@@ -1,3 +1,5 @@
+// Running: lets the stylesheet hide what the script will bring in.
+document.documentElement.classList.add('js');
 // Every page: the English ⇄ 中文 link remembers the choice, so a Chinese
 // browser is not sent back to the Chinese page after picking English.
 // Guide pages: highlight the section being read in the contents, and
@@ -53,7 +55,7 @@
   if (!nav) return;
   var ticking = false;
   // Over a dark band (the feature stage, the glass cards) the glass turns dark too.
-  var darks = document.querySelectorAll('.stage, .neon-band');
+  var darks = document.querySelectorAll('.hero-dark, .stage, .neon-band');
   var update = function () {
     ticking = false;
     nav.classList.toggle('scrolled', window.scrollY > 8);
@@ -175,5 +177,75 @@
   if (os) document.querySelectorAll('[data-os="' + os + '"]').forEach(function (a) { a.classList.add('mine'); });
   document.querySelectorAll('u[data-href]').forEach(function (u) {
     u.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); location.href = u.dataset.href; });
+  });
+})();
+
+// Scrolling: sections rise in as they appear, where the browser can't drive
+// that from scrolling itself; each glass card's neon draws itself in.
+(function () {
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.rise').forEach(function (el) { el.classList.add('in'); });
+    return;
+  }
+  var scrolls = window.CSS && CSS.supports && CSS.supports('animation-timeline: view()');
+  if (!scrolls) {
+    var rise = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rise.unobserve(e.target); } });
+    }, { rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.rise').forEach(function (el) { rise.observe(el); });
+  }
+  if (calm) return;
+  var cards = document.querySelectorAll('.nc');
+  cards.forEach(function (card) {
+    card.querySelectorAll('.neon g > *').forEach(function (shape) { shape.setAttribute('pathLength', '1'); });
+    card.classList.add('neon-draw');
+  });
+  var draw = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('drawn'); draw.unobserve(e.target); } });
+  }, { threshold: 0.35 });
+  cards.forEach(function (card) { draw.observe(card); });
+})();
+
+// A card with a clip (data-clip) opens it in a window over the page, with a
+// link on to its part of the user guide; without scripts it is just that link.
+(function () {
+  var cards = document.querySelectorAll('.nc[data-clip]');
+  if (!cards.length || typeof HTMLDialogElement !== 'function') return;
+  var zh = document.documentElement.lang.indexOf('zh') === 0;
+  var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css$/, '') + 'assets/clips/';
+  var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
+  var dialog = document.createElement('dialog');
+  dialog.className = 'clip-dialog';
+  dialog.innerHTML = '<div class="window-bar"><i></i><i></i><i></i><span></span>' +
+    '<button type="button" class="clip-close" aria-label="' + (zh ? '关闭' : 'Close') + '">×</button></div>' +
+    '<video muted loop playsinline controls></video>' +
+    '<div class="clip-text"><p></p><a></a></div>';
+  document.body.appendChild(dialog);
+  var video = dialog.querySelector('video');
+  function close() { video.pause(); dialog.close(); }
+  dialog.querySelector('.clip-close').addEventListener('click', close);
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) close(); });
+  dialog.addEventListener('close', function () { video.pause(); video.removeAttribute('src'); video.load(); });
+  cards.forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey) return;   // a new tab: the guide, as the link says
+      e.preventDefault();
+      var title = card.querySelector('h3').textContent;
+      dialog.querySelector('.window-bar span').textContent = 'BioManager — ' + title;
+      var p = dialog.querySelector('.clip-text p');
+      p.innerHTML = '';
+      var b = document.createElement('b'); b.textContent = title + (zh ? '。' : '. ');
+      p.appendChild(b);
+      p.appendChild(document.createTextNode(card.querySelector('p').textContent));
+      var a = dialog.querySelector('.clip-text a');
+      a.href = card.getAttribute('href');
+      a.textContent = zh ? '在用户指南中阅读 →' : 'Read about it in the user guide →';
+      video.poster = base + card.dataset.clip + '.webp';
+      video.src = base + card.dataset.clip + (webm ? '.webm' : '.mp4');
+      dialog.showModal();
+      var go = video.play();
+      if (go && go.catch) go.catch(function () {});
+    });
   });
 })();

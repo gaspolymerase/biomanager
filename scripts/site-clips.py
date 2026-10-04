@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Make the website's feature clips (site/assets/clips/) from a fresh demo lab.
 
-    python scripts/site-clips.py                 # all nine
+    python scripts/site-clips.py                 # all of them
     python scripts/site-clips.py home plasmid    # just these
 
 The front page's dark band plays one short clip per tab of its dock. Each is
@@ -25,8 +25,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/assets/clips"
-# In the dock's order. Most are the launch posts' clips; census is made here.
-CLIPS = ["home", "census", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders"]
+# The front page's dock, in its order, then the Features page's cards. Most are
+# the launch posts' clips; census is made here.
+CLIPS = ["home", "census", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders",
+         # and the Features page's cards
+         "flies", "new-database", "cards", "import", "search", "looks", "phone"]
 # Where the app sits in feature-clips.py's 1920×1080 plain frame: inside the
 # window, below its title bar and above its rounded bottom corners. A phone-only
 # clip keeps the whole phone.
@@ -62,9 +65,25 @@ def load_feature_clips():
         d.scroll(360, seconds=1.2)
         d.wait(1.4)
 
+    def cards_desktop(d):
+        # The launch post's cage-card walk, with its click on the Cage cards
+        # button that is showing (the Cards view has one too, hidden).
+        d.goto("/colony?view=cages")
+        d.start()
+        d.click("a:has-text('Cage cards') >> visible=true", after=1.0)
+        d.zoom(box=(244, 230, 380, 226), scale=2.0)
+        d.move("text=Cage 101", 0.8)
+        d.cover()
+        d.wait(1.6)
+        d.unzoom()
+        d.move("select >> nth=0", 0.8)
+        d.wait(1.0)
+
     def clips():
         found, prepare = load()
         found["census"] = [("desktop", census)]
+        if "cards" in found:
+            found["cards"] = [("desktop", cards_desktop)] + found["cards"][1:]
         return found, prepare
 
     mod.load_clips = clips
@@ -100,7 +119,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="biomanager-site-clips-") as tmp:
         sys.argv = ["feature-clips.py", "--plain", tmp, *wanted]
-        mod.main()
+        try:
+            mod.main()
+        except SystemExit as e:   # some clip failed: keep the ones that were recorded
+            print(e, flush=True)
         for name in wanted:
             source = Path(tmp) / name / "plain.mp4"
             if source.exists():

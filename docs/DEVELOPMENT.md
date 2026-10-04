@@ -1280,11 +1280,19 @@ teal in them).
   everywhere is a glass and neon card (`.nc`) on a dark band, drawn in the
   page: its own colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the
   card), a line drawing in inline SVG and a pane of glass with a little of
-  the app's own words. Each card opens its part of the user guide. Over a
-  dark band the header's glass turns dark (`.on-dark`, from `site.js`).
-- **Motion** is the hero's entrance and, where the browser can drive
-  animation from scrolling (`animation-timeline`), the product shot
-  flattening and sections (`.rise`) rising in. Without that support, or with
+  the app's own words. A card with `data-clip` opens that clip (from
+  `site/assets/clips/`, made by `scripts/site-clips.py`) in a window with a
+  link on to its part of the user guide; without scripts, or with ⌘-click, it
+  is just that link. Over a dark band the header's glass turns dark
+  (`.on-dark`, from `site.js`).
+- **The opening** (`.hero-dark`) is a dark band the height of the screen,
+  with slanted teal beams drifting behind the headline (CSS only) and the
+  product shot rising out of it. The header's **User guide** link is a
+  bordered pill: more than the other links, less than Download.
+- **Motion** is the hero's entrance and beams, the product shot flattening
+  as the page scrolls, sections (`.rise`) rising in (driven by scrolling
+  where the browser can, else by `site.js`), and each glass card's neon
+  drawing itself in. Without that support, or with
   reduced motion, everything simply shows; reduced motion also stops the
   clips playing by themselves.
 - **Icons** are `site/assets/icons.svg`, symbols copied from the app's

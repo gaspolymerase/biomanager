@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>BioManager</title>
-  <meta name="description" content="BioManager 是免费开源的实验室管理软件，把生物实验室的小鼠、斑马鱼、果蝇、线虫、质粒、样本、订购、试剂、日历和实验记录本集中在一处管理。提供 macOS、Windows、Linux 和 Android 免费应用。">
-  <meta name="keywords" content="实验室管理软件, 实验室管理系统, 小鼠管理, 鼠群管理, 小鼠繁殖管理, 小鼠笼卡, 笼位管理, 动物房管理, 斑马鱼管理, 果蝇管理, 线虫管理, 质粒管理, 样本管理, 冻存盒管理, 试剂库存管理, 实验室库存管理, 抗体管理, 引物管理, 细胞系管理, 实验记录本, 电子实验记录本, 免费, 开源, BioManager">
+  <meta name="description" content="BioManager 是免费开源的实验室管理软件：生物实验室的小鼠、斑马鱼、果蝇、线虫、质粒、样本、采购、试剂、日历和电子实验记录本，都在一处管好。提供 macOS、Windows、Linux 和 Android 免费版。">
+  <meta name="keywords" content="实验室管理软件, 实验室管理系统, 小鼠管理, 鼠群管理, 小鼠繁殖管理, 种鼠管理, 断奶分笼, 基因型鉴定, 小鼠笼卡, 笼位管理, 动物房管理, 斑马鱼管理, 果蝇管理, 线虫管理, 质粒管理, 样本管理, 冻存盒管理, 试剂库存管理, 试剂采购管理, 实验室库存管理, 抗体管理, 引物管理, 细胞系管理, 实验记录本, 电子实验记录本, 免费, 开源, BioManager">
   <meta name="color-scheme" content="light dark">
   <!-- Baidu search (ziyuan.baidu.com) checks this to know the site is ours: keep it. -->
   <meta name="baidu-site-verification" content="codeva-MlA4qivzSZ" />
@@ -23,7 +23,7 @@
   <meta property="og:url" content="https://biomanager.org/zh/">
   <meta property="og:locale" content="zh_CN">
   <meta property="og:title" content="BioManager — 免费的实验室管理软件">
-  <meta property="og:description" content="实验室的动物、品系和物资集中一处管理，不再需要二十张电子表格。">
+  <meta property="og:description" content="实验室的动物、品系和物资，一处管好，不用再维护二十张 Excel 表。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="640">
@@ -64,7 +64,7 @@
     <nav class="nav-links" aria-label="页面导航">
       <a href="features.html">功能</a>
       <a href="server.html">为实验室部署</a>
-      <a href="guide.html">用户指南</a>
+      <a class="nav-guide" href="guide.html">用户指南</a>
     </nav>
     <a class="lang-link" href="../" hreflang="en" lang="en" data-lang="en">English</a>
     <a class="btn btn-small btn-primary" href="download.html">下载</a>
@@ -74,34 +74,39 @@
 <main id="top">
 
   <!-- ============================================================ hero -->
-  <section class="hero">
-    <div class="wrap">
+  <section class="hero hero-dark">
+    <div class="beams" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="wrap hero-inner">
       <p class="eyebrow">实验室管理 · 免费开源</p>
-      <h1>实验室的动物、品系和物资，<span class="grad">集中一处管理。</span></h1>
-      <p class="lede">BioManager 取代大多数实验室还在用的电子表格、白板和纸质笼卡。
-        像编辑电子表格一样编辑记录——背后是一个数据库，它知道哪只小鼠在哪个笼里、
-        哪一窝该断奶了、哪种抗体快要过期。</p>
+      <h1>实验室的动物、品系和物资，<span class="grad">一处管好。</span></h1>
+      <p class="lede">大多数实验室还在靠 Excel 表、白板和纸质笼卡，BioManager 把它们都替换掉。
+        记录像表格一样直接改，背后却是一个数据库：哪只小鼠在哪个笼、
+        哪窝该断奶分笼、哪支抗体快过期，它都清楚。</p>
       <div class="cta">
         <a class="btn btn-primary btn-large" href="download.html" id="hero-download">免费下载</a>
-        <a class="btn btn-large" href="features.html">看看功能</a>
+        <a class="btn btn-large" href="features.html">查看功能</a>
       </div>
-      <p class="fine" id="hero-platform">macOS · Windows · Linux · Android · 任意浏览器 &nbsp;·&nbsp; MIT 许可证 &nbsp;·&nbsp; 数据保存在你自己的电脑或实验室自己的服务器上</p>
-      <ul class="chips" aria-label="可以管理的内容">
-        <li>小鼠</li><li>斑马鱼</li><li>果蝇</li><li>线虫</li><li>质粒</li><li>样本</li><li>订购</li>
+      <p class="fine" id="hero-platform">macOS · Windows · Linux · Android · 任意浏览器 &nbsp;·&nbsp; MIT 许可证 &nbsp;·&nbsp; 数据只留在自己的电脑或实验室自己的服务器上</p>
+      <ul class="chips" aria-label="能管什么">
+        <li>小鼠</li><li>斑马鱼</li><li>果蝇</li><li>线虫</li><li>质粒</li><li>样本</li><li>采购</li>
         <li>试剂</li><li>抗体</li><li>病毒</li><li>引物</li><li>细胞系</li><li>日历</li><li>实验记录本</li>
       </ul>
+    </div>
+  </section>
 
+  <section class="hero-show">
+    <div class="wrap">
       <div class="hero-stage">
         <figure class="window hero-shot">
           <div class="window-bar"><i></i><i></i><i></i><span>BioManager — 首页</span></div>
           <picture>
             <source srcset="../assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
             <img src="../assets/screenshots/home.webp" width="2000" height="1250" fetchpriority="high"
-                 alt="BioManager 首页：超过 30 周龄的小鼠、即将断奶的窝、待做的基因型鉴定、该转管的果蝇管、快过期的试剂，以及未来 14 天的安排">
+                 alt="BioManager 首页：超过 30 周龄的小鼠、快到断奶分笼的窝、待做的基因型鉴定、该转管的果蝇、快过期的试剂，以及未来 14 天的安排">
           </picture>
         </figure>
       </div>
-      <p class="caption">首页（Home）：每天早上，今天要做的事一目了然。</p>
+      <p class="caption">首页：每天早上打开，今天要做的事一目了然。</p>
     </div>
   </section>
 
@@ -110,18 +115,18 @@
     <div class="wrap trio">
       <div class="rise">
         <span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#user"/></svg></span>
-        <h3>给实验室成员</h3>
-        <p>管理自己的品系、鱼、保种和样本，不用再去翻别人的表格。</p>
+        <h3>实验室成员</h3>
+        <p>自己的品系、鱼、保种和样本自己管，不用再翻别人的表格。</p>
       </div>
       <div class="rise">
         <span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#list-check"/></svg></span>
-        <h3>给实验室主管和 PI</h3>
-        <p>一份真正完整的清点：谁负责什么，哪些笼闲着，哪些事已经逾期。</p>
+        <h3>实验室主管和 PI</h3>
+        <p>全组盘点，一项不漏：什么归谁、哪些笼空着、哪些事已经逾期。</p>
       </div>
       <div class="rise">
         <span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#dna"/></svg></span>
-        <h3>给养多种模式生物的实验室</h3>
-        <p>小鼠、斑马鱼、果蝇和线虫并排管理——其他任何生物也能在几分钟内建好自己的数据库。</p>
+        <h3>养多种模式生物的实验室</h3>
+        <p>小鼠、斑马鱼、果蝇和线虫放在一起管；其他物种也能几分钟建好自己的数据库。</p>
       </div>
     </div>
   </section>
@@ -129,7 +134,7 @@
   <!-- ============================================================ the feature stage -->
   <section id="see" class="stage" aria-labelledby="see-title">
     <div class="wrap">
-      <h2 id="see-title">实验室每周都要做的九件事。<span class="mute">看 BioManager 一件件做给你看。</span></h2>
+      <h2 id="see-title">实验室每周都在做的九件事。<span class="mute">看 BioManager 怎么一件件搞定。</span></h2>
 
       <div class="window stage-window">
         <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — 首页</span></div>
@@ -145,43 +150,43 @@
       <div class="dock" role="tablist" aria-label="功能">
         <button type="button" role="tab" id="tab-home" aria-selected="true" aria-controls="stage-panel" data-clip="home"
                 data-claim="每天早上，今天该做什么一目了然。"
-                data-more="断奶、基因型鉴定、该转管的果蝇管、快过期的试剂和未来两周，都替你算好了。">
+                data-more="断奶分笼、基因型鉴定、该转管的果蝇、快过期的试剂和未来 14 天的安排，都替你算好了。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#home"/></svg><span class="dock-tip">首页</span></button>
         <button type="button" role="tab" id="tab-census" aria-selected="false" aria-controls="stage-panel" data-clip="census" tabindex="-1"
                 data-claim="每只动物在哪个笼、哪个笼架，一清二楚。"
-                data-more="每只小鼠一行，直接编辑；笼按实物笼架排成网格；实验室主管还能在一页里看到全组所有的笼。">
-          <svg aria-hidden="true"><use href="../assets/icons.svg#mouse"/></svg><span class="dock-tip">动物清点</span></button>
+                data-more="每只小鼠一行，在表格里直接改；笼位按实物笼架排成网格；实验室主管一页就能看到全组的笼。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#mouse"/></svg><span class="dock-tip">动物盘点</span></button>
         <button type="button" role="tab" id="tab-experiment" aria-selected="false" aria-controls="stage-panel" data-clip="experiment" tabindex="-1"
-                data-claim="按体重自动算剂量，统计检验也替你做好。"
-                data-more="每只鼠的给药量按最新体重算，体重曲线标出处理日，各组逐日比较。">
+                data-claim="按体重算给药量，统计检验也替你做好。"
+                data-more="每只小鼠按最近一次称重算给药量，体重曲线上标出处理日，各组逐日比较。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#chart"/></svg><span class="dock-tip">实验</span></button>
         <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
-                data-claim="会自己填日程的实验室日历。"
-                data-more="断奶、基因型鉴定、转管和过期日期自动排上，仪器预约不会撞车。">
+                data-claim="会自己排日程的实验室日历。"
+                data-more="断奶分笼、基因型鉴定、转管和试剂过期自动排上，仪器预约不会撞车。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#calendar"/></svg><span class="dock-tip">日历</span></button>
         <button type="button" role="tab" id="tab-protocol" aria-selected="false" aria-controls="stage-panel" data-clip="protocol" tabindex="-1"
-                data-claim="在实验台边一步步执行实验流程。"
-                data-more="边做边勾选每一步，计时器自带，每个版本都会保留。">
+                data-claim="在实验台边照着流程一步步做。"
+                data-more="做完一步勾一步，每步自带计时器，每个版本都留档。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#notebook"/></svg><span class="dock-tip">实验记录本</span></button>
         <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
                 data-claim="粘贴数据，直接出图出统计。"
-                data-more="实验记录本里的柱状图、点图、箱线图或散点图，自带 SEM 误差棒和显著性星号。">
+                data-more="在实验记录本里画柱状图、点图、箱线图或散点图，自带 SEM 误差线和显著性星号。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#table"/></svg><span class="dock-tip">数据表</span></button>
         <button type="button" role="tab" id="tab-links" aria-selected="false" aria-controls="stage-panel" data-clip="links" tabindex="-1"
-                data-claim="每个样本都知道它来自哪只动物。"
-                data-more="样本关联到鼠群里的那只小鼠，也关联到提到它的实验记录页。">
+                data-claim="每个样本取自哪只动物，都有据可查。"
+                data-more="样本关联到鼠群里对应的小鼠，也关联到提到它的实验记录。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#vials"/></svg><span class="dock-tip">样本</span></button>
         <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
-                data-claim="质粒图谱，还知道每管放在哪个盒里。"
-                data-more="上传 GenBank、FASTA 或 SnapGene 文件直接编辑图谱；引物自动算出 Tm。">
+                data-claim="质粒图谱，外加每管在哪个冻存盒。"
+                data-more="上传 GenBank、FASTA 或 SnapGene 文件就能编辑图谱；引物的 Tm 自动算好。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#dna"/></svg><span class="dock-tip">分子生物学</span></button>
         <button type="button" role="tab" id="tab-orders" aria-selected="false" aria-controls="stage-panel" data-clip="orders" tabindex="-1"
-                data-claim="订单到货，直接进试剂库存。"
-                data-more="订单从申请、下单到到货，再自动转进试剂库存，信息都已填好。">
+                data-claim="货一到，直接入库。"
+                data-more="订单从申请到到货一路跟踪，到货后自动转入试剂库，各项信息都已填好。">
           <svg aria-hidden="true"><use href="../assets/icons.svg#cart"/></svg><span class="dock-tip">订购</span></button>
       </div>
       <p class="stage-caption" id="stage-caption" aria-live="polite"><b>每天早上，今天该做什么一目了然。</b>
-        断奶、基因型鉴定、该转管的果蝇管、快过期的试剂和未来两周，都替你算好了。</p>
+        断奶分笼、基因型鉴定、该转管的果蝇、快过期的试剂和未来 14 天的安排，都替你算好了。</p>
     </div>
   </section>
 
@@ -189,12 +194,12 @@
   <section class="section">
     <div class="wrap">
       <div class="section-head rise">
-        <h2>永远归你。<span class="mute">免费，而且不会被锁住。</span></h2>
+        <h2>数据是你的。<span class="mute">永久免费，随时带走。</span></h2>
       </div>
       <ul class="promises promises-row rise">
-          <li><b>数据永远是你的。</b>除非你连接日历或邮箱，你的记录绝不会离开你的电脑或实验室的服务器。它每天向开发者发送一次
-            <a href="guide.html#counts">匿名统计数字</a>，从不包含姓名，管理员可以关闭。</li>
-          <li><b>不会被锁住。</b><strong>设置 → 导出我的数据</strong>（Settings → Export my data）随时可以下载你保存的全部记录。</li>
+          <li><b>数据归你。</b>除非你接入日历或邮箱，记录不会离开你的电脑或实验室服务器。BioManager 每天向开发者发送一次
+            <a href="guide.html#counts">匿名统计</a>，不含任何姓名，管理员可以关闭。</li>
+          <li><b>不会被锁定。</b>在<strong>设置 → 导出我的数据</strong>，随时下载你保存的全部记录。</li>
           <li><b>永久免费。</b>以 MIT 许可证发布：可以自由使用、分享和修改。</li>
         </ul>
       <div class="cta rise" style="margin-top: 32px">
@@ -207,12 +212,12 @@
   <section class="section band">
     <div class="wrap">
       <div class="section-head rise">
-        <h2>了解更多。<span class="mute">接下来去哪里看看。</span></h2>
+        <h2>了解更多。<span class="mute">选一页接着看。</span></h2>
       </div>
       <div class="grid next-grid">
-        <a class="card next rise" href="features.html"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#grid"/></svg></span><h3>功能</h3><p>每个数据库，从鼠群到质粒和订购，以及在所有数据库里都通用的功能。</p></a>
-        <a class="card next rise" href="server.html"><span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#server"/></svg></span><h3>为实验室部署</h3><p>一台电脑、实验室电脑、学校服务器或免费云虚拟机：费用和每一步。</p></a>
-        <a class="card next rise" href="guide.html"><span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#notebook"/></svg></span><h3>用户指南</h3><p>每一个功能，以及从 Excel 迁移过来的路线。</p></a>
+        <a class="card next rise" href="features.html"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#grid"/></svg></span><h3>功能</h3><p>从鼠群到质粒、采购的每个数据库，以及所有数据库都通用的功能。</p></a>
+        <a class="card next rise" href="server.html"><span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#server"/></svg></span><h3>为实验室部署</h3><p>单台电脑、实验室主机、学校服务器或免费云服务器：费用和每一步都写清楚了。</p></a>
+        <a class="card next rise" href="guide.html"><span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#notebook"/></svg></span><h3>用户指南</h3><p>每项功能怎么用，以及从 Excel 搬过来的步骤。</p></a>
       </div>
     </div>
   </section>
