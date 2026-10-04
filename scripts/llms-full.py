@@ -8,8 +8,9 @@ AI assistants and AI search read Markdown more reliably than a styled page,
 and one file lets them take in the whole guide at once (site/llms.txt links
 it). It is made from each guide page's own words, between <!-- page --> and
 <!-- /page -->, in the order of scripts/guide-pages.py's PAGES, followed by
-site/deploy-with-ai.md. The website's publish workflow runs this, so the
-file always matches the guide; it is not kept in the repository.
+site/deploy-with-ai.md. It is kept in the repository, because Cloudflare
+Pages publishes site/ as it is: run this after editing the guide or
+deploy-with-ai.md (tests/test_llms_full.py fails while it is out of date).
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
@@ -35,6 +36,18 @@ SKIP_CLASSES = {"eyebrow", "doc-clip", "window-bar", "areas"}
 BLOCKS = {"p", "div", "section", "h1", "h2", "h3", "h4", "ul", "ol", "dl", "table", "figure", "figcaption", "details", "summary"}
 HEADING = {"h1": "## ", "h2": "### ", "h3": "#### ", "h4": "##### "}
 VOID = {"br", "img", "hr", "source", "input", "meta", "link", "wbr"}
+
+
+def final(link: str) -> str:
+    """A link to one of the site's pages, as its address without .html (what
+    the sitemap lists; Cloudflare Pages redirects .html there)."""
+    u = urlsplit(link)
+    if u.netloc != "biomanager.org" or not u.path.endswith(".html"):
+        return link
+    path = u.path[: -len(".html")]
+    if path.endswith("/index"):
+        path = path[: -len("index")]
+    return urlunsplit((u.scheme, u.netloc, path, u.query, u.fragment))
 
 
 class ToMarkdown(HTMLParser):
@@ -152,7 +165,7 @@ class ToMarkdown(HTMLParser):
             self.write("`")
         elif tag == "a":
             href = a.get("href")
-            self.href.append(urljoin(self.base, href) if href and not href.startswith("#") else
+            self.href.append(final(urljoin(self.base, href)) if href and not href.startswith("#") else
                              (self.base + href if href else None))
             self.link_text.append("")
 
@@ -246,8 +259,8 @@ def build() -> str:
         "> BioManager is a free, open-source lab management app for a biology lab's animal colonies "
         "(mice, zebrafish, flies, worms and any other organism), plasmids, samples, orders, reagents, "
         "antibodies and viruses, with a calendar and a lab notebook. Website: https://biomanager.org. "
-        "This file is the whole English user guide (https://biomanager.org/guide.html) in one place, "
-        "followed by the guide to deploying a lab server; the Chinese guide is at https://biomanager.org/zh/guide.html.",
+        "This file is the whole English user guide (https://biomanager.org/guide) in one place, "
+        "followed by the guide to deploying a lab server; the Chinese guide is at https://biomanager.org/zh/guide.",
     ]
     for _group, pages in guide_pages.PAGES:
         for slug, _en, _zh in pages:

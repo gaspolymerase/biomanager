@@ -36,9 +36,14 @@ class LlmsFull(unittest.TestCase):
         self.assertIsNone(re.search(r"</?(p|div|span|b|i|a|li|td|th|kbd|code|small|figure|video|section)\b", guide))
 
     def test_links_are_absolute_and_tables_keep_their_cells(self):
-        self.assertIn("[Lab setup](https://biomanager.org/guide/lab-setup.html)", self.text)
+        self.assertIn("[Lab setup](https://biomanager.org/guide/lab-setup)", self.text)
         self.assertNotIn("](guide/", self.text)
+        self.assertNotIn(".html)", self.text)        # the sitemap's addresses, not the .html ones
         self.assertIn("| `Esc` | Close a menu or dialog |", self.text)
+
+    def test_the_published_copy_is_up_to_date(self):
+        published = (ROOT / "site" / "llms-full.txt").read_text(encoding="utf-8")
+        self.assertEqual(published, self.text, "Run python scripts/llms-full.py after editing the guide")
 
     def test_a_note_s_title_is_set_off_from_its_text(self):
         self.assertIn("> **One litter date per cage** A cage holds one litter date", self.text)

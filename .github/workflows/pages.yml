@@ -29,7 +29,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
       # The whole English guide as one Markdown file, for AI assistants
-      # (site/llms.txt links it); made here so it always matches the guide.
+      # (site/llms.txt links it). Kept in the repository too, for Cloudflare
+      # Pages; made again here in case it is behind.
       - name: llms-full.txt
         run: python3 scripts/llms-full.py
       - uses: actions/upload-pages-artifact@v5

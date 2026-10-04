@@ -28,7 +28,8 @@ ENDPOINT = "https://api.indexnow.org/indexnow"
 
 
 def page_url(path: str) -> str | None:
-    """site/guide/zebrafish.html -> https://biomanager.org/guide/zebrafish.html;
+    """site/guide/zebrafish.html -> https://biomanager.org/guide/zebrafish (the address
+    without .html, as in the sitemap: Cloudflare Pages redirects to it);
     anything that isn't a page (styles, images, clips, the search index) -> None."""
     parts = Path(path).parts       # paths as git gives them, from the repository's root
     if parts[:1] != ("site",) or len(parts) < 2:
@@ -36,9 +37,11 @@ def page_url(path: str) -> str | None:
     rel = Path(*parts[1:])
     if rel.suffix != ".html" or rel.parts[0] == "pagefind":
         return None
-    tail = rel.as_posix()
+    if rel.name == "404.html":
+        return None
+    tail = rel.as_posix()[: -len(".html")]
     if rel.name == "index.html":
-        tail = tail[: -len("index.html")]
+        tail = tail[: -len("index")]
     return f"https://{HOST}/{tail}"
 
 
