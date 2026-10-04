@@ -1288,21 +1288,25 @@ teal in them).
   letter spacing (`:lang(zh)`).
 - **The header** floats above the page and turns to glass once the page
   scrolls (`site.js` adds `.scrolled`).
-- **The feature stage** (`#see` on the front page, the one dark band) plays a short clip per tab
-  of its dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
+- **The feature stage** (`#see` on the front page; dark on a dark page,
+  white with pale glass on a light one) plays a short clip per tab of its
+  dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
   poster. `scripts/site-clips.py` makes them from a fresh demo lab (through
   `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
   one another until someone picks a tab, and pause off screen. A tab's caption
   is in its `data-claim` and `data-more`.
 - **Features** has no screenshots: each database and each thing that works
-  everywhere is a glass and neon card (`.nc`) on a dark band, drawn in the
-  page: its own colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the
-  card), a line drawing in inline SVG and a pane of glass with a little of
-  the app's own words. A card with `data-clip` opens that clip (from
-  `site/assets/clips/`, made by `scripts/site-clips.py`) in a window with a
-  link on to its part of the user guide; without scripts, or with ⌘-click, it
-  is just that link. Over a dark band the header's glass turns dark
-  (`.on-dark`, from `site.js`).
+  everywhere is a glass and neon card (`.nc`) drawn in the page, with its own
+  colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the card on a dark
+  page), a line drawing in inline SVG and a pane of glass with a little of
+  the app's own words. On a dark page the card is dark and its drawing
+  glows; on a light page it is white with a soft wash of its colour, a
+  deeper drawing and white frosted glass. A card with `data-clip` opens that
+  clip (from `site/assets/clips/`, made by `scripts/site-clips.py`) in a
+  window with a link on to its part of the user guide; without scripts, or
+  with ⌘-click, it is just that link. By day every band is white, parted by
+  hairlines; on a dark page the header's glass turns dark over the stage and
+  the cards (`.on-dark`, from `site.js`).
 - **The opening** (`.hero-glass`) is a band the height of the screen, light
   or dark with the page. Behind the headline is a double helix of frosted
   glass, worked out as a real helix in 3D: each backbone is wider and brighter

@@ -39,17 +39,28 @@ def point(strand, x):
     return CY - R * math.sin(th), z, HALF * (1 + DEPTH * z)
 
 
-def runs(strand, front):
-    """The stretches of a strand on one side of the axis, as point lists,
-    a little past both ends of the turn so it tiles without a seam."""
+FADE = 0.16                     # depth over which a backbone passes from back to front
+
+
+def strand_run(strand):
+    """A whole strand, a little past both ends of the turn so it tiles
+    without a seam."""
+    return [(i, *point(strand, i)) for i in range(-120, PERIOD + 121, 6)]
+
+
+def near(z):
+    """How much of a point belongs to the near layer: 0 behind the axis,
+    1 in front, easing across the axis so the change shows no join."""
+    t = min(max((z + FADE) / (2 * FADE), 0), 1)
+    return t * t * (3 - 2 * t)
+
+
+def near_stretches(run):
+    """The stretches of a strand that are at all in front."""
     out, cur = [], []
-    pts = [(i, *point(strand, i)) for i in range(-120, PERIOD + 121, 6)]
-    for k, q in enumerate(pts):
-        near = [z >= 0 for _, _, z, _ in pts[max(k - 2, 0):k + 3]]
-        # the far side reaches two steps under the near side's ends
-        keep = (q[2] >= 0) if front else not all(near)
-        if keep:
-            cur.append(q)
+    for k, q in enumerate(run):
+        if near(q[2]) > 0:
+            cur.append((k, q))
         elif cur:
             out.append(cur); cur = []
     if cur:
@@ -98,9 +109,10 @@ def line(points, **attrs):
     return f"<polyline points='{pts(points)}' fill='none' stroke-linecap='round' stroke-linejoin='round' {a}/>"
 
 
-def shaded(run, points, width, alpha, stroke):
+def shaded(run, points, width, alpha, stroke, weight=lambda z: 1):
     """A line along a stretch in short pieces, its width and strength
-    following the depth, so it fades smoothly as the strand turns away."""
+    following the depth, so it fades smoothly as the strand turns away;
+    weight shares it between the back and front layers."""
     out = []
     for k in range(len(points) - 1):
         (x0, y0), (x1, y1) = points[k], points[k + 1]
@@ -108,7 +120,7 @@ def shaded(run, points, width, alpha, stroke):
         dx, dy = x1 - x0, y1 - y0
         n = math.hypot(dx, dy) or 1
         ex, ey = dx / n * 0.6, dy / n * 0.6                  # a hair of overlap
-        w, a = width(d), alpha(d)
+        w, a = width(d), alpha(d) * weight((run[k][2] + run[k + 1][2]) / 2)
         if a > 0.01:
             out.append(f"<path d='M{x0 - ex:.1f} {y0 - ey:.1f}L{x1 + ex:.1f} {y1 + ey:.1f}' stroke-width='{w:.1f}' stroke-opacity='{a:.2f}'/>")
     return f"<g stroke='{stroke}'>{''.join(out)}</g>"
@@ -133,40 +145,71 @@ def svg(name, body, defs=""):
     (OUT / name).write_text(s, encoding="utf-8")
 
 
+def near_mask(run, tag):
+    """The near layer's glass for a strand: its in-front stretches, each
+    filled with a gradient that fades it in and out across the axis. There
+    the backbone is at its highest or lowest, running level, so a gradient
+    across the page follows it."""
+    shapes, grads = [], []
+    for n, stretch in enumerate(near_stretches(run)):
+        pts_ = [q for _, q in stretch]
+        if len(pts_) < 2:
+            continue
+        gid = f"g{tag}{n}"
+        x0, x1 = pts_[0][0], pts_[-1][0]
+        stops = "".join(f"<stop offset='{(x - x0) / ((x1 - x0) or 1):.4f}' stop-color='white' stop-opacity='{near(z):.3f}'/>"
+                        for x, _, z, _ in pts_ if near(z) < 0.999 or x in (x0, x1))
+        grads.append(f"<linearGradient id='{gid}' gradientUnits='userSpaceOnUse' x1='{x0}' y1='0' x2='{x1}' y2='0'>{stops}</linearGradient>")
+        up, down = edges(pts_)
+        shapes.append(f"<polygon fill='url(#{gid})' points='{pts(up + down[::-1])}'/>")
+    return grads, shapes
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    layers = {side: [(s, r) for s in (0, 1) for r in runs(s, side == "front")] for side in ("back", "front")}
+    strands = [(s_, strand_run(s_)) for s_ in (0, 1)]
     bars = rungs()
     rung_shapes = "".join(f"<rect x='{x - RUNG_HALF:.1f}' y='{t:.1f}' width='{2 * RUNG_HALF}' height='{b - t:.1f}' rx='{RUNG_HALF}'/>" for x, t, b in bars)
-    for side, parts in layers.items():
-        svg(f"{side}.svg", "".join(band(r) for _, r in parts))
-        # the coloured core the glass frosts into a glow: thicker and
-        # stronger as it comes near
-        svg(f"{side}-core.svg", "".join(
-            shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 3 + 4 * d, lambda d: 0.45 + 0.55 * d, stroke=A if s == 0 else B)
-            for s, r in parts))
+    whole = "".join(band(r) for _, r in strands)
+    # The far layer's glass is the whole of both backbones; the near layer's
+    # fades in over it where a backbone comes round in front.
+    svg("back.svg", whole)
+    grads, shapes = [], []
+    for s_, r in strands:
+        g, sh = near_mask(r, "ab"[s_])
+        grads += g; shapes += sh
+    svg("front.svg", "".join(shapes), f"<defs>{''.join(grads)}</defs>")
+    hw_at = lambda d: HALF * (1 + DEPTH * (2 * d - 1))
+    for side, weight in (("back", lambda z: 1 - near(z)), ("front", near)):
+        # The coloured core the glass frosts into a glow, thicker and stronger
+        # as it comes near: all of it under the far glass, so it is frosted
+        # everywhere, even where the near glass is only fading in.
+        if side == "back":
+            # (soft already, so it never shows as a hard line)
+            svg("core.svg", "<g filter='url(#b)'>" + "".join(
+                shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 4 + 6 * d, lambda d: 0.45 + 0.55 * d, A if s_ == 0 else B)
+                for s_, r in strands) + "</g>",
+                "<defs><filter id='b' x='-5%' y='-20%' width='110%' height='140%'><feGaussianBlur stdDeviation='3'/></filter></defs>")
         # Rounded glass: a soft rim of light just inside each edge, fading
         # towards the middle as light does through a glass rod, a soft
         # highlight along the upper side, and a faint line at the edge itself.
-        # The rims are kept inside the backbone by clipping to its shape.
-        hw_at = lambda d: HALF * (1 + DEPTH * (2 * d - 1))
+        # The rims are kept inside the backbones by clipping to their shape.
         rims, lines = [], []
-        for _, r in parts:
-            rims.append(shaded(r, across(r, -0.8), lambda d: 0.42 * hw_at(d), lambda d: 0.18 + 0.5 * d, stroke="white"))
-            rims.append(shaded(r, across(r, 0.8), lambda d: 0.36 * hw_at(d), lambda d: 0.08 + 0.25 * d, stroke="white"))
-            rims.append(shaded(r, across(r, -0.42), lambda d: 0.16 * hw_at(d), lambda d: 0.1 + 0.45 * d, stroke="white"))
+        for _, r in strands:
+            rims.append(shaded(r, across(r, -0.8), lambda d: 0.42 * hw_at(d), lambda d: 0.18 + 0.5 * d, "white", weight))
+            rims.append(shaded(r, across(r, 0.8), lambda d: 0.36 * hw_at(d), lambda d: 0.08 + 0.25 * d, "white", weight))
+            rims.append(shaded(r, across(r, -0.42), lambda d: 0.16 * hw_at(d), lambda d: 0.1 + 0.45 * d, "white", weight))
             up, down = edges(r)
-            lines.append(shaded(r, down, lambda d: 1, lambda d: 0.12 + 0.4 * d, stroke="white"))  # higher on the page
-            lines.append(shaded(r, up, lambda d: 1, lambda d: 0.06 + 0.2 * d, stroke="white"))
-        clip = "".join(band(r) for _, r in parts)
-        defs = (f"<defs><clipPath id='c'>{clip}</clipPath>"
+            lines.append(shaded(r, down, lambda d: 1, lambda d: 0.12 + 0.4 * d, "white", weight))  # higher on the page
+            lines.append(shaded(r, up, lambda d: 1, lambda d: 0.06 + 0.2 * d, "white", weight))
+        defs = (f"<defs><clipPath id='c'>{whole}</clipPath>"
                 "<filter id='s' x='-10%' y='-10%' width='120%' height='120%'><feGaussianBlur stdDeviation='3'/></filter></defs>")
         body = [f"<g clip-path='url(#c)'><g filter='url(#s)'>{''.join(rims)}</g></g>", *lines]
         svg(f"{side}-edge.svg", "".join(body), defs)
     svg("rungs.svg", rung_shapes)
     svg("rungs-edge.svg", "".join(f"<rect x='{x - RUNG_HALF + .6:.1f}' y='{t + .6:.1f}' width='{2 * RUNG_HALF - 1.2}' height='{b - t - 1.2:.1f}' rx='{RUNG_HALF - .6}' fill='none' stroke='white' stroke-opacity='.7' stroke-width='1.2'/>" for x, t, b in bars))
     # everything, for the shadow under the glass and its hairline
-    svg("all.svg", "".join(band(r) for parts in layers.values() for _, r in parts) + rung_shapes)
+    svg("all.svg", whole + rung_shapes)
     print(f"one turn: {PERIOD}px, {len(bars) - 2} base pairs; written to {OUT}")
 
 

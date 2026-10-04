@@ -54,13 +54,14 @@ document.documentElement.classList.add('js');
   var nav = document.querySelector('.nav');
   if (!nav) return;
   var ticking = false;
-  // Over a dark band (the feature stage, the glass cards) the glass turns dark too.
-  var darks = document.querySelectorAll('.stage, .neon-band');
+  // Over a dark band (the feature stage, the glass cards, dark only on a dark
+  // page) the glass turns dark too.
+  var bands = document.querySelectorAll('.stage, .neon-band'), dim = window.matchMedia('(prefers-color-scheme: dark)');
   var update = function () {
     ticking = false;
     nav.classList.toggle('scrolled', window.scrollY > 8);
     var y = nav.getBoundingClientRect().top + nav.offsetHeight / 2, dark = false;
-    darks.forEach(function (d) { var r = d.getBoundingClientRect(); if (r.top <= y && r.bottom >= y) dark = true; });
+    if (dim.matches) bands.forEach(function (d) { var r = d.getBoundingClientRect(); if (r.top <= y && r.bottom >= y) dark = true; });
     nav.classList.toggle('on-dark', dark);
   };
   update();
