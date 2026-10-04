@@ -128,7 +128,7 @@
   <!-- ============================================================ the feature stage -->
   <section id="see" class="stage" aria-labelledby="see-title">
     <div class="wrap">
-      <h2 id="see-title">Seven things a lab does every week. <span class="mute">Watch BioManager do each one.</span></h2>
+      <h2 id="see-title">Nine things a lab does every week. <span class="mute">Watch BioManager do each one.</span></h2>
 
       <div class="window stage-window">
         <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — Home</span></div>
@@ -146,30 +146,38 @@
                 data-claim="Every morning, what needs doing today."
                 data-more="Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out for you.">
           <svg aria-hidden="true"><use href="assets/icons.svg#home"/></svg><span class="dock-tip">Home</span></button>
-        <button type="button" role="tab" id="tab-import" aria-selected="false" aria-controls="stage-panel" data-clip="import" tabindex="-1"
-                data-claim="Bring your Excel colony sheet in, as it is."
-                data-more="Columns matched by meaning, with a preview before anything is saved.">
-          <svg aria-hidden="true"><use href="assets/icons.svg#import"/></svg><span class="dock-tip">Import</span></button>
-        <button type="button" role="tab" id="tab-cards" aria-selected="false" aria-controls="stage-panel" data-clip="cards" tabindex="-1"
-                data-claim="Print the cage cards. Scan one, and the cage opens on your phone."
-                data-more="Any phone camera, no app needed, and Brother or Zebra label printers too.">
-          <svg aria-hidden="true"><use href="assets/icons.svg#qrcode"/></svg><span class="dock-tip">Cage cards</span></button>
+        <button type="button" role="tab" id="tab-census" aria-selected="false" aria-controls="stage-panel" data-clip="census" tabindex="-1"
+                data-claim="Every animal, in its cage and on its rack."
+                data-more="Each mouse in a sheet you edit in place, cages on a grid of the real rack, and everyone's cages on one page for the lab manager.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#mouse"/></svg><span class="dock-tip">Animal census</span></button>
         <button type="button" role="tab" id="tab-experiment" aria-selected="false" aria-controls="stage-panel" data-clip="experiment" tabindex="-1"
                 data-claim="Doses worked out from body weight, and the stats done for you."
                 data-more="Each mouse's dose from its latest weight, the weight chart with treatment days marked, and groups compared day by day.">
-          <svg aria-hidden="true"><use href="assets/icons.svg#chart"/></svg><span class="dock-tip">Experiments</span></button>
-        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
-                data-claim="Plasmid maps, and the box each tube is in."
-                data-more="Upload a GenBank, FASTA or SnapGene file and edit its map.">
-          <svg aria-hidden="true"><use href="assets/icons.svg#plasmid"/></svg><span class="dock-tip">Plasmids</span></button>
-        <button type="button" role="tab" id="tab-orders" aria-selected="false" aria-controls="stage-panel" data-clip="orders" tabindex="-1"
-                data-claim="When the box arrives, it goes straight onto the shelf."
-                data-more="Orders move from requested to received, then into Reagents with everything filled in.">
-          <svg aria-hidden="true"><use href="assets/icons.svg#cart"/></svg><span class="dock-tip">Orders</span></button>
+          <svg aria-hidden="true"><use href="assets/icons.svg#chart"/></svg><span class="dock-tip">Experiment</span></button>
+        <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
+                data-claim="A lab calendar that fills itself in."
+                data-more="Weanings, genotyping, flips and expiry dates, and equipment bookings that never double up.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#calendar"/></svg><span class="dock-tip">Calendar</span></button>
+        <button type="button" role="tab" id="tab-protocol" aria-selected="false" aria-controls="stage-panel" data-clip="protocol" tabindex="-1"
+                data-claim="Protocols you run at the bench, step by step."
+                data-more="Tick off each step as you go, with its timer, and every version kept.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#notebook"/></svg><span class="dock-tip">Notebook</span></button>
         <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
                 data-claim="Paste your numbers, get the plot and the test."
                 data-more="Bar, dot, box or scatter plots in the notebook, with SEM and significance stars.">
           <svg aria-hidden="true"><use href="assets/icons.svg#table"/></svg><span class="dock-tip">Data sheet</span></button>
+        <button type="button" role="tab" id="tab-links" aria-selected="false" aria-controls="stage-panel" data-clip="links" tabindex="-1"
+                data-claim="Every sample knows the animal it came from."
+                data-more="Samples link to their mouse in the colony, and to the notebook pages that mention it.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#vials"/></svg><span class="dock-tip">Samples</span></button>
+        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
+                data-claim="Plasmid maps, and the box each tube is in."
+                data-more="Upload a GenBank, FASTA or SnapGene file and edit its map; primers work out their own Tm.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#dna"/></svg><span class="dock-tip">Molecular biology</span></button>
+        <button type="button" role="tab" id="tab-orders" aria-selected="false" aria-controls="stage-panel" data-clip="orders" tabindex="-1"
+                data-claim="When the box arrives, it goes straight onto the shelf."
+                data-more="Orders move from requested to received, then into Reagents with everything filled in.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#cart"/></svg><span class="dock-tip">Order</span></button>
       </div>
       <p class="stage-caption" id="stage-caption" aria-live="polite"><b>Every morning, what needs doing today.</b>
         Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out for you.</p>

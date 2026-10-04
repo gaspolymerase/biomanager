@@ -116,6 +116,8 @@ code, and units.
 | Racks & boxes | 笼架与冻存盒 |
 | Lab setup | 实验室设置 |
 | Colony overview | 鼠群概览 |
+| Animal census (the website) | 动物清点 |
+| Molecular biology | 分子生物学 |
 | group lead | 组长 |
 | master copy | 主副本 |
 | API token | API 令牌 |

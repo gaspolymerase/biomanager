@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Make the website's feature clips (site/assets/clips/) from a fresh demo lab.
 
-    python scripts/site-clips.py                 # all seven
+    python scripts/site-clips.py                 # all nine
     python scripts/site-clips.py home plasmid    # just these
 
 The front page's dark band plays one short clip per tab of its dock. Each is
@@ -25,7 +25,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/assets/clips"
-CLIPS = ["home", "import", "cards", "experiment", "plasmid", "orders", "datasheet"]
+# In the dock's order. Most are the launch posts' clips; census is made here.
+CLIPS = ["home", "census", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders"]
 # Where the app sits in feature-clips.py's 1920×1080 plain frame: inside the
 # window, below its title bar and above its rounded bottom corners. A phone-only
 # clip keeps the whole phone.
@@ -46,24 +47,24 @@ def load_feature_clips():
             mod.FONT_EN = mod.FONT_ZH = (font, None)
     load = mod.load_clips
 
-    def cards_desktop(d):
-        # The cage cards walk, with its click on the Cage cards button that is
-        # showing (the Cards view has one too, hidden in the Table view).
-        d.goto("/colony?view=cages")
+    def census(d):
+        # The animals: every mouse in its sheet, the cages on their rack, and
+        # (for an admin) everyone's cages on one page.
+        d.goto("/colony")
         d.start()
-        d.click("a:has-text('Cage cards') >> visible=true", after=1.0)
-        d.zoom(box=(244, 230, 380, 226), scale=2.0)
-        d.move("text=Cage 101", 0.8)
-        d.cover()
-        d.wait(1.6)
-        d.unzoom()
-        d.move("select >> nth=0", 0.8)
         d.wait(1.0)
+        d.scroll(320, at="th:has-text('Transgene 1')")
+        d.wait(0.8)
+        d.click("a:has-text('Cages') >> nth=0", after=0.8)
+        d.click("[data-layout=grid] >> visible=true", after=1.8)
+        d.cover()
+        d.goto("/admin/colony", settle=1.0)
+        d.scroll(360, seconds=1.2)
+        d.wait(1.4)
 
     def clips():
         found, prepare = load()
-        if "cards" in found:
-            found["cards"] = [("desktop", cards_desktop)] + found["cards"][1:]
+        found["census"] = [("desktop", census)]
         return found, prepare
 
     mod.load_clips = clips
