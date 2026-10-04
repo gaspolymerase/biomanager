@@ -47,7 +47,7 @@ HOUSING_ICONS = {
 @lru_cache(maxsize=1)
 def known() -> frozenset[str]:
     try:
-        return frozenset(re.findall(r'<symbol id="([^"]+)"', SPRITE.read_text()))
+        return frozenset(re.findall(r'<symbol id="([^"]+)"', SPRITE.read_text(encoding="utf-8")))
     except OSError:
         return frozenset()
 

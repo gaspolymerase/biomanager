@@ -567,7 +567,7 @@ def _dump_menus(path: str) -> None:
                 out += walk(item.submenu(), depth + 1)
         return out
 
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(walk(AppKit.NSApplication.sharedApplication().mainMenu(), 0)) + "\n")
         f.write(f"# set_nav called {DesktopApi.calls} time(s); {sum(len(s['links']) for s in _state['nav'])} links\n")
 
