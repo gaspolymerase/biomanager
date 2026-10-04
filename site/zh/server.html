@@ -46,21 +46,19 @@
     <summary class="toc-title">目录</summary>
     <ol>
       <li class="toc-part">从这里开始</li>
-      <li><a href="#two-ways">桌面版还是服务器？</a></li>
-      <li><a href="#choose">选择方式</a></li>
-      <li class="toc-part">运行方式</li>
+      <li><a href="#choose">选择方案</a></li>
+      <li><a href="#ai">让 AI 助手来设置</a></li>
+      <li class="toc-part">部署方式</li>
       <li><a href="#desktop">A · 单台电脑</a></li>
-      <li><a href="#lan">B · 实验室网络里的一台电脑</a></li>
+      <li><a href="#lan">B · 实验室里的 Linux 电脑</a></li>
       <li><a href="#campus">C · 学校的服务器</a></li>
-      <li><a href="#tailscale">D · 云虚拟机 + Tailscale</a></li>
-      <li><a href="#domain">E · 云虚拟机 + 自己的域名</a></li>
+      <li><a href="#tailscale">D · 云服务器 + Tailscale</a></li>
+      <li><a href="#domain">E · 云服务器 + 自己的域名</a></li>
+      <li><a href="#move">把桌面版的记录带过来</a></li>
       <li><a href="#other">其他方式</a></li>
       <li class="toc-part">运行之后</li>
-      <li><a href="#after">运行起来以后</a></li>
+      <li><a href="#after">运行之后</a></li>
       <li><a href="#safe">保护数据安全</a></li>
-      <li><a href="#move">从桌面版迁到服务器</a></li>
-      <li class="toc-part">帮助</li>
-      <li><a href="#ai">让 AI 助手来设置</a></li>
       <li><a href="#faq">常见问题</a></li>
     </ol>
    </details>
@@ -69,302 +67,769 @@
   <main class="guide-body">
     <p class="eyebrow">为实验室部署</p>
     <h1>一个实验室，一个数据库。</h1>
-    <p class="lede-left">BioManager 可以在你自己的电脑上运行，两分钟就能用上；也可以放在服务器上，全实验室用任何浏览器和手机打开。
-      本页列出所有的部署方式、各自的费用，以及具体的设置步骤。大多数实验室一分钱都不用花。</p>
+    <p class="lede-left">BioManager 的部署步骤。选一种方式，按顺序做完每一步，看到<b>完成标志</b>就好了。
+      大多数实验室一分钱都不用花。</p>
 
     <div class="part"><p class="part-label">第一部分</p><h2>从这里开始</h2></div>
 
-    <!-- ======================================================= two ways -->
-    <section id="two-ways">
-      <h2>桌面版还是服务器？</h2>
-      <p>两种情况下 BioManager 都是同一个程序，区别只在于数据库放在哪里、谁能访问它。</p>
-      <div class="opt-grid">
-        <div class="opt">
-          <p class="opt-kicker">💻 桌面版</p>
-          <h3>给一个人用</h3>
-          <p>下载 macOS、Windows 或 Linux 版，打开就能用。数据库是那台电脑上的一个文件，只属于这台电脑。
-            不用安装别的东西，也不用另外运行什么。</p>
-          <p class="opt-meta">免费 · 2 分钟 · <a href="download.html">下载</a></p>
-        </div>
-        <div class="opt">
-          <p class="opt-kicker">🌐 实验室服务器（网页版）</p>
-          <h3>给整个实验室用</h3>
-          <p>由一台机器运行 BioManager，其他人都在浏览器里打开：笔记本电脑、鼠房里的电脑、笼架旁的手机都可以。
-            大家看到的是同一份记录，实时更新，而且每晚自动备份。</p>
-          <p class="opt-meta">通常免费 · 大约一小时 · <a href="#choose">选择方式</a></p>
-        </div>
-      </div>
-      <table class="gtable">
-        <tr><th>手机</th><td>手机打开的是<b>服务器</b>，不能连桌面版。<b>Android</b>：安装 BioManager 应用
-          （<a href="download.html">.apk</a>），输入一次服务器地址即可；它的<b>扫描</b>（Scan）按钮可以读取笼卡。
-          <b>iPhone 和 iPad</b>：用 Safari 打开服务器，点<b>分享 → 添加到主屏幕</b>（Share → Add to Home Screen）。
-          它会有自己的图标，像应用一样全屏打开，可以用相机扫描笼卡。</td></tr>
-        <tr><th>混合使用</th><td>先在自己的笔记本电脑上用桌面版。等实验室其他人加入时，一步就能<a href="#move">把同一个数据库
-          迁到服务器上</a>，什么都不用重新录入。</td></tr>
-        <tr><th>浏览器</th><td>任何较新版本的 Safari、Chrome、Edge 或 Firefox。浅色和深色模式跟随系统设置。</td></tr>
-      </table>
-    </section>
-
     <!-- ======================================================= choose -->
     <section id="choose">
-      <h2>选择方式</h2>
-      <p>回答三个问题就能定下来：</p>
+      <h2>选择方案</h2>
       <ol class="steps-list">
-        <li><b>只有你自己用？</b>用<a href="#desktop">桌面版</a>（A）就行了。</li>
-        <li><b>所有人都在同一栋楼、同一个网络里？</b>可以用<a href="#lan">实验室网络里的一台电脑</a>（B），
-          或者向 IT 部门申请<a href="#campus">学校的服务器</a>（C）。</li>
-        <li><b>有人在家里、用手机流量，或者分布在不同地点？</b>用<a href="#tailscale">配合 Tailscale
-          的云虚拟机</a>（D）：私密、免费，在哪里都能访问。我们向大多数实验室推荐这种方式。
-          只有当你想要一个不装任何应用也能打开的普通网址时，才用<a href="#domain">自己的
-          域名</a>（E）。</li>
+        <li><b>有几个人用？</b>只有你自己：<a href="#desktop">A</a>。不止一个人：看第 2 题。</li>
+        <li><b>需要在实验室网络以外使用吗？</b>（在家里、用手机流量、在别的院区。连学校 VPN 算在网络以内。）
+          需要：<a href="#tailscale">D</a>；如果有人装不了 Tailscale 应用，选 <a href="#domain">E</a>。不需要：看第 3 题。</li>
+        <li><b>学校 IT 部门能给你一台服务器吗？</b>能：<a href="#campus">C</a>。不能：<a href="#lan">B</a>。</li>
       </ol>
-      <div class="note"><b>让桌面版替你完成。</b>在桌面版里，<b>设置 → 搭建实验室服务器</b>（Settings → Set up a lab server）可以替你搭好
-        B、C、D 或 E：它会问服务器放在哪里，在执行任何操作前先告诉你要做什么，然后完成下面的每一步，还可以把桌面版里的记录一起带过去。
-        本页的步骤就是它所做的事，供你手动操作时参考。</div>
-
       <div class="table-scroll">
       <table class="gtable compare">
         <thead>
-          <tr><th></th><th>谁能访问</th><th>费用</th><th>设置时间</th><th>你需要</th></tr>
+          <tr><th>方式</th><th>谁能访问</th><th>每月费用</th><th>设置时间</th></tr>
         </thead>
         <tbody>
-          <tr><th><a href="#desktop">A · 单台电脑</a></th><td>只有这台电脑</td><td><b>免费</b></td><td>2 分钟</td><td>什么都不需要</td></tr>
-          <tr><th><a href="#lan">B · 实验室网络里的一台电脑</a></th><td>实验室或校园网络里（或连着 VPN）的任何人</td><td>有闲置电脑就<b>免费</b>；买一台 Mac mini 或小型主机，一次性花费 $300–600</td><td>1 小时</td><td>一台一直开着的电脑；Docker</td></tr>
-          <tr><th><a href="#campus">C · 学校的服务器</a></th><td>校园网络和 VPN</td><td>通常免费；有些 IT 部门会收费</td><td>取决于 IT 部门</td><td>向 IT 部门提一个申请</td></tr>
-          <tr class="rec"><th><a href="#tailscale">D · 云虚拟机 + Tailscale</a> <span class="pill">推荐</span></th><td>你的实验室，在哪里都能访问，其他人都不能</td><td><b>免费</b>（Oracle Cloud 的 Always Free 虚拟机 + Tailscale 免费套餐），付费虚拟机大约每月 $5–7</td><td>1 小时</td><td>一个云服务账号；每台设备装上 Tailscale</td></tr>
-          <tr><th><a href="#domain">E · 云虚拟机 + 自己的域名</a></th><td>任何知道网址的人（仍然需要账号才能登录）</td><td>虚拟机同 D，另加一个域名，每年大约 $10–15</td><td>1–2 小时</td><td>一个域名</td></tr>
+          <tr><th><a href="#desktop">A · 单台电脑</a></th><td>只有这台电脑</td><td>$0</td><td>2 分钟</td></tr>
+          <tr><th><a href="#lan">B · 实验室里的 Linux 电脑</a></th><td>实验室或校园网络，以及它的 VPN</td><td>有闲置电脑就是 $0（新买一台小主机，一次性 $300–600）</td><td>1 小时</td></tr>
+          <tr><th><a href="#campus">C · 学校的服务器</a></th><td>校园网络和 VPN</td><td>通常 $0；有些 IT 部门收费</td><td>取决于 IT 部门，之后 30 分钟</td></tr>
+          <tr class="rec"><th><a href="#tailscale">D · 云服务器 + Tailscale</a> <span class="pill">推荐</span></th><td>你的实验室，在哪里都能访问；其他人都不能</td><td>$0（Oracle Cloud Always Free + Tailscale 免费套餐），付费服务器大约 $5–7</td><td>1 小时</td></tr>
+          <tr><th><a href="#domain">E · 云服务器 + 自己的域名</a></th><td>任何知道网址的人（仍需账号才能登录）</td><td>同 D，另加域名大约 $1（每年 $10–15）</td><td>1–2 小时</td></tr>
         </tbody>
       </table>
       </div>
-      <p class="fine-left">价格是这些服务在 2026 年 9 月的收费，注册前请再核实。
-        所有服务器方式（B–E）都包含每晚备份、每周恢复测试和 HTTPS。</p>
-
-      <div class="note"><b>每台服务器都需要什么。</b>一台至少有 2 个 CPU 核心、2 GB 内存和 20 GB 硬盘的机器
-        （小实验室实际用到的远少于此），运行 Linux 或 macOS，并装有 <b>Docker</b>。BioManager 以四个小容器运行：
-        应用本身、PostgreSQL 数据库、负责 HTTPS 的 Caddy，以及备份服务。这些都在
-        <a href="https://github.com/gaspolymerase/biomanager/releases/latest">最新版本</a>里：<b>服务器
-        安装包</b>是一个小的下载包，包含运行所需的一切；应用本身是一个适用于 Intel 或 ARM 机器的文件，
-        由安装包里的 <code>host/load-image.sh</code> 替你下载。不需要注册账号，也不需要镜像仓库。</div>
+      <p class="fine-left">价格是这些服务在 2026 年 9 月的收费，注册前请再核实。所有服务器方式（B–E）都包含每晚备份、
+        每周恢复测试和 HTTPS。</p>
+      <div class="callout note"><b>也可以让桌面版来做</b>在桌面版里，<b>设置 → 搭建实验室服务器</b>可以替你完成 B、C、D 或 E；
+        在 Mac 上，它还能把这台 Mac 设成全实验室用的服务器。每一步执行前都会先给你看，也可以把你的记录一起带过去。</div>
     </section>
 
-    <div class="part"><p class="part-label">第二部分</p><h2>运行方式</h2>
-      <p>五种方式，从单台电脑到全实验室随处可访问的云服务器。先在<a href="#choose">选择方式</a>里选定一种，
-        然后按它的步骤操作。</p></div>
+    <!-- ======================================================= ai -->
+    <section id="ai">
+      <h2>让 AI 助手来设置</h2>
+      <p>能使用终端的 AI 助手（Claude Code、Cursor、Codex 等）可以按
+        <a href="../deploy-with-ai.md"><code>deploy-with-ai.md</code></a>（本页专门写给它的版本）替你完成 B、C、D 或 E。
+        把下面这段话粘贴给你的助手：</p>
+      <div class="prompt" id="ai-prompt">请阅读 https://biomanager.org/deploy-with-ai.md 并按照它为我的实验室搭建一台 BioManager 服务器。先问我其中列出的问题，推荐一种方案，在创建任何需要花钱或把服务器开放到互联网的东西之前，先等我同意。不要让我把密码或密钥粘贴到这个对话里：告诉我该在哪里自己输入。</div>
+      <button type="button" class="btn btn-small copy-btn" data-copy="ai-prompt">复制提示词</button>
+      <p>注册账号、批准登录、输入每一个密码，仍然由你自己来做；指南会让助手在这些地方停下来问你。</p>
+    </section>
+
+    <div class="part"><p class="part-label">第二部分</p><h2>部署方式</h2></div>
 
     <!-- ======================================================= A -->
     <section id="desktop">
       <h2>A · 单台电脑：桌面版</h2>
-      <p class="opt-meta">免费 · 2 分钟 · 只属于这台电脑</p>
-      <ol class="steps-list">
-        <li>为你的电脑<a href="download.html">下载</a> BioManager：macOS（Apple 芯片或 Intel）、Windows 或 Linux。</li>
-        <li><b>Mac：</b>解压后把 <b>BioManager</b> 拖到“应用程序”文件夹，第一次打开时<b>右键点按 → 打开 → 打开</b>（right-click → Open → Open）。
-          <b>Windows：</b>解压 zip，打开 <b>BioManager.exe</b>，出现警告时选择<b>更多信息 → 仍要运行</b>（More info → Run anyway）。
-          <b>Linux：</b>给 AppImage 加上可执行权限，然后打开。</li>
-        <li>创建你的账号，回答设置问题。详见<a href="guide.html#first-run">用户指南</a>。</li>
+      <div class="badges"><span class="badge who">一个人用</span><span class="badge">$0</span><span class="badge">2 分钟</span></div>
+      <h3>你需要</h3>
+      <ul class="need">
+        <li>一台 Mac（Apple 芯片或 Intel）、Windows 电脑或 Linux 电脑（x86-64）。</li>
+        <li>费用：每月 $0。</li>
+        <li>时间：2 分钟。</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>在<a href="download.html">下载</a>页面下载适合你电脑的文件。</p>
+          <p class="see"><b>你应该看到：</b>“下载”文件夹里有 <code>BioManager-macOS-AppleSilicon.zip</code>、
+            <code>BioManager-macOS-Intel.zip</code>、<code>BioManager-Windows.zip</code> 或
+            <code>BioManager-Linux.AppImage</code>。</p>
+          <p class="ifnot"><b>如果不是：</b>Mac 上，<b>苹果菜单 → 关于本机</b>会显示你的芯片类型。</p>
+        </li>
+        <li>
+          <p>打开它。</p>
+          <p><b>Mac：</b>解压，把 <b>BioManager</b> 拖进“应用程序”，然后右键点按它 → <b>打开</b> → <b>打开</b>。
+            <b>Windows：</b>解压 zip，打开 <b>BioManager.exe</b>，出现警告时选<b>更多信息 → 仍要运行</b>。
+            <b>Linux：</b></p>
+          <div class="cmd"><pre id="a-linux">cd ~/Downloads &amp;&amp; chmod +x BioManager-Linux.AppImage &amp;&amp; ./BioManager-Linux.AppImage</pre><button type="button" class="copy-btn" data-copy="a-linux">复制</button></div>
+          <p class="see"><b>你应该看到：</b>BioManager 窗口打开，请你创建账号。</p>
+          <p class="ifnot"><b>如果不是：</b>Mac 只给出<b>移到废纸篓</b>：打开<b>系统设置 → 隐私与安全性 → 仍要打开</b>。
+            Linux 上 AppImage 打不开，是缺少 FUSE：安装 <code>libfuse2</code>。</p>
+        </li>
+        <li>
+          <p>创建你的账号，回答设置问题（<a href="guide/install.html#first-run">用户指南</a>）。</p>
+          <p class="see"><b>你应该看到：</b>BioManager 的首页，上面是你勾选的数据库。</p>
+        </li>
       </ol>
-      <p>你的数据存放在应用之外（Mac 上是 <code>~/Library/Application Support/Biomanager/</code>，
-        Windows 上是 <code>%APPDATA%\Biomanager\</code>，Linux 上是 <code>~/.local/share/Biomanager/</code>），所以更新
-        永远不会动到它。请用 Time Machine 或“文件历史记录”备份这个文件夹，并且千万不要把它放在 Dropbox、
-        OneDrive、Google Drive 或 iCloud Drive 里：同步会损坏数据库。</p>
-      <p>同一网络里的几个人不用服务器也能共用一台电脑上的实验室：<b>设置 → 设备 → 在网络上共享这个实验室</b>
-        （Settings → Devices → Share this lab on the network）会把这台电脑设为实验室的主副本，其他人用它显示的地址打开。
-        这台电脑必须一直开着，不会像服务器那样每晚备份，而且连接没有加密：在你信任的实验室网络里没问题，
-        要求更高就用服务器（<a href="guide.html#devices">设备</a>）。</p>
+      <p class="done-when"><b>完成标志：</b>BioManager 打开在首页，并且你已登录。</p>
+      <div class="callout warn"><b>千万不要把数据文件夹放进 Dropbox、OneDrive、Google Drive 或 iCloud Drive</b>同步会损坏数据库。
+        数据在 <code>~/Library/Application Support/Biomanager/</code>（Mac）、<code>%APPDATA%\Biomanager\</code>（Windows）
+        或 <code>~/.local/share/Biomanager/</code>（Linux）：用 Time Machine 或“文件历史记录”备份这个文件夹。</div>
+      <p>同一个可信网络里的几个人，不用服务器也能共用这台电脑上的实验室：<b>设置 → 设备 → 在网络上共享这个实验室</b>。
+        它没有每晚备份，连接也不加密（<a href="guide/your-data.html#devices">设备</a>）。</p>
     </section>
 
     <!-- ======================================================= B -->
     <section id="lan">
-      <h2>B · 实验室网络里的一台电脑</h2>
-      <p class="opt-meta">有闲置电脑就免费 · 1 小时 · 在实验室或校园网络内访问</p>
-      <p>任何一直开着的电脑都可以当服务器：一台 Linux 电脑、一台旧台式机，或者一台 Mac mini。实验室成员
-        用类似 <code>https://192.168.1.50</code> 的地址打开它。除非学校的 VPN 能把人接入这个网络，
-        否则从网络外面访问不到它。</p>
-      <ol class="steps-list">
-        <li><b>给这台电脑一个固定地址。</b>向 IT 部门申请一个固定 IP 地址或 DNS 名称（例如
-          <code>biomanager.bio.youruni.edu</code>），让地址不会变。关闭睡眠。</li>
-        <li><b>安装 Docker。</b>Linux：运行 <code>curl -fsSL https://get.docker.com | sudo sh</code>，然后运行
-          <code>sudo usermod -aG docker $USER</code>，再重新登录。Mac：安装
-          <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a>（教育用途和小型
-          组织免费）或 <a href="https://orbstack.dev">OrbStack</a>，并设为登录时启动。</li>
-        <li><b>把服务器安装包放到</b> <code>/opt/biomanager</code>：
-<pre><code>sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
+      <h2>B · 实验室里的一台 Linux 电脑</h2>
+      <div class="badges"><span class="badge who">实验室局域网</span><span class="badge">有闲置电脑就是 $0</span><span class="badge">1 小时</span></div>
+      <h3>你需要</h3>
+      <ul class="need">
+        <li>一台一直开着的 Linux 电脑（Ubuntu 24.04，或其他带 systemd 的 Linux），x86-64 或 ARM，至少 2 个 CPU 核心、
+          2 GB 内存、20 GB 空闲硬盘。如果是 Mac，请用桌面版：<b>设置 → 搭建实验室服务器 → 这台电脑，供全实验室使用</b>。</li>
+        <li>这台电脑上一个能用 <code>sudo</code> 的账号。</li>
+        <li>IT 部门给它的固定 IP 地址或 DNS 名称。</li>
+        <li>费用：每月 $0。</li>
+        <li>时间：大约一小时。</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>向 IT 部门申请这台电脑的固定 IP 地址或 DNS 名称，并关闭睡眠（Ubuntu：<b>设置 → 电源 → 自动挂起 → 关闭</b>）。
+            然后查看它的地址：</p>
+          <div class="cmd"><pre id="b-address">hostname -I</pre><button type="button" class="copy-btn" data-copy="b-address">复制</button></div>
+          <p class="see"><b>你应该看到：</b>列出的地址里有 IT 部门给你的那个 IP。</p>
+          <p class="ifnot"><b>如果不是：</b>重启后地址会变：请 IT 部门为这台电脑做 DHCP 地址保留。</p>
+        </li>
+        <li>
+          <p>安装 Docker。</p>
+          <div class="cmd"><pre id="b-docker">curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER</pre><button type="button" class="copy-btn" data-copy="b-docker">复制</button></div>
+          <p class="see"><b>你应该看到：</b>Docker 安装程序运行结束，没有报错。</p>
+          <p class="ifnot"><b>如果不是：</b>出现 <code>sudo: a password is required</code> 或 <code>not in the sudoers file</code>：
+            换一个能用 <code>sudo</code> 的账号，或者找 IT 部门。</p>
+        </li>
+        <li>
+          <p>退出登录，重新登录，然后检查 Docker。</p>
+          <div class="cmd"><pre id="b-compose">docker compose version</pre><button type="button" class="copy-btn" data-copy="b-compose">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Docker Compose version v…</code></p>
+          <p class="ifnot"><b>如果不是：</b>出现 <code>permission denied while trying to connect to the Docker daemon socket</code>：
+            第 2 步之后你还没有重新登录。退出再登录（或重启）。</p>
+        </li>
+        <li>
+          <p>下载 BioManager。</p>
+          <div class="cmd"><pre id="b-bundle">sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
 curl -fsSL -o /tmp/biomanager-server.tar.gz \
   https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
-cd /opt/biomanager/Biomanager/deploy
-host/load-image.sh                  # downloads the app for this machine (Intel or ARM)
-cp .env.example .env &amp;&amp; chmod 600 .env</code></pre></li>
-        <li><b>填写 <code>.env</code></b>，用文本编辑器打开（<code>nano .env</code>）：
-<pre><code>DOMAIN=192.168.1.50            # or the DNS name IT gave you
-TLS=internal                    # BioManager makes its own certificate
-POSTGRES_PASSWORD=...           # paste the output of: openssl rand -hex 24
-TZ=America/New_York             # your time zone
-BACKUP_DIR=/opt/biomanager/backups   # better: a folder on a second disk</code></pre>
-          如果 IT 部门为这个名称提供了证书，就改用 <code>TLS=files</code>，把证书放在
-          <code>certs/server.crt</code> 和 <code>certs/server.key</code>：这样就可以跳过第 7 步。</li>
-        <li><b>启动：</b>
-<pre><code>docker compose up -d
-docker compose logs app | grep "setup code"</code></pre></li>
-        <li><b>创建管理员账号。</b>在服务器本机上打开 <code>https://DOMAIN/register</code>，输入上一步得到的
-          设置码（setup code）。第一个账号就是实验室的管理员。</li>
-        <li><b>在每台设备上信任它的证书，只需一次。</b>先导出证书：
-          <code>docker compose exec caddy cat /data/caddy/pki/authorities/local/root.crt &gt; biomanager-root.crt</code>
-          然后安装这个文件：
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="b-bundle">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Downloading BioManager &lt;version&gt; for amd64…</code>（或
+            <code>arm64</code>），然后是 <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> 和
+            <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>No BioManager image for …</code>：BioManager 只支持 x86-64 和 ARM64。
+            <code>Could not download</code>：这台电脑连不上 github.com；问问 IT 部门是否要设代理，然后重新运行最后一行。</p>
+        </li>
+        <li>
+          <p>写入不需要你选择的设置：数据库密码、证书类型和备份文件夹。</p>
+          <div class="cmd"><pre id="b-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=internal|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="b-env">复制</button></div>
+          <p class="see"><b>你应该看到：</b>没有任何输出。</p>
+          <p class="ifnot"><b>如果不是：</b><code>cannot stat '.env.example'</code>：第 4 步没有解压成功。重做第 4 步。</p>
+        </li>
+        <li>
+          <p>填入你的地址和时区。打开设置文件：</p>
+          <div class="cmd"><pre id="b-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="b-nano">复制</button></div>
+          <p>把这两行改成下面这样，按 <kbd>Ctrl</kbd>+<kbd>O</kbd>、<kbd>Enter</kbd> 保存，按 <kbd>Ctrl</kbd>+<kbd>X</kbd> 退出：</p>
+          <div class="cmd"><pre id="b-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="b-lines">复制</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>：第 1 步的固定 IP 地址或 DNS 名称，不带 <code>https://</code>。
+            <code>&lt;your-time-zone&gt;</code>：例如 <code>Asia/Shanghai</code> 或 <code>Europe/Berlin</code>；
+            <code>timedatectl</code> 会显示这台电脑的时区。如果有第二块硬盘，也把 <code>BACKUP_DIR</code> 改成那块硬盘上的文件夹。</p>
+          <p class="see"><b>你应该看到：</b><code>DOMAIN=</code> 在文件开头附近，<code>TZ=</code> 在中间。</p>
+          <p class="ifnot"><b>如果不是：</b><code>nano: command not found</code>：运行 <code>sudo apt-get install nano</code>。</p>
+        </li>
+        <li>
+          <p>检查设置。</p>
+          <div class="cmd"><pre id="b-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="b-check">复制</button></div>
+          <p class="see"><b>你应该看到：</b>你的四行设置，其中 <code>TLS=internal</code>，然后是 <code>settings ok</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>set POSTGRES_PASSWORD in .env</code>：重做第 5 步。仍是
+            <code>DOMAIN=biomanager.example.edu</code>：修改没有保存，重做第 6 步。</p>
+        </li>
+        <li>
+          <p>启动 BioManager。</p>
+          <div class="cmd"><pre id="b-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="b-up">复制</button></div>
+          <p class="see"><b>你应该看到：</b>一两分钟后，<code>biomanager-db-1</code>、<code>biomanager-app-1</code>、
+            <code>biomanager-caddy-1</code> 和 <code>biomanager-backup-1</code> 都显示 <code>Started</code> 或 <code>Healthy</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>pull access denied for ghcr.io/gaspolymerase/biomanager</code>：先运行
+            <code>host/load-image.sh</code>，再运行这一步。<code>container biomanager-app-1 is unhealthy</code>：
+            <code>docker compose logs --tail 100 app</code> 会说明原因。</p>
+        </li>
+        <li>
+          <p>检查所有服务都在运行。</p>
+          <div class="cmd"><pre id="b-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="b-ps">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>db</code> 和 <code>app</code> 显示 <code>(healthy)</code>，<code>caddy</code> 显示
+            <code>Up</code>，<code>backup</code> 显示 <code>(healthy)</code>；它做第一次备份的几分钟里会显示 <code>(health: starting)</code>。</p>
+          <p class="ifnot"><b>如果不是：</b>少了某个服务，或显示 <code>Restarting</code>：运行 <code>docker compose logs --tail 100 &lt;service&gt;</code>。</p>
+        </li>
+        <li>
+          <p>取得创建第一个账号用的设置码。</p>
+          <div class="cmd"><pre id="b-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="b-code">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f (also saved in /data/setup-code).</code></p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：应用还在启动。等一分钟再试，或运行
+            <code>docker compose exec app cat /data/setup-code</code>。</p>
+        </li>
+        <li>
+          <p>导出 BioManager 的证书，给实验室的设备信任。</p>
+          <div class="cmd"><pre id="b-cert">docker compose exec caddy cat /data/caddy/pki/authorities/local/root.crt &gt; biomanager-root.crt
+head -1 biomanager-root.crt</pre><button type="button" class="copy-btn" data-copy="b-cert">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>-----BEGIN CERTIFICATE-----</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>No such file or directory</code>：Caddy 还在启动。等十秒再试。</p>
+        </li>
+        <li>
+          <p>在每台要打开 BioManager 的电脑和手机上做一次：把 <code>biomanager-root.crt</code> 传过去（邮件、U 盘、隔空投送），
+            然后安装它。</p>
           <ul>
-            <li><b>Mac：</b>双击它，然后在“钥匙串访问”里打开它，把<b>信任 → 始终信任</b>（Trust → Always Trust）选上。</li>
-            <li><b>Windows：</b>双击 → <b>安装证书 → 本地计算机 → 受信任的根证书颁发机构</b>（Install Certificate → Local Machine → Trusted Root Certification Authorities）。</li>
-            <li><b>iPhone/iPad：</b>用隔空投送或邮件发过去，在<b>设置 → 通用 → VPN与设备管理</b>（Settings → General → VPN &amp; Device
-              Management）里安装描述文件，然后在<b>设置 → 通用 → 关于本机 → 证书信任设置</b>（Settings → General → About → Certificate Trust Settings）里打开它。</li>
-            <li><b>Android：</b><b>设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书</b>（Settings → Security → Encryption &amp; credentials → Install a certificate → CA certificate）。</li>
-          </ul></li>
-        <li><b>让大家能连进来：</b>在这台电脑的防火墙里允许 443 端口的入站连接，然后把地址发给实验室成员。
-          在 Linux 上，还要安装看门狗和每周自动更新：运行 <code>sudo host/install.sh</code>（在 <code>deploy</code> 文件夹里）。</li>
+            <li><b>Mac：</b>双击它；在“钥匙串访问”里打开它，把<b>信任 → 使用此证书时 → 始终信任</b>选上。</li>
+            <li><b>Windows：</b>双击它 → <b>安装证书 → 本地计算机 → 将所有的证书都放入下列存储 → 受信任的根证书颁发机构</b>。</li>
+            <li><b>iPhone、iPad：</b>打开它，在<b>设置 → 通用 → VPN与设备管理</b>里安装描述文件，然后在
+              <b>设置 → 通用 → 关于本机 → 证书信任设置</b>里打开它。</li>
+            <li><b>Android：</b><b>设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书</b>。</li>
+          </ul>
+          <p class="see"><b>你应该看到：</b>在这台设备上打开 <code>https://&lt;your-domain&gt;</code>，没有证书警告。</p>
+          <p class="ifnot"><b>如果不是：</b>iPhone 上<b>证书信任设置</b>里的开关还没打开。Firefox 用自己的证书列表：
+            <b>设置 → 隐私与安全 → 查看证书 → 证书颁发机构 → 导入</b>。</p>
+        </li>
+        <li>
+          <p>在其中一台设备上打开 <code>https://&lt;your-domain&gt;/register</code>，填写名称、用户名、密码和第 10 步的
+            <b>设置码</b>，然后点<b>创建账号</b>。第一个账号就是实验室的管理员。</p>
+          <p class="see"><b>你应该看到：</b>你已登录，实验室设置问卷打开了。</p>
+          <p class="ifnot"><b>如果不是：</b>提示设置码不对：从第 10 步重新复制，三组字符和中间的短横线都要。</p>
+        </li>
+        <li>
+          <p>打开告警、看门狗和每周自动更新。</p>
+          <div class="cmd"><pre id="b-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="b-install">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Installed. Alerts go to ntfy topic: biomanager-…</code>，以及两个定时器
+            <code>biomanager-watchdog.timer</code> 和 <code>biomanager-maintenance.timer</code>。在手机上的
+            <a href="https://ntfy.sh">ntfy</a> 应用里订阅这个主题。</p>
+          <p class="ifnot"><b>如果不是：</b><code>command not found</code>：你不在 deploy 文件夹里。先运行
+            <code>cd /opt/biomanager/Biomanager/deploy</code>。</p>
+        </li>
       </ol>
-      <div class="note warn"><b>所有东西都在一台电脑上。</b>把 <code>BACKUP_DIR</code> 放在第二块硬盘上，并且
-        把备份再复制到别的地方，见<a href="#safe">保护数据安全</a>。</div>
+      <p class="done-when"><b>完成标志：</b>在实验室网络里的另一台电脑上，<code>https://&lt;your-domain&gt;/healthz</code>
+        显示 <code>ok</code>，没有证书警告；并且能以管理员身份登录 <code>https://&lt;your-domain&gt;</code>。</p>
+      <div class="callout warn"><b>实验室的数据和备份都在同一台电脑上</b>它的硬盘一坏，两样都没了。把 <code>BACKUP_DIR</code>
+        放到第二块硬盘上，并打开异地备份（见<a href="#after">运行之后</a>）。</div>
     </section>
 
     <!-- ======================================================= C -->
     <section id="campus">
       <h2>C · 学校或院系的服务器</h2>
-      <p class="opt-meta">通常免费 · 难的部分由 IT 部门完成 · 校园网络和 VPN</p>
-      <p>很多大学会在校园网络上给实验室提供虚拟机。把下面这段申请发给 IT 部门：</p>
-      <blockquote class="req">“我们需要一台小型 Linux 虚拟机（Ubuntu 24.04，2 vCPU，4 GB RAM，40 GB 硬盘），装好 Docker，
-        配一个 DNS 名称，例如 <code>biomanager.ourdept.university.edu</code>，以及这个名称的 TLS 证书，并对校园网络和 VPN
-        开放 443 端口。它在 Docker 容器里运行 BioManager，一个实验室数据库。”</blockquote>
-      <p>然后从 B 的第 3 步开始照做，使用 <code>TLS=files</code>，把 IT 部门给的证书放在 <code>certs/</code> 里。
-        实验室的设备上什么都不用装。如果 IT 部门提供虚拟机备份，就用上：多一层保护总是好的。</p>
+      <div class="badges"><span class="badge who">校园网络和 VPN</span><span class="badge">通常 $0</span><span class="badge">等 IT，之后 30 分钟</span></div>
+      <h3>你需要</h3>
+      <ul class="need">
+        <li>IT 部门给的一台 Linux 虚拟机，以及上面一个能用 <code>sudo</code> 的账号（第 1 步一起申请）。</li>
+        <li>IT 部门为它的名称签发的证书：一个证书文件和它的私钥文件。</li>
+        <li>你自己的电脑，连着校园网络或 VPN，能打开终端。</li>
+        <li>费用：通常每月 $0；有些 IT 部门收费。</li>
+        <li>时间：等 IT 部门处理，之后 30 分钟。</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>把这段申请发给 IT 部门（他们多半要英文的话可以直接用）。</p>
+          <div class="cmd"><pre id="c-request">We'd like a small Linux VM (Ubuntu 24.04, 2 vCPU, 4 GB RAM, 40 GB disk) with Docker and its compose plugin, a DNS name such as biomanager.ourdept.example.edu, a TLS certificate for that name, and port 443 open to the campus network and VPN. It runs BioManager, a lab database, in Docker containers. Please give me an account on it that can use sudo.</pre><button type="button" class="copy-btn" data-copy="c-request">复制</button></div>
+          <p class="see"><b>你应该看到：</b>IT 部门回复 DNS 名称、登录方式和证书：一个 <code>.crt</code> 或 <code>.pem</code>
+            文件和它的私钥。</p>
+          <p class="ifnot"><b>如果不是：</b>IT 部门签发不了证书：第 6 步里用 <code>TLS=internal</code> 代替 <code>files</code>，
+            跳过第 5 步，启动后再做 B 的第 11、12 步。</p>
+        </li>
+        <li>
+          <p>在你的电脑上，把 IT 部门给的两个证书文件复制到虚拟机。</p>
+          <div class="cmd"><pre id="c-scp">scp &lt;certificate-file&gt; &lt;key-file&gt; &lt;you&gt;@&lt;your-domain&gt;:</pre><button type="button" class="copy-btn" data-copy="c-scp">复制</button></div>
+          <p class="fine-left"><code>&lt;certificate-file&gt;</code>、<code>&lt;key-file&gt;</code>：IT 部门给的文件（第 5 步只写文件名）。
+            <code>&lt;you&gt;</code>：你在虚拟机上的账号。<code>&lt;your-domain&gt;</code>：虚拟机的 DNS 名称。</p>
+          <p class="see"><b>你应该看到：</b>两个文件都复制到 100%。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Connection timed out</code>：你不在校园网络里。先连上 VPN。</p>
+        </li>
+        <li>
+          <p>登录虚拟机，检查 Docker。</p>
+          <div class="cmd"><pre id="c-ssh">ssh &lt;you&gt;@&lt;your-domain&gt;</pre><button type="button" class="copy-btn" data-copy="c-ssh">复制</button></div>
+          <div class="cmd"><pre id="c-compose">docker compose version</pre><button type="button" class="copy-btn" data-copy="c-compose">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Docker Compose version v…</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>permission denied while trying to connect to the Docker daemon socket</code>：
+            运行 <code>sudo usermod -aG docker $USER</code>，退出再登录。<code>docker: command not found</code>：请 IT 部门安装 Docker。</p>
+        </li>
+        <li>
+          <p>下载 BioManager。</p>
+          <div class="cmd"><pre id="c-bundle">sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
+curl -fsSL -o /tmp/biomanager-server.tar.gz \
+  https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="c-bundle">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> 和
+            <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>Could not download</code>：虚拟机连不上 github.com。问问 IT 部门是否要设代理，
+            然后重新运行最后一行。</p>
+        </li>
+        <li>
+          <p>把证书放到 BioManager 读取的位置。</p>
+          <div class="cmd"><pre id="c-certs">cp ~/&lt;certificate-file&gt; /opt/biomanager/Biomanager/deploy/certs/server.crt
+cp ~/&lt;key-file&gt; /opt/biomanager/Biomanager/deploy/certs/server.key
+ls /opt/biomanager/Biomanager/deploy/certs</pre><button type="button" class="copy-btn" data-copy="c-certs">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>server.crt  server.key</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>No such file</code>：用 <code>ls ~</code> 核对文件名。</p>
+        </li>
+        <li>
+          <p>写入不需要你选择的设置。</p>
+          <div class="cmd"><pre id="c-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=files|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="c-env">复制</button></div>
+          <p class="see"><b>你应该看到：</b>没有任何输出。</p>
+        </li>
+        <li>
+          <p>填入你的地址和时区：打开文件，改这两行，按 <kbd>Ctrl</kbd>+<kbd>O</kbd>、<kbd>Enter</kbd> 保存，
+            按 <kbd>Ctrl</kbd>+<kbd>X</kbd> 退出。</p>
+          <div class="cmd"><pre id="c-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="c-nano">复制</button></div>
+          <div class="cmd"><pre id="c-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="c-lines">复制</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>：IT 部门给的 DNS 名称，不带 <code>https://</code>。
+            <code>&lt;your-time-zone&gt;</code>：例如 <code>Asia/Shanghai</code> 或 <code>Europe/Berlin</code>。</p>
+          <p class="see"><b>你应该看到：</b><code>DOMAIN=</code> 在开头附近，<code>TZ=</code> 在中间。</p>
+        </li>
+        <li>
+          <p>检查设置。</p>
+          <div class="cmd"><pre id="c-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="c-check">复制</button></div>
+          <p class="see"><b>你应该看到：</b>你的四行设置，其中 <code>TLS=files</code>，然后是 <code>settings ok</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>set POSTGRES_PASSWORD in .env</code>：重做第 6 步。仍是
+            <code>DOMAIN=biomanager.example.edu</code>：修改没有保存，重做第 7 步。</p>
+        </li>
+        <li>
+          <p>启动 BioManager。</p>
+          <div class="cmd"><pre id="c-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="c-up">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>biomanager-db-1</code>、<code>biomanager-app-1</code>、
+            <code>biomanager-caddy-1</code> 和 <code>biomanager-backup-1</code> 都显示 <code>Started</code> 或 <code>Healthy</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>pull access denied</code>：先运行 <code>host/load-image.sh</code>，再运行这一步。</p>
+        </li>
+        <li>
+          <p>检查所有服务都在运行。</p>
+          <div class="cmd"><pre id="c-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="c-ps">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>db</code> 和 <code>app</code> 显示 <code>(healthy)</code>，<code>caddy</code> 显示
+            <code>Up</code>，<code>backup</code> 显示 <code>(healthy)</code>，最初几分钟可能是 <code>(health: starting)</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>caddy</code> 不断重启：运行 <code>docker compose logs caddy</code>；通常是私钥和证书
+            不配套，或两个文件放反了。</p>
+        </li>
+        <li>
+          <p>取得创建第一个账号用的设置码。</p>
+          <div class="cmd"><pre id="c-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="c-code">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f …</code></p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：等一分钟再试。</p>
+        </li>
+        <li>
+          <p>在你的电脑上打开 <code>https://&lt;your-domain&gt;/register</code>，填写名称、用户名、密码和<b>设置码</b>，
+            然后点<b>创建账号</b>。第一个账号就是实验室的管理员。</p>
+          <p class="see"><b>你应该看到：</b>你已登录，实验室设置问卷打开了。</p>
+          <p class="ifnot"><b>如果不是：</b>部分设备提示证书警告：向 IT 部门要包含完整证书链的证书，重新放进
+            <code>server.crt</code>，然后运行 <code>docker compose restart caddy</code>。</p>
+        </li>
+        <li>
+          <p>打开告警、看门狗和每周自动更新。</p>
+          <div class="cmd"><pre id="c-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="c-install">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Installed. Alerts go to ntfy topic: biomanager-…</code>。在
+            <a href="https://ntfy.sh">ntfy</a> 应用里订阅它。</p>
+          <p class="ifnot"><b>如果不是：</b><code>command not found</code>：先运行 <code>cd /opt/biomanager/Biomanager/deploy</code>。</p>
+        </li>
+      </ol>
+      <p class="done-when"><b>完成标志：</b>在校园网络或 VPN 里的电脑上，<code>https://&lt;your-domain&gt;/healthz</code>
+        显示 <code>ok</code>，没有证书警告；并且能以管理员身份登录。</p>
     </section>
 
     <!-- ======================================================= D -->
     <section id="tailscale">
-      <h2>D · 配合 Tailscale 的云虚拟机 <span class="pill">推荐</span></h2>
-      <p class="opt-meta">免费 · 大约一小时 · 你的实验室在哪里都能访问，其他人都不能</p>
-      <p>服务器是云上的一台虚拟机。<a href="https://tailscale.com">Tailscale</a> 在你实验室的各台设备之间
-        建立一个私有网络：服务器<b>在互联网上没有任何开放端口</b>，但实验室成员无论连着哪里的 Wi-Fi
-        还是手机信号，都能用一个普通的 HTTPS 地址打开它，比如 <code>https://biomanager.tail1234.ts.net</code>，
-        证书是正规的，不用手动信任任何东西。</p>
-      <table class="gtable">
-        <tr><th>虚拟机</th><td><b>Oracle Cloud Always Free</b>：一台 Ampere A1 虚拟机（最多 4 核、24 GB 内存）和
-          200 GB 硬盘，永久免费。也可以用任何 Ubuntu 24.04 虚拟机：Hetzner（大约 €4/月）、DigitalOcean 或 AWS Lightsail
-          （大约 $5–7/月）。</td></tr>
-        <tr><th>Tailscale</th><td>小团队用 Personal 套餐免费；人数再多，可以把服务器单独共享给每位
-          成员自己的免费 Tailscale 账号，同样不花钱。</td></tr>
-        <tr><th>每位成员</th><td>安装一次 Tailscale（Mac、Windows、Linux、iPhone、Android）并登录。</td></tr>
-      </table>
-
-      <h3>1. 账号</h3>
-      <ol class="steps-list">
-        <li>注册一个免费的 <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> 账号（会要求绑定银行卡
-          来验证身份；Always Free 资源永远不会收费）。选一个离你近的主区域（home region）：选定后不能更改。</li>
-        <li>注册一个免费的 <a href="https://login.tailscale.com/start">Tailscale</a> 账号，可以用实验室或个人的 Google、
-          Microsoft 或 GitHub 账号登录。</li>
-        <li>在你自己的电脑上，下载<a href="https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz">服务器
-          安装包</a>，解压后用文本编辑器打开 <code>Biomanager/deploy/cloud-init.yaml</code>。下一步要把它粘贴进去。</li>
-      </ol>
-
-      <h3>2. 创建虚拟机</h3>
-      <ol class="steps-list">
-        <li>在 Oracle Cloud 里：<b>Compute → Instances → Create instance</b>。</li>
-        <li><b>Image（镜像）：</b>Canonical Ubuntu 24.04。<b>Shape（规格）：</b>Ampere <b>VM.Standard.A1.Flex</b>，2 OCPU、12 GB
-          （或 4 OCPU、24 GB）。如果 Oracle 提示容量不足，稍后再试，或者换一个可用性域（availability domain）。</li>
-        <li><b>Networking（网络）：</b>新建一个公共子网，分配一个公网 IPv4 地址（只在第一次 SSH 登录时需要）。</li>
-        <li><b>SSH keys（SSH 密钥）：</b>上传你的公钥（<code>ssh-keygen -t ed25519</code> 可以生成一对；<code>.pub</code> 文件就是公钥）。</li>
-        <li><b>Advanced options → Management → Initialization script：</b>粘贴 <code>cloud-init.yaml</code> 的内容。
-          它会在第一次启动时安装 Docker、Tailscale 和安全更新。</li>
-        <li>创建后等几分钟。也可以在 <b>Billing</b> 里把账号升级为 <b>Pay As You Go</b>（按量付费）：Always Free
-          资源仍然免费，而且 Oracle 从此不会回收闲置的免费虚拟机。</li>
-      </ol>
-
-      <h3>3. 接入 Tailscale</h3>
-<pre><code>ssh ubuntu@&lt;the VM's public IP&gt;
-ls /var/lib/biomanager-ready          # exists once first-boot set-up has finished
-sudo tailscale up --ssh --hostname=biomanager</code></pre>
-      <p>打开它输出的链接并登录。然后在 <a href="https://login.tailscale.com/admin">Tailscale 管理控制台</a>里：</p>
-      <ul>
-        <li><b>Machines → biomanager → ⋯ → Disable key expiry</b>（关闭密钥过期，否则 180 天后它会掉线）；</li>
-        <li><b>DNS：</b>打开 <b>MagicDNS</b> 和 <b>HTTPS Certificates</b>。记下你的 tailnet 名称，类似 <code>tail1234.ts.net</code>。</li>
+      <h2>D · 配合 Tailscale 的云服务器 <span class="pill">推荐</span></h2>
+      <div class="badges"><span class="badge who">实验室成员，在哪里都能用</span><span class="badge">$0</span><span class="badge">1 小时</span></div>
+      <p>服务器在互联网上没有任何开放端口。实验室成员打开 Tailscale 应用，就能在任何网络下用
+        <code>https://biomanager.tail1234.ts.net</code>（换成你自己的 tailnet 名称）打开它。</p>
+      <h3>你需要</h3>
+      <ul class="need">
+        <li>一个 <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> 账号。注册时会要求绑定银行卡验证身份；
+          Always Free 资源永远不收费。主区域（home region）要选好：选定后不能更改。（也可以用任何服务商的、带 cloud-init
+          输入框的 Ubuntu 24.04 云服务器：Hetzner 大约每月 €4，DigitalOcean 或 AWS Lightsail 大约每月 $5–7。）</li>
+        <li>一个 <a href="https://login.tailscale.com/start">Tailscale</a> 账号（最多 6 个用户免费；其他人可以用自己的
+          免费账号，你把服务器共享给他们）。</li>
+        <li>你自己的电脑，能打开终端，并装好 <a href="https://tailscale.com/download">Tailscale 应用</a>。</li>
+        <li>费用：用 Oracle Always Free 每月 $0。</li>
+        <li>时间：大约一小时。</li>
       </ul>
-      <p>从现在起，通过 Tailscale 用 <code>ssh ubuntu@biomanager</code> 连接。</p>
-
-      <h3>4. 启动 BioManager</h3>
-<pre><code>curl -fsSL -o /tmp/biomanager-server.tar.gz \
+      <ol class="recipe">
+        <li>
+          <p>在你的电脑上生成一个 SSH 密钥。每个问题都直接按 <kbd>Enter</kbd>。</p>
+          <div class="cmd"><pre id="d-key">ssh-keygen -t ed25519</pre><button type="button" class="copy-btn" data-copy="d-key">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Your public key has been saved in …/.ssh/id_ed25519.pub</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>… already exists. Overwrite (y/n)?</code>：输入 <kbd>n</kbd>，用你已有的密钥。</p>
+        </li>
+        <li>
+          <p>在你的电脑上下载服务器安装包，显示其中的首次启动脚本。</p>
+          <div class="cmd"><pre id="d-download">curl -fsSL -o biomanager-server.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf biomanager-server.tar.gz
+cat Biomanager/deploy/cloud-init.yaml</pre><button type="button" class="copy-btn" data-copy="d-download">复制</button></div>
+          <p class="see"><b>你应该看到：</b>一个以 <code>#cloud-config</code> 开头的文件。第 3 步要把它整个粘贴进去。</p>
+          <p class="ifnot"><b>如果不是：</b>Windows PowerShell 提示找不到参数：把 <code>curl</code> 换成 <code>curl.exe</code>。</p>
+        </li>
+        <li>
+          <p>创建服务器：Oracle Cloud 控制台 → <b>☰ → Compute → Instances → Create instance</b>，设置：</p>
+          <ul>
+            <li><b>Image：</b>Change image → Ubuntu → <b>Canonical Ubuntu 24.04</b>。</li>
+            <li><b>Shape：</b>Change shape → Ampere → <b>VM.Standard.A1.Flex</b>，2 OCPU、12 GB 内存。</li>
+            <li><b>Networking：</b>新建虚拟云网络和公共子网；分配公网 IPv4 地址。</li>
+            <li><b>Add SSH keys：</b>Upload public key files (.pub) → 第 1 步的 <code>id_ed25519.pub</code>。</li>
+            <li><b>Advanced options → Management → Initialization script → Paste cloud-init script：</b>第 2 步的
+              <code>cloud-init.yaml</code> 全部内容。</li>
+          </ul>
+          <p>然后点 <b>Create</b>。</p>
+          <p class="see"><b>你应该看到：</b>几分钟内实例变成 <b>Running</b>，页面上有 <b>Public IP address</b>。记下它：
+            下面的 <code>&lt;public-ip&gt;</code> 就是它。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Out of capacity for shape VM.Standard.A1.Flex</code>：在 <b>Placement</b>
+            里换一个可用性域，或者稍后再试。</p>
+        </li>
+        <li>
+          <p>在你的电脑上登录服务器。问到指纹时输入 <code>yes</code>。</p>
+          <div class="cmd"><pre id="d-ssh">ssh ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="d-ssh">复制</button></div>
+          <p class="see"><b>你应该看到：</b>以 <code>ubuntu@</code> 开头的命令提示符。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Connection timed out</code>：服务器还在启动，两分钟后再试。
+            <code>Permission denied (publickey)</code>：运行 <code>ssh -i ~/.ssh/id_ed25519 ubuntu@&lt;public-ip&gt;</code>。</p>
+        </li>
+        <li>
+          <p>等首次启动脚本运行完（服务器启动后 5–10 分钟）。</p>
+          <div class="cmd"><pre id="d-ready">test -f /var/lib/biomanager-ready &amp;&amp; echo ready</pre><button type="button" class="copy-btn" data-copy="d-ready">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>ready</code></p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：还在运行。<code>sudo tail -f /var/log/cloud-init-output.log</code>
+            可以看进度（按 <kbd>Ctrl</kbd>+<kbd>C</kbd> 停止查看）。如果这个日志里始终没有 Docker，说明第 3 步没有粘贴脚本：
+            删除（terminate）这台服务器，重新创建。</p>
+        </li>
+        <li>
+          <p>把服务器加入你的 Tailscale 网络。</p>
+          <div class="cmd"><pre id="d-tailscale">sudo tailscale up --hostname=biomanager</pre><button type="button" class="copy-btn" data-copy="d-tailscale">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>To authenticate, visit: https://login.tailscale.com/a/…</code>。在你的电脑上
+            打开这个链接并登录；终端随后显示 <code>Success.</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>tailscale: command not found</code>：第 5 步还没完成。</p>
+        </li>
+        <li>
+          <p>在 <a href="https://login.tailscale.com/admin">Tailscale 管理控制台</a>里：<b>Machines → biomanager → ⋯ →
+            Disable key expiry</b>（关闭密钥过期）。</p>
+          <p class="see"><b>你应该看到：</b>biomanager 这一行显示 <b>Expiry disabled</b>。</p>
+          <p class="ifnot"><b>如果不是：</b>它叫 <code>biomanager-1</code>：有一台旧机器占用了这个名字。删除旧的
+            （<b>⋯ → Remove</b>），把这台改名为 <code>biomanager</code>（<b>⋯ → Edit machine name</b>）。</p>
+        </li>
+        <li>
+          <p>在管理控制台的 <b>DNS</b> 页面：打开 <b>MagicDNS</b>，再在 <b>HTTPS Certificates</b> 下点 <b>Enable HTTPS</b>。
+            记下页面上的 <b>Tailnet name</b>，类似 <code>tail1234.ts.net</code>。</p>
+          <p class="see"><b>你应该看到：</b>两项都已打开。服务器的地址就是 <code>biomanager.</code> 加上你的 tailnet 名称：
+            下面的 <code>&lt;your-domain&gt;</code> 就是它。</p>
+          <p class="ifnot"><b>如果不是：</b>没有 HTTPS 选项：先打开 MagicDNS。</p>
+        </li>
+        <li>
+          <p>在你的电脑上打开 Tailscale 应用，用同一个账号登录。在服务器窗口里输入 <code>exit</code>，再通过 Tailscale 重新登录。</p>
+          <div class="cmd"><pre id="d-ssh-ts">ssh ubuntu@biomanager</pre><button type="button" class="copy-btn" data-copy="d-ssh-ts">复制</button></div>
+          <p class="see"><b>你应该看到：</b>又出现 <code>ubuntu@</code> 提示符。之后都用这个连接。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Could not resolve hostname biomanager</code>：你电脑上的 Tailscale 没打开、
+            登录的是别的账号，或者 MagicDNS 没打开（第 8 步）。</p>
+        </li>
+        <li>
+          <p>下载 BioManager。</p>
+          <div class="cmd"><pre id="d-bundle">curl -fsSL -o /tmp/biomanager-server.tar.gz \
   https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
-cd /opt/biomanager/Biomanager/deploy
-host/load-image.sh                     # downloads the app for this machine (Intel or ARM)
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="d-bundle">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Downloading BioManager &lt;version&gt; for arm64…</code>，然后是
+            <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> 和 <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>permission denied while trying to connect to the Docker daemon socket</code>：
+            输入 <code>exit</code>，再 <code>ssh ubuntu@biomanager</code>，重做这一步。<code>Cannot mkdir: Permission denied</code>：
+            运行 <code>sudo chown ubuntu /opt/biomanager</code>，重做这一步。</p>
+        </li>
+        <li>
+          <p>写入不需要你选择的设置：数据库密码、Tailscale 证书和备份文件夹。</p>
+          <div class="cmd"><pre id="d-env">cd /opt/biomanager/Biomanager/deploy
 cp .env.example .env &amp;&amp; chmod 600 .env
-nano .env</code></pre>
-<pre><code>DOMAIN=biomanager.tail1234.ts.net     # biomanager + your tailnet name
-TLS=tailscale
-COMPOSE_FILE=compose.yaml:compose.tailscale.yaml
-POSTGRES_PASSWORD=...                  # openssl rand -hex 24
-TZ=America/New_York
-BACKUP_DIR=/opt/biomanager/backups</code></pre>
-<pre><code>docker compose up -d
-docker compose ps                      # wait until app and backup say "healthy"
-docker compose logs app | grep "setup code"
-sudo host/install.sh                   # watchdog, weekly updates and phone alerts</code></pre>
-      <p>在一台装了 Tailscale 的设备上打开 <code>https://DOMAIN/register</code>，用设置码创建管理员账号。
-        <code>install.sh</code> 会输出一个 <a href="https://ntfy.sh">ntfy</a> 主题：在 ntfy 应用里订阅它，
-        一旦网站、备份或硬盘需要你处理，就会收到通知。</p>
-
-      <h3>5. 关上门</h3>
-      <p>在 Oracle Cloud 里打开这台虚拟机的子网 → <b>Security list</b>（安全列表），删除 22 端口的入站规则。服务器
-        现在在互联网上没有任何开放端口；SSH 和网站都走 Tailscale。</p>
-
-      <h3>6. 邀请实验室成员</h3>
-      <ol class="steps-list">
-        <li>每位成员安装 Tailscale，然后要么加入你的 tailnet（<b>Users → Invite</b>），要么（不管多少人都更简单）
-          由你把服务器单独共享给他们自己的 Tailscale 账号：<b>Machines → biomanager → Share</b>。</li>
-        <li>他们打开地址，选择<b>创建账号</b>（Create account），你在<b>管理用户</b>（Manage users）里批准。</li>
-        <li>手机：先打开 Tailscale 应用，然后用 BioManager Android 应用；iPhone 上用 Safari → <b>添加到主屏幕</b>（Add to Home Screen）。</li>
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=tailscale|; s|^#COMPOSE_FILE=|COMPOSE_FILE=|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="d-env">复制</button></div>
+          <p class="see"><b>你应该看到：</b>没有任何输出。</p>
+        </li>
+        <li>
+          <p>填入你的地址和时区：打开文件，改这两行，按 <kbd>Ctrl</kbd>+<kbd>O</kbd>、<kbd>Enter</kbd> 保存，
+            按 <kbd>Ctrl</kbd>+<kbd>X</kbd> 退出。</p>
+          <div class="cmd"><pre id="d-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="d-nano">复制</button></div>
+          <div class="cmd"><pre id="d-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="d-lines">复制</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>：<code>biomanager.</code> 加上第 8 步的 tailnet 名称，例如
+            <code>biomanager.tail1234.ts.net</code>。<code>&lt;your-time-zone&gt;</code>：例如 <code>Asia/Shanghai</code> 或
+            <code>Europe/Berlin</code>。</p>
+          <p class="see"><b>你应该看到：</b><code>DOMAIN=</code> 在开头附近，<code>TZ=</code> 在中间。</p>
+        </li>
+        <li>
+          <p>检查设置。</p>
+          <div class="cmd"><pre id="d-check">grep -E '^(DOMAIN|TLS|COMPOSE_FILE|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="d-check">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>DOMAIN=biomanager.tail1234.ts.net</code>（换成你的 tailnet）、
+            <code>TLS=tailscale</code>、<code>COMPOSE_FILE=compose.yaml:compose.tailscale.yaml</code>、你的 <code>TZ</code>、
+            <code>BACKUP_DIR=/opt/biomanager/backups</code>，然后是 <code>settings ok</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>set POSTGRES_PASSWORD in .env</code> 或没有 <code>COMPOSE_FILE</code> 这一行：
+            重做第 11 步。仍是 <code>DOMAIN=biomanager.example.edu</code>：修改没有保存，重做第 12 步。</p>
+        </li>
+        <li>
+          <p>启动 BioManager。</p>
+          <div class="cmd"><pre id="d-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="d-up">复制</button></div>
+          <p class="see"><b>你应该看到：</b>一两分钟后，<code>biomanager-db-1</code>、<code>biomanager-app-1</code>、
+            <code>biomanager-caddy-1</code> 和 <code>biomanager-backup-1</code> 都显示 <code>Started</code> 或 <code>Healthy</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>pull access denied for ghcr.io/gaspolymerase/biomanager</code>：先运行
+            <code>host/load-image.sh</code>，再运行这一步。<code>container biomanager-app-1 is unhealthy</code>：
+            <code>docker compose logs --tail 100 app</code> 会说明原因。</p>
+        </li>
+        <li>
+          <p>检查所有服务都在运行。</p>
+          <div class="cmd"><pre id="d-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="d-ps">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>db</code> 和 <code>app</code> 显示 <code>(healthy)</code>，<code>caddy</code> 显示
+            <code>Up</code>，<code>backup</code> 显示 <code>(healthy)</code>；它做第一次备份的几分钟里会显示 <code>(health: starting)</code>。</p>
+          <p class="ifnot"><b>如果不是：</b>少了某个服务，或显示 <code>Restarting</code>：运行 <code>docker compose logs --tail 100 &lt;service&gt;</code>。</p>
+        </li>
+        <li>
+          <p>取得创建第一个账号用的设置码。</p>
+          <div class="cmd"><pre id="d-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="d-code">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f (also saved in /data/setup-code).</code></p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：应用还在启动。等一分钟再试。</p>
+        </li>
+        <li>
+          <p>在打开了 Tailscale 的电脑上打开 <code>https://&lt;your-domain&gt;/register</code>，填写名称、用户名、密码和
+            <b>设置码</b>，然后点<b>创建账号</b>。第一个账号就是实验室的管理员。</p>
+          <p class="see"><b>你应该看到：</b>你已登录，实验室设置问卷打开了。</p>
+          <p class="ifnot"><b>如果不是：</b>打不开或提示证书错误：Tailscale 的 HTTPS 没打开（第 8 步），或者缺少
+            <code>COMPOSE_FILE</code> 这一行（第 11 步）。改好后运行 <code>docker compose up -d</code>；仍不行就看
+            <code>docker compose logs caddy</code>。</p>
+        </li>
+        <li>
+          <p>打开告警、看门狗和每周自动更新。</p>
+          <div class="cmd"><pre id="d-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="d-install">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Installed. Alerts go to ntfy topic: biomanager-…</code>，以及两个定时器
+            <code>biomanager-watchdog.timer</code> 和 <code>biomanager-maintenance.timer</code>。在手机上的
+            <a href="https://ntfy.sh">ntfy</a> 应用里订阅这个主题。</p>
+          <p class="ifnot"><b>如果不是：</b><code>command not found</code>：先运行 <code>cd /opt/biomanager/Biomanager/deploy</code>。</p>
+        </li>
+        <li>
+          <p>关闭互联网上的 SSH：Oracle Cloud 控制台 → 这台实例 → <b>Subnet</b>（在 Primary VNIC 下）→
+            <b>Security Lists → Default Security List → Ingress Rules</b>，勾选目标端口为 22 的规则 → <b>Remove</b>。
+            然后在你的电脑上：</p>
+          <div class="cmd"><pre id="d-closed">ssh -o ConnectTimeout=10 ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="d-closed">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Connection timed out</code>，而 <code>ssh ubuntu@biomanager</code> 仍然能用。</p>
+          <p class="ifnot"><b>如果不是：</b>仍然能连上：还有别的规则开放了 22 端口（看看实例上的网络安全组），也删掉它。</p>
+        </li>
+        <li>
+          <p>可选，建议做：防止 Oracle 停掉服务器。Oracle Cloud 控制台 → <b>Billing → Upgrade and Manage Payment →
+            Upgrade to Pay As You Go</b>（升级为按量付费）。Always Free 资源仍然免费。</p>
+          <p class="see"><b>你应该看到：</b>账号类型显示为 Pay As You Go。</p>
+          <p class="ifnot"><b>如果不做：</b>Always Free 服务器看起来闲置一周，Oracle 会把它停掉。在
+            <b>Compute → Instances</b> 里重新启动即可，数据不会丢。</p>
+        </li>
       </ol>
-      <p>实验室以外的人如果只需要看几天，不用装 Tailscale：见<a href="#guests">访客通行码</a>。</p>
+      <p class="done-when"><b>完成标志：</b>在打开了 Tailscale 的手机或电脑上，<code>https://&lt;your-domain&gt;/healthz</code>
+        显示 <code>ok</code>；能以管理员身份登录 <code>https://&lt;your-domain&gt;</code>；并且
+        <code>ssh ubuntu@&lt;public-ip&gt;</code> 连接超时。</p>
     </section>
 
     <!-- ======================================================= E -->
     <section id="domain">
-      <h2>E · 用自己域名的云虚拟机</h2>
-      <p class="opt-meta">虚拟机同 D + 一个域名（每年大约 $10–15）· 一个任何人都能打开的普通网址</p>
-      <p>大家不用装任何应用，直接访问 <code>https://biomanager.yourlab.org</code>。这份方便的代价是：
-        登录页面暴露在公开的互联网上。BioManager 为此做了准备：新注册要等管理员批准，密码输错会被限速，
-        改密码后已登录的会话会失效，并启用了严格的内容安全策略。但仍然请使用强密码，并考虑用 Google 或 Microsoft 登录。</p>
-      <ol class="steps-list">
-        <li>从 Cloudflare、Porkbun 或 Namecheap 等注册商购买一个域名（或者用院系给你的
-          子域名）。</li>
-        <li>按 D 的第 1–2 步创建虚拟机（Tailscale 可装可不装，但它仍是 SSH 登录最安全的方式）。</li>
-        <li>在注册商那里添加一条 DNS <b>A 记录</b>：<code>biomanager</code> → 虚拟机的公网 IP。</li>
-        <li>在云防火墙里（Oracle：子网的安全列表）允许来自任何地址的 TCP <b>80</b> 和 <b>443</b> 入站连接。
-          Let's Encrypt 签发证书需要用到 80 端口。</li>
-        <li>按 D 的第 4 步获取安装包并填写 <code>.env</code>，其中：
-<pre><code>DOMAIN=biomanager.yourlab.org
-TLS=acme
-ACME_EMAIL=you@yourlab.org       # Let's Encrypt writes here before a certificate expires</code></pre>
-          然后运行 <code>docker compose up -d</code>。Caddy 会自动获取并续期证书。</li>
-        <li>用设置码在 <code>https://biomanager.yourlab.org/register</code> 创建管理员账号，然后运行
-          <code>sudo host/install.sh</code>（在 <code>deploy</code> 文件夹里）。</li>
+      <h2>E · 用自己域名的云服务器</h2>
+      <div class="badges"><span class="badge who">任何知道网址的人</span><span class="badge">每月约 $1</span><span class="badge">1–2 小时</span></div>
+      <p>不用装任何应用：谁都能打开 <code>https://biomanager.yourlab.example</code>。登录页面在公开的互联网上，所以请使用强密码，
+        并考虑<a href="#sign-in">用 Google 或 Microsoft 登录</a>。</p>
+      <h3>你需要</h3>
+      <ul class="need">
+        <li>一个 <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> 账号（免费；绑卡验证身份；主区域选定后不能更改），
+          或任何服务商带 cloud-init 输入框的 Ubuntu 24.04 云服务器。</li>
+        <li>一个域名（每年大约 $10–15），注册商要能添加 DNS 记录，例如 Cloudflare、Porkbun 或 Namecheap；或者院系给的子域名。</li>
+        <li>一个邮箱地址，给签发证书的 Let's Encrypt 用。</li>
+        <li>你自己的电脑，能打开终端。</li>
+        <li>费用：用 Oracle Always Free，每月大约 $1（域名）。</li>
+        <li>时间：1–2 小时；新的 DNS 记录最长可能要一小时才处处生效。</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>在你的电脑上生成一个 SSH 密钥。每个问题都直接按 <kbd>Enter</kbd>。</p>
+          <div class="cmd"><pre id="e-key">ssh-keygen -t ed25519</pre><button type="button" class="copy-btn" data-copy="e-key">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Your public key has been saved in …/.ssh/id_ed25519.pub</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>… already exists. Overwrite (y/n)?</code>：输入 <kbd>n</kbd>，用你已有的密钥。</p>
+        </li>
+        <li>
+          <p>在你的电脑上下载服务器安装包，显示其中的首次启动脚本。</p>
+          <div class="cmd"><pre id="e-download">curl -fsSL -o biomanager-server.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf biomanager-server.tar.gz
+cat Biomanager/deploy/cloud-init.yaml</pre><button type="button" class="copy-btn" data-copy="e-download">复制</button></div>
+          <p class="see"><b>你应该看到：</b>一个以 <code>#cloud-config</code> 开头的文件。第 3 步要把它整个粘贴进去。</p>
+          <p class="ifnot"><b>如果不是：</b>Windows PowerShell 提示找不到参数：把 <code>curl</code> 换成 <code>curl.exe</code>。</p>
+        </li>
+        <li>
+          <p>创建服务器：Oracle Cloud 控制台 → <b>☰ → Compute → Instances → Create instance</b>，设置：</p>
+          <ul>
+            <li><b>Image：</b>Change image → Ubuntu → <b>Canonical Ubuntu 24.04</b>。</li>
+            <li><b>Shape：</b>Change shape → Ampere → <b>VM.Standard.A1.Flex</b>，2 OCPU、12 GB 内存。</li>
+            <li><b>Networking：</b>新建虚拟云网络和公共子网；分配公网 IPv4 地址。</li>
+            <li><b>Add SSH keys：</b>Upload public key files (.pub) → 第 1 步的 <code>id_ed25519.pub</code>。</li>
+            <li><b>Advanced options → Management → Initialization script → Paste cloud-init script：</b>第 2 步的
+              <code>cloud-init.yaml</code> 全部内容。</li>
+          </ul>
+          <p>然后点 <b>Create</b>。</p>
+          <p class="see"><b>你应该看到：</b>实例变成 <b>Running</b>，页面上有 <b>Public IP address</b>：下面的
+            <code>&lt;public-ip&gt;</code> 就是它。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Out of capacity for shape VM.Standard.A1.Flex</code>：在 <b>Placement</b>
+            里换一个可用性域，或者稍后再试。</p>
+        </li>
+        <li>
+          <p>开放 80 和 443 端口：这台实例 → <b>Subnet</b>（在 Primary VNIC 下）→ <b>Security Lists → Default Security
+            List → Add Ingress Rules</b>：源 CIDR <code>0.0.0.0/0</code>，协议 TCP，目标端口 <code>80</code>；
+            点 <b>+ Another Ingress Rule</b>，同样填 <code>443</code>；再点 <b>Add Ingress Rules</b>。</p>
+          <p class="see"><b>你应该看到：</b>多了两行：TCP 80 和 TCP 443。Let's Encrypt 签发证书需要 80 端口。</p>
+        </li>
+        <li>
+          <p>在域名注册商那里添加一条 DNS <b>A 记录</b>：名称 <code>biomanager</code>，值 <code>&lt;public-ip&gt;</code>。
+            然后在你的电脑上：</p>
+          <div class="cmd"><pre id="e-dns">nslookup &lt;your-domain&gt;</pre><button type="button" class="copy-btn" data-copy="e-dns">复制</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>：<code>biomanager.</code> 加上你的域名，例如
+            <code>biomanager.yourlab.example</code>。</p>
+          <p class="see"><b>你应该看到：</b>名称下面有 <code>Address: &lt;public-ip&gt;</code>。</p>
+          <p class="ifnot"><b>如果不是：</b>还没有地址：等 10 分钟再试。用 Cloudflare 的话，这条记录要设成 <b>DNS only</b>
+            （灰色云朵），不要代理。</p>
+        </li>
+        <li>
+          <p>登录服务器。问到指纹时输入 <code>yes</code>。</p>
+          <div class="cmd"><pre id="e-ssh">ssh ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="e-ssh">复制</button></div>
+          <p class="see"><b>你应该看到：</b>以 <code>ubuntu@</code> 开头的命令提示符。</p>
+          <p class="ifnot"><b>如果不是：</b><code>Connection timed out</code>：两分钟后再试。
+            <code>Permission denied (publickey)</code>：运行 <code>ssh -i ~/.ssh/id_ed25519 ubuntu@&lt;public-ip&gt;</code>。</p>
+        </li>
+        <li>
+          <p>等首次启动脚本运行完（服务器启动后 5–10 分钟）。</p>
+          <div class="cmd"><pre id="e-ready">test -f /var/lib/biomanager-ready &amp;&amp; echo ready</pre><button type="button" class="copy-btn" data-copy="e-ready">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>ready</code>。然后输入 <code>exit</code>，重新登录（第 6 步），这样你的账号才能用 Docker。</p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：<code>sudo tail -f /var/log/cloud-init-output.log</code> 可以看进度。
+            如果这个日志里始终没有 Docker，说明第 3 步没有粘贴脚本：删除这台服务器，重新创建。</p>
+        </li>
+        <li>
+          <p>下载 BioManager。</p>
+          <div class="cmd"><pre id="e-bundle">curl -fsSL -o /tmp/biomanager-server.tar.gz \
+  https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="e-bundle">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> 和
+            <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>如果不是：</b><code>permission denied while trying to connect to the Docker daemon socket</code>：
+            输入 <code>exit</code>，重新登录，重做这一步。</p>
+        </li>
+        <li>
+          <p>写入不需要你选择的设置。</p>
+          <div class="cmd"><pre id="e-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=acme|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="e-env">复制</button></div>
+          <p class="see"><b>你应该看到：</b>没有任何输出。</p>
+        </li>
+        <li>
+          <p>填入你的地址、邮箱和时区：打开文件，改这三行，按 <kbd>Ctrl</kbd>+<kbd>O</kbd>、<kbd>Enter</kbd> 保存，
+            按 <kbd>Ctrl</kbd>+<kbd>X</kbd> 退出。</p>
+          <div class="cmd"><pre id="e-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="e-nano">复制</button></div>
+          <div class="cmd"><pre id="e-lines">DOMAIN=&lt;your-domain&gt;
+ACME_EMAIL=&lt;your-email&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="e-lines">复制</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>：第 5 步的名称。<code>&lt;your-email&gt;</code>：证书快到期时
+            Let's Encrypt 会发邮件到这里。<code>&lt;your-time-zone&gt;</code>：例如 <code>Asia/Shanghai</code> 或
+            <code>Europe/Berlin</code>。</p>
+          <p class="see"><b>你应该看到：</b><code>DOMAIN=</code> 和 <code>ACME_EMAIL=</code> 在开头附近，<code>TZ=</code> 在中间。</p>
+        </li>
+        <li>
+          <p>检查设置。</p>
+          <div class="cmd"><pre id="e-check">grep -E '^(DOMAIN|TLS|ACME_EMAIL|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="e-check">复制</button></div>
+          <p class="see"><b>你应该看到：</b>你的五行设置，其中 <code>TLS=acme</code>，然后是 <code>settings ok</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>set POSTGRES_PASSWORD in .env</code>：重做第 9 步。仍是
+            <code>DOMAIN=biomanager.example.edu</code>：修改没有保存，重做第 10 步。</p>
+        </li>
+        <li>
+          <p>启动 BioManager。</p>
+          <div class="cmd"><pre id="e-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="e-up">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>biomanager-db-1</code>、<code>biomanager-app-1</code>、
+            <code>biomanager-caddy-1</code> 和 <code>biomanager-backup-1</code> 都显示 <code>Started</code> 或 <code>Healthy</code>。</p>
+          <p class="ifnot"><b>如果不是：</b><code>pull access denied</code>：先运行 <code>host/load-image.sh</code>，再运行这一步。</p>
+        </li>
+        <li>
+          <p>检查 Caddy 拿到了证书。</p>
+          <div class="cmd"><pre id="e-cert">docker compose logs caddy | grep "certificate obtained"</pre><button type="button" class="copy-btn" data-copy="e-cert">复制</button></div>
+          <p class="see"><b>你应该看到：</b>一行包含 <code>certificate obtained successfully</code> 和你的域名。</p>
+          <p class="ifnot"><b>如果不是：</b>还没有：等一分钟再试。出现 <code>challenge failed</code> 或 <code>timeout</code>：
+            DNS 记录（第 5 步）或 80 端口（第 4 步）还不对。改好后运行 <code>docker compose restart caddy</code>。</p>
+        </li>
+        <li>
+          <p>取得创建第一个账号用的设置码。</p>
+          <div class="cmd"><pre id="e-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="e-code">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f …</code></p>
+          <p class="ifnot"><b>如果不是：</b>什么都没有：等一分钟再试。</p>
+        </li>
+        <li>
+          <p>打开 <code>https://&lt;your-domain&gt;/register</code>，填写名称、用户名、密码和<b>设置码</b>，然后点
+            <b>创建账号</b>。第一个账号就是实验室的管理员。</p>
+          <p class="see"><b>你应该看到：</b>你已登录，实验室设置问卷打开了。</p>
+          <p class="ifnot"><b>如果不是：</b>提示设置码不对：重新复制，三组字符和中间的短横线都要。</p>
+        </li>
+        <li>
+          <p>打开告警、看门狗和每周自动更新。</p>
+          <div class="cmd"><pre id="e-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="e-install">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>Installed. Alerts go to ntfy topic: biomanager-…</code>。在
+            <a href="https://ntfy.sh">ntfy</a> 应用里订阅它。</p>
+          <p class="ifnot"><b>如果不是：</b><code>command not found</code>：先运行 <code>cd /opt/biomanager/Biomanager/deploy</code>。</p>
+        </li>
       </ol>
+      <p class="done-when"><b>完成标志：</b>在用手机流量的手机上，<code>https://&lt;your-domain&gt;/healthz</code> 显示
+        <code>ok</code>，带锁形图标；并且能以管理员身份登录 <code>https://&lt;your-domain&gt;</code>。</p>
+    </section>
+
+    <!-- ======================================================= move -->
+    <section id="move">
+      <h2>把桌面版的记录带过来</h2>
+      <p>记录、历史和编号都会一起带过来。要在新服务器<b>第一次启动之前</b>做：在 B、C、D 或 E 里做完<b>检查设置</b>那一步后，
+        用下面的步骤代替后面的步骤，一直到<b>打开告警</b>那一步。之后用你原来的账号登录，不需要设置码。</p>
+      <ol class="recipe">
+        <li>
+          <p>退出桌面版。然后在那台电脑上，把它的数据库和上传的文件复制到服务器。</p>
+          <div class="cmd"><pre id="m-copy">scp "$HOME/Library/Application Support/Biomanager/data/biomanager.db" &lt;you&gt;@&lt;server&gt;:/tmp/lab.db
+scp -r "$HOME/Library/Application Support/Biomanager/uploads" &lt;you&gt;@&lt;server&gt;:/tmp/lab-uploads</pre><button type="button" class="copy-btn" data-copy="m-copy">复制</button></div>
+          <p class="fine-left">这是 Mac 的路径。Windows 上文件夹是 <code>$env:APPDATA\Biomanager</code>（PowerShell），
+            Linux 上是 <code>~/.local/share/Biomanager</code>。<code>&lt;you&gt;@&lt;server&gt;</code>：你登录服务器的方式，
+            例如 <code>ubuntu@biomanager</code>。</p>
+          <p class="see"><b>你应该看到：</b>每个文件都复制到 100%。</p>
+          <p class="ifnot"><b>如果不是：</b><code>uploads: No such file or directory</code>：桌面版没有上传过文件。
+            跳过第二行，以及第 4 步的第二行。</p>
+        </li>
+        <li>
+          <p>在服务器上试运行一次导入。它什么都不会改。</p>
+          <div class="cmd"><pre id="m-dry">cd /opt/biomanager/Biomanager/deploy
+docker compose up -d db
+docker compose run --rm --no-deps -v /tmp/lab.db:/import/lab.db:ro app \
+  sh -c 'python scripts/migrate-to-postgres.py --dry-run /import/lab.db "$DATABASE_URL"'</pre><button type="button" class="copy-btn" data-copy="m-dry">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>copied   : … rows in … tables, row counts verified</code> 和
+            <code>dry run  : rolled back, nothing kept</code>。</p>
+          <p class="ifnot"><b>如果不是：</b>列出了 PostgreSQL 不接受的值：在桌面版里改好这些记录，然后重做第 1 步。</p>
+        </li>
+        <li>
+          <p>正式导入。</p>
+          <div class="cmd"><pre id="m-copy-db">docker compose run --rm --no-deps -v /tmp/lab.db:/import/lab.db:ro app \
+  sh -c 'python scripts/migrate-to-postgres.py /import/lab.db "$DATABASE_URL"'</pre><button type="button" class="copy-btn" data-copy="m-copy-db">复制</button></div>
+          <p class="see"><b>你应该看到：</b><code>copied   : … row counts verified</code>，没有 <code>dry run</code> 那一行。</p>
+          <p class="ifnot"><b>如果不是：</b><code>The copy failed and was rolled back</code>：服务器的数据库不是空的
+            （BioManager 之前启动过）。请到 <a href="https://github.com/gaspolymerase/biomanager/issues">GitHub</a> 提问。</p>
+        </li>
+        <li>
+          <p>启动 BioManager，把上传的文件复制进去。</p>
+          <div class="cmd"><pre id="m-up">docker compose up -d --build
+docker compose cp /tmp/lab-uploads/. app:/data/uploads/</pre><button type="button" class="copy-btn" data-copy="m-up">复制</button></div>
+          <p class="see"><b>你应该看到：</b>四个服务都显示 <code>Started</code>，然后是 <code>Successfully copied</code>。</p>
+        </li>
+      </ol>
+      <p class="done-when"><b>完成标志：</b>用桌面版的账号登录 <code>https://&lt;your-domain&gt;</code>，能看到你的记录。
+        然后做你那种方式里的<b>打开告警</b>一步。</p>
+      <p>同样的步骤也能用实验室电脑上的副本重建丢失的服务器：改用它 <code>lab-copies/…/db</code> 文件夹里最新的
+        <code>.db</code>，以及它的 <code>uploads</code> 文件夹。</p>
     </section>
 
     <!-- ======================================================= other -->
     <section id="other">
       <h2>其他方式</h2>
       <dl class="gdl">
-        <dt id="guests">访客通行码：进来待几天，不用 Tailscale</dt>
-        <dd>在 Tailscale 服务器（D）上，管理员可以让实验室以外的人临时进来。在账号菜单的<b>访客</b>（Guests）里
-          生成一个通行码，然后用 Tailscale Funnel 把服务器开放到互联网：
-          <code>sudo deploy/host/internet-access.sh on</code>（第一次运行时，Tailscale 会输出一个允许 Funnel 的链接）。
-          访客打开 <code>https://DOMAIN:8443/guest</code> 并输入通行码；其他人在那里只能看到输入通行码的页面。
-          运行 <code>internet-access.sh off</code> 就会重新关上。详见<a href="guide.html#guests">用户指南</a>。</dd>
         <dt>Cloudflare Tunnel</dt>
-        <dd>和 E 一样是一个普通网址，但不用开放任何端口：服务器上的 <code>cloudflared</code> 主动向外连接
-          Cloudflare，而 Cloudflare Access 可以要求先用实验室邮箱登录，才能看到 BioManager（最多 50 人
-          免费）。它需要一个托管在 Cloudflare 上的域名。我们还没有把它做成现成方案；<a href="#ai">AI 指南</a>里有一些说明，
-          供 AI 助手设置时参考。</dd>
+        <dd>和 E 一样是普通网址，但不开放任何端口：服务器上的 <code>cloudflared</code> 主动连接 Cloudflare，
+          Cloudflare Access 还可以要求先用实验室邮箱登录。我们没有做成现成方案；<a href="../deploy-with-ai.md">AI 指南</a>里有说明。</dd>
         <dt>不用 Docker</dt>
-        <dd>BioManager 是一个运行在 PostgreSQL 上的 Python 网页应用（gunicorn），前面可以接任何 HTTPS 代理，所以也能在普通服务器上运行。
-          有了 Docker，备份、更新和恢复都只要一条命令，所以我们推荐用 Docker。</dd>
+        <dd>它是运行在 PostgreSQL 上的 Python 网页应用（gunicorn），前面接任何 HTTPS 代理即可：见 <a
+          href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#without-docker">deploy/README.md 的
+          Without Docker</a>。用 Docker 的话，备份、更新和恢复都只要一条命令。</dd>
       </dl>
     </section>
 
@@ -372,124 +837,83 @@ ACME_EMAIL=you@yourlab.org       # Let's Encrypt writes here before a certificat
 
     <!-- ======================================================= after -->
     <section id="after">
-      <h2>运行起来以后</h2>
-      <dl class="gdl">
-        <dt>设置实验室</dt>
-        <dd>管理员第一次登录时会打开设置问卷：勾选实验室要管理的内容，BioManager 就只建这些
-          数据库。详见<a href="guide.html#first-run">用户指南</a>。</dd>
-        <dt>人员</dt>
-        <dd>新注册的账号在<b>管理用户</b>（Manage users）里等待批准。管理员还可以在那里把其他人设为管理员、停用离开的人的账号、重置
-          密码，以及给动物房工作人员分配<b>动物饲养</b>（Animal care）或<b>动物房主管</b>（Facility manager）角色
-          （<a href="guide.html#lab">各角色能做什么</a>）。</dd>
-        <dt id="sign-in">用 Google、Microsoft 或学校账号登录</dt>
-        <dd>可选，每一种只需在 <code>deploy/.env</code> 里加几行再重启（安装包里的 <code>deploy/README.md</code>
-          有具体步骤）。学校自己的统一登录可以通过 OpenID Connect 接入（Okta、Keycloak、Azure AD、Shibboleth 的
-          OIDC 插件）：请 IT 部门登记 BioManager，回调地址填 <code>https://DOMAIN/auth/institution/callback</code>，
-          然后设置 <code>BIOMANAGER_OIDC_ISSUER</code>、<code>_CLIENT_ID</code>、<code>_CLIENT_SECRET</code> 和
-          <code>BIOMANAGER_OIDC_NAME</code>（登录按钮上显示的文字）。只支持 SAML 的大学（InCommon、eduGAIN）
-          可以通过 <a href="https://cilogon.org">CILogon</a> 接入：设置 <code>BIOMANAGER_CILOGON_CLIENT_ID</code> 和
-          <code>_SECRET</code>，再用 <code>BIOMANAGER_CILOGON_IDP</code> 直接跳转到你的学校。</dd>
-        <dt>带二维码的笼卡</dt>
-        <dd>在服务器上，任何能访问服务器的手机扫笼卡上的二维码，就能打开那个笼。实验室网络里的 Zebra 标签打印机
-          可以直接从服务器接收标签（<a href="guide.html#label-printers">方法</a>），前提是服务器能连到它：
-          云上的服务器连不到你实验室里的打印机，除非打印机也接入了 Tailscale。</dd>
-        <dt>告警</dt>
-        <dd><code>install.sh</code> 给出的 ntfy 主题会在网站无响应、某个容器停止、硬盘快满
-          或备份停止时通知你。<code>deploy/RUNBOOK.md</code> 写了每种情况该怎么处理。</dd>
-        <dt>更新</dt>
-        <dd>操作系统的安全补丁每晚自动安装，容器每周日刷新。升级到新版 BioManager
-          只要三条命令：
-<pre><code>cd /opt/biomanager/Biomanager/deploy
-docker compose exec backup backup.sh      # a fresh backup first
-curl -fsSL -o /tmp/b.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz \
-  &amp;&amp; tar -xzf /tmp/b.tar.gz -C /opt/biomanager &amp;&amp; host/load-image.sh &amp;&amp; docker compose up -d --build</code></pre>
-          你的 <code>.env</code> 和备份从来不在安装包里，所以直接解压覆盖也会保留它们。新版本启动时会
-          自动把数据库升级到最新；每个版本发布前都测试过从之前每个版本建立的实验室升级上来。</dd>
-      </dl>
+      <h2>运行之后</h2>
+      <p>每一项都链接到运维手册（runbook）里对应的清单；安装包里也有这份手册：<code>deploy/RUNBOOK.md</code>。
+        系统安全补丁每晚自动安装，容器每周日刷新。</p>
+      <ul class="need">
+        <li><b>设置实验室：</b>管理员第一次登录时，会问实验室要管理哪些内容（<a href="guide/install.html#first-run">用户指南</a>）。</li>
+        <li><b>记下各项信息在哪里</b>，保存在服务器以外的地方：
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#where-everything-is">Where everything is</a>。</li>
+        <li><b>打开异地备份</b>（Backblaze B2，这个用量免费）：先<a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#off-site-copies-backblaze-b2">建好存储桶</a>，
+          再运行 <code>sudo /opt/biomanager/Biomanager/deploy/host/offsite-setup.sh</code>。</li>
+        <li><b>收到告警：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#an-alert-arrived">每种告警的含义和处理</a>。</li>
+        <li><b>有人加入：</b>把服务器共享给他（Tailscale），在<b>设置 → 管理用户</b>里批准。手机：用 Android 应用，
+          或在 iPhone 的 Safari 里点<b>分享 → 添加到主屏幕</b>。
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-joins">Someone joins</a>。</li>
+        <li><b>有人离开：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-leaves">Someone leaves</a>。</li>
+        <li><b>升级到新版本：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-the-app">Updating the app</a>
+          （<a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-went-wrong">出问题时</a>）。</li>
+        <li><b>恢复一份备份：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#restore-a-backup-the-server-is-fine">Restore a backup</a>。</li>
+        <li><b>网站打不开：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#the-site-is-down">The site is down</a>。</li>
+        <li><b>服务器丢失，或要换一台服务器：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#the-server-is-lost">The server is lost</a>、
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#moving-to-another-server">Moving to another server</a>。</li>
+        <li><b>管理员登录不了：</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#an-admin-is-locked-out">An admin is locked out</a>。</li>
+        <li id="guests"><b>让访客从互联网进来</b>待几天，不用 Tailscale（方式 D）：在<b>访客</b>里生成通行码，然后运行
+          <code>sudo host/internet-access.sh on</code>；访客打开 <code>https://&lt;your-domain&gt;:8443/guest</code>。
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#letting-a-guest-in-from-the-internet">Letting a guest in</a>、
+          <a href="guide/people-and-guests.html#guests">用户指南</a>。</li>
+        <li id="sign-in"><b>用 Google、Microsoft 或学校账号登录：</b>在服务商那里登记服务器，把客户端 ID 和密钥写进
+          <code>.env</code>（<code>BIOMANAGER_GOOGLE_*</code>、<code>BIOMANAGER_MICROSOFT_*</code>，OpenID Connect 用
+          <code>BIOMANAGER_OIDC_*</code>，只支持 SAML 的大学用 <code>BIOMANAGER_CILOGON_*</code>），然后运行
+          <code>docker compose up -d</code>。
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#signing-in-with-google-or-microsoft">Signing in with Google or Microsoft</a>。</li>
+      </ul>
     </section>
 
     <!-- ======================================================= safe -->
     <section id="safe">
       <h2>保护数据安全</h2>
-      <p>鼠群的记录是多年的心血。BioManager 保留多份相互独立的副本，所以任何单一故障，
-        无论是虚拟机被删、硬盘损坏、笔记本被偷，还是一次有问题的更新，都不会让数据丢失。</p>
+      <p>多份相互独立的副本，所以任何单一故障（服务器被删、硬盘损坏、笔记本被偷、一次有问题的更新）都不会让实验室的记录丢失。</p>
       <table class="gtable layers">
-        <tr><th>1 · 每晚</th><td>服务器备份数据库和上传的文件，检查每份备份都能读取，
-          并保留最近 30 份。<i>所有服务器都自动进行。</i></td></tr>
-        <tr><th>2 · 每周</th><td>把最新的备份恢复到一个临时数据库里并检查，这样你就知道
-          备份真的能用，而不只是存在。<i>自动进行。</i></td></tr>
-        <tr><th>3 · 异地</th><td>加密副本存放在云存储里，按 30 天、12 周和 24 个月保留；如果打开存储桶的
-          Object Lock，即使有人控制了服务器也删不掉。Backblaze B2 的前 10 GB 免费，够存一个实验室好几年的备份。
-          一条命令即可：<code>sudo deploy/host/offsite-setup.sh</code>。</td></tr>
-        <tr><th>4 · 每台实验室电脑上</th><td><b>桌面版</b>可以保留整个实验室的一份副本：在服务器上，
-          用<b>设置 → 实验室副本 → 生成密钥</b>（Settings → Copies of the lab → Make a key）为一台电脑生成密钥；在那台电脑的桌面版里，打开<b>设置 → 保留实验室服务器的副本</b>
-          （Settings → Keep a copy of your lab server），填入地址和密钥。桌面版打开期间，它每天拉取一份新副本，检查副本
-          完整无缺，保留最近 14 份，并同步每个上传的文件。管理员能看到哪些电脑存有副本、副本有多新。
-          在几台实验室电脑上装好桌面版，即使服务器和异地副本都没了，实验室的数据也能保住。
-          （管理员可以在实验室设置（Lab setup）里允许成员也保留副本。）管理员的 Mac 还可以通过 SSH 拉取服务器自己的每晚
-          备份：使用安装包里的 <code>deploy/mac/install.sh</code>。</td></tr>
-        <tr><th>5 · 每个人</th><td>每个表格都有<b>导出</b>（Export）按钮，导出当前显示内容的 CSV，可以用 Excel 打开；
-          <b>设置 → 导出我的数据</b>（Settings → Export my data）随时可以下载你自己的小鼠和质粒（CSV 格式）以及你的实验记录本页面。</td></tr>
-        <tr><th>6 · 撤销与历史</th><td>针对的是失误，而不是灾难：每一次批量修改都可以在<b>批次</b>（Batches）里撤销，
-          <b>审计日志</b>（Audit log）显示每一次编辑、是谁改的，以及改之前是什么。</td></tr>
+        <tr><th>1 · 每晚</th><td>服务器备份数据库和上传的文件，检查每份备份都能读取，保留最近 30 份。<i>所有服务器都自动进行。</i></td></tr>
+        <tr><th>2 · 每周</th><td>把最新的备份恢复到一个临时数据库里并检查。<i>自动进行。</i></td></tr>
+        <tr><th>3 · 异地</th><td>加密副本存放在云存储里，按 30 天、12 周和 24 个月保留；打开存储桶的 Object Lock 后，
+          即使有人控制了服务器也删不掉。Backblaze B2 的前 10 GB 免费。
+          <code>sudo /opt/biomanager/Biomanager/deploy/host/offsite-setup.sh</code>。</td></tr>
+        <tr><th>4 · 实验室电脑上</th><td><b>桌面版</b>可以保留整个实验室的一份副本：在服务器上，<b>设置 → 实验室副本：保存在你们的电脑上
+          → 生成密钥</b>；在桌面版里，<b>设置 → 保留实验室服务器的副本</b>，填入地址和密钥。桌面版打开期间每天拉取一份新副本，
+          保留最近 14 份。管理员的 Mac 还可以拉取服务器每晚的备份：<code>deploy/mac/install.sh</code>
+          （<a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#a-copy-on-a-mac">方法</a>）。</td></tr>
+        <tr><th>5 · 每个人</th><td>每个表格的<b>导出</b>可以导出 CSV；<b>设置 → 导出我的数据</b>下载你自己的记录和实验记录本页面。</td></tr>
+        <tr><th>6 · 撤销与历史</th><td>每次批量修改都可以在<b>批量操作</b>里撤销；<b>审计日志</b>显示每一次编辑、是谁改的，以及改之前是什么。</td></tr>
       </table>
-      <p>恢复也只要一条命令，而且绝不会删掉被替换的数据，见 <code>deploy/RUNBOOK.md</code>。</p>
-    </section>
-
-    <!-- ======================================================= move -->
-    <section id="move">
-      <h2>从桌面版迁到服务器</h2>
-      <p>你在桌面版里录入的所有内容都会一起带过去：记录、历史、编号。用同样的步骤，也能从一台实验室电脑上的副本
-        重建丢失的服务器：改用它 <code>lab-copies/…/db</code> 文件夹里最新的 <code>.db</code>，以及它的
-        <code>uploads</code> 文件夹。请<b>在服务器第一次启动之前</b>操作（副本要导入一个空数据库）：</p>
-      <ol class="steps-list">
-        <li>退出桌面版，把它的数据文件夹（见 <a href="#desktop">A</a>）复制到服务器上，例如用
-          <code>scp</code> 复制到 <code>/tmp/lab</code>。</li>
-        <li>在服务器上，进入 deploy 文件夹，运行过 <code>host/load-image.sh</code> 并填好 <code>.env</code> 之后：
-<pre><code>docker compose up -d db
-docker compose run --rm --no-deps -v /tmp/lab/biomanager.db:/import/lab.db:ro app \
-  sh -c 'python scripts/migrate-to-postgres.py /import/lab.db "$DATABASE_URL"'
-docker compose up -d
-docker compose cp /tmp/lab/uploads/. app:/data/uploads/</code></pre></li>
-        <li>用你原来的账号登录。在脚本名后面加 <code>--dry-run</code> 可以先全部检查一遍，不做任何改动。</li>
-      </ol>
-      <p>在已运行的服务器上，主副本也可以不走这些步骤，直接转到桌面版再转回来：管理员在<b>设置 → 设备</b>（Settings → Devices）
-        里交出主副本，桌面版之后也在那里交还。桌面版持有主副本期间，服务器是只读的，并会显示实验室现在在哪里（<a href="guide.html#devices">设备</a>）。</p>
-    </section>
-
-    <div class="part"><p class="part-label">第四部分</p><h2>帮助</h2></div>
-
-    <!-- ======================================================= ai -->
-    <section id="ai">
-      <h2>让 AI 助手来设置</h2>
-      <p>能使用终端的 AI 编程助手（Claude Code、Cursor、Codex 等）可以替你完成 D 或 E 的大部分工作。我们
-        专门为它写了一份指南，包括相关事实、准确的命令、每一步之后要检查什么，以及安全规则，放在
-        <a href="../deploy-with-ai.md"><code>deploy-with-ai.md</code></a>。把下面这段话粘贴给你的助手：</p>
-      <div class="prompt" id="ai-prompt">请阅读 https://biomanager.org/deploy-with-ai.md 并按照它为我的实验室搭建一台 BioManager 服务器。先问我其中列出的问题，推荐一种方案，在创建任何需要花钱或把服务器开放到互联网的东西之前，先等我同意。不要让我把密码或密钥粘贴到这个对话里：告诉我该在哪里自己输入。</div>
-      <button type="button" class="btn btn-small copy-btn" data-copy="ai-prompt">复制提示词</button>
-      <p>只有你能做的部分仍由你掌控：注册云服务和 Tailscale 账号、批准登录，以及
-        输入密钥和密码。指南会让助手在每一处都停下来问你。</p>
+      <p>恢复绝不会删掉被替换的数据：
+        <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#restore-a-backup-the-server-is-fine">Restore a backup</a>。</p>
     </section>
 
     <!-- ======================================================= faq -->
     <section id="faq">
       <h2>常见问题</h2>
       <dl class="gdl">
-        <dt>免费的云虚拟机真的免费吗？</dt>
-        <dd>Oracle 的 Always Free 资源不收费。绑定银行卡是为了验证身份；除非你创建
-          付费资源，否则不会扣费。免费账号的虚拟机如果闲置一周，可能会被回收；把账号升级为 Pay As You
-          Go（按量付费）就不会被回收，Always Free 资源也仍然不收费。</dd>
+        <dt>Oracle 的免费服务器真的免费吗？</dt>
+        <dd>Always Free 资源不收费；绑卡是为了验证身份。免费账号的服务器如果看起来闲置一周，Oracle 可能会把它停掉：
+          重新启动即可，数据不会丢；或者升级为按量付费（方式 D 第 20 步），就不会再被停掉。</dd>
         <dt>Tailscale 用来传实验室数据安全吗？</dt>
-        <dd>Tailscale 用 WireGuard 加密直接连接各台设备，它自己看不到传输的内容。不在你 tailnet 里的人
-          根本看不到这台服务器，比一个公开的登录页面难攻击得多。</dd>
+        <dd>Tailscale 用 WireGuard 加密直接连接各台设备，它自己看不到传输的内容。不在你 tailnet 里的人根本看不到这台服务器。</dd>
         <dt>服务器需要多大？</dt>
-        <dd>一个有几万只动物的实验室，数据库也远不到 1 GB。最小的虚拟机就绰绰有余。</dd>
-        <dt>能在一台服务器上运行几个实验室吗？</dt>
-        <dd>可以每个实验室运行一个 BioManager（各用自己的文件夹和域名），也可以整个动物平台共用一个，每个实验室保留
-          自己的数据库。</dd>
-        <dt>谁能帮忙？</dt>
+        <dd>2 个 CPU 核心、2 GB 内存、20 GB 硬盘。一个有几万只动物的实验室，数据库也远不到 1 GB。</dd>
+        <dt>几个实验室能共用一台服务器吗？</dt>
+        <dd>可以每个实验室运行一个 BioManager（各用自己的文件夹和域名），也可以整个动物平台共用一个，每个实验室保留自己的数据库。</dd>
+        <dt>有一步没成功，谁能帮忙？</dt>
         <dd><a href="https://github.com/gaspolymerase/biomanager/issues/new?title=Lab%20server%20set-up">提交一个 issue</a>，
-          说明你在做什么、卡在了哪一步。</dd>
+          写明你用的方式、第几步，以及它输出了什么。</dd>
       </dl>
     </section>
   </main>

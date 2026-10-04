@@ -5,8 +5,8 @@
 - [Deploying a lab server, for AI assistants](https://biomanager.org/deploy-with-ai.md): facts, questions to ask, exact commands, checks and safety rules
 - [Features](https://biomanager.org/features.html): every database and what works the same in all of them
 - [Download](https://biomanager.org/download.html): the desktop apps and the Android app, first steps, and common questions
-- [Run it for your lab](https://biomanager.org/server.html): every hosting option with costs and steps
+- [Run it for your lab](https://biomanager.org/server.html): pick one of five routes (one computer, a Linux computer in the lab, a university server, a cloud VM with Tailscale, a cloud VM with your own domain), each with its cost and a step-by-step recipe: the command, what you should see, and the fix if not
 - [User guide](https://biomanager.org/guide.html): every function, and a path for people coming from Excel
-- [The API](https://biomanager.org/guide.html#api): JSON at /api/v1 on a lab's BioManager, with a personal token (Authorization: Bearer bmt_…, from Settings → API tokens); the reference is /api and the spec /api/v1/openapi.json on that server
+- [The API](https://biomanager.org/guide/scripts-and-api.html): JSON at /api/v1 on a lab's BioManager, with a personal token (Authorization: Bearer bmt_…, from Settings → API tokens); the reference is /api and the spec /api/v1/openapi.json on that server
 - [中文网站](https://biomanager.org/zh/): the site in Simplified Chinese — [功能](https://biomanager.org/zh/features.html)、[下载](https://biomanager.org/zh/download.html)、[用户指南](https://biomanager.org/zh/guide.html), [实验室服务器](https://biomanager.org/zh/server.html)
 - [Downloads](https://github.com/gaspolymerase/biomanager/releases/latest): desktop apps, Android app, and biomanager-server.tar.gz
