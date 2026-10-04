@@ -763,7 +763,7 @@ blockquote.req {
 @media (min-width: 1040px) { .nc-wide { grid-column: span 2; } .nc-wide .nc-glass { left: 52%; } .nc-wide .nc-art .neon { width: 34%; left: 10%; } }
 
 /* ------------------------------------------------------------ the opening */
-/* A dark band the height of the screen, with slanted beams of the app's teal
+/* A dark band the height of the screen, with a glowing double helix turning
    drifting behind the headline, a little film grain over them, and the
    product shot rising out of its lower edge. */
 .hero-dark {
@@ -786,27 +786,16 @@ blockquote.req {
 .hero-dark .fine { color: rgba(242, 247, 246, 0.6); }
 .hero-dark .chips { justify-content: center; margin-inline: auto; }
 .hero-dark .chips li { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); color: rgba(242, 247, 246, 0.8); }
-.beams {
-  position: absolute; z-index: 0; inset: -40% -30%; display: flex; justify-content: center; gap: 3vw;
-  transform: rotate(-38deg);
-}
-.beams i {
-  flex: none; width: clamp(60px, 9vw, 150px); height: 100%; border-radius: 999px; opacity: 1;
-  background: linear-gradient(180deg, transparent 6%, var(--beam, #0f8f7c) 34%, color-mix(in srgb, var(--beam, #0f8f7c) 55%, #d6fff5) 50%, var(--beam, #0f8f7c) 66%, transparent 92%);
-  filter: blur(18px) saturate(1.3);
-  animation: beam var(--t, 11s) ease-in-out var(--d, 0s) infinite alternate;
-}
-.beams i:nth-child(1) { --beam: #0b5f55; --t: 13s; --d: -4s; opacity: 0.6; }
-.beams i:nth-child(2) { --beam: #0f8f7c; --t: 10s; --d: -2s; }
-.beams i:nth-child(3) { --beam: #2cc4a6; --t: 12s; --d: -7s; width: clamp(80px, 12vw, 190px); }
-.beams i:nth-child(4) { --beam: #1d6fa5; --t: 14s; --d: -1s; opacity: 0.55; }
-.beams i:nth-child(5) { --beam: #3ed0b2; --t: 9s; --d: -5s; }
-.beams i:nth-child(6) { --beam: #0f8f7c; --t: 15s; --d: -9s; opacity: 0.7; }
-.beams i:nth-child(7) { --beam: #134e6f; --t: 12s; --d: -3s; opacity: 0.5; }
-@keyframes beam {
-  from { transform: translateY(-14%) scaleY(0.92); }
-  to   { transform: translateY(14%) scaleY(1.05); }
-}
+/* The double helix: two strands and their rungs, sliding by exactly one turn
+   so it seems to turn forever; a blurred copy behind gives it its glow. */
+.helix { position: absolute; z-index: 0; left: -25%; right: -25%; top: 22%; height: 52%; transform: rotate(-14deg); opacity: 0.6; }
+.helix svg { width: 100%; height: 100%; overflow: visible; }
+.helix path { fill: none; stroke-width: 4; stroke-linecap: round; }
+.helix .hx-a { stroke: #2cc4a6; filter: drop-shadow(0 0 6px #2cc4a6) drop-shadow(0 0 22px rgba(44, 196, 166, 0.7)); }
+.helix .hx-b { stroke: #4bb8ff; filter: drop-shadow(0 0 6px #4bb8ff) drop-shadow(0 0 22px rgba(75, 184, 255, 0.6)); }
+.helix .hx-rungs line { stroke-width: 2.5; stroke-linecap: round; }
+.helix .hx-move { animation: helix-turn 7s linear infinite; }
+@keyframes helix-turn { to { transform: translateX(-400px); } }
 .hero-dark::before {  /* film grain */
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.22; mix-blend-mode: overlay;
   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
@@ -865,7 +854,7 @@ blockquote.req {
 .clip-dialog .clip-text a { color: #5fe0c6; font-weight: 600; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) {
-  .beams i { animation: none !important; }
+  .helix .hx-move { animation: none !important; }
   .neon-draw .neon * { stroke-dashoffset: 0 !important; }
   .neon-draw .nc-glass { opacity: 1 !important; transform: none !important; }
 }
@@ -873,3 +862,62 @@ blockquote.req {
   .hero-dark { padding: 130px 0 150px; min-height: auto; }
   .hero-show { margin-top: -110px; }
 }
+
+/* ------------------------------------------------------------ docs: shared parts */
+/* The user guide and Run it for your lab use these. */
+kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.75em; height: 1.75em; padding: 0 0.42em;
+  font: 500 0.8em/1 var(--font-mono); color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; vertical-align: 0.08em;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+/* Two callouts only: a note, and a warning for what loses data or can't be undone. */
+.callout { margin: 18px 0; padding: 14px 16px; border-radius: 12px; font-size: 16px; line-height: 1.6; color: var(--read); max-width: 42em; }
+.callout > b:first-child { display: block; margin-bottom: 2px; font: 600 13px/1.4 var(--font-display); letter-spacing: 0.02em; }
+.callout.note { background: color-mix(in srgb, #3a7bd5 9%, transparent); }
+.callout.note > b:first-child { color: #2c6bc0; }
+.callout.warn { background: color-mix(in srgb, #e07a1f 12%, transparent); }
+.callout.warn > b:first-child { color: #b35a0e; }
+@media (prefers-color-scheme: dark) {
+  .callout.note > b:first-child { color: #8fb8f2; }
+  .callout.warn > b:first-child { color: #f0a868; }
+}
+/* Who can use it, under a page's title. */
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 18px; }
+.badge {
+  font: 500 11.5px/1 var(--font-mono); letter-spacing: 0.03em; padding: 5px 9px; border-radius: 980px;
+  border: 1px solid var(--line); color: var(--fg-2); background: var(--card);
+}
+.badge.who { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
+/* A recipe step: the action, its command, what you should see, and what to do if not. */
+.recipe { list-style: none; counter-reset: step; padding: 0; margin: 18px 0; display: grid; gap: 18px; }
+.recipe > li { position: relative; padding-left: 44px; counter-increment: step; }
+.recipe > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font: 600 13px/1 var(--font-mono); background: var(--fg); color: var(--bg);
+}
+.recipe > li > p:first-child { margin-top: 2px; color: var(--fg); font-weight: 600; }
+.cmd { position: relative; margin: 10px 0; }
+.cmd pre { margin: 0; padding: 12px 64px 12px 14px; overflow-x: auto; border-radius: 10px; background: #0f1514; color: #d8efe9;
+  font: 13.5px/1.6 var(--font-mono); border: 1px solid rgba(255, 255, 255, 0.06); }
+.cmd .copy-btn {
+  position: absolute; top: 8px; right: 8px; min-height: 26px; padding: 0 10px; border-radius: 7px; font: 600 12px var(--font-body);
+  background: rgba(255, 255, 255, 0.1); color: #d8efe9; border: 1px solid rgba(255, 255, 255, 0.14); cursor: pointer;
+}
+.see, .ifnot, .done-when { margin: 10px 0 0; padding: 10px 14px; border-radius: 10px; font-size: 15.5px; line-height: 1.55; color: var(--read); max-width: 42em; }
+.see { background: var(--accent-soft); }
+.see > b:first-child, .ifnot > b:first-child, .done-when > b:first-child { font-weight: 650; color: var(--fg); }
+.ifnot { background: var(--bg-band); border: 1px solid var(--line); }
+.done-when { background: color-mix(in srgb, var(--accent) 16%, transparent); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; }
+.need { list-style: none; padding: 0; margin: 12px 0 20px; display: grid; gap: 6px; max-width: 42em; }
+.need li { padding-left: 28px; position: relative; }
+.need li::before { content: ""; position: absolute; left: 2px; top: 0.3em; width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--accent); }
+/* Previous / Next, and Was this helpful? */
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); }
+.pager a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--fg); background: var(--card); }
+.pager a:hover { text-decoration: none; border-color: var(--accent); }
+.pager small { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+.pager .next { text-align: right; grid-column: 2; }
+.helpful { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; font-size: 14.5px; color: var(--fg-2); }
+.helpful button { font: 600 13px var(--font-body); padding: 5px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg-2); cursor: pointer; }
+.helpful button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
