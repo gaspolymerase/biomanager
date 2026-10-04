@@ -1471,7 +1471,7 @@ def _save(payload: dict) -> str:
                 old.unlink()
         except OSError:
             pass
-    (_dir() / f"{token}.json").write_text(json.dumps(payload))
+    (_dir() / f"{token}.json").write_text(json.dumps(payload), encoding="utf-8")
     return token
 
 
@@ -1479,7 +1479,7 @@ def _load(token: str) -> dict:
     if not re.match(r"^[A-Za-z0-9_-]{10,40}$", token or ""):
         abort(404)
     try:
-        payload = json.loads((_dir() / f"{token}.json").read_text())
+        payload = json.loads((_dir() / f"{token}.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         raise Gone() from None
     if payload.get("user") != g.user.username:

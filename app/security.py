@@ -96,12 +96,12 @@ def _read_or_create(path: Path, make) -> str:
     written in full under a temporary name and linked into place, so the
     loser of the race reads the winner's file, never a half-written one."""
     try:
-        return path.read_text().strip()
+        return path.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
         pass
     tmp = path.with_name(f".{path.name}.{os.getpid()}.{secrets.token_hex(4)}")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as fh:
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
         fh.write(make() + "\n")
     try:
         os.link(tmp, path)
@@ -109,7 +109,7 @@ def _read_or_create(path: Path, make) -> str:
         pass
     finally:
         tmp.unlink(missing_ok=True)
-    return path.read_text().strip()
+    return path.read_text(encoding="utf-8").strip()
 
 
 # ---------------------------------------------------------------- signing key

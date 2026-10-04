@@ -48,7 +48,7 @@ def version() -> str:
     """"0.5.0" in a build; from source, the latest tag (and "+dev" past it)."""
     bundled = Path(getattr(sys, "_MEIPASS", _ROOT)) / "VERSION"
     try:
-        text = bundled.read_text().strip()
+        text = bundled.read_text(encoding="utf-8").strip()
         if text:
             return text
     except OSError:
@@ -103,7 +103,7 @@ def _prefs_path() -> Path:
 
 def load_prefs() -> dict:
     try:
-        stored = json.loads(_prefs_path().read_text())
+        stored = json.loads(_prefs_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         stored = {}
     return {**DEFAULT_PREFS, **(stored if isinstance(stored, dict) else {})}
@@ -112,7 +112,7 @@ def load_prefs() -> dict:
 def save_prefs(**changes) -> dict:
     prefs = {**load_prefs(), **changes}
     try:
-        _prefs_path().write_text(json.dumps(prefs, indent=2))
+        _prefs_path().write_text(json.dumps(prefs, indent=2), encoding="utf-8")
     except OSError:
         pass
     return prefs
@@ -301,7 +301,9 @@ def install_update(release: dict, progress=None) -> str:
         keep = Path(tempfile.gettempdir()) / f"BioManager-before-{stamp}.AppImage"
     name, script = swap_script(sys.platform, os.getpid(), where, staged, keep)
     helper = work / name
-    helper.write_text(script)
+    # cmd.exe reads a batch file in the system's code page, not UTF-8, and the
+    # paths in it may not be ASCII (a user folder named 张伟).
+    helper.write_text(script, encoding="locale")
     if sys.platform.startswith("win"):
         subprocess.Popen(["cmd", "/c", str(helper)], creationflags=0x00000008 | 0x00000200)  # detached, new group
     else:

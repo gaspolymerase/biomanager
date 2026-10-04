@@ -487,7 +487,7 @@ def list_copies(server: str) -> list[dict]:
         sidecar = db.with_suffix(".json")
         if sidecar.exists():
             try:
-                info = json.loads(sidecar.read_text())
+                info = json.loads(sidecar.read_text(encoding="utf-8"))
             except ValueError:
                 pass
         out.append({"name": db.name, "path": str(db), "size": db.stat().st_size, **info})
@@ -551,7 +551,7 @@ def pull() -> dict:
         final = target / "db" / f"biomanager-{taken}Z.db"
         incoming.replace(final)
         final.with_suffix(".json").write_text(json.dumps({"server": server, "taken": taken, "rows": rows,
-                                                           "sha256": digest}, indent=1))
+                                                           "sha256": digest}, indent=1), encoding="utf-8")
         # 2. Keep the newest copies.
         dbs = sorted((target / "db").glob("biomanager-*.db"))
         for old in dbs[:-cfg["keep"]]:

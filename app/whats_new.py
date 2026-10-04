@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.0.6": {
+        "new": [
+            "**BioManager in Chinese (中文)**: choose it in **Settings → Language**, or 中文 / English on the sign-in "
+            "page. The colony, sheets, calendar, Home and Settings are translated so far.",
+        ],
+        "fixed": [
+            "On a Windows PC set to Chinese, Japanese or Korean, the desktop app starts again.",
+        ],
+    },
     "1.0.5": {
         "changed": [
             "BioManager's website is now **biomanager.org**: **Help → User guide** and the app's other links go "

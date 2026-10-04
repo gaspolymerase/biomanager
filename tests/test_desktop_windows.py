@@ -3,6 +3,7 @@ needs, unblocking the app's downloaded files, and the web browser instead.
 Nothing here reads a real registry or shows a message."""
 from __future__ import annotations
 
+import ast
 import os
 import tempfile
 import unittest
@@ -109,6 +110,35 @@ class InTheBrowser(unittest.TestCase):
         self.assertEqual(opened, [self.URL])
         self.assertIn("Python.Runtime.dll could not load", shown[0][0])
         self.assertIn("Windows Update", self.run_it("net", None)[1][0][0])
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class ChineseWindows(unittest.TestCase):
+    """On a Chinese, Japanese or Korean Windows a file opened without an
+    encoding is read in GBK, Shift-JIS or the Korean code page, so reading the
+    app's own UTF-8 files (icons.svg) stopped it starting at all."""
+
+    def test_the_built_app_runs_in_utf8_mode(self):
+        self.assertIn('[("X utf8", None, "OPTION")]', (ROOT / "Biomanager.spec").read_text(encoding="utf-8"))
+
+    def test_every_text_file_names_its_encoding(self):
+        unnamed = []
+        for path in [*ROOT.glob("*.py"), *(ROOT / "app").rglob("*.py")]:
+            for call in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                if not isinstance(call, ast.Call) or any(k.arg == "encoding" for k in call.keywords):
+                    continue
+                func = call.func
+                name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
+                if name in ("read_text", "write_text"):
+                    unnamed.append(f"{path.relative_to(ROOT)}:{call.lineno}")
+                elif name == "fdopen" or (name == "open" and isinstance(func, ast.Name)):
+                    mode = call.args[1] if len(call.args) > 1 else next(
+                        (k.value for k in call.keywords if k.arg == "mode"), ast.Constant("r"))
+                    if not (isinstance(mode, ast.Constant) and "b" in str(mode.value)):
+                        unnamed.append(f"{path.relative_to(ROOT)}:{call.lineno}")
+        self.assertEqual(unnamed, [], "open text files with encoding=\"utf-8\"")
 
 
 if __name__ == "__main__":

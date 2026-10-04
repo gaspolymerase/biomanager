@@ -72,10 +72,13 @@ a.datas = [entry for entry in a.datas if not entry[0].startswith(_uploads)]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# Python's UTF-8 mode, as on macOS and Linux. Without it a file opened with no
+# encoding is read in the Windows code page: GBK on a Chinese PC, where the
+# app's own UTF-8 files then fail to read and it never starts.
 exe = EXE(
     pyz,
     a.scripts,
-    [],
+    [("X utf8", None, "OPTION")],
     exclude_binaries=True,
     name="BioManager",
     debug=False,
