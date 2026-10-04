@@ -1349,6 +1349,10 @@ Each person sees it once after the update (`users.whats_new_seen`, revision
 What's new opens it again. A server knows its version from the `VERSION`
 file the release workflow writes into the image (`BIOMANAGER_VERSION`
 build arg); a build from source says `server` and shows none.
+The website names the version too (`<b data-version>` on the Download page
+and the opening, English and Chinese; `site.js` brings it up to date from
+GitHub where it can): change it with the notes, or `tests/test_whats_new.py`
+fails.
 
 **Signed builds.** The release workflow signs and notarises the Mac apps
 (`scripts/sign-macos.sh`, entitlements in `desktop/entitlements.plist`) and

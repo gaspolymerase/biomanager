@@ -100,5 +100,20 @@ class ThePopup(AppTestCase):
         self.assertNotIn('id="whats-new"', app.test_client().get("/login").get_data(as_text=True))
 
 
+class TheWebsiteNamesTheNewestVersion(unittest.TestCase):
+    """The website's download page and opening say which version the buttons
+    fetch. It's written in the page (site.js brings it up to date from GitHub
+    where it can), so a release that adds its notes here must change it too."""
+
+    def test_the_download_pages_carry_the_newest_notes_version(self):
+        newest = max(whats_new.NOTES, key=whats_new.parse)
+        site = Path(__file__).resolve().parent.parent / "site"
+        for page in ("download.html", "zh/download.html", "index.html", "zh/index.html"):
+            text = (site / page).read_text(encoding="utf-8")
+            self.assertEqual(re.findall(r"<b data-version>([^<]*)</b>", text), [newest], page)
+        for page in ("download.html", "zh/download.html"):
+            self.assertIn(f"/releases/tag/v{newest}", (site / page).read_text(encoding="utf-8"), page)
+
+
 if __name__ == "__main__":
     unittest.main()
