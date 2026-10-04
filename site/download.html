@@ -83,6 +83,10 @@
               <span class="dl-os">Linux</span><span class="dl-sub">AppImage, x86-64 · <span class="dl-alt">or <u data-href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.tar.gz">.tar.gz</u></span></span>
             </a>
           </div>
+          <div class="callout warn" id="windows-unzip"><b>Windows: extract the zip before you open BioManager</b>Right-click
+            <b>BioManager-Windows.zip</b> → <b>Extract All</b> (in WinRAR or 7-Zip, <b>Extract here</b>), then open
+            <b>BioManager.exe</b> in the <b>BioManager</b> folder it makes. Opened from inside the zip, or straight from
+            WinRAR, it shows an error instead of starting, or can't update itself later.</div>
           <div class="mobile-dl">
             <div class="card">
               <span class="ic ic-green"><svg aria-hidden="true"><use href="assets/icons.svg#phone"/></svg></span>
@@ -114,7 +118,7 @@
       </div>
 
       <div class="steps">
-        <div class="step rise"><span>1</span><div><h4>Unzip and move it</h4><p>On a Mac, drag <b>BioManager</b> into Applications. On Windows, extract the folder and open <b>BioManager.exe</b>. On Linux, mark the AppImage executable and open it.</p></div></div>
+        <div class="step rise"><span>1</span><div><h4>Unzip and move it</h4><p>On a Mac, drag <b>BioManager</b> into Applications. On Windows, extract the whole zip first (right-click → <b>Extract All</b>), then open <b>BioManager.exe</b> in the extracted folder, not from inside the zip. On Linux, mark the AppImage executable and open it.</p></div></div>
         <div class="step rise"><span>2</span><div><h4>Open it the first time</h4><p>macOS: <b>right-click → Open</b>, then Open. Windows: <b>More info → Run anyway</b>. They ask once, because the app isn't signed by Apple or Microsoft.</p></div></div>
         <div class="step rise"><span>3</span><div><h4>Set up your lab</h4><p>Create your account (the first is the admin) and tick what your lab keeps. BioManager makes just those databases, then <b>Getting started</b> walks you through the first steps. The <a href="guide.html">user guide</a> has the rest.</p></div></div>
       </div>
@@ -151,6 +155,19 @@
         <p>Mark it executable first (right-click → Properties → Allow executing, or <code>chmod +x BioManager-Linux.AppImage</code>).
           If it still won't start, your system may lack FUSE: install <code>libfuse2</code>, or use the .tar.gz and run
           <code>BioManager/BioManager</code>.</p></details>
+      <details><summary>Windows: an error appears instead of BioManager.</summary>
+        <p>Messages such as <i>Unhandled exception in script</i>, <i>Failed to load Python DLL</i> or <i>'gbk' codec can't
+          decode</i> mean one of these:</p>
+        <ul>
+          <li><b>It was opened from inside the zip.</b> Close it, right-click the zip → <b>Extract All</b>, and open
+            <b>BioManager.exe</b> in the extracted folder.</li>
+          <li><b>It is version 1.0.5 or older on a Windows set to Chinese, Japanese or Korean.</b> Those versions don't
+            start there. Download the latest version above: an old copy that never opened can't offer the update itself.</li>
+          <li><b>Antivirus removed some of its files</b> (360, Huorong and others sometimes do, because the app isn't
+            signed). Allow BioManager in the antivirus, then extract the zip again.</li>
+        </ul>
+        <p>Still stuck? <a href="https://github.com/gaspolymerase/biomanager/issues">Open an issue</a> with a screenshot
+          of the message.</p></details>
       <details><summary>Windows 10: BioManager opened in my web browser.</summary>
         <p>Its window needs Microsoft Edge WebView2, a free part of Windows that Windows 11 includes and some Windows 10 PCs
           lack. BioManager offers to download it from Microsoft (choose Yes) and works in your browser meanwhile; leave its
