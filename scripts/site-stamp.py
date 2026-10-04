@@ -36,8 +36,8 @@ def stamped_css() -> str:
 
 def stamped_page(text: str, hashes: dict[str, str]) -> str:
     for name, h in hashes.items():
-        # ../style.css, assets/icons.svg#star, site.js?v=old … → name?v=h
-        text = re.sub(r'((?:href|src)="(?:\.\./)*)' + re.escape(name) + r'(?:\?v=[0-9a-f]+)?(?=[#"])',
+        # ../style.css, /style.css, assets/icons.svg#star, site.js?v=old … → name?v=h
+        text = re.sub(r'((?:href|src)="(?:/|(?:\.\./)*))' + re.escape(name) + r'(?:\?v=[0-9a-f]+)?(?=[#"])',
                       lambda m: f"{m.group(1)}{name}?v={h}", text)
     return text
 
