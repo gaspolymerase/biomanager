@@ -56,6 +56,7 @@ from sqlalchemy import String, Text, create_engine, func, select, text
 
 from . import lab, security
 from .db import Base, SessionLocal, engine
+from .i18n import gettext
 from .models import EncryptedText, LabCopyKey, UserAccount
 from .paths import data_dir, uploads_dir
 
@@ -130,7 +131,7 @@ def make_key():
         if not may_keep_copies(s, g.user):
             abort(403)
         if not label:
-            flash("Say which computer the key is for, e.g. “Lab iMac”.", "error")
+            flash(gettext("Say which computer the key is for, e.g. “Lab iMac”."), "error")
             return redirect(url_for("settings") + "#lab-copies")
         key = new_key()
         s.add(LabCopyKey(user_id_fk=g.user.id, label=label, key_hash=key_hash(key)))
@@ -152,7 +153,8 @@ def revoke_key(key_id: int):
         if k.revoked_at is None:
             k.revoked_at = datetime.utcnow()
             s.commit()
-        flash(f"The key for {k.label} no longer works. Copies already on that computer stay there.", "success")
+        flash(gettext("The key for %(name)s no longer works. Copies already on that computer stay there.", name=k.label),
+              "success")
     return redirect(url_for("settings") + "#lab-copies")
 
 
@@ -670,9 +672,10 @@ def configure():
         s.commit()
     if server and (key or request.form.get("copy_now")):
         threading.Thread(target=_pull_in_app, args=(current_app._get_current_object(),), daemon=True).start()
-        flash("Saved. Making the first copy now…", "success")
+        flash(gettext("Saved. Making the first copy now…"), "success")
     else:
-        flash("Saved." if server else "This computer no longer keeps copies. Those already here stay.", "success")
+        flash(gettext("Saved.") if server else gettext("This computer no longer keeps copies. Those already here stay."),
+              "success")
     return redirect(url_for("settings") + "#lab-copy")
 
 

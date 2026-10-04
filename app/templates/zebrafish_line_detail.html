@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block page_title %}Line · {{ line.name }}{% endblock %}
+{% block page_title %}{{ _('Line') }} · {{ line.name }}{% endblock %}
 {% block page_heading %}{{ line.name }}{% endblock %}
-{% block page_subtitle %}Zebrafish line{% if line.zfin_name %} · {{ line.zfin_name }}{% endif %}{% if line.background %} · {{ line.background }}{% endif %}{% endblock %}
+{% block page_subtitle %}{{ _('Zebrafish line') }}{% if line.zfin_name %} · {{ line.zfin_name }}{% endif %}{% if line.background %} · {{ line.background }}{% endif %}{% endblock %}
 {% block page_actions %}
-  {% if line.owner %}<span class="flex items-center gap-1.5 text-[12px] text-muted">Owner {{ line.owner | owner_badge }}</span>{% endif %}
-  <a class="btn" href="{{ url_for('zebrafish', view='lines') }}">{{ icon('chevron-left') }} All lines</a>
+  {% if line.owner %}<span class="flex items-center gap-1.5 text-[12px] text-muted">{{ _('Owner') }} {{ line.owner | owner_badge }}</span>{% endif %}
+  <a class="btn" href="{{ url_for('zebrafish', view='lines') }}">{{ icon('chevron-left') }} {{ _('All lines') }}</a>
 {% endblock %}
 
 {% block content %}
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
   <div class="flex flex-col gap-4">
     <section class="card overflow-hidden">
-      <header class="card-head border-b border-sand-100 px-4 py-3"><h2>{{ icon('sitemap') }} Founder lineage</h2></header>
+      <header class="card-head border-b border-sand-100 px-4 py-3"><h2>{{ icon('sitemap') }} {{ _('Founder lineage') }}</h2></header>
       <div class="lineage">
         {% for a in ancestors %}
           <a class="lineage-node" href="{{ url_for('zebrafish_line_detail', line_id=a.id) }}">{{ a.name }}</a>
@@ -29,32 +29,32 @@
         {% endif %}
       </div>
       {% if not ancestors and not children %}
-        <p class="px-4 pb-4 text-[12.5px] text-muted">No parent or child lines are recorded for this line.</p>
+        <p class="px-4 pb-4 text-[12.5px] text-muted">{{ _('No parent or child lines are recorded for this line.') }}</p>
       {% endif %}
     </section>
 
     <section class="card overflow-hidden">
-      <header class="card-head border-b border-sand-100 px-4 py-3"><h2>{{ icon('edit') }} Details</h2></header>
+      <header class="card-head border-b border-sand-100 px-4 py-3"><h2>{{ icon('edit') }} {{ _('Details') }}</h2></header>
       {% if not editable %}<p class="org-locked-note mx-4 mt-4">{{ icon('lock') }} {{ denied }}</p>{% endif %}
       <datalist id="line-owners">{% for u in usernames %}<option value="{{ u }}"></option>{% endfor %}</datalist>
       <form method="post" action="{{ url_for('zebrafish_update_line', line_id=line.id) }}" class="modal-grid p-4">
         <fieldset class="contents" {% if not editable %}disabled{% endif %}>
-        <label>Name <input name="name" value="{{ line.name }}"></label>
-        <label>Owner <input name="owner" value="{{ line.owner }}" list="line-owners" placeholder="nobody"></label>
-        <label>ZFIN name <input name="zfin_name" value="{{ line.zfin_name }}"></label>
-        <label>Background <input name="background" value="{{ line.background }}"></label>
-        <label>Allele <input name="allele" value="{{ line.allele }}"></label>
-        <label>IACUC # <input name="iacuc_protocol" value="{{ line.iacuc_protocol }}"></label>
-        <label>Parent line
+        <label>{{ _('Name') }} <input name="name" value="{{ line.name }}"></label>
+        <label>{{ _('Owner') }} <input name="owner" value="{{ line.owner }}" list="line-owners" placeholder="{{ _('nobody') }}"></label>
+        <label>{{ _('ZFIN name') }} <input name="zfin_name" value="{{ line.zfin_name }}"></label>
+        <label>{{ _('Background') }} <input name="background" value="{{ line.background }}"></label>
+        <label>{{ _('Allele') }} <input name="allele" value="{{ line.allele }}"></label>
+        <label>{{ _('IACUC #') }} <input name="iacuc_protocol" value="{{ line.iacuc_protocol }}"></label>
+        <label>{{ _('Parent line') }}
           <select name="parent_line_id_fk">
-            <option value="">None</option>
+            <option value="">{{ _('None') }}</option>
             {% for other in all_lines if other.id != line.id %}<option value="{{ other.id }}" {% if line.parent_line_id_fk == other.id %}selected{% endif %}>{{ other.name }}</option>{% endfor %}
           </select>
         </label>
-        <label class="col-span-full">Transgenes <input name="transgene_summary" value="{{ line.transgene_summary }}"></label>
-        <label class="col-span-full">Founder notes <textarea name="founder_info" rows="3">{{ line.founder_info }}</textarea></label>
-        <label class="col-span-full">Notes <textarea name="notes" rows="3">{{ line.notes }}</textarea></label>
-        {% if editable %}<button type="submit">Save</button>{% endif %}
+        <label class="col-span-full">{{ _('Transgenes') }} <input name="transgene_summary" value="{{ line.transgene_summary }}"></label>
+        <label class="col-span-full">{{ _('Founder notes') }} <textarea name="founder_info" rows="3">{{ line.founder_info }}</textarea></label>
+        <label class="col-span-full">{{ _('Notes') }} <textarea name="notes" rows="3">{{ line.notes }}</textarea></label>
+        {% if editable %}<button type="submit">{{ _('Save') }}</button>{% endif %}
         </fieldset>
       </form>
     </section>
@@ -62,7 +62,7 @@
 
   <section class="card self-start overflow-hidden">
     <header class="card-head border-b border-sand-100 px-4 py-3">
-      <h2>{{ icon('tank') }} Tanks</h2>
+      <h2>{{ icon('tank') }} {{ _('Tanks') }}</h2>
       <span class="badge badge-quiet">{{ line_tanks|length }}</span>
     </header>
     {% if line_tanks %}
@@ -70,13 +70,13 @@
         {% for t in line_tanks %}
           <li class="flex items-center gap-2 px-4 py-2.5">
             <span class="ident font-semibold text-ink">{{ t.tank_id }}</span>
-            <span class="status-pill-static" data-status="{{ t.purpose }}">{{ t.purpose }}</span>
+            <span class="status-pill-static" data-status="{{ t.purpose }}">{{ t.purpose|tr('zebrafish') }}</span>
             {% if t.rack %}<span class="ml-auto text-[12px] text-muted">{{ t.rack.name }}{% if tank_positions.get(t.id) %} · {{ tank_positions[t.id] }}{% endif %}</span>{% endif %}
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="px-4 py-4 text-[12.5px] text-muted">No tanks hold this line right now.</p>
+      <p class="px-4 py-4 text-[12.5px] text-muted">{{ _('No tanks hold this line right now.') }}</p>
     {% endif %}
   </section>
 </div>

@@ -13,9 +13,10 @@ from datetime import date, timedelta
 
 from sqlalchemy import func, select
 
-from . import positions
+from . import i18n, positions
 from . import stocks as presets
 from .db import SessionLocal
+from .i18n import gettext, pgettext, translate_value
 from .models import (
     StockGenotype, StockIncubator, StockModule, StockRack, StockUnit,
 )
@@ -26,6 +27,12 @@ from .models import (
 # ---------------------------------------------------------------------------
 
 DEFAULT_DAYS = {"flip": 14, "develop": 10, "collect": 2}
+
+
+def _w(text) -> str:
+    """A stock word from the database's settings (vial, rack, Flip, a
+    purpose…) in the page's language; a lab's own word stays as typed."""
+    return translate_value(text, "stocks")
 
 
 def norm_temp(raw) -> str:
@@ -236,22 +243,32 @@ def flip_status(mv: ModuleView, rack: StockRack, today: date | None = None) -> d
     """The rack's last flip and when the next is due, for the line above its
     grid: {"text", "tone" ("", "due" or "overdue"), "title"}."""
     today = today or date.today()
-    verb = mv.s.get("flip_verb", "Flip")
-    done = mv.s.get("flip_done", f"{verb}ped")
-    every = flip_interval(mv, rack)
-    title = f"Every {every} days at {rack_temperature(mv, rack)} °C" + (" (set on this rack)" if rack.flip_days else "")
+    raw_verb = mv.s.get("flip_verb", "Flip")
+    verb = _w(raw_verb).lower()
+    done = _w(mv.s.get("flip_done", f"{raw_verb}ped"))
+    values = {"n": flip_interval(mv, rack), "temp": rack_temperature(mv, rack)}
+    title = (gettext("Every %(n)s days at %(temp)s °C (set on this rack)", **values) if rack.flip_days
+             else gettext("Every %(n)s days at %(temp)s °C", **values))
     if rack.last_flipped_on is None:
-        return {"text": f"No {verb.lower()} recorded yet", "tone": "due",
-                "title": f"{title}. Set the last {verb.lower()} date under Edit."}
+        return {"text": gettext("No %(verb)s recorded yet", verb=verb), "tone": "due",
+                "title": gettext("%(title)s. Set the last %(verb)s date under Edit.", title=title, verb=verb)}
     last = rack.last_flipped_on
     ago = (today - last).days
-    when = f"{done} {last:%a %d %b}" + (" (today)" if ago == 0 else f" ({ago} d ago)" if ago > 0 else "")
+    on = i18n.strftime(last, "%a %d %b")
+    if ago == 0:
+        when = gettext("%(done)s %(on)s (today)", done=done, on=on)
+    elif ago > 0:
+        when = gettext("%(done)s %(on)s (%(n)s d ago)", done=done, on=on, n=ago)
+    else:
+        when = gettext("%(done)s %(on)s", done=done, on=on)
     due = next_flip(mv, rack)
     if due < today:
-        return {"text": f"{when} · {verb.lower()} {(today - due).days} d overdue", "tone": "overdue", "title": title}
+        return {"text": gettext("%(when)s · %(verb)s %(n)s d overdue", when=when, verb=verb, n=(today - due).days),
+                "tone": "overdue", "title": title}
     if due == today:
-        return {"text": f"{when} · {verb.lower()} due today", "tone": "due", "title": title}
-    return {"text": f"{when} · next {due:%a %d %b}", "tone": "", "title": title}
+        return {"text": gettext("%(when)s · %(verb)s due today", when=when, verb=verb), "tone": "due", "title": title}
+    return {"text": gettext("%(when)s · next %(on)s", when=when, on=i18n.strftime(due, "%a %d %b")),
+            "tone": "", "title": title}
 
 
 def unit_stage(mv: ModuleView, unit: StockUnit, today: date | None = None) -> tuple[str, str]:
@@ -264,13 +281,14 @@ def unit_stage(mv: ModuleView, unit: StockUnit, today: date | None = None) -> tu
         return "", ""
     today = today or date.today()
     if unit.ready_on and unit.ready_on > today:
-        return "young", f"{mv.s.get('ready_label', 'Ready')} {unit.ready_on:%d %b}"
+        return "young", gettext("%(label)s %(on)s", label=_w(mv.s.get("ready_label", "Ready")),
+                                on=i18n.strftime(unit.ready_on, "%d %b"))
     started = [d for d in (unit.set_up_on, unit.rack.last_flipped_on if unit.rack else None) if d]
     every = flip_interval(mv, unit.rack) if unit.rack else mv.interval("flip", rack_temperature(mv, None))
     if started and every and (today - max(started)).days > every:
-        verb = mv.s.get("flip_verb", "Flip").lower()
-        return "old", f"{(today - max(started)).days} days old, past its {every}-day {verb}"
-    return "adult", "adult"
+        return "old", gettext("%(age)s days old, past its %(every)s-day %(verb)s", age=(today - max(started)).days,
+                              every=every, verb=_w(mv.s.get("flip_verb", "Flip")).lower())
+    return "adult", pgettext("stocks", "adult")
 
 
 # ---------------------------------------------------------------------------
@@ -323,7 +341,7 @@ def apply_position(session, unit: StockUnit, rack_raw, position_raw) -> str | No
         return None
     rack = session.get(StockRack, int(rack_raw)) if rack_raw.isdigit() else None
     if rack is None or rack.module_id_fk != unit.module_id_fk:
-        return "That rack is not part of this database."
+        return gettext("That rack is not part of this database.")
     if not position_raw:
         if unit.rack_id_fk == rack.id and unit.rack_row:
             return None
@@ -331,17 +349,22 @@ def apply_position(session, unit: StockUnit, rack_raw, position_raw) -> str | No
         unit.rack_id_fk = rack.id
         unit.rack_row, unit.rack_col = cells[0] if cells else (None, None)
         unit.rack = rack
-        return None if cells else f"{rack.name} is full; the {unit.id and 'record' or 'new one'} is in it but unplaced."
+        if cells:
+            return None
+        return (gettext("%(rack)s is full; the record is in it but unplaced.", rack=rack.name) if unit.id
+                else gettext("%(rack)s is full; the new one is in it but unplaced.", rack=rack.name))
     cell = positions.parse(position_raw, rack.naming, rack.rows, rack.cols)
     if cell is None:
         first = positions.label(1, 1, rack.naming, rack.cols)
         last = positions.label(rack.rows, rack.cols, rack.naming, rack.cols)
-        return f"“{position_raw}” is not a position in {rack.name} ({first}–{last})."
+        return gettext("“%(position)s” is not a position in %(rack)s (%(first)s–%(last)s).",
+                       position=position_raw, rack=rack.name, first=first, last=last)
     holder = session.scalar(select(StockUnit).where(
         StockUnit.rack_id_fk == rack.id, StockUnit.rack_row == cell[0], StockUnit.rack_col == cell[1],
         StockUnit.active.is_(True), StockUnit.id != (unit.id or 0)))
     if holder is not None:
-        return f"{rack.name} · {position_raw} already holds #{holder.number}. Drag on the grid to swap."
+        return gettext("%(rack)s · %(position)s already holds #%(number)s. Drag on the grid to swap.",
+                       rack=rack.name, position=position_raw, number=holder.number)
     unit.rack_id_fk, (unit.rack_row, unit.rack_col) = rack.id, cell
     unit.rack = rack
     return None
@@ -389,7 +412,7 @@ def collect_eggs(session, mv: ModuleView, cross: StockUnit, user: str, today: da
         if cells:
             progeny.rack_row, progeny.rack_col = cells[0]
         else:
-            note = f"{cross.rack.name} is full, so it has no position yet."
+            note = gettext("%(rack)s is full, so it has no position yet.", rack=cross.rack.name)
     cross.last_collected_on = today
     session.flush()
     return progeny, note
@@ -412,15 +435,20 @@ def schedule(session, mv: ModuleView, today: date | None = None, horizon: int = 
         due = next_flip(mv, rack)
         count = session.scalar(select(func.count(StockUnit.id)).where(
             StockUnit.rack_id_fk == rack.id, StockUnit.active.is_(True))) or 0
+        verb = _w(mv.s["flip_verb"])
+        noun = _w(mv.unit if count == 1 else mv.units)
         if due is None and count:
             out.append({"kind": "flip", "due": today, "rack": rack, "unset": True,
-                        "title": f"{mv.s['flip_verb']} {rack.name}",
-                        "detail": f"{count} {mv.unit if count == 1 else mv.units}; no {mv.s['flip_verb'].lower()} date recorded yet"})
+                        "title": gettext("%(verb)s %(rack)s", verb=verb, rack=rack.name),
+                        "detail": gettext("%(count)s %(units)s; no %(verb)s date recorded yet",
+                                          count=count, units=noun, verb=verb.lower())})
         elif due is not None and due <= until and count:
             out.append({"kind": "flip", "due": due, "rack": rack,
-                        "title": f"{mv.s['flip_verb']} {rack.name}",
-                        "detail": f"{count} {mv.unit if count == 1 else mv.units} · every {flip_interval(mv, rack)} days at "
-                                  f"{rack_temperature(mv, rack)} °C · last {rack.last_flipped_on:%d %b}"})
+                        "title": gettext("%(verb)s %(rack)s", verb=verb, rack=rack.name),
+                        "detail": gettext("%(count)s %(units)s · every %(n)s days at %(temp)s °C · last %(on)s",
+                                          count=count, units=noun, n=flip_interval(mv, rack),
+                                          temp=rack_temperature(mv, rack),
+                                          on=i18n.strftime(rack.last_flipped_on, "%d %b"))})
     units = list(session.scalars(select(StockUnit).where(
         StockUnit.module_id_fk == mv.id, StockUnit.active.is_(True))))
     for u in units:
@@ -431,19 +459,26 @@ def schedule(session, mv: ModuleView, today: date | None = None, horizon: int = 
                 due = last + timedelta(days=mv.interval("collect", unit_temperature(mv, u)))
                 if due <= until:
                     out.append({"kind": "collect", "due": due, "unit": u,
-                                "title": f"{mv.s['collect_verb']}: {code}",
-                                "detail": cross_label(u) + (f" · last {u.last_collected_on:%d %b}" if u.last_collected_on else " · first collection")})
+                                "title": gettext("%(verb)s: %(code)s", verb=_w(mv.s["collect_verb"]), code=code),
+                                "detail": (gettext("%(cross)s · last %(on)s", cross=cross_label(u),
+                                                   on=i18n.strftime(u.last_collected_on, "%d %b"))
+                                           if u.last_collected_on
+                                           else gettext("%(cross)s · first collection", cross=cross_label(u)))})
         if u.ready_on is not None and u.ready_on <= until:
-            parent = f" from {mv.s['code_prefix']}{u.parent.number}" if u.parent is not None else ""
+            detail = (gettext("%(genotype)s from %(code)s", genotype=u.genotype or "",
+                              code=f"{mv.s['code_prefix']}{u.parent.number}")
+                      if u.parent is not None else (u.genotype or ""))
             out.append({"kind": "ready", "due": u.ready_on, "unit": u,
-                        "title": f"{mv.s['ready_label']}: {code}", "detail": (u.genotype or "") + parent})
+                        "title": gettext("%(verb)s: %(code)s", verb=_w(mv.s["ready_label"]), code=code),
+                        "detail": detail})
         if u.shift_on is not None and u.shifted_on is None and u.shift_on <= until:
             out.append({"kind": "shift", "due": u.shift_on, "unit": u,
-                        "title": f"Shift {code} to {u.shift_to or '?'} °C",
-                        "detail": f"{u.genotype} · now at {unit_temperature(mv, u)} °C"})
+                        "title": gettext("Shift %(code)s to %(temp)s °C", code=code, temp=u.shift_to or "?"),
+                        "detail": gettext("%(genotype)s · now at %(temp)s °C", genotype=u.genotype,
+                                          temp=unit_temperature(mv, u))})
         if u.score_on is not None and u.score_on <= until and not u.attrs_dict.get("scored_on"):
             out.append({"kind": "score", "due": u.score_on, "unit": u,
-                        "title": f"Score {code}", "detail": u.genotype})
+                        "title": gettext("Score %(code)s", code=code), "detail": u.genotype})
     for item in out:
         item["overdue"] = item["due"] < today
         item["today"] = item["due"] == today

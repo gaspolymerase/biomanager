@@ -19,6 +19,7 @@ from sqlalchemy import func, select
 
 from . import access, audit, positions
 from .db import SessionLocal
+from .i18n import gettext
 from .models import (
     CageRecord, FishRack, InventoryItem, InventoryModule, InventoryRack, MouseRack, OrganismModule, OrgHousing,
     OrgLocation, PlasmidBox, PlasmidRecord, StockIncubator, StockModule, StockRack, StockUnit, TankRecord,
@@ -136,7 +137,7 @@ def assign():
     creator = (request.form.get("creator") or "").strip()
     with SessionLocal() as session:
         if creator and creator not in _usernames(session):
-            flash(f"“{creator}” is not an active lab member.", "error")
+            flash(gettext("“%(who)s” is not an active lab member.", who=creator), "error")
             return redirect(url_for("admin_racks.index"))
         row_id = request.form.get("id", "").strip()
         if row_id.isdigit():
@@ -149,14 +150,20 @@ def assign():
                     if not (r.created_by or "").strip() and (not database or kind.database(session, r) == database)]
         rows = [r for r in rows if (r.created_by or "") != creator]
         if not rows:
-            flash("Nothing to change.", "info")
+            flash(gettext("Nothing to change."), "info")
             return redirect(url_for("admin_racks.index"))
         who = creator or "admins only"
         with audit.batch(session, "update", f"{kind.label}: looked after by {who} ×{len(rows)}", kind.table):
             for r in rows:
                 r.created_by = creator
         session.commit()
-        names = ", ".join(r.name for r in rows[:4]) + (f" and {len(rows) - 4} more" if len(rows) > 4 else "")
-        flash(f"{names}: now {'looked after by ' + creator if creator else 'admin-only'}. "
-              f"Undo from Batch history if that was a mistake.", "success")
+        names = ", ".join(r.name for r in rows[:4])
+        if len(rows) > 4:
+            names = gettext("%(names)s and %(n)s more", names=names, n=len(rows) - 4)
+        if creator:
+            flash(gettext("%(names)s: now looked after by %(who)s. Undo from Batch history if that was a mistake.",
+                          names=names, who=creator), "success")
+        else:
+            flash(gettext("%(names)s: now admin-only. Undo from Batch history if that was a mistake.", names=names),
+                  "success")
     return redirect(url_for("admin_racks.index"))

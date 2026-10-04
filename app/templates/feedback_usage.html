@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block page_title %}Usage report{% endblock %}
-{% block page_heading %}Usage report{% endblock %}
-{% block page_subtitle %}The last {{ weeks }} weeks, in counts only: no names, nothing anyone wrote{% endblock %}
+{% block page_title %}{{ _('Usage report') }}{% endblock %}
+{% block page_heading %}{{ _('Usage report') }}{% endblock %}
+{% block page_subtitle %}{{ _('The last %(weeks)s weeks, in counts only: no names, nothing anyone wrote', weeks=weeks) }}{% endblock %}
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('feedback.index') }}">{{ icon('back') }} Feedback</a>
+  <a class="btn" href="{{ url_for('feedback.index') }}">{{ icon('back') }} {{ _('Feedback') }}</a>
 {% endblock %}
 
 {% block content %}
 <p class="mb-4 max-w-[760px] text-[13px] text-muted">
-  For a pilot: how much the lab uses BioManager, week by week — the people who changed something, and
+  {% trans %}For a pilot: how much the lab uses BioManager, week by week — the people who changed something, and
   the changes in each area from the change history. This report is not sent anywhere. To share it, copy
-  the text at the bottom into an email.
+  the text at the bottom into an email.{% endtrans %}
 </p>
 
 <section class="data-table-card mb-6">
@@ -21,17 +21,17 @@
     <table class="dt" style="min-width: 900px;">
       <thead>
         <tr>
-          <th>Week of</th>
-          <th>People</th>
-          {% for area in report.areas %}<th>{{ area }}</th>{% endfor %}
-          <th>Notebook pages</th>
-          <th>Calendar events</th>
+          <th>{{ _('Week of') }}</th>
+          <th>{{ _('People') }}</th>
+          {% for area in report.areas %}<th>{{ area|tr }}</th>{% endfor %}
+          <th>{{ _('Notebook pages') }}</th>
+          <th>{{ _('Calendar events') }}</th>
         </tr>
       </thead>
       <tbody>
         {% for row in report.weeks %}
           <tr>
-            <td>{{ row.week.strftime('%b %d') }}</td>
+            <td>{{ row.week|date_format('%b %d') }}</td>
             <td class="font-medium">{{ row.people }}</td>
             {% for area in report.areas %}<td>{{ '{:,}'.format(row.areas[area]) if row.areas[area] else '·' }}</td>{% endfor %}
             <td>{{ row.pages or '·' }}</td>
@@ -43,54 +43,58 @@
   </div>
 </section>
 
-<h2 class="mb-2 text-[14px] font-semibold">In the lab now</h2>
+<h2 class="mb-2 text-[14px] font-semibold">{{ _('In the lab now') }}</h2>
 <p class="mb-6 text-[13px]">
-  {% for name, value in report.now %}<span class="mr-4 inline-block">{{ name }} <b>{{ '{:,}'.format(value) }}</b></span>{% endfor %}
+  {% for name, value in report.now %}<span class="mr-4 inline-block">{{ name|tr }} <b>{{ '{:,}'.format(value) }}</b></span>{% endfor %}
 </p>
 
-<h2 class="mb-2 text-[14px] font-semibold">As text</h2>
+<h2 class="mb-2 text-[14px] font-semibold">{{ _('As text') }}</h2>
 <textarea class="w-full font-mono text-[12px]" rows="{{ report.weeks | length + 8 }}" readonly data-usage-text>{{ text }}</textarea>
 
 <article class="card mt-6 max-w-[760px]" id="heartbeat">
   <header class="card-head">
-    <h2>{{ icon('heart-pulse') }} Anonymous counts for BioManager's makers</h2>
+    <h2>{{ icon('heart-pulse') }} {{ _("Anonymous counts for BioManager's makers") }}</h2>
     {% if heartbeat.state == 'on' %}
-      <span class="badge badge-ok">on</span>
+      <span class="badge badge-ok">{{ _('on') }}</span>
     {% elif heartbeat.state in ('off', 'server-off') %}
-      <span class="badge badge-quiet">off</span>
+      <span class="badge badge-quiet">{{ _('off') }}</span>
     {% else %}
-      <span class="badge badge-quiet">not set up</span>
+      <span class="badge badge-quiet">{{ _('not set up') }}</span>
     {% endif %}
   </header>
   <div class="flex flex-col gap-3 p-4">
     <p class="text-[12.5px] leading-snug text-muted">
-      Once a day, BioManager tells its makers that this lab uses it: the version, how many members and how many
+      {% if config.get('LOCAL_SETUP') %}{% trans %}Once a day, BioManager tells its makers that this lab uses it: the version, how many members and how many
       were active this week (as ranges), and which databases and functions are on. No names, no email addresses,
-      nothing anyone wrote, not what your databases are called, not this {{ 'computer' if config.get('LOCAL_SETUP') else 'server' }}'s
-      address. It goes to PostHog, which is asked not to work out where it came from. Below is exactly what is sent.
+      nothing anyone wrote, not what your databases are called, not this computer's
+      address. It goes to PostHog, which is asked not to work out where it came from. Below is exactly what is sent.{% endtrans %}
+      {%- else %}{% trans %}Once a day, BioManager tells its makers that this lab uses it: the version, how many members and how many
+      were active this week (as ranges), and which databases and functions are on. No names, no email addresses,
+      nothing anyone wrote, not what your databases are called, not this server's
+      address. It goes to PostHog, which is asked not to work out where it came from. Below is exactly what is sent.{% endtrans %}{% endif %}
     </p>
     <p class="text-[12.5px] leading-snug">
       {% if heartbeat.state == 'server-off' %}
-        Off (set by the server): <code class="ident">BIOMANAGER_TELEMETRY=0</code> or <code class="ident">DO_NOT_TRACK=1</code>
-        is set where BioManager runs, so nothing is sent whatever the switch says.
+        {% trans %}Off (set by the server): <code class="ident">BIOMANAGER_TELEMETRY=0</code> or <code class="ident">DO_NOT_TRACK=1</code>
+        is set where BioManager runs, so nothing is sent whatever the switch says.{% endtrans %}
       {% elif heartbeat.state == 'no-key' %}
-        Not set up in this build: this copy of BioManager has nowhere to send the counts, so nothing is sent.
+        {{ _('Not set up in this build: this copy of BioManager has nowhere to send the counts, so nothing is sent.') }}
       {% elif heartbeat.state == 'off' %}
-        Off: nothing is sent.
+        {{ _('Off: nothing is sent.') }}
       {% elif heartbeat.last_sent %}
-        Last sent {{ heartbeat.last_sent | when }}.
+        {{ _('Last sent %(when)s.', when=heartbeat.last_sent | when) }}
       {% else %}
-        Not sent yet.
+        {{ _('Not sent yet.') }}
       {% endif %}
     </p>
     {% if heartbeat.state != 'server-off' %}
       <form method="post" action="{{ url_for('feedback.set_heartbeat') }}">
         <input type="hidden" name="enabled" value="{{ '0' if heartbeat.lab_on else '1' }}">
-        <button type="submit" class="btn btn-sm{% if heartbeat.lab_on %} btn-ghost{% endif %}">{{ 'Switch off' if heartbeat.lab_on else 'Switch on' }}</button>
+        <button type="submit" class="btn btn-sm{% if heartbeat.lab_on %} btn-ghost{% endif %}">{{ _('Switch off') if heartbeat.lab_on else _('Switch on') }}</button>
       </form>
     {% endif %}
     <div class="inset">
-      <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ 'What is sent' if heartbeat.state == 'on' else 'What would be sent' }}</p>
+      <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ _('What is sent') if heartbeat.state == 'on' else _('What would be sent') }}</p>
       <pre class="overflow-x-auto whitespace-pre text-[11.5px] leading-relaxed text-ink-soft" data-heartbeat-json><code>{{ heartbeat_json }}</code></pre>
     </div>
   </div>

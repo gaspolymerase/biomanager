@@ -2,33 +2,36 @@
 {% from "_icon_picker.html" import icon_picker with context %}
 
 {% set m = module %}
+{% set mlabel = m.label|tr %}
+{% set noun = m.item_noun|tr('inventory') %}
+{% set nouns = m.item_noun_plural|tr('inventory') %}
 
-{% block page_title %}{{ m.label }} · Configure{% endblock %}
-{% block page_heading %}Configure {{ m.label }}{% endblock %}
-{% block page_subtitle %}Rename it, choose what it tracks and edit its columns. Nothing already entered is lost when a column is hidden or removed.{% endblock %}
+{% block page_title %}{{ _('%(name)s · Configure', name=mlabel) }}{% endblock %}
+{% block page_heading %}{{ _('Configure %(name)s', name=mlabel) }}{% endblock %}
+{% block page_subtitle %}{{ _('Rename it, choose what it tracks and edit its columns. Nothing already entered is lost when a column is hidden or removed.') }}{% endblock %}
 {% block page_shell_class %}shell-page workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">{{ icon('back') }} Back to {{ m.label }}</a>
-  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('database') }} All databases</a>
+  <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">{{ icon('back') }} {{ _('Back to %(name)s', name=mlabel) }}</a>
+  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('database') }} {{ _('All databases') }}</a>
 {% endblock %}
 
 {% macro field_row(i, f) %}
   <tr data-field-row>
     <td>
       <input type="hidden" name="field_{{ i }}_key" value="{{ f.key or '' }}">
-      <input type="text" name="field_{{ i }}_label" value="{{ f.label or '' }}" placeholder="Column name" aria-label="Column name">
+      <input type="text" name="field_{{ i }}_label" value="{{ f.label or '' }}" placeholder="{{ _('Column name') }}" aria-label="{{ _('Column name') }}">
     </td>
     <td>
-      <select name="field_{{ i }}_type" aria-label="Type">
-        {% for t in field_types %}<option value="{{ t }}" {% if (f.type or 'text') == t %}selected{% endif %}>{{ {'text': 'Text', 'textarea': 'Long text', 'number': 'Number', 'date': 'Date', 'select': 'Choice', 'user': 'Person', 'url': 'Link', 'source': 'Source animal', 'plasmid': 'A plasmid'}[t] }}</option>{% endfor %}
+      <select name="field_{{ i }}_type" aria-label="{{ _('Type') }}">
+        {% for ft in field_types %}<option value="{{ ft }}" {% if (f.type or 'text') == ft %}selected{% endif %}>{{ {'text': 'Text', 'textarea': 'Long text', 'number': 'Number', 'date': 'Date', 'select': 'Choice', 'user': 'Person', 'url': 'Link', 'source': 'Source animal', 'plasmid': 'A plasmid'}[ft]|tr('field type') }}</option>{% endfor %}
       </select>
     </td>
-    <td><input type="text" name="field_{{ i }}_options" value="{{ (f.options or []) | join(', ') }}" placeholder="For Choice: a, b, c" aria-label="Choices"></td>
-    <td><input type="text" name="field_{{ i }}_icon" value="{{ f.icon or '' }}" placeholder="icon" class="w-24" aria-label="Icon"></td>
-    <td><input type="number" name="field_{{ i }}_width" value="{{ f.width or 130 }}" min="60" max="400" step="1" class="w-20" aria-label="Width"></td>
-    <td class="text-center"><input type="checkbox" name="field_{{ i }}_in_table" value="1" {% if f.in_table is not defined or f.in_table %}checked{% endif %} aria-label="Show in table"></td>
-    <td class="text-center"><input type="checkbox" name="field_{{ i }}_remove" value="1" aria-label="Remove" data-remove-toggle></td>
+    <td><input type="text" name="field_{{ i }}_options" value="{{ (f.options or []) | join(', ') }}" placeholder="{{ _('For Choice: a, b, c') }}" aria-label="{{ _('Choices') }}"></td>
+    <td><input type="text" name="field_{{ i }}_icon" value="{{ f.icon or '' }}" placeholder="{{ _('icon') }}" class="w-24" aria-label="{{ _('Icon') }}"></td>
+    <td><input type="number" name="field_{{ i }}_width" value="{{ f.width or 130 }}" min="60" max="400" step="1" class="w-20" aria-label="{{ _('Width') }}"></td>
+    <td class="text-center"><input type="checkbox" name="field_{{ i }}_in_table" value="1" {% if f.in_table is not defined or f.in_table %}checked{% endif %} aria-label="{{ _('Show in table') }}"></td>
+    <td class="text-center"><input type="checkbox" name="field_{{ i }}_remove" value="1" aria-label="{{ _('Remove') }}" data-remove-toggle></td>
   </tr>
 {% endmacro %}
 
@@ -37,14 +40,14 @@
     <td>
       <input type="hidden" name="{{ name }}_{{ i }}_was" value="{{ value }}" data-choice-was>
       <input type="text" name="{{ name }}_{{ i }}_value" value="{{ value }}" maxlength="{{ 40 if name == 'statuses' else 80 }}"
-             aria-label="Name" data-choice-value {% if not value %}placeholder="New…"{% endif %}>
+             aria-label="{{ _('Name') }}" data-choice-value {% if not value %}placeholder="{{ _('New…') }}"{% endif %}>
     </td>
-    <td class="choice-usage">{% if n %}{{ n }} {{ m.item_noun if n == 1 else m.item_noun_plural }}{% elif value %}<span class="text-sand-400">unused</span>{% endif %}</td>
-    <td class="text-center">{% if value %}<input type="checkbox" name="{{ name }}_{{ i }}_remove" value="1" aria-label="Remove {{ value }}" data-choice-remove>{% endif %}</td>
+    <td class="choice-usage">{% if n %}{{ _('%(n)s %(noun)s', n=n, noun=m.item_noun|tr('inventory') if n == 1 else m.item_noun_plural|tr('inventory')) }}{% elif value %}<span class="text-sand-400">{{ _('unused') }}</span>{% endif %}</td>
+    <td class="text-center">{% if value %}<input type="checkbox" name="{{ name }}_{{ i }}_remove" value="1" aria-label="{{ _('Remove %(value)s', value=value|tr('inventory')) }}" data-choice-remove>{% endif %}</td>
     <td class="choice-replace">
       {% if n %}
-        <label data-choice-replace hidden>{{ 'they become' if n != 1 else 'it becomes' }}
-          <select name="{{ name }}_{{ i }}_replace" aria-label="What the {{ m.item_noun_plural }} on {{ value }} become"><option value="">Pick…</option></select>
+        <label data-choice-replace hidden>{{ _('they become') if n != 1 else _('it becomes') }}
+          <select name="{{ name }}_{{ i }}_replace" aria-label="{{ _('What the %(nouns)s on %(value)s become', nouns=m.item_noun_plural|tr('inventory'), value=value|tr('inventory')) }}"><option value="">{{ _('Pick…') }}</option></select>
         </label>
       {% endif %}
     </td>
@@ -56,7 +59,7 @@
   <div class="field-label" data-choice-editor="{{ name }}">
     <span>{{ title }}</span>
     <table class="field-editor choice-editor">
-      <thead><tr><th>Name</th><th>Used by</th><th>Remove</th><th></th></tr></thead>
+      <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Used by') }}</th><th>{{ _('Remove') }}</th><th></th></tr></thead>
       <tbody data-choice-body>
         {% for v in values %}{{ choice_row(name, loop.index0, v, counts.get(v, 0)) }}{% endfor %}
         {{ choice_row(name, values|length, '', 0) }}
@@ -66,7 +69,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <button type="button" class="btn btn-sm" data-choice-add>{{ icon('plus') }} {{ add_label }}</button>
       {% if orphans %}
-        <span class="field-hint normal-case tracking-normal">Also held by {{ m.item_noun_plural }} but not listed: {{ orphans | join(', ') }}.</span>
+        <span class="field-hint normal-case tracking-normal">{{ _('Also held by %(nouns)s but not listed: %(values)s.', nouns=m.item_noun_plural|tr('inventory'), values=orphans | join(', ')) }}</span>
       {% endif %}
     </div>
     <span class="field-hint normal-case tracking-normal">{{ hint }}</span>
@@ -78,33 +81,33 @@
   <form method="post" class="flex flex-col gap-3" id="configure-form">
     <section class="card">
       <header class="card-head">
-        <h2>{{ icon('type') }} Name</h2>
-        <span class="badge badge-quiet">{{ item_count }} {{ m.item_noun if item_count == 1 else m.item_noun_plural }}</span>
+        <h2>{{ icon('type') }} {{ _('Name') }}</h2>
+        <span class="badge badge-quiet">{{ _('%(n)s %(noun)s', n=item_count, noun=noun if item_count == 1 else nouns) }}</span>
       </header>
       <div class="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label class="field-label">Name <input name="label" value="{{ m.label }}" required></label>
-        <label class="field-label">One entry is a… <input name="item_noun" value="{{ m.item_noun }}"></label>
-        <label class="field-label">Many are… <input name="item_noun_plural" value="{{ m.item_noun_plural }}"></label>
-        <label class="field-label sm:col-span-2">Description <input name="blurb" value="{{ m.blurb }}"></label>
+        <label class="field-label">{{ _('Name') }} <input name="label" value="{{ m.label }}" required></label>
+        <label class="field-label">{{ _('One entry is a…') }} <input name="item_noun" value="{{ m.item_noun }}"></label>
+        <label class="field-label">{{ _('Many are…') }} <input name="item_noun_plural" value="{{ m.item_noun_plural }}"></label>
+        <label class="field-label sm:col-span-2">{{ _('Description') }} <input name="blurb" value="{{ m.blurb }}"></label>
         <div class="sm:col-span-2 lg:col-span-3">{{ icon_picker('icon', m.icon, choices=icons) }}</div>
         <label class="flex items-center gap-2 text-[12.5px] sm:col-span-2 lg:col-span-3">
           <input type="hidden" name="enabled" value="0">
           <input type="checkbox" name="enabled" value="1" {% if m.enabled %}checked{% endif %}>
-          Show in the sidebar (unticked hides it without deleting anything)
+          {{ _('Show in the sidebar (unticked hides it without deleting anything)') }}
         </label>
       </div>
     </section>
 
     <section class="card">
-      <header class="card-head"><h2>{{ icon('sliders') }} What it tracks</h2></header>
+      <header class="card-head"><h2>{{ icon('sliders') }} {{ _('What it tracks') }}</h2></header>
       <div class="grid grid-cols-1 gap-2 p-4 sm:grid-cols-2">
         {% for key, blurb in features.items() %}
           <label class="flex cursor-pointer gap-2.5 rounded-xl border border-hairline bg-sand-50 px-3 py-2.5
                         transition-colors hover:border-sand-300 has-checked:border-brand-300 has-checked:bg-brand-50/50">
             <input type="checkbox" name="features" value="{{ key }}" class="mt-0.5" {% if m.has(key) %}checked{% endif %}>
             <span class="min-w-0">
-              <span class="block text-[12.5px] font-semibold text-ink">{{ {'storage': 'Boxes and positions', 'board': 'Status board', 'sharing': 'Mine / lab common', 'quantity': 'Quantity', 'supplier': 'Supplier', 'expiry': 'Expiry', 'received': 'Received date'}[key] }}</span>
-              <span class="block text-[11.5px] leading-snug text-muted">{{ blurb }}</span>
+              <span class="block text-[12.5px] font-semibold text-ink">{{ {'storage': _('Boxes and positions'), 'board': _('Status board'), 'sharing': _('Mine / lab common'), 'quantity': _('Quantity'), 'supplier': _('Supplier'), 'expiry': _('Expiry'), 'received': _('Received date')}[key] }}</span>
+              <span class="block text-[11.5px] leading-snug text-muted">{{ blurb|tr }}</span>
             </span>
           </label>
         {% endfor %}
@@ -112,72 +115,72 @@
     </section>
 
     <section class="card">
-      <header class="card-head"><h2>{{ icon('tag') }} Choices</h2></header>
+      <header class="card-head"><h2>{{ icon('tag') }} {{ _('Choices') }}</h2></header>
       <div class="grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
-        <label class="field-label lg:col-span-2 lg:max-w-[320px]">Category column is called <input name="category_label" value="{{ m.category_label }}"></label>
-        {{ choice_editor('categories', m.categories, category_counts, m.category_label ~ ' choices', 'Add a choice',
-                         'No choices means free text. Rename one and every ' ~ m.item_noun ~ ' with it follows.') }}
-        {{ choice_editor('statuses', m.statuses, status_counts, 'Statuses', 'Add a status',
-                         'In workflow order; the first is given to new entries, and these are the board’s columns. Rename one and every ' ~ m.item_noun ~ ' on it follows (no dates are stamped). None means no status.') }}
+        <label class="field-label lg:col-span-2 lg:max-w-[320px]">{{ _('Category column is called') }} <input name="category_label" value="{{ m.category_label }}"></label>
+        {{ choice_editor('categories', m.categories, category_counts, _('%(label)s choices', label=m.category_label|tr('inventory')), _('Add a choice'),
+                         _('No choices means free text. Rename one and every %(noun)s with it follows.', noun=noun)) }}
+        {{ choice_editor('statuses', m.statuses, status_counts, _('Statuses'), _('Add a status'),
+                         _('In workflow order; the first is given to new entries, and these are the board’s columns. Rename one and every %(noun)s on it follows (no dates are stamped). None means no status.', noun=noun)) }}
       </div>
     </section>
 
     <section class="card">
-      <header class="card-head"><h2>{{ icon('columns') }} Columns</h2></header>
+      <header class="card-head"><h2>{{ icon('columns') }} {{ _('Columns') }}</h2></header>
       <div class="overflow-x-auto p-4">
         <p class="mb-3 text-[12.5px] leading-snug text-muted">
-          Name, owner, {{ m.category_label|lower }}, status and the tracked features above are built in.
-          Add anything else here. Removing a column only takes it off the page: the values already entered stay stored in each record.
+          {% trans trimmed category=m.category_label|tr('inventory')|lower %}Name, owner, {{ category }}, status and the tracked features above are built in.
+          Add anything else here. Removing a column only takes it off the page: the values already entered stay stored in each record.{% endtrans %}
         </p>
         <table class="field-editor">
-          <thead><tr><th>Column</th><th>Type</th><th>Choices</th><th>Icon</th><th>Width</th><th>In table</th><th>Remove</th></tr></thead>
+          <thead><tr><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th><th>{{ _('Icon') }}</th><th>{{ _('Width') }}</th><th>{{ _('In table') }}</th><th>{{ _('Remove') }}</th></tr></thead>
           <tbody data-field-body>
             {% for f in m.fields %}{{ field_row(loop.index0, f) }}{% endfor %}
             {{ field_row(m.fields|length, {}) }}
           </tbody>
         </table>
         <input type="hidden" name="field_count" value="{{ m.fields|length + 1 }}" data-field-count>
-        <button type="button" class="btn btn-sm mt-2" data-add-field>{{ icon('plus') }} Add column</button>
+        <button type="button" class="btn btn-sm mt-2" data-add-field>{{ icon('plus') }} {{ _('Add column') }}</button>
       </div>
     </section>
 
     <section class="card">
-      <header class="card-head"><h2>{{ icon('check') }} Needed for a new {{ m.item_noun }}</h2></header>
+      <header class="card-head"><h2>{{ icon('check') }} {{ _('Needed for a new %(noun)s', noun=noun) }}</h2></header>
       <div class="p-4">
         <p class="mb-3 text-[12.5px] leading-snug text-muted">
-          Nobody can add {{ 'an' if m.item_noun[:1] in 'aeiou' else 'a' }} {{ m.item_noun }} until these are filled in, and they can’t be emptied later.
-          {{ m.item_noun_plural|capitalize }} added before keep working as they are.
+          {% if m.item_noun[:1] in 'aeiou' %}{{ _('Nobody can add an %(noun)s until these are filled in, and they can’t be emptied later.', noun=noun) }}{% else %}{{ _('Nobody can add a %(noun)s until these are filled in, and they can’t be emptied later.', noun=noun) }}{% endif %}
+          {{ _('%(nouns)s added before keep working as they are.', nouns=nouns|capitalize) }}
         </p>
         <input type="hidden" name="required_sent" value="1">
         <div class="flex flex-wrap gap-2">
           {% for key, label in m.requirable %}
             {% set always = key == 'name' and m.kind == 'orders' %}
             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-hairline bg-sand-50 px-2.5 py-1.5 text-[12.5px]
-                          has-checked:border-brand-300 has-checked:bg-brand-50/50" {% if always %}title="An order always needs to say what it is"{% endif %}>
+                          has-checked:border-brand-300 has-checked:bg-brand-50/50" {% if always %}title="{{ _('An order always needs to say what it is') }}"{% endif %}>
               <input type="checkbox" name="required" value="{{ key }}" {% if key in m.required %}checked{% endif %} {% if always %}disabled{% endif %}>
-              {{ label }}
+              {{ label|tr('inventory') }}
             </label>
           {% endfor %}
         </div>
-        <span class="field-hint mt-2 block normal-case tracking-normal">A column added above can be ticked here once it is saved.</span>
+        <span class="field-hint mt-2 block normal-case tracking-normal">{{ _('A column added above can be ticked here once it is saved.') }}</span>
       </div>
     </section>
 
     <div class="flex justify-end gap-2">
-      <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">Cancel</a>
-      <button type="submit" class="btn btn-primary">Save</button>
+      <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">{{ _('Cancel') }}</a>
+      <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
     </div>
   </form>
 
   <form method="post" action="{{ url_for('inventory.delete_module', key=m.key) }}" class="card border-danger-200">
-    <header class="card-head"><h2 class="text-danger-700">{{ icon('trash') }} Delete this inventory</h2></header>
+    <header class="card-head"><h2 class="text-danger-700">{{ icon('trash') }} {{ _('Delete this inventory') }}</h2></header>
     <div class="flex flex-wrap items-end gap-3 p-4">
       <p class="basis-full text-[12.5px] leading-snug text-muted">
-        Deletes {{ m.label }}, its {{ item_count }} {{ m.item_noun if item_count == 1 else m.item_noun_plural }} and its boxes.
-        The audit log keeps a record. Only an admin or whoever created it can do this. To keep the data but hide the list, untick “Show in the sidebar” instead.
+        {% trans trimmed name=mlabel, n=item_count, nouns=noun if item_count == 1 else nouns %}Deletes {{ name }}, its {{ n }} {{ nouns }} and its boxes.
+        The audit log keeps a record. Only an admin or whoever created it can do this. To keep the data but hide the list, untick “Show in the sidebar” instead.{% endtrans %}
       </p>
-      <label class="field-label grow">Type “{{ m.label }}” to confirm <input name="confirm" autocomplete="off"></label>
-      <button type="submit" class="btn btn-danger">Delete</button>
+      <label class="field-label grow">{{ _('Type “%(name)s” to confirm', name=m.label) }} <input name="confirm" autocomplete="off"></label>
+      <button type="submit" class="btn btn-danger">{{ _('Delete') }}</button>
     </div>
   </form>
 </div>
@@ -213,9 +216,9 @@
      saving asks first when anything will be relabelled. */
   (function () {
     const form = document.getElementById('configure-form');
-    const noun = {{ m.item_noun | tojson }}, plural = {{ m.item_noun_plural | tojson }};
+    const noun = {{ noun | tojson }}, plural = {{ nouns | tojson }};
     const editors = Array.from(form.querySelectorAll('[data-choice-editor]'));
-    const n = (k) => `${k} ${k === 1 ? noun : plural}`;
+    const n = (k) => t('%(n)s %(noun)s', { n: k, noun: k === 1 ? noun : plural });
 
     function kept(editor) {
       const seen = new Set();
@@ -247,14 +250,14 @@
             replace.hidden = !needs;
             select.required = needs;
             const current = select.value;
-            select.replaceChildren(new Option('Pick…', ''), ...others.map((v) => new Option(v, v)));
+            select.replaceChildren(new Option(t('Pick…'), ''), ...others.map((v) => new Option(v, v)));
             select.value = others.includes(current) ? current : '';
-            if (needs && select.value) changes.push(`${n(count)} from “${was}” to “${select.value}”`);
+            if (needs && select.value) changes.push(t('%(items)s from “%(was)s” to “%(now)s”', { items: n(count), was, now: select.value }));
           }
-          if (!gone && was && count && now !== was) changes.push(`${n(count)} from “${was}” to “${now}”`);
+          if (!gone && was && count && now !== was) changes.push(t('%(items)s from “%(was)s” to “%(now)s”', { items: n(count), was, now }));
         });
       });
-      if (changes.length) form.dataset.confirm = `Relabel ${changes.join('; ')}?`;
+      if (changes.length) form.dataset.confirm = t('Relabel %(changes)s?', { changes: changes.join(t('; ')) });
       else delete form.dataset.confirm;
     }
 
@@ -267,9 +270,11 @@
         const tr = document.createElement('tr');
         tr.dataset.choiceRow = '';
         tr.dataset.count = '0';
-        tr.innerHTML = '<td><input type="hidden" data-choice-was><input type="text" data-choice-value placeholder="New…" aria-label="Name"></td><td class="choice-usage"></td><td></td><td class="choice-replace"></td>';
+        tr.innerHTML = '<td><input type="hidden" data-choice-was><input type="text" data-choice-value></td><td class="choice-usage"></td><td></td><td class="choice-replace"></td>';
         tr.querySelector('[data-choice-was]').name = `${name}_${i}_was`;
         const input = tr.querySelector('[data-choice-value]');
+        input.placeholder = t('New…');
+        input.setAttribute('aria-label', t('Name'));
         input.name = `${name}_${i}_value`;
         input.maxLength = name === 'statuses' ? 40 : 80;
         body.appendChild(tr);

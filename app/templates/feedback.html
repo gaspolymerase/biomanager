@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 
-{% block page_title %}Send feedback{% endblock %}
-{% block page_heading %}Send feedback{% endblock %}
-{% block page_subtitle %}What went wrong, what you'd like, or what you're unsure of{% endblock %}
+{% block page_title %}{{ _('Send feedback') }}{% endblock %}
+{% block page_heading %}{{ _('Send feedback') }}{% endblock %}
+{% block page_subtitle %}{{ _("What went wrong, what you'd like, or what you're unsure of") }}{% endblock %}
 
 {% block page_actions %}
   {% if admin %}
-    <a class="btn" href="{{ url_for('feedback.usage_report') }}" title="Counts only, to send to whoever runs your pilot">{{ icon('chart') }} Usage report</a>
+    <a class="btn" href="{{ url_for('feedback.usage_report') }}" title="{{ _('Counts only, to send to whoever runs your pilot') }}">{{ icon('chart') }} {{ _('Usage report') }}</a>
   {% endif %}
 {% endblock %}
 
 {% block content %}
 {% if sent %}
   <div class="card mb-5 p-4 text-[13px]" data-feedback-sent>
-    <p class="font-semibold">Thank you — it's saved for your lab's admins.</p>
+    <p class="font-semibold">{{ _("Thank you — it's saved for your lab's admins.") }}</p>
     <p class="mt-1 text-muted">
-      To tell BioManager's makers too, open it as a GitHub issue: it opens with your text filled in, and
+      {% trans %}To tell BioManager's makers too, open it as a GitHub issue: it opens with your text filled in, and
       the page, version and browser below it (not this server's address, nor your name). Check it, then
-      submit it there. You need a GitHub account.
+      submit it there. You need a GitHub account.{% endtrans %}
     </p>
     <p class="mt-3">
-      <a class="btn btn-primary" href="{{ issue_url(sent) }}" target="_blank" rel="noopener">{{ icon('external') }} Open as a GitHub issue</a>
+      <a class="btn btn-primary" href="{{ issue_url(sent) }}" target="_blank" rel="noopener">{{ icon('external') }} {{ _('Open as a GitHub issue') }}</a>
     </p>
   </div>
 {% endif %}
@@ -28,36 +28,36 @@
 <form method="post" action="{{ url_for('feedback.send') }}" class="card mb-6 grid gap-3 p-4" style="max-width: 720px;">
   <input type="hidden" name="from" value="{{ from_page }}">
   <fieldset class="flex flex-wrap gap-4 text-[13px]">
-    <legend class="sr-only">What kind</legend>
+    <legend class="sr-only">{{ _('What kind') }}</legend>
     {% for key, label in kinds.items() %}
       <label class="inline-flex items-center gap-1.5">
-        <input type="radio" name="kind" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ label }}
+        <input type="radio" name="kind" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ label|tr }}
       </label>
     {% endfor %}
   </fieldset>
   <label class="grid gap-1 text-[13px]">
-    <span>What happened, or what you'd like</span>
+    <span>{{ _("What happened, or what you'd like") }}</span>
     <textarea name="text" rows="6" required minlength="3"
-              placeholder="I ticked 12 mice and pressed Sac, and… / It would save us time if…"></textarea>
+              placeholder="{{ _('I ticked 12 mice and pressed Sac, and… / It would save us time if…') }}"></textarea>
   </label>
-  {% if from_page %}<p class="text-[12px] text-muted">From <code>{{ from_page }}</code>.</p>{% endif %}
-  <div><button type="submit" class="btn btn-primary">Send</button></div>
+  {% if from_page %}<p class="text-[12px] text-muted">{% trans page=from_page %}From <code>{{ page }}</code>.{% endtrans %}</p>{% endif %}
+  <div><button type="submit" class="btn btn-primary">{{ _('Send') }}</button></div>
 </form>
 
 {% if items %}
   <h2 class="mb-2 text-[14px] font-semibold">
-    {{ "The lab's feedback" if admin else "What you've sent" }}
-    {% if admin and open_count %}<span class="badge badge-quiet ml-1">{{ open_count }} open</span>{% endif %}
+    {{ _("The lab's feedback") if admin else _("What you've sent") }}
+    {% if admin and open_count %}<span class="badge badge-quiet ml-1">{{ _('%(count)s open', count=open_count) }}</span>{% endif %}
   </h2>
   <section class="data-table-card">
     <div class="dt-scroll">
       <table class="dt" style="min-width: 760px;">
         <thead>
           <tr>
-            <th style="width: 130px;">When</th>
-            {% if admin %}<th style="width: 100px;">From</th>{% endif %}
-            <th style="width: 150px;">Kind</th>
-            <th>What</th>
+            <th style="width: 130px;">{{ _('When') }}</th>
+            {% if admin %}<th style="width: 100px;">{{ 'From'|tr('sender') }}</th>{% endif %}
+            <th style="width: 150px;">{{ _('Kind') }}</th>
+            <th>{{ _('What') }}</th>
             <th style="width: 220px;"></th>
           </tr>
         </thead>
@@ -66,17 +66,17 @@
             <tr class="{% if item.status == 'done' %}opacity-55{% endif %}">
               <td>{{ (item.created_at | local).strftime('%Y-%m-%d %H:%M') }}</td>
               {% if admin %}<td>{{ item.username | owner_badge }}</td>{% endif %}
-              <td>{{ kinds.get(item.kind, item.kind) }}</td>
+              <td>{{ kinds.get(item.kind, item.kind)|tr }}</td>
               <td class="whitespace-normal">
                 <span class="whitespace-pre-line">{{ item.text }}</span>
                 {% if item.page %}<span class="block text-[11.5px] text-muted">{{ item.page }}</span>{% endif %}
               </td>
               <td>
-                <a class="btn btn-sm" href="{{ issue_url(item) }}" target="_blank" rel="noopener">{{ icon('external') }} GitHub issue</a>
+                <a class="btn btn-sm" href="{{ issue_url(item) }}" target="_blank" rel="noopener">{{ icon('external') }} {{ _('GitHub issue') }}</a>
                 {% if admin %}
                   <form method="post" action="{{ url_for('feedback.set_status', item_id=item.id) }}" class="inline">
                     <input type="hidden" name="status" value="{{ 'open' if item.status == 'done' else 'done' }}">
-                    <button type="submit" class="btn btn-sm btn-ghost">{{ 'Reopen' if item.status == 'done' else 'Done' }}</button>
+                    <button type="submit" class="btn btn-sm btn-ghost">{{ _('Reopen') if item.status == 'done' else _('Done') }}</button>
                   </form>
                 {% endif %}
               </td>

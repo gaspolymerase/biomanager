@@ -44,6 +44,7 @@ from urllib.request import urlopen
 
 from flask import Blueprint, abort, current_app, jsonify, render_template, request
 
+from .i18n import gettext
 from .paths import data_dir
 
 bp = Blueprint("server_setup", __name__, url_prefix="/server-setup")
@@ -110,12 +111,12 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
     problems = []
     target = str(data.get("target") or "")
     if target not in TARGETS:
-        return None, ["Choose where the server goes."]
+        return None, [gettext("Choose where the server goes.")]
     plan = Plan(target=target)
     plan.timezone = str(data.get("timezone") or "UTC").strip()
     import zoneinfo
     if not _TZ.match(plan.timezone) or plan.timezone not in zoneinfo.available_timezones():
-        problems.append("The time zone should look like Europe/London or America/New_York.")
+        problems.append(gettext("The time zone should look like Europe/London or America/New_York."))
     plan.bring_data = bool(data.get("bring_data"))
     if plan.remote:
         plan.host = str(data.get("host") or "").strip()
@@ -126,28 +127,28 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
         except (TypeError, ValueError):
             plan.port = 0
         if not _HOST.match(plan.host):
-            problems.append("Give the server's address: an IP address or a host name.")
+            problems.append(gettext("Give the server's address: an IP address or a host name."))
         if not _USER.match(plan.user):
-            problems.append("Give the user name you sign in to the server with (often ubuntu or your university ID).")
+            problems.append(gettext("Give the user name you sign in to the server with (often ubuntu or your university ID)."))
         if not 0 < plan.port < 65536:
-            problems.append("The SSH port is a number, usually 22.")
+            problems.append(gettext("The SSH port is a number, usually 22."))
         if plan.key_path and not Path(os.path.expanduser(plan.key_path)).is_file():
-            problems.append(f"There is no key file at {plan.key_path}.")
+            problems.append(gettext("There is no key file at %(path)s.", path=plan.key_path))
     if target == "cloud-tailscale":
         plan.ts_authkey = str(data.get("ts_authkey") or "").strip()
         plan.ts_hostname = str(data.get("ts_hostname") or "biomanager").strip().lower()
         if not plan.ts_authkey.startswith("tskey-"):
-            problems.append("Paste a Tailscale auth key: it starts with tskey-.")
+            problems.append(gettext("Paste a Tailscale auth key: it starts with tskey-."))
         if not re.match(r"^[a-z0-9-]{1,63}$", plan.ts_hostname):
-            problems.append("The server's Tailscale name uses letters, digits and hyphens.")
+            problems.append(gettext("The server's Tailscale name uses letters, digits and hyphens."))
     else:
         plan.address = str(data.get("address") or "").strip().lower()
         if not _HOST.match(plan.address):
-            problems.append("Give the address people will type to reach BioManager.")
+            problems.append(gettext("Give the address people will type to reach BioManager."))
     if target == "cloud-domain":
         plan.acme_email = str(data.get("acme_email") or "").strip()
         if not _EMAIL.match(plan.acme_email):
-            problems.append("Give an email address for the certificate (Let's Encrypt writes there before it expires).")
+            problems.append(gettext("Give an email address for the certificate (Let's Encrypt writes there before it expires)."))
     return plan, problems
 
 
@@ -455,19 +456,18 @@ def check_connection(plan: Plan) -> dict:
     try:
         out = subprocess.run(ssh_base(plan) + [probe], capture_output=True, text=True, timeout=40)
     except FileNotFoundError:
-        return {"ok": False, "error": "This computer has no ssh command. On Windows, add the OpenSSH Client under "
-                                      "Settings → Apps → Optional features."}
+        return {"ok": False, "error": gettext("This computer has no ssh command. On Windows, add the OpenSSH Client under Settings → Apps → Optional features.")}
     except subprocess.TimeoutExpired:
-        return {"ok": False, "error": "The server didn't answer within 40 seconds. Check the address, and that it "
-                                      "allows SSH from this computer."}
+        return {"ok": False, "error": gettext("The server didn't answer within 40 seconds. Check the address, and that it allows SSH from this computer.")}
     if out.returncode != 0:
         detail = (out.stderr or out.stdout).strip().splitlines()[-1:] or ["no answer"]
         hint = ""
         if "Permission denied" in detail[0]:
-            hint = " The server didn't accept this key: check the user name and the key file."
+            hint = " " + gettext("The server didn't accept this key: check the user name and the key file.")
         elif "Could not resolve" in detail[0]:
-            hint = " That address doesn't resolve: check it for typos."
-        return {"ok": False, "error": f"Couldn't sign in to {plan.host}: {detail[0]}.{hint}"}
+            hint = " " + gettext("That address doesn't resolve: check it for typos.")
+        return {"ok": False, "error": gettext("Couldn't sign in to %(host)s: %(detail)s.", host=plan.host,
+                                              detail=detail[0]) + hint}
     info = dict(line.split("=", 1) for line in out.stdout.splitlines() if "=" in line)
     first = out.stdout.splitlines()[0] if out.stdout else ""
     return {"ok": True, "system": info.get("os") or first, "machine": first.split()[-1] if first else "",
@@ -478,16 +478,16 @@ def check_connection(plan: Plan) -> dict:
 def local_readiness() -> dict:
     """For "this computer": is Docker (with compose) here and running?"""
     if os.name == "nt":
-        return {"ok": False, "error": "On Windows, run the lab server on a Linux computer or cloud server, or in WSL."}
+        return {"ok": False, "error": gettext("On Windows, run the lab server on a Linux computer or cloud server, or in WSL.")}
     if not shutil.which("docker"):
-        return {"ok": False, "error": "Docker isn't installed. Install Docker Desktop (docker.com), start it, and try again."}
+        return {"ok": False, "error": gettext("Docker isn't installed. Install Docker Desktop (docker.com), start it, and try again.")}
     probe = subprocess.run(["docker", "compose", "version"], capture_output=True, text=True)
     if probe.returncode != 0:
-        return {"ok": False, "error": "Docker's compose command is missing. Update Docker Desktop and try again."}
+        return {"ok": False, "error": gettext("Docker's compose command is missing. Update Docker Desktop and try again.")}
     running = subprocess.run(["docker", "info"], capture_output=True, text=True)
     if running.returncode != 0:
-        return {"ok": False, "error": "Docker is installed but not running. Start Docker Desktop and try again."}
-    return {"ok": True, "system": "This computer", "docker": True, "sudo": True, "existing":
+        return {"ok": False, "error": gettext("Docker is installed but not running. Start Docker Desktop and try again.")}
+    return {"ok": True, "system": gettext("This computer"), "docker": True, "sudo": True, "existing":
             Path(os.path.expanduser(LOCAL_BASE), "Biomanager", "deploy", ".env").exists()}
 
 
@@ -534,7 +534,7 @@ def check():
         return jsonify({"ok": False, "error": problems[0]}), 400
     if plan.remote:
         if not _HOST.match(plan.host) or not _USER.match(plan.user):
-            return jsonify({"ok": False, "error": "Give the server's address and your user name on it first."}), 400
+            return jsonify({"ok": False, "error": gettext("Give the server's address and your user name on it first.")}), 400
         return jsonify(check_connection(plan))
     return jsonify(local_readiness())
 
@@ -545,7 +545,7 @@ def preview():
     if problems:
         return jsonify({"ok": False, "errors": problems}), 400
     return jsonify({"ok": True, "script": build_script(plan, show_secrets=False),
-                    "runs_on": f"{plan.user}@{plan.host}" if plan.remote else "this computer"})
+                    "runs_on": f"{plan.user}@{plan.host}" if plan.remote else gettext("this computer")})
 
 
 @bp.route("/start", methods=["POST"])
@@ -555,7 +555,7 @@ def start():
         return jsonify({"ok": False, "errors": problems}), 400
     with _JOBS_LOCK:
         if any(j.status == "running" for j in JOBS.values()):
-            return jsonify({"ok": False, "errors": ["A set-up is already running."]}), 409
+            return jsonify({"ok": False, "errors": [gettext("A set-up is already running.")]}), 409
         job = Job(id=uuid.uuid4().hex, plan=plan)
         JOBS[job.id] = job
     threading.Thread(target=_run, args=(job,), daemon=True).start()

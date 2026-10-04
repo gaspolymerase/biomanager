@@ -1,39 +1,38 @@
 {% extends "base.html" %}
 {% from "_db_actions.html" import db_actions with context %}
 
-{% block page_title %}Configure {{ label }}{% endblock %}
-{% block page_heading %}Configure {{ label }}{% endblock %}
-{% block page_subtitle %}{{ feature.blurb }}{% endblock %}
+{% block page_title %}{{ _('Configure %(name)s', name=label|tr) }}{% endblock %}
+{% block page_heading %}{{ _('Configure %(name)s', name=label|tr) }}{% endblock %}
+{% block page_subtitle %}{{ feature.blurb|tr }}{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ open_url }}">{{ icon(feature.icon) }} Open {{ label }}</a>
+  <a class="btn" href="{{ open_url }}">{{ icon(feature.icon) }} {{ _('Open %(name)s', name=label|tr) }}</a>
   {{ db_actions() }}
 {% endblock %}
 
 {% block content %}
 <div class="flex max-w-[720px] flex-col gap-4">
   <section class="card">
-    <header class="card-head"><h2>{{ icon('edit') }} Name</h2></header>
+    <header class="card-head"><h2>{{ icon('edit') }} {{ _('Name') }}</h2></header>
     <form method="post" action="{{ url_for('organisms.rename_builtin', key=key) }}" class="flex flex-col gap-3 p-4">
-      <label class="field-label">What the lab calls it
-        <input name="label" value="{{ label }}" placeholder="{{ default }}" class="field" autocomplete="off">
-        <span class="field-hint">Shown in the sidebar, on Home and in the page title. Leave it empty for “{{ default }}”.</span>
+      <label class="field-label">{{ _('What the lab calls it') }}
+        <input name="label" value="{{ label }}" placeholder="{{ default|tr }}" class="field" autocomplete="off">
+        <span class="field-hint">{{ _('Shown in the sidebar, on Home and in the page title. Leave it empty for “%(name)s”.', name=default|tr) }}</span>
       </label>
-      <div><button type="submit" class="btn btn-primary">Save name</button></div>
+      <div><button type="submit" class="btn btn-primary">{{ _('Save name') }}</button></div>
     </form>
   </section>
 
   <section class="card">
-    <header class="card-head"><h2>{{ icon('database') }} In this lab</h2></header>
+    <header class="card-head"><h2>{{ icon('database') }} {{ _('In this lab') }}</h2></header>
     <div class="flex flex-col gap-3 p-4">
       <p class="text-[12.5px] leading-snug text-muted">
-        Take {{ label }} out of the lab if it isn't used. It leaves the sidebar, Home and the calendar
-        and its pages close; nothing is deleted. Add it back from New database and every record is there.
+        {{ _("Take %(name)s out of the lab if it isn't used. It leaves the sidebar, Home and the calendar and its pages close; nothing is deleted. Add it back from New database and every record is there.", name=label|tr) }}
       </p>
       <form method="post" action="{{ url_for('organisms.switch_builtin', key=key) }}"
-            data-confirm="Take {{ label }} out of the lab? Nothing is deleted; you can add it back from New database.">
+            data-confirm="{{ _('Take %(name)s out of the lab? Nothing is deleted; you can add it back from New database.', name=label|tr) }}">
         <input type="hidden" name="on" value="0">
-        <button type="submit" class="btn btn-danger">{{ icon('archive') }} Take out of the lab</button>
+        <button type="submit" class="btn btn-danger">{{ icon('archive') }} {{ _('Take out of the lab') }}</button>
       </form>
     </div>
   </section>

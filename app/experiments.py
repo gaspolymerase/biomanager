@@ -31,8 +31,9 @@ from datetime import date, datetime
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import func, select
 
-from . import access, lab
+from . import access, i18n, lab
 from .db import SessionLocal
+from .i18n import gettext
 from .models import (CageRecord, ClutchRecord, Experiment, ExperimentMouse, ExperimentReading, ExperimentSubject,
                      FishRecord, MouseRecord, MouseWeight, OrgCohort, Organism, StockUnit, TankRecord)
 
@@ -105,6 +106,11 @@ def kind_info(family: str, key: str) -> tuple[str, str]:
             if k == key:
                 return label, icon
     return key.replace("_", " ").capitalize() or "Other", "note"
+
+
+class NotYours(str):
+    """set_reading's answer when the animal's own record is not this
+    person's to change: skipped, unlike a value that is wrong."""
 
 
 def is_reading(kind: str) -> bool:
@@ -324,23 +330,24 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
         for c in session.scalars(select(CageRecord).order_by(CageRecord.cage_id)):
             n = sum(1 for m in c.mice if mouse_is_active(m) and f"mouse:{m.id}" not in have)
             if n:
-                groups.append((c.cage_id, f"Cage {c.cage_id}", n))
+                groups.append((c.cage_id, gettext("Cage %(cage)s", cage=c.cage_id), n))
         for m in session.scalars(select(MouseRecord).where(MouseRecord.date_of_death.is_(None)).order_by(MouseRecord.mouse_id)):
             if f"mouse:{m.id}" not in have and mouse_is_active(m) and can_edit_mouse(m):
-                single.append((str(m.id), f"#{m.mouse_id} · {m.gender or '?'} · {m.genotype or 'no genotype'}"))
+                single.append((str(m.id), f"#{m.mouse_id} · {m.gender or '?'} · {m.genotype or gettext('no genotype')}"))
     elif place.subject_kind == "fish":
         for t in session.scalars(select(TankRecord).where(TankRecord.active.is_(True)).order_by(TankRecord.tank_id)):
             live = [f for f in t.fish if f.status == "alive" and f"fish:{f.id}" not in have]
             if live:
-                groups.append((str(t.id), f"Tank {t.tank_id}", len(live)))
+                groups.append((str(t.id), gettext("Tank %(tank)s", tank=t.tank_id), len(live)))
                 single += [(f"fish:{f.id}", f"{t.tank_id} · {f.count} {f.sex or ''} {f.line.name if f.line else ''} {f.genotype or ''}".strip())
                            for f in live]
         recent = date.today().toordinal() - 60
         for c in session.scalars(select(ClutchRecord).order_by(ClutchRecord.date_of_fertilization.desc()).limit(200)):
             if f"clutch:{c.id}" not in have and c.date_of_fertilization.toordinal() >= recent:
                 n = c.larvae_count or c.embryo_count
-                single.append((f"clutch:{c.id}", f"Clutch {c.clutch_id} · {c.date_of_fertilization.isoformat()}"
-                                                 + (f" · {n} larvae" if n else "") + (f" · {c.line.name}" if c.line else "")))
+                single.append((f"clutch:{c.id}", " · ".join(filter(None, [
+                    gettext("Clutch %(clutch)s", clutch=c.clutch_id), c.date_of_fertilization.isoformat(),
+                    gettext("%(count)s larvae", count=n) if n else "", c.line.name if c.line else ""]))))
     elif place.subject_kind == "unit":
         units = session.scalars(select(StockUnit).where(StockUnit.module_id_fk == place.module.id,
                                                         StockUnit.active.is_(True)).order_by(StockUnit.number)).all()
@@ -350,8 +357,8 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
                 continue
             if u.rack is not None:
                 racks.setdefault((u.rack.id, u.rack.name), []).append(u)
-            single.append((str(u.id), f"{place.mv.code(u)} · {u.genotype or 'no genotype'}"))
-        groups = [(str(rid), f"{place.housing.capitalize()} {name}", len(us)) for (rid, name), us in sorted(racks.items(), key=lambda kv: kv[0][1])]
+            single.append((str(u.id), f"{place.mv.code(u)} · {u.genotype or gettext('no genotype')}"))
+        groups = [(str(rid), f"{i18n.translate_value(place.housing).capitalize()} {name}", len(us)) for (rid, name), us in sorted(racks.items(), key=lambda kv: kv[0][1])]
     else:
         from .models import OrgHousing
         rows = session.scalars(select(Organism).where(Organism.module_id_fk == place.module.id).order_by(Organism.id)).all()
@@ -361,10 +368,10 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
                 continue
             if o.housing_id_fk:
                 houses.setdefault(o.housing_id_fk, []).append(o)
-            single.append((f"organism:{o.id}", " · ".join(filter(None, [o.code or f"{o.count} {place.nouns}", o.sex, o.genotype]))))
+            single.append((f"organism:{o.id}", " · ".join(filter(None, [o.code or f"{o.count} {i18n.translate_value(place.nouns)}", o.sex, o.genotype]))))
         codes = {h.id: h.code for h in session.scalars(select(OrgHousing).where(OrgHousing.id.in_(list(houses) or [0])))}
-        groups = [(str(hid), f"{place.housing.capitalize()} {codes.get(hid, hid)}", len(v)) for hid, v in houses.items()]
-        cohort_noun = (place.mv.cohort_noun or "cohort").capitalize() if place.mv else "Cohort"
+        groups = [(str(hid), f"{i18n.translate_value(place.housing).capitalize()} {codes.get(hid, hid)}", len(v)) for hid, v in houses.items()]
+        cohort_noun = i18n.translate_value((place.mv.cohort_noun if place.mv else "") or "cohort").capitalize()
         for c in session.scalars(select(OrgCohort).where(OrgCohort.module_id_fk == place.module.id).order_by(OrgCohort.code)):
             if f"cohort:{c.id}" not in have and c.count_current:
                 single.append((f"cohort:{c.id}", f"{cohort_noun} {c.code} · {c.count_current}"))
@@ -406,16 +413,17 @@ def set_reading(session, exp: Experiment, place: Place, subject: Subject, on: da
         try:
             value = float(raw)
         except ValueError:
-            return f"“{raw}” isn't a number."
+            return gettext("“%(value)s” isn't a number.", value=raw)
         if value < 0:
-            return "A readout can't be below zero."
+            return gettext("A readout can't be below zero.")
         if readout["kind"] == "fraction" and subject.start is not None and value > subject.start:
-            return f"{subject.label} started with {subject.start}: {value:g} is more than that."
+            return gettext("%(label)s started with %(start)s: %(value)s is more than that.",
+                           label=subject.label, start=subject.start, value=f"{value:g}")
         if readout["key"] == "body_weight" and place.subject_kind == "mouse" and not 0 < value < 200:
-            return f"{value:g} g isn't a mouse's weight."
+            return gettext("%(value)s g isn't a mouse's weight.", value=f"{value:g}")
     if place.subject_kind == "mouse" and readout["key"] == "body_weight":
         if not subject.can_edit:
-            return f"{subject.label}: {access.reason_denied(subject.record)}"
+            return NotYours(f"{subject.label}: {access.reason_denied(subject.record)}")
         row = session.scalar(select(MouseWeight).where(MouseWeight.mouse_id_fk == subject.id, MouseWeight.weigh_date == on))
         if value is None:
             if row is not None:
@@ -556,7 +564,7 @@ def render_page(experiment_id: int):
     with SessionLocal() as s:
         exp = s.get(Experiment, experiment_id)
         if exp is None:
-            flash("Experiment not found.", "error")
+            flash(gettext("Experiment not found."), "error")
             return redirect(url_for("colony", view="experiments"))
         place = place_for(s, exp.db or "colony")
         if place is None:
@@ -601,7 +609,7 @@ def tab_context(session, place: Place) -> dict:
         .group_by(ExperimentSubject.experiment_id_fk)).all()) if rows else {}
     cards = [{"id": e.id, "name": e.name, "description": e.description, "status": e.status,
               "owner": e.owner_username, "editable": access.can_edit_experiment(e), "count": counts.get(e.id, 0),
-              "start_date": e.start_date.strftime("%b %d, %Y") if e.start_date else "",
+              "start_date": i18n.strftime(e.start_date, "%b %d, %Y") if e.start_date else "",
               "readout": readout_of(e, place)["label"], "url": url_for("experiments.page", experiment_id=e.id)}
              for e in rows]
     # A new experiment can start with a whole tank, rack or housing of them,
@@ -670,9 +678,10 @@ def update(experiment_id: int):
         end = parse_date(form.get("end_date")) if "end_date" in form else exp.end_date
         status = (form.get("status") or "").strip().lower() if "status" in form else exp.status
         if start and end and end < start:
-            return jsonify({"ok": False, "error": f"The end date ({end.isoformat()}) is before the start date ({start.isoformat()})."}), 409
+            return jsonify({"ok": False, "error": gettext("The end date (%(end)s) is before the start date (%(start)s).",
+                                                          end=end.isoformat(), start=start.isoformat())}), 409
         if status and status not in STATUSES:
-            return jsonify({"ok": False, "error": f"“{status}” is not an experiment status."}), 409
+            return jsonify({"ok": False, "error": gettext("“%(status)s” is not an experiment status.", status=status)}), 409
         for name in ("name", "description", "treatment_plan"):
             if name in form:
                 value = (form.get(name) or "").strip() if name == "name" else form.get(name, "")
@@ -731,9 +740,13 @@ def add_subjects(experiment_id: int):
                 added += 1
         s.commit()
         s.refresh(exp)
-        message = f"Added {added} {place.noun if added == 1 else place.nouns}." if added else f"No {place.nouns} to add there."
+        if added:
+            message = gettext("Added %(count)s %(nouns)s.", count=added,
+                              nouns=i18n.translate_value(place.noun if added == 1 else place.nouns))
+        else:
+            message = gettext("No %(nouns)s to add there.", nouns=i18n.translate_value(place.nouns))
         if skipped:
-            message += f" {skipped} skipped: not yours to change."
+            message += " " + gettext("%(count)s skipped: not yours to change.", count=skipped)
         return jsonify({"ok": True, "message": message, **payload(s, exp, place),
                         "add": candidates(s, exp, place)})
 
@@ -781,7 +794,7 @@ def update_subject(experiment_id: int, key: str):
             return refused
         subject = find_subject(s, exp, place, key)
         if subject is None:
-            return jsonify({"ok": False, "error": "That one is no longer in the experiment."}), 404
+            return jsonify({"ok": False, "error": gettext("That one is no longer in the experiment.")}), 404
         row = subject.row
         if "group" in data:
             row.treatment_group = str(data.get("group") or "").strip()[:80]
@@ -790,7 +803,7 @@ def update_subject(experiment_id: int, key: str):
         if "start" in data and isinstance(row, ExperimentSubject):
             raw = str(data.get("start") or "").strip()
             if raw and not raw.isdigit():
-                return jsonify({"ok": False, "error": f"“{raw}” isn't a number of animals."}), 400
+                return jsonify({"ok": False, "error": gettext("“%(value)s” isn't a number of animals.", value=raw)}), 400
             row.start_count = int(raw) if raw else None
         s.commit()
         s.refresh(exp)
@@ -825,9 +838,9 @@ def save_readings(experiment_id: int):
         try:
             on = date.fromisoformat(str(data.get("on") or "")[:10])
         except ValueError:
-            return jsonify({"ok": False, "error": "Say which day it is for."}), 400
+            return jsonify({"ok": False, "error": gettext("Say which day it is for.")}), 400
         if on > date.today():
-            return jsonify({"ok": False, "error": "A readout can't be for a day still to come."}), 400
+            return jsonify({"ok": False, "error": gettext("A readout can't be for a day still to come.")}), 400
         by_key = {x.key: x for x in subjects(s, exp, place)}
         problems = []
         for key, raw in (data.get("values") or {}).items():
@@ -860,7 +873,8 @@ def delete(experiment_id: int):
         name = exp.name
         s.delete(exp)
         s.commit()
-    flash(f"Deleted experiment {name}. Its {place.nouns} are unchanged.", "success")
+    flash(gettext("Deleted experiment %(name)s. Its %(nouns)s are unchanged.", name=name,
+                  nouns=i18n.translate_value(place.nouns)), "success")
     return redirect(place.list_url)
 
 

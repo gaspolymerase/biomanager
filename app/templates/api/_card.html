@@ -3,34 +3,34 @@
 {% if api_card %}
   <article class="card lg:col-span-2" id="api-tokens">
     <header class="card-head">
-      <h2>{{ icon('key') }} API tokens</h2>
-      <a class="btn btn-sm btn-ghost" href="{{ url_for('api_pages.reference') }}">API reference</a>
+      <h2>{{ icon('key') }} {{ _('API tokens') }}</h2>
+      <a class="btn btn-sm btn-ghost" href="{{ url_for('api_pages.reference') }}">{{ _('API reference') }}</a>
     </header>
     <div class="flex flex-col gap-3 p-4">
       <p class="text-[12.5px] leading-snug text-muted">
-        A token lets a script, a balance, R or another tool read the lab's records — or change them — as you, with
-        exactly your permissions. Make one for each thing that uses it, so you can revoke one without the others.
+        {% trans %}A token lets a script, a balance, R or another tool read the lab's records — or change them — as you, with
+        exactly your permissions. Make one for each thing that uses it, so you can revoke one without the others.{% endtrans %}
       </p>
       {% if api_card.allowed %}
         <form method="post" action="{{ url_for('api_pages.make_token') }}" class="flex flex-wrap items-end gap-2">
-          <label class="field-label min-w-[220px] flex-1">What uses it
-            <input name="label" required maxlength="80" placeholder="e.g. Balance in B12, My R scripts" autocomplete="off">
+          <label class="field-label min-w-[220px] flex-1">{{ _('What uses it') }}
+            <input name="label" required maxlength="80" placeholder="{{ _('e.g. Balance in B12, My R scripts') }}" autocomplete="off">
           </label>
-          <label class="field-label">It may
-            <select name="scope">{% for key, name in api_card.scopes.items() %}<option value="{{ key }}">{{ name }}</option>{% endfor %}</select>
+          <label class="field-label">{{ _('It may') }}
+            <select name="scope">{% for key, name in api_card.scopes.items() %}<option value="{{ key }}">{{ name|tr('api scope') }}</option>{% endfor %}</select>
           </label>
-          <label class="field-label">Ends
-            <select name="expires">{% for key, name in api_card.expiry.items() %}<option value="{{ key }}" {% if key == '90' %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+          <label class="field-label">{{ 'Ends'|tr('token') }}
+            <select name="expires">{% for key, name in api_card.expiry.items() %}<option value="{{ key }}" {% if key == '90' %}selected{% endif %}>{{ name|tr('api expiry') }}</option>{% endfor %}</select>
           </label>
-          <button type="submit" class="btn btn-primary">{{ icon('plus') }} Make a token</button>
+          <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a token') }}</button>
         </form>
       {% endif %}
       {% if api_card.rows %}
         <div class="overflow-x-auto">
           <table class="dt">
             <thead><tr>
-              <th>For</th>{% if api_card.is_admin %}<th>Whose</th>{% endif %}
-              <th>May</th><th>Made</th><th>Ends</th><th>Last used</th><th></th>
+              <th>{{ 'For'|tr('token') }}</th>{% if api_card.is_admin %}<th>{{ _('Whose') }}</th>{% endif %}
+              <th>{{ _('May') }}</th><th>{{ 'Made'|tr('key') }}</th><th>{{ 'Ends'|tr('token') }}</th><th>{{ _('Last used') }}</th><th></th>
             </tr></thead>
             <tbody>
               {% for r in api_card.rows %}
@@ -38,19 +38,19 @@
                 <tr class="{% if not r.active %}opacity-55{% endif %}">
                   <td><span class="font-medium text-ink">{{ t.label }}</span> <code class="ident">{{ t.hint }}…</code></td>
                   {% if api_card.is_admin %}<td>{{ r.owner | owner_badge }}</td>{% endif %}
-                  <td>{{ api_card.scopes.get(t.scope, t.scope) }}</td>
+                  <td>{{ api_card.scopes.get(t.scope, t.scope)|tr('api scope') }}</td>
                   <td class="text-muted">{{ (t.created_at | local).strftime('%Y-%m-%d') }}</td>
-                  <td class="text-muted">{{ (t.expires_at | local).strftime('%Y-%m-%d') if t.expires_at else 'never' }}</td>
+                  <td class="text-muted">{{ (t.expires_at | local).strftime('%Y-%m-%d') if t.expires_at else _('never') }}</td>
                   <td class="text-muted">
-                    {% if t.revoked_at %}<span class="badge badge-quiet">revoked</span>
-                    {% elif t.last_used_at %}{{ (t.last_used_at | local).strftime('%Y-%m-%d %H:%M') }} · {{ '{:,}'.format(t.uses) }} request{{ '' if t.uses == 1 else 's' }}
-                    {% else %}not yet{% endif %}
+                    {% if t.revoked_at %}<span class="badge badge-quiet">{{ _('revoked') }}</span>
+                    {% elif t.last_used_at %}{{ (t.last_used_at | local).strftime('%Y-%m-%d %H:%M') }} · {% trans count=t.uses, n='{:,}'.format(t.uses) %}{{ n }} request{% pluralize %}{{ n }} requests{% endtrans %}
+                    {% else %}{{ 'not yet'|tr('last') }}{% endif %}
                   </td>
                   <td>
                     {% if not t.revoked_at %}
                       <form method="post" action="{{ url_for('api_pages.revoke_token', token_id=t.id) }}"
-                            data-confirm="Revoke the token “{{ t.label }}”? Whatever uses it stops working.">
-                        <button type="submit" class="btn btn-sm">Revoke</button>
+                            data-confirm="{{ _('Revoke the token “%(name)s”? Whatever uses it stops working.', name=t.label) }}">
+                        <button type="submit" class="btn btn-sm">{{ _('Revoke') }}</button>
                       </form>
                     {% endif %}
                   </td>
@@ -61,8 +61,8 @@
         </div>
       {% endif %}
       {% if api_card.is_admin %}
-        <p class="text-[12px] leading-snug text-muted">You see every token in the lab, and can revoke any. Members make
-          tokens only if <a href="{{ url_for('lab.setup') }}">Lab setup</a> allows it.</p>
+        <p class="text-[12px] leading-snug text-muted">{% trans link=url_for('lab.setup') %}You see every token in the lab, and can revoke any. Members make
+          tokens only if <a href="{{ link }}">Lab setup</a> allows it.{% endtrans %}</p>
       {% endif %}
     </div>
   </article>

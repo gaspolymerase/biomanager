@@ -37,7 +37,7 @@
         {% for status in t.statuses %}
           {% set n = t.cards|selectattr('status', 'equalto', status)|list|length %}
           <button type="button" class="dt-chip" data-experiment-filter="{{ status }}" aria-pressed="false">
-            {% set status_label = status|tr %}{{ status_label|capitalize if status_label == status else status_label }} <span class="dt-chip-count">{{ n }}</span>
+            {% set status_label = status|tr("experiment") %}{{ status_label|capitalize if status_label == status else status_label }} <span class="dt-chip-count">{{ n }}</span>
           </button>
         {% endfor %}
       </div>
@@ -45,7 +45,7 @@
         {% for exp in t.cards %}
           <a class="experiment-card experiment-status-{{ exp.status }}" data-status="{{ exp.status }}" href="{{ exp.url }}">
             <div class="experiment-card-head">
-              <span class="experiment-status-pill" data-status="{{ exp.status }}">{{ exp.status|tr }}</span>
+              <span class="experiment-status-pill" data-status="{{ exp.status }}">{{ exp.status|tr("experiment") }}</span>
               <span class="experiment-card-owner">
                 {% if not exp.editable %}<span class="sheet-lock" title="{{ _('%(owner)s’s experiment: read only', owner=exp.owner) }}">{{ icon('lock') }}</span>{% endif %}
                 {{ exp.owner | owner_badge if exp.owner else '' }}

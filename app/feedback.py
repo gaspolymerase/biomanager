@@ -26,6 +26,7 @@ from sqlalchemy import func, select
 
 from . import access
 from .db import SessionLocal, engine
+from .i18n import gettext
 from .models import AuditEntry, Feedback
 
 bp = Blueprint("feedback", __name__, url_prefix="/feedback")
@@ -129,7 +130,7 @@ def send():
     text = (request.form.get("text") or "").strip()
     kind = request.form.get("kind") if request.form.get("kind") in KINDS else "problem"
     if len(text) < 3:
-        flash("Say what happened, or what you'd like.", "error")
+        flash(gettext("Say what happened, or what you'd like."), "error")
         return redirect(url_for("feedback.index"))
     with SessionLocal() as s:
         item = Feedback(username=g.user.username, kind=kind, text=text[:5000], page=_from_page(),
@@ -140,8 +141,9 @@ def send():
         if admins:
             from . import notify
             for name in admins:
-                notify.send(s, name, f"{g.user.display_name or g.user.username} sent feedback", text[:300],
-                            category="lab", link=url_for("feedback.index"), actor=g.user.username)
+                notify.send(s, name, "%(who)s sent feedback", text[:300], category="lab",
+                            link=url_for("feedback.index"), actor=g.user.username,
+                            values={"who": g.user.display_name or g.user.username})
             s.commit()
         return redirect(url_for("feedback.index", sent=item.id))
 
@@ -267,6 +269,6 @@ def set_heartbeat():
     with SessionLocal() as s:
         telemetry.set_lab_on(s, on)
         s.commit()
-    flash("Anonymous counts switched on: sent once a day." if on
-          else "Anonymous counts switched off: nothing is sent.", "success")
+    flash(gettext("Anonymous counts switched on: sent once a day.") if on
+          else gettext("Anonymous counts switched off: nothing is sent."), "success")
     return redirect(url_for("feedback.usage_report") + "#heartbeat")

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block page_title %}{% if selected_page %}{{ selected_page.title }}{% else %}Notebook{% endif %}{% endblock %}
-{% block page_heading %}Notebook{% endblock %}
-{% block page_subtitle %}Experiments, protocols, data and meetings. Type / in a page for protocols, sheets, recipes, calculators and diagrams.{% endblock %}
+{% block page_title %}{% if selected_page %}{{ selected_page.title }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
+{% block page_heading %}{{ _('Notebook') }}{% endblock %}
+{% block page_subtitle %}{{ _('Experiments, protocols, data and meetings. Type / in a page for protocols, sheets, recipes, calculators and diagrams.') }}{% endblock %}
 {% block page_shell_class %}shell-page-flush{% endblock %}
 
 {% macro page_link(page, active_id, tab_id=None) -%}
@@ -10,9 +10,9 @@
       data-page-id="{{ page.id }}" data-page-title="{{ page.title|lower }}">
     <a href="{{ url_for('notebook', page=page.id) }}">
       {{ icon(kind_icons.get(page.kind or 'note', 'file'), 'notebook-page-icon') }}
-      <span class="page-title-label">{{ page.title or 'Untitled page' }}</span>
+      <span class="page-title-label">{{ page.title if page.title and page.title != 'Untitled page' else _('Untitled page') }}</span>
       {% if page.owner_name %}<span class="nb-side-owner">{{ page.owner_name }}</span>{% endif %}
-      {% if page.status %}<span class="nb-status-dot" data-status="{{ page.status }}" title="{{ statuses.get(page.status, '') }}"></span>{% endif %}
+      {% if page.status %}<span class="nb-status-dot" data-status="{{ page.status }}" title="{{ statuses.get(page.status, '')|tr }}"></span>{% endif %}
     </a>
   </li>
 {%- endmacro %}
@@ -25,34 +25,34 @@
 <section class="notebook-shell nb-shell{% if selected_page %} has-page{% endif %}" id="nb-shell">
   <aside class="notebook-sidebar">
     {% if selected_page %}
-      <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} All pages {{ icon('chevron-down') }}</button>
+      <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
     {% endif %}
     <div class="notebook-sidebar-head">
       <form class="notebook-search-row" id="nb-search-form" role="search">
         {{ icon('search', 'notebook-search-icon') }}
-        <input id="notebook-page-filter" type="search" placeholder="Search every page…" autocomplete="off" aria-label="Search the notebook">
+        <input id="notebook-page-filter" type="search" placeholder="{{ _('Search every page…') }}" autocomplete="off" aria-label="{{ _('Search the notebook') }}">
       </form>
       <div class="sidebar-head-actions">
-        <button type="button" class="notebook-new-btn" id="nb-new-page" title="New page">
-          {{ icon('plus') }}<span>New page</span>
+        <button type="button" class="notebook-new-btn" id="nb-new-page" title="{{ _('New page') }}">
+          {{ icon('plus') }}<span>{{ _('New page') }}</span>
         </button>
-        <a class="notebook-new-btn notebook-new-btn-secondary" href="{{ url_for('nb.today') }}" title="Today's log page">
+        <a class="notebook-new-btn notebook-new-btn-secondary" href="{{ url_for('nb.today') }}" title="{{ _("Today's log page") }}">
           {{ icon('calendar-clock') }}
         </a>
       </div>
     </div>
 
-    <nav class="nb-side-links" aria-label="Notebook tools">
-      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} Today</a>
-      <button type="button" data-panel="search">{{ icon('search') }} Search &amp; tags</button>
-      <button type="button" data-panel="meetings">{{ icon('users') }} Meetings</button>
-      <button type="button" data-panel="protocols">{{ icon('protocol') }} Protocols</button>
-      <button type="button" data-panel="recipes">{{ icon('flask') }} Recipes</button>
+    <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
+      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
+      <button type="button" data-panel="search">{{ icon('search') }} {{ _('Search & tags') }}</button>
+      <button type="button" data-panel="meetings">{{ icon('users') }} {{ _('Meetings') }}</button>
+      <button type="button" data-panel="protocols">{{ icon('protocol') }} {{ _('Protocols') }}</button>
+      <button type="button" data-panel="recipes">{{ icon('flask') }} {{ _('Recipes') }}</button>
     </nav>
 
     <div class="nb-side-scroll">
       {% if side.running %}
-        <div class="notebook-section-label">Open experiments</div>
+        <div class="notebook-section-label">{{ _('Open experiments') }}</div>
         <ul class="notebook-page-list">
           {% for p in side.running %}{{ page_link({'id': p.id, 'title': p.title, 'kind': 'experiment', 'status': p.status}, active_id) }}{% endfor %}
         </ul>
@@ -62,14 +62,14 @@
       {% for tab in tabs %}{% for page in tab.pages %}{% set _discard = recent_pages.append(page) %}{% endfor %}{% endfor %}
       {% set recent_pages = recent_pages | sort(attribute='updated_at', reverse=true) %}
       {% if recent_pages %}
-        <div class="notebook-section-label">Recents</div>
+        <div class="notebook-section-label">{{ _('Recents') }}</div>
         <ul class="notebook-page-list">
           {% for page in recent_pages[:5] %}{{ page_link(page, active_id) }}{% endfor %}
         </ul>
       {% endif %}
 
       {% if side.shared %}
-        <div class="notebook-section-label">Shared with me</div>
+        <div class="notebook-section-label">{{ _('Shared with me') }}</div>
         <ul class="notebook-page-list">
           {% for p in side.shared %}{{ page_link(p, active_id) }}{% endfor %}
         </ul>
@@ -77,39 +77,39 @@
 
       {% if side.protocols %}
         <details class="nb-side-group" {% if selected_page and selected_page.kind == 'protocol' %}open{% endif %}>
-          <summary class="notebook-section-label">Protocols <span class="nb-count">{{ side.protocols|length }}</span></summary>
+          <summary class="notebook-section-label">{{ _('Protocols') }} <span class="nb-count">{{ side.protocols|length }}</span></summary>
           <ul class="notebook-page-list">
             {% for p in side.protocols %}{{ page_link({'id': p.id, 'title': p.title, 'kind': 'protocol', 'owner_name': p.owner_name if p.owner != me.username else ''}, active_id) }}{% endfor %}
           </ul>
         </details>
       {% endif %}
 
-      <div class="notebook-section-label">Topics</div>
+      <div class="notebook-section-label">{{ _('Topics') }}</div>
       <div class="notebook-tabs" id="notebook-tabs">
         {% for tab in tabs %}
           <details class="notebook-tab" {% if tab.id == selected_tab_id %}open{% endif %} data-tab-id="{{ tab.id }}">
             <summary>
               {{ icon('chevron-right', 'notebook-tab-caret') }}
-              <span class="tab-title" data-on-dblclick="renameTab" data-arg="{{ tab.id }}" data-stop>{{ tab.title }}</span>
+              <span class="tab-title" data-on-dblclick="renameTab" data-arg="{{ tab.id }}" data-stop>{{ tab.title|tr }}</span>
               <span class="tab-actions" data-on-click="none" data-stop>
-                <button type="button" title="Add page" data-on-click="createPage" data-arg="{{ tab.id }}" data-prevent data-stop>{{ icon('plus') }}</button>
-                <button type="button" title="Rename topic" data-on-click="renameTab" data-arg="{{ tab.id }}" data-prevent data-stop>{{ icon('edit') }}</button>
-                <form method="post" action="{{ url_for('notebook_delete_tab', tab_id=tab.id) }}" data-confirm="Delete topic and all its pages?" data-on-submit="none" data-on-click="none" data-stop style="display:inline">
-                  <button type="submit" title="Delete topic" class="danger-link">{{ icon('trash') }}</button>
+                <button type="button" title="{{ _('Add page') }}" data-on-click="createPage" data-arg="{{ tab.id }}" data-prevent data-stop>{{ icon('plus') }}</button>
+                <button type="button" title="{{ _('Rename topic') }}" data-on-click="renameTab" data-arg="{{ tab.id }}" data-prevent data-stop>{{ icon('edit') }}</button>
+                <form method="post" action="{{ url_for('notebook_delete_tab', tab_id=tab.id) }}" data-confirm="{{ _('Delete topic and all its pages?') }}" data-on-submit="none" data-on-click="none" data-stop style="display:inline">
+                  <button type="submit" title="{{ _('Delete topic') }}" class="danger-link">{{ icon('trash') }}</button>
                 </form>
               </span>
             </summary>
             <ul class="notebook-page-list notebook-tab-pages">
-              {% for page in tab.pages %}{{ page_link(page, active_id) }}{% else %}<li class="notebook-empty">No pages yet.</li>{% endfor %}
+              {% for page in tab.pages %}{{ page_link(page, active_id) }}{% else %}<li class="notebook-empty">{{ _('No pages yet.') }}</li>{% endfor %}
             </ul>
           </details>
         {% else %}
-          <p class="notebook-empty-topics">No topics yet. Start a page and one is made for you.</p>
+          <p class="notebook-empty-topics">{{ _('No topics yet. Start a page and one is made for you.') }}</p>
         {% endfor %}
       </div>
 
       {% if side.tags %}
-        <div class="notebook-section-label">Tags</div>
+        <div class="notebook-section-label">{{ _('Tags') }}</div>
         <div class="nb-tag-cloud">
           {% for t in side.tags %}<button type="button" class="nb-tag" data-tag="{{ t.tag }}">#{{ t.tag }} <span>{{ t.count }}</span></button>{% endfor %}
         </div>
@@ -117,8 +117,8 @@
     </div>
 
     <div class="notebook-sidebar-footer">
-      <button type="button" class="notebook-sidebar-foot-btn" data-on-click="createTab" title="Create a new topic">{{ icon('folder-plus') }} New topic</button>
-      <button type="button" class="notebook-sidebar-foot-btn" id="nb-import" title="Import a Markdown file as a page">{{ icon('import') }} Import .md</button>
+      <button type="button" class="notebook-sidebar-foot-btn" data-on-click="createTab" title="{{ _('Create a new topic') }}">{{ icon('folder-plus') }} {{ _('New topic') }}</button>
+      <button type="button" class="notebook-sidebar-foot-btn" id="nb-import" title="{{ _('Import a Markdown file as a page') }}">{{ icon('import') }} {{ _('Import .md') }}</button>
     </div>
   </aside>
 
@@ -130,50 +130,50 @@
         <div class="nb-page-top">
           <div class="nb-page-where">
             {% if can_edit %}
-              <label class="nb-kind-select" title="What kind of page this is">
+              <label class="nb-kind-select" title="{{ _('What kind of page this is') }}">
                 {{ icon(kind_icons.get(p.kind, 'file')) }}
-                <select id="nb-kind" aria-label="Kind of page">
-                  {% for key, label in kinds.items() %}<option value="{{ key }}" {% if key == p.kind %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                <select id="nb-kind" aria-label="{{ _('Kind of page') }}">
+                  {% for key, label in kinds.items() %}<option value="{{ key }}" {% if key == p.kind %}selected{% endif %}>{{ label|tr('notebook') }}</option>{% endfor %}
                 </select>
               </label>
             {% else %}
-              <span class="nb-kind-select">{{ icon(kind_icons.get(p.kind, 'file')) }} {{ kinds.get(p.kind, 'Note') }}</span>
+              <span class="nb-kind-select">{{ icon(kind_icons.get(p.kind, 'file')) }} {{ kinds.get(p.kind, 'Note')|tr('notebook') }}</span>
             {% endif %}
-            {% if p.real_role != 'owner' %}<span class="nb-crumb">by {{ p.owner_name }} · {{ 'signed' if p.locked else ('you can edit' if can_edit else 'view only') }}</span>{% endif %}
+            {% if p.real_role != 'owner' %}<span class="nb-crumb">{% trans owner=p.owner_name %}by {{ owner }}{% endtrans %} · {{ _('signed') if p.locked else (_('you can edit') if can_edit else _('view only')) }}</span>{% endif %}
           </div>
           <div class="nb-page-tools">
-            <div class="nb-presence" id="nb-presence" aria-label="Also here"></div>
+            <div class="nb-presence" id="nb-presence" aria-label="{{ _('Also here') }}"></div>
             <span id="page-saved-state" class="page-saved-state" aria-live="polite"></span>
-            {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="Share with lab mates">{{ icon('users') }}<span>{% if p.shared %}Shared{% else %}Share{% endif %}</span></button>{% endif %}
-            <button type="button" class="nb-tool" data-panel="comments" title="Comments">{{ icon('note') }}<span>Comments</span>{% if p.open_comments %}<b class="nb-badge" id="nb-comment-count">{{ p.open_comments }}</b>{% endif %}</button>
-            <button type="button" class="nb-tool{% if p.locked %} is-signed{% endif %}" data-panel="sign" title="{{ 'Signed and locked: see the signatures, witness it, or amend it' if p.locked else 'Sign this page as the record of your work, which locks it' }}">{{ icon('success' if p.locked else 'edit') }}<span class="nb-hide-sm">{{ 'Signed' if p.locked else 'Sign' }}</span></button>
-            <button type="button" class="nb-tool" data-panel="history" title="Version history">{{ icon('history') }}<span class="nb-hide-sm">History</span></button>
-            <button type="button" class="nb-tool" id="nb-run" title="Go through the checklist step by step" hidden>{{ icon('list-check') }}<span class="nb-hide-sm">Run</span></button>
+            {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="{{ _('Share with lab mates') }}">{{ icon('users') }}<span>{% if p.shared %}{{ _('Shared') }}{% else %}{{ _('Share') }}{% endif %}</span></button>{% endif %}
+            <button type="button" class="nb-tool" data-panel="comments" title="{{ _('Comments') }}">{{ icon('note') }}<span>{{ _('Comments') }}</span>{% if p.open_comments %}<b class="nb-badge" id="nb-comment-count">{{ p.open_comments }}</b>{% endif %}</button>
+            <button type="button" class="nb-tool{% if p.locked %} is-signed{% endif %}" data-panel="sign" title="{{ _('Signed and locked: see the signatures, witness it, or amend it') if p.locked else _('Sign this page as the record of your work, which locks it') }}">{{ icon('success' if p.locked else 'edit') }}<span class="nb-hide-sm">{{ _('Signed') if p.locked else _('Sign') }}</span></button>
+            <button type="button" class="nb-tool" data-panel="history" title="{{ _('Version history') }}">{{ icon('history') }}<span class="nb-hide-sm">{{ _('History') }}</span></button>
+            <button type="button" class="nb-tool" id="nb-run" title="{{ _('Go through the checklist step by step') }}" hidden>{{ icon('list-check') }}<span class="nb-hide-sm">{{ _('Run') }}</span></button>
             <div class="nb-more">
-              <button type="button" class="nb-tool" id="nb-more-btn" aria-haspopup="true" aria-expanded="false" title="More">{{ icon('ellipsis') }}</button>
+              <button type="button" class="nb-tool" id="nb-more-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('More') }}">{{ icon('ellipsis') }}</button>
               <div class="nb-more-menu" id="nb-more-menu" hidden>
-                <button type="button" data-more="source">{{ icon('type') }} Edit as Markdown</button>
-                <a href="{{ url_for('nb.page_export', page_id=p.id) }}">{{ icon('download') }} Download .md</a>
-                <button type="button" data-more="print">{{ icon('print') }} Print / PDF</button>
-                <button type="button" data-more="template">{{ icon('template') }} Save as template</button>
-                {% if can_edit %}<button type="button" data-more="version">{{ icon('success') }} Save a named version</button>{% endif %}
+                <button type="button" data-more="source">{{ icon('type') }} {{ _('Edit as Markdown') }}</button>
+                <a href="{{ url_for('nb.page_export', page_id=p.id) }}">{{ icon('download') }} {{ _('Download .md') }}</a>
+                <button type="button" data-more="print">{{ icon('print') }} {{ _('Print / PDF') }}</button>
+                <button type="button" data-more="template">{{ icon('template') }} {{ _('Save as template') }}</button>
+                {% if can_edit %}<button type="button" data-more="version">{{ icon('success') }} {{ _('Save a named version') }}</button>{% endif %}
                 {# Any page, not only meeting notes: a task line naming @someone becomes their to-do. #}
-                {% if can_edit and p.kind != 'meeting' %}<button type="button" data-action="action-items" title="Each open task that names @someone becomes their to-do on the calendar">{{ icon('list-check') }} Send @name tasks as to-dos</button>{% endif %}
-                {% if p.real_role == 'owner' and not p.signed %}<button type="button" data-more="delete" class="is-danger">{{ icon('trash') }} Delete page</button>{% endif %}
+                {% if can_edit and p.kind != 'meeting' %}<button type="button" data-action="action-items" title="{{ _('Each open task that names @someone becomes their to-do on the calendar') }}">{{ icon('list-check') }} {{ _('Send @name tasks as to-dos') }}</button>{% endif %}
+                {% if p.real_role == 'owner' and not p.signed %}<button type="button" data-more="delete" class="is-danger">{{ icon('trash') }} {{ _('Delete page') }}</button>{% endif %}
               </div>
             </div>
           </div>
         </div>
 
-        <input id="page-title" class="page-title" value="{{ '' if p.title == 'Untitled page' else p.title }}" placeholder="Untitled page" autocomplete="off" {% if not can_edit %}readonly{% endif %}>
+        <input id="page-title" class="page-title" value="{{ '' if p.title == 'Untitled page' else p.title }}" placeholder="{{ _('Untitled page') }}" autocomplete="off" {% if not can_edit %}readonly{% endif %}>
 
         <div class="page-meta" id="page-meta">
-          <input type="date" id="page-entry-date" class="page-date-input" value="{{ p.entry_date }}" aria-label="Page date" {% if not can_edit %}disabled{% endif %}>
+          <input type="date" id="page-entry-date" class="page-date-input" value="{{ p.entry_date }}" aria-label="{{ _('Page date') }}" {% if not can_edit %}disabled{% endif %}>
           {% if p.real_role == 'owner' %}
             <span class="meta-sep">·</span>
-            <label class="topic-mover">Topic
+            <label class="topic-mover">{{ _('Topic') }}
               <select id="page-topic-select">
-                {% for tab in tabs %}<option value="{{ tab.id }}" {% if tab.id == p.tab_id %}selected{% endif %}>{{ tab.title }}</option>{% endfor %}
+                {% for tab in tabs %}<option value="{{ tab.id }}" {% if tab.id == p.tab_id %}selected{% endif %}>{{ tab.title|tr }}</option>{% endfor %}
               </select>
             </label>
           {% endif %}
@@ -181,10 +181,10 @@
             <span class="meta-sep">·</span>
             <span class="nb-status" data-status="{{ p.status }}">
               {% if can_edit %}
-                <select id="nb-status" aria-label="Status">
-                  {% for key, label in statuses.items() if key %}<option value="{{ key }}" {% if key == p.status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                <select id="nb-status" aria-label="{{ _('Status') }}">
+                  {% for key, label in statuses.items() if key %}<option value="{{ key }}" {% if key == p.status %}selected{% endif %}>{{ label|tr }}</option>{% endfor %}
                 </select>
-              {% else %}{{ statuses.get(p.status, '') }}{% endif %}
+              {% else %}{{ statuses.get(p.status, '')|tr }}{% endif %}
             </span>
           {% endif %}
           <span class="nb-stamps" id="nb-stamps"></span>
@@ -194,49 +194,49 @@
 
         {% if p.locked %}
           <div class="nb-callout nb-signed" id="nb-signed-callout">
-            <span>{{ icon('lock') }} Signed by <b>{{ p.signed_by.name }}</b> on <time datetime="{{ p.signed_by.at }}">{{ p.signed_by.local }}</time>: this page is a locked record.
-              {% if p.real_role == 'owner' %}To change it, amend it (the reason stays in the record).{% endif %}</span>
-            <button type="button" class="btn" data-panel="sign">{{ icon('success') }} Signatures</button>
+            <span>{{ icon('lock') }} {% trans name=p.signed_by.name, at=p.signed_by.at, local=p.signed_by.local %}Signed by <b>{{ name }}</b> on <time datetime="{{ at }}">{{ local }}</time>: this page is a locked record.{% endtrans %}
+              {% if p.real_role == 'owner' %}{{ _('To change it, amend it (the reason stays in the record).') }}{% endif %}</span>
+            <button type="button" class="btn" data-panel="sign">{{ icon('success') }} {{ _('Signatures') }}</button>
           </div>
         {% endif %}
         {% if p.kind == 'experiment' and can_edit and not p.started_at %}
           <div class="nb-callout" id="nb-start-callout">
-            <span>Ready to begin? Starting stamps the time, so the record shows when the work began.</span>
-            <button type="button" class="btn btn-primary" data-action="start">{{ icon('clock') }} Start experiment</button>
+            <span>{{ _('Ready to begin? Starting stamps the time, so the record shows when the work began.') }}</span>
+            <button type="button" class="btn btn-primary" data-action="start">{{ icon('clock') }} {{ _('Start experiment') }}</button>
           </div>
         {% elif p.kind == 'experiment' and can_edit and p.status == 'running' %}
           <div class="nb-callout is-quiet" id="nb-finish-callout">
-            <span>Running since <time id="nb-started"></time>.</span>
-            <button type="button" class="btn" data-action="finish" data-outcome="done">{{ icon('success') }} Finished</button>
-            <button type="button" class="btn" data-action="finish" data-outcome="failed">{{ icon('error') }} Did not work</button>
+            <span>{% trans %}Running since <time id="nb-started"></time>.{% endtrans %}</span>
+            <button type="button" class="btn" data-action="finish" data-outcome="done">{{ icon('success') }} {{ _('Finished') }}</button>
+            <button type="button" class="btn" data-action="finish" data-outcome="failed">{{ icon('error') }} {{ _('Did not work') }}</button>
           </div>
         {% endif %}
         {% if p.protocol %}
-          <div class="nb-callout is-quiet">{{ icon('protocol') }} Follows <a href="{{ url_for('notebook', page=p.protocol.id) }}">{{ p.protocol.title }}</a>{% if p.protocol.version %} · v{{ p.protocol.version }}{% endif %}</div>
+          <div class="nb-callout is-quiet">{{ icon('protocol') }} {% trans url=url_for('notebook', page=p.protocol.id), title=p.protocol.title %}Follows <a href="{{ url }}">{{ title }}</a>{% endtrans %}{% if p.protocol.version %} · v{{ p.protocol.version }}{% endif %}</div>
         {% endif %}
         {% if p.kind == 'protocol' %}
           <div class="nb-callout is-quiet nb-protocol-bar">
-            <span>{{ icon('protocol') }} Protocol{% if p.release %} · <b>v{{ p.release }}</b>{% else %} · not numbered yet{% endif %}</span>
-            <button type="button" class="btn btn-primary" data-action="start-experiment">{{ icon('flask') }} Start an experiment from it</button>
-            {% if can_edit %}<button type="button" class="btn" data-action="release">{{ icon('success') }} Save as v{{ (p.release or 0) + 1 }}</button>{% endif %}
-            <button type="button" class="btn btn-ghost" data-panel="experiments">Experiments that used it</button>
+            <span>{{ icon('protocol') }} {{ _('Protocol') }}{% if p.release %} · <b>v{{ p.release }}</b>{% else %} · {{ _('not numbered yet') }}{% endif %}</span>
+            <button type="button" class="btn btn-primary" data-action="start-experiment">{{ icon('flask') }} {{ _('Start an experiment from it') }}</button>
+            {% if can_edit %}<button type="button" class="btn" data-action="release">{{ icon('success') }} {{ _('Save as v%(number)s', number=(p.release or 0) + 1) }}</button>{% endif %}
+            <button type="button" class="btn btn-ghost" data-panel="experiments">{{ _('Experiments that used it') }}</button>
           </div>
         {% endif %}
         {% if p.kind == 'meeting' and can_edit %}
           <div class="nb-callout is-quiet">
-            <span>{{ icon('users') }} {% if p.presenter_name %}Presenter: <b>{{ p.presenter_name }}</b> · {% endif %}Tasks that name <b>@someone</b> go to their calendar as to-dos.</span>
-            <button type="button" class="btn" data-action="action-items">{{ icon('list-check') }} Send action items</button>
+            <span>{{ icon('users') }} {% if p.presenter_name %}{% trans name=p.presenter_name %}Presenter: <b>{{ name }}</b>{% endtrans %} · {% endif %}{% trans %}Tasks that name <b>@someone</b> go to their calendar as to-dos.{% endtrans %}</span>
+            <button type="button" class="btn" data-action="action-items">{{ icon('list-check') }} {{ _('Send action items') }}</button>
           </div>
         {% endif %}
         {% if p.kind == 'daily' and can_edit %}
           <form class="nb-quicklog" id="nb-quicklog">
             {{ icon('clock') }}
-            <input id="nb-quicklog-input" placeholder="What just happened? (added under Log with the time)" autocomplete="off" aria-label="Log entry">
-            <button type="submit" class="btn btn-primary">Log</button>
+            <input id="nb-quicklog-input" placeholder="{{ _('What just happened? (added under Log with the time)') }}" autocomplete="off" aria-label="{{ _('Log entry') }}">
+            <button type="submit" class="btn btn-primary">{{ _('Log') }}</button>
           </form>
         {% endif %}
         {% if not can_edit and not p.locked %}
-          <div class="nb-callout is-quiet">{{ icon('eye') }} You can read this page and comment on it; {{ p.owner_name }} can let you edit it.</div>
+          <div class="nb-callout is-quiet">{{ icon('eye') }} {% trans owner=p.owner_name %}You can read this page and comment on it; {{ owner }} can let you edit it.{% endtrans %}</div>
         {% endif %}
 
         <div id="editor-mount" class="tiptap-editor-host"></div>
@@ -244,24 +244,24 @@
       </div>
     {% else %}
       <div class="notebook-empty-state nb-welcome">
-        <h2>Start a page</h2>
-        <p>Pick what it is for; you can change it later.</p>
+        <h2>{{ _('Start a page') }}</h2>
+        <p>{{ _('Pick what it is for; you can change it later.') }}</p>
         <div class="nb-starter-grid">
           {% for st in starters %}
             <button type="button" class="nb-starter" data-starter="{{ st.key }}">
               {{ icon(kind_icons.get(st.kind, 'file')) }}
-              <b>{{ st.title if st.key != 'blank' else 'Blank page' }}</b>
-              <small>{{ st.hint }}</small>
+              <b>{{ st.title|tr if st.key != 'blank' else _('Blank page') }}</b>
+              <small>{{ st.hint|tr }}</small>
             </button>
           {% endfor %}
         </div>
-        <p class="nb-muted"><a href="{{ url_for('nb.today') }}">Open today's log</a> · <button type="button" class="btn-link" id="nb-import-2">import a Markdown file</button></p>
+        <p class="nb-muted"><a href="{{ url_for('nb.today') }}">{{ _("Open today's log") }}</a> · <button type="button" class="btn-link" id="nb-import-2">{{ _('import a Markdown file') }}</button></p>
       </div>
     {% endif %}
   </div>
 
   <aside class="nb-drawer" id="nb-drawer" hidden aria-live="polite">
-    <header class="nb-drawer-head"><h3 id="nb-drawer-title"></h3><button type="button" class="modal-close" id="nb-drawer-close" aria-label="Close">{{ icon('close') }}</button></header>
+    <header class="nb-drawer-head"><h3 id="nb-drawer-title"></h3><button type="button" class="modal-close" id="nb-drawer-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="nb-drawer-body" id="nb-drawer-body"></div>
   </aside>
 </section>
@@ -269,45 +269,45 @@
 {# New page: built-in starters and saved templates. #}
 <div class="notebook-modal" id="notebook-template-modal" hidden>
   <div class="notebook-modal-backdrop" data-close-modal></div>
-  <div class="notebook-modal-card" role="dialog" aria-label="New page">
+  <div class="notebook-modal-card" role="dialog" aria-label="{{ _('New page') }}">
     <header class="notebook-modal-head">
-      <h3>New page</h3>
-      <button type="button" class="modal-close" data-close-modal aria-label="Close">{{ icon('close') }}</button>
+      <h3>{{ _('New page') }}</h3>
+      <button type="button" class="modal-close" data-close-modal aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
     </header>
     <div class="notebook-modal-body">
       <div class="nb-starter-grid is-compact">
         {% for st in starters %}
           <button type="button" class="nb-starter" data-starter="{{ st.key }}">
-            {{ icon(kind_icons.get(st.kind, 'file')) }}<b>{{ st.title if st.key != 'blank' else 'Blank page' }}</b><small>{{ st.hint }}</small>
+            {{ icon(kind_icons.get(st.kind, 'file')) }}<b>{{ st.title|tr if st.key != 'blank' else _('Blank page') }}</b><small>{{ st.hint|tr }}</small>
           </button>
         {% endfor %}
       </div>
-      <div class="notebook-section-label">Your templates</div>
-      <div id="notebook-template-list" class="notebook-template-list"><div class="notebook-template-loading">Loading…</div></div>
+      <div class="notebook-section-label">{{ _('Your templates') }}</div>
+      <div id="notebook-template-list" class="notebook-template-list"><div class="notebook-template-loading">{{ _('Loading…') }}</div></div>
       <details class="notebook-template-new">
-        <summary>{{ icon('plus') }} Create a new template</summary>
+        <summary>{{ icon('plus') }} {{ _('Create a new template') }}</summary>
         <form id="notebook-template-form">
-          <label>Title <input name="title" required placeholder="e.g. PCR protocol"></label>
-          <label>Icon <input name="icon" maxlength="4" placeholder="Optional, one character"></label>
-          <label>Page type
-            <select name="kind">{% for k, label in kinds.items() if k != 'daily' %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select>
+          <label>{{ _('Title') }} <input name="title" required placeholder="{{ _('e.g. PCR protocol') }}"></label>
+          <label>{{ _('Icon') }} <input name="icon" maxlength="4" placeholder="{{ _('Optional, one character') }}"></label>
+          <label>{{ _('Page type') }}
+            <select name="kind">{% for k, label in kinds.items() if k != 'daily' %}<option value="{{ k }}">{{ label|tr('notebook') }}</option>{% endfor %}</select>
           </label>
-          <label>Body (Markdown)
-            <textarea name="body" rows="6" placeholder="# Goal&#10;&#10;## Materials&#10;&#10;## Steps&#10;1. ..."></textarea>
+          <label>{{ _('Body (Markdown)') }}
+            <textarea name="body" rows="6" placeholder="{{ _('# Goal') }}&#10;&#10;{{ _('## Materials') }}&#10;&#10;{{ _('## Steps') }}&#10;1. ..."></textarea>
           </label>
           {% set template_groups = groups_api.choices() %}
           {% if template_groups %}
-            <label>Who can use it
+            <label>{{ _('Who can use it') }}
               <select name="lab">
-                <option value="">Just me</option>
-                <option value="1">Everyone in the lab</option>
+                <option value="">{{ _('Just me') }}</option>
+                <option value="1">{{ _('Everyone in the lab') }}</option>
                 {% for gid, name in template_groups %}<option value="g{{ gid }}">{{ name }}</option>{% endfor %}
               </select>
             </label>
           {% else %}
-            <label class="cal-check"><input type="checkbox" name="lab" value="1"> Share it with the lab</label>
+            <label class="cal-check"><input type="checkbox" name="lab" value="1"> {{ _('Share it with the lab') }}</label>
           {% endif %}
-          <div class="notebook-template-form-actions"><button type="submit" class="btn btn-primary">Save template</button></div>
+          <div class="notebook-template-form-actions"><button type="submit" class="btn btn-primary">{{ _('Save template') }}</button></div>
         </form>
       </details>
     </div>
@@ -329,7 +329,7 @@
 <script nonce="{{ csp_nonce() }}">
 // Topic management stays here so the sidebar works even without the editor bundle.
 async function createTab() {
-  const title = await BioDialog.prompt('New topic', '', { placeholder: 'e.g. Photometry', okLabel: 'Create topic' });
+  const title = await BioDialog.prompt(t('New topic'), '', { placeholder: t('e.g. Photometry'), okLabel: t('Create topic') });
   if (!title || !title.trim()) return;
   const formData = new FormData();
   formData.append('title', title.trim());
@@ -340,7 +340,7 @@ async function createTab() {
 
 async function renameTab(tabId) {
   const current = document.querySelector(`.notebook-tab[data-tab-id="${tabId}"] .tab-title`)?.textContent || '';
-  const title = await BioDialog.prompt('Rename topic', current, { okLabel: 'Rename' });
+  const title = await BioDialog.prompt(t('Rename topic'), current, { okLabel: t('Rename') });
   if (!title || !title.trim()) return;
   const formData = new FormData();
   formData.append('title', title.trim());

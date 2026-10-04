@@ -27,6 +27,10 @@
     });
   }
   function icon(name) { return '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name + '"></use></svg>'; }
+  // Dates in the page's language; a label that arrives as a value with its
+  // meaning here ("notebook::Note": a page, not a note on a record).
+  var LOC = window.BM_LANG === 'zh' ? 'zh-CN' : [];
+  function tc(ctx, s) { var k = ctx + '::' + s; var v = t(k); return v === k ? t(s) : v; }
   // Server times are UTC without a zone.
   function when(iso) {
     if (!iso) return null;
@@ -49,8 +53,8 @@
     var now = new Date();
     var day = function (x) { return x.toLocaleDateString('en-CA', inLab()); };
     var same = day(d) === day(now);
-    var t = d.toLocaleTimeString([], inLab({ hour: '2-digit', minute: '2-digit' }));
-    return same ? 'today ' + t : d.toLocaleDateString([], inLab({ day: 'numeric', month: 'short', year: day(d).slice(0, 4) === day(now).slice(0, 4) ? undefined : 'numeric' })) + ' ' + t;
+    var hm = d.toLocaleTimeString(LOC, inLab({ hour: '2-digit', minute: '2-digit' }));
+    return same ? t('today') + ' ' + hm : d.toLocaleDateString(LOC, inLab({ day: 'numeric', month: 'short', year: day(d).slice(0, 4) === day(now).slice(0, 4) ? undefined : 'numeric' })) + ' ' + hm;
   }
   function api(url, opts) {
     opts = opts || {};
@@ -157,30 +161,30 @@
     b.addEventListener('click', function () {
       var body = { starter: b.dataset.starter, open_tab_id: DATA.topicChosen ? DATA.selectedTab || '' : '' };
       api('/notebook/api/pages/new', { body: body }).then(function (d) { go(d.url); })
-        .catch(function (e) { toast('Could not make the page: ' + esc(e.message), true); });
+        .catch(function (e) { toast(t('Could not make the page: %(error)s', { error: esc(e.message) }), true); });
     });
   });
 
   function loadTemplates() {
     var list = $('#notebook-template-list');
     if (!list) return;
-    list.innerHTML = '<div class="notebook-template-loading">Loading…</div>';
+    list.innerHTML = '<div class="notebook-template-loading">' + t('Loading…') + '</div>';
     api('/notebook/templates').then(function (d) {
       if (!d.templates.length) {
-        list.innerHTML = '<div class="notebook-template-empty">None yet. Use “Save as template” on any page, or make one below.</div>';
+        list.innerHTML = '<div class="notebook-template-empty">' + t('None yet. Use “Save as template” on any page, or make one below.') + '</div>';
         return;
       }
-      list.innerHTML = d.templates.map(function (t) {
-        var tags = (t.kind && t.kind !== 'note' ? '<span class="badge badge-quiet">' + esc(t.kind_label) + '</span>' : '') +
-          (t.lab ? '<span class="badge badge-brand" title="' + (t.group ? 'Everyone in ' + esc(t.group) + ' can use it' : 'Everyone in the lab can use it') + '">' +
-            (t.group ? esc(t.group) : 'Lab') + (t.mine ? '' : ' · ' + esc(t.owner_name)) + '</span>' : '');
-        return '<div class="notebook-template-row"><button type="button" class="notebook-template-pick" data-template="' + t.id + '">' +
-          '<span class="notebook-template-icon">' + (t.icon ? esc(t.icon) : icon('file')) + '</span>' +
-          '<span class="notebook-template-meta"><span class="notebook-template-title">' + esc(t.title) + ' ' + tags + '</span>' +
-          '<span class="notebook-template-preview">' + esc(t.body_preview || '') + '</span></span></button>' +
-          (t.can_delete ? '<button type="button" class="notebook-template-del" title="Delete template" aria-label="Delete template" data-del-template="' + t.id + '">' + icon('trash') + '</button>' : '') + '</div>';
+      list.innerHTML = d.templates.map(function (tpl) {
+        var tags = (tpl.kind && tpl.kind !== 'note' ? '<span class="badge badge-quiet">' + esc(tc('notebook', tpl.kind_label)) + '</span>' : '') +
+          (tpl.lab ? '<span class="badge badge-brand" title="' + (tpl.group ? t('Everyone in %(group)s can use it', { group: esc(tpl.group) }) : t('Everyone in the lab can use it')) + '">' +
+            (tpl.group ? esc(tpl.group) : t('Lab')) + (tpl.mine ? '' : ' · ' + esc(tpl.owner_name)) + '</span>' : '');
+        return '<div class="notebook-template-row"><button type="button" class="notebook-template-pick" data-template="' + tpl.id + '">' +
+          '<span class="notebook-template-icon">' + (tpl.icon ? esc(tpl.icon) : icon('file')) + '</span>' +
+          '<span class="notebook-template-meta"><span class="notebook-template-title">' + esc(tpl.title) + ' ' + tags + '</span>' +
+          '<span class="notebook-template-preview">' + esc(tpl.body_preview || '') + '</span></span></button>' +
+          (tpl.can_delete ? '<button type="button" class="notebook-template-del" title="' + t('Delete template') + '" aria-label="' + t('Delete template') + '" data-del-template="' + tpl.id + '">' + icon('trash') + '</button>' : '') + '</div>';
       }).join('');
-    }).catch(function () { list.innerHTML = '<div class="notebook-template-empty">Could not load templates.</div>'; });
+    }).catch(function () { list.innerHTML = '<div class="notebook-template-empty">' + t('Could not load templates.') + '</div>'; });
   }
   if (modal) {
     modal.addEventListener('click', function (event) {
@@ -189,7 +193,7 @@
       if (pick) {
         api('/notebook/api/pages/new', { body: { template_id: Number(pick.dataset.template), open_tab_id: DATA.topicChosen ? DATA.selectedTab || '' : '' } }).then(function (d) { go(d.url); });
       } else if (del) {
-        BioDialog.confirm('Delete this template?', { danger: true }).then(function (ok) {
+        BioDialog.confirm(t('Delete this template?'), { danger: true }).then(function (ok) {
           if (ok) fetch('/notebook/templates/' + del.dataset.delTemplate + '/delete', { method: 'POST' }).then(loadTemplates);
         });
       }
@@ -207,7 +211,7 @@
     var post = function () { return fetch('/notebook/templates/create', { method: 'POST', body: form }).then(function (r) { return r.json(); }); };
     return post().then(function (d) {
       if (!d.exists) return d;
-      return BioDialog.confirm(d.error + ' Replace it with this one?', { okLabel: 'Replace it' }).then(function (ok) {
+      return BioDialog.confirm(d.error + ' ' + t('Replace it with this one?'), { okLabel: t('Replace it') }).then(function (ok) {
         if (!ok) return null;
         form.set('replace', '1');
         return post();
@@ -225,7 +229,7 @@
       form.append('file', input.files[0]);
       if (DATA.selectedTab) form.append('tab_id', DATA.selectedTab);
       api('/notebook/api/import', { form: form }).then(function (d) { go(d.url); })
-        .catch(function (e) { toast('Could not import: ' + esc(e.message), true); });
+        .catch(function (e) { toast(t('Could not import: %(error)s', { error: esc(e.message) }), true); });
     });
     input.click();
   }
@@ -254,12 +258,12 @@
     drawer.hidden = false;
     drawer.dataset.panel = name;
     document.body.classList.add('nb-drawer-open');
-    drawerTitle.textContent = panel.title;
+    drawerTitle.textContent = t(panel.title);
     // A fresh box each time: a slow answer for a panel already closed
     // lands in a box no longer on the page, not in the one now open.
     var box = document.createElement('div');
     box.className = 'nb-panel';
-    box.innerHTML = '<p class="nb-muted">Loading…</p>';
+    box.innerHTML = '<p class="nb-muted">' + t('Loading…') + '</p>';
     drawerBody.innerHTML = '';
     drawerBody.appendChild(box);
     panel.render(box, opts || {});
@@ -278,27 +282,27 @@
         var taken = {};
         shared.forEach(function (s) { taken[s.username] = true; });
         var options = d.people.filter(function (p) { return !taken[p.username]; })
-          .map(function (p) { return '<option value="' + esc(p.username) + '">' + esc(p.name) + (p.guest ? ' (guest)' : '') + '</option>'; }).join('');
+          .map(function (p) { return '<option value="' + esc(p.username) + '">' + esc(p.name) + (p.guest ? ' ' + t('(guest)') : '') + '</option>'; }).join('');
         // Project groups the page can be shared with, as one choice each.
         var groupOptions = (d.groups || []).filter(function (grp) { return !taken[grp.username]; })
           .map(function (grp) { return '<option value="' + esc(grp.username) + '">' + esc(grp.name) + '</option>'; }).join('');
-        if (groupOptions) options = (options ? '<optgroup label="People">' + options + '</optgroup>' : '') +
-          '<optgroup label="Project groups">' + groupOptions + '</optgroup>';
+        if (groupOptions) options = (options ? '<optgroup label="' + t('People') + '">' + options + '</optgroup>' : '') +
+          '<optgroup label="' + t('Project groups') + '">' + groupOptions + '</optgroup>';
         box.innerHTML =
-          '<p class="nb-muted">People you share with see this page under <b>Shared with me</b>. Editors write in it with you, live. Share with a project group and everyone in it can.</p>' +
-          '<div class="nb-field-row"><label>Everyone in the lab <select id="nb-share-lab">' +
-          '<option value="">can’t see it</option><option value="view"' + (lab && lab.role === 'view' ? ' selected' : '') + '>can view</option>' +
-          '<option value="edit"' + (lab && lab.role === 'edit' ? ' selected' : '') + '>can edit</option></select></label></div>' +
-          '<form class="nb-field-row" id="nb-share-add"><select id="nb-share-who" aria-label="Person or project group">' + (options || '<option value="">Everyone already has access</option>') + '</select>' +
-          '<select id="nb-share-role" aria-label="Role"><option value="edit">can edit</option><option value="view">can view</option></select>' +
-          '<button class="btn btn-primary" type="submit">Share</button></form>' +
+          '<p class="nb-muted">' + t('People you share with see this page under <b>Shared with me</b>. Editors write in it with you, live. Share with a project group and everyone in it can.') + '</p>' +
+          '<div class="nb-field-row"><label>' + t('Everyone in the lab') + ' <select id="nb-share-lab">' +
+          '<option value="">' + t('can’t see it') + '</option><option value="view"' + (lab && lab.role === 'view' ? ' selected' : '') + '>' + t('can view') + '</option>' +
+          '<option value="edit"' + (lab && lab.role === 'edit' ? ' selected' : '') + '>' + t('can edit') + '</option></select></label></div>' +
+          '<form class="nb-field-row" id="nb-share-add"><select id="nb-share-who" aria-label="' + t('Person or project group') + '">' + (options || '<option value="">' + t('Everyone already has access') + '</option>') + '</select>' +
+          '<select id="nb-share-role" aria-label="' + t('Role') + '"><option value="edit">' + t('can edit') + '</option><option value="view">' + t('can view') + '</option></select>' +
+          '<button class="btn btn-primary" type="submit">' + t('Share') + '</button></form>' +
           '<ul class="nb-list">' + (shared.length ? shared.map(function (s) {
             var avatar = s.group ? '<span class="nb-avatar" style="background:#0d9488">' + icon('users') + '</span>'
               : '<span class="nb-avatar" style="background:' + colorFor(s.username) + '">' + esc(initials(s.name)) + '</span>';
             return '<li class="nb-list-row">' + avatar + '<span class="nb-grow">' + esc(s.name) + '</span>' +
-              '<select data-share-role="' + esc(s.username) + '"><option value="edit"' + (s.role === 'edit' ? ' selected' : '') + '>can edit</option><option value="view"' + (s.role === 'view' ? ' selected' : '') + '>can view</option></select>' +
-              '<button type="button" class="nb-icon-btn" data-share-remove="' + esc(s.username) + '" aria-label="Stop sharing">' + icon('close') + '</button></li>';
-          }).join('') : '<li class="nb-muted">Not shared with anyone yet.</li>') + '</ul>';
+              '<select data-share-role="' + esc(s.username) + '"><option value="edit"' + (s.role === 'edit' ? ' selected' : '') + '>' + t('can edit') + '</option><option value="view"' + (s.role === 'view' ? ' selected' : '') + '>' + t('can view') + '</option></select>' +
+              '<button type="button" class="nb-icon-btn" data-share-remove="' + esc(s.username) + '" aria-label="' + t('Stop sharing') + '">' + icon('close') + '</button></li>';
+          }).join('') : '<li class="nb-muted">' + t('Not shared with anyone yet.') + '</li>') + '</ul>';
         var refresh = function () { PANELS.share.render(box); setSharedLabel(true); };
         $('#nb-share-lab', box).addEventListener('change', function (e) {
           var role = e.target.value;
@@ -310,7 +314,7 @@
           var who = $('#nb-share-who', box).value;
           if (!who) return;
           api('/notebook/api/pages/' + page.id + '/shares', { body: { username: who, role: $('#nb-share-role', box).value } })
-            .then(function () { toast('Shared. They have been told.'); refresh(); })
+            .then(function () { toast(t('Shared. They have been told.')); refresh(); })
             .catch(function (err) { toast(esc(err.message), true); });
         });
         box.onchange = function (e) {      // once per box, however often the panel redraws
@@ -326,7 +330,7 @@
   };
   function setSharedLabel(shared) {
     var b = $('.nb-tool[data-panel="share"] span');
-    if (b) b.textContent = shared ? 'Shared' : 'Share';
+    if (b) b.textContent = shared ? t('Shared') : t('Share');
   }
 
   // ---- comments
@@ -407,8 +411,8 @@
   function commentHtml(c, isReply) {
     return '<div class="nb-comment' + (isReply ? ' is-reply' : '') + '" id="comment-' + c.id + '">' +
       '<div class="nb-comment-head"><span class="nb-avatar" style="background:' + colorFor(c.author) + '">' + esc(initials(c.author_name)) + '</span>' +
-      '<b>' + esc(c.author_name) + '</b><time>' + esc(timeText(c.created_at)) + (c.updated_at ? ' · edited' : '') + '</time>' +
-      (c.can_delete ? '<button type="button" class="nb-icon-btn" data-comment-delete="' + c.id + '" aria-label="Delete comment">' + icon('trash') + '</button>' : '') + '</div>' +
+      '<b>' + esc(c.author_name) + '</b><time>' + esc(timeText(c.created_at)) + (c.updated_at ? ' · ' + t('edited') : '') + '</time>' +
+      (c.can_delete ? '<button type="button" class="nb-icon-btn" data-comment-delete="' + c.id + '" aria-label="' + t('Delete comment') + '">' + icon('trash') + '</button>' : '') + '</div>' +
       '<div class="nb-comment-body">' + mentionize(c.body) + '</div></div>';
   }
   PANELS.comments = {
@@ -418,20 +422,20 @@
       loadComments().then(function () {
         var open = commentThreads.filter(function (t) { return !t.resolved; });
         var done = commentThreads.filter(function (t) { return t.resolved; });
-        var thread = function (t) {
-          return '<article class="nb-thread' + (t.resolved ? ' is-resolved' : '') + '" data-thread="' + t.id + '">' +
-            (t.quote ? '<button type="button" class="nb-thread-quote" data-quote="' + t.id + '">“' + esc(t.quote) + '”</button>' : '') +
-            commentHtml(t) + t.replies.map(function (r) { return commentHtml(r, true); }).join('') +
-            '<form class="nb-reply" data-reply="' + t.id + '"><textarea rows="1" placeholder="Reply… @name to tell someone"></textarea><button class="btn" type="submit">Reply</button></form>' +
-            '<button type="button" class="btn-link" data-resolve="' + t.id + '" data-to="' + (t.resolved ? '0' : '1') + '">' + (t.resolved ? 'Reopen' : 'Resolve') + '</button></article>';
+        var thread = function (th) {
+          return '<article class="nb-thread' + (th.resolved ? ' is-resolved' : '') + '" data-thread="' + th.id + '">' +
+            (th.quote ? '<button type="button" class="nb-thread-quote" data-quote="' + th.id + '">“' + esc(th.quote) + '”</button>' : '') +
+            commentHtml(th) + th.replies.map(function (r) { return commentHtml(r, true); }).join('') +
+            '<form class="nb-reply" data-reply="' + th.id + '"><textarea rows="1" placeholder="' + t('Reply… @name to tell someone') + '"></textarea><button class="btn" type="submit">' + t('Reply') + '</button></form>' +
+            '<button type="button" class="btn-link" data-resolve="' + th.id + '" data-to="' + (th.resolved ? '0' : '1') + '">' + (th.resolved ? t('Reopen') : t('Resolve')) + '</button></article>';
         };
         box.innerHTML =
           '<form class="nb-new-comment" id="nb-new-comment">' +
-          (selected ? '<div class="nb-thread-quote is-static">“' + esc(selected.slice(0, 300)) + '”</div>' : '<p class="nb-muted">Select text in the page first to comment on that passage.</p>') +
-          '<textarea rows="3" placeholder="Comment… type @ to mention a lab mate"></textarea>' +
-          '<div class="nb-field-row"><span class="nb-grow"></span><button class="btn btn-primary" type="submit">Comment</button></div></form>' +
-          (open.length ? open.map(thread).join('') : '<p class="nb-muted">No open comments.</p>') +
-          (done.length ? '<details class="nb-resolved"><summary>' + done.length + ' resolved</summary>' + done.map(thread).join('') + '</details>' : '');
+          (selected ? '<div class="nb-thread-quote is-static">“' + esc(selected.slice(0, 300)) + '”</div>' : '<p class="nb-muted">' + t('Select text in the page first to comment on that passage.') + '</p>') +
+          '<textarea rows="3" placeholder="' + t('Comment… type @ to mention a lab mate') + '"></textarea>' +
+          '<div class="nb-field-row"><span class="nb-grow"></span><button class="btn btn-primary" type="submit">' + t('Comment') + '</button></div></form>' +
+          (open.length ? open.map(thread).join('') : '<p class="nb-muted">' + t('No open comments.') + '</p>') +
+          (done.length ? '<details class="nb-resolved"><summary>' + t('%(n)s resolved', { n: done.length }) + '</summary>' + done.map(thread).join('') + '</details>' : '');
         $$('textarea', box).forEach(attachMentions);
         var form = $('#nb-new-comment', box);
         form.addEventListener('submit', function (e) {
@@ -459,7 +463,7 @@
           var del = e.target.closest('[data-comment-delete]');
           if (q && nb) nb.scrollToQuote(Number(q.dataset.quote));
           if (r) api('/notebook/api/comments/' + r.dataset.resolve + '/resolve', { body: { resolved: r.dataset.to === '1' } }).then(function () { PANELS.comments.render(box, {}); });
-          if (del) BioDialog.confirm('Delete this comment?', { danger: true }).then(function (ok) {
+          if (del) BioDialog.confirm(t('Delete this comment?'), { danger: true }).then(function (ok) {
             if (ok) api('/notebook/api/comments/' + del.dataset.commentDelete + '/delete', { body: {} }).then(function () { PANELS.comments.render(box, {}); });
           });
         };
@@ -469,13 +473,13 @@
         if (d.no_access && d.no_access.length) {
           var names = d.no_access_names.join(', ');
           if (isOwner) {
-            BioDialog.confirm(names + ' cannot see this page, so was not told. Let them view it?', { okLabel: 'Let them view it' }).then(function (ok) {
+            BioDialog.confirm(t('%(names)s cannot see this page, so was not told. Let them view it?', { names: names }), { okLabel: t('Let them view it') }).then(function (ok) {
               if (!ok) return;
               Promise.all(d.no_access.map(function (u) { return api('/notebook/api/pages/' + page.id + '/shares', { body: { username: u, role: 'view' } }); }))
-                .then(function () { toast('Shared with ' + esc(names) + '.'); });
+                .then(function () { toast(t('Shared with %(names)s.', { names: esc(names) })); });
             });
           } else {
-            toast(esc(names) + ' cannot see this page, so was not told. Ask ' + esc(page.owner_name) + ' to share it.', true);
+            toast(t('%(names)s cannot see this page, so was not told. Ask %(owner)s to share it.', { names: esc(names), owner: esc(page.owner_name) }), true);
           }
         }
         PANELS.comments.render(box, {});
@@ -504,18 +508,18 @@
     return out;
   }
   function diffHtml(ops) {
-    if (!ops) return '<p class="nb-muted">Too long to compare here.</p>';
+    if (!ops) return '<p class="nb-muted">' + t('Too long to compare here.') + '</p>';
     var html = [];
     var skipped = 0;
     ops.forEach(function (op, idx) {
       var near = ops.slice(Math.max(0, idx - 2), idx + 3).some(function (o) { return o[0] !== ' '; });
       if (op[0] === ' ' && !near) { skipped++; return; }
-      if (skipped) { html.push('<div class="nb-diff-skip">⋯ ' + skipped + ' unchanged line' + (skipped > 1 ? 's' : '') + '</div>'); skipped = 0; }
+      if (skipped) { html.push('<div class="nb-diff-skip">⋯ ' + t(skipped > 1 ? '%(n)s unchanged lines' : '%(n)s unchanged line', { n: skipped }) + '</div>'); skipped = 0; }
       html.push('<div class="nb-diff-' + (op[0] === '+' ? 'add' : op[0] === '-' ? 'del' : 'same') + '">' + esc(op[0] + ' ' + op[1]) + '</div>');
     });
-    if (skipped) html.push('<div class="nb-diff-skip">⋯ ' + skipped + ' unchanged lines</div>');
+    if (skipped) html.push('<div class="nb-diff-skip">⋯ ' + t(skipped > 1 ? '%(n)s unchanged lines' : '%(n)s unchanged line', { n: skipped }) + '</div>');
     var changes = ops.filter(function (o) { return o[0] !== ' '; }).length;
-    return changes ? '<div class="nb-diff">' + html.join('') + '</div>' : '<p class="nb-muted">No differences from the page as it is now.</p>';
+    return changes ? '<div class="nb-diff">' + html.join('') + '</div>' : '<p class="nb-muted">' + t('No differences from the page as it is now.') + '</p>';
   }
   // ---- sign: the page as a locked record (app/signatures.py). The
   // person's choice: nothing asks for it.
@@ -523,41 +527,38 @@
     title: 'Signatures',
     render: function (box) {
       api('/notebook/api/pages/' + page.id + '/signatures').then(function (d) {
-        var when = function (iso) { return new Date(iso).toLocaleString([], inLab({ dateStyle: 'medium', timeStyle: 'short' })); };
-        var label = { sign: 'Signed', review: 'Reviewed', witness: 'Witnessed', amend: 'Opened to amend' };
+        var when = function (iso) { return new Date(iso).toLocaleString(LOC, inLab({ dateStyle: 'medium', timeStyle: 'short' })); };
+        var label = { sign: t('Signed'), review: t('Reviewed'), witness: t('Witnessed'), amend: t('Opened to amend') };
         var list = d.entries.length ? '<ol class="nb-sig-list">' + d.entries.map(function (e) {
-          return '<li class="nb-sig" data-action="' + esc(e.action) + '"><b>' + esc(label[e.action] || e.action) + '</b> by ' + esc(e.name) +
+          return '<li class="nb-sig" data-action="' + esc(e.action) + '"><b>' + esc(label[e.action] || e.action) + '</b> ' + t('by %(name)s', { name: esc(e.name) }) +
             ' <span class="nb-muted">' + esc(when(e.at)) + '</span>' +
             (e.meaning ? '<div class="nb-sig-meaning">“' + esc(e.meaning) + '”</div>' : '') +
-            (e.reason ? '<div class="nb-sig-meaning">Reason: ' + esc(e.reason) + '</div>' : '') +
-            (e.sha256 && e.action !== 'amend' ? '<div class="nb-muted nb-sig-hash" title="SHA-256 of the title and text signed">' +
-              (e.matches ? '✓ The page reads exactly as signed' : 'The page has changed since (amended)') + ' · ' + esc(e.sha256.slice(0, 12)) + '…</div>' : '') +
+            (e.reason ? '<div class="nb-sig-meaning">' + t('Reason: %(reason)s', { reason: esc(e.reason) }) + '</div>' : '') +
+            (e.sha256 && e.action !== 'amend' ? '<div class="nb-muted nb-sig-hash" title="' + t('SHA-256 of the title and text signed') + '">' +
+              (e.matches ? t('✓ The page reads exactly as signed') : t('The page has changed since (amended)')) + ' · ' + esc(e.sha256.slice(0, 12)) + '…</div>' : '') +
             '</li>';
         }).join('') + '</ol>' : '';
         var identity = d.needs_password
-          ? '<label>Your password <input type="password" id="nb-sig-secret" autocomplete="current-password" required></label>'
-          : '<label>Type your user name (' + esc(d.me) + ') <input id="nb-sig-secret" autocomplete="off" required></label>';
+          ? '<label>' + t('Your password') + ' <input type="password" id="nb-sig-secret" autocomplete="current-password" required></label>'
+          : '<label>' + t('Type your user name (%(name)s)', { name: esc(d.me) }) + ' <input id="nb-sig-secret" autocomplete="off" required></label>';
         var mySign = d.entries.filter(function (e) { return e.action === 'sign'; }).pop();
         var forms = '';
         if (!d.locked && d.can_sign) {
-          forms += '<form class="nb-sig-form" data-sig="sign"><p class="nb-muted">Signing makes this page the record of your work: its exact text is ' +
-            'fingerprinted and kept, any live experiment in it is frozen as it is now, and the page is locked. Later changes are ' +
-            'amendments with a reason. Whether to sign is your choice.</p>' +
-            '<label>What you are saying <select id="nb-sig-meaning"><option value="sign">' + esc(d.meanings.sign) + '</option>' +
+          forms += '<form class="nb-sig-form" data-sig="sign"><p class="nb-muted">' + t('Signing makes this page the record of your work: its exact text is fingerprinted and kept, any live experiment in it is frozen as it is now, and the page is locked. Later changes are amendments with a reason. Whether to sign is your choice.') + '</p>' +
+            '<label>' + t('What you are saying') + ' <select id="nb-sig-meaning"><option value="sign">' + esc(d.meanings.sign) + '</option>' +
             '<option value="review">' + esc(d.meanings.review) + '</option></select></label>' + identity +
-            '<button type="submit" class="btn btn-primary">Sign and lock</button></form>';
+            '<button type="submit" class="btn btn-primary">' + t('Sign and lock') + '</button></form>';
         }
         if (d.locked && !(mySign && mySign.username === d.me)) {
-          forms += '<form class="nb-sig-form" data-sig="witness"><p class="nb-muted">Witness it: say you have read and understood it.</p>' + identity +
-            '<button type="submit" class="btn">Witness</button></form>';
+          forms += '<form class="nb-sig-form" data-sig="witness"><p class="nb-muted">' + t('Witness it: say you have read and understood it.') + '</p>' + identity +
+            '<button type="submit" class="btn">' + t('Witness') + '</button></form>';
         }
         if (d.locked && d.can_amend) {
-          forms += '<form class="nb-sig-form" data-sig="amend"><p class="nb-muted">Amend: open it again to change it. The reason stays in the ' +
-            'record, and so do the signatures; sign it again when it is done.</p>' +
-            '<label>Why it is being amended <textarea id="nb-sig-reason" rows="2" required></textarea></label>' + identity +
-            '<button type="submit" class="btn">Open to amend</button></form>';
+          forms += '<form class="nb-sig-form" data-sig="amend"><p class="nb-muted">' + t('Amend: open it again to change it. The reason stays in the record, and so do the signatures; sign it again when it is done.') + '</p>' +
+            '<label>' + t('Why it is being amended') + ' <textarea id="nb-sig-reason" rows="2" required></textarea></label>' + identity +
+            '<button type="submit" class="btn">' + t('Open to amend') + '</button></form>';
         }
-        box.innerHTML = (d.locked ? '<p class="nb-sig-state is-locked">Signed and locked.</p>' : (d.signed ? '<p class="nb-sig-state">Being amended: sign it again to lock it.</p>' : '<p class="nb-sig-state">Not signed.</p>')) +
+        box.innerHTML = (d.locked ? '<p class="nb-sig-state is-locked">' + t('Signed and locked.') + '</p>' : (d.signed ? '<p class="nb-sig-state">' + t('Being amended: sign it again to lock it.') + '</p>' : '<p class="nb-sig-state">' + t('Not signed.') + '</p>')) +
           list + forms + '<p class="nb-error" id="nb-sig-error" hidden></p>';
         box.querySelectorAll('.nb-sig-form').forEach(function (form) {
           form.addEventListener('submit', function (ev) {
@@ -585,16 +586,16 @@
     title: 'Version history',
     render: function (box) {
       api('/notebook/api/pages/' + page.id + '/versions').then(function (d) {
-        if (!d.versions.length) { box.innerHTML = '<p class="nb-muted">No versions yet: they are kept as the page is edited.</p>'; return; }
+        if (!d.versions.length) { box.innerHTML = '<p class="nb-muted">' + t('No versions yet: they are kept as the page is edited.') + '</p>'; return; }
         var lastDay = '';
-        box.innerHTML = (canEdit ? '<div class="nb-field-row"><button type="button" class="btn" id="nb-save-version">' + icon('success') + ' Save a named version</button></div>' : '') +
+        box.innerHTML = (canEdit ? '<div class="nb-field-row"><button type="button" class="btn" id="nb-save-version">' + icon('success') + ' ' + t('Save a named version') + '</button></div>' : '') +
           '<ul class="nb-list nb-versions">' + d.versions.map(function (v, i) {
             var day = (when(v.saved_at) || new Date()).toDateString();
-            var head = day !== lastDay ? '<li class="nb-list-day">' + esc((when(v.saved_at) || new Date()).toLocaleDateString([], inLab({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))) + '</li>' : '';
+            var head = day !== lastDay ? '<li class="nb-list-day">' + esc((when(v.saved_at) || new Date()).toLocaleDateString(LOC, inLab({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))) + '</li>' : '';
             lastDay = day;
-            var label = v.kind === 'release' ? '<b class="nb-pill">v' + v.number + '</b> ' : v.kind === 'manual' ? '<b class="nb-pill is-quiet">saved</b> ' : v.kind === 'restore' ? '<b class="nb-pill is-quiet">restored</b> ' : '';
+            var label = v.kind === 'release' ? '<b class="nb-pill">v' + v.number + '</b> ' : v.kind === 'manual' ? '<b class="nb-pill is-quiet">' + t('saved') + '</b> ' : v.kind === 'restore' ? '<b class="nb-pill is-quiet">' + t('restored') + '</b> ' : '';
             return head + '<li class="nb-list-row nb-version" data-version="' + v.id + '"><span class="nb-avatar" style="background:' + colorFor(v.saved_by) + '">' + esc(initials(v.saved_by_name)) + '</span>' +
-              '<span class="nb-grow"><span>' + label + esc(v.label || (i === 0 ? 'Latest' : 'Edits')) + '</span><small>' + esc(v.saved_by_name) + ' · ' + esc((when(v.saved_at) || new Date()).toLocaleTimeString([], inLab({ hour: '2-digit', minute: '2-digit' }))) + '</small></span></li>';
+              '<span class="nb-grow"><span>' + label + esc(v.label ? t(v.label) : (i === 0 ? tc('notebook', 'Latest') : t('Edits'))) + '</span><small>' + esc(v.saved_by_name) + ' · ' + esc((when(v.saved_at) || new Date()).toLocaleTimeString(LOC, inLab({ hour: '2-digit', minute: '2-digit' }))) + '</small></span></li>';
           }).join('') + '</ul><div id="nb-version-view"></div>';
         var save = $('#nb-save-version', box);
         if (save) save.addEventListener('click', function () { saveNamedVersion().then(function () { PANELS.history.render(box); }); });
@@ -602,7 +603,7 @@
           var row = e.target.closest('[data-version]');
           if (row) showVersion(Number(row.dataset.version), box);
           var restore = e.target.closest('[data-restore]');
-          if (restore) BioDialog.confirm('Put the page back as it was in this version? What is there now stays in the history.', { okLabel: 'Restore' }).then(function (ok) {
+          if (restore) BioDialog.confirm(t('Put the page back as it was in this version? What is there now stays in the history.'), { okLabel: t('Restore') }).then(function (ok) {
             if (!ok) return;
             flushed().then(function () { return api('/notebook/api/versions/' + restore.dataset.restore + '/restore', { body: {} }); })
               .then(function () { window.location.reload(); })
@@ -615,12 +616,12 @@
   function showVersion(id, box) {
     var view = $('#nb-version-view', box);
     $$('.nb-version', box).forEach(function (r) { r.classList.toggle('is-active', Number(r.dataset.version) === id); });
-    view.innerHTML = '<p class="nb-muted">Loading…</p>';
+    view.innerHTML = '<p class="nb-muted">' + t('Loading…') + '</p>';
     api('/notebook/api/versions/' + id).then(function (d) {
       var current = nb ? nb.getMarkdown() : ($('#initial-body') || {}).value;
       view.innerHTML = '<div class="nb-version-head"><b>' + esc(d.version.title) + '</b> · ' + esc(timeText(d.version.saved_at)) +
-        (canEdit ? ' <button type="button" class="btn btn-primary" data-restore="' + id + '">Restore this version</button>' : '') + '</div>' +
-        '<div class="nb-seg"><button type="button" class="is-on" data-vmode="diff">Changes since</button><button type="button" data-vmode="text">Text</button></div>' +
+        (canEdit ? ' <button type="button" class="btn btn-primary" data-restore="' + id + '">' + t('Restore this version') + '</button>' : '') + '</div>' +
+        '<div class="nb-seg"><button type="button" class="is-on" data-vmode="diff">' + t('Changes since') + '</button><button type="button" data-vmode="text">' + t('Text') + '</button></div>' +
         '<div class="nb-version-body">' + diffHtml(lineDiff(d.version.body, current)) + '</div>';
       view.onclick = function (e) {
         var m = e.target.closest('[data-vmode]');
@@ -631,11 +632,11 @@
     });
   }
   function saveNamedVersion() {
-    return BioDialog.prompt('Name this version', '', { placeholder: 'e.g. before re-analysis', okLabel: 'Save version' }).then(function (label) {
+    return BioDialog.prompt(t('Name this version'), '', { placeholder: t('e.g. before re-analysis'), okLabel: t('Save version') }).then(function (label) {
       if (label === null) return undefined;
       return flushed()
         .then(function () { return api('/notebook/api/pages/' + page.id + '/versions', { body: { label: label } }); })
-        .then(function () { toast('Version saved.'); });
+        .then(function () { toast(t('Version saved.')); });
     });
   }
 
@@ -646,29 +647,29 @@
       var kinds = DATA.kinds || {};
       var statuses = DATA.statuses || {};
       box.innerHTML = '<form class="nb-search" id="nb-search">' +
-        '<input type="search" name="q" placeholder="Words in the title or text" value="' + esc(opts.q || '') + '" aria-label="Search">' +
+        '<input type="search" name="q" placeholder="' + t('Words in the title or text') + '" value="' + esc(opts.q || '') + '" aria-label="' + t('Search') + '">' +
         '<div class="nb-field-row">' +
-        '<select name="kind" aria-label="Kind"><option value="">Any kind</option>' + Object.keys(kinds).map(function (k) { return '<option value="' + k + '">' + esc(kinds[k]) + '</option>'; }).join('') + '</select>' +
-        '<select name="status" aria-label="Status"><option value="">Any status</option>' + Object.keys(statuses).filter(Boolean).map(function (k) { return '<option value="' + k + '">' + esc(statuses[k]) + '</option>'; }).join('') + '</select>' +
-        '<select name="whose" aria-label="Whose"><option value="all">Mine & shared</option><option value="mine">Mine</option><option value="shared">Shared with me</option></select></div>' +
-        '<div class="nb-field-row"><select name="tag" aria-label="Tag"><option value="">Any tag</option></select>' +
-        '<label>From <input type="date" name="from"></label><label>To <input type="date" name="to"></label></div></form>' +
+        '<select name="kind" aria-label="' + t('Kind') + '"><option value="">' + t('Any kind') + '</option>' + Object.keys(kinds).map(function (k) { return '<option value="' + k + '">' + esc(tc('notebook', kinds[k])) + '</option>'; }).join('') + '</select>' +
+        '<select name="status" aria-label="' + t('Status') + '"><option value="">' + t('Any status') + '</option>' + Object.keys(statuses).filter(Boolean).map(function (k) { return '<option value="' + k + '">' + esc(t(statuses[k])) + '</option>'; }).join('') + '</select>' +
+        '<select name="whose" aria-label="' + t('Whose') + '"><option value="all">' + t('Mine & shared') + '</option><option value="mine">' + t('Mine') + '</option><option value="shared">' + t('Shared with me') + '</option></select></div>' +
+        '<div class="nb-field-row"><select name="tag" aria-label="' + t('Tag') + '"><option value="">' + t('Any tag') + '</option></select>' +
+        '<label>' + t('From') + ' <input type="date" name="from"></label><label>' + t('To') + ' <input type="date" name="to"></label></div></form>' +
         '<div id="nb-search-results"></div>';
       var form = $('#nb-search', box);
       api('/notebook/api/tags').then(function (d) {
-        form.tag.innerHTML = '<option value="">Any tag</option>' + d.tags.map(function (t) { return '<option value="' + esc(t.tag) + '"' + (t.tag === opts.tag ? ' selected' : '') + '>#' + esc(t.tag) + ' (' + t.count + ')</option>'; }).join('');
+        form.tag.innerHTML = '<option value="">' + t('Any tag') + '</option>' + d.tags.map(function (t) { return '<option value="' + esc(t.tag) + '"' + (t.tag === opts.tag ? ' selected' : '') + '>#' + esc(t.tag) + ' (' + t.count + ')</option>'; }).join('');
         run();
       });
       var run = debounce(function () {
         var params = new URLSearchParams(new FormData(form));
         var out = $('#nb-search-results', box);
         api('/notebook/api/search?' + params.toString()).then(function (d) {
-          out.innerHTML = d.results.length ? '<p class="nb-muted">' + d.results.length + (d.results.length === 100 ? '+' : '') + ' page' + (d.results.length === 1 ? '' : 's') + '</p><ul class="nb-list">' + d.results.map(function (r) {
+          out.innerHTML = d.results.length ? '<p class="nb-muted">' + t(d.results.length === 1 ? '%(n)s page' : '%(n)s pages', { n: d.results.length + (d.results.length === 100 ? '+' : '') }) + '</p><ul class="nb-list">' + d.results.map(function (r) {
             return '<li><a class="nb-result" href="' + esc(r.url) + '"><b>' + esc(r.title) + '</b>' +
-              '<small>' + esc(kinds[r.kind] || 'Note') + (r.status ? ' · ' + esc(statuses[r.status]) : '') + ' · ' + esc(r.mine ? r.tab : 'by ' + r.owner_name) + ' · ' + esc(r.entry_date || timeText(r.updated_at)) + '</small>' +
+              '<small>' + esc(tc('notebook', kinds[r.kind] || 'Note')) + (r.status ? ' · ' + esc(t(statuses[r.status])) : '') + ' · ' + esc(r.mine ? t(r.tab) : t('by %(name)s', { name: r.owner_name })) + ' · ' + esc(r.entry_date || timeText(r.updated_at)) + '</small>' +
               (r.snippet ? '<span class="nb-snippet">' + esc(r.snippet) + '</span>' : '') +
               (r.tags.length ? '<span class="nb-result-tags">' + r.tags.map(function (t) { return '#' + esc(t); }).join(' ') + '</span>' : '') + '</a></li>';
-          }).join('') + '</ul>' : '<p class="nb-muted">Nothing found.</p>';
+          }).join('') + '</ul>' : '<p class="nb-muted">' + t('Nothing found.') + '</p>';
         }).catch(function (e) { out.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
       }, 220);
       form.addEventListener('input', run);
@@ -687,18 +688,18 @@
         var card = function (s) {
           var next = s.next;
           return '<article class="nb-series" data-series="' + s.id + '">' +
-            '<header><b>' + esc(s.name) + '</b><small>' + esc([s.weekday_name ? s.weekday_name + 's' : '', s.time, s.location].filter(Boolean).join(' · ')) + '</small></header>' +
-            (next ? '<div class="nb-next"><span class="nb-avatar is-lg" style="background:' + colorFor(next.presenter) + '">' + esc(initials(next.name)) + '</span><div><small>Next to present' + (next.date ? ' · ' + esc(new Date(next.date + 'T12:00').toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })) : '') + '</small><b>' + esc(next.name) + '</b></div></div>' : '<p class="nb-muted">No one in the rotation yet.</p>') +
-            (s.upcoming.length > 1 ? '<ol class="nb-rotation">' + s.upcoming.slice(1).map(function (u) { return '<li><span>' + esc(u.name) + '</span><small>' + esc(u.date ? new Date(u.date + 'T12:00').toLocaleDateString([], { day: 'numeric', month: 'short' }) : '') + '</small></li>'; }).join('') + '</ol>' : '') +
+            '<header><b>' + esc(s.name) + '</b><small>' + esc([s.weekday_name ? t(s.weekday_name + 's') : '', s.time, s.location].filter(Boolean).join(' · ')) + '</small></header>' +
+            (next ? '<div class="nb-next"><span class="nb-avatar is-lg" style="background:' + colorFor(next.presenter) + '">' + esc(initials(next.name)) + '</span><div><small>' + t('Next to present') + (next.date ? ' · ' + esc(new Date(next.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'short', day: 'numeric', month: 'short' })) : '') + '</small><b>' + esc(next.name) + '</b></div></div>' : '<p class="nb-muted">' + t('No one in the rotation yet.') + '</p>') +
+            (s.upcoming.length > 1 ? '<ol class="nb-rotation">' + s.upcoming.slice(1).map(function (u) { return '<li><span>' + esc(u.name) + '</span><small>' + esc(u.date ? new Date(u.date + 'T12:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }) : '') + '</small></li>'; }).join('') + '</ol>' : '') +
             '<div class="nb-field-row">' +
-            '<button type="button" class="btn btn-primary" data-note="' + s.id + '">' + icon('note') + ' Notes for the next meeting</button>' +
-            (s.can_edit ? '<button type="button" class="btn" data-skip="' + s.id + '" title="Move the rotation on one person">Skip ›</button><button type="button" class="btn" data-back="' + s.id + '" title="Move the rotation back one">‹</button>' : '') + '</div>' +
-            (s.can_edit ? '<div class="nb-field-row"><button type="button" class="btn-link" data-cal="' + s.id + '">Put the next meetings on the calendar</button><button type="button" class="btn-link" data-edit="' + s.id + '">Edit</button></div>' : '') +
-            (s.notes.length ? '<details><summary>Past notes (' + s.notes.length + ')</summary><ul class="nb-list">' + s.notes.map(function (n) { return '<li><a href="' + esc(n.url) + '">' + esc(n.title) + '</a></li>'; }).join('') + '</ul></details>' : '') +
+            '<button type="button" class="btn btn-primary" data-note="' + s.id + '">' + icon('note') + ' ' + t('Notes for the next meeting') + '</button>' +
+            (s.can_edit ? '<button type="button" class="btn" data-skip="' + s.id + '" title="' + t('Move the rotation on one person') + '">' + t('Skip ›') + '</button><button type="button" class="btn" data-back="' + s.id + '" title="' + t('Move the rotation back one') + '">‹</button>' : '') + '</div>' +
+            (s.can_edit ? '<div class="nb-field-row"><button type="button" class="btn-link" data-cal="' + s.id + '">' + t('Put the next meetings on the calendar') + '</button><button type="button" class="btn-link" data-edit="' + s.id + '">' + t('Edit') + '</button></div>' : '') +
+            (s.notes.length ? '<details><summary>' + t('Past notes (%(n)s)', { n: s.notes.length }) + '</summary><ul class="nb-list">' + s.notes.map(function (n) { return '<li><a href="' + esc(n.url) + '">' + esc(n.title) + '</a></li>'; }).join('') + '</ul></details>' : '') +
             '</article>';
         };
-        box.innerHTML = (d.series.length ? d.series.map(card).join('') : '<p class="nb-muted">No meetings yet. Set one up and the notebook keeps track of who presents next.</p>') +
-          '<button type="button" class="btn" id="nb-series-new">' + icon('plus') + ' New meeting series</button><div id="nb-series-form"></div>';
+        box.innerHTML = (d.series.length ? d.series.map(card).join('') : '<p class="nb-muted">' + t('No meetings yet. Set one up and the notebook keeps track of who presents next.') + '</p>') +
+          '<button type="button" class="btn" id="nb-series-new">' + icon('plus') + ' ' + t('New meeting series') + '</button><div id="nb-series-form"></div>';
         var byId = {};
         d.series.forEach(function (s) { byId[s.id] = s; });
         $('#nb-series-new', box).addEventListener('click', function () { seriesForm(box, null, d.people, weekdays); });
@@ -710,10 +711,10 @@
           if (b.dataset.back) api('/notebook/api/meetings/' + b.dataset.back + '/advance', { body: { step: -1 } }).then(function () { PANELS.meetings.render(box); });
           if (b.dataset.edit) seriesForm(box, byId[b.dataset.edit], d.people, weekdays);
           if (b.dataset.cal) {
-            BioDialog.prompt('How many of the coming meetings?', String(Math.max(4, byId[b.dataset.cal].members.length)), { okLabel: 'Add to the calendar' }).then(function (n) {
+            BioDialog.prompt(t('How many of the coming meetings?'), String(Math.max(4, byId[b.dataset.cal].members.length)), { okLabel: t('Add to the calendar') }).then(function (n) {
               if (!n) return;
               api('/notebook/api/meetings/' + b.dataset.cal + '/calendar', { body: { count: Number(n) } })
-                .then(function (r) { toast(r.made ? r.made + ' meeting' + (r.made > 1 ? 's' : '') + ' added to the calendar, each naming its presenter.' : 'They are on the calendar already.'); })
+                .then(function (r) { toast(r.made ? t(r.made > 1 ? '%(n)s meetings added to the calendar, each naming its presenter.' : '%(n)s meeting added to the calendar, each naming its presenter.', { n: r.made }) : t('They are on the calendar already.')); })
                 .catch(function (err) { toast(esc(err.message), true); });
             });
           }
@@ -724,25 +725,25 @@
   function seriesForm(box, s, list, weekdays) {
     var holder = $('#nb-series-form', box);
     var members = s ? s.members.map(function (m) { return m.username; }) : [me.username];
-    var fields = { name: s ? s.name : 'Lab meeting', weekday: s && s.weekday !== null ? String(s.weekday) : '', time: s ? s.time : '', location: s ? s.location : '' };
+    var fields = { name: s ? s.name : t('Lab meeting'), weekday: s && s.weekday !== null ? String(s.weekday) : '', time: s ? s.time : '', location: s ? s.location : '' };
     function draw() {
       // Keep what has been typed when the rotation list is redrawn.
       var old = $('form', holder);
       if (old) ['name', 'weekday', 'time', 'location'].forEach(function (k) { fields[k] = old.elements[k].value; });
       var names = {};
       list.forEach(function (p) { names[p.username] = p.name; });
-      holder.innerHTML = '<form class="nb-series-form"><h4>' + (s ? 'Edit ' + esc(s.name) : 'New meeting series') + '</h4>' +
-        '<label>Name <input name="name" required value="' + esc(fields.name) + '"></label>' +
-        '<div class="nb-field-row"><label>Every <select name="weekday"><option value="">— day —</option>' + weekdays.map(function (w, i) { return '<option value="' + i + '"' + (fields.weekday === String(i) ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select></label>' +
-        '<label>at <input type="time" name="time" value="' + esc(fields.time) + '"></label></div>' +
-        '<label>Where <input name="location" value="' + esc(fields.location) + '" placeholder="Room, or a video link"></label>' +
-        '<div class="nb-label">Presenting order</div><ol class="nb-order">' + members.map(function (u, i) {
-          return '<li><span class="nb-grow">' + esc(names[u] || u) + '</span><button type="button" class="nb-icon-btn" data-up="' + i + '" aria-label="Earlier">↑</button><button type="button" class="nb-icon-btn" data-down="' + i + '" aria-label="Later">↓</button><button type="button" class="nb-icon-btn" data-out="' + i + '" aria-label="Remove">×</button></li>';
+      holder.innerHTML = '<form class="nb-series-form"><h4>' + (s ? t('Edit %(name)s', { name: esc(s.name) }) : t('New meeting series')) + '</h4>' +
+        '<label>' + t('Name') + ' <input name="name" required value="' + esc(fields.name) + '"></label>' +
+        '<div class="nb-field-row"><label>' + t('Every') + ' <select name="weekday"><option value="">' + t('— day —') + '</option>' + weekdays.map(function (w, i) { return '<option value="' + i + '"' + (fields.weekday === String(i) ? ' selected' : '') + '>' + esc(t(w)) + '</option>'; }).join('') + '</select></label>' +
+        '<label>' + t('at') + ' <input type="time" name="time" value="' + esc(fields.time) + '"></label></div>' +
+        '<label>' + t('Where') + ' <input name="location" value="' + esc(fields.location) + '" placeholder="' + t('Room, or a video link') + '"></label>' +
+        '<div class="nb-label">' + t('Presenting order') + '</div><ol class="nb-order">' + members.map(function (u, i) {
+          return '<li><span class="nb-grow">' + esc(names[u] || u) + '</span><button type="button" class="nb-icon-btn" data-up="' + i + '" aria-label="' + t('Earlier') + '">↑</button><button type="button" class="nb-icon-btn" data-down="' + i + '" aria-label="' + t('Later') + '">↓</button><button type="button" class="nb-icon-btn" data-out="' + i + '" aria-label="' + t('Remove') + '">×</button></li>';
         }).join('') + '</ol>' +
-        '<div class="nb-field-row"><select id="nb-series-add"><option value="">Add someone…</option>' + list.filter(function (p) { return members.indexOf(p.username) < 0; }).map(function (p) { return '<option value="' + esc(p.username) + '">' + esc(p.name) + '</option>'; }).join('') + '</select>' +
-        '<button type="button" class="btn-link" id="nb-series-all">Add everyone</button></div>' +
-        '<div class="nb-field-row"><button class="btn btn-primary" type="submit">Save</button><button type="button" class="btn" data-cancel>Cancel</button>' +
-        (s && (s.owner === me.username) ? '<span class="nb-grow"></span><button type="button" class="btn-link is-danger" data-delete-series>Delete</button>' : '') + '</div></form>';
+        '<div class="nb-field-row"><select id="nb-series-add"><option value="">' + t('Add someone…') + '</option>' + list.filter(function (p) { return members.indexOf(p.username) < 0; }).map(function (p) { return '<option value="' + esc(p.username) + '">' + esc(p.name) + '</option>'; }).join('') + '</select>' +
+        '<button type="button" class="btn-link" id="nb-series-all">' + t('Add everyone') + '</button></div>' +
+        '<div class="nb-field-row"><button class="btn btn-primary" type="submit">' + t('Save') + '</button><button type="button" class="btn" data-cancel>' + t('Cancel') + '</button>' +
+        (s && (s.owner === me.username) ? '<span class="nb-grow"></span><button type="button" class="btn-link is-danger" data-delete-series>' + t('Delete') + '</button>' : '') + '</div></form>';
       var form = $('form', holder);
       form.scrollIntoView({ block: 'nearest' });
       $('#nb-series-add', holder).addEventListener('change', function (e) { if (e.target.value) { members.push(e.target.value); draw(); } });
@@ -758,7 +759,7 @@
         if (b.dataset.down !== undefined) { i = Number(b.dataset.down); if (i < members.length - 1) { members.splice(i + 1, 0, members.splice(i, 1)[0]); draw(); } }
         if (b.dataset.out !== undefined) { members.splice(Number(b.dataset.out), 1); draw(); }
         if (b.dataset.cancel !== undefined) holder.innerHTML = '';
-        if (b.dataset.deleteSeries !== undefined) BioDialog.confirm('Delete ' + s.name + '? Its notes stay.', { danger: true }).then(function (ok) {
+        if (b.dataset.deleteSeries !== undefined) BioDialog.confirm(t('Delete %(name)s? Its notes stay.', { name: s.name }), { danger: true }).then(function (ok) {
           if (ok) api('/notebook/api/meetings/' + s.id + '/delete', { body: {} }).then(function () { PANELS.meetings.render(box); });
         });
       };
@@ -782,12 +783,12 @@
         var row = function (r, mine) {
           var comps = (r.data.components || []).map(function (c) { return esc(c.name); }).join(', ');
           return '<li class="nb-list-row nb-recipe-row"><span class="nb-grow"><b>' + esc(r.name) + '</b><small>' + esc(r.data.volume || '') + ' ' + esc(r.data.volumeUnit || '') + ' · ' + comps + '</small></span>' +
-            (insertable ? '<button type="button" class="btn" data-insert="' + esc(r.id) + '">Insert</button>' : '') +
-            (mine && r.can_edit ? '<button type="button" class="nb-icon-btn" data-del-recipe="' + r.id + '" aria-label="Delete">' + icon('trash') + '</button>' : '') + '</li>';
+            (insertable ? '<button type="button" class="btn" data-insert="' + esc(r.id) + '">' + tc('notebook', 'Insert') + '</button>' : '') +
+            (mine && r.can_edit ? '<button type="button" class="nb-icon-btn" data-del-recipe="' + r.id + '" aria-label="' + t('Delete') + '">' + icon('trash') + '</button>' : '') + '</li>';
         };
-        box.innerHTML = '<p class="nb-muted">' + (insertable ? 'Insert one into this page, then change the volume and every amount follows.' : 'Open a page you can edit to insert a recipe.') + ' Save your own from any recipe block.</p>' +
-          (d.recipes.length ? '<div class="notebook-section-label">Saved by the lab</div><ul class="nb-list">' + d.recipes.map(function (r) { return row(r, true); }).join('') + '</ul>' : '') +
-          '<div class="notebook-section-label">Common recipes</div><ul class="nb-list">' + d.presets.map(function (r) { return row(r, false); }).join('') + '</ul>';
+        box.innerHTML = '<p class="nb-muted">' + (insertable ? t('Insert one into this page, then change the volume and every amount follows.') : t('Open a page you can edit to insert a recipe.')) + ' ' + t('Save your own from any recipe block.') + '</p>' +
+          (d.recipes.length ? '<div class="notebook-section-label">' + t('Saved by the lab') + '</div><ul class="nb-list">' + d.recipes.map(function (r) { return row(r, true); }).join('') + '</ul>' : '') +
+          '<div class="notebook-section-label">' + t('Common recipes') + '</div><ul class="nb-list">' + d.presets.map(function (r) { return row(r, false); }).join('') + '</ul>';
         var all = d.recipes.concat(d.presets);
         box.onclick = function (e) {
           var ins = e.target.closest('[data-insert]');
@@ -797,9 +798,9 @@
             var value = JSON.parse(JSON.stringify(r.data));
             value.name = value.name || r.name;
             nb.editor.chain().focus().insertLabBlock('recipe', value).run();
-            toast('Inserted ' + esc(r.name) + '.');
+            toast(t('Inserted %(name)s.', { name: esc(r.name) }));
           }
-          if (del) BioDialog.confirm('Delete this recipe from the library?', { danger: true }).then(function (ok) {
+          if (del) BioDialog.confirm(t('Delete this recipe from the library?'), { danger: true }).then(function (ok) {
             if (ok) api('/notebook/api/recipes/' + del.dataset.delRecipe + '/delete', { body: {} }).then(function () { PANELS.recipes.render(box); });
           });
         };
@@ -814,31 +815,31 @@
       api('/notebook/api/protocols').then(function (d) {
         var insertable = !!(nb && canEdit);
         var labRow = function (p) {
-          var meta = [p.owner_name, p.version ? 'v' + p.version : 'not numbered yet'].filter(Boolean).join(' · ');
+          var meta = [p.owner_name, p.version ? 'v' + p.version : t('not numbered yet')].filter(Boolean).join(' · ');
           return '<li class="nb-list-row" data-find="' + esc((p.title + ' ' + (p.tags || []).join(' ')).toLowerCase()) + '">' +
             '<span class="nb-grow"><b>' + esc(p.title) + '</b><small>' + esc(meta) + '</small></span>' +
-            (insertable ? '<button type="button" class="btn" data-insert-page="' + p.id + '">Insert</button>' : '') +
-            '<a class="btn btn-ghost" href="/notebook?page=' + p.id + '">Open</a></li>';
+            (insertable ? '<button type="button" class="btn" data-insert-page="' + p.id + '">' + tc('notebook', 'Insert') + '</button>' : '') +
+            '<a class="btn btn-ghost" href="/notebook?page=' + p.id + '">' + t('Open') + '</a></li>';
         };
         var presetRow = function (p) {
           return '<li class="nb-list-row" data-find="' + esc((p.title + ' ' + p.category + ' ' + p.summary).toLowerCase()) + '">' +
             '<span class="nb-grow"><b>' + esc(p.title) + '</b><small>' + esc(p.summary) + '</small></span>' +
-            (insertable ? '<button type="button" class="btn" data-insert-preset="' + esc(p.key) + '">Insert</button>' : '') +
-            '<button type="button" class="btn btn-ghost" data-copy-preset="' + esc(p.key) + '" title="Save a copy as your own protocol to change">Copy</button></li>';
+            (insertable ? '<button type="button" class="btn" data-insert-preset="' + esc(p.key) + '">' + tc('notebook', 'Insert') + '</button>' : '') +
+            '<button type="button" class="btn btn-ghost" data-copy-preset="' + esc(p.key) + '" title="' + t('Save a copy as your own protocol to change') + '">' + t('Copy') + '</button></li>';
         };
         var groups = {};
         d.presets.forEach(function (p) { (groups[p.category] = groups[p.category] || []).push(p); });
         box.innerHTML =
           '<p class="nb-muted">' + (insertable
-            ? 'Insert one into this page: its steps come in as a checklist you can run, with a link back to the protocol.'
-            : 'Open a page you can edit to insert a protocol into it.') + '</p>' +
-          '<div class="nb-panel-actions"><input type="search" class="nb-panel-search" placeholder="Find a protocol…" aria-label="Find a protocol">' +
-          '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' New protocol</button></div>' +
-          '<div class="notebook-section-label">Lab protocols</div>' +
+            ? t('Insert one into this page: its steps come in as a checklist you can run, with a link back to the protocol.')
+            : t('Open a page you can edit to insert a protocol into it.')) + '</p>' +
+          '<div class="nb-panel-actions"><input type="search" class="nb-panel-search" placeholder="' + t('Find a protocol…') + '" aria-label="' + t('Find a protocol') + '">' +
+          '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button></div>' +
+          '<div class="notebook-section-label">' + t('Lab protocols') + '</div>' +
           (d.protocols.length ? '<ul class="nb-list">' + d.protocols.map(labRow).join('') + '</ul>'
-            : '<p class="nb-muted">None yet. Write one with New protocol, or copy a common one below and make it yours.</p>') +
+            : '<p class="nb-muted">' + t('None yet. Write one with New protocol, or copy a common one below and make it yours.') + '</p>') +
           Object.keys(groups).map(function (cat) {
-            return '<div class="notebook-section-label">' + esc(cat) + '</div><ul class="nb-list">' + groups[cat].map(presetRow).join('') + '</ul>';
+            return '<div class="notebook-section-label">' + esc(t(cat)) + '</div><ul class="nb-list">' + groups[cat].map(presetRow).join('') + '</ul>';
           }).join('');
         var search = box.querySelector('.nb-panel-search');
         search.addEventListener('input', function () {
@@ -859,7 +860,7 @@
           var query = target.dataset.insertPage ? 'page=' + target.dataset.insertPage : 'preset=' + encodeURIComponent(target.dataset.insertPreset);
           api('/notebook/api/protocols/text?' + query).then(function (r) {
             nb.editor.chain().focus().insertContent(r.markdown).run();
-            toast('Inserted ' + esc(r.title) + '.');
+            toast(t('Inserted %(name)s.', { name: esc(r.title) }));
           }).catch(function (err) { toast(esc(err.message), true); });
         };
       }).catch(function (e) { box.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
@@ -874,8 +875,8 @@
     render: function (box) {
       api('/notebook/api/pages/' + page.id + '/experiments').then(function (d) {
         box.innerHTML = d.experiments.length ? '<ul class="nb-list">' + d.experiments.map(function (x) {
-          return '<li><a class="nb-result" href="/notebook?page=' + x.id + '"><b>' + esc(x.title) + '</b><small>' + esc(x.owner_name) + (x.version ? ' · v' + x.version : '') + ' · ' + esc(timeText(x.started_at)) + (x.status ? ' · ' + esc((DATA.statuses || {})[x.status] || x.status) : '') + '</small></a></li>';
-        }).join('') + '</ul>' : '<p class="nb-muted">None yet. “Start an experiment from it” makes one with these steps as a checklist.</p>';
+          return '<li><a class="nb-result" href="/notebook?page=' + x.id + '"><b>' + esc(x.title) + '</b><small>' + esc(x.owner_name) + (x.version ? ' · v' + x.version : '') + ' · ' + esc(timeText(x.started_at)) + (x.status ? ' · ' + esc(t((DATA.statuses || {})[x.status] || x.status)) : '') + '</small></a></li>';
+        }).join('') + '</ul>' : '<p class="nb-muted">' + t('None yet. “Start an experiment from it” makes one with these steps as a checklist.') + '</p>';
       });
     },
   };
@@ -904,9 +905,9 @@
     var f = {};
     f[field] = value;
     return post(f).then(function (r) { return r.json(); }).then(function (d) {
-      if (d.ok) setSaved('Saved ' + new Date().toLocaleTimeString([], inLab({ hour: '2-digit', minute: '2-digit' })));
-      else setSaved('Not saved', true);
-    }).catch(function () { setSaved('Offline — not saved yet', true); });
+      if (d.ok) setSaved(t('Saved %(time)s', { time: new Date().toLocaleTimeString(LOC, inLab({ hour: '2-digit', minute: '2-digit' })) }));
+      else setSaved(t('Not saved'), true);
+    }).catch(function () { setSaved(t('Offline — not saved yet'), true); });
   }
 
   // Wait for the editor's latest text to be saved before asking the server
@@ -922,10 +923,10 @@
     return post(fields, headers).then(function (r) {
       if (r.status === 409) { restartEditor(); return; }
       return r.json().then(function (d) {
-        if (d.ok) setSaved('Saved ' + new Date().toLocaleTimeString([], inLab({ hour: '2-digit', minute: '2-digit' })));
-        else setSaved('Not saved', true);
+        if (d.ok) setSaved(t('Saved %(time)s', { time: new Date().toLocaleTimeString(LOC, inLab({ hour: '2-digit', minute: '2-digit' })) }));
+        else setSaved(t('Not saved'), true);
       });
-    }).catch(function () { setSaved('Offline — will save with the next change', true); });
+    }).catch(function () { setSaved(t('Offline — will save with the next change'), true); });
   }
 
   // Title, date, topic.
@@ -938,9 +939,9 @@
   function saveTitleNow() {
     if (titleUnsaved === null) return Promise.resolve();
     var value = title.value;
-    $$('.notebook-page-item[data-page-id="' + page.id + '"] .page-title-label').forEach(function (el) { el.textContent = value || 'Untitled page'; });
-    document.title = (value || 'Untitled page') + document.title.replace(/^[^·|—-]*/, ' ');
-    if (window.BiomanagerTabs && window.BiomanagerTabs.retitle) window.BiomanagerTabs.retitle(value || 'Untitled page');
+    $$('.notebook-page-item[data-page-id="' + page.id + '"] .page-title-label').forEach(function (el) { el.textContent = value || t('Untitled page'); });
+    document.title = (value || t('Untitled page')) + document.title.replace(/^[^·|—-]*/, ' ');
+    if (window.BiomanagerTabs && window.BiomanagerTabs.retitle) window.BiomanagerTabs.retitle(value || t('Untitled page'));
     return saveField('title', value).then(function () {
       page.title = value;
       if (titleUnsaved === value) titleUnsaved = null;
@@ -1003,7 +1004,7 @@
       } else if (action === 'finish') {
         meta({ action: 'finish', outcome: b.dataset.outcome }).then(function () { window.location.reload(); });
       } else if (action === 'start-experiment') {
-        BioDialog.prompt('Name the experiment', page.title + ' — ' + new Date().toLocaleDateString([], inLab({ day: 'numeric', month: 'short', year: 'numeric' })), { okLabel: 'Start' }).then(function (name) {
+        BioDialog.prompt(t('Name the experiment'), page.title + ' — ' + new Date().toLocaleDateString(LOC, inLab({ day: 'numeric', month: 'short', year: 'numeric' })), { okLabel: t('Start') }).then(function (name) {
           if (name === null) return;
           flushed().then(function () {
             return api('/notebook/api/pages/' + page.id + '/start-experiment', { body: { title: name } });
@@ -1013,7 +1014,7 @@
         flushed().then(function () {
           return api('/notebook/api/pages/' + page.id + '/versions', { body: { release: true } });
         }).then(function (d) {
-          toast('Saved as v' + d.number + '. Experiments started from now on follow this version.');
+          toast(t('Saved as v%(number)s. Experiments started from now on follow this version.', { number: d.number }));
           setTimeout(function () { window.location.reload(); }, 900);
         });
       } else if (action === 'action-items') {
@@ -1021,10 +1022,10 @@
           return api('/notebook/api/pages/' + page.id + '/action-items', { body: {} });
         }).then(function (d) {
             if (!d.made.length) {
-              toast(d.skipped ? 'Those action items were sent already.' : 'No open tasks name anyone. Write them like “- [ ] @name order primers, due 2026-10-01”.');
+              toast(d.skipped ? t('Those action items were sent already.') : t('No open tasks name anyone. Write them like “- [ ] @name order primers, due 2026-10-01”.'));
               return;
             }
-            toast('Sent ' + d.made.length + ' to-do' + (d.made.length > 1 ? 's' : '') + ': ' + d.made.map(function (m) { return esc(m.name); }).join(', ') + '.');
+            toast(t(d.made.length > 1 ? 'Sent %(n)s to-dos: %(names)s.' : 'Sent %(n)s to-do: %(names)s.', { n: d.made.length, names: d.made.map(function (m) { return esc(m.name); }).join(', ') }));
         }).catch(function (e) { toast(esc(e.message), true); });
       }
     });
@@ -1034,12 +1035,12 @@
     var box = $('#nb-stamps');
     if (!box) return;
     var parts = [];
-    if (page.started_at) parts.push('<span title="' + esc(when(page.started_at).toLocaleString([], inLab())) + '">' + icon('clock') + ' started ' + esc(timeText(page.started_at)) + '</span>');
-    if (page.finished_at) parts.push('<span title="' + esc(when(page.finished_at).toLocaleString([], inLab())) + '">finished ' + esc(timeText(page.finished_at)) + '</span>');
-    if (page.edited_by_name && page.edited_by !== me.username) parts.push('<span>last edited by ' + esc(page.edited_by_name) + '</span>');
+    if (page.started_at) parts.push('<span title="' + esc(when(page.started_at).toLocaleString(LOC, inLab())) + '">' + icon('clock') + ' ' + t('started %(time)s', { time: esc(timeText(page.started_at)) }) + '</span>');
+    if (page.finished_at) parts.push('<span title="' + esc(when(page.finished_at).toLocaleString(LOC, inLab())) + '">' + t('finished %(time)s', { time: esc(timeText(page.finished_at)) }) + '</span>');
+    if (page.edited_by_name && page.edited_by !== me.username) parts.push('<span>' + t('last edited by %(name)s', { name: esc(page.edited_by_name) }) + '</span>');
     box.innerHTML = parts.length ? '<span class="meta-sep">·</span>' + parts.join(' · ') : '';
     var started = $('#nb-started');
-    if (started && page.started_at) started.textContent = when(page.started_at).toLocaleString([], inLab({ weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
+    if (started && page.started_at) started.textContent = when(page.started_at).toLocaleString(LOC, inLab({ weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
   }
   drawStamps();
 
@@ -1047,9 +1048,9 @@
   var tagsBox = $('#nb-tags');
   function drawTags() {
     if (!tagsBox) return;
-    tagsBox.innerHTML = (page.tags || []).map(function (t) {
-      return '<span class="nb-tag is-chip">#' + esc(t) + (canEdit ? '<button type="button" data-untag="' + esc(t) + '" aria-label="Remove tag ' + esc(t) + '">×</button>' : '') + '</span>';
-    }).join('') + (canEdit ? '<input class="nb-tag-input" placeholder="' + ((page.tags || []).length ? '+ tag' : 'Add tags…') + '" aria-label="Add a tag" list="nb-tag-list"><datalist id="nb-tag-list"></datalist>' : (page.tags || []).length ? '' : '<span class="nb-muted">no tags</span>');
+    tagsBox.innerHTML = (page.tags || []).map(function (tag) {
+      return '<span class="nb-tag is-chip">#' + esc(tag) + (canEdit ? '<button type="button" data-untag="' + esc(tag) + '" aria-label="' + t('Remove tag %(tag)s', { tag: esc(tag) }) + '">×</button>' : '') + '</span>';
+    }).join('') + (canEdit ? '<input class="nb-tag-input" placeholder="' + ((page.tags || []).length ? t('+ tag') : t('Add tags…')) + '" aria-label="' + t('Add a tag') + '" list="nb-tag-list"><datalist id="nb-tag-list"></datalist>' : (page.tags || []).length ? '' : '<span class="nb-muted">' + t('no tags') + '</span>');
     var input = $('.nb-tag-input', tagsBox);
     if (!input) return;
     input.addEventListener('focus', function () {
@@ -1094,12 +1095,12 @@
       if (what === 'source') openSource();
       if (what === 'version') saveNamedVersion();
       if (what === 'template') {
-        BioDialog.prompt('Save this page as a template named', page.title || 'Untitled template', {
-          okLabel: 'Save template',
+        BioDialog.prompt(t('Save this page as a template named'), page.title || t('Untitled template'), {
+          okLabel: t('Save template'),
           checks: [
-            { name: 'structure_only', label: 'Structure only', checked: true,
-              hint: 'Keeps the headings, steps and table headers; leaves out the results, ticks, readings and pictures.' },
-            { name: 'lab', label: 'Share it with the lab', hint: 'Everyone can start a page from it.' },
+            { name: 'structure_only', label: t('Structure only'), checked: true,
+              hint: t('Keeps the headings, steps and table headers; leaves out the results, ticks, readings and pictures.') },
+            { name: 'lab', label: t('Share it with the lab'), hint: t('Everyone can start a page from it.') },
           ],
         }).then(function (answer) {
           var name = answer && answer.value;
@@ -1110,11 +1111,11 @@
           if (answer.checks.structure_only) f.append('structure_only', '1');
           if (answer.checks.lab) f.append('lab', '1');
           flushed().then(function () { return saveTemplate(f); })
-            .then(function (d) { if (d && d.ok) toast('Saved as the template “' + esc(name) + '”.'); });
+            .then(function (d) { if (d && d.ok) toast(t('Saved as the template “%(name)s”.', { name: esc(name) })); });
         });
       }
       if (what === 'delete') {
-        BioDialog.confirm('Delete “' + (page.title || 'Untitled page') + '”? Its history and comments go with it.', { danger: true, okLabel: 'Delete page' }).then(function (ok) {
+        BioDialog.confirm(t('Delete “%(title)s”? Its history and comments go with it.', { title: page.title || t('Untitled page') }), { danger: true, okLabel: t('Delete page') }).then(function (ok) {
           if (!ok) return;
           fetch('/notebook/pages/' + page.id + '/delete', { method: 'POST', headers: { 'X-Requested-With': 'fetch' } })
             .then(function (r) { return r.json(); }).then(function (d) { go('/notebook?tab=' + d.tab_id); });
@@ -1129,17 +1130,17 @@
     var overlay = document.createElement('div');
     overlay.className = 'notebook-modal';
     overlay.innerHTML = '<div class="notebook-modal-backdrop" data-x></div><div class="notebook-modal-card nb-source-card" role="dialog" aria-label="Markdown">' +
-      '<header class="notebook-modal-head"><h3>Markdown</h3><button type="button" class="modal-close" data-x aria-label="Close">' + icon('close') + '</button></header>' +
-      '<div class="notebook-modal-body"><p class="nb-muted">The page as Markdown: sheets, recipes and diagrams are the fenced blocks. ' + (canEdit ? 'Edit and apply, or paste Markdown from elsewhere.' : '') + '</p>' +
+      '<header class="notebook-modal-head"><h3>Markdown</h3><button type="button" class="modal-close" data-x aria-label="' + t('Close') + '">' + icon('close') + '</button></header>' +
+      '<div class="notebook-modal-body"><p class="nb-muted">' + t('The page as Markdown: sheets, recipes and diagrams are the fenced blocks.') + ' ' + (canEdit ? t('Edit and apply, or paste Markdown from elsewhere.') : '') + '</p>' +
       '<textarea class="nb-source" spellcheck="false"' + (canEdit ? '' : ' readonly') + '></textarea>' +
-      '<div class="nb-field-row"><button type="button" class="btn" data-copy>Copy</button><span class="nb-grow"></span>' + (canEdit ? '<button type="button" class="btn btn-primary" data-apply>Apply</button>' : '') + '</div></div></div>';
+      '<div class="nb-field-row"><button type="button" class="btn" data-copy>' + t('Copy') + '</button><span class="nb-grow"></span>' + (canEdit ? '<button type="button" class="btn btn-primary" data-apply>' + t('Apply') + '</button>' : '') + '</div></div></div>';
     document.body.appendChild(overlay);
     var ta = $('textarea', overlay);
     ta.value = md;
     ta.focus();
     overlay.addEventListener('click', function (e) {
       if (e.target.closest('[data-x]')) overlay.remove();
-      if (e.target.closest('[data-copy]')) { ta.select(); try { navigator.clipboard.writeText(ta.value); } catch (_e) { document.execCommand('copy'); } toast('Copied.'); }
+      if (e.target.closest('[data-copy]')) { ta.select(); try { navigator.clipboard.writeText(ta.value); } catch (_e) { document.execCommand('copy'); } toast(t('Copied.')); }
       if (e.target.closest('[data-apply]')) {
         if (nb) nb.setContent(ta.value);
         else { $('.notebook-fallback').value = ta.value; saveBody(ta.value); }
@@ -1155,9 +1156,9 @@
     // Your own other tabs are not company.
     peers = peers.filter(function (p) { return p.username !== me.username; });
     box.innerHTML = peers.map(function (p) {
-      return '<span class="nb-avatar" style="background:' + colorFor(p.username) + '" title="' + esc(p.name) + ' is here">' + esc(initials(p.name)) + '</span>';
+      return '<span class="nb-avatar" style="background:' + colorFor(p.username) + '" title="' + esc(t('%(name)s is here', { name: p.name })) + '">' + esc(initials(p.name)) + '</span>';
     }).join('');
-    box.title = peers.length ? peers.map(function (p) { return p.name; }).join(', ') + (peers.length > 1 ? ' are' : ' is') + ' on this page' : '';
+    box.title = peers.length ? t(peers.length > 1 ? '%(names)s are on this page' : '%(names)s is on this page', { names: peers.map(function (p) { return p.name; }).join(', ') }) : '';
   }
 
   // Daily log quick entry.
@@ -1185,7 +1186,7 @@
   function fallback() {
     var banner = document.createElement('div');
     banner.className = 'notebook-banner';
-    banner.innerHTML = '<strong>The editor isn’t built yet.</strong> Run this once in a terminal, then refresh. Until then you can write in plain Markdown below.<pre>cd frontend &amp;&amp; npm install &amp;&amp; npm run build</pre>';
+    banner.innerHTML = '<strong>' + t('The editor isn’t built yet.') + '</strong> ' + t('Run this once in a terminal, then refresh. Until then you can write in plain Markdown below.') + '<pre>cd frontend &amp;&amp; npm install &amp;&amp; npm run build</pre>';
     mountEl.parentNode.insertBefore(banner, mountEl);
     var ta = document.createElement('textarea');
     ta.value = initialBody.value;
@@ -1206,7 +1207,7 @@
       onSave: saveBody,
       onPeers: drawPeers,
       onChange: debounce(updateRun, 400),
-      onStatus: function (s) { if (s === 'offline') setSaved('Offline — changes will be sent when back', true); },
+      onStatus: function (s) { if (s === 'offline') setSaved(t('Offline — changes will be sent when back'), true); },
       onMeta: function (m) {
         var shown = m.title === 'Untitled page' ? '' : m.title;
         if (m.title && title && titleUnsaved === null && document.activeElement !== title && title.value !== shown) title.value = shown;
@@ -1228,7 +1229,7 @@
   function restartEditor() {
     if (restarting) return;
     restarting = true;
-    setSaved('Updating to the latest version…');
+    setSaved(t('Updating to the latest version…'));
     api('/notebook/api/pages/' + page.id).then(function (d) {
       page = Object.assign(page, d.page);
       if (nb) { try { nb.destroy(); } catch (_e) { /* already gone */ } nb = null; }
@@ -1236,9 +1237,9 @@
       return mount(d.page.body);
     }).then(function () {
       restarting = false;
-      setSaved('Up to date');
+      setSaved(t('Up to date'));
       refreshHighlights();
-    }).catch(function () { restarting = false; setSaved('Could not reload the page — refresh to continue', true); });
+    }).catch(function () { restarting = false; setSaved(t('Could not reload the page — refresh to continue'), true); });
   }
 
   window.addEventListener('DOMContentLoaded', function () {
@@ -1249,7 +1250,7 @@
     }
     mount(initialBody.value).catch(function (e) {
       console.error(e);
-      toast('The live editor could not start (' + esc(e.message) + '). Showing the plain text instead.', true);
+      toast(t('The live editor could not start (%(error)s). Showing the plain text instead.', { error: esc(e.message) }), true);
       mountEl.innerHTML = '';
       fallback();
     });

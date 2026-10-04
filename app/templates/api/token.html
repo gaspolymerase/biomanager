@@ -1,35 +1,36 @@
 {% extends "base.html" %}
 
-{% block page_title %}A token for {{ label }}{% endblock %}
-{% block page_heading %}A token for {{ label }}{% endblock %}
-{% block page_subtitle %}{{ scope }} the lab's records as you, from a script or another tool{% endblock %}
+{% block page_title %}{{ _('A token for %(name)s', name=label) }}{% endblock %}
+{% block page_heading %}{{ _('A token for %(name)s', name=label) }}{% endblock %}
+{% block page_subtitle %}{% if scope == 'Read' %}{{ _("Read the lab's records as you, from a script or another tool") }}{% else %}{{ _("Read and change the lab's records as you, from a script or another tool") }}{% endif %}{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('api_pages.reference') }}">{{ icon('list') }} API reference</a>
-  <a class="btn" href="{{ url_for('settings') }}#api-tokens">{{ icon('back') }} Back to settings</a>
+  <a class="btn" href="{{ url_for('api_pages.reference') }}">{{ icon('list') }} {{ _('API reference') }}</a>
+  <a class="btn" href="{{ url_for('settings') }}#api-tokens">{{ icon('back') }} {{ _('Back to settings') }}</a>
 {% endblock %}
 
 {% block content %}
 <div class="grid max-w-[760px] grid-cols-1 gap-3">
   <section class="card border-brand-200 p-5">
-    <h2 class="text-[15px] font-semibold text-ink">Copy this token now</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Copy this token now') }}</h2>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
-      It is shown only once. Treat it like your password: whatever has it can do what you can
-      ({{ scope | lower }}). If it gets lost or shared, revoke it in Settings and make a new one.
+      {% if scope == 'Read' %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
+      (read). If it gets lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% else %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
+      (read and change). If it gets lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% endif %}
     </p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <code id="api-token" class="rounded-lg bg-sand-100 px-3 py-2 font-mono text-[14px] text-ink break-all">{{ token }}</code>
-      <button type="button" class="btn" data-on-click="copy-text" data-arg="api-token">{{ icon('copy') }} Copy token</button>
+      <button type="button" class="btn" data-on-click="copy-text" data-arg="api-token">{{ icon('copy') }} {{ _('Copy token') }}</button>
     </div>
   </section>
 
   <section class="card p-5">
-    <h2 class="text-[15px] font-semibold text-ink">Try it</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Try it') }}</h2>
     <pre class="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-try">curl -H "Authorization: Bearer {{ token }}" {{ base }}/me</pre>
-    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-try">{{ icon('copy') }} Copy</button>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-try">{{ icon('copy') }} {{ _('Copy') }}</button>
     <p class="mt-3 text-[12px] leading-snug text-muted">
-      Every endpoint, with examples in Python and R, is in the <a href="{{ url_for('api_pages.reference') }}">API reference</a>.
-      Keep the token out of scripts you share: read it from a file or an environment variable.
+      {% trans link=url_for('api_pages.reference') %}Every endpoint, with examples in Python and R, is in the <a href="{{ link }}">API reference</a>.
+      Keep the token out of scripts you share: read it from a file or an environment variable.{% endtrans %}
     </p>
   </section>
 </div>
@@ -43,7 +44,7 @@
       if (!el || !navigator.clipboard) return;
       navigator.clipboard.writeText(el.textContent.trim()).then(() => {
         const was = this.innerHTML;
-        this.textContent = 'Copied';
+        this.textContent = t('Copied');
         setTimeout(() => { this.innerHTML = was; }, 1500);
       });
     },

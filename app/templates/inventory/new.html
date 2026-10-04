@@ -2,13 +2,13 @@
 
 {% set chosen = preset if preset in presets else 'custom' %}
 
-{% block page_title %}New inventory{% endblock %}
-{% block page_heading %}New lab inventory{% endblock %}
-{% block page_subtitle %}A list of things the lab keeps or buys. You can have as many as you like, e.g. one reagent list per bay or per project.{% endblock %}
+{% block page_title %}{{ _('New inventory') }}{% endblock %}
+{% block page_heading %}{{ _('New lab inventory') }}{% endblock %}
+{% block page_subtitle %}{{ _('A list of things the lab keeps or buys. You can have as many as you like, e.g. one reagent list per bay or per project.') }}{% endblock %}
 {% block page_shell_class %}shell-page workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('back') }} All databases</a>
+  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('back') }} {{ _('All databases') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -16,11 +16,11 @@
   <section>
     <h2 class="mb-1 flex items-center gap-2">
       <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">1</span>
-      What will it hold?
+      {{ _('What will it hold?') }}
     </h2>
     <p class="mb-3 pl-7 text-[12.5px] text-muted">
-      Each preset sets up the columns and behaviour that kind of list needs. Everything
-      stays editable in Configure afterwards.
+      {% trans trimmed %}Each preset sets up the columns and behaviour that kind of list needs. Everything
+      stays editable in Configure afterwards.{% endtrans %}
     </p>
     <div class="preset-grid">
       {% for key, p in presets.items() %}
@@ -28,10 +28,10 @@
           <input type="radio" name="preset" value="{{ key }}" {% if key == chosen %}checked{% endif %}
                  data-default-label="{{ p.label }}">
           <span class="preset-card-icon">{{ icon(p.icon) }}</span>
-          <span class="preset-card-title">{{ p.label }}</span>
-          <span class="preset-card-blurb">{{ p.blurb }}</span>
+          <span class="preset-card-title">{{ p.label|tr }}</span>
+          <span class="preset-card-blurb">{{ p.blurb|tr }}</span>
           <span class="preset-card-tags">
-            {% for f in p.features %}<span class="badge badge-quiet">{{ {'storage': 'boxes', 'board': 'board', 'sharing': 'mine / lab', 'quantity': 'quantity', 'supplier': 'vendor', 'expiry': 'expiry', 'received': 'received'}[f] }}</span>{% endfor %}
+            {% for f in p.features %}<span class="badge badge-quiet">{{ {'storage': _('boxes'), 'board': _('board'), 'sharing': _('mine / lab'), 'quantity': _('quantity'), 'supplier': _('vendor'), 'expiry': _('expiry'), 'received': _('received')}[f] }}</span>{% endfor %}
           </span>
         </label>
       {% endfor %}
@@ -42,22 +42,22 @@
     <header class="card-head">
       <h2>
         <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">2</span>
-        Name it
+        {{ _('Name it') }}
       </h2>
     </header>
     <div class="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2">
-      <label class="field-label">Name
+      <label class="field-label">{{ _('Name') }}
         <input name="label" required autofocus data-label-input value="{{ presets[chosen].label if preset else '' }}"
-               placeholder="e.g. Reagents, bay 3 or Antibodies, Smith project">
+               placeholder="{{ _('e.g. Reagents, bay 3 or Antibodies, Smith project') }}">
       </label>
-      <label class="field-label">Description
-        <input name="blurb" placeholder="Optional: one line about what this list holds">
+      <label class="field-label">{{ _('Description') }}
+        <input name="blurb" placeholder="{{ _('Optional: one line about what this list holds') }}">
       </label>
       {% include "lab/_audience_field.html" %}
     </div>
     <footer class="flex items-center justify-end gap-2 border-t border-sand-100 px-4 py-3">
-      <a class="btn" href="{{ url_for('organisms.index') }}">Cancel</a>
-      <button type="submit" class="btn btn-primary">{{ icon('plus') }} Create inventory</button>
+      <a class="btn" href="{{ url_for('organisms.index') }}">{{ _('Cancel') }}</a>
+      <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Create inventory') }}</button>
     </footer>
   </section>
 </form>

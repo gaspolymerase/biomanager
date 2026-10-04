@@ -218,9 +218,10 @@ def can_configure(module, user=None) -> bool:
 def reason_denied(record, user=None, noun: str | None = None) -> str:
     """A message worth showing someone, rather than a bare 403. `noun`
     names the kind of record ("reagent", "cage"…); "record" otherwise."""
-    owner = (getattr(record, "owner", "") or "").strip() or "someone else"
-    return (f"That {noun or 'record'} belongs to {owner}. "
-            f"Ask them, or an admin, to make the change.")
+    from .i18n import gettext, translate_value
+    owner = (getattr(record, "owner", "") or "").strip() or gettext("someone else")
+    return gettext("That %(thing)s belongs to %(owner)s. Ask them, or an admin, to make the change.",
+                   thing=translate_value(noun or "record"), owner=owner)
 
 
 # ---------------------------------------------------------------------------

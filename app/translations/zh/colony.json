@@ -362,5 +362,9 @@
   "Mark weaned, move pups later": "标记已断奶，稍后再移动幼崽",
   "Moves the pups as the rows above say, and marks the litter weaned": "按上面各行移动幼崽，并把这窝标记为已断奶",
   "Wean and move": "断奶并移动",
-  "(no genotype)": "（无基因型）"
+  "(no genotype)": "（无基因型）",
+  "experiment::active": "进行中",
+  "experiment::paused": "已暂停",
+  "experiment::done": "已完成",
+  "experiment::cancelled": "已取消"
 }

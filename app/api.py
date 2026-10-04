@@ -43,6 +43,7 @@ from werkzeug.datastructures import MultiDict
 from .formutil import like_pattern
 from . import access, groups, lab
 from .db import SessionLocal
+from .i18n import gettext
 from .models import (ApiToken, CageRecord, Experiment, FishRecord, InventoryItem, InventoryRack, LitterRecord,
                      MouseRecord, MouseWeight, PlasmidRecord, StockRack, StockUnit, StrainRecord, TankRecord,
                      UserAccount)
@@ -1024,7 +1025,7 @@ def make_token():
         if not may_make_tokens(s, g.user):
             abort(403)
         if not label:
-            flash("Say what the token is for, e.g. “Balance in B12” or “My R scripts”.", "error")
+            flash(gettext("Say what the token is for, e.g. “Balance in B12” or “My R scripts”."), "error")
             return redirect(url_for("settings") + "#api-tokens")
         raw = new_token()
         s.add(ApiToken(user_id_fk=g.user.id, label=label, token_hash=token_hash(raw), hint=raw[:10], scope=scope,
@@ -1047,7 +1048,7 @@ def revoke_token(token_id: int):
         if t.revoked_at is None:
             t.revoked_at = datetime.utcnow()
             s.commit()
-        flash(f"The token “{t.label}” no longer works.", "success")
+        flash(gettext("The token “%(name)s” no longer works.", name=t.label), "success")
     return redirect(url_for("settings") + "#api-tokens")
 
 

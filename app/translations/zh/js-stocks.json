@@ -1,0 +1,4 @@
+{
+  "Rename “%(old)s” to “%(new)s”? %(n)s active %(units)s (and any crosses using it as a parent) will be relabelled.": "将“%(old)s”重命名为“%(new)s”？%(n)s 个在用的%(units)s（以及用它作亲本的杂交）会被重新标注。",
+  "Rename": "重命名"
+}

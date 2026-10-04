@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block page_title %}{{ 'Set up your lab' if first_run else 'Lab setup' }}{% endblock %}
-{% block page_heading %}{{ 'Set up your lab' if first_run else 'Lab setup' }}{% endblock %}
-{% block page_subtitle %}{{ 'Four questions, then BioManager shows your lab only what it uses' if first_run else 'What the lab uses, what members may do, and who looks after it' }}{% endblock %}
+{% block page_title %}{{ _('Set up your lab') if first_run else _('Lab setup') }}{% endblock %}
+{% block page_heading %}{{ _('Set up your lab') if first_run else _('Lab setup') }}{% endblock %}
+{% block page_subtitle %}{{ _('Four questions, then BioManager shows your lab only what it uses') if first_run else _('What the lab uses, what members may do, and who looks after it') }}{% endblock %}
 
 {% macro choice(name, checked, label, blurb, icon_name) %}
   <label class="choice-card">
@@ -17,7 +17,7 @@
 {% endmacro %}
 
 {% macro name_field(field, placeholder) %}
-  <label class="field-label" style="width: 220px">Name
+  <label class="field-label" style="width: 220px">{{ _('Name') }}
     <input name="{{ field }}" maxlength="80" placeholder="{{ placeholder }}">
   </label>
 {% endmacro %}
@@ -26,107 +26,107 @@
 <div class="setup-page">
   {% if first_run %}
     <section class="setup-intro">
-      <h2>Welcome, {{ current_user.display_name or current_user.username }}</h2>
-      <p>You're the lab's first admin. Tell BioManager what your lab keeps, and everyone who joins
+      <h2>{{ _('Welcome, %(name)s', name=current_user.display_name or current_user.username) }}</h2>
+      <p>{% trans guide_url=guide_url %}You're the lab's first admin. Tell BioManager what your lab keeps, and everyone who joins
         gets exactly those databases: in their sidebar, on their home page, in search. Nothing is
         created until you answer, and nothing here is permanent: change any of it later under
         <strong>Lab setup</strong>, and anyone can still add a database of their own.
         New to BioManager? The <a href="{{ guide_url }}" target="_blank" rel="noopener" data-milestone="guide">user guide</a>
-        walks through everything.</p>
+        walks through everything.{% endtrans %}</p>
     </section>
   {% endif %}
 
   <form method="post" class="setup-form" id="setup-form">
     <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">1</span><h3>Your lab</h3></header>
-      <label class="field-label max-w-[420px]">Lab name
-        <input name="lab_name" value="{{ state.lab_name }}" maxlength="80" placeholder="e.g. McClintock Lab" autocomplete="organization">
-        <span class="field-hint normal-case tracking-normal">Shown to members when they first sign in. Optional.</span>
+      <header class="setup-step-head"><span class="setup-step-num">1</span><h3>{{ _('Your lab') }}</h3></header>
+      <label class="field-label max-w-[420px]">{{ _('Lab name') }}
+        <input name="lab_name" value="{{ state.lab_name }}" maxlength="80" placeholder="{{ _('e.g. McClintock Lab') }}" autocomplete="organization">
+        <span class="field-hint normal-case tracking-normal">{{ _('Shown to members when they first sign in. Optional.') }}</span>
       </label>
       <div class="mt-3 grid max-w-[720px] grid-cols-1 gap-3 sm:grid-cols-3">
-        <label class="field-label">Time zone
+        <label class="field-label">{{ _('Time zone') }}
           <input name="lab_timezone" value="{{ state.lab_timezone }}" list="lab-timezones" autocomplete="off"
                  placeholder="{{ server_timezone }}">
-          <span class="field-hint normal-case tracking-normal">What "today" and "overdue" mean, and the times shown. Blank: the {{ 'computer' if local_setup else 'server' }}'s ({{ server_timezone }}).</span>
+          <span class="field-hint normal-case tracking-normal">{% if local_setup %}{{ _('What “today” and “overdue” mean, and the times shown. Blank: the computer’s (%(zone)s).', zone=server_timezone) }}{% else %}{{ _('What “today” and “overdue” mean, and the times shown. Blank: the server’s (%(zone)s).', zone=server_timezone) }}{% endif %}</span>
         </label>
-        <label class="field-label">Dates
+        <label class="field-label">{{ _('Dates') }}
           <select name="date_style">
             {% for key, example in date_styles.items() %}
               <option value="{{ key }}" {% if state.date_style == key %}selected{% endif %}>{{ example }}</option>
             {% endfor %}
           </select>
-          <span class="field-hint normal-case tracking-normal">How dates are written in lists and messages. Date fields follow the computer's language.</span>
+          <span class="field-hint normal-case tracking-normal">{{ _("How dates are written in lists and messages. Date fields follow the computer's language.") }}</span>
         </label>
-        <label class="field-label">Genotyping day
+        <label class="field-label">{{ _('Genotyping day') }}
           <input type="number" name="genotyping_day" min="1" max="120" value="{{ state.genotyping_day }}">
-          <span class="field-hint normal-case tracking-normal">Days after birth (P{{ state.genotyping_day }}) the genotyping reminder falls on. Weaning is P{{ wean_offset_days }}.</span>
+          <span class="field-hint normal-case tracking-normal">{{ _('Days after birth (P%(day)s) the genotyping reminder falls on. Weaning is P%(wean)s.', day=state.genotyping_day, wean=wean_offset_days) }}</span>
         </label>
       </div>
       <datalist id="lab-timezones">{% for zone in timezones %}<option value="{{ zone }}"></option>{% endfor %}</datalist>
     </section>
 
     <section class="setup-step" id="databases">
-      <header class="setup-step-head"><span class="setup-step-num">2</span><h3>What does your lab keep?</h3></header>
-      <p class="setup-note">Tick everything the lab works with. Unticked databases are hidden, not deleted: tick one again and its records are back.</p>
-      <p class="setup-group-label">Animals and stocks</p>
+      <header class="setup-step-head"><span class="setup-step-num">2</span><h3>{{ _('What does your lab keep?') }}</h3></header>
+      <p class="setup-note">{{ _('Tick everything the lab works with. Unticked databases are hidden, not deleted: tick one again and its records are back.') }}</p>
+      <p class="setup-group-label">{{ _('Animals and stocks') }}</p>
       <div class="choice-grid">
         {% for key in ('colony', 'zebrafish') %}{% set f = features[key] %}
-          {{ choice('feature:' ~ key, state.features[key], f.label, f.blurb, f.icon) }}
+          {{ choice('feature:' ~ key, state.features[key], f.label|tr, f.blurb|tr, f.icon) }}
         {% endfor %}
         {% for kind, (label, blurb, icon_name) in stock_choices.items() %}
-          {{ choice('stock:' ~ kind, state.stocks[kind], label, blurb, icon_name) }}
+          {{ choice('stock:' ~ kind, state.stocks[kind], label|tr, blurb|tr, icon_name) }}
         {% endfor %}
       </div>
-      <p class="setup-group-label">Molecular biology and supplies</p>
+      <p class="setup-group-label">{{ _('Molecular biology and supplies') }}</p>
       <div class="choice-grid">
         {% set f = features['plasmids'] %}
-        {{ choice('feature:plasmids', state.features['plasmids'], f.label, f.blurb, f.icon) }}
+        {{ choice('feature:plasmids', state.features['plasmids'], f.label|tr, f.blurb|tr, f.icon) }}
         {% for kind, (label, blurb, icon_name) in inventory_choices.items() %}
-          {{ choice('inventory:' ~ kind, state.inventories[kind], label, blurb, icon_name) }}
+          {{ choice('inventory:' ~ kind, state.inventories[kind], label|tr, blurb|tr, icon_name) }}
         {% endfor %}
       </div>
-      <p class="setup-note">Another species (Xenopus, rats, cell lines…)? After this, <strong>Add database</strong> in the sidebar builds one to your lab's vocabulary.</p>
+      <p class="setup-note">{% trans %}Another species (Xenopus, rats, cell lines…)? After this, <strong>Add database</strong> in the sidebar builds one to your lab's vocabulary.{% endtrans %}</p>
 
       {% if first_run %}
         {# Details for each ticked database, shown as it is ticked. All optional. #}
         <div id="setup-details">
-          <p class="setup-group-label">A few details</p>
-          <p class="setup-note" data-details-empty>Tick what your lab keeps above, and BioManager asks a little about each.</p>
+          <p class="setup-group-label">{{ _('A few details') }}</p>
+          <p class="setup-note" data-details-empty>{{ _('Tick what your lab keeps above, and BioManager asks a little about each.') }}</p>
           <div class="setup-list" data-details-list>
             <div class="setup-row" data-details-for="feature:colony">
-              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('mouse') }} {{ features['colony'].label }}</span></div>
+              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('mouse') }} {{ features['colony'].label|tr }}</span></div>
               <div>
-                {{ name_field('name:colony', features['colony'].label) }}
-                <label class="field-label" style="width: 110px">Racks
+                {{ name_field('name:colony', features['colony'].label|tr) }}
+                <label class="field-label" style="width: 110px">{{ _('Racks') }}
                   <input name="racks:count" type="number" min="0" max="20" placeholder="0" inputmode="numeric">
                 </label>
-                <label class="field-label" style="width: 90px">Rows
+                <label class="field-label" style="width: 90px">{{ _('Rows') }}
                   <input name="racks:rows" type="number" min="1" max="26" value="5" inputmode="numeric">
                 </label>
-                <label class="field-label" style="width: 90px">Columns
+                <label class="field-label" style="width: 90px">{{ _('Columns') }}
                   <input name="racks:cols" type="number" min="1" max="40" value="7" inputmode="numeric">
                 </label>
-                <label class="field-label" style="width: 170px">Positions read
+                <label class="field-label" style="width: 170px">{{ _('Positions read') }}
                   <select name="racks:labels">
                     {% for key, (example, _naming) in rack_labels.items() %}<option value="{{ key }}">{{ example }}</option>{% endfor %}
                   </select>
                 </label>
               </div>
-              <p class="setup-note" style="width: 100%">How many cage racks the room has, and how their positions are labelled, so the rack grid matches the stickers. Leave racks at 0 to add them later.</p>
+              <p class="setup-note" style="width: 100%">{{ _('How many cage racks the room has, and how their positions are labelled, so the rack grid matches the stickers. Leave racks at 0 to add them later.') }}</p>
             </div>
 
             <div class="setup-row" data-details-for="feature:zebrafish">
-              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('fish') }} {{ features['zebrafish'].label }}</span></div>
-              <div>{{ name_field('name:zebrafish', features['zebrafish'].label) }}</div>
+              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('fish') }} {{ features['zebrafish'].label|tr }}</span></div>
+              <div>{{ name_field('name:zebrafish', features['zebrafish'].label|tr) }}</div>
             </div>
 
             {% for kind, (label, _blurb, icon_name) in stock_choices.items() %}
               <div class="setup-row" data-details-for="stock:{{ kind }}">
-                <div style="width: 100%"><span class="font-medium text-ink">{{ icon(icon_name) }} {{ label }}</span></div>
+                <div style="width: 100%"><span class="font-medium text-ink">{{ icon(icon_name) }} {{ label|tr }}</span></div>
                 <div>
-                  {{ name_field('name:stock:' ~ kind, stock_default_labels[kind]) }}
+                  {{ name_field('name:stock:' ~ kind, stock_default_labels[kind]|tr) }}
                   <fieldset class="field-label" style="border: 0; margin: 0; padding: 0">
-                    <legend>Incubators</legend>
+                    <legend>{{ _('Incubators') }}</legend>
                     <span class="flex flex-wrap items-center gap-y-2" style="column-gap: 14px; padding-top: 6px">
                       {% for temp in incubator_temps[kind] %}
                         <label class="inline-flex items-center gap-1.5 text-ink" style="text-transform: none; letter-spacing: 0">
@@ -137,19 +137,19 @@
                     </span>
                   </fieldset>
                 </div>
-                <p class="setup-note" style="width: 100%">One incubator is made for each temperature ticked. {{ 'Flip' if kind == 'fly' else 'Chunk' }} schedules follow the temperature a rack is kept at.</p>
+                <p class="setup-note" style="width: 100%">{% if kind == 'fly' %}{{ _('One incubator is made for each temperature ticked. Flip schedules follow the temperature a rack is kept at.') }}{% else %}{{ _('One incubator is made for each temperature ticked. Chunk schedules follow the temperature a rack is kept at.') }}{% endif %}</p>
               </div>
             {% endfor %}
 
             <div class="setup-row" data-details-for="feature:plasmids">
-              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('plasmid') }} {{ features['plasmids'].label }}</span></div>
-              <div>{{ name_field('name:plasmids', features['plasmids'].label) }}</div>
+              <div style="width: 100%"><span class="font-medium text-ink">{{ icon('plasmid') }} {{ features['plasmids'].label|tr }}</span></div>
+              <div>{{ name_field('name:plasmids', features['plasmids'].label|tr) }}</div>
             </div>
 
             {% for kind, (label, _blurb, icon_name) in inventory_choices.items() %}
               <div class="setup-row" data-details-for="inventory:{{ kind }}">
-                <div style="width: 100%"><span class="font-medium text-ink">{{ icon(icon_name) }} {{ label }}</span></div>
-                <div>{{ name_field('name:inventory:' ~ kind, label) }}</div>
+                <div style="width: 100%"><span class="font-medium text-ink">{{ icon(icon_name) }} {{ label|tr }}</span></div>
+                <div>{{ name_field('name:inventory:' ~ kind, label|tr) }}</div>
               </div>
             {% endfor %}
           </div>
@@ -180,35 +180,35 @@
     </section>
 
     <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">3</span><h3>Which lab functions?</h3></header>
+      <header class="setup-step-head"><span class="setup-step-num">3</span><h3>{{ _('Which lab functions?') }}</h3></header>
       <div class="choice-grid">
         {% for key in ('calendar', 'notebook') %}{% set f = features[key] %}
-          {{ choice('feature:' ~ key, state.features[key], f.label, f.blurb, f.icon) }}
+          {{ choice('feature:' ~ key, state.features[key], f.label|tr, f.blurb|tr, f.icon) }}
         {% endfor %}
       </div>
     </section>
 
     <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">4</span><h3>What may members do?</h3></header>
+      <header class="setup-step-head"><span class="setup-step-num">4</span><h3>{{ _('What may members do?') }}</h3></header>
       <div class="choice-grid">
         {% for key, (label, blurb, _default) in permissions.items() %}
-          {{ choice(key, state.permissions[key], label, blurb, {'members_create_databases': 'user', 'members_keep_copies': 'download', 'members_api_tokens': 'key'}.get(key, 'users')) }}
+          {{ choice(key, state.permissions[key], label|tr, blurb|tr, {'members_create_databases': 'user', 'members_keep_copies': 'download', 'members_api_tokens': 'key'}.get(key, 'users')) }}
         {% endfor %}
       </div>
-      <p class="setup-note">Admins can always add databases for the whole lab. Everyone sees every lab database's records; each person edits what they own, and shared cages are everyone's.</p>
+      <p class="setup-note">{{ _("Admins can always add databases for the whole lab. Everyone sees every lab database's records; each person edits what they own, and shared cages are everyone's.") }}</p>
     </section>
 
     {% if first_run %}
       <section class="setup-step" id="heartbeat">
         {% if heartbeat_off_by_server %}
-          <p class="setup-note">Anonymous counts for BioManager's makers are switched off where BioManager runs, so nothing is sent.</p>
+          <p class="setup-note">{{ _("Anonymous counts for BioManager's makers are switched off where BioManager runs, so nothing is sent.") }}</p>
         {% else %}
           <label class="flex items-start gap-2 text-[13px] text-ink">
             <input type="checkbox" name="heartbeat" value="1" checked class="accent-brand-600">
             <span class="flex flex-col gap-1">
-              <span class="font-medium">Send BioManager's makers anonymous counts once a day</span>
-              <span class="setup-note">So they know how many labs use it: the version, how many members (as a range) and which databases are on. Never names or anything anyone wrote.
-                <a href="{{ url_for('feedback.usage_report') }}#heartbeat" target="_blank" rel="noopener">See exactly what is sent</a>; switch it off any time on the Usage report.</span>
+              <span class="font-medium">{{ _("Send BioManager's makers anonymous counts once a day") }}</span>
+              <span class="setup-note">{% trans report=url_for('feedback.usage_report') %}So they know how many labs use it: the version, how many members (as a range) and which databases are on. Never names or anything anyone wrote.
+                <a href="{{ report }}#heartbeat" target="_blank" rel="noopener">See exactly what is sent</a>; switch it off any time on the Usage report.{% endtrans %}</span>
             </span>
           </label>
         {% endif %}
@@ -216,61 +216,61 @@
     {% endif %}
 
     <div class="setup-submit">
-      <button type="submit" class="btn btn-primary btn-lg">{{ icon('check') }} {{ 'Set up the lab' if first_run else 'Save lab setup' }}</button>
-      {% if first_run %}<span class="text-[12.5px] text-muted">You can change every answer later.</span>{% endif %}
+      <button type="submit" class="btn btn-primary btn-lg">{{ icon('check') }} {{ _('Set up the lab') if first_run else _('Save lab setup') }}</button>
+      {% if first_run %}<span class="text-[12.5px] text-muted">{{ _('You can change every answer later.') }}</span>{% endif %}
     </div>
   </form>
 
   {% if not first_run %}
     <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">{{ icon('database') }}</span><h3>Other databases</h3></header>
-      <p class="setup-note">Databases built with <strong>Add database</strong>, and members' own. Switch one off to hide it for everyone.</p>
+      <header class="setup-step-head"><span class="setup-step-num">{{ icon('database') }}</span><h3>{{ _('Other databases') }}</h3></header>
+      <p class="setup-note">{% trans %}Databases built with <strong>Add database</strong>, and members' own. Switch one off to hide it for everyone.{% endtrans %}</p>
       {% if custom %}
         <div class="setup-list">
           {% for d in custom %}
             <div class="setup-row">
               <div class="min-w-0">
                 <span class="font-medium text-ink">{{ d.label }}</span>
-                <span class="text-[12px] text-muted">{{ d.kind_label }}{% if d.created_by and d.created_by != 'system' %} · added by {{ d.created_by }}{% endif %}</span>
-                {% if d.private_to %}<span class="badge badge-brand">Personal · {{ d.private_to }}</span>{% elif d.share_group_id %}<span class="badge badge-quiet">{{ groups_api.name_of(d.share_group_id) or 'A deleted group' }}</span>{% endif %}
+                <span class="text-[12px] text-muted">{{ d.kind_label|tr('database kind') }}{% if d.created_by and d.created_by != 'system' %} · {{ _('added by %(who)s', who=d.created_by) }}{% endif %}</span>
+                {% if d.private_to %}<span class="badge badge-brand">{{ _('Personal') }} · {{ d.private_to }}</span>{% elif d.share_group_id %}<span class="badge badge-quiet">{{ groups_api.name_of(d.share_group_id) or _('A deleted group') }}</span>{% endif %}
               </div>
               <form method="post" action="{{ url_for('lab.setup') }}">
                 <input type="hidden" name="action" value="module">
                 <input type="hidden" name="kind" value="{{ d.kind }}">
                 <input type="hidden" name="key" value="{{ d.key }}">
                 <input type="hidden" name="enabled" value="{{ '0' if d.enabled else '1' }}">
-                <button type="submit" class="btn btn-sm{% if d.enabled %} btn-ghost{% endif %}">{{ 'Switch off' if d.enabled else 'Switch on' }}</button>
+                <button type="submit" class="btn btn-sm{% if d.enabled %} btn-ghost{% endif %}">{{ _('Switch off') if d.enabled else _('Switch on') }}</button>
               </form>
             </div>
           {% endfor %}
         </div>
       {% else %}
-        <p class="text-[12.5px] text-muted">None yet.</p>
+        <p class="text-[12.5px] text-muted">{{ _('None yet.') }}</p>
       {% endif %}
     </section>
 
     <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">{{ icon('shield') }}</span><h3>Who looks after the lab</h3></header>
-      <p class="setup-note">Admins can change this page, approve new accounts, reset passwords and edit any record. Keep at least two, so nobody is locked out when one is away.</p>
+      <header class="setup-step-head"><span class="setup-step-num">{{ icon('shield') }}</span><h3>{{ _('Who looks after the lab') }}</h3></header>
+      <p class="setup-note">{{ _('Admins can change this page, approve new accounts, reset passwords and edit any record. Keep at least two, so nobody is locked out when one is away.') }}</p>
       <div class="setup-list">
         {% for a in admins %}
           <div class="setup-row">
             <div class="flex min-w-0 items-center gap-2">{{ a.username | owner_badge }} <span class="font-medium text-ink">{{ a.name }}</span>
-              {% if a.id == current_user.id %}<span class="text-[12px] text-muted">you</span>{% endif %}</div>
-            <span class="badge badge-brand">admin</span>
+              {% if a.id == current_user.id %}<span class="text-[12px] text-muted">{{ _('you') }}</span>{% endif %}</div>
+            <span class="badge badge-brand">{{ _('admin') }}</span>
           </div>
         {% endfor %}
         {% for m in members %}
           <div class="setup-row">
             <div class="flex min-w-0 items-center gap-2">{{ m.username | owner_badge }} <span class="text-ink">{{ m.name }}</span></div>
             <form method="post" action="{{ url_for('admin_toggle_role', user_id=m.id) }}"
-                  data-confirm="Make {{ m.name }} a lab admin?">
-              <button type="submit" class="btn btn-sm">{{ icon('shield') }} Make admin</button>
+                  data-confirm="{{ _('Make %(name)s a lab admin?', name=m.name) }}">
+              <button type="submit" class="btn btn-sm">{{ icon('shield') }} {{ _('Make admin') }}</button>
             </form>
           </div>
         {% endfor %}
       </div>
-      <p class="setup-note"><a href="{{ url_for('admin_users') }}">Manage users</a> for approving sign-ups, removing admin rights and disabling accounts.</p>
+      <p class="setup-note">{% trans link=url_for('admin_users') %}<a href="{{ link }}">Manage users</a> for approving sign-ups, removing admin rights and disabling accounts.{% endtrans %}</p>
     </section>
   {% endif %}
 </div>

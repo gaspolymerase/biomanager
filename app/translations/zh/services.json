@@ -1,0 +1,12 @@
+{
+  "%(cell)s in %(box)s already holds plasmid #%(id)s.": "%(box)s 的 %(cell)s 已放着质粒 #%(id)s。",
+  "%(cell)s in %(box)s holds plasmid #%(id)s, which you may not move.": "%(box)s 的 %(cell)s 放着质粒 #%(id)s，你没有权限移动它。",
+  "Only %(who)s (who made it) or an admin can change or delete the box %(box)s.": "只有 %(who)s（创建者）或管理员可以修改或删除冻存盒 %(box)s。",
+  "Only an admin can change or delete the box %(box)s.": "只有管理员可以修改或删除冻存盒 %(box)s。",
+  "Already undone by %(who)s on %(when)s.": "已由 %(who)s 于 %(when)s 撤销。",
+  "No recorded changes to reverse.": "没有可撤销的修改记录。",
+  "Table %(table)s cannot be reversed automatically.": "表 %(table)s 无法自动撤销。",
+  "%(num)s record changed after this batch — reverting would throw that later edit away.": "这批操作之后有 %(num)s 条记录被修改过——撤销会丢掉那次修改。",
+  "%(num)s records changed after this batch — reverting would throw those later edits away.": "这批操作之后有 %(num)s 条记录被修改过——撤销会丢掉那些修改。",
+  "Already undone.": "已经撤销过了。"
+}

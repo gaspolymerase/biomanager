@@ -24,6 +24,7 @@ from sqlalchemy import select
 
 from . import groups, lab, notify, telemetry, whats_new
 from .db import SessionLocal
+from .i18n import gettext, translate_value
 from .models import NotificationRecord, UserAccount
 from .services import WEAN_OFFSET_DAYS
 
@@ -38,13 +39,13 @@ def when(moment) -> str:
         return ""
     seconds = (datetime.utcnow() - moment).total_seconds()
     if seconds < 60:
-        return "just now"
+        return gettext("just now")
     if seconds < 3600:
-        return f"{int(seconds // 60)} min ago"
+        return gettext("%(n)s min ago", n=int(seconds // 60))
     if seconds < 86400:
-        return f"{int(seconds // 3600)} h ago"
+        return gettext("%(n)s h ago", n=int(seconds // 3600))
     if seconds < 2 * 86400:
-        return "yesterday"
+        return gettext("yesterday")
     # Further back: the date, written the lab's way (Lab setup → Dates).
     return current_app.jinja_env.filters["day"](current_app.jinja_env.filters["local"](moment))
 
@@ -52,7 +53,7 @@ def when(moment) -> str:
 @bp.app_context_processor
 def _notification_labels():
     labels = {key: label for key, (label, _hint) in notify.CATEGORIES.items()}
-    labels.update({"account": "Accounts", "general": "General"})
+    labels.update({"account": "Accounts", "general": "General"})   # shown through |tr
     return {"notification_labels": labels}
 
 
@@ -60,7 +61,7 @@ def _admin_or_redirect():
     if g.get("user") is None:
         return redirect(url_for("login", next=request.path))
     if g.user.role != "admin":
-        flash("Only a lab admin can change the lab's setup.", "error")
+        flash(gettext("Only a lab admin can change the lab's setup."), "error")
         return redirect(url_for("home_dashboard"))
     return None
 
@@ -75,9 +76,11 @@ def refuse_switched_off():
     feature = lab.feature_for_path(request.path)
     if feature is None or lab.request_features().get(feature.key, True):
         return None
-    message = f"{feature.label} is switched off for this lab."
     if g.user.role == "admin":
-        message += " You can switch it on in Lab setup."
+        message = gettext("%(feature)s is switched off for this lab. You can switch it on in Lab setup.",
+                          feature=translate_value(feature.label))
+    else:
+        message = gettext("%(feature)s is switched off for this lab.", feature=translate_value(feature.label))
     if request.method != "GET" or request.headers.get("X-Autosave") == "1":
         return jsonify({"ok": False, "error": message}), 403
     flash(message, "error")
@@ -121,27 +124,27 @@ def setup():
                 if module is None:
                     abort(404)
                 db_session.commit()
-                flash(f"{module.label} {'switched on' if module.enabled else 'switched off'}.", "success")
+                flash(gettext("%(name)s switched on.", name=translate_value(module.label)) if module.enabled
+                      else gettext("%(name)s switched off.", name=translate_value(module.label)), "success")
                 return redirect(url_for("lab.setup") + "#databases")
             zone = (request.form.get("lab_timezone") or "").strip()
             if zone and not lab.valid_timezone(zone):
-                flash(f"“{zone}” is not a time zone BioManager knows; the time zone was left as it was. "
-                      "Pick one from the list, such as America/New_York.", "error")
+                flash(gettext("“%(zone)s” is not a time zone BioManager knows; the time zone was left as it was. Pick one from the list, such as America/New_York.", zone=zone), "error")
             switched_on = lab.apply_survey(db_session, request.form, g.user.username)
             if first_run and not telemetry.off_by_env():
                 # The first survey asks about the anonymous daily counts; afterwards it's on the Usage report.
                 telemetry.set_lab_on(db_session, request.form.get("heartbeat") == "1")
             if switched_on and not first_run:
-                notify.tell_lab(db_session, g.user.username,
-                                f"{g.user.display_name or g.user.username} added "
-                                f"{', '.join(switched_on)} for the lab", link=url_for("home_dashboard"))
+                notify.tell_lab(db_session, g.user.username, "%(who)s added %(what)s for the lab",
+                                link=url_for("home_dashboard"),
+                                values={"who": g.user.display_name or g.user.username, "what": ", ".join(switched_on)})
             user = db_session.get(UserAccount, g.user.id)
             if first_run and user.welcomed_at is None:
                 user.welcomed_at = datetime.utcnow()
                 whats_new.stamp(user)
             db_session.commit()
-            flash("The lab is set up. Change any of it here whenever you like." if first_run
-                  else "Lab setup saved.", "success")
+            flash(gettext("The lab is set up. Change any of it here whenever you like.") if first_run
+                  else gettext("Lab setup saved."), "success")
             return redirect(url_for("home_dashboard") if first_run else url_for("lab.setup"))
         state = lab.survey_state(db_session)
         custom = lab.custom_databases(db_session)
@@ -241,7 +244,7 @@ def hide_getting_started():
     with SessionLocal() as db_session:
         lab.hide_getting_started(db_session, g.user)
         db_session.commit()
-    flash("Getting started is hidden. The user guide is under Help in the sidebar.", "success")
+    flash(gettext("Getting started is hidden. The user guide is under Help in the sidebar."), "success")
     return redirect(url_for("home_dashboard"))
 
 
@@ -279,33 +282,38 @@ def audience(kind: str, key: str):
         if group_id is not None:
             # Your own database, for one of your project groups.
             if not (g.user.role == "admin" or module.private_to == g.user.username):
-                flash("Only its owner or a lab admin can give this database to a group.", "error")
+                flash(gettext("Only its owner or a lab admin can give this database to a group."), "error")
             elif not groups.may_share_with(group_id):
                 flash(groups.refusal(group_id), "error")
             else:
                 module.private_to, module.share_group_id = "", group_id
-                notify.tell_group(db_session, group_id, g.user.username,
-                                  f"{g.user.display_name or g.user.username} shared {module.label} "
-                                  f"with {groups.name_of(group_id)}")
-                flash(f"{module.label} is now {groups.name_of(group_id)}'s: its members see it.", "success")
+                notify.tell_group(db_session, group_id, g.user.username, "%(who)s shared %(name)s with %(group)s",
+                                  values={"who": g.user.display_name or g.user.username, "name": module.label,
+                                          "group": groups.name_of(group_id)})
+                flash(gettext("%(name)s is now %(group)s's: its members see it.", name=translate_value(module.label),
+                              group=groups.name_of(group_id)), "success")
                 db_session.commit()
             referrer = request.referrer or ""
             return redirect(referrer if referrer.startswith(request.host_url) else url_for("organisms.index"))
         if not lab.can_change_audience(db_session, module):
-            flash("Only a lab admin can change who sees this database.", "error")
+            flash(gettext("Only a lab admin can change who sees this database."), "error")
             return redirect(url_for("organisms.index"))
         if to == "lab":
             module.private_to, module.share_group_id = "", None
-            notify.tell_lab(db_session, g.user.username,
-                            f"{g.user.display_name or g.user.username} shared {module.label} with the lab")
-            flash(f"{module.label} is now a lab database: everyone sees it.", "success")
+            notify.tell_lab(db_session, g.user.username, "%(who)s shared %(name)s with the lab",
+                            values={"who": g.user.display_name or g.user.username, "name": module.label})
+            flash(gettext("%(name)s is now a lab database: everyone sees it.", name=translate_value(module.label)),
+                  "success")
         elif to == "me":
             owner = request.form.get("owner") or module.created_by or g.user.username
             if g.user.role != "admin":
                 owner = g.user.username
             module.private_to, module.share_group_id = owner, None
-            flash(f"{module.label} is now {'your' if owner == g.user.username else owner + chr(39) + 's'} "
-                  "own database.", "success")
+            if owner == g.user.username:
+                flash(gettext("%(name)s is now your own database.", name=translate_value(module.label)), "success")
+            else:
+                flash(gettext("%(name)s is now %(owner)s's own database.", name=translate_value(module.label),
+                              owner=owner), "success")
         db_session.commit()
     referrer = request.referrer or ""
     return redirect(referrer if referrer.startswith(request.host_url) else url_for("organisms.index"))

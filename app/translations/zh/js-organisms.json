@@ -1,0 +1,10 @@
+{
+  "Save %(name)s": "保存 %(name)s",
+  "Add location": "添加位置",
+  "New %(noun)s": "新建%(noun)s",
+  "Edit %(noun)s": "编辑%(noun)s",
+  "View %(noun)s": "查看%(noun)s",
+  "%(n)s selected": "已选 %(n)s 项",
+  "Read only: someone else’s record. Ask them, or an admin, to change it.": "只读：这是别人的记录。如需修改，请联系记录负责人或管理员。",
+  "Read only: %(owner)s’s record. Ask them, or an admin, to change it.": "只读：这是 %(owner)s 的记录。如需修改，请联系 %(owner)s 或管理员。"
+}

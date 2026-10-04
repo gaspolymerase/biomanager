@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block page_title %}Audit log{% endblock %}
-{% block page_heading %}Audit log{% endblock %}
-{% block page_subtitle %}Every tracked create, edit and delete · admin only · {{ entries|length }} entries (last 200){% endblock %}
+{% block page_title %}{{ _('Audit log') }}{% endblock %}
+{% block page_heading %}{{ _('Audit log') }}{% endblock %}
+{% block page_subtitle %}{{ _('Every tracked create, edit and delete · admin only · %(count)s entries (last 200)', count=entries|length) }}{% endblock %}
 
 {% block content %}
 <section class="data-table-card" data-table-id="audit">
   <div class="dt-toolbar">
     <div class="dt-toolbar-search">
       {{ icon('search', 'search-icon') }}
-      <input type="text" class="dt-search" placeholder="Search entries…" autocomplete="off">
+      <input type="text" class="dt-search" placeholder="{{ _('Search entries…') }}" autocomplete="off">
     </div>
     <div class="dt-toolbar-spacer"></div>
-    <button type="button" class="dt-toolbar-btn dt-btn-sort">{{ icon('sort') }} Sort</button>
+    <button type="button" class="dt-toolbar-btn dt-btn-sort">{{ icon('sort') }} {{ _('Sort') }}</button>
   </div>
 
   <div class="dt-scroll">
@@ -20,22 +20,22 @@
       <thead>
         <tr>
           <th class="dt-sortable" data-sort-key="when" style="width: 170px;">
-            <span class="dt-col-head">{{ icon('clock', 'dt-col-icon') }}When<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('clock', 'dt-col-icon') }}{{ _('When') }}<span class="dt-sort-indicator"></span></span>
           </th>
           <th class="dt-sortable" data-sort-key="action" style="width: 100px;">
-            <span class="dt-col-head">{{ icon('bolt', 'dt-col-icon') }}Action<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('bolt', 'dt-col-icon') }}{{ _('Action') }}<span class="dt-sort-indicator"></span></span>
           </th>
           <th class="dt-sortable" data-sort-key="table" style="width: 110px;">
-            <span class="dt-col-head">{{ icon('database', 'dt-col-icon') }}Table<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('database', 'dt-col-icon') }}{{ 'Table'|tr('audit') }}<span class="dt-sort-indicator"></span></span>
           </th>
           <th class="dt-sortable" data-sort-key="record" style="width: 220px;">
-            <span class="dt-col-head">{{ icon('file', 'dt-col-icon') }}Record<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('file', 'dt-col-icon') }}{{ _('Record') }}<span class="dt-sort-indicator"></span></span>
           </th>
           <th class="dt-sortable" data-sort-key="who" style="width: 140px;">
-            <span class="dt-col-head">{{ icon('user', 'dt-col-icon') }}Changed by<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('user', 'dt-col-icon') }}{{ _('Changed by') }}<span class="dt-sort-indicator"></span></span>
           </th>
           <th class="dt-sortable" data-sort-key="details">
-            <span class="dt-col-head">{{ icon('info', 'dt-col-icon') }}Details<span class="dt-sort-indicator"></span></span>
+            <span class="dt-col-head">{{ icon('info', 'dt-col-icon') }}{{ _('Details') }}<span class="dt-sort-indicator"></span></span>
           </th>
         </tr>
       </thead>
@@ -52,7 +52,7 @@
             <td>
               <span class="dt-status"
                     data-status="{{ {'create': 'active', 'update': 'ordered', 'delete': 'cancelled'}.get(e.action, e.action) }}">
-                {{ e.action }}
+                {{ e.action|tr('audit') }}
               </span>
             </td>
             <td title="{{ e.table_name }}">{{ e.table_name | table_label }}</td>
@@ -61,7 +61,7 @@
             <td class="whitespace-normal break-words font-mono text-[11.5px] leading-snug text-muted">{{ e.details }}</td>
           </tr>
         {% else %}
-          <tr><td class="dt-empty" colspan="6">No audit entries yet. Deletions in the colony / plasmids tables will show up here.</td></tr>
+          <tr><td class="dt-empty" colspan="6">{{ _('No audit entries yet. Deletions in the colony / plasmids tables will show up here.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

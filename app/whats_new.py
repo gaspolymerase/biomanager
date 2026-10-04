@@ -28,6 +28,7 @@ bp = Blueprint("whats_new", __name__)
 RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{version}"
 
 # Newest first. Each line is plain text; **bold** names a button or a page.
+# Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
     "1.0.6": {
         "new": [
@@ -135,8 +136,10 @@ def stamp(user) -> None:
 
 
 def rich(text: str) -> Markup:
-    """A note line: escaped, with **bold** made bold."""
-    return Markup(re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", str(escape(text))))
+    """A note line in the page's language (its Chinese is in
+    app/translations/zh/whats_new.json): escaped, with **bold** made bold."""
+    from .i18n import translate_value
+    return Markup(re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", str(escape(translate_value(text)))))
 
 
 @bp.app_context_processor

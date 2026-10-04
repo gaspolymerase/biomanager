@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "_icon_picker.html" import icon_picker with context %}
 
-{% block page_title %}New database{% endblock %}
-{% block page_heading %}New database{% endblock %}
-{% block page_subtitle %}A lab inventory for things you keep or buy, or an organism database for animals you house{% endblock %}
+{% block page_title %}{{ _('New database') }}{% endblock %}
+{% block page_heading %}{{ _('New database') }}{% endblock %}
+{% block page_subtitle %}{{ _('A lab inventory for things you keep or buy, or an organism database for animals you house') }}{% endblock %}
 {% block page_shell_class %}shell-page workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('database') }} All databases</a>
+  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('database') }} {{ _('All databases') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -15,10 +15,9 @@
 {# ---- Mouse colony, zebrafish, plasmids (app/lab.py) ---------------------- #}
 {% if builtin_choices %}
 <section class="mb-6">
-  <h2 class="mb-1 flex items-center gap-2">{{ icon('database', 'size-[17px] text-brand-600') }} Ready-made databases</h2>
+  <h2 class="mb-1 flex items-center gap-2">{{ icon('database', 'size-[17px] text-brand-600') }} {{ _('Ready-made databases') }}</h2>
   <p class="mb-3 text-[12.5px] text-muted">
-    Full databases of their own, with the lab's racks, tanks or boxes. Anything added to one before
-    comes back with it.
+    {{ _("Full databases of their own, with the lab's racks, tanks or boxes. Anything added to one before comes back with it.") }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
     {% for f in builtin_choices %}
@@ -27,9 +26,9 @@
         <button type="submit" class="card flex flex-col gap-2 p-4 text-left transition-all hover:border-brand-300 hover:shadow-sm">
           <span class="flex items-center gap-2">
             {{ icon(f.icon, "size-[17px] text-brand-600") }}
-            <span class="text-[14px] font-semibold text-ink">{{ f.label }}</span>
+            <span class="text-[14px] font-semibold text-ink">{{ f.label|tr }}</span>
           </span>
-          <span class="text-[12px] leading-snug text-muted">{{ f.blurb }}</span>
+          <span class="text-[12px] leading-snug text-muted">{{ f.blurb|tr }}</span>
         </button>
       </form>
     {% endfor %}
@@ -39,10 +38,9 @@
 
 {# ---- Fly and worm stocks ------------------------------------------------ #}
 <section class="mb-6">
-  <h2 class="mb-1 flex items-center gap-2">{{ icon('fly', 'size-[17px] text-brand-600') }} Fly or worm stocks</h2>
+  <h2 class="mb-1 flex items-center gap-2">{{ icon('fly', 'size-[17px] text-brand-600') }} {{ _('Fly or worm stocks') }}</h2>
   <p class="mb-3 text-[12.5px] text-muted">
-    Vials or plates in racks inside incubators: genotype, purpose, crosses, egg collection,
-    flip schedule and temperature shifts.
+    {{ _('Vials or plates in racks inside incubators: genotype, purpose, crosses, egg collection, flip schedule and temperature shifts.') }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
     {% for key, p in stock_presets.items() %}
@@ -50,9 +48,9 @@
          href="{{ url_for('stocks.new_module', kind=key) }}">
         <span class="flex items-center gap-2">
           {{ icon(p.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ p.label }}</span>
+          <span class="text-[14px] font-semibold text-ink">{{ p.label|tr }}</span>
         </span>
-        <span class="text-[12px] leading-snug text-muted">{{ p.blurb }}</span>
+        <span class="text-[12px] leading-snug text-muted">{{ p.blurb|tr }}</span>
       </a>
     {% endfor %}
   </div>
@@ -60,10 +58,9 @@
 
 {# ---- Lab inventories ---------------------------------------------------- #}
 <section class="mb-6">
-  <h2 class="mb-1 flex items-center gap-2">{{ icon('flask', 'size-[17px] text-brand-600') }} Lab inventory</h2>
+  <h2 class="mb-1 flex items-center gap-2">{{ icon('flask', 'size-[17px] text-brand-600') }} {{ _('Lab inventory') }}</h2>
   <p class="mb-3 text-[12.5px] text-muted">
-    Samples, orders, reagents, antibodies or a list of your own, with freezer boxes,
-    mine / lab common stock, and status boards. Pick one to name it.
+    {{ _('Samples, orders, reagents, antibodies or a list of your own, with freezer boxes, mine / lab common stock, and status boards. Pick one to name it.') }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
     {% for key, p in inventory_presets.items() %}
@@ -71,25 +68,24 @@
          href="{{ url_for('inventory.new_module', preset=key) }}">
         <span class="flex items-center gap-2">
           {{ icon(p.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ p.label }}</span>
+          <span class="text-[14px] font-semibold text-ink">{{ p.label|tr }}</span>
         </span>
-        <span class="text-[12px] leading-snug text-muted">{{ p.blurb }}</span>
+        <span class="text-[12px] leading-snug text-muted">{{ p.blurb|tr }}</span>
       </a>
     {% endfor %}
   </div>
 </section>
 
-<h2 class="mb-3 flex items-center gap-2">{{ icon('paw', 'size-[17px] text-brand-600') }} Organism database</h2>
+<h2 class="mb-3 flex items-center gap-2">{{ icon('paw', 'size-[17px] text-brand-600') }} {{ _('Organism database') }}</h2>
 
 {# ---- Step 1: preset ---------------------------------------------------- #}
 <section class="mb-4">
   <h2 class="mb-1 flex items-center gap-2">
     <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">1</span>
-    Pick a starting point
+    {{ _('Pick a starting point') }}
   </h2>
   <p class="mb-3 pl-7 text-[12.5px] text-muted">
-    A preset fills in the nouns, capabilities, schedule rules and fields that organism's
-    community actually uses. Everything stays editable afterwards.
+    {{ _("A preset fills in the nouns, capabilities, schedule rules and fields that organism's community actually uses. Everything stays editable afterwards.") }}
   </p>
 
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -99,14 +95,14 @@
          href="{{ url_for('organisms.new_module', preset=preset.key) }}" data-preset-link>
         <span class="flex items-center gap-2">
           {{ icon(preset.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ preset.label }}</span>
+          <span class="text-[14px] font-semibold text-ink">{{ preset.label|tr }}</span>
           {% if preset_key == preset.key %}
             <svg class="icon ml-auto size-4 text-brand-600" aria-hidden="true"><use href="/static/icons.svg#check"></use></svg>
           {% endif %}
         </span>
-        <span class="text-[12px] leading-snug text-muted">{{ preset.blurb }}</span>
+        <span class="text-[12px] leading-snug text-muted">{{ preset.blurb|tr }}</span>
         {% if preset.notes %}
-          <span class="text-[11.5px] leading-snug text-sand-400">{{ preset.notes }}</span>
+          <span class="text-[11.5px] leading-snug text-sand-400">{{ preset.notes|tr }}</span>
         {% endif %}
       </a>
     {% endfor %}
@@ -121,71 +117,69 @@
     <header class="card-head">
       <h2>
         <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">2</span>
-        Name and vocabulary
+        {{ _('Name and vocabulary') }}
       </h2>
     </header>
     <div class="p-4">
       <p class="mb-3.5 text-[12.5px] leading-snug text-muted">
-        These words are what the interface will call things. A fly database says
-        <em>vial</em> and <em>stock</em> where the mouse colony says <em>cage</em> and
-        <em>strain</em>.
+        {% trans %}These words are what the interface will call things. A fly database says <em>vial</em> and <em>stock</em> where the mouse colony says <em>cage</em> and <em>strain</em>.{% endtrans %}
       </p>
 
       <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        <label class="field-label">Database name
+        <label class="field-label">{{ _('Database name') }}
           <input name="label" value="{{ prefill.get('label', '') }}" required data-typed
                  data-prefill="{{ prefill.get('label', '') }}"
-                 placeholder="e.g. Xenopus colony, Mouse room B" autofocus>
+                 placeholder="{{ _('e.g. Xenopus colony, Mouse room B') }}" autofocus>
         </label>
-        <label class="field-label">Plural
+        <label class="field-label">{{ _('Plural') }}
           <input name="label_plural" value="{{ prefill.get('label_plural', '') }}" data-typed
                  data-prefill="{{ prefill.get('label_plural', '') }}">
         </label>
         <div class="sm:col-span-2">{{ icon_picker('icon', prefill.get('icon', 'paw')) }}</div>
 
-        <label class="field-label sm:col-span-2 lg:col-span-3">Description
+        <label class="field-label sm:col-span-2 lg:col-span-3">{{ _('Description') }}
           <input name="blurb" value="{{ prefill.get('blurb', '') }}" data-typed
                  data-prefill="{{ prefill.get('blurb', '') }}"
-                 placeholder="One line about what this database holds">
+                 placeholder="{{ _('One line about what this database holds') }}">
         </label>
 
-        <label class="field-label">One animal is a…
-          <input name="organism_noun" value="{{ prefill.get('organism_noun', '') }}" placeholder="fly, worm, fish">
+        <label class="field-label">{{ _('One animal is a…') }}
+          <input name="organism_noun" value="{{ prefill.get('organism_noun', '') }}" placeholder="{{ _('fly, worm, fish') }}">
         </label>
-        <label class="field-label">Many are…
+        <label class="field-label">{{ _('Many are…') }}
           <input name="organism_noun_plural" value="{{ prefill.get('organism_noun_plural', '') }}">
         </label>
-        <label class="field-label">Housing unit
-          <input name="housing_noun" value="{{ prefill.get('housing_noun', '') }}" placeholder="vial, plate, tank, cage">
+        <label class="field-label">{{ _('Housing unit') }}
+          <input name="housing_noun" value="{{ prefill.get('housing_noun', '') }}" placeholder="{{ _('vial, plate, tank, cage') }}">
         </label>
-        <label class="field-label">Housing units
+        <label class="field-label">{{ _('Housing units') }}
           <input name="housing_noun_plural" value="{{ prefill.get('housing_noun_plural', '') }}">
         </label>
-        <label class="field-label">Holds them in a…
-          <input name="container_noun" value="{{ prefill.get('container_noun', '') }}" placeholder="rack, incubator, system">
+        <label class="field-label">{{ _('Holds them in a…') }}
+          <input name="container_noun" value="{{ prefill.get('container_noun', '') }}" placeholder="{{ _('rack, incubator, system') }}">
         </label>
-        <label class="field-label">Genetic entity
-          <input name="line_noun" value="{{ prefill.get('line_noun', '') }}" placeholder="stock, strain, line">
+        <label class="field-label">{{ _('Genetic entity') }}
+          <input name="line_noun" value="{{ prefill.get('line_noun', '') }}" placeholder="{{ _('stock, strain, line') }}">
         </label>
-        <label class="field-label">Genetic entities
+        <label class="field-label">{{ _('Genetic entities') }}
           <input name="line_noun_plural" value="{{ prefill.get('line_noun_plural', '') }}">
         </label>
-        <label class="field-label">Birth cohort
-          <input name="cohort_noun" value="{{ prefill.get('cohort_noun', '') }}" placeholder="litter, clutch, progeny">
+        <label class="field-label">{{ _('Birth cohort') }}
+          <input name="cohort_noun" value="{{ prefill.get('cohort_noun', '') }}" placeholder="{{ _('litter, clutch, progeny') }}">
         </label>
-        <label class="field-label">Birth cohorts
+        <label class="field-label">{{ _('Birth cohorts') }}
           <input name="cohort_noun_plural" value="{{ prefill.get('cohort_noun_plural', '') }}">
         </label>
-        <label class="field-label">Breeding event
-          <input name="cross_noun" value="{{ prefill.get('cross_noun', '') }}" placeholder="cross, mating">
+        <label class="field-label">{{ _('Breeding event') }}
+          <input name="cross_noun" value="{{ prefill.get('cross_noun', '') }}" placeholder="{{ _('cross, mating') }}">
         </label>
-        <label class="field-label">Breeding events
-          <input name="cross_noun_plural" value="{{ (prefill.get('settings') or {}).get('cross_noun_plural', '') }}" placeholder="crosses, matings">
+        <label class="field-label">{{ _('Breeding events') }}
+          <input name="cross_noun_plural" value="{{ (prefill.get('settings') or {}).get('cross_noun_plural', '') }}" placeholder="{{ _('crosses, matings') }}">
         </label>
-        <label class="field-label">Age shown in
+        <label class="field-label">{{ _('Age shown in') }}
           <select name="age_unit">
             {% for value, label in age_units %}
-              <option value="{{ value }}" {% if prefill.get('age_unit') == value %}selected{% endif %}>{{ label }}</option>
+              <option value="{{ value }}" {% if prefill.get('age_unit') == value %}selected{% endif %}>{{ label|tr }}</option>
             {% endfor %}
           </select>
         </label>
@@ -198,13 +192,12 @@
     <header class="card-head">
       <h2>
         <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">3</span>
-        How are animals counted?
+        {{ _('How are animals counted?') }}
       </h2>
     </header>
     <div class="p-4">
       <p class="mb-3.5 text-[12.5px] leading-snug text-muted">
-        The one choice that shapes everything else. Mice are individuals; flies and worms
-        are counted in bulk; fish are groups that occasionally need a named individual.
+        {{ _('The one choice that shapes everything else. Mice are individuals; flies and worms are counted in bulk; fish are groups that occasionally need a named individual.') }}
       </p>
       <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-3">
         {% for value, label, blurb in identity_modes %}
@@ -214,8 +207,8 @@
             <input type="radio" name="identity_mode" value="{{ value }}" class="mt-1"
                    {% if selected %}checked{% endif %}>
             <span class="min-w-0">
-              <span class="block text-[13px] font-semibold text-ink">{{ label }}</span>
-              <span class="block text-[12px] leading-snug text-muted">{{ blurb }}</span>
+              <span class="block text-[13px] font-semibold text-ink">{{ label|tr }}</span>
+              <span class="block text-[12px] leading-snug text-muted">{{ blurb|tr }}</span>
             </span>
           </label>
         {% endfor %}
@@ -228,19 +221,18 @@
     <header class="card-head">
       <h2>
         <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">4</span>
-        Choose what this database does
+        {{ _('Choose what this database does') }}
       </h2>
-      <span class="badge badge-quiet" id="cap-count">0 selected</span>
+      <span class="badge badge-quiet" id="cap-count">{{ _('%(n)s selected', n=0) }}</span>
     </header>
     <div class="flex flex-col gap-4 p-4">
       <p class="text-[12.5px] leading-snug text-muted">
-        Each one adds a view and the records behind it. Leave out what the organism
-        doesn't have — flies need no protocol or census, worms need no water chemistry.
+        {{ _("Each one adds a view and the records behind it. Leave out what the organism doesn't have — flies need no protocol or census, worms need no water chemistry.") }}
       </p>
 
       {% for group, capabilities in capability_groups %}
         <div>
-          <h4 class="mb-2">{{ group }}</h4>
+          <h4 class="mb-2">{{ group|tr }}</h4>
           <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {% for cap in capabilities %}
               {% set checked = cap.key in prefill.get('capabilities', []) or cap.core %}
@@ -250,12 +242,12 @@
                        {% if checked %}checked{% endif %} {% if cap.core %}data-core="1"{% endif %}>
                 <span class="min-w-0">
                   <span class="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
-                    {{ icon(cap.icon, "text-sand-500") }}{{ cap.label }}
-                    {% if cap.core %}<span class="badge badge-quiet">always on</span>{% endif %}
+                    {{ icon(cap.icon, "text-sand-500") }}{{ cap.label|tr('capability') }}
+                    {% if cap.core %}<span class="badge badge-quiet">{{ _('always on') }}</span>{% endif %}
                   </span>
-                  <span class="block text-[11.5px] leading-snug text-muted">{{ cap.blurb }}</span>
+                  <span class="block text-[11.5px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
                   {% if cap.requires %}
-                    <span class="block text-[11px] text-sand-400">needs: {{ cap.requires|join(', ') }}</span>
+                    <span class="block text-[11px] text-sand-400">{{ _('needs: %(list)s', list=cap.requires|map('tr', 'capability')|join(', ')) }}</span>
                   {% endif %}
                 </span>
               </label>
@@ -270,15 +262,15 @@
     <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-sand-100 bg-sand-50/60 px-4 py-3">
       <p class="text-[12px] text-muted">
         {% if preset_key and prefill.get('schedule_rules') %}
-          Carries {{ prefill.get('schedule_rules')|length }} schedule rule{{ '' if prefill.get('schedule_rules')|length == 1 else 's' }}
-          and {{ prefill.get('fields', [])|length }} preset field{{ '' if prefill.get('fields', [])|length == 1 else 's' }} —
-          both editable after creating.
+          {{ _('Carries %(rules)s and %(fields)s — both editable after creating.',
+               rules=ngettext('%(num)s schedule rule', '%(num)s schedule rules', prefill.get('schedule_rules')|length),
+               fields=ngettext('%(num)s preset field', '%(num)s preset fields', prefill.get('fields', [])|length)) }}
         {% else %}
-          You can add fields and schedule rules once the database exists.
+          {{ _('You can add fields and schedule rules once the database exists.') }}
         {% endif %}
       </p>
       <button type="submit" class="btn btn-primary btn-lg">
-        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#check"></use></svg> Create database
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#check"></use></svg> {{ _('Create database') }}
       </button>
     </footer>
   </section>
@@ -291,7 +283,7 @@
     const counter = document.getElementById('cap-count');
     function refresh() {
       const n = boxes.filter((b) => b.checked).length;
-      counter.textContent = n + ' selected';
+      counter.textContent = t('%(n)s selected', { n: n });
     }
     boxes.forEach((box) => {
       if (box.dataset.core) {

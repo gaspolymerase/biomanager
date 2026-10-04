@@ -35,8 +35,9 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, request, url
 from sqlalchemy import delete, func, or_, select
 
 from .formutil import like_pattern
-from . import access, groups, notebook_protocols, notify
+from . import access, groups, i18n, notebook_protocols, notify
 from .db import SessionLocal
+from .i18n import gettext
 from .models import (CalendarEvent, NotebookComment, NotebookMeetingSeries, NotebookPage, NotebookPageInfo,
                      NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate, NotebookTab,
                      NotebookTemplate, NotebookVersion, TaskItem, UserAccount)
@@ -82,7 +83,7 @@ DUE_RE = re.compile(r"\b(?:due|by)\s*:?\s*(\d{4}-\d{2}-\d{2})\b", re.I)
 def require_login():
     if g.get("user") is None:
         if request.path.startswith("/notebook/api/"):
-            return jsonify({"ok": False, "error": "Sign in first."}), 401
+            return jsonify({"ok": False, "error": gettext("Sign in first.")}), 401
         return redirect(url_for("login", next=request.path))
     return None
 
@@ -442,7 +443,7 @@ def sync_push(page_id: int):
         last = None
         if updates or data.get("init"):
             if not can_edit_role(role):
-                return _fail("This page is view only.", 403)
+                return _fail(gettext("This page is view only."), 403)
             from .signatures import refuse_if_locked
             refused = refuse_if_locked(s, page_id)
             if refused:
@@ -677,10 +678,10 @@ FRONT_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 def page_import():
     upload = request.files.get("file")
     if upload is None or not upload.filename:
-        return _fail("Pick a Markdown file.")
+        return _fail(gettext("Pick a Markdown file."))
     raw = upload.read(2 * 1024 * 1024 + 1)
     if len(raw) > 2 * 1024 * 1024:
-        return _fail("That file is over 2 MB.", 413)
+        return _fail(gettext("That file is over 2 MB."), 413)
     text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n")
     title, tags, kind = "", [], "note"
     match = FRONT_RE.match(text)
@@ -826,7 +827,7 @@ def structure_only(body: str) -> str:
 # ---------------------------------------------------------------- new pages
 
 def _today_label(day: date) -> str:
-    return day.strftime("%a %d %b %Y")
+    return i18n.strftime(day, "%a %d %b %Y")
 
 
 def _fill(body: str, **values) -> str:
@@ -852,7 +853,7 @@ def page_new():
         if data.get("tab_id"):
             tab = s.get(NotebookTab, _int(data["tab_id"]) or 0)
             if tab is None or tab.owner_username != me:
-                return _fail("That topic is not yours.", 404)
+                return _fail(gettext("That topic is not yours."), 404)
         title, body, kind = (data.get("title") or "").strip(), "", "note"
         starter = STARTERS.get(data.get("starter") or "")
         if starter:
@@ -862,7 +863,7 @@ def page_new():
         elif data.get("template_id"):
             template = s.get(NotebookTemplate, _int(data["template_id"]) or 0)
             if template is None or not (template.owner_username == me or template.lab):
-                return _fail("Template not found.", 404)
+                return _fail(gettext("Template not found."), 404)
             title, body = title or template.title, template.body or ""
             kind = template.kind if template.kind in KINDS and template.kind != "daily" else "note"
         if tab is None:
@@ -918,10 +919,10 @@ def shares_list(page_id: int):
         owner = owner_of(page)
         def name_of(username):
             if username == EVERYONE:
-                return "Everyone in the lab"
+                return gettext("Everyone in the lab")
             group_id = groups.page_share_group(username)
             if group_id is not None:
-                return f"{groups.name_of(group_id) or 'A deleted group'} (project group)"
+                return gettext("%(group)s (project group)", group=groups.name_of(group_id) or gettext("A deleted group"))
             return names.get(username, username)
         return jsonify({"ok": True, "role": role, "owner": owner,
                         "owner_name": display_names(s, [owner]).get(owner, owner),
@@ -938,7 +939,7 @@ def shares_set(page_id: int):
     data = _json_body()
     username, share_role = str(data.get("username") or "").strip(), data.get("role") or "view"
     if share_role not in ROLES:
-        return _fail("Role is view or edit.")
+        return _fail(gettext("Role is view or edit."))
     with SessionLocal() as s:
         page, _role = load_page(s, page_id, need="owner")
         group_id = groups.page_share_group(username)
@@ -948,9 +949,9 @@ def shares_set(page_id: int):
         elif username != EVERYONE:
             user = s.scalar(select(UserAccount).where(UserAccount.username == username))
             if user is None or user.disabled:
-                return _fail("No one in the lab by that name.", 404)
+                return _fail(gettext("No one in the lab by that name."), 404)
             if username == owner_of(page):
-                return _fail("It is already theirs.")
+                return _fail(gettext("It is already theirs."))
         row = s.scalar(select(NotebookShare).where(NotebookShare.page_id_fk == page_id,
                                                    NotebookShare.username == username))
         is_new = row is None
@@ -959,14 +960,17 @@ def shares_set(page_id: int):
             s.add(row)
         row.role = share_role
         if is_new and username != EVERYONE:
-            verb = "edit" if share_role == "edit" else "read"
             told = sorted(groups.members_of(group_id) - {_me(), owner_of(page)}) if group_id is not None \
                 else [username]
-            whom = f" ({groups.name_of(group_id)})" if group_id is not None else ""
+            title = ("%(who)s shared “%(title)s” with you (%(group)s)" if group_id is not None
+                     else "%(who)s shared “%(title)s” with you")
+            message = ("You can edit it in your notebook, under Shared with me." if share_role == "edit"
+                       else "You can read it in your notebook, under Shared with me.")
+            values = {"who": g.user.display_name or _me(), "title": page.title,
+                      "group": groups.name_of(group_id) if group_id is not None else ""}
             for person in told:
-                notify.send(s, person, f"{g.user.display_name or _me()} shared “{page.title}” with you{whom}",
-                            f"You can {verb} it in your notebook, under Shared with me.",
-                            category="notebook", link=page_url(page_id), actor=_me())
+                notify.send(s, person, title, message, category="notebook", link=page_url(page_id), actor=_me(),
+                            values=values, message_values={})
         s.commit()
         return jsonify({"ok": True})
 
@@ -1092,7 +1096,7 @@ def comment_add(page_id: int):
     data = _json_body()
     body = str(data.get("body") or "").strip()
     if not body:
-        return _fail("Write something first.")
+        return _fail(gettext("Write something first."))
     with SessionLocal() as s:
         page, _role = load_page(s, page_id)
         me = _me()
@@ -1100,7 +1104,7 @@ def comment_add(page_id: int):
         if data.get("parent_id"):
             parent = s.get(NotebookComment, _int(data["parent_id"]) or 0)
             if parent is None or parent.page_id_fk != page_id:
-                return _fail("That thread is gone.", 404)
+                return _fail(gettext("That thread is gone."), 404)
             if parent.parent_id is not None:
                 parent = s.get(NotebookComment, parent.parent_id)
         comment = NotebookComment(page_id_fk=page_id, parent_id=parent.id if parent else None, author=me,
@@ -1119,8 +1123,8 @@ def comment_add(page_id: int):
             if role_for(s, page, target) is None:
                 no_access.append(username)
                 continue
-            if notify.send(s, username, f"{who} mentioned you on “{page.title}”", body[:300],
-                           category="notebook", link=link, actor=me):
+            if notify.send(s, username, "%(who)s mentioned you on “%(title)s”", body[:300],
+                           category="notebook", link=link, actor=me, values={"who": who, "title": page.title}):
                 told.add(username)
         followers = {owner_of(page)}
         if parent is not None:
@@ -1129,8 +1133,8 @@ def comment_add(page_id: int):
         for username in followers - told - {me}:
             target = s.scalar(select(UserAccount).where(UserAccount.username == username))
             if target is not None and role_for(s, page, target) is not None:
-                notify.send(s, username, f"{who} commented on “{page.title}”", body[:300],
-                            category="notebook", link=link, actor=me)
+                notify.send(s, username, "%(who)s commented on “%(title)s”", body[:300],
+                            category="notebook", link=link, actor=me, values={"who": who, "title": page.title})
         s.commit()
         return jsonify({"ok": True, "id": comment.id, "no_access": no_access,
                         "no_access_names": list(display_names(s, no_access).values())})
@@ -1164,7 +1168,7 @@ def comment_edit(comment_id: int):
         if comment.author != _me():
             abort(403)
         if not body:
-            return _fail("Write something first.")
+            return _fail(gettext("Write something first."))
         comment.body, comment.updated_at = body[:5000], _now()
         s.commit()
         return jsonify({"ok": True})
@@ -1292,7 +1296,7 @@ def protocol_text():
         if request.args.get("preset"):
             preset = notebook_protocols.PRESET_PROTOCOLS.get(request.args["preset"])
             if preset is None:
-                return _fail("That protocol is not built in.", 404)
+                return _fail(gettext("That protocol is not built in."), 404)
             title, body = preset["title"], preset["body"]
             header = f"> **Protocol:** {title} (built in)"
         elif _int(request.args.get("page")):
@@ -1303,7 +1307,7 @@ def protocol_text():
             version = f" · v{release.number}" if release is not None else ""
             header = f"> **Protocol:** [{title}]({page_url(page.id)}){version}"
         else:
-            return _fail("Choose a protocol to insert.")
+            return _fail(gettext("Choose a protocol to insert."))
         return jsonify({"ok": True, "title": title,
                         "markdown": f"\n{header}\n\n{steps_as_checklist(body, title)}\n"})
 
@@ -1327,7 +1331,7 @@ def protocol_new():
     data = _json_body()
     preset = notebook_protocols.PRESET_PROTOCOLS.get(str(data.get("preset") or ""))
     if data.get("preset") and preset is None:
-        return _fail("That protocol is not built in.", 404)
+        return _fail(gettext("That protocol is not built in."), 404)
     title = str(data.get("title") or "").strip()[:200] or (preset["title"] if preset else "New protocol")
     with SessionLocal() as s:
         tab = tab_named(s, _me(), PROTOCOLS_TAB)
@@ -1502,7 +1506,7 @@ def _apply_series(s, series: NotebookMeetingSeries, data: dict) -> str | None:
     if "name" in data:
         name = str(data.get("name") or "").strip()[:160]
         if not name:
-            return "Give the meeting a name."
+            return gettext("Give the meeting a name.")
         series.name = name
     if "members" in data:
         wanted = [str(m) for m in (data.get("members") or []) if m]
@@ -1609,9 +1613,12 @@ def create_meeting_note(s, series: NotebookMeetingSeries, when: date | None = No
     for member in members:
         if member != me:
             s.add(NotebookShare(page_id_fk=page.id, username=member, role="edit", shared_by=me))
-            notify.send(s, member, f"Notes for {series.name} on {when:%d %b} are open",
+            with i18n.using(i18n.language_for(s, member)):
+                day = i18n.strftime(when, "%d %b")
+            notify.send(s, member, "Notes for %(meeting)s on %(day)s are open",
                         "Everyone in the meeting can write in them.", category="notebook",
-                        link=page_url(page.id), actor=me)
+                        link=page_url(page.id), actor=me, values={"meeting": series.name, "day": day},
+                        message_values={})
     if members and advance:
         series.next_index = (series.next_index + 1) % len(members)
     record_edit(s, page)
@@ -1636,7 +1643,7 @@ def meeting_calendar(series_id: int):
         series = _series_or_404(s, series_id)
         members = _members(series)
         if series.weekday is None:
-            return _fail("Pick the day of the week the meeting is on first.")
+            return _fail(gettext("Pick the day of the week the meeting is on first."))
         names = display_names(s, members)
         made = 0
         for i, day in enumerate(upcoming_dates(series, count)):
@@ -1720,8 +1727,8 @@ def send_action_items(page_id: int):
                     continue
                 s.add(TaskItem(title=item["text"], due_date=_date(item["due"]), status="todo", priority="medium",
                                owner=username, notes=f"{marker}: “{page.title}” {link}"))
-                notify.send(s, username, f"Action item from “{page.title}”", item["text"],
-                            category="notebook", link=link, actor=_me())
+                notify.send(s, username, "Action item from “%(title)s”", item["text"],
+                            category="notebook", link=link, actor=_me(), values={"title": page.title})
                 made.append({"username": username, "name": names.get(username, username), "text": item["text"],
                              "due": item["due"]})
         s.commit()
@@ -1764,7 +1771,7 @@ def recipe_save():
     name = str(body.get("name") or "").strip()[:160]
     data = _clean_recipe(body.get("data"))
     if not name or data is None:
-        return _fail("A recipe needs a name and components.")
+        return _fail(gettext("A recipe needs a name and components."))
     data["name"] = name
     with SessionLocal() as s:
         recipe = None

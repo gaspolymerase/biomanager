@@ -27,6 +27,8 @@ import ssl
 from email.message import EmailMessage
 from email.utils import formataddr
 
+from .i18n import gettext
+
 log = logging.getLogger("biomanager.mail")
 
 
@@ -52,8 +54,9 @@ def status_line() -> str:
     """One sentence for the settings page."""
     cfg = config()
     if not cfg["configured"]:
-        return "Not configured — reminders are written to the log instead of sent."
-    return f"Sending through {cfg['host']}:{cfg['port']} as {cfg['sender'] or 'unset sender'}."
+        return gettext("Not configured — reminders are written to the log instead of sent.")
+    return gettext("Sending through %(host)s:%(port)s as %(sender)s.", host=cfg["host"], port=cfg["port"],
+                   sender=cfg["sender"] or gettext("unset sender"))
 
 
 def send(to: str, subject: str, text: str, html: str | None = None) -> bool:
@@ -121,8 +124,10 @@ def render_digest(display_name: str, sections: list[dict], base_url: str) -> tup
     a terminal, and the plain part is also what lands in the log when SMTP
     is unconfigured.
     """
-    lines = [f"Hello {display_name},", ""]
-    html = [f'<div style="{STYLE}">', f"<p>Hello {display_name},</p>"]
+    # In the reader's language when called inside i18n.using (scripts/send-reminders.py).
+    hello = gettext("Hello %(name)s,", name=display_name)
+    lines = [hello, ""]
+    html = [f'<div style="{STYLE}">', f"<p>{hello}</p>"]
 
     for section in sections:
         if not section["items"]:
@@ -131,7 +136,7 @@ def render_digest(display_name: str, sections: list[dict], base_url: str) -> tup
         html.append(f'<h3 style="margin:18px 0 6px;font-size:14px;">{section["title"]}</h3>')
         html.append('<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">')
         for item in section["items"]:
-            flag = {"overdue": "OVERDUE", "today": "today", "soon": ""}.get(item.get("urgency", ""), "")
+            flag = {"overdue": gettext("OVERDUE"), "today": gettext("today"), "soon": ""}.get(item.get("urgency", ""), "")
             prefix = f"[{flag}] " if flag else "  "
             lines.append(f"{prefix}{item['label']} — {item['detail']}")
             colour = {"overdue": "#91352f", "today": "#7e5a08"}.get(item.get("urgency", ""), "#6b757d")
@@ -146,13 +151,13 @@ def render_digest(display_name: str, sections: list[dict], base_url: str) -> tup
         html.append("</table>")
         lines.append("")
 
-    lines += ["", f"Open BioManager: {base_url}"]
+    lines += ["", gettext("Open BioManager: %(url)s", url=base_url)]
     html.append(
         f'<p style="margin-top:22px;"><a href="{base_url}" '
         'style="background:#14567f;color:#fff;padding:8px 14px;border-radius:6px;'
-        'text-decoration:none;display:inline-block;">Open BioManager</a></p>'
+        f'text-decoration:none;display:inline-block;">{gettext("Open BioManager")}</a></p>'
     )
     html.append('<p style="color:#8b959c;font-size:12px;margin-top:20px;">'
-                'You are receiving this because your account has an email address. '
-                'Clear it in Settings to stop.</p></div>')
+                + gettext("You are receiving this because your account has an email address. Clear it in Settings to stop.")
+                + '</p></div>')
     return "\n".join(lines), "\n".join(html)

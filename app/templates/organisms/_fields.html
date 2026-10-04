@@ -14,7 +14,7 @@
   {% set value = attrs.get(field.key) %}
   {% set name = 'attr_' ~ field.key %}
   <label class="field-label">
-    {{ field.label }}{% if field.required %} <span class="text-danger-600">*</span>{% endif %}
+    {{ field.label|tr('field') }}{% if field.required %} <span class="text-danger-600">*</span>{% endif %}
 
     {% if field.field_type == 'textarea' %}
       <textarea name="{{ name }}" rows="2" {% if field.required %}required{% endif %}>{{ value or '' }}</textarea>
@@ -67,7 +67,7 @@
     {% endif %}
 
     {% if field.help_text %}
-      <span class="field-hint normal-case tracking-normal">{{ field.help_text }}</span>
+      <span class="field-hint normal-case tracking-normal">{{ field.help_text|tr('field') }}</span>
     {% endif %}
   </label>
 {% endmacro %}
@@ -82,7 +82,7 @@
   {% elif field.field_type == 'mono' %}
     <span class="ident">{{ value }}</span>
   {% elif field.field_type == 'url' %}
-    <a href="{{ value }}" target="_blank" rel="noopener">link</a>
+    <a href="{{ value }}" target="_blank" rel="noopener">{{ _('link') }}</a>
   {% else %}
     {{ value }}
   {% endif %}
@@ -104,7 +104,7 @@
 {% macro table_headers(fields) %}
   {% for field in fields if field.show_in_table %}
     <th class="dt-sortable" data-sort-key="attr_{{ field.key }}" data-sort-type="{{ {'number': 'number', 'date': 'date', 'checkbox': 'number'}.get(field.field_type, 'text') }}" style="width: 112px;">
-      <span class="dt-col-head">{{ icon(field_icon(field), 'dt-col-icon') }}{{ field.label|head }}<span class="dt-sort-indicator"></span></span>
+      <span class="dt-col-head">{{ icon(field_icon(field), 'dt-col-icon') }}{{ field.label|tr('field')|head }}<span class="dt-sort-indicator"></span></span>
     </th>
   {% endfor %}
 {% endmacro %}
@@ -122,12 +122,12 @@
       {%- if form and not locked and field.field_type in INLINE_TYPES -%}
         {%- set shown = '' if value is none else value -%}
         {%- if field.field_type == 'select' -%}
-          <select name="{{ name }}" form="{{ form }}" data-autosave="1" aria-label="{{ field.label }}">
+          <select name="{{ name }}" form="{{ form }}" data-autosave="1" aria-label="{{ field.label|tr('field') }}">
             <option value="">–</option>
             {%- for option in field.options_list %}<option value="{{ option }}"{% if shown|string == option %} selected{% endif %}>{{ option }}</option>{% endfor -%}
           </select>
         {%- else -%}
-          <input name="{{ name }}" form="{{ form }}" value="{{ shown }}" data-autosave="1" aria-label="{{ field.label }}"
+          <input name="{{ name }}" form="{{ form }}" value="{{ shown }}" data-autosave="1" aria-label="{{ field.label|tr('field') }}"
                  {%- if field.field_type == 'number' %} type="number" step="any" class="sheet-num"
                  {%- elif field.field_type == 'date' %} type="date" data-empty="{{ '0' if shown else '1' }}"
                  {%- elif field.field_type == 'mono' %} class="ident"{% endif %} title="{{ shown }}">
@@ -148,12 +148,12 @@
   {% if settable %}
     <form method="post" action="{{ action_url }}" class="selbar-group" data-selection-form>
       <input type="hidden" name="action" value="set">
-      <select name="field" aria-label="Field to set" data-bulk-field>
-        {% for field in settable %}<option value="attr_{{ field.key }}" data-type="{{ field.field_type }}"{% if field.options_list %} data-options="{{ field.options_list|join('\n') }}"{% endif %}>{{ field.label }}</option>{% endfor %}
+      <select name="field" aria-label="{{ _('Field to set') }}" data-bulk-field>
+        {% for field in settable %}<option value="attr_{{ field.key }}" data-type="{{ field.field_type }}"{% if field.options_list %} data-options="{{ field.options_list|join('\n') }}"{% endif %}>{{ field.label|tr('field') }}</option>{% endfor %}
       </select>
-      <input name="value" aria-label="Value" placeholder="value" list="org-bulk-field-options-{{ action_url|replace('/', '-') }}" data-bulk-value class="w-[110px]">
+      <input name="value" aria-label="{{ _('Value') }}" placeholder="{{ _('value') }}" list="org-bulk-field-options-{{ action_url|replace('/', '-') }}" data-bulk-value class="w-[110px]">
       <datalist id="org-bulk-field-options-{{ action_url|replace('/', '-') }}"></datalist>
-      <button type="submit" class="btn btn-sm">Set field</button>
+      <button type="submit" class="btn btn-sm">{{ _('Set field') }}</button>
     </form>
   {% endif %}
 {% endmacro %}

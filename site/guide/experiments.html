@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Experiments — BioManager user guide</title>
+  <meta name="description" content="Treatment groups, doses from body weight, readouts and the stats, for every animal.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/guide/experiments.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/experiments.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/experiments.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/experiments.html">
+  <script>try{if(!localStorage.getItem('bm-lang')&&/^zh/i.test((navigator.languages&&navigator.languages[0])||navigator.language||''))location.replace('../zh/guide/experiments.html'+location.hash)}catch(e){}</script>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/guide/experiments.html">
+  <meta property="og:title" content="Experiments — BioManager user guide">
+  <meta property="og:description" content="Treatment groups, doses from body weight, readouts and the stats, for every animal.">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../"><img src="../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="Site">
+      <a href="../features.html">Features</a>
+      <a href="../server.html">Run it for your lab</a>
+      <a class="nav-guide" href="../guide.html" aria-current="page">User guide</a>
+    </nav>
+    <a class="lang-link" href="../zh/guide/experiments.html" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
+    <a class="btn btn-small btn-primary" href="../download.html">Download</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="Contents">
+    <button type="button" class="docs-search" data-search data-pagefind="../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Search the guide</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>Contents</summary>
+      <ol>
+        <li class="docs-group"><span>Get started</span>
+          <ol>
+            <li><a href="../guide.html">Guide home</a></li>
+            <li><a href="what-it-is.html">What BioManager is</a></li>
+            <li><a href="coming-from-excel.html">Coming from Excel</a></li>
+            <li><a href="install.html">Install and set up</a></li>
+            <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="home-page.html">Home</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Everyday skills</span>
+          <ol>
+            <li><a href="sheets.html">Working in a sheet</a></li>
+            <li><a href="many-at-once.html">Many at once</a></li>
+            <li><a href="finding-things.html">Finding things</a></li>
+            <li><a href="undo-and-history.html">Undo and history</a></li>
+            <li><a href="notifications.html">Notifications</a></li>
+            <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          </ol></li>
+        <li class="docs-group"><span>How to…</span>
+          <ol>
+            <li><a href="record-a-litter.html">Record a litter</a></li>
+            <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
+            <li><a href="wean-a-litter.html">Wean a litter</a></li>
+            <li><a href="print-cage-cards.html">Print cage cards</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Your databases</span>
+          <ol>
+            <li><a href="mouse-colony.html">Mouse colony</a></li>
+            <li><a href="zebrafish.html">Zebrafish</a></li>
+            <li><a href="flies-and-worms.html">Flies and worms</a></li>
+            <li><a href="any-organism.html">Any other organism</a></li>
+            <li><a href="experiments.html" aria-current="page">Experiments</a></li>
+            <li><a href="plasmids.html">Plasmids</a></li>
+            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="notebook.html">Notebook and utilities</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Working as a lab</span>
+          <ol>
+            <li><a href="who-can-do-what.html">Who can do what</a></li>
+            <li><a href="project-groups.html">Project groups</a></li>
+            <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="lab-setup.html">Lab setup</a></li>
+            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Data and help</span>
+          <ol>
+            <li><a href="your-data.html">Your data and backups</a></li>
+            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="troubleshooting.html">Troubleshooting</a></li>
+            <li><a href="feedback.html">Feedback</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">Your databases</p>
+    <h1>Experiments, for every animal</h1>
+    <p class="summary">Treatment groups, doses from body weight, readouts and the stats, for every animal.</p>
+    <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Experiments, for every animal</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/experiment.webp" data-clip-src="../assets/clips/experiment"></video></div></figure>
+
+      <p>Mice, zebrafish, flies, worms and your own organisms all have an <b>Experiments</b> tab beside their other tabs (Mice and
+        Cages; Tanks and Fish; the vials or plates). <b>New experiment</b> there can start with a whole cage, tank, rack or housing of
+        them. One page shows each experiment, and <b>All experiments</b> on it goes back to the tab.</p>
+      <table class="gtable">
+        <tr><th>Mice</th><td>Mice, or a whole cage. Body weight (or tumour volume, a clinical score, survival). Injections,
+          challenges, treatments, surgery, behaviour, sampling, imaging.</td></tr>
+        <tr><th>Zebrafish</th><td>Fish rows, a whole tank, or a clutch's larvae. Survival (how many of those at the start are
+          alive), standard length or a phenotype. Drug in the water, microinjection, heat shock, injury or fin clip.</td></tr>
+        <tr><th>Flies and worms</th><td>Vials or plates, or a whole rack; say how many each started with. They have no body weight:
+          survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi
+          feeding, temperature shifts, starvation, infection, flipping to fresh food.</td></tr>
+        <tr><th>Any other organism</th><td>Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score.</td></tr>
+      </table>
+      <p>Any experiment can follow a readout of its own (<b>Readout → Something else…</b>): a number for each, or how many of
+        those at the start.</p>
+      <h3 id="experiments-1">The page</h3>
+      <ul>
+        <li><b>The experiment</b> on top: name, status, start (day 1), end, readout and description, saved as you type.</li>
+        <li><b>The sheet of its animals</b> switches between <b>Treatment</b> — each manipulation day a column: ✓ and the amount for
+          each animal that got it (click to change) — and the readout, a column a day, typed in place (<b>Another day</b> adds one).
+          Each animal's group is edited here too.</li>
+        <li><b>Record manipulation</b> records what was just done — <i>the HDM group got Tamoxifen 20 mg/kg i.p. today</i> — or a day
+          of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume
+          given the solution (<i>10 mg/mL</i>). Tick the animals it was done to, pick the <b>Reagent used</b> (its lot is kept; an
+          expired one is flagged) and, if you want, <b>make a sample record for each one</b> in Samples, with the animal as its
+          source.</li>
+        <li><b>The chart</b> shows the readout by group over the days (the value, or its % of the first; for a count, % of those at
+          the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the
+          days the groups differ, and <b>Tests by day</b> below lists each test (Welch's t-test for two groups, one-way ANOVA for
+          more, χ² for counts), each day on its own.</li>
+      </ul>
+      <h3 id="experiments-2">The regimen</h3>
+      <p><b>Regimen</b> lists what is to be done and on which days: the kind, what, dose, route, solution, group and days
+        (<code>1</code>, <code>2-5</code>, <code>2/3/4/5</code>, <code>1, 8, 15</code>). Day 1 is the start date. The days to do
+        are on the calendar, and the experiment's owner gets a notification each morning of what is due (turn it off in
+        <b>Settings → Notifications → Experiments</b>). Nothing is done until someone records it on the page. <b>Save as a
+        regimen…</b> keeps it to plan the next cohort from.</p>
+      <h3 id="experiments-3">At the bench, and afterwards</h3>
+      <ul>
+        <li><b>Bench mode</b> (scan its QR code with a phone): pick what you are doing, then one animal at a time with big numbers —
+          type each weight or count, or give each today's manipulation and tap <b>Given ✓</b>; record it at the end. <b>Scan a card</b> reads a
+          cage, tank or vial card with the phone's camera and jumps to the animal in it.</li>
+        <li><b>Export</b> downloads an Excel workbook: the readout, long (for Prism or R) and wide, each animal's manipulations, and
+          the tests by day.</li>
+        <li><b>Add to notebook</b> makes your notebook page for the experiment, with a live view of its manipulations and readout
+          (<code>/experiment</code> adds one to any page; <b>Freeze a copy</b> keeps it as it is now).</li>
+      </ul>
+    <!-- /page -->
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="any-organism.html"><small>Previous</small>Any other organism</a><a class="next" href="plasmids.html"><small>Next</small>Plasmids</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>Was this page helpful?</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=Guide: Experiments&amp;body=Page: https://biomanager.org/guide/experiments.html%0A%0AWhat%20was%20unclear%20or%20missing:" target="_blank" rel="noopener">No</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="On this page">
+      <p>On this page</p>
+      <ol>
+        <li class="lvl3"><a href="#experiments-1">The page</a></li>
+        <li class="lvl3"><a href="#experiments-2">The regimen</a></li>
+        <li class="lvl3"><a href="#experiments-3">At the bench, and afterwards</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager is free and open source. <a href="../download.html">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">Report a problem</a></p>
+  </div>
+</footer>
+<script src="../site.js"></script>
+</body>
+</html>

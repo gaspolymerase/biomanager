@@ -1182,6 +1182,20 @@ written in English and wrapped, and the Chinese is looked up by the English:
 - **Python** (flash messages, labels made in code): `gettext("…")` and
   `ngettext(singular, plural, n)`, imported from `app.i18n`. Not `_`: many
   modules use `_` as a throwaway name.
+- **The same English, two meanings**: `pgettext("experiment", "active")` and
+  `{{ status|tr("experiment") }}` look for a `"experiment::active"` entry
+  first, so an experiment can be 进行中 while an account is 正常.
+- **Dates**: `{{ day|date_format('%a %d %b') }}` and `i18n.strftime(day, "%b %d, %Y")`
+  instead of `.strftime()` with month or weekday names: the same English
+  patterns come out as a Chinese reader writes them (10月3日, 2026年10月3日 周六).
+  `fmt_day` and `relative_day` already follow the language.
+- **Notifications and emails** are written in their recipient's language,
+  not the sender's: `notify.send(s, who, "%(who)s shared “%(title)s” with you",
+  values={…})` translates the English title for each recipient
+  (`i18n.language_for`: their choice in Settings, else the language their
+  browser last showed). The message is translated only when
+  `message_values` is given; otherwise it is kept as typed. Anything else
+  written for someone else: `with i18n.using(lang): …`.
 - **Page scripts**: `t("Saved")`, `t("%(n)s mice", {n: 3})` (`base.html`
   defines it before any page script).
 - **The Chinese**: `app/translations/zh/<area>.json`, `{"English": "中文"}`,
@@ -1198,6 +1212,12 @@ written in English and wrapped, and the Chinese is looked up by the English:
   `%(name)s` values of its English, and the same English is never given two
   different Chinese. So adding text to a translated page means adding its
   Chinese too.
+- **Kept in English**: what is stored (starter pages, default titles a
+  record is saved with, audit text), the JSON API (`/api/v1` answers in
+  English whoever asks; page scripts translate its labels for display), CSV
+  and Excel headers, printed labels, logs and the usage report. A word a
+  page script needs goes in a `js-*.json` file even when a server catalog
+  already has it (only those reach the browser), with the same Chinese.
 
 ## The website
 
@@ -1211,9 +1231,37 @@ from master:
   `.github/workflows/pages.yml`. Every page's canonical address names
   biomanager.org, so search engines count the two as one site.
 
+**Pages.** The front page (`index.html`: the opening, the feature stage, the
+promises and where to go next), Features (`features.html`: each database,
+cage cards, what works everywhere, the ways to run it), Run it for your lab
+(`server.html`), the user guide (`guide.html` and `guide/`) and Download
+(`download.html`: the files, phones, first steps and questions). Every page
+has the same header, whose links go to those pages, the current one marked;
+an old link to a section of the long front page (`/#download`, `/#tour`…)
+goes on to the page it moved to.
+
+**The user guide** is `guide.html` (its home, which the app opens through
+`/guide`: a first-day path and a card for each area) and one page per topic
+in `site/guide/` (and `site/zh/guide/`), in five groups: Get started,
+Everyday skills, How to… (one task per page, numbered steps), Your databases,
+Working as a lab, Data and help. Each page's own words sit between
+`<!-- page -->` and `<!-- /page -->`: a title, a one-line `.summary`,
+optional `.badges`, a clip (`video[data-clip-src]`, loaded when it scrolls
+into view), the text, and its own Troubleshooting. Everything around them
+(head, header, the grouped sidebar with search, "On this page", Previous /
+Next, "Was this helpful?", whose No opens a GitHub issue naming the page) is
+written by `scripts/guide-pages.py` from its `PAGES` list: to add a page, add
+it there, make its file with the two markers, and run the script.
+`--search` also rebuilds the search index (Pagefind, into `site/pagefind/`,
+published with the site; it indexes only `data-pagefind-body`, the guide's
+pages, and keeps English and Chinese apart). Run it after editing the guide.
+An old link to a section of the one-page guide (`guide.html#mice`) goes on to
+its page.
+
 **Two languages.** `site/zh/` holds the Chinese pages, one for each English
-page (`zh/index.html`, `zh/guide.html`, `zh/server.html`), with the same
-structure and the same ids, so `guide.html#mice` and `zh/guide.html#mice`
+page (`zh/index.html`, `zh/features.html`, `zh/download.html`,
+`zh/guide.html`, `zh/server.html`), with the same
+structure and the same ids, so `guide/mouse-colony.html` and `zh/guide/mouse-colony.html`
 are the same section. A change to an English page goes into its Chinese page
 in the same piece of work; the words come from `docs/i18n-glossary.md`.
 
@@ -1227,6 +1275,61 @@ in the same piece of work; the words come from `docs/i18n-glossary.md`.
   it asked for.
 - The Chinese pages carry `Content-Language` and `keywords` for Baidu, which
   still reads them.
+
+**How it looks.** One stylesheet, `site/style.css`, for every page, light and
+dark from the same tokens on `:root` (the app's teal, neutrals with a little
+teal in them).
+
+- **Type**: headings in Geist and small labels (eyebrows, the dock's names) in
+  Geist Mono, self-hosted as Latin subsets in `site/assets/fonts/` (SIL OFL,
+  `OFL.txt` beside them; about 25 KB and 20 KB), because mainland China can't
+  reach a font CDN. Running text is the system font with each system's
+  Chinese face; no Chinese webfont is sent. Big Chinese headings keep normal
+  letter spacing (`:lang(zh)`).
+- **The header** floats above the page and turns to glass once the page
+  scrolls (`site.js` adds `.scrolled`).
+- **The feature stage** (`#see` on the front page; dark on a dark page,
+  white with pale glass on a light one) plays a short clip per tab of its
+  dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
+  poster. `scripts/site-clips.py` makes them from a fresh demo lab (through
+  `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
+  one another until someone picks a tab, and pause off screen. A tab's caption
+  is in its `data-claim` and `data-more`.
+- **Features** has no screenshots: each database and each thing that works
+  everywhere is a glass and neon card (`.nc`) drawn in the page, with its own
+  colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the card on a dark
+  page), a line drawing in inline SVG and a pane of glass with a little of
+  the app's own words. On a dark page the card is dark and its drawing
+  glows; on a light page it is white with a soft wash of its colour, a
+  deeper drawing and white frosted glass. A card with `data-clip` opens that
+  clip (from `site/assets/clips/`, made by `scripts/site-clips.py`) in a
+  window with a link on to its part of the user guide; without scripts, or
+  with ⌘-click, it is just that link. By day every band is white, parted by
+  hairlines; on a dark page the header's glass turns dark over the stage and
+  the cards (`.on-dark`, from `site.js`).
+- **The opening** (`.hero-glass`) is a band the height of the screen, light
+  or dark with the page. Behind the headline is a double helix of frosted
+  glass, worked out as a real helix in 3D: each backbone is wider and brighter
+  where it comes towards you and thinner where it turns away, and where the
+  two cross the near one passes over the far one. It is three layers of glass,
+  back to front (the backbones behind the axis, the paler base pairs, the
+  backbones in front), each a single `backdrop-filter` layer masked to its
+  shapes, with a coloured core line under it that the glass frosts into a
+  glow and bright edges over it; soft teal and blue light drifts underneath.
+  One turn of every layer is drawn by `scripts/hero-helix.py` into
+  `site/assets/helix/`, and the helix slides by one turn on a loop, which
+  looks just like it turning. The product shot rises out of its lower edge.
+  The header's **User guide** link is a bordered pill: more than the other
+  links, less than Download.
+- **Motion** is the hero's entrance and turning helix, the product shot flattening
+  as the page scrolls, sections (`.rise`) rising in (driven by scrolling
+  where the browser can, else by `site.js`), and each glass card's neon
+  drawing itself in. Without that support, or with
+  reduced motion, everything simply shows; reduced motion also stops the
+  clips playing by themselves.
+- **Icons** are `site/assets/icons.svg`, symbols copied from the app's
+  `app/static/icons.svg` (plus phone, laptop, server and play), coloured by
+  `.ic-<colour>`.
 
 ## Desktop App
 

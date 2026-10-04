@@ -3,13 +3,13 @@
    that switches between the treatments each got and the readout, and the readout over the days with
    the manipulation days marked. The sheet, chart and plan are drawn by static/experiment-page.js. #}
 
-{% block page_title %}Experiment · {{ experiment.name }}{% endblock %}
+{% block page_title %}{{ _('Experiment') }} · {{ experiment.name }}{% endblock %}
 {% block page_heading %}{{ experiment.name }}{% endblock %}
 {% block page_subtitle %}
-  <span class="dt-status" data-status="{{ experiment.status }}">{{ experiment.status }}</span>
-  · {{ place.label }} · {{ data.subjects|length }} {{ place.noun if data.subjects|length == 1 else place.nouns }}
+  <span class="dt-status" data-status="{{ experiment.status }}">{{ experiment.status|tr("experiment") }}</span>
+  · {{ place.label|tr }} · {{ data.subjects|length }} {{ (place.noun if data.subjects|length == 1 else place.nouns)|tr }}
   {%- if experiment.owner %} · {{ experiment.owner | owner_with_badge }}{% endif %}
-  {%- if experiment.start_date %} · day 1 is {{ experiment.start_date }}{% endif %}
+  {%- if experiment.start_date %} · {{ _('day 1 is %(date)s', date=experiment.start_date) }}{% endif %}
 {% endblock %}
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 {% block head_extra %}
@@ -18,22 +18,22 @@
 
 {% block page_actions %}
   <span class="sheet-save" data-save-status aria-live="polite"></span>
-  <a class="btn" href="{{ back_url }}">{{ icon('back') }} All experiments</a>
+  <a class="btn" href="{{ back_url }}">{{ icon('back') }} {{ _('All experiments') }}</a>
   {% if notebook_on %}
     {% if notebook_page %}
       <a class="btn" href="{{ url_for('notebook', page=notebook_page) }}"
-         title="Your notebook page for this experiment, with its manipulations and readout">{{ icon('notebook') }} Notebook page</a>
+         title="{{ _('Your notebook page for this experiment, with its manipulations and readout') }}">{{ icon('notebook') }} {{ _('Notebook page') }}</a>
     {% else %}
       <form method="post" action="{{ url_for('expsteps.add_to_notebook', experiment_id=experiment.id) }}">
-        <button type="submit" class="btn" title="A page in your notebook with this experiment's manipulations and readout, kept up to date">{{ icon('notebook') }} Add to notebook</button>
+        <button type="submit" class="btn" title="{{ _("A page in your notebook with this experiment's manipulations and readout, kept up to date") }}">{{ icon('notebook') }} {{ _('Add to notebook') }}</button>
       </form>
     {% endif %}
   {% endif %}
   {% if experiment.editable %}
     <form method="post"
           action="{{ url_for('delete_experiment', experiment_id=experiment.id) if place.key == 'colony' else url_for('experiments.delete', experiment_id=experiment.id) }}"
-          data-confirm="Delete the experiment {{ experiment.name }}? Its {{ place.nouns }} are not deleted, only their place in it.">
-      <button type="submit" class="btn btn-danger">{{ icon('trash') }} Delete experiment</button>
+          data-confirm="{{ _('Delete the experiment %(name)s? Its %(nouns)s are not deleted, only their place in it.', name=experiment.name, nouns=place.nouns|tr) }}">
+      <button type="submit" class="btn btn-danger">{{ icon('trash') }} {{ _('Delete experiment') }}</button>
     </form>
   {% endif %}
 {% endblock %}
@@ -42,41 +42,41 @@
 {% set locked = not experiment.editable %}
 {% if locked %}
   <p class="inset mb-3 flex items-center gap-2 text-[12.5px] text-muted">
-    {{ icon('lock') }} This is {{ experiment.owner or 'another member' }}’s experiment, so it is read only. They, or an admin, can change it.
+    {{ icon('lock') }} {{ _('This is %(owner)s’s experiment, so it is read only. They, or an admin, can change it.', owner=experiment.owner or _('another member')) }}
   </p>
 {% endif %}
 
 {# 1 · The experiment #}
 <section class="panel xp-info">
   <form method="post" action="{{ url_for('experiments.update', experiment_id=experiment.id) }}" class="xp-info-form" data-xp-info>
-    <label class="xp-name">Name <input name="name" value="{{ experiment.name }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
-    <label>Status
+    <label class="xp-name">{{ _('Name') }} <input name="name" value="{{ experiment.name }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
+    <label>{{ _('Status') }}
       <select name="status" data-autosave="1" {% if locked %}disabled{% endif %}>
-        {% for opt in statuses %}<option value="{{ opt }}" {% if experiment.status == opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+        {% for opt in statuses %}<option value="{{ opt }}" {% if experiment.status == opt %}selected{% endif %}>{{ opt|tr("experiment") }}</option>{% endfor %}
       </select>
     </label>
-    <label>Start (day 1) <input type="date" name="start_date" value="{{ experiment.start_date }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
-    <label>End <input type="date" name="end_date" value="{{ experiment.end_date }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
-    <label>Readout
+    <label>{{ _('Start (day 1)') }} <input type="date" name="start_date" value="{{ experiment.start_date }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
+    <label>{{ _('End') }} <input type="date" name="end_date" value="{{ experiment.end_date }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
+    <label>{{ _('Readout') }}
       <select name="readout" data-autosave="1" data-xp-readout {% if locked %}disabled{% endif %}>
-        {% for r in readouts %}<option value="{{ r.key }}" {% if readout.key == r.key %}selected{% endif %}>{{ r.label }}{% if r.unit %} ({{ r.unit }}){% endif %}</option>{% endfor %}
-        <option value="custom" {% if readout.key == 'custom' %}selected{% endif %}>Something else…</option>
+        {% for r in readouts %}<option value="{{ r.key }}" {% if readout.key == r.key %}selected{% endif %}>{{ r.label|tr }}{% if r.unit %} ({{ r.unit|tr }}){% endif %}</option>{% endfor %}
+        <option value="custom" {% if readout.key == 'custom' %}selected{% endif %}>{{ _('Something else…') }}</option>
       </select>
     </label>
     <div class="xp-custom" data-xp-custom {% if readout.key != 'custom' %}hidden{% endif %}>
-      <label>Measured <input name="readout_label" value="{{ readout.label if readout.key == 'custom' else '' }}" placeholder="Tumour size, ear score…" data-autosave="1" {% if locked %}disabled{% endif %}></label>
-      <label>Unit <input name="readout_unit" value="{{ readout.unit if readout.key == 'custom' else '' }}" placeholder="mm" data-autosave="1" {% if locked %}disabled{% endif %}></label>
-      <label>As
+      <label>{{ _('Measured') }} <input name="readout_label" value="{{ readout.label if readout.key == 'custom' else '' }}" placeholder="{{ _('Tumour size, ear score…') }}" data-autosave="1" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Unit') }} <input name="readout_unit" value="{{ readout.unit if readout.key == 'custom' else '' }}" placeholder="mm" data-autosave="1" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('As') }}
         <select name="readout_kind" data-autosave="1" {% if locked %}disabled{% endif %}>
-          <option value="value" {% if readout.kind == 'value' %}selected{% endif %}>a number for each</option>
-          <option value="fraction" {% if readout.kind == 'fraction' %}selected{% endif %}>how many of those at the start</option>
+          <option value="value" {% if readout.kind == 'value' %}selected{% endif %}>{{ _('a number for each') }}</option>
+          <option value="fraction" {% if readout.kind == 'fraction' %}selected{% endif %}>{{ _('how many of those at the start') }}</option>
         </select>
       </label>
     </div>
-    <label class="xp-wide">Description <textarea name="description" rows="2" data-autosave="1" {% if locked %}disabled{% endif %}>{{ experiment.description }}</textarea></label>
+    <label class="xp-wide">{{ _('Description') }} <textarea name="description" rows="2" data-autosave="1" {% if locked %}disabled{% endif %}>{{ experiment.description }}</textarea></label>
     <details class="xp-wide xp-plan-text" {% if experiment.treatment_plan %}open{% endif %}>
-      <summary>Treatment plan, in words</summary>
-      <textarea name="treatment_plan" rows="4" data-autosave="1" {% if locked %}disabled{% endif %} placeholder="Endpoints, vehicle, anything the manipulations below don't say">{{ experiment.treatment_plan }}</textarea>
+      <summary>{{ _('Treatment plan, in words') }}</summary>
+      <textarea name="treatment_plan" rows="4" data-autosave="1" {% if locked %}disabled{% endif %} placeholder="{{ _("Endpoints, vehicle, anything the manipulations below don't say") }}">{{ experiment.treatment_plan }}</textarea>
     </details>
   </form>
 </section>
@@ -84,19 +84,19 @@
 {# 2 · Its animals: the treatments each got, or the readout #}
 <section class="data-table-card sheet xp-sheet" data-xp-sheet>
   <div class="dt-toolbar">
-    <div class="dt-chips view-switch" role="tablist" aria-label="Show">
-      <button type="button" class="dt-chip" role="tab" data-xp-view="treatment" aria-pressed="true">{{ icon('syringe') }} Treatment</button>
-      <button type="button" class="dt-chip" role="tab" data-xp-view="readout" aria-pressed="false">{{ icon('chart') }} <span data-xp-readout-label>{{ readout.label }}</span></button>
+    <div class="dt-chips view-switch" role="tablist" aria-label="{{ _('Show') }}">
+      <button type="button" class="dt-chip" role="tab" data-xp-view="treatment" aria-pressed="true">{{ icon('syringe') }} {{ _('Treatment') }}</button>
+      <button type="button" class="dt-chip" role="tab" data-xp-view="readout" aria-pressed="false">{{ icon('chart') }} <span data-xp-readout-label>{{ readout.label|tr }}</span></button>
     </div>
     <div class="dt-toolbar-spacer"></div>
     <a class="dt-toolbar-btn" href="{{ url_for('experiments.export', experiment_id=experiment.id, fmt='xlsx') }}" download
-       title="An Excel workbook: the readout (long, for Prism or R, and wide), each animal's manipulations, and the tests by day">{{ icon('download') }} Export</a>
-    <button type="button" class="dt-toolbar-btn" data-xp-open="bench" title="One animal at a time, on a phone at the bench">{{ icon('qrcode') }} Bench mode</button>
+       title="{{ _("An Excel workbook: the readout (long, for Prism or R, and wide), each animal's manipulations, and the tests by day") }}">{{ icon('download') }} {{ _('Export') }}</a>
+    <button type="button" class="dt-toolbar-btn" data-xp-open="bench" title="{{ _('One animal at a time, on a phone at the bench') }}">{{ icon('qrcode') }} {{ _('Bench mode') }}</button>
     {% if experiment.editable %}
-      <button type="button" class="dt-toolbar-btn" data-xp-open="add">{{ icon('plus') }} Add {{ place.nouns }}</button>
-      <button type="button" class="dt-toolbar-btn" data-xp-open="plan" title="What is to be done, and on which days">{{ icon('calendar') }} Regimen</button>
-      <button type="button" class="dt-toolbar-btn" data-xp-open="reading">{{ icon('chart') }} <span data-xp-reading-verb>{{ readout.verb }}</span></button>
-      <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]" data-xp-open="record">{{ icon('syringe') }} Record manipulation</button>
+      <button type="button" class="dt-toolbar-btn" data-xp-open="add">{{ icon('plus') }} {{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</button>
+      <button type="button" class="dt-toolbar-btn" data-xp-open="plan" title="{{ _('What is to be done, and on which days') }}">{{ icon('calendar') }} {{ _('Regimen') }}</button>
+      <button type="button" class="dt-toolbar-btn" data-xp-open="reading">{{ icon('chart') }} <span data-xp-reading-verb>{{ readout.verb|tr("readout") }}</span></button>
+      <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]" data-xp-open="record">{{ icon('syringe') }} {{ _('Record manipulation') }}</button>
     {% endif %}
   </div>
   <div class="dt-scroll"><table class="dt xp-table" data-xp-table></table></div>
@@ -106,22 +106,22 @@
 {# 3 · The readout over the days #}
 <section class="panel xp-chart-card">
   <header class="xp-chart-head">
-    <h2 data-xp-chart-title>{{ readout.label }}</h2>
-    <div class="dt-chips" role="group" aria-label="Scale">
+    <h2 data-xp-chart-title>{{ readout.label|tr }}</h2>
+    <div class="dt-chips" role="group" aria-label="{{ _('Scale') }}">
       <button type="button" class="dt-chip" data-xp-scale="raw" aria-pressed="true"></button>
       <button type="button" class="dt-chip" data-xp-scale="pct" aria-pressed="false"></button>
     </div>
   </header>
   <div class="xp-chart" data-xp-chart></div>
   <details class="xp-stats" data-xp-stats hidden>
-    <summary>Tests by day <span class="xp-muted">(each day on its own, not corrected for the number of days)</span></summary>
+    <summary>{{ _('Tests by day') }} <span class="xp-muted">{{ _('(each day on its own, not corrected for the number of days)') }}</span></summary>
     <div class="table-wrap" data-xp-stats-table></div>
   </details>
 </section>
 
 {# 4 · The plan, day by day (the calendar links here) #}
 <section class="panel xp-days-card">
-  <h2>Regimen, day by day <span class="xp-muted" data-xp-days-count></span></h2>
+  <h2>{{ _('Regimen, day by day') }} <span class="xp-muted" data-xp-days-count></span></h2>
   <ol class="xp-days" data-xp-days></ol>
 </section>
 
@@ -129,102 +129,101 @@
 {# Add animals #}
 <dialog class="xp-dialog" id="xp-add" aria-labelledby="xp-add-title">
   <form method="dialog" class="xp-form" data-xp-form="add">
-    <header class="xp-dialog-head"><h3 id="xp-add-title">Add {{ place.nouns }}</h3><button type="button" class="csv-modal-close" data-xp-close aria-label="Close">×</button></header>
+    <header class="xp-dialog-head"><h3 id="xp-add-title">{{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</h3><button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
     <div class="xp-dialog-body xp-grid">
-      <label>All in a {{ place.housing }}
+      <label>{{ _('All in a %(housing)s', housing=place.housing|tr) }}
         <select name="group_value" data-xp-add-groups>
           <option value="">—</option>
           {% for value, label, n in add.groups %}<option value="{{ value }}">{{ label }} ({{ n }})</option>{% endfor %}
         </select>
       </label>
-      <label>Or one
+      <label>{{ _('Or one') }}
         <select name="one_value" data-xp-add-single>
           <option value="">—</option>
           {% for value, label in add.single %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
         </select>
       </label>
-      <label class="xp-wide">Into the group <input name="group" placeholder="HDM, vehicle, control… (optional)" list="xp-groups" autocomplete="off"></label>
-      <p class="xp-sub xp-wide">{% if place.subject_kind == 'mouse' %}Living mice you may edit.{% else %}Only {{ place.nouns }} still in use.{% endif %}</p>
+      <label class="xp-wide">{{ _('Into the group') }} <input name="group" placeholder="{{ _('HDM, vehicle, control… (optional)') }}" list="xp-groups" autocomplete="off"></label>
+      <p class="xp-sub xp-wide">{% if place.subject_kind == 'mouse' %}{{ _('Living mice you may edit.') }}{% else %}{{ _('Only %(nouns)s still in use.', nouns=place.nouns|tr) }}{% endif %}</p>
       <p class="xp-error xp-wide" data-xp-error hidden></p>
     </div>
     <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>Cancel</button>
-      <button type="submit" class="dt-bottom-action is-primary">Add</button></footer>
+      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="dt-bottom-action is-primary">{{ _('Add') }}</button></footer>
   </form>
 </dialog>
 
 {# The plan #}
 <dialog class="xp-dialog xp-dialog-wide" id="xp-plan" aria-labelledby="xp-plan-title">
   <form method="dialog" class="xp-form" data-xp-form="plan">
-    <header class="xp-dialog-head"><div><h3 id="xp-plan-title">Regimen</h3>
-      <p class="xp-sub">What is to be done, and on which days (day 1 is the start date). The days show on the calendar and in
-        your notifications; each is still recorded here as it is done.</p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="Close">×</button></header>
+    <header class="xp-dialog-head"><div><h3 id="xp-plan-title">{{ _('Regimen') }}</h3>
+      <p class="xp-sub">{{ _('What is to be done, and on which days (day 1 is the start date). The days show on the calendar and in your notifications; each is still recorded here as it is done.') }}</p></div>
+      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
     <div class="xp-dialog-body">
       <div class="xp-regimens" data-xp-regimens></div>
       <div class="table-wrap" data-xp-plan-list></div>
-      <h4 class="xp-h4" data-xp-plan-form-title>Add to the regimen</h4>
+      <h4 class="xp-h4" data-xp-plan-form-title>{{ _('Add to the regimen') }}</h4>
       <div class="xp-grid" data-xp-step-fields>
         <input type="hidden" name="id">
-        <label>Kind <select name="kind" data-xp-kinds></select></label>
-        <label>What <input name="agent" placeholder="Tamoxifen, HDM, vehicle…" autocomplete="off"></label>
-        <label>Days <input name="days" placeholder="1, or 2-5, or 1, 8, 15" autocomplete="off"></label>
-        <label>Dose <input name="dose" placeholder="20 mg/kg, 25 µg, 10 µM" autocomplete="off"></label>
-        <label>Route <input name="route" list="xp-routes" autocomplete="off"></label>
-        <label>Solution <input name="concentration" placeholder="10 mg/mL: gives each volume" autocomplete="off"></label>
-        <label>Group <select name="group" data-xp-group-select></select></label>
-        <label class="xp-wide">Reagent <select name="reagent_id" data-xp-reagents></select></label>
-        <label class="xp-wide">Notes <input name="notes" placeholder="Vehicle, volume, what to watch for" autocomplete="off"></label>
+        <label>{{ _('Kind') }} <select name="kind" data-xp-kinds></select></label>
+        <label>{{ _('What') }} <input name="agent" placeholder="{{ _('Tamoxifen, HDM, vehicle…') }}" autocomplete="off"></label>
+        <label>{{ _('Days') }} <input name="days" placeholder="{{ _('1, or 2-5, or 1, 8, 15') }}" autocomplete="off"></label>
+        <label>{{ _('Dose') }} <input name="dose" placeholder="20 mg/kg, 25 µg, 10 µM" autocomplete="off"></label>
+        <label>{{ _('Route') }} <input name="route" list="xp-routes" autocomplete="off"></label>
+        <label>{{ _('Solution') }} <input name="concentration" placeholder="{{ _('10 mg/mL: gives each volume') }}" autocomplete="off"></label>
+        <label>{{ _('Group') }} <select name="group" data-xp-group-select></select></label>
+        <label class="xp-wide">{{ _('Reagent') }} <select name="reagent_id" data-xp-reagents></select></label>
+        <label class="xp-wide">{{ _('Notes') }} <input name="notes" placeholder="{{ _('Vehicle, volume, what to watch for') }}" autocomplete="off"></label>
       </div>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot"><button type="button" class="dt-bottom-action" data-xp-plan-new hidden>New line</button>
-      <button type="button" class="dt-bottom-action" data-xp-regimen-save title="Keep these lines to start the next experiment from">Save as a regimen…</button><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>Done</button>
-      <button type="submit" class="dt-bottom-action is-primary" data-xp-plan-save>Add to the regimen</button></footer>
+    <footer class="csv-modal-foot"><button type="button" class="dt-bottom-action" data-xp-plan-new hidden>{{ pgettext('experiment', 'New line') }}</button>
+      <button type="button" class="dt-bottom-action" data-xp-regimen-save title="{{ _('Keep these lines to start the next experiment from') }}">{{ _('Save as a regimen…') }}</button><span class="xp-spacer"></span>
+      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Done') }}</button>
+      <button type="submit" class="dt-bottom-action is-primary" data-xp-plan-save>{{ _('Add to the regimen') }}</button></footer>
   </form>
 </dialog>
 
 {# Record a manipulation: a planned day, or one that isn't in the plan #}
 <dialog class="xp-dialog xp-dialog-wide" id="xp-record" aria-labelledby="xp-record-title">
   <form method="dialog" class="xp-form" data-xp-form="record">
-    <header class="xp-dialog-head"><div><h3 id="xp-record-title">Record manipulation</h3><p class="xp-sub" data-xp-record-sub></p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="Close">×</button></header>
+    <header class="xp-dialog-head"><div><h3 id="xp-record-title">{{ _('Record manipulation') }}</h3><p class="xp-sub" data-xp-record-sub></p></div>
+      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
     <div class="xp-dialog-body">
       <div class="xp-grid">
-        <label class="xp-wide">What was done <select name="which" data-xp-which></select></label>
+        <label class="xp-wide">{{ _('What was done') }} <select name="which" data-xp-which></select></label>
       </div>
       <div class="xp-grid" data-xp-adhoc hidden>
-        <label>Kind <select name="kind" data-xp-kinds></select></label>
-        <label>What <input name="agent" placeholder="Tamoxifen" autocomplete="off"></label>
-        <label>Dose <input name="dose" placeholder="20 mg/kg" autocomplete="off"></label>
-        <label>Route <input name="route" list="xp-routes" autocomplete="off"></label>
-        <label>Solution <input name="concentration" placeholder="10 mg/mL" autocomplete="off"></label>
-        <label>Group <select name="group" data-xp-group-select></select></label>
+        <label>{{ _('Kind') }} <select name="kind" data-xp-kinds></select></label>
+        <label>{{ _('What') }} <input name="agent" placeholder="Tamoxifen" autocomplete="off"></label>
+        <label>{{ _('Dose') }} <input name="dose" placeholder="20 mg/kg" autocomplete="off"></label>
+        <label>{{ _('Route') }} <input name="route" list="xp-routes" autocomplete="off"></label>
+        <label>{{ _('Solution') }} <input name="concentration" placeholder="10 mg/mL" autocomplete="off"></label>
+        <label>{{ _('Group') }} <select name="group" data-xp-group-select></select></label>
       </div>
       <div class="xp-record-top">
-        <label>Done on <input type="date" name="done_on" required></label>
+        <label>{{ _('Done on') }} <input type="date" name="done_on" required></label>
         <p class="xp-sub" data-xp-dose-note></p>
       </div>
       <div class="table-wrap"><table class="dense-table fit-table xp-animals"><thead data-xp-animals-head></thead><tbody data-xp-animals></tbody></table></div>
       <div class="xp-grid">
-        <label class="xp-wide">Reagent used <select name="reagent_id" data-xp-reagents></select></label>
+        <label class="xp-wide">{{ _('Reagent used') }} <select name="reagent_id" data-xp-reagents></select></label>
       </div>
       <div class="xp-samples" data-xp-samples hidden>
-        <label class="xp-check"><input type="checkbox" name="make_samples"> Make a sample record for each one ticked</label>
+        <label class="xp-check"><input type="checkbox" name="make_samples"> {{ _('Make a sample record for each one ticked') }}</label>
         <div class="xp-grid" data-xp-sample-fields hidden>
-          <label>In <select name="sample_inventory" data-xp-sample-inventories></select></label>
-          <label class="xp-span2">Named <input name="sample_name" placeholder="Serum, lung, BAL fluid… (then the animal and the day)" autocomplete="off"></label>
+          <label>{{ _('In') }} <select name="sample_inventory" data-xp-sample-inventories></select></label>
+          <label class="xp-span2">{{ _('Named') }} <input name="sample_name" placeholder="{{ _('Serum, lung, BAL fluid… (then the animal and the day)') }}" autocomplete="off"></label>
         </div>
         <p class="xp-sub" data-xp-samples-made></p>
       </div>
-      <label class="xp-wide">Note <textarea name="note" rows="2" placeholder="Anything that differed: one missed, a leak, a reaction"></textarea></label>
+      <label class="xp-wide">{{ _('Note') }} <textarea name="note" rows="2" placeholder="{{ _('Anything that differed: one missed, a leak, a reaction') }}"></textarea></label>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
     <footer class="csv-modal-foot">
-      <button type="button" class="dt-bottom-action xp-undo" data-xp-undo hidden>Undo: not done</button><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>Cancel</button>
-      <button type="submit" class="dt-bottom-action is-primary" data-xp-record-save>Record as done</button></footer>
+      <button type="button" class="dt-bottom-action xp-undo" data-xp-undo hidden>{{ _('Undo: not done') }}</button><span class="xp-spacer"></span>
+      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="dt-bottom-action is-primary" data-xp-record-save>{{ _('Record as done') }}</button></footer>
   </form>
 </dialog>
 
@@ -232,15 +231,15 @@
 <dialog class="xp-dialog" id="xp-reading" aria-labelledby="xp-reading-title">
   <form method="dialog" class="xp-form" data-xp-form="reading">
     <header class="xp-dialog-head"><div><h3 id="xp-reading-title"></h3><p class="xp-sub" data-xp-reading-sub></p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="Close">×</button></header>
+      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
     <div class="xp-dialog-body">
-      <label class="xp-date">Day <input type="date" name="on" required></label>
+      <label class="xp-date">{{ pgettext('experiment', 'Day') }} <input type="date" name="on" required></label>
       <div class="table-wrap"><table class="dense-table fit-table xp-animals"><tbody data-xp-reading-rows></tbody></table></div>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
     <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>Cancel</button>
-      <button type="submit" class="dt-bottom-action is-primary">Save</button></footer>
+      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="dt-bottom-action is-primary">{{ _('Save') }}</button></footer>
   </form>
 </dialog>
 {% endif %}
@@ -248,16 +247,15 @@
 {# Bench mode on a phone #}
 <dialog class="xp-dialog" id="xp-bench" aria-labelledby="xp-bench-title">
   <form method="dialog" class="xp-form">
-    <header class="xp-dialog-head"><div><h3 id="xp-bench-title">Bench mode</h3>
-      <p class="xp-sub">One {{ place.noun }} at a time with big numbers: {{ readout.verb|lower }} each, or give each today's
-        manipulation and tick it. Scan this with a phone that can reach this BioManager, or open it here.</p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="Close">×</button></header>
+    <header class="xp-dialog-head"><div><h3 id="xp-bench-title">{{ _('Bench mode') }}</h3>
+      <p class="xp-sub">{{ _("One %(noun)s at a time with big numbers: %(verb)s each, or give each today's manipulation and tick it. Scan this with a phone that can reach this BioManager, or open it here.", noun=place.noun|tr, verb=(readout.verb|tr("readout"))|lower) }}</p></div>
+      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
     <div class="xp-dialog-body xp-bench-qr">
-      <img src="{{ url_for('experiments.bench_qr', experiment_id=experiment.id) }}" alt="A QR code that opens bench mode" width="200" height="200" loading="lazy">
+      <img src="{{ url_for('experiments.bench_qr', experiment_id=experiment.id) }}" alt="{{ _('A QR code that opens bench mode') }}" width="200" height="200" loading="lazy">
     </div>
     <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>Close</button>
-      <a class="dt-bottom-action is-primary" href="{{ url_for('experiments.bench', experiment_id=experiment.id) }}">Open here</a></footer>
+      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Close') }}</button>
+      <a class="dt-bottom-action is-primary" href="{{ url_for('experiments.bench', experiment_id=experiment.id) }}">{{ _('Open here') }}</a></footer>
   </form>
 </dialog>
 

@@ -35,6 +35,8 @@ from datetime import datetime
 
 from flask import g
 
+from .i18n import gettext
+
 
 @dataclass(frozen=True)
 class Feature:
@@ -282,16 +284,16 @@ def set_audience_for_new(session, module, requested: str, user=None) -> None:
     who = getattr(user, "display_name", "") or user.username
     if group_id is not None and groups.may_share_with(group_id, user):
         module.private_to, module.share_group_id = "", group_id
-        notify.tell_group(session, group_id, user.username,
-                          f"{who} added {module.label} for {groups.name_of(group_id)}")
+        notify.tell_group(session, group_id, user.username, "%(who)s added %(db)s for %(group)s",
+                          values={"who": who, "db": module.label, "group": groups.name_of(group_id)})
         return
     module.private_to = audience_for_new(session, requested, user)
     module.share_group_id = None
     if module.private_to and requested == "lab":
-        flash("It is yours for now: only lab admins add databases for everyone. "
-              "Ask one to share it with the lab.", "info")
+        flash(gettext("It is yours for now: only lab admins add databases for everyone. Ask one to share it with the lab."), "info")
     if not module.private_to:
-        notify.tell_lab(session, user.username, f"{who} added {module.label} for the lab")
+        notify.tell_lab(session, user.username, "%(who)s added %(db)s for the lab",
+                        values={"who": who, "db": module.label})
 
 
 def lab_audience(session, user=None) -> dict:
@@ -540,7 +542,8 @@ def _own_name(session, name: str, current: str = "", **whose) -> str:
         return name
     clash = database_keys.name_clash(session, name, **whose)
     if clash:
-        flash(f"“{name}” was not used: there is already a database called {clash}.", "error")
+        flash(gettext("“%(name)s” was not used: there is already a database called %(clash)s.", name=name,
+                      clash=clash), "error")
         return ""
     return name
 

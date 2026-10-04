@@ -16,7 +16,7 @@ from flask import (
 )
 from sqlalchemy import func, select
 
-from . import access, audit, database_keys, positions
+from . import access, audit, database_keys, i18n, positions
 from . import groups as project_groups
 from . import stock_service as svc
 from . import stocks as presets
@@ -24,6 +24,7 @@ from .db import SessionLocal
 from . import lab, notify
 from .lab import lab_audience
 from .formutil import form_changed
+from .i18n import gettext, ngettext, pgettext, translate_value
 from .models import (
     StockFrozen, StockGenotype, StockIncubator, StockModule, StockRack, StockUnit,
 )
@@ -62,6 +63,17 @@ def _module_or_404(session, key: str) -> StockModule:
         abort(404)
     database_keys.to_current(module, key)   # an address it had before a rename
     return module
+
+
+def _w(text) -> str:
+    """A stock word from the database's settings (vial, rack, Flip, a
+    purpose…) in the page's language; a lab's own word stays as typed."""
+    return translate_value(text, "stocks")
+
+
+def _n(mv, n: int) -> str:
+    """The vial noun (singular or plural) for `n`, in the page's language."""
+    return _w(mv.unit if n == 1 else mv.units)
 
 
 def _wants_json() -> bool:
@@ -117,7 +129,7 @@ def _checked_date(form, name: str) -> date | None:
     try:
         return date.fromisoformat(raw)
     except ValueError:
-        raise Invalid(f"“{raw}” is not a date (use YYYY-MM-DD).") from None
+        raise Invalid(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=raw)) from None
 
 
 def _lab_users(session) -> set[str]:
@@ -140,22 +152,23 @@ UNIT_FIELDS = ("genotype", "purpose", "female_genotype", "male_genotype", "owner
 def new_module():
     with SessionLocal() as session:
         if not lab.may_create_database(session):
-            flash("An admin has turned off adding databases for members. Ask a lab admin.", "error")
+            flash(gettext("An admin has turned off adding databases for members. Ask a lab admin."), "error")
             return redirect(url_for("organisms.index"))
         if request.method == "POST":
             kind = request.form.get("kind", "fly")
             label = (request.form.get("label") or "").strip()
             if not label:
-                flash("Give the database a name.", "error")
+                flash(gettext("Give the database a name."), "error")
                 return redirect(url_for("stocks.new_module", kind=kind))
             clash = database_keys.name_clash(session, label)
             if clash:
-                flash(f"There is already a database called {clash}; give this one a name of its own.", "error")
+                flash(gettext("There is already a database called %(name)s; give this one a name of its own.",
+                              name=clash), "error")
                 return redirect(url_for("stocks.new_module", kind=kind))
             module = svc.create_module(session, kind, label, created_by=g.user.username)
             lab.set_audience_for_new(session, module, request.form.get("audience", ""))
             session.commit()
-            flash(f"Created {module.label}. Add an incubator and a rack to start.", "success")
+            flash(gettext("Created %(name)s. Add an incubator and a rack to start.", name=module.label), "success")
             return redirect(url_for("stocks.module", key=module.key, view="setup"))
         return render_template("stocks/new.html", presets=presets.PRESETS,
                                kind=request.args.get("kind", "fly"), audience=lab_audience(session))
@@ -170,21 +183,109 @@ def _next_due(mv, unit: StockUnit, today: date) -> dict | None:
     """The one date that matters most for this vial right now."""
     rack = unit.rack
     if unit.shift_on and not unit.shifted_on:
-        return {"label": f"Shift to {unit.shift_to or '?'} °C", "on": unit.shift_on}
+        return {"label": gettext("Shift to %(temp)s °C", temp=unit.shift_to or "?"), "on": unit.shift_on}
     if unit.ready_on:
-        return {"label": mv.s["ready_label"], "on": unit.ready_on}
+        return {"label": _w(mv.s["ready_label"]), "on": unit.ready_on}
     if unit.purpose == presets.CROSS:
         last = unit.last_collected_on or unit.set_up_on
         if last:
-            return {"label": mv.s["collect_verb"],
+            return {"label": _w(mv.s["collect_verb"]),
                     "on": last + timedelta(days=mv.interval("collect", svc.unit_temperature(mv, unit)))}
     if unit.score_on and not unit.attrs_dict.get("scored_on"):
-        return {"label": "Score", "on": unit.score_on}
+        return {"label": gettext("Score"), "on": unit.score_on}
     if rack is not None:
         due = svc.next_flip(mv, rack)
         if due:
-            return {"label": mv.s["flip_verb"], "on": due}
+            return {"label": _w(mv.s["flip_verb"]), "on": due}
     return None
+
+
+# What stock_service says about racks, vials and the schedule, in the page's
+# language: the same facts, worded here so they can be translated.
+
+
+def _flip_status(mv, rack: StockRack, today: date | None = None) -> dict:
+    """svc.flip_status: the rack's last flip and when the next is due."""
+    today = today or date.today()
+    status = svc.flip_status(mv, rack, today)
+    verb = _w(mv.s.get("flip_verb", "Flip")).lower()
+    done = _w(mv.s.get("flip_done", f"{mv.s.get('flip_verb', 'Flip')}ped"))
+    values = {"n": svc.flip_interval(mv, rack), "temp": svc.rack_temperature(mv, rack)}
+    title = (gettext("Every %(n)s days at %(temp)s °C (set on this rack)", **values) if rack.flip_days
+             else gettext("Every %(n)s days at %(temp)s °C", **values))
+    if rack.last_flipped_on is None:
+        return {**status, "text": gettext("No %(verb)s recorded yet", verb=verb),
+                "title": gettext("%(title)s. Set the last %(verb)s date under Edit.", title=title, verb=verb)}
+    last = rack.last_flipped_on
+    ago = (today - last).days
+    on = i18n.strftime(last, "%a %d %b")
+    if ago == 0:
+        when = gettext("%(done)s %(on)s (today)", done=done, on=on)
+    elif ago > 0:
+        when = gettext("%(done)s %(on)s (%(n)s d ago)", done=done, on=on, n=ago)
+    else:
+        when = gettext("%(done)s %(on)s", done=done, on=on)
+    due = svc.next_flip(mv, rack)
+    if due < today:
+        text = gettext("%(when)s · %(verb)s %(n)s d overdue", when=when, verb=verb, n=(today - due).days)
+    elif due == today:
+        text = gettext("%(when)s · %(verb)s due today", when=when, verb=verb)
+    else:
+        text = gettext("%(when)s · next %(on)s", when=when, on=i18n.strftime(due, "%a %d %b"))
+    return {**status, "text": text, "title": title}
+
+
+def _stage(mv, unit: StockUnit, today: date) -> tuple[str, str]:
+    """svc.unit_stage: the colour of a vial's dot and what it means."""
+    stage, title = svc.unit_stage(mv, unit, today)
+    if stage == "young":
+        title = gettext("%(label)s %(on)s", label=_w(mv.s.get("ready_label", "Ready")),
+                        on=i18n.strftime(unit.ready_on, "%d %b"))
+    elif stage == "adult":
+        title = pgettext("stocks", "adult")
+    elif stage == "old":
+        started = max(d for d in (unit.set_up_on, unit.rack.last_flipped_on if unit.rack else None) if d)
+        every = svc.flip_interval(mv, unit.rack) if unit.rack else mv.interval("flip", svc.rack_temperature(mv, None))
+        title = gettext("%(age)s days old, past its %(every)s-day %(verb)s", age=(today - started).days,
+                        every=every, verb=_w(mv.s.get("flip_verb", "Flip")).lower())
+    return stage, title
+
+
+def _schedule_words(mv, items: list[dict], units) -> list[dict]:
+    """svc.schedule's titles and details."""
+    for it in items:
+        u, kind = it.get("unit"), it["kind"]
+        code = mv.code(u) if u is not None else ""
+        if kind == "flip":
+            rack = it["rack"]
+            count = sum(1 for v in units if v.active and v.rack_id_fk == rack.id)
+            verb = _w(mv.s["flip_verb"])
+            it["title"] = gettext("%(verb)s %(rack)s", verb=verb, rack=rack.name)
+            if it.get("unset"):
+                it["detail"] = gettext("%(count)s %(units)s; no %(verb)s date recorded yet",
+                                       count=count, units=_n(mv, count), verb=verb.lower())
+            else:
+                it["detail"] = gettext("%(count)s %(units)s · every %(n)s days at %(temp)s °C · last %(on)s",
+                                       count=count, units=_n(mv, count), n=svc.flip_interval(mv, rack),
+                                       temp=svc.rack_temperature(mv, rack),
+                                       on=i18n.strftime(rack.last_flipped_on, "%d %b"))
+        elif kind == "collect":
+            it["title"] = gettext("%(verb)s: %(code)s", verb=_w(mv.s["collect_verb"]), code=code)
+            it["detail"] = (gettext("%(cross)s · last %(on)s", cross=svc.cross_label(u),
+                                    on=i18n.strftime(u.last_collected_on, "%d %b")) if u.last_collected_on
+                            else gettext("%(cross)s · first collection", cross=svc.cross_label(u)))
+        elif kind == "ready":
+            it["title"] = gettext("%(verb)s: %(code)s", verb=_w(mv.s["ready_label"]), code=code)
+            if u.parent is not None:
+                it["detail"] = gettext("%(genotype)s from %(code)s", genotype=u.genotype or "",
+                                       code=f"{mv.s['code_prefix']}{u.parent.number}")
+        elif kind == "shift":
+            it["title"] = gettext("Shift %(code)s to %(temp)s °C", code=code, temp=u.shift_to or "?")
+            it["detail"] = gettext("%(genotype)s · now at %(temp)s °C", genotype=u.genotype,
+                                   temp=svc.unit_temperature(mv, u))
+        elif kind == "score":
+            it["title"] = gettext("Score %(code)s", code=code)
+    return items
 
 
 def unit_values(unit: StockUnit) -> dict:
@@ -216,12 +317,13 @@ def grid_payload(mv, racks, units) -> dict:
                    "group": r.incubator.name if r.incubator else "",
                    "naming": positions.scheme(r.naming),
                    # Flipping is done a rack at a time: its last flip shows above the grid.
-                   "note": svc.flip_status(mv, r),
+                   "note": _flip_status(mv, r),
                    "action": {"url": url_for("stocks.rack_flipped", key=mv.key, rack_id=r.id),
-                              "label": f"{mv.s.get('flip_done', 'Flipped')} today", "icon": "check",
+                              "label": gettext("%(done)s today", done=_w(mv.s.get("flip_done", "Flipped"))),
+                              "icon": "check",
                               "fields": {"back": "units"}, "done": r.last_flipped_on == date.today(),
-                              "title": f"Record that every vial in {r.name} was "
-                                       f"{mv.s.get('flip_done', 'Flipped').lower()} today"},
+                              "title": gettext("Record that every vial in %(rack)s was %(done)s today", rack=r.name,
+                                                    done=_w(mv.s.get("flip_done", "Flipped")).lower())},
                    "edit": {"data-record-edit": "rack-dialog", "data-record-payload": json.dumps(rack_payload(mv, r))}}
                   for r in racks],
         "items": [{
@@ -275,7 +377,9 @@ def module(key: str):
             units = [u for u in units if u.active or not u.discarded_on or u.discarded_on >= cutoff]
         genotypes = list(session.scalars(select(StockGenotype).where(StockGenotype.module_id_fk == row.id)
                                          .order_by(StockGenotype.genotype)))
-        schedule = svc.schedule(session, mv, today, horizon=max(1, min(_int(request.args.get("horizon"), 14), 366)))
+        schedule = _schedule_words(mv, svc.schedule(session, mv, today,
+                                                    horizon=max(1, min(_int(request.args.get("horizon"), 14), 366))),
+                                   units)
         me = g.user.username
         rows = []
         for u in units:
@@ -284,7 +388,7 @@ def module(key: str):
                          "position": svc.position_label(u), "temp": svc.unit_temperature(mv, u),
                          "incubator": u.rack.incubator.name if u.rack and u.rack.incubator else "",
                          "next": nxt, "overdue": bool(nxt and nxt["on"] < today),
-                         "stage": svc.unit_stage(mv, u, today),
+                         "stage": _stage(mv, u, today),
                          "payload": unit_payload(mv, u)})
         active_counts = {}
         for u in units:
@@ -343,19 +447,21 @@ def _unit_from_form(session, mv, unit: StockUnit, form, placing: bool = True, us
     if changed("owner"):
         owner = (form.get("owner") or "").strip()[:80]
         if owner and owner not in (users if users is not None else _lab_users(session)):
-            raise Invalid(f"“{owner}” is not a lab member.")
+            raise Invalid(gettext("“%(name)s” is not a lab member.", name=owner))
         unit.owner = owner
     # Which project group a lab stock is for ("1": the lab's).
     if "share_group" in form and project_groups.differs(unit, form.get("share_group"), shared=True):
         if not access.can_manage(unit):
-            raise Invalid(f"Only {unit.owner or 'its owner'} or an admin can change whom it is shared with.")
+            raise Invalid(gettext("Only %(owner)s or an admin can change whom it is shared with.",
+                                  owner=unit.owner) if unit.owner else
+                          gettext("Only its owner or an admin can change whom it is shared with."))
         refused = project_groups.apply(unit, form.get("share_group") or "1", set_shared=False)
         if refused:
             raise Invalid(refused)
     if changed("purpose"):
         purpose = (form.get("purpose") or "").strip()
         if purpose not in {p["key"] for p in mv.purposes} and purpose != unit.purpose:
-            raise Invalid(f"“{purpose}” is not one of this database’s purposes.")
+            raise Invalid(gettext("“%(purpose)s” is not one of this database’s purposes.", purpose=purpose))
         previous, unit.purpose = unit.purpose, purpose or mv.default_purpose
         # Becoming progeny starts the clock for when they emerge.
         if unit.purpose == presets.PROGENY and previous != presets.PROGENY and not unit.ready_on \
@@ -415,15 +521,17 @@ def save_unit(key: str):
                 problem = _unit_from_form(session, mv, unit, request.form, users=users)
             except Invalid as error:
                 session.rollback()
-                return _back(key, error=f"Not saved: {error}")
+                return _back(key, error=gettext("Not saved: %(error)s", error=error))
             unit.updated_at, unit.updated_by = datetime.utcnow(), user
             session.commit()
-            return _back(key, message=f"Saved {mv.code(unit)}." if not problem else "",
-                         error=f"Saved {mv.code(unit)}, but: {problem}" if problem else "")
+            return _back(key, message=gettext("Saved %(code)s.", code=mv.code(unit)) if not problem else "",
+                         error=gettext("Saved %(code)s, but: %(problem)s", code=mv.code(unit), problem=problem)
+                         if problem else "")
 
         count = _int(request.form.get("count"), 1)
         if not 1 <= count <= 60:
-            return _back(key, error=f"Make between 1 and 60 {mv.units} at a time (asked for {count}).")
+            return _back(key, error=gettext("Make between 1 and 60 %(units)s at a time (asked for %(count)s).",
+                                            units=_w(mv.units), count=count))
         rack_raw = (request.form.get("rack_id") or "").strip()
         rack = session.get(StockRack, int(rack_raw)) if rack_raw.isdigit() else None
         if rack is not None and rack.module_id_fk != row.id:
@@ -436,12 +544,15 @@ def save_unit(key: str):
             if pos:
                 start = positions.parse(pos, rack.naming, rack.rows, rack.cols)
                 if start is None:
-                    return _back(key, error=f"“{pos}” is not a position in {rack.name}.")
+                    return _back(key, error=gettext("“%(position)s” is not a position in %(rack)s.",
+                                                    position=pos, rack=rack.name))
                 if start in svc.occupied(session, rack.id):
-                    return _back(key, error=f"{rack.name} · {pos} is already taken.")
+                    return _back(key, error=gettext("%(rack)s · %(position)s is already taken.",
+                                                    rack=rack.name, position=pos))
             cells = svc.free_cells(session, rack, count, start)
             if len(cells) < count:
-                problem = f"{rack.name} had room for {len(cells)} of {count}; the rest are in it without a position."
+                problem = gettext("%(rack)s had room for %(room)s of %(count)s; the rest are in it without a position.",
+                                  rack=rack.name, room=len(cells), count=count)
         number = svc.next_number(session, row.id)
         created = []
         try:
@@ -468,12 +579,13 @@ def save_unit(key: str):
                 session.flush()
         except Invalid as error:
             session.rollback()
-            return _back(key, error=f"Not created: {error}")
+            return _back(key, error=gettext("Not created: %(error)s", error=error))
         session.commit()
         codes = [mv.code(u) for u in created]
-        where = f" in {rack.name}" if rack else ""
         label = codes[0] if len(codes) == 1 else f"{codes[0]}–{codes[-1]}"
-        return _back(key, message=f"Created {label}{where}.", error=problem or "")
+        message = (gettext("Created %(codes)s in %(rack)s.", codes=label, rack=rack.name) if rack
+                   else gettext("Created %(codes)s.", codes=label))
+        return _back(key, message=message, error=problem or "")
 
 
 class _null:
@@ -492,10 +604,10 @@ def update_unit(key: str, unit_id: int):
         mv = svc.view(row)
         unit = session.get(StockUnit, unit_id)
         if unit is None or unit.module_id_fk != row.id:
-            return jsonify({"ok": False, "error": "That record no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
         if not can_edit(unit) or not unit.active:
             return jsonify({"ok": False, "error": access.reason_denied(unit) if unit.active
-                            else f"{mv.code(unit)} is discarded; restore it to edit."}), 403
+                            else gettext("%(code)s is discarded; restore it to edit.", code=mv.code(unit))}), 403
         try:
             problem = _unit_from_form(session, mv, unit, request.form)
         except Invalid as error:
@@ -517,7 +629,7 @@ def place_unit(key: str, unit_id: int):
         row = _module_or_404(session, key)
         unit = session.get(StockUnit, unit_id)
         if unit is None or unit.module_id_fk != row.id:
-            return jsonify({"ok": False, "error": "That record no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
         if not can_edit(unit):
             return jsonify({"ok": False, "error": access.reason_denied(unit)}), 403
         rack_id = request.form.get("rack_id", "").strip()
@@ -528,15 +640,16 @@ def place_unit(key: str, unit_id: int):
         rack = session.get(StockRack, int(rack_id)) if rack_id.isdigit() else None
         r, c = _int(request.form.get("row")), _int(request.form.get("col"))
         if rack is None or rack.module_id_fk != row.id or not (1 <= r <= rack.rows and 1 <= c <= rack.cols):
-            return jsonify({"ok": False, "error": "That position is not in the rack."}), 400
+            return jsonify({"ok": False, "error": gettext("That position is not in the rack.")}), 400
         holder = session.scalar(select(StockUnit).where(
             StockUnit.rack_id_fk == rack.id, StockUnit.rack_row == r, StockUnit.rack_col == c,
             StockUnit.active.is_(True), StockUnit.id != unit.id))
         if holder is not None:
             if not can_edit(holder):
-                return jsonify({"ok": False, "error": f"That cell holds someone else’s {svc.view(row).unit}."}), 403
+                return jsonify({"ok": False, "error": gettext("That cell holds someone else’s %(unit)s.",
+                                                             unit=_w(svc.view(row).unit))}), 403
             if unit.rack_row is None:
-                return jsonify({"ok": False, "error": "That cell is taken. Drop it on an empty cell."}), 409
+                return jsonify({"ok": False, "error": gettext("That cell is taken. Drop it on an empty cell.")}), 409
             holder.rack_id_fk, holder.rack_row, holder.rack_col = unit.rack_id_fk, unit.rack_row, unit.rack_col
         svc.follow_temperature(svc.view(row), unit, unit.rack, rack)
         unit.rack_id_fk, unit.rack_row, unit.rack_col = rack.id, r, c
@@ -554,15 +667,21 @@ def collect(key: str, unit_id: int):
         if unit is None or unit.module_id_fk != row.id:
             abort(404)
         if unit.purpose != presets.CROSS or not unit.active:
-            return _back(key, error=f"{mv.code(unit)} is not an active cross; set its purpose to "
-                                    f"{mv.purpose_label(presets.CROSS)} first.")
+            return _back(key, error=gettext("%(code)s is not an active cross; set its purpose to %(cross)s first.",
+                                            code=mv.code(unit), cross=_w(mv.purpose_label(presets.CROSS))))
         if not can_edit(unit):
             return _back(key, error=access.reason_denied(unit))
         progeny, note = svc.collect_eggs(session, mv, unit, g.user.username)
         session.commit()
-        where = f" at {progeny.rack.name} · {svc.position_label(progeny)}" if progeny.rack and progeny.rack_row else ""
-        return _back(key, message=f"{mv.s['collect_verb']}: {mv.code(unit)} → new {mv.unit} {mv.code(progeny)}{where}; "
-                                  f"{mv.s['ready_label'].lower()} around {progeny.ready_on:%d %b}. {note}".strip())
+        values = {"verb": _w(mv.s["collect_verb"]), "cross": mv.code(unit), "unit": _w(mv.unit),
+                  "code": mv.code(progeny), "ready": _w(mv.s["ready_label"]).lower(),
+                  "on": i18n.strftime(progeny.ready_on, "%d %b")}
+        if progeny.rack and progeny.rack_row:
+            message = gettext("%(verb)s: %(cross)s → new %(unit)s %(code)s at %(where)s; %(ready)s around %(on)s.",
+                              where=f"{progeny.rack.name} · {svc.position_label(progeny)}", **values)
+        else:
+            message = gettext("%(verb)s: %(cross)s → new %(unit)s %(code)s; %(ready)s around %(on)s.", **values)
+        return _back(key, message=f"{message} {note}".strip())
 
 
 @bp.route("/<key>/units/<int:unit_id>/duplicate", methods=["POST"])
@@ -575,7 +694,7 @@ def duplicate_unit(key: str, unit_id: int):
             abort(404)
         copy = _copy_unit(session, mv, unit)
         session.commit()
-        return _back(key, message=f"Copied {mv.code(unit)} as {mv.code(copy)}.")
+        return _back(key, message=gettext("Copied %(code)s as %(copy)s.", code=mv.code(unit), copy=mv.code(copy)))
 
 
 def _copy_unit(session, mv, unit: StockUnit) -> StockUnit:
@@ -622,44 +741,57 @@ def unit_action(key: str, unit_id: int, action: str):
             return _back(key, error=access.reason_denied(unit))
         if action == "discard":
             _set_active(unit, False)
-            message = f"Discarded {code}."
+            message = gettext("Discarded %(code)s.", code=code)
         elif action == "restore":
             _set_active(unit, True)
             if unit.rack is not None:
                 cells = svc.free_cells(session, unit.rack, 1)
                 if cells:
                     unit.rack_row, unit.rack_col = cells[0]
-            message = f"Restored {code}."
+            message = gettext("Restored %(code)s.", code=code)
         elif action == "delete":
             for child in session.scalars(select(StockUnit).where(StockUnit.parent_id_fk == unit.id)):
                 child.parent_id_fk = None
             session.delete(unit)
-            message = f"Deleted {code}."
+            message = gettext("Deleted %(code)s.", code=code)
         elif action == "shifted":
             if not unit.shift_on:
-                return _back(key, error=f"{code} has no temperature shift planned; set “Shift on” first.")
+                return _back(key, error=gettext("%(code)s has no temperature shift planned; set “Shift on” first.",
+                                                code=code))
             target = request.form.get("rack_id", "").strip()
             if target.isdigit() and int(target) != unit.rack_id_fk:
                 unit.rack_row = unit.rack_col = None
                 problem = svc.apply_position(session, unit, target, "")
                 if problem or unit.rack_row is None:
                     session.rollback()
-                    return _back(key, error=f"Not shifted: {problem or 'that rack is full'}")
+                    return _back(key, error=gettext("Not shifted: %(problem)s",
+                                                    problem=problem or gettext("that rack is full")))
             unit.shifted_on = date.today()
-            message = (f"Shifted {code} to {unit.rack.name} · {svc.position_label(unit)}."
-                       if target.isdigit() and unit.rack else f"Shifted {code} to {unit.shift_to or 'the new'} °C.")
+            if target.isdigit() and unit.rack:
+                message = gettext("Shifted %(code)s to %(where)s.", code=code,
+                                  where=f"{unit.rack.name} · {svc.position_label(unit)}")
+            elif unit.shift_to:
+                message = gettext("Shifted %(code)s to %(temp)s °C.", code=code, temp=unit.shift_to)
+            else:
+                message = gettext("Shifted %(code)s to the new temperature.", code=code)
         elif action == "ready-done":
             unit.ready_on = None
-            message = f"Done: {code}."
+            message = gettext("Done: %(code)s.", code=code)
         else:
             attrs = unit.attrs_dict
             attrs["scored_on"] = date.today().isoformat()
             unit.attrs = json.dumps(attrs)
-            message = f"Scored {code}."
+            message = gettext("Scored %(code)s.", code=code)
         if action != "delete":
             unit.updated_at, unit.updated_by = datetime.utcnow(), g.user.username
         session.commit()
         return _back(key, message=message)
+
+
+# The fields the batch bar sets, as its message names them.
+BULK_FIELDS = {"purpose": "purpose", "genotype": "genotype", "owner": "owner", "rack_id": "rack id",
+               "set_up_on": "set up on", "shift_on": "shift on", "shift_to": "shift to", "score_on": "score on",
+               "notes": "notes", "female_genotype": "female genotype", "male_genotype": "male genotype"}
 
 
 @bp.route("/<key>/units/bulk", methods=["POST"])
@@ -676,7 +808,7 @@ def bulk(key: str):
         units = [u for u in session.scalars(select(StockUnit).where(
             StockUnit.module_id_fk == row.id, StockUnit.id.in_(ids)).order_by(StockUnit.number))]
         if not units:
-            return _back(key, error=f"No {mv.units} selected.")
+            return _back(key, error=gettext("No %(units)s selected.", units=_w(mv.units)))
         editable = [u for u in units if can_edit(u)]
         skipped = len(units) - len(editable)
         done, notes = 0, []
@@ -686,9 +818,8 @@ def bulk(key: str):
                 if action == "set":
                     field = request.form.get("field", "")
                     value = (request.form.get("value") or "").strip()
-                    if field not in ("purpose", "genotype", "owner", "rack_id", "set_up_on", "shift_on", "shift_to",
-                                     "score_on", "notes", "female_genotype", "male_genotype"):
-                        return _back(key, error="Pick what to set.")
+                    if field not in BULK_FIELDS:
+                        return _back(key, error=gettext("Pick what to set."))
                     for u in editable:
                         if not u.active:
                             continue
@@ -704,7 +835,8 @@ def bulk(key: str):
                             _unit_from_form(session, mv, u, {field: value}, placing=False, users=users)
                         u.updated_at, u.updated_by = datetime.utcnow(), g.user.username
                         done += 1
-                    message = f"Set {field.replace('_', ' ')} on {done} {mv.unit if done == 1 else mv.units}."
+                    message = gettext("Set %(field)s on %(count)s %(units)s.", field=gettext(BULK_FIELDS[field]),
+                                      count=done, units=_n(mv, done))
                 elif action == "collect":
                     crosses = [u for u in editable if u.purpose == presets.CROSS and u.active]
                     made = []
@@ -715,12 +847,14 @@ def bulk(key: str):
                             notes.append(note)
                     done = len(made)
                     skipped = sum(1 for u in units if u.purpose == presets.CROSS and u.active and not can_edit(u))
-                    message = (f"{mv.s['collect_verb']} from {done} cross{'es' if done != 1 else ''}: new "
-                               f"{mv.units} {', '.join(made)}." if made else "None of those are your active crosses.")
+                    message = (ngettext("%(verb)s from %(num)s cross: new %(units)s %(codes)s.",
+                                        "%(verb)s from %(num)s crosses: new %(units)s %(codes)s.", done,
+                                        verb=_w(mv.s["collect_verb"]), units=_w(mv.units), codes=", ".join(made))
+                               if made else gettext("None of those are your active crosses."))
                 elif action == "copy":
                     made = [mv.code(_copy_unit(session, mv, u)) for u in units]
                     done, skipped = len(made), 0
-                    message = f"Copied {done}: {', '.join(made)}."
+                    message = gettext("Copied %(count)s: %(codes)s.", count=done, codes=", ".join(made))
                 elif action in ("discard", "restore"):
                     for u in editable:
                         _set_active(u, action == "restore")
@@ -730,15 +864,17 @@ def bulk(key: str):
                                 u.rack_row, u.rack_col = cells[0]
                         session.flush()
                         done += 1
-                    message = f"{'Discarded' if action == 'discard' else 'Restored'} {done} {mv.unit if done == 1 else mv.units}."
+                    message = (gettext("Discarded %(count)s %(units)s.", count=done, units=_n(mv, done))
+                               if action == "discard" else
+                               gettext("Restored %(count)s %(units)s.", count=done, units=_n(mv, done)))
                 else:
-                    return _back(key, error="Unknown action.")
+                    return _back(key, error=gettext("Unknown action."))
         except Invalid as error:
             session.rollback()
-            return _back(key, error=f"Nothing changed: {error}")
+            return _back(key, error=gettext("Nothing changed: %(error)s", error=error))
         session.commit()
     if skipped:
-        message += f" {skipped} belong to someone else and were left alone."
+        message += " " + gettext("%(count)s belong to someone else and were left alone.", count=skipped)
     for note in notes[:5]:
         flash(note, "info")
     return _back(key, message=message)
@@ -761,7 +897,8 @@ def save_rack(key: str):
         if rack is not None and rack.module_id_fk != row.id:
             abort(404)
         if rack is not None and not can_manage(rack):
-            return _back(key, view="setup", error=f"Only an admin or whoever made {rack.name} can change it.")
+            return _back(key, view="setup", error=gettext("Only an admin or whoever made %(name)s can change it.",
+                                                          name=rack.name))
         rows = max(1, min(26, _int(form.get("rows"), mv.s["rack_rows"])))
         cols = max(1, min(40, _int(form.get("cols"), mv.s["rack_cols"])))
         if rack is not None and (rows < rack.rows or cols < rack.cols):
@@ -769,16 +906,18 @@ def save_rack(key: str):
                 StockUnit.rack_id_fk == rack.id, StockUnit.active.is_(True),
                 (StockUnit.rack_row > rows) | (StockUnit.rack_col > cols))) or 0
             if outside:
-                return _back(key, view="setup", error=f"{outside} {mv.unit if outside == 1 else mv.units} sit outside "
-                                                      f"{rows} × {cols}; move them before shrinking {rack.name}.")
+                return _back(key, view="setup", error=gettext(
+                    "%(count)s %(units)s sit outside %(rows)s × %(cols)s; move them before shrinking %(rack)s.",
+                    count=outside, units=_n(mv, outside), rows=rows, cols=cols, rack=rack.name))
         inc = form.get("incubator_id", "").strip()
         incubator = session.get(StockIncubator, int(inc)) if inc.isdigit() else None
         if incubator is not None and incubator.module_id_fk != row.id:
-            return _back(key, view="setup", error=f"That {mv.room} belongs to another database.")
+            return _back(key, view="setup", error=gettext("That %(room)s belongs to another database.",
+                                                          room=_w(mv.room)))
         try:
             last = _checked_date(form, "last_flipped_on") if "last_flipped_on" in form else None
         except Invalid as error:
-            return _back(key, view="setup", error=f"Not saved: {error}")
+            return _back(key, view="setup", error=gettext("Not saved: %(error)s", error=error))
         if rack is None:
             rack = StockRack(module_id_fk=row.id, created_by=g.user.username)
             session.add(rack)
@@ -791,7 +930,7 @@ def save_rack(key: str):
             rack.last_flipped_on = last
         rack.notes = (form.get("notes") or "").strip()
         session.commit()
-        return _back(key, view="setup", message=f"Saved {rack.name}.")
+        return _back(key, view="setup", message=gettext("Saved %(name)s.", name=rack.name))
 
 
 @bp.route("/<key>/racks/<int:rack_id>/delete", methods=["POST"])
@@ -802,13 +941,14 @@ def delete_rack(key: str, rack_id: int):
         if rack is None or rack.module_id_fk != row.id:
             abort(404)
         if not can_manage(rack):
-            return _back(key, view="setup", error=f"Only an admin or whoever made {rack.name} can delete it.")
+            return _back(key, view="setup", error=gettext("Only an admin or whoever made %(name)s can delete it.",
+                                                          name=rack.name))
         for u in session.scalars(select(StockUnit).where(StockUnit.rack_id_fk == rack.id)):
             u.rack_id_fk = u.rack_row = u.rack_col = None
         name = rack.name
         session.delete(rack)
         session.commit()
-        return _back(key, view="setup", message=f"Deleted {name}; what was in it is unplaced.")
+        return _back(key, view="setup", message=gettext("Deleted %(name)s; what was in it is unplaced.", name=name))
 
 
 @bp.route("/<key>/racks/<int:rack_id>/flipped", methods=["POST"])
@@ -827,13 +967,16 @@ def rack_flipped(key: str, rack_id: int):
             return _back(key, view="schedule", error=str(error))
         if on and on > date.today():
             # A flip "on" a future day would drop the rack off the schedule.
-            return _back(key, view="schedule", error=f"A {mv.s['flip_verb'].lower()} can't be recorded for a day that "
-                                                      f"hasn't come yet ({on:%d %b}).")
+            return _back(key, view="schedule", error=gettext(
+                "A %(verb)s can't be recorded for a day that hasn't come yet (%(on)s).",
+                verb=_w(mv.s["flip_verb"]).lower(), on=i18n.strftime(on, "%d %b")))
         rack.last_flipped_on = on or date.today()
         session.commit()
         return _back(key, view="units" if request.form.get("back") == "units" else "schedule",
-                     message=f"{rack.name}: {mv.s['flip_verb'].lower()} recorded for {rack.last_flipped_on:%d %b}; "
-                             f"next on {svc.next_flip(mv, rack):%a %d %b}.")
+                     message=gettext("%(rack)s: %(verb)s recorded for %(on)s; next on %(next)s.", rack=rack.name,
+                                     verb=_w(mv.s["flip_verb"]).lower(),
+                                     on=i18n.strftime(rack.last_flipped_on, "%d %b"),
+                                     next=i18n.strftime(svc.next_flip(mv, rack), "%a %d %b")))
 
 
 @bp.route("/<key>/incubators/save", methods=["POST"])
@@ -847,7 +990,8 @@ def save_incubator(key: str):
         if inc is not None and inc.module_id_fk != row.id:
             abort(404)
         if inc is not None and not can_manage(inc):
-            return _back(key, view="setup", error=f"Only an admin or whoever added {inc.name} can change it.")
+            return _back(key, view="setup", error=gettext("Only an admin or whoever added %(name)s can change it.",
+                                                          name=inc.name))
         if inc is None:
             inc = StockIncubator(module_id_fk=row.id, created_by=g.user.username)
             session.add(inc)
@@ -856,9 +1000,11 @@ def save_incubator(key: str):
         inc.notes = (form.get("notes") or "").strip()
         session.commit()
         known = inc.temperature in {svc.norm_temp(t) for t in mv.temp_values}
-        note = "" if known or not inc.temperature else \
-            f" {inc.temperature} °C has no timings in Settings, so the nearest listed temperature is used."
-        return _back(key, view="setup", message=f"Saved {inc.name}.{note}")
+        message = gettext("Saved %(name)s.", name=inc.name)
+        if inc.temperature and not known:
+            message += " " + gettext("%(temp)s °C has no timings in Settings, so the nearest listed temperature is used.",
+                                     temp=inc.temperature)
+        return _back(key, view="setup", message=message)
 
 
 @bp.route("/<key>/incubators/<int:inc_id>/delete", methods=["POST"])
@@ -870,7 +1016,8 @@ def delete_incubator(key: str, inc_id: int):
         if inc is None or inc.module_id_fk != row.id:
             abort(404)
         if not can_manage(inc):
-            return _back(key, view="setup", error=f"Only an admin or whoever added {inc.name} can delete it.")
+            return _back(key, view="setup", error=gettext("Only an admin or whoever added %(name)s can delete it.",
+                                                          name=inc.name))
         moved = []
         for rack in session.scalars(select(StockRack).where(StockRack.incubator_id_fk == inc.id)):
             rack.incubator_id_fk = None
@@ -878,9 +1025,12 @@ def delete_incubator(key: str, inc_id: int):
         name = inc.name
         session.delete(inc)
         session.commit()
-        note = (f" {', '.join(moved)} now {'uses' if len(moved) == 1 else 'use'} the default "
-                f"{mv.s['default_temperature']} °C timings.") if moved else ""
-        return _back(key, view="setup", message=f"Deleted {name}.{note}")
+        message = gettext("Deleted %(name)s.", name=name)
+        if moved:
+            message += " " + ngettext("%(racks)s now uses the default %(temp)s °C timings.",
+                                      "%(racks)s now use the default %(temp)s °C timings.", len(moved),
+                                      racks=", ".join(moved), temp=mv.s["default_temperature"])
+        return _back(key, view="setup", message=message)
 
 
 # ---------------------------------------------------------------------------
@@ -897,7 +1047,7 @@ def save_genotype(key: str):
         row = _module_or_404(session, key)
         text = (form.get("genotype") or "").strip()[:400]
         if not text:
-            return _back(key, view="genotypes", error="A genotype needs text.")
+            return _back(key, view="genotypes", error=gettext("A genotype needs text."))
         gid = form.get("id", "").strip()
         item = session.get(StockGenotype, int(gid)) if gid.isdigit() else None
         if item is not None and item.module_id_fk != row.id:
@@ -906,7 +1056,7 @@ def save_genotype(key: str):
             StockGenotype.module_id_fk == row.id, StockGenotype.genotype == text,
             StockGenotype.id != (item.id if item else 0)))
         if clash is not None:
-            return _back(key, view="genotypes", error=f"“{text}” is already in the list.")
+            return _back(key, view="genotypes", error=gettext("“%(genotype)s” is already in the list.", genotype=text))
         relabelled = 0
         if item is None:
             item = StockGenotype(module_id_fk=row.id, genotype=text, created_by=g.user.username)
@@ -920,8 +1070,8 @@ def save_genotype(key: str):
                       if uses(u) and not can_edit(u)]
             if locked and not access.is_admin():
                 return _back(key, view="genotypes",
-                             error=f"{len(locked)} of the {svc.view(row).units} labelled {old} belong to someone else, "
-                                   f"so it can’t be renamed for them. Ask them or an admin.")
+                             error=gettext("%(count)s of the %(units)s labelled %(genotype)s belong to someone else, so it can’t be renamed for them. Ask them or an admin.",  # noqa: E501
+                                           count=len(locked), units=_w(svc.view(row).units), genotype=old))
             for column in (StockUnit.genotype, StockUnit.female_genotype, StockUnit.male_genotype):
                 for u in session.scalars(select(StockUnit).where(StockUnit.module_id_fk == row.id, column == old)):
                     setattr(u, column.key, text)
@@ -939,8 +1089,10 @@ def save_genotype(key: str):
             if name in form:
                 setattr(item, name, (form.get(name) or "").strip())
         session.commit()
-        extra = f" Relabelled {relabelled} {'vial field' if relabelled == 1 else 'vial fields'}." if relabelled else ""
-        return _back(key, view="genotypes", message=f"Saved {text}.{extra}")
+        message = gettext("Saved %(name)s.", name=text)
+        if relabelled:
+            message += " " + ngettext("Relabelled %(num)s vial field.", "Relabelled %(num)s vial fields.", relabelled)
+        return _back(key, view="genotypes", message=message)
 
 
 @bp.route("/<key>/genotypes/<int:gid>/delete", methods=["POST"])
@@ -956,12 +1108,12 @@ def delete_genotype(key: str, gid: int):
             | (StockUnit.male_genotype == item.genotype)))
         if in_use:
             return _back(key, view="genotypes",
-                         error=f"{in_use} active {svc.view(row).unit if in_use == 1 else svc.view(row).units} still "
-                               f"carry {item.genotype} (or use it as a cross parent).")
+                         error=gettext("%(count)s active %(units)s still carry %(genotype)s (or use it as a cross parent).",
+                                       count=in_use, units=_n(svc.view(row), in_use), genotype=item.genotype))
         text = item.genotype
         session.delete(item)
         session.commit()
-        return _back(key, view="genotypes", message=f"Removed {text} from the list.")
+        return _back(key, view="genotypes", message=gettext("Removed %(genotype)s from the list.", genotype=text))
 
 
 # ---------------------------------------------------------------------------
@@ -987,13 +1139,14 @@ def save_frozen(key: str):
         try:
             frozen_on, tested_on = _checked_date(form, "frozen_on"), _checked_date(form, "thaw_tested_on")
             if not genotype:
-                raise Invalid("A frozen lot needs its genotype.")
+                raise Invalid(gettext("A frozen lot needs its genotype."))
             if vials_left > vials:
-                raise Invalid(f"{vials_left} vials left is more than the {vials} frozen.")
+                raise Invalid(gettext("%(left)s vials left is more than the %(frozen)s frozen.",
+                                      left=vials_left, frozen=vials))
             if owner and owner not in _lab_users(session):
-                raise Invalid(f"“{owner}” is not a lab member.")
+                raise Invalid(gettext("“%(name)s” is not a lab member.", name=owner))
         except Invalid as error:
-            return _back(key, view="frozen", error=f"Not saved: {error}")
+            return _back(key, view="frozen", error=gettext("Not saved: %(error)s", error=error))
         if lot is None:
             lot = StockFrozen(module_id_fk=row.id, owner=g.user.username)
             session.add(lot)
@@ -1006,7 +1159,7 @@ def save_frozen(key: str):
         lot.notes = (form.get("notes") or "").strip()
         svc.remember_genotype(session, row.id, lot.genotype, g.user.username)
         session.commit()
-        return _back(key, view="frozen", message=f"Saved frozen {lot.genotype}.")
+        return _back(key, view="frozen", message=gettext("Saved frozen %(genotype)s.", genotype=lot.genotype))
 
 
 @bp.route("/<key>/frozen/<int:fid>/<action>", methods=["POST"])
@@ -1023,9 +1176,9 @@ def frozen_action(key: str, fid: int, action: str):
                 return _back(key, view="frozen", error=access.reason_denied(lot))
             session.delete(lot)
             session.commit()
-            return _back(key, view="frozen", message="Deleted the frozen lot.")
+            return _back(key, view="frozen", message=gettext("Deleted the frozen lot."))
         if lot.vials_left <= 0:
-            return _back(key, view="frozen", error="No vials left in that lot.")
+            return _back(key, view="frozen", error=gettext("No vials left in that lot."))
         lot.vials_left -= 1
         # A thawed worm goes on a plate of the lab's maintenance kind.
         plate = StockUnit(module_id_fk=row.id, number=svc.next_number(session, row.id), genotype=lot.genotype,
@@ -1038,15 +1191,19 @@ def frozen_action(key: str, fid: int, action: str):
         mine = access.can_edit(lot)
         if not mine and lot.owner:
             from . import notify
-            notify.send(session, lot.owner, f"{g.user.display_name or g.user.username} thawed a vial of your {lot.genotype}",
-                        f"Onto {mv.code(plate)}; {lot.vials_left} vial{'s' if lot.vials_left != 1 else ''} left. "
-                        f"Record whether it recovered.", category="lab",
-                        link=url_for("stocks.module", key=key, view="frozen"), actor=g.user.username)
+            notify.send(session, lot.owner, "%(who)s thawed a vial of your %(genotype)s",
+                        "Onto %(code)s; vials left: %(left)s. Record whether it recovered.", category="lab",
+                        link=url_for("stocks.module", key=key, view="frozen"), actor=g.user.username,
+                        values={"who": g.user.display_name or g.user.username, "genotype": lot.genotype},
+                        message_values={"code": mv.code(plate), "left": lot.vials_left})
         session.commit()
-        follow_up = ("Record whether it recovered once you can see." if mine else
-                     f"{lot.owner} keeps this lot and has been told; tell them whether it recovered.")
+        follow_up = (gettext("Record whether it recovered once you can see.") if mine else
+                     gettext("%(owner)s keeps this lot and has been told; tell them whether it recovered.",
+                             owner=lot.owner))
         return _back(key, view="frozen",
-                     message=f"Thawed one vial of {lot.genotype} onto {mv.code(plate)}; {lot.vials_left} left. {follow_up}")
+                     message=gettext("Thawed one vial of %(genotype)s onto %(code)s; %(left)s left.",
+                                     genotype=lot.genotype, code=mv.code(plate), left=lot.vials_left)
+                     + " " + follow_up)
 
 
 # ---------------------------------------------------------------------------
@@ -1061,14 +1218,16 @@ def save_settings(key: str):
         row = _module_or_404(session, key)
         mv = svc.view(row)
         if not can_configure(row):
-            return _back(key, view="settings", error="Only an admin, or whoever created this database, can change its settings.")
+            return _back(key, view="settings",
+                         error=gettext("Only an admin, or whoever created this database, can change its settings."))
         label = (form.get("label") or "").strip()
         if not label:
-            return _back(key, view="settings", error="The database needs a name.")
+            return _back(key, view="settings", error=gettext("The database needs a name."))
         clash = database_keys.name_clash(session, label, "stocks", row)
         if clash and label.casefold() != (row.label or "").casefold():
             return _back(key, view="settings",
-                         error=f"There is already a database called {clash}; give this one a name of its own.")
+                         error=gettext("There is already a database called %(name)s; give this one a name of its own.",
+                                       name=clash))
         row.label = label
         row.blurb = (form.get("blurb") or "").strip()
         row.enabled = "1" in form.getlist("enabled")
@@ -1111,8 +1270,9 @@ def save_settings(key: str):
         row.settings = json.dumps(s)
         moved = database_keys.rekey(session, "stocks", row)    # its address follows its name
         session.commit()
-        return _back(row.key, view="settings", message=f"Saved {row.label}." + (
-            f" Its address is now /stocks/{moved}; links to the old one still work." if moved else ""))
+        return _back(row.key, view="settings", message=gettext("Saved %(name)s.", name=row.label) + (
+            " " + gettext("Its address is now %(address)s; links to the old one still work.", address=f"/stocks/{moved}")
+            if moved else ""))
 
 
 @bp.route("/<key>/delete", methods=["POST"])
@@ -1120,10 +1280,10 @@ def delete_module(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         if not can_configure(row):
-            flash("Only an admin, or whoever created it, can delete this database.", "error")
+            flash(gettext("Only an admin, or whoever created it, can delete this database."), "error")
             return redirect(url_for("stocks.module", key=key, view="settings"))
         if (request.form.get("confirm") or "").strip() != row.label:
-            flash(f"Type the name “{row.label}” to confirm.", "error")
+            flash(gettext("Type the name “%(name)s” to confirm.", name=row.label), "error")
             return redirect(url_for("stocks.module", key=key, view="settings"))
         for model in (StockUnit, StockFrozen, StockGenotype):
             for item in session.scalars(select(model).where(model.module_id_fk == row.id)):
@@ -1136,5 +1296,5 @@ def delete_module(key: str):
         label = row.label
         session.delete(row)
         session.commit()
-        flash(f"Deleted {label} and everything in it.", "success")
+        flash(gettext("Deleted %(name)s and everything in it.", name=label), "success")
     return redirect(url_for("organisms.index"))

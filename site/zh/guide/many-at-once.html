@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>批量操作 — BioManager 用户指南</title>
+  <meta name="description" content="选中多条记录，一次修改、移动或打印。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/many-at-once.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/many-at-once.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/many-at-once.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/many-at-once.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/many-at-once.html">
+  <meta property="og:title" content="批量操作 — BioManager 用户指南">
+  <meta property="og:description" content="选中多条记录，一次修改、移动或打印。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/many-at-once.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html" aria-current="page">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>怎么做</span>
+          <ol>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据库</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+            <li><a href="experiments.html">实验</a></li>
+            <li><a href="plasmids.html">质粒</a></li>
+            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据与帮助</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="troubleshooting.html">故障排除</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">日常操作</p>
+    <h1>批量操作</h1>
+    <p class="summary">选中多条记录，一次修改、移动或打印。</p>
+
+      <dl class="gdl">
+        <dt>批量添加（Add many）</dt>
+        <dd>用于一批新记录：描述一条记录，再说要几条。在库存和质粒里，也可以粘贴一份名字列表，
+          每行一个。小鼠则填雌雄各多少只，或载入 CSV（<b>下载模板</b>（Download a template）会给出各列）；之后你会
+          看到一个可编辑的预览，显示将分配的编号。在预览里，<b>向下填充</b>（Fill down）把当前单元格复制到下面
+          每一行（也可以按 <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>D</kbd>），点<b>创建</b>（Create）之前什么都不会保存。</dd>
+        <dt>从 Excel 导入（Import from Excel）</dt>
+        <dd>用于你已有的表格。每个数据库都能读入 Excel 工作簿或 CSV，列名随意：你检查匹配
+          结果，预览将创建什么、哪些行会被跳过，然后作为一个可以撤销的批次导入。
+          见<a href="bring-your-lab-in.html">把实验室搬进来</a>。</dd>
+        <dt>选中后操作</dt>
+        <dd>勾选几行（按住 Shift 点击可选一个范围），底部会升起一条操作栏：设置字段、移动、更改负责人或状态、处死（sac）、
+          退役、删除。<b>设置字段</b>（Set field）可以给它们设置任意一列，包括你自己加的列（日期列填日期，数字
+          列填数字）。你无权修改的记录会被跳过并计数，绝不会被悄悄改掉。</dd>
+        <dt>复制（Duplicate）</dt>
+        <dd>把一条记录复制成一条属于你的新记录——下一份分装，或再下一次同样的订购。</dd>
+      </dl>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="sheets.html"><small>上一页</small>在表格里工作</a><a class="next" href="finding-things.html"><small>下一页</small>查找</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：批量操作&amp;body=页面：https://biomanager.org/zh/guide/many-at-once.html%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager 免费开源。<a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">报告问题</a></p>
+  </div>
+</footer>
+<script src="../../site.js"></script>
+</body>
+</html>

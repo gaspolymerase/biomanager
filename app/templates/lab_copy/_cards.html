@@ -6,28 +6,28 @@
 {% if server_card and (server_card.allowed or server_card.rows) %}
   <article class="card lg:col-span-2" id="lab-copies">
     <header class="card-head">
-      <h2>{{ icon('download') }} Copies of the lab on your computers</h2>
+      <h2>{{ icon('download') }} {{ _('Copies of the lab on your computers') }}</h2>
     </header>
     <div class="flex flex-col gap-3 p-4">
       <p class="text-[12.5px] leading-snug text-muted">
-        The BioManager desktop app can keep a copy of this whole database, refreshed every day while it's open,
+        {% trans %}The BioManager desktop app can keep a copy of this whole database, refreshed every day while it's open,
         so the lab's records survive even if this server doesn't. Make a key for each computer, then enter it in the
-        desktop app under <b>Settings → Keep a copy of your lab server</b>.
+        desktop app under <b>Settings → Keep a copy of your lab server</b>.{% endtrans %}
       </p>
       {% if server_card.allowed %}
         <form method="post" action="{{ url_for('lab_copy.make_key') }}" class="flex flex-wrap items-end gap-2">
-          <label class="field-label min-w-[220px] flex-1">Which computer
-            <input name="label" required maxlength="80" placeholder="e.g. Lab iMac, Alex's laptop" autocomplete="off">
+          <label class="field-label min-w-[220px] flex-1">{{ _('Which computer') }}
+            <input name="label" required maxlength="80" placeholder="{{ _("e.g. Lab iMac, Alex's laptop") }}" autocomplete="off">
           </label>
-          <button type="submit" class="btn btn-primary">{{ icon('plus') }} Make a key</button>
+          <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a key') }}</button>
         </form>
       {% endif %}
       {% if server_card.rows %}
         <div class="overflow-x-auto">
           <table class="dt">
             <thead><tr>
-              <th>Computer</th>{% if server_card.is_admin %}<th>Whose</th>{% endif %}
-              <th>Made</th><th>Last copy</th><th>Size</th><th></th>
+              <th>{{ _('Computer') }}</th>{% if server_card.is_admin %}<th>{{ _('Whose') }}</th>{% endif %}
+              <th>{{ 'Made'|tr('key') }}</th><th>{{ _('Last copy') }}</th><th>{{ _('Size') }}</th><th></th>
             </tr></thead>
             <tbody>
               {% for r in server_card.rows %}
@@ -37,18 +37,18 @@
                   {% if server_card.is_admin %}<td>{{ r.owner | owner_badge }}</td>{% endif %}
                   <td class="text-muted">{{ (k.created_at | local).strftime('%Y-%m-%d') }}</td>
                   <td>
-                    {% if not r.active %}<span class="badge badge-quiet">revoked</span>
+                    {% if not r.active %}<span class="badge badge-quiet">{{ _('revoked') }}</span>
                     {% elif k.last_used_at %}
                       <span class="{{ 'text-ink' if r.fresh else 'text-danger-600' }}">{{ (k.last_used_at | local).strftime('%Y-%m-%d %H:%M') }}</span>
-                      {% if not r.fresh %}<span class="text-[11.5px] text-danger-600">· over a day ago</span>{% endif %}
-                    {% else %}<span class="text-muted">not yet</span>{% endif %}
+                      {% if not r.fresh %}<span class="text-[11.5px] text-danger-600">· {{ _('over a day ago') }}</span>{% endif %}
+                    {% else %}<span class="text-muted">{{ 'not yet'|tr('last') }}</span>{% endif %}
                   </td>
                   <td class="text-muted">{{ k.last_bytes | filesizeformat if k.last_bytes else '—' }}</td>
                   <td>
                     {% if r.active %}
                       <form method="post" action="{{ url_for('lab_copy.revoke_key', key_id=k.id) }}"
-                            data-confirm="Stop {{ k.label }} taking copies? The copies already on it stay there.">
-                        <button type="submit" class="btn btn-sm">Revoke</button>
+                            data-confirm="{{ _('Stop %(name)s taking copies? The copies already on it stay there.', name=k.label) }}">
+                        <button type="submit" class="btn btn-sm">{{ _('Revoke') }}</button>
                       </form>
                     {% endif %}
                   </td>
@@ -59,8 +59,8 @@
         </div>
       {% endif %}
       {% if server_card.is_admin %}
-        <p class="text-[12px] leading-snug text-muted">You see every computer in the lab that keeps a copy. Members may keep
-          one only if <a href="{{ url_for('lab.setup') }}">Lab setup</a> allows it.</p>
+        <p class="text-[12px] leading-snug text-muted">{% trans link=url_for('lab.setup') %}You see every computer in the lab that keeps a copy. Members may keep
+          one only if <a href="{{ link }}">Lab setup</a> allows it.{% endtrans %}</p>
       {% endif %}
     </div>
   </article>
@@ -70,30 +70,30 @@
   {% set st = desktop.status %}
   <article class="card lg:col-span-2" id="lab-copy">
     <header class="card-head">
-      <h2>{{ icon('download') }} Keep a copy of your lab server</h2>
-      {% if st.last_ok and not st.error %}<span class="badge badge-brand">on</span>{% endif %}
+      <h2>{{ icon('download') }} {{ _('Keep a copy of your lab server') }}</h2>
+      {% if st.last_ok and not st.error %}<span class="badge badge-brand">{{ _('on') }}</span>{% endif %}
     </header>
     <div class="flex flex-col gap-3 p-4">
       <p class="text-[12.5px] leading-snug text-muted">
-        If your lab uses a BioManager server, this computer can keep a copy of its whole database as a backup:
-        a fresh one every day while this app is open, the last {{ desktop.keep }} kept. Ask your lab's admin for a key,
-        or make one on the server under <b>Settings → Copies of the lab</b>. This computer's own data isn't touched.
+        {% trans keep=desktop.keep %}If your lab uses a BioManager server, this computer can keep a copy of its whole database as a backup:
+        a fresh one every day while this app is open, the last {{ keep }} kept. Ask your lab's admin for a key,
+        or make one on the server under <b>Settings → Copies of the lab</b>. This computer's own data isn't touched.{% endtrans %}
       </p>
       <form method="post" action="{{ url_for('lab_copy.configure') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_2fr_1fr]">
-        <label class="field-label">Server address
+        <label class="field-label">{{ _('Server address') }}
           <input name="server" value="{{ desktop.server }}" placeholder="https://biomanager.tail1234.ts.net" autocomplete="off" spellcheck="false">
         </label>
-        <label class="field-label">Key
+        <label class="field-label">{{ _('Key') }}
           <input type="password" name="key" autocomplete="off" spellcheck="false"
-                 placeholder="{{ 'saved — paste a new one to change it' if desktop.has_key else 'bmk_…' }}">
+                 placeholder="{{ _('saved — paste a new one to change it') if desktop.has_key else 'bmk_…' }}">
         </label>
-        <label class="field-label">Copies kept
+        <label class="field-label">{{ _('Copies kept') }}
           <input type="number" name="keep" min="1" max="365" value="{{ desktop.keep }}">
         </label>
         <div class="flex flex-wrap gap-2 sm:col-span-3">
-          <button type="submit" name="copy_now" value="1" class="btn btn-primary">{{ icon('download') }} Save and copy now</button>
+          <button type="submit" name="copy_now" value="1" class="btn btn-primary">{{ icon('download') }} {{ _('Save and copy now') }}</button>
           {% if desktop.server %}
-            <button type="submit" formaction="{{ url_for('lab_copy.copy_now') }}" class="btn">Copy now</button>
+            <button type="submit" formaction="{{ url_for('lab_copy.copy_now') }}" class="btn">{{ _('Copy now') }}</button>
           {% endif %}
         </div>
       </form>
@@ -101,25 +101,26 @@
       <div class="rounded-lg border border-hairline bg-sand-50 px-3 py-2.5 text-[12.5px] leading-snug" data-lab-copy-status
            data-url="{{ url_for('lab_copy.status_json') }}" data-running="{{ '1' if desktop.running else '0' }}">
         {% if desktop.running %}
-          <b>Copying now…</b> This page updates when it's done.
+          {% trans %}<b>Copying now…</b> This page updates when it's done.{% endtrans %}
         {% elif st.error %}
-          <b class="text-danger-600">The last copy failed:</b> {{ st.error }}
-          {% if st.last_ok %}<span class="text-muted">The last good copy is from {{ st.last_ok | replace('T', ' ') }} UTC.</span>{% endif %}
+          <b class="text-danger-600">{{ _('The last copy failed:') }}</b> {{ st.error }}
+          {% if st.last_ok %}<span class="text-muted">{{ _('The last good copy is from %(time)s UTC.', time=st.last_ok | replace('T', ' ')) }}</span>{% endif %}
         {% elif st.last_ok %}
-          <b>Last copy:</b> {{ st.last_ok | replace('T', ' ') }} UTC — {{ st.last_size | filesizeformat }},
-          {{ '{:,}'.format(st.records or 0) }} records, {{ st.files or 0 }} uploaded file{{ '' if st.files == 1 else 's' }}
-          {%- if st.files_fetched %} ({{ st.files_fetched }} new){% endif %}.
+          <b>{{ _('Last copy:') }}</b> {{ st.last_ok | replace('T', ' ') }} UTC — {{ st.last_size | filesizeformat }},
+          {{ _('%(records)s records', records='{:,}'.format(st.records or 0)) }},
+          {% trans count=st.files or 0 %}{{ count }} uploaded file{% pluralize %}{{ count }} uploaded files{% endtrans %}
+          {%- if st.files_fetched %} {{ _('(%(count)s new)', count=st.files_fetched) }}{% endif %}.
         {% elif desktop.server %}
-          No copy yet.
+          {{ _('No copy yet.') }}
         {% else %}
-          Not set up: this computer keeps no copy of a lab server.
+          {{ _('Not set up: this computer keeps no copy of a lab server.') }}
         {% endif %}
       </div>
 
       {% if desktop.copies %}
         <div class="overflow-x-auto">
           <table class="dt">
-            <thead><tr><th>Copy</th><th>Records</th><th>Size</th></tr></thead>
+            <thead><tr><th>{{ _('Copy') }}</th><th>{{ _('Records') }}</th><th>{{ _('Size') }}</th></tr></thead>
             <tbody>
               {% for c in desktop.copies[:5] %}
                 <tr>
@@ -132,10 +133,13 @@
           </table>
         </div>
         <p class="text-[12px] leading-snug text-muted">
-          {{ desktop.copies | length }} cop{{ 'y' if desktop.copies | length == 1 else 'ies' }} in
-          <code class="ident">{{ desktop.folder }}</code> (the <code class="ident">db</code> folder), with every uploaded file
+          {% trans count=desktop.copies | length, folder=desktop.folder %}{{ count }} copy in
+          <code class="ident">{{ folder }}</code> (the <code class="ident">db</code> folder), with every uploaded file
           in <code class="ident">uploads</code>. To rebuild the lab server from one, see "Moving from the app to a server" in
-          the Run it for your lab guide.
+          the Run it for your lab guide.{% pluralize %}{{ count }} copies in
+          <code class="ident">{{ folder }}</code> (the <code class="ident">db</code> folder), with every uploaded file
+          in <code class="ident">uploads</code>. To rebuild the lab server from one, see "Moving from the app to a server" in
+          the Run it for your lab guide.{% endtrans %}
         </p>
       {% endif %}
     </div>

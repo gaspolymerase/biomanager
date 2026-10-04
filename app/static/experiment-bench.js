@@ -11,7 +11,20 @@
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  const nice = (iso) => (iso ? new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '');
+  const nice = (iso) => (iso ? new Date(`${iso}T12:00:00`).toLocaleDateString(window.BM_LANG === 'zh' ? 'zh-CN' : undefined, { day: 'numeric', month: 'short' }) : '');
+  // Labels that arrive as values (the readout, the animals' noun), in the page's language.
+  const RL = () => t(D.readout.label);
+  const tc = (ctx, s) => { const k = `${ctx}::${s}`; const v = t(k); return v === k ? t(s) : v; };
+  const verb = () => tc('readout', D.readout.verb || 'Record');
+  const unitOf = () => (D.readout.unit ? t(D.readout.unit) : '');
+  const nouns = () => t(D.nouns);
+  // A day's title in the page's language, from its manipulation: what was given, or its kind.
+  const titleOf = (r) => {
+    const s = (D.steps || []).find((x) => x.id === r.step_id);
+    if (!s) return t(r.title);
+    if (s.reading) return RL();
+    return [s.agent || t(s.kind_label), s.dose, s.route].filter(Boolean).join(' ');
+  };
   const fraction = D.readout.kind === 'fraction';
   let task = null;      // {kind: 'reading'} | {kind: 'step', stepId, day, title, animals}
   let at = 0;
@@ -20,7 +33,7 @@
   async function post(url, body) {
     const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok || data.ok === false) throw new Error(data.error || `The app answered ${r.status}.`);
+    if (!r.ok || data.ok === false) throw new Error(data.error || t('The app answered %(status)s.', { status: r.status }));
     return data;
   }
 
@@ -29,7 +42,7 @@
   // read QR codes itself (BarcodeDetector) uses the camera here.
   const native = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmScan;
   const canScan = Boolean(native) || ('BarcodeDetector' in window && navigator.mediaDevices);
-  const scanButton = () => (canScan ? '<button type="button" class="btn xb-scan" data-xb-scan>Scan a card</button>' : '');
+  const scanButton = () => (canScan ? `<button type="button" class="btn xb-scan" data-xb-scan>${t('Scan a card')}</button>` : '');
 
   window.bmScanned = (value) => {
     const text = String(value || '').trim();
@@ -39,7 +52,7 @@
     const subject = D.subjects.find((x) => (anchor && x.card === anchor) || x.label === text || x.label.replace(/^#/, '') === text);
     const index = subject ? list.findIndex((a) => keyOf(a) === subject.key) : -1;
     if (index < 0) {
-      if (window.BioDialog) BioDialog.alert(anchor ? 'No animal of this experiment is on that card.' : `“${text}” isn't a card of this experiment.`);
+      if (window.BioDialog) BioDialog.alert(anchor ? t('No animal of this experiment is on that card.') : t("“%(text)s” isn't a card of this experiment.", { text }));
       return;
     }
     if (!task) { start('reading').then(() => { at = index; show(); }); return; }
@@ -50,7 +63,7 @@
   async function scanHere() {
     const box = document.createElement('div');
     box.className = 'xb-camera';
-    box.innerHTML = '<video playsinline muted></video><button type="button" class="btn">Cancel</button>';
+    box.innerHTML = `<video playsinline muted></video><button type="button" class="btn">${t('Cancel')}</button>`;
     document.body.appendChild(box);
     const video = box.querySelector('video');
     let stream = null;
@@ -71,21 +84,21 @@
       look();
     } catch (_e) {
       stop();
-      if (window.BioDialog) BioDialog.alert('The camera could not be opened here.');
+      if (window.BioDialog) BioDialog.alert(t('The camera could not be opened here.'));
     }
   }
 
   function pick() {
     const due = D.schedule.filter((r) => !r.record && !r.reading && (r.state === 'today' || r.state === 'overdue'));
     const later = D.schedule.filter((r) => !r.record && !r.reading && r.state !== 'today' && r.state !== 'overdue');
-    const button = (r) => `<button type="button" class="xb-choice" data-step="${r.step_id}:${r.day}"><b>${esc(r.title)}</b>
-      <span>Day ${r.day}${r.date ? ` · ${esc(nice(r.date))}` : ''}${r.group ? ` · ${esc(r.group)}` : ''} · ${r.state === 'overdue' ? 'overdue' : r.state === 'today' ? 'due today' : 'to come'}</span></button>`;
+    const button = (r) => `<button type="button" class="xb-choice" data-step="${r.step_id}:${r.day}"><b>${esc(titleOf(r))}</b>
+      <span>${t('Day %(n)s', { n: r.day })}${r.date ? ` · ${esc(nice(r.date))}` : ''}${r.group ? ` · ${esc(r.group)}` : ''} · ${r.state === 'overdue' ? t('overdue') : r.state === 'today' ? t('due today') : t('to come')}</span></button>`;
     $('[data-xb-pick]').innerHTML = `
-      <div class="xb-pick-head"><h2>What are you doing now?</h2>${scanButton()}</div>
-      ${D.editable ? `<button type="button" class="xb-choice xb-main" data-reading><b>${esc(D.readout.verb || 'Record')}: ${esc(D.readout.label)}</b><span>Today, ${D.subjects.length} ${esc(D.nouns)}, one at a time</span></button>
+      <div class="xb-pick-head"><h2>${t('What are you doing now?')}</h2>${scanButton()}</div>
+      ${D.editable ? `<button type="button" class="xb-choice xb-main" data-reading><b>${esc(verb())}: ${esc(RL())}</b><span>${t('Today, %(count)s %(nouns)s, one at a time', { count: D.subjects.length, nouns: esc(nouns()) })}</span></button>
       ${due.map(button).join('')}
-      ${later.length ? `<details class="xb-later"><summary>Planned for other days (${later.length})</summary>${later.map(button).join('')}</details>` : ''}`
-        : '<p class="xp-empty">This experiment is read only for you.</p>'}`;
+      ${later.length ? `<details class="xb-later"><summary>${t('Planned for other days (%(n)s)', { n: later.length })}</summary>${later.map(button).join('')}</details>` : ''}`
+        : `<p class="xp-empty">${t('This experiment is read only for you.')}</p>`}`;
   }
 
   async function start(which) {
@@ -97,7 +110,8 @@
       const [stepId, day] = which.split(':');
       const r = await fetch(`/colony/experiments/${D.id}/steps/${stepId}/day/${day}?on=${today()}`);
       const data = await r.json();
-      task = { kind: 'step', stepId, day, title: (D.schedule.find((x) => `${x.step_id}:${x.day}` === which) || {}).title, animals: data.animals || [] };
+      const row = D.schedule.find((x) => `${x.step_id}:${x.day}` === which);
+      task = { kind: 'step', stepId, day, title: row ? titleOf(row) : '', animals: data.animals || [] };
       task.animals.forEach((a) => given.set(a.subject, true));
     }
     $('[data-xb-pick]').hidden = true;
@@ -120,20 +134,20 @@
     if (at >= list.length) return finish();
     const a = list[at];
     const key = a.key || a.subject;
-    $('[data-xb-count]').textContent = `${at + 1} of ${list.length}`;
+    $('[data-xb-count]').textContent = t('%(count)s of %(total)s', { count: at + 1, total: list.length });
     $('[data-xb-bar]').style.width = `${(at / list.length) * 100}%`;
     const head = `<div class="xb-who"><span class="xb-label">${esc(a.label)}</span><span>${esc([a.group, a.housing, a.sex].filter(Boolean).join(' · '))}</span></div>`;
     if (task.kind === 'reading') {
       const prev = previous(key);
       $('[data-xb-card]').innerHTML = `${head}
-        <label class="xb-input"><span>${fraction && D.readout.unit ? esc(D.readout.unit.charAt(0).toUpperCase() + D.readout.unit.slice(1)) : esc(D.readout.label)}${D.readout.unit && !fraction ? ` (${esc(D.readout.unit)})` : ''}</span>
+        <label class="xb-input"><span>${fraction && D.readout.unit ? esc(unitOf().charAt(0).toUpperCase() + unitOf().slice(1)) : esc(RL())}${D.readout.unit && !fraction ? ` (${esc(unitOf())})` : ''}</span>
           <input type="text" inputmode="decimal" autocomplete="off" data-xb-value value="${prev && prev.today ? prev.value : ''}">
-          ${fraction && a.start != null ? `<em>of ${a.start}</em>` : ''}</label>
-        <p class="xb-prev">${prev && !prev.today ? `Last: ${prev.value}${D.readout.unit && !fraction ? ` ${esc(D.readout.unit)}` : ''} on ${esc(nice(prev.date))}` : prev ? 'Already recorded today: change it or go on.' : 'No readout yet.'}</p>
+          ${fraction && a.start != null ? `<em>${t('of %(n)s', { n: a.start })}</em>` : ''}</label>
+        <p class="xb-prev">${prev && !prev.today ? t('Last: %(value)s on %(date)s', { value: `${prev.value}${D.readout.unit && !fraction ? ` ${esc(unitOf())}` : ''}`, date: esc(nice(prev.date)) }) : prev ? t('Already recorded today: change it or go on.') : t('No readout yet.')}</p>
         <p class="xp-error" data-xb-error hidden></p>
-        <div class="xb-buttons"><button type="button" class="btn" data-xb-back ${at ? '' : 'disabled'}>Back</button>
-          <button type="button" class="btn" data-xb-skip>Skip</button>
-          <button type="button" class="btn btn-primary" data-xb-save>Save and next</button></div>`;
+        <div class="xb-buttons"><button type="button" class="btn" data-xb-back ${at ? '' : 'disabled'}>${t('Back')}</button>
+          <button type="button" class="btn" data-xb-skip>${t('Skip')}</button>
+          <button type="button" class="btn btn-primary" data-xb-save>${t('Save and next')}</button></div>`;
       const input = $('[data-xb-value]');
       input.focus();
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveReading(); } });
@@ -141,11 +155,11 @@
       const dose = [a.amount, a.volume].filter(Boolean).join(' · ');
       $('[data-xb-card]').innerHTML = `${head}
         <p class="xb-what">${esc(task.title || '')}</p>
-        <p class="xb-dose">${a.needs ? '<span class="xp-warn">needs a weight first</span>' : esc(dose || '—')}</p>
-        <p class="xb-prev">${a.grams != null ? `From ${a.grams} g on ${esc(nice(a.weighed_on))}` : ''}</p>
-        <div class="xb-buttons"><button type="button" class="btn" data-xb-back ${at ? '' : 'disabled'}>Back</button>
-          <button type="button" class="btn" data-xb-miss>Not given</button>
-          <button type="button" class="btn btn-primary" data-xb-give>Given ✓</button></div>`;
+        <p class="xb-dose">${a.needs ? `<span class="xp-warn">${t('needs a weight first')}</span>` : esc(dose || '—')}</p>
+        <p class="xb-prev">${a.grams != null ? t('From %(grams)s g on %(date)s', { grams: a.grams, date: esc(nice(a.weighed_on)) }) : ''}</p>
+        <div class="xb-buttons"><button type="button" class="btn" data-xb-back ${at ? '' : 'disabled'}>${t('Back')}</button>
+          <button type="button" class="btn" data-xb-miss>${t('Not given')}</button>
+          <button type="button" class="btn btn-primary" data-xb-give>${t('Given ✓')}</button></div>`;
     }
     $('[data-xb-jump]').innerHTML = scanButton() + list.map((x, i) => {
       const k = x.key || x.subject;
@@ -179,39 +193,39 @@
     if (task.kind === 'reading') {
       $('[data-xb-run]').hidden = true;
       done.hidden = false;
-      done.innerHTML = `<h2>Done</h2><p>${esc(D.readout.label)} saved for today.</p><div class="xb-buttons"><a class="btn" href="/experiments/${D.id}">The experiment</a><button type="button" class="btn btn-primary" data-xb-again>Something else</button></div>`;
+      done.innerHTML = `<h2>${t('Done')}</h2><p>${t('%(readout)s saved for today.', { readout: esc(RL()) })}</p><div class="xb-buttons"><a class="btn" href="/experiments/${D.id}">${t('The experiment')}</a><button type="button" class="btn btn-primary" data-xb-again>${t('Something else')}</button></div>`;
       return;
     }
     const yes = task.animals.filter((a) => given.get(a.subject));
     $('[data-xb-run]').hidden = true;
     done.hidden = false;
-    done.innerHTML = `<h2>${esc(task.title || 'Done')}</h2><p>${yes.length} of ${task.animals.length} ${esc(D.nouns)} given.</p>
-      <label class="xb-note">Note <textarea rows="3" data-xb-note placeholder="Anything that differed"></textarea></label>
+    done.innerHTML = `<h2>${esc(task.title || t('Done'))}</h2><p>${t('%(count)s of %(total)s %(nouns)s given.', { count: yes.length, total: task.animals.length, nouns: esc(nouns()) })}</p>
+      <label class="xb-note">${t('Note')} <textarea rows="3" data-xb-note placeholder="${esc(t('Anything that differed'))}"></textarea></label>
       <p class="xp-error" data-xb-error hidden></p>
-      <div class="xb-buttons"><button type="button" class="btn" data-xb-review>Back</button><button type="button" class="btn btn-primary" data-xb-record>Record as done</button></div>`;
+      <div class="xb-buttons"><button type="button" class="btn" data-xb-review>${t('Back')}</button><button type="button" class="btn btn-primary" data-xb-record>${t('Record as done')}</button></div>`;
   }
 
   document.addEventListener('click', async (event) => {
-    const t = event.target.closest('button');
-    if (!t) return;
-    if (t.matches('[data-xb-scan]')) { if (native) native.postMessage('scan'); else scanHere(); return; }
-    if (t.matches('[data-reading]')) start('reading');
-    else if (t.dataset.step) start(t.dataset.step);
-    else if (t.matches('[data-xb-save]')) saveReading();
-    else if (t.matches('[data-xb-skip]')) { at += 1; show(); }
-    else if (t.matches('[data-xb-back]')) { at = Math.max(0, at - 1); show(); }
-    else if (t.matches('[data-xb-give], [data-xb-miss]')) { given.set(task.animals[at].subject, t.matches('[data-xb-give]')); at += 1; show(); }
-    else if (t.dataset.xbGo) { at = Number(t.dataset.xbGo); show(); }
-    else if (t.matches('[data-xb-review]')) { at = task.animals.length - 1; $('[data-xb-done]').hidden = true; $('[data-xb-run]').hidden = false; show(); }
-    else if (t.matches('[data-xb-again]')) { $('[data-xb-done]').hidden = true; $('[data-xb-pick]').hidden = false; pick(); }
-    else if (t.matches('[data-xb-record]')) {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    if (btn.matches('[data-xb-scan]')) { if (native) native.postMessage('scan'); else scanHere(); return; }
+    if (btn.matches('[data-reading]')) start('reading');
+    else if (btn.dataset.step) start(btn.dataset.step);
+    else if (btn.matches('[data-xb-save]')) saveReading();
+    else if (btn.matches('[data-xb-skip]')) { at += 1; show(); }
+    else if (btn.matches('[data-xb-back]')) { at = Math.max(0, at - 1); show(); }
+    else if (btn.matches('[data-xb-give], [data-xb-miss]')) { given.set(task.animals[at].subject, btn.matches('[data-xb-give]')); at += 1; show(); }
+    else if (btn.dataset.xbGo) { at = Number(btn.dataset.xbGo); show(); }
+    else if (btn.matches('[data-xb-review]')) { at = task.animals.length - 1; $('[data-xb-done]').hidden = true; $('[data-xb-run]').hidden = false; show(); }
+    else if (btn.matches('[data-xb-again]')) { $('[data-xb-done]').hidden = true; $('[data-xb-pick]').hidden = false; pick(); }
+    else if (btn.matches('[data-xb-record]')) {
       const subjects = task.animals.filter((a) => given.get(a.subject)).map((a) => a.subject);
       try {
         const data = await post(`/colony/experiments/${D.id}/steps/${task.stepId}/day/${task.day}/record`,
           { done_on: today(), subjects, note: ($('[data-xb-note]') || {}).value || '' });
         D.schedule = data.schedule;
-        $('[data-xb-done]').innerHTML = `<h2>Recorded</h2><p>${esc(task.title || '')}: ${subjects.length} ${esc(D.nouns)}.</p>${(data.problems || []).map((p) => `<p class="xp-warn">${esc(p)}</p>`).join('')}
-          <div class="xb-buttons"><a class="btn" href="/experiments/${D.id}">The experiment</a><button type="button" class="btn btn-primary" data-xb-again>Something else</button></div>`;
+        $('[data-xb-done]').innerHTML = `<h2>${t('Recorded')}</h2><p>${esc(task.title || '')}: ${subjects.length} ${esc(nouns())}.</p>${(data.problems || []).map((p) => `<p class="xp-warn">${esc(p)}</p>`).join('')}
+          <div class="xb-buttons"><a class="btn" href="/experiments/${D.id}">${t('The experiment')}</a><button type="button" class="btn btn-primary" data-xb-again>${t('Something else')}</button></div>`;
       } catch (error) {
         const box = $('[data-xb-error]');
         box.textContent = error.message;

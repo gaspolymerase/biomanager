@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block page_title %}Guests{% endblock %}
-{% block page_heading %}Guests{% endblock %}
-{% block page_subtitle %}Let someone outside the lab in for a while, with a code{% endblock %}
+{% block page_title %}{{ _('Guests') }}{% endblock %}
+{% block page_heading %}{{ _('Guests') }}{% endblock %}
+{% block page_subtitle %}{{ _('Let someone outside the lab in for a while, with a code') }}{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('admin_users') }}">{{ icon('users') }} Manage users</a>
+  <a class="btn" href="{{ url_for('admin_users') }}">{{ icon('users') }} {{ _('Manage users') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -13,55 +13,55 @@
 
   {% if new %}
     <section class="card border-brand-200 p-5" aria-live="polite">
-      <h2 class="text-[15px] font-semibold text-ink">Guest access for {{ new.label }}</h2>
+      <h2 class="text-[15px] font-semibold text-ink">{{ _('Guest access for %(name)s', name=new.label) }}</h2>
       <p class="mt-1 text-[12.5px] leading-snug text-muted">
-        Send them this code and the link below. The code is shown only now: copy it before leaving this page.
-        If it gets lost, end this pass and make a new one.
+        {% trans %}Send them this code and the link below. The code is shown only now: copy it before leaving this page.
+        If it gets lost, end this pass and make a new one.{% endtrans %}
       </p>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <code id="guest-new-code" class="rounded-lg bg-sand-100 px-3 py-2 font-mono text-[18px] tracking-wider text-ink">{{ new.code }}</code>
-        <button type="button" class="btn" data-on-click="copy-text" data-arg="guest-new-code">{{ icon('copy') }} Copy code</button>
+        <button type="button" class="btn" data-on-click="copy-text" data-arg="guest-new-code">{{ icon('copy') }} {{ _('Copy code') }}</button>
       </div>
       <dl class="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-[12.5px]">
-        <dt class="text-muted">Open</dt>
+        <dt class="text-muted">{{ _('Open') }}</dt>
         <dd>
           {% if public_url %}<span class="font-mono" id="guest-link">{{ public_url }}/guest</span>
-            <button type="button" class="btn btn-sm ml-1" data-on-click="copy-text" data-arg="guest-link">{{ icon('copy') }} Copy</button>
+            <button type="button" class="btn btn-sm ml-1" data-on-click="copy-text" data-arg="guest-link">{{ icon('copy') }} {{ _('Copy') }}</button>
           {% else %}<span class="font-mono">{{ lab_url }}/guest</span>
-            <span class="text-muted">(on the lab network only: internet access is off)</span>{% endif %}
+            <span class="text-muted">{{ _('(on the lab network only: internet access is off)') }}</span>{% endif %}
         </dd>
-        <dt class="text-muted">Works until</dt>
+        <dt class="text-muted">{{ _('Works until') }}</dt>
         <dd>{{ (new.expires_at | local).strftime('%Y-%m-%d %H:%M') }}</dd>
-        <dt class="text-muted">Signs in as</dt>
-        <dd><span class="font-mono">{{ new.username }}</span>, a lab member</dd>
+        <dt class="text-muted">{{ _('Signs in as') }}</dt>
+        <dd>{% trans username=new.username %}<span class="font-mono">{{ username }}</span>, a lab member{% endtrans %}</dd>
       </dl>
     </section>
   {% endif %}
 
   <section class="card p-5">
-    <h2 class="text-[15px] font-semibold text-ink">New guest pass</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('New guest pass') }}</h2>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
-      The guest gets a member account of their own: they can look around and add records, but not change
-      Lab setup, approve people or edit others’ personal records. It stops working when the pass ends.
+      {% trans %}The guest gets a member account of their own: they can look around and add records, but not change
+      Lab setup, approve people or edit others’ personal records. It stops working when the pass ends.{% endtrans %}
     </p>
     <form method="post" class="mt-4 flex flex-wrap items-end gap-3">
-      <label class="field-label min-w-[220px] flex-1">Who it is for
-        <input name="label" required maxlength="60" placeholder="e.g. Alex from the Chen lab" autocomplete="off">
+      <label class="field-label min-w-[220px] flex-1">{{ _('Who it is for') }}
+        <input name="label" required maxlength="60" placeholder="{{ _('e.g. Alex from the Chen lab') }}" autocomplete="off">
       </label>
-      <label class="field-label">For
+      <label class="field-label">{{ 'For'|tr('duration') }}
         <select name="days">
-          {% for days, text in durations.items() %}<option value="{{ days }}" {% if days == 3 %}selected{% endif %}>{{ text }}</option>{% endfor %}
+          {% for days, text in durations.items() %}<option value="{{ days }}" {% if days == 3 %}selected{% endif %}>{{ text|tr }}</option>{% endfor %}
         </select>
       </label>
-      <button type="submit" class="btn btn-primary">{{ icon('plus') }} Make a code</button>
+      <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a code') }}</button>
     </form>
     <p class="mt-3 text-[12px] leading-snug text-muted">
       {% if public_url %}
-        Internet access is on: {{ public_url }}. Anyone there who is not signed in sees only the code page.
-        Switch it off when your guests are done (<span class="font-mono">deploy/host/internet-access.sh off</span>).
+        {% trans url=public_url %}Internet access is on: {{ url }}. Anyone there who is not signed in sees only the code page.
+        Switch it off when your guests are done (<span class="font-mono">deploy/host/internet-access.sh off</span>).{% endtrans %}
       {% else %}
-        Internet access is off, so a code works only for someone on the lab’s network. To let a guest in from
-        anywhere, switch it on on the server: <span class="font-mono">sudo deploy/host/internet-access.sh on</span>.
+        {% trans %}Internet access is off, so a code works only for someone on the lab’s network. To let a guest in from
+        anywhere, switch it on on the server: <span class="font-mono">sudo deploy/host/internet-access.sh on</span>.{% endtrans %}
       {% endif %}
     </p>
   </section>
@@ -71,11 +71,11 @@
       <table class="dt">
         <thead>
           <tr>
-            <th style="width: 180px;">Guest</th>
-            <th style="width: 160px;">Account</th>
-            <th style="width: 150px;">Until</th>
-            <th style="width: 150px;">Last in</th>
-            <th style="width: 110px;">Status</th>
+            <th style="width: 180px;">{{ _('Guest') }}</th>
+            <th style="width: 160px;">{{ _('Account') }}</th>
+            <th style="width: 150px;">{{ 'Until'|tr('guest') }}</th>
+            <th style="width: 150px;">{{ _('Last in') }}</th>
+            <th style="width: 110px;">{{ _('Status') }}</th>
             <th></th>
           </tr>
         </thead>
@@ -86,29 +86,29 @@
               <td><span class="font-medium text-ink">{{ p.label }}</span></td>
               <td class="font-mono text-[12px]">{{ r.user.username if r.user else '—' }}</td>
               <td class="text-muted">{{ (p.expires_at | local).strftime('%Y-%m-%d %H:%M') }}</td>
-              <td class="text-muted">{{ (p.last_used_at | local).strftime('%Y-%m-%d %H:%M') if p.last_used_at else 'not yet' }}{% if p.uses %} · {{ p.uses }}×{% endif %}</td>
+              <td class="text-muted">{{ (p.last_used_at | local).strftime('%Y-%m-%d %H:%M') if p.last_used_at else 'not yet'|tr('last') }}{% if p.uses %} · {{ p.uses }}×{% endif %}</td>
               <td>
-                {% if r.active %}<span class="dt-status" data-status="active">active</span>
-                {% elif p.ended_at %}<span class="badge badge-quiet">ended</span>
-                {% else %}<span class="badge badge-quiet">expired</span>{% endif %}
+                {% if r.active %}<span class="dt-status" data-status="active">{{ 'active'|tr('guest') }}</span>
+                {% elif p.ended_at %}<span class="badge badge-quiet">{{ _('ended') }}</span>
+                {% else %}<span class="badge badge-quiet">{{ _('expired') }}</span>{% endif %}
               </td>
               <td>
                 {% if r.active %}
                   <form method="post" action="{{ url_for('guests.end', pass_id=p.id) }}"
-                        data-confirm="End guest access for {{ p.label }} now? They are signed out.">
-                    <button type="submit" class="btn btn-sm btn-danger whitespace-nowrap">End now</button>
+                        data-confirm="{{ _('End guest access for %(name)s now? They are signed out.', name=p.label) }}">
+                    <button type="submit" class="btn btn-sm btn-danger whitespace-nowrap">{{ _('End now') }}</button>
                   </form>
                 {% endif %}
               </td>
             </tr>
           {% else %}
-            <tr><td class="dt-empty" colspan="6"><span class="dt-empty-msg">No guest passes yet.</span></td></tr>
+            <tr><td class="dt-empty" colspan="6"><span class="dt-empty-msg">{{ _('No guest passes yet.') }}</span></td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </section>
-  <p class="text-[12px] text-muted">What guests add stays, under their guest account’s name.</p>
+  <p class="text-[12px] text-muted">{{ _('What guests add stays, under their guest account’s name.') }}</p>
 </div>
 {% endblock %}
 
@@ -120,7 +120,7 @@
       if (!el || !navigator.clipboard) return;
       navigator.clipboard.writeText(el.textContent.trim()).then(() => {
         const was = this.innerHTML;
-        this.textContent = 'Copied';
+        this.textContent = t('Copied');
         setTimeout(() => { this.innerHTML = was; }, 1500);
       });
     },

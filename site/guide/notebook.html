@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notebook and utilities — BioManager user guide</title>
+  <meta name="description" content="Notebook pages, protocols, data sheets, signing, and the bench calculators.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/guide/notebook.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/notebook.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/notebook.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/notebook.html">
+  <script>try{if(!localStorage.getItem('bm-lang')&&/^zh/i.test((navigator.languages&&navigator.languages[0])||navigator.language||''))location.replace('../zh/guide/notebook.html'+location.hash)}catch(e){}</script>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/guide/notebook.html">
+  <meta property="og:title" content="Notebook and utilities — BioManager user guide">
+  <meta property="og:description" content="Notebook pages, protocols, data sheets, signing, and the bench calculators.">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../"><img src="../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="Site">
+      <a href="../features.html">Features</a>
+      <a href="../server.html">Run it for your lab</a>
+      <a class="nav-guide" href="../guide.html" aria-current="page">User guide</a>
+    </nav>
+    <a class="lang-link" href="../zh/guide/notebook.html" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
+    <a class="btn btn-small btn-primary" href="../download.html">Download</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="Contents">
+    <button type="button" class="docs-search" data-search data-pagefind="../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Search the guide</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>Contents</summary>
+      <ol>
+        <li class="docs-group"><span>Get started</span>
+          <ol>
+            <li><a href="../guide.html">Guide home</a></li>
+            <li><a href="what-it-is.html">What BioManager is</a></li>
+            <li><a href="coming-from-excel.html">Coming from Excel</a></li>
+            <li><a href="install.html">Install and set up</a></li>
+            <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="home-page.html">Home</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Everyday skills</span>
+          <ol>
+            <li><a href="sheets.html">Working in a sheet</a></li>
+            <li><a href="many-at-once.html">Many at once</a></li>
+            <li><a href="finding-things.html">Finding things</a></li>
+            <li><a href="undo-and-history.html">Undo and history</a></li>
+            <li><a href="notifications.html">Notifications</a></li>
+            <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+          </ol></li>
+        <li class="docs-group"><span>How to…</span>
+          <ol>
+            <li><a href="record-a-litter.html">Record a litter</a></li>
+            <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
+            <li><a href="wean-a-litter.html">Wean a litter</a></li>
+            <li><a href="print-cage-cards.html">Print cage cards</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Your databases</span>
+          <ol>
+            <li><a href="mouse-colony.html">Mouse colony</a></li>
+            <li><a href="zebrafish.html">Zebrafish</a></li>
+            <li><a href="flies-and-worms.html">Flies and worms</a></li>
+            <li><a href="any-organism.html">Any other organism</a></li>
+            <li><a href="experiments.html">Experiments</a></li>
+            <li><a href="plasmids.html">Plasmids</a></li>
+            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="notebook.html" aria-current="page">Notebook and utilities</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Working as a lab</span>
+          <ol>
+            <li><a href="who-can-do-what.html">Who can do what</a></li>
+            <li><a href="project-groups.html">Project groups</a></li>
+            <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="lab-setup.html">Lab setup</a></li>
+            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Data and help</span>
+          <ol>
+            <li><a href="your-data.html">Your data and backups</a></li>
+            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="troubleshooting.html">Troubleshooting</a></li>
+            <li><a href="feedback.html">Feedback</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">Your databases</p>
+    <h1>Notebook and utilities</h1>
+    <p class="summary">Notebook pages, protocols, data sheets, signing, and the bench calculators.</p>
+    <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Notebook and utilities</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/protocol.webp" data-clip-src="../assets/clips/protocol"></video></div></figure>
+
+      <h3 id="notebook-1">Pages</h3>
+      <ul>
+        <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. A new page goes in the topic you have open, or in
+          <i>Inbox</i> when none is (experiments and meetings go to their own topics). Type <b>/</b> at the start of a line for a menu of
+          blocks: tables, plots, protocols, calculators and the rest below. <b>Templates</b>: ⋯ → <b>Save as template</b>, and start new
+          pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); <b>Structure only</b> keeps the headings,
+          steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results,
+          Observations or Conclusion; <b>Share it with the lab</b> offers it to
+          everyone.</li>
+        <li>Type <code>@</code> to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer
+          (<code>@antibodies 5</code>), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like
+          <code>@0012</code>, comes first; names such as <i>anti-β-actin</i> or <i>Waf1/Cip1</i> are found as written), a database by its
+          name (<code>@antib</code> offers <i>Antibodies</i>, and picking it lists its records), or a colleague (<code>@jordan</code>, for action items); the page and the record then point at each other,
+          and the record lists the page under <b>Used in notebook pages</b>. The chip shows the record's name after its number
+          (<i>@antibodies 5 · anti-p53</i>). Hover over one for
+          its details; clicking it opens the record, and <b>↗</b> (or <kbd>⌘</kbd>/<kbd>Ctrl</kbd>-click) opens it in a new BioManager tab.</li>
+        <li><b>Daily log</b> (<i>Today</i>) and <b>Meetings</b>: a presenter rotation, shared meeting notes, and action items
+          (<code>- [ ] @name …, due …</code>) sent to that person's to-dos — from any page, with ⋯ → <b>Send @name tasks as to-dos</b>.</li>
+      </ul>
+      <h3 id="notebook-2">Experiments and protocols</h3>
+      <ul>
+        <li><b>Experiments</b>: aim, setup, samples and lot numbers, steps, results. <i>Start</i> and <i>Finished</i> stamp the times;
+          planned, running, done or failed shows in the sidebar. (The colony's <b>Experiments</b> tab groups the animals.)</li>
+        <li><b>Colony experiment</b> (<code>/experiment</code>) shows an experiment on any of your animals in the page: each day's manipulation, when it
+          was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first
+          weight, with the manipulation days marked). It stays up to date; <b>Freeze a copy</b> keeps what it shows now in the page,
+          so later changes to the experiment don't alter your record. On the experiment itself, <b>Add to notebook</b> makes your
+          page for it with this block already in.</li>
+        <li><b>Protocols</b> with numbered versions. <i>Start an experiment from it</i> copies the steps as a checklist and records the
+          version; <b>Run mode</b> takes you through it at the bench, one step at a time. <b>Protocols</b> in the sidebar (or
+          <code>/protocol</code>) opens the library: the lab's protocols and a dozen common ones built in, to insert or copy.</li>
+      </ul>
+      <h3 id="notebook-3">Data and calculators</h3>
+      <ul>
+        <li><b>Data sheets</b>: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error
+          bars, a fitted line and a t-test, Mann–Whitney or ANOVA. <b>Plate reader</b> and <b>qPCR</b> blocks read concentrations off a
+          standard curve and ΔΔCt fold changes.</li>
+        <li><b>Buffer recipes</b> scale with the volume; common buffers are built in and the lab's own are shared. <b>Calculators</b>
+          for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and <b>Protein (A₂₈₀)</b>: paste the
+          sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a
+          <b>⏱</b> timer, named from the step's own words; time points (<i>6, 24, 48 h</i>, <i>at 24 h</i>, <i>the 48 h samples</i>) don't. Times on a page (<i>started
+          16:00</i>) are on the lab's clock, whatever your computer's time zone.</li>
+      </ul>
+      <h3 id="signing">Signing a page</h3>
+      <p>When a page should be the record of your work, <b>Sign</b> it — your choice, page by page; nothing asks you to. You confirm who
+        you are (your password, or your user name if you sign in with Google or Microsoft) and what signing means. Its exact text is
+        fingerprinted and kept as a version, any live experiment in it is frozen as it is then, and the page is locked: nobody can change
+        or delete it. A lab mate can <b>Witness</b> it. To change it, its owner <b>Amends</b> it with a reason; the reason and every
+        signature stay with the page, each showing whether the page still reads as it did when signed.</p>
+      <h3 id="notebook-5">Working together</h3>
+      <p>Share a page to read or edit, with people, everyone in the lab or a <a href="project-groups.html">project group</a>; editors type in it
+        at the same time. Comments on a passage, with <code>@name</code> telling that
+        person (switch these notices off under <b>Settings → Notifications</b>). <b>Version history</b> keeps every editing session to
+        compare or restore. <b>Tags and search</b> work across every page you can open.</p>
+      <h3 id="utilities">Utilities</h3>
+      <p><b>Utilities</b>, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in <b>Find a
+        calculator</b> (plain letters do: <i>a260</i>, <i>ddct</i>, or what you are doing, like <i>nanodrop</i>); the answer changes as you type, each remembers what you last typed in it on this computer, and <b>Reset</b> goes
+        back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.</p>
+      <dl class="gdl">
+        <dt>Solutions &amp; buffers</dt><dd>Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔
+          molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate
+          or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight, from the lab's own list first (<i>MgCl2·6H2O</i> and
+          <i>magnesium chloride hexahydrate</i> are the same one); one it doesn't know leaves the weight for you to type.</dd>
+        <dt>DNA &amp; RNA</dt><dd>Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation
+          insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change;
+          transformation efficiency.</dd>
+        <dt>Protein</dt><dd>Concentration from A₂₈₀; MW, ε and pI from the sequence; a standard curve (BCA, Bradford, ELISA) read off for
+          your samples; SDS-PAGE gel recipes; µg per lane.</dd>
+        <dt>Cells</dt><dd>Haemocytometer counts; seeding plates (by vessel); doubling time; scaling a transfection; virus for an MOI;
+          lentivirus titer from % positive cells; freezing down; drug and vehicle for treatments.</dd>
+        <dt>Bacteria &amp; yeast</dt><dd>OD₆₀₀ to cells and dilutions; time to reach an OD; antibiotic for plates and media.</dd>
+        <dt>Centrifuge, animals &amp; gels</dt><dd>rpm ↔ × g; dose by body weight; agarose gels; radioactive decay.</dd>
+        <dt>Numbers &amp; units</dt><dd>Mean, SD, SEM and CV; animals or samples per group; a unit converter.</dd>
+      </dl>
+      <p><b>Reference tables</b>, below the calculator: culture vessels, buffers, antibiotics, agarose gels, isotopes and molecular
+        weights. A link to a calculator (<code>…/utilities#dilution</code>) opens it.</p>
+      <figure class="gshot"><a href="../assets/screenshots/utilities.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/utilities.webp" alt="Utilities: the list of calculators and a PCR master mix worked out for 12 reactions" loading="lazy" width="2000" height="1250"></a><figcaption>Utilities</figcaption></figure>
+    <!-- /page -->
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="calendar.html"><small>Previous</small>Calendar</a><a class="next" href="who-can-do-what.html"><small>Next</small>Who can do what</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>Was this page helpful?</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=Guide: Notebook%20and%20utilities&amp;body=Page: https://biomanager.org/guide/notebook.html%0A%0AWhat%20was%20unclear%20or%20missing:" target="_blank" rel="noopener">No</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="On this page">
+      <p>On this page</p>
+      <ol>
+        <li class="lvl3"><a href="#notebook-1">Pages</a></li>
+        <li class="lvl3"><a href="#notebook-2">Experiments and protocols</a></li>
+        <li class="lvl3"><a href="#notebook-3">Data and calculators</a></li>
+        <li class="lvl3"><a href="#signing">Signing a page</a></li>
+        <li class="lvl3"><a href="#notebook-5">Working together</a></li>
+        <li class="lvl3"><a href="#utilities">Utilities</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager is free and open source. <a href="../download.html">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">Report a problem</a></p>
+  </div>
+</footer>
+<script src="../site.js"></script>
+</body>
+</html>

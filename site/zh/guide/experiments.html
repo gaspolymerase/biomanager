@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>实验 — BioManager 用户指南</title>
+  <meta name="description" content="处理组、按体重算剂量、读数和统计，适用于所有动物。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/experiments.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/experiments.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/experiments.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/experiments.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/experiments.html">
+  <meta property="og:title" content="实验 — BioManager 用户指南">
+  <meta property="og:description" content="处理组、按体重算剂量、读数和统计，适用于所有动物。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/experiments.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>怎么做</span>
+          <ol>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据库</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+            <li><a href="experiments.html" aria-current="page">实验</a></li>
+            <li><a href="plasmids.html">质粒</a></li>
+            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据与帮助</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="troubleshooting.html">故障排除</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">数据库</p>
+    <h1>实验：适用于所有动物</h1>
+    <p class="summary">处理组、按体重算剂量、读数和统计，适用于所有动物。</p>
+    <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 实验：适用于所有动物</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/experiment.webp" data-clip-src="../../assets/clips/experiment"></video></div></figure>
+
+      <p>小鼠、斑马鱼、果蝇、线虫以及你自己定义的物种，在其他标签页旁边都有一个<b>实验</b>（Experiments）标签页（小鼠和
+        笼旁边；鱼缸和鱼旁边；果蝇管或培养皿旁边）。那里的<b>新建实验</b>（New experiment）可以直接用一整个笼、鱼缸、架子或饲养单元里的
+        动物开始。每个实验有一个页面，页面上的<b>所有实验</b>（All experiments）返回标签页。</p>
+      <table class="gtable">
+        <tr><th>小鼠</th><td>小鼠，或一整个笼。体重（或肿瘤体积、临床评分、存活）。注射、
+          激发、给药处理、手术、行为、取样、成像。</td></tr>
+        <tr><th>斑马鱼</th><td>鱼的记录、一整个鱼缸，或一个卵批的幼鱼。存活（开始时的个体中还有多少
+          活着）、标准体长或某个表型。水中给药、显微注射、热休克、损伤或剪鳍。</td></tr>
+        <tr><th>果蝇和线虫</th><td>果蝇管或培养皿，或一整个架子；写明每个开始时有多少只。它们没有体重：
+          记录存活，果蝇还可记录羽化和攀爬，线虫可记录产卵数和麻痹。食物中或培养皿上给药、RNAi
+          喂食、温度变化、饥饿、感染、转到新鲜食物上。</td></tr>
+        <tr><th>其他任意物种</th><td>动物、群体或队列，或一整个饲养单元。体重、长度、存活或评分。</td></tr>
+      </table>
+      <p>任何实验都可以跟踪自定义的观测指标（<b>观测指标 → 其他…</b>（Readout → Something else…））：每个个体一个数值，或开始时的
+        个体中还剩多少。</p>
+      <h3 id="experiments-1">实验页面</h3>
+      <ul>
+        <li>顶部是<b>实验信息</b>：名称、状态、开始（第 1 天）、结束、观测指标和描述，边输入边保存。</li>
+        <li><b>动物表格</b>可以在<b>处理</b>（Treatment）和观测指标之间切换——处理视图里每个处理日一列：对接受处理的
+          每只动物显示 ✓ 和剂量（点击修改）；观测指标视图每天一列，直接输入（<b>再加一天</b>（Another day）添加一列）。
+          每只动物的分组也在这里编辑。</li>
+        <li><b>记录处理</b>（Record manipulation）记录刚刚做了什么——<i>HDM 组今天腹腔注射他莫昔芬 20 mg/kg</i>——或处理方案中的
+          某一天。如果剂量按体重给，它会根据每只动物最近的体重算出剂量，并根据
+          溶液浓度（<i>10 mg/mL</i>）算出给药体积。勾选接受处理的动物，选择<b>所用试剂</b>（Reagent used，会记下批号；
+          过期的会标出），如果需要，还可以<b>为每只动物建一条样本记录</b>（make a sample record for each one），存到样本里，以该动物为
+          来源。</li>
+        <li><b>图表</b>按组显示观测指标随天数的变化（数值，或相对第一天的百分比；计数则是相对开始时
+          个体数的百分比）。每个处理日是一条虚线：指向它可以看到那天做了什么、是谁做的。星号标出
+          组间有差异的日子，下方的<b>逐日检验</b>（Tests by day）列出每项检验（两组用 Welch t 检验，多组用单因素方差分析，
+          计数用 χ² 检验），每天单独检验。</li>
+      </ul>
+      <h3 id="experiments-2">处理方案</h3>
+      <p><b>处理方案</b>（Regimen）列出要做什么、在哪些天做：类型、内容、剂量、途径、溶液、组别和天数
+        （<code>1</code>、<code>2-5</code>、<code>2/3/4/5</code>、<code>1, 8, 15</code>）。第 1 天就是开始日期。要做的那些天
+        会显示在日历上，实验负责人每天早上会收到当天待办的通知（在
+        <b>设置 → 通知 → 实验</b>（Settings → Notifications → Experiments）里关闭）。在页面上有人记录之前，什么都不算完成。<b>另存为
+        处理方案…</b>（Save as a regimen…）把它保存下来，用于规划下一批队列。</p>
+      <h3 id="experiments-3">在实验台上，以及之后</h3>
+      <ul>
+        <li><b>实验台模式</b>（Bench mode，用手机扫它的二维码）：选好要做的事，然后一次一只动物，数字很大——
+          输入每个体重或计数，或给每只动物做今天的处理后点<b>已给 ✓</b>（Given ✓）；最后统一记录。<b>扫描卡片</b>（Scan a card）用手机摄像头读取
+          笼卡、鱼缸卡或果蝇管卡，直接跳到里面的动物。</li>
+        <li><b>导出</b>（Export）下载一个 Excel 工作簿：观测指标的长格式（用于 Prism 或 R）和宽格式、每只动物的处理记录，以及
+          逐日检验结果。</li>
+        <li><b>添加到实验记录本</b>（Add to notebook）为这个实验建一页你的实验记录，里面实时显示它的处理和观测指标
+          （在任何页面里用 <code>/experiment</code> 都能插入一个；<b>冻结副本</b>（Freeze a copy）把它保留为当前的样子）。</li>
+      </ul>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="any-organism.html"><small>上一页</small>其他任意物种</a><a class="next" href="plasmids.html"><small>下一页</small>质粒</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：实验&amp;body=页面：https://biomanager.org/zh/guide/experiments.html%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容</p>
+      <ol>
+        <li class="lvl3"><a href="#experiments-1">实验页面</a></li>
+        <li class="lvl3"><a href="#experiments-2">处理方案</a></li>
+        <li class="lvl3"><a href="#experiments-3">在实验台上，以及之后</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager 免费开源。<a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">报告问题</a></p>
+  </div>
+</footer>
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -16,6 +16,7 @@ import json
 from sqlalchemy import func, select
 
 from . import access, positions
+from .i18n import gettext
 from .models import PlasmidBox, PlasmidRecord
 
 DEFAULT_ROWS = DEFAULT_COLS = 9
@@ -132,14 +133,16 @@ def place(session, p, box, row: int | None, col: int | None, swap: bool = False)
         p.box_row = p.box_col = None
         return None, None
     if not (0 <= row < box.rows and 0 <= col < box.cols):
-        return f"That cell is outside the box {box.name} ({span(box)}).", None
+        return gettext("That cell is outside the box %(box)s (%(span)s).", box=box.name, span=span(box)), None
     holder = at(session, box.id, row, col, p)
     if holder is not None:
-        where = f"{cell_label(box, row, col)} in {box.name}"
+        cell = cell_label(box, row, col)
         if not swap:
-            return f"{where} already holds plasmid #{holder.plasmid_id}.", None
+            return gettext("%(cell)s in %(box)s already holds plasmid #%(id)s.", cell=cell, box=box.name,
+                           id=holder.plasmid_id), None
         if not access.can_edit(holder):
-            return f"{where} holds plasmid #{holder.plasmid_id}, which you may not move.", None
+            return gettext("%(cell)s in %(box)s holds plasmid #%(id)s, which you may not move.", cell=cell,
+                           box=box.name, id=holder.plasmid_id), None
         if is_stored(p):
             old_box = session.get(PlasmidBox, p.box_id_fk)
             put_in(holder, old_box)
@@ -190,5 +193,7 @@ def box_payload(box, count: int = 0) -> dict:
 
 
 def denied_box(box) -> str:
-    who = f"{box.created_by} (who made it) or an admin" if (box.created_by or "").strip() else "an admin"
-    return f"Only {who} can change or delete the box {box.name}."
+    if (box.created_by or "").strip():
+        return gettext("Only %(who)s (who made it) or an admin can change or delete the box %(box)s.",
+                       who=box.created_by, box=box.name)
+    return gettext("Only an admin can change or delete the box %(box)s.", box=box.name)

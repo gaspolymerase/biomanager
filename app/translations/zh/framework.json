@@ -1,0 +1,10 @@
+{
+  "That %(thing)s belongs to %(owner)s. Ask them, or an admin, to make the change.": "这条%(thing)s属于 %(owner)s。请让他们或管理员来修改。",
+  "Hello %(name)s,": "%(name)s，你好：",
+  "OVERDUE": "已逾期",
+  "Open BioManager: %(url)s": "打开 BioManager：%(url)s",
+  "Open BioManager": "打开 BioManager",
+  "You are receiving this because your account has an email address. Clear it in Settings to stop.": "你收到这封邮件，是因为你的账号填写了邮箱地址。如不想再收到，请在设置中清空邮箱。",
+  "Sending through %(host)s:%(port)s as %(sender)s.": "通过 %(host)s:%(port)s 以 %(sender)s 发送。",
+  "unset sender": "未设置发件人"
+}

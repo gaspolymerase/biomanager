@@ -4,37 +4,37 @@
 
 {% set locked = plasmid.locked %}
 
-{% block page_title %}Plasmid · #{{ plasmid.plasmid_id }} {{ plasmid.name }}{% endblock %}
-{% block page_heading %}#{{ plasmid.plasmid_id }} · {{ plasmid.name or 'Unnamed' }}{% endblock %}
-{% block page_subtitle %}Plasmid{% if plasmid.length_bp %} · {{ plasmid.length_bp }} bp{% endif %}{% if plasmid.is_circular %} · circular{% elif plasmid.length_bp %} · linear{% endif %}{% if plasmid.sequence_format %} · {{ plasmid.sequence_format }}{% endif %}{% endblock %}
+{% block page_title %}{{ _('Plasmid') }} · #{{ plasmid.plasmid_id }} {{ plasmid.name }}{% endblock %}
+{% block page_heading %}#{{ plasmid.plasmid_id }} · {{ plasmid.name or _('Unnamed') }}{% endblock %}
+{% block page_subtitle %}{{ _('Plasmid') }}{% if plasmid.length_bp %} · {{ plasmid.length_bp }} bp{% endif %}{% if plasmid.is_circular %} · {{ _('circular') }}{% elif plasmid.length_bp %} · {{ _('linear') }}{% endif %}{% if plasmid.sequence_format %} · {{ plasmid.sequence_format }}{% endif %}{% endblock %}
 {% block page_shell_class %}shell-page-wide{% endblock %}
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('plasmids') }}">{{ icon('chevron-left') }} All plasmids</a>
+  <a class="btn" href="{{ url_for('plasmids') }}">{{ icon('chevron-left') }} {{ _('All plasmids') }}</a>
 {% endblock %}
 
 {% block page_nav %}
   <div class="mb-3 flex flex-wrap items-center gap-3">
-    <nav class="seg" role="tablist" aria-label="Plasmid sections">
-      <button type="button" class="seg-item plasmid-tab is-active" data-tab="sequence" role="tab">{{ icon('dna') }}Sequence</button>
-      <button type="button" class="seg-item plasmid-tab" data-tab="storage" role="tab">{{ icon('box') }}Storage</button>
-      <button type="button" class="seg-item plasmid-tab" data-tab="properties" role="tab">{{ icon('sliders') }}Properties</button>
+    <nav class="seg" role="tablist" aria-label="{{ _('Plasmid sections') }}">
+      <button type="button" class="seg-item plasmid-tab is-active" data-tab="sequence" role="tab">{{ icon('dna') }}{{ _('Sequence') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="storage" role="tab">{{ icon('box') }}{{ _('Storage') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="properties" role="tab">{{ icon('sliders') }}{{ _('Properties') }}</button>
     </nav>
     <div class="plasmid-meta">
       {% if plasmid.owner %}<span class="plasmid-meta-item">{{ plasmid.owner | owner_badge }} {{ plasmid.owner }}</span>
-      {% else %}<span class="plasmid-meta-item text-muted">No owner: anyone can edit</span>{% endif %}
-      <span class="plasmid-meta-item" title="{{ 'In a box' if plasmid.stored else 'Not stored' }}">
+      {% else %}<span class="plasmid-meta-item text-muted">{{ _('No owner: anyone can edit') }}</span>{% endif %}
+      <span class="plasmid-meta-item" title="{{ _('In a box') if plasmid.stored else _('Not stored') }}">
         <span class="life-dot{% if plasmid.stored %} is-alive{% endif %}"></span>
         {% if plasmid.stored %}{{ plasmid.storage_box }} · <span class="ident">{{ plasmid.position }}</span>{% if plasmid.box_location %} · {{ plasmid.box_location }}{% endif %}
-        {% elif plasmid.storage_box %}{{ plasmid.storage_box }} · no cell yet
-        {% else %}Not stored{% endif %}
+        {% elif plasmid.storage_box %}{{ plasmid.storage_box }} · {{ _('no cell yet') }}
+        {% else %}{{ _('Not stored') }}{% endif %}
       </span>
       {% if locked %}
-        <span class="plasmid-meta-item plasmid-meta-lock">{{ icon('lock') }} Read only</span>
+        <span class="plasmid-meta-item plasmid-meta-lock">{{ icon('lock') }} {{ _('Read only') }}</span>
       {% endif %}
     </div>
   </div>
   {% if locked %}
-    <p class="plasmid-lock-note">{{ plasmid.denied }} You can still view the map, copy the sequence, or duplicate it from the plasmid list.</p>
+    <p class="plasmid-lock-note">{{ plasmid.denied }} {{ _('You can still view the map, copy the sequence, or duplicate it from the plasmid list.') }}</p>
   {% endif %}
 {% endblock %}
 
@@ -61,43 +61,43 @@
   <div id="ove-shell">
     <div class="ove-bar">
       <span class="text-[12px] text-muted">
-        {% if locked %}Read only.{% else %}Edits save as you make them. Select bases, then <strong>Edit → Create</strong> for a feature, primer or translation. An empty sequence is never saved; use <strong>Clear sequence</strong> below.{% endif %}
+        {% if locked %}{{ _('Read only.') }}{% else %}{% trans %}Edits save as you make them. Select bases, then <strong>Edit → Create</strong> for a feature, primer or translation. An empty sequence is never saved; use <strong>Clear sequence</strong> below.{% endtrans %}{% endif %}
       </span>
       <span class="flex items-center gap-3">
         <span class="sheet-save" id="ove-status" aria-live="polite"></span>
-        <button type="button" class="btn btn-sm" id="ove-fullscreen" hidden><span>Full screen</span></button>
+        <button type="button" class="btn btn-sm" id="ove-fullscreen" hidden><span>{{ _('Full screen') }}</span></button>
       </span>
     </div>
     <div id="ove-root" class="ove-root" data-plasmid-id="{{ plasmid.row_id }}"
          data-plasmid-name="{{ plasmid.name or ('Plasmid #' ~ plasmid.plasmid_id) }}"
          data-locked="{{ '1' if locked else '0' }}">
-      <div class="ove-loading">Loading the sequence editor…</div>
+      <div class="ove-loading">{{ _('Loading the sequence editor…') }}</div>
     </div>
   </div>
 
   {% if not locked %}
     {# Replace the whole sequence from a file in one step. #}
     <details class="fold-card mt-4">
-      <summary>{{ icon('upload') }} Replace the sequence from a file</summary>
+      <summary>{{ icon('upload') }} {{ _('Replace the sequence from a file') }}</summary>
       <form method="post" action="{{ url_for('plasmid_upload_sequence', row_id=plasmid.row_id) }}"
             enctype="multipart/form-data" class="flex flex-col gap-3 px-4 py-3.5"
-            {% if plasmid.length_bp %}data-confirm="Replace the {{ plasmid.length_bp }} bp sequence and its {{ plasmid.features|length }} feature(s) of plasmid #{{ plasmid.plasmid_id }}? The old one stays in the audit history."{% endif %}>
-        <label class="field-label">SnapGene .dna, GenBank .gb / .gbk, or FASTA
+            {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? The old one stays in the audit history.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
+        <label class="field-label">{{ _('SnapGene .dna, GenBank .gb / .gbk, or FASTA') }}
           <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[12.5px] normal-case tracking-normal">
         </label>
         <details class="dropzone-paste">
-          <summary>Paste annotated text instead (FASTA or GenBank)</summary>
-          <textarea name="sequence_text" rows="4" placeholder="&gt;pTest&#10;ATGCGTAAACCC…&#10;&#10;…or a GenBank LOCUS … // record"></textarea>
+          <summary>{{ _('Paste annotated text instead (FASTA or GenBank)') }}</summary>
+          <textarea name="sequence_text" rows="4" placeholder="&gt;pTest&#10;ATGCGTAAACCC…&#10;&#10;{{ _('…or a GenBank LOCUS … // record') }}"></textarea>
         </details>
-        <button type="submit" class="btn btn-primary self-start">Replace sequence</button>
+        <button type="submit" class="btn btn-primary self-start">{{ _('Replace sequence') }}</button>
       </form>
     </details>
 
     {% if plasmid.length_bp %}
       <form method="post" action="{{ url_for('plasmid_clear_sequence', row_id=plasmid.row_id) }}" class="mt-3"
-            data-confirm="Clear the whole {{ plasmid.length_bp }} bp sequence of plasmid #{{ plasmid.plasmid_id }}? The old one stays in the audit history.">
+            data-confirm="{{ _('Clear the whole %(bp)s bp sequence of plasmid #%(id)s? The old one stays in the audit history.', bp=plasmid.length_bp, id=plasmid.plasmid_id) }}">
         <input type="hidden" name="confirm" value="1">
-        <button type="submit" class="btn btn-ghost btn-sm text-danger-700">{{ icon('trash') }} Clear sequence</button>
+        <button type="submit" class="btn btn-ghost btn-sm text-danger-700">{{ icon('trash') }} {{ _('Clear sequence') }}</button>
       </form>
     {% endif %}
   {% endif %}
@@ -109,16 +109,16 @@
     <form method="post" action="{{ url_for('update_plasmid', row_id=plasmid.row_id) }}" class="modal-grid p-4">
       <input type="hidden" name="box_id_was" value="{{ plasmid.box_id }}">
       <input type="hidden" name="position_was" value="{{ plasmid.position }}">
-      <label>Owner <input name="owner" value="{{ plasmid.owner }}" list="sheet-owners" {% if locked or not plasmid.can_manage %}disabled{% endif %}></label>
-      <label>Belongs to
+      <label>{{ _('Owner') }} <input name="owner" value="{{ plasmid.owner }}" list="sheet-owners" {% if locked or not plasmid.can_manage %}disabled{% endif %}></label>
+      <label>{{ _('Belongs to') }}
         <select name="is_shared" {% if locked or not plasmid.can_manage %}disabled{% endif %}>
           {{ sharing.sharing_options(plasmid.share_value, plasmid.share_group_id, lab="Lab common: anyone can edit") }}
         </select>
       </label>
-      <label>Storage location <input name="location" value="{{ plasmid.location }}" placeholder="−80 freezer, shelf 2 (when not in a box)" {% if locked %}disabled{% endif %}></label>
-      <label>Box
+      <label>{{ _('Storage location') }} <input name="location" value="{{ plasmid.location }}" placeholder="{{ _('−80 freezer, shelf 2 (when not in a box)') }}" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Box') }}
         <select name="box_id" {% if locked %}disabled{% endif %}>
-          <option value="">Not in a box</option>
+          <option value="">{{ _('Not in a box') }}</option>
           {% for location, group in boxes | groupby('location') %}
             {% if location %}<optgroup label="{{ location }}">{% endif %}
             {% for b in group %}<option value="{{ b.id }}" {% if b.id == plasmid.box_id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
@@ -126,25 +126,26 @@
           {% endfor %}
         </select>
       </label>
-      <label>Position <input name="position" value="{{ plasmid.position }}" class="font-mono"
-                             placeholder="{{ 'e.g. ' ~ plasmid.box_span if plasmid.box_span else 'pick a box first' }}"
-                             title="Named the way the box names its cells{{ ' (' ~ plasmid.box_span ~ ')' if plasmid.box_span }}" {% if locked %}disabled{% endif %}></label>
-      <label>Concentration (ng/µL) <input name="concentration" value="{{ plasmid.concentration }}" inputmode="decimal" placeholder="e.g. 412" {% if locked %}disabled{% endif %}></label>
-      <label>260/280 <input name="a260_280" value="{{ plasmid.a260_280 }}" inputmode="decimal" placeholder="e.g. 1.86" {% if locked %}disabled{% endif %}></label>
-      <label class="col-span-full">Notes
-        <textarea name="notes" rows="4" placeholder="Lot, related orders, sequencing…" {% if locked %}disabled{% endif %}>{{ plasmid.notes }}</textarea>
+      <label>{{ pgettext('plasmid', 'Position') }} <input name="position" value="{{ plasmid.position }}" class="font-mono"
+                             placeholder="{{ _('e.g. %(example)s', example=plasmid.box_span) if plasmid.box_span else _('pick a box first') }}"
+                             title="{{ _('Named the way the box names its cells (%(span)s)', span=plasmid.box_span) if plasmid.box_span else _('Named the way the box names its cells') }}" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Concentration (ng/µL)') }} <input name="concentration" value="{{ plasmid.concentration }}" inputmode="decimal" placeholder="{{ _('e.g. %(example)s', example='412') }}" {% if locked %}disabled{% endif %}></label>
+      <label>260/280 <input name="a260_280" value="{{ plasmid.a260_280 }}" inputmode="decimal" placeholder="{{ _('e.g. %(example)s', example='1.86') }}" {% if locked %}disabled{% endif %}></label>
+      <label class="col-span-full">{{ _('Notes') }}
+        <textarea name="notes" rows="4" placeholder="{{ _('Lot, related orders, sequencing…') }}" {% if locked %}disabled{% endif %}>{{ plasmid.notes }}</textarea>
       </label>
-      {% if not locked %}<button type="submit">Save storage</button>{% endif %}
+      {% if not locked %}<button type="submit">{{ _('Save storage') }}</button>{% endif %}
     </form>
     {% if plasmid.updated_at %}
       <p class="flex items-center gap-1.5 border-t border-sand-100 px-4 py-2.5 text-[12px] text-muted">
-        Last edited {{ plasmid.updated_at }}{% if plasmid.updated_by %} by {{ plasmid.updated_by | owner_badge }}{% endif %}
+        {% if plasmid.updated_by %}{% trans when=plasmid.updated_at, who=plasmid.updated_by|owner_badge %}Last edited {{ when }} by {{ who }}{% endtrans %}
+        {% else %}{% trans when=plasmid.updated_at %}Last edited {{ when }}{% endtrans %}{% endif %}
       </p>
     {% endif %}
   </div>
   {# What was made from it: a virus's "Made from" column names this plasmid. #}
   <article class="card mt-3 max-w-[760px]" id="made-from">
-    <header class="card-head"><h2>{{ icon('virus') }} Made from this plasmid</h2>
+    <header class="card-head"><h2>{{ icon('virus') }} {{ _('Made from this plasmid') }}</h2>
       {% if made_from %}<span class="badge badge-quiet">{{ made_from|length }}</span>{% endif %}</header>
     {% if made_from %}
       <div class="flex flex-col">
@@ -152,19 +153,18 @@
           <a class="row-line" href="{{ m.url }}">
             <span class="life-dot{% if m.available %} is-alive{% endif %}"></span>
             <span class="min-w-0 flex-1 truncate font-medium text-ink">{{ m.label }}</span>
-            <span class="shrink-0 text-[12px] text-muted">{{ m.database }} #{{ m.number }}{% if m.status %} · {{ m.status }}{% endif %}</span>
+            <span class="shrink-0 text-[12px] text-muted">{{ m.database|tr }} #{{ m.number }}{% if m.status %} · {{ m.status|tr }}{% endif %}</span>
           </a>
         {% endfor %}
       </div>
     {% else %}
-      <p class="px-4 py-3 text-[12.5px] text-muted">Nothing yet. A virus whose <b>Made from</b> names plasmid
-        #{{ plasmid.plasmid_id }} shows here.</p>
+      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A virus whose <b>Made from</b> names plasmid #{{ number }} shows here.{% endtrans %}</p>
     {% endif %}
   </article>
   <article class="card mt-3 max-w-[760px] used-in" data-used-in="plasmid" data-used-in-number="{{ plasmid.plasmid_id }}" hidden>
-    <header class="card-head"><h2>{{ icon('notebook') }} Used in notebook pages</h2></header>
+    <header class="card-head"><h2>{{ icon('notebook') }} {{ _('Used in notebook pages') }}</h2></header>
     <div class="px-4 py-3">
-      <p class="used-in-hint">Link it from a page by typing <code data-used-in-code></code>.</p>
+      <p class="used-in-hint">{% trans %}Link it from a page by typing <code data-used-in-code></code>.{% endtrans %}</p>
       <div data-used-in-list></div>
     </div>
   </article>
@@ -174,11 +174,11 @@
 <section class="plasmid-tab-panel" data-panel="properties">
   <div class="card max-w-[760px] overflow-hidden">
     <form method="post" action="{{ url_for('update_plasmid', row_id=plasmid.row_id) }}" class="modal-grid p-4">
-      <label>Name <input name="name" value="{{ plasmid.name }}" required {% if locked %}disabled{% endif %}></label>
-      <label>Backbone <input name="backbone" value="{{ plasmid.backbone }}" {% if locked %}disabled{% endif %}></label>
-      <label>Insert <input name="insert_seq" value="{{ plasmid.insert_seq }}" {% if locked %}disabled{% endif %}></label>
-      <label>Resistance <input name="resistance" value="{{ plasmid.resistance }}" list="plasmid-resistance" {% if locked %}disabled{% endif %}></label>
-      {% if not locked %}<button type="submit">Save properties</button>{% endif %}
+      <label>{{ _('Name') }} <input name="name" value="{{ plasmid.name }}" required {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Backbone') }} <input name="backbone" value="{{ plasmid.backbone }}" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Insert') }} <input name="insert_seq" value="{{ plasmid.insert_seq }}" {% if locked %}disabled{% endif %}></label>
+      <label>{{ _('Resistance') }} <input name="resistance" value="{{ plasmid.resistance }}" list="plasmid-resistance" {% if locked %}disabled{% endif %}></label>
+      {% if not locked %}<button type="submit">{{ _('Save properties') }}</button>{% endif %}
     </form>
   </div>
 </section>
@@ -227,11 +227,11 @@
     fsButton.hidden = false;
     fsButton.addEventListener('click', () => {
       if (document.fullscreenElement) document.exitFullscreen();
-      else shell.requestFullscreen().catch((err) => say('error', `Full screen is not available: ${err.message}`));
+      else shell.requestFullscreen().catch((err) => say('error', t('Full screen is not available: %(error)s', { error: err.message })));
     });
     document.addEventListener('fullscreenchange', () => {
       const on = document.fullscreenElement === shell;
-      fsButton.querySelector('span').textContent = on ? 'Exit full screen' : 'Full screen';
+      fsButton.querySelector('span').textContent = on ? t('Exit full screen') : t('Full screen');
       // The editor sizes itself on resize; nudge it when the frame changes.
       window.dispatchEvent(new Event('resize'));
     });
@@ -261,11 +261,11 @@
     waitForOve(),
   ]).then(([data, state]) => {
     if (state === 'missing') {
-      root.innerHTML = '<div class="ove-error">The sequence editor didn\'t load. Run <code>cd frontend &amp;&amp; npm run build:plasmid</code>, then hard-refresh.</div>';
+      root.innerHTML = '<div class="ove-error">' + t('The sequence editor didn’t load. Run %(command)s, then hard-refresh.', { command: '<code>cd frontend &amp;&amp; npm run build:plasmid</code>' }) + '</div>';
       return;
     }
     if (state === 'broken') {
-      root.innerHTML = '<div class="ove-error">OVE crashed at startup. Open DevTools → Console for the error.</div>';
+      root.innerHTML = '<div class="ove-error">' + t('OVE crashed at startup. Open DevTools → Console for the error.') + '</div>';
       return;
     }
     // Clear our placeholder. OVE renders into an empty container.
@@ -279,27 +279,27 @@
       doNotUseAbsolutePosition: true,
       onSave: function (event, sequenceData, editorState, onSuccess) {
         if (locked) return;
-        say('saving', 'Saving…');
+        say('saving', t('Saving…'));
         fetch(`/plasmids/${plasmidId}/sequence-save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sequenceData }),
         })
-          .then((r) => r.json().catch(() => ({ ok: false, error: `The server answered ${r.status}.` })))
+          .then((r) => r.json().catch(() => ({ ok: false, error: t('The server answered %(status)s.', { status: r.status }) })))
           .then((j) => {
             if (j && j.ok) {
               const c = j.counts || { features: j.features };
-              const parts = [`${c.features} feature${c.features === 1 ? '' : 's'}`];
-              if (c.primers) parts.push(`${c.primers} primer${c.primers === 1 ? '' : 's'}`);
-              if (c.translations) parts.push(`${c.translations} translation${c.translations === 1 ? '' : 's'}`);
-              if (c.parts) parts.push(`${c.parts} part${c.parts === 1 ? '' : 's'}`);
-              say('saved', `Saved · ${j.length} bp · ${parts.join(' · ')}`);
+              const parts = [t(c.features === 1 ? '%(n)s feature' : '%(n)s features', { n: c.features })];
+              if (c.primers) parts.push(t(c.primers === 1 ? '%(n)s primer' : '%(n)s primers', { n: c.primers }));
+              if (c.translations) parts.push(t(c.translations === 1 ? '%(n)s translation' : '%(n)s translations', { n: c.translations }));
+              if (c.parts) parts.push(t(c.parts === 1 ? '%(n)s part' : '%(n)s parts', { n: c.parts }));
+              say('saved', t('Saved · %(length)s bp · %(parts)s', { length: j.length, parts: parts.join(' · ') }));
               if (onSuccess) onSuccess();
             } else {
-              say('error', `Not saved: ${(j && j.error) || 'unknown error'}`);
+              say('error', t('Not saved: %(error)s', { error: (j && j.error) || t('unknown error') }));
             }
           })
-          .catch((err) => say('error', `Not saved: ${err.message}`));
+          .catch((err) => say('error', t('Not saved: %(error)s', { error: err.message })));
       },
     });
 

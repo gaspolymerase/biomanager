@@ -17,6 +17,7 @@ from sqlalchemy import String, func, inspect, select, text
 from sqlalchemy.orm import load_only
 
 from .db import BASE_DIR, Base, SessionLocal, engine
+from .i18n import gettext
 from .integrity import ensure_integrity
 from .paths import uploads_dir
 from .models import (
@@ -773,8 +774,8 @@ def get_or_create_litter(session, litter_code: str, dob: date | None = None) -> 
         if not has_request_context() or access.can_edit_litter(litter):
             litter.date_of_birth = dob
         else:
-            flash(f"Litter {litter.litter_id} keeps its date of birth "
-                  f"({litter.date_of_birth or 'not set'}): it has mice you can't edit.", "info")
+            flash(gettext("Litter %(litter)s keeps its date of birth (%(dob)s): it has mice you can't edit.",
+                          litter=litter.litter_id, dob=litter.date_of_birth or gettext("not set")), "info")
     return litter
 
 
@@ -1028,13 +1029,16 @@ def weaning_due(session, start: date, end: date) -> list[dict]:
 
 
 def weaning_title(item: dict) -> str:
-    """"Litter L-12 · cage 12", or "Cage 12" before the pups are entered."""
-    parts = []
-    if item["litter"] is not None:
-        parts.append(f"Litter {item['litter'].litter_id}")
-    if item["cage"] is not None:
-        parts.append(("cage " if parts else "Cage ") + item["cage"].cage_id)
-    return " · ".join(parts) or "A litter"
+    """"Litter L-12 · cage 12", or "Cage 12" before the pups are entered
+    (in the page's language)."""
+    litter, cage = item["litter"], item["cage"]
+    if litter is not None and cage is not None:
+        return gettext("Litter %(litter)s · cage %(cage)s", litter=litter.litter_id, cage=cage.cage_id)
+    if litter is not None:
+        return gettext("Litter %(litter)s", litter=litter.litter_id)
+    if cage is not None:
+        return gettext("Cage %(cage)s", cage=cage.cage_id)
+    return gettext("A litter")
 
 
 def mark_weaned(cage: CageRecord, when: date | None = None) -> list[LitterRecord]:
@@ -1088,12 +1092,16 @@ def current_lab_usernames(session) -> list[str]:
 
 
 def add_notification(session, recipient_username: str, title: str, message: str, category: str = "general",
-                     link: str = "", actor: str = "") -> None:
+                     link: str = "", actor: str = "", values: dict | None = None,
+                     message_values: dict | None = None) -> None:
     """Insert a notification, respecting the recipient's per-category
     preferences (notify_<category> on UserAccount). See app/notify.py, which
-    also sends most notifications by itself when records change."""
+    also sends most notifications by itself when records change, and writes
+    each in its recipient's language (`values`, `message_values`: see
+    notify.send)."""
     from . import notify
-    notify.send(session, recipient_username, title, message, category=category, link=link, actor=actor)
+    notify.send(session, recipient_username, title, message, category=category, link=link, actor=actor,
+                values=values, message_values=message_values)
 
 
 def recent_notifications(session, recipient_username: str, limit: int = 8) -> list[NotificationRecord]:
@@ -1447,7 +1455,8 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         if dob is None:
             continue
 
-        location_label = (cage.cage_location or cage.cage_id or f"Cage {cage.id}").strip() or f"Cage {cage.id}"
+        location_label = ((cage.cage_location or cage.cage_id or "").strip()
+                          or gettext("Cage %(cage)s", cage=cage.id))
 
         # Try to find the litter belonging to this cage: same DOB AND at
         # least one mouse in this cage. Fall back gracefully if missing.
@@ -1466,13 +1475,13 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         cage_geno = (cage.genotype_summary or "").strip()
         # Compose the notes line. Always include DOB; include parent geno
         # info when present, otherwise fall back to the cage's own summary.
-        body_parts = [f"DOB {dob.isoformat()}"]
+        body_parts = [gettext("DOB %(date)s", date=dob.isoformat())]
         if father:
-            body_parts.append(f"Father: {father}")
+            body_parts.append(gettext("Father: %(mouse)s", mouse=father))
         if mother:
-            body_parts.append(f"Mother: {mother}")
+            body_parts.append(gettext("Mother: %(mouse)s", mouse=mother))
         if cage_geno and not (father or mother):
-            body_parts.append(f"Genotype: {cage_geno}")
+            body_parts.append(gettext("Genotype: %(genotype)s", genotype=cage_geno))
         body = " · ".join(body_parts)
 
         # Weaning comes from weaning_due below, the same list Home shows.
@@ -1480,7 +1489,7 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         if _in_window(geno):
             items.append(_auto_item(
                 kind_tag="geno", anchor_id=cage.id,
-                title=f"Genotype - {location_label}",
+                title=gettext("Genotype - %(where)s", where=location_label),
                 color="#fcb77e",  # apricot
                 day=geno, body=body, source="cage",
                 href=f"/colony?view=cages&scope=all&q={quote(str(cage.cage_id))}",
@@ -1497,20 +1506,21 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
     hi = _day(end_dt, date.today() + timedelta(days=365))
     for wean in weaning_due(session, lo, hi):
         cage, litter = wean["cage"], wean["litter"]
-        body_parts = [f"DOB {wean['born'].isoformat()}"]
+        body_parts = [gettext("DOB %(date)s", date=wean["born"].isoformat())]
         if litter is not None:
             father = _parent_label(session, litter.father_info)
             mother = _parent_label(session, litter.mother_info)
-            body_parts += [f"Father: {father}"] if father else []
-            body_parts += [f"Mother: {mother}"] if mother else []
+            body_parts += [gettext("Father: %(mouse)s", mouse=father)] if father else []
+            body_parts += [gettext("Mother: %(mouse)s", mouse=mother)] if mother else []
         if cage is not None and (cage.genotype_summary or "").strip() and len(body_parts) == 1:
-            body_parts.append(f"Genotype: {cage.genotype_summary.strip()}")
+            body_parts.append(gettext("Genotype: %(genotype)s", genotype=cage.genotype_summary.strip()))
         where = ""
         if cage is not None:
             where = (cage.cage_location or "").strip()
         items.append(_auto_item(
             kind_tag="wean", anchor_id=(cage.id if cage is not None else litter.id),
-            title=f"Wean - {weaning_title(wean)}" + (f" ({where})" if where else ""),
+            title=(gettext("Wean - %(what)s (%(where)s)", what=weaning_title(wean), where=where) if where
+                   else gettext("Wean - %(what)s", what=weaning_title(wean))),
             color="#b6e2a1",  # pistachio
             day=wean["due"], body=" · ".join(body_parts), source="cage" if cage is not None else "litter",
             href=(f"/colony?view=cages&scope=all#cage-{cage.id}" if cage is not None else "/colony?view=litters"),
@@ -1535,10 +1545,10 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
             continue
         items.append(_auto_item(
             kind_tag="sac", anchor_id=m.id,
-            title=f"Sac reminder · M{m.mouse_id}",
+            title=gettext("Sac reminder · M%(mouse)s", mouse=m.mouse_id),
             color="#f9a8a8",  # rose — gentle warning
             day=threshold_day,
-            body=f"{SAC_THRESHOLD_WEEKS} weeks since litter DOB ({dob.isoformat()})",
+            body=gettext("%(weeks)s weeks since litter DOB (%(date)s)", weeks=SAC_THRESHOLD_WEEKS, date=dob.isoformat()),
             source="mouse",
             href=f"/colony?view=mice&scope=all&q={m.mouse_id}",
         ))
@@ -1553,7 +1563,7 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         if ex.start_date and _in_window(ex.start_date):
             items.append(_auto_item(
                 kind_tag="start", anchor_id=ex.id,
-                title=f"Exp start · {ex.name}",
+                title=gettext("Exp start · %(name)s", name=ex.name),
                 color="#c4b5fd",  # lavender
                 day=ex.start_date,
                 body=(ex.description or "")[:200],
@@ -1563,7 +1573,7 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         if ex.end_date and _in_window(ex.end_date):
             items.append(_auto_item(
                 kind_tag="end", anchor_id=ex.id,
-                title=f"Exp end · {ex.name}",
+                title=gettext("Exp end · %(name)s", name=ex.name),
                 color="#a4c8f0",  # sky
                 day=ex.end_date,
                 body=(ex.description or "")[:200],
@@ -1581,24 +1591,24 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
             continue
         label = c.clutch_id or f"C{c.id}"
         line_name = c.line.name if c.line else ""
-        body_parts = [f"DOF {dof.isoformat()}"]
+        body_parts = [gettext("DOF %(date)s", date=dof.isoformat())]
         if line_name:
-            body_parts.append(f"Line: {line_name}")
+            body_parts.append(gettext("Line: %(line)s", line=line_name))
         if c.embryo_count:
-            body_parts.append(f"Embryos: {c.embryo_count}")
+            body_parts.append(gettext("Embryos: %(n)s", n=c.embryo_count))
         body = " · ".join(body_parts)
 
         milestones = [
-            ("tank-up", 5,  "#a3e0d8", "Tank up"),
-            ("fin-clip", 30, "#fcb77e", "Fin clip"),
-            ("adult", 90, "#c4b5fd", "Adult"),
+            ("tank-up", 5,  "#a3e0d8", gettext("Tank up · %(clutch)s", clutch=label)),
+            ("fin-clip", 30, "#fcb77e", gettext("Fin clip · %(clutch)s", clutch=label)),
+            ("adult", 90, "#c4b5fd", gettext("Adult · %(clutch)s", clutch=label)),
         ]
-        for tag, offset, color, label_word in milestones:
+        for tag, offset, color, title in milestones:
             day = dof + timedelta(days=offset)
             if _in_window(day):
                 items.append(_auto_item(
                     kind_tag=tag, anchor_id=c.id,
-                    title=f"{label_word} · {label}",
+                    title=title,
                     color=color, day=day, body=body,
                     source="clutch",
                     href=f"/zebrafish?view=clutches#clutch-{c.id}",
@@ -1616,7 +1626,7 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
             continue
         items.append(_auto_item(
             kind_tag="mating-return", anchor_id=t.id,
-            title=f"Return mating · {t.tank_id}",
+            title=gettext("Return mating · %(tank)s", tank=t.tank_id),
             color="#f4b8d8",  # pink
             day=d,
             body=(t.notes or "")[:200],

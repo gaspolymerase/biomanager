@@ -30,8 +30,9 @@ from flask import Blueprint, Response, abort, g, jsonify, request, url_for
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from . import access, home_layouts, notify
+from . import access, home_layouts, i18n, notify
 from .db import SessionLocal
+from .i18n import gettext, ngettext, pgettext
 from .models import (Absence, CalendarEvent, CalendarFeed, CalendarRepeat, Equipment, EquipmentBooking,
                      Experiment, ProtocolRun, ProtocolTemplate, TaskItem, UserAccount)
 
@@ -41,6 +42,7 @@ bp = Blueprint("labcal", __name__, url_prefix="/calendar")
 # date ("the first Monday", or "the last Friday" when it is the fifth).
 FREQS = {"daily": "day", "weekly": "week", "monthly": "month", "nthweekday": "month"}
 ORDINALS = ("first", "second", "third", "fourth", "last")
+# The kinds of away time (how each reads on the calendar: absence_items).
 ABSENCE_KINDS = {"leave": "away", "conference": "at a conference", "other": "away"}
 # Colours of the calendar's layers; items may carry their own.
 COLORS = {"stocks": "#af52de", "supplies": "#ff2d55", "protocols": "#5856d6",
@@ -59,7 +61,7 @@ def require_login():
     if request.endpoint == "labcal.feed_ics":
         return None
     if g.get("user") is None:
-        return jsonify({"ok": False, "error": "Sign in first."}), 401
+        return jsonify({"ok": False, "error": gettext("Sign in first.")}), 401
 
 
 # ---------------------------------------------------------------- helpers
@@ -217,16 +219,33 @@ def repeats_by_event(session, event_ids) -> dict[int, CalendarRepeat]:
         select(CalendarRepeat).where(CalendarRepeat.event_id_fk.in_(list(event_ids))))}
 
 
+def _ordinal(n: int) -> str:
+    """"first" … "fourth", or "last" (ORDINALS), in the page's language."""
+    return (pgettext("weekday of the month", "first"), pgettext("weekday of the month", "second"),
+            pgettext("weekday of the month", "third"), pgettext("weekday of the month", "fourth"),
+            pgettext("weekday of the month", "last"))[n]
+
+
 def repeat_summary(repeat: CalendarRepeat | None, first: date | None = None) -> dict | None:
+    """How an event repeats, in words: "Every 2 weeks", "Every month on the
+    second Monday until 03 Oct 2026" (in the page's language)."""
     if repeat is None:
         return None
+    n = repeat.interval if repeat.interval > 1 else 1
     unit = FREQS.get(repeat.freq, "week")
-    every = f"Every {unit}" if repeat.interval <= 1 else f"Every {repeat.interval} {unit}s"
     if repeat.freq == "nthweekday" and first is not None:
-        every += f" on the {ORDINALS[weekday_of_month(first)]} {first:%A}"
+        every = ngettext("Every month on the %(nth)s %(weekday)s", "Every %(num)s months on the %(nth)s %(weekday)s",
+                         n, nth=_ordinal(weekday_of_month(first)), weekday=i18n.strftime(first, "%A"))
+    elif unit == "day":
+        every = ngettext("Every day", "Every %(num)s days", n)
+    elif unit == "month":
+        every = ngettext("Every month", "Every %(num)s months", n)
+    else:
+        every = ngettext("Every week", "Every %(num)s weeks", n)
+    if repeat.until:
+        every = gettext("%(every)s until %(date)s", every=every, date=i18n.strftime(repeat.until, "%d %b %Y"))
     return {"freq": repeat.freq, "interval": repeat.interval,
-            "until": repeat.until.isoformat() if repeat.until else "",
-            "text": every + (f" until {repeat.until:%d %b %Y}" if repeat.until else "")}
+            "until": repeat.until.isoformat() if repeat.until else "", "text": every}
 
 
 def save_repeat(session, event: CalendarEvent, data) -> None:
@@ -260,9 +279,9 @@ def skip_occurrence(event_id: int):
         repeat = s.scalar(select(CalendarRepeat).where(CalendarRepeat.event_id_fk == event_id))
         event = s.get(CalendarEvent, event_id)
         if repeat is None or event is None or day is None:
-            return _refuse("That event does not repeat.", 404)
+            return _refuse(gettext("That event does not repeat."), 404)
         if not event_can_edit(event):
-            return _refuse("Only the person who added this event, or an admin, can change it.", 403)
+            return _refuse(gettext("Only the person who added this event, or an admin, can change it."), 403)
         skip = [d for d in (repeat.skip or "").split(",") if d]
         if day.isoformat() not in skip:
             skip.append(day.isoformat())
@@ -320,7 +339,7 @@ def clean_steps(raw) -> list[dict]:
 
 
 def _run_label(run: ProtocolRun) -> str:
-    return run.label or run.name or "Protocol"
+    return run.label or run.name or gettext("Protocol")
 
 
 def protocol_items(session, start: date, end: date, owner: str | None = None) -> list[dict]:
@@ -335,7 +354,8 @@ def protocol_items(session, start: date, end: date, owner: str | None = None) ->
             last = run.start_date + timedelta(days=step["to"])
             if last < start or first > end:
                 continue
-            days = f"day {step['from']}" + (f"–{step['to']}" if step["to"] != step["from"] else "")
+            days = (gettext("day %(n)s", n=step["from"]) if step["to"] == step["from"]
+                    else gettext("day %(first)s–%(last)s", first=step["from"], last=step["to"]))
             out.append(_allday(f"protocol-{run.id}-{n}", "protocols", "protocol",
                                f"{step['title']} · {_run_label(run)}", first, last,
                                run.color or COLORS["protocols"], f"{run.name}, {days}",
@@ -372,16 +392,16 @@ def save_template():
     name = str(data.get("name", "")).strip()[:120]
     steps = clean_steps(data.get("steps"))
     if not name:
-        return _refuse("Give the protocol a name.")
+        return _refuse(gettext("Give the protocol a name."))
     if not steps:
-        return _refuse("Add at least one step with a title.")
+        return _refuse(gettext("Add at least one step with a title."))
     with SessionLocal() as s:
         if data.get("id"):
             t = s.get(ProtocolTemplate, _int(data["id"]))
             if t is None:
-                return _refuse("That protocol no longer exists.", 404)
+                return _refuse(gettext("That protocol no longer exists."), 404)
             if not _can_edit(t.owner):
-                return _refuse("Only the person who wrote this protocol can change it.", 403)
+                return _refuse(gettext("Only the person who wrote this protocol can change it."), 403)
         else:
             t = ProtocolTemplate(owner=_me())
             s.add(t)
@@ -397,9 +417,9 @@ def delete_template(template_id: int):
     with SessionLocal() as s:
         t = s.get(ProtocolTemplate, template_id)
         if t is None:
-            return _refuse("That protocol no longer exists.", 404)
+            return _refuse(gettext("That protocol no longer exists."), 404)
         if not _can_edit(t.owner):
-            return _refuse("Only the person who wrote this protocol can delete it.", 403)
+            return _refuse(gettext("Only the person who wrote this protocol can delete it."), 403)
         s.delete(t)  # runs keep their own copy of the steps
         s.commit()
     return jsonify({"ok": True})
@@ -410,18 +430,18 @@ def save_run():
     data = request.get_json(silent=True) or {}
     start = _date(data.get("start_date"))
     if start is None:
-        return _refuse("Choose a start date (day 0).")
+        return _refuse(gettext("Choose a start date (day 0)."))
     with SessionLocal() as s:
         if data.get("id"):
             run = s.get(ProtocolRun, _int(data["id"]))
             if run is None:
-                return _refuse("That protocol run no longer exists.", 404)
+                return _refuse(gettext("That protocol run no longer exists."), 404)
             if not _can_edit(run.owner):
-                return _refuse("Only the person who started this protocol can change it.", 403)
+                return _refuse(gettext("Only the person who started this protocol can change it."), 403)
         else:
             template = s.get(ProtocolTemplate, _int(data.get("template_id")))
             if template is None:
-                return _refuse("Choose a protocol to start.")
+                return _refuse(gettext("Choose a protocol to start."))
             run = ProtocolRun(template_id_fk=template.id, name=template.name, steps=template.steps,
                               color=template.color, owner=_me())
             s.add(run)
@@ -441,9 +461,9 @@ def delete_run(run_id: int):
     with SessionLocal() as s:
         run = s.get(ProtocolRun, run_id)
         if run is None:
-            return _refuse("That protocol run no longer exists.", 404)
+            return _refuse(gettext("That protocol run no longer exists."), 404)
         if not _can_edit(run.owner):
-            return _refuse("Only the person who started this protocol can remove it.", 403)
+            return _refuse(gettext("Only the person who started this protocol can remove it."), 403)
         s.delete(run)
         s.commit()
     return jsonify({"ok": True})
@@ -495,22 +515,22 @@ def save_equipment():
     data = request.get_json(silent=True) or {}
     name = str(data.get("name", "")).strip()[:120]
     if not name:
-        return _refuse("Give the instrument a name.")
+        return _refuse(gettext("Give the instrument a name."))
     with SessionLocal() as s:
         same = s.scalar(select(Equipment).where(Equipment.name == name))
         if data.get("id"):
             e = s.get(Equipment, _int(data["id"]))
             if e is None:
-                return _refuse("That instrument no longer exists.", 404)
+                return _refuse(gettext("That instrument no longer exists."), 404)
             if e.created_by and not _can_edit(e.created_by):
-                return _refuse("Only the person who added this instrument can change it.", 403)
+                return _refuse(gettext("Only the person who added this instrument can change it."), 403)
         elif same is not None and not same.active:
             e = same  # adding a retired instrument again brings it back
         else:
             e = Equipment(created_by=_me())
             s.add(e)
         if same is not None and same is not e:
-            return _refuse(f"There is already an instrument called {name}.")
+            return _refuse(gettext("There is already an instrument called %(name)s.", name=name))
         e.name, e.active = name, True
         e.location = str(data.get("location", "")).strip()[:120]
         e.color = _color(data.get("color"), e.color or COLORS["bookings"])
@@ -524,9 +544,9 @@ def retire_equipment(equipment_id: int):
     with SessionLocal() as s:
         e = s.get(Equipment, equipment_id)
         if e is None:
-            return _refuse("That instrument no longer exists.", 404)
+            return _refuse(gettext("That instrument no longer exists."), 404)
         if e.created_by and not _can_edit(e.created_by):
-            return _refuse("Only the person who added this instrument can remove it.", 403)
+            return _refuse(gettext("Only the person who added this instrument can remove it."), 403)
         e.active = False
         s.commit()
     return jsonify({"ok": True})
@@ -544,25 +564,29 @@ def _repeated_slots(start: datetime, end: datetime, repeat) -> list[tuple[dateti
         return [(start, end)]
     until = _date(repeat.get("until"))
     if until is None or until < start.date():
-        return "Choose the last day the booking repeats until."
+        return gettext("Choose the last day the booking repeats until.")
     step = timedelta(days=7 if repeat["freq"] == "weekly" else 1)
     if end - start > step:
-        return "A booking that long can't repeat that often: each one would run into the next."
+        return gettext("A booking that long can't repeat that often: each one would run into the next.")
     slots, at = [], start
     while at.date() <= until:
         if repeat["freq"] != "weekdays" or at.weekday() < 5:
             slots.append((at, at + (end - start)))
         at += step
         if len(slots) > MAX_REPEATED_BOOKINGS:
-            return f"That makes more than {MAX_REPEATED_BOOKINGS} bookings. Choose an earlier last day."
-    return slots or "There is no weekday in those dates."
+            return gettext("That makes more than %(n)s bookings. Choose an earlier last day.", n=MAX_REPEATED_BOOKINGS)
+    return slots or gettext("There is no weekday in those dates.")
 
 
-def _clash_text(s, eq: Equipment, clash: EquipmentBooking) -> str:
+def _clash_text(s, eq: Equipment, clash: EquipmentBooking, several: bool = False) -> str:
     who = display_names(s).get(clash.owner, clash.owner)
-    when = f"{clash.start_at:%a %d %b %H:%M}–" + (f"{clash.end_at:%H:%M}" if clash.end_at.date() == clash.start_at.date()
-                                                 else f"{clash.end_at:%a %d %b %H:%M}")
-    return f"{eq.name} is already booked by {who}, {when}."
+    when = i18n.strftime(clash.start_at, "%a %d %b %H:%M") + "–" + (
+        f"{clash.end_at:%H:%M}" if clash.end_at.date() == clash.start_at.date()
+        else i18n.strftime(clash.end_at, "%a %d %b %H:%M"))
+    if several:
+        return gettext("%(instrument)s is already booked by %(who)s, %(when)s. Nothing was booked.",
+                       instrument=eq.name, who=who, when=when)
+    return gettext("%(instrument)s is already booked by %(who)s, %(when)s.", instrument=eq.name, who=who, when=when)
 
 
 @bp.route("/bookings", methods=["POST"])
@@ -573,11 +597,11 @@ def save_booking():
     data = request.get_json(silent=True) or {}
     start, end = _dt(data.get("start")), _dt(data.get("end"))
     if start is None or end is None:
-        return _refuse("Choose when the booking starts and ends.")
+        return _refuse(gettext("Choose when the booking starts and ends."))
     if end <= start:
-        return _refuse("The booking has to end after it starts.")
+        return _refuse(gettext("The booking has to end after it starts."))
     if end - start > timedelta(days=14):
-        return _refuse("A booking can be at most two weeks long.")
+        return _refuse(gettext("A booking can be at most two weeks long."))
     slots = [(start, end)] if data.get("id") else _repeated_slots(start, end, data.get("repeat"))
     if isinstance(slots, str):
         return _refuse(slots)
@@ -585,20 +609,20 @@ def save_booking():
         if data.get("id"):
             booking = s.get(EquipmentBooking, _int(data["id"]))
             if booking is None:
-                return _refuse("That booking no longer exists.", 404)
+                return _refuse(gettext("That booking no longer exists."), 404)
             if not _can_edit(booking.owner):
-                return _refuse("Only the person who made this booking can change it.", 403)
+                return _refuse(gettext("Only the person who made this booking can change it."), 403)
         else:
             booking = EquipmentBooking(owner=_me())
         eq = s.get(Equipment, _int(data.get("equipment_id"), booking.equipment_id_fk or 0))
         if eq is None or not eq.active:
-            return _refuse("Choose an instrument to book.")
+            return _refuse(gettext("Choose an instrument to book."))
         for slot_start, slot_end in slots:
             clash = s.scalar(select(EquipmentBooking).where(
                 EquipmentBooking.equipment_id_fk == eq.id, EquipmentBooking.id != (booking.id or 0),
                 EquipmentBooking.start_at < slot_end, EquipmentBooking.end_at > slot_start))
             if clash is not None:
-                return _refuse(_clash_text(s, eq, clash) + (" Nothing was booked." if len(slots) > 1 else ""), 409)
+                return _refuse(_clash_text(s, eq, clash, several=len(slots) > 1), 409)
         purpose = str(data.get("purpose", "")).strip()[:200]
         booking.equipment_id_fk, booking.start_at, booking.end_at = eq.id, start, end
         booking.purpose = purpose
@@ -616,9 +640,9 @@ def delete_booking(booking_id: int):
     with SessionLocal() as s:
         booking = s.get(EquipmentBooking, booking_id)
         if booking is None:
-            return _refuse("That booking no longer exists.", 404)
+            return _refuse(gettext("That booking no longer exists."), 404)
         if not _can_edit(booking.owner):
-            return _refuse("Only the person who made this booking can cancel it.", 403)
+            return _refuse(gettext("Only the person who made this booking can cancel it."), 403)
         s.delete(booking)
         s.commit()
     return jsonify({"ok": True})
@@ -634,8 +658,10 @@ def absence_items(session, start: date, end: date, owner: str | None = None) -> 
     out = []
     for a in session.scalars(query):
         who = names.get(a.owner, a.owner)
-        cover = f"Covered by {names.get(a.cover, a.cover)}" if a.cover else "No cover chosen"
-        out.append(_allday(f"away-{a.id}", "away", "away", f"{who} {ABSENCE_KINDS.get(a.kind, 'away')}",
+        cover = gettext("Covered by %(who)s", who=names.get(a.cover, a.cover)) if a.cover else gettext("No cover chosen")
+        title = (gettext("%(who)s at a conference", who=who) if a.kind == "conference"
+                 else gettext("%(who)s away", who=who))
+        out.append(_allday(f"away-{a.id}", "away", "away", title,
                            a.start_date, a.end_date, COLORS["away"],
                            " · ".join(b for b in (a.note, cover) if b),
                            {"absenceId": a.id, "owner": a.owner, "kind": a.kind, "note": a.note,
@@ -666,7 +692,7 @@ def cover_report(session, features: dict, zebrafish: dict | None) -> list[dict]:
                 EquipmentBooking.owner == a.owner,
                 EquipmentBooking.start_at >= datetime.combine(lo, datetime.min.time()),
                 EquipmentBooking.start_at < datetime.combine(hi + timedelta(days=1), datetime.min.time()))):
-            jobs.append((b.start_at.date(), f"{b.equipment.name} booked"))
+            jobs.append((b.start_at.date(), gettext("%(instrument)s booked", instrument=b.equipment.name)))
         for item in protocol_items(session, lo, hi, owner=a.owner):
             jobs.append((max(lo, date.fromisoformat(item["start"][:10])), item["title"]))
         jobs = sorted(set(jobs))
@@ -682,10 +708,14 @@ def _tell_cover(session, absence: Absence) -> None:
     if not absence.cover:
         return
     who = display_names(session).get(absence.owner, absence.owner)
-    span = f"{absence.start_date:%d %b}" + (f"–{absence.end_date:%d %b}" if absence.end_date != absence.start_date else "")
-    notify.send(session, absence.cover, f"You're covering for {who}, {span}",
+    # The dates as the person told reads them (notify.send translates the rest).
+    with i18n.using(i18n.language_for(session, absence.cover)):
+        span = i18n.strftime(absence.start_date, "%d %b") + (
+            "–" + i18n.strftime(absence.end_date, "%d %b") if absence.end_date != absence.start_date else "")
+    notify.send(session, absence.cover, "You're covering for %(who)s, %(span)s",
                 "Their animals, stocks and bookings due while they are away are listed on the calendar.",
-                category="lab", link=url_for("calendar"), actor=_me())
+                category="lab", link=url_for("calendar"), actor=_me(), values={"who": who, "span": span},
+                message_values={})
 
 
 @bp.route("/away", methods=["POST"])
@@ -693,17 +723,17 @@ def save_absence():
     data = request.get_json(silent=True) or {}
     first, last = _date(data.get("start")), _date(data.get("end"))
     if first is None:
-        return _refuse("Choose the first day away.")
+        return _refuse(gettext("Choose the first day away."))
     last = last or first
     if last < first:
-        return _refuse("The last day away can't be before the first.")
+        return _refuse(gettext("The last day away can't be before the first."))
     with SessionLocal() as s:
         if data.get("id"):
             a = s.get(Absence, _int(data["id"]))
             if a is None:
-                return _refuse("That away time no longer exists.", 404)
+                return _refuse(gettext("That away time no longer exists."), 404)
             if not _can_edit(a.owner):
-                return _refuse("Only the person who is away (or an admin) can change this.", 403)
+                return _refuse(gettext("Only the person who is away (or an admin) can change this."), 403)
         else:
             owner = str(data.get("owner", "") or _me())
             if owner != _me() and not access.is_admin():
@@ -729,11 +759,11 @@ def set_cover(absence_id: int):
     with SessionLocal() as s:
         a = s.get(Absence, absence_id)
         if a is None:
-            return _refuse("That away time no longer exists.", 404)
+            return _refuse(gettext("That away time no longer exists."), 404)
         if not _can_edit(a.owner):
-            return _refuse("Only the person who is away (or an admin) can choose cover.", 403)
+            return _refuse(gettext("Only the person who is away (or an admin) can choose cover."), 403)
         if cover and (cover == a.owner or s.scalar(select(UserAccount).where(UserAccount.username == cover)) is None):
-            return _refuse("Choose someone else in the lab.")
+            return _refuse(gettext("Choose someone else in the lab."))
         changed = cover != a.cover
         a.cover = cover
         if changed:
@@ -747,9 +777,9 @@ def delete_absence(absence_id: int):
     with SessionLocal() as s:
         a = s.get(Absence, absence_id)
         if a is None:
-            return _refuse("That away time no longer exists.", 404)
+            return _refuse(gettext("That away time no longer exists."), 404)
         if not _can_edit(a.owner):
-            return _refuse("Only the person who is away (or an admin) can remove this.", 403)
+            return _refuse(gettext("Only the person who is away (or an admin) can remove this."), 403)
         s.delete(a)
         s.commit()
     return jsonify({"ok": True})
@@ -829,7 +859,8 @@ def render_ics(items: list[dict], name: str, base_url: str) -> str:
             continue
         title = item["title"]
         if item.get("kind") == "task":
-            title = ("Done: " if (item.get("raw") or {}).get("done") else "To-do: ") + title
+            title = (gettext("Done: %(title)s", title=title) if (item.get("raw") or {}).get("done")
+                     else gettext("To-do: %(title)s", title=title))
         lines += ["BEGIN:VEVENT", f"UID:{item['id']}@biomanager", f"DTSTAMP:{stamp}"]
         if item.get("isAllday"):
             lines += [f"DTSTART;VALUE=DATE:{start:%Y%m%d}",
@@ -857,16 +888,20 @@ def feed_ics(token: str):
         user = s.scalar(select(UserAccount).where(UserAccount.username == feed.owner)) if feed else None
         if feed is None or user is None or user.disabled:
             abort(404)
-        # The feed is read as its owner, so what they may see is what it shows.
+        # The feed is read as its owner, so what they may see is what it
+        # shows, in their language (a phone's calendar app asks for none).
         g.user = user
+        lang = i18n.language_for(s, user.username)
         today = date.today()
-        items = calendar_items(s, today - timedelta(days=FEED_BACK_DAYS), today + timedelta(days=FEED_AHEAD_DAYS),
-                               owner=user.username if feed.scope == "mine" else None, external=False)
+        with i18n.using(lang):
+            items = calendar_items(s, today - timedelta(days=FEED_BACK_DAYS), today + timedelta(days=FEED_AHEAD_DAYS),
+                                   owner=user.username if feed.scope == "mine" else None, external=False)
+            scope = "mine" if feed.scope == "mine" else "lab"
+            name = f"BioManager · {user.display_name or user.username}" if scope == "mine" else gettext("BioManager · lab")
         feed.last_used_at = datetime.utcnow()
-        scope = "mine" if feed.scope == "mine" else "lab"
-        name = f"BioManager · {user.display_name or user.username}" if scope == "mine" else "BioManager · lab"
         s.commit()
-    body = render_ics(items, name, request.host_url)
+    with i18n.using(lang):
+        body = render_ics(items, name, request.host_url)
     # The link is the key: keep it out of search engines, shared caches and
     # the Referer header of anything the calendar app opens from it.
     return Response(body, mimetype="text/calendar", headers={

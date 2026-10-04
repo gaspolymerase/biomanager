@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {# Bench mode (app/experiments.py bench): one animal at a time, on a phone at the bench.
    Drawn by static/experiment-bench.js from #xb-data. #}
-{% block page_title %}Bench · {{ data.name }}{% endblock %}
+{% block page_title %}{{ _('Bench') }} · {{ data.name }}{% endblock %}
 {% block page_heading %}{{ data.name }}{% endblock %}
-{% block page_subtitle %}Bench mode · {{ place.label }} · {{ data.subjects|length }} {{ place.nouns }}{% endblock %}
+{% block page_subtitle %}{{ _('Bench mode') }} · {{ place.label|tr }} · {{ data.subjects|length }} {{ place.nouns|tr }}{% endblock %}
 {% block head_extra %}
   <link rel="stylesheet" href="{{ url_for('static', filename='experiment-page.css') }}?v={{ asset_version('experiment-page.css') }}">
 {% endblock %}
 {% block page_actions %}
-  <a class="btn" href="{{ page_url }}">{{ icon('back') }} The experiment</a>
+  <a class="btn" href="{{ page_url }}">{{ icon('back') }} {{ _('The experiment') }}</a>
 {% endblock %}
 {% block content %}
 <div class="xb" data-xb>

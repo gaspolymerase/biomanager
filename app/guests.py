@@ -27,8 +27,9 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import select
 
-from . import security
+from . import i18n, security
 from .db import SessionLocal
+from .i18n import gettext, ngettext
 from .models import GuestPass, UserAccount
 
 bp = Blueprint("guests", __name__)
@@ -117,7 +118,8 @@ def enter():
         wait = guest_throttle.retry_after(THROTTLE_KEY)
         if wait:
             minutes = -(-wait // 60)
-            flash(f"Too many wrong codes. Try again in {minutes} minute{'s' if minutes != 1 else ''}.", "error")
+            flash(ngettext("Too many wrong codes. Try again in %(num)s minute.",
+                           "Too many wrong codes. Try again in %(num)s minutes.", minutes), "error")
             return render_template("guests/enter.html"), 429
         code = request.form.get("code", "")
         now = datetime.utcnow()
@@ -127,7 +129,7 @@ def enter():
             user = s.get(UserAccount, gp.user_id_fk) if gp is not None and is_active(gp, now) else None
             if user is None or user.disabled:
                 guest_throttle.failed(THROTTLE_KEY)
-                flash("That code is not right, or its guest access has ended.", "error")
+                flash(gettext("That code is not right, or its guest access has ended."), "error")
                 status = 401
             else:
                 gp.uses = (gp.uses or 0) + 1
@@ -136,8 +138,10 @@ def enter():
                 security.start_session(user)
                 from .app import local_time
                 until = local_time(gp.expires_at)
-                flash(f"Welcome, {gp.label}. Your guest access lasts until "
-                      f"{until.day} {until:%b %Y, %H:%M}.", "success")
+                when = (f"{until.day} {until:%b %Y, %H:%M}" if i18n.current() == i18n.DEFAULT
+                        else i18n.strftime(until, "%b %d, %Y %H:%M"))
+                flash(gettext("Welcome, %(name)s. Your guest access lasts until %(when)s.", name=gp.label, when=when),
+                      "success")
                 return redirect(landing_url(user))
     return render_template("guests/enter.html"), status
 
@@ -179,7 +183,7 @@ def admin():
         except ValueError:
             days = 0
         if not label or days not in DURATIONS:
-            flash("Give the guest a name and pick how long the access lasts.", "error")
+            flash(gettext("Give the guest a name and pick how long the access lasts."), "error")
             return _page(s, status=400)
         expires = datetime.utcnow() + timedelta(days=days)
         user = UserAccount(username=_username_for(s, label), display_name=f"{label} (guest)",
@@ -212,5 +216,5 @@ def end(pass_id: int):
         if user is not None and (user.expires_at is None or user.expires_at > now):
             user.expires_at = now          # signs out every session it has
         s.commit()
-        flash(f"Guest access for {gp.label} has ended.", "success")
+        flash(gettext("Guest access for %(name)s has ended.", name=gp.label), "success")
     return redirect(url_for("guests.admin"))

@@ -1,0 +1,10 @@
+{
+  "That rack is not part of this database.": "这个架子不属于这个数据库。",
+  "%(rack)s is full; the record is in it but unplaced.": "%(rack)s 已满；这条记录已放入其中，但没有位置。",
+  "%(rack)s is full; the new one is in it but unplaced.": "%(rack)s 已满；新建的已放入其中，但没有位置。",
+  "“%(position)s” is not a position in %(rack)s (%(first)s–%(last)s).": "「%(position)s」不是 %(rack)s 中的位置（%(first)s–%(last)s）。",
+  "%(rack)s · %(position)s already holds #%(number)s. Drag on the grid to swap.": "%(rack)s · %(position)s 已放着 #%(number)s。可在网格中拖动交换。",
+  "%(rack)s is full, so it has no position yet.": "%(rack)s 已满，所以它还没有位置。",
+  "Say what the token is for, e.g. “Balance in B12” or “My R scripts”.": "请写明令牌的用途，例如“B12 的天平”或“我的 R 脚本”。",
+  "The token “%(name)s” no longer works.": "令牌“%(name)s”已失效。"
+}

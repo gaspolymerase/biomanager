@@ -79,6 +79,7 @@ from sqlalchemy import func, select
 
 from . import notify, security
 from .db import SessionLocal
+from .i18n import gettext, translate_value
 from .models import UserAccount, UserIdentity
 
 bp = Blueprint("oidc", __name__, url_prefix="/auth")
@@ -143,8 +144,15 @@ def providers() -> dict[str, Provider]:
 
 
 def provider_choices() -> list[dict]:
-    """For templates: [{key, label}] of the configured providers."""
-    return [{"key": p.key, "label": p.label} for p in providers().values()]
+    """For templates: [{key, label}] of the configured providers (a built-in
+    label in the page's language; a name the server set stays as set)."""
+    return [{"key": p.key, "label": translate_value(p.label)} for p in providers().values()]
+
+
+def _shown(provider: Provider) -> str:
+    """The provider's name in a message: "Your institution" translated, a
+    name the server was given as it is."""
+    return translate_value(provider.label)
 
 
 # ---------------------------------------------------------------- talking to the provider
@@ -258,13 +266,14 @@ def start(key: str):
     if linking and g.get("user") is None:
         return redirect(url_for("login"))
     if security.https_required_but_missing():
-        flash("This server only accepts sign-ins over HTTPS. Open it with an https:// address.", "error")
+        flash(gettext("This server only accepts sign-ins over HTTPS. Open it with an https:// address."), "error")
         return redirect(url_for("login"))
     try:
         conf = discovery(provider)
     except (SignInError, OSError, ValueError) as exc:
         log.warning("%s sign-in unavailable: %s", provider.label, exc)
-        flash(f"{provider.label} sign-in is not reachable right now. Try again, or use your password.", "error")
+        flash(gettext("%(provider)s sign-in is not reachable right now. Try again, or use your password.",
+                      provider=_shown(provider)), "error")
         return redirect(url_for("settings" if linking else "login"))
 
     verifier = secrets.token_urlsafe(64)
@@ -299,12 +308,13 @@ def callback(key: str):
     back = url_for("settings") if pending.get("link") else url_for("login")
 
     if request.args.get("error"):
-        flash(f"Signing in with {provider.label} was cancelled.", "error")
+        flash(gettext("Signing in with %(provider)s was cancelled.", provider=_shown(provider)), "error")
         return redirect(back)
     fresh = time.time() - float(pending.get("started", 0)) < SIGN_IN_WINDOW
     if (pending.get("provider") != provider.key or not fresh
             or not hmac.compare_digest(request.args.get("state", ""), str(pending.get("state", "")))):
-        flash(f"That {provider.label} sign-in expired or was not started here. Try again.", "error")
+        flash(gettext("That %(provider)s sign-in expired or was not started here. Try again.",
+                      provider=_shown(provider)), "error")
         return redirect(back)
 
     try:
@@ -322,7 +332,8 @@ def callback(key: str):
         claims = verify_id_token(provider, conf, tokens["id_token"], pending["nonce"])
     except (SignInError, OSError, ValueError, KeyError) as exc:
         log.warning("%s sign-in refused: %s", provider.label, exc)
-        flash(f"Signing in with {provider.label} did not work. Try again, or use your password.", "error")
+        flash(gettext("Signing in with %(provider)s did not work. Try again, or use your password.",
+                      provider=_shown(provider)), "error")
         return redirect(back)
 
     if pending.get("link"):
@@ -350,14 +361,16 @@ def _connect(provider: Provider, claims: dict):
     with SessionLocal() as db_session:
         existing = _identity(db_session, claims)
         if existing is not None and existing.user_id_fk != g.user.id:
-            flash(f"That {provider.label} account is already connected to another BioManager account.", "error")
+            flash(gettext("That %(provider)s account is already connected to another BioManager account.",
+                          provider=_shown(provider)), "error")
         elif existing is not None:
-            flash(f"That {provider.label} account was already connected.", "success")
+            flash(gettext("That %(provider)s account was already connected.", provider=_shown(provider)), "success")
         else:
             db_session.add(UserIdentity(user_id_fk=g.user.id, provider=provider.key, issuer=claims["iss"],
                                         subject=str(claims["sub"]), email=_email(claims)))
             db_session.commit()
-            flash(f"{provider.label} account connected. You can sign in with it from now on.", "success")
+            flash(gettext("%(provider)s account connected. You can sign in with it from now on.",
+                          provider=_shown(provider)), "success")
     return redirect(url_for("settings"))
 
 
@@ -369,19 +382,19 @@ def _sign_in(provider: Provider, claims: dict, next_url: str):
         if identity is not None:
             user = db_session.get(UserAccount, identity.user_id_fk)
             if user is None:
-                flash("That account no longer exists.", "error")
+                flash(gettext("That account no longer exists."), "error")
                 return redirect(url_for("login"))
             if user.role == "pending":
-                flash("Your account is waiting for a lab admin to approve it.", "error")
+                flash(gettext("Your account is waiting for a lab admin to approve it."), "error")
                 return redirect(url_for("login"))
             if user.disabled:
-                flash("This account is disabled. Contact an admin.", "error")
+                flash(gettext("This account is disabled. Contact an admin."), "error")
                 return redirect(url_for("login"))
             identity.last_login_at = datetime.utcnow()
             identity.email = _email(claims) or identity.email
             db_session.commit()
             security.start_session(user)
-            flash(f"Welcome, {user.display_name or user.username}.", "success")
+            flash(gettext("Welcome, %(name)s.", name=user.display_name or user.username), "success")
             return redirect(next_url or landing_url(user))
         return _request_account(db_session, provider, claims)
 
@@ -401,8 +414,8 @@ def _request_account(db_session, provider: Provider, claims: dict):
     from .services import add_notification
 
     if db_session.scalar(select(func.count(UserAccount.id))) == 0:
-        flash("Create the admin account first (it needs the setup code). "
-              f"Then connect {provider.label} in Settings.", "error")
+        flash(gettext("Create the admin account first (it needs the setup code). Then connect %(provider)s in Settings.",
+                      provider=_shown(provider)), "error")
         return redirect(url_for("register"))
     username = _unique_username(db_session, claims)
     display_name = str(claims.get("name") or "").strip()[:120]
@@ -415,13 +428,12 @@ def _request_account(db_session, provider: Provider, claims: dict):
     admins = db_session.scalars(select(UserAccount.username).where(
         UserAccount.role == "admin", UserAccount.disabled.is_(False))).all()
     for admin_name in admins:
-        add_notification(db_session, admin_name, notify.SIGNUP_TITLE,
-                         f"{display_name or username} asked to join with {provider.label} "
-                         f"as {username}. Approve them in Settings → Manage users.",
-                         category="account", link=url_for("admin_users"))
+        add_notification(db_session, admin_name, notify.SIGNUP_TITLE, notify.SIGNUP_WITH_PROVIDER,
+                         category="account", link=url_for("admin_users"), message_values={
+                             "who": display_name or username, "provider": provider.label, "username": username})
     db_session.commit()
-    flash(f"Account requested as {username}. A lab admin needs to approve it before you can sign in.",
-          "success")
+    flash(gettext("Account requested as %(username)s. A lab admin needs to approve it before you can sign in.",
+                  username=username), "success")
     return redirect(url_for("login"))
 
 
@@ -438,9 +450,10 @@ def disconnect(identity_id: int):
             UserIdentity.user_id_fk == user.id, UserIdentity.id != identity.id))
         label = LABELS.get(identity.provider, identity.provider.title())
         if not others and not security.has_password(user):
-            flash(f"Set a password first: without {label} you would have no way to sign in.", "error")
+            flash(gettext("Set a password first: without %(provider)s you would have no way to sign in.",
+                          provider=translate_value(label)), "error")
         else:
             db_session.delete(identity)
             db_session.commit()
-            flash(f"{label} account disconnected.", "success")
+            flash(gettext("%(provider)s account disconnected.", provider=translate_value(label)), "success")
     return redirect(url_for("settings"))

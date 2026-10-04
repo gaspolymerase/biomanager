@@ -2,96 +2,106 @@
 {# Set up a lab server, from the desktop app (app/server_setup.py,
    static/server-setup.js). Six steps: where, connect, address, records,
    review, set up. #}
-<html lang="en">
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <meta name="darkreader-lock">
-  <title>Set up a lab server · BioManager</title>
+  <title>{{ _('Set up a lab server') }} · BioManager</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icon.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='tailwind.css') }}?v={{ asset_version('tailwind.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='hello.css') }}?v={{ asset_version('hello.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='server-setup.css') }}?v={{ asset_version('server-setup.css') }}">
+  {# t("…") for server-setup.js, as base.html defines it (app/i18n.py). #}
+  <script nonce="{{ csp_nonce() }}">
+    window.BM_LANG = {{ current_language()|tojson }};
+    (function (words) {
+      window.t = function (text, values) {
+        var out = Object.prototype.hasOwnProperty.call(words, text) ? words[text] : text;
+        return values ? out.replace(/%\((\w+)\)[sd]/g, function (m, k) { return k in values ? values[k] : m; }) : out;
+      };
+    })({{ js_catalog()|tojson }});
+  </script>
 </head>
 <body class="hello ss">
   <header class="hello-bar">
     <a class="hello-brand" href="{{ url_for('index') }}">
       <img src="{{ url_for('static', filename='icon.svg') }}" alt="" width="28" height="28">
-      <span>BioManager</span><span class="hello-lab">Set up a lab server</span>
+      <span>BioManager</span><span class="hello-lab">{{ _('Set up a lab server') }}</span>
     </a>
     <nav class="hello-nav">
-      <a href="https://biomanager.org/server.html" target="_blank" rel="noopener">Hosting options explained</a>
-      <a class="btn" href="{{ url_for('index') }}">Back to BioManager</a>
+      <a href="https://biomanager.org/server.html" target="_blank" rel="noopener">{{ _('Hosting options explained') }}</a>
+      <a class="btn" href="{{ url_for('index') }}">{{ _('Back to BioManager') }}</a>
     </nav>
   </header>
 
   <div class="ss-wrap">
-    <ol class="ss-steps" id="ss-steps" aria-label="Steps">
-      <li data-step="where">Where it goes</li>
-      <li data-step="connect">Connect</li>
-      <li data-step="address">Its address</li>
-      <li data-step="records">Your records</li>
-      <li data-step="review">Review</li>
-      <li data-step="run">Set up</li>
+    <ol class="ss-steps" id="ss-steps" aria-label="{{ _('Steps') }}">
+      <li data-step="where">{{ _('Where it goes') }}</li>
+      <li data-step="connect">{{ _('Connect') }}</li>
+      <li data-step="address">{{ _('Its address') }}</li>
+      <li data-step="records">{{ _('Your records') }}</li>
+      <li data-step="review">{{ _('Review') }}</li>
+      <li data-step="run">{{ 'Set up'|tr('server setup') }}</li>
     </ol>
 
     <main class="ss-main">
       {% if remembered %}
-        <p class="ss-note">You set up a lab server at <b>{{ remembered.address }}</b> on {{ remembered.set_up[:10] }}. Setting up another
-          one here leaves that one as it is.</p>
+        <p class="ss-note">{% trans address=remembered.address, day=remembered.set_up[:10] %}You set up a lab server at <b>{{ address }}</b> on {{ day }}. Setting up another
+          one here leaves that one as it is.{% endtrans %}</p>
       {% endif %}
 
       {# ---- 1. Where ---- #}
       <section class="ss-pane" data-pane="where">
-        <h1>Where should the lab's BioManager run?</h1>
-        <p class="ss-lede">A lab server is one BioManager everyone in the lab signs in to, from their computers and phones. Choose where
-          it goes; this app does the setting up and shows every step.</p>
-        <div class="ss-choices" role="radiogroup" aria-label="Where it goes">
+        <h1>{{ _("Where should the lab's BioManager run?") }}</h1>
+        <p class="ss-lede">{% trans %}A lab server is one BioManager everyone in the lab signs in to, from their computers and phones. Choose where
+          it goes; this app does the setting up and shows every step.{% endtrans %}</p>
+        <div class="ss-choices" role="radiogroup" aria-label="{{ _('Where it goes') }}">
           {% set blurbs = {
-            'cloud-tailscale': ('Recommended', 'A small cloud server (Oracle’s free tier is enough) that only your lab can reach, through Tailscale. Nothing is open to the internet.', 'An Ubuntu cloud server you can SSH into, and a free Tailscale account.'),
-            'cloud-domain': ('', 'A cloud server with a web address like biomanager.yourlab.org, open to the internet, with a free certificate.', 'The server, a domain whose DNS points at it, and ports 80 and 443 open.'),
-            'university': ('', 'A Linux server your department or IT runs, reached on the campus network.', 'SSH access with sudo, Docker allowed, and its host name.'),
-            'lab-linux': ('', 'A Linux computer in the lab that stays on, reached by others on the lab network.', 'SSH access with sudo.'),
-            'this-computer': ('', 'This Mac or Linux computer serves the lab. It has to stay on and awake, and on the lab network.', 'Docker Desktop, installed and running.'),
+            'cloud-tailscale': (_('Recommended'), _('A small cloud server (Oracle’s free tier is enough) that only your lab can reach, through Tailscale. Nothing is open to the internet.'), _('An Ubuntu cloud server you can SSH into, and a free Tailscale account.')),
+            'cloud-domain': ('', _('A cloud server with a web address like biomanager.yourlab.org, open to the internet, with a free certificate.'), _('The server, a domain whose DNS points at it, and ports 80 and 443 open.')),
+            'university': ('', _('A Linux server your department or IT runs, reached on the campus network.'), _('SSH access with sudo, Docker allowed, and its host name.')),
+            'lab-linux': ('', _('A Linux computer in the lab that stays on, reached by others on the lab network.'), _('SSH access with sudo.')),
+            'this-computer': ('', _('This Mac or Linux computer serves the lab. It has to stay on and awake, and on the lab network.'), _('Docker Desktop, installed and running.')),
           } %}
           {% for key, t in targets.items() %}
             <label class="ss-choice">
               <input type="radio" name="target" value="{{ key }}" {% if loop.first %}checked{% endif %}>
               <span class="ss-choice-body">
-                <span class="ss-choice-title">{{ t.title }}{% if blurbs[key][0] %}<span class="badge badge-brand">{{ blurbs[key][0] }}</span>{% endif %}</span>
+                <span class="ss-choice-title">{{ t.title|tr }}{% if blurbs[key][0] %}<span class="badge badge-brand">{{ blurbs[key][0] }}</span>{% endif %}</span>
                 <span class="ss-choice-text">{{ blurbs[key][1] }}</span>
-                <span class="ss-choice-needs">You need: {{ blurbs[key][2] }}</span>
+                <span class="ss-choice-needs">{{ _('You need: %(what)s', what=blurbs[key][2]) }}</span>
               </span>
             </label>
           {% endfor %}
         </div>
-        <p class="ss-fine">Only you use BioManager? You don't need a server: keep using this app, and your data stays on this computer.</p>
+        <p class="ss-fine">{{ _("Only you use BioManager? You don't need a server: keep using this app, and your data stays on this computer.") }}</p>
       </section>
 
       {# ---- 2. Connect ---- #}
       <section class="ss-pane" data-pane="connect" hidden>
-        <h1 data-remote>Sign in to the server</h1>
-        <h1 data-local hidden>Check this computer</h1>
+        <h1 data-remote>{{ _('Sign in to the server') }}</h1>
+        <h1 data-local hidden>{{ _('Check this computer') }}</h1>
         <div class="ss-form" data-remote>
-          <label class="field-label">Server address <input id="ss-host" autocomplete="off" spellcheck="false" placeholder="203.0.113.10 or server.dept.example.edu"></label>
-          <label class="field-label">User name on it <input id="ss-user" autocomplete="off" spellcheck="false" placeholder="ubuntu"></label>
-          <label class="field-label">SSH port <input id="ss-port" type="number" value="22" min="1" max="65535"></label>
-          <label class="field-label">SSH key
+          <label class="field-label">{{ _('Server address') }} <input id="ss-host" autocomplete="off" spellcheck="false" placeholder="{{ _('203.0.113.10 or server.dept.example.edu') }}"></label>
+          <label class="field-label">{{ _('User name on it') }} <input id="ss-user" autocomplete="off" spellcheck="false" placeholder="ubuntu"></label>
+          <label class="field-label">{{ _('SSH port') }} <input id="ss-port" type="number" value="22" min="1" max="65535"></label>
+          <label class="field-label">{{ _('SSH key') }}
             <select id="ss-key">
               {% for k in keys %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
-              <option value="">{{ 'The default (ssh decides)' if keys else 'The default (no key files found in ~/.ssh)' }}</option>
-              <option value="__other">Another file…</option>
+              <option value="">{{ _('The default (ssh decides)') if keys else _('The default (no key files found in ~/.ssh)') }}</option>
+              <option value="__other">{{ _('Another file…') }}</option>
             </select>
           </label>
-          <label class="field-label" id="ss-key-other-wrap" hidden>Key file <input id="ss-key-other" placeholder="~/Downloads/ssh-key-2026.key" spellcheck="false"></label>
+          <label class="field-label" id="ss-key-other-wrap" hidden>{{ _('Key file') }} <input id="ss-key-other" placeholder="~/Downloads/ssh-key-2026.key" spellcheck="false"></label>
         </div>
-        <p class="ss-fine" data-remote>Cloud providers give you a key when you create the server (Oracle: the private key you downloaded;
-          on a Mac, <code>chmod 600</code> it first). The account needs <b>sudo</b>; on Ubuntu cloud servers that's <code>ubuntu</code>.</p>
-        <p class="ss-fine" data-local hidden>BioManager runs here in Docker, in the folder <code>~/BioManagerServer</code>. Other lab computers reach
-          it by this computer's name on the network.</p>
+        <p class="ss-fine" data-remote>{% trans %}Cloud providers give you a key when you create the server (Oracle: the private key you downloaded;
+          on a Mac, <code>chmod 600</code> it first). The account needs <b>sudo</b>; on Ubuntu cloud servers that's <code>ubuntu</code>.{% endtrans %}</p>
+        <p class="ss-fine" data-local hidden>{% trans %}BioManager runs here in Docker, in the folder <code>~/BioManagerServer</code>. Other lab computers reach
+          it by this computer's name on the network.{% endtrans %}</p>
         <div class="ss-row">
-          <button type="button" class="btn" id="ss-check">Test the connection</button>
+          <button type="button" class="btn" id="ss-check">{{ _('Test the connection') }}</button>
           <span class="ss-check-result" id="ss-check-result" role="status"></span>
         </div>
         <ul class="ss-facts" id="ss-facts" hidden></ul>
@@ -99,39 +109,39 @@
 
       {# ---- 3. Address ---- #}
       <section class="ss-pane" data-pane="address" hidden>
-        <h1>How people will reach it</h1>
+        <h1>{{ _('How people will reach it') }}</h1>
         <div data-for="cloud-tailscale">
           <ol class="ss-howto">
-            <li>In the <a href="https://login.tailscale.com/admin/dns" target="_blank" rel="noopener">Tailscale admin console → DNS</a>, turn on
-              <b>MagicDNS</b> and <b>HTTPS Certificates</b>.</li>
-            <li>Under <a href="https://login.tailscale.com/admin/settings/keys" target="_blank" rel="noopener">Settings → Keys</a>,
-              <b>Generate auth key</b> and paste it below. It is used once, to join the server, and isn't kept.</li>
-            <li>After set-up, in Machines, open the server and <b>Disable key expiry</b>, or it drops off in 180 days.</li>
+            <li>{% trans %}In the <a href="https://login.tailscale.com/admin/dns" target="_blank" rel="noopener">Tailscale admin console → DNS</a>, turn on
+              <b>MagicDNS</b> and <b>HTTPS Certificates</b>.{% endtrans %}</li>
+            <li>{% trans %}Under <a href="https://login.tailscale.com/admin/settings/keys" target="_blank" rel="noopener">Settings → Keys</a>,
+              <b>Generate auth key</b> and paste it below. It is used once, to join the server, and isn't kept.{% endtrans %}</li>
+            <li>{% trans %}After set-up, in Machines, open the server and <b>Disable key expiry</b>, or it drops off in 180 days.{% endtrans %}</li>
           </ol>
           <div class="ss-form">
-            <label class="field-label">Tailscale auth key <input id="ss-authkey" type="password" autocomplete="off" placeholder="tskey-auth-…"></label>
-            <label class="field-label">Its name on the tailnet <input id="ss-tsname" value="biomanager" spellcheck="false"></label>
+            <label class="field-label">{{ _('Tailscale auth key') }} <input id="ss-authkey" type="password" autocomplete="off" placeholder="tskey-auth-…"></label>
+            <label class="field-label">{{ _('Its name on the tailnet') }} <input id="ss-tsname" value="biomanager" spellcheck="false"></label>
           </div>
-          <p class="ss-fine">The address becomes <code>biomanager.&lt;your-tailnet&gt;.ts.net</code>, with a real certificate. Lab members install
-            Tailscale (free for small teams), or you share the one machine with them.</p>
+          <p class="ss-fine">{% trans %}The address becomes <code>biomanager.&lt;your-tailnet&gt;.ts.net</code>, with a real certificate. Lab members install
+            Tailscale (free for small teams), or you share the one machine with them.{% endtrans %}</p>
         </div>
         <div data-for="cloud-domain" hidden>
           <div class="ss-form">
-            <label class="field-label">Web address <input id="ss-domain" placeholder="biomanager.yourlab.org" spellcheck="false"></label>
-            <label class="field-label">Email for the certificate <input id="ss-email" type="email" placeholder="you@yourlab.org"></label>
+            <label class="field-label">{{ _('Web address') }} <input id="ss-domain" placeholder="biomanager.yourlab.org" spellcheck="false"></label>
+            <label class="field-label">{{ _('Email for the certificate') }} <input id="ss-email" type="email" placeholder="you@yourlab.org"></label>
           </div>
-          <p class="ss-fine">Before you start: the name's DNS record points at the server, and its firewall lets in ports 80 and 443. Let's
-            Encrypt then issues the certificate by itself.</p>
+          <p class="ss-fine">{% trans %}Before you start: the name's DNS record points at the server, and its firewall lets in ports 80 and 443. Let's
+            Encrypt then issues the certificate by itself.{% endtrans %}</p>
         </div>
         <div data-for="university lab-linux this-computer" hidden>
           <div class="ss-form">
-            <label class="field-label">Address people type <input id="ss-address" spellcheck="false" placeholder="biomanager.dept.example.edu"></label>
+            <label class="field-label">{{ _('Address people type') }} <input id="ss-address" spellcheck="false" placeholder="biomanager.dept.example.edu"></label>
           </div>
-          <p class="ss-fine">The server's name on the network (or its IP address). BioManager makes its own certificate, so each lab computer
-            installs it once; the guide shows how. If IT gives you a certificate, it can replace that later.</p>
+          <p class="ss-fine">{% trans %}The server's name on the network (or its IP address). BioManager makes its own certificate, so each lab computer
+            installs it once; the guide shows how. If IT gives you a certificate, it can replace that later.{% endtrans %}</p>
         </div>
         <div class="ss-form">
-          <label class="field-label">The lab's time zone
+          <label class="field-label">{{ _("The lab's time zone") }}
             <select id="ss-tz">{% for z in zones %}<option {% if z == local_tz %}selected{% endif %}>{{ z }}</option>{% endfor %}</select>
           </label>
         </div>
@@ -139,70 +149,69 @@
 
       {# ---- 4. Records ---- #}
       <section class="ss-pane" data-pane="records" hidden>
-        <h1>Start empty, or bring this app's records?</h1>
+        <h1>{{ _("Start empty, or bring this app's records?") }}</h1>
         <div class="ss-choices">
           <label class="ss-choice">
             <input type="radio" name="bring" value="0" {% if not accounts %}checked{% endif %}>
-            <span class="ss-choice-body"><span class="ss-choice-title">Start empty</span>
-              <span class="ss-choice-text">The first account made on the server becomes its admin, with the setup code this shows you at
-                the end. The lab-setup survey then asks what the lab keeps.</span></span>
+            <span class="ss-choice-body"><span class="ss-choice-title">{{ _('Start empty') }}</span>
+              <span class="ss-choice-text">{% trans %}The first account made on the server becomes its admin, with the setup code this shows you at
+                the end. The lab-setup survey then asks what the lab keeps.{% endtrans %}</span></span>
           </label>
           <label class="ss-choice">
             <input type="radio" name="bring" value="1" {% if accounts %}checked{% endif %} {% if not accounts %}disabled{% endif %}>
-            <span class="ss-choice-body"><span class="ss-choice-title">Bring this app's records</span>
-              <span class="ss-choice-text">{% if accounts %}Everything in this app goes to the server — accounts, mice, stocks, plasmids,
-                inventories, the notebook, uploaded files — and you sign in there as you do here. This app keeps its copy.{% else %}This app
-                has no records yet.{% endif %}</span></span>
+            <span class="ss-choice-body"><span class="ss-choice-title">{{ _("Bring this app's records") }}</span>
+              <span class="ss-choice-text">{% if accounts %}{% trans %}Everything in this app goes to the server — accounts, mice, stocks, plasmids,
+                inventories, the notebook, uploaded files — and you sign in there as you do here. This app keeps its copy.{% endtrans %}{% else %}{{ _('This app has no records yet.') }}{% endif %}</span></span>
           </label>
         </div>
       </section>
 
       {# ---- 5. Review ---- #}
       <section class="ss-pane" data-pane="review" hidden>
-        <h1>Ready to set up</h1>
+        <h1>{{ _('Ready to set up') }}</h1>
         <dl class="ss-summary" id="ss-summary"></dl>
         <p class="cal-error ss-error" id="ss-review-error" role="alert" hidden></p>
         <details class="ss-script">
-          <summary>Show the commands it will run on <span id="ss-runs-on"></span></summary>
+          <summary>{% trans %}Show the commands it will run on <span id="ss-runs-on"></span>{% endtrans %}</summary>
           <pre id="ss-script"></pre>
         </details>
-        <p class="ss-fine">It takes about five minutes, most of it downloading. Keep this window open until it finishes.</p>
+        <p class="ss-fine">{{ _('It takes about five minutes, most of it downloading. Keep this window open until it finishes.') }}</p>
       </section>
 
       {# ---- 6. Run ---- #}
       <section class="ss-pane" data-pane="run" hidden>
-        <h1 id="ss-run-title">Setting up…</h1>
+        <h1 id="ss-run-title">{{ _('Setting up…') }}</h1>
         <ol class="ss-progress" id="ss-progress"></ol>
         <div class="ss-result" id="ss-done" hidden>
-          <p class="ss-address">BioManager is running at <a id="ss-open" target="_blank" rel="noopener"></a>
-            <button type="button" class="btn btn-sm" id="ss-copy">Copy</button></p>
+          <p class="ss-address">{% trans %}BioManager is running at <a id="ss-open" target="_blank" rel="noopener"></a>{% endtrans %}
+            <button type="button" class="btn btn-sm" id="ss-copy">{{ _('Copy') }}</button></p>
           <div id="ss-code-box" hidden>
-            <p><b>Create the admin account next.</b> Open <a id="ss-register" target="_blank" rel="noopener"></a> and use this setup code:</p>
+            <p>{% trans %}<b>Create the admin account next.</b> Open <a id="ss-register" target="_blank" rel="noopener"></a> and use this setup code:{% endtrans %}</p>
             <p class="ss-code" id="ss-code"></p>
           </div>
-          <p id="ss-own-cert" hidden>Browsers warn about its certificate until you install it on each lab computer:
-            <a href="https://biomanager.org/server.html" target="_blank" rel="noopener">how</a>.</p>
-          <p id="ss-unreachable" hidden>It's running, but this computer couldn't reach it yet. For Tailscale, this computer must be on the
-            tailnet too; for a web address, DNS can take a few minutes.</p>
-          <p id="ss-ntfy-box" hidden>Alerts (a failed backup, a full disk) go to the ntfy topic <code id="ss-ntfy"></code>: subscribe to it in
-            the ntfy app.</p>
-          <p>Next: invite the lab (Settings → Manage users), and read <a href="https://biomanager.org/server.html#after"
-            target="_blank" rel="noopener">After it's running</a>.</p>
+          <p id="ss-own-cert" hidden>{% trans %}Browsers warn about its certificate until you install it on each lab computer:
+            <a href="https://biomanager.org/server.html" target="_blank" rel="noopener">how</a>.{% endtrans %}</p>
+          <p id="ss-unreachable" hidden>{% trans %}It's running, but this computer couldn't reach it yet. For Tailscale, this computer must be on the
+            tailnet too; for a web address, DNS can take a few minutes.{% endtrans %}</p>
+          <p id="ss-ntfy-box" hidden>{% trans %}Alerts (a failed backup, a full disk) go to the ntfy topic <code id="ss-ntfy"></code>: subscribe to it in
+            the ntfy app.{% endtrans %}</p>
+          <p>{% trans %}Next: invite the lab (Settings → Manage users), and read <a href="https://biomanager.org/server.html#after"
+            target="_blank" rel="noopener">After it's running</a>.{% endtrans %}</p>
         </div>
         <div class="ss-result ss-failed" id="ss-failed" hidden>
-          <p><b>The set-up stopped.</b> <span id="ss-fail-text"></span></p>
-          <p>Nothing that already worked needs undoing: fix what it says, then <button type="button" class="btn btn-sm" id="ss-retry">Go back</button>.</p>
+          <p><b>{{ _('The set-up stopped.') }}</b> <span id="ss-fail-text"></span></p>
+          <p>{% trans %}Nothing that already worked needs undoing: fix what it says, then <button type="button" class="btn btn-sm" id="ss-retry">Go back</button>.{% endtrans %}</p>
         </div>
         <details class="ss-script" id="ss-log-box">
-          <summary>Details</summary>
+          <summary>{{ _('Details') }}</summary>
           <pre id="ss-log"></pre>
         </details>
       </section>
 
       <footer class="ss-foot">
-        <button type="button" class="btn" id="ss-back">Back</button>
+        <button type="button" class="btn" id="ss-back">{{ _('Back') }}</button>
         <span class="mr-auto"></span>
-        <button type="button" class="btn btn-primary" id="ss-next">Continue</button>
+        <button type="button" class="btn btn-primary" id="ss-next">{{ _('Continue') }}</button>
       </footer>
     </main>
   </div>

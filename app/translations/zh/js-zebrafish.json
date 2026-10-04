@@ -1,0 +1,9 @@
+{
+  "Queued": "已排队",
+  "No": "否",
+  "The server answered %(status)s.": "服务器返回 %(status)s。",
+  "Couldn’t change the genotyping flag: %(error)s": "无法修改待鉴定标记：%(error)s",
+  "Couldn’t load readings.": "无法加载读数。",
+  "No readings in the last 30 days.": "最近 30 天没有读数。",
+  "Water readings, last 30 days": "最近 30 天的水质读数"
+}

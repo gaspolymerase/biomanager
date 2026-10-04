@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {# Import from Excel (app/sheet_import.py): upload → match columns → preview → import. #}
 
-{% block page_title %}Import from Excel{% endblock %}
-{% block page_heading %}Import from Excel{% endblock %}
+{% block page_title %}{{ _('Import from Excel') }}{% endblock %}
+{% block page_heading %}{{ _('Import from Excel') }}{% endblock %}
 {% block page_subtitle %}
-  {%- if stage == 'upload' -%}{{ target.title }}: bring in a spreadsheet
-  {%- elif stage == 'match' -%}{{ payload.filename }}: say where each column goes
-  {%- else -%}{{ payload.filename }}: what the import would do
+  {%- if stage == 'upload' -%}{{ _('%(title)s: bring in a spreadsheet', title=target.title) }}
+  {%- elif stage == 'match' -%}{{ _('%(file)s: say where each column goes', file=payload.filename) }}
+  {%- else -%}{{ _('%(file)s: what the import would do', file=payload.filename) }}
   {%- endif -%}
 {% endblock %}
 {% block page_shell_class %}shell-page-wide{% endblock %}
@@ -15,14 +15,14 @@
 {% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ target.back_url }}">{{ icon('back') }} Back to {{ target.title }}</a>
+  <a class="btn" href="{{ target.back_url }}">{{ icon('back') }} {{ _('Back to %(title)s', title=target.title) }}</a>
 {% endblock %}
 
 {% block content %}
-<ol class="si-steps" aria-label="Steps">
-  <li class="{{ 'is-current' if stage == 'upload' else 'is-done' }}">Upload</li>
-  <li class="{{ 'is-current' if stage == 'match' else ('is-done' if stage == 'preview' else '') }}">Match columns</li>
-  <li class="{{ 'is-current' if stage == 'preview' else '' }}">Check and import</li>
+<ol class="si-steps" aria-label="{{ _('Steps') }}">
+  <li class="{{ 'is-current' if stage == 'upload' else 'is-done' }}">{{ _('Upload') }}</li>
+  <li class="{{ 'is-current' if stage == 'match' else ('is-done' if stage == 'preview' else '') }}">{{ _('Match columns') }}</li>
+  <li class="{{ 'is-current' if stage == 'preview' else '' }}">{{ _('Check and import') }}</li>
 </ol>
 
 {# ===================== UPLOAD ===================== #}
@@ -30,44 +30,43 @@
 <div class="si-grid">
   <form method="post" action="{{ url_for('sheet_import.upload', target_key=target_key) }}" enctype="multipart/form-data"
         class="card si-card">
-    <header class="card-head"><h2>{{ icon('import') }} Your spreadsheet</h2></header>
+    <header class="card-head"><h2>{{ icon('import') }} {{ _('Your spreadsheet') }}</h2></header>
     <div class="si-body">
       <p class="si-lede">
-        Upload the Excel workbook (.xlsx) or CSV you keep your {{ target.nouns }} in. It can have any columns, in any
+        {% trans nouns=target.nouns|tr('import') %}Upload the Excel workbook (.xlsx) or CSV you keep your {{ nouns }} in. It can have any columns, in any
         order: the next step matches them to BioManager's, and you can change every match. Nothing is saved until
-        you've seen a preview.
+        you've seen a preview.{% endtrans %}
       </p>
       <label class="si-drop">
         {{ icon('upload', 'size-6') }}
-        <span class="si-drop-title">Choose a file</span>
-        <span class="si-drop-hint">.xlsx, .csv or .tsv, up to 15 MB and {{ '{:,}'.format(5000) }} rows</span>
+        <span class="si-drop-title">{{ _('Choose a file') }}</span>
+        <span class="si-drop-hint">{{ _('.xlsx, .csv or .tsv, up to 15 MB and %(rows)s rows', rows='{:,}'.format(5000)) }}</span>
         <input type="file" name="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" required data-si-file>
       </label>
       <p class="si-fine" data-si-chosen hidden></p>
       <div class="si-actions">
-        <button type="submit" class="btn btn-primary">{{ icon('chevron-right') }} Continue</button>
+        <button type="submit" class="btn btn-primary">{{ icon('chevron-right') }} {{ _('Continue') }}</button>
       </div>
     </div>
   </form>
 
   <aside class="card si-card">
-    <header class="card-head"><h2>{{ icon('columns') }} Columns in {{ target.title }}</h2></header>
+    <header class="card-head"><h2>{{ icon('columns') }} {{ _('Columns in %(title)s', title=target.title) }}</h2></header>
     <div class="si-body">
       <ul class="si-fields">
         {% for f in target.fields %}
           <li>
-            <span class="si-field-name">{{ f.label }}</span>
-            {% if f.required %}<span class="badge badge-warn">must have</span>{% endif %}
-            {% if f.also() %}<span class="si-fine">or {{ f.also() | join(', ') }}</span>{% endif %}
+            <span class="si-field-name">{{ f.label|tr('import') }}</span>
+            {% if f.required %}<span class="badge badge-warn">{{ _('must have') }}</span>{% endif %}
+            {% if f.also() %}<span class="si-fine">{{ _('or %(names)s', names=f.also() | join(', ')) }}</span>{% endif %}
           </li>
         {% endfor %}
       </ul>
       <p class="si-fine">
-        Columns are matched by meaning as well as by name, so “Location”, “Slot” or “Well” holding A1, B2… go to the
-        position, and “DOB” or “Born” to the date of birth.
-        {% if target.can_add_columns %}A column BioManager doesn't have becomes a new column here.
+        {{ _('Columns are matched by meaning as well as by name, so “Location”, “Slot” or “Well” holding A1, B2… go to the position, and “DOB” or “Born” to the date of birth.') }}
+        {% if target.can_add_columns %}{{ _("A column BioManager doesn't have becomes a new column here.") }}
         {% else %}{{ target.columns_note }}{% endif %}
-        A must-have column your sheet lacks gets one value for every row.
+        {{ _('A must-have column your sheet lacks gets one value for every row.') }}
       </p>
     </div>
   </aside>
@@ -80,8 +79,8 @@
   <input type="hidden" name="sheet" value="{{ sheet }}">
 
   {% if sheet_names | length > 1 %}
-    <nav class="si-sheets" aria-label="Sheets in the workbook">
-      <span class="si-fine">Sheet</span>
+    <nav class="si-sheets" aria-label="{{ _('Sheets in the workbook') }}">
+      <span class="si-fine">{{ _('Sheet') }}</span>
       {% for name in sheet_names %}
         <a class="si-sheet {{ 'is-current' if name == sheet }}" href="{{ url_for('sheet_import.match', token=token, sheet=name) }}">{{ name }}</a>
       {% endfor %}
@@ -90,13 +89,13 @@
 
   <section class="card si-card">
     <header class="card-head">
-      <h2>{{ icon('columns') }} Match the columns</h2>
-      <span class="badge badge-quiet">{{ rows | length }} rows · {{ headers | length }} columns</span>
+      <h2>{{ icon('columns') }} {{ _('Match the columns') }}</h2>
+      <span class="badge badge-quiet">{{ _('%(rows)s rows · %(columns)s columns', rows=rows | length, columns=headers | length) }}</span>
     </header>
     <div class="si-table-wrap">
       <table class="si-table">
         <thead>
-          <tr><th>In your sheet</th><th>For example</th><th>Goes to</th><th class="si-why-col">Why</th></tr>
+          <tr><th>{{ _('In your sheet') }}</th><th>{{ _('For example') }}</th><th>{{ _('Goes to') }}</th><th class="si-why-col">{{ _('Why') }}</th></tr>
         </thead>
         <tbody>
           {% for s in suggestions %}
@@ -104,40 +103,40 @@
             <tr data-si-row>
               <td class="si-header">{{ s.header }}</td>
               <td><div class="si-samples">
-                {% for v in s.samples %}<span class="si-sample">{{ v | truncate(28, True, '…') }}</span>{% else %}<span class="si-fine">empty</span>{% endfor %}
+                {% for v in s.samples %}<span class="si-sample">{{ v | truncate(28, True, '…') }}</span>{% else %}<span class="si-fine">{{ _('empty') }}</span>{% endfor %}
               </div></td>
               <td>
                 <div class="si-choose">
-                  <select name="map-{{ s.index }}" data-si-map aria-label="Where {{ s.header }} goes">
+                  <select name="map-{{ s.index }}" data-si-map aria-label="{{ _('Where %(header)s goes', header=s.header) }}">
                     <optgroup label="{{ target.title }}">
                       {% for f in target.fields %}
-                        <option value="{{ f.key }}" {% if chosen == f.key %}selected{% endif %}>{{ f.label }}{% if f.required %} *{% endif %}</option>
+                        <option value="{{ f.key }}" {% if chosen == f.key %}selected{% endif %}>{{ f.label|tr('import') }}{% if f.required %} *{% endif %}</option>
                       {% endfor %}
                     </optgroup>
-                    <optgroup label="Otherwise">
+                    <optgroup label="{{ _('Otherwise') }}">
                       {% if target.can_add_columns %}
-                        <option value="_new" {% if chosen == '_new' %}selected{% endif %}>New column “{{ s.header | truncate(30, True, '…') }}”</option>
+                        <option value="_new" {% if chosen == '_new' %}selected{% endif %}>{{ _('New column “%(header)s”', header=s.header | truncate(30, True, '…')) }}</option>
                       {% endif %}
-                      <option value="_notes" {% if chosen == '_notes' or (chosen == '_new' and not target.can_add_columns) %}selected{% endif %}>Into the notes</option>
-                      <option value="_skip" {% if chosen == '_skip' %}selected{% endif %}>Leave out</option>
+                      <option value="_notes" {% if chosen == '_notes' or (chosen == '_new' and not target.can_add_columns) %}selected{% endif %}>{{ _('Into the notes') }}</option>
+                      <option value="_skip" {% if chosen == '_skip' %}selected{% endif %}>{{ _('Leave out') }}</option>
                     </optgroup>
                   </select>
                   {% if target.can_add_columns %}
                     {% set kind = request.args.get('kind-' ~ s.index, s.kind) %}
-                    <select name="kind-{{ s.index }}" data-si-kind aria-label="Kind of column" {% if chosen != '_new' %}hidden{% endif %}>
-                      <option value="text" {% if kind == 'text' %}selected{% endif %}>text</option>
-                      <option value="number" {% if kind == 'number' %}selected{% endif %}>number</option>
-                      <option value="date" {% if kind == 'date' %}selected{% endif %}>date</option>
+                    <select name="kind-{{ s.index }}" data-si-kind aria-label="{{ _('Kind of column') }}" {% if chosen != '_new' %}hidden{% endif %}>
+                      <option value="text" {% if kind == 'text' %}selected{% endif %}>{{ _('text') }}</option>
+                      <option value="number" {% if kind == 'number' %}selected{% endif %}>{{ _('number') }}</option>
+                      <option value="date" {% if kind == 'date' %}selected{% endif %}>{{ _('date') }}</option>
                     </select>
                   {% endif %}
                 </div>
-                <p class="si-clash" data-si-clash hidden>Another column goes here too: only one can.</p>
+                <p class="si-clash" data-si-clash hidden>{{ _('Another column goes here too: only one can.') }}</p>
               </td>
               <td class="si-why si-why-col">
                 {%- if s.why and chosen == s.key -%}
                   <span class="si-strength" data-strength="{{ 'sure' if s.strength >= 0.9 else 'likely' }}">{{ s.why }}</span>
-                {%- elif chosen == '_new' -%}<span class="si-fine">not in {{ target.title }} yet</span>
-                {%- elif chosen == '_notes' -%}<span class="si-fine">kept as “{{ s.header | truncate(20, True, '…') }}: …”</span>
+                {%- elif chosen == '_new' -%}<span class="si-fine">{{ _('not in %(title)s yet', title=target.title) }}</span>
+                {%- elif chosen == '_notes' -%}<span class="si-fine">{{ _('kept as “%(header)s: …”', header=s.header | truncate(20, True, '…')) }}</span>
                 {%- endif -%}
               </td>
             </tr>
@@ -151,28 +150,28 @@
   {% set required = target.fields | selectattr('required') | list %}
   {% if required %}
     <section class="card si-card">
-      <header class="card-head"><h2>{{ icon('list-check') }} Must-have columns</h2></header>
+      <header class="card-head"><h2>{{ icon('list-check') }} {{ _('Must-have columns') }}</h2></header>
       <div class="si-body">
-        <p class="si-fine" data-si-all-there>Your sheet has every column {{ target.title }} needs.</p>
+        <p class="si-fine" data-si-all-there>{{ _('Your sheet has every column %(title)s needs.', title=target.title) }}</p>
         {% for f in required %}
           <div class="si-fill" data-si-fill="{{ f.key }}">
-            <span class="si-field-name">{{ f.label }}</span>
-            <span class="si-fine">isn't in your sheet: every row gets</span>
+            <span class="si-field-name">{{ f.label|tr('import') }}</span>
+            <span class="si-fine">{{ _("isn't in your sheet: every row gets") }}</span>
             {% set typed = request.args.get('fill-' ~ f.key, f.fill) %}
             {% if f.kind == 'owner' %}
-              <select name="fill-{{ f.key }}" aria-label="{{ f.label }} for every row">
-                <option value="me">you ({{ g.user.username }})</option>
+              <select name="fill-{{ f.key }}" aria-label="{{ _('%(column)s for every row', column=f.label|tr('import')) }}">
+                <option value="me">{{ _('you (%(name)s)', name=g.user.username) }}</option>
                 {% for name in usernames if name != g.user.username %}
                   <option value="{{ name }}" {% if typed == name %}selected{% endif %}>{{ name }}</option>
                 {% endfor %}
               </select>
             {% elif f.options %}
-              <select name="fill-{{ f.key }}" aria-label="{{ f.label }} for every row">
-                {% for value, label in f.options %}<option value="{{ value }}" {% if typed == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              <select name="fill-{{ f.key }}" aria-label="{{ _('%(column)s for every row', column=f.label|tr('import')) }}">
+                {% for value, label in f.options %}<option value="{{ value }}" {% if typed == value %}selected{% endif %}>{{ label|tr('import') }}</option>{% endfor %}
               </select>
             {% else %}
-              <input name="fill-{{ f.key }}" value="{{ typed if typed != 'me' }}" placeholder="a value for every row"
-                     {% if f.kind == 'date' %}type="date"{% endif %} aria-label="{{ f.label }} for every row">
+              <input name="fill-{{ f.key }}" value="{{ typed if typed != 'me' }}" placeholder="{{ _('a value for every row') }}"
+                     {% if f.kind == 'date' %}type="date"{% endif %} aria-label="{{ _('%(column)s for every row', column=f.label|tr('import')) }}">
             {% endif %}
           </div>
         {% endfor %}
@@ -181,8 +180,8 @@
   {% endif %}
 
   <div class="si-actions">
-    <a class="btn" href="{{ url_for('sheet_import.start', target_key=target_key) }}">{{ icon('upload') }} Another file</a>
-    <button type="submit" class="btn btn-primary">{{ icon('eye') }} Preview the import</button>
+    <a class="btn" href="{{ url_for('sheet_import.start', target_key=target_key) }}">{{ icon('upload') }} {{ _('Another file') }}</a>
+    <button type="submit" class="btn btn-primary">{{ icon('eye') }} {{ _('Preview the import') }}</button>
   </div>
 </form>
 {% endif %}
@@ -193,32 +192,38 @@
 <div class="si-stack">
   <section class="card si-card">
     <header class="card-head">
-      <h2>{{ icon('check') }} Ready to import</h2>
-      <span class="badge {{ 'badge-ok' if not results.problems else 'badge-warn' }}">{{ made }} of {{ results.total }} rows</span>
+      <h2>{{ icon('check') }} {{ _('Ready to import') }}</h2>
+      <span class="badge {{ 'badge-ok' if not results.problems else 'badge-warn' }}">{{ _('%(made)s of %(total)s rows', made=made, total=results.total) }}</span>
     </header>
     <div class="si-body">
       <p class="si-lede">
         {% if made %}
-          This would add {{ made }} {{ target.nouns if made != 1 else target.noun }} to {{ target.title }}{% if results.added_columns %}
-          and {{ results.added_columns | length }} new column{{ 's' if results.added_columns | length != 1 }}
-          ({{ results.added_columns | join(', ') }}){% endif %}.
-          Everything goes in as one batch, so Batch history can undo it.
+          {% set things = (target.nouns if made != 1 else target.noun)|tr('import') %}
+          {% if results.added_columns %}
+            {% trans count=results.added_columns | length, made=made, things=things, title=target.title, names=results.added_columns | join(', ') -%}
+              This would add {{ made }} {{ things }} to {{ title }} and {{ count }} new column ({{ names }}).
+            {%- pluralize -%}
+              This would add {{ made }} {{ things }} to {{ title }} and {{ count }} new columns ({{ names }}).
+            {%- endtrans %}
+          {% else %}
+            {{ _('This would add %(made)s %(things)s to %(title)s.', made=made, things=things, title=target.title) }}
+          {% endif %}
+          {{ _('Everything goes in as one batch, so Batch history can undo it.') }}
         {% else %}
-          None of the rows can be imported yet. The reasons are below: change the matches, or fix the sheet and upload
-          it again.
+          {{ _('None of the rows can be imported yet. The reasons are below: change the matches, or fix the sheet and upload it again.') }}
         {% endif %}
       </p>
       {% if made %}
-        <p class="si-fine">First ones: {{ results.created[:8] | join(', ') }}{% if made > 8 %} and {{ made - 8 }} more{% endif %}.</p>
+        <p class="si-fine">{% if made > 8 %}{{ _('First ones: %(names)s and %(more)s more.', names=results.created[:8] | join(', '), more=made - 8) }}{% else %}{{ _('First ones: %(names)s.', names=results.created[:8] | join(', ')) }}{% endif %}</p>
       {% endif %}
 
       <dl class="si-plan">
         {% for i, key in plan.mapping.items() if key != '_skip' %}
           <dt>{{ headers[i] }}</dt>
-          <dd>→ {{ labels.get(key) or ('a new column' if key == '_new' and target.can_add_columns else 'the notes') }}</dd>
+          <dd>→ {{ labels.get(key)|tr('import') if labels.get(key) else (_('a new column') if key == '_new' and target.can_add_columns else _('the notes')) }}</dd>
         {% endfor %}
         {% for key, value in plan.fills.items() if key in labels and key not in plan.mapping.values() %}
-          <dt class="si-fine">every row</dt><dd>{{ labels[key] }}: {{ 'you' if value == 'me' else (fill_words.get(key, {}).get(value) or value) }}</dd>
+          <dt class="si-fine">{{ _('every row') }}</dt><dd>{{ labels[key]|tr('import') }}: {{ _('you') if value == 'me' else ((fill_words.get(key, {}).get(value))|tr('import') or value) }}</dd>
         {% endfor %}
       </dl>
     </div>
@@ -226,11 +231,11 @@
 
   {% if results.problems %}
     <section class="card si-card si-problems">
-      <header class="card-head"><h2>{{ icon('warning') }} {{ results.problems | length }} row{{ 's' if results.problems | length != 1 }} would be skipped</h2></header>
+      <header class="card-head"><h2>{{ icon('warning') }} {% trans count=results.problems | length %}{{ count }} row would be skipped{% pluralize %}{{ count }} rows would be skipped{% endtrans %}</h2></header>
       <ul class="si-list">{% for p in results.problems[:50] %}<li>{{ p }}</li>{% endfor %}</ul>
       {% if results.problems | length > 50 %}
         {# Every one can be read before importing: a long sheet's problems are the ones to check. #}
-        <details class="si-more"><summary class="si-fine">Show the other {{ results.problems | length - 50 }}</summary>
+        <details class="si-more"><summary class="si-fine">{{ _('Show the other %(count)s', count=results.problems | length - 50) }}</summary>
           <ul class="si-list">{% for p in results.problems[50:] %}<li>{{ p }}</li>{% endfor %}</ul></details>
       {% endif %}
     </section>
@@ -238,12 +243,12 @@
 
   {% if results.tidied or results.warnings %}
     <section class="card si-card">
-      <header class="card-head"><h2>{{ icon('info') }} Worth a look</h2></header>
+      <header class="card-head"><h2>{{ icon('info') }} {{ _('Worth a look') }}</h2></header>
       <ul class="si-list">
         {% for w in (results.tidied + results.warnings)[:40] %}<li>{{ w }}</li>{% endfor %}
       </ul>
       {% if (results.tidied + results.warnings) | length > 40 %}
-        <details class="si-more"><summary class="si-fine">Show the other {{ (results.tidied + results.warnings) | length - 40 }}</summary>
+        <details class="si-more"><summary class="si-fine">{{ _('Show the other %(count)s', count=(results.tidied + results.warnings) | length - 40) }}</summary>
           <ul class="si-list">{% for w in (results.tidied + results.warnings)[40:] %}<li>{{ w }}</li>{% endfor %}</ul></details>
       {% endif %}
     </section>
@@ -251,9 +256,9 @@
 
   <form method="post" action="{{ url_for('sheet_import.run_import', token=token) }}" class="si-actions">
     {% for name, value in form.items() %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
-    <a class="btn" href="{{ url_for('sheet_import.match', token=token, **form) }}">{{ icon('back') }} Change the matches</a>
+    <a class="btn" href="{{ url_for('sheet_import.match', token=token, **form) }}">{{ icon('back') }} {{ _('Change the matches') }}</a>
     {% if made %}
-      <button type="submit" class="btn btn-primary">{{ icon('import') }} Import {{ made }} {{ target.nouns if made != 1 else target.noun }}</button>
+      <button type="submit" class="btn btn-primary">{{ icon('import') }} {{ _('Import %(made)s %(things)s', made=made, things=(target.nouns if made != 1 else target.noun)|tr('import')) }}</button>
     {% endif %}
   </form>
 </div>

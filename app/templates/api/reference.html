@@ -1,46 +1,46 @@
 {% extends "base.html" %}
 
-{% block page_title %}API reference{% endblock %}
+{% block page_title %}{{ _('API reference') }}{% endblock %}
 {% block page_heading %}API{% endblock %}
-{% block page_subtitle %}The lab's records as JSON, for scripts, instruments and other tools{% endblock %}
+{% block page_subtitle %}{{ _("The lab's records as JSON, for scripts, instruments and other tools") }}{% endblock %}
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('api.openapi') }}" title="For tools that read OpenAPI (Postman, code generators)">{{ icon('download') }} openapi.json</a>
-  {% if allowed %}<a class="btn btn-primary" href="{{ url_for('settings') }}#api-tokens">{{ icon('key') }} Make a token</a>{% endif %}
+  <a class="btn" href="{{ url_for('api.openapi') }}" title="{{ _('For tools that read OpenAPI (Postman, code generators)') }}">{{ icon('download') }} openapi.json</a>
+  {% if allowed %}<a class="btn btn-primary" href="{{ url_for('settings') }}#api-tokens">{{ icon('key') }} {{ _('Make a token') }}</a>{% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="grid max-w-[980px] grid-cols-1 gap-4 text-[13px] leading-relaxed">
   <section class="card p-5">
-    <h2 class="text-[15px] font-semibold text-ink">How it works</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('How it works') }}</h2>
     <ul class="mt-2 list-disc space-y-1.5 pl-5 text-ink-soft">
-      <li><b>A token is you.</b> Make one under <b>Settings → API tokens</b>: <i>Read</i>, or <i>Read and change</i>.
+      <li>{% trans %}<b>A token is you.</b> Make one under <b>Settings → API tokens</b>: <i>Read</i>, or <i>Read and change</i>.
         It can do exactly what you can on these pages, no more; changes it makes are in the change history under
-        your name, marked with the token's name.</li>
-      <li>Send it with every request: <code>Authorization: Bearer bmt_…</code>. The address is <code>{{ base }}</code>.</li>
-      <li><b>Lists</b> come as <code>{"data": [...], "next": "…"}</code>, {{ '{:,}'.format(100) }} at a time
-        (<code>limit</code> up to {{ '{:,}'.format(max_limit) }}). While <code>next</code> isn't <code>null</code>, get it for the
-        rest.</li>
-      <li><b>Changes</b> are JSON: <code>Content-Type: application/json</code>. A refused change says why, as
-        <code>{"error": "…"}</code> with the HTTP status (400 wrong, 401 no token, 403 not yours, 404 not found).</li>
-      <li>Dates are <code>2026-09-28</code>; times are UTC, <code>2026-09-28T14:05:00Z</code>. At most {{ per_minute }}
-        requests a minute a token.</li>
+        your name, marked with the token's name.{% endtrans %}</li>
+      <li>{% trans base=base %}Send it with every request: <code>Authorization: Bearer bmt_…</code>. The address is <code>{{ base }}</code>.{% endtrans %}</li>
+      <li>{% trans page='{:,}'.format(100), most='{:,}'.format(max_limit) %}<b>Lists</b> come as <code>{"data": [...], "next": "…"}</code>, {{ page }} at a time
+        (<code>limit</code> up to {{ most }}). While <code>next</code> isn't <code>null</code>, get it for the
+        rest.{% endtrans %}</li>
+      <li>{% trans %}<b>Changes</b> are JSON: <code>Content-Type: application/json</code>. A refused change says why, as
+        <code>{"error": "…"}</code> with the HTTP status (400 wrong, 401 no token, 403 not yours, 404 not found).{% endtrans %}</li>
+      <li>{% trans per_minute=per_minute %}Dates are <code>2026-09-28</code>; times are UTC, <code>2026-09-28T14:05:00Z</code>. At most {{ per_minute }}
+        requests a minute a token.{% endtrans %}</li>
     </ul>
   </section>
 
   <section class="data-table-card">
     <div class="dt-scroll">
       <table class="dt" style="min-width: 820px;">
-        <thead><tr><th style="width: 70px;">Method</th><th style="width: 330px;">Path</th><th>What</th><th style="width: 80px;" title="The token it needs: Read, or Read and change">Token</th></tr></thead>
+        <thead><tr><th style="width: 70px;">{{ _('Method') }}</th><th style="width: 330px;">{{ _('Path') }}</th><th>{{ _('What') }}</th><th style="width: 80px;" title="{{ _('The token it needs: Read, or Read and change') }}">{{ _('Token') }}</th></tr></thead>
         <tbody>
           {% for method, path, scope, summary, params in endpoints %}
             <tr>
               <td><span class="badge {{ 'badge-brand' if method == 'GET' else 'badge-quiet' }}">{{ method }}</span></td>
               <td><code class="whitespace-normal break-all">{{ path }}</code></td>
-              <td class="whitespace-normal">{{ summary }}
+              <td class="whitespace-normal">{% if summary|tr != summary %}{{ summary|tr }}{% else %}{% set parts = summary.partition(': ') %}{{ parts[0]|tr }}{% if parts[1] %}{{ '：' if current_language() == 'zh' else ': ' }}{{ parts[2] }}{% endif %}{% endif %}
                 {% if params %}<span class="block text-[11.5px] text-muted">?{{ params | join(', ') }}</span>{% endif %}</td>
-              <td>{{ 'Read' if scope == 'read' else 'Change' }}</td>
+              <td>{{ 'Read'|tr('api scope') if scope == 'read' else 'Change'|tr('api scope') }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -49,7 +49,7 @@
   </section>
 
   <section class="card p-5">
-    <h2 class="text-[15px] font-semibold text-ink">Examples</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Examples') }}</h2>
     <h3 class="mt-3 font-semibold">curl</h3>
     <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px]">export BM_TOKEN=bmt_…     # from Settings → API tokens
 curl -H "Authorization: Bearer $BM_TOKEN" "{{ base }}/mice?alive=true&amp;limit=500"
@@ -83,7 +83,7 @@ mice &lt;- bm("mice") |&gt; req_url_query(alive = "true", limit = 1000) |&gt; re
   resp_body_json(simplifyVector = TRUE)
 head(mice$data)</pre>
 
-    <h3 class="mt-4 font-semibold">What a change looks like</h3>
+    <h3 class="mt-4 font-semibold">{{ _('What a change looks like') }}</h3>
     <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px]">PATCH /api/v1/mice/1043             {"cage": "C-118", "note": "moved for the HDM cohort"}
 PATCH /api/v1/inventories/samples/items/57   {"status": "used up"}
 POST  /api/v1/inventories/samples/items      {"name": "Liver, 1043", "box": "Freezer A box 3", "position": "B4",

@@ -622,10 +622,11 @@ and the app's accent colour follows it.
 BioManager is in English and Simplified Chinese. It follows the language a
 person's computer or browser asks for first; each person can choose for
 themselves in **Settings → Language** (or the **中文 / English** switch on the
-sign-in page). Names, notes and everything people type stay as written. The
-sidebar, Home, the mouse colony, the calendar, Settings and the sheets are in
-Chinese so far; the other databases' pages follow. The
-website has a Chinese version too, at [biomanager.org/zh](https://biomanager.org/zh/).
+sign-in page). Every page is in both: each database, the calendar, the
+notebook and experiments, Settings and the admin pages, and the messages and
+notifications, which reach each person in their own language. Names, notes
+and everything people type stay as written, and so do exports, labels and the
+API. The website has a Chinese version too, at [biomanager.org/zh](https://biomanager.org/zh/).
 
 <table>
   <tr>
@@ -694,7 +695,7 @@ every computer linked to the lab:
 ### 💻 Desktop app
 
 1. Download BioManager for your system from the
-   [**BioManager website**](https://biomanager.org/#download),
+   [**BioManager website**](https://biomanager.org/download.html),
    or build it yourself (below).
 2. **macOS:** open the download and drag BioManager into Applications.
    The first time, **right-click the app and choose Open** — macOS asks

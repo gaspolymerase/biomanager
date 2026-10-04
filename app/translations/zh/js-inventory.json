@@ -1,0 +1,15 @@
+{
+  "The order": "该订单",
+  "Could not move it.": "无法移动。",
+  "Create %(n)s %(nouns)s": "创建 %(n)s 条%(nouns)s",
+  "Create %(noun)s": "创建%(noun)s",
+  "%(first)s and %(last)s": "%(first)s和%(last)s",
+  ", ": "、",
+  "; ": "；",
+  "Filled %(fields)s from %(from)s.": "已从 %(from)s 填入%(fields)s。",
+  "Pick…": "选择…",
+  "%(items)s from “%(was)s” to “%(now)s”": "%(items)s从“%(was)s”改为“%(now)s”",
+  "Relabel %(changes)s?": "要改标记吗：%(changes)s？",
+  "New…": "新建…",
+  "Name": "名称"
+}

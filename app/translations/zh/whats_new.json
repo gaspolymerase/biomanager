@@ -1,0 +1,16 @@
+{
+  "BioManager's website is now **biomanager.org**: **Help → User guide** and the app's other links go there. The old address still works.": "BioManager 的网站现在是 **biomanager.org**：**帮助 → 用户指南** 和 app 里的其他链接都会打开它。旧地址仍然可用。",
+  "**What's new**: this note, once after each update. **Help → What's new** opens it again.": "**新功能**：每次更新后显示一次这个说明。**帮助 → 新功能** 可以再次打开。",
+  "**Litter born** asks for the date of birth (today unless you change it) before recording the litter.": "**产仔** 会先询问出生日期（默认今天，可以修改），再记录这一窝。",
+  "Any shared cage now says **Shared**, not only breeder cages.": "所有共享的笼现在都显示 **共享**，不再只限繁殖笼。",
+  "In an open cage, the mouse table's header no longer covers the first mouse.": "展开的笼里，小鼠表格的表头不再遮住第一只小鼠。",
+  "On a Windows 10 PC without Microsoft Edge WebView2, the desktop app offers to download it and opens in the web browser meanwhile, instead of a blank window.": "在没有 Microsoft Edge WebView2 的 Windows 10 电脑上，桌面版会提示下载它，并先在网页浏览器里打开，而不是显示空白窗口。",
+  "**Project groups** (More → Project groups): share cages, stock, databases, to-dos and notebook pages with the people on your project.": "**项目组**（更多 → 项目组）：和同一项目的成员共享笼、库存、数据库、待办和实验记录页。",
+  "**Who sees it** on calendar events and to-dos: only you, everyone in the lab, or one of your groups.": "日程和待办可以选择 **谁能看到**：仅自己、全实验室，或你的某个项目组。",
+  "**Any cage can be shared**, not only breeder cages, and the Cages tab has a chip for each purpose.": "**任何笼都可以共享**，不再只限繁殖笼；笼标签页还为每种用途提供了筛选标签。",
+  "**Settings → Devices**: open the lab's server in the desktop app, or share a desktop's lab on the lab's network.": "**设置 → 设备**：在桌面版里打开实验室服务器，或把一台电脑上的实验室共享到实验室网络。",
+  "Your own to-dos and events are yours alone, admins included. A shared event is changed only by whoever added it and admins.": "你自己的待办和日程只有你能看到，管理员也看不到。共享日程只有添加它的人和管理员可以修改。",
+  "A sample from a mouse number too big for the database no longer stops the samples sheet opening.": "来源小鼠编号超出数据库范围的样本，不会再导致样本表格打不开。",
+  "**BioManager in Chinese (中文)**: choose it in **Settings → Language**, or 中文 / English on the sign-in page. The colony, sheets, calendar, Home and Settings are translated so far.": "**BioManager 中文版**：在**设置 → 语言**里选择，或在登录页点中文 / English。目前已翻译鼠群、表格、日历、首页和设置。",
+  "On a Windows PC set to Chinese, Japanese or Korean, the desktop app starts again.": "在设为中文、日文或韩文的 Windows 电脑上，桌面版又能正常启动了。"
+}

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}">
 <head>
   <meta charset="utf-8">
-  <title>Tank card · {{ tank.tank_id }}</title>
+  <title>{{ _('Tank card') }} · {{ tank.tank_id }}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin: 0; padding: 24px; color: #111; }
     .card { width: 480px; border: 2px solid #111; border-radius: 6px; padding: 18px 22px; }
@@ -19,24 +19,26 @@
   <script src="{{ url_for('static', filename='actions.js') }}?v={{ asset_version('actions.js') }}"></script>
 </head>
 <body>
+  {# A name, not 'Card ID'|tr(…): Jinja would translate a literal once, when it compiles the page. #}
+  {% set card_id_label = 'Card ID' %}
   <div class="card">
     <h1>{{ tank.tank_id }}</h1>
-    <div class="sub">{{ tank.purpose|upper }}{% if tank.rack %} · {{ tank.rack.name }}{% endif %}{% if position %} · {{ position }}{% endif %}</div>
+    <div class="sub">{{ tank.purpose|tr('zebrafish')|upper }}{% if tank.rack %} · {{ tank.rack.name }}{% endif %}{% if position %} · {{ position }}{% endif %}</div>
 
-    <div class="field"><b>Line</b><span>{{ tank.line.name if tank.line else '—' }}</span></div>
+    <div class="field"><b>{{ _('Line') }}</b><span>{{ tank.line.name if tank.line else '—' }}</span></div>
     {% if tank.line %}<div class="field"><b>ZFIN</b><span>{{ tank.line.zfin_name or '—' }}</span></div>{% endif %}
-    {% if tank.line %}<div class="field"><b>Transgenes</b><span>{{ tank.line.transgene_summary or '—' }}</span></div>{% endif %}
-    {% if tank.line %}<div class="field"><b>IACUC #</b><span>{{ tank.line.iacuc_protocol or '—' }}</span></div>{% endif %}
-    <div class="field"><b>Owner</b><span>{{ tank.owner or '—' }}</span></div>
-    <div class="field"><b>Card ID</b><span>{{ tank.card_id or '—' }}</span></div>
+    {% if tank.line %}<div class="field"><b>{{ _('Transgenes') }}</b><span>{{ tank.line.transgene_summary or '—' }}</span></div>{% endif %}
+    {% if tank.line %}<div class="field"><b>{{ _('IACUC #') }}</b><span>{{ tank.line.iacuc_protocol or '—' }}</span></div>{% endif %}
+    <div class="field"><b>{{ _('Owner') }}</b><span>{{ tank.owner or '—' }}</span></div>
+    <div class="field"><b>{{ card_id_label|tr('zebrafish') }}</b><span>{{ tank.card_id or '—' }}</span></div>
     {% if tank.mating_return_at %}
-      <div class="field"><b>Return by</b><span>{{ tank.mating_return_at | day }}</span></div>
+      <div class="field"><b>{{ _('Return by') }}</b><span>{{ tank.mating_return_at | day }}</span></div>
     {% endif %}
-    {% if tank.notes %}<div class="field"><b>Notes</b><span>{{ tank.notes }}</span></div>{% endif %}
-    {% if tank.needs_genotyping %}<div class="alert">⚑ Needs genotyping</div>{% endif %}
+    {% if tank.notes %}<div class="field"><b>{{ _('Notes') }}</b><span>{{ tank.notes }}</span></div>{% endif %}
+    {% if tank.needs_genotyping %}<div class="alert">⚑ {{ _('Needs genotyping') }}</div>{% endif %}
 
     <div class="actions">
-      <button data-on-click="print">Print</button>
+      <button data-on-click="print">{{ _('Print') }}</button>
     </div>
   </div>
 </body>

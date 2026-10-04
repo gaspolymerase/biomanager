@@ -30,9 +30,10 @@ from datetime import date, datetime, timedelta
 from flask import Blueprint, abort, flash, g, jsonify, redirect, request, url_for
 from sqlalchemy import select
 
-from . import access, lab
+from . import access, i18n, lab
 from . import experiments as ex
 from .db import SessionLocal
+from .i18n import gettext, ngettext
 from .models import Experiment, ExperimentRegimen, ExperimentStep, ExperimentStepRecord, InventoryItem
 
 bp = Blueprint("expsteps", __name__, url_prefix="/colony/experiments")
@@ -59,7 +60,7 @@ def parse_days(text: str) -> list[int]:
     15]; "d1-3, d7" too. ValueError with a sentence to show otherwise."""
     raw = (text or "").strip().lower().replace("days", "").replace("day", "")
     if not raw:
-        raise ValueError("Say on which days, e.g. 1, or 2-5, or 1, 8, 15.")
+        raise ValueError(gettext("Say on which days, e.g. 1, or 2-5, or 1, 8, 15."))
     out: set[int] = set()
     for part in re.split(r"[,;/&]|\band\b|\s{2,}", raw):
         part = part.strip().lstrip("d").strip()
@@ -71,7 +72,7 @@ def parse_days(text: str) -> list[int]:
             if last < first:
                 first, last = last, first
             if last - first > MAX_DAYS_PER_STEP:
-                raise ValueError(f"Day {first} to {last} is too long a stretch for one line.")
+                raise ValueError(gettext("Day %(first)s to %(last)s is too long a stretch for one line.", first=first, last=last))
             out.update(range(first, last + 1))
         elif re.fullmatch(r"-?\d+", part):
             out.add(int(part))
@@ -81,11 +82,11 @@ def parse_days(text: str) -> list[int]:
             if bits and all(re.fullmatch(r"-?\d+", b) for b in bits):
                 out.update(int(b) for b in bits)
             else:
-                raise ValueError(f"“{part}” isn't a day or a range of days (like 2-5).")
+                raise ValueError(gettext("“%(part)s” isn't a day or a range of days (like 2-5).", part=part))
     if any(abs(d) > MAX_DAY for d in out):
-        raise ValueError(f"Days go up to {MAX_DAY}.")
+        raise ValueError(gettext("Days go up to %(max)s.", max=MAX_DAY))
     if len(out) > MAX_DAYS_PER_STEP:
-        raise ValueError("That is more days than one line can hold.")
+        raise ValueError(gettext("That is more days than one line can hold."))
     return sorted(out)
 
 
@@ -241,10 +242,13 @@ def reagent_snapshot(session, item_id) -> dict:
             "inventory": module.label if module else ""}
 
 
-def step_title(step: ExperimentStep, family: str = "mouse", readout: dict | None = None) -> str:
+def step_title(step: ExperimentStep, family: str = "mouse", readout: dict | None = None, shown: bool = False) -> str:
+    """What a day of `step` is called; `shown`: in the page's language
+    (the readout's or the kind's name), for the calendar."""
+    tr = i18n.translate_value if shown else str
     if ex.is_reading(step.kind):
-        return (readout or {}).get("label") or "Readout"
-    what = step.agent or ex.kind_info(family, step.kind)[0]
+        return tr((readout or {}).get("label") or "Readout")
+    what = step.agent or tr(ex.kind_info(family, step.kind)[0])
     return " ".join(filter(None, [what, step.dose, step.route]))
 
 
@@ -324,6 +328,8 @@ def calendar_items(session, start: date, end: date, owner: str | None = None) ->
         place = ex.place_for(session, exp.db or "colony")
         if place is None:
             continue
+        readout = ex.readout_of(exp, place)
+        titles = {st.id: step_title(st, place.family, readout, shown=True) for st in exp.steps}
         for row in schedule(session, exp, place):
             if row["state"] == "done" or not row["date"]:
                 continue
@@ -331,14 +337,16 @@ def calendar_items(session, start: date, end: date, owner: str | None = None) ->
             if not (start <= when <= end):
                 continue
             who = f" · {row['group']}" if row["group"] else ""
+            title = titles.get(row["step_id"], row["title"])
             color = "#ff9f0a" if row["state"] == "overdue" else "#34c759"
             out.append({
                 "id": f"auto-expstep-{row['step_id']}-{row['day']}", "kind": "auto", "calendarId": "auto",
-                "title": f"{row['title']} · {exp.name}{who}", "category": "allday", "isAllday": True,
+                "title": f"{title} · {exp.name}{who}", "category": "allday", "isAllday": True,
                 "start": datetime.combine(when, datetime.min.time()).isoformat(),
                 "end": datetime.combine(when, datetime.max.time()).isoformat(),
                 "backgroundColor": color, "borderColor": color,
-                "body": f"Day {row['day']} of {exp.name} ({row['group_size']} {place.nouns})",
+                "body": gettext("Day %(day)s of %(name)s (%(count)s %(nouns)s)", day=row["day"], name=exp.name,
+                                count=row["group_size"], nouns=i18n.translate_value(place.nouns)),
                 "isReadOnly": True,
                 "raw": {"source": "experiment-step", "anchor_id": exp.id, "icon": row["icon"],
                         "href": ex.page_url(exp) + f"#day-{row['day']}"},
@@ -384,19 +392,20 @@ def _fill_step(session, exp, place, data, days, step=None):
     kinds = {k for k, _l, _i in ex.kinds_for(place.family)} | {"weigh"}
     kind = str(data.get("kind") or "other")
     if kind not in kinds and not any(kind == k for rows in ex.KINDS.values() for k, _l, _i in rows):
-        return None, (jsonify({"ok": False, "error": "Pick what kind of manipulation it is."}), 400)
+        return None, (jsonify({"ok": False, "error": gettext("Pick what kind of manipulation it is.")}), 400)
     agent = str(data.get("agent") or "").strip()[:200]
     if not agent and kind in ("injection", "challenge", "treatment", "immersion", "microinjection", "food", "plate", "rnai"):
-        return None, (jsonify({"ok": False, "error": "Say what is given, e.g. Tamoxifen or HDM."}), 400)
+        return None, (jsonify({"ok": False, "error": gettext("Say what is given, e.g. Tamoxifen or HDM.")}), 400)
     step_id = int(data.get("id") or 0)
     if step is None and step_id:
         step = session.get(ExperimentStep, step_id)
         if step is None or step.experiment_id_fk != exp.id:
-            return None, (jsonify({"ok": False, "error": "That manipulation is no longer there."}), 404)
+            return None, (jsonify({"ok": False, "error": gettext("That manipulation is no longer there.")}), 404)
         gone = sorted(r.day for r in step.records if r.day not in days)
         if gone:
-            return None, (jsonify({"ok": False, "error": f"Day {days_label(gone)} is recorded as done: undo that "
-                                                         "first to take the day out of the plan."}), 409)
+            return None, (jsonify({"ok": False, "error": gettext(
+                "Day %(days)s is recorded as done: undo that first to take the day out of the plan.",
+                days=days_label(gone))}), 409)
     if step is None:
         step = ExperimentStep(experiment_id_fk=exp.id, created_by=g.user.username, position=len(exp.steps))
         session.add(step)
@@ -427,7 +436,8 @@ def delete_step(experiment_id: int, step_id: int):
         if step is not None and step.experiment_id_fk == exp.id:
             if step.records and (_json().get("confirm") != "1"):
                 return jsonify({"ok": False, "needs_confirm": True,
-                                "error": f"{len(step.records)} day(s) of it are recorded as done."}), 409
+                                "error": ngettext("%(num)s day of it is recorded as done.",
+                                                  "%(num)s days of it are recorded as done.", len(step.records))}), 409
             s.delete(step)
             s.commit()
         return _answer(s, exp, place)
@@ -502,12 +512,13 @@ def _record(session, exp, place, step, day, data):
     try:
         on = date.fromisoformat(str(data.get("done_on") or date.today().isoformat())[:10])
     except ValueError:
-        return None, (jsonify({"ok": False, "error": "That date isn't a date."}), 400)
+        return None, (jsonify({"ok": False, "error": gettext("That date isn't a date.")}), 400)
     if on > date.today():
-        return None, (jsonify({"ok": False, "error": "It can't be recorded as done on a day still to come."}), 400)
+        return None, (jsonify({"ok": False, "error": gettext("It can't be recorded as done on a day still to come.")}), 400)
     chosen = _chosen(session, exp, place, step, data)
     if not chosen:
-        return None, (jsonify({"ok": False, "error": f"Tick the {place.nouns} it was done to."}), 400)
+        return None, (jsonify({"ok": False, "error": gettext("Tick the %(nouns)s it was done to.",
+                                                             nouns=i18n.translate_value(place.nouns))}), 400)
     problems = []
     if ex.is_reading(step.kind):
         values = data.get("values") or data.get("grams") or {}
@@ -517,7 +528,7 @@ def _record(session, exp, place, step, day, data):
                 continue
             problem = ex.set_reading(session, exp, place, x, on, raw)
             if problem:
-                if "isn't" in problem or "more than" in problem or "below" in problem:
+                if not isinstance(problem, ex.NotYours):      # a wrong value, not one skipped
                     return None, (jsonify({"ok": False, "error": problem}), 400)
                 problems.append(problem)
         session.flush()
@@ -533,8 +544,11 @@ def _record(session, exp, place, step, day, data):
     snapshot = reagent_snapshot(session, reagent_id) if str(reagent_id or "").isdigit() else {}
     record.reagent = json.dumps(snapshot) if snapshot else ""
     if snapshot.get("expires") and snapshot["expires"] < on.isoformat():
-        problems.append(f"{snapshot['name']}{' lot ' + snapshot['lot'] if snapshot.get('lot') else ''} "
-                        f"expired on {snapshot['expires']}.")
+        if snapshot.get("lot"):
+            problems.append(gettext("%(name)s lot %(lot)s expired on %(date)s.", name=snapshot["name"],
+                                    lot=snapshot["lot"], date=snapshot["expires"]))
+        else:
+            problems.append(gettext("%(name)s expired on %(date)s.", name=snapshot["name"], date=snapshot["expires"]))
     # Sample records, only when the person asked for them.
     if data.get("make_samples") and not _record_dict(record)["samples"]:
         made, trouble = make_samples(session, exp, place, step, day, chosen, on, str(data.get("sample_inventory") or ""),
@@ -553,7 +567,7 @@ def make_samples(session, exp, place, step, day, chosen, on: date, inventory_key
     from .inventory_routes import Refused, _item_from_form
     module = inv.get_module(session, inventory_key)
     if module is None or not lab.can_see(module):
-        return [], ["There is no such inventory for the samples."]
+        return [], [gettext("There is no such inventory for the samples.")]
     mv = inv.view(module)
     source = next((f for f in mv.fields if f["type"] == "source"), None)
     dated = next((f for f in mv.fields if f["type"] == "date" and f["key"] in ("collected_on", "collected", "date")), None)
@@ -580,7 +594,7 @@ def make_samples(session, exp, place, step, day, chosen, on: date, inventory_key
         except Refused as error:
             savepoint.rollback()
             session.delete(item)
-            trouble.append(f"No sample for {x.label}: {error}")
+            trouble.append(gettext("No sample for %(label)s: %(error)s", label=x.label, error=error))
             break
     return made, trouble
 
@@ -654,13 +668,13 @@ def record_now(experiment_id: int):
         try:
             on = date.fromisoformat(str(data.get("done_on") or date.today().isoformat())[:10])
         except ValueError:
-            return jsonify({"ok": False, "error": "That date isn't a date."}), 400
+            return jsonify({"ok": False, "error": gettext("That date isn't a date.")}), 400
         if on > date.today():
-            return jsonify({"ok": False, "error": "It can't be recorded as done on a day still to come."}), 400
+            return jsonify({"ok": False, "error": gettext("It can't be recorded as done on a day still to come.")}), 400
         note = ""
         if exp.start_date is None:
             exp.start_date = on
-            note = f"The experiment had no start date, so {on.isoformat()} is its day 1."
+            note = gettext("The experiment had no start date, so %(date)s is its day 1.", date=on.isoformat())
         day = (on - exp.start_date).days + 1
         step, error = _fill_step(s, exp, place, data, [day])
         if error:
@@ -685,13 +699,13 @@ def toggle_subject(experiment_id: int, step_id: int, day: int):
         step = s.get(ExperimentStep, step_id)
         record = next((r for r in step.records if r.day == day), None) if step and step.experiment_id_fk == exp.id else None
         if record is None:
-            return jsonify({"ok": False, "error": "Record the day first, with Record manipulation."}), 409
+            return jsonify({"ok": False, "error": gettext("Record the day first, with Record manipulation.")}), 409
         key = str(data.get("subject") or "")
         entries = [e for e in _record_dict(record)["subjects"] if e.get("subject") != key]
         if data.get("given"):
             x = ex.find_subject(s, exp, place, key)
             if x is None:
-                return jsonify({"ok": False, "error": "That one is no longer in the experiment."}), 404
+                return jsonify({"ok": False, "error": gettext("That one is no longer in the experiment.")}), 404
             entries += _entries(s, exp, place, step, [x], record.done_on)
         record.mice = json.dumps(entries)
         s.commit()
@@ -728,7 +742,8 @@ def regimens_for(session, family: str) -> list[dict]:
         except ValueError:
             steps = []
         out.append({"id": r.id, "name": r.name, "owner": r.owner, "steps": steps,
-                    "summary": "; ".join(f"day {st.get('days')}: {st.get('agent') or ex.kind_info(family, st.get('kind') or '')[0]}"
+                    "summary": "; ".join(gettext("day %(days)s: %(what)s", days=st.get("days"),
+                                                 what=st.get("agent") or i18n.translate_value(ex.kind_info(family, st.get("kind") or "")[0]))
                                          for st in steps[:4]),
                     "mine": r.owner == me or access.is_admin()})
     return out
@@ -742,15 +757,15 @@ def save_regimen(experiment_id: int):
         exp, place = _load(s, experiment_id)
         name = str(data.get("name") or "").strip()[:200]
         if not name:
-            return jsonify({"ok": False, "error": "Give the regimen a name."}), 400
+            return jsonify({"ok": False, "error": gettext("Give the regimen a name.")}), 400
         if not exp.steps:
-            return jsonify({"ok": False, "error": "This experiment has nothing planned to save yet."}), 400
+            return jsonify({"ok": False, "error": gettext("This experiment has nothing planned to save yet.")}), 400
         steps = [{"kind": st.kind, "agent": st.agent, "dose": st.dose, "route": st.route,
                   "concentration": st.concentration, "days": st.days, "group": st.treatment_group, "notes": st.notes,
                   "reagent_id": st.reagent_item_id_fk} for st in exp.steps]
         s.add(ExperimentRegimen(name=name, family=place.family, steps=json.dumps(steps), owner=g.user.username))
         s.commit()
-        return _answer(s, exp, place, message=f"Saved the regimen {name}.")
+        return _answer(s, exp, place, message=gettext("Saved the regimen %(name)s.", name=name))
 
 
 @bp.post("/<int:experiment_id>/regimens/<int:regimen_id>/apply")
@@ -764,7 +779,7 @@ def apply_regimen(experiment_id: int, regimen_id: int):
             return refused
         regimen = s.get(ExperimentRegimen, regimen_id)
         if regimen is None:
-            return jsonify({"ok": False, "error": "That regimen is gone."}), 404
+            return jsonify({"ok": False, "error": gettext("That regimen is gone.")}), 404
         added = 0
         for st in json.loads(regimen.steps or "[]"):
             try:
@@ -775,7 +790,8 @@ def apply_regimen(experiment_id: int, regimen_id: int):
             if error is None:
                 added += 1
         s.commit()
-        return _answer(s, exp, place, message=f"Planned {added} line{'s' if added != 1 else ''} from {regimen.name}.")
+        return _answer(s, exp, place, message=ngettext("Planned %(num)s line from %(name)s.",
+                                                       "Planned %(num)s lines from %(name)s.", added, name=regimen.name))
 
 
 @bp.post("/<int:experiment_id>/regimens/<int:regimen_id>/delete")
@@ -785,7 +801,7 @@ def delete_regimen(experiment_id: int, regimen_id: int):
         regimen = s.get(ExperimentRegimen, regimen_id)
         if regimen is not None:
             if regimen.owner != g.user.username and not access.is_admin():
-                return jsonify({"ok": False, "error": f"That regimen is {regimen.owner}’s."}), 403
+                return jsonify({"ok": False, "error": gettext("That regimen is %(owner)s’s.", owner=regimen.owner)}), 403
             s.delete(regimen)
             s.commit()
         return _answer(s, exp, place)
@@ -839,7 +855,7 @@ def add_to_notebook(experiment_id: int):
     with SessionLocal() as s:
         exp, place = _load(s, experiment_id)
         if not lab.feature_on(s, "notebook"):
-            flash("The notebook is switched off for this lab.", "error")
+            flash(gettext("The notebook is switched off for this lab."), "error")
             return redirect(ex.page_url(exp))
         page_id = my_notebook_page(s, exp.id)
         if page_id is None:

@@ -25,6 +25,7 @@ from datetime import datetime
 from sqlalchemy import or_, select
 
 from . import audit
+from .i18n import gettext, ngettext
 from .models import AuditEntry, BatchRecord
 
 # Only tables the app knows how to rebuild a row for.
@@ -63,20 +64,20 @@ def blockers(session, batch: BatchRecord) -> list[str]:
     """Reasons this batch cannot be cleanly reversed."""
     problems: list[str] = []
     if batch.is_undone:
-        problems.append(f"Already undone by {batch.undone_by} "
-                        f"on {batch.undone_at:%Y-%m-%d %H:%M}.")
+        problems.append(gettext("Already undone by %(who)s on %(when)s.", who=batch.undone_by,
+                                when=f"{batch.undone_at:%Y-%m-%d %H:%M}"))
         return problems
 
     entries = session.scalars(
         select(AuditEntry).where(AuditEntry.batch_id_fk == batch.id)
     ).all()
     if not entries:
-        problems.append("No recorded changes to reverse.")
+        problems.append(gettext("No recorded changes to reverse."))
         return problems
 
     for entry in entries:
         if entry.table_name not in UNDOABLE_TABLES:
-            problems.append(f"Table {entry.table_name} cannot be reversed automatically.")
+            problems.append(gettext("Table %(table)s cannot be reversed automatically.", table=entry.table_name))
             break
     late = _changed_since(session, batch, entries)
     if late:
@@ -112,8 +113,9 @@ def _changed_since(session, batch: BatchRecord, entries=None) -> str:
         if later is not None:
             touched_since += 1
     if touched_since:
-        return (f"{touched_since} record(s) changed after this batch — reverting "
-                "would throw those later edits away.")
+        return ngettext("%(num)s record changed after this batch — reverting would throw that later edit away.",
+                        "%(num)s records changed after this batch — reverting would throw those later edits away.",
+                        touched_since)
     return ""
 
 
@@ -123,14 +125,14 @@ def undo(session, batch: BatchRecord, actor: str, force: bool = False) -> dict:
     if problems and not force:
         return {"ok": False, "problems": problems, "reverted": 0}
     if batch.is_undone:
-        return {"ok": False, "problems": ["Already undone."], "reverted": 0}
+        return {"ok": False, "problems": [gettext("Already undone.")], "reverted": 0}
     # Claim the batch first, in the database: of two people pressing Undo at
     # the same moment, only one gets it (the other's UPDATE finds it taken).
     from sqlalchemy import update
     claimed = session.execute(update(BatchRecord).where(BatchRecord.id == batch.id, BatchRecord.undone_at.is_(None))
                               .values(undone_at=datetime.utcnow(), undone_by=actor)).rowcount
     if not claimed:
-        return {"ok": False, "problems": ["Already undone."], "reverted": 0}
+        return {"ok": False, "problems": [gettext("Already undone.")], "reverted": 0}
     session.refresh(batch)
     if not force:
         # Lock what it will change (PostgreSQL; SQLite has one writer at a

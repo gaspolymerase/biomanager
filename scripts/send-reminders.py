@@ -13,6 +13,8 @@ What goes in a person's digest:
   * breeder mice past the age the lab retires them
   * their own open tasks that are due
 
+Each digest is written in its reader's language (their choice in Settings,
+else the language their browser last showed BioManager in; app/i18n.py).
 Nothing is sent to someone with an empty digest, and nothing at all is sent
 to an account without an email address. With SMTP unconfigured the messages
 are logged instead, so this is safe to run before any mail server exists —
@@ -34,8 +36,9 @@ from app.db import SessionLocal  # noqa: E402
 from app.models import (  # noqa: E402
     CageRecord, LitterRecord, MouseRecord, OrgDue, OrganismModule, TaskItem, UserAccount,
 )
-from app import mailer  # noqa: E402
+from app import i18n, mailer  # noqa: E402
 from app import organism_service as svc  # noqa: E402
+from app.i18n import gettext, ngettext, translate_value  # noqa: E402
 
 WEAN_AGE_DAYS = 21
 BREEDER_RETIRE_WEEKS = 30
@@ -51,22 +54,29 @@ def _urgency(days: int) -> str:
 
 def _when(days: int) -> str:
     if days < 0:
-        return f"{-days} day{'s' if days != -1 else ''} overdue"
+        return ngettext("%(num)s day overdue", "%(num)s days overdue", -days)
     if days == 0:
-        return "due today"
-    return f"in {days} day{'s' if days != 1 else ''}"
+        return gettext("due today")
+    return ngettext("in %(num)s day", "in %(num)s days", days)
 
 
 def collect(session, horizon: int) -> dict[str, list[dict]]:
-    """Build every user's sections, keyed by username."""
+    """Build every user's sections, keyed by username, each in that
+    person's language."""
     today = date.today()
     cutoff = today + timedelta(days=horizon)
     per_user: dict[str, list[dict]] = {}
+    languages: dict[str, str] = {}
 
-    def add(owner: str, title: str, item: dict) -> None:
+    def add(owner: str, title, item) -> None:
+        """`title` and `item` are made (called) in the owner's language."""
         owner = (owner or "").strip()
         if not owner:
             return
+        if owner not in languages:
+            languages[owner] = i18n.language_for(session, owner)
+        with i18n.using(languages[owner]):
+            title, item = title(), item()
         sections = per_user.setdefault(owner, [])
         section = next((s for s in sections if s["title"] == title), None)
         if section is None:
@@ -97,12 +107,13 @@ def collect(session, horizon: int) -> dict[str, list[dict]]:
             label = getattr(subject, "code", None) or f"#{row.subject_id}"
             days = (row.due_on - today).days
             rule = rules.get(row.rule_key, {})
-            add(row.assigned_to or getattr(subject, "owner", ""), module.label, {
-                "label": f"{rule.get('label', row.rule_key)} · {label}",
-                "detail": _when(days),
-                "urgency": _urgency(days),
-                "url": f"/organisms/{module.key}?view=schedule",
-            })
+            add(row.assigned_to or getattr(subject, "owner", ""), lambda: translate_value(module.label),
+                lambda: {
+                    "label": f"{translate_value(rule.get('label', row.rule_key))} · {label}",
+                    "detail": _when(days),
+                    "urgency": _urgency(days),
+                    "url": f"/organisms/{module.key}?view=schedule",
+                })
 
     # --- Mouse litters reaching weaning ----------------------------------
     for litter in session.scalars(
@@ -114,9 +125,9 @@ def collect(session, horizon: int) -> dict[str, list[dict]]:
             continue
         owners = {(m.owner or "").strip() for m in litter.mice if (m.owner or "").strip()}
         for owner in owners or {""}:
-            add(owner, "Mouse colony", {
-                "label": f"Wean litter {litter.litter_id}",
-                "detail": f"{_when(days)} (born {litter.date_of_birth})",
+            add(owner, lambda: gettext("Mouse colony"), lambda: {
+                "label": gettext("Wean litter %(litter)s", litter=litter.litter_id),
+                "detail": gettext("%(when)s (born %(date)s)", when=_when(days), date=litter.date_of_birth),
                 "urgency": _urgency(days),
                 "url": "/colony?view=litters",
             })
@@ -131,9 +142,9 @@ def collect(session, horizon: int) -> dict[str, list[dict]]:
         weeks = (today - litter.date_of_birth).days // 7
         if weeks < BREEDER_RETIRE_WEEKS:
             continue
-        add(mouse.owner, "Mouse colony", {
-            "label": f"Mouse #{mouse.mouse_id} is {weeks}w old",
-            "detail": f"past the {BREEDER_RETIRE_WEEKS}-week mark",
+        add(mouse.owner, lambda: gettext("Mouse colony"), lambda: {
+            "label": gettext("Mouse #%(mouse)s is %(weeks)sw old", mouse=mouse.mouse_id, weeks=weeks),
+            "detail": gettext("past the %(weeks)s-week mark", weeks=BREEDER_RETIRE_WEEKS),
             "urgency": "soon",
             "url": "/colony?view=mice",
         })
@@ -146,7 +157,7 @@ def collect(session, horizon: int) -> dict[str, list[dict]]:
         days = (task.due_date - today).days
         if days > horizon:
             continue
-        add(getattr(task, "owner", "") or getattr(task, "assigned_to", ""), "Your tasks", {
+        add(getattr(task, "owner", "") or getattr(task, "assigned_to", ""), lambda: gettext("Your tasks"), lambda: {
             "label": task.title,
             "detail": _when(days),
             "urgency": _urgency(days),
@@ -192,11 +203,13 @@ def main() -> int:
             if not count:
                 continue
 
-            text, html = mailer.render_digest(
-                user.display_name or user.username, sections, base_url)
             overdue = sum(1 for s in sections for i in s["items"] if i["urgency"] == "overdue")
-            subject = (f"BioManager: {overdue} overdue" if overdue
-                       else f"BioManager: {count} item{'s' if count != 1 else ''} coming up")
+            with i18n.using(i18n.language_for(session, username)):
+                text, html = mailer.render_digest(
+                    user.display_name or user.username, sections, base_url)
+                subject = (gettext("BioManager: %(n)s overdue", n=overdue) if overdue
+                           else ngettext("BioManager: %(num)s item coming up", "BioManager: %(num)s items coming up",
+                                         count))
 
             if args.dry_run:
                 print("=" * 68)

@@ -52,6 +52,7 @@ from flask import (Blueprint, abort, current_app, flash, g, jsonify, redirect, r
 from sqlalchemy import Integer, create_engine, func, select, text
 
 from . import lab_copy
+from .i18n import gettext
 from .db import Base, SessionLocal, engine
 from .models import AppSetting, LabCopyKey, UserAccount
 from .paths import data_dir, uploads_dir
@@ -171,7 +172,7 @@ def refuse_changes_while_read_only():
     if request.path.startswith(ALLOWED_WHILE_READ_ONLY):
         return None
     if _swapping.is_set():
-        why = "This computer is opening the lab's master copy. Try again in a moment."
+        why = gettext("This computer is opening the lab's master copy. Try again in a moment.")
     else:
         with SessionLocal() as s:
             st = state(s)
@@ -187,20 +188,17 @@ def refuse_changes_while_read_only():
 
 def notice(st: dict) -> dict:
     """What the banner says about the master copy on this device, if anything."""
-    where = st.get("label") or "another computer"
+    where = st.get("label") or gettext("another computer")
     p = st.get("phase", "")
     if p == ASKED:
-        return {"tone": "info", "text": f"Handing the lab's master copy to {where}: it takes it over the next time "
-                                         "it is open, in a minute or so. Until then everything works as usual."}
+        return {"tone": "info", "text": gettext("Handing the lab's master copy to %(where)s: it takes it over the next time it is open, in a minute or so. Until then everything works as usual.", where=where)}
     if p == FROZEN:
-        return {"tone": "warn", "text": f"Read only: the lab's master copy is moving to {where}. Nothing can be "
-                                         "changed here until it has, so no change is lost."}
+        return {"tone": "warn", "text": gettext("Read only: the lab's master copy is moving to %(where)s. Nothing can be changed here until it has, so no change is lost.", where=where)}
     if p == AWAY:
         return {"tone": "warn", "url": st.get("url", ""),
-                "text": f"Read only: the lab's master copy is now on {where}. Work there; what you see here is "
-                        "the lab as it was when it moved."}
+                "text": gettext("Read only: the lab's master copy is now on %(where)s. Work there; what you see here is the lab as it was when it moved.", where=where)}
     if p == RECEIVING:
-        return {"tone": "warn", "text": f"Read only for a moment: the lab's master copy is coming back from {where}."}
+        return {"tone": "warn", "text": gettext("Read only for a moment: the lab's master copy is coming back from %(where)s.", where=where)}
     if st.get("error"):
         return {"tone": "error", "text": st["error"]}
     return {}
@@ -235,15 +233,16 @@ def linked_devices(s) -> list[dict]:
         open_now = k.last_seen_at is not None and now - k.last_seen_at < SEEN_WITHIN
         why_not = ""
         if k.revoked_at is not None:
-            why_not = "Its key was revoked."
+            why_not = gettext("Its key was revoked.")
         elif owner is None or owner.role != "admin":
-            why_not = "Its key is a member's: only a computer with an admin's key can hold the whole lab."
+            why_not = gettext("Its key is a member's: only a computer with an admin's key can hold the whole lab.")
         elif not k.device_role:
-            why_not = "It hasn't been heard from since this version: open BioManager on it."
+            why_not = gettext("It hasn't been heard from since this version: open BioManager on it.")
         elif not open_now:
-            why_not = "It isn't open now: open BioManager on it first."
+            why_not = gettext("It isn't open now: open BioManager on it first.")
         elif k.device_version != mine:
-            why_not = f"It runs BioManager {k.device_version or '?'}, this device {mine}: update both to the same version."
+            why_not = gettext("It runs BioManager %(theirs)s, this device %(mine)s: update both to the same version.",
+                              theirs=k.device_version or "?", mine=mine)
         rows.append({"key": k, "owner": owner.username if owner else "?", "open_now": open_now,
                      "can_take_over": not why_not and st.get("phase", "") in ("",),
                      "why_not": why_not, "is_target": st.get("key_id") == k.id})
@@ -283,16 +282,18 @@ def make_master(key_id: int):
         if row is None:
             abort(404)
         if phase(s):
-            flash("The master copy is already being handed over. Cancel that first.", "error")
+            flash(gettext("The master copy is already being handed over. Cancel that first."), "error")
             return redirect(url_for("devices.page"))
         label = row["key"].label
         if not row["can_take_over"]:
-            flash(f"{label} can't take the master copy over: {row['why_not']}", "error")
+            flash(gettext("%(device)s can't take the master copy over: %(why)s", device=label, why=row["why_not"]),
+                  "error")
             return redirect(url_for("devices.page"))
         _save(s, STATE, {"phase": ASKED, "key_id": key_id, "label": label,
                          "since": datetime.utcnow().isoformat(timespec="seconds")})
         s.commit()
-    flash(f"{label} takes the master copy over in a minute or so, while BioManager is open on it.", "success")
+    flash(gettext("%(device)s takes the master copy over in a minute or so, while BioManager is open on it.",
+                  device=label), "success")
     return redirect(url_for("devices.page"))
 
 
@@ -304,15 +305,14 @@ def cancel():
         _master_only(s)
         st = state(s)
         if st.get("phase") == RECEIVING:
-            flash("The master copy is arriving right now; wait a moment.", "error")
+            flash(gettext("The master copy is arriving right now; wait a moment."), "error")
             return redirect(url_for("devices.page"))
         _save(s, STATE, {})
         s.commit()
     if st.get("phase") == AWAY:
-        flash(f"This is the lab's master copy again. What was changed on {st.get('label', 'the other computer')} "
-              "since it took over is not here.", "success")
+        flash(gettext("This is the lab's master copy again. What was changed on %(device)s since it took over is not here.", device=st.get("label") or gettext("the other computer")), "success")
     else:
-        flash("Hand-over cancelled; this is still the lab's master copy.", "success")
+        flash(gettext("Hand-over cancelled; this is still the lab's master copy."), "success")
     return redirect(url_for("devices.page"))
 
 
@@ -735,7 +735,7 @@ def give_back(app) -> dict:
         origin, cfg = came_from(s), lab_copy.config(s)
     server, key = (origin.get("url") or cfg["server"]).rstrip("/"), cfg["key"]
     if not server or not key:
-        return {"ok": False, "error": "This computer didn't take the master copy over from another device."}
+        return {"ok": False, "error": gettext("This computer didn't take the master copy over from another device.")}
     with SessionLocal() as s:
         _save(s, STATE, {"phase": FROZEN, "label": origin.get("label") or _master_label(server),
                          "since": datetime.utcnow().isoformat(timespec="seconds")})
@@ -766,7 +766,7 @@ def give_back(app) -> dict:
             _save(s, STATE, {})
             s.commit()
         reason = str(error) if isinstance(error, RuntimeError) else lab_copy._reason(error)
-        return {"ok": False, "error": f"Giving the master copy back failed: {reason} This computer is still the master."}
+        return {"ok": False, "error": gettext("Giving the master copy back failed: %(reason)s This computer is still the master.", reason=reason)}
     finally:
         path.unlink(missing_ok=True)
     stop_sharing()
@@ -832,10 +832,10 @@ def share():
     turn_on = request.form.get("on") == "1"
     with SessionLocal() as s:
         if not turn_on and came_from(s):
-            flash("This computer holds the lab's master copy: give it back instead of stopping.", "error")
+            flash(gettext("This computer holds the lab's master copy: give it back instead of stopping."), "error")
             return redirect(url_for("devices.page"))
         if turn_on and window_url():
-            flash("This window opens another device's lab: use this computer's own first.", "error")
+            flash(gettext("This window opens another device's lab: use this computer's own first."), "error")
             return redirect(url_for("devices.page"))
         _settings()[1](s, SHARING, "1" if turn_on else "")
         s.commit()
@@ -846,12 +846,13 @@ def share():
             with SessionLocal() as s:
                 _settings()[1](s, SHARING, "")
                 s.commit()
-            flash(f"Couldn't share the lab on the network: {error}", "error")
+            flash(gettext("Couldn't share the lab on the network: %(error)s", error=error), "error")
             return redirect(url_for("devices.page"))
-        flash(f"Shared: other devices on this network open {url}. This computer must stay on and awake.", "success")
+        flash(gettext("Shared: other devices on this network open %(url)s. This computer must stay on and awake.",
+                      url=url), "success")
     else:
         stop_sharing()
-        flash("No longer shared: only this computer reaches its lab.", "success")
+        flash(gettext("No longer shared: only this computer reaches its lab."), "success")
     return redirect(url_for("devices.page"))
 
 
@@ -864,15 +865,15 @@ def window():
         is_sharing = sharing(s)
     if request.form.get("to") == "lab":
         if not cfg["server"]:
-            flash("Link this computer to the lab first: its address and a key, under Keep a copy.", "error")
+            flash(gettext("Link this computer to the lab first: its address and a key, under Keep a copy."), "error")
             return redirect(url_for("devices.page"))
         if is_sharing:
-            flash("This computer shares its own lab: stop sharing it first.", "error")
+            flash(gettext("This computer shares its own lab: stop sharing it first."), "error")
             return redirect(url_for("devices.page"))
         _save_prefs(window_url=cfg["server"])
         return redirect(cfg["server"].rstrip("/") + "/")
     _save_prefs(window_url="")
-    flash("This window opens this computer's own BioManager again.", "success")
+    flash(gettext("This window opens this computer's own BioManager again."), "success")
     return redirect(url_for("devices.page"))
 
 
@@ -899,7 +900,7 @@ def own_again():
         st, shared = state(s), sharing(s)
     backup = Path(st.get("own_backup") or "")
     if st.get("phase") != AWAY or shared or not backup.is_file():
-        flash("There is no earlier lab of this computer's to go back to.", "error")
+        flash(gettext("There is no earlier lab of this computer's to go back to."), "error")
         return redirect(url_for("devices.page"))
     _swapping.set()
     try:
@@ -911,8 +912,7 @@ def own_again():
         _save(s, STATE, {})
         s.commit()
     _save_prefs(window_url="")
-    flash("This computer's own lab is back, as it was before it took the master copy over. "
-          "Sign in with this computer's own account.", "success")
+    flash(gettext("This computer's own lab is back, as it was before it took the master copy over. Sign in with this computer's own account."), "success")
     return redirect(url_for("login"))
 
 

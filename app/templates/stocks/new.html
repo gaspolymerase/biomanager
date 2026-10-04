@@ -2,13 +2,13 @@
 
 {% set chosen = kind if kind in presets else 'fly' %}
 
-{% block page_title %}New stock database{% endblock %}
-{% block page_heading %}New fly or worm database{% endblock %}
-{% block page_subtitle %}Vials or plates in racks inside incubators. You can keep several, e.g. one per project or per bay.{% endblock %}
+{% block page_title %}{{ _('New stock database') }}{% endblock %}
+{% block page_heading %}{{ _('New fly or worm database') }}{% endblock %}
+{% block page_subtitle %}{{ _('Vials or plates in racks inside incubators. You can keep several, e.g. one per project or per bay.') }}{% endblock %}
 {% block page_shell_class %}shell-page workbench{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('back') }} All databases</a>
+  <a class="btn" href="{{ url_for('organisms.index') }}">{{ icon('back') }} {{ _('All databases') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -18,27 +18,27 @@
       <label class="preset-card">
         <input type="radio" name="kind" value="{{ key }}" {% if key == chosen %}checked{% endif %} data-default-label="{{ p.label }}">
         <span class="preset-card-icon">{{ icon(p.icon) }}</span>
-        <span class="preset-card-title">{{ p.label }}</span>
-        <span class="preset-card-blurb">{{ p.blurb }}</span>
+        <span class="preset-card-title">{{ p.label|tr }}</span>
+        <span class="preset-card-blurb">{{ p.blurb|tr }}</span>
         <span class="preset-card-tags">
-          <span class="badge badge-quiet">{{ p.settings.unit_noun_plural }}</span>
-          <span class="badge badge-quiet">{{ p.settings.rack_noun_plural }}</span>
+          <span class="badge badge-quiet">{{ p.settings.unit_noun_plural|tr('stocks') }}</span>
+          <span class="badge badge-quiet">{{ p.settings.rack_noun_plural|tr('stocks') }}</span>
           <span class="badge badge-quiet">{{ p.settings.temperatures | map(attribute='temp') | join(' / ') }} °C</span>
-          {% if p.settings.frozen %}<span class="badge badge-quiet">frozen stocks</span>{% endif %}
+          {% if p.settings.frozen %}<span class="badge badge-quiet">{{ _('frozen stocks') }}</span>{% endif %}
         </span>
       </label>
     {% endfor %}
   </div>
   <section class="card">
     <div class="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2">
-      <label class="field-label">Name
+      <label class="field-label">{{ _('Name') }}
         <input name="label" required autofocus data-label-input value="{{ presets[chosen].label }}">
       </label>
       {% include "lab/_audience_field.html" %}
     </div>
     <footer class="flex items-center justify-end gap-2 border-t border-sand-100 px-4 py-3">
-      <a class="btn" href="{{ url_for('organisms.index') }}">Cancel</a>
-      <button type="submit" class="btn btn-primary">{{ icon('plus') }} Create</button>
+      <a class="btn" href="{{ url_for('organisms.index') }}">{{ _('Cancel') }}</a>
+      <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Create') }}</button>
     </footer>
   </section>
 </form>

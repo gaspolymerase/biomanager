@@ -22,7 +22,8 @@ from flask import url_for
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from . import inventory_service, organism_service, positions, stock_service
+from . import i18n, inventory_service, organism_service, positions, stock_service
+from .i18n import gettext, translate_value
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
 from .services import WEAN_OFFSET_DAYS, weaning_due, weaning_title
 
@@ -165,11 +166,12 @@ def _cage_loc(cage: CageRecord | None) -> dict | None:
     if rack is not None and cage.rack_row and cage.rack_col:
         pos = positions.label(cage.rack_row, cage.rack_col, rack.naming, rack.cols)
         return {"kind": "mouse", "rack_id": rack.id, "row": cage.rack_row, "col": cage.rack_col,
-                "text": f"cage {cage.cage_id} · {rack.name} · {pos}",
+                "text": gettext("cage %(cage)s · %(rack)s · %(pos)s", cage=cage.cage_id, rack=rack.name, pos=pos),
                 "order": (0, rack.position or 0, rack.name, cage.rack_row, cage.rack_col)}
-    note = f" · {cage.cage_location}" if cage.cage_location else ""
+    text = (gettext("cage %(cage)s · %(where)s", cage=cage.cage_id, where=cage.cage_location) if cage.cage_location
+            else gettext("cage %(cage)s", cage=cage.cage_id))
     return {"kind": "mouse", "rack_id": None, "row": None, "col": None,
-            "text": f"cage {cage.cage_id}{note}", "order": (3, 0, cage.cage_id, 0, 0)}
+            "text": text, "order": (3, 0, cage.cage_id, 0, 0)}
 
 
 def _stock_loc(unit: StockUnit | None, rack: StockRack | None) -> dict | None:
@@ -222,18 +224,21 @@ def _colony_items(session, today, until) -> list[dict]:
         due = when or min(m.litter.date_of_birth for m in group) + timedelta(days=SAC_AGE_DAYS)
         weeks = max((today - m.litter.date_of_birth).days // 7 for m in group)
         past = due < today
-        out.append(_item("colony:age", due, f"{'Past' if past else 'Turns'} 30 w: {_mouse_ids(group)}", today,
-                         mice_url, detail=f"oldest {weeks} w" if past else "",
+        title = (gettext("Past 30 w: %(mice)s", mice=_mouse_ids(group)) if past
+                 else gettext("Turns 30 w: %(mice)s", mice=_mouse_ids(group)))
+        out.append(_item("colony:age", due, title, today,
+                         mice_url, detail=gettext("oldest %(n)s w", n=weeks) if past else "",
                          loc=_cage_loc(group[0].cage), owner=group[0].owner))
 
     # Weanings at P21, from a week overdue to the end of the window: the
     # same list as Home's and the calendar's (services.weaning_due).
     for wean in weaning_due(session, today - timedelta(days=7), until):
         cage, litter = wean["cage"], wean["litter"]
-        bits = [b for b in (litter.cohort_name if litter else "", f"{wean['pups']} pups" if wean["pups"] else "") if b]
+        bits = [b for b in (litter.cohort_name if litter else "",
+                            gettext("%(n)s pups", n=wean["pups"]) if wean["pups"] else "") if b]
         url = (url_for("colony", view="cages", scope="all") + f"#cage-{cage.id}") if cage is not None \
             else url_for("colony", view="litters")
-        out.append(_item("colony:wean", wean["due"], f"Wean {weaning_title(wean)}", today, url,
+        out.append(_item("colony:wean", wean["due"], gettext("Wean %(what)s", what=weaning_title(wean)), today, url,
                          detail=" · ".join(bits), loc=_cage_loc(cage),
                          owner=cage.owner if cage is not None else ""))
 
@@ -242,7 +247,7 @@ def _colony_items(session, today, until) -> list[dict]:
         select(MouseRecord).options(selectinload(MouseRecord.cage).selectinload(CageRecord.rack))
         .where(MouseRecord.date_of_death.is_(None), MouseRecord.status == "geno")).all()
     for group in _by_cage(geno):
-        out.append(_item("colony:geno", today, f"Genotype {_mouse_ids(group)}", today, mice_url,
+        out.append(_item("colony:geno", today, gettext("Genotype %(mice)s", mice=_mouse_ids(group)), today, mice_url,
                          loc=_cage_loc(group[0].cage), owner=group[0].owner))
     return out
 
@@ -259,10 +264,10 @@ def _calendar_items(session, today, until) -> list[dict]:
 def _zebrafish_items(summary: dict, today) -> list[dict]:
     out = []
     for t in summary.get("mating", []):
-        out.append(_item("zebrafish", t["due"], f"Return mating tank {t['tank_id']}", today,
+        out.append(_item("zebrafish", t["due"], gettext("Return mating tank %(tank)s", tank=t["tank_id"]), today,
                          url_for("zebrafish", view="tanks") + f"#tank-{t['id']}", owner=t.get("owner", "")))
     for t in summary.get("geno", []):
-        out.append(_item("zebrafish", today, f"Genotype tank {t['tank_id']}", today,
+        out.append(_item("zebrafish", today, gettext("Genotype tank %(tank)s", tank=t["tank_id"]), today,
                          url_for("zebrafish", view="tanks", mode="geno"), detail=t.get("line", ""),
                          owner=t.get("owner", "")))
     return out
@@ -273,7 +278,8 @@ def _stock_items(session, today, horizon) -> tuple[list[dict], dict]:
     for module in stock_service.list_modules(session):
         mv = stock_service.view(module)
         track = f"stock:{mv.key}"
-        tracks[track] = (mv.label, "Flips & collections", url_for("stocks.module", key=mv.key, view="schedule"))
+        tracks[track] = (translate_value(mv.label), gettext("Flips & collections"),
+                         url_for("stocks.module", key=mv.key, view="schedule"))
         for it in stock_service.schedule(session, mv, today, horizon=horizon):
             unit = it.get("unit")
             out.append(_item(track, it["due"], it["title"], today, tracks[track][2], detail=it.get("detail", ""),
@@ -285,7 +291,8 @@ def _organism_items(session, horizon, today) -> tuple[list[dict], dict]:
     out, tracks = [], {}
     for it in organism_service.home_due(session, horizon_days=horizon):
         track = f"org:{it['key']}"
-        tracks[track] = (it["module"], "Schedule", url_for("organisms.module", key=it["key"], view="schedule"))
+        tracks[track] = (translate_value(it["module"]), gettext("Schedule"),
+                         url_for("organisms.module", key=it["key"], view="schedule"))
         out.append(_item(track, it["due"], it["title"], today, tracks[track][2]))
     return out, tracks
 
@@ -308,13 +315,17 @@ def _supply_items(session, today, horizon) -> list[dict]:
         url = url_for("inventory.module", key=a["key"], q=a["name"])
         owner = item.owner if item is not None else ""
         if a["expiry"] in ("expired", "soon") and a["expires_on"]:
-            verb = "Expired" if a["expiry"] == "expired" else "Expires"
-            out.append(_item("supplies", a["expires_on"], f"{verb}: {a['name']}", today, url,
-                             detail=a["module"] + (" · low" if a["low"] else ""), loc=loc, owner=owner))
+            title = (gettext("Expired: %(name)s", name=a["name"]) if a["expiry"] == "expired"
+                     else gettext("Expires: %(name)s", name=a["name"]))
+            module = translate_value(a["module"])
+            out.append(_item("supplies", a["expires_on"], title, today, url,
+                             detail=gettext("%(module)s · low", module=module) if a["low"] else module,
+                             loc=loc, owner=owner))
         else:
             # Low stock has no date of its own: it is on today's list, but it is
             # not as pressing as something due today.
-            out.append(_item("supplies", today, f"Low: {a['name']}", today, url, detail=a["module"],
+            out.append(_item("supplies", today, gettext("Low: %(name)s", name=a["name"]), today, url,
+                             detail=translate_value(a["module"]),
                              loc=loc, owner=owner, status="soon"))
     return out
 
@@ -322,20 +333,23 @@ def _supply_items(session, today, horizon) -> list[dict]:
 def build_agenda(session, today: date, horizon: int, features: dict, zebrafish: dict | None,
                  colony_label: str = "Mouse colony") -> tuple[list[dict], dict]:
     """Every dated piece of work up to `horizon` days ahead (and anything
-    overdue), with the tracks it belongs to: ({track: (group, name, url)})."""
+    overdue), with the tracks it belongs to: ({track: (group, name, url)}),
+    in the page's language."""
     until = today + timedelta(days=horizon)
+    colony_label = translate_value(colony_label)
     tracks: dict[str, tuple[str, str, str]] = {}
     items: list[dict] = []
     if features.get("calendar", True):
-        tracks["calendar"] = ("Calendar", "Events", url_for("calendar"))
+        tracks["calendar"] = (gettext("Calendar"), gettext("Events"), url_for("calendar"))
         items += _calendar_items(session, today, until)
     if features.get("colony", True):
-        tracks["colony:age"] = (colony_label, "30 weeks and older", url_for("colony", view="breeders"))
-        tracks["colony:wean"] = (colony_label, f"Weaning · P{WEAN_OFFSET_DAYS}", url_for("colony", view="litters"))
-        tracks["colony:geno"] = (colony_label, "Genotyping", url_for("colony", view="mice"))
+        tracks["colony:age"] = (colony_label, gettext("30 weeks and older"), url_for("colony", view="breeders"))
+        tracks["colony:wean"] = (colony_label, gettext("Weaning · P%(days)s", days=WEAN_OFFSET_DAYS),
+                                 url_for("colony", view="litters"))
+        tracks["colony:geno"] = (colony_label, gettext("Genotyping"), url_for("colony", view="mice"))
         items += _colony_items(session, today, until)
     if features.get("zebrafish", True) and zebrafish and zebrafish.get("any"):
-        tracks["zebrafish"] = ("Zebrafish", "Tanks", url_for("zebrafish", view="tanks"))
+        tracks["zebrafish"] = (gettext("Zebrafish"), gettext("Tanks"), url_for("zebrafish", view="tanks"))
         items += _zebrafish_items(zebrafish, today)
     stock_items, stock_tracks = _stock_items(session, today, horizon)
     tracks.update(stock_tracks)
@@ -344,7 +358,7 @@ def build_agenda(session, today: date, horizon: int, features: dict, zebrafish: 
     tracks.update(org_tracks)
     items += org_items
     if any(m.kind in inventory_service.RESTOCK_KINDS for m in inventory_service.list_modules(session)):
-        tracks["supplies"] = ("Supplies", "Expiry & low stock", "")
+        tracks["supplies"] = (gettext("Supplies"), gettext("Expiry & low stock"), "")
         items += _supply_items(session, today, horizon)
     order = {key: n for n, key in enumerate(tracks)}
     items.sort(key=lambda i: (i["due"], SEVERITY[i["status"]], order.get(i["track"], 99), i["title"]))
@@ -354,12 +368,12 @@ def build_agenda(session, today: date, horizon: int, features: dict, zebrafish: 
 def _when(due: date, today: date) -> str:
     days = (due - today).days
     if days < 0:
-        return "overdue"
+        return gettext("overdue")
     if days == 0:
-        return "today"
+        return gettext("today")
     if days == 1:
-        return "tomorrow"
-    return due.strftime("%a %d") if days < 7 else due.strftime("%b %d")
+        return gettext("tomorrow")
+    return i18n.strftime(due, "%a %d") if days < 7 else i18n.strftime(due, "%b %d")
 
 
 # ---------------------------------------------------------------- Tracks
@@ -376,8 +390,10 @@ def tracks_view(agenda: list[dict], track_meta: dict, today: date, span: int) ->
     days = []
     for i in range(span):
         d = today + timedelta(days=i)
-        days.append({"date": d, "weekday": d.strftime("%a")[0], "num": d.day,
-                     "month": d.strftime("%b") if (i == 0 or d.day == 1) else "",
+        # One letter of the weekday ("M"), or its last character in Chinese ("一" of 周一).
+        weekday = i18n.strftime(d, "%a")
+        days.append({"date": d, "weekday": weekday[0] if i18n.current() == i18n.DEFAULT else weekday[-1],
+                     "num": d.day, "month": i18n.strftime(d, "%b") if (i == 0 or d.day == 1) else "",
                      "weekend": d.weekday() >= 5, "today": i == 0, "left": i * 100 / span})
 
     per_track: dict[str, dict[int, list[dict]]] = {key: defaultdict(list) for key in track_meta}
@@ -453,7 +469,7 @@ def _ideogram(today: date, span: int) -> dict:
     while cursor <= end:
         nxt = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
         n = (nxt - cursor).days
-        arms.append({"x": round(x, 2), "w": round(n * unit, 2), "label": cursor.strftime("%b"), "start": cursor})
+        arms.append({"x": round(x, 2), "w": round(n * unit, 2), "label": i18n.strftime(cursor, "%b"), "start": cursor})
         for k in range(n):
             if (cursor + timedelta(days=k)).weekday() >= 5:
                 bands.append({"x": round(x + k * unit, 2), "w": round(unit + 0.3, 2)})
@@ -465,7 +481,8 @@ def _ideogram(today: date, span: int) -> dict:
         return arm["x"] + (d - arm["start"]).days * unit
 
     return {"arms": arms, "bands": bands, "box_x": round(x_of(today), 2),
-            "box_w": round(x_of(last) + unit - x_of(today), 2), "title": f"{start:%b}–{end:%b %Y}"}
+            "box_w": round(x_of(last) + unit - x_of(today), 2),
+            "title": i18n.strftime(start, "%b") + "–" + i18n.strftime(end, "%b %Y")}
 
 
 def _day_list(agenda: list[dict], today: date, span: int) -> list[dict]:
@@ -475,7 +492,7 @@ def _day_list(agenda: list[dict], today: date, span: int) -> list[dict]:
         if (item["due"] - today).days >= span:
             continue
         key = "overdue" if item["status"] == "overdue" else item["due"].isoformat()
-        label = "Overdue" if key == "overdue" else _when(item["due"], today).capitalize()
+        label = gettext("Overdue") if key == "overdue" else _when(item["due"], today).capitalize()
         groups.setdefault(key, {"label": label, "items": []})["items"].append(item)
     return list(groups.values())
 
@@ -531,15 +548,17 @@ def freezer_view(session, agenda: list[dict], today: date, username: str = "") -
             for cage in session.scalars(select(CageRecord).where(
                     CageRecord.rack_id_fk == rack.id, CageRecord.rack_row.is_not(None))):
                 cells[(cage.rack_row, cage.rack_col)] = {"label": cage.cage_id, "hue": _hue(cage.owner),
-                                                         "title": f"Cage {cage.cage_id}" + (f" · {cage.owner}" if cage.owner else "")}
-            sub = rack.room or "mouse rack"
+                                                         "title": gettext("Cage %(cage)s", cage=cage.cage_id)
+                                                         + (f" · {cage.owner}" if cage.owner else "")}
+            sub = rack.room or gettext("mouse rack")
             url = url_for("colony", view="cages")
         else:
             for unit in session.scalars(select(StockUnit).where(
                     StockUnit.rack_id_fk == rack.id, StockUnit.active.is_(True), StockUnit.rack_row.is_not(None))):
                 cells[(unit.rack_row, unit.rack_col)] = {"label": str(unit.number), "hue": _hue(unit.owner),
-                                                         "title": f"No. {unit.number} · {unit.genotype}"}
-            sub = rack.incubator.name if rack.incubator is not None else "rack"
+                                                         "title": gettext("No. %(n)s · %(genotype)s", n=unit.number,
+                                                                          genotype=unit.genotype)}
+            sub = rack.incubator.name if rack.incubator is not None else gettext("rack")
             key = stock_keys.get(rack.module_id_fk)
             url = url_for("stocks.module", key=key) if key else ""
         grid = []

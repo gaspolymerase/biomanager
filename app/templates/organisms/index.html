@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block page_title %}Databases{% endblock %}
-{% block page_heading %}Databases{% endblock %}
-{% block page_subtitle %}The lab's databases and your own. Open one, configure it, or add one: for the whole lab, or just for you.{% endblock %}
+{% block page_title %}{{ _('Databases') }}{% endblock %}
+{% block page_heading %}{{ _('Databases') }}{% endblock %}
+{% block page_subtitle %}{{ _("The lab's databases and your own. Open one, configure it, or add one: for the whole lab, or just for you.") }}{% endblock %}
 
 {% block page_actions %}
   {% if current_user.role == 'admin' %}
-    <a class="btn" href="{{ url_for('lab.setup') }}">{{ icon('sliders') }} Lab setup</a>
+    <a class="btn" href="{{ url_for('lab.setup') }}">{{ icon('sliders') }} {{ _('Lab setup') }}</a>
   {% endif %}
   <a class="btn btn-primary" href="{{ url_for('organisms.new_module') }}">
-    <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#plus"></use></svg> New database
+    <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#plus"></use></svg> {{ _('New database') }}
   </a>
 {% endblock %}
 
@@ -17,12 +17,12 @@
    share button in its footer for whoever may share it. #}
 {% macro audience_badge(row) %}
   {% if not row.private_to and row.share_group_id %}
-    <span class="badge badge-quiet whitespace-nowrap" title="A project group's database: only its members and lab admins see it">
-      {{ icon('users') }} {{ groups_api.name_of(row.share_group_id) or 'A deleted group' }}
+    <span class="badge badge-quiet whitespace-nowrap" title="{{ _("A project group's database: only its members and lab admins see it") }}">
+      {{ icon('users') }} {{ groups_api.name_of(row.share_group_id) or _('A deleted group') }}
     </span>
   {% elif row.private_to %}
-    <span class="badge badge-brand whitespace-nowrap" title="Only {{ 'you' if row.private_to == current_user.username else row.private_to }} and lab admins see it">
-      {{ 'Just you' if row.private_to == current_user.username else 'Personal · ' ~ row.private_to }}
+    <span class="badge badge-brand whitespace-nowrap" title="{{ _('Only you and lab admins see it') if row.private_to == current_user.username else _('Only %(name)s and lab admins see it', name=row.private_to) }}">
+      {{ _('Just you') if row.private_to == current_user.username else _('Personal · %(name)s', name=row.private_to) }}
     </span>
   {% endif %}
 {% endmacro %}
@@ -30,17 +30,17 @@
   {% set to_groups = groups_api.choices() if row.private_to and (row.private_to == current_user.username or current_user.role == 'admin') else [] %}
   {% if to_groups %}
     <form method="post" action="{{ url_for('lab.audience', kind=kind, key=row.key) }}" class="flex items-center gap-1">
-      <select name="to" aria-label="Give it to a project group" class="h-7 text-[12px]">
+      <select name="to" aria-label="{{ _('Give it to a project group') }}" class="h-7 text-[12px]">
         {% for gid, name in to_groups %}<option value="group:{{ gid }}">{{ name }}</option>{% endfor %}
       </select>
-      <button type="submit" class="btn btn-sm btn-ghost whitespace-nowrap">{{ icon('users') }} Share with the group</button>
+      <button type="submit" class="btn btn-sm btn-ghost whitespace-nowrap">{{ icon('users') }} {{ _('Share with the group') }}</button>
     </form>
   {% endif %}
   {% if (row.private_to or row.share_group_id) and can_share %}
     <form method="post" action="{{ url_for('lab.audience', kind=kind, key=row.key) }}" class="ml-auto"
-          data-confirm="Share {{ row.label }} with the whole lab? Everyone will see it in their sidebar.">
+          data-confirm="{{ _('Share %(name)s with the whole lab? Everyone will see it in their sidebar.', name=row.label|tr) }}">
       <input type="hidden" name="to" value="lab">
-      <button type="submit" class="btn btn-sm btn-ghost whitespace-nowrap">{{ icon('users') }} Share with the lab</button>
+      <button type="submit" class="btn btn-sm btn-ghost whitespace-nowrap">{{ icon('users') }} {{ _('Share with the lab') }}</button>
     </form>
   {% endif %}
 {% endmacro %}
@@ -50,16 +50,16 @@
 {% macro builtin_card(b) %}
   <article class="card flex flex-col">
     <header class="card-head">
-      <h2>{{ icon(b.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ b.url }}">{{ b.label }}</a></h2>
-      <span class="badge badge-quiet">{{ b.count }} {{ b.noun }}</span>
+      <h2>{{ icon(b.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ b.url }}">{{ b.label|tr }}</a></h2>
+      <span class="badge badge-quiet">{{ b.count }} {{ b.noun|tr }}</span>
     </header>
     <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">{{ b.blurb }}</p>
+      <p class="text-[12.5px] leading-snug text-muted">{{ b.blurb|tr }}</p>
     </div>
     <footer class="mt-auto flex flex-wrap items-center gap-2 border-t border-sand-100 px-4 py-3">
-      <a class="btn btn-sm" href="{{ b.url }}">Open</a>
+      <a class="btn btn-sm" href="{{ b.url }}">{{ _('Open') }}</a>
       {% if is_admin %}
-        <a class="btn btn-sm btn-ghost" href="{{ b.configure_url }}">{{ icon('settings') }} Rename / configure</a>
+        <a class="btn btn-sm btn-ghost" href="{{ b.configure_url }}">{{ icon('settings') }} {{ _('Rename / configure') }}</a>
       {% endif %}
     </footer>
   </article>
@@ -72,17 +72,17 @@
 {% if not builtins and not stock_cards and not inventory_cards and not cards %}
   <div class="card empty-state mb-6">
     {{ icon('database') }}
-    <p>The lab has no databases yet. Add the first one: a mouse colony, fly stocks, an inventory, or your own.</p>
-    <a class="btn btn-primary mt-2" href="{{ url_for('organisms.new_module') }}">{{ icon('plus') }} New database</a>
+    <p>{{ _('The lab has no databases yet. Add the first one: a mouse colony, fly stocks, an inventory, or your own.') }}</p>
+    <a class="btn btn-primary mt-2" href="{{ url_for('organisms.new_module') }}">{{ icon('plus') }} {{ _('New database') }}</a>
   </div>
 {% endif %}
 
 <div class="mb-2 flex items-center justify-between gap-2">
-  <h2 class="flex items-center gap-2">{{ icon('paw') }} Animals</h2>
+  <h2 class="flex items-center gap-2">{{ icon('paw') }} {{ _('Animals') }}</h2>
   <div class="flex gap-1.5">
-    <a class="btn btn-sm" href="{{ url_for('stocks.new_module', kind='fly') }}">{{ icon('plus') }} Drosophila</a>
-    <a class="btn btn-sm" href="{{ url_for('stocks.new_module', kind='worm') }}">{{ icon('plus') }} C. elegans</a>
-    <a class="btn btn-sm" href="{{ url_for('organisms.new_module') }}">{{ icon('plus') }} Other organism</a>
+    <a class="btn btn-sm" href="{{ url_for('stocks.new_module', kind='fly') }}">{{ icon('plus') }} {{ _('Drosophila') }}</a>
+    <a class="btn btn-sm" href="{{ url_for('stocks.new_module', kind='worm') }}">{{ icon('plus') }} {{ _('C. elegans') }}</a>
+    <a class="btn btn-sm" href="{{ url_for('organisms.new_module') }}">{{ icon('plus') }} {{ _('Other organism') }}</a>
   </div>
 </div>
 <section class="mb-6 grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
@@ -91,15 +91,15 @@
     {% set m = c.module %}
     <article class="card flex flex-col">
       <header class="card-head">
-        <h2>{{ icon(m.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ url_for('stocks.module', key=m.key) }}">{{ m.label }}</a></h2>
-        <span class="flex items-center gap-1.5">{{ audience_badge(c.row) }}{% if not m.enabled %}<span class="badge badge-quiet">hidden</span>{% else %}<span class="badge badge-quiet">{{ c.count }} {{ m.unit if c.count == 1 else m.units }}</span>{% endif %}</span>
+        <h2>{{ icon(m.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ url_for('stocks.module', key=m.key) }}">{{ m.label|tr }}</a></h2>
+        <span class="flex items-center gap-1.5">{{ audience_badge(c.row) }}{% if not m.enabled %}<span class="badge badge-quiet">{{ _('hidden') }}</span>{% else %}<span class="badge badge-quiet">{{ c.count }} {{ (m.unit if c.count == 1 else m.units)|tr('noun') }}</span>{% endif %}</span>
       </header>
       <div class="flex flex-col gap-3 p-4">
-        {% if m.blurb %}<p class="text-[12.5px] leading-snug text-muted">{{ m.blurb }}</p>{% endif %}
+        {% if m.blurb %}<p class="text-[12.5px] leading-snug text-muted">{{ m.blurb|tr }}</p>{% endif %}
       </div>
       <footer class="mt-auto flex flex-wrap items-center gap-2 border-t border-sand-100 px-4 py-3">
-        <a class="btn btn-sm" href="{{ url_for('stocks.module', key=m.key) }}">Open</a>
-        <a class="btn btn-sm btn-ghost" href="{{ url_for('stocks.module', key=m.key, view='settings') }}">{{ icon('settings') }} Rename / configure</a>
+        <a class="btn btn-sm" href="{{ url_for('stocks.module', key=m.key) }}">{{ _('Open') }}</a>
+        <a class="btn btn-sm btn-ghost" href="{{ url_for('stocks.module', key=m.key, view='settings') }}">{{ icon('settings') }} {{ _('Rename / configure') }}</a>
         {{ audience('stocks', c.row, c.can_share) }}
       </footer>
     </article>
@@ -111,32 +111,32 @@
         <h2>
           {{ icon(m.icon) }}
           <a class="text-ink no-underline hover:text-brand-700"
-             href="{{ url_for('organisms.module', key=m.key) }}">{{ m.label }}</a>
+             href="{{ url_for('organisms.module', key=m.key) }}">{{ m.label|tr }}</a>
         </h2>
         {{ audience_badge(card.row) }}
         {% if not card.module.row.enabled %}
-          <span class="badge badge-quiet">hidden</span>
+          <span class="badge badge-quiet">{{ _('hidden') }}</span>
         {% else %}
-          <span class="badge badge-quiet">{{ card.census.animals }} {{ m.organism_noun if card.census.animals == 1 else m.organism_noun_plural }}</span>
+          <span class="badge badge-quiet">{{ card.census.animals }} {{ (m.organism_noun if card.census.animals == 1 else m.organism_noun_plural)|tr('noun') }}</span>
         {% endif %}
       </header>
 
       <div class="flex flex-col gap-3 p-4">
         {% if m.blurb %}
-          <p class="text-[12.5px] leading-snug text-muted">{{ m.blurb }}</p>
+          <p class="text-[12.5px] leading-snug text-muted">{{ m.blurb|tr }}</p>
         {% endif %}
 
         <div class="grid grid-cols-3 gap-2">
           <div class="inset py-2">
-            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.organism_noun_plural }}</span>
+            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.organism_noun_plural|tr('noun') }}</span>
             <span class="text-[18px] font-semibold leading-tight text-ink">{{ card.census.animals }}</span>
           </div>
           <div class="inset py-2">
-            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.housing_noun_plural }}</span>
+            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.housing_noun_plural|tr('noun') }}</span>
             <span class="text-[18px] font-semibold leading-tight text-ink">{{ card.census.housing }}</span>
           </div>
           <div class="inset py-2">
-            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.line_noun_plural }}</span>
+            <span class="block text-[10px] font-semibold uppercase tracking-[0.07em] text-sand-400">{{ m.line_noun_plural|tr('noun') }}</span>
             <span class="text-[18px] font-semibold leading-tight text-ink">{{ card.census.lines }}</span>
           </div>
         </div>
@@ -144,13 +144,13 @@
         {% if card.census.overdue %}
           <p class="flash-message flash-warning mb-0 py-2 text-[12px]">
             <svg class="icon size-3.5 shrink-0" aria-hidden="true"><use href="/static/icons.svg#alarm"></use></svg>
-            {{ card.census.overdue }} overdue item{{ '' if card.census.overdue == 1 else 's' }}
+            {% trans count=card.census.overdue %}{{ count }} overdue item{% pluralize %}{{ count }} overdue items{% endtrans %}
           </p>
         {% endif %}
 
         <div class="flex flex-wrap gap-1">
           {% for label in card.capabilities[:7] %}
-            <span class="badge badge-quiet">{{ label }}</span>
+            <span class="badge badge-quiet">{{ label|tr('capability') }}</span>
         {% endfor %}
           {% if card.capabilities|length > 7 %}
             <span class="badge badge-quiet">+{{ card.capabilities|length - 7 }}</span>
@@ -159,22 +159,22 @@
       </div>
 
       <footer class="mt-auto flex flex-wrap items-center gap-2 border-t border-sand-100 px-4 py-3">
-        <a class="btn btn-sm" href="{{ url_for('organisms.module', key=m.key) }}">Open</a>
+        <a class="btn btn-sm" href="{{ url_for('organisms.module', key=m.key) }}">{{ _('Open') }}</a>
         <a class="btn btn-sm btn-ghost" href="{{ url_for('organisms.module', key=m.key, view='settings') }}">
-          {{ icon('settings') }} {{ 'Rename / configure' if card.can_configure else 'Setup' }}
+          {{ icon('settings') }} {{ _('Rename / configure') if card.can_configure else _('Setup') }}
         </a>
         {{ audience('organisms', card.row, card.can_share) }}
       </footer>
     </article>
   {% endfor %}
   {% if not animal_builtins and not stock_cards and not cards %}
-    <div class="card empty-state"><p>No animal databases.</p></div>
+    <div class="card empty-state"><p>{{ _('No animal databases.') }}</p></div>
   {% endif %}
 </section>
 
 <div class="mb-2 flex items-center justify-between gap-2">
-  <h2 class="flex items-center gap-2">{{ icon('flask') }} Molecular &amp; supplies</h2>
-  <a class="btn btn-sm" href="{{ url_for('inventory.new_module') }}">{{ icon('plus') }} New inventory</a>
+  <h2 class="flex items-center gap-2">{{ icon('flask') }} {{ _('Molecular &amp; supplies') }}</h2>
+  <a class="btn btn-sm" href="{{ url_for('inventory.new_module') }}">{{ icon('plus') }} {{ _('New inventory') }}</a>
 </div>
 <section class="mb-6 grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
   {% for b in supply_builtins %}{{ builtin_card(b) }}{% endfor %}
@@ -182,26 +182,26 @@
     {% set m = c.module %}
     <article class="card flex flex-col">
       <header class="card-head">
-        <h2>{{ icon(m.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ url_for('inventory.module', key=m.key) }}">{{ m.label }}</a></h2>
-        <span class="flex items-center gap-1.5">{{ audience_badge(c.row) }}{% if not m.enabled %}<span class="badge badge-quiet">hidden</span>{% else %}<span class="badge badge-quiet">{{ c.count }} {{ m.item_noun if c.count == 1 else m.item_noun_plural }}</span>{% endif %}</span>
+        <h2>{{ icon(m.icon) }}<a class="text-ink no-underline hover:text-brand-700" href="{{ url_for('inventory.module', key=m.key) }}">{{ m.label|tr }}</a></h2>
+        <span class="flex items-center gap-1.5">{{ audience_badge(c.row) }}{% if not m.enabled %}<span class="badge badge-quiet">{{ _('hidden') }}</span>{% else %}<span class="badge badge-quiet">{{ c.count }} {{ (m.item_noun if c.count == 1 else m.item_noun_plural)|tr('noun') }}</span>{% endif %}</span>
       </header>
       <div class="flex flex-col gap-3 p-4">
-        {% if m.blurb %}<p class="text-[12.5px] leading-snug text-muted">{{ m.blurb }}</p>{% endif %}
+        {% if m.blurb %}<p class="text-[12.5px] leading-snug text-muted">{{ m.blurb|tr }}</p>{% endif %}
         <div class="flex flex-wrap gap-1">
-          {% for f in m.settings.features %}<span class="badge badge-quiet">{{ {'storage': 'boxes', 'board': 'board', 'sharing': 'mine / lab', 'quantity': 'quantity', 'supplier': 'vendor', 'expiry': 'expiry', 'received': 'received'}[f] }}</span>{% endfor %}
+          {% for f in m.settings.features %}<span class="badge badge-quiet">{{ {'storage': _('boxes'), 'board': _('board'), 'sharing': _('mine / lab'), 'quantity': _('quantity'), 'supplier': _('vendor'), 'expiry': _('expiry'), 'received': _('received')}[f] }}</span>{% endfor %}
         </div>
       </div>
       <footer class="mt-auto flex flex-wrap items-center gap-2 border-t border-sand-100 px-4 py-3">
-        <a class="btn btn-sm" href="{{ url_for('inventory.module', key=m.key) }}">Open</a>
+        <a class="btn btn-sm" href="{{ url_for('inventory.module', key=m.key) }}">{{ _('Open') }}</a>
         {% if current_user.role == 'admin' or m.created_by == current_user.username %}
-          <a class="btn btn-sm btn-ghost" href="{{ url_for('inventory.configure', key=m.key) }}">{{ icon('settings') }} Rename / configure</a>
+          <a class="btn btn-sm btn-ghost" href="{{ url_for('inventory.configure', key=m.key) }}">{{ icon('settings') }} {{ _('Rename / configure') }}</a>
         {% endif %}
         {{ audience('inventory', c.row, c.can_share) }}
       </footer>
     </article>
   {% endfor %}
   {% if not supply_builtins and not inventory_cards %}
-    <div class="card empty-state"><p>No inventories yet.</p></div>
+    <div class="card empty-state"><p>{{ _('No inventories yet.') }}</p></div>
   {% endif %}
 </section>
 {% endblock %}

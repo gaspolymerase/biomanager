@@ -58,6 +58,7 @@ from flask import current_app, flash, g, jsonify, redirect, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from .i18n import gettext
 from .paths import data_dir
 
 log = logging.getLogger("biomanager.security")
@@ -311,8 +312,7 @@ def refuse_cross_site():
         return None
     log.warning("refused cross-site %s %s from %s (%s)",
                 request.method, request.path, request.remote_addr, reason)
-    message = ("This change came from another website, so it was refused. "
-               "If you were using BioManager, reload the page and try again.")
+    message = gettext("This change came from another website, so it was refused. If you were using BioManager, reload the page and try again.")
     if request.headers.get("X-Autosave") == "1" or request.is_json:
         return jsonify({"ok": False, "error": message}), 403
     return message, 403, {"Content-Type": "text/plain; charset=utf-8"}
@@ -415,7 +415,7 @@ def add_security_headers(response):
 
 def too_large(_error):
     limit = current_app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
-    message = f"That upload is too large. The limit is {limit} MB."
+    message = gettext("That upload is too large. The limit is %(limit)s MB.", limit=limit)
     if request.headers.get("X-Autosave") == "1" or request.is_json:
         return jsonify({"ok": False, "error": message}), 413
     flash(message, "error")
@@ -439,9 +439,9 @@ def safe_next(target: str | None) -> str | None:
 
 def password_problem(password: str, username: str = "") -> str | None:
     if len(password) < MIN_PASSWORD_LENGTH:
-        return f"Use a password of at least {MIN_PASSWORD_LENGTH} characters."
+        return gettext("Use a password of at least %(n)s characters.", n=MIN_PASSWORD_LENGTH)
     if username and password.strip().lower() == username.strip().lower():
-        return "Your password cannot be your username."
+        return gettext("Your password cannot be your username.")
     return None
 
 

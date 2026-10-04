@@ -17,7 +17,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import SessionLocal
 from . import access, i18n, lab, positions, security
-from .i18n import gettext
+from .i18n import gettext, ngettext, pgettext
 from .formutil import form_changed
 # Importing this registers the SQLAlchemy flush listener that writes
 # audit_log rows for every tracked change; nothing here calls into it.
@@ -240,7 +240,7 @@ def admin_required(view):
         if g.user is None:
             return redirect(url_for("login", next=request.path))
         if g.user.role != "admin":
-            flash("Admin access required.", "error")
+            flash(gettext("Admin access required."), "error")
             return redirect(url_for("colony"))
         return view(*args, **kwargs)
 
@@ -312,8 +312,10 @@ def follow_lab_timezone():
 @app.before_request
 def load_current_user():
     if request.path == "/api/v1" or request.path.startswith("/api/v1/"):
-        # The API is signed in by its token alone, never the session cookie (app/api.py).
+        # The API is signed in by its token alone, never the session cookie (app/api.py),
+        # and answers in English whatever the client's language: programs read it.
         from . import api
+        g.lang = i18n.DEFAULT
         api.authenticate()
         return
     user_id = session.get("user_id")
@@ -337,6 +339,13 @@ def load_current_user():
         if session.get("lang_for") != user.id:
             i18n.remember(i18n.preference(db_session, user.username))
             session["lang_for"] = user.id
+        # Remember the language they see, to write their notifications in it
+        # (its own session: committing this one would detach g.user).
+        if session.get("lang_seen") != i18n.current():
+            with SessionLocal() as seen_session:
+                i18n.note_seen(seen_session, user.username, i18n.current())
+                seen_session.commit()
+            session["lang_seen"] = i18n.current()
 
 
 # Cookies, upload limits, the cross-site check and security headers. After
@@ -411,6 +420,12 @@ def app_icon_url(glyph: str, color: str) -> str:
     return url_for("app_icon", glyph=glyph, color=color, v=appearance.version(glyph, color))
 
 
+def _said(message: str) -> str:
+    """An error handler's message in the page's language; the JSON API
+    (/api/…, read by programs) keeps the English."""
+    return message if request.path.startswith("/api/") else gettext(message)
+
+
 @app.errorhandler(403)
 def handle_forbidden(_error):
     """A page someone may not open: say so in the app, with a way back,
@@ -418,7 +433,7 @@ def handle_forbidden(_error):
     message = ("That page is for lab admins, or for whoever owns what it shows. "
                "If you need it, ask an admin.")
     if request.headers.get("X-Autosave") == "1" or request.accept_mimetypes.best == "application/json":
-        return jsonify({"ok": False, "error": message}), 403
+        return jsonify({"ok": False, "error": _said(message)}), 403
     return render_template("error.html", title="You don't have access to that", message=message), 403
 
 
@@ -450,14 +465,14 @@ def handle_database_unavailable(error: OperationalError):
                if full else "The database didn't answer in time, so nothing was saved. Try again in a moment; "
                "if it keeps happening, tell whoever runs the server.")
     if _wants_json():
-        return jsonify({"ok": False, "error": message}), 503
+        return jsonify({"ok": False, "error": _said(message)}), 503
     return _plain_error_page("The database is not answering", message), 503
 
 
 @app.errorhandler(StaleDataError)
 def handle_stale_data(_error):
     """The record was removed (an Undo, a colleague) while this save ran."""
-    message = "That record was changed or removed by someone else just now, so nothing was saved. Reload the page."
+    message = _said("That record was changed or removed by someone else just now, so nothing was saved. Reload the page.")
     if _wants_json():
         return jsonify({"ok": False, "error": message}), 409
     flash(message, "error")
@@ -471,14 +486,14 @@ def handle_overflow(error: OverflowError):
     app.logger.warning("overflow on %s: %s", request.path, error)
     message = "A number or date in that request is out of range."
     if _wants_json():
-        return jsonify({"ok": False, "error": message}), 400
+        return jsonify({"ok": False, "error": _said(message)}), 400
     return render_template("error.html", title="That's out of range", message=message), 400
 
 
 @app.errorhandler(404)
 def handle_not_found(_error):
     if _wants_json():
-        return jsonify({"ok": False, "error": "Not found."}), 404
+        return jsonify({"ok": False, "error": _said("Not found.")}), 404
     return render_template("error.html", title="There's nothing here",
                            message="That page doesn't exist, or what it showed was deleted."), 404
 
@@ -488,7 +503,7 @@ def handle_server_error(_error):
     message = "Something went wrong on the server, so that wasn't done. Try again; if it keeps happening, " \
               "use Send feedback to say what you were doing."
     if _wants_json():
-        return jsonify({"ok": False, "error": message}), 500
+        return jsonify({"ok": False, "error": _said(message)}), 500
     return _plain_error_page("Something went wrong", message), 500
 
 
@@ -508,11 +523,15 @@ def handle_integrity_error(error: IntegrityError):
     if match:
         column = match.group(1).split(",")[-1].strip().strip('"').split(".")[-1]
         field = column.replace("_id", " ID").replace("_", " ")
-        message = (f"That place in the rack has a cage already (someone may have just put one there), "
-                   f"so nothing was saved." if column in ("rack_col", "rack_row")
-                   else f"That {field} is already used. Choose another.")
+        if request.path.startswith("/api/"):
+            message = ("That place in the rack has a cage already (someone may have just put one there), "
+                       "so nothing was saved." if column in ("rack_col", "rack_row")
+                       else f"That {field} is already used. Choose another.")
+        else:
+            message = (gettext("That place in the rack has a cage already (someone may have just put one there), so nothing was saved.") if column in ("rack_col", "rack_row")
+                       else gettext("That %(field)s is already used. Choose another.", field=field))
     else:
-        message = "That change conflicts with an existing record, so it was not saved."
+        message = _said("That change conflicts with an existing record, so it was not saved.")
     app.logger.warning("integrity error on %s: %s", request.path, detail)
     if _wants_json():
         return jsonify({"ok": False, "error": message}), 409
@@ -527,8 +546,12 @@ def handle_data_error(error: DataError):
     longer than its column is refused there. Say so rather than 500."""
     detail = str(getattr(error, "orig", error))
     size = re.search(r"character varying\((\d+)\)", detail)
-    message = (f"One of the values is longer than its field allows ({size.group(1)} characters), so nothing was saved."
-               if size else "One of the values is not valid for its field, so nothing was saved.")
+    if request.path.startswith("/api/"):
+        message = (f"One of the values is longer than its field allows ({size.group(1)} characters), "
+                   "so nothing was saved." if size else "One of the values is not valid for its field, so nothing was saved.")
+    else:
+        message = (gettext("One of the values is longer than its field allows (%(size)s characters), so nothing was saved.", size=size.group(1)) if size
+                   else gettext("One of the values is not valid for its field, so nothing was saved."))
     app.logger.warning("data error on %s: %s", request.path, detail)
     if _wants_json():
         return jsonify({"ok": False, "error": message}), 409
@@ -930,15 +953,15 @@ def relative_day_filter(value) -> str:
         value = value.date()
     days = (value - date.today()).days
     if days == 0:
-        return "today"
+        return gettext("today")
     if days == 1:
-        return "tomorrow"
+        return gettext("tomorrow")
     if days == -1:
-        return "yesterday"
+        return gettext("yesterday")
     if 1 < days <= 13:
-        return f"in {days} d"
+        return gettext("in %(n)s d", n=days)
     if -13 <= days < -1:
-        return f"{-days} d ago"
+        return gettext("%(n)s d ago", n=-days)
     return fmt_day(value)
 
 
@@ -967,6 +990,9 @@ def fmt_day(value, with_time: bool = False) -> str:
     style = _lab_date_style()
     if style == "iso":
         text = day.isoformat()
+    elif i18n.current() == "zh":
+        # A Chinese reader writes the month first, whatever the lab's style.
+        text = f"{day.month}月{day.day}日" if day.year == date.today().year else f"{day.year}年{day.month}月{day.day}日"
     else:
         this_year = day.year == date.today().year
         if style == "day":
@@ -1113,7 +1139,10 @@ def future_birth(form, field: str = "date_of_birth", what: str = "A date of birt
     the wrong days."""
     born = parse_date(form.get(field)) if field in form else None
     if born is not None and born > date.today():
-        return f"{what} can't be in the future ({fmt_day(born)}). Nothing was saved."
+        if what == "A litter's birth date":
+            return gettext("A litter's birth date can't be in the future (%(day)s). Nothing was saved.",
+                           day=fmt_day(born))
+        return gettext("A date of birth can't be in the future (%(day)s). Nothing was saved.", day=fmt_day(born))
     return None
 
 
@@ -1158,8 +1187,8 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         if existing_cage is not None and existing_cage is not mouse.cage and not access.can_edit_cage(existing_cage):
             # The same rule as "Add existing mouse" on the cage: a private
             # cage takes mice only from its owner (or an admin).
-            flash(f"Cage {existing_cage.cage_id} is {existing_cage.owner or 'someone else'}’s private cage, so the "
-                  f"mouse stays where it is. Ask them, or have the cage marked shared.", "error")
+            flash(gettext("Cage %(cage)s is %(owner)s’s private cage, so the mouse stays where it is. Ask them, or have the cage marked shared.", cage=existing_cage.cage_id,
+                          owner=existing_cage.owner or gettext("someone else")), "error")
         elif cage_input:
             set_mouse_cage(mouse, get_or_create_cage(db_session, cage_input))
         elif form.get("auto_new_cage") == "1":
@@ -1232,7 +1261,8 @@ def create_transfer_copy(db_session, source_mouse: MouseRecord, recipient_userna
         db_session,
         recipient_username,
         title="Mouse transfer received",
-        message=f"Mouse {source_mouse.mouse_id} was transferred to you. A new record {copied_mouse.mouse_id} was created in your colony.",
+        message="Mouse %(mouse)s was transferred to you. A new record %(copy)s was created in your colony.",
+        message_values={"mouse": source_mouse.mouse_id, "copy": copied_mouse.mouse_id},
         category="transfer",
         link=url_for("colony", view="mice", scope="mine"),
         actor=sender_username or "",
@@ -1325,7 +1355,7 @@ def share_lock(cage) -> str:
     """Why this person can't make the cage shared or personal ("" if they
     can): its owner or an admin decides."""
     if not access.can_set_sharing(cage):
-        return f"Only {cage.owner or 'its owner'} or an admin can change this"
+        return gettext("Only %(owner)s or an admin can change this", owner=cage.owner or gettext("its owner"))
     return ""
 
 
@@ -1580,8 +1610,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     "owner": exp.owner_username,
                     "editable": access.can_edit_experiment(exp),
                     "member_count": len(exp.memberships),
-                    "start_date": exp.start_date.strftime("%b %d, %Y") if exp.start_date else "",
-                    "end_date": exp.end_date.strftime("%b %d, %Y") if exp.end_date else "",
+                    "start_date": i18n.strftime(exp.start_date, "%b %d, %Y") if exp.start_date else "",
+                    "end_date": i18n.strftime(exp.end_date, "%b %d, %Y") if exp.end_date else "",
                 })
 
     return {
@@ -1775,7 +1805,7 @@ def home_dashboard():
             "item": o.name,
             "status": o.status,
             "qty": o.quantity,
-            "created_at": local_time(o.created_at).strftime("%b %d, %Y"),
+            "created_at": i18n.strftime(local_time(o.created_at), "%b %d, %Y"),
         } for o in recent_orders]
 
         # ---- Upcoming calendar events ------------------------------------
@@ -1871,7 +1901,7 @@ def home_dashboard():
         organism_due=organism_due[:12],
         organism_due_total=len(organism_due),
         greeting=greeting,
-        today_str=today.strftime("%A, %b %d, %Y"),
+        today_str=i18n.strftime(today, "%A, %b %d, %Y"),
         counts={
             "total_mice": total_mice,
             "active_mice": active_mice,
@@ -1964,24 +1994,25 @@ def login():
         wait = security.login_throttle.retry_after(*keys)
         if wait:
             minutes = -(-wait // 60)
-            flash(f"Too many failed sign-in attempts. Try again in {minutes} minute{'s' if minutes != 1 else ''}.", "error")
+            flash(ngettext("Too many failed sign-in attempts. Try again in %(num)s minute.",
+                           "Too many failed sign-in attempts. Try again in %(num)s minutes.", minutes), "error")
             return render_template("auth.html", mode="login"), 429
         if security.https_required_but_missing():
-            flash("This server only accepts sign-ins over HTTPS. Open it with an https:// address.", "error")
+            flash(gettext("This server only accepts sign-ins over HTTPS. Open it with an https:// address."), "error")
             return render_template("auth.html", mode="login")
         with SessionLocal() as db_session:
             user = db_session.scalar(select(UserAccount).where(UserAccount.username == username))
             if not security.check_password(user, password):
                 security.login_throttle.failed(*keys)
-                flash("Incorrect username or password.", "error")
+                flash(gettext("Incorrect username or password."), "error")
             elif user.role == "pending":
-                flash("Your account is waiting for a lab admin to approve it.", "error")
+                flash(gettext("Your account is waiting for a lab admin to approve it."), "error")
             elif getattr(user, "disabled", False):
-                flash("This account is disabled. Contact an admin.", "error")
+                flash(gettext("This account is disabled. Contact an admin."), "error")
             else:
                 security.login_throttle.succeeded(*keys)
                 security.start_session(user)
-                flash(f"Welcome, {user.display_name or user.username}.", "success")
+                flash(gettext("Welcome, %(name)s.", name=user.display_name or user.username), "success")
                 return redirect(security.safe_next(request.args.get("next")) or landing_url(user))
     return render_template("auth.html", mode="login")
 
@@ -2050,7 +2081,7 @@ def settings():
                 if "home_layout" in request.form:
                     home_layouts.set_layout(db_session, user.username, request.form.get("home_layout", ""))
                 db_session.commit()
-                flash("Profile updated.", "success")
+                flash(gettext("Profile updated."), "success")
             elif action == "appearance":
                 glyph, color = appearance.set_choice(db_session, user.username,
                                                      request.form.get("glyph", ""), request.form.get("color", ""))
@@ -2060,7 +2091,7 @@ def settings():
                     # icon and the accent in place.
                     return jsonify({"ok": True, "icon": app_icon_url(glyph, color),
                                     "brand_css": appearance.brand_css(color)})
-                flash("App icon updated.", "success")
+                flash(gettext("App icon updated."), "success")
             elif action == "language":
                 i18n.set_preference(db_session, user.username, request.form.get("language", ""))
                 db_session.commit()
@@ -2069,7 +2100,7 @@ def settings():
                 for category in notify.CATEGORIES:
                     setattr(user, f"notify_{category}", request.form.get(f"notify_{category}") == "1")
                 db_session.commit()
-                flash("Notification preferences updated.", "success")
+                flash(gettext("Notification preferences updated."), "success")
             elif action == "password":
                 current = request.form.get("current_password", "")
                 new_pw = request.form.get("new_password", "")
@@ -2078,21 +2109,21 @@ def settings():
                 # no password yet; it may set one without a current one.
                 check_key = ("current-password", user.id)
                 if security.password_check_throttle.retry_after(check_key):
-                    flash("Too many wrong passwords. Try again in 15 minutes.", "error")
+                    flash(gettext("Too many wrong passwords. Try again in 15 minutes."), "error")
                 elif security.has_password(user) and not security.check_password(user, current):
                     security.password_check_throttle.failed(check_key)   # a stolen session can't guess on
-                    flash("Current password is incorrect.", "error")
+                    flash(gettext("Current password is incorrect."), "error")
                 elif problem := security.password_problem(new_pw, user.username):
                     flash(problem, "error")
                 elif new_pw != confirm:
-                    flash("New passwords do not match.", "error")
+                    flash(gettext("New passwords do not match."), "error")
                 else:
                     user.password_hash = generate_password_hash(new_pw)
                     db_session.commit()
                     # Other sessions (another browser, a lost laptop) end;
                     # this one carries on under the new password.
                     session["auth"] = security.session_stamp(user)
-                    flash("Password updated. Any other signed-in sessions have been signed out.", "success")
+                    flash(gettext("Password updated. Any other signed-in sessions have been signed out."), "success")
             return redirect(url_for("settings"))
         user_data = {
             "username": user.username,
@@ -2343,30 +2374,42 @@ def admin_toggle_role(user_id: int):
     with SessionLocal() as db_session:
         target = db_session.get(UserAccount, user_id)
         if target is None:
-            flash("User not found.", "error")
+            flash(gettext("User not found."), "error")
             return redirect(url_for("admin_users"))
         if target.id == g.user.id:
-            flash("You cannot change your own role.", "error")
+            flash(gettext("You cannot change your own role."), "error")
             return redirect(url_for("admin_users"))
         if target.role == "pending":
-            flash(f"Approve {target.username} before changing their role.", "error")
+            flash(gettext("Approve %(user)s before changing their role.", user=target.username), "error")
             return redirect(url_for("admin_users"))
         wanted = request.form.get("role", "")
         if wanted and wanted not in access.ROLES:
-            flash("That isn't a role.", "error")
+            flash(gettext("That isn't a role."), "error")
             return redirect(url_for("admin_users"))
         target.role = wanted or ("member" if target.role == "admin" else "admin")
+        who = g.user.display_name or g.user.username
         if target.role in ("care", "facility"):
             notify.send(db_session, target.username,
-                        f"{g.user.display_name or g.user.username} made you {access.ROLES[target.role][0].lower()}",
-                        access.ROLES[target.role][1], category="lab", actor=g.user.username)
+                        ("%(who)s made you animal care" if target.role == "care"
+                         else "%(who)s made you facility manager"),
+                        access.ROLES[target.role][1], category="lab", actor=g.user.username,
+                        values={"who": who}, message_values={})
         if target.role == "admin":
-            notify.send(db_session, target.username,
-                        f"{g.user.display_name or g.user.username} made you a lab admin",
+            notify.send(db_session, target.username, "%(who)s made you a lab admin",
                         "You can now change Lab setup, approve sign-ups and edit any record.",
-                        category="lab", link=url_for("lab.setup"), actor=g.user.username)
+                        category="lab", link=url_for("lab.setup"), actor=g.user.username,
+                        values={"who": who}, message_values={})
         db_session.commit()
-        flash(f"{target.username} is now {access.ROLES.get(target.role, (target.role,))[0].lower()}.", "success")
+        if target.role == "member":
+            flash(gettext("%(user)s is now member.", user=target.username), "success")
+        elif target.role == "care":
+            flash(gettext("%(user)s is now animal care.", user=target.username), "success")
+        elif target.role == "facility":
+            flash(gettext("%(user)s is now facility manager.", user=target.username), "success")
+        elif target.role == "admin":
+            flash(gettext("%(user)s is now admin.", user=target.username), "success")
+        else:
+            flash(f"{target.username} is now {target.role}.", "success")
     referrer = request.referrer or ""
     return redirect(referrer if referrer.startswith(request.host_url) else url_for("admin_users"))
 
@@ -2377,10 +2420,10 @@ def admin_toggle_disabled(user_id: int):
     with SessionLocal() as db_session:
         target = db_session.get(UserAccount, user_id)
         if target is None:
-            flash("User not found.", "error")
+            flash(gettext("User not found."), "error")
             return redirect(url_for("admin_users"))
         if target.id == g.user.id:
-            flash("You cannot disable your own account.", "error")
+            flash(gettext("You cannot disable your own account."), "error")
             return redirect(url_for("admin_users"))
         if target.role == "pending":
             # A sign-up waiting for approval: enabling it is the approval.
@@ -2388,7 +2431,7 @@ def admin_toggle_disabled(user_id: int):
             target.disabled = False
             db_session.commit()
             notify.settle_signups(db_session)
-            flash(f"{target.username} approved. They can sign in now.", "success")
+            flash(gettext("%(user)s approved. They can sign in now.", user=target.username), "success")
             return redirect(url_for("admin_users"))
         target.disabled = not target.disabled
         if target.disabled:
@@ -2398,7 +2441,8 @@ def admin_toggle_disabled(user_id: int):
                                                                      LabCopyKey.revoked_at.is_(None))):
                 key.revoked_at = datetime.utcnow()      # their computers' copy keys too
         db_session.commit()
-        flash(f"{target.username} {'disabled' if target.disabled else 'enabled'}.", "success")
+        flash(gettext("%(user)s disabled.", user=target.username) if target.disabled
+              else gettext("%(user)s enabled.", user=target.username), "success")
     return redirect(url_for("admin_users"))
 
 
@@ -2409,7 +2453,7 @@ def admin_reset_password(user_id: int):
     with SessionLocal() as db_session:
         target = db_session.get(UserAccount, user_id)
         if target is None:
-            flash("User not found.", "error")
+            flash(gettext("User not found."), "error")
             return redirect(url_for("admin_users"))
         if problem := security.password_problem(new_password, target.username):
             flash(problem, "error")
@@ -2420,7 +2464,8 @@ def admin_reset_password(user_id: int):
         # password stays signed in here.
         if target.id == g.user.id:
             session["auth"] = security.session_stamp(target)
-        flash(f"Password reset for {target.username}. Their other sessions have been signed out.", "success")
+        flash(gettext("Password reset for %(user)s. Their other sessions have been signed out.", user=target.username),
+              "success")
     return redirect(url_for("admin_users"))
 
 
@@ -2439,25 +2484,24 @@ def register():
         confirm_password = request.form.get("confirm_password", "")
         signup_key = ("signup", request.remote_addr or "")
         if not username or not password:
-            flash("Username and password are required.", "error")
+            flash(gettext("Username and password are required."), "error")
         elif not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{1,39}", username):
             # Plain letters and digits: "аlex" in Cyrillic looks like "alex" in the lab's lists.
-            flash("A username is 2–40 letters (a–z), digits, dots, dashes or underscores. Your full name, in "
-                  "any alphabet, goes in Name.", "error")
+            flash(gettext("A username is 2–40 letters (a–z), digits, dots, dashes or underscores. Your full name, in any alphabet, goes in Name."), "error")
         elif not first and security.signup_throttle.retry_after(signup_key):
-            flash("Too many sign-ups from here in the last hour. Try again later, or ask a lab admin.", "error")
+            flash(gettext("Too many sign-ups from here in the last hour. Try again later, or ask a lab admin."), "error")
         elif needs_code and not security.setup_code_matches(request.form.get("setup_code")):
-            flash("That setup code is not right. It is printed in the server log when BioManager starts.", "error")
+            flash(gettext("That setup code is not right. It is printed in the server log when BioManager starts."), "error")
         elif problem := security.password_problem(password, username):
             flash(problem, "error")
         elif password != confirm_password:
-            flash("Passwords do not match.", "error")
+            flash(gettext("Passwords do not match."), "error")
         else:
             with SessionLocal() as db_session:
                 existing = db_session.scalar(select(UserAccount).where(
                     func.lower(UserAccount.username) == username.lower()))
                 if existing is not None:
-                    flash("That username already exists.", "error")
+                    flash(gettext("That username already exists."), "error")
                 else:
                     user = UserAccount(
                         username=username,
@@ -2472,17 +2516,18 @@ def register():
                             UserAccount.role == "admin", UserAccount.disabled.is_(False))).all()
                         for admin_name in admins:
                             add_notification(db_session, admin_name, notify.SIGNUP_TITLE, category="account",
-                                             link=url_for("admin_users"), message=
-                                             f"{display_name or username} signed up as {username}. "
-                                             "Approve them in Settings → Manage users.")
+                                             link=url_for("admin_users"),
+                                             message=notify.SIGNUP_MESSAGE,
+                                             message_values={"who": display_name or username,
+                                                             "username": username})
                     db_session.commit()
                     if not first:
                         security.signup_throttle.failed(signup_key)     # counts sign-ups, not failures
                     if first:
                         security.clear_setup_code()
-                        flash("Admin account created. You can sign in now.", "success")
+                        flash(gettext("Admin account created. You can sign in now."), "success")
                     else:
-                        flash("Account created. A lab admin needs to approve it before you can sign in.", "success")
+                        flash(gettext("Account created. A lab admin needs to approve it before you can sign in."), "success")
                     return redirect(url_for("login"))
     return render_template("auth.html", mode="register", first_account=first, needs_setup_code=needs_code)
 
@@ -2491,7 +2536,7 @@ def register():
 def logout():
     with SessionLocal() as db_session:
         security.sign_out(db_session)
-    flash("You have been signed out.", "success")
+    flash(gettext("You have been signed out."), "success")
     return redirect(url_for("login"))
 
 
@@ -2572,8 +2617,7 @@ def create_experiment():
         if cage_id_raw:
             cage = db_session.scalar(select(CageRecord).where(CageRecord.cage_id == cage_id_raw))
             if cage is None:
-                flash(f"There is no cage {cage_id_raw}, so the experiment starts with no mice. "
-                      "Add a cage or single mice below.", "error")
+                flash(gettext("There is no cage %(cage)s, so the experiment starts with no mice. Add a cage or single mice below.", cage=cage_id_raw), "error")
             else:
                 added = skipped = 0
                 for mouse in cage.mice:
@@ -2589,7 +2633,8 @@ def create_experiment():
                     ))
                     added += 1
                 if skipped:
-                    flash(f"Added {added} mice from cage {cage.cage_id}; {skipped} skipped — not yours to edit.", "error")
+                    flash(gettext("Added %(added)s mice from cage %(cage)s; %(skipped)s skipped — not yours to edit.",
+                                  added=added, cage=cage.cage_id, skipped=skipped), "error")
         db_session.commit()
         return redirect(url_for("experiment_detail", experiment_id=exp.id))
 
@@ -2609,7 +2654,7 @@ def update_experiment(experiment_id: int):
     with SessionLocal() as db_session:
         exp = db_session.get(Experiment, experiment_id)
         if exp is None:
-            return jsonify({"ok": False, "error": "That experiment no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That experiment no longer exists.")}), 404
         refused = _experiment_refusal(exp)
         if refused:
             return refused
@@ -2619,9 +2664,10 @@ def update_experiment(experiment_id: int):
         status = (form.get("status") or "").strip().lower() if "status" in form else exp.status
         error = None
         if start and end and end < start:
-            error = f"The end date ({end.isoformat()}) is before the start date ({start.isoformat()})."
+            error = gettext("The end date (%(end)s) is before the start date (%(start)s).",
+                            end=end.isoformat(), start=start.isoformat())
         elif status and status not in EXPERIMENT_STATUSES:
-            error = f"“{status}” is not an experiment status."
+            error = gettext("“%(status)s” is not an experiment status.", status=status)
         if error:
             if autosave:
                 return jsonify({"ok": False, "error": error}), 409
@@ -2659,7 +2705,7 @@ def delete_experiment(experiment_id: int):
             name = exp.name
             db_session.delete(exp)
             db_session.commit()
-            flash(f"Deleted experiment {name}. Its mice are unchanged.", "success")
+            flash(gettext("Deleted experiment %(name)s. Its mice are unchanged.", name=name), "success")
     return redirect(url_for("colony", view="experiments"))
 
 
@@ -2675,11 +2721,11 @@ def experiment_add_cage(experiment_id: int):
         if refused:
             return refused
         if not cage_id_raw:
-            flash("Enter a cage to add its mice.", "error")
+            flash(gettext("Enter a cage to add its mice."), "error")
             return redirect(url_for("experiment_detail", experiment_id=experiment_id))
         cage = db_session.scalar(select(CageRecord).where(CageRecord.cage_id == cage_id_raw))
         if cage is None:
-            flash(f"Cage '{cage_id_raw}' not found.", "error")
+            flash(gettext("Cage '%(cage)s' not found.", cage=cage_id_raw), "error")
             return redirect(url_for("experiment_detail", experiment_id=experiment_id))
         existing = {em.mouse_id_fk for em in exp.memberships}
         added = skipped = 0
@@ -2697,11 +2743,17 @@ def experiment_add_cage(experiment_id: int):
             added += 1
         db_session.commit()
     if added or skipped:
-        flash(f"Added {added} {'mouse' if added == 1 else 'mice'} from cage {cage_id_raw}."
-              + (f" {skipped} skipped — not yours to edit." if skipped else ""),
-              "success" if added else "error")
+        if skipped:
+            message = ngettext("Added %(num)s mouse from cage %(cage)s. %(skipped)s skipped — not yours to edit.",
+                               "Added %(num)s mice from cage %(cage)s. %(skipped)s skipped — not yours to edit.",
+                               added, cage=cage_id_raw, skipped=skipped)
+        else:
+            message = ngettext("Added %(num)s mouse from cage %(cage)s.", "Added %(num)s mice from cage %(cage)s.",
+                               added, cage=cage_id_raw)
+        flash(message, "success" if added else "error")
     else:
-        flash(f"Cage {cage_id_raw} has no living mice that are not already in the experiment.", "info")
+        flash(gettext("Cage %(cage)s has no living mice that are not already in the experiment.", cage=cage_id_raw),
+              "info")
     return redirect(url_for("experiment_detail", experiment_id=experiment_id))
 
 
@@ -2719,7 +2771,7 @@ def experiment_add_mouse(experiment_id: int):
             return refused
         mouse = db_session.get(MouseRecord, mouse_row_id) if mouse_row_id else None
         if mouse is None:
-            flash("Pick a mouse to add.", "error")
+            flash(gettext("Pick a mouse to add."), "error")
             return redirect(url_for("experiment_detail", experiment_id=experiment_id))
         if not can_edit_mouse(mouse):
             flash(access.reason_denied(mouse), "error")
@@ -2740,7 +2792,7 @@ def experiment_member_update(experiment_id: int, membership_id: int):
     with SessionLocal() as db_session:
         em = db_session.get(ExperimentMouse, membership_id)
         if em is None or em.experiment_id_fk != experiment_id:
-            return jsonify({"ok": False, "error": "That mouse is no longer in the experiment."}), 404
+            return jsonify({"ok": False, "error": gettext("That mouse is no longer in the experiment.")}), 404
         if not access.can_edit_experiment(em.experiment):
             return jsonify({"ok": False, "error": access.denied_message(
                 "experiment", em.experiment.owner_username)}), 403
@@ -2776,12 +2828,12 @@ def mouse_weight_create(mouse_row_id: int):
     try:
         grams = float(raw_grams)
     except ValueError:
-        return jsonify({"ok": False, "error": "grams must be a number"}), 400
+        return jsonify({"ok": False, "error": gettext("grams must be a number")}), 400
     weigh_date = parse_date(raw_date) or date.today()
     with SessionLocal() as db_session:
         mouse = db_session.get(MouseRecord, mouse_row_id)
         if mouse is None:
-            return jsonify({"ok": False, "error": "mouse not found"}), 404
+            return jsonify({"ok": False, "error": gettext("mouse not found")}), 404
         if not can_edit_mouse(mouse):
             return jsonify({"ok": False, "error": access.reason_denied(mouse)}), 403
         # Upsert: if a weight for this mouse + date exists, update it.
@@ -2880,7 +2932,7 @@ def update_mouse(mouse_row_id: int):
         keeping_same_litter = bool(original_litter_id) and form_litter_id == original_litter_id
 
         if keeping_same_litter and requested_dob and requested_dob != original_dob and not confirm_cohort_change:
-            flash("DOB belongs to the cohort. Confirm to remove this mouse from the cohort before changing DOB.", "error")
+            flash(gettext("DOB belongs to the cohort. Confirm to remove this mouse from the cohort before changing DOB."), "error")
             return autosave_response("mice")
 
         transfer_recipient, sender_username = populate_mouse_from_form(db_session, mouse, request.form)
@@ -2994,7 +3046,7 @@ def bulk_sac_mice():
         db_session.commit()
     # Say what happened, like every other batch action, and go back to the
     # view (and scope) it was done from.
-    _report(done, len(mice) - done, "Recorded sac")
+    _report(done, len(mice) - done, gettext("Recorded sac"))
     return _back_to_colony("mice")
 
 
@@ -3025,14 +3077,17 @@ def _selected_mice(db_session, form) -> list:
 
 
 def _report(changed: int, skipped: int, what: str) -> None:
-    if changed:
-        flash(f"{what} on {changed} {'mouse' if changed == 1 else 'mice'}."
-              + (f" {skipped} skipped — not yours to edit." if skipped else ""),
-              "success")
+    """`what` is already in the page's language ("Set owner", "Recorded sac")."""
+    if changed and skipped:
+        flash(ngettext("%(what)s on %(num)s mouse. %(skipped)s skipped — not yours to edit.",
+                       "%(what)s on %(num)s mice. %(skipped)s skipped — not yours to edit.",
+                       changed, what=what, skipped=skipped), "success")
+    elif changed:
+        flash(ngettext("%(what)s on %(num)s mouse.", "%(what)s on %(num)s mice.", changed, what=what), "success")
     elif skipped:
-        flash(f"Nothing changed — {skipped} record(s) are not yours to edit.", "error")
+        flash(gettext("Nothing changed — %(skipped)s record(s) are not yours to edit.", skipped=skipped), "error")
     else:
-        flash("Nothing was selected.", "error")
+        flash(gettext("Nothing was selected."), "error")
 
 
 # Fields the bulk editor may set, and how to apply each one.
@@ -3043,6 +3098,15 @@ BULK_FIELDS = {
     "cage_id": "Cage",
     "note": "Note",
     "date_of_death": "Date of death",
+}
+# What _report says was done, for each field.
+BULK_DONE = {
+    "owner": "Set owner",
+    "status": "Set status",
+    "genotype": "Set transgenes",
+    "cage_id": "Set cage",
+    "note": "Set note",
+    "date_of_death": "Set date of death",
 }
 
 
@@ -3063,22 +3127,23 @@ def bulk_update_mice():
     value = (request.form.get("value") or "").strip()
     back = request.referrer or url_for("colony", view="mice")
     if field not in BULK_FIELDS:
-        flash("Pick a field to set.", "error")
+        flash(gettext("Pick a field to set."), "error")
         return redirect(back)
 
     changed = skipped = 0
     with SessionLocal() as db_session:
         if field == "owner" and value not in current_lab_usernames(db_session):
-            flash(f"“{value or '(blank)'}” is not a lab member, so no owner was changed. "
-                  "Pick a username from the list.", "error")
+            flash(gettext("“%(value)s” is not a lab member, so no owner was changed. Pick a username from the list.",
+                          value=value or gettext("(blank)")), "error")
             return redirect(back)
         if field == "date_of_death" and value and parse_date(value) is None:
-            flash(f"“{value}” is not a date (use YYYY-MM-DD).", "error")
+            flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value), "error")
             return redirect(back)
         if field == "cage_id" and value and value.lower() != "new":
             existing_cage = db_session.scalar(select(CageRecord).where(CageRecord.cage_id == value))
             if existing_cage is not None and not access.can_edit_cage(existing_cage):
-                flash(f"Cage {value} is {existing_cage.owner or 'someone else'}’s private cage, so no mouse was moved.", "error")
+                flash(gettext("Cage %(cage)s is %(owner)s’s private cage, so no mouse was moved.", cage=value,
+                              owner=existing_cage.owner or gettext("someone else")), "error")
                 return redirect(back)
         # "new" is one new cage for the whole selection — the mice were
         # picked together to be housed together — made only when at least
@@ -3115,7 +3180,7 @@ def bulk_update_mice():
                 changed += 1
             batch_row.record_count = changed
         db_session.commit()
-    _report(changed, skipped, f"Set {BULK_FIELDS[field].lower()}")
+    _report(changed, skipped, gettext(BULK_DONE[field]))
     return redirect(back)
 
 
@@ -3130,14 +3195,14 @@ def bulk_add_to_experiment():
     experiment_id = request.form.get("experiment_id")
     group = (request.form.get("treatment_group") or "").strip()
     if not (experiment_id or "").isdigit():
-        flash("Pick an experiment.", "error")
+        flash(gettext("Pick an experiment."), "error")
         return redirect(request.referrer or url_for("colony", view="mice"))
 
     added = skipped = already = 0
     with SessionLocal() as db_session:
         exp = db_session.get(Experiment, int(experiment_id))
         if exp is None:
-            flash("That experiment no longer exists.", "error")
+            flash(gettext("That experiment no longer exists."), "error")
             return redirect(request.referrer or url_for("colony", view="mice"))
         batch_ctx = audit.batch(db_session, "create",
                                 f"add to experiment {exp.name}"
@@ -3164,14 +3229,18 @@ def bulk_add_to_experiment():
         name = exp.name
         exp_id = exp.id
 
-    parts = [f"Added {added} {'mouse' if added == 1 else 'mice'} to {name}"]
     if group:
-        parts.append(f"as “{group}”")
+        said = ngettext("Added %(num)s mouse to %(name)s as “%(group)s”", "Added %(num)s mice to %(name)s as “%(group)s”",
+                        added, name=name, group=group)
+    else:
+        said = ngettext("Added %(num)s mouse to %(name)s", "Added %(num)s mice to %(name)s", added, name=name)
+    extras = []
     if already:
-        parts.append(f"({already} already in it)")
+        extras.append(gettext("(%(n)s already in it)", n=already))
     if skipped:
-        parts.append(f"— {skipped} skipped, not yours to edit")
-    flash(" ".join(parts) + ".", "success" if added else "error")
+        extras.append(gettext("— %(n)s skipped, not yours to edit", n=skipped))
+    flash(gettext("%(said)s%(extras)s.", said=said, extras="".join(" " + extra for extra in extras)),
+          "success" if added else "error")
     return redirect(url_for("experiment_detail", experiment_id=exp_id))
 
 
@@ -3262,7 +3331,7 @@ def _rows_from_csv(upload) -> tuple[list[dict], list[str]]:
 
     for index, raw_row in enumerate(reader, start=2):
         if index - 1 > MAX_BATCH:
-            warnings.append(f"Only the first {MAX_BATCH} rows were loaded.")
+            warnings.append(gettext("Only the first %(max)s rows were loaded.", max=MAX_BATCH))
             break
         row = _blank_row()
         for header, value in (raw_row or {}).items():
@@ -3274,7 +3343,7 @@ def _rows_from_csv(upload) -> tuple[list[dict], list[str]]:
         if any(row.values()):
             rows.append(row)
     if not rows:
-        warnings.append("No usable rows found in that file.")
+        warnings.append(gettext("No usable rows found in that file."))
     warnings.extend(_normalise_csv_dates(rows))
     return rows, warnings
 
@@ -3326,17 +3395,15 @@ def _normalise_csv_dates(rows: list[dict]) -> list[str]:
         except ValueError:
             unreadable.append(index)
     for index in sorted(unreadable):
-        warnings.append(f"Row {index + 2}: “{rows[index]['date_of_birth']}” is not a date; "
-                        "that date of birth is left blank.")
+        warnings.append(gettext("Row %(row)s: “%(value)s” is not a date; that date of birth is left blank.",
+                                row=index + 2, value=rows[index]["date_of_birth"]))
         rows[index]["date_of_birth"] = ""
     if day_first and month_first:
-        warnings.append("The dates of birth mix day-first and month-first; check them.")
+        warnings.append(gettext("The dates of birth mix day-first and month-first; check them."))
     elif guessed and read_day_first:
-        warnings.append("Dates of birth were read day first (03/04/2026 as 3 April), as Lab setup's date "
-                        "style says. If the file is month first, correct them here.")
+        warnings.append(gettext("Dates of birth were read day first (03/04/2026 as 3 April), as Lab setup's date style says. If the file is month first, correct them here."))
     elif guessed:
-        warnings.append("Dates of birth were read month first (03/04/2026 as 4 March). If the "
-                        "file is day first, correct them here, or save it with YYYY-MM-DD dates.")
+        warnings.append(gettext("Dates of birth were read month first (03/04/2026 as 4 March). If the file is day first, correct them here, or save it with YYYY-MM-DD dates."))
     return warnings
 
 
@@ -3363,8 +3430,7 @@ def _mixed_new_cages(rows: list[dict]) -> list[str]:
             sexes.setdefault(token, set()).add(sex)
             labels.setdefault(token, row["cage_id"].strip())
     return [
-        f"Cage “{labels[token]}” would get females and males together. Give the males "
-        f"another new cage (e.g. “{labels[token]}-M”) unless they are meant to breed."
+        gettext("Cage “%(cage)s” would get females and males together. Give the males another new cage (e.g. “%(cage)s-M”) unless they are meant to breed.", cage=labels[token])
         for token, found in sexes.items() if len(found) > 1
     ]
 
@@ -3455,7 +3521,7 @@ def batch_mice_preview():
         rows = _rows_from_prototype(request.form)
 
     if not rows:
-        flash("Nothing to preview — set a count or choose a file.", "error")
+        flash(gettext("Nothing to preview — set a count or choose a file."), "error")
         return redirect(url_for("batch_mice"))
     warnings.extend(_mixed_new_cages(rows))
     warnings.extend(_future_births(rows))
@@ -3468,8 +3534,9 @@ def _future_births(rows: list[dict]) -> list[str]:
             if (parse_date(row.get("date_of_birth")) or today_) > today_]
     if not late:
         return []
-    return [f"Row{'s' if len(late) > 1 else ''} {', '.join(late)}: the date of birth is in the future. "
-            "Correct it before creating."]
+    return [ngettext("Row %(rows)s: the date of birth is in the future. Correct it before creating.",
+                     "Rows %(rows)s: the date of birth is in the future. Correct it before creating.",
+                     len(late), rows=", ".join(late))]
 
 
 def _batch_preview(rows: list[dict], warnings: list[str]):
@@ -3500,7 +3567,7 @@ def batch_mice_create():
     """Write the previewed rows, with one contiguous block of IDs."""
     rows = _rows_from_grid(request.form)
     if not rows:
-        flash("Nothing to create.", "error")
+        flash(gettext("Nothing to create."), "error")
         return redirect(url_for("batch_mice"))
     late = _future_births(rows)
     if late:
@@ -3546,9 +3613,9 @@ def batch_mice_create():
         db_session.commit()
         first, last = (ids[0], ids[-1]) if ids else (0, 0)
 
-    flash(Markup(
-        f"Created {created} mice — #{first} to #{last}. "
-        f'<a href="{url_for("batches_view")}">Undo</a>'), "success")
+    undo = Markup('<a href="{}">{}</a>').format(url_for("batches_view"), gettext("Undo"))
+    flash(Markup(gettext("Created %(count)s mice — #%(first)s to #%(last)s. %(undo)s", count=created, first=first,
+                         last=last, undo=undo)), "success")
     return redirect(url_for("colony", view="mice"))
 
 
@@ -3602,7 +3669,8 @@ def create_cage():
     requested = form.get("cage_id", "").strip()
     raw_count = (form.get("count") or "1").strip() or "1"
     if not raw_count.isdigit() or not 1 <= int(raw_count) <= MAX_NEW_CAGES:
-        flash(f"Make between 1 and {MAX_NEW_CAGES} cages at a time (asked for “{raw_count}”).", "error")
+        flash(gettext("Make between 1 and %(max)s cages at a time (asked for “%(asked)s”).", max=MAX_NEW_CAGES,
+                      asked=raw_count), "error")
         return autosave_response("cages")
     count = int(raw_count)
     refused = future_birth(form, "date_give_birth", "A litter's birth date")
@@ -3612,13 +3680,13 @@ def create_cage():
     with SessionLocal() as db_session:
         if requested and requested.lower() != "new":
             if count > 1 and not requested.isdigit():
-                flash(f"To make {count} cages, leave the ID blank or type the first number of the run.", "error")
+                flash(gettext("To make %(count)s cages, leave the ID blank or type the first number of the run.",
+                              count=count), "error")
                 return autosave_response("cages")
             codes = [requested] if count == 1 else [str(int(requested) + i) for i in range(count)]
             taken = db_session.scalars(select(CageRecord.cage_id).where(CageRecord.cage_id.in_(codes))).all()
             if taken:
-                flash(f"Cage {', '.join(sorted(taken))} already exists; nothing was changed. "
-                      "Leave the ID blank to take the next free one.", "error")
+                flash(gettext("Cage %(cage)s already exists; nothing was changed. Leave the ID blank to take the next free one.", cage=", ".join(sorted(taken))), "error")
                 return autosave_response("cages")
         else:
             codes = reserve_cage_ids(db_session, count)
@@ -3629,19 +3697,20 @@ def create_cage():
             rack_raw = form.get("rack_id").strip()
             rack = db_session.get(MouseRack, int(rack_raw)) if rack_raw.isdigit() else None
             if rack is None:
-                placement_error = f"There is no rack called {rack_raw}."
+                placement_error = gettext("There is no rack called %(rack)s.", rack=rack_raw)
             else:
                 start = None
                 position = (form.get("position") or "").strip()
                 if position:
                     start = positions.parse(position, rack.naming, rack.rows, rack.cols)
                     if start is None:
-                        placement_error = f"“{position}” is not a position in rack {rack.name}."
+                        placement_error = gettext("“%(position)s” is not a position in rack %(rack)s.",
+                                                  position=position, rack=rack.name)
                 if not placement_error and (start or position == ""):
                     cells = _free_rack_cells(db_session, rack, count, start) if start else []
                     if start and len(cells) < count:
-                        placement_error = (f"{rack.name} had room for {len(cells)} of {count} from "
-                                           f"{position}; the rest are in it without a position.")
+                        placement_error = gettext("%(rack)s had room for %(room)s of %(count)s from %(position)s; the rest are in it without a position.", rack=rack.name,
+                                                  room=len(cells), count=count, position=position)
 
         batch_ctx = audit.batch(db_session, "create", f"add {count} cages", "mouse_cages") if count > 1 else None
         batch_row = batch_ctx.__enter__() if batch_ctx is not None else None
@@ -3672,12 +3741,15 @@ def create_cage():
             batch_row.record_count = len(created)
             batch_ctx.__exit__(None, None, None)
         db_session.commit()
-        label = f"cage {created[0]}" if count == 1 else f"{count} cages, {created[0]} to {created[-1]}"
         if placement_error:
-            flash(f"Created {label}, but not placed: {placement_error}" if count == 1
-                  else f"Created {label}. {placement_error}", "error")
+            flash(gettext("Created cage %(cage)s, but not placed: %(error)s", cage=created[0], error=placement_error)
+                  if count == 1 else
+                  gettext("Created %(count)s cages, %(first)s to %(last)s. %(error)s", count=count, first=created[0],
+                          last=created[-1], error=placement_error), "error")
         elif request.headers.get("X-Autosave") != "1":
-            flash(f"Created {label}.", "success")
+            flash(gettext("Created cage %(cage)s.", cage=created[0]) if count == 1 else
+                  gettext("Created %(count)s cages, %(first)s to %(last)s.", count=count, first=created[0],
+                          last=created[-1]), "success")
     return autosave_response("cages")
 
 
@@ -3694,16 +3766,16 @@ def rack_naming_payload(rack) -> dict:
 def _mouse_rack_from_form(db_session, rack, form) -> str | None:
     name = (form.get("name") or "").strip()
     if not name:
-        return "A rack needs a name."
+        return gettext("A rack needs a name.")
     clash = db_session.scalar(select(MouseRack.id).where(
         func.lower(MouseRack.name) == name.lower(), MouseRack.id != (rack.id or 0)))
     if clash:
-        return f"There is already a rack called {name}."
+        return gettext("There is already a rack called %(name)s.", name=name)
     try:
         rows = int(form.get("rows") or 8)
         cols = int(form.get("cols") or 10)
     except ValueError:
-        return "Rows and columns must be whole numbers."
+        return gettext("Rows and columns must be whole numbers.")
     rack.name = name
     rack.rows = max(1, min(26, rows))
     rack.cols = max(1, min(40, cols))
@@ -3736,7 +3808,7 @@ def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
     rack = db_session.get(MouseRack, int(rack_raw)) if rack_raw.isdigit() else db_session.scalar(
         select(MouseRack).where(func.lower(MouseRack.name) == rack_raw.lower()))
     if rack is None:
-        return f"There is no rack called {rack_raw}."
+        return gettext("There is no rack called %(rack)s.", rack=rack_raw)
     if not position_raw:
         cage.rack_id_fk, cage.rack_row, cage.rack_col = rack.id, None, None
         return None
@@ -3744,13 +3816,16 @@ def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
     if cell is None:
         first = positions.label(1, 1, rack.naming, rack.cols)
         last = positions.label(rack.rows, rack.cols, rack.naming, rack.cols)
-        return f"“{position_raw}” is not a position in rack {rack.name} ({first}–{last})."
+        return gettext("“%(position)s” is not a position in rack %(rack)s (%(first)s–%(last)s).",
+                       position=position_raw, rack=rack.name, first=first, last=last)
     holder = db_session.scalar(select(CageRecord).where(
         CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == cell[0],
         CageRecord.rack_col == cell[1], CageRecord.id != (cage.id or 0)))
     if holder is not None:
         name = positions.label(*cell, rack.naming, rack.cols)
-        return f"{rack.name} · {name} already holds cage {holder.cage_id}. Drag on the rack grid to swap."
+        return gettext("%(rack)s · %(position)s already holds cage %(cage)s. Drag on the rack grid to swap.",
+                       rack=rack.name, position=name, cage=holder.cage_id)
+
     cage.rack_id_fk, (cage.rack_row, cage.rack_col) = rack.id, cell
     return None
 
@@ -3769,10 +3844,10 @@ def save_mouse_rack():
         rack_id = request.form.get("id", "").strip()
         rack = db_session.get(MouseRack, int(rack_id)) if rack_id.isdigit() else MouseRack(name="", created_by=g.user.username)
         if rack is None:
-            flash("That rack no longer exists.", "error")
+            flash(gettext("That rack no longer exists."), "error")
             return redirect(url_for("colony", view="cages"))
         if rack.id is not None and not access.can_edit_rack(rack):
-            flash(f"Only whoever added rack {rack.name}, or an admin, can change it.", "error")
+            flash(gettext("Only whoever added rack %(rack)s, or an admin, can change it.", rack=rack.name), "error")
             return redirect(url_for("colony", view="cages"))
         error = _mouse_rack_from_form(db_session, rack, request.form)
         if error:
@@ -3781,7 +3856,7 @@ def save_mouse_rack():
         if rack.id is None:
             db_session.add(rack)
         db_session.commit()
-        flash(f"Saved rack {rack.name}.", "success")
+        flash(gettext("Saved rack %(rack)s.", rack=rack.name), "success")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -3792,7 +3867,7 @@ def delete_mouse_rack(rack_id: int):
     with SessionLocal() as db_session:
         rack = db_session.get(MouseRack, rack_id)
         if rack is not None and not access.can_edit_rack(rack):
-            flash(f"Only whoever added rack {rack.name}, or an admin, can delete it.", "error")
+            flash(gettext("Only whoever added rack %(rack)s, or an admin, can delete it.", rack=rack.name), "error")
             return redirect(url_for("colony", view="cages"))
         if rack is not None:
             name = rack.name
@@ -3800,7 +3875,7 @@ def delete_mouse_rack(rack_id: int):
                 cage.rack_id_fk = cage.rack_row = cage.rack_col = None
             db_session.delete(rack)
             db_session.commit()
-            flash(f"Deleted rack {name}. Its cages are now unplaced.", "success")
+            flash(gettext("Deleted rack %(rack)s. Its cages are now unplaced.", rack=name), "success")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -3812,7 +3887,7 @@ def place_cage(cage_row_id: int):
     with SessionLocal() as db_session:
         cage = db_session.get(CageRecord, cage_row_id)
         if cage is None:
-            return jsonify({"ok": False, "error": "That cage no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That cage no longer exists.")}), 404
         if not can_edit_cage(cage):
             return jsonify({"ok": False, "error": access.reason_denied(cage)}), 403
         rack_id = request.form.get("rack_id", "").strip()
@@ -3825,15 +3900,16 @@ def place_cage(cage_row_id: int):
         try:
             row, col = int(request.form.get("row", "")), int(request.form.get("col", ""))
         except ValueError:
-            return jsonify({"ok": False, "error": "Missing row or column."}), 400
+            return jsonify({"ok": False, "error": gettext("Missing row or column.")}), 400
         if rack is None or not (1 <= row <= rack.rows and 1 <= col <= rack.cols):
-            return jsonify({"ok": False, "error": "That position is not in the rack."}), 400
+            return jsonify({"ok": False, "error": gettext("That position is not in the rack.")}), 400
         holder = db_session.scalar(select(CageRecord).where(
             CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == row,
             CageRecord.rack_col == col, CageRecord.id != cage.id))
         if holder is not None:
             if not can_edit_cage(holder):
-                return jsonify({"ok": False, "error": f"That position holds cage {holder.cage_id}, which you may not move."}), 403
+                return jsonify({"ok": False, "error": gettext("That position holds cage %(cage)s, which you may not move.",
+                                                              cage=holder.cage_id)}), 403
             # A swap, in steps: one cage per place holds at every moment
             # (the unique index on the place), so the dropped cage leaves first.
             old = (cage.rack_id_fk, cage.rack_row, cage.rack_col)
@@ -3918,14 +3994,14 @@ def renumber_cage(db_session, cage, raw) -> str | None:
     if code == cage.cage_id:
         return None
     if not code:
-        return f"Cage {cage.cage_id} needs a number; it was left as it was."
+        return gettext("Cage %(cage)s needs a number; it was left as it was.", cage=cage.cage_id)
     if code.lower() == "new":
-        return "“new” takes the next free number for a new cage; type the number you want instead."
+        return gettext("“new” takes the next free number for a new cage; type the number you want instead.")
     if len(code) > 80:
-        return "A cage number can be at most 80 characters."
+        return gettext("A cage number can be at most 80 characters.")
     taken = db_session.scalar(select(CageRecord.id).where(CageRecord.cage_id == code, CageRecord.id != cage.id))
     if taken:
-        return f"There is already a cage {code}; cage {cage.cage_id} kept its number."
+        return gettext("There is already a cage %(code)s; cage %(cage)s kept its number.", code=code, cage=cage.cage_id)
     cage.cage_id = code
     return None
 
@@ -3955,7 +4031,8 @@ def apply_cage_form(db_session, cage, form) -> str | None:
     if "is_shared" in form and access.can_be_shared(cage):
         if project_groups.differs(cage, form.get("is_shared")):
             if not access.can_set_sharing(cage):
-                return f"Only {cage.owner or 'its owner'} or an admin can make cage {cage.cage_id} shared or personal."
+                return gettext("Only %(owner)s or an admin can make cage %(cage)s shared or personal.",
+                               owner=cage.owner or gettext("its owner"), cage=cage.cage_id)
             refused = project_groups.apply(cage, form.get("is_shared"))
             if refused:
                 return refused
@@ -3963,9 +4040,10 @@ def apply_cage_form(db_session, cage, form) -> str | None:
         owner = (form.get("owner") or "").strip()
         if owner != (cage.owner or "") and not (access.can_manage(cage) or access.is_care()):
             # Else anyone could take a shared cage and then make it personal.
-            return f"Only {cage.owner or 'its owner'} or an admin can give cage {cage.cage_id} to someone else."
+            return gettext("Only %(owner)s or an admin can give cage %(cage)s to someone else.",
+                           owner=cage.owner or gettext("its owner"), cage=cage.cage_id)
         if owner and owner not in current_lab_usernames(db_session):
-            return f"“{owner}” is not a lab member. Pick a username from the list."
+            return gettext("“%(owner)s” is not a lab member. Pick a username from the list.", owner=owner)
         cage.owner = owner
     if "rack_id" in form and form_changed(form, "rack_id", "position"):
         return apply_cage_position(db_session, cage, form.get("rack_id"), form.get("position"))
@@ -3978,7 +4056,7 @@ def update_cage(cage_row_id: int):
     with SessionLocal() as db_session:
         cage = db_session.get(CageRecord, cage_row_id)
         if cage is None:
-            flash("That cage no longer exists.", "error")
+            flash(gettext("That cage no longer exists."), "error")
             return autosave_response("cages")
         blocked = deny(cage, "cages")
         if blocked:
@@ -4016,7 +4094,7 @@ def bulk_cages():
     value = (form.get("value") or "").strip()
     back = url_for("colony", view="cages", scope=access.resolve_scope(form.get("scope")))
     if action not in CAGE_BULK_LABELS:
-        flash("Pick an action.", "error")
+        flash(gettext("Pick an action."), "error")
         return redirect(back)
     ids = [int(v) for v in form.getlist("selected_ids") if v.isdigit()]
     changed = skipped = unshareable = 0
@@ -4024,8 +4102,8 @@ def bulk_cages():
     with SessionLocal() as db_session:
         rack = None
         if action == "owner" and value not in current_lab_usernames(db_session):
-            flash(f"“{value or '(blank)'}” is not a lab member, so no owner was changed. "
-                  "Pick a username from the list.", "error")
+            flash(gettext("“%(value)s” is not a lab member, so no owner was changed. Pick a username from the list.",
+                          value=value or gettext("(blank)")), "error")
             return redirect(back)
         share_group = project_groups.parse(value)[1] if action == "shared" else None
         if share_group is not None and not project_groups.may_share_with(share_group):
@@ -4034,7 +4112,7 @@ def bulk_cages():
         if action == "rack" and value:
             rack = db_session.get(MouseRack, int(value)) if value.isdigit() else None
             if rack is None:
-                flash("That rack no longer exists.", "error")
+                flash(gettext("That rack no longer exists."), "error")
                 return redirect(back)
         what = {"purpose": f"set cage purpose = {value or '(blank)'}",
                 "owner": f"set cage owner = {value}",
@@ -4071,8 +4149,9 @@ def bulk_cages():
                 elif action == "retire":
                     living = [m for m in cage.mice if mouse_is_active(m)]
                     if living:
-                        blocked.append(f"cage {cage.cage_id} still holds {len(living)} living "
-                                       f"{'mouse' if len(living) == 1 else 'mice'}")
+                        blocked.append(ngettext("cage %(cage)s still holds %(num)s living mouse",
+                                                "cage %(cage)s still holds %(num)s living mice",
+                                                len(living), cage=cage.cage_id))
                         continue
                     # Retired: not a breeding or shared cage any more, and
                     # its rack position is free for the next one.
@@ -4084,19 +4163,23 @@ def bulk_cages():
                 changed += 1
             batch_row.record_count = changed
         db_session.commit()
-    noun = lambda n: "cage" if n == 1 else "cages"  # noqa: E731
-    if changed:
-        flash(f"{CAGE_BULK_LABELS[action]} on {changed} {noun(changed)}."
-              + (f" {skipped} skipped — not yours to edit." if skipped else ""), "success")
+    what = gettext(CAGE_BULK_LABELS[action])
+    if changed and skipped:
+        flash(ngettext("%(what)s on %(num)s cage. %(skipped)s skipped — not yours to edit.",
+                       "%(what)s on %(num)s cages. %(skipped)s skipped — not yours to edit.",
+                       changed, what=what, skipped=skipped), "success")
+    elif changed:
+        flash(ngettext("%(what)s on %(num)s cage.", "%(what)s on %(num)s cages.", changed, what=what), "success")
     elif skipped:
-        flash(f"Nothing changed — {skipped} {noun(skipped)} are not yours to edit.", "error")
+        flash(ngettext("Nothing changed — %(num)s cage are not yours to edit.",
+                       "Nothing changed — %(num)s cages are not yours to edit.", skipped), "error")
     elif not blocked and not unshareable:
-        flash("Nothing was changed.", "error")
+        flash(gettext("Nothing was changed."), "error")
     if unshareable:
-        flash(f"{unshareable} {noun(unshareable)} left as they were: only a cage's owner or an admin "
-              "can share it or make it personal.", "error")
+        flash(ngettext("%(num)s cage left as they were: only a cage's owner or an admin can share it or make it personal.",
+                       "%(num)s cages left as they were: only a cage's owner or an admin can share it or make it personal.", unshareable), "error")
     if blocked:
-        flash("Not retired: " + "; ".join(blocked) + ". Move or end its mice first.", "error")
+        flash(gettext("Not retired: %(cages)s. Move or end its mice first.", cages="; ".join(blocked)), "error")
     return redirect(back)
 
 
@@ -4112,19 +4195,20 @@ def add_mouse_from_cage(cage_row_id: int):
             return blocked
         requested_mouse_id = request.form.get("mouse_id", "").strip()
         if not requested_mouse_id.isdigit():
-            flash("Enter the number of an existing mouse.", "error")
+            flash(gettext("Enter the number of an existing mouse."), "error")
             return redirect(url_for("colony", view="cages"))
         mouse = db_session.scalar(select(MouseRecord).where(MouseRecord.mouse_id == int(requested_mouse_id)))
         if mouse is None:
-            flash(f"Mouse {requested_mouse_id} was not found.", "error")
+            flash(gettext("Mouse %(mouse)s was not found.", mouse=requested_mouse_id), "error")
             return redirect(url_for("colony", view="cages"))
         # Moving a mouse changes the mouse, not just the cage.
         if not can_edit_mouse(mouse):
-            flash(f"Mouse {mouse.mouse_id} was not moved. " + access.reason_denied(mouse), "error")
+            flash(gettext("Mouse %(mouse)s was not moved. %(reason)s", mouse=mouse.mouse_id,
+                          reason=access.reason_denied(mouse)), "error")
             return redirect(url_for("colony", view="cages"))
         mouse.cage_id_fk = cage.id  # the column, so the audit log records the move
         db_session.commit()
-        flash(f"Moved mouse {mouse.mouse_id} into cage {cage.cage_id}.", "success")
+        flash(gettext("Moved mouse %(mouse)s into cage %(cage)s.", mouse=mouse.mouse_id, cage=cage.cage_id), "success")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -4148,14 +4232,17 @@ def cage_give_birth(cage_row_id: int):
             cage.date_give_birth = born
             db_session.commit()
             wean = fmt_day(born + timedelta(days=WEAN_OFFSET_DAYS))
-            when = "today" if born == date.today() else f"on {fmt_day(born)}"
-            flash(f"Recorded a litter born {when} in cage {cage.cage_id}: weaning is due {wean}.", "success")
+            if born == date.today():
+                flash(gettext("Recorded a litter born today in cage %(cage)s: weaning is due %(wean)s.",
+                              cage=cage.cage_id, wean=wean), "success")
+            else:
+                flash(gettext("Recorded a litter born on %(born)s in cage %(cage)s: weaning is due %(wean)s.",
+                              born=fmt_day(born), cage=cage.cage_id, wean=wean), "success")
             if before and before != born:
                 # The cage holds one litter date: say what the new one replaced,
                 # so a litter still waiting to be weaned isn't forgotten.
-                flash(f"It replaces the litter born {fmt_day(before)} (weaning was due "
-                      f"{fmt_day(before + timedelta(days=WEAN_OFFSET_DAYS))}). If those pups are still in the cage, "
-                      f"wean them first.", "warning")
+                flash(gettext("It replaces the litter born %(born)s (weaning was due %(wean)s). If those pups are still in the cage, wean them first.", born=fmt_day(before),
+                              wean=fmt_day(before + timedelta(days=WEAN_OFFSET_DAYS))), "warning")
     return _back_to_colony("cages")
 
 
@@ -4171,7 +4258,8 @@ def cage_genotyping(cage_row_id: int):
             return blocked
         raw_pups = (request.form.get("total_pups") or "").strip()
         if not raw_pups.isdigit() or not 1 <= int(raw_pups) <= 40:
-            flash(f"Pups must be a whole number from 1 to 40, not “{raw_pups or '(blank)'}”. No litter was created.", "error")
+            flash(gettext("Pups must be a whole number from 1 to 40, not “%(value)s”. No litter was created.",
+                          value=raw_pups or gettext("(blank)")), "error")
             return redirect(url_for("colony", view="cages"))
         total_pups = int(raw_pups)
         father_info = request.form.get("father_info", "").strip()
@@ -4196,7 +4284,8 @@ def cage_genotyping(cage_row_id: int):
             db_session.add(mouse)
             db_session.flush()
         db_session.commit()
-        flash(f"Created litter {litter.litter_id} with {total_pups} pups in cage {cage.cage_id}.", "success")
+        flash(gettext("Created litter %(litter)s with %(pups)s pups in cage %(cage)s.", litter=litter.litter_id,
+                      pups=total_pups, cage=cage.cage_id), "success")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -4217,7 +4306,7 @@ def cage_wean(cage_row_id: int):
             mark_weaned(cage)
             batch_row.description, batch_row.record_count = f"wean cage {cage.cage_id}"[:200], 1
             db_session.commit()
-            flash(f"Cage {cage.cage_id} is weaned.", "success")
+            flash(gettext("Cage %(cage)s is weaned.", cage=cage.cage_id), "success")
     return _back_to_colony("cages")
 
 
@@ -4237,10 +4326,10 @@ def _too_young_to_wean(cage) -> str | None:
         return None
     due = born + timedelta(days=WEAN_OFFSET_DAYS)
     if age < 0:
-        return (f"Cage {cage.cage_id}'s litter is dated {fmt_day(born)}, in the future. "
-                "Correct its date before weaning.")
-    return (f"The pups in cage {cage.cage_id} are {age} days old; weaning is due {fmt_day(due)} "
-            f"(P{WEAN_OFFSET_DAYS}). Nothing was changed. To wean them early anyway, confirm it when asked.")
+        return gettext("Cage %(cage)s's litter is dated %(born)s, in the future. Correct its date before weaning.",
+                       cage=cage.cage_id, born=fmt_day(born))
+    return gettext("The pups in cage %(cage)s are %(age)s days old; weaning is due %(due)s (P%(days)s). Nothing was changed. To wean them early anyway, confirm it when asked.", cage=cage.cage_id, age=age,
+                   due=fmt_day(due), days=WEAN_OFFSET_DAYS)
 
 
 @app.route("/colony/cages/<int:cage_row_id>/wean-distribute", methods=["POST"])
@@ -4274,7 +4363,7 @@ def cage_wean_distribute(cage_row_id: int):
                                                    "mouse_cages") as batch_row:
         source_cage = db_session.get(CageRecord, cage_row_id)
         if source_cage is None:
-            flash("Cage not found.", "error")
+            flash(gettext("Cage not found."), "error")
             return redirect(url_for("colony", view="cages"))
         blocked = deny(source_cage, "cages")
         if blocked:
@@ -4297,15 +4386,17 @@ def cage_wean_distribute(cage_row_id: int):
                 if not token:
                     continue
                 if not token.isdigit():
-                    problems.append(f"“{token}” is not a mouse number")
+                    problems.append(gettext("“%(token)s” is not a mouse number", token=token))
                     continue
                 mouse = db_session.scalar(select(MouseRecord).where(MouseRecord.mouse_id == int(token)))
                 if mouse is None:
-                    problems.append(f"mouse {token} does not exist")
+                    problems.append(gettext("mouse %(mouse)s does not exist", mouse=token))
                 elif mouse.cage_id_fk != source_cage.id:
-                    problems.append(f"mouse {token} is not in cage {source_cage_label}")
+                    problems.append(gettext("mouse %(mouse)s is not in cage %(cage)s", mouse=token,
+                                            cage=source_cage_label))
                 elif not can_edit_mouse(mouse):
-                    problems.append(f"mouse {token} is {mouse.owner or 'someone else'}’s")
+                    problems.append(gettext("mouse %(mouse)s is %(owner)s’s", mouse=token,
+                                            owner=mouse.owner or gettext("someone else")))
                 else:
                     movers.append(mouse)
             if not movers:
@@ -4322,8 +4413,9 @@ def cage_wean_distribute(cage_row_id: int):
                     db_session.add(target_cage)
                     db_session.flush()
                 elif not can_edit_cage(target_cage):
-                    problems.append(f"cage {cage_id_input} is {target_cage.owner or 'someone else'}’s, "
-                                    f"so {', '.join(str(m.mouse_id) for m in movers)} stayed")
+                    problems.append(gettext("cage %(cage)s is %(owner)s’s, so %(mice)s stayed", cage=cage_id_input,
+                                            owner=target_cage.owner or gettext("someone else"),
+                                            mice=", ".join(str(m.mouse_id) for m in movers)))
                     continue
             else:
                 target_cage = new_owned_cage(db_session, card_id=card_id_input)
@@ -4340,11 +4432,12 @@ def cage_wean_distribute(cage_row_id: int):
         db_session.commit()
 
     if moved_count:
-        flash(f"Distributed {moved_count} mice and weaned cage {source_cage_label}.", "success")
+        flash(gettext("Distributed %(count)s mice and weaned cage %(cage)s.", count=moved_count,
+                      cage=source_cage_label), "success")
     else:
-        flash(f"Cage {source_cage_label} weaned (no mice were moved).", "success")
+        flash(gettext("Cage %(cage)s weaned (no mice were moved).", cage=source_cage_label), "success")
     if problems:
-        flash("Not moved: " + "; ".join(problems) + ".", "error")
+        flash(gettext("Not moved: %(problems)s.", problems="; ".join(problems)), "error")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -4352,8 +4445,8 @@ def _litter_refusal(litter, view: str = "litters"):
     if access.can_edit_litter(litter):
         return None
     owners = sorted({m.owner for m in litter.mice if m.owner and not can_edit_mouse(m)})
-    flash(f"Litter {litter.litter_id} has mice owned by {', '.join(owners) or 'someone else'}, "
-          "so only they or an admin can change it.", "error")
+    flash(gettext("Litter %(litter)s has mice owned by %(owners)s, so only they or an admin can change it.",
+                  litter=litter.litter_id, owners=", ".join(owners) or gettext("someone else")), "error")
     return autosave_response(view)
 
 
@@ -4370,8 +4463,7 @@ def create_litter():
         return redirect(url_for("colony", view="litters", scope=request.form.get("scope") or None))
     with SessionLocal() as db_session:
         if requested and db_session.scalar(select(LitterRecord.id).where(LitterRecord.litter_id == requested)):
-            flash(f"Litter {requested} already exists; nothing was changed. "
-                  "Leave the ID blank to take the next free one.", "error")
+            flash(gettext("Litter %(litter)s already exists; nothing was changed. Leave the ID blank to take the next free one.", litter=requested), "error")
             return redirect(url_for("colony", view="litters", scope=request.form.get("scope") or None))
         litter = LitterRecord(litter_id=requested or next_litter_id(db_session),
                               date_of_birth=parse_date(request.form.get("date_of_birth")))
@@ -4379,7 +4471,7 @@ def create_litter():
         litter.notes = request.form.get("notes", "").strip()
         db_session.add(litter)
         db_session.commit()
-        flash(f"Created litter {litter.litter_id}.", "success")
+        flash(gettext("Created litter %(litter)s.", litter=litter.litter_id), "success")
     return redirect(url_for("colony", view="litters", scope=request.form.get("scope") or None))
 
 
@@ -4406,7 +4498,7 @@ def update_litter(litter_row_id: int):
         if "total_pups" in form:
             raw = (form.get("total_pups") or "").strip()
             if raw and not raw.isdigit():
-                flash(f"Pups must be a whole number, not “{raw}”.", "error")
+                flash(gettext("Pups must be a whole number, not “%(value)s”.", value=raw), "error")
                 return autosave_response("litters")
             litter.total_pups = int(raw or 0)
         db_session.commit()
@@ -4425,26 +4517,31 @@ def add_existing_mouse_to_litter(litter_row_id: int):
             return refused
         requested_mouse_id = request.form.get("mouse_id", "").strip()
         if not requested_mouse_id.isdigit():
-            flash("Enter the number of an existing mouse.", "error")
+            flash(gettext("Enter the number of an existing mouse."), "error")
             return redirect(url_for("colony", view="litters"))
         mouse = db_session.scalar(select(MouseRecord).where(MouseRecord.mouse_id == int(requested_mouse_id)))
         if mouse is None:
-            flash(f"Mouse {requested_mouse_id} was not found.", "error")
+            flash(gettext("Mouse %(mouse)s was not found.", mouse=requested_mouse_id), "error")
             return redirect(url_for("colony", view="litters"))
         # Joining a litter changes the mouse's date of birth.
         if not can_edit_mouse(mouse):
-            flash(f"Mouse {mouse.mouse_id} was not added. " + access.reason_denied(mouse), "error")
+            flash(gettext("Mouse %(mouse)s was not added. %(reason)s", mouse=mouse.mouse_id,
+                          reason=access.reason_denied(mouse)), "error")
             return redirect(url_for("colony", view="litters"))
         mouse.litter_id_fk = litter.id  # the column, so the audit log records it
         db_session.commit()
-        flash(f"Mouse {mouse.mouse_id} is now in litter {litter.litter_id}.", "success")
+        flash(gettext("Mouse %(mouse)s is now in litter %(litter)s.", mouse=mouse.mouse_id, litter=litter.litter_id),
+              "success")
     return redirect(url_for("colony", view="litters"))
 
 
 def strain_denied(strain) -> str:
     who = (strain.created_by or "").strip()
-    return (f"Strain {strain.strain_name} was added by {who}; only they or an admin can change or remove it."
-            if who else f"Strain {strain.strain_name} predates recorded creators; only an admin can change or remove it.")
+    if who:
+        return gettext("Strain %(strain)s was added by %(who)s; only they or an admin can change or remove it.",
+                       strain=strain.strain_name, who=who)
+    return gettext("Strain %(strain)s predates recorded creators; only an admin can change or remove it.",
+                   strain=strain.strain_name)
 
 
 PRESETS_DENIED = "Only an admin can add, rename or remove dropdown choices. You can still pick them everywhere."
@@ -4456,12 +4553,12 @@ def create_strain():
     strain_name = (request.form.get("strain_name") or "").strip()
     with SessionLocal() as db_session:
         if not strain_name:
-            flash("A strain needs a name.", "error")
+            flash(gettext("A strain needs a name."), "error")
             return redirect(url_for("colony", view="strains"))
         existing = db_session.scalar(select(StrainRecord).where(
             func.lower(StrainRecord.strain_name) == strain_name.lower()))
         if existing is not None:
-            flash(f"There is already a strain called {existing.strain_name}.", "error")
+            flash(gettext("There is already a strain called %(strain)s.", strain=existing.strain_name), "error")
             return redirect(url_for("colony", view="strains"))
         db_session.add(
             StrainRecord(
@@ -4474,7 +4571,7 @@ def create_strain():
             )
         )
         db_session.commit()
-        flash(f"Added strain {strain_name}.", "success")
+        flash(gettext("Added strain %(strain)s.", strain=strain_name), "success")
     return redirect(url_for("colony", view="strains"))
 
 
@@ -4484,20 +4581,21 @@ def update_strain(strain_row_id: int):
     with SessionLocal() as db_session:
         strain = db_session.get(StrainRecord, strain_row_id)
         if strain is None:
-            flash("That strain no longer exists.", "error")
+            flash(gettext("That strain no longer exists."), "error")
             return autosave_response("strains")
         if not access.can_edit_strain(strain):
             flash(strain_denied(strain), "error")
             return autosave_response("strains")
         new_name = request.form.get("strain_name", strain.strain_name).strip()
         if not new_name:
-            flash("A strain needs a name.", "error")
+            flash(gettext("A strain needs a name."), "error")
             return autosave_response("strains")
         if new_name != strain.strain_name:
             conflict = db_session.scalar(select(StrainRecord).where(
                 func.lower(StrainRecord.strain_name) == new_name.lower(), StrainRecord.id != strain.id))
             if conflict is not None:
-                flash(f"There is already a strain called {conflict.strain_name}; this one was not renamed.", "error")
+                flash(gettext("There is already a strain called %(strain)s; this one was not renamed.",
+                              strain=conflict.strain_name), "error")
                 return autosave_response("strains")
             strain.strain_name = new_name
         for field in ("strain_number", "strain_background", "supplier", "description"):
@@ -4521,7 +4619,7 @@ def delete_strain(strain_row_id: int):
             name = strain.strain_name
             db_session.delete(strain)
             db_session.commit()
-            flash(f"Removed strain {name}. Mice that carry it are unchanged.", "success")
+            flash(gettext("Removed strain %(strain)s. Mice that carry it are unchanged.", strain=name), "success")
     return redirect(url_for("colony", view="strains"))
 
 
@@ -4531,11 +4629,11 @@ def create_option():
     field_name = (request.form.get("field_name") or "").strip()
     option_value = (request.form.get("option_value") or "").strip()
     if not access.can_edit_presets():
-        flash(PRESETS_DENIED, "error")
+        flash(gettext(PRESETS_DENIED), "error")
         return redirect(url_for("colony", view="settings"))
     with SessionLocal() as db_session:
         if not field_name or not option_value:
-            flash("Pick a column and type a value.", "error")
+            flash(gettext("Pick a column and type a value."), "error")
             return redirect(url_for("colony", view="settings"))
         existing = db_session.scalar(
             select(DropdownOption).where(
@@ -4544,11 +4642,13 @@ def create_option():
             )
         )
         if existing is not None:
-            flash(f"“{existing.option_value}” is already a {field_name} preset.", "error")
+            flash(gettext("“%(value)s” is already a %(column)s preset.", value=existing.option_value,
+                          column=i18n.translate_value(field_name)), "error")
             return redirect(url_for("colony", view="settings"))
         db_session.add(DropdownOption(field_name=field_name, option_value=option_value))
         db_session.commit()
-        flash(f"Saved “{option_value}” as a {field_name} preset.", "success")
+        flash(gettext("Saved “%(value)s” as a %(column)s preset.", value=option_value,
+                      column=i18n.translate_value(field_name)), "success")
     return redirect(url_for("colony", view="settings"))
 
 
@@ -4557,15 +4657,15 @@ def create_option():
 def update_option(option_id: int):
     new_value = request.form.get("option_value", "").strip()
     if not access.can_edit_presets():
-        flash(PRESETS_DENIED, "error")
+        flash(gettext(PRESETS_DENIED), "error")
         return autosave_response("settings")
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
         if option is None:
-            flash("That preset no longer exists.", "error")
+            flash(gettext("That preset no longer exists."), "error")
             return autosave_response("settings")
         if not new_value:
-            flash("A preset cannot be blank; delete it instead.", "error")
+            flash(gettext("A preset cannot be blank; delete it instead."), "error")
             return autosave_response("settings")
         duplicate = db_session.scalar(
             select(DropdownOption).where(
@@ -4575,7 +4675,8 @@ def update_option(option_id: int):
             )
         )
         if duplicate is not None:
-            flash(f"“{duplicate.option_value}” is already a {option.field_name} preset.", "error")
+            flash(gettext("“%(value)s” is already a %(column)s preset.", value=duplicate.option_value,
+                          column=i18n.translate_value(option.field_name)), "error")
             return autosave_response("settings")
         option.option_value = new_value
         db_session.commit()
@@ -4586,15 +4687,15 @@ def update_option(option_id: int):
 @login_required
 def delete_option(option_id: int):
     if not access.can_edit_presets():
-        flash(PRESETS_DENIED, "error")
+        flash(gettext(PRESETS_DENIED), "error")
         return redirect(url_for("colony", view="settings"))
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
         if option is not None:
-            label = f"the {option.field_name} preset “{option.option_value}”"
+            column, value = i18n.translate_value(option.field_name), option.option_value
             db_session.delete(option)
             db_session.commit()
-            flash(f"Removed {label}.", "success")
+            flash(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value), "success")
     return redirect(url_for("colony", view="settings"))
 
 
@@ -4610,7 +4711,9 @@ def _inventory_redirect(kind: str):
         module = inventories.first_of_kind(db_session, kind)
         key = module.key if module else None
     if key is None:
-        flash(f"There is no {kind} inventory yet. Add one from Add database.", "info")
+        flash(gettext("There is no orders inventory yet. Add one from Add database.") if kind == "orders" else
+              gettext("There is no samples inventory yet. Add one from Add database.") if kind == "samples" else
+              f"There is no {kind} inventory yet. Add one from Add database.", "info")
         return redirect(url_for("organisms.index"))
     return redirect(url_for("inventory.module", key=key))
 
@@ -4711,8 +4814,10 @@ def task_can_manage(t, user=None) -> bool:
 
 def task_denied(t) -> str:
     if t.is_shared and t.share_group_id:
-        return f"That to-do is {project_groups.name_of(t.share_group_id) or 'a project group'}'s."
-    return f"That to-do is {t.owner or 'someone else'}'s. Ask them, or an admin, to make the change."
+        return gettext("That to-do is %(group)s's.",
+                       group=project_groups.name_of(t.share_group_id) or gettext("a project group"))
+    return gettext("That to-do is %(owner)s's. Ask them, or an admin, to make the change.",
+                   owner=t.owner or gettext("someone else"))
 
 
 def _serialize_task(t: TaskItem) -> dict:
@@ -4997,7 +5102,7 @@ def calendar_google_status():
 def calendar_google_connect():
     """Kick off the OAuth dance. Redirects the user to Google's consent screen."""
     if not google_oauth_configured():
-        flash("Google Calendar integration isn't configured on this server.", "error")
+        flash(gettext("Google Calendar integration isn't configured on this server."), "error")
         return redirect(url_for("calendar"))
     from google_auth_oauthlib.flow import Flow
     redirect_uri = _google_redirect_uri()
@@ -5038,7 +5143,7 @@ def calendar_google_callback():
         flow.fetch_token(authorization_response=request.url)
     except Exception as exc:
         app.logger.warning("Google OAuth callback failed: %s", exc)
-        flash(f"Google sign-in failed: {exc}", "error")
+        flash(gettext("Google sign-in failed: %(error)s", error=exc), "error")
         return redirect(url_for("calendar"))
 
     creds = flow.credentials
@@ -5063,11 +5168,11 @@ def calendar_google_callback():
         link.enabled = True
         if not link.refresh_token:
             db_session.expunge(link)
-            flash("Google didn't return a refresh token. Revoke access at myaccount.google.com/permissions and try connecting again.", "warning")
+            flash(gettext("Google didn't return a refresh token. Revoke access at myaccount.google.com/permissions and try connecting again."), "warning")
             return redirect(url_for("calendar"))
         db_session.add(link)
         db_session.commit()
-    flash(f"Connected Google Calendar for {email}.", "success")
+    flash(gettext("Connected Google Calendar for %(email)s.", email=email), "success")
     return redirect(url_for("calendar"))
 
 
@@ -5126,7 +5231,7 @@ def calendar_item_create():
     is_all_day = bool(payload.get("isAllday", True))
     if start and end and end < start:
         # Saved like that, it would vanish from Month and Week (List only).
-        return jsonify({"ok": False, "error": "It has to end after it starts."}), 400
+        return jsonify({"ok": False, "error": gettext("It has to end after it starts.")}), 400
     color = (payload.get("backgroundColor") or payload.get("color") or "").strip()
     owner = g.user.username if g.user else ""
 
@@ -5172,10 +5277,9 @@ def calendar_item_create():
             repeat = series and db_session.scalar(
                 select(CalendarRepeat).where(CalendarRepeat.event_id_fk == series.id))
             if repeat is None or day is None:
-                return jsonify({"ok": False, "error": "That event does not repeat."}), 404
+                return jsonify({"ok": False, "error": gettext("That event does not repeat.")}), 404
             if not lab_calendar.event_can_edit(series):
-                return jsonify({"ok": False, "error": "Only the person who added this event, or an admin, "
-                                                      "can change it."}), 403
+                return jsonify({"ok": False, "error": gettext("Only the person who added this event, or an admin, can change it.")}), 403
             row.event_type, row.animal_id_fk = series.event_type, series.animal_id_fk
             skip = {d for d in (repeat.skip or "").split(",") if d} | {day.isoformat()}
             repeat.skip = ",".join(sorted(skip))
@@ -5211,7 +5315,7 @@ def calendar_item_update(item_key: str):
 
     new_start, new_end = _parse(payload.get("start")), _parse(payload.get("end"))
     if new_start and new_end and new_end < new_start:
-        return jsonify({"ok": False, "error": "It has to end after it starts."}), 400
+        return jsonify({"ok": False, "error": gettext("It has to end after it starts.")}), 400
 
     with SessionLocal() as db_session:
         if kind == "task":
@@ -5222,8 +5326,9 @@ def calendar_item_update(item_key: str):
                 return jsonify({"ok": False, "error": task_denied(row)}), 403
             if "audience" in payload and project_groups.differs(row, payload["audience"]):
                 if not task_can_manage(row):
-                    return jsonify({"ok": False, "error": f"Only {row.owner or 'its owner'} or an admin can "
-                                                          "change whose to-do it is."}), 403
+                    return jsonify({"ok": False, "error": gettext(
+                        "Only %(owner)s or an admin can change whose to-do it is.",
+                        owner=row.owner or gettext("its owner"))}), 403
                 refused = project_groups.apply(row, payload["audience"])
                 if refused:
                     return jsonify({"ok": False, "error": refused}), 403
@@ -5246,8 +5351,7 @@ def calendar_item_update(item_key: str):
             if row is None:
                 return jsonify({"ok": False}), 404
             if not lab_calendar.event_can_edit(row):
-                return jsonify({"ok": False, "error": "Only the person who added this event, or an admin, "
-                                                      "can change it."}), 403
+                return jsonify({"ok": False, "error": gettext("Only the person who added this event, or an admin, can change it.")}), 403
             if "audience" in payload and project_groups.differs(row, payload["audience"]):
                 refused = project_groups.apply(row, payload["audience"])
                 if refused:
@@ -5307,10 +5411,10 @@ def calendar_item_delete(item_key: str):
         if row is None:
             return jsonify({"ok": False}), 404
         if kind == "task" and not task_can_manage(row):
-            return jsonify({"ok": False, "error": f"Only {row.owner or 'its owner'} can delete this to-do."}), 403
+            return jsonify({"ok": False, "error": gettext("Only %(owner)s can delete this to-do.",
+                                                          owner=row.owner or gettext("its owner"))}), 403
         if kind != "task" and not lab_calendar.event_can_edit(row):
-            return jsonify({"ok": False, "error": "Only the person who added this event, or an admin, "
-                                                  "can delete it."}), 403
+            return jsonify({"ok": False, "error": gettext("Only the person who added this event, or an admin, can delete it.")}), 403
         if kind != "task":
             lab_calendar.delete_repeat(db_session, row_id)
         db_session.delete(row)
@@ -5560,8 +5664,9 @@ def global_search():
             results.append({
                 "type": "mouse",
                 "id": m.mouse_id,
-                "label": f"Mouse #{m.mouse_id}",
-                "sublabel": f"{m.gender or '?'} · {m.genotype or '(no genotype)'} · {m.owner or 'no owner'}",
+                "label": gettext("Mouse #%(id)s", id=m.mouse_id),
+                "sublabel": " · ".join([m.gender or "?", m.genotype or gettext("(no genotype)"),
+                                        m.owner or gettext("no owner")]),
                 # Everyone's scope, so the mouse is on the sheet whoever
                 # owns it; the sheet puts ?q= in its search box.
                 "url": url_for("colony", view="mice", scope="all", q=m.mouse_id),
@@ -5577,8 +5682,8 @@ def global_search():
             results.append({
                 "type": "cage",
                 "id": cage.id,
-                "label": f"Cage {cage.cage_id}",
-                "sublabel": " · ".join(filter(None, [cage.purpose, f"{live} live", cage.owner])),
+                "label": gettext("Cage %(id)s", id=cage.cage_id),
+                "sublabel": " · ".join(filter(None, [cage.purpose, gettext("%(n)s live", n=live), cage.owner])),
                 "url": url_for("colony", view="cages", scope="all", q=cage.cage_id),
             })
         litter_stmt = select(LitterRecord).where(
@@ -5588,10 +5693,10 @@ def global_search():
             results.append({
                 "type": "litter",
                 "id": litter.id,
-                "label": f"Litter {litter.litter_id}",
+                "label": gettext("Litter %(id)s", id=litter.litter_id),
                 "sublabel": " · ".join(filter(None, [
-                    f"born {litter.date_of_birth.isoformat()}" if litter.date_of_birth else "",
-                    litter.cohort_name, f"{len(litter.mice)} mice"])),
+                    gettext("born %(date)s", date=litter.date_of_birth.isoformat()) if litter.date_of_birth else "",
+                    litter.cohort_name, gettext("%(n)s mice", n=len(litter.mice))])),
                 "url": url_for("colony", view="litters", q=litter.litter_id),
             })
         exp_stmt = select(Experiment).where(
@@ -5602,7 +5707,8 @@ def global_search():
                 "type": "experiment",
                 "id": exp.id,
                 "label": exp.name,
-                "sublabel": " · ".join(filter(None, [exp.status, f"{len(exp.memberships)} mice"
+                "sublabel": " · ".join(filter(None, [pgettext("experiment", exp.status) if exp.status else "",
+                                                     gettext("%(n)s mice", n=len(exp.memberships))
                                                      if (exp.db or "colony") == "colony" else "", exp.owner_username])),
                 "url": experiment_pages.page_url(exp),
             })
@@ -5634,9 +5740,9 @@ def global_search():
             results.append({
                 "type": "plasmid",
                 "id": p.plasmid_id,
-                "label": f"Plasmid #{p.plasmid_id} · {p.name or '(no name)'}",
-                "sublabel": f"{p.backbone or '?'} · {p.resistance or 'no resistance'} · {p.owner or 'no owner'}"
-                            + (f" · {where}" if where else ""),
+                "label": gettext("Plasmid #%(id)s · %(name)s", id=p.plasmid_id, name=p.name or gettext("(no name)")),
+                "sublabel": " · ".join([p.backbone or "?", p.resistance or gettext("no resistance"),
+                                        p.owner or gettext("no owner")]) + (f" · {where}" if where else ""),
                 "url": url_for("plasmid_page", number=p.plasmid_id),
             })
 
@@ -5668,9 +5774,10 @@ def global_search():
             results.append({
                 "type": kind_type.get(module.kind, "item"),
                 "id": item.number,
-                "label": f"{module.label} #{item.number} · {item.name or '(unnamed)'}",
+                "label": f"{i18n.translate_value(module.label)} #{item.number} · "
+                         + (item.name or gettext("(unnamed)")),
                 "sublabel": " · ".join(filter(None, [item.category, item.status, item.vendor,
-                                                     "lab common" if item.is_shared else item.owner])),
+                                                     gettext("lab common") if item.is_shared else item.owner])),
                 # Open the inventory already searched down to this item.
                 "url": url_for("inventory.module", key=module.key, q=item.name or str(item.number)),
             })
@@ -5693,8 +5800,8 @@ def global_search():
             results.append({
                 "type": "vial",
                 "id": unit.number,
-                "label": f"{mv.code(unit)} · {unit.genotype or '(no genotype)'}",
-                "sublabel": " · ".join(filter(None, [mv.label, mv.purpose_label(unit.purpose),
+                "label": f"{mv.code(unit)} · " + (unit.genotype or gettext("(no genotype)")),
+                "sublabel": " · ".join(filter(None, [i18n.translate_value(mv.label), mv.purpose_label(unit.purpose),
                                                      unit.rack.name if unit.rack else "", unit.owner])),
                 "url": url_for("stocks.module", key=mv.key),
             })
@@ -5706,7 +5813,7 @@ def global_search():
                        | TankRecord.owner.ilike(like, escape="\\") | TankRecord.notes.ilike(like, escape="\\"))
                 .order_by(TankRecord.tank_id).limit(limit)).all():
             results.append({
-                "type": "tank", "id": t.id, "label": f"Tank {t.tank_id}",
+                "type": "tank", "id": t.id, "label": gettext("Tank %(id)s", id=t.tank_id),
                 "sublabel": " · ".join(filter(None, [t.purpose, t.line.name if t.line else "", t.owner])),
                 "url": url_for("zebrafish", view="tanks") + f"#tank-{t.id}",
             })
@@ -5716,16 +5823,17 @@ def global_search():
                 .order_by(FishLine.name).limit(limit)).all():
             results.append({
                 "type": "fish-line", "id": ln.id, "label": ln.name,
-                "sublabel": " · ".join(filter(None, ["Zebrafish line", ln.zfin_name, ln.background])),
+                "sublabel": " · ".join(filter(None, [gettext("Zebrafish line"), ln.zfin_name, ln.background])),
                 "url": url_for("zebrafish_line_detail", line_id=ln.id),
             })
         for c in db_session.scalars(
                 select(ClutchRecord).where(ClutchRecord.clutch_id.ilike(like, escape="\\") | ClutchRecord.notes.ilike(like, escape="\\"))
                 .order_by(ClutchRecord.date_of_fertilization.desc()).limit(limit)).all():
             results.append({
-                "type": "clutch", "id": c.id, "label": f"Clutch {c.clutch_id}",
+                "type": "clutch", "id": c.id, "label": gettext("Clutch %(id)s", id=c.clutch_id),
                 "sublabel": " · ".join(filter(None, [c.date_of_fertilization.isoformat() if c.date_of_fertilization else "",
-                                                     f"{c.embryo_count} embryos" if c.embryo_count else "", c.owner])),
+                                                     gettext("%(n)s embryos", n=c.embryo_count) if c.embryo_count else "",
+                                                     c.owner])),
                 "url": url_for("zebrafish", view="clutches") + f"#clutch-{c.id}",
             })
         # Animals, housing units and lines in the configurable organism databases.
@@ -5744,9 +5852,11 @@ def global_search():
             results.append({
                 "type": "page",
                 "id": page.id,
-                "label": page.title or "Untitled page",
-                "sublabel": (f"Notebook · {page.tab.title}" if page.tab and page.tab.owner_username == g.user.username
-                             else f"Notebook · shared by {page.tab.owner_username if page.tab else ''}"),
+                "label": page.title or gettext("Untitled page"),
+                "sublabel": (gettext("Notebook · %(tab)s", tab=page.tab.title)
+                             if page.tab and page.tab.owner_username == g.user.username
+                             else gettext("Notebook · shared by %(owner)s",
+                                          owner=page.tab.owner_username if page.tab else "")),
                 "url": url_for("notebook", page=page.id),
             })
 
@@ -5782,7 +5892,7 @@ def csv_import(entity: str):
         return jsonify({"ok": False, "error": f"unknown entity: {entity}"}), 400
     upload = request.files.get("file")
     if upload is None or not upload.filename:
-        return jsonify({"ok": False, "error": "missing file"}), 400
+        return jsonify({"ok": False, "error": gettext("missing file")}), 400
     dry_run = (request.form.get("dry_run") or "0") == "1"
 
     import csv as _csv, io as _io
@@ -5794,7 +5904,7 @@ def csv_import(entity: str):
     reader = _csv.DictReader(_io.StringIO(text_data))
     rows = [r for r in reader]
     if not rows:
-        return jsonify({"ok": False, "error": "empty CSV"}), 400
+        return jsonify({"ok": False, "error": gettext("empty CSV")}), 400
 
     errors: list[str] = []
     created = 0
@@ -5904,7 +6014,7 @@ def csv_import(entity: str):
             module = (inventories.get_module(db_session, named) if named
                       else inventories.first_of_kind(db_session, "orders"))
             if module is None or module.kind != "orders":
-                return jsonify({"ok": False, "error": "Orders can only be imported into an orders inventory."}), 400
+                return jsonify({"ok": False, "error": gettext("Orders can only be imported into an orders inventory.")}), 400
             mv = inventories.view(module)
             number = inventories.next_number(db_session, module.id)
             cell = lambda row, *names: next((str(row.get(n) or "").strip() for n in names if str(row.get(n) or "").strip()), "")
@@ -6001,10 +6111,10 @@ def undo_batch(batch_id: int):
     with SessionLocal() as db_session:
         row = db_session.get(BatchRecord, batch_id)
         if row is None:
-            flash("That batch no longer exists.", "error")
+            flash(gettext("That batch no longer exists."), "error")
             return redirect(url_for("batches_view"))
         if not (row.actor == g.user.username or access.is_admin()):
-            flash("Only whoever ran a batch, or an admin, can undo it.", "error")
+            flash(gettext("Only whoever ran a batch, or an admin, can undo it."), "error")
             return redirect(url_for("batches_view"))
 
         result = undo_service.undo(db_session, row, g.user.username, force=force)
@@ -6015,10 +6125,11 @@ def undo_batch(batch_id: int):
             return redirect(url_for("batches_view"))
         db_session.commit()
 
-    parts = [f"Undid {result['reverted']} change(s)"]
     if result["skipped"]:
-        parts.append(f"{result['skipped']} could not be reversed")
-    flash(" — ".join(parts) + ".", "success")
+        flash(gettext("Undid %(reverted)s change(s) — %(skipped)s could not be reversed.",
+                      reverted=result["reverted"], skipped=result["skipped"]), "success")
+    else:
+        flash(gettext("Undid %(reverted)s change(s).", reverted=result["reverted"]), "success")
     for note in result["notes"][:5]:
         flash(note, "info")
     return redirect(url_for("batches_view"))
@@ -6136,7 +6247,7 @@ def notebook_template_create():
         if from_page_id:
             page = db_session.get(NotebookPage, from_page_id)
             if page is None or lab_notebook.role_for(db_session, page) is None:
-                return jsonify({"ok": False, "error": "page not found"}), 404
+                return jsonify({"ok": False, "error": gettext("page not found")}), 404
             body = page.body or body
             info = lab_notebook.info_for(db_session, page.id)
             kind = info.kind if info is not None else kind
@@ -6149,7 +6260,8 @@ def notebook_template_create():
             func.lower(NotebookTemplate.title) == title.lower()).limit(1))
         if template is not None and request.form.get("replace") != "1":
             return jsonify({"ok": False, "exists": True,
-                            "error": f"You already have a template called “{template.title}”."}), 409
+                            "error": gettext("You already have a template called “%(title)s”.",
+                                             title=template.title)}), 409
         if template is None:
             template = NotebookTemplate(owner_username=g.user.username)
             db_session.add(template)
@@ -6196,7 +6308,7 @@ def notebook_create_page_from_template():
     with SessionLocal() as db_session:
         template = db_session.get(NotebookTemplate, template_id)
         if not _template_open(template):
-            return jsonify({"ok": False, "error": "template not found"}), 404
+            return jsonify({"ok": False, "error": gettext("template not found")}), 404
 
         if tab_id:
             tab = db_session.get(NotebookTab, tab_id)
@@ -6261,7 +6373,7 @@ def notebook_update_page(page_id: int):
         if role is None:
             return jsonify({"ok": False}), 404
         if not lab_notebook.can_edit_role(role):
-            return jsonify({"ok": False, "error": "This page is view only."}), 403
+            return jsonify({"ok": False, "error": gettext("This page is view only.")}), 403
         from . import signatures
         refused = signatures.refuse_if_locked(db_session, page.id)
         if refused:
@@ -6321,7 +6433,7 @@ def notebook_delete_page(page_id: int):
             return redirect(url_for("notebook"))
         from . import signatures
         if signatures.is_signed(db_session, page.id):
-            message = "A signed page is a record: it can't be deleted."
+            message = gettext("A signed page is a record: it can't be deleted.")
             if request.headers.get("X-Requested-With") == "fetch":
                 return jsonify({"ok": False, "error": message}), 409
             flash(message, "error")
@@ -6548,20 +6660,20 @@ def notebook_open_mention(entity_type: str, number: int):
             mouse = db_session.scalar(select(MouseRecord).where(MouseRecord.mouse_id == number))
             if mouse is not None:
                 return redirect(url_for("colony", view="mice", scope="all") + f"#mouse-update-{mouse.id}")
-            flash(f"There is no mouse #{number}.", "warning")
+            flash(gettext("There is no mouse #%(number)s.", number=number), "warning")
             return redirect(url_for("colony", view="mice"))
         if entity_type == "plasmid":
             plasmid = db_session.scalar(select(PlasmidRecord).where(PlasmidRecord.plasmid_id == number))
             if plasmid is not None:
                 return redirect(url_for("plasmid_page", number=plasmid.plasmid_id))
-            flash(f"There is no plasmid #{number}.", "warning")
+            flash(gettext("There is no plasmid #%(number)s.", number=number), "warning")
             return redirect(url_for("plasmids"))
         if entity_type == "order":
             found = _order_items_query(db_session, str(number), 1, by_number=True)
             if found:
                 module = db_session.get(InventoryModule, found[0].module_id_fk)
                 return redirect(url_for("inventory.module", key=module.key, open=found[0].id))
-            flash(f"There is no order #{number}.", "warning")
+            flash(gettext("There is no order #%(number)s.", number=number), "warning")
             return redirect(url_for("home_dashboard"))
         module = _mention_modules(db_session, with_old=True).get(entity_type)
         if module is not None:
@@ -6569,7 +6681,8 @@ def notebook_open_mention(entity_type: str, number: int):
                 InventoryItem.module_id_fk == module.id, InventoryItem.number == number))
             if item is not None:
                 return redirect(url_for("inventory.module", key=module.key, open=item.id))
-            flash(f"There is no {module.item_noun} #{number} in {module.label}.", "warning")
+            flash(gettext("There is no %(noun)s #%(number)s in %(database)s.", noun=i18n.translate_value(module.item_noun),
+                          number=number, database=i18n.translate_value(module.label)), "warning")
             return redirect(url_for("inventory.module", key=module.key))
     abort(404)
 
@@ -6679,7 +6792,7 @@ def notebook_search_entity(entity_type: str):
                 for person in lab_notebook.people(db_session):
                     names = [person["username"].lower(), *person["name"].lower().split()]
                     if not person["guest"] and any(n.startswith(q) for n in names):
-                        items.append({"type": "person", "type_label": "Person", "id": person["username"],
+                        items.append({"type": "person", "type_label": gettext("Person"), "id": person["username"],
                                       "label": f"{person['name']} · @{person['username']}"})
                 items = items[:3]
 
@@ -6689,7 +6802,7 @@ def notebook_search_entity(entity_type: str):
                 q = query.lower()
                 for key, module in _mention_modules(db_session).items():
                     if any(w.startswith(q) for w in (key, *module.label.lower().split())):
-                        items.append({"type": "database", "type_label": "Database", "id": key,
+                        items.append({"type": "database", "type_label": gettext("Database"), "id": key,
                                       "label": f"{module.label} · @{key} <number>"})
 
             # A lot or catalogue number typed as it is (@0012, @ab2947) is what
@@ -6787,8 +6900,9 @@ from .models import PlasmidBox  # noqa: E402
 
 
 def _plasmid_denied(p) -> str:
-    owner = (p.owner or "").strip() or "someone else"
-    return f"Plasmid #{p.plasmid_id} belongs to {owner}. Ask them, or an admin, to change it."
+    owner = (p.owner or "").strip() or gettext("someone else")
+    return gettext("Plasmid #%(id)s belongs to %(owner)s. Ask them, or an admin, to change it.", id=p.plasmid_id,
+                   owner=owner)
 
 
 def _plasmid_label(p) -> str:
@@ -6821,15 +6935,14 @@ def _submitted_sequence(file_field: str) -> tuple[dict | None, str]:
     if upload is not None and upload.filename:
         parsed = parse_sequence_bytes(upload.read(), upload.filename)
         if not parsed or not parsed.get("sequence"):
-            return None, (f"{upload.filename} is not a sequence file this app can read "
-                          f"(SnapGene .dna, GenBank or FASTA).")
+            return None, gettext("%(file)s is not a sequence file this app can read (SnapGene .dna, GenBank or FASTA).",
+                                 file=upload.filename)
         return parsed, ""
     raw_text = (request.form.get("sequence_text") or "").strip()
     if raw_text:
         parsed = parse_sequence_text(raw_text)
         if not parsed or not parsed.get("sequence"):
-            return None, ("The pasted text is not a sequence. Paste FASTA, GenBank, "
-                          "or bases only (IUPAC letters).")
+            return None, gettext("The pasted text is not a sequence. Paste FASTA, GenBank, or bases only (IUPAC letters).")
         return parsed, ""
     return None, ""
 
@@ -6920,7 +7033,8 @@ def _plasmid_measure(form, field: str) -> str:
         try:
             float(value)
         except ValueError:
-            raise ValueError(f"{label} is a number: “{value}” isn't one.") from None
+            raise ValueError(gettext("%(field)s is a number: “%(value)s” isn't one.", field=gettext(label),
+                                     value=value)) from None
     return value
 
 
@@ -6990,7 +7104,8 @@ def _create_plasmid():
 
     raw_id = (form.get("plasmid_id") or "").strip()
     if raw_id and (not raw_id.isdigit() or int(raw_id) < 1):
-        flash(f"“{raw_id}” is not a plasmid number. Leave it blank for the next free one.", "error")
+        flash(gettext("“%(value)s” is not a plasmid number. Leave it blank for the next free one.", value=raw_id),
+              "error")
         return redirect(url_for("plasmids"))
     requested = int(raw_id) if raw_id else None
 
@@ -6998,12 +7113,13 @@ def _create_plasmid():
     raw_count = str(len(names)) if names else (form.get("count") or "1").strip()
     count = int(raw_count) if raw_count.isdigit() else 0
     if not 1 <= count <= pbox.MAX_BATCH:
-        flash(f"Make between 1 and {pbox.MAX_BATCH} plasmids at a time (asked for {raw_count}).", "error")
+        flash(gettext("Make between 1 and %(max)s plasmids at a time (asked for %(asked)s).", max=pbox.MAX_BATCH,
+                      asked=raw_count), "error")
         return redirect(url_for("plasmids"))
 
     name = (form.get("name") or "").strip()[:200] or ((parsed or {}).get("name") or "")[:200]
     if not names and not name:
-        flash("Give the plasmid a name.", "error")
+        flash(gettext("Give the plasmid a name."), "error")
         return redirect(url_for("plasmids"))
 
     for _attempt in range(3):
@@ -7018,34 +7134,42 @@ def _create_plasmid():
                 continue
             break
     else:
-        flash("Couldn’t allocate plasmid numbers. Try again.", "error")
+        flash(gettext("Couldn’t allocate plasmid numbers. Try again."), "error")
         return redirect(url_for("plasmids"))
 
     ids = made["ids"]
     first, last = ids[0], ids[-1]
     if count == 1:
         if raw_id and first != int(raw_id):
-            made["notes"].insert(0, f"Plasmid #{raw_id} was taken by the time you saved, so this one is #{first}.")
+            made["notes"].insert(0, gettext("Plasmid #%(asked)s was taken by the time you saved, so this one is #%(first)s.", asked=raw_id, first=first))
         if parsed:
-            flash(f"Added plasmid #{first} with a {parsed['format'].upper()} sequence "
-                  f"({len(parsed['sequence'])} bp · {len(parsed.get('features') or [])} features).", "success")
+            flash(gettext("Added plasmid #%(first)s with a %(format)s sequence (%(bp)s bp · %(features)s features).",
+                          first=first, format=parsed["format"].upper(), bp=len(parsed["sequence"]),
+                          features=len(parsed.get("features") or [])), "success")
         else:
-            flash(f"Added plasmid #{first} {made['names'][0]}.", "success")
+            flash(gettext("Added plasmid #%(first)s %(name)s.", first=first, name=made["names"][0]), "success")
     else:
         if raw_id and first != int(raw_id):
-            made["notes"].insert(0, f"Some of #{raw_id}–#{int(raw_id) + count - 1} were taken, "
-                                    f"so these are #{first}–#{last}.")
-        where = f" in {made['box']}" if made["box"] else ""
+            made["notes"].insert(0, gettext("Some of #%(asked)s–#%(asked_last)s were taken, so these are #%(first)s–#%(last)s.", asked=raw_id, asked_last=int(raw_id) + count - 1,
+                                            first=first, last=last))
+        where = ""
         cells = made["cells"]
-        if cells:
-            where += f" ({cells[0]}–{cells[-1]})" if len(cells) > 1 else f" ({cells[0]})"
-        seq = f" with a {parsed['format'].upper()} sequence" if parsed else ""
-        flash(f"Added {count} plasmids, #{first}–#{last}{seq}{where}. Undo it from Batch history.", "success")
+        if made["box"] and len(cells) > 1:
+            where = gettext(" in %(box)s (%(first)s–%(last)s)", box=made["box"], first=cells[0], last=cells[-1])
+        elif made["box"] and cells:
+            where = gettext(" in %(box)s (%(cell)s)", box=made["box"], cell=cells[0])
+        elif made["box"]:
+            where = gettext(" in %(box)s", box=made["box"])
+        seq = gettext(" with a %(format)s sequence", format=parsed["format"].upper()) if parsed else ""
+        flash(gettext("Added %(count)s plasmids, #%(first)s–#%(last)s%(seq)s%(where)s. Undo it from Batch history.",
+                      count=count, first=first, last=last, seq=seq, where=where), "success")
     for note in made["notes"]:
         flash(note, "warning")
     if seq_problem:
-        flash(f"{seq_problem} The plasmid{'s were' if count > 1 else ' was'} saved without a sequence; "
-              f"add one on {'their pages' if count > 1 else 'its page'}.", "warning")
+        flash(gettext("%(problem)s The plasmids were saved without a sequence; add one on their pages.",
+                      problem=seq_problem) if count > 1 else
+              gettext("%(problem)s The plasmid was saved without a sequence; add one on its page.",
+                      problem=seq_problem), "warning")
     return redirect(url_for("plasmids"))
 
 
@@ -7058,7 +7182,8 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
         batch_row.record_count = count
         _given, box, problem = pbox.box_from_form(db_session, form, user)
         if problem:
-            notes.append(f"{problem} The plasmid{'s are' if count > 1 else ' is'} not in a box.")
+            notes.append(gettext("%(problem)s The plasmids are not in a box.", problem=problem) if count > 1
+                         else gettext("%(problem)s The plasmid is not in a box.", problem=problem))
         # Where the first one goes: "position" (D7) from the dialog, or the
         # older 0-based box_row / box_col pair; blank takes the first free cell.
         position = (form.get("position") or "").strip()
@@ -7067,20 +7192,28 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
         try:
             if position or legacy:
                 if box is None:
-                    raise ValueError("A position needs a box; the plasmid was saved without one."
-                                     if count == 1 else "A position needs a box; the plasmids were saved without one.")
+                    raise ValueError(gettext("A position needs a box; the plasmid was saved without one.")
+                                     if count == 1 else
+                                     gettext("A position needs a box; the plasmids were saved without one."))
                 if position:
                     start = pbox.parse(position, box)
                 else:
                     start = (_plasmid_int(form.get("box_row")), _plasmid_int(form.get("box_col")))
                     if None in start:
-                        raise ValueError("A box position needs both a row and a column.")
+                        raise ValueError(gettext("A box position needs both a row and a column."))
                     if not (0 <= start[0] < box.rows and 0 <= start[1] < box.cols):
-                        raise ValueError(f"That cell is outside the box {box.name} ({pbox.span(box)}).")
+                        raise ValueError(gettext("That cell is outside the box %(box)s (%(span)s).", box=box.name,
+                                                 span=pbox.span(box)))
                 mode = "exact" if count == 1 else "from"
         except ValueError as exc:
-            notes.append(f"{exc}" + (f" The new plasmid{'s are' if count > 1 else ' is'} in {box.name} but not placed."
-                                      if box is not None else ""))
+            if box is None:
+                notes.append(f"{exc}")
+            elif count > 1:
+                notes.append(gettext("%(problem)s The new plasmids are in %(box)s but not placed.", problem=exc,
+                                     box=box.name))
+            else:
+                notes.append(gettext("%(problem)s The new plasmid is in %(box)s but not placed.", problem=exc,
+                                     box=box.name))
             mode = "none"
 
         cells = []
@@ -7088,10 +7221,20 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
             cells = pbox.free_cells(db_session, box, count, start if mode == "from" else None)
             if len(cells) < count:
                 missing = count - len(cells)
-                notes.append(f"{box.name} had room for {len(cells)} of {count}"
-                             + (f" from {pbox.cell_label(box, *start)}" if mode == "from" else "")
-                             + f"; {'the other ' if cells else ''}{missing} "
-                             + ("is" if missing == 1 else "are") + " in it without a position.")
+                values = {"box": box.name, "room": len(cells), "count": count, "num": missing}
+                if mode == "from":
+                    values["start"] = pbox.cell_label(box, *start)
+                    notes.append(ngettext("%(box)s had room for %(room)s of %(count)s from %(start)s; the other %(num)s is in it without a position.",
+                                          "%(box)s had room for %(room)s of %(count)s from %(start)s; the other %(num)s are in it without a position.", missing, **values)
+                                 if cells else
+                                 ngettext("%(box)s had room for %(room)s of %(count)s from %(start)s; %(num)s is in it without a position.",
+                                          "%(box)s had room for %(room)s of %(count)s from %(start)s; %(num)s are in it without a position.", missing, **values))
+                else:
+                    notes.append(ngettext("%(box)s had room for %(room)s of %(count)s; the other %(num)s is in it without a position.",
+                                          "%(box)s had room for %(room)s of %(count)s; the other %(num)s are in it without a position.", missing, **values)
+                                 if cells else
+                                 ngettext("%(box)s had room for %(room)s of %(count)s; %(num)s is in it without a position.",
+                                          "%(box)s had room for %(room)s of %(count)s; %(num)s are in it without a position.", missing, **values))
 
         top = _next_plasmid_id(db_session)
         first = top
@@ -7107,7 +7250,7 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
                 measures[field] = _plasmid_measure(form, field)
             except ValueError as exc:
                 measures[field] = ""
-                notes.append(f"{exc} It was left empty.")
+                notes.append(gettext("%(problem)s It was left empty.", problem=exc))
         made = []
         for i in range(count):
             record = PlasmidRecord(
@@ -7128,7 +7271,8 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
                 refused, _ = pbox.place(db_session, record, box, *start)
                 if refused:
                     pbox.put_in(record, box)
-                    notes.append(f"{refused} The new plasmid is in {box.name} but not placed.")
+                    notes.append(gettext("%(problem)s The new plasmid is in %(box)s but not placed.", problem=refused,
+                                         box=box.name))
             elif i < len(cells):
                 record.box_row, record.box_col = cells[i]
             db_session.add(record)
@@ -7174,22 +7318,21 @@ def update_plasmid(row_id: int):
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
             if request.headers.get("X-Autosave") == "1":
-                return jsonify({"ok": False, "error": "That plasmid no longer exists."}), 404
-            flash("That plasmid no longer exists.", "error")
+                return jsonify({"ok": False, "error": gettext("That plasmid no longer exists.")}), 404
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         if not access.can_edit(p):
             return _plasmid_answer(db_session, p, error=_plasmid_denied(p), status=403)
         if "name" in form and not form["name"].strip() and (p.name or "").strip():
-            return _plasmid_answer(db_session, p, error="A plasmid needs a name.", status=400)
+            return _plasmid_answer(db_session, p, error=gettext("A plasmid needs a name."), status=400)
         # Lab common lets anyone edit it; whose it is stays its owner's call.
         # "1": the lab's, "g<id>": a project group's (app/groups.py).
         sharing_changes = "is_shared" in form and project_groups.differs(p, form.get("is_shared"))
         owner_changes = "owner" in form and (form.get("owner") or "").strip()[:120] != (p.owner or "")
         if (owner_changes or sharing_changes) and not access.can_manage(p):
-            owner = (p.owner or "").strip() or "its owner"
-            return _plasmid_answer(db_session, p, status=403, error=(
-                f"Plasmid #{p.plasmid_id} is lab common, so you can edit it, but only {owner} or an admin "
-                "can change whose it is."))
+            owner = (p.owner or "").strip() or gettext("its owner")
+            return _plasmid_answer(db_session, p, status=403, error=gettext(
+                "Plasmid #%(id)s is lab common, so you can edit it, but only %(owner)s or an admin can change whose it is.", id=p.plasmid_id, owner=owner))
         if sharing_changes:
             refused = project_groups.apply(p, form.get("is_shared"))
             if refused:
@@ -7219,7 +7362,7 @@ def update_plasmid(row_id: int):
                     # Clearing the box takes the plasmid out of it; typing a
                     # position with no box is a mistake worth saying so.
                     if (typed or "").strip() and form_changed(form, "position"):
-                        problem = "A position needs a box. Pick the box first."
+                        problem = gettext("A position needs a box. Pick the box first.")
                     else:
                         pbox.place(db_session, p, None, None, None)
                 else:
@@ -7241,8 +7384,9 @@ def update_plasmid(row_id: int):
         stamp_updated(p)
         db_session.commit()
         if problem:
-            return _plasmid_answer(db_session, p, error=f"Saved plasmid #{p.plasmid_id}, but not the box position: {problem}")
-        return _plasmid_answer(db_session, p, message=f"Saved plasmid #{p.plasmid_id}.")
+            return _plasmid_answer(db_session, p, error=gettext(
+                "Saved plasmid #%(id)s, but not the box position: %(problem)s", id=p.plasmid_id, problem=problem))
+        return _plasmid_answer(db_session, p, message=gettext("Saved plasmid #%(id)s.", id=p.plasmid_id))
 
 
 @app.route("/plasmids/<int:row_id>/delete", methods=["POST"])
@@ -7251,19 +7395,19 @@ def delete_plasmid(row_id: int):
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            flash("That plasmid no longer exists.", "error")
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         if not access.can_manage(p):
             flash(_plasmid_denied(p) if not access.can_edit(p) else
-                  f"Plasmid #{p.plasmid_id} is lab common: only {(p.owner or '').strip() or 'its owner'} or an admin can delete it.",
-                  "error")
+                  gettext("Plasmid #%(id)s is lab common: only %(owner)s or an admin can delete it.", id=p.plasmid_id,
+                          owner=(p.owner or "").strip() or gettext("its owner")), "error")
             return redirect(url_for("plasmids"))
         label = _plasmid_label(p)
         # A batch of one, so Batch history can bring it back.
         with audit.batch(db_session, "delete", f"delete plasmid {label}", "plasmids"):
             db_session.delete(p)
         db_session.commit()
-    flash(f"Deleted plasmid {label}. Undo it from Batch history.", "success")
+    flash(gettext("Deleted plasmid %(plasmid)s. Undo it from Batch history.", plasmid=label), "success")
     return redirect(url_for("plasmids"))
 
 
@@ -7275,7 +7419,7 @@ def duplicate_plasmid(row_id: int):
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            flash("That plasmid no longer exists.", "error")
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         copy = PlasmidRecord(
             plasmid_id=_next_plasmid_id(db_session), name=f"{p.name} (copy)"[:200],
@@ -7287,7 +7431,7 @@ def duplicate_plasmid(row_id: int):
         db_session.add(copy)
         stamp_updated(copy)
         db_session.commit()
-        flash(f"Duplicated plasmid #{p.plasmid_id} as #{copy.plasmid_id}.", "success")
+        flash(gettext("Duplicated plasmid #%(id)s as #%(copy)s.", id=p.plasmid_id, copy=copy.plasmid_id), "success")
     return redirect(url_for("plasmids"))
 
 
@@ -7306,10 +7450,10 @@ def bulk_plasmids():
             select(PlasmidRecord).where(PlasmidRecord.id.in_(ids)).order_by(PlasmidRecord.plasmid_id)
         ).all() if ids else []
         if not records:
-            flash("Tick the plasmids to change first.", "info")
+            flash(gettext("Tick the plasmids to change first."), "info")
             return redirect(url_for("plasmids"))
         if action not in ("owner", "resistance", "move", "delete", "shared"):
-            flash("Unknown batch action.", "error")
+            flash(gettext("Unknown batch action."), "error")
             return redirect(url_for("plasmids"))
         target, target_name = None, ""
         if action == "move":
@@ -7317,7 +7461,7 @@ def bulk_plasmids():
                 raw = (request.form.get("box_id") or "").strip()
                 target = db_session.get(PlasmidBox, int(raw)) if raw.isdigit() else None
                 if raw and target is None:
-                    flash("That box no longer exists. Reload the page.", "error")
+                    flash(gettext("That box no longer exists. Reload the page."), "error")
                     return redirect(url_for("plasmids"))
                 target_name = target.name if target else ""
             else:
@@ -7353,13 +7497,22 @@ def bulk_plasmids():
                     setattr(p, action, value[:limit])
                     stamp_updated(p)
                     done += 1
-                message = f"Set {action} on {done} {noun(done)}."
+                message = (ngettext("Set owner on %(num)s plasmid.", "Set owner on %(num)s plasmids.", done)
+                           if action == "owner" else
+                           ngettext("Set resistance on %(num)s plasmid.", "Set resistance on %(num)s plasmids.", done))
             elif action == "shared":
                 for p in editable:
                     project_groups.apply(p, value)
                     stamp_updated(p)
                     done += 1
-                message = f"Made {done} {noun(done)} {common}."
+                if share_group:
+                    message = ngettext("Made %(num)s plasmid shared with %(group)s.",
+                                       "Made %(num)s plasmids shared with %(group)s.", done,
+                                       group=project_groups.name_of(share_group))
+                elif value == "1":
+                    message = ngettext("Made %(num)s plasmid lab common.", "Made %(num)s plasmids lab common.", done)
+                else:
+                    message = ngettext("Made %(num)s plasmid personal.", "Made %(num)s plasmids personal.", done)
             elif action == "move":
                 box = target
                 if box is None and target_name:
@@ -7377,18 +7530,22 @@ def bulk_plasmids():
                         unplaced += 1 if box is not None else 0
                     stamp_updated(p)
                 done = len(editable)
-                message = (f"Moved {done} {noun(done)} to {box.name}." if box is not None
-                           else f"Took {done} {noun(done)} out of their boxes.")
+                message = (ngettext("Moved %(num)s plasmid to %(box)s.", "Moved %(num)s plasmids to %(box)s.", done,
+                                    box=box.name) if box is not None
+                           else ngettext("Took %(num)s plasmid out of their boxes.",
+                                         "Took %(num)s plasmids out of their boxes.", done))
                 if unplaced:
-                    message += f" {unplaced} did not fit and wait in {box.name} without a position."
+                    message += " " + gettext("%(n)s did not fit and wait in %(box)s without a position.", n=unplaced,
+                                             box=box.name)
             else:
                 for p in editable:
                     db_session.delete(p)
                     done += 1
-                message = f"Deleted {done} {noun(done)}. Undo it from Batch history."
+                message = ngettext("Deleted %(num)s plasmid. Undo it from Batch history.",
+                                   "Deleted %(num)s plasmids. Undo it from Batch history.", done)
         db_session.commit()
     if skipped:
-        message += f" {skipped} belong to someone else and were left alone."
+        message += " " + gettext("%(n)s belong to someone else and were left alone.", n=skipped)
     flash(message, "success" if done else "warning")
     return redirect(url_for("plasmids"))
 
@@ -7415,18 +7572,18 @@ def save_plasmid_box():
         raw_id = (form.get("id") or "").strip()
         box = db_session.get(PlasmidBox, int(raw_id)) if raw_id.isdigit() else None
         if raw_id and box is None:
-            flash("That box no longer exists.", "error")
+            flash(gettext("That box no longer exists."), "error")
             return _plasmids_page()
         if box is not None and not access.can_edit_rack(box):
             flash(pbox.denied_box(box), "error")
             return _plasmids_page(box.id)
         name = (form.get("name") or "").strip()[:80]
         if not name:
-            flash("Give the box a name.", "error")
+            flash(gettext("Give the box a name."), "error")
             return _plasmids_page(box.id if box else None)
         clash = pbox.by_name(db_session, name)
         if clash is not None and (box is None or clash.id != box.id):
-            flash(f"There is already a box called {clash.name}.", "error")
+            flash(gettext("There is already a box called %(box)s.", box=clash.name), "error")
             return _plasmids_page(clash.id)
         rows = number("rows", box.rows if box else pbox.DEFAULT_ROWS, pbox.MAX_ROWS)
         cols = number("cols", box.cols if box else pbox.DEFAULT_COLS, pbox.MAX_COLS)
@@ -7437,9 +7594,10 @@ def save_plasmid_box():
                 .order_by(PlasmidRecord.plasmid_id)).all()
             if outside:
                 n = len(outside)
-                flash(f"{box.name} cannot shrink to {rows} × {cols}: {n} {'plasmid sits' if n == 1 else 'plasmids sit'} "
-                      f"outside that ({', '.join('#' + str(p.plasmid_id) for p in outside[:5])}{'…' if n > 5 else ''}). "
-                      f"Move them first.", "error")
+                listed = ", ".join("#" + str(p.plasmid_id) for p in outside[:5]) + ("…" if n > 5 else "")
+                flash(ngettext("%(box)s cannot shrink to %(rows)s × %(cols)s: %(num)s plasmid sits outside that (%(listed)s). Move them first.",
+                               "%(box)s cannot shrink to %(rows)s × %(cols)s: %(num)s plasmids sit outside that (%(listed)s). Move them first.", n, box=box.name, rows=rows, cols=cols,
+                               listed=listed), "error")
                 return _plasmids_page(box.id)
         created = box is None
         if created:
@@ -7456,7 +7614,10 @@ def save_plasmid_box():
             for p in db_session.scalars(select(PlasmidRecord).where(PlasmidRecord.box_id_fk == box.id)):
                 p.storage_box = name
         db_session.commit()
-        flash(f"{'Added' if created else 'Saved'} box {box.name} ({rows} × {cols}, positions {pbox.span(box)}).", "success")
+        flash(gettext("Added box %(box)s (%(rows)s × %(cols)s, positions %(span)s).", box=box.name, rows=rows,
+                      cols=cols, span=pbox.span(box)) if created else
+              gettext("Saved box %(box)s (%(rows)s × %(cols)s, positions %(span)s).", box=box.name, rows=rows,
+                      cols=cols, span=pbox.span(box)), "success")
         return _plasmids_page(box.id)
 
 
@@ -7468,7 +7629,7 @@ def delete_plasmid_box(box_id: int):
     with SessionLocal() as db_session:
         box = db_session.get(PlasmidBox, box_id)
         if box is None:
-            flash("That box no longer exists.", "error")
+            flash(gettext("That box no longer exists."), "error")
             return _plasmids_page()
         if not access.can_edit_rack(box):
             flash(pbox.denied_box(box), "error")
@@ -7484,8 +7645,12 @@ def delete_plasmid_box(box_id: int):
             db_session.delete(box)
         db_session.commit()
     n = len(members)
-    flash(f"Deleted box {name}. " + (f"Its {n} {'plasmid is' if n == 1 else 'plasmids are'} no longer in a box. " if n else "")
-          + "Undo it from Batch history.", "success")
+    if n:
+        flash(ngettext("Deleted box %(box)s. Its %(num)s plasmid is no longer in a box. Undo it from Batch history.",
+                       "Deleted box %(box)s. Its %(num)s plasmids are no longer in a box. Undo it from Batch history.",
+                       n, box=name), "success")
+    else:
+        flash(gettext("Deleted box %(box)s. Undo it from Batch history.", box=name), "success")
     return _plasmids_page()
 
 
@@ -7505,7 +7670,7 @@ def plasmid_detail(row_id: int):
     with SessionLocal() as db_session:
         number = db_session.scalar(select(PlasmidRecord.plasmid_id).where(PlasmidRecord.id == row_id))
     if number is None:
-        flash("That plasmid isn't here any more. If it was deleted, More → Batch history can undo that.", "error")
+        flash(gettext("That plasmid isn't here any more. If it was deleted, More → Batch history can undo that."), "error")
         return redirect(url_for("plasmids"))
     return redirect(url_for("plasmid_page", number=number), code=301)
 
@@ -7516,7 +7681,8 @@ def plasmid_page(number: int):
     with SessionLocal() as db_session:
         p = db_session.scalar(select(PlasmidRecord).where(PlasmidRecord.plasmid_id == number))
         if p is None:
-            flash(f"There is no plasmid #{number}. If it was deleted, More → Batch history can undo that.", "error")
+            flash(gettext("There is no plasmid #%(number)s. If it was deleted, More → Batch history can undo that.",
+                          number=number), "error")
             return redirect(url_for("plasmids"))
         try:
             features = json.loads(p.features_json) if p.features_json else []
@@ -7549,9 +7715,10 @@ def plasmid_page(number: int):
             "is_circular": bool(p.is_circular),
             "features": _features_only(features),
             "sequence_format": p.sequence_format or "",
-            "sequence_uploaded_at": local_time(p.sequence_uploaded_at).strftime("%b %d, %Y %H:%M") if p.sequence_uploaded_at else "",
+            "sequence_uploaded_at": (i18n.strftime(local_time(p.sequence_uploaded_at), "%b %d, %Y %H:%M")
+                                     if p.sequence_uploaded_at else ""),
             "length_bp": len(p.full_sequence or ""),
-            "updated_at": local_time(p.updated_at).strftime("%b %d, %Y") if p.updated_at else "",
+            "updated_at": i18n.strftime(local_time(p.updated_at), "%b %d, %Y") if p.updated_at else "",
             "updated_by": p.updated_by or "",
             "locked": not access.can_edit(p),
             "denied": _plasmid_denied(p),
@@ -7576,7 +7743,7 @@ def plasmid_upload_sequence(row_id: int):
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            flash("That plasmid no longer exists.", "error")
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         if not access.can_edit(p):
             flash(_plasmid_denied(p), "error")
@@ -7584,17 +7751,18 @@ def plasmid_upload_sequence(row_id: int):
         parsed, problem = _submitted_sequence("file")
         if problem:
             # Nothing was changed, so a warning (as on create), not an error.
-            flash(f"{problem} The sequence was not changed.", "warning")
+            flash(gettext("%(problem)s The sequence was not changed.", problem=problem), "warning")
             return redirect(plasmid_page_url(row_id))
         if not parsed:
-            flash("Choose a file or paste a sequence first.", "info")
+            flash(gettext("Choose a file or paste a sequence first."), "info")
             return redirect(plasmid_page_url(row_id))
         _apply_parsed_sequence(p, parsed)
         if parsed.get("name") and not p.name:
             p.name = parsed["name"]
         stamp_updated(p)
         db_session.commit()
-    flash(f"Loaded {parsed['format'].upper()} · {len(parsed['sequence'])} bp · {len(parsed['features'])} features.", "success")
+    flash(gettext("Loaded %(format)s · %(bp)s bp · %(features)s features.", format=parsed["format"].upper(),
+                  bp=len(parsed["sequence"]), features=len(parsed["features"])), "success")
     return redirect(plasmid_page_url(row_id))
 
 
@@ -7607,13 +7775,13 @@ def plasmid_clear_sequence(row_id: int):
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            flash("That plasmid no longer exists.", "error")
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         if not access.can_edit(p):
             flash(_plasmid_denied(p), "error")
             return redirect(plasmid_page_url(row_id))
         if request.form.get("confirm") != "1":
-            flash("Confirm clearing the sequence first.", "error")
+            flash(gettext("Confirm clearing the sequence first."), "error")
             return redirect(plasmid_page_url(row_id))
         p.full_sequence = ""
         p.features_json = "[]"
@@ -7621,7 +7789,8 @@ def plasmid_clear_sequence(row_id: int):
         p.sequence_uploaded_at = None
         stamp_updated(p)
         db_session.commit()
-        flash(f"Cleared the sequence of plasmid #{p.plasmid_id}. Its audit history keeps the old one.", "success")
+        flash(gettext("Cleared the sequence of plasmid #%(id)s. Its audit history keeps the old one.", id=p.plasmid_id),
+              "success")
     return redirect(plasmid_page_url(row_id))
 
 
@@ -7638,12 +7807,12 @@ def plasmid_move_in_box(row_id: int):
     col_raw = (form.get("box_col") or "").strip()
     new_row, new_col = _plasmid_int(row_raw), _plasmid_int(col_raw)
     if (row_raw or col_raw) and (new_row is None or new_col is None):
-        return jsonify({"ok": False, "error": "A box position needs both a row and a column."}), 400
+        return jsonify({"ok": False, "error": gettext("A box position needs both a row and a column.")}), 400
 
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            return jsonify({"ok": False, "error": "That plasmid no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That plasmid no longer exists.")}), 404
         if not access.can_edit(p):
             return jsonify({"ok": False, "error": _plasmid_denied(p)}), 403
         current = _box_of(db_session, p)
@@ -7816,13 +7985,13 @@ def plasmid_edit_sequence(row_id: int):
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            flash("That plasmid no longer exists.", "error")
+            flash(gettext("That plasmid no longer exists."), "error")
             return redirect(url_for("plasmids"))
         if not access.can_edit(p):
             flash(_plasmid_denied(p), "error")
             return redirect(plasmid_page_url(row_id))
         if not cleaned:
-            flash("That leaves no sequence, so nothing was saved. Use Clear sequence to empty it.", "error")
+            flash(gettext("That leaves no sequence, so nothing was saved. Use Clear sequence to empty it."), "error")
             return redirect(plasmid_page_url(row_id))
         p.full_sequence = cleaned
         p.is_circular = new_circular
@@ -7833,7 +8002,8 @@ def plasmid_edit_sequence(row_id: int):
         new_features = _clean_features(features, len(cleaned))
         if len(new_features) != len(features):
             flash(
-                f"Dropped {len(features) - len(new_features)} feature(s) that fell beyond the new sequence length.",
+                gettext("Dropped %(n)s feature(s) that fell beyond the new sequence length.",
+                        n=len(features) - len(new_features)),
                 "warning",
             )
         p.features_json = json.dumps(new_features)
@@ -7842,7 +8012,7 @@ def plasmid_edit_sequence(row_id: int):
         p.sequence_uploaded_at = datetime.utcnow()
         stamp_updated(p)
         db_session.commit()
-    flash(f"Saved sequence · {len(cleaned)} bp.", "success")
+    flash(gettext("Saved sequence · %(bp)s bp.", bp=len(cleaned)), "success")
     return redirect(plasmid_page_url(row_id))
 
 
@@ -7863,16 +8033,16 @@ def plasmid_sequence_save_json(row_id: int):
     sd = payload.get("sequenceData", payload) if isinstance(payload, dict) else None
     raw_sequence = sd.get("sequence") if isinstance(sd, dict) else None
     if not isinstance(raw_sequence, str) or not raw_sequence.strip():
-        return jsonify({"ok": False, "error": "Refusing to save an empty sequence. Use Clear sequence to empty it."}), 400
+        return jsonify({"ok": False, "error": gettext("Refusing to save an empty sequence. Use Clear sequence to empty it.")}), 400
     if not looks_like_bases(raw_sequence):
-        return jsonify({"ok": False, "error": "The sequence has letters that are not IUPAC nucleotide codes."}), 400
+        return jsonify({"ok": False, "error": gettext("The sequence has letters that are not IUPAC nucleotide codes.")}), 400
     sequence = re.sub(r"\s+", "", raw_sequence).upper()
     translated = _clean_annotations(sd, len(sequence))
 
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
-            return jsonify({"ok": False, "error": "That plasmid no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That plasmid no longer exists.")}), 404
         if not access.can_edit(p):
             return jsonify({"ok": False, "error": _plasmid_denied(p)}), 403
         p.full_sequence = sequence
@@ -7993,19 +8163,20 @@ def zf_denied(record) -> str:
     """Why a record is read only, in words worth showing."""
     if isinstance(record, FishRecord) and record.tank is not None:
         record = record.tank
-    owner = (getattr(record, "owner", "") or "").strip() or "someone else"
+    owner = (getattr(record, "owner", "") or "").strip() or gettext("someone else")
     if isinstance(record, TankRecord) and zf_tank_shared(record) and record.share_group_id:
-        return (f"Tank {record.tank_id} is shared with {project_groups.name_of(record.share_group_id)}, "
-                f"which you are not in. Ask {owner}, or an admin, to make the change.")
+        return gettext("Tank %(tank)s is shared with %(group)s, which you are not in. Ask %(owner)s, or an admin, to make the change.", tank=record.tank_id,
+                       group=project_groups.name_of(record.share_group_id), owner=owner)
     if isinstance(record, TankRecord):
-        what = f"Tank {record.tank_id} and its fish belong"
-    elif isinstance(record, ClutchRecord):
-        what = f"Clutch {record.clutch_id} belongs"
-    elif isinstance(record, FishLine):
-        what = f"Line {record.name} belongs"
-    else:
-        what = "That record belongs"
-    return f"{what} to {owner}. Ask them, or an admin, to make the change."
+        return gettext("Tank %(tank)s and its fish belong to %(owner)s. Ask them, or an admin, to make the change.",
+                       tank=record.tank_id, owner=owner)
+    if isinstance(record, ClutchRecord):
+        return gettext("Clutch %(clutch)s belongs to %(owner)s. Ask them, or an admin, to make the change.",
+                       clutch=record.clutch_id, owner=owner)
+    if isinstance(record, FishLine):
+        return gettext("Line %(line)s belongs to %(owner)s. Ask them, or an admin, to make the change.",
+                       line=record.name, owner=owner)
+    return gettext("That record belongs to %(owner)s. Ask them, or an admin, to make the change.", owner=owner)
 
 
 def fish_alive(fish) -> bool:
@@ -8039,11 +8210,12 @@ def zf_int(form, name: str, label: str, default=None, lo=None, hi=None):
     try:
         value = int(raw)
     except ValueError:
-        raise ZfInputError(f"{label} must be a whole number, not “{raw}”.") from None
+        raise ZfInputError(gettext("%(field)s must be a whole number, not “%(value)s”.",
+                                   field=pgettext("zebrafish", label), value=raw)) from None
     if lo is not None and value < lo:
-        raise ZfInputError(f"{label} can’t be less than {lo}.")
+        raise ZfInputError(gettext("%(field)s can’t be less than %(n)s.", field=pgettext("zebrafish", label), n=lo))
     if hi is not None and value > hi:
-        raise ZfInputError(f"{label} can’t be more than {hi}.")
+        raise ZfInputError(gettext("%(field)s can’t be more than %(n)s.", field=pgettext("zebrafish", label), n=hi))
     return value
 
 
@@ -8054,7 +8226,8 @@ def zf_float(form, name: str, label: str):
     try:
         return float(raw)
     except ValueError:
-        raise ZfInputError(f"{label} must be a number, not “{raw}”.") from None
+        raise ZfInputError(gettext("%(field)s must be a number, not “%(value)s”.", field=pgettext("zebrafish", label),
+                                   value=raw)) from None
 
 
 def zf_date(form, name: str, label: str):
@@ -8063,7 +8236,8 @@ def zf_date(form, name: str, label: str):
         return None
     value = parse_date(raw)
     if value is None:
-        raise ZfInputError(f"{label}: “{raw}” is not a date.")
+        raise ZfInputError(gettext("%(field)s: “%(value)s” is not a date.", field=pgettext("zebrafish", label),
+                                   value=raw))
     return value
 
 
@@ -8075,7 +8249,8 @@ def zf_ref(s, model, raw, label: str):
         return None
     row = s.get(model, int(raw)) if raw.isdigit() else None
     if row is None:
-        raise ZfInputError(f"That {label} no longer exists. Reload the page.")
+        raise ZfInputError(gettext("That %(what)s no longer exists. Reload the page.",
+                                   what=pgettext("zebrafish", label)))
     return row.id
 
 
@@ -8088,7 +8263,8 @@ def zf_choice(raw, allowed, label: str, current=None) -> str:
             return option
     if current is not None and raw == (current or ""):
         return raw
-    raise ZfInputError(f"{label} must be one of: {', '.join(allowed)}.")
+    raise ZfInputError(gettext("%(field)s must be one of: %(options)s.", field=pgettext("zebrafish", label),
+                               options=", ".join(allowed)))
 
 
 def zf_next_code(s, column, prefix: str, width: int = 0) -> str:
@@ -8104,13 +8280,21 @@ def zf_unique(s, column, raw, noun: str, own_id=None, max_len: int = 80) -> str:
     """A required, unique identifier (tank ID, clutch ID, line name)."""
     value = (raw or "").strip()
     if not value:
-        raise ZfInputError(f"A {noun} needs a name." if noun == "line" else f"A {noun} needs an ID.")
+        raise ZfInputError(gettext("A line needs a name.") if noun == "line" else
+                           gettext("A tank needs an ID.") if noun == "tank" else
+                           gettext("A clutch needs an ID.") if noun == "clutch" else f"A {noun} needs an ID.")
     if len(value) > max_len:
-        raise ZfInputError(f"Keep the {noun} {'name' if noun == 'line' else 'ID'} under {max_len} characters.")
+        raise ZfInputError(gettext("Keep the line name under %(max)s characters.", max=max_len) if noun == "line" else
+                           gettext("Keep the tank ID under %(max)s characters.", max=max_len) if noun == "tank" else
+                           gettext("Keep the clutch ID under %(max)s characters.", max=max_len) if noun == "clutch"
+                           else f"Keep the {noun} ID under {max_len} characters.")
     model = column.class_
     clash = s.scalar(select(model.id).where(column == value, model.id != (own_id or 0)))
     if clash is not None:
-        raise ZfInputError(f"{value} is already used by another {noun}.")
+        raise ZfInputError(gettext("%(value)s is already used by another line.", value=value) if noun == "line" else
+                           gettext("%(value)s is already used by another tank.", value=value) if noun == "tank" else
+                           gettext("%(value)s is already used by another clutch.", value=value) if noun == "clutch"
+                           else f"{value} is already used by another {noun}.")
     return value
 
 
@@ -8119,16 +8303,35 @@ def zf_selected(s, model, form) -> list:
     return list(s.scalars(select(model).where(model.id.in_(ids)))) if ids else []
 
 
+def _zf_count(n: int, noun: str, plural: str) -> str:
+    """"3 tanks", in the page's language."""
+    if noun == "tank":
+        return ngettext("%(num)s tank", "%(num)s tanks", n)
+    if noun == "fish row":
+        return ngettext("%(num)s fish row", "%(num)s fish rows", n)
+    if noun == "line":
+        return ngettext("%(num)s line", "%(num)s lines", n)
+    if noun == "clutch":
+        return ngettext("%(num)s clutch", "%(num)s clutches", n)
+    if noun == "child line":
+        return ngettext("%(num)s child line", "%(num)s child lines", n)
+    return f"{n} {noun if n == 1 else plural}"
+
+
 def zf_report(changed: int, skipped: int, what: str, noun: str, plural: str, blocked: list | None = None) -> None:
     """Flash a batch result: applied to what you may edit, the rest counted."""
     blocked = blocked or []
-    if changed:
-        flash(f"{what}: {changed} {noun if changed == 1 else plural}."
-              + (f" {skipped} skipped — not yours to edit." if skipped else ""), "success")
+    what = gettext(what)
+    if changed and skipped:
+        flash(gettext("%(what)s: %(things)s. %(skipped)s skipped — not yours to edit.", what=what,
+                      things=_zf_count(changed, noun, plural), skipped=skipped), "success")
+    elif changed:
+        flash(gettext("%(what)s: %(things)s.", what=what, things=_zf_count(changed, noun, plural)), "success")
     elif skipped:
-        flash(f"Nothing changed — {skipped} {noun if skipped == 1 else plural} are not yours to edit.", "error")
+        flash(gettext("Nothing changed — %(things)s are not yours to edit.", things=_zf_count(skipped, noun, plural)),
+              "error")
     elif not blocked:
-        flash("Nothing was selected.", "error")
+        flash(gettext("Nothing was selected."), "error")
     for reason in blocked[:5]:
         flash(reason, "error")
 
@@ -8194,10 +8397,17 @@ def _zebrafish_context(active_view: str):
             total = sum(f.count or 0 for f in t.fish if fish_alive(f))
             editable = zf_can_edit(t)
             position = fish_position_label(t)
-            refs = [(parent_refs.get(t.id, 0), "clutch", "clutches", "will no longer name it as a parent"),
-                    (mating_refs.get(t.id, 0), "mating tank", "mating tanks", "will lose it as a parent"),
-                    (sac_refs.get(t.id, 0), "sac-log entry", "sac-log entries", "will lose its tank")]
-            affected = "; ".join(f"{n} {one if n == 1 else many} {what}" for n, one, many, what in refs if n)
+            refs = []
+            if parent_refs.get(t.id, 0):
+                refs.append(ngettext("%(num)s clutch will no longer name it as a parent",
+                                     "%(num)s clutches will no longer name it as a parent", parent_refs[t.id]))
+            if mating_refs.get(t.id, 0):
+                refs.append(ngettext("%(num)s mating tank will lose it as a parent",
+                                     "%(num)s mating tanks will lose it as a parent", mating_refs[t.id]))
+            if sac_refs.get(t.id, 0):
+                refs.append(ngettext("%(num)s sac-log entry will lose its tank",
+                                     "%(num)s sac-log entries will lose its tank", sac_refs[t.id]))
+            affected = "; ".join(refs)
             # A mating tank still out: where each live group goes back to.
             returnable = zf_is_mating(t) and t.active
             plan = [{"fish": f, "home": home if home in tank_by_id else None,
@@ -8210,7 +8420,9 @@ def _zebrafish_context(active_view: str):
                 "returnable": returnable, "return_plan": plan,
                 "return_ready": all(p["home"] for p in plan),
                 "return_confirm": zf_return_confirm(t, [(p["fish"].count or 0, p["home_code"]) for p in plan]),
-                "confirm": f"Delete tank {t.tank_id}?" + (f" {affected[0].upper()}{affected[1:]}." if affected else ""),
+                "confirm": (gettext("Delete tank %(tank)s? %(affected)s.", tank=t.tank_id,
+                                    affected=affected[0].upper() + affected[1:]) if affected
+                            else gettext("Delete tank %(tank)s?", tank=t.tank_id)),
                 "payload": {
                     "id": t.id, "_label": t.tank_id, "_locked": not editable, "tank_id": t.tank_id,
                     "purpose": t.purpose, "line_id_fk": t.line_id_fk or "", "owner": t.owner,
@@ -8255,8 +8467,10 @@ def _zebrafish_context(active_view: str):
                 "father": tank_by_id[c.father_tank_id].tank_id if c.father_tank_id in tank_by_id else "",
                 "mother": tank_by_id[c.mother_tank_id].tank_id if c.mother_tank_id in tank_by_id else "",
                 "editable": editable, "mine": c.owner == me,
-                "confirm": f"Delete clutch {c.clutch_id}?"
-                           + (f" {n_fish} fish row{'' if n_fish == 1 else 's'} will no longer name it." if n_fish else ""),
+                "confirm": (ngettext("Delete clutch %(clutch)s? %(num)s fish row will no longer name it.",
+                                     "Delete clutch %(clutch)s? %(num)s fish rows will no longer name it.", n_fish,
+                                     clutch=c.clutch_id) if n_fish
+                            else gettext("Delete clutch %(clutch)s?", clutch=c.clutch_id)),
                 "payload": {
                     "id": c.id, "_label": c.clutch_id, "_locked": not editable, "clutch_id": c.clutch_id,
                     "date_of_fertilization": dof.isoformat() if dof else "", "line_id_fk": c.line_id_fk or "",
@@ -8277,7 +8491,7 @@ def _zebrafish_context(active_view: str):
             uses = [(n_tanks, "tank", "tanks"), (fish_line_refs.get(ln.id, 0), "fish row", "fish rows"),
                     (clutch_line_refs.get(ln.id, 0), "clutch", "clutches"),
                     (children.get(ln.id, 0), "child line", "child lines")]
-            used = ", ".join(f"{n} {one if n == 1 else many}" for n, one, many in uses if n)
+            used = ", ".join(_zf_count(n, one, many) for n, one, many in uses if n)
             live = live_by_line.get(ln.id, 0)
             line_editable = zf_can_edit(ln)
             line_rows.append({
@@ -8305,9 +8519,9 @@ def _zebrafish_context(active_view: str):
             system_info[sys_.id] = {
                 "can_delete": access.can_edit_rack(sys_),
                 "in_use": zf_system_uses(s, sys_),
-                "confirm": f"Delete water system {sys_.name}?"
-                           + (f" Its {n_logs} {'reading is' if n_logs == 1 else 'readings are'} kept, listed under deleted systems."
-                              if n_logs else ""),
+                "confirm": (ngettext("Delete water system %(system)s? Its %(num)s reading is kept, listed under deleted systems.",
+                                     "Delete water system %(system)s? Its %(num)s readings are kept, listed under deleted systems.", n_logs, system=sys_.name) if n_logs
+                            else gettext("Delete water system %(system)s?", system=sys_.name)),
             }
         orphan_logs = s.scalars(select(WaterLog).where(WaterLog.system_id_fk.is_(None))
                                 .order_by(WaterLog.recorded_at.desc()).limit(50)).all()
@@ -8479,25 +8693,27 @@ def apply_fish_position(s, tank, rack_raw, position_raw) -> str | None:
         return None
     rack = s.get(FishRack, int(rack_raw)) if rack_raw.isdigit() else None
     if rack is None:
-        return "That rack no longer exists. Reload the page."
+        return gettext("That rack no longer exists. Reload the page.")
     if not raw:
         if tank.rack_id_fk == rack.id and tank.row is not None:
             return None
         cell = zf_free_cell(s, rack, tank.id)
         if cell is None:
-            return f"{rack.name} is full. Pick another rack, or make room first."
+            return gettext("%(rack)s is full. Pick another rack, or make room first.", rack=rack.name)
         zf_place(tank, rack, *cell)
         return None
     cell = positions.parse(raw, rack.naming, rack.rows, rack.cols)
     if cell is None:
-        return (f"“{raw}” is not a position in {rack.name} "
-                f"({positions.label(1, 1, rack.naming, rack.cols)}–{positions.label(rack.rows, rack.cols, rack.naming, rack.cols)}).")
+        return gettext("“%(position)s” is not a position in %(rack)s (%(first)s–%(last)s).", position=raw,
+                       rack=rack.name, first=positions.label(1, 1, rack.naming, rack.cols),
+                       last=positions.label(rack.rows, rack.cols, rack.naming, rack.cols))
     row, col = cell[0] - 1, cell[1] - 1
     holder = s.scalar(select(TankRecord).where(
         TankRecord.rack_id_fk == rack.id, TankRecord.row == row, TankRecord.col == col,
         TankRecord.id != (tank.id or 0)))
     if holder is not None:
-        return f"{rack.name} · {raw} already holds tank {holder.tank_id}. Drag on the rack grid to swap."
+        return gettext("%(rack)s · %(position)s already holds tank %(tank)s. Drag on the rack grid to swap.",
+                       rack=rack.name, position=raw, tank=holder.tank_id)
     zf_place(tank, rack, row, col)
     return None
 
@@ -8523,16 +8739,16 @@ def zf_code_run(s, first: str, n: int) -> list[str]:
     else:
         m = re.match(r"^(.*?)(\d+)$", first)
         if m is None:
-            raise ZfInputError("To add several tanks, give a first tank ID that ends in a number "
-                               "(T050), or leave it blank for the next free ones.")
+            raise ZfInputError(gettext("To add several tanks, give a first tank ID that ends in a number (T050), or leave it blank for the next free ones."))
         prefix, digits = m.group(1), m.group(2)
     codes = [f"{prefix}{int(digits) + i:0{len(digits)}d}" for i in range(n)]
     if any(len(c) > 80 for c in codes):
-        raise ZfInputError("Keep the tank ID under 80 characters.")
+        raise ZfInputError(gettext("Keep the tank ID under %(max)s characters.", max=80))
     taken = sorted(set(s.scalars(select(TankRecord.tank_id).where(TankRecord.tank_id.in_(codes)))))
     if taken:
-        raise ZfInputError(f"{', '.join(taken[:5])}{'…' if len(taken) > 5 else ''} "
-                           f"{'is' if len(taken) == 1 else 'are'} already used. Start from another tank ID.")
+        raise ZfInputError(ngettext("%(tanks)s is already used. Start from another tank ID.",
+                                    "%(tanks)s are already used. Start from another tank ID.", len(taken),
+                                    tanks=", ".join(taken[:5]) + ("…" if len(taken) > 5 else "")))
     return codes
 
 
@@ -8552,16 +8768,18 @@ def zf_free_cells_from(s, rack, start, n: int) -> list[tuple[int, int]]:
     return out
 
 
-def zf_create_tanks(s, template: dict, codes: list[str], rack_id, position: str) -> str:
+def zf_create_tanks(s, template: dict, codes: list[str], rack_id, position: str) -> tuple[str, bool]:
     """The New tank dialog's "How many": tanks with the same fields and
     consecutive IDs, side by side in the rack from the given position
-    (the next free cells). One batch. Returns the message to show."""
+    (the next free cells). One batch. Returns the message to show, and
+    whether every tank found a place."""
     rack = s.get(FishRack, rack_id) if rack_id else None
     start = None
     if rack is not None and position:
         cell = positions.parse(position, rack.naming, rack.rows, rack.cols)
         if cell is None:
-            raise ZfInputError(f"“{position}” is not a position in {rack.name}.")
+            raise ZfInputError(gettext("“%(position)s” is not a position in %(rack)s.", position=position,
+                                       rack=rack.name))
         start = (cell[0] - 1, cell[1] - 1)
     cells = zf_free_cells_from(s, rack, start, len(codes)) if rack is not None else []
     with audit.batch(s, "create", f"new tanks ×{len(codes)} ({codes[0]}–{codes[-1]})", "tanks") as batch_row:
@@ -8573,18 +8791,23 @@ def zf_create_tanks(s, template: dict, codes: list[str], rack_id, position: str)
                 zf_place(tank, rack, *cells[i])
             made.append(tank)
         batch_row.record_count = len(made)
-    message = f"Created {len(codes)} tanks, {codes[0]}–{codes[-1]}"
-    if rack is not None:
-        message += f", in {rack.name}"
-        if cells:
-            message += (f" from {positions.label(cells[0][0] + 1, cells[0][1] + 1, rack.naming, rack.cols)}"
-                        f" to {positions.label(cells[-1][0] + 1, cells[-1][1] + 1, rack.naming, rack.cols)}")
-        if len(cells) < len(codes):
-            left = codes[len(cells):]
-            message += (f". {rack.name} had room for {len(cells)}; "
-                        f"{left[0] if len(left) == 1 else left[0] + '–' + left[-1]} "
-                        f"{'is' if len(left) == 1 else 'are'} not placed")
-    return message + "."
+    values = {"count": len(codes), "first": codes[0], "last": codes[-1]}
+    if rack is None:
+        return gettext("Created %(count)s tanks, %(first)s–%(last)s.", **values), True
+    if cells:
+        message = gettext("Created %(count)s tanks, %(first)s–%(last)s, in %(rack)s from %(start)s to %(end)s.",
+                          rack=rack.name, start=positions.label(cells[0][0] + 1, cells[0][1] + 1, rack.naming, rack.cols),
+                          end=positions.label(cells[-1][0] + 1, cells[-1][1] + 1, rack.naming, rack.cols), **values)
+    else:
+        message = gettext("Created %(count)s tanks, %(first)s–%(last)s, in %(rack)s.", rack=rack.name, **values)
+    if len(cells) < len(codes):
+        left = codes[len(cells):]
+        message += " " + ngettext("%(rack)s had room for %(room)s; %(left)s is not placed.",
+                                  "%(rack)s had room for %(room)s; %(left)s are not placed.", len(left),
+                                  rack=rack.name, room=len(cells),
+                                  left=left[0] if len(left) == 1 else left[0] + "–" + left[-1])
+        return message, False
+    return message, True
 
 
 @app.route("/zebrafish/tanks/create", methods=["POST"])
@@ -8613,24 +8836,26 @@ def zebrafish_create_tank():
             if rack_id and not position and row is not None and col is not None:
                 rack = s.get(FishRack, rack_id)
                 if row >= rack.rows or col >= rack.cols:
-                    raise ZfInputError(f"Row {row}, column {col} is outside {rack.name} ({rack.rows} × {rack.cols}).")
+                    raise ZfInputError(gettext("Row %(row)s, column %(col)s is outside %(rack)s (%(rows)s × %(cols)s).",
+                                               row=row, col=col, rack=rack.name, rows=rack.rows, cols=rack.cols))
                 position = positions.label(row + 1, col + 1, rack.naming, rack.cols)
             if how_many > 1:
                 template = {k: getattr(tank, k) for k in ("purpose", "line_id_fk", "owner", "card_id", "notes", "active")}
-                message = zf_create_tanks(s, template, zf_code_run(s, code, how_many), rack_id, position)
+                message, all_placed = zf_create_tanks(s, template, zf_code_run(s, code, how_many), rack_id, position)
         except ZfInputError as error:
             s.rollback()
             return zf_reply("tanks", str(error))
         if how_many > 1:
             s.commit()
-            flash(message, "warning" if "not placed" in message else "success")
+            flash(message, "success" if all_placed else "warning")
             return zf_reply("tanks")
         s.add(tank)
         if rack_id:
             error = apply_fish_position(s, tank, rack_id, position)
             if error:
                 zf_place(tank, None)
-                flash(f"Tank {tank.tank_id} was created but not placed: {error}", "error")
+                flash(gettext("Tank %(tank)s was created but not placed: %(error)s", tank=tank.tank_id, error=error),
+                      "error")
         s.commit()
     return zf_reply("tanks")
 
@@ -8642,7 +8867,7 @@ def zebrafish_update_tank(tank_row_id: int):
     with SessionLocal() as s:
         t = s.get(TankRecord, tank_row_id)
         if t is None:
-            return zf_reply("tanks", "That tank no longer exists. Reload the page.", status=404)
+            return zf_reply("tanks", gettext("That tank no longer exists. Reload the page."), status=404)
         if not zf_can_edit(t):
             return zf_reply("tanks", zf_denied(t), status=403)
         try:
@@ -8664,8 +8889,8 @@ def zebrafish_update_tank(tank_row_id: int):
             # Which group a breeding or shared tank is for ("1": the lab's).
             if "share_group" in form and project_groups.differs(t, form.get("share_group"), shared=True):
                 if not access.can_manage(t):
-                    raise ZfInputError(f"Only {t.owner or 'its owner'} or an admin can change whom tank "
-                                       f"{t.tank_id} is shared with.")
+                    raise ZfInputError(gettext("Only %(owner)s or an admin can change whom tank %(tank)s is shared with.",
+                                               owner=t.owner or gettext("its owner"), tank=t.tank_id))
                 refused = project_groups.apply(t, form.get("share_group") or "1", set_shared=False)
                 if refused:
                     raise ZfInputError(refused)
@@ -8696,7 +8921,7 @@ def zebrafish_move_tank(tank_row_id: int):
     with SessionLocal() as s:
         t = s.get(TankRecord, tank_row_id)
         if t is None:
-            return jsonify({"ok": False, "error": "That tank no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That tank no longer exists.")}), 404
         if not zf_can_edit(t):
             return jsonify({"ok": False, "error": zf_denied(t)}), 403
         try:
@@ -8711,7 +8936,8 @@ def zebrafish_move_tank(tank_row_id: int):
             return jsonify({"ok": True})
         rack = s.get(FishRack, rack_id)
         if row is None or col is None or not (0 <= row < rack.rows and 0 <= col < rack.cols):
-            return jsonify({"ok": False, "error": f"That cell is outside {rack.name} ({rack.rows} × {rack.cols})."}), 409
+            return jsonify({"ok": False, "error": gettext("That cell is outside %(rack)s (%(rows)s × %(cols)s).",
+                                                          rack=rack.name, rows=rack.rows, cols=rack.cols)}), 409
         occupant = s.scalar(select(TankRecord).where(
             TankRecord.rack_id_fk == rack.id, TankRecord.row == row, TankRecord.col == col,
             TankRecord.id != t.id))
@@ -8731,7 +8957,8 @@ def zf_delete_tank(s, t) -> str | None:
     id would point at whichever tank reuses it."""
     if t.fish:
         n = len(t.fish)
-        return f"Tank {t.tank_id} still holds {n} fish row{'' if n == 1 else 's'}. Move or delete them first."
+        return ngettext("Tank %(tank)s still holds %(num)s fish row. Move or delete them first.",
+                        "Tank %(tank)s still holds %(num)s fish rows. Move or delete them first.", n, tank=t.tank_id)
     for c in s.scalars(select(ClutchRecord).where(
             (ClutchRecord.father_tank_id == t.id) | (ClutchRecord.mother_tank_id == t.id))):
         if c.father_tank_id == t.id:
@@ -8769,7 +8996,8 @@ def zebrafish_delete_tank(tank_row_id: int):
             flash(error, "error")
         else:
             s.commit()
-            flash(f"Deleted tank {code}. Undo it from Batch history if that was a mistake.", "success")
+            flash(gettext("Deleted tank %(tank)s. Undo it from Batch history if that was a mistake.", tank=code),
+                  "success")
     return redirect(url_for("zebrafish", view="tanks"))
 
 
@@ -8791,9 +9019,9 @@ def zebrafish_duplicate_tank(tank_row_id: int):
             if cell:
                 zf_place(copy, t.rack, *cell)
             else:
-                note = f" {t.rack.name} is full, so it is not placed."
+                note = " " + gettext("%(rack)s is full, so it is not placed.", rack=t.rack.name)
         s.commit()
-        flash(f"Copied tank {t.tank_id} to {copy.tank_id}.{note}", "success")
+        flash(gettext("Copied tank %(tank)s to %(copy)s.", tank=t.tank_id, copy=copy.tank_id) + note, "success")
     return redirect(url_for("zebrafish", view="tanks"))
 
 
@@ -8803,7 +9031,7 @@ def zebrafish_toggle_geno(tank_row_id: int):
     with SessionLocal() as s:
         t = s.get(TankRecord, tank_row_id)
         if t is None:
-            return jsonify({"ok": False, "error": "That tank no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That tank no longer exists.")}), 404
         if not zf_can_edit(t):
             return jsonify({"ok": False, "error": zf_denied(t)}), 403
         t.needs_genotyping = not bool(t.needs_genotyping)
@@ -8823,7 +9051,7 @@ def zebrafish_bulk_tanks():
     labels = {"purpose": "Set purpose", "owner": "Set owner", "rack": "Moved",
               "geno": "Genotyping flag", "return": "Returned", "delete": "Deleted"}
     if action not in labels:
-        flash("Pick an action.", "error")
+        flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="tanks"))
     changed = skipped = 0
     blocked: list[str] = []
@@ -8860,7 +9088,11 @@ def zebrafish_bulk_tanks():
                 elif action == "return":
                     error, _ = zf_return_mating(s, t, {})
                     if error:
-                        blocked.append(f"{t.tank_id}: {error}" if not error.startswith(("Tank", "Mating")) else error)
+                        # Messages that already begin with the tank are not prefixed with it again.
+                        names_it = (gettext("Tank %(tank)s is not a mating tank.", tank=t.tank_id),
+                                    gettext("Mating tank %(tank)s was already returned.", tank=t.tank_id),
+                                    zf_denied(t))
+                        blocked.append(error if error in names_it else f"{t.tank_id}: {error}")
                         continue
                     s.flush()
                 elif action == "delete":
@@ -8935,7 +9167,7 @@ def zebrafish_create_fish():
         try:
             tank_id = zf_ref(s, TankRecord, form.get("tank_id_fk"), "tank")
             if tank_id is None:
-                raise ZfInputError("Choose the tank these fish are in.")
+                raise ZfInputError(gettext("Choose the tank these fish are in."))
             tank = s.get(TankRecord, tank_id)
             if not zf_can_edit(tank):
                 raise ZfInputError(zf_denied(tank))
@@ -8956,7 +9188,7 @@ def zebrafish_update_fish(fish_row_id: int):
     with SessionLocal() as s:
         f = s.get(FishRecord, fish_row_id)
         if f is None:
-            return zf_reply("fish", "That fish row no longer exists. Reload the page.", status=404)
+            return zf_reply("fish", gettext("That fish row no longer exists. Reload the page."), status=404)
         if not zf_can_edit(f):
             return zf_reply("fish", zf_denied(f), status=403)
         previous_status = f.status
@@ -8964,11 +9196,12 @@ def zebrafish_update_fish(fish_row_id: int):
             if "tank_id_fk" in form:
                 tank_id = zf_ref(s, TankRecord, form.get("tank_id_fk"), "tank")
                 if tank_id is None:
-                    raise ZfInputError("Fish have to be in a tank.")
+                    raise ZfInputError(gettext("Fish have to be in a tank."))
                 if tank_id != f.tank_id_fk:
                     tank = s.get(TankRecord, tank_id)
                     if not zf_can_edit(tank):
-                        raise ZfInputError(f"Can’t move fish into {tank.tank_id}: " + zf_denied(tank))
+                        raise ZfInputError(gettext("Can’t move fish into %(tank)s: %(reason)s", tank=tank.tank_id,
+                                                   reason=zf_denied(tank)))
                     f.tank_id_fk, f.tank = tank.id, tank  # the column too, for the change history
             zf_fish_from_form(s, f, form)
         except ZfInputError as error:
@@ -8994,7 +9227,7 @@ def zebrafish_duplicate_fish(fish_row_id: int):
                          sex=f.sex, status=f.status, date_of_fertilization=f.date_of_fertilization,
                          sac_date=f.sac_date, clutch_id_fk=f.clutch_id_fk, genotype=f.genotype, notes=f.notes))
         s.commit()
-        flash("Copied the fish row.", "success")
+        flash(gettext("Copied the fish row."), "success")
     return redirect(url_for("zebrafish", view="fish"))
 
 
@@ -9024,7 +9257,7 @@ def zebrafish_bulk_fish():
     value = (form.get("value") or "").strip()
     labels = {"status": "Set status", "tank": "Moved", "sac": "Sac’d"}
     if action not in labels:
-        flash("Pick an action.", "error")
+        flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="fish"))
     changed = skipped = 0
     blocked: list[str] = []
@@ -9034,9 +9267,10 @@ def zebrafish_bulk_fish():
                 value = zf_choice(value, FISH_STATUS_OPTIONS + ["dead"], "Status")
             tank = s.get(TankRecord, zf_ref(s, TankRecord, value, "tank") or 0) if action == "tank" else None
             if action == "tank" and tank is None:
-                raise ZfInputError("Choose the tank to move them to.")
+                raise ZfInputError(gettext("Choose the tank to move them to."))
             if tank is not None and not zf_can_edit(tank):
-                raise ZfInputError(f"Can’t move fish into {tank.tank_id}: " + zf_denied(tank))
+                raise ZfInputError(gettext("Can’t move fish into %(tank)s: %(reason)s", tank=tank.tank_id,
+                                           reason=zf_denied(tank)))
         except ZfInputError as error:
             flash(str(error), "error")
             return redirect(url_for("zebrafish", view="fish"))
@@ -9075,7 +9309,7 @@ def zf_line_parent(s, line_id, raw):
     cursor = parent_id
     while cursor is not None and cursor not in seen:
         if cursor == line_id:
-            raise ZfInputError("A line can’t descend from itself. Pick a parent that is not this line or one of its descendants.")
+            raise ZfInputError(gettext("A line can’t descend from itself. Pick a parent that is not this line or one of its descendants."))
         seen.add(cursor)
         cursor = s.scalar(select(FishLine.parent_line_id_fk).where(FishLine.id == cursor))
     return parent_id
@@ -9109,7 +9343,7 @@ def zebrafish_update_line(line_id: int):
     with SessionLocal() as s:
         ln = s.get(FishLine, line_id)
         if ln is None:
-            return zf_reply("lines", "That line no longer exists. Reload the page.", status=404)
+            return zf_reply("lines", gettext("That line no longer exists. Reload the page."), status=404)
         if not zf_can_edit(ln):
             return zf_reply("lines", zf_denied(ln), status=403)
         try:
@@ -9138,7 +9372,7 @@ def zf_line_uses(s, ln) -> str:
         (s.scalar(select(func.count(ClutchRecord.id)).where(ClutchRecord.line_id_fk == ln.id)), "clutch", "clutches"),
         (s.scalar(select(func.count(FishLine.id)).where(FishLine.parent_line_id_fk == ln.id)), "child line", "child lines"),
     ]
-    return ", ".join(f"{n} {one if n == 1 else many}" for n, one, many in uses if n)
+    return ", ".join(_zf_count(n, one, many) for n, one, many in uses if n)
 
 
 def zf_delete_line(s, ln) -> str | None:
@@ -9146,7 +9380,8 @@ def zf_delete_line(s, ln) -> str | None:
     history and only lose the link."""
     used = zf_line_uses(s, ln)
     if used:
-        return f"Line {ln.name} is still used by {used}. Reassign or delete those first."
+        return gettext("Line %(line)s is still used by %(used)s. Reassign or delete those first.", line=ln.name,
+                       used=used)
     for entry in s.scalars(select(FishSacLog).where(FishSacLog.line_id_fk == ln.id)):
         entry.line_id_fk = None
     s.delete(ln)
@@ -9171,7 +9406,7 @@ def zebrafish_delete_line(line_id: int):
             flash(error, "error")
         else:
             s.commit()
-            flash(f"Deleted line {name}.", "success")
+            flash(gettext("Deleted line %(line)s.", line=name), "success")
     return redirect(url_for("zebrafish", view="lines"))
 
 
@@ -9189,7 +9424,7 @@ def zebrafish_duplicate_line(line_id: int):
         s.add(FishLine(name=name, parent_line_id_fk=ln.parent_line_id_fk, owner=access.username(),
                        **{fld: getattr(ln, fld) for fld in LINE_TEXT_FIELDS}))
         s.commit()
-        flash(f"Copied line {ln.name} to {name}.", "success")
+        flash(gettext("Copied line %(line)s to %(copy)s.", line=ln.name, copy=name), "success")
     return redirect(url_for("zebrafish", view="lines"))
 
 
@@ -9205,7 +9440,7 @@ def zebrafish_bulk_lines():
     labels = {"background": "Set background", "iacuc_protocol": "Set IACUC #", "owner": "Set owner",
               "delete": "Deleted"}
     if action not in labels:
-        flash("Pick an action.", "error")
+        flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="lines"))
     changed = skipped = 0
     blocked: list[str] = []
@@ -9238,7 +9473,7 @@ def zebrafish_line_detail(line_id: int):
     with SessionLocal() as s:
         ln = s.get(FishLine, line_id)
         if ln is None:
-            flash("Line not found.", "error")
+            flash(gettext("Line not found."), "error")
             return redirect(url_for("zebrafish", view="lines"))
 
         # The ancestor chain. The seen set stops at a cycle written before
@@ -9286,7 +9521,7 @@ def zf_rack_fields(s, r, form) -> None:
         name = (form.get("name") or "").strip() or r.name or "Rack"
         clash = s.scalar(select(FishRack.id).where(FishRack.name == name, FishRack.id != (r.id or 0)))
         if clash is not None:
-            raise ZfInputError(f"There is already a rack called {name}.")
+            raise ZfInputError(gettext("There is already a rack called %(name)s.", name=name))
         r.name = name
     r.rows = max(1, min(26, zf_int(form, "rows", "Rows", default=r.rows or 8)))
     r.cols = max(1, min(40, zf_int(form, "cols", "Columns", default=r.cols or 10)))
@@ -9319,12 +9554,12 @@ def zebrafish_update_rack(rack_id: int):
     with SessionLocal() as s:
         r = s.get(FishRack, rack_id)
         if r is None:
-            flash("That rack no longer exists.", "error")
+            flash(gettext("That rack no longer exists."), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         if not access.can_edit_rack(r):
             # Renaming or resizing a rack moves every tank in it: as for
             # mouse and fly racks, only whoever added it or an admin.
-            flash(f"Only whoever added rack {r.name}, or an admin, can change it.", "error")
+            flash(gettext("Only whoever added rack %(rack)s, or an admin, can change it.", rack=r.name), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         try:
             zf_rack_fields(s, r, request.form)
@@ -9333,7 +9568,7 @@ def zebrafish_update_rack(rack_id: int):
             flash(str(error), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         s.commit()
-        flash(f"Saved rack {r.name}.", "success")
+        flash(gettext("Saved rack %(rack)s.", rack=r.name), "success")
     return redirect(url_for("zebrafish", view="tanks", mode="grid"))
 
 
@@ -9345,13 +9580,13 @@ def zebrafish_delete_rack(rack_id: int):
     with SessionLocal() as s:
         r = s.get(FishRack, rack_id)
         if r is not None and not access.can_edit_rack(r):
-            flash(f"Only whoever added rack {r.name}, or an admin, can delete it.", "error")
+            flash(gettext("Only whoever added rack %(rack)s, or an admin, can delete it.", rack=r.name), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         if r is not None:
             theirs = [t.tank_id for t in r.tanks if not zf_can_edit(t)]
             if theirs:
-                flash(f"{r.name} holds tanks you can’t edit ({', '.join(theirs[:5])}"
-                      f"{'…' if len(theirs) > 5 else ''}). Ask their owners, or an admin.", "error")
+                flash(gettext("%(rack)s holds tanks you can’t edit (%(tanks)s). Ask their owners, or an admin.",
+                              rack=r.name, tanks=", ".join(theirs[:5]) + ("…" if len(theirs) > 5 else "")), "error")
                 return redirect(url_for("zebrafish", view="tanks", mode="grid"))
             with audit.batch(s, "delete", f"delete rack {r.name}", "fish_racks"):
                 for t in r.tanks:
@@ -9374,9 +9609,9 @@ def zebrafish_create_system():
         try:
             name = (form.get("name") or "").strip()
             if not name:
-                raise ZfInputError("A water system needs a name.")
+                raise ZfInputError(gettext("A water system needs a name."))
             if s.scalar(select(WaterSystem.id).where(WaterSystem.name == name)) is not None:
-                raise ZfInputError(f"There is already a water system called {name}.")
+                raise ZfInputError(gettext("There is already a water system called %(name)s.", name=name))
             s.add(WaterSystem(
                 name=name,
                 room=(form.get("room") or "").strip(),
@@ -9399,8 +9634,10 @@ def zf_system_uses(s, system) -> str:
     if not rack_ids:
         return ""
     n_tanks = s.scalar(select(func.count(TankRecord.id)).where(TankRecord.rack_id_fk.in_(rack_ids))) or 0
-    return (f"{len(rack_ids)} rack{'' if len(rack_ids) == 1 else 's'}"
-            + (f" holding {n_tanks} tank{'' if n_tanks == 1 else 's'}" if n_tanks else ""))
+    racks = ngettext("%(num)s rack", "%(num)s racks", len(rack_ids))
+    if not n_tanks:
+        return racks
+    return gettext("%(racks)s holding %(tanks)s", racks=racks, tanks=_zf_count(n_tanks, "tank", "tanks"))
 
 
 @app.route("/zebrafish/systems/<int:system_id>/delete", methods=["POST"])
@@ -9416,17 +9653,16 @@ def zebrafish_delete_system(system_id: int):
     with SessionLocal() as s:
         system = s.get(WaterSystem, system_id)
         if system is None:
-            flash("That water system no longer exists.", "error")
+            flash(gettext("That water system no longer exists."), "error")
             return redirect(back)
         if not access.can_edit_rack(system):
             flash(access.denied_message("water system", system.created_by)
-                  if system.created_by else "Only an admin can delete a water system added before creators were recorded.",
-                  "error")
+                  if system.created_by else
+                  gettext("Only an admin can delete a water system added before creators were recorded."), "error")
             return redirect(back)
         used = zf_system_uses(s, system)
         if used:
-            flash(f"{system.name} is still used by {used}. Move the racks to another system first "
-                  "(rack settings on the rack grid).", "error")
+            flash(gettext("%(system)s is still used by %(used)s. Move the racks to another system first (rack settings on the rack grid).", system=system.name, used=used), "error")
             return redirect(back)
         name = system.name
         with audit.batch(s, "delete", f"delete water system {name}", "water_systems"):
@@ -9436,7 +9672,8 @@ def zebrafish_delete_system(system_id: int):
             s.expire(system, ["water_logs"])
             s.delete(system)
         s.commit()
-    flash(f"Deleted water system {name}. Its readings are kept under deleted systems.", "success")
+    flash(gettext("Deleted water system %(system)s. Its readings are kept under deleted systems.", system=name),
+          "success")
     return redirect(back)
 
 
@@ -9448,7 +9685,7 @@ def zebrafish_log_water():
         try:
             system_id = zf_ref(s, WaterSystem, form.get("system_id_fk"), "water system")
             if system_id is None:
-                raise ZfInputError("Pick the water system this reading is for.")
+                raise ZfInputError(gettext("Pick the water system this reading is for."))
             log = WaterLog(
                 system_id_fk=system_id,
                 ph=zf_float(form, "ph", "pH"),
@@ -9461,7 +9698,7 @@ def zebrafish_log_water():
             )
             if (all(v is None for v in (log.ph, log.conductivity, log.temperature_c, log.salinity))
                     and not log.alarm and not log.notes):
-                raise ZfInputError("Enter at least one reading, a note or an alarm.")
+                raise ZfInputError(gettext("Enter at least one reading, a note or an alarm."))
         except ZfInputError as error:
             flash(str(error), "error")
             return redirect(url_for("zebrafish", view="water"))
@@ -9544,7 +9781,7 @@ def zebrafish_update_clutch(clutch_row_id: int):
     with SessionLocal() as s:
         c = s.get(ClutchRecord, clutch_row_id)
         if c is None:
-            return zf_reply("clutches", "That clutch no longer exists. Reload the page.", status=404)
+            return zf_reply("clutches", gettext("That clutch no longer exists. Reload the page."), status=404)
         if not zf_can_edit(c):
             return zf_reply("clutches", zf_denied(c), status=403)
         try:
@@ -9595,7 +9832,7 @@ def zebrafish_duplicate_clutch(clutch_row_id: int):
                             embryo_count=0, larvae_count=0, adults_count=0, owner=access.username(), notes=c.notes)
         s.add(copy)
         s.commit()
-        flash(f"Copied clutch {c.clutch_id} to {copy.clutch_id}.", "success")
+        flash(gettext("Copied clutch %(clutch)s to %(copy)s.", clutch=c.clutch_id, copy=copy.clutch_id), "success")
     return redirect(url_for("zebrafish", view="clutches"))
 
 
@@ -9608,7 +9845,7 @@ def zebrafish_bulk_clutches():
     value = (form.get("value") or "").strip()
     labels = {"owner": "Set owner", "delete": "Deleted"}
     if action not in labels:
-        flash("Pick an action.", "error")
+        flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="clutches"))
     changed = skipped = 0
     with SessionLocal() as s:
@@ -9643,9 +9880,9 @@ def zebrafish_set_up_mating():
             father_id = zf_ref(s, TankRecord, form.get("father_tank_id"), "male tank")
             mother_id = zf_ref(s, TankRecord, form.get("mother_tank_id"), "female tank")
             if not father_id or not mother_id:
-                raise ZfInputError("Pick both a male and a female tank.")
+                raise ZfInputError(gettext("Pick both a male and a female tank."))
             if father_id == mother_id:
-                raise ZfInputError("Pick two different tanks for the male and the female.")
+                raise ZfInputError(gettext("Pick two different tanks for the male and the female."))
             return_days = zf_int(form, "return_days", "Return in (days)", default=1, lo=1, hi=14)
             males = zf_int(form, "males", "Males", default=0, lo=0, hi=1000)
             females = zf_int(form, "females", "Females", default=0, lo=0, hi=1000)
@@ -9657,8 +9894,13 @@ def zebrafish_set_up_mating():
             for source, sex, wanted, noun in ((father, "M", males, "male"), (mother, "F", females, "female")):
                 have = zf_available(source, sex)
                 if wanted > have:
-                    raise ZfInputError(f"Tank {source.tank_id} has {have} live {noun}{'' if have == 1 else 's'} "
-                                       f"(fish rows marked {sex}); you asked for {wanted}.")
+                    if noun == "male":
+                        message = ngettext("Tank %(tank)s has %(num)s live male (fish rows marked %(sex)s); you asked for %(wanted)s.",
+                                           "Tank %(tank)s has %(num)s live males (fish rows marked %(sex)s); you asked for %(wanted)s.", have, tank=source.tank_id, sex=sex, wanted=wanted)
+                    else:
+                        message = ngettext("Tank %(tank)s has %(num)s live female (fish rows marked %(sex)s); you asked for %(wanted)s.",
+                                           "Tank %(tank)s has %(num)s live females (fish rows marked %(sex)s); you asked for %(wanted)s.", have, tank=source.tank_id, sex=sex, wanted=wanted)
+                    raise ZfInputError(message)
         except ZfInputError as error:
             flash(str(error), "error")
             return redirect(url_for("zebrafish", view="clutches"))
@@ -9681,8 +9923,13 @@ def zebrafish_set_up_mating():
         else:
             s.add(tank)
         s.commit()
-        moved = f" with {males} ♂ and {females} ♀" if males or females else ""
-        flash(f"Mating tank {tank.tank_id} set up{moved} · return by {fmt_day(tank.mating_return_at)}.", "success")
+        if males or females:
+            flash(gettext("Mating tank %(tank)s set up with %(males)s ♂ and %(females)s ♀ · return by %(day)s.",
+                          tank=tank.tank_id, males=males, females=females, day=fmt_day(tank.mating_return_at)),
+                  "success")
+        else:
+            flash(gettext("Mating tank %(tank)s set up · return by %(day)s.", tank=tank.tank_id,
+                          day=fmt_day(tank.mating_return_at)), "success")
     return redirect(url_for("zebrafish", view="tanks"))
 
 
@@ -9728,13 +9975,14 @@ def zf_mating_home(f, mating_tank):
 def zf_return_confirm(tank, groups) -> str:
     """The Returned prompt. groups: (count, home tank code) per live group."""
     if not groups:
-        return (f"Mark mating tank {tank.tank_id} returned? It holds no fish; "
-                f"it is retired and kept in the history.")
+        return gettext("Mark mating tank %(tank)s returned? It holds no fish; it is retired and kept in the history.",
+                       tank=tank.tank_id)
     homes = {}
     for n, code in groups:
         homes[code or "?"] = homes.get(code or "?", 0) + n
-    where = ", ".join(f"{n} to {code}" for code, n in homes.items())
-    return f"Return mating tank {tank.tank_id}? Fish go back: {where}. {tank.tank_id} is then retired."
+    where = ", ".join(gettext("%(n)s to %(tank)s", n=n, tank=code) for code, n in homes.items())
+    return gettext("Return mating tank %(tank)s? Fish go back: %(where)s. %(tank)s is then retired.",
+                   tank=tank.tank_id, where=where)
 
 
 def zf_matching_row(s, home, f):
@@ -9767,23 +10015,26 @@ def zf_return_mating(s, mt, choices: dict):
     """Put a mating tank's live fish back in their home tanks and retire
     it. Everything is checked before anything moves. (error, summary)."""
     if not zf_is_mating(mt):
-        return f"Tank {mt.tank_id} is not a mating tank.", ""
+        return gettext("Tank %(tank)s is not a mating tank.", tank=mt.tank_id), ""
     if not mt.active:
-        return f"Mating tank {mt.tank_id} was already returned.", ""
+        return gettext("Mating tank %(tank)s was already returned.", tank=mt.tank_id), ""
     if not zf_can_edit(mt):
         return zf_denied(mt), ""
     moves = []
     for f in [f for f in mt.fish if fish_alive(f)]:
         home_id = choices.get(f.id) or zf_mating_home(f, mt)
         home = s.get(TankRecord, home_id) if home_id else None
-        what = f"the {f.count or 0} {f.sex or 'unsexed'} fish" + (f" ({f.line.name})" if f.line else "")
+        what = (gettext("the %(n)s %(sex)s fish", n=f.count or 0,
+                        sex=i18n.translate_value(f.sex) if f.sex else gettext("unsexed"))
+                + (f" ({f.line.name})" if f.line else ""))
         if home is None:
-            return (f"Choose which tank {what} in {mt.tank_id} go back to: "
-                    f"use Returned on the tank's row."), ""
+            return gettext("Choose which tank %(what)s in %(tank)s go back to: use Returned on the tank's row.",
+                           what=what, tank=mt.tank_id), ""
         if home.id == mt.id:
-            return f"Pick a home tank for {what} other than {mt.tank_id} itself.", ""
+            return gettext("Pick a home tank for %(what)s other than %(tank)s itself.", what=what,
+                           tank=mt.tank_id), ""
         if not zf_can_edit(home):
-            return f"Can’t move fish into {home.tank_id}: " + zf_denied(home), ""
+            return gettext("Can’t move fish into %(tank)s: %(reason)s", tank=home.tank_id, reason=zf_denied(home)), ""
         moves.append((f, home))
     homes = {}
     for f, home in moves:
@@ -9799,7 +10050,9 @@ def zf_return_mating(s, mt, choices: dict):
     mt.active = False
     stamp = f"Returned {date.today().isoformat()}" + (f": {summary}" if summary else "")
     mt.notes = f"{mt.notes} · {stamp}" if (mt.notes or "").strip() else stamp
-    return None, summary
+    # The note above is the record's (kept in English); what is shown now
+    # is in the page's language.
+    return None, ", ".join(gettext("%(n)s fish to %(tank)s", n=n, tank=code) for code, n in homes.items())
 
 
 @app.route("/zebrafish/tanks/<int:tank_row_id>/return", methods=["POST"])
@@ -9810,7 +10063,7 @@ def zebrafish_return_mating(tank_row_id: int):
     with SessionLocal() as s:
         mt = s.get(TankRecord, tank_row_id)
         if mt is None:
-            return zf_reply("tanks", "That tank no longer exists. Reload the page.", status=404)
+            return zf_reply("tanks", gettext("That tank no longer exists. Reload the page."), status=404)
         code = mt.tank_id
         with audit.batch(s, "update", f"return mating tank {code}", "tanks"):
             error, summary = zf_return_mating(s, mt, zf_return_choices(request.form))
@@ -9818,8 +10071,9 @@ def zebrafish_return_mating(tank_row_id: int):
             s.rollback()
             return zf_reply("tanks", error)
         s.commit()
-    flash(f"Returned {code}" + (f": {summary}" if summary else "") + f". {code} is retired; "
-          "undo it from Batch history if that was a mistake.", "success")
+    flash(gettext("Returned %(tank)s: %(summary)s. %(tank)s is retired; undo it from Batch history if that was a mistake.", tank=code, summary=summary) if summary else
+          gettext("Returned %(tank)s. %(tank)s is retired; undo it from Batch history if that was a mistake.",
+                  tank=code), "success")
     return zf_reply("tanks")
 
 
@@ -9842,17 +10096,19 @@ def zebrafish_create_sac_log():
             count = zf_int(form, "count", "Count", default=1, lo=1, hi=100000)
             when = zf_date(form, "sac_date", "Sac date") or date.today()
             if when > date.today():
-                raise ZfInputError("The sac date can’t be in the future.")
+                raise ZfInputError(gettext("The sac date can’t be in the future."))
             fish_id = zf_ref(s, FishRecord, form.get("fish_id_fk"), "fish row")
             if fish_id is not None:
                 fish = s.get(FishRecord, fish_id)
                 if not zf_can_edit(fish):
                     raise ZfInputError(zf_denied(fish))
-                where = f"fish row #{fish.id} in {fish.tank.tank_id if fish.tank else 'no tank'}"
+                in_tank = fish.tank.tank_id if fish.tank else gettext("no tank")
                 if not fish_alive(fish):
-                    raise ZfInputError(f"The {where} is already {fish.status or 'sac'}.")
+                    raise ZfInputError(gettext("The fish row #%(row)s in %(tank)s is already %(status)s.", row=fish.id,
+                                               tank=in_tank, status=i18n.translate_value(fish.status or "sac")))
                 if count > (fish.count or 0):
-                    raise ZfInputError(f"The {where} has {fish.count or 0} fish; you can’t sac {count}.")
+                    raise ZfInputError(gettext("The fish row #%(row)s in %(tank)s has %(n)s fish; you can’t sac %(count)s.", row=fish.id, tank=in_tank, n=fish.count or 0,
+                                               count=count))
                 tank_id = fish.tank_id_fk
                 line_id = fish.line_id_fk or (fish.tank.line_id_fk if fish.tank else None)
             else:
@@ -9890,8 +10146,10 @@ def zebrafish_create_sac_log():
         s.commit()
         left = fish.count
         code = fish.tank.tank_id if fish.tank else ""
-        flash(f"Logged {count} sac’d from {code} (row #{fish.id}): "
-              + (f"{left} left." if left else "none left, so the row is marked sac."), "success")
+        flash(gettext("Logged %(count)s sac’d from %(tank)s (row #%(row)s): %(left)s left.", count=count, tank=code,
+                      row=fish.id, left=left) if left else
+              gettext("Logged %(count)s sac’d from %(tank)s (row #%(row)s): none left, so the row is marked sac.",
+                      count=count, tank=code, row=fish.id), "success")
     return redirect(back)
 
 

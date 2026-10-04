@@ -1,39 +1,39 @@
 {% extends "base.html" %}
 
-{% block page_title %}A key for {{ label }}{% endblock %}
-{% block page_heading %}A key for {{ label }}{% endblock %}
-{% block page_subtitle %}Lets that computer keep a copy of the lab's database{% endblock %}
+{% block page_title %}{{ _('A key for %(name)s', name=label) }}{% endblock %}
+{% block page_heading %}{{ _('A key for %(name)s', name=label) }}{% endblock %}
+{% block page_subtitle %}{{ _("Lets that computer keep a copy of the lab's database") }}{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('settings') }}#lab-copies">{{ icon('back') }} Back to settings</a>
+  <a class="btn" href="{{ url_for('settings') }}#lab-copies">{{ icon('back') }} {{ _('Back to settings') }}</a>
 {% endblock %}
 
 {% block content %}
 <div class="grid max-w-[760px] grid-cols-1 gap-3">
   <section class="card border-brand-200 p-5">
-    <h2 class="text-[15px] font-semibold text-ink">Copy this key now</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Copy this key now') }}</h2>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
-      It is shown only once. If it gets lost, revoke it in Settings and make a new one. Treat it like a password:
-      with it, a computer can download the whole lab.
+      {% trans %}It is shown only once. If it gets lost, revoke it in Settings and make a new one. Treat it like a password:
+      with it, a computer can download the whole lab.{% endtrans %}
     </p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <code id="lab-copy-key" class="rounded-lg bg-sand-100 px-3 py-2 font-mono text-[14px] text-ink">{{ key }}</code>
-      <button type="button" class="btn" data-on-click="copy-text" data-arg="lab-copy-key">{{ icon('copy') }} Copy key</button>
+      <button type="button" class="btn" data-on-click="copy-text" data-arg="lab-copy-key">{{ icon('copy') }} {{ _('Copy key') }}</button>
     </div>
   </section>
 
   <section class="card p-5">
-    <h2 class="text-[15px] font-semibold text-ink">On {{ label }}</h2>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('On %(name)s', name=label) }}</h2>
     <ol class="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-snug text-ink-soft">
-      <li>Open the BioManager <b>desktop app</b> (download it from the website if it isn't installed).</li>
-      <li>Go to <b>Settings → Keep a copy of your lab server</b>.</li>
-      <li>Server: <code class="ident" id="lab-copy-server">{{ server }}</code>
-        <button type="button" class="btn btn-sm ml-1" data-on-click="copy-text" data-arg="lab-copy-server">{{ icon('copy') }} Copy</button></li>
-      <li>Paste the key and press <b>Save and copy now</b>.</li>
+      <li>{% trans %}Open the BioManager <b>desktop app</b> (download it from the website if it isn't installed).{% endtrans %}</li>
+      <li>{% trans %}Go to <b>Settings → Keep a copy of your lab server</b>.{% endtrans %}</li>
+      <li>{{ _('Server:') }} <code class="ident" id="lab-copy-server">{{ server }}</code>
+        <button type="button" class="btn btn-sm ml-1" data-on-click="copy-text" data-arg="lab-copy-server">{{ icon('copy') }} {{ _('Copy') }}</button></li>
+      <li>{% trans %}Paste the key and press <b>Save and copy now</b>.{% endtrans %}</li>
     </ol>
     <p class="mt-3 text-[12px] leading-snug text-muted">
-      From then on, while the app is open, it takes a fresh copy every day and keeps the last 14. The computer must be
-      able to reach this server (the lab's network, VPN or Tailscale).
+      {% trans %}From then on, while the app is open, it takes a fresh copy every day and keeps the last 14. The computer must be
+      able to reach this server (the lab's network, VPN or Tailscale).{% endtrans %}
     </p>
   </section>
 </div>
@@ -47,7 +47,7 @@
       if (!el || !navigator.clipboard) return;
       navigator.clipboard.writeText(el.textContent.trim()).then(() => {
         const was = this.innerHTML;
-        this.textContent = 'Copied';
+        this.textContent = t('Copied');
         setTimeout(() => { this.innerHTML = was; }, 1500);
       });
     },

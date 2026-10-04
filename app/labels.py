@@ -36,6 +36,7 @@ from sqlalchemy.orm import selectinload
 
 from .formutil import arg_int
 from .db import SessionLocal
+from .i18n import gettext, ngettext, translate_value
 from .models import CageRecord, InventoryItem, OrgHousing, StockUnit, TankRecord
 from . import access, positions
 from . import organism_service as svc
@@ -234,7 +235,9 @@ def _module_cards(session, module_key: str) -> dict:
             "rows": rows,
             "shared": False,
         })
-    return {"cards": cards, "heading": f"{mv.label} · {mv.housing_noun} labels",
+    # The heading is only on the page (never printed): in the page's language.
+    return {"cards": cards, "heading": gettext("%(name)s · %(units)s labels", name=translate_value(mv.label),
+                                               units=translate_value(mv.housing_noun)),
             "size": CARD_SIZES.get("vial" if mv.housing_noun in ("vial", "plate") else "tank"),
             "kind": module_key, "back_url": url_for("organisms.module", key=module.key, view="housing")}
 
@@ -266,7 +269,8 @@ def _stock_cards(session, key: str) -> dict:
             "rows": rows,
             "shared": False,
         })
-    return {"cards": cards, "heading": f"{module.label} · {mv.units} labels", "size": CARD_SIZES["vial"],
+    return {"cards": cards, "heading": gettext("%(name)s · %(units)s labels", name=translate_value(module.label),
+                                               units=translate_value(mv.units)), "size": CARD_SIZES["vial"],
             "kind": f"stocks/{key}", "back_url": url_for("stocks.module", key=key)}
 
 
@@ -313,7 +317,8 @@ def _inventory_cards(session, key: str) -> dict:
             "rows": [(labels[k], values[k]) for k in chosen if values.get(k)],
             "shared": False,
         })
-    return {"cards": cards, "heading": f"{module.label} · labels", "size": CARD_SIZES["tube"],
+    return {"cards": cards, "heading": gettext("%(name)s · labels", name=translate_value(module.label)),
+            "size": CARD_SIZES["tube"],
             "kind": f"inventory/{key}", "back_url": url_for("inventory.module", key=key),
             "fields": fields, "chosen": chosen}
 
@@ -551,19 +556,21 @@ def send():
         raw, dpi = _lab_printer(session)
     where = printer_address(raw)
     if where is None:
-        flash("No label printer is set up for the lab yet: an admin adds its address on this page.", "error")
+        flash(gettext("No label printer is set up for the lab yet: an admin adds its address on this page."), "error")
         return redirect(back)
     if not built["cards"]:
-        flash("There are no labels to send.", "error")
+        flash(gettext("There are no labels to send."), "error")
         return redirect(back)
     try:
         with socket.create_connection(where, timeout=6) as conn:
             conn.sendall(to_zpl(built["cards"], size, dpi, wrap=_label_wrap(built["kind"])).encode("utf-8"))
     except OSError as exc:
-        flash(f"The label printer at {raw} didn't answer ({exc.strerror or exc}). Check it is on and on the network.", "error")
+        flash(gettext("The label printer at %(printer)s didn't answer (%(error)s). Check it is on and on the network.",
+                      printer=raw, error=exc.strerror or exc), "error")
         return redirect(back)
     n = len(built["cards"])
-    flash(f"Sent {n} label{'' if n == 1 else 's'} to the printer at {raw}.", "success")
+    flash(ngettext("Sent %(num)s label to the printer at %(printer)s.", "Sent %(num)s labels to the printer at %(printer)s.",
+                   n, printer=raw), "success")
     return redirect(back)
 
 
@@ -578,12 +585,14 @@ def set_printer():
         back = url_for("labels.cage_cards")
     raw = (request.form.get("address") or "").strip()
     if raw and printer_address(raw) is None:
-        flash(f"{raw} isn't a printer on the lab's own network (a private address such as 192.168.1.50).", "error")
+        flash(gettext("%(printer)s isn't a printer on the lab's own network (a private address such as 192.168.1.50).",
+                      printer=raw), "error")
         return redirect(back)
     dpi = "300" if request.form.get("dpi") == "300" else "203"
     with SessionLocal() as session:
         set_setting(session, PRINTER_SETTING, raw)
         set_setting(session, PRINTER_DPI_SETTING, dpi)
         session.commit()
-    flash(f"The lab's label printer is {raw} ({dpi} dpi)." if raw else "The lab's label printer is removed.", "success")
+    flash(gettext("The lab's label printer is %(printer)s (%(dpi)s dpi).", printer=raw, dpi=dpi) if raw
+          else gettext("The lab's label printer is removed."), "success")
     return redirect(back)

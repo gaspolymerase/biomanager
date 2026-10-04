@@ -29,13 +29,14 @@ from flask import (
 )
 from sqlalchemy import select
 
-from . import access, audit, database_keys, positions
+from . import access, audit, database_keys, i18n, positions
 from . import inventory as presets
 from . import inventory_service as svc
 from .db import SessionLocal
 from . import lab
 from .lab import lab_audience
 from .formutil import MAX_ID, form_changed
+from .i18n import gettext, ngettext
 from . import groups as project_groups
 from .models import InventoryItem, InventoryModule, InventoryRack
 
@@ -65,7 +66,19 @@ def _date(raw) -> date | None:
     try:
         return date.fromisoformat(raw)
     except ValueError:
-        raise Refused(f"“{raw}” is not a date. Use YYYY-MM-DD.") from None
+        raise Refused(gettext("“%(value)s” is not a date. Use YYYY-MM-DD.", value=raw)) from None
+
+
+def _sentences(*parts: str) -> str:
+    """Sentences one after another: a space between them in English, none
+    in Chinese."""
+    return ("" if i18n.current() == "zh" else " ").join(p for p in parts if p)
+
+
+def _tr(value) -> str:
+    """A database's own word (its noun, a column's or status's name) in the
+    page's language; what a lab typed comes back as typed."""
+    return i18n.translate_value(value, "inventory")
 
 
 def _int(raw, default: int, low: int, high: int) -> int:
@@ -137,10 +150,16 @@ def _can_manage(item: InventoryItem) -> bool:
 
 
 def _manage_denied(mv, item: InventoryItem, what: str) -> str:
+    """`what`: "owner", "personal" or "delete"."""
     if not _can_edit(item):
         return access.reason_denied(item, noun=mv.item_noun)
-    return (f"Anyone can edit a lab-common {mv.item_noun}, but only {item.owner or 'its owner'} "
-            f"or an admin can {what}.")
+    values = {"noun": _tr(mv.item_noun), "who": item.owner or gettext("its owner")}
+    if what == "owner":
+        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can change who it belongs to.", **values)
+    if what == "personal":
+        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can make it personal.",
+                       **values)
+    return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can delete it.", **values)
 
 
 def _can_configure(module: InventoryModule) -> bool:
@@ -165,24 +184,25 @@ def index():
 def new_module():
     with SessionLocal() as session:
         if not lab.may_create_database(session):
-            flash("An admin has turned off adding databases for members. Ask a lab admin.", "error")
+            flash(gettext("An admin has turned off adding databases for members. Ask a lab admin."), "error")
             return redirect(url_for("organisms.index"))
         if request.method == "POST":
             preset = request.form.get("preset", "custom")
             label = (request.form.get("label") or "").strip()
             if not label:
-                flash("Give the inventory a name.", "error")
+                flash(gettext("Give the inventory a name."), "error")
                 return redirect(url_for("inventory.new_module", preset=preset))
             clash = database_keys.name_clash(session, label)
             if clash:
-                flash(f"There is already a database called {clash}; give this one a name of its own.", "error")
+                flash(gettext("There is already a database called %(name)s; give this one a name of its own.",
+                              name=clash), "error")
                 return redirect(url_for("inventory.new_module", preset=preset))
             module = svc.create_module(session, preset, label, created_by=g.user.username)
             lab.set_audience_for_new(session, module, request.form.get("audience", ""))
             if request.form.get("blurb", "").strip():
                 module.blurb = request.form["blurb"].strip()
             session.commit()
-            flash(f"Created {module.label}.", "success")
+            flash(gettext("Created %(name)s.", name=module.label), "success")
             return redirect(url_for("inventory.module", key=module.key))
         preset = request.args.get("preset", "")
         return render_template("inventory/new.html", presets=presets.PRESETS, preset=preset,
@@ -259,7 +279,7 @@ def _grid_payload(mv, racks, items) -> dict:
             "tone": "stock" if i.is_shared else "", "flag": svc.expiry_state(i) == "expired",
             "badge": i.quantity or "",
             "rack": i.rack_id_fk, "row": i.rack_row, "col": i.rack_col,
-            "title": " · ".join(filter(None, [i.name, i.category, i.status, i.owner, project_groups.label(i.is_shared, i.share_group_id, personal="", lab="lab common")])),
+            "title": " · ".join(filter(None, [i.name, i.category, _tr(i.status or ""), i.owner, project_groups.label(i.is_shared, i.share_group_id, personal="", lab=gettext("lab common"))])),
             "search": " ".join(filter(None, [i.name, i.category, i.status, i.owner, i.vendor, i.catalog_number,
                                              *[str(v) for v in i.attrs_dict.values() if isinstance(v, str)]])).lower(),
             "edit": {"data-record-edit": "item-dialog", "data-record-payload": json.dumps(_item_payload(mv, i))},
@@ -392,7 +412,7 @@ def module(key: str):
             "next_number": svc.next_number(session, row.id),
             "stock_targets": stock_targets, "order_module": order_module, "reorder": reorder,
             "stock_links": _order_stock_links(session, row, items),
-            "on_order": ({i: "Already on order: " + "; ".join(_on_order_text(o) for o in found[:3])
+            "on_order": ({i: gettext("Already on order: %(orders)s", orders=gettext("; ").join(_on_order_text(o) for o in found[:3]))
                           for i, found in _open_orders_of(session, row, items).items()}
                          if row.kind in STOCK_KINDS else {}),
             "remembered": svc.remembered(session, mv, items),
@@ -445,8 +465,12 @@ def _open_orders_of(session, source: InventoryModule, stock: list[InventoryItem]
 
 def _on_order_text(order: InventoryItem) -> str:
     """"#14, ordered, asked for by sasha on 28 Sep"."""
-    when = f" on {order.created_at:%d %b}" if order.created_at else ""
-    return f"#{order.number}, {order.status or 'requested'}, asked for by {order.owner or 'someone'}{when}"
+    values = {"number": order.number, "status": _tr(order.status or "requested"),
+              "who": order.owner or gettext("someone")}
+    if order.created_at:
+        return gettext("#%(number)s, %(status)s, asked for by %(who)s on %(day)s",
+                       day=i18n.strftime(order.created_at, "%d %b"), **values)
+    return gettext("#%(number)s, %(status)s, asked for by %(who)s", **values)
 
 
 def _reorder_payload(session, mv, orders: list[InventoryItem], ref: str) -> dict | None:
@@ -458,7 +482,7 @@ def _reorder_payload(session, mv, orders: list[InventoryItem], ref: str) -> dict
     stock = session.get(InventoryItem, int(raw_id)) if raw_id.isdigit() else None
     if (source is None or source.kind not in STOCK_KINDS or not source.enabled or not lab.can_see(source)
             or stock is None or stock.module_id_fk != source.id):
-        flash("That record is gone, so there is nothing to order again.", "warning")
+        flash(gettext("That record is gone, so there is nothing to order again."), "warning")
         return None
     payload = {"owner": g.user.username, "status": mv.statuses[0] if mv.statuses else "", "is_shared": "0",
                "name": stock.name, "vendor": stock.vendor, "catalog_number": stock.catalog_number,
@@ -475,20 +499,23 @@ def _reorder_payload(session, mv, orders: list[InventoryItem], ref: str) -> dict
     last = (next((o for o in orders if o.attrs_dict.get("stocked_as") == stocked), None)
             or next((o for o in orders if same(o, "catalog_number")), None)
             or next((o for o in orders if same(o, "name") and not stock.catalog_number), None))
-    hint = f"Ordering {stock.name or 'it'} again from {source.label} #{stock.number}."
+    where = {"database": i18n.translate_value(source.label), "number": stock.number}
+    hint = (gettext("Ordering %(name)s again from %(database)s #%(number)s.", name=stock.name, **where) if stock.name
+            else gettext("Ordering it again from %(database)s #%(number)s.", **where))
     already = [o for o in orders if o.status in mv.open_statuses and _same_thing(o, stock, source)]
     if already:
-        hint = (f"Already on order: {'; '.join(_on_order_text(o) for o in already[:3])}. "
-                f"Save only if you need more. " + hint)
+        hint = _sentences(gettext("Already on order: %(orders)s. Save only if you need more.",
+                                  orders=gettext("; ").join(_on_order_text(o) for o in already[:3])), hint)
         payload["_warn"] = True
     if last is not None:
         payload.update(quantity=last.quantity, unit=last.unit)
         attrs = last.attrs_dict
         payload.update({f"attr_{f['key']}": attrs[f["key"]] for f in mv.fields
                         if f["type"] != "source" and attrs.get(f["key"]) and f["key"] not in NOT_COPIED_ATTRS})
-        hint += f" Quantity and the rest come from {mv.item_noun} #{last.number}: check them."
+        hint = _sentences(hint, gettext("Quantity and the rest come from %(noun)s #%(number)s: check them.",
+                                        noun=_tr(mv.item_noun), number=last.number))
     else:
-        hint += " Say how many to order."
+        hint = _sentences(hint, gettext("Say how many to order."))
     payload["_hint"] = hint
     return payload
 
@@ -536,7 +563,7 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
     if "name" in form:
         name = (form.get("name") or "").strip()[:200]
         if not name and mv.row.kind == "orders":
-            raise Refused("An order needs an item name.")
+            raise Refused(gettext("An order needs an item name."))
         item.name = name
     text("category", limit=80)
 
@@ -544,15 +571,16 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
         owner = (form.get("owner") or "").strip()[:80]
         if creating and not access.is_admin() and owner != me:
             if owner:
-                notes.append(f"Only an admin can add a {mv.item_noun} for someone else, so this one is yours.")
+                notes.append(gettext("Only an admin can add a %(noun)s for someone else, so this one is yours.",
+                                     noun=_tr(mv.item_noun)))
             owner = me
         if owner != (item.owner or ""):
             if not manage:
-                raise Refused(_manage_denied(mv, item, "change who it belongs to"), 403)
+                raise Refused(_manage_denied(mv, item, "owner"), 403)
             item.owner = owner
     if "is_shared" in form and project_groups.differs(item, form.get("is_shared")):
         if not manage:
-            raise Refused(_manage_denied(mv, item, "make it personal"), 403)
+            raise Refused(_manage_denied(mv, item, "personal"), 403)
         refused = project_groups.apply(item, form.get("is_shared"))
         if refused:
             raise Refused(refused, 403)
@@ -577,7 +605,8 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
                 old = attrs.get(k) if isinstance(attrs.get(k), dict) else {}
                 if (value["kind"] in MOUSE_SOURCE_KINDS and value["ref"] and value != old
                         and not _mouse_exists(session, value["ref"])):
-                    notes.append(f"There is no mouse {value['ref']} in the colony; the source was saved as typed.")
+                    notes.append(gettext("There is no mouse %(id)s in the colony; the source was saved as typed.",
+                                         id=value["ref"]))
                 attrs[k] = value
         elif f"attr_{k}" in form:
             value = (form.get(f"attr_{k}") or "").strip()
@@ -591,7 +620,8 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
                 try:
                     float(value.replace(",", ""))
                 except ValueError:
-                    raise Refused(f"{field['label']} is a number column: “{value}” isn't a number.")
+                    raise Refused(gettext("%(field)s is a number column: “%(value)s” isn't a number.",
+                                          field=_tr(field["label"]), value=value))
             if field["type"] == "plasmid" and value:
                 # Kept as the plasmid's number, which the sheet links to;
                 # a name or "#42 · pAAV…" from the list is read the same way.
@@ -599,19 +629,24 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
                 if plasmid is not None:
                     value = str(plasmid.plasmid_id)
                 elif value != str(attrs.get(k, "")):
-                    notes.append(f"There is no plasmid “{value}” in Plasmids; {field['label']} was saved as typed.")
+                    notes.append(gettext("There is no plasmid “%(value)s” in Plasmids; %(field)s was saved as typed.",
+                                         value=value, field=_tr(field["label"])))
             attrs[k] = value
     if json.dumps(attrs, sort_keys=True) != before:
         item.attrs = json.dumps(attrs)
 
     # A new entry needs every required column; an old one may not lose one
     # (but one that never had it can still be saved).
-    missing = [label for key, label in mv.required_labels.items()
+    missing = [_tr(label) for key, label in mv.required_labels.items()
                if not _column_value(item, key) and (creating or was[key])]
     if missing:
         if creating:
-            raise Refused(f"Fill in {_and(missing)} to add {'an' if mv.item_noun[:1] in 'aeiou' else 'a'} {mv.item_noun}.")
-        raise Refused(f"{_and(missing)} can’t be left empty.")
+            if mv.item_noun[:1] in "aeiou":
+                raise Refused(gettext("Fill in %(fields)s to add an %(noun)s.", fields=_and(missing),
+                                      noun=_tr(mv.item_noun)))
+            raise Refused(gettext("Fill in %(fields)s to add a %(noun)s.", fields=_and(missing),
+                                  noun=_tr(mv.item_noun)))
+        raise Refused(gettext("%(fields)s can’t be left empty.", fields=_and(missing)))
 
     # Status last: it may fill the received date or stamp a used-up date.
     place_was = (str(item.rack_id_fk or ""), svc.rack_label(item))
@@ -637,7 +672,9 @@ def _column_value(item: InventoryItem, key: str) -> str:
 
 
 def _and(words: list[str]) -> str:
-    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
+    if len(words) == 1:
+        return words[0]
+    return gettext("%(first)s and %(last)s", first=gettext(", ").join(words[:-1]), last=words[-1])
 
 
 @bp.route("/<key>/items/save", methods=["POST"])
@@ -672,7 +709,7 @@ def save_item(key: str):
             # used to save the record without its box and leave the dialog
             # open, so pressing Create again made a second one.
             session.rollback()
-            return _done(key, error=f"Not saved: {error}")
+            return _done(key, error=gettext("Not saved: %(reason)s", reason=error))
         item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
         if creating and row.kind in STOCK_KINDS and request.form.get("from_order"):
             # Made from a received order's "Add to stock": the order now
@@ -688,9 +725,9 @@ def save_item(key: str):
         for note in notes:
             flash(note, "warning")
         if not _wants_json() and _offers_stock(session, mv, item, status_was):
-            flash(f"Saved {label}.", "success")
+            flash(gettext("Saved %(name)s.", name=label), "success")
             return redirect(_back(key, offer=item.id))
-        return _done(key, message=f"Saved {label}.")
+        return _done(key, message=gettext("Saved %(name)s.", name=label))
 
 
 MAX_AT_ONCE = 50
@@ -714,9 +751,9 @@ def add_primer_pair(key: str):
         base = (form.get("name") or "").strip()[:190]
         seqs = {"F": svc.clean_sequence(form.get("forward")), "R": svc.clean_sequence(form.get("reverse"))}
         if not base:
-            return _done(key, error="Give the pair a name, e.g. GAPDH qPCR.")
+            return _done(key, error=gettext("Give the pair a name, e.g. GAPDH qPCR."))
         if not seqs["F"] or not seqs["R"]:
-            return _done(key, error="Paste both sequences, forward and reverse.")
+            return _done(key, error=gettext("Paste both sequences, forward and reverse."))
         names = {end: f"{base}-{end}" for end in seqs}
         made = []
         try:
@@ -739,9 +776,10 @@ def add_primer_pair(key: str):
                     made.append(item)
         except Refused as refused:
             session.rollback()
-            return _done(key, error=f"Not saved: {refused}")
+            return _done(key, error=gettext("Not saved: %(reason)s", reason=refused))
         session.commit()
-        return _done(key, message=f"Added {names['F']} (#{made[0].number}) and {names['R']} (#{made[1].number}).")
+        return _done(key, message=gettext("Added %(forward)s (#%(f)s) and %(reverse)s (#%(r)s).",
+                                          forward=names["F"], f=made[0].number, reverse=names["R"], r=made[1].number))
 
 
 def _create_many(session, row: InventoryModule, mv, form):
@@ -755,25 +793,28 @@ def _create_many(session, row: InventoryModule, mv, form):
     if names:
         count = len(names)
         if count > MAX_AT_ONCE:
-            return _done(key, error=f"Paste at most {MAX_AT_ONCE} names at a time ({count} given).")
+            return _done(key, error=gettext("Paste at most %(max)s names at a time (%(n)s given).",
+                                            max=MAX_AT_ONCE, n=count))
     else:
         count = _int(form.get("count"), 0, -1, 10_000)
         if not 1 <= count <= MAX_AT_ONCE:
-            return _done(key, error=f"Add between 1 and {MAX_AT_ONCE} {mv.item_noun_plural} at a time.")
+            return _done(key, error=gettext("Add between 1 and %(max)s %(nouns)s at a time.",
+                                            max=MAX_AT_ONCE, nouns=_tr(mv.item_noun_plural)))
 
     rack, cells, pos = None, [], (form.get("position") or "").strip()
     rack_raw = (form.get("rack_id") or "").strip() if mv.has("storage") else ""
     if rack_raw:
         rack = session.get(InventoryRack, int(rack_raw)) if rack_raw.isdigit() else None
         if rack is None or rack.module_id_fk != row.id:
-            return _done(key, error="That box is not part of this inventory.")
+            return _done(key, error=gettext("That box is not part of this inventory."))
         start = None
         if pos:
             start = positions.parse(pos, rack.naming, rack.rows, rack.cols)
             if start is None:
-                return _done(key, error=(
-                    f"“{pos}” is not a position in {rack.name} "
-                    f"({positions.label(1, 1, rack.naming, rack.cols)}–{positions.label(rack.rows, rack.cols, rack.naming, rack.cols)})."))
+                return _done(key, error=gettext(
+                    "“%(position)s” is not a position in %(box)s (%(first)s–%(last)s).", position=pos, box=rack.name,
+                    first=positions.label(1, 1, rack.naming, rack.cols),
+                    last=positions.label(rack.rows, rack.cols, rack.naming, rack.cols)))
         cells = svc.free_cells(session, rack, count, start)
 
     fresh = {k: v for k, v in form.items() if not k.endswith("_was") and k not in MANY_ONLY}
@@ -801,15 +842,23 @@ def _create_many(session, row: InventoryModule, mv, form):
     session.commit()
     for note in notes:
         flash(note, "warning")
-    where = f" in {rack.name}" if rack is not None else ""
-    span = f"#{created[0].number}" if count == 1 else f"#{created[0].number}–#{created[-1].number} ({count} {mv.item_noun_plural})"
-    flash(f"Created {span}{where}.", "success")
+    first, last = created[0].number, created[-1].number
+    if count == 1:
+        made = (gettext("Created #%(number)s in %(box)s.", number=first, box=rack.name) if rack is not None
+                else gettext("Created #%(number)s.", number=first))
+    else:
+        many = {"first": first, "last": last, "n": count, "nouns": _tr(mv.item_noun_plural)}
+        made = (gettext("Created #%(first)s–#%(last)s (%(n)s %(nouns)s) in %(box)s.", box=rack.name, **many)
+                if rack is not None else gettext("Created #%(first)s–#%(last)s (%(n)s %(nouns)s).", **many))
+    flash(made, "success")
     unplaced = created[len(cells):] if rack is not None else []
     if unplaced:
         labels = ", ".join(i.name or f"#{i.number}" for i in unplaced[:5]) + ("…" if len(unplaced) > 5 else "")
-        return _done(key, error=(f"{rack.name} had room for {len(cells)} of {count}"
-                                 f"{' from ' + pos if pos else ''}: {len(unplaced)} did not fit ({labels}) "
-                                 f"and are in it without a position."))
+        room = {"box": rack.name, "room": len(cells), "count": count, "n": len(unplaced), "items": labels}
+        if pos:
+            return _done(key, error=gettext("%(box)s had room for %(room)s of %(count)s from %(position)s: %(n)s did not fit (%(items)s) and are in it without a position.",
+                                            position=pos, **room))
+        return _done(key, error=gettext("%(box)s had room for %(room)s of %(count)s: %(n)s did not fit (%(items)s) and are in it without a position.", **room))
     return _done(key)
 
 
@@ -821,7 +870,7 @@ def update_item(key: str, item_id: int):
         mv = svc.view(row)
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
-            return jsonify({"ok": False, "error": "That record no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
         if not _can_edit(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
@@ -851,11 +900,11 @@ def delete_item(key: str, item_id: int):
         item = session.get(InventoryItem, item_id)
         if item is not None and item.module_id_fk == row.id:
             if not _can_manage(item):
-                return _done(key, error=_manage_denied(mv, item, "delete it"))
+                return _done(key, error=_manage_denied(mv, item, "delete"))
             label = item.name or f"#{item.number}"
             session.delete(item)
             session.commit()
-            return _done(key, message=f"Deleted {label}.")
+            return _done(key, message=gettext("Deleted %(name)s.", name=label))
     return _done(key)
 
 
@@ -882,7 +931,8 @@ def duplicate_item(key: str, item_id: int):
             catalog_number=item.catalog_number, lot="", attrs=json.dumps(attrs), notes=item.notes)
         session.add(copy)
         session.commit()
-        return _done(key, message=f"Duplicated {item.name or '#' + str(item.number)} as #{copy.number}.")
+        return _done(key, message=gettext("Duplicated %(name)s as #%(number)s.",
+                                          name=item.name or "#" + str(item.number), number=copy.number))
 
 
 @bp.route("/<key>/items/<int:item_id>/place", methods=["POST"])
@@ -895,7 +945,7 @@ def place_item(key: str, item_id: int):
         mv = svc.view(row)
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
-            return jsonify({"ok": False, "error": "That record no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
         if not _can_edit(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         rack_id = request.form.get("rack_id", "").strip()
@@ -907,19 +957,19 @@ def place_item(key: str, item_id: int):
         try:
             r, c = int(request.form.get("row", "")), int(request.form.get("col", ""))
         except ValueError:
-            return jsonify({"ok": False, "error": "Missing row or column."}), 400
+            return jsonify({"ok": False, "error": gettext("Missing row or column.")}), 400
         if rack is None or rack.module_id_fk != row.id or not (1 <= r <= rack.rows and 1 <= c <= rack.cols):
-            return jsonify({"ok": False, "error": "That position is not in the box."}), 400
+            return jsonify({"ok": False, "error": gettext("That position is not in the box.")}), 400
         holder = session.scalar(select(InventoryItem).where(
             InventoryItem.rack_id_fk == rack.id, InventoryItem.rack_row == r,
             InventoryItem.rack_col == c, InventoryItem.id != item.id))
         if holder is not None:
             holder_label = holder.name or f"#{holder.number}"
             if item.rack_id_fk is None or item.rack_row is None or item.rack_col is None:
-                return jsonify({"ok": False, "error": f"That cell holds {holder_label}. Drop it on an empty cell, "
-                                                      f"or move {holder_label} out first."}), 409
+                return jsonify({"ok": False, "error": gettext("That cell holds %(item)s. Drop it on an empty cell, or move %(item)s out first.", item=holder_label)}), 409
             if not _can_edit(holder):
-                return jsonify({"ok": False, "error": f"That cell holds {holder_label}, which you may not move."}), 403
+                return jsonify({"ok": False, "error": gettext("That cell holds %(item)s, which you may not move.",
+                                                              item=holder_label)}), 403
             holder.rack_id_fk, holder.rack_row, holder.rack_col = item.rack_id_fk, item.rack_row, item.rack_col
         item.rack_id_fk, item.rack_row, item.rack_col = rack.id, r, c
         session.commit()
@@ -934,7 +984,7 @@ def set_status(key: str, item_id: int):
         mv = svc.view(row)
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
-            return jsonify({"ok": False, "error": "That record no longer exists."}), 404
+            return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
         if not _can_edit(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
@@ -978,8 +1028,9 @@ def _order_stock_links(session, row: InventoryModule, items: list[InventoryItem]
             stock = target and session.scalar(select(InventoryItem).where(
                 InventoryItem.module_id_fk == target.id, InventoryItem.number == number))
             if stock is not None:
-                links[order_id] = {"label": f"{target.label} #{number}", "icon": "flask",
-                                   "title": f"In stock as {target.label} #{number}: open it",
+                record = f"{i18n.translate_value(target.label)} #{number}"
+                links[order_id] = {"label": record, "icon": "flask",
+                                   "title": gettext("In stock as %(record)s: open it", record=record),
                                    "url": url_for("inventory.module", key=key, open=stock.id)}
     elif row.kind in STOCK_KINDS:
         numbers = {item.number: item.id for item in items}
@@ -988,9 +1039,10 @@ def _order_stock_links(session, row: InventoryModule, items: list[InventoryItem]
                     InventoryItem.module_id_fk == orders.id, InventoryItem.attrs.like('%"stocked_as"%'))):
                 key, _, number = (order.attrs_dict.get("stocked_as") or "").partition(":")
                 if key == row.key and number.isdigit() and int(number) in numbers:
+                    record = f"{i18n.translate_value(orders.label)} #{order.number}"
                     links[numbers[int(number)]] = {
-                        "label": f"{orders.label} #{order.number}", "icon": "cart",
-                        "title": f"Came from {orders.label} #{order.number}: open the order",
+                        "label": record, "icon": "cart",
+                        "title": gettext("Came from %(record)s: open the order", record=record),
                         "url": url_for("inventory.module", key=orders.key, open=order.id)}
     return links
 
@@ -1021,26 +1073,32 @@ def order_to_reagents(key: str, item_id: int):
         mv = svc.view(row)
         order = session.get(InventoryItem, item_id)
         if order is None or order.module_id_fk != row.id or row.kind != "orders":
-            return _done(key, error="That order no longer exists.")
+            return _done(key, error=gettext("That order no longer exists."))
         if not _can_edit(order):
             return _done(key, error=access.reason_denied(order, noun="order"))
         if (order.status or "").lower() != "received":
-            return _done(key, error=f"Mark {order.name or 'the order'} received before adding it to stock.")
+            if order.name:
+                return _done(key, error=gettext("Mark %(name)s received before adding it to stock.", name=order.name))
+            return _done(key, error=gettext("Mark the order received before adding it to stock."))
         stocked = order.attrs_dict.get("stocked_as")
         if stocked:
-            return _done(key, error=f"{order.name or 'That order'} is already in stock ({stocked.replace(':', ' #')}).")
+            where = stocked.replace(":", " #")
+            if order.name:
+                return _done(key, error=gettext("%(name)s is already in stock (%(where)s).", name=order.name, where=where))
+            return _done(key, error=gettext("That order is already in stock (%(where)s).", where=where))
         target = svc.get_module(session, target_key) if target_key else svc.first_of_kind(session, "reagents")
         if target is None or target.kind not in STOCK_KINDS or not lab.can_see(target):
-            return _done(key, error="Pick a reagents, antibodies or viruses inventory to add it to.")
+            return _done(key, error=gettext("Pick a reagents, antibodies or viruses inventory to add it to."))
         tv = svc.view(target)
         attrs = order.attrs_dict
         draft = _stock_from_order(session, mv, tv, order, shared=request.form.get("shared") == "1")
-        missing = [label for k, label in tv.required_labels.items() if not _column_value(draft, k)]
+        missing = [_tr(label) for k, label in tv.required_labels.items() if not _column_value(draft, k)]
         if missing:
             # The stock inventory needs things the order doesn't say (its
             # Configure → Needed for a new item): open its new-item dialog,
             # filled in from the order, and link the two when it is saved.
-            flash(f"Fill in {_and(missing)} to add it to {target.label}.", "warning")
+            flash(gettext("Fill in %(fields)s to add it to %(database)s.", fields=_and(missing),
+                          database=i18n.translate_value(target.label)), "warning")
             return redirect(url_for("inventory.module", key=target.key, from_order=f"{key}:{order.id}",
                                     shared="1" if draft.is_shared else "0"))
         with audit.batch(session, "mixed", f"order #{order.number} to {target.label}", "inventory_items"):
@@ -1050,8 +1108,10 @@ def order_to_reagents(key: str, item_id: int):
             attrs["stocked_as"] = f"{target.key}:{stock.number}"
             order.attrs = json.dumps(attrs)
         session.commit()
-        flash(f"Added {stock.name} to {target.label} as #{stock.number}. "
-              f"Add where it is kept{' and when it expires' if tv.has('expiry') else ''}.", "success")
+        added = {"name": stock.name, "database": i18n.translate_value(target.label), "number": stock.number}
+        flash(gettext("Added %(name)s to %(database)s as #%(number)s. Add where it is kept and when it expires.", **added)
+              if tv.has("expiry") else
+              gettext("Added %(name)s to %(database)s as #%(number)s. Add where it is kept.", **added), "success")
         # Its dialog opens there, for the details only the shelf knows.
         return redirect(url_for("inventory.module", key=target.key, open=stock.id))
 
@@ -1088,12 +1148,13 @@ def _order_for_stock(session, ref: str):
 def _from_order_payload(session, tv, ref: str, shared: bool) -> dict | None:
     order, mv = _order_for_stock(session, ref)
     if order is None:
-        flash("That order can't be added to stock (it's gone, not received, or already in stock).", "warning")
+        flash(gettext("That order can't be added to stock (it's gone, not received, or already in stock)."), "warning")
         return None
     payload = _item_payload(tv, _stock_from_order(session, mv, tv, order, shared))
     payload.pop("id", None)
-    payload.update(from_order=ref, _hint=f"Adding {mv.item_noun} #{order.number} to {tv.row.label}: "
-                                         f"fill in what is starred, then Create.")
+    payload.update(from_order=ref, _hint=gettext(
+        "Adding %(noun)s #%(number)s to %(database)s: fill in what is starred, then Create.",
+        noun=_tr(mv.item_noun), number=order.number, database=i18n.translate_value(tv.row.label)))
     return payload
 
 
@@ -1103,13 +1164,13 @@ def _from_order_payload(session, tv, ref: str, shared: bool) -> dict | None:
 
 
 BULK_ACTIONS = {
-    # action: (who may, past tense for the message)
-    "status": ("edit", "Set the status of"),
-    "rack": ("edit", "Moved"),
-    "owner": ("manage", "Changed the owner of"),
-    "shared": ("manage", "Changed who can edit"),
-    "field": ("edit", "Set"),
-    "delete": ("manage", "Deleted"),
+    # action: who may (what it did is said by _bulk_message)
+    "status": "edit",
+    "rack": "edit",
+    "owner": "manage",
+    "shared": "manage",
+    "field": "edit",
+    "delete": "manage",
 }
 
 # Built-in columns "Set field" offers, and the feature each needs.
@@ -1136,6 +1197,21 @@ def bulk_fields(mv) -> list[dict]:
     return out
 
 
+def _bulk_message(action: str, n: int, noun: str, field: str = "") -> str:
+    """What a batch action did, as one sentence."""
+    if action == "status":
+        return gettext("Set the status of %(n)s %(noun)s.", n=n, noun=noun)
+    if action == "rack":
+        return gettext("Moved %(n)s %(noun)s.", n=n, noun=noun)
+    if action == "owner":
+        return gettext("Changed the owner of %(n)s %(noun)s.", n=n, noun=noun)
+    if action == "shared":
+        return gettext("Changed who can edit %(n)s %(noun)s.", n=n, noun=noun)
+    if action == "field":
+        return gettext("Set %(field)s on %(n)s %(noun)s.", field=field, n=n, noun=noun)
+    return gettext("Deleted %(n)s %(noun)s.", n=n, noun=noun)
+
+
 @bp.route("/<key>/items/bulk", methods=["POST"])
 def bulk(key: str):
     """Set status, move to a box, set owner, personal / lab common, delete.
@@ -1150,31 +1226,31 @@ def bulk(key: str):
         row = _module_or_404(session, key)
         mv = svc.view(row)
         if action not in BULK_ACTIONS:
-            return _done(key, error="Pick what to do with them.")
+            return _done(key, error=gettext("Pick what to do with them."))
         share_group = project_groups.parse(value)[1] if action == "shared" else None
         if share_group is not None and not project_groups.may_share_with(share_group):
             return _done(key, error=project_groups.refusal(share_group))
         items = list(session.scalars(select(InventoryItem).where(
             InventoryItem.module_id_fk == row.id, InventoryItem.id.in_(ids)).order_by(InventoryItem.number)))
         if not items:
-            return _done(key, error=f"No {mv.item_noun_plural} selected.")
+            return _done(key, error=gettext("No %(nouns)s selected.", nouns=_tr(mv.item_noun_plural)))
         rack = None
         if action == "status" and mv.statuses and svc.match_status(mv, value) is None:
-            return _done(key, error=f"“{value}” is not a status here.")
+            return _done(key, error=gettext("“%(value)s” is not a status here.", value=value))
         if action == "owner" and not value:
-            return _done(key, error="Type whose they should be.")
+            return _done(key, error=gettext("Type whose they should be."))
         if action == "rack" and value:
             rack = session.get(InventoryRack, int(value)) if value.isdigit() else None
             if rack is None or rack.module_id_fk != row.id:
-                return _done(key, error="That box is not part of this inventory.")
+                return _done(key, error=gettext("That box is not part of this inventory."))
         field = None
         if action == "field":
             field = next((f for f in bulk_fields(mv) if f["name"] == request.form.get("field")), None)
             if field is None:
-                return _done(key, error="Pick the column to set.")
+                return _done(key, error=gettext("Pick the column to set."))
             if not value.strip() and request.form.get("clear") != "1":
-                return _done(key, error=f"Type what to set {field['label']} to. (To empty it on those rows, leave it blank and confirm.)")
-        need, verb = BULK_ACTIONS[action]
+                return _done(key, error=gettext("Type what to set %(field)s to. (To empty it on those rows, leave it blank and confirm.)", field=_tr(field["label"])))
+        need = BULK_ACTIONS[action]
         refused: list[str] = []
         done = skipped = 0
         notes: list[str] = []
@@ -1215,21 +1291,20 @@ def bulk(key: str):
                         item.rack_id_fk = rack.id
                         item.rack_row, item.rack_col = cell if cell else (None, None)
                         if cell is None:
-                            notes.append(f"{rack.name} is full: {item.name or '#' + str(item.number)} is in it without a position.")
+                            notes.append(gettext("%(box)s is full: %(item)s is in it without a position.",
+                                                 box=rack.name, item=item.name or "#" + str(item.number)))
                         session.flush()  # the next item sees this cell as taken
                 item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
                 done += 1
-        noun = mv.item_noun if done == 1 else mv.item_noun_plural
+        noun = _tr(mv.item_noun if done == 1 else mv.item_noun_plural)
         session.commit()
-    if action == "field":
-        verb = f"Set {field['label']} on"
-    message = f"{verb} {done} {noun}."
+    message = _bulk_message(action, done, noun, _tr(field["label"]) if field else "")
     if refused:
-        flash(f"Not set on {len(refused)}: {refused[0]}", "error")
+        flash(gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error")
         skipped -= len(refused)
     if skipped:
-        message += (f" {skipped} left alone: only their owner or an admin can do that."
-                    if need == "manage" else f" {skipped} belong to someone else and were left alone.")
+        message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
+                             if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))
     for note in notes[:5]:
         flash(note, "info")
     if not done:
@@ -1253,7 +1328,8 @@ def save_rack(key: str):
         if rack is not None and rack.module_id_fk != row.id:
             abort(404)
         if rack is not None and not _can_manage_rack(rack):
-            flash(f"Only {rack.created_by or 'an admin'}{' or an admin' if rack.created_by else ''} can change {rack.name}.", "error")
+            flash(gettext("Only %(who)s or an admin can change %(box)s.", who=rack.created_by, box=rack.name)
+                  if rack.created_by else gettext("Only an admin can change %(box)s.", box=rack.name), "error")
             return redirect(url_for("inventory.module", key=key))
         rows = _int(form.get("rows"), rack.rows if rack else 9, 1, 26)
         cols = _int(form.get("cols"), rack.cols if rack else 9, 1, 40)
@@ -1263,10 +1339,11 @@ def save_rack(key: str):
                 (InventoryItem.rack_row > rows) | (InventoryItem.rack_col > cols))).all()
             if outside:
                 n = len(outside)
-                flash(f"{rack.name} cannot shrink to {rows} × {cols}: {n} "
-                      f"{mv.item_noun if n == 1 else mv.item_noun_plural} sit outside that "
-                      f"({', '.join(i.name or '#' + str(i.number) for i in outside[:4])}{'…' if n > 4 else ''}). "
-                      f"Move them first.", "error")
+                flash(gettext("%(box)s cannot shrink to %(rows)s × %(cols)s: %(n)s %(nouns)s sit outside that (%(items)s). Move them first.",
+                              box=rack.name, rows=rows, cols=cols, n=n,
+                              nouns=_tr(mv.item_noun if n == 1 else mv.item_noun_plural),
+                              items=", ".join(i.name or "#" + str(i.number) for i in outside[:4]) + ("…" if n > 4 else "")),
+                      "error")
                 return redirect(url_for("inventory.module", key=key))
         count = _int(form.get("count"), 1, 1, MAX_BOXES_AT_ONCE) if rack is None else 1
         if count > 1:
@@ -1286,7 +1363,7 @@ def save_rack(key: str):
         rack.rows, rack.cols = rows, cols
         rack.naming = json.dumps(positions.scheme_from_form(form))
         session.commit()
-        flash(f"Saved {rack.name}.", "success")
+        flash(gettext("Saved %(name)s.", name=rack.name), "success")
     return redirect(url_for("inventory.module", key=key))
 
 
@@ -1310,7 +1387,8 @@ def _create_boxes(session, row, mv, form, rows: int, cols: int, count: int):
                                   stored_at=(form.get("stored_at") or "").strip()[:40]))
         made.append(name)
     session.commit()
-    flash(f"Made {count} {'boxes' if count > 1 else 'box'}: {made[0]} to {made[-1]}.", "success")
+    flash(ngettext("Made %(num)s box: %(first)s to %(last)s.", "Made %(num)s boxes: %(first)s to %(last)s.", count,
+                   first=made[0], last=made[-1]), "success")
     return redirect(url_for("inventory.module", key=row.key))
 
 
@@ -1321,7 +1399,8 @@ def delete_rack(key: str, rack_id: int):
         rack = session.get(InventoryRack, rack_id)
         if rack is not None and rack.module_id_fk == row.id:
             if not _can_manage_rack(rack):
-                flash(f"Only {rack.created_by or 'an admin'}{' or an admin' if rack.created_by else ''} can delete {rack.name}.", "error")
+                flash(gettext("Only %(who)s or an admin can delete %(box)s.", who=rack.created_by, box=rack.name)
+                      if rack.created_by else gettext("Only an admin can delete %(box)s.", box=rack.name), "error")
                 return redirect(url_for("inventory.module", key=key))
             with audit.batch(session, "mixed", f"delete box {rack.name}", "inventory_racks"):
                 for item in session.scalars(select(InventoryItem).where(InventoryItem.rack_id_fk == rack.id)):
@@ -1330,7 +1409,7 @@ def delete_rack(key: str, rack_id: int):
                 name = rack.name
                 session.delete(rack)
             session.commit()
-            flash(f"Deleted {name}. What was in it is now unplaced.", "success")
+            flash(gettext("Deleted %(name)s. What was in it is now unplaced.", name=name), "success")
     return redirect(url_for("inventory.module", key=key))
 
 
@@ -1377,17 +1456,19 @@ def configure(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         if not _can_configure(row):
-            flash(f"Only an admin, or whoever created {row.label}, can configure it.", "error")
+            flash(gettext("Only an admin, or whoever created %(name)s, can configure it.",
+                          name=i18n.translate_value(row.label)), "error")
             return redirect(url_for("inventory.module", key=key))
         if request.method == "POST":
             form = request.form
             label = (form.get("label") or "").strip()
             if not label:
-                flash("An inventory needs a name.", "error")
+                flash(gettext("An inventory needs a name."), "error")
                 return redirect(url_for("inventory.configure", key=key))
             clash = database_keys.name_clash(session, label[:120], "inventory", row)
             if clash and label[:120].casefold() != (row.label or "").casefold():
-                flash(f"There is already a database called {clash}; give this one a name of its own.", "error")
+                flash(gettext("There is already a database called %(name)s; give this one a name of its own.",
+                              name=clash), "error")
                 return redirect(url_for("inventory.configure", key=key))
             row.label = label[:120]
             row.blurb = (form.get("blurb") or "").strip()
@@ -1410,11 +1491,12 @@ def configure(key: str):
                 session.rollback()
                 counts = {column: svc.choice_counts(session, row.id, column) for column, _ in problems}
                 mv = svc.view(row)
-                flash("Not saved: " + " ".join(
-                    f"{_n(counts[column][old], mv)} still {'have' if counts[column][old] != 1 else 'has'} the "
-                    f"{'status' if column == 'status' else mv.category_label.lower()} “{old}”. "
-                    f"Pick what {'they' if counts[column][old] != 1 else 'it'} should become, or keep it."
-                    for column, old in problems), "error")
+                flash(gettext("Not saved: %(reason)s", reason=_sentences(*(
+                    ngettext("%(items)s still has the %(column)s “%(value)s”. Pick what it should become, or keep it.",
+                             "%(items)s still have the %(column)s “%(value)s”. Pick what they should become, or keep it.",
+                             counts[column][old], items=_n(counts[column][old], mv), value=old,
+                             column=gettext("status") if column == "status" else _tr(mv.category_label).lower())
+                    for column, old in problems))), "error")
                 return redirect(url_for("inventory.configure", key=key))
             settings = json.dumps(presets.normalise_settings({
                 "features": form.getlist("features"),
@@ -1425,14 +1507,20 @@ def configure(key: str):
                              else presets.normalise_settings(row.settings)["required"]),
             }))
             category_label = presets.normalise_settings(settings)["category_label"]
-            changes = []
+            changes, said = [], []   # for Batch history (kept in English), and for the message
             for column, plan in plans.items():
                 counts = svc.choice_counts(session, row.id, column)
                 what = "status" if column == "status" else category_label.lower()
+                shown = gettext("status") if column == "status" else _tr(category_label).lower()
                 for old, (new, how) in plan.relabel.items():
                     if counts.get(old):
                         verb = "Rename" if how == "rename" else "Replace"
-                        changes.append(f"{verb} {what} ‘{old}’ → ‘{new}’ ({_n(counts[old], row)})")
+                        changes.append(f"{verb} {what} ‘{old}’ → ‘{new}’ ({counts[old]} "
+                                       f"{row.item_noun if counts[old] == 1 else row.item_noun_plural})")
+                        relabel = {"column": shown, "old": old, "new": new, "items": _n(counts[old], row)}
+                        said.append(gettext("Rename %(column)s ‘%(old)s’ → ‘%(new)s’ (%(items)s)", **relabel)
+                                    if how == "rename" else
+                                    gettext("Replace %(column)s ‘%(old)s’ → ‘%(new)s’ (%(items)s)", **relabel))
             if changes:
                 # One batch with the new settings, so Batch history puts the
                 # list and the items back together.
@@ -1444,8 +1532,10 @@ def configure(key: str):
                 row.settings = settings
             moved = database_keys.rekey(session, "inventory", row)    # its address follows its name
             session.commit()
-            flash(f"Saved {row.label}." + (" " + "; ".join(changes) + "." if changes else "")
-                  + (f" Its address is now /inventory/{moved}; links to the old one still work." if moved else ""),
+            flash(_sentences(gettext("Saved %(name)s.", name=row.label),
+                             gettext("%(changes)s.", changes=gettext("; ").join(said)) if said else "",
+                             gettext("Its address is now /inventory/%(key)s; links to the old one still work.", key=moved)
+                             if moved else ""),
                   "success")
             return redirect(url_for("inventory.module", key=row.key))
         mv = svc.view(row)
@@ -1457,7 +1547,7 @@ def configure(key: str):
 
 
 def _n(count: int, mv) -> str:
-    return f"{count} {mv.item_noun if count == 1 else mv.item_noun_plural}"
+    return gettext("%(n)s %(noun)s", n=count, noun=_tr(mv.item_noun if count == 1 else mv.item_noun_plural))
 
 
 def _choice_rows(form, name: str, limit: int) -> list[dict] | None:
@@ -1477,10 +1567,10 @@ def delete_module(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         if not _can_configure(row):
-            flash("Only an admin, or whoever created it, can delete an inventory.", "error")
+            flash(gettext("Only an admin, or whoever created it, can delete an inventory."), "error")
             return redirect(url_for("inventory.module", key=key))
         if (request.form.get("confirm") or "").strip() != row.label:
-            flash(f"Type the name “{row.label}” to confirm deleting it.", "error")
+            flash(gettext("Type the name “%(name)s” to confirm deleting it.", name=row.label), "error")
             return redirect(url_for("inventory.configure", key=key))
         for item in session.scalars(select(InventoryItem).where(InventoryItem.module_id_fk == row.id)):
             session.delete(item)
@@ -1489,5 +1579,5 @@ def delete_module(key: str):
         label = row.label
         session.delete(row)
         session.commit()
-        flash(f"Deleted {label} and everything in it.", "success")
+        flash(gettext("Deleted %(name)s and everything in it.", name=label), "success")
     return redirect(url_for("organisms.index"))

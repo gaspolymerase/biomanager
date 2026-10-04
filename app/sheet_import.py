@@ -50,6 +50,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 
 from . import access, audit, lab
 from .db import SessionLocal
+from .i18n import gettext, ngettext, translate_value
 from .paths import data_dir
 
 bp = Blueprint("sheet_import", __name__, url_prefix="/import-sheet")
@@ -70,8 +71,7 @@ class Gone(Exception):
 
 @bp.errorhandler(Gone)
 def _gone(_error):
-    flash("That upload is finished: it was imported, or it's more than a day old. Upload the file again to "
-          "import more.", "warning")
+    flash(gettext("That upload is finished: it was imported, or it's more than a day old. Upload the file again to import more."), "warning")
     return redirect(url_for("index"))
 
 
@@ -201,14 +201,14 @@ def read_workbook(filename: str, data: bytes) -> dict[str, list[list[str]]]:
     """{sheet name: rows of text}, empty sheets left out."""
     name = (filename or "").lower()
     if len(data) > MAX_BYTES:
-        raise ImportProblem("That file is over 15 MB. Save only the sheet you need, or as CSV.")
+        raise ImportProblem(gettext("That file is over 15 MB. Save only the sheet you need, or as CSV."))
     if name.endswith((".xlsx", ".xlsm")):
         from openpyxl import load_workbook
         try:
             book = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
         except Exception as exc:
-            raise ImportProblem(f"That doesn't open as an Excel workbook ({exc.__class__.__name__}). "
-                                "Save it again from Excel as .xlsx, or as CSV.") from exc
+            raise ImportProblem(gettext("That doesn't open as an Excel workbook (%(error)s). Save it again from Excel as .xlsx, or as CSV.",
+                                        error=exc.__class__.__name__)) from exc
         sheets = {}
         merged = _merged_ranges(data)
         for sheet in book.worksheets:
@@ -224,10 +224,9 @@ def read_workbook(filename: str, data: bytes) -> dict[str, list[list[str]]]:
         book.close()
         return sheets
     if name.endswith(".xls"):
-        raise ImportProblem("That's an old-style .xls file. In Excel choose File → Save As → Excel Workbook "
-                            "(.xlsx), or CSV, and upload that.")
+        raise ImportProblem(gettext("That's an old-style .xls file. In Excel choose File → Save As → Excel Workbook (.xlsx), or CSV, and upload that."))
     if not name.endswith((".csv", ".tsv", ".txt")):
-        raise ImportProblem("Upload an Excel workbook (.xlsx) or a CSV file.")
+        raise ImportProblem(gettext("Upload an Excel workbook (.xlsx) or a CSV file."))
     text = _decode(data)
     first = text.split("\n", 1)[0]
     if name.endswith(".tsv") or first.count("\t") > max(first.count(","), first.count(";")):
@@ -353,8 +352,8 @@ def score(header: str, values: list[str], f: Field) -> tuple[float, str]:
     names = f.names()
     shape = _shape(values)
     if h in names:
-        best, why = (1.0, "same name") if h in (norm(f.label), norm(f.key.replace("_", " "))) \
-            else (0.95, f"“{header}” means {f.label}")
+        best, why = (1.0, gettext("same name")) if h in (norm(f.label), norm(f.key.replace("_", " "))) \
+            else (0.95, gettext("“%(header)s” means %(label)s", header=header, label=translate_value(f.label, "import")))
     else:
         best, why = 0.0, ""
         for n in names:
@@ -362,15 +361,15 @@ def score(header: str, values: list[str], f: Field) -> tuple[float, str]:
             # spreadsheet header names its thing last. "Cage colour" is not
             # a cage.
             if n and n not in _GENERIC and h.endswith(f" {n}") and 0.8 > best:
-                best, why = 0.8, f"“{header}” is a kind of {n}"
+                best, why = 0.8, gettext("“%(header)s” is a kind of %(name)s", header=header, name=n)
             # "Hazard class", "Weight (g)": the name, then a generic word or a unit.
             rest = h[len(n) + 1:].split() if n and h.startswith(f"{n} ") else []
             if (rest and n not in _GENERIC and all(w in _GENERIC or w in _UNITS for w in rest)
                     and 0.75 > best):
-                best, why = 0.75, f"“{header}” is {n}"
+                best, why = 0.75, gettext("“%(header)s” is %(name)s", header=header, name=n)
             ratio = difflib.SequenceMatcher(None, h, n).ratio()
             if ratio >= 0.82 and ratio * 0.85 > best:
-                best, why = ratio * 0.85, f"spelled like “{n}”"
+                best, why = ratio * 0.85, gettext("spelled like “%(name)s”", name=n)
     if best and f.kind == "position" and not _positions(values):
         best *= 0.4                       # "Location: Freezer 2" is a note, not a position
     if best and f.kind == "place" and shape == "position" and h in _EITHER:
@@ -380,7 +379,8 @@ def score(header: str, values: list[str], f: Field) -> tuple[float, str]:
     if best and f.kind == "number" and shape in ("text", "position"):
         best *= 0.6
     if not best and f.kind == "position" and shape == "position" and h in _EITHER:
-        best, why = 0.9, f"“{header}” holds positions like {next(v for v in values if v.strip())}"
+        best, why = 0.9, gettext("“%(header)s” holds positions like %(example)s", header=header,
+                                    example=next(v for v in values if v.strip()))
     return best, why
 
 
@@ -458,7 +458,7 @@ def tidy_dates(values: list[str], day_first: bool = False) -> tuple[list[str], l
             out[i] = known.isoformat()
             continue
         if not match:
-            notes.append(f"“{raw}” isn't a date, so it's left blank.")
+            notes.append(gettext("“%(value)s” isn't a date, so it's left blank.", value=raw))
             out[i] = ""
             continue
         a, b, y = (int(x) for x in match.groups())
@@ -473,14 +473,14 @@ def tidy_dates(values: list[str], day_first: bool = False) -> tuple[list[str], l
         try:
             out[i] = date(y, month, day).isoformat()
         except ValueError:
-            notes.append(f"“{values[i]}” isn't a date, so it's left blank.")
+            notes.append(gettext("“%(value)s” isn't a date, so it's left blank.", value=values[i]))
             out[i] = ""
     if day_first and month_first:
-        notes.append("Its dates mix day-first and month-first: check them after importing.")
+        notes.append(gettext("Its dates mix day-first and month-first: check them after importing."))
     elif guessed and read_day_first:
-        notes.append("Its dates were read day first (03/04/2026 as 3 April), as Lab setup's date style says.")
+        notes.append(gettext("Its dates were read day first (03/04/2026 as 3 April), as Lab setup's date style says."))
     elif guessed:
-        notes.append("Its dates were read month first (03/04/2026 as 4 March).")
+        notes.append(gettext("Its dates were read month first (03/04/2026 as 4 March)."))
     return out, notes[:5]
 
 
@@ -548,7 +548,7 @@ def _owner(ctx, raw: str, warnings: list[str], extras: list[tuple[str, str]]) ->
     found = ctx["people"].get(raw.strip().lower())
     if found:
         return found
-    warnings.append(f"“{raw}” isn't anyone in the lab, so it's yours; the name is kept in the notes.")
+    warnings.append(gettext("“%(name)s” isn't anyone in the lab, so it's yours; the name is kept in the notes.", name=raw))
     extras.append(("Owner in the spreadsheet", raw))
     return g.user.username
 
@@ -634,8 +634,8 @@ class MiceTarget(Target):
             if typed:
                 extras.insert(0, ("ID in the spreadsheet", typed))
             if typed.isdigit() and int(typed) > 0:
-                warnings.append(f"Mouse ID {typed} is taken (in the colony or by an earlier row), "
-                                f"so this one is #{mouse_id}; {typed} is kept in its notes.")
+                warnings.append(gettext("Mouse ID %(typed)s is taken (in the colony or by an earlier row), so this one is #%(id)s; %(typed)s is kept in its notes.",
+                                        typed=typed, id=mouse_id))
         ctx["taken"].add(mouse_id)
         owner = _owner(ctx, v.get("owner", ""), warnings, extras)
         form = {k: v[k] for k in ("gender", "cage_id", "cage_location", "litter_id", "date_of_birth", "status",
@@ -644,8 +644,7 @@ class MiceTarget(Target):
         # Nothing is born tomorrow: a future date is a typo (2062 for 2026).
         born = parse_date(form.get("date_of_birth", ""))
         if born is not None and born > date.today():
-            warnings.append(f"The date of birth {born.isoformat()} is in the future, so it's left blank "
-                            "and kept in the notes.")
+            warnings.append(gettext("The date of birth %(date)s is in the future, so it's left blank and kept in the notes.", date=born.isoformat()))
             extras.append(("Date of birth in the spreadsheet", v.get("date_of_birth", "")))
             form["date_of_birth"], born = "", None
         # One litter, one date of birth: a later row can't re-date the mice before it.
@@ -653,8 +652,8 @@ class MiceTarget(Target):
         if litter and born is not None:
             first = ctx["litter_dates"].setdefault(litter, born)
             if first != born:
-                warnings.append(f"Litter {litter} was born {first.isoformat()} in an earlier row, so this "
-                                f"mouse is too; {born.isoformat()} is kept in its notes.")
+                warnings.append(gettext("Litter %(litter)s was born %(first)s in an earlier row, so this mouse is too; %(date)s is kept in its notes.",
+                                        litter=litter, first=first.isoformat(), date=born.isoformat()))
                 extras.append(("Date of birth in the spreadsheet", born.isoformat()))
                 form["date_of_birth"] = first.isoformat()
         # A rack and position with no cage number: one new cage per place.
@@ -699,9 +698,10 @@ def _mouse_statuses(session) -> dict[str, str]:
 
 def mice_target(session) -> Target:
     return MiceTarget(
-        key="mice", title=f"Mice in {lab.FEATURES['colony'].label}", noun="mouse", nouns="mice",
+        key="mice", title=gettext("Mice in %(db)s", db=translate_value(lab.FEATURES['colony'].label)),
+        noun="mouse", nouns="mice",
         back_url=url_for("colony", view="mice"),
-        columns_note="The mouse colony's columns are fixed, so any others go into each mouse's notes.",
+        columns_note=gettext("The mouse colony's columns are fixed, so any others go into each mouse's notes."),
         derived=("active", "age week", "age day", "age"),
         fields=[
             Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "ear tag", "tag", "animal id", "animal"),
@@ -753,7 +753,7 @@ class FishTarget(Target):
         warnings: list[str] = []
         code = v.get("tank", "").strip()
         if not code:
-            raise RowError("It has no tank.")
+            raise RowError(gettext("It has no tank."))
         owner = _owner(ctx, v.get("owner", ""), warnings, extras)
         line = None
         line_name = v.get("line", "").strip()
@@ -764,8 +764,8 @@ class FishTarget(Target):
                 session.add(line)
                 session.flush()
                 ctx["lines"][line_name.lower()] = line
-                warnings.append(f"There was no line “{line_name}”, so it's made new. If it's a spelling of "
-                                "one you have, change the name in the sheet (or merge them after).")
+                warnings.append(gettext("There was no line “%(line)s”, so it's made new. If it's a spelling of one you have, change the name in the sheet (or merge them after).",
+                                        line=line_name))
         tank = ctx["tanks"].get(code.lower())
         if tank is None:
             tank = TankRecord(tank_id=code[:80], owner=owner, purpose="stock", active=True,
@@ -773,10 +773,11 @@ class FishTarget(Target):
             session.add(tank)
             session.flush()
             ctx["tanks"][code.lower()] = tank
-            warnings.append(f"There was no tank {code}, so it's made new.")
+            warnings.append(gettext("There was no tank %(tank)s, so it's made new.", tank=code))
             rack = ctx["racks"].get(v.get("rack", "").strip().lower())
             if v.get("rack", "").strip() and rack is None:
-                warnings.append(f"There's no rack called “{v['rack']}”, so tank {code} isn't placed.")
+                warnings.append(gettext("There's no rack called “%(rack)s”, so tank %(tank)s isn't placed.",
+                                        rack=v['rack'], tank=code))
             elif rack is not None:
                 problem = apply_fish_position(session, tank, str(rack.id), v.get("position", ""))
                 if problem:
@@ -796,14 +797,15 @@ class FishTarget(Target):
         session.add(fish)
         zf_apply_fish_status(session, fish, "alive")
         session.flush()
-        return f"{fish.count} in {tank.tank_id}", warnings
+        return gettext("%(count)s in %(tank)s", count=fish.count, tank=tank.tank_id), warnings
 
 
 def fish_target(session) -> Target:
     return FishTarget(
-        key="fish", title=f"Fish in {lab.FEATURES['zebrafish'].label}", noun="row of fish", nouns="rows of fish",
+        key="fish", title=gettext("Fish in %(db)s", db=translate_value(lab.FEATURES['zebrafish'].label)),
+        noun="row of fish", nouns="rows of fish",
         back_url=url_for("zebrafish", view="fish"),
-        columns_note="The zebrafish columns are fixed, so any others go into the fish's notes.",
+        columns_note=gettext("The zebrafish columns are fixed, so any others go into the fish's notes."),
         fields=[
             Field("tank", "Tank", ("tank", "tank number", "tank id", "aquarium"), required=True,
                   note="New tanks are made, placed from Rack and Position"),
@@ -838,7 +840,7 @@ class PlasmidTarget(Target):
         warnings: list[str] = []
         name = v.get("name", "").strip()
         if not name:
-            raise RowError("It has no name.")
+            raise RowError(gettext("It has no name."))
         typed = v.get("plasmid_id", "").strip().lstrip("#")
         if typed.isdigit() and int(typed) > 0 and int(typed) not in ctx["taken"]:
             number = int(typed)
@@ -882,9 +884,9 @@ class PlasmidTarget(Target):
 
 def plasmid_target(session) -> Target:
     return PlasmidTarget(
-        key="plasmids", title=lab.FEATURES["plasmids"].label, noun="plasmid", nouns="plasmids",
+        key="plasmids", title=translate_value(lab.FEATURES["plasmids"].label), noun="plasmid", nouns="plasmids",
         back_url=url_for("plasmids"),
-        columns_note="The plasmid columns are fixed, so any others go into each plasmid's notes.",
+        columns_note=gettext("The plasmid columns are fixed, so any others go into each plasmid's notes."),
         fields=[
             Field("plasmid_id", "Plasmid number", ("plasmid number", "plasmid id", "number", "id", "stock number",
                                                    "pl number", "p number")),
@@ -924,7 +926,7 @@ class StockTarget(Target):
         mv = self.mv
         warnings: list[str] = []
         if not v.get("genotype", "").strip() and not (v.get("female_genotype") or v.get("male_genotype")):
-            raise RowError("It has no genotype.")
+            raise RowError(gettext("It has no genotype."))
         unit = StockUnit(module_id_fk=mv.id, number=svc.next_number(session, mv.id), owner=g.user.username,
                          purpose=mv.default_purpose)
         session.add(unit)
@@ -939,15 +941,16 @@ class StockTarget(Target):
             if known:
                 form["purpose"] = purpose
             else:
-                warnings.append(f"“{v['purpose']}” isn't one of this database's purposes, so it's "
-                                f"{mv.purpose_label(mv.default_purpose).lower()}.")
+                warnings.append(gettext("“%(purpose)s” isn't one of this database's purposes, so it's %(default)s.",
+                                        purpose=v['purpose'],
+                                        default=translate_value(mv.purpose_label(mv.default_purpose)).lower()))
                 extras.append(("Purpose in the spreadsheet", v["purpose"]))
         form["notes"] = _extras_note(v.get("notes", ""), extras)
         rack_name = v.get("rack", "").strip()
         if rack_name:
             rack = ctx["racks"].get(rack_name.lower())
             if rack is None:
-                warnings.append(f"There's no rack called “{rack_name}”, so it isn't placed.")
+                warnings.append(gettext("There's no rack called “%(rack)s”, so it isn't placed.", rack=rack_name))
             else:
                 form["rack_id"], form["position"] = str(rack.id), v.get("position", "")
         try:
@@ -972,9 +975,11 @@ def stock_target(session, module) -> Target:
     mv = svc.view(module)
     unit, units = mv.unit, mv.units
     return StockTarget(
-        key=f"stocks:{module.key}", title=f"{units.capitalize()} in {mv.label}", noun=unit, nouns=units,
+        key=f"stocks:{module.key}", title=gettext("%(things)s in %(db)s", things=translate_value(units.capitalize(), "import"),
+                                                   db=translate_value(mv.label)), noun=unit, nouns=units,
         back_url=url_for("stocks.module", key=module.key), module=module, mv=mv,
-        columns_note=f"The {mv.label} columns are fixed, so any others go into each {unit}'s notes.",
+        columns_note=gettext("The %(db)s columns are fixed, so any others go into each %(thing)s's notes.",
+                             db=translate_value(mv.label), thing=translate_value(unit, "import")),
         fields=[
             Field("genotype", "Genotype", ("genotype", "stock", "strain", "line", "name", "stock name",
                                            "description"), required=True),
@@ -1027,7 +1032,7 @@ class OrganismTarget(Target):
         if not code and mv.identity_mode == "individual":
             code = svc.next_code(session, module, "organism")
         if code and code.lower() in ctx["codes"]:
-            raise RowError(f"{code} is already in {mv.label}.")
+            raise RowError(gettext("%(code)s is already in %(db)s.", code=code, db=translate_value(mv.label)))
         form = {k: v[k] for k in v if k.startswith("attr_") or k in ("sex", "status", "genotype", "protocol",
                                                                      "birth_on", "death_on", "count")}
         form["owner"] = _owner(ctx, v.get("owner", ""), warnings, extras)
@@ -1060,7 +1065,7 @@ class OrganismTarget(Target):
             ctx["codes"].add(code.lower())
         svc.log_event(session, module, "organism", row.id, "create", count=row.count,
                       recorded_by=g.user.username, notes="Imported from a spreadsheet")
-        return code or f"{row.count} {mv.organism_noun_plural}", warnings
+        return code or f"{row.count} {translate_value(mv.organism_noun_plural)}", warnings
 
     def finish(self, session, ctx):
         from . import organism_service as svc
@@ -1103,11 +1108,12 @@ def organism_target(session, module) -> Target:
                             required=bool(f.required), custom=True))
     can_add = access.can_configure(module)
     return OrganismTarget(
-        key=f"organisms:{module.key}", title=f"{mv.organism_noun_plural.capitalize()} in {mv.label}",
+        key=f"organisms:{module.key}", title=gettext("%(things)s in %(db)s",
+                                                     things=translate_value(mv.organism_noun_plural.capitalize(), "import"),
+                                                     db=translate_value(mv.label)),
         noun=mv.organism_noun, nouns=mv.organism_noun_plural, back_url=url_for("organisms.module", key=module.key),
         module=module, mv=mv, fields=fields, can_add_columns=can_add,
-        columns_note="" if can_add else "Only the person who configures this database can add columns, so any "
-                                        "others go into the notes.")
+        columns_note="" if can_add else gettext("Only the person who configures this database can add columns, so any others go into the notes."))
 
 
 # -- Inventories ----------------------------------------------------------------------
@@ -1157,7 +1163,8 @@ class InventoryTarget(Target):
             if matched:
                 form["status"] = matched
             else:
-                warnings.append(f"“{form['status']}” isn't one of the statuses, so it's {mv.statuses[0]}.")
+                warnings.append(gettext("“%(status)s” isn't one of the statuses, so it's %(default)s.",
+                                        status=form['status'], default=translate_value(mv.statuses[0])))
                 extras.append(("Status in the spreadsheet", form["status"]))
                 form["status"] = mv.statuses[0]
                 form["notes"] = _extras_note(v.get("notes", ""), extras)
@@ -1167,7 +1174,7 @@ class InventoryTarget(Target):
         if rack_name and mv.has("storage"):
             rack = ctx["racks"].get(rack_name.lower())
             if rack is None:
-                warnings.append(f"There's no box called “{rack_name}”, so it isn't placed.")
+                warnings.append(gettext("There's no box called “%(box)s”, so it isn't placed.", box=rack_name))
                 form["location_note"] = " · ".join(filter(None, [form.get("location_note", ""), rack_name,
                                                                  v.get("position", "")]))
             else:
@@ -1266,11 +1273,10 @@ def inventory_target(session, module) -> Target:
             f.required = True
     can_add = _can_configure(module)
     return InventoryTarget(
-        key=f"inventory:{module.key}", title=mv.label, noun=mv.item_noun, nouns=mv.item_noun_plural,
+        key=f"inventory:{module.key}", title=translate_value(mv.label), noun=mv.item_noun, nouns=mv.item_noun_plural,
         back_url=url_for("inventory.module", key=module.key), module=module, mv=mv, fields=fields,
         can_add_columns=can_add,
-        columns_note="" if can_add else "Only the person who configures this inventory can add columns, so any "
-                                        "others go into the notes.")
+        columns_note="" if can_add else gettext("Only the person who configures this inventory can add columns, so any others go into the notes."))
 
 
 def target_for(session, target_key: str) -> Target:
@@ -1332,8 +1338,8 @@ def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, c
             plan.fills.setdefault(f.key, f.fill)          # the owner: you
     missing = [f for f in target.fields if f.required and f.key not in used and not plan.fills.get(f.key)]
     if missing:
-        raise ImportProblem("Match a column, or give a value for every row, for: "
-                            + ", ".join(f.label for f in missing) + ".")
+        raise ImportProblem(gettext("Match a column, or give a value for every row, for: %(columns)s.",
+                                    columns=", ".join(translate_value(f.label, "import") for f in missing)))
     where = numbers or [n + 2 for n in range(len(rows))]
     # A sheet's own summary line ("TOTAL", "Grand total") is not a record.
     totals = [n for n, r in zip(where, rows) if is_total(r)]
@@ -1351,12 +1357,12 @@ def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, c
         if f and f.kind == "date":
             raw = columns[i]
             columns[i], notes = tidy_dates(raw, day_first)
-            tidy_notes += [f"{headers[i]}: {n}" for n in notes]
+            tidy_notes += [gettext("%(column)s: %(note)s", column=headers[i], note=n) for n in notes]
             unread[i] = {n: v.strip() for n, v in enumerate(raw) if v.strip() and not columns[i][n]}
     sheet_values = {key: {v.strip() for v in columns[i] if v.strip()}
                     for i, key in plan.mapping.items() if key in fields}
     unknown_choices: dict[str, set[str]] = {}
-    tidy_notes += [f"Row {n} looks like the sheet's total, so it's left out." for n in totals]
+    tidy_notes += [gettext("Row %(row)s looks like the sheet's total, so it's left out.", row=n) for n in totals]
     results = {"created": [], "problems": [], "warnings": [], "added_columns": [], "tidied": tidy_notes,
                "total": len(rows)}
     with SessionLocal() as session:
@@ -1409,12 +1415,13 @@ def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, c
                     label, warnings = target.create(session, ctx, values, extras)
                     savepoint.commit()
                     results["created"].append(label)
-                    results["warnings"] += [f"Row {where[n]} ({label}): {w}" for w in warnings]
+                    results["warnings"] += [gettext("Row %(row)s (%(label)s): %(warning)s", row=where[n], label=label,
+                                                    warning=w) for w in warnings]
                 except (RowError, Exception) as error:   # one bad row doesn't stop the rest
                     savepoint.rollback()
                     ctx = {**target.prepare(session), "sheet": sheet_values, "carry": carry}  # forget what the row made
                     message = str(error) if isinstance(error, RowError) else _plain(error)
-                    results["problems"].append(f"Row {where[n]}: {message}")
+                    results["problems"].append(gettext("Row %(row)s: %(problem)s", row=where[n], problem=message))
             if results["created"]:
                 target.finish(session, ctx)
             if batch_row is not None:
@@ -1428,7 +1435,7 @@ def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, c
             session.rollback()
     for label, values in unknown_choices.items():
         shown = ", ".join(sorted(values)[:6])
-        results["warnings"].insert(0, f"{label}: {shown} kept as typed (not one of BioManager's names for it).")
+        results["warnings"].insert(0, gettext("%(column)s: %(values)s kept as typed (not one of BioManager's names for it).", column=translate_value(label, "import"), values=shown))
     return results
 
 
@@ -1444,7 +1451,7 @@ def _open_transaction(session) -> None:
 def _plain(error: Exception) -> str:
     text = str(error).split("\n")[0]
     if "UNIQUE" in text or "unique" in text or "duplicate key" in text:
-        return "It would be a duplicate of a record that's already there."
+        return gettext("It would be a duplicate of a record that's already there.")
     return text[:200] or error.__class__.__name__
 
 
@@ -1495,7 +1502,7 @@ def upload(target_key: str):
         target = target_for(session, target_key)
     file = request.files.get("file")
     if file is None or not file.filename:
-        flash("Choose a file to import.", "error")
+        flash(gettext("Choose a file to import."), "error")
         return redirect(url_for("sheet_import.start", target_key=target_key))
     try:
         sheets = read_workbook(file.filename, file.read())
@@ -1503,7 +1510,7 @@ def upload(target_key: str):
         flash(str(problem), "error")
         return redirect(url_for("sheet_import.start", target_key=target_key))
     if not sheets:
-        flash("That file has nothing in it to import.", "error")
+        flash(gettext("That file has nothing in it to import."), "error")
         return redirect(url_for("sheet_import.start", target_key=target_key))
     token = _save({"user": g.user.username, "target": target_key, "filename": file.filename[:120],
                    "sheets": sheets})
@@ -1533,7 +1540,7 @@ def match(token: str):
             key, strength, why = matched.get(i, ("", 0.0, ""))
             samples = [v for v in columns[i] if v.strip()][:3]
             if not key and norm(header) in target.derived:
-                key, why = "_skip", "worked out from the other columns"
+                key, why = "_skip", gettext("worked out from the other columns")
             if not key:
                 key = "_new" if target.can_add_columns and samples else ("_notes" if samples else "_skip")
             shape = _shape(columns[i])
@@ -1573,12 +1580,15 @@ def _go(token: str, commit: bool):
             except OSError:
                 pass
             n = len(results["problems"])
-            skipped = (f" {n} row was skipped." if n == 1 else f" {n} rows were skipped.") if n else ""
-            flash(Markup(f"Imported {len(results['created'])} {target.nouns if len(results['created']) != 1 else target.noun} "
-                         f"from {payload['filename']}.{skipped} "
-                         f'<a href="{url_for("batches_view")}">Undo</a>'), "success")
+            made = len(results["created"])
+            skipped = (" " + ngettext("%(num)s row was skipped.", "%(num)s rows were skipped.", n)) if n else ""
+            said = gettext("Imported %(count)s %(things)s from %(file)s.", count=made,
+                           things=translate_value(target.nouns if made != 1 else target.noun, "import"),
+                           file=payload["filename"])
+            flash(Markup.escape(said + skipped) + Markup(' <a href="%s">%s</a>') % (url_for("batches_view"),
+                                                                                    gettext("Undo")), "success")
             return redirect(target.back_url)
-        flash("Nothing was imported: every row had a problem.", "error")
+        flash(gettext("Nothing was imported: every row had a problem."), "error")
     labels = {f.key: f.label for f in target.fields}
     # A fill chosen from a list reads as the list said it ("Lab common", not "1").
     fill_words = {f.key: dict(f.options) for f in target.fields if f.options}

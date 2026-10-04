@@ -114,13 +114,23 @@ class TheTranslations(unittest.TestCase):
 
     def test_every_gettext_in_python_has_its_chinese(self):
         zh = i18n.catalog("zh")
-        call = re.compile(r'\bgettext\(\s*"((?:[^"\\]|\\.)*)"')
+        lit = r'"((?:[^"\\]|\\.)*)"'
+        plain = re.compile(r'(?<![\w.])gettext\(\s*' + lit)
+        plural = re.compile(r'\bngettext\(\s*' + lit + r'\s*,\s*' + lit)
+        context = re.compile(r'\bpgettext\(\s*' + lit + r'\s*,\s*' + lit)
+
+        def clean(text):
+            return text.encode().decode("unicode_escape") if "\\" in text else text
+
         missing = []
         for path in sorted((ROOT / "app").glob("*.py")):
-            for text in call.findall(path.read_text(encoding="utf-8")):
-                text = text.encode().decode("unicode_escape") if "\\" in text else text
-                if text not in zh:
-                    missing.append(f"{path.name}: {text!r}")
+            source = path.read_text(encoding="utf-8")
+            wanted = [clean(t) for t in plain.findall(source)]
+            for one, many in plural.findall(source):
+                wanted += [clean(one), clean(many)]
+            for ctx, text in context.findall(source):
+                wanted.append(f"{clean(ctx)}::{clean(text)}" if f"{clean(ctx)}::{clean(text)}" in zh else clean(text))
+            missing += [f"{path.name}: {text!r}" for text in wanted if text not in zh]
         self.assertEqual(missing, [], "\n".join(missing[:40]))
 
 
@@ -155,3 +165,85 @@ class Plurals(AppTestCase):
             self.assertEqual(i18n.ngettext("%(num)s mouse", "%(num)s mice", 2), "2 mice")
             self.assertEqual(i18n.ngettext("%(num)s mouse in %(cage)s", "%(num)s mice in %(cage)s", 1, cage="C1"),
                              "1 mouse in C1")
+
+
+class DatesAndNotes(AppTestCase):
+    def test_dates_read_as_a_chinese_reader_writes_them(self):
+        from datetime import date, datetime
+        d = date(2026, 10, 3)
+        with app.test_request_context(headers={"Accept-Language": "zh-CN"}):
+            self.assertEqual(i18n.strftime(d, "%b %d"), "10月3日")
+            self.assertEqual(i18n.strftime(d, "%A, %b %d, %Y"), "2026年10月3日 星期六")
+            self.assertEqual(i18n.strftime(d, "%a %d %b %Y"), "2026年10月3日 周六")
+            self.assertEqual(i18n.strftime(datetime(2026, 10, 3, 9, 5), "%Y-%m-%d %H:%M"), "2026-10-03 09:05")
+        with app.test_request_context(headers={"Accept-Language": "en"}):
+            self.assertEqual(i18n.strftime(d, "%b %d"), "Oct 03")
+
+    def test_a_word_can_mean_two_things(self):
+        with app.test_request_context(headers={"Accept-Language": "zh-CN"}):
+            i18n.catalog("zh")["experiment::Active"] = "进行中"
+            try:
+                self.assertEqual(i18n.pgettext("experiment", "Active"), "进行中")
+                self.assertEqual(app.jinja_env.from_string("{{ s|tr('experiment') }}").render(s="Active"), "进行中")
+            finally:
+                del i18n.catalog("zh")["experiment::Active"]
+
+    def test_every_release_note_line_has_its_chinese(self):
+        from app import whats_new
+        zh = i18n.catalog("zh")
+        missing = [line for note in whats_new.NOTES.values() for key in ("new", "changed", "fixed")
+                   for line in note.get(key, []) if line not in zh]
+        self.assertEqual(missing, [])
+
+
+class NotificationsInTheRecipientsLanguage(AppTestCase):
+    def test_each_recipient_reads_it_in_their_language(self):
+        from app import notify
+        from app.db import SessionLocal
+        from app.models import NotificationRecord
+        zh_reader, en_reader = make_user(uniq("zhread")), make_user(uniq("enread"))
+        i18n.catalog("zh")["%(who)s shared a page with you"] = "%(who)s 和你共享了一个页面"
+        try:
+            with SessionLocal() as s:
+                from app import inventory_service
+                inventory_service.set_setting(s, i18n.preference_key(zh_reader), "zh")
+                s.commit()
+                for who in (zh_reader, en_reader):
+                    notify.send(s, who, "%(who)s shared a page with you", "Notes typed by Sam",
+                                category="notebook", values={"who": "Sam"})
+                s.commit()
+                titles = {n.recipient_username: (n.title, n.message) for n in s.query(NotificationRecord)
+                          .filter(NotificationRecord.recipient_username.in_([zh_reader, en_reader]))}
+        finally:
+            del i18n.catalog("zh")["%(who)s shared a page with you"]
+        self.assertEqual(titles[zh_reader], ("Sam 和你共享了一个页面", "Notes typed by Sam"))
+        self.assertEqual(titles[en_reader], ("Sam shared a page with you", "Notes typed by Sam"))
+
+    def test_the_language_last_seen_is_remembered(self):
+        who = make_user(uniq("seen"))
+        client_for(who).get("/settings", headers={"Accept-Language": ZH})
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            self.assertEqual(i18n.language_for(s, who), "zh")
+
+
+class FiltersOnQuotedText(AppTestCase):
+    """{{ 'Rack'|tr }} is worked out per page, not once when the template is
+    compiled: a Chinese page first must not leave English pages in Chinese."""
+
+    def test_each_page_gets_its_own_language(self):
+        tpl = app.jinja_env.from_string("{{ 'Mouse'|tr }} {{ d|date_format('%b') }}")
+        from datetime import date
+        with app.test_request_context(headers={"Accept-Language": "zh-CN"}):
+            self.assertEqual(tpl.render(d=date(2026, 10, 3)), "小鼠 10月")
+        with app.test_request_context(headers={"Accept-Language": "en"}):
+            self.assertEqual(tpl.render(d=date(2026, 10, 3)), "Mouse Oct")
+
+
+class TheApiStaysEnglish(AppTestCase):
+    def test_a_chinese_client_still_gets_english_from_the_api(self):
+        r = app.test_client().get("/api/v1/mice", headers={"Accept-Language": ZH})
+        self.assertNotIn("登录", r.get_data(as_text=True))
+        with app.test_request_context("/api/v1/mice", headers={"Accept-Language": ZH}):
+            app.preprocess_request()
+            self.assertEqual(i18n.current(), "en")

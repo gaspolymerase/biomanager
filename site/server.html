@@ -31,13 +31,12 @@
   <div class="wrap nav-inner">
     <a class="brand" href="./"><img src="assets/icon.svg" alt="" width="28" height="28">BioManager</a>
     <nav class="nav-links" aria-label="Site">
-      <a href="./#tour">Tour</a>
-      <a href="guide.html">User guide</a>
+      <a href="features.html">Features</a>
       <a href="server.html" aria-current="page">Run it for your lab</a>
-      <a href="./#faq">FAQ</a>
+      <a class="nav-guide" href="guide.html">User guide</a>
     </nav>
     <a class="lang-link" href="zh/server.html" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
-    <a class="btn btn-small btn-primary" href="./#download">Download</a>
+    <a class="btn btn-small btn-primary" href="download.html">Download</a>
   </div>
 </header>
 
@@ -47,21 +46,19 @@
     <summary class="toc-title">Contents</summary>
     <ol>
       <li class="toc-part">Start here</li>
-      <li><a href="#two-ways">App or server?</a></li>
-      <li><a href="#choose">Choose how</a></li>
-      <li class="toc-part">Ways to run it</li>
+      <li><a href="#choose">Pick a route</a></li>
+      <li><a href="#ai">Set it up with an AI assistant</a></li>
+      <li class="toc-part">Routes</li>
       <li><a href="#desktop">A · One computer</a></li>
-      <li><a href="#lan">B · A lab computer on your network</a></li>
+      <li><a href="#lan">B · A Linux computer in the lab</a></li>
       <li><a href="#campus">C · A university server</a></li>
       <li><a href="#tailscale">D · Cloud VM + Tailscale</a></li>
       <li><a href="#domain">E · Cloud VM + your own domain</a></li>
+      <li><a href="#move">Bring the desktop app's records</a></li>
       <li><a href="#other">Other routes</a></li>
       <li class="toc-part">Once it's running</li>
       <li><a href="#after">After it's running</a></li>
       <li><a href="#safe">Keeping the data safe</a></li>
-      <li><a href="#move">Moving from the app to a server</a></li>
-      <li class="toc-part">Help</li>
-      <li><a href="#ai">Set it up with an AI assistant</a></li>
       <li><a href="#faq">Questions</a></li>
     </ol>
    </details>
@@ -70,304 +67,794 @@
   <main class="guide-body">
     <p class="eyebrow">Run it for your lab</p>
     <h1>One lab, one database.</h1>
-    <p class="lede-left">BioManager runs on your own computer in two minutes, or on a server that the whole lab
-      opens from any browser and phone. This page lays out every way to host it, what each costs, and exactly
-      how to set it up. Most labs pay nothing.</p>
+    <p class="lede-left">Set-up recipes for BioManager. Pick a route, do its steps in order, and stop at
+      <b>Done when</b>. Most labs pay nothing.</p>
 
     <div class="part"><p class="part-label">Part one</p><h2>Start here</h2></div>
 
-    <!-- ======================================================= two ways -->
-    <section id="two-ways">
-      <h2>App or server?</h2>
-      <p>BioManager is the same program in both cases; what differs is where the database lives and who can reach it.</p>
-      <div class="opt-grid">
-        <div class="opt">
-          <p class="opt-kicker">💻 The desktop app</p>
-          <h3>For one person</h3>
-          <p>Download for macOS, Windows or Linux, open it, and you're working. The database is a file on that
-            computer, private to it. Nothing to install, nothing to run.</p>
-          <p class="opt-meta">Free · 2 minutes · <a href="./#download">Download</a></p>
-        </div>
-        <div class="opt">
-          <p class="opt-kicker">🌐 A lab server (the web version)</p>
-          <h3>For a whole lab</h3>
-          <p>One machine runs BioManager; everyone opens it in a browser — laptops, the computer in the mouse room,
-            phones at the rack. Everyone sees the same records, live, and it backs itself up every night.</p>
-          <p class="opt-meta">Usually free · about an hour · <a href="#choose">choose how</a></p>
-        </div>
-      </div>
-      <table class="gtable">
-        <tr><th>Phones</th><td>Phones open a <b>server</b>, never a desktop app. <b>Android</b>: install the BioManager app
-          (<a href="./#download">.apk</a>) and type the server's address once; its <b>Scan</b> button reads cage cards.
-          <b>iPhone and iPad</b>: open the server in Safari, tap <b>Share → Add to Home Screen</b>. It gets its own icon
-          and opens full screen like an app; the camera scans cage cards.</td></tr>
-        <tr><th>Mixing</th><td>Start with the app on your laptop. When the lab joins, <a href="#move">move the same
-          database onto a server</a> in one step: nothing is retyped.</td></tr>
-        <tr><th>Browsers</th><td>Any current Safari, Chrome, Edge or Firefox. Light and dark follow the system.</td></tr>
-      </table>
-    </section>
-
     <!-- ======================================================= choose -->
     <section id="choose">
-      <h2>Choose how</h2>
-      <p>Three questions settle it:</p>
+      <h2>Pick a route</h2>
       <ol class="steps-list">
-        <li><b>Just you?</b> Use the <a href="#desktop">desktop app</a> (A). Done.</li>
-        <li><b>Everyone in one building, on the same network?</b> A <a href="#lan">lab computer on your network</a> (B)
-          works, or ask IT for <a href="#campus">a university server</a> (C).</li>
-        <li><b>People at home, on phones on mobile data, or across sites?</b> A <a href="#tailscale">cloud VM with
-          Tailscale</a> (D) — private, free, and reachable anywhere. This is what we recommend for most labs.
-          Only if you want an ordinary web address that works with no app at all, use <a href="#domain">your own
-          domain</a> (E).</li>
+        <li><b>How many people?</b> Just you: <a href="#desktop">A</a>. More than one: question 2.</li>
+        <li><b>Do they need it outside the lab network?</b> (At home, on phones on mobile data, at another site.
+          Your campus VPN counts as inside.) Yes: <a href="#tailscale">D</a>, or <a href="#domain">E</a> if some of them
+          can't install the Tailscale app. No: question 3.</li>
+        <li><b>Does your IT give you a server?</b> Yes: <a href="#campus">C</a>. No: <a href="#lan">B</a>.</li>
       </ol>
-      <div class="note"><b>Let the desktop app do it.</b> In the desktop app, <b>Settings → Set up a lab server</b> sets up
-        B, C, D or E for you: it asks where the server should go, shows what it will do before anything runs, does every
-        step below, and can bring the app's records along. The steps on this page are what it does, for doing it by hand.</div>
-
       <div class="table-scroll">
       <table class="gtable compare">
         <thead>
-          <tr><th></th><th>Who can reach it</th><th>Cost</th><th>Set-up</th><th>You need</th></tr>
+          <tr><th>Route</th><th>Who can reach it</th><th>Cost per month</th><th>Set-up time</th></tr>
         </thead>
         <tbody>
-          <tr><th><a href="#desktop">A · One computer</a></th><td>That computer only</td><td><b>Free</b></td><td>2 min</td><td>Nothing</td></tr>
-          <tr><th><a href="#lan">B · Lab computer on your network</a></th><td>Anyone on the lab or campus network (or VPN)</td><td><b>Free</b> with a spare computer; a Mac mini or small PC is a one-off $300–600</td><td>1 hour</td><td>A computer that stays on; Docker</td></tr>
-          <tr><th><a href="#campus">C · University server</a></th><td>Campus network and VPN</td><td>Often free; some IT departments charge</td><td>Depends on IT</td><td>A request to IT</td></tr>
-          <tr class="rec"><th><a href="#tailscale">D · Cloud VM + Tailscale</a> <span class="pill">recommended</span></th><td>Your lab, from anywhere, and no one else</td><td><b>Free</b> (Oracle Cloud's Always Free VM + Tailscale's free plan), or about $5–7 a month for a paid VM</td><td>1 hour</td><td>A cloud account; Tailscale on each device</td></tr>
-          <tr><th><a href="#domain">E · Cloud VM + your own domain</a></th><td>Anyone who knows the address (they still need an account)</td><td>VM as in D, plus a domain, about $10–15 a year</td><td>1–2 hours</td><td>A domain name</td></tr>
+          <tr><th><a href="#desktop">A · One computer</a></th><td>That computer only</td><td>$0</td><td>2 minutes</td></tr>
+          <tr><th><a href="#lan">B · Linux computer in the lab</a></th><td>The lab or campus network, and its VPN</td><td>$0 with a spare computer (a new small PC is a one-off $300–600)</td><td>1 hour</td></tr>
+          <tr><th><a href="#campus">C · University server</a></th><td>The campus network and VPN</td><td>Often $0; some IT departments charge</td><td>Depends on IT, then 30 minutes</td></tr>
+          <tr class="rec"><th><a href="#tailscale">D · Cloud VM + Tailscale</a> <span class="pill">recommended</span></th><td>Your lab, from anywhere; no one else</td><td>$0 (Oracle Cloud Always Free + Tailscale's free plan), or about $5–7 for a paid VM</td><td>1 hour</td></tr>
+          <tr><th><a href="#domain">E · Cloud VM + your own domain</a></th><td>Anyone with the address (they still need an account)</td><td>As D, plus about $1 for the domain ($10–15 a year)</td><td>1–2 hours</td></tr>
         </tbody>
       </table>
       </div>
-      <p class="fine-left">Prices are what these services charged in September 2026; check before you sign up.
-        Every server option (B–E) includes nightly backups, a weekly restore test and HTTPS.</p>
-
-      <div class="note"><b>What every server needs.</b> A machine with 2 CPU cores, 2 GB of memory and 20 GB of disk
-        or more (a small lab uses far less), running Linux or macOS with <b>Docker</b>. BioManager runs as four
-        small containers: the app, a PostgreSQL database, Caddy for HTTPS, and a backup service. You get them from the
-        <a href="https://github.com/gaspolymerase/biomanager/releases/latest">latest release</a>: the <b>server
-        bundle</b>, a small download with everything that runs it, and the app itself as a file for Intel or ARM
-        machines, which the bundle's <code>host/load-image.sh</code> fetches for you. No accounts or registries.</div>
+      <p class="fine-left">Prices as charged in September 2026; check before you sign up. Every server route (B–E)
+        includes nightly backups, a weekly restore test and HTTPS.</p>
+      <div class="callout note"><b>Or let the desktop app do it</b>In the desktop app, <b>Settings → Set up a lab
+        server</b> does B, C, D or E for you, and on a Mac sets up that Mac for the whole lab. It shows each step before
+        running it and can bring your records along.</div>
     </section>
 
-    <div class="part"><p class="part-label">Part two</p><h2>Ways to run it</h2>
-      <p>Five ways, from one computer to a cloud server the whole lab reaches from anywhere. Pick one in
-        <a href="#choose">Choose how</a>, then follow its steps.</p></div>
+    <!-- ======================================================= ai -->
+    <section id="ai">
+      <h2>Set it up with an AI assistant</h2>
+      <p>An AI assistant with a terminal (Claude Code, Cursor, Codex and the like) can follow route B, C, D or E for you
+        from <a href="deploy-with-ai.md"><code>deploy-with-ai.md</code></a>, a version of this page written for it. Paste
+        this to your assistant:</p>
+      <div class="prompt" id="ai-prompt">Read https://biomanager.org/deploy-with-ai.md and follow it to set up a BioManager server for my lab. Start by asking me the questions it lists, recommend an option, and wait for my go-ahead before creating anything that costs money or opens the server to the internet. Never ask me to paste passwords or keys into this chat: tell me where to type them myself.</div>
+      <button type="button" class="btn btn-small copy-btn" data-copy="ai-prompt">Copy the prompt</button>
+      <p>You still create the accounts, approve sign-ins and type every password yourself; the guide makes the
+        assistant stop and ask at each of those.</p>
+    </section>
+
+    <div class="part"><p class="part-label">Part two</p><h2>Routes</h2></div>
 
     <!-- ======================================================= A -->
     <section id="desktop">
       <h2>A · One computer: the desktop app</h2>
-      <p class="opt-meta">Free · 2 minutes · private to that computer</p>
-      <ol class="steps-list">
-        <li><a href="./#download">Download</a> BioManager for your computer: macOS (Apple silicon or Intel), Windows or Linux.</li>
-        <li><b>Mac:</b> unzip, drag <b>BioManager</b> to Applications, then the first time <b>right-click → Open → Open</b>.
-          <b>Windows:</b> extract the zip, open <b>BioManager.exe</b>, and at the warning choose <b>More info → Run anyway</b>.
-          <b>Linux:</b> mark the AppImage executable and open it.</li>
-        <li>Create your account and answer the set-up questions. See the <a href="guide.html#first-run">user guide</a>.</li>
+      <div class="badges"><span class="badge who">One person</span><span class="badge">$0</span><span class="badge">2 minutes</span></div>
+      <h3>You need</h3>
+      <ul class="need">
+        <li>A Mac (Apple silicon or Intel), a Windows PC, or a Linux PC (x86-64).</li>
+        <li>Cost: $0 a month.</li>
+        <li>Time: 2 minutes.</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>Download the file for your computer from the <a href="download.html">Download</a> page.</p>
+          <p class="see"><b>You should see:</b> <code>BioManager-macOS-AppleSilicon.zip</code>,
+            <code>BioManager-macOS-Intel.zip</code>, <code>BioManager-Windows.zip</code> or
+            <code>BioManager-Linux.AppImage</code> in your Downloads folder.</p>
+          <p class="ifnot"><b>If not:</b> on a Mac, <b>Apple menu → About This Mac</b> says which chip you have.</p>
+        </li>
+        <li>
+          <p>Open it.</p>
+          <p><b>Mac:</b> unzip it, drag <b>BioManager</b> into Applications, then right-click it → <b>Open</b> → <b>Open</b>.
+            <b>Windows:</b> extract the zip, open <b>BioManager.exe</b>, and at the warning choose <b>More info → Run anyway</b>.
+            <b>Linux:</b></p>
+          <div class="cmd"><pre id="a-linux">cd ~/Downloads &amp;&amp; chmod +x BioManager-Linux.AppImage &amp;&amp; ./BioManager-Linux.AppImage</pre><button type="button" class="copy-btn" data-copy="a-linux">Copy</button></div>
+          <p class="see"><b>You should see:</b> the BioManager window, asking you to create an account.</p>
+          <p class="ifnot"><b>If not:</b> a Mac that offers only <b>Move to Trash</b>: <b>System Settings → Privacy &amp;
+            Security → Open Anyway</b>. A Linux AppImage that won't start needs FUSE: install <code>libfuse2</code>.</p>
+        </li>
+        <li>
+          <p>Create your account and answer the set-up questions (<a href="guide/install.html#first-run">user guide</a>).</p>
+          <p class="see"><b>You should see:</b> BioManager's Home page, with the databases you ticked.</p>
+        </li>
       </ol>
-      <p>Your data lives outside the app (<code>~/Library/Application Support/Biomanager/</code> on a Mac,
-        <code>%APPDATA%\Biomanager\</code> on Windows, <code>~/.local/share/Biomanager/</code> on Linux), so updating
-        never touches it. Back that folder up with Time Machine or File History, and never keep it in Dropbox,
-        OneDrive, Google Drive or iCloud Drive: syncing corrupts databases.</p>
-      <p>A few people on one network can share one computer's lab without a server: <b>Settings → Devices → Share this lab
-        on the network</b> makes it the lab's master copy, opened by the others at the address it shows. The computer must
-        stay on, nothing is backed up nightly as on a server, and the connection isn't encrypted: fine on a lab network you
-        trust, a server for anything more (<a href="guide.html#devices">Devices</a>).</p>
+      <p class="done-when"><b>Done when:</b> BioManager opens on Home, signed in as you.</p>
+      <div class="callout warn"><b>Never put the data folder in Dropbox, OneDrive, Google Drive or iCloud Drive</b>Syncing
+        corrupts the database. The data lives in <code>~/Library/Application Support/Biomanager/</code> (Mac),
+        <code>%APPDATA%\Biomanager\</code> (Windows) or <code>~/.local/share/Biomanager/</code> (Linux): back that folder
+        up with Time Machine or File History.</div>
+      <p>A few people on one trusted network can share this computer's lab without a server: <b>Settings → Devices → Share
+        this lab on the network</b>. It has no nightly backup and no encryption (<a href="guide/your-data.html#devices">Devices</a>).</p>
     </section>
 
     <!-- ======================================================= B -->
     <section id="lan">
-      <h2>B · A lab computer on your network</h2>
-      <p class="opt-meta">Free with a spare computer · 1 hour · reachable on your lab or campus network</p>
-      <p>Any computer that stays switched on can be the server: a Linux PC, an old desktop, or a Mac mini. The lab
-        opens it at an address like <code>https://192.168.1.50</code>. It can't be reached from outside your network
-        unless your campus VPN puts people inside it.</p>
-      <ol class="steps-list">
-        <li><b>Give the computer a fixed address.</b> Ask IT for a fixed IP address or a DNS name for it (for example
-          <code>biomanager.bio.youruni.edu</code>), so the address never changes. Turn off sleep.</li>
-        <li><b>Install Docker.</b> Linux: <code>curl -fsSL https://get.docker.com | sudo sh</code>, then
-          <code>sudo usermod -aG docker $USER</code> and log in again. Mac: install
-          <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> (free for education and small
-          organisations) or <a href="https://orbstack.dev">OrbStack</a>, and set it to start at login.</li>
-        <li><b>Get the server bundle</b> into <code>/opt/biomanager</code>:
-<pre><code>sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
+      <h2>B · A Linux computer in the lab</h2>
+      <div class="badges"><span class="badge who">The lab network</span><span class="badge">$0 with a spare computer</span><span class="badge">1 hour</span></div>
+      <h3>You need</h3>
+      <ul class="need">
+        <li>A Linux computer that stays on (Ubuntu 24.04, or another Linux with systemd), x86-64 or ARM, with 2 CPU
+          cores, 2 GB of memory and 20 GB of free disk. For a Mac, use the desktop app: <b>Settings → Set up a lab server →
+          This computer, for the whole lab</b>.</li>
+        <li>An account on it that can use <code>sudo</code>.</li>
+        <li>A fixed IP address or DNS name for it, from your IT.</li>
+        <li>Cost: $0 a month.</li>
+        <li>Time: about an hour.</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>Ask IT for a fixed IP address or DNS name for this computer, and turn off sleep (Ubuntu: <b>Settings → Power →
+            Automatic Suspend → Off</b>). Then check its addresses:</p>
+          <div class="cmd"><pre id="b-address">hostname -I</pre><button type="button" class="copy-btn" data-copy="b-address">Copy</button></div>
+          <p class="see"><b>You should see:</b> the IP address IT gave you, among others.</p>
+          <p class="ifnot"><b>If not:</b> the address changes after a restart: ask IT for a DHCP reservation for this computer.</p>
+        </li>
+        <li>
+          <p>Install Docker.</p>
+          <div class="cmd"><pre id="b-docker">curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER</pre><button type="button" class="copy-btn" data-copy="b-docker">Copy</button></div>
+          <p class="see"><b>You should see:</b> Docker's installer finish without an error.</p>
+          <p class="ifnot"><b>If not:</b> <code>sudo: a password is required</code> or <code>not in the sudoers file</code>: use an
+            account that can use <code>sudo</code>, or ask IT.</p>
+        </li>
+        <li>
+          <p>Log out, log in again, and check Docker.</p>
+          <div class="cmd"><pre id="b-compose">docker compose version</pre><button type="button" class="copy-btn" data-copy="b-compose">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Docker Compose version v…</code></p>
+          <p class="ifnot"><b>If not:</b> <code>permission denied while trying to connect to the Docker daemon socket</code>: you
+            haven't logged in again since step 2. Log out and in (or restart).</p>
+        </li>
+        <li>
+          <p>Download BioManager.</p>
+          <div class="cmd"><pre id="b-bundle">sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
 curl -fsSL -o /tmp/biomanager-server.tar.gz \
   https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
-cd /opt/biomanager/Biomanager/deploy
-host/load-image.sh                  # downloads the app for this machine (Intel or ARM)
-cp .env.example .env &amp;&amp; chmod 600 .env</code></pre></li>
-        <li><b>Fill in <code>.env</code></b> with a text editor (<code>nano .env</code>):
-<pre><code>DOMAIN=192.168.1.50            # or the DNS name IT gave you
-TLS=internal                    # BioManager makes its own certificate
-POSTGRES_PASSWORD=...           # paste the output of: openssl rand -hex 24
-TZ=America/New_York             # your time zone
-BACKUP_DIR=/opt/biomanager/backups   # better: a folder on a second disk</code></pre>
-          If IT gives you a certificate for the name, use <code>TLS=files</code> instead and put it in
-          <code>certs/server.crt</code> and <code>certs/server.key</code>: then skip step 7.</li>
-        <li><b>Start it:</b>
-<pre><code>docker compose up -d
-docker compose logs app | grep "setup code"</code></pre></li>
-        <li><b>Create the admin account.</b> Open <code>https://DOMAIN/register</code> on the server itself and enter the
-          setup code from the last step. The first account is the lab's admin.</li>
-        <li><b>Trust its certificate on every device, once.</b> Export it:
-          <code>docker compose exec caddy cat /data/caddy/pki/authorities/local/root.crt &gt; biomanager-root.crt</code>
-          and install that file:
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="b-bundle">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Downloading BioManager &lt;version&gt; for amd64…</code> (or
+            <code>arm64</code>), then <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> and
+            <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>If not:</b> <code>No BioManager image for …</code>: BioManager runs on x86-64 and ARM64 only.
+            <code>Could not download</code>: this computer can't reach github.com; ask IT about a proxy, then run the last
+            line again.</p>
+        </li>
+        <li>
+          <p>Write the settings that need no choices: a database password, the certificate type and the backup folder.</p>
+          <div class="cmd"><pre id="b-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=internal|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="b-env">Copy</button></div>
+          <p class="see"><b>You should see:</b> no output.</p>
+          <p class="ifnot"><b>If not:</b> <code>cannot stat '.env.example'</code>: step 4 didn't unpack. Run step 4 again.</p>
+        </li>
+        <li>
+          <p>Enter your address and time zone. Open the settings file:</p>
+          <div class="cmd"><pre id="b-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="b-nano">Copy</button></div>
+          <p>Change these two lines to read as below, then save with <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd> and close
+            with <kbd>Ctrl</kbd>+<kbd>X</kbd>:</p>
+          <div class="cmd"><pre id="b-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="b-lines">Copy</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>: the fixed IP address or DNS name from step 1, without
+            <code>https://</code>. <code>&lt;your-time-zone&gt;</code>: like <code>Europe/Berlin</code> or
+            <code>Asia/Shanghai</code>; <code>timedatectl</code> shows this computer's. With a second disk, also set
+            <code>BACKUP_DIR</code> to a folder on it.</p>
+          <p class="see"><b>You should see:</b> <code>DOMAIN=</code> near the top of the file, <code>TZ=</code> about halfway down.</p>
+          <p class="ifnot"><b>If not:</b> <code>nano: command not found</code>: <code>sudo apt-get install nano</code>.</p>
+        </li>
+        <li>
+          <p>Check the settings.</p>
+          <div class="cmd"><pre id="b-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="b-check">Copy</button></div>
+          <p class="see"><b>You should see:</b> your four lines, with <code>TLS=internal</code>, then <code>settings ok</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>set POSTGRES_PASSWORD in .env</code>: run step 5 again. <code>DOMAIN=biomanager.example.edu</code>:
+            the edit wasn't saved; repeat step 6.</p>
+        </li>
+        <li>
+          <p>Start BioManager.</p>
+          <div class="cmd"><pre id="b-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="b-up">Copy</button></div>
+          <p class="see"><b>You should see:</b> after a minute or two, <code>biomanager-db-1</code>, <code>biomanager-app-1</code>,
+            <code>biomanager-caddy-1</code> and <code>biomanager-backup-1</code>, each <code>Started</code> or <code>Healthy</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>pull access denied for ghcr.io/gaspolymerase/biomanager</code>: run
+            <code>host/load-image.sh</code>, then this again. <code>container biomanager-app-1 is unhealthy</code>:
+            <code>docker compose logs --tail 100 app</code> says why.</p>
+        </li>
+        <li>
+          <p>Check that everything runs.</p>
+          <div class="cmd"><pre id="b-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="b-ps">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>db</code> and <code>app</code> <code>(healthy)</code>, <code>caddy</code>
+            <code>Up</code>, and <code>backup</code> <code>(healthy)</code>, or <code>(health: starting)</code> for a few minutes
+            while it takes its first backup.</p>
+          <p class="ifnot"><b>If not:</b> a service missing or <code>Restarting</code>: <code>docker compose logs --tail 100 &lt;service&gt;</code>.</p>
+        </li>
+        <li>
+          <p>Get the setup code for the first account.</p>
+          <div class="cmd"><pre id="b-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="b-code">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f (also saved in /data/setup-code).</code></p>
+          <p class="ifnot"><b>If not:</b> nothing: the app is still starting. Wait a minute and repeat, or run
+            <code>docker compose exec app cat /data/setup-code</code>.</p>
+        </li>
+        <li>
+          <p>Save BioManager's certificate, for the lab's devices to trust.</p>
+          <div class="cmd"><pre id="b-cert">docker compose exec caddy cat /data/caddy/pki/authorities/local/root.crt &gt; biomanager-root.crt
+head -1 biomanager-root.crt</pre><button type="button" class="copy-btn" data-copy="b-cert">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>-----BEGIN CERTIFICATE-----</code></p>
+          <p class="ifnot"><b>If not:</b> <code>No such file or directory</code>: Caddy is still starting. Wait ten seconds and repeat.</p>
+        </li>
+        <li>
+          <p>On each computer and phone that will open BioManager, once: copy <code>biomanager-root.crt</code> to it (email,
+            USB stick, AirDrop) and install it.</p>
           <ul>
-            <li><b>Mac:</b> double-click it, then in Keychain Access open it and set <b>Trust → Always Trust</b>.</li>
-            <li><b>Windows:</b> double-click → <b>Install Certificate → Local Machine → Trusted Root Certification Authorities</b>.</li>
-            <li><b>iPhone/iPad:</b> AirDrop or email it, install the profile under <b>Settings → General → VPN &amp; Device
-              Management</b>, then turn it on under <b>Settings → General → About → Certificate Trust Settings</b>.</li>
+            <li><b>Mac:</b> double-click it; in Keychain Access, open it and set <b>Trust → When using this certificate → Always Trust</b>.</li>
+            <li><b>Windows:</b> double-click it → <b>Install Certificate → Local Machine → Place all certificates in the following
+              store → Trusted Root Certification Authorities</b>.</li>
+            <li><b>iPhone, iPad:</b> open it, install the profile in <b>Settings → General → VPN &amp; Device Management</b>, then
+              turn it on in <b>Settings → General → About → Certificate Trust Settings</b>.</li>
             <li><b>Android:</b> <b>Settings → Security → Encryption &amp; credentials → Install a certificate → CA certificate</b>.</li>
-          </ul></li>
-        <li><b>Let people in:</b> allow incoming connections on port 443 in the computer's firewall, and send the lab the
-          address. On Linux, also install the watchdog and weekly updates: <code>sudo host/install.sh</code> (in the <code>deploy</code> folder).</li>
+          </ul>
+          <p class="see"><b>You should see:</b> <code>https://&lt;your-domain&gt;</code> open on that device with no certificate warning.</p>
+          <p class="ifnot"><b>If not:</b> on an iPhone, the switch in <b>Certificate Trust Settings</b> is still off. Firefox
+            keeps its own list: <b>Settings → Privacy &amp; Security → View Certificates → Authorities → Import</b>.</p>
+        </li>
+        <li>
+          <p>On one of those devices, open <code>https://&lt;your-domain&gt;/register</code>, fill in your name, a username, a
+            password and the <b>Setup code</b> from step 10, and choose <b>Create account</b>. This first account is the lab's admin.</p>
+          <p class="see"><b>You should see:</b> you are signed in, and the lab's set-up questions open.</p>
+          <p class="ifnot"><b>If not:</b> <code>That setup code is not right.</code>: copy it again from step 10, all three
+            groups and the dashes.</p>
+        </li>
+        <li>
+          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <div class="cmd"><pre id="b-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="b-install">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code> and two timers,
+            <code>biomanager-watchdog.timer</code> and <code>biomanager-maintenance.timer</code>. Subscribe to that topic in the
+            <a href="https://ntfy.sh">ntfy</a> app on your phone.</p>
+          <p class="ifnot"><b>If not:</b> <code>command not found</code>: you're not in the deploy folder. Run
+            <code>cd /opt/biomanager/Biomanager/deploy</code> first.</p>
+        </li>
       </ol>
-      <div class="note warn"><b>One computer holds everything.</b> Put <code>BACKUP_DIR</code> on a second disk, and
-        copy the backups somewhere else too — see <a href="#safe">Keeping the data safe</a>.</div>
+      <p class="done-when"><b>Done when:</b> on another computer on the lab network,
+        <code>https://&lt;your-domain&gt;/healthz</code> shows <code>ok</code> with no certificate warning, and you can sign
+        in at <code>https://&lt;your-domain&gt;</code> as the admin.</p>
+      <div class="callout warn"><b>One computer holds the lab and its backups</b>If its disk dies, both are gone. Put
+        <code>BACKUP_DIR</code> on a second disk and turn on off-site copies (<a href="#after">After it's running</a>).</div>
     </section>
 
     <!-- ======================================================= C -->
     <section id="campus">
       <h2>C · A university or department server</h2>
-      <p class="opt-meta">Often free · IT does the hard part · campus network and VPN</p>
-      <p>Many universities give labs a virtual machine on the campus network. Send IT this request:</p>
-      <blockquote class="req">“We'd like a small Linux VM (Ubuntu 24.04, 2 vCPU, 4 GB RAM, 40 GB disk) with Docker, a DNS
-        name such as <code>biomanager.ourdept.university.edu</code>, a TLS certificate for that name, and port 443 open
-        to the campus network and VPN. It runs BioManager, a lab database, in Docker containers.”</blockquote>
-      <p>Then follow B from step 3 with <code>TLS=files</code> and IT's certificate in <code>certs/</code>. Nothing needs
-        to be installed on lab devices. If IT offers backups of the VM, take them — they're a welcome extra layer.</p>
+      <div class="badges"><span class="badge who">Campus network and VPN</span><span class="badge">Often $0</span><span class="badge">IT, then 30 minutes</span></div>
+      <h3>You need</h3>
+      <ul class="need">
+        <li>A Linux VM from IT, with an account on it that can use <code>sudo</code> (step 1 asks for both).</li>
+        <li>A certificate from IT for its name: a certificate file and its key file.</li>
+        <li>Your computer, on the campus network or VPN, with a terminal.</li>
+        <li>Cost: often $0 a month; some IT departments charge.</li>
+        <li>Time: IT's turnaround, then 30 minutes.</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>Send IT this request.</p>
+          <div class="cmd"><pre id="c-request">We'd like a small Linux VM (Ubuntu 24.04, 2 vCPU, 4 GB RAM, 40 GB disk) with Docker and its compose plugin, a DNS name such as biomanager.ourdept.example.edu, a TLS certificate for that name, and port 443 open to the campus network and VPN. It runs BioManager, a lab database, in Docker containers. Please give me an account on it that can use sudo.</pre><button type="button" class="copy-btn" data-copy="c-request">Copy</button></div>
+          <p class="see"><b>You should see:</b> a reply with the DNS name, how to sign in, and the certificate: a
+            <code>.crt</code> or <code>.pem</code> file and its key.</p>
+          <p class="ifnot"><b>If not:</b> IT can't issue a certificate: set <code>TLS=internal</code> in step 6 instead of
+            <code>files</code>, skip step 5, and do route B's steps 11 and 12 after starting.</p>
+        </li>
+        <li>
+          <p>Copy IT's two certificate files to the VM, from your computer.</p>
+          <div class="cmd"><pre id="c-scp">scp &lt;certificate-file&gt; &lt;key-file&gt; &lt;you&gt;@&lt;your-domain&gt;:</pre><button type="button" class="copy-btn" data-copy="c-scp">Copy</button></div>
+          <p class="fine-left"><code>&lt;certificate-file&gt;</code>, <code>&lt;key-file&gt;</code>: the files from IT
+            (in step 5, just their names).
+            <code>&lt;you&gt;</code>: your account on the VM. <code>&lt;your-domain&gt;</code>: the VM's DNS name.</p>
+          <p class="see"><b>You should see:</b> both files copied, each at 100%.</p>
+          <p class="ifnot"><b>If not:</b> <code>Connection timed out</code>: you're off campus. Connect the VPN.</p>
+        </li>
+        <li>
+          <p>Sign in to the VM and check Docker.</p>
+          <div class="cmd"><pre id="c-ssh">ssh &lt;you&gt;@&lt;your-domain&gt;</pre><button type="button" class="copy-btn" data-copy="c-ssh">Copy</button></div>
+          <div class="cmd"><pre id="c-compose">docker compose version</pre><button type="button" class="copy-btn" data-copy="c-compose">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Docker Compose version v…</code></p>
+          <p class="ifnot"><b>If not:</b> <code>permission denied while trying to connect to the Docker daemon socket</code>:
+            run <code>sudo usermod -aG docker $USER</code>, sign out and in again. <code>docker: command not found</code>:
+            ask IT to install Docker.</p>
+        </li>
+        <li>
+          <p>Download BioManager.</p>
+          <div class="cmd"><pre id="c-bundle">sudo mkdir -p /opt/biomanager &amp;&amp; sudo chown "$USER" /opt/biomanager
+curl -fsSL -o /tmp/biomanager-server.tar.gz \
+  https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="c-bundle">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code>
+            and <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>If not:</b> <code>Could not download</code>: the VM can't reach github.com. Ask IT about a proxy,
+            then run the last line again.</p>
+        </li>
+        <li>
+          <p>Put the certificate where BioManager reads it.</p>
+          <div class="cmd"><pre id="c-certs">cp ~/&lt;certificate-file&gt; /opt/biomanager/Biomanager/deploy/certs/server.crt
+cp ~/&lt;key-file&gt; /opt/biomanager/Biomanager/deploy/certs/server.key
+ls /opt/biomanager/Biomanager/deploy/certs</pre><button type="button" class="copy-btn" data-copy="c-certs">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>server.crt  server.key</code></p>
+          <p class="ifnot"><b>If not:</b> <code>No such file</code>: check the file names with <code>ls ~</code>.</p>
+        </li>
+        <li>
+          <p>Write the settings that need no choices.</p>
+          <div class="cmd"><pre id="c-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=files|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="c-env">Copy</button></div>
+          <p class="see"><b>You should see:</b> no output.</p>
+        </li>
+        <li>
+          <p>Enter your address and time zone: open the file, change the two lines, save with
+            <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, close with <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p>
+          <div class="cmd"><pre id="c-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="c-nano">Copy</button></div>
+          <div class="cmd"><pre id="c-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="c-lines">Copy</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>: the DNS name from IT, without <code>https://</code>.
+            <code>&lt;your-time-zone&gt;</code>: like <code>Europe/Berlin</code> or <code>Asia/Shanghai</code>.</p>
+          <p class="see"><b>You should see:</b> <code>DOMAIN=</code> near the top, <code>TZ=</code> about halfway down.</p>
+        </li>
+        <li>
+          <p>Check the settings.</p>
+          <div class="cmd"><pre id="c-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="c-check">Copy</button></div>
+          <p class="see"><b>You should see:</b> your four lines, with <code>TLS=files</code>, then <code>settings ok</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>set POSTGRES_PASSWORD in .env</code>: run step 6 again.
+            <code>DOMAIN=biomanager.example.edu</code>: the edit wasn't saved; repeat step 7.</p>
+        </li>
+        <li>
+          <p>Start BioManager.</p>
+          <div class="cmd"><pre id="c-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="c-up">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>biomanager-db-1</code>, <code>biomanager-app-1</code>,
+            <code>biomanager-caddy-1</code> and <code>biomanager-backup-1</code>, each <code>Started</code> or <code>Healthy</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>pull access denied</code>: run <code>host/load-image.sh</code>, then this again.</p>
+        </li>
+        <li>
+          <p>Check that everything runs.</p>
+          <div class="cmd"><pre id="c-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="c-ps">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>db</code> and <code>app</code> <code>(healthy)</code>, <code>caddy</code>
+            <code>Up</code>, <code>backup</code> <code>(healthy)</code> or, for a few minutes, <code>(health: starting)</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>caddy</code> restarting: <code>docker compose logs caddy</code>; usually the key
+            doesn't match the certificate, or the files are swapped.</p>
+        </li>
+        <li>
+          <p>Get the setup code for the first account.</p>
+          <div class="cmd"><pre id="c-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="c-code">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f …</code></p>
+          <p class="ifnot"><b>If not:</b> nothing: wait a minute and repeat.</p>
+        </li>
+        <li>
+          <p>On your computer, open <code>https://&lt;your-domain&gt;/register</code>, fill in your name, a username, a
+            password and the <b>Setup code</b>, and choose <b>Create account</b>. This first account is the lab's admin.</p>
+          <p class="see"><b>You should see:</b> you are signed in, and the lab's set-up questions open.</p>
+          <p class="ifnot"><b>If not:</b> a certificate warning on some devices: ask IT for the certificate with its full
+            chain, put it in <code>server.crt</code> again and run <code>docker compose restart caddy</code>.</p>
+        </li>
+        <li>
+          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <div class="cmd"><pre id="c-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="c-install">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code>. Subscribe to it in
+            the <a href="https://ntfy.sh">ntfy</a> app.</p>
+          <p class="ifnot"><b>If not:</b> <code>command not found</code>: <code>cd /opt/biomanager/Biomanager/deploy</code> first.</p>
+        </li>
+      </ol>
+      <p class="done-when"><b>Done when:</b> from a computer on the campus network or VPN,
+        <code>https://&lt;your-domain&gt;/healthz</code> shows <code>ok</code> with no certificate warning, and you can sign
+        in as the admin.</p>
     </section>
 
     <!-- ======================================================= D -->
     <section id="tailscale">
       <h2>D · A cloud VM with Tailscale <span class="pill">recommended</span></h2>
-      <p class="opt-meta">Free · about an hour · your lab reaches it from anywhere; no one else can</p>
-      <p>The server is a virtual machine in the cloud. <a href="https://tailscale.com">Tailscale</a> is a private network
-        between your lab's devices: the server has <b>no open ports on the internet at all</b>, yet from any Wi-Fi or
-        phone signal, lab members open it at a normal HTTPS address like <code>https://biomanager.tail1234.ts.net</code>,
-        with a real certificate and nothing to trust by hand.</p>
-      <table class="gtable">
-        <tr><th>The VM</th><td><b>Oracle Cloud Always Free</b>: an Ampere A1 VM (up to 4 cores and 24 GB memory) and
-          200 GB of disk, free for good. Or any Ubuntu 24.04 VM: Hetzner (about €4/month), DigitalOcean or AWS Lightsail
-          (about $5–7/month).</td></tr>
-        <tr><th>Tailscale</th><td>Free on the Personal plan for small teams; beyond that, share just the server with each
-          member's own free Tailscale account, which costs nothing either.</td></tr>
-        <tr><th>Each member</th><td>Installs Tailscale once (Mac, Windows, Linux, iPhone, Android) and signs in.</td></tr>
-      </table>
-
-      <h3>1. Accounts</h3>
-      <ol class="steps-list">
-        <li>Create a free <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> account (a card is asked for to
-          verify you; Always Free resources are never charged). Pick a home region near you: it can't be changed.</li>
-        <li>Create a free <a href="https://login.tailscale.com/start">Tailscale</a> account, with a lab or personal Google,
-          Microsoft or GitHub account.</li>
-        <li>On your own computer, download the <a href="https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz">server
-          bundle</a>, unpack it, and open <code>Biomanager/deploy/cloud-init.yaml</code> in a text editor. You'll paste it in the next step.</li>
-      </ol>
-
-      <h3>2. Create the VM</h3>
-      <ol class="steps-list">
-        <li>In Oracle Cloud: <b>Compute → Instances → Create instance</b>.</li>
-        <li><b>Image:</b> Canonical Ubuntu 24.04. <b>Shape:</b> Ampere <b>VM.Standard.A1.Flex</b>, 2 OCPUs and 12 GB
-          (or 4 and 24). If Oracle says it's out of capacity, try again later or pick another availability domain.</li>
-        <li><b>Networking:</b> a new public subnet, with a public IPv4 address (needed only for the first SSH login).</li>
-        <li><b>SSH keys:</b> upload your public key (<code>ssh-keygen -t ed25519</code> makes one; the <code>.pub</code> file is the public half).</li>
-        <li><b>Advanced options → Management → Initialization script:</b> paste the contents of <code>cloud-init.yaml</code>.
-          It installs Docker, Tailscale and security updates at first boot.</li>
-        <li>Create it and wait a few minutes. Optionally, in <b>Billing</b>, upgrade to <b>Pay As You Go</b>: Always Free
-          stays free, and Oracle then never reclaims an idle free VM.</li>
-      </ol>
-
-      <h3>3. Put it on Tailscale</h3>
-<pre><code>ssh ubuntu@&lt;the VM's public IP&gt;
-ls /var/lib/biomanager-ready          # exists once first-boot set-up has finished
-sudo tailscale up --ssh --hostname=biomanager</code></pre>
-      <p>Open the link it prints and sign in. Then, in the <a href="https://login.tailscale.com/admin">Tailscale admin console</a>:</p>
-      <ul>
-        <li><b>Machines → biomanager → ⋯ → Disable key expiry</b> (otherwise it drops off after 180 days);</li>
-        <li><b>DNS:</b> turn on <b>MagicDNS</b> and <b>HTTPS Certificates</b>. Note your tailnet name, like <code>tail1234.ts.net</code>.</li>
+      <div class="badges"><span class="badge who">Your lab, anywhere</span><span class="badge">$0</span><span class="badge">1 hour</span></div>
+      <p>The server has no open ports on the internet. Lab members open it at
+        <code>https://biomanager.tail1234.ts.net</code> (your own tailnet name) from any network, with the Tailscale app on.</p>
+      <h3>You need</h3>
+      <ul class="need">
+        <li>An <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> account. It asks for a card to verify you;
+          Always Free resources are never charged. Pick your home region carefully: it can't be changed. (Or any
+          provider's Ubuntu 24.04 VM with a cloud-init box: Hetzner about €4, DigitalOcean or AWS Lightsail about $5–7 a month.)</li>
+        <li>A <a href="https://login.tailscale.com/start">Tailscale</a> account (free for up to 6 users; share the server
+          with anyone else's own free account).</li>
+        <li>Your computer, with a terminal and the <a href="https://tailscale.com/download">Tailscale app</a>.</li>
+        <li>Cost: $0 a month on Oracle Always Free.</li>
+        <li>Time: about an hour.</li>
       </ul>
-      <p>From now on, connect with <code>ssh ubuntu@biomanager</code> over Tailscale.</p>
-
-      <h3>4. Start BioManager</h3>
-<pre><code>curl -fsSL -o /tmp/biomanager-server.tar.gz \
+      <ol class="recipe">
+        <li>
+          <p>On your computer, make an SSH key. Press <kbd>Enter</kbd> at each question.</p>
+          <div class="cmd"><pre id="d-key">ssh-keygen -t ed25519</pre><button type="button" class="copy-btn" data-copy="d-key">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Your public key has been saved in …/.ssh/id_ed25519.pub</code></p>
+          <p class="ifnot"><b>If not:</b> <code>… already exists. Overwrite (y/n)?</code>: answer <kbd>n</kbd> and use the key you have.</p>
+        </li>
+        <li>
+          <p>On your computer, download the server bundle and show its first-boot script.</p>
+          <div class="cmd"><pre id="d-download">curl -fsSL -o biomanager-server.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf biomanager-server.tar.gz
+cat Biomanager/deploy/cloud-init.yaml</pre><button type="button" class="copy-btn" data-copy="d-download">Copy</button></div>
+          <p class="see"><b>You should see:</b> a file that starts with <code>#cloud-config</code>. You paste all of it in step 3.</p>
+          <p class="ifnot"><b>If not:</b> Windows PowerShell says a parameter can't be found: type <code>curl.exe</code> instead of <code>curl</code>.</p>
+        </li>
+        <li>
+          <p>Create the VM: Oracle Cloud console → <b>☰ → Compute → Instances → Create instance</b>, with:</p>
+          <ul>
+            <li><b>Image:</b> Change image → Ubuntu → <b>Canonical Ubuntu 24.04</b>.</li>
+            <li><b>Shape:</b> Change shape → Ampere → <b>VM.Standard.A1.Flex</b>, 2 OCPUs, 12 GB memory.</li>
+            <li><b>Networking:</b> a new virtual cloud network and public subnet; assign a public IPv4 address.</li>
+            <li><b>Add SSH keys:</b> Upload public key files (.pub) → <code>id_ed25519.pub</code> from step 1.</li>
+            <li><b>Advanced options → Management → Initialization script → Paste cloud-init script:</b> all of
+              <code>cloud-init.yaml</code> from step 2.</li>
+          </ul>
+          <p>Then <b>Create</b>.</p>
+          <p class="see"><b>You should see:</b> the instance <b>Running</b> within a few minutes, with a <b>Public IP address</b>
+            on its page. Note it: it's <code>&lt;public-ip&gt;</code> below.</p>
+          <p class="ifnot"><b>If not:</b> <code>Out of capacity for shape VM.Standard.A1.Flex</code>: pick another availability
+            domain under <b>Placement</b>, or try again later.</p>
+        </li>
+        <li>
+          <p>On your computer, sign in to the VM. Answer <code>yes</code> to the fingerprint question.</p>
+          <div class="cmd"><pre id="d-ssh">ssh ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="d-ssh">Copy</button></div>
+          <p class="see"><b>You should see:</b> a prompt that starts <code>ubuntu@</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>Connection timed out</code>: the VM is still booting; try again in two minutes.
+            <code>Permission denied (publickey)</code>: <code>ssh -i ~/.ssh/id_ed25519 ubuntu@&lt;public-ip&gt;</code>.</p>
+        </li>
+        <li>
+          <p>Wait for the first-boot script to finish (5–10 minutes after the VM starts).</p>
+          <div class="cmd"><pre id="d-ready">test -f /var/lib/biomanager-ready &amp;&amp; echo ready</pre><button type="button" class="copy-btn" data-copy="d-ready">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>ready</code></p>
+          <p class="ifnot"><b>If not:</b> nothing: it's still running. <code>sudo tail -f /var/log/cloud-init-output.log</code>
+            shows progress (<kbd>Ctrl</kbd>+<kbd>C</kbd> to stop watching). If that log never mentions Docker, the script
+            wasn't pasted in step 3: terminate the VM and create it again.</p>
+        </li>
+        <li>
+          <p>Put the VM on your Tailscale network.</p>
+          <div class="cmd"><pre id="d-tailscale">sudo tailscale up --hostname=biomanager</pre><button type="button" class="copy-btn" data-copy="d-tailscale">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>To authenticate, visit: https://login.tailscale.com/a/…</code>. Open that
+            link on your computer and sign in; the terminal then says <code>Success.</code></p>
+          <p class="ifnot"><b>If not:</b> <code>tailscale: command not found</code>: step 5 isn't finished.</p>
+        </li>
+        <li>
+          <p>In the <a href="https://login.tailscale.com/admin">Tailscale admin console</a>: <b>Machines → biomanager → ⋯ →
+            Disable key expiry</b>.</p>
+          <p class="see"><b>You should see:</b> <b>Expiry disabled</b> on the biomanager row.</p>
+          <p class="ifnot"><b>If not:</b> it's called <code>biomanager-1</code>: an older machine has the name. Remove the
+            old one (<b>⋯ → Remove</b>) and rename this one <code>biomanager</code> (<b>⋯ → Edit machine name</b>).</p>
+        </li>
+        <li>
+          <p>In the admin console, <b>DNS</b>: enable <b>MagicDNS</b>, then under <b>HTTPS Certificates</b> choose
+            <b>Enable HTTPS</b>. Note the <b>Tailnet name</b> on that page, like <code>tail1234.ts.net</code>.</p>
+          <p class="see"><b>You should see:</b> both on. Your server's address is <code>biomanager.</code> plus your tailnet
+            name: that is <code>&lt;your-domain&gt;</code> below.</p>
+          <p class="ifnot"><b>If not:</b> no HTTPS option: turn on MagicDNS first.</p>
+        </li>
+        <li>
+          <p>On your computer, open the Tailscale app and sign in with the same account. Type <code>exit</code> in the VM's
+            window, then sign in again through Tailscale.</p>
+          <div class="cmd"><pre id="d-ssh-ts">ssh ubuntu@biomanager</pre><button type="button" class="copy-btn" data-copy="d-ssh-ts">Copy</button></div>
+          <p class="see"><b>You should see:</b> the <code>ubuntu@</code> prompt again. Use this connection from now on.</p>
+          <p class="ifnot"><b>If not:</b> <code>Could not resolve hostname biomanager</code>: Tailscale is off on your computer,
+            signed in to another account, or MagicDNS is off (step 8).</p>
+        </li>
+        <li>
+          <p>Download BioManager.</p>
+          <div class="cmd"><pre id="d-bundle">curl -fsSL -o /tmp/biomanager-server.tar.gz \
   https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
-cd /opt/biomanager/Biomanager/deploy
-host/load-image.sh                     # downloads the app for this machine (Intel or ARM)
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="d-bundle">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Downloading BioManager &lt;version&gt; for arm64…</code>, then
+            <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code> and <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>If not:</b> <code>permission denied while trying to connect to the Docker daemon socket</code>:
+            <code>exit</code>, <code>ssh ubuntu@biomanager</code> again, and repeat. <code>Cannot mkdir: Permission denied</code>:
+            <code>sudo chown ubuntu /opt/biomanager</code>, and repeat.</p>
+        </li>
+        <li>
+          <p>Write the settings that need no choices: a database password, Tailscale certificates and the backup folder.</p>
+          <div class="cmd"><pre id="d-env">cd /opt/biomanager/Biomanager/deploy
 cp .env.example .env &amp;&amp; chmod 600 .env
-nano .env</code></pre>
-<pre><code>DOMAIN=biomanager.tail1234.ts.net     # biomanager + your tailnet name
-TLS=tailscale
-COMPOSE_FILE=compose.yaml:compose.tailscale.yaml
-POSTGRES_PASSWORD=...                  # openssl rand -hex 24
-TZ=America/New_York
-BACKUP_DIR=/opt/biomanager/backups</code></pre>
-<pre><code>docker compose up -d
-docker compose ps                      # wait until app and backup say "healthy"
-docker compose logs app | grep "setup code"
-sudo host/install.sh                   # watchdog, weekly updates and phone alerts</code></pre>
-      <p>On a device with Tailscale, open <code>https://DOMAIN/register</code> and create the admin account with the
-        setup code. <code>install.sh</code> prints an <a href="https://ntfy.sh">ntfy</a> topic: subscribe to it in the
-        ntfy app to hear if the site, the backups or the disk ever need you.</p>
-
-      <h3>5. Close the door</h3>
-      <p>In Oracle Cloud, open the VM's subnet → <b>Security list</b> and delete the ingress rule for port 22. The server
-        now has no open ports on the internet; SSH and the website both go over Tailscale.</p>
-
-      <h3>6. Invite the lab</h3>
-      <ol class="steps-list">
-        <li>Each member installs Tailscale and either joins your tailnet (<b>Users → Invite</b>) or — simpler at any size —
-          you share only the server with their own Tailscale account: <b>Machines → biomanager → Share</b>.</li>
-        <li>They open the address, choose <b>Create account</b>, and you approve them in <b>Manage users</b>.</li>
-        <li>Phones: Tailscale app on, then the BioManager Android app, or Safari → <b>Add to Home Screen</b> on iPhone.</li>
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=tailscale|; s|^#COMPOSE_FILE=|COMPOSE_FILE=|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="d-env">Copy</button></div>
+          <p class="see"><b>You should see:</b> no output.</p>
+        </li>
+        <li>
+          <p>Enter your address and time zone: open the file, change the two lines, save with
+            <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, close with <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p>
+          <div class="cmd"><pre id="d-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="d-nano">Copy</button></div>
+          <div class="cmd"><pre id="d-lines">DOMAIN=&lt;your-domain&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="d-lines">Copy</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>: <code>biomanager.</code> and your tailnet name from step 8,
+            like <code>biomanager.tail1234.ts.net</code>. <code>&lt;your-time-zone&gt;</code>: like <code>Europe/Berlin</code>
+            or <code>Asia/Shanghai</code>.</p>
+          <p class="see"><b>You should see:</b> <code>DOMAIN=</code> near the top, <code>TZ=</code> about halfway down.</p>
+        </li>
+        <li>
+          <p>Check the settings.</p>
+          <div class="cmd"><pre id="d-check">grep -E '^(DOMAIN|TLS|COMPOSE_FILE|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="d-check">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>DOMAIN=biomanager.tail1234.ts.net</code> (with your tailnet),
+            <code>TLS=tailscale</code>, <code>COMPOSE_FILE=compose.yaml:compose.tailscale.yaml</code>, your <code>TZ</code>,
+            <code>BACKUP_DIR=/opt/biomanager/backups</code>, then <code>settings ok</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>set POSTGRES_PASSWORD in .env</code> or no <code>COMPOSE_FILE</code> line: run
+            step 11 again. <code>DOMAIN=biomanager.example.edu</code>: the edit wasn't saved; repeat step 12.</p>
+        </li>
+        <li>
+          <p>Start BioManager.</p>
+          <div class="cmd"><pre id="d-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="d-up">Copy</button></div>
+          <p class="see"><b>You should see:</b> after a minute or two, <code>biomanager-db-1</code>, <code>biomanager-app-1</code>,
+            <code>biomanager-caddy-1</code> and <code>biomanager-backup-1</code>, each <code>Started</code> or <code>Healthy</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>pull access denied for ghcr.io/gaspolymerase/biomanager</code>: run
+            <code>host/load-image.sh</code>, then this again. <code>container biomanager-app-1 is unhealthy</code>:
+            <code>docker compose logs --tail 100 app</code> says why.</p>
+        </li>
+        <li>
+          <p>Check that everything runs.</p>
+          <div class="cmd"><pre id="d-ps">docker compose ps</pre><button type="button" class="copy-btn" data-copy="d-ps">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>db</code> and <code>app</code> <code>(healthy)</code>, <code>caddy</code>
+            <code>Up</code>, and <code>backup</code> <code>(healthy)</code>, or <code>(health: starting)</code> for a few minutes
+            while it takes its first backup.</p>
+          <p class="ifnot"><b>If not:</b> a service missing or <code>Restarting</code>: <code>docker compose logs --tail 100 &lt;service&gt;</code>.</p>
+        </li>
+        <li>
+          <p>Get the setup code for the first account.</p>
+          <div class="cmd"><pre id="d-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="d-code">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f (also saved in /data/setup-code).</code></p>
+          <p class="ifnot"><b>If not:</b> nothing: the app is still starting. Wait a minute and repeat.</p>
+        </li>
+        <li>
+          <p>On your computer, with Tailscale on, open <code>https://&lt;your-domain&gt;/register</code>, fill in your name, a
+            username, a password and the <b>Setup code</b>, and choose <b>Create account</b>. This first account is the lab's admin.</p>
+          <p class="see"><b>You should see:</b> you are signed in, and the lab's set-up questions open.</p>
+          <p class="ifnot"><b>If not:</b> no answer or a certificate error: HTTPS isn't on in Tailscale (step 8) or the
+            <code>COMPOSE_FILE</code> line is missing (step 11). Fix it, run <code>docker compose up -d</code>, and
+            <code>docker compose logs caddy</code> if it still fails.</p>
+        </li>
+        <li>
+          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <div class="cmd"><pre id="d-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="d-install">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code> and two timers,
+            <code>biomanager-watchdog.timer</code> and <code>biomanager-maintenance.timer</code>. Subscribe to that topic in the
+            <a href="https://ntfy.sh">ntfy</a> app on your phone.</p>
+          <p class="ifnot"><b>If not:</b> <code>command not found</code>: <code>cd /opt/biomanager/Biomanager/deploy</code> first.</p>
+        </li>
+        <li>
+          <p>Close SSH to the internet: Oracle Cloud console → the instance → <b>Subnet</b> (under Primary VNIC) →
+            <b>Security Lists → Default Security List → Ingress Rules</b>, tick the rule with destination port 22 →
+            <b>Remove</b>. Then, on your computer:</p>
+          <div class="cmd"><pre id="d-closed">ssh -o ConnectTimeout=10 ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="d-closed">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Connection timed out</code>, while <code>ssh ubuntu@biomanager</code> still works.</p>
+          <p class="ifnot"><b>If not:</b> it still connects: another rule opens port 22 (look for a network security group on
+            the instance) and remove it too.</p>
+        </li>
+        <li>
+          <p>Optional, recommended: keep Oracle from stopping the VM. Oracle Cloud console → <b>Billing → Upgrade and Manage
+            Payment → Upgrade to Pay As You Go</b>. Always Free resources stay free.</p>
+          <p class="see"><b>You should see:</b> the account shown as Pay As You Go.</p>
+          <p class="ifnot"><b>If you skip this:</b> Oracle stops an Always Free VM that looks idle for a week. Start it again in
+            <b>Compute → Instances</b>; nothing is lost.</p>
+        </li>
       </ol>
-      <p>Someone outside the lab who needs a look for a few days doesn't need Tailscale: see <a href="#guests">guest passes</a>.</p>
+      <p class="done-when"><b>Done when:</b> on your phone or computer with Tailscale on,
+        <code>https://&lt;your-domain&gt;/healthz</code> shows <code>ok</code>, you can sign in at
+        <code>https://&lt;your-domain&gt;</code> as the admin, and <code>ssh ubuntu@&lt;public-ip&gt;</code> times out.</p>
     </section>
 
     <!-- ======================================================= E -->
     <section id="domain">
       <h2>E · A cloud VM with your own domain</h2>
-      <p class="opt-meta">VM as in D + a domain (about $10–15 a year) · an ordinary address anyone can open</p>
-      <p>Everyone reaches <code>https://biomanager.yourlab.org</code> with no app at all. The cost of that convenience:
-        the sign-in page is on the open internet. BioManager is built for it — new sign-ups wait for an admin, wrong
-        passwords are throttled, sessions end when a password changes, and a strict content security policy is on — but
-        use strong passwords, and consider sign-in with Google or Microsoft.</p>
-      <ol class="steps-list">
-        <li>Buy a domain from a registrar such as Cloudflare, Porkbun or Namecheap (or use a subdomain your department
-          gives you).</li>
-        <li>Create the VM as in D, steps 1–2 (Tailscale is optional; it's still the safest way to SSH in).</li>
-        <li>At the registrar, add a DNS <b>A record</b>: <code>biomanager</code> → the VM's public IP.</li>
-        <li>In the cloud firewall (Oracle: the subnet's security list), allow inbound TCP <b>80</b> and <b>443</b> from
-          anywhere. Port 80 is needed for Let's Encrypt to issue the certificate.</li>
-        <li>Get the bundle and <code>.env</code> as in D step 4, with:
-<pre><code>DOMAIN=biomanager.yourlab.org
-TLS=acme
-ACME_EMAIL=you@yourlab.org       # Let's Encrypt writes here before a certificate expires</code></pre>
-          then <code>docker compose up -d</code>. Caddy gets and renews the certificate by itself.</li>
-        <li>Create the admin account at <code>https://biomanager.yourlab.org/register</code> with the setup code, and run
-          <code>sudo host/install.sh</code> (in the <code>deploy</code> folder).</li>
+      <div class="badges"><span class="badge who">Anyone with the address</span><span class="badge">About $1 a month</span><span class="badge">1–2 hours</span></div>
+      <p>No app needed: anyone opens <code>https://biomanager.yourlab.example</code>. The sign-in page is on the open
+        internet, so use strong passwords, and consider <a href="#sign-in">sign-in with Google or Microsoft</a>.</p>
+      <h3>You need</h3>
+      <ul class="need">
+        <li>An <a href="https://www.oracle.com/cloud/free/">Oracle Cloud</a> account (free; a card verifies you; the home
+          region can't be changed), or any provider's Ubuntu 24.04 VM with a cloud-init box.</li>
+        <li>A domain (about $10–15 a year) at a registrar where you can add DNS records, such as Cloudflare, Porkbun or
+          Namecheap; or a subdomain from your department.</li>
+        <li>An email address for Let's Encrypt, which issues the certificate.</li>
+        <li>Your computer, with a terminal.</li>
+        <li>Cost: about $1 a month (the domain) on Oracle Always Free.</li>
+        <li>Time: 1–2 hours; a new DNS record can take up to an hour to work everywhere.</li>
+      </ul>
+      <ol class="recipe">
+        <li>
+          <p>On your computer, make an SSH key. Press <kbd>Enter</kbd> at each question.</p>
+          <div class="cmd"><pre id="e-key">ssh-keygen -t ed25519</pre><button type="button" class="copy-btn" data-copy="e-key">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Your public key has been saved in …/.ssh/id_ed25519.pub</code></p>
+          <p class="ifnot"><b>If not:</b> <code>… already exists. Overwrite (y/n)?</code>: answer <kbd>n</kbd> and use the key you have.</p>
+        </li>
+        <li>
+          <p>On your computer, download the server bundle and show its first-boot script.</p>
+          <div class="cmd"><pre id="e-download">curl -fsSL -o biomanager-server.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf biomanager-server.tar.gz
+cat Biomanager/deploy/cloud-init.yaml</pre><button type="button" class="copy-btn" data-copy="e-download">Copy</button></div>
+          <p class="see"><b>You should see:</b> a file that starts with <code>#cloud-config</code>. You paste all of it in step 3.</p>
+          <p class="ifnot"><b>If not:</b> Windows PowerShell says a parameter can't be found: type <code>curl.exe</code> instead of <code>curl</code>.</p>
+        </li>
+        <li>
+          <p>Create the VM: Oracle Cloud console → <b>☰ → Compute → Instances → Create instance</b>, with:</p>
+          <ul>
+            <li><b>Image:</b> Change image → Ubuntu → <b>Canonical Ubuntu 24.04</b>.</li>
+            <li><b>Shape:</b> Change shape → Ampere → <b>VM.Standard.A1.Flex</b>, 2 OCPUs, 12 GB memory.</li>
+            <li><b>Networking:</b> a new virtual cloud network and public subnet; assign a public IPv4 address.</li>
+            <li><b>Add SSH keys:</b> Upload public key files (.pub) → <code>id_ed25519.pub</code> from step 1.</li>
+            <li><b>Advanced options → Management → Initialization script → Paste cloud-init script:</b> all of
+              <code>cloud-init.yaml</code> from step 2.</li>
+          </ul>
+          <p>Then <b>Create</b>.</p>
+          <p class="see"><b>You should see:</b> the instance <b>Running</b>, with a <b>Public IP address</b> on its page:
+            <code>&lt;public-ip&gt;</code> below.</p>
+          <p class="ifnot"><b>If not:</b> <code>Out of capacity for shape VM.Standard.A1.Flex</code>: pick another availability
+            domain under <b>Placement</b>, or try again later.</p>
+        </li>
+        <li>
+          <p>Open ports 80 and 443: the instance → <b>Subnet</b> (under Primary VNIC) → <b>Security Lists → Default Security
+            List → Add Ingress Rules</b>: source CIDR <code>0.0.0.0/0</code>, IP protocol TCP, destination port <code>80</code>;
+            <b>+ Another Ingress Rule</b>, the same with <code>443</code>; <b>Add Ingress Rules</b>.</p>
+          <p class="see"><b>You should see:</b> two new rows, TCP 80 and TCP 443. Let's Encrypt needs port 80 to issue the certificate.</p>
+        </li>
+        <li>
+          <p>At your registrar, add a DNS <b>A record</b>: name <code>biomanager</code>, value <code>&lt;public-ip&gt;</code>.
+            Then, on your computer:</p>
+          <div class="cmd"><pre id="e-dns">nslookup &lt;your-domain&gt;</pre><button type="button" class="copy-btn" data-copy="e-dns">Copy</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>: <code>biomanager.</code> and your domain, like
+            <code>biomanager.yourlab.example</code>.</p>
+          <p class="see"><b>You should see:</b> <code>Address: &lt;public-ip&gt;</code> under the name.</p>
+          <p class="ifnot"><b>If not:</b> no address yet: wait 10 minutes and repeat. On Cloudflare, set the record to
+            <b>DNS only</b> (grey cloud), not proxied.</p>
+        </li>
+        <li>
+          <p>Sign in to the VM. Answer <code>yes</code> to the fingerprint question.</p>
+          <div class="cmd"><pre id="e-ssh">ssh ubuntu@&lt;public-ip&gt;</pre><button type="button" class="copy-btn" data-copy="e-ssh">Copy</button></div>
+          <p class="see"><b>You should see:</b> a prompt that starts <code>ubuntu@</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>Connection timed out</code>: try again in two minutes.
+            <code>Permission denied (publickey)</code>: <code>ssh -i ~/.ssh/id_ed25519 ubuntu@&lt;public-ip&gt;</code>.</p>
+        </li>
+        <li>
+          <p>Wait for the first-boot script to finish (5–10 minutes after the VM starts).</p>
+          <div class="cmd"><pre id="e-ready">test -f /var/lib/biomanager-ready &amp;&amp; echo ready</pre><button type="button" class="copy-btn" data-copy="e-ready">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>ready</code>. Then type <code>exit</code> and sign in again (step 6), so
+            your account can use Docker.</p>
+          <p class="ifnot"><b>If not:</b> nothing: <code>sudo tail -f /var/log/cloud-init-output.log</code> shows progress. If
+            that log never mentions Docker, the script wasn't pasted in step 3: terminate the VM and create it again.</p>
+        </li>
+        <li>
+          <p>Download BioManager.</p>
+          <div class="cmd"><pre id="e-bundle">curl -fsSL -o /tmp/biomanager-server.tar.gz \
+  https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
+tar -xzf /tmp/biomanager-server.tar.gz -C /opt/biomanager
+/opt/biomanager/Biomanager/deploy/host/load-image.sh</pre><button type="button" class="copy-btn" data-copy="e-bundle">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Loaded image: ghcr.io/gaspolymerase/biomanager:&lt;version&gt;</code>
+            and <code>Loaded. Start or update with: …</code></p>
+          <p class="ifnot"><b>If not:</b> <code>permission denied while trying to connect to the Docker daemon socket</code>:
+            <code>exit</code>, sign in again, and repeat.</p>
+        </li>
+        <li>
+          <p>Write the settings that need no choices.</p>
+          <div class="cmd"><pre id="e-env">cd /opt/biomanager/Biomanager/deploy
+cp .env.example .env &amp;&amp; chmod 600 .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^TLS=.*|TLS=acme|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env</pre><button type="button" class="copy-btn" data-copy="e-env">Copy</button></div>
+          <p class="see"><b>You should see:</b> no output.</p>
+        </li>
+        <li>
+          <p>Enter your address, email and time zone: open the file, change the three lines, save with
+            <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, close with <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p>
+          <div class="cmd"><pre id="e-nano">nano .env</pre><button type="button" class="copy-btn" data-copy="e-nano">Copy</button></div>
+          <div class="cmd"><pre id="e-lines">DOMAIN=&lt;your-domain&gt;
+ACME_EMAIL=&lt;your-email&gt;
+TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy="e-lines">Copy</button></div>
+          <p class="fine-left"><code>&lt;your-domain&gt;</code>: the name from step 5. <code>&lt;your-email&gt;</code>: Let's
+            Encrypt writes there before a certificate expires. <code>&lt;your-time-zone&gt;</code>: like
+            <code>Europe/Berlin</code> or <code>Asia/Shanghai</code>.</p>
+          <p class="see"><b>You should see:</b> <code>DOMAIN=</code> and <code>ACME_EMAIL=</code> near the top, <code>TZ=</code>
+            about halfway down.</p>
+        </li>
+        <li>
+          <p>Check the settings.</p>
+          <div class="cmd"><pre id="e-check">grep -E '^(DOMAIN|TLS|ACME_EMAIL|TZ|BACKUP_DIR)=' .env
+docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="e-check">Copy</button></div>
+          <p class="see"><b>You should see:</b> your five lines, with <code>TLS=acme</code>, then <code>settings ok</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>set POSTGRES_PASSWORD in .env</code>: run step 9 again.
+            <code>DOMAIN=biomanager.example.edu</code>: the edit wasn't saved; repeat step 10.</p>
+        </li>
+        <li>
+          <p>Start BioManager.</p>
+          <div class="cmd"><pre id="e-up">docker compose up -d --build</pre><button type="button" class="copy-btn" data-copy="e-up">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>biomanager-db-1</code>, <code>biomanager-app-1</code>,
+            <code>biomanager-caddy-1</code> and <code>biomanager-backup-1</code>, each <code>Started</code> or <code>Healthy</code>.</p>
+          <p class="ifnot"><b>If not:</b> <code>pull access denied</code>: run <code>host/load-image.sh</code>, then this again.</p>
+        </li>
+        <li>
+          <p>Check that Caddy got the certificate.</p>
+          <div class="cmd"><pre id="e-cert">docker compose logs caddy | grep "certificate obtained"</pre><button type="button" class="copy-btn" data-copy="e-cert">Copy</button></div>
+          <p class="see"><b>You should see:</b> a line with <code>certificate obtained successfully</code> and your domain.</p>
+          <p class="ifnot"><b>If not:</b> nothing yet: wait a minute and repeat. Lines with <code>challenge failed</code> or
+            <code>timeout</code>: the DNS record (step 5) or port 80 (step 4) isn't right yet. Fix it, then
+            <code>docker compose restart caddy</code>.</p>
+        </li>
+        <li>
+          <p>Get the setup code for the first account.</p>
+          <div class="cmd"><pre id="e-code">docker compose logs app | grep "setup code"</pre><button type="button" class="copy-btn" data-copy="e-code">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>No accounts yet. Create the first admin at /register with setup code
+            1a2b-3c4d-5e6f …</code></p>
+          <p class="ifnot"><b>If not:</b> nothing: wait a minute and repeat.</p>
+        </li>
+        <li>
+          <p>Open <code>https://&lt;your-domain&gt;/register</code>, fill in your name, a username, a password and the
+            <b>Setup code</b>, and choose <b>Create account</b>. This first account is the lab's admin.</p>
+          <p class="see"><b>You should see:</b> you are signed in, and the lab's set-up questions open.</p>
+          <p class="ifnot"><b>If not:</b> <code>That setup code is not right.</code>: copy it again, all three groups and the dashes.</p>
+        </li>
+        <li>
+          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <div class="cmd"><pre id="e-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="e-install">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code>. Subscribe to it in
+            the <a href="https://ntfy.sh">ntfy</a> app.</p>
+          <p class="ifnot"><b>If not:</b> <code>command not found</code>: <code>cd /opt/biomanager/Biomanager/deploy</code> first.</p>
+        </li>
       </ol>
+      <p class="done-when"><b>Done when:</b> on a phone on mobile data, <code>https://&lt;your-domain&gt;/healthz</code> shows
+        <code>ok</code> with a padlock, and you can sign in at <code>https://&lt;your-domain&gt;</code> as the admin.</p>
+    </section>
+
+    <!-- ======================================================= move -->
+    <section id="move">
+      <h2>Bring the desktop app's records</h2>
+      <p>Records, history and IDs all come along. Do this on a new server, <b>before its first start</b>: in route B, C, D
+        or E, after <b>Check the settings</b>, do these steps instead of the rest of the route up to <b>Turn on alerts</b>.
+        You then sign in with your existing account: no setup code.</p>
+      <ol class="recipe">
+        <li>
+          <p>Quit the desktop app. Then, on that computer, copy its database and uploaded files to the server.</p>
+          <div class="cmd"><pre id="m-copy">scp "$HOME/Library/Application Support/Biomanager/data/biomanager.db" &lt;you&gt;@&lt;server&gt;:/tmp/lab.db
+scp -r "$HOME/Library/Application Support/Biomanager/uploads" &lt;you&gt;@&lt;server&gt;:/tmp/lab-uploads</pre><button type="button" class="copy-btn" data-copy="m-copy">Copy</button></div>
+          <p class="fine-left">That is a Mac. On Windows the folder is <code>$env:APPDATA\Biomanager</code> (PowerShell),
+            on Linux <code>~/.local/share/Biomanager</code>. <code>&lt;you&gt;@&lt;server&gt;</code>: how you sign in to the
+            server, like <code>ubuntu@biomanager</code>.</p>
+          <p class="see"><b>You should see:</b> each file copied at 100%.</p>
+          <p class="ifnot"><b>If not:</b> <code>uploads: No such file or directory</code>: the app has no uploads. Skip the
+            second line, and the second line of step 4.</p>
+        </li>
+        <li>
+          <p>On the server, test the copy. It changes nothing.</p>
+          <div class="cmd"><pre id="m-dry">cd /opt/biomanager/Biomanager/deploy
+docker compose up -d db
+docker compose run --rm --no-deps -v /tmp/lab.db:/import/lab.db:ro app \
+  sh -c 'python scripts/migrate-to-postgres.py --dry-run /import/lab.db "$DATABASE_URL"'</pre><button type="button" class="copy-btn" data-copy="m-dry">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>copied   : … rows in … tables, row counts verified</code> and
+            <code>dry run  : rolled back, nothing kept</code>.</p>
+          <p class="ifnot"><b>If not:</b> a list of values PostgreSQL would refuse: fix those records in the desktop app, then
+            repeat step 1.</p>
+        </li>
+        <li>
+          <p>Copy it for real.</p>
+          <div class="cmd"><pre id="m-copy-db">docker compose run --rm --no-deps -v /tmp/lab.db:/import/lab.db:ro app \
+  sh -c 'python scripts/migrate-to-postgres.py /import/lab.db "$DATABASE_URL"'</pre><button type="button" class="copy-btn" data-copy="m-copy-db">Copy</button></div>
+          <p class="see"><b>You should see:</b> <code>copied   : … row counts verified</code>, with no <code>dry run</code> line.</p>
+          <p class="ifnot"><b>If not:</b> <code>The copy failed and was rolled back</code>: the server's database isn't empty
+            (BioManager was started before). Ask on <a href="https://github.com/gaspolymerase/biomanager/issues">GitHub</a>.</p>
+        </li>
+        <li>
+          <p>Start BioManager and copy the uploaded files in.</p>
+          <div class="cmd"><pre id="m-up">docker compose up -d --build
+docker compose cp /tmp/lab-uploads/. app:/data/uploads/</pre><button type="button" class="copy-btn" data-copy="m-up">Copy</button></div>
+          <p class="see"><b>You should see:</b> the four services <code>Started</code>, then <code>Successfully copied</code>.</p>
+        </li>
+      </ol>
+      <p class="done-when"><b>Done when:</b> you sign in at <code>https://&lt;your-domain&gt;</code> with your desktop account
+        and see your records. Then do your route's <b>Turn on alerts</b> step.</p>
+      <p>The same steps rebuild a lost server from a lab computer's copy: use the newest <code>.db</code> in its
+        <code>lab-copies/…/db</code> folder and its <code>uploads</code> folder.</p>
     </section>
 
     <!-- ======================================================= other -->
     <section id="other">
       <h2>Other routes</h2>
       <dl class="gdl">
-        <dt id="guests">Guest passes: in for a few days, no Tailscale</dt>
-        <dd>On a Tailscale server (D), an admin can let someone outside the lab in temporarily. Make a code under
-          <b>Guests</b> in the account menu, then put the server on the internet with Tailscale Funnel:
-          <code>sudo deploy/host/internet-access.sh on</code> (the first time, Tailscale prints a link to allow Funnel).
-          The guest opens <code>https://DOMAIN:8443/guest</code> and enters the code; anyone else there sees only that
-          code page. <code>internet-access.sh off</code> closes it again. See the <a href="guide.html#guests">user guide</a>.</dd>
         <dt>Cloudflare Tunnel</dt>
-        <dd>Like E, an ordinary address, but without opening any port: <code>cloudflared</code> on the server connects out
-          to Cloudflare, and Cloudflare Access can require a lab email login before anyone even sees BioManager (free for
-          up to 50 people). It needs a domain on Cloudflare. We haven't packaged it; the <a href="#ai">AI guide</a> has notes
-          for an assistant setting it up.</dd>
+        <dd>An ordinary address like E, with no open port: <code>cloudflared</code> on the server connects out to Cloudflare,
+          and Cloudflare Access can ask for a lab email login first. Not packaged; <a href="deploy-with-ai.md">the AI guide</a>
+          has notes for it.</dd>
         <dt>Without Docker</dt>
-        <dd>BioManager is a Python web app (gunicorn) on PostgreSQL behind any HTTPS proxy, so it runs on a plain server too.
-          Docker is what makes backups, updates and restores one command each, so we recommend it.</dd>
+        <dd>A Python web app (gunicorn) on PostgreSQL behind any HTTPS proxy: <a
+          href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#without-docker">deploy/README.md,
+          Without Docker</a>. With Docker, backups, updates and restores are one command each.</dd>
       </dl>
     </section>
 
@@ -376,124 +863,91 @@ ACME_EMAIL=you@yourlab.org       # Let's Encrypt writes here before a certificat
     <!-- ======================================================= after -->
     <section id="after">
       <h2>After it's running</h2>
-      <dl class="gdl">
-        <dt>Set up the lab</dt>
-        <dd>The admin's first sign-in opens the set-up survey: tick what the lab keeps and BioManager builds just those
-          databases. See the <a href="guide.html#first-run">user guide</a>.</dd>
-        <dt>People</dt>
-        <dd>Sign-ups wait for approval in <b>Manage users</b>, where admins also make others admin, disable leavers and reset
-          passwords, and give animal-facility staff the <b>Animal care</b> or <b>Facility manager</b> role
-          (<a href="guide.html#lab">what each may do</a>).</dd>
-        <dt id="sign-in">Sign-in with Google, Microsoft or your institution</dt>
-        <dd>Optional, each one a few lines in <code>deploy/.env</code> and a restart (<code>deploy/README.md</code> in the bundle
-          has the steps). Your institution's own sign-in works through OpenID Connect (Okta, Keycloak, Azure AD, Shibboleth's
-          OIDC plugin): register BioManager with your IT, redirect address <code>https://DOMAIN/auth/institution/callback</code>,
-          and set <code>BIOMANAGER_OIDC_ISSUER</code>, <code>_CLIENT_ID</code>, <code>_CLIENT_SECRET</code> and
-          <code>BIOMANAGER_OIDC_NAME</code> (what the button says). A university that only speaks SAML (InCommon, eduGAIN)
-          comes in through <a href="https://cilogon.org">CILogon</a>: <code>BIOMANAGER_CILOGON_CLIENT_ID</code> and
-          <code>_SECRET</code>, and <code>BIOMANAGER_CILOGON_IDP</code> to go straight to your university.</dd>
-        <dt>Cage cards with QR codes</dt>
-        <dd>On a server, a card's QR code opens that cage on any phone that can reach the server. A Zebra label printer on
-          the lab's network can be sent labels straight from the server (<a href="guide.html#label-printers">how</a>) when the
-          server can reach it: a server in the cloud can't reach a printer in your lab, unless the printer is on Tailscale too.</dd>
-        <dt>Alerts</dt>
-        <dd>The ntfy topic from <code>install.sh</code> tells you if the site stops answering, a container stops, the disk
-          fills, or backups stop. <code>deploy/RUNBOOK.md</code> says what to do for each.</dd>
-        <dt>Updates</dt>
-        <dd>Security fixes for the operating system install nightly, and the containers refresh every Sunday. A new BioManager
-          version is three commands:
-<pre><code>cd /opt/biomanager/Biomanager/deploy
-docker compose exec backup backup.sh      # a fresh backup first
-curl -fsSL -o /tmp/b.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz \
-  &amp;&amp; tar -xzf /tmp/b.tar.gz -C /opt/biomanager &amp;&amp; host/load-image.sh &amp;&amp; docker compose up -d --build</code></pre>
-          Your <code>.env</code> and backups are never in the bundle, so unpacking over it keeps them. The new version
-          brings the database up to date as it starts; every release is tested upgrading a lab made by each earlier one.</dd>
-      </dl>
+      <p>Each item links to its checklist in the runbook, which is also in the bundle as
+        <code>deploy/RUNBOOK.md</code>. Security updates install nightly, and the containers refresh on Sundays.</p>
+      <ul class="need">
+        <li><b>Set up the lab:</b> the admin's first sign-in asks what the lab keeps (<a href="guide/install.html#first-run">user guide</a>).</li>
+        <li><b>Write down where everything is</b>, and keep it off the server:
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#where-everything-is">Where everything is</a>.</li>
+        <li><b>Turn on off-site backups</b> (Backblaze B2, free at this size):
+          <code>sudo /opt/biomanager/Biomanager/deploy/host/offsite-setup.sh</code>, after
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#off-site-copies-backblaze-b2">making the bucket</a>.</li>
+        <li><b>An alert arrived:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#an-alert-arrived">what each one means</a>.</li>
+        <li><b>Someone joins:</b> share the server with them (Tailscale), approve them in <b>Settings → Manage users</b>.
+          Phones: the Android app, or Safari → <b>Share → Add to Home Screen</b> on iPhone.
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-joins">Someone joins</a>.</li>
+        <li><b>Someone leaves:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-leaves">Someone leaves</a>.</li>
+        <li><b>Update to a new version:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-the-app">Updating the app</a>
+          (and <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-went-wrong">if it goes wrong</a>).</li>
+        <li><b>Put a backup back:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#restore-a-backup-the-server-is-fine">Restore a backup</a>.</li>
+        <li><b>The site is down:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#the-site-is-down">The site is down</a>.</li>
+        <li><b>The server is lost, or you move to another:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#the-server-is-lost">The server is lost</a>,
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#moving-to-another-server">Moving to another server</a>.</li>
+        <li><b>An admin is locked out:</b>
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#an-admin-is-locked-out">An admin is locked out</a>.</li>
+        <li id="guests"><b>Let a guest in from the internet</b> for a few days, with no Tailscale (route D): a code from
+          <b>Guests</b>, then <code>sudo host/internet-access.sh on</code>; they open
+          <code>https://&lt;your-domain&gt;:8443/guest</code>.
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#letting-a-guest-in-from-the-internet">Letting a guest in</a>,
+          <a href="guide/people-and-guests.html#guests">user guide</a>.</li>
+        <li id="sign-in"><b>Sign in with Google, Microsoft or your institution:</b> register the server with the provider,
+          put its client ID and secret in <code>.env</code> (<code>BIOMANAGER_GOOGLE_*</code>, <code>BIOMANAGER_MICROSOFT_*</code>,
+          <code>BIOMANAGER_OIDC_*</code> for OpenID Connect, <code>BIOMANAGER_CILOGON_*</code> for a SAML-only university),
+          then <code>docker compose up -d</code>.
+          <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#signing-in-with-google-or-microsoft">Signing in with Google or Microsoft</a>.</li>
+      </ul>
     </section>
 
     <!-- ======================================================= safe -->
     <section id="safe">
       <h2>Keeping the data safe</h2>
-      <p>A colony's records are years of work. BioManager keeps several independent copies, so no single failure —
-        a deleted VM, a dead disk, a stolen laptop, a bad update — loses them.</p>
+      <p>Several independent copies, so no single failure (a deleted VM, a dead disk, a stolen laptop, a bad update) loses
+        the lab's records.</p>
       <table class="gtable layers">
         <tr><th>1 · Every night</th><td>The server backs up the database and uploaded files, checks each backup can be read,
           and keeps the last 30. <i>Automatic on every server.</i></td></tr>
-        <tr><th>2 · Every week</th><td>The newest backup is restored into a scratch database and checked, so you know the
-          backups actually work — not just that they exist. <i>Automatic.</i></td></tr>
-        <tr><th>3 · Off-site</th><td>Encrypted copies in cloud storage, kept 30 days, 12 weeks and 24 months — and, with the
-          bucket's Object Lock on, safe from deletion even by someone who takes over the server. Backblaze B2's first 10 GB are free — years of a lab's backups.
-          One command: <code>sudo deploy/host/offsite-setup.sh</code>.</td></tr>
-        <tr><th>4 · On every lab computer</th><td>The <b>desktop app</b> keeps its own copy of the whole lab: on the server,
-          <b>Settings → Copies of the lab → Make a key</b> for a computer; in that computer's desktop app, <b>Settings → Keep a copy
-          of your lab server</b>, the address and the key. While the app is open it takes a fresh copy every day, checks it
-          arrived whole, keeps the last 14 and mirrors every uploaded file. Admins see which computers hold a copy and how
-          fresh it is. Put the app on a few lab machines and the lab survives even losing the server and its off-site copies.
-          (Admins may allow members to keep copies too, in Lab setup.) An admin's Mac can also pull the server's own nightly
-          backups over SSH: <code>deploy/mac/install.sh</code> from the bundle.</td></tr>
-        <tr><th>5 · Everyone</th><td>Every sheet has <b>Export</b>, a CSV of what it shows that opens in Excel; and
-          <b>Settings → Export my data</b> downloads your own mice and plasmids as CSV with your notebook pages, any time.</td></tr>
-        <tr><th>6 · Undo and history</th><td>Mistakes, not disasters: every bulk change can be undone from <b>Batches</b>, and the
-          <b>Audit log</b> shows every edit, who made it and what it was before.</td></tr>
+        <tr><th>2 · Every week</th><td>The newest backup is restored into a scratch database and checked. <i>Automatic.</i></td></tr>
+        <tr><th>3 · Off-site</th><td>Encrypted copies in cloud storage, kept 30 days, 12 weeks and 24 months; with the
+          bucket's Object Lock on, safe even from someone who takes over the server. Backblaze B2's first 10 GB are free.
+          <code>sudo /opt/biomanager/Biomanager/deploy/host/offsite-setup.sh</code>.</td></tr>
+        <tr><th>4 · On lab computers</th><td>The <b>desktop app</b> keeps its own copy of the whole lab: on the server,
+          <b>Settings → Copies of the lab on your computers → Make a key</b>; in the desktop app, <b>Settings → Keep a copy of
+          your lab server</b>, with the address and the key. It takes a fresh copy every day while open and keeps the last 14.
+          An admin's Mac can also pull the server's nightly backups: <code>deploy/mac/install.sh</code>
+          (<a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/README.md#a-copy-on-a-mac">how</a>).</td></tr>
+        <tr><th>5 · Everyone</th><td><b>Export</b> on every sheet gives a CSV; <b>Settings → Export my data</b> downloads your
+          own records and notebook pages.</td></tr>
+        <tr><th>6 · Undo and history</th><td>Every bulk change can be undone from <b>Batches</b>; the <b>Audit log</b> shows
+          every edit, who made it and what it was before.</td></tr>
       </table>
-      <p>Restoring is one command too, and never deletes what it replaces — see <code>deploy/RUNBOOK.md</code>.</p>
-    </section>
-
-    <!-- ======================================================= move -->
-    <section id="move">
-      <h2>Moving from the desktop app to a server</h2>
-      <p>Everything you entered in the app comes along: records, history, IDs. The same steps rebuild a lost server from a
-        lab computer's copy: use the newest <code>.db</code> from its <code>lab-copies/…/db</code> folder instead, and its
-        <code>uploads</code> folder. Do it <b>before the server's first start</b> (the copy goes into an empty database):</p>
-      <ol class="steps-list">
-        <li>Quit the app, and copy its data folder (see <a href="#desktop">A</a>) to the server, for example with
-          <code>scp</code>, to <code>/tmp/lab</code>.</li>
-        <li>On the server, in the deploy folder, after <code>host/load-image.sh</code> and filling in <code>.env</code>:
-<pre><code>docker compose up -d db
-docker compose run --rm --no-deps -v /tmp/lab/biomanager.db:/import/lab.db:ro app \
-  sh -c 'python scripts/migrate-to-postgres.py /import/lab.db "$DATABASE_URL"'
-docker compose up -d
-docker compose cp /tmp/lab/uploads/. app:/data/uploads/</code></pre></li>
-        <li>Sign in with your existing account. <code>--dry-run</code> after the script name checks everything first and changes nothing.</li>
-      </ol>
-      <p>On a running server, the master copy can also move to a desktop and back without these steps: an admin hands it
-        over under <b>Settings → Devices</b>, and the desktop gives it back there. While a desktop holds it the server is
-        read only and says where the lab is (<a href="guide.html#devices">Devices</a>).</p>
-    </section>
-
-    <div class="part"><p class="part-label">Part four</p><h2>Help</h2></div>
-
-    <!-- ======================================================= ai -->
-    <section id="ai">
-      <h2>Set it up with an AI assistant</h2>
-      <p>An AI coding assistant with a terminal (Claude Code, Cursor, Codex and the like) can do most of D or E for you. We
-        keep a guide written for it — the facts, the exact commands, what to check after each step, and the safety rules — at
-        <a href="deploy-with-ai.md"><code>deploy-with-ai.md</code></a>. Paste this to your assistant:</p>
-      <div class="prompt" id="ai-prompt">Read https://biomanager.org/deploy-with-ai.md and follow it to set up a BioManager server for my lab. Start by asking me the questions it lists, recommend an option, and wait for my go-ahead before creating anything that costs money or opens the server to the internet. Never ask me to paste passwords or keys into this chat: tell me where to type them myself.</div>
-      <button type="button" class="btn btn-small copy-btn" data-copy="ai-prompt">Copy the prompt</button>
-      <p>You stay in charge of the parts only you can do: creating the cloud and Tailscale accounts, approving sign-ins, and
-        typing secrets. The guide tells the assistant to stop and ask at each of those.</p>
+      <p>Restoring never deletes what it replaces:
+        <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#restore-a-backup-the-server-is-fine">Restore a backup</a>.</p>
     </section>
 
     <!-- ======================================================= faq -->
     <section id="faq">
       <h2>Questions</h2>
       <dl class="gdl">
-        <dt>Is a free cloud VM really free?</dt>
-        <dd>Oracle's Always Free resources carry no charge. The card is for identity; nothing is billed unless you create
-          paid resources. Free-tier accounts' VMs can be reclaimed when idle for a week; upgrading the account to Pay As You
-          Go stops that and still charges nothing for Always Free resources.</dd>
+        <dt>Is Oracle's free VM really free?</dt>
+        <dd>Always Free resources carry no charge; the card is for identity. Oracle may stop a free-tier VM that looks idle
+          for a week: start it again and nothing is lost, or upgrade to Pay As You Go (route D, step 20) to stop it happening.</dd>
         <dt>Is Tailscale safe for lab data?</dt>
-        <dd>Tailscale connects devices directly with WireGuard encryption; it can't read the traffic. The server is simply
-          invisible to anyone not in your tailnet — a far smaller target than a public sign-in page.</dd>
+        <dd>Tailscale connects devices directly with WireGuard encryption and can't read the traffic. Anyone outside your
+          tailnet can't see the server at all.</dd>
         <dt>How big does the server need to be?</dt>
-        <dd>A lab with tens of thousands of animals uses well under 1 GB of database. The smallest VMs are plenty.</dd>
-        <dt>Can we run several labs on one server?</dt>
-        <dd>Run one BioManager per lab (each its own folder and domain), or one for a whole facility, where each lab keeps its
-          own databases.</dd>
-        <dt>Who can help?</dt>
+        <dd>2 CPU cores, 2 GB of memory and 20 GB of disk. A lab with tens of thousands of animals uses well under 1 GB of database.</dd>
+        <dt>Can several labs share one server?</dt>
+        <dd>Run one BioManager per lab (each its own folder and domain), or one for a whole facility, where each lab keeps
+          its own databases.</dd>
+        <dt>A step didn't work. Who can help?</dt>
         <dd><a href="https://github.com/gaspolymerase/biomanager/issues/new?title=Lab%20server%20set-up">Open an issue</a>
-          with what you're trying and where it stopped.</dd>
+          with your route, the step number and what it printed.</dd>
       </dl>
     </section>
   </main>
@@ -503,7 +957,7 @@ docker compose cp /tmp/lab/uploads/. app:/data/uploads/</code></pre></li>
   <div class="wrap footer-inner">
     <div class="brand"><img src="assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     <p>Released under the <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a>. <a href="./">Home</a> · <a href="guide.html">User guide</a> ·
-      <a href="./#download">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">Report a problem</a></p>
+      <a href="download.html">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">Report a problem</a></p>
   </div>
 </footer>
 

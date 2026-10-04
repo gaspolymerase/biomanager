@@ -29,6 +29,7 @@ from sqlalchemy import delete, select, update
 
 from . import access
 from .db import SessionLocal
+from .i18n import gettext
 from .models import LabGroup, LabGroupMember, UserAccount
 
 bp = Blueprint("groups", __name__)
@@ -212,8 +213,8 @@ def label(is_shared, group_id, personal: str = "Personal", lab: str = "Shared") 
 
 
 def refusal(group_id) -> str:
-    return "You can share only with a project group you are in." if group_id in names() \
-        else "That project group doesn't exist any more."
+    return gettext("You can share only with a project group you are in.") if group_id in names() \
+        else gettext("That project group doesn't exist any more.")
 
 
 # ---------------------------------------------------------------- databases
@@ -334,11 +335,11 @@ def create():
         abort(403)
     name = _clean_name(request.form.get("name"))
     if not name:
-        flash("Give the group a name.", "error")
+        flash(gettext("Give the group a name."), "error")
         return redirect(url_for("groups.page"))
     with SessionLocal() as s:
         if s.scalar(select(LabGroup.id).where(LabGroup.name == name)):
-            flash(f"There is already a group called {name}.", "error")
+            flash(gettext("There is already a group called %(name)s.", name=name), "error")
             return redirect(url_for("groups.page"))
         group = LabGroup(name=name, description=(request.form.get("description") or "").strip()[:500],
                          created_by=access.username())
@@ -350,7 +351,7 @@ def create():
         s.commit()
         gid = group.id
     forget()
-    flash(f"Made the project group {name}.", "success")
+    flash(gettext("Made the project group %(name)s.", name=name), "success")
     return redirect(url_for("groups.page", _anchor=f"group-{gid}"))
 
 
@@ -362,15 +363,15 @@ def rename(group_id: int):
     with SessionLocal() as s:
         group = _group_or_404(s, group_id)
         if not name:
-            flash("Give the group a name.", "error")
+            flash(gettext("Give the group a name."), "error")
         elif s.scalar(select(LabGroup.id).where(LabGroup.name == name, LabGroup.id != group_id)):
-            flash(f"There is already a group called {name}.", "error")
+            flash(gettext("There is already a group called %(name)s.", name=name), "error")
         else:
             group.name = name
             if "description" in request.form:
                 group.description = (request.form.get("description") or "").strip()[:500]
             s.commit()
-            flash("Saved.", "success")
+            flash(gettext("Saved."), "success")
     forget()
     return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
 
@@ -386,7 +387,8 @@ def remove(group_id: int):
         s.delete(group)
         s.commit()
     forget()
-    flash(f"Deleted the project group {name}. What was shared with it is its owner's own again.", "success")
+    flash(gettext("Deleted the project group %(name)s. What was shared with it is its owner's own again.", name=name),
+          "success")
     return redirect(url_for("groups.page"))
 
 
@@ -398,15 +400,15 @@ def add_member(group_id: int):
     with SessionLocal() as s:
         _group_or_404(s, group_id)
         if not s.scalar(select(UserAccount.id).where(UserAccount.username == who)):
-            flash("Pick someone in the lab.", "error")
+            flash(gettext("Pick someone in the lab."), "error")
         elif s.scalar(select(LabGroupMember.id).where(LabGroupMember.group_id_fk == group_id,
                                                      LabGroupMember.username == who)):
-            flash(f"{who} is already in the group.", "info")
+            flash(gettext("%(who)s is already in the group.", who=who), "info")
         else:
             s.add(LabGroupMember(group_id_fk=group_id, username=who,
                                  lead=bool(request.form.get("lead")) and access.is_admin()))
             s.commit()
-            flash(f"Added {who}.", "success")
+            flash(gettext("Added %(who)s.", who=who), "success")
     forget()
     return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
 
@@ -421,11 +423,11 @@ def remove_member(group_id: int, who: str):
                                                     LabGroupMember.username == who))
         if row is not None:
             if row.lead and not access.is_admin():
-                flash("Only an admin can take a lead out of the group.", "error")
+                flash(gettext("Only an admin can take a lead out of the group."), "error")
             else:
                 s.delete(row)
                 s.commit()
-                flash(f"Took {who} out of the group.", "success")
+                flash(gettext("Took %(who)s out of the group.", who=who), "success")
     forget()
     return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
 
