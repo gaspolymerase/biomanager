@@ -202,22 +202,121 @@
   </section>
 
   <!-- ============================================================ features -->
-  <section id="features" class="section">
+  <section id="features" class="section neon-band">
     <div class="wrap">
       <div class="section-head rise">
         <p class="eyebrow">通用功能</p>
         <h2>帮你省下一下午的细节。<span class="mute">每个数据库都有，从第一天起。</span></h2>
       </div>
-      <div class="grid">
-        <div class="card rise"><span class="ic ic-amber"><svg aria-hidden="true"><use href="../assets/icons.svg#home"/></svg></span><h3>首页列出今天要做的事</h3><p>断奶、基因型鉴定、老龄繁殖鼠、该转管的果蝇管、快过期的库存——可以显示为卡片、两周时间轴，或者显示为你的笼架并附取出清单。<b>自定义</b>（Customize）可以挑选卡片并调整顺序：加入你的待办、预约、最近的页面或计算器。</p></div>
-        <div class="card rise"><span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#calculator"/></svg></span><h3>41 个实验台计算器</h3><p><b>工具</b>（Utilities）：摩尔浓度和稀释、缓冲液 pH、A₂₆₀ 和 A₂₈₀、连接和组装、预混液、ΔΔCt、细胞铺板和 MOI、OD₆₀₀、rpm ↔ × g、给药剂量、统计——边输入边出结果，并附参考表。</p></div>
-        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#table"/></svg></span><h3>像电子表格一样编辑</h3><p>点一下单元格直接输入，边改边自动保存。可以排序、筛选、导出 CSV、打印。底部的 <b>新建</b>（New）会添加一个空行供你输入；每只动物前的圆点表示年龄：蓝色是幼年，绿色是成年，红色是老龄。</p></div>
-        <div class="card rise"><span class="ic ic-green"><svg aria-hidden="true"><use href="../assets/icons.svg#import"/></svg></span><h3>原有表格直接导入</h3><p>每个数据库都有 <b>从 Excel 导入</b>（Import from Excel），按含义匹配你的列——<i>Slot</i>、<i>Well</i> 还是 <i>Position</i> 都能认出——并且先给你预览。也可以用 <b>批量添加</b>（Add many）：“4 females, 2 males”（4 雌 2 雄）。</p></div>
-        <div class="card rise"><span class="ic ic-orange"><svg aria-hidden="true"><use href="../assets/icons.svg#undo"/></svg></span><h3>批量修改可以撤销</h3><p>每一批修改都能撤销——除非之后有人又改过这些记录。</p></div>
-        <div class="card rise"><span class="ic ic-slate"><svg aria-hidden="true"><use href="../assets/icons.svg#history"/></svg></span><h3>完整的修改历史</h3><p>谁改了什么、具体怎么改的：<code>genotype: DBH-Cre → ∅</code>。脚本、R 和天平都可以通过 <a href="guide.html#api">API</a> 以你的身份读写数据。</p></div>
-        <div class="card rise"><span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg></span><h3>什么都能搜</h3><p>在任何地方按 <kbd>⌘</kbd> <kbd>K</kbd>；页面以标签页打开并一直保留；<b>+</b> 打开你的起始页。</p></div>
-        <div class="card rise"><span class="ic ic-pink"><svg aria-hidden="true"><use href="../assets/icons.svg#users"/></svg></span><h3>为整个实验室设计</h3><p>审批成员加入，编辑自己负责的记录，共享繁殖笼。<a href="guide.html#groups">项目组</a>可以在组内共享动物、库存、数据库、待办和实验记录本页面。为动物饲养人员设有专门的角色。可用 Google、Microsoft 或所在机构的账号登录。</p></div>
-        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkle"/></svg></span><h3>在 Mac 上用着顺手</h3><p>完整的菜单栏和常用快捷键，支持浅色和深色模式；有新版本时点 <b>安装并重启</b>（Install and Restart）即可——会先备份一份你的数据。在任何现代浏览器中也能使用。</p></div>
+      <div class="nc-grid">
+        <a class="nc rise" href="guide.html#home" style="--c1:#ffb35c;--c2:#ff6b3d;--a:#3a2208;--b:#140c05" aria-label="首页列出今天要做的事. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#home"/></svg></span>
+            <h3>首页列出今天要做的事</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>断奶、基因型鉴定、老龄繁殖鼠、该转管的果蝇管和快过期的库存，以卡片、两周时间轴或笼架显示。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-home" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb35c"/><stop offset="1" stop-color="#ff6b3d"/></linearGradient></defs><g stroke="url(#ng-home)"><circle cx="100" cy="86" r="30"/><path d="M100 30v14M58 46l10 10M142 46l-10 10M40 86h16M144 86h16M30 116h140"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>断奶</b> 笼 102<span>2 天后</span></div><div class="gl-row"><b>基因型鉴定</b> 窝 L-3<span>今天</span></div><div class="gl-row"><b>转管</b> 架 B<span>25 °C</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#utilities" style="--c1:#7aa7ff;--c2:#4be1ff;--a:#13214f;--b:#090d22" aria-label="41 个实验台计算器. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#calculator"/></svg></span>
+            <h3>41 个实验台计算器</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>摩尔浓度、稀释、缓冲液 pH、A260、连接、预混液、ΔΔCt 等，边输入边出结果。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-calc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa7ff"/><stop offset="1" stop-color="#4be1ff"/></linearGradient></defs><g stroke="url(#ng-calc)"><path d="M82 22h36M88 22v34l-34 62a8 8 0 0 0 7 12h78a8 8 0 0 0 7-12l-34-62V22"/><path d="M66 96h68"/><circle cx="92" cy="110" r="5"/><circle cx="112" cy="102" r="3"/></g></svg>
+            <div class="nc-glass"><div class="gl-big">C₁V₁ = C₂V₂</div><div class="gl-row">10 mM → 250 µM<span>加 25 µL</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#sheets" style="--c1:#3ed0b2;--c2:#b5f5e6;--a:#073229;--b:#06120f" aria-label="像电子表格一样编辑. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#table"/></svg></span>
+            <h3>像电子表格一样编辑</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>点一下单元格直接输入，边改边保存。可以排序、筛选、导出 CSV 或打印。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-sheet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ed0b2"/><stop offset="1" stop-color="#b5f5e6"/></linearGradient></defs><g stroke="url(#ng-sheet)"><rect x="34" y="24" width="132" height="96" rx="12"/><path d="M34 56h132M34 88h132M78 24v96M122 24v96"/></g></svg>
+            <div class="nc-glass"><div class="gl-grid"><span>小鼠</span><span>性别</span><span>笼位</span><span>101</span><span>雌</span><span class="on">A1</span><span>102</span><span>雄</span><span>A2</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#move-in" style="--c1:#8fdc6a;--c2:#3ed0b2;--a:#12320f;--b:#071209" aria-label="原有表格直接导入. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#import"/></svg></span>
+            <h3>原有表格直接导入</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>从 Excel 导入时按含义匹配你的列，保存之前先给你预览。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-import" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fdc6a"/><stop offset="1" stop-color="#3ed0b2"/></linearGradient></defs><g stroke="url(#ng-import)"><path d="M70 18h44l22 22v40"/><path d="M70 18v58M114 18v22h22"/><path d="M100 70v44M84 98l16 16 16-16"/><path d="M40 104v14a8 8 0 0 0 8 8h104a8 8 0 0 0 8-8v-14"/></g></svg>
+            <div class="nc-glass"><div class="gl-row">Slot<span>→ 位置</span></div><div class="gl-row">DOB<span>→ 出生日期</span></div><div class="gl-row">Tag<span>→ 小鼠编号</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#history" style="--c1:#ff7ab6;--c2:#ffb35c;--a:#381032;--b:#13070f" aria-label="批量修改可以撤销. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#undo"/></svg></span>
+            <h3>批量修改可以撤销</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>每一批修改都能撤销，除非之后有人又改过这些记录。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-undo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ab6"/><stop offset="1" stop-color="#ffb35c"/></linearGradient></defs><g stroke="url(#ng-undo)"><path d="M70 52H128a32 32 0 0 1 0 64H76"/><path d="M90 30L68 52l22 22"/></g></svg>
+            <div class="nc-glass"><div class="gl-row">已把 12 只小鼠移到架 B</div><div class="gl-pill">撤销</div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#history" style="--c1:#c9d6db;--c2:#7aa7ff;--a:#1a2932;--b:#0a1013" aria-label="完整的修改历史. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#history"/></svg></span>
+            <h3>完整的修改历史</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>每条记录谁改了什么、具体怎么改的都有记录。脚本和 R 可以通过 API 以你的身份读写。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-history" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9d6db"/><stop offset="1" stop-color="#7aa7ff"/></linearGradient></defs><g stroke="url(#ng-history)"><path d="M52 76a48 48 0 1 0 14-34"/><path d="M48 26v20h20"/><path d="M100 50v28l18 12"/></g></svg>
+            <div class="nc-glass"><div class="gl-mono">genotype</div><div class="gl-mono gl-strong">DBH-Cre → ∅</div><div class="gl-row">alex<span>2 分钟前</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#finding" style="--c1:#b79cff;--c2:#ff6bd6;--a:#26135a;--b:#0e0822" aria-label="什么都能搜. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg></span>
+            <h3>什么都能搜</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>在任何地方按 ⌘K，小鼠、质粒、样本和页面都能找到，页面以标签页打开并一直保留。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-search" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b79cff"/><stop offset="1" stop-color="#ff6bd6"/></linearGradient></defs><g stroke="url(#ng-search)"><circle cx="90" cy="64" r="36"/><path d="M116 90l34 34"/><path d="M74 52a20 20 0 0 1 18-8"/></g></svg>
+            <div class="nc-glass"><div class="gl-field">pCAG<i></i></div><div class="gl-row">pCAG-EGFP<span>质粒</span></div><div class="gl-row">pCAG-Cre<span>质粒</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#lab" style="--c1:#ff8fb1;--c2:#ff4d6d;--a:#3a0d22;--b:#13060c" aria-label="为整个实验室设计. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#users"/></svg></span>
+            <h3>为整个实验室设计</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>成员、负责人和项目组，动物饲养人员的专门角色，可用 Google、Microsoft 或所在机构的账号登录。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-lab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8fb1"/><stop offset="1" stop-color="#ff4d6d"/></linearGradient></defs><g stroke="url(#ng-lab)"><circle cx="70" cy="56" r="16"/><circle cx="130" cy="56" r="16"/><circle cx="100" cy="44" r="18"/><path d="M40 120c0-22 14-36 30-36M160 120c0-22-14-36-30-36M66 124c0-26 15-42 34-42s34 16 34 42"/></g></svg>
+            <div class="nc-glass"><div class="gl-chips"><span>ALE</span><span>SAM</span><span>JOR</span><span>PRI</span></div><div class="gl-row">项目组<span>光纤记录</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#install" style="--c1:#3ed0b2;--c2:#7aa7ff;--a:#0d2446;--b:#071122" aria-label="在 Mac 上用着顺手. 在用户指南中打开">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkle"/></svg></span>
+            <h3>在 Mac 上用着顺手</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>完整的菜单栏和常用快捷键，浅色和深色模式，有新版本时点「安装并重启」即可。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-mac" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ed0b2"/><stop offset="1" stop-color="#7aa7ff"/></linearGradient></defs><g stroke="url(#ng-mac)"><path d="M70 14c0 28 60 28 60 56s-60 28-60 56"/><path d="M130 14c0 28-60 28-60 56s60 28 60 56"/><path d="M82 30h36M82 110h36M74 70h52"/></g></svg>
+            <div class="nc-glass"><div class="gl-menu"><b>BioManager</b><span>文件</span><span>编辑</span><span>显示</span></div><div class="gl-row gl-strong">安装并重启</div></div>
+          </div>
+        </a>
       </div>
     </div>
   </section>

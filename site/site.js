@@ -52,7 +52,15 @@
   var nav = document.querySelector('.nav');
   if (!nav) return;
   var ticking = false;
-  var update = function () { ticking = false; nav.classList.toggle('scrolled', window.scrollY > 8); };
+  // Over a dark band (the feature stage, the glass cards) the glass turns dark too.
+  var darks = document.querySelectorAll('.stage, .neon-band');
+  var update = function () {
+    ticking = false;
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+    var y = nav.getBoundingClientRect().top + nav.offsetHeight / 2, dark = false;
+    darks.forEach(function (d) { var r = d.getBoundingClientRect(); if (r.top <= y && r.bottom >= y) dark = true; });
+    nav.classList.toggle('on-dark', dark);
+  };
   update();
   window.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }

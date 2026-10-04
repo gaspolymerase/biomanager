@@ -145,6 +145,11 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   border-color: var(--glass-line);
   box-shadow: inset 0 1px 0 var(--glass-shine), 0 8px 30px rgba(0, 0, 0, 0.08);
 }
+.nav.on-dark { --glass: rgba(12, 17, 16, 0.5); --glass-line: rgba(255, 255, 255, 0.1); --glass-shine: rgba(255, 255, 255, 0.06); }
+.nav.on-dark .brand, .nav.on-dark .nav-links a, .nav.on-dark .lang-link { color: rgba(238, 244, 242, 0.88); }
+.nav.on-dark .brand { color: #fff; }
+.nav.on-dark .nav-links a:hover, .nav.on-dark .nav-links a.on, .nav.on-dark .nav-links a[aria-current="page"] { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.nav.on-dark .btn-primary { background: #2cc4a6; color: #06231e; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav.scrolled { background: color-mix(in srgb, var(--bg) 95%, transparent); }
 }
@@ -669,3 +674,88 @@ blockquote.req {
   .guide-body h2 { font-size: 1.6rem; }
   .guide-body h3 { font-size: 1.18rem; }
 }
+
+/* ------------------------------------------------------------ glass and neon cards */
+/* The Features page's "everywhere in the app" cards: a dark band, each card
+   tinted in its own colour, with a neon line drawing and a pane of glass
+   holding the app's own words. Drawn in the page, no screenshots. */
+.neon-band { background: var(--stage-bg); color: var(--stage-fg); border: 0; }
+.neon-band .eyebrow { color: #2cc4a6; }
+.neon-band h2 { color: var(--stage-fg); }
+.neon-band h2 .mute { color: var(--stage-fg-2); }
+.nc-grid { display: grid; gap: 20px; }
+@media (min-width: 680px) { .nc-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .nc-grid { grid-template-columns: repeat(3, 1fr); } }
+.nc {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column;
+  min-height: 430px; border-radius: 26px; color: var(--stage-fg);
+  background: radial-gradient(130% 90% at 15% 0%, var(--a), var(--b) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.25s;
+}
+.nc:hover { text-decoration: none; transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.14); }
+.nc::after {   /* the glow behind the drawing */
+  content: ""; position: absolute; z-index: -1; left: 10%; right: 10%; bottom: 4%; height: 55%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 38%, transparent), transparent);
+  filter: blur(26px); opacity: 0.8; transition: opacity 0.25s;
+}
+.nc:hover::after { opacity: 1; }
+.nc-head { display: flex; align-items: center; gap: 14px; padding: 26px 26px 0; }
+.nc-tile {
+  flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 18px rgba(0, 0, 0, 0.45);
+  color: var(--c1);
+}
+.nc-tile svg { width: 24px; height: 24px; fill: currentColor; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c1) 70%, transparent)); }
+.nc h3 { margin: 0; flex: 1; font-size: 1.2rem; font-weight: 500; letter-spacing: -0.015em; color: #fff; }
+.nc-go {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.75);
+}
+.nc-go svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nc p { margin: 0; padding: 18px 26px 0; font-size: 16px; line-height: 1.55; color: rgba(238, 244, 242, 0.84); }
+.nc-art { position: relative; flex: 1; min-height: 210px; margin-top: 8px; }
+.nc-art .neon {
+  position: absolute; left: 6%; top: 4%; width: 62%; height: auto; overflow: visible;
+  fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px var(--c1)) drop-shadow(0 0 12px color-mix(in srgb, var(--c1) 60%, transparent));
+}
+.nc-glass {
+  position: absolute; left: 34%; right: -1px; bottom: -1px; padding: 16px 18px 18px;
+  border-radius: 16px 0 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.14); border-right: 0; border-bottom: 0;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), -10px -10px 30px rgba(0, 0, 0, 0.25);
+}
+.gl-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gl-row b { font-weight: 600; color: #fff; }
+.gl-row span { margin-left: auto; padding-left: 10px; color: rgba(255, 255, 255, 0.55); font: 500 12px var(--font-mono); }
+.gl-strong { color: #fff; font-weight: 600; }
+.gl-big { font: 600 1.45rem/1.2 var(--font-display); letter-spacing: -0.02em; color: #fff; margin-bottom: 6px; }
+.gl-mono { font: 500 13px/1.6 var(--font-mono); color: rgba(255, 255, 255, 0.6); }
+.gl-mono.gl-strong { font-size: 15px; color: #fff; }
+.gl-pill {
+  display: inline-block; margin-top: 8px; padding: 6px 14px; border-radius: 980px; font-weight: 600;
+  color: #170a14; background: var(--c1); box-shadow: 0 0 16px color-mix(in srgb, var(--c1) 55%, transparent);
+}
+.gl-field {
+  display: flex; align-items: center; gap: 2px; margin-bottom: 6px; padding: 7px 10px; border-radius: 9px;
+  background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.16); color: #fff;
+}
+.gl-field i { width: 2px; height: 16px; background: var(--c1); animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.gl-grid { display: grid; grid-template-columns: repeat(3, 1fr); font-size: 14px; }
+.gl-grid span { padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.gl-grid span:nth-child(-n+3) { font: 500 11px var(--font-mono); text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.gl-grid .on { outline: 2px solid var(--c1); outline-offset: -2px; border-radius: 4px; box-shadow: 0 0 14px color-mix(in srgb, var(--c1) 45%, transparent); }
+.gl-chips { display: flex; gap: 6px; margin-bottom: 8px; }
+.gl-chips span {
+  padding: 4px 8px; border-radius: 7px; font: 600 11px var(--font-mono); color: #fff;
+  background: color-mix(in srgb, var(--c1) 30%, transparent); border: 1px solid color-mix(in srgb, var(--c1) 50%, transparent);
+}
+.gl-menu { display: flex; gap: 12px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; }
+.gl-menu span { color: rgba(255, 255, 255, 0.7); }
+@media (max-width: 680px) { .nc { min-height: 400px; } .nc-glass { left: 26%; } }
