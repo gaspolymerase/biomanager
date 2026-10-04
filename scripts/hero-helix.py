@@ -22,8 +22,8 @@ from pathlib import Path
 
 PERIOD, HEIGHT = 1400, 560      # one turn, and the tile's height (px)
 R = 200                         # the helix's radius
-HALF = 30                       # a backbone's half-width at the axis's depth
-DEPTH = 0.42                    # how much nearer is wider, farther narrower
+HALF = 32                       # a backbone's half-width at the axis's depth
+DEPTH = 0.5                     # how much nearer is wider, farther narrower
 OFFSET = 0.72 * math.pi         # strand B's lag: a wide groove and a narrow one
 RUNGS = 22                      # base pairs per turn
 RUNG_HALF = 7                   # a base pair's half-width
@@ -54,6 +54,19 @@ def runs(strand, front):
             out.append(cur); cur = []
     if cur:
         out.append(cur)
+    return out
+
+
+def across(run, f):
+    """Points a fraction f of the half-width off the centre line, across the
+    band (f = -1 the edge higher on the page, 1 the lower one)."""
+    out = []
+    for k, (x, y, z, hw) in enumerate(run):
+        x0, y0 = run[max(k - 1, 0)][:2]
+        x1, y1 = run[min(k + 1, len(run) - 1)][:2]
+        n = math.hypot(x1 - x0, y1 - y0) or 1
+        nx, ny = (y0 - y1) / n, (x1 - x0) / n
+        out.append((x + nx * hw * f, y + ny * hw * f))
     return out
 
 
@@ -132,15 +145,23 @@ def main():
         svg(f"{side}-core.svg", "".join(
             shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 3 + 4 * d, lambda d: 0.45 + 0.55 * d, stroke=A if s == 0 else B)
             for s, r in parts))
-        # bright edges, and a highlight along the upper side
-        body = []
+        # Rounded glass: a soft rim of light just inside each edge, fading
+        # towards the middle as light does through a glass rod, a soft
+        # highlight along the upper side, and a faint line at the edge itself.
+        # The rims are kept inside the backbone by clipping to its shape.
+        hw_at = lambda d: HALF * (1 + DEPTH * (2 * d - 1))
+        rims, lines = [], []
         for _, r in parts:
+            rims.append(shaded(r, across(r, -0.8), lambda d: 0.42 * hw_at(d), lambda d: 0.18 + 0.5 * d, stroke="white"))
+            rims.append(shaded(r, across(r, 0.8), lambda d: 0.36 * hw_at(d), lambda d: 0.08 + 0.25 * d, stroke="white"))
+            rims.append(shaded(r, across(r, -0.42), lambda d: 0.16 * hw_at(d), lambda d: 0.1 + 0.45 * d, stroke="white"))
             up, down = edges(r)
-            body.append(shaded(r, up, lambda d: 1.6, lambda d: 0.25 + 0.75 * d, stroke="white"))
-            body.append(shaded(r, down, lambda d: 1.2, lambda d: 0.1 + 0.3 * d, stroke="white"))
-            shine = [(x, y - hw * 0.5) for x, y, _, hw in r]
-            body.append(f"<g filter='url(#s)'>{shaded(r, shine, lambda d: 3, lambda d: 0.08 + 0.4 * d, stroke='white')}</g>")
-        defs = "<defs><filter id='s' x='-5%' y='-50%' width='110%' height='200%'><feGaussianBlur stdDeviation='1.5'/></filter></defs>"
+            lines.append(shaded(r, down, lambda d: 1, lambda d: 0.12 + 0.4 * d, stroke="white"))  # higher on the page
+            lines.append(shaded(r, up, lambda d: 1, lambda d: 0.06 + 0.2 * d, stroke="white"))
+        clip = "".join(band(r) for _, r in parts)
+        defs = (f"<defs><clipPath id='c'>{clip}</clipPath>"
+                "<filter id='s' x='-10%' y='-10%' width='120%' height='120%'><feGaussianBlur stdDeviation='3'/></filter></defs>")
+        body = [f"<g clip-path='url(#c)'><g filter='url(#s)'>{''.join(rims)}</g></g>", *lines]
         svg(f"{side}-edge.svg", "".join(body), defs)
     svg("rungs.svg", rung_shapes)
     svg("rungs-edge.svg", "".join(f"<rect x='{x - RUNG_HALF + .6:.1f}' y='{t + .6:.1f}' width='{2 * RUNG_HALF - 1.2}' height='{b - t - 1.2:.1f}' rx='{RUNG_HALF - .6}' fill='none' stroke='white' stroke-opacity='.7' stroke-width='1.2'/>" for x, t, b in bars))
