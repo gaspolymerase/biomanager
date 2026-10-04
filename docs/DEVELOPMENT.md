@@ -1304,15 +1304,19 @@ teal in them).
   is just that link. Over a dark band the header's glass turns dark
   (`.on-dark`, from `site.js`).
 - **The opening** (`.hero-glass`) is a band the height of the screen, light
-  or dark with the page. Behind the headline is a double helix made of frosted
-  glass: one slab per base pair, so the slab ends trace the two strands, which
-  run as thin lines behind the glass (sharp between the slabs, frosted through
-  them), with soft teal and blue light drifting underneath. One turn is drawn
-  by `scripts/hero-helix.py` as CSS variables (pictures of the slabs, their
-  tints and edges, and the strands) pasted into `.hero-glass`; the glass is a
-  single `backdrop-filter` layer masked to the slabs, and the whole helix
-  slides by one turn on a loop. The product shot rises out of its lower edge. The header's **User guide** link is a
-  bordered pill: more than the other links, less than Download.
+  or dark with the page. Behind the headline is a double helix of frosted
+  glass, worked out as a real helix in 3D: each backbone is wider and brighter
+  where it comes towards you and thinner where it turns away, and where the
+  two cross the near one passes over the far one. It is three layers of glass,
+  back to front (the backbones behind the axis, the paler base pairs, the
+  backbones in front), each a single `backdrop-filter` layer masked to its
+  shapes, with a coloured core line under it that the glass frosts into a
+  glow and bright edges over it; soft teal and blue light drifts underneath.
+  One turn of every layer is drawn by `scripts/hero-helix.py` into
+  `site/assets/helix/`, and the helix slides by one turn on a loop, which
+  looks just like it turning. The product shot rises out of its lower edge.
+  The header's **User guide** link is a bordered pill: more than the other
+  links, less than Download.
 - **Motion** is the hero's entrance and turning helix, the product shot flattening
   as the page scrolls, sections (`.rise`) rising in (driven by scrolling
   where the browser can, else by `site.js`), and each glass card's neon
