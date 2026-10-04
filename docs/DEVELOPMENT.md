@@ -1303,11 +1303,17 @@ teal in them).
   link on to its part of the user guide; without scripts, or with ⌘-click, it
   is just that link. Over a dark band the header's glass turns dark
   (`.on-dark`, from `site.js`).
-- **The opening** (`.hero-dark`) is a dark band the height of the screen,
-  with slanted teal beams drifting behind the headline (CSS only) and the
-  product shot rising out of it. The header's **User guide** link is a
+- **The opening** (`.hero-glass`) is a band the height of the screen, light
+  or dark with the page. Behind the headline is a double helix made of frosted
+  glass: one slab per base pair, so the slab ends trace the two strands, which
+  run as thin lines behind the glass (sharp between the slabs, frosted through
+  them), with soft teal and blue light drifting underneath. One turn is drawn
+  by `scripts/hero-helix.py` as CSS variables (pictures of the slabs, their
+  tints and edges, and the strands) pasted into `.hero-glass`; the glass is a
+  single `backdrop-filter` layer masked to the slabs, and the whole helix
+  slides by one turn on a loop. The product shot rises out of its lower edge. The header's **User guide** link is a
   bordered pill: more than the other links, less than Download.
-- **Motion** is the hero's entrance and beams, the product shot flattening
+- **Motion** is the hero's entrance and turning helix, the product shot flattening
   as the page scrolls, sections (`.rise`) rising in (driven by scrolling
   where the browser can, else by `site.js`), and each glass card's neon
   drawing itself in. Without that support, or with

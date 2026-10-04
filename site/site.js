@@ -55,7 +55,7 @@ document.documentElement.classList.add('js');
   if (!nav) return;
   var ticking = false;
   // Over a dark band (the feature stage, the glass cards) the glass turns dark too.
-  var darks = document.querySelectorAll('.hero-dark, .stage, .neon-band');
+  var darks = document.querySelectorAll('.stage, .neon-band');
   var update = function () {
     ticking = false;
     nav.classList.toggle('scrolled', window.scrollY > 8);
