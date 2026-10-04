@@ -1295,6 +1295,30 @@ unpacked from a downloaded zip, and .NET won't load a marked assembly
 (HRESULT 0x80131515). The release workflow's Windows job fails if
 `missing()` finds anything lacking on the runner, which has both.
 
+**Windows in Chinese: always name the encoding.** On Windows, Python opens
+a text file without `encoding=` in the system code page: GBK on a Chinese
+PC (Shift-JIS on a Japanese one, and so on), not UTF-8. From 0.10.2 to
+1.0.5 `app/icons.py` read `icons.svg` (which has an em dash) that way at
+start-up, so on Chinese Windows 10 and 11 the desktop app raised
+`UnicodeDecodeError` and closed before any window opened. Users said it
+"failed to install" (安装出错). The release check didn't see it: its runner is
+English Windows, where cp1252 reads the same bytes without complaint. So:
+
+- Every `open()`, `read_text()`, `write_text()` and `os.fdopen()` of text
+  says `encoding="utf-8"`. `tests/test_desktop_windows.py` (`ChineseWindows`)
+  fails on one in `app/` or the top-level `.py` files that doesn't.
+- The built app runs in Python's UTF-8 mode (`("X utf8", None, "OPTION")` in
+  `Biomanager.spec`; `X utf8_mode=1` is silently ignored). A test checks the
+  spec still has it. It is the safety net, not the fix: code run from
+  source, the tests and the server don't have it.
+- The one exception is the update helper's `.cmd` (`desktop_updates.install_update`),
+  written with `encoding="locale"`: cmd.exe reads a batch file in the system
+  code page, and its paths may be Chinese.
+- To try the app the way a Chinese PC runs it, on Linux:
+  `sudo localedef -i zh_CN -f GBK zh_CN.GBK`, then run it, or the tests, with
+  `LC_ALL=zh_CN.GBK`. `python -X warn_default_encoding` lists every file
+  opened without an encoding.
+
 Build a clickable native app (no terminal needed to launch):
 
 ```bash
