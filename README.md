@@ -1062,7 +1062,9 @@ screenshots, see `scripts/screenshots.py`.
 
 ## 🙏 Licence and credits
 
-BioManager is released under the [MIT licence](LICENSE).
+BioManager is released under the [MIT licence](LICENSE). If you use it in
+your research, **Cite this repository** on the GitHub page gives the
+citation in APA or BibTeX (from [CITATION.cff](CITATION.cff)).
 
 Built with Python, Flask, SQLAlchemy, PostgreSQL / SQLite and Tailwind CSS.
 Icons from [Font Awesome Free](https://fontawesome.com) (CC BY 4.0) and

@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use BioManager in your research, please cite it as below."
+type: software
+title: BioManager
+abstract: >-
+  A free, open-source lab management app for a biology lab's animal colonies
+  (mice, zebrafish, flies, worms and any other organism), plasmids, samples,
+  orders, reagents, antibodies and viruses, with a calendar and a lab notebook.
+  It runs as a desktop app for one person or as a server for a whole lab.
+authors:
+  - name: gaspolymerase
+repository-code: "https://github.com/gaspolymerase/biomanager"
+url: "https://biomanager.org"
+license: MIT
+keywords:
+  - lab management
+  - mouse colony management
+  - animal colony
+  - laboratory information management system
+  - electronic lab notebook
+  - plasmids
+  - inventory
+  - zebrafish
+  - drosophila
