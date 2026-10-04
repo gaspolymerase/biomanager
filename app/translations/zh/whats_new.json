@@ -10,5 +10,7 @@
   "**Any cage can be shared**, not only breeder cages, and the Cages tab has a chip for each purpose.": "**任何笼都可以共享**，不再只限繁殖笼；笼标签页还为每种用途提供了筛选标签。",
   "**Settings → Devices**: open the lab's server in the desktop app, or share a desktop's lab on the lab's network.": "**设置 → 设备**：在桌面版里打开实验室服务器，或把一台电脑上的实验室共享到实验室网络。",
   "Your own to-dos and events are yours alone, admins included. A shared event is changed only by whoever added it and admins.": "你自己的待办和日程只有你能看到，管理员也看不到。共享日程只有添加它的人和管理员可以修改。",
-  "A sample from a mouse number too big for the database no longer stops the samples sheet opening.": "来源小鼠编号超出数据库范围的样本，不会再导致样本表格打不开。"
+  "A sample from a mouse number too big for the database no longer stops the samples sheet opening.": "来源小鼠编号超出数据库范围的样本，不会再导致样本表格打不开。",
+  "**BioManager in Chinese (中文)**: choose it in **Settings → Language**, or 中文 / English on the sign-in page. The colony, sheets, calendar, Home and Settings are translated so far.": "**BioManager 中文版**：在**设置 → 语言**里选择，或在登录页点中文 / English。目前已翻译鼠群、表格、日历、首页和设置。",
+  "On a Windows PC set to Chinese, Japanese or Korean, the desktop app starts again.": "在设为中文、日文或韩文的 Windows 电脑上，桌面版又能正常启动了。"
 }
