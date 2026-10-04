@@ -39,3 +39,6 @@ promo/out/
 
 # Words kept out of what ships (tests/test_deploy.py), one a line
 .private-words
+
+# Made by scripts/llms-full.py when the website publishes
+site/llms-full.txt

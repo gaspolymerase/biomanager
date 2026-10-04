@@ -1258,6 +1258,16 @@ pages, and keeps English and Chinese apart). Run it after editing the guide.
 An old link to a section of the one-page guide (`guide.html#mice`) goes on to
 its page.
 
+**For search engines and AI.** When the site publishes, `.github/workflows/pages.yml`
+runs `scripts/llms-full.py`, which writes `site/llms-full.txt` (git-ignored): every
+English guide page's own words as Markdown in `PAGES` order, then
+`deploy-with-ai.md`, for AI assistants (`site/llms.txt` links it;
+`tests/test_llms_full.py` checks it). After the deploy, `scripts/indexnow.py`
+sends the pages that push changed to IndexNow (Bing, and through it ChatGPT
+search and Copilot; Yandex, Seznam, Naver), proven ours by the key file
+`site/<KEY>.txt`; a failure there leaves the site published. A new page also
+goes in `site/sitemap.xml`.
+
 **Two languages.** `site/zh/` holds the Chinese pages, one for each English
 page (`zh/index.html`, `zh/features.html`, `zh/download.html`,
 `zh/guide.html`, `zh/server.html`), with the same

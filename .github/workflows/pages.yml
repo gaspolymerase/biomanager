@@ -28,8 +28,25 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
+      # The whole English guide as one Markdown file, for AI assistants
+      # (site/llms.txt links it); made here so it always matches the guide.
+      - name: llms-full.txt
+        run: python3 scripts/llms-full.py
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v5
+      # Tell Bing and the other IndexNow engines which pages this push changed
+      # (every page when run by hand), so they crawl them again now. A failure
+      # here leaves the site published.
+      - name: Tell search engines what changed
+        continue-on-error: true
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.event_name }}" = push ] && git fetch -q --depth=1 origin "$BEFORE" 2>/dev/null; then
+            python3 scripts/indexnow.py $(git diff --name-only "$BEFORE" HEAD -- site)
+          else
+            python3 scripts/indexnow.py --all
+          fi
