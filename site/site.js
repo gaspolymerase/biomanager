@@ -249,3 +249,84 @@ document.documentElement.classList.add('js');
     });
   });
 })();
+
+// The guide: search (Pagefind, in a window: the box at the top of the
+// contents, ⌘K or /), each page's clip (loaded when it scrolls into view),
+// "On this page" following the reading, and "Was this helpful?".
+(function () {
+  // On a phone the contents start folded, so the page comes first.
+  var toc = document.querySelector('.docs-toc');
+  if (toc && window.matchMedia('(max-width: 979px)').matches) toc.open = false;
+  var zh = document.documentElement.lang.indexOf('zh') === 0;
+  var opener = document.querySelector('[data-search]');
+  if (opener) {
+    var base = opener.dataset.pagefind, dialog = null, ready = false;
+    var open = function () {
+      if (!dialog) {
+        dialog = document.createElement('dialog');
+        dialog.className = 'search-dialog';
+        dialog.innerHTML = '<div id="guide-search"></div>';
+        document.body.appendChild(dialog);
+        dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+        var css = document.createElement('link');
+        css.rel = 'stylesheet'; css.href = base + 'pagefind-ui.css';
+        document.head.appendChild(css);
+        var js = document.createElement('script');
+        js.src = base + 'pagefind-ui.js';
+        js.onload = function () {
+          // Results are links from the site's root, which is a folder down on GitHub Pages.
+          new window.PagefindUI({ element: '#guide-search', showSubResults: true, showImages: false, resetStyles: false,
+            baseUrl: new URL(base + '../', location.href).pathname,
+            translations: zh ? { placeholder: '搜索用户指南', zero_results: '没有找到“[SEARCH_TERM]”' } : { placeholder: 'Search the guide' } });
+          ready = true;
+          var input = dialog.querySelector('input');
+          if (input) input.focus();
+        };
+        document.head.appendChild(js);
+      }
+      dialog.showModal();
+      if (ready) { var i = dialog.querySelector('input'); if (i) { i.focus(); i.select(); } }
+    };
+    opener.addEventListener('click', open);
+    document.addEventListener('keydown', function (e) {
+      var typing = /input|textarea|select/i.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
+      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) { e.preventDefault(); open(); }
+    });
+  }
+
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
+  var clips = document.querySelectorAll('video[data-clip-src]');
+  if (clips.length && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) {
+          if (!v.src) v.src = v.dataset.clipSrc + (webm ? '.webm' : '.mp4');
+          if (calm) { v.controls = true; } else { var p = v.play(); if (p && p.catch) p.catch(function () { v.controls = true; }); }
+        } else { v.pause(); }
+      });
+    }, { threshold: 0.4 });
+    clips.forEach(function (v) { io.observe(v); });
+  }
+
+  var rail = {};
+  document.querySelectorAll('.docs-rail a').forEach(function (a) { rail[a.getAttribute('href').slice(1)] = a; });
+  if (Object.keys(rail).length && 'IntersectionObserver' in window) {
+    var heads = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && rail[e.target.id]) {
+          Object.keys(rail).forEach(function (k) { rail[k].classList.toggle('on', k === e.target.id); });
+        }
+      });
+    }, { rootMargin: '-90px 0px -70% 0px' });
+    Object.keys(rail).forEach(function (id) { var h = document.getElementById(id); if (h) heads.observe(h); });
+  }
+
+  document.querySelectorAll('[data-helpful="yes"]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.setAttribute('aria-pressed', 'true');
+      b.textContent = zh ? '谢谢！' : 'Thanks!';
+    });
+  });
+})();

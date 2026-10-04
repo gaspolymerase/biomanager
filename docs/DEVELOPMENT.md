@@ -1234,16 +1234,34 @@ from master:
 **Pages.** The front page (`index.html`: the opening, the feature stage, the
 promises and where to go next), Features (`features.html`: each database,
 cage cards, what works everywhere, the ways to run it), Run it for your lab
-(`server.html`), the user guide (`guide.html`) and Download
+(`server.html`), the user guide (`guide.html` and `guide/`) and Download
 (`download.html`: the files, phones, first steps and questions). Every page
 has the same header, whose links go to those pages, the current one marked;
 an old link to a section of the long front page (`/#download`, `/#tour`…)
 goes on to the page it moved to.
 
+**The user guide** is `guide.html` (its home, which the app opens through
+`/guide`: a first-day path and a card for each area) and one page per topic
+in `site/guide/` (and `site/zh/guide/`), in five groups: Get started,
+Everyday skills, How to… (one task per page, numbered steps), Your databases,
+Working as a lab, Data and help. Each page's own words sit between
+`<!-- page -->` and `<!-- /page -->`: a title, a one-line `.summary`,
+optional `.badges`, a clip (`video[data-clip-src]`, loaded when it scrolls
+into view), the text, and its own Troubleshooting. Everything around them
+(head, header, the grouped sidebar with search, "On this page", Previous /
+Next, "Was this helpful?", whose No opens a GitHub issue naming the page) is
+written by `scripts/guide-pages.py` from its `PAGES` list: to add a page, add
+it there, make its file with the two markers, and run the script.
+`--search` also rebuilds the search index (Pagefind, into `site/pagefind/`,
+published with the site; it indexes only `data-pagefind-body`, the guide's
+pages, and keeps English and Chinese apart). Run it after editing the guide.
+An old link to a section of the one-page guide (`guide.html#mice`) goes on to
+its page.
+
 **Two languages.** `site/zh/` holds the Chinese pages, one for each English
 page (`zh/index.html`, `zh/features.html`, `zh/download.html`,
 `zh/guide.html`, `zh/server.html`), with the same
-structure and the same ids, so `guide.html#mice` and `zh/guide.html#mice`
+structure and the same ids, so `guide/mouse-colony.html` and `zh/guide/mouse-colony.html`
 are the same section. A change to an English page goes into its Chinese page
 in the same piece of work; the words come from `docs/i18n-glossary.md`.
 

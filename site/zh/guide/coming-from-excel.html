@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>从 Excel 过来 — BioManager 用户指南</title>
+  <meta name="description" content="原来的电子表格在 BioManager 里对应什么，每一张该怎么处理。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/coming-from-excel.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/coming-from-excel.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/coming-from-excel.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/coming-from-excel.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/coming-from-excel.html">
+  <meta property="og:title" content="从 Excel 过来 — BioManager 用户指南">
+  <meta property="og:description" content="原来的电子表格在 BioManager 里对应什么，每一张该怎么处理。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/coming-from-excel.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html" aria-current="page">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>怎么做</span>
+          <ol>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据库</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+            <li><a href="experiments.html">实验</a></li>
+            <li><a href="plasmids.html">质粒</a></li>
+            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据与帮助</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="troubleshooting.html">故障排除</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">入门</p>
+    <h1>从 Excel 过来</h1>
+    <p class="summary">原来的电子表格在 BioManager 里对应什么，每一张该怎么处理。</p>
+
+      <p>如果你的实验室一直靠电子表格，那 BioManager 的大部分你已经会了。表格还在——点一个单元格就能输入——
+        只是 Excel 里要你手动做的每件事，BioManager 都替你做了。</p>
+
+      <h3 id="coming-from-excel-1">你熟悉的东西，在这里变成了什么</h3>
+      <table class="gtable map">
+        <thead><tr><th>在 Excel 里</th><th>在 BioManager 里</th></tr></thead>
+        <tr><th>一个工作簿，每类东西一个工作表</th><td>你的实验室，侧边栏里每类东西一个<b>数据库</b>：小鼠、斑马鱼、质粒、订购……</td></tr>
+        <tr><th>一行</th><td>一条<b>记录</b>，编号永不重复使用，所以“小鼠 1042”永远只指那一只。</td></tr>
+        <tr><th>输入、保存，然后问“谁开着这个文件？”</th><td>直接在单元格里输入，<b>边输入边保存</b>。所有人可以同时编辑
+          同一批记录，谁的修改都不会覆盖别人的。</td></tr>
+        <tr><th>自动筛选</th><td>每个表格上方的搜索框和<b>筛选标签</b>：<i>全部、存活、我的</i>（All、Alive、Mine），每种状态一个。你上次的
+          选择会被记住，而且写在页面地址里，所以书签或发给别人的链接打开后，表格还是同样的筛选。</td></tr>
+        <tr><th>冻结窗格、隐藏列、列宽</th><td>滚动时 ID 列始终固定；<b>列</b>（Columns）用来隐藏和显示列；拖动列边缘
+          调整宽度。每个表格各自记住。</td></tr>
+        <tr><th>数据验证下拉列表</th><td>每列的<b>选项</b>（状态、类别、用途），在<b>配置</b>（Configure）或
+          <b>下拉选项</b>（Dropdowns）里设置。改一个选项的名字，所有地方都跟着改。</td></tr>
+        <tr><th>根据本列自动补全</th><td>根据实验室以前输入过的内容给出<b>建议</b>。在库存里，选中以前的
+          某个物品，会自动填好它的供应商、货号和价格。</td></tr>
+        <tr><th>向下填充、复制一行</th><td>在小鼠的<b>批量添加</b>（Add many）预览里，点一个单元格，<b>向下填充</b>（Fill down，或 <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>D</kbd>）
+          就把它复制到下面各行。<b>复制</b>（Duplicate）可以复制任意一条记录。</td></tr>
+        <tr><th>粘贴一列</th><td>复制一列读数（比如 Nanodrop 导出的数据）或一块单元格，点表格里的第一个单元格
+          再粘贴：数值按显示顺序逐行往下填；如果复制了好几列，也会往右填，每个值都像手动输入一样保存。数字会跳过不属于它的选项列（比如
+          浓度和 A260/280 之间的单位列），并有提示说明从第几行填到第几行，所以顺序不同的列表一眼就能看出来。</td></tr>
+        <tr><th>算年龄、断奶日、转管日的公式</th><td>都替你算好：年龄、P21 断奶、基因型鉴定日期，以及随
+          培养箱温度变化的转管计划。</td></tr>
+        <tr><th>条件格式</th><td>状态标签；存活或在用的东西前面有个圆点（动物按年龄着色）；过期库存标红——还有
+          <b>首页</b>（Home），把今天需要你处理的事都集中在一起。</td></tr>
+        <tr><th>跨表 VLOOKUP</th><td>真正的关联：小鼠在某个笼里，笼在某个笼架上；样本来自那只小鼠；订购到货后变成
+          那瓶试剂。点进去就能跳转。</td></tr>
+        <tr><th>版本历史，“这是谁改的？”</th><td><b>审计日志</b>（Audit log）记录每一次编辑：谁改的、改之前是什么；
+          <b>批量操作记录</b>（Batch history）可以撤销任何一次批量修改。</td></tr>
+        <tr><th>用邮件合并做笼子标签</th><td><b>笼卡</b>（Cage cards）按卡纸尺寸排版，每张带二维码，用手机扫一下就能打开那个笼。</td></tr>
+        <tr><th>你原来的工作簿</th><td>每个数据库都有<b>从 Excel 导入</b>（Import from Excel），原样读入，不管列叫什么名字。</td></tr>
+        <tr><th>另存为 CSV</th><td>每个表格都有<b>导出</b>（Export，CSV；小鼠还可以导出 Excel 和 PDF）。数据永远不会被锁住。</td></tr>
+      </table>
+      <p>装好 BioManager、设置好实验室之后，就可以<a href="bring-your-lab-in.html">把表格导进来</a>：大约半小时。</p>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="what-it-is.html"><small>上一页</small>BioManager 是什么</a><a class="next" href="install.html"><small>下一页</small>安装与设置</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：从%20Excel%20过来&amp;body=页面：https://biomanager.org/zh/guide/coming-from-excel.html%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager 免费开源。<a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">报告问题</a></p>
+  </div>
+</footer>
+<script src="../../site.js"></script>
+</body>
+</html>

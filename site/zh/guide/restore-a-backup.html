@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>从备份恢复 — BioManager 用户指南</title>
+  <meta name="description" content="把桌面版的实验室数据恢复原样：用你自己的备份，或 BioManager 在更新前留下的副本。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/restore-a-backup.html">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/restore-a-backup.html">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/restore-a-backup.html">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/restore-a-backup.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/restore-a-backup.html">
+  <meta property="og:title" content="从备份恢复 — BioManager 用户指南">
+  <meta property="og:description" content="把桌面版的实验室数据恢复原样：用你自己的备份，或 BioManager 在更新前留下的副本。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/restore-a-backup.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>怎么做</span>
+          <ol>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="restore-a-backup.html" aria-current="page">从备份恢复</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据库</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+            <li><a href="experiments.html">实验</a></li>
+            <li><a href="plasmids.html">质粒</a></li>
+            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据与帮助</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="troubleshooting.html">故障排除</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">怎么做</p>
+    <h1>从备份恢复</h1>
+    <p class="summary">把桌面版的实验室数据恢复原样：用你自己的备份，或 BioManager 在更新前留下的副本。</p>
+    <div class="badges"><span class="badge who">使用这台电脑的人</span><span class="badge">桌面版</span></div>
+    <ol class="steps">
+      <li>退出 BioManager。</li>
+      <li>打开它的数据文件夹：Mac 上是 <code>~/Library/Application Support/Biomanager/</code>，Windows 上是
+        <code>%APPDATA%\Biomanager\</code>，Linux 上是 <code>~/.local/share/Biomanager/</code>。实验室数据库是 <code>data/biomanager.db</code>。</li>
+      <li>把 <code>data/biomanager.db</code> 挪到稳妥的地方，不要删掉。</li>
+      <li>把备份放到原来的位置，命名为 <code>biomanager.db</code>。<span class="sub">备份可以来自 Time Machine 或“文件历史记录”里这个文件夹的副本；
+        也可以是新版本改动数据库之前 BioManager 自动留下的副本 <code>data/backups/before-upgrade-….db</code>（保留最近十份）。
+        记录和页面里添加的文件在 <code>uploads</code> 文件夹里，也从同一份备份放回去。</span></li>
+      <li>打开 BioManager。如果是要撤销一次更新，用更新前的那个版本打开。</li>
+    </ol>
+    <p class="result">BioManager 打开的实验室就是做那份备份时的样子。</p>
+    <div class="callout warn"><b>备份里没有之后的改动</b>做备份之后录入的一切都不在里面。确认无误之前，留着挪开的那个文件。</div>
+    <h2 id="lab-server">实验室服务器</h2>
+    <p>服务器每晚备份一次，每周恢复一次最新备份以证明备份可用。恢复只要一条命令，由负责服务器的人执行，而且不会删掉被替换的数据：
+      见服务器安装包里的 <code>deploy/RUNBOOK.md</code> 和<a href="../server.html#safe">保护数据安全</a>。如果只是批量操作出了错，
+      用<b>更多 → 批量操作记录 → 撤销</b>就够了。</p>
+    <section class="trouble">
+      <h2 id="troubleshooting">故障排除</h2>
+      <h3>BioManager 打不开，提示实验室数据库是空文件</h3>
+      <p>这个文件是 0 字节，里面没有记录。按上面的步骤放回一份备份；或者删掉这个空文件，从一个新实验室开始。</p>
+    </section>
+    <p class="related"><span>相关：</span> <a href="your-data.html">数据与备份</a> <a href="undo-and-history.html">撤销与历史</a> <a href="../server.html#safe">保护数据安全</a></p>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="invite-someone.html"><small>上一页</small>邀请成员</a><a class="next" href="mouse-colony.html"><small>下一页</small>小鼠鼠群</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：从备份恢复&amp;body=页面：https://biomanager.org/zh/guide/restore-a-backup.html%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容</p>
+      <ol>
+        <li class="lvl2"><a href="#lab-server">实验室服务器</a></li>
+        <li class="lvl2"><a href="#troubleshooting">故障排除</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p>BioManager 免费开源。<a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/issues">报告问题</a></p>
+  </div>
+</footer>
+<script src="../../site.js"></script>
+</body>
+</html>

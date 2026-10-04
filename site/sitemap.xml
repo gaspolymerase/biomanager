@@ -62,4 +62,472 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/server.html"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/server.html"/>
   </url>
+  <url>
+    <loc>https://biomanager.org/guide/what-it-is.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/what-it-is.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/what-it-is.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/what-it-is.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/what-it-is.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/what-it-is.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/what-it-is.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/what-it-is.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/coming-from-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/coming-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/coming-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/coming-from-excel.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/coming-from-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/coming-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/coming-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/coming-from-excel.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/install.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/install.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/install.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/install.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/install.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/install.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/install.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/install.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/bring-your-lab-in.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/bring-your-lab-in.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/bring-your-lab-in.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/bring-your-lab-in.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/bring-your-lab-in.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/bring-your-lab-in.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/bring-your-lab-in.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/bring-your-lab-in.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/home-page.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/home-page.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/home-page.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/home-page.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/home-page.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/home-page.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/home-page.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/home-page.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/sheets.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/sheets.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/sheets.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/sheets.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/sheets.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/sheets.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/sheets.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/sheets.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/many-at-once.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/many-at-once.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/many-at-once.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/many-at-once.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/many-at-once.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/many-at-once.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/many-at-once.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/many-at-once.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/finding-things.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/finding-things.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/finding-things.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/finding-things.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/finding-things.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/finding-things.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/finding-things.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/finding-things.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/undo-and-history.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/undo-and-history.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/undo-and-history.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/undo-and-history.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/undo-and-history.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/undo-and-history.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/undo-and-history.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/undo-and-history.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/notifications.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/notifications.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/notifications.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/notifications.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/notifications.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/notifications.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/notifications.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/notifications.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/keyboard-shortcuts.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/keyboard-shortcuts.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/keyboard-shortcuts.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/keyboard-shortcuts.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/keyboard-shortcuts.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/keyboard-shortcuts.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/keyboard-shortcuts.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/keyboard-shortcuts.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/record-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/record-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/record-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/record-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/record-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/record-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/record-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/record-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/genotype-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/genotype-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/genotype-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/genotype-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/genotype-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/genotype-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/genotype-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/genotype-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/wean-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/wean-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/wean-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/wean-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/wean-a-litter.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/wean-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/wean-a-litter.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/wean-a-litter.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/print-cage-cards.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/print-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/print-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/print-cage-cards.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/print-cage-cards.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/print-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/print-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/print-cage-cards.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/import-from-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/import-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/import-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/import-from-excel.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/import-from-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/import-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/import-from-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/import-from-excel.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/receive-an-order.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/receive-an-order.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/receive-an-order.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/receive-an-order.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/receive-an-order.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/receive-an-order.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/receive-an-order.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/receive-an-order.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/book-equipment.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/book-equipment.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/book-equipment.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/book-equipment.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/book-equipment.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/book-equipment.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/book-equipment.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/book-equipment.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/sign-a-notebook-page.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/sign-a-notebook-page.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/sign-a-notebook-page.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/sign-a-notebook-page.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/sign-a-notebook-page.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/sign-a-notebook-page.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/sign-a-notebook-page.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/sign-a-notebook-page.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/invite-someone.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/invite-someone.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/invite-someone.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/invite-someone.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/invite-someone.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/invite-someone.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/invite-someone.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/invite-someone.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/restore-a-backup.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/restore-a-backup.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/restore-a-backup.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/restore-a-backup.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/restore-a-backup.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/restore-a-backup.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/restore-a-backup.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/restore-a-backup.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/mouse-colony.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/mouse-colony.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/mouse-colony.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/mouse-colony.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/mouse-colony.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/mouse-colony.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/mouse-colony.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/mouse-colony.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/zebrafish.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/zebrafish.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/zebrafish.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/zebrafish.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/zebrafish.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/zebrafish.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/zebrafish.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/zebrafish.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/flies-and-worms.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/flies-and-worms.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/flies-and-worms.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/flies-and-worms.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/flies-and-worms.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/flies-and-worms.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/flies-and-worms.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/flies-and-worms.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/any-organism.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/any-organism.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/any-organism.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/any-organism.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/any-organism.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/any-organism.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/any-organism.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/any-organism.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/experiments.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/experiments.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/experiments.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/experiments.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/experiments.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/experiments.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/experiments.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/experiments.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/plasmids.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/plasmids.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/plasmids.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/plasmids.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/plasmids.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/plasmids.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/plasmids.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/plasmids.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/samples-and-orders.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/samples-and-orders.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/samples-and-orders.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/samples-and-orders.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/samples-and-orders.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/samples-and-orders.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/samples-and-orders.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/samples-and-orders.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/calendar.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/calendar.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/calendar.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/calendar.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/calendar.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/calendar.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/calendar.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/calendar.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/notebook.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/notebook.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/notebook.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/notebook.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/notebook.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/notebook.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/notebook.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/notebook.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/who-can-do-what.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/who-can-do-what.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/who-can-do-what.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/who-can-do-what.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/who-can-do-what.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/who-can-do-what.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/who-can-do-what.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/who-can-do-what.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/project-groups.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/project-groups.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/project-groups.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/project-groups.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/project-groups.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/project-groups.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/project-groups.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/project-groups.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/people-and-guests.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/people-and-guests.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/people-and-guests.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/people-and-guests.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/people-and-guests.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/people-and-guests.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/people-and-guests.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/people-and-guests.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/lab-setup.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/lab-setup.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/lab-setup.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/lab-setup.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/lab-setup.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/lab-setup.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/lab-setup.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/lab-setup.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/phones-and-cage-cards.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/phones-and-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/phones-and-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/phones-and-cage-cards.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/phones-and-cage-cards.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/phones-and-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/phones-and-cage-cards.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/phones-and-cage-cards.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/your-data.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/your-data.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/your-data.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/your-data.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/your-data.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/your-data.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/your-data.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/your-data.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/scripts-and-api.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/scripts-and-api.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/scripts-and-api.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/scripts-and-api.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/scripts-and-api.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/scripts-and-api.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/scripts-and-api.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/scripts-and-api.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/troubleshooting.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/troubleshooting.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/troubleshooting.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/troubleshooting.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/troubleshooting.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/troubleshooting.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/troubleshooting.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/troubleshooting.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/guide/feedback.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/feedback.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/feedback.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/feedback.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/feedback.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/feedback.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/feedback.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/feedback.html"/>
+  </url>
 </urlset>
