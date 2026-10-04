@@ -15,6 +15,30 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/"/>
   </url>
   <url>
+    <loc>https://biomanager.org/features.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/features.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/features.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/features.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/features.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/features.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/features.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/features.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/download.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/download.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/download.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/download.html"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/download.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/download.html"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/download.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/download.html"/>
+  </url>
+  <url>
     <loc>https://biomanager.org/guide.html</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide.html"/>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide.html"/>

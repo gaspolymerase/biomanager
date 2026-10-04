@@ -45,7 +45,7 @@ Ask these, then recommend an option (the table after them) and wait for a yes.
 
 | Situation | Option |
 | --- | --- |
-| One person | **A**: the desktop app. No server. Send them to https://biomanager.org/#download and stop here. |
+| One person | **A**: the desktop app. No server. Send them to https://biomanager.org/download.html and stop here. |
 | One building, a computer that stays on | **B**: a lab computer, `TLS=internal` (or `TLS=files` with IT's certificate) |
 | University offers VMs | **C**: ask IT for a VM with Docker, a DNS name and a certificate; then as B with `TLS=files` |
 | People anywhere, most labs | **D**: Ubuntu 24.04 cloud VM + Tailscale, `TLS=tailscale` (recommended; free on Oracle Cloud Always Free) |

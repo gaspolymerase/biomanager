@@ -1231,8 +1231,18 @@ from master:
   `.github/workflows/pages.yml`. Every page's canonical address names
   biomanager.org, so search engines count the two as one site.
 
+**Pages.** The front page (`index.html`: the opening, the feature stage, the
+promises and where to go next), Features (`features.html`: each database,
+cage cards, what works everywhere, the ways to run it), Run it for your lab
+(`server.html`), the user guide (`guide.html`) and Download
+(`download.html`: the files, phones, first steps and questions). Every page
+has the same header, whose links go to those pages, the current one marked;
+an old link to a section of the long front page (`/#download`, `/#tour`…)
+goes on to the page it moved to.
+
 **Two languages.** `site/zh/` holds the Chinese pages, one for each English
-page (`zh/index.html`, `zh/guide.html`, `zh/server.html`), with the same
+page (`zh/index.html`, `zh/features.html`, `zh/download.html`,
+`zh/guide.html`, `zh/server.html`), with the same
 structure and the same ids, so `guide.html#mice` and `zh/guide.html#mice`
 are the same section. A change to an English page goes into its Chinese page
 in the same piece of work; the words come from `docs/i18n-glossary.md`.
@@ -1259,9 +1269,8 @@ teal in them).
   Chinese face; no Chinese webfont is sent. Big Chinese headings keep normal
   letter spacing (`:lang(zh)`).
 - **The header** floats above the page and turns to glass once the page
-  scrolls (`site.js` adds `.scrolled`); on the front page it highlights the
-  section in view.
-- **The feature stage** (`#see`, the one dark band) plays a short clip per tab
+  scrolls (`site.js` adds `.scrolled`).
+- **The feature stage** (`#see` on the front page, the one dark band) plays a short clip per tab
   of its dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
   poster. `scripts/site-clips.py` makes them from a fresh demo lab (through
   `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow

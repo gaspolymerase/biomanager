@@ -170,7 +170,7 @@
   "a database was added for the lab.": "实验室新增了一个数据库。",
   "Turn any of them off in <a href=\"%(url)s\">Settings</a>.": "可以在<a href=\"%(url)s\">设置</a>中关闭任何一类。",
   "At the rack, on your phone": "在笼架旁，用手机",
-  "Open this same address on your phone and add it to your home screen, or install the BioManager app for Android from the <a href=\"https://biomanager.org/#download\" target=\"_blank\" rel=\"noopener\">download page</a>.": "在手机上打开同一个网址并添加到主屏幕，或从<a href=\"https://biomanager.org/zh/#download\" target=\"_blank\" rel=\"noopener\">下载页面</a>安装 Android 版 BioManager。",
+  "Open this same address on your phone and add it to your home screen, or install the BioManager app for Android from the <a href=\"https://biomanager.org/download.html\" target=\"_blank\" rel=\"noopener\">download page</a>.": "在手机上打开同一个网址并添加到主屏幕，或从<a href=\"https://biomanager.org/zh/download.html\" target=\"_blank\" rel=\"noopener\">下载页面</a>安装 Android 版 BioManager。",
   "Scanning a cage card's QR code opens that cage, with its mice.": "扫描笼卡上的二维码，就会打开那个笼和里面的小鼠。",
   "When you're stuck": "遇到困难时",
   "The <a href=\"%(url)s\" target=\"_blank\" rel=\"noopener\" data-milestone=\"guide\">user guide</a> explains every part of BioManager, step by step. <strong>Help</strong> at the bottom of the sidebar opens it any time.": "<a href=\"%(url)s\" target=\"_blank\" rel=\"noopener\" data-milestone=\"guide\">用户指南</a>一步步讲解 BioManager 的每个部分。随时可以用侧边栏底部的<strong>帮助</strong>打开它。",

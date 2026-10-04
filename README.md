@@ -695,7 +695,7 @@ every computer linked to the lab:
 ### 💻 Desktop app
 
 1. Download BioManager for your system from the
-   [**BioManager website**](https://biomanager.org/#download),
+   [**BioManager website**](https://biomanager.org/download.html),
    or build it yourself (below).
 2. **macOS:** open the download and drag BioManager into Applications.
    The first time, **right-click the app and choose Open** — macOS asks

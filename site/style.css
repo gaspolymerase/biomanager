@@ -253,6 +253,21 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 .band { background: var(--bg-band); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .section h2 { max-width: 18em; }
 .section-head { margin-bottom: clamp(40px, 6vw, 72px); }
+.section-first { padding-top: clamp(24px, 4vw, 48px); }
+
+/* A page's own heading, under the header (Features, Download). */
+.page-head { padding: clamp(48px, 7vw, 96px) 0 0; }
+.page-head h1 { font-size: clamp(2.3rem, 1.4rem + 3.4vw, 3.75rem); max-width: 16em; margin-bottom: 0.4em; }
+.page-head .lede { margin-bottom: 0; }
+
+/* The front page's promises side by side, and where to go next. */
+@media (min-width: 800px) {
+  .promises-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .promises.promises-row li, .promises.promises-row li:first-child { border-top: 1px solid var(--line); padding: 20px 0 0; }
+}
+.card.next { display: block; color: inherit; }
+.card.next:hover { text-decoration: none; border-color: var(--accent); }
+.card.next h3::after { content: " →"; color: var(--accent-ink); }
 
 /* Sections rise into place as they scroll in, where the browser can drive
    that from scrolling. Without it (or without scripts) everything simply shows. */

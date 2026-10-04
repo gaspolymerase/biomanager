@@ -3,8 +3,10 @@
 > A lab database for animal colonies (mice, zebrafish, flies, worms, any organism), plasmids, samples, orders, reagents, antibodies, viruses, a calendar and a notebook. Desktop apps for macOS, Windows and Linux; a Docker server for a whole lab; an Android app and iPhone home-screen web app for the server.
 
 - [Deploying a lab server, for AI assistants](https://biomanager.org/deploy-with-ai.md): facts, questions to ask, exact commands, checks and safety rules
+- [Features](https://biomanager.org/features.html): every database and what works the same in all of them
+- [Download](https://biomanager.org/download.html): the desktop apps and the Android app, first steps, and common questions
 - [Run it for your lab](https://biomanager.org/server.html): every hosting option with costs and steps
 - [User guide](https://biomanager.org/guide.html): every function, and a path for people coming from Excel
 - [The API](https://biomanager.org/guide.html#api): JSON at /api/v1 on a lab's BioManager, with a personal token (Authorization: Bearer bmt_…, from Settings → API tokens); the reference is /api and the spec /api/v1/openapi.json on that server
-- [中文网站](https://biomanager.org/zh/): the site in Simplified Chinese — [用户指南](https://biomanager.org/zh/guide.html), [实验室服务器](https://biomanager.org/zh/server.html)
+- [中文网站](https://biomanager.org/zh/): the site in Simplified Chinese — [功能](https://biomanager.org/zh/features.html)、[下载](https://biomanager.org/zh/download.html)、[用户指南](https://biomanager.org/zh/guide.html), [实验室服务器](https://biomanager.org/zh/server.html)
 - [Downloads](https://github.com/gaspolymerase/biomanager/releases/latest): desktop apps, Android app, and biomanager-server.tar.gz

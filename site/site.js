@@ -47,8 +47,7 @@
   });
 })();
 
-// The header: on the page at the very top, a pane of glass once it scrolls;
-// and on the front page, the link to the section in view is highlighted.
+// The header: on the page at the very top, a pane of glass once it scrolls.
 (function () {
   var nav = document.querySelector('.nav');
   if (!nav) return;
@@ -59,17 +58,6 @@
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }, { passive: true });
 
-  var links = {};
-  nav.querySelectorAll('.nav-links a[href^="#"]').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
-  if (!Object.keys(links).length || !('IntersectionObserver' in window)) return;
-  var shown = {};
-  var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { shown[e.target.id] = e.isIntersecting; });
-    var current = null;
-    Object.keys(links).forEach(function (id) { if (shown[id] && !current) current = id; });
-    Object.keys(links).forEach(function (id) { links[id].classList.toggle('on', id === current); });
-  }, { rootMargin: '-45% 0px -50% 0px' });
-  Object.keys(links).forEach(function (id) { var s = document.getElementById(id); if (s) io.observe(s); });
 })();
 
 // The feature stage: a dock of tabs under a window, each playing a short
@@ -159,4 +147,25 @@
   }
   document.addEventListener('visibilitychange', resume);
   show(0, 'first');
+})();
+
+// Download: the front page's button names this visitor's system and, where it
+// can tell the file, downloads it; the Download page marks that file. Browsers
+// can't tell an Apple-silicon Mac from an Intel one reliably, so Macs get the page.
+(function () {
+  var zh = document.documentElement.lang.indexOf('zh') === 0;
+  var latest = 'https://github.com/gaspolymerase/biomanager/releases/latest/download/';
+  var ua = navigator.userAgent, os = null, label = null;
+  if (/Android/.test(ua)) { os = 'android'; label = zh ? '获取 Android 应用' : 'Get the Android app'; }
+  else if (/Windows/.test(ua)) { os = 'win'; label = zh ? '下载 Windows 版' : 'Download for Windows'; }
+  else if (/Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua)) { label = zh ? '下载 Mac 版' : 'Download for Mac'; }
+  else if (/Linux/.test(ua)) { os = 'linux'; label = zh ? '下载 Linux 版' : 'Download for Linux'; }
+  var files = { android: 'BioManager-Android.apk', win: 'BioManager-Windows.zip', linux: 'BioManager-Linux.AppImage' };
+  var hero = document.getElementById('hero-download');
+  if (hero && label) hero.textContent = label;
+  if (hero && os) hero.href = latest + files[os];
+  if (os) document.querySelectorAll('[data-os="' + os + '"]').forEach(function (a) { a.classList.add('mine'); });
+  document.querySelectorAll('u[data-href]').forEach(function (u) {
+    u.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); location.href = u.dataset.href; });
+  });
 })();
