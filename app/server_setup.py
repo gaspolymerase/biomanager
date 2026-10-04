@@ -434,14 +434,14 @@ def _remember(job: Job) -> None:
               "host": job.plan.host, "user": job.plan.user, "set_up": datetime.now().isoformat(timespec="minutes")}
     path = data_dir() / "lab-server.json"
     try:
-        path.write_text(json.dumps(record, indent=2))
+        path.write_text(json.dumps(record, indent=2), encoding="utf-8")
     except OSError:
         pass
 
 
 def remembered() -> dict | None:
     try:
-        return json.loads((data_dir() / "lab-server.json").read_text())
+        return json.loads((data_dir() / "lab-server.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
 

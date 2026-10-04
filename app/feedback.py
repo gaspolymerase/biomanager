@@ -64,7 +64,7 @@ def app_version() -> str:
         return version()
     except ImportError:
         try:
-            return (Path(__file__).resolve().parent.parent / "VERSION").read_text().strip() or "server"
+            return (Path(__file__).resolve().parent.parent / "VERSION").read_text(encoding="utf-8").strip() or "server"
         except OSError:
             return "server"
 
