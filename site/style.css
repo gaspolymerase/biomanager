@@ -774,7 +774,7 @@ blockquote.req {
 .gl-grid span { padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .gl-grid span:nth-child(-n+3) { font: 500 11px var(--font-mono); text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
 .gl-grid .on { outline: 2px solid var(--c1); outline-offset: -2px; border-radius: 4px; box-shadow: 0 0 14px color-mix(in srgb, var(--c1) 45%, transparent); }
-.gl-chips { display: flex; gap: 6px; margin-bottom: 8px; }
+.gl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .gl-chips span {
   padding: 4px 8px; border-radius: 7px; font: 600 11px var(--font-mono); color: #fff;
   background: color-mix(in srgb, var(--c1) 30%, transparent); border: 1px solid color-mix(in srgb, var(--c1) 50%, transparent);
