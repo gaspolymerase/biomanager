@@ -1,0 +1,16 @@
+name: An idea or something missing · 想法或缺少的功能
+description: Something your lab needs that BioManager doesn't do yet. 你的实验室需要、但 BioManager 还没有的功能。
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What would help your lab? · 什么能帮到你的实验室？
+      description: The job you're trying to get done, and how you do it today. 你想完成的工作，以及现在是怎么做的。
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else · 其他补充
+      description: Examples, a sketch, or a screenshot. 例子、草图或截图都可以。

@@ -478,6 +478,23 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 .dl-os::after { content: " ↓"; color: var(--accent-ink); }
 .dl-sub { font-size: 14px; color: var(--fg-3); }
 .dl-links { font-size: 14px; color: var(--fg-3); margin: 16px 0 0; }
+/* The version the buttons download (written in the page, brought up to date
+   from GitHub when it answers), and the invitation to star and give feedback. */
+.dl-version { font-size: 14px; color: var(--fg-3); margin: 0 0 14px; }
+.dl-version b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.btn svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+.btn-quiet { background: var(--card); color: var(--fg); border: 1px solid var(--line); }
+.btn-quiet:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.btn-quiet .star { color: #e3a008; }
+.gh-cta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 28px; padding: 22px 24px;
+  border-radius: var(--radius); border: 1px solid var(--line);
+  background: linear-gradient(120deg, var(--accent-soft), transparent 70%), var(--card);
+}
+.gh-cta > div:first-child { flex: 1 1 320px; }
+.gh-cta h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.gh-cta p { margin: 0; font-size: 15px; color: var(--fg-2); }
+.gh-btns { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .steps { display: grid; gap: 24px; margin-top: clamp(48px, 6vw, 72px); }
 @media (min-width: 900px) { .steps { grid-template-columns: repeat(3, 1fr); } }
@@ -514,6 +531,9 @@ details p { font-size: 16px; }
 .footer { padding: 48px 0 64px; border-top: 1px solid var(--line); }
 .footer-inner { display: grid; gap: 14px; }
 .footer p { font-size: 13px; color: var(--fg-3); margin: 0; max-width: 760px; }
+.footer-gh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding-bottom: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.footer-gh p { flex: 1 1 340px; font-size: 14px; color: var(--fg-2); }
+.footer-gh .btn { min-height: 36px; padding: 0 14px; font-size: 14px; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

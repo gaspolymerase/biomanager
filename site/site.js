@@ -181,6 +181,28 @@ document.documentElement.classList.add('js');
   });
 })();
 
+// The version: written in the page (so it shows where GitHub can't be
+// reached), then brought up to date from the latest release, with its date.
+(function () {
+  var spots = document.querySelectorAll('[data-latest]');
+  if (!spots.length || !window.fetch) return;
+  var zh = document.documentElement.lang.indexOf('zh') === 0;
+  fetch('https://api.github.com/repos/gaspolymerase/biomanager/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel || !rel.tag_name) return;
+      var v = rel.tag_name.replace(/^v/, '');
+      var when = rel.published_at ? new Date(rel.published_at).toLocaleDateString(zh ? 'zh-CN' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+      spots.forEach(function (el) {
+        var b = el.querySelector('[data-version]'), d = el.querySelector('[data-date]'), n = el.querySelector('[data-notes]');
+        if (b) b.textContent = v;
+        if (d && when) d.textContent = (zh ? '，' : ', ') + (zh ? when + '发布' : 'released ' + when);
+        if (n && rel.html_url) n.href = rel.html_url;
+      });
+    })
+    .catch(function () {});
+})();
+
 // Scrolling: sections rise in as they appear, where the browser can't drive
 // that from scrolling itself; each glass card's neon draws itself in.
 (function () {

@@ -87,11 +87,11 @@ T = {
     "en": dict(lang="en", nav_label="Site", features="Features", server="Run it for your lab", guide="User guide",
                download="Download", other="中文", other_code="zh-CN", other_data="zh", search="Search the guide",
                contents="Contents", on_page="On this page", prev="Previous", next="Next", helpful="Was this page helpful?",
-               yes="Yes", no="No", suffix="BioManager user guide", footer_report="Report a problem"),
+               yes="Yes", no="No", suffix="BioManager user guide"),
     "zh": dict(lang="zh-CN", nav_label="页面导航", features="功能", server="为实验室部署", guide="用户指南",
                download="下载", other="English", other_code="en", other_data="en", search="搜索用户指南",
                contents="目录", on_page="本页内容", prev="上一页", next="下一页", helpful="这一页对你有帮助吗？",
-               yes="有", no="没有", suffix="BioManager 用户指南", footer_report="报告问题"),
+               yes="有", no="没有", suffix="BioManager 用户指南"),
 }
 
 
@@ -259,15 +259,24 @@ def pager(lang, slug):
 
 def footer(lang, slug):
     u = up(lang, slug)
-    t = T[lang]
+    repo = "https://github.com/gaspolymerase/biomanager"
     if lang == "en":
-        body = (f'<p>BioManager is free and open source. <a href="{u}download.html">Download</a> · '
-                f'<a href="https://github.com/gaspolymerase/biomanager/issues">{t["footer_report"]}</a></p>')
+        invite = ("BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs "
+                  "find it; an issue there tells us what to fix or build next.")
+        star, feedback = "Star on GitHub", "Send feedback"
+        body = f'<p><a href="{u}download.html">Download</a> · <a href="{repo}/releases">All releases and what changed</a></p>'
     else:
-        body = (f'<p>BioManager 免费开源。<a href="{u}download.html">下载</a> · '
-                f'<a href="https://github.com/gaspolymerase/biomanager/issues">{t["footer_report"]}</a></p>')
+        invite = ("BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；"
+                  "遇到问题或有想法，也欢迎在 GitHub 上提给我们。")
+        star, feedback = "在 GitHub 上标星", "提交反馈"
+        body = f'<p><a href="{u}download.html">下载</a> · <a href="{repo}/releases">所有版本和更新内容</a></p>'
     return f"""<footer class="footer">
   <div class="wrap footer-inner">
+    <div class="footer-gh">
+      <p>{invite}</p>
+      <a class="btn btn-quiet" href="{repo}"><svg class="star" aria-hidden="true"><use href="{u}assets/icons.svg#star"/></svg>{star}</a>
+      <a class="btn btn-quiet" href="{repo}/issues/new/choose"><svg aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg>{feedback}</a>
+    </div>
     <div class="brand"><img src="{u}assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     {body}
   </div>

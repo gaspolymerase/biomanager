@@ -1,0 +1,33 @@
+name: Something isn't working · 有问题
+description: Tell us what went wrong in BioManager. 告诉我们 BioManager 哪里出了问题。
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please leave out anything private: names, lab data, passwords or your server's address.
+        感谢反馈。请不要写入任何私人信息：人名、实验数据、密码或服务器地址。
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? · 发生了什么？
+      description: What you did, what you expected, and what you saw instead. A screenshot helps. 你做了什么、期望看到什么、实际看到了什么。附上截图更好。
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version · 版本
+      description: Help → What's new shows it. In the app, Help → Send feedback → Open as a GitHub issue fills it in for you. 在“帮助 → 新功能”里可以看到；在应用里用“帮助 → 发送反馈 → 作为 GitHub issue 打开”会自动填好。
+      placeholder: "1.0.6"
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where · 在哪里用
+      options:
+        - Desktop app on macOS · macOS 桌面版
+        - Desktop app on Windows · Windows 桌面版
+        - Desktop app on Linux · Linux 桌面版
+        - A lab server, in a browser · 实验室服务器（浏览器）
+        - Android app · Android 应用
+        - iPhone, from the home screen · iPhone（主屏幕）
