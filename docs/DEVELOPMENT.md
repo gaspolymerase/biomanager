@@ -1276,6 +1276,12 @@ teal in them).
   `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
   one another until someone picks a tab, and pause off screen. A tab's caption
   is in its `data-claim` and `data-more`.
+- **Features** has no screenshots: each database and each thing that works
+  everywhere is a glass and neon card (`.nc`) on a dark band, drawn in the
+  page: its own colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the
+  card), a line drawing in inline SVG and a pane of glass with a little of
+  the app's own words. Each card opens its part of the user guide. Over a
+  dark band the header's glass turns dark (`.on-dark`, from `site.js`).
 - **Motion** is the hero's entrance and, where the browser can drive
   animation from scrolling (`animation-timeline`), the product shot
   flattening and sections (`.rise`) rising in. Without that support, or with

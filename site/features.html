@@ -56,148 +56,109 @@
   </section>
 
   <!-- ============================================================ tour -->
-  <section id="tour" class="section section-first">
+  <section id="tour" class="section neon-band">
     <div class="wrap">
-      <article class="row rise">
-        <div class="row-text">
-          <h3><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#mouse"/></svg></span> Mouse colony</h3>
-          <p>Every mouse in a sheet you edit in place: sex, age, status, transgenes, cage, rack and owner.
-            IDs are assigned in order and never reused.</p>
-          <ul class="ticks">
-            <li><b>Cages</b> with their mice, purpose, rack position and P21 weaning date</li>
-            <li><b>Litters</b>: record a birth once; weaning and genotyping dates follow</li>
-            <li><b>Breeders</b> past 30 weeks flagged, <b>experiments</b> with treatment groups</li>
-            <li><b>Experiments</b>: record each manipulation — tamoxifen 20 mg/kg on day 1, HDM on days 2–5 — with each mouse's dose from its weight, follow body weight with the manipulation days marked, and compare groups day by day. Fish, flies, worms and your own organisms have them too, with survival and readouts that fit them</li>
-          </ul>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>Mouse colony</span></div>
-            <img src="assets/screenshots/mice.webp" loading="lazy" width="2000" height="1250" alt="The mouse sheet: one row per mouse with sex, age, status, transgenes, cage, rack, position and owner">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row flip rise">
-        <div class="row-text">
-          <h3><span class="ic ic-slate"><svg aria-hidden="true"><use href="assets/icons.svg#grid"/></svg></span> Racks, named your way</h3>
-          <p><code>D7</code>, <code>4-7</code>, <code>7D</code>, <code>G12</code> or plain 1 to 80 —
-            each rack keeps the labels on its real stickers. See what's where, and drag a cage to move it.</p>
-          <p>The same grid holds fly vials, worm plates, plasmid boxes and freezer boxes.</p>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>Rack grid</span></div>
-            <img src="assets/screenshots/rack-grid.webp" loading="lazy" width="2000" height="1250" alt="A mouse rack as a grid of positions, each filled cage showing its number and genotype">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row rise">
-        <div class="row-text">
-          <h3><span class="ic ic-amber"><svg aria-hidden="true"><use href="assets/icons.svg#fly"/></svg></span> Drosophila &amp; C. elegans</h3>
-          <p>Vials and plates in racks inside incubators. Set crosses, collect eggs into new vials,
-            and see when the progeny will be adults.</p>
-          <ul class="ticks">
-            <li>Flip schedules that follow temperature — 14 days at 25 °C, 28 at 18 °C</li>
-            <li>Each rack shows its last flip and the next, with <b>Flipped today</b> in one click</li>
-            <li>What's due shows up on Home and the calendar</li>
-            <li>Frozen-stock records for worms</li>
-          </ul>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>Drosophila</span></div>
-            <img src="assets/screenshots/fly-stocks.webp" loading="lazy" width="2000" height="1250" alt="Fly vials with genotype, purpose, incubator and rack">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row flip rise">
-        <div class="row-text">
-          <h3><span class="ic ic-orange"><svg aria-hidden="true"><use href="assets/icons.svg#plasmid"/></svg></span> Plasmids</h3>
-          <p>Upload a GenBank, FASTA or SnapGene file: the sequence and its features are kept,
-            with an interactive map you can edit. Every tube has an address in a plasmid box.</p>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>pCAG-EGFP</span></div>
-            <img src="assets/screenshots/plasmid-map.webp" loading="lazy" width="2000" height="1250" alt="A circular plasmid map with features and restriction sites beside the sequence">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row rise">
-        <div class="row-text">
-          <h3><span class="ic ic-pink"><svg aria-hidden="true"><use href="assets/icons.svg#flask"/></svg></span> Samples, orders, reagents, antibodies, primers, cell lines</h3>
-          <p>One engine, eight starting points. Orders move across a board from <i>requested</i> to
-            <i>received</i>; reagents warn before they expire; antibodies keep host, clone, dilution and RRID;
-            viruses keep serotype, titer and biosafety level, and link to the plasmid each was made from;
-            primers work out their length, GC and Tm from the sequence; cell-line vials keep passage and
-            mycoplasma tests. Keep your own stock apart from the lab's common shelf.</p>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>Orders</span></div>
-            <img src="assets/screenshots/orders.webp" loading="lazy" width="2000" height="1250" alt="The orders board with requested, ordered, received and cancelled columns">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row flip rise">
-        <div class="row-text">
-          <h3><span class="ic ic-green"><svg aria-hidden="true"><use href="assets/icons.svg#database"/></svg></span> Any other organism</h3>
-          <p>Xenopus, axolotls, cell lines, yeast — choose <b>Add database</b>, start from a preset
-            or a blank sheet, and describe it: the words it uses, how it's counted, what it needs
-            (crosses, genotyping, cryo, census…), its schedules and your own columns. No code.</p>
-          <p>Only what your lab keeps appears — the mouse colony, zebrafish and plasmids are added the same
-            way, and every database has <b>Configure</b> and <b>All databases</b> beside its name.</p>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>New database</span></div>
-            <img src="assets/screenshots/new-database.webp" loading="lazy" width="2000" height="1250" alt="The Add database page with presets for flies, worms, inventories and organisms">
-          </figure>
-        </div>
-      </article>
-
-      <article class="row rise">
-        <div class="row-text">
-          <h3><span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg#calendar"/></svg></span> Calendar &amp; notebook</h3>
-          <p>Experiments and to-dos, with weanings, genotyping, flips and reagent expiry filled in for you,
-            alongside your Google Calendar — and on your phone's calendar too.</p>
-          <ul class="ticks">
-            <li>Protocol timelines from day 0: move the start and every step moves</li>
-            <li>Equipment booking without double bookings, repeating every day or week, and cover for time away</li>
-            <li>A notebook you edit together live, with protocols to run at the bench, data sheets with plots and stats, and buffer recipes</li>
-            <li>Link any antibody, sample, primer or plasmid from a page with <code>@</code>; the record lists the pages that use it</li>
-            <li>Sign a page when it is the record of your work: fingerprinted, locked, witnessed by a lab mate, amended only with a reason</li>
-          </ul>
-        </div>
-        <div class="frame">
-          <figure class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span>Calendar</span></div>
-            <img src="assets/screenshots/calendar.webp" loading="lazy" width="2000" height="1250" alt="A month calendar with experiments, meetings, weaning and genotyping dates">
-          </figure>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <!-- ============================================================ phone -->
-  <section class="section band">
-    <div class="wrap phone-row rise">
-      <div class="row-text">
-        <p class="eyebrow">Cage cards</p>
-        <h2>Scan the cage card. <span class="mute">The cage opens.</span></h2>
-        <p>Print correctly sized cards for cages, tanks and vials, and labels for tubes — on any printer, or on a
-          Brother or Zebra label printer. Point any phone camera at the QR code and that record opens, ready to
-          edit — nobody walks back to a computer to type an ID.</p>
-        <p class="fine">With a lab server, use the <a href="download.html">Android app</a>'s Scan button or any phone camera.</p>
+      <div class="section-head rise">
+        <p class="eyebrow">Databases</p>
+        <h2>One database for each thing you keep. <span class="mute">Only what your lab keeps appears.</span></h2>
       </div>
-      <div class="phones">
-        <img class="card-sheet" src="assets/screenshots/cage-cards.webp" loading="lazy" width="2000" height="1250" alt="Printable cage cards with owner, purpose, genotype and a QR code">
-        <div class="phone"><img src="assets/screenshots/phone-cage.webp" loading="lazy" width="780" height="1333" alt="A cage opened on a phone after scanning its card"></div>
+      <div class="nc-grid">
+        <a class="nc rise" href="guide.html#mice" style="--c1:#3ed0b2;--c2:#b5f5e6;--a:#073229;--b:#06120f" aria-label="Mouse colony. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#mouse"/></svg></span>
+            <h3>Mouse colony</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Every mouse in a sheet you edit in place. Record a litter once: weaning and genotyping dates follow, and experiments dose each mouse from its weight.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-mice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ed0b2"/><stop offset="1" stop-color="#b5f5e6"/></linearGradient></defs><g stroke="url(#ng-db-mice)"><path d="M44 96c0-30 26-50 58-50 30 0 52 18 52 40 0 16-14 26-34 26H70c-14 0-26-6-26-16z"/><circle cx="66" cy="50" r="14"/><circle cx="134" cy="74" r="3"/><path d="M154 92c16 0 22 12 16 22s-24 12-34 4"/><path d="M80 112v12M118 112v12"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>Cage 102</b><span>2 + 7 pups</span></div><div class="gl-row">Wean due<span>Oct 14</span></div><div class="gl-row">Genotype L-3<span>today</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#mice" style="--c1:#c9d6db;--c2:#7aa7ff;--a:#1a2932;--b:#0a1013" aria-label="Racks, named your way. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#grid"/></svg></span>
+            <h3>Racks, named your way</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>D7, 4-7, G12 or plain 1 to 80: each rack keeps the labels on its real stickers. Drag a cage to move it.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-racks" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9d6db"/><stop offset="1" stop-color="#7aa7ff"/></linearGradient></defs><g stroke="url(#ng-db-racks)"><rect x="30" y="18" width="140" height="104" rx="12"/><circle cx="58" cy="44" r="9"/><circle cx="86" cy="44" r="9"/><circle cx="114" cy="44" r="9"/><circle cx="142" cy="44" r="9"/><circle cx="58" cy="72" r="9"/><circle cx="86" cy="72" r="9"/><circle cx="58" cy="100" r="9"/></g></svg>
+            <div class="nc-glass"><div class="gl-chips"><span>D7</span><span>4-7</span><span>G12</span></div><div class="gl-row">Rack A · 5 × 7<span>10 of 35</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#flies" style="--c1:#ffd166;--c2:#ff9f43;--a:#382a06;--b:#140f04" aria-label="Drosophila & C. elegans. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#fly"/></svg></span>
+            <h3>Drosophila & C. elegans</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Vials and plates on racks in incubators, with flip schedules that follow the temperature, crosses and frozen stocks.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-flies" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff9f43"/></linearGradient></defs><g stroke="url(#ng-db-flies)"><path d="M70 14h44M78 14v86a14 14 0 0 0 28 0V14"/><path d="M78 64h28"/><circle cx="92" cy="82" r="4"/><circle cx="96" cy="98" r="3"/><path d="M140 30v66"/><circle cx="140" cy="106" r="12"/><path d="M140 30a8 8 0 0 1 16 0v40"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>25 °C</b> flip every<span>14 d</span></div><div class="gl-row"><b>18 °C</b> flip every<span>28 d</span></div><div class="gl-row">Rack B<span>flip today</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#plasmids" style="--c1:#ffb35c;--c2:#ff6b3d;--a:#3a2208;--b:#140c05" aria-label="Plasmids. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#plasmid"/></svg></span>
+            <h3>Plasmids</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Upload a GenBank, FASTA or SnapGene file: the sequence and its features, with a map you can edit, and the box each tube is in.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-plasmids" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb35c"/><stop offset="1" stop-color="#ff6b3d"/></linearGradient></defs><g stroke="url(#ng-db-plasmids)"><circle cx="100" cy="70" r="46"/><path d="M100 24a46 46 0 0 1 40 24"/><path d="M146 76a46 46 0 0 1-30 37"/><path d="M60 92a46 46 0 0 1-6-30"/><path d="M100 14v20M152 112l-10-10"/></g></svg>
+            <div class="nc-glass"><div class="gl-big">pCAG-EGFP</div><div class="gl-row">5.5 kb · AmpR<span>Box 2 · A4</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#inventory" style="--c1:#ff8fb1;--c2:#ff4d6d;--a:#3a0d22;--b:#13060c" aria-label="Samples, orders and reagents. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#flask"/></svg></span>
+            <h3>Samples, orders and reagents</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Orders move from requested to received; reagents warn before they expire; antibodies, viruses, primers and cell lines keep what matters.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-stock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8fb1"/><stop offset="1" stop-color="#ff4d6d"/></linearGradient></defs><g stroke="url(#ng-db-stock)"><rect x="34" y="20" width="132" height="100" rx="12"/><circle cx="64" cy="48" r="11"/><circle cx="100" cy="48" r="11"/><circle cx="136" cy="48" r="11"/><circle cx="64" cy="88" r="11"/><circle cx="100" cy="88" r="11"/><path d="M128 80l16 16M144 80l-16 16"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>Anti-GFP</b> chicken<span>1:1000</span></div><div class="gl-row">Tamoxifen 1 g<span>12 d left</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#custom" style="--c1:#8fdc6a;--c2:#3ed0b2;--a:#12320f;--b:#071209" aria-label="Any other organism. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#database"/></svg></span>
+            <h3>Any other organism</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Xenopus, axolotls, yeast: describe it in your own words, how it's counted and what it needs, with no code.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-custom" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fdc6a"/><stop offset="1" stop-color="#3ed0b2"/></linearGradient></defs><g stroke="url(#ng-db-custom)"><ellipse cx="96" cy="32" rx="48" ry="14"/><path d="M48 32v72c0 8 22 14 48 14"/><path d="M144 32v34"/><path d="M48 68c0 8 22 14 48 14"/><circle cx="142" cy="102" r="22"/><path d="M142 90v24M130 102h24"/></g></svg>
+            <div class="nc-glass"><div class="gl-row gl-strong">Add database</div><div class="gl-row">Xenopus<span>counted by tank</span></div></div>
+          </div>
+        </a>
+        <a class="nc rise" href="guide.html#calendar" style="--c1:#7aa7ff;--c2:#b79cff;--a:#13214f;--b:#090d22" aria-label="Calendar & notebook. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#calendar"/></svg></span>
+            <h3>Calendar & notebook</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Weanings and flips filled in, protocol timelines from day 0, and a notebook you edit together and sign.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-calendar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa7ff"/><stop offset="1" stop-color="#b79cff"/></linearGradient></defs><g stroke="url(#ng-db-calendar)"><rect x="34" y="26" width="132" height="98" rx="14"/><path d="M34 56h132M70 14v24M130 14v24"/><path d="M74 90l16 16 34-34"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>Day 0</b> Tamoxifen<span>i.p.</span></div><div class="gl-row"><b>Day 7</b> Perfuse<span>cohort 2</span></div><div class="gl-row">Page signed<span>witnessed</span></div></div>
+          </div>
+        </a>
+        <a class="nc nc-wide rise" href="guide.html#phones" style="--c1:#4be1ff;--c2:#3ed0b2;--a:#0b2a3a;--b:#061219" aria-label="Cage cards and phones. Open in the user guide">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg#qrcode"/></svg></span>
+            <h3>Cage cards and phones</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
+          </div>
+          <p>Print cards for cages, tanks and vials. Point any phone camera at the QR code and that record opens, ready to edit.</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-cards" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4be1ff"/><stop offset="1" stop-color="#3ed0b2"/></linearGradient></defs><g stroke="url(#ng-db-cards)"><rect x="64" y="10" width="72" height="124" rx="16"/><path d="M90 20h20"/><rect x="80" y="44" width="16" height="16" rx="3"/><rect x="104" y="44" width="16" height="16" rx="3"/><rect x="80" y="68" width="16" height="16" rx="3"/><path d="M104 68h16v16M112 76h8"/><path d="M84 108h32"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>Cage 102</b> Rack A · A2</div><div class="gl-row">Scanned<span>opened on phone</span></div></div>
+          </div>
+        </a>
       </div>
     </div>
   </section>

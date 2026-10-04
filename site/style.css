@@ -759,3 +759,5 @@ blockquote.req {
 .gl-menu { display: flex; gap: 12px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; }
 .gl-menu span { color: rgba(255, 255, 255, 0.7); }
 @media (max-width: 680px) { .nc { min-height: 400px; } .nc-glass { left: 26%; } }
+/* Eight database cards: the last fills the row's two places on a wide screen. */
+@media (min-width: 1040px) { .nc-wide { grid-column: span 2; } .nc-wide .nc-glass { left: 52%; } .nc-wide .nc-art .neon { width: 34%; left: 10%; } }
