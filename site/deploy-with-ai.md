@@ -4,7 +4,7 @@ You are helping someone set up **BioManager**, a lab database for animal
 colonies, stocks and inventories, as a server for their lab. This file is
 written for you: follow it in order, run the checks, and stop where it says
 to ask. The human-readable version is
-https://biomanager.org/server.html.
+https://biomanager.org/server.
 
 ## Rules
 
@@ -45,7 +45,7 @@ Ask these, then recommend an option (the table after them) and wait for a yes.
 
 | Situation | Option |
 | --- | --- |
-| One person | **A**: the desktop app. No server. Send them to https://biomanager.org/download.html and stop here. |
+| One person | **A**: the desktop app. No server. Send them to https://biomanager.org/download and stop here. |
 | One building, a Linux computer that stays on | **B**: a Linux computer in the lab, `TLS=internal` (or `TLS=files` with IT's certificate). For a Mac, send them to the desktop app: Settings → Set up a lab server → This computer, for the whole lab |
 | University offers VMs | **C**: ask IT for a VM with Docker, a DNS name and a certificate; then as B with `TLS=files` |
 | People anywhere, most labs | **D**: Ubuntu 24.04 cloud VM + Tailscale, `TLS=tailscale` (recommended; free on Oracle Cloud Always Free) |
@@ -282,4 +282,4 @@ weekly) and whether off-site is on; the ntfy topic for alerts; how to update
 alert arrives. Fill in its table at the top (*Where everything is*) with them:
 the address, the server and where to start or rebuild it, where backups go,
 off-site or not, the ntfy topic; and have them keep a copy somewhere other
-than the server. The user guide is https://biomanager.org/guide.html.
+than the server. The user guide is https://biomanager.org/guide.

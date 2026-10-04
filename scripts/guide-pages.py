@@ -118,7 +118,9 @@ def up(lang: str, slug: str) -> str:
 
 
 def url(lang: str, slug: str) -> str:
-    rel = "guide.html" if slug == "index" else f"guide/{slug}.html"
+    """A page's address as search engines should list it: without .html, which
+    Cloudflare Pages redirects away from (GitHub Pages serves both)."""
+    rel = "guide" if slug == "index" else f"guide/{slug}"
     return "https://biomanager.org/" + ("" if lang == "en" else "zh/") + rel
 
 

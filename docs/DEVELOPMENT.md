@@ -1258,6 +1258,24 @@ pages, and keeps English and Chinese apart). Run it after editing the guide.
 An old link to a section of the one-page guide (`guide.html#mice`) goes on to
 its page.
 
+**For search engines and AI.** When the site publishes, `.github/workflows/pages.yml`
+runs `scripts/llms-full.py`, which writes `site/llms-full.txt`: every English
+guide page's own words as Markdown in `PAGES` order, then `deploy-with-ai.md`,
+for AI assistants (`site/llms.txt` links it). It is committed too, since
+Cloudflare Pages publishes `site/` as it is: run the script after editing the
+guide (`tests/test_llms_full.py` fails while it is behind). After the deploy, `scripts/indexnow.py`
+sends the pages that push changed to IndexNow (Bing, and through it ChatGPT
+search and Copilot; Yandex, Seznam, Naver), proven ours by the key file
+`site/<KEY>.txt`; a failure there leaves the site published. A new page also
+goes in `site/sitemap.xml`.
+
+**Addresses.** biomanager.org is served by Cloudflare Pages (DNS on Cloudflare),
+which redirects `page.html` to `page` and, without `site/404.html`, would answer
+every unknown address with the front page. So canonical links, language
+alternates, `og:url`, the sitemap, IndexNow and `llms-full.txt` all use the
+address without `.html` (`guide-pages.py`'s `url()`); GitHub Pages serves both
+forms, so the site works on either. Links between pages may keep `.html`.
+
 **Two languages.** `site/zh/` holds the Chinese pages, one for each English
 page (`zh/index.html`, `zh/features.html`, `zh/download.html`,
 `zh/guide.html`, `zh/server.html`), with the same
