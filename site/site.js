@@ -46,3 +46,117 @@
     });
   });
 })();
+
+// The header: on the page at the very top, a pane of glass once it scrolls;
+// and on the front page, the link to the section in view is highlighted.
+(function () {
+  var nav = document.querySelector('.nav');
+  if (!nav) return;
+  var ticking = false;
+  var update = function () { ticking = false; nav.classList.toggle('scrolled', window.scrollY > 8); };
+  update();
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+
+  var links = {};
+  nav.querySelectorAll('.nav-links a[href^="#"]').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  if (!Object.keys(links).length || !('IntersectionObserver' in window)) return;
+  var shown = {};
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { shown[e.target.id] = e.isIntersecting; });
+    var current = null;
+    Object.keys(links).forEach(function (id) { if (shown[id] && !current) current = id; });
+    Object.keys(links).forEach(function (id) { links[id].classList.toggle('on', id === current); });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  Object.keys(links).forEach(function (id) { var s = document.getElementById(id); if (s) io.observe(s); });
+})();
+
+// The feature stage: a dock of tabs under a window, each playing a short
+// clip. Only the chosen clip loads. Clips follow one another until the
+// visitor picks one, which then loops; they pause off screen or in a
+// background tab. With reduced motion nothing plays by itself: the still
+// shows, with a play button.
+(function () {
+  var dock = document.querySelector('.dock[role="tablist"]');
+  var video = document.getElementById('stage-video');
+  if (!dock || !video) return;
+  var tabs = Array.prototype.slice.call(dock.querySelectorAll('[role="tab"]'));
+  var screen = video.parentNode;
+  var title = document.getElementById('stage-title');
+  var caption = document.getElementById('stage-caption');
+  var play = document.getElementById('stage-play');
+  var base = video.getAttribute('poster').replace(/[^/]*$/, '');
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var webm = !!video.canPlayType && video.canPlayType('video/webm; codecs="vp9"') !== '';
+  var chosen = false;     // the visitor picked a tab: stop moving on by itself
+  var inView = false;
+  var current = 0;
+  var loaded = -1;
+  var prefix = title ? title.textContent.replace(/—.*$/, '— ') : 'BioManager — ';
+
+  function clip(i) { return tabs[i].dataset.clip; }
+  function wanted() { return inView && !document.hidden && (!calm || chosen); }
+  function load(i) {
+    if (loaded === i) return;
+    loaded = i;
+    video.src = base + clip(i) + (webm ? '.webm' : '.mp4');
+    video.load();
+  }
+  function resume() {
+    if (!wanted()) { video.pause(); return; }
+    load(current);
+    var p = video.play();
+    if (p && p.catch) p.catch(function () { if (play) play.hidden = false; });
+  }
+  function show(i, byHand) {
+    current = i;
+    tabs.forEach(function (t, j) {
+      t.setAttribute('aria-selected', j === i ? 'true' : 'false');
+      t.tabIndex = j === i ? 0 : -1;
+    });
+    screen.setAttribute('aria-labelledby', tabs[i].id);
+    var name = tabs[i].querySelector('.dock-tip').textContent;
+    if (title) title.textContent = prefix + name;
+    caption.innerHTML = '';
+    var b = document.createElement('b');
+    b.textContent = tabs[i].dataset.claim;
+    caption.appendChild(b);
+    caption.appendChild(document.createTextNode(' ' + tabs[i].dataset.more));
+    video.loop = chosen;
+    if (play) play.hidden = !(calm && !chosen);
+    screen.classList.add('swapping');
+    setTimeout(function () {
+      video.pause();
+      video.setAttribute('poster', base + clip(i) + '.webp');
+      loaded = -1;
+      if (wanted()) { resume(); } else { video.removeAttribute('src'); video.load(); }
+      screen.classList.remove('swapping');
+    }, byHand === 'first' ? 0 : 120);
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { chosen = true; show(i); });
+    t.addEventListener('keydown', function (e) {
+      var j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (j === undefined) return;
+      e.preventDefault();
+      j = (j + tabs.length) % tabs.length;
+      tabs[j].focus();
+      chosen = true;
+      show(j);
+      tabs[j].scrollIntoView({ block: 'nearest', inline: 'center' });
+    });
+  });
+  video.addEventListener('ended', function () {
+    if (!chosen) show((current + 1) % tabs.length);
+  });
+  if (play) play.addEventListener('click', function () { chosen = true; video.loop = true; play.hidden = true; resume(); });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      inView = entries[0].isIntersecting;
+      resume();
+    }, { threshold: 0.35 }).observe(screen);
+  }
+  document.addEventListener('visibilitychange', resume);
+  show(0, 'first');
+})();

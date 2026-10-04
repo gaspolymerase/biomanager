@@ -8,8 +8,8 @@
   <meta name="color-scheme" content="light dark">
   <!-- Baidu search (ziyuan.baidu.com) checks this to know the site is ours: keep it. -->
   <meta name="baidu-site-verification" content="codeva-MlA4qivzSZ" />
-  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161618" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://biomanager.org/">
   <link rel="alternate" hreflang="en" href="https://biomanager.org/">
   <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/">
@@ -30,6 +30,7 @@
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <script type="application/ld+json">
   {
@@ -56,13 +57,13 @@
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="#top"><img src="assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <a class="brand" href="#top"><img src="assets/icon.svg" alt="" width="26" height="26">BioManager</a>
     <nav class="nav-links" aria-label="Sections">
+      <a href="#see">See it work</a>
       <a href="#tour">Tour</a>
       <a href="#features">Features</a>
       <a href="server.html">Run it for your lab</a>
       <a href="guide.html">User guide</a>
-      <a href="#faq">FAQ</a>
     </nav>
     <a class="lang-link" href="zh/" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
     <a class="btn btn-small btn-primary" href="#download">Download</a>
@@ -74,65 +75,119 @@
   <!-- ============================================================ hero -->
   <section class="hero">
     <div class="wrap">
-      <div class="hero-icon"><img src="assets/icon.svg" alt="" width="96" height="96"></div>
-      <h1>Your lab's animals, stocks and supplies.<br><span class="grad">In one place.</span></h1>
+      <p class="eyebrow">Free lab management · open source</p>
+      <h1>Your lab's animals, stocks and supplies. <span class="grad">In one place.</span></h1>
       <p class="lede">BioManager replaces the spreadsheets, whiteboards and paper cage cards
         most labs run on. Edit records like a spreadsheet — underneath is a database that knows
         which mouse is in which cage, when a litter needs weaning, and which antibody is about to expire.</p>
       <div class="cta">
         <a class="btn btn-primary btn-large" href="#download" id="hero-download">Download for free</a>
-        <a class="btn btn-large" href="#tour">Take the tour</a>
+        <a class="btn btn-large" href="#see">See it work</a>
       </div>
       <p class="fine" id="hero-platform">macOS · Windows · Linux · Android · any browser &nbsp;·&nbsp; MIT licence &nbsp;·&nbsp; your data stays on your computer or your lab's own server</p>
+      <ul class="chips" aria-label="What it tracks">
+        <li>Mice</li><li>Zebrafish</li><li>Flies</li><li>Worms</li><li>Plasmids</li><li>Samples</li><li>Orders</li>
+        <li>Reagents</li><li>Antibodies</li><li>Viruses</li><li>Primers</li><li>Cell lines</li><li>Calendar</li><li>Notebook</li>
+      </ul>
 
-      <div class="chips" aria-label="What it tracks">
-        <span>🐭 Mice</span><span>🐟 Zebrafish</span><span>🪰 Flies</span><span>🪱 Worms</span>
-        <span>🧬 Plasmids</span><span>🧫 Samples</span><span>🛒 Orders</span><span>⚗️ Reagents</span>
-        <span>🔬 Antibodies</span><span>🦠 Viruses</span><span>🧬 Primers</span><span>🧫 Cell lines</span><span>📅 Calendar</span><span>📓 Notebook</span>
+      <div class="hero-stage">
+        <figure class="window hero-shot">
+          <div class="window-bar"><i></i><i></i><i></i><span>BioManager — Home</span></div>
+          <picture>
+            <source srcset="assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
+            <img src="assets/screenshots/home.webp" width="2000" height="1250" fetchpriority="high"
+                 alt="BioManager's home page: mice older than 30 weeks, upcoming weanings, the genotyping queue, fly vials due, expiring reagents and the next 14 days">
+          </picture>
+        </figure>
       </div>
-
-      <figure class="window hero-shot">
-        <div class="window-bar"><i></i><i></i><i></i><span>BioManager — Home</span></div>
-        <picture>
-          <source srcset="assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
-          <img src="assets/screenshots/home.webp" width="2000" height="1250"
-               alt="BioManager's home page: mice older than 30 weeks, upcoming weanings, the genotyping queue, fly vials due, expiring reagents and the next 14 days">
-        </picture>
-      </figure>
       <p class="caption">Home: every morning, what needs doing today.</p>
     </div>
   </section>
 
   <!-- ============================================================ audience -->
-  <section class="band">
+  <section class="band" style="margin-top: clamp(56px, 8vw, 96px)">
     <div class="wrap trio">
-      <div>
-        <div class="emoji">🧑‍🔬</div>
+      <div class="rise">
+        <span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#user"/></svg></span>
         <h3>For lab members</h3>
         <p>Manage your own lines, fish, stocks and samples without hunting through someone else's spreadsheet.</p>
       </div>
-      <div>
-        <div class="emoji">📋</div>
+      <div class="rise">
+        <span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg#list-check"/></svg></span>
         <h3>For lab managers &amp; PIs</h3>
         <p>A census that is actually complete: who owns what, which cages are idle, what is overdue.</p>
       </div>
-      <div>
-        <div class="emoji">🧬</div>
+      <div class="rise">
+        <span class="ic ic-purple"><svg aria-hidden="true"><use href="assets/icons.svg#dna"/></svg></span>
         <h3>For multi-organism labs</h3>
         <p>Mice, fish, flies and worms side by side — and a database for any other organism, set up in minutes.</p>
       </div>
     </div>
   </section>
 
+  <!-- ============================================================ the feature stage -->
+  <section id="see" class="stage" aria-labelledby="see-title">
+    <div class="wrap">
+      <p class="eyebrow center">See it work</p>
+      <h2 id="see-title">Seven things a lab does every week. <span class="mute">Watch BioManager do each one.</span></h2>
+
+      <div class="window stage-window">
+        <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — Home</span></div>
+        <div class="stage-screen" id="stage-panel" role="tabpanel" aria-labelledby="tab-home">
+          <video id="stage-video" muted playsinline preload="none" width="1280" height="786"
+                 poster="assets/clips/home.webp" aria-describedby="stage-caption"></video>
+          <button class="stage-play" type="button" id="stage-play" hidden aria-label="Play the clip">
+            <svg aria-hidden="true"><use href="assets/icons.svg#play"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="dock" role="tablist" aria-label="Features">
+        <button type="button" role="tab" id="tab-home" aria-selected="true" aria-controls="stage-panel" data-clip="home"
+                data-claim="Every morning, what needs doing today."
+                data-more="Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out for you.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#home"/></svg><span class="dock-tip">Home</span></button>
+        <button type="button" role="tab" id="tab-cards" aria-selected="false" aria-controls="stage-panel" data-clip="cards" tabindex="-1"
+                data-claim="Print the cage cards. Scan one, and the cage opens on your phone."
+                data-more="Any phone camera, no app needed, and Brother or Zebra label printers too.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#qrcode"/></svg><span class="dock-tip">Cage cards</span></button>
+        <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
+                data-claim="Paste your numbers, get the plot and the test."
+                data-more="Bar, dot, box or scatter plots in the notebook, with SEM and significance stars.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#table"/></svg><span class="dock-tip">Data sheet</span></button>
+        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
+                data-claim="Plasmid maps, and the box each tube is in."
+                data-more="Upload a GenBank, FASTA or SnapGene file and edit its map.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#plasmid"/></svg><span class="dock-tip">Plasmids</span></button>
+        <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
+                data-claim="A lab calendar that fills itself in."
+                data-more="Weanings, genotyping, flips and expiry dates, beside your Google Calendar.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#calendar"/></svg><span class="dock-tip">Calendar</span></button>
+        <button type="button" role="tab" id="tab-sign" aria-selected="false" aria-controls="stage-panel" data-clip="sign" tabindex="-1"
+                data-claim="Sign a notebook page: locked, fingerprinted, witnessed."
+                data-more="Amend it with a reason, and every version is kept.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#notebook"/></svg><span class="dock-tip">Notebook</span></button>
+        <button type="button" role="tab" id="tab-phone" aria-selected="false" aria-controls="stage-panel" data-clip="phone" tabindex="-1"
+                data-claim="The whole lab on one server, and on their phones."
+                data-more="Everyone signs in from a browser, at the desk or at the rack.">
+          <svg aria-hidden="true"><use href="assets/icons.svg#phone"/></svg><span class="dock-tip">Phone</span></button>
+      </div>
+      <p class="stage-caption" id="stage-caption" aria-live="polite"><b>Every morning, what needs doing today.</b>
+        Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out for you.</p>
+    </div>
+  </section>
+
   <!-- ============================================================ tour -->
   <section id="tour" class="section">
     <div class="wrap">
-      <p class="eyebrow">The tour</p>
-      <h2>Built around how a lab actually works.</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">The tour</p>
+        <h2>Built around how a lab actually works. <span class="mute">One database for each thing you keep.</span></h2>
+      </div>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🐭</span> Mouse colony</h3>
+          <h3><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#mouse"/></svg></span> Mouse colony</h3>
           <p>Every mouse in a sheet you edit in place: sex, age, status, transgenes, cage, rack and owner.
             IDs are assigned in order and never reused.</p>
           <ul class="ticks">
@@ -142,28 +197,32 @@
             <li><b>Experiments</b>: record each manipulation — tamoxifen 20 mg/kg on day 1, HDM on days 2–5 — with each mouse's dose from its weight, follow body weight with the manipulation days marked, and compare groups day by day. Fish, flies, worms and your own organisms have them too, with survival and readouts that fit them</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>Mouse colony</span></div>
-          <img src="assets/screenshots/mice.webp" loading="lazy" width="2000" height="1250" alt="The mouse sheet: one row per mouse with sex, age, status, transgenes, cage, rack, position and owner">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>Mouse colony</span></div>
+            <img src="assets/screenshots/mice.webp" loading="lazy" width="2000" height="1250" alt="The mouse sheet: one row per mouse with sex, age, status, transgenes, cage, rack, position and owner">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🗄️</span> Racks, named your way</h3>
+          <h3><span class="ic ic-slate"><svg aria-hidden="true"><use href="assets/icons.svg#grid"/></svg></span> Racks, named your way</h3>
           <p><code>D7</code>, <code>4-7</code>, <code>7D</code>, <code>G12</code> or plain 1 to 80 —
             each rack keeps the labels on its real stickers. See what's where, and drag a cage to move it.</p>
           <p>The same grid holds fly vials, worm plates, plasmid boxes and freezer boxes.</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>Rack grid</span></div>
-          <img src="assets/screenshots/rack-grid.webp" loading="lazy" width="2000" height="1250" alt="A mouse rack as a grid of positions, each filled cage showing its number and genotype">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>Rack grid</span></div>
+            <img src="assets/screenshots/rack-grid.webp" loading="lazy" width="2000" height="1250" alt="A mouse rack as a grid of positions, each filled cage showing its number and genotype">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🪰</span> Drosophila &amp; C. elegans</h3>
+          <h3><span class="ic ic-amber"><svg aria-hidden="true"><use href="assets/icons.svg#fly"/></svg></span> Drosophila &amp; C. elegans</h3>
           <p>Vials and plates in racks inside incubators. Set crosses, collect eggs into new vials,
             and see when the progeny will be adults.</p>
           <ul class="ticks">
@@ -173,57 +232,65 @@
             <li>Frozen-stock records for worms</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>Drosophila</span></div>
-          <img src="assets/screenshots/fly-stocks.webp" loading="lazy" width="2000" height="1250" alt="Fly vials with genotype, purpose, incubator and rack">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>Drosophila</span></div>
+            <img src="assets/screenshots/fly-stocks.webp" loading="lazy" width="2000" height="1250" alt="Fly vials with genotype, purpose, incubator and rack">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🧬</span> Plasmids</h3>
+          <h3><span class="ic ic-orange"><svg aria-hidden="true"><use href="assets/icons.svg#plasmid"/></svg></span> Plasmids</h3>
           <p>Upload a GenBank, FASTA or SnapGene file: the sequence and its features are kept,
             with an interactive map you can edit. Every tube has an address in a plasmid box.</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>pCAG-EGFP</span></div>
-          <img src="assets/screenshots/plasmid-map.webp" loading="lazy" width="2000" height="1250" alt="A circular plasmid map with features and restriction sites beside the sequence">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>pCAG-EGFP</span></div>
+            <img src="assets/screenshots/plasmid-map.webp" loading="lazy" width="2000" height="1250" alt="A circular plasmid map with features and restriction sites beside the sequence">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🧪</span> Samples, orders, reagents, antibodies, primers, cell lines</h3>
+          <h3><span class="ic ic-pink"><svg aria-hidden="true"><use href="assets/icons.svg#flask"/></svg></span> Samples, orders, reagents, antibodies, primers, cell lines</h3>
           <p>One engine, eight starting points. Orders move across a board from <i>requested</i> to
             <i>received</i>; reagents warn before they expire; antibodies keep host, clone, dilution and RRID;
             viruses keep serotype, titer and biosafety level, and link to the plasmid each was made from;
             primers work out their length, GC and Tm from the sequence; cell-line vials keep passage and
             mycoplasma tests. Keep your own stock apart from the lab's common shelf.</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>Orders</span></div>
-          <img src="assets/screenshots/orders.webp" loading="lazy" width="2000" height="1250" alt="The orders board with requested, ordered, received and cancelled columns">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>Orders</span></div>
+            <img src="assets/screenshots/orders.webp" loading="lazy" width="2000" height="1250" alt="The orders board with requested, ordered, received and cancelled columns">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🦎</span> Any other organism</h3>
+          <h3><span class="ic ic-green"><svg aria-hidden="true"><use href="assets/icons.svg#database"/></svg></span> Any other organism</h3>
           <p>Xenopus, axolotls, cell lines, yeast — choose <b>Add database</b>, start from a preset
             or a blank sheet, and describe it: the words it uses, how it's counted, what it needs
             (crosses, genotyping, cryo, census…), its schedules and your own columns. No code.</p>
           <p>Only what your lab keeps appears — the mouse colony, zebrafish and plasmids are added the same
             way, and every database has <b>Configure</b> and <b>All databases</b> beside its name.</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>New database</span></div>
-          <img src="assets/screenshots/new-database.webp" loading="lazy" width="2000" height="1250" alt="The Add database page with presets for flies, worms, inventories and organisms">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>New database</span></div>
+            <img src="assets/screenshots/new-database.webp" loading="lazy" width="2000" height="1250" alt="The Add database page with presets for flies, worms, inventories and organisms">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">📅</span> Calendar &amp; notebook</h3>
+          <h3><span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg#calendar"/></svg></span> Calendar &amp; notebook</h3>
           <p>Experiments and to-dos, with weanings, genotyping, flips and reagent expiry filled in for you,
             alongside your Google Calendar — and on your phone's calendar too.</p>
           <ul class="ticks">
@@ -234,20 +301,22 @@
             <li>Sign a page when it is the record of your work: fingerprinted, locked, witnessed by a lab mate, amended only with a reason</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>Calendar</span></div>
-          <img src="assets/screenshots/calendar.webp" loading="lazy" width="2000" height="1250" alt="A month calendar with experiments, meetings, weaning and genotyping dates">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>Calendar</span></div>
+            <img src="assets/screenshots/calendar.webp" loading="lazy" width="2000" height="1250" alt="A month calendar with experiments, meetings, weaning and genotyping dates">
+          </figure>
+        </div>
       </article>
     </div>
   </section>
 
   <!-- ============================================================ phone -->
   <section class="section band">
-    <div class="wrap phone-row">
+    <div class="wrap phone-row rise">
       <div class="row-text">
         <p class="eyebrow">At the rack</p>
-        <h2>Scan the cage card.<br>The cage opens.</h2>
+        <h2>Scan the cage card. <span class="mute">The cage opens.</span></h2>
         <p>Print correctly sized cards for cages, tanks and vials, and labels for tubes — on any printer, or on a
           Brother or Zebra label printer. Point any phone camera at the QR code and that record opens, ready to
           edit — nobody walks back to a computer to type an ID.</p>
@@ -263,18 +332,20 @@
   <!-- ============================================================ features -->
   <section id="features" class="section">
     <div class="wrap">
-      <p class="eyebrow">Everywhere in the app</p>
-      <h2>The details that save the afternoon.</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">Everywhere in the app</p>
+        <h2>The details that save the afternoon. <span class="mute">In every database, from the first day.</span></h2>
+      </div>
       <div class="grid">
-        <div class="card"><div class="emoji">☀️</div><h3>A home page with today's jobs</h3><p>Weanings, genotyping, old breeders, vials to flip, expiring stock — as cards, on a two-week ruler, or as your racks with a pull list. <b>Customize</b> picks and orders the cards: add your to-dos, bookings, recent pages or calculators.</p></div>
-        <div class="card"><div class="emoji">🧮</div><h3>41 bench calculators</h3><p><b>Utilities</b>: molarity and dilutions, buffer pH, A₂₆₀ and A₂₈₀, ligation and assembly, master mixes, ΔΔCt, cell seeding and MOI, OD₆₀₀, rpm ↔ × g, doses, statistics — answers as you type, with reference tables.</p></div>
-        <div class="card"><div class="emoji">📊</div><h3>Spreadsheet-style editing</h3><p>Click a cell and type; it saves as you go. Sort, filter, export to CSV, print. <b>New</b> at the bottom adds an empty row to type in, and each animal's dot shows its age: blue young, green adult, red old.</p></div>
-        <div class="card"><div class="emoji">📥</div><h3>Bring your spreadsheets</h3><p><b>Import from Excel</b> on every database matches your columns by meaning — <i>Slot</i>, <i>Well</i> or <i>Position</i> — and shows a preview first. Or <b>Add many</b>: “4 females, 2 males”.</p></div>
-        <div class="card"><div class="emoji">↩️</div><h3>Undo for bulk changes</h3><p>Every batch can be undone — unless someone edited those records since.</p></div>
-        <div class="card"><div class="emoji">🕓</div><h3>Full change history</h3><p>Who changed what, and exactly how: <code>genotype: DBH-Cre → ∅</code>. Scripts, R and balances can read and write through the <a href="guide.html#api">API</a>, as you.</p></div>
-        <div class="card"><div class="emoji">🔎</div><h3>Search everything</h3><p><kbd>⌘</kbd> <kbd>K</kbd> from anywhere, and pages open as tabs you keep; <b>+</b> opens your start page.</p></div>
-        <div class="card"><div class="emoji">👥</div><h3>Made for a whole lab</h3><p>Approve members, edit what you own, share breeder cages. <a href="guide.html#groups">Project groups</a> share animals, stock, databases, to-dos and notebook pages among themselves. Roles for animal-care staff. Sign in with Google, Microsoft or your institution.</p></div>
-        <div class="card"><div class="emoji">🌗</div><h3>At home on a Mac</h3><p>A full menu bar with the usual shortcuts, light and dark, and <b>Install and Restart</b> when there's a new version — a copy of your data kept first. Works in any modern browser too.</p></div>
+        <div class="card rise"><span class="ic ic-amber"><svg aria-hidden="true"><use href="assets/icons.svg#home"/></svg></span><h3>A home page with today's jobs</h3><p>Weanings, genotyping, old breeders, vials to flip, expiring stock — as cards, on a two-week ruler, or as your racks with a pull list. <b>Customize</b> picks and orders the cards: add your to-dos, bookings, recent pages or calculators.</p></div>
+        <div class="card rise"><span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg#calculator"/></svg></span><h3>41 bench calculators</h3><p><b>Utilities</b>: molarity and dilutions, buffer pH, A₂₆₀ and A₂₈₀, ligation and assembly, master mixes, ΔΔCt, cell seeding and MOI, OD₆₀₀, rpm ↔ × g, doses, statistics — answers as you type, with reference tables.</p></div>
+        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#table"/></svg></span><h3>Spreadsheet-style editing</h3><p>Click a cell and type; it saves as you go. Sort, filter, export to CSV, print. <b>New</b> at the bottom adds an empty row to type in, and each animal's dot shows its age: blue young, green adult, red old.</p></div>
+        <div class="card rise"><span class="ic ic-green"><svg aria-hidden="true"><use href="assets/icons.svg#import"/></svg></span><h3>Bring your spreadsheets</h3><p><b>Import from Excel</b> on every database matches your columns by meaning — <i>Slot</i>, <i>Well</i> or <i>Position</i> — and shows a preview first. Or <b>Add many</b>: “4 females, 2 males”.</p></div>
+        <div class="card rise"><span class="ic ic-orange"><svg aria-hidden="true"><use href="assets/icons.svg#undo"/></svg></span><h3>Undo for bulk changes</h3><p>Every batch can be undone — unless someone edited those records since.</p></div>
+        <div class="card rise"><span class="ic ic-slate"><svg aria-hidden="true"><use href="assets/icons.svg#history"/></svg></span><h3>Full change history</h3><p>Who changed what, and exactly how: <code>genotype: DBH-Cre → ∅</code>. Scripts, R and balances can read and write through the <a href="guide.html#api">API</a>, as you.</p></div>
+        <div class="card rise"><span class="ic ic-purple"><svg aria-hidden="true"><use href="assets/icons.svg#search"/></svg></span><h3>Search everything</h3><p><kbd>⌘</kbd> <kbd>K</kbd> from anywhere, and pages open as tabs you keep; <b>+</b> opens your start page.</p></div>
+        <div class="card rise"><span class="ic ic-pink"><svg aria-hidden="true"><use href="assets/icons.svg#users"/></svg></span><h3>Made for a whole lab</h3><p>Approve members, edit what you own, share breeder cages. <a href="guide.html#groups">Project groups</a> share animals, stock, databases, to-dos and notebook pages among themselves. Roles for animal-care staff. Sign in with Google, Microsoft or your institution.</p></div>
+        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#sparkle"/></svg></span><h3>At home on a Mac</h3><p>A full menu bar with the usual shortcuts, light and dark, and <b>Install and Restart</b> when there's a new version — a copy of your data kept first. Works in any modern browser too.</p></div>
       </div>
     </div>
   </section>
@@ -282,19 +353,21 @@
   <!-- ============================================================ run -->
   <section id="run" class="section band">
     <div class="wrap">
-      <p class="eyebrow">Ways to run it</p>
-      <h2>Start on your laptop. Grow into a server.</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">Ways to run it</p>
+        <h2>Start on your laptop. <span class="mute">Grow into a server.</span></h2>
+      </div>
       <div class="duo">
-        <div class="card big">
-          <div class="emoji">💻</div>
+        <div class="card big rise">
+          <span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg#laptop"/></svg></span>
           <h3>Desktop app</h3>
           <p>For one person on one computer. Download, open, done. Your data is a file in your user
             folder, private to that computer, and moves to a server later in one step. Or
             <a href="guide.html#devices">share it on the lab's network</a>, or open the lab's server in its window.</p>
           <a class="btn btn-primary" href="#download">Download</a>
         </div>
-        <div class="card big">
-          <div class="emoji">🏫</div>
+        <div class="card big rise">
+          <span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg#server"/></svg></span>
           <h3>Lab server — the web version</h3>
           <p>For the whole lab, from any browser, the Android app, or an iPhone's home screen. HTTPS, PostgreSQL,
             and backups that run nightly and are test-restored every week. Free on a cloud VM with Tailscale;
@@ -308,48 +381,58 @@
   <!-- ============================================================ download -->
   <section id="download" class="section">
     <div class="wrap">
-      <p class="eyebrow">Download</p>
-      <h2>Free, and yours to keep.</h2>
-      <p class="lede narrow">BioManager is released under the MIT licence. No account, no subscription,
-        and your records never leave your computer or server unless you connect a calendar or email. Once a day it sends its makers
-        <a href="guide.html#counts">anonymous counts</a>, never names, which an admin can switch off.</p>
-
-      <div class="downloads">
-        <a class="dl" data-os="mac-arm" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-AppleSilicon.zip">
-          <span class="dl-os">macOS</span><span class="dl-sub">Apple silicon (M1 and later)</span>
-        </a>
-        <a class="dl" data-os="mac-intel" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-Intel.zip">
-          <span class="dl-os">macOS</span><span class="dl-sub">Intel</span>
-        </a>
-        <a class="dl" data-os="win" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Windows.zip">
-          <span class="dl-os">Windows</span><span class="dl-sub">10 and 11, 64-bit</span>
-        </a>
-        <a class="dl" data-os="linux" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.AppImage">
-          <span class="dl-os">Linux</span><span class="dl-sub">AppImage, x86-64 · <span class="dl-alt">or <u data-href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.tar.gz">.tar.gz</u></span></span>
-        </a>
+      <div class="section-head rise">
+        <p class="eyebrow">Download</p>
+        <h2>Free, and yours to keep. <span class="mute">No account, no subscription.</span></h2>
       </div>
-      <p class="fine center"><a href="guide.html">Read the user guide</a> &nbsp;·&nbsp; <a href="https://github.com/gaspolymerase/biomanager/releases">All releases and what changed</a>
-</p>
-
-      <div class="mobile-dl">
-        <div class="card big">
-          <div class="emoji">📱</div>
-          <h3>On your phone</h3>
-          <p>The phone apps open your lab's BioManager server — the same data as everyone in the lab,
-            with a <b>Scan</b> button for cage cards. Ask your lab's admin for the server's address.</p>
-          <div class="cta left">
-            <a class="btn btn-primary" data-os="android" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Android.apk">Android app (.apk)</a>
+      <div class="get">
+        <ul class="promises rise">
+          <li><b>Your data stays yours.</b>Your records never leave your computer or your lab's server unless you
+            connect a calendar or email. Once a day BioManager sends its makers <a href="guide.html#counts">anonymous counts</a>,
+            never names, which an admin can switch off.</li>
+          <li><b>Nothing is locked in.</b><strong>Settings → Export my data</strong> downloads every record you
+            keep, whenever you like.</li>
+          <li><b>Free, for good.</b>Released under the MIT licence: use it, share it, change it.</li>
+        </ul>
+        <div class="rise">
+          <div class="downloads">
+            <a class="dl" data-os="mac-arm" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-AppleSilicon.zip">
+              <span class="dl-os">macOS</span><span class="dl-sub">Apple silicon (M1 and later)</span>
+            </a>
+            <a class="dl" data-os="mac-intel" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-Intel.zip">
+              <span class="dl-os">macOS</span><span class="dl-sub">Intel</span>
+            </a>
+            <a class="dl" data-os="win" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Windows.zip">
+              <span class="dl-os">Windows</span><span class="dl-sub">10 and 11, 64-bit</span>
+            </a>
+            <a class="dl" data-os="linux" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.AppImage">
+              <span class="dl-os">Linux</span><span class="dl-sub">AppImage, x86-64 · <span class="dl-alt">or <u data-href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.tar.gz">.tar.gz</u></span></span>
+            </a>
           </div>
-          <p class="fine">iPhone, or no app: open the server in Safari or Chrome and choose
-            <b>Share → Add to Home Screen</b> (iPhone) or <b>⋮ → Install app</b> (Android).
-            On Android, allow your browser to install the .apk when it asks.</p>
+          <div class="mobile-dl">
+            <div class="card">
+              <span class="ic ic-green"><svg aria-hidden="true"><use href="assets/icons.svg#phone"/></svg></span>
+              <div>
+                <h3>On your phone</h3>
+                <p>The phone apps open your lab's BioManager server — the same data as everyone in the lab,
+                  with a <b>Scan</b> button for cage cards. Ask your lab's admin for the server's address.</p>
+                <div class="cta left">
+                  <a class="btn btn-primary" data-os="android" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Android.apk">Android app (.apk)</a>
+                </div>
+                <p class="fine">iPhone, or no app: open the server in Safari or Chrome and choose
+                  <b>Share → Add to Home Screen</b> (iPhone) or <b>⋮ → Install app</b> (Android).
+                  On Android, allow your browser to install the .apk when it asks.</p>
+              </div>
+            </div>
+          </div>
+          <p class="dl-links"><a href="guide.html">Read the user guide</a> &nbsp;·&nbsp; <a href="https://github.com/gaspolymerase/biomanager/releases">All releases and what changed</a></p>
         </div>
       </div>
 
       <div class="steps">
-        <div class="step"><span>1</span><div><h4>Unzip and move it</h4><p>On a Mac, drag <b>BioManager</b> into Applications. On Windows, extract the folder and open <b>BioManager.exe</b>. On Linux, mark the AppImage executable and open it.</p></div></div>
-        <div class="step"><span>2</span><div><h4>Open it the first time</h4><p>macOS: <b>right-click → Open</b>, then Open. Windows: <b>More info → Run anyway</b>. They ask once, because the app isn't signed by Apple or Microsoft.</p></div></div>
-        <div class="step"><span>3</span><div><h4>Set up your lab</h4><p>Create your account (the first is the admin) and tick what your lab keeps. BioManager makes just those databases, then <b>Getting started</b> walks you through the first steps. The <a href="guide.html">user guide</a> has the rest.</p></div></div>
+        <div class="step rise"><span>1</span><div><h4>Unzip and move it</h4><p>On a Mac, drag <b>BioManager</b> into Applications. On Windows, extract the folder and open <b>BioManager.exe</b>. On Linux, mark the AppImage executable and open it.</p></div></div>
+        <div class="step rise"><span>2</span><div><h4>Open it the first time</h4><p>macOS: <b>right-click → Open</b>, then Open. Windows: <b>More info → Run anyway</b>. They ask once, because the app isn't signed by Apple or Microsoft.</p></div></div>
+        <div class="step rise"><span>3</span><div><h4>Set up your lab</h4><p>Create your account (the first is the admin) and tick what your lab keeps. BioManager makes just those databases, then <b>Getting started</b> walks you through the first steps. The <a href="guide.html">user guide</a> has the rest.</p></div></div>
       </div>
     </div>
   </section>
@@ -411,8 +494,9 @@
     <div class="brand"><img src="assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     <p>Released under the <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a>. Icons from
       <a href="https://fontawesome.com">Font Awesome Free</a> (CC BY 4.0) and
-      <a href="https://game-icons.net">game-icons.net</a> by Delapouite (CC BY 3.0).
-      The people and records in the screenshots are made up.</p>
+      <a href="https://game-icons.net">game-icons.net</a> by Delapouite (CC BY 3.0). Headings in
+      <a href="https://vercel.com/font">Geist</a> (SIL Open Font Licence).
+      The people and records in the screenshots and clips are made up.</p>
   </div>
 </footer>
 

@@ -71,10 +71,15 @@ PEOPLE = [
 ]
 password = secrets.token_urlsafe(12)
 with SessionLocal() as s:
+    from app import whats_new
     for username, name, role in PEOPLE:
-        s.add(UserAccount(username=username, display_name=name, role=role,
-                          password_hash=generate_password_hash(password),
-                          welcomed_at=__import__("datetime").datetime.utcnow()))
+        person = UserAccount(username=username, display_name=name, role=role,
+                             password_hash=generate_password_hash(password),
+                             welcomed_at=__import__("datetime").datetime.utcnow())
+        # Past the welcome tour and this version's What's new, so neither
+        # covers the screenshots and clips.
+        whats_new.stamp(person)
+        s.add(person)
     # A lab that has already answered the setup survey (app/lab.py), so the
     # screenshots show the app in use rather than its first-run pages.
     from app import lab

@@ -1248,6 +1248,34 @@ in the same piece of work; the words come from `docs/i18n-glossary.md`.
 - The Chinese pages carry `Content-Language` and `keywords` for Baidu, which
   still reads them.
 
+**How it looks.** One stylesheet, `site/style.css`, for every page, light and
+dark from the same tokens on `:root` (the app's teal, neutrals with a little
+teal in them).
+
+- **Type**: headings in Geist and small labels (eyebrows, the dock's names) in
+  Geist Mono, self-hosted as Latin subsets in `site/assets/fonts/` (SIL OFL,
+  `OFL.txt` beside them; about 25 KB and 20 KB), because mainland China can't
+  reach a font CDN. Running text is the system font with each system's
+  Chinese face; no Chinese webfont is sent. Big Chinese headings keep normal
+  letter spacing (`:lang(zh)`).
+- **The header** floats above the page and turns to glass once the page
+  scrolls (`site.js` adds `.scrolled`); on the front page it highlights the
+  section in view.
+- **The feature stage** (`#see`, the one dark band) plays a short clip per tab
+  of its dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
+  poster. `scripts/site-clips.py` makes them from a fresh demo lab (through
+  `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
+  one another until someone picks a tab, and pause off screen. A tab's caption
+  is in its `data-claim` and `data-more`.
+- **Motion** is the hero's entrance and, where the browser can drive
+  animation from scrolling (`animation-timeline`), the product shot
+  flattening and sections (`.rise`) rising in. Without that support, or with
+  reduced motion, everything simply shows; reduced motion also stops the
+  clips playing by themselves.
+- **Icons** are `site/assets/icons.svg`, symbols copied from the app's
+  `app/static/icons.svg` (plus phone, laptop, server and play), coloured by
+  `.ic-<colour>`.
+
 ## Desktop App
 
 **Releasing.** Push a tag: `v1.0.0` builds every app, the server image and

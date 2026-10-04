@@ -10,8 +10,8 @@
   <meta name="color-scheme" content="light dark">
   <!-- Baidu search (ziyuan.baidu.com) checks this to know the site is ours: keep it. -->
   <meta name="baidu-site-verification" content="codeva-MlA4qivzSZ" />
-  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161618" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://biomanager.org/zh/">
   <link rel="alternate" hreflang="en" href="https://biomanager.org/">
   <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/">
@@ -30,6 +30,7 @@
   <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../style.css">
   <script type="application/ld+json">
   {
@@ -57,13 +58,13 @@
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="#top"><img src="../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <a class="brand" href="#top"><img src="../assets/icon.svg" alt="" width="26" height="26">BioManager</a>
     <nav class="nav-links" aria-label="页面导航">
+      <a href="#see">看它怎么用</a>
       <a href="#tour">功能导览</a>
       <a href="#features">功能</a>
       <a href="server.html">为实验室部署</a>
       <a href="guide.html">用户指南</a>
-      <a href="#faq">常见问题</a>
     </nav>
     <a class="lang-link" href="../" hreflang="en" lang="en" data-lang="en">English</a>
     <a class="btn btn-small btn-primary" href="#download">下载</a>
@@ -75,65 +76,119 @@
   <!-- ============================================================ hero -->
   <section class="hero">
     <div class="wrap">
-      <div class="hero-icon"><img src="../assets/icon.svg" alt="" width="96" height="96"></div>
-      <h1>实验室的动物、品系和物资，<br><span class="grad">集中一处管理。</span></h1>
+      <p class="eyebrow">免费的实验室管理软件 · 开源</p>
+      <h1>实验室的动物、品系和物资，<span class="grad">集中一处管理。</span></h1>
       <p class="lede">BioManager 取代大多数实验室还在用的电子表格、白板和纸质笼卡。
         像编辑电子表格一样编辑记录——背后是一个数据库，它知道哪只小鼠在哪个笼里、
         哪一窝该断奶了、哪种抗体快要过期。</p>
       <div class="cta">
         <a class="btn btn-primary btn-large" href="#download" id="hero-download">免费下载</a>
-        <a class="btn btn-large" href="#tour">看看功能导览</a>
+        <a class="btn btn-large" href="#see">看它怎么用</a>
       </div>
       <p class="fine" id="hero-platform">macOS · Windows · Linux · Android · 任意浏览器 &nbsp;·&nbsp; MIT 许可证 &nbsp;·&nbsp; 数据保存在你自己的电脑或实验室自己的服务器上</p>
+      <ul class="chips" aria-label="可以管理的内容">
+        <li>小鼠</li><li>斑马鱼</li><li>果蝇</li><li>线虫</li><li>质粒</li><li>样本</li><li>订购</li>
+        <li>试剂</li><li>抗体</li><li>病毒</li><li>引物</li><li>细胞系</li><li>日历</li><li>实验记录本</li>
+      </ul>
 
-      <div class="chips" aria-label="可以管理的内容">
-        <span>🐭 小鼠</span><span>🐟 斑马鱼</span><span>🪰 果蝇</span><span>🪱 线虫</span>
-        <span>🧬 质粒</span><span>🧫 样本</span><span>🛒 订购</span><span>⚗️ 试剂</span>
-        <span>🔬 抗体</span><span>🦠 病毒</span><span>🧬 引物</span><span>🧫 细胞系</span><span>📅 日历</span><span>📓 实验记录本</span>
+      <div class="hero-stage">
+        <figure class="window hero-shot">
+          <div class="window-bar"><i></i><i></i><i></i><span>BioManager — 首页</span></div>
+          <picture>
+            <source srcset="../assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
+            <img src="../assets/screenshots/home.webp" width="2000" height="1250" fetchpriority="high"
+                 alt="BioManager 首页：超过 30 周龄的小鼠、即将断奶的窝、待做的基因型鉴定、该转管的果蝇管、快过期的试剂，以及未来 14 天的安排">
+          </picture>
+        </figure>
       </div>
-
-      <figure class="window hero-shot">
-        <div class="window-bar"><i></i><i></i><i></i><span>BioManager — 首页</span></div>
-        <picture>
-          <source srcset="../assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
-          <img src="../assets/screenshots/home.webp" width="2000" height="1250"
-               alt="BioManager 首页：超过 30 周龄的小鼠、即将断奶的窝、待做的基因型鉴定、该转管的果蝇管、快过期的试剂，以及未来 14 天的安排">
-        </picture>
-      </figure>
       <p class="caption">首页（Home）：每天早上，今天要做的事一目了然。</p>
     </div>
   </section>
 
   <!-- ============================================================ audience -->
-  <section class="band">
+  <section class="band" style="margin-top: clamp(56px, 8vw, 96px)">
     <div class="wrap trio">
-      <div>
-        <div class="emoji">🧑‍🔬</div>
+      <div class="rise">
+        <span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#user"/></svg></span>
         <h3>给实验室成员</h3>
         <p>管理自己的品系、鱼、保种和样本，不用再去翻别人的表格。</p>
       </div>
-      <div>
-        <div class="emoji">📋</div>
+      <div class="rise">
+        <span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#list-check"/></svg></span>
         <h3>给实验室主管和 PI</h3>
         <p>一份真正完整的清点：谁负责什么，哪些笼闲着，哪些事已经逾期。</p>
       </div>
-      <div>
-        <div class="emoji">🧬</div>
+      <div class="rise">
+        <span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#dna"/></svg></span>
         <h3>给养多种模式生物的实验室</h3>
         <p>小鼠、斑马鱼、果蝇和线虫并排管理——其他任何生物也能在几分钟内建好自己的数据库。</p>
       </div>
     </div>
   </section>
 
+  <!-- ============================================================ the feature stage -->
+  <section id="see" class="stage" aria-labelledby="see-title">
+    <div class="wrap">
+      <p class="eyebrow center">看它怎么用</p>
+      <h2 id="see-title">实验室每周都要做的七件事。<span class="mute">看 BioManager 一件件做给你看。</span></h2>
+
+      <div class="window stage-window">
+        <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — 首页</span></div>
+        <div class="stage-screen" id="stage-panel" role="tabpanel" aria-labelledby="tab-home">
+          <video id="stage-video" muted playsinline preload="none" width="1280" height="786"
+                 poster="../assets/clips/home.webp" aria-describedby="stage-caption"></video>
+          <button class="stage-play" type="button" id="stage-play" hidden aria-label="播放视频">
+            <svg aria-hidden="true"><use href="../assets/icons.svg#play"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="dock" role="tablist" aria-label="功能">
+        <button type="button" role="tab" id="tab-home" aria-selected="true" aria-controls="stage-panel" data-clip="home"
+                data-claim="每天早上，今天该做什么一目了然。"
+                data-more="断奶、基因型鉴定、该转管的果蝇管、快过期的试剂和未来两周，都替你算好了。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#home"/></svg><span class="dock-tip">首页</span></button>
+        <button type="button" role="tab" id="tab-cards" aria-selected="false" aria-controls="stage-panel" data-clip="cards" tabindex="-1"
+                data-claim="打印笼卡，手机一扫，笼的信息直接打开。"
+                data-more="任何手机相机都能扫，不用装应用；也支持 Brother 和 Zebra 标签打印机。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#qrcode"/></svg><span class="dock-tip">笼卡</span></button>
+        <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
+                data-claim="粘贴数据，直接出图出统计。"
+                data-more="实验记录本里的柱状图、点图、箱线图或散点图，自带 SEM 误差棒和显著性星号。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#table"/></svg><span class="dock-tip">数据表</span></button>
+        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
+                data-claim="质粒图谱，还知道每管放在哪个盒里。"
+                data-more="上传 GenBank、FASTA 或 SnapGene 文件，直接编辑图谱。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#plasmid"/></svg><span class="dock-tip">质粒</span></button>
+        <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
+                data-claim="会自己填日程的实验室日历。"
+                data-more="断奶、基因型鉴定、转管和过期日期，与你的 Google 日历并排显示。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#calendar"/></svg><span class="dock-tip">日历</span></button>
+        <button type="button" role="tab" id="tab-sign" aria-selected="false" aria-controls="stage-panel" data-clip="sign" tabindex="-1"
+                data-claim="实验记录可以签名：锁定、生成指纹、请人见证。"
+                data-more="修改要写明理由，每个版本都会保留。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#notebook"/></svg><span class="dock-tip">实验记录本</span></button>
+        <button type="button" role="tab" id="tab-phone" aria-selected="false" aria-controls="stage-panel" data-clip="phone" tabindex="-1"
+                data-claim="全实验室用一台服务器，手机上也能用。"
+                data-more="每个人都用浏览器登录，在电脑前或笼架旁都行。">
+          <svg aria-hidden="true"><use href="../assets/icons.svg#phone"/></svg><span class="dock-tip">手机</span></button>
+      </div>
+      <p class="stage-caption" id="stage-caption" aria-live="polite"><b>每天早上，今天该做什么一目了然。</b>
+        断奶、基因型鉴定、该转管的果蝇管、快过期的试剂和未来两周，都替你算好了。</p>
+    </div>
+  </section>
+
   <!-- ============================================================ tour -->
   <section id="tour" class="section">
     <div class="wrap">
-      <p class="eyebrow">功能导览</p>
-      <h2>按实验室真正的工作方式来设计。</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">功能导览</p>
+        <h2>按实验室真正的工作方式来设计。<span class="mute">你管理的每样东西，都有自己的数据库。</span></h2>
+      </div>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🐭</span> 鼠群</h3>
+          <h3><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#mouse"/></svg></span> 鼠群</h3>
           <p>每只小鼠都在一张可直接编辑的表格里：性别、年龄、状态、转基因、笼、笼架和负责人。
             编号按顺序分配，永不重复使用。</p>
           <ul class="ticks">
@@ -143,28 +198,32 @@
             <li><b>实验</b>：记录每一次处理——第 1 天按 20 mg/kg 给他莫昔芬、第 2–5 天给 HDM——每只小鼠的剂量按体重算出；跟踪体重并标出处理日，逐日比较各组。斑马鱼、果蝇、线虫和你自己添加的生物也有实验功能，配有适合它们的存活率和读数指标</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>鼠群</span></div>
-          <img src="../assets/screenshots/mice.webp" loading="lazy" width="2000" height="1250" alt="小鼠表格：每行一只小鼠，包含性别、年龄、状态、转基因、笼、笼架、位置和负责人">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>鼠群</span></div>
+            <img src="../assets/screenshots/mice.webp" loading="lazy" width="2000" height="1250" alt="小鼠表格：每行一只小鼠，包含性别、年龄、状态、转基因、笼、笼架、位置和负责人">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🗄️</span> 笼架，按你的方式命名</h3>
+          <h3><span class="ic ic-slate"><svg aria-hidden="true"><use href="../assets/icons.svg#grid"/></svg></span> 笼架，按你的方式命名</h3>
           <p><code>D7</code>、<code>4-7</code>、<code>7D</code>、<code>G12</code>，或者简单的 1 到 80——
             每个笼架沿用实物贴纸上的标签。什么放在哪里一目了然，拖动一个笼就能给它换位置。</p>
           <p>同样的网格也用来管理果蝇管、线虫平板、质粒盒和冻存盒。</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>笼架网格</span></div>
-          <img src="../assets/screenshots/rack-grid.webp" loading="lazy" width="2000" height="1250" alt="以位置网格显示的小鼠笼架，每个有笼的位置显示笼号和基因型">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>笼架网格</span></div>
+            <img src="../assets/screenshots/rack-grid.webp" loading="lazy" width="2000" height="1250" alt="以位置网格显示的小鼠笼架，每个有笼的位置显示笼号和基因型">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🪰</span> 果蝇和线虫</h3>
+          <h3><span class="ic ic-amber"><svg aria-hidden="true"><use href="../assets/icons.svg#fly"/></svg></span> 果蝇和线虫</h3>
           <p>果蝇管和线虫平板放在培养箱内的架子上。设置杂交、把卵收到新管里，
             还能看到子代什么时候成虫。</p>
           <ul class="ticks">
@@ -174,57 +233,65 @@
             <li>线虫的冻存记录</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>果蝇</span></div>
-          <img src="../assets/screenshots/fly-stocks.webp" loading="lazy" width="2000" height="1250" alt="果蝇管列表，包含基因型、用途、培养箱和架子">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>果蝇</span></div>
+            <img src="../assets/screenshots/fly-stocks.webp" loading="lazy" width="2000" height="1250" alt="果蝇管列表，包含基因型、用途、培养箱和架子">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🧬</span> 质粒</h3>
+          <h3><span class="ic ic-orange"><svg aria-hidden="true"><use href="../assets/icons.svg#plasmid"/></svg></span> 质粒</h3>
           <p>上传 GenBank、FASTA 或 SnapGene 文件：序列和其中的元件都会保留，
             并附带可以编辑的交互式图谱。每一管质粒在质粒盒里都有自己的位置。</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>pCAG-EGFP</span></div>
-          <img src="../assets/screenshots/plasmid-map.webp" loading="lazy" width="2000" height="1250" alt="环形质粒图谱，标有元件和酶切位点，旁边是序列">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>pCAG-EGFP</span></div>
+            <img src="../assets/screenshots/plasmid-map.webp" loading="lazy" width="2000" height="1250" alt="环形质粒图谱，标有元件和酶切位点，旁边是序列">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">🧪</span> 样本、订购、试剂、抗体、引物、细胞系</h3>
+          <h3><span class="ic ic-pink"><svg aria-hidden="true"><use href="../assets/icons.svg#flask"/></svg></span> 样本、订购、试剂、抗体、引物、细胞系</h3>
           <p>一套引擎，八种起点。订购单在看板上从<i>已申请</i>移到
             <i>已到货</i>；试剂在过期前提醒；抗体记录宿主、克隆号、稀释比例和 RRID；
             病毒记录血清型、滴度和生物安全等级，并关联到构建它的质粒；
             引物根据序列自动算出长度、GC 含量和 Tm；细胞系冻存管记录代次和
             支原体检测。个人库存与实验室的公用库存分开管理。</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>订购</span></div>
-          <img src="../assets/screenshots/orders.webp" loading="lazy" width="2000" height="1250" alt="订购看板，分为已申请、已订购、已到货和已取消四列">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>订购</span></div>
+            <img src="../assets/screenshots/orders.webp" loading="lazy" width="2000" height="1250" alt="订购看板，分为已申请、已订购、已到货和已取消四列">
+          </figure>
+        </div>
       </article>
 
-      <article class="row flip">
+      <article class="row flip rise">
         <div class="row-text">
-          <h3><span class="tag">🦎</span> 任何其他生物</h3>
+          <h3><span class="ic ic-green"><svg aria-hidden="true"><use href="../assets/icons.svg#database"/></svg></span> 任何其他生物</h3>
           <p>非洲爪蟾、美西螈、细胞系、酵母——选择 <b>添加数据库</b>（Add database），从预设
             或空白表格开始，再描述它：它用的叫法、怎么计数、需要哪些功能
             （杂交、基因型鉴定、冻存、清点……）、它的时间安排以及你自己的列。无需写代码。</p>
           <p>只显示你实验室实际在管的内容——鼠群、斑马鱼和质粒也是这样添加的，
             每个数据库名称旁边都有 <b>配置</b>（Configure）和 <b>所有数据库</b>（All databases）。</p>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>新建数据库</span></div>
-          <img src="../assets/screenshots/new-database.webp" loading="lazy" width="2000" height="1250" alt="添加数据库（Add database）页面，提供果蝇、线虫、库存和各种生物的预设">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>新建数据库</span></div>
+            <img src="../assets/screenshots/new-database.webp" loading="lazy" width="2000" height="1250" alt="添加数据库（Add database）页面，提供果蝇、线虫、库存和各种生物的预设">
+          </figure>
+        </div>
       </article>
 
-      <article class="row">
+      <article class="row rise">
         <div class="row-text">
-          <h3><span class="tag">📅</span> 日历和实验记录本</h3>
+          <h3><span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#calendar"/></svg></span> 日历和实验记录本</h3>
           <p>实验和待办，断奶、基因型鉴定、转管和试剂过期的日期都会自动填好，
             与你的 Google 日历并排显示——手机日历上也能看到。</p>
           <ul class="ticks">
@@ -235,20 +302,22 @@
             <li>页面作为你工作的正式记录时可以签名：生成指纹、锁定、由实验室同事见证，之后只能注明理由再修改</li>
           </ul>
         </div>
-        <figure class="window row-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>日历</span></div>
-          <img src="../assets/screenshots/calendar.webp" loading="lazy" width="2000" height="1250" alt="月历，上面有实验、组会、断奶和基因型鉴定的日期">
-        </figure>
+        <div class="frame">
+          <figure class="window">
+            <div class="window-bar"><i></i><i></i><i></i><span>日历</span></div>
+            <img src="../assets/screenshots/calendar.webp" loading="lazy" width="2000" height="1250" alt="月历，上面有实验、组会、断奶和基因型鉴定的日期">
+          </figure>
+        </div>
       </article>
     </div>
   </section>
 
   <!-- ============================================================ phone -->
   <section class="section band">
-    <div class="wrap phone-row">
+    <div class="wrap phone-row rise">
       <div class="row-text">
         <p class="eyebrow">在笼架旁</p>
-        <h2>扫一下笼卡，<br>笼就打开了。</h2>
+        <h2>扫一下笼卡，<span class="mute">笼就打开了。</span></h2>
         <p>为笼、鱼缸和果蝇管打印尺寸合适的卡片，也能给管子打印标签——用任何打印机都行，也支持
           Brother 或 Zebra 标签打印机。用任何手机摄像头对准二维码，对应的记录就会打开，可以直接
           编辑——不用再走回电脑前输入编号。</p>
@@ -264,18 +333,20 @@
   <!-- ============================================================ features -->
   <section id="features" class="section">
     <div class="wrap">
-      <p class="eyebrow">应用中处处可见</p>
-      <h2>帮你省下一下午的细节。</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">应用中处处可见</p>
+        <h2>帮你省下一下午的细节。<span class="mute">每个数据库都有，从第一天起。</span></h2>
+      </div>
       <div class="grid">
-        <div class="card"><div class="emoji">☀️</div><h3>首页列出今天要做的事</h3><p>断奶、基因型鉴定、老龄繁殖鼠、该转管的果蝇管、快过期的库存——可以显示为卡片、两周时间轴，或者显示为你的笼架并附取出清单。<b>自定义</b>（Customize）可以挑选卡片并调整顺序：加入你的待办、预约、最近的页面或计算器。</p></div>
-        <div class="card"><div class="emoji">🧮</div><h3>41 个实验台计算器</h3><p><b>工具</b>（Utilities）：摩尔浓度和稀释、缓冲液 pH、A₂₆₀ 和 A₂₈₀、连接和组装、预混液、ΔΔCt、细胞铺板和 MOI、OD₆₀₀、rpm ↔ × g、给药剂量、统计——边输入边出结果，并附参考表。</p></div>
-        <div class="card"><div class="emoji">📊</div><h3>像电子表格一样编辑</h3><p>点一下单元格直接输入，边改边自动保存。可以排序、筛选、导出 CSV、打印。底部的 <b>新建</b>（New）会添加一个空行供你输入；每只动物前的圆点表示年龄：蓝色是幼年，绿色是成年，红色是老龄。</p></div>
-        <div class="card"><div class="emoji">📥</div><h3>原有表格直接导入</h3><p>每个数据库都有 <b>从 Excel 导入</b>（Import from Excel），按含义匹配你的列——<i>Slot</i>、<i>Well</i> 还是 <i>Position</i> 都能认出——并且先给你预览。也可以用 <b>批量添加</b>（Add many）：“4 females, 2 males”（4 雌 2 雄）。</p></div>
-        <div class="card"><div class="emoji">↩️</div><h3>批量修改可以撤销</h3><p>每一批修改都能撤销——除非之后有人又改过这些记录。</p></div>
-        <div class="card"><div class="emoji">🕓</div><h3>完整的修改历史</h3><p>谁改了什么、具体怎么改的：<code>genotype: DBH-Cre → ∅</code>。脚本、R 和天平都可以通过 <a href="guide.html#api">API</a> 以你的身份读写数据。</p></div>
-        <div class="card"><div class="emoji">🔎</div><h3>什么都能搜</h3><p>在任何地方按 <kbd>⌘</kbd> <kbd>K</kbd>；页面以标签页打开并一直保留；<b>+</b> 打开你的起始页。</p></div>
-        <div class="card"><div class="emoji">👥</div><h3>为整个实验室设计</h3><p>审批成员加入，编辑自己负责的记录，共享繁殖笼。<a href="guide.html#groups">项目组</a>可以在组内共享动物、库存、数据库、待办和实验记录本页面。为动物饲养人员设有专门的角色。可用 Google、Microsoft 或所在机构的账号登录。</p></div>
-        <div class="card"><div class="emoji">🌗</div><h3>在 Mac 上用着顺手</h3><p>完整的菜单栏和常用快捷键，支持浅色和深色模式；有新版本时点 <b>安装并重启</b>（Install and Restart）即可——会先备份一份你的数据。在任何现代浏览器中也能使用。</p></div>
+        <div class="card rise"><span class="ic ic-amber"><svg aria-hidden="true"><use href="../assets/icons.svg#home"/></svg></span><h3>首页列出今天要做的事</h3><p>断奶、基因型鉴定、老龄繁殖鼠、该转管的果蝇管、快过期的库存——可以显示为卡片、两周时间轴，或者显示为你的笼架并附取出清单。<b>自定义</b>（Customize）可以挑选卡片并调整顺序：加入你的待办、预约、最近的页面或计算器。</p></div>
+        <div class="card rise"><span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#calculator"/></svg></span><h3>41 个实验台计算器</h3><p><b>工具</b>（Utilities）：摩尔浓度和稀释、缓冲液 pH、A₂₆₀ 和 A₂₈₀、连接和组装、预混液、ΔΔCt、细胞铺板和 MOI、OD₆₀₀、rpm ↔ × g、给药剂量、统计——边输入边出结果，并附参考表。</p></div>
+        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#table"/></svg></span><h3>像电子表格一样编辑</h3><p>点一下单元格直接输入，边改边自动保存。可以排序、筛选、导出 CSV、打印。底部的 <b>新建</b>（New）会添加一个空行供你输入；每只动物前的圆点表示年龄：蓝色是幼年，绿色是成年，红色是老龄。</p></div>
+        <div class="card rise"><span class="ic ic-green"><svg aria-hidden="true"><use href="../assets/icons.svg#import"/></svg></span><h3>原有表格直接导入</h3><p>每个数据库都有 <b>从 Excel 导入</b>（Import from Excel），按含义匹配你的列——<i>Slot</i>、<i>Well</i> 还是 <i>Position</i> 都能认出——并且先给你预览。也可以用 <b>批量添加</b>（Add many）：“4 females, 2 males”（4 雌 2 雄）。</p></div>
+        <div class="card rise"><span class="ic ic-orange"><svg aria-hidden="true"><use href="../assets/icons.svg#undo"/></svg></span><h3>批量修改可以撤销</h3><p>每一批修改都能撤销——除非之后有人又改过这些记录。</p></div>
+        <div class="card rise"><span class="ic ic-slate"><svg aria-hidden="true"><use href="../assets/icons.svg#history"/></svg></span><h3>完整的修改历史</h3><p>谁改了什么、具体怎么改的：<code>genotype: DBH-Cre → ∅</code>。脚本、R 和天平都可以通过 <a href="guide.html#api">API</a> 以你的身份读写数据。</p></div>
+        <div class="card rise"><span class="ic ic-purple"><svg aria-hidden="true"><use href="../assets/icons.svg#search"/></svg></span><h3>什么都能搜</h3><p>在任何地方按 <kbd>⌘</kbd> <kbd>K</kbd>；页面以标签页打开并一直保留；<b>+</b> 打开你的起始页。</p></div>
+        <div class="card rise"><span class="ic ic-pink"><svg aria-hidden="true"><use href="../assets/icons.svg#users"/></svg></span><h3>为整个实验室设计</h3><p>审批成员加入，编辑自己负责的记录，共享繁殖笼。<a href="guide.html#groups">项目组</a>可以在组内共享动物、库存、数据库、待办和实验记录本页面。为动物饲养人员设有专门的角色。可用 Google、Microsoft 或所在机构的账号登录。</p></div>
+        <div class="card rise"><span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#sparkle"/></svg></span><h3>在 Mac 上用着顺手</h3><p>完整的菜单栏和常用快捷键，支持浅色和深色模式；有新版本时点 <b>安装并重启</b>（Install and Restart）即可——会先备份一份你的数据。在任何现代浏览器中也能使用。</p></div>
       </div>
     </div>
   </section>
@@ -283,19 +354,21 @@
   <!-- ============================================================ run -->
   <section id="run" class="section band">
     <div class="wrap">
-      <p class="eyebrow">运行方式</p>
-      <h2>先在笔记本电脑上用，以后再换到服务器。</h2>
+      <div class="section-head rise">
+        <p class="eyebrow">运行方式</p>
+        <h2>先在笔记本电脑上用，<span class="mute">以后再换到服务器。</span></h2>
+      </div>
       <div class="duo">
-        <div class="card big">
-          <div class="emoji">💻</div>
+        <div class="card big rise">
+          <span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg#laptop"/></svg></span>
           <h3>桌面版</h3>
           <p>适合一个人在一台电脑上使用。下载、打开，就能用。数据是你用户文件夹里的一个文件，
             只保存在这台电脑上，以后一步就能迁移到服务器。也可以
             <a href="guide.html#devices">在实验室网络上共享</a>，或者在它的窗口里打开实验室服务器。</p>
           <a class="btn btn-primary" href="#download">下载</a>
         </div>
-        <div class="card big">
-          <div class="emoji">🏫</div>
+        <div class="card big rise">
+          <span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg#server"/></svg></span>
           <h3>实验室服务器——网页版</h3>
           <p>供全实验室使用，可以从任何浏览器、Android 应用或 iPhone 主屏幕打开。HTTPS、PostgreSQL，
             每晚自动备份，每周做一次恢复测试。用云虚拟机加 Tailscale 可以免费运行；
@@ -309,48 +382,56 @@
   <!-- ============================================================ download -->
   <section id="download" class="section">
     <div class="wrap">
-      <p class="eyebrow">下载</p>
-      <h2>免费，而且永远归你。</h2>
-      <p class="lede narrow">BioManager 以 MIT 许可证发布。无需注册账号，无需订阅；
-        除非你连接日历或邮箱，你的记录绝不会离开你的电脑或服务器。它每天向开发者发送一次
-        <a href="guide.html#counts">匿名统计数字</a>，从不包含姓名，管理员可以关闭。</p>
-
-      <div class="downloads">
-        <a class="dl" data-os="mac-arm" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-AppleSilicon.zip">
-          <span class="dl-os">macOS</span><span class="dl-sub">Apple 芯片（M1 及更新）</span>
-        </a>
-        <a class="dl" data-os="mac-intel" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-Intel.zip">
-          <span class="dl-os">macOS</span><span class="dl-sub">Intel</span>
-        </a>
-        <a class="dl" data-os="win" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Windows.zip">
-          <span class="dl-os">Windows</span><span class="dl-sub">10 和 11，64 位</span>
-        </a>
-        <a class="dl" data-os="linux" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.AppImage">
-          <span class="dl-os">Linux</span><span class="dl-sub">AppImage，x86-64 · <span class="dl-alt">或 <u data-href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.tar.gz">.tar.gz</u></span></span>
-        </a>
+      <div class="section-head rise">
+        <p class="eyebrow">下载</p>
+        <h2>免费，而且永远归你。<span class="mute">无需注册账号，无需订阅。</span></h2>
       </div>
-      <p class="fine center"><a href="guide.html">阅读用户指南</a> &nbsp;·&nbsp; <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本及更新内容</a>
-</p>
-
-      <div class="mobile-dl">
-        <div class="card big">
-          <div class="emoji">📱</div>
-          <h3>在手机上</h3>
-          <p>手机应用打开的是你实验室的 BioManager 服务器——和实验室其他人用的是同一份数据，
-            并带有用来扫描笼卡的 <b>扫描</b>（Scan）按钮。服务器地址请向实验室的管理员索取。</p>
-          <div class="cta left">
-            <a class="btn btn-primary" data-os="android" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Android.apk">Android 应用（.apk）</a>
+      <div class="get">
+        <ul class="promises rise">
+          <li><b>数据永远是你的。</b>除非你连接日历或邮箱，你的记录绝不会离开你的电脑或实验室的服务器。它每天向开发者发送一次
+            <a href="guide.html#counts">匿名统计数字</a>，从不包含姓名，管理员可以关闭。</li>
+          <li><b>不会被锁住。</b><strong>设置 → 导出我的数据</strong>（Settings → Export my data）随时可以下载你保存的全部记录。</li>
+          <li><b>永久免费。</b>以 MIT 许可证发布：可以自由使用、分享和修改。</li>
+        </ul>
+        <div class="rise">
+          <div class="downloads">
+            <a class="dl" data-os="mac-arm" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-AppleSilicon.zip">
+              <span class="dl-os">macOS</span><span class="dl-sub">Apple 芯片（M1 及更新）</span>
+            </a>
+            <a class="dl" data-os="mac-intel" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-macOS-Intel.zip">
+              <span class="dl-os">macOS</span><span class="dl-sub">Intel</span>
+            </a>
+            <a class="dl" data-os="win" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Windows.zip">
+              <span class="dl-os">Windows</span><span class="dl-sub">10 和 11，64 位</span>
+            </a>
+            <a class="dl" data-os="linux" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.AppImage">
+              <span class="dl-os">Linux</span><span class="dl-sub">AppImage，x86-64 · <span class="dl-alt">或 <u data-href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Linux.tar.gz">.tar.gz</u></span></span>
+            </a>
           </div>
-          <p class="fine">iPhone，或者不想装应用：在 Safari 或 Chrome 中打开服务器，选择
-            <b>共享 → 添加到主屏幕</b>（iPhone）或 <b>⋮ → 安装应用</b>（Android）。
-            在 Android 上，浏览器询问时请允许它安装 .apk。</p>
+          <div class="mobile-dl">
+            <div class="card">
+              <span class="ic ic-green"><svg aria-hidden="true"><use href="../assets/icons.svg#phone"/></svg></span>
+              <div>
+                <h3>在手机上</h3>
+                <p>手机应用打开的是你实验室的 BioManager 服务器——和实验室其他人用的是同一份数据，
+                  并带有用来扫描笼卡的 <b>扫描</b>（Scan）按钮。服务器地址请向实验室的管理员索取。</p>
+                <div class="cta left">
+                  <a class="btn btn-primary" data-os="android" href="https://github.com/gaspolymerase/biomanager/releases/latest/download/BioManager-Android.apk">Android 应用（.apk）</a>
+                </div>
+                <p class="fine">iPhone，或者不想装应用：在 Safari 或 Chrome 中打开服务器，选择
+                  <b>共享 → 添加到主屏幕</b>（iPhone）或 <b>⋮ → 安装应用</b>（Android）。
+                  在 Android 上，浏览器询问时请允许它安装 .apk。</p>
+              </div>
+            </div>
+          </div>
+          <p class="dl-links"><a href="guide.html">阅读用户指南</a> &nbsp;·&nbsp; <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本及更新内容</a></p>
         </div>
       </div>
 
       <div class="steps">
-        <div class="step"><span>1</span><div><h4>解压并放好</h4><p>在 Mac 上，把 <b>BioManager</b> 拖进“应用程序”文件夹。在 Windows 上，解压出文件夹后打开 <b>BioManager.exe</b>。在 Linux 上，给 AppImage 加上可执行权限后打开。</p></div></div>
-        <div class="step"><span>2</span><div><h4>第一次打开</h4><p>macOS：<b>右键 → 打开</b>，再点“打开”。Windows：<b>更多信息 → 仍要运行</b>。系统只会问这一次，因为本应用没有经过 Apple 或 Microsoft 签名。</p></div></div>
-        <div class="step"><span>3</span><div><h4>设置你的实验室</h4><p>创建你的账号（第一个账号就是管理员），勾选实验室要管理的内容。BioManager 只创建这些数据库，然后由 <b>入门</b>（Getting started）带你完成最初几步。其余内容见<a href="guide.html">用户指南</a>。</p></div></div>
+        <div class="step rise"><span>1</span><div><h4>解压并放好</h4><p>在 Mac 上，把 <b>BioManager</b> 拖进“应用程序”文件夹。在 Windows 上，解压出文件夹后打开 <b>BioManager.exe</b>。在 Linux 上，给 AppImage 加上可执行权限后打开。</p></div></div>
+        <div class="step rise"><span>2</span><div><h4>第一次打开</h4><p>macOS：<b>右键 → 打开</b>，再点“打开”。Windows：<b>更多信息 → 仍要运行</b>。系统只会问这一次，因为本应用没有经过 Apple 或 Microsoft 签名。</p></div></div>
+        <div class="step rise"><span>3</span><div><h4>设置你的实验室</h4><p>创建你的账号（第一个账号就是管理员），勾选实验室要管理的内容。BioManager 只创建这些数据库，然后由 <b>入门</b>（Getting started）带你完成最初几步。其余内容见<a href="guide.html">用户指南</a>。</p></div></div>
       </div>
     </div>
   </section>
@@ -412,8 +493,9 @@
     <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     <p>以 <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT 许可证</a>发布。图标来自
       <a href="https://fontawesome.com">Font Awesome Free</a>（CC BY 4.0）和
-      Delapouite 的 <a href="https://game-icons.net">game-icons.net</a>（CC BY 3.0）。
-      截图中的人员和记录均为虚构。</p>
+      Delapouite 的 <a href="https://game-icons.net">game-icons.net</a>（CC BY 3.0）。标题字体为
+      <a href="https://vercel.com/font">Geist</a>（SIL 开源字体许可证）。
+      截图和视频中的人员和记录均为虚构。</p>
   </div>
 </footer>
 
