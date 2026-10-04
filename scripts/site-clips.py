@@ -25,7 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/assets/clips"
-CLIPS = ["home", "cards", "datasheet", "plasmid", "calendar", "sign", "phone"]
+CLIPS = ["home", "import", "cards", "experiment", "plasmid", "orders", "datasheet"]
 # Where the app sits in feature-clips.py's 1920×1080 plain frame: inside the
 # window, below its title bar and above its rounded bottom corners. A phone-only
 # clip keeps the whole phone.
