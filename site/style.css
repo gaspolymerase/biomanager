@@ -155,6 +155,8 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   font: 600 16px/1 var(--font-display); letter-spacing: -0.02em;
 }
 .brand:hover { text-decoration: none; }
+.nav .brand { gap: 11px; font-size: 17px; }
+.nav .brand img { width: 38px; height: 38px; }
 .nav-links { display: flex; gap: 4px; margin-left: auto; font-size: 14px; font-weight: 500; }
 .nav-links a { color: var(--fg-2); padding: 7px 12px; border-radius: 980px; transition: color 0.15s, background-color 0.15s; }
 .nav-links a:hover { color: var(--fg); text-decoration: none; background: var(--accent-soft); }
