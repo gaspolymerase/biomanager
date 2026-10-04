@@ -1328,8 +1328,14 @@ teal in them).
   reduced motion, everything simply shows; reduced motion also stops the
   clips playing by themselves.
 - **Icons** are `site/assets/icons.svg`, symbols copied from the app's
-  `app/static/icons.svg` (plus phone, laptop, server and play), coloured by
-  `.ic-<colour>`.
+  `app/static/icons.svg` (plus phone, laptop, server and play, and Octicons'
+  GitHub mark and star), coloured by `.ic-<colour>`.
+- **Fresh copies.** Pages link `style.css`, `site.js` and `assets/icons.svg`
+  as `…?v=<hash of the file>`, and `style.css` links the helix pictures the
+  same way, so a browser never pairs a new page with yesterday's stylesheet.
+  `scripts/site-stamp.py` writes the stamps (`scripts/guide-pages.py` and
+  `scripts/hero-helix.py` run it); after editing any of those files by hand,
+  run it, or `tests/test_site.py` fails.
 
 ## Desktop App
 

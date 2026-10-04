@@ -274,8 +274,8 @@ def footer(lang, slug):
   <div class="wrap footer-inner">
     <div class="footer-gh">
       <p>{invite}</p>
-      <a class="btn btn-quiet" href="{repo}"><svg class="star" aria-hidden="true"><use href="{u}assets/icons.svg#star"/></svg>{star}</a>
-      <a class="btn btn-quiet" href="{repo}/issues/new/choose"><svg aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg>{feedback}</a>
+      <a class="btn btn-quiet" href="{repo}"><svg class="star" width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#star"/></svg>{star}</a>
+      <a class="btn btn-quiet" href="{repo}/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg>{feedback}</a>
     </div>
     <div class="brand"><img src="{u}assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     {body}
@@ -325,6 +325,8 @@ def main():
         for slug, _, _ in flat():
             build(lang, slug)
     print(f"{2 * len(flat())} guide pages written")
+    # the pages link style.css, site.js and the icons by their content
+    subprocess.run([sys.executable, str(Path(__file__).with_name("site-stamp.py"))], check=True)
     if "--search" in sys.argv:
         subprocess.run(["npx", "--yes", "pagefind@1", "--site", str(SITE)], check=True)
 

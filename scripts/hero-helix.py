@@ -211,6 +211,9 @@ def main():
     # everything, for the shadow under the glass and its hairline
     svg("all.svg", whole + rung_shapes)
     print(f"one turn: {PERIOD}px, {len(bars) - 2} base pairs; written to {OUT}")
+    # style.css links these by their content: bring the links up to date
+    import subprocess, sys
+    subprocess.run([sys.executable, str(Path(__file__).with_name("site-stamp.py"))], check=True)
 
 
 if __name__ == "__main__":
