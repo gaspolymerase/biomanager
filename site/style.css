@@ -80,7 +80,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+html { scroll-behavior: smooth; scroll-padding-top: 92px; }
 body {
   margin: 0;
   background: var(--bg);
@@ -134,8 +134,8 @@ p { margin: 0 0 1em; color: var(--fg-2); }
    (site.js adds .scrolled) it becomes a pane of glass over the content. */
 .nav {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 20;
-  width: calc(100% - 24px); max-width: 1120px; height: 52px; margin: 12px auto 0;
-  border-radius: 14px; border: 1px solid transparent;
+  width: calc(100% - 24px); max-width: 1180px; height: 62px; margin: 12px auto 0;
+  border-radius: 22px; border: 1px solid transparent;
   transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
 }
 .nav.scrolled {
@@ -148,14 +148,15 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav.scrolled { background: color-mix(in srgb, var(--bg) 95%, transparent); }
 }
-.nav .nav-inner { display: flex; align-items: center; gap: 24px; height: 100%; padding: 0 8px 0 18px; max-width: none; }
+.nav .nav-inner { display: flex; align-items: center; gap: 24px; height: 100%; padding: 0 12px 0 24px; max-width: none; }
+.nav .btn-small { min-height: 40px; padding: 0 18px; }
 .brand {
   display: flex; align-items: center; gap: 9px; color: var(--fg);
   font: 600 16px/1 var(--font-display); letter-spacing: -0.02em;
 }
 .brand:hover { text-decoration: none; }
 .nav-links { display: flex; gap: 4px; margin-left: auto; font-size: 14px; font-weight: 500; }
-.nav-links a { color: var(--fg-2); padding: 6px 10px; border-radius: 8px; transition: color 0.15s, background-color 0.15s; }
+.nav-links a { color: var(--fg-2); padding: 7px 12px; border-radius: 980px; transition: color 0.15s, background-color 0.15s; }
 .nav-links a:hover { color: var(--fg); text-decoration: none; background: var(--accent-soft); }
 .nav-links a.on, .nav-links a[aria-current="page"] { color: var(--fg); background: var(--accent-soft); }
 .lang-link { margin-left: 4px; font-size: 14px; font-weight: 500; color: var(--fg-2); white-space: nowrap; padding: 6px 8px; }
@@ -501,7 +502,7 @@ details p { font-size: 16px; }
 .guide { display: grid; gap: 40px; padding-top: 40px; padding-bottom: 80px; }
 @media (min-width: 960px) { .guide { grid-template-columns: 230px minmax(0, 1fr); gap: 56px; } }
 .toc { font-size: 14.5px; line-height: 1.45; }
-@media (min-width: 960px) { .toc { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 96px); overflow: auto; } }
+@media (min-width: 960px) { .toc { position: sticky; top: 96px; align-self: start; max-height: calc(100vh - 112px); overflow: auto; } }
 @media (max-width: 959px) {
   .toc { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; background: var(--bg-band); }
 }
