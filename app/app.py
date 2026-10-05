@@ -23,7 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
-from . import feature_library, feature_pack, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
+from . import feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -7065,6 +7065,7 @@ def _version_row(v, current: bool) -> dict:
     else:
         how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
                "detect": gettext("Features found from the library"),
+               "annotate": gettext("Features found by pLannotate"),
                "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
     try:
         features = len([f for f in json.loads(v.features_json or "[]") if (f.get("kind") or "feature") == "feature"])
@@ -7898,6 +7899,7 @@ def plasmid_page(number: int):
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
                            made_from=made_from, lineage_options=lineage_options, primers=primers, files=files,
+                           plannotate_here=plannotate.available(),
                            glycerol=glycerol)
 
 
@@ -8200,6 +8202,43 @@ def plasmid_detect_features(row_id: int):
         db_session.commit()
     flash(ngettext("Marked %(num)s feature from the library: %(names)s.",
                    "Marked %(num)s features from the library: %(names)s.", len(found), names=names), "success")
+    return redirect(plasmid_page_url(row_id))
+
+
+@app.route("/plasmids/<int:row_id>/annotate", methods=["POST"])
+@login_required
+def plasmid_annotate(row_id: int):
+    """Mark what pLannotate finds (app/plannotate.py), which unlike the
+    library's exact matching also finds an element a few bases off. A
+    version is kept first, so Restore undoes it."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        if not plannotate.available():
+            flash(gettext("pLannotate is not set up on this server."), "info")
+            return redirect(plasmid_page_url(row_id))
+        current = json.loads(p.features_json or "[]")
+        try:
+            found = plannotate.find(p.full_sequence or "", bool(p.is_circular), current)
+        except plannotate.ToolFailed as problem:
+            flash(gettext("pLannotate could not annotate this plasmid: %(problem)s.", problem=problem), "error")
+            return redirect(plasmid_page_url(row_id))
+        if not found:
+            flash(gettext("pLannotate found nothing this map does not already mark."), "info")
+            return redirect(plasmid_page_url(row_id))
+        plasmid_versions.before_change(db_session, p)
+        p.features_json = json.dumps(current + found)
+        stamp_updated(p)
+        names = ", ".join(dict.fromkeys(f["name"] for f in found))
+        plasmid_versions.record(db_session, p, "annotate", g.user.username, detail=names[:200])
+        db_session.commit()
+    flash(ngettext("pLannotate marked %(num)s feature: %(names)s.",
+                   "pLannotate marked %(num)s features: %(names)s.", len(found), names=names), "success")
     return redirect(plasmid_page_url(row_id))
 
 

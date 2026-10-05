@@ -284,3 +284,86 @@ class LibraryRouteTests(AppTestCase):
         html = self.get_ok(self.m, f"/plasmid/{one('select plasmid_id from plasmids where id=?', self.source)}")
         self.assertIn("Detect features", html)
         self.assertIn("Add to library", html)
+
+
+class PLannotateTests(AppTestCase):
+    """Annotating with pLannotate, the separate program a lab may install
+    (app/plannotate.py). The tool itself is never run in the tests."""
+
+    SEQ = bases(400, "plann")
+
+    def setUp(self):
+        self.rid = self.make_plasmid(self.m, sequence_text=self.SEQ)
+
+    def gbk(self, feats):
+        lines = [f"LOCUS       plasmid {len(self.SEQ)} bp    DNA     circular SYN 01-JAN-2026",
+                 "FEATURES             Location/Qualifiers"]
+        for name, start, end in feats:
+            lines += [f"     CDS             {start}..{end}", f'                     /label="{name}"']
+        lines.append("ORIGIN")
+        for i in range(0, len(self.SEQ), 60):
+            lines.append(f"{i + 1:>9} " + self.SEQ[i:i + 60].lower())
+        lines.append("//")
+        return "\n".join(lines) + "\n"
+
+    def features(self):
+        return [f["name"] for f in json.loads(one("select features_json from plasmids where id=?", self.rid) or "[]")]
+
+    def test_the_button_is_there_only_when_the_lab_has_set_it_up(self):
+        from unittest import mock
+        from app import plannotate
+        page = f"/plasmid/{one('select plasmid_id from plasmids where id=?', self.rid)}"
+        self.assertNotIn("Annotate with pLannotate", self.get_ok(self.m, page))
+        self.assertFlash(self.post(self.m, f"/plasmids/{self.rid}/annotate"), "not set up on this server", "info")
+        with mock.patch.dict("os.environ", {plannotate.ENV_VAR: "plannotate"}):
+            self.assertIn("Annotate with pLannotate", self.get_ok(self.m, page))
+            self.assertEqual(plannotate.command(), ["plannotate"])
+
+    def test_what_it_finds_is_marked_and_kept_as_a_version(self):
+        from unittest import mock
+        from app import plannotate
+        with mock.patch.dict("os.environ", {plannotate.ENV_VAR: "plannotate"}), \
+                mock.patch.object(plannotate, "run_tool",
+                                  return_value=self.gbk([("EGFP", 10, 60), ("AmpR", 100, 200)])):
+            r = self.post(self.m, f"/plasmids/{self.rid}/annotate")
+            self.assertFlash(r, "pLannotate marked 2 features: EGFP, AmpR.", "success")
+            self.assertEqual(self.features(), ["EGFP", "AmpR"])
+            self.assertEqual(one("select how from plasmid_sequence_versions where plasmid_row_id=? "
+                                 "order by id desc limit 1", self.rid), "annotate")
+            # What the map already marks is not marked twice.
+            self.assertFlash(self.post(self.m, f"/plasmids/{self.rid}/annotate"), "found nothing", "info")
+            self.assertEqual(self.features(), ["EGFP", "AmpR"])
+
+    def test_a_tool_that_is_missing_or_slow_is_said_plainly(self):
+        from unittest import mock
+        from app import plannotate
+        for problem in ("plannotate is not installed here", "it took longer than 45 seconds"):
+            with mock.patch.dict("os.environ", {plannotate.ENV_VAR: "plannotate"}), \
+                    mock.patch.object(plannotate, "run_tool", side_effect=plannotate.ToolFailed(problem)):
+                self.assertFlash(self.post(self.m, f"/plasmids/{self.rid}/annotate"), problem, "error")
+        self.assertEqual(self.features(), [])
+
+    def test_the_command_is_run_as_a_list_and_never_through_a_shell(self):
+        from unittest import mock
+        from app import plannotate
+        with mock.patch.dict("os.environ", {plannotate.ENV_VAR: "/opt/envs/pl/bin/plannotate --quiet"}):
+            self.assertEqual(plannotate.command(), ["/opt/envs/pl/bin/plannotate", "--quiet"])
+            with mock.patch("subprocess.run") as run:
+                run.return_value = mock.Mock(stdout="", stderr="nothing written")
+                with self.assertRaises(plannotate.ToolFailed):
+                    plannotate.run_tool(self.SEQ, True)
+                call = run.call_args
+                self.assertEqual(call.args[0][:2], ["/opt/envs/pl/bin/plannotate", "--quiet"])
+                self.assertIn("batch", call.args[0])
+                self.assertNotIn("--linear", call.args[0])          # circular is its default
+                self.assertNotIn("shell", call.kwargs)              # never through a shell
+                self.assertEqual(call.kwargs["timeout"], plannotate.TIMEOUT)
+            with mock.patch("subprocess.run") as run:
+                run.return_value = mock.Mock(stdout="", stderr="")
+                with self.assertRaises(plannotate.ToolFailed):
+                    plannotate.run_tool(self.SEQ, False)
+                self.assertIn("--linear", run.call_args.args[0])
+        # Unbalanced quotes are not a command.
+        with mock.patch.dict("os.environ", {plannotate.ENV_VAR: 'plannotate "oops'}):
+            self.assertEqual(plannotate.command(), [])
+            self.assertFalse(plannotate.available())

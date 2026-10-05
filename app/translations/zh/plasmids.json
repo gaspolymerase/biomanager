@@ -202,5 +202,7 @@
   "The last try did not finish: %(problem)s": "上次下载未完成：%(problem)s",
   "Find an element or a sequence…": "查找元件或序列…",
   "Find an element": "查找元件",
-  "the first %(n)s — search to narrow it": "仅显示前 %(n)s 个，可用搜索缩小范围"
+  "the first %(n)s — search to narrow it": "仅显示前 %(n)s 个，可用搜索缩小范围",
+  "Annotate with pLannotate": "用 pLannotate 注释",
+  "Find features by alignment, including ones a few bases off": "通过序列比对识别特征，相差几个碱基也能找到"
 }

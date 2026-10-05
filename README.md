@@ -253,7 +253,9 @@ from, so they are tabs of the Plasmids area rather than four entries in
 the sidebar. The **Feature library**
 keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
 by sequence, from any well-annotated map, and **Detect features** marks
-them on another plasmid. **Files** on its Storage tab keeps
+them on another plasmid; a lab that installs [pLannotate](https://github.com/mmcguffi/pLannotate) on its server also gets
+**Annotate with pLannotate**, which finds elements by alignment rather than
+exact matching. **Files** on its Storage tab keeps
 the sequencing reads, gel photos and datasheets that belong with it, and
 they come along in Export my data. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists

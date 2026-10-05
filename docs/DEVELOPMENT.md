@@ -551,6 +551,23 @@ crossing the origin keeps `start > end`.
   already downloads. The page shows the first 100 of each kind and
   searches by name, type or sequence (`?q=`), since a lab with the pack
   has a couple of thousand.
+- **pLannotate** (`app/plannotate.py`): a lab that installs pLannotate
+  (`mamba install -c bioconda plannotate`, then `plannotate setupdb`) and
+  sets `BIOMANAGER_PLANNOTATE` to its command gets **Annotate with
+  pLannotate** above the map, which finds elements by alignment — a
+  codon-optimised CDS, a promoter a base off — where the library matches
+  exactly. `run_tool` writes a FASTA into a folder of its own, runs
+  `<command> batch -i … -o … -f plasmid` (plus `--linear` for a linear
+  plasmid) with `subprocess.run`, a list and never a shell, and reads the
+  `.gbk` it wrote back through `sequence_parser.parse_genbank`; `find`
+  then drops what the map already marks with that name, as Detect features
+  does, and the route records a version (`how="annotate"`). It is a tool
+  this app runs, never imported, so its GPL-3 does not reach this code,
+  and its databases stay the lab's own download. The command is an
+  environment variable rather than a setting on purpose: it is a command
+  this server runs, so whoever installs the server decides it, and getting
+  into an admin account is not a way to run code on the machine. The
+  timeout (45 s) sits under the 60 s a lab server allows a request.
 - **The common-features pack** (`app/feature_pack.py`, with revision
   0021's `feature_library.source_name`): GenoLIB (Adames et al., *Nucleic
   Acids Res* 2015;43(10):4823-4832, doi:10.1093/nar/gkv272, CC BY 4.0),
@@ -1656,6 +1673,7 @@ Settings (environment variables, all optional):
 | `BIOMANAGER_MAX_UPLOAD_MB` | `64` | largest upload accepted |
 | `BIOMANAGER_UPLOADS_DIR` | `app/static/uploads` | where uploads are kept; put it next to the database |
 | `BIOMANAGER_TELEMETRY` | on | `0`: never send the anonymous daily counts (so does `DO_NOT_TRACK=1`) |
+| `BIOMANAGER_PLANNOTATE` | — | the pLannotate command, which turns on **Annotate with pLannotate** (`app/plannotate.py`) |
 | `WEB_CONCURRENCY` | 1 on SQLite, 3 on Postgres | gunicorn worker processes |
 
 `gunicorn.conf.py` loads the app once before forking (`preload_app`), so the

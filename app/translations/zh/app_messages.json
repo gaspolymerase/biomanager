@@ -518,5 +518,11 @@
   "Read from %(num)s file.": "来自 %(num)s 个文件。",
   "Read from %(num)s files.": "来自 %(num)s 个文件。",
   "Downloading the common-features pack. It takes about a minute; this page shows it when it is in.": "正在下载常用元件包。大约需要一分钟；下载完成后本页会显示。",
-  "The pack is already being downloaded.": "元件包正在下载中。"
+  "The pack is already being downloaded.": "元件包正在下载中。",
+  "Features found by pLannotate": "pLannotate 识别的特征",
+  "pLannotate is not set up on this server.": "本服务器未配置 pLannotate。",
+  "pLannotate could not annotate this plasmid: %(problem)s.": "pLannotate 无法注释这个质粒：%(problem)s。",
+  "pLannotate found nothing this map does not already mark.": "pLannotate 没有找到图谱上尚未标注的内容。",
+  "pLannotate marked %(num)s feature: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。",
+  "pLannotate marked %(num)s features: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。"
 }
