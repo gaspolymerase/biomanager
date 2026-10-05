@@ -260,6 +260,49 @@
       <p class="px-4 py-3 text-[12.5px] text-muted">{% trans url=glycerol.new_url %}Keep the bacteria carrying each plasmid in a <a href="{{ url }}">Glycerol stocks</a> database; each stock then shows here with the box it's in.{% endtrans %}</p>
     {% endif %}
   </article>
+  {# Files kept with it: sequencing traces, a gel photo, a vendor's map. #}
+  <article class="card mt-3 max-w-[760px]" id="plasmid-files">
+    <header class="card-head"><h2>{{ icon('file') }} {{ _('Files') }}</h2>
+      {% if files %}<span class="badge badge-quiet">{{ files|length }}</span>{% endif %}</header>
+    {% if files %}
+      <div class="flex flex-col">
+        {% for f in files %}
+          <div class="row-line">
+            {% if f.kind == 'image' %}
+              <a href="{{ f.url }}" target="_blank" rel="noopener" class="shrink-0">
+                <img src="{{ f.url }}" alt="{{ f.name }}" loading="lazy" class="h-8 w-8 rounded object-cover">
+              </a>
+            {% else %}
+              <span class="shrink-0 text-muted">{{ icon('file') }}</span>
+            {% endif %}
+            <a class="min-w-0 flex-1 truncate font-medium text-ink" href="{{ f.url }}" target="_blank" rel="noopener">{{ f.name }}</a>
+            <span class="shrink-0 text-[12px] text-muted">{{ f.kind_label }} · {{ f.size }} · {{ f.who }} · {{ f.when }}</span>
+            {% if f.may_remove and not locked %}
+              <form method="post" action="{{ url_for('plasmid_remove_file', row_id=plasmid.row_id, file_id=f.id) }}" class="shrink-0"
+                    data-confirm="{{ _('Take %(name)s off this plasmid?', name=f.name) }}">
+                <button type="submit" class="row-icon-btn" title="{{ _('Take %(name)s off this plasmid', name=f.name) }}">{{ icon('trash') }}</button>
+              </form>
+            {% endif %}
+          </div>
+          {% if f.notes %}<p class="px-4 pb-2 text-[12px] text-muted">{{ f.notes }}</p>{% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="px-4 py-3 text-[12.5px] text-muted">{{ _('Nothing yet. Keep the sequencing reads, gel photos and datasheets of this plasmid here.') }}</p>
+    {% endif %}
+    {% if not locked %}
+      <form method="post" action="{{ url_for('plasmid_add_files', row_id=plasmid.row_id) }}" enctype="multipart/form-data"
+            class="flex flex-wrap items-end gap-3 border-t border-hairline px-4 py-3">
+        <label class="field-label">{{ _('Sequencing reads (.ab1), gel photos, datasheets') }}
+          <input type="file" name="files" multiple class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+        </label>
+        <label class="field-label flex-1">{{ _('What they show (optional)') }}
+          <input type="text" name="notes" maxlength="300" class="mt-1.5" placeholder="{{ _('Sanger from the T7 primer, clone 3') }}">
+        </label>
+        <button type="submit" class="btn">{{ icon('upload') }} {{ _('Keep with this plasmid') }}</button>
+      </form>
+    {% endif %}
+  </article>
   {# What was made from it: a virus's "Made from" column names this plasmid. #}
   <article class="card mt-3 max-w-[760px]" id="made-from">
     <header class="card-head"><h2>{{ icon('virus') }} {{ _('Made from this plasmid') }}</h2>

@@ -789,6 +789,8 @@ Plasmid records with their sequence and map, and the box each tube is in.
 
 - The **Feature library** (a link at the top of Plasmids) keeps the lab's elements by sequence: promoters, ITRs and LTRs, WPRE, resistance genes, tags. **Add to library**, above a well-annotated map (a SnapGene or Addgene file, say), keeps its named features there; an admin can **Collect from every plasmid**. On any other plasmid, **Detect features** marks each library element wherever it is, on either strand and across the origin, and keeps the map as it was in **Versions**.
 
+- **Files**, on **Storage**, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it, gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an admin, can take it off again. They come with your data in **Export my data**.
+
 - A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
 
 - Each tube keeps its miniprep's **Concentration** (ng/µL) and **260/280**, in the sheet and on its **Storage** tab, which also lists the notebook pages that link it.
@@ -1131,7 +1133,7 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 #### Everyone
 
-**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features, your notebook pages and your profile, in one zip.
+**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
 
 #### What BioManager sends its makers
 

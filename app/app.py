@@ -59,7 +59,7 @@ from .models import (
     NotebookPage,
     NotebookTab,
     NotebookTemplate,
-    PlasmidRecord,
+    PlasmidFile, PlasmidRecord,
     PlasmidSequenceVersion,
     ORDER_STATUS_OPTIONS,
     Order,
@@ -2271,6 +2271,22 @@ def export_my_data():
                 safe = _re.sub(r"[^\w\-.]+", "_", p.name or "").strip("_")
                 zf.writestr(f"plasmids/{p.plasmid_id}{'-' + safe if safe else ''}.gb",
                             to_genbank(p.name or f"plasmid-{p.plasmid_id}", p.full_sequence, bool(p.is_circular), annotations))
+            # The files kept with each of their plasmids: traces, gel photos.
+            from pathlib import Path as _Path
+
+            # The folder save_uploaded_file writes to (the tests point it
+            # at a temp folder), not paths.uploads_dir().
+            from . import services as _services
+            for p in plasmids:
+                safe = _re.sub(r"[^\w\-.]+", "_", p.name or "").strip("_")
+                folder = f"plasmids/{p.plasmid_id}{'-' + safe if safe else ''}-files"
+                for kept in db_session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id)
+                                               .order_by(PlasmidFile.id)):
+                    source = _services.UPLOAD_DIR / _Path(kept.path).name
+                    if not source.is_file():
+                        continue
+                    name = _re.sub(r"[^\w\-. ]+", "_", kept.name or source.name).strip() or source.name
+                    zf.write(source, f"{folder}/{name}")
 
             tabs = db_session.scalars(
                 select(NotebookTab).where(NotebookTab.owner_username == username).order_by(NotebookTab.position, NotebookTab.id)
@@ -7875,12 +7891,13 @@ def plasmid_page(number: int):
             "url": url_for("inventory.module", key=stocks_db.key) if stocks_db else "",
             "new_url": url_for("inventory.new_module", preset="glycerol_stocks"),
         }
+        files = _plasmid_files(db_session, p)
         primers = _plasmid_primers(db_session, p)
         lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
             select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
-                           made_from=made_from, lineage_options=lineage_options, primers=primers,
+                           made_from=made_from, lineage_options=lineage_options, primers=primers, files=files,
                            glycerol=glycerol)
 
 
@@ -8057,6 +8074,99 @@ FEATURE_CATEGORY_LABELS = {
     "selection": "Selection markers", "origin": "Origins", "terminator": "PolyA signals and terminators",
     "other": "Other elements",
 }
+
+
+# What a file kept with a plasmid is, from its name: a sequencing read, a
+# picture (a gel, a plate), or anything else.
+TRACE_SUFFIXES = (".ab1", ".abi", ".scf", ".ztr", ".phd", ".seq")
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".tif", ".tiff", ".bmp", ".heic")
+
+
+def _file_kind(filename: str) -> str:
+    lowered = (filename or "").lower()
+    if lowered.endswith(TRACE_SUFFIXES):
+        return "trace"
+    if lowered.endswith(IMAGE_SUFFIXES):
+        return "image"
+    return "document"
+
+
+def _file_kind_label(kind: str) -> str:
+    return {"trace": gettext("Sequencing read"), "image": gettext("Photo")}.get(kind, gettext("File"))
+
+
+def _plasmid_files(db_session, p) -> list[dict]:
+    """The files kept with this plasmid, newest first."""
+    rows = db_session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id)
+                              .order_by(PlasmidFile.uploaded_at.desc(), PlasmidFile.id.desc()))
+    out = []
+    for f in rows:
+        size = f.size_bytes or 0
+        out.append({"id": f.id, "name": f.name, "kind": f.kind, "kind_label": _file_kind_label(f.kind),
+                    "url": url_for("static", filename=f.path), "notes": f.notes,
+                    "size": gettext("%(n)s MB", n=f"{size / 1048576:.1f}") if size >= 1048576
+                            else gettext("%(n)s KB", n=max(size // 1024, 1)),
+                    "when": fmt_day(local_time(f.uploaded_at), with_time=True), "who": f.uploaded_by,
+                    "may_remove": g.user.role == "admin" or f.uploaded_by == g.user.username})
+    return out
+
+
+@app.route("/plasmids/<int:row_id>/files", methods=["POST"])
+@login_required
+def plasmid_add_files(row_id: int):
+    """Keep files with a plasmid: sequencing traces, a gel photo, a vendor's
+    map. Anyone who may edit the plasmid may add them."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        note = (request.form.get("notes") or "").strip()[:300]
+        kept = []
+        for upload in request.files.getlist("files"):
+            saved = save_uploaded_file(upload)
+            if saved is None:
+                continue
+            db_session.add(PlasmidFile(plasmid_row_id=p.id, kind=_file_kind(saved["original_name"]),
+                                       name=saved["original_name"][:200], path=saved["path"],
+                                       size_bytes=saved["size_bytes"], notes=note,
+                                       uploaded_by=g.user.username))
+            kept.append(saved["original_name"])
+        if not kept:
+            flash(gettext("Choose a file to keep with this plasmid first."), "info")
+            return redirect(plasmid_page_url(row_id))
+        stamp_updated(p)
+        db_session.commit()
+    flash(ngettext("Kept %(num)s file with this plasmid: %(names)s.",
+                   "Kept %(num)s files with this plasmid: %(names)s.", len(kept), names=", ".join(kept)), "success")
+    return redirect(plasmid_page_url(row_id) + "#plasmid-files")
+
+
+@app.route("/plasmids/<int:row_id>/files/<int:file_id>/remove", methods=["POST"])
+@login_required
+def plasmid_remove_file(row_id: int, file_id: int):
+    """Take a file off a plasmid (whoever added it, or an admin). The file
+    itself stays in the uploads folder, as the notebook's do."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        kept = db_session.get(PlasmidFile, file_id)
+        if p is None or kept is None or kept.plasmid_row_id != p.id:
+            flash(gettext("That file is no longer here."), "info")
+            return redirect(plasmid_page_url(row_id))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        if g.user.role != "admin" and kept.uploaded_by != g.user.username:
+            flash(gettext("Only an admin or whoever added %(name)s can take it off.", name=kept.name), "error")
+            return redirect(plasmid_page_url(row_id) + "#plasmid-files")
+        name = kept.name
+        db_session.delete(kept)
+        db_session.commit()
+    flash(gettext("Took %(name)s off this plasmid.", name=name), "success")
+    return redirect(plasmid_page_url(row_id) + "#plasmid-files")
 
 
 @app.route("/plasmids/<int:row_id>/detect-features", methods=["POST"])

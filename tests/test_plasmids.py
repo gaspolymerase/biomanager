@@ -465,6 +465,59 @@ class PrimerRecordTests(AppTestCase):
         self.assertNotIn("Used to make", self.get_ok(self.a, page(self.rid)))
 
 
+class PlasmidFileTests(AppTestCase):
+    """Files kept with a plasmid: sequencing reads, gel photos, datasheets."""
+
+    def setUp(self):
+        self.rid = self.make_plasmid(self.m, sequence_text="ACGTACGTACGT")
+
+    def upload(self, client, *files, notes=""):
+        data = {"files": [(io.BytesIO(body), name) for name, body in files]}
+        if notes:
+            data["notes"] = notes
+        return self.post(client, f"/plasmids/{self.rid}/files", data, content_type="multipart/form-data")
+
+    def kept(self):
+        return rows("select name, kind, uploaded_by, notes from plasmid_files where plasmid_row_id=? order by id", self.rid)
+
+    def test_a_read_and_a_gel_are_kept_and_shown_with_what_they_are(self):
+        r = self.upload(self.m, ("clone3_T7.ab1", b"ABIF\x00\x01trace"), ("gel.png", b"\x89PNG\r\n\x1a\n"),
+                        notes="Sanger from the T7 primer, clone 3")
+        self.assertFlash(r, "Kept 2 files with this plasmid", "success")
+        self.assertEqual(self.kept(), [("clone3_T7.ab1", "trace", self.member, "Sanger from the T7 primer, clone 3"),
+                                       ("gel.png", "image", self.member, "Sanger from the T7 primer, clone 3")])
+        html = self.get_ok(self.m, page(self.rid))
+        card = html.split('id="plasmid-files"', 1)[1].split("</article>", 1)[0]
+        self.assertIn("clone3_T7.ab1", card)
+        self.assertIn("Sequencing read", card)
+        self.assertIn("Photo", card)
+        self.assertIn("/static/uploads/", card)
+
+    def test_nothing_chosen_says_so(self):
+        self.assertFlash(self.upload(self.m, ("", b"")), "Choose a file", "info")
+        self.assertEqual(self.kept(), [])
+
+    def test_the_data_export_carries_the_files(self):
+        import zipfile
+        self.upload(self.m, ("clone3_T7.ab1", b"ABIF trace"))
+        names = zipfile.ZipFile(io.BytesIO(self.m.get("/settings/export").get_data())).namelist()
+        number = plasmid(self.rid, "plasmid_id")[0]
+        self.assertTrue(any(n.startswith(f"plasmids/{number}-") and n.endswith("-files/clone3_T7.ab1") for n in names),
+                        names)
+
+    def test_only_someone_who_may_edit_the_plasmid_adds_or_removes(self):
+        self.upload(self.m, ("read.ab1", b"ABIF"))
+        file_id = one("select id from plasmid_files where plasmid_row_id=?", self.rid)
+        self.assertFlash(self.upload(self.o, ("sneaky.ab1", b"ABIF")), "belongs to", "error")
+        self.assertFlash(self.post(self.o, f"/plasmids/{self.rid}/files/{file_id}/remove"), "belongs to", "error")
+        self.assertEqual(len(self.kept()), 1)
+        # Lab common: anyone edits it, but only whoever added the file (or an admin) takes it off.
+        self.assertSaved(self.autosave(self.m, f"/plasmids/{self.rid}/update", {"is_shared": "1"}))
+        self.assertFlash(self.post(self.o, f"/plasmids/{self.rid}/files/{file_id}/remove"), "Only an admin", "error")
+        self.assertFlash(self.post(self.a, f"/plasmids/{self.rid}/files/{file_id}/remove"), "Took read.ab1 off", "success")
+        self.assertEqual(self.kept(), [])
+
+
 # ====================================================================== create
 
 class CreatePlasmidTests(AppTestCase):

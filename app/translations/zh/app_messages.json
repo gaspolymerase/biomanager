@@ -500,5 +500,16 @@
   "Origins": "复制起点",
   "PolyA signals and terminators": "PolyA 信号和终止子",
   "Other elements": "其他元件",
-  "Features found from the library": "从元件库识别的特征"
+  "Features found from the library": "从元件库识别的特征",
+  "Sequencing read": "测序结果",
+  "Photo": "照片",
+  "File": "文件",
+  "%(n)s MB": "%(n)s MB",
+  "%(n)s KB": "%(n)s KB",
+  "Choose a file to keep with this plasmid first.": "请先选择要和这个质粒一起保存的文件。",
+  "That file is no longer here.": "这个文件已不在这里。",
+  "Only an admin or whoever added %(name)s can take it off.": "只有管理员或添加者可以移除 %(name)s。",
+  "Took %(name)s off this plasmid.": "已从这个质粒移除 %(name)s。",
+  "Kept %(num)s file with this plasmid: %(names)s.": "已为这个质粒保存 %(num)s 个文件：%(names)s。",
+  "Kept %(num)s files with this plasmid: %(names)s.": "已为这个质粒保存 %(num)s 个文件：%(names)s。"
 }

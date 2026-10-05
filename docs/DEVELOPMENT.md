@@ -520,6 +520,14 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
+- **Files** (`plasmid_files`, revision 0020): what belongs with a plasmid
+  — a sequencing read, a gel photo, a datasheet — saved by
+  `services.save_uploaded_file` into the uploads folder, with `kind` from
+  the name (`_file_kind`: trace, image, document). Anyone who may edit the
+  plasmid adds them; whoever added one, or an admin, takes it off, and the
+  file itself stays in uploads, as the notebook's do. Export my data
+  carries them under `plasmids/<n>-<name>-files/`. Row ids without foreign
+  keys, as for versions.
 - **One area, four tabs:** `PLASMID_TAB_KINDS` (primers, glycerol_stocks,
   viruses) are left out of the sidebar rail by `_inventory_module_links`
   and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,

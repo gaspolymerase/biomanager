@@ -566,6 +566,26 @@ class PlasmidParent(Base):
     created_by: Mapped[str] = mapped_column(String(80), default="")
 
 
+class PlasmidFile(Base):
+    """A file kept with a plasmid: a sequencing trace (.ab1), a gel photo, a
+    map from the vendor. The file itself is in the uploads folder
+    (app/services.save_uploaded_file); this row is what the page lists. The
+    plasmid's row id with no foreign key, as for versions, so undoing a
+    plasmid's delete brings its files back with it."""
+    __tablename__ = "plasmid_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    # trace (a sequencing read), image (a gel or a colony plate), document
+    kind: Mapped[str] = mapped_column(String(20), default="document")
+    name: Mapped[str] = mapped_column(String(200), default="")
+    path: Mapped[str] = mapped_column(String(300), default="")
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    notes: Mapped[str] = mapped_column(String(300), default="")
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    uploaded_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class FeatureLibraryEntry(Base):
     """A named element the lab reuses, by its sequence (app/feature_library.py):
     Detect features on any plasmid's map finds it there. Collected from the
