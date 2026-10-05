@@ -58,7 +58,7 @@ PERMISSION = "members_api_tokens"
 SCOPES = {"read": "Read", "write": "Read and change", "propose": "Read and propose"}
 # What a Propose-only token may send besides reading (app/proposals.py): it
 # never changes a record itself; its person approves in BioManager.
-PROPOSING = {"api.proposal_create", "api.proposal_discard"}
+PROPOSING = {"api.proposal_create", "api.proposal_discard", "api.mcp"}
 EXPIRY_DAYS = {"30": "In 30 days", "90": "In 90 days", "365": "In a year", "": "Never"}
 PER_MINUTE = 600
 MAX_LIMIT = 1000
@@ -140,10 +140,15 @@ def _error(status: int, message: str, **extra):
 @bp.before_request
 def _gate():
     if g.get("user") is None or g.get("api_token") is None:
-        return _error(401, "Send an API token: Authorization: Bearer bmt_… Make one in Settings → API tokens.")
+        # Where an assistant app learns how to sign in (app/oauth.py, RFC 9728).
+        pointer = f'Bearer resource_metadata="{request.url_root.rstrip("/")}/.well-known/oauth-protected-resource/api/v1/mcp"'
+        return _error(401, "Send an API token: Authorization: Bearer bmt_… Make one in Settings → API tokens.") + (
+            {"WWW-Authenticate": pointer},)
     wait = rate.wait(g.api_token.id) if g.api_token.id else 0  # 0: a proposal being applied
     if wait:
         return _error(429, f"Too many requests: at most {PER_MINUTE} a minute.") + ({"Retry-After": str(wait)},)
+    if request.endpoint == "api.mcp":
+        return None                   # its tools check the scope as the API does (app/mcp_http.py)
     if request.method not in ("GET", "HEAD", "OPTIONS") and g.api_token.scope != "write":
         if g.api_token.scope == "propose" and request.endpoint in PROPOSING:
             return None
@@ -909,6 +914,9 @@ def experiment_readings(experiment_id: int):
 
 @bp.route("/<path:_rest>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 def unknown(_rest):
+    if _rest.strip("/") == "mcp":
+        # MCP clients may try to open an event stream; this server has none (app/mcp_http.py).
+        return _error(405, "Send MCP messages by POST; this server has no event stream.") + ({"Allow": "POST"},)
     return _error(404, "There is no such endpoint. GET /api/v1 lists them.")
 
 
@@ -1030,6 +1038,16 @@ def proposal_discard(proposal_id: int):
         return jsonify(proposals.as_dict(s, p))
 
 
+# ---------------------------------------------------------------- MCP (app/mcp_http.py)
+
+@bp.post("/mcp")
+def mcp():
+    """MCP over streamable HTTP, for assistant apps (claude.ai, ChatGPT,
+    Claude Code): the same tools as mcp/biomanager_mcp.py."""
+    from . import mcp_http
+    return mcp_http.endpoint()
+
+
 # ---------------------------------------------------------------- the reference
 
 # (method, path, token scope, summary, query parameters)
@@ -1069,8 +1087,9 @@ ENDPOINTS = [
     ("GET", "/api/v1/proposals", "read", "Your proposals, newest first", ("status",)),
     ("GET", "/api/v1/proposals/{proposal_id}", "read", "One proposal: its status and each change as previewed", ()),
     ("POST", "/api/v1/proposals/{proposal_id}/discard", "propose", "Withdraw a proposal still waiting", ()),
+    ("POST", "/api/v1/mcp", "propose", "MCP (streamable HTTP) for assistant apps: the tools of mcp/biomanager_mcp.py", ()),
 ]
-NOT_PAGED = {"/", "/me", "/resolve", "/vocabulary", "/due", "/actions", "/proposals"}
+NOT_PAGED = {"/", "/me", "/resolve", "/vocabulary", "/due", "/actions", "/proposals", "/mcp"}
 PARAM_HELP = {
     "limit": "How many a page (default 100, at most 1000)",
     "after": "Continue after this row (from `next`)",

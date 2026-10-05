@@ -126,18 +126,41 @@
         changes anything itself.</p>
 
       <h2 id="connect">Connect an assistant</h2>
+      <p>Open <b>Settings → API tokens → Connect an AI assistant</b>. It shows the ways in for your BioManager, with its
+        address filled in. Nothing needs installing, except for Claude Desktop on the lab network (below).</p>
+
+      <h3 id="connector">From claude.ai, the Claude apps or ChatGPT</h3>
+      <p>These apps reach BioManager from the internet, so this works when your lab's server is on the internet: its admin
+        turns on internet access (in the server's runbook). Then the Connect page shows the <b>connector address</b>, ending in
+        <code>/api/v1/mcp</code>. The desktop app can't be reached this way; use the way below.</p>
       <ol class="steps-list">
-        <li><b>Settings → API tokens → Connect an AI assistant</b>. It makes a token that may <b>Read and propose</b> and shows
-          the setup to copy, with your BioManager's address and the token filled in. Copy it now: the token is shown once.</li>
-        <li>The assistant runs a small program from BioManager's source, <code>mcp/biomanager_mcp.py</code>: download the source
-          and run <code>python -m pip install -r mcp/requirements.txt</code> once. Then add the setup to your assistant app; the
-          steps for Claude Desktop, Claude Code, Cursor and Cherry Studio are in <code>mcp/README.md</code>.</li>
-        <li>Ask it: <i>Log today's work from my notes: …</i> It looks up each animal, cage and experiment you mention, asks
-          you when something could be more than one record, and sends one proposal with a link to it.</li>
+        <li>Add BioManager as a custom connector with that address. In Claude: <b>Settings → Connectors → Add custom
+          connector</b> (on a Team or Enterprise plan, an owner adds it first). In ChatGPT: <b>Settings → Connectors</b>, with
+          developer mode on, then create a connector with OAuth.</li>
+        <li>When it asks you to connect, a BioManager page opens asking for a <b>connection code</b>. On the Connect page (on
+          the lab network), press <b>Get a connection code</b>, type it in, and press <b>Allow</b>. A code works once, for 10
+          minutes.</li>
+        <li>That's it, on the web and in the phone app alike. The connection is listed under <b>Settings → API tokens</b> with
+          the app's name; revoke it there to end it.</li>
       </ol>
+
+      <h3 id="token">From Claude Code, Cursor, Cherry Studio or Claude Desktop</h3>
+      <p>These run on a computer that can reach BioManager: the same computer as the desktop app, or any computer on the lab
+        network for a lab server. No internet access is needed.</p>
+      <ol class="steps-list">
+        <li>On the Connect page, press <b>Make a token</b>. It makes a token that may <b>Read and propose</b>, and the next page
+          shows the setup to copy for each app, with the address and the token filled in. Copy it now: the token is shown
+          once.</li>
+        <li><b>Claude Code</b>: one command in a terminal. <b>Cursor</b> and <b>Cherry Studio</b>: the address and the token, in
+          their MCP settings. <b>Claude Desktop</b> runs a small program from BioManager's source instead,
+          <code>mcp/biomanager_mcp.py</code> (install it once with <code>python -m pip install -r mcp/requirements.txt</code>);
+          the steps are in <code>mcp/README.md</code>.</li>
+      </ol>
+
+      <h3 id="use-it">Use it</h3>
+      <p>Ask it: <i>Log today's work from my notes: …</i> It looks up each animal, cage and experiment you mention, asks you
+        when something could be more than one record, and sends one proposal with a link to it.</p>
       <ul>
-        <li>With the desktop app, the assistant app has to run on the same computer; with a lab server, on any computer that
-          can reach it.</li>
         <li>The assistant reads what you can read, as you. Revoke its token under <b>Settings → API tokens</b> to cut it off.</li>
       </ul>
 
@@ -170,8 +193,12 @@
     <section class="trouble">
       <h2 id="troubleshooting">Troubleshooting</h2>
       <h3>The assistant says it can't reach BioManager</h3>
-      <p>Check that BioManager is running and that <code>BIOMANAGER_URL</code> in the setup is its address (the desktop app's
-        is on <b>Settings → API tokens</b>), and that the token hasn't been revoked or expired.</p>
+      <p>For Claude Code, Cursor or Cherry Studio: check that BioManager is running, that the address in the setup is its
+        address (the desktop app's is on <b>Settings → API tokens</b>), and that the token hasn't been revoked or expired.
+        For claude.ai, the Claude apps or ChatGPT: check that the connector address opens from a phone off the lab's Wi-Fi
+        (it should show a short message asking for an API token), and that it ends in <code>/api/v1/mcp</code>.</p>
+      <h3>Connecting says the connection code isn't right</h3>
+      <p>A code works once and for 10 minutes. Press <b>Get a connection code</b> again and use the new one.</p>
       <h3>Approving says a record changed after the proposal was made</h3>
       <p>Someone (or you) changed it meanwhile, so the proposal may be out of date. <b>Discard</b> it and ask the assistant to
         propose again.</p>
@@ -188,6 +215,9 @@
       <p>On this page</p>
       <ol>
         <li class="lvl2"><a href="#connect">Connect an assistant</a></li>
+        <li class="lvl3"><a href="#connector">From claude.ai, the Claude apps or ChatGPT</a></li>
+        <li class="lvl3"><a href="#token">From Claude Code, Cursor, Cherry Studio or Claude Desktop</a></li>
+        <li class="lvl3"><a href="#use-it">Use it</a></li>
         <li class="lvl2"><a href="#what-it-can-do">What it can propose</a></li>
         <li class="lvl2"><a href="#approving">Approving</a></li>
         <li class="lvl2"><a href="#troubleshooting">Troubleshooting</a></li>

@@ -9,11 +9,33 @@ It is a small MCP server: the assistant app starts it as a command and talks
 to it over stdio. It holds no data; it calls your BioManager's API with a
 token.
 
+**Most apps don't need it.** BioManager answers MCP itself, at
+`<your BioManager>/api/v1/mcp`, with the same tools:
+
+- **Claude Code**, **Cursor**, **Cherry Studio** and other apps that take an
+  MCP address: the address and `Authorization: Bearer <token>`, from
+  **Settings → API tokens → Connect an AI assistant → Make a token**, which
+  shows the setup to copy. For Claude Code:
+
+  ```bash
+  claude mcp add --transport http biomanager https://your-server/api/v1/mcp \
+    --header "Authorization: Bearer bmt_…"
+  ```
+
+- **claude.ai, the Claude apps and ChatGPT**, as a custom connector, when
+  your lab's server is on the internet (`deploy/host/internet-access.sh`):
+  the address `https://<server>:8443/api/v1/mcp`, signed in with OAuth and a
+  one-time connection code from the same page.
+
+Use this program for **Claude Desktop** on the lab network (Desktop's own
+connectors go through the internet), or for an app that only starts
+commands.
+
 ## 1. A token
 
-In BioManager: **Settings → API tokens → Connect an AI assistant**. That
-makes a token that may *Read and propose* and shows the setup below with your
-address and the token filled in. The token is shown once.
+In BioManager: **Settings → API tokens → Connect an AI assistant → Make a
+token**. That makes a token that may *Read and propose* and shows the setup
+below with your address and the token filled in. The token is shown once.
 
 ## 2. The program
 
@@ -53,19 +75,8 @@ path to this folder; on Windows `"command": "py"` or the full path to
 }
 ```
 
-**Claude Code**:
-
-```bash
-claude mcp add biomanager --env BIOMANAGER_URL=https://your-server --env BIOMANAGER_TOKEN=bmt_… \
-  --env BIOMANAGER_ASSISTANT=Claude -- python /path/to/biomanager/mcp/biomanager_mcp.py
-```
-
-**Cursor**: Settings → MCP → Add new MCP server, or the same `mcpServers`
-block as Claude Desktop's in `~/.cursor/mcp.json`.
-
-**Cherry Studio**: Settings → MCP Servers → Add server, type *stdio*,
-command `python`, arguments the path to `biomanager_mcp.py`, and the three
-settings as environment variables.
+Other apps that only start commands take the same command, arguments and
+three settings.
 
 ## 4. Use it
 
@@ -94,4 +105,5 @@ what's due*.
 
 What may be proposed comes from your BioManager (`/api/v1/actions`), so an
 update to BioManager reaches the assistant without changing this program.
+The tools themselves are `app/assistant_tools.py`, shared with `/api/v1/mcp`.
 The user guide's *AI assistants* page has more.

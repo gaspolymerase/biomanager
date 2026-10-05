@@ -1906,6 +1906,61 @@ class NotebookPendingInsert(Base):
     done_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class OAuthClient(Base):
+    """An assistant app that registered itself to connect (app/oauth.py,
+    RFC 7591): claude.ai, ChatGPT, Claude Code…"""
+    __tablename__ = "oauth_clients"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    secret_hash: Mapped[str] = mapped_column(String(64), default="")    # empty: a public client
+    name: Mapped[str] = mapped_column(String(120), default="")
+    redirect_uris: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class OAuthCode(Base):
+    """A one-time authorization code, given after the person said yes."""
+    __tablename__ = "oauth_codes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    client_id: Mapped[str] = mapped_column(String(64), default="")
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    redirect_uri: Mapped[str] = mapped_column(Text, default="")
+    code_challenge: Mapped[str] = mapped_column(String(128), default="")
+    scope: Mapped[str] = mapped_column(String(80), default="propose")
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class OAuthGrant(Base):
+    """One connection: its access token is an api_tokens row (Read and
+    propose), renewed with the refresh token, which changes every time."""
+    __tablename__ = "oauth_grants"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(64), default="", index=True)
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    api_token_id_fk: Mapped[int] = mapped_column(ForeignKey("api_tokens.id", ondelete="CASCADE"), index=True)
+    refresh_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    refresh_expires_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class OAuthLinkCode(Base):
+    """A connection code a person makes in Settings, to say yes to an
+    assistant from the internet, where the lab shows no sign-in form."""
+    __tablename__ = "oauth_link_codes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class Feedback(Base):
     """Something someone in the lab reported from Send feedback
     (app/feedback.py): a problem, an idea or a question. It stays in the

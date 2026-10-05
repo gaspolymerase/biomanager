@@ -250,7 +250,7 @@ def write_snapshot(path: Path, user: UserAccount | None = None) -> dict[str, int
 # tests/test_lab_copy.py checks that each table holding someone's own rows
 # is named here, or in MEMBER_SEES_WHOLE, so a new one is decided on.
 ADMIN_ONLY = ("api_tokens", "lab_copy_keys", "guest_passes", "user_identities", "feedback", "audit_log",
-              "proposal_changes", "proposals")
+              "proposal_changes", "proposals", "oauth_clients", "oauth_codes", "oauth_grants", "oauth_link_codes")
 OWN_ROWS = {"notifications": "recipient_username", "calendar_subscriptions": "owner",
             "google_calendar_links": "owner", "calendar_feeds": "owner", "notebook_templates": "owner_username",
             # Batch history: a member's own, as the Batches page shows them

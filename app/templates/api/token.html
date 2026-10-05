@@ -29,12 +29,25 @@
   {% if scope_key == 'propose' %}
   <section class="card p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('Connect an AI assistant') }}</h2>
-    <p class="mt-1 text-[12.5px] leading-snug text-muted">
-      {% trans %}The assistant runs a small program from BioManager's source, mcp/biomanager_mcp.py (install it once with
-      python -m pip install -r mcp/requirements.txt). Add this to your assistant app's MCP settings (Claude Desktop:
-      Settings → Developer → Edit Config), with the path to where you put the source.{% endtrans %}
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Claude Code, in a terminal:') }}</p>
+    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp-cli">claude mcp add --transport http biomanager {{ server }}/api/v1/mcp --header "Authorization: Bearer {{ token }}"</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp-cli">{{ icon('copy') }} {{ _('Copy') }}</button>
+    <p class="mt-3 text-[12.5px] leading-snug text-muted">{{ _('Cursor, Cherry Studio and other apps that connect to an MCP address (in their MCP settings):') }}</p>
+    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp-http">{
+  "mcpServers": {
+    "biomanager": {
+      "url": "{{ server }}/api/v1/mcp",
+      "headers": { "Authorization": "Bearer {{ token }}" }
+    }
+  }
+}</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp-http">{{ icon('copy') }} {{ _('Copy') }}</button>
+    <p class="mt-3 text-[12.5px] leading-snug text-muted">
+      {% trans %}Claude Desktop runs a small program from BioManager's source, mcp/biomanager_mcp.py (install it once with
+      python -m pip install -r mcp/requirements.txt). Add this to its config (Settings → Developer → Edit Config), with the
+      path to where you put the source:{% endtrans %}
     </p>
-    <pre class="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp">{
+    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp">{
   "mcpServers": {
     "biomanager": {
       "command": "python",
@@ -48,9 +61,6 @@
   }
 }</pre>
     <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp">{{ icon('copy') }} {{ _('Copy') }}</button>
-    <p class="mt-3 text-[12.5px] leading-snug text-muted">{{ _('Claude Code, in a terminal:') }}</p>
-    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp-cli">claude mcp add biomanager --env BIOMANAGER_URL={{ server }} --env BIOMANAGER_TOKEN={{ token }} --env BIOMANAGER_ASSISTANT=Claude -- python /path/to/biomanager/mcp/biomanager_mcp.py</pre>
-    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp-cli">{{ icon('copy') }} {{ _('Copy') }}</button>
     <p class="mt-3 text-[12px] leading-snug text-muted">
       {% trans link=assistants_guide %}Then tell it what you did. What it proposes waits for you on Proposed changes, in
       your account menu. More in the guide: <a href="{{ link }}" target="_blank" rel="noopener">AI assistants</a>.{% endtrans %}

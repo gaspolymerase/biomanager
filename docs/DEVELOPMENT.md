@@ -850,8 +850,8 @@ from `ENDPOINTS`, so a new endpoint goes there too.
 
 - **Tokens** (`api_tokens`): made under Settings → API tokens (`api/_card.html`),
   `bmt_` and 40 random characters, shown once (`api/token.html`); only the
-  SHA-256 and the first ten characters (`hint`) are kept. `scope` is `read` or
-  `write`; `expires_at` 30, 90, 365 days or never. Members make them only
+  SHA-256 and the first ten characters (`hint`) are kept. `scope` is `read`,
+  `write` or `propose` (below); `expires_at` 30, 90, 365 days or never. Members make them only
   while Lab setup's `members_api_tokens` is on (default on); guests never.
   Admins see and revoke everyone's.
 - **Signing in**: `app.load_current_user` hands `/api/v1…` to
@@ -861,7 +861,8 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   skips them, and `api._no_cookie` strips any Set-Cookie. A disabled
   account, a revoked or expired token, or members' tokens switched off: 401.
   `g.audit_batch = "API: <label>"` marks the change history.
-- `_gate`: 401 without a token, 403 when a read token tries a change, 429
+- `_gate`: 401 without a token (with `WWW-Authenticate` pointing at the
+  OAuth resource metadata, below), 403 when a read token tries a change, 429
   past `PER_MINUTE` (600) per token per worker (`_Rate`, in memory).
 - **Lists** page by row id: `?limit` (100, at most 1000) and `?after`;
   the reply's `next` is the URL of the following page. Filters are in SQL.
@@ -967,22 +968,89 @@ button's `appendLogLine` (so it travels through Yjs like typing) and posts
 `/inserts/done`. Notebook rows aren't in the change history, so undoing an
 approved proposal doesn't take a note back out.
 
-### The MCP server (`mcp/`)
+### The tools (`app/assistant_tools.py`)
 
-`mcp/biomanager_mcp.py` is an MCP server (the `mcp` SDK, version 2:
-`MCPServer`, stdio) that an assistant app starts as a command; it is run
-from this repository, not packaged (`mcp/requirements.txt`, `mcp/README.md`).
-It holds no data: its tools call `/api/v1` with `BIOMANAGER_URL` and
-`BIOMANAGER_TOKEN` (`lab_overview` → `/me` and `/vocabulary`, `resolve`,
-`get`/`list` limited to the API's read paths, `whats_due`, `list_actions`,
-`propose_changes` → `POST /proposals` signed `BIOMANAGER_ASSISTANT`,
-`proposal_status`, `discard_proposal`). The tool logic is plain functions
-over `Api`, wrapped by `build_server()`, so `tests/test_mcp.py` runs them
-against the test app without the SDK; `propose_changes`' description
-lists the lab's own `/actions` at start-up. Its `INSTRUCTIONS` tell the
-assistant to resolve every record, ask rather than guess, send one proposal
-and give the review link. **Settings → API tokens → Connect an AI
-assistant** makes a `propose` token and `api/token.html` shows the setup.
+What an assistant gets, standard library only so both servers below share
+it: `INSTRUCTIONS` (resolve every record, ask rather than guess, send one
+proposal, give the review link), `PROMPTS`, and `TOOLS`, each a
+description, an input JSON Schema and a function over `Api` (a small
+urllib client of `/api/v1`): `lab_overview` → `/me` and `/vocabulary`,
+`resolve`, `get`/`list` limited to the API's read paths (`READABLE`),
+`whats_due`, `list_actions`, `propose_changes` → `POST /proposals`,
+`proposal_status`, `discard_proposal`. `propose_changes`' description is
+built from the lab's own `/actions` (`description(api, name)`).
+`call_tool()` turns an `ApiError` or bad arguments into `{"error": …}` for
+the assistant to read.
+
+### The local MCP server (`mcp/`)
+
+`mcp/biomanager_mcp.py` (the `mcp` SDK, version 2: `MCPServer`, stdio) is
+started as a command by an assistant app that can't use an address
+(Claude Desktop on the lab network); it is run from this repository, not
+packaged (`mcp/requirements.txt`, `mcp/README.md`). `build_server()`
+registers `TOOLS` and `PROMPTS`; it calls `/api/v1` with `BIOMANAGER_URL`
+and `BIOMANAGER_TOKEN` and signs proposals `BIOMANAGER_ASSISTANT`.
+`tests/test_mcp.py` runs the tools against the test app without the SDK.
+
+### The MCP endpoint (`app/mcp_http.py`)
+
+`POST /api/v1/mcp`: MCP's streamable HTTP, kept to what the clients need.
+One JSON-RPC message (or a batch) per POST, answered with JSON;
+notifications get 202; no session and no event stream (`GET` is 405,
+from `api.unknown`). `initialize` echoes a version in `PROTOCOL_VERSIONS`
+or offers the newest; `tools/list` adds titles and read-only hints;
+`tools/call` returns the result as text and `structuredContent`. It sits
+in `/api/v1`, so `_gate` checks the token and the rate; any scope may call
+it (`api.mcp` is in `PROPOSING`), and each tool runs through
+`InProcessApi`, the app's test client with the caller's own token, so a
+tool can do nothing the API wouldn't for that token. Proposals are signed
+with the token's label (the OAuth client's name, "Claude").
+
+### Connectors: OAuth (`app/oauth.py`)
+
+claude.ai, the Claude apps and ChatGPT add `/api/v1/mcp` as a custom
+connector and sign in with OAuth 2.1; their servers make the calls, so
+this needs the lab on the internet (`BIOMANAGER_PUBLIC_URL`, set by
+`internet-access.sh`). Claude Code can use it too, with a loopback
+redirect.
+
+- Discovery: `/.well-known/oauth-protected-resource[/api/v1/mcp]` (RFC 9728;
+  `resource` is `issuer()/api/v1/mcp`) and
+  `/.well-known/oauth-authorization-server` (RFC 8414). The issuer is
+  `request.url_root`, so from the internet it is the public address
+  (Caddy's internet site sets `Host`), from inside the lab's own.
+- `POST /oauth/register` (RFC 7591, JSON): https or loopback redirects;
+  public clients (`none`) or a `bms_` secret (post or Basic). Clients
+  unused for `UNUSED_CLIENT_FOR` go, unless a grant made with one can
+  still be refreshed.
+- `/oauth/authorize`: an unknown client or redirect is an error page (never
+  a redirect); then `response_type=code`, PKCE `S256` and `resource` are
+  required. Loopback redirects match on any port (`redirect_matches`).
+  Signed in: a consent page naming the client and where it sends you back.
+  From the internet nobody is signed in (the lab never shows its sign-in
+  form there), so the page takes a **connection code** instead
+  (`oauth_link_codes`: made on Connect an AI assistant, hashed, once, 10
+  minutes, wrong guesses throttled by `link_throttle`). The person must be
+  allowed to make tokens (`api.may_make_tokens`). Every answer carries
+  `iss` (RFC 9207, which ChatGPT wants).
+- `POST /oauth/token` (form-encoded): an `authorization_code` (`oauth_codes`,
+  hashed, once, 5 minutes, PKCE and redirect checked) gives an access
+  token that is an `api_tokens` row (scope `propose`, label the client's
+  name, an hour) and a `bmr_` refresh token (`oauth_grants`, 90 days). A
+  refresh rotates both into the same `api_tokens` row, so Settings lists
+  one row per connection; revoking it ends the connection
+  (`invalid_grant`). Errors are RFC 6749's JSON.
+- The internet gate (`guests.OPEN_PREFIXES`) lets `/api/v1/`, `/oauth/`
+  and `/.well-known/oauth-` through without a session: each answers only to
+  a token, a code or with public metadata. `/oauth/token` and
+  `/oauth/register` skip the cross-site check (no cookie is involved).
+- **Settings → API tokens → Connect an AI assistant**
+  (`oauth.connect_page`, `oauth/connect.html`): the connector address and
+  **Get a connection code** when the lab is on the internet, and **Make a
+  token** (scope `propose`), after which `api/token.html` shows the Claude
+  Code command, the address-and-header block for Cursor and Cherry Studio,
+  and the local server's setup.
+- The four tables are admin-only in a lab copy (`lab_copy.ADMIN_ONLY`).
 
 ## Feedback and the usage report
 

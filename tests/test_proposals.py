@@ -47,12 +47,12 @@ class Proposing(Base):
         self.assertEqual(one("select status from proposals where id=?", pid), "pending")
 
     def test_connect_an_assistant_gives_the_setup_to_copy(self):
-        self.assertIn("Connect an AI assistant", self.get_ok(self.m, "/settings"))
+        self.assertTrue("/settings/assistant" in self.get_ok(self.m, "/settings"))
         r = self.m.post("/settings/api-tokens", data={"label": "AI assistant", "scope": "propose", "expires": "365"})
         page = r.get_data(as_text=True)
-        self.assertIn('"mcpServers"', page)
-        self.assertIn('"BIOMANAGER_URL": "http://localhost"', page)
-        self.assertIn("claude mcp add biomanager", page)
+        for needed in ('"mcpServers"', '"BIOMANAGER_URL": "http://localhost"', '"url": "http://localhost/api/v1/mcp"',
+                       "claude mcp add --transport http biomanager http://localhost/api/v1/mcp"):
+            self.assertTrue(needed in page, needed)
         self.assertEqual(one("select scope from api_tokens order by id desc limit 1"), "propose")
 
     def test_a_read_token_cannot_propose(self):

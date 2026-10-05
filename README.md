@@ -988,9 +988,13 @@ track.
   would and keeps under **Proposed changes** (in your account menu, with a
   notification) as one plain summary. **Approve** makes every change at
   once, as one batch you can undo; **Discard** makes none; only you, signed
-  in, can approve. **Connect an AI assistant** on the same card makes such
-  a token and the setup to copy into Claude, Cursor or Cherry Studio, which
-  run `mcp/biomanager_mcp.py` from this repository (`mcp/README.md`).
+  in, can approve. **Connect an AI assistant** on the same card connects
+  one. Claude Code, Cursor and Cherry Studio use BioManager's own MCP
+  address (`/api/v1/mcp`) with such a token, nothing to install; Claude
+  Desktop runs `mcp/biomanager_mcp.py` from this repository
+  (`mcp/README.md`). On a lab server that is on the internet, claude.ai,
+  the Claude phone apps and ChatGPT add the same address as a custom
+  connector and sign in with a one-time connection code.
   Changes are in the change history
   under your name, marked with the token's name. The reference, with
   examples in curl, Python and R, is at `/api` on your BioManager

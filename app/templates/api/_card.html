@@ -26,13 +26,10 @@
           </label>
           <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a token') }}</button>
         </form>
-        <form method="post" action="{{ url_for('api_pages.make_token') }}" class="flex flex-wrap items-center gap-2">
-          <input type="hidden" name="label" value="{{ _('AI assistant') }}">
-          <input type="hidden" name="scope" value="propose">
-          <input type="hidden" name="expires" value="365">
-          <button type="submit" class="btn">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</button>
-          <span class="text-[12px] text-muted">{{ _('A Read and propose token, and the setup to copy into Claude, Cursor or another assistant app.') }}</span>
-        </form>
+        <div class="flex flex-wrap items-center gap-2">
+          <a class="btn" href="{{ url_for('oauth.connect_page') }}">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</a>
+          <span class="text-[12px] text-muted">{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}</span>
+        </div>
       {% endif %}
       {% if api_card.rows %}
         <div class="overflow-x-auto">

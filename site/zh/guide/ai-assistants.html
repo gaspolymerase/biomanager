@@ -125,17 +125,36 @@
         由你在 BioManager 里批准。它自己什么都不会改。</p>
 
       <h2 id="connect">连接助手</h2>
+      <p>打开<b>设置 → API 令牌 → 连接 AI 助手</b>（Connect an AI assistant）。它会列出连接你的 BioManager 的几种方式，
+        地址已经填好。都不用安装任何东西，只有在实验室网络里用 Claude Desktop 时例外（见下文）。</p>
+
+      <h3 id="connector">从 claude.ai、Claude 应用或 ChatGPT 连接</h3>
+      <p>这些应用是从互联网访问 BioManager 的，所以实验室服务器要在互联网上：由管理员打开互联网访问（见服务器手册）。
+        之后连接页面会显示<b>连接器地址</b>，以 <code>/api/v1/mcp</code> 结尾。桌面版无法这样访问，请用下面的方式。</p>
       <ol class="steps-list">
-        <li><b>设置 → API 令牌 → 连接 AI 助手</b>（Connect an AI assistant）。它会生成一个<b>读取和提议</b>的令牌，并显示
-          要复制的设置，里面已经填好了你的 BioManager 地址和令牌。请马上复制：令牌只显示一次。</li>
-        <li>助手运行的是 BioManager 源代码里的一个小程序 <code>mcp/biomanager_mcp.py</code>：下载源代码后运行一次
-          <code>python -m pip install -r mcp/requirements.txt</code>。然后把设置加到你的助手应用里；Claude Desktop、
-          Claude Code、Cursor 和 Cherry Studio 的步骤在 <code>mcp/README.md</code> 里。</li>
-        <li>对它说：<i>根据我的记录记下今天的工作：……</i> 它会查找你提到的每只动物、每个笼和每个实验，遇到可能对应
-          多条记录时问你，然后发一个提议并附上链接。</li>
+        <li>用这个地址把 BioManager 添加为自定义连接器。Claude：<b>Settings → Connectors → Add custom connector</b>
+          （Team 或 Enterprise 套餐需要先由所有者添加）。ChatGPT：<b>Settings → Connectors</b>，开启开发者模式后，
+          新建一个使用 OAuth 的连接器。</li>
+        <li>要求连接时，会打开一个 BioManager 页面，要你输入<b>连接码</b>。在连接页面（在实验室网络里）按
+          <b>获取连接码</b>，把它输进去，再按<b>允许</b>。连接码只能用一次，10 分钟内有效。</li>
+        <li>这样就好了，网页版和手机应用都一样。这个连接会以应用的名字列在<b>设置 → API 令牌</b>里；在那里撤销就能断开。</li>
       </ol>
+
+      <h3 id="token">从 Claude Code、Cursor、Cherry Studio 或 Claude Desktop 连接</h3>
+      <p>这些应用运行在能连上 BioManager 的电脑上：桌面版就是同一台电脑，实验室服务器则是实验室网络里的任何电脑。
+        不需要互联网访问。</p>
+      <ol class="steps-list">
+        <li>在连接页面按<b>生成令牌</b>。它会生成一个<b>读取和提议</b>的令牌，下一页会给出每个应用要复制的设置，
+          地址和令牌都已填好。请马上复制：令牌只显示一次。</li>
+        <li><b>Claude Code</b>：在终端里运行一条命令。<b>Cursor</b> 和 <b>Cherry Studio</b>：在它们的 MCP 设置里填地址和令牌。
+          <b>Claude Desktop</b> 则运行 BioManager 源代码里的一个小程序 <code>mcp/biomanager_mcp.py</code>（先运行一次
+          <code>python -m pip install -r mcp/requirements.txt</code> 安装）；步骤在 <code>mcp/README.md</code> 里。</li>
+      </ol>
+
+      <h3 id="use-it">使用</h3>
+      <p>对它说：<i>根据我的记录记下今天的工作：……</i> 它会查找你提到的每只动物、每个笼和每个实验，遇到可能对应
+        多条记录时问你，然后发一个提议并附上链接。</p>
       <ul>
-        <li>用桌面版时，助手应用必须在同一台电脑上；用实验室服务器时，任何能连上服务器的电脑都可以。</li>
         <li>助手能读取你能读取的内容，以你的身份。到<b>设置 → API 令牌</b>撤销它的令牌，就能切断它。</li>
       </ul>
 
@@ -163,8 +182,11 @@
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>助手说连不上 BioManager</h3>
-      <p>确认 BioManager 正在运行，设置里的 <code>BIOMANAGER_URL</code> 是它的地址（桌面版的地址在<b>设置 → API 令牌</b>里），
-        并且令牌没有被撤销或过期。</p>
+      <p>Claude Code、Cursor 或 Cherry Studio：确认 BioManager 正在运行，设置里的地址是它的地址（桌面版的地址在
+        <b>设置 → API 令牌</b>里），并且令牌没有被撤销或过期。claude.ai、Claude 应用或 ChatGPT：用不连实验室 Wi-Fi 的手机
+        打开连接器地址，确认能打开（应该显示一条要求 API 令牌的简短消息），并且地址以 <code>/api/v1/mcp</code> 结尾。</p>
+      <h3>连接时说连接码不对</h3>
+      <p>连接码只能用一次，10 分钟内有效。再按一次<b>获取连接码</b>，用新的连接码。</p>
       <h3>批准时说某条记录在提议之后被改过</h3>
       <p>有人（或你自己）在这期间改过它，提议可能已经过时。<b>丢弃</b>它，让助手重新提议。</p>
     </section>
@@ -180,6 +202,9 @@
       <p>本页内容</p>
       <ol>
         <li class="lvl2"><a href="#connect">连接助手</a></li>
+        <li class="lvl3"><a href="#connector">从 claude.ai、Claude 应用或 ChatGPT 连接</a></li>
+        <li class="lvl3"><a href="#token">从 Claude Code、Cursor、Cherry Studio 或 Claude Desktop 连接</a></li>
+        <li class="lvl3"><a href="#use-it">使用</a></li>
         <li class="lvl2"><a href="#what-it-can-do">它能提议什么</a></li>
         <li class="lvl2"><a href="#approving">批准</a></li>
         <li class="lvl2"><a href="#troubleshooting">故障排除</a></li>
