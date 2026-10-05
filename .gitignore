@@ -20,10 +20,11 @@ node_modules/
 # macOS
 .DS_Store
 
-# Claude Code: project notes, memory, local settings, MCP config, preview
-# config and agent worktrees. Kept private, never in this public repository.
+# Claude Code: memory, local settings, MCP config, preview config and agent
+# worktrees — local state, kept private. CLAUDE.md itself is tracked: it is
+# how this repository works, and an ignored file does not reach a fresh
+# clone or an agent's worktree, where it is needed most.
 .claude/
-CLAUDE.md
 CLAUDE.local.md
 .claude.json
 .mcp.json
