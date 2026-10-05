@@ -1305,6 +1305,10 @@ kbd {
   }
   .mg::before { background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.5) 30%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.5) 72%, #fff); }
   .fl-chg b { color: #3f6fe6; }
+  .fl-row { background: linear-gradient(165deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25));
+    box-shadow: inset 0 1px 1px #fff, 0 0 0 0.5px rgba(30, 50, 110, 0.16), 0 6px 14px -8px rgba(30, 60, 160, 0.3); }
+  .ai-card .fl-row b { border-color: rgba(30, 50, 110, 0.35); }
+  .ai-card .fl-row u { background: rgba(30, 50, 110, 0.22); }
   .fl-box::before { opacity: 0.6; }
   .fl-gate { background: #fff; }
   @keyframes fl-ok { 0%, 54% { color: var(--mute); border-color: var(--ln); background: #fff; }
