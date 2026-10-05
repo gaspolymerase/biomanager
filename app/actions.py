@@ -37,7 +37,8 @@ from .db import SessionLocal
 from .i18n import gettext, ngettext
 from .models import (FISH_SEX_OPTIONS, FISH_STATUS_OPTIONS, TANK_PURPOSE_OPTIONS, AuditEntry, BatchRecord, CageRecord,
                      ClutchRecord, FishLine, FishRack, FishRecord, LitterRecord, MouseRack, MouseRecord, TankRecord,
-                     Organism, OrganismModule, OrgCohort, OrgCross, OrgDue, OrgHousing, OrgLine, OrgLocation,
+                     Experiment, ExperimentStep, Organism, OrganismModule, OrgCohort, OrgCross, OrgDue, OrgHousing,
+                     OrgLine, OrgLocation,
                      StockFrozen, StockModule, StockRack, StockUnit, UserAccount, WaterSystem)
 
 MAX_CHANGES = 200
@@ -524,7 +525,8 @@ def _wean_said(s, cage, v) -> str:
 
 
 @action(name="note_add", area="mice", title="Add to a note",
-        help="Add a line to the notes of a mouse, cage or litter (what is there stays).", target="mouse|cage|litter",
+        help="Add a line to the notes of a mouse, cage or litter, or to an experiment's description (what is there "
+             "stays).", target="mouse|cage|litter|experiment",
         fields=(Field("text", "text", "What to add", required=True),),
         describe=lambda _s, r, v: gettext("Note on %(record)s: “%(text)s”", record=_record_label(r), text=v["text"]))
 def _note_add(_s, record, v):
@@ -532,6 +534,9 @@ def _note_add(_s, record, v):
         return [Call("PATCH", f"/api/v1/mice/{record.mouse_id}", json={"note": _added(record.note, v["text"])})]
     if isinstance(record, CageRecord):
         return [Call("POST", f"/colony/cages/{record.id}/update", form=[("notes", _added(record.notes, v["text"]))])]
+    if isinstance(record, Experiment):
+        text = f"{record.description.rstrip()}\n{v['text']}" if (record.description or "").strip() else v["text"]
+        return [Call("POST", f"/experiments/{record.id}/update", form=[("description", text)])]
     return [Call("POST", f"/colony/litters/{record.id}/update", form=[("notes", _added(record.notes, v["text"]))])]
 
 
@@ -540,6 +545,8 @@ def _record_label(r) -> str:
         return gettext("mouse %(mouse)s", mouse=_mouse_label(r))
     if isinstance(r, CageRecord):
         return gettext("cage %(cage)s", cage=r.cage_id)
+    if isinstance(r, Experiment):
+        return gettext("the experiment “%(name)s”", name=r.name)
     return gettext("litter %(litter)s", litter=r.litter_id)
 
 
@@ -1171,6 +1178,198 @@ def _org_due_done(s, due, v):
     return [Call("POST", f"/organisms/{module.key}/due/{due.id}/done", form=[("done_on", v.get("done_on", ""))])]
 
 
+# ---------------------------------------------------------------- experiments
+
+def _experiments_named(s, name: str) -> list:
+    rows = list(s.scalars(select(Experiment).where(func.lower(Experiment.name) == name.lower())))
+    return rows or ([s.get(Experiment, int(name))] if name.isdigit() else [])
+
+
+KINDS.update({
+    "experiment": (Experiment, None, _experiments_named),
+    "experiment_step": (ExperimentStep, None, None),
+})
+
+
+def _place(s, exp):
+    from . import experiments as xp
+    place = xp.place_for(s, exp.db or "colony")
+    if place is None:
+        raise ActionError(gettext("You can't open the database of the experiment “%(name)s”.", name=exp.name))
+    return place
+
+
+def _subject_keys(s, exp, names) -> list[str]:
+    """The experiment's animals a person named: by key ("mouse:12"), label
+    ("#1043", "1043"), or a reference to the mouse."""
+    from . import experiments as xp
+    place = _place(s, exp)
+    members = xp.subjects(s, exp, place)
+    by = {x.key: x for x in members}
+    by.update({x.label.lstrip("#"): x for x in members})
+    keys = []
+    for name in names:
+        if isinstance(name, dict) and name.get("kind") == "mouse":
+            name = f"mouse:{name.get('id')}"
+        x = by.get(str(name).strip().lstrip("#"))
+        if x is None:
+            raise ActionError(gettext("%(animal)s isn't in the experiment “%(name)s”.", animal=_show(name), name=exp.name))
+        keys.append(x.key)
+    return keys
+
+
+def _step_day(step, exp, v) -> int:
+    from .experiment_steps import day_date, safe_days
+    days = safe_days(step)
+    if "day" in v:
+        if v["day"] not in days:
+            raise ActionError(gettext("Day %(day)s is not in this step's plan (%(days)s).", day=v["day"], days=step.days))
+        return v["day"]
+    on = date.fromisoformat(v["done_on"]) if v.get("done_on") else date.today()
+    for day in days:
+        if day_date(exp.start_date, day) == on:
+            return day
+    raise ActionError(gettext("No day of this step falls on %(date)s; say which day of the plan (%(days)s).",
+                              date=on.isoformat(), days=step.days))
+
+
+def _step_label(s, step) -> str:
+    exp = s.get(Experiment, step.experiment_id_fk)
+    what = step.agent or step.kind
+    return f"{what} · {exp.name}" if exp else what
+
+
+@action(name="experiment_step_done", area="experiments", title="Mark a step done",
+        help="Record a planned step (an injection, a readout day…) as done, for all of its animals or some. "
+             "Steps and their days are in GET /api/v1/experiments/{id} (page.steps).", target="experiment_step",
+        fields=(Field("day", "int", "Which day of the plan (found from done_on if left out)"),
+                Field("done_on", "date", "When it was done (today if left out)"),
+                Field("animals", "list", "Only these animals: their keys or labels (all of the step's group if left out)"),
+                Field("values", "object", "For a readout step: each animal's value, by key or label"),
+                Field("note", "text", "A note")),
+        describe=lambda s, st, v: gettext("Experiment: %(step)s, day %(day)s done%(on)s%(who)s",
+                                          step=_step_label(s, st),
+                                          day=_step_day(st, s.get(Experiment, st.experiment_id_fk), v),
+                                          on=_on(v.get("done_on")),
+                                          who=gettext(" for %(n)s animals", n=len(v["animals"]))
+                                          if v.get("animals") else ""))
+def _experiment_step_done(s, step, v):
+    exp = s.get(Experiment, step.experiment_id_fk)
+    day = _step_day(step, exp, v)
+    body = {"done_on": v.get("done_on") or date.today().isoformat(), "note": v.get("note", "")}
+    if v.get("animals"):
+        body["subjects"] = _subject_keys(s, exp, v["animals"])
+    if v.get("values"):
+        keys = _subject_keys(s, exp, list(v["values"]))
+        body["values"] = {k: str(x) for k, x in zip(keys, v["values"].values())}
+    return [Call("POST", f"/colony/experiments/{exp.id}/steps/{step.id}/day/{day}/record", json=body)]
+
+
+@action(name="experiment_reading", area="experiments", title="Record a readout",
+        help="The experiment's readout (a weight, a count, a score) for some animals on one day.",
+        target="experiment",
+        fields=(Field("values", "object", "Each animal's reading, by its key or label: {\"1043\": 24.5}",
+                      required=True),
+                Field("date", "date", "The day (today if left out)")),
+        describe=lambda _s, e, v: gettext("Experiment “%(name)s”: readout%(on)s for %(n)s animals", name=e.name,
+                                          on=_on(v.get("date")), n=len(v["values"])))
+def _experiment_reading(_s, exp, v):
+    return [Call("POST", f"/api/v1/experiments/{exp.id}/readings",
+                 json={"date": v.get("date") or date.today().isoformat(), "values": v["values"]})]
+
+
+@action(name="experiment_add_animals", area="experiments", title="Add animals to an experiment",
+        help="Add mice (one by one, or a whole cage), or a tank's fish, or a housing unit's animals, to a treatment group.",
+        target="experiment",
+        fields=(Field("mice", "mice", "Mice to add"),
+                Field("cage", "cage", "Every living mouse in this cage"),
+                Field("tank", "tank", "Every fish row in this tank (a zebrafish experiment)"),
+                Field("housing", "org_housing", "Every animal in this housing (an organism experiment)"),
+                Field("group", "text", "Their treatment group")),
+        describe=lambda s, e, v: gettext("Experiment “%(name)s”: add %(what)s%(group)s", name=e.name,
+                                         what=_added_what(s, v), group=f" ({v['group']})" if v.get("group") else ""))
+def _experiment_add(s, exp, v):
+    calls = []
+    group = v.get("group", "")
+    for m in _mice(s, v.get("mice") or []):
+        calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
+                          json={"how": "one", "value": str(m.id), "group": group}))
+    if v.get("cage") not in (None, ""):
+        calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
+                          json={"how": "group", "value": find(s, "cage", v["cage"]).cage_id, "group": group}))
+    for key in ("tank", "housing"):
+        if v.get(key) not in (None, ""):
+            rec = find(s, "tank" if key == "tank" else "org_housing", v[key])
+            calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
+                              json={"how": "group", "value": str(rec.id), "group": group}))
+    if not calls:
+        raise ActionError(gettext("Say which animals to add: mice, a cage, a tank or a housing unit."))
+    return calls
+
+
+def _added_what(s, v) -> str:
+    bits = []
+    if v.get("mice"):
+        bits.append(_mice_label(_mice(s, v["mice"])))
+    if v.get("cage") not in (None, ""):
+        bits.append(gettext("cage %(cage)s", cage=find(s, "cage", v["cage"]).cage_id))
+    if v.get("tank") not in (None, ""):
+        bits.append(find(s, "tank", v["tank"]).tank_id)
+    if v.get("housing") not in (None, ""):
+        rec = find(s, "org_housing", v["housing"])
+        bits.append(rec.code or f"#{rec.id}")
+    return ", ".join(bits) or "-"
+
+
+@action(name="experiment_change", area="experiments", title="Change an experiment",
+        help="Its status, dates or name; what is left out stays. To add to its description, use note_add.",
+        target="experiment",
+        fields=(Field("status", "text", "active, paused, done or cancelled",
+                      choices=("active", "paused", "done", "cancelled")),
+                Field("start_date", "date", "Day 1"),
+                Field("end_date", "date", "When it ends"),
+                Field("name", "text", "A new name")),
+        describe=lambda s, e, v: gettext("Experiment “%(name)s”: %(fields)s", name=e.name,
+                                         fields=", ".join(f"{k} → {_named(s, k, v[k])}" for k in v)))
+def _experiment_change(_s, exp, v):
+    if not v:
+        raise ActionError(gettext("Say what to change on the experiment “%(name)s”.", name=exp.name))
+    return [Call("POST", f"/experiments/{exp.id}/update", form=[(k, str(x)) for k, x in v.items()])]
+
+
+# ---------------------------------------------------------------- notebook
+
+def _pages_titled(s, title: str) -> list:
+    from .models import NotebookPage
+    rows = list(s.scalars(select(NotebookPage).where(func.lower(NotebookPage.title) == title.lower())))
+    return rows or ([s.get(NotebookPage, int(title))] if title.isdigit() else [])
+
+
+def _notebook_kind():
+    from .models import NotebookPage
+    return (NotebookPage, None, _pages_titled)
+
+
+KINDS["notebook_page"] = _notebook_kind()
+
+
+@action(name="notebook_note", area="notebook", title="Add to the notebook's log",
+        help="A timestamped line in the Log of today's daily log (made if it doesn't exist yet), or of another "
+             "notebook page you may edit.", target=None,
+        fields=(Field("text", "text", "What to write", required=True),
+                Field("time", "text", "The time it happened, like 14:30 (now if left out)"),
+                Field("page", "notebook_page", "Another page (today's daily log if left out)")),
+        describe=lambda s, _t, v: gettext("Notebook: “%(text)s” in the log of %(page)s", text=v["text"],
+                                          page=f"“{find(s, 'notebook_page', v['page']).title}”"
+                                          if v.get("page") not in (None, "") else gettext("today's daily log")))
+def _notebook_note(s, _target, v):
+    from flask import g
+    form = [("text", v["text"]), ("time", v.get("time", "")), ("via", g.get("proposal_source") or "")]
+    if v.get("page") not in (None, ""):
+        form.append(("page_id", str(find(s, "notebook_page", v["page"]).id)))
+    return [Call("POST", "/notebook/api/notes", form=form)]
+
+
 # ---------------------------------------------------------------- running them
 
 @dataclass
@@ -1235,11 +1434,27 @@ def _entries_since(s, last: int) -> tuple[list[dict], int]:
 
 
 def run(app, username: str, changes: list[dict], apply: bool = False, label: str = "",
-        description: str = "") -> Outcome:
+        description: str = "", lang: str = "en", source: str = "") -> Outcome:
     """Run `changes` as `username`, in order, in one transaction: a preview
     (rolled back) or, with apply, for real as one batch, kept only if every
     change went through. Each change's failed part is undone before the next
-    runs, so a preview reports every change's own problems."""
+    runs, so a preview reports every change's own problems. Summaries and
+    the pages' messages are in `lang`."""
+    from flask import g
+    with app.test_request_context("/"):
+        g.lang = lang
+        g.proposal_source = source      # who proposed it, for what says so (a notebook line)
+        # Summaries are written as this person sees the lab (helpers that
+        # read g.user: which databases they may open).
+        with SessionLocal() as s:
+            g.user = s.scalar(select(UserAccount).where(UserAccount.username == username,
+                                                        UserAccount.disabled.is_(False)))
+            if g.user is not None:
+                s.expunge(g.user)
+        return _run(app, username, changes, apply, label, description, lang)
+
+
+def _run(app, username, changes, apply, label, description, lang) -> Outcome:
     if not isinstance(changes, list) or not changes:
         return Outcome(False, [ChangeOutcome("", ok=False, errors=[gettext("There are no changes.")])])
     if len(changes) > MAX_CHANGES:
@@ -1281,7 +1496,7 @@ def run(app, username: str, changes: list[dict], apply: bool = False, label: str
                 calls = []
             for call in calls:
                 result = contained.run(app, username, call.method, call.path, data=call.form, json_body=call.json,
-                                       batch_id=batch_id, label=label)
+                                       batch_id=batch_id, label=label, lang=lang)
                 out.errors += [t for c, t in result.messages if c == "error"]
                 out.warnings += [t for c, t in result.messages if c == "warning"]
                 out.said += [t for c, t in result.messages if c not in ("error", "warning")]

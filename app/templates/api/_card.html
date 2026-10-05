@@ -10,6 +10,8 @@
       <p class="text-[12.5px] leading-snug text-muted">
         {% trans %}A token lets a script, a balance, R or another tool read the lab's records — or change them — as you, with
         exactly your permissions. Make one for each thing that uses it, so you can revoke one without the others.{% endtrans %}
+        {% trans %}For an AI assistant, choose <b>Read and propose</b>: what it proposes waits for you on Proposed
+        changes, and nothing changes until you approve it.{% endtrans %}
       </p>
       {% if api_card.allowed %}
         <form method="post" action="{{ url_for('api_pages.make_token') }}" class="flex flex-wrap items-end gap-2">
@@ -23,6 +25,13 @@
             <select name="expires">{% for key, name in api_card.expiry.items() %}<option value="{{ key }}" {% if key == '90' %}selected{% endif %}>{{ name|tr('api expiry') }}</option>{% endfor %}</select>
           </label>
           <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a token') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('api_pages.make_token') }}" class="flex flex-wrap items-center gap-2">
+          <input type="hidden" name="label" value="{{ _('AI assistant') }}">
+          <input type="hidden" name="scope" value="propose">
+          <input type="hidden" name="expires" value="365">
+          <button type="submit" class="btn">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</button>
+          <span class="text-[12px] text-muted">{{ _('A Read and propose token, and the setup to copy into Claude, Cursor or another assistant app.') }}</span>
         </form>
       {% endif %}
       {% if api_card.rows %}

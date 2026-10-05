@@ -1,6 +1,11 @@
 # Plan: AI assistants suggest records, people approve them
 
-Status: agreed, not started. Scope for the first round: every animal colony
+Status: built (steps 1 to 4 below), on a branch, not yet released: actions
+for every animal database, experiments and the daily log; `/resolve`,
+`/vocabulary`, `/due`, `/actions`; proposals with the Propose-only token and
+Proposed changes; the MCP server in `mcp/` and Connect an AI assistant.
+Members may make Propose-only tokens under the same Lab setup switch as
+other tokens. Scope for the first round: every animal colony
 (mice, zebrafish, flies and worms, any other organism), experiments, and the
 notebook's daily log.
 
@@ -72,15 +77,18 @@ notebook's daily log.
 
 ### 1. Shared actions
 
-Each action the assistant may propose becomes one function that both the
-page and the API call, moved out of the page handler, so the API can never
-behave differently from the page. Functions take the session, the acting
-person and plain values, raise a validation error with the page's own
-message, and leave committing to the caller (so a proposal can try them all
-and roll back).
+Each action the assistant may propose is sent to the page itself, as the
+form it would post (or to the API's own write, for a mouse's fields and
+weights), so a proposal can never behave differently from the page. Rather
+than moving each page's code into shared functions, the pages run as the
+person inside one transaction that is rolled back for a preview and kept
+for an approval (`app/contained.py`: every session joins it, so the pages'
+commits become savepoints). The catalogue is `app/actions.py`: each
+action's fields, target, summary line and the requests it makes; how it
+works is in `docs/DEVELOPMENT.md` ("Proposed changes").
 
 **Mouse colony** (app.py routes such as `cage_give_birth`, `cage_wean`,
-`cage_wean_distribute`, the mouse and cage forms):
+`cage_wean_distribute`, the mouse and cage forms; done):
 new mouse; change a mouse (any field the sheet edits, including genotype and
 status); record a weight; new cage; change a cage (purpose, owner, rack and
 position); litter born (cage, date); create the litter at genotyping
@@ -88,23 +96,24 @@ position); litter born (cage, date); create the litter at genotyping
 existing or new cage); move mice to a cage; mark dead or culled (date,
 reason); a note on a mouse, cage or litter.
 
-**Zebrafish** (`/zebrafish/...`): new tank; change a tank (line, count,
+**Zebrafish** (`/zebrafish/...`; done): new tank; change a tank (line, count,
 status); move a tank and return it; a cross (`/zebrafish/mate`); new or
 changed clutch; new or changed fish row; a sacrifice entry (`/zebrafish/sac`);
 a water reading.
 
-**Flies and worms** (stock_routes.py, stock_service.py): new vial or plate;
-change one; flip, collect, duplicate; mark a rack flipped; a frozen stock.
+**Flies and worms** (stock_routes.py, stock_service.py; done): new vial or
+plate; change one; copy, collect, discard, restore, shifted, progeny done,
+scored; mark a rack flipped; a frozen stock.
 
-**Any other organism** (organism_routes.py, organism_service.py): housing,
-animal, line, cross, cohort, reading and genotype saves; mark a scheduled job
-done.
+**Any other organism** (organism_routes.py, organism_service.py; done):
+housing, animal, line, cross, cohort, reading and genotype saves; mark a
+scheduled job done.
 
-**Experiments** (experiments.py, experiment_steps.py): record a readout
+**Experiments** (experiments.py, experiment_steps.py; done): record a readout
 (exists); mark a step done for some or all of its animals (date, dose given,
 notes); add animals; change status; a note.
 
-**Notebook**: add a note to today's daily log (made if it doesn't exist, as
+**Notebook** (done for the Log of a page; new pages are not proposable yet): add a note to today's daily log (made if it doesn't exist, as
 `/notebook/today` does), or to a page the person may edit; make a new page
 (a note, or an experiment page from a protocol). See step 5 for how text gets
 into a live page.
@@ -121,7 +130,8 @@ asks the person. `GET /api/v1/vocabulary` returns what this lab calls things:
 strains and lines, genotype values, cage purposes, rack names, each
 organism's own words (from its configuration), so free text maps to real
 values. `GET /api/v1/due` returns Home's list (weanings, genotyping, flips,
-scheduled jobs, experiment steps due).
+scheduled jobs, experiment steps due), each with the change that records it
+done where there is one. `GET /api/v1/actions` lists the catalogue.
 
 ### 3. Proposals
 
@@ -162,7 +172,9 @@ document as a paragraph block with a small "from Claude" label, through the
 normal Yjs path, and marks it done; the server hands each insert to one
 client only. Until then the page shows the pending note above its text, and
 search finds it. A page nobody has ever edited live (no sync updates yet) is
-written directly on the server. Alternative, if this proves fragile: a Python
+written directly on the server. (Built so, without the pending note shown
+above the text or found by search: an editor that opens the page adds it
+within seconds.) Alternative, if this proves fragile: a Python
 Yjs library (pycrdt) so the server appends to the document itself; heavier,
 so second choice.
 
@@ -212,7 +224,7 @@ and a token from its environment (`BIOMANAGER_URL`, `BIOMANAGER_TOKEN`). Run
 from the repository:
 
     python -m pip install -r mcp/requirements.txt
-    python mcp/server.py        # or point the assistant app at this command
+    python mcp/biomanager_mcp.py   # or point the assistant app at this command
 
 Tools:
 

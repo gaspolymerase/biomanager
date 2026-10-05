@@ -1838,12 +1838,72 @@ class ApiToken(Base):
     label: Mapped[str] = mapped_column(String(80))                   # what uses it, e.g. "Balance in B12"
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     hint: Mapped[str] = mapped_column(String(16), default="")         # its first characters, to tell tokens apart
-    scope: Mapped[str] = mapped_column(String(10), default="read")    # read | write
+    scope: Mapped[str] = mapped_column(String(10), default="read")    # read | write | propose
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     uses: Mapped[int] = mapped_column(Integer, default=0)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class Proposal(Base):
+    """Changes an assistant proposed (app/proposals.py), waiting for its
+    person to approve them, all at once, on Proposed changes. Approved, they
+    go in as one batch (batch_id_fk)."""
+    __tablename__ = "proposals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_username: Mapped[str] = mapped_column(String(80), index=True)
+    token_id_fk: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source: Mapped[str] = mapped_column(String(80), default="")        # "Claude", or the token's name
+    summary: Mapped[str] = mapped_column(Text, default="")            # the assistant's own words
+    # pending | approved | discarded | superseded | expired | invalid
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    replaces_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    batch_id_fk: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # The change history's newest row when it was checked: a record changed
+    # after it is changed since the preview.
+    audit_mark: Mapped[int] = mapped_column(Integer, default=0)
+    lang: Mapped[str] = mapped_column(String(10), default="")
+
+
+class ProposalChange(Base):
+    """One change of a proposal, as sent and as its preview found it."""
+    __tablename__ = "proposal_changes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    proposal_id_fk: Mapped[int] = mapped_column(ForeignKey("proposals.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    action: Mapped[str] = mapped_column(String(60), default="")
+    area: Mapped[str] = mapped_column(String(40), default="")
+    request_json: Mapped[str] = mapped_column(Text, default="")       # {action, target, fields}, as sent
+    summary: Mapped[str] = mapped_column(Text, default="")
+    ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    errors_json: Mapped[str] = mapped_column(Text, default="[]")
+    warnings_json: Mapped[str] = mapped_column(Text, default="[]")
+    records_json: Mapped[str] = mapped_column(Text, default="[]")     # what the preview changed
+
+
+class NotebookPendingInsert(Base):
+    """A line to add to a notebook page that someone has open in the live
+    editor (app/lab_notebook.add_note): the server can't edit its Yjs
+    document, so the next editor that polls the page claims it, adds it
+    through the editor and reports it done."""
+    __tablename__ = "notebook_pending_inserts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    page_id_fk: Mapped[int] = mapped_column(ForeignKey("notebook_pages.id", ondelete="CASCADE"), index=True)
+    text: Mapped[str] = mapped_column(Text, default="")
+    time: Mapped[str] = mapped_column(String(5), default="")          # "10:42", as the log line shows it
+    via: Mapped[str] = mapped_column(String(80), default="")          # "Claude"
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    claimed_by: Mapped[str] = mapped_column(String(40), default="")   # the editor (sync client id) adding it
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    done_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class Feedback(Base):

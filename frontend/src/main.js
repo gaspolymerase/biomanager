@@ -150,6 +150,17 @@ async function mountOnce(options) {
     }
   }
   provider.startLoop();
+  if (canEdit) {
+    // An assistant's notes, approved while this page was open somewhere:
+    // added to the Log here, through the live document, like the Log button.
+    provider.onInserts = (lines) => {
+      for (const line of lines) {
+        const text = line.via ? `${line.text} (via ${line.via})` : line.text;
+        appendLogLine(editor, /^log$/i, 'Log', text, line.time ? { time: line.time } : {});
+      }
+    };
+    provider.drainInserts();
+  }
 
   // Save the Markdown for search, history and export. Changes typed here are
   // saved soon; changes from others are saved by them, and here only as a

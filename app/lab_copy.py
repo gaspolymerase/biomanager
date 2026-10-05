@@ -249,14 +249,15 @@ def write_snapshot(path: Path, user: UserAccount | None = None) -> dict[str, int
 # lab's shared records, which every member sees in the app anyway.
 # tests/test_lab_copy.py checks that each table holding someone's own rows
 # is named here, or in MEMBER_SEES_WHOLE, so a new one is decided on.
-ADMIN_ONLY = ("api_tokens", "lab_copy_keys", "guest_passes", "user_identities", "feedback", "audit_log")
+ADMIN_ONLY = ("api_tokens", "lab_copy_keys", "guest_passes", "user_identities", "feedback", "audit_log",
+              "proposal_changes", "proposals")
 OWN_ROWS = {"notifications": "recipient_username", "calendar_subscriptions": "owner",
             "google_calendar_links": "owner", "calendar_feeds": "owner", "notebook_templates": "owner_username",
             # Batch history: a member's own, as the Batches page shows them
             # (a description can name someone's personal database or file).
             "batches": "actor"}
 PAGE_ROWS = ("notebook_comments", "notebook_page_info", "notebook_presence", "notebook_shares",
-             "notebook_sync_updates", "notebook_versions", "record_signatures")
+             "notebook_sync_updates", "notebook_versions", "record_signatures", "notebook_pending_inserts")
 PERSONAL_DATABASES = ("inventory_modules", "stock_modules", "organism_modules")
 ALIAS_KIND = {"inventory_modules": "inventory", "stock_modules": "stocks", "organism_modules": "organisms"}
 MEMBER_SEES_WHOLE = ("users", "experiments", "notebook_tabs", "notebook_pages", "lab_groups", "lab_group_members")

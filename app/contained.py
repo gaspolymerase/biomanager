@@ -34,6 +34,7 @@ from werkzeug.datastructures import MultiDict
 from .db import JOINED, contained_engine
 
 _ACTING: ContextVar = ContextVar("biomanager_acting_user", default=None)
+_LANG: ContextVar = ContextVar("biomanager_acting_lang", default=None)
 
 # What /api/v1 sees as the token while a proposal calls the API's own writes
 # (app.load_current_user): read-and-change, and no rate limit (id 0).
@@ -43,6 +44,11 @@ API_TOKEN = SimpleNamespace(id=0, label="proposal", scope="write")
 def acting_user() -> str | None:
     """Whose request this is, when a proposal is running the pages."""
     return _ACTING.get()
+
+
+def acting_lang() -> str | None:
+    """The language the pages answer in then (the person's own)."""
+    return _LANG.get()
 
 
 @dataclass
@@ -95,14 +101,15 @@ def transaction():
 
 
 def run(app, username: str, method: str, path: str, data=None, json_body=None,
-        batch_id: int | None = None, label: str = "") -> PageResult:
+        batch_id: int | None = None, label: str = "", lang: str | None = None) -> PageResult:
     """Make one request to the app as `username`, inside the current
     transaction, and say how the page answered. With `batch_id`, what it
     changes belongs to that batch (pages' own batches join it, audit.batch)
-    and is labelled `label` in the change history."""
+    and is labelled `label` in the change history. The page answers in
+    `lang` (English if not given)."""
     if isinstance(data, list):  # a form's (name, value) pairs, a name repeating
         data = MultiDict(data)
-    token = _ACTING.set(username)
+    token, lang_token = _ACTING.set(username), _LANG.set(lang)
     try:
         with app.test_request_context(path, method=method, data=data, json=json_body):
             if batch_id is not None:
@@ -116,6 +123,7 @@ def run(app, username: str, method: str, path: str, data=None, json_body=None,
             messages = [(c, _plain(t)) for c, t in get_flashed_messages(with_categories=True)]
     finally:
         _ACTING.reset(token)
+        _LANG.reset(lang_token)
     body = None
     if response.mimetype == "application/json":
         try:

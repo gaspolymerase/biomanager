@@ -55,7 +55,10 @@ VERSION = "1"
 TOKEN_PREFIX = "bmt_"
 ALPHABET = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PERMISSION = "members_api_tokens"
-SCOPES = {"read": "Read", "write": "Read and change"}
+SCOPES = {"read": "Read", "write": "Read and change", "propose": "Read and propose"}
+# What a Propose-only token may send besides reading (app/proposals.py): it
+# never changes a record itself; its person approves in BioManager.
+PROPOSING = {"api.proposal_create", "api.proposal_discard"}
 EXPIRY_DAYS = {"30": "In 30 days", "90": "In 90 days", "365": "In a year", "": "Never"}
 PER_MINUTE = 600
 MAX_LIMIT = 1000
@@ -142,6 +145,11 @@ def _gate():
     if wait:
         return _error(429, f"Too many requests: at most {PER_MINUTE} a minute.") + ({"Retry-After": str(wait)},)
     if request.method not in ("GET", "HEAD", "OPTIONS") and g.api_token.scope != "write":
+        if g.api_token.scope == "propose" and request.endpoint in PROPOSING:
+            return None
+        if g.api_token.scope == "propose":
+            return _error(403, "This token can read and propose changes, not make them: send them to "
+                               "POST /api/v1/proposals, and its person approves them in BioManager.")
         return _error(403, "This token can only read. Make a read-and-change token to make changes.")
     return None
 
@@ -904,6 +912,124 @@ def unknown(_rest):
     return _error(404, "There is no such endpoint. GET /api/v1 lists them.")
 
 
+# ---------------------------------------------------------------- for assistants (app/lookup.py)
+
+@bp.get("/resolve")
+def resolve():
+    """The records a phrase could mean, each with the reference a proposal
+    names it by. More than one candidate: ask the person which."""
+    from . import actions, lookup
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        abort(400, "Send q: what to look for (cage 88, #14, FV12, a line's name).")
+    kinds = {k.strip() for k in (request.args.get("kinds") or "").split(",") if k.strip()} or None
+    unknown = sorted((kinds or set()) - set(actions.KINDS))
+    if unknown:
+        abort(400, f"No kind {', '.join(unknown)}; kinds are {', '.join(actions.KINDS)}.")
+    with SessionLocal() as s:
+        return jsonify({"data": lookup.resolve(s, q, kinds), "next": None})
+
+
+@bp.get("/vocabulary")
+def vocabulary():
+    """What this lab calls things: databases, strains and lines, statuses,
+    purposes, racks, people, and each organism database's own fields."""
+    from . import lookup
+    with SessionLocal() as s:
+        return jsonify(lookup.vocabulary(s))
+
+
+@bp.get("/due")
+def due():
+    """Home's list of what is due, overdue first, up to `days` ahead."""
+    from . import lookup
+    days = _int_arg("days", 7, 0, 60)
+    with SessionLocal() as s:
+        data = lookup.due(s, days)
+        s.commit()  # an organism schedule rebuilt on the way (as Home does)
+    return jsonify({"data": data, "next": None})
+
+
+@bp.get("/actions")
+def action_list():
+    """What a proposal may contain: each action, its target and its fields."""
+    from . import actions
+    return jsonify({"data": actions.catalogue(), "kinds": list(actions.KINDS), "next": None})
+
+
+# ---------------------------------------------------------------- proposals (app/proposals.py)
+
+@bp.post("/proposals")
+def proposal_create():
+    """{"summary", "source", "changes": [{action, target, fields}], "replaces"}:
+    previewed at once and kept for its person to approve in BioManager."""
+    from flask import current_app
+    from . import actions, proposals
+    data = _json()
+    changes = data.get("changes")
+    if not isinstance(changes, list) or not changes:
+        abort(400, "Send changes: a list of {action, target, fields} (see GET /api/v1/actions).")
+    if len(changes) > actions.MAX_CHANGES:
+        abort(400, f"At most {actions.MAX_CHANGES} changes in one proposal.")
+    replaces = data.get("replaces")
+    if replaces is not None and (isinstance(replaces, bool) or not isinstance(replaces, int)):
+        abort(400, "replaces is the id of an earlier proposal of yours.")
+    source = " ".join(str(data.get("source") or g.api_token.label or "").split())[:80]
+    with SessionLocal() as s:
+        p = proposals.create(current_app._get_current_object(), s, g.user.username, changes,
+                             summary=str(data.get("summary") or ""), source=source,
+                             token_id=g.api_token.id or None, replaces=replaces)
+        body = proposals.as_dict(s, p)
+    body["review_url"] = url_for("proposals.page", _external=True) + f"#proposal-{body['id']}"
+    return jsonify(body), 201
+
+
+@bp.get("/proposals")
+def proposal_list():
+    """Your proposals, newest first."""
+    from . import proposals
+    from .models import Proposal
+    status = (request.args.get("status") or "").strip()
+    if status and status not in proposals.STATUSES:
+        abort(400, f"status is one of {', '.join(proposals.STATUSES)}.")
+    limit = _int_arg("limit", 20, 1, 100)
+    with SessionLocal() as s:
+        proposals.expire_old(s)
+        s.commit()
+        stmt = select(Proposal).where(Proposal.owner_username == g.user.username)
+        if status:
+            stmt = stmt.where(Proposal.status == status)
+        rows = s.scalars(stmt.order_by(Proposal.id.desc()).limit(limit)).all()
+        return jsonify({"data": [proposals.as_dict(s, p) for p in rows], "next": None})
+
+
+@bp.get("/proposals/<int:proposal_id>")
+def proposal_get(proposal_id: int):
+    """One proposal of yours: its status, and each change as previewed."""
+    from . import proposals
+    from .models import Proposal
+    with SessionLocal() as s:
+        proposals.expire_old(s)
+        s.commit()
+        p = s.get(Proposal, proposal_id)
+        if p is None or p.owner_username != g.user.username:
+            abort(404, f"There is no proposal {proposal_id} of yours.")
+        return jsonify(proposals.as_dict(s, p, full=True))
+
+
+@bp.post("/proposals/<int:proposal_id>/discard")
+def proposal_discard(proposal_id: int):
+    """Withdraw a proposal of yours that is still waiting (approving is
+    only done in BioManager)."""
+    from . import proposals
+    with SessionLocal() as s:
+        try:
+            p = proposals.discard(s, proposal_id, g.user.username)
+        except proposals.ProposalError as error:
+            abort(409 if "already" in str(error) else 404, str(error))
+        return jsonify(proposals.as_dict(s, p))
+
+
 # ---------------------------------------------------------------- the reference
 
 # (method, path, token scope, summary, query parameters)
@@ -934,7 +1060,17 @@ ENDPOINTS = [
     ("GET", "/api/v1/experiments", "read", "Experiments, in every database", ("status", "owner", "database")),
     ("GET", "/api/v1/experiments/{experiment_id}", "read", "One experiment: animals, readout table, manipulations", ()),
     ("POST", "/api/v1/experiments/{experiment_id}/readings", "write", "Record the readout: {date, values}", ()),
+    ("GET", "/api/v1/resolve", "read", "The records a phrase could mean, with references", ("q", "kinds")),
+    ("GET", "/api/v1/vocabulary", "read", "What this lab calls things", ()),
+    ("GET", "/api/v1/due", "read", "What is due (Home's list), with the change that records each done", ("days",)),
+    ("GET", "/api/v1/actions", "read", "What a proposal may contain", ()),
+    ("POST", "/api/v1/proposals", "propose",
+     "Propose changes for your approval: {summary, source, changes: [{action, target, fields}], replaces}", ()),
+    ("GET", "/api/v1/proposals", "read", "Your proposals, newest first", ("status",)),
+    ("GET", "/api/v1/proposals/{proposal_id}", "read", "One proposal: its status and each change as previewed", ()),
+    ("POST", "/api/v1/proposals/{proposal_id}/discard", "propose", "Withdraw a proposal still waiting", ()),
 ]
+NOT_PAGED = {"/", "/me", "/resolve", "/vocabulary", "/due", "/actions", "/proposals"}
 PARAM_HELP = {
     "limit": "How many a page (default 100, at most 1000)",
     "after": "Continue after this row (from `next`)",
@@ -942,6 +1078,8 @@ PARAM_HELP = {
     "updated_since": "Changed on or after this date or time",
     "born_since": "Born on or after this date",
     "q": "Part of the name", "genotype": "Part of the genotype",
+    "kinds": "Only these kinds, comma-separated (cage,mouse; see /actions)",
+    "days": "How many days ahead (default 7, at most 60)",
 }
 
 
@@ -956,7 +1094,7 @@ def openapi():
               "x-token-scope": scope}
         parameters = [{"name": name, "in": "path", "required": True, "schema": {"type": "string"}}
                       for name in _path_names(rel)]
-        listing = method == "GET" and not rel.endswith("}") and rel not in ("/", "/me")
+        listing = method == "GET" and not rel.endswith("}") and rel not in NOT_PAGED
         for name in (*params, *(("limit", "after") if listing else ())):
             parameters.append({"name": name, "in": "query", "required": False, "schema": {"type": "string"},
                                "description": PARAM_HELP.get(name, "")})
@@ -1032,8 +1170,10 @@ def make_token():
                        expires_at=datetime.utcnow() + timedelta(days=int(days)) if days else None))
         s.commit()
     # Shown on this page only: never stored, never in a redirect.
-    return render_template("api/token.html", token=raw, label=label, scope=SCOPES[scope],
-                           base=url_for("api.index", _external=True))
+    from . import lab
+    return render_template("api/token.html", token=raw, label=label, scope=SCOPES[scope], scope_key=scope,
+                           base=url_for("api.index", _external=True), server=request.host_url.rstrip("/"),
+                           assistants_guide=lab.guide_url().replace("guide.html", "guide/ai-assistants.html"))
 
 
 @pages.post("/settings/api-tokens/<int:token_id>/revoke")

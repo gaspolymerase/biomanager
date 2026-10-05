@@ -105,6 +105,7 @@
           <ol>
             <li><a href="your-data.html">Your data and backups</a></li>
             <li><a href="scripts-and-api.html" aria-current="page">Scripts, instruments and other tools</a></li>
+            <li><a href="ai-assistants.html">AI assistants</a></li>
             <li><a href="troubleshooting.html">Troubleshooting</a></li>
             <li><a href="feedback.html">Feedback</a></li>
           </ol></li>
@@ -123,7 +124,7 @@
         cages for the facility — without anyone exporting a sheet.</p>
       <ol class="steps-list">
         <li><b>Settings → API tokens</b>: say what will use it (<i>Balance in B12</i>, <i>My R scripts</i>), whether it may
-          <b>Read</b> or <b>Read and change</b>, and when it ends. <b>Make a token</b>.</li>
+          <b>Read</b>, <b>Read and change</b> or <b>Read and propose</b> (for an AI assistant: see below), and when it ends. <b>Make a token</b>.</li>
         <li>Copy the token: it is shown once. Treat it like your password, and keep it out of scripts you share (an environment
           variable is the usual place).</li>
         <li>Send it with each request, as <code>Authorization: Bearer bmt_…</code>. The <b>API reference</b> (the link on the same
@@ -135,12 +136,21 @@
         <li>It can read mice, cages, litters, strains, tanks and fish, plasmids, fly and worm vials, every inventory and every
           experiment; and change a mouse (its cage, genotype, note, status…), record a weight, change a vial, add or change an
           inventory item, and record an experiment's readout.</li>
+        <li>For a tool that starts from your own words (an AI assistant, say), it can also find the records a phrase means, each
+          with a reference to use (<code>/api/v1/resolve?q=cage 88</code>), list what your lab calls things: strains, statuses,
+          purposes, racks, people and each database's own fields (<code>/api/v1/vocabulary</code>), and list what is due, as
+          Home does (<code>/api/v1/due</code>).</li>
         <li>Make one token for each thing that uses it, so you can <b>Revoke</b> one without the others. The card shows when each was
           last used. Admins see everyone's tokens and can revoke any; <b>Setup</b> can keep tokens to admins.</li>
         <li>With the desktop app, only programs on that computer can reach it; on a lab server, anything that can reach the server.</li>
       </ul>
+
+      <h2 id="proposed-changes">Changes an assistant proposes</h2>
+      <p>A token that may <b>Read and propose</b> is for an AI assistant: it changes nothing itself, and sends its changes as
+        one proposal that you approve, whole, under <b>Proposed changes</b>. Connecting one and approving are in
+        <a href="ai-assistants.html">AI assistants</a>.</p>
     <!-- /page -->
-      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="your-data.html"><small>Previous</small>Your data and backups</a><a class="next" href="troubleshooting.html"><small>Next</small>Troubleshooting</a></nav>
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="your-data.html"><small>Previous</small>Your data and backups</a><a class="next" href="ai-assistants.html"><small>Next</small>AI assistants</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>Was this page helpful?</span>
         <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>

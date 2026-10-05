@@ -317,7 +317,14 @@ class FlyAndWormActions(AppTestCase):
         self.assertEqual(len(units), 2)
         self.assertEqual(count("stock_units", "module_id_fk=? and rack_row is not null", mid), 2)
         prefix_code = code_of(units[0])
-        out = self.apply({"action": "stock_change", "target": prefix_code, "fields": {"notes": "weak"}},
+        # Another database numbering its vials the same way: the code alone could be either, so it is refused.
+        twin = self.make_vial(self.m, self.make_stock_module(self.m, "fly"))
+        if code_of(twin) == prefix_code:
+            out = actions.run(app, self.member, [{"action": "stock_change", "target": prefix_code,
+                                                  "fields": {"notes": "weak"}}])
+            self.assertIn("could be several", out.changes[0].errors[0])
+        out = self.apply({"action": "stock_change", "target": {"kind": "stock_unit", "id": units[0]},
+                          "fields": {"notes": "weak"}},
                          {"action": "stock_event", "target": {"kind": "stock_unit", "id": units[1]},
                           "fields": {"event": "copy"}},
                          {"action": "stock_event", "target": {"kind": "stock_unit", "id": units[1]},
@@ -413,6 +420,71 @@ class OrganismActions(AppTestCase):
         out = actions.run(app, self.member, [{"action": "org_animal_new", "fields": {
             "database": self.key, "housing": {"kind": "org_housing", "id": foreign}}}])
         self.assertIn("another database", " ".join(out.changes[0].errors))
+
+
+class ExperimentActions(AppTestCase):
+    def setUp(self):
+        super().setUp()
+        from datetime import date, timedelta
+        self.start = date.today() - timedelta(days=1)            # day 2 is today
+        from tests.base import location
+        r = self.m.post("/colony/experiments/create", data={"name": uniq("TMX "), "start_date": self.start.isoformat()})
+        self.exp = int(location(r).rsplit("/", 1)[1])
+        self.name = one("select name from experiments where id=?", self.exp)
+        self.mice = [self.make_mouse(self.m, self.member) for _ in range(3)]
+        for mouse in self.mice:
+            self.m.post(f"/colony/experiments/{self.exp}/add-mouse", data={"mouse_row_id": mouse})
+        r = self.m.post(f"/colony/experiments/{self.exp}/steps/save",
+                        json={"kind": "injection", "agent": "Tamoxifen", "dose": "20 mg/kg", "days": "1-3"})
+        self.step = r.get_json()["steps"][0]["id"]
+
+    def apply(self, *changes):
+        out = actions.run(app, self.member, list(changes), apply=True, description=uniq("P"))
+        self.assertTrue(out.ok, [c.as_dict() for c in out.changes])
+        return out
+
+    def test_a_step_done_today_finds_its_day(self):
+        out = self.apply({"action": "experiment_step_done", "target": {"kind": "experiment_step", "id": self.step},
+                          "fields": {"animals": [number(self.mice[0]), f"#{number(self.mice[1])}"], "note": "#3 escaped"}})
+        self.assertIn("day 2 done", out.changes[0].summary)
+        day, note, mice = row("select day, note, mice from experiment_step_records where step_id_fk=?", self.step)
+        self.assertEqual((day, note), (2, "#3 escaped"))
+        self.assertEqual(mice.count('"subject"'), 2)
+
+    def test_a_day_off_the_plan_is_refused(self):
+        out = actions.run(app, self.member, [{"action": "experiment_step_done",
+                                              "target": {"kind": "experiment_step", "id": self.step},
+                                              "fields": {"day": 9}}])
+        self.assertIn("not in this step's plan", out.changes[0].errors[0])
+
+    def test_status_readout_animals_and_a_note(self):
+        extra = self.make_mouse(self.m, self.member)
+        self.apply({"action": "experiment_change", "target": self.name, "fields": {"status": "paused"}},
+                   {"action": "experiment_add_animals", "target": {"kind": "experiment", "id": self.exp},
+                    "fields": {"mice": [number(extra)], "group": "vehicle"}},
+                   {"action": "experiment_reading", "target": {"kind": "experiment", "id": self.exp},
+                    "fields": {"values": {str(number(self.mice[0])): 22.5}}},
+                   {"action": "note_add", "target": {"kind": "experiment", "id": self.exp},
+                    "fields": {"text": "cage flooded on day 2"}})
+        self.assertEqual(one("select status from experiments where id=?", self.exp), "paused")
+        self.assertEqual(one("select treatment_group from experiment_mice where experiment_id_fk=? and mouse_id_fk=?",
+                             self.exp, extra), "vehicle")
+        self.assertIn("cage flooded on day 2", one("select description from experiments where id=?", self.exp))
+
+    def test_due_lists_the_days_not_yet_done(self):
+        from app import api
+        api.rate.reset()
+        r = self.m.post("/settings/api-tokens", data={"label": uniq("T"), "scope": "read", "expires": "90"})
+        import re
+        tok = re.search(r'id="api-token"[^>]*>(bmt_\w+)<', r.get_data(as_text=True)).group(1)
+        data = app.test_client().get("/api/v1/due", headers={"Authorization": f"Bearer {tok}"}).get_json()["data"]
+        mine = [d for d in data if d["ref"] == {"kind": "experiment_step", "id": self.step}]
+        self.assertEqual([d["propose"]["fields"]["day"] for d in mine], [1, 2, 3])
+        self.assertEqual(mine[0]["status"], "overdue")
+        self.apply(mine[1]["propose"])
+        data = app.test_client().get("/api/v1/due", headers={"Authorization": f"Bearer {tok}"}).get_json()["data"]
+        self.assertEqual([d["propose"]["fields"]["day"] for d in data
+                          if d["ref"] == {"kind": "experiment_step", "id": self.step}], [1, 3])
 
 
 if __name__ == "__main__":

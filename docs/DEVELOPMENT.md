@@ -874,6 +874,116 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   same functions (`can_edit_mouse`, `_can_edit`, `can_edit`,
   `access.can_edit_experiment`). A switched-off built-in database is a 404.
 
+- **For assistants** (`app/lookup.py`): `/resolve?q=` finds the records a
+  phrase means across every database the person can open ("cage 88" looks
+  only at cages; a mouse by its number, a vial by its prefix and number),
+  each with a reference `{"kind", "id"}` (the kinds are `actions.KINDS`);
+  `/vocabulary` is the lab's own words; `/due` is Home's agenda
+  (`home_layouts.build_agenda`), whose items carry `ref` and `propose`, the
+  change that records each done; `/actions` is `actions.catalogue()`.
+
+## Proposed changes: running the pages on someone's behalf
+
+What an assistant proposes is a list of things a person does on the pages.
+Rather than a second copy of each page's rules, every change is sent to the
+page itself.
+
+- `app/contained.py`: `transaction()` opens one connection and transaction;
+  while it is set (`db.JOINED`, a ContextVar), every `SessionLocal()` is a
+  `db.LabSession` joined to it with `join_transaction_mode="create_savepoint"`,
+  so a page's `commit()` releases a savepoint and its `rollback()` undoes only
+  its own part. SQLite gets its own engine (`db.contained_engine`) that
+  leaves transactions to SQLAlchemy and sends `BEGIN` itself, without which
+  savepoints don't nest. `run(app, username, method, path, data|json_body)`
+  sends one request through `app.full_dispatch_request()` as that person
+  (`contained.acting_user()`, read by `load_current_user`; for `/api/v1`
+  it also stands in a write token, `contained.API_TOKEN`, with no rate
+  limit), so every before_request check and the view's own permissions
+  apply, and returns what the page said: its flashed messages (or its
+  JSON) and whether it refused (a 4xx/5xx, an error flash, `ok: false`, a
+  redirect to sign in). Leaving the block without `commit()` rolls it all
+  back: a preview.
+- `app/actions.py`: the catalogue, one `Action` per thing (`litter_born`,
+  `experiment_step_done`, `notebook_note`,
+  `wean`, `tank_new`, `stock_event`, `org_animal_change`…): its target kind,
+  its fields (which also give the JSON Schema for the MCP server), a plain
+  summary line, and `build`, which turns checked values into the `Call`s the
+  page would send. `find()` turns a reference, or what the lab writes on a
+  record (cage ID, `#14`, `FV12`), into the row, refusing one that could be
+  several. `run(app, username, changes, apply=False)` runs a list in order
+  inside one `contained.transaction()`, each change in its own savepoint
+  (a failed one is undone before the next, so a preview reports each
+  change's own problems), and collects the change-history rows each wrote
+  (`records`, the before → after). With `apply=True` it first writes one
+  `BatchRecord` ("mixed") and runs every page inside it: `audit.batch`
+  called while another batch is open joins it (yielding a stand-in, no
+  second row), so Batch history undoes the whole proposal as one; anything
+  failing keeps nothing.
+
+### Proposals (`app/proposals.py`)
+
+- `proposals` and `proposal_changes` (revision `0017_proposals`): a proposal
+  belongs to the person whose token sent it (`owner_username`), with its
+  `source` ("Claude", or the token's name), the assistant's `summary`, a
+  `status` (pending, approved, discarded, superseded, expired, invalid),
+  `expires_at` (14 days), `replaces_id`, `batch_id_fk` once approved, and
+  `audit_mark`, the change history's newest id when it was previewed. Each
+  change keeps the request as sent, its summary, errors, warnings and the
+  change-history rows the preview wrote (`records_json`). Both tables are
+  left out of members' lab copies (`lab_copy.ADMIN_ONLY`).
+- `create()` previews with `actions.run` in the owner's language
+  (`i18n.language_for`; `contained.run(lang=…)` makes the pages answer in
+  it too), stores the result (pending, or invalid with the reasons), marks
+  `replaces` superseded and notifies the owner (`notify.send`, linking to
+  `/proposals`). It commits the session's read before the preview starts,
+  so SQLite's lock is not held across it.
+- `approve()` refuses unless pending; refuses when a record the preview
+  changed (not one it made) has a change-history row after `audit_mark`
+  (`changed_since`, naming it); otherwise runs `actions.run(apply=True)`
+  with `label()` / `description()` ("Proposal #12: … (via Claude)") and
+  keeps it only if every change went through. `expire_old()` is applied
+  lazily wherever proposals are read.
+- API (`app/api.py`): scope `propose` (`SCOPES`) may read and call only
+  `PROPOSING` (create, discard); a write token may propose too. There is
+  no approve endpoint. `GET /proposals`, `GET /proposals/<id>` (with each
+  change's request and records) are the owner's only.
+- The page (`proposals.bp`, `templates/proposals.html`): pending proposals
+  with their changes grouped by `AREAS`, warnings first, **Approve** /
+  **Discard**, and **Show each change** (the stored records); recent
+  decisions below. The account menu shows **Proposed changes**, with the
+  pending count, once someone has any (`inject_user`).
+
+### Notes into the notebook (`lab_notebook.add_note`)
+
+`POST /notebook/api/notes` {text, time, via, page_id} adds `- **HH:MM** text`
+to the end of a page's Log section (made if missing), on today's daily log
+(`_daily_page`, shared with `/today`) unless a page is named. A page with
+no live-editing updates in its current generation has nothing in Yjs to
+lose, so its Markdown is changed directly (`append_log_line`, a version
+recorded). One that has them gets a `notebook_pending_inserts` row
+instead: `sync_pull` hands unclaimed rows (or rows claimed more than
+`CLAIM_FOR` ago) to the editor that asks, which adds each with the Log
+button's `appendLogLine` (so it travels through Yjs like typing) and posts
+`/inserts/done`. Notebook rows aren't in the change history, so undoing an
+approved proposal doesn't take a note back out.
+
+### The MCP server (`mcp/`)
+
+`mcp/biomanager_mcp.py` is an MCP server (the `mcp` SDK, version 2:
+`MCPServer`, stdio) that an assistant app starts as a command; it is run
+from this repository, not packaged (`mcp/requirements.txt`, `mcp/README.md`).
+It holds no data: its tools call `/api/v1` with `BIOMANAGER_URL` and
+`BIOMANAGER_TOKEN` (`lab_overview` → `/me` and `/vocabulary`, `resolve`,
+`get`/`list` limited to the API's read paths, `whats_due`, `list_actions`,
+`propose_changes` → `POST /proposals` signed `BIOMANAGER_ASSISTANT`,
+`proposal_status`, `discard_proposal`). The tool logic is plain functions
+over `Api`, wrapped by `build_server()`, so `tests/test_mcp.py` runs them
+against the test app without the SDK; `propose_changes`' description
+lists the lab's own `/actions` at start-up. Its `INSTRUCTIONS` tell the
+assistant to resolve every record, ask rather than guess, send one proposal
+and give the review link. **Settings → API tokens → Connect an AI
+assistant** makes a `propose` token and `api/token.html` shows the setup.
+
 ## Feedback and the usage report
 
 `app/feedback.py`, for a pilot (the plan is `docs/PILOT.md`). **Feedback**

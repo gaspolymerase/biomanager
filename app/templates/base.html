@@ -223,6 +223,11 @@
                   <a class="menu-item" href="{{ url_for('lab.notifications') }}" role="menuitem">
                     {{ icon('bell') }} {{ _('Notifications') }}
                   </a>
+                  {% if proposals_pending is not none %}
+                    <a class="menu-item" href="{{ url_for('proposals.page') }}" role="menuitem">
+                      {{ icon('list-check') }} {{ _('Proposed changes') }}{% if proposals_pending %} <span class="badge">{{ proposals_pending }}</span>{% endif %}
+                    </a>
+                  {% endif %}
                   <a class="menu-item" href="{{ url_for('batches_view') }}" role="menuitem">
                     {{ icon('layers') }} {{ _('Batch history') }}
                   </a>

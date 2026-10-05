@@ -258,7 +258,7 @@ Source: https://biomanager.org/guide/finding-things
 
 Undo a whole batch of changes from Batch history, and see in the Audit log who changed what, and when.
 
-**More → Batch history** at the foot of the sidebar opens it: every bulk change — an Add many, a move, a status change on fifty rows, an import — with **Undo**. If someone has edited those records since, BioManager says so and offers **Undo anyway** rather than silently overwriting their work. Everyone sees their own batches; admins see the lab's.
+**More → Batch history** at the foot of the sidebar opens it: every bulk change — an Add many, a move, a status change on fifty rows, an import — with **Undo**. If someone has edited those records since, BioManager says so and offers **Undo anyway** rather than silently overwriting their work. Everyone sees their own batches; admins see the lab's. Changes an AI assistant proposed and you approved are here too, as one batch each ([AI assistants](https://biomanager.org/guide/ai-assistants)).
 
 The **Audit log** (admins) records every create, edit and delete: when, who, which record, and exactly what changed — `genotype: DBH-Cre → ∅`.
 
@@ -887,6 +887,8 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Daily log** (*Today*) and **Meetings**: a presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
 
+- An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
+
 #### Experiments and protocols
 
 - **Experiments**: aim, setup, samples and lot numbers, steps, results. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
@@ -1152,7 +1154,7 @@ Who and where: Lab server or desktop
 
 BioManager has an API: other programs can read the lab's records, and change them, as you. Pull an experiment's body weights straight into R or Python, have a balance post each weight as it weighs, let a core's system mark samples as done, or count cages for the facility — without anyone exporting a sheet.
 
-1. **Settings → API tokens**: say what will use it (*Balance in B12*, *My R scripts*), whether it may **Read** or **Read and change**, and when it ends. **Make a token**.
+1. **Settings → API tokens**: say what will use it (*Balance in B12*, *My R scripts*), whether it may **Read**, **Read and change** or **Read and propose** (for an AI assistant: see below), and when it ends. **Make a token**.
 
 2. Copy the token: it is shown once. Treat it like your password, and keep it out of scripts you share (an environment variable is the usual place).
 
@@ -1162,11 +1164,77 @@ BioManager has an API: other programs can read the lab's records, and change the
 
 - It can read mice, cages, litters, strains, tanks and fish, plasmids, fly and worm vials, every inventory and every experiment; and change a mouse (its cage, genotype, note, status…), record a weight, change a vial, add or change an inventory item, and record an experiment's readout.
 
+- For a tool that starts from your own words (an AI assistant, say), it can also find the records a phrase means, each with a reference to use (`/api/v1/resolve?q=cage 88`), list what your lab calls things: strains, statuses, purposes, racks, people and each database's own fields (`/api/v1/vocabulary`), and list what is due, as Home does (`/api/v1/due`).
+
 - Make one token for each thing that uses it, so you can **Revoke** one without the others. The card shows when each was last used. Admins see everyone's tokens and can revoke any; **Setup** can keep tokens to admins.
 
 - With the desktop app, only programs on that computer can reach it; on a lab server, anything that can reach the server.
 
+### Changes an assistant proposes
+
+A token that may **Read and propose** is for an AI assistant: it changes nothing itself, and sends its changes as one proposal that you approve, whole, under **Proposed changes**. Connecting one and approving are in [AI assistants](https://biomanager.org/guide/ai-assistants).
+
 Source: https://biomanager.org/guide/scripts-and-api
+
+---
+
+## AI assistants
+
+Tell an AI assistant what you did; it proposes the records, and you approve them in BioManager.
+
+Who and where: Lab server or desktop
+
+BioManager has no AI inside it. If you already use an assistant (Claude, ChatGPT, Cursor, Cherry Studio or another app that speaks MCP), you can connect it to your lab. Tell it what you did, in your own words or with a photo of your notebook (*litter in 102 yesterday, 7 pups; moved the two old breeders from 88 to 91; injected day 3 of the TMX cohort this morning*), and it turns that into records: as one proposal, which you approve in BioManager. It never changes anything itself.
+
+### Connect an assistant
+
+1. **Settings → API tokens → Connect an AI assistant**. It makes a token that may **Read and propose** and shows the setup to copy, with your BioManager's address and the token filled in. Copy it now: the token is shown once.
+
+2. The assistant runs a small program from BioManager's source, `mcp/biomanager_mcp.py`: download the source and run `python -m pip install -r mcp/requirements.txt` once. Then add the setup to your assistant app; the steps for Claude Desktop, Claude Code, Cursor and Cherry Studio are in `mcp/README.md`.
+
+3. Ask it: *Log today's work from my notes: …* It looks up each animal, cage and experiment you mention, asks you when something could be more than one record, and sends one proposal with a link to it.
+
+- With the desktop app, the assistant app has to run on the same computer; with a lab server, on any computer that can reach it.
+
+- The assistant reads what you can read, as you. Revoke its token under **Settings → API tokens** to cut it off.
+
+### What it can propose
+
+- In the mouse colony, zebrafish, fly and worm databases and any other organism's: the everyday records. New animals, cages, tanks and vials; litters, weaning, moves and deaths; crosses, clutches and flips; weights and readings; scheduled jobs done.
+
+- In an experiment: a step done, a readout, animals added, its status, a note.
+
+- In the notebook: a line in the **Log** of today's daily log, with the time. If the page is open, the line appears in it within a few seconds.
+
+- It can't delete anything, sign a page, or change who may see what.
+
+- It can also tell you what is due, as Home lists it, and plan your day from it.
+
+### Approving
+
+A proposal tells you (the bell) and waits under **Proposed changes** in your account menu.
+
+- Each proposal is one summary in plain words: what will change in each database, with any warnings at the top (a litter date that would be replaced, pups too young to wean). **Show each change** lists every record, before → after.
+
+- **Approve** makes every change at once; **Discard** makes none. There is no approving one change at a time: if something is wrong, discard it and ask the assistant for a corrected proposal.
+
+- An approved proposal is one batch in **Batch history**, marked with the assistant's name, so **Undo** takes it back whole (a line added to the notebook stays).
+
+- If a record it touches was changed after the proposal was made, or a change no longer goes through, nothing is applied and the page says which record and why.
+
+- Only you can approve your proposals, and only signed in to BioManager: no token can. A proposal you leave waits two weeks, then expires.
+
+### Troubleshooting
+
+#### The assistant says it can't reach BioManager
+
+Check that BioManager is running and that `BIOMANAGER_URL` in the setup is its address (the desktop app's is on **Settings → API tokens**), and that the token hasn't been revoked or expired.
+
+#### Approving says a record changed after the proposal was made
+
+Someone (or you) changed it meanwhile, so the proposal may be out of date. **Discard** it and ask the assistant to propose again.
+
+Source: https://biomanager.org/guide/ai-assistants
 
 ---
 

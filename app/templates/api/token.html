@@ -2,7 +2,7 @@
 
 {% block page_title %}{{ _('A token for %(name)s', name=label) }}{% endblock %}
 {% block page_heading %}{{ _('A token for %(name)s', name=label) }}{% endblock %}
-{% block page_subtitle %}{% if scope == 'Read' %}{{ _("Read the lab's records as you, from a script or another tool") }}{% else %}{{ _("Read and change the lab's records as you, from a script or another tool") }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% if scope_key == 'read' %}{{ _("Read the lab's records as you, from a script or another tool") }}{% elif scope_key == 'propose' %}{{ _("Read the lab's records and propose changes for you to approve, from an AI assistant or another tool") }}{% else %}{{ _("Read and change the lab's records as you, from a script or another tool") }}{% endif %}{% endblock %}
 
 {% block page_actions %}
   <a class="btn" href="{{ url_for('api_pages.reference') }}">{{ icon('list') }} {{ _('API reference') }}</a>
@@ -14,8 +14,10 @@
   <section class="card border-brand-200 p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('Copy this token now') }}</h2>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
-      {% if scope == 'Read' %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
-      (read). If it gets lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% else %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
+      {% if scope_key == 'read' %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
+      (read). If it gets lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% elif scope_key == 'propose' %}{% trans link=url_for('proposals.page') %}It is shown only once. Treat it like your password: whatever has it can read what you can
+      and propose changes, which wait for you on <a href="{{ link }}">Proposed changes</a> until you approve them. If it gets
+      lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% else %}{% trans %}It is shown only once. Treat it like your password: whatever has it can do what you can
       (read and change). If it gets lost or shared, revoke it in Settings and make a new one.{% endtrans %}{% endif %}
     </p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -23,6 +25,38 @@
       <button type="button" class="btn" data-on-click="copy-text" data-arg="api-token">{{ icon('copy') }} {{ _('Copy token') }}</button>
     </div>
   </section>
+
+  {% if scope_key == 'propose' %}
+  <section class="card p-5">
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Connect an AI assistant') }}</h2>
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">
+      {% trans %}The assistant runs a small program from BioManager's source, mcp/biomanager_mcp.py (install it once with
+      python -m pip install -r mcp/requirements.txt). Add this to your assistant app's MCP settings (Claude Desktop:
+      Settings → Developer → Edit Config), with the path to where you put the source.{% endtrans %}
+    </p>
+    <pre class="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp">{
+  "mcpServers": {
+    "biomanager": {
+      "command": "python",
+      "args": ["/path/to/biomanager/mcp/biomanager_mcp.py"],
+      "env": {
+        "BIOMANAGER_URL": "{{ server }}",
+        "BIOMANAGER_TOKEN": "{{ token }}",
+        "BIOMANAGER_ASSISTANT": "Claude"
+      }
+    }
+  }
+}</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp">{{ icon('copy') }} {{ _('Copy') }}</button>
+    <p class="mt-3 text-[12.5px] leading-snug text-muted">{{ _('Claude Code, in a terminal:') }}</p>
+    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="api-mcp-cli">claude mcp add biomanager --env BIOMANAGER_URL={{ server }} --env BIOMANAGER_TOKEN={{ token }} --env BIOMANAGER_ASSISTANT=Claude -- python /path/to/biomanager/mcp/biomanager_mcp.py</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="api-mcp-cli">{{ icon('copy') }} {{ _('Copy') }}</button>
+    <p class="mt-3 text-[12px] leading-snug text-muted">
+      {% trans link=assistants_guide %}Then tell it what you did. What it proposes waits for you on Proposed changes, in
+      your account menu. More in the guide: <a href="{{ link }}" target="_blank" rel="noopener">AI assistants</a>.{% endtrans %}
+    </p>
+  </section>
+  {% endif %}
 
   <section class="card p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('Try it') }}</h2>

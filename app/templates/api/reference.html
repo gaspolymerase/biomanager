@@ -40,7 +40,7 @@
               <td><code class="whitespace-normal break-all">{{ path }}</code></td>
               <td class="whitespace-normal">{% if summary|tr != summary %}{{ summary|tr }}{% else %}{% set parts = summary.partition(': ') %}{{ parts[0]|tr }}{% if parts[1] %}{{ '：' if current_language() == 'zh' else ': ' }}{{ parts[2] }}{% endif %}{% endif %}
                 {% if params %}<span class="block text-[11.5px] text-muted">?{{ params | join(', ') }}</span>{% endif %}</td>
-              <td>{{ 'Read'|tr('api scope') if scope == 'read' else 'Change'|tr('api scope') }}</td>
+              <td>{{ 'Read'|tr('api scope') if scope == 'read' else ('Propose'|tr('api scope') if scope == 'propose' else 'Change'|tr('api scope')) }}</td>
             </tr>
           {% endfor %}
         </tbody>

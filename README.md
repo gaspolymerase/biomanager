@@ -979,7 +979,19 @@ track.
   admin can revoke it). Mice, cages, litters, strains, tanks and fish,
   plasmids, fly and worm vials, every inventory and every experiment can be
   read; a mouse's weights and fields, vials, inventory items and an
-  experiment's readout can be written. Changes are in the change history
+  experiment's readout can be written. For tools that start from your
+  own words, such as an AI assistant, it also finds the records a phrase
+  means (`/api/v1/resolve`), lists what the lab calls things
+  (`/api/v1/vocabulary`) and what is due (`/api/v1/due`). A *Read and
+  propose* token, meant for an AI assistant, changes nothing itself: it
+  sends its changes as one proposal, which BioManager checks as its pages
+  would and keeps under **Proposed changes** (in your account menu, with a
+  notification) as one plain summary. **Approve** makes every change at
+  once, as one batch you can undo; **Discard** makes none; only you, signed
+  in, can approve. **Connect an AI assistant** on the same card makes such
+  a token and the setup to copy into Claude, Cursor or Cherry Studio, which
+  run `mcp/biomanager_mcp.py` from this repository (`mcp/README.md`).
+  Changes are in the change history
   under your name, marked with the token's name. The reference, with
   examples in curl, Python and R, is at `/api` on your BioManager
   (`/api/v1/openapi.json` for tools that read OpenAPI). Lab setup can keep
