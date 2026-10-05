@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import random
 
-from tests.base import AppTestCase, one, row, rows, uniq
+from tests.base import AppTestCase, count, flash_text, one, row, rows, uniq
 
 from app import feature_library as fl
 from app.primer_records import reverse_complement
@@ -119,6 +119,29 @@ class LibraryRouteTests(AppTestCase):
         self.assertFlash(self.post(self.o, f"/plasmids/features/{entry}/delete"), "Only an admin", "error")
         self.assertFlash(self.post(self.m, f"/plasmids/features/{entry}/delete"), "Took", "success")
         self.assertIsNone(one("select id from feature_library where id=?", entry))
+
+    def test_files_fill_the_library_without_making_plasmids(self):
+        import io
+        name = uniq("pRef-")
+        itr, wpre = bases(40, name + "i"), bases(60, name + "w")
+        gb = self.genbank(name, FILLER[:20] + itr + FILLER[20:80] + wpre + FILLER[80:120],
+                          [("repeat_region", 21, 60, "AAV2 ITR ref", False), ("misc_feature", 121, 180, "WPRE ref", False)])
+        plasmids_before = count("plasmids")
+        r = self.post(self.m, "/plasmids/features/import",
+                      {"files": [(io.BytesIO(gb.encode()), "pRef.gb"), (io.BytesIO(b"not a sequence"), "notes.txt")]},
+                      content_type="multipart/form-data")
+        self.assertFlash(r, "Added 2 elements to the feature library. Read from 1 file.", "success")
+        self.assertIn("notes.txt", flash_text(r))
+        self.assertEqual(count("plasmids"), plasmids_before)   # a file is not a plasmid
+        self.assertEqual({n for n, in rows("select name from feature_library")} & {"AAV2 ITR ref", "WPRE ref"},
+                         {"AAV2 ITR ref", "WPRE ref"})
+        self.assertEqual(one("select sequence from feature_library where name=?", "WPRE ref"), wpre)
+        # The same file again adds nothing.
+        r = self.post(self.m, "/plasmids/features/import",
+                      {"files": [(io.BytesIO(gb.encode()), "pRef.gb")]}, content_type="multipart/form-data")
+        self.assertFlash(r, "already has every named feature", "info")
+        self.assertFlash(self.post(self.m, "/plasmids/features/import", {}, content_type="multipart/form-data"),
+                         "Choose the annotated files", "info")
 
     def test_the_plasmid_page_offers_detect_and_add(self):
         html = self.get_ok(self.m, f"/plasmid/{one('select plasmid_id from plasmids where id=?', self.source)}")

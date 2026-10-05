@@ -544,7 +544,11 @@ crossing the origin keeps `start > end`.
   `MIN_LENGTH` on both strands and across the origin, skipping a span
   already annotated or overlapping a feature of the same name;
   `/plasmids/<id>/detect-features` appends them and records a version
-  (`how="detect"`). The library page is `/plasmids/features`.
+  (`how="detect"`). The library page is `/plasmids/features`;
+  `/plasmids/features/import` reads elements straight from uploaded
+  annotated files (`add_from_sequence`, which `add_from_plasmid` also
+  uses), making no plasmid, so a lab fills the library from the maps it
+  already downloads.
 - **A record's plasmid, to read:** `/inventory/<key>/items/<id>/sequence`
   (`item_sequence`) mounts the same editor read only on the plasmid a
   record's plasmid column names — a virus's payload, a glycerol stock's

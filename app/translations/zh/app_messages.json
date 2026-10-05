@@ -511,5 +511,10 @@
   "Only an admin or whoever added %(name)s can take it off.": "只有管理员或添加者可以移除 %(name)s。",
   "Took %(name)s off this plasmid.": "已从这个质粒移除 %(name)s。",
   "Kept %(num)s file with this plasmid: %(names)s.": "已为这个质粒保存 %(num)s 个文件：%(names)s。",
-  "Kept %(num)s files with this plasmid: %(names)s.": "已为这个质粒保存 %(num)s 个文件：%(names)s。"
+  "Kept %(num)s files with this plasmid: %(names)s.": "已为这个质粒保存 %(num)s 个文件：%(names)s。",
+  "Choose the annotated files to read the elements from.": "请选择带注释的文件，从中读取元件。",
+  "The library already has every named feature in %(files)s.": "%(files)s 中有名称的特征都已在元件库中。",
+  "%(files)s: not a sequence file this app can read (SnapGene .dna, GenBank or FASTA).": "%(files)s：不是本应用能读取的序列文件（SnapGene .dna、GenBank 或 FASTA）。",
+  "Read from %(num)s file.": "来自 %(num)s 个文件。",
+  "Read from %(num)s files.": "来自 %(num)s 个文件。"
 }

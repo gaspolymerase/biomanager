@@ -190,5 +190,8 @@
   "Sequencing reads (.ab1), gel photos, datasheets": "测序结果（.ab1）、跑胶照片、说明书",
   "What they show (optional)": "这些文件是什么（可不填）",
   "Sanger from the T7 primer, clone 3": "克隆 3，T7 引物 Sanger 测序",
-  "Keep with this plasmid": "和这个质粒一起保存"
+  "Keep with this plasmid": "和这个质粒一起保存",
+  "Annotated files (GenBank, SnapGene .dna, FASTA)": "带注释的文件（GenBank、SnapGene .dna、FASTA）",
+  "Read elements from files": "从文件读取元件",
+  "Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.": "文件中有名称的特征会按序列加入元件库。不会凭空生成：元件都来自你自己的图谱。"
 }

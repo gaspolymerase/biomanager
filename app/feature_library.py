@@ -107,13 +107,16 @@ def add(session, *, name: str, ftype: str, sequence: str, color: str = "", notes
     return entry, True
 
 
-def add_from_plasmid(session, plasmid: PlasmidRecord, user: str) -> int:
-    """Every named feature of this plasmid into the library. How many were new."""
-    template = plasmid.full_sequence or ""
+def add_from_sequence(session, sequence: str, annotations, user: str,
+                      source: PlasmidRecord | None = None) -> int:
+    """Every named feature of an annotated sequence into the library, by the
+    bases it covers. How many were new. The annotations are either a
+    plasmid's stored ones or a freshly parsed file's (same shape)."""
+    template = (sequence or "").upper()
     if not template:
         return 0
     made = 0
-    for a in json.loads(plasmid.features_json or "[]"):
+    for a in annotations or []:
         if not usable(a):
             continue
         try:
@@ -121,9 +124,18 @@ def add_from_plasmid(session, plasmid: PlasmidRecord, user: str) -> int:
         except (KeyError, TypeError, ValueError):
             continue
         _entry, new = add(session, name=a["name"], ftype=a.get("type", ""), sequence=bases, color=a.get("color", ""),
-                          notes=a.get("notes") if isinstance(a.get("notes"), dict) else None, source=plasmid, user=user)
+                          notes=a.get("notes") if isinstance(a.get("notes"), dict) else None, source=source, user=user)
         made += new
     return made
+
+
+def add_from_plasmid(session, plasmid: PlasmidRecord, user: str) -> int:
+    """Every named feature of this plasmid into the library. How many were new."""
+    try:
+        annotations = json.loads(plasmid.features_json or "[]")
+    except json.JSONDecodeError:
+        return 0
+    return add_from_sequence(session, plasmid.full_sequence or "", annotations, user, source=plasmid)
 
 
 def collect(session, user: str) -> int:

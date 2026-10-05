@@ -15,12 +15,26 @@
 {% endblock %}
 
 {% block content %}
-{% if current_user.role == 'admin' %}
-  <form method="post" action="{{ url_for('feature_library_collect') }}" class="mb-3 flex flex-wrap items-center gap-2">
-    <button type="submit" class="btn btn-sm">{{ icon('import') }} {{ _('Collect from every plasmid') }}</button>
-    <span class="text-[12px] text-muted">{{ _("Every named feature on the lab's plasmid maps, once per sequence.") }}</span>
+<div class="card mb-3">
+  {# The library fills from files the lab already has: the GenBank a repository
+     gives you, a SnapGene .dna, a vendor's map. Nothing is built in. #}
+  <form method="post" action="{{ url_for('feature_library_import') }}" enctype="multipart/form-data"
+        class="flex flex-wrap items-end gap-3 px-4 py-3">
+    <label class="field-label">{{ _('Annotated files (GenBank, SnapGene .dna, FASTA)') }}
+      <input type="file" name="files" multiple accept=".dna,.gb,.gbk,.fasta,.fa,.txt"
+             class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+    </label>
+    <button type="submit" class="btn">{{ icon('import') }} {{ _('Read elements from files') }}</button>
+    <span class="flex-1 text-[12px] text-muted">{{ _('Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.') }}</span>
   </form>
-{% endif %}
+  {% if current_user.role == 'admin' %}
+    <form method="post" action="{{ url_for('feature_library_collect') }}"
+          class="flex flex-wrap items-center gap-2 border-t border-hairline px-4 py-3">
+      <button type="submit" class="btn btn-sm">{{ icon('plasmid') }} {{ _('Collect from every plasmid') }}</button>
+      <span class="text-[12px] text-muted">{{ _("Every named feature on the lab's plasmid maps, once per sequence.") }}</span>
+    </form>
+  {% endif %}
+</div>
 
 {% if not groups %}
   <div class="card px-4 py-6 text-[13px] text-muted">

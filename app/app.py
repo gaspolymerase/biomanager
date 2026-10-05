@@ -8250,6 +8250,53 @@ def feature_library_page():
                            total=len(everything), labels={k: gettext(v) for k, v in FEATURE_CATEGORY_LABELS.items()})
 
 
+def _names(files: list[str]) -> str:
+    """File names in a sentence, as inventory_routes._and words them."""
+    from .inventory_routes import _and
+    return _and(files) if files else ""
+
+
+@app.route("/plasmids/features/import", methods=["POST"])
+@login_required
+def feature_library_import():
+    """Fill the library straight from annotated files — the GenBank a
+    repository gives you, a SnapGene .dna, a vendor's map — without making a
+    plasmid for each. Several files at once; each is reported by name."""
+    from .sequence_parser import parse_sequence_bytes
+
+    uploads = [f for f in request.files.getlist("files") if f and f.filename]
+    if not uploads:
+        flash(gettext("Choose the annotated files to read the elements from."), "info")
+        return redirect(url_for("feature_library_page"))
+    made, read, unreadable, nothing = 0, 0, [], []
+    with SessionLocal() as db_session:
+        for upload in uploads:
+            parsed = parse_sequence_bytes(upload.read(), upload.filename)
+            if not parsed or not parsed.get("sequence"):
+                unreadable.append(upload.filename)
+                continue
+            read += 1
+            added = feature_library.add_from_sequence(db_session, parsed["sequence"], parsed.get("features") or [],
+                                                      g.user.username)
+            if not added:
+                nothing.append(upload.filename)
+            made += added
+        db_session.commit()
+    if made:
+        # Two counts, each pluralised on its own, rather than one sentence
+        # whose "1 files" follows the other number.
+        flash(ngettext("Added %(num)s element to the feature library.",
+                       "Added %(num)s elements to the feature library.", made) + " "
+              + ngettext("Read from %(num)s file.", "Read from %(num)s files.", read), "success")
+    elif read:
+        flash(gettext("The library already has every named feature in %(files)s.",
+                      files=_names(nothing)), "info")
+    if unreadable:
+        flash(gettext("%(files)s: not a sequence file this app can read (SnapGene .dna, GenBank or FASTA).",
+                      files=_names(unreadable)), "warning")
+    return redirect(url_for("feature_library_page"))
+
+
 @app.route("/plasmids/features/collect", methods=["POST"])
 @admin_required
 def feature_library_collect():
