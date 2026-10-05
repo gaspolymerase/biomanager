@@ -1504,16 +1504,15 @@ teal in them).
   hairlines; on a dark page the header's glass turns dark over the stage and
   the cards (`.on-dark`, from `site.js`).
 - **The AI assistants card** (`.nc-full.ai-card`, first under Features, the
-  whole row) is drawn differently: an exploded isometric stack of liquid
-  glass (`.iso`), its parts named like a technical drawing. The stack is
-  CSS 3D with no perspective (`rotateX(54.74deg) rotateZ(45deg)`), each
-  slab a pane with `backdrop-filter` and a darker edge just under it, and
-  every size in `cqw` so it scales with the card. The names' leader lines
-  end at points measured in a browser (the `.pt` marks) and written into
-  the SVG; move a slab and measure again. The stack opens out as it scrolls
-  into view (`neon-draw`/`drawn`), and stays open with reduced motion.
-  Its clip is `assistant.*`, made by `scripts/assistant-clip.py`: the
-  assistant's window is drawn in a page, BioManager is a fresh demo lab
+  whole row) is drawn plainly: three steps in thin lines with small mono
+  captions (what you said, one proposal, your records), joined by arrows,
+  with Approve as a gate on the last one (`.flow`, all HTML and CSS, so on
+  a phone it runs down the card). A dot walks the path and Approve lights
+  as it passes (CSS keyframes; still and lit with reduced motion). Under it
+  its clip plays by itself while on screen, with no window to open: a
+  `video[data-clip-src]`, which `site.js` loads and plays as the guide's
+  clips. The clip, `assistant.*`, is made by `scripts/assistant-clip.py`:
+  the assistant's window is drawn in a page, BioManager is a fresh demo lab
   where a token proposes and a real click approves, and each frame is a
   screenshot at twice the size with the zoom done by the browser, so words
   stay sharp.

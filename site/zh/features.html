@@ -28,7 +28,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=2c1d7c80c1">
+  <link rel="stylesheet" href="../style.css?v=4f798e5130">
 </head>
 <body>
 
@@ -170,29 +170,23 @@
         <h2>省下一下午的细节。<span class="mute">每个数据库都有，开箱即用。</span></h2>
       </div>
       <div class="nc-grid">
-        <a data-clip="assistant" class="nc nc-full ai-card rise" href="guide/ai-assistants.html" style="--c1:#7aa7ff;--c2:#b79cff;--a:#0d1a44;--b:#060a18">
+        <a class="nc nc-full ai-card rise" href="guide/ai-assistants.html" style="--c1:#7aa7ff;--c2:#b79cff;--a:#0d1a44;--b:#060a18">
           <div class="nc-copy">
             <div class="nc-head">
               <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#list-check"/></svg></span>
               <h3>告诉你的 AI 助手</h3>
-              <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
+              <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
             </div>
             <p>用你自己的话、或者拍一张实验记录本的照片，告诉 Claude、ChatGPT 或 Cursor 你做了什么。它会提出记录；在你批准之前，什么都不会改变。</p>
           </div>
-          <div class="iso" aria-hidden="true">
-            <div class="iso-stage">
-              <div class="iso-base edge"></div><div class="iso-base"></div>
-              <div class="iso-list edge"></div><div class="iso-list glass"><div class="iso-rows"><span><i></i><i style="width:14cqw"></i><i style="width:6cqw"></i></span><span><i></i><i style="width:18cqw"></i><i style="width:5cqw"></i></span><span><i></i><i style="width:11cqw"></i><i style="width:7cqw"></i></span><span><i></i><i style="width:16cqw"></i><i style="width:6cqw"></i></span><span><i></i><i style="width:13cqw"></i><i style="width:5cqw"></i></span></div><b class="pt" data-pt="list" style="left:30%;top:94%"></b></div>
-              <div class="iso-pick edge"></div><div class="iso-pick glass"><i></i><i style="width:17cqw"></i><i style="width:7cqw;margin-left:auto"></i><b class="pt" data-pt="pick" style="left:96%;top:50%"></b></div>
-              <div class="iso-frame edge"></div>
-              <div class="iso-frame rim">
-                <div class="iso-bar top glass"><i></i><i style="width:30cqw"></i><b class="pt" data-pt="said" style="left:70%;top:50%"></b></div>
-                <div class="iso-bar bottom glass"><i class="go"></i><i style="width:6cqw"></i><b class="pt" data-pt="approve" style="left:12%;top:50%"></b></div>
-              </div>
-            </div>
-            <svg class="iso-lines" viewBox="0 0 100 65.62"><path d="M65.88 20.81V4.2"/><circle cx="65.88" cy="20.81" r="0.45"/><path d="M27.33 18.59V7.4"/><circle cx="27.33" cy="18.59" r="0.45"/><path d="M69.42 36.09V57.5"/><circle cx="69.42" cy="36.09" r="0.45"/><path d="M33.45 35.71V57.5"/><circle cx="33.45" cy="35.71" r="0.45"/></svg>
-            <span class="iso-tag up" style="left:65.88cqw;top:4.2cqw">你说的话</span><span class="iso-tag up" style="left:27.33cqw;top:7.4cqw">批准</span><span class="iso-tag down" style="left:69.42cqw;top:57.5cqw">提议的修改</span><span class="iso-tag down" style="left:33.45cqw;top:57.5cqw">你的记录</span>
+          <div class="flow" aria-hidden="true">
+            <div class="fl-node fl-say"><span class="fl-n">01</span><div class="fl-box"><i></i><i></i><i></i></div><span class="fl-tag">你说的话</span></div>
+            <div class="fl-link l1"><i class="fl-dot"></i></div>
+            <div class="fl-node fl-prop"><span class="fl-n">02</span><div class="fl-box"><span><b>断奶</b>笼 110</span><span><b>称重</b>#6 #7</span><span><b>移笼</b>#30 #31 → 106</span></div><span class="fl-tag">一个提议</span></div>
+            <div class="fl-link l2"><i class="fl-dot"></i><b class="fl-gate"><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></b><span class="fl-tag">批准</span></div>
+            <div class="fl-node fl-lab"><span class="fl-n">03</span><div class="fl-box"><svg viewBox="0 0 62 70"><ellipse cx="31" cy="12" rx="26" ry="8"/><path d="M5 12v46c0 4.4 11.6 8 26 8s26-3.6 26-8V12M5 35c0 4.4 11.6 8 26 8s26-3.6 26-8"/></svg></div><span class="fl-tag">你的记录</span></div>
           </div>
+          <figure class="ai-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — AI 助手</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/assistant.webp" data-clip-src="../assets/clips/assistant"></video></div></figure>
         </a>
         <a data-clip="home" class="nc rise" href="guide/home-page.html" style="--c1:#ffb35c;--c2:#ff6b3d;--a:#3a2208;--b:#140c05">
           <div class="nc-head">
