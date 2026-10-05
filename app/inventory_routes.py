@@ -885,6 +885,34 @@ def _create_many(session, row: InventoryModule, mv, form):
     return _done(key)
 
 
+@bp.route("/<key>/items/<int:item_id>/sequence")
+def item_sequence(key: str, item_id: int):
+    """The sequence and map of the plasmid a record names, to read but not
+    edit: a virus's payload, a glycerol stock's plasmid. The plasmid's own
+    page is where it is edited."""
+    from .models import PlasmidRecord
+
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        mv = svc.view(module)
+        item = session.get(InventoryItem, item_id)
+        if item is None or item.module_id_fk != module.id:
+            abort(404)
+        attrs = item.attrs_dict
+        number = next((str(attrs.get(f["key"], "")).strip() for f in svc.plasmid_fields(mv)
+                       if str(attrs.get(f["key"], "")).strip().isdigit()), "")
+        plasmid = session.scalar(select(PlasmidRecord).where(PlasmidRecord.plasmid_id == int(number))) if number else None
+        if plasmid is None or not (plasmid.full_sequence or ""):
+            flash(gettext("%(name)s doesn’t name a plasmid with a sequence.", name=item.name or f"#{item.number}"), "info")
+            return redirect(url_for("inventory.module", key=key, open=item.id))
+        return render_template(
+            "inventory/sequence.html", key=key, m=mv, item=item,
+            item_label=item.name or f"#{item.number}",
+            plasmid={"row_id": plasmid.id, "number": plasmid.plasmid_id, "name": plasmid.name or "",
+                     "length_bp": len(plasmid.full_sequence or ""), "is_circular": bool(plasmid.is_circular),
+                     "url": url_for("plasmid_page", number=plasmid.plasmid_id)})
+
+
 @bp.route("/<key>/items/<int:item_id>/update", methods=["POST"])
 def update_item(key: str, item_id: int):
     """Inline edit from the sheet; answers JSON (see _row_json)."""

@@ -46,6 +46,31 @@ class VirusDatabaseTests(VirusCase):
         self.assertTrue(attrs_of(vid).get("used_up_on"))
 
 
+class SequenceViewTests(VirusCase):
+    """A virus (or any record with a plasmid column) shows that plasmid's
+    sequence and map, to read but not edit."""
+
+    def test_the_sheet_links_the_sequence_and_the_page_is_read_only(self):
+        number, name, _rid = self.plasmid()
+        self.post(self.a, f"/plasmids/{one('select id from plasmids where plasmid_id=?', number)}/edit-sequence",
+                  {"sequence_text": "ATGCGTACGTTAGCATGCATCGATCGATCG", "is_circular": "1"})
+        vid = self.make_item(self.a, self.viruses, uniq("AAV9-"), attr_plasmid=str(number))
+        sheet = self.get_ok(self.a, f"/inventory/{self.viruses}")
+        self.assertIn(f"/inventory/{self.viruses}/items/{vid}/sequence", sheet)
+        page = self.get_ok(self.a, f"/inventory/{self.viruses}/items/{vid}/sequence")
+        self.assertIn("read only", page)
+        self.assertIn(f"/plasmid/{number}", page)
+        self.assertIn("readOnly: true", page)
+        self.assertNotIn("sequence-save", page)
+
+    def test_without_a_sequence_it_says_so_instead(self):
+        number, _name, _rid = self.plasmid()
+        vid = self.make_item(self.a, self.viruses, uniq("AAV9-"), attr_plasmid=str(number))
+        self.assertNotIn(f"items/{vid}/sequence", self.get_ok(self.a, f"/inventory/{self.viruses}"))
+        r = self.a.get(f"/inventory/{self.viruses}/items/{vid}/sequence", follow_redirects=True)
+        self.assertIn("doesn’t name a plasmid with a sequence", r.get_data(as_text=True))
+
+
 class PlasmidColumnTests(VirusCase):
 
     def test_a_number_a_hash_or_a_name_is_kept_as_the_plasmids_number(self):

@@ -566,6 +566,28 @@ class PlasmidParent(Base):
     created_by: Mapped[str] = mapped_column(String(80), default="")
 
 
+class FeatureLibraryEntry(Base):
+    """A named element the lab reuses, by its sequence (app/feature_library.py):
+    Detect features on any plasmid's map finds it there. Collected from the
+    lab's annotated plasmids or added from one; `seq_hash` keeps one entry
+    per sequence."""
+    __tablename__ = "feature_library"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), default="")
+    type: Mapped[str] = mapped_column(String(40), default="misc_feature")
+    # viral, promoter, coding, selection, origin, terminator, other
+    category: Mapped[str] = mapped_column(String(20), default="other", index=True)
+    sequence: Mapped[str] = mapped_column(Text, default="")   # uppercase, as the feature reads 5′→3′
+    seq_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    color: Mapped[str] = mapped_column(String(20), default="")
+    notes_json: Mapped[str] = mapped_column(Text, default="{}")
+    # The plasmid it was taken from; no foreign key, as for versions.
+    source_row_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class NotebookTab(Base):
     __tablename__ = "notebook_tabs"
 

@@ -520,6 +520,22 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
+- **Feature library** (`app/feature_library.py`, `feature_library`,
+  revision 0019): named elements by sequence (as the feature reads 5′→3′),
+  one per `seq_hash`, sorted into `CATEGORIES` by `category_of` (name and
+  GenBank type; viral elements by name). Entries come only from the lab's
+  own maps (`add_from_plasmid`, Add to library; `collect`, an admin's
+  Collect from every plasmid), never built in, so a mistyped base can't
+  label every map. `detect` finds exact matches of entries of at least
+  `MIN_LENGTH` on both strands and across the origin, skipping a span
+  already annotated or overlapping a feature of the same name;
+  `/plasmids/<id>/detect-features` appends them and records a version
+  (`how="detect"`). The library page is `/plasmids/features`.
+- **A record's plasmid, to read:** `/inventory/<key>/items/<id>/sequence`
+  (`item_sequence`) mounts the same editor read only on the plasmid a
+  record's plasmid column names — a virus's payload, a glycerol stock's
+  plasmid — from `/plasmids/<id>/sequence.json`; the sheet's plasmid cell
+  links to it when that plasmid has a sequence. Nothing there saves.
 - **Glycerol stocks:** a `glycerol_stocks` database's *Plasmid* column
   says which plasmid the bacteria carry. `made_from_plasmid(kinds=…)`
   finds them for the Storage tab's Glycerol stocks card (with the box,

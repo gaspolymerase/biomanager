@@ -168,5 +168,18 @@
   "doesn’t bind here": "不结合此质粒",
   "Glycerol stocks": "甘油菌",
   "Nothing yet. A glycerol stock whose <b>Plasmid</b> is #%(number)s shows here, with the box it's in.": "暂无。<b>质粒</b>为 #%(number)s 的甘油菌会显示在这里，并注明所在冻存盒。",
-  "Keep the bacteria carrying each plasmid in a <a href=\"%(url)s\">Glycerol stocks</a> database; each stock then shows here with the box it's in.": "把带有各个质粒的细菌保存在<a href=\"%(url)s\">甘油菌</a>数据库里；每管甘油菌会显示在这里，并注明所在冻存盒。"
+  "Keep the bacteria carrying each plasmid in a <a href=\"%(url)s\">Glycerol stocks</a> database; each stock then shows here with the box it's in.": "把带有各个质粒的细菌保存在<a href=\"%(url)s\">甘油菌</a>数据库里；每管甘油菌会显示在这里，并注明所在冻存盒。",
+  "Feature library": "元件库",
+  "Elements the lab reuses, by sequence. Detect features on a plasmid marks each one wherever it is in the map.": "实验室常用的元件，按序列保存。在质粒上点「识别特征」，就会在图谱中标出每个元件所在的位置。",
+  "Collect from every plasmid": "从所有质粒收集",
+  "Every named feature on the lab's plasmid maps, once per sequence.": "实验室所有质粒图谱上有名称的特征，相同序列只收一次。",
+  "The library is empty. On a plasmid with a well-annotated map (a SnapGene or Addgene file, say), use <b>Add to library</b> above the map to keep its features here.": "元件库还是空的。打开一个注释完整的质粒（比如来自 SnapGene 或 Addgene 的文件），用图谱上方的<b>加入元件库</b>把它的特征保存到这里。",
+  "Take %(name)s out of the library? Maps it was marked on keep it.": "把 %(name)s 移出元件库？已标注过它的图谱会保留标注。",
+  "Take %(name)s out of the library": "把 %(name)s 移出元件库",
+  "Taken from": "取自",
+  "The <a href=\"%(url)s\">feature library</a> keeps the lab's elements by sequence.": "<a href=\"%(url)s\">元件库</a>按序列保存实验室的常用元件。",
+  "Mark every library element found in this sequence": "标出这条序列中所有元件库里的元件",
+  "Detect features": "识别特征",
+  "Keep the named features of this map in the library": "把这张图谱上有名称的特征保存到元件库",
+  "Add to library": "加入元件库"
 }

@@ -625,7 +625,8 @@ def plasmid_links(session, values) -> dict[str, dict]:
     numbers = {int(v) for v in values if str(v).strip().isdigit()}
     if not numbers:
         return {}
-    return {str(p.plasmid_id): {"row_id": p.id, "number": p.plasmid_id, "name": p.name or ""}
+    return {str(p.plasmid_id): {"row_id": p.id, "number": p.plasmid_id, "name": p.name or "",
+                                "has_sequence": bool(p.full_sequence)}
             for p in session.scalars(select(PlasmidRecord).where(PlasmidRecord.plasmid_id.in_(numbers)))}
 
 

@@ -23,7 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
-from . import plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
+from . import feature_library, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -7016,6 +7016,7 @@ def _version_row(v, current: bool) -> dict:
         how = gettext("Restored the version of %(when)s", when=restored)
     else:
         how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
+               "detect": gettext("Features found from the library"),
                "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
     try:
         features = len([f for f in json.loads(v.features_json or "[]") if (f.get("kind") or "feature") == "feature"])
@@ -8017,6 +8018,128 @@ def plasmid_restore_version(row_id: int, version_id: int):
         bp = len(p.full_sequence or "")
     flash(gettext("Restored the version of %(when)s · %(bp)s bp.", when=when, bp=bp), "success")
     return redirect(plasmid_page_url(row_id))
+
+
+FEATURE_CATEGORY_LABELS = {
+    "viral": "Viral elements", "promoter": "Promoters and enhancers", "coding": "Coding sequences",
+    "selection": "Selection markers", "origin": "Origins", "terminator": "PolyA signals and terminators",
+    "other": "Other elements",
+}
+
+
+@app.route("/plasmids/<int:row_id>/detect-features", methods=["POST"])
+@login_required
+def plasmid_detect_features(row_id: int):
+    """Annotate the library's elements wherever they are in this sequence
+    (app/feature_library.py). A version is kept first, so Restore undoes it."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        library = feature_library.entries(db_session)
+        if not library:
+            flash(gettext("The feature library is empty. Add a plasmid's features to it first."), "info")
+            return redirect(plasmid_page_url(row_id))
+        current = json.loads(p.features_json or "[]")
+        found = feature_library.detect(library, p.full_sequence or "", bool(p.is_circular), current)
+        if not found:
+            flash(gettext("None of the library's %(n)s elements is in this sequence, or each is already marked.",
+                          n=len(library)), "info")
+            return redirect(plasmid_page_url(row_id))
+        plasmid_versions.before_change(db_session, p)
+        p.features_json = json.dumps(current + found)
+        stamp_updated(p)
+        names = ", ".join(dict.fromkeys(f["name"] for f in found))
+        plasmid_versions.record(db_session, p, "detect", g.user.username, detail=names[:200])
+        db_session.commit()
+    flash(ngettext("Marked %(num)s feature from the library: %(names)s.",
+                   "Marked %(num)s features from the library: %(names)s.", len(found), names=names), "success")
+    return redirect(plasmid_page_url(row_id))
+
+
+@app.route("/plasmids/<int:row_id>/features-to-library", methods=["POST"])
+@login_required
+def plasmid_features_to_library(row_id: int):
+    """This plasmid's named features into the lab's feature library."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        made = feature_library.add_from_plasmid(db_session, p, g.user.username)
+        db_session.commit()
+    if made:
+        flash(ngettext("Added %(num)s element to the feature library.",
+                       "Added %(num)s elements to the feature library.", made), "success")
+    else:
+        flash(gettext("The feature library already has every named feature of this plasmid."), "info")
+    return redirect(plasmid_page_url(row_id))
+
+
+@app.route("/plasmids/features")
+@login_required
+def feature_library_page():
+    """The lab's feature library, by kind of element."""
+    category = request.args.get("category", "")
+    if category not in feature_library.CATEGORIES:
+        category = ""
+    with SessionLocal() as db_session:
+        everything = feature_library.entries(db_session)
+        sources = {p.id: p for p in db_session.scalars(select(PlasmidRecord).where(
+            PlasmidRecord.id.in_({e.source_row_id for e in everything if e.source_row_id})))}
+        groups = []
+        for key in feature_library.CATEGORIES:
+            rows = [{"id": e.id, "name": e.name, "type": e.type, "length": len(e.sequence), "color": e.color,
+                     "sequence": e.sequence, "by": e.created_by,
+                     "may_delete": g.user.role == "admin" or e.created_by == g.user.username,
+                     "source": ({"number": sources[e.source_row_id].plasmid_id, "name": sources[e.source_row_id].name,
+                                 "url": url_for("plasmid_page", number=sources[e.source_row_id].plasmid_id)}
+                                if e.source_row_id in sources else None)}
+                    for e in everything if e.category == key]
+            if rows:
+                groups.append({"key": key, "label": gettext(FEATURE_CATEGORY_LABELS[key]), "rows": rows})
+    counts = {g_["key"]: len(g_["rows"]) for g_ in groups}
+    shown = [g_ for g_ in groups if not category or g_["key"] == category]
+    return render_template("feature_library.html", groups=shown, counts=counts, category=category,
+                           total=len(everything), labels={k: gettext(v) for k, v in FEATURE_CATEGORY_LABELS.items()})
+
+
+@app.route("/plasmids/features/collect", methods=["POST"])
+@admin_required
+def feature_library_collect():
+    """Every plasmid's named features into the library."""
+    with SessionLocal() as db_session:
+        made = feature_library.collect(db_session, g.user.username)
+        db_session.commit()
+    flash(ngettext("Added %(num)s element to the feature library.",
+                   "Added %(num)s elements to the feature library.", made), "success" if made else "info")
+    return redirect(url_for("feature_library_page"))
+
+
+@app.route("/plasmids/features/<int:entry_id>/delete", methods=["POST"])
+@login_required
+def feature_library_delete(entry_id: int):
+    """Take an element out of the library (its admin or whoever added it).
+    Maps it was marked on keep their features."""
+    from .models import FeatureLibraryEntry
+    with SessionLocal() as db_session:
+        entry = db_session.get(FeatureLibraryEntry, entry_id)
+        if entry is None:
+            flash(gettext("That element is no longer in the library."), "info")
+            return redirect(url_for("feature_library_page"))
+        if g.user.role != "admin" and entry.created_by != g.user.username:
+            flash(gettext("Only an admin or whoever added it can take %(name)s out of the library.", name=entry.name),
+                  "error")
+            return redirect(url_for("feature_library_page"))
+        name = entry.name
+        db_session.delete(entry)
+        db_session.commit()
+    flash(gettext("Took %(name)s out of the feature library.", name=name), "success")
+    return redirect(url_for("feature_library_page"))
 
 
 @app.route("/plasmids/<int:row_id>/clear-sequence", methods=["POST"])

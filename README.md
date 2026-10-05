@@ -248,7 +248,10 @@ map (**Add sequence** when it has none yet). **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
-from and what was made from it, with a family tree. A primer drawn on the
+from and what was made from it, with a family tree. The **Feature library**
+keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
+by sequence, from any well-annotated map, and **Detect features** marks
+them on another plasmid. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
 where each binds, and **Copy for ordering** or **Export for ordering**
 gives the ticked ones to your oligo supplier.
@@ -268,7 +271,7 @@ change:
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
 | ⚗️ **Reagents** | quantity, concentration, CAS number, hazard, supplier and lot, and expiry dates with warnings |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
-| 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, whose page lists every virus made from it |
+| 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
 | 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
 | 🧪 **Glycerol stocks** | bacteria carrying each plasmid: the plasmid, strain, colony, resistance, how it was checked and the date frozen, and its place in a −80 °C box; the plasmid's page lists its stocks and where each is |
 | 🧫 **Cell lines** | frozen vials of each line and clone: species, parent, passage, freeze date, cells per vial, mycoplasma result and date, and where each vial sits in the LN₂ boxes |

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{# The plasmid a record names, to read: the same map as the plasmid's own
+   page, read only. Editing stays on the plasmid's page. #}
+
+{% block page_title %}{{ item_label }}{% endblock %}
+{% block page_heading %}{{ item_label }}{% endblock %}
+{% block page_subtitle %}{% trans number=plasmid.number, name=plasmid.name, bp=plasmid.length_bp %}Plasmid #{{ number }} {{ name }} · {{ bp }} bp · read only{% endtrans %}{% endblock %}
+{% block page_shell_class %}shell-page-wide{% endblock %}
+
+{% block page_nav %}
+  <div class="mb-3 flex flex-wrap items-center gap-2 text-[12px]">
+    <a class="badge" href="{{ url_for('inventory.module', key=key, open=item.id) }}">{{ icon('back') }} {{ m.label|tr }}</a>
+    <a class="badge" href="{{ plasmid.url }}">{{ icon('plasmid') }} {{ _('Open the plasmid to edit it') }}</a>
+    <span class="text-muted">{{ _('Download') }}
+      <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='gb') }}">GenBank</a> ·
+      <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='fa') }}">FASTA</a></span>
+  </div>
+{% endblock %}
+
+{% block head_extra %}
+<style>@import url("{{ url_for('static', filename='notebook-build/plasmid-app.css') }}?v={{ asset_version('notebook-build/plasmid-app.css') }}") layer(vendor);</style>
+{% endblock %}
+
+{% block content %}
+<div id="ove-root" class="ove-root" data-plasmid-id="{{ plasmid.row_id }}"
+     data-plasmid-name="{{ plasmid.name or ('Plasmid #' ~ plasmid.number) }}">
+  <div class="ove-loading">{{ _('Loading the sequence editor…') }}</div>
+</div>
+
+<script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
+        data-loaded-flag="__oveLoaded" data-missing-flag="__oveMissing"></script>
+<script nonce="{{ csp_nonce() }}">
+  (function () {
+    const root = document.getElementById('ove-root');
+    const plasmidId = root.dataset.plasmidId;
+
+    function waitForOve() {
+      return new Promise((resolve) => {
+        if (window.createVectorEditor) return resolve('ready');
+        const start = Date.now();
+        const tick = () => {
+          if (window.createVectorEditor) return resolve('ready');
+          if (window.__oveMissing) return resolve('missing');
+          if (Date.now() - start > 20000) return resolve('missing');
+          setTimeout(tick, 80);
+        };
+        tick();
+      });
+    }
+
+    Promise.all([
+      fetch(`/plasmids/${plasmidId}/sequence.json`).then((r) => (r.ok ? r.json() : null)),
+      waitForOve(),
+    ]).then(([data, state]) => {
+      if (state !== 'ready') {
+        root.innerHTML = '<div class="ove-error">' + t('The sequence editor didn’t load. Reload the page.') + '</div>';
+        return;
+      }
+      root.innerHTML = '';
+      const editor = window.createVectorEditor(root, {
+        editorName: `inventory-plasmid-${plasmidId}`,
+        showMenuBar: true,
+        readOnly: true,
+        doNotUseAbsolutePosition: true,
+      });
+      editor.updateEditor({
+        readOnly: true,
+        sequenceData: {
+          name: (data && data.name) || root.dataset.plasmidName,
+          sequence: (data && data.sequence) || '',
+          circular: !!(data && data.circular),
+          features: (data && data.features) || [],
+          primers: (data && data.primers) || [],
+          translations: (data && data.translations) || [],
+          parts: (data && data.parts) || [],
+        },
+      });
+    });
+  })();
+</script>
+{% endblock %}

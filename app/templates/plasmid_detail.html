@@ -88,6 +88,24 @@
         <button type="button" class="btn btn-sm" id="ove-fullscreen" hidden><span>{{ _('Full screen') }}</span></button>
       </span>
     </div>
+    {# The lab's feature library (app/feature_library.py): mark its elements here, or keep this map's in it. #}
+    {% if plasmid.length_bp %}
+      <div class="ove-bar text-[12px]" id="feature-library-bar">
+        <span class="text-muted">{% trans url=url_for('feature_library_page') %}The <a href="{{ url }}">feature library</a> keeps the lab's elements by sequence.{% endtrans %}</span>
+        <span class="flex items-center gap-2">
+          {% if not locked %}
+            <form method="post" action="{{ url_for('plasmid_detect_features', row_id=plasmid.row_id) }}">
+              <button type="submit" class="btn btn-sm" title="{{ _('Mark every library element found in this sequence') }}">{{ icon('wand') }} {{ _('Detect features') }}</button>
+            </form>
+          {% endif %}
+          {% if plasmid.features %}
+            <form method="post" action="{{ url_for('plasmid_features_to_library', row_id=plasmid.row_id) }}">
+              <button type="submit" class="btn btn-sm" title="{{ _('Keep the named features of this map in the library') }}">{{ icon('folder-plus') }} {{ _('Add to library') }}</button>
+            </form>
+          {% endif %}
+        </span>
+      </div>
+    {% endif %}
     <div id="ove-root" class="ove-root" data-plasmid-id="{{ plasmid.row_id }}"
          data-plasmid-name="{{ plasmid.name or ('Plasmid #' ~ plasmid.plasmid_id) }}"
          data-locked="{{ '1' if locked else '0' }}">

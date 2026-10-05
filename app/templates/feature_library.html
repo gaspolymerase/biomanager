@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ _('Feature library') }}{% endblock %}
+{% block page_heading %}{{ _('Feature library') }}{% endblock %}
+{% block page_subtitle %}{{ _('Elements the lab reuses, by sequence. Detect features on a plasmid marks each one wherever it is in the map.') }}{% endblock %}
+
+{% block page_nav %}
+  <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[12px]">
+    <a class="dt-chip" aria-pressed="{{ 'false' if category else 'true' }}" href="{{ url_for('feature_library_page') }}">{{ _('All') }} <span class="dt-chip-count">{{ total }}</span></a>
+    {% for key, n in counts.items() %}
+      <a class="dt-chip" aria-pressed="{{ 'true' if category == key else 'false' }}" href="{{ url_for('feature_library_page', category=key) }}">{{ labels[key] }} <span class="dt-chip-count">{{ n }}</span></a>
+    {% endfor %}
+    <a class="ml-auto text-muted" href="{{ url_for('plasmids') }}">{{ icon('plasmid') }} {{ db_labels.get('plasmids', 'Plasmids')|tr }}</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+{% if current_user.role == 'admin' %}
+  <form method="post" action="{{ url_for('feature_library_collect') }}" class="mb-3 flex flex-wrap items-center gap-2">
+    <button type="submit" class="btn btn-sm">{{ icon('import') }} {{ _('Collect from every plasmid') }}</button>
+    <span class="text-[12px] text-muted">{{ _("Every named feature on the lab's plasmid maps, once per sequence.") }}</span>
+  </form>
+{% endif %}
+
+{% if not groups %}
+  <div class="card px-4 py-6 text-[13px] text-muted">
+    {% trans %}The library is empty. On a plasmid with a well-annotated map (a SnapGene or Addgene file, say), use <b>Add to library</b> above the map to keep its features here.{% endtrans %}
+  </div>
+{% endif %}
+
+{% for group in groups %}
+  <section class="card mb-3 overflow-hidden" id="library-{{ group.key }}">
+    <header class="card-head"><h2>{{ group.label }}</h2><span class="badge badge-quiet">{{ group.rows|length }}</span></header>
+    <div class="dt-scroll">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th style="width: 220px;">{{ _('Name') }}</th>
+            <th style="width: 120px;">{{ _('Type') }}</th>
+            <th style="width: 80px;">{{ _('Length') }}</th>
+            <th>{{ _('Sequence') }}</th>
+            <th style="width: 180px;">{{ _('Taken from') }}</th>
+            <th style="width: 44px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in group.rows %}
+            <tr>
+              <td><span class="inline-block h-2.5 w-2.5 rounded-full align-middle" style="background: {{ e.color or '#cbd5e1' }}"></span> <span class="font-medium text-ink">{{ e.name }}</span></td>
+              <td class="text-muted">{{ e.type }}</td>
+              <td class="text-muted">{{ e.length }} bp</td>
+              <td><code class="block max-w-[420px] truncate text-[11.5px]" title="{{ e.sequence }}">{{ e.sequence }}</code></td>
+              <td class="text-muted">{% if e.source %}<a href="{{ e.source.url }}">#{{ e.source.number }} {{ e.source.name }}</a>{% endif %}{% if e.by %} · {{ e.by }}{% endif %}</td>
+              <td>
+                {% if e.may_delete %}
+                  <form method="post" action="{{ url_for('feature_library_delete', entry_id=e.id) }}"
+                        data-confirm="{{ _('Take %(name)s out of the library? Maps it was marked on keep it.', name=e.name) }}">
+                    <button type="submit" class="row-icon-btn" title="{{ _('Take %(name)s out of the library', name=e.name) }}">{{ icon('trash') }}</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endfor %}
+{% endblock %}

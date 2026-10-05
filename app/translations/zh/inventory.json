@@ -411,5 +411,9 @@
   "colony PCR": "菌落 PCR",
   "Sanger": "Sanger 测序",
   "whole plasmid": "全质粒测序",
-  "Glycerol %": "甘油 %"
+  "Glycerol %": "甘油 %",
+  "%(name)s doesn’t name a plasmid with a sequence.": "%(name)s 没有填写带序列的质粒。",
+  "Plasmid #%(number)s %(name)s · %(bp)s bp · read only": "质粒 #%(number)s %(name)s · %(bp)s bp · 只读",
+  "Open the plasmid to edit it": "打开质粒即可编辑",
+  "See the sequence of plasmid #%(number)s": "查看质粒 #%(number)s 的序列"
 }

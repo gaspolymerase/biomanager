@@ -31,7 +31,7 @@
 {% macro req(column) %}{% if column in module.required %} data-required="1"{% endif %}{% endmacro %}
 {% macro star(column) %}{% if column in module.required %}<span class="req-star" title="{{ _('Required') }}">*</span>{% endif %}{% endmacro %}
 
-{% macro field_cell(field, value, form_id, locked, src_label='', links={}) %}
+{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0) %}
   {% set name = 'attr_' ~ field.key %}
   {% set flabel = field.label|tr('inventory') %}
   {% if field.type == 'select' %}
@@ -55,6 +55,9 @@
              data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
       {% if plasmid %}<a class="plasmid-cell-link" href="{{ url_for('plasmid_page', number=plasmid.number) }}"
          title="{{ _('Open plasmid #%(number)s', number=plasmid.number) }}">{{ plasmid.name or ('#' ~ plasmid.number) }}</a>{% endif %}
+      {# Its sequence and map, to read (the plasmid's own page is where it is edited). #}
+      {% if plasmid and plasmid.has_sequence and item_id %}<a class="plasmid-cell-link flex-none" href="{{ url_for('inventory.item_sequence', key=key, item_id=item_id) }}"
+         title="{{ _('See the sequence of plasmid #%(number)s', number=plasmid.number) }}">{{ icon('dna') }}</a>{% endif %}
     </span>
   {% elif field.type == 'url' and value %}
     <a class="sheet-link font-normal" href="{{ value }}" target="_blank" rel="noopener">{{ value|replace('https://', '')|truncate(28) }}</a>
@@ -279,7 +282,7 @@
                   </td>
                 {% endif %}
                 {% for fd in m.table_fields %}
-                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links) }}</td>
+                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id) }}</td>
                 {% endfor %}
                 {% if m.has('sharing') %}
                   <td>
