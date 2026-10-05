@@ -1504,8 +1504,9 @@ teal in them).
   hairlines; on a dark page the header's glass turns dark over the stage and
   the cards (`.on-dark`, from `site.js`).
 - **The AI assistants card** (`.nc-full.ai-card`, first under Features, the
-  whole row) is drawn plainly: three steps in thin lines with small mono
-  captions (what you said, one proposal, your records), joined by arrows,
+  whole row) is drawn plainly: three steps with small mono
+  captions (what you said as two small glass bubbles, one proposal, your
+  records as a stack of glass rows), joined by thin arrows,
   with Approve as a gate on the last one (`.flow`, all HTML and CSS, so on
   a phone it runs down the card). A dot walks the path and Approve lights
   as it passes (CSS keyframes; still and lit with reduced motion). Under it

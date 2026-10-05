@@ -1176,10 +1176,35 @@ kbd {
 .fl-n { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; color: var(--mute); }
 .fl-tag { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
 .fl-box { display: grid; align-content: center; gap: 7px; height: 92px; border: 1px solid var(--ln); border-radius: 12px; }
-.fl-say .fl-box { width: 104px; padding: 0 16px; border-radius: 16px 16px 16px 4px; }
-.fl-say .fl-box i { display: block; height: 2px; border-radius: 2px; background: var(--ln); }
-.fl-say .fl-box i:nth-child(2) { width: 70%; }
-.fl-say .fl-box i:nth-child(3) { width: 45%; }
+/* What you said and your records: small pieces of liquid glass, each over
+   a soft glow of the card's colours so the glass has something to bend. */
+.fl-glass {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 48%, rgba(255, 255, 255, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), inset -1px -1px 0 rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8);
+}
+.fl-say .fl-box, .fl-lab .fl-box { position: relative; isolation: isolate; border: 0; width: 132px; }
+.fl-say .fl-box::before, .fl-lab .fl-box::before {   /* the glow behind the glass */
+  content: ""; position: absolute; z-index: -1; inset: 14px 18px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--c2), transparent), radial-gradient(closest-side at 30% 70%, var(--c1), transparent);
+  filter: blur(14px); opacity: 0.55;
+}
+.fl-say .fl-box { display: block; }
+.fl-bub { position: absolute; border-radius: 16px 16px 16px 5px; }
+.fl-bub.back { left: 26px; top: 6px; width: 96px; height: 34px; opacity: 0.55; }
+.fl-bub.front {
+  left: 0; bottom: 6px; width: 122px; padding: 9px 11px 10px;
+  font: 400 11px/1.4 var(--font-body); color: var(--ink); text-align: left;
+}
+.fl-bub.front i { display: inline-block; width: 1.5px; height: 11px; margin-left: 2px; vertical-align: -1px; background: var(--c1); }
+.fl-lab .fl-box { display: grid; align-content: center; gap: 5px; }
+.fl-row { display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 8px; border-radius: 8px; }
+.fl-row:nth-child(2) { margin-left: 8px; opacity: 0.8; }
+.fl-row:nth-child(3) { margin-left: 16px; opacity: 0.6; }
+.fl-row b { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.55); }
+.fl-row u { flex: 1; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.4); text-decoration: none; }
+.fl-row u + u { flex: 0 0 18px; }
 .fl-prop .fl-box {
   width: 172px; padding: 12px 14px; gap: 6px; font: 500 11.5px/1.35 var(--font-mono); color: var(--ink);
   border-color: color-mix(in srgb, var(--c1) 70%, transparent);
@@ -1189,8 +1214,6 @@ kbd {
 }
 .fl-prop .fl-box span { display: flex; gap: 8px; white-space: nowrap; }
 .fl-prop .fl-box b { font-weight: 500; color: var(--c1); }
-.fl-lab .fl-box { border: 0; }
-.fl-lab svg { width: 66px; height: 76px; fill: none; stroke: var(--ln); stroke-width: 1.2; }
 .fl-link { position: relative; flex: 1; min-width: 18px; height: 1px; margin: 0 10px; background: var(--ln); }
 .fl-link::after {   /* the arrowhead */
   content: ""; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px;
@@ -1214,7 +1237,7 @@ kbd {
   .flow { flex-direction: column; padding: 8px 26px 24px; }
   .flow { gap: 0; }
   .fl-node { gap: 8px; }
-  .fl-box { height: 78px; }
+  .fl-box { height: 84px; }
   .fl-link { width: 1px; min-width: 0; height: 34px; flex: none; margin: 6px 0; }
   .fl-link::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
   .fl-gate + .fl-tag { left: 22px; top: 50%; transform: translateY(-50%); }
@@ -1225,6 +1248,7 @@ kbd {
   .ai-card .fl-link.l2 .fl-dot { animation: fl-b 6s linear infinite; }
   .ai-card .fl-gate { animation: fl-ok 6s linear infinite; }
   .ai-card .fl-prop .fl-box { animation: fl-glow 6s linear infinite; }
+  .ai-card .fl-row:first-child { animation: fl-rec 6s linear infinite; }
   @media (max-width: 679px) {
     .ai-card .fl-link.l1 .fl-dot { animation-name: fl-a-down; }
     .ai-card .fl-link.l2 .fl-dot { animation-name: fl-b-down; }
@@ -1240,6 +1264,9 @@ kbd {
 @keyframes fl-glow { 0%, 20% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 26px color-mix(in srgb, var(--c1) 22%, transparent); }
   28%, 50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 34px color-mix(in srgb, var(--c1) 50%, transparent); }
   60%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 26px color-mix(in srgb, var(--c1) 22%, transparent); } }
+@keyframes fl-rec { 0%, 80% { border-color: rgba(255, 255, 255, 0.32); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), 0 10px 24px rgba(0, 0, 0, 0.28); }
+  84%, 96% { border-color: var(--c1); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), 0 0 18px color-mix(in srgb, var(--c1) 60%, transparent); }
+  100% { border-color: rgba(255, 255, 255, 0.32); } }
 @media (prefers-reduced-motion: reduce) {
   .ai-card .fl-gate { color: #06101c; border-color: var(--c1); background: var(--c1); }
 }
@@ -1249,6 +1276,11 @@ kbd {
   .fl-prop .fl-box { background: linear-gradient(150deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.5)); box-shadow: 0 6px 18px rgba(30, 60, 160, 0.1); }
   .fl-prop .fl-box b { color: color-mix(in srgb, var(--c1) 70%, #0b1a44); }
   .fl-gate { background: #fff; }
+  .fl-glass { background: linear-gradient(140deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.42) 48%, rgba(255, 255, 255, 0.62));
+    border-color: rgba(255, 255, 255, 0.95); box-shadow: inset 1px 1px 0 #fff, 0 0 0 1px rgba(40, 70, 160, 0.1), 0 8px 20px rgba(30, 60, 160, 0.12); }
+  .fl-say .fl-box::before, .fl-lab .fl-box::before { opacity: 0.45; }
+  .fl-row b { border-color: rgba(40, 70, 160, 0.45); }
+  .fl-row u { background: rgba(40, 70, 160, 0.28); }
   @keyframes fl-ok { 0%, 54% { color: var(--mute); border-color: var(--ln); background: #fff; }
     58%, 92% { color: #fff; border-color: #4f7ef5; background: #4f7ef5; box-shadow: 0 0 14px rgba(79, 126, 245, 0.6); }
     100% { color: var(--mute); border-color: var(--ln); background: #fff; } }
