@@ -32,5 +32,6 @@
   "%(n)s part": "%(n)s 个部件",
   "%(n)s parts": "%(n)s 个部件",
   "Saved · %(length)s bp · %(parts)s": "已保存 · %(length)s bp · %(parts)s",
-  "Not saved: %(error)s": "未保存：%(error)s"
+  "Not saved: %(error)s": "未保存：%(error)s",
+  "from the file, or type one": "取自文件，也可自己填写"
 }

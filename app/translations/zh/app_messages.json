@@ -466,5 +466,8 @@
   "zebrafish::water system": "养殖系统",
   "zebrafish::male tank": "雄鱼缸",
   "zebrafish::female tank": "雌鱼缸",
-  "zebrafish::fish row": "鱼行"
+  "zebrafish::fish row": "鱼行",
+  "The file holds %(n)s sequences; only the first, %(name)s, was kept.": "文件中有 %(n)s 条序列，只保留了第一条：%(name)s。",
+  "unnamed": "未命名",
+  "The sequence has characters that are not IUPAC nucleotide codes.": "序列中有不属于 IUPAC 核苷酸代码的字符。"
 }

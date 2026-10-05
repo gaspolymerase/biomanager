@@ -781,7 +781,7 @@ Plasmid records with their sequence and map, and the box each tube is in.
 
 - **Sequence**, beside each plasmid's number in the table, opens its sequence and map (**Add sequence** when it has none yet); the number opens the same page.
 
-- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence.
+- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
 - Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like; **Storage** and **Properties** are the other tabs. **Storage** also lists the viruses made from the plasmid ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
 

@@ -443,9 +443,13 @@
       const n = list.length || Math.max(1, Math.min({{ max_batch }}, parseInt(count.value, 10) || 1));
       count.disabled = list.length > 0;
       if (list.length) count.value = list.length;
-      nameInput.required = !list.length;
+      const file = document.getElementById('plasmid-new-file');
+      const hasFile = !!(file && file.files && file.files.length);
+      // A list names them; so can a sequence file (the server reads its name).
+      nameInput.required = !list.length && !hasFile;
       nameInput.closest('label').classList.toggle('is-muted', list.length > 0);
-      nameInput.placeholder = list.length ? t('from the list below') : t('e.g. %(example)s', { example: 'pCMV-mCherry-NLS' });
+      nameInput.placeholder = list.length ? t('from the list below')
+        : hasFile ? t('from the file, or type one') : t('e.g. %(example)s', { example: 'pCMV-mCherry-NLS' });
       sub.textContent = n > 1
         ? t('They will be plasmids #%(first)s–#%(last)s (or the next free run of numbers).', { first: nextId, last: nextId + n - 1 })
         : t('It will be plasmid #%(n)s, or the next free number if that is taken when you save.', { n: nextId });
@@ -606,7 +610,11 @@
       fileLabel.textContent = `${file.name} · ${kb} KB`;
     }
 
-    fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+    fileInput.addEventListener('change', () => {
+      showFile(fileInput.files[0]);
+      // The name may now come from the file (see syncMany).
+      modal.querySelector('[data-plasmid-names]')?.dispatchEvent(new Event('input'));
+    });
 
     ['dragenter', 'dragover'].forEach((ev) => {
       dz.addEventListener(ev, (event) => {
@@ -631,7 +639,7 @@
       const dt = new DataTransfer();
       dt.items.add(f);
       fileInput.files = dt.files;
-      showFile(f);
+      fileInput.dispatchEvent(new Event('change'));
     });
 
     // Reset the filename display when the dialog closes or reopens.

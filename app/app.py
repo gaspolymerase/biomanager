@@ -6947,6 +6947,12 @@ def _submitted_sequence(file_field: str) -> tuple[dict | None, str]:
     return None, ""
 
 
+def _several_records(parsed: dict) -> str:
+    """A file of several sequences keeps its first: say so."""
+    return gettext("The file holds %(n)s sequences; only the first, %(name)s, was kept.",
+                   n=parsed["records"], name=parsed.get("name") or gettext("unnamed"))
+
+
 def _apply_parsed_sequence(p, parsed: dict) -> None:
     p.full_sequence = parsed["sequence"]
     p.is_circular = bool(parsed.get("is_circular"))
@@ -7165,6 +7171,8 @@ def _create_plasmid():
                       count=count, first=first, last=last, seq=seq, where=where), "success")
     for note in made["notes"]:
         flash(note, "warning")
+    if parsed and parsed.get("records", 1) > 1:
+        flash(_several_records(parsed), "warning")
     if seq_problem:
         flash(gettext("%(problem)s The plasmids were saved without a sequence; add one on their pages.",
                       problem=seq_problem) if count > 1 else
@@ -7278,6 +7286,9 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
             db_session.add(record)
             if parsed:
                 _apply_parsed_sequence(record, parsed)
+                # A SnapGene file's description fills an empty Notes.
+                if parsed.get("description") and not (record.notes or "").strip():
+                    record.notes = parsed["description"][:2000]
             stamp_updated(record)
             made.append(record)
     return {
@@ -7763,6 +7774,8 @@ def plasmid_upload_sequence(row_id: int):
         db_session.commit()
     flash(gettext("Loaded %(format)s · %(bp)s bp · %(features)s features.", format=parsed["format"].upper(),
                   bp=len(parsed["sequence"]), features=len(parsed["features"])), "success")
+    if parsed.get("records", 1) > 1:
+        flash(_several_records(parsed), "warning")
     return redirect(plasmid_page_url(row_id))
 
 
@@ -7846,6 +7859,8 @@ def plasmid_move_in_box(row_id: int):
         return jsonify({"ok": True, "moved": moved})
 
 
+from .sequence_parser import NOTE_LIMIT, QUALIFIER_LIMIT  # noqa: E402
+
 # What the plasmid editor annotates, as stored in features_json. Each entry
 # carries its "kind"; an entry without one is a feature (how every stored
 # annotation looked before primers, translations and parts were kept).
@@ -7883,11 +7898,11 @@ def _clean_features(raw_features, length: int, kind: str = "feature") -> list[di
             except (TypeError, ValueError):
                 direction = 1
         notes = f.get("notes")
-        if isinstance(notes, dict):  # the editor's {key: [values]}
-            notes = {str(k)[:60]: [str(v)[:400] for v in (vals if isinstance(vals, list) else [vals])][:20]
-                     for k, vals in list(notes.items())[:30]}
+        if isinstance(notes, dict):  # the editor's {key: [values]}, every qualifier an import kept
+            notes = {str(k)[:60]: [str(v)[:NOTE_LIMIT] for v in (vals if isinstance(vals, list) else [vals])][:20]
+                     for k, vals in list(notes.items())[:QUALIFIER_LIMIT]}
         elif isinstance(notes, str):
-            notes = notes[:400]
+            notes = notes[:NOTE_LIMIT]
         else:
             notes = ""
         item_kind = f.get("kind") if f.get("kind") in ANNOTATION_KINDS.values() else kind
@@ -8027,16 +8042,16 @@ def plasmid_sequence_save_json(row_id: int):
     An empty or malformed save is refused (400) rather than stored: the
     editor autosaves after every edit, and a blank body used to wipe the
     construct. Clearing a sequence is /clear-sequence."""
-    from .sequence_parser import looks_like_bases
+    from .sequence_parser import is_iupac
 
     payload = request.get_json(silent=True)
     sd = payload.get("sequenceData", payload) if isinstance(payload, dict) else None
     raw_sequence = sd.get("sequence") if isinstance(sd, dict) else None
     if not isinstance(raw_sequence, str) or not raw_sequence.strip():
         return jsonify({"ok": False, "error": gettext("Refusing to save an empty sequence. Use Clear sequence to empty it.")}), 400
-    if not looks_like_bases(raw_sequence):
-        return jsonify({"ok": False, "error": gettext("The sequence has letters that are not IUPAC nucleotide codes.")}), 400
     sequence = re.sub(r"\s+", "", raw_sequence).upper()
+    if not is_iupac(sequence):
+        return jsonify({"ok": False, "error": gettext("The sequence has characters that are not IUPAC nucleotide codes.")}), 400
     translated = _clean_annotations(sd, len(sequence))
 
     with SessionLocal() as db_session:

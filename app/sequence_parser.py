@@ -4,6 +4,9 @@ We don't pull in BioPython for this — a single-purpose ~150-line parser
 covers our needs (display in SeqViz, store features), and avoids a 50+ MB
 dep on numpy + biopython.
 
+A file holding several records keeps the first; "records" says how many
+there were, so the caller can say so.
+
 Output shape (also what gets handed to SeqViz):
 {
   "sequence": "ATGCGTGCAT...",
@@ -36,6 +39,12 @@ def clean_bases(text: str) -> str:
     return _NOT_IUPAC.sub("", text or "").upper()
 
 
+def is_iupac(sequence: str) -> bool:
+    """True when every character is an IUPAC nucleotide letter: no digits,
+    spaces or punctuation. For a sequence about to be stored as it is."""
+    return bool(sequence) and not _NOT_IUPAC.search(sequence)
+
+
 def looks_like_bases(text: str) -> bool:
     """True when text is only bases, whitespace and position numbers.
 
@@ -44,6 +53,32 @@ def looks_like_bases(text: str) -> bool:
     A, C, G or T."""
     body = _RAW_NOISE.sub("", text or "")
     return bool(body) and not _NOT_IUPAC.search(body)
+
+
+# How much of a feature's qualifiers is kept. Generous: an Addgene note with
+# its citation, or a whole /translation, must survive the round trip.
+NOTE_LIMIT = 10000
+QUALIFIER_LIMIT = 60
+
+
+def qualifier_notes(pairs) -> dict:
+    """(key, value) pairs as the editor's notes shape, {key: [values]}: a
+    key may repeat (two /note lines), and nothing is cut short."""
+    notes: dict[str, list[str]] = {}
+    for key, value in pairs:
+        key = str(key).strip()[:60]
+        if not key or (key not in notes and len(notes) >= QUALIFIER_LIMIT):
+            continue
+        notes.setdefault(key, []).append(str(value)[:NOTE_LIMIT])
+    return notes
+
+
+def _first(notes: dict, *keys) -> str:
+    for key in keys:
+        for value in notes.get(key) or []:
+            if value.strip():
+                return value.strip()
+    return ""
 
 
 # Pastel colors used to tint features by type. Same palette SnapGene-ish
@@ -76,6 +111,11 @@ def parse_fasta(raw: str) -> dict | None:
         return None
     lines = raw.splitlines()
     name = lines[0][1:].strip().split()[0] if lines[0][1:].strip() else "sequence"
+    # A file of several records (primers, contigs) is not one sequence:
+    # keep the first and say so, rather than gluing them into a chimera.
+    headers = [i for i, line in enumerate(lines) if line.startswith(">")]
+    if len(headers) > 1:
+        lines = lines[:headers[1]]
     body = "".join(l.strip() for l in lines[1:] if not l.startswith(">"))
     # Alignment gaps and a stop mark are tolerated; any other letter means
     # this is not a nucleotide FASTA (a protein, or prose).
@@ -88,11 +128,16 @@ def parse_fasta(raw: str) -> dict | None:
         "format": "fasta",
         "name": name,
         "features": [],
+        "records": len(headers),
     }
 
 
 # GenBank LOCUS line: "LOCUS       name      length bp    DNA     circular ..."
+# A long name can run into the length ("…-long5563 bp"); the topology is read
+# from the line whatever the name does, and such a name is split off later,
+# once the sequence's length is known.
 _LOCUS_NAME_RE = re.compile(r"^LOCUS\s+(\S+)\s+\d+\s+bp", re.IGNORECASE)
+_LOCUS_JOINED_RE = re.compile(r"^LOCUS\s+(\S+?)(\d+)\s+bp", re.IGNORECASE)
 _LOCUS_TOPO_RE = re.compile(r"\b(linear|circular)\b", re.IGNORECASE)
 
 
@@ -101,10 +146,12 @@ def parse_genbank(raw: str) -> dict | None:
         return None
 
     name = ""
+    locus_line = ""
     is_circular = False
     seq = ""
     features: list[dict] = []
 
+    records = len(re.findall(r"^LOCUS\b", raw, re.MULTILINE))
     lines = raw.splitlines()
     state = "header"
     current_feature: dict | None = None
@@ -114,8 +161,12 @@ def parse_genbank(raw: str) -> dict | None:
     def flush_qualifier():
         nonlocal pending_qualifier_key, pending_qualifier_value
         if current_feature and pending_qualifier_key:
-            val = " ".join(pending_qualifier_value).strip().strip('"')
-            current_feature.setdefault("qualifiers", {})[pending_qualifier_key] = val
+            # A translation wraps without spaces; text wraps at word breaks.
+            joiner = "" if pending_qualifier_key == "translation" else " "
+            val = joiner.join(pending_qualifier_value).strip()
+            if len(val) >= 2 and val.startswith('"') and val.endswith('"'):
+                val = val[1:-1]
+            current_feature.setdefault("qualifiers", []).append((pending_qualifier_key, val.replace('""', '"')))
         pending_qualifier_key = None
         pending_qualifier_value = []
 
@@ -125,9 +176,11 @@ def parse_genbank(raw: str) -> dict | None:
 
     for raw_line in lines:
         if state == "header":
-            m = _LOCUS_NAME_RE.match(raw_line)
-            if m:
-                name = m.group(1) or name
+            if raw_line[:5].upper() == "LOCUS" and not locus_line:
+                locus_line = raw_line
+                m = _LOCUS_NAME_RE.match(raw_line)
+                if m:
+                    name = m.group(1)
                 topo = _LOCUS_TOPO_RE.search(raw_line)
                 if topo:
                     is_circular = topo.group(1).lower() == "circular"
@@ -186,6 +239,11 @@ def parse_genbank(raw: str) -> dict | None:
     seq = clean_bases(seq)
     if not seq:
         return None
+    if not name and locus_line:
+        joined = _LOCUS_JOINED_RE.match(locus_line)
+        token = (joined.group(1) + joined.group(2)) if joined else ""
+        if token.endswith(str(len(seq))) and len(token) > len(str(len(seq))):
+            name = token[: -len(str(len(seq)))]
 
     # Normalize features: parse the location into start/end + direction.
     normalized = []
@@ -197,12 +255,9 @@ def parse_genbank(raw: str) -> dict | None:
         if start is None or end is None:
             continue
         # Pick a feature name in priority order.
-        q = feat.get("qualifiers", {})
+        q = qualifier_notes(feat.get("qualifiers", []))
         name_val = (
-            q.get("label")
-            or q.get("gene")
-            or q.get("product")
-            or q.get("note")
+            _first(q, "label", "gene", "product", "note")
             or feat.get("type")
             or "feature"
         ).split(";")[0][:80]
@@ -213,7 +268,7 @@ def parse_genbank(raw: str) -> dict | None:
             "type": feat.get("type", "misc_feature"),
             "direction": direction,
             "color": FEATURE_TYPE_COLORS.get(feat.get("type", ""), "#d0d0d0"),
-            "notes": (q.get("note") or "")[:200],
+            "notes": q,
         })
 
     return {
@@ -222,6 +277,7 @@ def parse_genbank(raw: str) -> dict | None:
         "format": "genbank",
         "name": name,
         "features": normalized,
+        "records": max(records, 1),
     }
 
 
@@ -273,11 +329,14 @@ def _parse_location(loc: str, length: int = 0) -> tuple[int | None, int | None, 
 
 
 def parse_sequence_text(raw: str) -> dict | None:
-    """Auto-detect FASTA vs GenBank vs raw-bases input and parse."""
+    """Auto-detect FASTA vs GenBank vs raw-bases input and parse. A
+    byte-order mark (Windows editors add one) is ignored, and a GenBank file
+    may have comment or blank lines before its LOCUS line."""
+    raw = (raw or "").lstrip("\ufeff")
     raw_strip = raw.strip()
     if raw_strip.startswith(">"):
         return parse_fasta(raw)
-    if raw_strip.upper().startswith("LOCUS"):
+    if re.search(r"^LOCUS\b", raw_strip[:4000], re.MULTILINE | re.IGNORECASE):
         return parse_genbank(raw)
     # Treat as raw bases, but only if that is all it is.
     if not looks_like_bases(raw_strip):
@@ -288,6 +347,7 @@ def parse_sequence_text(raw: str) -> dict | None:
         "format": "raw",
         "name": "",
         "features": [],
+        "records": 1,
     }
 
 
@@ -330,6 +390,7 @@ def parse_snapgene_dna(raw_bytes: bytes) -> dict | None:
     is_circular = False
     features_xml: str | None = None
     name = ""
+    description = ""
 
     while pos + 5 <= len(raw_bytes):
         chunk_type = raw_bytes[pos]
@@ -353,6 +414,18 @@ def parse_snapgene_dna(raw_bytes: bytes) -> dict | None:
                 features_xml = payload.decode("utf-8", errors="ignore")
             except Exception:
                 features_xml = None
+        elif chunk_type == 0x06:
+            # Notes: the map's name (CustomMapLabel) and its description.
+            try:
+                notes_root = _ET.fromstring(payload.decode("utf-8", errors="ignore"))
+            except _ET.ParseError:
+                notes_root = None
+            if notes_root is not None:
+                label = (notes_root.findtext("CustomMapLabel") or "").strip()
+                if label and (notes_root.findtext("UseCustomMapLabel") or "1").strip() != "0":
+                    name = label[:200]
+                description = re.sub(r"<[^>]+>", " ", notes_root.findtext("Description") or "")
+                description = re.sub(r"\s+", " ", description).strip()[:NOTE_LIMIT]
 
     if not sequence:
         return None
@@ -367,7 +440,9 @@ def parse_snapgene_dna(raw_bytes: bytes) -> dict | None:
         "is_circular": is_circular,
         "format": "snapgene",
         "name": name,
+        "description": description,
         "features": features,
+        "records": 1,
     }
 
 
@@ -413,12 +488,13 @@ def _parse_snapgene_features_xml(xml_text: str) -> list[dict]:
             continue
         start, end = span_of_parts(parts)
 
-        note_text = ""
+        # Every qualifier: <Q name="note"><V text="…"/></Q>, or int= / predef=.
+        pairs = []
         for q in f.iter("Q"):
-            if q.attrib.get("name") == "note":
-                v = q.find("V")
-                if v is not None:
-                    note_text = (v.attrib.get("text") or "").strip()[:200]
+            key = q.attrib.get("name") or ""
+            for v in q.findall("V"):
+                value = v.attrib.get("text", v.attrib.get("int", v.attrib.get("predef", "")))
+                pairs.append((key, re.sub(r"<[^>]+>", "", value).strip()))
 
         features.append({
             "name": (fname or "feature")[:80],
@@ -427,7 +503,7 @@ def _parse_snapgene_features_xml(xml_text: str) -> list[dict]:
             "type": ftype,
             "direction": direction,
             "color": seg_color or FEATURE_TYPE_COLORS.get(ftype, "#d0d0d0"),
-            "notes": note_text,
+            "notes": qualifier_notes(pairs),
         })
     return features
 
@@ -452,7 +528,7 @@ def parse_sequence_bytes(raw_bytes: bytes, filename: str = "") -> dict | None:
         return None
     # Text fallback.
     try:
-        text = raw_bytes.decode("utf-8")
+        text = raw_bytes.decode("utf-8-sig")
     except UnicodeDecodeError:
         try:
             text = raw_bytes.decode("latin-1")

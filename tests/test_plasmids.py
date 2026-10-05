@@ -110,6 +110,90 @@ class SequenceParserTests(AppTestCase):
         self.assertEqual((f["name"], f["start"], f["end"], f["direction"], f["color"]), ("wrapper", 8, 1, -1, "#ff0000"))
 
 
+class ImportFidelityTests(AppTestCase):
+    """What a sequence file says survives the import: its name, its topology,
+    every qualifier, and which of several records was kept."""
+
+    def test_a_name_run_into_the_length_keeps_both_and_the_topology(self):
+        joined = GB.replace("LOCUS       pQA1        60 bp", "LOCUS       pQA1-a-long-name60 bp", 1)
+        parsed = sp.parse_genbank(joined)
+        self.assertEqual((parsed["name"], parsed["is_circular"], len(parsed["sequence"])), ("pQA1-a-long-name", True, 60))
+
+    def test_a_byte_order_mark_or_lines_before_locus_still_read_as_genbank(self):
+        for text in ("\ufeff" + GB, "# exported by our old tool\n\n" + GB):
+            parsed = sp.parse_sequence_bytes(text.encode("utf-8"), "p.gb")
+            self.assertEqual((parsed["format"], parsed["name"], parsed["is_circular"]), ("genbank", "pQA1", True))
+
+    def test_several_fasta_records_keep_the_first_and_say_how_many(self):
+        parsed = sp.parse_fasta(">insertA\nACGTACGTAC\n>insertB\nGGGGCCCCTT\n")
+        self.assertEqual((parsed["name"], parsed["sequence"], parsed["records"]), ("insertA", "ACGTACGTAC", 2))
+        self.assertEqual(sp.parse_fasta(">one\nACGT\n")["records"], 1)
+
+    def test_every_genbank_qualifier_is_kept_in_full(self):
+        # GenBank wraps long text at a space; the two lines join with one.
+        first, rest = "from pEGFP-N1, see Cormack et al. 1996", " ".join(["linker"] * 70)
+        note = f"{first} {rest}"
+        gb = GB.replace('                     /label="GFPfrag"\n',
+                        '                     /label="GFPfrag"\n'
+                        f'                     /note="{first}\n'
+                        f'                     {rest}"\n'
+                        '                     /codon_start=1\n'
+                        '                     /translation="MVSKGEELFT\n'
+                        '                     GVVPILVELD"\n'
+                        '                     /note="second note"\n', 1)
+        frag = [f for f in sp.parse_genbank(gb)["features"] if f["name"] == "GFPfrag"][0]
+        self.assertEqual(frag["notes"]["label"], ["GFPfrag"])
+        self.assertEqual(frag["notes"]["note"], [note, "second note"])
+        self.assertEqual(frag["notes"]["codon_start"], ["1"])
+        self.assertEqual(frag["notes"]["translation"], ["MVSKGEELFTGVVPILVELD"])
+
+    def test_snapgene_name_description_and_qualifiers_come_through(self):
+        def chunk(kind: int, payload: bytes) -> bytes:
+            return bytes([kind]) + struct.pack(">I", len(payload)) + payload
+        features = ('<Features><Feature name="EGFP" type="CDS" directionality="1"><Segment range="1-6"/>'
+                    '<Q name="note"><V text="&lt;html&gt;mEGFP, A206K&lt;/html&gt;"/></Q>'
+                    '<Q name="codon_start"><V int="1"/></Q></Feature></Features>')
+        notes = ("<Notes><CustomMapLabel>pCAG-GFP</CustomMapLabel><UseCustomMapLabel>1</UseCustomMapLabel>"
+                 "<Description>&lt;html&gt;&lt;body&gt;CAG-driven GFP&lt;/body&gt;&lt;/html&gt;</Description></Notes>")
+        raw = (chunk(0x09, b"SnapGene\x00\x01\x00\x0f\x00\x14") + chunk(0x00, b"\x01ACGTACGTAC")
+               + chunk(0x0A, features.encode()) + chunk(0x06, notes.encode()))
+        parsed = sp.parse_sequence_bytes(raw, "p.dna")
+        self.assertEqual((parsed["name"], parsed["description"]), ("pCAG-GFP", "CAG-driven GFP"))
+        self.assertEqual(parsed["features"][0]["notes"], {"note": ["mEGFP, A206K"], "codon_start": ["1"]})
+
+    def test_a_snapgene_file_names_a_new_plasmid_and_fills_its_notes(self):
+        def chunk(kind: int, payload: bytes) -> bytes:
+            return bytes([kind]) + struct.pack(">I", len(payload)) + payload
+        label = uniq("pSG")
+        raw = (chunk(0x09, b"SnapGene\x00\x01\x00\x0f\x00\x14") + chunk(0x00, b"\x01ACGTACGTAC")
+               + chunk(0x06, f"<Notes><CustomMapLabel>{label}</CustomMapLabel><Description>From Addgene</Description></Notes>".encode()))
+        self.post(self.a, "/plasmids", data={"name": "", "sequence_file": (io.BytesIO(raw), "p.dna")},
+                  content_type="multipart/form-data")
+        self.assertEqual(by_name(label, "full_sequence, notes, sequence_format"), [("ACGTACGTAC", "From Addgene", "snapgene")])
+
+    def test_uploading_several_records_says_only_the_first_was_kept(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        r = self.post(self.a, f"/plasmids/{rid}/upload-sequence",
+                      data={"file": (io.BytesIO(b">insertA\nACGTAC\n>insertB\nGGGGCC\n"), "two.fa")},
+                      content_type="multipart/form-data")
+        self.assertFlash(r, "The file holds 2 sequences; only the first, insertA, was kept.", "warning")
+        self.assertEqual(plasmid(rid, "full_sequence")[0], "ACGTAC")
+
+    def test_the_editor_cannot_store_digits_as_bases(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        r = self.a.post(f"/plasmids/{rid}/sequence-save", json={"sequenceData": {"sequence": "ACGT 123 acgt"}})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(plasmid(rid, "full_sequence")[0], "ACGTACGTACGT")
+
+    def test_a_long_qualifier_survives_an_editor_save(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        long_note = "y" * 3000
+        self.a.post(f"/plasmids/{rid}/sequence-save", json={"sequenceData": {"sequence": "ACGTACGTACGT", "features": [
+            {"name": "f", "start": 0, "end": 3, "forward": True, "notes": {"note": [long_note]}}]}})
+        stored = json.loads(plasmid(rid, "features_json")[0])
+        self.assertEqual(stored[0]["notes"]["note"], [long_note])
+
+
 # ====================================================================== create
 
 class CreatePlasmidTests(AppTestCase):
