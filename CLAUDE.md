@@ -29,8 +29,8 @@ it say so. In the same piece of work, update:
 | --- | --- |
 | `README.md` (this repo) | What each database and function does, features across the app, accounts, data and backups |
 | `site/index.html` | The website's front page: the tour of each database, the feature cards, downloads |
-| `site/guide.html` | The user guide: one section per area (a sheet, finding things, each database, calendar, notebook, working as a lab, phones, data) |
-| `site/server.html`, `deploy-with-ai.md`, `llms.txt` | Only when running a server, deploying or the downloads change |
+| `site/guide/<page>.html` and `site/zh/guide/<page>.html` | The user guide: one page per area (a sheet, finding things, each database, calendar, notebook, working as a lab, phones, data), in both languages |
+| `site/server.html`, `site/deploy-with-ai.md`, `site/llms.txt` | Only when running a server, deploying or the downloads change |
 | `docs/DEVELOPMENT.md` | Internals: tables, modules, how things fit together |
 
 The website is `site/`, served by GitHub Pages at
@@ -45,6 +45,11 @@ from before the move update to, and which looks here for every update after.
   in plain words, as the surrounding text does. Name buttons as the app does.
 - Put a change where a reader would look for it; don't add a "what's new"
   list. Fix text the change made wrong (a removed button, a renamed tab).
+- A guide page is edited between its `<!-- page -->` and `<!-- /page -->`
+  marks; everything around them is rebuilt. After editing one, run
+  `python scripts/guide-pages.py --search` (the pages, then the Pagefind
+  index) and `python scripts/llms-full.py` (`site/llms-full.txt`, which is
+  committed and which `tests/test_llms_full.py` checks is current).
 - Before publishing the website, check the edited pages still parse (every
   list and section closed).
 - When a change alters a page that has a screenshot, retake the screenshots
@@ -52,3 +57,16 @@ from before the move update to, and which looks here for every update after.
   and copy them to `docs/screenshots/` and `site/assets/screenshots/`.
 - Internal changes with nothing to see (a refactor, a test, a fix that restores
   documented behaviour) need no docs.
+
+## Two rules the tests enforce
+
+- **One string literal per `gettext()` and `ngettext()` call.** The
+  translation check reads the first literal only, so a message split over
+  two lines reads as untranslated however long the line has to be. Every
+  English text needs its Chinese in `app/translations/zh/*.json`, and one
+  English text may not have two different Chinese translations
+  (`tests/test_i18n.py`).
+- **Open text files with `encoding="utf-8"`** — `read_text`, `write_text`,
+  `open`. A Chinese Windows machine defaults to GBK, where the app would
+  read its own files wrongly; `tests/test_desktop_windows.py` checks every
+  call.
