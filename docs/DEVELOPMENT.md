@@ -507,6 +507,19 @@ crossing the origin keeps `start > end`.
   `tree()` up to `TREE_DEPTH` generations each way on Properties. Row ids
   without foreign keys, as for versions. The assembly wizard records its
   product's parents through `add_parent`.
+- **Primers** (`app/primer_records.py`): each save of the map gives every
+  primer annotation a record in the lab's Primers database
+  (`sync_from_map`, made with it only by someone who may add lab
+  databases), with the plasmid's number in its `template` (**Plasmid**)
+  column and status *to order*; the annotation keeps `inventory_id`.
+  `save_primer` matches the plasmid plus sequence, then name, so repeated
+  autosaves and the assembly wizard's primers never duplicate; taking a
+  primer off the map leaves its record. `binding_sites` needs `MIN_ANCHOR`
+  (15) 3′ bases to match and reports the 5′ tail. The plasmid's Primers
+  card and `/plasmids/<id>/primers.csv`, and the Primers sheet's
+  `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
+  `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
+  Used to make leaves Primers databases out.
 - **Out:** `to_genbank` / `to_fasta` (`sequence_parser.py`) write what
   `parse_genbank` reads back the same: features and primers (as
   `primer_bind`) with every qualifier, a wrap across the origin as a join.

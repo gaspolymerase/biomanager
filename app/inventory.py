@@ -157,12 +157,14 @@ PRESETS: dict[str, dict] = {
         "features": ["storage", "sharing", "quantity", "supplier", "received"],
         "category_label": "Use",
         "categories": ["PCR", "qPCR", "sequencing", "cloning", "genotyping", "mutagenesis", "probe", "gRNA", "other"],
-        "statuses": ["ordered", "in stock", "low", "used up", "discarded"],
+        "statuses": ["to order", "ordered", "in stock", "low", "used up", "discarded"],
         "fields": [
             {"key": "sequence", "label": "Sequence (5′→3′)", "type": "text", "icon": "dna", "width": 204},
             {"key": "direction", "label": "Direction", "type": "select", "options": ["forward", "reverse", "probe"],
              "icon": "signpost", "width": 80},
             {"key": "target", "label": "Target", "type": "text", "icon": "target", "width": 92},
+            # The plasmid it binds (app/primer_records.py): primers drawn on a map land here.
+            {"key": "template", "label": "Plasmid", "type": "plasmid", "icon": "plasmid", "width": 120},
             {"key": "pair", "label": "Pair", "type": "text", "icon": "link", "width": 104},
             {"key": "length", "label": "Length", "type": "number", "icon": "count", "width": 64},
             {"key": "gc", "label": "GC %", "type": "number", "icon": "gauge", "width": 60},

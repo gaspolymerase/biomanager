@@ -154,5 +154,16 @@
   "Synthesised": "合成",
   "Family tree": "家族树",
   "Where it came from": "它的来源",
-  "What came from it": "由它构建的"
+  "What came from it": "由它构建的",
+  "Primers": "引物",
+  "Kept in <a href=\"%(url)s\">%(db)s</a>, to order and to find in a box.": "保存在<a href=\"%(url)s\">%(db)s</a>，方便订购，也能在盒子里找到。",
+  "Copy for ordering": "复制以订购",
+  "Export for ordering": "导出订购表",
+  "Select all primers": "选择全部引物",
+  "Binds": "结合位置",
+  "Tm (°C)": "Tm（°C）",
+  "%(n)s-base tail": "%(n)s 个碱基的尾巴",
+  "%(num)s more site": "另有 %(num)s 个位点",
+  "%(num)s more sites": "另有 %(num)s 个位点",
+  "doesn’t bind here": "不结合此质粒"
 }

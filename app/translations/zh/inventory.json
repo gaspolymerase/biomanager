@@ -396,5 +396,7 @@
   "field type::Link": "链接",
   "field type::Source animal": "来源动物",
   "field type::A plasmid": "质粒",
-  "inventory::Target": "靶标"
+  "inventory::Target": "靶标",
+  "Copy for ordering": "复制以订购",
+  "Export for ordering": "导出订购表"
 }

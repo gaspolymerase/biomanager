@@ -95,6 +95,40 @@
     </div>
   </div>
 
+  {# Primers that name this plasmid in the Primers database; the map's own primers land there (app/primer_records.py). #}
+  {% if primers.rows %}
+    <div class="card mt-4 overflow-hidden" id="plasmid-primers">
+      <header class="card-head flex flex-wrap items-center gap-3">
+        <h3 class="card-title">{{ _('Primers') }} <span class="badge badge-quiet">{{ primers.rows|length }}</span></h3>
+        <span class="text-[12px] text-muted">{% trans db=primers.database, url=primers.url %}Kept in <a href="{{ url }}">{{ db }}</a>, to order and to find in a box.{% endtrans %}</span>
+        <span class="ml-auto flex gap-2">
+          <button type="button" class="btn btn-sm" data-primers-copy>{{ icon('copy') }} {{ _('Copy for ordering') }}</button>
+          <a class="btn btn-sm" data-primers-export href="{{ url_for('plasmid_primers_csv', row_id=plasmid.row_id) }}">{{ icon('download') }} {{ _('Export for ordering') }}</a>
+        </span>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px]">
+          <thead><tr class="text-left text-muted">
+            <th class="px-4 py-2 w-8"><input type="checkbox" data-primers-all aria-label="{{ _('Select all primers') }}"></th>
+            <th class="py-2">{{ _('Name') }}</th><th class="py-2">{{ _('Sequence (5′→3′)') }}</th>
+            <th class="py-2">{{ _('Binds') }}</th><th class="py-2">{{ _('Tm (°C)') }}</th><th class="py-2 pr-4">{{ _('Status') }}</th></tr></thead>
+          <tbody>
+            {% for r in primers.rows %}
+              <tr class="border-t border-[var(--color-line)]" data-primer-row data-id="{{ r.id }}" data-name="{{ r.name }}" data-sequence="{{ r.sequence }}">
+                <td class="px-4 py-2"><input type="checkbox" data-primer-pick aria-label="{{ _('Select %(name)s', name=r.name) }}"></td>
+                <td class="py-2"><a href="{{ r.url }}">{{ r.name }}</a></td>
+                <td class="py-2 font-mono text-[12px] break-all">{{ r.sequence }}</td>
+                <td class="py-2 whitespace-nowrap">{% if r.binds %}{{ r.where }}{% if r.tail %} <span class="text-muted">· {{ _('%(n)s-base tail', n=r.tail) }}</span>{% endif %}{% if r.more_sites %} <span class="text-warning-700">· {{ ngettext('%(num)s more site', '%(num)s more sites', r.more_sites) }}</span>{% endif %}{% else %}<span class="text-muted">{{ _('doesn’t bind here') }}</span>{% endif %}</td>
+                <td class="py-2 tabular-nums">{{ r.tm }}</td>
+                <td class="py-2 pr-4">{{ r.status|tr }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
   {% if not locked %}
     {# Replace the whole sequence from a file in one step. #}
     <details class="fold-card mt-4">
@@ -285,6 +319,32 @@
   {% endif %}
 </section>
 
+<script nonce="{{ csp_nonce() }}">
+(function () {
+  // The Primers card: tick some (or none for all), then copy or export them for ordering.
+  const card = document.getElementById('plasmid-primers');
+  if (!card) return;
+  const rows = () => Array.from(card.querySelectorAll('[data-primer-row]'));
+  const picked = () => { const p = rows().filter((r) => r.querySelector('[data-primer-pick]').checked); return p.length ? p : rows(); };
+  const exportLink = card.querySelector('[data-primers-export]');
+  const base = exportLink.getAttribute('href');
+  function sync() {
+    const ids = rows().filter((r) => r.querySelector('[data-primer-pick]').checked).map((r) => r.dataset.id);
+    exportLink.setAttribute('href', ids.length ? `${base}?ids=${ids.join(',')}` : base);
+  }
+  card.querySelector('[data-primers-all]').addEventListener('change', (e) => {
+    rows().forEach((r) => { r.querySelector('[data-primer-pick]').checked = e.target.checked; });
+    sync();
+  });
+  card.addEventListener('change', (e) => { if (e.target.matches('[data-primer-pick]')) sync(); });
+  card.querySelector('[data-primers-copy]').addEventListener('click', (e) => {
+    const lines = picked().map((r) => `${r.dataset.name}\t${r.dataset.sequence}`).join('\n');
+    const button = e.currentTarget;
+    const done = () => { button.lastChild.textContent = ' ' + t('Copied %(n)s', { n: picked().length }); };
+    if (navigator.clipboard) navigator.clipboard.writeText(lines).then(done, () => window.prompt('', lines));
+  });
+})();
+</script>
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
@@ -395,6 +455,7 @@
               if (c.primers) parts.push(t(c.primers === 1 ? '%(n)s primer' : '%(n)s primers', { n: c.primers }));
               if (c.translations) parts.push(t(c.translations === 1 ? '%(n)s translation' : '%(n)s translations', { n: c.translations }));
               if (c.parts) parts.push(t(c.parts === 1 ? '%(n)s part' : '%(n)s parts', { n: c.parts }));
+              if (j.primers_added) parts.push(t(j.primers_added === 1 ? '%(n)s primer added to Primers' : '%(n)s primers added to Primers', { n: j.primers_added }));
               say('saved', t('Saved · %(length)s bp · %(parts)s', { length: j.length, parts: parts.join(' · ') }));
               if (onSuccess) onSuccess();
             } else {

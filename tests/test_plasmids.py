@@ -364,6 +364,107 @@ class LineageTests(AppTestCase):
                              self.child)
 
 
+class PrimerRecordTests(AppTestCase):
+    """A primer drawn on the map gets its record in the Primers database,
+    with the plasmid in its Plasmid column; the plasmid's Primers card shows
+    where each binds and copies or exports them for ordering."""
+
+    # 60 bases, no repeats of a 15-base 3′ end.
+    SEQ = "ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGAC"
+
+    def setUp(self):
+        self.name = uniq("pPrime")
+        self.rid = self.make_plasmid(self.a, name=self.name, sequence_text=self.SEQ)
+        self.number = plasmid(self.rid, "plasmid_id")[0]
+
+    def save(self, primers):
+        return self.a.post(f"/plasmids/{self.rid}/sequence-save", json={"sequenceData": {
+            "sequence": self.SEQ, "circular": True, "name": self.name, "primers": primers}})
+
+    def records(self):
+        """(name, sequence, direction, status) of the Primers records naming this plasmid."""
+        out = []
+        for name, attrs, status in rows("select i.name, i.attrs, i.status from inventory_items i "
+                                        "join inventory_modules m on m.id = i.module_id_fk "
+                                        "where m.kind='primers' order by i.number"):
+            a = json.loads(attrs or "{}")
+            if str(a.get("template", "")) == str(self.number):
+                out.append((name, a.get("sequence"), a.get("direction"), status))
+        return out
+
+    def test_binding_sites_find_both_strands_a_tail_and_the_origin(self):
+        from app import primer_records as pr
+        fwd = "GAATTC" + self.SEQ[10:30]           # an EcoRI tail on 20 annealing bases
+        site, = pr.binding_sites(self.SEQ, True, fwd)
+        self.assertEqual((site["start"], site["end"], site["direction"], site["annealed"], site["tail"]),
+                         (10, 29, 1, 20, 6))
+        rev = pr.reverse_complement(self.SEQ[35:58])
+        site, = pr.binding_sites(self.SEQ, True, rev)
+        self.assertEqual((site["start"], site["end"], site["direction"], site["tail"]), (35, 57, -1, 0))
+        across = self.SEQ[50:] + self.SEQ[:12]
+        site, = pr.binding_sites(self.SEQ, True, across)
+        self.assertEqual((site["start"], site["end"]), (50, 11))
+        self.assertEqual(pr.binding_sites(self.SEQ, False, across), [])
+        self.assertEqual(pr.binding_sites(self.SEQ, True, "CCCCCCCCCCCCCCCCCCCC"), [])
+        self.assertEqual(pr.region_primer(self.SEQ, 50, 11, 1), across)
+
+    def test_a_primer_on_the_map_is_kept_in_primers_once(self):
+        from app.primer_records import reverse_complement
+        primers = {"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True},
+                   "p2": {"start": 40, "end": 59, "forward": False}}
+        r = self.save(primers)
+        self.assertEqual(r.get_json()["primers_added"], 2)
+        self.assertEqual(self.records(), [
+            ("GFP-F", self.SEQ[:20], "forward", "to order"),
+            (f"{self.name} 41-60", reverse_complement(self.SEQ[40:]), "reverse", "to order")])
+        # Every save sends the map again: nothing is made twice.
+        self.assertEqual(self.save(primers).get_json()["primers_added"], 0)
+        self.assertEqual(len(self.records()), 2)
+        stored = json.loads(plasmid(self.rid, "features_json")[0])
+        self.assertTrue(all(a.get("inventory_id") for a in stored if a.get("kind") == "primer"))
+
+    def test_no_primers_database_is_made_by_someone_who_may_not_add_one(self):
+        from unittest import mock
+        from app import inventory_service, lab, primer_records
+        from app.db import SessionLocal
+        from app.models import PlasmidRecord
+        from app.app import app
+        with app.test_request_context(), SessionLocal() as s, \
+                mock.patch.object(inventory_service, "first_of_kind", return_value=None), \
+                mock.patch.object(lab, "may_create_lab_database", return_value=False):
+            made = primer_records.sync_from_map(s, s.get(PlasmidRecord, self.rid),
+                                                [{"kind": "primer", "start": 0, "end": 19, "direction": 1}], "x")
+            self.assertEqual(made, 0)
+
+    def test_the_plasmid_page_lists_its_primers_and_exports_them_for_ordering(self):
+        self.save({"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True}})
+        html = self.get_ok(self.a, page(self.rid))
+        self.assertIn('id="plasmid-primers"', html)
+        self.assertIn("GFP-F", html)
+        self.assertIn("1–20 →", html)
+        r = self.a.get(f"/plasmids/{self.rid}/primers.csv")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get_data(as_text=True).splitlines(),
+                         ["Name,Sequence,Scale,Purification", f"GFP-F,{self.SEQ[:20]},,"])
+
+    def test_the_primers_sheet_copies_and_exports_the_ticked_ones(self):
+        self.save({"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True},
+                   "p2": {"name": "GFP-R", "start": 40, "end": 59, "forward": False}})
+        key, = row("select key from inventory_modules where kind='primers' and private_to='' "
+                   "order by position, id limit 1")
+        ids = [one("select id from inventory_items where name=? order by id desc limit 1", n) for n in ("GFP-F", "GFP-R")]
+        sheet = self.get_ok(self.a, f"/inventory/{key}")
+        self.assertIn("Copy for ordering", sheet)
+        self.assertIn("Export for ordering", sheet)
+        r = self.a.get(f"/inventory/{key}/order-sheet.txt?selected_ids={ids[0]}")
+        self.assertEqual(r.get_data(as_text=True), f"GFP-F\t{self.SEQ[:20]}")
+        r = self.a.get(f"/inventory/{key}/order-sheet.csv?selected_ids={ids[0]}&selected_ids={ids[1]}")
+        self.assertIn("attachment", r.headers["Content-Disposition"])
+        self.assertEqual(len(r.get_data(as_text=True).splitlines()), 3)
+        # Primers bind the plasmid; they aren't things made from it.
+        self.assertNotIn("Used to make", self.get_ok(self.a, page(self.rid)))
+
+
 # ====================================================================== create
 
 class CreatePlasmidTests(AppTestCase):
@@ -669,7 +770,7 @@ class SequenceRouteTests(AppTestCase):
                 {"name": "wrap", "start": 12, "end": 2, "forward": False},
                 {"name": "too far", "start": 3, "end": 99}]}})
         self.assertEqual(r.get_json(), {"ok": True, "length": 16, "features": 2, "counts": {
-            "features": 2, "primers": 0, "translations": 0, "parts": 0}})
+            "features": 2, "primers": 0, "translations": 0, "parts": 0}, "primers_added": 0})
         seq, feats = plasmid(self.rid, "full_sequence, features_json")
         self.assertEqual(seq, "ACGTRYKMACGTNNNN")
         self.assertEqual([(f["name"], f["start"], f["end"], f["direction"]) for f in json.loads(feats)],

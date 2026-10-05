@@ -23,7 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
-from . import plasmid_lineage, plasmid_versions  # noqa: E402
+from . import plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -6960,6 +6960,26 @@ def _submitted_sequence(file_field: str) -> tuple[dict | None, str]:
     return None, ""
 
 
+def _plasmid_primers(db_session, p) -> dict:
+    """The Primers card: records in the Primers database that name this
+    plasmid, and where each binds on it (primer_records.binding_sites)."""
+    module = primer_records.primers_module(db_session, create=False)
+    rows = []
+    for item in primer_records.primers_for(db_session, p):
+        attrs = item.attrs_dict
+        sites = primer_records.binding_sites(p.full_sequence or "", bool(p.is_circular), attrs.get("sequence", ""))
+        where = ""
+        if sites:
+            site = sites[0]
+            where = f"{site['start'] + 1}–{site['end'] + 1} {'→' if site['direction'] > 0 else '←'}"
+        rows.append({"id": item.id, "name": item.name or f"#{item.number}", "sequence": attrs.get("sequence", ""),
+                     "tm": attrs.get("tm", ""), "status": item.status, "where": where, "more_sites": max(len(sites) - 1, 0),
+                     "tail": sites[0]["tail"] if sites else 0, "binds": bool(sites),
+                     "url": url_for("inventory.module", key=module.key, open=item.id) if module else ""})
+    return {"rows": rows, "database": module.label if module else "",
+            "url": url_for("inventory.module", key=module.key) if module else ""}
+
+
 def _parent_role_label(role: str) -> str:
     return {"backbone": gettext("backbone"), "insert": gettext("insert"), "template": gettext("template"),
             "donor": gettext("donor"), "other": gettext("parent")}.get(role, role)
@@ -7809,11 +7829,12 @@ def plasmid_page(number: int):
             "database": m["module"].label, "status": m["item"].status, "available": m["available"],
             "url": url_for("inventory.module", key=m["module"].key, open=m["item"].id),
         } for m in inventories.made_from_plasmid(db_session, p.plasmid_id)]
+        primers = _plasmid_primers(db_session, p)
         lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
             select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
-                           made_from=made_from, lineage_options=lineage_options)
+                           made_from=made_from, lineage_options=lineage_options, primers=primers)
 
 
 @app.route("/plasmids/<int:row_id>/upload-sequence", methods=["POST"])
@@ -7912,6 +7933,23 @@ def plasmid_remove_parent(row_id: int, link_id: int):
             db_session.commit()
             flash(gettext("Removed it from Made from."), "success")
     return redirect(plasmid_page_url(row_id) + "#made-from")
+
+
+@app.route("/plasmids/<int:row_id>/primers.csv")
+@login_required
+def plasmid_primers_csv(row_id: int):
+    """An order sheet (Name, Sequence, Scale, Purification) for the plasmid's
+    primers, or the ones ticked (?ids=3,7)."""
+    wanted = {int(x) for x in (request.args.get("ids") or "").split(",") if x.strip().isdigit()}
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            abort(404)
+        items = [i for i in primer_records.primers_for(db_session, p) if not wanted or i.id in wanted]
+        body = primer_records.order_sheet(items)
+        safe = re.sub(r"[^\w\-.]+", "_", p.name or f"plasmid-{p.plasmid_id}").strip("_")
+    return Response(body, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{safe}-primers.csv"'})
 
 
 @app.route("/plasmids/<int:row_id>/download.<fmt>")
@@ -8124,6 +8162,8 @@ def _clean_features(raw_features, length: int, kind: str = "feature") -> list[di
             entry["locations"] = locations
         if item_kind == "primer" and isinstance(f.get("bases"), str) and f["bases"].strip():
             entry["bases"] = re.sub(r"[^A-Za-z]", "", f["bases"])[:500]
+        if item_kind == "primer" and str(f.get("inventory_id") or "").isdigit():
+            entry["inventory_id"] = int(f["inventory_id"])
         if item_kind == "translation" and isinstance(f.get("translationType"), str):
             entry["translationType"] = f["translationType"][:40]
         translated.append(entry)
@@ -8159,7 +8199,7 @@ def _editor_annotations(stored: list) -> dict[str, list]:
             "color": f.get("color") or "#cbd5e1",
             "notes": f.get("notes") or "",
         }
-        for extra in ("locations", "bases", "translationType"):
+        for extra in ("locations", "bases", "translationType", "inventory_id"):
             if f.get(extra):
                 item[extra] = f[extra]
         groups[group].append(item)
@@ -8255,6 +8295,8 @@ def plasmid_sequence_save_json(row_id: int):
         plasmid_versions.before_change(db_session, p)
         p.full_sequence = sequence
         p.is_circular = bool(sd.get("circular"))
+        # Each primer drawn on the map gets its record in the Primers database.
+        primers_added = primer_records.sync_from_map(db_session, p, translated, g.user.username)
         p.features_json = json.dumps(translated)
         if not p.sequence_format:
             p.sequence_format = "ove"
@@ -8267,7 +8309,8 @@ def plasmid_sequence_save_json(row_id: int):
         db_session.commit()
     counts = {group: sum(1 for f in translated if (f.get("kind") or "feature") == kind)
               for group, kind in ANNOTATION_KINDS.items()}
-    return jsonify({"ok": True, "length": len(sequence), "features": counts["features"], "counts": counts})
+    return jsonify({"ok": True, "length": len(sequence), "features": counts["features"], "counts": counts,
+                    "primers_added": primers_added})
 
 
 @app.route("/plasmids/<int:row_id>/sequence.json")

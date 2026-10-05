@@ -345,6 +345,29 @@ def _recent_items(mv, items: list) -> tuple[list, int]:
     return keep, hidden
 
 
+@bp.route("/<key>/order-sheet.<fmt>")
+def order_sheet(key: str, fmt: str):
+    """The ticked primers (selected_ids) for ordering: a CSV (Name, Sequence,
+    Scale, Purification) or Name<TAB>sequence lines for a supplier's
+    bulk-entry box (app/primer_records.py)."""
+    from flask import Response
+    from . import primer_records
+
+    if fmt not in ("csv", "txt"):
+        abort(404)
+    ids = {int(x) for x in request.args.getlist("selected_ids") if str(x).isdigit()}
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        items = [i for i in session.scalars(select(InventoryItem).where(InventoryItem.module_id_fk == module.id)
+                                            .order_by(InventoryItem.number)) if not ids or i.id in ids]
+        if fmt == "txt":
+            return Response(primer_records.order_lines(items), mimetype="text/plain; charset=utf-8")
+        body = primer_records.order_sheet(items)
+        name = re.sub(r"[^\w\-.]+", "_", module.label).strip("_") or "primers"
+    return Response(body, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}-order.csv"'})
+
+
 @bp.route("/<key>")
 def module(key: str):
     from .services import current_lab_usernames, sample_sources, sample_source_label

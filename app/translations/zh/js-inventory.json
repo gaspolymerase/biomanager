@@ -11,5 +11,6 @@
   "%(items)s from “%(was)s” to “%(now)s”": "%(items)s从“%(was)s”改为“%(now)s”",
   "Relabel %(changes)s?": "要改标记吗：%(changes)s？",
   "New…": "新建…",
-  "Name": "名称"
+  "Name": "名称",
+  "Copied %(n)s": "已复制 %(n)s 条"
 }

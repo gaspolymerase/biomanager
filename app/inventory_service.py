@@ -633,6 +633,8 @@ def made_from_plasmid(session, plasmid_number: int) -> list[dict]:
     in the inventories this person can see: for the plasmid's own page."""
     out = []
     for module in list_modules(session):
+        if module.kind == "primers":   # primers bind it; the plasmid's Primers card lists them
+            continue
         mv = view(module)
         keys = [f["key"] for f in plasmid_fields(mv)]
         if not keys:
