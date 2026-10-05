@@ -11,7 +11,7 @@ count who actually uses it.
 | | |
 | --- | --- |
 | Day 0 | **Thu 1 Oct 2026**, with 1.0 (China's National Day holiday starts that day, so Chinese platforms are quieter in week one) |
-| Every day | **08:30 New York** = 20:30 Beijing (Xiaohongshu and Bilibili's evening peak) = 14:30 Central Europe (LinkedIn and X's working day) |
+| Every day | **08:30 Beijing** (the morning commute, for Xiaohongshu and Bilibili) = 20:30 New York the evening before (X and LinkedIn's evening scroll); a day's date is its Beijing date |
 | Days | 0 announcement · 1–7 the strongest features · review · 8–20 the rest · 20 thank-you |
 | Calendar | [`posts.json`](posts.json): every day's theme, clip, and text for each platform |
 
@@ -48,7 +48,7 @@ platform (links tagged, lengths checked) and the clip in each shape:
 | Bilibili | `bilibili.mp4` 16:9, Chinese title; cover `bilibili-cover.png` | title ≤ 80, description with links, tags |
 | Xiaohongshu | `xhs.mp4` 3:4 with three points; cover `xhs-cover.png` | title ≤ 20, text, hashtags, no link |
 
-Post them at 08:30 (or schedule a week at a time: Bilibili and
+Post them at 08:30 Beijing, 20:30 New York (or schedule a week at a time: Bilibili and
 Xiaohongshu's creator centres schedule posts, and Buffer's free plan covers
 X, LinkedIn and Facebook). Then answer yesterday's comments. Nothing
 posts by itself.

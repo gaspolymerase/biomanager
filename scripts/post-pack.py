@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Put together one day's launch post, ready to paste, for every platform.
 
-    python scripts/post-pack.py                 # today's post
+    python scripts/post-pack.py                 # today's post (by the date in Beijing, where it goes out at 08:30)
     python scripts/post-pack.py 2026-10-09      # a given date
     python scripts/post-pack.py --day 3         # by day number
     python scripts/post-pack.py --all           # every day, e.g. to schedule a week ahead
@@ -29,9 +29,10 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 POSTS = ROOT / "promo/posts.json"
@@ -173,7 +174,7 @@ def pack(post: dict, data: dict, when: date, ver: str, record: bool) -> Path:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("date", nargs="?", help="YYYY-MM-DD (default today)")
+    ap.add_argument("date", nargs="?", help="YYYY-MM-DD (default today in Beijing)")
     ap.add_argument("--day", type=int)
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--check", action="store_true")
@@ -196,7 +197,7 @@ def main():
     elif args.day is not None:
         chosen = [p for p in posts if p["day"] == args.day]
     else:
-        when = date.fromisoformat(args.date) if args.date else date.today()
+        when = date.fromisoformat(args.date) if args.date else datetime.now(ZoneInfo("Asia/Shanghai")).date()
         chosen = [p for p in posts if start + timedelta(days=p["day"]) == when]
         if not chosen:
             sys.exit(f"No post on {when} (the launch runs {start} to {start + timedelta(days=posts[-1]['day'])}).")
