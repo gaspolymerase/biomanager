@@ -23,6 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
+from . import plasmid_lineage, plasmid_versions  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -59,6 +60,7 @@ from .models import (
     NotebookTab,
     NotebookTemplate,
     PlasmidRecord,
+    PlasmidSequenceVersion,
     ORDER_STATUS_OPTIONS,
     Order,
     SAMPLE_TYPE_OPTIONS,
@@ -2226,6 +2228,17 @@ def export_my_data():
                 *([p.plasmid_id, p.name, p.backbone, p.insert_seq, p.resistance, p.owner, p.location,
                    p.concentration, p.a260_280, project_groups.label(p.is_shared, p.share_group_id, personal="", lab="yes"), p.notes]
                   for p in plasmids)]))
+            from .sequence_parser import to_genbank
+            for p in plasmids:
+                if not p.full_sequence:
+                    continue
+                try:
+                    annotations = json.loads(p.features_json) if p.features_json else []
+                except json.JSONDecodeError:
+                    annotations = []
+                safe = _re.sub(r"[^\w\-.]+", "_", p.name or "").strip("_")
+                zf.writestr(f"plasmids/{p.plasmid_id}{'-' + safe if safe else ''}.gb",
+                            to_genbank(p.name or f"plasmid-{p.plasmid_id}", p.full_sequence, bool(p.is_circular), annotations))
 
             tabs = db_session.scalars(
                 select(NotebookTab).where(NotebookTab.owner_username == username).order_by(NotebookTab.position, NotebookTab.id)
@@ -6947,6 +6960,51 @@ def _submitted_sequence(file_field: str) -> tuple[dict | None, str]:
     return None, ""
 
 
+def _parent_role_label(role: str) -> str:
+    return {"backbone": gettext("backbone"), "insert": gettext("insert"), "template": gettext("template"),
+            "donor": gettext("donor"), "other": gettext("parent")}.get(role, role)
+
+
+def _parent_method_label(method: str) -> str:
+    return {"digest_ligate": gettext("Digest and ligate"), "gibson": gettext("Gibson / HiFi assembly"),
+            "golden_gate": gettext("Golden Gate"), "pcr": gettext("PCR"), "mutagenesis": gettext("Mutagenesis"),
+            "gateway": gettext("Gateway"), "synthesis": gettext("Synthesised"), "other": gettext("Other")}.get(method, "")
+
+
+def _tree_rows(family: dict) -> dict:
+    """The family tree as the page lists it: each node with its number, link
+    and role, children nested."""
+    def node(n: dict) -> dict:
+        plasmid = n["plasmid"]
+        return {"label": n["label"], "number": plasmid.plasmid_id if plasmid else None,
+                "url": url_for("plasmid_page", number=plasmid.plasmid_id) if plasmid else "",
+                "role": _parent_role_label(n["role"]) if n["role"] else "",
+                "children": [node(c) for c in n["children"]]}
+    return {"up": [node(n) for n in family["up"]], "down": [node(n) for n in family["down"]]}
+
+
+def _version_row(v, current: bool) -> dict:
+    """One line of a plasmid's version history, as its Sequence tab lists it."""
+    if v.how == "upload":
+        how = gettext("Loaded from a %(format)s file", format=(v.detail or "sequence").upper())
+    elif v.how == "restore":
+        try:
+            restored = fmt_day(local_time(datetime.fromisoformat(v.detail)), with_time=True)
+        except ValueError:
+            restored = v.detail
+        how = gettext("Restored the version of %(when)s", when=restored)
+    else:
+        how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
+               "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
+    try:
+        features = len([f for f in json.loads(v.features_json or "[]") if (f.get("kind") or "feature") == "feature"])
+    except (json.JSONDecodeError, AttributeError):
+        features = 0
+    return {"id": v.id, "how": how, "who": v.saved_by, "when": fmt_day(local_time(v.saved_at), with_time=True),
+            "bp": len(v.full_sequence or ""), "features": features, "circular": bool(v.is_circular),
+            "current": current}
+
+
 def _several_records(parsed: dict) -> str:
     """A file of several sequences keeps its first: say so."""
     return gettext("The file holds %(n)s sequences; only the first, %(name)s, was kept.",
@@ -7289,6 +7347,7 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
                 # A SnapGene file's description fills an empty Notes.
                 if parsed.get("description") and not (record.notes or "").strip():
                     record.notes = parsed["description"][:2000]
+                plasmid_versions.record(db_session, record, "upload", user, parsed["format"])
             stamp_updated(record)
             made.append(record)
     return {
@@ -7733,6 +7792,15 @@ def plasmid_page(number: int):
             "updated_by": p.updated_by or "",
             "locked": not access.can_edit(p),
             "denied": _plasmid_denied(p),
+            "versions": [_version_row(v, i == 0) for i, v in enumerate(plasmid_versions.versions(db_session, p))],
+            "parents": [{"id": e["link"].id, "label": e["label"], "role": _parent_role_label(e["role"]),
+                         "method": _parent_method_label(e["method"]),
+                         "number": e["plasmid"].plasmid_id if e["plasmid"] else None,
+                         "url": url_for("plasmid_page", number=e["plasmid"].plasmid_id) if e["plasmid"] else ""}
+                        for e in plasmid_lineage.parents(db_session, p)],
+            "children": [{"label": c.name, "number": c.plasmid_id, "url": url_for("plasmid_page", number=c.plasmid_id)}
+                         for c in plasmid_lineage.children(db_session, p)],
+            "tree": _tree_rows(plasmid_lineage.tree(db_session, p)),
         }
         # Viruses (or anything with a plasmid column) made from it.
         from . import inventory_service as inventories
@@ -7741,8 +7809,11 @@ def plasmid_page(number: int):
             "database": m["module"].label, "status": m["item"].status, "available": m["available"],
             "url": url_for("inventory.module", key=m["module"].key, open=m["item"].id),
         } for m in inventories.made_from_plasmid(db_session, p.plasmid_id)]
+        lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
+            select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
+            .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
-                           made_from=made_from)
+                           made_from=made_from, lineage_options=lineage_options)
 
 
 @app.route("/plasmids/<int:row_id>/upload-sequence", methods=["POST"])
@@ -7767,15 +7838,132 @@ def plasmid_upload_sequence(row_id: int):
         if not parsed:
             flash(gettext("Choose a file or paste a sequence first."), "info")
             return redirect(plasmid_page_url(row_id))
+        plasmid_versions.before_change(db_session, p)
         _apply_parsed_sequence(p, parsed)
         if parsed.get("name") and not p.name:
             p.name = parsed["name"]
         stamp_updated(p)
+        plasmid_versions.record(db_session, p, "upload", g.user.username, parsed["format"])
         db_session.commit()
     flash(gettext("Loaded %(format)s · %(bp)s bp · %(features)s features.", format=parsed["format"].upper(),
                   bp=len(parsed["sequence"]), features=len(parsed["features"])), "success")
     if parsed.get("records", 1) > 1:
         flash(_several_records(parsed), "warning")
+    return redirect(plasmid_page_url(row_id))
+
+
+@app.route("/plasmids/<int:row_id>/parents", methods=["POST"])
+@login_required
+def plasmid_add_parent(row_id: int):
+    """Say what a plasmid was made from: a plasmid in the lab (its number,
+    #42, or its name) or one from outside it (anything else, e.g.
+    "Addgene #11150"), in a role, by a method."""
+    from . import inventory_service as inventories
+
+    raw = (request.form.get("parent") or "").strip()
+    role = request.form.get("role") or "other"
+    method = request.form.get("method") or ""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        if not raw:
+            flash(gettext("Name the plasmid it was made from: its number, its name, or where it came from."), "error")
+            return redirect(plasmid_page_url(row_id) + "#made-from")
+        parent = inventories.resolve_plasmid(db_session, raw)
+        try:
+            plasmid_lineage.add_parent(db_session, p, parent=parent, label="" if parent else raw, role=role,
+                                       method=method, user=g.user.username)
+        except ValueError as problem:
+            flash(gettext("A plasmid can't be made from itself.") if str(problem) == "self" else
+                  gettext("That would make a loop: #%(n)s was made from this plasmid.", n=parent.plasmid_id),
+                  "error")
+            return redirect(plasmid_page_url(row_id) + "#made-from")
+        # The Backbone and Insert columns name it, when they are empty.
+        name = parent.name if parent is not None else raw
+        if role == "backbone" and not (p.backbone or "").strip():
+            p.backbone = name[:200]
+        elif role == "insert" and not (p.insert_seq or "").strip():
+            p.insert_seq = name[:200]
+        stamp_updated(p)
+        db_session.commit()
+        shown = f"#{parent.plasmid_id} {parent.name}" if parent is not None else raw
+    flash(gettext("Made from %(parent)s.", parent=shown), "success")
+    return redirect(plasmid_page_url(row_id) + "#made-from")
+
+
+@app.route("/plasmids/<int:row_id>/parents/<int:link_id>/remove", methods=["POST"])
+@login_required
+def plasmid_remove_parent(row_id: int, link_id: int):
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        if plasmid_lineage.remove_link(db_session, p, link_id):
+            stamp_updated(p)
+            db_session.commit()
+            flash(gettext("Removed it from Made from."), "success")
+    return redirect(plasmid_page_url(row_id) + "#made-from")
+
+
+@app.route("/plasmids/<int:row_id>/download.<fmt>")
+@login_required
+def plasmid_download(row_id: int, fmt: str):
+    """The plasmid's sequence as a GenBank (.gb) or FASTA (.fa) file, with
+    every feature and qualifier it keeps (GenBank)."""
+    from .sequence_parser import to_fasta, to_genbank
+
+    if fmt not in ("gb", "fa"):
+        abort(404)
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None or not p.full_sequence:
+            abort(404)
+        name = p.name or f"plasmid-{p.plasmid_id}"
+        try:
+            annotations = json.loads(p.features_json) if p.features_json else []
+        except json.JSONDecodeError:
+            annotations = []
+        if fmt == "gb":
+            body = to_genbank(name, p.full_sequence, bool(p.is_circular), annotations)
+        else:
+            body = to_fasta(name, p.full_sequence, f"plasmid #{p.plasmid_id}")
+    safe = re.sub(r"[^\w\-.]+", "_", name).strip("_") or f"plasmid-{row_id}"
+    return Response(body, mimetype="text/plain; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{safe}.{fmt}"'})
+
+
+@app.route("/plasmids/<int:row_id>/versions/<int:version_id>/restore", methods=["POST"])
+@login_required
+def plasmid_restore_version(row_id: int, version_id: int):
+    """Put an earlier version of the sequence back (it becomes the newest
+    version; nothing in between is lost)."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            flash(gettext("That plasmid no longer exists."), "error")
+            return redirect(url_for("plasmids"))
+        if not access.can_edit(p):
+            flash(_plasmid_denied(p), "error")
+            return redirect(plasmid_page_url(row_id))
+        version = db_session.get(PlasmidSequenceVersion, version_id)
+        if version is None or version.plasmid_row_id != p.id:
+            flash(gettext("That version no longer exists."), "error")
+            return redirect(plasmid_page_url(row_id))
+        plasmid_versions.restore(db_session, p, version, g.user.username)
+        stamp_updated(p)
+        db_session.commit()
+        when = fmt_day(local_time(version.saved_at), with_time=True)
+        bp = len(p.full_sequence or "")
+    flash(gettext("Restored the version of %(when)s · %(bp)s bp.", when=when, bp=bp), "success")
     return redirect(plasmid_page_url(row_id))
 
 
@@ -7796,11 +7984,13 @@ def plasmid_clear_sequence(row_id: int):
         if request.form.get("confirm") != "1":
             flash(gettext("Confirm clearing the sequence first."), "error")
             return redirect(plasmid_page_url(row_id))
+        plasmid_versions.before_change(db_session, p)
         p.full_sequence = ""
         p.features_json = "[]"
         p.sequence_format = ""
         p.sequence_uploaded_at = None
         stamp_updated(p)
+        plasmid_versions.record(db_session, p, "clear", g.user.username)
         db_session.commit()
         flash(gettext("Cleared the sequence of plasmid #%(id)s. Its audit history keeps the old one.", id=p.plasmid_id),
               "success")
@@ -8008,6 +8198,7 @@ def plasmid_edit_sequence(row_id: int):
         if not cleaned:
             flash(gettext("That leaves no sequence, so nothing was saved. Use Clear sequence to empty it."), "error")
             return redirect(plasmid_page_url(row_id))
+        plasmid_versions.before_change(db_session, p)
         p.full_sequence = cleaned
         p.is_circular = new_circular
         try:
@@ -8026,6 +8217,7 @@ def plasmid_edit_sequence(row_id: int):
             p.sequence_format = "manual"
         p.sequence_uploaded_at = datetime.utcnow()
         stamp_updated(p)
+        plasmid_versions.record(db_session, p, "hand", g.user.username)
         db_session.commit()
     flash(gettext("Saved sequence · %(bp)s bp.", bp=len(cleaned)), "success")
     return redirect(plasmid_page_url(row_id))
@@ -8060,6 +8252,7 @@ def plasmid_sequence_save_json(row_id: int):
             return jsonify({"ok": False, "error": gettext("That plasmid no longer exists.")}), 404
         if not access.can_edit(p):
             return jsonify({"ok": False, "error": _plasmid_denied(p)}), 403
+        plasmid_versions.before_change(db_session, p)
         p.full_sequence = sequence
         p.is_circular = bool(sd.get("circular"))
         p.features_json = json.dumps(translated)
@@ -8070,6 +8263,7 @@ def plasmid_sequence_save_json(row_id: int):
             p.name = sd["name"].strip()[:200]
         p.sequence_uploaded_at = datetime.utcnow()
         stamp_updated(p)
+        plasmid_versions.record(db_session, p, "editor", g.user.username)
         db_session.commit()
     counts = {group: sum(1 for f in translated if (f.get("kind") or "feature") == kind)
               for group, kind in ANNOTATION_KINDS.items()}

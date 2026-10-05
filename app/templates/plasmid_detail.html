@@ -53,10 +53,25 @@
 
 {# ============ Sequence — Open Vector Editor ============ #}
 <section class="plasmid-tab-panel is-active" data-panel="sequence">
+  {% if plasmid.parents or plasmid.children or made_from %}
+    {# What it was made from and what was made from it, on the first screen (app/plasmid_lineage.py). #}
+    <p class="lineage-line mb-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
+      {% if plasmid.parents %}
+        <span><span class="text-muted">{{ _('Made from') }}</span>
+          {% for e in plasmid.parents %}{% if not loop.first %} + {% endif %}{% if e.url %}<a href="{{ e.url }}">#{{ e.number }} {{ e.label }}</a>{% else %}{{ e.label }}{% endif %} <span class="text-muted">({{ e.role }})</span>{% endfor %}{% if plasmid.parents[0].method %} <span class="text-muted">· {{ plasmid.parents[0].method }}</span>{% endif %}</span>
+      {% endif %}
+      {% if plasmid.children or made_from %}
+        <span><span class="text-muted">{{ _('Used to make') }}</span>
+          {% for c in plasmid.children %}{% if not loop.first %}, {% endif %}<a href="{{ c.url }}">#{{ c.number }} {{ c.label }}</a>{% endfor %}{% if plasmid.children and made_from %}, {% endif %}{% for m in made_from %}{% if not loop.first %}, {% endif %}<a href="{{ m.url }}">{{ m.label }}</a> <span class="text-muted">({{ m.database|tr }})</span>{% endfor %}</span>
+      {% endif %}
+    </p>
+  {% endif %}
   {# Full screen shows the bar and the editor filling the screen. #}
   <style>
     #ove-shell:fullscreen { background: var(--color-surface, #fff); padding: 12px 16px; display: flex; flex-direction: column; }
     #ove-shell:fullscreen .ove-root { flex: 1; height: auto; }
+    .lineage-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .lineage-tree .lineage-tree { margin: 4px 0 0 6px; padding-left: 12px; border-left: 1px solid var(--color-line); }
   </style>
   <div id="ove-shell">
     <div class="ove-bar">
@@ -65,6 +80,11 @@
       </span>
       <span class="flex items-center gap-3">
         <span class="sheet-save" id="ove-status" aria-live="polite"></span>
+        {% if plasmid.length_bp %}
+          <span class="text-[12px] text-muted">{{ _('Download') }}
+            <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='gb') }}">GenBank</a> ·
+            <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='fa') }}">FASTA</a></span>
+        {% endif %}
         <button type="button" class="btn btn-sm" id="ove-fullscreen" hidden><span>{{ _('Full screen') }}</span></button>
       </span>
     </div>
@@ -81,7 +101,7 @@
       <summary>{{ icon('upload') }} {{ _('Replace the sequence from a file') }}</summary>
       <form method="post" action="{{ url_for('plasmid_upload_sequence', row_id=plasmid.row_id) }}"
             enctype="multipart/form-data" class="flex flex-col gap-3 px-4 py-3.5"
-            {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? The old one stays in the audit history.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
+            {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? You can restore it from its versions.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
         <label class="field-label">{{ _('SnapGene .dna, GenBank .gb / .gbk, or FASTA') }}
           <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[12.5px] normal-case tracking-normal">
         </label>
@@ -95,11 +115,35 @@
 
     {% if plasmid.length_bp %}
       <form method="post" action="{{ url_for('plasmid_clear_sequence', row_id=plasmid.row_id) }}" class="mt-3"
-            data-confirm="{{ _('Clear the whole %(bp)s bp sequence of plasmid #%(id)s? The old one stays in the audit history.', bp=plasmid.length_bp, id=plasmid.plasmid_id) }}">
+            data-confirm="{{ _('Clear the whole %(bp)s bp sequence of plasmid #%(id)s? You can restore it from its versions.', bp=plasmid.length_bp, id=plasmid.plasmid_id) }}">
         <input type="hidden" name="confirm" value="1">
         <button type="submit" class="btn btn-ghost btn-sm text-danger-700">{{ icon('trash') }} {{ _('Clear sequence') }}</button>
       </form>
     {% endif %}
+  {% endif %}
+
+  {% if plasmid.versions|length > 1 %}
+    {# Every state the sequence has had, newest first (app/plasmid_versions.py). #}
+    <details class="fold-card mt-4" id="sequence-versions">
+      <summary>{{ icon('history') }} {{ _('Versions') }} <span class="badge badge-quiet">{{ plasmid.versions|length }}</span></summary>
+      <ul class="divide-y divide-[var(--color-line)]">
+        {% for v in plasmid.versions %}
+          <li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-[13px]">
+            <span class="min-w-0 flex-1"><span class="font-medium">{{ v.how }}</span>
+              <span class="text-muted">· {{ v.who or _('someone') }} · {{ v.when }}</span></span>
+            <span class="text-muted tabular-nums">{{ _('%(bp)s bp', bp=v.bp) }} · {{ ngettext('%(num)s feature', '%(num)s features', v.features) }} · {{ _('circular') if v.circular else _('linear') }}</span>
+            {% if v.current %}
+              <span class="badge badge-quiet">{{ _('Current version') }}</span>
+            {% elif not locked %}
+              <form method="post" action="{{ url_for('plasmid_restore_version', row_id=plasmid.row_id, version_id=v.id) }}"
+                    data-confirm="{{ _('Restore the version of %(when)s (%(bp)s bp)? The sequence it replaces stays in the list.', when=v.when, bp=v.bp) }}">
+                <button type="submit" class="btn btn-sm">{{ _('Restore') }}</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
   {% endif %}
 </section>
 
@@ -181,6 +225,64 @@
       {% if not locked %}<button type="submit">{{ _('Save properties') }}</button>{% endif %}
     </form>
   </div>
+
+  <div class="card max-w-[760px] overflow-hidden mt-4" id="made-from">
+    <header class="card-head"><h3 class="card-title">{{ _('Made from') }}</h3></header>
+    {% if plasmid.parents %}
+      <ul class="divide-y divide-[var(--color-line)]">
+        {% for e in plasmid.parents %}
+          <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-[13px]">
+            <span class="badge badge-quiet">{{ e.role }}</span>
+            <span class="min-w-0 flex-1">{% if e.url %}<a href="{{ e.url }}">#{{ e.number }} {{ e.label }}</a>{% else %}{{ e.label }} <span class="text-muted">· {{ _('not in this lab') }}</span>{% endif %}</span>
+            {% if e.method %}<span class="text-muted">{{ e.method }}</span>{% endif %}
+            {% if not locked %}
+              <form method="post" action="{{ url_for('plasmid_remove_parent', row_id=plasmid.row_id, link_id=e.id) }}">
+                <button type="submit" class="btn btn-ghost btn-sm" aria-label="{{ _('Remove %(name)s from Made from', name=e.label) }}">{{ icon('close') }}</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="px-4 py-3 text-[13px] text-muted">{{ _('Its backbone, insert or template, so its family tree shows where it came from.') }}</p>
+    {% endif %}
+    {% if not locked %}
+      <form method="post" action="{{ url_for('plasmid_add_parent', row_id=plasmid.row_id) }}" class="modal-grid p-4 border-t border-[var(--color-line)]">
+        <label>{{ _('Plasmid') }} <input name="parent" list="lineage-plasmids" required autocomplete="off"
+               placeholder="{{ _('its number, its name, or e.g. Addgene #11150') }}"></label>
+        <label>{{ _('Role') }} <select name="role">
+          <option value="backbone">{{ _('backbone') }}</option><option value="insert">{{ _('insert') }}</option>
+          <option value="template">{{ _('template') }}</option><option value="donor">{{ _('donor') }}</option>
+          <option value="other">{{ _('parent') }}</option></select></label>
+        <label>{{ _('How it was made') }} <select name="method">
+          <option value="">{{ _('Not said') }}</option><option value="digest_ligate">{{ _('Digest and ligate') }}</option>
+          <option value="gibson">{{ _('Gibson / HiFi assembly') }}</option><option value="golden_gate">{{ _('Golden Gate') }}</option>
+          <option value="pcr">{{ _('PCR') }}</option><option value="mutagenesis">{{ _('Mutagenesis') }}</option>
+          <option value="gateway">{{ _('Gateway') }}</option><option value="synthesis">{{ _('Synthesised') }}</option>
+          <option value="other">{{ _('Other') }}</option></select></label>
+        <button type="submit">{{ _('Add') }}</button>
+        <datalist id="lineage-plasmids">{% for o in lineage_options %}<option value="{{ o }}"></option>{% endfor %}</datalist>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if plasmid.tree.up or plasmid.tree.down %}
+    {% macro branch(nodes) %}
+      <ul class="lineage-tree">
+        {% for n in nodes %}
+          <li>{% if n.url %}<a href="{{ n.url }}">#{{ n.number }} {{ n.label }}</a>{% else %}{{ n.label }}{% endif %}{% if n.role %} <span class="text-muted">({{ n.role }})</span>{% endif %}
+            {% if n.children %}{{ branch(n.children) }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endmacro %}
+    <div class="card max-w-[760px] overflow-hidden mt-4">
+      <header class="card-head"><h3 class="card-title">{{ _('Family tree') }}</h3></header>
+      <div class="grid gap-4 px-4 py-3 text-[13px] sm:grid-cols-2">
+        <div><p class="field-label mb-1">{{ _('Where it came from') }}</p>{% if plasmid.tree.up %}{{ branch(plasmid.tree.up) }}{% else %}<p class="text-muted">—</p>{% endif %}</div>
+        <div><p class="field-label mb-1">{{ _('What came from it') }}</p>{% if plasmid.tree.down %}{{ branch(plasmid.tree.down) }}{% else %}<p class="text-muted">—</p>{% endif %}</div>
+      </div>
+    </div>
+  {% endif %}
 </section>
 
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>

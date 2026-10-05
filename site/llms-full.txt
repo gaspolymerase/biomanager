@@ -783,7 +783,7 @@ Plasmid records with their sequence and map, and the box each tube is in.
 
 - **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
-- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like; **Storage** and **Properties** are the other tabs. **Storage** also lists the viruses made from the plasmid ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists the viruses made from the plasmid ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
 
 - Each tube keeps its miniprep's **Concentration** (ng/µL) and **260/280**, in the sheet and on its **Storage** tab, which also lists the notebook pages that link it.
 
@@ -1124,7 +1124,7 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 #### Everyone
 
-**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, your notebook pages and your profile, in one zip.
+**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features, your notebook pages and your profile, in one zip.
 
 #### What BioManager sends its makers
 

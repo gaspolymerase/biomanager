@@ -244,7 +244,11 @@ plasmid can be **Lab common**: anyone can edit it (or, shared with a
 project group, its members), while its owner still decides whose it is. A plasmid's page lists the notebook pages that
 `@plasmid` it, and its address is its number (plasmid #12 is `/plasmid/12`).
 In the sheet, **Sequence** beside a plasmid's number opens its sequence and
-map (**Add sequence** when it has none yet).
+map (**Add sequence** when it has none yet). **Download** gives it as
+GenBank or FASTA, and **Versions** keeps every earlier sequence to
+restore. **Made from** records its backbone, insert or template (in the
+lab or from Addgene) and how it was made; its page shows what it was made
+from and what was made from it, with a family tree.
 
 <p align="center">
   <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
@@ -1040,7 +1044,8 @@ whether members may (guests never). An admin's copy is the whole lab; a
 member's holds what they can see in the app, without anyone's password,
 other people's private notebook pages or personal databases, or the Audit
 log. **Settings → Export my data** downloads your own mice, cages,
-weights, experiments, plasmids and notebook pages as a zip at any time.
+weights, experiments, plasmids (each sequence as a GenBank file, with its
+features) and notebook pages as a zip at any time.
 
 ---
 

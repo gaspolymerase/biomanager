@@ -524,6 +524,48 @@ class PlasmidRecord(Base):
     updated_by: Mapped[str] = mapped_column(String(80), default="")
 
 
+class PlasmidSequenceVersion(Base):
+    """One state a plasmid's sequence has had (app/plasmid_versions.py):
+    what it was, who made it and how, so an earlier one can be restored.
+    Tied to the plasmid by its row id with no foreign key, so a deleted
+    plasmid that Batch history brings back gets its versions back too."""
+    __tablename__ = "plasmid_sequence_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    saved_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    saved_by: Mapped[str] = mapped_column(String(80), default="")
+    # How it came to be: upload, editor, hand, clear, restore, baseline.
+    how: Mapped[str] = mapped_column(String(20), default="")
+    detail: Mapped[str] = mapped_column(String(200), default="")
+    full_sequence: Mapped[str] = mapped_column(Text, default="")
+    is_circular: Mapped[bool] = mapped_column(Boolean, default=True)
+    features_json: Mapped[str] = mapped_column(Text, default="")
+    sequence_format: Mapped[str] = mapped_column(String(20), default="")
+
+
+class PlasmidParent(Base):
+    """What a plasmid was made from (app/plasmid_lineage.py): a parent in the
+    lab (parent_row_id), or one from outside it (parent_label only, e.g.
+    "Addgene #11150"), in a role, by a method, with the details an assembly
+    records (enzymes, coordinates, primers). Row ids without foreign keys,
+    as for sequence versions, so undoing a delete brings links back."""
+    __tablename__ = "plasmid_parents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    child_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    parent_row_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    parent_label: Mapped[str] = mapped_column(String(200), default="")
+    # backbone, insert, template, donor, other
+    role: Mapped[str] = mapped_column(String(20), default="other")
+    # digest_ligate, gibson, golden_gate, pcr, mutagenesis, gateway, synthesis, other, or ""
+    method: Mapped[str] = mapped_column(String(30), default="")
+    details_json: Mapped[str] = mapped_column(Text, default="{}")
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class NotebookTab(Base):
     __tablename__ = "notebook_tabs"
 

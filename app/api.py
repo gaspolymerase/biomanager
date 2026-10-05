@@ -26,6 +26,8 @@ the reference page at /api.
 """
 from __future__ import annotations
 
+import json
+
 import hashlib
 import secrets
 import threading
@@ -564,7 +566,12 @@ def plasmid_json(p: PlasmidRecord, sequence: bool = False) -> dict:
            "box": p.storage_box or "", "notes": p.notes or "", "has_sequence": bool(p.full_sequence),
            "updated_at": _stamp(p.updated_at)}
     if sequence:
-        out.update(sequence=p.full_sequence or "", circular=bool(p.is_circular))
+        try:
+            annotations = json.loads(p.features_json) if p.features_json else []
+        except (TypeError, ValueError):
+            annotations = []
+        out.update(sequence=p.full_sequence or "", circular=bool(p.is_circular),
+                   annotations=[a for a in annotations if isinstance(a, dict)])
     return out
 
 
@@ -922,7 +929,7 @@ ENDPOINTS = [
     ("GET", "/api/v1/tanks", "read", "Zebrafish tanks", ("active", "owner")),
     ("GET", "/api/v1/fish", "read", "Zebrafish rows", ("tank", "status")),
     ("GET", "/api/v1/plasmids", "read", "Plasmids", ("q",)),
-    ("GET", "/api/v1/plasmids/{plasmid_id}", "read", "One plasmid, with its sequence", ()),
+    ("GET", "/api/v1/plasmids/{plasmid_id}", "read", "One plasmid, with its sequence and annotations", ()),
     ("GET", "/api/v1/stocks", "read", "Fly and worm stock databases", ()),
     ("GET", "/api/v1/stocks/{key}/units", "read", "Vials or plates", ("active", "purpose", "owner", "genotype")),
     ("PATCH", "/api/v1/stocks/{key}/units/{number}", "write", "Change a vial: " + ", ".join(UNIT_FIELDS), ()),

@@ -535,3 +535,111 @@ def parse_sequence_bytes(raw_bytes: bytes, filename: str = "") -> dict | None:
         except UnicodeDecodeError:
             return None
     return parse_sequence_text(text)
+
+
+# ---------------------------------------------------------------------------
+# Writing: GenBank and FASTA, for downloads and the lab's data export. A
+# GenBank file written here reads back (parse_genbank) with the same
+# sequence, topology, features and qualifiers.
+# ---------------------------------------------------------------------------
+
+# Qualifiers GenBank writes as bare numbers, not quoted text.
+_NUMERIC_QUALIFIERS = {"codon_start", "transl_table", "number", "estimated_length"}
+
+
+def _gb_location(f: dict, length: int) -> str:
+    """A stored annotation's span as a GenBank location (1-based)."""
+    parts = f.get("locations") if len(f.get("locations") or []) > 1 else None
+    pieces = parts or [{"start": f["start"], "end": f["end"]}]
+    spans = []
+    for piece in pieces:
+        start, end = int(piece["start"]), int(piece["end"])
+        if start > end:  # crosses the origin of a circular sequence
+            spans += [f"{start + 1}..{length}", f"1..{end + 1}"]
+        else:
+            spans.append(f"{start + 1}..{end + 1}" if start != end else f"{start + 1}")
+    location = spans[0] if len(spans) == 1 else f"join({','.join(spans)})"
+    return f"complement({location})" if int(f.get("direction", 1) or 1) < 0 else location
+
+
+def _gb_wrap(text: str, width: int = 58, hard: bool = False) -> list[str]:
+    """Lines of at most `width` characters: at spaces for text, anywhere for
+    a translation (hard)."""
+    if hard:
+        return [text[i:i + width] for i in range(0, len(text), width)] or [""]
+    lines, line = [], ""
+    for word in text.split(" "):
+        while len(word) > width:  # one long word (a URL) is cut where it must be
+            if line:
+                lines.append(line)
+                line = ""
+            lines.append(word[:width])
+            word = word[width:]
+        if not line:
+            line = word
+        elif len(line) + 1 + len(word) <= width:
+            line += " " + word
+        else:
+            lines.append(line)
+            line = word
+    lines.append(line)
+    return lines
+
+
+def _gb_qualifiers(f: dict) -> list[tuple[str, str, bool]]:
+    """(key, value, quoted) for an annotation: its kept qualifiers, with a
+    /label from its name when it has none."""
+    notes = f.get("notes")
+    pairs: list[tuple[str, str]] = []
+    if isinstance(notes, dict):
+        for key, values in notes.items():
+            for value in values if isinstance(values, list) else [values]:
+                pairs.append((str(key), str(value)))
+    elif isinstance(notes, str) and notes.strip():
+        pairs.append(("note", notes.strip()))
+    if f.get("name") and not any(k == "label" for k, _ in pairs):
+        pairs.insert(0, ("label", str(f["name"])))
+    return [(k, v, k not in _NUMERIC_QUALIFIERS or not v.isdigit()) for k, v in pairs]
+
+
+def to_genbank(name: str, sequence: str, is_circular: bool, annotations: list[dict],
+               when=None) -> str:
+    """A GenBank record of a stored plasmid. Features and primers
+    (primer_bind) are written; translations and parts are the editor's own."""
+    from datetime import date as _date
+
+    when = when or _date.today()
+    length = len(sequence)
+    locus = re.sub(r"\s+", "_", (name or "sequence").strip())[:60] or "sequence"
+    day = f"{when.day:02d}-{when.strftime('%b').upper()}-{when.year}"
+    lines = [f"LOCUS       {locus:<16} {length:>11} bp    DNA     {'circular' if is_circular else 'linear':<8} SYN {day}",
+             f"DEFINITION  {(name or locus).strip()}.",
+             "FEATURES             Location/Qualifiers"]
+    for f in annotations if isinstance(annotations, list) else []:
+        kind = f.get("kind") or "feature"
+        if kind not in ("feature", "primer") or not isinstance(f, dict):
+            continue
+        try:
+            int(f["start"]), int(f["end"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        ftype = "primer_bind" if kind == "primer" else (str(f.get("type") or "misc_feature").replace(" ", "_")[:15])
+        lines.append(f"     {ftype:<16}{_gb_location(f, length)}")
+        for key, value, quoted in _gb_qualifiers(f):
+            body = '"' + value.replace('"', '""') + '"' if quoted else value
+            wrapped = _gb_wrap(f"/{key}={body}", hard=(key == "translation"))
+            lines += ["                     " + piece for piece in wrapped]
+    lines.append("ORIGIN")
+    seq = sequence.lower()
+    for i in range(0, length, 60):
+        chunk = seq[i:i + 60]
+        lines.append(f"{i + 1:>9} " + " ".join(chunk[j:j + 10] for j in range(0, len(chunk), 10)))
+    lines.append("//")
+    return "\n".join(lines) + "\n"
+
+
+def to_fasta(name: str, sequence: str, description: str = "") -> str:
+    header = re.sub(r"\s+", "_", (name or "sequence").strip()) or "sequence"
+    if description.strip():
+        header += " " + re.sub(r"\s+", " ", description.strip())
+    return f">{header}\n" + "\n".join(sequence[i:i + 70] for i in range(0, len(sequence), 70)) + "\n"

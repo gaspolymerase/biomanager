@@ -464,6 +464,56 @@ pages are in `app/lab_routes.py`.
   one-shot parameters are removed from the address on load and from the
   referrer in `_back()`.
 
+## Plasmids and their sequences
+
+A plasmid's sequence is `plasmids.full_sequence` (uppercase IUPAC, no
+spaces), `is_circular` and `features_json`: every annotation the map holds,
+features without a `kind` and primers, translations and parts with one
+(`ANNOTATION_KINDS` in `app.py`). Coordinates are 0-based inclusive; one
+crossing the origin keeps `start > end`.
+
+- **Import** (`app/sequence_parser.py`, no BioPython): SnapGene `.dna`
+  (packets: 0x00 sequence and topology, 0x0A features, 0x06 notes, whose
+  `CustomMapLabel` names the plasmid and whose description fills an empty
+  Notes), GenBank and FASTA, or pasted bases. Every qualifier is kept, as
+  the editor's `notes` shape `{key: [values]}` (`qualifier_notes`, up to
+  `NOTE_LIMIT` characters each), and a `/translation` rejoins without
+  spaces. The LOCUS line's topology is read whatever its name does, and a
+  name run into the length is split off once the sequence's length is
+  known. A byte-order mark and lines before LOCUS are ignored. A file of
+  several records keeps the first, and `records` says how many there were
+  (`_several_records` warns).
+- **Saves:** the map (Open Vector Editor, `/plasmids/<id>/sequence-save`,
+  after every edit), the hand edit, a file, and Clear. The editor's save
+  refuses anything but IUPAC letters (`is_iupac`) and an empty sequence.
+- **Versions** (`app/plasmid_versions.py`, `plasmid_sequence_versions`,
+  revision 0017): each of those records the state it leaves (`record`, with
+  `how`: upload, editor, hand, clear, restore); a sequence from before
+  version history is kept as `baseline` before its first change
+  (`before_change`). One person's map edits within `EDITS_JOIN` (10 min)
+  are one version, and the newest `KEEP` (50) are kept. The Sequence tab
+  lists them with **Restore** (`/plasmids/<id>/versions/<vid>/restore`),
+  which makes the old state the newest version. Versions point at the
+  plasmid's row id with no foreign key, so undoing a plasmid's delete
+  brings them back.
+- **Made from** (`app/plasmid_lineage.py`, `plasmid_parents`, revision
+  0018): a child's parents, each a plasmid row (`parent_row_id`) or a
+  label from outside the lab, with a `role` (backbone, insert, template,
+  donor, other), a `method` and `details_json` (what an assembly used:
+  enzymes, coordinates, primer ids). `add_parent` refuses a plasmid as its
+  own parent and a loop; an empty Backbone or Insert takes the parent's
+  name. The page shows Made from and Used to make (child plasmids, and
+  inventory rows whose plasmid column names it) above the map, and
+  `tree()` up to `TREE_DEPTH` generations each way on Properties. Row ids
+  without foreign keys, as for versions. The assembly wizard records its
+  product's parents through `add_parent`.
+- **Out:** `to_genbank` / `to_fasta` (`sequence_parser.py`) write what
+  `parse_genbank` reads back the same: features and primers (as
+  `primer_bind`) with every qualifier, a wrap across the origin as a join.
+  `/plasmids/<id>/download.gb` and `.fa`, a `plasmids/<n>-<name>.gb` per
+  sequence in Export my data, and the API's one-plasmid answer carries
+  `annotations`.
+
 ## Calendar repeats and bookings
 
 `app/lab_calendar.py`. A repeating event is one `calendar_events` row and a

@@ -469,5 +469,18 @@
   "zebrafish::fish row": "鱼行",
   "The file holds %(n)s sequences; only the first, %(name)s, was kept.": "文件中有 %(n)s 条序列，只保留了第一条：%(name)s。",
   "unnamed": "未命名",
-  "The sequence has characters that are not IUPAC nucleotide codes.": "序列中有不属于 IUPAC 核苷酸代码的字符。"
+  "The sequence has characters that are not IUPAC nucleotide codes.": "序列中有不属于 IUPAC 核苷酸代码的字符。",
+  "Loaded from a %(format)s file": "从 %(format)s 文件导入",
+  "Restored the version of %(when)s": "恢复了 %(when)s 的版本",
+  "Edited in the map": "在图谱中编辑",
+  "Edited by hand": "手动编辑",
+  "Cleared": "已清空",
+  "As it was before version history": "启用版本记录之前的样子",
+  "That version no longer exists.": "该版本已不存在。",
+  "Restored the version of %(when)s · %(bp)s bp.": "已恢复 %(when)s 的版本 · %(bp)s bp。",
+  "Name the plasmid it was made from: its number, its name, or where it came from.": "请填写它的来源质粒：编号、名称或出处。",
+  "A plasmid can't be made from itself.": "质粒不能以自己为来源。",
+  "That would make a loop: #%(n)s was made from this plasmid.": "这样会形成循环：#%(n)s 是由这个质粒构建的。",
+  "Made from %(parent)s.": "来源质粒：%(parent)s。",
+  "Removed it from Made from.": "已从来源质粒中移除。"
 }
