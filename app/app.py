@@ -311,6 +311,19 @@ def follow_lab_timezone():
 
 @app.before_request
 def load_current_user():
+    from . import contained
+    acting = contained.acting_user()
+    if acting is not None:
+        # A proposal running the pages (or the API's own writes) on its owner's
+        # behalf (app/contained.py): that person, with no cookie or token, and
+        # messages in English for the assistant that sent it.
+        g.lang = i18n.DEFAULT
+        with SessionLocal() as db_session:
+            g.user = db_session.scalar(select(UserAccount).where(UserAccount.username == acting,
+                                                                 UserAccount.disabled.is_(False)))
+        if g.user is not None and (request.path == "/api/v1" or request.path.startswith("/api/v1/")):
+            g.api_token = contained.API_TOKEN
+        return
     if request.path == "/api/v1" or request.path.startswith("/api/v1/"):
         # The API is signed in by its token alone, never the session cookie (app/api.py),
         # and answers in English whatever the client's language: programs read it.

@@ -138,7 +138,7 @@ def _error(status: int, message: str, **extra):
 def _gate():
     if g.get("user") is None or g.get("api_token") is None:
         return _error(401, "Send an API token: Authorization: Bearer bmt_… Make one in Settings → API tokens.")
-    wait = rate.wait(g.api_token.id)
+    wait = rate.wait(g.api_token.id) if g.api_token.id else 0  # 0: a proposal being applied
     if wait:
         return _error(429, f"Too many requests: at most {PER_MINUTE} a minute.") + ({"Retry-After": str(wait)},)
     if request.method not in ("GET", "HEAD", "OPTIONS") and g.api_token.scope != "write":
