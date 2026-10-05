@@ -10,6 +10,8 @@
       <p class="text-[12.5px] leading-snug text-muted">
         {% trans %}A token lets a script, a balance, R or another tool read the lab's records — or change them — as you, with
         exactly your permissions. Make one for each thing that uses it, so you can revoke one without the others.{% endtrans %}
+        {% trans %}For an AI assistant, choose <b>Read and propose</b>: what it proposes waits for you on Proposed
+        changes, and nothing changes until you approve it.{% endtrans %}
       </p>
       {% if api_card.allowed %}
         <form method="post" action="{{ url_for('api_pages.make_token') }}" class="flex flex-wrap items-end gap-2">
@@ -24,6 +26,10 @@
           </label>
           <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Make a token') }}</button>
         </form>
+        <div class="flex flex-wrap items-center gap-2">
+          <a class="btn" href="{{ url_for('oauth.connect_page') }}">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</a>
+          <span class="text-[12px] text-muted">{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}</span>
+        </div>
       {% endif %}
       {% if api_card.rows %}
         <div class="overflow-x-auto">

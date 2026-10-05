@@ -32,14 +32,15 @@ import re
 from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, request, url_for
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, or_, select, update
 
 from .formutil import like_pattern
 from . import access, groups, i18n, notebook_protocols, notify
 from .db import SessionLocal
 from .i18n import gettext
 from .models import (CalendarEvent, NotebookComment, NotebookMeetingSeries, NotebookPage, NotebookPageInfo,
-                     NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate, NotebookTab,
+                     NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
+                     NotebookTab,
                      NotebookTemplate, NotebookVersion, TaskItem, UserAccount)
 
 bp = Blueprint("nb", __name__, url_prefix="/notebook")
@@ -417,8 +418,10 @@ def sync_pull(page_id: int):
                                                          NotebookPresence.updated_at >= cutoff,
                                                          NotebookPresence.client_id != client)).all()
         names = display_names(s, [p.username for p in peers])
+        inserts = _claim_inserts(s, page_id, client) if client and can_edit_role(role) and not empty else []
         return jsonify({
             "ok": True, "gen": current, "reset": reset, "empty": empty, "updates": updates, "last": last,
+            "inserts": inserts,
             "more": len(rows) == SYNC_BATCH, "role": role,
             "peers": [{"client": p.client_id, "username": p.username, "name": names.get(p.username, p.username),
                        "state": p.state} for p in peers],
@@ -481,6 +484,120 @@ def sync_push(page_id: int):
         s.execute(delete(NotebookPresence).where(NotebookPresence.updated_at < _now() - timedelta(minutes=10)))
         s.commit()
         return jsonify({"ok": True, "last": last})
+
+
+# A pending line is this editor's to add for this long; then another may.
+CLAIM_FOR = timedelta(seconds=60)
+
+
+def _claim_inserts(session, page_id: int, client: str) -> list[dict]:
+    """Lines waiting to be added to this page (add_note), handed to one
+    editor at a time: this one, unless another claimed them a moment ago."""
+    now = _now()
+    rows = session.scalars(select(NotebookPendingInsert).where(
+        NotebookPendingInsert.page_id_fk == page_id, NotebookPendingInsert.done_at.is_(None))
+        .order_by(NotebookPendingInsert.id)).all()
+    mine = [r for r in rows if r.claimed_by in ("", client) or (r.claimed_at and now - r.claimed_at > CLAIM_FOR)]
+    if not mine:
+        return []
+    claimed = session.execute(update(NotebookPendingInsert).where(
+        NotebookPendingInsert.id.in_([r.id for r in mine]), NotebookPendingInsert.done_at.is_(None),
+        (NotebookPendingInsert.claimed_by.in_(("", client))) | (NotebookPendingInsert.claimed_at < now - CLAIM_FOR))
+        .values(claimed_by=client, claimed_at=now))
+    session.commit()
+    if not claimed.rowcount:
+        return []
+    rows = session.scalars(select(NotebookPendingInsert).where(
+        NotebookPendingInsert.page_id_fk == page_id, NotebookPendingInsert.done_at.is_(None),
+        NotebookPendingInsert.claimed_by == client).order_by(NotebookPendingInsert.id)).all()
+    return [{"id": r.id, "text": r.text, "time": r.time, "via": r.via} for r in rows]
+
+
+@bp.post("/api/pages/<int:page_id>/inserts/done")
+def inserts_done(page_id: int):
+    """The editor added these lines to the page."""
+    data = _json_body()
+    client = str(data.get("client") or "")[:40]
+    ids = [i for i in data.get("ids") or [] if isinstance(i, int)]
+    with SessionLocal() as s:
+        load_page(s, page_id, need="edit")
+        s.execute(update(NotebookPendingInsert).where(
+            NotebookPendingInsert.page_id_fk == page_id, NotebookPendingInsert.id.in_(ids or [0]),
+            NotebookPendingInsert.claimed_by == client, NotebookPendingInsert.done_at.is_(None))
+            .values(done_at=_now()))
+        s.commit()
+        return jsonify({"ok": True})
+
+
+LOG_HEADING = re.compile(r"^#{1,6}\s+log\s*$", re.I | re.M)
+
+
+def append_log_line(markdown: str, line: str) -> str:
+    """The page's Markdown with `line` (already "- **10:42** text") at the end
+    of its Log section, the way the editor's Log button adds one (made at
+    the end of the page if there is none)."""
+    text = (markdown or "").rstrip("\n")
+    heading = LOG_HEADING.search(text)
+    if heading is None:
+        return f"{text}\n\n## Log\n\n{line}\n" if text else f"## Log\n\n{line}\n"
+    following = re.search(r"^#{1,6}\s", text[heading.end():], re.M)
+    end = heading.end() + following.start() if following else len(text)
+    section, rest = text[:end].rstrip("\n"), text[end:].strip("\n")
+    last = section.splitlines()[-1]
+    joiner = "\n" if re.match(r"\s*[-*] ", last) else "\n\n"     # the Log's list goes on
+    return f"{section}{joiner}{line}\n" + (f"\n{rest}\n" if rest else "")
+
+
+@bp.post("/api/notes")
+def add_note():
+    """A line for the Log of a page: today's daily log (made if it doesn't
+    exist yet, as /today does) or a page the person may edit. A page nobody
+    has open in the live editor gets it at once; one that is open gets it
+    from the next editor that polls it (_claim_inserts)."""
+    data = _json_body() if request.is_json else request.form.to_dict()
+    text = " ".join(str(data.get("text") or "").split())[:2000]
+    if not text:
+        return _fail(gettext("Write the note to add."))
+    when = str(data.get("time") or "").strip()
+    if when and not re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", when):
+        return _fail(gettext("time is a time of day, like 14:30."))
+    via = " ".join(str(data.get("via") or "").split())[:80]
+    with SessionLocal() as s:
+        me = _me()
+        if data.get("page_id"):
+            page, _role = load_page(s, _int(data["page_id"]) or 0, need="edit")
+        else:
+            page = _daily_page(s, me, date.today())
+        if not when:
+            from .app import local_time
+            when = local_time(datetime.utcnow()).strftime("%H:%M")
+        gen = collab_generation(s, page.id)
+        live = s.scalar(select(NotebookSyncUpdate.id).where(NotebookSyncUpdate.page_id_fk == page.id,
+                                                            NotebookSyncUpdate.generation == gen).limit(1))
+        if live is None:
+            line = f"- **{when}** {text}" + (f" _(via {via})_" if via else "")
+            page.body = append_log_line(page.body or "", line)
+            page.updated_at = _now()
+            record_edit(s, page, me)
+        else:
+            s.add(NotebookPendingInsert(page_id_fk=page.id, text=text, time=when, via=via, created_by=me))
+        s.commit()
+        return jsonify({"ok": True, "page_id": page.id, "pending": live is not None, "title": page.title,
+                        "url": page_url(page.id)})
+
+
+def _daily_page(session, me: str, day: date) -> NotebookPage:
+    page = session.scalar(select(NotebookPage)
+                          .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
+                          .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
+                          .where(NotebookTab.owner_username == me, NotebookPageInfo.kind == "daily",
+                                 NotebookPageInfo.day == day).limit(1))
+    if page is None:
+        tab = tab_named(session, me, DAILY_TAB)
+        page = new_page(session, tab, _today_label(day), STARTERS["daily"]["body"], kind="daily", day=day)
+        page.entry_date = day
+        session.flush()
+    return page
 
 
 @bp.post("/api/pages/<int:page_id>/sync/compact")
@@ -890,20 +1007,10 @@ def page_new():
 @bp.get("/today")
 def today():
     """Today's daily log page, made the first time it is opened."""
-    day = date.today()
     with SessionLocal() as s:
-        me = _me()
-        page_id = s.scalar(select(NotebookPage.id)
-                           .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
-                           .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
-                           .where(NotebookTab.owner_username == me, NotebookPageInfo.kind == "daily",
-                                  NotebookPageInfo.day == day).limit(1))
-        if page_id is None:
-            tab = tab_named(s, me, DAILY_TAB)
-            page = new_page(s, tab, _today_label(day), STARTERS["daily"]["body"], kind="daily", day=day)
-            page.entry_date = day
-            s.commit()
-            page_id = page.id
+        page = _daily_page(s, _me(), date.today())
+        page_id = page.id
+        s.commit()
         return redirect(url_for("notebook", page=page_id))
 
 

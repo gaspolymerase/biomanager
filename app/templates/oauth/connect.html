@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ _('Connect an AI assistant') }}{% endblock %}
+{% block page_heading %}{{ _('Connect an AI assistant') }}{% endblock %}
+{% block page_subtitle %}{{ _('It reads your lab and proposes changes; nothing changes until you approve them.') }}{% endblock %}
+
+{% block page_actions %}
+  <a class="btn" href="{{ url_for('settings') }}#api-tokens">{{ icon('back') }} {{ _('Back to settings') }}</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid max-w-[760px] grid-cols-1 gap-3">
+  {% if not allowed %}
+    <section class="card p-5"><p class="text-[13px] text-muted">{{ _('In this lab, only admins can connect tools. Ask one to switch on tokens for members in Lab setup.') }}</p></section>
+  {% else %}
+  <section class="card p-5" id="connector">
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('claude.ai, the Claude apps or ChatGPT') }}</h2>
+    {% if public %}
+      <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Add BioManager as a custom connector (Claude: Settings → Connectors → Add custom connector; ChatGPT: Settings → Connectors, in developer mode) with this address. When it asks you to sign in, enter a connection code.') }}</p>
+      <pre class="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="connector-url">{{ connector_url }}</pre>
+      <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="connector-url">{{ icon('copy') }} {{ _('Copy') }}</button>
+      {% if code %}
+        <div class="mt-4 rounded-lg border border-brand-200 p-3">
+          <p class="text-[12.5px] text-muted">{{ _('Your connection code, for the next 10 minutes, once:') }}</p>
+          <p class="mt-1 font-mono text-[20px] tracking-wider text-ink" id="link-code">{{ code }}</p>
+        </div>
+      {% else %}
+        <form method="post" action="{{ url_for('oauth.make_link_code') }}" class="mt-3">
+          <button type="submit" class="btn btn-primary">{{ icon('key') }} {{ _('Get a connection code') }}</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _("These apps reach BioManager from the internet, and this BioManager isn't on the internet. A lab server's admin can put it there (internet access, in the server's runbook); until then, use one of the ways below.") }}</p>
+    {% endif %}
+  </section>
+
+  <section class="card p-5" id="local">
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Claude Code, Claude Desktop, Cursor or Cherry Studio on this computer or the lab network') }}</h2>
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Make a token that may read and propose; the next page shows the setup to copy for each app.') }}</p>
+    <form method="post" action="{{ url_for('api_pages.make_token') }}" class="mt-3">
+      <input type="hidden" name="label" value="{{ _('AI assistant') }}">
+      <input type="hidden" name="scope" value="propose">
+      <input type="hidden" name="expires" value="365">
+      <button type="submit" class="btn">{{ icon('plus') }} {{ _('Make a token') }}</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block body_end %}
+<script nonce="{{ csp_nonce() }}">
+  BioActions.register({
+    'copy-text': function (id) {
+      const el = document.getElementById(id);
+      if (!el || !navigator.clipboard) return;
+      navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+        const was = this.innerHTML;
+        this.textContent = t('Copied');
+        setTimeout(() => { this.innerHTML = was; }, 1500);
+      });
+    },
+  });
+</script>
+{% endblock %}

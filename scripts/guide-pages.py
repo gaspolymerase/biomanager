@@ -78,6 +78,7 @@ PAGES = [
     (("Data and help", "数据与帮助"), [
         ("your-data", "Your data and backups", "数据与备份"),
         ("scripts-and-api", "Scripts, instruments and other tools", "脚本、仪器和其他工具"),
+        ("ai-assistants", "AI assistants", "AI 助手"),
         ("troubleshooting", "Troubleshooting", "故障排除"),
         ("feedback", "Feedback", "反馈"),
     ]),

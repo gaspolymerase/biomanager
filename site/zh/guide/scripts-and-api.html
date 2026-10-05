@@ -105,6 +105,7 @@
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
             <li><a href="scripts-and-api.html" aria-current="page">脚本、仪器和其他工具</a></li>
+            <li><a href="ai-assistants.html">AI 助手</a></li>
             <li><a href="troubleshooting.html">故障排除</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
@@ -123,7 +124,7 @@
         设施统计笼数——都不用任何人去导出表格。</p>
       <ol class="steps-list">
         <li><b>设置 → API 令牌</b>（Settings → API tokens）：写明谁会用它（<i>B12 的天平</i>、<i>我的 R 脚本</i>），权限是
-          <b>只读</b>（Read）还是<b>读写</b>（Read and change），以及到期时间。点<b>生成令牌</b>（Make a token）。</li>
+          <b>只读</b>（Read）、<b>读写</b>（Read and change）还是<b>读取和提议</b>（Read and propose，给 AI 助手用，见下文），以及到期时间。点<b>生成令牌</b>（Make a token）。</li>
         <li>复制令牌：它只显示一次。像对待密码一样对待它，不要写进你要分享的脚本里（通常放在环境
           变量里）。</li>
         <li>每次请求都带上它，格式为 <code>Authorization: Bearer bmt_…</code>。<b>API 参考</b>（API reference，同一张
@@ -135,12 +136,20 @@
         <li>它可以读取小鼠、笼、窝、品系、鱼缸和鱼、质粒、果蝇和线虫的管/皿、所有库存和所有
           实验；可以修改小鼠（笼、基因型、备注、状态……）、记录体重、修改果蝇管、添加或修改
           库存物品，以及记录实验的观测指标。</li>
+        <li>对从你自己的话出发的工具（比如 AI 助手），它还能找出一句话指的是哪些记录，并给出每条记录的引用
+          （<code>/api/v1/resolve?q=cage 88</code>）；列出你们实验室对各种东西的叫法：品系、状态、用途、笼架、
+          成员和每个数据库自己的字段（<code>/api/v1/vocabulary</code>）；以及像首页一样列出待办的事
+          （<code>/api/v1/due</code>）。</li>
         <li>每个使用它的东西单独建一个令牌，这样可以<b>撤销</b>（Revoke）其中一个而不影响其他。卡片上显示每个令牌
           最近一次使用的时间。管理员能看到所有人的令牌并撤销任何一个；<b>设置</b>（Setup）可以规定只有管理员能建令牌。</li>
         <li>桌面版只有那台电脑上的程序能访问；实验室服务器则是任何能连上服务器的东西都能访问。</li>
       </ul>
+
+      <h2 id="proposed-changes">助手提出的修改</h2>
+      <p><b>读取和提议</b>的令牌是给 AI 助手用的：它自己什么都不会改，而是把修改作为一个提议发过来，由你在<b>修改提议</b>里
+        整体批准。怎么连接和批准，见 <a href="ai-assistants.html">AI 助手</a>。</p>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="your-data.html"><small>上一页</small>数据与备份</a><a class="next" href="troubleshooting.html"><small>下一页</small>故障排除</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="your-data.html"><small>上一页</small>数据与备份</a><a class="next" href="ai-assistants.html"><small>下一页</small>AI 助手</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
