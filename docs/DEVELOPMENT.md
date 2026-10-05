@@ -548,7 +548,26 @@ crossing the origin keeps `start > end`.
   `/plasmids/features/import` reads elements straight from uploaded
   annotated files (`add_from_sequence`, which `add_from_plasmid` also
   uses), making no plasmid, so a lab fills the library from the maps it
-  already downloads.
+  already downloads. The page shows the first 100 of each kind and
+  searches by name, type or sequence (`?q=`), since a lab with the pack
+  has a couple of thousand.
+- **The common-features pack** (`app/feature_pack.py`, with revision
+  0021's `feature_library.source_name`): GenoLIB (Adames et al., *Nucleic
+  Acids Res* 2015;43(10):4823-4832, doi:10.1093/nar/gkv272, CC BY 4.0),
+  about 1,900 elements with their DNA. The app carries no copy: an
+  admin's **Add the common-features pack** downloads the article's SBOL
+  supplement from Europe PMC (a zip of zips, `labhost_All.xml`), so the
+  lab obtains it from the archive rather than BioManager redistributing
+  it. Worth knowing when reading that paper: its authors built the library
+  by exporting a commercial program's published annotated files, which is
+  why the page says to check anything you rely on and why each entry keeps
+  `source_name`. The download takes about a minute, longer than a lab
+  server allows a request (`gunicorn.conf.py`: `timeout = 60`), so `start`
+  runs it in a thread and keeps its state in `app_settings`
+  (`feature_pack_status`), where every worker can read it; the page shows
+  "Downloading…" and refreshes itself. Adding two thousand elements uses
+  `feature_library.add(known=…)`: one read of the library's hashes instead
+  of a query and a flush each.
 - **A record's plasmid, to read:** `/inventory/<key>/items/<id>/sequence`
   (`item_sequence`) mounts the same editor read only on the plasmid a
   record's plasmid column names — a virus's payload, a glycerol stock's

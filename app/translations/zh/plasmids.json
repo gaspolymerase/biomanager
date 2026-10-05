@@ -193,5 +193,14 @@
   "Keep with this plasmid": "和这个质粒一起保存",
   "Annotated files (GenBank, SnapGene .dna, FASTA)": "带注释的文件（GenBank、SnapGene .dna、FASTA）",
   "Read elements from files": "从文件读取元件",
-  "Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.": "文件中有名称的特征会按序列加入元件库。不会凭空生成：元件都来自你自己的图谱。"
+  "Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.": "文件中有名称的特征会按序列加入元件库。不会凭空生成：元件都来自你自己的图谱。",
+  "Add the common-features pack": "添加常用元件包",
+  "%(n)s from the pack": "%(n)s 个来自元件包",
+  "About 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open archive when you ask for it: <a href=\"%(url)s\">%(name)s</a>, %(licence)s.": "约 1900 个元件，整理自约 2000 个常用质粒；点击后才从公开文献库下载：<a href=\"%(url)s\">%(name)s</a>，%(licence)s。",
+  "Its authors built it by exporting a commercial program’s published library, so check anything you rely on; your own elements always win over it.": "它由作者导出某商业软件公开的元件库整理而成，重要的元件请自行核对；你自己的元件始终优先。",
+  "Downloading…": "正在下载…",
+  "The last try did not finish: %(problem)s": "上次下载未完成：%(problem)s",
+  "Find an element or a sequence…": "查找元件或序列…",
+  "Find an element": "查找元件",
+  "the first %(n)s — search to narrow it": "仅显示前 %(n)s 个，可用搜索缩小范围"
 }

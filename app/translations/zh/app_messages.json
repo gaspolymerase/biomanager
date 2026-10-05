@@ -516,5 +516,7 @@
   "The library already has every named feature in %(files)s.": "%(files)s 中有名称的特征都已在元件库中。",
   "%(files)s: not a sequence file this app can read (SnapGene .dna, GenBank or FASTA).": "%(files)s：不是本应用能读取的序列文件（SnapGene .dna、GenBank 或 FASTA）。",
   "Read from %(num)s file.": "来自 %(num)s 个文件。",
-  "Read from %(num)s files.": "来自 %(num)s 个文件。"
+  "Read from %(num)s files.": "来自 %(num)s 个文件。",
+  "Downloading the common-features pack. It takes about a minute; this page shows it when it is in.": "正在下载常用元件包。大约需要一分钟；下载完成后本页会显示。",
+  "The pack is already being downloaded.": "元件包正在下载中。"
 }

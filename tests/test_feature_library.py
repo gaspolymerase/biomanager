@@ -54,6 +54,125 @@ class CategoryTests(AppTestCase):
         self.assertEqual([f["name"] for f in fl.detect([E("ITR", ITR)], seq, True, marked)], [])
 
 
+SBOL = """<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns="http://sbols.org/v1#" xmlns:so="http://purl.obolibrary.org/obo/SO_">
+  <DnaComponent rdf:about="http://example.org/Part:loxP-001">
+    <rdf:type rdf:resource="http://purl.obolibrary.org/obo/SO_0000057"/>
+    <displayId>loxP-001</displayId><name>loxP-001</name>
+    <description>Cre recombinase site</description>
+    <dnaSequence><DnaSequence rdf:about="http://example.org/Part:loxP-001/seq">
+      <nucleotides>ataacttcgtatagcatacattatacgaagttat</nucleotides>
+    </DnaSequence></dnaSequence>
+  </DnaComponent>
+  <DnaComponent rdf:about="http://example.org/Part:T7-001">
+    <rdf:type rdf:resource="http://purl.obolibrary.org/obo/SO_0000167"/>
+    <displayId>T7_promoter-001</displayId><name>T7 promoter</name><description></description>
+    <dnaSequence><DnaSequence rdf:about="http://example.org/Part:T7-001/seq">
+      <nucleotides>taatacgactcactatagg</nucleotides>
+    </DnaSequence></dnaSequence>
+  </DnaComponent>
+  <DnaComponent rdf:about="http://example.org/Part:empty">
+    <displayId>no-sequence</displayId><name>Nameless</name>
+  </DnaComponent>
+</rdf:RDF>
+"""
+
+
+def supplement_zip(sbol: bytes = None) -> bytes:
+    """A stand-in for Europe PMC's answer: a zip holding the supplement's
+    own zip, which holds SBOL_files/labhost_All.xml."""
+    import io
+    import zipfile
+    inner = io.BytesIO()
+    with zipfile.ZipFile(inner, "w") as z:
+        z.writestr("SBOL_files/labhost_All.xml", sbol if sbol is not None else SBOL.encode())
+        z.writestr("SBOL_files/labhost_Mammalian_Cells.xml", "<rdf:RDF/>")
+    outer = io.BytesIO()
+    with zipfile.ZipFile(outer, "w") as z:
+        z.writestr("supp_gkv272_File005.pdf", b"%PDF-1.4 not the one")
+        z.writestr("supp_gkv272_File009.zip", inner.getvalue())
+    return outer.getvalue()
+
+
+class FeaturePackTests(AppTestCase):
+    """The common-features pack: read from the archive's supplement, never
+    carried in the app (app/feature_pack.py)."""
+
+    def test_the_sbol_in_the_supplement_becomes_elements(self):
+        from app import feature_pack as pack
+        found = pack.elements(pack.sbol_from_supplement(supplement_zip()))
+        self.assertEqual([(e["name"], e["type"], e["sequence"]) for e in found], [
+            ("loxP", "protein_bind", "ATAACTTCGTATAGCATACATTATACGAAGTTAT"),
+            ("T7 promoter", "promoter", "TAATACGACTCACTATAGG")])
+        self.assertEqual(found[0]["description"], "Cre recombinase site")
+
+    def test_a_download_that_is_not_the_pack_is_said_plainly(self):
+        from app import feature_pack as pack
+        for raw in (b"", b"not a zip at all", supplement_zip(b"<rdf:RDF")):
+            with self.subTest(raw=raw[:12]):
+                with self.assertRaises(pack.PackUnavailable):
+                    pack.elements(pack.sbol_from_supplement(raw)) if raw else pack.sbol_from_supplement(raw)
+
+    def test_the_work_adds_the_elements_and_says_it_is_done(self):
+        from unittest import mock
+        from app import feature_pack as pack
+        from app.db import SessionLocal
+        with mock.patch.object(pack, "fetch_bytes", return_value=supplement_zip()):
+            pack._run("alex")        # what the background thread does
+        self.assertEqual(rows("select name, source_name from feature_library where source_name!='' order by name"),
+                         [("T7 promoter", "GenoLIB"), ("loxP", "GenoLIB")])
+        with SessionLocal() as s:
+            state = pack.status(s)
+        self.assertEqual((state["state"], state["added"], state["total"], state["by"]), ("done", 2, 2, "alex"))
+        self.assertIn("2 from the pack", self.get_ok(self.a, "/plasmids/features"))
+        # The variant number the library gives its entries is not a name a map should show.
+        self.assertNotIn("loxP-001", self.get_ok(self.a, "/plasmids/features"))
+
+    def test_a_download_that_fails_leaves_the_library_alone_and_says_why(self):
+        from unittest import mock
+        from app import feature_pack as pack
+        before = count("feature_library")
+        with mock.patch.object(pack, "fetch_bytes", side_effect=pack.PackUnavailable("no route to host")):
+            pack._run("alex")
+        self.assertEqual(count("feature_library"), before)
+        page = self.get_ok(self.a, "/plasmids/features")
+        self.assertIn("The last try did not finish: no route to host", page)
+        self.assertIn("Add the common-features pack", page)   # and it can be tried again
+
+    def test_the_button_starts_one_run_in_the_background_for_an_admin(self):
+        from unittest import mock
+        from app import feature_pack as pack
+        from app.db import SessionLocal
+        # The thread's work is stubbed out: the route must not wait for it.
+        with mock.patch.object(pack, "_run") as work:
+            r = self.post(self.a, "/plasmids/features/pack")
+            self.assertFlash(r, "Downloading the common-features pack", "info")
+            with SessionLocal() as s:
+                self.assertEqual(pack.status(s)["state"], "running")
+            # A second ask while it runs starts nothing more.
+            self.assertFlash(self.post(self.a, "/plasmids/features/pack"), "already being downloaded", "info")
+            self.assertEqual(work.call_count, 1)
+            self.assertIn("Downloading…", self.get_ok(self.a, "/plasmids/features"))
+        self.assertFlash(self.post(self.m, "/plasmids/features/pack"), "Admin access required.", "error")
+
+    def test_a_run_that_stopped_without_finishing_does_not_block_the_next(self):
+        from datetime import datetime, timedelta
+        from app import feature_pack as pack
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            pack._save_status(s, state="running", by="alex")
+            s.commit()
+        with SessionLocal() as s:
+            stale = (datetime.utcnow() - pack.STALE - timedelta(minutes=1)).isoformat(timespec="seconds")
+            s.execute(__import__("sqlalchemy").text(
+                "update app_settings set value = :v where key = :k"),
+                {"v": f'{{"state": "running", "by": "alex", "at": "{stale}"}}', "k": pack.STATUS_KEY})
+            s.commit()
+        with SessionLocal() as s:
+            self.assertEqual(pack.status(s)["state"], "failed")
+
+
 class LibraryRouteTests(AppTestCase):
 
     def setUp(self):
@@ -106,6 +225,24 @@ class LibraryRouteTests(AppTestCase):
         self.assertFlash(self.post(self.m, f"/plasmids/{target}/detect-features"), "already marked", "info")
         # Someone who may not edit it can't.
         self.assertFlash(self.post(self.o, f"/plasmids/{target}/detect-features"), "belongs to", "error")
+
+    def test_a_big_library_is_searched_and_shown_a_shelf_at_a_time(self):
+        from app import feature_library as fl
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            known = fl.hashes(s)
+            for i in range(120):
+                fl.add(s, name=f"Filler {i}", ftype="misc_feature", sequence=bases(30, f"fill{i}"),
+                       user="alex", known=known)
+            fl.add(s, name=uniq("hSyn promoter "), ftype="promoter", sequence=bases(60, "hsyn"),
+                   user="alex", known=known)
+            s.commit()
+        page = self.get_ok(self.m, "/plasmids/features")
+        self.assertIn("search to narrow it", page)
+        self.assertEqual(page.count("Filler "), 100)        # a shelf-full, not all 120
+        found = self.get_ok(self.m, "/plasmids/features?q=hSyn")
+        self.assertIn("hSyn promoter", found)
+        self.assertNotIn("Filler ", found)
 
     def test_the_library_page_groups_elements_and_only_admins_collect(self):
         self.post(self.m, f"/plasmids/{self.source}/features-to-library")

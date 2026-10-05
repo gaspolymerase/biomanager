@@ -86,24 +86,43 @@ def entries(session, category: str = "") -> list[FeatureLibraryEntry]:
     return list(session.scalars(stmt))
 
 
+def hashes(session) -> set[str]:
+    """Every sequence the library already holds, for adding many at once."""
+    return set(session.scalars(select(FeatureLibraryEntry.seq_hash)))
+
+
 def add(session, *, name: str, ftype: str, sequence: str, color: str = "", notes=None,
-        source: PlasmidRecord | None = None, user: str = "") -> tuple[FeatureLibraryEntry | None, bool]:
+        source: PlasmidRecord | None = None, user: str = "", source_name: str = "",
+        known: set[str] | None = None) -> tuple[FeatureLibraryEntry | None, bool]:
     """The entry for this sequence, made if the library hasn't got it.
-    Returns (entry, made); (None, False) for a sequence too short or long."""
+    Returns (entry, made); (None, False) for a sequence too short or long.
+
+    `known` is the set of sequence hashes already in the library (see
+    `hashes`): pass it when adding hundreds at once and each is checked
+    against it and added to it, rather than each costing a query and a
+    flush. An entry already there then answers (None, False), since it is
+    not fetched."""
     sequence = re.sub(r"[^A-Za-z]", "", sequence or "").upper()
     if not (MIN_LENGTH <= len(sequence) <= MAX_LENGTH):
         return None, False
     key = seq_hash(sequence)
-    found = session.scalar(select(FeatureLibraryEntry).where(FeatureLibraryEntry.seq_hash == key))
-    if found is not None:
-        return found, False
+    if known is not None:
+        if key in known:
+            return None, False
+    else:
+        found = session.scalar(select(FeatureLibraryEntry).where(FeatureLibraryEntry.seq_hash == key))
+        if found is not None:
+            return found, False
     entry = FeatureLibraryEntry(
         name=(name or "").strip()[:120], type=(ftype or "misc_feature")[:40], category=category_of(name, ftype),
         sequence=sequence, seq_hash=key, color=(color or "")[:20],
         notes_json=json.dumps(notes if isinstance(notes, dict) else {}),
-        source_row_id=source.id if source is not None else None, created_by=user)
+        source_row_id=source.id if source is not None else None, source_name=source_name[:120], created_by=user)
     session.add(entry)
-    session.flush()
+    if known is None:
+        session.flush()
+    else:
+        known.add(key)
     return entry, True
 
 

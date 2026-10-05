@@ -604,6 +604,9 @@ class FeatureLibraryEntry(Base):
     notes_json: Mapped[str] = mapped_column(Text, default="{}")
     # The plasmid it was taken from; no foreign key, as for versions.
     source_row_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Empty when the lab's own maps gave it; else where it came from, e.g.
+    # the common-features pack (app/feature_pack.py).
+    source_name: Mapped[str] = mapped_column(String(120), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     created_by: Mapped[str] = mapped_column(String(80), default="")
 

@@ -4,13 +4,25 @@
 {% block page_heading %}{{ _('Feature library') }}{% endblock %}
 {% block page_subtitle %}{{ _('Elements the lab reuses, by sequence. Detect features on a plasmid marks each one wherever it is in the map.') }}{% endblock %}
 
+{% block head_extra %}
+  {# While the pack downloads, come back to the page when it is in. #}
+  {% if pack.state == 'running' %}<meta http-equiv="refresh" content="10">{% endif %}
+{% endblock %}
+
 {% block page_nav %}
   <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[12px]">
     <a class="dt-chip" aria-pressed="{{ 'false' if category else 'true' }}" href="{{ url_for('feature_library_page') }}">{{ _('All') }} <span class="dt-chip-count">{{ total }}</span></a>
     {% for key, n in counts.items() %}
       <a class="dt-chip" aria-pressed="{{ 'true' if category == key else 'false' }}" href="{{ url_for('feature_library_page', category=key) }}">{{ labels[key] }} <span class="dt-chip-count">{{ n }}</span></a>
     {% endfor %}
-    <a class="ml-auto text-muted" href="{{ url_for('plasmids') }}">{{ icon('plasmid') }} {{ db_labels.get('plasmids', 'Plasmids')|tr }}</a>
+    <form method="get" class="ml-auto flex items-center gap-1.5">
+      {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+      <input type="search" name="q" value="{{ look_for }}" placeholder="{{ _('Find an element or a sequence…') }}"
+             aria-label="{{ _('Find an element') }}" class="w-56">
+      <button type="submit" class="btn btn-sm">{{ icon('search') }}</button>
+      {% if look_for %}<a class="text-muted" href="{{ url_for('feature_library_page', category=category or none) }}">{{ _('Clear') }}</a>{% endif %}
+    </form>
+    <a class="text-muted" href="{{ url_for('plasmids') }}">{{ icon('plasmid') }} {{ db_labels.get('plasmids', 'Plasmids')|tr }}</a>
   </div>
 {% endblock %}
 
@@ -27,6 +39,30 @@
     <button type="submit" class="btn">{{ icon('import') }} {{ _('Read elements from files') }}</button>
     <span class="flex-1 text-[12px] text-muted">{{ _('Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.') }}</span>
   </form>
+  {# The common-features pack: downloaded from the open archive when a lab
+     asks for it, never carried in the app (app/feature_pack.py). #}
+  {% if current_user.role == 'admin' or pack.here %}
+    <div class="flex flex-wrap items-start gap-3 border-t border-hairline px-4 py-3">
+      {% if pack.state == 'running' %}
+        {# It downloads in the background; the page comes back by itself. #}
+        <span class="badge badge-quiet shrink-0">{{ _('Downloading…') }}</span>
+      {% elif current_user.role == 'admin' and not pack.here %}
+        <form method="post" action="{{ url_for('feature_library_pack') }}">
+          <button type="submit" class="btn btn-sm">{{ icon('download') }} {{ _('Add the common-features pack') }}</button>
+        </form>
+      {% elif pack.here %}
+        <span class="badge badge-quiet shrink-0">{{ _('%(n)s from the pack', n=pack.here) }}</span>
+      {% endif %}
+      <p class="flex-1 text-[12px] text-muted">
+        {% trans name=pack.name, url=pack.url, licence=pack.licence %}About 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open archive when you ask for it: <a href="{{ url }}">{{ name }}</a>, {{ licence }}.{% endtrans %}
+        {{ _('Its authors built it by exporting a commercial program’s published library, so check anything you rely on; your own elements always win over it.') }}
+        <span class="block">{{ pack.citation }}</span>
+        {% if pack.state == 'failed' and pack.error %}
+          <span class="block text-danger-700">{{ _('The last try did not finish: %(problem)s', problem=pack.error) }}</span>
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
   {% if current_user.role == 'admin' %}
     <form method="post" action="{{ url_for('feature_library_collect') }}"
           class="flex flex-wrap items-center gap-2 border-t border-hairline px-4 py-3">
@@ -44,7 +80,10 @@
 
 {% for group in groups %}
   <section class="card mb-3 overflow-hidden" id="library-{{ group.key }}">
-    <header class="card-head"><h2>{{ group.label }}</h2><span class="badge badge-quiet">{{ group.rows|length }}</span></header>
+    <header class="card-head"><h2>{{ group.label }}</h2><span class="badge badge-quiet">{{ group.all }}</span>
+      {% if group.all > group.rows|length %}
+        <span class="text-[12px] text-muted">{{ _('the first %(n)s — search to narrow it', n=group.rows|length) }}</span>
+      {% endif %}</header>
     <div class="dt-scroll">
       <table class="dt">
         <thead>
@@ -63,8 +102,8 @@
               <td><span class="inline-block h-2.5 w-2.5 rounded-full align-middle" style="background: {{ e.color or '#cbd5e1' }}"></span> <span class="font-medium text-ink">{{ e.name }}</span></td>
               <td class="text-muted">{{ e.type }}</td>
               <td class="text-muted">{{ e.length }} bp</td>
-              <td><code class="block max-w-[420px] truncate text-[11.5px]" title="{{ e.sequence }}">{{ e.sequence }}</code></td>
-              <td class="text-muted">{% if e.source %}<a href="{{ e.source.url }}">#{{ e.source.number }} {{ e.source.name }}</a>{% endif %}{% if e.by %} · {{ e.by }}{% endif %}</td>
+              <td><code class="block max-w-[420px] truncate text-[11.5px]">{{ e.sequence }}{% if e.more %}<span class="text-muted">…+{{ e.more }}</span>{% endif %}</code></td>
+              <td class="text-muted">{% if e.from_pack %}{{ e.from_pack }}{% elif e.source %}<a href="{{ e.source.url }}">#{{ e.source.number }} {{ e.source.name }}</a>{% endif %}{% if e.by and not e.from_pack %} · {{ e.by }}{% endif %}</td>
               <td>
                 {% if e.may_delete %}
                   <form method="post" action="{{ url_for('feature_library_delete', entry_id=e.id) }}"

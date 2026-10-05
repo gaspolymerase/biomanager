@@ -23,7 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
-from . import feature_library, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
+from . import feature_library, feature_pack, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -8229,31 +8229,64 @@ def feature_library_page():
     category = request.args.get("category", "")
     if category not in feature_library.CATEGORIES:
         category = ""
+    # With the pack in, a lab has a couple of thousand elements: show a
+    # shelf-full at a time and let a search narrow it, rather than sending
+    # every one of them to a phone.
+    look_for = (request.args.get("q") or "").strip()[:80]
+    SHOWN = 100
     with SessionLocal() as db_session:
         everything = feature_library.entries(db_session)
         sources = {p.id: p for p in db_session.scalars(select(PlasmidRecord).where(
             PlasmidRecord.id.in_({e.source_row_id for e in everything if e.source_row_id})))}
+        if look_for:
+            wanted = look_for.lower()
+            everything = [e for e in everything
+                          if wanted in e.name.lower() or wanted in e.type.lower()
+                          or wanted in e.sequence.lower()]
         groups = []
         for key in feature_library.CATEGORIES:
             rows = [{"id": e.id, "name": e.name, "type": e.type, "length": len(e.sequence), "color": e.color,
-                     "sequence": e.sequence, "by": e.created_by,
+                     "sequence": e.sequence[:72], "more": max(len(e.sequence) - 72, 0),
+                     "by": e.created_by, "from_pack": e.source_name,
                      "may_delete": g.user.role == "admin" or e.created_by == g.user.username,
                      "source": ({"number": sources[e.source_row_id].plasmid_id, "name": sources[e.source_row_id].name,
                                  "url": url_for("plasmid_page", number=sources[e.source_row_id].plasmid_id)}
                                 if e.source_row_id in sources else None)}
                     for e in everything if e.category == key]
             if rows:
-                groups.append({"key": key, "label": gettext(FEATURE_CATEGORY_LABELS[key]), "rows": rows})
-    counts = {g_["key"]: len(g_["rows"]) for g_ in groups}
+                groups.append({"key": key, "label": gettext(FEATURE_CATEGORY_LABELS[key]),
+                               "rows": rows[:SHOWN], "all": len(rows)})
+        state = feature_pack.status(db_session)
+    counts = {g_["key"]: g_["all"] for g_ in groups}
     shown = [g_ for g_ in groups if not category or g_["key"] == category]
-    return render_template("feature_library.html", groups=shown, counts=counts, category=category,
-                           total=len(everything), labels={k: gettext(v) for k, v in FEATURE_CATEGORY_LABELS.items()})
+    pack = {"name": feature_pack.SOURCE_NAME, "citation": feature_pack.CITATION, "licence": feature_pack.LICENCE,
+            "url": feature_pack.ARTICLE_URL, "state": state["state"], "error": state["error"],
+            "here": sum(1 for e in everything if e.source_name == feature_pack.SOURCE_NAME)}
+    return render_template("feature_library.html", groups=shown, counts=counts, category=category, pack=pack,
+                           total=len(everything), look_for=look_for, shown=SHOWN,
+                           labels={k: gettext(v) for k, v in FEATURE_CATEGORY_LABELS.items()})
 
 
 def _names(files: list[str]) -> str:
     """File names in a sentence, as inventory_routes._and words them."""
     from .inventory_routes import _and
     return _and(files) if files else ""
+
+
+@app.route("/plasmids/features/pack", methods=["POST"])
+@admin_required
+def feature_library_pack():
+    """Fetch the common-features pack (app/feature_pack.py) and put it in the
+    lab's library. The file is downloaded from the open archive when asked
+    for; the app carries no copy of it."""
+    with SessionLocal() as db_session:
+        started = feature_pack.start(db_session, g.user.username)
+    if started:
+        flash(gettext("Downloading the common-features pack. It takes about a minute; this page shows it when it is in."),
+              "info")
+    else:
+        flash(gettext("The pack is already being downloaded."), "info")
+    return redirect(url_for("feature_library_page"))
 
 
 @app.route("/plasmids/features/import", methods=["POST"])
