@@ -520,6 +520,12 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
+- **One area, four tabs:** `PLASMID_TAB_KINDS` (primers, glycerol_stocks,
+  viruses) are left out of the sidebar rail by `_inventory_module_links`
+  and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,
+  and `_plasmid_tabs.html` draws the strip on the Plasmids page and on
+  those sheets (only where one of them is the page you are on). The rail
+  marks Plasmids active on all of them.
 - **Feature library** (`app/feature_library.py`, `feature_library`,
   revision 0019): named elements by sequence (as the feature reads 5′→3′),
   one per `seq_hash`, sorted into `CATEGORIES` by `category_of` (name and

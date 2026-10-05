@@ -181,5 +181,6 @@
   "Mark every library element found in this sequence": "标出这条序列中所有元件库里的元件",
   "Detect features": "识别特征",
   "Keep the named features of this map in the library": "把这张图谱上有名称的特征保存到元件库",
-  "Add to library": "加入元件库"
+  "Add to library": "加入元件库",
+  "Plasmids and what goes with them": "质粒及相关数据库"
 }

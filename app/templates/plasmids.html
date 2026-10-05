@@ -11,6 +11,7 @@
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_nav %}
+  {% include "_plasmid_tabs.html" %}
   <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
     <span class="badge">{% trans count=counts.all %}{{ count }} plasmid{% pluralize %}{{ count }} plasmids{% endtrans %}</span>
     <span class="badge">{% trans n=counts.sequence %}{{ n }} with a sequence{% endtrans %}</span>

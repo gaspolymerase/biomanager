@@ -248,7 +248,9 @@ map (**Add sequence** when it has none yet). **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
-from and what was made from it, with a family tree. The **Feature library**
+from and what was made from it, with a family tree. Primers, glycerol stocks and viruses each name the plasmid they came
+from, so they are tabs of the Plasmids area rather than four entries in
+the sidebar. The **Feature library**
 keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
 by sequence, from any well-annotated map, and **Detect features** marks
 them on another plasmid. A primer drawn on the

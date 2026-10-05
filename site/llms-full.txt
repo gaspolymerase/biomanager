@@ -777,6 +777,8 @@ Source: https://biomanager.org/guide/experiments
 
 Plasmid records with their sequence and map, and the box each tube is in.
 
+- At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar because each names the plasmid it came from.
+
 - Show them as a **Table**, by storage **Boxes**, or as a **List**; chips for *Mine*, *Has sequence*, *In a box*.
 
 - **Sequence**, beside each plasmid's number in the table, opens its sequence and map (**Add sequence** when it has none yet); the number opens the same page.
@@ -805,7 +807,7 @@ Source: https://biomanager.org/guide/plasmids
 
 Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
 
-One engine, eight starting points, each with its own columns and statuses:
+One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
 | Samples | Tissue and material, linked to the animal it came from, stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|

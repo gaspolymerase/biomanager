@@ -46,6 +46,38 @@ class VirusDatabaseTests(VirusCase):
         self.assertTrue(attrs_of(vid).get("used_up_on"))
 
 
+class PlasmidTabsTests(VirusCase):
+    """Plasmids, Primers, Glycerol stocks and Viruses are one area with a tab
+    each (PLASMID_TAB_KINDS), not four entries in the sidebar."""
+
+    @staticmethod
+    def rail(html: str) -> str:
+        return html.split('<nav class="rail"', 1)[-1].split("</nav>", 1)[0]
+
+    @staticmethod
+    def tabs(html: str) -> str:
+        return html.split('aria-label="Plasmids and what goes with them"', 1)[-1].split("</nav>", 1)[0]
+
+    def test_the_tab_strip_is_on_both_pages_and_the_rail_lists_plasmids_only(self):
+        plasmids = self.get_ok(self.a, "/plasmids")
+        self.assertIn(f"/inventory/{self.viruses}", self.tabs(plasmids))
+        self.assertIn('class="seg-item is-active"', self.tabs(plasmids))
+        self.assertNotIn(f"/inventory/{self.viruses}", self.rail(plasmids))
+        self.assertIn("/plasmids", self.rail(plasmids))
+
+        sheet = self.get_ok(self.a, f"/inventory/{self.viruses}")
+        self.assertIn("/plasmids", self.tabs(sheet))
+        self.assertIn(f'class="seg-item is-active" href="/inventory/{self.viruses}"', self.tabs(sheet))
+        # Plasmids is the database you are in, so the rail marks it.
+        self.assertIn('rail-item is-active', self.rail(sheet).split('href="/plasmids"')[0][-120:])
+
+    def test_another_inventory_stays_in_the_rail_with_no_tab_strip(self):
+        key = self.new_module(self.a, "reagents")
+        sheet = self.get_ok(self.a, f"/inventory/{key}")
+        self.assertIn(f"/inventory/{key}", self.rail(sheet))
+        self.assertNotIn("Plasmids and what goes with them", sheet)
+
+
 class SequenceViewTests(VirusCase):
     """A virus (or any record with a plasmid column) shows that plasmid's
     sequence and map, to read but not edit."""

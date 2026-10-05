@@ -74,6 +74,7 @@
 {% endmacro %}
 
 {% block page_nav %}
+  {% include "_plasmid_tabs.html" %}
   <div class="mb-3 flex flex-wrap items-center gap-2.5">
     {% if m.has('storage') or m.has('board') %}
       <div class="dt-chips view-switch" data-view-switch="inv-{{ key }}" role="group" aria-label="{{ _('Layout') }}">

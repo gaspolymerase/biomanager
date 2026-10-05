@@ -770,28 +770,42 @@ def builtin_labels() -> dict[str, str]:
         return {key: default for key, (default, _short) in inventories.BUILTIN_DATABASES.items()}
 
 
+# Plasmids and the databases that belong with them: one area in the sidebar
+# with a tab each, in the order the work flows. They are nothing like the
+# lab's other inventories — a primer, a glycerol stock and a virus each name
+# the plasmid they came from — so they are kept together.
+PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")
+
+
 def _inventory_module_links() -> list[dict]:
-    """Rail entries for the lab inventories (samples, orders, reagents…)."""
+    """Rail entries for the lab inventories (samples, orders, reagents…).
+    The ones that go with Plasmids are left out of the rail and kept in
+    `g.plasmid_tabs` for the tab strip (PLASMID_TAB_KINDS)."""
     from . import inventory_service as inventories
     from .icons import resolve as resolve_icon
 
     current_key = request.view_args.get("key") if request.view_args else None
     on_inventory = (request.endpoint or "").startswith("inventory.")
-    links = []
+    links, tabs = [], []
     try:
         with SessionLocal() as db_session:
             for module in inventories.list_modules(db_session):
                 if not lab.in_sidebar(module):
                     continue
-                links.append({
+                entry = {
                     "key": f"inventory:{module.key}", "label": module.label, "short": module.label,
                     "icon": resolve_icon(module.icon), "soon": None,
                     "url": url_for("inventory.module", key=module.key),
                     "active": on_inventory and current_key == module.key,
                     "personal": lab.is_personal(module),
-                })
+                }
+                if module.kind in PLASMID_TAB_KINDS:
+                    tabs.append((PLASMID_TAB_KINDS.index(module.kind), module.position, entry))
+                else:
+                    links.append(entry)
     except Exception:
         return []
+    g.plasmid_tabs = [entry for _kind, _position, entry in sorted(tabs, key=lambda t: t[:2])]
     return links
 
 
@@ -876,6 +890,11 @@ def inject_nav():
             tail = [l for l in links if l["key"] in ("drosophila", "new-db")]
             head = [l for l in links if l["key"] not in ("drosophila", "new-db")]
             links = head + extras + [l for l in tail if l["key"] == "new-db"]
+            # Plasmids holds the tabs, so it is the active database on them.
+            if any(t["active"] for t in g.get("plasmid_tabs", [])):
+                for link in links:
+                    if link["key"] == "plasmids":
+                        link["active"] = True
             # Each database's tabs show its own glyph, not the generic one.
             tab_icon_rules += [(l["url"], l["icon"]) for l in extras]
 
@@ -890,7 +909,20 @@ def inject_nav():
         "tab_icon_rules": tab_icon_rules,
         "colony_view_meta": COLONY_VIEW_META,
         "db_labels": g.db_labels,
+        "plasmid_tabs": _plasmid_tab_strip(active),
     }
+
+
+def _plasmid_tab_strip(active_endpoint: str) -> list[dict]:
+    """Plasmids and its databases, as the tab strip both pages show."""
+    tabs = g.get("plasmid_tabs")
+    if not tabs or not lab.request_features().get("plasmids", True):
+        return []
+    plasmids = {"key": "plasmids", "label": g.db_labels.get("plasmids", "Plasmids"), "icon": "plasmid",
+                "url": url_for("plasmids"),
+                "active": active_endpoint in ("plasmids", "plasmid_detail", "plasmid_page",
+                                              "feature_library_page")}
+    return [plasmids] + tabs
 
 
 @app.context_processor
