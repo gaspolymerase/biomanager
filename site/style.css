@@ -1160,61 +1160,81 @@ kbd {
 .search-dialog .pagefind-ui__result-title { font-weight: 600; }
 
 /* ------------------------------------------------------------ the AI assistants card */
-/* The whole row, drawn plainly: thin lines, small capitals in mono and one
-   colour. What you said becomes one proposal; it waits at Approve; only
-   then does it reach your records. A dot walks the path and Approve
-   lights as it passes. Under it the clip plays by itself while it is on
-   screen (site.js, as in the guide), with no window to open. */
+/* The whole row. Three small panes of matte glass, joined by thin arrows:
+   what you said (a message, with the photo of your notebook), one proposal,
+   and your records. Each pane is frosted, with a fine grain, a lit top
+   edge and a darker bottom one, over a few coloured shapes that show
+   sharp where they stick out and soft through the glass. A dot walks the
+   path; Approve lights as it passes and the new record takes the change.
+   Under it the clip plays by itself while it is on screen (site.js). */
 .nc-full { min-height: 0; }
-@media (min-width: 680px) {
-  .nc-full { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); align-items: center; }
+@media (min-width: 680px) { .nc-full { grid-column: 1 / -1; } }
+/* words beside the drawing only where both fit; above it on a tablet */
+@media (min-width: 1150px) {
+  .nc-full { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); align-items: center; }
 }
+@media (min-width: 770px) and (max-width: 1149px) { .nc-full .flow { justify-content: center; padding: 6px 26px 30px; } }
 .nc-full .nc-copy { padding-bottom: 22px; }
-.ai-card { --ln: rgba(225, 233, 245, 0.32); --ink: rgba(235, 241, 250, 0.92); --mute: rgba(225, 233, 245, 0.55); }
-.flow { display: flex; align-items: center; padding: 26px 30px 22px 10px; }
-.fl-node { position: relative; flex: none; display: grid; justify-items: center; gap: 10px; }
+.ai-card {
+  --ln: rgba(225, 233, 245, 0.3); --ink: rgba(238, 243, 252, 0.94); --mute: rgba(225, 233, 245, 0.55);
+  --glass: linear-gradient(165deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.09));
+  --rim: rgba(255, 255, 255, 0.13);
+}
+.flow { display: flex; align-items: center; padding: 30px 34px 30px 4px; }
+.fl-node { position: relative; flex: none; display: grid; justify-items: center; gap: 12px; }
 .fl-n { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; color: var(--mute); }
 .fl-tag { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
-.fl-box { display: grid; align-content: center; gap: 7px; height: 92px; border: 1px solid var(--ln); border-radius: 12px; }
-/* What you said and your records: small pieces of liquid glass, each over
-   a soft glow of the card's colours so the glass has something to bend. */
-.fl-glass {
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 48%, rgba(255, 255, 255, 0.12));
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), inset -1px -1px 0 rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.28);
-  -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8);
+.fl-box { position: relative; isolation: isolate; width: 146px; height: 112px; }
+.fl-prop .fl-box { width: 172px; }
+
+/* the shapes behind the glass */
+.sh { position: absolute; z-index: 0; display: block; }
+.sh-a { width: 34px; height: 34px; top: -11px; right: -9px; border-radius: 50%; background: linear-gradient(140deg, #8fd0ff, var(--c1)); }
+.sh-b { width: 50px; height: 15px; bottom: -6px; left: 16px; border-radius: 9px; background: linear-gradient(90deg, var(--c2), #ff9ad5); transform: rotate(-10deg); }
+.sh-c { width: 30px; height: 30px; top: -10px; left: -10px; border-radius: 9px; background: linear-gradient(140deg, var(--c1), #4be1ff); transform: rotate(14deg); }
+.sh-d { width: 28px; height: 28px; bottom: -9px; right: -8px; border-radius: 50%; background: linear-gradient(140deg, #5fe0c6, #2cc4a6); }
+.sh-e { width: 44px; height: 13px; top: -6px; left: 20px; border-radius: 8px; background: linear-gradient(90deg, var(--c1), var(--c2)); transform: rotate(8deg); }
+
+/* matte glass */
+.mg {
+  position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; padding: 10px 12px;
+  border-radius: 14px; border: 1px solid var(--rim); background: var(--glass);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5); backdrop-filter: blur(12px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 1px 1px rgba(0, 0, 0, 0.25), 0 18px 30px -12px rgba(0, 0, 0, 0.65);
+  text-align: left; color: var(--ink);
 }
-.fl-say .fl-box, .fl-lab .fl-box { position: relative; isolation: isolate; border: 0; width: 132px; }
-.fl-say .fl-box::before, .fl-lab .fl-box::before {   /* the glow behind the glass */
-  content: ""; position: absolute; z-index: -1; inset: 14px 18px; border-radius: 50%;
-  background: radial-gradient(closest-side, var(--c2), transparent), radial-gradient(closest-side at 30% 70%, var(--c1), transparent);
-  filter: blur(14px); opacity: 0.55;
+.mg::before {   /* light coming through the top-left */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(130% 90% at 0% 0%, rgba(255, 255, 255, 0.12), transparent 55%);
 }
-.fl-say .fl-box { display: block; }
-.fl-bub { position: absolute; border-radius: 16px 16px 16px 5px; }
-.fl-bub.back { left: 26px; top: 6px; width: 96px; height: 34px; opacity: 0.55; }
-.fl-bub.front {
-  left: 0; bottom: 6px; width: 122px; padding: 9px 11px 10px;
-  font: 400 11px/1.4 var(--font-body); color: var(--ink); text-align: left;
+.mg::after {    /* the grain of matte glass */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 140px; opacity: 0.32; mix-blend-mode: overlay;
 }
-.fl-bub.front i { display: inline-block; width: 1.5px; height: 11px; margin-left: 2px; vertical-align: -1px; background: var(--c1); }
-.fl-lab .fl-box { display: grid; align-content: center; gap: 5px; }
-.fl-row { display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 8px; border-radius: 8px; }
-.fl-row:nth-child(2) { margin-left: 8px; opacity: 0.8; }
-.fl-row:nth-child(3) { margin-left: 16px; opacity: 0.6; }
-.fl-row b { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.55); }
-.fl-row u { flex: 1; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.4); text-decoration: none; }
-.fl-row u + u { flex: 0 0 18px; }
-.fl-prop .fl-box {
-  width: 172px; padding: 12px 14px; gap: 6px; font: 500 11.5px/1.35 var(--font-mono); color: var(--ink);
-  border-color: color-mix(in srgb, var(--c1) 70%, transparent);
-  background: linear-gradient(150deg, color-mix(in srgb, var(--c1) 16%, transparent), color-mix(in srgb, var(--c1) 4%, transparent));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 26px color-mix(in srgb, var(--c1) 22%, transparent);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+.fl-say .mg { border-radius: 16px 16px 16px 5px; }
+.fl-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font: 500 9px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.fl-meta em { margin-left: auto; font-style: normal; }
+.fl-av { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(140deg, #ffd166, #ff8fb1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.fl-words { font: 400 11.5px/1.38 var(--font-body); }
+.fl-words i { display: inline-block; width: 1.5px; height: 11px; margin-left: 2px; vertical-align: -1px; background: var(--c1); }
+.fl-chip {
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: auto; padding: 3px 7px 3px 4px;
+  border-radius: 7px; font: 500 9px/1 var(--font-mono); color: var(--mute);
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.fl-prop .fl-box span { display: flex; gap: 8px; white-space: nowrap; }
-.fl-prop .fl-box b { font-weight: 500; color: var(--c1); }
-.fl-link { position: relative; flex: 1; min-width: 18px; height: 1px; margin: 0 10px; background: var(--ln); }
+.fl-chip i { width: 14px; height: 11px; border-radius: 3px; background: linear-gradient(160deg, #cfe3ff, #8fb5ff 60%, #6e8fe0); box-shadow: inset 0 -3px 0 rgba(20, 60, 40, 0.35); }
+.fl-pill { margin-left: auto; padding: 2px 6px; border-radius: 5px; color: var(--c1); background: color-mix(in srgb, var(--c1) 16%, transparent); }
+.fl-chg { display: flex; gap: 8px; padding: 3px 0; font: 500 11px/1.3 var(--font-mono); white-space: nowrap; }
+.fl-chg b { font-weight: 500; color: var(--c1); }
+.fl-rec { display: flex; align-items: center; gap: 7px; padding: 4px 0; font: 500 10.5px/1.2 var(--font-mono); white-space: nowrap;
+  border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.fl-rec i { flex: none; width: 8px; height: 8px; border-radius: 2.5px; border: 1px solid var(--ln); }
+.fl-rec em { margin-left: auto; font-style: normal; color: var(--mute); }
+.fl-rec.new em { color: var(--c1); }
+
+.fl-link { position: relative; flex: 1 1 0; min-width: 40px; max-width: 120px; height: 1px; margin: 0 12px; background: var(--ln); }
+.fl-link.l2 { min-width: 70px; }
 .fl-link::after {   /* the arrowhead */
   content: ""; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px;
   border-top: 1px solid var(--ln); border-right: 1px solid var(--ln); transform: rotate(45deg);
@@ -1233,12 +1253,11 @@ kbd {
 .ai-clip video::-webkit-media-controls { display: none !important; }
 @media (min-width: 680px) { .ai-clip { grid-column: 1 / -1; } }
 /* On a phone the path runs down the card. */
-@media (max-width: 679px) {
-  .flow { flex-direction: column; padding: 8px 26px 24px; }
-  .flow { gap: 0; }
-  .fl-node { gap: 8px; }
-  .fl-box { height: 84px; }
-  .fl-link { width: 1px; min-width: 0; height: 34px; flex: none; margin: 6px 0; }
+@media (max-width: 769px) {
+  .flow { flex-direction: column; padding: 10px 26px 26px; }
+  .fl-node { gap: 10px; }
+  .fl-box, .fl-prop .fl-box { width: 190px; }
+  .fl-link, .fl-link.l2 { width: 1px; min-width: 0; height: 34px; flex: none; margin: 10px 0; }
   .fl-link::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
   .fl-gate + .fl-tag { left: 22px; top: 50%; transform: translateY(-50%); }
 }
@@ -1247,9 +1266,9 @@ kbd {
   .ai-card .fl-link.l1 .fl-dot { animation: fl-a 6s linear infinite; }
   .ai-card .fl-link.l2 .fl-dot { animation: fl-b 6s linear infinite; }
   .ai-card .fl-gate { animation: fl-ok 6s linear infinite; }
-  .ai-card .fl-prop .fl-box { animation: fl-glow 6s linear infinite; }
-  .ai-card .fl-row:first-child { animation: fl-rec 6s linear infinite; }
-  @media (max-width: 679px) {
+  .ai-card .fl-prop .mg { animation: fl-glow 6s linear infinite; }
+  .ai-card .fl-rec.new em { animation: fl-rec 6s linear infinite; }
+  @media (max-width: 769px) {
     .ai-card .fl-link.l1 .fl-dot { animation-name: fl-a-down; }
     .ai-card .fl-link.l2 .fl-dot { animation-name: fl-b-down; }
   }
@@ -1261,28 +1280,27 @@ kbd {
 @keyframes fl-ok { 0%, 54% { color: var(--mute); border-color: var(--ln); background: var(--b); box-shadow: none; }
   58%, 92% { color: #06101c; border-color: var(--c1); background: var(--c1); box-shadow: 0 0 16px var(--c1); }
   100% { color: var(--mute); border-color: var(--ln); background: var(--b); box-shadow: none; } }
-@keyframes fl-glow { 0%, 20% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 26px color-mix(in srgb, var(--c1) 22%, transparent); }
-  28%, 50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 34px color-mix(in srgb, var(--c1) 50%, transparent); }
-  60%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 26px color-mix(in srgb, var(--c1) 22%, transparent); } }
-@keyframes fl-rec { 0%, 80% { border-color: rgba(255, 255, 255, 0.32); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), 0 10px 24px rgba(0, 0, 0, 0.28); }
-  84%, 96% { border-color: var(--c1); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.55), 0 0 18px color-mix(in srgb, var(--c1) 60%, transparent); }
-  100% { border-color: rgba(255, 255, 255, 0.32); } }
+@keyframes fl-glow { 0%, 20%, 60%, 100% { border-color: var(--rim); } 28%, 50% { border-color: color-mix(in srgb, var(--c1) 70%, transparent); } }
+@keyframes fl-rec { 0%, 80% { color: var(--mute); text-shadow: none; } 84%, 97% { color: var(--c1); text-shadow: 0 0 8px var(--c1); } 100% { color: var(--mute); } }
 @media (prefers-reduced-motion: reduce) {
   .ai-card .fl-gate { color: #06101c; border-color: var(--c1); background: var(--c1); }
 }
 
 @media (prefers-color-scheme: light) {
-  .ai-card { --ln: rgba(20, 35, 70, 0.28); --ink: #1a2440; --mute: rgba(30, 45, 80, 0.6); }
-  .fl-prop .fl-box { background: linear-gradient(150deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.5)); box-shadow: 0 6px 18px rgba(30, 60, 160, 0.1); }
-  .fl-prop .fl-box b { color: color-mix(in srgb, var(--c1) 70%, #0b1a44); }
+  .ai-card {
+    --ln: rgba(20, 35, 70, 0.26); --ink: #17203a; --mute: rgba(30, 45, 80, 0.58);
+    --glass: linear-gradient(165deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.36) 55%, rgba(255, 255, 255, 0.5));
+    --rim: rgba(255, 255, 255, 0.85);
+  }
+  .mg { box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(30, 50, 110, 0.1), 0 0 0 1px rgba(30, 50, 110, 0.07),
+    0 16px 28px -14px rgba(30, 60, 160, 0.4); }
+  .mg::after { opacity: 0.4; mix-blend-mode: soft-light; }
+  .fl-chip { background: rgba(255, 255, 255, 0.5); border-color: rgba(30, 50, 110, 0.08); }
+  .fl-rec { border-top-color: rgba(30, 50, 110, 0.08); }
+  .fl-chg b, .fl-pill, .fl-rec.new em { color: #3f6fe6; }
   .fl-gate { background: #fff; }
-  .fl-glass { background: linear-gradient(140deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.42) 48%, rgba(255, 255, 255, 0.62));
-    border-color: rgba(255, 255, 255, 0.95); box-shadow: inset 1px 1px 0 #fff, 0 0 0 1px rgba(40, 70, 160, 0.1), 0 8px 20px rgba(30, 60, 160, 0.12); }
-  .fl-say .fl-box::before, .fl-lab .fl-box::before { opacity: 0.45; }
-  .fl-row b { border-color: rgba(40, 70, 160, 0.45); }
-  .fl-row u { background: rgba(40, 70, 160, 0.28); }
   @keyframes fl-ok { 0%, 54% { color: var(--mute); border-color: var(--ln); background: #fff; }
     58%, 92% { color: #fff; border-color: #4f7ef5; background: #4f7ef5; box-shadow: 0 0 14px rgba(79, 126, 245, 0.6); }
     100% { color: var(--mute); border-color: var(--ln); background: #fff; } }
-  @keyframes fl-glow { 0%, 100% { box-shadow: 0 6px 18px rgba(30, 60, 160, 0.1); } 28%, 50% { box-shadow: 0 6px 26px rgba(30, 60, 160, 0.28); } }
+  @keyframes fl-rec { 0%, 80% { color: var(--mute); } 84%, 97% { color: #3f6fe6; } 100% { color: var(--mute); } }
 }
