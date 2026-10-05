@@ -352,6 +352,16 @@ var bmClips = (function () {
       });
     }, { threshold: 0.4 });
     clips.forEach(function (v) { io.observe(v); });
+    // A clip inside a link (the AI assistants card) is not the link: a click
+    // on it stays on the page, and starts it if the browser held it back.
+    clips.forEach(function (v) {
+      var frame = v.closest('figure') || v.parentNode;
+      if (!v.closest('a')) return;
+      frame.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (v.src && v.paused && !calm) v.play();
+      });
+    });
   }
 
   var rail = {};

@@ -1251,7 +1251,7 @@ kbd {
 }
 .fl-gate svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fl-gate + .fl-tag { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); }
-.ai-clip { margin: 0; padding: 0 26px 26px; }
+.ai-clip { margin: 0; padding: 0 26px 26px; cursor: default; }
 .ai-clip .window { border-radius: 14px; }
 .ai-clip video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; background: #0e1312; pointer-events: none; }
 @media (min-width: 680px) { .ai-clip { grid-column: 1 / -1; } }
