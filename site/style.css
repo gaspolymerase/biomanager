@@ -1206,7 +1206,8 @@ kbd {
 .fl-gate + .fl-tag { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); }
 .ai-clip { margin: 0; padding: 0 26px 26px; }
 .ai-clip .window { border-radius: 14px; }
-.ai-clip video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; background: #0e1312; }
+.ai-clip video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; background: #0e1312; pointer-events: none; }
+.ai-clip video::-webkit-media-controls { display: none !important; }
 @media (min-width: 680px) { .ai-clip { grid-column: 1 / -1; } }
 /* On a phone the path runs down the card. */
 @media (max-width: 679px) {
