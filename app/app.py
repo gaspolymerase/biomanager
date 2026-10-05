@@ -5761,7 +5761,8 @@ def global_search():
 
         # Every lab inventory: samples, orders, reagents, antibodies, custom.
         kind_type = {"orders": "order", "samples": "sample", "reagents": "reagent", "antibodies": "antibody",
-                     "viruses": "virus", "primers": "primer", "cell_lines": "cell-line"}
+                     "viruses": "virus", "primers": "primer", "cell_lines": "cell-line",
+                     "glycerol_stocks": "glycerol-stock"}
         # Only databases this person sees: the lab's and their own (app/lab.py).
         from . import inventory_service as inventories
         modules = {m.id: m for m in inventories.list_modules(db_session)}
@@ -7829,12 +7830,25 @@ def plasmid_page(number: int):
             "database": m["module"].label, "status": m["item"].status, "available": m["available"],
             "url": url_for("inventory.module", key=m["module"].key, open=m["item"].id),
         } for m in inventories.made_from_plasmid(db_session, p.plasmid_id)]
+        stocks_db = inventories.first_of_kind(db_session, "glycerol_stocks")
+        glycerol = {
+            "rows": [{"label": m["item"].name or f"#{m['item'].number}", "number": m["item"].number,
+                      "status": m["item"].status, "available": m["available"],
+                      "where": " ".join(x for x in ((m["item"].rack.name if m["item"].rack else ""), m["where"]) if x)
+                               or m["item"].location_note,
+                      "url": url_for("inventory.module", key=m["module"].key, open=m["item"].id)}
+                     for m in inventories.made_from_plasmid(db_session, p.plasmid_id, kinds=("glycerol_stocks",))],
+            "database": stocks_db.label if stocks_db else "",
+            "url": url_for("inventory.module", key=stocks_db.key) if stocks_db else "",
+            "new_url": url_for("inventory.new_module", preset="glycerol_stocks"),
+        }
         primers = _plasmid_primers(db_session, p)
         lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
             select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
-                           made_from=made_from, lineage_options=lineage_options, primers=primers)
+                           made_from=made_from, lineage_options=lineage_options, primers=primers,
+                           glycerol=glycerol)
 
 
 @app.route("/plasmids/<int:row_id>/upload-sequence", methods=["POST"])

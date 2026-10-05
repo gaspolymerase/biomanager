@@ -221,6 +221,27 @@
       </p>
     {% endif %}
   </div>
+  {# Bacteria carrying it: a Glycerol stocks record whose Plasmid column names it. #}
+  <article class="card mt-3 max-w-[760px]" id="glycerol-stocks">
+    <header class="card-head"><h2>{{ icon('bacterium') }} {{ _('Glycerol stocks') }}</h2>
+      {% if glycerol.rows %}<span class="badge badge-quiet">{{ glycerol.rows|length }}</span>{% endif %}
+      {% if glycerol.url %}<a class="btn btn-sm ml-auto" href="{{ glycerol.url }}">{{ icon('bacterium') }} {{ glycerol.database|tr }}</a>{% endif %}</header>
+    {% if glycerol.rows %}
+      <div class="flex flex-col">
+        {% for m in glycerol.rows %}
+          <a class="row-line" href="{{ m.url }}">
+            <span class="life-dot{% if m.available %} is-alive{% endif %}"></span>
+            <span class="min-w-0 flex-1 truncate font-medium text-ink">{{ m.label }}</span>
+            <span class="shrink-0 text-[12px] text-muted">{% if m.where %}{{ m.where }} · {% endif %}#{{ m.number }}{% if m.status %} · {{ m.status|tr }}{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% elif glycerol.url %}
+      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A glycerol stock whose <b>Plasmid</b> is #{{ number }} shows here, with the box it's in.{% endtrans %}</p>
+    {% else %}
+      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans url=glycerol.new_url %}Keep the bacteria carrying each plasmid in a <a href="{{ url }}">Glycerol stocks</a> database; each stock then shows here with the box it's in.{% endtrans %}</p>
+    {% endif %}
+  </article>
   {# What was made from it: a virus's "Made from" column names this plasmid. #}
   <article class="card mt-3 max-w-[760px]" id="made-from">
     <header class="card-head"><h2>{{ icon('virus') }} {{ _('Made from this plasmid') }}</h2>

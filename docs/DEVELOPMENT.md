@@ -444,7 +444,7 @@ pages are in `app/lab_routes.py`.
   makes *name*-F and *name*-R through `_item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
-  setup survey) include `primers` and `cell_lines`; Samples has number
+  setup survey) include `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
   columns for what was measured (`SAMPLE_MEASURES`), which revision 0008
   adds to Samples databases made earlier unless a column of that key or
   name is there. The same revision adds `plasmids.concentration`
@@ -520,6 +520,11 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
+- **Glycerol stocks:** a `glycerol_stocks` database's *Plasmid* column
+  says which plasmid the bacteria carry. `made_from_plasmid(kinds=…)`
+  finds them for the Storage tab's Glycerol stocks card (with the box,
+  `rack_label`), and `NOT_MADE_FROM` keeps them, like primers, out of Made
+  from this plasmid and Used to make.
 - **Out:** `to_genbank` / `to_fasta` (`sequence_parser.py`) write what
   `parse_genbank` reads back the same: features and primers (as
   `primer_bind`) with every qualifier, a wrap across the origin as a join.

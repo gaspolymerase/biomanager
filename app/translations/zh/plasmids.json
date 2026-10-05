@@ -165,5 +165,8 @@
   "%(n)s-base tail": "%(n)s 个碱基的尾巴",
   "%(num)s more site": "另有 %(num)s 个位点",
   "%(num)s more sites": "另有 %(num)s 个位点",
-  "doesn’t bind here": "不结合此质粒"
+  "doesn’t bind here": "不结合此质粒",
+  "Glycerol stocks": "甘油菌",
+  "Nothing yet. A glycerol stock whose <b>Plasmid</b> is #%(number)s shows here, with the box it's in.": "暂无。<b>质粒</b>为 #%(number)s 的甘油菌会显示在这里，并注明所在冻存盒。",
+  "Keep the bacteria carrying each plasmid in a <a href=\"%(url)s\">Glycerol stocks</a> database; each stock then shows here with the box it's in.": "把带有各个质粒的细菌保存在<a href=\"%(url)s\">甘油菌</a>数据库里；每管甘油菌会显示在这里，并注明所在冻存盒。"
 }

@@ -175,6 +175,27 @@ PRESETS: dict[str, dict] = {
              "options": ["desalted", "cartridge", "HPLC", "PAGE"], "icon": "flask", "width": 88, "in_table": False},
         ],
     },
+    # A plasmid kept in bacteria: its page lists them (Glycerol stocks, on Storage).
+    "glycerol_stocks": {
+        "label": "Glycerol stocks",
+        "icon": "bacterium",
+        "item_noun": "glycerol stock", "item_noun_plural": "glycerol stocks",
+        "blurb": "Bacteria carrying each plasmid, frozen in glycerol: the plasmid, strain, colony, how it was checked, "
+                 "and where each tube sits in the −80 °C boxes.",
+        "features": ["storage", "sharing"],
+        "category_label": "Strain",
+        "categories": ["DH5α", "Stbl3", "TOP10", "DH10B", "XL1-Blue", "NEB Stable", "ccdB Survival", "BL21(DE3)", "other"],
+        "statuses": ["in stock", "low", "used up", "discarded"],
+        "fields": [
+            {"key": "plasmid", "label": "Plasmid", "type": "plasmid", "icon": "plasmid", "width": 128},
+            {"key": "colony", "label": "Colony / clone", "type": "text", "icon": "tag", "width": 92},
+            {"key": "resistance", "label": "Resistance", "type": "text", "icon": "resistance", "width": 92},
+            {"key": "verified", "label": "Checked by", "type": "select",
+             "options": ["not checked", "digest", "colony PCR", "Sanger", "whole plasmid"], "icon": "success", "width": 104},
+            {"key": "frozen_on", "label": "Frozen", "type": "date", "icon": "calendar", "width": 112},
+            {"key": "glycerol", "label": "Glycerol %", "type": "number", "icon": "droplet", "width": 76, "in_table": False},
+        ],
+    },
     "cell_lines": {
         "label": "Cell lines",
         "icon": "petri",

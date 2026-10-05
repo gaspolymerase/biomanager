@@ -398,5 +398,18 @@
   "field type::A plasmid": "质粒",
   "inventory::Target": "靶标",
   "Copy for ordering": "复制以订购",
-  "Export for ordering": "导出订购表"
+  "Export for ordering": "导出订购表",
+  "Glycerol stocks": "甘油菌",
+  "inventory::glycerol stock": "甘油菌",
+  "inventory::glycerol stocks": "甘油菌",
+  "Bacteria carrying each plasmid, frozen in glycerol: the plasmid, strain, colony, how it was checked, and where each tube sits in the −80 °C boxes.": "带有各个质粒的细菌甘油冻存：质粒、菌株、克隆、验证方式，以及每管在 −80 °C 冻存盒中的位置。",
+  "inventory::Strain": "菌株",
+  "Colony / clone": "单克隆 / 克隆号",
+  "Checked by": "验证方式",
+  "not checked": "未验证",
+  "digest": "酶切",
+  "colony PCR": "菌落 PCR",
+  "Sanger": "Sanger 测序",
+  "whole plasmid": "全质粒测序",
+  "Glycerol %": "甘油 %"
 }

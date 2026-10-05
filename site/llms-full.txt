@@ -783,7 +783,7 @@ Plasmid records with their sequence and map, and the box each tube is in.
 
 - **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
-- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists the viruses made from the plasmid ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
 
 - A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
 
@@ -801,7 +801,7 @@ Source: https://biomanager.org/guide/plasmids
 
 ## Samples, orders, reagents, antibodies, viruses
 
-Samples, orders, reagents, antibodies, viruses, primers and cell lines.
+Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
 
 One engine, eight starting points, each with its own columns and statuses:
 
@@ -812,6 +812,7 @@ One engine, eight starting points, each with its own columns and statuses:
 | Antibodies | Host, clonality, clone, conjugate, reactivity, applications, dilution, isotype, RRID, and where each vial is. |
 | Viruses | AAV, lentivirus, rabies and other vectors: serotype, the plasmid it was made from (**Made from**), promoter, payload, titer, biosafety level, the date made, and each aliquot's place in a −80 °C box. In stock, low, used up, discarded. |
 | Primers & oligos | Sequence (5′→3′), direction, target, its pair, stock µM and modification. *Length*, *GC %* and *Tm* are worked out from the sequence (nearest neighbour, 50 mM Na⁺, 250 nM). **Add primer pair** makes *name*-F and *name*-R at once, each naming the other, side by side in a box. A primer drawn on a plasmid's map comes here by itself, with the plasmid in its **Plasmid** column. Tick primers, then **Copy for ordering** or **Export for ordering** for the supplier. To order, ordered, in stock, low, used up, discarded. |
+| Glycerol stocks | Bacteria carrying a plasmid, frozen in glycerol: the plasmid (**Plasmid**), strain, colony, resistance, how it was checked (digest, colony PCR, Sanger, whole plasmid), the date frozen, and its place in a −80 °C box. The plasmid's **Storage** tab lists its glycerol stocks and the box each is in. In stock, low, used up, discarded. |
 | Cell lines | A frozen vial of each line or clone: species, parent, passage, freeze date, cells per vial, medium, selection, mycoplasma result and date, and its place in the LN₂ boxes. In stock, thawed, used up, discarded. |
 | Custom list | Whatever you define. |
 
