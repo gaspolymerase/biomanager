@@ -1503,6 +1503,27 @@ teal in them).
   with ⌘-click, it is just that link. By day every band is white, parted by
   hairlines; on a dark page the header's glass turns dark over the stage and
   the cards (`.on-dark`, from `site.js`).
+- **The AI assistants card** (`.nc-full.ai-card`, first under Features, the
+  whole row): three small panes of glass (`.mg`), joined by thin arrows
+  with Approve as a gate on the last: what you said (a prompt with its
+  send button), one proposal, and your records (three glass rows). The
+  glass is after Apple's Liquid Glass: clear and barely blurred, no grain,
+  its light in the rim (a gradient border by mask, bright top left and
+  bottom right) and a sheen across the top, over a soft glow of the
+  card's colours. All HTML and CSS: beside the words on a wide screen,
+  under them on a tablet, down the card on a phone. The send button
+  presses, a dot walks the path, Approve lights as it passes and the first
+  record row takes the change (CSS keyframes; still and lit with reduced
+  motion). Under it its clip plays by itself while on screen, with no window to open: a
+  `video[data-clip-src]`, which `site.js` loads and plays as the guide's
+  clips. `data-clip-still` makes it a moving picture rather than a player:
+  it loops with no controls and clicks pass through to the card's link;
+  asked for less motion, or not allowed to play, it stays on its poster.
+  The clip, `assistant.*`, is made by `scripts/assistant-clip.py`: the
+  assistant's window is drawn in a page, BioManager is a fresh demo lab
+  where a token proposes and a real click approves, and each frame is a
+  screenshot at twice the size with the zoom done by the browser, so words
+  stay sharp.
 - **The opening** (`.hero-glass`) is a band the height of the screen, light
   or dark with the page. Behind the headline is a double helix of frosted
   glass, worked out as a real helix in 3D: each backbone is wider and brighter
