@@ -236,7 +236,7 @@ document.documentElement.classList.add('js');
   var cards = document.querySelectorAll('.nc[data-clip]');
   if (!cards.length || typeof HTMLDialogElement !== 'function') return;
   var zh = document.documentElement.lang.indexOf('zh') === 0;
-  var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css$/, '') + 'assets/clips/';
+  var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css(\?.*)?$/, '') + 'assets/clips/';
   var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
   var dialog = document.createElement('dialog');
   dialog.className = 'clip-dialog';

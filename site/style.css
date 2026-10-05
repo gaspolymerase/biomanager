@@ -1158,3 +1158,108 @@ kbd {
 .search-dialog .pagefind-ui__search-clear:hover { color: var(--fg); }
 .search-dialog .pagefind-ui__result { padding: 14px 4px; }
 .search-dialog .pagefind-ui__result-title { font-weight: 600; }
+
+/* ------------------------------------------------------------ the AI assistants card */
+/* The whole row: words on the left, and on the right the idea drawn as an
+   exploded stack of liquid glass, seen from above at the isometric angle
+   with no perspective, its parts named like a technical drawing. From the
+   bottom: your lab (a dashed outline), its records (tinted glass), the one
+   change the assistant proposes (bright glass, lifted out of the list), and
+   the frame you work in: what you said along the top, Approve along the
+   bottom. Every size is in cqw, so the drawing scales with the card. */
+.nc-full { min-height: 0; }
+@media (min-width: 680px) {
+  .nc-full { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr); align-items: center; }
+}
+.nc-full .nc-copy { padding-bottom: 26px; }
+.iso { position: relative; container-type: inline-size; aspect-ratio: 16 / 10.5; }
+.iso-stage {
+  --z-base: -10cqw; --z-list: 0cqw; --z-pick: 6cqw; --z-frame: 16cqw;
+  position: absolute; left: 24cqw; top: 19.6cqw; width: 52cqw; height: 30cqw;
+  transform: rotateX(54.74deg) rotateZ(45deg); transform-style: preserve-3d;
+}
+.iso-stage > div { position: absolute; inset: 0; border-radius: 3cqw; transition: transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s; }
+/* liquid glass: a clear pane that bends a little light, bright where the
+   light catches its rim, with a slab's edge just under it */
+.iso-stage .glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 40%, rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 1.5px 1.5px 0 rgba(255, 255, 255, 0.5), inset -1px -1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(5px) saturate(1.8); backdrop-filter: blur(5px) saturate(1.8);
+}
+.iso-stage .edge { border: 1px solid rgba(150, 175, 230, 0.3); background: rgba(30, 50, 110, 0.12); }
+.iso-stage .iso-base { transform: translateZ(var(--z-base)); border: 1.5px dashed rgba(255, 255, 255, 0.22); }
+.iso-stage .iso-base.edge { transform: translateZ(calc(var(--z-base) - 1.6cqw)); background: none; border-color: rgba(255, 255, 255, 0.1); }
+.iso-stage .iso-list { transform: translateZ(var(--z-list)); }
+.iso-stage .iso-list.glass {
+  background: linear-gradient(135deg, rgba(36, 70, 190, 0.5), rgba(14, 30, 95, 0.55) 55%, rgba(30, 60, 170, 0.45));
+  border-color: rgba(110, 150, 255, 0.6);
+}
+.iso-stage .iso-list.edge { transform: translateZ(calc(var(--z-list) - 0.9cqw)); border-color: rgba(90, 130, 255, 0.45); background: rgba(20, 40, 130, 0.5); }
+.iso-rows { position: absolute; inset: 8.5cqw 3.4cqw 7cqw; display: grid; align-content: space-between; }
+.iso-rows > span, .iso-pick, .iso-bar { display: flex; gap: 2cqw; align-items: center; }
+.iso-stage i { display: block; flex: none; height: 1.5cqw; border-radius: 1cqw; border: 1px solid rgba(140, 175, 255, 0.55); }
+.iso-stage i:first-child:not(.go) { width: 2.4cqw; height: 2cqw; border-radius: 0.7cqw; }
+.iso-stage .iso-pick { inset: 6.4cqw 2.4cqw auto; height: 5.4cqw; padding: 0 2.2cqw; border-radius: 1.6cqw; transform: translateZ(var(--z-pick)); }
+.iso-stage .iso-pick.glass {
+  background: linear-gradient(135deg, rgba(185, 210, 255, 0.95), rgba(120, 160, 255, 0.88) 55%, rgba(150, 185, 255, 0.92));
+  border-color: rgba(240, 246, 255, 0.95);
+  box-shadow: inset 1.5px 1.5px 0 #fff, inset -1px -1px 0 rgba(60, 90, 200, 0.4), 0 0 5cqw rgba(110, 160, 255, 0.5);
+}
+.iso-stage .iso-pick.edge { transform: translateZ(calc(var(--z-pick) - 0.8cqw)); background: rgba(70, 110, 235, 0.9); border-color: rgba(70, 110, 235, 0.9); }
+.iso-stage .iso-pick i { border-color: rgba(20, 45, 140, 0.5); }
+.iso-stage .iso-frame { transform: translateZ(var(--z-frame)); }
+.iso-stage .iso-frame.rim { border: 1px solid rgba(255, 255, 255, 0.34); box-shadow: inset 1.5px 1.5px 0 rgba(255, 255, 255, 0.35); }
+.iso-stage .iso-frame.edge { transform: translateZ(calc(var(--z-frame) - 0.9cqw)); background: none; border-color: rgba(255, 255, 255, 0.14); }
+.iso-bar { position: absolute; left: 0; right: 0; padding: 0 2.6cqw; }
+.iso-bar.top { top: 0; height: 5.6cqw; border-radius: 3cqw 3cqw 0 0; }
+.iso-bar.bottom { bottom: 0; height: 5cqw; border-radius: 0 0 3cqw 3cqw; }
+.iso-stage .iso-bar.glass { border: 0; }
+.iso-stage .iso-bar.top.glass { border-bottom: 1px solid rgba(255, 255, 255, 0.28); }
+.iso-stage .iso-bar.bottom.glass { border-top: 1px solid rgba(255, 255, 255, 0.28); box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.12); }
+.iso-stage .iso-bar i { border-color: rgba(255, 255, 255, 0.45); }
+.iso-stage .iso-bar i.go { width: 7cqw; height: 2cqw; background: rgba(160, 195, 255, 0.95); border-color: #fff; box-shadow: 0 0 2cqw rgba(140, 180, 255, 0.7); }
+/* where each name's leader line meets the drawing: measured in a browser, then
+   written into the SVG and the names' places in the page */
+.iso .pt { position: absolute; width: 0; height: 0; }
+
+/* the names, flat over the drawing, each with its leader line */
+.iso-tag {
+  position: absolute; z-index: 2; margin: 0; padding: 0.6cqw 1.1cqw; border-radius: 0.6cqw;
+  font: 500 clamp(9px, 1.7cqw, 13px)/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+  color: rgba(225, 233, 245, 0.75); background: rgba(10, 14, 26, 0.6);
+}
+.iso-tag.up { transform: translate(-50%, -100%); }
+.iso-tag.down { transform: translate(-50%, 0); }
+.iso-lines { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
+.iso-lines path { fill: none; stroke: rgba(225, 233, 245, 0.4); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.iso-lines circle { fill: rgba(225, 233, 245, 0.85); }
+
+/* As it appears, the stack opens out from flat, then the names come
+   (site.js adds neon-draw, and drawn on sight; not with reduced motion). */
+.ai-card.neon-draw:not(.drawn) .iso-stage > div:not(.iso-base) { transform: translateZ(0); }
+.ai-card .iso-tag, .ai-card .iso-lines { transition: opacity 0.6s ease 1.05s; }
+.ai-card.neon-draw:not(.drawn) .iso-tag, .ai-card.neon-draw:not(.drawn) .iso-lines { opacity: 0; }
+.ai-card:hover .iso-stage { --z-pick: 7.5cqw; }
+
+@media (prefers-color-scheme: light) {
+  .iso-stage .glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0.6));
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 1.5px 1.5px 0 #fff, 0 0 0 1px rgba(40, 70, 160, 0.14);
+  }
+  .iso-stage .edge { border-color: rgba(40, 70, 160, 0.2); background: rgba(40, 70, 160, 0.06); }
+  .iso-stage .iso-base { border-color: rgba(16, 40, 90, 0.3); }
+  .iso-stage .iso-base.edge { border-color: rgba(16, 40, 90, 0.14); background: none; }
+  .iso-stage .iso-list.glass { background: linear-gradient(135deg, rgba(120, 160, 255, 0.4), rgba(80, 125, 245, 0.26) 55%, rgba(110, 150, 255, 0.36)); border-color: rgba(70, 115, 240, 0.5); }
+  .iso-stage .iso-list.edge { background: rgba(70, 115, 240, 0.3); border-color: rgba(70, 115, 240, 0.35); }
+  .iso-stage i { border-color: rgba(40, 80, 200, 0.45); }
+  .iso-stage .iso-frame.rim { border-color: rgba(30, 50, 110, 0.28); box-shadow: inset 1.5px 1.5px 0 #fff; }
+  .iso-stage .iso-frame.edge { border-color: rgba(30, 50, 110, 0.12); }
+  .iso-stage .iso-bar.top.glass, .iso-stage .iso-bar.bottom.glass { border-color: rgba(30, 50, 110, 0.14); }
+  .iso-stage .iso-bar i { border-color: rgba(30, 50, 110, 0.35); }
+  .iso-stage .iso-bar i.go { background: #6f9bff; border-color: #fff; }
+  .iso-tag { color: #2b3550; background: rgba(255, 255, 255, 0.75); }
+  .iso-lines path { stroke: rgba(30, 45, 80, 0.38); }
+  .iso-lines circle { fill: rgba(30, 45, 80, 0.75); }
+}
