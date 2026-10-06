@@ -44,7 +44,10 @@ CODE_LENGTH = 16                     # about 78 bits: guessing is hopeless
 OPEN_PATHS = ("/guest", "/healthz", "/logout", security.CSP_REPORT_PATH)
 # A calendar feed link carries its own secret (app/lab_calendar.py), so a
 # phone or Google Calendar can fetch it from outside the lab's network.
-OPEN_PREFIXES = ("/static/", "/calendar/feed/")
+OPEN_PREFIXES = ("/static/", "/calendar/feed/",
+                 # Assistant apps (app/oauth.py, app/mcp_http.py): each answers only with a
+                 # token, a connection code, or public metadata.
+                 "/api/v1/", "/oauth/", "/.well-known/oauth-")
 
 # Wrong codes from anywhere, counted together: behind the proxies every
 # internet request can look as if it came from the same address.

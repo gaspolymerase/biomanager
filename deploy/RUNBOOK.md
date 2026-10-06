@@ -277,6 +277,15 @@ a few days. It needs Tailscale (`TLS=tailscale`).
 
 What a guest adds stays, under their `guest-…` account.
 
+Internet access also lets people connect claude.ai, the Claude apps or
+ChatGPT to BioManager as a custom connector, at
+`https://DOMAIN:8443/api/v1/mcp`: those apps' servers call it from the
+internet. A connector signs in with a connection code each person makes on
+the lab network (**Settings → API tokens → Connect an AI assistant**), and
+can only read and propose changes that person approves. Turning internet
+access off disconnects them until it is on again; Claude Code, Cursor and
+the other apps that run on a lab computer don't need it.
+
 ## Rotating secrets
 
 | Secret | How | What people notice |

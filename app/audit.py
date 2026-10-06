@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 from contextlib import contextmanager
 from datetime import date, datetime
+from types import SimpleNamespace
 
 from sqlalchemy import event, inspect as sa_inspect
 from sqlalchemy.orm import Session
@@ -161,14 +162,22 @@ def batch(session, action: str, description: str, target_table: str = ""):
 
     The BatchRecord is flushed immediately so the audit rows written during
     the block can point at it, and the record count is filled in on the way
-    out. Entering this twice would silently reparent the inner changes, so
-    a nested call is left alone rather than overwriting the outer batch.
+    out. A nested call joins the outer batch rather than starting its own.
     """
     from flask import g, has_request_context
 
     outer = None
     if has_request_context():
         outer = g.get("audit_batch_id")
+    if outer is not None:
+        # Inside another batch (an approved proposal runs many pages as one,
+        # app/proposals.py): its changes are the outer batch's, so the page
+        # gets a stand-in it can set a count or description on, and no
+        # second, empty batch is written.
+        yield SimpleNamespace(id=outer, action=action, description=description,
+                              target_table=target_table, record_count=0)
+        session.flush()
+        return
 
     row = BatchRecord(
         action=action,
@@ -179,7 +188,7 @@ def batch(session, action: str, description: str, target_table: str = ""):
     session.add(row)
     session.flush()
 
-    if has_request_context() and outer is None:
+    if has_request_context():
         g.audit_batch_id = row.id
         g.audit_batch = description
     try:
@@ -192,7 +201,7 @@ def batch(session, action: str, description: str, target_table: str = ""):
         # no batch attached — the changes would be recorded but orphaned.
         session.flush()
     finally:
-        if has_request_context() and outer is None:
+        if has_request_context():
             g.audit_batch_id = None
             g.audit_batch = ""
 

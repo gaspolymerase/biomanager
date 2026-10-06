@@ -1267,7 +1267,7 @@ def home_due(session, horizon_days: int = 2) -> list[dict]:
             session.flush()
         for item in due_items(session, module, horizon_days=horizon_days):
             items.append({
-                "module": mv.label, "key": mv.key, "icon": item["icon"],
+                "id": item["id"], "module": mv.label, "key": mv.key, "icon": item["icon"],
                 "title": f"{item['label']} · {item['subject_label']}",
                 "due": item["due_on"], "overdue": item["overdue"], "is_today": item["days"] == 0,
             })

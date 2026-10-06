@@ -58,6 +58,10 @@ export class HttpSyncProvider {
     this.pushing = null;
     this.timer = null;
     this.base = `/notebook/api/pages/${pageId}/sync`;
+    // Lines the server handed this editor to add (an assistant's note on a
+    // page that is open live): the editor adds them once it is ready.
+    this.inserts = [];
+    this.onInserts = null;
 
     this._onDocUpdate = (update, origin) => {
       if (origin === this) return;
@@ -127,6 +131,16 @@ export class HttpSyncProvider {
     this.awareness.destroy();
   }
 
+  // Hand the waiting lines to the editor, then tell the server they are in.
+  drainInserts() {
+    if (!this.onInserts || !this.inserts.length || this.stopped) return;
+    const batch = this.inserts;
+    this.inserts = [];
+    this.onInserts(batch);
+    this._post(`/notebook/api/pages/${this.pageId}/inserts/done`, { client: this.client, ids: batch.map((i) => i.id) })
+      .catch(() => {});
+  }
+
   hasUnsent() {
     return this.pending.length > 0 || !!this.pushing;
   }
@@ -192,6 +206,11 @@ export class HttpSyncProvider {
       }
       this.last = data.last;
       more = data.more;
+      if (data.inserts && data.inserts.length) {
+        const known = new Set(this.inserts.map((i) => i.id));
+        this.inserts.push(...data.inserts.filter((i) => !known.has(i.id)));
+        this.drainInserts();
+      }
       this._applyPeers(data.peers || []);
       this.onMeta({ title: data.title, updated_at: data.updated_at, role: data.role });
     }

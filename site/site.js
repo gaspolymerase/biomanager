@@ -236,7 +236,7 @@ document.documentElement.classList.add('js');
   var cards = document.querySelectorAll('.nc[data-clip]');
   if (!cards.length || typeof HTMLDialogElement !== 'function') return;
   var zh = document.documentElement.lang.indexOf('zh') === 0;
-  var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css$/, '') + 'assets/clips/';
+  var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css(\?.*)?$/, '') + 'assets/clips/';
   var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
   var dialog = document.createElement('dialog');
   dialog.className = 'clip-dialog';
@@ -325,8 +325,12 @@ document.documentElement.classList.add('js');
       entries.forEach(function (e) {
         var v = e.target;
         if (e.isIntersecting) {
+          // data-clip-still: a picture that moves, never a player; asked for
+          // less motion (or not allowed to play), it stays its still frame.
+          var still = 'clipStill' in v.dataset;
+          if (calm && still) return;
           if (!v.src) v.src = v.dataset.clipSrc + (webm ? '.webm' : '.mp4');
-          if (calm) { v.controls = true; } else { var p = v.play(); if (p && p.catch) p.catch(function () { v.controls = true; }); }
+          if (calm) { v.controls = true; } else { var p = v.play(); if (p && p.catch) p.catch(function () { if (!still) v.controls = true; }); }
         } else { v.pause(); }
       });
     }, { threshold: 0.4 });

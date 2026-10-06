@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from migrations.helpers import create_index, create_table
 
-revision = "0020_plasmid_files"
-down_revision = "0019_feature_library"
+revision = "0022_plasmid_files"
+down_revision = "0021_feature_library"
 branch_labels = None
 depends_on = None
 

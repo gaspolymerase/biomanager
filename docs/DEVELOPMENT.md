@@ -487,7 +487,7 @@ crossing the origin keeps `start > end`.
   after every edit), the hand edit, a file, and Clear. The editor's save
   refuses anything but IUPAC letters (`is_iupac`) and an empty sequence.
 - **Versions** (`app/plasmid_versions.py`, `plasmid_sequence_versions`,
-  revision 0017): each of those records the state it leaves (`record`, with
+  revision 0019): each of those records the state it leaves (`record`, with
   `how`: upload, editor, hand, clear, restore); a sequence from before
   version history is kept as `baseline` before its first change
   (`before_change`). One person's map edits within `EDITS_JOIN` (10 min)
@@ -497,7 +497,7 @@ crossing the origin keeps `start > end`.
   plasmid's row id with no foreign key, so undoing a plasmid's delete
   brings them back.
 - **Made from** (`app/plasmid_lineage.py`, `plasmid_parents`, revision
-  0018): a child's parents, each a plasmid row (`parent_row_id`) or a
+  0020): a child's parents, each a plasmid row (`parent_row_id`) or a
   label from outside the lab, with a `role` (backbone, insert, template,
   donor, other), a `method` and `details_json` (what an assembly used:
   enzymes, coordinates, primer ids). `add_parent` refuses a plasmid as its
@@ -520,7 +520,7 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
-- **Files** (`plasmid_files`, revision 0020): what belongs with a plasmid
+- **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
   `services.save_uploaded_file` into the uploads folder, with `kind` from
   the name (`_file_kind`: trace, image, document). Anyone who may edit the
@@ -535,7 +535,7 @@ crossing the origin keeps `start > end`.
   those sheets (only where one of them is the page you are on). The rail
   marks Plasmids active on all of them.
 - **Feature library** (`app/feature_library.py`, `feature_library`,
-  revision 0019): named elements by sequence (as the feature reads 5′→3′),
+  revision 0021): named elements by sequence (as the feature reads 5′→3′),
   one per `seq_hash`, sorted into `CATEGORIES` by `category_of` (name and
   GenBank type; viral elements by name). Entries come only from the lab's
   own maps (`add_from_plasmid`, Add to library; `collect`, an admin's
@@ -569,7 +569,7 @@ crossing the origin keeps `start > end`.
   into an admin account is not a way to run code on the machine. The
   timeout (45 s) sits under the 60 s a lab server allows a request.
 - **The common-features pack** (`app/feature_pack.py`, with revision
-  0021's `feature_library.source_name`): GenoLIB (Adames et al., *Nucleic
+  0023's `feature_library.source_name`): GenoLIB (Adames et al., *Nucleic
   Acids Res* 2015;43(10):4823-4832, doi:10.1093/nar/gkv272, CC BY 4.0),
   about 1,900 elements with their DNA. The app carries no copy: an
   admin's **Add the common-features pack** downloads the article's SBOL
@@ -988,8 +988,8 @@ from `ENDPOINTS`, so a new endpoint goes there too.
 
 - **Tokens** (`api_tokens`): made under Settings → API tokens (`api/_card.html`),
   `bmt_` and 40 random characters, shown once (`api/token.html`); only the
-  SHA-256 and the first ten characters (`hint`) are kept. `scope` is `read` or
-  `write`; `expires_at` 30, 90, 365 days or never. Members make them only
+  SHA-256 and the first ten characters (`hint`) are kept. `scope` is `read`,
+  `write` or `propose` (below); `expires_at` 30, 90, 365 days or never. Members make them only
   while Lab setup's `members_api_tokens` is on (default on); guests never.
   Admins see and revoke everyone's.
 - **Signing in**: `app.load_current_user` hands `/api/v1…` to
@@ -999,7 +999,8 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   skips them, and `api._no_cookie` strips any Set-Cookie. A disabled
   account, a revoked or expired token, or members' tokens switched off: 401.
   `g.audit_batch = "API: <label>"` marks the change history.
-- `_gate`: 401 without a token, 403 when a read token tries a change, 429
+- `_gate`: 401 without a token (with `WWW-Authenticate` pointing at the
+  OAuth resource metadata, below), 403 when a read token tries a change, 429
   past `PER_MINUTE` (600) per token per worker (`_Rate`, in memory).
 - **Lists** page by row id: `?limit` (100, at most 1000) and `?after`;
   the reply's `next` is the URL of the following page. Filters are in SQL.
@@ -1011,6 +1012,183 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`can_edit_mouse`, `_can_edit`, `can_edit`,
   `access.can_edit_experiment`). A switched-off built-in database is a 404.
+
+- **For assistants** (`app/lookup.py`): `/resolve?q=` finds the records a
+  phrase means across every database the person can open ("cage 88" looks
+  only at cages; a mouse by its number, a vial by its prefix and number),
+  each with a reference `{"kind", "id"}` (the kinds are `actions.KINDS`);
+  `/vocabulary` is the lab's own words; `/due` is Home's agenda
+  (`home_layouts.build_agenda`), whose items carry `ref` and `propose`, the
+  change that records each done; `/actions` is `actions.catalogue()`.
+
+## Proposed changes: running the pages on someone's behalf
+
+What an assistant proposes is a list of things a person does on the pages.
+Rather than a second copy of each page's rules, every change is sent to the
+page itself.
+
+- `app/contained.py`: `transaction()` opens one connection and transaction;
+  while it is set (`db.JOINED`, a ContextVar), every `SessionLocal()` is a
+  `db.LabSession` joined to it with `join_transaction_mode="create_savepoint"`,
+  so a page's `commit()` releases a savepoint and its `rollback()` undoes only
+  its own part. SQLite gets its own engine (`db.contained_engine`) that
+  leaves transactions to SQLAlchemy and sends `BEGIN` itself, without which
+  savepoints don't nest. `run(app, username, method, path, data|json_body)`
+  sends one request through `app.full_dispatch_request()` as that person
+  (`contained.acting_user()`, read by `load_current_user`; for `/api/v1`
+  it also stands in a write token, `contained.API_TOKEN`, with no rate
+  limit), so every before_request check and the view's own permissions
+  apply, and returns what the page said: its flashed messages (or its
+  JSON) and whether it refused (a 4xx/5xx, an error flash, `ok: false`, a
+  redirect to sign in). Leaving the block without `commit()` rolls it all
+  back: a preview.
+- `app/actions.py`: the catalogue, one `Action` per thing (`litter_born`,
+  `experiment_step_done`, `notebook_note`,
+  `wean`, `tank_new`, `stock_event`, `org_animal_change`…): its target kind,
+  its fields (which also give the JSON Schema for the MCP server), a plain
+  summary line, and `build`, which turns checked values into the `Call`s the
+  page would send. `find()` turns a reference, or what the lab writes on a
+  record (cage ID, `#14`, `FV12`), into the row, refusing one that could be
+  several. `run(app, username, changes, apply=False)` runs a list in order
+  inside one `contained.transaction()`, each change in its own savepoint
+  (a failed one is undone before the next, so a preview reports each
+  change's own problems), and collects the change-history rows each wrote
+  (`records`, the before → after). With `apply=True` it first writes one
+  `BatchRecord` ("mixed") and runs every page inside it: `audit.batch`
+  called while another batch is open joins it (yielding a stand-in, no
+  second row), so Batch history undoes the whole proposal as one; anything
+  failing keeps nothing.
+
+### Proposals (`app/proposals.py`)
+
+- `proposals` and `proposal_changes` (revision `0017_proposals`): a proposal
+  belongs to the person whose token sent it (`owner_username`), with its
+  `source` ("Claude", or the token's name), the assistant's `summary`, a
+  `status` (pending, approved, discarded, superseded, expired, invalid),
+  `expires_at` (14 days), `replaces_id`, `batch_id_fk` once approved, and
+  `audit_mark`, the change history's newest id when it was previewed. Each
+  change keeps the request as sent, its summary, errors, warnings and the
+  change-history rows the preview wrote (`records_json`). Both tables are
+  left out of members' lab copies (`lab_copy.ADMIN_ONLY`).
+- `create()` previews with `actions.run` in the owner's language
+  (`i18n.language_for`; `contained.run(lang=…)` makes the pages answer in
+  it too), stores the result (pending, or invalid with the reasons), marks
+  `replaces` superseded and notifies the owner (`notify.send`, linking to
+  `/proposals`). It commits the session's read before the preview starts,
+  so SQLite's lock is not held across it.
+- `approve()` refuses unless pending; refuses when a record the preview
+  changed (not one it made) has a change-history row after `audit_mark`
+  (`changed_since`, naming it); otherwise runs `actions.run(apply=True)`
+  with `label()` / `description()` ("Proposal #12: … (via Claude)") and
+  keeps it only if every change went through. `expire_old()` is applied
+  lazily wherever proposals are read.
+- API (`app/api.py`): scope `propose` (`SCOPES`) may read and call only
+  `PROPOSING` (create, discard); a write token may propose too. There is
+  no approve endpoint. `GET /proposals`, `GET /proposals/<id>` (with each
+  change's request and records) are the owner's only.
+- The page (`proposals.bp`, `templates/proposals.html`): pending proposals
+  with their changes grouped by `AREAS`, warnings first, **Approve** /
+  **Discard**, and **Show each change** (the stored records); recent
+  decisions below. The account menu shows **Proposed changes**, with the
+  pending count, once someone has any (`inject_user`).
+
+### Notes into the notebook (`lab_notebook.add_note`)
+
+`POST /notebook/api/notes` {text, time, via, page_id} adds `- **HH:MM** text`
+to the end of a page's Log section (made if missing), on today's daily log
+(`_daily_page`, shared with `/today`) unless a page is named. A page with
+no live-editing updates in its current generation has nothing in Yjs to
+lose, so its Markdown is changed directly (`append_log_line`, a version
+recorded). One that has them gets a `notebook_pending_inserts` row
+instead: `sync_pull` hands unclaimed rows (or rows claimed more than
+`CLAIM_FOR` ago) to the editor that asks, which adds each with the Log
+button's `appendLogLine` (so it travels through Yjs like typing) and posts
+`/inserts/done`. Notebook rows aren't in the change history, so undoing an
+approved proposal doesn't take a note back out.
+
+### The tools (`app/assistant_tools.py`)
+
+What an assistant gets, standard library only so both servers below share
+it: `INSTRUCTIONS` (resolve every record, ask rather than guess, send one
+proposal, give the review link), `PROMPTS`, and `TOOLS`, each a
+description, an input JSON Schema and a function over `Api` (a small
+urllib client of `/api/v1`): `lab_overview` → `/me` and `/vocabulary`,
+`resolve`, `get`/`list` limited to the API's read paths (`READABLE`),
+`whats_due`, `list_actions`, `propose_changes` → `POST /proposals`,
+`proposal_status`, `discard_proposal`. `propose_changes`' description is
+built from the lab's own `/actions` (`description(api, name)`).
+`call_tool()` turns an `ApiError` or bad arguments into `{"error": …}` for
+the assistant to read.
+
+### The local MCP server (`mcp/`)
+
+`mcp/biomanager_mcp.py` (the `mcp` SDK, version 2: `MCPServer`, stdio) is
+started as a command by an assistant app that can't use an address
+(Claude Desktop on the lab network); it is run from this repository, not
+packaged (`mcp/requirements.txt`, `mcp/README.md`). `build_server()`
+registers `TOOLS` and `PROMPTS`; it calls `/api/v1` with `BIOMANAGER_URL`
+and `BIOMANAGER_TOKEN` and signs proposals `BIOMANAGER_ASSISTANT`.
+`tests/test_mcp.py` runs the tools against the test app without the SDK.
+
+### The MCP endpoint (`app/mcp_http.py`)
+
+`POST /api/v1/mcp`: MCP's streamable HTTP, kept to what the clients need.
+One JSON-RPC message (or a batch) per POST, answered with JSON;
+notifications get 202; no session and no event stream (`GET` is 405,
+from `api.unknown`). `initialize` echoes a version in `PROTOCOL_VERSIONS`
+or offers the newest; `tools/list` adds titles and read-only hints;
+`tools/call` returns the result as text and `structuredContent`. It sits
+in `/api/v1`, so `_gate` checks the token and the rate; any scope may call
+it (`api.mcp` is in `PROPOSING`), and each tool runs through
+`InProcessApi`, the app's test client with the caller's own token, so a
+tool can do nothing the API wouldn't for that token. Proposals are signed
+with the token's label (the OAuth client's name, "Claude").
+
+### Connectors: OAuth (`app/oauth.py`)
+
+claude.ai, the Claude apps and ChatGPT add `/api/v1/mcp` as a custom
+connector and sign in with OAuth 2.1; their servers make the calls, so
+this needs the lab on the internet (`BIOMANAGER_PUBLIC_URL`, set by
+`internet-access.sh`). Claude Code can use it too, with a loopback
+redirect.
+
+- Discovery: `/.well-known/oauth-protected-resource[/api/v1/mcp]` (RFC 9728;
+  `resource` is `issuer()/api/v1/mcp`) and
+  `/.well-known/oauth-authorization-server` (RFC 8414). The issuer is
+  `request.url_root`, so from the internet it is the public address
+  (Caddy's internet site sets `Host`), from inside the lab's own.
+- `POST /oauth/register` (RFC 7591, JSON): https or loopback redirects;
+  public clients (`none`) or a `bms_` secret (post or Basic). Clients
+  unused for `UNUSED_CLIENT_FOR` go, unless a grant made with one can
+  still be refreshed.
+- `/oauth/authorize`: an unknown client or redirect is an error page (never
+  a redirect); then `response_type=code`, PKCE `S256` and `resource` are
+  required. Loopback redirects match on any port (`redirect_matches`).
+  Signed in: a consent page naming the client and where it sends you back.
+  From the internet nobody is signed in (the lab never shows its sign-in
+  form there), so the page takes a **connection code** instead
+  (`oauth_link_codes`: made on Connect an AI assistant, hashed, once, 10
+  minutes, wrong guesses throttled by `link_throttle`). The person must be
+  allowed to make tokens (`api.may_make_tokens`). Every answer carries
+  `iss` (RFC 9207, which ChatGPT wants).
+- `POST /oauth/token` (form-encoded): an `authorization_code` (`oauth_codes`,
+  hashed, once, 5 minutes, PKCE and redirect checked) gives an access
+  token that is an `api_tokens` row (scope `propose`, label the client's
+  name, an hour) and a `bmr_` refresh token (`oauth_grants`, 90 days). A
+  refresh rotates both into the same `api_tokens` row, so Settings lists
+  one row per connection; revoking it ends the connection
+  (`invalid_grant`). Errors are RFC 6749's JSON.
+- The internet gate (`guests.OPEN_PREFIXES`) lets `/api/v1/`, `/oauth/`
+  and `/.well-known/oauth-` through without a session: each answers only to
+  a token, a code or with public metadata. `/oauth/token` and
+  `/oauth/register` skip the cross-site check (no cookie is involved).
+- **Settings → API tokens → Connect an AI assistant**
+  (`oauth.connect_page`, `oauth/connect.html`): the connector address and
+  **Get a connection code** when the lab is on the internet, and **Make a
+  token** (scope `propose`), after which `api/token.html` shows the Claude
+  Code command, the address-and-header block for Cursor and Cherry Studio,
+  and the local server's setup.
+- The four tables are admin-only in a lab copy (`lab_copy.ADMIN_ONLY`).
 
 ## Feedback and the usage report
 
@@ -1463,6 +1641,27 @@ teal in them).
   with ⌘-click, it is just that link. By day every band is white, parted by
   hairlines; on a dark page the header's glass turns dark over the stage and
   the cards (`.on-dark`, from `site.js`).
+- **The AI assistants card** (`.nc-full.ai-card`, first under Features, the
+  whole row): three small panes of glass (`.mg`), joined by thin arrows
+  with Approve as a gate on the last: what you said (a prompt with its
+  send button), one proposal, and your records (three glass rows). The
+  glass is after Apple's Liquid Glass: clear and barely blurred, no grain,
+  its light in the rim (a gradient border by mask, bright top left and
+  bottom right) and a sheen across the top, over a soft glow of the
+  card's colours. All HTML and CSS: beside the words on a wide screen,
+  under them on a tablet, down the card on a phone. The send button
+  presses, a dot walks the path, Approve lights as it passes and the first
+  record row takes the change (CSS keyframes; still and lit with reduced
+  motion). Under it its clip plays by itself while on screen, with no window to open: a
+  `video[data-clip-src]`, which `site.js` loads and plays as the guide's
+  clips. `data-clip-still` makes it a moving picture rather than a player:
+  it loops with no controls and clicks pass through to the card's link;
+  asked for less motion, or not allowed to play, it stays on its poster.
+  The clip, `assistant.*`, is made by `scripts/assistant-clip.py`: the
+  assistant's window is drawn in a page, BioManager is a fresh demo lab
+  where a token proposes and a real click approves, and each frame is a
+  screenshot at twice the size with the zoom done by the browser, so words
+  stay sharp.
 - **The opening** (`.hero-glass`) is a band the height of the screen, light
   or dark with the page. Behind the headline is a double helix of frosted
   glass, worked out as a real helix in 3D: each backbone is wider and brighter

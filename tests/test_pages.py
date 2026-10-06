@@ -21,7 +21,10 @@ SKIP = {"/logout", "/calendar/google/connect", "/calendar/google/callback",
         # The desktop app's only (tests/test_server_setup.py).
         "/server-setup/"}
 # /: the welcome page before signing in (app.py hello); /guest: entering a guest code (app/guests.py).
-PUBLIC = {"/", "/login", "/register", "/healthz", "/guest", "/favicon.ico"}
+PUBLIC = {"/", "/login", "/register", "/healthz", "/guest", "/favicon.ico",
+          # OAuth metadata, which an assistant app reads before signing in (app/oauth.py)
+          "/.well-known/oauth-authorization-server", "/.well-known/oauth-protected-resource",
+          "/.well-known/oauth-protected-resource/api/v1/mcp"}
 
 
 def simple_get_routes() -> list[str]:
