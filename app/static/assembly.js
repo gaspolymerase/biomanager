@@ -61,14 +61,20 @@
     return row;
   }
 
+  /* The bases are the junction; what kind of end it is reads off them, so
+     the row is the icon and the bases, and the words are the tooltip. A
+     junction with no bases to show yet (a Gibson's, before its primers are
+     designed) has nothing else to say, so there the words stay. */
   function junctionRow(junction) {
     const row = document.createElement('li');
     row.className = 'assembly-join';
     row.dataset.ok = junction.ok ? '1' : '0';
-    const bases = junction.bases ? `<span class="bases">${escape(junction.bases)}</span>` : '';
-    const tm = junction.tm ? ` · ${escape(junction.tm)} °C` : '';
-    row.innerHTML = `${icon(junction.ok ? 'link' : 'warning')}${bases}` +
-      `<span class="words">${escape(junction.words)}${tm}</span>`;
+    row.title = junction.words;
+    const tm = junction.tm ? `<span class="words">${escape(junction.tm)} °C</span>` : '';
+    const says = junction.bases
+      ? `<span class="bases">${escape(junction.bases)}</span>${tm}`
+      : `<span class="words">${escape(junction.words)}</span>`;
+    row.innerHTML = `${icon(junction.ok ? 'link' : 'warning')}${says}`;
     return row;
   }
 
