@@ -132,9 +132,9 @@
       "day": 5,
       "clip": "assistant",
       "theme": "AI assistants: a photo of your notebook, or a sentence, becomes records you approve",
-      "title_en": "What if I'm lazy but still want it to be recorded",
+      "title_en": "Too lazy to type up your lab notebook? Same. Snap it instead.",
       "subtitle_en": "Send your notes to your AI assistant; approve the records in BioManager",
-      "title_zh": "我是个懒人，我想让信息自己整理好",
+      "title_zh": "我是个懒人，实验数据能不能自己整理自己",
       "subtitle_zh": "拍一张记录本或打一句话，AI 整理好，你点批准",
       "bullets_zh": [
         "拍照、手写、打字都行",
@@ -145,11 +145,11 @@
         "#e0e7ff",
         "#ccfbf1"
       ],
-      "x": "What if I'm lazy but still want it all recorded?\n\nSnap the page in your lab notebook, or type a sentence, and send it to your AI assistant. Connected to BioManager, it finds the cages and mice and proposes the records. You press Approve.\n\n{site}",
-      "linkedin": "What if I'm lazy but still want it to be recorded?\n\nBioManager has no AI inside it. But if you already use an assistant (Claude, ChatGPT, Cursor, Cherry Studio), you can connect it to your lab. Then tell it what you did: type a sentence, or send a photo of the page in your notebook, handwriting and all.\n\nIt looks up each cage, mouse and experiment you mention, asks when something could be more than one record, and sends one proposal. In BioManager you read it in plain words, every change before and after, and press Approve. Until you do, nothing changes, and it can never delete anything or sign a page.\n\nFree and open source: {site}",
-      "xhs_title": "我是个懒人，我想让信息自己整理好",
+      "x": "Too lazy to type up your lab notebook? Same. Snap it instead.\n\nSend the photo of the page (or just a sentence) to your AI assistant. Connected to BioManager, it finds the cages and mice and proposes the records. You press Approve.\n\n{site}",
+      "linkedin": "Too lazy to type up your lab notebook? Same. Snap it instead.\n\nBioManager has no AI inside it. But if you already use an assistant (Claude, ChatGPT, Cursor, Cherry Studio), you can connect it to your lab. Then tell it what you did: type a sentence, or send a photo of the page in your notebook, handwriting and all.\n\nIt looks up each cage, mouse and experiment you mention, asks when something could be more than one record, and sends one proposal. In BioManager you read it in plain words, every change before and after, and press Approve. Until you do, nothing changes, and it can never delete anything or sign a page.\n\nFree and open source: {site}",
+      "xhs_title": "我是个懒人，实验数据能不能自己整理自己",
       "xhs_body": "实验做完，还要一条条录进系统？\n\n现在拍一张实验记录本，或者打一句话，发给你常用的 AI 助手就行：\n📸 手写的记录本拍照，它也能读懂\n💬 或者直接说：110 号笼断奶了，6 号和 7 号称重 24.1 g、23.8 g\n🔍 它自己找到对应的笼子和小鼠，整理成一份提议\n✅ 你在 BioManager 里看一眼，点「批准」才写进去，不点什么都不会变\n🔒 它不能删东西，也不能替你签名\n🤖 Claude、ChatGPT、Cursor、Cherry Studio 都能连\n\n永久免费开源\n官网：biomanager.org",
-      "bili_title": "我是个懒人，我想让信息自己整理好：拍一张实验记录本，AI 帮你录进系统 | BioManager",
+      "bili_title": "我是个懒人，实验数据能不能自己整理自己：拍一张实验记录本，AI 帮你录进系统 | BioManager",
       "bili_desc": "拍一张实验记录本的照片，或者打一句话，发给你常用的 AI 助手（Claude、ChatGPT、Cursor、Cherry Studio）；它找到对应的笼子和小鼠，在 BioManager 里整理成一份提议，你批准后才写入。永久免费开源：{site}"
     },
     {

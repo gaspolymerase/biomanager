@@ -139,6 +139,10 @@
                 <a class="menu-item" role="menuitem"
                    href="{{ url_for('feedback.index', **({'from': request.full_path.rstrip('?')} if request.endpoint and not request.endpoint.startswith('feedback.') else {})) }}"
                    data-label="{{ _('Send feedback') }}" title="{{ _('Something went wrong, an idea or a question') }}">{{ icon('mail') }} {{ _('Send feedback') }}</a>
+                {% if current_user and not current_user.expires_at %}
+                <a class="menu-item" role="menuitem" href="{{ url_for('oauth.connect_page') }}"
+                   data-label="{{ _('Connect an AI assistant') }}" title="{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</a>
+                {% endif %}
                 <a class="menu-item" role="menuitem" href="#whats-new" data-whats-new-open
                    data-label="{{ _("What's new") }}" title="{{ _('What changed in this version') }}">{{ icon('sparkle') }} {{ _("What's new") }}</a>
               </div>

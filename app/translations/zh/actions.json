@@ -161,9 +161,20 @@
   "Your connection code, for the next 10 minutes, once:": "你的连接码，10 分钟内有效，只能用一次：",
   "Get a connection code": "获取连接码",
   "These apps reach BioManager from the internet, and this BioManager isn't on the internet. A lab server's admin can put it there (internet access, in the server's runbook); until then, use one of the ways below.": "这些应用要从互联网访问 BioManager，而这个 BioManager 不在互联网上。实验室服务器的管理员可以把它放到互联网上（见服务器手册里的互联网访问）；在此之前，请用下面的方式之一。",
-  "Claude Code, Claude Desktop, Cursor or Cherry Studio on this computer or the lab network": "这台电脑或实验室网络里的 Claude Code、Claude Desktop、Cursor 或 Cherry Studio",
-  "Make a token that may read and propose; the next page shows the setup to copy for each app.": "生成一个可以读取和提议的令牌；下一页会给出每个应用要复制的设置。",
   "This assistant app isn't registered here any more. Start connecting it again.": "这个助手应用已不再在这里注册。请重新开始连接。",
   "The address this app wants to send you back to isn't one it registered.": "这个应用要把你送回的地址，不是它注册过的地址。",
-  "That connection code isn't right, or it has run out. Make a new one under Settings → API tokens → Connect an AI assistant.": "连接码不对，或者已经过期。请在设置 → API 令牌 → 连接 AI 助手里重新生成一个。"
+  "That connection code isn't right, or it has run out. Make a new one under Settings → API tokens → Connect an AI assistant.": "连接码不对，或者已经过期。请在设置 → API 令牌 → 连接 AI 助手里重新生成一个。",
+  "Claude Code, Cursor or Cherry Studio on this computer or the lab network": "这台电脑或实验室网络里的 Claude Code、Cursor 或 Cherry Studio",
+  "The easiest way: let your assistant set itself up": "最简单的方法：让助手自己设置",
+  "Copy this message into a chat with your coding assistant and send it. It adds BioManager by itself, then asks you to sign in.": "把这段话复制到与编程助手的对话里发送。它会自己添加 BioManager，然后请你登录。",
+  "Please connect yourself to our lab's BioManager. It is an MCP server at %(url)s (streamable HTTP) that signs in with OAuth.": "请把你自己连接到我们实验室的 BioManager。它是一个 MCP 服务器，地址是 %(url)s（streamable HTTP），用 OAuth 登录。",
+  "In Claude Code, run: %(command)s": "在 Claude Code 里运行：%(command)s",
+  "In Cursor, add it to ~/.cursor/mcp.json under \"mcpServers\" as \"biomanager\": {\"url\": \"%(url)s\"}. Other apps: add that address in their MCP settings.": "在 Cursor 里，把它加到 ~/.cursor/mcp.json 的 \"mcpServers\" 下：\"biomanager\": {\"url\": \"%(url)s\"}。其他应用：在它们的 MCP 设置里添加这个地址。",
+  "Then tell me how to sign in (in Claude Code I type /mcp and choose biomanager); BioManager opens in my browser and I press Allow.": "然后告诉我怎么登录（在 Claude Code 里我输入 /mcp 并选择 biomanager）；BioManager 会在我的浏览器里打开，我按“允许”。",
+  "Once connected, call its lab_overview tool and tell me what this lab keeps. From then on you read the lab and propose changes for me to approve; never guess a record, ask me.": "连接后，调用它的 lab_overview 工具，告诉我这个实验室有哪些数据。之后你读取实验室数据并提出修改，由我批准；不要猜测记录，拿不准就问我。",
+  "Copy the message": "复制这段话",
+  "Or yourself, in Claude Code: sign in, no token": "或者自己在 Claude Code 里设置：登录即可，不需要令牌",
+  "Run this in a terminal, then type /mcp in Claude Code and choose biomanager. BioManager opens in your browser: press Allow.": "在终端里运行这条命令，然后在 Claude Code 里输入 /mcp 并选择 biomanager。BioManager 会在浏览器里打开：按“允许”。",
+  "Or with a token": "或者使用令牌",
+  "For an app that can't sign in, and for Claude Desktop: make a token that may read and propose; the next page shows the setup to copy for each app.": "用于不能登录的应用和 Claude Desktop：生成一个可以读取和提议的令牌；下一页会给出每个应用要复制的设置。"
 }

@@ -13,14 +13,17 @@ token.
 `<your BioManager>/api/v1/mcp`, with the same tools:
 
 - **Claude Code**, **Cursor**, **Cherry Studio** and other apps that take an
-  MCP address: the address and `Authorization: Bearer <token>`, from
-  **Settings → API tokens → Connect an AI assistant → Make a token**, which
-  shows the setup to copy. For Claude Code:
+  MCP address: **Help → Connect an AI assistant** has a message to paste into
+  the assistant's chat, with your address in it, so it sets itself up. Or,
+  in Claude Code, add the address and sign in, with no token: run this, then
+  type `/mcp`, choose *biomanager* and press **Allow** in the browser:
 
   ```bash
-  claude mcp add --transport http biomanager https://your-server/api/v1/mcp \
-    --header "Authorization: Bearer bmt_…"
+  claude mcp add --transport http --scope user biomanager https://your-server/api/v1/mcp
   ```
+
+  An app that can't sign in takes the address and `Authorization: Bearer
+  <token>`, from **Make a token** on the same page, which shows the setup.
 
 - **claude.ai, the Claude apps and ChatGPT**, as a custom connector, when
   your lab's server is on the internet (`deploy/host/internet-access.sh`):

@@ -9,7 +9,7 @@ import os
 import re
 from urllib.parse import parse_qs, urlparse
 
-from tests.base import days_ago, execute, one, uniq
+from tests.base import client_for, days_ago, execute, make_user, one, uniq
 from tests.test_api import Base
 
 CLAUDE = "https://claude.ai/api/mcp/auth_callback"
@@ -301,3 +301,23 @@ class ConnectPage(Base):
             self.assertTrue(re.search(r'id="link-code">[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}<', made))
         finally:
             del os.environ["BIOMANAGER_PUBLIC_URL"]
+
+    def test_a_coding_assistant_sets_itself_up_or_signs_in_without_a_token(self):
+        page = self.get_ok(self.m, "/settings/assistant")
+        command = "claude mcp add --transport http --scope user biomanager http://localhost/api/v1/mcp"
+        self.assertTrue('id="agent-message"' in page)
+        self.assertTrue("an MCP server at http://localhost/api/v1/mcp" in page)
+        self.assertTrue(command in page)                                 # in the message, and on its own
+        self.assertEqual(page.count(command), 2)
+        self.assertTrue("lab_overview" in page)
+
+    def test_it_is_found_from_help_and_from_an_empty_proposed_changes(self):
+        for path in ("/settings", "/proposals"):
+            page = self.get_ok(self.m, path)
+            self.assertTrue('href="/settings/assistant"' in page, path)
+
+    def test_a_guest_is_not_offered_it(self):
+        guest = make_user(uniq("guest-visitor"))
+        execute("update users set expires_at=? where username=?", "2099-01-01 00:00:00", guest)
+        page = self.get_ok(client_for(guest), "/settings")
+        self.assertFalse('href="/settings/assistant"' in page)
