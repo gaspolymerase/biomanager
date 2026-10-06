@@ -1044,12 +1044,16 @@ redirect.
   and `/.well-known/oauth-` through without a session: each answers only to
   a token, a code or with public metadata. `/oauth/token` and
   `/oauth/register` skip the cross-site check (no cookie is involved).
-- **Settings → API tokens → Connect an AI assistant**
-  (`oauth.connect_page`, `oauth/connect.html`): the connector address and
-  **Get a connection code** when the lab is on the internet, and **Make a
-  token** (scope `propose`), after which `api/token.html` shows the Claude
-  Code command, the address-and-header block for Cursor and Cherry Studio,
-  and the local server's setup.
+- **Connect an AI assistant** (`oauth.connect_page`, `oauth/connect.html`;
+  linked from Help for everyone but guests, from Settings → API tokens and
+  from an empty Proposed changes): the connector address and **Get a
+  connection code** when the lab is on the internet; for coding assistants
+  a message to paste into their chat (`#agent-message`: the address, the
+  Claude Code command and Cursor's `mcp.json` entry, how to sign in, and to
+  start with `lab_overview`), the Claude Code command that signs in with
+  OAuth and a loopback redirect (no token), and **Make a token** (scope
+  `propose`), after which `api/token.html` shows the address-and-header
+  setup and the local server's.
 - The four tables are admin-only in a lab copy (`lab_copy.ADMIN_ONLY`).
 
 ## Feedback and the usage report

@@ -35,8 +35,24 @@
   </section>
 
   <section class="card p-5" id="local">
-    <h2 class="text-[15px] font-semibold text-ink">{{ _('Claude Code, Claude Desktop, Cursor or Cherry Studio on this computer or the lab network') }}</h2>
-    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Make a token that may read and propose; the next page shows the setup to copy for each app.') }}</p>
+    <h2 class="text-[15px] font-semibold text-ink">{{ _('Claude Code, Cursor or Cherry Studio on this computer or the lab network') }}</h2>
+
+    <h3 class="mt-3 text-[13px] font-semibold text-ink">{{ _('The easiest way: let your assistant set itself up') }}</h3>
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Copy this message into a chat with your coding assistant and send it. It adds BioManager by itself, then asks you to sign in.') }}</p>
+    <pre class="mt-2 whitespace-pre-wrap rounded-lg bg-sand-100 p-3 font-mono text-[12px] leading-relaxed text-ink" id="agent-message">{{ _("Please connect yourself to our lab's BioManager. It is an MCP server at %(url)s (streamable HTTP) that signs in with OAuth.", url=local_url) }}
+{{ _('In Claude Code, run: %(command)s', command='claude mcp add --transport http --scope user biomanager ' ~ local_url) }}
+{{ _('In Cursor, add it to ~/.cursor/mcp.json under "mcpServers" as "biomanager": {"url": "%(url)s"}. Other apps: add that address in their MCP settings.', url=local_url) }}
+{{ _('Then tell me how to sign in (in Claude Code I type /mcp and choose biomanager); BioManager opens in my browser and I press Allow.') }}
+{{ _('Once connected, call its lab_overview tool and tell me what this lab keeps. From then on you read the lab and propose changes for me to approve; never guess a record, ask me.') }}</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="agent-message">{{ icon('copy') }} {{ _('Copy the message') }}</button>
+
+    <h3 class="mt-5 text-[13px] font-semibold text-ink">{{ _('Or yourself, in Claude Code: sign in, no token') }}</h3>
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('Run this in a terminal, then type /mcp in Claude Code and choose biomanager. BioManager opens in your browser: press Allow.') }}</p>
+    <pre class="mt-2 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px] text-ink" id="signin-cli">claude mcp add --transport http --scope user biomanager {{ local_url }}</pre>
+    <button type="button" class="btn btn-sm mt-2" data-on-click="copy-text" data-arg="signin-cli">{{ icon('copy') }} {{ _('Copy') }}</button>
+
+    <h3 class="mt-5 text-[13px] font-semibold text-ink">{{ _('Or with a token') }}</h3>
+    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _("For an app that can't sign in, and for Claude Desktop: make a token that may read and propose; the next page shows the setup to copy for each app.") }}</p>
     <form method="post" action="{{ url_for('api_pages.make_token') }}" class="mt-3">
       <input type="hidden" name="label" value="{{ _('AI assistant') }}">
       <input type="hidden" name="scope" value="propose">

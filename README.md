@@ -989,8 +989,10 @@ track.
   notification) as one plain summary. **Approve** makes every change at
   once, as one batch you can undo; **Discard** makes none; only you, signed
   in, can approve. **Connect an AI assistant** on the same card connects
-  one. Claude Code, Cursor and Cherry Studio use BioManager's own MCP
-  address (`/api/v1/mcp`) with such a token, nothing to install; Claude
+  one (it is also under Help). Claude Code, Cursor and Cherry Studio use
+  BioManager's own MCP address (`/api/v1/mcp`), nothing to install: paste
+  the page's message into the assistant and it sets itself up, then you
+  sign in in the browser (or use such a token); Claude
   Desktop runs `mcp/biomanager_mcp.py` from this repository
   (`mcp/README.md`). On a lab server that is on the internet, claude.ai,
   the Claude phone apps and ChatGPT add the same address as a custom

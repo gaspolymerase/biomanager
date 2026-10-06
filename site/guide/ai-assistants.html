@@ -127,8 +127,9 @@
         changes anything itself.</p>
 
       <h2 id="connect">Connect an assistant</h2>
-      <p>Open <b>Settings → API tokens → Connect an AI assistant</b>. It shows the ways in for your BioManager, with its
-        address filled in. Nothing needs installing, except for Claude Desktop on the lab network (below).</p>
+      <p>Open <b>Help → Connect an AI assistant</b> (it is also under <b>Settings → API tokens</b>, and on an empty
+        <b>Proposed changes</b>). It shows the ways in for your BioManager, with its address filled in. Nothing needs
+        installing, except for Claude Desktop on the lab network (below).</p>
 
       <h3 id="connector">From claude.ai, the Claude apps or ChatGPT</h3>
       <p>These apps reach BioManager from the internet, so this works when your lab's server is on the internet: its admin
@@ -147,16 +148,20 @@
 
       <h3 id="token">From Claude Code, Cursor, Cherry Studio or Claude Desktop</h3>
       <p>These run on a computer that can reach BioManager: the same computer as the desktop app, or any computer on the lab
-        network for a lab server. No internet access is needed.</p>
+        network for a lab server. No internet access is needed. You don't need to know how the connection works:</p>
       <ol class="steps-list">
-        <li>On the Connect page, press <b>Make a token</b>. It makes a token that may <b>Read and propose</b>, and the next page
-          shows the setup to copy for each app, with the address and the token filled in. Copy it now: the token is shown
-          once.</li>
-        <li><b>Claude Code</b>: one command in a terminal. <b>Cursor</b> and <b>Cherry Studio</b>: the address and the token, in
-          their MCP settings. <b>Claude Desktop</b> runs a small program from BioManager's source instead,
-          <code>mcp/biomanager_mcp.py</code> (install it once with <code>python -m pip install -r mcp/requirements.txt</code>);
-          the steps are in <code>mcp/README.md</code>.</li>
+        <li><b>Let your assistant set itself up.</b> On the Connect page, press <b>Copy the message</b> and send it in a chat
+          with your coding assistant. The message has your BioManager's address in it; the assistant adds BioManager by
+          itself, then tells you how to sign in.</li>
+        <li><b>Sign in.</b> In Claude Code, type <code>/mcp</code> and choose <i>biomanager</i>. BioManager opens in your
+          browser, asking whether to let the app connect: press <b>Allow</b>. There is no token to copy or keep.</li>
       </ol>
+      <ul>
+        <li>To do it yourself in Claude Code, the Connect page also has the one command to run in a terminal.</li>
+        <li>For an app that can't sign in, and for <b>Claude Desktop</b>, press <b>Make a token</b>: it makes a token that may
+          <b>Read and propose</b>, and the next page shows the setup to copy for each app. Claude Desktop runs a small program
+          from BioManager's source, <code>mcp/biomanager_mcp.py</code>; the steps are in <code>mcp/README.md</code>.</li>
+      </ul>
 
       <h3 id="use-it">Use it</h3>
       <p>Ask it: <i>Log today's work from my notes: …</i> It looks up each animal, cage and experiment you mention, asks you
