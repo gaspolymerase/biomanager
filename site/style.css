@@ -860,13 +860,13 @@ blockquote.req {
    glass base pairs between. Soft teal and blue light drifts behind it. Light
    on a light page, dark on a dark one; the product shot rises out of its
    lower edge. The pictures of one turn (site/assets/helix/) are drawn by
-   scripts/hero-helix.py: 1400px a turn, 560px high. */
+   scripts/hero-helix.py: 1400px a turn, 560px high, with 100px of room
+   above and below. */
 .hero-glass {
   --hg-bg: #ffffff; --hg-veil: rgba(255, 255, 255, 0.82);
-  --hg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(226, 240, 237, 0.32) 55%, rgba(255, 255, 255, 0.5));
-  --hg-blur: blur(14px) saturate(1.7);
-  --hg-rung-fill: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
-  --hg-shadow: 0.13; --hg-line: 0.11; --hg-core: 0.8; --hg-edge: 1; --hg-light: 0.6;
+  --hg-shadow: 0.13; --hg-line: 0.11; --hg-core: 0.55; --hg-glass: 0.7; --hg-rungs: 0.2;
+  --hg-hide: 0.5; --hg-core-near: 0.45; --hg-tint: 0.35; --hg-edge: 1; --hg-light: 0.6;
+  --hg-hide-pic: url("assets/helix/front.svg?v=fe19a43789");
   --hg-c1: #5fe0c6; --hg-c2: #8cc4ff; --hg-c3: #b5f5e6;
   --hg-scale: 1;
   position: relative; isolation: isolate; overflow: hidden; text-align: center;
@@ -877,10 +877,9 @@ blockquote.req {
 @media (prefers-color-scheme: dark) {
   .hero-glass {
     --hg-bg: #050908; --hg-veil: rgba(5, 9, 8, 0.62);
-    --hg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03) 55%, rgba(255, 255, 255, 0.07));
-    --hg-blur: blur(16px) saturate(1.5);
-    --hg-rung-fill: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
-    --hg-shadow: 0.7; --hg-line: 0; --hg-core: 0.95; --hg-edge: 0.5; --hg-light: 0.85;
+    --hg-shadow: 0.7; --hg-line: 0; --hg-core: 1; --hg-glass: 0.075; --hg-rungs: 0.04;
+    --hg-hide: 0.42; --hg-core-near: 0.9; --hg-tint: 0.25; --hg-edge: 0.5; --hg-light: 0.85;
+    --hg-hide-pic: url("assets/helix/front-veil.svg?v=55b913571c");
     --hg-c1: #0f8f7c; --hg-c2: #1d5fb0; --hg-c3: #2cc4a6;
   }
 }
@@ -913,30 +912,33 @@ blockquote.req {
 @keyframes hg-drift { from { transform: translate(-5vw, -3vh); } to { transform: translate(5vw, 4vh); } }
 /* The helix, three turns wide and tilted, slides left by one turn on a loop,
    which looks just like it turning. Back to front: a shadow, the coloured
-   cores, the far glass (the whole of both backbones), the paler glass of
-   the base pairs, then the near glass fading in where a backbone comes
-   round in front, frosting everything behind it. */
+   cores, the far glass (the whole of both backbones) and its teal or blue
+   tint, the paler glass of the base pairs, then where a backbone comes
+   round in front a veil the colour of the page that hides what is behind
+   it, its core, its glass and its tint.
+   Each layer is a plain picture that only slides: Safari draws frosted
+   glass, masks and blurs on a long moving layer with gaps and straight
+   edges, so the pictures carry the glass and blurs themselves. */
 .hg-band {
   position: absolute; left: 50%; top: 52%; width: 4200px; height: 560px;
   transform: translate(-50%, -50%) rotate(-21deg) scale(var(--hg-scale));
 }
 .hg-move { position: absolute; inset: 0 -1400px 0 0; animation: hg-turn 52s linear infinite; }
 @keyframes hg-turn { to { transform: translateX(-1400px); } }
-.hg-move > * { position: absolute; inset: 0; background-repeat: repeat-x; background-size: 1400px 560px; }
-.hg-shadow { background-image: url("assets/helix/all.svg?v=df51785ad1"); opacity: var(--hg-shadow); filter: brightness(0) blur(20px); transform: translateY(26px); }
-.hg-line { background-image: url("assets/helix/all.svg?v=df51785ad1"); opacity: var(--hg-line); filter: brightness(0) blur(0.8px); }
-.hg-core { background-image: url("assets/helix/core.svg?v=03bd336eee"); opacity: var(--hg-core); }
-.hg-glass { -webkit-backdrop-filter: var(--hg-blur); backdrop-filter: var(--hg-blur); }
-.hg-glass.back { background: var(--hg-fill); -webkit-mask: url("assets/helix/back.svg?v=c8a5a45f19") 0 0 / 1400px 560px repeat-x; mask: url("assets/helix/back.svg?v=c8a5a45f19") 0 0 / 1400px 560px repeat-x; }
-.hg-glass.rungs {
-  background: var(--hg-rung-fill); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3);
-  -webkit-mask: url("assets/helix/rungs.svg?v=ea24b8e4c6") 0 0 / 1400px 560px repeat-x; mask: url("assets/helix/rungs.svg?v=ea24b8e4c6") 0 0 / 1400px 560px repeat-x;
-}
-.hg-glass.front { background: var(--hg-fill); -webkit-mask: url("assets/helix/front.svg?v=8cae96ef4d") 0 0 / 1400px 560px repeat-x; mask: url("assets/helix/front.svg?v=8cae96ef4d") 0 0 / 1400px 560px repeat-x; }
-.hg-back-edge { background-image: url("assets/helix/back-edge.svg?v=261f25a7fa"); opacity: var(--hg-edge); }
-.hg-rungs-edge { background-image: url("assets/helix/rungs-edge.svg?v=597a791500"); opacity: calc(var(--hg-edge) * 0.8); }
-.hg-front-edge { background-image: url("assets/helix/front-edge.svg?v=a7e741898c"); opacity: var(--hg-edge); }
-@media (prefers-color-scheme: dark) { .hg-core { filter: drop-shadow(0 0 8px rgba(44, 196, 166, 0.55)); } }
+.hg-move > * { position: absolute; inset: -100px 0; background-repeat: repeat-x; background-size: 1400px 760px; }
+.hg-shadow { background-image: url("assets/helix/shadow.svg?v=821a873a7e"); opacity: var(--hg-shadow); }
+.hg-line { background-image: url("assets/helix/line.svg?v=caeddea730"); opacity: var(--hg-line); }
+.hg-core { background-image: url("assets/helix/core-back.svg?v=63dd7b9e79"); opacity: var(--hg-core); }
+.hg-back { background-image: url("assets/helix/back.svg?v=fe61189683"); opacity: var(--hg-glass); }
+.hg-tint { background-image: url("assets/helix/tint-back.svg?v=d4e38a26ea"); opacity: var(--hg-tint); }
+.hg-back-edge { background-image: url("assets/helix/back-edge.svg?v=d7fcc9fcc2"); opacity: var(--hg-edge); }
+.hg-rungs { background-image: url("assets/helix/rungs.svg?v=ca1bb0a97a"); opacity: var(--hg-rungs); }
+.hg-rungs-edge { background-image: url("assets/helix/rungs-edge.svg?v=e7f0560f51"); opacity: calc(var(--hg-edge) * 0.8); }
+.hg-hide { background-image: var(--hg-hide-pic); opacity: var(--hg-hide); }
+.hg-core-near { background-image: url("assets/helix/core-front.svg?v=d688b53d23"); opacity: var(--hg-core-near); }
+.hg-front { background-image: url("assets/helix/front.svg?v=fe19a43789"); opacity: var(--hg-glass); }
+.hg-tint-near { background-image: url("assets/helix/tint-front.svg?v=ce2406598f"); opacity: var(--hg-tint); }
+.hg-front-edge { background-image: url("assets/helix/front-edge.svg?v=e3e5adb165"); opacity: var(--hg-edge); }
 /* Quiet behind the words, and into the page at the foot. */
 .hero-glass::after {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;

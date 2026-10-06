@@ -1722,14 +1722,18 @@ teal in them).
   or dark with the page. Behind the headline is a double helix of frosted
   glass, worked out as a real helix in 3D: each backbone is wider and brighter
   where it comes towards you and thinner where it turns away, and where the
-  two cross the near one passes over the far one. It is three layers of glass,
-  back to front (the backbones behind the axis, the paler base pairs, the
-  backbones in front), each a single `backdrop-filter` layer masked to its
-  shapes, with a coloured core line under it that the glass frosts into a
-  glow and bright edges over it; soft teal and blue light drifts underneath.
-  One turn of every layer is drawn by `scripts/hero-helix.py` into
-  `site/assets/helix/`, and the helix slides by one turn on a loop, which
-  looks just like it turning. The product shot rises out of its lower edge.
+  two cross the near one passes over the far one. Back to front: a shadow,
+  the soft coloured cores, the far glass (both whole backbones) tinted teal
+  or blue, the paler base pairs, then where a backbone comes in front a veil
+  the colour of the page that hides the strand behind, its core, its glass
+  and tint, each glass with bright edges (each strand's tint is kept inside
+  its own outline, so it never spills onto the other where they cross); soft teal and blue light drifts underneath. Every layer is a
+  plain picture with its blur drawn in, which the CSS only slides: no
+  `backdrop-filter`, mask or CSS `filter`, which Safari draws on a long moving
+  layer with gaps and straight-edged holes. One turn of every layer, with
+  100px of room above and below for the blurs, is drawn by
+  `scripts/hero-helix.py` into `site/assets/helix/`, and the helix slides by
+  one turn on a loop, which looks just like it turning. The product shot rises out of its lower edge.
   The header's **User guide** link is a bordered pill: more than the other
   links, less than Download.
 - **Motion** is the hero's entrance and turning helix, the product shot flattening
