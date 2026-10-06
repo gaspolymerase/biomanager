@@ -119,15 +119,14 @@
     <p class="summary">把记录搬进来：导入表格、批量添加，再检查导入的结果。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 把实验室搬进来</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/import.webp" data-clip-src="../../assets/clips/import"></video></div></figure>
 
-      <p>实验室设置好之后，大约半小时。有两种方式：<b>从 Excel 导入</b>（Import from Excel），用于你已有的表格；
-        <b>批量添加</b>（Add many），用于描述一次就能建好的一批新记录。</p>
+      <p>实验室设置好之后，大约半小时。有两种方式：<b>从 Excel 导入</b> （Import from Excel），用于你已有的表格；<b>批量添加</b> （Add many），用于描述一次就能建好的一批新记录。</p>
       <ol class="steps-list">
-        <li><b>先建笼架。</b><b>笼 → 笼架视图 → 新建笼架</b>（Cages → Rack grid → New rack），名字和表格里一致，位置编号跟实物笼架上的
+        <li><b>先建笼架。</b><b>笼 → 笼架视图 → 新建笼架</b> （Cages → Rack grid → New rack），名字和表格里一致，位置编号跟实物笼架上的
           贴纸一样。这样，带 <i>Rack</i> 和 <i>Position</i> 列的表格就能把每个笼放到对应位置；没有位置的
-          会留在<i>未放置</i>（Unplaced）里，等你拖上去（平板上：点<b>移动</b>（Move），点笼，再点目标位置）。</li>
-        <li><b>打开“从 Excel 导入”。</b>每个数据库的表格上方工具栏里都有——小鼠、斑马鱼、质粒、果蝇和线虫
-          管/皿、任意物种以及所有库存。<b>选择文件</b>（Choose a file，<code>.xlsx</code>、CSV 或 TSV，最大 15 MB、5,000 行），
-          然后点<b>继续</b>（Continue）。如果工作簿有多个工作表，在匹配结果上方选一个。不需要模板，也不用改
+          会留在<i>未放置</i>（Unplaced）里，等你拖上去（平板上：点 <b>移动</b> （Move），点笼，再点目标位置）。</li>
+        <li><b>打开“从 Excel 导入”。</b> 每个数据库的表格上方工具栏里都有——小鼠、斑马鱼、质粒、果蝇和线虫
+          管/皿、任意物种以及所有库存。<b>选择文件</b> （Choose a file，<code>.xlsx</code>、CSV 或 TSV，最大 15 MB、5,000 行），
+          然后点 <b>继续</b> （Continue）。如果工作簿有多个工作表，在匹配结果上方选一个。不需要模板，也不用改
           列名。</li>
         <li><b>检查列是怎么匹配的。</b>BioManager 按含义匹配，而不只是按名字：<i>Position</i>、
           <i>Slot</i> 和 <i>Well</i> 都是位置，<i>DOB</i> 和 <i>Born</i> 是出生日期，<i>Supplier</i> 是供应商，
@@ -135,23 +134,23 @@
           <code>A1</code>、<code>B2</code>……就是盒内位置，是 <code>Freezer 2</code> 这样的就是存放地点。每个匹配都会说明理由，
           任何一个都可以改。</li>
         <li><b>除非你决定，否则什么都不会丢。</b>BioManager 没有的列，在库存或
-          物种数据库里会变成一个新列（如果你有配置权限），或者以 <code>Header: value</code> 的形式<b>放进备注</b>（Into the notes）；选
-          <b>不导入</b>（Leave out）则跳过。表格缺少的必填列（比如负责人），会给所有行统一填一个值——对于
+          物种数据库里会变成一个新列（如果你有配置权限），或者以 <code>Header: value</code> 的形式 <b>放进备注</b> （Into the notes）；选
+ <b>不导入</b> （Leave out）则跳过。表格缺少的必填列（比如负责人），会给所有行统一填一个值——对于
           质粒和保种，还包括每行是<i>个人</i>（Personal）还是<i>实验室公用</i>（Lab common）（如果有 <i>Lab common</i> 列，则逐行读取）。日期
           保持 Excel 的写法（<code>3/14/2026</code>、<code>14/03/2026</code>、<code>12-May-26</code>）：每一列自己判断
           是日在前还是月在前，判断不出时，按实验室设置里的日期格式。读不出的日期，或在
           未来的出生日期，会留空并保存在备注里。<i>Male</i>、<i>m</i> 和 <i>♂</i> 都变成 M；
           状态和人员按名字匹配。如果 <i>Cage #</i> 只填了一次、向下合并到多只小鼠，每只都算在这个笼里；
           导入时新建的笼归这些小鼠的负责人所有。</li>
-        <li><b>先预览，再导入。</b><b>预览导入</b>（Preview the import）会让每一行都经过与数据库自身
+        <li><b>先预览，再导入。</b><b>预览导入</b> （Preview the import）会让每一行都经过与数据库自身
           表单相同的检查，并按 Excel 里的行号列出会被跳过的行。记录下方的<i>合计</i>（Total）行会被
           排除；ID 已被占用（鼠群里已有，或前面某行已用）的小鼠会拿到下一个空闲 ID，原来的 ID 保存
-          在备注里；预览会逐条说明。<b>导入 120 只小鼠</b>（Import 120 mice，按钮上会显示数量）
-          把其余的作为一个批次保存，可以在<b>批量操作记录</b>（Batch history）里撤销；<b>修改对应</b>（Change the matches）返回上一步。</li>
-        <li><b>不是现成的表格，而是一批新的？</b>小鼠用<b>批量添加</b>（Add many）：描述一只小鼠和数量，或者载入用
-          <b>下载模板</b>（Download a template）做好的 CSV。在任何库存和质粒里，<b>批量添加</b>可以直接粘贴从 Excel 复制的列表——
+          在备注里；预览会逐条说明。<b>导入 120 只小鼠</b> （Import 120 mice，按钮上会显示数量）
+          把其余的作为一个批次保存，可以在 <b>批量操作记录</b> （Batch history）里撤销；<b>修改对应</b> （Change the matches）返回上一步。</li>
+        <li><b>不是现成的表格，而是一批新的？</b> 小鼠用 <b>批量添加</b> （Add many）：描述一只小鼠和数量，或者载入用
+ <b>下载模板</b> （Download a template）做好的 CSV。在任何库存和质粒里，<b>批量添加</b> 可以直接粘贴从 Excel 复制的列表——
           每行一个名字，各生成一条记录。</li>
-        <li><b>打印笼卡</b>（Print cage cards），挂到笼上。从现在起，电子表格只是备份，BioManager 才是正式记录。</li>
+        <li><b>打印笼卡</b> （Print cage cards），挂到笼上。从现在起，电子表格只是备份，BioManager 才是正式记录。</li>
       </ol>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>

@@ -118,7 +118,7 @@
     <h1>Your data and backups</h1>
     <p class="summary">Where your data is kept, how it&#x27;s backed up, and how to move it.</p>
 
-      <h3 id="your-data-1">The desktop app</h3>
+      <h2 id="the-desktop-app">The desktop app</h2>
       <table class="gtable">
         <tr><th>macOS</th><td><code>~/Library/Application Support/Biomanager/</code></td></tr>
         <tr><th>Windows</th><td><code>%APPDATA%\Biomanager\</code></td></tr>
@@ -132,10 +132,10 @@
       </ul>
       <div class="note warn"><b>Don't keep BioManager's data in Dropbox, OneDrive, Google Drive or iCloud Drive.</b> Syncing corrupts
         database files. BioManager warns you if it finds itself in one.</div>
-      <h3 id="your-data-2">A lab server</h3>
+      <h2 id="a-lab-server">A lab server</h2>
       <p>A server backs up every night, restores the newest backup every week to prove it works, and can keep encrypted copies
         off-site — see <a href="../server.html#safe">Keeping the data safe</a>.</p>
-      <h3 id="copies">A copy of the lab on your computer</h3>
+      <h2 id="copies">A copy of the lab on your computer</h2>
       <p>The desktop app can keep a copy of your lab server's whole database, so the lab's records live on more than one
         machine:</p>
       <ol class="steps-list">
@@ -151,7 +151,7 @@
         server if it's ever lost (<a href="../server.html#move">how</a>): treat a computer holding one like the server itself.
         A member's copy holds what they can see in the app: no one's password, not other people's private notebook pages or
         personal databases, not the Audit log. Guests can't keep a copy.</p>
-      <h3 id="devices">One lab on many devices</h3>
+      <h2 id="devices">One lab on many devices</h2>
       <p>One device holds the lab's <b>master copy</b>; every other one works on it through its address, so nothing is ever
         merged and nothing written in two places is lost. <b>Settings → Devices</b> shows which device it is, and every
         computer linked to the lab (by a key from <b>Copies of the lab</b>): how it uses the lab, its version, when it was last
@@ -175,13 +175,13 @@
         <li>If the computer holding the master copy is lost, an admin on the old master chooses <b>Make this the master
           again</b>: what was changed on the lost computer since is not there.</li>
       </ul>
-      <h3 id="your-data-5">Everyone</h3>
+      <h2 id="everyone">Getting your data out</h2>
       <p><b>Export</b> on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, <b>Export → Excel</b>
         is a workbook that <b>Import from Excel</b> reads back. A note that starts with <code>=</code> stays text in every export,
         never a formula. <b>Export my data</b> (in the account menu, and in Settings) downloads your own mice, cages, weights,
         experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and
         your profile, in one zip.</p>
-      <h3 id="counts">What BioManager sends its makers</h3>
+      <h2 id="counts">What BioManager sends its makers</h2>
       <p>Your records never leave your computer or your lab's server. So that BioManager's makers know how many labs use it, each
         installation sends one short message a day, with counts only:</p>
       <ul>
@@ -203,14 +203,14 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page</p>
+      <p>On this page · 5 min read</p>
       <ol>
-        <li class="lvl3"><a href="#your-data-1">The desktop app</a></li>
-        <li class="lvl3"><a href="#your-data-2">A lab server</a></li>
-        <li class="lvl3"><a href="#copies">A copy of the lab on your computer</a></li>
-        <li class="lvl3"><a href="#devices">One lab on many devices</a></li>
-        <li class="lvl3"><a href="#your-data-5">Everyone</a></li>
-        <li class="lvl3"><a href="#counts">What BioManager sends its makers</a></li>
+        <li class="lvl2"><a href="#the-desktop-app">The desktop app</a></li>
+        <li class="lvl2"><a href="#a-lab-server">A lab server</a></li>
+        <li class="lvl2"><a href="#copies">A copy of the lab on your computer</a></li>
+        <li class="lvl2"><a href="#devices">One lab on many devices</a></li>
+        <li class="lvl2"><a href="#everyone">Getting your data out</a></li>
+        <li class="lvl2"><a href="#counts">What BioManager sends its makers</a></li>
       </ol>
     </nav>
 </div>

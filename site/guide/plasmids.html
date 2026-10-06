@@ -118,17 +118,22 @@
     <h1>Plasmids</h1>
     <p class="summary">Plasmid records with their sequence and map, and the box each tube is in.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Plasmids</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/plasmid.webp" data-clip-src="../assets/clips/plasmid"></video></div></figure>
-
       <ul>
         <li>At the top, tabs for the databases that go with plasmids — <b>Primers</b>, <b>Glycerol stocks</b>, <b>Viruses</b> —
           in the order the work runs. Each is an ordinary database with its own sheet (<a href="samples-and-orders.html">see them</a>);
           they share one place in the sidebar because each names the plasmid it came from.</li>
+      </ul>
+      <h2 id="the-sheet">The plasmid sheet</h2>
+      <ul>
         <li>Show them as a <b>Table</b>, by storage <b>Boxes</b>, or as a <b>List</b>; chips for <i>Mine</i>, <i>Has sequence</i>, <i>In a box</i>.</li>
         <li><b>Sequence</b>, beside each plasmid's number in the table, opens its sequence and map (<b>Add sequence</b> when it has
           none yet); the number opens the same page.</li>
         <li><b>New plasmid</b> takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) —
           or paste a list of names to make several. Drop in a SnapGene <code>.dna</code>, GenBank, FASTA or plain-text sequence: its name, features and every
           annotation note come with it, and a file of several sequences keeps the first and says so.</li>
+      </ul>
+      <h2 id="the-map">The sequence and its map</h2>
+      <ul>
         <li>Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if
           you like. <b>Download</b> above the map gives it as GenBank (with every feature) or FASTA. <b>Versions</b>, below the map, lists every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.
           <b>Storage</b> and <b>Properties</b> are the other tabs.
@@ -136,6 +141,10 @@
           or one from outside it such as <i>Addgene #11150</i>) and how it was made; the page then shows <b>Made from</b> and
           <b>Used to make</b> above the map, and a <b>Family tree</b> both ways. <b>Storage</b> also lists its <a href="samples-and-orders.html">glycerol stocks</a>, with the box each is in, and the viruses made from it
           (<a href="samples-and-orders.html">Viruses</a>). Its address carries its number: plasmid #12 is <code>…/plasmid/12</code>.</li>
+      </ul>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid map" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid map</figcaption></figure>
+      <h2 id="features">Knowing what a sequence holds</h2>
+      <ul>
         <li>The <b>Feature library</b> (a link at the top of Plasmids) keeps the lab's elements by sequence: promoters, ITRs and LTRs,
           WPRE, resistance genes, tags. <b>Add to library</b>, above a well-annotated map (a SnapGene or Addgene file, say), keeps its
           named features there; an admin can <b>Collect from every plasmid</b>. On the library page, <b>Read elements from files</b>
@@ -147,6 +156,13 @@
           commercial program's published library, so check anything you rely on; elements you added yourself always win over it.
           Search the library by name or by sequence. On any other plasmid, <b>Detect features</b> marks
           each library element wherever it is, on either strand and across the origin, and keeps the map as it was in <b>Versions</b>.</li>
+        <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
+          <b>Annotate with pLannotate</b> then appears above the map. It finds elements by comparing sequences rather than matching
+          them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
+          miss. Everything it marks is kept in <b>Versions</b>, so it can be undone.</li>
+      </ul>
+      <h2 id="building">Building a new plasmid</h2>
+      <ul>
         <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map, builds the next plasmid out of the
           ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases,
           or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together
@@ -167,25 +183,26 @@
           elements marked if you asked. A Gibson's primers are saved in the <a href="samples-and-orders.html">Primers</a>
           database marked <i>to order</i> and drawn on the map of the plasmid each one amplifies, so <b>Copy for
           ordering</b> picks them up with the rest.</li>
-        <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
-          <b>Annotate with pLannotate</b> then appears above the map. It finds elements by comparing sequences rather than matching
-          them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
-          miss. Everything it marks is kept in <b>Versions</b>, so it can be undone.</li>
-        <li><b>Files</b>, on <b>Storage</b>, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it,
-          gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an
-          admin, can take it off again. They come with your data in <b>Export my data</b>.</li>
         <li>A primer you draw on the map (select bases, then <b>Edit → Create → Primer</b>) is also kept in the lab's
           <a href="samples-and-orders.html">Primers</a> database, marked <i>to order</i>, with the plasmid in its <b>Plasmid</b> column.
           The <b>Primers</b> card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
           <b>Copy for ordering</b> (name and sequence, one per line, to paste into a supplier's form) or <b>Export for ordering</b> (a CSV).</li>
+      </ul>
+      <h2 id="tubes">Tubes, boxes and files</h2>
+      <ul>
+        <li><b>Files</b>, on <b>Storage</b>, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it,
+          gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an
+          admin, can take it off again. They come with your data in <b>Export my data</b>.</li>
         <li>Each tube keeps its miniprep's <b>Concentration</b> (ng/µL) and <b>260/280</b>, in the sheet and on its <b>Storage</b> tab, which
           also lists the notebook pages that link it.</li>
+      </ul>
+      <h2 id="sharing">Sharing and bulk changes</h2>
+      <ul>
         <li><b>Belongs to</b>: <i>Personal</i>, or <i>Lab common</i> — anyone can edit it (a shared stock plasmid), while only its owner or
           an admin changes whose it is or deletes it. The <i>Lab common</i> chip lists them.</li>
         <li>Select plasmids to set owner, resistance or Belongs to, move them to a box, or delete. Moved into another box with no
           position, a plasmid takes its next free cell. <b>Import from Excel</b> brings in your old list.</li>
       </ul>
-      <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid map" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid map</figcaption></figure>
     <!-- /page -->
       <nav class="pager" aria-label="Previous / Next"><a class="prev" href="experiments.html"><small>Previous</small>Experiments</a><a class="next" href="samples-and-orders.html"><small>Next</small>Samples, orders, reagents, antibodies, viruses</a></nav>
       <div class="helpful" data-pagefind-ignore>
@@ -194,7 +211,17 @@
         <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=Guide: Plasmids&amp;body=Page: https://biomanager.org/guide/plasmids%0A%0AWhat%20was%20unclear%20or%20missing:" target="_blank" rel="noopener">No</a>
       </div>
   </main>
-  
+  <nav class="docs-rail" aria-label="On this page">
+      <p>On this page · 6 min read</p>
+      <ol>
+        <li class="lvl2"><a href="#the-sheet">The plasmid sheet</a></li>
+        <li class="lvl2"><a href="#the-map">The sequence and its map</a></li>
+        <li class="lvl2"><a href="#features">Knowing what a sequence holds</a></li>
+        <li class="lvl2"><a href="#building">Building a new plasmid</a></li>
+        <li class="lvl2"><a href="#tubes">Tubes, boxes and files</a></li>
+        <li class="lvl2"><a href="#sharing">Sharing and bulk changes</a></li>
+      </ol>
+    </nav>
 </div>
 
 <footer class="footer">

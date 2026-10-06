@@ -89,11 +89,11 @@ T = {
     "en": dict(lang="en", nav_label="Site", features="Features", server="Run it for your lab", guide="User guide",
                download="Download", other="中文", other_code="zh-CN", other_data="zh", search="Search the guide",
                contents="Contents", on_page="On this page", prev="Previous", next="Next", helpful="Was this page helpful?",
-               yes="Yes", no="No", suffix="BioManager user guide"),
+               yes="Yes", no="No", minutes="{n} min read", suffix="BioManager user guide"),
     "zh": dict(lang="zh-CN", nav_label="页面导航", features="功能", server="为实验室部署", guide="用户指南",
                download="下载", other="English", other_code="en", other_data="en", search="搜索用户指南",
                contents="目录", on_page="本页内容", prev="上一页", next="下一页", helpful="这一页对你有帮助吗？",
-               yes="有", no="没有", suffix="BioManager 用户指南"),
+               yes="有", no="没有", minutes="阅读约 {n} 分钟", suffix="BioManager 用户指南"),
 }
 
 
@@ -225,13 +225,20 @@ def sidebar(lang, slug):
   </aside>"""
 
 
+def reading_time(lang, content):
+    """Minutes, at 200 English words or 400 Chinese characters a minute."""
+    plain = re.sub(r"<[^>]+>", " ", content)
+    units = len(re.findall(r"[\u4e00-\u9fff]", plain)) / 400 if lang == "zh" else len(plain.split()) / 200
+    return max(1, round(units))
+
+
 def on_page(lang, content):
     heads = re.findall(r'<h([23]) id="([^"]+)"[^>]*>([\s\S]*?)</h\1>', content)
     if len(heads) < 2:
         return ""
     items = "\n".join(f'        <li class="lvl{lvl}"><a href="#{i}">{html.escape(text(h))}</a></li>' for lvl, i, h in heads)
     return f"""<nav class="docs-rail" aria-label="{T[lang]['on_page']}">
-      <p>{T[lang]['on_page']}</p>
+      <p>{T[lang]['on_page']} · {T[lang]['minutes'].format(n=reading_time(lang, content))}</p>
       <ol>
 {items}
       </ol>

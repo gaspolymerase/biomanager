@@ -121,54 +121,54 @@
       <h3 id="install-1">获取</h3>
       <table class="gtable">
         <tr><th>macOS</th><td><a href="../download.html">下载</a>，解压，把 <b>BioManager</b> 拖进“应用程序”。第一次打开时，<b>右键点它
-          → 打开</b>（Open），再点“打开”。</td></tr>
+          → 打开</b> （Open），再点“打开”。</td></tr>
         <tr><th>Windows</th><td>解压 zip，打开 <b>BioManager</b> 文件夹，运行 <b>BioManager.exe</b>。出现警告时选
-          <b>更多信息 → 仍要运行</b>（More info → Run anyway）。它的窗口使用 Microsoft Edge WebView2，Windows 11 自带；如果 Windows 10 电脑上
+ <b>更多信息 → 仍要运行</b> （More info → Run anyway）。它的窗口使用 Microsoft Edge WebView2，Windows 11 自带；如果 Windows 10 电脑上
           没有，BioManager 会提出从微软下载，并先在你的浏览器里打开。装好后
           再打开一次 BioManager，就会用它自己的窗口了。</td></tr>
         <tr><th>Linux</th><td>给 <code>BioManager-Linux.AppImage</code> 加上可执行权限（右键 → 属性，或 <code>chmod +x</code>），然后打开。</td></tr>
         <tr><th>更新</th><td>桌面版每天检查一次新版本，有新版本时会提示，并附上新功能说明；<b>BioManager →
-          检查更新…</b>（Check for Updates…；Windows 和 Linux 在<b>帮助</b>（Help）菜单里）可以立即检查。<b>安装并重启</b>（Install and Restart）会下载新版本、校验，
+          检查更新…</b> （Check for Updates…；Windows 和 Linux 在 <b>帮助</b> （Help）菜单里）可以立即检查。<b>安装并重启</b> （Install and Restart）会下载新版本、校验，
           并在应用退出时替换；无法自动替换时（Linux 的 <code>.tar.gz</code>，或没有写入权限的文件夹），它会打开下载
           页面，按上面的方法安装。你的数据原地不动，新版本改动数据库之前会先留一份副本
-          （见<a href="your-data.html">你的数据</a>）。取消勾选<b>自动检查更新</b>（Check for Updates Automatically）可以关掉每天的检查。</td></tr>
+          （见<a href="your-data.html">你的数据</a>）。取消勾选 <b>自动检查更新</b> （Check for Updates Automatically）可以关掉每天的检查。</td></tr>
         <tr><th>新功能</th><td>更新之后，无论是桌面版还是实验室服务器，打开的第一个页面会显示一段简短的
-          <b>新功能</b>（What's new）：新增了什么、什么变了、修复了什么，并附完整说明的链接。<b>知道了</b>（Got it）会永久关闭
-          它；<b>帮助 → 新功能</b>（Help → What's new）可以再次打开。</td></tr>
+ <b>新功能</b> （What's new）：新增了什么、什么变了、修复了什么，并附完整说明的链接。<b>知道了</b> （Got it）会永久关闭
+          它；<b>帮助 → 新功能</b> （Help → What's new）可以再次打开。</td></tr>
         <tr><th>实验室服务器</th><td>不用安装：打开管理员给你的地址即可。欢迎页会介绍
-          BioManager 能做什么，然后引导你<b>登录</b>（Sign in）或<b>创建账号</b>（Create an account）。如何搭建服务器见
+          BioManager 能做什么，然后引导你 <b>登录</b> （Sign in）或 <b>创建账号</b> （Create an account）。如何搭建服务器见
           <a href="../server.html">为实验室部署</a>。</td></tr>
         <tr><th>手机</th><td>用 Android 应用，或把实验室服务器添加到 iPhone 主屏幕：见
           <a href="phones-and-cage-cards.html">手机与笼卡</a>。</td></tr>
       </table>
-      <div class="note"><b>电脑上为什么会出现警告？</b>这些应用没有经过 Apple 或微软签名，所以每个版本系统都会请你
+      <div class="note"><b>电脑上为什么会出现警告？</b> 这些应用没有经过 Apple 或微软签名，所以每个版本系统都会请你
         确认一次。</div>
 
       <h3 id="first-run">设置问卷</h3>
-      <p>第一个账号就是实验室的<b>管理员</b>（在服务器上，需要服务器启动时打印出来的一次性设置码）。
+      <p>第一个账号就是实验室的 <b>管理员</b> （在服务器上，需要服务器启动时打印出来的一次性设置码）。
         管理员接着回答一份简短的问卷，BioManager 就只搭建你会用到的东西——不多也不少：</p>
       <ol class="steps-list">
         <li><b>你的实验室</b>——名称、时区、日期写法和基因型鉴定日
           （<a href="lab-setup.html">这些设置有什么用</a>）。</li>
-        <li><b>实验室要管哪些东西？</b>勾选动物和品系保种（小鼠、斑马鱼、果蝇、线虫、其他物种）以及分子
+        <li><b>实验室要管哪些东西？</b> 勾选动物和品系保种（小鼠、斑马鱼、果蝇、线虫、其他物种）以及分子
           和耗材（质粒、样本、订购、试剂、抗体、病毒）。每一项还会多问几句：名称（例如 <i>Mouse room B</i>）；
           鼠群要几个笼架、多大、位置怎么编号；果蝇和线虫要用哪些培养箱
           温度。留空就用常规设置。</li>
-        <li><b>要哪些实验室功能？</b>日历和实验记录本。</li>
-        <li><b>成员可以做什么？</b>成员能否创建自己的数据库，能否为
+        <li><b>要哪些实验室功能？</b> 日历和实验记录本。</li>
+        <li><b>成员可以做什么？</b> 成员能否创建自己的数据库，能否为
           全实验室添加数据库，能否在自己电脑上保留一份实验室副本，能否创建
           <a href="scripts-and-api.html">API 令牌</a>。</li>
       </ol>
-      <p>问题下方的<b>每天向 BioManager 开发者发送匿名统计</b>（Send BioManager's makers anonymous counts once a day）默认是勾选的；不想发送就取消勾选
+      <p>问题下方的 <b>每天向 BioManager 开发者发送匿名统计</b> （Send BioManager's makers anonymous counts once a day）默认是勾选的；不想发送就取消勾选
         （<a href="your-data.html#counts">会发送什么</a>）。</p>
       <p>然后 BioManager 会建好这些数据库，连同笼架和培养箱，并带你回到首页。之后加入的每个人第一次登录时，都会看到
-        一页实验室数据库的欢迎导览（<b>设置 → 再看一次欢迎导览</b>（Settings → See the welcome tour again）可以重新打开）。</p>
+        一页实验室数据库的欢迎导览（<b>设置 → 再看一次欢迎导览</b> （Settings → See the welcome tour again）可以重新打开）。</p>
       <p><b>中文或 English。</b>BioManager 会按照你的电脑或浏览器首选的语言显示：简体中文或英文。你可以在 <b>设置 → 语言</b>
         里自己选择，也可以用登录页上的 <b>中文 / English</b> 切换。实验室里每个人各自选择；名称、备注等大家输入的内容保持原样。</p>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>应用在 Mac 上打不开</h3>
-      <p>右键点它，选<b>打开</b>（Open）。如果 macOS 提示已损坏，先把它移到“应用程序”文件夹，
+      <p>右键点它，选 <b>打开</b> （Open）。如果 macOS 提示已损坏，先把它移到“应用程序”文件夹，
           再试一次。</p>
       <h3>Linux：AppImage 没反应</h3>
       <p>给它加上可执行权限。如果还是启动不了，安装 <code>libfuse2</code>，或者改用
@@ -183,7 +183,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容</p>
+      <p>本页内容 · 阅读约 3 分钟</p>
       <ol>
         <li class="lvl3"><a href="#install-1">获取</a></li>
         <li class="lvl3"><a href="#first-run">设置问卷</a></li>
