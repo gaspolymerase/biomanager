@@ -71,11 +71,33 @@ document.documentElement.classList.add('js');
 
 })();
 
+// Clips. Each browser gets the format it plays best: Apple's browsers MP4,
+// which they play reliably, the others the smaller WebM. A clip plays with
+// no button: one a browser won't start by itself (Safari in Low Power Mode)
+// starts at the visitor's first tap, click or key, wherever it is.
+var bmClips = (function () {
+  var ua = navigator.userAgent;
+  var apple = /iP(hone|ad|od)/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/.test(ua));
+  var v = document.createElement('video');
+  var ext = !apple && v.canPlayType && v.canPlayType('video/webm; codecs="vp9"') !== '' ? '.webm' : '.mp4';
+  var waiting = [];
+  function retry() { var w = waiting; waiting = []; w.forEach(function (f) { f(); }); }
+  ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { document.addEventListener(t, retry, { passive: true }); });
+  return {
+    ext: ext,
+    // play, or once the browser allows it, do `again` (which checks it is still wanted)
+    play: function (video, again) {
+      var p = video.play();
+      if (p && p.catch) p.catch(function () { if (waiting.indexOf(again) < 0) waiting.push(again); });
+    }
+  };
+})();
+
 // The feature stage: a dock of tabs under a window, each playing a short
 // clip. Only the chosen clip loads. Clips follow one another until the
 // visitor picks one, which then loops; they pause off screen or in a
-// background tab. With reduced motion nothing plays by itself: the still
-// shows, with a play button.
+// background tab. There is no play button: with reduced motion nothing
+// plays by itself, and the still shows until a tab is picked.
 (function () {
   var dock = document.querySelector('.dock[role="tablist"]');
   var video = document.getElementById('stage-video');
@@ -84,10 +106,8 @@ document.documentElement.classList.add('js');
   var screen = video.parentNode;
   var title = document.getElementById('stage-title');
   var caption = document.getElementById('stage-caption');
-  var play = document.getElementById('stage-play');
   var base = video.getAttribute('poster').replace(/[^/]*$/, '');
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var webm = !!video.canPlayType && video.canPlayType('video/webm; codecs="vp9"') !== '';
   var chosen = false;     // the visitor picked a tab: stop moving on by itself
   var inView = false;
   var current = 0;
@@ -99,14 +119,13 @@ document.documentElement.classList.add('js');
   function load(i) {
     if (loaded === i) return;
     loaded = i;
-    video.src = base + clip(i) + (webm ? '.webm' : '.mp4');
+    video.src = base + clip(i) + bmClips.ext;
     video.load();
   }
   function resume() {
     if (!wanted()) { video.pause(); return; }
     load(current);
-    var p = video.play();
-    if (p && p.catch) p.catch(function () { if (play) play.hidden = false; });
+    bmClips.play(video, resume);
   }
   function show(i, byHand) {
     current = i;
@@ -123,7 +142,6 @@ document.documentElement.classList.add('js');
     caption.appendChild(b);
     caption.appendChild(document.createTextNode(' ' + tabs[i].dataset.more));
     video.loop = chosen;
-    if (play) play.hidden = !(calm && !chosen);
     screen.classList.add('swapping');
     setTimeout(function () {
       video.pause();
@@ -149,7 +167,6 @@ document.documentElement.classList.add('js');
   video.addEventListener('ended', function () {
     if (!chosen) show((current + 1) % tabs.length);
   });
-  if (play) play.addEventListener('click', function () { chosen = true; video.loop = true; play.hidden = true; resume(); });
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (entries) {
       inView = entries[0].isIntersecting;
@@ -237,12 +254,11 @@ document.documentElement.classList.add('js');
   if (!cards.length || typeof HTMLDialogElement !== 'function') return;
   var zh = document.documentElement.lang.indexOf('zh') === 0;
   var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css(\?.*)?$/, '') + 'assets/clips/';
-  var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
   var dialog = document.createElement('dialog');
   dialog.className = 'clip-dialog';
   dialog.innerHTML = '<div class="window-bar"><i></i><i></i><i></i><span></span>' +
     '<button type="button" class="clip-close" aria-label="' + (zh ? '关闭' : 'Close') + '">×</button></div>' +
-    '<video muted loop playsinline controls></video>' +
+    '<video muted loop playsinline disablepictureinpicture></video>' +
     '<div class="clip-text"><p></p><a></a></div>';
   document.body.appendChild(dialog);
   var video = dialog.querySelector('video');
@@ -265,10 +281,9 @@ document.documentElement.classList.add('js');
       a.href = card.getAttribute('href');
       a.textContent = zh ? '在用户指南中阅读 →' : 'Read about it in the user guide →';
       video.poster = base + card.dataset.clip + '.webp';
-      video.src = base + card.dataset.clip + (webm ? '.webm' : '.mp4');
+      video.src = base + card.dataset.clip + bmClips.ext;
       dialog.showModal();
-      var go = video.play();
-      if (go && go.catch) go.catch(function () {});
+      bmClips.play(video, function () { if (dialog.open) video.play(); });
     });
   });
 })();
@@ -318,23 +333,35 @@ document.documentElement.classList.add('js');
   }
 
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var webm = document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
   var clips = document.querySelectorAll('video[data-clip-src]');
   if (clips.length && 'IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         var v = e.target;
+        if (e.isIntersecting) { v.dataset.seen = '1'; } else { delete v.dataset.seen; }
         if (e.isIntersecting) {
           // data-clip-still: a picture that moves, never a player; asked for
           // less motion (or not allowed to play), it stays its still frame.
           var still = 'clipStill' in v.dataset;
           if (calm && still) return;
-          if (!v.src) v.src = v.dataset.clipSrc + (webm ? '.webm' : '.mp4');
-          if (calm) { v.controls = true; } else { var p = v.play(); if (p && p.catch) p.catch(function () { if (!still) v.controls = true; }); }
+          if (!v.src) v.src = v.dataset.clipSrc + bmClips.ext;
+          if (calm) { v.controls = true; }
+          else if (still) { bmClips.play(v, function () { if (v.dataset.seen) v.play(); }); }
+          else { var p = v.play(); if (p && p.catch) p.catch(function () { v.controls = true; }); }
         } else { v.pause(); }
       });
     }, { threshold: 0.4 });
     clips.forEach(function (v) { io.observe(v); });
+    // A clip inside a link (the AI assistants card) is not the link: a click
+    // on it stays on the page, and starts it if the browser held it back.
+    clips.forEach(function (v) {
+      var frame = v.closest('figure') || v.parentNode;
+      if (!v.closest('a')) return;
+      frame.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (v.src && v.paused && !calm) v.play();
+      });
+    });
   }
 
   var rail = {};

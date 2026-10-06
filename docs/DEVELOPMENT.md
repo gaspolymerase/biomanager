@@ -1629,6 +1629,14 @@ teal in them).
   `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
   one another until someone picks a tab, and pause off screen. A tab's caption
   is in its `data-claim` and `data-more`.
+- **Clips play by themselves** on the front page and Features, with no
+  play button or controls (`bmClips` in `site.js`): Apple's browsers get
+  the `.mp4` (they can stall on WebM), the others the smaller `.webm`; a
+  clip the browser won't start on its own (Safari in Low Power Mode)
+  starts at the visitor's first tap, click or key anywhere on the page,
+  and the browser's own play button is hidden over them. With reduced
+  motion the stage and the AI card stay still (the stage plays the tab
+  someone picks); a Features window plays what was clicked.
 - **Features** has no screenshots: each database and each thing that works
   everywhere is a glass and neon card (`.nc`) drawn in the page, with its own
   colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the card on a dark
@@ -1655,7 +1663,8 @@ teal in them).
   motion). Under it its clip plays by itself while on screen, with no window to open: a
   `video[data-clip-src]`, which `site.js` loads and plays as the guide's
   clips. `data-clip-still` makes it a moving picture rather than a player:
-  it loops with no controls and clicks pass through to the card's link;
+  it loops with no controls, and a click on it stays on the page (the
+  rest of the card is the link) and starts it if the browser held it back;
   asked for less motion, or not allowed to play, it stays on its poster.
   The clip, `assistant.*`, is made by `scripts/assistant-clip.py`: the
   assistant's window is drawn in a page, BioManager is a fresh demo lab

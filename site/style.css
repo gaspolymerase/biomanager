@@ -366,13 +366,14 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 .stage-screen.swapping video { opacity: 0; transform: scale(0.985); }
-.stage-play {
-  position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 2;
-  display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; border: 0; cursor: pointer;
-  background: rgba(255, 255, 255, 0.92); color: #0b0f0e; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-}
-.stage-play svg { width: 26px; height: 26px; margin-left: 4px; fill: currentColor; }
-.stage-play[hidden] { display: none; }
+/* The clips on the front page and Features play by themselves: no browser's
+   own play button over them (Safari draws one when it holds a clip back). */
+.stage-screen video::-webkit-media-controls, .clip-dialog video::-webkit-media-controls,
+.ai-clip video::-webkit-media-controls { display: none !important; }
+.stage-screen video::-webkit-media-controls-start-playback-button, .clip-dialog video::-webkit-media-controls-start-playback-button,
+.ai-clip video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+.stage-screen video::-webkit-media-controls-overlay-play-button, .clip-dialog video::-webkit-media-controls-overlay-play-button,
+.ai-clip video::-webkit-media-controls-overlay-play-button { display: none !important; }
 
 .dock {
   display: flex; justify-content: center; align-items: flex-end; gap: 12px;
@@ -1250,10 +1251,9 @@ kbd {
 }
 .fl-gate svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fl-gate + .fl-tag { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); }
-.ai-clip { margin: 0; padding: 0 26px 26px; }
+.ai-clip { margin: 0; padding: 0 26px 26px; cursor: default; }
 .ai-clip .window { border-radius: 14px; }
 .ai-clip video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; background: #0e1312; pointer-events: none; }
-.ai-clip video::-webkit-media-controls { display: none !important; }
 @media (min-width: 680px) { .ai-clip { grid-column: 1 / -1; } }
 /* On a phone the path runs down the card. */
 @media (max-width: 769px) {
