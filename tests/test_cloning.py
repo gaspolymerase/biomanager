@@ -426,7 +426,11 @@ class TheWizardPage(AppTestCase):
             with self.subTest(method=method):
                 page = self.get_ok(self.m, f"/plasmids/assembly/?method={method}")
                 self.assertIn("Assemble a plasmid", page)
-                self.assertIn("EcoRI G^AATTC", page)
+                for taking in ("Whole plasmid", "A feature", "A region", "A cut fragment"):
+                    self.assertIn(taking, page)
+        # The enzymes are per plasmid now, so only Golden Gate's own choice
+        # is on the page itself.
+        self.assertIn("BsaI GGTCTC(1/5)", self.get_ok(self.m, "/plasmids/assembly/?method=golden_gate"))
         # An unknown method falls back rather than failing.
         self.assertIn("Assemble a plasmid", self.get_ok(self.m, "/plasmids/assembly/?method=magic"))
 
@@ -477,6 +481,21 @@ class TakingAPieceOffAPlasmid(AppTestCase):
 
     def test_an_enzyme_that_does_not_cut_says_so_rather_than_nothing(self):
         self.assertTrue(self.source(enzymes="EcoRV")["uncut"])
+
+    def test_it_offers_only_the_enzymes_that_cut_this_plasmid(self):
+        cutters = {e["name"]: e for e in self.source()["cutters"]}
+        # pUC19's own single cutters, the ones a catalogue lists for it.
+        for name in ("EcoRI", "HindIII", "BamHI", "PstI", "SalI", "XbaI", "SphI", "KpnI", "SacI", "ScaI"):
+            self.assertEqual(cutters[name]["sites"], 1, name)
+        self.assertNotIn("EcoRV", cutters)          # no site at all: not offered
+        self.assertNotIn("PacI", cutters)
+        self.assertEqual(cutters["EcoRI"]["at"], [397])
+        self.assertEqual(cutters["EcoRI"]["where"], "1 site")
+        self.assertEqual(cutters["EcoRI"]["label"], "EcoRI G^AATTC")
+        # The ones that cut once come first, so the useful ones are at the top.
+        counts = [e["sites"] for e in self.source()["cutters"]]
+        self.assertEqual(counts, sorted(counts))
+        self.assertTrue(any(e["sites"] > 1 for e in self.source()["cutters"]))
 
     def test_a_plasmid_with_no_sequence_is_not_a_source(self):
         empty = self.make_plasmid(self.m, uniq("pEmpty"))

@@ -64,6 +64,18 @@
 .assembly-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 
 /* --- the picker --- */
+.assembly-kinds { display: grid; gap: 5px; }
+.assembly-kinds .seg { justify-self: start; }
+.assembly-pieces { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: start; }
+.assembly-piece-map { width: 150px; height: 150px; }
+/* A hairline is too faint to read as a plasmid; the ring wants to be seen. */
+.assembly-piece-map .ring { fill: none; stroke: var(--color-ink-soft); stroke-width: 7; opacity: 0.5; }
+.assembly-piece-map .piece { fill: none; stroke: var(--color-brand-600); stroke-width: 7; }
+.assembly-piece-map .cut { fill: none; stroke: var(--color-danger-700); stroke-width: 6; }
+.assembly-piece-map .bp { font-size: 12px; font-weight: 600; fill: var(--color-ink); text-anchor: middle; }
+.assembly-piece-map .bp-sub { font-size: 9px; fill: var(--color-muted); text-anchor: middle; }
+@media (max-width: 560px) { .assembly-pieces { grid-template-columns: minmax(0, 1fr); } }
+
 .assembly-region { display: flex; align-items: flex-end; gap: 10px; }
 .assembly-region label { display: flex; flex-direction: column; gap: 4px; }
 .assembly-region input { width: 110px; }
@@ -72,6 +84,7 @@
   border-radius: var(--radius-md, 8px); }
 .assembly-enzyme { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; }
 .assembly-enzyme span { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; }
+.assembly-enzyme i { margin-left: auto; font-style: normal; font-size: 11px; color: var(--color-muted); }
 .assembly-problem { margin: 0; font-size: 12.5px; color: var(--color-danger-700); }
 
 /* The two list boxes in the picker (features, and the pieces of a digest):

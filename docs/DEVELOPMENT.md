@@ -546,7 +546,14 @@ crossing the origin keeps `start > end`.
   saying the assembly failed. `/plasmids/assembly/preview` answers the tray
   with the junctions, the product's features and that sentence after every
   change, so none of the biology is in `static/assembly.js`, which draws
-  the tray and a ring map of the product. **Create** makes an ordinary
+  the tray and a ring map of the product. The fragment picker asks
+  `/plasmids/assembly/source/<n>` what can be taken off one plasmid: its
+  features, and `cutters_of` — only the enzymes with a site in *that*
+  plasmid, with how many and where, fewest sites first, since forty enzymes
+  of which most do not cut is a list to read rather than a choice to make.
+  Picking enzymes draws each piece on a ring of the plasmid it came off,
+  the cuts marked, so you can see which part would come out before taking
+  it. **Create** makes an ordinary
   plasmid: the fragments' features at their new coordinates
   (`carry_features`, which keeps the part of a feature a cut runs through
   and notes it), a `part` annotation per fragment so the map shows the

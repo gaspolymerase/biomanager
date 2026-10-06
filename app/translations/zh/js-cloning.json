@@ -18,5 +18,9 @@
   "That is as many fragments as one assembly takes.": "一次组装最多就这么多片段。",
   "Choose a feature.": "请选择一个特征。",
   "Choose an enzyme to cut with.": "请选择用哪种酶切。",
-  "Choose which piece to take.": "请选择要取哪一段。"
+  "Choose which piece to take.": "请选择要取哪一段。",
+  "cuts at %(at)s": "切点在 %(at)s",
+  "%(n)s of them cut this plasmid": "其中 %(n)s 种能切这条质粒",
+  "no enzyme in the list cuts this plasmid": "列表里没有能切这条质粒的酶",
+  "of %(n)s bp": "共 %(n)s bp"
 }

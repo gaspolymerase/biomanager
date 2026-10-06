@@ -99,11 +99,14 @@
             {% for s in sources %}<option value="{{ s.number }}">{{ s.label }} · {{ s.length }} bp</option>{% endfor %}
           </select>
         </label>
-        <div class="dt-chips record-wide" role="group" aria-label="{{ _('What to take') }}">
-          <button type="button" class="dt-chip" data-pick-kind="whole" aria-pressed="true">{{ _('Whole plasmid') }}</button>
-          <button type="button" class="dt-chip" data-pick-kind="feature" aria-pressed="false">{{ _('A feature') }}</button>
-          <button type="button" class="dt-chip" data-pick-kind="region" aria-pressed="false">{{ _('A region') }}</button>
-          <button type="button" class="dt-chip" data-pick-kind="digest" aria-pressed="false">{{ _('A cut fragment') }}</button>
+        <div class="record-wide assembly-kinds">
+          <span class="field-label">{{ _('What to take') }}</span>
+          <div class="seg" role="group" aria-label="{{ _('What to take') }}">
+            <button type="button" class="seg-item is-active" data-pick-kind="whole" aria-pressed="true">{{ _('Whole plasmid') }}</button>
+            <button type="button" class="seg-item" data-pick-kind="feature" aria-pressed="false">{{ _('A feature') }}</button>
+            <button type="button" class="seg-item" data-pick-kind="region" aria-pressed="false">{{ _('A region') }}</button>
+            <button type="button" class="seg-item" data-pick-kind="digest" aria-pressed="false">{{ _('A cut fragment') }}</button>
+          </div>
         </div>
 
         <div class="record-wide" data-pick-panel="feature" hidden>
@@ -115,12 +118,15 @@
           <span class="text-[12px] text-muted" data-pick-span></span>
         </div>
         <div class="record-wide" data-pick-panel="digest" hidden>
-          <div class="assembly-enzymes" data-pick-enzymes>
-            {% for e in enzymes %}
-              <label class="assembly-enzyme"><input type="checkbox" value="{{ e.name }}"><span>{{ e.label }}</span></label>
-            {% endfor %}
+          {# Only the enzymes with a site in this plasmid, filled in by the
+             page from /plasmids/assembly/source (app/cloning_routes.py). #}
+          <span class="field-label">{{ _('Cut with') }} <span class="text-muted" data-pick-cutters></span></span>
+          <div class="assembly-enzymes" data-pick-enzymes></div>
+          <div class="assembly-pieces">
+            <select class="assembly-list" data-pick-piece size="5"></select>
+            <svg viewBox="0 0 150 150" class="assembly-piece-map" role="img"
+                 aria-label="{{ _('Where the piece sits on the plasmid') }}" data-pick-map></svg>
           </div>
-          <select class="assembly-list" data-pick-piece size="5"></select>
         </div>
 
         <label class="record-wide">{{ _('Its part in this') }}

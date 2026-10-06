@@ -309,6 +309,24 @@ def _enzyme_rows(names=None) -> list[dict]:
             for name in chosen if name in cloning.ENZYMES]
 
 
+def cutters_of(p: PlasmidRecord) -> list[dict]:
+    """The enzymes worth offering for this plasmid: the ones that have a site
+    in it, how many, and where they cut. Forty enzymes none of which cuts is
+    a list to read rather than a choice to make, and the one that cuts once
+    is usually the one you want, so the single cutters come first."""
+    sequence, circular = p.full_sequence or "", bool(p.is_circular)
+    found = []
+    for name, enzyme in cloning.ENZYMES.items():
+        sites = cloning.sites(sequence, circular, enzyme)
+        if not sites:
+            continue
+        found.append({"name": name, "label": enzyme.label, "sites": len(sites),
+                      "at": sorted((cut.at % len(sequence)) + 1 for cut in sites),
+                      "overhang": enzyme.overhang, "outside": enzyme.outside,
+                      "where": ngettext("%(num)s site", "%(num)s sites", len(sites))})
+    return sorted(found, key=lambda e: (e["sites"], e["name"]))
+
+
 @bp.route("/")
 def wizard():
     method = request.args.get("method", "digest_ligate")
@@ -320,7 +338,7 @@ def wizard():
         start = preload.plasmid_id if preload is not None and preload.full_sequence else None
         library = len(feature_library.entries(db_session))
     return render_template("plasmid_assembly.html", method=method, methods=cloning.METHODS, sources=sources,
-                           enzymes=_enzyme_rows(), golden_gate_enzymes=_enzyme_rows(cloning.GOLDEN_GATE_ENZYMES),
+                           golden_gate_enzymes=_enzyme_rows(cloning.GOLDEN_GATE_ENZYMES),
                            role_labels=role_labels(), start=start, library=library,
                            max_fragments=MAX_FRAGMENTS,
                            method_labels={m: method_label(m) for m in cloning.METHODS},
@@ -344,8 +362,8 @@ def source(number: int):
                    "enzymes": f.source.get("enzymes") or []}
                   for i, f in enumerate(pieces_of(p, names))] if names else []
         return jsonify({"ok": True, "number": p.plasmid_id, "label": _plasmid_label(p),
-                        "length": len(p.full_sequence or ""), "circular": bool(p.is_circular),
-                        "features": _named_features(p), "pieces": pieces,
+                        "length": length, "circular": bool(p.is_circular),
+                        "features": _named_features(p), "pieces": pieces, "cutters": cutters_of(p),
                         "uncut": bool(names) and not pieces})
 
 

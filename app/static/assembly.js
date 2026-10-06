@@ -101,42 +101,56 @@
      product is drawn as the same ring with a gap at the top. */
   const COLOURS = ['#60a5fa', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#fb923c', '#22d3ee', '#c084fc'];
 
-  function arc(radius, from, to) {
+  /* An arc of the ring, `from` and `to` as fractions of the way round,
+     clockwise from twelve o'clock. */
+  function arc(centre, radius, from, to) {
     const point = (f) => {
       const angle = (f * 2 - 0.5) * Math.PI;
-      return [130 + radius * Math.cos(angle), 130 + radius * Math.sin(angle)];
+      return [centre + radius * Math.cos(angle), centre + radius * Math.sin(angle)];
     };
     const [x1, y1] = point(from);
     const [x2, y2] = point(Math.min(to, from + 0.9999));
-    return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${radius} ${radius} 0 ${to - from > 0.5 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 ${to - from > 0.5 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  }
+
+  /* The whole way round is a circle, not an arc: an arc whose two ends are
+     the same point draws nothing at all, which left the ring invisible. */
+  function ring(add, centre, radius, circular) {
+    if (circular) return add('circle', { class: 'ring', cx: centre, cy: centre, r: radius });
+    return add('path', { class: 'ring', d: arc(centre, radius, 0.012, 0.988) });
+  }
+
+  const svgns = 'http://www.w3.org/2000/svg';
+
+  function drawing(into) {
+    into.textContent = '';
+    return (tag, attrs, text) => {
+      const node = document.createElementNS(svgns, tag);
+      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+      if (text != null) node.textContent = text;
+      into.append(node);
+      return node;
+    };
   }
 
   function drawMap() {
     const preview = lastPreview;
-    map.textContent = '';
-    if (!preview || !preview.length) return;
+    if (!preview || !preview.length) { map.textContent = ''; return; }
     const total = preview.length;
     const circular = preview.circular;
-    const svgns = 'http://www.w3.org/2000/svg';
-    const add = (tag, attrs, text) => {
-      const node = document.createElementNS(svgns, tag);
-      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
-      if (text != null) node.textContent = text;
-      map.append(node);
-      return node;
-    };
+    const add = drawing(map);
     const gap = circular ? 0 : 0.012;
-    add('path', { class: 'ring', d: arc(96, gap, 1 - gap) });
+    ring(add, 130, 96, circular);
     (preview.parts || []).forEach((part, i) => {
       const from = part.start / total;
       const to = (part.end + 1) / total;
-      add('path', { class: 'part', d: arc(96, from + gap, Math.max(to - gap, from + gap + 0.002)),
+      add('path', { class: 'part', d: arc(130, 96, from + gap, Math.max(to - gap, from + gap + 0.002)),
                     stroke: COLOURS[i % COLOURS.length] });
     });
     (preview.features || []).forEach((feature) => {
       const from = feature.start / total;
       const to = (feature.end + 1) / total;
-      add('path', { class: 'mark', d: arc(106, from, Math.max(to, from + 0.003)) });
+      add('path', { class: 'mark', d: arc(130, 106, from, Math.max(to, from + 0.003)) });
     });
     add('text', { class: 'bp', x: 130, y: 127 }, t('%(n)s bp', { n: total }));
     add('text', { class: 'bp-sub', x: 130, y: 142 },
@@ -227,6 +241,8 @@
     role: picker && picker.querySelector('[data-pick-role]'),
     problem: picker && picker.querySelector('[data-pick-problem]'),
     enzymes: picker && picker.querySelector('[data-pick-enzymes]'),
+    cutters: picker && picker.querySelector('[data-pick-cutters]'),
+    pieceMap: picker && picker.querySelector('[data-pick-map]'),
   };
   let kind = 'whole';
   let source = null;
@@ -247,6 +263,54 @@
     return Array.from(pick.enzymes ? pick.enzymes.querySelectorAll('input:checked') : []).map((box) => box.value);
   }
 
+  /* Only the enzymes that cut the plasmid in hand, fewest sites first: a
+     single cutter is usually the one you want, and forty that mostly do not
+     cut is a list to read rather than a choice to make. */
+  function showCutters(cutters) {
+    const ticked = new Set(chosenEnzymes());
+    pick.enzymes.textContent = '';
+    cutters.forEach((enzyme) => {
+      const label = document.createElement('label');
+      label.className = 'assembly-enzyme';
+      label.title = t('cuts at %(at)s', { at: enzyme.at.join(', ') });
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = enzyme.name;
+      box.checked = ticked.has(enzyme.name);
+      const site = document.createElement('span');
+      site.textContent = enzyme.label;
+      const where = document.createElement('i');
+      where.textContent = enzyme.where;
+      label.append(box, site, where);
+      pick.enzymes.append(label);
+    });
+    pick.cutters.textContent = cutters.length
+      ? t('%(n)s of them cut this plasmid', { n: cutters.length })
+      : t('no enzyme in the list cuts this plasmid');
+  }
+
+  /* Where the chosen piece sits on the plasmid it came off: the whole ring
+     faint, the piece itself drawn over it, and a tick at each cut. */
+  function drawPiece() {
+    if (!pick.pieceMap) return;
+    const piece = source && (source.pieces || []).find((x) => String(x.piece) === pick.piece.value);
+    if (!piece || !source.length) { pick.pieceMap.textContent = ''; return; }
+    const total = source.length;
+    const add = drawing(pick.pieceMap);
+    ring(add, 75, 54, source.circular);
+    const from = (piece.start - 1) / total;
+    // A 51 bp piece of a 2.7 kb plasmid is half a degree: draw it long
+    // enough to see, or the preview shows nothing where the piece is.
+    const sweep = Math.max(piece.length / total, 0.02);
+    add('path', { class: 'piece', d: arc(75, 54, from, from + sweep) });
+    (source.pieces || []).forEach((other) => {
+      const at = (other.start - 1) / total;
+      add('path', { class: 'cut', d: arc(75, 64, at - 0.004, at + 0.004) });
+    });
+    add('text', { class: 'bp', x: 75, y: 73 }, t('%(n)s bp', { n: piece.length }));
+    add('text', { class: 'bp-sub', x: 75, y: 86 }, t('of %(n)s bp', { n: total }));
+  }
+
   function problem(text) {
     pick.problem.textContent = text || '';
     pick.problem.hidden = !text;
@@ -263,6 +327,7 @@
     if (mine !== asked) return;
     if (!answer.ok) { problem(answer.error || ''); return; }
     source = answer;
+    showCutters(answer.cutters || []);
     pick.feature.textContent = '';
     answer.features.forEach((feature) => {
       const option = document.createElement('option');
@@ -287,6 +352,7 @@
     });
     if (answer.uncut) problem(t('Those enzymes do not cut this plasmid.'));
     if (pick.piece.options.length) pick.piece.selectedIndex = 0;
+    drawPiece();
     pick.start.max = pick.end.max = String(answer.length);
     if (Number(pick.end.value) <= 1) pick.end.value = String(answer.length);
     span();
@@ -304,11 +370,13 @@
     picker.addEventListener('click', (event) => {
       const chip = event.target.closest('[data-pick-kind]');
       if (chip) { kind = chip.dataset.pickKind; panels(); loadSource(); return; }
+      if (event.target.closest('[data-pick-piece]')) drawPiece();
       if (event.target.closest('[data-pick-ok]')) { addFromPicker(); }
     });
     picker.addEventListener('change', (event) => {
       if (event.target.closest('[data-pick-plasmid]') || event.target.closest('[data-pick-enzymes]')) loadSource();
       if (event.target.closest('[data-pick-start]') || event.target.closest('[data-pick-end]')) span();
+      if (event.target.closest('[data-pick-piece]')) drawPiece();
     });
   }
 

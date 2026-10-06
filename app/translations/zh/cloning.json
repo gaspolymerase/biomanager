@@ -67,5 +67,9 @@
   "Marked %(num)s feature from the library.": "从元件库标出了 %(num)s 个特征。",
   "Marked %(num)s features from the library.": "从元件库标出了 %(num)s 个特征。",
   "%(num)s primer saved to order, drawn on %(drawn)s map.": "已保存 %(num)s 条待订购的引物，标在 %(drawn)s 张图谱上。",
-  "%(num)s primers saved to order, drawn on %(drawn)s maps.": "已保存 %(num)s 条待订购的引物，标在 %(drawn)s 张图谱上。"
+  "%(num)s primers saved to order, drawn on %(drawn)s maps.": "已保存 %(num)s 条待订购的引物，标在 %(drawn)s 张图谱上。",
+  "Cut with": "用什么酶切",
+  "Where the piece sits on the plasmid": "这一段在质粒上的位置",
+  "%(num)s site": "%(num)s 个位点",
+  "%(num)s sites": "%(num)s 个位点"
 }
