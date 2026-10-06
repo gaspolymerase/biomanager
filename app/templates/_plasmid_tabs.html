@@ -1,0 +1,12 @@
+{# Plasmids and the databases that go with it — primers, glycerol stocks,
+   viruses — as one area with a tab each, in the order the work flows
+   (PLASMID_TAB_KINDS in app.py). Shown on the Plasmids page and on each of
+   those sheets; nothing when the lab has none of them. #}
+{% if plasmid_tabs|length > 1 and plasmid_tabs|selectattr('active')|first %}
+  <nav class="seg mb-3" aria-label="{{ _('Plasmids and what goes with them') }}">
+    {% for tab in plasmid_tabs %}
+      <a class="seg-item{% if tab.active %} is-active{% endif %}" href="{{ tab.url }}"
+         {% if tab.active %}aria-current="page"{% endif %}>{{ icon(tab.icon) }}{{ tab.label|tr }}</a>
+    {% endfor %}
+  </nav>
+{% endif %}

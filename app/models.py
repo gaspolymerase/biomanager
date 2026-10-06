@@ -524,6 +524,93 @@ class PlasmidRecord(Base):
     updated_by: Mapped[str] = mapped_column(String(80), default="")
 
 
+class PlasmidSequenceVersion(Base):
+    """One state a plasmid's sequence has had (app/plasmid_versions.py):
+    what it was, who made it and how, so an earlier one can be restored.
+    Tied to the plasmid by its row id with no foreign key, so a deleted
+    plasmid that Batch history brings back gets its versions back too."""
+    __tablename__ = "plasmid_sequence_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    saved_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    saved_by: Mapped[str] = mapped_column(String(80), default="")
+    # How it came to be: upload, editor, hand, clear, restore, baseline.
+    how: Mapped[str] = mapped_column(String(20), default="")
+    detail: Mapped[str] = mapped_column(String(200), default="")
+    full_sequence: Mapped[str] = mapped_column(Text, default="")
+    is_circular: Mapped[bool] = mapped_column(Boolean, default=True)
+    features_json: Mapped[str] = mapped_column(Text, default="")
+    sequence_format: Mapped[str] = mapped_column(String(20), default="")
+
+
+class PlasmidParent(Base):
+    """What a plasmid was made from (app/plasmid_lineage.py): a parent in the
+    lab (parent_row_id), or one from outside it (parent_label only, e.g.
+    "Addgene #11150"), in a role, by a method, with the details an assembly
+    records (enzymes, coordinates, primers). Row ids without foreign keys,
+    as for sequence versions, so undoing a delete brings links back."""
+    __tablename__ = "plasmid_parents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    child_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    parent_row_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    parent_label: Mapped[str] = mapped_column(String(200), default="")
+    # backbone, insert, template, donor, other
+    role: Mapped[str] = mapped_column(String(20), default="other")
+    # digest_ligate, gibson, golden_gate, pcr, mutagenesis, gateway, synthesis, other, or ""
+    method: Mapped[str] = mapped_column(String(30), default="")
+    details_json: Mapped[str] = mapped_column(Text, default="{}")
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+
+
+class PlasmidFile(Base):
+    """A file kept with a plasmid: a sequencing trace (.ab1), a gel photo, a
+    map from the vendor. The file itself is in the uploads folder
+    (app/services.save_uploaded_file); this row is what the page lists. The
+    plasmid's row id with no foreign key, as for versions, so undoing a
+    plasmid's delete brings its files back with it."""
+    __tablename__ = "plasmid_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    # trace (a sequencing read), image (a gel or a colony plate), document
+    kind: Mapped[str] = mapped_column(String(20), default="document")
+    name: Mapped[str] = mapped_column(String(200), default="")
+    path: Mapped[str] = mapped_column(String(300), default="")
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    notes: Mapped[str] = mapped_column(String(300), default="")
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    uploaded_by: Mapped[str] = mapped_column(String(80), default="")
+
+
+class FeatureLibraryEntry(Base):
+    """A named element the lab reuses, by its sequence (app/feature_library.py):
+    Detect features on any plasmid's map finds it there. Collected from the
+    lab's annotated plasmids or added from one; `seq_hash` keeps one entry
+    per sequence."""
+    __tablename__ = "feature_library"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), default="")
+    type: Mapped[str] = mapped_column(String(40), default="misc_feature")
+    # viral, promoter, coding, selection, origin, terminator, other
+    category: Mapped[str] = mapped_column(String(20), default="other", index=True)
+    sequence: Mapped[str] = mapped_column(Text, default="")   # uppercase, as the feature reads 5′→3′
+    seq_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    color: Mapped[str] = mapped_column(String(20), default="")
+    notes_json: Mapped[str] = mapped_column(Text, default="{}")
+    # The plasmid it was taken from; no foreign key, as for versions.
+    source_row_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Empty when the lab's own maps gave it; else where it came from, e.g.
+    # the common-features pack (app/feature_pack.py).
+    source_name: Mapped[str] = mapped_column(String(120), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class NotebookTab(Base):
     __tablename__ = "notebook_tabs"
 

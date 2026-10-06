@@ -244,7 +244,34 @@ plasmid can be **Lab common**: anyone can edit it (or, shared with a
 project group, its members), while its owner still decides whose it is. A plasmid's page lists the notebook pages that
 `@plasmid` it, and its address is its number (plasmid #12 is `/plasmid/12`).
 In the sheet, **Sequence** beside a plasmid's number opens its sequence and
-map (**Add sequence** when it has none yet).
+map (**Add sequence** when it has none yet). **Download** gives it as
+GenBank or FASTA, and **Versions** keeps every earlier sequence to
+restore. **Made from** records its backbone, insert or template (in the
+lab or from Addgene) and how it was made; its page shows what it was made
+from and what was made from it, with a family tree. **Assemble a
+plasmid** builds the next one from the ones you have: fill a tray with
+fragments — a whole plasmid, one feature, a region, or a piece an enzyme
+leaves — and put them together by **digest and ligation**, by **Gibson /
+NEBuilder HiFi**, or by **Golden Gate**. Every junction shows its own
+bases, and one line says what is wrong and which end it is ("Fragment 2's
+3′ end has no overlap with fragment 3") before you make anything. The
+product arrives as an ordinary plasmid, with every fragment's features at
+their new places, each fragment marked on its map, **Made from** filled in
+for all of them, and — for a Gibson — the primers it needs designed,
+costed by melting temperature and waiting in the Primers database to
+order. Primers, glycerol stocks and viruses each name the plasmid they came
+from, so they are tabs of the Plasmids area rather than four entries in
+the sidebar. The **Feature library**
+keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
+by sequence, from any well-annotated map, and **Detect features** marks
+them on another plasmid; a lab that installs [pLannotate](https://github.com/mmcguffi/pLannotate) on its server also gets
+**Annotate with pLannotate**, which finds elements by alignment rather than
+exact matching. **Files** on its Storage tab keeps
+the sequencing reads, gel photos and datasheets that belong with it, and
+they come along in Export my data. A primer drawn on the
+map is kept in the Primers database, linked to the plasmid; the page lists
+where each binds, and **Copy for ordering** or **Export for ordering**
+gives the ticked ones to your oligo supplier.
 
 <p align="center">
   <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
@@ -261,8 +288,9 @@ change:
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
 | ⚗️ **Reagents** | quantity, concentration, CAS number, hazard, supplier and lot, and expiry dates with warnings |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
-| 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, whose page lists every virus made from it |
-| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box |
+| 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
+| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
+| 🧪 **Glycerol stocks** | bacteria carrying each plasmid: the plasmid, strain, colony, resistance, how it was checked and the date frozen, and its place in a −80 °C box; the plasmid's page lists its stocks and where each is |
 | 🧫 **Cell lines** | frozen vials of each line and clone: species, parent, passage, freeze date, cells per vial, mycoplasma result and date, and where each vial sits in the LN₂ boxes |
 | 📝 **Custom** | whatever you define |
 
@@ -1058,7 +1086,8 @@ whether members may (guests never). An admin's copy is the whole lab; a
 member's holds what they can see in the app, without anyone's password,
 other people's private notebook pages or personal databases, or the Audit
 log. **Settings → Export my data** downloads your own mice, cages,
-weights, experiments, plasmids and notebook pages as a zip at any time.
+weights, experiments, plasmids (each sequence as a GenBank file, with its
+features) and notebook pages as a zip at any time.
 
 ---
 

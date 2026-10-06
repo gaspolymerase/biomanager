@@ -238,6 +238,7 @@ AVAILABLE_BY_KIND = {
     "viruses": {"in stock", "low"},
     "primers": {"in stock", "low"},
     "cell_lines": {"in stock"},
+    "glycerol_stocks": {"in stock", "low"},
     "orders": {"requested", "ordered"},
 }
 
@@ -624,15 +625,25 @@ def plasmid_links(session, values) -> dict[str, dict]:
     numbers = {int(v) for v in values if str(v).strip().isdigit()}
     if not numbers:
         return {}
-    return {str(p.plasmid_id): {"row_id": p.id, "number": p.plasmid_id, "name": p.name or ""}
+    return {str(p.plasmid_id): {"row_id": p.id, "number": p.plasmid_id, "name": p.name or "",
+                                "has_sequence": bool(p.full_sequence)}
             for p in session.scalars(select(PlasmidRecord).where(PlasmidRecord.plasmid_id.in_(numbers)))}
 
 
-def made_from_plasmid(session, plasmid_number: int) -> list[dict]:
+# Databases whose plasmid column says what a record holds rather than what
+# was made from it; the plasmid's page lists them on cards of their own.
+NOT_MADE_FROM = ("primers", "glycerol_stocks")
+
+
+def made_from_plasmid(session, plasmid_number: int, kinds: tuple[str, ...] | None = None) -> list[dict]:
     """The records (a virus, say) that name this plasmid in a plasmid column,
-    in the inventories this person can see: for the plasmid's own page."""
+    in the inventories this person can see: for the plasmid's own page.
+    `kinds` keeps databases of those kinds only; without it, those in
+    NOT_MADE_FROM are left out."""
     out = []
     for module in list_modules(session):
+        if (module.kind not in kinds) if kinds is not None else (module.kind in NOT_MADE_FROM):
+            continue
         mv = view(module)
         keys = [f["key"] for f in plasmid_fields(mv)]
         if not keys:
@@ -643,7 +654,7 @@ def made_from_plasmid(session, plasmid_number: int) -> list[dict]:
             attrs = item.attrs_dict
             if any(str(attrs.get(k, "")).strip() == str(plasmid_number) for k in keys):
                 out.append({"module": module, "item": item, "noun": mv.item_noun,
-                            "available": is_available(mv, item.status)})
+                            "available": is_available(mv, item.status), "where": rack_label(item)})
     return out
 
 

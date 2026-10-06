@@ -120,14 +120,62 @@
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Plasmids</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/plasmid.webp" data-clip-src="../assets/clips/plasmid"></video></div></figure>
 
       <ul>
+        <li>At the top, tabs for the databases that go with plasmids — <b>Primers</b>, <b>Glycerol stocks</b>, <b>Viruses</b> —
+          in the order the work runs. Each is an ordinary database with its own sheet (<a href="samples-and-orders.html">see them</a>);
+          they share one place in the sidebar because each names the plasmid it came from.</li>
         <li>Show them as a <b>Table</b>, by storage <b>Boxes</b>, or as a <b>List</b>; chips for <i>Mine</i>, <i>Has sequence</i>, <i>In a box</i>.</li>
         <li><b>Sequence</b>, beside each plasmid's number in the table, opens its sequence and map (<b>Add sequence</b> when it has
           none yet); the number opens the same page.</li>
         <li><b>New plasmid</b> takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) —
-          or paste a list of names to make several. Drop in a SnapGene <code>.dna</code>, GenBank, FASTA or plain-text sequence.</li>
+          or paste a list of names to make several. Drop in a SnapGene <code>.dna</code>, GenBank, FASTA or plain-text sequence: its name, features and every
+          annotation note come with it, and a file of several sequences keeps the first and says so.</li>
         <li>Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if
-          you like; <b>Storage</b> and <b>Properties</b> are the other tabs. <b>Storage</b> also lists the viruses made from the plasmid
+          you like. <b>Download</b> above the map gives it as GenBank (with every feature) or FASTA. <b>Versions</b>, below the map, lists every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.
+          <b>Storage</b> and <b>Properties</b> are the other tabs.
+          On <b>Properties</b>, <b>Made from</b> records its backbone, insert or template (a plasmid in the lab, by number or name,
+          or one from outside it such as <i>Addgene #11150</i>) and how it was made; the page then shows <b>Made from</b> and
+          <b>Used to make</b> above the map, and a <b>Family tree</b> both ways. <b>Storage</b> also lists its <a href="samples-and-orders.html">glycerol stocks</a>, with the box each is in, and the viruses made from it
           (<a href="samples-and-orders.html">Viruses</a>). Its address carries its number: plasmid #12 is <code>…/plasmid/12</code>.</li>
+        <li>The <b>Feature library</b> (a link at the top of Plasmids) keeps the lab's elements by sequence: promoters, ITRs and LTRs,
+          WPRE, resistance genes, tags. <b>Add to library</b>, above a well-annotated map (a SnapGene or Addgene file, say), keeps its
+          named features there; an admin can <b>Collect from every plasmid</b>. On the library page, <b>Read elements from files</b>
+          takes them straight from annotated files — the GenBank a repository gives you, a SnapGene <code>.dna</code>, a vendor's map —
+          several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because
+          a sequence typed from memory and wrong by one base would mislabel every map in the lab. An admin can also fetch the
+          <b>common-features pack</b> — about 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open
+          research archive when you ask for it (about a minute; the page shows it when it is in). Its authors built it by exporting a
+          commercial program's published library, so check anything you rely on; elements you added yourself always win over it.
+          Search the library by name or by sequence. On any other plasmid, <b>Detect features</b> marks
+          each library element wherever it is, on either strand and across the origin, and keeps the map as it was in <b>Versions</b>.</li>
+        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map, builds the next plasmid out of the
+          ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases,
+          or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together
+          three ways: <b>digest and ligate</b> (cut with the same enzymes and let the sticky ends meet),
+          <b>Gibson / NEBuilder HiFi</b> (neighbouring fragments share twenty-odd bases where they meet; the wizard
+          designs the primers that add them, each with its melting temperature) or <b>Golden Gate</b> (BsaI, BsmBI or
+          BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). Each junction
+          shows its own bases, and one line tells you what is wrong and which end it is — <i>Fragment 2's 3′ end has no
+          overlap with fragment 3</i> — rather than that it did not work. A Golden Gate is refused when two junctions
+          take the same overhang, when one is another backwards, or when one reads the same on both strands, because
+          each of those puts the pieces together in more than one way. You see the product's map, its length and every
+          fragment in it before anything is made. <b>Create the plasmid</b> then makes an ordinary plasmid: the features
+          of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so),
+          each fragment marked on the map so you can see the joins, <b>Made from</b> filled in for every plasmid it came
+          out of with the enzymes and coordinates used, the first entry in its <b>Versions</b>, and the library's
+          elements marked if you asked. A Gibson's primers are saved in the <a href="samples-and-orders.html">Primers</a>
+          database marked <i>to order</i> and drawn on the map of the plasmid each one amplifies, so <b>Copy for
+          ordering</b> picks them up with the rest.</li>
+        <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
+          <b>Annotate with pLannotate</b> then appears above the map. It finds elements by comparing sequences rather than matching
+          them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
+          miss. Everything it marks is kept in <b>Versions</b>, so it can be undone.</li>
+        <li><b>Files</b>, on <b>Storage</b>, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it,
+          gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an
+          admin, can take it off again. They come with your data in <b>Export my data</b>.</li>
+        <li>A primer you draw on the map (select bases, then <b>Edit → Create → Primer</b>) is also kept in the lab's
+          <a href="samples-and-orders.html">Primers</a> database, marked <i>to order</i>, with the plasmid in its <b>Plasmid</b> column.
+          The <b>Primers</b> card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
+          <b>Copy for ordering</b> (name and sequence, one per line, to paste into a supplier's form) or <b>Export for ordering</b> (a CSV).</li>
         <li>Each tube keeps its miniprep's <b>Concentration</b> (ng/µL) and <b>260/280</b>, in the sheet and on its <b>Storage</b> tab, which
           also lists the notebook pages that link it.</li>
         <li><b>Belongs to</b>: <i>Personal</i>, or <i>Lab common</i> — anyone can edit it (a shared stock plasmid), while only its owner or

@@ -157,12 +157,14 @@ PRESETS: dict[str, dict] = {
         "features": ["storage", "sharing", "quantity", "supplier", "received"],
         "category_label": "Use",
         "categories": ["PCR", "qPCR", "sequencing", "cloning", "genotyping", "mutagenesis", "probe", "gRNA", "other"],
-        "statuses": ["ordered", "in stock", "low", "used up", "discarded"],
+        "statuses": ["to order", "ordered", "in stock", "low", "used up", "discarded"],
         "fields": [
             {"key": "sequence", "label": "Sequence (5′→3′)", "type": "text", "icon": "dna", "width": 204},
             {"key": "direction", "label": "Direction", "type": "select", "options": ["forward", "reverse", "probe"],
              "icon": "signpost", "width": 80},
             {"key": "target", "label": "Target", "type": "text", "icon": "target", "width": 92},
+            # The plasmid it binds (app/primer_records.py): primers drawn on a map land here.
+            {"key": "template", "label": "Plasmid", "type": "plasmid", "icon": "plasmid", "width": 120},
             {"key": "pair", "label": "Pair", "type": "text", "icon": "link", "width": 104},
             {"key": "length", "label": "Length", "type": "number", "icon": "count", "width": 64},
             {"key": "gc", "label": "GC %", "type": "number", "icon": "gauge", "width": 60},
@@ -171,6 +173,27 @@ PRESETS: dict[str, dict] = {
             {"key": "stock_um", "label": "Stock (µM)", "type": "number", "icon": "amount", "width": 76},
             {"key": "purification", "label": "Purification", "type": "select",
              "options": ["desalted", "cartridge", "HPLC", "PAGE"], "icon": "flask", "width": 88, "in_table": False},
+        ],
+    },
+    # A plasmid kept in bacteria: its page lists them (Glycerol stocks, on Storage).
+    "glycerol_stocks": {
+        "label": "Glycerol stocks",
+        "icon": "bacterium",
+        "item_noun": "glycerol stock", "item_noun_plural": "glycerol stocks",
+        "blurb": "Bacteria carrying each plasmid, frozen in glycerol: the plasmid, strain, colony, how it was checked, "
+                 "and where each tube sits in the −80 °C boxes.",
+        "features": ["storage", "sharing"],
+        "category_label": "Strain",
+        "categories": ["DH5α", "Stbl3", "TOP10", "DH10B", "XL1-Blue", "NEB Stable", "ccdB Survival", "BL21(DE3)", "other"],
+        "statuses": ["in stock", "low", "used up", "discarded"],
+        "fields": [
+            {"key": "plasmid", "label": "Plasmid", "type": "plasmid", "icon": "plasmid", "width": 128},
+            {"key": "colony", "label": "Colony / clone", "type": "text", "icon": "tag", "width": 92},
+            {"key": "resistance", "label": "Resistance", "type": "text", "icon": "resistance", "width": 92},
+            {"key": "verified", "label": "Checked by", "type": "select",
+             "options": ["not checked", "digest", "colony PCR", "Sanger", "whole plasmid"], "icon": "success", "width": 104},
+            {"key": "frozen_on", "label": "Frozen", "type": "date", "icon": "calendar", "width": 112},
+            {"key": "glycerol", "label": "Glycerol %", "type": "number", "icon": "droplet", "width": 76, "in_table": False},
         ],
     },
     "cell_lines": {

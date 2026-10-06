@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>样本、采购、试剂、抗体、病毒 — BioManager 用户指南</title>
-  <meta name="description" content="样本、采购、试剂、抗体、病毒、引物和细胞系。">
+  <meta name="description" content="样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/zh/guide/samples-and-orders">
   <meta property="og:title" content="样本、采购、试剂、抗体、病毒 — BioManager 用户指南">
-  <meta property="og:description" content="样本、采购、试剂、抗体、病毒、引物和细胞系。">
+  <meta property="og:description" content="样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
@@ -116,10 +116,11 @@
     <!-- page -->
     <p class="eyebrow">数据库</p>
     <h1>样本、订购、试剂、抗体、病毒</h1>
-    <p class="summary">样本、采购、试剂、抗体、病毒、引物和细胞系。</p>
+    <p class="summary">样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 样本、订购、试剂、抗体、病毒</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/orders.webp" data-clip-src="../../assets/clips/orders"></video></div></figure>
 
-      <p>同一套机制，八种起点，各有自己的列和状态：</p>
+      <p>同一套机制，九种起点，各有自己的列和状态。病毒、引物和甘油菌都要写明来源质粒，
+        所以它们和<a href="plasmids.html">质粒</a>合为一个区域的几个标签页，不再各自单独出现在侧边栏：</p>
       <table class="gtable">
         <tr><th>样本</th><td>组织和材料，关联到它所来自的动物，存放在室温、4 °C、−20 °C、−80 °C 或液氮（LN₂）中的冻存
           盒位置上，测量值以数字记录：<i>Conc.</i>（浓度）及其单位、<i>260/280</i>、<i>260/230</i>、<i>Volume (µL)</i>（体积）。
@@ -130,11 +131,16 @@
           已丢弃。</td></tr>
         <tr><th>抗体</th><td>宿主、克隆性、克隆号、偶联物、反应种属、应用、稀释度、亚型、RRID，以及每管放在哪里。</td></tr>
         <tr><th>病毒</th><td>AAV、慢病毒、狂犬病毒及其他载体：血清型、制备所用的质粒（<b>制备自</b>（Made from））、启动子、
-          表达内容、滴度、生物安全等级、制备日期，以及每份分装在 −80 °C 冻存盒中的位置。状态：有库存、不足、用完、已丢弃。</td></tr>
+          表达内容、滴度、生物安全等级、制备日期，以及每份分装在 −80 °C 冻存盒中的位置。点质粒旁边的 DNA 图标，
+          可以查看它的序列和图谱（只读；要编辑请打开质粒自己的页面）。状态：有库存、不足、用完、已丢弃。</td></tr>
         <tr><th>引物与寡核苷酸</th><td>序列（5′→3′）、方向、靶标、配对引物、储存浓度 µM 和修饰。<i>Length</i>（长度）、
           <i>GC %</i> 和 <i>Tm</i> 由序列自动算出（最近邻法，50 mM Na⁺，250 nM）。<b>添加引物对</b>（Add primer pair）一次建好
-          <i>名称</i>-F 和 <i>名称</i>-R，互相注明对方，并排放在盒中。状态：已订购、有库存、不足、用完、
+          <i>名称</i>-F 和 <i>名称</i>-R，互相注明对方，并排放在盒中。在质粒图谱上画的引物会自动出现在这里，
+          <b>质粒</b>一列填着那个质粒。勾选引物后用<b>复制以订购</b>或<b>导出订购表</b>交给公司。状态：待订购、已订购、有库存、不足、用完、
           已丢弃。</td></tr>
+        <tr><th>甘油菌</th><td>带有某个质粒的细菌甘油冻存：质粒（<b>质粒</b>）、菌株、克隆号、
+          抗性、验证方式（酶切、菌落 PCR、Sanger 测序、全质粒测序）、冻存日期，以及在 −80 °C 冻存盒中的位置。
+          质粒的<b>存放</b>标签页会列出它的甘油菌和各自所在的盒子。状态：有库存、不足、用完、已丢弃。</td></tr>
         <tr><th>细胞系</th><td>每个细胞系或克隆的冻存管：物种、亲本、代数、冻存日期、每管细胞数、培养基、
           筛选、支原体检测结果和日期，以及在液氮冻存盒中的位置。状态：有库存、已复苏、用完、已丢弃。</td></tr>
         <tr><th>自定义列表</th><td>完全由你定义。</td></tr>

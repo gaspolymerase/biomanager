@@ -444,7 +444,7 @@ pages are in `app/lab_routes.py`.
   makes *name*-F and *name*-R through `_item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
-  setup survey) include `primers` and `cell_lines`; Samples has number
+  setup survey) include `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
   columns for what was measured (`SAMPLE_MEASURES`), which revision 0008
   adds to Samples databases made earlier unless a column of that key or
   name is there. The same revision adds `plasmids.concentration`
@@ -463,6 +463,180 @@ pages are in `app/lab_routes.py`.
   `order_to_reagents` redirects to the new record with `?open=<id>`. These
   one-shot parameters are removed from the address on load and from the
   referrer in `_back()`.
+
+## Plasmids and their sequences
+
+A plasmid's sequence is `plasmids.full_sequence` (uppercase IUPAC, no
+spaces), `is_circular` and `features_json`: every annotation the map holds,
+features without a `kind` and primers, translations and parts with one
+(`ANNOTATION_KINDS` in `app.py`). Coordinates are 0-based inclusive; one
+crossing the origin keeps `start > end`.
+
+- **Import** (`app/sequence_parser.py`, no BioPython): SnapGene `.dna`
+  (packets: 0x00 sequence and topology, 0x0A features, 0x06 notes, whose
+  `CustomMapLabel` names the plasmid and whose description fills an empty
+  Notes), GenBank and FASTA, or pasted bases. Every qualifier is kept, as
+  the editor's `notes` shape `{key: [values]}` (`qualifier_notes`, up to
+  `NOTE_LIMIT` characters each), and a `/translation` rejoins without
+  spaces. The LOCUS line's topology is read whatever its name does, and a
+  name run into the length is split off once the sequence's length is
+  known. A byte-order mark and lines before LOCUS are ignored. A file of
+  several records keeps the first, and `records` says how many there were
+  (`_several_records` warns).
+- **Saves:** the map (Open Vector Editor, `/plasmids/<id>/sequence-save`,
+  after every edit), the hand edit, a file, and Clear. The editor's save
+  refuses anything but IUPAC letters (`is_iupac`) and an empty sequence.
+- **Versions** (`app/plasmid_versions.py`, `plasmid_sequence_versions`,
+  revision 0019): each of those records the state it leaves (`record`, with
+  `how`: upload, editor, hand, clear, restore); a sequence from before
+  version history is kept as `baseline` before its first change
+  (`before_change`). One person's map edits within `EDITS_JOIN` (10 min)
+  are one version, and the newest `KEEP` (50) are kept. The Sequence tab
+  lists them with **Restore** (`/plasmids/<id>/versions/<vid>/restore`),
+  which makes the old state the newest version. Versions point at the
+  plasmid's row id with no foreign key, so undoing a plasmid's delete
+  brings them back.
+- **Made from** (`app/plasmid_lineage.py`, `plasmid_parents`, revision
+  0020): a child's parents, each a plasmid row (`parent_row_id`) or a
+  label from outside the lab, with a `role` (backbone, insert, template,
+  donor, other), a `method` and `details_json` (what an assembly used:
+  enzymes, coordinates, primer ids). `add_parent` refuses a plasmid as its
+  own parent and a loop; an empty Backbone or Insert takes the parent's
+  name. The page shows Made from and Used to make (child plasmids, and
+  inventory rows whose plasmid column names it) above the map, and
+  `tree()` up to `TREE_DEPTH` generations each way on Properties. Row ids
+  without foreign keys, as for versions. The assembly wizard records its
+  product's parents through `add_parent`.
+- **Primers** (`app/primer_records.py`): each save of the map gives every
+  primer annotation a record in the lab's Primers database
+  (`sync_from_map`, made with it only by someone who may add lab
+  databases), with the plasmid's number in its `template` (**Plasmid**)
+  column and status *to order*; the annotation keeps `inventory_id`.
+  `save_primer` matches the plasmid plus sequence, then name, so repeated
+  autosaves and the assembly wizard's primers never duplicate; taking a
+  primer off the map leaves its record. `binding_sites` needs `MIN_ANCHOR`
+  (15) 3′ bases to match and reports the 5′ tail. The plasmid's Primers
+  card and `/plasmids/<id>/primers.csv`, and the Primers sheet's
+  `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
+  `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
+  Used to make leaves Primers databases out.
+- **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
+  the pages, at `/plasmids/assembly`): a tray of fragments taken from the
+  lab's plasmids — a whole one, one feature, a region, or a piece a digest
+  leaves — put together three ways. **Digest and ligate** cuts with the
+  enzymes of `ENZYMES` (a recognition site and the two strands' cut
+  offsets, as a catalogue writes them: `EcoRI G^AATTC`, `BsaI
+  GGTCTC(1/5)`) and joins ends that fit; **Gibson / HiFi** joins fragments
+  that already share 15–60 bases where they meet, and designs the primers
+  that add that homology where they do not (`design_gibson_primers`, a 25
+  base 5′ arm copied from the neighbour plus what anneals, sized to 60 °C
+  by `inventory_service.primer_tm`); **Golden Gate** takes the pieces a
+  Type IIS enzyme releases (`released`: the ones its site has left) and
+  refuses an overhang used twice, one that is another's reverse complement,
+  or one that reads the same on both strands.
+  A cut is `(at, overhang)` — the bond the top strand breaks at, and how
+  far the other strand's nick is from it, signed — and a fragment keeps its
+  top strand between two such nicks with each end's overhang written as the
+  top strand reads it, which makes a product the fragments' sequences one
+  after another and makes two ends fit when their words match. `flip` turns
+  a fragment round, ends and features with it. Everything is pure: a
+  problem comes back as `{kind, at, next, …}` and `status_text` turns it
+  into the one sentence the page shows, which names the end that is wrong
+  ("Fragment 2's 3′ end has no overlap with fragment 3") rather than
+  saying the assembly failed. `/plasmids/assembly/preview` answers the tray
+  with the junctions, the product's features and that sentence after every
+  change, so none of the biology is in `static/assembly.js`, which draws
+  the tray and a ring map of the product. **Create** makes an ordinary
+  plasmid: the fragments' features at their new coordinates
+  (`carry_features`, which keeps the part of a feature a cut runs through
+  and notes it), a `part` annotation per fragment so the map shows the
+  joins, a version (`how="assembly"`), `add_parent` per fragment with the
+  enzymes, coordinates and primer ids in `details_json`, and the library's
+  elements marked if asked. A Gibson's primers go to the Primers database
+  through `save_primer` against the plasmid each amplifies and are drawn on
+  that plasmid's map where `binding_sites` says they bind (`how="primers"`);
+  a map that is not yours to edit keeps the records but not the drawing.
+- **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
+  — a sequencing read, a gel photo, a datasheet — saved by
+  `services.save_uploaded_file` into the uploads folder, with `kind` from
+  the name (`_file_kind`: trace, image, document). Anyone who may edit the
+  plasmid adds them; whoever added one, or an admin, takes it off, and the
+  file itself stays in uploads, as the notebook's do. Export my data
+  carries them under `plasmids/<n>-<name>-files/`. Row ids without foreign
+  keys, as for versions.
+- **One area, four tabs:** `PLASMID_TAB_KINDS` (primers, glycerol_stocks,
+  viruses) are left out of the sidebar rail by `_inventory_module_links`
+  and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,
+  and `_plasmid_tabs.html` draws the strip on the Plasmids page and on
+  those sheets (only where one of them is the page you are on). The rail
+  marks Plasmids active on all of them.
+- **Feature library** (`app/feature_library.py`, `feature_library`,
+  revision 0021): named elements by sequence (as the feature reads 5′→3′),
+  one per `seq_hash`, sorted into `CATEGORIES` by `category_of` (name and
+  GenBank type; viral elements by name). Entries come only from the lab's
+  own maps (`add_from_plasmid`, Add to library; `collect`, an admin's
+  Collect from every plasmid), never built in, so a mistyped base can't
+  label every map. `detect` finds exact matches of entries of at least
+  `MIN_LENGTH` on both strands and across the origin, skipping a span
+  already annotated or overlapping a feature of the same name;
+  `/plasmids/<id>/detect-features` appends them and records a version
+  (`how="detect"`). The library page is `/plasmids/features`;
+  `/plasmids/features/import` reads elements straight from uploaded
+  annotated files (`add_from_sequence`, which `add_from_plasmid` also
+  uses), making no plasmid, so a lab fills the library from the maps it
+  already downloads. The page shows the first 100 of each kind and
+  searches by name, type or sequence (`?q=`), since a lab with the pack
+  has a couple of thousand.
+- **pLannotate** (`app/plannotate.py`): a lab that installs pLannotate
+  (`mamba install -c bioconda plannotate`, then `plannotate setupdb`) and
+  sets `BIOMANAGER_PLANNOTATE` to its command gets **Annotate with
+  pLannotate** above the map, which finds elements by alignment — a
+  codon-optimised CDS, a promoter a base off — where the library matches
+  exactly. `run_tool` writes a FASTA into a folder of its own, runs
+  `<command> batch -i … -o … -f plasmid` (plus `--linear` for a linear
+  plasmid) with `subprocess.run`, a list and never a shell, and reads the
+  `.gbk` it wrote back through `sequence_parser.parse_genbank`; `find`
+  then drops what the map already marks with that name, as Detect features
+  does, and the route records a version (`how="annotate"`). It is a tool
+  this app runs, never imported, so its GPL-3 does not reach this code,
+  and its databases stay the lab's own download. The command is an
+  environment variable rather than a setting on purpose: it is a command
+  this server runs, so whoever installs the server decides it, and getting
+  into an admin account is not a way to run code on the machine. The
+  timeout (45 s) sits under the 60 s a lab server allows a request.
+- **The common-features pack** (`app/feature_pack.py`, with revision
+  0023's `feature_library.source_name`): GenoLIB (Adames et al., *Nucleic
+  Acids Res* 2015;43(10):4823-4832, doi:10.1093/nar/gkv272, CC BY 4.0),
+  about 1,900 elements with their DNA. The app carries no copy: an
+  admin's **Add the common-features pack** downloads the article's SBOL
+  supplement from Europe PMC (a zip of zips, `labhost_All.xml`), so the
+  lab obtains it from the archive rather than BioManager redistributing
+  it. Worth knowing when reading that paper: its authors built the library
+  by exporting a commercial program's published annotated files, which is
+  why the page says to check anything you rely on and why each entry keeps
+  `source_name`. The download takes about a minute, longer than a lab
+  server allows a request (`gunicorn.conf.py`: `timeout = 60`), so `start`
+  runs it in a thread and keeps its state in `app_settings`
+  (`feature_pack_status`), where every worker can read it; the page shows
+  "Downloading…" and refreshes itself. Adding two thousand elements uses
+  `feature_library.add(known=…)`: one read of the library's hashes instead
+  of a query and a flush each.
+- **A record's plasmid, to read:** `/inventory/<key>/items/<id>/sequence`
+  (`item_sequence`) mounts the same editor read only on the plasmid a
+  record's plasmid column names — a virus's payload, a glycerol stock's
+  plasmid — from `/plasmids/<id>/sequence.json`; the sheet's plasmid cell
+  links to it when that plasmid has a sequence. Nothing there saves.
+- **Glycerol stocks:** a `glycerol_stocks` database's *Plasmid* column
+  says which plasmid the bacteria carry. `made_from_plasmid(kinds=…)`
+  finds them for the Storage tab's Glycerol stocks card (with the box,
+  `rack_label`), and `NOT_MADE_FROM` keeps them, like primers, out of Made
+  from this plasmid and Used to make.
+- **Out:** `to_genbank` / `to_fasta` (`sequence_parser.py`) write what
+  `parse_genbank` reads back the same: features and primers (as
+  `primer_bind`) with every qualifier, a wrap across the origin as a join.
+  `/plasmids/<id>/download.gb` and `.fa`, a `plasmids/<n>-<name>.gb` per
+  sequence in Export my data, and the API's one-plasmid answer carries
+  `annotations`.
 
 ## Calendar repeats and bookings
 
@@ -1747,6 +1921,7 @@ Settings (environment variables, all optional):
 | `BIOMANAGER_MAX_UPLOAD_MB` | `64` | largest upload accepted |
 | `BIOMANAGER_UPLOADS_DIR` | `app/static/uploads` | where uploads are kept; put it next to the database |
 | `BIOMANAGER_TELEMETRY` | on | `0`: never send the anonymous daily counts (so does `DO_NOT_TRACK=1`) |
+| `BIOMANAGER_PLANNOTATE` | — | the pLannotate command, which turns on **Annotate with pLannotate** (`app/plannotate.py`) |
 | `WEB_CONCURRENCY` | 1 on SQLite, 3 on Postgres | gunicorn worker processes |
 
 `gunicorn.conf.py` loads the app once before forking (`preload_app`), so the

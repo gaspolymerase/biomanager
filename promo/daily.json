@@ -132,6 +132,36 @@
     },
     {
       "day": 5,
+      "clip": "assistant",
+      "zh": {
+        "hook": "实验做完，还要一条条录进系统？",
+        "lines": [
+          "拍一张实验记录本，或者直接打一句话，发给你常用的 AI 助手。",
+          "它读懂你的笔记，找到对应的笼子和小鼠，在 BioManager 里整理成一份提议。",
+          "你看一眼，点批准，记录就全部写好了；不点，什么都不会变。"
+        ],
+        "bullets": [
+          "拍照、手写、打字都行",
+          "AI 提议，你来批准",
+          "Claude、ChatGPT 都能连"
+        ]
+      },
+      "en": {
+        "hook": "Done at the bench, and now you have to type it all in?",
+        "lines": [
+          "Snap a photo of your lab notebook, or just type a sentence, and send it to the AI assistant you already use.",
+          "It reads your notes, finds the cages and mice you mean, and turns them into one proposal in BioManager.",
+          "You look it over and press Approve, and every record is written. Until you do, nothing changes."
+        ],
+        "bullets": [
+          "A photo or a sentence",
+          "The AI proposes, you approve",
+          "Works with Claude and ChatGPT"
+        ]
+      }
+    },
+    {
+      "day": 6,
       "clip": "experiment",
       "zh": {
         "hook": "给药前，还在按计算器算剂量？",
@@ -161,7 +191,7 @@
       }
     },
     {
-      "day": 6,
+      "day": 7,
       "clip": "datasheet",
       "zh": {
         "hook": "一张柱状图加 t 检验，还要开 Prism？",
@@ -191,7 +221,7 @@
       }
     },
     {
-      "day": 7,
+      "day": 8,
       "clip": "orders",
       "zh": {
         "hook": "谁订了这个试剂？到了吗？放哪了？",
@@ -221,7 +251,7 @@
       }
     },
     {
-      "day": 8,
+      "day": 9,
       "clip": "new-database",
       "zh": {
         "hook": "不养小鼠的实验室，怎么办？",
@@ -251,7 +281,7 @@
       }
     },
     {
-      "day": 9,
+      "day": 10,
       "clip": "home",
       "zh": {
         "hook": "今天哪窝该断奶？哪些该剪尾巴？",
@@ -281,7 +311,7 @@
       }
     },
     {
-      "day": 10,
+      "day": 11,
       "clip": "flies",
       "zh": {
         "hook": "几百管果蝇，靠记性翻管？",
@@ -311,7 +341,7 @@
       }
     },
     {
-      "day": 11,
+      "day": 12,
       "clip": "sign",
       "zh": {
         "hook": "电子记录本，也能像纸质本一样签名？",
@@ -341,7 +371,7 @@
       }
     },
     {
-      "day": 12,
+      "day": 13,
       "clip": "protocol",
       "zh": {
         "hook": "边做实验边翻步骤，还要另开计时器？",
@@ -371,7 +401,7 @@
       }
     },
     {
-      "day": 13,
+      "day": 14,
       "clip": "calendar",
       "zh": {
         "hook": "实验室的日程，能自己排好吗？",
@@ -401,7 +431,7 @@
       }
     },
     {
-      "day": 14,
+      "day": 15,
       "clip": "undo",
       "zh": {
         "hook": "批量改错了，Ctrl+Z 也救不回来？",
@@ -431,7 +461,7 @@
       }
     },
     {
-      "day": 15,
+      "day": 16,
       "clip": "search",
       "zh": {
         "hook": "那个质粒在哪？那只鼠在哪笼？",
@@ -461,7 +491,7 @@
       }
     },
     {
-      "day": 16,
+      "day": 17,
       "clip": "qpcr",
       "zh": {
         "hook": "qPCR 做完，又要重新搭 Excel 公式？",
@@ -491,7 +521,7 @@
       }
     },
     {
-      "day": 17,
+      "day": 18,
       "clip": "looks",
       "zh": {
         "hook": "谁说实验室软件，都长得像上个世纪？",
@@ -517,36 +547,6 @@
           "A Mac-style interface",
           "Full dark mode",
           "Your own icon and colour"
-        ]
-      }
-    },
-    {
-      "day": 18,
-      "clip": "phone",
-      "zh": {
-        "hook": "在鼠房，用手机就能管？",
-        "lines": [
-          "全组可以共用一个实验室服务器，用浏览器登录，手机也行。",
-          "在手机上，表格自动变成一张张卡片，点一下就能改。",
-          "可以用学校账号登录，服务器每晚自动备份。"
-        ],
-        "bullets": [
-          "全组共用服务器",
-          "手机上自动变卡片",
-          "学校账号登录，每晚备份"
-        ]
-      },
-      "en": {
-        "hook": "Run the lab from your phone at the rack?",
-        "lines": [
-          "The whole lab can share one server and sign in from a browser, phones included.",
-          "On a phone, every sheet becomes a stack of cards you can tap to edit.",
-          "Sign in with your institution's account, and the server backs up every night."
-        ],
-        "bullets": [
-          "One server for the lab",
-          "Sheets become cards on phones",
-          "Nightly backups"
         ]
       }
     },

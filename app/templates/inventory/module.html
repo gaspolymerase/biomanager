@@ -31,7 +31,7 @@
 {% macro req(column) %}{% if column in module.required %} data-required="1"{% endif %}{% endmacro %}
 {% macro star(column) %}{% if column in module.required %}<span class="req-star" title="{{ _('Required') }}">*</span>{% endif %}{% endmacro %}
 
-{% macro field_cell(field, value, form_id, locked, src_label='', links={}) %}
+{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0) %}
   {% set name = 'attr_' ~ field.key %}
   {% set flabel = field.label|tr('inventory') %}
   {% if field.type == 'select' %}
@@ -55,6 +55,9 @@
              data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
       {% if plasmid %}<a class="plasmid-cell-link" href="{{ url_for('plasmid_page', number=plasmid.number) }}"
          title="{{ _('Open plasmid #%(number)s', number=plasmid.number) }}">{{ plasmid.name or ('#' ~ plasmid.number) }}</a>{% endif %}
+      {# Its sequence and map, to read (the plasmid's own page is where it is edited). #}
+      {% if plasmid and plasmid.has_sequence and item_id %}<a class="plasmid-cell-link flex-none" href="{{ url_for('inventory.item_sequence', key=key, item_id=item_id) }}"
+         title="{{ _('See the sequence of plasmid #%(number)s', number=plasmid.number) }}">{{ icon('dna') }}</a>{% endif %}
     </span>
   {% elif field.type == 'url' and value %}
     <a class="sheet-link font-normal" href="{{ value }}" target="_blank" rel="noopener">{{ value|replace('https://', '')|truncate(28) }}</a>
@@ -71,6 +74,7 @@
 {% endmacro %}
 
 {% block page_nav %}
+  {% include "_plasmid_tabs.html" %}
   <div class="mb-3 flex flex-wrap items-center gap-2.5">
     {% if m.has('storage') or m.has('board') %}
       <div class="dt-chips view-switch" data-view-switch="inv-{{ key }}" role="group" aria-label="{{ _('Layout') }}">
@@ -279,7 +283,7 @@
                   </td>
                 {% endif %}
                 {% for fd in m.table_fields %}
-                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links) }}</td>
+                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id) }}</td>
                 {% endfor %}
                 {% if m.has('sharing') %}
                   <td>
@@ -449,6 +453,13 @@
         <form method="get" action="{{ url_for('labels.inventory_cards', key=key) }}" class="selbar-group" data-selection-form>
           <button type="submit" class="btn btn-sm" title="{{ _('Labels with a QR code for the ticked %(nouns)s', nouns=nouns) }}">{{ icon('qrcode') }} {{ _('Labels') }}</button>
         </form>
+        {% if m.kind == 'primers' %}
+          {# For ordering: names and sequences copied, or a CSV for the supplier (app/primer_records.py). #}
+          <button type="button" class="btn btn-sm" data-primers-copy-url="{{ url_for('inventory.order_sheet', key=key, fmt='txt') }}">{{ icon('copy') }} {{ _('Copy for ordering') }}</button>
+          <form method="get" action="{{ url_for('inventory.order_sheet', key=key, fmt='csv') }}" class="selbar-group" data-selection-form>
+            <button type="submit" class="btn btn-sm">{{ icon('download') }} {{ _('Export for ordering') }}</button>
+          </form>
+        {% endif %}
         <div class="selbar-spacer"></div>
         <button type="button" class="btn btn-sm btn-ghost" data-selection-clear>{{ _('Clear') }}</button>
       </div>
@@ -734,6 +745,34 @@
     });
   })();
 </script>
+{% if m.kind == 'primers' %}
+<script nonce="{{ csp_nonce() }}">
+  /* Copy for ordering: the ticked primers as name<TAB>sequence lines, ready
+     to paste into a supplier's bulk-entry box. The text is fetched inside
+     the click so the clipboard still counts it as the person's own act. */
+  (function () {
+    const button = document.querySelector('[data-primers-copy-url]');
+    if (!button) return;
+    button.addEventListener('click', () => {
+      const ids = [...document.querySelectorAll('.mouse-select:checked, [data-select-row]:checked')].map((b) => b.value);
+      if (!ids.length) return;
+      const url = button.dataset.primersCopyUrl + '?' + ids.map((id) => 'selected_ids=' + encodeURIComponent(id)).join('&');
+      const text = fetch(url, { credentials: 'same-origin' }).then((r) => (r.ok ? r.text() : Promise.reject(r.status)));
+      const label = button.lastChild;
+      const done = () => { label.textContent = ' ' + t('Copied %(n)s', { n: ids.length }); };
+      let write;
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        write = navigator.clipboard.write([new ClipboardItem({ 'text/plain': text.then((s) => new Blob([s], { type: 'text/plain' })) })]);
+      } else if (navigator.clipboard) {
+        write = text.then((s) => navigator.clipboard.writeText(s));
+      } else {
+        write = Promise.reject();
+      }
+      write.then(done, () => text.then((s) => window.prompt('', s)));
+    });
+  })();
+</script>
+{% endif %}
 <script type="application/json" id="inv-page-data">{{ {"isAdmin": is_admin, "me": current_user.username,
                                                         "openStatuses": m.open_statuses | map('lower') | list} | tojson }}</script>
 <script type="application/json" id="inv-fill-data">{{ remembered.fill | tojson }}</script>

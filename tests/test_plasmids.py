@@ -110,6 +110,414 @@ class SequenceParserTests(AppTestCase):
         self.assertEqual((f["name"], f["start"], f["end"], f["direction"], f["color"]), ("wrapper", 8, 1, -1, "#ff0000"))
 
 
+class ImportFidelityTests(AppTestCase):
+    """What a sequence file says survives the import: its name, its topology,
+    every qualifier, and which of several records was kept."""
+
+    def test_a_name_run_into_the_length_keeps_both_and_the_topology(self):
+        joined = GB.replace("LOCUS       pQA1        60 bp", "LOCUS       pQA1-a-long-name60 bp", 1)
+        parsed = sp.parse_genbank(joined)
+        self.assertEqual((parsed["name"], parsed["is_circular"], len(parsed["sequence"])), ("pQA1-a-long-name", True, 60))
+
+    def test_a_byte_order_mark_or_lines_before_locus_still_read_as_genbank(self):
+        for text in ("\ufeff" + GB, "# exported by our old tool\n\n" + GB):
+            parsed = sp.parse_sequence_bytes(text.encode("utf-8"), "p.gb")
+            self.assertEqual((parsed["format"], parsed["name"], parsed["is_circular"]), ("genbank", "pQA1", True))
+
+    def test_several_fasta_records_keep_the_first_and_say_how_many(self):
+        parsed = sp.parse_fasta(">insertA\nACGTACGTAC\n>insertB\nGGGGCCCCTT\n")
+        self.assertEqual((parsed["name"], parsed["sequence"], parsed["records"]), ("insertA", "ACGTACGTAC", 2))
+        self.assertEqual(sp.parse_fasta(">one\nACGT\n")["records"], 1)
+
+    def test_every_genbank_qualifier_is_kept_in_full(self):
+        # GenBank wraps long text at a space; the two lines join with one.
+        first, rest = "from pEGFP-N1, see Cormack et al. 1996", " ".join(["linker"] * 70)
+        note = f"{first} {rest}"
+        gb = GB.replace('                     /label="GFPfrag"\n',
+                        '                     /label="GFPfrag"\n'
+                        f'                     /note="{first}\n'
+                        f'                     {rest}"\n'
+                        '                     /codon_start=1\n'
+                        '                     /translation="MVSKGEELFT\n'
+                        '                     GVVPILVELD"\n'
+                        '                     /note="second note"\n', 1)
+        frag = [f for f in sp.parse_genbank(gb)["features"] if f["name"] == "GFPfrag"][0]
+        self.assertEqual(frag["notes"]["label"], ["GFPfrag"])
+        self.assertEqual(frag["notes"]["note"], [note, "second note"])
+        self.assertEqual(frag["notes"]["codon_start"], ["1"])
+        self.assertEqual(frag["notes"]["translation"], ["MVSKGEELFTGVVPILVELD"])
+
+    def test_snapgene_name_description_and_qualifiers_come_through(self):
+        def chunk(kind: int, payload: bytes) -> bytes:
+            return bytes([kind]) + struct.pack(">I", len(payload)) + payload
+        features = ('<Features><Feature name="EGFP" type="CDS" directionality="1"><Segment range="1-6"/>'
+                    '<Q name="note"><V text="&lt;html&gt;mEGFP, A206K&lt;/html&gt;"/></Q>'
+                    '<Q name="codon_start"><V int="1"/></Q></Feature></Features>')
+        notes = ("<Notes><CustomMapLabel>pCAG-GFP</CustomMapLabel><UseCustomMapLabel>1</UseCustomMapLabel>"
+                 "<Description>&lt;html&gt;&lt;body&gt;CAG-driven GFP&lt;/body&gt;&lt;/html&gt;</Description></Notes>")
+        raw = (chunk(0x09, b"SnapGene\x00\x01\x00\x0f\x00\x14") + chunk(0x00, b"\x01ACGTACGTAC")
+               + chunk(0x0A, features.encode()) + chunk(0x06, notes.encode()))
+        parsed = sp.parse_sequence_bytes(raw, "p.dna")
+        self.assertEqual((parsed["name"], parsed["description"]), ("pCAG-GFP", "CAG-driven GFP"))
+        self.assertEqual(parsed["features"][0]["notes"], {"note": ["mEGFP, A206K"], "codon_start": ["1"]})
+
+    def test_a_snapgene_file_names_a_new_plasmid_and_fills_its_notes(self):
+        def chunk(kind: int, payload: bytes) -> bytes:
+            return bytes([kind]) + struct.pack(">I", len(payload)) + payload
+        label = uniq("pSG")
+        raw = (chunk(0x09, b"SnapGene\x00\x01\x00\x0f\x00\x14") + chunk(0x00, b"\x01ACGTACGTAC")
+               + chunk(0x06, f"<Notes><CustomMapLabel>{label}</CustomMapLabel><Description>From Addgene</Description></Notes>".encode()))
+        self.post(self.a, "/plasmids", data={"name": "", "sequence_file": (io.BytesIO(raw), "p.dna")},
+                  content_type="multipart/form-data")
+        self.assertEqual(by_name(label, "full_sequence, notes, sequence_format"), [("ACGTACGTAC", "From Addgene", "snapgene")])
+
+    def test_uploading_several_records_says_only_the_first_was_kept(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        r = self.post(self.a, f"/plasmids/{rid}/upload-sequence",
+                      data={"file": (io.BytesIO(b">insertA\nACGTAC\n>insertB\nGGGGCC\n"), "two.fa")},
+                      content_type="multipart/form-data")
+        self.assertFlash(r, "The file holds 2 sequences; only the first, insertA, was kept.", "warning")
+        self.assertEqual(plasmid(rid, "full_sequence")[0], "ACGTAC")
+
+    def test_the_editor_cannot_store_digits_as_bases(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        r = self.a.post(f"/plasmids/{rid}/sequence-save", json={"sequenceData": {"sequence": "ACGT 123 acgt"}})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(plasmid(rid, "full_sequence")[0], "ACGTACGTACGT")
+
+    def test_a_long_qualifier_survives_an_editor_save(self):
+        rid = self.make_plasmid(self.a, sequence_text="ACGTACGTACGT")
+        long_note = "y" * 3000
+        self.a.post(f"/plasmids/{rid}/sequence-save", json={"sequenceData": {"sequence": "ACGTACGTACGT", "features": [
+            {"name": "f", "start": 0, "end": 3, "forward": True, "notes": {"note": [long_note]}}]}})
+        stored = json.loads(plasmid(rid, "features_json")[0])
+        self.assertEqual(stored[0]["notes"]["note"], [long_note])
+
+
+class SequenceVersionTests(AppTestCase):
+    """Every state a sequence has had can be restored from its page."""
+
+    def setUp(self):
+        self.rid = self.make_plasmid(self.m, sequence_text="ACGTACGTACGT")
+
+    def versions(self):
+        return rows("select how, full_sequence from plasmid_sequence_versions where plasmid_row_id=? "
+                    "order by saved_at desc, id desc", self.rid)
+
+    def test_replacing_and_clearing_keep_every_version_newest_first(self):
+        self.post(self.m, f"/plasmids/{self.rid}/upload-sequence", data=gb_upload(), content_type="multipart/form-data")
+        self.post(self.m, f"/plasmids/{self.rid}/clear-sequence", data={"confirm": "1"})
+        self.assertEqual([how for how, _ in self.versions()], ["clear", "upload", "upload"])
+        self.assertEqual(self.versions()[-1][1], "ACGTACGTACGT")
+
+    def test_restore_brings_an_old_sequence_back_as_a_new_version(self):
+        self.post(self.m, f"/plasmids/{self.rid}/upload-sequence", data=gb_upload(), content_type="multipart/form-data")
+        first = one("select id from plasmid_sequence_versions where plasmid_row_id=? and full_sequence=?",
+                    self.rid, "ACGTACGTACGT")
+        r = self.post(self.m, f"/plasmids/{self.rid}/versions/{first}/restore")
+        self.assertFlash(r, "Restored the version of", "success")
+        self.assertEqual(plasmid(self.rid, "full_sequence, sequence_format"), ("ACGTACGTACGT", "raw"))
+        self.assertEqual([how for how, _ in self.versions()], ["restore", "upload", "upload"])
+
+    def test_a_sequence_from_before_version_history_is_kept_before_its_first_change(self):
+        execute("delete from plasmid_sequence_versions where plasmid_row_id=?", self.rid)
+        self.post(self.m, f"/plasmids/{self.rid}/clear-sequence", data={"confirm": "1"})
+        self.assertEqual(self.versions(), [("clear", ""), ("baseline", "ACGTACGTACGT")])
+
+    def test_one_person_s_map_edits_close_together_are_one_version(self):
+        for sequence in ("ACGTACGTACGA", "ACGTACGTACGC", "ACGTACGTACGG"):
+            self.m.post(f"/plasmids/{self.rid}/sequence-save", json={"sequenceData": {"sequence": sequence}})
+        self.assertEqual(self.versions(), [("editor", "ACGTACGTACGG"), ("upload", "ACGTACGTACGT")])
+
+    def test_someone_who_may_only_read_cannot_restore(self):
+        self.post(self.m, f"/plasmids/{self.rid}/clear-sequence", data={"confirm": "1"})
+        first = one("select id from plasmid_sequence_versions where plasmid_row_id=? and how='upload'", self.rid)
+        self.post(self.o, f"/plasmids/{self.rid}/versions/{first}/restore")
+        self.assertEqual(plasmid(self.rid, "full_sequence")[0], "")
+
+    def test_a_version_of_another_plasmid_is_refused(self):
+        other = self.make_plasmid(self.m, sequence_text="GGGGCCCC")
+        theirs = one("select id from plasmid_sequence_versions where plasmid_row_id=?", other)
+        r = self.post(self.m, f"/plasmids/{self.rid}/versions/{theirs}/restore")
+        self.assertFlash(r, "That version no longer exists.", "error")
+        self.assertEqual(plasmid(self.rid, "full_sequence")[0], "ACGTACGTACGT")
+
+    def test_the_sequence_tab_lists_the_versions_with_restore(self):
+        self.post(self.m, f"/plasmids/{self.rid}/upload-sequence", data=gb_upload(), content_type="multipart/form-data")
+        html = self.get_ok(self.m, page(self.rid))
+        self.assertIn("Versions", html)
+        self.assertIn("Loaded from a GENBANK file", html)
+        self.assertIn("Current version", html)
+        self.assertIn("/restore", html)
+
+
+class SequenceDownloadTests(AppTestCase):
+    """A sequence comes out as GenBank or FASTA, and reads back the same."""
+
+    def setUp(self):
+        self.rid = self.make_plasmid(self.m, name=uniq("pDL"))
+        self.post(self.m, f"/plasmids/{self.rid}/upload-sequence", data=gb_upload(), content_type="multipart/form-data")
+
+    def test_genbank_download_reads_back_with_the_same_sequence_and_features(self):
+        r = self.m.get(f"/plasmids/{self.rid}/download.gb")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("attachment;", r.headers["Content-Disposition"])
+        back = sp.parse_genbank(r.get_data(as_text=True))
+        seq, circular, feats = plasmid(self.rid, "full_sequence, is_circular, features_json")
+        self.assertEqual((back["sequence"], back["is_circular"]), (seq, bool(circular)))
+        self.assertEqual(sorted((f["name"], f["start"], f["end"], f["direction"]) for f in back["features"]),
+                         sorted((f["name"], f["start"], f["end"], f["direction"]) for f in json.loads(feats)))
+
+    def test_fasta_download_and_what_cannot_be_downloaded(self):
+        text = self.m.get(f"/plasmids/{self.rid}/download.fa").get_data(as_text=True)
+        self.assertEqual(sp.parse_fasta(text)["sequence"], plasmid(self.rid, "full_sequence")[0])
+        self.assertEqual(self.m.get(f"/plasmids/{self.rid}/download.pdf").status_code, 404)
+        empty = self.make_plasmid(self.m)
+        self.assertEqual(self.m.get(f"/plasmids/{empty}/download.gb").status_code, 404)
+
+    def test_the_data_export_carries_each_sequence_as_genbank(self):
+        import zipfile
+        r = self.m.get("/settings/export")
+        names = zipfile.ZipFile(io.BytesIO(r.get_data())).namelist()
+        number = plasmid(self.rid, "plasmid_id")[0]
+        self.assertTrue(any(n.startswith(f"plasmids/{number}-") and n.endswith(".gb") for n in names), names)
+
+    def test_the_api_gives_the_annotations_with_the_sequence(self):
+        from app.api import plasmid_json
+        from app.db import SessionLocal
+        from app.models import PlasmidRecord
+        with SessionLocal() as s:
+            out = plasmid_json(s.get(PlasmidRecord, self.rid), sequence=True)
+        self.assertEqual(len(out["annotations"]), 3)
+        self.assertEqual(len(out["sequence"]), 60)
+
+
+class LineageTests(AppTestCase):
+    """What a plasmid was made from, and what was made from it."""
+
+    def setUp(self):
+        self.backbone = self.make_plasmid(self.m, name=uniq("pBack"))
+        self.insert = self.make_plasmid(self.m, name=uniq("pIns"))
+        self.child = self.make_plasmid(self.m, name=uniq("pChild"))
+
+    def number(self, rid):
+        return plasmid(rid, "plasmid_id")[0]
+
+    def links(self, rid):
+        return rows("select parent_row_id, parent_label, role, method from plasmid_parents where child_row_id=? "
+                    "order by position", rid)
+
+    def test_parents_by_number_or_name_and_from_outside_the_lab(self):
+        self.post(self.m, f"/plasmids/{self.child}/parents",
+                  data={"parent": f"#{self.number(self.backbone)}", "role": "backbone", "method": "gibson"})
+        self.post(self.m, f"/plasmids/{self.child}/parents",
+                  data={"parent": plasmid(self.insert, "name")[0], "role": "insert", "method": "gibson"})
+        r = self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": "Addgene #11150", "role": "template"})
+        self.assertFlash(r, "Made from Addgene #11150.", "success")
+        self.assertEqual(self.links(self.child), [(self.backbone, plasmid(self.backbone, "name")[0], "backbone", "gibson"),
+                                                  (self.insert, plasmid(self.insert, "name")[0], "insert", "gibson"),
+                                                  (None, "Addgene #11150", "template", "")])
+        # An empty Backbone or Insert column takes the parent's name.
+        self.assertEqual(plasmid(self.child, "backbone, insert_seq"),
+                         (plasmid(self.backbone, "name")[0], plasmid(self.insert, "name")[0]))
+
+    def test_a_plasmid_cannot_be_its_own_parent_or_make_a_loop(self):
+        r = self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.child))})
+        self.assertFlash(r, "can't be made from itself", "error")
+        self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.backbone))})
+        r = self.post(self.m, f"/plasmids/{self.backbone}/parents", data={"parent": str(self.number(self.child))})
+        self.assertFlash(r, "would make a loop", "error")
+        self.assertEqual(self.links(self.backbone), [])
+
+    def test_both_pages_show_the_link_and_the_family_tree(self):
+        self.post(self.m, f"/plasmids/{self.child}/parents",
+                  data={"parent": str(self.number(self.backbone)), "role": "backbone"})
+        child_page = self.get_ok(self.m, page(self.child))
+        self.assertIn("Made from", child_page)
+        self.assertIn(f"/plasmid/{self.number(self.backbone)}", child_page)
+        self.assertIn("Family tree", child_page)
+        parent_page = self.get_ok(self.m, page(self.backbone))
+        self.assertIn("Used to make", parent_page)
+        self.assertIn(f"/plasmid/{self.number(self.child)}", parent_page)
+
+    def test_removing_a_link_and_who_may_change_them(self):
+        self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.backbone))})
+        link = one("select id from plasmid_parents where child_row_id=?", self.child)
+        self.post(self.o, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.insert))})
+        self.post(self.o, f"/plasmids/{self.child}/parents/{link}/remove")
+        self.assertEqual(len(self.links(self.child)), 1)
+        r = self.post(self.m, f"/plasmids/{self.child}/parents/{link}/remove")
+        self.assertFlash(r, "Removed it from Made from.", "success")
+        self.assertEqual(self.links(self.child), [])
+
+    def test_the_tree_follows_grandparents_and_stops_at_a_repeat(self):
+        from app import plasmid_lineage
+        from app.db import SessionLocal
+        from app.models import PlasmidRecord
+        self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.backbone))})
+        self.post(self.m, f"/plasmids/{self.backbone}/parents", data={"parent": str(self.number(self.insert))})
+        with SessionLocal() as s:
+            family = plasmid_lineage.tree(s, s.get(PlasmidRecord, self.child))
+            self.assertEqual(family["up"][0]["plasmid"].id, self.backbone)
+            self.assertEqual(family["up"][0]["children"][0]["plasmid"].id, self.insert)
+            self.assertEqual(plasmid_lineage.tree(s, s.get(PlasmidRecord, self.insert))["down"][0]["children"][0]["plasmid"].id,
+                             self.child)
+
+
+class PrimerRecordTests(AppTestCase):
+    """A primer drawn on the map gets its record in the Primers database,
+    with the plasmid in its Plasmid column; the plasmid's Primers card shows
+    where each binds and copies or exports them for ordering."""
+
+    # 60 bases, no repeats of a 15-base 3′ end.
+    SEQ = "ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGAC"
+
+    def setUp(self):
+        self.name = uniq("pPrime")
+        self.rid = self.make_plasmid(self.a, name=self.name, sequence_text=self.SEQ)
+        self.number = plasmid(self.rid, "plasmid_id")[0]
+
+    def save(self, primers):
+        return self.a.post(f"/plasmids/{self.rid}/sequence-save", json={"sequenceData": {
+            "sequence": self.SEQ, "circular": True, "name": self.name, "primers": primers}})
+
+    def records(self):
+        """(name, sequence, direction, status) of the Primers records naming this plasmid."""
+        out = []
+        for name, attrs, status in rows("select i.name, i.attrs, i.status from inventory_items i "
+                                        "join inventory_modules m on m.id = i.module_id_fk "
+                                        "where m.kind='primers' order by i.number"):
+            a = json.loads(attrs or "{}")
+            if str(a.get("template", "")) == str(self.number):
+                out.append((name, a.get("sequence"), a.get("direction"), status))
+        return out
+
+    def test_binding_sites_find_both_strands_a_tail_and_the_origin(self):
+        from app import primer_records as pr
+        fwd = "GAATTC" + self.SEQ[10:30]           # an EcoRI tail on 20 annealing bases
+        site, = pr.binding_sites(self.SEQ, True, fwd)
+        self.assertEqual((site["start"], site["end"], site["direction"], site["annealed"], site["tail"]),
+                         (10, 29, 1, 20, 6))
+        rev = pr.reverse_complement(self.SEQ[35:58])
+        site, = pr.binding_sites(self.SEQ, True, rev)
+        self.assertEqual((site["start"], site["end"], site["direction"], site["tail"]), (35, 57, -1, 0))
+        across = self.SEQ[50:] + self.SEQ[:12]
+        site, = pr.binding_sites(self.SEQ, True, across)
+        self.assertEqual((site["start"], site["end"]), (50, 11))
+        self.assertEqual(pr.binding_sites(self.SEQ, False, across), [])
+        self.assertEqual(pr.binding_sites(self.SEQ, True, "CCCCCCCCCCCCCCCCCCCC"), [])
+        self.assertEqual(pr.region_primer(self.SEQ, 50, 11, 1), across)
+
+    def test_a_primer_on_the_map_is_kept_in_primers_once(self):
+        from app.primer_records import reverse_complement
+        primers = {"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True},
+                   "p2": {"start": 40, "end": 59, "forward": False}}
+        r = self.save(primers)
+        self.assertEqual(r.get_json()["primers_added"], 2)
+        self.assertEqual(self.records(), [
+            ("GFP-F", self.SEQ[:20], "forward", "to order"),
+            (f"{self.name} 41-60", reverse_complement(self.SEQ[40:]), "reverse", "to order")])
+        # Every save sends the map again: nothing is made twice.
+        self.assertEqual(self.save(primers).get_json()["primers_added"], 0)
+        self.assertEqual(len(self.records()), 2)
+        stored = json.loads(plasmid(self.rid, "features_json")[0])
+        self.assertTrue(all(a.get("inventory_id") for a in stored if a.get("kind") == "primer"))
+
+    def test_no_primers_database_is_made_by_someone_who_may_not_add_one(self):
+        from unittest import mock
+        from app import inventory_service, lab, primer_records
+        from app.db import SessionLocal
+        from app.models import PlasmidRecord
+        from app.app import app
+        with app.test_request_context(), SessionLocal() as s, \
+                mock.patch.object(inventory_service, "first_of_kind", return_value=None), \
+                mock.patch.object(lab, "may_create_lab_database", return_value=False):
+            made = primer_records.sync_from_map(s, s.get(PlasmidRecord, self.rid),
+                                                [{"kind": "primer", "start": 0, "end": 19, "direction": 1}], "x")
+            self.assertEqual(made, 0)
+
+    def test_the_plasmid_page_lists_its_primers_and_exports_them_for_ordering(self):
+        self.save({"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True}})
+        html = self.get_ok(self.a, page(self.rid))
+        self.assertIn('id="plasmid-primers"', html)
+        self.assertIn("GFP-F", html)
+        self.assertIn("1–20 →", html)
+        r = self.a.get(f"/plasmids/{self.rid}/primers.csv")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get_data(as_text=True).splitlines(),
+                         ["Name,Sequence,Scale,Purification", f"GFP-F,{self.SEQ[:20]},,"])
+
+    def test_the_primers_sheet_copies_and_exports_the_ticked_ones(self):
+        self.save({"p1": {"name": "GFP-F", "start": 0, "end": 19, "forward": True},
+                   "p2": {"name": "GFP-R", "start": 40, "end": 59, "forward": False}})
+        key, = row("select key from inventory_modules where kind='primers' and private_to='' "
+                   "order by position, id limit 1")
+        ids = [one("select id from inventory_items where name=? order by id desc limit 1", n) for n in ("GFP-F", "GFP-R")]
+        sheet = self.get_ok(self.a, f"/inventory/{key}")
+        self.assertIn("Copy for ordering", sheet)
+        self.assertIn("Export for ordering", sheet)
+        r = self.a.get(f"/inventory/{key}/order-sheet.txt?selected_ids={ids[0]}")
+        self.assertEqual(r.get_data(as_text=True), f"GFP-F\t{self.SEQ[:20]}")
+        r = self.a.get(f"/inventory/{key}/order-sheet.csv?selected_ids={ids[0]}&selected_ids={ids[1]}")
+        self.assertIn("attachment", r.headers["Content-Disposition"])
+        self.assertEqual(len(r.get_data(as_text=True).splitlines()), 3)
+        # Primers bind the plasmid; they aren't things made from it.
+        self.assertNotIn("Used to make", self.get_ok(self.a, page(self.rid)))
+
+
+class PlasmidFileTests(AppTestCase):
+    """Files kept with a plasmid: sequencing reads, gel photos, datasheets."""
+
+    def setUp(self):
+        self.rid = self.make_plasmid(self.m, sequence_text="ACGTACGTACGT")
+
+    def upload(self, client, *files, notes=""):
+        data = {"files": [(io.BytesIO(body), name) for name, body in files]}
+        if notes:
+            data["notes"] = notes
+        return self.post(client, f"/plasmids/{self.rid}/files", data, content_type="multipart/form-data")
+
+    def kept(self):
+        return rows("select name, kind, uploaded_by, notes from plasmid_files where plasmid_row_id=? order by id", self.rid)
+
+    def test_a_read_and_a_gel_are_kept_and_shown_with_what_they_are(self):
+        r = self.upload(self.m, ("clone3_T7.ab1", b"ABIF\x00\x01trace"), ("gel.png", b"\x89PNG\r\n\x1a\n"),
+                        notes="Sanger from the T7 primer, clone 3")
+        self.assertFlash(r, "Kept 2 files with this plasmid", "success")
+        self.assertEqual(self.kept(), [("clone3_T7.ab1", "trace", self.member, "Sanger from the T7 primer, clone 3"),
+                                       ("gel.png", "image", self.member, "Sanger from the T7 primer, clone 3")])
+        html = self.get_ok(self.m, page(self.rid))
+        card = html.split('id="plasmid-files"', 1)[1].split("</article>", 1)[0]
+        self.assertIn("clone3_T7.ab1", card)
+        self.assertIn("Sequencing read", card)
+        self.assertIn("Photo", card)
+        self.assertIn("/static/uploads/", card)
+
+    def test_nothing_chosen_says_so(self):
+        self.assertFlash(self.upload(self.m, ("", b"")), "Choose a file", "info")
+        self.assertEqual(self.kept(), [])
+
+    def test_the_data_export_carries_the_files(self):
+        import zipfile
+        self.upload(self.m, ("clone3_T7.ab1", b"ABIF trace"))
+        names = zipfile.ZipFile(io.BytesIO(self.m.get("/settings/export").get_data())).namelist()
+        number = plasmid(self.rid, "plasmid_id")[0]
+        self.assertTrue(any(n.startswith(f"plasmids/{number}-") and n.endswith("-files/clone3_T7.ab1") for n in names),
+                        names)
+
+    def test_only_someone_who_may_edit_the_plasmid_adds_or_removes(self):
+        self.upload(self.m, ("read.ab1", b"ABIF"))
+        file_id = one("select id from plasmid_files where plasmid_row_id=?", self.rid)
+        self.assertFlash(self.upload(self.o, ("sneaky.ab1", b"ABIF")), "belongs to", "error")
+        self.assertFlash(self.post(self.o, f"/plasmids/{self.rid}/files/{file_id}/remove"), "belongs to", "error")
+        self.assertEqual(len(self.kept()), 1)
+        # Lab common: anyone edits it, but only whoever added the file (or an admin) takes it off.
+        self.assertSaved(self.autosave(self.m, f"/plasmids/{self.rid}/update", {"is_shared": "1"}))
+        self.assertFlash(self.post(self.o, f"/plasmids/{self.rid}/files/{file_id}/remove"), "Only an admin", "error")
+        self.assertFlash(self.post(self.a, f"/plasmids/{self.rid}/files/{file_id}/remove"), "Took read.ab1 off", "success")
+        self.assertEqual(self.kept(), [])
+
+
 # ====================================================================== create
 
 class CreatePlasmidTests(AppTestCase):
@@ -415,7 +823,7 @@ class SequenceRouteTests(AppTestCase):
                 {"name": "wrap", "start": 12, "end": 2, "forward": False},
                 {"name": "too far", "start": 3, "end": 99}]}})
         self.assertEqual(r.get_json(), {"ok": True, "length": 16, "features": 2, "counts": {
-            "features": 2, "primers": 0, "translations": 0, "parts": 0}})
+            "features": 2, "primers": 0, "translations": 0, "parts": 0}, "primers_added": 0})
         seq, feats = plasmid(self.rid, "full_sequence, features_json")
         self.assertEqual(seq, "ACGTRYKMACGTNNNN")
         self.assertEqual([(f["name"], f["start"], f["end"], f["direction"]) for f in json.loads(feats)],

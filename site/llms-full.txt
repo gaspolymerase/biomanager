@@ -777,13 +777,25 @@ Source: https://biomanager.org/guide/experiments
 
 Plasmid records with their sequence and map, and the box each tube is in.
 
+- At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar because each names the plasmid it came from.
+
 - Show them as a **Table**, by storage **Boxes**, or as a **List**; chips for *Mine*, *Has sequence*, *In a box*.
 
 - **Sequence**, beside each plasmid's number in the table, opens its sequence and map (**Add sequence** when it has none yet); the number opens the same page.
 
-- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence.
+- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
-- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like; **Storage** and **Properties** are the other tabs. **Storage** also lists the viruses made from the plasmid ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+
+- The **Feature library** (a link at the top of Plasmids) keeps the lab's elements by sequence: promoters, ITRs and LTRs, WPRE, resistance genes, tags. **Add to library**, above a well-annotated map (a SnapGene or Addgene file, say), keeps its named features there; an admin can **Collect from every plasmid**. On the library page, **Read elements from files** takes them straight from annotated files — the GenBank a repository gives you, a SnapGene `.dna`, a vendor's map — several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because a sequence typed from memory and wrong by one base would mislabel every map in the lab. An admin can also fetch the **common-features pack** — about 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open research archive when you ask for it (about a minute; the page shows it when it is in). Its authors built it by exporting a commercial program's published library, so check anything you rely on; elements you added yourself always win over it. Search the library by name or by sequence. On any other plasmid, **Detect features** marks each library element wherever it is, on either strand and across the origin, and keeps the map as it was in **Versions**.
+
+- **Assemble a plasmid**, from the top of Plasmids or from above any map, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
+
+- If your lab runs a server, whoever looks after it can install **pLannotate** (a separate, free program) and **Annotate with pLannotate** then appears above the map. It finds elements by comparing sequences rather than matching them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will miss. Everything it marks is kept in **Versions**, so it can be undone.
+
+- **Files**, on **Storage**, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it, gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an admin, can take it off again. They come with your data in **Export my data**.
+
+- A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
 
 - Each tube keeps its miniprep's **Concentration** (ng/µL) and **260/280**, in the sheet and on its **Storage** tab, which also lists the notebook pages that link it.
 
@@ -799,17 +811,18 @@ Source: https://biomanager.org/guide/plasmids
 
 ## Samples, orders, reagents, antibodies, viruses
 
-Samples, orders, reagents, antibodies, viruses, primers and cell lines.
+Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
 
-One engine, eight starting points, each with its own columns and statuses:
+One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
 | Samples | Tissue and material, linked to the animal it came from, stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|
 | Orders | What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered, received, cancelled — on a table or a **Board** you drag cards across. |
 | Reagents | Quantity, concentration, CAS number, storage temperature, hazard, lot and expiry. In stock, low, empty, discarded. |
 | Antibodies | Host, clonality, clone, conjugate, reactivity, applications, dilution, isotype, RRID, and where each vial is. |
-| Viruses | AAV, lentivirus, rabies and other vectors: serotype, the plasmid it was made from (**Made from**), promoter, payload, titer, biosafety level, the date made, and each aliquot's place in a −80 °C box. In stock, low, used up, discarded. |
-| Primers & oligos | Sequence (5′→3′), direction, target, its pair, stock µM and modification. *Length*, *GC %* and *Tm* are worked out from the sequence (nearest neighbour, 50 mM Na⁺, 250 nM). **Add primer pair** makes *name*-F and *name*-R at once, each naming the other, side by side in a box. Ordered, in stock, low, used up, discarded. |
+| Viruses | AAV, lentivirus, rabies and other vectors: serotype, the plasmid it was made from (**Made from**), promoter, payload, titer, biosafety level, the date made, and each aliquot's place in a −80 °C box. The DNA icon beside the plasmid opens its sequence and map to read (editing stays on the plasmid's own page). In stock, low, used up, discarded. |
+| Primers & oligos | Sequence (5′→3′), direction, target, its pair, stock µM and modification. *Length*, *GC %* and *Tm* are worked out from the sequence (nearest neighbour, 50 mM Na⁺, 250 nM). **Add primer pair** makes *name*-F and *name*-R at once, each naming the other, side by side in a box. A primer drawn on a plasmid's map comes here by itself, with the plasmid in its **Plasmid** column. Tick primers, then **Copy for ordering** or **Export for ordering** for the supplier. To order, ordered, in stock, low, used up, discarded. |
+| Glycerol stocks | Bacteria carrying a plasmid, frozen in glycerol: the plasmid (**Plasmid**), strain, colony, resistance, how it was checked (digest, colony PCR, Sanger, whole plasmid), the date frozen, and its place in a −80 °C box. The plasmid's **Storage** tab lists its glycerol stocks and the box each is in. In stock, low, used up, discarded. |
 | Cell lines | A frozen vial of each line or clone: species, parent, passage, freeze date, cells per vial, medium, selection, mycoplasma result and date, and its place in the LN₂ boxes. In stock, thawed, used up, discarded. |
 | Custom list | Whatever you define. |
 
@@ -1126,7 +1139,7 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 #### Everyone
 
-**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, your notebook pages and your profile, in one zip.
+**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
 
 #### What BioManager sends its makers
 

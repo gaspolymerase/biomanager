@@ -74,6 +74,7 @@ INVENTORY_CHOICES = {
     "antibodies": ("Antibodies", "Antibodies with host, target and dilution.", "antibody"),
     "viruses": ("Viruses", "AAV, lentivirus and other vectors: titer, serotype, the plasmid each came from.", "virus"),
     "primers": ("Primers & oligos", "Primers and probes by sequence, with length, GC and Tm worked out.", "dna"),
+    "glycerol_stocks": ("Glycerol stocks", "Bacteria carrying each plasmid, in −80 °C boxes.", "bacterium"),
     "cell_lines": ("Cell lines", "Frozen vials of each line: passage, mycoplasma tests, LN₂ boxes.", "petri"),
 }
 

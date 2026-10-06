@@ -1,0 +1,22 @@
+{
+  "%(n)s bp": "%(n)s bp",
+  "%(n)s features": "%(n)s 个元件",
+  "blunt": "平末端",
+  "Move up": "上移",
+  "Move down": "下移",
+  "Turn it round": "反向",
+  "Take it out": "移除",
+  "Nothing here yet. Add the backbone first, then what goes into it.": "这里还是空的。先加骨架，再加要装进去的部分。",
+  "Add fragments to start.": "先添加片段。",
+  "Could not work the assembly out. Try again.": "无法计算这次组装，请重试。",
+  "%(n)s primers to design and order": "需要设计并订购 %(n)s 条引物",
+  "circular": "环状",
+  "linear": "线性",
+  "This map has no named features yet.": "这张图谱还没有命名的特征。",
+  "Those enzymes do not cut this plasmid.": "这些酶切不开这条质粒。",
+  "backwards": "方向相反",
+  "That is as many fragments as one assembly takes.": "一次组装最多就这么多片段。",
+  "Choose a feature.": "请选择一个特征。",
+  "Choose an enzyme to cut with.": "请选择用哪种酶切。",
+  "Choose which piece to take.": "请选择要取哪一段。"
+}

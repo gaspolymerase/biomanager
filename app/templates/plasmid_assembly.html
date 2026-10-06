@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ _('Assemble a plasmid') }}{% endblock %}
+{% block page_heading %}{{ _('Assemble a plasmid') }}{% endblock %}
+{% block page_subtitle %}{{ _('Put pieces of the lab’s plasmids together, and keep the product with everything it was made from.') }}{% endblock %}
+{% block page_shell_class %}shell-page-wide{% endblock %}
+{% block page_actions %}
+  <a class="btn" href="{{ url_for('plasmids') }}">{{ icon('chevron-left') }} {{ db_labels.get('plasmids', 'Plasmids')|tr }}</a>
+{% endblock %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='assembly.css') }}?v={{ asset_version('assembly.css') }}">
+{% endblock %}
+
+{% block page_nav %}
+  {% include "_plasmid_tabs.html" %}
+  <nav class="seg mb-3" aria-label="{{ _('How it goes together') }}">
+    {% for key in methods %}
+      <a class="seg-item{% if key == method %} is-active{% endif %}" href="{{ url_for('cloning.wizard', method=key, **({'from': start} if start else {})) }}">{{ method_labels[key]|tr }}</a>
+    {% endfor %}
+  </nav>
+  <p class="mb-3 text-[12.5px] text-muted">{{ method_blurbs[method]|tr }}</p>
+{% endblock %}
+
+{% block content %}
+<form method="post" action="{{ url_for('cloning.create') }}" id="assembly" class="assembly"
+      data-method="{{ method }}" data-start="{{ start or '' }}" data-max="{{ max_fragments }}"
+      data-source-url="{{ url_for('cloning.source', number=0) }}" data-preview-url="{{ url_for('cloning.preview') }}">
+  <input type="hidden" name="method" value="{{ method }}">
+  <input type="hidden" name="tray" value="[]" data-tray>
+
+  <div class="assembly-grid">
+    {# ---- The tray: the fragments, in the order they go together ---- #}
+    <section class="card assembly-card">
+      <header class="card-head">
+        <h2 class="card-title">{{ _('Fragments') }}</h2>
+        <span class="assembly-hint text-[12px] text-muted">{{ _('In the order they go together') }}</span>
+        <span class="ml-auto"><button type="button" class="btn btn-sm" data-add>{{ icon('plus') }} {{ _('Add fragment') }}</button></span>
+      </header>
+      <ol class="assembly-tray" data-list>
+        <li class="assembly-empty">{{ _('Nothing here yet. Add the backbone first, then what goes into it.') }}</li>
+      </ol>
+    </section>
+
+    {# ---- The product, before it is made ---- #}
+    <section class="card assembly-card">
+      <header class="card-head"><h2 class="card-title">{{ _('The product') }}</h2>
+        <span class="ml-auto text-[12px] text-muted" data-size></span></header>
+      <div class="assembly-preview">
+        <svg viewBox="0 0 260 260" class="assembly-map" role="img" aria-label="{{ _('A map of the product') }}" data-map></svg>
+      </div>
+      <div class="assembly-fields">
+        <label class="field-label">{{ _('Name') }}
+          <input type="text" name="name" required maxlength="200" autocomplete="off" placeholder="{{ _('e.g. %(example)s', example='pLab-hSyn-GFP') }}">
+        </label>
+        <label class="field-label">{{ _('Notes') }}
+          <textarea name="notes" rows="2" placeholder="{{ _('What it is for, and anything to check') }}"></textarea>
+        </label>
+        <div class="assembly-options">
+          <label><input type="checkbox" name="circular" value="1" checked data-live> {{ _('Circular') }}</label>
+          {% if method == 'gibson' %}
+            <label><input type="checkbox" name="design" value="1" checked data-live> {{ _('Design the primers') }}</label>
+          {% endif %}
+          {% if method == 'golden_gate' %}
+            <label>{{ _('Enzyme') }}
+              <select name="enzyme" data-live>
+                {% for e in golden_gate_enzymes %}<option value="{{ e.name }}">{{ e.label }}</option>{% endfor %}
+              </select>
+            </label>
+          {% endif %}
+          <label><input type="checkbox" name="detect" value="1" {% if library %}checked{% else %}disabled{% endif %}>
+            {{ _('Mark features from the library') }}</label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {# One line, always: which end is wrong, or what will be made. #}
+  <p class="assembly-status" data-status aria-live="polite">{{ _('Add fragments to start.') }}</p>
+
+  <div class="assembly-foot">
+    <span class="text-[12px] text-muted" data-primers></span>
+    <span class="ml-auto"></span>
+    <button type="submit" class="btn btn-primary" data-create disabled>{{ icon('plasmid') }} {{ _('Create the plasmid') }}</button>
+  </div>
+</form>
+
+{# ---- Where a fragment comes from ---- #}
+<dialog id="assembly-picker" class="record-dialog" aria-labelledby="assembly-picker-title" data-picker>
+  <form novalidate>
+    <header class="record-dialog-head">
+      <div><h3 id="assembly-picker-title">{{ _('Add a fragment') }}</h3></div>
+      <button type="button" class="modal-close" data-on-click="close-dialog-id" data-arg="assembly-picker" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
+      {% if sources %}
+        <label class="record-wide">{{ _('Plasmid') }}
+          <select data-pick-plasmid>
+            {% for s in sources %}<option value="{{ s.number }}">{{ s.label }} · {{ s.length }} bp</option>{% endfor %}
+          </select>
+        </label>
+        <div class="dt-chips record-wide" role="group" aria-label="{{ _('What to take') }}">
+          <button type="button" class="dt-chip" data-pick-kind="whole" aria-pressed="true">{{ _('Whole plasmid') }}</button>
+          <button type="button" class="dt-chip" data-pick-kind="feature" aria-pressed="false">{{ _('A feature') }}</button>
+          <button type="button" class="dt-chip" data-pick-kind="region" aria-pressed="false">{{ _('A region') }}</button>
+          <button type="button" class="dt-chip" data-pick-kind="digest" aria-pressed="false">{{ _('A cut fragment') }}</button>
+        </div>
+
+        <div class="record-wide" data-pick-panel="feature" hidden>
+          <select class="assembly-list" data-pick-feature size="6"></select>
+        </div>
+        <div class="record-wide assembly-region" data-pick-panel="region" hidden>
+          <label>{{ _('From base') }} <input type="number" min="1" value="1" data-pick-start></label>
+          <label>{{ _('To base') }} <input type="number" min="1" value="1" data-pick-end></label>
+          <span class="text-[12px] text-muted" data-pick-span></span>
+        </div>
+        <div class="record-wide" data-pick-panel="digest" hidden>
+          <div class="assembly-enzymes" data-pick-enzymes>
+            {% for e in enzymes %}
+              <label class="assembly-enzyme"><input type="checkbox" value="{{ e.name }}"><span>{{ e.label }}</span></label>
+            {% endfor %}
+          </div>
+          <select class="assembly-list" data-pick-piece size="5"></select>
+        </div>
+
+        <label class="record-wide">{{ _('Its part in this') }}
+          <select data-pick-role>
+            <option value="">{{ _('Work it out') }}</option>
+            {% for role, label in role_labels.items() %}<option value="{{ role }}">{{ label|tr }}</option>{% endfor %}
+          </select>
+        </label>
+        <p class="assembly-problem record-wide" data-pick-problem hidden></p>
+      {% else %}
+        <p class="record-wide text-[12.5px] text-muted">{% trans url=url_for('plasmids') %}No plasmid in the lab has a sequence yet. <a href="{{ url }}">Add one</a> and come back.{% endtrans %}</p>
+      {% endif %}
+    </div>
+    <footer class="record-dialog-foot">
+      <span class="mr-auto"></span>
+      <button type="button" class="btn" data-on-click="close-dialog-id" data-arg="assembly-picker">{{ _('Cancel') }}</button>
+      <button type="button" class="btn btn-primary" data-pick-ok{% if not sources %} disabled{% endif %}>{{ _('Add to the tray') }}</button>
+    </footer>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block body_end %}
+<script src="{{ url_for('static', filename='assembly.js') }}?v={{ asset_version('assembly.js') }}" defer></script>
+{% endblock %}

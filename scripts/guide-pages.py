@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import html
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -331,6 +332,9 @@ def main():
     # the pages link style.css, site.js and the icons by their content
     subprocess.run([sys.executable, str(Path(__file__).with_name("site-stamp.py"))], check=True)
     if "--search" in sys.argv:
+        # Pagefind writes new hashed files and never removes the old ones, so
+        # start from an empty folder or every rebuild leaves its index behind.
+        shutil.rmtree(SITE / "pagefind", ignore_errors=True)
         subprocess.run(["npx", "--yes", "pagefind@1", "--site", str(SITE)], check=True)
 
 

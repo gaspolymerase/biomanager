@@ -345,6 +345,29 @@ def _recent_items(mv, items: list) -> tuple[list, int]:
     return keep, hidden
 
 
+@bp.route("/<key>/order-sheet.<fmt>")
+def order_sheet(key: str, fmt: str):
+    """The ticked primers (selected_ids) for ordering: a CSV (Name, Sequence,
+    Scale, Purification) or Name<TAB>sequence lines for a supplier's
+    bulk-entry box (app/primer_records.py)."""
+    from flask import Response
+    from . import primer_records
+
+    if fmt not in ("csv", "txt"):
+        abort(404)
+    ids = {int(x) for x in request.args.getlist("selected_ids") if str(x).isdigit()}
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        items = [i for i in session.scalars(select(InventoryItem).where(InventoryItem.module_id_fk == module.id)
+                                            .order_by(InventoryItem.number)) if not ids or i.id in ids]
+        if fmt == "txt":
+            return Response(primer_records.order_lines(items), mimetype="text/plain; charset=utf-8")
+        body = primer_records.order_sheet(items)
+        name = re.sub(r"[^\w\-.]+", "_", module.label).strip("_") or "primers"
+    return Response(body, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}-order.csv"'})
+
+
 @bp.route("/<key>")
 def module(key: str):
     from .services import current_lab_usernames, sample_sources, sample_source_label
@@ -860,6 +883,34 @@ def _create_many(session, row: InventoryModule, mv, form):
                                             position=pos, **room))
         return _done(key, error=gettext("%(box)s had room for %(room)s of %(count)s: %(n)s did not fit (%(items)s) and are in it without a position.", **room))
     return _done(key)
+
+
+@bp.route("/<key>/items/<int:item_id>/sequence")
+def item_sequence(key: str, item_id: int):
+    """The sequence and map of the plasmid a record names, to read but not
+    edit: a virus's payload, a glycerol stock's plasmid. The plasmid's own
+    page is where it is edited."""
+    from .models import PlasmidRecord
+
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        mv = svc.view(module)
+        item = session.get(InventoryItem, item_id)
+        if item is None or item.module_id_fk != module.id:
+            abort(404)
+        attrs = item.attrs_dict
+        number = next((str(attrs.get(f["key"], "")).strip() for f in svc.plasmid_fields(mv)
+                       if str(attrs.get(f["key"], "")).strip().isdigit()), "")
+        plasmid = session.scalar(select(PlasmidRecord).where(PlasmidRecord.plasmid_id == int(number))) if number else None
+        if plasmid is None or not (plasmid.full_sequence or ""):
+            flash(gettext("%(name)s doesn’t name a plasmid with a sequence.", name=item.name or f"#{item.number}"), "info")
+            return redirect(url_for("inventory.module", key=key, open=item.id))
+        return render_template(
+            "inventory/sequence.html", key=key, m=mv, item=item,
+            item_label=item.name or f"#{item.number}",
+            plasmid={"row_id": plasmid.id, "number": plasmid.plasmid_id, "name": plasmid.name or "",
+                     "length_bp": len(plasmid.full_sequence or ""), "is_circular": bool(plasmid.is_circular),
+                     "url": url_for("plasmid_page", number=plasmid.plasmid_id)})
 
 
 @bp.route("/<key>/items/<int:item_id>/update", methods=["POST"])

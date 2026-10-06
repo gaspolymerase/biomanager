@@ -304,5 +304,7 @@
   "A cloud server with the lab's own web address": "使用实验室自己网址的云服务器",
   "A university or department server": "学校或院系的服务器",
   "A Linux computer in the lab": "实验室里的 Linux 电脑",
-  "This computer, for the whole lab": "这台电脑，供全实验室使用"
+  "This computer, for the whole lab": "这台电脑，供全实验室使用",
+  "Glycerol stocks": "甘油菌",
+  "Bacteria carrying each plasmid, in −80 °C boxes.": "带有各个质粒的细菌，存放在 −80 °C 冻存盒中。"
 }

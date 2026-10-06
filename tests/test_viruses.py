@@ -46,6 +46,63 @@ class VirusDatabaseTests(VirusCase):
         self.assertTrue(attrs_of(vid).get("used_up_on"))
 
 
+class PlasmidTabsTests(VirusCase):
+    """Plasmids, Primers, Glycerol stocks and Viruses are one area with a tab
+    each (PLASMID_TAB_KINDS), not four entries in the sidebar."""
+
+    @staticmethod
+    def rail(html: str) -> str:
+        return html.split('<nav class="rail"', 1)[-1].split("</nav>", 1)[0]
+
+    @staticmethod
+    def tabs(html: str) -> str:
+        return html.split('aria-label="Plasmids and what goes with them"', 1)[-1].split("</nav>", 1)[0]
+
+    def test_the_tab_strip_is_on_both_pages_and_the_rail_lists_plasmids_only(self):
+        plasmids = self.get_ok(self.a, "/plasmids")
+        self.assertIn(f"/inventory/{self.viruses}", self.tabs(plasmids))
+        self.assertIn('class="seg-item is-active"', self.tabs(plasmids))
+        self.assertNotIn(f"/inventory/{self.viruses}", self.rail(plasmids))
+        self.assertIn("/plasmids", self.rail(plasmids))
+
+        sheet = self.get_ok(self.a, f"/inventory/{self.viruses}")
+        self.assertIn("/plasmids", self.tabs(sheet))
+        self.assertIn(f'class="seg-item is-active" href="/inventory/{self.viruses}"', self.tabs(sheet))
+        # Plasmids is the database you are in, so the rail marks it.
+        self.assertIn('rail-item is-active', self.rail(sheet).split('href="/plasmids"')[0][-120:])
+
+    def test_another_inventory_stays_in_the_rail_with_no_tab_strip(self):
+        key = self.new_module(self.a, "reagents")
+        sheet = self.get_ok(self.a, f"/inventory/{key}")
+        self.assertIn(f"/inventory/{key}", self.rail(sheet))
+        self.assertNotIn("Plasmids and what goes with them", sheet)
+
+
+class SequenceViewTests(VirusCase):
+    """A virus (or any record with a plasmid column) shows that plasmid's
+    sequence and map, to read but not edit."""
+
+    def test_the_sheet_links_the_sequence_and_the_page_is_read_only(self):
+        number, name, _rid = self.plasmid()
+        self.post(self.a, f"/plasmids/{one('select id from plasmids where plasmid_id=?', number)}/edit-sequence",
+                  {"sequence_text": "ATGCGTACGTTAGCATGCATCGATCGATCG", "is_circular": "1"})
+        vid = self.make_item(self.a, self.viruses, uniq("AAV9-"), attr_plasmid=str(number))
+        sheet = self.get_ok(self.a, f"/inventory/{self.viruses}")
+        self.assertIn(f"/inventory/{self.viruses}/items/{vid}/sequence", sheet)
+        page = self.get_ok(self.a, f"/inventory/{self.viruses}/items/{vid}/sequence")
+        self.assertIn("read only", page)
+        self.assertIn(f"/plasmid/{number}", page)
+        self.assertIn("readOnly: true", page)
+        self.assertNotIn("sequence-save", page)
+
+    def test_without_a_sequence_it_says_so_instead(self):
+        number, _name, _rid = self.plasmid()
+        vid = self.make_item(self.a, self.viruses, uniq("AAV9-"), attr_plasmid=str(number))
+        self.assertNotIn(f"items/{vid}/sequence", self.get_ok(self.a, f"/inventory/{self.viruses}"))
+        r = self.a.get(f"/inventory/{self.viruses}/items/{vid}/sequence", follow_redirects=True)
+        self.assertIn("doesn’t name a plasmid with a sequence", r.get_data(as_text=True))
+
+
 class PlasmidColumnTests(VirusCase):
 
     def test_a_number_a_hash_or_a_name_is_kept_as_the_plasmids_number(self):
