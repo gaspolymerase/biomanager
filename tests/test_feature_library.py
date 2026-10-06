@@ -120,8 +120,11 @@ class FeaturePackTests(AppTestCase):
         from app.db import SessionLocal
         with mock.patch.object(pack, "fetch_bytes", return_value=supplement_zip()):
             pack._run("alex")        # what the background thread does
-        self.assertEqual(rows("select name, source_name from feature_library where source_name!='' order by name"),
-                         [("T7 promoter", "GenoLIB"), ("loxP", "GenoLIB")])
+        # Sorted here, not by the database: SQLite orders by bytes (upper
+        # case first) and PostgreSQL by its collation, so "loxP" and
+        # "T7 promoter" come back in a different order on each.
+        self.assertEqual(sorted(rows("select name, source_name from feature_library where source_name!=''")),
+                         sorted([("T7 promoter", "GenoLIB"), ("loxP", "GenoLIB")]))
         with SessionLocal() as s:
             state = pack.status(s)
         self.assertEqual((state["state"], state["added"], state["total"], state["by"]), ("done", 2, 2, "alex"))
