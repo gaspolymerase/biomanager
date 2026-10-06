@@ -18,6 +18,7 @@
     <span class="badge">{% trans n=counts.stored %}{{ n }} in a box{% endtrans %}</span>
     <span class="badge">{% trans count=boxes|length %}{{ count }} box{% pluralize %}{{ count }} boxes{% endtrans %}</span>
     <a class="badge" href="{{ url_for('feature_library_page') }}">{{ icon('dna') }} {{ _('Feature library') }}</a>
+    <a class="badge" href="{{ url_for('cloning.wizard') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
     <span class="ml-1.5">
       {% if current_user.role == 'admin' %}{{ _('Admin — you can edit anything.') }}
       {% else %}{{ _('Plasmids owned by other people are read-only, unless they are lab common.') }}{% endif %}

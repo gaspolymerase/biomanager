@@ -109,6 +109,9 @@
               <button type="submit" class="btn btn-sm" title="{{ _('Keep the named features of this map in the library') }}">{{ icon('folder-plus') }} {{ _('Add to library') }}</button>
             </form>
           {% endif %}
+          {# Build something out of this one (app/cloning.py). #}
+          <a class="btn btn-sm" href="{{ url_for('cloning.wizard', **{'from': plasmid.plasmid_id}) }}"
+             title="{{ _('Cut it, or use it whole, in a new plasmid') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
         </span>
       </div>
     {% endif %}

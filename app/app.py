@@ -402,6 +402,9 @@ from . import sheet_import  # noqa: E402
 app.register_blueprint(sheet_import.bp)
 # Sharing, live editing, versions, comments, protocols and meetings (app/lab_notebook.py).
 app.register_blueprint(lab_notebook.bp)
+# The assembly wizard: digest and ligate, Gibson, Golden Gate (app/cloning.py).
+from . import cloning_routes  # noqa: E402
+app.register_blueprint(cloning_routes.bp)
 
 
 @app.route("/app-icon/<glyph>/<color>.svg")
@@ -648,7 +651,8 @@ NAV_SECTIONS: list[dict] = [
             {"key": "zebrafish", "label": "Zebrafish", "short": "Fish", "icon": "fish",
              "endpoint": "zebrafish", "feature": "zebrafish", "match": ("zebrafish", "zebrafish_line_detail")},
             {"key": "plasmids", "label": "Plasmids", "icon": "plasmid", "feature": "plasmids",
-             "endpoint": "plasmids", "match": ("plasmids", "plasmid_detail", "plasmid_page")},
+             "endpoint": "plasmids",
+             "match": ("plasmids", "plasmid_detail", "plasmid_page", "feature_library_page", "cloning.wizard")},
             {"key": "new-db", "label": "Add database", "icon": "plus", "needs": "create_db",
              "hint": "Keep another kind of record: an organism, a stock collection or an inventory",
              "endpoint": "organisms.new_module", "match": ("organisms.new_module",)},
@@ -921,7 +925,7 @@ def _plasmid_tab_strip(active_endpoint: str) -> list[dict]:
     plasmids = {"key": "plasmids", "label": g.db_labels.get("plasmids", "Plasmids"), "icon": "plasmid",
                 "url": url_for("plasmids"),
                 "active": active_endpoint in ("plasmids", "plasmid_detail", "plasmid_page",
-                                              "feature_library_page")}
+                                              "feature_library_page", "cloning.wizard")}
     return [plasmids] + tabs
 
 
@@ -7066,6 +7070,8 @@ def _version_row(v, current: bool) -> dict:
         how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
                "detect": gettext("Features found from the library"),
                "annotate": gettext("Features found by pLannotate"),
+               "assembly": gettext("Assembled from fragments"),
+               "primers": gettext("Primers the wizard designed, drawn on the map"),
                "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
     try:
         features = len([f for f in json.loads(v.features_json or "[]") if (f.get("kind") or "feature") == "feature"])

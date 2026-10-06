@@ -520,6 +520,42 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out.
+- **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
+  the pages, at `/plasmids/assembly`): a tray of fragments taken from the
+  lab's plasmids — a whole one, one feature, a region, or a piece a digest
+  leaves — put together three ways. **Digest and ligate** cuts with the
+  enzymes of `ENZYMES` (a recognition site and the two strands' cut
+  offsets, as a catalogue writes them: `EcoRI G^AATTC`, `BsaI
+  GGTCTC(1/5)`) and joins ends that fit; **Gibson / HiFi** joins fragments
+  that already share 15–60 bases where they meet, and designs the primers
+  that add that homology where they do not (`design_gibson_primers`, a 25
+  base 5′ arm copied from the neighbour plus what anneals, sized to 60 °C
+  by `inventory_service.primer_tm`); **Golden Gate** takes the pieces a
+  Type IIS enzyme releases (`released`: the ones its site has left) and
+  refuses an overhang used twice, one that is another's reverse complement,
+  or one that reads the same on both strands.
+  A cut is `(at, overhang)` — the bond the top strand breaks at, and how
+  far the other strand's nick is from it, signed — and a fragment keeps its
+  top strand between two such nicks with each end's overhang written as the
+  top strand reads it, which makes a product the fragments' sequences one
+  after another and makes two ends fit when their words match. `flip` turns
+  a fragment round, ends and features with it. Everything is pure: a
+  problem comes back as `{kind, at, next, …}` and `status_text` turns it
+  into the one sentence the page shows, which names the end that is wrong
+  ("Fragment 2's 3′ end has no overlap with fragment 3") rather than
+  saying the assembly failed. `/plasmids/assembly/preview` answers the tray
+  with the junctions, the product's features and that sentence after every
+  change, so none of the biology is in `static/assembly.js`, which draws
+  the tray and a ring map of the product. **Create** makes an ordinary
+  plasmid: the fragments' features at their new coordinates
+  (`carry_features`, which keeps the part of a feature a cut runs through
+  and notes it), a `part` annotation per fragment so the map shows the
+  joins, a version (`how="assembly"`), `add_parent` per fragment with the
+  enzymes, coordinates and primer ids in `details_json`, and the library's
+  elements marked if asked. A Gibson's primers go to the Primers database
+  through `save_primer` against the plasmid each amplifies and are drawn on
+  that plasmid's map where `binding_sites` says they bind (`how="primers"`);
+  a map that is not yours to edit keeps the records but not the drawing.
 - **Files** (`plasmid_files`, revision 0020): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
   `services.save_uploaded_file` into the uploads folder, with `kind` from

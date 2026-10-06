@@ -146,6 +146,24 @@
           commercial program's published library, so check anything you rely on; elements you added yourself always win over it.
           Search the library by name or by sequence. On any other plasmid, <b>Detect features</b> marks
           each library element wherever it is, on either strand and across the origin, and keeps the map as it was in <b>Versions</b>.</li>
+        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map, builds the next plasmid out of the
+          ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases,
+          or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together
+          three ways: <b>digest and ligate</b> (cut with the same enzymes and let the sticky ends meet),
+          <b>Gibson / NEBuilder HiFi</b> (neighbouring fragments share twenty-odd bases where they meet; the wizard
+          designs the primers that add them, each with its melting temperature) or <b>Golden Gate</b> (BsaI, BsmBI or
+          BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). Each junction
+          shows its own bases, and one line tells you what is wrong and which end it is — <i>Fragment 2's 3′ end has no
+          overlap with fragment 3</i> — rather than that it did not work. A Golden Gate is refused when two junctions
+          take the same overhang, when one is another backwards, or when one reads the same on both strands, because
+          each of those puts the pieces together in more than one way. You see the product's map, its length and every
+          fragment in it before anything is made. <b>Create the plasmid</b> then makes an ordinary plasmid: the features
+          of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so),
+          each fragment marked on the map so you can see the joins, <b>Made from</b> filled in for every plasmid it came
+          out of with the enzymes and coordinates used, the first entry in its <b>Versions</b>, and the library's
+          elements marked if you asked. A Gibson's primers are saved in the <a href="samples-and-orders.html">Primers</a>
+          database marked <i>to order</i> and drawn on the map of the plasmid each one amplifies, so <b>Copy for
+          ordering</b> picks them up with the rest.</li>
         <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
           <b>Annotate with pLannotate</b> then appears above the map. It finds elements by comparing sequences rather than matching
           them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
