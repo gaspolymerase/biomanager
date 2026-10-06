@@ -58,7 +58,11 @@ def sign_in(page):
         page.wait_for_load_state("networkidle")
 
 
-def shoot(page, name, path, click=None, full=False):
+def shoot(page, name, path, click=None, full=False, crop=None):
+    """`crop` is a CSS selector: the shot is that element and a little around
+    it, rather than the whole window. A cropped shot shows the reader the
+    panel the step is about, and — because the crop lives here and not in an
+    image editor — it survives every retake from a fresh demo lab."""
     page.goto(f"{BASE}{path}")
     page.wait_for_load_state("networkidle")
     if click:
@@ -69,8 +73,24 @@ def shoot(page, name, path, click=None, full=False):
         page.evaluate("document.activeElement && document.activeElement.blur();"
                       "document.querySelectorAll('*').forEach(e => { if (e.scrollTop) e.scrollTop = 0 });"
                       "window.scrollTo(0, 0)")
-    page.screenshot(path=str(OUT / f"{name}.png"), full_page=full)
-    print(f"  {name}.png")
+    target, box = page, None
+    if crop:
+        found = page.locator(crop).first
+        if found.count() and found.is_visible():
+            found.scroll_into_view_if_needed()
+            page.wait_for_timeout(250)
+            rect = found.bounding_box()
+            if rect:
+                pad = 14
+                box = {"x": max(rect["x"] - pad, 0), "y": max(rect["y"] - pad, 0),
+                       "width": rect["width"] + 2 * pad, "height": rect["height"] + 2 * pad}
+        if box is None:
+            print(f"  ! {name}: nothing matched {crop}, taking the whole window")
+    if box:
+        page.screenshot(path=str(OUT / f"{name}.png"), clip=box)
+    else:
+        target.screenshot(path=str(OUT / f"{name}.png"), full_page=full)
+    print(f"  {name}.png" + (" (cropped)" if box else ""))
 
 
 with sync_playwright() as p:
@@ -80,9 +100,9 @@ with sync_playwright() as p:
                                   color_scheme=scheme)
         page = ctx.new_page()
         sign_in(page)
-        for name, path, want, click in DESKTOP:
+        for name, path, want, click, *rest in DESKTOP:
             if want == scheme:
-                shoot(page, name, path, click)
+                shoot(page, name, path, click, crop=rest[0] if rest else None)
         ctx.close()
 
     phone = browser.new_context(**p.devices["iPhone 13"], color_scheme="light")

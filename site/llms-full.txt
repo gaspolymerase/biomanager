@@ -469,6 +469,8 @@ Each card shows the owner, purpose, where the cage goes (rack and position), its
 
 Check the address with your admin; that you're on the lab's network, VPN or Tailscale; and, if your lab uses its own certificate, that it's installed on the phone.
 
+*A cage card, as it prints*
+
 Related: [Phones and cage cards](https://biomanager.org/guide/phones-and-cage-cards) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
 Source: https://biomanager.org/guide/print-cage-cards
@@ -608,6 +610,8 @@ They sign in with their own account and work as a member: they edit what they ow
 #### They forgot their password
 
 An admin resets it in **Manage users**.
+
+*Manage users, where a new person is approved and given a role*
 
 Related: [People and guests](https://biomanager.org/guide/people-and-guests) [Who can do what](https://biomanager.org/guide/who-can-do-what) [Run it for your lab](https://biomanager.org/server)
 
