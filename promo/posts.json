@@ -130,6 +130,30 @@
     },
     {
       "day": 5,
+      "clip": "assistant",
+      "theme": "AI assistants: a photo of your notebook, or a sentence, becomes records you approve",
+      "title_en": "What if I'm lazy but still want it to be recorded",
+      "subtitle_en": "Send your notes to your AI assistant; approve the records in BioManager",
+      "title_zh": "我是个懒人，我想让信息自己整理好",
+      "subtitle_zh": "拍一张记录本或打一句话，AI 整理好，你点批准",
+      "bullets_zh": [
+        "拍照、手写、打字都行",
+        "AI 只提议，你批准才生效",
+        "Claude、ChatGPT 都能连"
+      ],
+      "gradient": [
+        "#e0e7ff",
+        "#ccfbf1"
+      ],
+      "x": "What if I'm lazy but still want it all recorded?\n\nSnap the page in your lab notebook, or type a sentence, and send it to your AI assistant. Connected to BioManager, it finds the cages and mice and proposes the records. You press Approve.\n\n{site}",
+      "linkedin": "What if I'm lazy but still want it to be recorded?\n\nBioManager has no AI inside it. But if you already use an assistant (Claude, ChatGPT, Cursor, Cherry Studio), you can connect it to your lab. Then tell it what you did: type a sentence, or send a photo of the page in your notebook, handwriting and all.\n\nIt looks up each cage, mouse and experiment you mention, asks when something could be more than one record, and sends one proposal. In BioManager you read it in plain words, every change before and after, and press Approve. Until you do, nothing changes, and it can never delete anything or sign a page.\n\nFree and open source: {site}",
+      "xhs_title": "我是个懒人，我想让信息自己整理好",
+      "xhs_body": "实验做完，还要一条条录进系统？\n\n现在拍一张实验记录本，或者打一句话，发给你常用的 AI 助手就行：\n📸 手写的记录本拍照，它也能读懂\n💬 或者直接说：110 号笼断奶了，6 号和 7 号称重 24.1 g、23.8 g\n🔍 它自己找到对应的笼子和小鼠，整理成一份提议\n✅ 你在 BioManager 里看一眼，点「批准」才写进去，不点什么都不会变\n🔒 它不能删东西，也不能替你签名\n🤖 Claude、ChatGPT、Cursor、Cherry Studio 都能连\n\n永久免费开源\n官网：biomanager.org",
+      "bili_title": "我是个懒人，我想让信息自己整理好：拍一张实验记录本，AI 帮你录进系统 | BioManager",
+      "bili_desc": "拍一张实验记录本的照片，或者打一句话，发给你常用的 AI 助手（Claude、ChatGPT、Cursor、Cherry Studio）；它找到对应的笼子和小鼠，在 BioManager 里整理成一份提议，你批准后才写入。永久免费开源：{site}"
+    },
+    {
+      "day": 6,
       "clip": "experiment",
       "theme": "Experiments: doses from body weight, the weight chart, tests by day, export for Prism or R",
       "title_en": "Doses worked out from body weight, and the stats done for you",
@@ -149,7 +173,7 @@
       "bili_desc": "给药方案写一次，按每只鼠最新体重算剂量和体积；体重曲线标出给药日和显著性；导出 Excel 给 Prism/R；手机 Bench mode。{site}"
     },
     {
-      "day": 6,
+      "day": 7,
       "clip": "datasheet",
       "theme": "Notebook data sheets: paste from Excel, get a plot with error bars and a test",
       "title_en": "Paste your numbers, get the plot and the test",
@@ -169,7 +193,7 @@
       "bili_desc": "数据表：粘贴 Excel 或导入 CSV，公式列，柱状/点/箱线/散点/折线图，SEM/SD，t 检验、Mann–Whitney、ANOVA（Holm），SVG/PNG 下载。{site}"
     },
     {
-      "day": 7,
+      "day": 8,
       "clip": "orders",
       "theme": "Orders board: requested to ordered to received, then straight into the reagent inventory",
       "title_en": "When the box arrives, it goes straight onto the shelf",
@@ -189,7 +213,7 @@
       "bili_desc": "订单看板（申请/下单/到货/取消），自动补全，收货后一键入库到试剂、抗体、病毒，过期提醒，再订一次。{site}"
     },
     {
-      "day": 8,
+      "day": 9,
       "clip": "new-database",
       "theme": "A database for any organism, in your own words, no code",
       "title_en": "Xenopus? Axolotls? Build its database in a minute",
@@ -209,7 +233,7 @@
       "bili_desc": "Add database：自定义名词、计数方式、功能、时间表和字段，实验功能同样可用。{site}"
     },
     {
-      "day": 9,
+      "day": 10,
       "clip": "home",
       "theme": "Home tells you what needs doing today",
       "title_en": "Every morning: what needs doing today",
@@ -229,7 +253,7 @@
       "bili_desc": "首页：30 周以上小鼠、断奶、基因分型、果蝇翻管、试剂过期、未来 14 天；Classic / Tracks / Freezer 三种布局；可选每日邮件。{site}"
     },
     {
-      "day": 10,
+      "day": 11,
       "clip": "flies",
       "theme": "Fly and worm stocks: temperature-aware flip schedules on the rack grid",
       "title_en": "Flip every 14 days at 25 °C, 28 at 18 °C. It keeps count",
@@ -249,7 +273,7 @@
       "bili_desc": "果蝇管/线虫板按培养箱和架子管理，翻管时间随温度变化，格子图显示上次和下次翻管，杂交与子代时间。{site}"
     },
     {
-      "day": 11,
+      "day": 12,
       "clip": "sign",
       "theme": "Sign a notebook page as a locked record, with a witness",
       "title_en": "Sign a notebook page. It's locked, fingerprinted and witnessed",
@@ -269,7 +293,7 @@
       "bili_desc": "签名锁定页面并存指纹，见证人，修订需理由，版本历史逐行对比，多人实时协作。{site}"
     },
     {
-      "day": 12,
+      "day": 13,
       "clip": "protocol",
       "theme": "Protocols with versions, Run mode at the bench, timers in every step",
       "title_en": "Run a protocol one step at a time, timers included",
@@ -289,7 +313,7 @@
       "bili_desc": "方案版本、Run mode、步骤计时器、偏差记录，内置十几个常用方案。{site}"
     },
     {
-      "day": 13,
+      "day": 14,
       "clip": "calendar",
       "theme": "The lab calendar fills itself in: colony dates, flips, protocol timelines, bookings",
       "title_en": "A lab calendar that fills itself in",
@@ -309,7 +333,7 @@
       "bili_desc": "自动日程、实验时间线、重复事件、仪器预约、请假交接、Google 日历与 ICS、手机订阅。{site}"
     },
     {
-      "day": 14,
+      "day": 15,
       "clip": "undo",
       "theme": "Batch actions with undo, and a full change history",
       "title_en": "Change a cage of mice at once. Undo it if you were wrong",
@@ -329,7 +353,7 @@
       "bili_desc": "批量操作可撤销（不覆盖他人后续修改），完整变更历史。{site}"
     },
     {
-      "day": 15,
+      "day": 16,
       "clip": "search",
       "theme": "⌘K searches everything; every page is a tab",
       "title_en": "⌘K finds anything in the lab",
@@ -349,7 +373,7 @@
       "bili_desc": "全局搜索、标签页、快捷键。{site}"
     },
     {
-      "day": 16,
+      "day": 17,
       "clip": "qpcr",
       "theme": "Plate reader and qPCR: standard curves and ΔΔCt in the notebook",
       "title_en": "Plate reader and qPCR maths, done in the notebook",
@@ -369,7 +393,7 @@
       "bili_desc": "孔板热图与标准曲线、ΔΔCt、缓冲液配方、常用计算器。{site}"
     },
     {
-      "day": 17,
+      "day": 18,
       "clip": "looks",
       "theme": "At home on a Mac, full dark mode, your own app icon",
       "title_en": "Lab software can be nice to look at",
@@ -387,26 +411,6 @@
       "xhs_body": "谁说实验室软件都长得像上个世纪的🙃\n\nBioManager：\n🍎 Mac 风格界面：半透明侧边栏、Finder 一样的标签页\n🌙 完整深色模式\n🎨 每个人可以换自己的 App 图标：双螺旋、小鼠、斑马鱼、线虫、果蝇、冻存盒、离心管、培养皿\n🍬 6 种马卡龙配色，整个软件的主题色跟着变\n💻 Windows、Linux 也能用\n\n永久免费开源\n官网：biomanager.org",
       "bili_title": "颜值超高的实验室管理软件：Mac 风格、深色模式、自选图标 | BioManager",
       "bili_desc": "macOS 风格、深色模式、8 种图标 × 6 种配色。{site}"
-    },
-    {
-      "day": 18,
-      "clip": "phone",
-      "theme": "One person on a desktop, or the whole lab on a server, phones included",
-      "title_en": "The whole lab on one server, and on their phones",
-      "subtitle_en": "Everyone signs in from a browser, including on their phone at the rack",
-      "title_zh": "全组用一个服务器，手机上也能用",
-      "subtitle_zh": "浏览器登录，在鼠房用手机也行",
-      "bullets_zh": [
-        "用学校账号登录（Google / Microsoft）",
-        "动物房工作人员可以有单独权限",
-        "每晚自动备份"
-      ],
-      "x": "BioManager runs as a desktop app for one person, or on a lab server everyone signs in to from a browser, phones included. Sign in with Google, Microsoft or your institution's account; animal-facility staff get their own roles.\n\nFree for the whole lab: {site}",
-      "linkedin": "BioManager runs two ways. For one person, a desktop app on macOS, Windows or Linux. For the whole lab, a server everyone signs in to from a browser, including on their phone at the rack: sheets become one card per row, and rack grids get a Move button.\n\nSign in with Google, Microsoft, a password or your institution's own account. Animal-facility staff can have care or facility roles. A lab server keeps nightly backups, and upgrades take a copy first. There's a step-by-step guide for setting one up, including one written for an AI assistant to follow.\n\nFree for the whole lab, no per-seat pricing: {site}",
-      "xhs_title": "全组一起用，手机也能管老鼠📱",
-      "xhs_body": "BioManager 两种用法：\n💻 一个人用：Mac / Windows / Linux 桌面版\n🖥️ 全组用：搭一个实验室服务器，大家用浏览器登录\n\n📱 手机上表格自动变成卡片，笼位图点一下挪笼\n🔐 Google、Microsoft、学校账号都能登录\n🧑‍🔬 动物房工作人员可以单独设权限\n💾 服务器每晚自动备份，升级前先留一份副本\n\n整个组免费，不按人头收费，永久开源\n官网：biomanager.org",
-      "bili_title": "给实验室搭一个管理服务器：全组浏览器登录、手机可用、每晚备份 | BioManager",
-      "bili_desc": "桌面版或实验室服务器，机构账号登录，动物房角色，夜间备份。部署指南：{site}"
     },
     {
       "day": 19,
