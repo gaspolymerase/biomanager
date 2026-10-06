@@ -12,5 +12,10 @@
   "Your own to-dos and events are yours alone, admins included. A shared event is changed only by whoever added it and admins.": "你自己的待办和日程只有你能看到，管理员也看不到。共享日程只有添加它的人和管理员可以修改。",
   "A sample from a mouse number too big for the database no longer stops the samples sheet opening.": "来源小鼠编号超出数据库范围的样本，不会再导致样本表格打不开。",
   "**BioManager in Chinese (中文)**: choose it in **Settings → Language**, or 中文 / English on the sign-in page. The colony, sheets, calendar, Home and Settings are translated so far.": "**BioManager 中文版**：在**设置 → 语言**里选择，或在登录页点中文 / English。目前已翻译鼠群、表格、日历、首页和设置。",
-  "On a Windows PC set to Chinese, Japanese or Korean, the desktop app starts again.": "在设为中文、日文或韩文的 Windows 电脑上，桌面版又能正常启动了。"
+  "On a Windows PC set to Chinese, Japanese or Korean, the desktop app starts again.": "在设为中文、日文或韩文的 Windows 电脑上，桌面版又能正常启动了。",
+  "**AI assistants**: tell Claude, ChatGPT or Cursor what you did and it proposes the records; they wait for you on **Proposed changes**. **Help → Connect an AI assistant** sets it up.": "**AI 助手**：告诉 Claude、ChatGPT 或 Cursor 你做了什么，它会提出记录，在 **修改提议** 里等你批准。**帮助 → 连接 AI 助手** 可以完成设置。",
+  "**Plasmids**: **Versions** you can restore, **Made from** and a family tree, a **Feature library** that marks elements on any map, **Assemble a plasmid**, and **Files** for reads and gel photos.": "**质粒**：可以恢复的 **版本**、**来源质粒** 和家族树、能在任何图谱上标出元件的 **元件库**、**组装质粒**，以及存放测序结果和胶图的 **文件**。",
+  "**Glycerol stocks**: a database for the bacteria carrying each plasmid.": "**甘油菌**：记录携带每个质粒的菌株的数据库。",
+  "The rest of BioManager is in Chinese: the other databases, experiments, the notebook and the messages.": "BioManager 的其余部分也有了中文：其他数据库、实验、实验记录本和各种提示信息。",
+  "**Primers**, **Glycerol stocks** and **Viruses** are tabs at the top of **Plasmids**, not separate entries in the sidebar.": "**引物**、**甘油菌** 和 **病毒** 现在是 **质粒** 顶部的标签页，不再是侧栏里单独的条目。"
 }
