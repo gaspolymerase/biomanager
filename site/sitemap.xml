@@ -507,6 +507,18 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/scripts-and-api"/>
   </url>
   <url>
+    <loc>https://biomanager.org/guide/ai-assistants</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/ai-assistants"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/ai-assistants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/ai-assistants"/>
+  </url>
+  <url>
+    <loc>https://biomanager.org/zh/guide/ai-assistants</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/ai-assistants"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/ai-assistants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/ai-assistants"/>
+  </url>
+  <url>
     <loc>https://biomanager.org/guide/troubleshooting</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://biomanager.org/guide/troubleshooting"/>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/troubleshooting"/>

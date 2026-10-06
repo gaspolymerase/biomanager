@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from migrations.helpers import create_index, create_table
 
-revision = "0017_plasmid_sequence_versions"
-down_revision = "0016_whats_new"
+revision = "0019_plasmid_sequence_versions"
+down_revision = "0018_oauth"
 branch_labels = None
 depends_on = None
 

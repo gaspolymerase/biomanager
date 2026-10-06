@@ -6,8 +6,8 @@ import sqlalchemy as sa
 
 from migrations.helpers import add_column
 
-revision = "0021_feature_library_source"
-down_revision = "0020_plasmid_files"
+revision = "0023_feature_library_source"
+down_revision = "0022_plasmid_files"
 branch_labels = None
 depends_on = None
 

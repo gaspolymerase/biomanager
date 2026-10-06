@@ -16,6 +16,7 @@ class Base(AppTestCase):
     def setUp(self):
         super().setUp()
         api.rate.reset()
+        execute("delete from app_settings where key='members_api_tokens'")  # another module may have left it off
         self.bare = app.test_client()             # no session: the API is signed in by its token alone
 
     def tearDown(self):

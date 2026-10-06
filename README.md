@@ -1007,7 +1007,23 @@ track.
   admin can revoke it). Mice, cages, litters, strains, tanks and fish,
   plasmids, fly and worm vials, every inventory and every experiment can be
   read; a mouse's weights and fields, vials, inventory items and an
-  experiment's readout can be written. Changes are in the change history
+  experiment's readout can be written. For tools that start from your
+  own words, such as an AI assistant, it also finds the records a phrase
+  means (`/api/v1/resolve`), lists what the lab calls things
+  (`/api/v1/vocabulary`) and what is due (`/api/v1/due`). A *Read and
+  propose* token, meant for an AI assistant, changes nothing itself: it
+  sends its changes as one proposal, which BioManager checks as its pages
+  would and keeps under **Proposed changes** (in your account menu, with a
+  notification) as one plain summary. **Approve** makes every change at
+  once, as one batch you can undo; **Discard** makes none; only you, signed
+  in, can approve. **Connect an AI assistant** on the same card connects
+  one. Claude Code, Cursor and Cherry Studio use BioManager's own MCP
+  address (`/api/v1/mcp`) with such a token, nothing to install; Claude
+  Desktop runs `mcp/biomanager_mcp.py` from this repository
+  (`mcp/README.md`). On a lab server that is on the internet, claude.ai,
+  the Claude phone apps and ChatGPT add the same address as a custom
+  connector and sign in with a one-time connection code.
+  Changes are in the change history
   under your name, marked with the token's name. The reference, with
   examples in curl, Python and R, is at `/api` on your BioManager
   (`/api/v1/openapi.json` for tools that read OpenAPI). Lab setup can keep

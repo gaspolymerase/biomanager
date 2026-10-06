@@ -313,6 +313,19 @@ def follow_lab_timezone():
 
 @app.before_request
 def load_current_user():
+    from . import contained
+    acting = contained.acting_user()
+    if acting is not None:
+        # A proposal running the pages (or the API's own writes) on its owner's
+        # behalf (app/contained.py): that person, with no cookie or token, and
+        # messages in their language (English unless the proposal says).
+        g.lang = contained.acting_lang() or i18n.DEFAULT
+        with SessionLocal() as db_session:
+            g.user = db_session.scalar(select(UserAccount).where(UserAccount.username == acting,
+                                                                 UserAccount.disabled.is_(False)))
+        if g.user is not None and (request.path == "/api/v1" or request.path.startswith("/api/v1/")):
+            g.api_token = contained.API_TOKEN
+        return
     if request.path == "/api/v1" or request.path.startswith("/api/v1/"):
         # The API is signed in by its token alone, never the session cookie (app/api.py),
         # and answers in English whatever the client's language: programs read it.
@@ -391,6 +404,12 @@ app.register_blueprint(record_signatures.bp)
 from . import api as public_api  # noqa: E402
 app.register_blueprint(public_api.bp)
 app.register_blueprint(public_api.pages)
+# Proposed changes: what an assistant proposed, approved here (app/proposals.py).
+from . import proposals as lab_proposals  # noqa: E402
+app.register_blueprint(lab_proposals.bp)
+# Assistant apps signing in to use BioManager as a connector (app/oauth.py).
+from . import oauth as lab_oauth  # noqa: E402
+app.register_blueprint(lab_oauth.bp)
 # Send feedback and the usage report, for a pilot (app/feedback.py).
 from . import feedback as lab_feedback  # noqa: E402
 app.register_blueprint(lab_feedback.bp)
@@ -600,11 +619,17 @@ def inject_life_stage():
 def inject_user():
     user = g.get("user")
     unread = 0
+    proposals_menu = None
     if user is not None:
+        from . import proposals as lab_proposals
         with SessionLocal() as db_session:
             unread = notify.unread_count(db_session, user.username)
+            # Proposed changes is in the account menu once an assistant has sent some.
+            if lab_proposals.has_any(db_session, user.username):
+                proposals_menu = lab_proposals.pending_count(db_session, user.username)
     return {"current_user": user, "min_password_length": security.MIN_PASSWORD_LENGTH,
             "sign_in_providers": oidc.provider_choices(), "notification_unread": unread,
+            "proposals_pending": proposals_menu,
             "lab_features": lab.request_features() if user is not None else {}}
 
 
