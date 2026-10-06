@@ -75,6 +75,7 @@
       {{ icon('list-check') }}
       <p>{{ _('Nothing is waiting for you.') }}</p>
       <p class="text-[12.5px] text-muted">{{ _('When an assistant you connected proposes changes, they wait here for you to approve or discard.') }}</p>
+      <a class="btn mt-3" href="{{ url_for('oauth.connect_page') }}">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</a>
     </div>
   {% endfor %}
 
