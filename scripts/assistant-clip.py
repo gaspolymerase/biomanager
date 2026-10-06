@@ -3,9 +3,11 @@
 
     python scripts/assistant-clip.py site/assets/clips
     python scripts/assistant-clip.py /tmp/out --base http://127.0.0.1:5077 --data /path/to/lab
+    python scripts/assistant-clip.py promo/out/assistant --photo --name assistant-photo
 
-Someone tells an assistant what they did; it finds each record, sends one
-proposal, and they approve it in BioManager. The assistant's window is drawn
+Someone tells an assistant what they did (with --photo, by sending a photo of
+the page in their notebook instead of typing it); it finds each record, sends
+one proposal, and they approve it in BioManager. The assistant's window is drawn
 here (a plain one, not any real app's), and BioManager is the real app: a
 fresh demo lab (scripts/demo-data.py), a Read and propose token, and a
 proposal sent through /api/v1 as an assistant would, then approved on
@@ -36,7 +38,7 @@ import time
 from pathlib import Path
 
 import imageio_ffmpeg
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,6 +54,38 @@ STEPS = ["Found cage 110 · its litter is 19 days old",
          "Found mice 6 and 7 · cage 103",
          "Found the two females in 112 · #30 and #31",
          "Sent one proposal · 4 changes"]
+# --photo: the same day, written in a notebook and sent as a picture
+PHOTO_SAID = "Log today's work from this page of my notebook."
+PHOTO_STEPS = ["Read the page · 3 entries, 4 changes"] + STEPS
+PAGE_LINES = ["Mon 5 Oct", "weaned the litter in 110", "weighed  #6  24.1 g", "              #7  23.8 g   (TMX)",
+              "moved the 2 females 112 to 106"]
+
+
+def notebook_photo() -> str:
+    """A phone photo of a handwritten notebook page, as a data: URL."""
+    w, h = 1200, 900
+    paper = Image.new("RGB", (w, h), (251, 248, 238))
+    d = ImageDraw.Draw(paper)
+    for y in range(110, h, 64):
+        d.line([(0, y), (w, y)], fill=(176, 198, 228), width=2)
+    d.line([(118, 0), (118, h)], fill=(232, 150, 150), width=3)
+    hand = ImageFont.truetype("/System/Library/Fonts/Supplemental/Bradley Hand Bold.ttf", 54)
+    for i, line in enumerate(PAGE_LINES):
+        y = 110 + 64 * (i + 1) - 62 + (4 if i % 2 else 0)
+        d.text((150 + (6 if i % 3 == 1 else 0), y), line, font=hand, fill=(28, 40, 105))
+    page = paper.rotate(-3.5, resample=Image.BICUBIC, expand=True, fillcolor=(0, 0, 0))
+    mask = paper.convert("L").point(lambda _: 255).rotate(-3.5, resample=Image.BICUBIC, expand=True)
+    desk = Image.new("RGB", (1280, 960), (120, 104, 88))
+    grad = Image.linear_gradient("L").resize((1280, 960)).rotate(90, expand=False)
+    desk = Image.composite(desk, Image.new("RGB", desk.size, (92, 78, 66)), grad)
+    shadow = Image.new("L", desk.size, 0)
+    sx, sy = (desk.width - page.width) // 2 + 14, (desk.height - page.height) // 2 + 20
+    shadow.paste(mask, (sx, sy))
+    desk.paste((40, 32, 26), (0, 0), shadow.filter(ImageFilter.GaussianBlur(18)))
+    desk.paste(page, ((desk.width - page.width) // 2, (desk.height - page.height) // 2), mask)
+    buf = io.BytesIO()
+    desk.save(buf, "JPEG", quality=88)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 def ease(x: float) -> float:
@@ -183,6 +217,10 @@ body::before { content: ""; position: absolute; inset: 0;
 .send { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: #d9dfdd; color: #fff; }
 .send.on { background: #121a19; }
 .send svg { width: 18px; height: 18px; }
+.me img { display: block; width: 300px; border-radius: 12px; margin: 2px 0 10px; }
+.att { display: flex; align-items: center; gap: 10px; margin: 0 22px -2px; }
+.att img { width: 64px; height: 48px; object-fit: cover; border-radius: 9px; border: 1px solid rgba(16, 52, 46, 0.15); }
+.att span { font-size: 14px; color: #4a5856; }
 .hide { display: none !important; }
 #cursor { position: absolute; left: 0; top: 0; width: 26px; height: 26px; z-index: 9; pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
@@ -199,13 +237,14 @@ body::before { content: ""; position: absolute; inset: 0;
         <div class="link hide" id="link"><img src="{icon}"><div><b>Proposal #{pid} · 4 changes</b><span>Waiting for you on Proposed changes</span></div><span class="go">Review →</span></div>
       </div></div>
   </div>
+  <div class="att hide" id="att"><img src="{photo}"><span>notebook-page.jpg</span></div>
   <div class="input"><div class="txt" id="txt"><span class="ph">Tell it what you did…</span></div>
     <div class="send" id="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
 </div>
 </div>
 <svg id="cursor" viewBox="0 0 26 26"><path d="M5 3l15 8.5-6.4 1.6L10.6 20z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
 <script>
-const SAID = {said}, STEPS = {steps};
+const SAID = {said}, STEPS = {steps}, PHOTO = {has_photo};
 const OK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
 const $ = id => document.getElementById(id);
 window.frame = function (s) {
@@ -214,7 +253,10 @@ window.frame = function (s) {
   if (s.sent) t.innerHTML = '<span class="ph">Tell it what you did…</span>';
   else if (s.typed > 0) t.innerHTML = SAID.slice(0, s.typed).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '<span class="caret"></span>';
   $('send').classList.toggle('on', !s.sent && s.typed > 0);
-  $('me').classList.toggle('hide', !s.sent); $('me').textContent = SAID;
+  $('me').classList.toggle('hide', !s.sent);
+  $('me').innerHTML = (PHOTO ? '<img id="photo" src="' + $('att').querySelector('img').src + '">' : '') +
+      SAID.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  $('att').classList.toggle('hide', !(PHOTO && s.attached && !s.sent));
   $('it').classList.toggle('hide', !s.steps.length);
   $('steps').innerHTML = s.steps.map((st, i) => '<div class="step"><span class="ic ' + (st ? 'ok' : 'busy') + '"' +
       (st ? '' : ' style="transform:rotate(' + (s.spin || 0) + 'deg)"') + '>' + (st ? OK : '') + '</span>' + STEPS[i] + '</div>').join('');
@@ -230,41 +272,56 @@ window.where = id => { const r = $(id).getBoundingClientRect(); return [r.left +
 </script></body></html>"""
 
 
-def chat_frames(browser, pid: int, sink):
-    """The assistant's window: typed, sent, the records found, the link."""
+def chat_frames(browser, pid: int, sink, photo: bool = False):
+    """The assistant's window: typed (with the photo attached), sent, the records found, the link."""
+    said, steps_text = (PHOTO_SAID, PHOTO_STEPS) if photo else (SAID, STEPS)
     ctx = browser.new_context(viewport={"width": VIEW[0], "height": VIEW[1]}, device_scale_factor=SCALE)
     page = ctx.new_page()
     tmp = Path(tempfile.mkdtemp(prefix="assistant-chat-"))
     doc = (CHAT_HTML.replace("{fonts}", FONTS.as_uri()).replace("{icon}", (ROOT / "app/static/icon-512.png").as_uri())
-           .replace("{pid}", str(pid)).replace("{said}", json.dumps(SAID)).replace("{steps}", json.dumps(STEPS)))
+           .replace("{pid}", str(pid)).replace("{said}", json.dumps(said)).replace("{steps}", json.dumps(steps_text))
+           .replace("{has_photo}", "true" if photo else "false")
+           .replace("{photo}", notebook_photo() if photo else ""))
     (tmp / "chat.html").write_text(doc, encoding="utf-8")
     page.goto((tmp / "chat.html").as_uri())
     page.evaluate("document.fonts.ready")
 
     # the timeline, in seconds
-    type_from, type_cps = 0.7, 44.0
-    type_to = type_from + len(SAID) / type_cps
+    attach_at = 0.5
+    type_from, type_cps = (1.3 if photo else 0.7), 44.0
+    type_to = type_from + len(said) / type_cps
     sent = type_to + 0.45
-    step_at = [sent + 0.6 + 0.55 * i for i in range(len(STEPS))]
+    look = 2.6 if photo else 0.0                  # with a photo: a close look at the page before the answer
+    step_at = [sent + look + 0.6 + 0.55 * i for i in range(len(steps_text))]
     step_done = [a + 0.45 for a in step_at]
     reply_at = step_done[-1] + 0.35
     link_at = reply_at + 0.45
     end = link_at + 1.9
 
-    page.evaluate("frame({typed: 0, sent: false, steps: [], reply: false, link: false, cursor: null, cam: [640, 393, 1]})")
+    page.evaluate("frame({typed: 0, sent: false, attached: true, steps: [], reply: false, link: false, cursor: null, cam: [640, 393, 1]})")
     send_xy = page.evaluate("where('send')")
-    page.evaluate("frame({typed: 0, sent: true, steps: [1,1,1,1], reply: true, link: true, cursor: null, cam: [640, 393, 1]})")
+    photo_xy = None
+    if photo:
+        page.evaluate("frame({typed: 0, sent: true, steps: [], reply: false, link: false, cursor: null, cam: [640, 393, 1]})")
+        photo_xy = page.evaluate("where('photo')")
+    page.evaluate(f"frame({{typed: 0, sent: true, steps: {json.dumps([1] * len(steps_text))}, reply: true, link: true, "
+                  "cursor: null, cam: [640, 393, 1]})")
     link_xy = page.evaluate("where('link')")
 
     n = int(end * FPS)
     for f in range(n):
         t = f / FPS
-        typed = 0 if t < type_from else min(len(SAID), int((t - type_from) * type_cps))
+        typed = 0 if t < type_from else min(len(said), int((t - type_from) * type_cps))
         steps = [1 if t >= d else 0 for a, d in zip(step_at, step_done) if t >= a]
         # the camera: the whole window while typing, closer on the answer, then on the link
         k = 1 + 0.18 * ease((t - sent) / 1.2) + 0.12 * ease((t - link_at) / 1.0)
         cy = 393 + 70 * ease((t - sent) / 1.2) + 60 * ease((t - link_at) / 1.0)
         cx = 640 - 40 * ease((t - link_at) / 1.0)
+        if photo:
+            # in on the handwriting once it is sent, and back out as the assistant answers
+            near = ease((t - sent - 0.2) / 0.8) * (1 - ease((t - sent - look + 0.1) / 0.8))
+            k = k + (2.1 - k) * near
+            cx, cy = cx + (photo_xy[0] - cx) * near, cy + (photo_xy[1] - cy) * near
         # the cursor: to Send, then to the link
         cursor = None
         if t < type_to + 0.1:
@@ -275,7 +332,7 @@ def chat_frames(browser, pid: int, sink):
         elif t >= link_at + 0.6:
             p = ease((t - link_at - 0.6) / 0.8)
             cursor = [960 + (link_xy[0] + 120 - 960) * p, 700 + (link_xy[1] - 700) * p, t >= end - 0.35]
-        state = {"typed": typed, "sent": t >= sent, "steps": steps, "reply": t >= reply_at, "link": t >= link_at,
+        state = {"typed": typed, "sent": t >= sent, "attached": t >= attach_at, "steps": steps, "reply": t >= reply_at, "link": t >= link_at,
                  "cursor": cursor, "cam": [cx, cy, k], "spin": (t * 360) % 360}
         page.evaluate(f"frame({json.dumps(state)})")
         sink(page.screenshot(type="png"))
@@ -425,6 +482,7 @@ def main():
     ap.add_argument("--base", help="a running demo lab to record in, instead of a fresh one")
     ap.add_argument("--data", help="that lab's data folder (for its demo-password)")
     ap.add_argument("--name", default="assistant")
+    ap.add_argument("--photo", action="store_true", help="the notes arrive as a photo of a notebook page")
     args = ap.parse_args()
 
     server = None
@@ -444,7 +502,7 @@ def main():
             proposal = propose(page, base)
             chat, app = Frames(), Frames()
             app_frames(page, base, proposal["id"], app)      # first, while the proposal is "just now"
-            chat_frames(browser, proposal["id"], chat)
+            chat_frames(browser, proposal["id"], chat, photo=args.photo)
             browser.close()
         frames = crossfade(chat.items, app.items, int(0.5 * FPS))
         mp4, webm = encode(frames, Path(args.out), args.name)
