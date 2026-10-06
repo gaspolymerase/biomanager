@@ -130,6 +130,52 @@ Source: https://biomanager.org/guide/install
 
 ---
 
+## Try it first
+
+Ten minutes on a practice rack: make a cage, add mice, record a litter, and watch the weaning date appear. Then throw it away.
+
+Who and where: Anyone, in a new lab · Desktop and lab server
+
+Before you move a real colony in, it is worth seeing the whole loop once on records that do not matter. Everything below is made in your own lab and deleted at the end, so nothing you do here can spoil anything. If a step does not look like this page says, that is worth telling us — the guide is meant to match the app.
+
+### 1. A practice rack
+
+1. Open **Mouse** in the sidebar, then the **Cages** tab.
+
+2. **Rack grid → New rack**. Call it *Practice*, 2 rows by 3 columns, and save.
+
+An empty grid of six positions appears, labelled the way you chose — the same grid every rack in the lab uses.
+
+### 2. A cage with mice in it
+
+1. **New cage**. Put it in the *Practice* rack at the first position, and set **Purpose** to *Breeding*.
+
+2. Open the cage and add two mice: one female, one male. Give them any genotype you like.
+
+The cage shows 2 mice, and its card sits in the first square of the rack. The mice are yours: your name is on them.
+
+### 3. A litter, and the dates that follow
+
+1. On the cage, press **Litter born** and keep today's date.
+
+2. Press **Record the litter**.
+
+BioManager says *Recorded a litter born today in cage … : weaning is due …* — three weeks out. You did not work that date out, and neither will anyone else in the lab. Open [Home](https://biomanager.org/guide/home-page) and the [calendar](https://biomanager.org/guide/calendar): the weaning is waiting there on the day it is due, in both places, because they are the same list.
+
+### 4. Throw it away
+
+1. Open **Batch history** (in **More**) and **Undo** what you just made, newest first.
+
+2. Anything left: delete the mice, then the cage, then the rack in **Rack grid**.
+
+The colony is empty again and ready for your real records. Nothing was sent anywhere while you did this — see [Your data and backups](https://biomanager.org/guide/your-data).
+
+Next: [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in) moves your real records across, and [Coming from Excel](https://biomanager.org/guide/coming-from-excel) explains what changes when a sheet becomes a database.
+
+Source: https://biomanager.org/guide/try-it-first
+
+---
+
 ## Bring your lab in
 
 Move your records in: import sheets, add many at once, and check what came in.
@@ -966,6 +1012,25 @@ Source: https://biomanager.org/guide/notebook
 
 Who can see and change what in a lab: members, owners and admins.
 
+### The roles
+
+Everyone in a lab has one role. A role never takes away what you own: it adds what else you may touch.
+
+| Member | Changes their own records, and the lab's shared ones. Most people in a lab are members. |
+|---|---|
+| Animal care | Technicians and vets: may change *any* lab member's animals, cages, tanks and vials — weights, moves, flips, health. Other people's experiments, notebook pages and settings stay theirs. Their own records they keep like a member. |
+| Facility manager | Animal care, plus the facility itself: racks, rooms, incubators, water systems and each database's settings. Not accounts. |
+| Admin | Everything, including accounts, roles and [Lab setup](https://biomanager.org/guide/lab-setup), and the audit log. A lab needs at least one. |
+| [Guest](https://biomanager.org/guide/people-and-guests) | Someone outside the lab, on a pass that ends by itself after a day, three days, a week or 30 days. They see only what the pass opens, and can never keep a copy of the lab. |
+
+An admin changes a role in **Manage users**, and cannot change their own — so a lab can never lock its last admin out.
+
+### Which rule wins
+
+You may change a record if *any one* of these is true: you own it; it is shared with the lab or with a [project group](https://biomanager.org/guide/project-groups) you are in; or your role covers it. Nothing takes a permission away again, so you never have to work out which rule lost.
+
+### What is yours
+
 - **You edit what you own** — your mice, cages, vials, plasmids and items.
 
 - **Shared cages and anything marked lab common** belong to the whole lab. A cage whose purpose is *Breeder* starts out *Shared*; any other cage (an experiment cage, a *Breeding* one) starts *Personal*. Only its owner or an admin shares a cage, makes it personal or gives it to someone else; admins and animal care can still see and change every cage.
@@ -981,6 +1046,18 @@ Who can see and change what in a lab: members, owners and admins.
 - **Racks & boxes** (admins, in the account menu) says who may resize, rename or delete each rack, box and incubator, in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.
 
 When a record isn't yours, BioManager says whose it is instead of just refusing.
+
+### When someone leaves the lab
+
+Their records do not disappear — mice, cages, plasmids and pages stay exactly where they are, still in their name, so the colony and the notebook stay whole. To hand the work on:
+
+1. On each sheet, select their records and use **Set field → Owner** to put them in the new person's name. ([Many at once](https://biomanager.org/guide/many-at-once) does a whole sheet in one go.)
+
+2. An admin sets their role, in **Manage users**, to whatever is right now they have gone.
+
+3. A guest pass needs nothing: it ends on its own date.
+
+A notebook page they signed stays signed in their name — that is the point of signing, and nobody can change it afterwards, including an admin.
 
 ### Troubleshooting
 

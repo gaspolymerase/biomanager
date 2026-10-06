@@ -56,6 +56,7 @@
             <li><a href="what-it-is.html">What BioManager is</a></li>
             <li><a href="coming-from-excel.html">Coming from Excel</a></li>
             <li><a href="install.html">Install and set up</a></li>
+            <li><a href="try-it-first.html">Try it first</a></li>
             <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
             <li><a href="home-page.html">Home</a></li>
           </ol></li>
@@ -118,6 +119,21 @@
     <h1>Who can do what</h1>
     <p class="summary">Who can see and change what in a lab: members, owners and admins.</p>
 
+      <h2 id="roles">The roles</h2>
+      <p>Everyone in a lab has one role. A role never takes away what you own: it adds what else you may touch.</p>
+      <table class="gtable">
+        <tr><th>Member</th><td>Changes their own records, and the lab's shared ones. Most people in a lab are members.</td></tr>
+        <tr><th>Animal care</th><td>Technicians and vets: may change <i>any</i> lab member's animals, cages, tanks and vials — weights, moves, flips, health. Other people's experiments, notebook pages and settings stay theirs. Their own records they keep like a member.</td></tr>
+        <tr><th>Facility manager</th><td>Animal care, plus the facility itself: racks, rooms, incubators, water systems and each database's settings. Not accounts.</td></tr>
+        <tr><th>Admin</th><td>Everything, including accounts, roles and <a href="lab-setup.html">Lab setup</a>, and the audit log. A lab needs at least one.</td></tr>
+        <tr><th><a href="people-and-guests.html">Guest</a></th><td>Someone outside the lab, on a pass that ends by itself after a day, three days, a week or 30 days. They see only what the pass opens, and can never keep a copy of the lab.</td></tr>
+      </table>
+      <p>An admin changes a role in <b>Manage users</b>, and cannot change their own — so a lab can never lock its last admin out.</p>
+      <h2 id="what-applies">Which rule wins</h2>
+      <p>You may change a record if <i>any one</i> of these is true: you own it; it is shared with the lab or with a
+        <a href="project-groups.html">project group</a> you are in; or your role covers it. Nothing takes a permission away
+        again, so you never have to work out which rule lost.</p>
+      <h2 id="owning">What is yours</h2>
       <ul>
         <li><b>You edit what you own</b> — your mice, cages, vials, plasmids and items.</li>
         <li><b>Shared cages and anything marked lab common</b> belong to the whole lab. A cage whose purpose is <i>Breeder</i>
@@ -135,6 +151,17 @@
           in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.</li>
       </ul>
       <p>When a record isn't yours, BioManager says whose it is instead of just refusing.</p>
+      <h2 id="leaving">When someone leaves the lab</h2>
+      <p>Their records do not disappear — mice, cages, plasmids and pages stay exactly where they are, still in their name, so
+        the colony and the notebook stay whole. To hand the work on:</p>
+      <ol class="steps-list">
+        <li>On each sheet, select their records and use <b>Set field → Owner</b> to put them in the new person's name.
+          (<a href="many-at-once.html">Many at once</a> does a whole sheet in one go.)</li>
+        <li>An admin sets their role, in <b>Manage users</b>, to whatever is right now they have gone.</li>
+        <li>A guest pass needs nothing: it ends on its own date.</li>
+      </ol>
+      <p>A notebook page they signed stays signed in their name — that is the point of signing, and nobody can change it
+        afterwards, including an admin.</p>
     <section class="trouble">
       <h2 id="troubleshooting">Troubleshooting</h2>
       <h3>I can't edit a record</h3>
@@ -148,7 +175,16 @@
         <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=Guide: Who%20can%20do%20what&amp;body=Page: https://biomanager.org/guide/who-can-do-what%0A%0AWhat%20was%20unclear%20or%20missing:" target="_blank" rel="noopener">No</a>
       </div>
   </main>
-  
+  <nav class="docs-rail" aria-label="On this page">
+      <p>On this page · 3 min read</p>
+      <ol>
+        <li class="lvl2"><a href="#roles">The roles</a></li>
+        <li class="lvl2"><a href="#what-applies">Which rule wins</a></li>
+        <li class="lvl2"><a href="#owning">What is yours</a></li>
+        <li class="lvl2"><a href="#leaving">When someone leaves the lab</a></li>
+        <li class="lvl2"><a href="#troubleshooting">Troubleshooting</a></li>
+      </ol>
+    </nav>
 </div>
 
 <footer class="footer">

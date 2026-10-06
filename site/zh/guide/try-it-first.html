@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>先试一遍 — BioManager 用户指南</title>
+  <meta name="description" content="用十分钟在练习鼠架上走一遍：建笼、加小鼠、记录产仔，看着断奶日期自动出现，然后把它们删掉。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/try-it-first">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/try-it-first">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/try-it-first">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/try-it-first">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/try-it-first">
+  <meta property="og:title" content="先试一遍 — BioManager 用户指南">
+  <meta property="og:description" content="用十分钟在练习鼠架上走一遍：建笼、加小鼠、记录产仔，看着断奶日期自动出现，然后把它们删掉。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css?v=7efa086028">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/try-it-first.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html" aria-current="page">先试一遍</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>怎么做</span>
+          <ol>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据库</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+            <li><a href="experiments.html">实验</a></li>
+            <li><a href="plasmids.html">质粒</a></li>
+            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>数据与帮助</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="ai-assistants.html">AI 助手</a></li>
+            <li><a href="troubleshooting.html">故障排除</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">入门</p>
+    <h1>先试一遍</h1>
+    <p class="summary">用十分钟在练习鼠架上走一遍：建笼、加小鼠、记录产仔，看着断奶日期自动出现，然后把它们删掉。</p>
+    <div class="badges"><span class="badge who">任何人，在新建的实验室里</span><span class="badge">桌面版和实验室服务器</span></div>
+    <p>把真正的鼠群搬进来之前，先用无关紧要的记录把整个流程走一遍是值得的。下面所有内容都建在你自己的实验室里，最后会删掉，
+      所以怎么点都不会弄坏什么。如果某一步和这页写的不一样，欢迎告诉我们——这份指南应当和应用保持一致。</p>
+    <h2 id="a-rack">1. 一个练习鼠架</h2>
+    <ol class="steps-list">
+      <li>在侧边栏打开 <b>小鼠</b>，再打开 <b>笼</b> 标签页。</li>
+      <li>点 <b>鼠架视图 → 新建鼠架</b>，命名为<i>练习</i>，2 行 3 列，保存。</li>
+    </ol>
+    <p class="result">出现一个六个位置的空网格，按你选的方式编号——实验室里每个鼠架用的都是同一套网格。</p>
+    <h2 id="a-cage">2. 一个有小鼠的笼</h2>
+    <ol class="steps-list">
+      <li>点 <b>新建笼</b>，放进<i>练习</i>鼠架的第一个位置，<b>用途</b> 选<i>繁殖</i>。</li>
+      <li>打开这个笼，加两只小鼠：一只雌、一只雄，基因型随便填。</li>
+    </ol>
+    <p class="result">笼上显示 2 只小鼠，笼卡出现在鼠架的第一格里。这些小鼠归你——上面写着你的名字。</p>
+    <h2 id="a-litter">3. 产仔，以及随之而来的日期</h2>
+    <ol class="steps-list">
+      <li>在这个笼上点 <b>产仔</b>，日期保持今天。</li>
+      <li>点 <b>记录产仔</b>。</li>
+    </ol>
+    <p class="result">BioManager 提示<i>已记录今天在 … 笼出生的一窝：断奶日期为 …</i>——三周之后。这个日期不用你算，
+      实验室里其他人也不用算。打开<a href="home-page.html">首页</a>和<a href="calendar.html">日历</a>：断奶任务就等在那一天，
+      两处都有，因为它们本来就是同一份列表。</p>
+    <h2 id="clean-up">4. 把它删掉</h2>
+    <ol class="steps-list">
+      <li>打开 <b>批次历史</b>（在 <b>更多</b> 里），从最新的开始逐条 <b>撤销</b>。</li>
+      <li>还有剩下的，就依次删掉小鼠、笼，最后在 <b>鼠架视图</b> 里删掉鼠架。</li>
+    </ol>
+    <p class="result">鼠群又空了，可以放你真正的记录了。刚才这些操作没有把任何内容发送到别处——见<a href="your-data.html">数据与备份</a>。</p>
+    <p class="related"><span>下一步：</span><a href="bring-your-lab-in.html">把实验室搬进来</a>可以把真实记录迁过来，
+      <a href="coming-from-excel.html">从 Excel 过来</a>讲清表格变成数据库后有什么不同。</p>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="install.html"><small>上一页</small>安装与设置</a><a class="next" href="bring-your-lab-in.html"><small>下一页</small>把实验室搬进来</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：先试一遍&amp;body=页面：https://biomanager.org/zh/guide/try-it-first%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容 · 阅读约 1 分钟</p>
+      <ol>
+        <li class="lvl2"><a href="#a-rack">1. 一个练习鼠架</a></li>
+        <li class="lvl2"><a href="#a-cage">2. 一个有小鼠的笼</a></li>
+        <li class="lvl2"><a href="#a-litter">3. 产仔，以及随之而来的日期</a></li>
+        <li class="lvl2"><a href="#clean-up">4. 把它删掉</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-gh">
+      <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=d44b577819#star"/></svg>在 GitHub 上标星</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=d44b577819#github"/></svg>提交反馈</a>
+    </div>
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p><a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本和更新内容</a></p>
+  </div>
+</footer>
+<script src="../../site.js?v=e2f462f0da"></script>
+</body>
+</html>

@@ -56,6 +56,7 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
@@ -118,6 +119,20 @@
     <h1>谁能做什么</h1>
     <p class="summary">实验室里谁能看、谁能改：成员、负责人和管理员。</p>
 
+      <h2 id="roles">角色</h2>
+      <p>实验室里每个人都有一个角色。角色不会收走你自己的记录，只会增加你还能动的东西。</p>
+      <table class="gtable">
+        <tr><th>成员</th><td>可以修改自己的记录，以及实验室共享的记录。实验室里大多数人都是成员。</td></tr>
+        <tr><th>动物护理</th><td>技术员和兽医：可以修改<i>任何</i>成员的动物、笼、鱼缸和管——体重、转移、换管、健康状况。别人的实验、实验记录本页面和设置仍归他们自己。自己的记录则和成员一样。</td></tr>
+        <tr><th>设施管理员</th><td>动物护理的权限，再加上设施本身：鼠架、房间、培养箱、水系统，以及各数据库的设置。不包括账号。</td></tr>
+        <tr><th>管理员</th><td>所有权限，包括账号、角色、<a href="lab-setup.html">实验室设置</a>和审计日志。每个实验室至少要有一位。</td></tr>
+        <tr><th><a href="people-and-guests.html">访客</a></th><td>实验室以外的人，持有到期自动失效的通行证（1 天、3 天、1 周或 30 天）。只能看到通行证开放的内容，也不能保留实验室副本。</td></tr>
+      </table>
+      <p>管理员在 <b>管理用户</b> 里更改角色，但不能更改自己的——这样实验室永远不会把最后一位管理员关在门外。</p>
+      <h2 id="what-applies">以哪条规则为准</h2>
+      <p>只要满足<i>其中一条</i>，你就可以修改这条记录：它是你的；它共享给了实验室或你所在的<a href="project-groups.html">项目组</a>；
+        或者你的角色涵盖它。权限只会叠加、不会互相抵消，所以你不用去想哪条规则「赢了」。</p>
+      <h2 id="owning">What is yours</h2>
       <ul>
         <li><b>你能编辑自己的东西</b>——你的小鼠、笼、果蝇管、质粒和物品。</li>
         <li><b>共享笼和任何标为实验室公用的东西</b> 属于全实验室。用途为<i>繁殖笼</i>（Breeder）的笼
@@ -135,6 +150,15 @@
           覆盖所有数据库——斑马鱼的架子和你自己数据库里的架子也包括在内。没有指定任何人的，只有管理员能操作。</li>
       </ul>
       <p>当一条记录不属于你时，BioManager 会告诉你它属于谁，而不只是简单地拒绝。</p>
+      <h2 id="leaving">有人离开实验室时</h2>
+      <p>他们的记录不会消失——小鼠、笼、质粒和页面都原样留在那里，仍记在他们名下，鼠群和实验记录本因此是完整的。要把工作交接出去：</p>
+      <ol class="steps-list">
+        <li>在各个表格里选中他们的记录，用 <b>批量设置 → 负责人</b> 改成新的人。
+          （<a href="many-at-once.html">批量操作</a>可以一次处理整张表。）</li>
+        <li>管理员在 <b>管理用户</b> 里把他们的角色改成现在合适的。</li>
+        <li>访客通行证不用处理：到期自动失效。</li>
+      </ol>
+      <p>他们签过名的实验记录本页面仍然记在他们名下——这正是签名的意义，事后谁都不能更改，管理员也不行。</p>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>我无法编辑某条记录</h3>
@@ -148,7 +172,16 @@
         <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：谁能做什么&amp;body=页面：https://biomanager.org/zh/guide/who-can-do-what%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
       </div>
   </main>
-  
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容 · 阅读约 3 分钟</p>
+      <ol>
+        <li class="lvl2"><a href="#roles">角色</a></li>
+        <li class="lvl2"><a href="#what-applies">以哪条规则为准</a></li>
+        <li class="lvl2"><a href="#owning">What is yours</a></li>
+        <li class="lvl2"><a href="#leaving">有人离开实验室时</a></li>
+        <li class="lvl2"><a href="#troubleshooting">故障排除</a></li>
+      </ol>
+    </nav>
 </div>
 
 <footer class="footer">

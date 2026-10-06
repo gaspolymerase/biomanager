@@ -35,6 +35,7 @@ PAGES = [
         ("what-it-is", "What BioManager is", "BioManager 是什么"),
         ("coming-from-excel", "Coming from Excel", "从 Excel 过来"),
         ("install", "Install and set up", "安装与设置"),
+        ("try-it-first", "Try it first", "先试一遍"),
         ("bring-your-lab-in", "Bring your lab in", "把实验室搬进来"),
         ("home-page", "Home", "首页"),
     ]),
