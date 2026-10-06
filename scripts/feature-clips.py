@@ -510,6 +510,13 @@ def sign_in(page, base, password):
     page.press("input[name=password]", "Enter")
     page.wait_for_load_state("networkidle")
     page.goto(f"{base}/home")
+    # A fresh demo lab has never seen this release, so What's new opens over
+    # the page and swallows the first click of every walk (app/whats_new.py).
+    for _ in range(3):
+        if not page.locator("dialog#whats-new[open]").count():
+            break
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
     hide = page.get_by_role("button", name="Hide this list")
     if hide.count():
         hide.first.click()

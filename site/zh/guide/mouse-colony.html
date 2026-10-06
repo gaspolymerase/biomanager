@@ -58,6 +58,7 @@
             <li><a href="install.html">安装与设置</a></li>
             <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -69,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html" aria-current="page">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html" aria-current="page">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -119,6 +134,23 @@
     <h1>小鼠鼠群</h1>
     <p class="summary">小鼠、笼、产仔和繁殖，从出生到断奶分笼。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 小鼠鼠群</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/census.webp" data-clip-src="../../assets/clips/census"></video></div></figure>
+      <h2 id="a-week">它对你每周的工作意味着什么</h2>
+      <p>鼠群运转靠的是一堆容易记错、又很烦人的日期：一窝什么时候够大可以鉴定基因型、什么时候必须断奶、哪个笼快挤了、
+        这些小鼠是谁的。BioManager 要做的，就是从你本来就知道的那一件事——出生那天——把这些日期都算出来，
+        并摆到当班的人面前。</p>
+      <table class="gtable">
+        <tr><th>产仔</th><td>日期只记一次（<a href="record-a-litter.html">记录产仔</a>）。基因型鉴定和断奶日期据此算出，
+          出现在<a href="home-page.html">首页</a>和<a href="calendar.html">日历</a>上——两处是同一份列表，谁也不用再自己记一本。</td></tr>
+        <tr><th>够大可以做基因型鉴定了</th><td>几下点击就把一窝变成每只一条记录
+          （<a href="genotype-a-litter.html">鉴定一窝的基因型</a>），各自带耳标和结果，而不是让你重新敲一遍表格。</td></tr>
+        <tr><th>断奶那天</th><td><a href="wean-a-litter.html">断奶分笼</a>按性别把幼鼠分进新笼，仍然关联着它们来自的那一窝，
+          并腾空繁殖笼。新笼的笼卡打印出来时，基因型已经印在上面
+          （<a href="print-cage-cards.html">打印笼卡</a>）。</td></tr>
+        <tr><th>在动物房里</th><td>用手机扫笼卡上的二维码就能打开那个笼，戴着手套也能记体重或写一句备注，
+          走出房间前就已经进了记录（<a href="phones-and-cage-cards.html">在实验台</a>）。</td></tr>
+      </table>
+      <p>你不用再做的事：把断奶日期记在脑子里或墙上的挂历、把一窝重新敲进表格、断奶后手写笼卡，
+        以及追问某个笼里的小鼠是谁的——每条记录都写着负责人，也写着<a href="who-can-do-what.html">谁可以改它</a>。</p>
 
       <p>顶部的标签页：<b>小鼠</b> （Mice）、<b>笼</b> （Cages）、<b>窝</b> （Litters）、<b>繁殖笼</b> （Breeders）、<b>实验</b> （Experiments）、<b>品系</b> （Strains）和
  <b>下拉选项</b> （Dropdowns）。<b>我的鼠群 / 我的项目组 / 共享 / 全实验室</b> （My colony / My groups / Shared / Everyone）开关改变的是你<i>看到</i>什么，而不是你能
@@ -179,7 +211,7 @@
           能修改。</li>
       </ul>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="restore-a-backup.html"><small>上一页</small>从备份恢复</a><a class="next" href="zebrafish.html"><small>下一页</small>斑马鱼</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="keyboard-shortcuts.html"><small>上一页</small>快捷键</a><a class="next" href="record-a-litter.html"><small>下一页</small>记录产仔</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
@@ -187,8 +219,9 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 3 分钟</p>
+      <p>本页内容 · 阅读约 4 分钟</p>
       <ol>
+        <li class="lvl2"><a href="#a-week">它对你每周的工作意味着什么</a></li>
         <li class="lvl2"><a href="#racks-and-cages">笼架和笼</a></li>
         <li class="lvl2"><a href="#mice">小鼠</a></li>
         <li class="lvl2"><a href="#breeding-from-litter-to-weaning">繁殖：从产仔到断奶</a></li>
