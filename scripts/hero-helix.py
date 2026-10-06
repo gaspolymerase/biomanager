@@ -139,13 +139,16 @@ def rungs():
     return out
 
 
+PAD = 100                       # room above and below the turn, for the blurs
+
+
 def svg(name, body, defs=""):
-    s = (f"<svg xmlns='http://www.w3.org/2000/svg' width='{PERIOD}' height='{HEIGHT}' "
-         f"viewBox='0 0 {PERIOD} {HEIGHT}'>{defs}{body}</svg>\n")
+    s = (f"<svg xmlns='http://www.w3.org/2000/svg' width='{PERIOD}' height='{HEIGHT + 2 * PAD}' "
+         f"viewBox='0 {-PAD} {PERIOD} {HEIGHT + 2 * PAD}'>{defs}{body}</svg>\n")
     (OUT / name).write_text(s, encoding="utf-8")
 
 
-def near_mask(run, tag):
+def near_mask(run, tag, colour="white"):
     """The near layer's glass for a strand: its in-front stretches, each
     filled with a gradient that fades it in and out across the axis. There
     the backbone is at its highest or lowest, running level, so a gradient
@@ -157,7 +160,7 @@ def near_mask(run, tag):
             continue
         gid = f"g{tag}{n}"
         x0, x1 = pts_[0][0], pts_[-1][0]
-        stops = "".join(f"<stop offset='{(x - x0) / ((x1 - x0) or 1):.4f}' stop-color='white' stop-opacity='{near(z):.3f}'/>"
+        stops = "".join(f"<stop offset='{(x - x0) / ((x1 - x0) or 1):.4f}' stop-color='{colour}' stop-opacity='{near(z):.3f}'/>"
                         for x, _, z, _ in pts_ if near(z) < 0.999 or x in (x0, x1))
         grads.append(f"<linearGradient id='{gid}' gradientUnits='userSpaceOnUse' x1='{x0}' y1='0' x2='{x1}' y2='0'>{stops}</linearGradient>")
         up, down = edges(pts_)
@@ -165,31 +168,58 @@ def near_mask(run, tag):
     return grads, shapes
 
 
+def blur(sd, dy=0):
+    return (f"<filter id='b' x='-10%' y='-30%' width='120%' height='160%'>"
+            f"<feGaussianBlur stdDeviation='{sd}'/>" + (f"<feOffset dy='{dy}'/>" if dy else "") + "</filter>")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob("*.svg"):
+        old.unlink()
     strands = [(s_, strand_run(s_)) for s_ in (0, 1)]
     bars = rungs()
     rung_shapes = "".join(f"<rect x='{x - RUNG_HALF:.1f}' y='{t:.1f}' width='{2 * RUNG_HALF}' height='{b - t:.1f}' rx='{RUNG_HALF}'/>" for x, t, b in bars)
     whole = "".join(band(r) for _, r in strands)
-    # The far layer's glass is the whole of both backbones; the near layer's
-    # fades in over it where a backbone comes round in front.
-    svg("back.svg", whole)
-    grads, shapes = [], []
-    for s_, r in strands:
-        g, sh = near_mask(r, "ab"[s_])
-        grads += g; shapes += sh
-    svg("front.svg", "".join(shapes), f"<defs>{''.join(grads)}</defs>")
+    # Every layer is a plain picture, blurs and all, with room above and
+    # below for them; the CSS only slides them. (Safari draws frosted glass,
+    # masks and CSS blurs on a long moving layer with gaps and straight
+    # edges, so none is used.)
+    # The shadow under the helix, and its faint outline.
+    svg("shadow.svg", f"<g filter='url(#b)'>{whole}{rung_shapes}</g>", f"<defs>{blur(20, 26)}</defs>")
+    svg("line.svg", f"<g filter='url(#b)'>{whole}{rung_shapes}</g>", f"<defs>{blur(10)}</defs>")
+    # The far glass: the whole of both backbones, paler across the middle.
+    fill = ("<linearGradient id='f' gradientUnits='userSpaceOnUse' x1='0' y1='0' x2='0' y2='560'>"
+            "<stop offset='0' stop-color='white'/><stop offset='.55' stop-color='#e2f0ed' stop-opacity='.45'/>"
+            "<stop offset='1' stop-color='white' stop-opacity='.7'/></linearGradient>")
+    svg("back.svg", f"<g fill='url(#f)'>{whole}</g>", f"<defs>{fill}</defs>")
+    svg("rungs.svg", f"<g fill='white'>{rung_shapes}</g>")
+    # The near glass fades in where a backbone comes round in front: a veil
+    # the colour of the page that hides the strand behind (the glass itself
+    # on a light page, front-veil.svg on a dark one), then its glass.
+    for name, colour in (("front-veil.svg", "#08100e"), ("front.svg", "white")):
+        grads, shapes = [], []
+        for s_, r in strands:
+            g, sh = near_mask(r, "ab"[s_], colour)
+            grads += g; shapes += sh
+        svg(name, "".join(shapes), f"<defs>{''.join(grads)}</defs>")
     hw_at = lambda d: HALF * (1 + DEPTH * (2 * d - 1))
     for side, weight in (("back", lambda z: 1 - near(z)), ("front", near)):
-        # The coloured core the glass frosts into a glow, thicker and stronger
-        # as it comes near: all of it under the far glass, so it is frosted
-        # everywhere, even where the near glass is only fading in.
-        if side == "back":
-            # (soft already, so it never shows as a hard line)
-            svg("core.svg", "<g filter='url(#b)'>" + "".join(
-                shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 4 + 6 * d, lambda d: 0.45 + 0.55 * d, A if s_ == 0 else B)
-                for s_, r in strands) + "</g>",
-                "<defs><filter id='b' x='-5%' y='-20%' width='110%' height='140%'><feGaussianBlur stdDeviation='3'/></filter></defs>")
+        # The coloured core, soft as if seen through frosted glass, thicker
+        # and stronger as it comes near.
+        svg(f"core-{side}.svg", "<g filter='url(#b)'>" + "".join(
+            shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 4 + 6 * d, lambda d: 0.45 + 0.55 * d, A if s_ == 0 else B, weight)
+            for s_, r in strands) + "</g>", f"<defs>{blur(10)}</defs>")
+        # The glass's colour: a soft tint of the strand's colour across its
+        # width, each strand's kept inside its own outline so it never
+        # spills onto the other where they cross.
+        clips = "".join(f"<clipPath id='k{s_}'>{band(r)}</clipPath>" for s_, r in strands)
+        tint = "".join(
+            f"<g clip-path='url(#k{s_})'><g filter='url(#t)'>"
+            + shaded(r, [(x, y) for x, y, _, _ in r], lambda d: 2 * hw_at(d), lambda d: 0.5 + 0.3 * d, A if s_ == 0 else B, weight)
+            + "</g></g>" for s_, r in strands)
+        svg(f"tint-{side}.svg", tint, f"<defs>{clips}<filter id='t' x='-10%' y='-30%' width='120%' height='160%'>"
+            "<feGaussianBlur stdDeviation='5'/></filter></defs>")
         # Rounded glass: a soft rim of light just inside each edge, fading
         # towards the middle as light does through a glass rod, a soft
         # highlight along the upper side, and a faint line at the edge itself.
@@ -206,10 +236,7 @@ def main():
                 "<filter id='s' x='-10%' y='-10%' width='120%' height='120%'><feGaussianBlur stdDeviation='3'/></filter></defs>")
         body = [f"<g clip-path='url(#c)'><g filter='url(#s)'>{''.join(rims)}</g></g>", *lines]
         svg(f"{side}-edge.svg", "".join(body), defs)
-    svg("rungs.svg", rung_shapes)
     svg("rungs-edge.svg", "".join(f"<rect x='{x - RUNG_HALF + .6:.1f}' y='{t + .6:.1f}' width='{2 * RUNG_HALF - 1.2}' height='{b - t - 1.2:.1f}' rx='{RUNG_HALF - .6}' fill='none' stroke='white' stroke-opacity='.7' stroke-width='1.2'/>" for x, t, b in bars))
-    # everything, for the shadow under the glass and its hairline
-    svg("all.svg", whole + rung_shapes)
     print(f"one turn: {PERIOD}px, {len(bars) - 2} base pairs; written to {OUT}")
     # style.css links these by their content: bring the links up to date
     import subprocess, sys
