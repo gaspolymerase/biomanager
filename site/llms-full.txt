@@ -473,6 +473,8 @@ BioManager works out weaning (P21) and genotyping (P28, or the day chosen in [La
 
 > **One litter date per cage** A cage holds one litter date, so a new litter replaces the last. If those pups are still in the cage, wean them first.
 
+*A breeding cage, with Litter born, Genotyping and Wean on it*
+
 Related: [Genotype a litter](https://biomanager.org/guide/genotype-a-litter) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
 Source: https://biomanager.org/guide/record-a-litter
@@ -498,6 +500,8 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 6. Change each pup's **Status** from *geno* to what it is for now, such as *breeder* or *experiment*. For many at once, tick them and use **Set field**.
 
 A pup waits in the genotyping queue on Home while its status is *geno*, and leaves it once that changes. If someone else records the genotype of your mice, you are notified.
+
+*Genotyping: the parents, and how many pups to make records for*
 
 Related: [Record a litter](https://biomanager.org/guide/record-a-litter) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Home](https://biomanager.org/guide/home-page) [Many at once](https://biomanager.org/guide/many-at-once)
 
@@ -528,6 +532,8 @@ Either way the litter is marked weaned and leaves Home and the calendar. Then [p
 #### I weaned the wrong cage
 
 A weaning is one bulk change: **More → Batch history** in the sidebar → **Undo**.
+
+*Wean sits on the breeding cage, beside Litter born*
 
 Related: [Record a litter](https://biomanager.org/guide/record-a-litter) [Genotype a litter](https://biomanager.org/guide/genotype-a-litter) [Print cage cards](https://biomanager.org/guide/print-cage-cards) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
