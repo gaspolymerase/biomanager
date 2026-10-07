@@ -994,6 +994,8 @@ Its exact text is fingerprinted and kept as a version, any live experiment in it
 
 > **Changing a signed page** Its owner presses **Signed**, writes **Why it is being amended** and presses **Open to amend**. The reason and every signature stay with the page; sign it again when it is done.
 
+*Signing a page: what you are saying, your password, and Sign and lock*
+
 Related: [Signing a page](https://biomanager.org/guide/notebook#signing) [Notebook and utilities](https://biomanager.org/guide/notebook)
 
 Source: https://biomanager.org/guide/sign-a-notebook-page

@@ -54,10 +54,12 @@ DESKTOP = [
      [("select.status-pill", "ordered"), ("select.status-pill", "received")], "#stock-offer-dialog"),
     ("task-booking", "/calendar", "light",
      ["#cal-new-more", "button.menu-item[data-new=booking]"], "#biocal-modal"),
-    # No task-sign shot: Sign on the demo lab's notebook page opens nothing,
-    # so the dialog the page describes cannot be reached from demo data yet.
-    # No restore-a-backup shot either: its steps are in Finder and the file
-    # system, which a browser cannot photograph.
+    # Signing opens a panel in the page's drawer, not a dialog — the control
+    # is .nb-tool[data-panel=sign] (promo/clips/more.py's sign walk knows the
+    # same selectors).
+    ("task-sign", "/notebook", "light", [".nb-tool[data-panel=sign]"], "form.nb-sig-form"),
+    # No restore-a-backup shot: its steps are in Finder and the file system,
+    # which a browser cannot photograph.
 ]
 PHONE = [
     ("phone-cage", "/colony?view=cages&scope=all#cage-1", "light"),
