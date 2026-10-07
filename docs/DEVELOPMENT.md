@@ -475,7 +475,14 @@ pages are in `app/lab_routes.py`.
   (`field_cell`) is those same two boxes, autosaving like every other cell,
   with the colony's identifiers offered in the ID box (`inv-src-<n>`, the
   datalist the dialog uses) and the mouse it names one click away; it was
-  the one cell that could only be changed by opening the record. What the save would have said
+  the one cell that could only be changed by opening the record.
+  `_mouse_links` reads each named mouse's `ear_tag` along with its row, so a
+  sample shows what is written on the animal it came from, read fresh every
+  render: a mouse re-tagged in the colony says the new mark on every one of
+  its samples at once. It is not editable there — the tag belongs to the
+  mouse, and a mouse with a dozen samples would otherwise have a dozen
+  places to change it from, and a dozen ways to disagree.
+  What the save would have said
   (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in
   place, with `attr_<key>_was` so a stale row doesn't undo a later change

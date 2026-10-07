@@ -1127,6 +1127,24 @@ class SampleSourceTests(InventoryCase):
         super().setUpClass()
         cls.key = cls.new_module(cls.a, "samples")
 
+    def test_the_source_shows_the_mouse_s_ear_tag_and_follows_it(self):
+        """Type the number; what is written on that mouse comes with it, and
+        keeps up when the colony changes it. The tag belongs to the mouse,
+        so it is not edited from here."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "RF"})
+        name = uniq("S-tagged")
+        self.post(self.a, f"/inventory/{self.key}/items/save", data={
+            "id": "", "name": name, "attr_source_kind": "mouse", "attr_source_ref": mouse_id})
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        self.assertIn('title="Ear tag RF"', html)
+        self.assertIn(f"Open mouse {mouse_id} (ear tag RF) in the colony", html)
+        # Re-tag the mouse: every sample of it says the new mark, with
+        # nothing to update here.
+        self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
+        self.assertIn('title="Ear tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
+
     def test_the_source_is_edited_in_the_sheet_like_any_other_cell(self):
         """Typing in the row, not opening the record: the two boxes autosave
         the way every other cell does."""

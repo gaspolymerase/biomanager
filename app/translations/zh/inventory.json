@@ -416,5 +416,6 @@
   "Plasmid #%(number)s %(name)s · %(bp)s bp · read only": "质粒 #%(number)s %(name)s · %(bp)s bp · 只读",
   "Open the plasmid to edit it": "打开质粒即可编辑",
   "See the sequence of plasmid #%(number)s": "查看质粒 #%(number)s 的序列",
-  "Which colony they came from": "它们来自哪个群体"
+  "Which colony they came from": "它们来自哪个群体",
+  "Open mouse %(id)s (ear tag %(tag)s) in the colony": "在小鼠库中打开 %(id)s 号小鼠（耳标 %(tag)s）"
 }

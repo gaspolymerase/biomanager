@@ -47,7 +47,7 @@
     {# Which colony, and the ID in it: two boxes, saved as you type like
        every other cell. The mouse it names stays one click away. #}
     {% set src = value if value is mapping else {} %}
-    {% set mouse_row = links.get(src.ref|string) if src.kind in ['mouse', 'colony'] else none %}
+    {% set mouse = links.get(src.ref|string) if src.kind in ['mouse', 'colony'] else none %}
     <span class="plasmid-cell source-cell">
       <select name="{{ name }}_kind" form="{{ form_id }}" data-autosave="1" data-source-kind
               aria-label="{{ _('%(field)s: from', field=flabel) }}" {% if locked %}disabled{% endif %}>
@@ -57,10 +57,11 @@
       </select>
       <input class="ident" name="{{ name }}_ref" form="{{ form_id }}" value="{{ src.ref or '' }}" data-source-ref
              placeholder="{{ _('ID') }}" data-autosave="1" aria-label="{{ _('ID in that colony') }}"
-             {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse_row %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"{% endif %}
+             {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"
+             {%- elif mouse and mouse.ear_tag %}title="{{ _('Ear tag %(tag)s', tag=mouse.ear_tag) }}"{% endif %}
              {% if locked %}disabled{% endif %}>
-      {% if mouse_row %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse_row }}"
-         title="{{ _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
+      {% if mouse %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse.row }}"
+         title="{{ _('Open mouse %(id)s (ear tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
     </span>
   {% elif field.type == 'plasmid' %}
     {# The plasmid's number, editable; its name links to the plasmid when there is one. #}
