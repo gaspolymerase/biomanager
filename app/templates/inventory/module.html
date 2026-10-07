@@ -3,6 +3,7 @@
 {% from "_rack_grid.html" import rack_grid, rack_dialog with context %}
 {% import "_sheet.html" as sheet_ui with context %}
 {% import "_sharing.html" as sharing with context %}
+{% from "_mouse_sheet.html" import mouse_table_id, mouse_tag_column %}
 
 {% set m = module %}
 {% set key = m.key %}
@@ -58,10 +59,10 @@
       <input class="ident" name="{{ name }}_ref" form="{{ form_id }}" value="{{ src.ref or '' }}" data-source-ref
              placeholder="{{ _('ID') }}" data-autosave="1" aria-label="{{ _('ID in that colony') }}"
              {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"
-             {%- elif mouse and mouse.ear_tag %}title="{{ _('Custom tag %(tag)s', tag=mouse.ear_tag) }}"{% endif %}
+             {%- elif mouse and mouse.ear_tag %}title="{{ _('Custom tag %(tag)s', tag=mouse.ear_tag) }}" data-mouse-tag-title{% endif %}
              {% if locked %}disabled{% endif %}>
       {% if mouse %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse.row }}"
-         title="{{ _('Open mouse %(id)s (custom tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
+         {% if mouse.ear_tag %}data-mouse-tag-title="{{ _('Open mouse %(id)s in the colony', id=src.ref) }}"{% endif %} title="{{ _('Open mouse %(id)s (custom tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
     </span>
   {% elif field.type == 'plasmid' %}
     {# The plasmid's number, editable; its name links to the plasmid when there is one. #}
@@ -216,6 +217,14 @@
                 <th class="dt-sortable" data-sort-key="attr_{{ f.key }}" style="width: {{ f.width }}px;">
                   <span class="dt-col-head">{{ icon(f.icon or 'type', 'dt-col-icon') }}{{ f.label|tr('inventory')|head }}<span class="dt-sort-indicator"></span></span>
                 </th>
+                {% if f.type == 'source' %}
+                  {# The source mouse's Custom tag, read from the colony; it
+                     follows this person's Columns choice on the mouse sheet. #}
+                  <th data-mouse-tag style="width: 88px;"
+                      title="{{ _('How the source mouse is marked, read from the mouse colony. Hide Custom tag under Columns on the Mice tab and it goes from here too.') }}">
+                    <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Custom tag') }}</span>
+                  </th>
+                {% endif %}
               {% endfor %}
               {% if m.has('sharing') %}
                 <th class="dt-sortable" data-sort-key="is_shared" style="width: 104px;" title="{{ _("Your own stock, or the lab's common stock that anyone may use and edit") }}">
@@ -300,6 +309,11 @@
                 {% endif %}
                 {% for fd in m.table_fields %}
                   <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources) }}</td>
+                  {% if fd.type == 'source' %}
+                    {% set src = r.attrs.get(fd.key) %}
+                    {% set tagged = mouse_links.get(src.ref|string) if src is mapping and src.kind in ['mouse', 'colony'] else none %}
+                    <td class="ident" data-mouse-tag>{{ tagged.ear_tag if tagged else '' }}</td>
+                  {% endif %}
                 {% endfor %}
                 {% if m.has('sharing') %}
                   <td>
@@ -381,6 +395,24 @@
             {% endfor %}
           </tbody>
         </table>
+        {% if m.table_fields|selectattr('type', 'equalto', 'source')|list %}
+        <script nonce="{{ csp_nonce() }}">
+          /* Custom tag goes wherever this person has hidden it on the mouse
+             sheet (data-table.js keeps that choice by column number, on this
+             computer; templates/_mouse_sheet.html), tooltip and all. Before
+             the sheet sets itself up, so its column is simply off. */
+          (function () {
+            let hidden = [];
+            try { hidden = JSON.parse(localStorage.getItem({{ ('dt:' ~ mouse_table_id ~ ':hidden') | tojson }}) || '[]'); } catch (_) { return; }
+            if (!hidden.includes({{ mouse_tag_column }})) return;
+            const sheet = document.currentScript.previousElementSibling;
+            sheet.querySelectorAll('th[data-mouse-tag]').forEach((th) => { th.dataset.dtOff = '1'; });
+            sheet.querySelectorAll('[data-mouse-tag-title]').forEach((el) => {
+              if (el.dataset.mouseTagTitle) el.title = el.dataset.mouseTagTitle; else el.removeAttribute('title');
+            });
+          })();
+        </script>
+        {% endif %}
       </div>
       {# One form per row; cells join it through form="…". The "_was"
          copies are what the row showed: the server only takes a status,

@@ -1,0 +1,8 @@
+{#- The mouse sheet's table id and column numbers. data-table.js keeps a
+    person's Columns choice by column number under dt:<id>:hidden, and other
+    pages follow it: the cages' mice (transgenes, colony.html) and Samples'
+    Custom tag (inventory/module.html). Count from 0: tick box, Mouse, Custom
+    tag, Sex… A test (tests/test_mice.py) checks these against the sheet. -#}
+{% set mouse_table_id = 'mice-v4' %}
+{% set mouse_tag_column = 2 %}
+{% set mouse_tg1_column = 6 %}

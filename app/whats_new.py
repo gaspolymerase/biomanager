@@ -30,12 +30,17 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
-    "1.2.1": {
+    "1.2.2": {
         "fixed": [
             "The language picked on the sign-in page stays when you sign in, and on a Mac set to Chinese the desktop app shows Chinese.",
         ],
         "changed": [
             "**Settings → Language** changes as soon as you pick a language.",
+        ],
+    },
+    "1.2.1": {
+        "new": [
+            "**Samples** show the source mouse's **Custom tag** as a column after **Source**; hide it on the **Mice** tab and it goes from Samples too.",
         ],
     },
     "1.2.0": {

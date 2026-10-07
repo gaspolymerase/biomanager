@@ -526,6 +526,15 @@ pages are in `app/lab_routes.py`.
   its samples at once. It is not editable there — the tag belongs to the
   mouse, and a mouse with a dozen samples would otherwise have a dozen
   places to change it from, and a dozen ways to disagree.
+  The sheet also shows it as a read-only *Custom tag* column after each
+  source column, and follows the person's Columns choice on the mouse
+  sheet: data-table.js keeps that by column number under
+  `dt:<table id>:hidden`, `templates/_mouse_sheet.html` names the mouse
+  sheet's id and columns (the cages' transgenes read it too), and a small
+  script after the table marks the header `data-dt-off="1"` when the tag is
+  hidden there. data-table.js keeps such a column hidden, out of the
+  Columns menu and the export, without saving it, so the column numbers
+  the Samples sheet saves stay those of its columns as drawn.
   What the save would have said
   (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in

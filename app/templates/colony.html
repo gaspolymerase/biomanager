@@ -9,8 +9,7 @@
    checkbox is 0): the Cages tab reads the Columns choice people made there,
    which data-table.js keeps by column number. A new column before the
    transgenes moves both: a new id, so saved choices start afresh. #}
-{% set mouse_table_id = 'mice-v4' %}
-{% set mouse_tg1_column = 6 %}
+{% from "_mouse_sheet.html" import mouse_table_id, mouse_tg1_column %}
 
 {# What the mouse dialog opens with: the Mice sheet's rows and the cage
    sheet's sub-rows pass the same payload. #}

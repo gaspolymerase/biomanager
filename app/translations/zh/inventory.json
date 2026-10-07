@@ -433,5 +433,6 @@
   "polymer": "聚合物",
   "initiator": "引发剂",
   "catalyst": "催化剂",
-  "surfactant": "表面活性剂"
+  "surfactant": "表面活性剂",
+  "How the source mouse is marked, read from the mouse colony. Hide Custom tag under Columns on the Mice tab and it goes from here too.": "来源小鼠身上的标记，直接从鼠群读取。在小鼠标签页的「列」里隐藏自定义标识，这里也会一起隐藏。"
 }
