@@ -206,37 +206,68 @@
 </section>
 
 {# The order of the sidebar, as the lab wants to read it rather than as it
-   added them (app/lab.py: in_database_order). #}
-{% if order|length > 1 %}
+   added them (app/lab.py: in_database_order). Drag a row, or use the arrows;
+   the form posts the whole order, so it never depends on what moved. #}
+{% if order|length > 1 and is_admin %}
   <section class="card mt-6 overflow-hidden" id="database-order">
     <header class="card-head">
       <h2 class="card-title">{{ icon('list') }} {{ _('Order in the sidebar') }}</h2>
-      <span class="text-[12px] text-muted">{{ _('Put the ones you use every day at the top. A new database joins the end.') }}</span>
+      <span class="text-[12px] text-muted">{{ _('Drag a database, or use the arrows. A new one joins the end.') }}</span>
     </header>
-    <ol>
-      {% for entry in order %}
-        <li class="flex items-center gap-3 border-t border-hairline px-4 py-2 text-[13px]">
-          <span class="tabular-nums text-[12px] text-muted">{{ loop.index }}</span>
-          <span class="flex items-center gap-2">{{ icon(entry.icon) }} {{ entry.label|tr }}</span>
-          <span class="ml-auto flex gap-1">
-            <form method="post" action="{{ url_for('organisms.reorder') }}">
-              <input type="hidden" name="key" value="{{ entry.key }}">
-              <input type="hidden" name="by" value="up">
-              {% for other in order %}<input type="hidden" name="keys" value="{{ other.key }}">{% endfor %}
-              <button type="submit" class="btn btn-ghost btn-sm" {% if loop.first %}disabled{% endif %}
-                      aria-label="{{ _('Move %(name)s up', name=entry.label|tr) }}">{{ icon('chevron-up') }}</button>
-            </form>
-            <form method="post" action="{{ url_for('organisms.reorder') }}">
-              <input type="hidden" name="key" value="{{ entry.key }}">
-              <input type="hidden" name="by" value="down">
-              {% for other in order %}<input type="hidden" name="keys" value="{{ other.key }}">{% endfor %}
-              <button type="submit" class="btn btn-ghost btn-sm" {% if loop.last %}disabled{% endif %}
-                      aria-label="{{ _('Move %(name)s down', name=entry.label|tr) }}">{{ icon('chevron-down') }}</button>
-            </form>
-          </span>
-        </li>
-      {% endfor %}
-    </ol>
+    <form method="post" action="{{ url_for('organisms.reorder') }}">
+      <ol class="home-cust-list" data-db-order-list>
+        {% for entry in order %}
+          <li class="home-cust-row" draggable="true">
+            <input type="hidden" name="keys" value="{{ entry.key }}">
+            <span class="home-cust-grip" aria-hidden="true">⋮⋮</span>
+            <span class="home-cust-show">{{ icon(entry.icon) }} {{ entry.label|tr }}</span>
+            <span class="home-cust-move">
+              <button type="button" class="row-icon-btn" data-move="top" title="{{ _('To the top') }}"
+                      aria-label="{{ _('Move %(name)s to the top', name=entry.label|tr) }}">{{ icon('arrow-up') }}{{ icon('arrow-up') }}</button>
+              <button type="button" class="row-icon-btn" data-move="-1"
+                      aria-label="{{ _('Move %(name)s up', name=entry.label|tr) }}">{{ icon('arrow-up') }}</button>
+              <button type="button" class="row-icon-btn" data-move="1"
+                      aria-label="{{ _('Move %(name)s down', name=entry.label|tr) }}">{{ icon('arrow-down') }}</button>
+            </span>
+          </li>
+        {% endfor %}
+      </ol>
+      <footer class="flex items-center gap-2 border-t border-hairline px-4 py-3">
+        <span class="text-[12px] text-muted" data-db-order-note hidden>{{ _('Not saved yet.') }}</span>
+        <span class="ml-auto"></span>
+        <button type="submit" class="btn btn-primary btn-sm">{{ _('Save the order') }}</button>
+      </footer>
+    </form>
   </section>
+  <script nonce="{{ csp_nonce() }}">
+    /* The same handling as Home's Customise: the arrows, or drag a row. The
+       hidden inputs move with their row, so the form posts the order shown. */
+    (function () {
+      const list = document.querySelector('[data-db-order-list]');
+      if (!list) return;
+      const note = document.querySelector('[data-db-order-note]');
+      const moved = () => { if (note) note.hidden = false; };
+      list.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-move]');
+        if (!b) return;
+        const row = b.closest('li');
+        if (b.dataset.move === 'top') list.insertBefore(row, list.firstElementChild);
+        if (b.dataset.move === '-1' && row.previousElementSibling) list.insertBefore(row, row.previousElementSibling);
+        if (b.dataset.move === '1' && row.nextElementSibling) list.insertBefore(row.nextElementSibling, row);
+        b.focus();
+        moved();
+      });
+      let dragged = null;
+      list.addEventListener('dragstart', (e) => { dragged = e.target.closest('li'); if (dragged) dragged.classList.add('is-dragging'); });
+      list.addEventListener('dragend', () => { if (dragged) dragged.classList.remove('is-dragging'); dragged = null; moved(); });
+      list.addEventListener('dragover', (e) => {
+        const over = e.target.closest('li');
+        if (!dragged || !over || over === dragged) return;
+        e.preventDefault();
+        const r = over.getBoundingClientRect();
+        list.insertBefore(dragged, e.clientY > r.top + r.height / 2 ? over.nextSibling : over);
+      });
+    })();
+  </script>
 {% endif %}
 {% endblock %}

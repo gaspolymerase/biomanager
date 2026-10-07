@@ -93,17 +93,32 @@ class TheSidebarOrder(AppTestCase):
     """The lab arranges its databases by the work, not by what it added
     first (issue #39)."""
 
+    def setUp(self):
+        super().setUp()
+        # The order is one lab-wide setting, so each test starts from none
+        # and leaves none behind.
+        self.addCleanup(self.forget_order)
+        self.forget_order()
+
+    @staticmethod
+    def forget_order():
+        from app import lab
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            lab.set_database_order(s, [])
+            s.commit()
+
     def order_on_page(self, client):
         import re
         html = self.get_ok(client, "/organisms/")
         block = html.split('id="database-order"')[-1]
-        return re.findall(r'name="key" value="([^"]+)"', block)[::2] or re.findall(r'name="key" value="([^"]+)"', block)
+        return re.findall(r'name="keys" value="([^"]+)"', block)
 
     def test_moving_one_down_changes_the_sidebar(self):
         from app.db import SessionLocal
         from app import lab
         before = self.order_on_page(self.a)
-        self.assertIn("colony", before)
+        self.assertEqual(before[:2], ["colony", "zebrafish"])   # as it comes
         first, second = before[0], before[1]
         self.post(self.a, "/organisms/order", {"key": first, "by": "down", "keys": before})
         after = self.order_on_page(self.a)
@@ -117,6 +132,20 @@ class TheSidebarOrder(AppTestCase):
 
     def _label(self, key):
         return {"colony": "Mouse colony", "zebrafish": "Zebrafish", "plasmids": "Plasmids"}[key]
+
+    def test_dragging_posts_the_whole_order_at_once(self):
+        """What a drag sends: the list as it now reads, with no "which one
+        moved" to get out of step."""
+        before = self.order_on_page(self.a)
+        wanted = before[2:] + before[:2]
+        self.post(self.a, "/organisms/order", {"keys": wanted})
+        self.assertEqual(self.order_on_page(self.a), wanted)
+
+    def test_only_an_admin_arranges_them(self):
+        before = self.order_on_page(self.a)
+        r = self.post(self.m, "/organisms/order", {"keys": list(reversed(before))})
+        self.assertFlash(r, "Only an admin", "error")
+        self.assertEqual(self.order_on_page(self.a), before)
 
     def test_the_ends_do_not_move_past_themselves(self):
         before = self.order_on_page(self.a)

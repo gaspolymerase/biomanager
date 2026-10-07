@@ -598,5 +598,9 @@
   "capability::Birth cohorts": "出生批次",
   "Order in the sidebar": "侧边栏顺序",
   "Put the ones you use every day at the top. A new database joins the end.": "把每天都用的放在最前面。新建的数据库会排在最后。",
-  "Only an admin can arrange the lab's databases.": "只有管理员可以调整实验室数据库的顺序。"
+  "Only an admin can arrange the lab's databases.": "只有管理员可以调整实验室数据库的顺序。",
+  "Drag a database, or use the arrows. A new one joins the end.": "拖动数据库，或用箭头调整。新建的会排在最后。",
+  "Save the order": "保存顺序",
+  "Not saved yet.": "尚未保存。",
+  "Saved the order of the databases.": "数据库顺序已保存。"
 }

@@ -283,7 +283,10 @@ Every row carries `module_id_fk`, and every relation is resolved through
 
 The rail lists the built-in pages and then whatever the lab added, which is
 the order they came into being rather than the order the work runs in. A lab
-says otherwise on **All databases → Order in the sidebar**: one list of keys
+says otherwise on **All databases → Order in the sidebar** (an admin; rows
+drag, or move with arrows, and the form posts the whole order, so no step
+depends on which row moved — the same handling as Home's Customise, down to
+its classes): one list of keys
 in `app_settings` under `databases:order` (`lab.database_order`,
 `set_database_order`, `move_database`), applied by `lab.in_database_order`
 where the rail's Databases group is assembled. The keys are the rail's own —

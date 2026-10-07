@@ -354,15 +354,21 @@ def reorder():
     is sent with it, so moving one never depends on what the page last
     showed matching what the database now holds."""
     key = (request.form.get("key") or "").strip()
-    by = -1 if request.form.get("by") == "up" else 1
     keys = [k for k in request.form.getlist("keys") if k]
     with SessionLocal() as session:
-        if not lab.may_create_lab_database(session) and not access.is_admin():
+        if not access.is_admin():
             flash(gettext("Only an admin can arrange the lab's databases."), "error")
             return redirect(url_for("organisms.index"))
-        if not lab.move_database(session, key, by, keys):
+        if key:
+            # One step, from a page that sends a single move.
+            if not lab.move_database(session, key, -1 if request.form.get("by") == "up" else 1, keys):
+                return redirect(url_for("organisms.index"))
+        elif keys:
+            lab.set_database_order(session, keys)
+        else:
             return redirect(url_for("organisms.index"))
         session.commit()
+    flash(gettext("Saved the order of the databases."), "success")
     return redirect(url_for("organisms.index"))
 
 
