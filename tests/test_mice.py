@@ -101,6 +101,13 @@ class TheEarTag(AppTestCase):
         self.assertIn('value="LB-7"', html)
         self.assertLess(html.index('data-sort-key="ear_tag"'), html.index('data-sort-key="gender"'))
 
+    def test_the_number_carries_the_tag_on_hover_too(self):
+        """Someone who hides the column still sees the mark when they point
+        at the number."""
+        mouse = self.make_mouse(self.m, self.member)
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "RF"})
+        self.assertIn('title="Ear tag RF"', self.get_ok(self.m, "/colony?view=mice"))
+
     def test_searching_for_the_tag_finds_the_mouse(self):
         mouse = self.make_mouse(self.m, self.member)
         tag = uniq("ET")

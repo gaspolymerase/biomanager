@@ -279,6 +279,21 @@ migration.
 Every row carries `module_id_fk`, and every relation is resolved through
 `_ref()` in `app/organism_routes.py` so a reference can never cross modules.
 
+### The order the databases sit in
+
+The rail lists the built-in pages and then whatever the lab added, which is
+the order they came into being rather than the order the work runs in. A lab
+says otherwise on **All databases → Order in the sidebar**: one list of keys
+in `app_settings` under `databases:order` (`lab.database_order`,
+`set_database_order`, `move_database`), applied by `lab.in_database_order`
+where the rail's Databases group is assembled. The keys are the rail's own —
+a built-in bare (`colony`), a module namespaced by its kind
+(`inventory:samples`, `stock:drosophila`, `organism:worms`), so two
+databases of different kinds may share a key. Anything the list does not
+name keeps its place after the ones it does, so a new database joins the end
+instead of landing in the middle of someone's arrangement. No migration: the
+setting is one row.
+
 ## Access control
 
 Who may change what lives in one place, `app/access.py`:
@@ -1389,7 +1404,10 @@ punch such as RF or LB, a tattoo. It sits beside the ID in the sheet, in
 the dialog, in Add many, in the export and in search
 (`MouseRecord.ear_tag.ilike`), and a spreadsheet column called "ear tag",
 "notch" or "tattoo" now maps to it — before it had anywhere to go, the
-importer read such a column as the Mouse ID.
+importer read such a column as the Mouse ID. Pointing at the number shows
+the tag as well (`_sheet.html`'s `id_cell(aside=…)`), so hiding the column
+under **Columns** loses nothing; the column stays because a tooltip cannot
+be scanned down a sheet, sorted, printed or read on a phone at the rack.
 
 **Numbers are handed out once.** `services.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest

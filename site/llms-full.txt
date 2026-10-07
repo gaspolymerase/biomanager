@@ -427,7 +427,7 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 - Each mouse has an **Ear tag**, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
 
-- The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Ear tag**, beside it, is whatever is written on the animal — a tag number, an ear punch such as *RF* or *LB*, a tattoo. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *ear tag*, *notch* or *tattoo* comes into it when you import.
+- The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Ear tag**, beside it, is whatever is written on the animal — a tag number, an ear punch such as *RF* or *LB*, a tattoo. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *ear tag*, *notch* or *tattoo* comes into it when you import. Point at a mouse's number and its tag shows there too, so you can hide the column under **Columns** and still see it.
 
 - Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
 
@@ -687,6 +687,8 @@ Source: https://biomanager.org/guide/flies-and-worms
 A database for any other organism, described in your own words.
 
 **Add database** in the sidebar builds a database for anything else — Xenopus, axolotls, cell lines, yeast. Start from a mouse-like, zebrafish-like or blank organism and describe it:
+
+However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. **All databases → Order in the sidebar** arranges them: move the ones you open every day to the top, and a database you add later joins the end rather than pushing into the middle.
 
 - **Name and vocabulary** — what to call an animal, its housing (tank, cage, plate), a line, a birth cohort and a breeding event, and whether age is shown in days, weeks, days post-fertilisation, generations or passages (then Age shows the record's own *Passage* or *Generation* column, *P12*). The whole interface then speaks your words.
 

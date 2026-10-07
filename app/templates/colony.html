@@ -228,7 +228,7 @@
                       <span class="life-dot{% if row.active %} is-alive{% endif %}"{% if st %} data-stage="{{ st }}"{% endif %}
                             data-alive-title="{{ _('Alive') }}{% if st %} · {{ life_stage_title('mouse', st)|tr }}{% endif %}"
                             title="{{ (_('Alive') ~ (' · ' ~ life_stage_title('mouse', st)|tr if st else '')) if row.active else _('Not alive') }}"></span>
-                      <span class="ident">{{ row.mouse_id }}</span>
+                      <span class="ident"{% if row.ear_tag %} title="{{ _('Ear tag %(tag)s', tag=row.ear_tag) }}"{% endif %}>{{ row.mouse_id }}</span>
                       {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s mouse: read only', owner=row.owner) }}">{{ icon('lock') }}</span>{% endif %}
                     </span>
                   </td>
@@ -764,7 +764,8 @@
                                     {% set st = life_stage('mouse', mouse.age_days) %}
                                     <td>{{ sheet_ui.id_cell(mouse.mouse_id, alive=mouse.active, locked=mlocked, owner=mouse.owner, noun='mouse',
                                                             alive_title=_('Alive'), dead_title=_('Not alive'),
-                                                            stage=st, stage_title=life_stage_title('mouse', st)|tr) }}</td>
+                                                            stage=st, stage_title=life_stage_title('mouse', st)|tr,
+                                                            aside=_('Ear tag %(tag)s', tag=mouse.ear_tag) if mouse.ear_tag else '') }}</td>
                                     <td>
                                       <select class="sex-pill" name="gender" form="{{ mf }}" data-sex="{{ mouse.gender }}" data-autosave="1"
                                               aria-label="{{ _('Sex of mouse %(id)s', id=mouse.mouse_id) }}" {% if mlocked %}disabled{% endif %}>

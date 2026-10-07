@@ -773,3 +773,62 @@ def getting_started_pending(session, user, on_server: bool) -> bool:
     if not setup_done(session) or getting_started_hidden(session, user):
         return False
     return not all(s["done"] for s in getting_started(session, user, on_server))
+
+
+# ---------------------------------------------------------------------------
+# The order the databases sit in
+#
+# The rail lists the built-in pages first and then whatever the lab added,
+# which is the order they came into being, not the order the work runs in.
+# A lab that reads its samples every day and its fish never wants to say so
+# (issue #39), so the order is the lab's: one list of database keys, the
+# same keys the rail gives its links — a built-in is bare ("colony"), and a
+# module is namespaced by its kind ("inventory:samples", "stock:drosophila",
+# "organism:worms"), so two databases may share a key without colliding. Anything not named in
+# it keeps its place behind those that are, so a new database appears at
+# the end rather than in the middle of someone's arrangement.
+# ---------------------------------------------------------------------------
+
+ORDER_KEY = "databases:order"
+
+
+def database_order(session) -> list[str]:
+    """The keys the lab has arranged, in order."""
+    from . import inventory_service as inventories
+
+    raw = inventories.get_setting(session, ORDER_KEY, "")
+    return [key for key in (k.strip() for k in raw.split(",")) if key]
+
+
+def set_database_order(session, keys) -> None:
+    from . import inventory_service as inventories
+
+    clean = []
+    for key in keys:
+        key = str(key).strip()[:80]
+        if key and key not in clean:
+            clean.append(key)
+    inventories.set_setting(session, ORDER_KEY, ",".join(clean[:200]))
+
+
+def in_database_order(order: list[str], entries: list[dict], key=lambda e: e["key"]) -> list[dict]:
+    """`entries` arranged by `order`; the rest keep the order they came in,
+    after the arranged ones."""
+    where = {name: i for i, name in enumerate(order)}
+    return sorted(entries, key=lambda e: (where.get(key(e), len(where)),))
+
+
+def move_database(session, key: str, by: int, keys: list[str]) -> bool:
+    """Move one database one place up (-1) or down (+1) among `keys`, which
+    is every database there is, in the order it is shown now. Returns
+    whether anything moved."""
+    order = [k for k in keys if k]
+    if key not in order:
+        return False
+    at = order.index(key)
+    to = at + by
+    if not 0 <= to < len(order):
+        return False
+    order[at], order[to] = order[to], order[at]
+    set_database_order(session, order)
+    return True
