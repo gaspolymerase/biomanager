@@ -670,13 +670,16 @@ def assembly(d):
     d.goto("/plasmids/assembly/", settle=1.0)
     d.start()
     d.wait(1.0)
-    for _ in range(2):
+    for which in (3, 1):          # the ori, then EGFP into it
         d.click("[data-add]", after=0.9)
         picker = d.page.locator("#assembly-picker")
         d.zoom(picker, scale=1.4)
         d.wait(0.6)
         d.click("[data-pick-kind=feature]", after=0.8)
-        d.wait(0.8)
+        # Choosing one is what the wizard waits for: pressing Add to the tray
+        # without it answers "Choose a feature." and nothing is added.
+        d.page.select_option("[data-pick-feature]", index=which)
+        d.wait(0.7)
         d.click("[data-pick-ok]", after=1.2)
         d.unzoom()
         d.wait(0.7)
