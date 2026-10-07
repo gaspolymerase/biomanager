@@ -456,7 +456,11 @@ pages are in `app/lab_routes.py`.
   *source* column is two answers — which colony and the ID in it — so the
   bar shows a second box for the colony and `_bulk_value` pairs them back
   into the `attr_<key>_kind` / `_ref` the item form posts; one mouse's
-  whole harvest takes its source in one go. What the save would have said
+  whole harvest takes its source in one go. The sheet's own source cell
+  (`field_cell`) is those same two boxes, autosaving like every other cell,
+  with the colony's identifiers offered in the ID box (`inv-src-<n>`, the
+  datalist the dialog uses) and the mouse it names one click away; it was
+  the one cell that could only be changed by opening the record. What the save would have said
   (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in
   place, with `attr_<key>_was` so a stale row doesn't undo a later change

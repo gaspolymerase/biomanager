@@ -815,7 +815,7 @@ Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cel
 
 One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
-| Samples | Tissue and material, linked to the animal it came from, stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
+| Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once — stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|
 | Orders | What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered, received, cancelled — on a table or a **Board** you drag cards across. |
 | Reagents | Quantity, concentration, CAS number, storage temperature, hazard, lot and expiry. In stock, low, empty, discarded. |

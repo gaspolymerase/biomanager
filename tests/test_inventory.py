@@ -1127,6 +1127,22 @@ class SampleSourceTests(InventoryCase):
         super().setUpClass()
         cls.key = cls.new_module(cls.a, "samples")
 
+    def test_the_source_is_edited_in_the_sheet_like_any_other_cell(self):
+        """Typing in the row, not opening the record: the two boxes autosave
+        the way every other cell does."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        name = uniq("S-inline")
+        self.post(self.a, f"/inventory/{self.key}/items/save", data={"id": "", "name": name, "category": "tissue"})
+        [sid] = items_named(self.key, name)
+        self.assertSaved(self.autosave(self.a, f"/inventory/{self.key}/items/{sid}/update",
+                                       {"attr_source_kind": "mouse", "attr_source_ref": mouse_id}))
+        self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": mouse_id})
+        # And changing just the ID keeps the colony it was already in.
+        self.assertSaved(self.autosave(self.a, f"/inventory/{self.key}/items/{sid}/update",
+                                       {"attr_source_kind": "mouse", "attr_source_ref": "7"}))
+        self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": "7"})
+
     def test_the_whole_harvest_takes_its_source_in_one_go(self):
         """One mouse gives many samples: set which mouse on all of them at
         once, rather than opening each."""
@@ -1171,7 +1187,9 @@ class SampleSourceTests(InventoryCase):
         self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": str(mouse_id)})
         self.assertEqual(attrs_of(sid)["collected_on"], days_ago(1))
         html = self.get_ok(self.a, f"/inventory/{self.key}")
-        self.assertIn('source-chip-kind">Mouse', html)
+        # The cell is editable in place: the colony chosen, the ID beside it.
+        self.assertIn('<option value="mouse" data-list="inv-src-0" selected>', html)
+        self.assertIn('name="attr_source_ref"', html)
         self.assertIn(f'title="Open mouse {mouse_id} in the colony"', html)
 
     def test_a_mouse_number_too_big_for_the_database_is_no_mouse_not_an_error(self):
