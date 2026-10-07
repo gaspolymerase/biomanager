@@ -670,9 +670,10 @@ and the app's accent colour follows it.
 ### 🌏 English or 中文
 
 BioManager is in English and Simplified Chinese. It follows the language a
-person's computer or browser asks for first; each person can choose for
-themselves in **Settings → Language** (or the **中文 / English** switch on the
-sign-in page). Every page is in both: each database, the calendar, the
+person's computer or browser asks for first (the desktop app, the computer's);
+each person can choose for themselves in **Settings → Language**, which
+changes as soon as they pick, or with the **中文 / English** switch on the
+sign-in page, which stays their choice once they sign in. Every page is in both: each database, the calendar, the
 notebook and experiments, Settings and the admin pages, and the messages and
 notifications, which reach each person in their own language. Names, notes
 and everything people type stay as written, and so do exports, labels and the

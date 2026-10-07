@@ -1684,7 +1684,13 @@ written in English and wrapped, and the Chinese is looked up by the English:
   (kept per person, `language.<username>` in the settings table), else the
   language the browser or computer asks for first (`Accept-Language`); the
   sign-in page has a 中文 / English switch (`POST /language`).
-  `session["lang"]` holds the choice for this browser.
+  `session["lang"]` holds the choice for this browser. Signing in keeps it
+  (`security.start_session`), and with nothing chosen in Settings it becomes
+  the person's (`load_current_user`). The desktop app's own window goes by
+  the computer's language (`i18n.system_language`, set as
+  `COMPUTER_LANGUAGE` by `desktop.py`) before the header: a Mac's web view
+  reports English unless the app lists Chinese among its languages, which
+  `Biomanager.spec` now does (`CFBundleLocalizations`).
 - **Tests** (`tests/test_i18n.py`): every `_()` in a template and every
   `gettext("…")` in Python has its Chinese, a translation keeps the
   `%(name)s` values of its English, and the same English is never given two

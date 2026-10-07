@@ -73,7 +73,7 @@
     <header class="card-head">
       <h2>{{ icon('type') }} {{ _('Language') }}</h2>
     </header>
-    <form method="post" class="flex flex-wrap items-end gap-3">
+    <form method="post" class="flex flex-wrap items-end gap-3" data-language-form>
       <input type="hidden" name="action" value="language">
       <label class="field-label min-w-[220px]">{{ _('Show BioManager in') }}
         <select name="language">
@@ -83,7 +83,6 @@
           {% endfor %}
         </select>
       </label>
-      <button type="submit" class="btn">{{ _('Save') }}</button>
     </form>
     <p class="mt-2 text-[12px] text-muted">{{ _('Only for you: everyone in the lab chooses their own. Names, notes and other things people type stay as they were written.') }}</p>
   </article>
@@ -333,6 +332,12 @@
 
 {% block body_end %}
 <script nonce="{{ csp_nonce() }}">
+  // Language: saved the moment it is picked, and the page comes back in it.
+  (function () {
+    var form = document.querySelector('[data-language-form]');
+    if (form) form.addEventListener('change', function () { form.submit(); });
+  })();
+
   // App icon: saved the moment a picture or colour is picked. The icons and
   // the accent change in place, so the page never reloads under you.
   (function () {

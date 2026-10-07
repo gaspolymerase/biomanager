@@ -11,16 +11,20 @@ stays English. `docs/i18n-glossary.md` lists the words the translations use.
 Which language a page is in: the person's choice in Settings (Language), or,
 when they have not chosen (and before signing in), the language their
 browser or computer asks for first. `session["lang"]` keeps the choice made
-for this browser.
+for this browser. The desktop app's own window goes by the computer's
+language (system_language), which a Mac's web view does not always pass on.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 
-from flask import g, has_request_context, request, session
+from flask import current_app, g, has_request_context, request, session
 
 LANGUAGES = {"en": "English", "zh": "中文"}
 DEFAULT = "en"
@@ -84,11 +88,50 @@ def from_header(header: str | None) -> str:
 
 
 def choose() -> str:
-    """This browser's language: a choice already made, else what it asks for."""
+    """This browser's language: a choice already made, else, in the desktop
+    app's own window, the computer's, else what the browser asks for."""
     chosen = session.get("lang")
     if chosen in LANGUAGES:
         return chosen
+    computer = current_app.config.get("COMPUTER_LANGUAGE")
+    if computer in LANGUAGES:
+        from .devices import on_this_computer
+        if on_this_computer():
+            return computer
     return from_header(request.headers.get("Accept-Language"))
+
+
+def _supported(tag: str) -> str:
+    """"zh" for zh-Hans-CN, zh_CN.UTF-8 or zh; "" for a language we lack."""
+    base = re.split(r"[-_.@]", (tag or "").strip().strip('"').lower())[0]
+    return base if base in LANGUAGES else ""
+
+
+def system_language(platform: str = sys.platform, environ=os.environ, run=subprocess.run) -> str:
+    """The language this computer shows its own menus in, when it is one the
+    app has, else "". For the desktop app: a Mac's web view tells the app
+    English unless the app lists Chinese among its own (Biomanager.spec), so
+    "Automatic" would not follow a Chinese Mac by the browser alone."""
+    try:
+        if platform == "darwin":
+            out = run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True,
+                      text=True, encoding="utf-8", timeout=3).stdout
+            # A list in the Mac's own notation: ( "zh-Hans-CN", "en-US" ).
+            first = next((item.strip(' "') for item in re.split(r"[,\n]", out.strip().strip("()"))
+                          if item.strip(' "')), "")
+            return _supported(first)
+        if platform == "win32":
+            import ctypes
+            import locale
+            langid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            return _supported(locale.windows_locale.get(langid, ""))
+    except Exception:
+        return ""
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = environ.get(name, "")
+        if value:
+            return _supported(value.split(":")[0])
+    return ""
 
 
 def preference_key(username: str) -> str:

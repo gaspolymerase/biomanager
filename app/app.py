@@ -352,8 +352,16 @@ def load_current_user():
             return
         g.user = user
         # Their language from Settings, read once per sign-in (app/i18n.py).
+        # With none chosen there, the one picked on the sign-in page becomes
+        # theirs (its own session: committing this one would detach g.user).
         if session.get("lang_for") != user.id:
-            i18n.remember(i18n.preference(db_session, user.username))
+            chosen, picked = i18n.preference(db_session, user.username), session.get("lang")
+            if not chosen and picked in i18n.LANGUAGES:
+                with SessionLocal() as pref_session:
+                    i18n.set_preference(pref_session, user.username, picked)
+                    pref_session.commit()
+            else:
+                i18n.remember(chosen)
             session["lang_for"] = user.id
         # Remember the language they see, to write their notifications in it
         # (its own session: committing this one would detach g.user).

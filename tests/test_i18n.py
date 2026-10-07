@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from tests.base import *  # noqa: F401,F403
-from tests.base import AppTestCase, app, client_for, make_user, uniq
+from tests.base import AppTestCase, SessionLocal, app, client_for, make_user, uniq
 
 from app import i18n
 
@@ -50,6 +50,88 @@ class TheSignInPage(AppTestCase):
         self.assertNotIn("evil.example", r.headers["Location"])
 
 
+class SigningIn(AppTestCase):
+    """The language picked on the sign-in page goes on after signing in
+    (issue #40: it went back to the browser's), and becomes the person's
+    when they have none chosen in Settings; a choice there still wins."""
+
+    def sign_in(self, username, pick):
+        from werkzeug.security import generate_password_hash
+        from app.models import UserAccount
+        with SessionLocal() as s:
+            s.query(UserAccount).filter_by(username=username).update({"password_hash": generate_password_hash("pw-12345678")})
+            s.commit()
+        c = app.test_client()
+        c.post("/language", data={"language": pick, "next": "/login"}, headers={"Accept-Language": "en-US"})
+        r = c.post("/login", data={"username": username, "password": "pw-12345678"}, headers={"Accept-Language": "en-US"})
+        self.assertEqual(r.status_code, 302)
+        return c
+
+    def test_the_sign_in_pages_choice_carries_on_and_becomes_theirs(self):
+        who = make_user(uniq("pick"))
+        c = self.sign_in(who, "zh")
+        self.assertIn('<html lang="zh-CN">', c.get("/settings", headers={"Accept-Language": "en-US"}).get_data(as_text=True))
+        # Theirs from now on: another computer, an English one, too.
+        self.assertIn('<html lang="zh-CN">', client_for(who).get("/settings", headers={"Accept-Language": "en-US"}).get_data(as_text=True))
+
+    def test_a_choice_in_settings_still_wins(self):
+        who = make_user(uniq("kept"))
+        client_for(who).post("/settings", data={"action": "language", "language": "en"})
+        c = self.sign_in(who, "zh")
+        self.assertIn('<html lang="en">', c.get("/settings", headers={"Accept-Language": ZH}).get_data(as_text=True))
+
+
+class TheDesktopWindow(AppTestCase):
+    """The desktop app's own window follows the computer's language when
+    nobody has chosen one: a Mac's web view may say English regardless."""
+
+    def setUp(self):
+        super().setUp()
+        self.saved = {k: app.config.get(k) for k in ("LOCAL_SETUP", "COMPUTER_LANGUAGE")}
+        app.config.update(LOCAL_SETUP=True, COMPUTER_LANGUAGE="zh")
+
+    def tearDown(self):
+        app.config.update(self.saved)
+        super().tearDown()
+
+    def test_the_window_on_this_computer_follows_it(self):
+        page = app.test_client().get("/login", headers={"Accept-Language": "en-US"}).get_data(as_text=True)
+        self.assertIn('<html lang="zh-CN">', page)
+
+    def test_another_device_on_the_network_keeps_its_browsers(self):
+        page = app.test_client().get("/login", headers={"Accept-Language": "en-US"},
+                                     environ_overrides={"biomanager.lan": "1"}).get_data(as_text=True)
+        self.assertIn('<html lang="en">', page)
+
+    def test_a_choice_made_still_wins(self):
+        c = app.test_client()
+        c.post("/language", data={"language": "en", "next": "/login"})
+        self.assertIn('<html lang="en">', c.get("/login").get_data(as_text=True))
+
+
+class TheComputersLanguage(unittest.TestCase):
+    def run_with(self, out):
+        return lambda *a, **k: type("Done", (), {"stdout": out})()
+
+    def test_a_mac_says_it_in_its_list(self):
+        mac = '(\n    "zh-Hans-CN",\n    "en-US"\n)\n'
+        self.assertEqual(i18n.system_language("darwin", {}, self.run_with(mac)), "zh")
+        self.assertEqual(i18n.system_language("darwin", {}, self.run_with("(\n    en,\n    \"zh-Hans\"\n)")), "en")
+        self.assertEqual(i18n.system_language("darwin", {}, self.run_with('(\n    "fr-FR"\n)')), "")
+        def broken(*a, **k):
+            raise OSError("no defaults")
+        self.assertEqual(i18n.system_language("darwin", {}, broken), "")
+
+    def test_linux_says_it_in_its_locale(self):
+        self.assertEqual(i18n.system_language("linux", {"LANG": "zh_CN.UTF-8"}), "zh")
+        self.assertEqual(i18n.system_language("linux", {"LANGUAGE": "en_GB:zh_CN", "LANG": "zh_CN.UTF-8"}), "en")
+        self.assertEqual(i18n.system_language("linux", {}), "")
+
+    def test_the_mac_app_says_it_speaks_chinese(self):
+        spec = (ROOT / "Biomanager.spec").read_text(encoding="utf-8")
+        self.assertIn('"CFBundleLocalizations": ["en", "zh-Hans"]', spec)
+
+
 class APersonsChoice(AppTestCase):
     def test_settings_keeps_the_language_for_that_person(self):
         who = make_user(uniq("lang"))
@@ -64,6 +146,15 @@ class APersonsChoice(AppTestCase):
         # Automatic again: the browser decides.
         c.post("/settings", data={"action": "language", "language": ""})
         self.assertIn('<html lang="en">', client_for(who).get("/settings", headers={"Accept-Language": "en-US"}).get_data(as_text=True))
+
+    def test_settings_saves_the_language_as_it_is_picked(self):
+        """No Save button: picking a language saves it, and the page comes
+        back in it."""
+        page = client_for(make_user(uniq("pick"))).get("/settings").get_data(as_text=True)
+        form = page[page.index("data-language-form"):]
+        form = form[:form.index("</form>")]
+        self.assertNotIn('type="submit"', form)
+        self.assertIn("form.addEventListener('change', function () { form.submit(); })", page)
 
     def test_the_guide_link_follows_the_language(self):
         who = make_user(uniq("guide"))

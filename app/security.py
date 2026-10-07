@@ -480,11 +480,15 @@ def start_session(user) -> None:
     password it was started under (session_stamp), with a rolling lifetime."""
     from flask import session
 
+    lang = session.get("lang")
     session.clear()
     session.permanent = True
     session["user_id"] = user.id
     session["auth"] = session_stamp(user)
     session["sid"] = secrets.token_urlsafe(18)
+    if lang:
+        # The language picked on the sign-in page carries on (app/i18n.py).
+        session["lang"] = lang
 
 
 class LoginThrottle:
