@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/assets/clips"
 # The front page's dock, in its order, then the Features page's cards. Most are
 # the launch posts' clips; census is made here.
-CLIPS = ["home", "census", "litter", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders",
+CLIPS = ["home", "census", "litter", "assembly", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders",
          # and the Features page's cards
          "flies", "new-database", "cards", "import", "search", "looks", "phone"]
 # Where the app sits in feature-clips.py's 1920×1080 plain frame: inside the
