@@ -638,8 +638,8 @@ class MiceTarget(Target):
                                         typed=typed, id=mouse_id))
         ctx["taken"].add(mouse_id)
         owner = _owner(ctx, v.get("owner", ""), warnings, extras)
-        form = {k: v[k] for k in ("gender", "cage_id", "cage_location", "litter_id", "date_of_birth", "status",
-                                  "date_of_death") if k in v}
+        form = {k: v[k] for k in ("ear_tag", "gender", "cage_id", "cage_location", "litter_id", "date_of_birth",
+                                  "status", "date_of_death") if k in v}
         form["owner"] = owner
         # Nothing is born tomorrow: a future date is a typo (2062 for 2026).
         born = parse_date(form.get("date_of_birth", ""))
@@ -704,8 +704,12 @@ def mice_target(session) -> Target:
         columns_note=gettext("The mouse colony's columns are fixed, so any others go into each mouse's notes."),
         derived=("active", "age week", "age day", "age"),
         fields=[
-            Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "ear tag", "tag", "animal id", "animal"),
+            Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "animal id", "animal"),
                   note="Kept when it's a free number; otherwise the next ID, with yours in the notes"),
+            # "ear tag" used to come in as the Mouse ID, for want of anywhere
+            # else to put it; it has its own column now.
+            Field("ear_tag", "Ear tag", ("ear tag", "eartag", "tag", "ear punch", "ear notch", "notch",
+                                         "tattoo", "marking", "mark")),
             Field("gender", "Sex", ("sex", "gender", "m f", "male female"), kind="sex"),
             Field("genotype", "Genotype", ("genotype", "strain", "line", "transgene", "allele", "cre", "gt",
                                            "transgene 1")),

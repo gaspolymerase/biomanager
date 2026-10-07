@@ -11,7 +11,7 @@
 {% macro mouse_payload(row, locked) -%}
 {{ {
   "id": row.id, "mouse_id": row.mouse_id, "locked": locked,
-  "gender": row.gender, "transgene_1": row.transgene_1, "transgene_2": row.transgene_2,
+  "ear_tag": row.ear_tag, "gender": row.gender, "transgene_1": row.transgene_1, "transgene_2": row.transgene_2,
   "transgene_3": row.transgene_3, "transgene_4": row.transgene_4,
   "cage_id": row.cage_id, "cage_rack": row.cage_rack_id or "", "cage_position": row.cage_position,
   "cage_location": row.cage_location, "owner": row.owner,
@@ -157,6 +157,12 @@
                     title="{{ _('Mouse ID. The dot is blue for a mouse under 8 weeks, green from 8 to 30 weeks, red past 30 weeks, and grey once it is not alive.') }}">
                   <span class="dt-col-head">{{ icon('mouse', 'dt-col-icon') }}{{ _('Mouse') }}<span class="dt-sort-indicator"></span></span>
                 </th>
+                {# What is written on the animal — a tag number, RF/LB, a tattoo —
+                   beside the number BioManager gives it (issue #39). #}
+                <th class="dt-sortable" data-sort-key="ear_tag" style="width: 80px;"
+                    title="{{ _('What is written on the mouse itself: a tag number, an ear punch such as RF or LB, a tattoo. The Mouse number stays its identity.') }}">
+                  <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Ear tag') }}<span class="dt-sort-indicator"></span></span>
+                </th>
                 <th class="dt-sortable" data-sort-key="gender" style="width: 56px;">
                   <span class="dt-col-head">{{ icon('sex', 'dt-col-icon') }}{{ _('Sex') }}<span class="dt-sort-indicator"></span></span>
                 </th>
@@ -210,6 +216,7 @@
                 <tr data-id="{{ row.id }}"
                     data-active="{{ 'true' if row.active else 'false' }}"
                     data-mouse_id="{{ row.mouse_id }}"
+                    data-ear_tag="{{ row.ear_tag }}"
                     data-age="{{ row.age_days if row.age_days is not none else '' }}"
                     class="{% if not row.active %}is-inactive{% endif %}{% if locked %} is-locked{% endif %}">
                   <td class="sheet-pin sheet-pin-0">
@@ -224,6 +231,10 @@
                       <span class="ident">{{ row.mouse_id }}</span>
                       {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s mouse: read only', owner=row.owner) }}">{{ icon('lock') }}</span>{% endif %}
                     </span>
+                  </td>
+                  <td>
+                    <input class="ident" name="ear_tag" form="{{ f }}" value="{{ row.ear_tag }}" maxlength="40"
+                           placeholder="–" data-autosave="1" aria-label="{{ _('Ear tag') }}" {% if locked %}disabled{% endif %}>
                   </td>
                   <td>
                     <select class="sex-pill" name="gender" form="{{ f }}" data-sex="{{ row.gender }}" data-autosave="1"
@@ -1495,6 +1506,9 @@
             <input type="hidden" name="cage_location_was">
             <fieldset class="record-group">
               <legend>{{ _('Identity') }}</legend>
+              <label>{{ _('Ear tag') }} <input name="ear_tag" maxlength="40" autocomplete="off"
+                     placeholder="{{ _('e.g. 142, or RF') }}"
+                     title="{{ _('What is written on the mouse itself. The Mouse number stays its identity.') }}"></label>
               <label>{{ _('Sex') }}
                 <select name="gender">
                   <option value="">{{ _('Not set') }}</option>

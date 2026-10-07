@@ -905,6 +905,7 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
     return {
         "id": mouse.id,
         "mouse_id": mouse.mouse_id,
+        "ear_tag": mouse.ear_tag or "",
         "active": mouse_is_active(mouse),
         "active_label": "Y" if mouse_is_active(mouse) else "N",
         "age_weeks": ages["age_weeks"],

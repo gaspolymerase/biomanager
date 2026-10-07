@@ -1381,6 +1381,16 @@ and numbers mice with one counter that skips every number used in the
 database or earlier in the file, the same in the dry run (so a repeated ID
 is reported per row); a real run is a batch.
 
+**The number and the mark are different things.** `mice.mouse_id` is the
+identity — unique, never reused, what samples, cage cards, experiments and
+`@mouse` all link by. `mice.ear_tag` (revision 0024, 40 characters, free
+text, not unique) is what is written on the animal: a tag number, an ear
+punch such as RF or LB, a tattoo. It sits beside the ID in the sheet, in
+the dialog, in Add many, in the export and in search
+(`MouseRecord.ear_tag.ilike`), and a spreadsheet column called "ear tag",
+"notch" or "tattoo" now maps to it — before it had anywhere to go, the
+importer read such a column as the Mouse ID.
+
 **Numbers are handed out once.** `services.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest
 ever handed out, so deleting the newest mouse or undoing an Add many never

@@ -425,7 +425,9 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
 
-- Each mouse has sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
+- Each mouse has an **Ear tag**, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
+
+- The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Ear tag**, beside it, is whatever is written on the animal — a tag number, an ear punch such as *RF* or *LB*, a tattoo. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *ear tag*, *notch* or *tattoo* comes into it when you import.
 
 - Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
 
