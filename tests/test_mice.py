@@ -228,6 +228,18 @@ class TheEarTag(AppTestCase):
         self.assertIn('value="LB-7"', html)
         self.assertLess(html.index('data-sort-key="ear_tag"'), html.index('data-sort-key="gender"'))
 
+    def test_other_pages_know_where_its_column_is(self):
+        """Samples and the cages follow the Columns choice made here, which
+        data-table.js keeps by column number: templates/_mouse_sheet.html
+        names them, and must move when the sheet's columns do."""
+        import re
+        html = self.get_ok(self.m, "/colony?view=mice")
+        table = html.split('data-table-id="mice-v4"', 1)[1]
+        heads = re.findall(r"<th\b[^>]*>", table.split("</tr>", 1)[0])
+        keys = [re.search(r'data-sort-key="([^"]+)"', h).group(1) if "data-sort-key" in h else "" for h in heads]
+        self.assertEqual(keys.index("ear_tag"), 2)
+        self.assertEqual(keys.index("transgene_1"), 6)
+
     def test_the_number_carries_the_tag_on_hover_too(self):
         """Someone who hides the column still sees the mark when they point
         at the number."""

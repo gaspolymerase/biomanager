@@ -1145,6 +1145,26 @@ class SampleSourceTests(InventoryCase):
         self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
         self.assertIn('title="Custom tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
 
+    def test_the_custom_tag_is_a_column_after_the_source(self):
+        """Read from the colony, next to the mouse it belongs to; and the
+        page knows where this person's mouse-sheet Columns choice is kept,
+        so hiding it there hides it here (templates/_mouse_sheet.html)."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        tag = uniq("TT")
+        self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": tag})
+        self.post(self.a, f"/inventory/{self.key}/items/save", data={
+            "id": "", "name": uniq("S-col"), "attr_source_kind": "mouse", "attr_source_ref": mouse_id})
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        head = html.split('data-sort-key="attr_source"', 1)[1]
+        self.assertLess(head.index("data-mouse-tag"), head.index("</tr>"))
+        self.assertIn(f'<td class="ident" data-mouse-tag>{tag}</td>', html)
+        self.assertIn('localStorage.getItem("dt:mice-v4:hidden")', html)
+        self.assertIn("hidden.includes(2)", html)
+        # A database with no source column has none.
+        reagents = self.new_module(self.a, "reagents")
+        self.assertNotIn("data-mouse-tag", self.get_ok(self.a, f"/inventory/{reagents}"))
+
     def test_the_source_is_edited_in_the_sheet_like_any_other_cell(self):
         """Typing in the row, not opening the record: the two boxes autosave
         the way every other cell does."""

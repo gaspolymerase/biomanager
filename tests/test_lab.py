@@ -235,7 +235,8 @@ class PersonalDatabases(LabSettingsCase):
         self.set("members_create_databases", "off")
         r = self.post(self.m, "/inventory/new", data={"preset": "custom", "label": uniq("No"), "audience": "me"})
         self.assertFlash(r, "turned off adding databases", "error")
-        self.assertNotIn("Add database", self.get_ok(self.m, "/home"))
+        # The sidebar's entry, not the words: What's new may mention it.
+        self.assertNotIn('data-label="Add database"', self.get_ok(self.m, "/home"))
         self.assertIsNotNone(self.create_inventory(self.a, "me"))
 
     def test_sharing_with_the_lab(self):
