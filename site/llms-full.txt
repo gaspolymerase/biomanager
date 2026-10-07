@@ -852,6 +852,8 @@ Who and where: Anyone who may edit the order · Desktop and lab server
 
 From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other. The person who requested the order is notified as it moves. When it runs low, **Order again** (the cart button on the reagent, antibody or virus) opens a new order with its details.
 
+*Add it to stock? — the new record is filled in from the order*
+
 Related: [Samples, orders, reagents, antibodies, viruses](https://biomanager.org/guide/samples-and-orders) [Notifications](https://biomanager.org/guide/notifications)
 
 Source: https://biomanager.org/guide/receive-an-order
@@ -1045,6 +1047,8 @@ Who and where: Anyone in the lab · Desktop and lab server
 5. Press **Save**.
 
 The booking is on the calendar; drag it to move it. A booking that overlaps another is refused, saying who has it and when, and if one repeat clashes, none is made. **Duplicate**, on an open booking, books the same instrument and times on another day.
+
+*Book equipment: the instrument, the times, and what for*
 
 Related: [Calendar](https://biomanager.org/guide/calendar) [Home](https://biomanager.org/guide/home-page)
 
