@@ -664,6 +664,37 @@ def links(d):
     d.wait(0.6)
 
 
+def assembly(d):
+    """Build the next plasmid out of the ones the lab has: fill the tray with
+    fragments, let the wizard check the junctions, and create the product."""
+    d.goto("/plasmids/assembly/", settle=1.0)
+    d.start()
+    d.wait(1.0)
+    for _ in range(2):
+        d.click("[data-add]", after=0.9)
+        picker = d.page.locator("#assembly-picker")
+        d.zoom(picker, scale=1.4)
+        d.wait(0.6)
+        d.click("[data-pick-kind=feature]", after=0.8)
+        d.wait(0.8)
+        d.click("[data-pick-ok]", after=1.2)
+        d.unzoom()
+        d.wait(0.7)
+    # The tray, in the order the fragments go together.
+    tray = d.page.locator(".assembly-tray").first
+    d.zoom(tray, scale=1.5)
+    d.wait(1.6)
+    d.cover()
+    d.unzoom()
+    # The product, drawn before it exists.
+    preview = d.page.locator(".assembly-preview").first
+    if preview.count() and preview.is_visible():
+        d.zoom(preview, scale=1.4)
+        d.wait(1.8)
+        d.unzoom()
+    d.wait(0.8)
+
+
 CLIPS = {
     "datasheet": [("desktop", datasheet)],
     "qpcr": [("desktop", qpcr)],
@@ -677,6 +708,7 @@ CLIPS = {
     "phone": [("phone", phone)],
     "labels": [("desktop", labels)],
     "links": [("desktop", links)],
+    "assembly": [("desktop", assembly)],
 }
 PREPARE = {
     "datasheet": make_datasheet,

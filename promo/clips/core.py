@@ -122,6 +122,20 @@ def cards_phone(d):
 def plasmid(d):
     d.goto("/plasmids")
     d.start()
+    d.wait(0.8)
+    # The tabs that go with plasmids, and the two things above the sheet:
+    # the lab's feature library and the assembly wizard.
+    strip = d.page.locator("nav.seg").first
+    if strip.count() and strip.is_visible():
+        d.zoom(strip, scale=1.8)
+        d.move("a.seg-item >> nth=1", 0.9)
+        d.wait(0.9)
+        d.unzoom()
+    for text in ("Feature library", "Assemble a plasmid"):
+        link = d.page.locator(f"a:has-text('{text}')").first
+        if link.count() and link.is_visible():
+            d.move(link, 0.7)
+            d.wait(0.6)
     d.click("a[href='/plasmid/2'] >> nth=0", after=2.0)
     d.zoom(box=(250, 300, 500, 420), scale=1.8)
     d.wait(0.9)
