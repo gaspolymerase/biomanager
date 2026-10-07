@@ -1,5 +1,5 @@
-// The notebook's working blocks — data sheets, recipes, calculators,
-// plates, qPCR, diagrams and equations — as one TipTap node.
+// The notebook's working blocks — data sheets, recipes, formulations,
+// calculators, plates, qPCR, diagrams and equations — as one TipTap node.
 //
 // In Markdown each is a fenced block named by its kind, holding its data
 // (JSON, or the diagram/equation source):
@@ -20,6 +20,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { el } from '../util.js';
 import { mountSheet, defaultSheet } from './sheet.js';
 import { mountRecipe, defaultRecipe } from './recipe.js';
+import { mountFormulation, defaultFormulation } from './formulation.js';
 import { mountCalc, defaultCalc, CALC_TYPES } from './calc.js';
 import { mountPlate, defaultPlate } from './plate.js';
 import { mountQpcr, defaultQpcr } from './qpcr.js';
@@ -29,6 +30,7 @@ import { mountExperiment, defaultExperiment } from './experiment.js';
 export const BLOCKS = {
   sheet: { label: 'Data sheet', json: true, mount: mountSheet, make: defaultSheet },
   recipe: { label: 'Buffer recipe', json: true, mount: mountRecipe, make: defaultRecipe },
+  formulation: { label: 'Formulation', json: true, mount: mountFormulation, make: defaultFormulation },
   calc: { label: 'Calculator', json: true, mount: mountCalc, make: () => defaultCalc('dilution') },
   plate: { label: 'Plate reader', json: true, mount: mountPlate, make: defaultPlate },
   qpcr: { label: 'qPCR ΔΔCt', json: true, mount: mountQpcr, make: defaultQpcr },

@@ -1056,11 +1056,11 @@ def set_status(key: str, item_id: int):
 
 STOCK_KINDS = svc.RESTOCK_KINDS
 # The order category that belongs in each kind of stock, and back.
-STOCK_CATEGORY = {"reagents": "reagent", "antibodies": "antibody", "viruses": "virus"}
+STOCK_CATEGORY = {"reagents": "reagent", "chemicals": "reagent", "antibodies": "antibody", "viruses": "virus"}
 
 
 def _stock_targets(session) -> list[InventoryModule]:
-    """The reagent, antibody and virus inventories this person can add to."""
+    """The reagent, chemical, antibody and virus inventories this person can add to."""
     return [m for m in svc.list_modules(session) if m.kind in STOCK_KINDS]
 
 
@@ -1142,7 +1142,7 @@ def order_to_reagents(key: str, item_id: int):
             return _done(key, error=gettext("That order is already in stock (%(where)s).", where=where))
         target = svc.get_module(session, target_key) if target_key else svc.first_of_kind(session, "reagents")
         if target is None or target.kind not in STOCK_KINDS or not lab.can_see(target):
-            return _done(key, error=gettext("Pick a reagents, antibodies or viruses inventory to add it to."))
+            return _done(key, error=gettext("Pick a reagents, chemicals, antibodies or viruses inventory to add it to."))
         tv = svc.view(target)
         attrs = order.attrs_dict
         draft = _stock_from_order(session, mv, tv, order, shared=request.form.get("shared") == "1")

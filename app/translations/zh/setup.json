@@ -306,5 +306,7 @@
   "A Linux computer in the lab": "实验室里的 Linux 电脑",
   "This computer, for the whole lab": "这台电脑，供全实验室使用",
   "Glycerol stocks": "甘油菌",
-  "Bacteria carrying each plasmid, in −80 °C boxes.": "带有各个质粒的细菌，存放在 −80 °C 冻存盒中。"
+  "Bacteria carrying each plasmid, in −80 °C boxes.": "带有各个质粒的细菌，存放在 −80 °C 冻存盒中。",
+  "Chemicals": "化学品",
+  "Chemicals by abbreviation, CAS number and molecular weight, for formulations.": "按缩写、CAS 号和分子量记录化学品，供配方使用。"
 }

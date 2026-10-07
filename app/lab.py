@@ -71,6 +71,7 @@ INVENTORY_CHOICES = {
     "samples": ("Samples", "Tissue, DNA and other samples, in boxes.", "vial"),
     "orders": ("Orders", "What the lab has asked to buy, and when it arrived.", "cart"),
     "reagents": ("Reagents", "Chemicals and kits, with lots, expiry and low-stock warnings.", "flask"),
+    "chemicals": ("Chemicals", "Chemicals by abbreviation, CAS number and molecular weight, for formulations.", "flask-vial"),
     "antibodies": ("Antibodies", "Antibodies with host, target and dilution.", "antibody"),
     "viruses": ("Viruses", "AAV, lentivirus and other vectors: titer, serotype, the plasmid each came from.", "virus"),
     "primers": ("Primers & oligos", "Primers and probes by sequence, with length, GC and Tm worked out.", "dna"),

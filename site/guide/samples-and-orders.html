@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Samples, reagents, antibodies, viruses — BioManager user guide</title>
-  <meta name="description" content="Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.">
+  <meta name="description" content="Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks and cell lines.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/guide/samples-and-orders">
   <meta property="og:title" content="Samples, reagents, antibodies, viruses — BioManager user guide">
-  <meta property="og:description" content="Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.">
+  <meta property="og:description" content="Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks and cell lines.">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
@@ -132,7 +132,7 @@
     <!-- page -->
     <p class="eyebrow">Your databases</p>
     <h1>Samples, orders, reagents, antibodies, viruses</h1>
-    <p class="summary">Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.</p>
+    <p class="summary">Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks and cell lines.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Samples, orders, reagents, antibodies, viruses</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/orders.webp" data-clip-src="../assets/clips/orders"></video></div></figure>
       <h2 id="a-week">What this does for your week</h2>
       <p>Buying something and finding it again are the same chain, and it usually breaks where one person orders and another
@@ -151,7 +151,7 @@
       <p>What you stop doing: ordering a second one because nobody knew the first had arrived, retyping a catalogue number off a
         box, and finding the antibody expired the morning you needed it.</p>
 
-      <p>One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name
+      <p>One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name
         the plasmid they came from, so they sit with <a href="plasmids.html">Plasmids</a> as tabs of one area rather than on their own
         in the sidebar:</p>
       <table class="gtable">
@@ -164,6 +164,11 @@
           received, cancelled — on a table or a <b>Board</b> you drag cards across.</td></tr>
         <tr><th>Reagents</th><td>Quantity, concentration, CAS number, storage temperature, hazard, lot and expiry. In stock, low, empty,
           discarded.</td></tr>
+        <tr><th>Chemicals</th><td>The lab's chemical list, as you may keep it in Excel now: name, <i>Abbreviation</i>, <i>CAS</i>,
+          <i>MW (g/mol)</i>, <i>Purity (%)</i>, and in the record <i>Formula</i> and <i>Density (g/mL)</i>; with quantity, lot, expiry,
+          hazard and where each bottle is. A <b>Formulation</b> in a <a href="notebook.html#data-and-calculators">notebook page</a> picks
+          chemicals from here by name, abbreviation or CAS number and works out the moles from what you weigh, and the
+          <a href="notebook.html#utilities">calculators</a> in Utilities know each molecular weight. In stock, low, empty, discarded.</td></tr>
         <tr><th>Antibodies</th><td>Host, clonality, clone, conjugate, reactivity, applications, dilution, isotype, RRID, and where each vial is.</td></tr>
         <tr><th>Viruses</th><td>AAV, lentivirus, rabies and other vectors: serotype, the plasmid it was made from (<b>Made from</b>), promoter,
           payload, titer, biosafety level, the date made, and each aliquot's place in a −80 °C box. The DNA icon beside the plasmid
@@ -187,11 +192,11 @@
           The lab's admins are told of each new request.</li>
         <li><b>Follow it.</b> The status chips — <i>Requested, Ordered, Received, Cancelled</i> — show each stage in one tap; the person who
           requested it is notified as it moves.</li>
-        <li><b>It arrives.</b> Mark it received and BioManager asks <b>Add it to stock?</b>: a new reagent, antibody or virus with its name,
+        <li><b>It arrives.</b> Mark it received and BioManager asks <b>Add it to stock?</b>: a new reagent, chemical, antibody or virus with its name,
           vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the
           <b>To stock</b> button on the order does the same.) From then on the order shows <i>Reagents #8</i> and the reagent shows the
           order it came from; each opens the other.</li>
-        <li><b>Running low?</b> On any reagent, antibody or virus, the cart button, <b>Order again</b>, opens a new order with its details and the
+        <li><b>Running low?</b> On any reagent, chemical, antibody or virus, the cart button, <b>Order again</b>, opens a new order with its details and the
           quantity, price and grant of the last time it was ordered. While it is already on order the button says <b>On order</b>, and
           the new order opens with a note naming the open one and who asked for it.</li>
       </ol>

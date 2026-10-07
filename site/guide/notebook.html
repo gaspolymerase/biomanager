@@ -159,7 +159,7 @@
       </ul>
       <h2 id="experiments-and-protocols">Experiments and protocols</h2>
       <ul>
-        <li><b>Experiments</b>: aim, setup, samples and lot numbers, steps, results. <i>Start</i> and <i>Finished</i> stamp the times;
+        <li><b>Experiments</b>: aim, setup, samples and lot numbers, steps, results and a summary. <i>Start</i> and <i>Finished</i> stamp the times;
           planned, running, done or failed shows in the sidebar. (The colony's <b>Experiments</b> tab groups the animals.)</li>
         <li><b>Colony experiment</b> (<code>/experiment</code>) shows an experiment on any of your animals in the page: each day's manipulation, when it
           was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first
@@ -173,8 +173,15 @@
       <h2 id="data-and-calculators">Data and calculators</h2>
       <ul>
         <li><b>Data sheets</b>: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error
-          bars, a fitted line and a t-test, Mann–Whitney or ANOVA. <b>Plate reader</b> and <b>qPCR</b> blocks read concentrations off a
+          bars, a fitted line and a t-test, Mann–Whitney or ANOVA. Paste a log with its headers (time down the first column, readings
+          such as temperature and pressure beside it) and it is drawn as a line over time; <b>Y</b> picks the reading. <b>Plate reader</b> and <b>qPCR</b> blocks read concentrations off a
           standard curve and ΔΔCt fold changes.</li>
+        <li><b>Formulation</b> (<code>/formulation</code>): what goes into a reaction or a batch, by mass. In <b>Component</b>, type a
+          chemical's name, abbreviation or CAS number and pick it from the lab's <a href="samples-and-orders.html">Chemicals</a>
+          database: its molecular weight, purity, density and lot come with it, and the chemical's <b>Used in notebook pages</b> lists
+          the page. Type the <b>Mass</b> you weigh and <b>Amount</b> gives the moles. Mark one row as the basis (the round button
+          beside <b>Equiv.</b>) and give the others in equivalents: the mass to weigh follows, and changes when the basis does.
+          Each row shows its <b>wt %</b>, a liquid its volume, and the total is underneath.</li>
         <li><b>Buffer recipes</b> scale with the volume; common buffers are built in and the lab's own are shared. <b>Calculators</b>
           for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and <b>Protein (A₂₈₀)</b>: paste the
           sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a
@@ -199,8 +206,9 @@
       <dl class="gdl">
         <dt>Solutions &amp; buffers</dt><dd>Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔
           molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate
-          or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight, from the lab's own list first (<i>MgCl2·6H2O</i> and
-          <i>magnesium chloride hexahydrate</i> are the same one); one it doesn't know leaves the weight for you to type.</dd>
+          or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight (<i>MgCl2·6H2O</i> and
+          <i>magnesium chloride hexahydrate</i> are the same one). The lab's own come first: its
+          <a href="samples-and-orders.html">Chemicals</a> database, by name or abbreviation. One it doesn't know leaves the weight for you to type.</dd>
         <dt>DNA &amp; RNA</dt><dd>Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation
           insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change;
           transformation efficiency.</dd>
@@ -224,7 +232,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 6 min read</p>
+      <p>On this page · 7 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">Experiments and protocols</a></li>
