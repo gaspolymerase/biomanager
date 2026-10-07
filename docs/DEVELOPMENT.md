@@ -279,6 +279,21 @@ migration.
 Every row carries `module_id_fk`, and every relation is resolved through
 `_ref()` in `app/organism_routes.py` so a reference can never cross modules.
 
+### The order the databases sit in
+
+The rail lists the built-in pages and then whatever the lab added, which is
+the order they came into being rather than the order the work runs in. A lab
+says otherwise on **All databases → Order in the sidebar**: one list of keys
+in `app_settings` under `databases:order` (`lab.database_order`,
+`set_database_order`, `move_database`), applied by `lab.in_database_order`
+where the rail's Databases group is assembled. The keys are the rail's own —
+a built-in bare (`colony`), a module namespaced by its kind
+(`inventory:samples`, `stock:drosophila`, `organism:worms`), so two
+databases of different kinds may share a key. Anything the list does not
+name keeps its place after the ones it does, so a new database joins the end
+instead of landing in the middle of someone's arrangement. No migration: the
+setting is one row.
+
 ## Access control
 
 Who may change what lives in one place, `app/access.py`:
@@ -450,10 +465,25 @@ pages are in `app/lab_routes.py`.
   name is there. The same revision adds `plasmids.concentration`
   and `plasmids.a260_280` (typed numbers, checked by `_plasmid_measure`).
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
-  built-in columns the inventory uses, every custom one but *source*, and
-  notes) runs each ticked row through `_item_from_form` with that one
-  column, inside the batch; a refused value leaves that row as it was and
-  is named. Organisms do the same for custom fields (`bulk_animals`,
+  built-in columns the inventory uses, every custom one and notes) runs
+  each ticked row through `_item_from_form` with that one column, inside
+  the batch; a refused value leaves that row as it was and is named. A
+  *source* column is two answers — which colony and the ID in it — so the
+  bar shows a second box for the colony and `_bulk_value` pairs them back
+  into the `attr_<key>_kind` / `_ref` the item form posts; one mouse's
+  whole harvest takes its source in one go. The sheet's own source cell
+  (`field_cell`) is those same two boxes, autosaving like every other cell,
+  with the colony's identifiers offered in the ID box (`inv-src-<n>`, the
+  datalist the dialog uses) and the mouse it names one click away; it was
+  the one cell that could only be changed by opening the record.
+  `_mouse_links` reads each named mouse's `ear_tag` along with its row, so a
+  sample shows what is written on the animal it came from, read fresh every
+  render: a mouse re-tagged in the colony says the new mark on every one of
+  its samples at once. It is not editable there — the tag belongs to the
+  mouse, and a mouse with a dozen samples would otherwise have a dozen
+  places to change it from, and a dozen ways to disagree.
+  What the save would have said
+  (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in
   place, with `attr_<key>_was` so a stale row doesn't undo a later change
   (`read_attrs_checked` skips a field whose value equals its `_was`).
@@ -1276,7 +1306,12 @@ to that, and `tests/test_telemetry.py` checks names don't leak.
   the setup survey answered, and claims `telemetry:last_sent` with a
   conditional UPDATE so two gunicorn workers never both send. A failed
   post (5 s timeout, `urllib`) puts the old stamp back, logs at debug and
-  is retried the next hour. Never under `TESTING` (the hook checks).
+  is retried the next hour. Never under `TESTING` (the hook checks), and
+  never from a build being worked on (`released()`: a `+dev` version, or
+  a checkout with no VERSION file). Each dev run, upgrade check and
+  screenshot pass makes its own database and so its own install id;
+  before that guard, 230 of 234 counted "labs" were one developer's
+  machine.
 - **app_settings**: `telemetry:enabled` (`on`/`off`, default on; the first
   survey's checkbox, and **Switch on/off** on the Usage report,
   `POST /feedback/usage/heartbeat`), `telemetry:install_id` (a `uuid4`,
@@ -1367,6 +1402,19 @@ The older `/import/<entity>` endpoint still serves plasmid and order imports,
 and numbers mice with one counter that skips every number used in the
 database or earlier in the file, the same in the dry run (so a repeated ID
 is reported per row); a real run is a batch.
+
+**The number and the mark are different things.** `mice.mouse_id` is the
+identity — unique, never reused, what samples, cage cards, experiments and
+`@mouse` all link by. `mice.ear_tag` (revision 0024, 40 characters, free
+text, not unique) is what is written on the animal: a tag number, an ear
+punch such as RF or LB, a tattoo. It sits beside the ID in the sheet, in
+the dialog, in Add many, in the export and in search
+(`MouseRecord.ear_tag.ilike`), and a spreadsheet column called "ear tag",
+"notch" or "tattoo" now maps to it — before it had anywhere to go, the
+importer read such a column as the Mouse ID. Pointing at the number shows
+the tag as well (`_sheet.html`'s `id_cell(aside=…)`), so hiding the column
+under **Columns** loses nothing; the column stays because a tooltip cannot
+be scanned down a sheet, sorted, printed or read on a phone at the rack.
 
 **Numbers are handed out once.** `services.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest

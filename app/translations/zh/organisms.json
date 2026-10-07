@@ -595,5 +595,8 @@
   "organism::sperm": "精子",
   "organism::-80 °C soft agar": "-80 °C 软琼脂",
   "capability::Housing units": "饲养单元",
-  "capability::Birth cohorts": "出生批次"
+  "capability::Birth cohorts": "出生批次",
+  "Order in the sidebar": "侧边栏顺序",
+  "Put the ones you use every day at the top. A new database joins the end.": "把每天都用的放在最前面。新建的数据库会排在最后。",
+  "Only an admin can arrange the lab's databases.": "只有管理员可以调整实验室数据库的顺序。"
 }

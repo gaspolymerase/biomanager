@@ -35,7 +35,9 @@ PAGES = [
         ("what-it-is", "What BioManager is", "BioManager 是什么"),
         ("coming-from-excel", "Coming from Excel", "从 Excel 过来"),
         ("install", "Install and set up", "安装与设置"),
+        ("try-it-first", "Try it first", "先试一遍"),
         ("bring-your-lab-in", "Bring your lab in", "把实验室搬进来"),
+        ("import-from-excel", "Import from Excel", "从 Excel 导入"),
         ("home-page", "Home", "首页"),
     ]),
     (("Everyday skills", "日常操作"), [
@@ -46,41 +48,50 @@ PAGES = [
         ("notifications", "Notifications", "通知"),
         ("keyboard-shortcuts", "Keyboard shortcuts", "快捷键"),
     ]),
-    (("How to…", "怎么做"), [
+    (("Your mouse colony", "小鼠鼠群"), [
+        ("mouse-colony", "Mouse colony", "小鼠鼠群"),
         ("record-a-litter", "Record a litter", "记录产仔"),
         ("genotype-a-litter", "Genotype a litter", "鉴定一窝的基因型"),
         ("wean-a-litter", "Wean a litter", "断奶分笼"),
         ("print-cage-cards", "Print cage cards", "打印笼卡"),
-        ("import-from-excel", "Import from Excel", "从 Excel 导入"),
-        ("receive-an-order", "Receive an order into stock", "订单到货入库"),
-        ("book-equipment", "Book equipment", "预约仪器"),
-        ("sign-a-notebook-page", "Sign a notebook page", "签名实验记录"),
-        ("invite-someone", "Invite someone to the lab", "邀请成员"),
-        ("restore-a-backup", "Restore a backup", "从备份恢复"),
+        ("phones-and-cage-cards", "At the bench: phones and cage cards", "在实验台：手机与笼卡"),
     ]),
-    (("Your databases", "数据库"), [
-        ("mouse-colony", "Mouse colony", "小鼠鼠群"),
+    (("Fish, flies and other animals", "鱼、果蝇和其他动物"), [
         ("zebrafish", "Zebrafish", "斑马鱼"),
         ("flies-and-worms", "Flies and worms", "果蝇和线虫"),
         ("any-organism", "Any other organism", "其他任意物种"),
+    ]),
+    (("Molecular biology", "分子生物学"), [
+        ("plasmids", "Plasmids, primers and stocks", "质粒、引物与菌种"),
+    ]),
+    (("Samples and ordering", "样本与采购"), [
+        ("samples-and-orders", "Samples, reagents, antibodies, viruses", "样本、试剂、抗体、病毒"),
+        ("receive-an-order", "Receive an order into stock", "订单到货入库"),
+    ]),
+    (("Experiments and the notebook", "实验与记录本"), [
         ("experiments", "Experiments", "实验"),
-        ("plasmids", "Plasmids", "质粒"),
-        ("samples-and-orders", "Samples, orders, reagents, antibodies, viruses", "样本、采购、试剂、抗体、病毒"),
-        ("calendar", "Calendar", "日历"),
         ("notebook", "Notebook and utilities", "实验记录本与工具"),
+        ("sign-a-notebook-page", "Sign a notebook page", "签名实验记录"),
+    ]),
+    (("Planning the week", "日程安排"), [
+        ("calendar", "Calendar", "日历"),
+        ("book-equipment", "Book equipment", "预约仪器"),
     ]),
     (("Working as a lab", "实验室协作"), [
         ("who-can-do-what", "Who can do what", "谁能做什么"),
         ("project-groups", "Project groups", "项目组"),
         ("people-and-guests", "People and guests", "成员与访客"),
+        ("invite-someone", "Invite someone to the lab", "邀请成员"),
         ("lab-setup", "Lab setup", "实验室设置"),
-        ("phones-and-cage-cards", "Phones and cage cards", "手机与笼卡"),
     ]),
-    (("Data and help", "数据与帮助"), [
+    (("Your data", "你的数据"), [
         ("your-data", "Your data and backups", "数据与备份"),
-        ("scripts-and-api", "Scripts, instruments and other tools", "脚本、仪器和其他工具"),
+        ("restore-a-backup", "Restore a backup", "从备份恢复"),
+        ("scripts-and-api", "Scripts and the API", "脚本与 API"),
         ("ai-assistants", "AI assistants", "AI 助手"),
-        ("troubleshooting", "Troubleshooting", "故障排除"),
+    ]),
+    (("Help", "帮助"), [
+        ("troubleshooting", "Troubleshooting", "疑难解答"),
         ("feedback", "Feedback", "反馈"),
     ]),
 ]
@@ -89,11 +100,11 @@ T = {
     "en": dict(lang="en", nav_label="Site", features="Features", server="Run it for your lab", guide="User guide",
                download="Download", other="中文", other_code="zh-CN", other_data="zh", search="Search the guide",
                contents="Contents", on_page="On this page", prev="Previous", next="Next", helpful="Was this page helpful?",
-               yes="Yes", no="No", suffix="BioManager user guide"),
+               yes="Yes", no="No", minutes="{n} min read", suffix="BioManager user guide"),
     "zh": dict(lang="zh-CN", nav_label="页面导航", features="功能", server="为实验室部署", guide="用户指南",
                download="下载", other="English", other_code="en", other_data="en", search="搜索用户指南",
                contents="目录", on_page="本页内容", prev="上一页", next="下一页", helpful="这一页对你有帮助吗？",
-               yes="有", no="没有", suffix="BioManager 用户指南"),
+               yes="有", no="没有", minutes="阅读约 {n} 分钟", suffix="BioManager 用户指南"),
 }
 
 
@@ -225,13 +236,20 @@ def sidebar(lang, slug):
   </aside>"""
 
 
+def reading_time(lang, content):
+    """Minutes, at 200 English words or 400 Chinese characters a minute."""
+    plain = re.sub(r"<[^>]+>", " ", content)
+    units = len(re.findall(r"[\u4e00-\u9fff]", plain)) / 400 if lang == "zh" else len(plain.split()) / 200
+    return max(1, round(units))
+
+
 def on_page(lang, content):
     heads = re.findall(r'<h([23]) id="([^"]+)"[^>]*>([\s\S]*?)</h\1>', content)
     if len(heads) < 2:
         return ""
     items = "\n".join(f'        <li class="lvl{lvl}"><a href="#{i}">{html.escape(text(h))}</a></li>' for lvl, i, h in heads)
     return f"""<nav class="docs-rail" aria-label="{T[lang]['on_page']}">
-      <p>{T[lang]['on_page']}</p>
+      <p>{T[lang]['on_page']} · {T[lang]['minutes'].format(n=reading_time(lang, content))}</p>
       <ol>
 {items}
       </ol>

@@ -12,7 +12,7 @@
    data-* hooks (autosave, live availability dot). #}
 
 {% macro id_cell(code, alive=None, locked=False, owner='', noun='record',
-                 alive_title='Available', dead_title='Not available', stage='', stage_title='') %}
+                 alive_title='Available', dead_title='Not available', stage='', stage_title='', aside='') %}
   {# stage: "young", "adult" or "old" colours a living animal's dot blue,
      green or red (app/life_stage.py); "expired" makes it red. #}
   {% set alive_title = [alive_title|tr, stage_title|tr] | select | join(' · ') %}
@@ -23,7 +23,10 @@
             data-alive-title="{{ alive_title }}" data-dead-title="{{ dead_title }}"
             title="{{ alive_title if alive else dead_title }}"></span>
     {% endif %}
-    <span class="ident">{{ code }}</span>
+    {# `aside` is what the record carries besides its number — a mouse's ear
+       tag — so hovering the number tells you, whether or not its column is
+       shown. #}
+    <span class="ident"{% if aside %} title="{{ aside }}"{% endif %}>{{ code }}</span>
     {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s %(noun)s: read only', owner=owner or _('Someone else'), noun=noun|tr) }}">{{ icon('lock') }}</span>{% endif %}
   </span>
 {% endmacro %}

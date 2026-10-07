@@ -62,7 +62,9 @@ PRESETS: dict[str, dict] = {
         "categories": ["tissue", "blood", "serum", "DNA", "RNA", "protein", "organoid", "cells", "other"],
         "statuses": ["available", "in use", "used up", "discarded"],
         "fields": [
-            {"key": "source", "label": "Source", "type": "source", "icon": "signpost", "width": 160},
+            # Wider than a plain column: the cell holds the colony and the
+            # ID in it, both editable in the sheet.
+            {"key": "source", "label": "Source", "type": "source", "icon": "signpost", "width": 210},
             {"key": "collected_on", "label": "Collected", "type": "date", "icon": "calendar", "width": 116},
             {"key": "amount", "label": "Amount", "type": "text", "icon": "amount", "width": 84},
             *SAMPLE_MEASURES,

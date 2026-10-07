@@ -78,6 +78,51 @@ def flash_texts(client, kind: str | None = None) -> str:
     return " | ".join(text for k, text in take_flashes(client) if kind is None or k == kind)
 
 
+class TheEarTag(AppTestCase):
+    """What is written on the animal, beside the number BioManager gives it
+    (issue #39): the number stays the identity, the tag is how you find the
+    mouse in your hand."""
+
+    def test_it_is_typed_in_the_sheet_and_kept(self):
+        mouse = self.make_mouse(self.m, self.member)
+        self.assertSaved(self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "RF"}))
+        self.assertEqual(one("select ear_tag from mice where id=?", mouse), "RF")
+        # A tag number does just as well, and it need not be unique: two
+        # mice in different cages are often punched the same.
+        other = self.make_mouse(self.m, self.member)
+        self.assertSaved(self.autosave(self.m, f"/colony/mice/{other}/update", {"ear_tag": "RF"}))
+        self.assertEqual(count("mice", "ear_tag=?", "RF"), 2)
+
+    def test_the_sheet_shows_the_column_after_the_number(self):
+        mouse = self.make_mouse(self.m, self.member)
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "LB-7"})
+        html = self.get_ok(self.m, "/colony?view=mice")
+        self.assertIn('data-sort-key="ear_tag"', html)
+        self.assertIn('value="LB-7"', html)
+        self.assertLess(html.index('data-sort-key="ear_tag"'), html.index('data-sort-key="gender"'))
+
+    def test_the_number_carries_the_tag_on_hover_too(self):
+        """Someone who hides the column still sees the mark when they point
+        at the number."""
+        mouse = self.make_mouse(self.m, self.member)
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "RF"})
+        self.assertIn('title="Ear tag RF"', self.get_ok(self.m, "/colony?view=mice"))
+
+    def test_searching_for_the_tag_finds_the_mouse(self):
+        mouse = self.make_mouse(self.m, self.member)
+        tag = uniq("ET")
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": tag})
+        found = self.m.get(f"/search?q={tag}").get_json()
+        self.assertIn("mouse", [r["type"] for r in found["results"]])
+
+    def test_the_number_is_still_the_identity(self):
+        """Changing the tag never changes what everything else links by."""
+        mouse = self.make_mouse(self.m, self.member)
+        was = one("select mouse_id from mice where id=?", mouse)
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "999"})
+        self.assertEqual(one("select mouse_id from mice where id=?", mouse), was)
+
+
 class Case(AppTestCase):
     """Starts each test with no flashes left over from an earlier one on
     the class's shared clients."""

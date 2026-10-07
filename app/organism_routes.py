@@ -333,9 +333,37 @@ def index():
         inventory_cards = [{"module": inventories.view(m), "count": item_counts.get(m.id, 0), "row": m,
                             "can_share": share(m)}
                            for m in inventories.list_modules(session, include_disabled=True, everyone=everyone)]
+        # Every database, in the order the sidebar shows them, so the lab
+        # can arrange them by the work rather than by what it added first.
+        listed = ([{"key": b["key"], "label": b["label"], "icon": b["icon"]} for b in builtins]
+                  + [{"key": f"stock:{c['module'].key}", "label": c["module"].label,
+                      "icon": c["module"].icon or "database"} for c in stock_cards if c["row"].enabled]
+                  + [{"key": f"organism:{c['module'].key}", "label": c["module"].label,
+                      "icon": c["module"].icon or "database"} for c in cards if c["row"].enabled]
+                  + [{"key": f"inventory:{c['module'].key}", "label": c["module"].label,
+                      "icon": c["module"].icon or "database"} for c in inventory_cards if c["row"].enabled])
+        order = lab.in_database_order(lab.database_order(session), listed)
         return render_template("organisms/index.html", cards=cards, builtins=builtins,
                                inventory_cards=inventory_cards, stock_cards=stock_cards,
-                               is_admin=access.is_admin())
+                               order=order, is_admin=access.is_admin())
+
+
+@bp.route("/order", methods=["POST"])
+def reorder():
+    """Move one database a place up or down in the sidebar. The whole order
+    is sent with it, so moving one never depends on what the page last
+    showed matching what the database now holds."""
+    key = (request.form.get("key") or "").strip()
+    by = -1 if request.form.get("by") == "up" else 1
+    keys = [k for k in request.form.getlist("keys") if k]
+    with SessionLocal() as session:
+        if not lab.may_create_lab_database(session) and not access.is_admin():
+            flash(gettext("Only an admin can arrange the lab's databases."), "error")
+            return redirect(url_for("organisms.index"))
+        if not lab.move_database(session, key, by, keys):
+            return redirect(url_for("organisms.index"))
+        session.commit()
+    return redirect(url_for("organisms.index"))
 
 
 @bp.route("/builtin/<key>/rename", methods=["POST"])

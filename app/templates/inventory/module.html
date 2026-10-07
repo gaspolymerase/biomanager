@@ -31,7 +31,7 @@
 {% macro req(column) %}{% if column in module.required %} data-required="1"{% endif %}{% endmacro %}
 {% macro star(column) %}{% if column in module.required %}<span class="req-star" title="{{ _('Required') }}">*</span>{% endif %}{% endmacro %}
 
-{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0) %}
+{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0, sources=[]) %}
   {% set name = 'attr_' ~ field.key %}
   {% set flabel = field.label|tr('inventory') %}
   {% if field.type == 'select' %}
@@ -44,9 +44,25 @@
     <input type="date" name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-empty="{{ '0' if value else '1' }}"
            data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
   {% elif field.type == 'source' %}
+    {# Which colony, and the ID in it: two boxes, saved as you type like
+       every other cell. The mouse it names stays one click away. #}
     {% set src = value if value is mapping else {} %}
-    {% set mouse_row = links.get(src.ref|string) if src.kind in ['mouse', 'colony'] else none %}
-    <span class="sheet-cell-text">{% if src.kind or src.ref %}<span class="source-chip">{% if src.kind %}<span class="source-chip-kind">{{ (src_label or src.kind.split(':')[-1]|replace('_', ' ')|title)|tr }}</span>{% endif %}{% if mouse_row %}<a class="ident source-chip-link" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse_row }}" title="{{ _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ src.ref }}</a>{% else %}<span class="ident" {% if src.kind in ['mouse', 'colony'] and src.ref %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"{% endif %}>{{ src.ref or '—' }}</span>{% endif %}</span>{% else %}<span class="sheet-empty">–</span>{% endif %}</span>
+    {% set mouse = links.get(src.ref|string) if src.kind in ['mouse', 'colony'] else none %}
+    <span class="plasmid-cell source-cell">
+      <select name="{{ name }}_kind" form="{{ form_id }}" data-autosave="1" data-source-kind
+              aria-label="{{ _('%(field)s: from', field=flabel) }}" {% if locked %}disabled{% endif %}>
+        <option value="">–</option>
+        {% for source in sources %}<option value="{{ source.kind }}" data-list="inv-src-{{ loop.index0 }}" {% if source.kind == src.kind %}selected{% endif %}>{{ source.label|tr }}</option>{% endfor %}
+        {% if src.kind and src.kind not in sources|map(attribute='kind')|list %}<option value="{{ src.kind }}" selected>{{ (src_label or src.kind)|tr }}</option>{% endif %}
+      </select>
+      <input class="ident" name="{{ name }}_ref" form="{{ form_id }}" value="{{ src.ref or '' }}" data-source-ref
+             placeholder="{{ _('ID') }}" data-autosave="1" aria-label="{{ _('ID in that colony') }}"
+             {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"
+             {%- elif mouse and mouse.ear_tag %}title="{{ _('Ear tag %(tag)s', tag=mouse.ear_tag) }}"{% endif %}
+             {% if locked %}disabled{% endif %}>
+      {% if mouse %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse.row }}"
+         title="{{ _('Open mouse %(id)s (ear tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
+    </span>
   {% elif field.type == 'plasmid' %}
     {# The plasmid's number, editable; its name links to the plasmid when there is one. #}
     {% set plasmid = plasmid_links.get(value|string) %}
@@ -283,7 +299,7 @@
                   </td>
                 {% endif %}
                 {% for fd in m.table_fields %}
-                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id) }}</td>
+                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources) }}</td>
                 {% endfor %}
                 {% if m.has('sharing') %}
                   <td>
@@ -426,6 +442,11 @@
           <input type="hidden" name="action" value="field">
           <select name="field" aria-label="{{ _('Column to set') }}" data-bulk-field>
             {% for f in bulk_fields %}<option value="{{ f.name }}" data-type="{{ f.type }}"{% if f.options %} data-options="{{ f.options|join('\n') }}"{% endif %}>{{ f.label|tr('inventory') }}</option>{% endfor %}
+          </select>
+          {# A source column is two answers: which colony, then the ID in it.
+             The "from" box shows only when a source column is chosen. #}
+          <select name="source_kind" aria-label="{{ _('Which colony they came from') }}" data-bulk-source hidden>
+            {% for source in sources %}<option value="{{ source.kind }}">{{ source.label|tr }}</option>{% endfor %}
           </select>
           <input name="value" aria-label="{{ _('Value') }}" placeholder="{{ _('value') }}" list="inv-bulk-field-options" data-bulk-value>
           <datalist id="inv-bulk-field-options"></datalist>
@@ -952,11 +973,21 @@
     const dialog = document.getElementById('item-dialog');
     const kind = dialog.querySelector('[data-source-kind]');
     const ref = dialog.querySelector('[data-source-ref]');
-    const sync = () => {
-      const list = kind.selectedOptions[0] && kind.selectedOptions[0].dataset.list;
-      if (list) ref.setAttribute('list', list); else ref.removeAttribute('list');
+    /* The ID box offers the identifiers of whichever colony is chosen —
+       in the dialog, and in every source cell in the sheet. */
+    const pair = (from) => {
+      const box = from.closest('.source-cell, label, fieldset, .record-dialog-body');
+      const to = box && box.querySelector('[data-source-ref]');
+      if (!to) return;
+      const list = from.selectedOptions[0] && from.selectedOptions[0].dataset.list;
+      if (list) to.setAttribute('list', list); else to.removeAttribute('list');
     };
-    if (kind && ref) kind.addEventListener('change', sync);
+    const sync = () => { if (kind && ref) pair(kind); };
+    document.addEventListener('change', (event) => {
+      const from = event.target.closest && event.target.closest('[data-source-kind]');
+      if (from) pair(from);
+    });
+    document.querySelectorAll('.source-cell [data-source-kind]').forEach(pair);
     dialog.addEventListener('record-dialog:open', (event) => {
       const { data, isNew } = event.detail || {};
       if (kind && ref) sync();

@@ -1127,6 +1127,72 @@ class SampleSourceTests(InventoryCase):
         super().setUpClass()
         cls.key = cls.new_module(cls.a, "samples")
 
+    def test_the_source_shows_the_mouse_s_ear_tag_and_follows_it(self):
+        """Type the number; what is written on that mouse comes with it, and
+        keeps up when the colony changes it. The tag belongs to the mouse,
+        so it is not edited from here."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "RF"})
+        name = uniq("S-tagged")
+        self.post(self.a, f"/inventory/{self.key}/items/save", data={
+            "id": "", "name": name, "attr_source_kind": "mouse", "attr_source_ref": mouse_id})
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        self.assertIn('title="Ear tag RF"', html)
+        self.assertIn(f"Open mouse {mouse_id} (ear tag RF) in the colony", html)
+        # Re-tag the mouse: every sample of it says the new mark, with
+        # nothing to update here.
+        self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
+        self.assertIn('title="Ear tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
+
+    def test_the_source_is_edited_in_the_sheet_like_any_other_cell(self):
+        """Typing in the row, not opening the record: the two boxes autosave
+        the way every other cell does."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        name = uniq("S-inline")
+        self.post(self.a, f"/inventory/{self.key}/items/save", data={"id": "", "name": name, "category": "tissue"})
+        [sid] = items_named(self.key, name)
+        self.assertSaved(self.autosave(self.a, f"/inventory/{self.key}/items/{sid}/update",
+                                       {"attr_source_kind": "mouse", "attr_source_ref": mouse_id}))
+        self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": mouse_id})
+        # And changing just the ID keeps the colony it was already in.
+        self.assertSaved(self.autosave(self.a, f"/inventory/{self.key}/items/{sid}/update",
+                                       {"attr_source_kind": "mouse", "attr_source_ref": "7"}))
+        self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": "7"})
+
+    def test_the_whole_harvest_takes_its_source_in_one_go(self):
+        """One mouse gives many samples: set which mouse on all of them at
+        once, rather than opening each."""
+        mouse_row = self.make_mouse(self.a, self.admin)
+        mouse_id = str(one("select mouse_id from mice where id=?", mouse_row))
+        names = [uniq("S-organ") for _ in range(3)]
+        for name in names:
+            self.post(self.a, f"/inventory/{self.key}/items/save",
+                      data={"id": "", "name": name, "category": "tissue"})
+        ids = [items_named(self.key, name)[0] for name in names]
+        r = self.post(self.a, f"/inventory/{self.key}/items/bulk", data={
+            "action": "field", "field": "attr_source", "source_kind": "mouse", "value": mouse_id,
+            "selected_ids": [str(i) for i in ids]})
+        self.assertNoErrors(r)
+        for sid in ids:
+            self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": mouse_id})
+
+    def test_the_source_column_is_one_the_bulk_bar_offers(self):
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        self.assertIn('value="attr_source" data-type="source"', html)
+        self.assertIn('data-bulk-source', html)
+
+    def test_a_mouse_that_is_not_in_the_colony_is_still_said_so_in_bulk(self):
+        [sid] = [items_named(self.key, n)[0] for n in [uniq("S-ghost")]
+                 if self.post(self.a, f"/inventory/{self.key}/items/save",
+                              data={"id": "", "name": n, "category": "tissue"}) or True]
+        r = self.post(self.a, f"/inventory/{self.key}/items/bulk", data={
+            "action": "field", "field": "attr_source", "source_kind": "mouse", "value": "99999999",
+            "selected_ids": [str(sid)]})
+        self.assertFlash(r, "no mouse 99999999 in the colony", "info")
+        self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": "99999999"})
+
     def test_a_sample_from_a_colony_mouse_links_back_to_it(self):
         mouse_row = self.make_mouse(self.a, self.admin)
         mouse_id = one("select mouse_id from mice where id=?", mouse_row)
@@ -1139,7 +1205,9 @@ class SampleSourceTests(InventoryCase):
         self.assertEqual(attrs_of(sid)["source"], {"kind": "mouse", "ref": str(mouse_id)})
         self.assertEqual(attrs_of(sid)["collected_on"], days_ago(1))
         html = self.get_ok(self.a, f"/inventory/{self.key}")
-        self.assertIn('source-chip-kind">Mouse', html)
+        # The cell is editable in place: the colony chosen, the ID beside it.
+        self.assertIn('<option value="mouse" data-list="inv-src-0" selected>', html)
+        self.assertIn('name="attr_source_ref"', html)
         self.assertIn(f'title="Open mouse {mouse_id} in the colony"', html)
 
     def test_a_mouse_number_too_big_for_the_database_is_no_mouse_not_an_error(self):

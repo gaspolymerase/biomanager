@@ -204,4 +204,39 @@
     <div class="card empty-state"><p>{{ _('No inventories yet.') }}</p></div>
   {% endif %}
 </section>
+
+{# The order of the sidebar, as the lab wants to read it rather than as it
+   added them (app/lab.py: in_database_order). #}
+{% if order|length > 1 %}
+  <section class="card mt-6 overflow-hidden" id="database-order">
+    <header class="card-head">
+      <h2 class="card-title">{{ icon('list') }} {{ _('Order in the sidebar') }}</h2>
+      <span class="text-[12px] text-muted">{{ _('Put the ones you use every day at the top. A new database joins the end.') }}</span>
+    </header>
+    <ol>
+      {% for entry in order %}
+        <li class="flex items-center gap-3 border-t border-hairline px-4 py-2 text-[13px]">
+          <span class="tabular-nums text-[12px] text-muted">{{ loop.index }}</span>
+          <span class="flex items-center gap-2">{{ icon(entry.icon) }} {{ entry.label|tr }}</span>
+          <span class="ml-auto flex gap-1">
+            <form method="post" action="{{ url_for('organisms.reorder') }}">
+              <input type="hidden" name="key" value="{{ entry.key }}">
+              <input type="hidden" name="by" value="up">
+              {% for other in order %}<input type="hidden" name="keys" value="{{ other.key }}">{% endfor %}
+              <button type="submit" class="btn btn-ghost btn-sm" {% if loop.first %}disabled{% endif %}
+                      aria-label="{{ _('Move %(name)s up', name=entry.label|tr) }}">{{ icon('chevron-up') }}</button>
+            </form>
+            <form method="post" action="{{ url_for('organisms.reorder') }}">
+              <input type="hidden" name="key" value="{{ entry.key }}">
+              <input type="hidden" name="by" value="down">
+              {% for other in order %}<input type="hidden" name="keys" value="{{ other.key }}">{% endfor %}
+              <button type="submit" class="btn btn-ghost btn-sm" {% if loop.last %}disabled{% endif %}
+                      aria-label="{{ _('Move %(name)s down', name=entry.label|tr) }}">{{ icon('chevron-down') }}</button>
+            </form>
+          </span>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endif %}
 {% endblock %}

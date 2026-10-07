@@ -898,6 +898,17 @@ def _organism_module_links() -> list[dict]:
     return links
 
 
+def _database_order() -> list[str]:
+    """The lab's arrangement, read once a request."""
+    if "database_order" not in g:
+        try:
+            with SessionLocal() as db_session:
+                g.database_order = lab.database_order(db_session)
+        except Exception:  # noqa: BLE001 — a database being set up still renders the rail
+            g.database_order = []
+    return g.database_order
+
+
 @app.context_processor
 def inject_nav():
     if g.get("user") is None:
@@ -919,7 +930,10 @@ def inject_nav():
             extras = _stock_module_links() + _organism_module_links() + _inventory_module_links()
             tail = [l for l in links if l["key"] in ("drosophila", "new-db")]
             head = [l for l in links if l["key"] not in ("drosophila", "new-db")]
-            links = head + extras + [l for l in tail if l["key"] == "new-db"]
+            # The lab's own order, if it has arranged them (app/lab.py);
+            # anything it has not named keeps its place at the end.
+            links = lab.in_database_order(_database_order(), head + extras) + \
+                [l for l in tail if l["key"] == "new-db"]
             # Plasmids holds the tabs, so it is the active database on them.
             if any(t["active"] for t in g.get("plasmid_tabs", [])):
                 for link in links:
@@ -1275,6 +1289,8 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         sync_mouse_transgenes(mouse, transgenes)
     if form_changed(form, "gender"):
         mouse.gender = form.get("gender", "").strip()
+    if form_changed(form, "ear_tag"):
+        mouse.ear_tag = form.get("ear_tag", "").strip()[:40]
     previous_status = mouse.status
     if form_changed(form, "status"):
         mouse.status = form.get("status", "").strip()
@@ -2261,8 +2277,8 @@ def export_my_data():
             ).all()
             iso = lambda d: d.isoformat() if d else ""
             zf.writestr("mice.csv", csv_text([
-                ["mouse_id", "gender", "genotype", "status", "owner", "cage_id", "litter_id", "dob", "dod", "note"],
-                *([m.mouse_id, m.gender, m.genotype, m.status, m.owner, m.cage.cage_id if m.cage else "",
+                ["mouse_id", "ear_tag", "gender", "genotype", "status", "owner", "cage_id", "litter_id", "dob", "dod", "note"],
+                *([m.mouse_id, m.ear_tag, m.gender, m.genotype, m.status, m.owner, m.cage.cage_id if m.cage else "",
                    m.litter.litter_id if m.litter else "", iso(m.litter.date_of_birth) if m.litter else "",
                    iso(m.date_of_death), m.note] for m in mice)]))
 
@@ -3360,6 +3376,7 @@ def bulk_add_to_experiment():
 
 # Columns the preview grid understands, in display order.
 BATCH_COLUMNS = [
+    ("ear_tag", "Ear tag", 80),
     ("gender", "Sex", 70),
     ("transgene_1", "Transgene 1", 130),
     ("transgene_2", "Transgene 2", 130),
@@ -5761,6 +5778,7 @@ def global_search():
         else:
             mouse_stmt = mouse_stmt.where(
                 MouseRecord.genotype.ilike(like, escape="\\") | MouseRecord.owner.ilike(like, escape="\\") | MouseRecord.note.ilike(like, escape="\\")
+                | MouseRecord.ear_tag.ilike(like, escape="\\")
             )
         for m in db_session.scalars(mouse_stmt.order_by(MouseRecord.mouse_id.desc()).limit(limit)).all():
             results.append({
@@ -6857,7 +6875,8 @@ def notebook_search_entity(entity_type: str):
             if _record_number(query) is not None:
                 stmt = stmt.where(MouseRecord.mouse_id == int(query))
             elif query:
-                stmt = stmt.where(MouseRecord.genotype.ilike(like_pattern(query), escape="\\") | MouseRecord.owner.ilike(like_pattern(query), escape="\\"))
+                stmt = stmt.where(MouseRecord.genotype.ilike(like_pattern(query), escape="\\") | MouseRecord.owner.ilike(like_pattern(query), escape="\\")
+                                  | MouseRecord.ear_tag.ilike(like_pattern(query), escape="\\"))
             stmt = stmt.order_by(MouseRecord.mouse_id.desc()).limit(limit)
             rows = db_session.scalars(stmt).all()
             return jsonify({"ok": True, "items": [
@@ -6926,6 +6945,7 @@ def notebook_search_entity(entity_type: str):
                 like = like_pattern(query)
                 mouse_stmt = mouse_stmt.where(
                     MouseRecord.genotype.ilike(like, escape="\\") | MouseRecord.owner.ilike(like, escape="\\")
+                    | MouseRecord.ear_tag.ilike(like, escape="\\")
                 )
             mouse_stmt = mouse_stmt.order_by(MouseRecord.mouse_id.desc()).limit(per_type_limit)
             for m in db_session.scalars(mouse_stmt).all():

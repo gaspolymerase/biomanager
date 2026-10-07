@@ -321,6 +321,10 @@ class MouseRecord(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mouse_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
+    # What is written on the animal: an ear tag's number, a notch (RF, LB),
+    # a tattoo. Free text, because every lab marks them differently, and not
+    # unique — mouse_id is the identity everything else links by (0024).
+    ear_tag: Mapped[str] = mapped_column(String(40), default="", server_default="")
     date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True)
     gender: Mapped[str] = mapped_column(String(20), default="")
     transgene_1: Mapped[str] = mapped_column(String(200), default="")

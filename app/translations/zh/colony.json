@@ -366,5 +366,10 @@
   "experiment::active": "进行中",
   "experiment::paused": "已暂停",
   "experiment::done": "已完成",
-  "experiment::cancelled": "已取消"
+  "experiment::cancelled": "已取消",
+  "Ear tag": "耳标",
+  "What is written on the mouse itself. The Mouse number stays its identity.": "写在小鼠身上的标记。小鼠编号仍然是它的身份。",
+  "What is written on the mouse itself: a tag number, an ear punch such as RF or LB, a tattoo. The Mouse number stays its identity.": "写在小鼠身上的标记：耳标号、耳孔位置（如 RF、LB）、文身。小鼠编号仍然是它的身份。",
+  "e.g. 142, or RF": "例如 142 或 RF",
+  "Ear tag %(tag)s": "耳标 %(tag)s"
 }

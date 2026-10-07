@@ -460,14 +460,16 @@ class CageSheetTests(Case):
         """Each panel draws all four transgenes, hiding what the mouse
         sheet hides by default; the page script then follows the person's
         own Columns choice there, which data-table.js keeps by column number
-        (Transgene 1 is the mouse sheet's column 5)."""
+        (mouse_tg1_column in colony.html, checked here against the sheet)."""
         mice = self.get_ok(self.m, "/colony?view=mice&scope=all")
+        table_id = re.search(r'data-table-id="(mice-v\d+)"', mice).group(1)
         heads = re.findall(r"<th\b[^>]*>", between(mice, '<table class="dt sheet-table"', "</thead>"))
-        self.assertEqual([re.search(r'data-sort-key="(\w+)"', h).group(1) for h in heads[5:9]],
-                         [f"transgene_{n}" for n in range(1, 5)])
-        mouse_sheet_hides = {n: "data-default-hidden" in heads[4 + n] for n in range(1, 5)}
-        self.assertIn("'dt:mice-v3:hidden'", self.html)
-        self.assertIn("hiddenCols.has(4 + Number(cell.dataset.tg))", self.html)
+        keys = [m.group(1) if (m := re.search(r'data-sort-key="(\w+)"', h)) else "" for h in heads]
+        tg1 = keys.index("transgene_1")
+        self.assertEqual(keys[tg1:tg1 + 4], [f"transgene_{n}" for n in range(1, 5)])
+        mouse_sheet_hides = {n: "data-default-hidden" in heads[tg1 - 1 + n] for n in range(1, 5)}
+        self.assertIn(f'"dt:{table_id}:hidden"', self.html)
+        self.assertIn(f"hiddenCols.has({tg1 - 1} + Number(cell.dataset.tg))", self.html)
         panel = between(self.html, f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
         for n in range(1, 5):
             th = re.search(rf'<th data-tg="{n}"[^>]*>', panel).group(0)

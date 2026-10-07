@@ -87,3 +87,50 @@ class IconPickerTests(AppTestCase):
         self.assertIn("flask", radios)
         self.assertIn('<use href="/static/icons.svg#flask">', picker)
         self.assertNotIn("<select", picker)
+
+
+class TheSidebarOrder(AppTestCase):
+    """The lab arranges its databases by the work, not by what it added
+    first (issue #39)."""
+
+    def order_on_page(self, client):
+        import re
+        html = self.get_ok(client, "/organisms/")
+        block = html.split('id="database-order"')[-1]
+        return re.findall(r'name="key" value="([^"]+)"', block)[::2] or re.findall(r'name="key" value="([^"]+)"', block)
+
+    def test_moving_one_down_changes_the_sidebar(self):
+        from app.db import SessionLocal
+        from app import lab
+        before = self.order_on_page(self.a)
+        self.assertIn("colony", before)
+        first, second = before[0], before[1]
+        self.post(self.a, "/organisms/order", {"key": first, "by": "down", "keys": before})
+        after = self.order_on_page(self.a)
+        self.assertEqual(after[:2], [second, first])
+        # The rail follows it, not just this page.
+        rail = self.get_ok(self.a, "/home")
+        self.assertLess(rail.index(f'data-label="{self._label(second)}"'),
+                        rail.index(f'data-label="{self._label(first)}"'))
+        with SessionLocal() as s:
+            self.assertEqual(lab.database_order(s)[:2], [second, first])
+
+    def _label(self, key):
+        return {"colony": "Mouse colony", "zebrafish": "Zebrafish", "plasmids": "Plasmids"}[key]
+
+    def test_the_ends_do_not_move_past_themselves(self):
+        before = self.order_on_page(self.a)
+        self.post(self.a, "/organisms/order", {"key": before[0], "by": "up", "keys": before})
+        self.assertEqual(self.order_on_page(self.a), before)
+        self.post(self.a, "/organisms/order", {"key": before[-1], "by": "down", "keys": before})
+        self.assertEqual(self.order_on_page(self.a), before)
+
+    def test_a_database_nobody_arranged_joins_the_end(self):
+        from app import lab
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            lab.set_database_order(s, ["plasmids", "colony"])
+            s.commit()
+        order = self.order_on_page(self.a)
+        self.assertEqual(order[:2], ["plasmids", "colony"])
+        self.assertIn("inventory:samples", order[2:])

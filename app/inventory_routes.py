@@ -305,9 +305,11 @@ def _mouse_number(ref: str) -> int | None:
     return None
 
 
-def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[str, int]:
-    """{mouse ID typed as a source: that mouse's row id}, for linking the
-    source chip to the colony."""
+def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[str, dict]:
+    """{mouse ID typed as a source: {"row", "ear_tag"}} — the row to link to
+    in the colony, and what is written on that mouse, so a sample says which
+    animal it came from in the terms the bench uses. Read from the mouse
+    every time, so changing a tag in the colony changes it here."""
     from .models import MouseRecord
 
     refs = set()
@@ -320,8 +322,9 @@ def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[st
                     refs.add(number)
     if not refs:
         return {}
-    return {str(mid): rid for mid, rid in session.execute(
-        select(MouseRecord.mouse_id, MouseRecord.id).where(MouseRecord.mouse_id.in_(refs)))}
+    return {str(mid): {"row": rid, "ear_tag": tag or ""} for mid, rid, tag in session.execute(
+        select(MouseRecord.mouse_id, MouseRecord.id, MouseRecord.ear_tag)
+        .where(MouseRecord.mouse_id.in_(refs)))}
 
 
 RECENT_DAYS = 90
@@ -1241,11 +1244,24 @@ def bulk_fields(mv) -> list[dict]:
             out.append({"name": name, "label": label, "type": "date" if name.endswith("_on") else "text", "options": []})
     derived = svc.PRIMER_DERIVED if mv.row.kind == "primers" else ()
     for field in mv.fields:
-        if field["type"] != "source" and field["key"] not in derived:
-            out.append({"name": f"attr_{field['key']}", "label": field["label"],
-                        "type": field["type"], "options": field.get("options") or []})
+        if field["key"] in derived:
+            continue
+        # A source is two values — which colony, and the ID in it — so the
+        # bar shows a second box for it (see `bulk`, which pairs them up).
+        out.append({"name": f"attr_{field['key']}", "label": field["label"],
+                    "type": field["type"], "options": field.get("options") or []})
     out.append({"name": "notes", "label": "Notes", "type": "text", "options": []})
     return out
+
+
+def _bulk_value(field: dict, value: str, form) -> dict:
+    """What the item form would have sent for this one column. A source
+    needs both halves — the colony it came from and the ID in it — so the
+    bar's own "from" box is carried across with the value."""
+    if field["type"] != "source":
+        return {field["name"]: value}
+    return {f"{field['name']}_kind": (form.get("source_kind") or "").strip(),
+            f"{field['name']}_ref": value}
 
 
 def _bulk_message(action: str, n: int, noun: str, field: str = "") -> str:
@@ -1327,7 +1343,12 @@ def bulk(key: str):
                     # numbers, a date a date), one column only.
                     kept = {c.key: getattr(item, c.key) for c in InventoryItem.__table__.columns}
                     try:
-                        _item_from_form(session, mv, item, ImmutableMultiDict({field["name"]: value}))
+                        # What the save wants to say — a source that names no
+                        # mouse in the colony — is worth hearing once here too,
+                        # not thirty times.
+                        _problem, said = _item_from_form(
+                            session, mv, item, ImmutableMultiDict(_bulk_value(field, value, request.form)))
+                        notes += [n for n in said if n not in notes]
                     except Refused as problem:
                         for column, old in kept.items():     # this one stays as it was
                             setattr(item, column, old)

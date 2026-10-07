@@ -24,7 +24,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=9a8e1feaae">
+  <link rel="stylesheet" href="../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">What BioManager is</a></li>
             <li><a href="coming-from-excel.html">Coming from Excel</a></li>
             <li><a href="install.html">Install and set up</a></li>
+            <li><a href="try-it-first.html">Try it first</a></li>
             <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
             <li><a href="home-page.html">Home</a></li>
           </ol></li>
         <li class="docs-group"><span>Everyday skills</span>
@@ -68,44 +70,58 @@
             <li><a href="notifications.html">Notifications</a></li>
             <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
           </ol></li>
-        <li class="docs-group"><span>How to…</span>
+        <li class="docs-group"><span>Your mouse colony</span>
           <ol>
+            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="record-a-litter.html">Record a litter</a></li>
             <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
             <li><a href="wean-a-litter.html">Wean a litter</a></li>
             <li><a href="print-cage-cards.html">Print cage cards</a></li>
-            <li><a href="import-from-excel.html">Import from Excel</a></li>
-            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
-            <li><a href="book-equipment.html">Book equipment</a></li>
-            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
-            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
-            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="phones-and-cage-cards.html">At the bench: phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Your databases</span>
+        <li class="docs-group"><span>Fish, flies and other animals</span>
           <ol>
-            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="zebrafish.html">Zebrafish</a></li>
             <li><a href="flies-and-worms.html">Flies and worms</a></li>
             <li><a href="any-organism.html">Any other organism</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Molecular biology</span>
+          <ol>
+            <li><a href="plasmids.html">Plasmids, primers and stocks</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Samples and ordering</span>
+          <ol>
+            <li><a href="samples-and-orders.html">Samples, reagents, antibodies, viruses</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Experiments and the notebook</span>
+          <ol>
             <li><a href="experiments.html">Experiments</a></li>
-            <li><a href="plasmids.html">Plasmids</a></li>
-            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
-            <li><a href="calendar.html">Calendar</a></li>
             <li><a href="notebook.html">Notebook and utilities</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Planning the week</span>
+          <ol>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
           </ol></li>
         <li class="docs-group"><span>Working as a lab</span>
           <ol>
             <li><a href="who-can-do-what.html">Who can do what</a></li>
             <li><a href="project-groups.html">Project groups</a></li>
             <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
             <li><a href="lab-setup.html">Lab setup</a></li>
-            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Data and help</span>
+        <li class="docs-group"><span>Your data</span>
           <ol>
             <li><a href="your-data.html" aria-current="page">Your data and backups</a></li>
-            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="scripts-and-api.html">Scripts and the API</a></li>
             <li><a href="ai-assistants.html">AI assistants</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Help</span>
+          <ol>
             <li><a href="troubleshooting.html">Troubleshooting</a></li>
             <li><a href="feedback.html">Feedback</a></li>
           </ol></li>
@@ -118,7 +134,7 @@
     <h1>Your data and backups</h1>
     <p class="summary">Where your data is kept, how it&#x27;s backed up, and how to move it.</p>
 
-      <h3 id="your-data-1">The desktop app</h3>
+      <h2 id="the-desktop-app">The desktop app</h2>
       <table class="gtable">
         <tr><th>macOS</th><td><code>~/Library/Application Support/Biomanager/</code></td></tr>
         <tr><th>Windows</th><td><code>%APPDATA%\Biomanager\</code></td></tr>
@@ -132,10 +148,10 @@
       </ul>
       <div class="note warn"><b>Don't keep BioManager's data in Dropbox, OneDrive, Google Drive or iCloud Drive.</b> Syncing corrupts
         database files. BioManager warns you if it finds itself in one.</div>
-      <h3 id="your-data-2">A lab server</h3>
+      <h2 id="a-lab-server">A lab server</h2>
       <p>A server backs up every night, restores the newest backup every week to prove it works, and can keep encrypted copies
         off-site — see <a href="../server.html#safe">Keeping the data safe</a>.</p>
-      <h3 id="copies">A copy of the lab on your computer</h3>
+      <h2 id="copies">A copy of the lab on your computer</h2>
       <p>The desktop app can keep a copy of your lab server's whole database, so the lab's records live on more than one
         machine:</p>
       <ol class="steps-list">
@@ -151,7 +167,7 @@
         server if it's ever lost (<a href="../server.html#move">how</a>): treat a computer holding one like the server itself.
         A member's copy holds what they can see in the app: no one's password, not other people's private notebook pages or
         personal databases, not the Audit log. Guests can't keep a copy.</p>
-      <h3 id="devices">One lab on many devices</h3>
+      <h2 id="devices">One lab on many devices</h2>
       <p>One device holds the lab's <b>master copy</b>; every other one works on it through its address, so nothing is ever
         merged and nothing written in two places is lost. <b>Settings → Devices</b> shows which device it is, and every
         computer linked to the lab (by a key from <b>Copies of the lab</b>): how it uses the lab, its version, when it was last
@@ -175,13 +191,13 @@
         <li>If the computer holding the master copy is lost, an admin on the old master chooses <b>Make this the master
           again</b>: what was changed on the lost computer since is not there.</li>
       </ul>
-      <h3 id="your-data-5">Everyone</h3>
+      <h2 id="everyone">Getting your data out</h2>
       <p><b>Export</b> on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, <b>Export → Excel</b>
         is a workbook that <b>Import from Excel</b> reads back. A note that starts with <code>=</code> stays text in every export,
         never a formula. <b>Export my data</b> (in the account menu, and in Settings) downloads your own mice, cages, weights,
         experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and
         your profile, in one zip.</p>
-      <h3 id="counts">What BioManager sends its makers</h3>
+      <h2 id="counts">What BioManager sends its makers</h2>
       <p>Your records never leave your computer or your lab's server. So that BioManager's makers know how many labs use it, each
         installation sends one short message a day, with counts only:</p>
       <ul>
@@ -195,7 +211,7 @@
         <b>Usage report</b> (<b>Feedback → Usage report</b>) and can <b>Switch off</b> there; the setup survey asks first. On a
         server, <code>BIOMANAGER_TELEMETRY=0</code> (or <code>DO_NOT_TRACK=1</code>) in <code>.env</code> turns it off for good.</p>
     <!-- /page -->
-      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="phones-and-cage-cards.html"><small>Previous</small>Phones and cage cards</a><a class="next" href="scripts-and-api.html"><small>Next</small>Scripts, instruments and other tools</a></nav>
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="lab-setup.html"><small>Previous</small>Lab setup</a><a class="next" href="restore-a-backup.html"><small>Next</small>Restore a backup</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>Was this page helpful?</span>
         <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
@@ -203,14 +219,14 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page</p>
+      <p>On this page · 5 min read</p>
       <ol>
-        <li class="lvl3"><a href="#your-data-1">The desktop app</a></li>
-        <li class="lvl3"><a href="#your-data-2">A lab server</a></li>
-        <li class="lvl3"><a href="#copies">A copy of the lab on your computer</a></li>
-        <li class="lvl3"><a href="#devices">One lab on many devices</a></li>
-        <li class="lvl3"><a href="#your-data-5">Everyone</a></li>
-        <li class="lvl3"><a href="#counts">What BioManager sends its makers</a></li>
+        <li class="lvl2"><a href="#the-desktop-app">The desktop app</a></li>
+        <li class="lvl2"><a href="#a-lab-server">A lab server</a></li>
+        <li class="lvl2"><a href="#copies">A copy of the lab on your computer</a></li>
+        <li class="lvl2"><a href="#devices">One lab on many devices</a></li>
+        <li class="lvl2"><a href="#everyone">Getting your data out</a></li>
+        <li class="lvl2"><a href="#counts">What BioManager sends its makers</a></li>
       </ol>
     </nav>
 </div>

@@ -227,10 +227,21 @@ class Importing(AppTestCase):
         self.assertIn("Room: B12", got[3])                       # no cage to hold the room
         self.assertEqual(last_batch()[2], "create")
 
+    def test_an_ear_tag_column_goes_to_the_ear_tag_not_the_mouse_number(self):
+        """It used to be read as the Mouse ID, for want of anywhere else to
+        put it; mice have a column for what is written on them now."""
+        tag = uniq("TG")
+        data = xlsx([["Ear tag", "Sex", "Strain"], ["RF", "M", tag], ["142", "F", tag]])
+        token, html = self.upload(self.a, "mice", "colony.xlsx", data)
+        form = {**self.chosen(html), "sheet": "Sheet1", "fill-owner": "me"}
+        self.post(self.a, f"/import-sheet/file/{token}/run", data=form)
+        self.assertEqual(sorted(r[0] for r in rows("select ear_tag from mice where transgene_1=?", tag)),
+                         ["142", "RF"])
+
     def test_a_taken_mouse_id_and_a_total_line_are_named(self):
         n = (one("select max(mouse_id) from mice") or 0) + 1000
         tag = uniq("TG")
-        data = xlsx([["Ear tag", "Sex", "Strain"], [str(n), "M", tag], [str(n), "F", tag], ["TOTAL", "", "2 mice"]])
+        data = xlsx([["Mouse ID", "Sex", "Strain"], [str(n), "M", tag], [str(n), "F", tag], ["TOTAL", "", "2 mice"]])
         token, html = self.upload(self.a, "mice", "colony.xlsx", data)
         form = {**self.chosen(html), "sheet": "Sheet1", "fill-owner": "me"}
         preview = self.a.post(f"/import-sheet/file/{token}/preview", data=form).get_data(as_text=True)

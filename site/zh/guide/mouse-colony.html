@@ -24,7 +24,7 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=9a8e1feaae">
+  <link rel="stylesheet" href="../../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -68,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html" aria-current="page">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html" aria-current="page">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -118,73 +134,90 @@
     <h1>小鼠鼠群</h1>
     <p class="summary">小鼠、笼、产仔和繁殖，从出生到断奶分笼。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 小鼠鼠群</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/census.webp" data-clip-src="../../assets/clips/census"></video></div></figure>
+      <h2 id="a-week">它对你每周的工作意味着什么</h2>
+      <p>鼠群运转靠的是一堆容易记错、又很烦人的日期：一窝什么时候够大可以鉴定基因型、什么时候必须断奶、哪个笼快挤了、
+        这些小鼠是谁的。BioManager 要做的，就是从你本来就知道的那一件事——出生那天——把这些日期都算出来，
+        并摆到当班的人面前。</p>
+      <table class="gtable">
+        <tr><th>产仔</th><td>日期只记一次（<a href="record-a-litter.html">记录产仔</a>）。基因型鉴定和断奶日期据此算出，
+          出现在<a href="home-page.html">首页</a>和<a href="calendar.html">日历</a>上——两处是同一份列表，谁也不用再自己记一本。</td></tr>
+        <tr><th>够大可以做基因型鉴定了</th><td>几下点击就把一窝变成每只一条记录
+          （<a href="genotype-a-litter.html">鉴定一窝的基因型</a>），各自带耳标和结果，而不是让你重新敲一遍表格。</td></tr>
+        <tr><th>断奶那天</th><td><a href="wean-a-litter.html">断奶分笼</a>按性别把幼鼠分进新笼，仍然关联着它们来自的那一窝，
+          并腾空繁殖笼。新笼的笼卡打印出来时，基因型已经印在上面
+          （<a href="print-cage-cards.html">打印笼卡</a>）。</td></tr>
+        <tr><th>在动物房里</th><td>用手机扫笼卡上的二维码就能打开那个笼，戴着手套也能记体重或写一句备注，
+          走出房间前就已经进了记录（<a href="phones-and-cage-cards.html">在实验台</a>）。</td></tr>
+      </table>
+      <p>你不用再做的事：把断奶日期记在脑子里或墙上的挂历、把一窝重新敲进表格、断奶后手写笼卡，
+        以及追问某个笼里的小鼠是谁的——每条记录都写着负责人，也写着<a href="who-can-do-what.html">谁可以改它</a>。</p>
 
-      <p>顶部的标签页：<b>小鼠</b>（Mice）、<b>笼</b>（Cages）、<b>窝</b>（Litters）、<b>繁殖笼</b>（Breeders）、<b>实验</b>（Experiments）、<b>品系</b>（Strains）和
-        <b>下拉选项</b>（Dropdowns）。<b>我的鼠群 / 我的项目组 / 共享 / 全实验室</b>（My colony / My groups / Shared / Everyone）开关改变的是你<i>看到</i>什么，而不是你能
+      <p>顶部的标签页：<b>小鼠</b> （Mice）、<b>笼</b> （Cages）、<b>窝</b> （Litters）、<b>繁殖笼</b> （Breeders）、<b>实验</b> （Experiments）、<b>品系</b> （Strains）和
+ <b>下拉选项</b> （Dropdowns）。<b>我的鼠群 / 我的项目组 / 共享 / 全实验室</b> （My colony / My groups / Shared / Everyone）开关改变的是你<i>看到</i>什么，而不是你能
         编辑什么：<i>我的鼠群</i>是你自己的加上你参与的共享笼，<i>我的项目组</i>是你所在<a href="project-groups.html">项目组</a>的，
         <i>共享</i>只显示共享笼，<i>全实验室</i>显示所有笼。在笼标签页里，每种用途都有一个筛选标签（<i>Experiments</i>、
         <i>Breeder</i>……），只显示那类笼。</p>
       <figure class="gshot"><a href="../../assets/screenshots/mice.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/mice.webp" alt="小鼠表格" loading="lazy" width="2000" height="1250"></a><figcaption>小鼠表格</figcaption></figure>
 
-      <h3 id="mouse-colony-1">笼架和笼</h3>
-      <p><b>笼 → 笼架视图 → 新建笼架</b>（Cages → Rack grid → New rack）：设置行数、列数和位置编号方式——<code>D7</code>、<code>4-7</code>、
+      <h2 id="racks-and-cages">笼架和笼</h2>
+      <p><b>笼 → 笼架视图 → 新建笼架</b> （Cages → Rack grid → New rack）：设置行数、列数和位置编号方式——<code>D7</code>、<code>4-7</code>、
         <code>7D</code> 或 1 到 80，和实物笼架上的贴纸一样。没有位置的笼会留在<i>未放置</i>（Unplaced）里；把它们拖
         上去。每个笼都有用途（繁殖、保种、实验）、负责人、房间和笼里的小鼠。选中笼可以设置用途或负责人、
-        移动，或<b>退役</b>（Retire）。</p>
-      <p>笼有三种显示方式。<b>表格</b>（Table）：每笼一行，小鼠列在下面（可直接编辑），还有操作按钮；
+        移动，或 <b>退役</b> （Retire）。</p>
+      <p>笼有三种显示方式。<b>表格</b> （Table）：每笼一行，小鼠列在下面（可直接编辑），还有操作按钮；
         <i>产仔</i>（Litter born）和<i>断奶到期</i>（Wean due）紧跟在小鼠后面，什么时候该断奶一目了然。直接改写笼号就能
         重新编号（小鼠跟着走；与其他笼重号会被拒绝）。笼号后面的<i>笼卡编号</i>（Card ID）是动物房自己笼卡上的编号（如果有）。
-        笼里小鼠显示的转基因列与<b>小鼠</b>（Mice）标签页一致：在那里的<b>列</b>（Columns）里显示或隐藏<i>转基因 3</i>、<i>4</i>，
-        笼这边也跟着变。
-        <b>全部收起</b>（Close all）把每个笼折叠成一行（页面会记住），<b>全部展开</b>（Open all）再展开；行首的箭头
-        或小鼠数量可以单独展开或收起一个笼。<b>卡片</b>（Cards）：每笼一张卡片——位置、用途、负责人、品系、断奶时间、笼里的小鼠和同样的
-        操作——有自己的搜索框和<i>活跃、繁殖、我的</i>（Active、Breeding、Mine）筛选。<b>笼架视图</b>（Rack grid）：从正面看笼架。页面
+        笼里小鼠显示的转基因列与 <b>小鼠</b> （Mice）标签页一致：在那里的 <b>列</b> （Columns）里显示或隐藏<i>转基因 3</i>、<i>4</i>，
+        笼这边也跟着变。<b>全部收起</b> （Close all）把每个笼折叠成一行（页面会记住），<b>全部展开</b> （Open all）再展开；行首的箭头
+        或小鼠数量可以单独展开或收起一个笼。<b>卡片</b> （Cards）：每笼一张卡片——位置、用途、负责人、品系、断奶时间、笼里的小鼠和同样的
+        操作——有自己的搜索框和<i>活跃、繁殖、我的</i>（Active、Breeding、Mine）筛选。<b>笼架视图</b> （Rack grid）：从正面看笼架。页面
         会记住你上次用的方式。</p>
       <figure class="gshot"><a href="../../assets/screenshots/rack-grid.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/rack-grid.webp" alt="笼架视图" loading="lazy" width="2000" height="1250"></a><figcaption>笼架视图</figcaption></figure>
 
-      <h3 id="mouse-colony-2">小鼠</h3>
+      <h2 id="mice">小鼠</h2>
       <ul>
-        <li><b>新建小鼠</b>（New mouse）添加一只，<b>批量添加</b>（Add many）添加一批新的（或载入用<b>下载模板</b>（Download a template）做的 CSV），
-          <b>从 Excel 导入</b>（Import from Excel）用于你已有的表格（<a href="bring-your-lab-in.html">方法</a>）。在批量添加里，笼号填 <code>new</code>
+        <li><b>新建小鼠</b> （New mouse）添加一只，<b>批量添加</b> （Add many）添加一批新的（或载入用 <b>下载模板</b> （Download a template）做的 CSV），<b>从 Excel 导入</b> （Import from Excel）用于你已有的表格（<a href="bring-your-lab-in.html">方法</a>）。在批量添加里，笼号填 <code>new</code>
           就把这一批放进一个新笼；同时有雌雄时，雌雄各进一个新笼，除非勾选<i>雌雄放在
           同一个新笼</i>（Keep both sexes in one new cage）。在预览里，<code>new-2</code>、<code>new-3</code>……表示更多的新笼，如果某个新笼
           会同时有雌雄，会特别指出。</li>
-        <li>每只小鼠有性别、出生日期（年龄以周显示）、状态——<i>breeder、experiment、geno、transfer、sac</i>（繁殖、实验、待鉴定、转出、处死）——最多四个
+        <li>每只小鼠有 <b>耳标</b> （Ear tag）、性别、出生日期（年龄以周显示）、状态——<i>breeder、experiment、geno、transfer、sac</i>（繁殖、实验、待鉴定、转出、处死）——最多四个
           转基因、基因型、笼、窝、负责人和备注。出生日期不能是未来的日期。</li>
-        <li>选中小鼠可以设置字段（负责人、状态、转基因、笼、备注、死亡日期）、<b>加入实验</b>（Add to experiment）或<b>处死</b>（Sac）。
+        <li>BioManager 给小鼠的编号就是它的身份：按顺序分配、从不重复使用，它的样本、笼卡和实验都按这个编号关联。
+          旁边的 <b>耳标</b> 则是写在动物身上的标记——耳标号、耳孔位置（如 <i>RF</i>、<i>LB</i>）、文身。两只小鼠可以有同样的标记，
+          搜索也能按它找到小鼠；导入时，表格里名为 <i>ear tag</i>、<i>notch</i> 或 <i>tattoo</i> 的列会进入这一列。
+          把鼠标停在小鼠编号上也会显示它的耳标，所以你可以在 <b>列</b> （Columns）里把这一列隐藏起来，信息依然看得到。</li>
+        <li>选中小鼠可以设置字段（负责人、状态、转基因、笼、备注、死亡日期）、<b>加入实验</b> （Add to experiment）或 <b>处死</b> （Sac）。
           设为 sac 或填写死亡日期就结束这条记录；它会留在历史里。</li>
       </ul>
 
-      <h3 id="mouse-colony-3">繁殖：从产仔到断奶</h3>
-      <p>在<b>笼</b>（Cages）标签页，展开一个繁殖笼（点箭头或小鼠数量），或在<b>卡片</b>（Cards）里找到它：
-        <b>产仔</b>（Litter born）、<b>基因型鉴定</b>（Genotyping）和<b>断奶</b>（Wean）按钮都在那里，只出现在用途为 <i>Breeder</i> 或 <i>Breeding</i> 的笼上。<b>创建窝</b>（Create litter）按 L-1、L-2、L-3……
+      <h2 id="breeding-from-litter-to-weaning">繁殖：从产仔到断奶</h2>
+      <p>在 <b>笼</b> （Cages）标签页，展开一个繁殖笼（点箭头或小鼠数量），或在 <b>卡片</b> （Cards）里找到它：<b>产仔</b> （Litter born）、<b>基因型鉴定</b> （Genotyping）和 <b>断奶</b> （Wean）按钮都在那里，只出现在用途为 <i>Breeder</i> 或 <i>Breeding</i> 的笼上。<b>创建窝</b> （Create litter）按 L-1、L-2、L-3……
         给每一窝编号（也可以自己输入 ID）。</p>
       <ol class="steps-list">
-        <li><b>产仔</b>会询问出生日期（默认今天，可修改；未来的日期会被拒绝），并记录
+        <li><b>产仔</b> 会询问出生日期（默认今天，可修改；未来的日期会被拒绝），并记录
           这次生产。BioManager 自动算出断奶日（P21）和基因型鉴定日（P28，或在
           <a href="lab-setup.html">实验室设置</a>里选定的天数），到期时会出现在首页和日历上——两处是同一份列表。一个笼只记一个
           产仔日期，所以新的一窝会替换上一窝：如果上一窝的仔鼠还在笼里，先给它们断奶。</li>
-        <li><b>基因型鉴定</b>会询问父本、母本和仔鼠数量；<b>创建窝</b>（Create litter）建立这一窝，并为每只仔鼠
-          建一条小鼠记录，状态设为 <i>geno</i>。它们会留在首页的基因型鉴定队列里，直到你把它们的<b>状态</b>（Status）从 <i>geno</i> 改掉；只录入基因型并不会让它们离开队列。</li>
-        <li><b>断奶</b>会打开<i>断奶并分笼</i>（Wean and distribute pups），已经填好这个笼的仔鼠，雌雄分行：
-          <b>断奶并移动</b>（Wean and move）把每一行送到新笼或已有的笼，或者<b>标记已断奶，稍后再移动幼崽</b>（Mark weaned, move pups later）。无论哪种，这一窝
+        <li><b>基因型鉴定</b> 会询问父本、母本和仔鼠数量；<b>创建窝</b> （Create litter）建立这一窝，并为每只仔鼠
+          建一条小鼠记录，状态设为 <i>geno</i>。它们会留在首页的基因型鉴定队列里，直到你把它们的 <b>状态</b> （Status）从 <i>geno</i> 改掉；只录入基因型并不会让它们离开队列。</li>
+        <li><b>断奶</b> 会打开<i>断奶并分笼</i>（Wean and distribute pups），已经填好这个笼的仔鼠，雌雄分行：<b>断奶并移动</b> （Wean and move）把每一行送到新笼或已有的笼，或者 <b>标记已断奶，稍后再移动幼崽</b> （Mark weaned, move pups later）。无论哪种，这一窝
           都会标为已断奶，并从首页和日历上消失。小于 P18 的仔鼠需要你确认后才能断奶。</li>
       </ol>
-      <p><b>繁殖笼</b>（Breeders）列出繁殖笼——笼架和位置、雌雄各几只——以及它们的繁殖力，并标出超过 30 周的
-        繁殖鼠。<b>领用</b>（Pick）把一个繁殖笼
+      <p><b>繁殖笼</b> （Breeders）列出繁殖笼——笼架和位置、雌雄各几只——以及它们的繁殖力，并标出超过 30 周的
+        繁殖鼠。<b>领用</b> （Pick）把一个繁殖笼
         转到你名下；原负责人会收到通知。</p>
 
-      <h3 id="mouse-colony-4">实验、品系、下拉选项</h3>
+      <h2 id="experiments-strains-dropdowns">实验、品系、下拉选项</h2>
       <ul>
-        <li><b>实验</b>（Experiments）把小鼠组成一个队列，分成处理组，记录每天对它们做了什么，以及体重：
+        <li><b>实验</b> （Experiments）把小鼠组成一个队列，分成处理组，记录每天对它们做了什么，以及体重：
           见<a href="experiments.html">实验：适用于所有动物</a>。（实验记录本里的实验是实验记录；这里的是
           动物。）</li>
-        <li><b>品系</b>（Strains）是实验室的品系和等位基因参考列表。</li>
-        <li><b>下拉选项</b>（Dropdowns）保存每列可选的选项，让全实验室用同样的词。所有人都能看到；只有管理员
+        <li><b>品系</b> （Strains）是实验室的品系和等位基因参考列表。</li>
+        <li><b>下拉选项</b> （Dropdowns）保存每列可选的选项，让全实验室用同样的词。所有人都能看到；只有管理员
           能修改。</li>
       </ul>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="restore-a-backup.html"><small>上一页</small>从备份恢复</a><a class="next" href="zebrafish.html"><small>下一页</small>斑马鱼</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="keyboard-shortcuts.html"><small>上一页</small>快捷键</a><a class="next" href="record-a-litter.html"><small>下一页</small>记录产仔</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
@@ -192,12 +225,13 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容</p>
+      <p>本页内容 · 阅读约 5 分钟</p>
       <ol>
-        <li class="lvl3"><a href="#mouse-colony-1">笼架和笼</a></li>
-        <li class="lvl3"><a href="#mouse-colony-2">小鼠</a></li>
-        <li class="lvl3"><a href="#mouse-colony-3">繁殖：从产仔到断奶</a></li>
-        <li class="lvl3"><a href="#mouse-colony-4">实验、品系、下拉选项</a></li>
+        <li class="lvl2"><a href="#a-week">它对你每周的工作意味着什么</a></li>
+        <li class="lvl2"><a href="#racks-and-cages">笼架和笼</a></li>
+        <li class="lvl2"><a href="#mice">小鼠</a></li>
+        <li class="lvl2"><a href="#breeding-from-litter-to-weaning">繁殖：从产仔到断奶</a></li>
+        <li class="lvl2"><a href="#experiments-strains-dropdowns">实验、品系、下拉选项</a></li>
       </ol>
     </nav>
 </div>
