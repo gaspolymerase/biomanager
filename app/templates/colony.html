@@ -5,6 +5,12 @@
 {% import "_sharing.html" as sharing with context %}
 
 {% set view_meta = colony_view_meta.get(active_view, {}) %}
+{# The mouse sheet's table, and the column number of its Transgene 1 (the
+   checkbox is 0): the Cages tab reads the Columns choice people made there,
+   which data-table.js keeps by column number. A new column before the
+   transgenes moves both: a new id, so saved choices start afresh. #}
+{% set mouse_table_id = 'mice-v4' %}
+{% set mouse_tg1_column = 6 %}
 
 {# What the mouse dialog opens with: the Mice sheet's rows and the cage
    sheet's sub-rows pass the same payload. #}
@@ -115,7 +121,7 @@
          content so dates, statuses and IDs never truncate — the sheet
          scrolls sideways instead, with the ID column and row actions
          pinned. #}
-      <section class="data-table-card sheet" data-table-id="mice-v3"
+      <section class="data-table-card sheet" data-table-id="{{ mouse_table_id }}"
                data-selection-scope="mice"
                data-selection-noun="mouse" data-selection-noun-plural="mice">
         <div class="dt-toolbar">
@@ -487,7 +493,7 @@
           {# The cage sheet: one row per cage, laid out like the mouse sheet.
              Cells save as you type (static/sheet.js); the chevron opens a
              sub-row with the cage's mice and its breeding actions. #}
-          <section class="data-table-card sheet cage-sheet" data-table-id="cages-v2"
+          <section class="data-table-card sheet cage-sheet" data-table-id="cages-v3"
                    data-noun="cage" data-noun-plural="cages" data-export-name="cages"
                    data-autosave-sheet data-selection-scope="cages"
                    data-selection-noun="cage" data-selection-noun-plural="cages">
@@ -544,29 +550,32 @@
                         title="{{ _('Cage ID. The dot is green while the cage holds living mice.') }}">
                       <span class="dt-col-head">{{ icon('cage', 'dt-col-icon') }}{{ _('Cage') }}<span class="dt-sort-indicator"></span></span>
                     </th>
+                    <th class="dt-sortable" data-sort-key="card_id" style="width: 88px;" title="{{ _("The number on the facility's own cage card, if it has one") }}">
+                      <span class="dt-col-head">{{ icon('barcode', 'dt-col-icon') }}{{ _('Card ID') }}<span class="dt-sort-indicator"></span></span>
+                    </th>
                     <th class="dt-sortable" data-sort-key="rack_name" style="width: 80px;">
                       <span class="dt-col-head">{{ icon('grid', 'dt-col-icon') }}{{ _('Rack') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="position" style="width: 60px;" title="{{ _("Position in the rack, named by the rack's scheme (e.g. D7)") }}">
+                    <th class="dt-sortable" data-sort-key="position" style="width: 84px;" title="{{ _("Position in the rack, named by the rack's scheme (e.g. D7)") }}">
                       <span class="dt-col-head">{{ icon('position', 'dt-col-icon') }}{{ _('Position') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="purpose" style="width: 96px;" title="{{ _('What the cage is for. A Breeder cage is shared with the lab unless its owner makes it personal') }}">
+                    <th class="dt-sortable" data-sort-key="purpose" style="width: 100px;" title="{{ _('What the cage is for. A Breeder cage is shared with the lab unless its owner makes it personal') }}">
                       <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="mice" style="width: 80px;" title="{{ _('Living mice, by sex') }}">
+                    <th class="dt-sortable" data-sort-key="mice" style="width: 64px;" title="{{ _('Living mice, by sex') }}">
                       <span class="dt-col-head">{{ icon('mouse', 'dt-col-icon') }}{{ _('Mice') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="date_give_birth" style="width: 132px;" title="{{ _("When the cage's litter was born; its pups' litter, if any") }}">
                       <span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}{{ _('Litter born') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="wean_due" style="width: 84px;" title="{{ _('Litter born + %(days)s days (P%(days)s)', days=wean_offset_days) }}">
+                    <th class="dt-sortable" data-sort-key="wean_due" style="width: 88px;" title="{{ _('Litter born + %(days)s days (P%(days)s)', days=wean_offset_days) }}">
                       <span class="dt-col-head">{{ icon('calendar-clock', 'dt-col-icon') }}{{ _('Wean due') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="genotype_summary" style="width: 136px;"
                         title="{{ _("The cage's genotype summary; when empty, what its living mice carry is shown in grey") }}">
                       <span class="dt-col-head">{{ icon('dna', 'dt-col-icon') }}{{ _('Strain / genotype') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="owner" style="width: 56px;">
+                    <th class="dt-sortable" data-sort-key="owner" style="width: 72px;">
                       <span class="dt-col-head">{{ icon('user', 'dt-col-icon') }}{{ _('Owner') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="is_shared" style="width: 80px;" title="{{ _('A shared cage is editable by the whole lab, or by one project group') }}">
@@ -576,7 +585,7 @@
                         {% if not cs.location_notes_used %}data-default-hidden="1"{% endif %}>
                       <span class="dt-col-head">{{ icon('location', 'dt-col-icon') }}{{ _('Location note') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="notes" style="min-width: 140px;">
+                    <th class="dt-sortable" data-sort-key="notes" style="min-width: 120px;">
                       <span class="dt-col-head">{{ icon('note', 'dt-col-icon') }}{{ _('Note') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="sheet-pin sheet-pin-end" style="width: 64px; min-width: 64px;"><span class="sr-only">{{ _('Actions') }}</span></th>
@@ -590,7 +599,7 @@
                         data-active="{{ 'true' if cage.active else 'false' }}"
                         data-breeding="{{ cage.breeding }}" data-mine="{{ 'true' if cage.mine else 'false' }}"
                         data-purpose="{{ (cage.purpose or '')|trim|lower }}"
-                        data-rack_name="{{ cage.rack_name }}" data-mice="{{ cage.live_count }}"
+                        data-card_id="{{ cage.card_id }}" data-rack_name="{{ cage.rack_name }}" data-mice="{{ cage.live_count }}"
                         data-wean_due="{{ cage.wean_due }}"
                         data-mouse-ids="{{ cage.mice|map(attribute='mouse_id')|join(' ') }}"
                         data-genotypes="{{ cage.genotype_auto }}"
@@ -615,6 +624,8 @@
                         {# What decides the dot until the server answers (static/sheet.js). #}
                         <input type="hidden" data-alive-values="1" value="{{ '1' if cage.active else '0' }}" data-cage-alive>
                       </td>
+                      <td><input class="ident" name="card_id" form="{{ f }}" value="{{ cage.card_id }}" placeholder="–" title="{{ cage.card_id }}"
+                                 data-autosave="1" aria-label="{{ _('Card ID') }}" {% if locked %}disabled{% endif %}></td>
                       <td>
                         <select name="rack_id" form="{{ f }}" data-autosave="1" aria-label="{{ _('Rack') }}" {% if locked %}disabled{% endif %}>
                           <option value="">–</option>
@@ -683,12 +694,12 @@
                        person chose Close all. It travels with its row when the
                        sheet sorts or pages (data-detail-for). #}
                     <tr class="cage-detail" id="cage-detail-{{ cage.id }}" data-detail-for="{{ cage.id }}">
-                      <td colspan="14">
+                      <td colspan="15">
                         <article class="cage-detail-body{% if locked %} is-locked{% endif %}" aria-label="{{ _('Cage %(id)s', id=cage.cage_id) }}"
                                  data-cage-card="{{ cage.id }}" data-active="{{ 'true' if cage.active else 'false' }}"
                                  data-breeding="{{ cage.breeding }}" data-mine="{{ 'true' if cage.mine else 'false' }}"
                                  data-purpose="{{ (cage.purpose or '')|trim|lower }}"
-                                 data-search="{{ [cage.cage_id, cage.rack_name, cage.position, cage.purpose, cage.owner,
+                                 data-search="{{ [cage.cage_id, cage.card_id, cage.rack_name, cage.position, cage.purpose, cage.owner,
                                                   cage.genotype_summary, cage.genotype_auto, cage.cage_location, cage.notes]
                                                  | select | join(' ') | lower }} {{ cage.mice|map(attribute='mouse_id')|join(' ')|lower }}">
                           {# Shown only on a card (Cards layout): where it is, what it is, and its own buttons. #}
@@ -748,11 +759,12 @@
                             {% endif %}
                           </div>
                           {% if cage.mice %}
-                            <table class="cage-mice-table">
+                            {# Its transgene columns are the ones the mouse sheet shows (the script below). #}
+                            <table class="cage-mice-table" data-tg-table>
                               <thead>
                                 <tr>
                                   <th>{{ _('Mouse') }}</th><th>{{ _('Sex') }}</th><th>{{ _('Age') }}</th><th>{{ _('Status') }}</th>
-                                  {% for n in range(1, 5) %}{% if n <= 2 or mouse_sheet.tg_used[n - 1] %}<th>{{ _('Transgene %(n)s', n=n) }}</th>{% endif %}{% endfor %}
+                                  {% for n in range(1, 5) %}<th data-tg="{{ n }}" {% if n > 2 and not mouse_sheet.tg_used[n - 1] %}hidden{% endif %}>{{ _('Transgene %(n)s', n=n) }}</th>{% endfor %}
                                   <th>{{ _('Owner') }}</th><th>{{ _('Litter') }}</th><th>{{ _('Note') }}</th><th><span class="sr-only">{{ _('Open') }}</span></th>
                                 </tr>
                               </thead>
@@ -787,12 +799,8 @@
                                       </select>
                                     </td>
                                     {% for n in range(1, 5) %}
-                                      {% if n <= 2 or mouse_sheet.tg_used[n - 1] %}
-                                        <td><input name="transgene_{{ n }}" form="{{ mf }}" value="{{ mouse['transgene_' ~ n] }}" list="strain-name-options"
-                                                   data-autosave="1" aria-label="{{ _('Transgene %(n)s of mouse %(id)s', n=n, id=mouse.mouse_id) }}" {% if mlocked %}disabled{% endif %}></td>
-                                      {% else %}
-                                        {# Kept in the form so a save does not clear it. #}
-                                      {% endif %}
+                                      <td data-tg="{{ n }}" {% if n > 2 and not mouse_sheet.tg_used[n - 1] %}hidden{% endif %}><input name="transgene_{{ n }}" form="{{ mf }}" value="{{ mouse['transgene_' ~ n] }}" list="strain-name-options"
+                                                 data-autosave="1" aria-label="{{ _('Transgene %(n)s of mouse %(id)s', n=n, id=mouse.mouse_id) }}" {% if mlocked %}disabled{% endif %}></td>
                                     {% endfor %}
                                     <td>{{ sheet_ui.owner_cell(mouse.owner, mf, mlocked) }}</td>
                                     <td><input class="ident" name="litter_id" form="{{ mf }}" value="{{ mouse.litter_id }}" placeholder="–"
@@ -2188,6 +2196,20 @@ function weanDue(born) {
     const count = event.target.closest('[data-cage-open]');
     if (count) toggle(count.dataset.cageOpen);
   });
+
+  // A cage's mice show the transgene columns the mouse sheet shows: the
+  // person's Columns choice there (data-table.js keeps it on this computer
+  // by column number; see mouse_tg1_column), else its default, as the page
+  // drew them.
+  try {
+    const raw = localStorage.getItem({{ ('dt:' ~ mouse_table_id ~ ':hidden') | tojson }});
+    if (raw) {
+      const hiddenCols = new Set(JSON.parse(raw));
+      sheet.querySelectorAll('[data-tg-table] [data-tg]').forEach((cell) => {
+        cell.hidden = hiddenCols.has({{ mouse_tg1_column - 1 }} + Number(cell.dataset.tg));
+      });
+    }
+  } catch (_) { /* storage unavailable: the page's default stands */ }
 
   // Every cage shows open, with its mice, unless this person chose Close
   // all (remembered on this computer). Open all / Close all sets every cage

@@ -402,7 +402,7 @@ class CageSheetTests(Case):
         self.html = self.get_ok(self.m, "/colony?view=cages&scope=all")
 
     def test_the_sheet_renders_as_an_autosaving_table(self):
-        self.assertIn('data-table-id="cages-v2"', self.html)
+        self.assertIn('data-table-id="cages-v3"', self.html)
         self.assertIn("data-autosave-sheet", self.html)
         self.assertIn('data-selection-scope="cages"', self.html)
         self.assertRegex(self.html, r'<label data-new-only>How many\s*<input type="number" name="count" min="1" max="20"')
@@ -440,6 +440,51 @@ class CageSheetTests(Case):
         self.assertIn('data-record-edit="cage-dialog"', detail)
         for f in ("active", "breeding", "mine"):
             self.assertIn(f'data-cage-card-filter="{f}"', self.html)
+
+    def test_the_card_id_column_sits_after_the_cage_and_saves(self):
+        """The facility's card number, right after the cage's own number."""
+        head = between(self.html, '<table class="dt sheet-table"', "</thead>")
+        keys = re.findall(r'data-sort-key="(\w+)"', head)
+        self.assertEqual(keys[:3], ["cage_id", "card_id", "rack_name"])
+        cid = self.colony["cage_id"]
+        tr = between(self.html, f'<tr id="cage-{cid}"', "</tr>")
+        self.assertIn(f'name="card_id" form="cage-update-{cid}"', tr)
+        # One more column: the sub-row still spans them all.
+        self.assertIn('<td colspan="15">', self.html)
+        r = self.autosave(self.m, update_url(cid), {"card_id": "F-20417"})
+        self.assertSaved(r)
+        self.assertEqual(cage(cid)["card_id"], "F-20417")
+        self.assertIn('data-card_id="F-20417"', self.get_ok(self.m, "/colony?view=cages&scope=all"))
+
+    def test_a_cages_mice_show_the_transgene_columns_the_mouse_sheet_shows(self):
+        """Each panel draws all four transgenes, hiding what the mouse
+        sheet hides by default; the page script then follows the person's
+        own Columns choice there, which data-table.js keeps by column number
+        (mouse_tg1_column in colony.html, checked here against the sheet)."""
+        mice = self.get_ok(self.m, "/colony?view=mice&scope=all")
+        table_id = re.search(r'data-table-id="(mice-v\d+)"', mice).group(1)
+        heads = re.findall(r"<th\b[^>]*>", between(mice, '<table class="dt sheet-table"', "</thead>"))
+        keys = [m.group(1) if (m := re.search(r'data-sort-key="(\w+)"', h)) else "" for h in heads]
+        tg1 = keys.index("transgene_1")
+        self.assertEqual(keys[tg1:tg1 + 4], [f"transgene_{n}" for n in range(1, 5)])
+        mouse_sheet_hides = {n: "data-default-hidden" in heads[tg1 - 1 + n] for n in range(1, 5)}
+        self.assertIn(f'"dt:{table_id}:hidden"', self.html)
+        self.assertIn(f"hiddenCols.has({tg1 - 1} + Number(cell.dataset.tg))", self.html)
+        panel = between(self.html, f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
+        for n in range(1, 5):
+            th = re.search(rf'<th data-tg="{n}"[^>]*>', panel).group(0)
+            self.assertEqual("hidden" in th, mouse_sheet_hides[n], n)
+        self.assertEqual(panel.count('data-tg="3"'), 1 + len(self.colony["mice"]))
+        # A mouse with three transgenes shows Transgene 3 in both places.
+        mid = self.colony["mice"][0]
+        m = row("select gender, status, owner from mice where id=?", mid)
+        self.assertSaved(self.autosave(self.m, f"/colony/mice/{mid}/update", {
+            "gender": m[0], "status": m[1], "owner": m[2],
+            "transgene_1": "Tg1", "transgene_2": "Tg2", "transgene_3": uniq("Tg3-")}))
+        panel = between(self.get_ok(self.m, "/colony?view=cages&scope=all"), f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
+        self.assertNotIn("hidden", re.search(r'<th data-tg="3"[^>]*>', panel).group(0))
+        mice = self.get_ok(self.m, "/colony?view=mice&scope=all")
+        self.assertNotRegex(mice, r'data-sort-key="transgene_3"[^>]*data-default-hidden')
 
     def test_someone_elses_cage_is_read_only(self):
         tr = between(self.html, f'<tr id="cage-{self.theirs}"', "</tr>")
