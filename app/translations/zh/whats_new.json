@@ -17,5 +17,13 @@
   "**Plasmids**: **Versions** you can restore, **Made from** and a family tree, a **Feature library** that marks elements on any map, **Assemble a plasmid**, and **Files** for reads and gel photos.": "**质粒**：可以恢复的 **版本**、**来源质粒** 和家族树、能在任何图谱上标出元件的 **元件库**、**组装质粒**，以及存放测序结果和胶图的 **文件**。",
   "**Glycerol stocks**: a database for the bacteria carrying each plasmid.": "**甘油菌**：记录携带每个质粒的菌株的数据库。",
   "The rest of BioManager is in Chinese: the other databases, experiments, the notebook and the messages.": "BioManager 的其余部分也有了中文：其他数据库、实验、实验记录本和各种提示信息。",
-  "**Primers**, **Glycerol stocks** and **Viruses** are tabs at the top of **Plasmids**, not separate entries in the sidebar.": "**引物**、**甘油菌** 和 **病毒** 现在是 **质粒** 顶部的标签页，不再是侧栏里单独的条目。"
+  "**Primers**, **Glycerol stocks** and **Viruses** are tabs at the top of **Plasmids**, not separate entries in the sidebar.": "**引物**、**甘油菌** 和 **病毒** 现在是 **质粒** 顶部的标签页，不再是侧栏里单独的条目。",
+  "**Chemicals**: a database for the lab's chemical list, by abbreviation, CAS number and molecular weight. Add it from **Add database**.": "**化学品**：记录实验室化学原料的数据库，包括缩写、CAS 号和分子量。在 **添加数据库** 里添加。",
+  "**Formulation** in the notebook (type /formulation in a page): pick chemicals, type what you weigh and get the moles, or give equivalents and get the mass to weigh.": "实验记录本里的 **配方**（在页面里输入 /formulation）：选取化学品，填称量的质量得到摩尔数，或填当量得到要称的质量。",
+  "**Columns of your own** on the mouse colony, zebrafish and plasmids: **Configure → Your own columns**.": "小鼠、斑马鱼和质粒也能加 **你自己的列**：**配置 → 你自己的列**。",
+  "**Ear tag** on every mouse, and **Card ID** on cages; search finds both.": "每只小鼠都有 **耳标**，笼有 **笼卡编号**；搜索都能找到。",
+  "**All databases → Order** arranges the sidebar in the order your lab works.": "**所有数据库 → 排序** 按实验室的工作顺序排列侧边栏。",
+  "A sample's **Source** is edited in the sheet, and **Set field** sets it on many samples at once.": "样本的 **来源** 可以直接在表格里修改，**设置字段** 能一次设置多个样本。",
+  "A log pasted into a data sheet (time down the first column) is drawn as a line over time.": "粘贴到数据表里的记录（第一列是时间）会画成随时间变化的折线。",
+  "A cage's mice show the same transgene columns as the **Mice** tab.": "笼里的小鼠显示与 **小鼠** 标签页相同的转基因列。"
 }

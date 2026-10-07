@@ -30,6 +30,20 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.0": {
+        "new": [
+            "**Chemicals**: a database for the lab's chemical list, by abbreviation, CAS number and molecular weight. Add it from **Add database**.",
+            "**Formulation** in the notebook (type /formulation in a page): pick chemicals, type what you weigh and get the moles, or give equivalents and get the mass to weigh.",
+            "**Columns of your own** on the mouse colony, zebrafish and plasmids: **Configure → Your own columns**.",
+            "**Ear tag** on every mouse, and **Card ID** on cages; search finds both.",
+            "**All databases → Order** arranges the sidebar in the order your lab works.",
+            "A sample's **Source** is edited in the sheet, and **Set field** sets it on many samples at once.",
+        ],
+        "changed": [
+            "A log pasted into a data sheet (time down the first column) is drawn as a line over time.",
+            "A cage's mice show the same transgene columns as the **Mice** tab.",
+        ],
+    },
     "1.1.0": {
         "new": [
             "**AI assistants**: tell Claude, ChatGPT or Cursor what you did and it proposes the records; they wait "
