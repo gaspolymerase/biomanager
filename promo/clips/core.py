@@ -120,32 +120,48 @@ def cards_phone(d):
 # ---------------------------------------------------------------------------
 
 def plasmid(d):
+    """Molecular biology end to end. Kept brisk: this plays in the front
+    page's dock beside clips of about twelve seconds, and the wizard — the
+    part worth staying for — has to arrive before a visitor clicks away."""
     d.goto("/plasmids")
     d.start()
-    d.wait(0.8)
-    # The tabs that go with plasmids, and the two things above the sheet:
-    # the lab's feature library and the assembly wizard.
+    d.wait(0.6)
+    # Primers, glycerol stocks and viruses are tabs of the same area.
     strip = d.page.locator("nav.seg").first
     if strip.count() and strip.is_visible():
         d.zoom(strip, scale=1.8)
-        d.move("a.seg-item >> nth=1", 0.9)
-        d.wait(0.9)
+        d.move("a.seg-item >> nth=1", 0.7)
+        d.wait(0.5)
         d.unzoom()
-    for text in ("Feature library", "Assemble a plasmid"):
-        link = d.page.locator(f"a:has-text('{text}')").first
-        if link.count() and link.is_visible():
-            d.move(link, 0.7)
-            d.wait(0.6)
-    d.click("a[href='/plasmid/2'] >> nth=0", after=2.0)
+    # A map, briefly.
+    d.click("a[href='/plasmid/2'] >> nth=0", after=1.5)
     d.zoom(box=(250, 300, 500, 420), scale=1.8)
     d.wait(0.9)
     d.cover()
-    d.move("text=EGFP >> nth=0", 1.0)
-    d.click("text=EGFP >> nth=0", after=1.4)
     d.unzoom()
+    d.wait(0.4)
+    # And the next construct, built out of the ones the lab has.
+    d.goto("/plasmids/assembly/", settle=0.8)
+    d.wait(0.6)
+    for which in (3, 1):          # ori, then EGFP into it
+        d.click("[data-add]", after=0.7)
+        d.zoom(d.page.locator("#assembly-picker"), scale=1.4)
+        d.click("[data-pick-kind=feature]", after=0.6)
+        d.page.select_option("[data-pick-feature]", index=which)
+        d.wait(0.5)
+        d.click("[data-pick-ok]", after=0.9)
+        d.unzoom()
+        d.wait(0.3)
+    tray = d.page.locator(".assembly-tray").first
+    d.zoom(tray, scale=1.5)
     d.wait(1.2)
-    d.click("text=Linear Map", after=1.6)
-    d.click("button:has-text('Storage'), a:has-text('Storage')", after=1.8)
+    d.unzoom()
+    preview = d.page.locator(".assembly-preview").first
+    if preview.count() and preview.is_visible():
+        d.zoom(preview, scale=1.4)
+        d.wait(1.3)
+        d.unzoom()
+    d.wait(0.4)
 
 
 # ---------------------------------------------------------------------------
