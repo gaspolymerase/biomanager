@@ -485,7 +485,7 @@
           menu.appendChild(title);
           headers.forEach((th, idx) => {
             const label = this._columnLabel(th);
-            if (!label) return;   // checkbox and action columns
+            if (!label || th.dataset.dtOff === '1') return;   // checkbox and action columns, and one turned off
             const row = document.createElement('label');
             row.className = 'dt-menu-item';
             const box = document.createElement('input');
@@ -575,14 +575,24 @@
       });
     }
 
+    /* A column whose header the page marks data-dt-off="1" stays hidden
+       whatever the Columns menu says, and is left out of that menu and of
+       the export: the page has decided it (Samples' Custom tag, when this
+       person hides it on the mouse sheet). It is not saved, so the column
+       numbers the menu saves stay those of the columns as drawn. */
+    _isHidden(idx) {
+      const th = this.table.tHead.rows[0].cells[idx];
+      return this.hidden.has(idx) || Boolean(th && th.dataset.dtOff === '1');
+    }
+
     _applyHidden() {
       if (!this.table) return;
       Array.from(this.table.tHead.rows).forEach((row) => {
-        Array.from(row.cells).forEach((th, idx) => { th.style.display = this.hidden.has(idx) ? 'none' : ''; });
+        Array.from(row.cells).forEach((th, idx) => { th.style.display = this._isHidden(idx) ? 'none' : ''; });
       });
       this.rows.forEach((tr) => {
         Array.from(tr.cells).forEach((td, idx) => {
-          td.style.display = this.hidden.has(idx) ? 'none' : '';
+          td.style.display = this._isHidden(idx) ? 'none' : '';
         });
       });
     }
@@ -710,7 +720,7 @@
     _exportColumns() {
       const headers = Array.from(this.table.tHead.rows[0].cells);
       return headers.map((th, idx) => ({ th, idx })).filter(({ th, idx }) => {
-        if (this.hidden.has(idx)) return false;
+        if (this._isHidden(idx)) return false;
         if (th.querySelector('input[type=checkbox]')) return false;
         const label = (th.textContent || '').replace(/\s+/g, ' ').trim();
         return label && label !== 'Actions' && label !== t('Actions');
