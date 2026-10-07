@@ -104,7 +104,7 @@ The first account is the lab's **admin** (on a server, it needs the one-time set
 
 1. **Your lab** — its name, time zone, how dates are written and the genotyping day ([what these do](https://biomanager.org/guide/lab-setup)).
 
-2. **What does your lab keep?** Tick animals and stocks (mice, zebrafish, flies, worms, other organisms) and molecular and supplies (plasmids, samples, orders, reagents, antibodies, viruses). For each, a little more: a name (e.g. *Mouse room B*); for the colony how many racks, their size and how positions are labelled; for flies and worms which incubator temperatures you run. Blank means the usual.
+2. **What does your lab keep?** Tick animals and stocks (mice, zebrafish, flies, worms, other organisms) and molecular and supplies (plasmids, samples, orders, reagents, chemicals, antibodies, viruses). For each, a little more: a name (e.g. *Mouse room B*); for the colony how many racks, their size and how positions are labelled; for flies and worms which incubator temperatures you run. Blank means the usual.
 
 3. **Which lab functions?** The calendar and the notebook.
 
@@ -274,7 +274,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Edit in place**: Click a cell and type, or pick from its list. It saves as you go; a note at the bottom says *All changes saved*. If a change can't be saved (say, a required field emptied) the cell turns red and says why.
 
-- **The dot**: The dot beside the number means alive or usable: a living mouse, a vial in use, an open order, a reagent in stock; grey means it isn't. For animals its colour is their age: **blue** young, **green** adult, **red** old (mice: under 8 weeks, 8 to 30, past 30; fish: under 3 months, to 18 months, past 18; a vial or plate: progeny still developing, adults, past its flip or chunk). An expired reagent, antibody or virus is red too. Point at a dot to see what it means.
+- **The dot**: The dot beside the number means alive or usable: a living mouse, a vial in use, an open order, a reagent in stock; grey means it isn't. For animals its colour is their age: **blue** young, **green** adult, **red** old (mice: under 8 weeks, 8 to 30, past 30; fish: under 3 months, to 18 months, past 18; a vial or plate: progeny still developing, adults, past its flip or chunk). An expired reagent, chemical, antibody or virus is red too. Point at a dot to see what it means.
 
 - **Scrolling and New**: The page scrolls, not the sheet: its search and buttons stay at the top of the window, its column names under them, and its count at the bottom. **All** under *per page* lists every row. **New**, at the bottom left, adds an empty row at the end of the sheet with its first cell ready to type in. A strain, fish, line, plasmid or order needs a name or a tank first, so there it opens the form.
 
@@ -326,7 +326,7 @@ Search everything from anywhere, and keep pages open as tabs.
 
 - **Chips** beside it narrow it: *All*, *Alive*, *Mine*, *Lab common*, a status, *Expiring soon*.
 
-- **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open.
+- **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open.
 
 - **Tabs.** Following a link moves the tab you're in; **+** opens a new tab on your start page (**Settings → Default landing page**; Home if none). Drag to reorder, `Alt` (`⌥ Option` on a Mac) + `1`…`9` to jump. They're still there tomorrow, and they are yours: someone else signing in on the same computer gets their own.
 
@@ -417,7 +417,7 @@ Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experimen
 
 **Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner, move them, or **Retire** them.
 
-The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and *Active, Breeding, Mine* filters. **Rack grid**: the racks from the front. The page remembers the one you used last.
+The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). *Card ID*, right after the number, is the number on the facility's own cage card, if it has one. A cage's mice show the transgene columns the **Mice** tab shows: show or hide *Transgene 3* or *4* there under **Columns**, and the cages follow. **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and *Active, Breeding, Mine* filters. **Rack grid**: the racks from the front. The page remembers the one you used last.
 
 *A rack grid*
 
@@ -688,7 +688,7 @@ A database for any other organism, described in your own words.
 
 **Add database** in the sidebar builds a database for anything else — Xenopus, axolotls, cell lines, yeast. Start from a mouse-like, zebrafish-like or blank organism and describe it:
 
-However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. **All databases → Order in the sidebar** arranges them: drag a database by its grip, or use the arrows, then **Save the order**. Put the ones you open every day at the top; a database you add later joins the end rather than pushing into the middle of your arrangement. An admin arranges it, and it is the lab's order, the same for everyone.
+However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. **All databases → Order in the sidebar** arranges them: move the ones you open every day to the top, and a database you add later joins the end rather than pushing into the middle.
 
 - **Name and vocabulary** — what to call an animal, its housing (tank, cage, plate), a line, a birth cohort and a breeding event, and whether age is shown in days, weeks, days post-fertilisation, generations or passages (then Age shows the record's own *Passage* or *Generation* column, *P12*). The whole interface then speaks your words.
 
@@ -700,11 +700,7 @@ However many you end up with, the sidebar lists them in the order they were adde
 
 - **Who it is for** — *Just me* (a personal database only you and admins see) or *The whole lab*.
 
-**The mouse colony, zebrafish and plasmids take columns of your own too.** Open the database, press **Configure**, and under **Your own columns** add what it doesn't keep yet — an organ weight as a number, a perfusion as a choice of *yes* / *no*, a date, a lab member, a link. Each one appears in that database's sheet and in each record, edited in place like any other cell, and comes along in **Export my data**. Untick *In the table* for something you want on the record but not as a column. Taking a column away hides it and keeps what your records hold in it, so putting it back shows the values again. Only an admin changes them, because they are the lab's columns, the same for everyone.
-
-A column of your own works like the ones that come with the database: tick rows and **Set field** sets it on all of them at once, **Import from Excel** matches a spreadsheet column to it by name, and search finds a record by what it holds — type the ear-punch code or the batch number into the search box and the records with it come up.
-
-Change any of it later under the database's **Configure**, without losing records. The same page offers inventories (samples, orders, reagents, antibodies, viruses, primers & oligos, cell lines, a custom list) and fly or worm stock databases. An icon is picked from a grid of the icons themselves; hover over one for its name.
+Change any of it later under the database's **Configure**, without losing records. The same page offers inventories (samples, orders, reagents, chemicals, antibodies, viruses, primers & oligos, glycerol stocks, cell lines, a custom list) and fly or worm stock databases. An icon is picked from a grid of the icons themselves; hover over one for its name.
 
 *The Add database page*
 
@@ -783,7 +779,7 @@ Source: https://biomanager.org/guide/plasmids
 
 ## Samples, orders, reagents, antibodies, viruses
 
-Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
+Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks and cell lines.
 
 ### What this does for your week
 
@@ -797,12 +793,13 @@ Buying something and finding it again are the same chain, and it usually breaks 
 
 What you stop doing: ordering a second one because nobody knew the first had arrived, retyping a catalogue number off a box, and finding the antibody expired the morning you needed it.
 
-One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
+One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
 | Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Point at the ID and it tells you that mouse's ear tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|
 | Orders | What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered, received, cancelled — on a table or a **Board** you drag cards across. |
 | Reagents | Quantity, concentration, CAS number, storage temperature, hazard, lot and expiry. In stock, low, empty, discarded. |
+| Chemicals | The lab's chemical list, as you may keep it in Excel now: name, *Abbreviation*, *CAS*, *MW (g/mol)*, *Purity (%)*, and in the record *Formula* and *Density (g/mL)*; with quantity, lot, expiry, hazard and where each bottle is. A **Formulation** in a [notebook page](https://biomanager.org/guide/notebook#data-and-calculators) picks chemicals from here by name, abbreviation or CAS number and works out the moles from what you weigh, and the [calculators](https://biomanager.org/guide/notebook#utilities) in Utilities know each molecular weight. In stock, low, empty, discarded. |
 | Antibodies | Host, clonality, clone, conjugate, reactivity, applications, dilution, isotype, RRID, and where each vial is. |
 | Viruses | AAV, lentivirus, rabies and other vectors: serotype, the plasmid it was made from (**Made from**), promoter, payload, titer, biosafety level, the date made, and each aliquot's place in a −80 °C box. The DNA icon beside the plasmid opens its sequence and map to read (editing stays on the plasmid's own page). In stock, low, used up, discarded. |
 | Primers & oligos | Sequence (5′→3′), direction, target, its pair, stock µM and modification. *Length*, *GC %* and *Tm* are worked out from the sequence (nearest neighbour, 50 mM Na⁺, 250 nM). **Add primer pair** makes *name*-F and *name*-R at once, each naming the other, side by side in a box. A primer drawn on a plasmid's map comes here by itself, with the plasmid in its **Plasmid** column. Tick primers, then **Copy for ordering** or **Export for ordering** for the supplier. To order, ordered, in stock, low, used up, discarded. |
@@ -816,9 +813,9 @@ One engine, nine starting points, each with its own columns and statuses. Viruse
 
 2. **Follow it.** The status chips — *Requested, Ordered, Received, Cancelled* — show each stage in one tap; the person who requested it is notified as it moves.
 
-3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, antibody or virus with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
+3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, chemical, antibody or virus with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
 
-4. **Running low?** On any reagent, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
+4. **Running low?** On any reagent, chemical, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
 
 ### Every inventory
 
@@ -852,13 +849,13 @@ Who and where: Anyone who may edit the order · Desktop and lab server
 
 2. Mark it received: set its **Status** to *received*, or on the **Board**, drag its card to the *Received* column.
 
-3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, antibodies or viruses it goes into, and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
+3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, chemicals, antibodies or viruses it goes into, and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
 
 4. Press **Add to stock**.
 
 5. The new record opens with its name, vendor, catalogue number, lot, quantity and expiry already filled in from the order. Add where it is kept. If that database needs a field the order doesn't have, its form opens filled in from the order instead: fill in the rest and save.
 
-From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other. The person who requested the order is notified as it moves. When it runs low, **Order again** (the cart button on the reagent, antibody or virus) opens a new order with its details.
+From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other. The person who requested the order is notified as it moves. When it runs low, **Order again** (the cart button on the reagent, chemical, antibody or virus) opens a new order with its details.
 
 *Add it to stock? — the new record is filled in from the order*
 
@@ -936,7 +933,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 ### Experiments and protocols
 
-- **Experiments**: aim, setup, samples and lot numbers, steps, results. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
+- **Experiments**: aim, setup, samples and lot numbers, steps, results and a summary. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
 
 - **Colony experiment** (`/experiment`) shows an experiment on any of your animals in the page: each day's manipulation, when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first weight, with the manipulation days marked). It stays up to date; **Freeze a copy** keeps what it shows now in the page, so later changes to the experiment don't alter your record. On the experiment itself, **Add to notebook** makes your page for it with this block already in.
 
@@ -944,7 +941,9 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 ### Data and calculators
 
-- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes.
+- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. Paste a log with its headers (time down the first column, readings such as temperature and pressure beside it) and it is drawn as a line over time; **Y** picks the reading. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes.
+
+- **Formulation** (`/formulation`): what goes into a reaction or a batch, by mass. In **Component**, type a chemical's name, abbreviation or CAS number and pick it from the lab's [Chemicals](https://biomanager.org/guide/samples-and-orders) database: its molecular weight, purity, density and lot come with it, and the chemical's **Used in notebook pages** lists the page. Type the **Mass** you weigh and **Amount** gives the moles. Mark one row as the basis (the round button beside **Equiv.**) and give the others in equivalents: the mass to weigh follows, and changes when the basis does. Each row shows its **wt %**, a liquid its volume, and the total is underneath.
 
 - **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
 
@@ -960,7 +959,7 @@ Share a page to read or edit, with people, everyone in the lab or a [project gro
 
 **Utilities**, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in **Find a calculator** (plain letters do: *a260*, *ddct*, or what you are doing, like *nanodrop*); the answer changes as you type, each remembers what you last typed in it on this computer, and **Reset** goes back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.
 
-- **Solutions & buffers**: Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔ molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight, from the lab's own list first (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one); one it doesn't know leaves the weight for you to type.
+- **Solutions & buffers**: Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔ molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one). The lab's own come first: its [Chemicals](https://biomanager.org/guide/samples-and-orders) database, by name or abbreviation. One it doesn't know leaves the weight for you to type.
 
 - **DNA & RNA**: Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change; transformation efficiency.
 

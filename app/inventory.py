@@ -105,6 +105,32 @@ PRESETS: dict[str, dict] = {
              "options": ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"], "icon": "warning", "width": 92},
         ],
     },
+    # The lab's list of chemicals by molecular weight: the notebook's
+    # Formulation block picks from it (lab_notebook.chemicals_search) and
+    # Utilities' chemical picker lists it.
+    "chemicals": {
+        "label": "Chemicals",
+        "icon": "flask-vial",
+        "item_noun": "chemical", "item_noun_plural": "chemicals",
+        "blurb": "Chemicals by name, abbreviation, CAS number and molecular weight. A Formulation in the notebook "
+                 "picks them from here and works out the moles from what you weigh.",
+        "features": ["storage", "sharing", "quantity", "supplier", "expiry", "received"],
+        "category_label": "Kind",
+        "categories": ["salt", "acid", "base", "solvent", "monomer", "polymer", "initiator", "catalyst",
+                       "surfactant", "other"],
+        "statuses": ["in stock", "low", "empty", "discarded"],
+        "fields": [
+            {"key": "abbreviation", "label": "Abbreviation", "type": "text", "icon": "tag", "width": 88},
+            {"key": "cas", "label": "CAS", "type": "text", "icon": "barcode", "width": 92},
+            {"key": "mw", "label": "MW (g/mol)", "type": "number", "icon": "weight", "width": 84},
+            {"key": "formula", "label": "Formula", "type": "text", "icon": "type", "width": 96, "in_table": False},
+            {"key": "purity", "label": "Purity (%)", "type": "number", "icon": "gauge", "width": 72},
+            {"key": "density", "label": "Density (g/mL)", "type": "number", "icon": "droplet", "width": 84, "in_table": False},
+            {"key": "storage_temp", "label": "Stored at", "type": "select", "options": STORAGE_TEMPS, "icon": "snowflake", "width": 88},
+            {"key": "hazard", "label": "Hazard", "type": "select",
+             "options": ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"], "icon": "warning", "width": 92},
+        ],
+    },
     "antibodies": {
         "label": "Antibodies",
         "icon": "antibody",

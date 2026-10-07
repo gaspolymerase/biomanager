@@ -10,7 +10,8 @@
 // }
 // Cells are kept as typed text; formula columns are computed on the fly.
 // Paste a block copied from Excel or Sheets into any cell and it spreads
-// out from there, adding rows and columns as needed.
+// out from there, adding rows and columns as needed. A pasted or imported
+// log over time (looksLikeLog) is drawn as a line.
 
 import { computeSheet, colLetter } from './formula.js';
 import { compare, linearFit, summary, TESTS } from './stats.js';
@@ -37,6 +38,27 @@ function normalize(data) {
   if (!Array.isArray(d.chart.y)) d.chart.y = [Number(d.chart.y) || 1];
   d.stats = { ...defaultSheet().stats, ...(d.stats || {}) };
   return d;
+}
+
+// A log from an instrument: time (or any steadily rising number) down the
+// first column and readings beside it, like a reactor's temperature and
+// pressure. It reads as a line over time, not as groups to compare.
+const TIME_HEADER = /\b(t|times?|mins?|minutes?|s|secs?|seconds?|h|hrs?|hours?|days?|elapsed|date|datetime|timestamp)\b|时间|时刻/i;
+
+// A number, a clock time (10:32, 10:32:05.5) or a date (2026-10-05 10:32).
+const timeLike = (v) => isNum(v) || /^\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v)
+  || /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}([ T]\d{1,2}:\d{2}(:\d{2})?)?$/.test(v);
+
+export function looksLikeLog(columns, rows) {
+  if (columns.length < 2) return false;
+  const first = rows.map((r) => String(r[0] ?? '').trim()).filter(Boolean);
+  if (first.length < 5) return false;
+  const readings = columns.some((_c, j) => j > 0 && rows.some((r) => isNum(r[j]))
+    && rows.every((r) => String(r[j] ?? '').trim() === '' || isNum(r[j])));
+  if (!readings || !first.every(timeLike)) return false;
+  if (TIME_HEADER.test(columns[0].name || '')) return true;
+  const xs = first.map(toNumber);
+  return xs.every(Number.isFinite) && xs.every((x, k) => k === 0 || x > xs[k - 1]);
 }
 
 const CHART_TYPES = {
@@ -180,6 +202,15 @@ export function mountSheet(host, ctx) {
     }
   }
 
+  // A pasted or imported log is drawn as a line of its first reading over
+  // the first column; the Y box picks another reading.
+  function plotAsLog() {
+    const y = data.columns.findIndex((c, j) => j > 0 && c.type === 'number');
+    data.chart = { ...data.chart, type: 'line', x: 0, y: [y > 0 ? y : 1], group: -1, fit: false };
+    data.showPlot = true;
+    data.showStats = false;
+  }
+
   function onPaste(event, ri, ci) {
     const text = event.clipboardData && event.clipboardData.getData('text/plain');
     if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
@@ -213,6 +244,7 @@ export function mountSheet(host, ctx) {
       const vals = data.rows.map((r) => r[j]).filter((v) => String(v ?? '').trim() !== '');
       if (vals.length) col.type = vals.every(isNum) ? 'number' : 'text';
     });
+    if (looksLikeHeader && data.chart.type === 'bar' && looksLikeLog(data.columns, data.rows)) plotAsLog();
     commit(); renderAll();
     focusCell(ri, ci);
   }
@@ -430,6 +462,7 @@ export function mountSheet(host, ctx) {
           data.rows = grid.slice(1).map((r) => data.columns.map((_c, j) => (r[j] ?? '').trim()));
           data.stats.group = Math.max(0, data.columns.findIndex((c) => c.type === 'text'));
           data.stats.value = Math.max(0, data.columns.findIndex((c) => c.type === 'number'));
+          if (looksLikeLog(data.columns, data.rows)) plotAsLog();
           commit(); renderAll();
         });
         input.click();

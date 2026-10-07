@@ -28,6 +28,15 @@ def like_pattern(text: str) -> str:
     return "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
+def attr_value_pattern(text: str) -> str:
+    """For .ilike(…, escape="\\") on a record's `attrs` JSON: one of its
+    values starts with the text (so "DM" finds a chemical abbreviated DMF,
+    and "con" does not find every record with a concentration column).
+    The text is written as json.dumps writes it, non-Latin letters escaped."""
+    import json
+    return '%": "' + like_pattern(json.dumps(text)[1:-1])[1:]
+
+
 MAX_ID = 2**31 - 1
 
 

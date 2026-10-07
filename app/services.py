@@ -896,11 +896,23 @@ def _cage_position(cage) -> str:
     return positions.label(cage.rack_row, cage.rack_col, cage.rack.naming, cage.rack.cols)
 
 
+def transgene_parts(mouse: MouseRecord) -> list[str]:
+    """A mouse's transgenes as the sheets show them: the filled ones in
+    order (a lone third reads as Transgene 1), else its genotype split up."""
+    transgenes = [mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4]
+    return [value for value in transgenes if value] or split_genotype(mouse.genotype)
+
+
+def transgene_columns_used(mice) -> list[bool]:
+    """Which of the sheets' four transgene columns any of `mice` fills."""
+    counts = [len(transgene_parts(mouse)) for mouse in mice]
+    return [any(c >= n for c in counts) for n in range(1, 5)]
+
+
 def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, current_role: str | None = None) -> dict[str, object]:
     dob = mouse.litter.date_of_birth if mouse.litter else None
     ages = calculate_age_fields(dob)
-    transgenes = [mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4]
-    genotype_parts = [value for value in transgenes if value] or split_genotype(mouse.genotype)
+    genotype_parts = transgene_parts(mouse)
     can_edit_breeder = current_role == "admin" or mouse.owner == current_username
     cage_is_breeder = mouse.cage is not None and is_breeder_purpose(mouse.cage.purpose)
     return {

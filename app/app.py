@@ -73,7 +73,7 @@ from .models import (
     UserAccount,
     UserIdentity,
 )
-from .formutil import arg_int, like_pattern
+from .formutil import arg_int, attr_value_pattern, like_pattern
 from .services import (
     csv_text,
     add_notification,
@@ -112,6 +112,7 @@ from .services import (
     get_or_create_litter,
     init_database,
     mouse_display_row,
+    transgene_columns_used,
     next_cage_id,
     next_litter_id,
     next_mouse_id,
@@ -1572,16 +1573,22 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 CageRecord.is_shared.is_(True), CageRecord.share_group_id.in_(sorted(my_groups)))
             totals["group_mice"] = count_of(select(func.count(MouseRecord.id)).where(
                 MouseRecord.owner.in_(sorted(project_groups.colleagues())) | MouseRecord.cage_id_fk.in_(group_cages)))
-        mice, hidden_mice = [], 0
-        if active_view == "mice":
+        def sheet_mice(*options):
+            """The mice the mouse sheet lists: in scope and, unless asked
+            for, none that ended long ago."""
             query = select(MouseRecord).options(selectinload(MouseRecord.cage).selectinload(CageRecord.rack),
-                                                selectinload(MouseRecord.litter)).order_by(MouseRecord.mouse_id)
+                                                *options).order_by(MouseRecord.mouse_id)
             if not show_ended:
-                hidden_mice = count_of(select(func.count(MouseRecord.id)).where(MouseRecord.date_of_death < recent))
                 query = query.where(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
-            mice = [m for m in db_session.scalars(query).all()
+            return [m for m in db_session.scalars(query).all()
                     if access.in_scope(m, scope, shared=access.cage_shared_with(m.cage),
                                        group_id=access.cage_group(m.cage))]
+
+        mice, hidden_mice = [], 0
+        if active_view == "mice":
+            if not show_ended:
+                hidden_mice = count_of(select(func.count(MouseRecord.id)).where(MouseRecord.date_of_death < recent))
+            mice = sheet_mice(selectinload(MouseRecord.litter))
         cages, hidden_cages = [], 0
         if active_view == "cages":
             all_cages = db_session.scalars(select(CageRecord).options(
@@ -1694,12 +1701,17 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     "start_date": i18n.strftime(exp.start_date, "%b %d, %Y") if exp.start_date else "",
                     "end_date": i18n.strftime(exp.end_date, "%b %d, %Y") if exp.end_date else "",
                 })
+        mouse_sheet = mouse_sheet_meta(mouse_rows, dropdowns, sheet_racks)
+        if active_view == "cages":
+            # A cage's mice show the transgene columns the mouse sheet shows,
+            # which go by the mice it lists, not just this page's cages.
+            mouse_sheet["tg_used"] = transgene_columns_used(sheet_mice())
 
     return {
         "active_view": active_view,
         "colony_views": COLONY_VIEWS,
         "mouse_rows": mouse_rows,
-        "mouse_sheet": mouse_sheet_meta(mouse_rows, dropdowns, sheet_racks),
+        "mouse_sheet": mouse_sheet,
         "cage_racks": cage_racks,
         "cage_rows": cage_rows,
         "cage_sheet": {
@@ -5889,7 +5901,8 @@ PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like,
             })
 
         # Every lab inventory: samples, orders, reagents, antibodies, custom.
-        kind_type = {"orders": "order", "samples": "sample", "reagents": "reagent", "antibodies": "antibody",
+        kind_type = {"orders": "order", "samples": "sample", "reagents": "reagent", "chemicals": "chemical",
+                     "antibodies": "antibody",
                      "viruses": "virus", "primers": "primer", "cell_lines": "cell-line",
                      "glycerol_stocks": "glycerol-stock"}
         # Only databases this person sees: the lab's and their own (app/lab.py).
@@ -6695,13 +6708,16 @@ def _record_number(query: str) -> int | None:
 
 def _mention_items(db_session, module: InventoryModule, query: str, limit: int) -> list[InventoryItem]:
     """Records whose name, catalogue number, lot or vendor holds what was
-    typed; a record number finds that record too. A lot or catalogue number
-    that is what was typed comes first, then the record of that number."""
+    typed, or one of whose own columns (a chemical's abbreviation or CAS
+    number) starts with it; a record number finds that record too. A lot or
+    catalogue number that is what was typed comes first, then the record of
+    that number."""
     stmt = select(InventoryItem).where(InventoryItem.module_id_fk == module.id)
     if query:
         like = like_pattern(query)
         found = (InventoryItem.name.ilike(like, escape="\\") | InventoryItem.catalog_number.ilike(like, escape="\\")
-                 | InventoryItem.lot.ilike(like, escape="\\") | InventoryItem.vendor.ilike(like, escape="\\"))
+                 | InventoryItem.lot.ilike(like, escape="\\") | InventoryItem.vendor.ilike(like, escape="\\")
+                 | InventoryItem.attrs.ilike(attr_value_pattern(query), escape="\\"))
         exact = (func.lower(InventoryItem.lot) == query.lower()) | (func.lower(InventoryItem.catalog_number) == query.lower())
         number = _record_number(query)
         if number is not None:
@@ -6737,6 +6753,11 @@ def notebook_lookup_item(key: str, number: int):
                   ("Owner", "Lab common" if item.is_shared else item.owner), ("Vendor", item.vendor),
                   ("Catalog #", item.catalog_number), ("Lot", item.lot), ("Amount", amount), ("Where", where),
                   ("Expires", item.expires_on.isoformat() if item.expires_on else "")]
+        # A chemical's abbreviation, CAS number and molecular weight, after its name.
+        if module.kind == "chemicals":
+            attrs = item.attrs_dict
+            fields[1:1] = [(f["label"], str(attrs.get(f["key"]) or "")) for f in inventories.view(module).fields
+                           if f["key"] in lab_notebook.CHEMICAL_KEYS]
         return jsonify({"ok": True, "label": _mention_label(module, item, True), "type_label": module.label,
                         "name": item.name or "", "fields": [[k, v] for k, v in fields if v]})
 
@@ -8840,11 +8861,18 @@ def plasmid_sequence_json(row_id: int):
 @app.route("/utilities")
 @login_required
 def utilities():
-    """The bench calculators (static/bench-calcs.js); the lab's own list of
-    molecular weights comes first in their chemical picker."""
+    """The bench calculators (static/bench-calcs.js); the lab's own
+    molecular weights come first in their chemical picker: its Chemicals
+    database (each by name, and by abbreviation too), then its older list."""
     with SessionLocal() as db_session:
-        chemicals = [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
-                     for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
+        chemicals = []
+        for c in lab_notebook.chemicals_search(db_session, "", limit=2000):
+            if c["mw"]:
+                chemicals.append({"name": c["name"], "mw": c["mw"], "notes": c["cas"]})
+                if c["abbr"] and c["abbr"].lower() != c["name"].lower():
+                    chemicals.append({"name": c["abbr"], "mw": c["mw"], "notes": c["name"]})
+        chemicals += [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
+                      for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
     return render_template("utilities.html", chemicals=chemicals)
 
 

@@ -226,7 +226,7 @@ TERMINAL_STATUSES = {"used up", "empty", "discarded", "cancelled"}
 GONE_FROM_BOX = {"used up", "empty", "discarded"}
 # Stock that runs out or expires: Home's "Expiring & low stock", and what a
 # received order can be added to (inventory_routes.STOCK_KINDS).
-RESTOCK_KINDS = ("reagents", "antibodies", "viruses")
+RESTOCK_KINDS = ("reagents", "chemicals", "antibodies", "viruses")
 ENDED_ATTR = "used_up_on"
 
 # The statuses that mean "usable" (or, for orders, "still open"): the green
@@ -234,6 +234,7 @@ ENDED_ATTR = "used_up_on"
 AVAILABLE_BY_KIND = {
     "samples": {"available", "in use"},
     "reagents": {"in stock", "low"},
+    "chemicals": {"in stock", "low"},
     "antibodies": {"in stock", "low"},
     "viruses": {"in stock", "low"},
     "primers": {"in stock", "low"},

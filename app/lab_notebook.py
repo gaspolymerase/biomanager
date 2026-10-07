@@ -840,7 +840,8 @@ _UPLOAD_LINE = re.compile(r"^\s*!?\[[^\]]*\]\(/static/uploads/[^)]*\)\s*$")
 def _empty_block(kind: str, raw: str) -> str:
     """A block with its setup kept and its results gone: a data sheet keeps
     its columns and each row's first cell; a plate reader its layout of
-    standards and blanks; a qPCR block its reference gene and control."""
+    standards and blanks; a qPCR block its reference gene and control; a
+    formulation its chemicals and equivalents."""
     try:
         data = json.loads(raw)
     except ValueError:
@@ -856,6 +857,13 @@ def _empty_block(kind: str, raw: str) -> str:
         data["rows"] = []
     elif kind == "experiment":
         data["id"] = None
+    elif kind == "formulation" and isinstance(data.get("components"), list):
+        # The chemicals, the basis and the equivalents stay; this run's
+        # ticks and the bottle it was weighed from go.
+        for c in data["components"]:
+            if isinstance(c, dict):
+                c.pop("done", None)
+                c.pop("lot", None)
     else:
         return raw
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
@@ -1909,6 +1917,93 @@ def recipe_delete(recipe_id: int):
         return jsonify({"ok": True})
 
 
+# ---------------------------------------------------------------- chemicals for formulations
+
+# The columns a Formulation reads from a chemical, and a chemical's @ popover
+# shows (the Chemicals preset's keys; any inventory with an "mw" column is
+# offered too).
+CHEMICAL_KEYS = ("abbreviation", "cas", "formula", "mw", "purity", "density")
+
+
+def _positive(value) -> float | None:
+    try:
+        n = float(str(value).replace(",", ".").strip())
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def chemical_modules(s) -> list:
+    """The databases this person sees that a Formulation picks from: every
+    Chemicals one, and any other with a molecular-weight column."""
+    from . import inventory_service as inventories
+    return [m for m in inventories.list_modules(s)
+            if m.kind == "chemicals" or any(f["key"] == "mw" for f in inventories.view(m).fields)]
+
+
+def chemicals_search(s, query: str, limit: int = 12) -> list[dict]:
+    """The lab's chemicals matching what was typed, by name, abbreviation,
+    CAS number, formula, lot or catalogue number: an exact match first, then
+    a start, then the rest; ones in stock before ones used up. Then the
+    built-in molecular weights (`chemical_references`), which carry no
+    record to link."""
+    from . import inventory_service as inventories
+    from .models import ChemicalReference, InventoryItem
+    q = query.strip().lower()
+    modules = {m.id: m for m in chemical_modules(s)}
+    found = []
+    if modules:
+        stmt = select(InventoryItem).where(InventoryItem.module_id_fk.in_(list(modules)))
+        if q:
+            like = like_pattern(query.strip())
+            in_attrs = like_pattern(json.dumps(query.strip())[1:-1])
+            stmt = stmt.where(InventoryItem.name.ilike(like, escape="\\") | InventoryItem.attrs.ilike(in_attrs, escape="\\")
+                              | InventoryItem.lot.ilike(like, escape="\\")
+                              | InventoryItem.catalog_number.ilike(like, escape="\\"))
+        views = {}
+        for item in s.scalars(stmt.order_by(InventoryItem.name).limit(max(400, limit))):
+            module = modules[item.module_id_fk]
+            mv = views.setdefault(module.id, inventories.view(module))
+            attrs = item.attrs_dict
+            words = [item.name or "", str(attrs.get("abbreviation") or ""), str(attrs.get("cas") or ""),
+                     str(attrs.get("formula") or ""), item.lot or "", item.catalog_number or ""]
+            lowered = [w.strip().lower() for w in words]
+            if q and not any(q in w for w in lowered):
+                continue                          # the text was in some other column
+            rank = 0 if q in lowered else 1 if any(w.startswith(q) for w in lowered) else 2
+            available = inventories.is_available(mv, item.status) is not False
+            found.append(((0 if available else 1, rank if q else 0, (item.name or "").lower()), {
+                "ref": f"@{module.key} {item.number}", "database": module.label,
+                "name": item.name or "", "abbr": str(attrs.get("abbreviation") or ""),
+                "cas": str(attrs.get("cas") or ""), "formula": str(attrs.get("formula") or ""),
+                "mw": _positive(attrs.get("mw")), "purity": _positive(attrs.get("purity")),
+                "density": _positive(attrs.get("density")), "lot": item.lot or "",
+                "status": item.status or "", "available": available}))
+    found.sort(key=lambda pair: pair[0])
+    out = [entry for _key, entry in found[:limit]]
+    if len(out) < limit and q:
+        have = {e["name"].lower() for e in out} | {e["abbr"].lower() for e in out if e["abbr"]}
+        for ref in s.scalars(select(ChemicalReference).where(
+                ChemicalReference.name.ilike(like_pattern(query.strip()), escape="\\")).order_by(ChemicalReference.name)):
+            if ref.name.lower() in have or not _positive(ref.molecular_weight):
+                continue
+            out.append({"ref": "", "database": "", "name": ref.name, "abbr": "", "cas": "", "formula": "",
+                        "mw": ref.molecular_weight, "purity": None, "density": None, "lot": "",
+                        "status": "", "available": True, "builtin": True})
+            if len(out) >= limit:
+                break
+    return out
+
+
+@bp.get("/api/chemicals")
+def chemicals():
+    """What a Formulation's component box offers as you type."""
+    query = str(request.args.get("q") or "")[:120]
+    with SessionLocal() as s:
+        has_database = bool(chemical_modules(s))
+        return jsonify({"ok": True, "items": chemicals_search(s, query), "has_database": has_database})
+
+
 # ---------------------------------------------------------------- built-in starters and recipes
 
 def _c(name, conc, unit, mw=None, stock=None, stock_unit=None, note=""):
@@ -2001,7 +2096,7 @@ STARTERS = {
 
 ## Results
 
-## Conclusion & next steps
+## Summary & next steps
 """},
     "protocol": {
         "title": "New protocol", "kind": "protocol", "icon": "list-check",
