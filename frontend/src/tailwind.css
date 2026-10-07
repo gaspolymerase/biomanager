@@ -2868,6 +2868,15 @@
   .cage-sheet .cage-mice-count strong { @apply font-semibold text-ink; }
   .cage-sheet .cage-sexes { @apply ml-1 text-[11.5px] font-normal text-muted; }
   .cage-born-cell { @apply flex items-center gap-1; }
+  /* Room for every column at a glance: a column's name wraps onto a second
+     line rather than widening it past what it holds, the purpose pill fills
+     its column rather than sizing to the longest choice, and the note, last,
+     takes what is left instead of its input's own width. */
+  .cage-sheet .sheet-table > thead th { @apply whitespace-normal; }
+  .cage-sheet .sheet-table > thead .dt-col-head { @apply w-0 min-w-full leading-tight; }
+  .cage-sheet .cage-wean { @apply whitespace-nowrap; }
+  .cage-sheet .sheet-table > tbody > tr > td > select.status-pill[name="purpose"] { @apply w-full px-1.5; }
+  .cage-sheet .sheet-table > tbody > tr > td > input.note-cell { @apply w-0 min-w-full; }
   .cage-born-cell > input { @apply h-6.5 w-[7.75rem] min-w-0 shrink-0; }
   .cage-sheet .cage-mice-count { @apply whitespace-nowrap; }
   .cage-pups {

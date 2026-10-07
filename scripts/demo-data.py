@@ -146,7 +146,8 @@ CAGES = [
 ]
 for code, c, owner, rack, pos, purpose, born in CAGES:
     c.post("/colony/cages/create", data={"cage_id": code, "owner": owner, "rack_id": str(rack),
-                                          "position": pos, "purpose": purpose, "room": "B-204"})
+                                          "position": pos, "purpose": purpose, "room": "B-204",
+                                          "card_id": f"F-{20316 + int(code)}"})   # the facility's card
     if born is not None:
         cage_row = one("select id from mouse_cages where cage_id=?", code)
         c.post(f"/colony/cages/{cage_row}/update", data={"date_give_birth": ago(born)},
