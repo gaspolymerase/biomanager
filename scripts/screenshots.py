@@ -48,6 +48,18 @@ DESKTOP = [
     # with no litter in scripts/demo-data.py would make it shootable.
     ("task-genotyping", "/colony?view=cages", "light",
      ["[data-layout=cards]", "button:has-text('Genotyping')"], "#genotyping-modal"),
+    # Set it back first, so the shot works whether or not this order has
+    # already been received: only a change to received raises the offer.
+    ("task-stock", "/orders", "light",
+     [("select.status-pill", "ordered"), ("select.status-pill", "received")], "#stock-offer-dialog"),
+    ("task-booking", "/calendar", "light",
+     ["#cal-new-more", "button.menu-item[data-new=booking]"], "#biocal-modal"),
+    # Signing opens a panel in the page's drawer, not a dialog — the control
+    # is .nb-tool[data-panel=sign] (promo/clips/more.py's sign walk knows the
+    # same selectors).
+    ("task-sign", "/notebook", "light", [".nb-tool[data-panel=sign]"], "form.nb-sig-form"),
+    # No restore-a-backup shot: its steps are in Finder and the file system,
+    # which a browser cannot photograph.
 ]
 PHONE = [
     ("phone-cage", "/colony?view=cages&scope=all#cage-1", "light"),
@@ -84,8 +96,13 @@ def shoot(page, name, path, click=None, full=False, crop=None):
     page.goto(f"{BASE}{path}")
     page.wait_for_load_state("networkidle")
     for step in ([click] if isinstance(click, str) else click or []):
-        # A dialog shot needs two: open the view, then open the dialog.
-        page.locator(step).first.click()
+        # A dialog shot needs two steps: open the view, then open the dialog.
+        # A (selector, value) step chooses in a dropdown instead of clicking,
+        # which is how the orders sheet raises "Add it to stock?".
+        if isinstance(step, tuple):
+            page.select_option(step[0], step[1])
+        else:
+            page.locator(step).first.click()
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(400)
     page.wait_for_timeout(800)  # let maps, grids and fonts settle
