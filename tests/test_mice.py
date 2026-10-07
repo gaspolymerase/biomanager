@@ -214,9 +214,11 @@ class TheEarTag(AppTestCase):
         self.assertEqual(one("select ear_tag from mice where id=?", mouse), "RF")
         # A tag number does just as well, and it need not be unique: two
         # mice in different cages are often punched the same.
+        mark = uniq("RF")
+        self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": mark})
         other = self.make_mouse(self.m, self.member)
-        self.assertSaved(self.autosave(self.m, f"/colony/mice/{other}/update", {"ear_tag": "RF"}))
-        self.assertEqual(count("mice", "ear_tag=?", "RF"), 2)
+        self.assertSaved(self.autosave(self.m, f"/colony/mice/{other}/update", {"ear_tag": mark}))
+        self.assertEqual(count("mice", "ear_tag=?", mark), 2)
 
     def test_the_sheet_shows_the_column_after_the_number(self):
         mouse = self.make_mouse(self.m, self.member)
@@ -231,7 +233,7 @@ class TheEarTag(AppTestCase):
         at the number."""
         mouse = self.make_mouse(self.m, self.member)
         self.autosave(self.m, f"/colony/mice/{mouse}/update", {"ear_tag": "RF"})
-        self.assertIn('title="Ear tag RF"', self.get_ok(self.m, "/colony?view=mice"))
+        self.assertIn('title="Custom tag RF"', self.get_ok(self.m, "/colony?view=mice"))
 
     def test_searching_for_the_tag_finds_the_mouse(self):
         mouse = self.make_mouse(self.m, self.member)

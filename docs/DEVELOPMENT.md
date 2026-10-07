@@ -322,7 +322,12 @@ the order they came into being rather than the order the work runs in. A lab
 says otherwise on **All databases → Order in the sidebar** (an admin; rows
 drag, or move with arrows, and the form posts the whole order, so no step
 depends on which row moved — the same handling as Home's Customise, down to
-its classes): one list of keys
+its classes), or by dragging in the rail itself on any page
+(`static/shell.js` `setupRailOrder`: the admin's Databases group carries
+`data-rail-order`, each entry `data-db-key`; a drop posts `rail=1` and the
+rail's keys, which `lab.arrange_within` puts in the places they held, so
+what the rail doesn't show — Plasmids' tabs, others' own databases — stays
+put): one list of keys
 in `app_settings` under `databases:order` (`lab.database_order`,
 `set_database_order`, `move_database`), applied by `lab.in_database_order`
 where the rail's Databases group is assembled. The keys are the rail's own —
@@ -1468,11 +1473,11 @@ is reported per row); a real run is a batch.
 **The number and the mark are different things.** `mice.mouse_id` is the
 identity — unique, never reused, what samples, cage cards, experiments and
 `@mouse` all link by. `mice.ear_tag` (revision 0024, 40 characters, free
-text, not unique) is what is written on the animal: a tag number, an ear
-punch such as RF or LB, a tattoo. It sits beside the ID in the sheet, in
+text, not unique; shown as *Custom tag*) is how the animal is marked: an
+ear tag number, an ear punch such as RF or LB, a tail tattoo. It sits beside the ID in the sheet, in
 the dialog, in Add many, in the export and in search
-(`MouseRecord.ear_tag.ilike`), and a spreadsheet column called "ear tag",
-"notch" or "tattoo" now maps to it — before it had anywhere to go, the
+(`MouseRecord.ear_tag.ilike`), and a spreadsheet column called "custom
+tag", "ear tag", "notch", "tattoo" or "tail tattoo" now maps to it — before it had anywhere to go, the
 importer read such a column as the Mouse ID. Pointing at the number shows
 the tag as well (`_sheet.html`'s `id_cell(aside=…)`), so hiding the column
 under **Columns** loses nothing; the column stays because a tooltip cannot

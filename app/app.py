@@ -943,7 +943,10 @@ def inject_nav():
             tab_icon_rules += [(l["url"], l["icon"]) for l in extras]
 
         if links:
-            sections.append({"label": section["label"], "links": links})
+            # An admin drags the databases into the lab's order right in the
+            # rail (static/shell.js); it saves through organisms.reorder.
+            sortable = section["label"] == "Databases" and access.is_admin()
+            sections.append({"label": section["label"], "links": links, "sortable": sortable})
     footer = [r for r in (_resolve_nav_item(i, active) for i in NAV_FOOTER) if r]
     more = [r for r in (_resolve_nav_item(i, active) for i in NAV_MORE) if r]
     return {
@@ -3409,7 +3412,7 @@ def bulk_add_to_experiment():
 
 # Columns the preview grid understands, in display order.
 BATCH_COLUMNS = [
-    ("ear_tag", "Ear tag", 80),
+    ("ear_tag", "Custom tag", 80),
     ("gender", "Sex", 70),
     ("transgene_1", "Transgene 1", 130),
     ("transgene_2", "Transgene 2", 130),

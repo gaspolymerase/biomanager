@@ -1138,12 +1138,12 @@ class SampleSourceTests(InventoryCase):
         self.post(self.a, f"/inventory/{self.key}/items/save", data={
             "id": "", "name": name, "attr_source_kind": "mouse", "attr_source_ref": mouse_id})
         html = self.get_ok(self.a, f"/inventory/{self.key}")
-        self.assertIn('title="Ear tag RF"', html)
-        self.assertIn(f"Open mouse {mouse_id} (ear tag RF) in the colony", html)
+        self.assertIn('title="Custom tag RF"', html)
+        self.assertIn(f"Open mouse {mouse_id} (custom tag RF) in the colony", html)
         # Re-tag the mouse: every sample of it says the new mark, with
         # nothing to update here.
         self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
-        self.assertIn('title="Ear tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
+        self.assertIn('title="Custom tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
 
     def test_the_source_is_edited_in_the_sheet_like_any_other_cell(self):
         """Typing in the row, not opening the record: the two boxes autosave

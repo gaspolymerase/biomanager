@@ -833,3 +833,16 @@ def move_database(session, key: str, by: int, keys: list[str]) -> bool:
     order[at], order[to] = order[to], order[at]
     set_database_order(session, order)
     return True
+
+
+def arrange_within(order: list[str], keys: list[str]) -> list[str]:
+    """`order` with `keys` in the order given, in the places they held, so
+    a drag in the sidebar leaves alone what it doesn't show (Plasmids' tabs,
+    someone else's own database). A key `order` doesn't name yet joins the
+    end first, which is where the sidebar shows it."""
+    keys = [k for i, k in enumerate(keys) if k and k not in keys[:i]]
+    full = list(order) + [k for k in keys if k not in order]
+    places = sorted(full.index(k) for k in keys)
+    for place, key in zip(places, keys):
+        full[place] = key
+    return full

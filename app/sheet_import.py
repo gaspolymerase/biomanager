@@ -708,10 +708,12 @@ def mice_target(session) -> Target:
         fields=[
             Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "animal id", "animal"),
                   note="Kept when it's a free number; otherwise the next ID, with yours in the notes"),
-            # "ear tag" used to come in as the Mouse ID, for want of anywhere
-            # else to put it; it has its own column now.
-            Field("ear_tag", "Ear tag", ("ear tag", "eartag", "tag", "ear punch", "ear notch", "notch",
-                                         "tattoo", "marking", "mark")),
+            # How the mouse is marked (an ear tag, punch or tail tattoo), shown
+            # as Custom tag. "ear tag" used to come in as the Mouse ID, for want
+            # of anywhere else to put it; it has its own column now.
+            Field("ear_tag", "Custom tag", ("custom tag", "ear tag", "eartag", "tag", "ear punch", "ear notch",
+                                            "notch", "tattoo", "tail tattoo", "tail mark", "toe clip", "marking",
+                                            "mark", "identification")),
             Field("gender", "Sex", ("sex", "gender", "m f", "male female"), kind="sex"),
             Field("genotype", "Genotype", ("genotype", "strain", "line", "transgene", "allele", "cre", "gt",
                                            "transgene 1")),

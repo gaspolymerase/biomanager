@@ -238,6 +238,16 @@ class Importing(AppTestCase):
         self.assertEqual(sorted(r[0] for r in rows("select ear_tag from mice where transgene_1=?", tag)),
                          ["142", "RF"])
 
+    def test_a_tail_tattoo_column_goes_to_the_custom_tag(self):
+        """However the lab marks its mice, the column goes to Custom tag."""
+        for header in ("Tail tattoo", "Custom tag"):
+            tag = uniq("TG")
+            data = xlsx([[header, "Sex", "Strain"], ["T-12", "M", tag]])
+            token, html = self.upload(self.a, "mice", "colony.xlsx", data)
+            form = {**self.chosen(html), "sheet": "Sheet1", "fill-owner": "me"}
+            self.post(self.a, f"/import-sheet/file/{token}/run", data=form)
+            self.assertEqual(one("select ear_tag from mice where transgene_1=?", tag), "T-12", header)
+
     def test_a_taken_mouse_id_and_a_total_line_are_named(self):
         n = (one("select max(mouse_id) from mice") or 0) + 1000
         tag = uniq("TG")

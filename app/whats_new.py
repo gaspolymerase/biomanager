@@ -34,9 +34,9 @@ NOTES: dict[str, dict[str, list[str]]] = {
         "new": [
             "**Chemicals**: a database for the lab's chemical list, by abbreviation, CAS number and molecular weight. Add it from **Add database**.",
             "**Formulation** in the notebook (type /formulation in a page): pick chemicals, type what you weigh and get the moles, or give equivalents and get the mass to weigh.",
-            "**Columns of your own** on the mouse colony, zebrafish and plasmids: **Configure → Your own columns**.",
-            "**Ear tag** on every mouse, and **Card ID** on cages; search finds both.",
-            "**All databases → Order** arranges the sidebar in the order your lab works.",
+            "**Columns of your own** now in the mouse colony, zebrafish and plasmids too, as in the other databases: **Configure → Your own columns**.",
+            "**Custom tag** on every mouse (an ear tag, ear punch or tail tattoo; hide it under **Columns** if you don't use it), and **Card ID** on cages.",
+            "Drag the databases in the sidebar into the order your lab works in (admins).",
             "A sample's **Source** is edited in the sheet, and **Set field** sets it on many samples at once.",
         ],
         "changed": [

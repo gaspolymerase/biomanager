@@ -425,9 +425,9 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
 
-- Each mouse has an **Ear tag**, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
+- Each mouse has a **Custom tag**, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
 
-- The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Ear tag**, beside it, is whatever is written on the animal — a tag number, an ear punch such as *RF* or *LB*, a tattoo. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *ear tag*, *notch* or *tattoo* comes into it when you import. Point at a mouse's number and its tag shows there too, so you can hide the column under **Columns** and still see it.
+- The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Custom tag**, beside it, is however the animal itself is marked — an ear tag number, an ear punch such as *RF* or *LB*, a tail tattoo, or your lab's own way. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *custom tag*, *ear tag*, *notch*, *tattoo* or *tail tattoo* comes into it when you import. Point at a mouse's number and its tag shows there too. If your lab doesn't mark its mice, untick **Custom tag** under **Columns** to hide it.
 
 - Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
 
@@ -688,7 +688,7 @@ A database for any other organism, described in your own words.
 
 **Add database** in the sidebar builds a database for anything else — Xenopus, axolotls, cell lines, yeast. Start from a mouse-like, zebrafish-like or blank organism and describe it:
 
-However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. **All databases → Order in the sidebar** arranges them: drag a database by its grip, or use the arrows, then **Save the order**. Put the ones you open every day at the top; a database you add later joins the end rather than pushing into the middle of your arrangement. An admin arranges it, and it is the lab's order, the same for everyone.
+However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. An admin drags them into place right in the sidebar, on any page: hold a database's name, move it up or down, and let go; the new order is saved at once. **All databases → Order in the sidebar** does the same as a list, with a grip to drag or arrows, then **Save the order**. Put the ones you open every day at the top; a database you add later joins the end rather than pushing into the middle of your arrangement. An admin arranges it, and it is the lab's order, the same for everyone.
 
 - **Name and vocabulary** — what to call an animal, its housing (tank, cage, plate), a line, a birth cohort and a breeding event, and whether age is shown in days, weeks, days post-fertilisation, generations or passages (then Age shows the record's own *Passage* or *Generation* column, *P12*). The whole interface then speaks your words.
 
@@ -799,7 +799,7 @@ What you stop doing: ordering a second one because nobody knew the first had arr
 
 One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
-| Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Point at the ID and it tells you that mouse's ear tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
+| Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Point at the ID and it tells you that mouse's custom tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|
 | Orders | What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered, received, cancelled — on a table or a **Board** you drag cards across. |
 | Reagents | Quantity, concentration, CAS number, storage temperature, hazard, lot and expiry. In stock, low, empty, discarded. |

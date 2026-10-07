@@ -85,11 +85,12 @@ The most complete module, built around how a mouse room actually works.
   <img src="docs/screenshots/mice.webp" alt="The mouse sheet: one row per mouse with sex, age, status, transgenes, cage, rack, position and owner" width="100%">
 </p>
 
-- **Mice** — a spreadsheet of every animal: ID, ear tag, sex, age, status,
+- **Mice** — a spreadsheet of every animal: ID, custom tag, sex, age, status,
   transgenes, cage, rack, owner and notes. IDs are assigned in order and
-  never reused; the **Ear tag** beside the ID is whatever is written on the
-  animal itself — a tag number, an ear punch such as RF or LB, a tattoo — so
-  you can find the mouse in your hand, and search finds it by that too. A mouse is alive until it has a date of death. The dot
+  never reused; the **Custom tag** beside the ID is however the animal itself
+  is marked — an ear tag number, an ear punch such as RF or LB, a tail tattoo
+  — so you can find the mouse in your hand, and search finds it by that too.
+  A lab that doesn't mark its mice unticks it under **Columns**. A mouse is alive until it has a date of death. The dot
   before its ID shows its age at a glance: blue under 8 weeks, green from
   8 to 30 weeks, red past 30 weeks, and grey once it is not alive.
 - **Cages** — every cage with its rack position, purpose, the mice

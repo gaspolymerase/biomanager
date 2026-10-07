@@ -163,3 +163,55 @@ class TheSidebarOrder(AppTestCase):
         order = self.order_on_page(self.a)
         self.assertEqual(order[:2], ["plasmids", "colony"])
         self.assertIn("inventory:samples", order[2:])
+
+
+class DraggingInTheSidebar(AppTestCase):
+    """An admin arranges the databases by dragging them in the rail of any
+    page (static/shell.js); a member's rail does not drag."""
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(TheSidebarOrder.forget_order)
+        TheSidebarOrder.forget_order()
+
+    def rail_keys(self, client):
+        html = self.get_ok(client, "/home")
+        return re.findall(r'data-db-key="([^"]+)"', html)
+
+    def test_an_admins_rail_drags_and_a_members_does_not(self):
+        html = self.get_ok(self.a, "/home")
+        self.assertIn('data-rail-order="/organisms/order"', html)
+        self.assertIn('draggable="true"', html)
+        self.assertNotIn('data-db-key="new-db"', html)
+        member = self.get_ok(self.m, "/home")
+        self.assertNotIn("data-rail-order", member)
+        self.assertNotIn("data-db-key", member)
+
+    def test_a_drop_saves_the_rails_order_and_keeps_the_rest_in_place(self):
+        from app import lab
+        from app.db import SessionLocal
+        with SessionLocal() as s:
+            # Primers is a tab of Plasmids, not in the rail; it keeps its place.
+            lab.set_database_order(s, ["colony", "inventory:primers", "plasmids"])
+            s.commit()
+        shown = self.rail_keys(self.a)
+        wanted = [shown[-1]] + shown[:-1]
+        r = self.a.post("/organisms/order", data={"rail": "1", "keys": wanted}, headers={"X-Autosave": "1"})
+        self.assertEqual(r.get_json(), {"ok": True})
+        self.assertEqual(self.rail_keys(self.a), wanted)
+        with SessionLocal() as s:
+            order = lab.database_order(s)
+        self.assertEqual(order.index("inventory:primers"), 1)
+
+    def test_a_member_cannot_save_one(self):
+        before = self.rail_keys(self.a)
+        r = self.m.post("/organisms/order", data={"rail": "1", "keys": list(reversed(before))},
+                        headers={"X-Autosave": "1"})
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(self.rail_keys(self.a), before)
+
+    def test_keys_keep_the_places_they_held(self):
+        from app import lab
+        self.assertEqual(lab.arrange_within(["a", "x", "b", "c"], ["c", "a", "b"]), ["c", "x", "a", "b"])
+        self.assertEqual(lab.arrange_within(["a", "b"], ["new", "a", "b"]), ["new", "a", "b"])
+        self.assertEqual(lab.arrange_within([], ["b", "a", "b"]), ["b", "a"])

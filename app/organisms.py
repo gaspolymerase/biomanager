@@ -607,7 +607,7 @@ PRESETS: tuple[Preset, ...] = (
              "field_type": "text", "show_in_table": True},
             {"entity": "line", "key": "supplier", "label": "Supplier", "field_type": "text"},
             {"entity": "line", "key": "mgi_id", "label": "MGI ID", "field_type": "text"},
-            {"entity": "organism", "key": "ear_tag", "label": "Ear tag",
+            {"entity": "organism", "key": "ear_tag", "label": "Custom tag",
              "field_type": "text", "show_in_table": True},
         ],
         settings={"protocol_required": True, "regulated": True, "billing_unit": "housing"},
