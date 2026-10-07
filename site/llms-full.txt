@@ -130,6 +130,52 @@ Source: https://biomanager.org/guide/install
 
 ---
 
+## Try it first
+
+Ten minutes on a practice rack: make a cage, add mice, record a litter, and watch the weaning date appear. Then throw it away.
+
+Who and where: Anyone, in a new lab · Desktop and lab server
+
+Before you move a real colony in, it is worth seeing the whole loop once on records that do not matter. Everything below is made in your own lab and deleted at the end, so nothing you do here can spoil anything. If a step does not look like this page says, that is worth telling us — the guide is meant to match the app.
+
+### 1. A practice rack
+
+1. Open **Mouse** in the sidebar, then the **Cages** tab.
+
+2. **Rack grid → New rack**. Call it *Practice*, 2 rows by 3 columns, and save.
+
+An empty grid of six positions appears, labelled the way you chose — the same grid every rack in the lab uses.
+
+### 2. A cage with mice in it
+
+1. **New cage**. Put it in the *Practice* rack at the first position, and set **Purpose** to *Breeding*.
+
+2. Open the cage and add two mice: one female, one male. Give them any genotype you like.
+
+The cage shows 2 mice, and its card sits in the first square of the rack. The mice are yours: your name is on them.
+
+### 3. A litter, and the dates that follow
+
+1. On the cage, press **Litter born** and keep today's date.
+
+2. Press **Record the litter**.
+
+BioManager says *Recorded a litter born today in cage … : weaning is due …* — three weeks out. You did not work that date out, and neither will anyone else in the lab. Open [Home](https://biomanager.org/guide/home-page) and the [calendar](https://biomanager.org/guide/calendar): the weaning is waiting there on the day it is due, in both places, because they are the same list.
+
+### 4. Throw it away
+
+1. Open **Batch history** (in **More**) and **Undo** what you just made, newest first.
+
+2. Anything left: delete the mice, then the cage, then the rack in **Rack grid**.
+
+The colony is empty again and ready for your real records. Nothing was sent anywhere while you did this — see [Your data and backups](https://biomanager.org/guide/your-data).
+
+Next: [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in) moves your real records across, and [Coming from Excel](https://biomanager.org/guide/coming-from-excel) explains what changes when a sheet becomes a database.
+
+Source: https://biomanager.org/guide/try-it-first
+
+---
+
 ## Bring your lab in
 
 Move your records in: import sheets, add many at once, and check what came in.
@@ -157,6 +203,40 @@ About half an hour, once the lab is set up. There are two ways in: **Import from
 The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time.
 
 Source: https://biomanager.org/guide/bring-your-lab-in
+
+---
+
+## Import from Excel
+
+Bring in the sheet your lab already keeps, as it is, with no template and no renaming of columns.
+
+Who and where: Anyone who adds records · Every database
+
+1. For mice, make your racks first: **Cages → Rack grid → New rack**, named as in your sheet. A sheet with *Rack* and *Position* columns then puts every cage in its place; anything without a position waits in *Unplaced*.
+
+2. Open the database and press **Import from Excel** in the toolbar above its sheet (for mice, on the **Mice** tab).
+
+3. **Choose a file** (`.xlsx`, CSV or TSV, up to 15 MB and 5,000 rows) and press **Continue**. If the workbook has several sheets, pick one above the matches.
+
+4. Check where each column goes. Each match says why; change any of them. A column BioManager doesn't have becomes a new column in an inventory or organism database (if you may configure it), or goes **Into the notes**; **Leave out** skips it.
+
+5. Give a value for any must-have column your sheet lacks, like the owner: it goes on every row. For plasmids and stock, also whether every row is *Personal* or *Lab common*.
+
+6. Press **Preview the import**. It runs every row through the database's own checks and lists any that would be skipped, by its row number in Excel. **Change the matches** goes back a step.
+
+7. Press the import button, which counts the records (**Import 120 mice**, say).
+
+The rows are saved as one batch, which **More → Batch history** can undo. Dates stay as Excel wrote them, and one that can't be read, or a birth date in the future, is left blank and kept in the notes. A mouse whose ID is already taken gets the next free one, with yours kept in its notes.
+
+### Troubleshooting
+
+#### Rows were skipped on import
+
+The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time.
+
+Related: [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in) [Coming from Excel](https://biomanager.org/guide/coming-from-excel) [Undo and history](https://biomanager.org/guide/undo-and-history)
+
+Source: https://biomanager.org/guide/import-from-excel
 
 ---
 
@@ -313,6 +393,66 @@ Source: https://biomanager.org/guide/keyboard-shortcuts
 
 ---
 
+## Mouse colony
+
+Mice, cages, litters and breeders, from birth to weaning: racks laid out like yours, and genotyping and weaning dates worked out for you.
+
+### What this does for your week
+
+A colony runs on dates that are easy to get wrong and tedious to keep: when a litter is old enough to genotype, when it must be weaned, which cage is getting crowded, whose mice they are. BioManager's job is to work those out from one thing you already know — the day the pups were born — and then put them in front of whoever is on duty.
+
+| Pups are born | You record the date once ([Record a litter](https://biomanager.org/guide/record-a-litter)). Genotyping and weaning dates are worked out from it and appear on [Home](https://biomanager.org/guide/home-page) and the [calendar](https://biomanager.org/guide/calendar) — the same list in both, so nobody keeps a private one. |
+|---|---|
+| They are old enough to genotype | The litter becomes one record per pup in a few clicks ([Genotype a litter](https://biomanager.org/guide/genotype-a-litter)), each with its own ear tag and result, instead of a row you retype. |
+| Weaning day | [Wean a litter](https://biomanager.org/guide/wean-a-litter) moves the pups into new cages by sex, keeps them attached to the litter they came from, and frees the breeding cage. The cage cards for the new cages print with the genotypes already on them ([Print cage cards](https://biomanager.org/guide/print-cage-cards)). |
+| In the animal room | Scan the QR code on a cage card with a phone to open that cage, add a weight or a note with gloves on, and have it in the record before you leave the room ([At the bench](https://biomanager.org/guide/phones-and-cage-cards)). |
+
+What you stop doing: keeping the wean dates in your head or a wall calendar, retyping a litter into a sheet, rewriting cage cards by hand after a wean, and asking whose mouse a cage holds — every record carries its owner, and [who may change it](https://biomanager.org/guide/who-can-do-what).
+
+Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. In the Cages tab, a chip for each purpose (*Experiments*, *Breeder*…) shows only those cages.
+
+*The mouse sheet*
+
+### Racks and cages
+
+**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner, move them, or **Retire** them.
+
+The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and *Active, Breeding, Mine* filters. **Rack grid**: the racks from the front. The page remembers the one you used last.
+
+*A rack grid*
+
+### Mice
+
+- **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
+
+- Each mouse has sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
+
+- Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
+
+### Breeding: from litter to weaning
+
+On the **Cages** tab, open a breeding cage (its arrow or mice count) or find its card under **Cards**: **Litter born**, **Genotyping** and **Wean** are there, on cages whose purpose is *Breeder* or *Breeding*. **Create litter** numbers each litter L-1, L-2, L-3… (type your own ID instead if you like).
+
+1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and records the birth. BioManager works out weaning (P21) and genotyping (P28, or the day chosen in [Lab setup](https://biomanager.org/guide/lab-setup)), which appear on Home and the calendar when due — the same list in both. A cage holds one litter date, so a new litter replaces the last: if those pups are still in the cage, wean them first.
+
+2. **Genotyping** asks for the father, mother and number of pups; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it.
+
+3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm.
+
+**Breeders** lists breeding cages — rack and position, how many of each sex — with their productivity, and flags breeders past 30 weeks. **Pick** takes a breeder as yours; its owner is notified.
+
+### Experiments, strains, dropdowns
+
+- **Experiments** group mice into a cohort with treatment groups, what is done to them day by day and their body weights: see [Experiments, for every animal](https://biomanager.org/guide/experiments). (The notebook's experiments are the write-ups; these are the animals.)
+
+- **Strains** is the lab's reference list of lines and alleles.
+
+- **Dropdowns** keeps the choices each column offers, so the lab uses the same words. Everyone sees them; only admins change them.
+
+Source: https://biomanager.org/guide/mouse-colony
+
+---
+
 ## Record a litter
 
 When pups are born in a breeding cage, record the date once and BioManager works out when they are weaned and genotyped.
@@ -332,6 +472,8 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 BioManager works out weaning (P21) and genotyping (P28, or the day chosen in [Lab setup](https://biomanager.org/guide/lab-setup)), which appear on Home and the calendar when due — the same list in both. In the cage's row, *Litter born* and *Wean due* come right after the mice. To make a record for each pup, go on to [Genotype a litter](https://biomanager.org/guide/genotype-a-litter).
 
 > **One litter date per cage** A cage holds one litter date, so a new litter replaces the last. If those pups are still in the cage, wean them first.
+
+*A breeding cage, with Litter born, Genotyping and Wean on it*
 
 Related: [Genotype a litter](https://biomanager.org/guide/genotype-a-litter) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
@@ -358,6 +500,8 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 6. Change each pup's **Status** from *geno* to what it is for now, such as *breeder* or *experiment*. For many at once, tick them and use **Set field**.
 
 A pup waits in the genotyping queue on Home while its status is *geno*, and leaves it once that changes. If someone else records the genotype of your mice, you are notified.
+
+*Genotyping: the parents, and how many pups to make records for*
 
 Related: [Record a litter](https://biomanager.org/guide/record-a-litter) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Home](https://biomanager.org/guide/home-page) [Many at once](https://biomanager.org/guide/many-at-once)
 
@@ -388,6 +532,8 @@ Either way the litter is marked weaned and leaves Home and the calendar. Then [p
 #### I weaned the wrong cage
 
 A weaning is one bulk change: **More → Batch history** in the sidebar → **Undo**.
+
+*Wean sits on the breeding cage, beside Litter born*
 
 Related: [Record a litter](https://biomanager.org/guide/record-a-litter) [Genotype a litter](https://biomanager.org/guide/genotype-a-litter) [Print cage cards](https://biomanager.org/guide/print-cage-cards) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
@@ -423,239 +569,60 @@ Each card shows the owner, purpose, where the cage goes (rack and position), its
 
 Check the address with your admin; that you're on the lab's network, VPN or Tailscale; and, if your lab uses its own certificate, that it's installed on the phone.
 
+*A cage card, as it prints*
+
 Related: [Phones and cage cards](https://biomanager.org/guide/phones-and-cage-cards) [Wean a litter](https://biomanager.org/guide/wean-a-litter) [Mouse colony](https://biomanager.org/guide/mouse-colony)
 
 Source: https://biomanager.org/guide/print-cage-cards
 
 ---
 
-## Import from Excel
+## Phones and cage cards
 
-Bring in the sheet your lab already keeps, as it is, with no template and no renaming of columns.
+Use BioManager on a phone, and print cage cards and labels that open records when scanned.
 
-Who and where: Anyone who adds records · Every database
+Who and where: Lab server for phones
 
-1. For mice, make your racks first: **Cages → Rack grid → New rack**, named as in your sheet. A sheet with *Rack* and *Position* columns then puts every cage in its place; anything without a position waits in *Unplaced*.
+- **Android**: Install `BioManager-Android.apk` from the [download page](https://biomanager.org/download) (allow your browser to install apps when asked), type your lab server's address once, and you're in. The **Scan** button reads cage cards.
 
-2. Open the database and press **Import from Excel** in the toolbar above its sheet (for mice, on the **Mice** tab).
+- **iPhone and iPad**: Open the server in **Safari** and tap **Share → Add to Home Screen**. BioManager gets its own icon and opens full screen like an app; your camera scans cage cards. (Android without the app: Chrome → **⋮ → Install app**.)
 
-3. **Choose a file** (`.xlsx`, CSV or TSV, up to 15 MB and 5,000 rows) and press **Continue**. If the workbook has several sheets, pick one above the matches.
+- **Cage cards**: **Cages → Cage cards** prints cards sized for standard card stock — owner, purpose, where it goes (rack and position), animals with how many of each sex, genotype and a QR code. Scanning it opens that cage, ready to edit, at the rack. **Tank labels** (Zebrafish), **Labels** on a fly or worm database, and **Labels** on ticked samples, reagents or any inventory's rows do the same for tanks, vials and tubes.
 
-4. Check where each column goes. Each match says why; change any of them. A column BioManager doesn't have becomes a new column in an inventory or organism database (if you may configure it), or goes **Into the notes**; **Leave out** skips it.
+- **Label printers**: **Print on** chooses a sheet of cards for any printer, or a label printer's roll: Brother QL (62 × 29, 90 × 29, 100 × 62 mm), Zebra (2 × 1, 3 × 1, 4 × 2, 4 × 2.5 in) or cryo-tube labels. It then prints one label a page, typed to fit; in the print dialog pick the label printer and that label size, margins **None**. Your choice is remembered. For tubes, **On each label** chooses what a label says (box, position, lot, owner, a column such as concentration, the day printed), remembered for each database, and **Two lines for long text** wraps a long name or place instead of cutting it. For a Zebra, **Download for Zebra (.zpl)** gives the labels in its own language; or an admin adds the Zebra's address on the lab's network once (under **Send labels straight to a Zebra**), and **Send to Zebra** prints them at once.
 
-5. Give a value for any must-have column your sheet lacks, like the owner: it goes on every row. For plasmids and stock, also whether every row is *Personal* or *Lab common*.
+> Phones reach a **server** , or a desktop that shares its lab on the network ([Devices](https://biomanager.org/guide/your-data#devices)): otherwise the app on one computer is private to that computer.
 
-6. Press **Preview the import**. It runs every row through the database's own checks and lists any that would be skipped, by its row number in Excel. **Change the matches** goes back a step.
+*A cage opened on a phone after scanning its card*
 
-7. Press the import button, which counts the records (**Import 120 mice**, say).
-
-The rows are saved as one batch, which **More → Batch history** can undo. Dates stay as Excel wrote them, and one that can't be read, or a birth date in the future, is left blank and kept in the notes. A mouse whose ID is already taken gets the next free one, with yours kept in its notes.
+*Printable cage cards*
 
 ### Troubleshooting
 
-#### Rows were skipped on import
+#### My phone can't reach the server
 
-The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time.
+Check the address with your admin; that you're on the lab's network, VPN or Tailscale; and, if your lab uses its own certificate, that it's installed on the phone.
 
-Related: [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in) [Coming from Excel](https://biomanager.org/guide/coming-from-excel) [Undo and history](https://biomanager.org/guide/undo-and-history)
-
-Source: https://biomanager.org/guide/import-from-excel
-
----
-
-## Receive an order into stock
-
-When an order arrives, mark it received and add it to stock, with its details already filled in.
-
-Who and where: Anyone who may edit the order · Desktop and lab server
-
-1. Open Orders and find the order. The status chips, *Requested, Ordered, Received, Cancelled*, narrow the sheet to one stage.
-
-2. Mark it received: set its **Status** to *received*, or on the **Board**, drag its card to the *Received* column.
-
-3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, antibodies or viruses it goes into, and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
-
-4. Press **Add to stock**.
-
-5. The new record opens with its name, vendor, catalogue number, lot, quantity and expiry already filled in from the order. Add where it is kept. If that database needs a field the order doesn't have, its form opens filled in from the order instead: fill in the rest and save.
-
-From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other. The person who requested the order is notified as it moves. When it runs low, **Order again** (the cart button on the reagent, antibody or virus) opens a new order with its details.
-
-Related: [Samples, orders, reagents, antibodies, viruses](https://biomanager.org/guide/samples-and-orders) [Notifications](https://biomanager.org/guide/notifications)
-
-Source: https://biomanager.org/guide/receive-an-order
-
----
-
-## Book equipment
-
-Book time on a shared instrument in the calendar, so two people never turn up for the confocal at once.
-
-Who and where: Anyone in the lab · Desktop and lab server
-
-1. Open the Calendar. If the instrument isn't listed under **Equipment** in its sidebar, press **Manage** there, give its **Name** and **Where**, and press **Add instrument**. **Edit** one there to rename it, say where it is or change its colour; its bookings follow.
-
-2. Press the arrow beside **New event** and choose **Book equipment**. Or press **New event** and choose **Booking**.
-
-3. Pick the **Instrument**, the **From** and **To** times, and say **What for**.
-
-4. To book it again and again, choose **Every day**, **Every weekday** or **Every week**, and the date it runs **until**. Each repeat is a booking of its own.
-
-5. Press **Save**.
-
-The booking is on the calendar; drag it to move it. A booking that overlaps another is refused, saying who has it and when, and if one repeat clashes, none is made. **Duplicate**, on an open booking, books the same instrument and times on another day.
-
-Related: [Calendar](https://biomanager.org/guide/calendar) [Home](https://biomanager.org/guide/home-page)
-
-Source: https://biomanager.org/guide/book-equipment
-
----
-
-## Sign a notebook page
-
-When a page should be the record of your work, sign it: its text is fingerprinted and the page is locked.
-
-Who and where: Whoever may edit the page · Desktop and lab server
-
-1. Open the page in the Notebook.
-
-2. Press **Sign** at the top of the page. The page's owner, and anyone it is shared with to edit, can sign it; anyone else can witness it once it is signed.
-
-3. Under **What you are saying**, choose whether you did this work or reviewed the page.
-
-4. Confirm who you are: **Your password**, or, if you sign in with Google or Microsoft, your user name.
-
-5. Press **Sign and lock**.
-
-Its exact text is fingerprinted and kept as a version, any live experiment in it is frozen as it is then, and the page is locked: nobody can change or delete it. The button now says **Signed**; it lists every signature, each showing whether the page still reads as it did when signed. A lab mate can open it and **Witness** the page.
-
-> **Changing a signed page** Its owner presses **Signed**, writes **Why it is being amended** and presses **Open to amend**. The reason and every signature stay with the page; sign it again when it is done.
-
-Related: [Signing a page](https://biomanager.org/guide/notebook#signing) [Notebook and utilities](https://biomanager.org/guide/notebook)
-
-Source: https://biomanager.org/guide/sign-a-notebook-page
-
----
-
-## Invite someone to the lab
-
-Bring a new member onto your lab server: they make their own account, and an admin lets them in.
-
-Who and where: Admins · Lab server
-
-1. Send them your lab server's address.
-
-2. They open it, press **Create an account** and fill it in. They can't sign in until an admin approves it. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in methods**.
-
-3. Admins are notified of the sign-up. Open **More → Manage users** at the foot of the sidebar.
-
-4. Find the account marked *awaiting approval*, press **Approve**, and confirm.
-
-5. For more than a member's rights, choose their role — *Member*, *Animal care*, *Facility manager* or *Admin* — and press **Set**.
-
-They sign in with their own account and work as a member: they edit what they own and what is shared, and see the lab's databases. To share work with a few of them, put them in a [project group](https://biomanager.org/guide/project-groups).
-
-> **Someone from outside the lab?** Give them a guest pass for a day to a month: **More → Guests**, who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**.
-
-### Troubleshooting
-
-#### They forgot their password
-
-An admin resets it in **Manage users**.
-
-Related: [People and guests](https://biomanager.org/guide/people-and-guests) [Who can do what](https://biomanager.org/guide/who-can-do-what) [Run it for your lab](https://biomanager.org/server)
-
-Source: https://biomanager.org/guide/invite-someone
-
----
-
-## Restore a backup
-
-Put the desktop app's lab back as it was, from your own backup or from the copy BioManager kept before an update.
-
-Who and where: Whoever uses that computer · Desktop app
-
-1. Quit BioManager.
-
-2. Open its data folder: `~/Library/Application Support/Biomanager/` on a Mac, `%APPDATA%\Biomanager\` on Windows, `~/.local/share/Biomanager/` on Linux. The lab's database is `data/biomanager.db`.
-
-3. Move `data/biomanager.db` somewhere safe, rather than deleting it.
-
-4. Put the backup in its place, named `biomanager.db`. From your Time Machine or File History copy of the folder; or one of the copies BioManager made before a new version changed the database, `data/backups/before-upgrade-….db` (the last ten are kept). Files added to records and pages are in the `uploads` folder; put it back from the same backup too.
-
-5. Open BioManager. To undo an update, open it with the version you had before.
-
-BioManager opens the lab as it was when that backup was made.
-
-> **Newer changes aren't in a backup** Everything entered since the backup was made is not in it. Keep the file you moved aside until you are sure.
-
-### On a lab server
-
-A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever looks after the server, and never deletes what it replaces: see `deploy/RUNBOOK.md` in the server bundle and [Keeping the data safe](https://biomanager.org/server#safe). For a mistake in a bulk change, **More → Batch history → Undo** is enough.
-
-### Troubleshooting
-
-#### BioManager won't start: the lab's database is an empty file
-
-The file is 0 bytes, so its records are not in it. Put back a backup as above, or delete the empty file to start a new lab.
-
-Related: [Your data and backups](https://biomanager.org/guide/your-data) [Undo and history](https://biomanager.org/guide/undo-and-history) [Keeping the data safe](https://biomanager.org/server#safe)
-
-Source: https://biomanager.org/guide/restore-a-backup
-
----
-
-## Mouse colony
-
-Mice, cages, litters and breeders, from birth to weaning: racks laid out like yours, and genotyping and weaning dates worked out for you.
-
-Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. In the Cages tab, a chip for each purpose (*Experiments*, *Breeder*…) shows only those cages.
-
-*The mouse sheet*
-
-#### Racks and cages
-
-**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner, move them, or **Retire** them.
-
-The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and *Active, Breeding, Mine* filters. **Rack grid**: the racks from the front. The page remembers the one you used last.
-
-*A rack grid*
-
-#### Mice
-
-- **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
-
-- Each mouse has sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
-
-- Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
-
-#### Breeding: from litter to weaning
-
-On the **Cages** tab, open a breeding cage (its arrow or mice count) or find its card under **Cards**: **Litter born**, **Genotyping** and **Wean** are there, on cages whose purpose is *Breeder* or *Breeding*. **Create litter** numbers each litter L-1, L-2, L-3… (type your own ID instead if you like).
-
-1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and records the birth. BioManager works out weaning (P21) and genotyping (P28, or the day chosen in [Lab setup](https://biomanager.org/guide/lab-setup)), which appear on Home and the calendar when due — the same list in both. A cage holds one litter date, so a new litter replaces the last: if those pups are still in the cage, wean them first.
-
-2. **Genotyping** asks for the father, mother and number of pups; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it.
-
-3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm.
-
-**Breeders** lists breeding cages — rack and position, how many of each sex — with their productivity, and flags breeders past 30 weeks. **Pick** takes a breeder as yours; its owner is notified.
-
-#### Experiments, strains, dropdowns
-
-- **Experiments** group mice into a cohort with treatment groups, what is done to them day by day and their body weights: see [Experiments, for every animal](https://biomanager.org/guide/experiments). (The notebook's experiments are the write-ups; these are the animals.)
-
-- **Strains** is the lab's reference list of lines and alleles.
-
-- **Dropdowns** keeps the choices each column offers, so the lab uses the same words. Everyone sees them; only admins change them.
-
-Source: https://biomanager.org/guide/mouse-colony
+Source: https://biomanager.org/guide/phones-and-cage-cards
 
 ---
 
 ## Zebrafish
 
 Tanks on racks, fish as groups or individuals, matings and clutches, lines with ZFIN names, and water quality.
+
+### What this does for your week
+
+A fish facility runs on things that go wrong quietly: a mating tank left in overnight, a clutch nobody wrote down, a system whose conductivity drifted a week ago. BioManager keeps those where the whole lab can see them rather than in one person's notebook.
+
+| Setting up a cross | **Set up a mating** records which male and female tanks went in, how many of each, and when they go back. Mating tanks due back show on [Home](https://biomanager.org/guide/home-page) until someone marks them **Returned**, so a fish is not left in overnight because the person who set it up is away. |
+|---|---|
+| The clutch | **New clutch** records each fertilisation against the cross it came from, so a line's output is a number you can look up instead of a memory. |
+| Raising and sorting | Fish live as a group with a headcount until you need them individually, which is how a nursery tank actually works. Select tanks to set purpose or owner, move them, or mark genotyping. |
+| The water | **Log reading** keeps temperature, pH and conductivity per system, so when a clutch fails you can look back at the week rather than argue about it. |
+| An experiment | A tank's fish or a clutch's larvae go under a treatment as a cohort, following survival, length or a phenotype ([Experiments](https://biomanager.org/guide/experiments)). |
+
+What you stop doing: keeping mating returns on a whiteboard, counting a line's clutches from memory, and discovering a water problem only when the fish tell you.
 
 - **Tanks**: **New tank** or **Add many** (consecutive IDs), on a table or a rack grid. Purposes: stock, breeding, mating, experiment, quarantine. Select tanks to set purpose or owner, move, or mark genotyping. The tank view also has the **Sacrifice log**.
 
@@ -676,6 +643,18 @@ Source: https://biomanager.org/guide/zebrafish
 ## Flies and worms
 
 Vials and plates on racks, with flips that follow the temperature.
+
+### What this does for your week
+
+Fly and worm stocks are lost by missing a flip, and flips depend on the temperature the stock is kept at. BioManager works the schedule out per incubator rather than leaving it to a rota on the wall.
+
+| Where a stock lives | Incubators hold racks or boxes, and each incubator has its temperature — which is what decides how often its vials need flipping. |
+|---|---|
+| Knowing what is due | **Schedule** shows what is overdue, what is due today, and what is coming in the next week or month. Above each rack, the line says when it was last flipped and when the next is due, red when it has slipped. |
+| Doing the flips | Mark a vial **Flipped** (worms: **Chunked**) as you go, a whole rack at a time if that is how you work ([Many at once](https://biomanager.org/guide/many-at-once)). |
+| Keeping a line safe | Worms: **New frozen lot** records a freeze, and you thaw one onto a plate when you need it, so a line survives a missed flip. |
+
+What you stop doing: keeping the flip rota on a whiteboard, working out by hand which 25 °C vials are due before the 18 °C ones, and finding out a stock was lost two weeks after it happened.
 
 Drosophila keeps **vials** in racks inside incubators; C. elegans keeps **plates** in boxes. Tabs: the vials or plates, **Schedule**, **Experiments**, **Genotypes**, **Incubators & racks**, **Frozen** (worms) and **Settings**.
 
@@ -733,51 +712,26 @@ Source: https://biomanager.org/guide/any-organism
 
 ---
 
-## Experiments, for every animal
-
-Treatment groups, doses from body weight, readouts and the stats, for every animal.
-
-Mice, zebrafish, flies, worms and your own organisms all have an **Experiments** tab beside their other tabs (Mice and Cages; Tanks and Fish; the vials or plates). **New experiment** there can start with a whole cage, tank, rack or housing of them. One page shows each experiment, and **All experiments** on it goes back to the tab.
-
-| Mice | Mice, or a whole cage. Body weight (or tumour volume, a clinical score, survival). Injections, challenges, treatments, surgery, behaviour, sampling, imaging. |
-|---|---|
-| Zebrafish | Fish rows, a whole tank, or a clutch's larvae. Survival (how many of those at the start are alive), standard length or a phenotype. Drug in the water, microinjection, heat shock, injury or fin clip. |
-| Flies and worms | Vials or plates, or a whole rack; say how many each started with. They have no body weight: survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi feeding, temperature shifts, starvation, infection, flipping to fresh food. |
-| Any other organism | Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score. |
-
-Any experiment can follow a readout of its own (**Readout → Something else…**): a number for each, or how many of those at the start.
-
-#### The page
-
-- **The experiment** on top: name, status, start (day 1), end, readout and description, saved as you type.
-
-- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too.
-
-- **Record manipulation** records what was just done — *the HDM group got Tamoxifen 20 mg/kg i.p. today* — or a day of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume given the solution (*10 mg/mL*). Tick the animals it was done to, pick the **Reagent used** (its lot is kept; an expired one is flagged) and, if you want, **make a sample record for each one** in Samples, with the animal as its source.
-
-- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own.
-
-#### The regimen
-
-**Regimen** lists what is to be done and on which days: the kind, what, dose, route, solution, group and days (`1`, `2-5`, `2/3/4/5`, `1, 8, 15`). Day 1 is the start date. The days to do are on the calendar, and the experiment's owner gets a notification each morning of what is due (turn it off in **Settings → Notifications → Experiments**). Nothing is done until someone records it on the page. **Save as a regimen…** keeps it to plan the next cohort from.
-
-#### At the bench, and afterwards
-
-- **Bench mode** (scan its QR code with a phone): pick what you are doing, then one animal at a time with big numbers — type each weight or count, or give each today's manipulation and tap **Given ✓**; record it at the end. **Scan a card** reads a cage, tank or vial card with the phone's camera and jumps to the animal in it.
-
-- **Export** downloads an Excel workbook: the readout, long (for Prism or R) and wide, each animal's manipulations, and the tests by day.
-
-- **Add to notebook** makes your notebook page for the experiment, with a live view of its manipulations and readout (`/experiment` adds one to any page; **Freeze a copy** keeps it as it is now).
-
-Source: https://biomanager.org/guide/experiments
-
----
-
 ## Plasmids
 
 Plasmid records with their sequence and map, and the box each tube is in.
 
+### What this does for your cloning
+
+A construct is only as good as what you can still prove about it a year later: what it was built from, which primers made it, which tube in the freezer is the real one, and whether the sequence in the file is the sequence in the tube. These pages keep the whole loop in one place instead of across SnapGene files, a primer spreadsheet and a box diagram.
+
+| Designing it | **Assemble a plasmid** builds the next construct out of the ones you already have — digest and ligate, Gibson or Golden Gate — and the product records what it was made from, so a year later the family tree answers the question instead of your memory. |
+|---|---|
+| The primers it needs | Primers the wizard designs, and any you draw on a map yourself, land in the lab's **Primers** database marked *to order*, with the plasmid beside them. Tick them and **Copy for ordering** hands the list to your supplier. |
+| Checking what you got | **Detect features** marks the lab's known elements on a new map, and the sequencing reads that confirmed the clone live on the plasmid itself under **Files**, with the gel photo. |
+| Finding the tube | Every plasmid has a box position, and the bacteria carrying it sit in **Glycerol stocks** with their own box — so "which tube" has an answer that is not a colleague's memory. |
+| Handing it on | A virus made from it names the plasmid; the plasmid's page lists what was made from it. Download it as GenBank whenever someone outside the lab asks. |
+
+What you stop doing: keeping maps in one folder and primers in another spreadsheet, retyping a primer to order it, guessing which miniprep is the good one, and losing what a construct was built from when the person who built it leaves.
+
 - At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar because each names the plasmid it came from.
+
+### The plasmid sheet
 
 - Show them as a **Table**, by storage **Boxes**, or as a **List**; chips for *Mine*, *Has sequence*, *In a box*.
 
@@ -785,25 +739,35 @@ Plasmid records with their sequence and map, and the box each tube is in.
 
 - **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
+### The sequence and its map
+
 - Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+
+*A plasmid map*
+
+### Knowing what a sequence holds
 
 - The **Feature library** (a link at the top of Plasmids) keeps the lab's elements by sequence: promoters, ITRs and LTRs, WPRE, resistance genes, tags. **Add to library**, above a well-annotated map (a SnapGene or Addgene file, say), keeps its named features there; an admin can **Collect from every plasmid**. On the library page, **Read elements from files** takes them straight from annotated files — the GenBank a repository gives you, a SnapGene `.dna`, a vendor's map — several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because a sequence typed from memory and wrong by one base would mislabel every map in the lab. An admin can also fetch the **common-features pack** — about 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open research archive when you ask for it (about a minute; the page shows it when it is in). Its authors built it by exporting a commercial program's published library, so check anything you rely on; elements you added yourself always win over it. Search the library by name or by sequence. On any other plasmid, **Detect features** marks each library element wherever it is, on either strand and across the origin, and keeps the map as it was in **Versions**.
 
-- **Assemble a plasmid**, from the top of Plasmids or from above any map, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). When you cut a plasmid, only the enzymes that actually have a site in it are offered, with how many sites each has and the single cutters first, and the piece you pick is drawn on a ring of the plasmid it came off, so you can see which part comes out before you take it. Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
-
 - If your lab runs a server, whoever looks after it can install **pLannotate** (a separate, free program) and **Annotate with pLannotate** then appears above the map. It finds elements by comparing sequences rather than matching them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will miss. Everything it marks is kept in **Versions**, so it can be undone.
 
-- **Files**, on **Storage**, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it, gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an admin, can take it off again. They come with your data in **Export my data**.
+### Building a new plasmid
+
+- **Assemble a plasmid**, from the top of Plasmids or from above any map, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). When you cut a plasmid, only the enzymes that actually have a site in it are offered, with how many sites each has and the single cutters first, and the piece you pick is drawn on a ring of the plasmid it came off, so you can see which part comes out before you take it. Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
 
 - A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
 
+### Tubes, boxes and files
+
+- **Files**, on **Storage**, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it, gel photos, the vendor's datasheet. Say in one line what they show. Pictures show a thumbnail; whoever added a file, or an admin, can take it off again. They come with your data in **Export my data**.
+
 - Each tube keeps its miniprep's **Concentration** (ng/µL) and **260/280**, in the sheet and on its **Storage** tab, which also lists the notebook pages that link it.
+
+### Sharing and bulk changes
 
 - **Belongs to**: *Personal*, or *Lab common* — anyone can edit it (a shared stock plasmid), while only its owner or an admin changes whose it is or deletes it. The *Lab common* chip lists them.
 
 - Select plasmids to set owner, resistance or Belongs to, move them to a box, or delete. Moved into another box with no position, a plasmid takes its next free cell. **Import from Excel** brings in your old list.
-
-*A plasmid map*
 
 Source: https://biomanager.org/guide/plasmids
 
@@ -812,6 +776,18 @@ Source: https://biomanager.org/guide/plasmids
 ## Samples, orders, reagents, antibodies, viruses
 
 Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
+
+### What this does for your week
+
+Buying something and finding it again are the same chain, and it usually breaks where one person orders and another unpacks the box. BioManager keeps that chain in one place, so the shelf matches the record.
+
+| Someone needs something | **New order** will not go out without item, vendor, catalogue number and quantity, which is what makes a reorder possible months later. |
+|---|---|
+| While it is coming | Requested → Ordered → Received, one tap each, on a table or a board you drag cards across. Everyone can see what is on its way instead of asking. |
+| The box arrives | Mark it received and BioManager offers to put it on the shelf — [Receive an order into stock](https://biomanager.org/guide/receive-an-order) makes the reagent, antibody or virus record with the vendor, catalogue number and lot already filled in. |
+| Months later | Expiring soon and Expired chips, and both on [Home](https://biomanager.org/guide/home-page). On anything running low, **Order again** opens a new order already filled in from the old one. |
+
+What you stop doing: ordering a second one because nobody knew the first had arrived, retyping a catalogue number off a box, and finding the antibody expired the morning you needed it.
 
 One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
@@ -826,7 +802,7 @@ One engine, nine starting points, each with its own columns and statuses. Viruse
 | Cell lines | A frozen vial of each line or clone: species, parent, passage, freeze date, cells per vial, medium, selection, mycoplasma result and date, and its place in the LN₂ boxes. In stock, thawed, used up, discarded. |
 | Custom list | Whatever you define. |
 
-#### Ordering, start to shelf
+### Ordering, start to shelf
 
 1. **New order.** Item, vendor, catalogue number and quantity are required (starred), so no order goes out half-filled. Type an item or catalogue number the lab has used before and pick it: the vendor, price and grant fill in from last time. The lab's admins are told of each new request.
 
@@ -836,7 +812,7 @@ One engine, nine starting points, each with its own columns and statuses. Viruse
 
 4. **Running low?** On any reagent, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
 
-#### Every inventory
+### Every inventory
 
 - **Mine** and **Lab common** keep your own stock apart from the lab's shared shelf.
 
@@ -855,6 +831,170 @@ One engine, nine starting points, each with its own columns and statuses. Viruse
 *The orders board*
 
 Source: https://biomanager.org/guide/samples-and-orders
+
+---
+
+## Receive an order into stock
+
+When an order arrives, mark it received and add it to stock, with its details already filled in.
+
+Who and where: Anyone who may edit the order · Desktop and lab server
+
+1. Open Orders and find the order. The status chips, *Requested, Ordered, Received, Cancelled*, narrow the sheet to one stage.
+
+2. Mark it received: set its **Status** to *received*, or on the **Board**, drag its card to the *Received* column.
+
+3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, antibodies or viruses it goes into, and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
+
+4. Press **Add to stock**.
+
+5. The new record opens with its name, vendor, catalogue number, lot, quantity and expiry already filled in from the order. Add where it is kept. If that database needs a field the order doesn't have, its form opens filled in from the order instead: fill in the rest and save.
+
+From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other. The person who requested the order is notified as it moves. When it runs low, **Order again** (the cart button on the reagent, antibody or virus) opens a new order with its details.
+
+Related: [Samples, orders, reagents, antibodies, viruses](https://biomanager.org/guide/samples-and-orders) [Notifications](https://biomanager.org/guide/notifications)
+
+Source: https://biomanager.org/guide/receive-an-order
+
+---
+
+## Experiments, for every animal
+
+Treatment groups, doses from body weight, readouts and the stats, for every animal.
+
+### What this does for your week
+
+An experiment is where a colony turns into data, and it is where records usually fall apart: doses on a paper sheet, weights in one person's phone, the groups remembered rather than written. This page keeps the regimen, the animals and the readout together, so the export is the experiment.
+
+| Before it starts | Name it, set day 1 and the readout, and pull in the animals — a tank's fish or a cohort of mice — so the groups are written down before the first dose. |
+|---|---|
+| Each manipulation | **Record manipulation** writes what was just done to a whole group — Tamoxifen 20 mg/kg i.p. today — and doses are worked out from each animal's body weight rather than in your head. |
+| At the bench | Scan the experiment's QR code with a phone for bench mode: one animal at a time, gloves on, recorded where you stand ([At the bench](https://biomanager.org/guide/phones-and-cage-cards)). |
+| Afterwards | The chart shows the readout by group over the days. **Export** gives an Excel workbook — long for Prism or R, wide for a glance, with every animal's manipulations beside it. |
+
+What you stop doing: transcribing a dosing sheet, recalculating mg/kg at the cage, and rebuilding the groups from memory when it is time to analyse.
+
+Mice, zebrafish, flies, worms and your own organisms all have an **Experiments** tab beside their other tabs (Mice and Cages; Tanks and Fish; the vials or plates). **New experiment** there can start with a whole cage, tank, rack or housing of them. One page shows each experiment, and **All experiments** on it goes back to the tab.
+
+| Mice | Mice, or a whole cage. Body weight (or tumour volume, a clinical score, survival). Injections, challenges, treatments, surgery, behaviour, sampling, imaging. |
+|---|---|
+| Zebrafish | Fish rows, a whole tank, or a clutch's larvae. Survival (how many of those at the start are alive), standard length or a phenotype. Drug in the water, microinjection, heat shock, injury or fin clip. |
+| Flies and worms | Vials or plates, or a whole rack; say how many each started with. They have no body weight: survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi feeding, temperature shifts, starvation, infection, flipping to fresh food. |
+| Any other organism | Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score. |
+
+Any experiment can follow a readout of its own (**Readout → Something else…**): a number for each, or how many of those at the start.
+
+### The page
+
+- **The experiment** on top: name, status, start (day 1), end, readout and description, saved as you type.
+
+- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too.
+
+- **Record manipulation** records what was just done — *the HDM group got Tamoxifen 20 mg/kg i.p. today* — or a day of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume given the solution (*10 mg/mL*). Tick the animals it was done to, pick the **Reagent used** (its lot is kept; an expired one is flagged) and, if you want, **make a sample record for each one** in Samples, with the animal as its source.
+
+- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own.
+
+### The regimen
+
+**Regimen** lists what is to be done and on which days: the kind, what, dose, route, solution, group and days (`1`, `2-5`, `2/3/4/5`, `1, 8, 15`). Day 1 is the start date. The days to do are on the calendar, and the experiment's owner gets a notification each morning of what is due (turn it off in **Settings → Notifications → Experiments**). Nothing is done until someone records it on the page. **Save as a regimen…** keeps it to plan the next cohort from.
+
+### At the bench, and afterwards
+
+- **Bench mode** (scan its QR code with a phone): pick what you are doing, then one animal at a time with big numbers — type each weight or count, or give each today's manipulation and tap **Given ✓**; record it at the end. **Scan a card** reads a cage, tank or vial card with the phone's camera and jumps to the animal in it.
+
+- **Export** downloads an Excel workbook: the readout, long (for Prism or R) and wide, each animal's manipulations, and the tests by day.
+
+- **Add to notebook** makes your notebook page for the experiment, with a live view of its manipulations and readout (`/experiment` adds one to any page; **Freeze a copy** keeps it as it is now).
+
+Source: https://biomanager.org/guide/experiments
+
+---
+
+## Notebook and utilities
+
+Notebook pages, protocols, data sheets, signing, and the bench calculators.
+
+### Pages
+
+- Pages in **Topics**, written like a document and kept as Markdown. A new page goes in the topic you have open, or in *Inbox* when none is (experiments and meetings go to their own topics). Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
+
+- Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`, for action items); the page and the record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
+
+- **Daily log** (*Today*) and **Meetings**: a presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
+
+- An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
+
+### Experiments and protocols
+
+- **Experiments**: aim, setup, samples and lot numbers, steps, results. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
+
+- **Colony experiment** (`/experiment`) shows an experiment on any of your animals in the page: each day's manipulation, when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first weight, with the manipulation days marked). It stays up to date; **Freeze a copy** keeps what it shows now in the page, so later changes to the experiment don't alter your record. On the experiment itself, **Add to notebook** makes your page for it with this block already in.
+
+- **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time. **Protocols** in the sidebar (or `/protocol`) opens the library: the lab's protocols and a dozen common ones built in, to insert or copy.
+
+### Data and calculators
+
+- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes.
+
+- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
+
+### Signing a page
+
+When a page should be the record of your work, **Sign** it — your choice, page by page; nothing asks you to. You confirm who you are (your password, or your user name if you sign in with Google or Microsoft) and what signing means. Its exact text is fingerprinted and kept as a version, any live experiment in it is frozen as it is then, and the page is locked: nobody can change or delete it. A lab mate can **Witness** it. To change it, its owner **Amends** it with a reason; the reason and every signature stay with the page, each showing whether the page still reads as it did when signed.
+
+### Working together
+
+Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Tags and search** work across every page you can open.
+
+### Utilities
+
+**Utilities**, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in **Find a calculator** (plain letters do: *a260*, *ddct*, or what you are doing, like *nanodrop*); the answer changes as you type, each remembers what you last typed in it on this computer, and **Reset** goes back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.
+
+- **Solutions & buffers**: Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔ molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight, from the lab's own list first (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one); one it doesn't know leaves the weight for you to type.
+
+- **DNA & RNA**: Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change; transformation efficiency.
+
+- **Protein**: Concentration from A₂₈₀; MW, ε and pI from the sequence; a standard curve (BCA, Bradford, ELISA) read off for your samples; SDS-PAGE gel recipes; µg per lane.
+
+- **Cells**: Haemocytometer counts; seeding plates (by vessel); doubling time; scaling a transfection; virus for an MOI; lentivirus titer from % positive cells; freezing down; drug and vehicle for treatments.
+
+- **Bacteria & yeast**: OD₆₀₀ to cells and dilutions; time to reach an OD; antibiotic for plates and media.
+
+- **Centrifuge, animals & gels**: rpm ↔ × g; dose by body weight; agarose gels; radioactive decay.
+
+- **Numbers & units**: Mean, SD, SEM and CV; animals or samples per group; a unit converter.
+
+**Reference tables**, below the calculator: culture vessels, buffers, antibiotics, agarose gels, isotopes and molecular weights. A link to a calculator (`…/utilities#dilution`) opens it.
+
+*Utilities*
+
+Source: https://biomanager.org/guide/notebook
+
+---
+
+## Sign a notebook page
+
+When a page should be the record of your work, sign it: its text is fingerprinted and the page is locked.
+
+Who and where: Whoever may edit the page · Desktop and lab server
+
+1. Open the page in the Notebook.
+
+2. Press **Sign** at the top of the page. The page's owner, and anyone it is shared with to edit, can sign it; anyone else can witness it once it is signed.
+
+3. Under **What you are saying**, choose whether you did this work or reviewed the page.
+
+4. Confirm who you are: **Your password**, or, if you sign in with Google or Microsoft, your user name.
+
+5. Press **Sign and lock**.
+
+Its exact text is fingerprinted and kept as a version, any live experiment in it is frozen as it is then, and the page is locked: nobody can change or delete it. The button now says **Signed**; it lists every signature, each showing whether the page still reads as it did when signed. A lab mate can open it and **Witness** the page.
+
+> **Changing a signed page** Its owner presses **Signed**, writes **Why it is being amended** and presses **Open to amend**. The reason and every signature stay with the page; sign it again when it is done.
+
+Related: [Signing a page](https://biomanager.org/guide/notebook#signing) [Notebook and utilities](https://biomanager.org/guide/notebook)
+
+Source: https://biomanager.org/guide/sign-a-notebook-page
 
 ---
 
@@ -888,71 +1028,52 @@ Source: https://biomanager.org/guide/calendar
 
 ---
 
-## Notebook and utilities
+## Book equipment
 
-Notebook pages, protocols, data sheets, signing, and the bench calculators.
+Book time on a shared instrument in the calendar, so two people never turn up for the confocal at once.
 
-#### Pages
+Who and where: Anyone in the lab · Desktop and lab server
 
-- Pages in **Topics**, written like a document and kept as Markdown. A new page goes in the topic you have open, or in *Inbox* when none is (experiments and meetings go to their own topics). Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
+1. Open the Calendar. If the instrument isn't listed under **Equipment** in its sidebar, press **Manage** there, give its **Name** and **Where**, and press **Add instrument**. **Edit** one there to rename it, say where it is or change its colour; its bookings follow.
 
-- Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`, for action items); the page and the record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
+2. Press the arrow beside **New event** and choose **Book equipment**. Or press **New event** and choose **Booking**.
 
-- **Daily log** (*Today*) and **Meetings**: a presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
+3. Pick the **Instrument**, the **From** and **To** times, and say **What for**.
 
-- An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
+4. To book it again and again, choose **Every day**, **Every weekday** or **Every week**, and the date it runs **until**. Each repeat is a booking of its own.
 
-#### Experiments and protocols
+5. Press **Save**.
 
-- **Experiments**: aim, setup, samples and lot numbers, steps, results. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
+The booking is on the calendar; drag it to move it. A booking that overlaps another is refused, saying who has it and when, and if one repeat clashes, none is made. **Duplicate**, on an open booking, books the same instrument and times on another day.
 
-- **Colony experiment** (`/experiment`) shows an experiment on any of your animals in the page: each day's manipulation, when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first weight, with the manipulation days marked). It stays up to date; **Freeze a copy** keeps what it shows now in the page, so later changes to the experiment don't alter your record. On the experiment itself, **Add to notebook** makes your page for it with this block already in.
+Related: [Calendar](https://biomanager.org/guide/calendar) [Home](https://biomanager.org/guide/home-page)
 
-- **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time. **Protocols** in the sidebar (or `/protocol`) opens the library: the lab's protocols and a dozen common ones built in, to insert or copy.
-
-#### Data and calculators
-
-- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes.
-
-- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
-
-#### Signing a page
-
-When a page should be the record of your work, **Sign** it — your choice, page by page; nothing asks you to. You confirm who you are (your password, or your user name if you sign in with Google or Microsoft) and what signing means. Its exact text is fingerprinted and kept as a version, any live experiment in it is frozen as it is then, and the page is locked: nobody can change or delete it. A lab mate can **Witness** it. To change it, its owner **Amends** it with a reason; the reason and every signature stay with the page, each showing whether the page still reads as it did when signed.
-
-#### Working together
-
-Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Tags and search** work across every page you can open.
-
-#### Utilities
-
-**Utilities**, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in **Find a calculator** (plain letters do: *a260*, *ddct*, or what you are doing, like *nanodrop*); the answer changes as you type, each remembers what you last typed in it on this computer, and **Reset** goes back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.
-
-- **Solutions & buffers**: Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔ molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight, from the lab's own list first (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one); one it doesn't know leaves the weight for you to type.
-
-- **DNA & RNA**: Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change; transformation efficiency.
-
-- **Protein**: Concentration from A₂₈₀; MW, ε and pI from the sequence; a standard curve (BCA, Bradford, ELISA) read off for your samples; SDS-PAGE gel recipes; µg per lane.
-
-- **Cells**: Haemocytometer counts; seeding plates (by vessel); doubling time; scaling a transfection; virus for an MOI; lentivirus titer from % positive cells; freezing down; drug and vehicle for treatments.
-
-- **Bacteria & yeast**: OD₆₀₀ to cells and dilutions; time to reach an OD; antibiotic for plates and media.
-
-- **Centrifuge, animals & gels**: rpm ↔ × g; dose by body weight; agarose gels; radioactive decay.
-
-- **Numbers & units**: Mean, SD, SEM and CV; animals or samples per group; a unit converter.
-
-**Reference tables**, below the calculator: culture vessels, buffers, antibiotics, agarose gels, isotopes and molecular weights. A link to a calculator (`…/utilities#dilution`) opens it.
-
-*Utilities*
-
-Source: https://biomanager.org/guide/notebook
+Source: https://biomanager.org/guide/book-equipment
 
 ---
 
 ## Who can do what
 
 Who can see and change what in a lab: members, owners and admins.
+
+### The roles
+
+Everyone in a lab has one role. A role never takes away what you own: it adds what else you may touch.
+
+| Member | Changes their own records, and the lab's shared ones. Most people in a lab are members. |
+|---|---|
+| Animal care | Technicians and vets: may change *any* lab member's animals, cages, tanks and vials — weights, moves, flips, health. Other people's experiments, notebook pages and settings stay theirs. Their own records they keep like a member. |
+| Facility manager | Animal care, plus the facility itself: racks, rooms, incubators, water systems and each database's settings. Not accounts. |
+| Admin | Everything, including accounts, roles and [Lab setup](https://biomanager.org/guide/lab-setup), and the audit log. A lab needs at least one. |
+| [Guest](https://biomanager.org/guide/people-and-guests) | Someone outside the lab, on a pass that ends by itself after a day, three days, a week or 30 days. They see only what the pass opens, and can never keep a copy of the lab. |
+
+An admin changes a role in **Manage users**, and cannot change their own — so a lab can never lock its last admin out.
+
+### Which rule wins
+
+You may change a record if *any one* of these is true: you own it; it is shared with the lab or with a [project group](https://biomanager.org/guide/project-groups) you are in; or your role covers it. Nothing takes a permission away again, so you never have to work out which rule lost.
+
+### What is yours
 
 - **You edit what you own** — your mice, cages, vials, plasmids and items.
 
@@ -969,6 +1090,18 @@ Who can see and change what in a lab: members, owners and admins.
 - **Racks & boxes** (admins, in the account menu) says who may resize, rename or delete each rack, box and incubator, in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.
 
 When a record isn't yours, BioManager says whose it is instead of just refusing.
+
+### When someone leaves the lab
+
+Their records do not disappear — mice, cages, plasmids and pages stay exactly where they are, still in their name, so the colony and the notebook stay whole. To hand the work on:
+
+1. On each sheet, select their records and use **Set field → Owner** to put them in the new person's name. ([Many at once](https://biomanager.org/guide/many-at-once) does a whole sheet in one go.)
+
+2. An admin sets their role, in **Manage users**, to whatever is right now they have gone.
+
+3. A guest pass needs nothing: it ends on its own date.
+
+A notebook page they signed stays signed in their name — that is the point of signing, and nobody can change it afterwards, including an admin.
 
 ### Troubleshooting
 
@@ -1028,6 +1161,40 @@ Source: https://biomanager.org/guide/people-and-guests
 
 ---
 
+## Invite someone to the lab
+
+Bring a new member onto your lab server: they make their own account, and an admin lets them in.
+
+Who and where: Admins · Lab server
+
+1. Send them your lab server's address.
+
+2. They open it, press **Create an account** and fill it in. They can't sign in until an admin approves it. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in methods**.
+
+3. Admins are notified of the sign-up. Open **More → Manage users** at the foot of the sidebar.
+
+4. Find the account marked *awaiting approval*, press **Approve**, and confirm.
+
+5. For more than a member's rights, choose their role — *Member*, *Animal care*, *Facility manager* or *Admin* — and press **Set**.
+
+They sign in with their own account and work as a member: they edit what they own and what is shared, and see the lab's databases. To share work with a few of them, put them in a [project group](https://biomanager.org/guide/project-groups).
+
+> **Someone from outside the lab?** Give them a guest pass for a day to a month: **More → Guests**, who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**.
+
+### Troubleshooting
+
+#### They forgot their password
+
+An admin resets it in **Manage users**.
+
+*Manage users, where a new person is approved and given a role*
+
+Related: [People and guests](https://biomanager.org/guide/people-and-guests) [Who can do what](https://biomanager.org/guide/who-can-do-what) [Run it for your lab](https://biomanager.org/server)
+
+Source: https://biomanager.org/guide/invite-someone
+
+---
+
 ## Lab setup
 
 Turn databases on or off, and set your lab's name, time zone and dates.
@@ -1056,41 +1223,11 @@ Source: https://biomanager.org/guide/lab-setup
 
 ---
 
-## Phones and cage cards
-
-Use BioManager on a phone, and print cage cards and labels that open records when scanned.
-
-Who and where: Lab server for phones
-
-- **Android**: Install `BioManager-Android.apk` from the [download page](https://biomanager.org/download) (allow your browser to install apps when asked), type your lab server's address once, and you're in. The **Scan** button reads cage cards.
-
-- **iPhone and iPad**: Open the server in **Safari** and tap **Share → Add to Home Screen**. BioManager gets its own icon and opens full screen like an app; your camera scans cage cards. (Android without the app: Chrome → **⋮ → Install app**.)
-
-- **Cage cards**: **Cages → Cage cards** prints cards sized for standard card stock — owner, purpose, where it goes (rack and position), animals with how many of each sex, genotype and a QR code. Scanning it opens that cage, ready to edit, at the rack. **Tank labels** (Zebrafish), **Labels** on a fly or worm database, and **Labels** on ticked samples, reagents or any inventory's rows do the same for tanks, vials and tubes.
-
-- **Label printers**: **Print on** chooses a sheet of cards for any printer, or a label printer's roll: Brother QL (62 × 29, 90 × 29, 100 × 62 mm), Zebra (2 × 1, 3 × 1, 4 × 2, 4 × 2.5 in) or cryo-tube labels. It then prints one label a page, typed to fit; in the print dialog pick the label printer and that label size, margins **None**. Your choice is remembered. For tubes, **On each label** chooses what a label says (box, position, lot, owner, a column such as concentration, the day printed), remembered for each database, and **Two lines for long text** wraps a long name or place instead of cutting it. For a Zebra, **Download for Zebra (.zpl)** gives the labels in its own language; or an admin adds the Zebra's address on the lab's network once (under **Send labels straight to a Zebra**), and **Send to Zebra** prints them at once.
-
-> Phones reach a **server** , or a desktop that shares its lab on the network ([Devices](https://biomanager.org/guide/your-data#devices)): otherwise the app on one computer is private to that computer.
-
-*A cage opened on a phone after scanning its card*
-
-*Printable cage cards*
-
-### Troubleshooting
-
-#### My phone can't reach the server
-
-Check the address with your admin; that you're on the lab's network, VPN or Tailscale; and, if your lab uses its own certificate, that it's installed on the phone.
-
-Source: https://biomanager.org/guide/phones-and-cage-cards
-
----
-
 ## Your data and backups
 
 Where your data is kept, how it's backed up, and how to move it.
 
-#### The desktop app
+### The desktop app
 
 | macOS | `~/Library/Application Support/Biomanager/` |
 |---|---|
@@ -1105,11 +1242,11 @@ Where your data is kept, how it's backed up, and how to move it.
 
 > **Don't keep BioManager's data in Dropbox, OneDrive, Google Drive or iCloud Drive.** Syncing corrupts database files. BioManager warns you if it finds itself in one.
 
-#### A lab server
+### A lab server
 
 A server backs up every night, restores the newest backup every week to prove it works, and can keep encrypted copies off-site — see [Keeping the data safe](https://biomanager.org/server#safe).
 
-#### A copy of the lab on your computer
+### A copy of the lab on your computer
 
 The desktop app can keep a copy of your lab server's whole database, so the lab's records live on more than one machine:
 
@@ -1121,7 +1258,7 @@ The desktop app can keep a copy of your lab server's whole database, so the lab'
 
 The copies sit beside the app's own data, which they never touch. An admin's copy is the whole lab, and can rebuild the server if it's ever lost ([how](https://biomanager.org/server#move)): treat a computer holding one like the server itself. A member's copy holds what they can see in the app: no one's password, not other people's private notebook pages or personal databases, not the Audit log. Guests can't keep a copy.
 
-#### One lab on many devices
+### One lab on many devices
 
 One device holds the lab's **master copy**; every other one works on it through its address, so nothing is ever merged and nothing written in two places is lost. **Settings → Devices** shows which device it is, and every computer linked to the lab (by a key from **Copies of the lab**): how it uses the lab, its version, when it was last heard from.
 
@@ -1137,11 +1274,11 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 - If the computer holding the master copy is lost, an admin on the old master chooses **Make this the master again**: what was changed on the lost computer since is not there.
 
-#### Everyone
+### Getting your data out
 
 **Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
 
-#### What BioManager sends its makers
+### What BioManager sends its makers
 
 Your records never leave your computer or your lab's server. So that BioManager's makers know how many labs use it, each installation sends one short message a day, with counts only:
 
@@ -1156,6 +1293,42 @@ Your records never leave your computer or your lab's server. So that BioManager'
 Never names, email addresses, anything anyone wrote, what your databases are called, or the computer's name or address. It goes to PostHog, which is asked not to work out where it came from. Admins see exactly what is sent on the **Usage report** (**Feedback → Usage report**) and can **Switch off** there; the setup survey asks first. On a server, `BIOMANAGER_TELEMETRY=0` (or `DO_NOT_TRACK=1`) in `.env` turns it off for good.
 
 Source: https://biomanager.org/guide/your-data
+
+---
+
+## Restore a backup
+
+Put the desktop app's lab back as it was, from your own backup or from the copy BioManager kept before an update.
+
+Who and where: Whoever uses that computer · Desktop app
+
+1. Quit BioManager.
+
+2. Open its data folder: `~/Library/Application Support/Biomanager/` on a Mac, `%APPDATA%\Biomanager\` on Windows, `~/.local/share/Biomanager/` on Linux. The lab's database is `data/biomanager.db`.
+
+3. Move `data/biomanager.db` somewhere safe, rather than deleting it.
+
+4. Put the backup in its place, named `biomanager.db`. From your Time Machine or File History copy of the folder; or one of the copies BioManager made before a new version changed the database, `data/backups/before-upgrade-….db` (the last ten are kept). Files added to records and pages are in the `uploads` folder; put it back from the same backup too.
+
+5. Open BioManager. To undo an update, open it with the version you had before.
+
+BioManager opens the lab as it was when that backup was made.
+
+> **Newer changes aren't in a backup** Everything entered since the backup was made is not in it. Keep the file you moved aside until you are sure.
+
+### On a lab server
+
+A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever looks after the server, and never deletes what it replaces: see `deploy/RUNBOOK.md` in the server bundle and [Keeping the data safe](https://biomanager.org/server#safe). For a mistake in a bulk change, **More → Batch history → Undo** is enough.
+
+### Troubleshooting
+
+#### BioManager won't start: the lab's database is an empty file
+
+The file is 0 bytes, so its records are not in it. Put back a backup as above, or delete the empty file to start a new lab.
+
+Related: [Your data and backups](https://biomanager.org/guide/your-data) [Undo and history](https://biomanager.org/guide/undo-and-history) [Keeping the data safe](https://biomanager.org/server#safe)
+
+Source: https://biomanager.org/guide/restore-a-backup
 
 ---
 

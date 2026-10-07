@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/assets/clips"
 # The front page's dock, in its order, then the Features page's cards. Most are
 # the launch posts' clips; census is made here.
-CLIPS = ["home", "census", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders",
+CLIPS = ["home", "census", "litter", "experiment", "calendar", "protocol", "datasheet", "links", "plasmid", "orders",
          # and the Features page's cards
          "flies", "new-database", "cards", "import", "search", "looks", "phone"]
 # Where the app sits in feature-clips.py's 1920×1080 plain frame: inside the
@@ -65,6 +65,34 @@ def load_feature_clips():
         d.scroll(360, seconds=1.2)
         d.wait(1.4)
 
+    def litter(d):
+        # Pups are born: one date, and BioManager works out weaning and
+        # genotyping. The zoom is on the dialog, then on what it answers.
+        d.goto("/colony?view=cages")
+        d.start()
+        d.wait(1.0)
+        born = d.page.locator("[data-litter-born] >> visible=true").first
+        d.move(born, 0.9)
+        d.wait(0.5)
+        born.click()
+        d.wait(1.0)
+        dialog = d.page.locator("#litter-born-modal").first
+        d.zoom(dialog, scale=1.7)
+        d.wait(1.0)
+        d.move("#litter-born-modal input[name=date_give_birth]", 0.7)
+        d.wait(1.0)
+        d.cover()
+        d.click("#litter-born-modal button:has-text('Record the litter')", after=2.0)
+        d.unzoom()
+        d.wait(0.6)
+        # The answer: weaning is due three weeks out, worked out for you.
+        said = d.page.locator(".flash-message").first
+        if said.count() and said.is_visible():
+            d.zoom(said, scale=1.9)
+            d.wait(2.4)
+            d.unzoom()
+        d.wait(0.8)
+
     def cards_desktop(d):
         # The launch post's cage-card walk, with its click on the Cage cards
         # button that is showing (the Cards view has one too, hidden).
@@ -82,6 +110,7 @@ def load_feature_clips():
     def clips():
         found, prepare = load()
         found["census"] = [("desktop", census)]
+        found["litter"] = [("desktop", litter)]
         if "cards" in found:
             found["cards"] = [("desktop", cards_desktop)] + found["cards"][1:]
         return found, prepare

@@ -24,7 +24,7 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -68,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html" aria-current="page">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -119,15 +135,16 @@
     <p class="summary">给新生的一窝每只仔鼠建一条小鼠记录，结果出来后再录入基因型。</p>
     <div class="badges"><span class="badge who">能编辑这个笼的人</span><span class="badge">桌面版和实验室服务器</span></div>
     <ol class="steps">
-      <li><a href="record-a-litter.html">记录产仔</a>之后，在<b>笼</b>标签页展开这个繁殖笼，点<b>基因型鉴定</b>。</li>
-      <li>核对<b>父本</b>和<b>母本</b>，填上<b>幼崽数</b>。<span class="sub">父本和母本默认是笼里的第一只雄鼠和第一只雌鼠。幼崽数是 1 到 40 的整数。</span></li>
-      <li>点<b>创建窝</b>。BioManager 建立这一窝（编号 L-1、L-2、L-3……），并为每只仔鼠建一条小鼠记录，状态为<i>待鉴定</i>。<span class="sub">这些仔鼠在这个笼里，负责人是你。</span></li>
-      <li>结果出来后找到这些仔鼠：展开的笼上点<b>在小鼠表格中查看</b>，列出这个笼的小鼠；或者在首页的<b>待基因型鉴定</b>卡片里看等待鉴定的小鼠，点<b>查看小鼠</b>打开小鼠表格。<span class="sub">鉴定日（P28，或实验室设置里选定的天数）会出现在首页和日历上，每天还会有一条通知提醒你哪些仔鼠在等鉴定。</span></li>
-      <li>在每只仔鼠的<b>基因型</b>单元格里填结果；性别还没填的也一起填上。单元格边输入边保存。</li>
-      <li>把每只仔鼠的<b>状态</b>从<i>待鉴定</i>改成它现在的用途，比如<i>繁殖鼠</i>或<i>实验</i>。<span class="sub">要一次改很多只，勾选它们，用<b>设置字段</b>。</span></li>
+      <li><a href="record-a-litter.html">记录产仔</a>之后，在 <b>笼</b> 标签页展开这个繁殖笼，点 <b>基因型鉴定</b>。</li>
+      <li>核对 <b>父本</b> 和 <b>母本</b>，填上 <b>幼崽数</b>。<span class="sub">父本和母本默认是笼里的第一只雄鼠和第一只雌鼠。幼崽数是 1 到 40 的整数。</span></li>
+      <li>点 <b>创建窝</b>。BioManager 建立这一窝（编号 L-1、L-2、L-3……），并为每只仔鼠建一条小鼠记录，状态为<i>待鉴定</i>。<span class="sub">这些仔鼠在这个笼里，负责人是你。</span></li>
+      <li>结果出来后找到这些仔鼠：展开的笼上点 <b>在小鼠表格中查看</b>，列出这个笼的小鼠；或者在首页的 <b>待基因型鉴定</b> 卡片里看等待鉴定的小鼠，点 <b>查看小鼠</b> 打开小鼠表格。<span class="sub">鉴定日（P28，或实验室设置里选定的天数）会出现在首页和日历上，每天还会有一条通知提醒你哪些仔鼠在等鉴定。</span></li>
+      <li>在每只仔鼠的 <b>基因型</b> 单元格里填结果；性别还没填的也一起填上。单元格边输入边保存。</li>
+      <li>把每只仔鼠的 <b>状态</b> 从<i>待鉴定</i>改成它现在的用途，比如<i>繁殖鼠</i>或<i>实验</i>。<span class="sub">要一次改很多只，勾选它们，用 <b>设置字段</b>。</span></li>
     </ol>
     <p class="result">状态还是<i>待鉴定</i>的仔鼠会一直留在首页的鉴定队列里，状态一改就离开队列。
       别人给你的小鼠录入基因型时，你会收到通知。</p>
+    <figure class="gshot"><a href="../../assets/screenshots/task-genotyping.webp" target="_blank" rel="noopener"><img src="../../assets/screenshots/task-genotyping.webp" alt="基因型鉴定：父母本，以及要为几只幼鼠建记录" loading="lazy" width="1336" height="564"></a><figcaption>基因型鉴定：父母本，以及要为几只幼鼠建记录</figcaption></figure>
     <p class="related"><span>相关：</span> <a href="record-a-litter.html">记录产仔</a> <a href="wean-a-litter.html">断奶分笼</a> <a href="home-page.html">首页</a> <a href="many-at-once.html">批量操作</a></p>
     <!-- /page -->
       <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="record-a-litter.html"><small>上一页</small>记录产仔</a><a class="next" href="wean-a-litter.html"><small>下一页</small>断奶分笼</a></nav>

@@ -24,7 +24,7 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -68,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -125,35 +141,35 @@
           修改保存不了（比如清空了必填项），单元格会变红并说明原因。</dd>
         <dt>圆点</dt>
         <dd>编号旁边的圆点表示存活或可用：活着的小鼠、在用的果蝇管、未完成的订购、有库存的试剂；灰色
-          表示不是。对动物来说，圆点颜色代表年龄：<b>蓝色</b>幼年，<b>绿色</b>成年，<b>红色</b>老龄（小鼠：8
+          表示不是。对动物来说，圆点颜色代表年龄：<b>蓝色</b> 幼年，<b>绿色</b> 成年，<b>红色</b> 老龄（小鼠：8
           周以下、8 到 30 周、30 周以上；斑马鱼：3 个月以下、到 18 个月、18 个月以上；果蝇管或线虫培养皿：子代还在发育、已成虫、
           已过转管或转板时间）。过期的试剂、抗体或病毒也是红色。把鼠标指向圆点就能看到含义。</dd>
         <dt>滚动和新建</dt>
         <dd>滚动的是整个页面，而不是表格：搜索框和按钮固定在窗口顶部，列名在它们下面，
-          计数在底部。<i>每页</i>（per page）下的<b>全部</b>（All）会列出所有行。左下角的<b>新建</b>（New）会在表格末尾添加一个空行，
+          计数在底部。<i>每页</i>（per page）下的 <b>全部</b> （All）会列出所有行。左下角的 <b>新建</b> （New）会在表格末尾添加一个空行，
           第一个单元格可以直接输入。小鼠品系、斑马鱼、斑马鱼品系、质粒或订购需要先填名字或鱼缸，
           所以这些会打开表单。</dd>
         <dt>打开一条记录</dt>
         <dd>铅笔图标会在对话框里打开完整记录，所有字段分组显示。新建记录也用同一个对话框。</dd>
         <dt>排序、列、导出、打印</dt>
-        <dd><b>排序</b>（Sort）可以按任意列，也可以点列标题。<b>列</b>（Columns）隐藏你不需要的列；拖动边缘调整宽度。<b>导出</b>（Export）
-          把你看到的行下载为 CSV（小鼠还可以导出 Excel 和 PDF）。<b>打印</b>（Print）输出一张干净的表。你的排序、筛选、隐藏的列
+        <dd><b>排序</b> （Sort）可以按任意列，也可以点列标题。<b>列</b> （Columns）隐藏你不需要的列；拖动边缘调整宽度。<b>导出</b> （Export）
+          把你看到的行下载为 CSV（小鼠还可以导出 Excel 和 PDF）。<b>打印</b> （Print）输出一张干净的表。你的排序、筛选、隐藏的列
           和列宽都会在那台电脑上记住。</dd>
         <dt>在手机上</dt>
-        <dd>表格变成每行一张卡片：编号和按钮在上面，下面按列名逐项显示。<b>列</b>（Columns）在这里同样可以隐藏
+        <dd>表格变成每行一张卡片：编号和按钮在上面，下面按列名逐项显示。<b>列</b> （Columns）在这里同样可以隐藏
           你不需要的内容。</dd>
         <dt>保存被拒绝时</dt>
         <dd>比如鱼缸 ID 已被占用：页面会告诉你原因，并重新打开填好你输入内容的表单，你只需改一个字段，而不是全部重填。</dd>
         <dt>视图</dt>
         <dd>视图切换在表格上方左侧，每个数据库都一样。适用的地方，表格还可以显示为
-          <b>笼架视图</b>（Rack grid）或<b>冻存盒视图</b>（Box grid）：每个格子显示记录的名称和位置；拖动格子就能移动。在触屏上，点
-          <b>移动</b>（Move），点一个格子，再点目标位置——如果那里已有格子就互换，拖到<i>未放置</i>（Unplaced）则移出。订购还可以显示为
-          <b>看板</b>（Board），每种状态一列：把卡片往后拖即可。</dd>
+ <b>笼架视图</b> （Rack grid）或 <b>冻存盒视图</b> （Box grid）：每个格子显示记录的名称和位置；拖动格子就能移动。在触屏上，点
+ <b>移动</b> （Move），点一个格子，再点目标位置——如果那里已有格子就互换，拖到<i>未放置</i>（Unplaced）则移出。订购还可以显示为
+ <b>看板</b> （Board），每种状态一列：把卡片往后拖即可。</dd>
         <dt>输入建议</dt>
         <dd>文本列会提示以前输入过的内容，这样全实验室对同一个供应商或单位只有一种写法。</dd>
         <dt>很久以前结束的记录</dt>
         <dd>死亡超过 90 天的小鼠、清空的笼、用完的管子和丢弃的果蝇管不会列出，所以有多年
-          历史的鼠群也能很快打开。顶部有一行说明有多少条；<b>显示它们</b>（Show them）会列出全部。搜索仍能找到它们，
+          历史的鼠群也能很快打开。顶部有一行说明有多少条；<b>显示它们</b> （Show them）会列出全部。搜索仍能找到它们，
           小鼠导出也包括它们。</dd>
       </dl>
     <section class="trouble">

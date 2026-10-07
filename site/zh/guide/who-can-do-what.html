@@ -24,7 +24,7 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -68,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html" aria-current="page">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -118,37 +134,69 @@
     <h1>谁能做什么</h1>
     <p class="summary">实验室里谁能看、谁能改：成员、负责人和管理员。</p>
 
+      <h2 id="roles">角色</h2>
+      <p>实验室里每个人都有一个角色。角色不会收走你自己的记录，只会增加你还能动的东西。</p>
+      <table class="gtable">
+        <tr><th>成员</th><td>可以修改自己的记录，以及实验室共享的记录。实验室里大多数人都是成员。</td></tr>
+        <tr><th>动物护理</th><td>技术员和兽医：可以修改<i>任何</i>成员的动物、笼、鱼缸和管——体重、转移、换管、健康状况。别人的实验、实验记录本页面和设置仍归他们自己。自己的记录则和成员一样。</td></tr>
+        <tr><th>设施管理员</th><td>动物护理的权限，再加上设施本身：鼠架、房间、培养箱、水系统，以及各数据库的设置。不包括账号。</td></tr>
+        <tr><th>管理员</th><td>所有权限，包括账号、角色、<a href="lab-setup.html">实验室设置</a>和审计日志。每个实验室至少要有一位。</td></tr>
+        <tr><th><a href="people-and-guests.html">访客</a></th><td>实验室以外的人，持有到期自动失效的通行证（1 天、3 天、1 周或 30 天）。只能看到通行证开放的内容，也不能保留实验室副本。</td></tr>
+      </table>
+      <p>管理员在 <b>管理用户</b> 里更改角色，但不能更改自己的——这样实验室永远不会把最后一位管理员关在门外。</p>
+      <h2 id="what-applies">以哪条规则为准</h2>
+      <p>只要满足<i>其中一条</i>，你就可以修改这条记录：它是你的；它共享给了实验室或你所在的<a href="project-groups.html">项目组</a>；
+        或者你的角色涵盖它。权限只会叠加、不会互相抵消，所以你不用去想哪条规则「赢了」。</p>
+      <h2 id="owning">What is yours</h2>
       <ul>
         <li><b>你能编辑自己的东西</b>——你的小鼠、笼、果蝇管、质粒和物品。</li>
-        <li><b>共享笼和任何标为实验室公用的东西</b>属于全实验室。用途为<i>繁殖笼</i>（Breeder）的笼
+        <li><b>共享笼和任何标为实验室公用的东西</b> 属于全实验室。用途为<i>繁殖笼</i>（Breeder）的笼
           默认是<i>共享</i>（Shared）；其他笼（实验笼、<i>Breeding</i> 笼）默认是<i>个人</i>（Personal）。只有笼的负责人或
           管理员可以把笼设为共享、设为个人或转给别人；管理员和动物饲养人员仍然能查看和修改所有
           笼。</li>
         <li><b>所有人都能看到实验室的数据库</b>，因为有漏洞的普查就不算普查。</li>
-        <li><b>个人数据库</b>（图块上显示 <i>Just you</i>）只有负责人和管理员能看到；
+        <li><b>个人数据库</b> （图块上显示 <i>Just you</i>）只有负责人和管理员能看到；
           <a href="project-groups.html">项目组</a>的数据库只有组员和管理员能看到。</li>
-        <li><b>管理员</b>可以修改任何东西、进行实验室设置、审批人员，以及查看审计日志。</li>
-        <li><b>动物饲养人员</b>（Animal care，技术员、兽医；<b>管理用户</b>（Manage users）里的一种角色）可以修改任何人的动物、笼、鱼缸和果蝇管，但
-          不能修改别人的实验、实验记录本页面或设置（他们自己的，与普通成员一样管理）。<b>设施管理员</b>（Facility manager）还负责笼架、房间、培养箱、水系统以及每个
+        <li><b>管理员</b> 可以修改任何东西、进行实验室设置、审批人员，以及查看审计日志。</li>
+        <li><b>动物饲养人员</b> （Animal care，技术员、兽医；<b>管理用户</b> （Manage users）里的一种角色）可以修改任何人的动物、笼、鱼缸和果蝇管，但
+          不能修改别人的实验、实验记录本页面或设置（他们自己的，与普通成员一样管理）。<b>设施管理员</b> （Facility manager）还负责笼架、房间、培养箱、水系统以及每个
           数据库的设置，但不管账号。</li>
-        <li><b>笼架与冻存盒</b>（Racks &amp; boxes，管理员，在账号菜单里）规定谁可以调整大小、重命名或删除每个笼架、冻存盒和培养箱，
+        <li><b>笼架与冻存盒</b> （Racks &amp; boxes，管理员，在账号菜单里）规定谁可以调整大小、重命名或删除每个笼架、冻存盒和培养箱，
           覆盖所有数据库——斑马鱼的架子和你自己数据库里的架子也包括在内。没有指定任何人的，只有管理员能操作。</li>
       </ul>
       <p>当一条记录不属于你时，BioManager 会告诉你它属于谁，而不只是简单地拒绝。</p>
+      <h2 id="leaving">有人离开实验室时</h2>
+      <p>他们的记录不会消失——小鼠、笼、质粒和页面都原样留在那里，仍记在他们名下，鼠群和实验记录本因此是完整的。要把工作交接出去：</p>
+      <ol class="steps-list">
+        <li>在各个表格里选中他们的记录，用 <b>批量设置 → 负责人</b> 改成新的人。
+          （<a href="many-at-once.html">批量操作</a>可以一次处理整张表。）</li>
+        <li>管理员在 <b>管理用户</b> 里把他们的角色改成现在合适的。</li>
+        <li>访客通行证不用处理：到期自动失效。</li>
+      </ol>
+      <p>他们签过名的实验记录本页面仍然记在他们名下——这正是签名的意义，事后谁都不能更改，管理员也不行。</p>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>我无法编辑某条记录</h3>
       <p>它属于别人，而且没有共享：BioManager 会告诉你是谁的。去问他，或者问管理员。</p>
     </section>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="notebook.html"><small>上一页</small>实验记录本与工具</a><a class="next" href="project-groups.html"><small>下一页</small>项目组</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="book-equipment.html"><small>上一页</small>预约仪器</a><a class="next" href="project-groups.html"><small>下一页</small>项目组</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
         <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：谁能做什么&amp;body=页面：https://biomanager.org/zh/guide/who-can-do-what%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
       </div>
   </main>
-  
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容 · 阅读约 3 分钟</p>
+      <ol>
+        <li class="lvl2"><a href="#roles">角色</a></li>
+        <li class="lvl2"><a href="#what-applies">以哪条规则为准</a></li>
+        <li class="lvl2"><a href="#owning">What is yours</a></li>
+        <li class="lvl2"><a href="#leaving">有人离开实验室时</a></li>
+        <li class="lvl2"><a href="#troubleshooting">故障排除</a></li>
+      </ol>
+    </nav>
 </div>
 
 <footer class="footer">

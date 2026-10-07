@@ -30,6 +30,20 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.1.0": {
+        "new": [
+            "**AI assistants**: tell Claude, ChatGPT or Cursor what you did and it proposes the records; they wait "
+            "for you on **Proposed changes**. **Help → Connect an AI assistant** sets it up.",
+            "**Plasmids**: **Versions** you can restore, **Made from** and a family tree, a **Feature library** "
+            "that marks elements on any map, **Assemble a plasmid**, and **Files** for reads and gel photos.",
+            "**Glycerol stocks**: a database for the bacteria carrying each plasmid.",
+            "The rest of BioManager is in Chinese: the other databases, experiments, the notebook and the messages.",
+        ],
+        "changed": [
+            "**Primers**, **Glycerol stocks** and **Viruses** are tabs at the top of **Plasmids**, not separate "
+            "entries in the sidebar.",
+        ],
+    },
     "1.0.6": {
         "new": [
             "**BioManager in Chinese (中文)**: choose it in **Settings → Language**, or 中文 / English on the sign-in "

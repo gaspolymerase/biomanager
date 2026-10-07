@@ -24,7 +24,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">What BioManager is</a></li>
             <li><a href="coming-from-excel.html">Coming from Excel</a></li>
             <li><a href="install.html">Install and set up</a></li>
+            <li><a href="try-it-first.html">Try it first</a></li>
             <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
             <li><a href="home-page.html">Home</a></li>
           </ol></li>
         <li class="docs-group"><span>Everyday skills</span>
@@ -68,44 +70,58 @@
             <li><a href="notifications.html">Notifications</a></li>
             <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
           </ol></li>
-        <li class="docs-group"><span>How to…</span>
+        <li class="docs-group"><span>Your mouse colony</span>
           <ol>
+            <li><a href="mouse-colony.html" aria-current="page">Mouse colony</a></li>
             <li><a href="record-a-litter.html">Record a litter</a></li>
             <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
             <li><a href="wean-a-litter.html">Wean a litter</a></li>
             <li><a href="print-cage-cards.html">Print cage cards</a></li>
-            <li><a href="import-from-excel.html">Import from Excel</a></li>
-            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
-            <li><a href="book-equipment.html">Book equipment</a></li>
-            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
-            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
-            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="phones-and-cage-cards.html">At the bench: phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Your databases</span>
+        <li class="docs-group"><span>Fish, flies and other animals</span>
           <ol>
-            <li><a href="mouse-colony.html" aria-current="page">Mouse colony</a></li>
             <li><a href="zebrafish.html">Zebrafish</a></li>
             <li><a href="flies-and-worms.html">Flies and worms</a></li>
             <li><a href="any-organism.html">Any other organism</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Molecular biology</span>
+          <ol>
+            <li><a href="plasmids.html">Plasmids, primers and stocks</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Samples and ordering</span>
+          <ol>
+            <li><a href="samples-and-orders.html">Samples, reagents, antibodies, viruses</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Experiments and the notebook</span>
+          <ol>
             <li><a href="experiments.html">Experiments</a></li>
-            <li><a href="plasmids.html">Plasmids</a></li>
-            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
-            <li><a href="calendar.html">Calendar</a></li>
             <li><a href="notebook.html">Notebook and utilities</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Planning the week</span>
+          <ol>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
           </ol></li>
         <li class="docs-group"><span>Working as a lab</span>
           <ol>
             <li><a href="who-can-do-what.html">Who can do what</a></li>
             <li><a href="project-groups.html">Project groups</a></li>
             <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
             <li><a href="lab-setup.html">Lab setup</a></li>
-            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Data and help</span>
+        <li class="docs-group"><span>Your data</span>
           <ol>
             <li><a href="your-data.html">Your data and backups</a></li>
-            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="scripts-and-api.html">Scripts and the API</a></li>
             <li><a href="ai-assistants.html">AI assistants</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Help</span>
+          <ol>
             <li><a href="troubleshooting.html">Troubleshooting</a></li>
             <li><a href="feedback.html">Feedback</a></li>
           </ol></li>
@@ -118,6 +134,27 @@
     <h1>Mouse colony</h1>
     <p class="summary">Mice, cages, litters and breeders, from birth to weaning: racks laid out like yours, and genotyping and weaning dates worked out for you.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Mouse colony</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/census.webp" data-clip-src="../assets/clips/census"></video></div></figure>
+      <h2 id="a-week">What this does for your week</h2>
+      <p>A colony runs on dates that are easy to get wrong and tedious to keep: when a litter is old enough to genotype, when
+        it must be weaned, which cage is getting crowded, whose mice they are. BioManager's job is to work those out from one
+        thing you already know — the day the pups were born — and then put them in front of whoever is on duty.</p>
+      <table class="gtable">
+        <tr><th>Pups are born</th><td>You record the date once (<a href="record-a-litter.html">Record a litter</a>). Genotyping
+          and weaning dates are worked out from it and appear on <a href="home-page.html">Home</a> and the
+          <a href="calendar.html">calendar</a> — the same list in both, so nobody keeps a private one.</td></tr>
+        <tr><th>They are old enough to genotype</th><td>The litter becomes one record per pup in a few clicks
+          (<a href="genotype-a-litter.html">Genotype a litter</a>), each with its own ear tag and result, instead of a row you
+          retype.</td></tr>
+        <tr><th>Weaning day</th><td><a href="wean-a-litter.html">Wean a litter</a> moves the pups into new cages by sex, keeps
+          them attached to the litter they came from, and frees the breeding cage. The cage cards for the new cages print with
+          the genotypes already on them (<a href="print-cage-cards.html">Print cage cards</a>).</td></tr>
+        <tr><th>In the animal room</th><td>Scan the QR code on a cage card with a phone to open that cage, add a weight or a
+          note with gloves on, and have it in the record before you leave the room
+          (<a href="phones-and-cage-cards.html">At the bench</a>).</td></tr>
+      </table>
+      <p>What you stop doing: keeping the wean dates in your head or a wall calendar, retyping a litter into a sheet, rewriting
+        cage cards by hand after a wean, and asking whose mouse a cage holds — every record carries its owner, and
+        <a href="who-can-do-what.html">who may change it</a>.</p>
 
       <p>Tabs across the top: <b>Mice</b>, <b>Cages</b>, <b>Litters</b>, <b>Breeders</b>, <b>Experiments</b>, <b>Strains</b> and
         <b>Dropdowns</b>. The <b>My colony / My groups / Shared / Everyone</b> switch changes what you <i>see</i>, never what you may
@@ -126,7 +163,7 @@
         <i>Breeder</i>…) shows only those cages.</p>
       <figure class="gshot"><a href="../assets/screenshots/mice.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/mice.webp" alt="The mouse sheet" loading="lazy" width="2000" height="1250"></a><figcaption>The mouse sheet</figcaption></figure>
 
-      <h3 id="mouse-colony-1">Racks and cages</h3>
+      <h2 id="racks-and-cages">Racks and cages</h2>
       <p><b>Cages → Rack grid → New rack</b>: rows, columns and how positions are labelled — <code>D7</code>, <code>4-7</code>,
         <code>7D</code> or 1 to 80, like the stickers on your real racks. Cages without a position wait in <i>Unplaced</i>; drag them
         on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner,
@@ -140,7 +177,7 @@
         remembers the one you used last.</p>
       <figure class="gshot"><a href="../assets/screenshots/rack-grid.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/rack-grid.webp" alt="A rack grid" loading="lazy" width="2000" height="1250"></a><figcaption>A rack grid</figcaption></figure>
 
-      <h3 id="mouse-colony-2">Mice</h3>
+      <h2 id="mice">Mice</h2>
       <ul>
         <li><b>New mouse</b> for one, <b>Add many</b> for a new group (or a CSV made from its <b>Download a template</b>), and
           <b>Import from Excel</b> for the sheet you already keep (<a href="bring-your-lab-in.html">how</a>). In Add many, type <code>new</code> as the
@@ -153,7 +190,7 @@
           Setting sac or a date of death ends the record; it stays in the history.</li>
       </ul>
 
-      <h3 id="mouse-colony-3">Breeding: from litter to weaning</h3>
+      <h2 id="breeding-from-litter-to-weaning">Breeding: from litter to weaning</h2>
       <p>On the <b>Cages</b> tab, open a breeding cage (its arrow or mice count) or find its card under <b>Cards</b>:
         <b>Litter born</b>, <b>Genotyping</b> and <b>Wean</b> are there, on cages whose purpose is <i>Breeder</i> or <i>Breeding</i>. <b>Create litter</b> numbers each litter
         L-1, L-2, L-3… (type your own ID instead if you like).</p>
@@ -172,7 +209,7 @@
         past 30 weeks. <b>Pick</b> takes a breeder as
         yours; its owner is notified.</p>
 
-      <h3 id="mouse-colony-4">Experiments, strains, dropdowns</h3>
+      <h2 id="experiments-strains-dropdowns">Experiments, strains, dropdowns</h2>
       <ul>
         <li><b>Experiments</b> group mice into a cohort with treatment groups, what is done to them day by day and their body weights:
           see <a href="experiments.html">Experiments, for every animal</a>. (The notebook's experiments are the write-ups; these are the
@@ -182,7 +219,7 @@
           change them.</li>
       </ul>
     <!-- /page -->
-      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="restore-a-backup.html"><small>Previous</small>Restore a backup</a><a class="next" href="zebrafish.html"><small>Next</small>Zebrafish</a></nav>
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="keyboard-shortcuts.html"><small>Previous</small>Keyboard shortcuts</a><a class="next" href="record-a-litter.html"><small>Next</small>Record a litter</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>Was this page helpful?</span>
         <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
@@ -190,12 +227,13 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page</p>
+      <p>On this page · 6 min read</p>
       <ol>
-        <li class="lvl3"><a href="#mouse-colony-1">Racks and cages</a></li>
-        <li class="lvl3"><a href="#mouse-colony-2">Mice</a></li>
-        <li class="lvl3"><a href="#mouse-colony-3">Breeding: from litter to weaning</a></li>
-        <li class="lvl3"><a href="#mouse-colony-4">Experiments, strains, dropdowns</a></li>
+        <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
+        <li class="lvl2"><a href="#racks-and-cages">Racks and cages</a></li>
+        <li class="lvl2"><a href="#mice">Mice</a></li>
+        <li class="lvl2"><a href="#breeding-from-litter-to-weaning">Breeding: from litter to weaning</a></li>
+        <li class="lvl2"><a href="#experiments-strains-dropdowns">Experiments, strains, dropdowns</a></li>
       </ol>
     </nav>
 </div>

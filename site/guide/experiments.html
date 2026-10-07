@@ -24,7 +24,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">What BioManager is</a></li>
             <li><a href="coming-from-excel.html">Coming from Excel</a></li>
             <li><a href="install.html">Install and set up</a></li>
+            <li><a href="try-it-first.html">Try it first</a></li>
             <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
             <li><a href="home-page.html">Home</a></li>
           </ol></li>
         <li class="docs-group"><span>Everyday skills</span>
@@ -68,44 +70,58 @@
             <li><a href="notifications.html">Notifications</a></li>
             <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
           </ol></li>
-        <li class="docs-group"><span>How to…</span>
+        <li class="docs-group"><span>Your mouse colony</span>
           <ol>
+            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="record-a-litter.html">Record a litter</a></li>
             <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
             <li><a href="wean-a-litter.html">Wean a litter</a></li>
             <li><a href="print-cage-cards.html">Print cage cards</a></li>
-            <li><a href="import-from-excel.html">Import from Excel</a></li>
-            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
-            <li><a href="book-equipment.html">Book equipment</a></li>
-            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
-            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
-            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="phones-and-cage-cards.html">At the bench: phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Your databases</span>
+        <li class="docs-group"><span>Fish, flies and other animals</span>
           <ol>
-            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="zebrafish.html">Zebrafish</a></li>
             <li><a href="flies-and-worms.html">Flies and worms</a></li>
             <li><a href="any-organism.html">Any other organism</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Molecular biology</span>
+          <ol>
+            <li><a href="plasmids.html">Plasmids, primers and stocks</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Samples and ordering</span>
+          <ol>
+            <li><a href="samples-and-orders.html">Samples, reagents, antibodies, viruses</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Experiments and the notebook</span>
+          <ol>
             <li><a href="experiments.html" aria-current="page">Experiments</a></li>
-            <li><a href="plasmids.html">Plasmids</a></li>
-            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
-            <li><a href="calendar.html">Calendar</a></li>
             <li><a href="notebook.html">Notebook and utilities</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Planning the week</span>
+          <ol>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
           </ol></li>
         <li class="docs-group"><span>Working as a lab</span>
           <ol>
             <li><a href="who-can-do-what.html">Who can do what</a></li>
             <li><a href="project-groups.html">Project groups</a></li>
             <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
             <li><a href="lab-setup.html">Lab setup</a></li>
-            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Data and help</span>
+        <li class="docs-group"><span>Your data</span>
           <ol>
             <li><a href="your-data.html">Your data and backups</a></li>
-            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="scripts-and-api.html">Scripts and the API</a></li>
             <li><a href="ai-assistants.html">AI assistants</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Help</span>
+          <ol>
             <li><a href="troubleshooting.html">Troubleshooting</a></li>
             <li><a href="feedback.html">Feedback</a></li>
           </ol></li>
@@ -118,6 +134,22 @@
     <h1>Experiments, for every animal</h1>
     <p class="summary">Treatment groups, doses from body weight, readouts and the stats, for every animal.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Experiments, for every animal</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/experiment.webp" data-clip-src="../assets/clips/experiment"></video></div></figure>
+      <h2 id="a-week">What this does for your week</h2>
+      <p>An experiment is where a colony turns into data, and it is where records usually fall apart: doses on a paper sheet,
+        weights in one person's phone, the groups remembered rather than written. This page keeps the regimen, the animals and
+        the readout together, so the export is the experiment.</p>
+      <table class="gtable">
+        <tr><th>Before it starts</th><td>Name it, set day 1 and the readout, and pull in the animals — a tank's fish or a
+          cohort of mice — so the groups are written down before the first dose.</td></tr>
+        <tr><th>Each manipulation</th><td><b>Record manipulation</b> writes what was just done to a whole group — Tamoxifen
+          20 mg/kg i.p. today — and doses are worked out from each animal's body weight rather than in your head.</td></tr>
+        <tr><th>At the bench</th><td>Scan the experiment's QR code with a phone for bench mode: one animal at a time, gloves on,
+          recorded where you stand (<a href="phones-and-cage-cards.html">At the bench</a>).</td></tr>
+        <tr><th>Afterwards</th><td>The chart shows the readout by group over the days. <b>Export</b> gives an Excel workbook —
+          long for Prism or R, wide for a glance, with every animal's manipulations beside it.</td></tr>
+      </table>
+      <p>What you stop doing: transcribing a dosing sheet, recalculating mg/kg at the cage, and rebuilding the groups from
+        memory when it is time to analyse.</p>
 
       <p>Mice, zebrafish, flies, worms and your own organisms all have an <b>Experiments</b> tab beside their other tabs (Mice and
         Cages; Tanks and Fish; the vials or plates). <b>New experiment</b> there can start with a whole cage, tank, rack or housing of
@@ -134,7 +166,7 @@
       </table>
       <p>Any experiment can follow a readout of its own (<b>Readout → Something else…</b>): a number for each, or how many of
         those at the start.</p>
-      <h3 id="experiments-1">The page</h3>
+      <h2 id="the-page">The page</h2>
       <ul>
         <li><b>The experiment</b> on top: name, status, start (day 1), end, readout and description, saved as you type.</li>
         <li><b>The sheet of its animals</b> switches between <b>Treatment</b> — each manipulation day a column: ✓ and the amount for
@@ -150,13 +182,13 @@
           days the groups differ, and <b>Tests by day</b> below lists each test (Welch's t-test for two groups, one-way ANOVA for
           more, χ² for counts), each day on its own.</li>
       </ul>
-      <h3 id="experiments-2">The regimen</h3>
+      <h2 id="the-regimen">The regimen</h2>
       <p><b>Regimen</b> lists what is to be done and on which days: the kind, what, dose, route, solution, group and days
         (<code>1</code>, <code>2-5</code>, <code>2/3/4/5</code>, <code>1, 8, 15</code>). Day 1 is the start date. The days to do
         are on the calendar, and the experiment's owner gets a notification each morning of what is due (turn it off in
         <b>Settings → Notifications → Experiments</b>). Nothing is done until someone records it on the page. <b>Save as a
         regimen…</b> keeps it to plan the next cohort from.</p>
-      <h3 id="experiments-3">At the bench, and afterwards</h3>
+      <h2 id="at-the-bench-and-afterwards">At the bench, and afterwards</h2>
       <ul>
         <li><b>Bench mode</b> (scan its QR code with a phone): pick what you are doing, then one animal at a time with big numbers —
           type each weight or count, or give each today's manipulation and tap <b>Given ✓</b>; record it at the end. <b>Scan a card</b> reads a
@@ -167,7 +199,7 @@
           (<code>/experiment</code> adds one to any page; <b>Freeze a copy</b> keeps it as it is now).</li>
       </ul>
     <!-- /page -->
-      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="any-organism.html"><small>Previous</small>Any other organism</a><a class="next" href="plasmids.html"><small>Next</small>Plasmids</a></nav>
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="receive-an-order.html"><small>Previous</small>Receive an order into stock</a><a class="next" href="notebook.html"><small>Next</small>Notebook and utilities</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>Was this page helpful?</span>
         <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
@@ -175,11 +207,12 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page</p>
+      <p>On this page · 5 min read</p>
       <ol>
-        <li class="lvl3"><a href="#experiments-1">The page</a></li>
-        <li class="lvl3"><a href="#experiments-2">The regimen</a></li>
-        <li class="lvl3"><a href="#experiments-3">At the bench, and afterwards</a></li>
+        <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
+        <li class="lvl2"><a href="#the-page">The page</a></li>
+        <li class="lvl2"><a href="#the-regimen">The regimen</a></li>
+        <li class="lvl2"><a href="#at-the-bench-and-afterwards">At the bench, and afterwards</a></li>
       </ol>
     </nav>
 </div>

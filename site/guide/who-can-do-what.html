@@ -24,7 +24,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">What BioManager is</a></li>
             <li><a href="coming-from-excel.html">Coming from Excel</a></li>
             <li><a href="install.html">Install and set up</a></li>
+            <li><a href="try-it-first.html">Try it first</a></li>
             <li><a href="bring-your-lab-in.html">Bring your lab in</a></li>
+            <li><a href="import-from-excel.html">Import from Excel</a></li>
             <li><a href="home-page.html">Home</a></li>
           </ol></li>
         <li class="docs-group"><span>Everyday skills</span>
@@ -68,44 +70,58 @@
             <li><a href="notifications.html">Notifications</a></li>
             <li><a href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
           </ol></li>
-        <li class="docs-group"><span>How to…</span>
+        <li class="docs-group"><span>Your mouse colony</span>
           <ol>
+            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="record-a-litter.html">Record a litter</a></li>
             <li><a href="genotype-a-litter.html">Genotype a litter</a></li>
             <li><a href="wean-a-litter.html">Wean a litter</a></li>
             <li><a href="print-cage-cards.html">Print cage cards</a></li>
-            <li><a href="import-from-excel.html">Import from Excel</a></li>
-            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
-            <li><a href="book-equipment.html">Book equipment</a></li>
-            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
-            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
-            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="phones-and-cage-cards.html">At the bench: phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Your databases</span>
+        <li class="docs-group"><span>Fish, flies and other animals</span>
           <ol>
-            <li><a href="mouse-colony.html">Mouse colony</a></li>
             <li><a href="zebrafish.html">Zebrafish</a></li>
             <li><a href="flies-and-worms.html">Flies and worms</a></li>
             <li><a href="any-organism.html">Any other organism</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Molecular biology</span>
+          <ol>
+            <li><a href="plasmids.html">Plasmids, primers and stocks</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Samples and ordering</span>
+          <ol>
+            <li><a href="samples-and-orders.html">Samples, reagents, antibodies, viruses</a></li>
+            <li><a href="receive-an-order.html">Receive an order into stock</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Experiments and the notebook</span>
+          <ol>
             <li><a href="experiments.html">Experiments</a></li>
-            <li><a href="plasmids.html">Plasmids</a></li>
-            <li><a href="samples-and-orders.html">Samples, orders, reagents, antibodies, viruses</a></li>
-            <li><a href="calendar.html">Calendar</a></li>
             <li><a href="notebook.html">Notebook and utilities</a></li>
+            <li><a href="sign-a-notebook-page.html">Sign a notebook page</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Planning the week</span>
+          <ol>
+            <li><a href="calendar.html">Calendar</a></li>
+            <li><a href="book-equipment.html">Book equipment</a></li>
           </ol></li>
         <li class="docs-group"><span>Working as a lab</span>
           <ol>
             <li><a href="who-can-do-what.html" aria-current="page">Who can do what</a></li>
             <li><a href="project-groups.html">Project groups</a></li>
             <li><a href="people-and-guests.html">People and guests</a></li>
+            <li><a href="invite-someone.html">Invite someone to the lab</a></li>
             <li><a href="lab-setup.html">Lab setup</a></li>
-            <li><a href="phones-and-cage-cards.html">Phones and cage cards</a></li>
           </ol></li>
-        <li class="docs-group"><span>Data and help</span>
+        <li class="docs-group"><span>Your data</span>
           <ol>
             <li><a href="your-data.html">Your data and backups</a></li>
-            <li><a href="scripts-and-api.html">Scripts, instruments and other tools</a></li>
+            <li><a href="restore-a-backup.html">Restore a backup</a></li>
+            <li><a href="scripts-and-api.html">Scripts and the API</a></li>
             <li><a href="ai-assistants.html">AI assistants</a></li>
+          </ol></li>
+        <li class="docs-group"><span>Help</span>
+          <ol>
             <li><a href="troubleshooting.html">Troubleshooting</a></li>
             <li><a href="feedback.html">Feedback</a></li>
           </ol></li>
@@ -118,6 +134,21 @@
     <h1>Who can do what</h1>
     <p class="summary">Who can see and change what in a lab: members, owners and admins.</p>
 
+      <h2 id="roles">The roles</h2>
+      <p>Everyone in a lab has one role. A role never takes away what you own: it adds what else you may touch.</p>
+      <table class="gtable">
+        <tr><th>Member</th><td>Changes their own records, and the lab's shared ones. Most people in a lab are members.</td></tr>
+        <tr><th>Animal care</th><td>Technicians and vets: may change <i>any</i> lab member's animals, cages, tanks and vials — weights, moves, flips, health. Other people's experiments, notebook pages and settings stay theirs. Their own records they keep like a member.</td></tr>
+        <tr><th>Facility manager</th><td>Animal care, plus the facility itself: racks, rooms, incubators, water systems and each database's settings. Not accounts.</td></tr>
+        <tr><th>Admin</th><td>Everything, including accounts, roles and <a href="lab-setup.html">Lab setup</a>, and the audit log. A lab needs at least one.</td></tr>
+        <tr><th><a href="people-and-guests.html">Guest</a></th><td>Someone outside the lab, on a pass that ends by itself after a day, three days, a week or 30 days. They see only what the pass opens, and can never keep a copy of the lab.</td></tr>
+      </table>
+      <p>An admin changes a role in <b>Manage users</b>, and cannot change their own — so a lab can never lock its last admin out.</p>
+      <h2 id="what-applies">Which rule wins</h2>
+      <p>You may change a record if <i>any one</i> of these is true: you own it; it is shared with the lab or with a
+        <a href="project-groups.html">project group</a> you are in; or your role covers it. Nothing takes a permission away
+        again, so you never have to work out which rule lost.</p>
+      <h2 id="owning">What is yours</h2>
       <ul>
         <li><b>You edit what you own</b> — your mice, cages, vials, plasmids and items.</li>
         <li><b>Shared cages and anything marked lab common</b> belong to the whole lab. A cage whose purpose is <i>Breeder</i>
@@ -135,20 +166,40 @@
           in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.</li>
       </ul>
       <p>When a record isn't yours, BioManager says whose it is instead of just refusing.</p>
+      <h2 id="leaving">When someone leaves the lab</h2>
+      <p>Their records do not disappear — mice, cages, plasmids and pages stay exactly where they are, still in their name, so
+        the colony and the notebook stay whole. To hand the work on:</p>
+      <ol class="steps-list">
+        <li>On each sheet, select their records and use <b>Set field → Owner</b> to put them in the new person's name.
+          (<a href="many-at-once.html">Many at once</a> does a whole sheet in one go.)</li>
+        <li>An admin sets their role, in <b>Manage users</b>, to whatever is right now they have gone.</li>
+        <li>A guest pass needs nothing: it ends on its own date.</li>
+      </ol>
+      <p>A notebook page they signed stays signed in their name — that is the point of signing, and nobody can change it
+        afterwards, including an admin.</p>
     <section class="trouble">
       <h2 id="troubleshooting">Troubleshooting</h2>
       <h3>I can't edit a record</h3>
       <p>It belongs to someone else and isn't shared: BioManager says whose it is. Ask them, or an admin.</p>
     </section>
     <!-- /page -->
-      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="notebook.html"><small>Previous</small>Notebook and utilities</a><a class="next" href="project-groups.html"><small>Next</small>Project groups</a></nav>
+      <nav class="pager" aria-label="Previous / Next"><a class="prev" href="book-equipment.html"><small>Previous</small>Book equipment</a><a class="next" href="project-groups.html"><small>Next</small>Project groups</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>Was this page helpful?</span>
         <button type="button" data-helpful="yes" aria-pressed="false">Yes</button>
         <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=Guide: Who%20can%20do%20what&amp;body=Page: https://biomanager.org/guide/who-can-do-what%0A%0AWhat%20was%20unclear%20or%20missing:" target="_blank" rel="noopener">No</a>
       </div>
   </main>
-  
+  <nav class="docs-rail" aria-label="On this page">
+      <p>On this page · 3 min read</p>
+      <ol>
+        <li class="lvl2"><a href="#roles">The roles</a></li>
+        <li class="lvl2"><a href="#what-applies">Which rule wins</a></li>
+        <li class="lvl2"><a href="#owning">What is yours</a></li>
+        <li class="lvl2"><a href="#leaving">When someone leaves the lab</a></li>
+        <li class="lvl2"><a href="#troubleshooting">Troubleshooting</a></li>
+      </ol>
+    </nav>
 </div>
 
 <footer class="footer">

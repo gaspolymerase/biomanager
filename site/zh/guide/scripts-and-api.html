@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
-  <title>脚本、仪器和其他工具 — BioManager 用户指南</title>
+  <title>脚本与 API — BioManager 用户指南</title>
   <meta name="description" content="用 API 令牌让脚本、R 和仪器读写实验室的数据，比如让天平自动记录体重。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
@@ -16,7 +16,7 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/zh/guide/scripts-and-api">
-  <meta property="og:title" content="脚本、仪器和其他工具 — BioManager 用户指南">
+  <meta property="og:title" content="脚本与 API — BioManager 用户指南">
   <meta property="og:description" content="用 API 令牌让脚本、R 和仪器读写实验室的数据，比如让天平自动记录体重。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -24,7 +24,7 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=7efa086028">
+  <link rel="stylesheet" href="../../style.css?v=9cfb574a4f">
 </head>
 <body class="docs-page">
 
@@ -56,7 +56,9 @@
             <li><a href="what-it-is.html">BioManager 是什么</a></li>
             <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
             <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
             <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
             <li><a href="home-page.html">首页</a></li>
           </ol></li>
         <li class="docs-group"><span>日常操作</span>
@@ -68,45 +70,59 @@
             <li><a href="notifications.html">通知</a></li>
             <li><a href="keyboard-shortcuts.html">快捷键</a></li>
           </ol></li>
-        <li class="docs-group"><span>怎么做</span>
+        <li class="docs-group"><span>小鼠鼠群</span>
           <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="record-a-litter.html">记录产仔</a></li>
             <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
             <li><a href="wean-a-litter.html">断奶分笼</a></li>
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
-            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
-            <li><a href="receive-an-order.html">订单到货入库</a></li>
-            <li><a href="book-equipment.html">预约仪器</a></li>
-            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
-            <li><a href="invite-someone.html">邀请成员</a></li>
-            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据库</span>
+        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
           <ol>
-            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
             <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
             <li><a href="experiments.html">实验</a></li>
-            <li><a href="plasmids.html">质粒</a></li>
-            <li><a href="samples-and-orders.html">样本、采购、试剂、抗体、病毒</a></li>
-            <li><a href="calendar.html">日历</a></li>
             <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
           </ol></li>
         <li class="docs-group"><span>实验室协作</span>
           <ol>
             <li><a href="who-can-do-what.html">谁能做什么</a></li>
             <li><a href="project-groups.html">项目组</a></li>
             <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
             <li><a href="lab-setup.html">实验室设置</a></li>
-            <li><a href="phones-and-cage-cards.html">手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>数据与帮助</span>
+        <li class="docs-group"><span>你的数据</span>
           <ol>
             <li><a href="your-data.html">数据与备份</a></li>
-            <li><a href="scripts-and-api.html" aria-current="page">脚本、仪器和其他工具</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html" aria-current="page">脚本与 API</a></li>
             <li><a href="ai-assistants.html">AI 助手</a></li>
-            <li><a href="troubleshooting.html">故障排除</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
             <li><a href="feedback.html">反馈</a></li>
           </ol></li>
       </ol>
@@ -123,15 +139,15 @@
         直接拉进 R 或 Python，让天平每称一次就上传一次体重，让平台的系统把样本标记为已完成，或者为
         设施统计笼数——都不用任何人去导出表格。</p>
       <ol class="steps-list">
-        <li><b>设置 → API 令牌</b>（Settings → API tokens）：写明谁会用它（<i>B12 的天平</i>、<i>我的 R 脚本</i>），权限是
-          <b>只读</b>（Read）、<b>读写</b>（Read and change）还是<b>读取和提议</b>（Read and propose，给 AI 助手用，见下文），以及到期时间。点<b>生成令牌</b>（Make a token）。</li>
+        <li><b>设置 → API 令牌</b> （Settings → API tokens）：写明谁会用它（<i>B12 的天平</i>、<i>我的 R 脚本</i>），权限是
+ <b>只读</b> （Read）、<b>读写</b> （Read and change）还是 <b>读取和提议</b> （Read and propose，给 AI 助手用，见下文），以及到期时间。点 <b>生成令牌</b> （Make a token）。</li>
         <li>复制令牌：它只显示一次。像对待密码一样对待它，不要写进你要分享的脚本里（通常放在环境
           变量里）。</li>
-        <li>每次请求都带上它，格式为 <code>Authorization: Bearer bmt_…</code>。<b>API 参考</b>（API reference，同一张
+        <li>每次请求都带上它，格式为 <code>Authorization: Bearer bmt_…</code>。<b>API 参考</b> （API reference，同一张
           卡片上的链接，或你的 BioManager 上的 <code>/api</code>）列出它能读取和修改的所有内容，附有 curl、Python 和 R 示例。</li>
       </ol>
       <ul>
-        <li><b>令牌就是你。</b>它能做的和你在页面上能做的一样，不会更多；用它做的修改会以你的名义记在修改历史里，
+        <li><b>令牌就是你。</b> 它能做的和你在页面上能做的一样，不会更多；用它做的修改会以你的名义记在修改历史里，
           并标注令牌名称。</li>
         <li>它可以读取小鼠、笼、窝、品系、鱼缸和鱼、质粒、果蝇和线虫的管/皿、所有库存和所有
           实验；可以修改小鼠（笼、基因型、备注、状态……）、记录体重、修改果蝇管、添加或修改
@@ -140,20 +156,20 @@
           （<code>/api/v1/resolve?q=cage 88</code>）；列出你们实验室对各种东西的叫法：品系、状态、用途、笼架、
           成员和每个数据库自己的字段（<code>/api/v1/vocabulary</code>）；以及像首页一样列出待办的事
           （<code>/api/v1/due</code>）。</li>
-        <li>每个使用它的东西单独建一个令牌，这样可以<b>撤销</b>（Revoke）其中一个而不影响其他。卡片上显示每个令牌
-          最近一次使用的时间。管理员能看到所有人的令牌并撤销任何一个；<b>设置</b>（Setup）可以规定只有管理员能建令牌。</li>
+        <li>每个使用它的东西单独建一个令牌，这样可以 <b>撤销</b> （Revoke）其中一个而不影响其他。卡片上显示每个令牌
+          最近一次使用的时间。管理员能看到所有人的令牌并撤销任何一个；<b>设置</b> （Setup）可以规定只有管理员能建令牌。</li>
         <li>桌面版只有那台电脑上的程序能访问；实验室服务器则是任何能连上服务器的东西都能访问。</li>
       </ul>
 
       <h2 id="proposed-changes">助手提出的修改</h2>
-      <p><b>读取和提议</b>的令牌是给 AI 助手用的：它自己什么都不会改，而是把修改作为一个提议发过来，由你在<b>修改提议</b>里
+      <p><b>读取和提议</b> 的令牌是给 AI 助手用的：它自己什么都不会改，而是把修改作为一个提议发过来，由你在 <b>修改提议</b> 里
         整体批准。怎么连接和批准，见 <a href="ai-assistants.html">AI 助手</a>。</p>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="your-data.html"><small>上一页</small>数据与备份</a><a class="next" href="ai-assistants.html"><small>下一页</small>AI 助手</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="restore-a-backup.html"><small>上一页</small>从备份恢复</a><a class="next" href="ai-assistants.html"><small>下一页</small>AI 助手</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
-        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：脚本、仪器和其他工具&amp;body=页面：https://biomanager.org/zh/guide/scripts-and-api%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：脚本与%20API&amp;body=页面：https://biomanager.org/zh/guide/scripts-and-api%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
       </div>
   </main>
   
