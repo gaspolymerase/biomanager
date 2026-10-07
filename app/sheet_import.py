@@ -640,6 +640,8 @@ class MiceTarget(Target):
         owner = _owner(ctx, v.get("owner", ""), warnings, extras)
         form = {k: v[k] for k in ("ear_tag", "gender", "cage_id", "cage_location", "litter_id", "date_of_birth",
                                   "status", "date_of_death") if k in v}
+        # The lab's own columns, under the names populate_mouse_from_form reads.
+        form.update({k: value for k, value in v.items() if k.startswith("attr_")})
         form["owner"] = owner
         # Nothing is born tomorrow: a future date is a typo (2062 for 2026).
         born = parse_date(form.get("date_of_birth", ""))
@@ -730,7 +732,25 @@ def mice_target(session) -> Target:
             Field("date_of_death", "Date of death", ("death date", "date of death", "dod", "sac date",
                                                      "euthanized", "died"), kind="date"),
             Field("note", "Notes", ("note", "comment", "remark", "description", "notes")),
+            *custom_import_fields(session, "colony"),
         ])
+
+
+def custom_import_fields(session, database: str) -> list:
+    """The lab's own columns (app/custom_fields.py) as fields a spreadsheet
+    can be matched to, by their own names. Their values ride in the form as
+    `attr_<key>`, which is what every save already reads."""
+    from . import custom_fields
+
+    kinds = {"number": "number", "date": "date", "select": "choice", "user": "owner"}
+    out = []
+    for own in custom_fields.fields(session, database):
+        label = own["label"]
+        out.append(Field(f"attr_{own['key']}", label,
+                         (label.lower(), own["key"].replace("_", " ")),
+                         kind=kinds.get(own["type"], "text"),
+                         choices={o.lower(): o for o in own["options"]} if own["type"] == "select" else None))
+    return out
 
 
 # -- Zebrafish -------------------------------------------------------------------

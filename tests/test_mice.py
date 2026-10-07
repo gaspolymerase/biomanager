@@ -155,6 +155,48 @@ class ColumnsTheLabAdds(AppTestCase):
                 self.assertIn(label, html)
                 self.assertIn(f'name="{field}"', html)
 
+    def test_a_column_is_set_on_many_at_once(self):
+        self.columns({"label": "Perfused", "type": "text"})
+        mice = [self.make_mouse(self.a, self.admin) for _ in range(3)]
+        r = self.post(self.a, "/colony/mice/bulk-update",
+                      {"field": "attr_perfused", "value": "yes", "selected_ids": [str(m) for m in mice]})
+        self.assertNoErrors(r)
+        import json
+        for m in mice:
+            self.assertEqual(json.loads(one("select attrs from mice where id=?", m))["perfused"], "yes")
+
+    def test_a_spreadsheet_column_of_that_name_comes_into_it(self):
+        """A column the lab added is one the importer can match a sheet to,
+        and what it reads lands in it."""
+        import io
+        from tests.test_sheet_import import xlsx
+        self.columns({"label": "Tail clip", "type": "text"})
+        tag = uniq("TC")
+        data = xlsx([["Mouse ID", "Strain", "Tail clip"], ["", tag, "done"]])
+        r = self.a.post("/import-sheet/mice/upload", data={"file": (io.BytesIO(data), "colony.xlsx")},
+                        content_type="multipart/form-data")
+        token = r.headers["Location"].rsplit("/", 1)[1]
+        html = self.get_ok(self.a, f"/import-sheet/file/{token}")
+        self.assertIn("Tail clip", html)
+        import re
+        form = {}
+        for name, body in re.findall(r'<select name="((?:map|kind)-\d+)"[^>]*>(.*?)</select>', html, re.S):
+            picked = re.search(r'<option value="([^"]*)" selected', body)
+            form[name] = picked.group(1) if picked else ""
+        self.assertIn("attr_tail_clip", form.values())   # matched by its own name
+        form.update({"sheet": "Sheet1", "fill-owner": "me"})
+        self.post(self.a, f"/import-sheet/file/{token}/run", data=form)
+        held = one("select attrs from mice where transgene_1=?", tag)
+        self.assertIn("done", held or "")
+
+    def test_searching_finds_a_record_by_what_a_column_holds(self):
+        self.columns({"label": "Tail clip", "type": "text"})
+        mouse = self.make_mouse(self.a, self.admin)
+        mark = uniq("clip")
+        self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_tail_clip": mark})
+        found = self.a.get(f"/search?q={mark}").get_json()
+        self.assertIn("mouse", [r["type"] for r in found["results"]])
+
     def test_only_an_admin_adds_columns(self):
         r = self.post(self.m, "/organisms/builtin/colony/fields",
                       {"field_count": "1", "field_0_label": "Sneaky", "field_0_type": "text"})

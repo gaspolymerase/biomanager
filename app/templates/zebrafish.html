@@ -345,6 +345,16 @@
 
     <div class="selbar" data-selection-bar hidden>
       <span class="selbar-count" data-selection-count></span>
+      {% if custom_columns_all %}
+        {# Columns the lab added (Configure → Your own columns). #}
+        <form method="post" action="{{ url_for('zebrafish_bulk_tanks') }}" class="selbar-group" data-selection-form>
+          <select name="action" aria-label="{{ _('Column to set') }}">
+            {% for fd in custom_columns_all %}<option value="attr_{{ fd.key }}">{{ fd.label|tr }}</option>{% endfor %}
+          </select>
+          <input name="value" placeholder="{{ _('value') }}" aria-label="{{ _('Value') }}">
+          <button type="submit" class="btn btn-sm">{{ _('Set field') }}</button>
+        </form>
+      {% endif %}
       <form method="post" action="{{ url_for('zebrafish_bulk_tanks') }}" class="selbar-group" data-selection-form>
         <input type="hidden" name="action" value="purpose">
         <select name="value" aria-label="{{ _('Purpose') }}">{{ options(tank_purpose_options) }}</select>

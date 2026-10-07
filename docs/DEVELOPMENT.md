@@ -303,6 +303,16 @@ record points at rather than anything a mouse carries. Removing a column
 hides it and keeps what records hold in it, so putting it back shows the
 values again.
 
+A column of the lab's own goes everywhere a built-in one does:
+**Set field** offers it (the bulk routes look for `attr_<key>` before their
+own actions and hand it to `_bulk_custom_column`, one batch that Batch
+history undoes); **Import from Excel** matches a spreadsheet column to it by
+its own name (`custom_import_fields`, typed as the column is: a number
+column takes a number, a choice column its choices); and search finds a
+record by what one holds, with a LIKE over the record's `attrs` — one JSON
+string, so the value is found whichever column holds it, the reach the notes
+have always had.
+
 ### The order the databases sit in
 
 The rail lists the built-in pages and then whatever the lab added, which is

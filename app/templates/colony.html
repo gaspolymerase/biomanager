@@ -383,6 +383,7 @@
               <option value="cage_id">{{ _('Cage') }}</option>
               <option value="note">{{ _('Note') }}</option>
               <option value="date_of_death">{{ _('Date of death') }}</option>
+              {% for fd in custom_columns_all %}<option value="attr_{{ fd.key }}">{{ fd.label|tr }}</option>{% endfor %}
             </select>
             <input name="value" placeholder="{{ _('new value') }}" list="owner-name-options"
                    aria-label="{{ _('New value') }}">

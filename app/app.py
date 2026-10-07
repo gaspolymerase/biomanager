@@ -3232,6 +3232,26 @@ def new_owned_cage(db_session, **fields) -> CageRecord:
     return cage
 
 
+def _bulk_custom_column(db_session, database: str, field: dict, value: str, back: str,
+                        records, may_edit, table: str):
+    """Set one of the lab's own columns on the ticked records, in one batch
+    so Batch history can undo it. Records the person may not change are
+    skipped and counted, as every other bulk action does."""
+    changed = skipped = 0
+    with audit.batch(db_session, "update", f"set {field['label'].lower()} = {value or '(blank)'}", table) as batch_row:
+        for record in records:
+            if not may_edit(record):
+                skipped += 1
+                continue
+            custom_fields.apply_form(record, {f"attr_{field['key']}": value}, [field])
+            stamp_updated(record)
+            changed += 1
+        batch_row.record_count = changed
+    db_session.commit()
+    _report(changed, skipped, gettext("Set %(column)s", column=field["label"]))
+    return redirect(back)
+
+
 @app.route("/colony/mice/bulk-update", methods=["POST"])
 @login_required
 def bulk_update_mice():
@@ -3239,12 +3259,18 @@ def bulk_update_mice():
     field = (request.form.get("field") or "").strip()
     value = (request.form.get("value") or "").strip()
     back = request.referrer or url_for("colony", view="mice")
-    if field not in BULK_FIELDS:
-        flash(gettext("Pick a field to set."), "error")
-        return redirect(back)
-
     changed = skipped = 0
     with SessionLocal() as db_session:
+        # A column the lab added (app/custom_fields.py) is set like any
+        # other: one column, one value, across the ticked rows.
+        own = next((f for f in custom_fields.fields(db_session, "colony")
+                    if f"attr_{f['key']}" == field), None)
+        if own is None and field not in BULK_FIELDS:
+            flash(gettext("Pick a field to set."), "error")
+            return redirect(back)
+        if own is not None:
+            return _bulk_custom_column(db_session, "colony", own, value, back,
+                                       _selected_mice(db_session, request.form), can_edit_mouse, "mice")
         if field == "owner" and value not in current_lab_usernames(db_session):
             flash(gettext("“%(value)s” is not a lab member, so no owner was changed. Pick a username from the list.",
                           value=value or gettext("(blank)")), "error")
@@ -5773,7 +5799,7 @@ def global_search():
         else:
             mouse_stmt = mouse_stmt.where(
                 MouseRecord.genotype.ilike(like, escape="\\") | MouseRecord.owner.ilike(like, escape="\\") | MouseRecord.note.ilike(like, escape="\\")
-                | MouseRecord.ear_tag.ilike(like, escape="\\")
+                | MouseRecord.ear_tag.ilike(like, escape="\\") | MouseRecord.attrs.ilike(like, escape="\\")
             )
         for m in db_session.scalars(mouse_stmt.order_by(MouseRecord.mouse_id.desc()).limit(limit)).all():
             results.append({
@@ -5844,7 +5870,8 @@ def global_search():
             plasmid_stmt = plasmid_stmt.where(PlasmidRecord.plasmid_id == int(q))
         else:
             plasmid_stmt = plasmid_stmt.where(
-                PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like, escape="\\")
+PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like, escape="\\")
+                | PlasmidRecord.attrs.ilike(like, escape="\\")
                 | PlasmidRecord.insert_seq.ilike(like, escape="\\") | PlasmidRecord.resistance.ilike(like, escape="\\")
                 | PlasmidRecord.owner.ilike(like, escape="\\") | PlasmidRecord.storage_box.ilike(like, escape="\\")
                 | PlasmidRecord.location.ilike(like, escape="\\") | PlasmidRecord.notes.ilike(like, escape="\\")
@@ -5926,6 +5953,7 @@ def global_search():
         for t in db_session.scalars(
                 select(TankRecord).options(joinedload(TankRecord.line))
                 .where(TankRecord.tank_id.ilike(like, escape="\\") | TankRecord.card_id.ilike(like, escape="\\")
+                       | TankRecord.attrs.ilike(like, escape="\\")
                        | TankRecord.owner.ilike(like, escape="\\") | TankRecord.notes.ilike(like, escape="\\"))
                 .order_by(TankRecord.tank_id).limit(limit)).all():
             results.append({
@@ -6940,7 +6968,7 @@ def notebook_search_entity(entity_type: str):
                 like = like_pattern(query)
                 mouse_stmt = mouse_stmt.where(
                     MouseRecord.genotype.ilike(like, escape="\\") | MouseRecord.owner.ilike(like, escape="\\")
-                    | MouseRecord.ear_tag.ilike(like, escape="\\")
+                    | MouseRecord.ear_tag.ilike(like, escape="\\") | MouseRecord.attrs.ilike(like, escape="\\")
                 )
             mouse_stmt = mouse_stmt.order_by(MouseRecord.mouse_id.desc()).limit(per_type_limit)
             for m in db_session.scalars(mouse_stmt).all():
@@ -7658,6 +7686,12 @@ def bulk_plasmids():
         if not records:
             flash(gettext("Tick the plasmids to change first."), "info")
             return redirect(url_for("plasmids"))
+        # A column the lab added to Plasmids is set like any other.
+        own = next((f for f in custom_fields.fields(db_session, "plasmids")
+                    if f"attr_{f['key']}" == action), None)
+        if own is not None:
+            return _bulk_custom_column(db_session, "plasmids", own, value, url_for("plasmids"),
+                                       records, access.can_edit, "plasmids")
         if action not in ("owner", "resistance", "move", "delete", "shared"):
             flash(gettext("Unknown batch action."), "error")
             return redirect(url_for("plasmids"))
@@ -9772,6 +9806,15 @@ def zebrafish_bulk_tanks():
     value = (form.get("value") or "").strip()
     labels = {"purpose": "Set purpose", "owner": "Set owner", "rack": "Moved",
               "geno": "Genotyping flag", "return": "Returned", "delete": "Deleted"}
+    with SessionLocal() as s:
+        # A column the lab added to Zebrafish is set like any other.
+        own = next((f for f in custom_fields.fields(s, "zebrafish")
+                    if f"attr_{f['key']}" == action), None)
+        if own is not None:
+            tanks = s.scalars(select(TankRecord).where(TankRecord.id.in_(
+                [int(i) for i in form.getlist("selected_ids") if i.isdigit()]))).all()
+            return _bulk_custom_column(s, "zebrafish", own, value, url_for("zebrafish", view="tanks"),
+                                       tanks, zf_can_edit, "tanks")
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="tanks"))

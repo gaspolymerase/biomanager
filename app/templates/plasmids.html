@@ -312,6 +312,16 @@
       <input name="value" list="plasmid-resistance" placeholder="{{ _('resistance') }}" aria-label="{{ _('New resistance') }}">
       <button type="submit" class="btn btn-sm">{{ _('Set resistance') }}</button>
     </form>
+    {% if custom_columns_all %}
+      {# Columns the lab added (Configure → Your own columns). #}
+      <form method="post" action="{{ url_for('bulk_plasmids') }}" class="selbar-group" data-selection-form>
+        <select name="action" aria-label="{{ _('Column to set') }}">
+          {% for fd in custom_columns_all %}<option value="attr_{{ fd.key }}">{{ fd.label|tr }}</option>{% endfor %}
+        </select>
+        <input name="value" placeholder="{{ _('value') }}" aria-label="{{ _('Value') }}">
+        <button type="submit" class="btn btn-sm">{{ _('Set field') }}</button>
+      </form>
+    {% endif %}
     <form method="post" action="{{ url_for('bulk_plasmids') }}" class="selbar-group" data-selection-form
           title="{{ _("Places them in the box's first free cells; “Out of any box” takes them out") }}">
       <input type="hidden" name="action" value="move">

@@ -374,5 +374,6 @@
   "Ear tag %(tag)s": "耳标 %(tag)s",
   "mouse": "小鼠",
   "tank": "鱼缸",
-  "plasmid": "质粒"
+  "plasmid": "质粒",
+  "Set %(column)s": "设置%(column)s"
 }
