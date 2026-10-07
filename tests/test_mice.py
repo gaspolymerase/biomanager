@@ -78,6 +78,89 @@ def flash_texts(client, kind: str | None = None) -> str:
     return " | ".join(text for k, text in take_flashes(client) if kind is None or k == kind)
 
 
+class ColumnsTheLabAdds(AppTestCase):
+    """The colony takes columns of a lab's own, as every configurable
+    database always has (issue #39)."""
+
+    def columns(self, *fields):
+        """Set the colony's own columns through Configure."""
+        data = {"field_count": str(len(fields))}
+        for i, f in enumerate(fields):
+            data[f"field_{i}_label"] = f["label"]
+            data[f"field_{i}_type"] = f.get("type", "text")
+            data[f"field_{i}_options"] = ", ".join(f.get("options", []))
+            data[f"field_{i}_width"] = str(f.get("width", 130))
+            if f.get("in_table", True):
+                data[f"field_{i}_in_table"] = "1"
+        return self.post(self.a, "/organisms/builtin/colony/fields", data)
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(self.columns)      # leave the colony as it was
+
+    def test_a_column_shows_in_the_sheet_and_takes_a_value(self):
+        self.columns({"label": "Organ weight", "type": "number"})
+        mouse = self.make_mouse(self.a, self.admin)
+        html = self.get_ok(self.a, "/colony?view=mice")
+        self.assertIn("Organ weight", html)
+        self.assertIn('name="attr_organ_weight"', html)
+        self.assertSaved(self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_organ_weight": "31.4"}))
+        self.assertIn('value="31.4"', self.get_ok(self.a, "/colony?view=mice"))
+
+    def test_a_choice_column_offers_its_choices(self):
+        self.columns({"label": "Perfused", "type": "select", "options": ["yes", "no"]})
+        self.make_mouse(self.a, self.admin)
+        html = self.get_ok(self.a, "/colony?view=mice")
+        self.assertIn('name="attr_perfused"', html)
+        self.assertIn('<option value="yes"', html)
+
+    def test_a_column_may_not_take_the_name_of_one_the_colony_has(self):
+        from app import custom_fields
+        kept = custom_fields.normalise("colony", [{"key": "owner", "label": "Owner"},
+                                                  {"key": "genotype", "label": "Genotype"},
+                                                  {"key": "tail_clip", "label": "Tail clip"}])
+        self.assertEqual([f["key"] for f in kept], ["tail_clip"])
+
+    def test_removing_a_column_keeps_what_the_records_hold(self):
+        self.columns({"label": "Perfused", "type": "text"})
+        mouse = self.make_mouse(self.a, self.admin)
+        self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_perfused": "yes"})
+        self.columns()                                   # take the column away
+        self.assertNotIn("attr_perfused", self.get_ok(self.a, "/colony?view=mice"))
+        self.assertIn("yes", one("select attrs from mice where id=?", mouse) or "")
+        self.columns({"label": "Perfused", "type": "text"})   # and put it back
+        self.assertIn('value="yes"', self.get_ok(self.a, "/colony?view=mice"))
+
+    def test_saving_one_cell_leaves_the_others_alone(self):
+        self.columns({"label": "Perfused", "type": "text"}, {"label": "Score", "type": "number"})
+        mouse = self.make_mouse(self.a, self.admin)
+        self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_perfused": "yes", "attr_score": "3"})
+        self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_score": "4"})
+        import json
+        held = json.loads(one("select attrs from mice where id=?", mouse))
+        self.assertEqual(held, {"perfused": "yes", "score": "4"})
+
+    def test_the_other_built_in_databases_take_them_too(self):
+        """One path serves the colony, zebrafish and plasmids."""
+        self.make_plasmid(self.a)
+        self.make_tank(self.a)
+        for key, page, label, field in (("plasmids", "/plasmids", "Supplier", "attr_supplier"),
+                                        ("zebrafish", "/zebrafish", "Water system", "attr_water_system")):
+            with self.subTest(database=key):
+                self.post(self.a, f"/organisms/builtin/{key}/fields",
+                          {"field_count": "1", "field_0_label": label, "field_0_type": "text",
+                           "field_0_width": "130", "field_0_in_table": "1"})
+                self.addCleanup(self.post, self.a, f"/organisms/builtin/{key}/fields", {"field_count": "0"})
+                html = self.get_ok(self.a, page)
+                self.assertIn(label, html)
+                self.assertIn(f'name="{field}"', html)
+
+    def test_only_an_admin_adds_columns(self):
+        r = self.post(self.m, "/organisms/builtin/colony/fields",
+                      {"field_count": "1", "field_0_label": "Sneaky", "field_0_type": "text"})
+        self.assertFlash(r, "Only an admin", "error")
+
+
 class TheEarTag(AppTestCase):
     """What is written on the animal, beside the number BioManager gives it
     (issue #39): the number stays the identity, the tag is how you find the

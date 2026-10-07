@@ -279,6 +279,12 @@ gives the ticked ones to your oligo supplier.
   <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
 </p>
 
+Every database takes **columns of your own** — *Configure → Your own
+columns*, on the mouse colony, zebrafish and plasmids as on the others: a
+weight, a score, a date, a choice from your own list. They show in the
+sheet and in each record, and come along in Export my data. Taking a column
+away hides it without losing what your records hold in it.
+
 ### 🧪 Lab inventories
 
 Every inventory runs on the same engine, starting from a preset you can

@@ -10,6 +10,24 @@
   {{ db_actions() }}
 {% endblock %}
 
+{% macro field_row(i, f) %}
+  <tr data-field-row>
+    <td>
+      <input type="hidden" name="field_{{ i }}_key" value="{{ f.key or '' }}">
+      <input type="text" name="field_{{ i }}_label" value="{{ f.label or '' }}" placeholder="{{ _('Column name') }}" aria-label="{{ _('Column name') }}">
+    </td>
+    <td>
+      <select name="field_{{ i }}_type" aria-label="{{ _('Type') }}">
+        {% for ft in field_types %}<option value="{{ ft }}" {% if (f.type or 'text') == ft %}selected{% endif %}>{{ {'text': 'Text', 'textarea': 'Long text', 'number': 'Number', 'date': 'Date', 'select': 'Choice', 'user': 'Person', 'url': 'Link', 'source': 'Source animal', 'plasmid': 'A plasmid'}[ft]|tr('field type') }}</option>{% endfor %}
+      </select>
+    </td>
+    <td><input type="text" name="field_{{ i }}_options" value="{{ (f.options or []) | join(', ') }}" placeholder="{{ _('For Choice: a, b, c') }}" aria-label="{{ _('Choices') }}"></td>
+    <td><input type="number" name="field_{{ i }}_width" value="{{ f.width or 130 }}" min="60" max="400" step="1" class="w-20" aria-label="{{ _('Width') }}"></td>
+    <td class="text-center"><input type="checkbox" name="field_{{ i }}_in_table" value="1" {% if f.in_table is not defined or f.in_table %}checked{% endif %} aria-label="{{ _('Show in table') }}"></td>
+    <td class="text-center"><input type="checkbox" name="field_{{ i }}_remove" value="1" aria-label="{{ _('Remove') }}" data-remove-toggle></td>
+  </tr>
+{% endmacro %}
+
 {% block content %}
 <div class="flex max-w-[720px] flex-col gap-4">
   <section class="card">
@@ -22,6 +40,37 @@
       <div><button type="submit" class="btn btn-primary">{{ _('Save name') }}</button></div>
     </form>
   </section>
+
+  {% if takes_fields %}
+    {# Columns of the lab's own, as every configurable database has had
+       (app/custom_fields.py). The built-in columns are set on its own page. #}
+    <section class="card">
+      <header class="card-head"><h2>{{ icon('columns') }} {{ _('Your own columns') }}</h2>
+        <span class="text-[12px] text-muted">{{ _('Anything this database does not keep yet: a weight, a score, a date of your own.') }}</span>
+      </header>
+      <form method="post" action="{{ url_for('organisms.builtin_fields', key=key) }}" class="flex flex-col gap-3 p-4">
+        <div class="dt-scroll">
+          <table class="dt">
+            <thead><tr>
+              <th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th>
+              <th>{{ _('Width') }}</th><th class="text-center">{{ _('In the table') }}</th><th class="text-center">{{ _('Remove') }}</th>
+            </tr></thead>
+            <tbody data-field-body>
+              {% for f in fields %}{{ field_row(loop.index0, f) }}{% endfor %}
+              {{ field_row(fields|length, {}) }}
+            </tbody>
+          </table>
+        </div>
+        <input type="hidden" name="field_count" value="{{ fields|length + 1 }}" data-field-count>
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-sm" data-add-field>{{ icon('plus') }} {{ _('Add column') }}</button>
+          <span class="ml-auto"></span>
+          <button type="submit" class="btn btn-primary">{{ _('Save columns') }}</button>
+        </div>
+        <p class="text-[12px] text-muted">{% trans noun=record_noun|tr %}Each one shows in the {{ noun }} sheet and in its record, and comes along in Export my data. Removing a column here hides it; what your records hold in it is kept, and putting the column back shows it again.{% endtrans %}</p>
+      </form>
+    </section>
+  {% endif %}
 
   <section class="card">
     <header class="card-head"><h2>{{ icon('database') }} {{ _('In this lab') }}</h2></header>
@@ -37,4 +86,35 @@
     </div>
   </section>
 </div>
+{% endblock %}
+
+{% block body_end %}
+{% if takes_fields %}
+  <script nonce="{{ csp_nonce() }}">
+    /* Add column / Remove, as an inventory's Configure does it. */
+    (function () {
+      const body = document.querySelector('[data-field-body]');
+      const count = document.querySelector('[data-field-count]');
+      if (!body || !count) return;
+      document.querySelector('[data-add-field]').addEventListener('click', () => {
+        const last = body.querySelector('[data-field-row]:last-child');
+        const n = Number(count.value);
+        const row = last.cloneNode(true);
+        row.querySelectorAll('[name]').forEach((el) => {
+          el.name = el.name.replace(/^field_\d+_/, `field_${n}_`);
+          if (el.type === 'checkbox') el.checked = el.name.endsWith('_in_table');
+          else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+          else el.value = el.name.endsWith('_width') ? '130' : '';
+        });
+        row.classList.remove('is-removed');
+        body.appendChild(row);
+        count.value = n + 1;
+        row.querySelector('[name$="_label"]').focus();
+      });
+      body.addEventListener('change', (e) => {
+        if (e.target.matches('[data-remove-toggle]')) e.target.closest('tr').classList.toggle('is-removed', e.target.checked);
+      });
+    })();
+  </script>
+{% endif %}
 {% endblock %}

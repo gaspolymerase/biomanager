@@ -279,6 +279,30 @@ migration.
 Every row carries `module_id_fk`, and every relation is resolved through
 `_ref()` in `app/organism_routes.py` so a reference can never cross modules.
 
+### Columns a lab adds to a built-in database
+
+Inventories, stock collections and organism databases have taken custom
+columns from the start; the mouse colony, zebrafish and plasmids could not,
+because their columns are real ones, so a lab that weighs organs had nowhere
+to put it but the notes. `app/custom_fields.py` gives all three what the
+others have, by the same shapes: a definition in `app_settings` under
+`custom_fields:<database>` (**Configure → Your own columns**, admins), and a
+value in the record's own `attrs` JSON — `mice`, `tanks`, `fish` and
+`plasmids` each gained one in revision 0025, the column an inventory item
+has always had. Adding a column is a setting, not a migration.
+
+`fields()` reads and `set_fields()` keeps them; `normalise()` drops a column
+whose key is one the record already has (`RESERVED`), or the sheet would
+have two columns answering to one name. `apply_form()` copies `attr_<key>`
+from a submitted form, touching only the keys the form sent, so saving one
+cell of a sheet row never blanks the rest. `values()` reads them back.
+`_sheet.html`'s `custom_cell` draws one, as the inventory sheet's own
+`field_cell` does for an inventory's; the types are the simple ones
+(`FIELD_TYPES`), since *source* and *plasmid* describe what an inventory
+record points at rather than anything a mouse carries. Removing a column
+hides it and keeps what records hold in it, so putting it back shows the
+values again.
+
 ### The order the databases sit in
 
 The rail lists the built-in pages and then whatever the lab added, which is

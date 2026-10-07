@@ -133,6 +133,12 @@
             <th class="dt-sortable" data-sort-key="notes" style="min-width: 188px;">
               <span class="dt-col-head">{{ icon('note', 'dt-col-icon') }}{{ _('Notes') }}<span class="dt-sort-indicator"></span></span>
             </th>
+            {# Columns this lab added (Configure → Your own columns). #}
+            {% for fd in custom_columns %}
+              <th class="dt-sortable" data-sort-key="attr_{{ fd.key }}" style="width: {{ fd.width }}px;">
+                <span class="dt-col-head">{% if fd.icon %}{{ icon(fd.icon, 'dt-col-icon') }}{% endif %}{{ fd.label|tr }}<span class="dt-sort-indicator"></span></span>
+              </th>
+            {% endfor %}
             <th class="sheet-pin sheet-pin-end" style="width: 96px; min-width: 96px;"><span class="sr-only">{{ _('Actions') }}</span></th>
           </tr>
         </thead>
@@ -193,6 +199,9 @@
               </td>
               <td><input class="note-cell" form="{{ f }}" name="notes" value="{{ p.notes }}" title="{{ p.notes }}" placeholder="{{ _('Add a note') }}"
                          data-autosave="1" aria-label="{{ _('Notes') }}" {% if locked %}disabled{% endif %}></td>
+              {% for fd in custom_columns %}
+                <td>{{ sheet_ui.custom_cell(fd, r.payload.get('attr_' ~ fd.key, ''), f, locked, 'owner-name-options') }}</td>
+              {% endfor %}
               <td class="sheet-pin sheet-pin-end">
                 <div class="sheet-actions">
                   <button type="button" class="row-icon-btn" title="{{ _('Open plasmid #%(id)s', id=p.plasmid_id) }}" data-record-edit="plasmid-dialog"

@@ -9,7 +9,7 @@
 {# What the mouse dialog opens with: the Mice sheet's rows and the cage
    sheet's sub-rows pass the same payload. #}
 {% macro mouse_payload(row, locked) -%}
-{{ {
+{%- set payload = {
   "id": row.id, "mouse_id": row.mouse_id, "locked": locked,
   "ear_tag": row.ear_tag, "gender": row.gender, "transgene_1": row.transgene_1, "transgene_2": row.transgene_2,
   "transgene_3": row.transgene_3, "transgene_4": row.transgene_4,
@@ -18,7 +18,10 @@
   "cage_rack_was": row.cage_rack_id or "", "cage_position_was": row.cage_position,
   "cage_location_was": row.cage_location,
   "litter_id": row.litter_id, "date_of_birth": row.date_of_birth, "status": row.status,
-  "date_of_death": row.date_of_death, "note": row.note } | tojson }}
+  "date_of_death": row.date_of_death, "note": row.note } -%}
+{#- The lab's own columns travel under the names the dialog's fields have. -#}
+{%- for fd in custom_columns_all %}{% set _ = payload.update({"attr_" ~ fd.key: row.attrs.get(fd.key, "")}) %}{% endfor -%}
+{{ payload | tojson }}
 {%- endmacro %}
 
 {% block page_actions %}{{ db_actions(url_for('organisms.configure_builtin', key='colony'), current_user.role == 'admin') }}{% endblock %}
@@ -206,6 +209,12 @@
                 <th class="dt-sortable" data-sort-key="note" style="min-width: 188px;">
                   <span class="dt-col-head">{{ icon('note', 'dt-col-icon') }}{{ _('Note') }}<span class="dt-sort-indicator"></span></span>
                 </th>
+                {# Columns this lab added (Configure → Your own columns). #}
+                {% for fd in custom_columns %}
+                  <th class="dt-sortable" data-sort-key="attr_{{ fd.key }}" style="width: {{ fd.width }}px;">
+                    <span class="dt-col-head">{% if fd.icon %}{{ icon(fd.icon, 'dt-col-icon') }}{% endif %}{{ fd.label|tr }}<span class="dt-sort-indicator"></span></span>
+                  </th>
+                {% endfor %}
                 <th class="sheet-pin sheet-pin-end" style="width: 96px; min-width: 96px;"><span class="sr-only">{{ _('Actions') }}</span></th>
               </tr>
             </thead>
@@ -292,6 +301,9 @@
                              list="options-cage_location" data-autosave="1" aria-label="{{ _('Location note') }}" {% if locked %}disabled{% endif %}></td>
                   <td><input class="note-cell" name="note" form="{{ f }}" value="{{ row.note }}" title="{{ row.note }}" placeholder="{{ _('Add a note') }}"
                              data-autosave="1" aria-label="{{ _('Note') }}" {% if locked %}disabled{% endif %}></td>
+                  {% for fd in custom_columns %}
+                    <td>{{ sheet_ui.custom_cell(fd, row.attrs.get(fd.key, ''), f, locked, 'owner-name-options') }}</td>
+                  {% endfor %}
                   <td class="sheet-pin sheet-pin-end">
                     <div class="sheet-actions">
                       <button type="button" class="row-icon-btn" title="{{ _('Open mouse %(id)s', id=row.mouse_id) }}"
@@ -1524,6 +1536,26 @@
               </label>
               <label>{{ _('Owner') }} <input name="owner" list="owner-name-options"></label>
             </fieldset>
+            {% if custom_columns_all %}
+              <fieldset class="record-group">
+                <legend>{{ _('Your own columns') }}</legend>
+                {% for fd in custom_columns_all %}
+                  {% set name = 'attr_' ~ fd.key %}
+                  {% if fd.type == 'select' %}
+                    <label><span>{{ fd.label|tr }}</span> <select name="{{ name }}"><option value="">{{ _('Not set') }}</option>
+                      {% for o in fd.options %}<option value="{{ o }}">{{ o|tr }}</option>{% endfor %}</select></label>
+                  {% elif fd.type == 'textarea' %}
+                    <label class="record-wide"><span>{{ fd.label|tr }}</span> <textarea name="{{ name }}" rows="2"></textarea></label>
+                  {% elif fd.type == 'date' %}
+                    <label><span>{{ fd.label|tr }}</span> <input type="date" name="{{ name }}"></label>
+                  {% elif fd.type == 'user' %}
+                    <label><span>{{ fd.label|tr }}</span> <input name="{{ name }}" list="owner-name-options"></label>
+                  {% else %}
+                    <label><span>{{ fd.label|tr }}</span> <input name="{{ name }}" autocomplete="off"></label>
+                  {% endif %}
+                {% endfor %}
+              </fieldset>
+            {% endif %}
             <fieldset class="record-group">
               <legend>{{ _('Genotype') }}</legend>
               {% for n in range(1, 5) %}

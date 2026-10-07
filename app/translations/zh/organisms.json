@@ -602,5 +602,12 @@
   "Drag a database, or use the arrows. A new one joins the end.": "拖动数据库，或用箭头调整。新建的会排在最后。",
   "Save the order": "保存顺序",
   "Not saved yet.": "尚未保存。",
-  "Saved the order of the databases.": "数据库顺序已保存。"
+  "Saved the order of the databases.": "数据库顺序已保存。",
+  "Your own columns": "你自己的列",
+  "Anything this database does not keep yet: a weight, a score, a date of your own.": "这个数据库还没有记录的内容：重量、评分、你自己的日期。",
+  "Each one shows in the %(noun)s sheet and in its record, and comes along in Export my data. Removing a column here hides it; what your records hold in it is kept, and putting the column back shows it again.": "每一列都会出现在%(noun)s表格和记录里，导出数据时也会带上。在这里删除某一列只是把它隐藏起来：记录里已填的内容会保留，把列加回来就又能看到。",
+  "Save columns": "保存列",
+  "In the table": "显示在表格中",
+  "Saved %(num)s column of your own.": "已保存 %(num)s 个自定义列。",
+  "Saved %(num)s columns of your own.": "已保存 %(num)s 个自定义列。"
 }

@@ -23,7 +23,7 @@ from .formutil import form_changed
 # audit_log rows for every tracked change; nothing here calls into it.
 from . import audit  # noqa: F401
 from . import undo as undo_service
-from . import feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
+from . import custom_fields, feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
     COLONY_VIEWS,
     CageRecord,
@@ -1290,6 +1290,8 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         mouse.gender = form.get("gender", "").strip()
     if form_changed(form, "ear_tag"):
         mouse.ear_tag = form.get("ear_tag", "").strip()[:40]
+    # Columns this lab added to the colony: only the ones the form sent.
+    custom_fields.apply_form(mouse, form, custom_fields.fields(db_session, "colony"))
     previous_status = mouse.status
     if form_changed(form, "status"):
         mouse.status = form.get("status", "").strip()
@@ -2674,6 +2676,11 @@ def colony():
     context["scopes"] = access.scopes_for()
     context["scope_hints"] = access.SCOPE_HINTS
     context["end_statuses"] = sorted(END_STATUSES)
+    # Columns this lab added to the colony (app/custom_fields.py).
+    with SessionLocal() as db_session:
+        defined = custom_fields.fields(db_session, "colony")
+    context["custom_columns"] = custom_fields.in_table(defined)
+    context["custom_columns_all"] = defined
     return render_template("colony.html", **context)
 
 
@@ -7155,9 +7162,11 @@ def _plasmid_values(p, box) -> dict:
 def _plasmid_payload(p, box, editable: bool) -> dict:
     """The record dialog's view of a plasmid (see static/record-dialog.js)."""
     values = _plasmid_values(p, box)
+    held = custom_fields.values(p)
     return {
         "id": p.id, "_label": _plasmid_label(p), "_locked": not editable, "_manage": access.can_manage(p),
         "plasmid_id": p.plasmid_id, **values,
+        **{f"attr_{key}": value for key, value in held.items()},
         "box_id_was": values["box_id"], "position_was": values["position"],
     }
 
@@ -7262,6 +7271,7 @@ def plasmids():
             "lab": sum(1 for r in rows if r["p"].is_shared),
         }
         box_list = [{"id": b.id, "name": b.name, "location": b.location or ""} for b in boxes]
+        defined_columns = custom_fields.fields(db_session, "plasmids")
         return render_template(
             "plasmids.html",
             rows=rows,
@@ -7272,6 +7282,8 @@ def plasmids():
             boxes=box_list,
             grid=grid,
             max_batch=pbox.MAX_BATCH,
+            custom_columns=custom_fields.in_table(defined_columns),
+            custom_columns_all=defined_columns,
         )
 
 
@@ -7542,6 +7554,8 @@ def update_plasmid(row_id: int):
                     return _plasmid_answer(db_session, p, error=str(exc), status=400)
         if "notes" in form:
             p.notes = (form.get("notes") or "").strip()
+        # Columns this lab added to Plasmids: only the ones the form sent.
+        custom_fields.apply_form(p, form, custom_fields.fields(db_session, "plasmids"))
 
         problem = None
         if (("box_id" in form or "storage_box" in form or "position" in form)
@@ -9116,6 +9130,7 @@ def _zebrafish_context(active_view: str):
                     for f in t.fish if fish_alive(f) for home in [zf_mating_home(f, t)]] if returnable else []
             tank_rows.append({
                 "row": t, "total_fish": total, "position": position, "editable": editable,
+                "attrs": custom_fields.values(t),
                 "mine": t.owner == me, "shared": zf_tank_shared(t), "fish_rows": len(t.fish),
                 "share_group": project_groups.name_of(t.share_group_id) if zf_tank_shared(t) else "",
                 "returnable": returnable, "return_plan": plan,
@@ -9275,9 +9290,13 @@ def _zebrafish_context(active_view: str):
                    "rack_field": "rack_id_fk", "text_field": "position"},
     }
 
+    with SessionLocal() as s:
+        zf_columns = custom_fields.fields(s, "zebrafish")
     return {
         "active_view": active_view,
         "zebrafish_views": ZEBRAFISH_VIEWS,
+        "custom_columns": custom_fields.in_table(zf_columns),
+        "custom_columns_all": zf_columns,
         "fish_racks": fish_racks,
         "tank_purpose_options": TANK_PURPOSE_OPTIONS,
         "fish_sex_options": FISH_SEX_OPTIONS,
@@ -9585,6 +9604,8 @@ def zebrafish_update_tank(tank_row_id: int):
             for fld in ("card_id", "notes"):
                 if fld in form:
                     setattr(t, fld, (form.get(fld) or "").strip())
+            # Columns this lab added to Zebrafish: only the ones it sent.
+            custom_fields.apply_form(t, form, custom_fields.fields(s, "zebrafish"))
             if "active" in form:
                 t.active = zf_active_flag(form.get("active"))
             # Which group a breeding or shared tank is for ("1": the lab's).

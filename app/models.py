@@ -325,6 +325,9 @@ class MouseRecord(Base):
     # a tattoo. Free text, because every lab marks them differently, and not
     # unique — mouse_id is the identity everything else links by (0024).
     ear_tag: Mapped[str] = mapped_column(String(40), default="", server_default="")
+    # Columns the lab added to this built-in database (app/custom_fields.py):
+    # the same JSON an inventory item has carried from the start (0025).
+    attrs: Mapped[str] = mapped_column(Text, default="", server_default="")
     date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True)
     gender: Mapped[str] = mapped_column(String(20), default="")
     transgene_1: Mapped[str] = mapped_column(String(200), default="")
@@ -485,6 +488,9 @@ class PlasmidRecord(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plasmid_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
+    # Columns the lab added to this built-in database (app/custom_fields.py),
+    # as an inventory item has always carried its own (0025).
+    attrs: Mapped[str] = mapped_column(Text, default="", server_default="")
     name: Mapped[str] = mapped_column(String(200), default="")
     backbone: Mapped[str] = mapped_column(String(200), default="")
     insert_seq: Mapped[str] = mapped_column(String(200), default="")
@@ -977,6 +983,9 @@ class TankRecord(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tank_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    # Columns the lab added to this built-in database (app/custom_fields.py),
+    # as an inventory item has always carried its own (0025).
+    attrs: Mapped[str] = mapped_column(Text, default="", server_default="")
     rack_id_fk: Mapped[int | None] = mapped_column(ForeignKey("fish_racks.id"), nullable=True)
     row: Mapped[int | None] = mapped_column(Integer, nullable=True)
     col: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -1008,6 +1017,9 @@ class FishRecord(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tank_id_fk: Mapped[int] = mapped_column(ForeignKey("tanks.id"), index=True)
+    # Columns the lab added to this built-in database (app/custom_fields.py),
+    # as an inventory item has always carried its own (0025).
+    attrs: Mapped[str] = mapped_column(Text, default="", server_default="")
     line_id_fk: Mapped[int | None] = mapped_column(ForeignKey("fish_lines.id"), nullable=True)
     individual_id: Mapped[str] = mapped_column(String(80), default="", index=True)
     count: Mapped[int] = mapped_column(Integer, default=1)

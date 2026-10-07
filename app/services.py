@@ -20,6 +20,7 @@ from .db import BASE_DIR, Base, SessionLocal, engine
 from .i18n import gettext
 from .integrity import ensure_integrity
 from .paths import uploads_dir
+from . import custom_fields
 from .models import (
     AnimalRecord,
     CageRecord,
@@ -906,6 +907,7 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
         "id": mouse.id,
         "mouse_id": mouse.mouse_id,
         "ear_tag": mouse.ear_tag or "",
+        "attrs": custom_fields.values(mouse),
         "active": mouse_is_active(mouse),
         "active_label": "Y" if mouse_is_active(mouse) else "N",
         "age_weeks": ages["age_weeks"],

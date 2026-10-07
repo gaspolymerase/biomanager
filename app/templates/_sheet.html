@@ -63,3 +63,38 @@
     <button type="submit" class="dt-bottom-action is-primary" title="{{ _('Add an empty row at the bottom to type in') }}">{{ icon('plus') }} {{ label|tr }}</button>
   </form>
 {% endmacro %}
+
+{% macro custom_cell(field, value, form_id, locked, usernames='sheet-owners') %}
+  {# A column the lab added to a built-in database (app/custom_fields.py).
+     It autosaves like every other cell; the inventory sheet's own
+     field_cell does the same for an inventory's columns, with the two
+     types — a source animal, a plasmid — that only an inventory has. #}
+  {% set name = 'attr_' ~ field.key %}
+  {% set flabel = field.label|tr %}
+  {% if field.type == 'select' %}
+    <select name="{{ name }}" form="{{ form_id }}" data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+      <option value="">–</option>
+      {% for o in field.options %}<option value="{{ o }}" {% if o == value %}selected{% endif %}>{{ o|tr }}</option>{% endfor %}
+      {% if value and value not in field.options %}<option value="{{ value }}" selected>{{ value }}</option>{% endif %}
+    </select>
+  {% elif field.type == 'date' %}
+    <input type="date" name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-empty="{{ '0' if value else '1' }}"
+           data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+  {% elif field.type == 'number' %}
+    <input type="text" inputmode="decimal" name="{{ name }}" form="{{ form_id }}" value="{{ value }}"
+           data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+  {% elif field.type == 'user' %}
+    <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" list="{{ usernames }}"
+           data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+  {% elif field.type == 'url' %}
+    <span class="plasmid-cell">
+      <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-autosave="1"
+             aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+      {% if value %}<a class="plasmid-cell-link flex-none" href="{{ value }}" target="_blank" rel="noopener"
+         title="{{ _('Open the link') }}">{{ icon('external') }}</a>{% endif %}
+    </span>
+  {% else %}
+    <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-autosave="1"
+           aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+  {% endif %}
+{% endmacro %}

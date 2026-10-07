@@ -399,9 +399,10 @@ def rename_builtin(key: str):
 
 @bp.route("/builtin/<key>/configure")
 def configure_builtin(key: str):
-    """Rename the mouse colony, zebrafish or plasmid pages, or take one out
-    of the lab (admins). Their records and columns are set on their own
-    pages; this is what every other database's Configure also offers."""
+    """Rename the mouse colony, zebrafish or plasmid pages, add columns of
+    the lab's own to them, or take one out of the lab (admins). Their
+    built-in columns are set on their own pages; this is what every other
+    database's Configure also offers."""
     from . import inventory_service as inventories
 
     if key not in inventories.BUILTIN_DATABASES:
@@ -410,13 +411,39 @@ def configure_builtin(key: str):
         flash(gettext("Only an admin can configure this database."), "error")
         return redirect(url_for("organisms.index"))
     feature = lab.FEATURES[key]
+    from . import custom_fields
+
     with SessionLocal() as session:
         label = inventories.builtin_labels(session)[key]
         on = lab.feature_on(session, key)
+        fields = custom_fields.fields(session, key)
     return render_template("organisms/builtin_configure.html", key=key, feature=feature, label=label,
-                           default=inventories.BUILTIN_DATABASES[key][0], on=on,
+                           default=inventories.BUILTIN_DATABASES[key][0], on=on, fields=fields,
+                           takes_fields=key in custom_fields.DATABASES,
+                           field_types=custom_fields.FIELD_TYPES, record_noun=custom_fields.NOUNS[key],
                            open_url={"colony": url_for("colony", view="mice"), "zebrafish": url_for("zebrafish"),
                                      "plasmids": url_for("plasmids")}[key])
+
+
+@bp.route("/builtin/<key>/fields", methods=["POST"])
+def builtin_fields(key: str):
+    """The lab's own columns on a built-in database. Removing one leaves
+    what records hold in it: nothing is deleted, and putting the column back
+    shows it again."""
+    from . import custom_fields
+    from .inventory_routes import _fields_from_form
+
+    if key not in custom_fields.DATABASES:
+        abort(404)
+    if not access.is_admin():
+        flash(gettext("Only an admin can configure this database."), "error")
+        return redirect(url_for("organisms.index"))
+    with SessionLocal() as session:
+        kept = custom_fields.set_fields(session, key, _fields_from_form(request.form))
+        session.commit()
+    flash(ngettext("Saved %(num)s column of your own.", "Saved %(num)s columns of your own.", len(kept),
+                   num=len(kept)), "success")
+    return redirect(url_for("organisms.configure_builtin", key=key))
 
 
 @bp.route("/builtin/<key>/switch", methods=["POST"])
