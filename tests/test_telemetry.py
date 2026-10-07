@@ -35,6 +35,12 @@ class Heartbeat(AppTestCase):
         set_up = mock.patch("app.lab.setup_done", return_value=True)
         set_up.start()
         self.addCleanup(set_up.stop)
+        # A checkout has no VERSION file, so it looks like a build being
+        # worked on, which never sends (see `released`). The tests are about
+        # what a released build does, so they run as one.
+        shipped = mock.patch("app.feedback.app_version", return_value="1.1.0")
+        shipped.start()
+        self.addCleanup(shipped.stop)
         self.post_mock = mock.patch("app.telemetry.urlopen", return_value=_answer())
         self.urlopen = self.post_mock.start()
         self.addCleanup(self.post_mock.stop)
@@ -168,6 +174,14 @@ class Heartbeat(AppTestCase):
         telemetry._next_check = 0.0
 
     # ---------------------------------------------------------------- what admins see
+
+    def test_a_build_being_worked_on_is_not_a_lab(self):
+        """Every dev run and every upgrade check makes a fresh database, so
+        a development build that sent would count as a new lab each time."""
+        for version, sends in (("1.1.0", True), ("1.1.0+dev", False), ("server", False), ("", False)):
+            with self.subTest(version=version):
+                with mock.patch("app.feedback.app_version", return_value=version):
+                    self.assertEqual(telemetry.released(), sends)
 
     def test_the_switch_on_the_usage_report(self):
         html = self.get_ok(self.a, "/feedback/usage")
