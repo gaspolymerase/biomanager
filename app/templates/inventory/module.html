@@ -427,6 +427,11 @@
           <select name="field" aria-label="{{ _('Column to set') }}" data-bulk-field>
             {% for f in bulk_fields %}<option value="{{ f.name }}" data-type="{{ f.type }}"{% if f.options %} data-options="{{ f.options|join('\n') }}"{% endif %}>{{ f.label|tr('inventory') }}</option>{% endfor %}
           </select>
+          {# A source column is two answers: which colony, then the ID in it.
+             The "from" box shows only when a source column is chosen. #}
+          <select name="source_kind" aria-label="{{ _('Which colony they came from') }}" data-bulk-source hidden>
+            {% for source in sources %}<option value="{{ source.kind }}">{{ source.label|tr }}</option>{% endfor %}
+          </select>
           <input name="value" aria-label="{{ _('Value') }}" placeholder="{{ _('value') }}" list="inv-bulk-field-options" data-bulk-value>
           <datalist id="inv-bulk-field-options"></datalist>
           <button type="submit" class="btn btn-sm">{{ _('Set field') }}</button>

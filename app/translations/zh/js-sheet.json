@@ -149,5 +149,7 @@
   "stock populations": "种群",
   "plate population": "培养皿种群",
   "plate populations": "培养皿种群",
-  "alive": "存活"
+  "alive": "存活",
+  "ID in that colony": "在该群体中的编号",
+  "value": "值"
 }

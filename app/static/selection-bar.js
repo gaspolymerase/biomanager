@@ -137,11 +137,16 @@
     const form = select.form;
     const input = form.querySelector('[data-bulk-value]');
     const list = input && input.list;
+    const kind = form.querySelector('[data-bulk-source]');
     const sync = () => {
       const opt = select.selectedOptions[0];
       if (!opt || !input) return;
+      const isSource = opt.dataset.type === 'source';
+      // A source column asks two things: the colony, then the ID in it.
+      if (kind) kind.hidden = !isSource;
       input.type = opt.dataset.type === 'date' ? 'date' : 'text';
       input.inputMode = opt.dataset.type === 'number' ? 'decimal' : '';
+      input.placeholder = isSource ? t('ID in that colony') : t('value');
       if (list) {
         list.innerHTML = '';
         (opt.dataset.options || '').split('\n').filter(Boolean).forEach((o) => {

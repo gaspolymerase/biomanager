@@ -1241,11 +1241,24 @@ def bulk_fields(mv) -> list[dict]:
             out.append({"name": name, "label": label, "type": "date" if name.endswith("_on") else "text", "options": []})
     derived = svc.PRIMER_DERIVED if mv.row.kind == "primers" else ()
     for field in mv.fields:
-        if field["type"] != "source" and field["key"] not in derived:
-            out.append({"name": f"attr_{field['key']}", "label": field["label"],
-                        "type": field["type"], "options": field.get("options") or []})
+        if field["key"] in derived:
+            continue
+        # A source is two values — which colony, and the ID in it — so the
+        # bar shows a second box for it (see `bulk`, which pairs them up).
+        out.append({"name": f"attr_{field['key']}", "label": field["label"],
+                    "type": field["type"], "options": field.get("options") or []})
     out.append({"name": "notes", "label": "Notes", "type": "text", "options": []})
     return out
+
+
+def _bulk_value(field: dict, value: str, form) -> dict:
+    """What the item form would have sent for this one column. A source
+    needs both halves — the colony it came from and the ID in it — so the
+    bar's own "from" box is carried across with the value."""
+    if field["type"] != "source":
+        return {field["name"]: value}
+    return {f"{field['name']}_kind": (form.get("source_kind") or "").strip(),
+            f"{field['name']}_ref": value}
 
 
 def _bulk_message(action: str, n: int, noun: str, field: str = "") -> str:
@@ -1327,7 +1340,12 @@ def bulk(key: str):
                     # numbers, a date a date), one column only.
                     kept = {c.key: getattr(item, c.key) for c in InventoryItem.__table__.columns}
                     try:
-                        _item_from_form(session, mv, item, ImmutableMultiDict({field["name"]: value}))
+                        # What the save wants to say — a source that names no
+                        # mouse in the colony — is worth hearing once here too,
+                        # not thirty times.
+                        _problem, said = _item_from_form(
+                            session, mv, item, ImmutableMultiDict(_bulk_value(field, value, request.form)))
+                        notes += [n for n in said if n not in notes]
                     except Refused as problem:
                         for column, old in kept.items():     # this one stays as it was
                             setattr(item, column, old)

@@ -450,10 +450,14 @@ pages are in `app/lab_routes.py`.
   name is there. The same revision adds `plasmids.concentration`
   and `plasmids.a260_280` (typed numbers, checked by `_plasmid_measure`).
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
-  built-in columns the inventory uses, every custom one but *source*, and
-  notes) runs each ticked row through `_item_from_form` with that one
-  column, inside the batch; a refused value leaves that row as it was and
-  is named. Organisms do the same for custom fields (`bulk_animals`,
+  built-in columns the inventory uses, every custom one and notes) runs
+  each ticked row through `_item_from_form` with that one column, inside
+  the batch; a refused value leaves that row as it was and is named. A
+  *source* column is two answers — which colony and the ID in it — so the
+  bar shows a second box for the colony and `_bulk_value` pairs them back
+  into the `attr_<key>_kind` / `_ref` the item form posts; one mouse's
+  whole harvest takes its source in one go. What the save would have said
+  (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in
   place, with `attr_<key>_was` so a stale row doesn't undo a later change
   (`read_attrs_checked` skips a field whose value equals its `_was`).

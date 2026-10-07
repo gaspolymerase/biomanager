@@ -230,7 +230,7 @@ Select many records and change, move or print them in one go.
 
 - **Import from Excel**: For the sheet you already keep. Every database takes an Excel workbook or CSV, with any columns: you check how they were matched, see a preview of what would be created and which rows would be skipped, then import them as one batch you can undo. See [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in).
 
-- **Select and act**: Tick rows (shift-click selects a range) and a bar rises from the bottom: set a field, move, change owner or status, sac, retire, delete. **Set field** sets any column on them, your own columns included (a date column takes a date, a number column a number). Records you may not change are skipped and counted, never silently changed.
+- **Select and act**: Tick rows (shift-click selects a range) and a bar rises from the bottom: set a field, move, change owner or status, sac, retire, delete. **Set field** sets any column on them, your own columns included (a date column takes a date, a number column a number). That includes **Source**, where you pick the colony and type the ID once — handy when one mouse gives a dozen samples and each would otherwise be opened in turn. Records you may not change are skipped and counted, never silently changed.
 
 - **Duplicate**: Copies a record as a new one of yours — the next aliquot, or the same order again.
 
