@@ -352,13 +352,23 @@ def index():
 def reorder():
     """Move one database a place up or down in the sidebar. The whole order
     is sent with it, so moving one never depends on what the page last
-    showed matching what the database now holds."""
+    showed matching what the database now holds. A drag in the sidebar
+    itself (`rail=1`) sends the databases it shows, which keep the places
+    they held among the rest (`lab.arrange_within`), and is answered in
+    JSON."""
     key = (request.form.get("key") or "").strip()
     keys = [k for k in request.form.getlist("keys") if k]
+    background = request.headers.get("X-Autosave") == "1"
     with SessionLocal() as session:
         if not access.is_admin():
+            if background:
+                return jsonify({"ok": False, "error": gettext("Only an admin can arrange the lab's databases.")}), 403
             flash(gettext("Only an admin can arrange the lab's databases."), "error")
             return redirect(url_for("organisms.index"))
+        if request.form.get("rail") == "1" and keys:
+            lab.set_database_order(session, lab.arrange_within(lab.database_order(session), keys))
+            session.commit()
+            return jsonify({"ok": True}) if background else redirect(url_for("organisms.index"))
         if key:
             # One step, from a page that sends a single move.
             if not lab.move_database(session, key, -1 if request.form.get("by") == "up" else 1, keys):

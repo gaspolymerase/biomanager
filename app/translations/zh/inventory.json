@@ -417,7 +417,7 @@
   "Open the plasmid to edit it": "打开质粒即可编辑",
   "See the sequence of plasmid #%(number)s": "查看质粒 #%(number)s 的序列",
   "Which colony they came from": "它们来自哪个群体",
-  "Open mouse %(id)s (ear tag %(tag)s) in the colony": "在小鼠库中打开 %(id)s 号小鼠（耳标 %(tag)s）",
+  "Open mouse %(id)s (custom tag %(tag)s) in the colony": "在小鼠库中打开 %(id)s 号小鼠（自定义标识 %(tag)s）",
   "Chemicals": "化学品",
   "inventory::chemicals": "化学品",
   "Chemicals by name, abbreviation, CAS number and molecular weight. A Formulation in the notebook picks them from here and works out the moles from what you weigh.": "按名称、缩写、CAS 号和分子量记录化学品。实验记录本里的配方从这里选取，并根据称量的质量算出摩尔数。",

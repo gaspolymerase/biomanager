@@ -58,10 +58,10 @@
       <input class="ident" name="{{ name }}_ref" form="{{ form_id }}" value="{{ src.ref or '' }}" data-source-ref
              placeholder="{{ _('ID') }}" data-autosave="1" aria-label="{{ _('ID in that colony') }}"
              {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"
-             {%- elif mouse and mouse.ear_tag %}title="{{ _('Ear tag %(tag)s', tag=mouse.ear_tag) }}"{% endif %}
+             {%- elif mouse and mouse.ear_tag %}title="{{ _('Custom tag %(tag)s', tag=mouse.ear_tag) }}"{% endif %}
              {% if locked %}disabled{% endif %}>
       {% if mouse %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse.row }}"
-         title="{{ _('Open mouse %(id)s (ear tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
+         title="{{ _('Open mouse %(id)s (custom tag %(tag)s) in the colony', id=src.ref, tag=mouse.ear_tag) if mouse.ear_tag else _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
     </span>
   {% elif field.type == 'plasmid' %}
     {# The plasmid's number, editable; its name links to the plasmid when there is one. #}

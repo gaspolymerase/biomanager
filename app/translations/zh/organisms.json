@@ -489,7 +489,7 @@
   "field::Embryos": "胚胎数",
   "field::Larvae": "幼鱼数",
   "field::Supplier": "供应商",
-  "field::Ear tag": "耳标",
+  "field::Custom tag": "自定义标识",
   "field::Conductivity": "电导率",
   "field::Temperature": "温度",
   "field::Nitrite": "亚硝酸盐",

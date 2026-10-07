@@ -80,12 +80,13 @@
           </div>
 
           {% for section in nav_sections %}
-            <div class="rail-group">
+            <div class="rail-group"{% if section.sortable %} data-rail-order="{{ url_for('organisms.reorder') }}"{% endif %}>
               <div class="rail-group-label">{{ section.label|tr }}</div>
               {% for item in section.links %}
                 {% if item.url %}
                   <a class="rail-item {% if item.active %}is-active{% endif %}"
                      href="{{ item.url }}" data-label="{{ item.label|tr }}"
+                     {% if section.sortable and item.key != 'new-db' %}data-db-key="{{ item.key }}" draggable="true"{% endif %}
                      {% if item.hint %}title="{{ item.hint|tr }}"{% endif %}
                      {% if item.active %}aria-current="page"{% endif %}>
                     {{ icon(item.icon) }}<span class="rail-label">{{ item.short|tr }}</span>

@@ -286,11 +286,60 @@
     else window.addEventListener('pywebviewready', send, { once: true });
   }
 
+  /* ------------------------------------------------- arranging the rail */
+
+  // An admin drags a database up or down the rail itself to put the lab's
+  // databases in the order it works in. The rail's group carries the save
+  // address (data-rail-order) only for an admin; the drop posts the keys
+  // as they now read, which organisms.reorder places among the rest.
+  function setupRailOrder() {
+    const group = document.querySelector('[data-rail-order]');
+    if (!group) return;
+    let dragged = null;
+    let before = '';
+    const keys = () => [...group.querySelectorAll('[data-db-key]')].map((el) => el.dataset.dbKey);
+    group.addEventListener('dragstart', (event) => {
+      dragged = event.target.closest && event.target.closest('[data-db-key]');
+      if (!dragged) return;
+      before = keys().join(',');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', dragged.dataset.dbKey);
+      requestAnimationFrame(() => { if (dragged) dragged.style.opacity = '0.4'; });
+    });
+    group.addEventListener('dragover', (event) => {
+      if (!dragged) return;
+      const over = event.target.closest && event.target.closest('[data-db-key]');
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      if (!over || over === dragged) return;
+      const box = over.getBoundingClientRect();
+      over.parentNode.insertBefore(dragged, event.clientY > box.top + box.height / 2 ? over.nextSibling : over);
+    });
+    group.addEventListener('drop', (event) => { if (dragged) event.preventDefault(); });
+    group.addEventListener('dragend', () => {
+      if (!dragged) return;
+      dragged.style.opacity = '';
+      dragged = null;
+      const now = keys();
+      if (now.join(',') === before) return;
+      const body = new FormData();
+      body.append('rail', '1');
+      now.forEach((key) => body.append('keys', key));
+      fetch(group.dataset.railOrder, { method: 'POST', body, headers: { 'X-Autosave': '1' } })
+        .then((r) => r.json().catch(() => ({})).then((data) => {
+          if (!r.ok || data.ok === false) throw new Error(data.error || '');
+          toast(t('Saved the order of the databases.'), 'ok');
+        }))
+        .catch((error) => toast(error.message || t('Could not save the order. Reload the page and try again.'), 'danger'));
+    });
+  }
+
   /* ------------------------------------------------------------------ init */
 
   function init() {
     shareNavWithDesktop();
     setupRailMenus();
+    setupRailOrder();
     document.querySelectorAll('[data-rail-toggle]').forEach((el) => {
       el.addEventListener('click', toggleRail);
     });
