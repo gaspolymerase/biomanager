@@ -605,6 +605,19 @@ Source: https://biomanager.org/guide/phones-and-cage-cards
 
 Tanks on racks, fish as groups or individuals, matings and clutches, lines with ZFIN names, and water quality.
 
+### What this does for your week
+
+A fish facility runs on things that go wrong quietly: a mating tank left in overnight, a clutch nobody wrote down, a system whose conductivity drifted a week ago. BioManager keeps those where the whole lab can see them rather than in one person's notebook.
+
+| Setting up a cross | **Set up a mating** records which male and female tanks went in, how many of each, and when they go back. Mating tanks due back show on [Home](https://biomanager.org/guide/home-page) until someone marks them **Returned**, so a fish is not left in overnight because the person who set it up is away. |
+|---|---|
+| The clutch | **New clutch** records each fertilisation against the cross it came from, so a line's output is a number you can look up instead of a memory. |
+| Raising and sorting | Fish live as a group with a headcount until you need them individually, which is how a nursery tank actually works. Select tanks to set purpose or owner, move them, or mark genotyping. |
+| The water | **Log reading** keeps temperature, pH and conductivity per system, so when a clutch fails you can look back at the week rather than argue about it. |
+| An experiment | A tank's fish or a clutch's larvae go under a treatment as a cohort, following survival, length or a phenotype ([Experiments](https://biomanager.org/guide/experiments)). |
+
+What you stop doing: keeping mating returns on a whiteboard, counting a line's clutches from memory, and discovering a water problem only when the fish tell you.
+
 - **Tanks**: **New tank** or **Add many** (consecutive IDs), on a table or a rack grid. Purposes: stock, breeding, mating, experiment, quarantine. Select tanks to set purpose or owner, move, or mark genotyping. The tank view also has the **Sacrifice log**.
 
 - **Fish**: A group with a headcount, or individuals when you need them; statuses alive, transfer, geno, sac. Move or sac a selection.
@@ -624,6 +637,18 @@ Source: https://biomanager.org/guide/zebrafish
 ## Flies and worms
 
 Vials and plates on racks, with flips that follow the temperature.
+
+### What this does for your week
+
+Fly and worm stocks are lost by missing a flip, and flips depend on the temperature the stock is kept at. BioManager works the schedule out per incubator rather than leaving it to a rota on the wall.
+
+| Where a stock lives | Incubators hold racks or boxes, and each incubator has its temperature — which is what decides how often its vials need flipping. |
+|---|---|
+| Knowing what is due | **Schedule** shows what is overdue, what is due today, and what is coming in the next week or month. Above each rack, the line says when it was last flipped and when the next is due, red when it has slipped. |
+| Doing the flips | Mark a vial **Flipped** (worms: **Chunked**) as you go, a whole rack at a time if that is how you work ([Many at once](https://biomanager.org/guide/many-at-once)). |
+| Keeping a line safe | Worms: **New frozen lot** records a freeze, and you thaw one onto a plate when you need it, so a line survives a missed flip. |
+
+What you stop doing: keeping the flip rota on a whiteboard, working out by hand which 25 °C vials are due before the 18 °C ones, and finding out a stock was lost two weeks after it happened.
 
 Drosophila keeps **vials** in racks inside incubators; C. elegans keeps **plates** in boxes. Tabs: the vials or plates, **Schedule**, **Experiments**, **Genotypes**, **Incubators & racks**, **Frozen** (worms) and **Settings**.
 
@@ -685,6 +710,19 @@ Source: https://biomanager.org/guide/any-organism
 
 Plasmid records with their sequence and map, and the box each tube is in.
 
+### What this does for your cloning
+
+A construct is only as good as what you can still prove about it a year later: what it was built from, which primers made it, which tube in the freezer is the real one, and whether the sequence in the file is the sequence in the tube. These pages keep the whole loop in one place instead of across SnapGene files, a primer spreadsheet and a box diagram.
+
+| Designing it | **Assemble a plasmid** builds the next construct out of the ones you already have — digest and ligate, Gibson or Golden Gate — and the product records what it was made from, so a year later the family tree answers the question instead of your memory. |
+|---|---|
+| The primers it needs | Primers the wizard designs, and any you draw on a map yourself, land in the lab's **Primers** database marked *to order*, with the plasmid beside them. Tick them and **Copy for ordering** hands the list to your supplier. |
+| Checking what you got | **Detect features** marks the lab's known elements on a new map, and the sequencing reads that confirmed the clone live on the plasmid itself under **Files**, with the gel photo. |
+| Finding the tube | Every plasmid has a box position, and the bacteria carrying it sit in **Glycerol stocks** with their own box — so "which tube" has an answer that is not a colleague's memory. |
+| Handing it on | A virus made from it names the plasmid; the plasmid's page lists what was made from it. Download it as GenBank whenever someone outside the lab asks. |
+
+What you stop doing: keeping maps in one folder and primers in another spreadsheet, retyping a primer to order it, guessing which miniprep is the good one, and losing what a construct was built from when the person who built it leaves.
+
 - At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar because each names the plasmid it came from.
 
 ### The plasmid sheet
@@ -732,6 +770,18 @@ Source: https://biomanager.org/guide/plasmids
 ## Samples, orders, reagents, antibodies, viruses
 
 Samples, orders, reagents, antibodies, viruses, primers, glycerol stocks and cell lines.
+
+### What this does for your week
+
+Buying something and finding it again are the same chain, and it usually breaks where one person orders and another unpacks the box. BioManager keeps that chain in one place, so the shelf matches the record.
+
+| Someone needs something | **New order** will not go out without item, vendor, catalogue number and quantity, which is what makes a reorder possible months later. |
+|---|---|
+| While it is coming | Requested → Ordered → Received, one tap each, on a table or a board you drag cards across. Everyone can see what is on its way instead of asking. |
+| The box arrives | Mark it received and BioManager offers to put it on the shelf — [Receive an order into stock](https://biomanager.org/guide/receive-an-order) makes the reagent, antibody or virus record with the vendor, catalogue number and lot already filled in. |
+| Months later | Expiring soon and Expired chips, and both on [Home](https://biomanager.org/guide/home-page). On anything running low, **Order again** opens a new order already filled in from the old one. |
+
+What you stop doing: ordering a second one because nobody knew the first had arrived, retyping a catalogue number off a box, and finding the antibody expired the morning you needed it.
 
 One engine, nine starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
 
@@ -805,6 +855,18 @@ Source: https://biomanager.org/guide/receive-an-order
 ## Experiments, for every animal
 
 Treatment groups, doses from body weight, readouts and the stats, for every animal.
+
+### What this does for your week
+
+An experiment is where a colony turns into data, and it is where records usually fall apart: doses on a paper sheet, weights in one person's phone, the groups remembered rather than written. This page keeps the regimen, the animals and the readout together, so the export is the experiment.
+
+| Before it starts | Name it, set day 1 and the readout, and pull in the animals — a tank's fish or a cohort of mice — so the groups are written down before the first dose. |
+|---|---|
+| Each manipulation | **Record manipulation** writes what was just done to a whole group — Tamoxifen 20 mg/kg i.p. today — and doses are worked out from each animal's body weight rather than in your head. |
+| At the bench | Scan the experiment's QR code with a phone for bench mode: one animal at a time, gloves on, recorded where you stand ([At the bench](https://biomanager.org/guide/phones-and-cage-cards)). |
+| Afterwards | The chart shows the readout by group over the days. **Export** gives an Excel workbook — long for Prism or R, wide for a glance, with every animal's manipulations beside it. |
+
+What you stop doing: transcribing a dosing sheet, recalculating mg/kg at the cage, and rebuilding the groups from memory when it is time to analyse.
 
 Mice, zebrafish, flies, worms and your own organisms all have an **Experiments** tab beside their other tabs (Mice and Cages; Tanks and Fish; the vials or plates). **New experiment** there can start with a whole cage, tank, rack or housing of them. One page shows each experiment, and **All experiments** on it goes back to the tab.
 
