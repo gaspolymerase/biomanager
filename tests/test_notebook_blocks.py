@@ -32,6 +32,9 @@ class Blocks(unittest.TestCase):
     def test_step_timers_leave_time_points_alone(self):
         self.check("durations.check.mjs")
 
+    def test_a_formulation_works_out_moles_and_equivalents_and_a_log_is_a_line(self):
+        self.check("formulation.check.mjs")
+
 
 if __name__ == "__main__":
     unittest.main()

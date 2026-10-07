@@ -73,7 +73,7 @@ from .models import (
     UserAccount,
     UserIdentity,
 )
-from .formutil import arg_int, like_pattern
+from .formutil import arg_int, attr_value_pattern, like_pattern
 from .services import (
     csv_text,
     add_notification,
@@ -5867,7 +5867,8 @@ def global_search():
             })
 
         # Every lab inventory: samples, orders, reagents, antibodies, custom.
-        kind_type = {"orders": "order", "samples": "sample", "reagents": "reagent", "antibodies": "antibody",
+        kind_type = {"orders": "order", "samples": "sample", "reagents": "reagent", "chemicals": "chemical",
+                     "antibodies": "antibody",
                      "viruses": "virus", "primers": "primer", "cell_lines": "cell-line",
                      "glycerol_stocks": "glycerol-stock"}
         # Only databases this person sees: the lab's and their own (app/lab.py).
@@ -6672,13 +6673,16 @@ def _record_number(query: str) -> int | None:
 
 def _mention_items(db_session, module: InventoryModule, query: str, limit: int) -> list[InventoryItem]:
     """Records whose name, catalogue number, lot or vendor holds what was
-    typed; a record number finds that record too. A lot or catalogue number
-    that is what was typed comes first, then the record of that number."""
+    typed, or one of whose own columns (a chemical's abbreviation or CAS
+    number) starts with it; a record number finds that record too. A lot or
+    catalogue number that is what was typed comes first, then the record of
+    that number."""
     stmt = select(InventoryItem).where(InventoryItem.module_id_fk == module.id)
     if query:
         like = like_pattern(query)
         found = (InventoryItem.name.ilike(like, escape="\\") | InventoryItem.catalog_number.ilike(like, escape="\\")
-                 | InventoryItem.lot.ilike(like, escape="\\") | InventoryItem.vendor.ilike(like, escape="\\"))
+                 | InventoryItem.lot.ilike(like, escape="\\") | InventoryItem.vendor.ilike(like, escape="\\")
+                 | InventoryItem.attrs.ilike(attr_value_pattern(query), escape="\\"))
         exact = (func.lower(InventoryItem.lot) == query.lower()) | (func.lower(InventoryItem.catalog_number) == query.lower())
         number = _record_number(query)
         if number is not None:
@@ -6714,6 +6718,11 @@ def notebook_lookup_item(key: str, number: int):
                   ("Owner", "Lab common" if item.is_shared else item.owner), ("Vendor", item.vendor),
                   ("Catalog #", item.catalog_number), ("Lot", item.lot), ("Amount", amount), ("Where", where),
                   ("Expires", item.expires_on.isoformat() if item.expires_on else "")]
+        # A chemical's abbreviation, CAS number and molecular weight, after its name.
+        if module.kind == "chemicals":
+            attrs = item.attrs_dict
+            fields[1:1] = [(f["label"], str(attrs.get(f["key"]) or "")) for f in inventories.view(module).fields
+                           if f["key"] in lab_notebook.CHEMICAL_KEYS]
         return jsonify({"ok": True, "label": _mention_label(module, item, True), "type_label": module.label,
                         "name": item.name or "", "fields": [[k, v] for k, v in fields if v]})
 
@@ -8804,11 +8813,18 @@ def plasmid_sequence_json(row_id: int):
 @app.route("/utilities")
 @login_required
 def utilities():
-    """The bench calculators (static/bench-calcs.js); the lab's own list of
-    molecular weights comes first in their chemical picker."""
+    """The bench calculators (static/bench-calcs.js); the lab's own
+    molecular weights come first in their chemical picker: its Chemicals
+    database (each by name, and by abbreviation too), then its older list."""
     with SessionLocal() as db_session:
-        chemicals = [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
-                     for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
+        chemicals = []
+        for c in lab_notebook.chemicals_search(db_session, "", limit=2000):
+            if c["mw"]:
+                chemicals.append({"name": c["name"], "mw": c["mw"], "notes": c["cas"]})
+                if c["abbr"] and c["abbr"].lower() != c["name"].lower():
+                    chemicals.append({"name": c["abbr"], "mw": c["mw"], "notes": c["name"]})
+        chemicals += [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
+                      for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
     return render_template("utilities.html", chemicals=chemicals)
 
 

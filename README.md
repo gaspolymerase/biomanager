@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Your lab's animals, stocks and supplies — in one place, instead of twenty spreadsheets.</b><br>
-  Mice · zebrafish · flies · worms · plasmids · samples · orders · reagents · antibodies · viruses · calendar · notebook
+  Mice · zebrafish · flies · worms · plasmids · samples · orders · reagents · chemicals · antibodies · viruses · calendar · notebook
 </p>
 
 <p align="center">
@@ -74,7 +74,7 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🪰 | [**Drosophila & C. elegans**](#-drosophila-and-c-elegans) | Vials and plates, crosses, and temperature-aware flip schedules |
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
 | 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, and where each tube lives |
-| 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, antibodies, viruses, or a list of your own |
+| 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, or a list of your own |
 | 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols and meeting notes |
 
 ### 🐭 Mouse colony
@@ -289,6 +289,7 @@ change:
 | 🧫 **Samples** | harvested tissue and material, linked to the animal it came from, stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
 | ⚗️ **Reagents** | quantity, concentration, CAS number, hazard, supplier and lot, and expiry dates with warnings |
+| 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is; a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
 | 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
 | 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
@@ -305,7 +306,7 @@ database has a name of its own (one another database has is refused), so
 
 - **Filter orders by status** — one tap shows only what is requested,
   ordered, received or cancelled.
-- **Expired is red** — a reagent, antibody or virus past its expiry date
+- **Expired is red** — a reagent, chemical, antibody or virus past its expiry date
   has a red dot, number, name and date; **Expired** and **Expiring soon**
   show only those.
 - **Nothing half-filled** — an order can't be placed without its item,
@@ -314,7 +315,7 @@ database has a name of its own (one another database has is refused), so
 - **Type it once** — every column suggests what the lab has typed before;
   pick an earlier item or catalogue number and the vendor, price and grant
   fill themselves in.
-- **Order again** — one click on a reagent, antibody or virus starts a new order
+- **Order again** — one click on a reagent, chemical, antibody or virus starts a new order
   with its details, and the quantity, price and grant of the last time. A
   record that is already on order shows **On order**, and Order again says
   which order is open and who asked for it.
@@ -326,7 +327,7 @@ database has a name of its own (one another database has is refused), so
   the next free one. **New box** can make several alike at once
   (*Tower A 1 … 13*).
 - **From the box to the shelf** — when an order is marked received,
-  BioManager offers to add it to Reagents, Antibodies or Viruses with everything
+  BioManager offers to add it to Reagents, Chemicals, Antibodies or Viruses with everything
   already filled in.
 
 <table>
@@ -377,7 +378,8 @@ database has a name of its own (one another database has is refused), so
   dialog lists the pages that link it (**Used in notebook pages**), so the
   record and the notes point at each other. Type **/** on a new line for
   everything below.
-  - **Experiments**: aim, setup, samples and lot numbers, steps, results.
+  - **Experiments**: aim, setup, samples and lot numbers, steps, results
+    and a summary.
     *Start* and *Finished* stamp the times; planned, running, done or
     failed shows in the sidebar.
   - **Sign** a page when it should be the record of your work (your
@@ -407,7 +409,9 @@ database has a name of its own (one another database has is refused), so
     (`=B/mean(B)*100`), and get a bar, dot, box, scatter or line plot with
     SEM or SD error bars, a fitted line, and a t-test, Mann–Whitney or ANOVA
     (Holm-corrected pairs) with significance stars. Plots download as SVG or
-    PNG.
+    PNG. A log pasted with its headers (time down the first column and
+    readings beside it, such as a reactor's temperature and pressure) is
+    drawn as a line over time; **Y** picks which reading.
   - **Plate reader and qPCR**: paste readings onto a 6- to 384-well
     heatmap, mark blanks, standards and samples, and read concentrations off
     the standard curve; paste Ct values and get ΔΔCt fold changes.
@@ -415,6 +419,14 @@ database has a name of its own (one another database has is refused), so
     millilitres to add out (from molecular weight or a stock); change the
     volume and every amount follows. Common buffers are built in; the lab's
     own are saved to a shared library.
+  - **Formulations** (`/formulation`): what goes into a reaction or a batch,
+    by mass. Type a chemical's name, abbreviation or CAS number and pick it
+    from the lab's **Chemicals** database; its molecular weight, purity,
+    density and lot come with it. Type what you weigh and get the moles;
+    or mark one row as the basis and give the others in equivalents, and
+    the mass to weigh follows. Each row shows its weight %, a liquid its
+    volume, and the chemical lists the page under **Used in notebook
+    pages**.
   - **Calculators**: dilution (C₁V₁ = C₂V₂), molarity, master mix, serial
     dilution, ligation insert, cell counting and seeding, agarose gel,
     DNA/RNA concentration and copy number, and protein concentration from
@@ -462,7 +474,8 @@ database has a name of its own (one another database has is refused), so
   bacteria (OD₆₀₀, time to an OD, antibiotics), rpm ↔ × g, doses by body
   weight, agarose gels, radioactive decay, statistics, group sizes and a
   unit converter. Reference tables for culture vessels, buffers,
-  antibiotics, gels, isotopes and molecular weights (the lab's own first).
+  antibiotics, gels, isotopes and molecular weights (the lab's own first,
+  from its Chemicals database by name or abbreviation).
 
 <p align="center">
   <img src="docs/screenshots/utilities.webp" alt="Utilities: the list of calculators and a PCR master mix worked out for 12 reactions" width="100%">

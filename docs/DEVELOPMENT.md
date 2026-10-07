@@ -123,7 +123,9 @@ each to its base unit first. It loads in Node too, and
 `tests/js/bench-calcs.check.mjs` checks known answers.
 `static/utilities-page.js` draws the list, the open calculator (from the
 address hash) and the reference tables; the lab's chemicals come from the
-page (`/utilities` passes them) ahead of the built-in list.
+page (`/utilities` passes them: its Chemicals databases through
+`lab_notebook.chemicals_search`, each by name and abbreviation, then
+`chemical_references`) ahead of the built-in list.
 
 ### Database addresses
 
@@ -421,8 +423,8 @@ pages are in `app/lab_routes.py`.
   column's earlier values (datalists `inv-rem-<column>`) and a fill map by
   name and catalogue number. Inventories that track a supplier lend each
   other name, vendor and catalogue number, never quantity.
-- **Stock kinds:** `inventory_service.RESTOCK_KINDS` (reagents, antibodies,
-  viruses) are what a received order can become (`STOCK_KINDS`), what
+- **Stock kinds:** `inventory_service.RESTOCK_KINDS` (reagents, chemicals,
+  antibodies, viruses) are what a received order can become (`STOCK_KINDS`), what
   offers **Order again**, and what Home's *Expiring & low stock* watches.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
@@ -459,7 +461,7 @@ pages are in `app/lab_routes.py`.
   makes *name*-F and *name*-R through `_item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
-  setup survey) include `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
+  setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
   columns for what was measured (`SAMPLE_MEASURES`), which revision 0008
   adds to Samples databases made earlier unless a column of that key or
   name is there. The same revision adds `plasmids.concentration`
@@ -663,6 +665,17 @@ crossing the origin keeps `start > end`.
   record's plasmid column names — a virus's payload, a glycerol stock's
   plasmid — from `/plasmids/<id>/sequence.json`; the sheet's plasmid cell
   links to it when that plasmid has a sequence. Nothing there saves.
+- **Chemicals:** a `chemicals` database keeps `abbreviation`, `cas`, `mw`,
+  `formula`, `purity` and `density` in `attrs`. `lab_notebook.chemicals_search`
+  (`/notebook/api/chemicals`, for the Formulation block) reads them from
+  every Chemicals database the person sees and any other inventory with an
+  `mw` column: name, those columns, lot and catalogue number, exact match
+  first, then a start, in-stock bottles before used-up ones, then the
+  built-in `chemical_references`. The `@` menu (`_mention_items`) also looks
+  in `attrs`, through `formutil.attr_value_pattern` (a JSON value that
+  starts with what was typed, so a column's name is not a match), and a
+  chemical's popover lists those columns after its name. An order of one
+  is a `reagent` (`STOCK_CATEGORY`).
 - **Glycerol stocks:** a `glycerol_stocks` database's *Plasmid* column
   says which plasmid the bacteria carry. `made_from_plasmid(kinds=…)`
   finds them for the Storage tab's Glycerol stocks card (with the box,
@@ -841,6 +854,18 @@ number (`data-entity-name`, fetched once per record and cached).
 pages* on an inventory record's dialog (from the payload's `_number`) and
 a plasmid's Storage tab.
 
+**Formulations.** The `formulation` block (`frontend/src/blocks/formulation.js`)
+keeps each component's name, MW, purity, density, CAS number and lot as
+picked, so a signed page needs nothing live; `compute()` gives grams,
+moles, equivalents against the `basis` row (a row's `given` says whether
+its mass or its equivalents were typed) and weight %. A component picked
+from a database keeps `ref: "@<key> <n>"`: the page's Markdown then holds
+the record link, so backlinks (*Used in notebook pages*) find it like a
+typed `@` link. `structure_only` keeps the components and equivalents and
+drops the ticks and lots. `tests/js/formulation.check.mjs` checks the
+arithmetic, and the data sheet's `looksLikeLog()` (a pasted or imported
+log over time is drawn as a line).
+
 **Colony experiments in a page.** The `experiment` block
 (`frontend/src/blocks/experiment.js`) keeps only `{"id", "show",
 "percent"}` and reads `/colony/experiments/<id>/notebook.json`; *Freeze a
@@ -926,8 +951,8 @@ that replaces the text from outside the editor (restoring a version, the
 plain-text fallback) bumps `collab_generation` and clears the log; open
 editors are told to start again from the saved text.
 
-**Blocks** (data sheets, recipes, calculators, plates, qPCR, diagrams,
-equations) are one TipTap node, `labBlock` (`frontend/src/blocks/`). In
+**Blocks** (data sheets, recipes, formulations, calculators, plates, qPCR,
+diagrams, equations) are one TipTap node, `labBlock` (`frontend/src/blocks/`). In
 Markdown each is a fenced block named by its kind (```` ```sheet ````,
 ```` ```recipe ````, ```` ```mermaid ```` …) holding JSON or the source, so a
 page reads anywhere and GitHub draws the diagrams and maths itself. In the

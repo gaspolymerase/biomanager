@@ -166,6 +166,27 @@ tr:has(input[data-c="done"]:checked) .nb-recipe-amount b { text-decoration: line
 .nb-lib-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 6px; border-radius: 6px; cursor: pointer; color: var(--color-ink); font: inherit; }
 .nb-lib-item:hover { background: var(--color-surface); }
 .nb-lib-item small { display: block; color: var(--color-muted); font-size: 11px; }
+/* Formulation (blocks/formulation.js): the recipe's table, by mass. */
+.tiptap-editor-host .nb-form-table { min-width: 720px; }
+.nb-form-table col.c-mw { width: 84px; } .nb-form-table col.c-mass { width: 128px; } .nb-form-table col.c-mol { width: 112px; }
+.nb-form-table col.c-eq { width: 96px; } .nb-form-table col.c-wt { width: 64px; }
+.nb-form-name a { color: var(--color-brand-700); }
+.nb-form-eq { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.nb-form-eq input[data-c="eq"] { width: 58px !important; text-align: right; }
+.nb-form-basis { display: inline-flex; cursor: pointer; }
+.nb-form-basis input { width: auto !important; margin: 0; }
+.nb-form-one { font-variant-numeric: tabular-nums; }
+.nb-form-one small { color: var(--color-muted); font-size: 11px; }
+.nb-form-wt { font-variant-numeric: tabular-nums; color: var(--color-muted); }
+.nb-form-table input.is-computed { font-style: italic; color: var(--color-muted); }
+tr:has(input[data-c="done"]:checked) .nb-form-mol b { text-decoration: line-through; color: var(--color-muted); }
+.nb-chem-menu { position: fixed; z-index: 60; max-height: 260px; overflow: auto;
+  padding: 4px; border: 1px solid var(--color-hairline); border-radius: 8px; background: var(--color-surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
+.nb-chem-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 6px; border-radius: 6px; cursor: pointer; color: var(--color-ink); font: inherit; }
+.nb-chem-menu button:hover, .nb-chem-menu button.is-active { background: var(--color-recess); }
+.nb-chem-menu button span { color: var(--color-muted); }
+.nb-chem-menu small { display: block; color: var(--color-muted); font-size: 11px; }
+.nb-chem-menu p { margin: 6px; }
 
 /* ---------------------------------------------------------------- calculators */
 

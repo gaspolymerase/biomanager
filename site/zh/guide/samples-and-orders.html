@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>样本、试剂、抗体、病毒 — BioManager 用户指南</title>
-  <meta name="description" content="样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。">
+  <meta name="description" content="样本、采购、试剂、化学品、抗体、病毒、引物、甘油菌和细胞系。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/zh/guide/samples-and-orders">
   <meta property="og:title" content="样本、试剂、抗体、病毒 — BioManager 用户指南">
-  <meta property="og:description" content="样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。">
+  <meta property="og:description" content="样本、采购、试剂、化学品、抗体、病毒、引物、甘油菌和细胞系。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
@@ -132,7 +132,7 @@
     <!-- page -->
     <p class="eyebrow">数据库</p>
     <h1>样本、订购、试剂、抗体、病毒</h1>
-    <p class="summary">样本、采购、试剂、抗体、病毒、引物、甘油菌和细胞系。</p>
+    <p class="summary">样本、采购、试剂、化学品、抗体、病毒、引物、甘油菌和细胞系。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 样本、订购、试剂、抗体、病毒</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/orders.webp" data-clip-src="../../assets/clips/orders"></video></div></figure>
       <h2 id="a-week">它对你每周的工作意味着什么</h2>
       <p>买东西和再找到它，本来是同一条链子，而它通常断在「一个人下单、另一个人拆箱」的地方。
@@ -150,7 +150,7 @@
       <p>你不用再做的事：因为没人知道第一件已经到了而又买一件、对着箱子重敲一遍货号，
         以及在真正要用的那天早上才发现抗体过期了。</p>
 
-      <p>同一套机制，九种起点，各有自己的列和状态。病毒、引物和甘油菌都要写明来源质粒，
+      <p>同一套机制，十种起点，各有自己的列和状态。病毒、引物和甘油菌都要写明来源质粒，
         所以它们和<a href="plasmids.html">质粒</a>合为一个区域的几个标签页，不再各自单独出现在侧边栏：</p>
       <table class="gtable">
         <tr><th>样本</th><td>组织和材料，关联到它所来自的动物——在 <b>来源</b>（Source）单元格里选好群体、填上编号即可，
@@ -162,6 +162,11 @@
           已到货、已取消——可以用表格，也可以用 <b>看板</b> （Board）拖动卡片。</td></tr>
         <tr><th>试剂</th><td>数量、浓度、CAS 号、存放温度、危险性、批号和有效期。状态：有库存、不足、用完、
           已丢弃。</td></tr>
+        <tr><th>化学品</th><td>实验室的化学原料表，就像你现在在 Excel 里记的那样：名称、<i>缩写</i>、<i>CAS</i> 号、
+          <i>分子量 (g/mol)</i>、<i>纯度 (%)</i>，记录里还有 <i>分子式</i> 和 <i>密度 (g/mL)</i>；另有数量、批号、有效期、
+          危险性和每瓶放在哪里。<a href="notebook.html#data-and-calculators">实验记录本</a>里的 <b>配方</b>（Formulation）
+          按名称、缩写或 CAS 号从这里选取化学品，并根据称量的质量算出摩尔数；<b>工具</b>（Utilities）里的
+          <a href="notebook.html#utilities">计算器</a>也认得每种化学品的分子量。状态：有库存、不足、用完、已丢弃。</td></tr>
         <tr><th>抗体</th><td>宿主、克隆性、克隆号、偶联物、反应种属、应用、稀释度、亚型、RRID，以及每管放在哪里。</td></tr>
         <tr><th>病毒</th><td>AAV、慢病毒、狂犬病毒及其他载体：血清型、制备所用的质粒（<b>制备自</b> （Made from））、启动子、
           表达内容、滴度、生物安全等级、制备日期，以及每份分装在 −80 °C 冻存盒中的位置。点质粒旁边的 DNA 图标，
@@ -184,11 +189,11 @@
           实验室管理员会收到每个新申请的通知。</li>
         <li><b>跟进进度。</b> 状态筛选标签——<i>已申请、已下单、已到货、已取消</i>（Requested、Ordered、Received、Cancelled）——点一下就能看到每个阶段；申请人
           会在每次状态变化时收到通知。</li>
-        <li><b>到货了。</b> 标记为已到货后，BioManager 会问 <b>加入库存？</b> （Add it to stock?）：新建一条试剂、抗体或病毒记录，名称、
+        <li><b>到货了。</b> 标记为已到货后，BioManager 会问 <b>加入库存？</b> （Add it to stock?）：新建一条试剂、化学品、抗体或病毒记录，名称、
           供应商、货号、批号、数量和有效期都已填好，打开后你只需补上存放位置。（之后，订购上的
  <b>入库</b> （To stock）按钮也能做同样的事。）从此订购上显示 <i>Reagents #8</i>，试剂上显示它来自哪个
           订购；两者可以互相跳转。</li>
-        <li><b>快用完了？</b> 任何试剂、抗体或病毒上的购物车按钮 <b>再次订购</b> （Order again），会打开一个新订购，带上它的详细信息，以及上次订购时的
+        <li><b>快用完了？</b> 任何试剂、化学品、抗体或病毒上的购物车按钮 <b>再次订购</b> （Order again），会打开一个新订购，带上它的详细信息，以及上次订购时的
           数量、价格和经费。如果它已经在订购中，按钮会显示 <b>订购中</b> （On order），
           新订购打开时会附一条备注，注明那个未完成的订购和申请人。</li>
       </ol>

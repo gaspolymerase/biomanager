@@ -158,7 +158,7 @@
       </ul>
       <h2 id="experiments-and-protocols">实验和实验流程</h2>
       <ul>
-        <li><b>实验</b> （Experiments）：目的、实验设计、样本和批号、步骤、结果。<i>开始</i>（Start）和<i>完成</i>（Finished）会记下时间；
+        <li><b>实验</b> （Experiments）：目的、实验设计、样本和批号、步骤、结果和小结。<i>开始</i>（Start）和<i>完成</i>（Finished）会记下时间；
           计划中、进行中、已完成或失败会显示在侧边栏。（鼠群里的 <b>实验</b> 标签页管理的是动物分组。）</li>
         <li><b>鼠群实验</b> （Colony experiment，<code>/experiment</code>）在页面里显示你任何动物上的一个实验：每天的处理、
           完成时间和操作人、每只小鼠的给药量，以及体重的表格和图表（克数或相对第一次
@@ -172,8 +172,14 @@
       <h2 id="data-and-calculators">数据和计算器</h2>
       <ul>
         <li><b>数据表</b> （Data sheets）：从 Excel 或 CSV 粘贴，添加公式列，然后作图（柱状图、点图、箱线图、散点图、折线图），带误差
-          线、拟合线，以及 t 检验、Mann–Whitney 检验或方差分析。<b>酶标仪</b> （Plate reader）和 <b>qPCR</b> 模块根据
+          线、拟合线，以及 t 检验、Mann–Whitney 检验或方差分析。连同表头粘贴一份记录（第一列是时间，旁边是温度、压力等读数），
+          会画成随时间变化的折线；用 <b>Y</b> 选择要看的读数。<b>酶标仪</b> （Plate reader）和 <b>qPCR</b> 模块根据
           标准曲线算出浓度，或算出 ΔΔCt 倍数变化。</li>
+        <li><b>配方</b> （Formulation，<code>/formulation</code>）：一次反应或一批料里加了什么，按质量记录。在 <b>Component</b>（组分）里
+          输入化学品的名称、缩写或 CAS 号，从实验室的<a href="samples-and-orders.html">化学品</a>数据库中选取：分子量、纯度、
+          密度和批号随之带入，该化学品的 <b>引用此记录的实验记录本页面</b> （Used in notebook pages）也会列出这一页。
+          在 <b>Mass</b>（质量）里填称量的质量，<b>Amount</b>（用量）给出摩尔数。把某一行设为基准（<b>Equiv.</b> 旁边的圆形按钮），
+          其他行填当量：要称的质量随之算出，基准变化时也跟着变。每行显示 <b>wt %</b>（质量分数），液体显示体积，下方是总质量。</li>
         <li><b>缓冲液配方</b> （Buffer recipes）随体积缩放；内置常用缓冲液，实验室自己的配方全组共享。<b>计算器</b> （Calculators）
           包括稀释、摩尔浓度、预混液、梯度稀释、连接、细胞、凝胶、DNA/RNA 和 <b>蛋白（A₂₈₀）</b> （Protein (A₂₈₀)）：粘贴
           序列（或给出 ε 和分子量）和读数，就能得到 µM 和 mg/mL。步骤里的时长会带一个
@@ -198,8 +204,9 @@
       <dl class="gdl">
         <dt>溶液与缓冲液</dt><dd>摩尔浓度；稀释（C₁V₁ = C₂V₂）；梯度稀释；百分比溶液；×倍储液；质量浓度 ↔
           摩尔浓度；缓冲液 pH（Henderson–Hasselbalch 方程，考虑温度）；渗透压；化学品换算（配方里是一种形式，手头是另一种
-          水合物或盐）。输入化学品名称或分子式即可填入分子量，优先使用实验室自己的列表（<i>MgCl2·6H2O</i> 和
-          <i>magnesium chloride hexahydrate</i> 是同一种）；不认识的化学品会留空，由你自己填分子量。</dd>
+          水合物或盐）。输入化学品名称或分子式即可填入分子量（<i>MgCl2·6H2O</i> 和
+          <i>magnesium chloride hexahydrate</i> 是同一种）。实验室自己的优先：它的<a href="samples-and-orders.html">化学品</a>数据库，
+          按名称或缩写都能找到。不认识的化学品会留空，由你自己填分子量。</dd>
         <dt>DNA 与 RNA</dt><dd>由 A₂₆₀ 算浓度；质量 ↔ 摩尔 ↔ 拷贝数；寡核苷酸 Tm、GC、分子量和溶解体积；连接反应
           插入片段:载体比例；HiFi/Gibson 组装；PCR 和 qPCR 预混液；由标准曲线算 qPCR 扩增效率；ΔΔCt 倍数变化；
           转化效率。</dd>

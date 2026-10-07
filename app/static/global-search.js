@@ -18,7 +18,7 @@
   const TYPE_LABEL = {
     mouse: t('Mouse'), cage: t('Cage'), litter: t('Litter'), experiment: t('Experiment'), strain: t('Strain'),
     vial: t('Fly / worm'), tank: t('Tank'), 'fish-line': t('Fish line'), clutch: t('Clutch'), organism: t('Animal database'),
-    plasmid: t('Plasmid'), order: t('Order'), sample: t('Sample'), reagent: t('Reagent'), antibody: t('Antibody'), virus: t('Virus'), primer: t('Primer'), 'cell-line': t('Cell line'), 'glycerol-stock': t('Glycerol stock'), item: t('Item'),
+    plasmid: t('Plasmid'), order: t('Order'), sample: t('Sample'), reagent: t('Reagent'), chemical: t('Chemical'), antibody: t('Antibody'), virus: t('Virus'), primer: t('Primer'), 'cell-line': t('Cell line'), 'glycerol-stock': t('Glycerol stock'), item: t('Item'),
     page: t('Notebook'),
   };
 
