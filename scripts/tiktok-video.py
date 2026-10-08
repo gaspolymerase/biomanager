@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Vertical (9:16) videos for TikTok, Reels and Shorts.
+
+    python scripts/tiktok-video.py               # every video in promo/tiktok.json
+    python scripts/tiktok-video.py assistant     # or the ones named
+
+Each video in promo/tiktok.json is cut from a recorded clip: its hook stays
+at the top of the screen, the footage fills the middle (each narration line
+shows a part of the clip, cropped close and stretched to the line's length,
+on a blurred copy of itself), the line is shown below a few words at a time,
+and an end card gives the website. The voice is a Qwen voice, as in
+explainer-video.py, over the same music. Writes promo/out/tiktok/<name>.mp4
+and <name>-cover.png.
+"""
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import subprocess
+import tempfile
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _load(name, file):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / file)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+fc = _load("feature_clips", "feature-clips.py")
+ex = _load("explainer_video", "explainer-video.py")
+OUT = ROOT / "promo/out/tiktok"
+W, H, SR = 1080, 1920, ex.SR
+BOX_Y, BOX_H = 560, 860          # where the footage sits
+CAPTION_Y = 1510                 # the middle of the caption line, under the footage, above TikTok's own text
+GAP = 0.3
+INK = (15, 23, 42)
+GREEN = (13, 148, 136)
+
+
+def font(size):
+    return fc.font(fc.FONT_EN, size)
+
+
+def centred(draw, y, text, fnt, fill, stroke=0, stroke_fill=None):
+    w = draw.textlength(text, font=fnt)
+    draw.text(((W - w) / 2, y), text, font=fnt, fill=fill, stroke_width=stroke, stroke_fill=stroke_fill)
+
+
+def background(video, path: Path):
+    """The gradient and the hook at the top."""
+    img = fc.gradient((W, H), video["gradient"]).convert("RGBA")
+    d = ImageDraw.Draw(img)
+    big = font(78)
+    y = 210
+    for line in video["hook"]:
+        centred(d, y, line, big, INK)
+        y += 92
+    mark = font(58)
+    tw = d.textlength(video["mark"], font=mark)
+    x0 = (W - tw) / 2 - 26
+    d.rounded_rectangle((x0, y + 18, x0 + tw + 52, y + 104), 22, fill=GREEN)
+    d.text((x0 + 26, y + 28), video["mark"], font=mark, fill="white")
+    img.convert("RGB").save(path)
+
+
+def caption(text, path: Path):
+    img = Image.new("RGBA", (W, 200), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    fnt = font(76)
+    lines = fc.wrap(d, text, fnt, 860)
+    y = 100 - len(lines) * 46
+    for line in lines:
+        centred(d, y, line, fnt, "white", 8, (15, 23, 42))
+        y += 92
+    img.save(path)
+
+
+def end_card(end, colours, path: Path):
+    img = fc.gradient((W, H), colours).convert("RGBA")
+    d = ImageDraw.Draw(img)
+    icon = Image.open(ROOT / "app/static/icon-512.png").convert("RGBA").resize((240, 240))
+    img.alpha_composite(icon, ((W - 240) // 2, 520))
+    centred(d, 820, end["title"], font(84), INK)
+    site = font(70)
+    sw = d.textlength(end["site"], font=site)
+    d.rounded_rectangle(((W - sw) / 2 - 40, 960, (W + sw) / 2 + 40, 1070), 26, fill=INK)
+    centred(d, 975, end["site"], site, "white")
+    centred(d, 1140, end["follow"], font(46), (51, 65, 85))
+    img.convert("RGB").save(path)
+
+
+def chunks(text: str, size: int = 3) -> list[str]:
+    words = text.split()
+    out = []
+    while words:
+        take = size
+        # Don't leave one short word on its own at the end.
+        if len(words) == size + 1:
+            take = size + 1
+        out.append(" ".join(words[:take]))
+        words = words[take:]
+    return out
+
+
+def make(video: dict, voice: str, tmp: Path) -> Path:
+    source = ROOT / video["source"]
+    lines = video["lines"]
+    says = [l["say"] for l in lines] + [video["end"]["say"]]
+    ex.prefetch([(voice, s) for s in says])
+    audio = [ex.speak(s, voice, 0, tmp) for s in says]
+    # Each line's footage lasts as long as the line, plus a breath.
+    lead = 0.15
+    spans, t = [], lead
+    for a in audio:
+        spans.append((t, len(a) / SR))
+        t += len(a) / SR + GAP
+    footage_end = spans[len(lines) - 1][0] + spans[len(lines) - 1][1] + GAP
+    end_len = spans[-1][1] + 1.6
+    total = footage_end + end_len
+
+    # The footage: each part cropped, fitted to the box on a blurred copy, stretched to its line.
+    parts = []
+    for i, line in enumerate(lines):
+        start, length = spans[i]
+        seconds = (length + GAP + (lead if i == 0 else 0))
+        x, y, w, h = line["crop"]
+        speed = seconds / (line["to"] - line["from"])
+        part = tmp / f"part{i}.mp4"
+        subprocess.run([ex.FFMPEG, "-v", "error", "-y", "-ss", str(line["from"]), "-t", str(line["to"] - line["from"]),
+                        "-i", str(source), "-filter_complex",
+                        f"[0:v]setpts=PTS*{speed:.4f},crop={w}:{h}:{x}:{y},split[a][b];"
+                        f"[a]scale={W}:{BOX_H}:force_original_aspect_ratio=increase,crop={W}:{BOX_H},boxblur=30:2[bg];"
+                        f"[b]scale={W}:{BOX_H}:force_original_aspect_ratio=decrease:flags=lanczos[fg];"
+                        f"[bg][fg]overlay=(W-w)/2:(H-h)/2,fps=30,format=yuv420p[v]",
+                        "-map", "[v]", "-an", "-t", f"{seconds:.3f}", "-c:v", "libx264", "-crf", "16", str(part)],
+                       check=True)
+        parts.append(part)
+    (tmp / "parts.txt").write_text("".join(f"file '{p}'\n" for p in parts), encoding="utf-8")
+    footage = tmp / "footage.mp4"
+    subprocess.run([ex.FFMPEG, "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(tmp / "parts.txt"),
+                    "-c", "copy", str(footage)], check=True)
+
+    # The sound: the voice, the music under it, a pop at each cut.
+    mix = ex.music(total) * 0.55
+    for (start, _), a in zip(spans, audio):
+        ex.place(mix, a, start)
+    for start, _ in spans[1:]:
+        ex.place(mix, ex.pop(660) * 0.5, start - 0.12)
+    mix = np.clip(mix, -0.98, 0.98)
+    (tmp / "mix.raw").write_bytes(mix.astype(np.float32).tobytes())
+
+    # The captions, a few words at a time, shared out over each line by length.
+    background(video, tmp / "bg.png")
+    end_card(video["end"], video["gradient"], tmp / "end.png")
+    overlays = []
+    for i, (say, (start, length)) in enumerate(zip(says[:-1], spans)):
+        bits = chunks(say)
+        weights = [len(b) + 4 for b in bits]
+        t = start
+        for j, bit in enumerate(bits):
+            d = length * weights[j] / sum(weights)
+            png = tmp / f"cap{i}-{j}.png"
+            caption(bit, png)
+            overlays.append((png, t, t + d + (GAP if j == len(bits) - 1 else 0)))
+            t += d
+    # Stills last only as long as the video, or ffmpeg queues their frames without end.
+    still = ["-loop", "1", "-framerate", "30", "-t", f"{total:.3f}", "-i"]
+    inputs = [*still, str(tmp / "bg.png"), "-i", str(footage), *still, str(tmp / "end.png"),
+              "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", str(tmp / "mix.raw")]
+    graph = [f"[0:v][1:v]overlay=0:{BOX_Y}:eof_action=pass[v0]"]
+    for k, (png, a, b) in enumerate(overlays):
+        inputs += [*still, str(png)]
+        graph.append(f"[v{k}][{4 + k}:v]overlay=0:{CAPTION_Y - 100}:enable='between(t,{a:.3f},{b:.3f})'[v{k + 1}]")
+    n = len(overlays)
+    graph.append(f"[2:v]format=rgba,fade=in:st={footage_end:.3f}:d=0.35:alpha=1[end]")
+    graph.append(f"[v{n}][end]overlay=0:0:enable='gte(t,{footage_end:.3f})',format=yuv420p[out]")
+    OUT.mkdir(parents=True, exist_ok=True)
+    out = OUT / f"{video['name']}.mp4"
+    subprocess.run([ex.FFMPEG, "-v", "error", "-y", *inputs, "-filter_complex", ";".join(graph),
+                    "-map", "[out]", "-map", "3:a", "-r", "30", "-c:v", "libx264", "-crf", "20",
+                    "-preset", "medium", "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}",
+                    "-movflags", "+faststart", str(out)], check=True)
+    # The cover: the first frame with the hook and a caption-free picture.
+    subprocess.run([ex.FFMPEG, "-v", "error", "-y", "-ss", "1.2", "-i", str(out), "-frames:v", "1",
+                    str(OUT / f"{video['name']}-cover.png")], check=True)
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("names", nargs="*")
+    args = ap.parse_args()
+    board = json.loads((ROOT / "promo/tiktok.json").read_text(encoding="utf-8"))
+    for video in board["videos"]:
+        if args.names and video["name"] not in args.names:
+            continue
+        with tempfile.TemporaryDirectory(prefix="tiktok-") as tmp:
+            out = make(video, board["voice"], Path(tmp))
+        print(f"{video['name']}: {out.relative_to(ROOT)} ({ex.duration(out):.1f} s)", flush=True)
+
+
+if __name__ == "__main__":
+    main()
