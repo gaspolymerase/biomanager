@@ -97,7 +97,7 @@
       </div>
       <p class="fine-left">价格是这些服务在 2026 年 9 月的收费，注册前请再核实。所有服务器方式（B–E）都包含每晚备份、
         每周恢复测试和 HTTPS。</p>
-      <div class="callout note"><b>也可以让桌面版来做</b>在桌面版里，<b>设置 → 搭建实验室服务器</b>可以替你完成 B、C、D 或 E；
+      <div class="callout note"><b>也可以让桌面版来做</b>在桌面版里，<b>设置 → 设备与副本 → 搭建实验室服务器</b>可以替你完成 B、C、D 或 E；
         在 Mac 上，它还能把这台 Mac 设成全实验室用的服务器。每一步执行前都会先给你看，也可以把你的记录一起带过去。</div>
     </section>
 
@@ -151,7 +151,7 @@
       <div class="callout warn"><b>千万不要把数据文件夹放进 Dropbox、OneDrive、Google Drive 或 iCloud Drive</b>同步会损坏数据库。
         数据在 <code>~/Library/Application Support/Biomanager/</code>（Mac）、<code>%APPDATA%\Biomanager\</code>（Windows）
         或 <code>~/.local/share/Biomanager/</code>（Linux）：用 Time Machine 或“文件历史记录”备份这个文件夹。</div>
-      <p>同一个可信网络里的几个人，不用服务器也能共用这台电脑上的实验室：<b>设置 → 设备 → 在网络上共享这个实验室</b>。
+      <p>同一个可信网络里的几个人，不用服务器也能共用这台电脑上的实验室：<b>设置 → 设备与副本 → 设备 → 在网络上共享这个实验室</b>。
         它没有每晚备份，连接也不加密（<a href="guide/your-data.html#devices">设备</a>）。</p>
     </section>
 
@@ -162,9 +162,9 @@
       <h3>你需要</h3>
       <ul class="need">
         <li>一台一直开着的 Linux 电脑（Ubuntu 24.04，或其他带 systemd 的 Linux），x86-64 或 ARM，至少 2 个 CPU 核心、
-          2 GB 内存、20 GB 空闲硬盘。如果是 Mac，请用桌面版：<b>设置 → 搭建实验室服务器 → 这台电脑，供全实验室使用</b>。</li>
+          2 GB 内存、20 GB 空闲硬盘。如果是 Mac，请用桌面版：<b>设置 → 设备与副本 → 搭建实验室服务器 → 这台电脑，供全实验室使用</b>。</li>
         <li>装了 Docker 的 NAS（飞牛 fnOS 等）也可以：它自己的网页照旧占着 80 和 443 端口，BioManager
-          会另找空闲的端口（第 7 步）。桌面版的<b>设置 → 搭建实验室服务器 → 实验室里的 Linux 电脑</b>可以替你完成这一切：
+          会另找空闲的端口（第 7 步）。桌面版的<b>设置 → 设备与副本 → 搭建实验室服务器 → 实验室里的 Linux 电脑</b>可以替你完成这一切：
           选<b>不用密钥：用密码登录</b>，填上 NAS 账号的密码即可。</li>
         <li>这台电脑上一个能用 <code>sudo</code> 的账号。</li>
         <li>IT 部门给它的固定 IP 地址或 DNS 名称。</li>
