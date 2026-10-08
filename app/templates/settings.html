@@ -11,9 +11,10 @@
   You: this person's own settings. Lab: the lab's, one pane so far
   (Devices & copies); the lab's other pages join it there later.
 #}
-{% macro pane_link(key, icon_name, label, family='you') %}
+{% macro pane_link(key, icon_name, label, family='you', badge='') %}
   <a class="set-link" href="#{{ key }}" data-pane-link="{{ key }}">
     <span class="set-ico is-{{ family }}">{{ icon(icon_name) }}</span><span class="set-link-label">{{ label }}</span>
+    {% if badge %}<span class="set-link-badge">{{ badge }}</span>{% endif %}
   </a>
 {% endmacro %}
 
@@ -59,7 +60,7 @@
       {{ pane_link('databases', 'database', _('Databases'), 'lab') }}
       {{ pane_link('people', 'users', _('People & access'), 'lab') }}
     {% endif %}
-    {{ pane_link('devices', 'copy', _('Devices & copies'), 'lab') }}
+    {{ pane_link('devices', 'copy', _('Devices & copies'), 'lab', _('Update') if updates and updates.latest else '') }}
     {% if lab_data %}{{ pane_link('history', 'history', _('History'), 'lab') }}{% endif %}
     <p class="set-search-none" data-settings-none hidden>{{ _('No setting matches.') }}</p>
   </nav>
@@ -751,6 +752,60 @@
           </a>
         {% endif %}
       </div>
+      {% if updates and updates.applies %}
+        {# A lab server hearing of a newer release, and updating itself (app/server_updates.py). #}
+        {% set upd = updates.latest %}
+        <div class="set-title" id="updates">{{ _('Updates') }}</div>
+        <div class="set-group" data-updates data-status-url="{{ url_for('settings_updates_status') }}"
+             data-current="{{ updates.current }}" data-state="{{ (updates.progress or {}).get('state', '') }}">
+          <div class="set-row">
+            <span class="set-label"><b>{{ _('This server runs BioManager %(version)s', version=updates.current) }}</b>
+              <small>{% if upd %}{{ _('BioManager %(version)s is available.', version=upd.version) }}{% else %}{{ _('The newest version.') }}{% endif %}</small></span>
+            {% if upd and updates.can_update %}
+              <form method="post" action="{{ url_for('settings_updates') }}"
+                    data-confirm="{{ _('Update the lab’s server to BioManager %(version)s now? A backup is taken first, and BioManager is unavailable for a minute or two while the server restarts.', version=upd.version) }}">
+                <input type="hidden" name="action" value="install">
+                <button type="submit" class="btn btn-primary btn-sm" data-update-button>{{ _('Update now') }}</button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('settings_updates') }}">
+                <input type="hidden" name="action" value="check">
+                <button type="submit" class="btn btn-sm">{{ _('Check now') }}</button>
+              </form>
+            {% endif %}
+          </div>
+          <div class="set-row" data-update-progress {% if not updates.progress or updates.progress.state in ('current',) %}hidden{% endif %}>
+            <span class="set-label"><b data-update-line></b><small data-update-detail></small></span>
+          </div>
+          {% if upd %}
+            <div class="set-more">
+              {% if upd.notes %}<pre class="set-notes">{{ upd.notes }}</pre>{% endif %}
+              <p><a href="{{ upd.page }}" target="_blank" rel="noopener">{{ _('Release notes') }}</a>{% if not updates.can_update %} · {{ _('To update from here, run sudo host/install.sh on the server once; it sets up the updater. Or update by hand, as the runbook’s “Updating the app” says.') }}{% endif %}</p>
+            </div>
+          {% endif %}
+          <form method="post" action="{{ url_for('settings_updates') }}" data-autosave-form>
+            <input type="hidden" name="action" value="switch">
+            <label class="set-row">
+              <span class="set-label"><b>{{ _('Check for new versions every day') }}</b>
+                <small>{% if updates.env_off %}{{ _('Switched off for this server (BIOMANAGER_UPDATE_CHECK=0).') }}{% else %}{{ _('Asks GitHub once a day, sending only this server’s version. Admins are told of a new one.') }}{% endif %}{% if updates.checked %} · {{ _('Checked %(when)s', when=(updates.checked | local).strftime('%Y-%m-%d %H:%M')) }}{% endif %}</small></span>
+              <input type="checkbox" class="set-switch" name="check" value="1" {% if updates.checking %}checked{% endif %} {% if updates.env_off %}disabled{% endif %}>
+            </label>
+          </form>
+        </div>
+        <script type="application/json" id="update-words">{{ {
+          'asked': _('Waiting for the server to start the update…'),
+          'check': _('Looking for the newest release…'),
+          'backup': _('Taking a backup…'),
+          'download': _('Downloading BioManager %(version)s…', version='%(version)s'),
+          'image': _('Loading the new version…'),
+          'restart': _('Restarting the server…'),
+          'done': _('Updated to BioManager %(version)s.', version='%(version)s'),
+          'failed': _('The update stopped: %(detail)s', detail='%(detail)s'),
+          'failed_help': _('The server’s runbook says what to do, under “Updating went wrong”.'),
+          'current': _('This server runs the newest BioManager.'),
+          'away': _('The server is restarting…'),
+        } | tojson }}</script>
+      {% endif %}
       {% include "lab_copy/_cards.html" %}
     </section>
 
@@ -814,7 +869,7 @@
     var panes = Array.prototype.slice.call(root.querySelectorAll('[data-pane]'));
     var links = Array.prototype.slice.call(root.querySelectorAll('[data-pane-link]'));
     var aliases = { 'api-tokens': 'assistant', 'language': 'appearance', 'app-icon': 'appearance', 'racks': 'stats',
-                    'lab-copies': 'devices', 'lab-copy': 'devices', 'lab-server': 'devices' };
+                    'lab-copies': 'devices', 'lab-copy': 'devices', 'lab-server': 'devices', 'updates': 'devices' };
     root.classList.add('is-ready');
     function show() {
       var id = decodeURIComponent(location.hash.slice(1));
@@ -971,6 +1026,50 @@
         if (mine === latest) say(t('Not saved. Check the connection and pick again.'));
       });
     });
+  })();
+
+  // Update now: follow host/update.sh (app/server_updates.py) until the
+  // server answers with the new version, then reload. While it restarts
+  // the page cannot reach it, and says so.
+  (function () {
+    var box = document.querySelector('[data-updates]');
+    var wordsEl = document.getElementById('update-words');
+    if (!box || !wordsEl) return;
+    var words = JSON.parse(wordsEl.textContent);
+    var row = box.querySelector('[data-update-progress]');
+    var line = box.querySelector('[data-update-line]');
+    var detail = box.querySelector('[data-update-detail]');
+    var button = box.querySelector('[data-update-button]');
+    var started = box.dataset.current;
+    function fill(text, p) {
+      return text.replace('%(version)s', (p && p.version) || '').replace('%(detail)s', (p && p.detail) || '');
+    }
+    function show(p, away) {
+      row.hidden = false;
+      detail.textContent = '';
+      if (away) { line.textContent = words.away; return; }
+      var state = p ? p.state : '';
+      if (state === 'running') line.textContent = fill(words[p.step] || words.restart, p);
+      else if (state === 'failed') { line.textContent = fill(words.failed, p); detail.textContent = words.failed_help; }
+      else line.textContent = fill(words[state] || '', p);
+      if (button) button.disabled = state === 'asked' || state === 'running';
+    }
+    function poll() {
+      fetch(box.dataset.statusUrl, {credentials: 'same-origin', cache: 'no-store'}).then(function (res) {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+      }).then(function (body) {
+        var p = body.progress;
+        if (body.current !== started) { window.location.reload(); return; }
+        show(p, false);
+        if (p && (p.state === 'asked' || p.state === 'running')) setTimeout(poll, 3000);
+      }).catch(function () {
+        show(null, true);
+        setTimeout(poll, 4000);
+      });
+    }
+    var state = box.dataset.state;
+    if (state) poll();
   })();
 </script>
 {% endblock %}

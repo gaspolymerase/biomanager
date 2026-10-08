@@ -32,6 +32,7 @@ CLAUDE.local.md
 # Deployment secrets and data (deploy/README.md)
 deploy/.env
 deploy/backups/
+deploy/control/
 deploy/certs/*
 !deploy/certs/.gitkeep
 

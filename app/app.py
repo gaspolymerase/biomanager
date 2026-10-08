@@ -425,6 +425,9 @@ app.register_blueprint(lab_feedback.bp)
 # Anonymous counts for BioManager's makers, once a day (app/telemetry.py).
 from . import telemetry  # noqa: E402
 telemetry.init_app(app)
+# A newer release for a lab server: told once a day, and Update now (app/server_updates.py).
+from . import server_updates  # noqa: E402
+server_updates.init_app(app)
 # Import from Excel into any database (app/sheet_import.py).
 from . import sheet_import  # noqa: E402
 app.register_blueprint(sheet_import.bp)
@@ -2293,10 +2296,11 @@ def settings():
 
     with SessionLocal() as db_session:
         lab_data = settings_lab.panes(db_session) if not g.user.expires_at else None
+        updates = server_updates.state(db_session) if g.user.role == "admin" else None
     from .stocks import PRESETS as STOCK_PRESETS
     return render_template(
         "settings.html",
-        lab_data=lab_data, lab_features=lab.FEATURES, stock_choices=lab.STOCK_CHOICES,
+        lab_data=lab_data, updates=updates, lab_features=lab.FEATURES, stock_choices=lab.STOCK_CHOICES,
         inventory_choices=lab.INVENTORY_CHOICES, member_permissions=lab.MEMBER_PERMISSIONS,
         date_styles=lab.DATE_STYLES, timezones=lab.timezone_names(), server_timezone=lab.server_timezone(),
         wean_offset_days=WEAN_OFFSET_DAYS, roles=access.ROLES, group_switches=project_groups.SWITCHES,
@@ -2351,6 +2355,47 @@ def settings_lab_save():
         return jsonify({"ok": True})
     flash(gettext("Lab setup saved."), "success")
     return redirect(url_for("settings", _anchor=anchor))
+
+
+@app.route("/settings/updates", methods=["POST"])
+@admin_required
+def settings_updates():
+    """Settings → Devices & copies → Updates, on a lab server: the daily
+    check on or off, Check now, and Update now (app/server_updates.py)."""
+    action = request.form.get("action", "")
+    autosave = request.headers.get("X-Autosave") == "1"
+    with SessionLocal() as db_session:
+        if action == "switch":
+            server_updates.set_checking(db_session, request.form.get("check") == "1")
+            db_session.commit()
+            if autosave:
+                return jsonify({"ok": True})
+        elif action == "check":
+            result = server_updates.check(db_session, manual=True)
+            if result["state"] == "newer":
+                flash(gettext("BioManager %(version)s is available.", version=result["release"]["version"]), "success")
+            elif result["state"] == "current":
+                flash(gettext("This server runs the newest BioManager."), "success")
+            else:
+                flash(gettext("BioManager couldn't reach GitHub to check. Try again later."), "error")
+        elif action == "install":
+            release = server_updates.latest(db_session)
+            if release is None:
+                flash(gettext("This server runs the newest BioManager."), "success")
+            elif not server_updates.request_update(g.user.username, release["version"]):
+                flash(gettext("This server can't update itself yet: run sudo host/install.sh on it once."), "error")
+            else:
+                app.logger.info("%s asked the server to update to BioManager %s", g.user.username, release["version"])
+        else:
+            abort(400)
+    return redirect(url_for("settings", _anchor="updates"))
+
+
+@app.route("/settings/updates/status")
+@admin_required
+def settings_updates_status():
+    """How far the server's update has got, for the page to follow."""
+    return jsonify({"current": server_updates.current(), "progress": server_updates.progress()})
 
 
 @app.route("/settings/export")

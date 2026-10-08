@@ -876,6 +876,18 @@ app also checks by itself, at most once a day; turn that off with
 **Check for Updates Automatically**. The check sends nothing but the app's
 version.
 
+A **lab server** looks for a new version once a day and tells its admins
+(a notification, and **Settings → Devices & copies → Updates**, with
+what's new and a link to the release notes). **Update now** there takes a
+backup, downloads the new version, checks it against the checksum GitHub
+publishes, installs it and restarts the server; BioManager is away for a
+minute or two and the page comes back on the new version. It needs the
+server's helpers installed once (`sudo host/install.sh`, which every set-up
+route runs); without them the pane says so, and the runbook's "Updating
+the app" does the same by hand. The check sends only the server's version;
+turn it off there, or for the server with `BIOMANAGER_UPDATE_CHECK=0`. The
+phone apps open the server, so they are always on its version.
+
 After an update (the desktop app's, or the lab server's), the first page
 each person opens shows a short **What's new**: what is new, what works
 differently and what was fixed, with a link to the full release notes.

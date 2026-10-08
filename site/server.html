@@ -305,7 +305,7 @@ head -1 biomanager-root.crt</pre><button type="button" class="copy-btn" data-cop
             groups and the dashes.</p>
         </li>
         <li>
-          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <p>Turn on alerts, the watchdog, weekly updates and <b>Update now</b>.</p>
           <div class="cmd"><pre id="b-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="b-install">Copy</button></div>
           <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code> and two timers,
             <code>biomanager-watchdog.timer</code> and <code>biomanager-maintenance.timer</code>. Subscribe to that topic in the
@@ -436,7 +436,7 @@ docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="b
             chain, put it in <code>server.crt</code> again and run <code>docker compose restart caddy</code>.</p>
         </li>
         <li>
-          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <p>Turn on alerts, the watchdog, weekly updates and <b>Update now</b>.</p>
           <div class="cmd"><pre id="c-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="c-install">Copy</button></div>
           <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code>. Subscribe to it in
             the <a href="https://ntfy.sh">ntfy</a> app.</p>
@@ -614,7 +614,7 @@ docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="b
             <code>docker compose logs caddy</code> if it still fails.</p>
         </li>
         <li>
-          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <p>Turn on alerts, the watchdog, weekly updates and <b>Update now</b>.</p>
           <div class="cmd"><pre id="d-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="d-install">Copy</button></div>
           <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code> and two timers,
             <code>biomanager-watchdog.timer</code> and <code>biomanager-maintenance.timer</code>. Subscribe to that topic in the
@@ -791,7 +791,7 @@ docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="b
           <p class="ifnot"><b>If not:</b> <code>That setup code is not right.</code>: copy it again, all three groups and the dashes.</p>
         </li>
         <li>
-          <p>Turn on alerts, the watchdog and weekly updates.</p>
+          <p>Turn on alerts, the watchdog, weekly updates and <b>Update now</b>.</p>
           <div class="cmd"><pre id="e-install">sudo host/install.sh</pre><button type="button" class="copy-btn" data-copy="e-install">Copy</button></div>
           <p class="see"><b>You should see:</b> <code>Installed. Alerts go to ntfy topic: biomanager-…</code>. Subscribe to it in
             the <a href="https://ntfy.sh">ntfy</a> app.</p>
@@ -888,7 +888,8 @@ docker compose cp /tmp/lab-uploads/. app:/data/uploads/</pre><button type="butto
           <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-joins">Someone joins</a>.</li>
         <li><b>Someone leaves:</b>
           <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#someone-leaves">Someone leaves</a>.</li>
-        <li><b>Update to a new version:</b>
+        <li><b>Update to a new version:</b> the server tells its admins when one is out; <b>Update now</b> in
+          <b>Settings → Devices &amp; copies</b> backs up, installs it and restarts. By hand:
           <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-the-app">Updating the app</a>
           (and <a href="https://github.com/gaspolymerase/biomanager/blob/master/deploy/RUNBOOK.md#updating-went-wrong">if it goes wrong</a>).</li>
         <li><b>Put a backup back:</b>

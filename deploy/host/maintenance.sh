@@ -25,6 +25,9 @@ notify() {
 fail() { notify "BioManager: weekly update failed" "$(hostname): $1" high rotating_light; exit 1; }
 
 cd "$DEPLOY_DIR" || fail "no $DEPLOY_DIR"
+# Never at the same time as an update (update.sh).
+exec 9> /run/lock/biomanager-stack.lock 2> /dev/null || exec 9> "${TMPDIR:-/tmp}/biomanager-stack.lock"
+flock -w 2700 9 || fail "an update is still running"
 docker compose exec -T backup backup.sh < /dev/null || fail "the backup before updating failed, so nothing was updated"
 docker compose pull --quiet db caddy < /dev/null || fail "could not pull images"
 docker compose build --pull --quiet < /dev/null || fail "could not rebuild the app or backup image"

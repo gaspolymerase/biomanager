@@ -284,8 +284,9 @@ is lost).
 ## Alerts
 
 The watchdog checks the site, the services, the disk, the backups and
-their restore tests every 5 minutes, and a weekly job refreshes the images
-the stack is built on (a backup first). On the server:
+their restore tests every 5 minutes, a weekly job refreshes the images
+the stack is built on (a backup first), and an updater waits for **Update
+now** in the app (`host/update.sh`, below). On the server:
 
 ```bash
 sudo /opt/biomanager/Biomanager/deploy/host/install.sh
@@ -296,6 +297,18 @@ subscribe to it in the ntfy app on your phone. Alerts say what is wrong,
 never any lab data. [RUNBOOK.md](RUNBOOK.md) says what to do for each.
 
 ## Updating
+
+The app looks for a new release once a day (it sends only its version;
+`BIOMANAGER_UPDATE_CHECK=0` in `.env` stops it) and tells its admins. With
+the server bundle and `host/install.sh` run, **Update now** in **Settings →
+Devices & copies → Updates** takes a backup, downloads the newest release's
+bundle and image, checks both against the SHA-256 GitHub publishes, loads
+the image, unpacks the bundle over this one and restarts, and the page
+follows it. The app asks through `deploy/control/` (mounted at `/control`),
+which `install.sh` makes root's and sticky: the app can leave a request
+there and nothing else, and `update.sh` reads nothing from it but that it
+is there, so the most it can bring about is BioManager's own newest
+release. `sudo host/update.sh` does the same from a shell. By hand:
 
 ```bash
 docker compose exec backup backup.sh     # a fresh backup first

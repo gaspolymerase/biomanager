@@ -137,11 +137,11 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
             problems.append(gettext("Give the user name you sign in to the server with (often ubuntu or your university ID)."))
         if not 0 < plan.port < 65536:
             problems.append(gettext("The SSH port is a number, usually 22."))
-        if plan.key_path and not Path(os.path.expanduser(plan.key_path)).is_file():
-            problems.append(gettext("There is no key file at %(path)s.", path=plan.key_path))
         plan.password = str(data.get("password") or "")
         if plan.password:
-            plan.key_path = ""
+            plan.key_path = ""       # a password sign-in uses no key, so a missing one doesn't matter
+        if plan.key_path and not Path(os.path.expanduser(plan.key_path)).is_file():
+            problems.append(gettext("There is no key file at %(path)s.", path=plan.key_path))
         if "\n" in plan.password or "\r" in plan.password or len(plan.password) > 256:
             problems.append(gettext("That password can't be used: it has a line break in it, or is very long."))
         plan.sudo_password = str(data.get("sudo_password") or "")

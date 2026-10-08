@@ -27,7 +27,7 @@ somewhere other than the server (a password manager note works well).
 | Backups on the server | `BACKUP_DIR` in `.env` (`deploy/backups/` unless set): nightly at `BACKUP_TIME`, `KEEP_LOCAL` kept, restore-tested each `RESTORE_TEST_WEEKDAY` | |
 | Backups elsewhere | off-site with restic, if `RESTIC_REPOSITORY` is set (its password is in your password manager, not only in `.env`); a copy on an admin's Mac, if `deploy/mac/install.sh` was run (it pulls from `/opt/biomanager/backups`; set `BIOMANAGER_SERVER_BACKUPS` to your `BACKUP_DIR` when installing it if yours is elsewhere) | |
 | Alerts | the ntfy topic in `/etc/biomanager/watchdog.env`, if `sudo deploy/host/install.sh` was run; macOS notifications from the Mac's copy | |
-| Automatic jobs | with `deploy/host/install.sh`: a check every 5 minutes, and the images refreshed on Sundays at 03:30. With `cloud-init.yaml`: operating system security updates nightly, restarting at 04:30 if they need to | |
+| Automatic jobs | with `deploy/host/install.sh`: a check every 5 minutes, the images refreshed on Sundays at 03:30, and the updater that **Update now** in Settings starts (`host/update.sh`). The app looks for a new release once a day and tells its admins. With `cloud-init.yaml`: operating system security updates nightly, restarting at 04:30 if they need to | |
 
 ## An alert arrived
 
@@ -47,6 +47,8 @@ These come from the watchdog (`deploy/host/install.sh`). Without it, look at
 | **certificate** | the HTTPS certificate expires within 14 days | With `TLS=internal` or `acme`, Caddy renews it: **server** `docker compose logs caddy` says why it didn't. With `tailscale`, check HTTPS is still on in the Tailscale admin console (DNS). With `files`, put IT's new one in `deploy/certs/`. Then **server** `docker compose restart caddy` |
 | **tailscale** | the server left the Tailscale network | **server** (through the provider's console if SSH is down) `sudo tailscale up` |
 | **weekly update failed** | Sunday's image refresh stopped | Read the message. Nothing was updated if the backup failed. If the app is unhealthy after it, see [Updating went wrong](#updating-went-wrong) |
+| **update failed** | **Update now** stopped | Read the message: it names the step. Before the restart nothing changed (the old version still runs); after it, see [Updating went wrong](#updating-went-wrong). The same text is in Settings → Devices & copies, and `journalctl -u biomanager-update` has the rest |
+| **updated to …** | **Update now** finished, and the app is healthy | Nothing |
 | Mac: **backup copy failed** | the Mac could not pull from the server | Is the Mac on the lab's network (or Tailscale)? Then `ssh <your server>` by hand; if that fails, the server is down |
 | Mac: **backups have stopped** | the server's newest backup is over 48 h old | The server is up but not backing up: as **backup** above |
 
@@ -210,6 +212,14 @@ and stop the old app (`docker compose stop app`) so nobody writes to it meanwhil
 
 ## Updating the app
 
+The server looks for a new release once a day and tells its admins. With the
+**server bundle** and `host/install.sh` run, an admin presses **Update now**
+in **Settings → Devices & copies → Updates**: it does everything below
+(`host/update.sh`, as root, through `biomanager-update.path`), checks the
+bundle and the image against the SHA-256 GitHub publishes, and the page
+follows it to the end. It always installs the latest release GitHub lists,
+and only when it is newer. By hand, the same is `sudo host/update.sh`, or:
+
 ```bash
 # server
 docker compose exec backup backup.sh     # a fresh backup first
@@ -225,6 +235,10 @@ host/load-image.sh
 docker compose up -d --build
 ```
 
+Then `sudo host/install.sh`, once, if this version is the first with
+**Update now**: it sets up the updater (and `deploy/control/`, where the app
+asks for it).
+
 With a **checkout**: `git pull`, then `docker compose up -d --build`.
 (`--build` rebuilds the backup service, so updated backup and restore
 scripts are used; it takes no second backup while the one above is fresh.)
@@ -235,6 +249,10 @@ schema up to date by itself; when it does, the log says
 `Upgrading the database from … to …`.
 
 ### Updating went wrong
+
+If **Update now** stopped before **Restarting the server**, nothing changed:
+the old version still runs; fix what the message says and press it again.
+After that step, read on.
 
 The backup taken just before is the newest in `/backups/db` (the backup
 service takes none of its own at start while one from the last 12 hours is

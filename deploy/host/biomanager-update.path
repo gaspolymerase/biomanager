@@ -1,0 +1,9 @@
+[Unit]
+Description=Update BioManager when an admin presses Update now (Settings → Devices & copies)
+
+[Path]
+# The app writes this (deploy/control is /control in it); update.sh takes it away.
+PathExists=/opt/biomanager/Biomanager/deploy/control/update-request
+
+[Install]
+WantedBy=paths.target

@@ -88,8 +88,9 @@ Ask these, then recommend an option (the table after them) and wait for a yes.
 - **Resources:** 2 vCPU, 2 GB RAM, 20 GB disk is plenty. ARM (Oracle Ampere)
   and x86-64 both work.
 - **Host extras (Linux with systemd):** `sudo host/install.sh` (from the
-  deploy folder) installs a watchdog (every 5 min: site, containers, disk, backups) and
-  weekly image updates, alerting to an ntfy topic it prints.
+  deploy folder) installs a watchdog (every 5 min: site, containers, disk, backups),
+  weekly image updates and the updater behind **Update now** in the app's Settings
+  (`host/update.sh`, started by `biomanager-update.path`), alerting to an ntfy topic it prints.
   `host/offsite-setup.sh` sets up encrypted off-site backups (asks for the
   key itself). `host/internet-access.sh on|off|status` opens temporary guest
   access via Tailscale Funnel (option D only).
@@ -159,7 +160,7 @@ account with it. The code is single-use; it is fine to show it to them.
 
 **D5. Host extras.** `sudo host/install.sh` (in the deploy folder); tell them to subscribe
 to the printed ntfy topic in the ntfy app. Check:
-`systemctl list-timers 'biomanager-*'`.
+`systemctl list-timers 'biomanager-*'` and `systemctl is-active biomanager-update.path`.
 
 **D6. Close the door (ask first).** In Oracle Cloud, delete the security
 list's ingress rule for port 22. Check from their computer:
@@ -255,12 +256,20 @@ accounts came along) and sees their data. Then D5 (host extras).
 
 ## Updating a running server
 
+Once `host/install.sh` has run, an admin can do it in the app: **Settings →
+Devices & copies → Updates → Update now** (the server tells its admins when a
+release is out). From a shell, `sudo host/update.sh` does the same: backup,
+download and SHA-256 check, image, unpack, restart, health check. If this
+server's version is older than the first with Update now, do it by hand once,
+then run `sudo host/install.sh`:
+
 ```bash
 cd /opt/biomanager/Biomanager/deploy
 docker compose exec backup backup.sh
 curl -fsSL -o /tmp/b.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/b.tar.gz -C /opt/biomanager      # .env and backups are not in the bundle
 host/load-image.sh && docker compose up -d --build
+sudo host/install.sh                           # the updater, if this is the first version with it
 ```
 
 Check: `docker compose ps` healthy; `curl -fsS https://DOMAIN/healthz`

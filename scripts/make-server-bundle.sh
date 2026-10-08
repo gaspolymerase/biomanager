@@ -64,8 +64,10 @@ file for this machine, Intel or ARM):
 
     host/load-image.sh
 
-Update to a newer version: back up, unpack the newer bundle over this one,
-load its image and restart (your .env and backups are not in the bundle):
+Update to a newer version: Update now in Settings → Devices & copies, once
+host/install.sh has been run; or sudo host/update.sh. By hand: back up,
+unpack the newer bundle over this one, load its image and restart (your .env
+and backups are not in the bundle):
 
     docker compose exec backup backup.sh
     tar -xzf biomanager-server.tar.gz -C /opt/biomanager

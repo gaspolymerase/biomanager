@@ -1,0 +1,8 @@
+[Unit]
+Description=Update BioManager to its newest release (deploy/host/update.sh)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/biomanager/Biomanager/deploy/host/update.sh
+TimeoutStartSec=60min

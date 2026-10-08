@@ -37,5 +37,7 @@
   "The **Genotyping** dialog says what to type, and the rack position column is headed **Pos**.": "**基因型鉴定** 对话框会说明要填什么；笼架位置一列的标题改为 **Pos**。",
   "A lab server can run on a NAS such as fnOS: when the NAS's own pages already use ports 80 and 443, BioManager takes free ones and gives its address with the port.": "实验室服务器可以装在 NAS 上，比如飞牛 fnOS：NAS 自己的网页已经占用 80 和 443 端口时，BioManager 会改用空闲的端口，并给出带端口的访问地址。",
   "**Set up a lab server** can sign in with a password instead of an SSH key, and asks for the password **sudo** needs when the account has one.": "**搭建实验室服务器** 可以用密码代替 SSH 密钥登录；账号使用 **sudo** 需要密码时，也会向你询问。",
-  "**Start a new lab** on the desktop app's sign-in page sets aside a lab nobody can sign in to, deleting nothing, and starts an empty one whose first account is the admin.": "桌面版登录页的 **新建实验室** 会把没人能登录的实验室移开（不删除任何东西），开始一个空的实验室，第一个注册的账号就是管理员。"
+  "**Start a new lab** on the desktop app's sign-in page sets aside a lab nobody can sign in to, deleting nothing, and starts an empty one whose first account is the admin.": "桌面版登录页的 **新建实验室** 会把没人能登录的实验室移开（不删除任何东西），开始一个空的实验室，第一个注册的账号就是管理员。",
+  "A lab server tells its admins when a new BioManager is out, in a notification and in **Settings → Devices & copies → Updates**.": "实验室服务器在有新版 BioManager 时会告诉管理员：发一条通知，并显示在 **设置 → 设备与副本 → 更新** 里。",
+  "**Update now** there backs up, installs the new version and restarts the lab's server; the page follows it and comes back on the new version.": "那里的 **立即更新** 会先备份，再安装新版本并重启实验室服务器；页面会跟着显示每一步，完成后回到新版本。"
 }
