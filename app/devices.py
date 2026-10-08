@@ -65,7 +65,7 @@ SHARING = "devices:sharing"        # "1" on a desktop sharing its lab on the net
 LAST_HELLO = "devices:last_hello"  # on a linked desktop: what the master last said
 # Settings that belong to the device, not the lab: kept when a database
 # moves between devices, and never carried to the other one.
-LOCAL_SETTINGS = ("devices:", "lab_copy_", "telemetry:", "server_setup")
+LOCAL_SETTINGS = ("devices:", "lab_copy_", "telemetry:", "server_setup", "updates:")
 
 # Phases on a master. "asked": handing over, still writable; the others are
 # read only.

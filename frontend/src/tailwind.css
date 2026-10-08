@@ -3388,6 +3388,8 @@ tr.is-scanned > td:first-child {
   .set-link:hover { @apply bg-sand-100; }
   .set-link.is-on { @apply bg-brand-600 text-white; }
   .set-link-label { @apply min-w-0 truncate; }
+  .set-link-badge { @apply ml-auto shrink-0 rounded-full bg-brand-600 px-1.5 text-[10.5px] font-semibold leading-[17px] text-white; }
+  .set-link.is-on .set-link-badge { @apply bg-white text-brand-700; }
   .set-search-none { @apply px-2 py-2 text-[12.5px] text-muted; }
 
   .set-ico { @apply grid size-[22px] shrink-0 place-items-center rounded-md; }
@@ -3467,6 +3469,7 @@ tr.is-scanned > td:first-child {
   .set-more { @apply border-t border-hairline px-3.5 py-3 text-[12px] text-muted; }
   .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[11.5px] leading-relaxed text-ink-soft; }
   .set-more p { @apply m-0; }
+  .set-more .set-notes { @apply max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-[12px]; }
 
   .set-group.icon-picker { @apply p-4; }
 

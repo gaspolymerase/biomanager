@@ -1468,6 +1468,57 @@ to that, and `tests/test_telemetry.py` checks names don't leak.
   from `scripts/demo-data.py` is switched off in its own settings, so
   screenshots and the launch clips never count as a lab.
 
+## A lab server's updates
+
+`app/server_updates.py` (its docstring is the full account). Only on a lab
+server from a release (`applies()`: not `LOCAL_SETUP`, and
+`telemetry.released()`); the desktop app has its own (`desktop_updates.py`),
+and both compare versions with `app/releases.py` (`is_newer`,
+`parse_version`, `summary`), which the server image carries while
+`desktop_updates.py` stays beside the desktop app.
+
+- **The check**: the same `after_request` pattern as the counts above (at
+  most once an hour per process, a daemon thread), claiming
+  `updates:last_check` with a conditional UPDATE so only one worker asks
+  GitHub's `releases/latest` a day (User-Agent `BioManager/<version>`, no
+  other data). The answer is kept in `updates:latest` (version, page, short
+  notes, date); a newer version than this one notifies every active admin
+  once (`updates:told`, claimed the same way; category `lab`, link
+  `/settings#updates`). `updates:check` = `off` (the switch in Settings →
+  Devices & copies → Updates) or `BIOMANAGER_UPDATE_CHECK=0` stops it;
+  **Check now** (`POST /settings/updates`, `action=check`) always asks. The
+  `updates:` keys are this machine's (`devices.LOCAL_SETTINGS`).
+- **Update now** (`action=install`, admins): the app cannot restart its
+  own server, so it writes `update-request` (who, which version; written to
+  a temporary name, then renamed) into `/control`, which compose mounts from
+  `deploy/control/`. `host/install.sh` makes that folder root's with mode
+  1733 (others may add a file, not list it or touch root's), writes
+  `updater` there (`can_update()` looks for it), and installs
+  `biomanager-update.path`, whose `PathExists=` starts
+  `biomanager-update.service` → `host/update.sh` as root. The script runs a
+  copy of itself (the unpack replaces it), takes the request away, waits on
+  `/run/lock/biomanager-stack.lock` (shared with `maintenance.sh`), and
+  reads nothing from the request: it asks GitHub for the latest release,
+  stops unless it is newer than `VERSION` (a candidate before its
+  release, as `is_newer`), backs up, downloads `biomanager-server.tar.gz`
+  and `biomanager-image-<arch>.tar.gz` and checks each against the asset's
+  `digest`, loads the image with the new bundle's `load-image.sh`, copies the
+  bundle over the deploy folder (keeping its owner), `docker compose up -d
+  --build`, re-runs `install.sh` (so the units follow the version), and
+  waits for the app to be healthy. Each step is written to
+  `update-status.json` (`state`: running, done, failed, current; `step`:
+  check, backup, download, image, restart; `detail` on failure) through a
+  temporary file and a rename; ntfy hears the result. It refuses a checkout
+  and a `.env` that pins `BIOMANAGER_IMAGE`.
+- **The page** polls `GET /settings/updates/status` every few seconds while
+  a request or a run is under way; while the server restarts the request
+  fails and the page says so, and once the version it answers with differs
+  from the one the page was drawn with, it reloads.
+- **Tests**: `tests/test_server_updates.py` runs the check, the routes, and
+  `update.sh` itself against stand-in `docker` and `curl` commands
+  (`BIOMANAGER_UPDATE_TEST=1` lets it run without root), including a
+  checksum that doesn't match and a release that isn't newer.
+
 ## Reminder emails
 
 A daily digest of what is overdue or imminent: module schedule items (flips,
@@ -1998,9 +2049,10 @@ which keeps only same-origin paths. `desktop_updates.py` is the version
 (the `VERSION` file `Biomanager.spec` bundles from `BIOMANAGER_VERSION`;
 from source, the latest tag + "+dev"), the update check against
 `api.github.com/repos/gaspolymerase/biomanager/releases/latest` (which
-leaves pre-releases out; `is_newer` puts `1.0.0-rc.1` before `1.0.0`), and
-this computer's `desktop-prefs.json` (automatic check, skipped version,
-appearance, zoom) in the data folder. Set `BIOMANAGER_MENU_DUMP=<file>` to
+leaves pre-releases out; `is_newer`, in `app/releases.py` with a lab
+server's check, puts `1.0.0-rc.1` before `1.0.0`), and this computer's
+`desktop-prefs.json` (automatic check, skipped version, appearance, zoom) in
+the data folder. Set `BIOMANAGER_MENU_DUMP=<file>` to
 have a running app write its menu bar there, for checking a build.
 
 **Windows 10** (`desktop_windows.py`). The Windows window is WebView2
@@ -2126,6 +2178,7 @@ Settings (environment variables, all optional):
 | `BIOMANAGER_MAX_UPLOAD_MB` | `64` | largest upload accepted |
 | `BIOMANAGER_UPLOADS_DIR` | `app/static/uploads` | where uploads are kept; put it next to the database |
 | `BIOMANAGER_TELEMETRY` | on | `0`: never send the anonymous daily counts (so does `DO_NOT_TRACK=1`) |
+| `BIOMANAGER_UPDATE_CHECK` | on | `0`: never ask GitHub for a newer release (`app/server_updates.py`) |
 | `BIOMANAGER_PLANNOTATE` | — | the pLannotate command, which turns on **Annotate with pLannotate** (`app/plannotate.py`) |
 | `WEB_CONCURRENCY` | 1 on SQLite, 3 on Postgres | gunicorn worker processes |
 

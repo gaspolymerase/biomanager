@@ -94,6 +94,7 @@ Install the desktop app, open it the first time, and set up your lab.
 | Updates | The desktop app checks for a new version once a day and offers it, with what's new; **BioManager → Check for Updates…** (on Windows and Linux, **Help**) asks now. **Install and Restart** downloads it, checks it, and swaps it in as the app quits; where it can't (the Linux `.tar.gz`, a folder it can't write to), it opens the download to install as above. Your data stays where it is, and before a new version changes it a copy is kept ([Your data](https://biomanager.org/guide/your-data)). Turn the daily check off with **Check for Updates Automatically**. |
 | What's new | After an update, on a desktop or a lab server, the first page you open shows a short **What's new**: what is new, what works differently and what was fixed, with a link to the full notes. **Got it** closes it for good; **Help → What's new** opens it again. |
 | A lab server | Nothing to install: open the address your admin gives you. A welcome page shows what BioManager does and leads to **Sign in** or **Create an account**. Setting one up is on [Run it for your lab](https://biomanager.org/server). |
+| Updating a lab server | The server looks for a new version once a day and tells its admins. They find it in **Settings → Devices & copies → Updates**, with what's new and a link to the release notes. **Update now** takes a backup, installs the new version and restarts the server; BioManager is away for a minute or two, and the page comes back by itself on the new version. The phone apps open the server, so they follow it. Turn the daily look off with **Check for new versions every day**. |
 | Phones | The Android app, or your lab server added to an iPhone's home screen: see [Phones and cage cards](https://biomanager.org/guide/phones-and-cage-cards). |
 
 > **Why the warning on a computer?** The apps aren't signed by Apple or Microsoft, so the system asks you to confirm once per version.
@@ -1631,8 +1632,9 @@ Ask these, then recommend an option (the table after them) and wait for a yes.
 - **Resources:** 2 vCPU, 2 GB RAM, 20 GB disk is plenty. ARM (Oracle Ampere)
   and x86-64 both work.
 - **Host extras (Linux with systemd):** `sudo host/install.sh` (from the
-  deploy folder) installs a watchdog (every 5 min: site, containers, disk, backups) and
-  weekly image updates, alerting to an ntfy topic it prints.
+  deploy folder) installs a watchdog (every 5 min: site, containers, disk, backups),
+  weekly image updates and the updater behind **Update now** in the app's Settings
+  (`host/update.sh`, started by `biomanager-update.path`), alerting to an ntfy topic it prints.
   `host/offsite-setup.sh` sets up encrypted off-site backups (asks for the
   key itself). `host/internet-access.sh on|off|status` opens temporary guest
   access via Tailscale Funnel (option D only).
@@ -1696,7 +1698,7 @@ account with it. The code is single-use; it is fine to show it to them.
 
 **D5. Host extras.** `sudo host/install.sh` (in the deploy folder); tell them to subscribe
 to the printed ntfy topic in the ntfy app. Check:
-`systemctl list-timers 'biomanager-*'`.
+`systemctl list-timers 'biomanager-*'` and `systemctl is-active biomanager-update.path`.
 
 **D6. Close the door (ask first).** In Oracle Cloud, delete the security
 list's ingress rule for port 22. Check from their computer:
@@ -1788,12 +1790,20 @@ accounts came along) and sees their data. Then D5 (host extras).
 
 ## Updating a running server
 
+Once `host/install.sh` has run, an admin can do it in the app: **Settings →
+Devices & copies → Updates → Update now** (the server tells its admins when a
+release is out). From a shell, `sudo host/update.sh` does the same: backup,
+download and SHA-256 check, image, unpack, restart, health check. If this
+server's version is older than the first with Update now, do it by hand once,
+then run `sudo host/install.sh`:
+
 ```bash
 cd /opt/biomanager/Biomanager/deploy
 docker compose exec backup backup.sh
 curl -fsSL -o /tmp/b.tar.gz https://github.com/gaspolymerase/biomanager/releases/latest/download/biomanager-server.tar.gz
 tar -xzf /tmp/b.tar.gz -C /opt/biomanager      # .env and backups are not in the bundle
 host/load-image.sh && docker compose up -d --build
+sudo host/install.sh                           # the updater, if this is the first version with it
 ```
 
 Check: `docker compose ps` healthy; `curl -fsS https://DOMAIN/healthz`

@@ -275,5 +275,7 @@
   "Tank up · %(clutch)s": "入缸 · %(clutch)s",
   "Fin clip · %(clutch)s": "剪鳍 · %(clutch)s",
   "Adult · %(clutch)s": "成鱼 · %(clutch)s",
-  "Return mating · %(tank)s": "交配鱼归缸 · %(tank)s"
+  "Return mating · %(tank)s": "交配鱼归缸 · %(tank)s",
+  "BioManager %(version)s is available": "BioManager %(version)s 已发布",
+  "Update the lab's server in Settings → Devices & copies.": "请在“设置 → 设备与副本”中更新实验室服务器。"
 }
