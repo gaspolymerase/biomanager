@@ -9,7 +9,7 @@ at the top of the screen, the footage fills the middle (each narration line
 shows a part of the clip, cropped close and stretched to the line's length,
 on a blurred copy of itself), the line is shown below a few words at a time,
 and an end card gives the website. The voice is a Qwen voice, as in
-explainer-video.py, over the same music. Writes promo/out/tiktok/<name>.mp4
+explainer-video.py, over a quick beat made here. Writes promo/out/tiktok/<name>.mp4
 and <name>-cover.png.
 """
 from __future__ import annotations
@@ -97,6 +97,54 @@ def end_card(end, colours, path: Path):
     img.convert("RGB").save(path)
 
 
+def beat(seconds: float, bpm: int = 122) -> np.ndarray:
+    """A bright loop for short videos: four-on-the-floor kick, claps, sixteenth hats,
+    an off-beat bass and a plucked arpeggio over Am – F – C – G."""
+    step = 60 / bpm / 4                     # a sixteenth
+    n = int((seconds + 1) * SR)
+    left, right = np.zeros(n), np.zeros(n)
+    hz = lambda m: 440 * 2 ** ((m - 69) / 12)
+    rng = np.random.default_rng(5)
+    chords = [[69, 72, 76], [65, 69, 72], [60, 64, 67], [67, 71, 74]]
+    roots = [45, 41, 48, 43]
+
+    def add(sound, at, pan=0.5, gain=1.0):
+        i = int(at * SR)
+        if i >= n:
+            return
+        e = min(n, i + len(sound))
+        left[i:e] += sound[:e - i] * gain * (1 - pan) * 2
+        right[i:e] += sound[:e - i] * gain * pan * 2
+
+    t = np.arange(int(0.3 * SR)) / SR
+    kick = np.sin(2 * np.pi * (50 + 110 * np.exp(-t * 35)) * t) * np.exp(-t * 11) * 0.5
+    clap = rng.normal(0, 1, len(t)) * np.exp(-t * 22) * 0.16
+    th = np.arange(int(0.04 * SR)) / SR
+    hat = np.diff(rng.normal(0, 1, len(th) + 1)) * np.exp(-th * 120) * 0.05
+    tb = np.arange(int(step * 1.8 * SR)) / SR
+    tp = np.arange(int(step * 2.5 * SR)) / SR
+    k = 0
+    while k * step < seconds + 1:
+        at, bar, pos = k * step, (k // 16) % 4, k % 16
+        if pos % 4 == 0:
+            add(kick, at)
+        if pos in (4, 12):
+            add(clap, at, 0.55)
+        add(hat, at, 0.65, 1.0 if pos % 2 else 0.5)
+        if pos % 4 == 2:                    # bass on the off-beat
+            f = hz(roots[bar])
+            add(np.tanh(2 * np.sin(2 * np.pi * f * tb)) * np.exp(-tb * 6) * 0.16, at)
+        if pos % 2 == 0:                    # the arpeggio, up and down the chord
+            m = chords[bar][[0, 1, 2, 1][(pos // 2) % 4]] + (12 if pos >= 8 else 0)
+            f = hz(m)
+            pluck = (np.sin(2 * np.pi * f * tp) + 0.4 * np.sin(4 * np.pi * f * tp)) * np.exp(-tp * 14) * 0.07
+            add(pluck, at, 0.3 if pos % 4 else 0.7)
+        k += 1
+    mix = np.stack([left, right], 1)[: int(seconds * SR)]
+    fade = np.minimum(1, np.minimum(np.arange(len(mix)) / (0.05 * SR), (len(mix) - np.arange(len(mix))) / (1.5 * SR)))
+    return mix * fade[:, None]
+
+
 def chunks(text: str, size: int = 3) -> list[str]:
     words = text.split()
     out = []
@@ -149,12 +197,17 @@ def make(video: dict, voice: str, tmp: Path) -> Path:
                     "-c", "copy", str(footage)], check=True)
 
     # The sound: the voice, the music under it, a pop at each cut.
-    mix = ex.music(total) * 0.55
+    # The beat drops back while someone speaks and comes up in the gaps.
+    level = np.full(int(total * SR), 0.55)
+    for start, length in spans:
+        level[int(start * SR):int((start + length) * SR)] = 0.3
+    level = np.convolve(level, np.ones(int(0.12 * SR)) / int(0.12 * SR), mode="same")
+    mix = beat(total) * level[:, None]
     for (start, _), a in zip(spans, audio):
         ex.place(mix, a, start)
     for start, _ in spans[1:]:
         ex.place(mix, ex.pop(660) * 0.5, start - 0.12)
-    mix = np.clip(mix, -0.98, 0.98)
+    mix *= min(1.0, 0.9 / max(1e-6, float(np.abs(mix).max())))
     (tmp / "mix.raw").write_bytes(mix.astype(np.float32).tobytes())
 
     # The captions, a few words at a time, shared out over each line by length.
