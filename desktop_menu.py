@@ -63,6 +63,13 @@ class DesktopApi:
                 AppHelper.callAfter(_rebuild_go_menu)
         return True
 
+    def quit(self):
+        """Close the app: Start a new lab sets the lab aside at the next start."""
+        window = _state["window"]
+        if window is not None:
+            window.destroy()
+        return True
+
 
 # ---------------------------------------------------------------- helpers shared by both
 

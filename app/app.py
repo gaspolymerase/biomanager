@@ -2139,7 +2139,8 @@ def login():
                 security.start_session(user)
                 flash(gettext("Welcome, %(name)s.", name=user.display_name or user.username), "success")
                 return redirect(security.safe_next(request.args.get("next")) or landing_url(user))
-    return render_template("auth.html", mode="login")
+    return render_template("auth.html", mode="login", lab_set_aside=lab_set_aside(),
+                           new_lab_offered=devices.on_this_computer() and not no_accounts_yet())
 
 
 LANDING_FEATURES = {"colony": "colony", "calendar": "calendar", "notebook": "notebook", "plasmids": "plasmids"}
@@ -2656,7 +2657,41 @@ def register():
                     else:
                         flash(gettext("Account created. A lab admin needs to approve it before you can sign in."), "success")
                     return redirect(url_for("login"))
-    return render_template("auth.html", mode="register", first_account=first, needs_setup_code=needs_code)
+    return render_template("auth.html", mode="register", first_account=first, needs_setup_code=needs_code,
+                           lab_set_aside=lab_set_aside())
+
+
+def no_accounts_yet() -> bool:
+    with SessionLocal() as db_session:
+        return db_session.scalar(select(func.count(UserAccount.id))) == 0
+
+
+def lab_set_aside() -> str:
+    """Where the lab set aside at this start went (paths.set_lab_aside), until
+    the new lab has its first account: the sign-in page says so."""
+    folder = app.config.get("LAB_SET_ASIDE") or ""
+    return folder if folder and no_accounts_yet() else ""
+
+
+@app.route("/start-new-lab", methods=["GET", "POST"])
+def start_new_lab():
+    """The desktop app's way out of a lab nobody can sign in to (the admin's
+    password is lost, or someone else made it): the next start sets this lab
+    aside, whole, in data/old-labs/, and begins an empty one whose first
+    account is its admin. Only for the person at this computer."""
+    if not devices.on_this_computer():
+        abort(404)
+    from . import paths
+    if request.method == "POST":
+        if request.form.get("action") == "keep":
+            paths.ask_for_new_lab(False)
+            flash(gettext("Nothing changes: this lab stays as it is."), "success")
+            return redirect(url_for("login"))
+        paths.ask_for_new_lab()
+        return redirect(url_for("start_new_lab"))
+    return render_template("start_new_lab.html", asked=paths.new_lab_asked_for(),
+                           folder=str(paths.old_labs_dir()),
+                           restore_url=lab.guide_url().replace("guide.html", "guide/restore-a-backup.html"))
 
 
 @app.route("/logout", methods=["POST"])

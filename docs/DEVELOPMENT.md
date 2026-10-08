@@ -2145,6 +2145,19 @@ private network such as Tailscale.
   *awaiting approval*; admins get a notification and approve it in
   Settings → People & access. `scripts/reset-password.py NAME --enable` does the
   same from the command line on SQLite.
+- **Start a new lab** (`/start-new-lab`, linked from the sign-in page) is the
+  desktop app's way out of a lab nobody can sign in to. Only the person at
+  the computer gets it (`devices.on_this_computer`: `LOCAL_SETUP`, loopback,
+  not the network listener); elsewhere it is a 404. It only writes the
+  request file `data/start-new-lab`; `desktop.py` calls
+  `paths.set_lab_aside()` before importing the app, so the database is moved
+  before anything opens it: everything in the data folder except what is the
+  computer's own (`desktop-prefs.json`, `window/`) goes to
+  `data/old-labs/<YYYY-MM-DD HHMMSS>/`, with the uploads folder as `uploads/`.
+  Nothing is deleted; a failed move leaves the request for the next start.
+  `LAB_SET_ASIDE` carries the folder to the sign-in page until the new lab
+  has an account. The page's **Close BioManager** calls
+  `DesktopApi.quit` (desktop_menu.py).
 - **Passwords are at least 12 characters.** Ten failed sign-ins in 15 minutes
   lock out that username and that address for the rest of the window.
 - **Changing or resetting a password signs out every other session** of

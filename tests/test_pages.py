@@ -18,8 +18,8 @@ SKIP = {"/logout", "/calendar/google/connect", "/calendar/google/callback",
         # A computer's key, not a session, opens these (tests/test_lab_copy.py);
         # the status is the desktop app's only.
         "/api/lab-copy/snapshot", "/api/lab-copy/files", "/lab-copy/status",
-        # The desktop app's only (tests/test_server_setup.py).
-        "/server-setup/"}
+        # The desktop app's only (tests/test_server_setup.py, tests/test_start_new_lab.py).
+        "/server-setup/", "/start-new-lab"}
 # /: the welcome page before signing in (app.py hello); /guest: entering a guest code (app/guests.py).
 PUBLIC = {"/", "/login", "/register", "/healthz", "/guest", "/favicon.ico",
           # OAuth metadata, which an assistant app reads before signing in (app/oauth.py)

@@ -992,6 +992,10 @@ track.
 - **The first account is the admin.** On a server it needs the setup code,
   so nobody else on the network can claim it first.
 - **New sign-ups wait for an admin's approval.**
+- **A lab nobody can sign in to on the desktop app** (the admin's password
+  lost, or someone else made the first account): **Start a new lab** on the
+  sign-in page sets it aside, deleting nothing, and the next start begins an
+  empty lab whose first account is the admin.
 - **You edit what you own.** Your mice, cages and records are yours.
   **Shared cages and anything marked lab common belong to the whole lab.**
   A Breeder cage starts out shared; any other cage starts personal. Only a

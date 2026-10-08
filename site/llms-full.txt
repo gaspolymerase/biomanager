@@ -1192,6 +1192,14 @@ Who and where: Admins
 
 Ask an admin: the **···** beside you in **Settings → People & access** resets it.
 
+#### My new account is waiting for an admin to approve it
+
+The first account made in a lab becomes its admin, and every account after that waits until an admin approves it in **Settings → People & access**. On the desktop app, that means an account was made on this computer before yours, perhaps by you when you first opened it: sign in with that one, and approve the new one if you want both.
+
+#### Nobody can sign in to the lab on my computer
+
+On the desktop app, **Start a new lab** at the bottom of the sign-in page sets this computer's lab aside and starts an empty one, whose first account is its admin. Nothing is deleted: the old lab, with its accounts, records and files, is kept in the data folder under `old-labs`, and putting its files back brings it back, as for [a backup](https://biomanager.org/guide/restore-a-backup). Press **Set this lab aside**, then **Close BioManager** and open it again. A lab server has no such button: whoever runs it can reset an admin's password there.
+
 Source: https://biomanager.org/guide/people-and-guests
 
 ---
@@ -1361,6 +1369,8 @@ BioManager opens the lab as it was when that backup was made.
 
 > **Newer changes aren't in a backup** Everything entered since the backup was made is not in it. Keep the file you moved aside until you are sure.
 
+> **A lab set aside with Start a new lab** It is in `data/old-labs/`, in a folder named for when it was set aside (see [People and access](https://biomanager.org/guide/people-and-guests#troubleshooting)). To go back to it, quit BioManager and move the current lab's files out of `data` in the same way, then move everything in that folder back into `data`, except its `uploads` folder, which goes back beside `data`.
+
 ### On a lab server
 
 A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever looks after the server, and never deletes what it replaces: see `deploy/RUNBOOK.md` in the server bundle and [Keeping the data safe](https://biomanager.org/server#safe). For a mistake in a bulk change, **Settings → History → Undo** is enough.
@@ -1510,6 +1520,10 @@ Common problems and their fixes, each also on the page it belongs to.
 - **I made a mistake with a bulk change**: **Settings → History** → **Undo**. [→ See the page](https://biomanager.org/guide/undo-and-history)
 
 - **I forgot my password**: Ask an admin: the **···** beside you in **Settings → People & access** resets it. [→ See the page](https://biomanager.org/guide/people-and-guests)
+
+- **My new account is waiting for an admin to approve it**: Only a lab's first account is its admin; later ones wait for its approval. On the desktop app, an account was made on this computer before: sign in with that one. [→ See the page](https://biomanager.org/guide/people-and-guests)
+
+- **Nobody can sign in to the lab on my computer**: On the desktop app, **Start a new lab** on the sign-in page sets the lab aside, without deleting anything, and starts an empty one. [→ See the page](https://biomanager.org/guide/people-and-guests)
 
 - **Rows were skipped on import**: The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time. [→ See the page](https://biomanager.org/guide/bring-your-lab-in)
 
