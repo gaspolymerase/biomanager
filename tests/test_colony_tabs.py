@@ -231,6 +231,12 @@ class GiveBirthGenotypingTests(AppTestCase):
         pups = rows("select status, owner, cage_id_fk from mice where litter_id_fk=?", litter[0])
         self.assertEqual(pups, [("geno", self.member, cage)] * 3)
 
+    def test_genotyping_dialog_says_what_to_type(self):
+        self.make_cage(self.m, purpose="Breeder")
+        html = self.get_ok(self.m, "/colony?view=cages")
+        dialog = html.split('id="genotyping-modal"', 1)[1].split("</dialog>", 1)[0]
+        self.assertIn("Type the mouse numbers of the father and the mother, and how many pups were born.", dialog)
+
     def test_genotyping_rejects_pups_that_are_not_1_to_40(self):
         cage = self.make_cage(self.m)
         litters, mice = count("litters"), count("mice")

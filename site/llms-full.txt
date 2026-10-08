@@ -437,7 +437,7 @@ On the **Cages** tab, open a breeding cage (its arrow or mice count) or find its
 
 1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and records the birth. BioManager works out weaning (P21) and genotyping (P28, or the day chosen in [Lab setup](https://biomanager.org/guide/lab-setup)), which appear on Home and the calendar when due — the same list in both. A cage holds one litter date, so a new litter replaces the last: if those pups are still in the cage, wean them first.
 
-2. **Genotyping** asks for the father, mother and number of pups; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it.
+2. **Genotyping** asks for the mouse numbers of the father and mother, and how many pups were born; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it.
 
 3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm.
 
@@ -491,7 +491,7 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 
 1. Once the litter is [recorded](https://biomanager.org/guide/record-a-litter), open the breeding cage on the **Cages** tab and press **Genotyping**.
 
-2. Check the **Father** and **Mother**, and type the number of **Pups**. Father and mother start as the cage's first male and female. Pups is a whole number from 1 to 40.
+2. In **Father** and **Mother**, type the parents' mouse numbers, and in **Pups**, how many pups were born. Father and mother start as the mouse numbers of the cage's first male and female. Pups is a whole number from 1 to 40.
 
 3. Press **Create litter**. BioManager makes the litter, numbered L-1, L-2, L-3…, and a mouse for each pup, set to *geno*. The pups are in that cage, and they are yours.
 

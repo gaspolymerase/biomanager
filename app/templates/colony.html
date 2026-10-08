@@ -1638,6 +1638,7 @@
     <button type="submit" class="ghost-button">{{ _('Close') }}</button>
   </form>
   <form method="post" id="genotyping-form" class="modal-grid">
+    <p class="muted-inline col-span-full">{{ _('Type the mouse numbers of the father and the mother, and how many pups were born. Create litter makes a mouse for each pup, ready to genotype.') }}</p>
     <label>{{ _('Father') }} <input id="genotyping-father" name="father_info"></label>
     <label>{{ _('Mother') }} <input id="genotyping-mother" name="mother_info"></label>
     <label>{{ _('Pups') }} <input type="number" min="1" max="40" value="1" name="total_pups" required></label>
