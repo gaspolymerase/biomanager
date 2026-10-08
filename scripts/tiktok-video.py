@@ -48,6 +48,7 @@ BOX_Y, BOX_H = 560, 860          # where the footage sits
 CAPTION_Y = 1510                 # the middle of the caption line, under the footage, above TikTok's own text
 GAP = 0.3
 INK = (15, 23, 42)
+BLACK, MUTED = (0, 0, 0), (148, 163, 184)   # the screen is black, as TikTok is
 GREEN = (13, 148, 136)
 
 
@@ -77,8 +78,8 @@ def balanced(draw, text, fnt, width):
 
 
 def background(video, path: Path):
-    """The gradient, the hook at the top and the title on a green band under it."""
-    img = fc.gradient((W, H), video["gradient"]).convert("RGBA")
+    """Black, with the hook at the top and the title on a green band under it."""
+    img = Image.new("RGBA", (W, H), BLACK)
     d = ImageDraw.Draw(img)
     # As large as fits between TikTok's tabs (y 150) and the footage.
     for size in (78, 72, 66, 60, 56, 52):
@@ -90,7 +91,7 @@ def background(video, path: Path):
             break
     y = 160 + (BOX_Y - 20 - 160 - height) / 2
     for line in hook:
-        centred(d, y, line, big, INK)
+        centred(d, y, line, big, "white")
         y += size * 1.18
     y += 20
     for line in marks:
@@ -114,17 +115,17 @@ def caption(text, path: Path):
     img.save(path)
 
 
-def end_card(end, colours, path: Path):
-    img = fc.gradient((W, H), colours).convert("RGBA")
+def end_card(end, path: Path):
+    img = Image.new("RGBA", (W, H), BLACK)
     d = ImageDraw.Draw(img)
     icon = Image.open(ROOT / "app/static/icon-512.png").convert("RGBA").resize((240, 240))
     img.alpha_composite(icon, ((W - 240) // 2, 520))
-    centred(d, 820, end["title"], font(84), INK)
+    centred(d, 820, end["title"], font(84), "white")
     site = font(70)
     sw = d.textlength(end["site"], font=site)
-    d.rounded_rectangle(((W - sw) / 2 - 40, 960, (W + sw) / 2 + 40, 1070), 26, fill=INK)
+    d.rounded_rectangle(((W - sw) / 2 - 40, 960, (W + sw) / 2 + 40, 1070), 26, fill=GREEN)
     centred(d, 975, end["site"], site, "white")
-    centred(d, 1140, end["follow"], font(46), (51, 65, 85))
+    centred(d, 1140, end["follow"], font(46), MUTED)
     img.convert("RGB").save(path)
 
 
@@ -234,7 +235,6 @@ def from_day(n: int, board: dict, posts: dict) -> dict:
     says = [en["hook"], *en["lines"]]
     return {"name": f"day{n:02d}", "source": f"promo/out/{day['clip']}/plain.mp4",
             "hook": en["hook"], "mark": post["title_en"],
-            "gradient": list(ex.PALETTE[n % len(ex.PALETTE)]),
             "lines": [{"say": s} for s in says]}
 
 
@@ -307,7 +307,7 @@ def make(video: dict, voice: str, tmp: Path) -> Path:
 
     # The captions, a few words at a time, shared out over each line by length.
     background(video, tmp / "bg.png")
-    end_card(video["end"], video["gradient"], tmp / "end.png")
+    end_card(video["end"], tmp / "end.png")
     overlays = []
     for i, (say, (start, length)) in enumerate(zip(says[:-1], spans)):
         bits = chunks(say)

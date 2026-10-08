@@ -11,10 +11,6 @@
         "your lab notebook?"
       ],
       "mark": "Same. Snap it instead.",
-      "gradient": [
-        "#e0e7ff",
-        "#ccfbf1"
-      ],
       "lines": [
         {
           "say": "Done at the bench, and now you have to type all this in?",
