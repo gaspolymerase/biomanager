@@ -117,9 +117,10 @@
   </div>
 {% endmacro %}
 
-{% macro col(key, icon_name, label, width=None, title=None, hidden=False, min=None) %}
+{% macro col(key, icon_name, label, width=None, title=None, hidden=False, min=None, full=None) %}
   <th {% if key %}class="dt-sortable" data-sort-key="{{ key }}"{% endif %}
       style="{% if width %}width: {{ width }}px;{% endif %}{% if min %} min-width: {{ min }}px;{% endif %}"
+      {% if full %}data-dt-label="{{ full }}"{% endif %}
       {% if title %}title="{{ title }}"{% endif %} {% if hidden %}data-default-hidden="1"{% endif %}>
     <span class="dt-col-head">{{ icon(icon_name, 'dt-col-icon') }}{{ label }}{% if key %}<span class="dt-sort-indicator"></span>{% endif %}</span>
   </th>
@@ -232,7 +233,7 @@
               <span class="dt-col-head">{{ icon('tank', 'dt-col-icon') }}{{ _('Tank') }}<span class="dt-sort-indicator"></span></span>
             </th>
             {{ col('rack', 'grid', zf('Rack'), 112) }}
-            {{ col('position', 'position', _('Position'), 72, _("Position in the rack, named by the rack's scheme")) }}
+            {{ col('position', 'position', _('Pos'), 56, _("Position in the rack, named by the rack's scheme"), full=_('Position')) }}
             {{ col('purpose', 'tag', _('Purpose'), 104, _('Breeding tanks are shared: anyone in the lab (or the project group it is shared with) can edit them')) }}
             {{ col('line', 'sitemap', _('Line'), 160) }}
             {{ col('fish', 'fish', zf('Fish'), 56, _('Live fish in the tank')) }}

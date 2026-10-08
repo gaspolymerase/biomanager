@@ -457,6 +457,9 @@
     }
 
     _columnLabel(th) {
+      // A header shortened to fit (Pos) names its column in full here, for
+      // the Columns and sort menus and a phone's cards.
+      if (th.dataset.dtLabel) return th.dataset.dtLabel;
       const head = th.querySelector('.dt-col-head');
       return (head ? head.textContent : th.textContent || '').replace(/\s+/g, ' ').trim();
     }
