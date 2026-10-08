@@ -2146,13 +2146,23 @@ class LabGroup(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     created_by: Mapped[str] = mapped_column(String(80), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # What its members may do in it (groups.member_may); its leads and the
+    # lab's admins always may. Each starts as the group worked before these.
+    may_edit_shared: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    may_change_records: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    may_edit_each_other: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
+    may_edit_pages: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    may_tick_todos: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    may_share: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
 
     members: Mapped[list["LabGroupMember"]] = relationship(
         back_populates="group", cascade="all, delete-orphan", order_by="LabGroupMember.username")
 
 
 class LabGroupMember(Base):
-    """Someone in a project group. A lead may add and remove its members."""
+    """Someone in a project group. A lead may add and remove its members and
+    set what the group may do; one who may not edit (can_edit off) only
+    sees what is shared with the group."""
     __tablename__ = "lab_group_members"
     __table_args__ = (UniqueConstraint("group_id_fk", "username", name="uq_lab_group_member"),)
 
@@ -2160,6 +2170,7 @@ class LabGroupMember(Base):
     group_id_fk: Mapped[int] = mapped_column(ForeignKey("lab_groups.id", ondelete="CASCADE"), index=True)
     username: Mapped[str] = mapped_column(String(80), index=True)
     lead: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
+    can_edit: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
     added_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     group: Mapped[LabGroup] = relationship(back_populates="members")

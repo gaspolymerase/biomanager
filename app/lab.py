@@ -227,6 +227,28 @@ def can_see(module, user=None) -> bool:
     return user.role == "admin" or module.private_to == user.username
 
 
+def may_change_in(module, user=None) -> bool:
+    """May this person add or change anything in the database? A group's
+    only if the group lets its members (groups.member_may "records"); the
+    lab's and their own, yes (each record still says whose it is)."""
+    gid = group_of(module)
+    if not gid:
+        return True
+    from . import groups
+    return groups.member_may(gid, "records", user)
+
+
+def opened(module) -> None:
+    """The database this request is about (each blueprint's _module_or_404):
+    access.can_edit asks it whether a group's members may edit each
+    other's records in it. Changing anything in a group's database needs
+    the group's leave (may_change_in)."""
+    from flask import abort, request
+    g.current_module = module
+    if request.method not in ("GET", "HEAD", "OPTIONS") and not may_change_in(module):
+        abort(403)
+
+
 def in_sidebar(module, user=None) -> bool:
     """Is it one of *their* databases: the lab's, their own, or one of their
     project groups'?"""
@@ -452,10 +474,13 @@ def survey_state(session) -> dict:
     }
 
 
-def apply_survey(session, form, actor: str) -> list[str]:
+def apply_survey(session, form, actor: str, sections=("general", "databases", "permissions")) -> list[str]:
     """Save the survey. Returns the labels of databases and functions it
     switched on that were off, for telling the lab. Nothing is deleted:
-    a database the lab stops using is only switched off."""
+    a database the lab stops using is only switched off. Settings saves
+    one pane at a time: `sections` says which parts the form carries."""
+    if "databases" not in sections:
+        return _apply_rest(session, form, sections)
     from . import database_keys, inventory_service, stock_service
     _, set_setting = _settings()
     before = survey_state(session)
@@ -512,8 +537,19 @@ def apply_survey(session, form, actor: str) -> list[str]:
                 module.label = name
                 database_keys.rekey(session, "inventory", module)
 
-    for key in MEMBER_PERMISSIONS:
-        _set_flag(session, key, form.get(key) == "1")
+    _apply_rest(session, form, sections)
+    return switched_on
+
+
+def _apply_rest(session, form, sections) -> list[str]:
+    """The survey's other parts: what members may do, and the lab's name,
+    time zone, dates and genotyping day."""
+    _, set_setting = _settings()
+    if "permissions" in sections:
+        for key in MEMBER_PERMISSIONS:
+            _set_flag(session, key, form.get(key) == "1")
+    if "general" not in sections:
+        return []
     set_setting(session, "lab_name", (form.get("lab_name") or "").strip()[:80])
     if "lab_timezone" in form:
         zone = (form.get("lab_timezone") or "").strip()
@@ -527,7 +563,7 @@ def apply_survey(session, form, actor: str) -> list[str]:
     if raw_day.isdigit() and 1 <= int(raw_day) <= 120:
         set_setting(session, "genotyping_day", raw_day)
     mark_setup_done(session)
-    return switched_on
+    return []
 
 
 def _name(form, field: str) -> str:
@@ -602,6 +638,7 @@ def custom_databases(session) -> list[dict]:
                 continue
             out.append({"kind": prefix, "kind_label": kind_label, "key": module.key, "label": module.label,
                         "enabled": module.enabled, "private_to": module.private_to or "",
+                        "share_group_id": getattr(module, "share_group_id", None),
                         "created_by": module.created_by or ""})
     return out
 
@@ -720,7 +757,7 @@ def getting_started(session, user, on_server: bool) -> list[dict]:
     if on_server and user.role == "admin":
         others = session.scalar(select(func.count(UserAccount.id)).where(
             UserAccount.id != user.id, UserAccount.disabled.is_(False))) or 0
-        steps.append(step("Invite your lab", "Send members this address. They sign up, and you approve them in Manage users.",
+        steps.append(step("Invite your lab", "Send members this address. They sign up, and you approve them in Settings → People & access.",
                           url_for("admin_users"), others > 0))
     steps.append(step("Read the user guide", "Ten minutes on everything BioManager does. Help in the sidebar opens it too.",
                       guide_url(), did(session, user, "guide"), external=True))

@@ -6,7 +6,7 @@
 
 {% block page_actions %}
   {% if current_user.role == 'admin' %}
-    <a class="btn" href="{{ url_for('lab.setup') }}">{{ icon('sliders') }} {{ _('Lab setup') }}</a>
+    <a class="btn" href="{{ url_for('settings', _anchor='databases') }}">{{ icon('sliders') }} {{ _('Switch databases on or off') }}</a>
   {% endif %}
   <a class="btn btn-primary" href="{{ url_for('organisms.new_module') }}">
     <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#plus"></use></svg> {{ _('New database') }}

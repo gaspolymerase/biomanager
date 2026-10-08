@@ -617,6 +617,7 @@ def _stock_module(session, key: str):
     module = ssvc.get_module(session, key)
     if module is None or not lab.can_see(module):
         abort(404, f"There is no stock database {key}.")
+    lab.opened(module)   # a group's database: changing it needs the group's leave
     return module, ssvc.view(module)
 
 
@@ -696,6 +697,7 @@ def _inventory(session, key: str):
     module = isvc.get_module(session, key)
     if module is None or not lab.can_see(module):
         abort(404, f"There is no inventory {key}.")
+    lab.opened(module)   # a group's database: changing it needs the group's leave
     return module, isvc.view(module)
 
 

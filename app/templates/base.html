@@ -102,25 +102,6 @@
           {% endfor %}
 
           <div class="rail-foot">
-            {# Pages not used every day, in one menu: batch history, and the admin's pages. #}
-            {% if nav_more %}
-              {% set more_active = nav_more | selectattr('active') | list %}
-              <div class="rail-menu" data-rail-menu>
-                <button type="button" class="rail-item {% if more_active %}is-active{% endif %}" data-label="{{ _('More') }}"
-                        data-rail-menu-toggle aria-haspopup="menu" aria-expanded="false">
-                  {{ icon('ellipsis') }}<span class="rail-label">{{ _('More') }}</span>{{ icon('chevron-right', 'rail-chev') }}
-                </button>
-                <div class="menu rail-pop" role="menu" hidden>
-                  {% for item in nav_more %}
-                    {% if loop.index0 == 1 %}<div class="menu-rule"></div><div class="rail-pop-head">{{ _('Lab') }}</div>{% endif %}
-                    <a class="menu-item {% if item.active %}is-current{% endif %}" role="menuitem" href="{{ item.url }}"
-                       data-label="{{ item.label|tr }}" {% if item.hint %}title="{{ item.hint|tr }}"{% endif %}>
-                      {{ icon(item.icon) }} {{ item.label|tr }}
-                    </a>
-                  {% endfor %}
-                </div>
-              </div>
-            {% endif %}
             {% for item in nav_footer %}
               <a class="rail-item {% if item.active %}is-active{% endif %}"
                  href="{{ item.url }}" data-label="{{ item.label|tr }}"
@@ -233,16 +214,6 @@
                       {{ icon('list-check') }} {{ _('Proposed changes') }}{% if proposals_pending %} <span class="badge">{{ proposals_pending }}</span>{% endif %}
                     </a>
                   {% endif %}
-                  <a class="menu-item" href="{{ url_for('batches_view') }}" role="menuitem">
-                    {{ icon('layers') }} {{ _('Batch history') }}
-                  </a>
-                  <a class="menu-item" href="{{ url_for('export_my_data') }}" role="menuitem">
-                    {{ icon('download') }} {{ _('Export my data') }}
-                  </a>
-                  {# The lab's admin pages: the same list as More in the sidebar. #}
-                  {% for item in nav_more[1:] %}
-                    <a class="menu-item" href="{{ item.url }}" role="menuitem">{{ icon(item.icon) }} {{ item.label|tr }}</a>
-                  {% endfor %}
                   <div class="menu-rule"></div>
                   <form method="post" action="{{ url_for('logout') }}">
                     <button type="submit" class="menu-item menu-item-danger" role="menuitem">

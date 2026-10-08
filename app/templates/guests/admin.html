@@ -5,7 +5,7 @@
 {% block page_subtitle %}{{ _('Let someone outside the lab in for a while, with a code') }}{% endblock %}
 
 {% block page_actions %}
-  <a class="btn" href="{{ url_for('admin_users') }}">{{ icon('users') }} {{ _('Manage users') }}</a>
+  <a class="btn" href="{{ url_for('settings', _anchor='people') }}">{{ icon('users') }} {{ _('People & access') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -42,7 +42,7 @@
     <h2 class="text-[15px] font-semibold text-ink">{{ _('New guest pass') }}</h2>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
       {% trans %}The guest gets a member account of their own: they can look around and add records, but not change
-      Lab setup, approve people or edit others’ personal records. It stops working when the pass ends.{% endtrans %}
+      the lab's setup, approve people or edit others’ personal records. It stops working when the pass ends.{% endtrans %}
     </p>
     <form method="post" class="mt-4 flex flex-wrap items-end gap-3">
       <label class="field-label min-w-[220px] flex-1">{{ _('Who it is for') }}

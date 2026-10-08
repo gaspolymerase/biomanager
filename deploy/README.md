@@ -53,7 +53,7 @@ docker compose logs app | grep "setup code"
 
 Open `https://DOMAIN/register` and create the first account with that setup
 code. It becomes the admin. Everyone else who signs up waits for an admin's
-approval in Settings → Manage users.
+approval in Settings → People & access.
 
 ### HTTPS
 

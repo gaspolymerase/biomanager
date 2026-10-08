@@ -41,7 +41,7 @@ ROLES = {
                             "and settings, stay theirs; they keep their own like a member."),
     "facility": ("Facility manager", "Animal care, plus the facility's racks, rooms, incubators, water systems "
                                      "and databases' settings. Not accounts."),
-    "admin": ("Admin", "Everything, including accounts and Lab setup."),
+    "admin": ("Admin", "Everything, including accounts and the lab's setup."),
 }
 # Records animal care staff look after, whoever owns them.
 CARE_RECORDS = {"MouseRecord", "CageRecord", "TankRecord", "FishRecord", "StockUnit", "Organism", "OrgHousing",
@@ -99,6 +99,14 @@ def cage_shared_with(cage, user=None) -> bool:
     return is_shared_cage(cage) and groups.record_shared_with(cage, user)
 
 
+def cage_editable_shared(cage, user=None) -> bool:
+    """A shared cage this person may edit for being shared: the lab's, or
+    one of their project groups' when the group lets its members edit
+    (groups.member_may)."""
+    from . import groups
+    return is_shared_cage(cage) and groups.record_editable(cage, user)
+
+
 def can_set_sharing(cage, user=None) -> bool:
     """Who may make a cage shared or personal: its owner or an admin
     (anyone while it has no owner), not everyone who may edit it because
@@ -118,9 +126,26 @@ def can_edit(record, user=None, shared: bool = False) -> bool:
         return True
     if type(record).__name__ in LAB_COMMON_RECORDS and getattr(record, "is_shared", False):
         from . import groups
-        if groups.record_shared_with(record, user):
+        if groups.record_editable(record, user):
             return True
-    return owns(record, user) or is_unowned(record)
+    return owns(record, user) or is_unowned(record) or _peer_editable(record, user)
+
+
+def _peer_editable(record, user=None) -> bool:
+    """A record in a project group's database that the group lets its
+    members edit whoever added it (groups.member_may "each_other"). The
+    database is the one this request opened (lab.opened)."""
+    from flask import g, has_request_context
+    module_id = getattr(record, "module_id_fk", None)
+    module = g.get("current_module") if has_request_context() else None
+    if module_id is None or module is None or module.id != module_id:
+        return False
+    column = getattr(getattr(type(record), "__table__", None), "c", {}).get("module_id_fk")
+    if column is None or module.__tablename__ not in {fk.column.table.name for fk in column.foreign_keys}:
+        return False
+    from . import groups, lab
+    gid = lab.group_of(module)
+    return bool(gid) and groups.member_may(gid, "each_other", user)
 
 
 def can_manage(record, user=None) -> bool:
@@ -131,7 +156,7 @@ def can_manage(record, user=None) -> bool:
 
 
 def can_edit_cage(cage, user=None) -> bool:
-    return can_edit(cage, user, shared=cage_shared_with(cage, user))
+    return can_edit(cage, user, shared=cage_editable_shared(cage, user))
 
 
 def can_edit_mouse(mouse, user=None) -> bool:
@@ -140,7 +165,7 @@ def can_edit_mouse(mouse, user=None) -> bool:
     out of."""
     if mouse is None:
         return False
-    return can_edit(mouse, user, shared=cage_shared_with(getattr(mouse, "cage", None), user))
+    return can_edit(mouse, user, shared=cage_editable_shared(getattr(mouse, "cage", None), user))
 
 
 def can_edit_experiment(experiment, user=None) -> bool:

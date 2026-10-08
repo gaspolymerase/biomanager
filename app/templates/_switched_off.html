@@ -1,11 +1,11 @@
-{# Shown to admins on a database switched off in Lab setup: members can't
+{# Shown to admins on a database switched off in Settings → Databases: members can't
    open it (lab.can_see), so an admin looking at it should know why. #}
 {% macro switched_off_notice(row) %}
   {% if not row.enabled %}
     <div class="flash-message flash-warning mb-3">
       {{ icon('eye-off', 'size-4 shrink-0') }}
       <span>{{ _("%(name)s is switched off: it is hidden from the sidebar and members can't open it.", name=row.label|tr) }}
-        {% trans url=url_for('lab.setup') ~ '#databases' %}<a href="{{ url }}">Switch it on in Lab setup</a>.{% endtrans %}</span>
+        {% trans url=url_for('settings', _anchor='databases') %}<a href="{{ url }}">Switch it on in Settings → Databases</a>.{% endtrans %}</span>
     </div>
   {% endif %}
 {% endmacro %}

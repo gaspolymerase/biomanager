@@ -110,21 +110,18 @@ def _usernames(session) -> list[str]:
         select(UserAccount).where(UserAccount.disabled.is_not(True)).order_by(UserAccount.username))]
 
 
+def _back():
+    """Racks and boxes are listed in Settings → Statistics."""
+    if request.headers.get("X-Autosave") == "1":
+        from flask import get_flashed_messages, jsonify
+        errors = [m for c, m in get_flashed_messages(with_categories=True) if c == "error"]
+        return (jsonify({"ok": False, "error": errors[0]}), 400) if errors else jsonify({"ok": True})
+    return redirect(url_for("settings", _anchor="racks"))
+
+
 @bp.route("/")
 def index():
-    with SessionLocal() as session:
-        groups = []
-        for kind in CONTAINERS:
-            rows = []
-            for row in sorted(session.scalars(select(kind.model)), key=lambda r: positions.place_order(r.name)):
-                rows.append({"id": row.id, "name": row.name, "database": kind.database(session, row),
-                             "where": kind.where(session, row), "count": kind.count(session, row),
-                             "creator": (row.created_by or "").strip()})
-            groups.append({"kind": kind, "rows": rows,
-                           "unassigned": sum(1 for r in rows if not r["creator"]),
-                           "databases": sorted({r["database"] for r in rows if not r["creator"]})})
-        return render_template("admin_racks.html", groups=groups, usernames=_usernames(session),
-                               total_unassigned=sum(g_["unassigned"] for g_ in groups))
+    return _back()
 
 
 @bp.route("/assign", methods=["POST"])
@@ -138,7 +135,7 @@ def assign():
     with SessionLocal() as session:
         if creator and creator not in _usernames(session):
             flash(gettext("“%(who)s” is not an active lab member.", who=creator), "error")
-            return redirect(url_for("admin_racks.index"))
+            return _back()
         row_id = request.form.get("id", "").strip()
         if row_id.isdigit():
             rows = [session.get(kind.model, int(row_id))]
@@ -151,7 +148,7 @@ def assign():
         rows = [r for r in rows if (r.created_by or "") != creator]
         if not rows:
             flash(gettext("Nothing to change."), "info")
-            return redirect(url_for("admin_racks.index"))
+            return _back()
         who = creator or "admins only"
         with audit.batch(session, "update", f"{kind.label}: looked after by {who} ×{len(rows)}", kind.table):
             for r in rows:
@@ -166,4 +163,4 @@ def assign():
         else:
             flash(gettext("%(names)s: now admin-only. Undo from Batch history if that was a mistake.", names=names),
                   "success")
-    return redirect(url_for("admin_racks.index"))
+    return _back()

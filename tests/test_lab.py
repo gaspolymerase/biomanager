@@ -172,8 +172,8 @@ class SetupSurvey(LabSettingsCase):
     def test_admins_can_make_a_member_an_admin_from_here(self):
         self.set("lab_setup_done", "2026-01-01T00:00:00")
         promoted = make_user(uniq("promo"))
-        html = self.get_ok(self.a, "/setup")
-        self.assertIn("Make admin", html)
+        html = self.get_ok(self.a, "/settings")
+        self.assertIn(f'action="/admin/users/{user_id(promoted)}/role"', html)
         self.post(self.a, f"/admin/users/{user_id(promoted)}/role")
         self.assertEqual(one("select role from users where username=?", promoted), "admin")
         self.assertTrue(notes_for(promoted, "lab"))

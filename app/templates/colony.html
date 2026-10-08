@@ -74,7 +74,7 @@
       </span>
     {% else %}
       <span class="text-[12px] text-muted">
-        {% trans url=url_for('admin_colony_overview') %}Admin — you can edit anything. <a href="{{ url }}">Colony overview</a>.{% endtrans %}
+        {% trans url=url_for('settings', _anchor='stats') %}Admin — you can edit anything. <a href="{{ url }}">The lab in numbers</a>.{% endtrans %}
       </span>
     {% endif %}
     {# The colony keeps every mouse it ever had: what ended long ago waits behind a link. #}

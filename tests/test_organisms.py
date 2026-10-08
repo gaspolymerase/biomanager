@@ -489,7 +489,7 @@ class PlacementTests(OrganismCase):
         self.post(self.a, "/admin/racks/assign", {"kind": "org_location", "id": rack, "creator": self.member})
         self.post(self.m, f"{self.url}/location/save", {"id": rack, "name": name, "rows": "3", "cols": "3"})
         self.assertEqual(one("select rows, cols from organism_locations where id=?", rack), 3)
-        self.assertIn(name, self.get_ok(self.a, "/admin/racks/"))
+        self.assertIn(name, self.get_ok(self.a, "/settings"))
 
     def test_the_rack_form_starts_with_a_real_size_and_offers_edit(self):
         rack = self.rack()

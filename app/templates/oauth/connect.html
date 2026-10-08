@@ -11,7 +11,7 @@
 {% block content %}
 <div class="grid max-w-[760px] grid-cols-1 gap-3">
   {% if not allowed %}
-    <section class="card p-5"><p class="text-[13px] text-muted">{{ _('In this lab, only admins can connect tools. Ask one to switch on tokens for members in Lab setup.') }}</p></section>
+    <section class="card p-5"><p class="text-[13px] text-muted">{{ _('In this lab, only admins can connect tools. Ask one to switch on tokens for members in Settings → People & access.') }}</p></section>
   {% else %}
   <section class="card p-5" id="connector">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('claude.ai, the Claude apps or ChatGPT') }}</h2>

@@ -8,7 +8,7 @@
 # On: Tailscale Funnel publishes https://<DOMAIN>:8443 on the internet and
 # forwards it to Caddy's internet-facing site (deploy/Caddyfile, :8081 on
 # this host only). There, anyone not signed in sees only the guest-code page
-# (app/guests.py): make a code under Guests, from Manage users. The lab keeps
+# (app/guests.py): make a code with New guest pass, in Settings → People & access. The lab keeps
 # using https://<DOMAIN> over Tailscale as before.
 #
 # The first time, Tailscale may print a link to allow Funnel for this
@@ -61,7 +61,7 @@ case "${1:-status}" in
     fi
     tell_app "$URL"
     echo
-    echo "On. Guests open $URL/guest and enter the code from Guests (Manage users → Guests)."
+    echo "On. Guests open $URL/guest and enter the code from New guest pass (Settings → People & access)."
     echo "Switch it off when they are done: sudo $0 off"
     ;;
   off)

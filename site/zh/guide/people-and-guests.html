@@ -136,14 +136,16 @@
     <div class="badges"><span class="badge who">管理员</span></div>
 
       <dl class="gdl">
-        <dt>加入</dt><dd>新注册的账号要等管理员在 <b>管理用户</b> （Manage users）里审批。如果服务器支持，成员也可以用 Google 或
+        <dt>位置</dt><dd><b>设置 → 人员与权限</b> （Settings → People &amp; access）。所有人都能在这里看到实验室的人员；管理员通过每个人
+          旁边的 <b>···</b> 修改。</dd>
+        <dt>加入</dt><dd>新注册的账号在 <b>等待加入</b> （Waiting to join）下等待，直到管理员点 <b>批准</b> （Approve）。如果服务器支持，成员也可以用 Google 或
           微软账号，或所在机构自己的账号登录，并在 <b>设置 → 登录与安全</b> （Settings → Sign-in
           &amp; security）里关联（<a href="../server.html#sign-in">如何设置</a>）。</dd>
-        <dt>管理员</dt><dd><b>管理用户</b> （Manage users）可以设立和撤销管理员、停用账号、重置密码；<b>实验室设置</b> （Lab setup）也可以
-          把某人设为管理员。至少保留两位管理员。</dd>
-        <dt>离开</dt><dd>侧边栏里的 <b>更多 → 鼠群概览</b> （More → Colony overview，管理员）按负责人列出每个笼，以及闲置的笼和没有笼的存活小鼠；在
- <b>笼架与冻存盒</b> （Racks &amp; boxes）里移交笼架，然后停用账号。他们的记录和历史都会保留。</dd>
-        <dt id="guests">访客</dt><dd>给实验室以外的人——合作者、来访者——用一天到一个月：在账号菜单的 <b>访客</b> （Guests，管理员）里
+        <dt>管理员</dt><dd>某人旁边的 <b>···</b> 可以设置他的角色（管理员、成员、动物饲养、动物房主管）、重置密码或停用账号。
+          至少保留两位管理员。</dd>
+        <dt>离开</dt><dd><b>设置 → 统计</b> （Settings → Statistics）显示每个人养了多少动物；在那里移交他的笼架（谁可以修改每个笼架），
+          用 <b>批量设置 → 负责人</b> （Set field → Owner）把他的记录交给别人，然后停用账号。他的记录和历史都会保留。</dd>
+        <dt id="guests">访客</dt><dd>给实验室以外的人——合作者、来访者——用一天到一个月：在 <b>访客</b> （Guests，管理员）下点 <b>新建访客通行码</b> （New guest pass），
           填写给谁、多长时间，点 <b>生成通行码</b> （Make a code）。对方打开链接、输入通行码，就能用自己的账号像成员一样
           工作，直到期限结束或你点 <b>立即结束</b> （End now）。在 Tailscale 服务器上，管理员可以允许访客不装 Tailscale、直接从
           互联网进入（<a href="../server.html#guests">方法</a>）。</dd>
@@ -151,7 +153,7 @@
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>忘记密码</h3>
-      <p>找管理员：在 <b>管理用户</b> （Manage users）里可以重置。</p>
+      <p>找管理员：在 <b>设置 → 人员与权限</b> （Settings → People &amp; access）里点你旁边的 <b>···</b> 就能重置。</p>
     </section>
     <!-- /page -->
       <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="project-groups.html"><small>上一页</small>项目组</a><a class="next" href="invite-someone.html"><small>下一页</small>邀请成员</a></nav>

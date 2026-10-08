@@ -546,8 +546,8 @@ def tell_group(session, group_id: int, actor: str, title: str, message: str = ""
 SIGNUP_TITLE = "Account waiting for approval"
 # Its message, as an English template (send it with message_values; each
 # admin reads it in their language). settle_signups finds the username in it.
-SIGNUP_MESSAGE = "%(who)s signed up as %(username)s. Approve them in Settings → Manage users."
-SIGNUP_WITH_PROVIDER = "%(who)s asked to join with %(provider)s as %(username)s. Approve them in Settings → Manage users."
+SIGNUP_MESSAGE = "%(who)s signed up as %(username)s. Approve them in Settings → People & access."
+SIGNUP_WITH_PROVIDER = "%(who)s asked to join with %(provider)s as %(username)s. Approve them in Settings → People & access."
 _SIGNUP_NAME = re.compile(r"\bas (\S+)\. Approve")
 
 

@@ -61,6 +61,7 @@ def _module_or_404(session, key: str) -> StockModule:
     # person can tell (app/lab.py).
     if module is None or not lab.can_see(module):
         abort(404)
+    lab.opened(module)
     database_keys.to_current(module, key)   # an address it had before a rename
     return module
 
@@ -102,7 +103,7 @@ def can_edit(unit: StockUnit) -> bool:
     """Stocks, backups and maintenance plates are the lab's (or, shared with
     a project group, its members'); crosses, experiments and progeny belong
     to whoever set them up."""
-    shared = unit.purpose in LAB_PURPOSES and project_groups.record_shared_with(unit, shared=True)
+    shared = unit.purpose in LAB_PURPOSES and project_groups.record_editable(unit, shared=True)
     return access.can_edit(unit, shared=shared)
 
 

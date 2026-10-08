@@ -55,7 +55,7 @@ class Roles(AppTestCase):
         self.assertEqual(one("select role from users where id=?", uid), "care")
         self.a.post(f"/admin/users/{uid}/role", data={"role": "overlord"})
         self.assertEqual(one("select role from users where id=?", uid), "care")
-        self.assertIn("Animal care", self.get_ok(self.a, "/admin/users"))
+        self.assertIn("Animal care", self.get_ok(self.a, "/settings"))
 
 
 CONF = {"issuer": "https://login.example.edu", "authorization_endpoint": "https://login.example.edu/authorize",

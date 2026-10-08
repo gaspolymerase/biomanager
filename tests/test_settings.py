@@ -12,13 +12,15 @@ class SettingsWindowTests(AppTestCase):
         html = self.get_ok(self.m, "/settings")
         links = re.findall(r'data-pane-link="([a-z]+)"', html)
         panes = re.findall(r'data-pane="([a-z]+)"', html)
-        self.assertEqual(links, ["profile", "security", "appearance", "notifications", "assistant", "data", "devices"])
+        self.assertEqual(links, ["profile", "security", "appearance", "notifications", "assistant", "data",
+                                 "stats", "general", "databases", "people", "devices", "history"])
         self.assertEqual(panes, links)
         self.assertIn('placeholder="Search settings"', html)
 
     def test_older_links_still_land_on_something(self):
-        # #notifications is a pane; #language and #api-tokens are inside one.
-        html = self.get_ok(self.m, "/settings")
+        # #notifications is a pane; #language and #api-tokens are inside one
+        # (an admin always has API tokens).
+        html = self.get_ok(self.a, "/settings")
         for anchor in ('id="notifications"', 'id="language"', 'id="app-icon"', 'id="api-tokens"'):
             self.assertIn(anchor, html)
 

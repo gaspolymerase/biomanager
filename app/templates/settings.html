@@ -53,7 +53,14 @@
     {% if show_assistant %}{{ pane_link('assistant', 'sparkle', _('AI assistant & tokens')) }}{% endif %}
     {{ pane_link('data', 'archive', _('Your data')) }}
     <div class="set-group-head">{{ _('Lab') }}</div>
-    {{ pane_link('devices', 'database', _('Devices & copies'), 'lab') }}
+    {% if lab_data %}
+      {{ pane_link('stats', 'chart', _('Statistics'), 'lab') }}
+      {{ pane_link('general', 'sliders', _('General'), 'lab') }}
+      {{ pane_link('databases', 'database', _('Databases'), 'lab') }}
+      {{ pane_link('people', 'users', _('People & access'), 'lab') }}
+    {% endif %}
+    {{ pane_link('devices', 'copy', _('Devices & copies'), 'lab') }}
+    {% if lab_data %}{{ pane_link('history', 'history', _('History'), 'lab') }}{% endif %}
     <p class="set-search-none" data-settings-none hidden>{{ _('No setting matches.') }}</p>
   </nav>
 
@@ -323,7 +330,7 @@
           <span class="set-label"><b>{{ _('Export my data') }}</b><small>{{ _('Your mice and plasmids, your notebook pages and your profile, in one .zip.') }}</small></span>
           <a class="btn btn-sm" href="{{ url_for('export_my_data') }}">{{ icon('download') }} {{ _('Download .zip') }}</a>
         </div>
-        <a class="set-row set-row-link" href="{{ url_for('batches_view') }}">
+        <a class="set-row set-row-link" href="{% if lab_data %}#history{% else %}{{ url_for('batches_view') }}{% endif %}">
           <span class="set-label"><b>{{ _('Batch history') }}</b><small>{{ _('Changes made many records at a time (Add many, bulk edits, imports), each with Undo') }}</small></span>
           {{ icon('chevron-right', 'set-chev') }}
         </a>
@@ -334,9 +341,403 @@
       </div>
     </section>
 
+    {% if lab_data %}
+    {% set admin = current_user.role == 'admin' %}
+    {% set stats = lab_data.stats %}
+    {# ---------------------------------------------------------------- Statistics (app/settings_lab.py) #}
+    <section class="set-pane" id="stats" data-pane="stats">
+      {{ pane_head('chart', _('Statistics'), _('The lab in numbers: its animals, who keeps them, and how full the racks are.'), 'lab', saved=True) }}
+      {% if stats.animals %}
+        <div class="set-stats">
+          {% for a in stats.animals %}
+            <div class="set-stat">
+              <b>{{ '{:,}'.format(a.total) }}</b>
+              <small>{{ a.unit|tr }}{% if a.cages is defined %} · {{ _('%(n)s cages', n=a.cages) }}{% endif %}</small>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="set-title set-title-row">
+          <span>{{ _('By person') }}</span>
+          {% if stats.animals|length > 1 %}
+            <span class="seg seg-sub" role="tablist" data-animal-tabs>
+              {% for a in stats.animals %}
+                <button type="button" class="seg-item {% if loop.first %}is-active{% endif %}" data-animal-tab="{{ a.key }}">{{ a.label|tr }}</button>
+              {% endfor %}
+            </span>
+          {% endif %}
+        </div>
+        {% for a in stats.animals %}
+          <div class="set-group" data-animal-pane="{{ a.key }}" {% if not loop.first %}hidden{% endif %}>
+            {% for who, name, n in a.people %}
+              <div class="set-row" title="{{ name or _('No one') }}: {{ n }} {{ a.unit|tr }}">
+                {% if who %}{{ who | owner_badge }}{% endif %}
+                <span class="set-label"><b>{{ name or _('No one') }}</b></span>
+                <span class="set-bar" style="--w: {{ (100 * n / a.max)|round(1) }}%"><i></i></span>
+                <span class="set-num">{{ n }}</span>
+              </div>
+            {% else %}
+              <div class="set-row"><span class="set-label"><small>{{ _('None yet.') }}</small></span></div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="set-note">{{ _('No animal databases are on. Switch one on under Databases.') }}</p>
+      {% endif %}
+
+      {% if stats.racks %}
+        <div class="set-title set-title-row" id="racks">
+          <span>{{ _('Racks & boxes') }}</span>
+          <span class="font-normal">{{ _('How full, and who may change each') }}</span>
+        </div>
+        {% if not admin %}<p class="set-readonly">{{ _('Only admins choose who may change a rack or box.') }}</p>{% endif %}
+        {% for kgroup in stats.racks %}
+          <div class="set-subtitle">{{ kgroup.kind.label|tr }}</div>
+          <div class="set-group">
+            {% for r in kgroup.rows %}
+              <div class="set-row">
+                <span class="set-label"><b>{{ r.name }}</b>
+                  <small>{{ r.database|tr }}{% if r.where %} · {{ r.where }}{% endif %} · {% if r.places %}{{ _('%(n)s of %(places)s', n=r.count, places=r.places) }}{% else %}{{ r.count }}{% endif %} {{ kgroup.kind.count_noun|tr }}</small></span>
+                {% if r.full is not none %}<span class="set-meter" title="{{ r.full }}%"><i style="width: {{ r.full }}%"></i></span>{% endif %}
+                {% if admin %}
+                  <form method="post" action="{{ url_for('admin_racks.assign') }}" data-autosave-form>
+                    <input type="hidden" name="kind" value="{{ kgroup.kind.key }}"><input type="hidden" name="id" value="{{ r.id }}">
+                    <select name="creator" aria-label="{{ _('Who may change %(name)s', name=r.name) }}">
+                      <option value="" {% if not r.creator %}selected{% endif %}>{{ _('Admins only') }}</option>
+                      {% for m in lab_data.people.members if not m.disabled %}
+                        <option value="{{ m.username }}" {% if r.creator == m.username %}selected{% endif %}>{{ m.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                {% else %}
+                  <span class="set-value">{{ r.creator or _('Admins only') }}</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <p class="set-note mt-2">{{ _('New racks and boxes are made where they are used, such as the Cages tab.') }}</p>
+      {% endif %}
+
+      {% if stats.coming %}
+        <div class="set-title">{{ _('Coming up') }}</div>
+        <div class="set-group">
+          {% for label, n in stats.coming %}
+            <div class="set-row"><span class="set-label"><b>{{ label|tr }}</b></span><span class="set-value">{{ n }}</span></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if stats.records %}
+        <div class="set-title">{{ _('Records') }}</div>
+        <div class="set-group">
+          {% for label, n in stats.records %}
+            <div class="set-row"><span class="set-label"><b>{{ label|tr }}</b></span><span class="set-value">{{ '{:,}'.format(n) }}</span></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    {# ---------------------------------------------------------------- General (app/lab.py survey) #}
+    {% set state = lab_data.state %}
+    <section class="set-pane" id="general" data-pane="general">
+      {{ pane_head('sliders', _('General'), _('The lab’s name, and how it counts days.'), 'lab', saved=True) }}
+      {% if not admin %}<p class="set-readonly">{{ _('Only admins change these. You can see how the lab is set up.') }}</p>{% endif %}
+      <form method="post" action="{{ url_for('settings_lab_save') }}" class="set-group" {% if admin %}data-autosave-form{% endif %}>
+        <input type="hidden" name="section" value="general">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Lab name') }}</b><small>{{ _('Shown to members when they first sign in.') }}</small></span>
+          <input name="lab_name" value="{{ state.lab_name }}" maxlength="80" placeholder="{{ _('e.g. McClintock Lab') }}" {% if not admin %}disabled{% endif %}>
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Time zone') }}</b><small>{% if config.LOCAL_SETUP %}{{ _('When “today” starts and what is overdue. Blank: the computer’s (%(zone)s).', zone=server_timezone) }}{% else %}{{ _('When “today” starts and what is overdue. Blank: the server’s (%(zone)s).', zone=server_timezone) }}{% endif %}</small></span>
+          <input name="lab_timezone" value="{{ state.lab_timezone }}" list="lab-timezones" autocomplete="off" placeholder="{{ server_timezone }}" {% if not admin %}disabled{% endif %}>
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Dates') }}</b><small>{{ _('How dates are written in lists and messages.') }}</small></span>
+          <select name="date_style" {% if not admin %}disabled{% endif %}>
+            {% for key, example in date_styles.items() %}<option value="{{ key }}" {% if state.date_style == key %}selected{% endif %}>{{ example }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Genotyping day') }}</b><small>{{ _('Days after birth that pups are genotyped. Weaning is P%(wean)s.', wean=wean_offset_days) }}</small></span>
+          <input type="number" name="genotyping_day" min="1" max="120" value="{{ state.genotyping_day }}" class="set-input-short" {% if not admin %}disabled{% endif %}>
+        </label>
+        <datalist id="lab-timezones">{% for zone in timezones %}<option value="{{ zone }}"></option>{% endfor %}</datalist>
+      </form>
+    </section>
+
+    {# ---------------------------------------------------------------- Databases #}
+    {% macro db_switch(name, on, label, blurb) %}
+      <label class="set-row">
+        <span class="set-label"><b>{{ label }}</b>{% if blurb %}<small>{{ blurb }}</small>{% endif %}</span>
+        <input type="checkbox" class="set-switch" name="{{ name }}" value="1" {% if on %}checked{% endif %} {% if current_user.role != 'admin' %}disabled{% endif %}>
+      </label>
+    {% endmacro %}
+    <section class="set-pane" id="databases" data-pane="databases">
+      {{ pane_head('database', _('Databases'), _('What the lab keeps. Switching one off hides it; nothing is deleted.'), 'lab', saved=True) }}
+      {% if not admin %}<p class="set-readonly">{{ _('Only admins change these. You can see how the lab is set up.') }}</p>{% endif %}
+      <form method="post" action="{{ url_for('settings_lab_save') }}" {% if admin %}data-autosave-form{% endif %}>
+        <input type="hidden" name="section" value="databases">
+        <div class="set-title">{{ _('Animals and stocks') }}</div>
+        <div class="set-group">
+          {% for key in ('colony', 'zebrafish') %}{% set f = lab_features[key] %}
+            {{ db_switch('feature:' ~ key, state.features[key], f.label|tr, f.blurb|tr) }}
+          {% endfor %}
+          {% for kind, (label, blurb, _icon) in stock_choices.items() %}
+            {{ db_switch('stock:' ~ kind, state.stocks[kind], label|tr, blurb|tr) }}
+          {% endfor %}
+        </div>
+        <div class="set-title">{{ _('Molecular biology and supplies') }}</div>
+        <div class="set-group">
+          {% set f = lab_features['plasmids'] %}
+          {{ db_switch('feature:plasmids', state.features['plasmids'], f.label|tr, f.blurb|tr) }}
+          {% for kind, (label, blurb, _icon) in inventory_choices.items() %}
+            {{ db_switch('inventory:' ~ kind, state.inventories[kind], label|tr, blurb|tr) }}
+          {% endfor %}
+        </div>
+        <div class="set-title">{{ _('Lab functions') }}</div>
+        <div class="set-group">
+          {% for key, f in lab_features.items() if key not in ('colony', 'zebrafish', 'plasmids') %}
+            {{ db_switch('feature:' ~ key, state.features[key], f.label|tr, f.blurb|tr) }}
+          {% endfor %}
+        </div>
+      </form>
+      <div class="set-title">{{ _('Other databases') }}</div>
+      <div class="set-group">
+        {% for d in lab_data.custom %}
+          <form method="post" action="{{ url_for('settings_lab_save') }}" {% if admin %}data-autosave-form{% endif %}>
+            <input type="hidden" name="section" value="module"><input type="hidden" name="kind" value="{{ d.kind }}"><input type="hidden" name="key" value="{{ d.key }}">
+            <label class="set-row">
+              <span class="set-label"><b>{{ d.label }}</b>
+                <small>{{ d.kind_label|tr('database kind') }}{% if d.private_to %} · {{ _('Personal') }} · {{ d.private_to }}{% elif d.share_group_id %} · {{ groups_api.name_of(d.share_group_id) or _('A deleted group') }}{% endif %}{% if d.created_by and d.created_by != 'system' %} · {{ _('added by %(who)s', who=d.created_by) }}{% endif %}</small></span>
+              <input type="checkbox" class="set-switch" name="enabled" value="1" {% if d.enabled %}checked{% endif %} {% if not admin %}disabled{% endif %}>
+            </label>
+          </form>
+        {% else %}
+          <div class="set-row"><span class="set-label"><small>{% trans %}None yet. <b>Add database</b> in the sidebar builds one to your lab's vocabulary.{% endtrans %}</small></span></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ---------------------------------------------------------------- People & access (accounts, guests, groups, permissions) #}
+    {% set ppl = lab_data.people %}
+    <section class="set-pane" id="people" data-pane="people">
+      {{ pane_head('users', _('People & access'), _('Who is in the lab, who works together, and what members may do.'), 'lab', saved=True) }}
+      <nav class="set-tabs" aria-label="{{ _('People & access') }}">
+        <a href="#people" data-tab-link="people-list">{{ _('People') }} <span>{{ ppl.members|length + ppl.guests|length }}</span></a>
+        <a href="#groups" data-tab-link="groups">{{ _('Project groups') }} <span>{{ lab_data.groups|length }}</span></a>
+        <a href="#member-rights" data-tab-link="member-rights">{{ _('What members may do') }}</a>
+      </nav>
+
+      <div data-tabpane id="people-list">
+        {% if admin and ppl.waiting %}
+          <div class="set-title">{{ _('Waiting to join') }}</div>
+          <div class="set-group">
+            {% for u in ppl.waiting %}
+              <div class="set-row">
+                {{ u.username | owner_badge }}
+                <span class="set-label"><b>{{ u.name }}</b><small>{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</small></span>
+                <form method="post" action="{{ url_for('admin_toggle_disabled', user_id=u.id) }}"
+                      data-confirm="{{ _('Let %(name)s sign in as a lab member?', name=u.username) }}">
+                  <button type="submit" class="btn btn-sm btn-primary">{{ _('Approve') }}</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="set-title">{{ _('Members') }}</div>
+        <div class="set-group">
+          {% for u in ppl.members %}
+            <div class="set-row {% if u.disabled %}opacity-55{% endif %}">
+              {{ u.username | owner_badge }}
+              <span class="set-label"><b>{{ u.name }}{% if u.me %} <span class="font-normal text-muted">· {{ _('you') }}</span>{% endif %}</b>
+                <small>{{ u.username }}{% if u.job %} · {{ u.job }}{% endif %}{% if admin and u.email %} · {{ u.email }}{% endif %}</small></span>
+              {% if u.disabled %}<span class="badge badge-danger">{{ _('disabled') }}</span>{% endif %}
+              <span class="badge {{ 'badge-brand' if u.role == 'admin' else 'badge-quiet' }}" {% if roles.get(u.role) %}title="{{ roles[u.role][1]|tr }}"{% endif %}>{{ roles[u.role][0]|tr if roles.get(u.role) else u.role }}</span>
+              {% if admin and not u.me %}
+                <details class="set-menu">
+                  <summary class="btn btn-sm" aria-label="{{ _('Change %(name)s', name=u.name) }}">···</summary>
+                  <div class="set-menu-pop">
+                    <form method="post" action="{{ url_for('admin_toggle_role', user_id=u.id) }}" class="set-menu-row"
+                          data-confirm="{{ _('Change %(name)s’s role?', name=u.username) }}">
+                      <select name="role" aria-label="{{ _('Role of %(name)s', name=u.username) }}">
+                        {% for key, (label, hint) in roles.items() %}<option value="{{ key }}" title="{{ hint|tr }}" {% if u.role == key %}selected{% endif %}>{{ label|tr }}</option>{% endfor %}
+                      </select>
+                      <button type="submit" class="btn btn-sm">{{ _('Set role') }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin_reset_password', user_id=u.id) }}" class="set-menu-row">
+                      <input type="password" name="new_password" placeholder="{{ _('new password (≥%(count)s)', count=min_password_length) }}" minlength="{{ min_password_length }}" required autocomplete="new-password">
+                      <button type="submit" class="btn btn-sm">{{ _('Reset password') }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin_toggle_disabled', user_id=u.id) }}"
+                          data-confirm="{{ _('Toggle this account’s disabled state?') }}">
+                      <button type="submit" class="btn btn-sm {% if not u.disabled %}btn-danger{% endif %}">{{ _('Enable the account') if u.disabled else _('Disable the account') }}</button>
+                    </form>
+                  </div>
+                </details>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        {% if admin %}<p class="set-note mt-2">{{ _('Keep at least two admins, so nobody is locked out when one is away.') }}</p>{% endif %}
+
+        {% if ppl.guests or admin %}
+          <div class="set-title set-title-row">
+            <span>{{ _('Guests') }}</span>
+            {% if admin %}<a href="{{ url_for('guests.admin') }}">{{ icon('plus') }} {{ _('New guest pass') }}</a>{% endif %}
+          </div>
+          <div class="set-group">
+            {% for u in ppl.guests %}
+              <div class="set-row {% if not u.active %}opacity-55{% endif %}">
+                {{ u.username | owner_badge }}
+                <span class="set-label"><b>{{ u.name }}</b>
+                  <small>{% if u.active %}{{ _('Can look around and add records until %(time)s', time=(u.until | local).strftime('%Y-%m-%d %H:%M')) }}{% else %}{{ _('Ended') }}{% endif %}</small></span>
+                {% if admin and u.active and u.pass_id %}
+                  <form method="post" action="{{ url_for('guests.end', pass_id=u.pass_id) }}"
+                        data-confirm="{{ _('End %(name)s’s guest access now?', name=u.name) }}">
+                    <button type="submit" class="btn btn-sm btn-danger">{{ _('End now') }}</button>
+                  </form>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="set-row"><span class="set-label"><small>{{ _('A guest pass lets someone outside the lab look around and add records for a while.') }}</small></span></div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div data-tabpane id="groups">
+        <div data-subview-list>
+          <p class="set-note mb-2">{{ _('People in a group share animals, stock, to-dos and notebook pages. Open a group to choose who is in it and what they may do.') }}</p>
+          <div class="set-group">
+            {% for grp in lab_data.groups %}
+              <a class="set-row set-row-link" href="#group-{{ grp.id }}">
+                <span class="set-label"><b>{{ grp.name }}</b>
+                  <small>{% if grp.leads %}{{ _('Lead: %(names)s', names=grp.leads|join(', ')) }} · {% endif %}{% trans count=grp.people|length %}{{ count }} person{% pluralize %}{{ count }} people{% endtrans %}</small></span>
+                <span class="set-badges">{% for p in grp.people[:4] %}{{ p.username | owner_badge }}{% endfor %}</span>
+                {{ icon('chevron-right', 'set-chev') }}
+              </a>
+            {% else %}
+              <div class="set-row"><span class="set-label"><small>{{ _('No project groups yet.') }}</small></span></div>
+            {% endfor %}
+          </div>
+          {% if admin %}
+            <form method="post" action="{{ url_for('groups.create') }}" class="set-inline-form">
+              <input name="name" maxlength="80" required placeholder="{{ _('New group’s name, e.g. Dopamine project') }}" aria-label="{{ _('New group’s name') }}">
+              <button type="submit" class="btn btn-sm">{{ icon('plus') }} {{ _('New group') }}</button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% for grp in lab_data.groups %}
+          <div data-subview id="group-{{ grp.id }}" class="set-subview">
+            <a class="set-back-inline" href="#groups">{{ icon('chevron-left') }} {{ _('Project groups') }}</a>
+            <h3 class="set-subview-title">{{ grp.name }}</h3>
+            {% if not grp.manage %}
+              <p class="set-readonly">{% if grp.leads %}{{ _('Only admins and the group’s leads (%(names)s) change this group. You can see who is in it and what members may do.', names=grp.leads|join(', ')) }}{% else %}{{ _('Only admins and the group’s leads change this group. You can see who is in it and what members may do.') }}{% endif %}</p>
+            {% endif %}
+
+            <div class="set-title">{{ _('People in the group') }}</div>
+            <div class="set-group">
+              {% for p in grp.people %}
+                <div class="set-row">
+                  {{ p.username | owner_badge }}
+                  <span class="set-label"><b>{{ p.name }}</b></span>
+                  {% if grp.manage and (admin or p.part != 'lead') %}
+                    <form method="post" action="{{ url_for('groups.set_part', group_id=grp.id, who=p.username) }}" data-autosave-form>
+                      <select name="part" aria-label="{{ _('%(name)s’s part in the group', name=p.name) }}">
+                        {% for key, (label, _hint) in group_parts.items() if admin or key != 'lead' %}
+                          <option value="{{ key }}" {% if p.part == key %}selected{% endif %}>{{ label|tr }}</option>
+                        {% endfor %}
+                      </select>
+                    </form>
+                    <form method="post" action="{{ url_for('groups.remove_member', group_id=grp.id, who=p.username) }}"
+                          data-confirm="{{ _('Take %(name)s out of %(group)s?', name=p.name, group=grp.name) }}">
+                      <button type="submit" class="btn btn-sm btn-ghost" aria-label="{{ _('Take %(name)s out of the group', name=p.name) }}">{{ icon('close') }}</button>
+                    </form>
+                  {% else %}
+                    <span class="set-value">{{ group_parts[p.part][0]|tr }}</span>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="set-row"><span class="set-label"><small>{{ _('No one yet.') }}</small></span></div>
+              {% endfor %}
+              {% if grp.manage %}
+                {% set inside = grp.people|map(attribute='username')|list %}
+                <form method="post" action="{{ url_for('groups.add_member', group_id=grp.id) }}" class="set-row">
+                  <span class="set-label"></span>
+                  <select name="username" aria-label="{{ _('Someone to add') }}" required>
+                    <option value="">{{ _('Add someone…') }}</option>
+                    {% for m in ppl.members + ppl.guests if not m.disabled and m.username not in inside %}
+                      <option value="{{ m.username }}">{{ m.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn btn-sm">{{ _('Add') }}</button>
+                </form>
+              {% endif %}
+            </div>
+            <p class="set-note mt-2">{% for key, (label, hint) in group_parts.items() %}<b>{{ label|tr }}</b>: {{ hint|tr }} {% endfor %}</p>
+
+            <div class="set-title">{{ _('In this group, members may') }}</div>
+            <form method="post" action="{{ url_for('groups.set_switches', group_id=grp.id) }}" class="set-group" {% if grp.manage %}data-autosave-form{% endif %}>
+              {% for key, (_column, label, hint) in group_switches.items() %}
+                <label class="set-row">
+                  <span class="set-label"><b>{{ label|tr }}</b>{% if hint %}<small>{{ hint|tr }}</small>{% endif %}</span>
+                  <input type="checkbox" class="set-switch" name="{{ key }}" value="1" {% if grp.switches[key] %}checked{% endif %} {% if not grp.manage %}disabled{% endif %}>
+                </label>
+              {% endfor %}
+            </form>
+
+            {% if grp.shared or grp.databases %}
+              <div class="set-title">{{ _('Shared with this group') }}</div>
+              <div class="set-group">
+                {% for n, noun in grp.shared %}
+                  <div class="set-row"><span class="set-label"><b>{{ noun|tr }}</b></span><span class="set-value">{{ n }}</span></div>
+                {% endfor %}
+                {% for name in grp.databases %}
+                  <div class="set-row"><span class="set-label"><b>{{ name }}</b><small>{{ _('A database only this group (and admins) sees.') }}</small></span></div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if admin %}
+              <div class="set-title">{{ _('Group') }}</div>
+              <div class="set-group">
+                <form method="post" action="{{ url_for('groups.rename', group_id=grp.id) }}" class="set-row">
+                  <span class="set-label"><b>{{ _('Name') }}</b></span>
+                  <input name="name" value="{{ grp.name }}" maxlength="80" required aria-label="{{ _('Group name') }}">
+                  <button type="submit" class="btn btn-sm">{{ _('Rename') }}</button>
+                </form>
+                <form method="post" action="{{ url_for('groups.remove', group_id=grp.id) }}" class="set-row"
+                      data-confirm="{{ _('Delete %(name)s? What was shared with it goes back to whoever owns it.', name=grp.name) }}">
+                  <span class="set-label"><b>{{ _('Delete the group') }}</b><small>{{ _('What was shared with it goes back to whoever owns it.') }}</small></span>
+                  <button type="submit" class="btn btn-sm btn-danger">{{ _('Delete…') }}</button>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div data-tabpane id="member-rights">
+        {% if not admin %}<p class="set-readonly">{{ _('Only admins change these. You can see what you may do.') }}</p>{% endif %}
+        <form method="post" action="{{ url_for('settings_lab_save') }}" class="set-group" {% if admin %}data-autosave-form{% endif %}>
+          <input type="hidden" name="section" value="permissions">
+          {% for key, (label, blurb, _default) in member_permissions.items() %}
+            <label class="set-row">
+              <span class="set-label"><b>{{ label|tr }}</b><small>{{ blurb|tr }}</small></span>
+              <input type="checkbox" class="set-switch" name="{{ key }}" value="1" {% if state.permissions[key] %}checked{% endif %} {% if not admin %}disabled{% endif %}>
+            </label>
+          {% endfor %}
+        </form>
+        <p class="set-note mt-2">{{ _("Admins may always do all of these. Everyone sees every lab database's records; each person edits what they own, and shared cages are everyone's.") }}</p>
+      </div>
+    </section>
+    {% endif %}
+
     {# ---------------------------------------------------------------- Devices & copies (app/devices.py, app/lab_copy.py) #}
     <section class="set-pane" id="devices" data-pane="devices">
-      {{ pane_head('database', _('Devices & copies'), _('Where the lab is kept, and the computers that keep a copy of it.'), 'lab') }}
+      {{ pane_head('copy', _('Devices & copies'), _('Where the lab is kept, and the computers that keep a copy of it.'), 'lab') }}
       <div class="set-group">
         <a class="set-row set-row-link" href="{{ url_for('devices.page') }}">
           <span class="set-label"><b>{{ _('Devices') }}</b><small>{{ _('Which device holds the lab: the lab server, or a computer that shares its lab. Hand it to another computer, or open the lab in this window.') }}</small></span>
@@ -352,6 +753,52 @@
       </div>
       {% include "lab_copy/_cards.html" %}
     </section>
+
+    {% if lab_data %}
+    {# ---------------------------------------------------------------- History (bulk changes, every change) #}
+    {% set hist = lab_data.history %}
+    <section class="set-pane" id="history" data-pane="history">
+      {{ pane_head('history', _('History'), _('What changed, and undo for big changes.'), 'lab') }}
+      <div class="set-title set-title-row">
+        <span>{{ _('Bulk changes') }}</span>
+        <a href="{{ url_for('batches_view') }}">{{ _('See all') }}</a>
+      </div>
+      <div class="set-group">
+        {% for b in hist.batches %}
+          <div class="set-row {% if b.undone_at %}opacity-55{% endif %}">
+            <span class="set-label"><b>{{ b.description }}</b>
+              <small>{% trans count=b.count %}{{ count }} record{% pluralize %}{{ count }} records{% endtrans %} · {{ (b.created_at | local).strftime('%Y-%m-%d %H:%M') }}{% if b.actor %} · {{ b.actor }}{% endif %}{% if b.undone_at %} · {{ _('undone') }}{% endif %}</small></span>
+            {% if b.can_undo %}
+              <form method="post" action="{{ url_for('undo_batch', batch_id=b.id) }}"
+                    data-confirm="{{ _('Undo “%(what)s”? This reverses %(n)s record(s).', what=b.description, n=b.count) }}">
+                <input type="hidden" name="from" value="settings">
+                {% if b.blocked %}<input type="hidden" name="force" value="1">{% endif %}
+                <button type="submit" class="btn btn-sm {% if b.blocked %}btn-danger{% endif %}" {% if b.blocked %}title="{{ _('Reverses anyway, discarding later edits') }}"{% endif %}>{{ icon('undo') }} {{ _('Undo anyway') if b.blocked else _('Undo') }}</button>
+              </form>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="set-row"><span class="set-label"><small>{{ _('Add many, Set field and imports show here, each with Undo.') }}</small></span></div>
+        {% endfor %}
+      </div>
+      {% if current_user.role == 'admin' %}
+        <div class="set-title set-title-row">
+          <span>{{ _('Every change') }}</span>
+          <a href="{{ url_for('audit_log_view') }}">{{ _('Open the audit log') }}</a>
+        </div>
+        <div class="set-group">
+          {% for c in hist.changes %}
+            <div class="set-row">
+              <span class="set-label"><b>{{ c.label }}</b>
+                <small>{{ c.action|tr('audit') }} · {{ (c.table | table_label)|tr }} · {{ (c.at | local).strftime('%Y-%m-%d %H:%M') }}{% if c.by %} · {{ c.by }}{% endif %}</small></span>
+            </div>
+          {% else %}
+            <div class="set-row"><span class="set-label"><small>{{ _('No changes recorded yet.') }}</small></span></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -366,7 +813,7 @@
     if (!root) return;
     var panes = Array.prototype.slice.call(root.querySelectorAll('[data-pane]'));
     var links = Array.prototype.slice.call(root.querySelectorAll('[data-pane-link]'));
-    var aliases = { 'api-tokens': 'assistant', 'language': 'appearance', 'app-icon': 'appearance',
+    var aliases = { 'api-tokens': 'assistant', 'language': 'appearance', 'app-icon': 'appearance', 'racks': 'stats',
                     'lab-copies': 'devices', 'lab-copy': 'devices', 'lab-server': 'devices' };
     root.classList.add('is-ready');
     function show() {
@@ -383,11 +830,38 @@
         l.classList.toggle('is-on', on);
         if (on) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current');
       });
-      if (target && target !== pane) target.scrollIntoView({ block: 'start' });
+      var page = within(pane, target);
+      if (target && target !== pane && !page) target.scrollIntoView({ block: 'start' });
       else document.getElementById('app-scroll') && (document.getElementById('app-scroll').scrollTop = 0);
+    }
+    // A pane with tabs (People & access) shows the tab the hash is in, and
+    // in Project groups, one group's page or the list. Returns true when
+    // the hash named a tab or a page, which then opens at its top.
+    function within(pane, target) {
+      var tabs = Array.prototype.slice.call(pane.querySelectorAll('[data-tabpane]'));
+      if (!tabs.length) return false;
+      var inner = target && target !== pane ? target : null;
+      var tab = (inner && inner.closest('[data-tabpane]')) || tabs[0];
+      tabs.forEach(function (t) { t.classList.toggle('is-on', t === tab); });
+      pane.querySelectorAll('[data-tab-link]').forEach(function (a) {
+        a.classList.toggle('is-on', a.dataset.tabLink === tab.id);
+      });
+      var sub = inner && inner.closest('[data-subview]');
+      tab.querySelectorAll('[data-subview]').forEach(function (v) { v.hidden = v !== sub; });
+      tab.querySelectorAll('[data-subview-list]').forEach(function (l) { l.hidden = !!sub; });
+      return !inner || inner === tab || inner === sub;
     }
     window.addEventListener('hashchange', show);
     show();
+
+    // Statistics: one animal's bars at a time, each counted in its own unit.
+    var animalTabs = root.querySelector('[data-animal-tabs]');
+    if (animalTabs) animalTabs.addEventListener('click', function (event) {
+      var b = event.target.closest('[data-animal-tab]');
+      if (!b) return;
+      animalTabs.querySelectorAll('[data-animal-tab]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      root.querySelectorAll('[data-animal-pane]').forEach(function (p) { p.hidden = p.dataset.animalPane !== b.dataset.animalTab; });
+    });
 
     // Search: keeps the panes whose name or settings mention the words.
     var search = root.querySelector('[data-settings-search]');

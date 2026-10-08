@@ -221,57 +221,5 @@
     </div>
   </form>
 
-  {% if not first_run %}
-    <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">{{ icon('database') }}</span><h3>{{ _('Other databases') }}</h3></header>
-      <p class="setup-note">{% trans %}Databases built with <strong>Add database</strong>, and members' own. Switch one off to hide it for everyone.{% endtrans %}</p>
-      {% if custom %}
-        <div class="setup-list">
-          {% for d in custom %}
-            <div class="setup-row">
-              <div class="min-w-0">
-                <span class="font-medium text-ink">{{ d.label }}</span>
-                <span class="text-[12px] text-muted">{{ d.kind_label|tr('database kind') }}{% if d.created_by and d.created_by != 'system' %} · {{ _('added by %(who)s', who=d.created_by) }}{% endif %}</span>
-                {% if d.private_to %}<span class="badge badge-brand">{{ _('Personal') }} · {{ d.private_to }}</span>{% elif d.share_group_id %}<span class="badge badge-quiet">{{ groups_api.name_of(d.share_group_id) or _('A deleted group') }}</span>{% endif %}
-              </div>
-              <form method="post" action="{{ url_for('lab.setup') }}">
-                <input type="hidden" name="action" value="module">
-                <input type="hidden" name="kind" value="{{ d.kind }}">
-                <input type="hidden" name="key" value="{{ d.key }}">
-                <input type="hidden" name="enabled" value="{{ '0' if d.enabled else '1' }}">
-                <button type="submit" class="btn btn-sm{% if d.enabled %} btn-ghost{% endif %}">{{ _('Switch off') if d.enabled else _('Switch on') }}</button>
-              </form>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-[12.5px] text-muted">{{ _('None yet.') }}</p>
-      {% endif %}
-    </section>
-
-    <section class="setup-step">
-      <header class="setup-step-head"><span class="setup-step-num">{{ icon('shield') }}</span><h3>{{ _('Who looks after the lab') }}</h3></header>
-      <p class="setup-note">{{ _('Admins can change this page, approve new accounts, reset passwords and edit any record. Keep at least two, so nobody is locked out when one is away.') }}</p>
-      <div class="setup-list">
-        {% for a in admins %}
-          <div class="setup-row">
-            <div class="flex min-w-0 items-center gap-2">{{ a.username | owner_badge }} <span class="font-medium text-ink">{{ a.name }}</span>
-              {% if a.id == current_user.id %}<span class="text-[12px] text-muted">{{ _('you') }}</span>{% endif %}</div>
-            <span class="badge badge-brand">{{ _('admin') }}</span>
-          </div>
-        {% endfor %}
-        {% for m in members %}
-          <div class="setup-row">
-            <div class="flex min-w-0 items-center gap-2">{{ m.username | owner_badge }} <span class="text-ink">{{ m.name }}</span></div>
-            <form method="post" action="{{ url_for('admin_toggle_role', user_id=m.id) }}"
-                  data-confirm="{{ _('Make %(name)s a lab admin?', name=m.name) }}">
-              <button type="submit" class="btn btn-sm">{{ icon('shield') }} {{ _('Make admin') }}</button>
-            </form>
-          </div>
-        {% endfor %}
-      </div>
-      <p class="setup-note">{% trans link=url_for('admin_users') %}<a href="{{ link }}">Manage users</a> for approving sign-ups, removing admin rights and disabling accounts.{% endtrans %}</p>
-    </section>
-  {% endif %}
 </div>
 {% endblock %}
