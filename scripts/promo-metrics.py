@@ -79,9 +79,10 @@ def posthog() -> dict:
                                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r)["results"]
-    # Heartbeats before COUNT_FROM came from GitHub's build machines, before CI was switched off.
+    # Heartbeats before COUNT_FROM came from GitHub's build machines, before CI was switched off;
+    # a "+dev" version runs from source (demo labs for the clips, tests), never someone's install.
     beat = (f"from events where event = 'heartbeat' and timestamp >= toDateTime('{COUNT_FROM}') "
-            "and timestamp > now() - interval")
+            "and not (properties.version like '%+dev%') and timestamp > now() - interval")
     try:
         out = {"installs_1d": q(f"select count(distinct distinct_id) {beat} 1 day")[0][0],
                "installs_7d": q(f"select count(distinct distinct_id) {beat} 7 day")[0][0]}
