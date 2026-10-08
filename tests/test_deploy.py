@@ -255,3 +255,49 @@ class ServerBundle(unittest.TestCase):
                 if private:
                     found += [f"{rel}: a private word" for _ in private.findall(text)]
         self.assertEqual(found, [])
+
+
+@unittest.skipIf(os.name == "nt", "a server's script, run with bash")
+class Ports(unittest.TestCase):
+    """deploy/host/ports.sh: 80 and 443, or others when the machine (a NAS)
+    already uses them, chosen once and kept in .env."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.deploy = Path(tmp.name) / "deploy"
+        (self.deploy / "host").mkdir(parents=True)
+        (self.deploy / "host" / "ports.sh").write_bytes((Path(ROOT) / "deploy/host/ports.sh").read_bytes())
+        self.env = self.deploy / ".env"
+
+    def ports(self, env_text):
+        self.env.write_text(env_text, encoding="utf-8")
+        self.env.chmod(0o600)
+        r = subprocess.run(["bash", str(self.deploy / "host/ports.sh")], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r.stdout, self.env.read_text(encoding="utf-8")
+
+    def test_the_choice_is_written_once_and_kept(self):
+        out, env = self.ports("DOMAIN=nas.local\nTLS=internal\n")
+        chosen = dict(re.findall(r"^(HTTP_PORT|HTTPS_PORT|FUNNEL_PORT)=(\d+)$", env, re.M))
+        self.assertEqual(sorted(chosen), ["FUNNEL_PORT", "HTTPS_PORT", "HTTP_PORT"])
+        self.assertNotEqual(chosen["HTTPS_PORT"], "8443")             # Tailscale Funnel's
+        self.assertIn("BioManager will be at https://nas.local", out)
+        self.assertEqual(self.env.stat().st_mode & 0o777, 0o600)      # still this account's only
+        out, again = self.ports(env)
+        self.assertEqual(again, env)
+        self.assertIn("already chosen", out)
+
+    def test_a_port_set_by_hand_is_kept(self):
+        out, env = self.ports("DOMAIN=nas.local\nHTTPS_PORT=9443\n")
+        self.assertEqual(env, "DOMAIN=nas.local\nHTTPS_PORT=9443\n")
+        self.assertIn("https://nas.local:9443", out)
+
+    def test_caddy_listens_where_compose_publishes(self):
+        compose = (Path(ROOT) / "deploy/compose.yaml").read_text(encoding="utf-8")
+        caddyfile = (Path(ROOT) / "deploy/Caddyfile").read_text(encoding="utf-8")
+        self.assertIn('"${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"', compose)
+        self.assertIn('"${HTTP_PORT:-80}:${HTTP_PORT:-80}"', compose)
+        self.assertIn("BIOMANAGER_HTTPS_PORT: ${HTTPS_PORT:-443}", compose)
+        self.assertIn("{$DOMAIN}:{$HTTPS_PORT:443} {", caddyfile)
+        self.assertIn("http_port {$HTTP_PORT:80}", caddyfile)

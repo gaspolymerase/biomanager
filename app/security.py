@@ -36,6 +36,8 @@ Settings, all optional:
   BIOMANAGER_ENV=production     set by wsgi.py; stricter defaults
   BIOMANAGER_HTTPS=1|0          Secure cookies (default: on in production)
   BIOMANAGER_PROXY_HOPS=1       behind nginx/Caddy: trust its X-Forwarded-*
+  BIOMANAGER_HTTPS_PORT=443     a lab server's HTTPS port; another one goes into
+                                BIOMANAGER_BASE_URL and turns off HSTS
   BIOMANAGER_TRUSTED_ORIGINS    other origins allowed to post, comma separated
   BIOMANAGER_SESSION_DAYS=7     idle days before a sign-in expires
   BIOMANAGER_MAX_UPLOAD_MB=64   largest request body accepted
@@ -52,7 +54,7 @@ import time
 from datetime import datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from flask import current_app, flash, g, jsonify, redirect, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -88,6 +90,23 @@ def _int(name: str, default: int) -> int:
         return int(os.environ.get(name, "").strip() or default)
     except ValueError:
         raise RuntimeError(f"{name} must be a whole number") from None
+
+
+def https_port() -> int:
+    """The port a lab server takes HTTPS on: 443, unless deploy/host/ports.sh
+    found this machine already using it (a NAS's own pages) and chose another."""
+    return _int("BIOMANAGER_HTTPS_PORT", 443)
+
+
+def base_url() -> str:
+    """BIOMANAGER_BASE_URL, or "" when it isn't set. compose.yaml sets it to
+    https://DOMAIN; on another HTTPS port, the links made from it (sign-in
+    callbacks, emails) need that port, so it is added here."""
+    base, port = os.environ.get("BIOMANAGER_BASE_URL", "").strip(), https_port()
+    parts = urlsplit(base)
+    if port != 443 and parts.scheme == "https" and parts.hostname and parts.port is None:
+        base = urlunsplit(parts._replace(netloc=f"{parts.netloc}:{port}"))
+    return base.rstrip("/")
 
 
 def _read_or_create(path: Path, make) -> str:
@@ -399,7 +418,10 @@ def add_security_headers(response):
     headers.setdefault("X-Content-Type-Options", "nosniff")
     headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     headers.setdefault("Referrer-Policy", "same-origin")
-    if request.is_secure:
+    # HSTS covers every port of a name: on a port other than 443 the name is
+    # shared with something else on that machine (a NAS's own http:// pages),
+    # which browsers would then refuse to open over plain HTTP.
+    if request.is_secure and https_port() == 443:
         headers.setdefault("Strict-Transport-Security", "max-age=31536000")
     mode = csp_mode()
     if mode != "off" and response.mimetype == "text/html" and not request.path.startswith(UPLOADS_PREFIX):

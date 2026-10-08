@@ -139,9 +139,15 @@ sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
 sed -i "s|^TLS=.*|TLS=tailscale|; s|^#COMPOSE_FILE=|COMPOSE_FILE=|; s|^BACKUP_DIR=.*|BACKUP_DIR=/opt/biomanager/backups|" .env
 sed -i "s|^DOMAIN=.*|DOMAIN=biomanager.tailXXXX.ts.net|; s|^TZ=.*|TZ=<their time zone>|" .env
 grep -E '^(DOMAIN|TLS|COMPOSE_FILE|TZ|BACKUP_DIR)=' .env
+host/ports.sh
 docker compose config --quiet && echo "settings ok"
 docker compose up -d --build
 ```
+
+`host/ports.sh` writes `HTTP_PORT`, `HTTPS_PORT` and `FUNNEL_PORT` into
+`.env`: 80, 443 and 8081 when free, others when the machine already uses
+them. If it says another port (`BioManager will be at https://…:4443`),
+that address, port included, is the one to give everyone below.
 
 Check: `docker compose ps` shows `db` and `app` healthy within a minute or
 two, and `backup` healthy once its first backup is done (`health: starting`
@@ -197,6 +203,10 @@ Certification Authorities"; iOS profile + Certificate Trust Settings;
 Android "CA certificate"). Docker publishes 80 and 443 on the machine
 itself; a network firewall run by IT must let 443 through from the lab
 network (and the VPN). Put `BACKUP_DIR` on a second disk if there is one.
+A NAS with Docker (fnOS and the like) works as B: Docker is already there,
+its own web pages usually hold 80 and 443, and `host/ports.sh` moves
+BioManager to a free port (4443) by itself; open that port, not 443,
+in any firewall. Its storage volume (e.g. `/vol1/…`) is a good `BACKUP_DIR`.
 
 ## Option E: a domain
 

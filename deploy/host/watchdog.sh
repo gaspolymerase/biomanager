@@ -36,6 +36,9 @@ TLS_MODE=$(env_value TLS)
 : "${NTFY_SERVER:=https://ntfy.sh}"
 : "${NTFY_TOPIC:=}"
 DOMAIN=${DOMAIN:-$(env_value DOMAIN)}
+# 443 unless host/ports.sh found it taken here and chose another.
+HTTPS_PORT=$(env_value HTTPS_PORT); HTTPS_PORT=${HTTPS_PORT:-443}
+SITE="https://$DOMAIN"; [ "$HTTPS_PORT" = 443 ] || SITE="$SITE:$HTTPS_PORT"
 
 mkdir -p "$STATE_DIR"
 now=$(date +%s)
@@ -76,8 +79,8 @@ if [ "${TLS_MODE:-internal}" = "internal" ]; then
     && [ -s "$root" ] && trust=(--cacert "$root")
 fi
 if [ -n "$DOMAIN" ]; then
-  if curl -fsS -m 20 "${trust[@]}" -o /dev/null "https://$DOMAIN/healthz"; then report site ok
-  else report site "https://$DOMAIN/healthz does not answer. Check: cd $DEPLOY_DIR && docker compose ps"; fi
+  if curl -fsS -m 20 "${trust[@]}" -o /dev/null "$SITE/healthz"; then report site ok
+  else report site "$SITE/healthz does not answer. Check: cd $DEPLOY_DIR && docker compose ps"; fi
 fi
 
 # --- every service is running, and healthy where it has a health check
@@ -120,7 +123,7 @@ fi
 # Encrypt renew it). Caddy's own (TLS=internal) lasts hours and Caddy
 # renews it itself, so there is nothing to warn about there.
 if [ -n "$DOMAIN" ] && [ "${TLS_MODE:-internal}" != "internal" ]; then
-  end=$(echo | timeout 20 openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" 2>/dev/null \
+  end=$(echo | timeout 20 openssl s_client -connect "$DOMAIN:$HTTPS_PORT" -servername "$DOMAIN" 2>/dev/null \
         | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
   if [ -n "$end" ]; then
     left=$(( ($(date -d "$end" +%s) - now) / 86400 ))

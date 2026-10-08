@@ -258,6 +258,11 @@ setenv TZ "$TZ_NAME"
 [ -z "$ACME_EMAIL" ] || setenv ACME_EMAIL "$ACME_EMAIL"
 if [ "$TLS" = tailscale ]; then sed -i.bak 's|^#COMPOSE_FILE=|COMPOSE_FILE=|' .env && rm -f .env.bak; fi
 echo "Written to $BASE/Biomanager/deploy/.env (readable by this account only)."
+# 80 and 443, or others when this machine already uses them (a NAS's own pages).
+ports=$(bash host/ports.sh) || {{ echo "::fail::$(echo "$ports" | tr '\\n' ' ')"; exit 1; }}
+echo "$ports"
+https_port=$(grep -E '^HTTPS_PORT=' .env | tail -1 | cut -d= -f2)
+[ "${{https_port:-443}}" = 443 ] || echo "::value::ADDRESS=$ADDRESS:$https_port"
 
 if [ "$BRING_DATA" = 1 ]; then
   step "Moving your records in"

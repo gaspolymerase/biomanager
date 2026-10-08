@@ -36,6 +36,8 @@ services:
       # (which the backups include). Set it to manage the key yourself.
       SECRET_KEY: ${SECRET_KEY:-}
       BIOMANAGER_BASE_URL: https://${DOMAIN:?set DOMAIN in .env}
+      # Added to the address above when it isn't 443 (app/security.py).
+      BIOMANAGER_HTTPS_PORT: ${HTTPS_PORT:-443}
       BIOMANAGER_HTTPS: "1"
       # The lab's time zone: "today" (weaning due, expiry) and the times shown.
       TZ: ${TZ:-UTC}
@@ -73,13 +75,17 @@ services:
   caddy:
     image: caddy:2
     restart: unless-stopped
+    # 80 and 443 unless host/ports.sh found them taken and chose others.
+    # Published as the same numbers inside, where the Caddyfile listens.
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
       # The internet-facing site, for Tailscale Funnel on this host only.
-      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:${FUNNEL_PORT:-8081}:8081"
     environment:
       DOMAIN: ${DOMAIN}
+      HTTP_PORT: ${HTTP_PORT:-80}
+      HTTPS_PORT: ${HTTPS_PORT:-443}
       TLS: ${TLS:-internal}
       ACME_EMAIL: ${ACME_EMAIL:-}
     volumes:

@@ -6,6 +6,14 @@
 #                   Tailscale (needs compose.tailscale.yaml; see deploy/README.md)
 #   TLS=acme        Let's Encrypt, as ACME_EMAIL (needs public DNS and port 80)
 #   TLS=files       a certificate from IT: deploy/certs/server.crt and server.key
+#
+# The ports are 80 and 443 unless .env says otherwise (host/ports.sh moves
+# them when this machine already uses those); compose.yaml publishes them
+# as the same numbers. The HTTPS one is in the site's address rather than
+# https_port, so that Caddy's redirect from http:// keeps it when it isn't 443.
+{
+	http_port {$HTTP_PORT:80}
+}
 
 (tls_internal) {
 	tls internal
@@ -26,7 +34,7 @@
 	tls /certs/server.crt /certs/server.key
 }
 
-{$DOMAIN} {
+{$DOMAIN}:{$HTTPS_PORT:443} {
 	import tls_{$TLS:internal}
 	encode zstd gzip
 
@@ -34,10 +42,10 @@
 		max_size 64MB
 	}
 
-	header {
-		Strict-Transport-Security "max-age=31536000"
-		-Server
-	}
+	# Strict-Transport-Security comes from the app, which leaves it out on
+	# a port other than 443: there this name is shared with the machine's
+	# own pages, and it would make browsers insist on HTTPS for those too.
+	header -Server
 
 	reverse_proxy app:8000 {
 		# Only the internet-facing site below may say a request came from the internet.

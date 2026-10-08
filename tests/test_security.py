@@ -414,6 +414,42 @@ class SecurityHeaders(AppTestCase):
         self.assertEqual(h["X-Frame-Options"], "SAMEORIGIN")
         self.assertEqual(h["Referrer-Policy"], "same-origin")
 
+    def test_https_on_443_asks_browsers_to_keep_to_https(self):
+        h = self.m.get("/colony", base_url="https://lab.example.edu").headers
+        self.assertEqual(h["Strict-Transport-Security"], "max-age=31536000")
+
+    def test_on_another_port_it_does_not(self):
+        # There the name is shared with the machine's own pages (a NAS's),
+        # which may be plain http://.
+        with mock.patch.dict(os.environ, {"BIOMANAGER_HTTPS_PORT": "4443"}):
+            h = self.m.get("/colony", base_url="https://nas.local:4443").headers
+        self.assertNotIn("Strict-Transport-Security", h)
+
+
+class BaseUrl(unittest.TestCase):
+    """deploy/host/ports.sh may move a server off 443; its links follow."""
+
+    def base(self, **env):
+        clean = {k: v for k, v in os.environ.items() if k not in ("BIOMANAGER_BASE_URL", "BIOMANAGER_HTTPS_PORT")}
+        with mock.patch.dict(os.environ, {**clean, **env}, clear=True):
+            return security.base_url()
+
+    def test_on_443_it_is_the_address_as_set(self):
+        self.assertEqual(self.base(BIOMANAGER_BASE_URL="https://lab.example.edu"), "https://lab.example.edu")
+        self.assertEqual(self.base(BIOMANAGER_BASE_URL="https://lab.example.edu/", BIOMANAGER_HTTPS_PORT="443"),
+                         "https://lab.example.edu")
+
+    def test_another_port_is_added(self):
+        self.assertEqual(self.base(BIOMANAGER_BASE_URL="https://nas.local", BIOMANAGER_HTTPS_PORT="4443"),
+                         "https://nas.local:4443")
+
+    def test_a_port_already_there_is_kept(self):
+        self.assertEqual(self.base(BIOMANAGER_BASE_URL="https://nas.local:9443", BIOMANAGER_HTTPS_PORT="4443"),
+                         "https://nas.local:9443")
+
+    def test_unset_is_empty(self):
+        self.assertEqual(self.base(BIOMANAGER_HTTPS_PORT="4443"), "")
+
 
 class EntryPoints(unittest.TestCase):
     """In a child process: wsgi sets BIOMANAGER_ENV for the whole process."""

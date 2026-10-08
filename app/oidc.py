@@ -251,7 +251,7 @@ def _provider_or_404(key: str) -> Provider:
 
 
 def redirect_uri(provider: Provider) -> str:
-    base = os.environ.get("BIOMANAGER_BASE_URL", "").strip() or request.url_root
+    base = security.base_url() or request.url_root
     return f"{base.rstrip('/')}/auth/{provider.key}/callback"
 
 

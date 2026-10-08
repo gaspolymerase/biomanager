@@ -835,12 +835,14 @@ it should run:
 - a cloud server reached privately over **Tailscale** (recommended; Oracle's
   free tier is enough), or one with the lab's **own web address**;
 - a **university or department server**;
-- a **Linux computer in the lab**, or **this computer** if it has Docker.
+- a **Linux computer in the lab** (a NAS with Docker, such as one running
+  fnOS, will do), or **this computer** if it has Docker.
 
 It signs in over SSH with your key, installs Docker (and Tailscale) if
 needed, downloads the release's server bundle, writes its settings with a
 fresh database password, can bring the desktop app's records along, starts
-it, sets up alerts and backups, and checks that it answers. Every step and
+it (on ports 80 and 443, or others it finds free when the machine already
+uses those, as a NAS's own web pages often do), sets up alerts and backups, and checks that it answers. Every step and
 every command is shown before and while it runs; at the end you get the
 address and the setup code for the admin account.
 
@@ -851,6 +853,7 @@ night, checks each dump and test-restores one every week.
 ```bash
 git clone <this repository> biomanager && cd biomanager/deploy
 cp .env.example .env && chmod 600 .env     # set DOMAIN, POSTGRES_PASSWORD, TZ
+host/ports.sh                              # 80 and 443, or free ones if those are taken
 docker compose up -d --build
 docker compose logs app | grep "setup code"
 ```
