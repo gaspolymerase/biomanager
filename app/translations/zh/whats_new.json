@@ -34,5 +34,7 @@
   "In a project group, each person is a **Lead**, a **Member** or **Can only view**, and the group's switches say what its members may do.": "在项目组里，每个人是 **组长**、**成员** 或 **仅可查看**，项目组的开关决定成员可以做什么。",
   "Home has a card for each of the lab's databases, in the sidebar's order.": "首页按侧边栏的顺序，为实验室的每个数据库显示一张卡片。",
   "The sidebar's **More** menu is gone: its pages are in **Settings**.": "侧边栏的 **更多** 菜单没有了：它的页面都在 **设置** 里。",
-  "The **Genotyping** dialog says what to type, and the rack position column is headed **Pos**.": "**基因型鉴定** 对话框会说明要填什么；笼架位置一列的标题改为 **Pos**。"
+  "The **Genotyping** dialog says what to type, and the rack position column is headed **Pos**.": "**基因型鉴定** 对话框会说明要填什么；笼架位置一列的标题改为 **Pos**。",
+  "A lab server can run on a NAS such as fnOS: when the NAS's own pages already use ports 80 and 443, BioManager takes free ones and gives its address with the port.": "实验室服务器可以装在 NAS 上，比如飞牛 fnOS：NAS 自己的网页已经占用 80 和 443 端口时，BioManager 会改用空闲的端口，并给出带端口的访问地址。",
+  "**Set up a lab server** can sign in with a password instead of an SSH key, and asks for the password **sudo** needs when the account has one.": "**搭建实验室服务器** 可以用密码代替 SSH 密钥登录；账号使用 **sudo** 需要密码时，也会向你询问。"
 }
