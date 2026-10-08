@@ -263,6 +263,35 @@ CUSTOM["culture-vial"] = '''
 c-13 0-24-11-24-24s11-24 24-24zm-24 304v42c0 3 3 6 6 6h156c3 0 6-3 6-6v-42H172z"/>
 '''
 
+# A cell: its membrane, the nucleus and two organelles.
+CUSTOM["cell"] = '''
+<path fill-rule="evenodd" d="M256 40c128 0 216 82 216 210 0 130-92 222-220 222C120 472 40 384 40 254 40 124 128 40 256 40zm-2 52C156 92 92 160 92 254c0 98 64 166 160 166 96 0 168-68 168-170 0-96-68-158-166-158z"/>
+<circle cx="226" cy="232" r="78"/>
+<ellipse cx="342" cy="336" rx="44" ry="24" transform="rotate(-35 342 336)"/>
+<circle cx="330" cy="168" r="20"/>
+<circle cx="172" cy="352" r="16"/>
+'''
+
+# A 1.5 mL microcentrifuge (Eppendorf) tube: rim, conical body, the lid
+# open on its hinge, which is what tells it from a vial at 15px.
+CUSTOM["microtube"] = '''
+<path d="M190 112h220a22 22 0 0 1 0 44h-24v144l-66 152q-6 14-20 14t-20-14l-66-152V156h-24a22 22 0 0 1 0-44z"/>
+<rect x="50" y="112" width="160" height="44" rx="22" transform="rotate(-58 196 134)"/>
+'''
+
+# A multi-well plate with its A1 corner cut: 12 wells stand for 96, as
+# many as stay apart at 15px.
+CUSTOM["well-plate"] = '''
+<path fill-rule="evenodd" d="M80 96h376c22 0 40 18 40 40v240c0 22-18 40-40 40H56c-22 0-40-18-40-40V160l64-64zM78 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM78 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM78 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0z"/>
+'''
+
+# Blood: two red blood cells, the front one with its pale centre, the one
+# behind it a crescent.
+CUSTOM["blood"] = '''
+<path fill-rule="evenodd" d="M156 326a170 170 0 1 0 340 0a170 170 0 1 0 -340 0zM260 326a66 66 0 1 1 132 0a66 66 0 1 1 -132 0z"/>
+<path d="M312 122A150 150 0 1 0 122 312A204 204 0 0 1 312 122Z"/>
+'''
+
 
 # Drawn by other people and vendored under scripts/icon-sources/, because a
 # convincing mouse or housefly needs more detail than a hand-written path of
@@ -295,7 +324,8 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
   Sources:
     - Font Awesome Free 6.7.2 (fontawesome.com) — Icons: CC BY 4.0
     - game-icons.net by Delapouite — CC BY 3.0 — the mouse and fly
-    - plasmid, petri, cage, tank, culture-vial — original to this project
+    - plasmid, petri, cage, tank, culture-vial, antibody, cell, microtube,
+      well-plate, blood — original to this project
 -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 """

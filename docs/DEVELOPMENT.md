@@ -48,7 +48,7 @@ Three sources, all permissively licensed:
 | --- | --- | --- |
 | [Font Awesome Free 6](https://fontawesome.com) | Icons CC BY 4.0 | the UI, plus `worm`, `mosquito`, `fish`, `frog`, `dna`, `vial`, `microscope`, `bacterium`, `virus`, `syringe` |
 | [game-icons.net](https://game-icons.net) by Delapouite | CC BY 3.0 | `mouse` (their *rat*) and `fly`, vendored in `scripts/icon-sources/` |
-| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial` |
+| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood` |
 
 Font Awesome has no laboratory mouse and no plasmid. The plasmid and the
 labware are drawn here; the mouse and the housefly are not, because both
