@@ -292,6 +292,47 @@ CUSTOM["blood"] = '''
 <path d="M312 122A150 150 0 1 0 122 312A204 204 0 0 1 312 122Z"/>
 '''
 
+# A kidney: the bean, its hilum and the ureter leaving it.
+CUSTOM["kidney"] = '''
+<path d="M300 56C170 40 70 140 74 272c4 124 96 200 202 188 76-8 108-60 84-110-16-32-56-48-56-88s40-56 58-86c30-56 6-112-62-120z"/>
+<path d="M318 262c52 0 94 36 98 86l10 112" fill="none" stroke="currentColor" stroke-width="40" stroke-linecap="round"/>
+'''
+
+# The liver: the wedge of its lobes, the ligament between them as a slit,
+# the gallbladder beneath.
+CUSTOM["liver"] = '''
+<path fill-rule="evenodd" d="M36 176C108 112 228 90 340 94c104 4 146 60 136 140-10 86-70 150-152 160C238 404 160 340 36 176zM246 104c-6 54 0 104 26 150l-20 12c-30-50-36-104-28-162z"/>
+<path d="M306 380c18-8 42-6 52 14 12 24-2 54-28 58-24 4-42-14-40-36 2-14 6-30 16-36z"/>
+'''
+
+# The stomach: the bag with the oesophagus coming in and the duodenum
+# leaving.
+CUSTOM["stomach"] = '''
+<path d="M300 112c-40-24-110-26-160 20-58 54-74 160-30 236 46 80 160 114 248 68 50-26 66-66 50-96-14-26-48-32-82-18-44 18-84 8-92-30-8-40 22-66 58-82 30-14 40-58 8-78z"/>
+<path d="M304 120c20-30 30-58 30-88M412 386c34-14 54-44 58-84" fill="none" stroke="currentColor" stroke-width="50" stroke-linecap="round"/>
+'''
+
+# The gut: the colon's arch around the coiled small intestine.
+CUSTOM["intestine"] = '''
+<path d="M112 452V138c0-14 10-24 24-24h240c14 0 24 10 24 24v314" fill="none" stroke="currentColor" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200 192h96c18 0 30 12 30 28s-12 28-30 28h-80c-18 0-30 12-30 28s12 28 30 28h80c18 0 30 12 30 28s-12 28-30 28h-96" fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+'''
+
+# An electrophoresis gel: its wells and lanes of bands, a ladder first.
+CUSTOM["gel"] = '''
+<path fill-rule="evenodd" d="M76 40h360c20 0 36 16 36 36v360c0 20-16 36-36 36H76c-20 0-36-16-36-36V76c0-20 16-36 36-36zm8 36c-4 0-8 4-8 8v344c0 4 4 8 8 8h344c4 0 8-4 8-8V84c0-4-4-8-8-8z"/>
+<path d="M80 150h72v30h-72zM80 230h72v30h-72zM80 310h72v30h-72zM80 390h72v30h-72zM176 230h72v30h-72zM272 190h72v30h-72zM272 330h72v30h-72zM368 270h72v30h-72zM86 88h60v26h-60zM182 88h60v26h-60zM278 88h60v26h-60zM374 88h60v26h-60z"/>
+'''
+
+# A centrifuge rotor seen from above, its tube slots, and the spin.
+CUSTOM["centrifuge"] = '''
+<path fill-rule="evenodd" d="M82 256a174 174 0 1 0 348 0a174 174 0 1 0 -348 0zM256 198A50 25 -90 1 0 256 98A50 25 -90 1 0 256 198zM306 227A50 25 -30 1 0 393 177A50 25 -30 1 0 306 227zM306 285A50 25 30 1 0 393 335A50 25 30 1 0 306 285zM256 314A50 25 90 1 0 256 414A50 25 90 1 0 256 314zM206 285A50 25 150 1 0 119 335A50 25 150 1 0 206 285zM206 227A50 25 210 1 0 119 177A50 25 210 1 0 206 227z"/>
+<path d="M47 180A222 222 0 0 1 180 47" fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round"/>
+<path d="M214 38L156 20L183 83z"/>
+<path d="M465 332A222 222 0 0 1 332 465" fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round"/>
+<path d="M298 474L356 492L329 429z"/>
+'''
+
 
 # Drawn by other people and vendored under scripts/icon-sources/, because a
 # convincing mouse or housefly needs more detail than a hand-written path of
@@ -325,7 +366,8 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
     - Font Awesome Free 6.7.2 (fontawesome.com) — Icons: CC BY 4.0
     - game-icons.net by Delapouite — CC BY 3.0 — the mouse and fly
     - plasmid, petri, cage, tank, culture-vial, antibody, cell, microtube,
-      well-plate, blood — original to this project
+      well-plate, blood, kidney, liver, stomach, intestine, gel, centrifuge
+      — original to this project
 -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 """

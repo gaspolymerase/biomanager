@@ -1963,15 +1963,15 @@ FOLDER_KINDS = ("protocol", "recipe")
 FOLDER_ICONS = (
     "folder", "protocol",
     # the bench
-    "flask", "flask-vial", "vial", "vials", "microtube", "culture-vial", "petri", "well-plate", "droplet",
-    "dropper", "microscope",
-    "mortar-pestle", "atom",
+    "flask", "flask-vial", "vial", "vials", "microtube", "culture-vial", "petri", "well-plate", "gel",
+    "centrifuge", "droplet", "dropper", "microscope", "mortar-pestle", "atom",
     # molecules and cells
     "dna", "plasmid", "antibody", "cell",
     # microbes and disease
     "bacterium", "bacteria", "virus", "vial-virus", "disease", "lungs-virus",
     # organs and the body
-    "blood", "brain", "heart", "lungs", "bone", "joint", "tooth", "skull", "eye", "ear", "hand", "person", "pregnancy",
+    "blood", "brain", "heart", "lungs", "liver", "kidney", "stomach", "intestine", "bone", "joint", "tooth",
+    "skull", "eye", "ear", "hand", "person", "pregnancy",
     # organisms and their housing
     "mouse", "fish", "fly", "worm", "frog", "bird", "cow", "paw", "egg", "seedling", "leaf", "wheat",
     "cage", "tank",
