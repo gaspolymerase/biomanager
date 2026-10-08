@@ -460,8 +460,121 @@ class ProtocolLibraryTests(Notebook):
         self.assertEqual(self.post_json(self.m, "/notebook/api/protocols/new", {"preset": "nope"}).status_code, 404)
         self.assertEqual(self.m.get("/notebook/api/protocols/text?preset=nope").status_code, 404)
 
-    def test_the_sidebar_offers_the_library(self):
-        self.assertIn('data-panel="protocols"', self.get_ok(self.m, "/notebook"))
+    def test_the_sidebar_opens_each_library_as_a_page(self):
+        html = self.get_ok(self.m, "/notebook")
+        for key in ("protocols", "recipes", "meetings"):
+            self.assertIn(f'href="/notebook/{key}"', html)
+            page = self.get_ok(self.m, f"/notebook/{key}")
+            self.assertIn(f'data-library="{key}"', page)
+            self.assertIn("notebook-library.js", page)
+            self.assertIn('aria-current="page"', page)
+        self.assertEqual(self.m.get("/notebook/other").status_code, 404)
+
+    def test_a_built_in_protocol_reads_as_it_is_written(self):
+        from app.notebook_protocols import PRESET_PROTOCOLS
+        text = self.m.get("/notebook/api/protocols/text?preset=hotshot&as=written").get_json()
+        self.assertEqual(text["markdown"], PRESET_PROTOCOLS["hotshot"]["body"])
+
+
+class LibraryFolderTests(Notebook):
+    """Folders in the protocol and recipe libraries: the lab's, so anyone
+    makes one and files in it what they may edit; its maker or an admin
+    renames or deletes it, and what was in it stays."""
+
+    def folder(self, client, kind, name=None):
+        r = self.post_json(client, "/notebook/api/folders", {"kind": kind, "name": name or uniq("Cloning")})
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        return r.get_json()["id"]
+
+    def file(self, client, kind, item_id, folder_id):
+        return self.post_json(client, "/notebook/api/folders/file", {"kind": kind, "item_id": item_id, "folder_id": folder_id})
+
+    def recipe(self, client, name=None):
+        r = self.post_json(client, "/notebook/api/recipes", {"name": name or uniq("TBS"), "data": {
+            "volume": 1, "volumeUnit": "L", "components": [{"name": "Tris", "conc": 50, "unit": "mM", "mw": 121.14}]}})
+        return r.get_json()["id"]
+
+    def test_a_protocol_is_filed_in_a_folder_the_lab_sees(self):
+        folder = self.folder(self.m, "protocol")
+        protocol = self.new_page(self.m, starter="protocol", title=uniq("Gibson"))
+        self.assertEqual(self.file(self.m, "protocol", protocol, folder).status_code, 200)
+        lib = self.m.get("/notebook/api/protocols").get_json()
+        mine = next(p for p in lib["protocols"] if p["id"] == protocol)
+        self.assertEqual((mine["folder_id"], mine["can_edit"]), (folder, True))
+        self.assertIn(folder, [f["id"] for f in lib["folders"]])
+        # A lab mate sees the folder, but not a protocol not shared with them.
+        theirs = client_for(make_user()).get("/notebook/api/protocols").get_json()
+        self.assertIn(folder, [f["id"] for f in theirs["folders"]])
+        self.assertNotIn(protocol, [p["id"] for p in theirs["protocols"]])
+        # The page knows its folder; taking it out leaves it in none.
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{protocol}").get_json()["page"]["folder_id"], folder)
+        self.file(self.m, "protocol", protocol, None)
+        self.assertIsNone(one("select folder_id from notebook_page_info where page_id_fk=?", protocol))
+
+    def test_a_new_protocol_made_in_a_folder_goes_in_it(self):
+        folder = self.folder(self.m, "protocol")
+        r = self.post_json(self.m, "/notebook/api/protocols/new", {"preset": "hotshot", "folder_id": folder}).get_json()
+        self.assertEqual(one("select folder_id from notebook_page_info where page_id_fk=?", r["page_id"]), folder)
+        # A recipe folder is not a protocol's.
+        other = self.folder(self.m, "recipe")
+        self.assertEqual(self.post_json(self.m, "/notebook/api/protocols/new", {"folder_id": other}).status_code, 404)
+
+    def test_only_who_may_edit_a_protocol_files_it(self):
+        folder = self.folder(self.m, "protocol")
+        protocol = self.new_page(self.m, starter="protocol", title=uniq("Shared SOP"))
+        viewer, editor = make_user(), make_user()
+        self.share(self.m, protocol, viewer, "view")
+        self.share(self.m, protocol, editor, "edit")
+        self.assertEqual(self.file(client_for(viewer), "protocol", protocol, folder).status_code, 403)
+        listed = client_for(viewer).get("/notebook/api/protocols").get_json()["protocols"]
+        self.assertFalse(next(p for p in listed if p["id"] == protocol)["can_edit"])
+        self.assertEqual(self.file(client_for(editor), "protocol", protocol, folder).status_code, 200)
+        self.assertEqual(self.file(client_for(make_user()), "protocol", protocol, folder).status_code, 404)
+        note = self.new_page(self.m, title=uniq("not a protocol"))
+        self.assertEqual(self.file(self.m, "protocol", note, folder).status_code, 400)
+
+    def test_recipes_are_filed_by_whoever_saved_them(self):
+        folder = self.folder(self.m, "recipe", uniq("Buffers"))
+        rid = self.recipe(self.m)
+        self.assertEqual(self.file(client_for(make_user()), "recipe", rid, folder).status_code, 403)
+        self.assertEqual(self.file(self.m, "recipe", rid, folder).status_code, 200)
+        lib = self.m.get("/notebook/api/recipes").get_json()
+        self.assertEqual(next(r for r in lib["recipes"] if r["id"] == rid)["folder_id"], folder)
+        # Saving its text keeps it where it is; a new one can start in a folder.
+        self.post_json(self.m, "/notebook/api/recipes", {"id": rid, "name": "TBS, 10×", "data": {"components": []}})
+        self.assertEqual(one("select folder_id from notebook_recipes where id=?", rid), folder)
+        made = self.post_json(self.m, "/notebook/api/recipes", {"name": uniq("PBS-T"), "data": {"components": []}, "folder_id": folder}).get_json()["id"]
+        self.assertEqual(one("select folder_id from notebook_recipes where id=?", made), folder)
+
+    def test_a_folder_is_renamed_or_deleted_by_its_maker_and_its_contents_stay(self):
+        name = uniq("Imaging")
+        folder = self.folder(self.m, "recipe", name)
+        rid = self.recipe(self.m)
+        self.file(self.m, "recipe", rid, folder)
+        # The same name twice is refused, whatever its case; a protocol folder may share it.
+        self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "recipe", "name": name.upper()}).status_code, 400)
+        self.folder(self.m, "protocol", name)
+        other = client_for(make_user())
+        self.assertEqual(self.post_json(other, f"/notebook/api/folders/{folder}", {"name": "Mine"}).status_code, 403)
+        self.assertEqual(self.post_json(other, f"/notebook/api/folders/{folder}/delete").status_code, 403)
+        renamed = uniq("Microscopy")
+        self.assertEqual(self.post_json(self.m, f"/notebook/api/folders/{folder}", {"name": renamed}).get_json()["name"], renamed)
+        # An admin may too.
+        self.assertEqual(self.post_json(self.a, f"/notebook/api/folders/{folder}/delete").status_code, 200)
+        self.assertEqual(count("notebook_folders", "id=?", folder), 0)
+        self.assertIsNone(one("select folder_id from notebook_recipes where id=?", rid))
+
+    def test_a_folder_needs_a_name_and_a_kind_and_guests_make_none(self):
+        self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "protocol", "name": "  "}).status_code, 400)
+        self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "plasmid", "name": "X"}).status_code, 400)
+        guest = make_user()
+        from app.db import SessionLocal
+        from app.models import UserAccount
+        from datetime import datetime
+        with SessionLocal() as s:
+            s.query(UserAccount).filter_by(username=guest).update({"expires_at": datetime.utcnow() + timedelta(days=30)})
+            s.commit()
+        self.assertEqual(self.post_json(client_for(guest), "/notebook/api/folders", {"kind": "protocol", "name": uniq("G")}).status_code, 403)
 
 
 class MeetingTests(Notebook):

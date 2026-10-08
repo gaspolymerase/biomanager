@@ -933,9 +933,25 @@ the rules; the editor is `frontend/src/` and the page around it is
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
 | `notebook_comments` | comments on a page or a quoted passage, and replies |
-| `notebook_recipes` | the lab's buffer library (the built-in ones are `PRESET_RECIPES`) |
+| `notebook_recipes` | the lab's buffer library (the built-in ones are `PRESET_RECIPES`), and the folder each is in |
+| `notebook_folders` | the lab's folders in the protocol and recipe libraries (`kind`); a protocol's folder is `notebook_page_info.folder_id` (revision 0027) |
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
+
+**Libraries.** Protocols, Recipes and Meetings in the notebook's sidebar
+are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`,
+`NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
+and `static/notebook-library.js` in the main column. It reads the same
+`/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
+recipe block do, and draws Meetings with notebook-page.js's panel
+(`window.NotebookPage`). A recipe opens in the recipe block's editor
+(`BiomanagerNotebook.recipe`, with `library: true`: no ticks, no Save to /
+Load from library), which saves as it changes. `?folder=`, `?recipe=` and
+`?preset=` say where in a library you are. Folders are the lab's: anyone
+but a guest makes one; their maker or an admin renames or deletes one
+(what was in it stays, in none); `/api/folders/file` files a protocol for
+whoever may edit its page, a recipe for its owner or an admin. The
+`/protocol` drawer and Load from library list by folder.
 
 **Durations and clocks.** `frontend/src/durations.js` finds what gets a
 step timer and leaves time points out (a list of times, "at 24 h", "48 h

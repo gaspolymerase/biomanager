@@ -153,6 +153,8 @@
 .nb-recipe-conc select { flex: 1; min-width: 0; }
 .nb-recipe-tick { width: 22px; text-align: center !important; }
 .nb-recipe-tick input { width: auto !important; }
+/* The Recipes page edits the library's copy: nothing to tick off there. */
+.nb-recipe.is-library .nb-recipe-tick, .nb-recipe.is-library col.c-tick { display: none; }
 .nb-recipe-amount { min-width: 120px; font-variant-numeric: tabular-nums; }
 .nb-recipe-amount b { display: block; font-size: 13px; }
 .nb-recipe-amount small, .nb-recipe-table small { display: block; color: var(--color-muted); font-size: 11px; }

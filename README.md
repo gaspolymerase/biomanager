@@ -441,11 +441,16 @@ database has a name of its own (one another database has is refused), so
     for it with that block already in.
   - **Protocols** with numbered versions. *Start an experiment from it*
     copies the steps as a checklist and records which version was followed.
-    **Protocols** in the sidebar (or `/protocol` in a page) opens the
-    library: the lab's protocols and a dozen common ones built in
-    (genotyping, perfusion, immunofluorescence, western, BCA,
-    transformation, miniprep, TRIzol, qPCR, passaging, tamoxifen), to insert
-    as a checklist or copy into a protocol of your own.
+    **Protocols** in the notebook's sidebar opens the lab's protocols as a
+    page of their own: search them, open one to read or change it, make one
+    with **New protocol**, and sort them into **folders** (**New folder**,
+    then drag a protocol onto it, or pick its folder on the card or in the
+    protocol's own bar). Folders are the lab's, shared by everyone. Below
+    them are a dozen common protocols built in (genotyping, perfusion,
+    immunofluorescence, western, BCA, transformation, miniprep, TRIzol,
+    qPCR, passaging, tamoxifen), to read and **Copy** into one of your own.
+    In a page, `/protocol` opens the same protocols beside it, folder by
+    folder, to insert one as a checklist.
     **Run the checklist step by step** (▶) goes through it at the bench one step at a time
     in large type: each tick gets the time, a deviation is written under the
     page's Deviations heading.
@@ -462,7 +467,11 @@ database has a name of its own (one another database has is refused), so
   - **Buffer recipes**: final volume and concentrations in, grams and
     millilitres to add out (from molecular weight or a stock); change the
     volume and every amount follows. Common buffers are built in; the lab's
-    own are saved to a shared library.
+    own are saved to a shared library. **Recipes** in the notebook's
+    sidebar opens that library: open a recipe to change it, make one with
+    **New recipe**, sort them into folders as protocols are, and **Save a
+    copy** of a built-in one to make it yours. **Load from library** in a
+    recipe block lists them by folder.
   - **Formulations** (`/formulation`): what goes into a reaction or a batch,
     by mass. Type a chemical's name, abbreviation or CAS number and pick it
     from the lab's **Chemicals** database; its molecular weight, purity,
@@ -486,7 +495,8 @@ database has a name of its own (one another database has is refused), so
     when they end.
   - **Daily log**: *Today* opens the day's page; each quick entry is added
     with the time.
-  - **Meetings and seminars**: a rotation of who presents next, notes for
+  - **Meetings and seminars** (**Meetings** in the notebook's sidebar,
+    where each series is edited): a rotation of who presents next, notes for
     each meeting shared with everyone in it, the coming meetings on the
     calendar, and action items (`- [ ] @name order primers, due
     2026-10-02`) sent to each person's to-dos, from any page with ⋯ →

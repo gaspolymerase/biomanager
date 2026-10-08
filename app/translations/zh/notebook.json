@@ -132,5 +132,13 @@
   "%(who)s commented on “%(title)s”": "%(who)s 评论了“%(title)s”",
   "Notes for %(meeting)s on %(day)s are open": "%(meeting)s（%(day)s）的会议记录已开放",
   "Everyone in the meeting can write in them.": "参会的每个人都可以在其中编写。",
-  "Action item from “%(title)s”": "来自“%(title)s”的行动事项"
+  "Action item from “%(title)s”": "来自“%(title)s”的行动事项",
+  "The folder it is in, in the lab’s protocols": "它在实验室实验流程中所在的文件夹",
+  "Folder": "文件夹",
+  "No folder": "不放进文件夹",
+  "Choose the protocols or the recipes.": "请选择实验流程或配方。",
+  "A folder needs a name.": "文件夹需要一个名称。",
+  "There is a folder of that name already.": "已经有同名的文件夹了。",
+  "Choose what to file.": "请选择要归档的内容。",
+  "That page is not a protocol.": "这个页面不是实验流程。"
 }

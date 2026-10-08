@@ -932,7 +932,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`, for action items); the page and the record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
 
-- **Daily log** (*Today*) and **Meetings**: a presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
+- **Daily log** (*Today*) and **Meetings**: **Meetings** in the sidebar lists each meeting series, where you edit its day, place and presenting order. A presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
 
 - An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
 
@@ -942,7 +942,9 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Colony experiment** (`/experiment`) shows an experiment on any of your animals in the page: each day's manipulation, when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first weight, with the manipulation days marked). It stays up to date; **Freeze a copy** keeps what it shows now in the page, so later changes to the experiment don't alter your record. On the experiment itself, **Add to notebook** makes your page for it with this block already in.
 
-- **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time. **Protocols** in the sidebar (or `/protocol`) opens the library: the lab's protocols and a dozen common ones built in, to insert or copy.
+- **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
+
+- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one.
 
 ### Data and calculators
 
@@ -950,7 +952,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Formulation** (`/formulation`): what goes into a reaction or a batch, by mass. In **Component**, type a chemical's name, abbreviation or CAS number and pick it from the lab's [Chemicals](https://biomanager.org/guide/samples-and-orders) database: its molecular weight, purity, density and lot come with it, and the chemical's **Used in notebook pages** lists the page. Type the **Mass** you weigh and **Amount** gives the moles. Mark one row as the basis (the round button beside **Equiv.**) and give the others in equivalents: the mass to weigh follows, and changes when the basis does. Each row shows its **wt %**, a liquid its volume, and the total is underneath.
 
-- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
+- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Recipes** in the sidebar opens them: open one to change it, make one with **New recipe**, sort them into folders as protocols are, or **Save a copy** of a built-in one. **Load from library** in a recipe block lists them by folder. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
 
 ### Signing a page
 

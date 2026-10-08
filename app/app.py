@@ -674,7 +674,7 @@ NAV_SECTIONS: list[dict] = [
             {"key": "calendar", "label": "Calendar", "icon": "calendar",
              "endpoint": "calendar", "feature": "calendar"},
             {"key": "notebook", "label": "Notebook", "icon": "notebook", "feature": "notebook",
-             "endpoint": "notebook", "match": ("notebook", "notebook_templates")},
+             "endpoint": "notebook", "match": ("notebook", "notebook_templates", "notebook_library")},
             {"key": "utilities", "label": "Utilities", "icon": "calculator", "endpoint": "utilities",
              "hint": "Bench calculators and reference data"},
         ],
@@ -5702,11 +5702,33 @@ def _serialize_page(page: NotebookPage) -> dict:
     }
 
 
+# The notebook's libraries, each a page of its own beside the sidebar:
+# key -> (title, icon). The drawer beside a page (/protocol) still lists
+# protocols to insert.
+NOTEBOOK_LIBRARIES = {
+    "protocols": ("Protocols", "protocol"),
+    "recipes": ("Recipes", "flask"),
+    "meetings": ("Meetings", "users"),
+}
+
+
 @app.route("/notebook")
 @login_required
 def notebook():
+    return _notebook_page()
+
+
+@app.route("/notebook/<any(protocols, recipes, meetings):library>")
+@login_required
+def notebook_library(library: str):
+    """The lab's protocols, recipes or meetings, to look through, open,
+    add to and sort into folders."""
+    return _notebook_page(library)
+
+
+def _notebook_page(library: str | None = None):
     selected_tab_id = arg_int("tab", None)
-    selected_page_id = arg_int("page", None)
+    selected_page_id = arg_int("page", None) if library is None else None
     with SessionLocal() as db_session:
         tabs = db_session.scalars(
             _notebook_owner_filter(select(NotebookTab)).order_by(NotebookTab.position, NotebookTab.id)
@@ -5721,7 +5743,7 @@ def notebook():
         selected_tab = None
         if selected_page is not None and role == "owner":
             selected_tab = next((tab for tab in tabs if tab.id == selected_page.tab_id_fk), None)
-        if selected_tab is None and selected_page is None:
+        if selected_tab is None and selected_page is None and library is None:
             if selected_tab_id is not None:
                 selected_tab = next((tab for tab in tabs if tab.id == selected_tab_id), None)
             if selected_tab is None and tabs:
@@ -5770,6 +5792,8 @@ def notebook():
         lab_zone=lab.clock_zone(),
         starters=[{"key": key, "title": st["title"], "kind": st["kind"], "hint": st["hint"]}
                   for key, st in lab_notebook.STARTERS.items()],
+        library=library,
+        libraries=NOTEBOOK_LIBRARIES,
     )
 
 

@@ -38,7 +38,8 @@ from .formutil import like_pattern
 from . import access, groups, i18n, notebook_protocols, notify
 from .db import SessionLocal
 from .i18n import gettext
-from .models import (CalendarEvent, NotebookComment, NotebookMeetingSeries, NotebookPage, NotebookPageInfo,
+from .models import (CalendarEvent, NotebookComment, NotebookFolder, NotebookMeetingSeries, NotebookPage,
+                     NotebookPageInfo,
                      NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
                      NotebookTab,
                      NotebookTemplate, NotebookVersion, TaskItem, UserAccount)
@@ -680,6 +681,9 @@ def page_payload(session, page: NotebookPage, role: str) -> dict:
         "open_comments": open_comments,
         "release": release,
         "protocol": protocol,
+        # A protocol: the library folder it is in, and the folders there are.
+        "folder_id": info.folder_id if info else None,
+        "folders": folder_list(session, "protocol") if info and info.kind == "protocol" else [],
     }
 
 
@@ -1382,11 +1386,24 @@ def people_list():
 
 # ---------------------------------------------------------------- protocols and experiments
 
+def _gist(body: str, width: int = 140) -> str:
+    """The first words of a page that say what it is: its first line of
+    text that is not a heading, a rule, a table or a fence."""
+    for line in (body or "").split("\n"):
+        text = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?", "", line).strip()
+        if not text or text.startswith(("#", ">", "|", "```", "---")):
+            continue
+        text = re.sub(r"[*_`]+", "", text)
+        return text if len(text) <= width else text[:width - 1].rstrip() + "…"
+    return ""
+
+
 @bp.get("/api/protocols")
 def protocols():
     with SessionLocal() as s:
-        stmt = accessible_filter(select(NotebookPage.id, NotebookPage.title, NotebookPage.updated_at,
-                                        NotebookTab.owner_username, NotebookPageInfo.tags)
+        me = _me()
+        stmt = accessible_filter(select(NotebookPage, NotebookTab.owner_username, NotebookPageInfo.tags,
+                                        NotebookPageInfo.folder_id)
                                  .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
                                  .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
                                  .where(NotebookPageInfo.kind == "protocol"))
@@ -1396,9 +1413,14 @@ def protocols():
                                   .group_by(NotebookVersion.page_id_fk)).all())
         names = display_names(s, [r.owner_username for r in rows])
         return jsonify({"ok": True, "protocols": [{
-            "id": r.id, "title": r.title, "owner": r.owner_username,
-            "owner_name": names.get(r.owner_username, r.owner_username), "version": releases.get(r.id),
-            "tags": tag_list(r.tags or ""), "updated_at": _iso(r.updated_at)} for r in rows],
+            "id": r.NotebookPage.id, "title": r.NotebookPage.title, "owner": r.owner_username,
+            "owner_name": names.get(r.owner_username, r.owner_username),
+            "version": releases.get(r.NotebookPage.id), "folder_id": r.folder_id,
+            "gist": _gist(r.NotebookPage.body),
+            # May file it in a folder: whoever may edit the page.
+            "can_edit": r.owner_username == me or can_edit_role(role_for(s, r.NotebookPage)),
+            "tags": tag_list(r.tags or ""), "updated_at": _iso(r.NotebookPage.updated_at)} for r in rows],
+            "folders": folder_list(s, "protocol"),
             "presets": notebook_protocols.preset_list()})
 
 
@@ -1412,13 +1434,16 @@ def _latest_release(session, page_id: int):
 def protocol_text():
     """A protocol ready to insert into a page: a line saying which protocol
     (and version) it is, then its text with the steps as a checklist. A lab
-    protocol gives its latest numbered version, or its current text."""
+    protocol gives its latest numbered version, or its current text. A
+    built-in one with ?as=written comes as it is written, to read."""
     with SessionLocal() as s:
         if request.args.get("preset"):
             preset = notebook_protocols.PRESET_PROTOCOLS.get(request.args["preset"])
             if preset is None:
                 return _fail(gettext("That protocol is not built in."), 404)
             title, body = preset["title"], preset["body"]
+            if request.args.get("as") == "written":       # to read in the library, as it is
+                return jsonify({"ok": True, "title": title, "markdown": body})
             header = f"> **Protocol:** {title} (built in)"
         elif _int(request.args.get("page")):
             page, _role = load_page(s, _int(request.args["page"]))
@@ -1448,15 +1473,18 @@ BLANK_PROTOCOL = """## Purpose
 @bp.post("/api/protocols/new")
 def protocol_new():
     """A new protocol page of one's own: blank, or a copy of a built-in one
-    to change. It goes in the Protocols topic."""
+    to change. It goes in the Protocols topic, and in the library's folder
+    it was made in, if any."""
     data = _json_body()
     preset = notebook_protocols.PRESET_PROTOCOLS.get(str(data.get("preset") or ""))
     if data.get("preset") and preset is None:
         return _fail(gettext("That protocol is not built in."), 404)
     title = str(data.get("title") or "").strip()[:200] or (preset["title"] if preset else "New protocol")
     with SessionLocal() as s:
+        folder = _folder(s, data.get("folder_id"), "protocol")
         tab = tab_named(s, _me(), PROTOCOLS_TAB)
-        page = new_page(s, tab, title, preset["body"] if preset else BLANK_PROTOCOL, kind="protocol")
+        page = new_page(s, tab, title, preset["body"] if preset else BLANK_PROTOCOL, kind="protocol",
+                        folder_id=folder.id if folder else None)
         record_edit(s, page)
         s.commit()
         return jsonify({"ok": True, "page_id": page.id, "url": page_url(page.id)})
@@ -1864,7 +1892,7 @@ def _recipe_json(r: NotebookRecipe, names: dict) -> dict:
     except ValueError:
         data = {}
     return {"id": r.id, "name": r.name, "owner": r.owner, "owner_name": names.get(r.owner, r.owner),
-            "data": data, "updated_at": _iso(r.updated_at),
+            "data": data, "updated_at": _iso(r.updated_at), "folder_id": r.folder_id,
             "can_edit": access.is_admin() or r.owner == _me()}
 
 
@@ -1874,6 +1902,7 @@ def recipes():
         rows = s.scalars(select(NotebookRecipe).order_by(NotebookRecipe.name)).all()
         names = display_names(s, [r.owner for r in rows])
         return jsonify({"ok": True, "recipes": [_recipe_json(r, names) for r in rows],
+                        "folders": folder_list(s, "recipe"),
                         "presets": [{"id": f"preset:{key}", "name": p["name"], "data": p} for key, p in PRESET_RECIPES.items()]})
 
 
@@ -1906,6 +1935,9 @@ def recipe_save():
             recipe = NotebookRecipe(name=name, owner=_me())
             s.add(recipe)
         recipe.name, recipe.data, recipe.updated_at = name, json.dumps(data), _now()
+        if "folder_id" in body:
+            folder = _folder(s, body.get("folder_id"), "recipe")
+            recipe.folder_id = folder.id if folder else None
         s.commit()
         return jsonify({"ok": True, "id": recipe.id})
 
@@ -1921,6 +1953,123 @@ def recipe_delete(recipe_id: int):
         s.delete(recipe)
         s.commit()
         return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------- library folders
+
+FOLDER_KINDS = ("protocol", "recipe")
+
+
+def folder_list(session, kind: str) -> list[dict]:
+    rows = session.scalars(select(NotebookFolder).where(NotebookFolder.kind == kind)).all()
+    rows = sorted(rows, key=lambda f: f.name.casefold())
+    return [{"id": f.id, "name": f.name, "can_edit": access.is_admin() or f.created_by == _me()} for f in rows]
+
+
+def _folder(session, raw, kind: str) -> NotebookFolder | None:
+    """The folder named by `raw` (an id; empty for none), which must be one
+    of this kind, or aborts with 404."""
+    if raw in (None, "", 0, "0"):
+        return None
+    folder = session.get(NotebookFolder, _int(raw) or 0)
+    if folder is None or folder.kind != kind:
+        abort(404)
+    return folder
+
+
+def _own_folder(session, folder_id: int) -> NotebookFolder:
+    folder = session.get(NotebookFolder, folder_id)
+    if folder is None:
+        abort(404)
+    if not (access.is_admin() or folder.created_by == _me()):
+        abort(403)
+    return folder
+
+
+def _folder_name(raw) -> str:
+    return " ".join(str(raw or "").split())[:120]
+
+
+@bp.post("/api/folders")
+def folder_create():
+    """A new folder in the protocol or recipe library, shared with the lab."""
+    data = _json_body()
+    kind, name = str(data.get("kind") or ""), _folder_name(data.get("name"))
+    if kind not in FOLDER_KINDS:
+        return _fail(gettext("Choose the protocols or the recipes."))
+    if not name:
+        return _fail(gettext("A folder needs a name."))
+    if _is_guest(g.user):
+        abort(403)
+    with SessionLocal() as s:
+        taken = s.scalar(select(NotebookFolder.id).where(NotebookFolder.kind == kind,
+                                                         func.lower(NotebookFolder.name) == name.lower()))
+        if taken:
+            return _fail(gettext("There is a folder of that name already."))
+        folder = NotebookFolder(kind=kind, name=name, created_by=_me(), created_at=_now())
+        s.add(folder)
+        s.commit()
+        return jsonify({"ok": True, "id": folder.id, "name": folder.name})
+
+
+@bp.post("/api/folders/<int:folder_id>")
+def folder_rename(folder_id: int):
+    name = _folder_name(_json_body().get("name"))
+    if not name:
+        return _fail(gettext("A folder needs a name."))
+    with SessionLocal() as s:
+        folder = _own_folder(s, folder_id)
+        taken = s.scalar(select(NotebookFolder.id).where(NotebookFolder.kind == folder.kind,
+                                                         NotebookFolder.id != folder.id,
+                                                         func.lower(NotebookFolder.name) == name.lower()))
+        if taken:
+            return _fail(gettext("There is a folder of that name already."))
+        folder.name = name
+        s.commit()
+        return jsonify({"ok": True, "id": folder.id, "name": folder.name})
+
+
+@bp.post("/api/folders/<int:folder_id>/delete")
+def folder_delete(folder_id: int):
+    """Delete a folder; what was filed in it stays, in no folder."""
+    with SessionLocal() as s:
+        folder = _own_folder(s, folder_id)
+        if folder.kind == "protocol":
+            s.execute(update(NotebookPageInfo).where(NotebookPageInfo.folder_id == folder.id).values(folder_id=None))
+        else:
+            s.execute(update(NotebookRecipe).where(NotebookRecipe.folder_id == folder.id).values(folder_id=None))
+        s.delete(folder)
+        s.commit()
+        return jsonify({"ok": True})
+
+
+@bp.post("/api/folders/file")
+def folder_file():
+    """File a protocol (by its page) or a recipe in a folder, or take it out
+    of one (no folder_id). Whoever may edit it may file it."""
+    data = _json_body()
+    kind, item_id = str(data.get("kind") or ""), _int(data.get("item_id"))
+    if kind not in FOLDER_KINDS or item_id is None:
+        return _fail(gettext("Choose what to file."))
+    with SessionLocal() as s:
+        folder = _folder(s, data.get("folder_id"), kind)
+        if kind == "protocol":
+            page, role = load_page(s, item_id)
+            if not can_edit_role(role):
+                abort(403)
+            info = info_for(s, page.id)
+            if info is None or info.kind != "protocol":
+                return _fail(gettext("That page is not a protocol."))
+            info.folder_id = folder.id if folder else None
+        else:
+            recipe = s.get(NotebookRecipe, item_id)
+            if recipe is None:
+                abort(404)
+            if not (access.is_admin() or recipe.owner == _me()):
+                abort(403)
+            recipe.folder_id = folder.id if folder else None
+        s.commit()
+        return jsonify({"ok": True, "folder_id": folder.id if folder else None})
 
 
 # ---------------------------------------------------------------- chemicals for formulations

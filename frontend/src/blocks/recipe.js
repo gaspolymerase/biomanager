@@ -51,11 +51,15 @@ export function amountFor(c, volumeL) {
   return { error: 'needs a stock concentration' };
 }
 
+// ctx.library: the recipe is the library's own (the Recipes page edits
+// it), not one in a page: no ticks, and nothing to save to or load from
+// the library.
 export function mountRecipe(host, ctx) {
   let data = normalize(ctx.data);
   let editable = ctx.editable;
+  const inLibrary = !!ctx.library;
   const commit = debounce(() => ctx.commit(JSON.parse(JSON.stringify(data))), 350);
-  const root = el('div', { class: 'nb-recipe' });
+  const root = el('div', { class: inLibrary ? 'nb-recipe is-library' : 'nb-recipe' });
   host.appendChild(root);
 
   function volumeL() {
@@ -110,9 +114,9 @@ export function mountRecipe(host, ctx) {
       <div class="nb-recipe-water"></div>
       <textarea class="nb-recipe-notes" data-f="notes" rows="2" placeholder="Notes: how to dissolve, adjust pH, sterilise, store"${dis}>${escapeHtml(data.notes || '')}</textarea>
       <div class="nb-recipe-actions">
-        ${editable ? '<button type="button" class="nb-mini" data-act="add">+ Component</button><button type="button" class="nb-mini" data-act="load">Load from library</button>' : ''}
-        <button type="button" class="nb-mini" data-act="save">Save to library</button>
-        <button type="button" class="nb-mini" data-act="untick">Clear ticks</button>
+        ${editable ? '<button type="button" class="nb-mini" data-act="add">+ Component</button>' : ''}
+        ${editable && !inLibrary ? '<button type="button" class="nb-mini" data-act="load">Load from library</button>' : ''}
+        ${inLibrary ? '' : '<button type="button" class="nb-mini" data-act="save">Save to library</button><button type="button" class="nb-mini" data-act="untick">Clear ticks</button>'}
       </div>
       <div class="nb-recipe-library" hidden></div>`;
     renderResults();
@@ -190,8 +194,14 @@ export function mountRecipe(host, ctx) {
       const res = await api('/notebook/api/recipes');
       libraryItems = [...res.recipes, ...res.presets];
       const row = (r, tag) => `<button type="button" class="nb-lib-item" data-pick="${escapeHtml(r.id)}"><b>${escapeHtml(r.name)}</b><small>${tag} · ${(r.data.components || []).length} components · ${escapeHtml(fmt(toNumber(r.data.volume)))} ${escapeHtml(r.data.volumeUnit || '')}</small></button>`;
+      // The lab's recipes as the Recipes page files them: each folder, then the rest.
+      const folders = (res.folders || []).map((f) => ({ label: f.name, items: res.recipes.filter((r) => r.folder_id === f.id) }))
+        .filter((part) => part.items.length);
+      const filed = new Set((res.folders || []).map((f) => f.id));
+      const loose = res.recipes.filter((r) => !filed.has(r.folder_id));
+      if (loose.length) folders.push({ label: folders.length ? 'Not in a folder' : 'Saved by the lab', items: loose });
       box.innerHTML = `<div class="nb-lib-head"><b>Recipe library</b><button type="button" class="nb-icon-btn" data-close-lib aria-label="Close">×</button></div>
-        ${res.recipes.length ? `<div class="nb-lib-label">Saved by the lab</div>${res.recipes.map((r) => row(r, escapeHtml(r.owner_name || r.owner))).join('')}` : ''}
+        ${folders.map((part) => `<div class="nb-lib-label">${escapeHtml(part.label)}</div>${part.items.map((r) => row(r, escapeHtml(r.owner_name || r.owner))).join('')}`).join('')}
         <div class="nb-lib-label">Common recipes</div>${res.presets.map((r) => row(r, 'built in')).join('')}`;
     } catch (e) {
       box.innerHTML = `<p class="nb-warn">Could not load the library: ${escapeHtml(e.message)}</p>`;

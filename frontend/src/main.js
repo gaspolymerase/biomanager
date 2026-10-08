@@ -27,6 +27,7 @@ import { MathInline } from './extensions/MathInline.js';
 import { SlashMenu } from './extensions/SlashMenu.js';
 import { CommentHighlights } from './extensions/CommentHighlights.js';
 import { LabBlock } from './blocks/index.js';
+import { mountRecipe } from './blocks/recipe.js';
 import { StepTimers, timers } from './timers.js';
 import { createToolbar } from './toolbar.js';
 import { attachTableAutofill } from './table-autofill.js';
@@ -230,4 +231,6 @@ async function mountOnce(options) {
 window.BiomanagerNotebook = {
   mount: mountOnce,
   timers,
+  // The recipe editor on its own, for the Recipes page (static/notebook-library.js).
+  recipe: mountRecipe,
 };
