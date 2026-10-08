@@ -82,7 +82,8 @@
       '<a href="' + BASE + '" data-nav="" data-drop-folder="">' + icon(home[1]) + ' ' + esc(t(home[0])) + '</a>',
     ].concat(crumbs.map(function (c) {
       return '<span class="nb-lib-sep" aria-hidden="true">›</span>' +
-        (c.params ? '<a href="' + link(c.params) + '" data-nav="' + esc(JSON.stringify(c.params)) + '">' + esc(c.label) + '</a>' : '<span>' + esc(c.label) + '</span>');
+        (c.params ? '<a href="' + link(c.params) + '" data-nav="' + esc(JSON.stringify(c.params)) + '">' + (c.icon ? icon(c.icon) + ' ' : '') + esc(c.label) + '</a>'
+          : '<span>' + (c.icon ? icon(c.icon) + ' ' : '') + '<span class="nb-lib-crumb-text">' + esc(c.label) + '</span></span>');
     }));
     return '<header class="nb-lib-head"><nav class="nb-lib-crumbs" aria-label="' + t('Where you are') + '">' + trail.join('') + '</nav>' +
       '<div class="nb-lib-tools">' + (tools || '') + '</div></header>' +
@@ -97,7 +98,7 @@
     return '<h2 class="nb-lib-label">' + t('Folders') + '</h2><div class="nb-lib-folders">' + folders.map(function (f) {
       var n = items.filter(function (x) { return x.folder_id === f.id; }).length;
       return '<a class="nb-lib-folder" href="' + link({ folder: f.id }) + '" data-nav="' + esc(JSON.stringify({ folder: f.id })) + '" data-drop-folder="' + f.id + '">' +
-        icon('folder') + '<span><b>' + esc(f.name) + '</b><small>' + count(n, KIND === 'protocols' ? '%(n)s protocol' : '%(n)s recipe', KIND === 'protocols' ? '%(n)s protocols' : '%(n)s recipes') + '</small></span></a>';
+        icon(f.icon || 'folder') + '<span><b>' + esc(f.name) + '</b><small>' + count(n, KIND === 'protocols' ? '%(n)s protocol' : '%(n)s recipe', KIND === 'protocols' ? '%(n)s protocols' : '%(n)s recipes') + '</small></span></a>';
     }).join('') + '</div>';
   }
   // A card's folder button: a menu of the folders, for whoever may file it.
@@ -113,17 +114,23 @@
     return f ? f.name : '';
   }
 
-  // Folder buttons shared by both libraries.
-  function newFolder(kind) {
-    return BioDialog.prompt(t('New folder'), '', { placeholder: kind === 'protocol' ? t('e.g. Cloning') : t('e.g. Buffers'), okLabel: t('Create folder') }).then(function (name) {
-      if (!name || !name.trim()) return null;
-      return api('/notebook/api/folders', { body: { kind: kind, name: name.trim() } });
+  // Folder buttons shared by both libraries: a name and an icon to pick.
+  function newFolder(kind, icons) {
+    return BioDialog.prompt(t('New folder'), '', {
+      placeholder: kind === 'protocol' ? t('e.g. Cloning') : t('e.g. Buffers'), okLabel: t('Create folder'),
+      icons: { choices: icons, value: 'folder' },
+    }).then(function (answer) {
+      if (!answer || !answer.value.trim()) return null;
+      return api('/notebook/api/folders', { body: { kind: kind, name: answer.value.trim(), icon: answer.icon } });
     });
   }
-  function renameFolder(folder) {
-    return BioDialog.prompt(t('Rename folder'), folder.name, { okLabel: t('Rename') }).then(function (name) {
-      if (!name || !name.trim() || name.trim() === folder.name) return null;
-      return api('/notebook/api/folders/' + folder.id, { body: { name: name.trim() } });
+  function editFolder(folder, icons) {
+    return BioDialog.prompt(t('Edit folder'), folder.name, {
+      okLabel: t('Save'), icons: { choices: icons, value: folder.icon || 'folder' },
+    }).then(function (answer) {
+      if (!answer || !answer.value.trim()) return null;
+      if (answer.value.trim() === folder.name && answer.icon === folder.icon) return null;
+      return api('/notebook/api/folders/' + folder.id, { body: { name: answer.value.trim(), icon: answer.icon } });
     });
   }
   function deleteFolder(folder) {
@@ -210,11 +217,11 @@
       };
       var tools = searchBox(t('Find a protocol…'), lastQuery) +
         (folder
-          ? (folder.can_edit ? '<button type="button" class="btn" data-rename-folder>' + icon('edit') + ' ' + t('Rename') + '</button>' +
+          ? (folder.can_edit ? '<button type="button" class="btn" data-edit-folder>' + icon('edit') + ' ' + t('Edit folder') + '</button>' +
             '<button type="button" class="btn" data-delete-folder>' + icon('trash') + ' ' + t('Delete folder') + '</button>' : '')
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button>';
-      root.innerHTML = head(folder ? [{ label: folder.name }] : [], tools,
+      root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
         folder ? '' : t('The lab’s protocols. Open one to read or change it, drag it onto a folder to file it, or start an experiment from it. In a page, type /protocol to insert one.')) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
@@ -286,9 +293,9 @@
         var b = e.target.closest('button');
         if (!b) return;
         if (b.hasAttribute('data-new-folder')) {
-          newFolder('protocol').then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
-        } else if (b.hasAttribute('data-rename-folder')) {
-          renameFolder(folder).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
+          newFolder('protocol', d.folder_icons).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
+        } else if (b.hasAttribute('data-edit-folder')) {
+          editFolder(folder, d.folder_icons).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
         } else if (b.hasAttribute('data-delete-folder')) {
           deleteFolder(folder).then(function (r) { if (r) nav({}); }).catch(function (err) { toast(esc(err.message), true); });
         } else if (b.hasAttribute('data-new-protocol')) {
@@ -350,11 +357,11 @@
       };
       var tools = searchBox(t('Find a recipe…'), lastQuery) +
         (folder
-          ? (folder.can_edit ? '<button type="button" class="btn" data-rename-folder>' + icon('edit') + ' ' + t('Rename') + '</button>' +
+          ? (folder.can_edit ? '<button type="button" class="btn" data-edit-folder>' + icon('edit') + ' ' + t('Edit folder') + '</button>' +
             '<button type="button" class="btn" data-delete-folder>' + icon('trash') + ' ' + t('Delete folder') + '</button>' : '')
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-recipe>' + icon('plus') + ' ' + t('New recipe') + '</button>';
-      root.innerHTML = head(folder ? [{ label: folder.name }] : [], tools,
+      root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
         folder ? '' : t('The lab’s buffer and media recipes. Open one to change it; in a page, type /recipe and load one, then change the volume and every amount follows.')) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
@@ -409,9 +416,9 @@
         var b = e.target.closest('button');
         if (!b) return;
         if (b.hasAttribute('data-new-folder')) {
-          newFolder('recipe').then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
-        } else if (b.hasAttribute('data-rename-folder')) {
-          renameFolder(folder).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
+          newFolder('recipe', d.folder_icons).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
+        } else if (b.hasAttribute('data-edit-folder')) {
+          editFolder(folder, d.folder_icons).then(function (r) { if (r) draw(); }).catch(function (err) { toast(esc(err.message), true); });
         } else if (b.hasAttribute('data-delete-folder')) {
           deleteFolder(folder).then(function (r) { if (r) nav({}); }).catch(function (err) { toast(esc(err.message), true); });
         } else if (b.hasAttribute('data-new-recipe')) {
@@ -437,7 +444,7 @@
     var builtIn = String(r.id).indexOf('preset:') === 0;
     var editable = !builtIn && r.can_edit;
     var folder = builtIn ? null : d.folders.filter(function (f) { return f.id === r.folder_id; })[0];
-    var crumbs = (folder ? [{ label: folder.name, params: { folder: folder.id } }] : []).concat([{ label: r.name }]);
+    var crumbs = (folder ? [{ label: folder.name, icon: folder.icon, params: { folder: folder.id } }] : []).concat([{ label: r.name }]);
     var tools = '<span class="nb-lib-saved" id="nb-lib-saved" aria-live="polite"></span>' +
       (editable && d.folders.length ? '<label class="nb-folder-select">' + icon('folder') + '<select id="nb-recipe-folder" aria-label="' + t('Folder') + '"><option value="">' + t('No folder') + '</option>' +
         d.folders.map(function (f) { return '<option value="' + f.id + '"' + (f.id === r.folder_id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join('') + '</select></label>' : '') +
@@ -466,7 +473,7 @@
           api('/notebook/api/recipes', { body: { id: r.id, name: name, data: next } }).then(function () {
             r.name = name;
             r.data = next;
-            var last = root.querySelector('.nb-lib-crumbs > span:last-child');
+            var last = root.querySelector('.nb-lib-crumbs > span:last-child .nb-lib-crumb-text');
             if (last) last.textContent = name;
             saved.textContent = t('Saved');
           }).catch(function (err) { saved.textContent = ''; toast(esc(err.message), true); });

@@ -445,7 +445,9 @@ database has a name of its own (one another database has is refused), so
     page of their own: search them, open one to read or change it, make one
     with **New protocol**, and sort them into **folders** (**New folder**,
     then drag a protocol onto it, or pick its folder on the card or in the
-    protocol's own bar). Folders are the lab's, shared by everyone. Below
+    protocol's own bar). Each folder has an icon you pick when you make it;
+    **Edit folder** changes its name or icon. Folders are the lab's, shared
+    by everyone. Below
     them are a dozen common protocols built in (genotyping, perfusion,
     immunofluorescence, western, BCA, transformation, miniprep, TRIzol,
     qPCR, passaging, tamoxifen), to read and **Copy** into one of your own.

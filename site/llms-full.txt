@@ -944,7 +944,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
 
-- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one.
+- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one.
 
 ### Data and calculators
 

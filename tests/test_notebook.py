@@ -564,6 +564,26 @@ class LibraryFolderTests(Notebook):
         self.assertEqual(count("notebook_folders", "id=?", folder), 0)
         self.assertIsNone(one("select folder_id from notebook_recipes where id=?", rid))
 
+    def test_a_folder_has_an_icon_its_maker_can_change(self):
+        lib = self.m.get("/notebook/api/recipes").get_json()
+        self.assertEqual(lib["folder_icons"][0], "folder")
+        plain = self.folder(self.m, "recipe")
+        r = self.post_json(self.m, "/notebook/api/folders", {"kind": "recipe", "name": uniq("Media"), "icon": "petri"}).get_json()
+        icons = {f["id"]: f["icon"] for f in self.m.get("/notebook/api/recipes").get_json()["folders"]}
+        self.assertEqual((icons[plain], icons[r["id"]]), ("folder", "petri"))
+        # Changed with the name; only one of the icons offered.
+        name = uniq("Bacterial media")
+        changed = self.post_json(self.m, f"/notebook/api/folders/{plain}", {"name": name, "icon": "bacterium"}).get_json()
+        self.assertEqual((changed["name"], changed["icon"]), (name, "bacterium"))
+        self.assertEqual(self.post_json(self.m, f"/notebook/api/folders/{plain}", {"name": name, "icon": "nope"}).status_code, 400)
+        self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "recipe", "name": uniq("X"), "icon": "nope"}).status_code, 400)
+        self.assertEqual(self.post_json(client_for(make_user()), f"/notebook/api/folders/{plain}", {"name": name, "icon": "dna"}).status_code, 403)
+        # Back to a plain folder; a rename alone keeps the icon.
+        self.post_json(self.m, f"/notebook/api/folders/{r['id']}", {"name": uniq("Plates")})
+        self.assertEqual(one("select icon from notebook_folders where id=?", r["id"]), "petri")
+        self.post_json(self.m, f"/notebook/api/folders/{plain}", {"name": name, "icon": "folder"})
+        self.assertEqual(one("select icon from notebook_folders where id=?", plain), "")
+
     def test_a_folder_needs_a_name_and_a_kind_and_guests_make_none(self):
         self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "protocol", "name": "  "}).status_code, 400)
         self.assertEqual(self.post_json(self.m, "/notebook/api/folders", {"kind": "plasmid", "name": "X"}).status_code, 400)

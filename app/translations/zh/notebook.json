@@ -140,5 +140,6 @@
   "A folder needs a name.": "文件夹需要一个名称。",
   "There is a folder of that name already.": "已经有同名的文件夹了。",
   "Choose what to file.": "请选择要归档的内容。",
-  "That page is not a protocol.": "这个页面不是实验流程。"
+  "That page is not a protocol.": "这个页面不是实验流程。",
+  "Choose one of the icons shown.": "请从显示的图标中选择一个。"
 }

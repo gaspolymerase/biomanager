@@ -1420,7 +1420,7 @@ def protocols():
             # May file it in a folder: whoever may edit the page.
             "can_edit": r.owner_username == me or can_edit_role(role_for(s, r.NotebookPage)),
             "tags": tag_list(r.tags or ""), "updated_at": _iso(r.NotebookPage.updated_at)} for r in rows],
-            "folders": folder_list(s, "protocol"),
+            "folders": folder_list(s, "protocol"), "folder_icons": FOLDER_ICONS,
             "presets": notebook_protocols.preset_list()})
 
 
@@ -1902,7 +1902,7 @@ def recipes():
         rows = s.scalars(select(NotebookRecipe).order_by(NotebookRecipe.name)).all()
         names = display_names(s, [r.owner for r in rows])
         return jsonify({"ok": True, "recipes": [_recipe_json(r, names) for r in rows],
-                        "folders": folder_list(s, "recipe"),
+                        "folders": folder_list(s, "recipe"), "folder_icons": FOLDER_ICONS,
                         "presets": [{"id": f"preset:{key}", "name": p["name"], "data": p} for key, p in PRESET_RECIPES.items()]})
 
 
@@ -1958,12 +1958,27 @@ def recipe_delete(recipe_id: int):
 # ---------------------------------------------------------------- library folders
 
 FOLDER_KINDS = ("protocol", "recipe")
+# The icons a folder may have, first the plain folder it starts as.
+FOLDER_ICONS = ("folder", "protocol", "flask", "flask-vial", "vial", "vials", "droplet", "dna", "plasmid",
+                "antibody", "microscope", "petri", "culture-vial", "bacterium", "virus", "mouse", "fish", "fly",
+                "worm", "frog", "seedling", "paw", "syringe", "heart-pulse", "snowflake", "temperature", "scale",
+                "calculator", "chart", "target", "list-check", "clipboard", "notebook", "star", "bolt", "tag")
 
 
 def folder_list(session, kind: str) -> list[dict]:
     rows = session.scalars(select(NotebookFolder).where(NotebookFolder.kind == kind)).all()
     rows = sorted(rows, key=lambda f: f.name.casefold())
-    return [{"id": f.id, "name": f.name, "can_edit": access.is_admin() or f.created_by == _me()} for f in rows]
+    return [{"id": f.id, "name": f.name, "icon": f.icon if f.icon in FOLDER_ICONS else "folder",
+             "can_edit": access.is_admin() or f.created_by == _me()} for f in rows]
+
+
+def _folder_icon(raw) -> str | None:
+    """A folder icon from the form: one of FOLDER_ICONS ("folder" is kept
+    as none), or None when it is not one."""
+    icon = str(raw or "folder")
+    if icon not in FOLDER_ICONS:
+        return None
+    return "" if icon == "folder" else icon
 
 
 def _folder(session, raw, kind: str) -> NotebookFolder | None:
@@ -1999,6 +2014,9 @@ def folder_create():
         return _fail(gettext("Choose the protocols or the recipes."))
     if not name:
         return _fail(gettext("A folder needs a name."))
+    icon = _folder_icon(data.get("icon"))
+    if icon is None:
+        return _fail(gettext("Choose one of the icons shown."))
     if _is_guest(g.user):
         abort(403)
     with SessionLocal() as s:
@@ -2006,19 +2024,26 @@ def folder_create():
                                                          func.lower(NotebookFolder.name) == name.lower()))
         if taken:
             return _fail(gettext("There is a folder of that name already."))
-        folder = NotebookFolder(kind=kind, name=name, created_by=_me(), created_at=_now())
+        folder = NotebookFolder(kind=kind, name=name, icon=icon, created_by=_me(), created_at=_now())
         s.add(folder)
         s.commit()
-        return jsonify({"ok": True, "id": folder.id, "name": folder.name})
+        return jsonify({"ok": True, "id": folder.id, "name": folder.name, "icon": folder.icon or "folder"})
 
 
 @bp.post("/api/folders/<int:folder_id>")
 def folder_rename(folder_id: int):
-    name = _folder_name(_json_body().get("name"))
+    """Rename a folder, change its icon, or both."""
+    data = _json_body()
+    name = _folder_name(data.get("name"))
     if not name:
         return _fail(gettext("A folder needs a name."))
+    icon = _folder_icon(data.get("icon")) if "icon" in data else None
+    if "icon" in data and icon is None:
+        return _fail(gettext("Choose one of the icons shown."))
     with SessionLocal() as s:
         folder = _own_folder(s, folder_id)
+        if icon is not None:
+            folder.icon = icon
         taken = s.scalar(select(NotebookFolder.id).where(NotebookFolder.kind == folder.kind,
                                                          NotebookFolder.id != folder.id,
                                                          func.lower(NotebookFolder.name) == name.lower()))
@@ -2026,7 +2051,7 @@ def folder_rename(folder_id: int):
             return _fail(gettext("There is a folder of that name already."))
         folder.name = name
         s.commit()
-        return jsonify({"ok": True, "id": folder.id, "name": folder.name})
+        return jsonify({"ok": True, "id": folder.id, "name": folder.name, "icon": folder.icon or "folder"})
 
 
 @bp.post("/api/folders/<int:folder_id>/delete")

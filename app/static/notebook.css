@@ -281,8 +281,9 @@
 .nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .nb-lib-crumbs a { display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px; margin: -2px -6px; border-radius: 8px; color: var(--color-ink); text-decoration: none; }
 .nb-lib-crumbs a:hover { background: var(--color-recess); }
-.nb-lib-crumbs a .icon { width: 18px; height: 18px; color: var(--color-brand-600); }
-.nb-lib-crumbs > span:last-child { overflow-wrap: anywhere; }
+.nb-lib-crumbs a .icon, .nb-lib-crumbs > span > .icon { width: 18px; height: 18px; color: var(--color-brand-600); }
+.nb-lib-crumbs > span:last-child { display: inline-flex; align-items: center; gap: 8px; }
+.nb-lib-crumbs > span:last-child { overflow-wrap: anywhere; min-width: 0; }
 .nb-lib-crumbs:has(> span:last-child) > a:first-child { color: var(--color-muted); }
 .nb-lib-sep { color: var(--color-sand-400); font-weight: 400; }
 .nb-lib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -359,3 +360,5 @@
 .nb-folder-select { display: inline-flex; align-items: center; gap: 5px; color: var(--color-muted); font-size: 12px; }
 .nb-folder-select .icon { width: 13px; height: 13px; }
 .nb-folder-select select { max-width: 180px; padding: 2px 6px; border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 12px; }
+/* New folder / Edit folder: the icon grid inside the name dialog. */
+.bio-dialog .icon-picker { margin-top: 12px; }

@@ -276,7 +276,6 @@
   "Not in a folder": "未放进文件夹",
   "Nothing in this folder yet. Make a protocol here with New protocol, or drag one onto the folder.": "这个文件夹还是空的。用“新建实验流程”在这里创建一个，或把实验流程拖到文件夹上。",
   "Nothing in this folder yet. Make a recipe here with New recipe, or drag one onto the folder.": "这个文件夹还是空的。用“新建配方”在这里创建一个，或把配方拖到文件夹上。",
-  "Rename folder": "重命名文件夹",
   "Save a copy": "另存一份",
   "Saved as your own. Change it here.": "已另存为你自己的，可以在这里修改。",
   "Saved by %(name)s; they can change it. Save a copy to make your own.": "由 %(name)s 保存，只有他们可以修改。另存一份即成为你自己的。",
@@ -292,5 +291,6 @@
   "e.g. Western blot": "例如 Western blot",
   "Create": "创建",
   "Saved": "已保存",
-  "Saving…": "保存中…"
+  "Saving…": "保存中…",
+  "Edit folder": "编辑文件夹"
 }

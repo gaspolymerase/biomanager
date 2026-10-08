@@ -816,7 +816,7 @@
           '<div class="nb-panel-actions"><input type="search" class="nb-panel-search" placeholder="' + t('Find a protocol…') + '" aria-label="' + t('Find a protocol') + '">' +
           '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button></div>' +
           (d.protocols.length ? byFolder(d.protocols, d.folders, t('Lab protocols')).map(function (part) {
-            return '<div class="notebook-section-label">' + (part.folder ? icon('folder') + ' ' : '') + esc(part.label) + '</div>' +
+            return '<div class="notebook-section-label">' + (part.folder ? icon(part.folder.icon || 'folder') + ' ' : '') + esc(part.label) + '</div>' +
               '<ul class="nb-list">' + part.items.map(labRow).join('') + '</ul>';
           }).join('')
             : '<div class="notebook-section-label">' + t('Lab protocols') + '</div><p class="nb-muted">' + t('None yet. Write one with New protocol, or copy a common one below and make it yours.') + '</p>') +

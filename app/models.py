@@ -2283,6 +2283,8 @@ class NotebookFolder(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     kind: Mapped[str] = mapped_column(String(20), index=True)  # protocol | recipe
     name: Mapped[str] = mapped_column(String(120))
+    # Its icon in the library (lab_notebook.FOLDER_ICONS); empty: a folder.
+    icon: Mapped[str] = mapped_column(String(40), default="", server_default="")
     created_by: Mapped[str] = mapped_column(String(80), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

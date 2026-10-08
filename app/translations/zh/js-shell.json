@@ -56,5 +56,6 @@
   "Glycerol stock": "甘油菌",
   "Chemical": "化学品",
   "Saved the order of the databases.": "数据库顺序已保存。",
-  "Could not save the order. Reload the page and try again.": "无法保存顺序。请刷新页面后再试。"
+  "Could not save the order. Reload the page and try again.": "无法保存顺序。请刷新页面后再试。",
+  "Icon": "图标"
 }
