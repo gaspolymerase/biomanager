@@ -30,6 +30,18 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.3": {
+        "new": [
+            "**Settings** is laid out like the Mac's: a list of panes beside the one you pick, each change saved as you make it, and a search box.",
+            "The lab's pages are panes in Settings: **Statistics**, **General**, **Databases**, **People & access** and **History**. Everyone sees them; admins change them.",
+            "In a project group, each person is a **Lead**, a **Member** or **Can only view**, and the group's switches say what its members may do.",
+            "Home has a card for each of the lab's databases, in the sidebar's order.",
+        ],
+        "changed": [
+            "The sidebar's **More** menu is gone: its pages are in **Settings**.",
+            "The **Genotyping** dialog says what to type, and the rack position column is headed **Pos**.",
+        ],
+    },
     "1.2.2": {
         "fixed": [
             "The language picked on the sign-in page stays when you sign in, and on a Mac set to Chinese the desktop app shows Chinese.",
