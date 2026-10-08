@@ -48,7 +48,22 @@ BOX_Y, BOX_H = 560, 860          # where the footage sits
 CAPTION_Y = 1510                 # the middle of the caption line, under the footage, above TikTok's own text
 GAP = 0.3
 INK = (15, 23, 42)
-BLACK, MUTED = (0, 0, 0), (148, 163, 184)   # the screen is black, as TikTok is
+MUTED = (148, 163, 184)
+# Dark, as TikTok is, but each day in its own colour: a deep gradient and two soft glows.
+TONES = [("#1e1b4b", "#0f3d3a", "#14b8a6", "#6366f1"), ("#172554", "#3b0764", "#3b82f6", "#a855f7"),
+         ("#042f2e", "#172554", "#10b981", "#0ea5e9"), ("#3b0764", "#0c4a6e", "#d946ef", "#06b6d4"),
+         ("#0f172a", "#064e3b", "#22c55e", "#3b82f6"), ("#4a044e", "#1e1b4b", "#ec4899", "#8b5cf6"),
+         ("#422006", "#1e1b4b", "#f59e0b", "#6366f1")]
+
+
+def backdrop(day: int) -> Image.Image:
+    top, bottom, glow_a, glow_b = TONES[day % len(TONES)]
+    img = fc.gradient((W, H), (top, bottom)).convert("RGBA")
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    g = ImageDraw.Draw(glow)
+    g.ellipse((-300, -260, 700, 640), fill=(*fc.hex_rgb(glow_a), 110))
+    g.ellipse((480, 1300, 1480, 2260), fill=(*fc.hex_rgb(glow_b), 110))
+    return Image.alpha_composite(img, glow.filter(ImageFilter.GaussianBlur(160)))
 GREEN = (13, 148, 136)
 
 
@@ -78,8 +93,8 @@ def balanced(draw, text, fnt, width):
 
 
 def background(video, path: Path):
-    """Black, with the hook at the top and the title on a green band under it."""
-    img = Image.new("RGBA", (W, H), BLACK)
+    """The day's dark colours, with the hook at the top and the title on a green band under it."""
+    img = backdrop(video.get("day", 0))
     d = ImageDraw.Draw(img)
     # As large as fits between TikTok's tabs (y 150) and the footage.
     for size in (78, 72, 66, 60, 56, 52):
@@ -115,8 +130,8 @@ def caption(text, path: Path):
     img.save(path)
 
 
-def end_card(end, path: Path):
-    img = Image.new("RGBA", (W, H), BLACK)
+def end_card(end, day: int, path: Path):
+    img = backdrop(day)
     d = ImageDraw.Draw(img)
     icon = Image.open(ROOT / "app/static/icon-512.png").convert("RGBA").resize((240, 240))
     img.alpha_composite(icon, ((W - 240) // 2, 520))
@@ -233,7 +248,7 @@ def from_day(n: int, board: dict, posts: dict) -> dict:
     post = next(p for p in posts["posts"] if p["day"] == n)
     en = day["en"]
     says = [en["hook"], *en["lines"]]
-    return {"name": f"day{n:02d}", "source": f"promo/out/{day['clip']}/plain.mp4",
+    return {"day": n, "name": f"day{n:02d}", "source": f"promo/out/{day['clip']}/plain.mp4",
             "hook": en["hook"], "mark": post["title_en"],
             "lines": [{"say": s} for s in says]}
 
@@ -307,7 +322,7 @@ def make(video: dict, voice: str, tmp: Path) -> Path:
 
     # The captions, a few words at a time, shared out over each line by length.
     background(video, tmp / "bg.png")
-    end_card(video["end"], tmp / "end.png")
+    end_card(video["end"], video.get("day", 0), tmp / "end.png")
     overlays = []
     for i, (say, (start, length)) in enumerate(zip(says[:-1], spans)):
         bits = chunks(say)
