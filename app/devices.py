@@ -75,7 +75,7 @@ SEEN_WITHIN = timedelta(minutes=10)   # a desktop heard from this recently is "o
 HELLO_EVERY = 60                      # seconds, on a linked desktop
 LAN_PORT = 5870
 ALLOWED_WHILE_READ_ONLY = ("/static/", "/api/devices/", "/api/lab-copy/", "/login", "/logout", "/app-icon/",
-                           "/settings/devices")
+                           "/settings/devices", "/start-new-lab")
 
 _swapping = threading.Event()         # this desktop is opening another database right now
 

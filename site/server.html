@@ -168,6 +168,10 @@
         <li>A Linux computer that stays on (Ubuntu 24.04, or another Linux with systemd), x86-64 or ARM, with 2 CPU
           cores, 2 GB of memory and 20 GB of free disk. For a Mac, use the desktop app: <b>Settings → Set up a lab server →
           This computer, for the whole lab</b>.</li>
+        <li>A NAS that runs Docker (fnOS and the like) works too: it keeps its own web pages on ports 80 and 443,
+          and BioManager takes free ones beside them (step 7). The desktop app's <b>Settings → Set up a lab server →
+          A Linux computer in the lab</b> does all of this for you: choose <b>No key: sign in with a password</b> and
+          give the NAS account's password.</li>
         <li>An account on it that can use <code>sudo</code>.</li>
         <li>A fixed IP address or DNS name for it, from your IT.</li>
         <li>Cost: $0 a month.</li>
@@ -182,7 +186,7 @@
           <p class="ifnot"><b>If not:</b> the address changes after a restart: ask IT for a DHCP reservation for this computer.</p>
         </li>
         <li>
-          <p>Install Docker.</p>
+          <p>Install Docker. (On a NAS it is already there: go on to step 3.)</p>
           <div class="cmd"><pre id="b-docker">curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER</pre><button type="button" class="copy-btn" data-copy="b-docker">Copy</button></div>
           <p class="see"><b>You should see:</b> Docker's installer finish without an error.</p>
@@ -234,10 +238,15 @@ TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy=
           <p class="ifnot"><b>If not:</b> <code>nano: command not found</code>: <code>sudo apt-get install nano</code>.</p>
         </li>
         <li>
-          <p>Check the settings.</p>
+          <p>Check the settings, and choose BioManager's ports.</p>
           <div class="cmd"><pre id="b-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+host/ports.sh
 docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="b-check">Copy</button></div>
-          <p class="see"><b>You should see:</b> your four lines, with <code>TLS=internal</code>, then <code>settings ok</code>.</p>
+          <p class="see"><b>You should see:</b> your four lines, with <code>TLS=internal</code>, then
+            <code>BioManager will be at https://&lt;your-domain&gt;</code> and <code>settings ok</code>. If this computer
+            already uses port 443 (a NAS's own pages do), it says so and gives an address with a port, such as
+            <code>https://&lt;your-domain&gt;:4443</code>: use that address, port and all, wherever this page says
+            <code>https://&lt;your-domain&gt;</code>.</p>
           <p class="ifnot"><b>If not:</b> <code>set POSTGRES_PASSWORD in .env</code>: run step 5 again. <code>DOMAIN=biomanager.example.edu</code>:
             the edit wasn't saved; repeat step 6.</p>
         </li>

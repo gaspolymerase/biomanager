@@ -9,6 +9,15 @@ from __future__ import annotations
 import os
 import socket
 import sys
+
+# Asked by ssh for a password (SSH_ASKPASS, set by app/server_setup.py when
+# the server set-up signs in with one): print it and stop, before anything
+# else starts. Windows has no shell script to do this, so the app does it.
+if os.environ.get("BIOMANAGER_ASKPASS") == "1":
+    # Straight to the pipe ssh gave it: the windowed app may have no sys.stdout.
+    os.write(1, (os.environ.get("BIOMANAGER_SSH_PASSWORD", "") + "\n").encode("utf-8"))
+    sys.exit(0)
+
 import threading
 import time
 from pathlib import Path
@@ -16,13 +25,20 @@ from urllib.request import urlopen
 
 import webview
 
-from app.app import app
+# Start a new lab, if the sign-in page asked for one: this lab moves aside,
+# whole, before anything opens its database (app/paths.py).
+from app import paths as _paths  # noqa: E402
+LAB_SET_ASIDE = _paths.set_lab_aside()
+
+from app.app import app  # noqa: E402
 
 # Only this machine can reach the desktop app (it binds 127.0.0.1 on a random
 # port), so creating its first account does not need the server setup code.
 # Sharing the lab on the network (app/devices.py) listens there as well, and
 # marks those requests, which never get the desktop's own pages.
 app.config["LOCAL_SETUP"] = True
+# Said on the sign-in page until the new lab has its first account.
+app.config["LAB_SET_ASIDE"] = str(LAB_SET_ASIDE or "")
 # "Automatic" language in this window: the computer's (app/i18n.py).
 from app import i18n  # noqa: E402
 app.config["COMPUTER_LANGUAGE"] = i18n.system_language()

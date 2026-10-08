@@ -30,6 +30,17 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.5": {
+        "new": [
+            "**Start a new lab** on the desktop app's sign-in page sets aside a lab nobody can sign in to, deleting nothing, and starts an empty one whose first account is the admin.",
+        ],
+    },
+    "1.2.4": {
+        "new": [
+            "A lab server can run on a NAS such as fnOS: when the NAS's own pages already use ports 80 and 443, BioManager takes free ones and gives its address with the port.",
+            "**Set up a lab server** can sign in with a password instead of an SSH key, and asks for the password **sudo** needs when the account has one.",
+        ],
+    },
     "1.2.3": {
         "new": [
             "**Settings** is laid out like the Mac's: a list of panes beside the one you pick, each change saved as you make it, and a search box.",

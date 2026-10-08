@@ -15,8 +15,11 @@
   const target = () => ($('input[name="target"]:checked') || {}).value;
   const remote = () => target() !== 'this-computer';
 
+  const byPassword = () => $('#ss-key').value === '__password';
+
   function keyPath() {
     const pick = $('#ss-key').value;
+    if (byPassword()) return '';
     return pick === '__other' ? $('#ss-key-other').value.trim() : pick;
   }
 
@@ -29,6 +32,8 @@
       user: $('#ss-user').value.trim(),
       port: $('#ss-port').value,
       key_path: keyPath(),
+      password: byPassword() ? $('#ss-password').value : '',
+      sudo_password: $('#ss-sudo').value,
       address,
       acme_email: $('#ss-email').value.trim(),
       ts_authkey: $('#ss-authkey').value.trim(),
@@ -79,9 +84,14 @@
     return undefined;
   });
   $$('input[name="target"]').forEach((r) => r.addEventListener('change', () => { checked = null; result(null, ''); }));
-  ['#ss-host', '#ss-user', '#ss-port', '#ss-key', '#ss-key-other'].forEach((sel) =>
+  ['#ss-host', '#ss-user', '#ss-port', '#ss-key', '#ss-key-other', '#ss-password', '#ss-sudo'].forEach((sel) =>
     $(sel).addEventListener('input', () => { checked = null; result(null, ''); }));
-  $('#ss-key').addEventListener('change', () => { $('#ss-key-other-wrap').hidden = $('#ss-key').value !== '__other'; });
+  $('#ss-key').addEventListener('change', () => {
+    $('#ss-key-other-wrap').hidden = $('#ss-key').value !== '__other';
+    $('#ss-password-wrap').hidden = !byPassword();
+    $('#ss-password-note').hidden = !byPassword();
+    if (byPassword()) $('#ss-password').focus();
+  });
 
   // ---------------------------------------------------------------- connect
 
@@ -102,7 +112,15 @@
       facts.push(['ok', remote() ? t('Signed in: %(system)s', { system: j.system + (j.machine ? ` (${j.machine})` : '') }) : t('Docker Desktop is installed and running')]);
       if (remote()) {
         facts.push([j.docker ? 'ok' : 'todo', j.docker ? t('Docker is installed') : t('Docker isn\'t installed yet: the set-up installs it (Ubuntu or Debian)')]);
-        facts.push([j.sudo ? 'ok' : 'bad', j.sudo ? t('This account can use sudo') : t('This account can\'t use sudo without a password: use one that can')]);
+        if (j.sudo) facts.push(['ok', j.sudo_password ? t('This account can use sudo, with its password') : t('This account can use sudo')]);
+        else if (j.sudo_password === 'needed') facts.push(['bad', t('This account asks for its password to use sudo: type it below, then test again')]);
+        else if (j.sudo_password === 'wrong') facts.push(['bad', t('sudo didn’t take that password, or this account may not use sudo: check it, then test again')]);
+        else facts.push(['bad', t('This account can’t use sudo: sign in as one that can')]);
+        // Only while sudo still needs one (the sign-in password may already do), or once one is typed.
+        const ask = (!j.sudo && Boolean(j.sudo_password)) || Boolean($('#ss-sudo').value);
+        $('#ss-sudo-wrap').hidden = !ask;
+        $('#ss-sudo-note').hidden = !ask;
+        if (j.sudo_password === 'needed' && !j.sudo) $('#ss-sudo').focus();
       }
       if (j.existing) facts.push(['bad', t('BioManager is already set up there: this would stop rather than overwrite it')]);
       $('#ss-facts').innerHTML = facts.map(([kind, text]) => `<li data-kind="${kind}">${escapeHtml(text)}</li>`).join('');

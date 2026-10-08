@@ -168,7 +168,7 @@ def _page(s, new_code_for: dict | None = None, status: int = 200):
     users = {u.id: u for u in s.scalars(select(UserAccount).where(
         UserAccount.id.in_([p.user_id_fk for p in passes])))} if passes else {}
     rows = [{"pass": p, "user": users.get(p.user_id_fk), "active": is_active(p, now)} for p in passes]
-    base = (os.environ.get("BIOMANAGER_BASE_URL") or request.host_url).rstrip("/")
+    base = (security.base_url() or request.host_url).rstrip("/")
     return render_template("guests/admin.html", rows=rows, durations=DURATIONS, new=new_code_for,
                            public_url=public_url(), lab_url=base), status
 

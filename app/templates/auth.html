@@ -4,6 +4,12 @@
 
 {% block content %}
 <article class="card p-6">
+  {% if lab_set_aside %}
+    {# Just after Start a new lab: where the old one went (app/paths.py). #}
+    <p class="mb-4 rounded-md bg-brand-50/50 px-3 py-2 text-[12.5px] leading-snug">
+      {{ _('This is a new lab: create its first account, which becomes the admin. The lab you set aside is kept in %(folder)s.', folder=lab_set_aside) }}
+    </p>
+  {% endif %}
   {% if mode == "login" %}
     <h1 class="text-[17px]">{{ _('Sign in') }}</h1>
     <p class="mt-1 text-[12.5px] leading-snug text-muted">
@@ -28,6 +34,11 @@
     <p class="mt-4 text-center text-[12.5px] text-muted">
       {{ _('Need an account?') }} <a href="{{ url_for('register') }}">{{ _('Create one') }}</a>.
     </p>
+    {% if new_lab_offered %}
+    <p class="mt-1 text-center text-[12.5px] text-muted">
+      {{ _('Nobody can sign in to this lab?') }} <a href="{{ url_for('start_new_lab') }}">{{ _('Start a new lab') }}</a>.
+    </p>
+    {% endif %}
     <p class="mt-1 text-center text-[12.5px] text-muted">
       <a href="{{ url_for('index') }}">{{ _('What BioManager does') }}</a> · <a href="{{ guide_url }}" target="_blank" rel="noopener">{{ _('User guide') }}</a>
     </p>

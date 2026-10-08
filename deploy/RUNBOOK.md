@@ -18,7 +18,7 @@ somewhere other than the server (a password manager note works well).
 
 | What | Where | Yours |
 | --- | --- | --- |
-| The site | `https://DOMAIN`, the `DOMAIN` in `.env` | |
+| The site | `https://DOMAIN`, the `DOMAIN` in `.env`; with `:HTTPS_PORT` after it if `.env` sets one other than 443 (`host/ports.sh` does when the machine already uses 443, as a NAS does) | |
 | The server | the machine or cloud VM, and how you sign in to it (SSH, a console) | |
 | Its provider | where you start, stop or rebuild it: a cloud console, or who in IT looks after it | |
 | The code | `/opt/biomanager/Biomanager`: a server bundle from a release, or a checkout of the source | |

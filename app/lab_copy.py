@@ -137,7 +137,7 @@ def make_key():
         s.add(LabCopyKey(user_id_fk=g.user.id, label=label, key_hash=key_hash(key)))
         s.commit()
     from . import devices
-    base = (devices.share_url() or os.environ.get("BIOMANAGER_BASE_URL") or request.host_url).rstrip("/")
+    base = (devices.share_url() or security.base_url() or request.host_url).rstrip("/")
     # Shown on this page only: never stored, never in a redirect.
     return render_template("lab_copy/key.html", key=key, label=label, server=base)
 

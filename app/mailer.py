@@ -27,6 +27,7 @@ import ssl
 from email.message import EmailMessage
 from email.utils import formataddr
 
+from . import security
 from .i18n import gettext
 
 log = logging.getLogger("biomanager.mail")
@@ -41,7 +42,7 @@ def config() -> dict:
         "user": user,
         "password": os.environ.get("BIOMANAGER_SMTP_PASSWORD", ""),
         "sender": os.environ.get("BIOMANAGER_MAIL_FROM", "").strip() or user,
-        "base_url": os.environ.get("BIOMANAGER_BASE_URL", "http://127.0.0.1:5055").rstrip("/"),
+        "base_url": security.base_url() or "http://127.0.0.1:5055",
         "configured": bool(host),
     }
 

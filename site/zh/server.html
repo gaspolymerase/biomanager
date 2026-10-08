@@ -163,6 +163,9 @@
       <ul class="need">
         <li>一台一直开着的 Linux 电脑（Ubuntu 24.04，或其他带 systemd 的 Linux），x86-64 或 ARM，至少 2 个 CPU 核心、
           2 GB 内存、20 GB 空闲硬盘。如果是 Mac，请用桌面版：<b>设置 → 搭建实验室服务器 → 这台电脑，供全实验室使用</b>。</li>
+        <li>装了 Docker 的 NAS（飞牛 fnOS 等）也可以：它自己的网页照旧占着 80 和 443 端口，BioManager
+          会另找空闲的端口（第 7 步）。桌面版的<b>设置 → 搭建实验室服务器 → 实验室里的 Linux 电脑</b>可以替你完成这一切：
+          选<b>不用密钥：用密码登录</b>，填上 NAS 账号的密码即可。</li>
         <li>这台电脑上一个能用 <code>sudo</code> 的账号。</li>
         <li>IT 部门给它的固定 IP 地址或 DNS 名称。</li>
         <li>费用：每月 $0。</li>
@@ -177,7 +180,7 @@
           <p class="ifnot"><b>如果不是：</b>重启后地址会变：请 IT 部门为这台电脑做 DHCP 地址保留。</p>
         </li>
         <li>
-          <p>安装 Docker。</p>
+          <p>安装 Docker。（NAS 上已经有了：直接做第 3 步。）</p>
           <div class="cmd"><pre id="b-docker">curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER</pre><button type="button" class="copy-btn" data-copy="b-docker">复制</button></div>
           <p class="see"><b>你应该看到：</b>Docker 安装程序运行结束，没有报错。</p>
@@ -226,10 +229,14 @@ TZ=&lt;your-time-zone&gt;</pre><button type="button" class="copy-btn" data-copy=
           <p class="ifnot"><b>如果不是：</b><code>nano: command not found</code>：运行 <code>sudo apt-get install nano</code>。</p>
         </li>
         <li>
-          <p>检查设置。</p>
+          <p>检查设置，并选好 BioManager 的端口。</p>
           <div class="cmd"><pre id="b-check">grep -E '^(DOMAIN|TLS|TZ|BACKUP_DIR)=' .env
+host/ports.sh
 docker compose config --quiet &amp;&amp; echo "settings ok"</pre><button type="button" class="copy-btn" data-copy="b-check">复制</button></div>
-          <p class="see"><b>你应该看到：</b>你的四行设置，其中 <code>TLS=internal</code>，然后是 <code>settings ok</code>。</p>
+          <p class="see"><b>你应该看到：</b>你的四行设置，其中 <code>TLS=internal</code>，然后是
+            <code>BioManager will be at https://&lt;your-domain&gt;</code> 和 <code>settings ok</code>。如果这台电脑已经占用了
+            443 端口（NAS 自己的网页就会占用），它会说明，并给出一个带端口的地址，例如
+            <code>https://&lt;your-domain&gt;:4443</code>：本页凡是写 <code>https://&lt;your-domain&gt;</code> 的地方，都改用这个带端口的地址。</p>
           <p class="ifnot"><b>如果不是：</b><code>set POSTGRES_PASSWORD in .env</code>：重做第 5 步。仍是
             <code>DOMAIN=biomanager.example.edu</code>：修改没有保存，重做第 6 步。</p>
         </li>

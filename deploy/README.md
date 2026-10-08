@@ -14,8 +14,9 @@ browser ──HTTPS──▶ caddy ──▶ app (gunicorn) ──▶ db (Postgr
                     (uploads, signing key) ◀── backup ┘ ──▶ ./backups ──▶ restic (off-site)
 ```
 
-Only Caddy listens on the network (80 and 443). The database sits on an
-internal Docker network with no route out.
+Only Caddy listens on the network: on 80 and 443, or the ports
+`host/ports.sh` chose when this machine already uses those. The database
+sits on an internal Docker network with no route out.
 
 Keep the server **off the open internet**: on the campus network or VPN, or
 a private network such as Tailscale.
@@ -47,11 +48,20 @@ Then:
 cd /opt/biomanager/Biomanager/deploy
 cp .env.example .env && chmod 600 .env
 # edit .env: DOMAIN, POSTGRES_PASSWORD (openssl rand -hex 24), TZ, backups
+host/ports.sh
 docker compose up -d --build
 docker compose logs app | grep "setup code"
 ```
 
-Open `https://DOMAIN/register` and create the first account with that setup
+`host/ports.sh` writes the ports into `.env`: 80 and 443 when they are free.
+On a machine that already uses them, such as a NAS whose own web pages hold
+80 and 443, it picks others (443, then 4443, 7443, 9443, 10443) and says
+so; BioManager's address then carries the port, e.g. `https://nas.local:4443`,
+and that is the address people type. The choice is kept from then on.
+Let's Encrypt (`TLS=acme`) needs 80 and 443 themselves.
+
+Open `https://DOMAIN/register` (with the port, if `host/ports.sh` chose
+one) and create the first account with that setup
 code. It becomes the admin. Everyone else who signs up waits for an admin's
 approval in Settings → People & access.
 

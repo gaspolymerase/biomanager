@@ -92,10 +92,15 @@
               {% for k in keys %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
               <option value="">{{ _('The default (ssh decides)') if keys else _('The default (no key files found in ~/.ssh)') }}</option>
               <option value="__other">{{ _('Another file…') }}</option>
+              <option value="__password">{{ _('No key: sign in with a password') }}</option>
             </select>
           </label>
           <label class="field-label" id="ss-key-other-wrap" hidden>{{ _('Key file') }} <input id="ss-key-other" placeholder="~/Downloads/ssh-key-2026.key" spellcheck="false"></label>
+          <label class="field-label" id="ss-password-wrap" hidden>{{ _('Password') }} <input id="ss-password" type="password" autocomplete="off"></label>
+          <label class="field-label" id="ss-sudo-wrap" hidden>{{ _('Its password, for sudo') }} <input id="ss-sudo" type="password" autocomplete="off"></label>
         </div>
+        <p class="ss-fine" id="ss-password-note" hidden>{{ _('The password you sign in to the server with, as on a NAS. It is used for this set-up only, and never saved; if sudo asks for a password too, this one is tried first.') }}</p>
+        <p class="ss-fine" id="ss-sudo-note" hidden>{{ _('This account asks for its password before it uses sudo, as a NAS’s admin account usually does. It is used for this set-up only, and never saved.') }}</p>
         <p class="ss-fine" data-remote>{% trans %}Cloud providers give you a key when you create the server (Oracle: the private key you downloaded;
           on a Mac, <code>chmod 600</code> it first). The account needs <b>sudo</b>; on Ubuntu cloud servers that's <code>ubuntu</code>.{% endtrans %}</p>
         <p class="ss-fine" data-local hidden>{% trans %}BioManager runs here in Docker, in the folder <code>~/BioManagerServer</code>. Other lab computers reach

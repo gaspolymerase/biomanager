@@ -44,17 +44,19 @@ tell_app() { put BIOMANAGER_PUBLIC_URL "$1"; (cd "$DEPLOY_DIR" && docker compose
 DOMAIN=$(get DOMAIN)
 [ -n "$DOMAIN" ] || { echo "DOMAIN is not set in $ENV_FILE."; exit 1; }
 URL="https://$DOMAIN:$PORT"
+# Where compose.yaml publishes that site on this host: 8081 unless host/ports.sh chose another.
+LOCAL=$(get FUNNEL_PORT); LOCAL="http://127.0.0.1:${LOCAL:-8081}"
 
 case "${1:-status}" in
   on)
-    curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:8081/healthz || {
-      echo "Caddy's internet-facing site does not answer on 127.0.0.1:8081."
+    curl -fsS -o /dev/null --max-time 5 "$LOCAL/healthz" || {
+      echo "Caddy's internet-facing site does not answer on $LOCAL."
       echo "Update BioManager first (deploy/README.md, Updating), then run this again."
       exit 1
     }
     # Until Funnel is allowed for this machine, tailscale prints a link and
     # waits for it: give up after a minute instead of hanging.
-    if ! timeout 60 tailscale funnel --bg --yes --https="$PORT" http://127.0.0.1:8081; then
+    if ! timeout 60 tailscale funnel --bg --yes --https="$PORT" "$LOCAL"; then
       echo
       echo "Funnel is not on. If Tailscale printed a link above, open it, allow Funnel, and run this again."
       exit 1
