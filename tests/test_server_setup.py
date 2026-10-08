@@ -5,13 +5,15 @@ script it would run is checked by bash for syntax."""
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import sys
 import time
 from types import SimpleNamespace
 from unittest import mock
 
 # tests.base first: it points the app at a throwaway database before app is imported.
-from tests.base import AppTestCase, ON_POSTGRES
+from tests.base import AppTestCase, ON_POSTGRES, ROOT
 from app import server_setup as ss  # noqa: E402
 from app.app import app  # noqa: E402
 
@@ -119,7 +121,7 @@ class Wizard(AppTestCase):
     def test_the_run_never_shows_the_password_and_then_forgets_it(self):
         seen = []
 
-        def fake_stream(job, command, stdin_text=None, stdin_file=None):
+        def fake_stream(job, command, stdin_text=None, stdin_file=None, ssh=None):
             seen.append(stdin_text or "")
             for line in ["::step::Checking the machine", "echo hunter2 x", "::value::ADDRESS=nas.local", "::done::"]:
                 ss._say(job, line)
@@ -139,6 +141,46 @@ class Wizard(AppTestCase):
         self.assertNotIn("hunter2", "\n".join(state["lines"]))     # …the page never shows it
         self.assertEqual(ss.JOBS[job_id].plan.sudo_password, "")    # and it isn't kept
 
+    def test_a_password_sign_in_never_puts_it_on_a_command_line(self):
+        plan, problems = ss.plan_from({**ANSWERS, "target": "lab-linux", "address": "nas.local", "password": "pa ss",
+                                       "key_path": "~/.ssh/id_ed25519"})
+        self.assertEqual(problems, [])
+        command = ss.ssh_base(plan)
+        self.assertNotIn("BatchMode=yes", command)                  # BatchMode would refuse the helper
+        self.assertNotIn("-i", command)
+        self.assertIn("PubkeyAuthentication=no", command)
+        self.assertNotIn("pa ss", " ".join(command))
+        with ss.ssh_password(plan) as ssh:
+            env, helper = ssh["env"], ssh["env"]["SSH_ASKPASS"]
+            self.assertEqual((env["BIOMANAGER_SSH_PASSWORD"], env["SSH_ASKPASS_REQUIRE"]), ("pa ss", "force"))
+            if os.name != "nt":
+                said = subprocess.run([helper, "admin@nas's password: "], env=env, capture_output=True, text=True)
+                self.assertEqual(said.stdout, "pa ss\n")
+        self.assertFalse(os.path.exists(helper))                     # gone once the run is over
+        with ss.ssh_password(ss.Plan(target="lab-linux")) as ssh:
+            self.assertEqual(ssh, {})                                 # with a key, ssh is left alone
+
+    def test_the_desktop_app_answers_as_the_helper_on_windows(self):
+        said = subprocess.run([sys.executable, "desktop.py"], cwd=ROOT, capture_output=True, text=True, timeout=60,
+                              env={**os.environ, "BIOMANAGER_ASKPASS": "1", "BIOMANAGER_SSH_PASSWORD": "pa ss 密码"})
+        self.assertEqual((said.returncode, said.stdout.strip()), (0, "pa ss 密码"))
+
+    def test_the_sign_in_password_is_tried_for_sudo_first(self):
+        got, call = self.check_with("sudo=password-ok", password="pa ss")
+        self.assertEqual((got["sudo"], got["sudo_password"]), (True, "needed"))
+        self.assertEqual(call.kwargs["input"], "pa ss\n")
+        got, _ = self.check_with("sudo=no", password="pa ss")
+        self.assertEqual((got["sudo"], got["sudo_password"]), (False, "needed"))   # ask for sudo's own
+        got, _ = self.check_with("sudo=no", password="pa ss", sudo_password="other")
+        self.assertEqual(got["sudo_password"], "wrong")
+
+    def test_a_refused_password_says_so(self):
+        out = SimpleNamespace(returncode=255, stdout="", stderr="admin@nas: Permission denied (password,keyboard-interactive).")
+        with mock.patch.object(ss.subprocess, "run", return_value=out):
+            got = self.post_json("/server-setup/check", {**ANSWERS, "password": "nope"}).get_json()
+        self.assertIn("didn't accept this password", got["error"])
+        self.assertNotIn("..", got["error"])
+
     def test_a_refused_key_says_so(self):
         out = SimpleNamespace(returncode=255, stdout="", stderr="ubuntu@203.0.113.10: Permission denied (publickey).")
         with mock.patch.object(ss.subprocess, "run", return_value=out):
@@ -151,7 +193,7 @@ class Wizard(AppTestCase):
                  "::step::Starting BioManager", "::value::ADDRESS=biomanager.tail1234.ts.net",
                  "::value::SETUP_CODE=abcd-ef01-2345", "::done::"]
 
-        def fake_stream(job, command, stdin_text=None, stdin_file=None):
+        def fake_stream(job, command, stdin_text=None, stdin_file=None, ssh=None):
             for line in lines:
                 ss._say(job, line)
             return 0
@@ -171,7 +213,7 @@ class Wizard(AppTestCase):
         self.assertNotIn("SECRET123", "\n".join(state["lines"]))
 
     def test_a_failed_run_says_why(self):
-        def fake_stream(job, command, stdin_text=None, stdin_file=None):
+        def fake_stream(job, command, stdin_text=None, stdin_file=None, ssh=None):
             ss._say(job, "::fail::Docker isn't installed here.")
             return 1
 

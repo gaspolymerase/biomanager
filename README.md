@@ -838,10 +838,10 @@ it should run:
 - a **Linux computer in the lab** (a NAS with Docker, such as one running
   fnOS, will do), or **this computer** if it has Docker.
 
-It signs in over SSH with your key (and asks for the account's password
-when its sudo wants one, as a NAS's admin account does; that password is
-used for the one run and never saved), installs Docker (and Tailscale) if
-needed, downloads the release's server bundle, writes its settings with a
+It signs in over SSH with your key, or with the account's password if
+you have no key (as on a NAS), and asks for a password for sudo too when
+the account needs one; passwords are used for that one run and never
+saved. It installs Docker (and Tailscale) if needed, downloads the release's server bundle, writes its settings with a
 fresh database password, can bring the desktop app's records along, starts
 it (on ports 80 and 443, or others it finds free when the machine already
 uses those, as a NAS's own web pages often do), sets up alerts and backups, and checks that it answers. Every step and

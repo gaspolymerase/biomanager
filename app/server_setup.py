@@ -32,11 +32,13 @@ import shutil
 import sqlite3
 import ssl
 import subprocess
+import sys
 import tarfile
 import tempfile
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -86,7 +88,9 @@ class Plan:
     user: str = ""
     port: int = 22
     key_path: str = ""
+    password: str = ""         # signing in with a password instead of a key (a NAS); never kept
     sudo_password: str = ""    # for an account whose sudo asks for one (a NAS's admin); never kept
+    sudo_from_login: bool = False   # sudo_password is the sign-in password, tried first
     address: str = ""          # what people type; Tailscale fills it in itself
     acme_email: str = ""
     ts_authkey: str = ""
@@ -135,9 +139,17 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
             problems.append(gettext("The SSH port is a number, usually 22."))
         if plan.key_path and not Path(os.path.expanduser(plan.key_path)).is_file():
             problems.append(gettext("There is no key file at %(path)s.", path=plan.key_path))
+        plan.password = str(data.get("password") or "")
+        if plan.password:
+            plan.key_path = ""
+        if "\n" in plan.password or "\r" in plan.password or len(plan.password) > 256:
+            problems.append(gettext("That password can't be used: it has a line break in it, or is very long."))
         plan.sudo_password = str(data.get("sudo_password") or "")
         if "\n" in plan.sudo_password or "\r" in plan.sudo_password or len(plan.sudo_password) > 256:
             problems.append(gettext("That sudo password can't be used: it has a line break in it, or is very long."))
+        if not plan.sudo_password and plan.password:
+            # Usually the same password (a NAS's admin): try it before asking for another.
+            plan.sudo_password, plan.sudo_from_login = plan.password, True
     if target == "cloud-tailscale":
         plan.ts_authkey = str(data.get("ts_authkey") or "").strip()
         plan.ts_hostname = str(data.get("ts_hostname") or "biomanager").strip().lower()
@@ -157,11 +169,53 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
 
 
 def ssh_base(plan: Plan) -> list[str]:
-    command = ["ssh", "-p", str(plan.port), "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
+    command = ["ssh", "-p", str(plan.port), "-o", "StrictHostKeyChecking=accept-new",
                "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30"]
-    if plan.key_path:
-        command += ["-i", os.path.expanduser(plan.key_path)]
+    if plan.password:
+        # Asked for by ssh_password()'s helper; one try, so a wrong one fails at once.
+        command += ["-o", "PreferredAuthentications=keyboard-interactive,password", "-o", "PubkeyAuthentication=no",
+                    "-o", "NumberOfPasswordPrompts=1"]
+    else:
+        command += ["-o", "BatchMode=yes"]
+        if plan.key_path:
+            command += ["-i", os.path.expanduser(plan.key_path)]
     return command + [f"{plan.user}@{plan.host}"]
+
+
+ASKPASS_MODE = "BIOMANAGER_ASKPASS"      # desktop.py answers as the helper when this is set
+ASKPASS_SECRET = "BIOMANAGER_SSH_PASSWORD"
+
+
+@contextmanager
+def ssh_password(plan: Plan):
+    """What ssh needs to sign in with plan.password, as keyword arguments for
+    subprocess: an environment naming a helper that prints the password
+    (SSH_ASKPASS), so it is never on a command line. Empty for a key."""
+    if not plan.password:
+        yield {}
+        return
+    folder = tempfile.mkdtemp(prefix="biomanager-ssh-")
+    try:
+        env = {**os.environ, ASKPASS_SECRET: plan.password, "SSH_ASKPASS_REQUIRE": "force",
+               # ssh before 8.4 has no SSH_ASKPASS_REQUIRE: it uses the helper when
+               # there is a DISPLAY and no terminal (start_new_session below).
+               "DISPLAY": os.environ.get("DISPLAY") or ":0"}
+        if os.name == "nt" and getattr(sys, "frozen", False):
+            # No shell scripts here: the app itself prints it (desktop.py).
+            env.update({"SSH_ASKPASS": sys.executable, ASKPASS_MODE: "1"})
+        elif os.name == "nt":
+            helper = Path(folder) / "askpass.cmd"
+            helper.write_text(f'@"{sys.executable}" -c "import os; print(os.environ[\'{ASKPASS_SECRET}\'])"\r\n',
+                              encoding="utf-8")
+            env["SSH_ASKPASS"] = str(helper)
+        else:
+            helper = Path(folder) / "askpass"
+            helper.write_text(f'#!/bin/sh\nprintf \'%s\\n\' "${ASKPASS_SECRET}"\n', encoding="utf-8")
+            helper.chmod(0o700)
+            env["SSH_ASKPASS"] = str(helper)
+        yield {"env": env, "start_new_session": os.name != "nt"}
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
 
 
 # ---------------------------------------------------------------- the script
@@ -346,8 +400,9 @@ def _say(job: Job, line: str) -> None:
     secret = job.plan.ts_authkey
     if secret:
         line = line.replace(secret, "tskey-…")
-    if job.plan.sudo_password:
-        line = line.replace(job.plan.sudo_password, "••••••")
+    for password in (job.plan.password, job.plan.sudo_password):
+        if password:
+            line = line.replace(password, "••••••")
     line = line.rstrip()
     if line.startswith("::step::"):
         job.steps.append(line[8:])
@@ -386,9 +441,10 @@ def _export_data(tmp: Path) -> list[Path]:
     return files
 
 
-def _stream(job: Job, command: list[str], stdin_text: str | None = None, stdin_file: Path | None = None) -> int:
+def _stream(job: Job, command: list[str], stdin_text: str | None = None, stdin_file: Path | None = None,
+            ssh: dict | None = None) -> int:
     proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=stdin_file is None, bufsize=1 if stdin_file is None else -1)
+                            text=stdin_file is None, bufsize=1 if stdin_file is None else -1, **(ssh or {}))
     if stdin_file is not None:
         with open(stdin_file, "rb") as handle:
             shutil.copyfileobj(handle, proc.stdin)
@@ -407,7 +463,7 @@ def _stream(job: Job, command: list[str], stdin_text: str | None = None, stdin_f
 def _run(job: Job) -> None:
     plan = job.plan
     try:
-        with tempfile.TemporaryDirectory() as tmp_name:
+        with tempfile.TemporaryDirectory() as tmp_name, ssh_password(plan) as ssh:
             tmp = Path(tmp_name)
             if plan.bring_data:
                 job.steps.append("Copying this app's records")
@@ -418,13 +474,13 @@ def _run(job: Job) -> None:
                     # password (sudo -S reads it, when there is one, from this input).
                     prep = (f"cmd=\"mkdir -p {REMOTE_BASE}/import && chown $(id -un) {REMOTE_BASE} {REMOTE_BASE}/import\"; "
                             "if [ \"$(id -u)\" = 0 ]; then sh -c \"$cmd\"; else sudo -S -p '' sh -c \"$cmd\"; fi")
-                    if _stream(job, ssh_base(plan) + [prep],
+                    if _stream(job, ssh_base(plan) + [prep], ssh=ssh,
                                stdin_text=plan.sudo_password + "\n" if plan.sudo_password else "") != 0:
                         raise RuntimeError(f"Couldn't make {REMOTE_BASE}/import on the server.")
                 for f in files:
                     if plan.remote:
                         remote = f"{REMOTE_BASE}/import/{f.name}"
-                        if _stream(job, ssh_base(plan) + [f"cat > {remote}"], stdin_file=f) != 0:
+                        if _stream(job, ssh_base(plan) + [f"cat > {remote}"], stdin_file=f, ssh=ssh) != 0:
                             raise RuntimeError(f"Couldn't copy {f.name} to the server.")
                     else:
                         local = Path(os.path.expanduser(LOCAL_BASE)) / "import"
@@ -433,7 +489,7 @@ def _run(job: Job) -> None:
                     job.lines.append(f"Copied {f.name} ({f.stat().st_size // 1024} KB).")
             script = build_script(plan)
             command = ssh_base(plan) + ["bash -s"] if plan.remote else ["bash", "-s"]
-            code = _stream(job, command, stdin_text=script)
+            code = _stream(job, command, stdin_text=script, ssh=ssh)
             if code != 0 or job.error:
                 raise RuntimeError(job.error or f"The set-up stopped (exit {code}).")
         address = job.values.get("ADDRESS") or plan.address
@@ -445,7 +501,7 @@ def _run(job: Job) -> None:
         job.error = job.error or str(exc)
         job.status = "failed"
     finally:
-        job.plan.sudo_password = ""  # used for this run only
+        job.plan.password = job.plan.sudo_password = ""  # used for this run only
 
 
 def _check_from_here(address: str) -> str:
@@ -500,9 +556,10 @@ def check_connection(plan: Plan) -> dict:
              f"if [ \"$(id -u)\" = 0 ]; then echo sudo=root; else {sudo}; fi; "
              f"[ -f {REMOTE_BASE}/Biomanager/deploy/.env ] && echo existing=yes || echo existing=no")
     try:
-        # The password, if any, goes in on standard input, for sudo -S only.
-        out = subprocess.run(ssh_base(plan) + [probe], capture_output=True, text=True, timeout=40,
-                             input=plan.sudo_password + "\n" if plan.sudo_password else "")
+        # The sudo password, if any, goes in on standard input, for sudo -S only.
+        with ssh_password(plan) as ssh:
+            out = subprocess.run(ssh_base(plan) + [probe], capture_output=True, text=True, timeout=40,
+                                 input=plan.sudo_password + "\n" if plan.sudo_password else "", **ssh)
     except FileNotFoundError:
         return {"ok": False, "error": gettext("This computer has no ssh command. On Windows, add the OpenSSH Client under Settings → Apps → Optional features.")}
     except subprocess.TimeoutExpired:
@@ -510,17 +567,23 @@ def check_connection(plan: Plan) -> dict:
     if out.returncode != 0:
         detail = (out.stderr or out.stdout).strip().splitlines()[-1:] or ["no answer"]
         hint = ""
-        if "Permission denied" in detail[0]:
+        if plan.password and "askpass" in (out.stderr or ""):
+            hint = " " + gettext("This computer's ssh can't take a password from BioManager. Sign in with an SSH key instead.")
+        elif "Permission denied" in detail[0] and plan.password:
+            hint = " " + gettext("The server didn't accept this password: check the user name and the password, and that the server allows signing in with a password.")
+        elif "Permission denied" in detail[0]:
             hint = " " + gettext("The server didn't accept this key: check the user name and the key file.")
         elif "Could not resolve" in detail[0]:
             hint = " " + gettext("That address doesn't resolve: check it for typos.")
         return {"ok": False, "error": gettext("Couldn't sign in to %(host)s: %(detail)s.", host=plan.host,
-                                              detail=detail[0]) + hint}
+                                              detail=detail[0].rstrip(".")) + hint}
     info = dict(line.split("=", 1) for line in out.stdout.splitlines() if "=" in line)
     first = out.stdout.splitlines()[0] if out.stdout else ""
     return {"ok": True, "system": info.get("os") or first, "machine": first.split()[-1] if first else "",
             "docker": info.get("docker") == "yes", "sudo": info.get("sudo") in ("yes", "root", "password-ok"),
-            "sudo_password": "wrong" if plan.sudo_password and info.get("sudo") == "no" else
+            # The sign-in password, tried for sudo, not working: ask for sudo's own.
+            "sudo_password": "needed" if plan.sudo_from_login and info.get("sudo") == "no" else
+                             "wrong" if plan.sudo_password and info.get("sudo") == "no" else
                              "needed" if info.get("sudo") in ("password", "password-ok") else "",
             "existing": info.get("existing") == "yes"}
 

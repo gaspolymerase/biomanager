@@ -9,6 +9,15 @@ from __future__ import annotations
 import os
 import socket
 import sys
+
+# Asked by ssh for a password (SSH_ASKPASS, set by app/server_setup.py when
+# the server set-up signs in with one): print it and stop, before anything
+# else starts. Windows has no shell script to do this, so the app does it.
+if os.environ.get("BIOMANAGER_ASKPASS") == "1":
+    # Straight to the pipe ssh gave it: the windowed app may have no sys.stdout.
+    os.write(1, (os.environ.get("BIOMANAGER_SSH_PASSWORD", "") + "\n").encode("utf-8"))
+    sys.exit(0)
+
 import threading
 import time
 from pathlib import Path
