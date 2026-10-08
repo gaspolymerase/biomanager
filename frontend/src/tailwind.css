@@ -3352,3 +3352,129 @@ tr.is-scanned > td:first-child {
     outline-offset: 2px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   SETTINGS — laid out like the Mac's System Settings (templates/settings.html):
+   a list of panes beside the chosen one; each pane is grouped rows, the name
+   on the left and its control on the right. Icon tiles come in two families,
+   so the colour says which group a pane is in: You follows the accent the
+   person picked, Lab is one steady slate.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .settings {
+    --set-lab: #5B6B80;
+    --set-lab-tint: rgb(91 107 128 / 0.14);
+    @apply grid grid-cols-1 items-start gap-6 md:grid-cols-[230px_minmax(0,1fr)];
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+  }
+  :root[data-theme="dark"] .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+
+  .settings-nav { @apply flex flex-col gap-0.5 md:sticky md:top-4; }
+  .set-search { @apply mb-2; }
+  .set-search input { @apply h-8 text-[13px]; }
+  .set-me {
+    @apply mb-2 flex items-center gap-2.5 rounded-xl px-2 py-2 no-underline text-ink transition-colors;
+  }
+  .set-me b { @apply block truncate text-[13.5px] font-semibold; }
+  .set-me small { @apply block truncate text-[12px] text-muted; }
+  .set-me:hover { @apply bg-sand-100; }
+  .set-me.is-on { @apply bg-brand-50; }
+  .set-group-head { @apply mt-3 mb-1 px-2 text-[11px] font-semibold text-sand-400; }
+  .set-link {
+    @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13.5px] no-underline text-ink transition-colors;
+  }
+  .set-link:hover { @apply bg-sand-100; }
+  .set-link.is-on { @apply bg-brand-600 text-white; }
+  .set-link-label { @apply min-w-0 truncate; }
+  .set-search-none { @apply px-2 py-2 text-[12.5px] text-muted; }
+
+  .set-ico { @apply grid size-[22px] shrink-0 place-items-center rounded-md; }
+  .set-ico svg { @apply size-[13px]; }
+  .set-ico.is-you { background: color-mix(in srgb, var(--color-brand-600) 15%, transparent); color: var(--color-brand-600); }
+  .set-ico.is-lab { background: var(--set-lab-tint); color: var(--set-lab); }
+  .set-link.is-on .set-ico { background: rgb(255 255 255 / 0.22); color: #fff; }
+  .set-ico-lg { @apply size-10 rounded-[10px]; }
+  .set-ico-lg svg { @apply size-[21px]; }
+
+  /* Until the script picks one, every pane shows (and without JavaScript). */
+  .settings.is-ready .set-pane:not(.is-on) { @apply hidden; }
+  .set-pane { @apply min-w-0 max-w-[700px] pb-10; }
+  .set-pane + .set-pane { @apply mt-8; }
+  .settings.is-ready .set-pane + .set-pane { @apply mt-0; }
+  .set-back { @apply mb-3 hidden items-center gap-1 text-[13px] font-medium text-brand-700 no-underline; }
+  .set-back svg { @apply size-4; }
+  .set-head { @apply mb-4 flex items-center gap-3; }
+  .set-head h2 { @apply m-0 text-[19px] font-semibold leading-tight tracking-[-0.015em] text-ink; }
+  .set-head p { @apply mt-0.5 mb-0 text-[12.5px] leading-snug text-muted; }
+  .set-head p svg { @apply inline size-3 align-[-1px]; }
+  .set-head a { @apply text-brand-700; }
+  .set-me-badge .owner-badge, .set-me-badge > span { @apply scale-125; }
+  .set-saved { @apply ml-auto shrink-0 text-[12px] font-medium text-brand-700 opacity-0 transition-opacity; }
+  .set-saved.is-shown { @apply opacity-100; }
+
+  .set-title { @apply mt-5 mb-1.5 px-1 text-[12px] font-semibold text-sand-500; }
+  .set-title-row { @apply flex items-center justify-between gap-3; }
+  .set-title-row a { @apply text-[12px] font-medium text-brand-700 no-underline; }
+  .set-group {
+    @apply overflow-hidden rounded-xl border border-hairline bg-surface;
+  }
+  .set-group-pad { @apply flex flex-col gap-3 p-4; }
+  .set-note { @apply m-0 text-[12.5px] leading-snug text-muted; }
+  .set-row {
+    @apply flex min-h-11 items-center gap-3 px-3.5 py-2 text-[13.5px] text-ink no-underline;
+  }
+  .set-group > .set-row + .set-row,
+  .set-group > * + .set-row,
+  .set-group > .set-row + *:not(input):not(noscript),
+  .set-details + .set-row, .set-row + .set-details { @apply border-t border-hairline; }
+  .set-label { @apply min-w-0 flex-1; }
+  .set-label b { @apply block font-medium; }
+  .set-label small { @apply mt-px block text-[12px] leading-snug text-muted; }
+  .set-value { @apply shrink-0 text-[13px] text-muted; }
+  .set-row > input:not([type="checkbox"]):not([type="radio"]),
+  .set-row > select {
+    @apply w-[min(240px,50%)] shrink-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-[13.5px] text-ink-soft;
+  }
+  .set-row > select { @apply w-auto max-w-[55%] cursor-pointer text-right; }
+  .set-row > input:not([type="checkbox"]):not([type="radio"]):hover,
+  .set-row > select:hover { @apply bg-sand-50; }
+  .set-row > input:not([type="checkbox"]):not([type="radio"]):focus { @apply border-hairline bg-sand-50 text-left outline-none; }
+  .set-row > .set-input-short { @apply w-24; }
+  a.set-row-link { @apply cursor-pointer transition-colors; }
+  a.set-row-link:hover { @apply bg-sand-50; }
+  .set-chev { @apply size-4 shrink-0 text-sand-400; }
+
+  /* An on/off switch: a checkbox drawn the Mac's way. */
+  .set-switch {
+    @apply relative h-[22px] w-[38px] shrink-0 cursor-pointer appearance-none rounded-full bg-sand-200 transition-colors;
+  }
+  .set-switch::after {
+    content: ""; @apply absolute top-[2px] left-[2px] size-[18px] rounded-full bg-white transition-transform;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  }
+  .set-switch:checked { @apply bg-brand-600; }
+  .set-switch:checked::after { transform: translateX(16px); }
+  .set-switch:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+  .set-switch:disabled { @apply cursor-default opacity-55; }
+
+  .set-details > summary { @apply cursor-pointer list-none; }
+  .set-details > summary::-webkit-details-marker { @apply hidden; }
+  .set-details[open] > summary .set-chev { @apply rotate-180; }
+  .set-password { @apply grid grid-cols-1 gap-3 border-t border-hairline px-3.5 py-3 sm:grid-cols-3; }
+  .set-password > div { @apply sm:col-span-3; }
+  .set-more { @apply border-t border-hairline px-3.5 py-3 text-[12px] text-muted; }
+  .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[11.5px] leading-relaxed text-ink-soft; }
+  .set-more p { @apply m-0; }
+
+  .set-group.icon-picker { @apply p-4; }
+
+  /* A phone: the list, then the pane on its own with a way back. */
+  @media (width < 48rem) {
+    .settings.is-ready:not([data-open]) .settings-panes { @apply hidden; }
+    .settings.is-ready[data-open] .settings-nav { @apply hidden; }
+    .settings.is-ready .set-back { @apply inline-flex; }
+    .set-row > input:not([type="checkbox"]):not([type="radio"]) { @apply w-[50%]; }
+  }
+}

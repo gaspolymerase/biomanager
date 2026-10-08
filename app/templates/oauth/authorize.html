@@ -17,7 +17,7 @@
     <p class="mt-3 text-[12.5px] leading-snug text-muted">
       {{ _('After this you go back to %(host)s.', host=host) }}
       {% if loopback %}<b class="text-warn-700">{{ _('That is a program on your own computer: only continue if you just started connecting one, such as Claude Code.') }}</b>{% endif %}
-      {{ _('You can end the connection any time under Settings → API tokens.') }}
+      {{ _('You can end the connection any time under Settings → AI assistant & tokens.') }}
     </p>
     {% if problem %}<p class="mt-3 text-[12.5px] text-warn-700">{{ problem }}</p>{% endif %}
     <form method="post" class="mt-5 flex flex-col gap-3">
@@ -27,7 +27,7 @@
           <input name="link_code" autocomplete="off" autocapitalize="characters" spellcheck="false" required autofocus
                  class="font-mono tracking-wider" placeholder="XXXX-XXXX-XXXX">
         </label>
-        <p class="text-[12px] leading-snug text-muted">{{ _('Make one in BioManager on the lab network: Settings → API tokens → Connect an AI assistant → Get a connection code.') }}</p>
+        <p class="text-[12px] leading-snug text-muted">{{ _('Make one in BioManager on the lab network: Settings → AI assistant & tokens → Connect an AI assistant → Get a connection code.') }}</p>
       {% endif %}
       <div class="flex flex-wrap gap-2">
         <button type="submit" name="decision" value="allow" class="btn btn-primary">{{ icon('check') }} {{ _('Allow') }}</button>

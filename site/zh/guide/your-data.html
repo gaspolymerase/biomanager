@@ -155,9 +155,9 @@
       <p>桌面版可以保留一份实验室服务器整个数据库的副本，这样实验室的记录就不止存在一台
         机器上：</p>
       <ol class="steps-list">
-        <li>在服务器上：<b>设置 → 电脑上的实验室副本</b> （Settings → Copies of the lab on your computers），填写电脑名称，点 <b>生成密钥</b> （Make a key）。
+        <li>在服务器上：<b>设置 → 设备与副本</b> （Settings → Devices &amp; copies），填写电脑名称，点 <b>生成密钥</b> （Make a key）。
           复制密钥；它只显示一次。（管理员总是可以；成员需要实验室设置允许。）</li>
-        <li>在那台电脑的桌面版里：<b>设置 → 保留实验室服务器的副本</b> （Settings → Keep a copy of your lab server）。输入服务器
+        <li>在那台电脑的桌面版里：<b>设置 → 设备与副本</b> （Settings → Devices &amp; copies）。输入服务器
           地址和密钥，点 <b>保存并立即复制</b> （Save and copy now）。</li>
         <li>从此，只要应用开着，它每天都会做一份新副本、校验、保留最近 14 份，并同步
           上传的文件。卡片上显示上次复制的时间；在服务器上，列表显示每台电脑以及它的副本有多
@@ -169,7 +169,7 @@
         个人数据库，也没有审计日志。访客不能保留副本。</p>
       <h2 id="devices">一个实验室，多台设备</h2>
       <p>一台设备保存实验室的 <b>主副本</b> （master copy）；其他设备都通过它的地址在主副本上工作，所以从不需要
-        合并，也不会因为两处同时写入而丢失内容。<b>设置 → 设备</b> （Settings → Devices）显示当前是哪台设备，以及每台
+        合并，也不会因为两处同时写入而丢失内容。<b>设置 → 设备与副本 → 设备</b> （Settings → Devices &amp; copies → Devices）显示当前是哪台设备，以及每台
         与实验室关联的电脑（通过 <b>实验室副本</b> （Copies of the lab）里的密钥）：它怎样使用实验室、版本，以及最后一次
         联络的时间。</p>
       <ul>
@@ -194,7 +194,7 @@
       <h2 id="everyone">导出你的数据</h2>
       <p>任何表格上的 <b>导出</b> （Export）都会把显示的内容下载为 CSV，可以用 Excel 打开。在小鼠表格上，<b>导出 → Excel</b> （Export → Excel）
         生成的工作簿可以用 <b>从 Excel 导入</b> （Import from Excel）再读回来。以 <code>=</code> 开头的备注在所有导出中都保持为文本，
-        绝不会变成公式。<b>导出我的数据</b> （Export my data，在账号菜单和设置里）会把你自己的小鼠、笼、体重、
+        绝不会变成公式。<b>导出我的数据</b> （Export my data，在账号菜单和 <b>设置 → 你的数据</b> 里）会把你自己的小鼠、笼、体重、
         实验和质粒（CSV）、每个质粒带特征的 GenBank 序列文件和与它一起保存的文件、你的实验记录本页面和个人资料打包成一个 zip 下载。</p>
       <h2 id="counts">BioManager 会向开发者发送什么</h2>
       <p>你的记录永远不会离开你的电脑或实验室服务器。为了让 BioManager 的开发者知道有多少实验室在用，每个

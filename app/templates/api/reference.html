@@ -15,7 +15,7 @@
   <section class="card p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('How it works') }}</h2>
     <ul class="mt-2 list-disc space-y-1.5 pl-5 text-ink-soft">
-      <li>{% trans %}<b>A token is you.</b> Make one under <b>Settings → API tokens</b>: <i>Read</i>, or <i>Read and change</i>.
+      <li>{% trans %}<b>A token is you.</b> Make one under <b>Settings → AI assistant & tokens</b>: <i>Read</i>, or <i>Read and change</i>.
         It can do exactly what you can on these pages, no more; changes it makes are in the change history under
         your name, marked with the token's name.{% endtrans %}</li>
       <li>{% trans base=base %}Send it with every request: <code>Authorization: Bearer bmt_…</code>. The address is <code>{{ base }}</code>.{% endtrans %}</li>
@@ -51,7 +51,7 @@
   <section class="card p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('Examples') }}</h2>
     <h3 class="mt-3 font-semibold">curl</h3>
-    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px]">export BM_TOKEN=bmt_…     # from Settings → API tokens
+    <pre class="mt-1 overflow-x-auto rounded-lg bg-sand-100 p-3 font-mono text-[12px]">export BM_TOKEN=bmt_…     # from Settings → AI assistant & tokens
 curl -H "Authorization: Bearer $BM_TOKEN" "{{ base }}/mice?alive=true&amp;limit=500"
 curl -X POST -H "Authorization: Bearer $BM_TOKEN" -H "Content-Type: application/json" \
      -d '{"grams": 24.1}' {{ base }}/mice/1043/weights</pre>

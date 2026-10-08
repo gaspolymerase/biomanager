@@ -97,6 +97,27 @@ fixed inside it. Toasts (`BiomanagerShell.toast`) are a manual popover,
 in the top layer, so they show in front of an open `<dialog>`; a refused
 form's message is copied into the dialog `static/form-memory.js` reopens.
 
+### Settings
+
+`templates/settings.html` is laid out like the Mac's System Settings: a
+list of panes (`.settings-nav`) beside one pane at a time (`<section
+data-pane>`). The address's `#hash` picks the pane; a hash naming something
+inside a pane (`#api-tokens`, `#lab-copies`, `#language`) opens that pane and
+scrolls to it, so links from other pages and redirects
+(`url_for("settings", _anchor=…)`) keep working. Without JavaScript every
+pane shows, stacked. On a phone the list and the pane take turns, with
+**‹ Settings** to go back. Panes: **You**, the person's own (Profile,
+Sign-in & security, Appearance & language, Notifications, AI assistant &
+tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
+the lab's (Devices & copies so far) in one slate (`.set-ico.is-lab`).
+Rows are `.set-row` in a `.set-group`, an on/off is
+`input.set-switch`. Forms marked `data-autosave-form` post on change with
+`X-Autosave: 1`, and the `settings` route answers `{"ok": true}` instead of a
+redirect; the profile action only touches the fields the form sent, since
+Profile and "When you sign in" are separate forms. The API tokens and lab
+copy blocks are `api/_card.html` and `lab_copy/_cards.html`, included in
+their panes.
+
 ### Home
 
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
@@ -797,7 +818,7 @@ PostgreSQL).
 
 ## One master copy, many devices
 
-`app/devices.py`, the Settings → Devices page. One database is the lab's
+`app/devices.py`, the Settings → Devices & copies → Devices page. One database is the lab's
 master copy and every other device works on it through the master's
 address: nothing is ever merged. A server is the master unless an admin
 hands the role to a desktop. A desktop becomes a master by sharing its lab
@@ -1150,7 +1171,7 @@ the code.
 the reference page is `/api` and the spec `/api/v1/openapi.json`, both made
 from `ENDPOINTS`, so a new endpoint goes there too.
 
-- **Tokens** (`api_tokens`): made under Settings → API tokens (`api/_card.html`),
+- **Tokens** (`api_tokens`): made under Settings → AI assistant & tokens (`api/_card.html`),
   `bmt_` and 40 random characters, shown once (`api/token.html`); only the
   SHA-256 and the first ten characters (`hint`) are kept. `scope` is `read`,
   `write` or `propose` (below); `expires_at` 30, 90, 365 days or never. Members make them only
@@ -1347,7 +1368,7 @@ redirect.
   a token, a code or with public metadata. `/oauth/token` and
   `/oauth/register` skip the cross-site check (no cookie is involved).
 - **Connect an AI assistant** (`oauth.connect_page`, `oauth/connect.html`;
-  linked from Help for everyone but guests, from Settings → API tokens and
+  linked from Help for everyone but guests, from Settings → AI assistant & tokens and
   from an empty Proposed changes): the connector address and **Get a
   connection code** when the lab is on the internet; for coding assistants
   a message to paste into their chat (`#agent-message`: the address, the
@@ -1704,7 +1725,7 @@ written in English and wrapped, and the Chinese is looked up by the English:
   one file per area so translations of different pages don't collide; the
   scripts' words in `js-<area>.json` (sent to the browser). The words come
   from `docs/i18n-glossary.md`. A text with no entry shows in English.
-- **Which language**: the person's choice in **Settings → Language**
+- **Which language**: the person's choice in **Settings → Appearance & language**
   (kept per person, `language.<username>` in the settings table), else the
   language the browser or computer asks for first (`Accept-Language`); the
   sign-in page has a 中文 / English switch (`POST /language`).

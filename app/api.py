@@ -2,7 +2,7 @@
 
     curl -H "Authorization: Bearer bmt_…" https://SERVER/api/v1/mice?alive=true
 
-**Tokens.** Each person makes their own under Settings → API tokens (a
+**Tokens.** Each person makes their own under Settings → AI assistant & tokens (a
 member only if Lab setup allows it; not a guest). A token acts as its
 owner, with exactly their permissions, and is either *read* or *write*
 (read and change). Only its SHA-256 is kept; it is shown once. It can
@@ -144,7 +144,7 @@ def _gate():
     if g.get("user") is None or g.get("api_token") is None:
         # Where an assistant app learns how to sign in (app/oauth.py, RFC 9728).
         pointer = f'Bearer resource_metadata="{request.url_root.rstrip("/")}/.well-known/oauth-protected-resource/api/v1/mcp"'
-        return _error(401, "Send an API token: Authorization: Bearer bmt_… Make one in Settings → API tokens.") + (
+        return _error(401, "Send an API token: Authorization: Bearer bmt_… Make one in Settings → AI assistant & tokens.") + (
             {"WWW-Authenticate": pointer},)
     wait = rate.wait(g.api_token.id) if g.api_token.id else 0  # 0: a proposal being applied
     if wait:
@@ -1132,7 +1132,7 @@ def openapi():
     return jsonify({
         "openapi": "3.0.3",
         "info": {"title": "BioManager", "version": VERSION,
-                 "description": "The lab's records. Authorization: Bearer <token from Settings → API tokens>."},
+                 "description": "The lab's records. Authorization: Bearer <token from Settings → AI assistant & tokens>."},
         "servers": [{"url": url_for("api.index", _external=True)}],
         "components": {"securitySchemes": {"token": {"type": "http", "scheme": "bearer"}}},
         "paths": paths,
@@ -1143,7 +1143,7 @@ def _path_names(path: str) -> list[str]:
     return [part[1:-1] for part in path.split("/") if part.startswith("{")]
 
 
-# ---------------------------------------------------------------- Settings → API tokens, and /api
+# ---------------------------------------------------------------- Settings → AI assistant & tokens, and /api
 
 def _signed_in():
     if g.get("user") is None:

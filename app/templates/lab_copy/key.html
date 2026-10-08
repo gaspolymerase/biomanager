@@ -26,7 +26,7 @@
     <h2 class="text-[15px] font-semibold text-ink">{{ _('On %(name)s', name=label) }}</h2>
     <ol class="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-snug text-ink-soft">
       <li>{% trans %}Open the BioManager <b>desktop app</b> (download it from the website if it isn't installed).{% endtrans %}</li>
-      <li>{% trans %}Go to <b>Settings → Keep a copy of your lab server</b>.{% endtrans %}</li>
+      <li>{% trans %}Go to <b>Settings → Devices &amp; copies</b>.{% endtrans %}</li>
       <li>{{ _('Server:') }} <code class="ident" id="lab-copy-server">{{ server }}</code>
         <button type="button" class="btn btn-sm ml-1" data-on-click="copy-text" data-arg="lab-copy-server">{{ icon('copy') }} {{ _('Copy') }}</button></li>
       <li>{% trans %}Paste the key and press <b>Save and copy now</b>.{% endtrans %}</li>
