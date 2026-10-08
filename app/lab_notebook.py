@@ -1958,11 +1958,17 @@ def recipe_delete(recipe_id: int):
 # ---------------------------------------------------------------- library folders
 
 FOLDER_KINDS = ("protocol", "recipe")
-# The icons a folder may have, first the plain folder it starts as.
-FOLDER_ICONS = ("folder", "protocol", "flask", "flask-vial", "vial", "vials", "droplet", "dna", "plasmid",
-                "antibody", "microscope", "petri", "culture-vial", "bacterium", "virus", "mouse", "fish", "fly",
-                "worm", "frog", "seedling", "paw", "syringe", "heart-pulse", "snowflake", "temperature", "scale",
-                "calculator", "chart", "target", "list-check", "clipboard", "notebook", "star", "bolt", "tag")
+# The icons a folder may have, first the plain folder it starts as: the
+# sprite's biology, grouped as the picker shows them (methods and
+# glassware, molecules, microbes, organisms and housing, animal health,
+# storage and weighing).
+FOLDER_ICONS = ("folder", "protocol",
+                "flask", "flask-vial", "vial", "vials", "culture-vial", "petri", "droplet", "microscope",
+                "dna", "plasmid", "antibody",
+                "bacterium", "virus",
+                "mouse", "fish", "fly", "worm", "frog", "seedling", "paw", "egg", "cage", "tank",
+                "syringe", "resistance", "heart-pulse", "stethoscope", "notes-medical",
+                "snowflake", "temperature", "scale")
 
 
 def folder_list(session, kind: str) -> list[dict]:
