@@ -1111,16 +1111,14 @@ class GlobalSearchTests(AppTestCase):
 
 class AdminColonyOverviewTests(AppTestCase):
 
-    def test_admin_sees_cages_grouped_by_owner_and_shared_breeders(self):
-        mine = self.make_colony(self.m, self.member, n_mice=2)
-        shared = self.make_cage(self.o, purpose="Breeder")
-        shared_code = one("select cage_id from mouse_cages where id=?", shared)
-        html = self.get_ok(self.a, "/admin/colony")
-        self.assertIn("Colony overview", html)
-        self.assertIn("Shared cages", html)
-        self.assertIn(self.member, html)
-        self.assertIn(mine["cage"], html)
-        self.assertIn(shared_code, html)
+    def test_the_overview_is_settings_statistics_now(self):
+        self.make_colony(self.m, self.member, n_mice=2)
+        r = self.a.get("/admin/colony")
+        self.assertTrue(r.headers["Location"].endswith("/settings#stats"))
+        html = self.get_ok(self.a, "/settings")
+        stats = html.split('id="stats"', 1)[1].split('id="general"', 1)[0]
+        self.assertIn("living mice", stats)
+        self.assertIn(self.member, stats)
 
     def test_members_are_turned_away(self):
         r = self.m.get("/admin/colony", follow_redirects=True)

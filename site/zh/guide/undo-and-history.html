@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>撤销与历史 — BioManager 用户指南</title>
-  <meta name="description" content="在批量历史里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。">
+  <meta name="description" content="在「设置 → 历史」里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/zh/guide/undo-and-history">
   <meta property="og:title" content="撤销与历史 — BioManager 用户指南">
-  <meta property="og:description" content="在批量历史里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。">
+  <meta property="og:description" content="在「设置 → 历史」里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
@@ -132,18 +132,20 @@
     <!-- page -->
     <p class="eyebrow">日常操作</p>
     <h1>撤销与历史</h1>
-    <p class="summary">在批量历史里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。</p>
+    <p class="summary">在「设置 → 历史」里一键撤销整批修改，在审计日志里查看谁在什么时候改了什么。</p>
 
-      <p>侧边栏底部的 <b>更多 → 批量操作记录</b> （More → Batch history）列出每一次批量修改——一次批量添加、一次移动、对五十行的状态修改、一次导入——每条都有
+      <p><b>设置 → 历史</b> （Settings → History）列出最近的批量修改，点 <b>查看全部</b> （See all）打开 <b>批量操作记录</b> （Batch
+        history）：每一次批量修改——一次批量添加、一次移动、对五十行的状态修改、一次导入——每条都有
  <b>撤销</b> （Undo）。如果之后有人改过这些记录，BioManager 会告诉你，并提供 <b>仍然撤销</b> （Undo anyway），而不会悄悄
         覆盖别人的修改。每个人能看到自己的批次；管理员能看到整个实验室的。你批准的 AI 助手提议也在这里，每个提议是一批
         （见<a href="ai-assistants.html">AI 助手</a>）。</p>
       <p><b>审计日志</b> （Audit log，管理员可用）记录每一次创建、编辑和删除：时间、操作人、哪条记录，以及具体改了什么——
-        <code>genotype: DBH-Cre → ∅</code>。</p>
+        <code>genotype: DBH-Cre → ∅</code>。在 <b>设置 → 历史</b> 的 <b>所有修改</b> （Every change）下点 <b>打开审计日志</b>
+        （Open the audit log）就能打开它。</p>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>批量修改出错了</h3>
-      <p>侧边栏里的 <b>更多 → 批量操作记录</b> （More → Batch history）→ <b>撤销</b> （Undo）。</p>
+      <p><b>设置 → 历史</b> → <b>撤销</b>。</p>
     </section>
     <!-- /page -->
       <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="finding-things.html"><small>上一页</small>查找</a><a class="next" href="notifications.html"><small>下一页</small>通知</a></nav>

@@ -22,7 +22,7 @@ Six steps, in order. New here, or coming from spreadsheets? Read [Coming from Ex
 
 5. [**Find anything**: Search everything with `⌘` `K`. (2 min)](https://biomanager.org/guide/finding-things)
 
-6. [**Invite your lab**: Approve sign-ups in Manage users, or give a visitor a guest pass. (5 min)](https://biomanager.org/guide/invite-someone)
+6. [**Invite your lab**: Approve sign-ups in Settings → People & access, or give a visitor a guest pass. (5 min)](https://biomanager.org/guide/invite-someone)
 
 ### Find your way
 
@@ -164,7 +164,7 @@ BioManager says *Recorded a litter born today in cage … : weaning is due …* 
 
 ### 4. Throw it away
 
-1. Open **Batch history** (in **More**) and **Undo** what you just made, newest first.
+1. Open **Settings → History** and **Undo** what you just made, newest first.
 
 2. Anything left: delete the mice, then the cage, then the rack in **Rack grid**.
 
@@ -226,7 +226,7 @@ Who and where: Anyone who adds records · Every database
 
 7. Press the import button, which counts the records (**Import 120 mice**, say).
 
-The rows are saved as one batch, which **More → Batch history** can undo. Dates stay as Excel wrote them, and one that can't be read, or a birth date in the future, is left blank and kept in the notes. A mouse whose ID is already taken gets the next free one, with yours kept in its notes.
+The rows are saved as one batch, which **Settings → History** can undo. Dates stay as Excel wrote them, and one that can't be read, or a birth date in the future, is left blank and kept in the notes. A mouse whose ID is already taken gets the next free one, with yours kept in its notes.
 
 ### Troubleshooting
 
@@ -336,17 +336,17 @@ Source: https://biomanager.org/guide/finding-things
 
 ## Undo and history
 
-Undo a whole batch of changes from Batch history, and see in the Audit log who changed what, and when.
+Undo a whole batch of changes from Settings → History, and see in the Audit log who changed what, and when.
 
-**More → Batch history** at the foot of the sidebar opens it: every bulk change — an Add many, a move, a status change on fifty rows, an import — with **Undo**. If someone has edited those records since, BioManager says so and offers **Undo anyway** rather than silently overwriting their work. Everyone sees their own batches; admins see the lab's. Changes an AI assistant proposed and you approved are here too, as one batch each ([AI assistants](https://biomanager.org/guide/ai-assistants)).
+**Settings → History** lists the latest, and **See all** opens Batch history: every bulk change — an Add many, a move, a status change on fifty rows, an import — with **Undo**. If someone has edited those records since, BioManager says so and offers **Undo anyway** rather than silently overwriting their work. Everyone sees their own batches; admins see the lab's. Changes an AI assistant proposed and you approved are here too, as one batch each ([AI assistants](https://biomanager.org/guide/ai-assistants)).
 
-The **Audit log** (admins) records every create, edit and delete: when, who, which record, and exactly what changed — `genotype: DBH-Cre → ∅`.
+The **Audit log** (admins; **Open the audit log** under **Every change** in **Settings → History**) records every create, edit and delete: when, who, which record, and exactly what changed — `genotype: DBH-Cre → ∅`.
 
 ### Troubleshooting
 
 #### I made a mistake with a bulk change
 
-**More → Batch history** in the sidebar → **Undo**.
+**Settings → History** → **Undo**.
 
 Source: https://biomanager.org/guide/undo-and-history
 
@@ -533,7 +533,7 @@ Either way the litter is marked weaned and leaves Home and the calendar. Then [p
 
 #### I weaned the wrong cage
 
-A weaning is one bulk change: **More → Batch history** in the sidebar → **Undo**.
+A weaning is one bulk change: **Settings → History** → **Undo**.
 
 *Wean sits on the breeding cage, beside Litter born*
 
@@ -1084,7 +1084,7 @@ Everyone in a lab has one role. A role never takes away what you own: it adds wh
 | Admin | Everything, including accounts, roles and [Lab setup](https://biomanager.org/guide/lab-setup), and the audit log. A lab needs at least one. |
 | [Guest](https://biomanager.org/guide/people-and-guests) | Someone outside the lab, on a pass that ends by itself after a day, three days, a week or 30 days. They see only what the pass opens, and can never keep a copy of the lab. |
 
-An admin changes a role in **Manage users**, and cannot change their own — so a lab can never lock its last admin out.
+An admin changes a role from the **···** beside someone in **Settings → People & access**, and cannot change their own — so a lab can never lock its last admin out.
 
 ### Which rule wins
 
@@ -1100,11 +1100,11 @@ You may change a record if *any one* of these is true: you own it; it is shared 
 
 - **Personal databases** (*Just you* on their tile) are seen only by their owner and admins; a [project group's](https://biomanager.org/guide/project-groups) by its members and admins.
 
-- **Admins** can change anything, run Lab setup, approve people, and read the audit log.
+- **Admins** can change anything, change the lab's setup in Settings, approve people, and read the audit log.
 
-- **Animal care** (technicians, vets; a role in **Manage users**) may change any lab's animals, cages, tanks and vials, but not other people's experiments, notebook pages or settings (their own they keep like a member). A **Facility manager** also runs the racks, rooms, incubators, water systems and each database's settings, but not accounts.
+- **Animal care** (technicians, vets; a role set in **Settings → People & access**) may change any lab's animals, cages, tanks and vials, but not other people's experiments, notebook pages or settings (their own they keep like a member). A **Facility manager** also runs the racks, rooms, incubators, water systems and each database's settings, but not accounts.
 
-- **Racks & boxes** (admins, in the account menu) says who may resize, rename or delete each rack, box and incubator, in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.
+- **Racks & boxes** in **Settings → Statistics** (admins) says who may resize, rename or delete each rack, box and incubator, in every database — fish racks and the racks of your own databases too. One with nobody is for admins only.
 
 When a record isn't yours, BioManager says whose it is instead of just refusing.
 
@@ -1114,7 +1114,7 @@ Their records do not disappear — mice, cages, plasmids and pages stay exactly 
 
 1. On each sheet, select their records and use **Set field → Owner** to put them in the new person's name. ([Many at once](https://biomanager.org/guide/many-at-once) does a whole sheet in one go.)
 
-2. An admin sets their role, in **Manage users**, to whatever is right now they have gone.
+2. An admin sets their role, in **Settings → People & access**, to whatever is right now they have gone.
 
 3. A guest pass needs nothing: it ends on its own date.
 
@@ -1136,9 +1136,25 @@ Share animals, stock, databases and pages among the people on a project.
 
 Who and where: Since 1.0.3
 
-A group is some of the lab working on one project: a layer between you and the whole lab. **More → Project groups** lists them and who is in each. An admin makes a group, names it and picks its members; a group's *leads* may add and remove members too. Someone can be in several groups.
+A group is some of the lab working on one project: a layer between you and the whole lab. **Settings → People & access → Project groups** lists them; open one to see who is in it and what they may do. An admin makes a group and names it; an admin or the group's *leads* add and remove people. Someone can be in several groups.
 
-- **Shared with a group.** Wherever you choose *Shared* or *Lab common*, your groups are offered as well: a breeder cage, a plasmid or a reagent shared with a group is its members' to edit. For a breeding tank or a lab stock vial, pick the group under **Shared with** in its dialog. Everyone in the lab still sees them.
+Each person in a group is a **Lead** (runs the group: adds and removes people and sets what it may do), a **Member** (does what the group's switches allow) or **Can only view** (sees what is shared with the group and changes nothing, for a rotation student or a collaborator). Only an admin makes someone a lead. Under **In this group, members may**, a lead or an admin chooses:
+
+- **Edit the group's animals and stock** (on to start);
+
+- **Add and change records in the group's databases** (on); off, they can look but not change anything there;
+
+- **Edit each other's records there** (off): off, each person edits only what they added;
+
+- **Edit notebook pages shared with the group** (on): off, a page shared with the group to edit opens to read;
+
+- **Tick off the group's to-dos** (on);
+
+- **Share their own things with the group** (on): off, only its leads share with it.
+
+Each starts as groups have always worked, so nothing changes until someone changes it. Leads and admins may always do all of them; the owner of a record may always edit it.
+
+- **Shared with a group.** Wherever you choose *Shared* or *Lab common*, your groups are offered as well: a breeder cage, a plasmid or a reagent shared with a group is its members' to edit, as the group allows. For a breeding tank or a lab stock vial, pick the group under **Shared with** in its dialog. Everyone in the lab still sees them.
 
 - **A group's database.** When you make a database, **Who is it for?** offers your groups: only their members (and admins) see it, and they are told it was added. **Share with the group** on the Databases page gives one of your own to a group.
 
@@ -1160,19 +1176,21 @@ Approve sign-ups, manage admins and accounts, offer Google, Microsoft or institu
 
 Who and where: Admins
 
-- **Joining**: New sign-ups wait for an admin's approval in **Manage users**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it under **Settings → Sign-in & security** ([setting it up](https://biomanager.org/server#sign-in)).
+- **Where**: **Settings → People & access**. Everyone sees the lab's people there; admins change them, from the **···** beside each person.
 
-- **Admins**: **Manage users** promotes and demotes admins, disables accounts and resets passwords; **Lab setup** can also make someone admin. Keep at least two.
+- **Joining**: New sign-ups wait under **Waiting to join** until an admin presses **Approve**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it under **Settings → Sign-in & security** ([setting it up](https://biomanager.org/server#sign-in)).
 
-- **Leaving**: **More → Colony overview** in the sidebar (admins) lists every cage by who manages it, idle cages and living mice without a cage; hand racks over in **Racks & boxes**, then disable the account. Their records and history stay.
+- **Admins**: The **···** beside someone sets their role (admin, member, animal care, facility manager), resets their password, or disables the account. Keep at least two admins.
 
-- **Guests**: For someone outside the lab — a collaborator, a visitor — for a day to a month: **Guests** in the account menu (admins), who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**. On a Tailscale server, the admin can let guests in from the internet without Tailscale ([how](https://biomanager.org/server#guests)).
+- **Leaving**: **Settings → Statistics** shows how many animals each person keeps; hand their racks over there (who may change each rack), give their records to someone else with **Set field → Owner**, then disable the account. Their records and history stay.
+
+- **Guests**: For someone outside the lab — a collaborator, a visitor — for a day to a month: **New guest pass** under **Guests** (admins), who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**. On a Tailscale server, the admin can let guests in from the internet without Tailscale ([how](https://biomanager.org/server#guests)).
 
 ### Troubleshooting
 
 #### I forgot my password
 
-Ask an admin: **Manage users** resets it.
+Ask an admin: the **···** beside you in **Settings → People & access** resets it.
 
 Source: https://biomanager.org/guide/people-and-guests
 
@@ -1188,7 +1206,7 @@ Who and where: Admins · Lab server
 
 2. They open it, press **Create an account** and fill it in. They can't sign in until an admin approves it. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in methods**.
 
-3. Admins are notified of the sign-up. Open **More → Manage users** at the foot of the sidebar.
+3. Admins are notified of the sign-up. Open **Settings → People & access**: they wait under **Waiting to join**.
 
 4. Find the account marked *awaiting approval*, press **Approve**, and confirm.
 
@@ -1196,15 +1214,15 @@ Who and where: Admins · Lab server
 
 They sign in with their own account and work as a member: they edit what they own and what is shared, and see the lab's databases. To share work with a few of them, put them in a [project group](https://biomanager.org/guide/project-groups).
 
-> **Someone from outside the lab?** Give them a guest pass for a day to a month: **More → Guests**, who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**.
+> **Someone from outside the lab?** Give them a guest pass for a day to a month: **New guest pass** under **Guests** in **Settings → People & access**, who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**.
 
 ### Troubleshooting
 
 #### They forgot their password
 
-An admin resets it in **Manage users**.
+An admin resets it from the **···** beside them in **Settings → People & access**.
 
-*Manage users, where a new person is approved and given a role*
+*Settings → People & access, where a new person is approved and given a role*
 
 Related: [People and guests](https://biomanager.org/guide/people-and-guests) [Who can do what](https://biomanager.org/guide/who-can-do-what) [Run it for your lab](https://biomanager.org/server)
 
@@ -1218,11 +1236,21 @@ Turn databases on or off, and set your lab's name, time zone and dates.
 
 Who and where: Admins only
 
-**More → Lab setup** in the sidebar (admins) reopens the survey at any time: switch databases on or off, rename the lab, choose the calendar and notebook, and set what members may do — create their own databases, or add ones for the whole lab. Under **Who looks after the lab**, make someone admin.
+After the first survey, the lab's setup is in **Settings**, under **Lab**. Admins change it; everyone else sees it, read only, so they know how the lab is set up. Each change is saved as you make it.
+
+- **General** — the lab's name, time zone, dates and genotyping day.
+
+- **Databases** — switch each database and the calendar and notebook on or off; **Other databases** lists the ones made with **Add database** and members' own.
+
+- **People & access** — the lab's people ([People and guests](https://biomanager.org/guide/people-and-guests)), its [project groups](https://biomanager.org/guide/project-groups), and **What members may do**: create their own databases, add ones for the whole lab, keep a copy of the lab, make tokens.
+
+- **Statistics** — the lab's animals in numbers, by person, how full each rack and box is, and what is coming up. Admins choose there who may change each rack, box and incubator.
+
+- **History** — the latest bulk changes, with **Undo**, and for admins the latest of every change ([Undo and history](https://biomanager.org/guide/undo-and-history)).
 
 Switching a database off hides it and closes it to members, even by a saved link; its data is kept, and admins can still open it (a note says it is off).
 
-Under **Your lab**, besides its name:
+Under **General**, besides its name:
 
 - **Time zone** — what "today" and "overdue" mean, and the times shown. Blank uses the server's (or the computer's).
 
@@ -1234,7 +1262,7 @@ Under **Your lab**, besides its name:
 
 #### A database disappeared from the sidebar
 
-An admin may have switched it off in **Lab setup**; its data is kept, and it comes back when it is switched on.
+An admin may have switched it off in **Settings → Databases**; its data is kept, and it comes back when it is switched on.
 
 Source: https://biomanager.org/guide/lab-setup
 
@@ -1267,7 +1295,7 @@ A server backs up every night, restores the newest backup every week to prove it
 
 The desktop app can keep a copy of your lab server's whole database, so the lab's records live on more than one machine:
 
-1. On the server: **Settings → Devices & copies**, name the computer and **Make a key**. Copy the key; it's shown once. (Admins always may; members when Lab setup allows it.)
+1. On the server: **Settings → Devices & copies**, name the computer and **Make a key**. Copy the key; it's shown once. (Admins always may; members when **Settings → People & access → What members may do** allows it.)
 
 2. On that computer, in the desktop app: **Settings → Devices & copies**. Enter the server's address and the key, and **Save and copy now**.
 
@@ -1293,7 +1321,7 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 ### Getting your data out
 
-**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in **Settings → Your data**) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
+**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in **Settings → Your data**) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
 
 ### What BioManager sends its makers
 
@@ -1335,7 +1363,7 @@ BioManager opens the lab as it was when that backup was made.
 
 ### On a lab server
 
-A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever looks after the server, and never deletes what it replaces: see `deploy/RUNBOOK.md` in the server bundle and [Keeping the data safe](https://biomanager.org/server#safe). For a mistake in a bulk change, **More → Batch history → Undo** is enough.
+A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever looks after the server, and never deletes what it replaces: see `deploy/RUNBOOK.md` in the server bundle and [Keeping the data safe](https://biomanager.org/server#safe). For a mistake in a bulk change, **Settings → History → Undo** is enough.
 
 ### Troubleshooting
 
@@ -1479,15 +1507,15 @@ Common problems and their fixes, each also on the page it belongs to.
 
 - **A cell turned red**: That change wasn't saved; the message at the bottom says why (a required field, a date that isn't one). [→ See the page](https://biomanager.org/guide/sheets)
 
-- **I made a mistake with a bulk change**: **More → Batch history** in the sidebar → **Undo**. [→ See the page](https://biomanager.org/guide/undo-and-history)
+- **I made a mistake with a bulk change**: **Settings → History** → **Undo**. [→ See the page](https://biomanager.org/guide/undo-and-history)
 
-- **I forgot my password**: Ask an admin: **Manage users** resets it. [→ See the page](https://biomanager.org/guide/people-and-guests)
+- **I forgot my password**: Ask an admin: the **···** beside you in **Settings → People & access** resets it. [→ See the page](https://biomanager.org/guide/people-and-guests)
 
 - **Rows were skipped on import**: The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time. [→ See the page](https://biomanager.org/guide/bring-your-lab-in)
 
 - **A colleague's database isn't in my sidebar**: It may be their personal one (*Just you* on its tile), which only they and admins see, or an admin may have switched it off. [→ See the page](https://biomanager.org/guide/any-organism)
 
-- **A database disappeared from the sidebar**: An admin may have switched it off in **Lab setup**; its data is kept, and it comes back when it is switched on. [→ See the page](https://biomanager.org/guide/lab-setup)
+- **A database disappeared from the sidebar**: An admin may have switched it off in **Settings → Databases**; its data is kept, and it comes back when it is switched on. [→ See the page](https://biomanager.org/guide/lab-setup)
 
 - **Something else**: **Help → Send feedback** in the sidebar (see below), or [open an issue](https://github.com/gaspolymerase/biomanager/issues) — say which system you use and what you expected to happen.
 
@@ -1690,7 +1718,7 @@ password once, to save in their password manager):
 **D8. The lab.** Members install Tailscale; the person either invites them
 to the tailnet or shares the one machine with their own Tailscale accounts
 (Machines → biomanager → Share). Members sign up at the address; the admin
-approves them in Settings → Manage users. Phones: Android app (download page), or on
+approves them in Settings → People & access. Phones: Android app (download page), or on
 iPhone Safari → Share → Add to Home Screen.
 
 ## Options B and C: a Linux computer or a university VM

@@ -627,7 +627,7 @@ it is:
   by its row number in Excel. A *Total* line under the records is left out,
   and a mouse whose ID is taken (by the colony or an earlier row) gets the
   next free one, with the preview saying so. The import itself is one
-  batch, so **Batch history** can undo it.
+  batch, so **Settings → History** can undo it.
 
 ### 📱 Cage cards that open on your phone
 
@@ -670,10 +670,13 @@ in any modern browser on Windows and Linux too.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 on the left (**You**: Profile, Sign-in & security, Appearance & language,
-Notifications, AI assistant & tokens, Your data; **Lab**: Devices & copies)
-and the chosen one beside it, its settings in grouped rows with a short line
-on what each does. A change is saved as it is made, and the search box at the
-top finds a setting by name.
+Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
+General, Databases, People & access, Devices & copies, History) and the
+chosen one beside it, its settings in grouped rows with a short line on what
+each does. A change is saved as it is made, and the search box at the top
+finds a setting by name. The lab's panes hold its setup and its admin
+pages: everyone sees them, admins change them. **Statistics** counts the lab's mice, fish tanks and fly and worm
+vials, by person, and shows how full each rack and box is.
 
 Each person can pick their own app icon in **Settings → Appearance &
 language**: a double helix,
@@ -893,7 +896,7 @@ A walk-through for a mouse colony. The other modules work the same way.
     <td valign="top" width="25%">
       <h4>Day 1 · Set up</h4>
       <ol>
-        <li>Sign in as the admin; approve colleagues in <b>Settings → Manage users</b>.</li>
+        <li>Sign in as the admin; approve colleagues in <b>Settings → People &amp; access</b>.</li>
         <li><b>Mouse colony → Cages → Rack grid → New rack</b>, labelled like the stickers on your real racks.</li>
         <li>Add your lines under <b>Strains</b>.</li>
       </ol>
@@ -947,7 +950,7 @@ notebook** puts all of it in a notebook page.
 <details>
 <summary><b>↩️ When you make a mistake</b></summary>
 
-Open **More → Batch history** at the foot of the sidebar and undo the bulk action. For a single
+Open **Settings → History** and undo the bulk action. For a single
 edit, the change history shows what the value used to be.
 </details>
 
@@ -990,11 +993,16 @@ track.
   cage's owner or an admin shares it, makes it personal or gives it away.
   Admins can change anything.
 - **Project groups.** Some of the lab working on one project can be a
-  group (**More → Project groups**): an admin makes it and picks its
-  members, and the group's leads may add and remove people; someone can be
-  in several groups. Wherever something can be shared with the lab, it can
+  group (**Settings → People & access → Project groups**): an admin makes
+  it, and an admin or the group's leads add and remove people; someone can
+  be in several groups. Each person in a group is a **Lead**, a **Member**
+  or **Can only view**, and the group's switches say what its members may
+  do: edit what is shared with it, add and change records in its
+  databases, edit each other's records there, edit its notebook pages,
+  tick off its to-dos, and share their own things with it. They start as
+  groups always worked. Wherever something can be shared with the lab, it can
   be shared with one of your groups instead: a cage, a breeding tank or a
-  lab stock vial is then its members' to edit, as is a plasmid
+  lab stock vial is then its members' to edit (as the group allows), as is a plasmid
   or reagent shared with it (everyone still sees them). A database made
   for a group is seen only by its members (and admins), a group's to-dos
   are on their calendars for any of them to tick off, and a notebook page
@@ -1002,7 +1010,7 @@ track.
   shows the mice and cages of everyone in your groups. Deleting a group
   makes what was shared with it its owner's own again (a breeding tank or
   stock vial the lab's).
-- **Roles for a facility** (Manage users → role): **Animal care**
+- **Roles for a facility** (Settings → People & access, the **···** beside someone): **Animal care**
   (technicians, vets) may change any lab's animals, cages, tanks and
   vials, but not other people's experiments, notebook pages or settings
   (their own they keep like a member); a **Facility
@@ -1019,8 +1027,10 @@ track.
 - **The lab sees only what it uses.** On first sign-in the admin answers
   four questions: which databases the lab keeps and which functions it
   uses. Everyone then gets exactly those, in the sidebar and on their home
-  page. **Lab setup** changes it any time, switches things off (hidden,
-  never deleted) and makes someone else an admin.
+  page. **Settings → General** and **Databases** change it any time and
+  switch things off (hidden, never deleted); **People & access** makes
+  someone else an admin and says what members may do. Members see these
+  panes too, read only.
 - **Your own databases.** Anyone can add a database **just for them**, which
   only they and the admins see, or for one of their project groups, and
   share it with a group or the lab later. Admins add databases for the
@@ -1032,11 +1042,11 @@ track.
 - **Guests.** An admin can let someone outside the lab in for a day to 30
   days with a **guest pass**: a one-time code instead of a password, an
   account that stops working when the pass ends, and nothing they can do
-  to Lab setup or other people's records. From the internet, someone not
+  to the lab's setup or other people's records. From the internet, someone not
   signed in only ever sees the page for entering a code.
-- **When someone leaves,** the admin's **Colony overview** (under **More**) shows every cage by
-  owner, idle cages and living mice without a cage, and **Racks & boxes**
-  hands their racks to someone else.
+- **When someone leaves,** **Settings → Statistics** shows how many
+  animals each person keeps and how full each rack and box is, and the
+  admin hands their racks to someone else there.
 - **An API for scripts and instruments.** **Settings → AI assistant & tokens**
   makes a token for R, a Python script, a balance or another tool; it
   reads the lab's records as JSON, or changes them, as you and with your

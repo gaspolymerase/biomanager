@@ -112,7 +112,9 @@ class PassTests(GuestCase):
         self.post(self.a, f"/admin/guests/{pid}/end")
         self.assertEqual(location(guest.get("/settings")).split("?")[0], "/login")
         self.assertEqual(self.enter(self.visitor(), code).status_code, 401)
-        self.assertIn("guest, ended", self.get_ok(self.a, "/admin/users"))
+        guests = self.get_ok(self.a, "/settings").split(">Guests<", 1)[1].split('id="groups"', 1)[0]
+        self.assertIn("Ended", guests)
+        self.assertNotIn(f"/admin/guests/{pid}/end", guests)
 
     def test_a_guest_has_no_password_to_sign_in_with(self):
         _, username = self.make_pass()

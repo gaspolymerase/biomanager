@@ -177,7 +177,7 @@ and stop the old app (`docker compose stop app`) so nobody writes to it meanwhil
 
 ## An admin is locked out
 
-- Another admin resets their password in **Settings → Manage users**.
+- Another admin resets their password in **Settings → People & access** (the **···** beside them).
 - No other admin can sign in:
 
   ```bash
@@ -194,15 +194,15 @@ and stop the old app (`docker compose stop app`) so nobody writes to it meanwhil
    with Tailscale, admin console → Machines → the server → **Share**, and
    send them the invite (sharing gives them this machine only).
 2. Send them the address, `https://DOMAIN`, and the user guide.
-3. When they sign up, approve them in **Settings → Manage users**. Give
+3. When they sign up, approve them in **Settings → People & access**. Give
    animal-facility staff the *Animal care* or *Facility manager* role there.
 
 ## Someone leaves
 
-1. **Settings → Manage users** → **Disable**. They are signed out at once.
+1. **Settings → People & access** → **···** beside them → **Disable the account**. They are signed out at once.
 2. Hand their records to someone: on the **Mice** and **Cages** sheets, show
-   everyone's, filter by their name, tick them and use **Set → Owner** (the
-   **Colony overview**, `/admin/colony`, shows who holds what). Do the same
+   everyone's, filter by their name, tick them and use **Set → Owner** (**Settings →
+   Statistics** shows who holds what). Do the same
    in the other databases they used.
 3. Take away their network access: revoke the Tailscale share (or remove
    them from the tailnet), or ask IT to.

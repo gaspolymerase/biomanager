@@ -39,7 +39,8 @@ class GroupCase(AppTestCase):
 
 class GroupPageTests(GroupCase):
     def test_everyone_sees_the_groups_and_who_is_in_them(self):
-        html = self.get_ok(self.o, "/groups")
+        self.assertTrue(self.o.get("/groups").headers["Location"].endswith("/settings#groups"))
+        html = self.get_ok(self.o, "/settings")
         self.assertIn(f'id="group-{self.gid}"', html)
         self.assertIn(self.colleague, html)
         self.assertNotIn('action="/groups/create"', html)

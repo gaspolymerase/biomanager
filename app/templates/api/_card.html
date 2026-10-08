@@ -60,8 +60,8 @@
         </div>
       {% endif %}
       {% if api_card.is_admin %}
-        <p class="set-note">{% trans link=url_for('lab.setup') %}You see every token in the lab, and can revoke any. Members make
-          tokens only if <a href="{{ link }}">Lab setup</a> allows it.{% endtrans %}</p>
+        <p class="set-note">{% trans link=url_for('settings', _anchor='member-rights') %}You see every token in the lab, and can revoke any. Members make
+          tokens only if <a href="{{ link }}">What members may do</a> allows it.{% endtrans %}</p>
       {% endif %}
   </div>
 {% endif %}

@@ -220,4 +220,4 @@ def end(pass_id: int):
             user.expires_at = now          # signs out every session it has
         s.commit()
         flash(gettext("Guest access for %(name)s has ended.", name=gp.label), "success")
-    return redirect(url_for("guests.admin"))
+    return redirect(url_for("settings", _anchor="people"))

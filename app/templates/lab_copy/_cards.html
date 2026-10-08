@@ -56,8 +56,8 @@
         </div>
       {% endif %}
       {% if server_card.is_admin %}
-        <p class="set-note">{% trans link=url_for('lab.setup') %}You see every computer in the lab that keeps a copy. Members may keep
-          one only if <a href="{{ link }}">Lab setup</a> allows it.{% endtrans %}</p>
+        <p class="set-note">{% trans link=url_for('settings', _anchor='member-rights') %}You see every computer in the lab that keeps a copy. Members may keep
+          one only if <a href="{{ link }}">What members may do</a> allows it.{% endtrans %}</p>
       {% endif %}
   </div>
 {% endif %}

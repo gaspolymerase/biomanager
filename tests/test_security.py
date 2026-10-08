@@ -287,8 +287,9 @@ class SignUp(AppTestCase):
 
     def test_the_admin_page_offers_approve(self):
         username, _ = self.register()
-        html = self.get_ok(self.a, "/admin/users")
-        self.assertIn("awaiting approval", html)
+        html = self.get_ok(self.a, "/settings")
+        self.assertIn("Waiting to join", html)
+        self.assertIn(username, html.split("Waiting to join", 1)[1].split(">Members<", 1)[0])
         self.assertIn("Approve", html)
 
     def test_a_pending_account_cannot_be_promoted_straight_to_admin(self):

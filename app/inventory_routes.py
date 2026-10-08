@@ -95,6 +95,7 @@ def _module_or_404(session, key: str) -> InventoryModule:
     # person can tell (app/lab.py).
     if module is None or not lab.can_see(module):
         abort(404)
+    lab.opened(module)
     database_keys.to_current(module, key)   # an address it had before a rename
     return module
 
@@ -140,7 +141,7 @@ def _back(key: str, **params) -> str:
 def _can_edit(item: InventoryItem) -> bool:
     """Lab common stock is everyone's to edit; shared with a project group,
     its members'."""
-    return access.can_edit(item, shared=project_groups.record_shared_with(item))
+    return access.can_edit(item, shared=project_groups.record_editable(item))
 
 
 def _can_manage(item: InventoryItem) -> bool:

@@ -87,10 +87,9 @@ click, and switched with `Alt+1…9` / `Alt+←` / `Alt+→` (`Alt+W` closes,
 `Cmd/Ctrl+B` collapses the rail, `Cmd/Ctrl+K` opens search).
 
 The rail's lists are in `app/app.py`: `NAV_SECTIONS` (Workspace, with
-Utilities, and the databases), `NAV_FOOTER` (Settings) and `NAV_MORE`, the
-**More** menu at the rail's foot (Batch history, then the admin pages:
-Lab setup, Colony overview, Audit log, Manage users, Guests, Racks &
-boxes); **Help** holds the guide and Send feedback. `static/shell.js`
+Utilities, and the databases) and `NAV_FOOTER` (Settings, which holds the
+lab's pages too: see Settings below); **Help** holds the guide and Send
+feedback. `static/shell.js`
 (`setupRailMenus`) moves each `.rail-pop` menu to `<body>` when it opens:
 the rail's `backdrop-filter` makes it the containing block of anything
 fixed inside it. Toasts (`BiomanagerShell.toast`) are a manual popover,
@@ -109,7 +108,17 @@ pane shows, stacked. On a phone the list and the pane take turns, with
 **‹ Settings** to go back. Panes: **You**, the person's own (Profile,
 Sign-in & security, Appearance & language, Notifications, AI assistant &
 tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
-the lab's (Devices & copies so far) in one slate (`.set-ico.is-lab`).
+the lab's (Statistics, General, Databases, People & access, Devices &
+copies, History) in one slate (`.set-ico.is-lab`). `app/settings_lab.py`
+gathers what the Lab panes show (`panes()`); everyone sees them and only
+admins get their forms (`/settings/lab` saves General, Databases, What
+members may do and one other database at a time: `lab.apply_survey(...,
+sections=)`). The pages they replace redirect to them: `/setup` once the lab
+is set up (#general), `/admin/users` (#people), `/admin/colony` (#stats),
+`/admin/racks/` (#racks), `/groups` (#groups); Batch history and the Audit
+log stay as full pages, linked from History. People & access has tabs
+(`[data-tabpane]`), and Project groups a page per group (`[data-subview]`,
+`#group-<id>`), all picked by the hash.
 Rows are `.set-row` in a `.set-group`, an on/off is
 `input.set-switch`. Forms marked `data-autosave-form` post on change with
 `X-Autosave: 1`, and the `settings` route answers `{"ok": true}` instead of a
@@ -410,10 +419,28 @@ someone in a group); edit rights are per record and don't change with it.
 
 ## Project groups
 
-`app/groups.py`, the **Project groups** page (`/groups`, under More). Tables
-`lab_groups` and `lab_group_members` (`lead`: may add and remove members;
-making groups, renaming, deleting and naming leads is for admins), revision
-0015. A record shared with a group keeps `is_shared` and names the group in
+`app/groups.py`, shown in Settings → People & access → Project groups
+(`/groups` redirects there). Tables `lab_groups` and `lab_group_members`
+(`lead`: may add and remove members and set the group's switches; making
+groups, renaming, deleting and naming leads is for admins), revision 0015.
+
+**What members may do in a group** (revision 0026): six `lab_groups`
+switches, `groups.SWITCHES` (`may_edit_shared`, `may_change_records`,
+`may_edit_each_other`, `may_edit_pages`, `may_tick_todos`, `may_share`),
+and `lab_group_members.can_edit` (off: *Can only view*). `groups.member_may(
+group, what)` is the one rule: an admin or a lead always, a member who can
+edit when the switch is on, a viewer never. It is asked by
+`groups.record_editable()` (shared cages and mice via
+`access.cage_editable_shared`, plasmids, inventory, tanks, stock vials;
+to-dos with `what="todos"`), `may_share_with()` and `choices()`,
+`lab_notebook.role_for` (a group's edit share reads as view when
+`pages` is off), `lab.opened()` (every POST into a group's database needs
+`records`; each blueprint's `_module_or_404` calls it and keeps the module
+in `g.current_module`) and `access._peer_editable` (`each_other`: a record
+in that database whoever added it). `record_shared_with()` still decides
+who *sees* something. Every switch starts as groups worked before 0026.
+`/groups/<id>/switches` and `/groups/<id>/members/<who>/part` save them
+(leads and admins; only an admin makes or unmakes a lead). A record shared with a group keeps `is_shared` and names the group in
 `share_group_id` (no foreign key; `groups.release()` clears it, and the
 record's `is_shared`, when a group is deleted): `mouse_cages`, `plasmids`,
 `inventory_items` and `tasks`. Breeding tanks and lab stock vials are shared
@@ -450,10 +477,11 @@ shared to-dos, not their personal ones. A member's copy
 of the lab (`lab_copy.member_view`) leaves out the databases of groups they
 are not in, and keeps pages shared with their groups.
 
-Admins get **Colony overview** (`/admin/colony`): every cage in the facility
-grouped by who manages it, with occupancy, shared-cage pooling, idle-time
-flags and a warning for living mice with no cage. That's the page for
-reassigning animals when someone leaves.
+**Settings → Statistics** (`settings_lab.statistics`) counts living mice,
+active fish tanks and fly and worm vials per person (one animal at a time:
+they are counted in different units), every rack, box and incubator with
+how full it is (`admin_racks.CONTAINERS`; `rows × cols` places) and who may
+change it (`admin_racks.assign`, autosaved), and what is coming up.
 
 Cage ownership is backfilled on first run from the mice each cage holds; a
 cage whose mice disagree is left unowned rather than guessed at.
@@ -2115,7 +2143,7 @@ private network such as Tailscale.
   from the log, so nobody else on the network can claim it first.
 - **Everyone after that waits for approval.** A sign-up is created as
   *awaiting approval*; admins get a notification and approve it in
-  Settings → Manage users. `scripts/reset-password.py NAME --enable` does the
+  Settings → People & access. `scripts/reset-password.py NAME --enable` does the
   same from the command line on SQLite.
 - **Passwords are at least 12 characters.** Ten failed sign-ins in 15 minutes
   lock out that username and that address for the rest of the window.

@@ -33,16 +33,20 @@ class RackHandOverPage(AppTestCase):
         self.assertEqual(r.status_code, 403)
         self.assertEqual(one("select created_by from mouse_racks where id=?", rack), self.admin)
 
-    def test_the_page_lists_every_kind_of_container(self):
-        html = self.get_ok(self.a, "/admin/racks/")
-        for label in ("Mouse racks", "Fish racks", "Racks and rooms of other databases", "Plasmid boxes",
-                      "Inventory boxes", "Fly &amp; worm racks", "Fly &amp; worm incubators"):
-            self.assertIn(label, html)
+    def test_settings_statistics_lists_the_racks_by_kind(self):
+        # Racks & boxes is part of Settings → Statistics now; the old page sends you there.
+        self.make_mouse_rack(self.a)
+        self.assertTrue(self.a.get("/admin/racks/").headers["Location"].endswith("/settings#racks"))
+        html = self.get_ok(self.a, "/settings")
+        self.assertIn('id="racks"', html)
+        self.assertIn("Mouse racks", html)
 
     def test_a_container_without_a_creator_is_shown_as_admin_only(self):
         rack = self.make_mouse_rack(self.a)
         execute("update mouse_racks set created_by='' where id=?", rack)
-        self.assertIn("admin-only", self.get_ok(self.a, "/admin/racks/"))
+        html = self.get_ok(self.a, "/settings")
+        form = html.split(f'name="id" value="{rack}"', 1)[1].split("</form>", 1)[0]
+        self.assertIn('<option value="" selected>Admins only</option>', form)
 
     def test_the_page_is_linked_from_settings(self):
         self.assertIn("/admin/racks/", self.get_ok(self.a, "/settings"))
@@ -138,7 +142,7 @@ class UserAdministration(AppTestCase):
         self.assertNotIn("/admin/users", r.headers["Location"])
 
     def test_admin_sees_the_users(self):
-        self.assertIn(self.member, self.get_ok(self.a, "/admin/users"))
+        self.assertIn(self.member, self.get_ok(self.a, "/settings"))
 
     def test_a_member_cannot_change_roles(self):
         target = make_user()

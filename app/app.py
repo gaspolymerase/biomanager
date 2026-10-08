@@ -694,32 +694,15 @@ NAV_SECTIONS: list[dict] = [
     },
 ]
 
-# The foot of the sidebar: Settings, and one More menu for the pages not
-# used every day (batch history for everyone; the admin's pages). Help and
-# Feedback are a Help menu in the template. Utilities sits with Workspace.
+# The foot of the sidebar: Settings, which holds the lab's pages too
+# (Statistics, General, Databases, People & access, History), and a Help
+# menu in the template. Utilities sits with Workspace.
 NAV_FOOTER: list[dict] = [
     {"key": "settings", "label": "Settings", "icon": "settings", "endpoint": "settings",
-     "match": ("settings", "admin_users")},
+     "match": ("settings", "admin_users", "batches_view", "audit_log_view", "guests.admin", "devices.page",
+               "server_setup.page", "oauth.connect_page", "proposals.page")},
 ]
-NAV_MORE: list[dict] = [
-    {"key": "batches", "label": "Batch history", "icon": "layers", "endpoint": "batches_view",
-     "hint": "Changes made many records at a time (Add many, bulk edits, imports), each with Undo"},
-    {"key": "groups", "label": "Project groups", "icon": "users", "endpoint": "groups.page",
-     "hint": "Who works together: groups share animals, stock, databases, to-dos and notebook pages"},
-    {"key": "lab-setup", "label": "Lab setup", "icon": "sliders",
-     "hint": "What the lab keeps, its name, and what members may do",
-     "endpoint": "lab.setup", "admin_only": True},
-    {"key": "admin-colony", "label": "Colony overview", "hint": "Every member's mice and cages at a glance",
-     "icon": "list", "endpoint": "admin_colony_overview", "admin_only": True, "feature": "colony"},
-    {"key": "audit", "label": "Audit log", "icon": "history", "endpoint": "audit_log_view",
-     "hint": "Who changed what, and when", "admin_only": True},
-    {"key": "users", "label": "Manage users", "icon": "users", "endpoint": "admin_users", "admin_only": True,
-     "hint": "Approve people, roles, passwords"},
-    {"key": "guests", "label": "Guests", "icon": "user", "endpoint": "guests.admin", "admin_only": True,
-     "hint": "A pass for someone outside the lab"},
-    {"key": "racks", "label": "Racks & boxes", "icon": "box", "endpoint": "admin_racks.index", "admin_only": True,
-     "hint": "Who may change each rack, box and incubator"},
-]
+
 
 # Colony sub-views: label, icon and one-line description for the segmented
 # tab row on the colony page. Keyed by the view keys in models.COLONY_VIEWS.
@@ -922,7 +905,7 @@ def _database_order() -> list[str]:
 @app.context_processor
 def inject_nav():
     if g.get("user") is None:
-        return {"nav_sections": [], "nav_footer": [], "nav_more": [], "tab_icon_rules": [],
+        return {"nav_sections": [], "nav_footer": [], "tab_icon_rules": [],
                 "colony_view_meta": COLONY_VIEW_META, "db_labels": {}}
 
     active = request.endpoint or ""
@@ -962,11 +945,9 @@ def inject_nav():
             sortable = section["label"] == "Databases" and access.is_admin()
             sections.append({"label": section["label"], "links": links, "sortable": sortable})
     footer = [r for r in (_resolve_nav_item(i, active) for i in NAV_FOOTER) if r]
-    more = [r for r in (_resolve_nav_item(i, active) for i in NAV_MORE) if r]
     return {
         "nav_sections": sections,
         "nav_footer": footer,
-        "nav_more": more,
         "tab_icon_rules": tab_icon_rules,
         "colony_view_meta": COLONY_VIEW_META,
         "db_labels": g.db_labels,
@@ -2307,10 +2288,18 @@ def settings():
                        "provider_key": i.provider, "email": i.email,
                        "last_used": local_time(i.last_login_at).strftime("%Y-%m-%d") if i.last_login_at else ""}
                       for i in linked]
-    from . import mailer
+    from . import mailer, settings_lab
 
+    with SessionLocal() as db_session:
+        lab_data = settings_lab.panes(db_session) if not g.user.expires_at else None
+    from .stocks import PRESETS as STOCK_PRESETS
     return render_template(
         "settings.html",
+        lab_data=lab_data, lab_features=lab.FEATURES, stock_choices=lab.STOCK_CHOICES,
+        inventory_choices=lab.INVENTORY_CHOICES, member_permissions=lab.MEMBER_PERMISSIONS,
+        date_styles=lab.DATE_STYLES, timezones=lab.timezone_names(), server_timezone=lab.server_timezone(),
+        wean_offset_days=WEAN_OFFSET_DAYS, roles=access.ROLES, group_switches=project_groups.SWITCHES,
+        group_parts=project_groups.PARTS, stock_default_labels={k: STOCK_PRESETS[k]["label"] for k in lab.STOCK_CHOICES},
         user_settings=user_data,
         landing_choices=sorted(ALLOWED_LANDING_ENDPOINTS),
         home_layout_choices=home_layouts.LAYOUTS,
@@ -2322,6 +2311,45 @@ def settings():
         identities=identities,
         notification_categories=notify.CATEGORIES,
     )
+
+
+@app.route("/settings/lab", methods=["POST"])
+@admin_required
+def settings_lab_save():
+    """Settings → Lab: one pane's form (General, Databases, What members may
+    do, or one other database switched on or off), saved as it changes."""
+    section = request.form.get("section", "")
+    autosave = request.headers.get("X-Autosave") == "1"
+    anchor = {"general": "general", "databases": "databases", "permissions": "member-rights",
+              "module": "databases"}.get(section)
+    if anchor is None:
+        abort(400)
+    with SessionLocal() as db_session:
+        if section == "module":
+            module = lab.set_module_enabled(db_session, request.form.get("kind", ""), request.form.get("key", ""),
+                                            request.form.get("enabled") == "1")
+            if module is None:
+                abort(404)
+            db_session.commit()
+            if autosave:
+                return jsonify({"ok": True})
+            return redirect(url_for("settings", _anchor=anchor))
+        zone = (request.form.get("lab_timezone") or "").strip()
+        if section == "general" and zone and not lab.valid_timezone(zone):
+            message = gettext("“%(zone)s” is not a time zone BioManager knows; the time zone was left as it was. Pick one from the list, such as America/New_York.", zone=zone)
+            if autosave:
+                return jsonify({"ok": False, "error": message}), 400
+            flash(message, "error")
+        switched_on = lab.apply_survey(db_session, request.form, g.user.username, sections=(section,))
+        if switched_on:
+            notify.tell_lab(db_session, g.user.username, "%(who)s added %(what)s for the lab",
+                            link=url_for("home_dashboard"),
+                            values={"who": g.user.display_name or g.user.username, "what": ", ".join(switched_on)})
+        db_session.commit()
+    if autosave:
+        return jsonify({"ok": True})
+    flash(gettext("Lab setup saved."), "success")
+    return redirect(url_for("settings", _anchor=anchor))
 
 
 @app.route("/settings/export")
@@ -2456,101 +2484,15 @@ def export_my_data():
 @app.route("/admin/colony")
 @admin_required
 def admin_colony_overview():
-    """Everyone's cages on one page, grouped by who manages them.
-
-    The colony views are scoped to the person looking at them, which is what
-    you want day to day but useless when someone leaves and their animals
-    need reassigning. This is the whole-facility picture: who holds what,
-    how full it is, and what has gone quiet.
-    """
-    today = date.today()
-    with SessionLocal() as db_session:
-        cages = db_session.scalars(
-            select(CageRecord).options(selectinload(CageRecord.mice)).order_by(CageRecord.cage_id)
-        ).all()
-        unhoused = db_session.scalars(
-            select(MouseRecord).where(MouseRecord.cage_id_fk.is_(None),
-                                      MouseRecord.date_of_death.is_(None))
-        ).all()
-
-        groups: dict[str, dict] = {}
-        for cage in cages:
-            living = [m for m in cage.mice if m.date_of_death is None]
-            shared = access.is_shared_cage(cage)
-            # A shared cage belongs to the lab or a group, not to one person.
-            key = "__shared__" if shared else (cage.owner or "").strip() or "__unowned__"
-            group = groups.setdefault(key, {
-                "owner": key, "cages": [], "mice": 0, "active_cages": 0,
-            })
-            last_touch = max(
-                [m.updated_at for m in cage.mice if m.updated_at] or [cage.created_at]
-            )
-            group["cages"].append({
-                "id": cage.id,
-                "cage_id": cage.cage_id,
-                "purpose": cage.purpose,
-                "room": cage.room or cage.cage_location,
-                "count": len(living),
-                "total": len(cage.mice),
-                "shared": shared,
-                "active": cage_is_active(cage),
-                "owner": cage.owner,
-                "idle_days": (today - local_time(last_touch).date()).days if last_touch else None,
-            })
-            group["mice"] += len(living)
-            group["active_cages"] += 1 if cage_is_active(cage) else 0
-
-        def sort_key(item):
-            name = item[0]
-            return (name in ("__shared__", "__unowned__"), name)
-
-        ordered = [
-            {
-                "label": {"__shared__": "Shared cages",
-                          "__unowned__": "Unassigned"}.get(name, name),
-                "owner": "" if name.startswith("__") else name,
-                "is_pool": name.startswith("__"),
-                **data,
-            }
-            for name, data in sorted(groups.items(), key=sort_key)
-        ]
-
-        return render_template(
-            "admin_colony.html",
-            groups=ordered,
-            unhoused=unhoused,
-            totals={
-                "cages": len(cages),
-                "mice": sum(g["mice"] for g in ordered),
-                "owners": sum(1 for g in ordered if not g["is_pool"]),
-                "shared": sum(len(g["cages"]) for g in ordered if g["label"].startswith("Shared")),
-            },
-        )
+    """The colony at a glance is Settings → Statistics now."""
+    return redirect(url_for("settings", _anchor="stats"))
 
 
 @app.route("/admin/users")
 @admin_required
 def admin_users():
-    with SessionLocal() as db_session:
-        users = db_session.scalars(select(UserAccount).order_by(UserAccount.created_at)).all()
-        rows = [
-            {
-                "id": u.id,
-                "username": u.username,
-                "display_name": u.display_name,
-                "short_name": u.short_name,
-                "email": u.email,
-                "role_title": u.role_title,
-                "role": u.role,
-                "disabled": u.disabled,
-                "created_at": local_time(u.created_at).strftime("%Y-%m-%d") if u.created_at else "",
-                # A guest's account (app/guests.py): when it stops working.
-                "expires_at": u.expires_at,
-                "expired": u.expires_at is not None and u.expires_at <= datetime.utcnow(),
-            }
-            for u in users
-        ]
-    return render_template("admin_users.html", users=rows, roles=access.ROLES)
+    """The lab's accounts are in Settings → People & access."""
+    return redirect(url_for("settings", _anchor="people"))
 
 
 @app.route("/admin/users/<int:user_id>/role", methods=["POST"])
@@ -2560,17 +2502,17 @@ def admin_toggle_role(user_id: int):
         target = db_session.get(UserAccount, user_id)
         if target is None:
             flash(gettext("User not found."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         if target.id == g.user.id:
             flash(gettext("You cannot change your own role."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         if target.role == "pending":
             flash(gettext("Approve %(user)s before changing their role.", user=target.username), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         wanted = request.form.get("role", "")
         if wanted and wanted not in access.ROLES:
             flash(gettext("That isn't a role."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         target.role = wanted or ("member" if target.role == "admin" else "admin")
         who = g.user.display_name or g.user.username
         if target.role in ("care", "facility"):
@@ -2581,7 +2523,7 @@ def admin_toggle_role(user_id: int):
                         values={"who": who}, message_values={})
         if target.role == "admin":
             notify.send(db_session, target.username, "%(who)s made you a lab admin",
-                        "You can now change Lab setup, approve sign-ups and edit any record.",
+                        "You can now change the lab's setup, approve sign-ups and edit any record.",
                         category="lab", link=url_for("lab.setup"), actor=g.user.username,
                         values={"who": who}, message_values={})
         db_session.commit()
@@ -2596,7 +2538,7 @@ def admin_toggle_role(user_id: int):
         else:
             flash(f"{target.username} is now {target.role}.", "success")
     referrer = request.referrer or ""
-    return redirect(referrer if referrer.startswith(request.host_url) else url_for("admin_users"))
+    return redirect(referrer if referrer.startswith(request.host_url) else url_for("settings", _anchor="people"))
 
 
 @app.route("/admin/users/<int:user_id>/disable", methods=["POST"])
@@ -2606,10 +2548,10 @@ def admin_toggle_disabled(user_id: int):
         target = db_session.get(UserAccount, user_id)
         if target is None:
             flash(gettext("User not found."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         if target.id == g.user.id:
             flash(gettext("You cannot disable your own account."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         if target.role == "pending":
             # A sign-up waiting for approval: enabling it is the approval.
             target.role = "member"
@@ -2617,7 +2559,7 @@ def admin_toggle_disabled(user_id: int):
             db_session.commit()
             notify.settle_signups(db_session)
             flash(gettext("%(user)s approved. They can sign in now.", user=target.username), "success")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         target.disabled = not target.disabled
         if target.disabled:
             security.end_sessions(db_session, target)   # enabling it again won't bring them back
@@ -2628,7 +2570,7 @@ def admin_toggle_disabled(user_id: int):
         db_session.commit()
         flash(gettext("%(user)s disabled.", user=target.username) if target.disabled
               else gettext("%(user)s enabled.", user=target.username), "success")
-    return redirect(url_for("admin_users"))
+    return redirect(url_for("settings", _anchor="people"))
 
 
 @app.route("/admin/users/<int:user_id>/reset-password", methods=["POST"])
@@ -2639,10 +2581,10 @@ def admin_reset_password(user_id: int):
         target = db_session.get(UserAccount, user_id)
         if target is None:
             flash(gettext("User not found."), "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         if problem := security.password_problem(new_password, target.username):
             flash(problem, "error")
-            return redirect(url_for("admin_users"))
+            return redirect(url_for("settings", _anchor="people"))
         target.password_hash = generate_password_hash(new_password)
         db_session.commit()
         # Their sessions end (session_stamp); an admin resetting their own
@@ -2651,7 +2593,7 @@ def admin_reset_password(user_id: int):
             session["auth"] = security.session_stamp(target)
         flash(gettext("Password reset for %(user)s. Their other sessions have been signed out.", user=target.username),
               "success")
-    return redirect(url_for("admin_users"))
+    return redirect(url_for("settings", _anchor="people"))
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -3618,7 +3560,7 @@ def _normalise_csv_dates(rows: list[dict]) -> list[str]:
     if day_first and month_first:
         warnings.append(gettext("The dates of birth mix day-first and month-first; check them."))
     elif guessed and read_day_first:
-        warnings.append(gettext("Dates of birth were read day first (03/04/2026 as 3 April), as Lab setup's date style says. If the file is month first, correct them here."))
+        warnings.append(gettext("Dates of birth were read day first (03/04/2026 as 3 April), as the lab's date style (Settings → General) says. If the file is month first, correct them here."))
     elif guessed:
         warnings.append(gettext("Dates of birth were read month first (03/04/2026 as 4 March). If the file is day first, correct them here, or save it with YYYY-MM-DD dates."))
     return warnings
@@ -5019,7 +4961,7 @@ def task_can_edit(t, user=None) -> bool:
     admin's."""
     if lab_calendar.task_is_personal(t):
         return (t.owner or "") == access.username(user)
-    return access.can_edit(t, user, shared=project_groups.record_shared_with(t, user))
+    return access.can_edit(t, user, shared=project_groups.record_editable(t, user, what="todos"))
 
 
 def task_can_manage(t, user=None) -> bool:
@@ -6334,17 +6276,17 @@ def undo_batch(batch_id: int):
         row = db_session.get(BatchRecord, batch_id)
         if row is None:
             flash(gettext("That batch no longer exists."), "error")
-            return redirect(url_for("batches_view"))
+            return redirect(_undo_back())
         if not (row.actor == g.user.username or access.is_admin()):
             flash(gettext("Only whoever ran a batch, or an admin, can undo it."), "error")
-            return redirect(url_for("batches_view"))
+            return redirect(_undo_back())
 
         result = undo_service.undo(db_session, row, g.user.username, force=force)
         if not result["ok"]:
             db_session.rollback()
             for problem in result["problems"]:
                 flash(problem, "error")
-            return redirect(url_for("batches_view"))
+            return redirect(_undo_back())
         db_session.commit()
 
     if result["skipped"]:
@@ -6354,8 +6296,13 @@ def undo_batch(batch_id: int):
         flash(gettext("Undid %(reverted)s change(s).", reverted=result["reverted"]), "success")
     for note in result["notes"][:5]:
         flash(note, "info")
-    return redirect(url_for("batches_view"))
+    return redirect(_undo_back())
 
+
+
+def _undo_back() -> str:
+    """Undo from Settings → History goes back there; from Batch history, there."""
+    return url_for("settings", _anchor="history") if request.form.get("from") == "settings" else url_for("batches_view")
 
 @app.route("/audit")
 @admin_required
@@ -8997,7 +8944,7 @@ def zf_can_edit(record) -> bool:
     if isinstance(record, TankRecord):
         # A breeding tank shared with a project group is its members'.
         return access.can_edit(record, shared=zf_tank_shared(record)
-                               and project_groups.record_shared_with(record, shared=True))
+                               and project_groups.record_editable(record, shared=True))
     return access.can_edit(record)
 
 

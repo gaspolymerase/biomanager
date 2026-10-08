@@ -175,7 +175,7 @@ password once, to save in their password manager):
 **D8. The lab.** Members install Tailscale; the person either invites them
 to the tailnet or shares the one machine with their own Tailscale accounts
 (Machines → biomanager → Share). Members sign up at the address; the admin
-approves them in Settings → Manage users. Phones: Android app (download page), or on
+approves them in Settings → People & access. Phones: Android app (download page), or on
 iPhone Safari → Share → Add to Home Screen.
 
 ## Options B and C: a Linux computer or a university VM

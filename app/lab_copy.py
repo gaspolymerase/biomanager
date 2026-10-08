@@ -192,7 +192,7 @@ def _unauthorised(_e):
 
 @bp.errorhandler(403)
 def _forbidden(_e):
-    return _json_error(403, "This account may not keep copies of the lab. An admin can allow it in Lab setup.")
+    return _json_error(403, "This account may not keep copies of the lab. An admin can allow it in Settings → People & access.")
 
 
 @bp.errorhandler(429)

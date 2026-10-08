@@ -24,7 +24,7 @@ purpose, the lab's; a group database its creator's own).
 """
 from __future__ import annotations
 
-from flask import Blueprint, abort, flash, g, has_request_context, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, has_request_context, jsonify, redirect, request, url_for
 from sqlalchemy import delete, select, update
 
 from . import access
@@ -38,6 +38,27 @@ bp = Blueprint("groups", __name__)
 PAGE_SHARE_PREFIX = "group:"
 NAME_LIMIT = 80
 
+# What a group's members may do in it, each a LabGroup column; a lead (and
+# an admin) always may, a member who can only view never does. Settings →
+# People & access → a group shows them as switches.
+SWITCHES = {
+    "shared": ("may_edit_shared", "Edit the group's animals and stock",
+               "Cages, tanks, vials, plasmids and stock shared with the group."),
+    "records": ("may_change_records", "Add and change records in the group's databases",
+                "Off: they can look, but not add or change anything there."),
+    "each_other": ("may_edit_each_other", "Edit each other's records there",
+                   "Off: each person edits only what they added."),
+    "pages": ("may_edit_pages", "Edit notebook pages shared with the group", "Off: they may read them."),
+    "todos": ("may_tick_todos", "Tick off the group's to-dos", ""),
+    "share": ("may_share", "Share their own things with the group", "Off: only its leads share with it."),
+}
+# A member's part in a group (Settings → People & access → a group).
+PARTS = {
+    "lead": ("Lead", "Adds and removes people, and sets what the group may do."),
+    "member": ("Member", "Does what is switched on below."),
+    "viewer": ("Can only view", "Sees what is shared with the group, and changes nothing."),
+}
+
 
 # ---------------------------------------------------------------- who is in which group
 
@@ -47,15 +68,21 @@ def _cache() -> dict:
         return {}
     if "_groups" not in g:
         with SessionLocal() as s:
-            names = {gid: name for gid, name in s.execute(select(LabGroup.id, LabGroup.name)).all()}
+            names, switches = {}, {}
+            for group in s.scalars(select(LabGroup)):
+                names[group.id] = group.name
+                switches[group.id] = {key: bool(getattr(group, column)) for key, (column, *_rest) in SWITCHES.items()}
             members: dict[int, set[str]] = {gid: set() for gid in names}
             leads: dict[int, set[str]] = {gid: set() for gid in names}
-            for gid, who, lead in s.execute(select(LabGroupMember.group_id_fk, LabGroupMember.username,
-                                                   LabGroupMember.lead)).all():
+            viewers: dict[int, set[str]] = {gid: set() for gid in names}
+            for gid, who, lead, can_edit in s.execute(select(LabGroupMember.group_id_fk, LabGroupMember.username,
+                                                             LabGroupMember.lead, LabGroupMember.can_edit)).all():
                 members.setdefault(gid, set()).add(who)
                 if lead:
                     leads.setdefault(gid, set()).add(who)
-        g._groups = {"names": names, "members": members, "leads": leads}
+                elif can_edit is False:
+                    viewers.setdefault(gid, set()).add(who)
+        g._groups = {"names": names, "members": members, "leads": leads, "viewers": viewers, "switches": switches}
     return g._groups
 
 
@@ -113,8 +140,61 @@ def is_lead(group_id, user=None) -> bool:
 
 
 def can_manage(group_id, user=None) -> bool:
-    """Add and remove members: an admin or one of the group's leads."""
+    """Add and remove members and set what the group may do: an admin or
+    one of the group's leads."""
     return access.is_admin(user) or is_lead(group_id, user)
+
+
+def only_views(group_id, user=None) -> bool:
+    """In the group, but may only look (not a lead)."""
+    who = access.username(user)
+    data = _cache()
+    if data:
+        return who in data["viewers"].get(group_id or 0, set())
+    with SessionLocal() as s:
+        return bool(s.scalar(select(LabGroupMember.id).where(
+            LabGroupMember.group_id_fk == group_id, LabGroupMember.username == who,
+            LabGroupMember.lead.is_(False), LabGroupMember.can_edit.is_(False))))
+
+
+def switch(group_id, what: str) -> bool:
+    """Is this switch on for the group (SWITCHES)?"""
+    data = _cache()
+    if data:
+        return data["switches"].get(group_id or 0, {}).get(what, False)
+    column = SWITCHES[what][0]
+    with SessionLocal() as s:
+        group = s.get(LabGroup, group_id)
+        return bool(group is not None and getattr(group, column))
+
+
+def member_may(group_id, what: str, user=None) -> bool:
+    """May this person do `what` (a SWITCHES key) in the group? An admin
+    and the group's leads always; a member if the group's switch is on and
+    they may edit; someone outside it never. "each_other" needs "records"
+    on too."""
+    if not group_id or group_id not in names():
+        return False
+    if access.is_admin(user):
+        return True
+    if not in_group(group_id, user):
+        return False
+    if is_lead(group_id, user):
+        return True
+    if only_views(group_id, user):
+        return False
+    if what == "each_other" and not switch(group_id, "records"):
+        return False
+    return switch(group_id, what)
+
+
+def part_of(group_id, user=None) -> str:
+    """"lead", "member", "viewer", or "" for someone not in it."""
+    if not in_group(group_id, user):
+        return ""
+    if is_lead(group_id, user):
+        return "lead"
+    return "viewer" if only_views(group_id, user) else "member"
 
 
 def colleagues(user=None) -> set[str]:
@@ -126,11 +206,12 @@ def colleagues(user=None) -> set[str]:
 
 
 def choices(user=None, current=None) -> list[tuple[int, str]]:
-    """The groups this person may share something with: their own (an admin:
-    every group), plus the one it is shared with now, so a form never drops
-    it silently."""
+    """The groups this person may share something with: their own where the
+    group lets them (an admin: every group), plus the one it is shared with
+    now, so a form never drops it silently."""
     every = names()
-    mine = every if access.is_admin(user) else {gid: n for gid, n in every.items() if gid in ids_of(user)}
+    mine = every if access.is_admin(user) else {gid: n for gid, n in every.items()
+                                               if gid in ids_of(user) and member_may(gid, "share", user)}
     out = dict(mine)
     if current and current in every:
         out[current] = every[current]
@@ -138,7 +219,7 @@ def choices(user=None, current=None) -> list[tuple[int, str]]:
 
 
 def may_share_with(group_id, user=None) -> bool:
-    return group_id in names() and (access.is_admin(user) or in_group(group_id, user))
+    return group_id in names() and member_may(group_id, "share", user)
 
 
 # ---------------------------------------------------------------- shared with whom
@@ -158,6 +239,17 @@ def record_shared_with(record, user=None, shared: bool | None = None) -> bool:
     is_shared when a purpose decides it (a breeding tank, a stock vial)."""
     is_shared = getattr(record, "is_shared", False) if shared is None else shared
     return shared_with(is_shared, getattr(record, "share_group_id", None), user)
+
+
+def record_editable(record, user=None, shared: bool | None = None, what: str = "shared") -> bool:
+    """May this person edit a record because of how it is shared? The lab's
+    is everyone's; a group's is its members' when the group lets them
+    (member_may). Its owner may edit it anyway (access.can_edit)."""
+    is_shared = getattr(record, "is_shared", False) if shared is None else shared
+    if not is_shared:
+        return False
+    group_id = getattr(record, "share_group_id", None)
+    return True if not group_id else member_may(group_id, what, user)
 
 
 def value_of(is_shared, group_id) -> str:
@@ -197,7 +289,7 @@ def apply(record, raw, user=None, set_shared: bool = True) -> str | None:
     shared, group_id = parse(raw)
     if group_id is not None and group_id != getattr(record, "share_group_id", None) \
             and not may_share_with(group_id, user):
-        return refusal(group_id)
+        return refusal(group_id, user)
     if set_shared:
         record.is_shared = shared
     record.share_group_id = group_id if shared else None
@@ -212,9 +304,12 @@ def label(is_shared, group_id, personal: str = "Personal", lab: str = "Shared") 
     return lab
 
 
-def refusal(group_id) -> str:
-    return gettext("You can share only with a project group you are in.") if group_id in names() \
-        else gettext("That project group doesn't exist any more.")
+def refusal(group_id, user=None) -> str:
+    if group_id not in names():
+        return gettext("That project group doesn't exist any more.")
+    if in_group(group_id, user):
+        return gettext("Only the leads of %(group)s share with it.", group=name_of(group_id))
+    return gettext("You can share only with a project group you are in.")
 
 
 # ---------------------------------------------------------------- databases
@@ -293,11 +388,6 @@ def release(s, group_id: int) -> dict[str, int]:
 
 # ---------------------------------------------------------------- the page
 
-def _people(s) -> list[UserAccount]:
-    return list(s.scalars(select(UserAccount).where(
-        UserAccount.disabled.is_(False), UserAccount.role != "pending").order_by(UserAccount.username)))
-
-
 def _group_or_404(s, group_id: int) -> LabGroup:
     group = s.get(LabGroup, group_id)
     if group is None:
@@ -318,15 +408,13 @@ def require_login():
 
 @bp.route("/groups")
 def page():
-    with SessionLocal() as s:
-        rows = list(s.scalars(select(LabGroup).order_by(LabGroup.name)))
-        for group in rows:
-            _ = group.members
-        people = _people(s)
-        shown = {u.username: u.display_name or u.username for u in people}
-        return render_template("groups/index.html", groups=rows, people=people, shown=shown,
-                               mine=ids_of(), is_admin=access.is_admin(),
-                               can_manage={grp.id: can_manage(grp.id) for grp in rows})
+    """Project groups live in Settings → People & access."""
+    return redirect(url_for("settings", _anchor="groups"))
+
+
+def _back(group_id=None):
+    """Back to the group in Settings → People & access."""
+    return redirect(url_for("settings", _anchor=f"group-{group_id}" if group_id else "groups"))
 
 
 @bp.route("/groups/create", methods=["POST"])
@@ -336,11 +424,11 @@ def create():
     name = _clean_name(request.form.get("name"))
     if not name:
         flash(gettext("Give the group a name."), "error")
-        return redirect(url_for("groups.page"))
+        return _back()
     with SessionLocal() as s:
         if s.scalar(select(LabGroup.id).where(LabGroup.name == name)):
             flash(gettext("There is already a group called %(name)s.", name=name), "error")
-            return redirect(url_for("groups.page"))
+            return _back()
         group = LabGroup(name=name, description=(request.form.get("description") or "").strip()[:500],
                          created_by=access.username())
         s.add(group)
@@ -352,7 +440,7 @@ def create():
         gid = group.id
     forget()
     flash(gettext("Made the project group %(name)s.", name=name), "success")
-    return redirect(url_for("groups.page", _anchor=f"group-{gid}"))
+    return _back(gid)
 
 
 @bp.route("/groups/<int:group_id>/rename", methods=["POST"])
@@ -373,7 +461,7 @@ def rename(group_id: int):
             s.commit()
             flash(gettext("Saved."), "success")
     forget()
-    return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
+    return _back(group_id)
 
 
 @bp.route("/groups/<int:group_id>/delete", methods=["POST"])
@@ -389,7 +477,7 @@ def remove(group_id: int):
     forget()
     flash(gettext("Deleted the project group %(name)s. What was shared with it is its owner's own again.", name=name),
           "success")
-    return redirect(url_for("groups.page"))
+    return _back()
 
 
 @bp.route("/groups/<int:group_id>/members", methods=["POST"])
@@ -410,7 +498,7 @@ def add_member(group_id: int):
             s.commit()
             flash(gettext("Added %(who)s.", who=who), "success")
     forget()
-    return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
+    return _back(group_id)
 
 
 @bp.route("/groups/<int:group_id>/members/<path:who>/remove", methods=["POST"])
@@ -429,7 +517,7 @@ def remove_member(group_id: int, who: str):
                 s.commit()
                 flash(gettext("Took %(who)s out of the group.", who=who), "success")
     forget()
-    return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
+    return _back(group_id)
 
 
 @bp.route("/groups/<int:group_id>/members/<path:who>/lead", methods=["POST"])
@@ -444,7 +532,52 @@ def set_lead(group_id: int, who: str):
         row.lead = request.form.get("lead") == "1"
         s.commit()
     forget()
-    return redirect(url_for("groups.page", _anchor=f"group-{group_id}"))
+    return _back(group_id)
+
+
+@bp.route("/groups/<int:group_id>/members/<path:who>/part", methods=["POST"])
+def set_part(group_id: int, who: str):
+    """Someone's part in the group: lead (an admin decides), member, or
+    can only view (the group's leads decide, for anyone but a lead)."""
+    part = request.form.get("part", "")
+    if part not in PARTS or not can_manage(group_id):
+        abort(403)
+    autosave = request.headers.get("X-Autosave") == "1"
+    with SessionLocal() as s:
+        row = s.scalar(select(LabGroupMember).where(LabGroupMember.group_id_fk == group_id,
+                                                    LabGroupMember.username == who))
+        if row is None:
+            abort(404)
+        if not access.is_admin() and (row.lead or part == "lead"):
+            message = gettext("Only an admin makes someone a lead, or changes a lead's part.")
+            if autosave:
+                return jsonify({"ok": False, "error": message}), 403
+            flash(message, "error")
+            return _back(group_id)
+        row.lead = part == "lead"
+        row.can_edit = part != "viewer"
+        s.commit()
+    forget()
+    if autosave:
+        return jsonify({"ok": True})
+    return _back(group_id)
+
+
+@bp.route("/groups/<int:group_id>/switches", methods=["POST"])
+def set_switches(group_id: int):
+    """What the group's members may do in it: its leads or an admin."""
+    if not can_manage(group_id):
+        abort(403)
+    with SessionLocal() as s:
+        group = _group_or_404(s, group_id)
+        for key, (column, *_rest) in SWITCHES.items():
+            setattr(group, column, request.form.get(key) == "1")
+        s.commit()
+    forget()
+    if request.headers.get("X-Autosave") == "1":
+        return jsonify({"ok": True})
+    flash(gettext("Saved."), "success")
+    return _back(group_id)
 
 
 @bp.app_context_processor

@@ -77,7 +77,7 @@ def refuse_switched_off():
     if feature is None or lab.request_features().get(feature.key, True):
         return None
     if g.user.role == "admin":
-        message = gettext("%(feature)s is switched off for this lab. You can switch it on in Lab setup.",
+        message = gettext("%(feature)s is switched off for this lab. You can switch it on in Settings → Databases.",
                           feature=translate_value(feature.label))
     else:
         message = gettext("%(feature)s is switched off for this lab.", feature=translate_value(feature.label))
@@ -117,6 +117,9 @@ def setup():
         return blocked
     with SessionLocal() as db_session:
         first_run = not lab.setup_done(db_session)
+        if request.method == "GET" and not first_run:
+            # Once the lab is set up, its setup is Settings → Lab.
+            return redirect(url_for("settings", _anchor="general"))
         if request.method == "POST":
             if request.form.get("action") == "module":
                 module = lab.set_module_enabled(db_session, request.form.get("kind", ""), request.form.get("key", ""),
@@ -126,7 +129,7 @@ def setup():
                 db_session.commit()
                 flash(gettext("%(name)s switched on.", name=translate_value(module.label)) if module.enabled
                       else gettext("%(name)s switched off.", name=translate_value(module.label)), "success")
-                return redirect(url_for("lab.setup") + "#databases")
+                return redirect(url_for("settings", _anchor="databases"))
             zone = (request.form.get("lab_timezone") or "").strip()
             if zone and not lab.valid_timezone(zone):
                 flash(gettext("“%(zone)s” is not a time zone BioManager knows; the time zone was left as it was. Pick one from the list, such as America/New_York.", zone=zone), "error")
@@ -145,7 +148,7 @@ def setup():
             db_session.commit()
             flash(gettext("The lab is set up. Change any of it here whenever you like.") if first_run
                   else gettext("Lab setup saved."), "success")
-            return redirect(url_for("home_dashboard") if first_run else url_for("lab.setup"))
+            return redirect(url_for("home_dashboard") if first_run else url_for("settings", _anchor="general"))
         state = lab.survey_state(db_session)
         custom = lab.custom_databases(db_session)
         admins = db_session.scalars(select(UserAccount).where(UserAccount.role == "admin",

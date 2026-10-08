@@ -478,7 +478,7 @@ def tidy_dates(values: list[str], day_first: bool = False) -> tuple[list[str], l
     if day_first and month_first:
         notes.append(gettext("Its dates mix day-first and month-first: check them after importing."))
     elif guessed and read_day_first:
-        notes.append(gettext("Its dates were read day first (03/04/2026 as 3 April), as Lab setup's date style says."))
+        notes.append(gettext("Its dates were read day first (03/04/2026 as 3 April), as the lab's date style (Settings → General) says."))
     elif guessed:
         notes.append(gettext("Its dates were read month first (03/04/2026 as 4 March)."))
     return out, notes[:5]

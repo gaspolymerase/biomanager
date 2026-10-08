@@ -159,6 +159,7 @@ def _module_or_404(session, key: str) -> OrganismModule:
     # person can tell (app/lab.py).
     if module is None or not lab.can_see(module):
         abort(404)
+    lab.opened(module)
     database_keys.to_current(module, key)   # an address it had before a rename
     return module
 

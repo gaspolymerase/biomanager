@@ -162,8 +162,14 @@ def role_for(session, page: NotebookPage, user=None) -> str | None:
     if owner_of(page) == me:
         return "owner"
     names = ([me] if _is_guest(user) else [me, EVERYONE]) + groups.page_share_names(user)
-    roles = set(session.scalars(select(NotebookShare.role).where(NotebookShare.page_id_fk == page.id,
-                                                                 NotebookShare.username.in_(names))).all())
+    roles = set()
+    for share_name, role in session.execute(select(NotebookShare.username, NotebookShare.role).where(
+            NotebookShare.page_id_fk == page.id, NotebookShare.username.in_(names))).all():
+        # Shared with a group to edit: only if the group lets its members.
+        group_id = groups.page_share_group(share_name)
+        if role == "edit" and group_id is not None and not groups.member_may(group_id, "pages", user):
+            role = "view"
+        roles.add(role)
     if "edit" in roles:
         return "edit"
     return "view" if roles else None

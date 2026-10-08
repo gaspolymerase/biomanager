@@ -3470,6 +3470,48 @@ tr.is-scanned > td:first-child {
 
   .set-group.icon-picker { @apply p-4; }
 
+  /* Only admins (or a group's leads) change it: a quiet note, not an error. */
+  .set-readonly { @apply mb-2 rounded-lg bg-brand-50 px-3 py-2 text-[12.5px] leading-snug text-ink-soft; }
+  .set-subtitle { @apply mt-3 mb-1 px-1 text-[11.5px] font-medium text-muted; }
+
+  /* Statistics: the totals, one bar per person, how full each rack is. */
+  .set-stats { @apply grid grid-cols-2 gap-2.5 sm:grid-cols-4; }
+  .set-stat { @apply rounded-xl border border-hairline bg-surface px-3.5 py-3; }
+  .set-stat b { @apply block text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink; }
+  .set-stat small { @apply text-[12px] text-muted; }
+  .set-bar { @apply block h-2 w-[min(220px,35%)] shrink-0 overflow-hidden rounded bg-transparent; }
+  .set-bar i { @apply block h-full rounded bg-brand-600; width: var(--w); }
+  .set-num { @apply w-10 shrink-0 text-right text-[13px] tabular-nums text-ink-soft; }
+  .set-meter { @apply block h-2 w-28 shrink-0 overflow-hidden rounded bg-sand-100; }
+  .set-meter i { @apply block h-full rounded; background: var(--set-lab); }
+  .set-badges { @apply flex shrink-0 gap-1; }
+
+  /* Tabs inside a pane (People & access), each a #hash. */
+  .set-tabs { @apply mb-3 flex flex-wrap gap-1; }
+  .set-tabs a { @apply rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted no-underline transition-colors; }
+  .set-tabs a span { @apply ml-0.5 text-[11.5px] text-sand-400; }
+  .set-tabs a:hover { @apply bg-sand-100 text-ink-soft; }
+  .set-tabs a.is-on { @apply bg-brand-50 text-brand-700; }
+  .settings.is-ready [data-tabpane]:not(.is-on) { @apply hidden; }
+  .set-subview + .set-subview, [data-subview-list] + .set-subview { @apply mt-6; }
+  .set-back-inline { @apply inline-flex items-center gap-1 text-[13px] font-medium text-brand-700 no-underline; }
+  .set-back-inline svg { @apply size-4; }
+  .set-subview-title { @apply mt-2 mb-1 text-[16px] font-semibold text-ink; }
+  .set-inline-form { @apply mt-2.5 flex flex-wrap items-center gap-2; }
+  .set-inline-form input { @apply field h-8 max-w-[320px] flex-1 text-[13px]; }
+
+  /* A person's ··· menu: role, password, disable. */
+  .set-menu { @apply relative shrink-0; }
+  /* The menu opens over the rows below, so its group may not clip it. */
+  .set-group:has(.set-menu) { @apply overflow-visible; }
+  .set-menu > summary { @apply cursor-pointer list-none; }
+  .set-menu > summary::-webkit-details-marker { @apply hidden; }
+  .set-menu-pop {
+    @apply absolute right-0 z-20 mt-1 flex w-[300px] flex-col gap-2 rounded-xl border border-hairline bg-surface p-3 shadow-lg;
+  }
+  .set-menu-row { @apply flex items-center gap-1.5; }
+  .set-menu-row > input, .set-menu-row > select { @apply field h-7 min-w-0 flex-1 text-[12px]; }
+
   /* A phone: the list, then the pane on its own with a way back. */
   @media (width < 48rem) {
     .settings.is-ready:not([data-open]) .settings-panes { @apply hidden; }
