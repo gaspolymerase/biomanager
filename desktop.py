@@ -23,6 +23,9 @@ from app.app import app
 # Sharing the lab on the network (app/devices.py) listens there as well, and
 # marks those requests, which never get the desktop's own pages.
 app.config["LOCAL_SETUP"] = True
+# "Automatic" language in this window: the computer's (app/i18n.py).
+from app import i18n  # noqa: E402
+app.config["COMPUTER_LANGUAGE"] = i18n.system_language()
 
 
 def _pick_free_port() -> int:

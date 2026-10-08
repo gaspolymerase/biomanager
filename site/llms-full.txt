@@ -114,7 +114,7 @@ Below the questions, **Send BioManager's makers anonymous counts once a day** is
 
 BioManager then makes those databases, the racks and incubators too, and takes you Home. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → See the welcome tour again** brings it back).
 
-**English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese. Choose for yourself under **Settings → Language**, or with the **中文 / English** switch on the sign-in page. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
+**English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
 
 ### Troubleshooting
 

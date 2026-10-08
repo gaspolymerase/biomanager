@@ -113,5 +113,10 @@ app = BUNDLE(
         "LSBackgroundOnly": "False",
         "CFBundleShortVersionString": os.environ.get("BIOMANAGER_VERSION", "0.1.0"),
         "CFBundleVersion": os.environ.get("BIOMANAGER_VERSION", "0.1.0"),
+        # The languages the app speaks. Without them a Mac runs it, and its
+        # window, in English whatever the Mac is set to (app/i18n.py).
+        "CFBundleDevelopmentRegion": "en",
+        "CFBundleLocalizations": ["en", "zh-Hans"],
+        "CFBundleAllowMixedLocalizations": True,
     },
 )
