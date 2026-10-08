@@ -73,13 +73,17 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🐟 | [**Zebrafish**](#-zebrafish) | Lines, tanks, fish, clutches, matings and water systems |
 | 🪰 | [**Drosophila & C. elegans**](#-drosophila-and-c-elegans) | Vials and plates, crosses, and temperature-aware flip schedules |
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
-| 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, and where each tube lives |
-| 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, or a list of your own |
+| 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
+| 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks, cell lines, or a list of your own |
 | 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols and meeting notes |
 
 ### 🐭 Mouse colony
 
 The most complete module, built around how a mouse room actually works.
+Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**,
+**Experiments**, **Strains** and **Dropdowns**. **My colony**, **My
+groups**, **Shared** and **Everyone** change which mice and cages you see,
+never what you may edit.
 
 <p align="center">
   <img src="docs/screenshots/mice.webp" alt="The mouse sheet: one row per mouse with sex, age, status, transgenes, cage, rack, position and owner" width="100%">
@@ -93,22 +97,29 @@ The most complete module, built around how a mouse room actually works.
   A lab that doesn't mark its mice unticks it under **Columns**. A mouse is alive until it has a date of death. The dot
   before its ID shows its age at a glance: blue under 8 weeks, green from
   8 to 30 weeks, red past 30 weeks, and grey once it is not alive.
-- **Cages** — every cage with its rack position, purpose, the mice
-  inside (with the sex breakdown), litter born and the P21 weaning date
-  side by side, then its genotype and owner. Type over a cage's number to
-  renumber it; its mice go with it. A chip for each purpose (Experiments,
-  Breeder…) shows just those cages.
+- **Cages** — every cage with its **Card ID** (the number on the animal
+  facility's own cage card, if it has one), rack position, purpose, the
+  mice inside (with the sex breakdown), litter born and the P21 weaning
+  date side by side, then its genotype and owner. Type over a cage's
+  number to renumber it; its mice go with it. A cage's mice show the
+  transgene columns the Mice tab shows. A chip for each purpose
+  (Experiments, Breeder…) shows just those cages.
   Each cage shows its mice beneath it, to edit right there and wean
   (**Close all** folds them to one row each), or switch to **Cards**: a
   card per cage with its mice and its actions, as on a rack.
-- **Litters** — record a birth once, and the weaning date (P21) and
-  genotyping date (about P28) follow from it. New litters are numbered
-  L-1, L-2, L-3… **Wean** starts filled with
-  the cage's pups, females and males apart; weaning before P18 asks first,
-  and a weaned litter leaves every list. Birth dates in the future are
+- **Litters** — on a breeding cage, **Litter born** records the birth
+  once, and the weaning date (P21) and genotyping date (P28, or the day
+  the lab sets in **Settings → General**) follow from it, on Home and the
+  calendar. **Genotyping** takes the parents' mouse numbers and how many
+  pups were born, and makes the litter (numbered L-1, L-2, L-3…) and a
+  mouse for each pup, waiting in the genotyping queue on Home. **Wean**
+  starts filled with the cage's pups, females and males apart, and sends
+  each row to a new or existing cage; weaning before P18 asks first, and
+  a weaned litter leaves every list. Birth dates in the future are
   refused.
-- **Breeders** — breeding cages at a glance, with breeders past 30 weeks
-  flagged.
+- **Breeders** — breeding cages at a glance with their productivity,
+  breeders past 30 weeks flagged; **Pick** takes a breeder as yours, and
+  its owner is told.
 - **Strains** and **Experiments** — your lab's lines with owners, and
   groups of mice under one experiment with a shared treatment group.
   An experiment's page has its details on top; then a **sheet of its
@@ -154,8 +165,12 @@ The most complete module, built around how a mouse room actually works.
 
 ### 🐟 Zebrafish
 
-Lines, tanks, individual fish, clutches, matings (and returning the fish
-afterwards), water systems with water-quality logs, and a sac log. A tank
+Lines with their ZFIN names and founders, tanks, individual fish,
+clutches, water systems and a sac log. **Set up a mating** records which
+tanks went in and when they go back, and they stay on Home until someone
+marks them **Returned**; **New clutch** records each fertilisation against
+its cross. **Log reading** keeps each system's temperature, pH,
+conductivity and salinity, with a chart, and can raise an alarm. A tank
 can hold a group with a headcount, or resolve into named individuals.
 A fish row's dot is blue under 3 months post fertilisation, green to 18
 months and red after. The **Experiments** tab, beside Tanks and Fish, works as the mouse
@@ -166,21 +181,26 @@ alive), standard length or a phenotype.
 
 ### 🪰 Drosophila and C. elegans
 
-Vial (fly) and plate (worm) databases, organised into racks inside
-incubators.
+Vial (fly) and plate (worm) databases: vials in racks and plates in
+boxes, inside incubators, each incubator at its own temperature.
 
 - Label each vial with its genotype and purpose: stock, experiment,
   cross or progeny.
-- **Set crosses**, collect eggs or pick progeny into new vials, and see
-  when the progeny will be adults.
+- Set up crosses, **Collect eggs** into a new vial (worms: **Pick
+  progeny** onto a new plate), and see when the progeny will be adults.
 - **Flip / chunk schedules that follow temperature** — flip every 14 days
-  at 25 °C, every 28 at 18 °C — and they show up on Home when due.
+  at 25 °C, every 28 at 18 °C, set in the database's **Settings →
+  Temperatures and timing** — and a rack moved to another incubator
+  changes its schedule by itself. **Schedule** shows what is overdue, due
+  today and coming up, and each fly or worm database has its own card on
+  Home.
 - **Each rack's grid says when it was last flipped** and when the next is
   due (red when overdue), with a **Flipped today** button beside Edit.
 - A vial's or plate's dot is blue while its progeny are still developing,
   green once they are adults, and red once it is older than its rack's
   flip or chunk interval.
-- Frozen-stock records for worms.
+- Worms: **New frozen lot** records a freeze, to thaw onto a plate when a
+  line is lost.
 - An **Experiments** tab for vials or plates (a rack's at once), with
   the manipulations flies and worms get: drug in the food or on the plate,
   RNAi feeding, a temperature shift, starvation, infection, flipping to
@@ -201,12 +221,13 @@ incubators.
 
 ### 🦎 Any other organism
 
-Choose **Add database** in the sidebar, start from a preset or a blank
-sheet, and describe your organism:
+Choose **Add database** in the sidebar, start from a mouse-like,
+zebrafish-like or blank organism, and describe it:
 
 - **The words it uses** — cage, tank, vial or plate; strain, line or
   stock; litter, clutch or progeny. The interface then speaks your
-  language.
+  language. Age can be counted in days, weeks, days post-fertilisation,
+  generations or passages.
 - **How it is counted** — individual animals, groups with a headcount,
   or both.
 - **What it needs**, from a checklist — crosses, cohorts, a nursery
@@ -220,6 +241,8 @@ sheet, and describe your organism:
 - An **Experiments** tab, the same as the mouse colony's, on your
   animals, groups or cohorts (a housing's at once), with body weight,
   length, survival or your own readout.
+- **Who it is for** — just you (a personal database only you and admins
+  see), or the whole lab.
 
 <p align="center">
   <img src="docs/screenshots/new-database.webp" alt="The Add database page with presets for flies, worms, inventories and organisms" width="100%">
@@ -229,10 +252,14 @@ sheet, and describe your organism:
 > Xenopus, axolotls, cell lines, yeast strains — anything you keep in
 > containers and breed or passage fits here. No code and no migration.
 
-**Only what your lab keeps.** No database is there by default, the mouse
-colony, zebrafish and plasmids included: the lab adds what it uses (from
-the setup survey, or **Add database → Ready-made databases**), and an admin
-can take one out again without deleting anything. **All databases** groups
+**Only what your lab keeps, in the order you work.** No database is there
+by default, the mouse colony, zebrafish and plasmids included: the lab
+adds what it uses (from the setup survey, or **Add database → Ready-made
+databases**), and an admin can switch one off in **Settings → Databases**
+without deleting anything; its records come back when it is switched on.
+An admin drags the databases into the lab's order right in the sidebar
+(or **All databases → Order in the sidebar**), the same for everyone.
+**All databases** groups
 them into Animals and Molecular & supplies, and every database has the same
 two buttons beside its name: **Configure** (for whoever may change it) and
 **All databases**. Icons are picked from a grid of the icons themselves.
@@ -246,8 +273,9 @@ Each tube keeps its miniprep's concentration (ng/µL) and 260/280, and a
 plasmid can be **Lab common**: anyone can edit it (or, shared with a
 project group, its members), while its owner still decides whose it is. A plasmid's page lists the notebook pages that
 `@plasmid` it, and its address is its number (plasmid #12 is `/plasmid/12`).
-In the sheet, **Sequence** beside a plasmid's number opens its sequence and
-map (**Add sequence** when it has none yet). **Download** gives it as
+Show them as a **Table**, by storage **Boxes**, or as a **List**. In the
+sheet, **Sequence** beside a plasmid's number opens its sequence and map
+(**Add sequence** when it has none yet). **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
@@ -270,7 +298,10 @@ keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
 by sequence, from any well-annotated map, and **Detect features** marks
 them on another plasmid; a lab that installs [pLannotate](https://github.com/mmcguffi/pLannotate) on its server also gets
 **Annotate with pLannotate**, which finds elements by alignment rather than
-exact matching. **Files** on its Storage tab keeps
+exact matching. Nothing is built into the library: its elements come from
+your own files (**Add to library** above a map, or **Read elements from
+files**), and an admin can **Add the common-features pack**, about 1,900
+elements from widely used plasmids, downloaded when asked for. **Files** on its Storage tab keeps
 the sequencing reads, gel photos and datasheets that belong with it, and
 they come along in Export my data. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
@@ -294,7 +325,7 @@ change:
 
 | Preset | Tracks |
 | --- | --- |
-| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from, stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
+| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
 | ⚗️ **Reagents** | quantity, concentration, CAS number, hazard, supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is; a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
@@ -327,7 +358,8 @@ database has a name of its own (one another database has is refused), so
   with its details, and the quantity, price and grant of the last time. A
   record that is already on order shows **On order**, and Order again says
   which order is open and who asked for it.
-- **Requests reach the lab manager** — a new order tells the lab's admins.
+- **Requests reach the lab manager** — a new order tells the lab's admins,
+  and whoever asked for it is told as it moves.
 - **Boxes that look after themselves** — a tube marked used up, empty or
   discarded leaves its box position free (its location note keeps where it
   was); a box can say where it is kept (−80 °C, LN₂), and what goes in
@@ -335,8 +367,10 @@ database has a name of its own (one another database has is refused), so
   the next free one. **New box** can make several alike at once
   (*Tower A 1 … 13*).
 - **From the box to the shelf** — when an order is marked received,
-  BioManager offers to add it to Reagents, Chemicals, Antibodies or Viruses with everything
-  already filled in.
+  BioManager asks **Add it to stock?**: a new reagent, chemical, antibody
+  or virus with the name, vendor, catalogue number, lot, quantity and
+  expiry already filled in (later, **To stock** on the order does the
+  same). The order and the record then link to each other.
 
 <table>
   <tr>
@@ -354,13 +388,13 @@ database has a name of its own (one another database has is refused), so
 - **Calendar** — experiments and to-dos, with colony dates (weanings,
   genotyping, sac reminders), fly and worm flips, organism schedules and
   reagent expiry filled in for you. Shows your **Google Calendar** and any
-  **ICS subscription** alongside.
+  iCal subscription alongside, read-only, under **Connected calendars**.
   - **Who sees it**: an event or to-do is yours alone, the lab's or one
     of your project groups'. Your own is seen by nobody else, admins
     included. A shared event is everyone's to see, its owner's and the
     admins' to change; a shared to-do anyone it is for can tick off.
-  - **Repeating events**: every day, week or month, or every month on the
-    same weekday ("the first Monday"), until a date. One date can be taken
+  - **Repeating events**: every so many days, weeks or months (every 2
+    weeks, say), or every month on the same weekday ("the first Monday"), until a date. One date can be taken
     out (**Delete this one**) or changed on its own (**Change this one
     only**).
   - **Protocol timelines**: write the steps once in days from day 0
@@ -375,7 +409,8 @@ database has a name of its own (one another database has is refused), so
   - **Time away**: leave and conferences, with what falls due while you
     are away and who covers it (they are told).
   - **On your phone**: a private link that Apple, Google or Outlook
-    Calendar subscribes to, with just your things or the whole lab.
+    Calendar subscribes to, with just your things or the whole lab; it
+    updates about every hour, and **Make a new link** stops the old one.
 - **Lab notebook** — pages in topics, written like a document and saved as
   Markdown. A page links to mice, plasmids, orders and any inventory record
   (`@mouse 12`, `@antibodies 5`): type **@** and a name (written as it is,
@@ -393,13 +428,14 @@ database has a name of its own (one another database has is refused), so
   - **Sign** a page when it should be the record of your work (your
     choice, page by page): you confirm who you are, its exact text is
     fingerprinted and kept, any live experiment in it is frozen, and it is
-    locked. A lab mate can **witness** it; to change it, its owner
-    **amends** it with a reason, which stays in the record with every
-    signature. A signed page can't be deleted.
-  - **Colony experiment** (`/experiment`) shows a mouse experiment in the
-    page: its manipulations, when each was done and by whom, the amount
-    each mouse got, and its body weights as a table and a chart (grams or
-    % of the first weight, manipulation days marked), kept up to date.
+    locked (**Sign and lock**). A lab mate can **Witness** it; to change
+    it, its owner gives a reason and **Open to amend**, and the reason stays
+    in the record with every signature. A signed page can't be deleted.
+  - **Colony experiment** (`/experiment`) shows an experiment on any of
+    your animals in the page: its manipulations, when each was done and by
+    whom, the amount each animal got, and its readout as a table and a
+    chart (body weight in grams or % of the first, manipulation days
+    marked), kept up to date.
     **Freeze a copy** keeps what it shows at that moment in the page. On
     the experiment itself, **Add to notebook** makes your notebook page
     for it with that block already in.
@@ -410,7 +446,7 @@ database has a name of its own (one another database has is refused), so
     (genotyping, perfusion, immunofluorescence, western, BCA,
     transformation, miniprep, TRIzol, qPCR, passaging, tamoxifen), to insert
     as a checklist or copy into a protocol of your own.
-    **Run mode** goes through the checklist at the bench one step at a time
+    **Run the checklist step by step** (▶) goes through it at the bench one step at a time
     in large type: each tick gets the time, a deviation is written under the
     page's Deviations heading.
   - **Data sheets**: paste from Excel or import a CSV, add formula columns
@@ -460,13 +496,14 @@ database has a name of its own (one another database has is refused), so
     sequence, Gantt timelines) and mind maps from an indented list. Edit
     the page as Markdown, download it as `.md`, or import `.md` files.
   - **Pictures and files**: paste, drop, or take a photo on the phone.
-  - **Working together**: share a page with lab mates (or the whole lab)
-    to read or to edit. Editors write in it at the same time and see each
-    other's cursors. Comments sit on a passage of text, and an `@name`
-    tells that person, as it does in any record's notes (a reagent, an
-    order, a plasmid, a cage). A mention of a mouse, plasmid or order opens that
-    record in a new BioManager tab. Anyone can turn these notebook notices off under
-    **Settings → Notifications**.
+  - **Working together**: share a page to read or to edit, with lab mates,
+    the whole lab or a project group. Editors write in it at the same time
+    and see each other's cursors. Comments sit on a passage of text, and
+    an `@name` tells that person, as it does in any record's notes (a
+    reagent, an order, a plasmid, a cage). Point at a linked record for its
+    details; **↗** (or ⌘/Ctrl-click) opens it in a new BioManager tab.
+    Anyone can turn these notebook notices off under **Settings →
+    Notifications**.
   - **Version history**: every editing session is kept, compared line by
     line with the page now, and any version can be restored.
   - **Tags and search** across every page you own or that is shared with
@@ -507,7 +544,8 @@ database has a name of its own (one another database has is refused), so
       colony, zebrafish tanks to return, recent plasmids, and a card of
       its own for each fly, worm or other animal database with what is
       due — then expiring stock, the next 14 days and recent orders.
-      Three layouts, switched on Home:
+      Three layouts, chosen with <b>Layout</b> at the top of Home (or in
+      <b>Settings → Appearance &amp; language</b>), each person's own:
       <b>Classic</b> cards, <b>Tracks</b> (the coming weeks on one day
       ruler, a track per kind of work) and <b>Freezer</b> (your racks from
       above, with a pull list in the order you'd walk the room).
@@ -543,10 +581,14 @@ database has a name of its own (one another database has is refused), so
     </td>
     <td valign="top">
       <h4>↩️ Batch actions with undo</h4>
-      Tick rows, then <b>Set field</b> (any column, your own included), add
-      them to an experiment or sac them.
-      Every bulk action can be <b>undone</b> — unless someone has edited
-      those records since, so their work is never silently lost.
+      Tick rows (shift-click for a range), then <b>Set field</b> (any
+      column, your own included), move them, change owner or status, add
+      them to an experiment, sac, retire or delete them. Records you may
+      not change are skipped and counted.
+      Every bulk action, an import included, can be <b>undone</b> from
+      <b>Settings → History</b>. If someone has edited those records since,
+      BioManager says so first and offers <b>Undo anyway</b>, so their work
+      is never lost without you knowing.
     </td>
   </tr>
   <tr>
@@ -567,12 +609,14 @@ database has a name of its own (one another database has is refused), so
     <td valign="top">
       <h4>🕓 Full change history</h4>
       Every create, edit and delete is recorded with who and exactly what
-      changed (<code>genotype: DBH-Cre → ∅</code>).
+      changed (<code>genotype: DBH-Cre → ∅</code>). Admins read it in the
+      <b>Audit log</b>, from <b>Settings → History</b>.
     </td>
     <td valign="top">
       <h4>🔐 Sign-in options and reminders</h4>
-      Sign in with Google, Microsoft or a password. Optional daily emails
-      list what is overdue or coming up for each person.
+      Sign in with Google, Microsoft or a password. If your server sends
+      email, a daily digest lists what is overdue or coming up for each
+      person (<b>Settings → Notifications → Reminder email</b>).
     </td>
   </tr>
   <tr>
@@ -592,14 +636,32 @@ database has a name of its own (one another database has is refused), so
       its makers once a day, with <b>Switch off</b>.
     </td>
   </tr>
+  <tr>
+    <td valign="top">
+      <h4>🤖 Tell an AI assistant what you did</h4>
+      BioManager has no AI inside it, but Claude, ChatGPT, Cursor or another
+      assistant you already use can connect to your lab (<b>Help → Connect
+      an AI assistant</b>). Tell it what you did, in your words or with a
+      photo of your notebook, and it sends one proposal: you <b>Approve</b>
+      it whole in BioManager, or <b>Discard</b> it. It never changes
+      anything itself, and an approved proposal can be undone like any batch.
+    </td>
+    <td valign="top">
+      <h4>↕️ Your sidebar, your order</h4>
+      An admin drags a database up or down right in the sidebar, and the
+      order is saved at once (or <b>All databases → Order in the
+      sidebar</b>). It is the lab's order, the same for everyone, and Home
+      and ⌘1–⌘9 follow it.
+    </td>
+  </tr>
 </table>
 
 ### 📥 Coming from Excel
 
 Every database has **Import from Excel** beside **Add many**: mice, fish,
 plasmids, fly and worm vials, any organism database and every inventory.
-Upload the workbook (.xlsx, any sheet) or CSV you kept your records in, as
-it is:
+Upload the workbook (.xlsx, any sheet), CSV or TSV you kept your records
+in, as it is (up to 15 MB and 5,000 rows):
 
 - **Columns are matched by meaning, not just by name.** *Position*,
   *Slot* and *Well* are the position; *DOB* and *Born* the date of birth;
@@ -609,14 +671,17 @@ it is:
   says why it was made, and you can change any of them.
 - **The database adjusts to your sheet.** A column BioManager doesn't have
   becomes a new column (text, number or date) in inventories and organism
-  databases; in the fixed ones it goes into each record's notes as
-  `Header: value`, so nothing is lost.
+  databases, if you may configure them, and a mouse sheet's columns are
+  matched to the colony's own columns too. Anything else goes into each
+  record's notes as `Header: value` (or **Leave out** skips it), so
+  nothing is lost.
 - **Must-have columns are filled in.** If your sheet has no owner, say who
   every row belongs to (you, by default); for plasmids and stock, whether
   every row is Personal or Lab common (or a *Lab common* column says so row
   by row).
 - **Values are tidied.** Excel dates in any style (day or month first,
-  decided per column and otherwise by Lab setup's date style, `12-May-26`,
+  decided per column and otherwise by the lab's date style in
+  **Settings → General**, `12-May-26`,
   or a date number; a future date of birth is left blank and kept in the
   notes), `Male`/`m`/`♂` → `M`, your lab's own statuses, people by name.
   A cell merged down over several rows (a *Cage #* typed once for its
@@ -631,24 +696,33 @@ it is:
 
 ### 📱 Cage cards that open on your phone
 
-Print correctly sized cards for cages, tanks and vials, and labels for
-tubes: tick samples or reagents and press **Labels**. Scan the QR code
+Print correctly sized cards and labels: **Cage cards** on the Cages tab,
+**Tank labels** for zebrafish, **Labels** on a fly or worm database, and
+**Labels** on ticked samples, reagents or any inventory's rows. Scan the QR code
 with any phone camera at the rack and that cage opens, ready to edit —
 nobody walks back to a computer to type an ID. On a phone every sheet row
 becomes a card with its columns under their names, and rack grids get a
 **Move** button: tap a cage, then where it goes.
+
+- **On a phone**: Android has its own app (**BioManager-Android.apk** from
+  the download page; **Scan** reads cage cards). On an iPhone or iPad, open
+  the lab server in Safari and **Share → Add to Home Screen**: it opens
+  full screen like an app, and the camera scans the cards. Phones reach a
+  lab server, or a desktop that shares its lab on the network.
 
 - **Label printers**: **Print on** chooses a sheet of cards for any
   printer, or a label printer's roll — Brother QL (62 × 29, 90 × 29,
   100 × 62 mm), Zebra (2 × 1, 3 × 1, 4 × 2, 4 × 2.5 in) or cryo-tube
   labels — and prints one label a page, typed to fit. Each person's
   choice is remembered.
-- **What each label says**: for tubes, tick the fields (box, position, lot,
-  a column such as concentration, the day printed…) and **Two lines for
-  long text**, so a cryo label's name and place wrap instead of being cut.
+- **What each label says**: for tubes, **On each label** chooses the
+  fields (box, position, lot, a column such as concentration, the day
+  printed…), remembered for each database, and **Two lines for long
+  text** wraps a cryo label's name and place instead of cutting them.
 - **Zebra**: **Download for Zebra (.zpl)** gives the labels in the
-  printer's own language. Or an admin adds the Zebra's address on the
-  lab's network once, and **Send to Zebra** prints them straight away.
+  printer's own language. Or an admin adds the Zebra's address once,
+  under **Send labels straight to a Zebra on the network**, and **Send to
+  Zebra** prints them straight away.
 
 <table>
   <tr>
@@ -665,8 +739,10 @@ becomes a card with its columns under their names, and rack grids get a
 
 ### 🌗 At home on a Mac, and in the dark
 
-The interface follows macOS conventions and has a full dark mode. It works
-in any modern browser on Windows and Linux too.
+The interface follows macOS conventions and has a full dark mode,
+following the system's setting (in the desktop app, **View → Appearance**
+chooses Light or Dark). It works in any modern browser on Windows and
+Linux too.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 on the left (**You**: Profile, Sign-in & security, Appearance & language,
@@ -691,7 +767,7 @@ person's computer or browser asks for first (the desktop app, the computer's);
 each person can choose for themselves in **Settings → Appearance & language**, which
 changes as soon as they pick, or with the **中文 / English** switch on the
 sign-in page, which stays their choice once they sign in. Every page is in both: each database, the calendar, the
-notebook and experiments, Settings and the admin pages, and the messages and
+notebook and experiments, Settings and the lab's panes in it, and the messages and
 notifications, which reach each person in their own language. Names, notes
 and everything people type stay as written, and so do exports, labels and the
 API. The website has a Chinese version too, at [biomanager.org/zh](https://biomanager.org/zh/).
@@ -729,8 +805,9 @@ flowchart TB
 | **Phones & QR codes** | — only your computer, unless it shares its lab on the network | ✅ | on your local network |
 
 > [!NOTE]
-> Start on the desktop and move to a server later —
-> `scripts/migrate-to-postgres.py` carries an existing database across.
+> Start on the desktop and move to a server later: **Set up a lab server**
+> in the desktop app can bring this computer's records along (by hand,
+> `scripts/migrate-to-postgres.py` carries an existing database across).
 
 ### 🔁 One lab, many devices
 
@@ -744,7 +821,7 @@ every computer linked to the lab:
   window**): you work on the lab itself, in the app, and the computer keeps
   its daily copy. **Go → This Computer's BioManager** comes back.
 - **A desktop can share its own lab on the network** (**Share this lab on
-  the network**): it becomes the master for every device on the same
+  the network**, admins): it becomes the master for every device on the same
   network (Wi-Fi or cable), which opens its address. The computer must
   stay on, and the connection isn't encrypted, so only on a network you
   trust.
@@ -766,12 +843,19 @@ every computer linked to the lab:
    [**BioManager website**](https://biomanager.org/download.html),
    or build it yourself (below).
 2. **macOS:** open the download and drag BioManager into Applications.
-   The first time, **right-click the app and choose Open** — macOS asks
-   once because the app is not signed through the App Store.
+   The first time, **right-click the app and choose Open**. **Windows:**
+   extract the zip, open the BioManager folder and run `BioManager.exe`;
+   at the warning choose **More info → Run anyway**. **Linux:** mark
+   `BioManager-Linux.AppImage` executable and open it. The apps aren't
+   signed by Apple or Microsoft, so the system asks once per version.
 3. Create your account (the first account on a computer is the admin) and
    answer the short setup survey: tick what your lab keeps, and BioManager
    creates just those databases, with racks and incubators to match. Home
-   then shows a **Getting started** list of first steps.
+   then shows a **Getting started** list of first steps. Before moving a
+   real colony in, the guide's
+   [*Try it first*](https://biomanager.org/guide/try-it-first.html) walks
+   through a practice rack, a litter and its weaning date, then throws it
+   away.
 
 On a Mac the app has a full menu bar: **File** (New Tab ⌘T, Close Tab
 ⌘W, Export This Sheet ⇧⌘E, Print ⌘P), **Edit** (the usual editing
@@ -829,8 +913,8 @@ Windows and Linux.
 ### 🏫 Lab server
 
 **The easy way: let the desktop app do it.** In the desktop app, choose
-**Set up a lab server** (on the welcome page, or in Settings) and say where
-it should run:
+**Set up a lab server** (on the welcome page, or in **Settings → Devices &
+copies**) and say where it should run:
 
 - a cloud server reached privately over **Tailscale** (recommended; Oracle's
   free tier is enough), or one with the lab's **own web address**;
@@ -839,14 +923,16 @@ it should run:
   fnOS, will do), or **this computer** if it has Docker.
 
 It signs in over SSH with your key, or with the account's password if
-you have no key (as on a NAS), and asks for a password for sudo too when
-the account needs one; passwords are used for that one run and never
-saved. It installs Docker (and Tailscale) if needed, downloads the release's server bundle, writes its settings with a
-fresh database password, can bring the desktop app's records along, starts
-it (on ports 80 and 443, or others it finds free when the machine already
-uses those, as a NAS's own web pages often do), sets up alerts and backups, and checks that it answers. Every step and
-every command is shown before and while it runs; at the end you get the
-address and the setup code for the admin account.
+you have no key (as on a NAS: under **SSH key**, choose **No key: sign in
+with a password**), and asks for a password for sudo too when the account
+needs one; passwords are used for that one run and never saved. It
+installs Docker (and Tailscale) if needed, downloads the release's server
+bundle, writes its settings with a fresh database password, can bring the
+desktop app's records along, starts it (on ports 80 and 443, or others it
+finds free when the machine already uses those, as a NAS's own web pages
+often do), sets up alerts and backups, and checks that it answers. Every
+step and every command is shown before and while it runs; at the end you
+get the address and the setup code for the admin account.
 
 **By hand:** the supported setup is the Docker stack in [`deploy/`](deploy/README.md):
 HTTPS, PostgreSQL, and a backup service that dumps the database every
@@ -860,10 +946,11 @@ docker compose up -d --build
 docker compose logs app | grep "setup code"
 ```
 
-Open `https://<your domain>/register` and create the first account with
-the **setup code** from the log. That account is the admin; signing in,
-it answers four questions about what the lab keeps, and BioManager sets
-itself up to match.
+Open `https://<your domain>/register` (with the port, such as `:4443`, if
+`host/ports.sh` chose other ones) and create the first account with the
+**setup code** from the log. That account is the admin; signing in, it
+answers four questions about the lab, and BioManager sets itself up to
+match.
 
 > [!IMPORTANT]
 > Keep the server off the open internet: on the campus network, a VPN, or
@@ -920,7 +1007,7 @@ A walk-through for a mouse colony. The other modules work the same way.
       <ol>
         <li><b>Cages → Cage cards → Print.</b></li>
         <li>One card per cage.</li>
-        <li>From now on, a phone camera opens any cage.</li>
+        <li>From now on, on a lab server, a phone camera opens any cage.</li>
       </ol>
     </td>
     <td valign="top" width="25%">
@@ -947,8 +1034,9 @@ weaning, add the pups with **Add many** and move them to their new cages.
 
 Tick the mice on **Mice** (shift-click selects a range). In the bar that
 rises from the bottom, choose **Add to experiment** and name the treatment
-group. On the experiment, **Add manipulation** for each injection,
-challenge or weighing day, then **Record** each day as it's done. **Add to
+group. On the experiment, list each injection, challenge or weighing day
+under **Regimen**, then **Record manipulation** as each is done: a dose
+per body weight is worked out from each animal's latest weight. **Add to
 notebook** puts all of it in a notebook page.
 </details>
 
@@ -979,6 +1067,8 @@ track.
 | <kbd>Alt</kbd> + <kbd>W</kbd> | Close the current tab |
 | Middle-click a tab | Close it |
 | <kbd>Shift</kbd>-click a row | Select a range |
+| <kbd>⌘/Ctrl</kbd> + <kbd>D</kbd> | Fill down, in the mice's **Add many** preview |
+| <kbd>Esc</kbd> | Close a menu or dialog |
 </details>
 
 ---
@@ -991,16 +1081,20 @@ track.
   installation it leads to creating the admin account instead.
 - **The first account is the admin.** On a server it needs the setup code,
   so nobody else on the network can claim it first.
-- **New sign-ups wait for an admin's approval.**
+- **New sign-ups wait for an admin's approval**, under **Waiting to join**
+  in **Settings → People & access**; **Approve** lets them in.
 - **A lab nobody can sign in to on the desktop app** (the admin's password
   lost, or someone else made the first account): **Start a new lab** on the
-  sign-in page sets it aside, deleting nothing, and the next start begins an
-  empty lab whose first account is the admin.
+  sign-in page sets it aside in the data folder under `old-labs`, deleting
+  nothing, and the next start begins an empty lab whose first account is
+  the admin.
 - **You edit what you own.** Your mice, cages and records are yours.
   **Shared cages and anything marked lab common belong to the whole lab.**
   A Breeder cage starts out shared; any other cage starts personal. Only a
   cage's owner or an admin shares it, makes it personal or gives it away.
-  Admins can change anything.
+  Admins can change anything, and when a record isn't yours, BioManager
+  says whose it is. **Racks & boxes**, in **Settings → Statistics**, says
+  who may change each rack, box and incubator.
 - **Project groups.** Some of the lab working on one project can be a
   group (**Settings → People & access → Project groups**): an admin makes
   it, and an admin or the group's leads add and remove people; someone can
@@ -1034,8 +1128,9 @@ track.
   census. The **My colony / My groups / Shared / Everyone** switch filters
   the view without changing who may edit what.
 - **The lab sees only what it uses.** On first sign-in the admin answers
-  four questions: which databases the lab keeps and which functions it
-  uses. Everyone then gets exactly those, in the sidebar and on their home
+  four questions: the lab's name, time zone and how dates are written;
+  which databases it keeps; which functions it uses (the calendar, the
+  notebook); and what members may do. Everyone then gets exactly those, in the sidebar and on their home
   page. **Settings → General** and **Databases** change it any time and
   switch things off (hidden, never deleted); **People & access** makes
   someone else an admin and says what members may do. Members see these
@@ -1045,17 +1140,25 @@ track.
   share it with a group or the lab later. Admins add databases for the
   whole lab, and decide whether members may too.
 - **Notifications.** The bell tells you when someone moves or gives you
-  animals, records a genotype for yours, or when an order you placed is
-  ordered, received or cancelled; you choose which kinds in Settings. New
-  members get a short welcome tour.
+  animals, picks from your breeders, records a genotype for yours, writes
+  @you in a note or a notebook comment, or when an order you placed is
+  ordered, received or cancelled; admins hear of each new order request.
+  Choose which kinds in **Settings → Notifications**. New members get a
+  short welcome tour (**Settings → Your data → See the welcome tour
+  again**).
 - **Guests.** An admin can let someone outside the lab in for a day to 30
   days with a **guest pass**: a one-time code instead of a password, an
   account that stops working when the pass ends, and nothing they can do
-  to the lab's setup or other people's records. From the internet, someone not
-  signed in only ever sees the page for entering a code.
+  to the lab's setup or other people's records. **New guest pass**, under
+  Guests in **Settings → People & access**, makes one, and **End now**
+  stops it early. From the internet, someone not signed in only ever sees
+  the page for entering a code.
 - **When someone leaves,** **Settings → Statistics** shows how many
   animals each person keeps and how full each rack and box is, and the
-  admin hands their racks to someone else there.
+  admin hands their racks to someone else there. **Set field → Owner** on
+  each sheet puts their records in someone else's name, and **Disable the
+  account** (the **···** beside them in **Settings → People & access**)
+  closes it; their records and history stay.
 - **An API for scripts and instruments.** **Settings → AI assistant & tokens**
   makes a token for R, a Python script, a balance or another tool; it
   reads the lab's records as JSON, or changes them, as you and with your
@@ -1069,11 +1172,11 @@ track.
   (`/api/v1/vocabulary`) and what is due (`/api/v1/due`). A *Read and
   propose* token, meant for an AI assistant, changes nothing itself: it
   sends its changes as one proposal, which BioManager checks as its pages
-  would and keeps under **Proposed changes** (in your account menu, with a
-  notification) as one plain summary. **Approve** makes every change at
+  would and keeps under **Proposed changes** (in your account menu and in
+  **Settings → AI assistant & tokens**, with a notification) as one plain summary. **Approve** makes every change at
   once, as one batch you can undo; **Discard** makes none; only you, signed
-  in, can approve. **Connect an AI assistant** on the same card connects
-  one (it is also under Help). Claude Code, Cursor and Cherry Studio use
+  in, can approve. **Connect an AI assistant**, at the top of the same
+  pane, connects one (it is also under **Help**). Claude Code, Cursor and Cherry Studio use
   BioManager's own MCP address (`/api/v1/mcp`), nothing to install: paste
   the page's message into the assistant and it sets itself up, then you
   sign in in the browser (or use such a token); Claude
@@ -1084,14 +1187,17 @@ track.
   Changes are in the change history
   under your name, marked with the token's name. The reference, with
   examples in curl, Python and R, is at `/api` on your BioManager
-  (`/api/v1/openapi.json` for tools that read OpenAPI). Lab setup can keep
-  tokens to admins.
+  (`/api/v1/openapi.json` for tools that read OpenAPI). **Members may make
+  API tokens**, under **What members may do** in **Settings → People &
+  access**, can keep them to admins.
 
   ```bash
   curl -H "Authorization: Bearer $BM_TOKEN" "https://your-server/api/v1/mice?alive=true"
   ```
 - Passwords are at least 12 characters, repeated failed sign-ins are
-  locked out, and changing a password signs out every other session.
+  locked out, and changing a password (**Settings → Sign-in & security**)
+  signs out every other session. A forgotten password is reset by an
+  admin, from the **···** beside you in **Settings → People & access**.
 - **Your data stays with you** — on your computer or your lab's server.
   None of it is sent anywhere unless you connect Google Calendar, Google or
   Microsoft sign-in, or reminder emails, or a tool you gave a token asks.
@@ -1104,7 +1210,7 @@ track.
   addresses, anything anyone wrote, what your databases are called, or the
   computer's name or address. It goes to PostHog, which is asked not to
   work out where it came from. The admin chooses in the setup survey, and
-  the **Usage report** (Feedback → Usage report) shows exactly what is sent
+  the **Usage report** (**Help → Send feedback → Usage report**) shows exactly what is sent
   and has **Switch off**. On a server, `BIOMANAGER_TELEMETRY=0` or
   `DO_NOT_TRACK=1` turns it off for good.
 
@@ -1115,7 +1221,14 @@ track.
 > Google Drive, iCloud Drive). Syncing corrupts SQLite files. BioManager
 > warns you at startup if it spots this.
 
-On a single computer:
+On a single computer, back up BioManager's data folder
+(`~/Library/Application Support/Biomanager/` on a Mac,
+`%APPDATA%\Biomanager\` on Windows, `~/.local/share/Biomanager/` on
+Linux) with Time Machine or File History. To put a backup back, quit
+BioManager, move `data/biomanager.db` aside and put the backup in its
+place (the guide's
+[*Restore a backup*](https://biomanager.org/guide/restore-a-backup.html)
+says how). Running from source, `scripts/dbtool.py` does the same:
 
 ```bash
 python scripts/dbtool.py check                      # where is it, is it healthy, is it at risk
@@ -1128,9 +1241,8 @@ python scripts/dbtool.py restore <file>
 one made, it copies it (`backups/before-upgrade-….db` in the data folder;
 the last ten are kept), and every release is tested opening a demo lab
 made by each earlier release, with nothing lost. To go back, close
-BioManager, put that copy in place of `biomanager.db`
-(`python scripts/dbtool.py restore <file>`) and open the version it came
-from. A lab server takes a backup before every update.
+BioManager, put that copy in place of `data/biomanager.db` and open the
+version it came from. A lab server takes a backup before every update.
 
 A lab server backs itself up every night, checks every backup and
 test-restores one every week, with an optional off-site copy and a nightly
@@ -1143,7 +1255,7 @@ member's holds what they can see in the app, without anyone's password,
 other people's private notebook pages or personal databases, or the Audit
 log. **Settings → Your data → Export my data** downloads your own mice, cages,
 weights, experiments, plasmids (each sequence as a GenBank file, with its
-features) and notebook pages as a zip at any time.
+features), notebook pages and profile as a zip at any time.
 
 ---
 
