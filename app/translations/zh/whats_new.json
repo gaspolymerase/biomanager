@@ -28,5 +28,11 @@
   "A cage's mice show the same transgene columns as the **Mice** tab.": "笼里的小鼠显示与 **小鼠** 标签页相同的转基因列。",
   "The language picked on the sign-in page stays when you sign in, and on a Mac set to Chinese the desktop app shows Chinese.": "登录页上选的语言在登录后会保留；系统设为中文的 Mac 上，桌面版也会显示中文。",
   "**Settings → Language** changes as soon as you pick a language.": "**设置 → 语言** 选好立即生效。",
-  "**Samples** show the source mouse's **Custom tag** as a column after **Source**; hide it on the **Mice** tab and it goes from Samples too.": "**样本** 在 **来源** 后面多了一列来源小鼠的 **自定义标识**；在 **小鼠** 标签页隐藏它，样本里也会一起隐藏。"
+  "**Samples** show the source mouse's **Custom tag** as a column after **Source**; hide it on the **Mice** tab and it goes from Samples too.": "**样本** 在 **来源** 后面多了一列来源小鼠的 **自定义标识**；在 **小鼠** 标签页隐藏它，样本里也会一起隐藏。",
+  "**Settings** is laid out like the Mac's: a list of panes beside the one you pick, each change saved as you make it, and a search box.": "**设置** 改成了和 Mac 一样的布局：左边是各个面板，右边是你选的那一个；每项修改即时保存，还有搜索框。",
+  "The lab's pages are panes in Settings: **Statistics**, **General**, **Databases**, **People & access** and **History**. Everyone sees them; admins change them.": "实验室的页面都成了设置里的面板：**统计**、**一般**、**数据库**、**人员与权限** 和 **历史**。每个人都能看到，管理员可以修改。",
+  "In a project group, each person is a **Lead**, a **Member** or **Can only view**, and the group's switches say what its members may do.": "在项目组里，每个人是 **组长**、**成员** 或 **仅可查看**，项目组的开关决定成员可以做什么。",
+  "Home has a card for each of the lab's databases, in the sidebar's order.": "首页按侧边栏的顺序，为实验室的每个数据库显示一张卡片。",
+  "The sidebar's **More** menu is gone: its pages are in **Settings**.": "侧边栏的 **更多** 菜单没有了：它的页面都在 **设置** 里。",
+  "The **Genotyping** dialog says what to type, and the rack position column is headed **Pos**.": "**基因型鉴定** 对话框会说明要填什么；笼架位置一列的标题改为 **Pos**。"
 }
