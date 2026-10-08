@@ -71,6 +71,12 @@ class PlasmidTabsTests(VirusCase):
         # Plasmids is the database you are in, so the rail marks it.
         self.assertIn('rail-item is-active', self.rail(sheet).split('href="/plasmids"')[0][-120:])
 
+    def test_the_rail_names_the_area_and_the_first_tab_is_still_plasmids(self):
+        plasmids = self.get_ok(self.a, "/plasmids")
+        self.assertIn("Molecular biology", self.rail(plasmids))
+        self.assertIn("Plasmids", self.tabs(plasmids))
+        self.assertNotIn("Molecular biology", self.tabs(plasmids))
+
     def test_another_inventory_stays_in_the_rail_with_no_tab_strip(self):
         key = self.new_module(self.a, "reagents")
         sheet = self.get_ok(self.a, f"/inventory/{key}")

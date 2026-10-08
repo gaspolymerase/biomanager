@@ -813,6 +813,8 @@ def builtin_labels() -> dict[str, str]:
 # lab's other inventories — a primer, a glycerol stock and a virus each name
 # the plasmid they came from — so they are kept together.
 PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")
+# The rail's name for that area; its first tab is still Plasmids.
+MOLECULAR_BIOLOGY = "Molecular biology"
 
 
 def _inventory_module_links() -> list[dict]:
@@ -942,11 +944,15 @@ def inject_nav():
             # anything it has not named keeps its place at the end.
             links = lab.in_database_order(_database_order(), head + extras) + \
                 [l for l in tail if l["key"] == "new-db"]
-            # Plasmids holds the tabs, so it is the active database on them.
-            if any(t["active"] for t in g.get("plasmid_tabs", [])):
-                for link in links:
-                    if link["key"] == "plasmids":
+            # Plasmids holds the tabs, so it is the active database on them,
+            # and once it has primers, glycerol stocks or viruses beside it
+            # the rail names the whole area (unless the lab renamed it).
+            for link in links:
+                if link["key"] == "plasmids":
+                    if any(t["active"] for t in g.get("plasmid_tabs", [])):
                         link["active"] = True
+                    if g.get("plasmid_tabs") and link["label"] == "Plasmids":
+                        link["label"] = link["short"] = MOLECULAR_BIOLOGY
             # Each database's tabs show its own glyph, not the generic one.
             tab_icon_rules += [(l["url"], l["icon"]) for l in extras]
 

@@ -659,7 +659,9 @@ crossing the origin keeps `start > end`.
   and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,
   and `_plasmid_tabs.html` draws the strip on the Plasmids page and on
   those sheets (only where one of them is the page you are on). The rail
-  marks Plasmids active on all of them.
+  marks Plasmids active on all of them, and names it `MOLECULAR_BIOLOGY`
+  ("Molecular biology") whenever there is a tab beside it, unless the lab
+  renamed Plasmids; the first tab keeps the database's own name.
 - **Feature library** (`app/feature_library.py`, `feature_library`,
   revision 0021): named elements by sequence (as the feature reads 5′→3′),
   one per `seq_hash`, sorted into `CATEGORIES` by `category_of` (name and

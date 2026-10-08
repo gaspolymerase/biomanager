@@ -263,8 +263,9 @@ their new places, each fragment marked on its map, **Made from** filled in
 for all of them, and — for a Gibson — the primers it needs designed,
 costed by melting temperature and waiting in the Primers database to
 order. Primers, glycerol stocks and viruses each name the plasmid they came
-from, so they are tabs of the Plasmids area rather than four entries in
-the sidebar. The **Feature library**
+from, so they are tabs of one area rather than four entries in the
+sidebar: **Molecular biology**, called just **Plasmids** while the lab
+has none of them. The **Feature library**
 keeps the lab's elements (promoters, ITRs, LTRs, WPRE, resistance genes)
 by sequence, from any well-annotated map, and **Detect features** marks
 them on another plasmid; a lab that installs [pLannotate](https://github.com/mmcguffi/pLannotate) on its server also gets

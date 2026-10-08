@@ -737,7 +737,7 @@ A construct is only as good as what you can still prove about it a year later: w
 
 What you stop doing: keeping maps in one folder and primers in another spreadsheet, retyping a primer to order it, guessing which miniprep is the good one, and losing what a construct was built from when the person who built it leaves.
 
-- At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar because each names the plasmid it came from.
+- At the top, tabs for the databases that go with plasmids — **Primers**, **Glycerol stocks**, **Viruses** — in the order the work runs. Each is an ordinary database with its own sheet ([see them](https://biomanager.org/guide/samples-and-orders)); they share one place in the sidebar, **Molecular biology** (just **Plasmids** while the lab has none of them), because each names the plasmid it came from.
 
 ### The plasmid sheet
 
@@ -797,7 +797,7 @@ Buying something and finding it again are the same chain, and it usually breaks 
 
 What you stop doing: ordering a second one because nobody knew the first had arrived, retyping a catalogue number off a box, and finding the antibody expired the morning you needed it.
 
-One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area rather than on their own in the sidebar:
+One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area, **Molecular biology** in the sidebar, rather than on their own:
 
 | Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Beside it, **Custom tag** shows that mouse's tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. If you hide **Custom tag** under **Columns** on the Mice tab, it goes from Samples too. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
 |---|---|
