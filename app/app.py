@@ -812,7 +812,7 @@ def builtin_labels() -> dict[str, str]:
 # with a tab each, in the order the work flows. They are nothing like the
 # lab's other inventories — a primer, a glycerol stock and a virus each name
 # the plasmid they came from — so they are kept together.
-PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")
+from .inventory_service import PLASMID_TAB_KINDS  # noqa: E402
 # The rail's name for that area; its first tab is still Plasmids.
 MOLECULAR_BIOLOGY = "Molecular biology"
 
@@ -1934,21 +1934,43 @@ def home_dashboard():
             "event_type": e.event_type,
         } for e in upcoming_events]
 
-    # Fly / worm work due soon: flips, egg collections, shifts, scoring.
-    from . import stock_service
-    stock_due = []
+    # The lab's databases as the sidebar lists them (app/home_layouts.py):
+    # each brings its own cards and Counts tile.
+    from . import organism_service, stock_service
+    from .icons import resolve as resolve_icon
+    features = lab.request_features()
     with SessionLocal() as db_session:
-        for module in stock_service.list_modules(db_session):
-            mv = stock_service.view(module)
-            for item in stock_service.schedule(db_session, mv, today, horizon=2):
-                stock_due.append({"module": mv.label, "key": mv.key, "icon": mv.icon, "title": item["title"],
-                                  "due": item["due"], "overdue": item["overdue"], "is_today": item["today"], "kind": item["kind"]})
-    stock_due.sort(key=lambda i: i["due"])
+        databases = home_layouts.lab_databases(db_session, features)
+        lab_cards = home_layouts.lab_cards(databases)
 
-    # Schedule items from the configurable organism databases (wean, retire…).
-    from . import organism_service
-    with SessionLocal() as db_session:
+        # Each fly or worm database's work due soon: flips, egg collections,
+        # shifts, scoring; and each animal database's schedule (wean, retire…).
+        db_cards, due_count = {}, {}
+        for db in databases:
+            module = db["module"]
+            if db["kind"] == "stock":
+                mv = stock_service.view(module)
+                rows = [{"title": item["title"], "due": item["due"], "overdue": item["overdue"],
+                         "is_today": item["today"]}
+                        for item in stock_service.schedule(db_session, mv, today, horizon=2)]
+                rows.sort(key=lambda i: i["due"])
+                db_cards[f"stock:{mv.key}"] = {
+                    "label": mv.label, "icon": resolve_icon(module.icon), "worms": module.kind == "worm",
+                    "url": url_for("stocks.module", key=mv.key, view="schedule"), "rows": rows}
+                due_count[db["key"]] = len(rows)
         organism_due = organism_service.home_due(db_session, horizon_days=2)
+        for db in databases:
+            card = f"org:{db['module'].key}" if db["kind"] == "organism" else None
+            if card and any(c[0] == card for c in lab_cards):
+                rows = [d for d in organism_due if d["key"] == db["module"].key]
+                db_cards[card] = {
+                    "label": db["module"].label, "icon": resolve_icon(db["module"].icon or "paw"),
+                    "url": url_for("organisms.module", key=db["module"].key, view="schedule"), "rows": rows}
+                due_count[db["key"]] = len(rows)
+        tiles = home_layouts.count_tiles(
+            db_session, databases, g.user.username, builtin_labels(),
+            {"total_mice": total_mice, "active_mice": active_mice, "my_mice": my_mice,
+             "notebook_pages": notebook_pages}, due_count, bool(features.get("notebook", True)))
         db_session.commit()
 
     hour = datetime.now().hour
@@ -1961,7 +1983,6 @@ def home_dashboard():
         visible_inventories = _inv.list_modules(db_session)
         has_orders = any(m.kind == "orders" for m in visible_inventories)
         has_restock = any(m.kind in _inv.RESTOCK_KINDS for m in visible_inventories)
-        has_stocks = bool(stock_service.list_modules(db_session))
         setup_needed = g.user.role == "admin" and not lab.setup_done(db_session)
         if g.user.role == "admin":
             notify.settle_signups(db_session)
@@ -1972,9 +1993,9 @@ def home_dashboard():
     # which draw the same work from one agenda.
     zebrafish_due = zebrafish_home_summary()
     with SessionLocal() as db_session:
-        home_cards = home_layouts.get_cards(db_session, g.user.username)
-        offered = home_layouts.offered_cards(lab.request_features(), {
-            "has_orders": has_orders, "has_restock": has_restock, "has_stocks": has_stocks})
+        home_cards = home_layouts.get_cards(db_session, g.user.username, lab_cards)
+        offered = home_layouts.offered_cards(features, {
+            "has_orders": has_orders, "has_restock": has_restock}, lab_cards)
         shown = {c["key"] for c in offered} - set(home_cards["hidden"])
         extra = _home_extra_cards(db_session, shown, today)
         home_layout = home_layouts.get_layout(db_session, g.user.username)
@@ -2002,14 +2023,12 @@ def home_dashboard():
         layout_view=layout_view,
         has_orders=has_orders,
         has_restock=has_restock,
-        has_stocks=has_stocks,
         setup_needed=setup_needed,
         for_you=for_you,
         zebrafish_due=zebrafish_due,
-        stock_due=stock_due[:12],
-        stock_due_total=len(stock_due),
-        organism_due=organism_due[:12],
-        organism_due_total=len(organism_due),
+        db_cards=db_cards,
+        tiles=tiles,
+        shown_tiles=home_layouts.shown_tiles(tiles, home_cards["tiles"]),
         greeting=greeting,
         today_str=i18n.strftime(today, "%A, %b %d, %Y"),
         counts={
@@ -2038,7 +2057,17 @@ HOME_CALCULATORS = [("dilution", "Dilution"), ("molarity", "Molarity"), ("a260",
 def _home_extra_cards(db_session, shown: set, today: date) -> dict:
     """What Home's optional cards show, read only when they are on."""
     me = g.user.username
-    out = {"todos": [], "bookings": [], "recent_pages": [], "home_calculators": HOME_CALCULATORS}
+    out = {"todos": [], "bookings": [], "recent_pages": [], "recent_plasmids": [], "home_calculators": HOME_CALCULATORS}
+    if "plasmids" in shown:
+        # Your newest plasmids first, then the lab's; a plasmid with no
+        # sequence yet is marked, as the Plasmids page marks it.
+        rows = db_session.scalars(select(PlasmidRecord).order_by(
+            (PlasmidRecord.owner == me).desc(),
+            func.coalesce(PlasmidRecord.updated_at, PlasmidRecord.created_at).desc(),
+            PlasmidRecord.id.desc()).limit(6)).all()
+        out["recent_plasmids"] = [{"number": p.plasmid_id, "name": p.name, "owner": p.owner,
+                                   "url": url_for("plasmid_page", number=p.plasmid_id), "has_sequence": bool(p.full_sequence),
+                                   "when": p.updated_at or p.created_at} for p in rows]
     if "todos" in shown:
         # Yours, and the lab's and your project groups' to-dos.
         rows = db_session.scalars(select(TaskItem).where(
@@ -2069,15 +2098,20 @@ def _home_extra_cards(db_session, shown: set, today: date) -> dict:
 @app.route("/home/cards", methods=["POST"])
 @login_required
 def set_home_cards():
-    """Customize Home: which cards show, their order, which are full width."""
+    """Customize Home: which cards show, their order, which are full width,
+    and which Counts tiles there are."""
     with SessionLocal() as db_session:
         if request.form.get("reset") == "1":
             home_layouts.reset_cards(db_session, g.user.username)
         else:
             order = request.form.getlist("order")
             shown = set(request.form.getlist("show"))
+            # The tiles only when the dialog listed them: none ticked is a choice too.
+            tiles = request.form.getlist("tile") if request.form.get("tiles") == "1" else None
+            cards = home_layouts.lab_cards(home_layouts.lab_databases(db_session, lab.request_features()))
             home_layouts.set_cards(db_session, g.user.username, order,
-                                   [k for k in order if k not in shown], request.form.getlist("wide"))
+                                   [k for k in order if k not in shown], request.form.getlist("wide"),
+                                   tiles, cards)
         db_session.commit()
     return redirect(url_for("home_dashboard"))
 

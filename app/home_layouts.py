@@ -24,6 +24,7 @@ from sqlalchemy.orm import selectinload
 
 from . import i18n, inventory_service, organism_service, positions, stock_service
 from .i18n import gettext, translate_value
+from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
 from .services import WEAN_OFFSET_DAYS, weaning_due, weaning_title
 
@@ -61,9 +62,10 @@ def set_layout(session, username: str, value: str) -> str:
 
 # ---------------------------------------------------------------- the cards
 
-# Classic's cards, in their first order: key, name, icon, whether it starts
-# full width, and what the lab must keep for it to be offered (a feature,
-# or one of the has_* flags home_dashboard works out).
+# Classic's cards: key, name, icon, whether it starts full width, and what
+# the lab must keep for it to be offered (a feature, or one of the has_*
+# flags home_dashboard works out). Each fly, worm and animal database also
+# has a card of its own ("stock:<key>", "org:<key>"; lab_cards).
 CARDS = [
     ("for_you", "For you (unread notices)", "bell", True, None),
     ("databases", "Your databases", "database", True, None),
@@ -72,10 +74,9 @@ CARDS = [
     ("sac", "Mice older than 30 weeks", "warning", False, "colony"),
     ("weanings", "Upcoming weanings", "baby", False, "colony"),
     ("geno", "Genotyping queue", "microscope", False, "colony"),
-    ("stocks", "Flies & worms: due", "fly", False, "has_stocks"),
-    ("restock", "Expiring & low stock", "flask", False, "has_restock"),
     ("zebrafish", "Zebrafish", "fish", False, "zebrafish"),
-    ("organisms", "Animal databases: due", "paw", False, None),
+    ("plasmids", "Recent plasmids", "plasmid", False, "plasmids"),
+    ("restock", "Expiring & low stock", "flask", False, "has_restock"),
     ("calendar", "Next 14 days", "calendar", False, "calendar"),
     ("bookings", "Your bookings", "calendar-clock", False, "calendar"),
     ("notebook", "Recent notebook pages", "notebook", False, "notebook"),
@@ -83,56 +84,222 @@ CARDS = [
     ("orders", "Recent orders", "cart", True, "has_orders"),
 ]
 CARD_KEYS = [c[0] for c in CARDS]
+# Home starts with these, then each database's cards in the sidebar's order,
+# then the rest.
+TOP_CARDS = ("for_you", "databases", "stats", "todos")
+# The cards a built-in database brings, and the kind of inventory whose
+# first database in the sidebar places the others.
+BUILTIN_CARDS = {"colony": ("sac", "weanings", "geno"), "zebrafish": ("zebrafish",), "plasmids": ("plasmids",)}
+INVENTORY_CARDS = {"orders": "orders", **{kind: "restock" for kind in inventory_service.RESTOCK_KINDS}}
+# The cards there were before each database had its own, and the prefix of
+# the cards that took their place (a saved arrangement keeps their spot).
+SPLIT_CARDS = {"stocks": "stock:", "organisms": "org:"}
 # Cards a new person doesn't see until they add them in Customize.
 OFF_AT_FIRST = {"todos", "bookings", "notebook", "utilities"}
+# How many of the Counts tiles show until someone chooses.
+TILES_AT_FIRST = 5
+
+
+def lab_databases(session, features: dict) -> list[dict]:
+    """The databases this person has in the sidebar, in its order:
+    {"key": the sidebar's key, "kind": colony, zebrafish, plasmids, stock,
+    organism or inventory, "module": the row, for the last three}. The
+    inventories kept as tabs of Plasmids are left out, as the sidebar does."""
+    from . import lab
+    out = [{"key": key, "kind": key, "module": None}
+           for key in ("colony", "zebrafish", "plasmids") if features.get(key, True)]
+    for kind, prefix, modules in (
+            ("stock", "stock", stock_service.list_modules(session)),
+            ("organism", "organism", organism_service.list_modules(session)),
+            ("inventory", "inventory", inventory_service.list_modules(session))):
+        for module in modules:
+            if not lab.in_sidebar(module):
+                continue
+            if kind == "inventory" and module.kind in inventory_service.PLASMID_TAB_KINDS:
+                continue
+            out.append({"key": f"{prefix}:{module.key}", "kind": kind, "module": module})
+    return lab.in_database_order(lab.database_order(session), out)
+
+
+def _has_schedule(module) -> bool:
+    mv = organism_service.view(module)
+    return mv.has("schedule") and bool(mv.schedule_rules)
+
+
+def lab_cards(databases: list[dict]) -> list[tuple]:
+    """Every card this lab has, in Home's usual order: the general ones,
+    then each database's own, as the sidebar lists the databases, then the
+    rest. Cards whose database the lab doesn't keep stay in the list (in
+    CARDS's order), so a saved arrangement keeps their place."""
+    by_key = {c[0]: c for c in CARDS}
+    placed = list(TOP_CARDS)
+    for db in databases:
+        if db["kind"] in BUILTIN_CARDS:
+            placed += BUILTIN_CARDS[db["kind"]]
+        elif db["kind"] == "stock":
+            mv = stock_service.view(db["module"])
+            by_key[f"stock:{mv.key}"] = (f"stock:{mv.key}", mv.label, resolve_icon(mv.icon), False, None)
+            placed.append(f"stock:{mv.key}")
+        elif db["kind"] == "organism" and _has_schedule(db["module"]):
+            module = db["module"]
+            by_key[f"org:{module.key}"] = (f"org:{module.key}", module.label, resolve_icon(module.icon or "paw"), False, None)
+            placed.append(f"org:{module.key}")
+        elif db["kind"] == "inventory":
+            card = INVENTORY_CARDS.get(db["module"].kind)
+            if card and card not in placed:
+                placed.append(card)
+    placed += [key for key in CARD_KEYS if key not in placed]
+    return [by_key[key] for key in placed]
 
 
 def _cards_key(username: str) -> str:
     return f"home_cards:{username}"
 
 
-def get_cards(session, username: str) -> dict:
-    """{"order": [...every key...], "hidden": [...], "wide": [...]}, as this
-    person arranged Home (kept in app_settings, like the layout); a card
-    added to the app since goes in its usual place, off if OFF_AT_FIRST."""
+def _saved(session, username: str) -> dict:
     import json
     try:
         saved = json.loads(inventory_service.get_setting(session, _cards_key(username), "") or "{}")
     except ValueError:
         saved = {}
-    order = [k for k in saved.get("order", []) if k in CARD_KEYS]
+    return saved if isinstance(saved, dict) else {}
+
+
+def get_cards(session, username: str, cards: list[tuple] | None = None) -> dict:
+    """{"order": [...every key...], "hidden": [...], "wide": [...],
+    "tiles": [...] or None}, as this person arranged Home (kept in
+    app_settings, like the layout); a card added since (a new database, or
+    one new to the app) goes in its usual place, off if OFF_AT_FIRST.
+    `cards` is lab_cards(); without it, CARDS."""
+    cards = cards or CARDS
+    keys = [c[0] for c in cards]
+    saved = _saved(session, username)
+
+    def split(names):
+        # The old shared fly-and-worm and animal cards: each database's own now.
+        out = []
+        for key in names:
+            out += [k for k in keys if k.startswith(SPLIT_CARDS[key])] if key in SPLIT_CARDS else [key]
+        return [k for k in dict.fromkeys(out) if k in keys]
+
+    order = split(saved.get("order", []))
     known = set(order)
-    for i, key in enumerate(CARD_KEYS):          # new cards: after the one before them
+    for i, key in enumerate(keys):               # new cards: after the one before them
         if key not in known:
-            before = next((CARD_KEYS[j] for j in range(i - 1, -1, -1) if CARD_KEYS[j] in order), None)
+            before = next((keys[j] for j in range(i - 1, -1, -1) if keys[j] in order), None)
             order.insert(order.index(before) + 1 if before else 0, key)
             known.add(key)
-    seen = set(saved.get("seen", [])) if saved else set()
-    hidden = [k for k in saved.get("hidden", []) if k in CARD_KEYS] if saved else []
+    seen = set(saved.get("seen", []))
+    hidden = split(saved.get("hidden", []))
     hidden += [k for k in OFF_AT_FIRST if k not in seen and k not in hidden]
-    wide = [k for k in saved.get("wide", []) if k in CARD_KEYS] if "wide" in saved else [c[0] for c in CARDS if c[3]]
-    return {"order": order, "hidden": hidden, "wide": wide}
+    wide = split(saved.get("wide", [])) if "wide" in saved else [c[0] for c in cards if c[3]]
+    tiles = saved.get("tiles")
+    return {"order": order, "hidden": hidden, "wide": wide,
+            "tiles": [str(k) for k in tiles] if isinstance(tiles, list) else None}
 
 
-def set_cards(session, username: str, order, hidden, wide) -> dict:
+def set_cards(session, username: str, order, hidden, wide, tiles=None, cards: list[tuple] | None = None) -> dict:
     import json
-    clean = lambda keys: [k for k in dict.fromkeys(keys) if k in CARD_KEYS]  # noqa: E731
+    cards = cards or CARDS
+    keys = {c[0] for c in cards}
+    clean = lambda names: [k for k in dict.fromkeys(names) if k in keys]  # noqa: E731
     value = {"order": clean(order), "hidden": clean(hidden), "wide": clean(wide), "seen": CARD_KEYS}
+    if tiles is not None:
+        value["tiles"] = [str(k)[:120] for k in dict.fromkeys(tiles)][:50]
+    else:
+        old = _saved(session, username).get("tiles")
+        if isinstance(old, list):
+            value["tiles"] = old
     inventory_service.set_setting(session, _cards_key(username), json.dumps(value))
-    return get_cards(session, username)
+    return get_cards(session, username, cards)
 
 
 def reset_cards(session, username: str) -> None:
     inventory_service.set_setting(session, _cards_key(username), "")
 
 
-def offered_cards(features: dict, flags: dict) -> list[dict]:
+def offered_cards(features: dict, flags: dict, cards: list[tuple] | None = None) -> list[dict]:
     """The cards this lab can show, for Customize."""
     out = []
-    for key, label, icon, _wide, needs in CARDS:
+    for key, label, icon, _wide, needs in cards or CARDS:
         if needs and not (flags.get(needs) if needs.startswith("has_") else features.get(needs, True)):
             continue
         out.append({"key": key, "label": label, "icon": icon})
+    return out
+
+
+def shown_tiles(tiles: list[dict], chosen: list[str] | None) -> list[dict]:
+    """The Counts tiles to draw: the ones this person ticked, or the first
+    few until they choose."""
+    if chosen is None:
+        return tiles[:TILES_AT_FIRST]
+    return [t for t in tiles if t["key"] in chosen]
+
+
+def count_tiles(session, databases: list[dict], username: str, labels: dict, counts: dict,
+                due: dict, notebook: bool) -> list[dict]:
+    """One Counts tile per database, in the sidebar's order, then the
+    notebook: {"key", "label", "icon", "value", "sub", "url"}, in the page's
+    language. `counts` has the mice and notebook numbers home_dashboard
+    already worked out; `due` is the number of things due soon by database
+    key (the same as the database's card lists)."""
+    from sqlalchemy import func
+    from .models import Organism, PlasmidRecord, TankRecord
+    out = []
+    items = dict(session.execute(select(InventoryItem.module_id_fk, func.count(InventoryItem.id))
+                                 .group_by(InventoryItem.module_id_fk)).all())
+    attention = defaultdict(int)
+    for a in inventory_service.attention_items(session, limit=10_000):
+        attention[a["key"]] += 1
+    for db in databases:
+        kind, module, key = db["kind"], db["module"], db["key"]
+        tile = {"key": key, "label": translate_value(labels.get(kind, "")), "icon": "", "value": 0, "sub": "", "url": ""}
+        if kind == "colony":
+            tile.update(icon="mouse", value=counts["total_mice"], url=url_for("colony", view="mice"),
+                        sub=gettext("mice · %(active)s active · %(mine)s yours",
+                                    active=counts["active_mice"], mine=counts["my_mice"]))
+        elif kind == "zebrafish":
+            active = select(func.count(TankRecord.id)).where(TankRecord.active.is_(True))
+            tile.update(icon="fish", value=session.scalar(active) or 0, url=url_for("zebrafish", view="tanks"),
+                        sub=gettext("tanks · %(n)s mating",
+                                    n=session.scalar(active.where(TankRecord.purpose == "mating")) or 0))
+        elif kind == "plasmids":
+            total = select(func.count(PlasmidRecord.id))
+            tile.update(icon="plasmid", label=gettext("Plasmids"), value=session.scalar(total) or 0,
+                        url=url_for("plasmids"),
+                        sub=gettext("plasmids · %(mine)s yours",
+                                    mine=session.scalar(total.where(PlasmidRecord.owner == username)) or 0))
+        elif kind == "stock":
+            mv = stock_service.view(module)
+            live = select(func.count(StockUnit.id)).where(StockUnit.module_id_fk == module.id,
+                                                          StockUnit.active.is_(True))
+            tile.update(label=translate_value(mv.label), icon=resolve_icon(module.icon), value=session.scalar(live) or 0,
+                        url=url_for("stocks.module", key=mv.key),
+                        sub=gettext("%(things)s · %(n)s due", things=translate_value(mv.units), n=due.get(key, 0)))
+        elif kind == "organism":
+            mv = organism_service.view(module)
+            alive = select(func.coalesce(func.sum(Organism.count), 0)).where(
+                Organism.module_id_fk == module.id, organism_service.alive_clause(mv))
+            sub = (gettext("%(things)s · %(n)s due", things=translate_value(mv.organism_noun_plural), n=due.get(key, 0))
+                   if _has_schedule(module) else translate_value(mv.organism_noun_plural))
+            tile.update(label=translate_value(module.label), icon=resolve_icon(module.icon or "paw"),
+                        value=session.scalar(alive) or 0, sub=sub,
+                        url=url_for("organisms.module", key=module.key))
+        else:
+            mv = inventory_service.view(module)
+            tile.update(label=translate_value(module.label), icon=resolve_icon(module.icon), value=items.get(module.id, 0),
+                        url=url_for("inventory.module", key=module.key), sub=gettext("items"))
+            if module.kind == "orders":
+                statuses = mv.open_statuses
+                tile.update(value=session.scalar(select(func.count(InventoryItem.id)).where(
+                    InventoryItem.module_id_fk == module.id, InventoryItem.status.in_(statuses))) or 0
+                    if statuses else 0, sub=gettext("still open"))
+            elif module.kind in inventory_service.RESTOCK_KINDS:
+                tile["sub"] = gettext("items · %(n)s low or expiring", n=attention.get(module.key, 0))
+        out.append(tile)
+    if notebook:
+        out.append({"key": "notebook", "label": gettext("Notebook pages"), "icon": "notebook",
+                    "value": counts["notebook_pages"], "sub": gettext("your pages"), "url": url_for("notebook")})
     return out
 
 
@@ -296,8 +463,8 @@ def _stock_items(session, today, horizon) -> tuple[list[dict], dict]:
     for module in stock_service.list_modules(session):
         mv = stock_service.view(module)
         track = f"stock:{mv.key}"
-        tracks[track] = (translate_value(mv.label), gettext("Flips & collections"),
-                         url_for("stocks.module", key=mv.key, view="schedule"))
+        work = gettext("Chunks & picks") if module.kind == "worm" else gettext("Flips & collections")
+        tracks[track] = (translate_value(mv.label), work, url_for("stocks.module", key=mv.key, view="schedule"))
         for it in stock_service.schedule(session, mv, today, horizon=horizon):
             unit = it.get("unit")
             if it["kind"] == "flip":

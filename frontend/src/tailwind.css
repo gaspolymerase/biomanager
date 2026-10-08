@@ -3116,6 +3116,12 @@
   .home-cust-show .icon { @apply size-3.5 shrink-0 text-muted; }
   .home-cust-wide { @apply flex shrink-0 cursor-pointer items-center gap-1 text-[12px] text-muted; }
   .home-cust-move { @apply flex shrink-0; }
+  /* The Counts tiles to show: a grid of ticks under the cards. */
+  .home-cust-tiles { @apply mt-4 border-t border-hairline pt-3; }
+  .home-cust-tiles h4 { @apply text-[13px] font-semibold text-ink; }
+  .home-cust-tiles p { @apply mb-2 text-[12px] text-muted; }
+  .home-cust-tile-grid { @apply grid grid-cols-1 gap-1 sm:grid-cols-2; }
+  .home-cust-tile-grid .home-cust-show { @apply rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px]; }
   .home-db {
     @apply inline-flex shrink-0 items-center gap-2 rounded-xl border border-hairline bg-surface px-3.5 py-2.5
            text-[13px] font-medium text-ink no-underline shadow-xs;

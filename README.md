@@ -501,15 +501,20 @@ database has a name of its own (one another database has is refused), so
   <tr>
     <td width="50%" valign="top">
       <h4>☀️ A home page that tells you what to do</h4>
-      Mice older than 30 weeks, upcoming weanings, the genotyping queue,
-      vials due for flipping, expiring stock, zebrafish tasks, the next
-      14 days and recent orders. Three layouts, switched on Home:
+      Built from the databases your lab keeps, in the sidebar's order:
+      a count for each database, then each one's own cards — mice older
+      than 30 weeks, upcoming weanings and the genotyping queue for the
+      colony, zebrafish tanks to return, recent plasmids, and a card of
+      its own for each fly, worm or other animal database with what is
+      due — then expiring stock, the next 14 days and recent orders.
+      Three layouts, switched on Home:
       <b>Classic</b> cards, <b>Tracks</b> (the coming weeks on one day
       ruler, a track per kind of work) and <b>Freezer</b> (your racks from
       above, with a pull list in the order you'd walk the room).
       <b>Customize</b> chooses which cards Classic shows, in what order
-      and how wide, with your to-dos, bookings, recent pages and
-      calculators (the ones you opened last) to add.
+      and how wide, and which counts it shows, with your to-dos,
+      bookings, recent pages and calculators (the ones you opened last)
+      to add.
     </td>
     <td width="50%" valign="top">
       <h4>📊 Spreadsheet-style editing</h4>

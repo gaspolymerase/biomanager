@@ -30,6 +30,21 @@
           </li>
         {% endfor %}
       </ol>
+      {# The Counts tiles: one per database; the first few until you choose. #}
+      {% if tiles %}
+        <section class="home-cust-tiles">
+          <h4>{{ _('Counts') }}</h4>
+          <p>{{ _('Which numbers the Counts card shows, in the order of the sidebar.') }}</p>
+          <input type="hidden" name="tiles" value="1">
+          {% set chosen = shown_tiles | map(attribute='key') | list %}
+          <div class="home-cust-tile-grid">
+            {% for tile in tiles %}
+              <label class="home-cust-show"><input type="checkbox" name="tile" value="{{ tile.key }}" {% if tile.key in chosen %}checked{% endif %}>
+                {{ icon(tile.icon) }} {{ tile.label }}</label>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
       {# Cards this lab can't show now (a database it doesn't keep) keep their place. #}
       {% for key in home_cards.order if key not in offered_keys %}
         <input type="hidden" name="order" value="{{ key }}">
