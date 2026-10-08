@@ -58,7 +58,12 @@ compound eyes and wings — are all resolved, which is more drawing than a
 away.
 
 Add an icon by adding a name to `FROM_FONTAWESOME`, `FROM_SOURCES` or
-`CUSTOM` in the build script and rebuilding. **Check any new icon at 15px**,
+`CUSTOM` in the build script and rebuilding (`npm pack
+@fortawesome/fontawesome-free@6.7.2` and unpack it for the path). A Font
+Awesome icon keeps its own viewBox (they are 320 to 640 wide), so each is
+centred in its square and none is cut off. Organs, procedures and more
+organisms came in for the notebook's library folders, which offer the
+biology ones (`FOLDER_ICONS` in `app/lab_notebook.py`). **Check any new icon at 15px**,
 not just large — that is where they fail.
 
 ### App icon

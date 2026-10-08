@@ -1959,16 +1959,27 @@ def recipe_delete(recipe_id: int):
 
 FOLDER_KINDS = ("protocol", "recipe")
 # The icons a folder may have, first the plain folder it starts as: the
-# sprite's biology, grouped as the picker shows them (methods and
-# glassware, molecules, microbes, organisms and housing, animal health,
-# storage and weighing).
-FOLDER_ICONS = ("folder", "protocol",
-                "flask", "flask-vial", "vial", "vials", "culture-vial", "petri", "droplet", "microscope",
-                "dna", "plasmid", "antibody",
-                "bacterium", "virus",
-                "mouse", "fish", "fly", "worm", "frog", "seedling", "paw", "egg", "cage", "tank",
-                "syringe", "resistance", "heart-pulse", "stethoscope", "notes-medical",
-                "snowflake", "temperature", "scale")
+# sprite's biology (scripts/build-icons.py), in the picker's order.
+FOLDER_ICONS = (
+    "folder", "protocol",
+    # the bench
+    "flask", "flask-vial", "vial", "vials", "culture-vial", "petri", "droplet", "dropper", "microscope",
+    "mortar-pestle", "atom",
+    # molecules
+    "dna", "plasmid", "antibody",
+    # microbes and disease
+    "bacterium", "bacteria", "virus", "vial-virus", "disease", "lungs-virus",
+    # organs and the body
+    "brain", "heart", "lungs", "bone", "joint", "tooth", "skull", "eye", "ear", "hand", "person", "pregnancy",
+    # organisms and their housing
+    "mouse", "fish", "fly", "worm", "frog", "bird", "cow", "paw", "egg", "seedling", "leaf", "wheat",
+    "cage", "tank",
+    # procedures and animal health
+    "syringe", "blood-draw", "scissors", "bandage", "mask", "aseptic", "recovery", "recording", "x-ray",
+    "clinician", "stethoscope", "heart-pulse", "notes-medical", "pills", "alarm", "ruler", "weight",
+    # safety and storage
+    "biohazard", "radiation", "toxic", "snowflake", "temperature", "scale",
+)
 
 
 def folder_list(session, kind: str) -> list[dict]:

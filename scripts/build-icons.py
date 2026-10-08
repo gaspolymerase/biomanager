@@ -133,6 +133,45 @@ FROM_FONTAWESOME = {
     "notes-medical": "notes-medical",
     "heart-pulse": "heart-pulse",
     "weight": "weight-scale",
+    # --- library folders (lab_notebook.FOLDER_ICONS): organs ---
+    "brain": "brain",
+    "lungs": "lungs",
+    "bone": "bone",
+    "joint": "joint",
+    "tooth": "tooth",
+    "skull": "skull",
+    "hand": "hand",
+    "ear": "ear-listen",
+    "person": "person",
+    "pregnancy": "person-pregnant",
+    # --- library folders: microbes, disease, chemistry, safety ---
+    "bacteria": "bacteria",
+    "vial-virus": "vial-virus",
+    "lungs-virus": "lungs-virus",
+    "disease": "disease",
+    "atom": "atom",
+    "mortar-pestle": "mortar-pestle",
+    "pills": "pills",
+    "biohazard": "biohazard",
+    "radiation": "radiation",
+    "toxic": "skull-crossbones",
+    # --- library folders: procedures ---
+    "dropper": "eye-dropper",
+    "scissors": "scissors",
+    "bandage": "bandage",
+    "blood-draw": "hand-holding-droplet",
+    "mask": "mask-face",
+    "aseptic": "hands-bubbles",
+    "recovery": "bed-pulse",
+    "recording": "file-waveform",
+    "x-ray": "x-ray",
+    "clinician": "user-doctor",
+    "ruler": "ruler",
+    # --- library folders: more organisms ---
+    "bird": "dove",
+    "cow": "cow",
+    "leaf": "leaf",
+    "wheat": "wheat-awn",
     "clipboard": "clipboard-check",
     "sitemap": "sitemap",
     "alarm": "stopwatch",
@@ -239,7 +278,7 @@ def read_source(name: str) -> str | None:
     path = Path(__file__).resolve().parent / "icon-sources" / name
     if not path.exists():
         return None
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     inner = re.sub(r"^.*?<svg[^>]*>", "", text, flags=re.S)
     inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
     # game-icons ship a white glyph on a full-bleed black plate.
@@ -262,15 +301,20 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def read_fa(root: Path, fa_name: str) -> str | None:
+def read_fa(root: Path, fa_name: str) -> tuple[str, str] | None:
+    """(viewBox, inner markup) of a Font Awesome icon. Its own viewBox, not a
+    512 square: Font Awesome icons are 320 to 640 wide, and in a square box
+    a narrow one sits to the left and a wide one is cut off on the right.
+    In its own box each is centred and fits."""
     path = root / "svgs" / "solid" / f"{fa_name}.svg"
     if not path.exists():
         return None
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
+    box = re.search(r'<svg[^>]*viewBox="([^"]+)"', text)
     inner = re.sub(r"^.*?<svg[^>]*>", "", text, flags=re.S)
     inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
     inner = re.sub(r"<!--.*?-->", "", inner, flags=re.S)
-    return inner.strip()
+    return (box.group(1) if box else "0 0 512 512"), inner.strip()
 
 
 def main() -> int:
@@ -281,11 +325,12 @@ def main() -> int:
     parts = [HEADER]
     missing = []
     for name, fa_name in sorted(FROM_FONTAWESOME.items()):
-        inner = read_fa(root, fa_name)
-        if inner is None:
+        found = read_fa(root, fa_name)
+        if found is None:
             missing.append(f"{name} ({fa_name})")
             continue
-        parts.append(f'  <symbol id="{name}" viewBox="0 0 512 512">{inner}</symbol>')
+        box, inner = found
+        parts.append(f'  <symbol id="{name}" viewBox="{box}">{inner}</symbol>')
 
     for name, filename in sorted(FROM_SOURCES.items()):
         inner = read_source(filename)
@@ -300,7 +345,7 @@ def main() -> int:
 
     parts.append("</svg>")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text("\n".join(parts) + "\n")
+    OUTPUT.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
     total = len(FROM_FONTAWESOME) + len(FROM_SOURCES) - len(missing) + len(CUSTOM)
     print(f"wrote {OUTPUT.relative_to(PROJECT_ROOT)} — {total} icons "
