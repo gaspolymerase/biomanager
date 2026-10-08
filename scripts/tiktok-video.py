@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """Vertical (9:16) videos for TikTok, Reels and Shorts.
 
-    python scripts/tiktok-video.py               # every video in promo/tiktok.json
-    python scripts/tiktok-video.py assistant     # or the ones named
+    python scripts/tiktok-video.py          # every day of the launch calendar
+    python scripts/tiktok-video.py 1 2      # or the days named
 
-Each video in promo/tiktok.json is cut from a recorded clip: its hook stays
-at the top of the screen, the footage fills the middle (each narration line
-shows a part of the clip, cropped close and stretched to the line's length,
-on a blurred copy of itself), the line is shown below a few words at a time,
-and an end card gives the website. The voice is a Qwen voice, as in
-explainer-video.py, over a quick beat made here. Writes promo/out/tiktok/<name>.mp4
-and <name>-cover.png.
+A day's video is made from its storyboard in promo/daily.json (the English
+hook and lines, read aloud) and its footage, promo/out/<clip>/plain.mp4; a
+day in promo/tiktok.json is made from what is written there instead. The
+hook stays at the top of the screen with the day's title (posts.json) under
+it, the footage fills the middle (each line shows its own part of the clip,
+cropped to where things move and stretched to the line's length, on a
+blurred copy of itself), the line is shown below a few words at a time, and
+an end card gives the website. The voice is a Qwen voice, as in
+explainer-video.py, over a quick beat made here. Writes
+promo/out/tiktok/dayNN.mp4 and dayNN-cover.png.
+
+TikTok runs six days behind the other platforms: day N goes out at 08:30
+Beijing on promo/tiktok.json's "first" date + N - 1.
 """
 from __future__ import annotations
 
@@ -54,20 +60,45 @@ def centred(draw, y, text, fnt, fill, stroke=0, stroke_fill=None):
     draw.text(((W - w) / 2, y), text, font=fnt, fill=fill, stroke_width=stroke, stroke_fill=stroke_fill)
 
 
+def balanced(draw, text, fnt, width):
+    """Wrapped to as few lines as fit, with the words shared out evenly between them."""
+    lines = fc.wrap(draw, text, fnt, width)
+    words = text.split()
+    if len(lines) < 2 or len(words) < 2:
+        return lines
+    best, limit = lines, width
+    while limit > width * 0.4:
+        limit -= 20
+        trial = fc.wrap(draw, text, fnt, limit)
+        if len(trial) > len(lines) or "" in trial:
+            break
+        best = trial
+    return best
+
+
 def background(video, path: Path):
-    """The gradient and the hook at the top."""
+    """The gradient, the hook at the top and the title on a green band under it."""
     img = fc.gradient((W, H), video["gradient"]).convert("RGBA")
     d = ImageDraw.Draw(img)
-    big = font(78)
-    y = 210
-    for line in video["hook"]:
+    # As large as fits between TikTok's tabs (y 150) and the footage.
+    for size in (78, 72, 66, 60, 56, 52):
+        big, mark = font(size), font(int(size * 0.74))
+        hook = (video["hook"] if isinstance(video["hook"], list) else balanced(d, video["hook"], big, 960))
+        marks = balanced(d, video["mark"], mark, 940)
+        height = len(hook) * size * 1.18 + 20 + len(marks) * (size * 0.74 + 30)
+        if height <= BOX_Y - 20 - 160:
+            break
+    y = 160 + (BOX_Y - 20 - 160 - height) / 2
+    for line in hook:
         centred(d, y, line, big, INK)
-        y += 92
-    mark = font(58)
-    tw = d.textlength(video["mark"], font=mark)
-    x0 = (W - tw) / 2 - 26
-    d.rounded_rectangle((x0, y + 18, x0 + tw + 52, y + 104), 22, fill=GREEN)
-    d.text((x0 + 26, y + 28), video["mark"], font=mark, fill="white")
+        y += size * 1.18
+    y += 20
+    for line in marks:
+        tw = d.textlength(line, font=mark)
+        x0 = (W - tw) / 2 - 24
+        d.rounded_rectangle((x0, y, x0 + tw + 48, y + mark.size + 22), 18, fill=GREEN)
+        d.text((x0 + 24, y + 6), line, font=mark, fill="white")
+        y += mark.size + 30
     img.convert("RGB").save(path)
 
 
@@ -158,9 +189,63 @@ def chunks(text: str, size: int = 3) -> list[str]:
     return out
 
 
+def frames(source: Path, start: float, seconds: float, size=(480, 270), fps=6) -> np.ndarray:
+    raw = subprocess.run([ex.FFMPEG, "-v", "error", "-ss", f"{start:.3f}", "-t", f"{seconds:.3f}", "-i", str(source),
+                          "-vf", f"fps={fps},scale={size[0]}:{size[1]},format=gray", "-f", "rawvideo", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.uint8).reshape(-1, size[1], size[0]).astype(np.int16)
+
+
+def auto_crop(source: Path, start: float, end: float, frame=(1920, 1080)) -> list[int]:
+    """Where the work happens in this stretch of footage (a typed cell, an opened panel,
+    the pointer), zoomed in far enough that the app's text can be read on a phone."""
+    fw, fh = frame
+    shots = frames(source, start, end - start)
+    k = fw / shots.shape[2]
+    aspect = W / BOX_H
+    moved = np.zeros(shots.shape[1:])
+    for a, b in zip(shots, shots[1:]):
+        step = np.abs(b - a) > 14
+        if step.mean() < 0.25:          # a page change or a camera move says nothing about where to look
+            moved += step
+    ys, xs = np.nonzero(moved)
+    if len(xs) < 40:
+        cx, cy, w = fw / 2, fh / 2, 960
+    else:
+        weights = moved[ys, xs]
+        def at(v, q):
+            order = np.argsort(v)
+            cum = np.cumsum(weights[order]) / weights.sum()
+            return v[order][min(len(v) - 1, np.searchsorted(cum, q))] * k
+        cx, cy = at(xs, 0.5), at(ys, 0.5)
+        w = min(max((at(xs, 0.9) - at(xs, 0.1)) * 1.4, (at(ys, 0.9) - at(ys, 0.1)) * 1.4 * aspect, 640), 960)
+    h = w / aspect
+    x = min(max(cx - w / 2, 0), fw - w)
+    y = min(max(cy - h / 2, 0), fh - h)
+    return [int(x) // 2 * 2, int(y) // 2 * 2, int(w) // 2 * 2, int(h) // 2 * 2]
+
+
+def from_day(n: int, board: dict, posts: dict) -> dict:
+    """A day's video from its storyboard: the hook read first, then each line, with the
+    footage shared out between them by how long each takes to say."""
+    day = next(d for d in board["days"] if d["day"] == n)
+    post = next(p for p in posts["posts"] if p["day"] == n)
+    en = day["en"]
+    says = [en["hook"], *en["lines"]]
+    return {"name": f"day{n:02d}", "source": f"promo/out/{day['clip']}/plain.mp4",
+            "hook": en["hook"], "mark": post["title_en"],
+            "gradient": list(ex.PALETTE[n % len(ex.PALETTE)]),
+            "lines": [{"say": s} for s in says]}
+
+
+END = {"say": "It's free and open source. Find it at biomanager dot org.",
+       "title": "Free & open source", "site": "biomanager.org", "follow": "Follow for a lab hack a day"}
+
+
 def make(video: dict, voice: str, tmp: Path) -> Path:
     source = ROOT / video["source"]
     lines = video["lines"]
+    video.setdefault("end", END)
     says = [l["say"] for l in lines] + [video["end"]["say"]]
     ex.prefetch([(voice, s) for s in says])
     audio = [ex.speak(s, voice, 0, tmp) for s in says]
@@ -174,6 +259,16 @@ def make(video: dict, voice: str, tmp: Path) -> Path:
     end_len = spans[-1][1] + 1.6
     total = footage_end + end_len
 
+    # Lines without their own part of the footage share it out by how long each is said for.
+    if any("from" not in line for line in lines):
+        clip = ex.duration(source) - 0.1
+        said = [spans[i][1] + GAP for i in range(len(lines))]
+        at = 0.0
+        for line, s_ in zip(lines, said):
+            line["from"], line["to"] = at, at + clip * s_ / sum(said)
+            at = line["to"]
+    for line in lines:
+        line.setdefault("crop", auto_crop(source, line["from"], line["to"]))
     # The footage: each part cropped, fitted to the box on a blurred copy, stretched to its line.
     parts = []
     for i, line in enumerate(lines):
@@ -249,15 +344,18 @@ def make(video: dict, voice: str, tmp: Path) -> Path:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("names", nargs="*")
+    ap.add_argument("days", nargs="*", type=int)
     args = ap.parse_args()
-    board = json.loads((ROOT / "promo/tiktok.json").read_text(encoding="utf-8"))
-    for video in board["videos"]:
-        if args.names and video["name"] not in args.names:
-            continue
+    tiktok = json.loads((ROOT / "promo/tiktok.json").read_text(encoding="utf-8"))
+    board = json.loads((ROOT / "promo/daily.json").read_text(encoding="utf-8"))
+    posts = json.loads((ROOT / "promo/posts.json").read_text(encoding="utf-8"))
+    own = {v["day"]: v for v in tiktok["videos"]}
+    for n in args.days or [d["day"] for d in board["days"]]:
+        video = own.get(n) or from_day(n, board, posts)
+        video.setdefault("name", f"day{n:02d}")
         with tempfile.TemporaryDirectory(prefix="tiktok-") as tmp:
-            out = make(video, board["voice"], Path(tmp))
-        print(f"{video['name']}: {out.relative_to(ROOT)} ({ex.duration(out):.1f} s)", flush=True)
+            out = make(video, tiktok["voice"], Path(tmp))
+        print(f"day {n:2d}: {out.relative_to(ROOT)} ({ex.duration(out):.1f} s)", flush=True)
 
 
 if __name__ == "__main__":

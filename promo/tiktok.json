@@ -1,8 +1,10 @@
 {
   "voice": "qwen:en-b",
+  "first": "2026-10-08",
+  "post_at": "08:30 Beijing (20:30 New York the evening before); day N on first + N - 1, six days after the other platforms",
   "videos": [
     {
-      "name": "assistant",
+      "day": 5,
       "source": "promo/out/assistant/assistant-photo.mp4",
       "hook": [
         "Too lazy to type up",
@@ -58,13 +60,7 @@
             1163
           ]
         }
-      ],
-      "end": {
-        "say": "It's free and open source. Find it at biomanager dot org.",
-        "title": "Free & open source",
-        "site": "biomanager.org",
-        "follow": "Follow for a lab hack a day"
-      }
+      ]
     }
   ]
 }
