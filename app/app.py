@@ -409,7 +409,7 @@ app.register_blueprint(experiment_steps.bp)
 # Signing a notebook page, which locks it (app/signatures.py).
 from . import signatures as record_signatures  # noqa: E402
 app.register_blueprint(record_signatures.bp)
-# The public API, and Settings → API tokens (app/api.py).
+# The public API, and Settings → AI assistant & tokens (app/api.py).
 from . import api as public_api  # noqa: E402
 app.register_blueprint(public_api.bp)
 app.register_blueprint(public_api.pages)
@@ -2181,16 +2181,25 @@ def settings():
         if request.method == "POST":
             action = request.form.get("action", "profile")
             if action == "profile":
-                user.display_name = request.form.get("display_name", "").strip()
-                short = request.form.get("short_name", "").strip()
-                user.short_name = short[:5]
-                user.email = request.form.get("email", "").strip()
-                user.role_title = request.form.get("role_title", "").strip()
-                landing = request.form.get("default_landing", "").strip()
-                user.default_landing = landing if landing in ALLOWED_LANDING_ENDPOINTS else ""
-                if "home_layout" in request.form:
-                    home_layouts.set_layout(db_session, user.username, request.form.get("home_layout", ""))
+                # Only the fields the form sent: Profile and "When you sign
+                # in" are separate forms on the page, each saved as it changes.
+                form = request.form
+                if "display_name" in form:
+                    user.display_name = form.get("display_name", "").strip()
+                if "short_name" in form:
+                    user.short_name = form.get("short_name", "").strip()[:5]
+                if "email" in form:
+                    user.email = form.get("email", "").strip()
+                if "role_title" in form:
+                    user.role_title = form.get("role_title", "").strip()
+                if "default_landing" in form:
+                    landing = form.get("default_landing", "").strip()
+                    user.default_landing = landing if landing in ALLOWED_LANDING_ENDPOINTS else ""
+                if "home_layout" in form:
+                    home_layouts.set_layout(db_session, user.username, form.get("home_layout", ""))
                 db_session.commit()
+                if request.headers.get("X-Autosave") == "1":
+                    return jsonify({"ok": True})
                 flash(gettext("Profile updated."), "success")
             elif action == "appearance":
                 glyph, color = appearance.set_choice(db_session, user.username,
@@ -2210,6 +2219,8 @@ def settings():
                 for category in notify.CATEGORIES:
                     setattr(user, f"notify_{category}", request.form.get(f"notify_{category}") == "1")
                 db_session.commit()
+                if request.headers.get("X-Autosave") == "1":
+                    return jsonify({"ok": True})
                 flash(gettext("Notification preferences updated."), "success")
             elif action == "password":
                 current = request.form.get("current_password", "")
@@ -2234,7 +2245,10 @@ def settings():
                     # this one carries on under the new password.
                     session["auth"] = security.session_stamp(user)
                     flash(gettext("Password updated. Any other signed-in sessions have been signed out."), "success")
-            return redirect(url_for("settings"))
+            # Back to the pane the form was on (templates/settings.html).
+            pane = {"appearance": "appearance", "language": "appearance", "notifications": "notifications",
+                    "password": "security"}.get(action, "profile")
+            return redirect(url_for("settings", _anchor=pane))
         user_data = {
             "username": user.username,
             "display_name": user.display_name,

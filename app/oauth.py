@@ -248,7 +248,7 @@ def authorize():
             user = _redeem_link_code(s, request.form.get("link_code", ""))
             if user is None:
                 context["problem"] = gettext(
-                    "That connection code isn't right, or it has run out. Make a new one under Settings → API tokens → Connect an AI assistant.")
+                    "That connection code isn't right, or it has run out. Make a new one under Settings → AI assistant & tokens → Connect an AI assistant.")
                 return render_template("oauth/authorize.html", **context), 400
         from .api import may_make_tokens
         user = s.get(UserAccount, user.id)
@@ -390,7 +390,7 @@ def _signed_in():
 
 @bp.get("/settings/assistant")
 def connect_page():
-    """Settings → API tokens → Connect an AI assistant: the ways in."""
+    """Settings → AI assistant & tokens → Connect an AI assistant: the ways in."""
     blocked = _signed_in()
     if blocked:
         return blocked

@@ -663,7 +663,15 @@ becomes a card with its columns under their names, and rack grids get a
 The interface follows macOS conventions and has a full dark mode. It works
 in any modern browser on Windows and Linux too.
 
-Each person can pick their own app icon in **Settings**: a double helix,
+**Settings** is laid out like the Mac's System Settings: a list of panes
+on the left (**You**: Profile, Sign-in & security, Appearance & language,
+Notifications, AI assistant & tokens, Your data; **Lab**: Devices & copies)
+and the chosen one beside it, its settings in grouped rows with a short line
+on what each does. A change is saved as it is made, and the search box at the
+top finds a setting by name.
+
+Each person can pick their own app icon in **Settings → Appearance &
+language**: a double helix,
 mouse, zebrafish, *C. elegans*, *Drosophila*, cryobox, microtube or petri
 dish, in one of six macaron colours. The browser tab and sidebar show it,
 and the app's accent colour follows it.
@@ -672,7 +680,7 @@ and the app's accent colour follows it.
 
 BioManager is in English and Simplified Chinese. It follows the language a
 person's computer or browser asks for first (the desktop app, the computer's);
-each person can choose for themselves in **Settings → Language**, which
+each person can choose for themselves in **Settings → Appearance & language**, which
 changes as soon as they pick, or with the **中文 / English** switch on the
 sign-in page, which stays their choice once they sign in. Every page is in both: each database, the calendar, the
 notebook and experiments, Settings and the admin pages, and the messages and
@@ -720,7 +728,7 @@ flowchart TB
 
 One device holds the lab's **master copy**; every other one works on it
 through its address, so nothing is ever merged and nothing written in two
-places is lost. **Settings → Devices** says which device it is and lists
+places is lost. **Settings → Devices & copies → Devices** says which device it is and lists
 every computer linked to the lab:
 
 - **A lab server** is the master copy unless an admin hands it on.
@@ -1024,7 +1032,7 @@ track.
 - **When someone leaves,** the admin's **Colony overview** (under **More**) shows every cage by
   owner, idle cages and living mice without a cage, and **Racks & boxes**
   hands their racks to someone else.
-- **An API for scripts and instruments.** **Settings → API tokens**
+- **An API for scripts and instruments.** **Settings → AI assistant & tokens**
   makes a token for R, a Python script, a balance or another tool; it
   reads the lab's records as JSON, or changes them, as you and with your
   permissions (*Read*, or *Read and change*; it can expire, and you or an
@@ -1103,13 +1111,13 @@ from. A lab server takes a backup before every update.
 A lab server backs itself up every night, checks every backup and
 test-restores one every week, with an optional off-site copy and a nightly
 copy on the admin's Mac. The desktop app can also keep **a copy of the lab
-server** on any computer (**Settings → Keep a copy of your lab server**):
+server** on any computer (**Settings → Devices & copies**):
 the whole database, checked when it arrives, refreshed daily, the newest 14
 kept, and loadable into a new server if the old one is lost. Admins decide
 whether members may (guests never). An admin's copy is the whole lab; a
 member's holds what they can see in the app, without anyone's password,
 other people's private notebook pages or personal databases, or the Audit
-log. **Settings → Export my data** downloads your own mice, cages,
+log. **Settings → Your data → Export my data** downloads your own mice, cages,
 weights, experiments, plasmids (each sequence as a GenBank file, with its
 features) and notebook pages as a zip at any time.
 

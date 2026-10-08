@@ -42,7 +42,7 @@ It comes in two forms, the same program in both:
 
 | Desktop app | For one person. macOS, Windows or Linux; your data stays on your computer. |
 |---|---|
-| Lab server | For a whole lab: one BioManager that everyone opens in a browser, the Android app, or from an iPhone's home screen. Usually free to host. [Every way to run one.](https://biomanager.org/server) The desktop app can set one up for you: **Settings → Set up a lab server** asks where it should go, does the work, and can bring your records along. |
+| Lab server | For a whole lab: one BioManager that everyone opens in a browser, the Android app, or from an iPhone's home screen. Usually free to host. [Every way to run one.](https://biomanager.org/server) The desktop app can set one up for you: **Settings → Devices & copies → Set up a lab server** asks where it should go, does the work, and can bring your records along. |
 
 Source: https://biomanager.org/guide/what-it-is
 
@@ -112,9 +112,9 @@ The first account is the lab's **admin** (on a server, it needs the one-time set
 
 Below the questions, **Send BioManager's makers anonymous counts once a day** is ticked; untick it if you'd rather not ([what is sent](https://biomanager.org/guide/your-data#counts)).
 
-BioManager then makes those databases, the racks and incubators too, and takes you Home. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → See the welcome tour again** brings it back).
+BioManager then makes those databases, the racks and incubators too, and takes you Home. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → Your data → See the welcome tour again** brings it back).
 
-**English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
+**English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Appearance & language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
 
 ### Troubleshooting
 
@@ -244,7 +244,7 @@ Source: https://biomanager.org/guide/import-from-excel
 
 The page that opens each morning: what needs doing today, in three layouts.
 
-Home is where each day starts: only what needs attention, from every database you can see. Choose how it looks with the **Layout** chips at the top (or in **Settings → Home layout**); the choice is yours alone.
+Home is where each day starts: only what needs attention, from every database you can see. Choose how it looks with the **Layout** chips at the top (or in **Settings → Appearance & language → Home layout**); the choice is yours alone.
 
 - **Classic**: Cards: your databases as tiles, a few numbers (total mice, mice over 30 weeks, weanings, pending orders, notebook pages) and cards for *Mice older than 30 weeks*, *Upcoming weanings*, the *Genotyping queue*, *Flies & worms: due*, *Animal databases: due*, *Expiring & low stock*, zebrafish mating tanks to return, the *Next 14 days* and *Recent orders*.
 
@@ -328,7 +328,7 @@ Search everything from anywhere, and keep pages open as tabs.
 
 - **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open.
 
-- **Tabs.** Following a link moves the tab you're in; **+** opens a new tab on your start page (**Settings → Default landing page**; Home if none). Drag to reorder, `Alt` (`⌥ Option` on a Mac) + `1`…`9` to jump. They're still there tomorrow, and they are yours: someone else signing in on the same computer gets their own.
+- **Tabs.** Following a link moves the tab you're in; **+** opens a new tab on your start page (**Settings → Appearance & language → Open on**; Home if none). Drag to reorder, `Alt` (`⌥ Option` on a Mac) + `1`…`9` to jump. They're still there tomorrow, and they are yours: someone else signing in on the same computer gets their own.
 
 Source: https://biomanager.org/guide/finding-things
 
@@ -358,7 +358,7 @@ The bell and what it tells you: your animals moved, orders arriving, @mentions a
 
 The bell at the top shows what happened while you were away: someone moved your animals or vials, picked from your breeders, recorded a genotype on your mice, an order you placed was ordered, arrived or was cancelled, someone wrote `@you` in a record's notes (a reagent, an order, a plasmid, a cage) or a notebook comment, and lab news such as being made admin. Admins are told of each new order request. A notice about one record opens that record — an order notice opens the order. A daily note reminds you of pups waiting to be genotyped. Choose which kinds you get in **Settings → Notifications**; you're never notified of your own changes.
 
-If your server sends email, a daily digest of what's overdue or coming up — flips, weanings, returns, expiring stock — goes to the email on your profile (**Settings → Reminder emails**). Clear the email to stop it.
+If your server sends email, a daily digest of what's overdue or coming up — flips, weanings, returns, expiring stock — goes to the email on your profile (**Settings → Notifications → Reminder email**). Clear the email to stop it.
 
 Source: https://biomanager.org/guide/notifications
 
@@ -1160,7 +1160,7 @@ Approve sign-ups, manage admins and accounts, offer Google, Microsoft or institu
 
 Who and where: Admins
 
-- **Joining**: New sign-ups wait for an admin's approval in **Manage users**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it under **Settings → Sign-in methods** ([setting it up](https://biomanager.org/server#sign-in)).
+- **Joining**: New sign-ups wait for an admin's approval in **Manage users**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it under **Settings → Sign-in & security** ([setting it up](https://biomanager.org/server#sign-in)).
 
 - **Admins**: **Manage users** promotes and demotes admins, disables accounts and resets passwords; **Lab setup** can also make someone admin. Keep at least two.
 
@@ -1267,9 +1267,9 @@ A server backs up every night, restores the newest backup every week to prove it
 
 The desktop app can keep a copy of your lab server's whole database, so the lab's records live on more than one machine:
 
-1. On the server: **Settings → Copies of the lab on your computers**, name the computer and **Make a key**. Copy the key; it's shown once. (Admins always may; members when Lab setup allows it.)
+1. On the server: **Settings → Devices & copies**, name the computer and **Make a key**. Copy the key; it's shown once. (Admins always may; members when Lab setup allows it.)
 
-2. On that computer, in the desktop app: **Settings → Keep a copy of your lab server**. Enter the server's address and the key, and **Save and copy now**.
+2. On that computer, in the desktop app: **Settings → Devices & copies**. Enter the server's address and the key, and **Save and copy now**.
 
 3. From then on, while the app is open, it takes a fresh copy every day, checks it, keeps the last 14 and mirrors uploaded files. The card shows when the last copy was made; on the server, the list shows every computer and how fresh its copy is. **Revoke** stops a computer (a lost laptop, say) from taking more.
 
@@ -1277,7 +1277,7 @@ The copies sit beside the app's own data, which they never touch. An admin's cop
 
 ### One lab on many devices
 
-One device holds the lab's **master copy**; every other one works on it through its address, so nothing is ever merged and nothing written in two places is lost. **Settings → Devices** shows which device it is, and every computer linked to the lab (by a key from **Copies of the lab**): how it uses the lab, its version, when it was last heard from.
+One device holds the lab's **master copy**; every other one works on it through its address, so nothing is ever merged and nothing written in two places is lost. **Settings → Devices & copies → Devices** shows which device it is, and every computer linked to the lab (by a key from **Copies of the lab**): how it uses the lab, its version, when it was last heard from.
 
 - **A lab server** is the master copy unless an admin hands it on.
 
@@ -1293,7 +1293,7 @@ One device holds the lab's **master copy**; every other one works on it through 
 
 ### Getting your data out
 
-**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in Settings) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
+**Export** on any sheet downloads what it shows as CSV, which opens in Excel. On the Mice sheet, **Export → Excel** is a workbook that **Import from Excel** reads back. A note that starts with `=` stays text in every export, never a formula. **Export my data** (in the account menu, and in **Settings → Your data**) downloads your own mice, cages, weights, experiments and plasmids as CSV, each plasmid's sequence as a GenBank file with its features and the files kept with it, your notebook pages and your profile, in one zip.
 
 ### What BioManager sends its makers
 
@@ -1357,7 +1357,7 @@ Who and where: Lab server or desktop
 
 BioManager has an API: other programs can read the lab's records, and change them, as you. Pull an experiment's body weights straight into R or Python, have a balance post each weight as it weighs, let a core's system mark samples as done, or count cages for the facility — without anyone exporting a sheet.
 
-1. **Settings → API tokens**: say what will use it (*Balance in B12*, *My R scripts*), whether it may **Read**, **Read and change** or **Read and propose** (for an AI assistant: see below), and when it ends. **Make a token**.
+1. **Settings → AI assistant & tokens**: say what will use it (*Balance in B12*, *My R scripts*), whether it may **Read**, **Read and change** or **Read and propose** (for an AI assistant: see below), and when it ends. **Make a token**.
 
 2. Copy the token: it is shown once. Treat it like your password, and keep it out of scripts you share (an environment variable is the usual place).
 
@@ -1391,7 +1391,7 @@ BioManager has no AI inside it. If you already use an assistant (Claude, ChatGPT
 
 ### Connect an assistant
 
-Open **Help → Connect an AI assistant** (it is also under **Settings → API tokens**, and on an empty **Proposed changes**). It shows the ways in for your BioManager, with its address filled in. Nothing needs installing, except for Claude Desktop on the lab network (below).
+Open **Help → Connect an AI assistant** (it is also under **Settings → AI assistant & tokens**, and on an empty **Proposed changes**). It shows the ways in for your BioManager, with its address filled in. Nothing needs installing, except for Claude Desktop on the lab network (below).
 
 #### From claude.ai, the Claude apps or ChatGPT
 
@@ -1401,7 +1401,7 @@ These apps reach BioManager from the internet, so this works when your lab's ser
 
 2. When it asks you to connect, a BioManager page opens asking for a **connection code**. On the Connect page (on the lab network), press **Get a connection code**, type it in, and press **Allow**. A code works once, for 10 minutes.
 
-3. That's it, on the web and in the phone app alike. The connection is listed under **Settings → API tokens** with the app's name; revoke it there to end it.
+3. That's it, on the web and in the phone app alike. The connection is listed under **Settings → AI assistant & tokens** with the app's name; revoke it there to end it.
 
 #### From Claude Code, Cursor, Cherry Studio or Claude Desktop
 
@@ -1419,7 +1419,7 @@ These run on a computer that can reach BioManager: the same computer as the desk
 
 Ask it: *Log today's work from my notes: …* It looks up each animal, cage and experiment you mention, asks you when something could be more than one record, and sends one proposal with a link to it.
 
-- The assistant reads what you can read, as you. Revoke its token under **Settings → API tokens** to cut it off.
+- The assistant reads what you can read, as you. Revoke its token under **Settings → AI assistant & tokens** to cut it off.
 
 ### What it can propose
 
@@ -1451,7 +1451,7 @@ A proposal tells you (the bell) and waits under **Proposed changes** in your acc
 
 #### The assistant says it can't reach BioManager
 
-For Claude Code, Cursor or Cherry Studio: check that BioManager is running, that the address in the setup is its address (the desktop app's is on **Settings → API tokens**), and that the token hasn't been revoked or expired. For claude.ai, the Claude apps or ChatGPT: check that the connector address opens from a phone off the lab's Wi-Fi (it should show a short message asking for an API token), and that it ends in `/api/v1/mcp`.
+For Claude Code, Cursor or Cherry Studio: check that BioManager is running, that the address in the setup is its address (the desktop app's is on **Settings → AI assistant & tokens**), and that the token hasn't been revoked or expired. For claude.ai, the Claude apps or ChatGPT: check that the connector address opens from a phone off the lab's Wi-Fi (it should show a short message asking for an API token), and that it ends in `/api/v1/mcp`.
 
 #### Connecting says the connection code isn't right
 

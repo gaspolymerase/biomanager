@@ -1,337 +1,452 @@
 {% extends "base.html" %}
 
 {% block page_title %}{{ _('Settings') }}{% endblock %}
-{% block page_heading %}{{ _('Account settings') }}{% endblock %}
-{% block page_subtitle %}
-  {% trans username=user_settings.username, role=user_settings.role|tr, joined=user_settings.created_at %}Signed in as <strong class="font-semibold text-ink-soft">{{ username }}</strong>
-  · {{ role }} · joined {{ joined }}{% endtrans %}
-{% endblock %}
+{% block page_heading %}{{ _('Settings') }}{% endblock %}
+
+{#
+  Settings, laid out like the Mac's: a list of panes beside the chosen one.
+  Each pane is a <section data-pane> and the address's #hash picks it, so
+  every older link (#notifications, #api-tokens, #lab-copies…) still lands
+  on the right pane. Without JavaScript the panes simply stack.
+  You: this person's own settings. Lab: the lab's, one pane so far
+  (Devices & copies); the lab's other pages join it there later.
+#}
+{% macro pane_link(key, icon_name, label, family='you') %}
+  <a class="set-link" href="#{{ key }}" data-pane-link="{{ key }}">
+    <span class="set-ico is-{{ family }}">{{ icon(icon_name) }}</span><span class="set-link-label">{{ label }}</span>
+  </a>
+{% endmacro %}
+
+{% macro pane_head(icon_name, title, blurb, family='you', saved=False) %}
+  <a class="set-back" href="#">{{ icon('chevron-left') }} {{ _('Settings') }}</a>
+  <header class="set-head">
+    <span class="set-ico set-ico-lg is-{{ family }}">{{ icon(icon_name) }}</span>
+    <div class="min-w-0">
+      <h2>{{ title }}</h2>
+      {% if blurb %}<p>{{ blurb }}</p>{% endif %}
+    </div>
+    {% if saved %}<span class="set-saved" data-saved role="status"></span>{% endif %}
+  </header>
+{% endmacro %}
 
 {% block content %}
-<div class="grid max-w-[880px] grid-cols-1 gap-3">
+<div class="settings" data-settings>
 
-  {# ---- Profile ---- #}
-  <article class="card">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#user"></use></svg> {{ _('Profile') }}</h2>
-    </header>
-    <form method="post" class="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2">
-      <input type="hidden" name="action" value="profile">
+  {# ---------------------------------------------------------------- the list of panes #}
+  <nav class="settings-nav" aria-label="{{ _('Settings') }}">
+    <label class="input-icon set-search">
+      {{ icon('search') }}
+      <input type="search" placeholder="{{ _('Search settings') }}" aria-label="{{ _('Search settings') }}" data-settings-search>
+    </label>
+    <a class="set-me" href="#profile" data-pane-link="profile">
+      {{ current_user.username | owner_badge }}
+      <span class="min-w-0">
+        <b>{{ user_settings.display_name or user_settings.username }}</b>
+        <small>{{ _('Profile') }} · {{ (user_settings.role|tr)|capitalize }}</small>
+      </span>
+    </a>
+    <div class="set-group-head">{{ _('You') }}</div>
+    {{ pane_link('security', 'lock', _('Sign-in & security')) }}
+    {{ pane_link('appearance', 'type', _('Appearance & language')) }}
+    {{ pane_link('notifications', 'bell', _('Notifications')) }}
+    {% set show_assistant = api_tokens_card() or proposals_pending is not none or not current_user.expires_at %}
+    {% if show_assistant %}{{ pane_link('assistant', 'sparkle', _('AI assistant & tokens')) }}{% endif %}
+    {{ pane_link('data', 'archive', _('Your data')) }}
+    <div class="set-group-head">{{ _('Lab') }}</div>
+    {{ pane_link('devices', 'database', _('Devices & copies'), 'lab') }}
+    <p class="set-search-none" data-settings-none hidden>{{ _('No setting matches.') }}</p>
+  </nav>
 
-      <label class="field-label">{{ _('Username') }}
-        <input value="{{ user_settings.username }}" readonly>
-        <span class="field-hint normal-case tracking-normal">{{ _('Cannot be changed.') }}</span>
-      </label>
+  <div class="settings-panes">
 
-      <label class="field-label">{{ _('Full name') }}
-        <input name="display_name" value="{{ user_settings.display_name }}" placeholder="{{ _('e.g. Barbara McClintock') }}">
-        <span class="field-hint normal-case tracking-normal">{{ _('Shown in the account menu and greeting.') }}</span>
-      </label>
-
-      <label class="field-label">{{ _('Short name') }}
-        <input name="short_name" value="{{ user_settings.short_name }}" maxlength="5" placeholder="HXT">
-        <span class="field-hint normal-case tracking-normal">{{ _('Up to 5 characters — used as the owner badge in tables.') }}</span>
-      </label>
-
-      <label class="field-label">{{ _('Email') }}
-        <input type="email" name="email" value="{{ user_settings.email }}" placeholder="you@university.edu">
-        <span class="field-hint normal-case tracking-normal">{{ _('For password reset and notifications.') }}</span>
-      </label>
-
-      <label class="field-label">{{ _('Job / position') }}
-        <input name="role_title" value="{{ user_settings.role_title }}" placeholder="{{ _('PhD Year 3') }}">
-        <span class="field-hint normal-case tracking-normal">{{ _('e.g. PhD Year 3, Postdoc, RA.') }}</span>
-      </label>
-
-      <label class="field-label">{{ _('Default landing page') }}
-        <select name="default_landing">
-          <option value="" {% if not user_settings.default_landing %}selected{% endif %}>{{ _('Colony (default)') }}</option>
-          {% for endpoint in landing_choices %}
-            <option value="{{ endpoint }}" {% if user_settings.default_landing == endpoint %}selected{% endif %}>{{ endpoint|title|tr }}</option>
-          {% endfor %}
-        </select>
-        <span class="field-hint normal-case tracking-normal">{{ _('Where you arrive after signing in.') }}</span>
-      </label>
-
-      <label class="field-label">{{ _('Home layout') }}
-        <select name="home_layout">
-          {% for key, (label, _icon) in home_layout_choices.items() %}
-            <option value="{{ key }}" {% if user_settings.home_layout == key %}selected{% endif %}>{{ label|tr }}</option>
-          {% endfor %}
-        </select>
-        <span class="field-hint normal-case tracking-normal">{{ _('Classic cards, Tracks (the next weeks on one day ruler) or Freezer (your racks and a pull list). Also switchable on Home.') }}</span>
-      </label>
-
-      <div class="sm:col-span-2">
-        <button type="submit" class="btn btn-primary">{{ _('Save profile') }}</button>
-      </div>
-    </form>
-  </article>
-
-  {# ---- Language (app/i18n.py) ---- #}
-  <article class="card" id="language">
-    <header class="card-head">
-      <h2>{{ icon('type') }} {{ _('Language') }}</h2>
-    </header>
-    <form method="post" class="flex flex-wrap items-end gap-3" data-language-form>
-      <input type="hidden" name="action" value="language">
-      <label class="field-label min-w-[220px]">{{ _('Show BioManager in') }}
-        <select name="language">
-          <option value="" {% if not user_settings.language %}selected{% endif %}>{{ _('Automatic (this computer’s language)') }}</option>
-          {% for code, name in languages.items() %}
-            <option value="{{ code }}" lang="{{ 'zh-CN' if code == 'zh' else code }}" {% if user_settings.language == code %}selected{% endif %}>{{ name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-    </form>
-    <p class="mt-2 text-[12px] text-muted">{{ _('Only for you: everyone in the lab chooses their own. Names, notes and other things people type stay as they were written.') }}</p>
-  </article>
-
-  {# ---- App icon (app/appearance.py) ---- #}
-  {% set chosen_glyph, chosen_color = user_settings.app_icon %}
-  <article class="card" id="app-icon">
-    <header class="card-head">
-      <h2>{{ icon('sparkle') }} {{ _('App icon') }}</h2>
-      <span class="text-[12px] text-muted" data-icon-status role="status"></span>
-    </header>
-    <form method="post" class="icon-picker" data-icon-picker data-urls="{{ icon_urls|tojson|forceescape }}">
-      <input type="hidden" name="action" value="appearance">
-      <div class="icon-picker-hero">
-        <img src="{{ icon_urls[chosen_glyph ~ '/' ~ chosen_color] }}" alt="" data-app-icon>
-        <p>{{ _('Shown in your browser tab and the sidebar, and its colour becomes the app’s accent. Only you see it. The desktop and Android apps keep the helix on their launcher icon.') }}</p>
-      </div>
-      <fieldset>
-        <legend>{{ _('Picture') }}</legend>
-        <div class="icon-picker-glyphs">
-          {% for key, label in icon_glyphs.items() %}
-            <label class="icon-pick">
-              <input type="radio" name="glyph" value="{{ key }}" {% if key == chosen_glyph %}checked{% endif %}>
-              <img src="{{ icon_urls[key ~ '/' ~ chosen_color] }}" alt="" data-glyph="{{ key }}">
-              <span>{{ label|tr }}</span>
-            </label>
-          {% endfor %}
+    {# ---------------------------------------------------------------- Profile #}
+    <section class="set-pane" id="profile" data-pane="profile">
+      <a class="set-back" href="#">{{ icon('chevron-left') }} {{ _('Settings') }}</a>
+      <header class="set-head">
+        <span class="set-me-badge">{{ current_user.username | owner_badge }}</span>
+        <div class="min-w-0">
+          <h2>{{ user_settings.display_name or user_settings.username }}</h2>
+          <p>{{ user_settings.username }} · {{ (user_settings.role|tr)|capitalize }} · {{ _('joined %(date)s', date=user_settings.created_at) }}</p>
         </div>
-      </fieldset>
-      <fieldset>
-        <legend>{{ _('Colour') }}</legend>
-        <div class="icon-picker-swatches">
-          {% for key, pal in icon_palettes.items() %}
-            <label class="icon-swatch">
-              <input type="radio" name="color" value="{{ key }}" {% if key == chosen_color %}checked{% endif %}>
-              <i style="--top: {{ pal.top }}; --bottom: {{ pal.bottom }}"></i>
-              <span>{{ pal.label|tr }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      </fieldset>
-      <noscript><button type="submit" class="btn btn-primary justify-self-start">{{ _('Save icon') }}</button></noscript>
-    </form>
-  </article>
-
-  {# ---- Notifications (app/notify.py) ---- #}
-  <article class="card" id="notifications">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#bell"></use></svg> {{ _('Notifications') }}</h2>
-      <a class="card-head-link" href="{{ url_for('lab.notifications') }}">{{ _('See them') }}</a>
-    </header>
-    <form method="post" class="flex flex-col gap-2 p-4">
-      <input type="hidden" name="action" value="notifications">
-      <p class="text-[12.5px] leading-snug text-muted">{% trans bell=icon('bell') %}Shown under the {{ bell }} at the top. You’re never told about changes you made yourself.{% endtrans %}</p>
-      {% for key, (label, hint) in notification_categories.items() %}
-        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-sand-50 px-3.5 py-3 transition-colors hover:border-sand-300">
-          <input type="checkbox" name="notify_{{ key }}" value="1" class="mt-0.5 size-3.5 accent-brand-600"
-                 {% if user_settings['notify_' ~ key] %}checked{% endif %}>
-          <span class="min-w-0">
-            <span class="block text-[13px] font-semibold text-ink">{{ label|tr }}</span>
-            <span class="block text-[12px] leading-snug text-muted">{{ _('%(hint)s.', hint=hint|tr) }}</span>
-          </span>
-        </label>
-      {% endfor %}
-      <div class="mt-1 flex flex-wrap items-center gap-2">
-        <button type="submit" class="btn btn-primary">{{ _('Save notifications') }}</button>
-        <a class="btn btn-ghost" href="{{ url_for('lab.welcome') }}">{{ _('See the welcome tour again') }}</a>
-      </div>
-    </form>
-  </article>
-
-  {# ---- Email delivery ---- #}
-  <article class="card">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#mail"></use></svg> {{ _('Reminder emails') }}</h2>
-      {% if mail_configured %}
-        <span class="badge badge-ok">{{ _('configured') }}</span>
-      {% else %}
-        <span class="badge badge-warn">{{ _('not configured') }}</span>
-      {% endif %}
-    </header>
-    <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">{{ mail_status|tr }}</p>
-      <p class="text-[12.5px] leading-snug text-muted">
-        {{ _('A daily digest of what is overdue or coming up — flips, chunks, weanings, aging breeders and your own tasks — goes to the address on your profile. Clear the email field above to stop receiving it.') }}
-      </p>
-      <div class="inset">
-        <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400">
-          {{ _('Sending it daily') }}
-        </p>
-        <pre class="overflow-x-auto whitespace-pre text-[11.5px] leading-relaxed text-ink-soft"><code>0 8 * * *  cd {{ config.get('PROJECT_ROOT', '/path/to/Biomanager') }} \
-  && .venv/bin/python scripts/send-reminders.py</code></pre>
-        <p class="mt-2 text-[11.5px] leading-snug text-muted">
-          {{ _('Preview without sending anything:') }}
-          <code class="ident">scripts/send-reminders.py --dry-run</code>
-        </p>
-      </div>
-    </div>
-  </article>
-
-  {# ---- Password ---- #}
-  <article class="card">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#key"></use></svg> {{ _('Change password') if user_settings.has_password else _('Set a password') }}</h2>
-    </header>
-    <form method="post" class="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-3">
-      <input type="hidden" name="action" value="password">
-      {% if user_settings.has_password %}
-      <label class="field-label">{{ _('Current password') }}
-        <input type="password" name="current_password" autocomplete="current-password" required>
-      </label>
-      {% else %}
-      <p class="text-[12.5px] leading-snug text-muted sm:col-span-3">
-        {{ _('You sign in with %(providers)s. A password as well means you can still sign in if that account is ever unavailable.', providers=identities|map(attribute='provider')|join(_(' or '))) }}
-      </p>
-      {% endif %}
-      <label class="field-label">{{ _('New password') }}
-        <input type="password" name="new_password" autocomplete="new-password" minlength="{{ min_password_length }}" required>
-        <span class="field-hint normal-case tracking-normal">{{ _('At least %(count)s characters. Changing it signs out your other sessions.', count=min_password_length) }}</span>
-      </label>
-      <label class="field-label">{{ _('Confirm new password') }}
-        <input type="password" name="confirm_password" autocomplete="new-password" required>
-      </label>
-      <div class="sm:col-span-3">
-        <button type="submit" class="btn btn-primary">{{ _('Update password') }}</button>
-      </div>
-    </form>
-  </article>
-
-  {# ---- Google / Microsoft sign-in ---- #}
-  {% if sign_in_providers or identities %}
-  <article class="card">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#users"></use></svg> {{ _('Sign-in methods') }}</h2>
-    </header>
-    <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
-        {{ _('Connect a Google or Microsoft account to sign in with it instead of your password.') }}
-      </p>
-      {% for ident in identities %}
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <span class="font-medium text-ink">{{ ident.provider }}</span>
-            <span class="text-muted">{{ ident.email }}</span>
-            {% if ident.last_used %}<span class="text-[12px] text-muted">· {{ _('last used %(date)s', date=ident.last_used) }}</span>{% endif %}
-          </div>
-          <form method="post" action="{{ url_for('oidc.disconnect', identity_id=ident.id) }}"
-                data-confirm="{{ _('Disconnect this %(provider)s account?', provider=ident.provider) }}">
-            <button type="submit" class="btn btn-sm">{{ _('Disconnect') }}</button>
-          </form>
-        </div>
-      {% endfor %}
-      {% set connected = identities|map(attribute='provider_key')|list %}
-      <div class="flex items-center gap-1.5">
-        {% for p in sign_in_providers if p.key not in connected %}
-          <a class="btn btn-sm" href="{{ url_for('oidc.start', key=p.key, link=1) }}">{{ _('Connect %(provider)s', provider=p.label) }}</a>
-        {% endfor %}
-      </div>
-    </div>
-  </article>
-  {% endif %}
-
-  {# ---- Data + admin ---- #}
-  <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-    <article class="card">
-      <header class="card-head">
-        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#download"></use></svg> {{ _('Export my data') }}</h2>
+        <span class="set-saved" data-saved role="status"></span>
       </header>
-      <div class="flex flex-col items-start gap-3 p-4">
-        <p class="text-[12.5px] leading-snug text-muted">
-          {% trans %}A ZIP of everything tied to your username — mice and plasmids you own, your notebook
-          pages as Markdown, and a <code class="ident">profile.json</code> snapshot.{% endtrans %}
-        </p>
-        <a class="btn" href="{{ url_for('export_my_data') }}">
-          <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#file-archive"></use></svg> {{ _('Download .zip') }}
+      <form method="post" class="set-group" data-autosave-form>
+        <input type="hidden" name="action" value="profile">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Full name') }}</b></span>
+          <input name="display_name" value="{{ user_settings.display_name }}" placeholder="{{ _('e.g. Barbara McClintock') }}">
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Short name') }}</b><small>{{ _('Shown on your records in tables. Up to 5 letters.') }}</small></span>
+          <input name="short_name" value="{{ user_settings.short_name }}" maxlength="5" placeholder="HXT" class="set-input-short">
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Email') }}</b><small>{{ _('Where reminders and password resets are sent.') }}</small></span>
+          <input type="email" name="email" value="{{ user_settings.email }}" placeholder="you@university.edu">
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Job') }}</b></span>
+          <input name="role_title" value="{{ user_settings.role_title }}" placeholder="{{ _('e.g. PhD Year 3') }}">
+        </label>
+        <noscript><div class="set-row"><span class="set-label"></span><button type="submit" class="btn btn-primary">{{ _('Save profile') }}</button></div></noscript>
+      </form>
+      <div class="set-title">{{ _('Account') }}</div>
+      <div class="set-group">
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Username') }}</b><small>{{ _('What you sign in with. It cannot be changed.') }}</small></span>
+          <span class="set-value">{{ user_settings.username }}</span>
+        </div>
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Role') }}</b></span>
+          <span class="set-value">{{ (user_settings.role|tr)|capitalize }}</span>
+        </div>
+      </div>
+    </section>
+
+    {# ---------------------------------------------------------------- Sign-in & security #}
+    <section class="set-pane" id="security" data-pane="security">
+      {{ pane_head('lock', _('Sign-in & security'), _('How you sign in to BioManager.')) }}
+      <div class="set-group">
+        <details class="set-details" {% if not user_settings.has_password %}open{% endif %}>
+          <summary class="set-row">
+            <span class="set-label"><b>{{ _('Password') }}</b>
+              <small>{% if user_settings.has_password %}{{ _('Changing it signs you out everywhere else.') }}{% else %}{{ _('You sign in with %(providers)s. A password as well means you can still sign in if that account is ever unavailable.', providers=identities|map(attribute='provider')|join(_(' or '))) }}{% endif %}</small>
+            </span>
+            <span class="btn btn-sm">{{ _('Change password…') if user_settings.has_password else _('Set a password…') }}</span>
+          </summary>
+          <form method="post" class="set-password">
+            <input type="hidden" name="action" value="password">
+            {% if user_settings.has_password %}
+              <label class="field-label">{{ _('Current password') }}
+                <input type="password" name="current_password" autocomplete="current-password" required>
+              </label>
+            {% endif %}
+            <label class="field-label">{{ _('New password') }}
+              <input type="password" name="new_password" autocomplete="new-password" minlength="{{ min_password_length }}" required>
+              <span class="field-hint normal-case tracking-normal">{{ _('At least %(count)s characters.', count=min_password_length) }}</span>
+            </label>
+            <label class="field-label">{{ _('Confirm new password') }}
+              <input type="password" name="confirm_password" autocomplete="new-password" required>
+            </label>
+            <div><button type="submit" class="btn btn-primary">{{ _('Update password') }}</button></div>
+          </form>
+        </details>
+      </div>
+
+      {% if sign_in_providers or identities %}
+        <div class="set-title">{{ _('Sign in with another account') }}</div>
+        <div class="set-group">
+          {% for ident in identities %}
+            <div class="set-row">
+              <span class="set-label"><b>{{ ident.provider }}</b>
+                <small>{{ ident.email }}{% if ident.last_used %} · {{ _('last used %(date)s', date=ident.last_used) }}{% endif %}</small></span>
+              <form method="post" action="{{ url_for('oidc.disconnect', identity_id=ident.id) }}"
+                    data-confirm="{{ _('Disconnect this %(provider)s account?', provider=ident.provider) }}">
+                <button type="submit" class="btn btn-sm">{{ _('Disconnect') }}</button>
+              </form>
+            </div>
+          {% endfor %}
+          {% set connected = identities|map(attribute='provider_key')|list %}
+          {% for p in sign_in_providers if p.key not in connected %}
+            <div class="set-row">
+              <span class="set-label"><b>{{ p.label }}</b><small>{{ _('Sign in with it instead of your password.') }}</small></span>
+              <a class="btn btn-sm" href="{{ url_for('oidc.start', key=p.key, link=1) }}">{{ _('Connect') }}</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    {# ---------------------------------------------------------------- Appearance & language #}
+    <section class="set-pane" id="appearance" data-pane="appearance">
+      {{ pane_head('type', _('Appearance & language'), _('How BioManager looks for you. Nobody else sees these choices.'), saved=True) }}
+
+      {# Language (app/i18n.py): saved as it is picked; the page comes back in it. #}
+      <form method="post" class="set-group" id="language" data-language-form>
+        <input type="hidden" name="action" value="language">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Language') }}</b><small>{{ _('What people type stays as they wrote it.') }}</small></span>
+          <select name="language">
+            <option value="" {% if not user_settings.language %}selected{% endif %}>{{ _('Automatic (this computer’s language)') }}</option>
+            {% for code, name in languages.items() %}
+              <option value="{{ code }}" lang="{{ 'zh-CN' if code == 'zh' else code }}" {% if user_settings.language == code %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+
+      {# App icon (app/appearance.py): its colour is also the app's accent. #}
+      {% set chosen_glyph, chosen_color = user_settings.app_icon %}
+      <div class="set-title">{{ _('App icon and colour') }}</div>
+      <form method="post" class="set-group icon-picker" id="app-icon" data-icon-picker data-urls="{{ icon_urls|tojson|forceescape }}">
+        <input type="hidden" name="action" value="appearance">
+        <div class="icon-picker-hero">
+          <img src="{{ icon_urls[chosen_glyph ~ '/' ~ chosen_color] }}" alt="" data-app-icon>
+          <p>{{ _('In your browser tab and the sidebar. Its colour tints buttons and highlights everywhere. The desktop and Android apps keep the helix on their launcher icon.') }}</p>
+        </div>
+        <fieldset>
+          <legend>{{ _('Colour') }}</legend>
+          <div class="icon-picker-swatches">
+            {% for key, pal in icon_palettes.items() %}
+              <label class="icon-swatch">
+                <input type="radio" name="color" value="{{ key }}" {% if key == chosen_color %}checked{% endif %}>
+                <i style="--top: {{ pal.top }}; --bottom: {{ pal.bottom }}"></i>
+                <span>{{ pal.label|tr }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>{{ _('Picture') }}</legend>
+          <div class="icon-picker-glyphs">
+            {% for key, label in icon_glyphs.items() %}
+              <label class="icon-pick">
+                <input type="radio" name="glyph" value="{{ key }}" {% if key == chosen_glyph %}checked{% endif %}>
+                <img src="{{ icon_urls[key ~ '/' ~ chosen_color] }}" alt="" data-glyph="{{ key }}">
+                <span>{{ label|tr }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <noscript><button type="submit" class="btn btn-primary justify-self-start">{{ _('Save icon') }}</button></noscript>
+      </form>
+
+      <div class="set-title">{{ _('When you sign in') }}</div>
+      <form method="post" class="set-group" data-autosave-form>
+        <input type="hidden" name="action" value="profile">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Open on') }}</b><small>{{ _('The page you arrive at after signing in.') }}</small></span>
+          <select name="default_landing">
+            <option value="" {% if not user_settings.default_landing %}selected{% endif %}>{{ _('Colony (default)') }}</option>
+            {% for endpoint in landing_choices %}
+              <option value="{{ endpoint }}" {% if user_settings.default_landing == endpoint %}selected{% endif %}>{{ endpoint|title|tr }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Home layout') }}</b><small>{{ _('Cards, the next weeks on a ruler, or your racks and a pull list. Also switchable on Home.') }}</small></span>
+          <select name="home_layout">
+            {% for key, (label, _icon) in home_layout_choices.items() %}
+              <option value="{{ key }}" {% if user_settings.home_layout == key %}selected{% endif %}>{{ label|tr }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <noscript><div class="set-row"><span class="set-label"></span><button type="submit" class="btn btn-primary">{{ _('Save') }}</button></div></noscript>
+      </form>
+    </section>
+
+    {# ---------------------------------------------------------------- Notifications (app/notify.py) #}
+    <section class="set-pane" id="notifications" data-pane="notifications">
+      <a class="set-back" href="#">{{ icon('chevron-left') }} {{ _('Settings') }}</a>
+      <header class="set-head">
+        <span class="set-ico set-ico-lg is-you">{{ icon('bell') }}</span>
+        <div class="min-w-0">
+          <h2>{{ _('Notifications') }}</h2>
+          <p>{% trans bell=icon('bell') %}What the {{ bell }} at the top tells you about. Never your own changes.{% endtrans %}
+            <a href="{{ url_for('lab.notifications') }}">{{ _('See them') }}</a></p>
+        </div>
+        <span class="set-saved" data-saved role="status"></span>
+      </header>
+      <form method="post" class="set-group" data-autosave-form>
+        <input type="hidden" name="action" value="notifications">
+        {% for key, (label, hint) in notification_categories.items() %}
+          <label class="set-row">
+            <span class="set-label"><b>{{ label|tr }}</b><small>{{ _('%(hint)s.', hint=hint|tr) }}</small></span>
+            <input type="checkbox" class="set-switch" name="notify_{{ key }}" value="1" {% if user_settings['notify_' ~ key] %}checked{% endif %}>
+          </label>
+        {% endfor %}
+        <noscript><div class="set-row"><span class="set-label"></span><button type="submit" class="btn btn-primary">{{ _('Save notifications') }}</button></div></noscript>
+      </form>
+
+      <div class="set-title">{{ _('Reminder email') }}</div>
+      <div class="set-group">
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Daily email') }}</b><small>{{ _('Each morning: what is overdue or coming up, such as flips, weanings, aging breeders and your own tasks.') }}</small></span>
+        </div>
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Sent to') }}</b>
+            <small>{% if user_settings.email %}{{ _('To stop it, clear your email in Profile.') }}{% else %}{{ _('Add your email in Profile to get it.') }}{% endif %}</small></span>
+          {% if user_settings.email %}<span class="set-value">{{ user_settings.email }}</span>
+          {% else %}<a class="btn btn-sm" href="#profile">{{ _('Profile') }}</a>{% endif %}
+        </div>
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('On this server') }}</b>
+            <small>{% if mail_configured %}{{ mail_status|tr }}{% else %}{{ _('Not set up yet, so no email is sent. Whoever runs the server can turn it on.') }}{% endif %}</small></span>
+          {% if mail_configured %}<span class="badge badge-ok">{{ _('on') }}</span>{% else %}<span class="badge badge-warn">{{ _('off') }}</span>{% endif %}
+        </div>
+        {% if current_user.role == 'admin' %}
+          <details class="set-details">
+            <summary class="set-row">
+              <span class="set-label"><b>{{ _('Sending it each morning') }}</b><small>{{ _('For whoever runs the server.') }}</small></span>
+              {{ icon('chevron-down', 'set-chev') }}
+            </summary>
+            <div class="set-more">
+              <pre><code>0 8 * * *  cd {{ config.get('PROJECT_ROOT', '/path/to/Biomanager') }} \
+  && .venv/bin/python scripts/send-reminders.py</code></pre>
+              <p>{{ _('Preview without sending anything:') }} <code class="ident">scripts/send-reminders.py --dry-run</code></p>
+            </div>
+          </details>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---------------------------------------------------------------- AI assistant & tokens (app/api.py, app/oauth.py) #}
+    {% if show_assistant %}
+    <section class="set-pane" id="assistant" data-pane="assistant">
+      {{ pane_head('sparkle', _('AI assistant & tokens'), _('Let an assistant or a script work with the lab, as you.')) }}
+      {% if not current_user.expires_at or proposals_pending is not none %}
+        <div class="set-group">
+          {% if not current_user.expires_at %}
+            <a class="set-row set-row-link" href="{{ url_for('oauth.connect_page') }}">
+              <span class="set-label"><b>{{ _('Connect an AI assistant') }}</b><small>{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}</small></span>
+              {{ icon('chevron-right', 'set-chev') }}
+            </a>
+          {% endif %}
+          {% if proposals_pending is not none %}
+            <a class="set-row set-row-link" href="{{ url_for('proposals.page') }}">
+              <span class="set-label"><b>{{ _('Proposed changes') }}</b><small>{{ _('What an assistant proposed, waiting for you to approve.') }}</small></span>
+              {% if proposals_pending %}<span class="badge">{{ proposals_pending }}</span>{% endif %}
+              {{ icon('chevron-right', 'set-chev') }}
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% include "api/_card.html" %}
+    </section>
+    {% endif %}
+
+    {# ---------------------------------------------------------------- Your data #}
+    <section class="set-pane" id="data" data-pane="data">
+      {{ pane_head('archive', _('Your data'), _('Take your records with you, and undo big changes.')) }}
+      <div class="set-group">
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Export my data') }}</b><small>{{ _('Your mice and plasmids, your notebook pages and your profile, in one .zip.') }}</small></span>
+          <a class="btn btn-sm" href="{{ url_for('export_my_data') }}">{{ icon('download') }} {{ _('Download .zip') }}</a>
+        </div>
+        <a class="set-row set-row-link" href="{{ url_for('batches_view') }}">
+          <span class="set-label"><b>{{ _('Batch history') }}</b><small>{{ _('Changes made many records at a time (Add many, bulk edits, imports), each with Undo') }}</small></span>
+          {{ icon('chevron-right', 'set-chev') }}
+        </a>
+        <a class="set-row set-row-link" href="{{ url_for('lab.welcome') }}">
+          <span class="set-label"><b>{{ _('See the welcome tour again') }}</b></span>
+          {{ icon('chevron-right', 'set-chev') }}
         </a>
       </div>
-    </article>
+    </section>
 
-    {% if current_user and current_user.role == 'admin' %}
-      <article class="card">
-        <header class="card-head">
-          <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#shield"></use></svg> {{ _('Admin tools') }}</h2>
-          <span class="badge badge-brand">{{ _('admin') }}</span>
-        </header>
-        <div class="flex flex-col items-start gap-3 p-4">
-          <p class="text-[12.5px] leading-snug text-muted">
-            {{ _('Promote or disable lab members and reset their passwords, and choose who looks after each rack, box and incubator.') }}
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <a class="btn" href="{{ url_for('admin_users') }}">
-              <svg class="icon" aria-hidden="true"><use href="/static/icons.svg#users"></use></svg> {{ _('Manage users') }}
-            </a>
-            <a class="btn" href="{{ url_for('admin_racks.index') }}">{{ icon('box') }} {{ _('Racks, boxes & incubators') }}</a>
-          </div>
-        </div>
-      </article>
-    {% endif %}
-
-    {% include "api/_card.html" %}
-    {# Which device holds the lab's master copy (app/devices.py). #}
-    <article class="card lg:col-span-2" id="devices">
-      <header class="card-head"><h2>{{ icon('database') }} {{ _('Devices') }}</h2></header>
-      <div class="flex flex-wrap items-center gap-3 p-4">
-        <p class="m-0 min-w-[240px] flex-1 text-[12.5px] leading-snug text-muted">
-          {{ _('Which device holds the lab’s master copy: the lab server, or a desktop that shares its lab on the network. Every other one works on it there. Hand it to another computer, share this computer’s lab, or open the lab in this window.') }}
-        </p>
-        <a class="btn" href="{{ url_for('devices.page') }}">{{ icon('database') }} {{ _('Devices') }}</a>
+    {# ---------------------------------------------------------------- Devices & copies (app/devices.py, app/lab_copy.py) #}
+    <section class="set-pane" id="devices" data-pane="devices">
+      {{ pane_head('database', _('Devices & copies'), _('Where the lab is kept, and the computers that keep a copy of it.'), 'lab') }}
+      <div class="set-group">
+        <a class="set-row set-row-link" href="{{ url_for('devices.page') }}">
+          <span class="set-label"><b>{{ _('Devices') }}</b><small>{{ _('Which device holds the lab: the lab server, or a computer that shares its lab. Hand it to another computer, or open the lab in this window.') }}</small></span>
+          {{ icon('chevron-right', 'set-chev') }}
+        </a>
+        {% if config.LOCAL_SETUP %}
+          {# Only the desktop app sets servers up (app/server_setup.py). #}
+          <a class="set-row set-row-link" id="lab-server" href="{{ url_for('server_setup.page') }}">
+            <span class="set-label"><b>{{ _('Set up a lab server') }}</b><small>{{ _('One BioManager everyone in the lab signs in to, from their computers and phones. This app does the setting up and can bring your records along.') }}</small></span>
+            {{ icon('chevron-right', 'set-chev') }}
+          </a>
+        {% endif %}
       </div>
-    </article>
-    {% include "lab_copy/_cards.html" %}
-    {% if config.LOCAL_SETUP %}
-      {# Only the desktop app sets servers up (app/server_setup.py). #}
-      <article class="card lg:col-span-2" id="lab-server">
-        <header class="card-head"><h2>{{ icon('database') }} {{ _('Set up a lab server') }}</h2></header>
-        <div class="flex flex-col gap-3 p-4">
-          <p class="text-[12.5px] leading-snug text-muted">
-            {{ _('One BioManager everyone in the lab signs in to, from their computers and phones: on a cloud server, a university server, a lab computer or this one. This app asks where, does the setting up, and can bring your records along.') }}
-          </p>
-          <div><a class="btn btn-primary" href="{{ url_for('server_setup.page') }}">{{ _('Set up a lab server') }}</a></div>
-        </div>
-      </article>
-    {% endif %}
+      {% include "lab_copy/_cards.html" %}
+    </section>
   </div>
-
-  {# ---- Roadmap ---- #}
-  <article class="card">
-    <header class="card-head">
-      <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#signpost"></use></svg> {{ _('Coming next') }}</h2>
-    </header>
-    <ul class="grid grid-cols-1 gap-x-6 gap-y-2 p-4 sm:grid-cols-2">
-      {% for title, detail in [
-        (_('Display density'), _('compact / cozy / spacious table rows')),
-        (_('Sessions'), _('sign out of all devices, view active sessions')),
-        (_('Two-factor'), _('TOTP for shared lab accounts')),
-      ] %}
-        <li class="flex items-baseline gap-2 text-[12.5px]">
-          <svg class="icon size-4 shrink-0 text-sand-300" aria-hidden="true"><use href="/static/icons.svg#circle"></use></svg>
-          <span><strong class="font-semibold text-ink-soft">{{ title }}</strong>
-            <span class="text-muted">— {{ detail }}</span></span>
-        </li>
-      {% endfor %}
-    </ul>
-  </article>
 </div>
 {% endblock %}
 
 {% block body_end %}
 <script nonce="{{ csp_nonce() }}">
+  // One pane at a time, picked by the address's #hash. A hash naming
+  // something inside a pane (#api-tokens, #lab-copies) opens that pane
+  // and scrolls to it, so links from other pages keep working.
+  (function () {
+    var root = document.querySelector('[data-settings]');
+    if (!root) return;
+    var panes = Array.prototype.slice.call(root.querySelectorAll('[data-pane]'));
+    var links = Array.prototype.slice.call(root.querySelectorAll('[data-pane-link]'));
+    var aliases = { 'api-tokens': 'assistant', 'language': 'appearance', 'app-icon': 'appearance',
+                    'lab-copies': 'devices', 'lab-copy': 'devices', 'lab-server': 'devices' };
+    root.classList.add('is-ready');
+    function show() {
+      var id = decodeURIComponent(location.hash.slice(1));
+      var target = id && document.getElementById(id);
+      var pane = target && target.closest('[data-pane]');
+      if (!pane && aliases[id]) pane = root.querySelector('[data-pane="' + aliases[id] + '"]');
+      // On a phone, an empty hash shows the list; on a wider screen, Profile.
+      root.toggleAttribute('data-open', !!pane);
+      if (!pane) pane = panes[0];
+      panes.forEach(function (p) { p.classList.toggle('is-on', p === pane); });
+      links.forEach(function (l) {
+        var on = l.dataset.paneLink === pane.dataset.pane;
+        l.classList.toggle('is-on', on);
+        if (on) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current');
+      });
+      if (target && target !== pane) target.scrollIntoView({ block: 'start' });
+      else document.getElementById('app-scroll') && (document.getElementById('app-scroll').scrollTop = 0);
+    }
+    window.addEventListener('hashchange', show);
+    show();
+
+    // Search: keeps the panes whose name or settings mention the words.
+    var search = root.querySelector('[data-settings-search]');
+    var none = root.querySelector('[data-settings-none]');
+    search.addEventListener('input', function () {
+      var q = search.value.trim().toLowerCase(), shown = 0;
+      links.forEach(function (l) {
+        var pane = root.querySelector('[data-pane="' + l.dataset.paneLink + '"]');
+        var hit = !q || l.textContent.toLowerCase().indexOf(q) >= 0 ||
+                  (pane && pane.textContent.toLowerCase().indexOf(q) >= 0);
+        l.hidden = !hit;
+        if (hit) shown++;
+      });
+      root.querySelectorAll('.set-group-head').forEach(function (h) {
+        var next = h.nextElementSibling, any = false;
+        while (next && !next.classList.contains('set-group-head')) {
+          if (next.matches('[data-pane-link]') && !next.hidden) any = true;
+          next = next.nextElementSibling;
+        }
+        h.hidden = !any;
+      });
+      none.hidden = shown > 0;
+    });
+  })();
+
+  // Saved as you change it: no Save buttons. "Saved" shows by the pane's title.
+  (function () {
+    function flag(form, text) {
+      var pane = form.closest('[data-pane]');
+      var badge = pane && pane.querySelector('[data-saved]');
+      if (!badge) return;
+      badge.textContent = text;
+      badge.classList.add('is-shown');
+      clearTimeout(badge._hide);
+      badge._hide = setTimeout(function () { badge.classList.remove('is-shown'); }, 1800);
+    }
+    document.querySelectorAll('[data-autosave-form]').forEach(function (form) {
+      var latest = 0;
+      function save() {
+        if (!form.reportValidity()) return;
+        var mine = ++latest;
+        flag(form, t('Saving…'));
+        fetch(form.getAttribute('action') || window.location.pathname, {
+          method: 'POST', body: new FormData(form), credentials: 'same-origin', headers: { 'X-Autosave': '1' }
+        }).then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok || !body.ok) throw new Error(body.error || res.statusText);
+          });
+        }).then(function () {
+          if (mine === latest) flag(form, t('Saved'));
+        }).catch(function (err) {
+          if (mine === latest) flag(form, err && err.message ? err.message : t('Not saved. Check the connection and try again.'));
+        });
+      }
+      form.addEventListener('change', save);
+      form.addEventListener('submit', function (event) { event.preventDefault(); save(); });
+    });
+  })();
+
   // Language: saved the moment it is picked, and the page comes back in it.
   (function () {
     var form = document.querySelector('[data-language-form]');
@@ -344,7 +459,15 @@
     var form = document.querySelector('[data-icon-picker]');
     if (!form) return;
     var urls = JSON.parse(form.dataset.urls);
-    var status = document.querySelector('[data-icon-status]');
+    var pane = form.closest('[data-pane]');
+    var status = pane && pane.querySelector('[data-saved]');
+    function say(text) {
+      if (!status) return;
+      status.textContent = text;
+      status.classList.add('is-shown');
+      clearTimeout(status._hide);
+      status._hide = setTimeout(function () { status.classList.remove('is-shown'); }, 1800);
+    }
     var latest = 0;
     form.addEventListener('change', function () {
       var data = new FormData(form);
@@ -356,7 +479,7 @@
         img.src = urls[glyph + '/' + color];
       });
       var mine = ++latest;
-      status.textContent = t('Saving…');
+      say(t('Saving…'));
       fetch(form.getAttribute('action') || window.location.pathname, {
         method: 'POST', body: data, credentials: 'same-origin', headers: {'X-Autosave': '1'}
       }).then(function (res) {
@@ -369,9 +492,9 @@
         document.getElementById('brand-css').textContent = body.brand_css;
         var link = document.getElementById('app-icon-link');
         if (link) link.href = body.icon;
-        status.textContent = t('Saved');
+        say(t('Saved'));
       }).catch(function () {
-        if (mine === latest) status.textContent = t('Not saved. Check the connection and pick again.');
+        if (mine === latest) say(t('Not saved. Check the connection and pick again.'));
       });
     });
   })();

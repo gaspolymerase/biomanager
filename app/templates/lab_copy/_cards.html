@@ -4,15 +4,12 @@
 {% set desktop = lab_copy_desktop() %}
 
 {% if server_card and (server_card.allowed or server_card.rows) %}
-  <article class="card lg:col-span-2" id="lab-copies">
-    <header class="card-head">
-      <h2>{{ icon('download') }} {{ _('Copies of the lab on your computers') }}</h2>
-    </header>
-    <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
+  <div class="set-title" id="lab-copies">{{ _('Copies of the lab on your computers') }}</div>
+  <div class="set-group set-group-pad">
+      <p class="set-note">
         {% trans %}The BioManager desktop app can keep a copy of this whole database, refreshed every day while it's open,
         so the lab's records survive even if this server doesn't. Make a key for each computer, then enter it in the
-        desktop app under <b>Settings → Keep a copy of your lab server</b>.{% endtrans %}
+        desktop app under <b>Settings → Devices &amp; copies</b>.{% endtrans %}
       </p>
       {% if server_card.allowed %}
         <form method="post" action="{{ url_for('lab_copy.make_key') }}" class="flex flex-wrap items-end gap-2">
@@ -59,25 +56,23 @@
         </div>
       {% endif %}
       {% if server_card.is_admin %}
-        <p class="text-[12px] leading-snug text-muted">{% trans link=url_for('lab.setup') %}You see every computer in the lab that keeps a copy. Members may keep
+        <p class="set-note">{% trans link=url_for('lab.setup') %}You see every computer in the lab that keeps a copy. Members may keep
           one only if <a href="{{ link }}">Lab setup</a> allows it.{% endtrans %}</p>
       {% endif %}
-    </div>
-  </article>
+  </div>
 {% endif %}
 
 {% if desktop %}
   {% set st = desktop.status %}
-  <article class="card lg:col-span-2" id="lab-copy">
-    <header class="card-head">
-      <h2>{{ icon('download') }} {{ _('Keep a copy of your lab server') }}</h2>
-      {% if st.last_ok and not st.error %}<span class="badge badge-brand">{{ _('on') }}</span>{% endif %}
-    </header>
-    <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
+  <div class="set-title set-title-row" id="lab-copy">
+    <span>{{ _('Keep a copy of your lab server') }}</span>
+    {% if st.last_ok and not st.error %}<span class="badge badge-brand">{{ _('on') }}</span>{% endif %}
+  </div>
+  <div class="set-group set-group-pad">
+      <p class="set-note">
         {% trans keep=desktop.keep %}If your lab uses a BioManager server, this computer can keep a copy of its whole database as a backup:
         a fresh one every day while this app is open, the last {{ keep }} kept. Ask your lab's admin for a key,
-        or make one on the server under <b>Settings → Copies of the lab</b>. This computer's own data isn't touched.{% endtrans %}
+        or make one on the server under <b>Settings → Devices &amp; copies</b>. This computer's own data isn't touched.{% endtrans %}
       </p>
       <form method="post" action="{{ url_for('lab_copy.configure') }}" class="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_2fr_1fr]">
         <label class="field-label">{{ _('Server address') }}
@@ -132,7 +127,7 @@
             </tbody>
           </table>
         </div>
-        <p class="text-[12px] leading-snug text-muted">
+        <p class="set-note">
           {% trans count=desktop.copies | length, folder=desktop.folder %}{{ count }} copy in
           <code class="ident">{{ folder }}</code> (the <code class="ident">db</code> folder), with every uploaded file
           in <code class="ident">uploads</code>. To rebuild the lab server from one, see "Moving from the app to a server" in
@@ -142,8 +137,7 @@
           the Run it for your lab guide.{% endtrans %}
         </p>
       {% endif %}
-    </div>
-  </article>
+  </div>
 {% endif %}
 
 {% if desktop %}

@@ -142,7 +142,7 @@
         由你在 BioManager 里批准。它自己什么都不会改。</p>
 
       <h2 id="connect">连接助手</h2>
-      <p>打开 <b>帮助 → 连接 AI 助手</b> （Connect an AI assistant；也在 <b>设置 → API 令牌</b> 里，以及空的 <b>修改提议</b> 页上）。
+      <p>打开 <b>帮助 → 连接 AI 助手</b> （Connect an AI assistant；也在 <b>设置 → AI 助手与令牌</b> 里，以及空的 <b>修改提议</b> 页上）。
         它会列出连接你的 BioManager 的几种方式，地址已经填好。都不用安装任何东西，只有在实验室网络里用 Claude Desktop 时例外（见下文）。</p>
 
       <h3 id="connector">从 claude.ai、Claude 应用或 ChatGPT 连接</h3>
@@ -154,7 +154,7 @@
           新建一个使用 OAuth 的连接器。</li>
         <li>要求连接时，会打开一个 BioManager 页面，要你输入 <b>连接码</b>。在连接页面（在实验室网络里）按
  <b>获取连接码</b>，把它输进去，再按 <b>允许</b>。连接码只能用一次，10 分钟内有效。</li>
-        <li>这样就好了，网页版和手机应用都一样。这个连接会以应用的名字列在 <b>设置 → API 令牌</b> 里；在那里撤销就能断开。</li>
+        <li>这样就好了，网页版和手机应用都一样。这个连接会以应用的名字列在 <b>设置 → AI 助手与令牌</b> 里；在那里撤销就能断开。</li>
       </ol>
 
       <h3 id="token">从 Claude Code、Cursor、Cherry Studio 或 Claude Desktop 连接</h3>
@@ -177,7 +177,7 @@
       <p>对它说：<i>根据我的记录记下今天的工作：……</i> 它会查找你提到的每只动物、每个笼和每个实验，遇到可能对应
         多条记录时问你，然后发一个提议并附上链接。</p>
       <ul>
-        <li>助手能读取你能读取的内容，以你的身份。到 <b>设置 → API 令牌</b> 撤销它的令牌，就能切断它。</li>
+        <li>助手能读取你能读取的内容，以你的身份。到 <b>设置 → AI 助手与令牌</b> 撤销它的令牌，就能切断它。</li>
       </ul>
 
       <h2 id="what-it-can-do">它能提议什么</h2>
@@ -205,7 +205,7 @@
       <h2 id="troubleshooting">故障排除</h2>
       <h3>助手说连不上 BioManager</h3>
       <p>Claude Code、Cursor 或 Cherry Studio：确认 BioManager 正在运行，设置里的地址是它的地址（桌面版的地址在
- <b>设置 → API 令牌</b> 里），并且令牌没有被撤销或过期。claude.ai、Claude 应用或 ChatGPT：用不连实验室 Wi-Fi 的手机
+ <b>设置 → AI 助手与令牌</b> 里），并且令牌没有被撤销或过期。claude.ai、Claude 应用或 ChatGPT：用不连实验室 Wi-Fi 的手机
         打开连接器地址，确认能打开（应该显示一条要求 API 令牌的简短消息），并且地址以 <code>/api/v1/mcp</code> 结尾。</p>
       <h3>连接时说连接码不对</h3>
       <p>连接码只能用一次，10 分钟内有效。再按一次 <b>获取连接码</b>，用新的连接码。</p>
