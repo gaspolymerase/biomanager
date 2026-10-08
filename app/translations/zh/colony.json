@@ -376,5 +376,6 @@
   "tank": "鱼缸",
   "plasmid": "质粒",
   "Set %(column)s": "设置%(column)s",
-  "Type the mouse numbers of the father and the mother, and how many pups were born. Create litter makes a mouse for each pup, ready to genotype.": "填上父本和母本的小鼠编号，以及生了几只幼崽。创建窝会为每只幼崽建一只小鼠，等待基因型鉴定。"
+  "Type the mouse numbers of the father and the mother, and how many pups were born. Create litter makes a mouse for each pup, ready to genotype.": "填上父本和母本的小鼠编号，以及生了几只幼崽。创建窝会为每只幼崽建一只小鼠，等待基因型鉴定。",
+  "Pos": "位置"
 }

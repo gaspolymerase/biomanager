@@ -231,6 +231,16 @@ class GiveBirthGenotypingTests(AppTestCase):
         pups = rows("select status, owner, cage_id_fk from mice where litter_id_fk=?", litter[0])
         self.assertEqual(pups, [("geno", self.member, cage)] * 3)
 
+    def test_position_columns_are_short_and_named_in_full(self):
+        self.make_cage(self.m)
+        for view, key in (("mice", "cage_position"), ("cages", "position")):
+            with self.subTest(view=view):
+                html = self.get_ok(self.m, f"/colony?view={view}")
+                th = re.search(r'<th[^>]*data-sort-key="' + key + r'"[^>]*>.*?</th>', html, re.S).group(0)
+                self.assertIn('data-dt-label="Position"', th)
+                self.assertIn('title="Position in the rack', th)
+                self.assertIn(">Pos<", th)
+
     def test_genotyping_dialog_says_what_to_type(self):
         self.make_cage(self.m, purpose="Breeder")
         html = self.get_ok(self.m, "/colony?view=cages")
