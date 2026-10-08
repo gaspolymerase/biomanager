@@ -1839,6 +1839,12 @@ from master:
   `.github/workflows/pages.yml`. Every page's canonical address names
   biomanager.org, so search engines count the two as one site.
 
+**The Gitee copy.** `.github/workflows/gitee.yml` pushes master and the
+version tags to gitee.com under the same owner and name on every push, for
+people in China, where GitHub can be slow (the 知乎 and CSDN articles link
+it). It needs the `GITEE_TOKEN` secret, a Gitee personal access token with
+"projects"; without it the job does nothing. Release files stay on GitHub.
+
 **Pages.** The front page (`index.html`: the opening, the feature stage, the
 promises and where to go next), Features (`features.html`: each database,
 cage cards, what works everywhere, the ways to run it), Run it for your lab
