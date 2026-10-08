@@ -295,6 +295,23 @@ var bmClips = (function () {
   // On a phone the contents start folded, so the page comes first.
   var toc = document.querySelector('.docs-toc');
   if (toc && window.matchMedia('(max-width: 979px)').matches) toc.open = false;
+  // On a wide screen the contents scroll on their own: keep them where they
+  // were when a link in them opens the next page, and otherwise bring this
+  // page's entry into view, so a page far down the list doesn't open at the top.
+  var side = document.querySelector('.docs-nav');
+  if (side && side.scrollHeight > side.clientHeight) {
+    var kept = null;
+    try { kept = sessionStorage.getItem('bm-guide-nav'); sessionStorage.removeItem('bm-guide-nav'); } catch (e) {}
+    if (kept !== null) side.scrollTop = +kept;
+    var here = side.querySelector('.docs-toc a[aria-current="page"]');
+    if (here) {
+      var box = side.getBoundingClientRect(), at = here.getBoundingClientRect();
+      if (at.top < box.top || at.bottom > box.bottom) side.scrollTop += at.top - box.top - (box.height - at.height) / 2;
+    }
+  }
+  if (side) side.addEventListener('click', function (e) {
+    if (e.target.closest('.docs-toc a')) try { sessionStorage.setItem('bm-guide-nav', side.scrollTop); } catch (e2) {}
+  });
   var zh = document.documentElement.lang.indexOf('zh') === 0;
   var opener = document.querySelector('[data-search]');
   if (opener) {
