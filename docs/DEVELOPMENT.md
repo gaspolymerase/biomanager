@@ -99,17 +99,30 @@ form's message is copied into the dialog `static/form-memory.js` reopens.
 
 ### Home
 
-Classic's cards are `home_layouts.CARDS` (key, label, icon, wide at first,
-the feature or flag it needs). A person's choice is the `home_cards:<user>`
-setting — `order`, `hidden`, `wide`, and `seen` (the keys that existed when
+Home is built from the lab's databases. `home_layouts.lab_databases` lists
+the ones in this person's sidebar, in the lab's order (as the rail does,
+leaving out the inventories that are tabs of Plasmids). `lab_cards` turns
+them into the cards there are: `CARDS` (key, label, icon, wide at first,
+the feature or flag it needs) plus a card of its own for each fly or worm
+database (`stock:<key>`) and each animal database with a schedule
+(`org:<key>`), ordered `TOP_CARDS`, then each database's cards in sidebar
+order (`BUILTIN_CARDS`; `INVENTORY_CARDS` places Recent orders and
+Expiring & low stock at the first such inventory), then the rest.
+`count_tiles` makes the Counts card, a tile per database plus the
+notebook; `shown_tiles` keeps the first `TILES_AT_FIRST` until the person
+ticks their own. A person's choice is the `home_cards:<user>` setting —
+`order`, `hidden`, `wide`, `tiles`, and `seen` (the keys that existed when
 they saved, so a card added in a later release joins at its place, shown
-unless it is one of `OFF_AT_FIRST`). `get_cards`, `set_cards` and
+unless it is one of `OFF_AT_FIRST`). The shared cards there were before
+(`stocks`, `organisms`; `SPLIT_CARDS`) are read as every per-database
+card that replaced them, at their place. `get_cards`, `set_cards` and
 `reset_cards` read and write it; `offered_cards` is what this lab can
 show; `POST /home/cards` saves the Customize dialog
-(`templates/home/_customize.html`). `home.html` captures each card with
-`{% set %}` into a dict and draws them in the person's order;
-`_home_extra_cards` loads the four off at first (to-dos, bookings, recent
-pages, calculators). The calculators card puts the ones Utilities opened
+(`templates/home/_customize.html`; the tiles only when it sends
+`tiles=1`). `home.html` captures each card with `{% set %}` into a dict
+and draws them in the person's order; `_home_extra_cards` loads the four
+off at first (to-dos, bookings, recent pages, calculators) and Recent
+plasmids. The calculators card puts the ones Utilities opened
 last first (`biomanager:util:recent` in `localStorage`, up to eight).
 
 ### Utilities

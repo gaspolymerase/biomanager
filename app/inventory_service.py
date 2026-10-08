@@ -227,6 +227,9 @@ GONE_FROM_BOX = {"used up", "empty", "discarded"}
 # Stock that runs out or expires: Home's "Expiring & low stock", and what a
 # received order can be added to (inventory_routes.STOCK_KINDS).
 RESTOCK_KINDS = ("reagents", "chemicals", "antibodies", "viruses")
+# The ones that live as tabs of the Plasmids area, not in the sidebar
+# (app.py _inventory_module_links), in the order the work flows.
+PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")
 ENDED_ATTR = "used_up_on"
 
 # The statuses that mean "usable" (or, for orders, "still open"): the green

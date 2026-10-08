@@ -246,13 +246,13 @@ The page that opens each morning: what needs doing today, in three layouts.
 
 Home is where each day starts: only what needs attention, from every database you can see. Choose how it looks with the **Layout** chips at the top (or in **Settings → Home layout**); the choice is yours alone.
 
-- **Classic**: Cards: your databases as tiles, a few numbers (total mice, mice over 30 weeks, weanings, pending orders, notebook pages) and cards for *Mice older than 30 weeks*, *Upcoming weanings*, the *Genotyping queue*, *Flies & worms: due*, *Animal databases: due*, *Expiring & low stock*, zebrafish mating tanks to return, the *Next 14 days* and *Recent orders*.
+- **Classic**: Cards, built from the databases your lab keeps and laid out in the sidebar's order: your databases as tiles, then *Counts*, a number for each database (mice, tanks, plasmids, vials or plates, open orders, items running low), and each database's own cards. The mouse colony brings *Mice older than 30 weeks*, *Upcoming weanings* and the *Genotyping queue*; zebrafish the mating tanks to return; Molecular biology *Recent plasmids* (yours first, marked *No sequence* until one is added); and each fly, worm or other animal database a card of its own with what is due in the next two days, so Drosophila and C. elegans are never mixed. *Expiring & low stock*, the *Next 14 days* and *Recent orders* complete it. The button at the top opens the first database in the sidebar.
 
 - **Tracks**: Every dated job on one ruler of days, one track per kind of work, coloured overdue, today, within 3 days or scheduled. Choose 1, 2 or 4 weeks. *Needs you now* and *Busy days* sit beside it. On a phone it becomes a list of days.
 
 - **Freezer**: Your racks seen from above, lit where something is due, with a **Pull list** of the next three days' jobs in walking order, to take into the room. A cage's cap colour shows its owner.
 
-**Customize**, beside the layout chips, arranges Classic your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. Four cards start switched off and are there to add: *Your to-dos* (due this week or undated), *Bookings* (instruments booked in the next week), *Recent pages* of your notebook, and *Calculators* (the ones you opened last, then the usual ones). **Back to the usual** puts everything back, after asking. Like the layout, it is yours alone.
+**Customize**, beside the layout chips, arranges Classic your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. Four cards start switched off and are there to add: *Your to-dos* (due this week or undated), *Bookings* (instruments booked in the next week), *Recent pages* of your notebook, and *Calculators* (the ones you opened last, then the usual ones). Under the cards, *Counts* lists a number for every database: the first five show until you tick the ones you want. **Back to the usual** puts everything back, after asking. Like the layout, it is yours alone.
 
 On every layout:
 

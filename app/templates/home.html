@@ -10,9 +10,14 @@
       {{ icon('notebook') }} {{ _('Notebook') }}
     </a>
   {% endif %}
-  {% if lab_features.colony %}
-    <a class="btn btn-primary" href="{{ url_for('colony', view='mice') }}">
-      {{ icon('mouse') }} {{ _('Open %(name)s', name=db_labels.get('colony', 'Mouse colony')|tr) }}
+  {# The first database in the sidebar, in the lab's order. #}
+  {% set first = namespace(db=None) %}
+  {% for section in nav_sections if section.label == 'Databases' %}
+    {% for link in section.links if link.key != 'new-db' and first.db is none %}{% set first.db = link %}{% endfor %}
+  {% endfor %}
+  {% if first.db %}
+    <a class="btn btn-primary" href="{{ first.db.url }}">
+      {{ icon(first.db.icon) }} {{ _('Open %(name)s', name=first.db.label|tr) }}
     </a>
   {% endif %}
 {% endblock %}
@@ -81,40 +86,17 @@
     {% endfor %}
   </section>
 {% endset %}{% set _discard = cards.update({"databases": c}) %}{% endif %}
-{% if true %}{% set c %}
+{% if shown_tiles %}{% set c %}
+  {# One tile per database, in the sidebar's order (Customize chooses which). #}
   <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-{% if lab_features.colony %}
-  <a class="stat" href="{{ url_for('colony', view='mice') }}">
-    <span class="stat-label">{{ _('Total mice') }}</span>
-    <span class="stat-value">{{ counts.total_mice }}</span>
-    <span class="stat-sub">{{ _('%(active)s active · %(mine)s yours', active=counts.active_mice, mine=counts.my_mice) }}</span>
-  </a>
-  <a class="stat" href="{{ url_for('colony', view='breeders') }}">
-    <span class="stat-label">{{ _('Over 30 weeks') }}</span>
-    <span class="stat-value">{{ sac_candidates|length }}</span>
-    <span class="stat-sub">{{ _('older than 30 weeks') }}</span>
-  </a>
-  <a class="stat" href="{{ url_for('colony', view='litters') }}">
-    <span class="stat-label">{{ _('Weanings') }}</span>
-    <span class="stat-value">{{ weanings|length }}</span>
-    <span class="stat-sub">{{ _('within ±7 days of P%(days)s', days=wean_offset_days) }}</span>
-  </a>
-{% endif %}
-{% if has_orders %}
-  <a class="stat" href="{{ url_for('orders') }}">
-    <span class="stat-label">{{ _('Pending orders') }}</span>
-    <span class="stat-value">{{ counts.pending_orders }}</span>
-    <span class="stat-sub">{{ _('still open') }}</span>
-  </a>
-{% endif %}
-{% if lab_features.notebook %}
-  <a class="stat" href="{{ url_for('notebook') }}">
-    <span class="stat-label">{{ _('Notebook pages') }}</span>
-    <span class="stat-value">{{ counts.notebook_pages }}</span>
-    <span class="stat-sub">{{ _('your pages') }}</span>
-  </a>
-{% endif %}
-</section>
+    {% for tile in shown_tiles %}
+      <a class="stat" href="{{ tile.url }}" data-tile="{{ tile.key }}">
+        <span class="stat-label">{{ tile.label }}</span>
+        <span class="stat-value">{{ tile.value }}</span>
+        <span class="stat-sub">{{ tile.sub }}</span>
+      </a>
+    {% endfor %}
+  </section>
 {% endset %}{% set _discard = cards.update({"stats": c}) %}{% endif %}
 {% if lab_features.calendar %}{% set c %}
   <article class="card flex flex-col">
@@ -225,28 +207,34 @@
     {% endif %}
   </article>
 {% endset %}{% set _discard = cards.update({"geno": c}) %}{% endif %}
-{% if has_stocks %}{% set c %}
-  {# Fly / worm work due #}
+{# Each fly, worm and animal database's own card: its work due in the next two days. #}
+{% for key, d in db_cards.items() %}{% set c %}
   <article class="card flex flex-col">
     <header class="card-head">
-      <h2>{{ icon('fly') }} {{ _('Flies & worms: due') }}</h2>
-      {% if stock_due_total > stock_due|length %}<span class="badge badge-quiet">{{ stock_due_total }}</span>{% endif %}
+      <h2>{{ icon(d.icon) }} {{ d.label|tr }}</h2>
+      <a class="card-head-link" href="{{ d.url }}">{{ _('Open schedule') }}</a>
     </header>
-    {% if stock_due %}
+    {% if d.rows %}
       <div class="flex flex-col">
-        {% for d in stock_due %}
-          <a class="row-line" href="{{ url_for('stocks.module', key=d.key, view='schedule') }}">
-            <span class="w-20 shrink-0 text-[12px] font-semibold {% if d.overdue %}text-danger-700{% elif d.is_today %}text-warn-700{% else %}text-muted{% endif %}">{{ d.due | relative_day }}</span>
-            <span class="min-w-0 flex-1 truncate text-ink-soft">{{ d.title }}</span>
-            <span class="shrink-0 text-[11.5px] text-sand-400">{{ d.module|tr }}</span>
+        {% for r in d.rows[:8] %}
+          <a class="row-line" href="{{ d.url }}">
+            <span class="w-20 shrink-0 text-[12px] font-semibold {% if r.overdue %}text-danger-700{% elif r.is_today %}text-warn-700{% else %}text-muted{% endif %}">{{ r.due | relative_day }}</span>
+            <span class="min-w-0 flex-1 truncate text-ink-soft">{{ r.title }}</span>
           </a>
         {% endfor %}
+        {% if d.rows|length > 8 %}
+          <a class="row-line text-[12px] text-muted" href="{{ d.url }}">{{ _('and %(n)s more', n=d.rows|length - 8) }}</a>
+        {% endif %}
       </div>
     {% else %}
-      <div class="empty-state">{{ icon('fly') }}<p>{{ _('No flips, collections or shifts due in the next two days.') }}</p></div>
+      <div class="empty-state">{{ icon(d.icon) }}<p>
+        {%- if d.worms is not defined -%}{{ _('Nothing due in the next two days.') }}
+        {%- elif d.worms -%}{{ _('No chunks, picks or shifts due in the next two days.') }}
+        {%- else -%}{{ _('No flips, collections or shifts due in the next two days.') }}{%- endif -%}
+      </p></div>
     {% endif %}
   </article>
-{% endset %}{% set _discard = cards.update({"stocks": c}) %}{% endif %}
+{% endset %}{% set _discard = cards.update({key: c}) %}{% endfor %}
 {% if has_restock %}{% set c %}
   {# Reagents and antibodies to restock #}
   <article class="card flex flex-col">
@@ -316,23 +304,31 @@
       {% endif %}
     </article>
 {% endset %}{% set _discard = cards.update({"zebrafish": c}) %}{% endif %}
-{% if organism_due %}{% set c %}
+{% if lab_features.plasmids %}{% set c %}
   <article class="card flex flex-col">
-      <header class="card-head">
-        <h2>{{ icon('paw') }} {{ _('Animal databases: due') }}</h2>
-        {% if organism_due_total > organism_due|length %}<span class="badge badge-quiet">{{ organism_due_total }}</span>{% endif %}
-      </header>
+    <header class="card-head">
+      <h2>{{ icon('plasmid') }} {{ _('Recent plasmids') }}</h2>
+      <a class="card-head-link" href="{{ url_for('plasmids') }}">{{ _('Open plasmids') }}</a>
+    </header>
+    {% if recent_plasmids %}
       <div class="flex flex-col">
-        {% for d in organism_due %}
-          <a class="row-line" href="{{ url_for('organisms.module', key=d.key, view='schedule') }}">
-            <span class="w-20 shrink-0 text-[12px] font-semibold {% if d.overdue %}text-danger-700{% elif d.is_today %}text-warn-700{% else %}text-muted{% endif %}">{{ d.due | relative_day }}</span>
-            <span class="min-w-0 flex-1 truncate text-ink-soft">{{ d.title }}</span>
-            <span class="shrink-0 text-[11.5px] text-sand-400">{{ d.module|tr }}</span>
+        {% for p in recent_plasmids %}
+          <a class="row-line" href="{{ p.url }}">
+            <span class="ident w-11 shrink-0">#{{ p.number }}</span>
+            <span class="min-w-0 flex-1 truncate text-ink">{{ p.name or _('Untitled') }}</span>
+            {% if not p.has_sequence %}<span class="badge badge-quiet shrink-0">{{ _('No sequence') }}</span>{% endif %}
+            {% if p.owner %}{{ p.owner | owner_badge }}{% endif %}
           </a>
         {% endfor %}
       </div>
-    </article>
-{% endset %}{% set _discard = cards.update({"organisms": c}) %}{% endif %}
+    {% else %}
+      <div class="empty-state">
+        {{ icon('plasmid') }}
+        <p>{% trans url=url_for('plasmids') %}No plasmids yet. <a href="{{ url }}">Add one</a>.{% endtrans %}</p>
+      </div>
+    {% endif %}
+  </article>
+{% endset %}{% set _discard = cards.update({"plasmids": c}) %}{% endif %}
 {% if lab_features.calendar %}{% set c %}
   {# Upcoming events #}
   <article class="card flex flex-col">

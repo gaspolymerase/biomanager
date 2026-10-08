@@ -153,5 +153,21 @@
   "Busy days": "繁忙的日子",
   "%(n)s things": "%(n)s 件事",
   "<b>%(overdue)s</b> overdue · <b>%(today)s</b> today · <b>%(soon)s</b> in the next 3 days · <b>%(later)s</b> later": "<b>%(overdue)s</b> 已逾期 · <b>%(today)s</b> 今天 · <b>%(soon)s</b> 3 天内 · <b>%(later)s</b> 之后",
-  "Nothing due in the next %(n)s days.": "未来 %(n)s 天没有到期的。"
+  "Nothing due in the next %(n)s days.": "未来 %(n)s 天没有到期的。",
+  "mice · %(active)s active · %(mine)s yours": "只小鼠 · 在养 %(active)s · 你的 %(mine)s",
+  "tanks · %(n)s mating": "个鱼缸 · %(n)s 个在配对",
+  "plasmids · %(mine)s yours": "个质粒 · 你的 %(mine)s 个",
+  "%(things)s · %(n)s due": "%(things)s · %(n)s 项待做",
+  "items · %(n)s low or expiring": "件物品 · %(n)s 件不足或将过期",
+  "Chunks & picks": "转板与挑子代",
+  "Which numbers the Counts card shows, in the order of the sidebar.": "统计卡片显示哪些数字，按侧边栏的顺序排列。",
+  "Open schedule": "打开日程",
+  "and %(n)s more": "还有 %(n)s 项",
+  "Nothing due in the next two days.": "未来两天没有到期的事。",
+  "No chunks, picks or shifts due in the next two days.": "未来两天没有要转板、挑子代或换温度的。",
+  "Recent plasmids": "最近的质粒",
+  "Open plasmids": "打开质粒",
+  "Untitled": "未命名",
+  "No sequence": "没有序列",
+  "No plasmids yet. <a href=\"%(url)s\">Add one</a>.": "还没有质粒。<a href=\"%(url)s\">添加一个</a>。"
 }
