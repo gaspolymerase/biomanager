@@ -57,6 +57,7 @@
 - 官网（中文）：https://biomanager.org/zh/
 - 中文使用指南：https://biomanager.org/zh/guide.html
 - 源代码（GitHub）：https://github.com/gaspolymerase/biomanager
+- 国内镜像（Gitee）：https://gitee.com/gaspolymerase/biomanager
 - 下载最新版：https://github.com/gaspolymerase/biomanager/releases/latest
 
 它还在不断更新。如果你的实验室需要什么功能还没有，欢迎在评论里告诉我，或者在 GitHub 上提 issue。觉得有用的话，也欢迎在 GitHub 上点个星标，让更多实验室找到它。
