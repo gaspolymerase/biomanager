@@ -86,6 +86,7 @@ class Plan:
     user: str = ""
     port: int = 22
     key_path: str = ""
+    sudo_password: str = ""    # for an account whose sudo asks for one (a NAS's admin); never kept
     address: str = ""          # what people type; Tailscale fills it in itself
     acme_email: str = ""
     ts_authkey: str = ""
@@ -134,6 +135,9 @@ def plan_from(data: dict) -> tuple[Plan | None, list[str]]:
             problems.append(gettext("The SSH port is a number, usually 22."))
         if plan.key_path and not Path(os.path.expanduser(plan.key_path)).is_file():
             problems.append(gettext("There is no key file at %(path)s.", path=plan.key_path))
+        plan.sudo_password = str(data.get("sudo_password") or "")
+        if "\n" in plan.sudo_password or "\r" in plan.sudo_password or len(plan.sudo_password) > 256:
+            problems.append(gettext("That sudo password can't be used: it has a line break in it, or is very long."))
     if target == "cloud-tailscale":
         plan.ts_authkey = str(data.get("ts_authkey") or "").strip()
         plan.ts_hostname = str(data.get("ts_hostname") or "biomanager").strip().lower()
@@ -167,6 +171,7 @@ def build_script(plan: Plan, show_secrets: bool = True) -> str:
     showing it on the page) the Tailscale key is left out."""
     q = shlex.quote
     authkey = plan.ts_authkey if show_secrets else "tskey-…(hidden)"
+    sudo_password = plan.sudo_password if show_secrets or not plan.sudo_password else "(hidden)"
     header = "\n".join([
         f"BASE={plan.base}",
         f"TARGET={q(plan.target)}",
@@ -175,6 +180,7 @@ def build_script(plan: Plan, show_secrets: bool = True) -> str:
         f"ACME_EMAIL={q(plan.acme_email)}",
         f"TZ_NAME={q(plan.timezone)}",
         f"TS_AUTHKEY={q(authkey)}",
+        f"SUDO_PASSWORD={q(sudo_password)}",
         f"TS_HOSTNAME={q(plan.ts_hostname)}",
         f"BRING_DATA={'1' if plan.bring_data else '0'}",
         f"BUNDLE_URL={q(BUNDLE_URL)}",
@@ -189,6 +195,18 @@ step() {{ echo "::step::$1"; }}
 SUDO=""; [ "$(id -u)" = 0 ] || SUDO="sudo"
 # On this computer everything goes in the user's own folder, through Docker Desktop.
 [ "$TARGET" != this-computer ] || SUDO=""
+if [ -n "$SUDO" ] && [ -n "$SUDO_PASSWORD" ]; then
+  # An account whose sudo asks for its password (a NAS's admin): sudo gets it
+  # from this helper, never from a command line, and commands keep their input.
+  askpass=$(mktemp "${{HOME:-/tmp}}/.biomanager-askpass.XXXXXX") && chmod 700 "$askpass"
+  cat > "$askpass" <<'ASKPASS'
+#!/bin/sh
+printf '%s\\n' "$BIOMANAGER_SUDO_PASSWORD"
+ASKPASS
+  trap 'rm -f "$askpass"' EXIT
+  export SUDO_ASKPASS="$askpass" BIOMANAGER_SUDO_PASSWORD="$SUDO_PASSWORD"
+  SUDO="sudo -A"
+fi
 have() {{ command -v "$1" >/dev/null 2>&1; }}
 
 step "Checking the machine"
@@ -198,9 +216,13 @@ case "$arch" in
   *) echo "::fail::BioManager runs on x86-64 and ARM64 computers, not $arch."; exit 1 ;;
 esac
 if [ -r /etc/os-release ]; then . /etc/os-release; echo "${{PRETTY_NAME:-Linux}}, $arch"; else echo "$(uname -s), $arch"; fi
-if [ -n "$SUDO" ] && [ "$(uname -s)" = Linux ] && ! sudo -n true 2>/dev/null; then
-  echo "::fail::This account can't use sudo without a password. Sign in as an account that can (on cloud servers, usually ubuntu), or give this one passwordless sudo."
-  exit 1
+if [ -n "$SUDO" ] && [ "$(uname -s)" = Linux ]; then
+  if [ -n "$SUDO_PASSWORD" ]; then
+    $SUDO -v 2>/dev/null || {{ echo "::fail::sudo didn't accept the password, or this account may not use sudo. Check it and run the set-up again."; exit 1; }}
+  elif ! sudo -n true 2>/dev/null; then
+    echo "::fail::This account can't use sudo without a password. Give its password on the Connect step, or sign in as an account that can (on cloud servers, usually ubuntu)."
+    exit 1
+  fi
 fi
 if [ -f "$BASE/Biomanager/deploy/.env" ]; then
   echo "::fail::BioManager is already set up on this machine ($BASE). To update it, see the runbook's Updating section."
@@ -324,6 +346,8 @@ def _say(job: Job, line: str) -> None:
     secret = job.plan.ts_authkey
     if secret:
         line = line.replace(secret, "tskey-…")
+    if job.plan.sudo_password:
+        line = line.replace(job.plan.sudo_password, "••••••")
     line = line.rstrip()
     if line.startswith("::step::"):
         job.steps.append(line[8:])
@@ -388,12 +412,19 @@ def _run(job: Job) -> None:
             if plan.bring_data:
                 job.steps.append("Copying this app's records")
                 files = _export_data(tmp)
+                if plan.remote:
+                    # A folder this account owns, made in one sudo of its own: the
+                    # copies below send the files as their input, with no room for a
+                    # password (sudo -S reads it, when there is one, from this input).
+                    prep = (f"cmd=\"mkdir -p {REMOTE_BASE}/import && chown $(id -un) {REMOTE_BASE} {REMOTE_BASE}/import\"; "
+                            "if [ \"$(id -u)\" = 0 ]; then sh -c \"$cmd\"; else sudo -S -p '' sh -c \"$cmd\"; fi")
+                    if _stream(job, ssh_base(plan) + [prep],
+                               stdin_text=plan.sudo_password + "\n" if plan.sudo_password else "") != 0:
+                        raise RuntimeError(f"Couldn't make {REMOTE_BASE}/import on the server.")
                 for f in files:
                     if plan.remote:
                         remote = f"{REMOTE_BASE}/import/{f.name}"
-                        prep = (f"SUDO=; [ \"$(id -u)\" = 0 ] || SUDO=sudo; $SUDO mkdir -p {REMOTE_BASE}/import && "
-                                f"$SUDO chown \"$(id -un)\" {REMOTE_BASE} {REMOTE_BASE}/import && cat > {remote}")
-                        if _stream(job, ssh_base(plan) + [prep], stdin_file=f) != 0:
+                        if _stream(job, ssh_base(plan) + [f"cat > {remote}"], stdin_file=f) != 0:
                             raise RuntimeError(f"Couldn't copy {f.name} to the server.")
                     else:
                         local = Path(os.path.expanduser(LOCAL_BASE)) / "import"
@@ -413,6 +444,8 @@ def _run(job: Job) -> None:
     except Exception as exc:  # shown on the page; nothing is left half-remembered
         job.error = job.error or str(exc)
         job.status = "failed"
+    finally:
+        job.plan.sudo_password = ""  # used for this run only
 
 
 def _check_from_here(address: str) -> str:
@@ -454,12 +487,22 @@ def remembered() -> dict | None:
 
 def check_connection(plan: Plan) -> dict:
     """Can we reach it, and what is it? Runs a few read-only commands."""
+    # sudo: root, yes (no password), password (it asks for one; none given yet),
+    # password-ok (the one given works) or no (the one given doesn't, or sudo is refused).
+    if plan.sudo_password:
+        sudo = ("(sudo -n true 2>/dev/null && echo sudo=yes) || "
+                "(sudo -S -p '' -v 2>/dev/null && echo sudo=password-ok) || echo sudo=no")
+    else:
+        sudo = ("(sudo -n true 2>/dev/null && echo sudo=yes) || "
+                "(sudo -n true 2>&1 | grep -q 'password is required' && echo sudo=password) || echo sudo=no")
     probe = ("uname -sm; (. /etc/os-release 2>/dev/null && echo \"os=$PRETTY_NAME\") || true; "
              "command -v docker >/dev/null && echo docker=yes || echo docker=no; "
-             "[ \"$(id -u)\" = 0 ] && echo sudo=root || (sudo -n true 2>/dev/null && echo sudo=yes || echo sudo=no); "
+             f"if [ \"$(id -u)\" = 0 ]; then echo sudo=root; else {sudo}; fi; "
              f"[ -f {REMOTE_BASE}/Biomanager/deploy/.env ] && echo existing=yes || echo existing=no")
     try:
-        out = subprocess.run(ssh_base(plan) + [probe], capture_output=True, text=True, timeout=40)
+        # The password, if any, goes in on standard input, for sudo -S only.
+        out = subprocess.run(ssh_base(plan) + [probe], capture_output=True, text=True, timeout=40,
+                             input=plan.sudo_password + "\n" if plan.sudo_password else "")
     except FileNotFoundError:
         return {"ok": False, "error": gettext("This computer has no ssh command. On Windows, add the OpenSSH Client under Settings → Apps → Optional features.")}
     except subprocess.TimeoutExpired:
@@ -476,7 +519,9 @@ def check_connection(plan: Plan) -> dict:
     info = dict(line.split("=", 1) for line in out.stdout.splitlines() if "=" in line)
     first = out.stdout.splitlines()[0] if out.stdout else ""
     return {"ok": True, "system": info.get("os") or first, "machine": first.split()[-1] if first else "",
-            "docker": info.get("docker") == "yes", "sudo": info.get("sudo") in ("yes", "root"),
+            "docker": info.get("docker") == "yes", "sudo": info.get("sudo") in ("yes", "root", "password-ok"),
+            "sudo_password": "wrong" if plan.sudo_password and info.get("sudo") == "no" else
+                             "needed" if info.get("sudo") in ("password", "password-ok") else "",
             "existing": info.get("existing") == "yes"}
 
 

@@ -308,5 +308,8 @@
   "Glycerol stocks": "甘油菌",
   "Bacteria carrying each plasmid, in −80 °C boxes.": "带有各个质粒的细菌，存放在 −80 °C 冻存盒中。",
   "Chemicals": "化学品",
-  "Chemicals by abbreviation, CAS number and molecular weight, for formulations.": "按缩写、CAS 号和分子量记录化学品，供配方使用。"
+  "Chemicals by abbreviation, CAS number and molecular weight, for formulations.": "按缩写、CAS 号和分子量记录化学品，供配方使用。",
+  "Its password, for sudo": "它的密码（用于 sudo）",
+  "This account asks for its password before it uses sudo, as a NAS’s admin account usually does. It is used for this set-up only, and never saved.": "这个账号使用 sudo 前要输入密码，NAS 的管理员账号通常如此。密码只用于这次搭建，不会保存。",
+  "That sudo password can't be used: it has a line break in it, or is very long.": "这个 sudo 密码无法使用：其中有换行，或者太长。"
 }

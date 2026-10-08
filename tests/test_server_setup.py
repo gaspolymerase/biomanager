@@ -80,6 +80,65 @@ class Wizard(AppTestCase):
         self.assertTrue(got["ok"])
         self.assertEqual((got["system"], got["machine"], got["docker"], got["sudo"]), ("Ubuntu 24.04 LTS", "aarch64", False, True))
 
+    def check_with(self, sudo_line, **answers):
+        out = SimpleNamespace(returncode=0, stdout=f"Linux x86_64\nos=Debian GNU/Linux 12\ndocker=yes\n{sudo_line}\nexisting=no\n",
+                              stderr="")
+        with mock.patch.object(ss.subprocess, "run", return_value=out) as run:
+            got = self.post_json("/server-setup/check", {**ANSWERS, **answers}).get_json()
+        return got, run.call_args
+
+    def test_an_account_whose_sudo_asks_for_a_password_is_asked_for_it(self):
+        # A NAS's admin account: sudo works, but only with its password.
+        got, _ = self.check_with("sudo=password")
+        self.assertEqual((got["sudo"], got["sudo_password"]), (False, "needed"))
+
+    def test_the_password_goes_to_sudo_as_input_never_on_a_command_line(self):
+        got, call = self.check_with("sudo=password-ok", sudo_password="hunter2 x")
+        self.assertEqual((got["sudo"], got["sudo_password"]), (True, "needed"))
+        self.assertEqual(call.kwargs["input"], "hunter2 x\n")
+        self.assertNotIn("hunter2", " ".join(call.args[0]))
+        self.assertIn("sudo -S", call.args[0][-1])
+
+    def test_a_wrong_password_says_so(self):
+        got, _ = self.check_with("sudo=no", sudo_password="wrong")
+        self.assertEqual((got["sudo"], got["sudo_password"]), (False, "wrong"))
+
+    def test_the_script_hands_sudo_the_password_through_a_helper(self):
+        plan = ss.Plan(target="lab-linux", host="nas.local", user="admin", address="nas.local", sudo_password="it's $ecret")
+        script = ss.build_script(plan)
+        self.assertIn('SUDO="sudo -A"', script)
+        self.assertIn("SUDO_PASSWORD='it'\"'\"'s $ecret'", script)      # quoted for bash
+        r = subprocess.run(["bash", "-n"], input=script, text=True, capture_output=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("$ecret", ss.build_script(plan, show_secrets=False))
+
+    def test_a_password_with_a_line_break_is_refused(self):
+        r = self.post_json("/server-setup/preview", {**ANSWERS, "sudo_password": "two\nlines"})
+        self.assertIn("line break", " ".join(r.get_json()["errors"]))
+
+    def test_the_run_never_shows_the_password_and_then_forgets_it(self):
+        seen = []
+
+        def fake_stream(job, command, stdin_text=None, stdin_file=None):
+            seen.append(stdin_text or "")
+            for line in ["::step::Checking the machine", "echo hunter2 x", "::value::ADDRESS=nas.local", "::done::"]:
+                ss._say(job, line)
+            return 0
+
+        with mock.patch.object(ss, "_stream", fake_stream), \
+                mock.patch.object(ss, "_check_from_here", return_value="yes"), \
+                mock.patch.object(ss, "data_dir", return_value=__import__("pathlib").Path(__import__("tempfile").mkdtemp())):
+            job_id = self.post_json("/server-setup/start", {**ANSWERS, "sudo_password": "hunter2 x"}).get_json()["job"]
+            for _ in range(50):
+                state = self.a.get(f"/server-setup/job/{job_id}").get_json()
+                if state["status"] != "running":
+                    break
+                time.sleep(0.05)
+        self.assertEqual(state["status"], "done", state)
+        self.assertIn("hunter2 x", seen[-1])                       # the script had it…
+        self.assertNotIn("hunter2", "\n".join(state["lines"]))     # …the page never shows it
+        self.assertEqual(ss.JOBS[job_id].plan.sudo_password, "")    # and it isn't kept
+
     def test_a_refused_key_says_so(self):
         out = SimpleNamespace(returncode=255, stdout="", stderr="ubuntu@203.0.113.10: Permission denied (publickey).")
         with mock.patch.object(ss.subprocess, "run", return_value=out):
