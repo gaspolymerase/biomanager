@@ -798,7 +798,7 @@ def builtin_labels() -> dict[str, str]:
 # with a tab each, in the order the work flows. They are nothing like the
 # lab's other inventories — a primer, a glycerol stock and a virus each name
 # the plasmid they came from — so they are kept together.
-from .inventory_service import PLASMID_TAB_KINDS  # noqa: E402
+from .inventory_service import PLASMID_TAB_KINDS, get_setting, set_setting  # noqa: E402
 # The rail's name for that area; its first tab is still Plasmids.
 MOLECULAR_BIOLOGY = "Molecular biology"
 
@@ -2033,9 +2033,9 @@ def home_dashboard():
 
 
 # Calculators the Home card links to (static/bench-calcs.js ids).
-HOME_CALCULATORS = [("dilution", "Dilution"), ("molarity", "Molarity"), ("a260", "DNA / RNA from A260"),
-                    ("count", "Cell count"), ("seeding", "Seeding plates"), ("rcf", "rpm ↔ × g"),
-                    ("buffer", "Buffer pH"), ("pcrmix", "PCR master mix")]
+HOME_CALCULATORS = [("dilute", "Dilute (C₁V₁)"), ("make", "Make a solution"), ("a260", "DNA / RNA concentration"),
+                    ("count", "Count cells"), ("seed", "Seed plates"), ("rcf", "rpm ↔ × g"),
+                    ("buffer", "Buffer at a pH"), ("mastermix", "Master mix")]
 
 
 def _home_extra_cards(db_session, shown: set, today: date) -> dict:
@@ -8989,7 +8989,52 @@ def utilities():
                     chemicals.append({"name": c["abbr"], "mw": c["mw"], "notes": c["name"]})
         chemicals += [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
                       for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
-    return render_template("utilities.html", chemicals=chemicals)
+        rotors = _utility_rotors(db_session)
+    return render_template("utilities.html", chemicals=chemicals, rotors=rotors,
+                           rotors_editable=g.user.expires_at is None)
+
+
+UTILITY_ROTORS_KEY = "utilities_rotors"
+
+
+def _utility_rotors(db_session) -> list[dict]:
+    """The lab's centrifuge rotors for rpm ↔ × g: a name, the radius to the
+    bottom of the tube (cm) and the top speed (rpm, 0 when not given)."""
+    try:
+        rows = json.loads(get_setting(db_session, UTILITY_ROTORS_KEY, "[]") or "[]")
+    except ValueError:
+        return []
+    return [r for r in rows if isinstance(r, dict)]
+
+
+@app.route("/utilities/rotors", methods=["POST"])
+@login_required
+def utilities_rotors():
+    """Save the lab's rotors (Utilities, rpm ↔ × g). Anyone in the lab may;
+    a guest may not."""
+    if g.user.expires_at is not None:
+        return jsonify({"error": gettext("Guests can't change the lab's rotors.")}), 403
+    data = request.get_json(silent=True) or {}
+    rows = data.get("rotors")
+    if not isinstance(rows, list) or len(rows) > 40:
+        return jsonify({"error": gettext("Up to 40 rotors.")}), 400
+    rotors = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("name") or "").strip()[:80]
+        try:
+            radius = float(row.get("radius") or 0)
+            top = float(row.get("max") or 0)
+        except (TypeError, ValueError):
+            radius, top = 0.0, 0.0
+        if not name or not 0.5 <= radius <= 60 or not 0 <= top <= 300000:
+            return jsonify({"error": gettext("Each rotor needs a name and a radius between 0.5 and 60 cm.")}), 400
+        rotors.append({"name": name, "radius": round(radius, 2), "max": round(top)})
+    with SessionLocal() as db_session:
+        set_setting(db_session, UTILITY_ROTORS_KEY, json.dumps(rotors, ensure_ascii=False))
+        db_session.commit()
+    return jsonify({"rotors": rotors})
 
 
 # ---------------------------------------------------------------------------

@@ -163,17 +163,28 @@ last first (`biomanager:util:recent` in `localStorage`, up to eight).
 ### Utilities
 
 `static/bench-calcs.js` is the arithmetic and its data (molecular weights,
-buffer pKa, vessels, antibiotics, isotopes): each calculator in `CALCS` is
-a description (`id`, `group`, `title`, `inputs` with units) and a
-`compute(v)` that returns `{lines, table, warnings, notes, solved}`;
-`run(id, raw)` reads the typed numbers (decimal commas too) and converts
-each to its base unit first. It loads in Node too, and
-`tests/js/bench-calcs.check.mjs` checks known answers.
-`static/utilities-page.js` draws the list, the open calculator (from the
-address hash) and the reference tables; the lab's chemicals come from the
-page (`/utilities` passes them: its Chemicals databases through
-`lab_notebook.chemicals_search`, each by name and abbreviation, then
-`chemical_references`) ahead of the built-in list.
+buffer pKa and how each is made, vessels, antibiotics and stocks,
+concentrated reagents, ladders): each calculator in `CALCS` is an `id`,
+`inputs` with units and a `compute(v)` that returns `{lines, table,
+warnings, notes, solved}`; `run(id, raw)` reads the typed numbers (decimal
+commas too) and converts each to its base unit first. What the page lists
+is `TOOLS`, in `GROUPS`: a tool has a name, a line on what it gives, the
+words people search for (English and Chinese) and one or more `modes`,
+each running one calculator, with the `example` it opens on and the values
+it can `solve` for. `search(q)` ranks tools by those words (whole word,
+then start of word, then inside a word or one typo), and `locate(id)` turns
+an address into a tool and mode, so an old calculator's `#dilution` still
+opens Dilute. It loads in Node too, and `tests/js/bench-calcs.check.mjs`
+checks known answers and the searches testers typed.
+`static/utilities-page.js` draws the search, Pinned and Recent (kept in
+this browser under `biomanager:util:`; Home's Calculators card reads
+`recent`), the group cards, the open tool (from the address hash) and the
+reference tables. The lab's chemicals come from the page (`/utilities`
+passes them: its Chemicals databases through `lab_notebook.chemicals_search`,
+each by name and abbreviation, then `chemical_references`) ahead of the
+built-in list. The lab's centrifuge rotors (name, radius, top speed) are
+one `app_settings` row, `utilities_rotors`, saved by `POST
+/utilities/rotors` by anyone but a guest.
 
 ### Database addresses
 

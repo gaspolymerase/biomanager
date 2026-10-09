@@ -37,7 +37,7 @@ DESKTOP = [
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),
     ("new-database", "/organisms/new", "light", None),
-    ("utilities", "/utilities#pcrmix", "light", None),
+    ("utilities", "/utilities", "light", None),
     ("cage-cards", "/labels/cards/cages", "light", None),
     # For the task pages: the panel the step is about, not the whole window.
     # The fifth item crops the shot to that element (see shoot).

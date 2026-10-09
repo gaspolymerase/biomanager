@@ -52,12 +52,13 @@
 
   const ok = (x) => typeof x === 'number' && Number.isFinite(x);
 
-  /* 4 significant figures, no trailing zeros, thousands spaced. */
+  /* 4 significant figures, no trailing zeros, thousands spaced; a million
+     and up as a power of ten, so counts and titers read alike. */
   function fmt(x, sig = 4) {
     if (!ok(x)) return '—';
     if (x === 0) return '0';
     const a = Math.abs(x);
-    if (a >= 1e7 || a < 1e-4) {
+    if (a >= 1e6 || a < 1e-4) {
       const [m, e] = x.toExponential(sig - 1).split('e');
       return `${String(Number(m))} × 10${superscript(Number(e))}`;
     }
@@ -106,13 +107,40 @@
     ['Doxycycline hyclate', 512.94], ['Puromycin dihydrochloride', 544.43],
   ];
 
-  // Good's and other buffers: pKa at 25 °C and its change per °C.
+  // Good's and other buffers: pKa at 25 °C, its change per °C, and how it
+  // is made: one form weighed and titrated (HCl or NaOH), two salts mixed,
+  // or (citrate, with three pKa) the ratio only.
   const BUFFERS = [
-    ['Tris', 8.06, -0.028], ['HEPES', 7.48, -0.014], ['MOPS', 7.20, -0.015], ['MES', 6.10, -0.011],
-    ['PIPES', 6.76, -0.0085], ['Bis-Tris', 6.46, -0.017], ['Phosphate (pKa₂)', 7.20, -0.0028],
-    ['Acetate', 4.76, 0.0002], ['Citrate (pKa₃)', 6.40, 0], ['Bicine', 8.26, -0.018], ['Tricine', 8.05, -0.021],
-    ['EPPS (HEPPS)', 8.00, -0.015], ['Glycine (pKa₂)', 9.60, -0.025], ['CHES', 9.50, -0.011],
-    ['Carbonate (pKa₂)', 10.33, -0.009], ['CAPS', 10.40, -0.009], ['Imidazole', 6.95, -0.020],
+    ['Tris', 8.06, -0.028, { weigh: ['Tris base', 121.14], titrant: 'HCl' }],
+    ['HEPES', 7.48, -0.014, { weigh: ['HEPES (free acid)', 238.30], titrant: 'NaOH' }],
+    ['MOPS', 7.20, -0.015, { weigh: ['MOPS (free acid)', 209.26], titrant: 'NaOH' }],
+    ['MES', 6.10, -0.011, { weigh: ['MES monohydrate', 213.25], titrant: 'NaOH' }],
+    ['PIPES', 6.76, -0.0085, { weigh: ['PIPES (free acid)', 302.37], titrant: 'NaOH' }],
+    ['Bis-Tris', 6.46, -0.017, { weigh: ['Bis-Tris', 209.24], titrant: 'HCl' }],
+    ['Phosphate (pKa₂)', 7.20, -0.0028, { pair: [['NaH₂PO₄·H₂O', 137.99], ['Na₂HPO₄ (anhydrous)', 141.96]] }],
+    ['Acetate', 4.76, 0.0002, { pair: [['Acetic acid, glacial', 60.05, 17.4], ['Sodium acetate·3H₂O', 136.08]] }],
+    ['Citrate (pKa₃)', 6.40, 0, null],
+    ['Bicine', 8.26, -0.018, { weigh: ['Bicine', 163.17], titrant: 'NaOH' }],
+    ['Tricine', 8.05, -0.021, { weigh: ['Tricine', 179.17], titrant: 'NaOH' }],
+    ['EPPS (HEPPS)', 8.00, -0.015, { weigh: ['EPPS', 252.33], titrant: 'NaOH' }],
+    ['Glycine (pKa₂)', 9.60, -0.025, { weigh: ['Glycine', 75.07], titrant: 'NaOH' }],
+    ['CHES', 9.50, -0.011, { weigh: ['CHES', 207.29], titrant: 'NaOH' }],
+    ['Carbonate (pKa₂)', 10.33, -0.009, { pair: [['NaHCO₃', 84.01], ['Na₂CO₃ (anhydrous)', 105.99]] }],
+    ['CAPS', 10.40, -0.009, { weigh: ['CAPS', 221.32], titrant: 'NaOH' }],
+    ['Imidazole', 6.95, -0.020, { weigh: ['Imidazole', 68.08], titrant: 'HCl' }],
+  ];
+  // The titrants as they sit on the shelf: concentrated HCl, and 10 M NaOH.
+  const TITRANTS = { HCl: ['37 % HCl (12 M)', 12], NaOH: ['10 M NaOH', 10] };
+
+  // Liquids sold concentrated: name, w/w %, density (g/mL), MW, and acid or
+  // base (for the safety line).
+  const REAGENTS = [
+    ['Hydrochloric acid', 37, 1.18, 36.46, 'acid'], ['Sulfuric acid', 96, 1.84, 98.08, 'acid'],
+    ['Nitric acid', 70, 1.41, 63.01, 'acid'], ['Phosphoric acid', 85, 1.685, 98.00, 'acid'],
+    ['Acetic acid, glacial', 100, 1.049, 60.05, 'acid'], ['Sodium hydroxide solution', 50, 1.52, 40.00, 'base'],
+    ['Ammonia solution', 28, 0.90, 17.03, 'base'], ['Hydrogen peroxide', 30, 1.11, 34.01, ''],
+    ['β-Mercaptoethanol', 100, 1.114, 78.13, ''], ['Glycerol', 100, 1.261, 92.09, ''],
+    ['Ethanol', 100, 0.789, 46.07, ''], ['DMSO', 100, 1.10, 78.13, ''],
   ];
 
   // Surface area (cm²) and usual medium volume (mL) of culture vessels.
@@ -122,19 +150,36 @@
     ['150 mm dish', 145, 20], ['T25 flask', 25, 5], ['T75 flask', 75, 15], ['T175 flask', 175, 30],
   ];
 
-  // Working concentration (µg/mL) and a usual stock (mg/mL).
+  // Working concentration (µg/mL), a usual stock (mg/mL), what it is
+  // dissolved in, and how it keeps.
   const ANTIBIOTICS = [
-    ['Ampicillin (E. coli)', 100, 100], ['Carbenicillin (E. coli)', 100, 100], ['Kanamycin (E. coli)', 50, 50],
-    ['Chloramphenicol (E. coli, in ethanol)', 34, 34], ['Tetracycline (E. coli)', 10, 10],
-    ['Spectinomycin (E. coli)', 50, 50], ['Gentamicin (E. coli)', 15, 10], ['Zeocin (E. coli, low salt)', 25, 100],
-    ['Puromycin (mammalian)', 2, 10], ['Blasticidin (mammalian)', 10, 10], ['G418 / Geneticin (mammalian)', 500, 50],
-    ['Hygromycin B (mammalian)', 200, 50], ['Zeocin (mammalian)', 200, 100],
-    ['Penicillin–streptomycin (1×, U/mL pen)', 100, 10],
+    ['Ampicillin (E. coli)', 100, 100, 'Water, filtered', '−20 °C'], ['Carbenicillin (E. coli)', 100, 100, 'Water, filtered', '−20 °C'],
+    ['Kanamycin (E. coli)', 50, 50, 'Water, filtered', '−20 °C'],
+    ['Chloramphenicol (E. coli, in ethanol)', 34, 34, 'Ethanol', '−20 °C'], ['Tetracycline (E. coli)', 10, 10, '70 % ethanol', '−20 °C, dark'],
+    ['Spectinomycin (E. coli)', 50, 50, 'Water, filtered', '−20 °C'], ['Gentamicin (E. coli)', 15, 10, 'Water, filtered', '4 °C'],
+    ['Zeocin (E. coli, low salt)', 25, 100, 'As sold', '−20 °C, dark'],
+    ['Puromycin (mammalian)', 2, 10, 'Water, filtered', '−20 °C'], ['Blasticidin (mammalian)', 10, 10, 'Water, filtered', '−20 °C, few thaws'],
+    ['G418 / Geneticin (mammalian)', 500, 50, 'Water, filtered', '4 °C'],
+    ['Hygromycin B (mammalian)', 200, 50, 'As sold', '4 °C, dark'], ['Zeocin (mammalian)', 200, 100, 'As sold', '−20 °C, dark'],
+    ['Penicillin–streptomycin (1×, U/mL pen)', 100, 10, 'As sold (100×)', '−20 °C'],
+  ];
+  // Other stocks a lab makes: name, a usual stock, solvent, how it keeps.
+  const STOCKS = [
+    ['IPTG', '1 M', 'Water, filtered', '−20 °C'], ['X-gal', '20 mg/mL', 'DMF or DMSO', '−20 °C, dark'],
+    ['DTT', '1 M', 'Water', '−20 °C, single-use aliquots'], ['PMSF', '100 mM', 'Isopropanol or ethanol', 'Room temperature; add just before use (minutes in water)'],
+    ['Arabinose', '20 %', 'Water, filtered', '4 °C'], ['Doxycycline', '1 mg/mL', 'Water, filtered', '−20 °C, dark'],
+    ['Tamoxifen', '20 mg/mL', 'Corn oil (shake at 37 °C to dissolve)', '4 °C, dark; make weekly'], ['4-Hydroxytamoxifen', '10 mM', 'Ethanol', '−20 °C, dark'],
+  ];
+  // Band sizes (bp), largest first, of ladders most labs run.
+  const LADDERS = [
+    ['1 kb DNA Ladder (NEB N3232)', [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 500]],
+    ['1 kb Plus DNA Ladder (NEB N3200)', [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1200, 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100]],
+    ['100 bp DNA Ladder (NEB N3231)', [1517, 1200, 1000, 900, 800, 700, 600, 517, 500, 400, 300, 200, 100]],
+    ['GeneRuler 1 kb (Thermo SM0311)', [10000, 8000, 6000, 5000, 4000, 3500, 3000, 2500, 2000, 1500, 1000, 750, 500, 250]],
+    ['GeneRuler 1 kb Plus (Thermo SM1331)', [20000, 10000, 7000, 5000, 4000, 3000, 2000, 1500, 1000, 700, 500, 400, 300, 200, 75]],
+    ['GeneRuler 100 bp Plus (Thermo SM0321)', [3000, 2000, 1500, 1200, 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100]],
   ];
 
-  const ISOTOPES = [
-    ['³²P', 14.29], ['³³P', 25.34], ['³⁵S', 87.37], ['¹²⁵I', 59.49], ['⁵¹Cr', 27.70], ['³H', 4500.4], ['¹⁴C', 2092700],
-  ];
 
   const GEL_RANGES = [
     ['0.5%', '1–30 kb'], ['0.7%', '0.8–12 kb'], ['1.0%', '0.5–10 kb'], ['1.2%', '0.4–7 kb'],
@@ -154,9 +199,6 @@
     return { name: parts.join(' '), nums };
   }
   const mean = (xs) => xs.reduce((a, x) => a + x, 0) / xs.length;
-  function numbers(text) {
-    return String(text || '').split(/[\s,;\t\n]+/).map(num).filter(ok);
-  }
   function linfit(xs, ys) {
     const n = xs.length;
     const mx = xs.reduce((a, b) => a + b, 0) / n;
@@ -201,10 +243,6 @@
     return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q
       / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
   }
-  // Two-sided 95% t critical values, df 1–30; the normal beyond.
-  const T975 = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.160, 2.145,
-    2.131, 2.120, 2.110, 2.101, 2.093, 2.086, 2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042];
-  const tcrit = (df) => (df <= 30 ? T975[df - 1] : 1.96 + 2.4 / df);
 
   /* DNA: nearest-neighbour Tm (SantaLucia 1998), as app/inventory_service.py. */
   const NN = { AA: [-7.9, -22.2], AT: [-7.2, -20.4], TA: [-7.2, -21.3], CA: [-8.5, -22.7], GT: [-8.4, -22.4],
@@ -267,8 +305,7 @@
   const CALCS = [
     /* ================================================= Solutions */
     {
-      id: 'molarity', group: t('Solutions & buffers'), title: t('Molarity: mass, volume, concentration'),
-      blurb: t('Leave one of the four blank and it is worked out. Pick a chemical to fill its molecular weight.'),
+      id: 'molarity',
       solveOne: ['mass', 'volume', 'conc', 'mw'],
       inputs: [
         { key: 'chem', label: t('Chemical'), type: 'chemical' },
@@ -293,18 +330,27 @@
       },
     },
     {
-      id: 'dilution', group: t('Solutions & buffers'), title: t('Dilution (C₁V₁ = C₂V₂)'),
-      blurb: t('Leave one of the four blank. Stock and final must be the same kind of unit (molar, mass, %, ×…).'),
+      id: 'dilution',
       solveOne: ['c1', 'v1', 'c2', 'v2'],
       inputs: [
         { key: 'c1', label: t('Stock C₁'), units: 'conc', unit: 'mM' },
         { key: 'v1', label: t('Stock volume V₁'), units: 'volume', unit: 'µL' },
         { key: 'c2', label: t('Final C₂'), units: 'conc', unit: 'µM' },
         { key: 'v2', label: t('Final volume V₂'), units: 'volume', unit: 'mL' },
+        { key: 'mw', label: t('MW (g/mol), to go between mg/mL and µM') },
       ],
       compute(v) {
-        if (FAMILY[v.unit.c1] !== FAMILY[v.unit.c2]) return { error: t('C₁ and C₂ must be the same kind of unit.') };
-        const vals = { c1: b(v, 'c1'), v1: b(v, 'v1'), c2: b(v, 'c2'), v2: b(v, 'v2') };
+        // A stock in mg/mL and a final in µM (or the other way) meet through
+        // the molecular weight: `to2` turns C₁ into C₂'s kind of unit.
+        const f1 = FAMILY[v.unit.c1]; const f2 = FAMILY[v.unit.c2]; const mw = n(v, 'mw');
+        let to2 = 1;
+        if (f1 !== f2) {
+          const pair = (f1 === 'molar' && f2 === 'mass') || (f1 === 'mass' && f2 === 'molar');
+          if (!pair) return { error: t('C₁ and C₂ must be the same kind of unit.') };
+          if (!(mw > 0)) return { error: t('One is molar and the other mass per volume: give the MW.') };
+          to2 = f1 === 'molar' ? mw : 1 / mw;
+        }
+        const vals = { c1: b(v, 'c1') * to2, v1: b(v, 'v1'), c2: b(v, 'c2'), v2: b(v, 'v2') };
         const blank = Object.keys(vals).filter((k) => !ok(vals[k]));
         if (blank.length !== 1) return { hint: t('Fill in three of the four; the blank one is worked out.') };
         const k = blank[0];
@@ -316,17 +362,17 @@
           return { solved: k, error: t('The final is stronger than the stock: a dilution can’t reach it. Use a stronger stock, or a weaker final.') };
         }
         const label = { c1: t('Stock C₁'), v1: t('Stock to add'), c2: t('Final C₂'), v2: t('Final volume') }[k];
-        const value = k[0] === 'c' ? `${fmt(x / factor('conc', v.unit[k]))} ${v.unit[k]}` : show(x, 'volume');
+        const value = k[0] === 'c' ? `${fmt(x / (k === 'c1' ? to2 : 1) / factor('conc', v.unit[k]))} ${v.unit[k]}` : show(x, 'volume');
         const out = { solved: k, lines: [L(label, value, true)], notes: [], warnings: [] };
         if (all.v2 >= all.v1) out.lines.push(L(t('Diluent'), show(all.v2 - all.v1, 'volume')));
         if (ok(all.v1) && all.v1 < 0.5e-6) out.warnings.push(t('Under 0.5 µL is hard to pipette: make an intermediate dilution.'));
         out.notes.push(t('1 : %(ratio)s dilution.', { ratio: fmt(all.v2 / all.v1, 3) }));
+        if (to2 !== 1) out.notes.push(t('Through MW %(mw)s g/mol.', { mw: fmt(mw) }));
         return out;
       },
     },
     {
-      id: 'serial', group: t('Solutions & buffers'), title: t('Serial dilution'),
-      blurb: t('A series of tubes, each the same fold weaker than the last.'),
+      id: 'serial',
       inputs: [
         { key: 'start', label: t('Starting concentration'), units: 'conc', unit: 'µM', value: '100' },
         { key: 'fold', label: t('Fold per step'), value: '10' },
@@ -348,8 +394,29 @@
       },
     },
     {
-      id: 'percent', group: t('Solutions & buffers'), title: t('Percent solutions'),
-      blurb: t('w/v is grams per 100 mL; v/v is mL per 100 mL.'),
+      id: 'serialfixed',
+      inputs: [
+        { key: 'start', label: t('Starting concentration'), units: 'conc', unit: 'µM', value: '100' },
+        { key: 'transfer', label: t('Carry (µL)'), value: '10' },
+        { key: 'diluent', label: t('Into diluent (µL)'), value: '90' },
+        { key: 'steps', label: t('Tubes'), value: '6' },
+      ],
+      compute(v) {
+        const tr = n(v, 'transfer'); const dl = n(v, 'diluent'); const steps = Math.round(n(v, 'steps'));
+        if (!(tr > 0) || !(dl > 0) || !(steps >= 1 && steps <= 30) || !ok(n(v, 'start'))) return { hint: t('A start, the volumes and 1–30 tubes.') };
+        const f = (tr + dl) / tr;
+        const rows = [];
+        for (let i = 0; i <= steps; i += 1) rows.push([i ? t('Tube %(n)s', { n: i }) : t('Stock solution'), `${fmt(n(v, 'start') / f ** i)} ${v.unit.start}`]);
+        return {
+          lines: [L(t('Each step'), `1 : ${fmt(f, 4)}`, true), L(t('Diluent in each tube'), `${fmt(dl)} µL`), L(t('Carry from tube to tube'), `${fmt(tr)} µL`)],
+          table: { head: ['', t('Concentration')], rows },
+          notes: [t('Mix each tube before the next transfer. Each tube keeps %(left)s µL; the last keeps %(last)s µL unless you take %(tr)s µL out.',
+            { left: fmt(dl), last: fmt(tr + dl), tr: fmt(tr) })],
+        };
+      },
+    },
+    {
+      id: 'percent',
       inputs: [
         { key: 'pct', label: t('Percent'), value: '10' },
         { key: 'kind', label: t('Kind'), type: 'select', options: [['wv', t('% w/v (a solid)')], ['vv', t('% v/v (a liquid)')]] },
@@ -365,38 +432,7 @@
       },
     },
     {
-      id: 'xfold', group: t('Solutions & buffers'), title: t('×-fold stocks (10× to 1×)'),
-      blurb: t('Buffers and media sold or made as 5×, 10×, 50× stocks.'),
-      inputs: [
-        { key: 'stock', label: t('Stock strength (×)'), value: '10' },
-        { key: 'final', label: t('Wanted strength (×)'), value: '1' },
-        { key: 'volume', label: t('Final volume'), units: 'volume', unit: 'mL', value: '500' },
-      ],
-      compute(v) {
-        const s = n(v, 'stock'); const f = n(v, 'final'); const vol = b(v, 'volume');
-        if (!(s > 0) || !(f > 0) || !ok(vol)) return { hint: t('Both strengths and a volume.') };
-        if (f > s) return { error: t('The wanted strength is above the stock.') };
-        return { lines: [L(t('Stock solution'), show(vol * f / s, 'volume'), true), L(t('Water or diluent'), show(vol - vol * f / s, 'volume'))] };
-      },
-    },
-    {
-      id: 'massmolar', group: t('Solutions & buffers'), title: t('Mass ↔ molar concentration'),
-      blurb: t('mg/mL to µM and back, from the molecular weight.'),
-      inputs: [
-        { key: 'value', label: t('Concentration'), units: 'conc', unit: 'mg/mL', value: '1' },
-        { key: 'mw', label: t('Molecular weight (g/mol)'), value: '66430' },
-      ],
-      compute(v) {
-        const mw = n(v, 'mw'); const fam = FAMILY[v.unit.value]; const x = b(v, 'value');
-        if (!ok(mw) || !ok(x)) return { hint: t('A concentration and a molecular weight.') };
-        if (fam === 'mass') return { lines: [L(t('Molar'), show(x / mw, 'molar'), true)] };
-        if (fam === 'molar') return { lines: [L(t('Mass per volume'), show(x * mw, 'massconc', ['mg/mL', 'µg/mL', 'ng/mL']), true)] };
-        return { error: t('Give a molar or a mass-per-volume concentration.') };
-      },
-    },
-    {
-      id: 'buffer', group: t('Solutions & buffers'), title: t('Buffer pH (Henderson–Hasselbalch)'),
-      blurb: t('How much of the acid and base forms make a buffer of this pH, at its temperature.'),
+      id: 'buffer',
       inputs: [
         { key: 'buffer', label: t('Buffer'), type: 'select', options: [...opt(BUFFERS), ['custom', t('Other (give its pKa)')]] },
         { key: 'pka', label: t('pKa at 25 °C (for Other)') },
@@ -417,39 +453,41 @@
         const out = {
           lines: [
             L(t('pKa of %(buffer)s at %(temp)s °C', { buffer: t(buf[0]), temp: fmt(temp) }), fmt(pka, 3)),
-            L(t('Base : acid'), `${fmt(baseFrac / (1 - baseFrac), 3)} : 1`, true),
-            L(t('Base form'), ok(mol) ? `${fmt(baseFrac * 100, 3)} % · ${show(mol * baseFrac, 'amount')}` : `${fmt(baseFrac * 100, 3)} %`),
-            L(t('Acid form'), ok(mol) ? `${fmt((1 - baseFrac) * 100, 3)} % · ${show(mol * (1 - baseFrac), 'amount')}` : `${fmt((1 - baseFrac) * 100, 3)} %`),
+            L(t('Base : acid'), `${fmt(baseFrac / (1 - baseFrac), 3)} : 1`),
           ],
           notes: [], warnings: [],
         };
+        const how = custom ? null : buf[3];
+        if (ok(mol) && how && how.weigh) {
+          const [form, mw] = how.weigh;
+          const [name, molar] = TITRANTS[how.titrant];
+          const titrant = how.titrant === 'HCl' ? mol * (1 - baseFrac) : mol * baseFrac;
+          out.lines.unshift(
+            L(t('Weigh'), `${show(mol * mw, 'mass')} ${t(form)}`, true),
+            L(t('Titrate with about'), `${show(titrant / molar, 'volume')} ${name}`, true),
+            L(t('…or 1 M %(titrant)s', { titrant: how.titrant }), show(titrant, 'volume')),
+            L(t('Then make up to'), show(b(v, 'volume'), 'volume')),
+          );
+          out.notes.push(t('Dissolve in about 80 % of the volume, bring to pH with the meter, then make up to volume. Set the pH at the temperature you use it.'));
+        } else if (ok(mol) && how && how.pair) {
+          const [[acid, mwA, liquid], [base, mwB]] = how.pair;
+          const molA = mol * (1 - baseFrac); const molB = mol * baseFrac;
+          out.lines.unshift(
+            L(t(acid), liquid ? `${show(molA / liquid, 'volume')} (${show(molA * mwA, 'mass')})` : show(molA * mwA, 'mass'), true),
+            L(t(base), show(molB * mwB, 'mass'), true),
+            L(t('Then make up to'), show(b(v, 'volume'), 'volume')),
+          );
+          out.notes.push(t('Mix the two, check the pH with the meter, and adjust with a little of either.'));
+        } else if (ok(mol)) {
+          out.lines.push(L(t('Base form'), show(mol * baseFrac, 'amount')), L(t('Acid form'), show(mol * (1 - baseFrac), 'amount')));
+        }
         if (Math.abs(ph - pka) > 1) out.warnings.push(t('pH %(ph)s is more than one unit from the pKa: %(buffer)s buffers poorly there.', { ph: fmt(ph, 3), buffer: t(buf[0]) }));
-        if (buf[0] === 'Tris' && ok(mol)) out.notes.push(t('Tris: weigh %(mass)s of Tris base and titrate with about %(amount)s HCl (%(volume)s of 1 M), then make up to volume. Set the pH at the temperature you use it.',
-          { mass: show(mol * 121.14, 'mass'), amount: show(mol * (1 - baseFrac), 'amount'), volume: show(mol * (1 - baseFrac), 'volume') }));
         out.notes.push(t('The equation ignores ionic strength; check the pH with a meter.'));
         return out;
       },
     },
     {
-      id: 'osmolarity', group: t('Solutions & buffers'), title: t('Osmolarity'),
-      blurb: t('One solute a line: its name, concentration in mM and the particles it gives (NaCl 2, glucose 1).'),
-      inputs: [{ key: 'list', label: t('Solutes'), type: 'textarea', value: 'NaCl 137 2\nKCl 2.7 2\nNa2HPO4 10 3\nKH2PO4 1.8 2' }],
-      compute(v) {
-        const rows = lines(v.raw.list).map(row).filter((r) => r.nums.length >= 1);
-        if (!rows.length) return { hint: t('Name, mM and particles, one solute a line.') };
-        let total = 0;
-        const table = rows.map((r) => {
-          const i = r.nums.length > 1 ? r.nums[1] : 1;
-          total += r.nums[0] * i;
-          return [r.name || '—', fmt(r.nums[0]), fmt(i), fmt(r.nums[0] * i)];
-        });
-        return { lines: [L(t('Osmolarity (ideal)'), `${fmt(total)} mOsm/L`, true)], table: { head: [t('Solute'), 'mM', t('Particles'), 'mOsm/L'], rows: table },
-          notes: [t('Real solutions are about 7 % lower (osmotic coefficient ≈ 0.93); cells like 280–300 mOsm/kg.')] };
-      },
-    },
-    {
-      id: 'saltform', group: t('Solutions & buffers'), title: t('Another form of a chemical'),
-      blurb: t('A recipe for the anhydrous form, and you have the hydrate (or another salt): weigh this much.'),
+      id: 'saltform',
       inputs: [
         { key: 'mass', label: t('Mass in the recipe'), units: 'mass', unit: 'g', value: '1' },
         { key: 'mw1', label: t('MW of the form in the recipe'), value: '95.21' },
@@ -461,10 +499,33 @@
       },
     },
 
+    {
+      id: 'fromconc',
+      inputs: [
+        { key: 'reagent', label: t('Reagent'), type: 'select', options: REAGENTS.map((r, i) => [String(i), `${t(r[0])} (${fmt(r[1])} %)`]) },
+        { key: 'pct', label: t('Bottle strength (% w/w, blank: usual)') },
+        { key: 'want', label: t('Wanted'), units: 'molar', unit: 'M', value: '1' },
+        { key: 'volume', label: t('Final volume'), units: 'volume', unit: 'mL', value: '100' },
+      ],
+      compute(v) {
+        const r = REAGENTS[Number(v.raw.reagent || 0)];
+        const pct = ok(n(v, 'pct')) ? n(v, 'pct') : r[1];
+        const molar = pct / 100 * r[2] * 1000 / r[3];
+        const add = b(v, 'want') * b(v, 'volume') / molar;
+        if (!ok(add)) return { lines: [L(t('The bottle is'), `${fmt(molar, 3)} M`)], hint: t('The strength wanted and the volume.') };
+        const out = { lines: [L(t('Concentrate to add'), show(add, 'volume'), true), L(t('Water'), show(b(v, 'volume') - add, 'volume')),
+          L(t('The bottle is'), `${fmt(molar, 3)} M`)], notes: [], warnings: [] };
+        if (add > b(v, 'volume')) return { error: t('Stronger than the bottle (%(m)s M).', { m: fmt(molar, 3) }) };
+        if (r[4] === 'acid') out.warnings.push(t('Add the acid to the water, slowly, in a fume hood; never water to acid.'));
+        if (r[4] === 'base') out.warnings.push(t('It heats as it dilutes: add it to cold water slowly.'));
+        out.notes.push(t('From %(pct)s % w/w and a density of %(d)s g/mL; a bottle’s label gives its own.', { pct: fmt(pct), d: fmt(r[2]) }));
+        return out;
+      },
+    },
+
     /* ================================================= DNA and RNA */
     {
-      id: 'a260', group: t('DNA & RNA'), title: t('Nucleic acid from A₂₆₀'),
-      blurb: t('Concentration from a spectrophotometer reading, and what the purity ratios say.'),
+      id: 'a260',
       inputs: [
         { key: 'kind', label: t('Kind'), type: 'select', options: [['50', t('dsDNA (50)')], ['40', t('RNA (40)')], ['33', t('ssDNA (33)')], ['20', t('Oligo (≈ 20–33)')]] },
         { key: 'a260', label: 'A₂₆₀' },
@@ -492,13 +553,14 @@
       },
     },
     {
-      id: 'dnamoles', group: t('DNA & RNA'), title: t('DNA mass ↔ moles ↔ copies'),
-      blurb: t('ng of a plasmid or fragment to pmol and copy number, and back.'),
+      id: 'dnamoles',
       inputs: [
         { key: 'kind', label: t('Kind'), type: 'select', options: [['ds', 'dsDNA'], ['ss', 'ssDNA'], ['rna', 'RNA']] },
         { key: 'length', label: t('Length (bp or nt)'), value: '5000' },
         { key: 'mass', label: t('Mass'), units: 'mass', unit: 'ng', value: '100' },
         { key: 'moles', label: t('…or moles'), units: 'amount', unit: 'pmol' },
+        { key: 'conc', label: t('Concentration (ng/µL, optional)') },
+        { key: 'want', label: t('Amount wanted (fmol, optional)') },
       ],
       compute(v) {
         const len = n(v, 'length');
@@ -506,13 +568,18 @@
         const mw = { ds: len * 617.96 + 36.04, ss: len * 308.97 + 18.02, rna: len * 321.47 + 18.02 }[v.raw.kind || 'ds'];
         let mol = b(v, 'moles'); let mass = b(v, 'mass');
         if (ok(mass)) mol = mass / mw; else if (ok(mol)) mass = mol * mw; else return { hint: t('A mass or an amount in moles.') };
-        return { lines: [L(t('Molecular weight'), `${fmt(mw)} g/mol`), L(t('Mass'), show(mass, 'mass'), true),
+        const out = { lines: [L(t('Molecular weight'), `${fmt(mw)} g/mol`), L(t('Mass'), show(mass, 'mass'), true),
           L(t('Moles'), show(mol, 'amount'), true), L(t('Copies'), fmt(mol * 6.02214076e23, 3), true)] };
+        const nM = n(v, 'conc') / mw * 1e6;                 // ng/µL is mg/L
+        if (ok(nM)) {
+          out.lines.push(L(t('Molar concentration'), `${fmt(nM)} nM`, true));
+          if (ok(n(v, 'want'))) out.lines.push(L(t('Volume for %(fmol)s fmol', { fmol: fmt(n(v, 'want')) }), `${fmt(n(v, 'want') / nM)} µL`, true));
+        }
+        return out;
       },
     },
     {
-      id: 'oligo', group: t('DNA & RNA'), title: t('Oligo: Tm, GC, MW, resuspension'),
-      blurb: t('Nearest-neighbour Tm (SantaLucia) for a primer in excess, as the Primers database works it out.'),
+      id: 'oligo',
       inputs: [
         { key: 'seq', label: t('Sequence 5′→3′'), type: 'text', value: 'GTAAAACGACGGCCAGT' },
         { key: 'na', label: 'Na⁺ (mM)', value: '50' },
@@ -520,6 +587,8 @@
         { key: 'nmol', label: t('Delivered (nmol, optional)') },
         { key: 'stock', label: t('Stock wanted (µM)'), value: '100' },
         { key: 'seq2', label: t('Its partner (optional)'), type: 'text' },
+        { key: 'pol', label: t('Polymerase'), type: 'select', options: [['taq', 'Taq'], ['hf', 'Q5 / Phusion']] },
+        { key: 'amplicon', label: t('Product length (bp, optional)') },
       ],
       compute(v) {
         const seq = cleanDna(v.raw.seq);
@@ -539,35 +608,85 @@
           const tm2 = dnaTm(partner, (n(v, 'na') || 50) / 1000, (n(v, 'primer') || 250) * 1e-9);
           if (ok(tm) && ok(tm2)) {
             out.lines.push(L(t('Partner Tm'), `${fmt(tm2, 3)} °C`));
-            out.lines.push(L(t('Annealing, to start'), `${fmt(Math.min(tm, tm2) - 3, 3)} °C`, true));
+            // Taq anneals below the lower Tm; Q5 and Phusion buffers raise it,
+            // so their makers anneal above it.
+            const hf = v.raw.pol === 'hf';
+            const ta = Math.min(tm, tm2) + (hf ? 3 : -5);
+            out.lines.push(L(t('Annealing, to start'), `${fmt(Math.min(ta, 72), 3)} °C`, true));
+            out.notes.push(hf ? t('Q5 / Phusion: the lower Tm + 3 °C. Their makers’ calculators allow for the buffer and can differ by a few degrees; above 72 °C, run a two-step PCR at 72 °C.')
+              : t('Taq: the lower Tm − 5 °C.'));
             if (Math.abs(tm - tm2) > 5) out.warnings.push(t('The two Tm differ by %(diff)s °C (aim for within 5).', { diff: fmt(Math.abs(tm - tm2), 2) }));
           }
+        }
+        const bp = n(v, 'amplicon');
+        if (bp > 0) {
+          const perKb = v.raw.pol === 'hf' ? 30 : 60;
+          out.lines.push(L(t('Extension'), `${fmt(Math.max(v.raw.pol === 'hf' ? 10 : 30, Math.ceil(bp / 1000 * perKb / 5) * 5))} s`, true));
+          out.notes.push(v.raw.pol === 'hf' ? t('Extension at 72 °C, 30 s per kb (20 s per kb from a plasmid).') : t('Extension at 72 °C, 1 min per kb.'));
         }
         return out;
       },
     },
     {
-      id: 'ligation', group: t('DNA & RNA'), title: t('Ligation: insert to vector'),
-      blurb: t('ng of insert for a molar ratio to the vector.'),
+      id: 'digest',
+      inputs: [
+        { key: 'ug', label: t('DNA (µg)'), value: '1' }, { key: 'conc', label: t('DNA concentration (ng/µL)'), value: '200' },
+        { key: 'e1', label: t('First enzyme (U/µL)'), value: '20' }, { key: 'e2', label: t('Second enzyme (U/µL, blank: none)'), value: '20' },
+        { key: 'units', label: t('Units per µg'), value: '10', hint: t('1 U cuts 1 µg in an hour; 10 U is plenty.') },
+        { key: 'rxn', label: t('Reaction (µL)'), value: '50' },
+      ],
+      compute(v) {
+        const ug = n(v, 'ug'); const rxn = n(v, 'rxn'); const units = n(v, 'units') || 10;
+        const dna = ug * 1000 / n(v, 'conc');
+        if (!ok(dna) || !ok(rxn) || !ok(n(v, 'e1'))) return { hint: t('DNA, its concentration, an enzyme and the reaction volume.') };
+        const enzymes = [n(v, 'e1'), n(v, 'e2')].filter((u) => u > 0).map((u) => ug * units / u);
+        const buffer = rxn / 10;
+        const water = rxn - dna - buffer - enzymes.reduce((a, x) => a + x, 0);
+        const rows = [[t('DNA'), fmt(dna)], [t('10× buffer'), fmt(buffer)],
+          ...enzymes.map((ul, i) => [t('Enzyme %(n)s', { n: i + 1 }), fmt(ul)]), [t('Water'), water < 0 ? '—' : fmt(water)], [t('In all'), fmt(rxn)]];
+        const glycerol = enzymes.reduce((a, x) => a + x, 0) * 0.5 / rxn * 100;
+        const out = { lines: [L(t('Water'), water < 0 ? '—' : `${fmt(water)} µL`, true), L(t('Glycerol'), `${fmt(glycerol, 2)} %`)],
+          table: { head: ['', 'µL'], rows }, warnings: [], notes: [t('Add the enzymes last; 1 h at the enzyme’s temperature (usually 37 °C).')] };
+        if (water < 0) out.warnings.push(t('More than the reaction holds: use a bigger reaction or more concentrated DNA.'));
+        if (glycerol > 5) out.warnings.push(t('Over 5 % glycerol invites star activity: use less enzyme or a bigger reaction.'));
+        enzymes.forEach((ul, i) => { if (ul < 0.5) out.notes.push(t('Enzyme %(n)s: under 0.5 µL; 0.5–1 µL is fine, extra enzyme does no harm in an hour.', { n: i + 1 })); });
+        return out;
+      },
+    },
+    {
+      id: 'ligation',
       inputs: [
         { key: 'vng', label: t('Vector (ng)'), value: '50' }, { key: 'vbp', label: t('Vector length (bp)'), value: '5000' },
         { key: 'ibp', label: t('Insert length (bp)'), value: '1000' }, { key: 'ratio', label: t('Insert : vector'), value: '3' },
         { key: 'iconc', label: t('Insert concentration (ng/µL, optional)') },
+        { key: 'vconc', label: t('Vector concentration (ng/µL, optional)') },
+        { key: 'rxn', label: t('Reaction'), type: 'select', options: [['20', '20 µL'], ['10', '10 µL']] },
       ],
       compute(v) {
         const ng = n(v, 'vng') * n(v, 'ibp') / n(v, 'vbp') * n(v, 'ratio');
         if (!ok(ng)) return { hint: t('Vector amount, both lengths and a ratio.') };
         const fmolV = n(v, 'vng') / (n(v, 'vbp') * 617.96 + 36.04) * 1e6;
-        const out = { lines: [L(t('Insert'), `${fmt(ng)} ng`, true), L(t('Vector'), `${fmt(fmolV)} fmol`), L(t('Insert'), `${fmt(fmolV * n(v, 'ratio'))} fmol`)] };
-        if (ok(n(v, 'iconc'))) out.lines.push(L(t('Insert to add'), `${fmt(ng / n(v, 'iconc'))} µL`, true));
+        const out = { lines: [L(t('Insert'), `${fmt(ng)} ng`, true), L(t('Vector, in moles'), `${fmt(fmolV)} fmol`), L(t('Insert, in moles'), `${fmt(fmolV * n(v, 'ratio'))} fmol`)], warnings: [] };
+        const iul = ng / n(v, 'iconc'); const vul = n(v, 'vng') / n(v, 'vconc');
+        if (ok(iul)) out.lines.push(L(t('Insert to add'), `${fmt(iul)} µL`, true));
+        if (ok(iul) && ok(vul)) {
+          const rxn = Number(v.raw.rxn || 20); const buffer = rxn / 10; const ligase = 1;
+          const water = rxn - iul - vul - buffer - ligase;
+          if (water < 0) out.warnings.push(t('The DNA is more than the reaction holds: use more concentrated DNA or a bigger reaction.'));
+          out.table = { head: ['', 'µL'], rows: [[t('Vector'), fmt(vul)], [t('Insert'), fmt(iul)], [t('10× T4 ligase buffer'), fmt(buffer)],
+            [t('T4 DNA ligase'), fmt(ligase)], [t('Water'), water < 0 ? '—' : fmt(water)], [t('In all'), fmt(rxn)]] };
+        }
+        [[t('Insert'), iul], [t('Vector'), vul]].forEach(([what, ul]) => {
+          if (ok(ul) && ul < 0.5) out.warnings.push(t('%(what)s: under 0.5 µL is hard to pipette; dilute it 1:10 first.', { what }));
+        });
         return out;
       },
     },
     {
-      id: 'assembly', group: t('DNA & RNA'), title: t('HiFi / Gibson assembly'),
-      blurb: t('One fragment a line: name, length (bp) and ng/µL; the first is the vector.'),
+      id: 'assembly',
       inputs: [
-        { key: 'list', label: t('Fragments'), type: 'textarea', value: 'pUC19 (cut) 2686 45\ninsert A 1200 38\ninsert B 800 52' },
+        { key: 'list', label: t('Fragments'), type: 'textarea', value: 'pUC19 (cut) 2686 45\ninsert A 1200 38\ninsert B 800 52',
+          hint: t('One a line: name, length (bp), ng/µL. The first is the vector.') },
         { key: 'vpmol', label: t('Vector (pmol)'), value: '0.05' },
         { key: 'ratio', label: t('Each insert : vector'), value: '2' },
         { key: 'rxn', label: t('Reaction volume (µL)'), value: '20' },
@@ -585,17 +704,27 @@
         });
         const rxn = n(v, 'rxn') || 20;
         const out = { lines: [L(t('DNA in total'), `${fmt(total)} µL`, true), L(t('2× master mix'), `${fmt(rxn / 2)} µL`), L(t('Water'), total <= rxn / 2 ? `${fmt(rxn / 2 - total)} µL` : '—')],
-          table: { head: [t('Fragment'), t('Amount'), t('Mass'), t('Volume')], rows }, warnings: [] };
+          table: { head: [t('Fragment'), t('Amount'), t('Mass'), t('Volume')], rows }, warnings: [], notes: [] };
         if (total > rxn / 2) out.warnings.push(t('The DNA is more than half the reaction (%(half)s µL): concentrate it or lower the amounts.', { half: fmt(rxn / 2) }));
+        // NEB's ranges for HiFi: 0.03–0.2 pmol in all for 2–3 fragments,
+        // 0.2–0.5 pmol for 4–6.
+        const pmol = frags.reduce((a, f, i) => a + (n(v, 'vpmol') || 0.05) * (i ? n(v, 'ratio') || 2 : 1), 0);
+        const most = frags.length <= 3 ? 0.2 : 0.5;
+        if (pmol > most) out.warnings.push(t('%(pmol)s pmol of DNA in all: more than %(most)s pmol for %(n)s fragments lowers the yield.', { pmol: fmt(pmol, 3), most: fmt(most), n: frags.length }));
+        frags.forEach((f, i) => {
+          if (f.nums[0] < 200) out.notes.push(t('%(name)s is under 200 bp: use it at 5× the vector.', { name: f.name || t('Fragment %(n)s', { n: i + 1 }) }));
+          const ul = (n(v, 'vpmol') || 0.05) * (i ? n(v, 'ratio') || 2 : 1) * 1e-12 * (f.nums[0] * 617.96 + 36.04) * 1e9 / f.nums[1];
+          if (ul < 0.5) out.warnings.push(t('%(what)s: under 0.5 µL is hard to pipette; dilute it 1:10 first.', { what: f.name || t('Fragment %(n)s', { n: i + 1 }) }));
+        });
         return out;
       },
     },
     {
-      id: 'pcrmix', group: t('DNA & RNA'), title: t('PCR / qPCR master mix'),
-      blurb: t('One component a line with its µL per reaction; the template is added to each tube after.'),
+      id: 'pcrmix',
       inputs: [
         { key: 'n', label: t('Reactions'), value: '12' }, { key: 'extra', label: t('Extra (%)'), value: '10' },
-        { key: 'list', label: t('Per reaction'), type: 'textarea', value: '2× master mix 10\nForward primer 10 µM 0.8\nReverse primer 10 µM 0.8\nWater 6.4' },
+        { key: 'list', label: t('Per reaction'), type: 'textarea', value: '2× master mix 10\nForward primer 10 µM 0.8\nReverse primer 10 µM 0.8\nWater 6.4',
+          hint: t('One component a line, then its µL per reaction.') },
         { key: 'template', label: t('Template per reaction (µL)'), value: '2' },
       ],
       compute(v) {
@@ -606,14 +735,14 @@
         const rows = comps.map((c) => { const u = c.nums[c.nums.length - 1]; per += u; return [c.name, fmt(u), fmt(u * k)]; });
         rows.push([t('Mix'), fmt(per), fmt(per * k)]);
         return { lines: [L(t('Mix into each tube'), `${fmt(per)} µL`, true), L(t('Then template'), `${fmt(n(v, 'template') || 0)} µL`), L(t('Each reaction'), `${fmt(per + (n(v, 'template') || 0))} µL`)],
-          table: { head: [t('Component'), t('µL / reaction'), t('µL for %(n)s', { n: fmt(k, 3) })], rows } };
+          table: { head: [t('Component'), t('µL / reaction'), t('µL for %(n)s + %(extra)s %', { n: fmt(n(v, 'n')), extra: fmt(n(v, 'extra') || 0) })], rows } };
       },
     },
     {
-      id: 'qpcreff', group: t('DNA & RNA'), title: t('qPCR efficiency from a standard curve'),
-      blurb: t('One standard a line: its amount (any unit, or copies) and its Ct. Or just the slope.'),
+      id: 'qpcreff',
       inputs: [
-        { key: 'list', label: t('Standards'), type: 'textarea', value: '100000 17.1\n10000 20.5\n1000 23.9\n100 27.3\n10 30.7' },
+        { key: 'list', label: t('Standards'), type: 'textarea', value: '100000 17.1\n10000 20.5\n1000 23.9\n100 27.3\n10 30.7',
+          hint: t('One standard a line: its amount (any unit, or copies), then its Ct.') },
         { key: 'slope', label: t('…or the slope') },
       ],
       compute(v) {
@@ -629,8 +758,7 @@
       },
     },
     {
-      id: 'ddct', group: t('DNA & RNA'), title: t('ΔΔCt fold change'),
-      blurb: t('Mean Ct of the target and the reference gene, in the control and the treated sample.'),
+      id: 'ddct',
       inputs: [
         { key: 'tc', label: t('Target, control'), value: '25.0' }, { key: 'rc', label: t('Reference, control'), value: '18.1' },
         { key: 'tt', label: t('Target, treated'), value: '22.1' }, { key: 'rt', label: t('Reference, treated'), value: '18.0' },
@@ -642,45 +770,96 @@
         const ddct = (tt - rt) - (tc - rc);
         const et = 1 + (n(v, 'et') || 100) / 100; const er = 1 + (n(v, 'er') || 100) / 100;
         const pfaffl = et ** (tc - tt) / er ** (rc - rt);
-        return { lines: [L(t('ΔCt control'), fmt(tc - rc, 4)), L(t('ΔCt treated'), fmt(tt - rt, 4)), L('ΔΔCt', fmt(ddct, 4)),
-          L(t('Fold change (2^−ΔΔCt)'), fmt(2 ** -ddct, 4), true), L(t('Fold change, with efficiencies (Pfaffl)'), fmt(pfaffl, 4))] };
+        const out = { lines: [L(t('ΔCt control'), fmt(tc - rc, 4)), L(t('ΔCt treated'), fmt(tt - rt, 4)), L('ΔΔCt', fmt(ddct, 4)),
+          L(t('Fold change (2^−ΔΔCt)'), fmt(2 ** -ddct, 4), true)], warnings: [] };
+        if (et !== 2 || er !== 2) out.lines.push(L(t('Fold change, with efficiencies (Pfaffl)'), fmt(pfaffl, 4), true));
+        if ([tc, rc, tt, rt].some((c) => c > 35)) out.warnings.push(t('A Ct above 35 is near the detection limit: the fold change is unreliable.'));
+        return out;
       },
     },
+
     {
-      id: 'transformation', group: t('DNA & RNA'), title: t('Transformation efficiency'),
-      blurb: t('Colonies per µg of DNA, from a plate of a known part of the transformation.'),
+      id: 'ddcttable',
       inputs: [
-        { key: 'colonies', label: t('Colonies counted'), value: '150' }, { key: 'ng', label: t('DNA used (ng)'), value: '0.1' },
-        { key: 'plated', label: t('Volume plated (µL)'), value: '100' }, { key: 'total', label: t('Total after recovery (µL)'), value: '1000' },
-        { key: 'dil', label: t('Dilution before plating (×)'), value: '1' },
+        { key: 'list', label: t('Ct values'), type: 'textarea', value: 'Control GAPDH 18.1\nControl GAPDH 18.2\nControl GAPDH 18.0\nControl MYC 25.0\nControl MYC 25.2\nControl MYC 24.9\nTreated GAPDH 18.0\nTreated GAPDH 18.1\nTreated GAPDH 17.9\nTreated MYC 22.1\nTreated MYC 22.3\nTreated MYC 22.0',
+          hint: t('One well a line: sample, gene, Ct. Paste from a spreadsheet (tabs) when a sample name has spaces.') },
+        { key: 'control', label: t('Control sample (blank: the first)') },
+        { key: 'ref', label: t('Reference gene (blank: the first)') },
       ],
       compute(v) {
-        const frac = n(v, 'plated') / n(v, 'total') / (n(v, 'dil') || 1);
-        const eff = n(v, 'colonies') / (n(v, 'ng') * 1e-3 * frac);
-        if (!ok(eff)) return { hint: t('Colonies, DNA and volumes.') };
-        return { lines: [L(t('Efficiency'), `${fmt(eff, 3)} cfu/µg`, true), L(t('DNA on the plate'), `${fmt(n(v, 'ng') * frac * 1000, 3)} pg`)] };
+        // A line is sample, gene, Ct: by tabs when pasted from a sheet, else
+        // the last word before the Ct is the gene and the rest the sample.
+        const wells = lines(v.raw.list).map((line) => {
+          const cells = line.includes('\t') ? line.split('\t').map((c) => c.trim()).filter(Boolean) : line.split(/\s+/);
+          const ct = num(cells.pop());
+          const gene = cells.pop();
+          return { sample: cells.join(' '), gene, ct };
+        }).filter((w) => w.sample && w.gene && (ok(w.ct) || /undet|^n\/?a$/i.test(String(w.ct))));
+        const used = wells.filter((w) => ok(w.ct));
+        if (!used.length) return { hint: t('Sample, gene and Ct, one well a line.') };
+        const samples = [...new Set(used.map((w) => w.sample))];
+        const genes = [...new Set(used.map((w) => w.gene))];
+        const control = samples.find((x) => x.toLowerCase() === String(v.raw.control || '').trim().toLowerCase()) || samples[0];
+        const ref = genes.find((x) => x.toLowerCase() === String(v.raw.ref || '').trim().toLowerCase()) || genes[0];
+        if (genes.length < 2) return { hint: t('A target gene and a reference gene.') };
+        const stat = (sample, gene) => {
+          const cts = used.filter((w) => w.sample === sample && w.gene === gene).map((w) => w.ct);
+          if (!cts.length) return null;
+          const m = mean(cts);
+          const sd = cts.length > 1 ? Math.sqrt(cts.reduce((a, c) => a + (c - m) ** 2, 0) / (cts.length - 1)) : 0;
+          return { m, sd, n: cts.length, spread: Math.max(...cts) - Math.min(...cts) };
+        };
+        const warnings = [];
+        const flagged = new Set();
+        samples.forEach((sm) => genes.forEach((g) => {
+          const st = stat(sm, g);
+          if (st && st.spread > 0.5) flagged.add(t('%(sample)s %(gene)s: replicates %(spread)s cycles apart.', { sample: sm, gene: g, spread: fmt(st.spread, 2) }));
+          if (st && st.m > 35) flagged.add(t('%(sample)s %(gene)s: mean Ct %(ct)s, near the detection limit.', { sample: sm, gene: g, ct: fmt(st.m, 3) }));
+        }));
+        warnings.push(...flagged);
+        const rows = []; const lines_ = [];
+        genes.filter((g) => g !== ref).forEach((g) => {
+          const c0 = stat(control, g); const r0 = stat(control, ref);
+          if (!c0 || !r0) return;
+          const dctControl = c0.m - r0.m;
+          samples.forEach((sm) => {
+            const tg = stat(sm, g); const rf = stat(sm, ref);
+            if (!tg || !rf) return;
+            const dct = tg.m - rf.m; const sd = Math.sqrt(tg.sd ** 2 + rf.sd ** 2);
+            const ddct = dct - dctControl; const fold = 2 ** -ddct;
+            rows.push([sm, g, fmt(dct, 3), fmt(ddct, 3), fmt(fold, 3), `${fmt(2 ** -(ddct + sd), 3)}–${fmt(2 ** -(ddct - sd), 3)}`]);
+            if (sm !== control) lines_.push(L(`${sm} · ${g}`, t('%(fold)s-fold', { fold: fmt(fold, 3) }), true));
+          });
+        });
+        if (!rows.length) return { hint: t('The control sample needs the target and the reference gene.') };
+        return { lines: lines_.slice(0, 6), table: { head: [t('Sample'), t('Gene'), 'ΔCt', 'ΔΔCt', t('Fold change'), t('Range (± SD)')], rows }, warnings,
+          notes: [t('Relative to %(control)s, normalised to %(ref)s; 2^−ΔΔCt, replicates averaged.', { control, ref })] };
       },
     },
 
     /* ================================================= Protein */
     {
-      id: 'a280', group: t('Protein'), title: t('Protein from A₂₈₀'),
-      blurb: t('µM and mg/mL from the reading, with ε and MW given or worked out from the sequence.'),
+      id: 'a280',
       inputs: [
         { key: 'seq', label: t('Sequence (optional)'), type: 'textarea', placeholder: t('MKV… (FASTA is fine)') },
         { key: 'eps', label: 'ε₂₈₀ (M⁻¹cm⁻¹)' }, { key: 'mw', label: 'MW (g/mol)' },
         { key: 'a280', label: 'A₂₈₀' }, { key: 'path', label: t('Path (cm)'), value: '1' }, { key: 'dil', label: t('Dilution (×)'), value: '1' },
+        { key: 'cys', label: t('Cysteines (for ε from the sequence)'), type: 'select', options: [['paired', t('Paired (no reducing agent)')], ['reduced', t('Reduced (DTT, TCEP, β-ME)')]] },
       ],
       compute(v) {
         const seq = cleanProtein(v.raw.seq);
         const p = seq ? protein(seq) : null;
         if (seq && !p) return { error: t('The sequence has letters that are not amino acids.') };
-        const eps = ok(n(v, 'eps')) ? n(v, 'eps') : p && p.epsilon;
+        const fromSeq = p && (v.raw.cys === 'reduced' ? p.reduced : p.epsilon);
+        const eps = ok(n(v, 'eps')) ? n(v, 'eps') : fromSeq;
         const mw = ok(n(v, 'mw')) ? n(v, 'mw') : p && p.mw;
         const out = { lines: [], notes: [], warnings: [] };
         if (p) {
           out.notes.push(t('From the sequence: %(length)s aa, %(kda)s kDa, ε₂₈₀ %(eps)s (%(reduced)s reduced).',
             { length: p.length, kda: fmt(p.mw / 1000, 4), eps: fmt(p.epsilon), reduced: fmt(p.reduced) }));
+          if (!ok(n(v, 'eps')) && p.epsilon !== p.reduced) {
+            out.notes.push(v.raw.cys === 'reduced' ? t('Using the reduced ε.') : t('Using the ε with cysteines paired; pick Reduced for a buffer with DTT or TCEP.'));
+          }
           // A typed ε or MW wins over the sequence's: say so, not leave the
           // sequence's figure looking like the one used.
           if (ok(n(v, 'eps'))) out.notes.push(t('Worked out with the ε you typed (%(eps)s), not the sequence’s.', { eps: fmt(n(v, 'eps')) }));
@@ -695,8 +874,7 @@
       },
     },
     {
-      id: 'protparam', group: t('Protein'), title: t('Protein properties from the sequence'),
-      blurb: t('Length, MW, extinction coefficient, pI and charge at pH 7.'),
+      id: 'protparam',
       inputs: [{ key: 'seq', label: t('Sequence'), type: 'textarea', placeholder: t('One-letter code; a FASTA header is fine') }],
       compute(v) {
         const seq = cleanProtein(v.raw.seq);
@@ -709,13 +887,15 @@
       },
     },
     {
-      id: 'stdcurve', group: t('Protein'), title: t('Standard curve (BCA, Bradford, ELISA)'),
-      blurb: t('Standards as "concentration reading" a line, unknowns as "name reading", and read them off the curve.'),
+      id: 'stdcurve',
       inputs: [
-        { key: 'std', label: t('Standards'), type: 'textarea', value: '0 0.10\n125 0.21\n250 0.33\n500 0.55\n1000 0.98\n2000 1.62' },
-        { key: 'unk', label: t('Unknowns'), type: 'textarea', value: 'Lysate A 0.72\nLysate B 0.64' },
+        { key: 'std', label: t('Standards'), type: 'textarea', value: '0 0.10\n125 0.21\n250 0.33\n500 0.55\n1000 0.98\n2000 1.62',
+          hint: t('One a line: concentration, then its reading (or several replicate readings).') },
+        { key: 'unk', label: t('Unknowns'), type: 'textarea', value: 'Lysate A 0.72\nLysate B 0.64',
+          hint: t('One a line: name, then its reading (or several).') },
         { key: 'fit', label: t('Fit'), type: 'select', options: [['quad', t('Quadratic (BCA bends)')], ['lin', t('Straight line')]] },
         { key: 'dil', label: t('Unknowns diluted (×)'), value: '1' },
+        { key: 'unit', label: t('Standards in'), type: 'select', options: [['µg/mL', 'µg/mL'], ['mg/mL', 'mg/mL'], ['ng/mL', 'ng/mL'], ['pg/mL', 'pg/mL']] },
       ],
       compute(v) {
         // A standard is its concentration, then one reading or several
@@ -762,8 +942,9 @@
         }).filter((r) => r.readings.length).map((r) => {
           const y = mean(r.readings);
           if (y > top || y < bottom) warnings.push(t('%(name)s is outside the standards: dilute it and read again.', { name: r.name || fmt(y) }));
-          return [r.name || '—', fmt(y), fmt(inv(y)), fmt(inv(y) * dil)];
+          return dil === 1 ? [r.name || '—', fmt(y), fmt(inv(y))] : [r.name || '—', fmt(y), fmt(inv(y)), fmt(inv(y) * dil)];
         });
+        const unit = v.raw.unit || 'µg/mL';
         const term = (c, x) => (c === 0 || none(c, x === '' ? 0 : x === '·x' ? 1 : 2) ? '' : `${c < 0 ? ' − ' : ' + '}${fmt(Math.abs(c))}${x}`);
         const eq = quad ? `y = ${fmt(f.a)}${term(f.b, '·x')}${term(f.c, '·x²')}` : `y = ${fmt(f.slope)}·x${term(f.intercept, '')}`;
         reps.forEach((r) => {
@@ -773,12 +954,14 @@
           }
         });
         const notes = reps.length ? [t('Replicate readings are averaged.')] : [];
-        return { lines: [L(t('Fit'), eq), L('R²', fmt(f.r2, 4), true)], table: rows.length ? { head: [t('Sample'), t('Reading'), t('On the curve'), `× ${fmt(dil)}`], rows } : null, warnings, notes };
+        const mains = rows.slice(0, 8).map((r) => L(r[0], `${r[r.length - 1]} ${unit}`, true));
+        if (f.r2 < 0.98) warnings.push(t('R² %(r2)s: a standard is off; check it or leave it out.', { r2: fmt(f.r2, 3) }));
+        return { lines: [...mains, L(t('Fit'), eq), L('R²', fmt(f.r2, 4))],
+          table: rows.length ? { head: dil === 1 ? [t('Sample'), t('Reading'), unit] : [t('Sample'), t('Reading'), t('On the curve'), t('In the sample (× %(dil)s)', { dil: fmt(dil) })], rows } : null, warnings, notes };
       },
     },
     {
-      id: 'sdspage', group: t('Protein'), title: t('SDS-PAGE gel recipe'),
-      blurb: t('Resolving and stacking gels from 30 % acrylamide/bis, for a number of gels.'),
+      id: 'sdspage',
       inputs: [
         { key: 'pct', label: t('Resolving gel (%)'), value: '12' }, { key: 'gels', label: t('Gels'), value: '2' },
         { key: 'res', label: t('Resolving gel each (mL)'), value: '5' }, { key: 'stack', label: t('Stacking gel each (mL)'), value: '2' },
@@ -803,10 +986,10 @@
       },
     },
     {
-      id: 'loading', group: t('Protein'), title: t('Gel loading: µg per lane'),
-      blurb: t('One sample a line: its name and µg/µL (from BCA); the volume of sample, buffer and water for each lane.'),
+      id: 'loading',
       inputs: [
-        { key: 'list', label: t('Samples'), type: 'textarea', value: 'WT 2.48\nKO 2.31\nKO + drug 1.95' },
+        { key: 'list', label: t('Samples'), type: 'textarea', value: 'WT 2.48\nKO 2.31\nKO + drug 1.95',
+          hint: t('One a line: name, then µg/µL (from a BCA).') },
         { key: 'ug', label: t('µg per lane'), value: '30' }, { key: 'lane', label: t('Volume per lane (µL)'), value: '20' },
         { key: 'buf', label: t('Loading buffer (×)'), value: '4' },
       ],
@@ -815,19 +998,88 @@
         const ug = n(v, 'ug'); const lane = n(v, 'lane'); const bx = n(v, 'buf') || 4;
         if (!samples.length || !ok(ug) || !ok(lane)) return { hint: t('Samples with µg/µL, µg per lane and lane volume.') };
         const buf = lane / bx; const warnings = [];
+        const d1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
         const rows = samples.map((s) => {
-          const sv = ug / s.nums[s.nums.length - 1]; const water = lane - buf - sv;
-          if (water < 0) warnings.push(t('%(name)s: too dilute for %(ug)s µg in %(lane)s µL.', { name: s.name, ug: fmt(ug), lane: fmt(lane) }));
-          return [s.name, fmt(sv), fmt(buf), water < 0 ? '—' : fmt(water)];
+          const conc = s.nums[s.nums.length - 1];
+          const sv = ug / conc; const water = lane - buf - sv;
+          if (water < 0) {
+            warnings.push(t('%(name)s: too dilute for %(ug)s µg in %(lane)s µL; it can give %(most)s µg.', { name: s.name, ug: fmt(ug), lane: fmt(lane), most: fmt((lane - buf) * conc, 3) }));
+            return [s.name, d1(lane - buf), d1(buf), '0.0'];
+          }
+          return [s.name, d1(sv), d1(buf), d1(water)];
         });
         return { table: { head: [t('Sample'), t('Sample µL'), t('%(x)s× buffer µL', { x: fmt(bx) }), t('Water µL')], rows }, warnings };
       },
     },
 
+    {
+      id: 'normalise',
+      inputs: [
+        { key: 'list', label: t('Samples'), type: 'textarea', value: 'WT-1 412\nWT-2 388\nKO-1 256\nKO-2 97',
+          hint: t('One a line: name, then ng/µL.') },
+        { key: 'ng', label: t('Amount in each (ng)'), value: '1000' },
+        { key: 'vol', label: t('Volume of each (µL)'), value: '10' },
+      ],
+      compute(v) {
+        const samples = lines(v.raw.list).map(row).filter((r) => r.nums.length);
+        const want = n(v, 'ng'); const vol = n(v, 'vol');
+        if (!samples.length || !ok(want) || !ok(vol)) return { hint: t('Samples with ng/µL, the amount and the volume.') };
+        const d1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+        const warnings = [];
+        const rows = samples.map((s) => {
+          const conc = s.nums[s.nums.length - 1]; const sv = want / conc;
+          if (sv > vol) {
+            warnings.push(t('%(name)s: too dilute for %(ng)s ng in %(vol)s µL; it can give %(most)s ng.', { name: s.name, ng: fmt(want), vol: fmt(vol), most: fmt(conc * vol, 3) }));
+            return [s.name, d1(vol), '0.0'];
+          }
+          if (sv < 0.5) warnings.push(t('%(what)s: under 0.5 µL is hard to pipette; dilute it 1:10 first.', { what: s.name }));
+          return [s.name, d1(sv), d1(vol - sv)];
+        });
+        return { table: { head: [t('Sample'), t('Sample µL'), t('Water µL')], rows }, warnings,
+          notes: [t('The lowest sample sets the most you can use: %(most)s ng in %(vol)s µL.', { most: fmt(Math.min(...samples.map((s) => s.nums[s.nums.length - 1])) * vol, 3), vol: fmt(vol) })] };
+      },
+    },
+    {
+      id: 'concentrate',
+      inputs: [
+        { key: 'now', label: t('Concentration now (mg/mL)'), value: '1.2' },
+        { key: 'vol', label: t('Volume now'), units: 'volume', unit: 'mL', value: '10' },
+        { key: 'want', label: t('Wanted (mg/mL)'), value: '5' },
+        { key: 'recovery', label: t('Expected recovery (%)'), value: '90' },
+      ],
+      compute(v) {
+        const mg = n(v, 'now') * b(v, 'vol') * 1000;
+        const rec = (n(v, 'recovery') || 100) / 100;
+        const to = mg * rec / n(v, 'want') / 1000;               // L
+        if (!ok(to)) return { hint: t('Concentration and volume now, and the concentration wanted.') };
+        if (n(v, 'want') <= n(v, 'now')) return { error: t('Already at or above that: dilute instead.') };
+        return { lines: [L(t('Spin down to'), show(to, 'volume'), true), L(t('Protein now'), `${fmt(mg)} mg`), L(t('Expected after'), `${fmt(mg * rec)} mg`)],
+          notes: [t('Stop a little above the volume, mix, and measure (A₂₈₀) before going further; above about 10 mg/mL many proteins aggregate.')] };
+      },
+    },
+    {
+      id: 'dialysis',
+      inputs: [
+        { key: 'sample', label: t('Sample'), units: 'volume', unit: 'mL', value: '5' },
+        { key: 'buffer', label: t('Buffer each change'), units: 'volume', unit: 'mL', value: '1000' },
+        { key: 'changes', label: t('Changes'), value: '2' },
+        { key: 'start', label: t('What to remove, now (e.g. 250 mM imidazole)'), value: '250' },
+      ],
+      compute(v) {
+        const s0 = b(v, 'sample'); const buf = b(v, 'buffer'); const k = Math.round(n(v, 'changes')); const c0 = n(v, 'start');
+        if (!ok(s0) || !ok(buf) || !(k >= 1 && k <= 10) || !ok(c0)) return { hint: t('Sample and buffer volumes, the changes and the starting amount.') };
+        const f = s0 / (s0 + buf);
+        const rows = []; let c = c0;
+        for (let i = 1; i <= k; i += 1) { c *= f; rows.push([t('After change %(n)s', { n: i }), fmt(c, 3)]); }
+        return { lines: [L(t('Left at the end'), fmt(c, 3), true), L(t('Each change dilutes'), `1 : ${fmt(1 / f, 4)}`)],
+          table: { head: ['', t('Left (same unit)')], rows },
+          notes: [t('At equilibrium: give each change 2–4 h, the last overnight, with the buffer stirring.')] };
+      },
+    },
+
     /* ================================================= Cells */
     {
-      id: 'count', group: t('Cells'), title: t('Cell count (haemocytometer)'),
-      blurb: t('Live and dead cells counted over the large squares, with trypan blue.'),
+      id: 'count',
       inputs: [
         { key: 'live', label: t('Live cells counted'), value: '212' }, { key: 'dead', label: t('Dead (blue) counted'), value: '14' },
         { key: 'squares', label: t('Large squares counted'), value: '4' }, { key: 'dil', label: t('Dilution (trypan 1:1 = 2)'), value: '2' },
@@ -844,42 +1096,41 @@
       },
     },
     {
-      id: 'seeding', group: t('Cells'), title: t('Seeding plates'),
-      blurb: t('How much cell suspension and medium for a number of wells, by cells per well or per cm².'),
+      id: 'seeding',
       inputs: [
         { key: 'susp', label: t('Suspension (cells/mL)'), value: '1.2e6' },
-        { key: 'vessel', label: t('Vessel'), type: 'select', options: opt(VESSELS) },
+        { key: 'vessel', label: t('Vessel'), type: 'select', options: opt(VESSELS), value: '4' },
         { key: 'wells', label: t('Wells or flasks'), value: '6' },
         { key: 'per', label: t('Cells per well'), value: '3e5' }, { key: 'percm', label: t('…or cells per cm²') },
         { key: 'vol', label: t('Medium per well (mL, blank: usual)') }, { key: 'extra', label: t('Extra (%)'), value: '10' },
       ],
       compute(v) {
-        const vessel = VESSELS[Number(v.raw.vessel || 0)];
+        const vessel = VESSELS[Number(v.raw.vessel || 4)];
         const per = ok(n(v, 'percm')) ? n(v, 'percm') * vessel[1] : n(v, 'per');
         const wells = n(v, 'wells') * (1 + (n(v, 'extra') || 0) / 100);
         const vol = ok(n(v, 'vol')) ? n(v, 'vol') : vessel[2];
         const cells = per * wells; const susp = cells / n(v, 'susp');
         if (!ok(susp)) return { hint: t('Suspension density, cells per well and wells.') };
         const total = vol * wells;
-        const out = { lines: [L(t('Cells needed'), fmt(cells, 3)), L(t('Cell suspension'), `${fmt(susp)} mL`, true)], warnings: [] };
+        const ml = (x) => show(x * 1e-3, 'volume');
+        const out = { lines: [L(t('Cell suspension'), ml(susp), true)], warnings: [] };
         if (susp > total) {
           // No "−0.99 mL medium": say what would work instead.
-          out.warnings.push(t('The suspension alone (%(susp)s mL) is more than the wells hold (%(total)s mL): spin the cells down and resuspend at %(density)s cells/mL or more.',
-            { susp: fmt(susp), total: fmt(total), density: fmt(cells / total, 3) }));
+          out.warnings.push(t('The suspension alone (%(susp)s) is more than the wells hold (%(total)s): spin the cells down and resuspend at %(density)s cells/mL or more.',
+            { susp: ml(susp), total: ml(total), density: fmt(cells / total, 3) }));
         } else {
-          out.lines.push(L(t('Add medium to'), t('%(total)s mL (%(medium)s mL medium)', { total: fmt(total), medium: fmt(total - susp) }), true));
+          out.lines.push(L(t('Medium'), ml(total - susp), true), L(t('Together'), t('%(total)s, %(each)s a well', { total: ml(total), each: ml(vol) })));
         }
-        out.lines.push(L(t('Per well'), `${fmt(vol)} mL · ${fmt(per / vessel[1], 3)} cells/cm²`));
+        out.lines.push(L(t('Cells needed'), fmt(cells, 3)), L(t('Density'), `${fmt(per / vessel[1], 3)} cells/cm²`));
         return out;
       },
     },
     {
-      id: 'doubling', group: t('Cells'), title: t('Doubling time and growth'),
-      blurb: t('From two counts; and how many cells after a time.'),
+      id: 'doubling',
       inputs: [
         { key: 'n0', label: t('First count'), value: '2e5' }, { key: 'n1', label: t('Second count'), value: '1.6e6' },
         { key: 't', label: t('Time between'), units: 'time', unit: 'h', value: '72' },
-        { key: 'later', label: t('Predict after (optional)'), units: 'time', unit: 'h' },
+        { key: 'later', label: t('Cells this long after the second count (optional)'), units: 'time', unit: 'h' },
       ],
       compute(v) {
         const g = Math.log(n(v, 'n1') / n(v, 'n0')) / b(v, 't');         // per second
@@ -890,8 +1141,7 @@
       },
     },
     {
-      id: 'transfection', group: t('Cells'), title: t('Scale a transfection'),
-      blurb: t('From a condition that works in one vessel to another, by growth area.'),
+      id: 'transfection',
       inputs: [
         { key: 'from', label: t('Works in'), type: 'select', options: opt(VESSELS), value: '4' },
         { key: 'dna', label: t('DNA there (µg)'), value: '2.5' }, { key: 'reagent', label: t('Reagent there (µL)'), value: '7.5' },
@@ -912,8 +1162,38 @@
       },
     },
     {
-      id: 'moi', group: t('Cells'), title: t('Virus for a multiplicity of infection'),
-      blurb: t('Volume of virus for an MOI, from its titer.'),
+      id: 'split',
+      inputs: [
+        { key: 'susp', label: t('Suspension (cells/mL)'), value: '1e6' },
+        { key: 'vessel', label: t('Into'), type: 'select', options: opt(VESSELS), value: '10' },
+        { key: 'n', label: t('How many'), value: '1' },
+        { key: 'confl', label: t('Wanted confluence (%)'), value: '80' },
+        { key: 'days', label: t('In (days)'), value: '3' },
+        { key: 'dt', label: t('Doubling time (h)'), value: '24' },
+        { key: 'full', label: t('Cells/cm² when confluent'), value: '1e5', hint: t('About 1 × 10⁵ for many lines; more for HEK293, fewer for fibroblasts.') },
+        { key: 'now', label: t('Suspension you have (mL, optional)') },
+      ],
+      compute(v) {
+        const vessel = VESSELS[Number(v.raw.vessel || 10)];
+        const target = n(v, 'full') * vessel[1] * n(v, 'confl') / 100;
+        // Seeded cells settle for about a day before they grow.
+        const hours = Math.max(0, n(v, 'days') * 24 - 24);
+        const seed = target / 2 ** (hours / n(v, 'dt'));
+        const susp = seed / n(v, 'susp');                      // mL a vessel
+        if (!ok(susp) || !(n(v, 'dt') > 0)) return { hint: t('Suspension density, the day and the doubling time.') };
+        const each = vessel[2]; const many = n(v, 'n') || 1;
+        const out = { lines: [L(t('Cells to seed'), t('%(n)s per vessel', { n: fmt(seed, 3) }), true),
+          L(t('Suspension'), t('%(volume)s per vessel', { volume: show(susp * 1e-3, 'volume') }), true),
+          L(t('Medium'), t('%(volume)s per vessel', { volume: show(Math.max(0, each - susp) * 1e-3, 'volume') }))], warnings: [], notes: [] };
+        if (many > 1) out.lines.push(L(t('For %(n)s', { n: fmt(many) }), t('%(susp)s suspension, %(medium)s medium', { susp: show(susp * many * 1e-3, 'volume'), medium: show(Math.max(0, each - susp) * many * 1e-3, 'volume') })));
+        if (ok(n(v, 'now'))) out.lines.push(L(t('Split ratio'), `1 : ${fmt(n(v, 'now') / (susp * many), 3)}`));
+        if (susp > each) out.warnings.push(t('More suspension than the vessel holds: spin the cells down and resuspend in less.'));
+        out.notes.push(t('Allows a day for the cells to settle before they grow; growth slows as they near confluence.'));
+        return out;
+      },
+    },
+    {
+      id: 'moi',
       inputs: [
         { key: 'cells', label: t('Cells at infection'), value: '2e5' }, { key: 'moi', label: 'MOI', value: '5' },
         { key: 'titer', label: t('Titer (TU, PFU or vg per mL)'), value: '1e8' }, { key: 'wells', label: t('Wells'), value: '1' },
@@ -929,23 +1209,30 @@
       },
     },
     {
-      id: 'titer', group: t('Cells'), title: t('Lentivirus titer from % positive cells'),
-      blurb: t('Use a dilution that gave 1–20 % positive cells, so most had one integration.'),
+      id: 'titer',
       inputs: [
-        { key: 'cells', label: t('Cells at transduction'), value: '1e5' }, { key: 'pos', label: t('Positive (%)'), value: '12' },
-        { key: 'vol', label: t('Virus added (µL)'), value: '1' }, { key: 'dil', label: t('Its dilution (×)'), value: '1' },
+        { key: 'cells', label: t('Cells at transduction'), value: '1e5' },
+        { key: 'list', label: t('Wells'), type: 'textarea', value: '10 58\n1 12\n0.1 1.4',
+          hint: t('One well a line: µL of the virus stock added, then % positive.') },
       ],
       compute(v) {
-        const tu = n(v, 'cells') * n(v, 'pos') / 100 / (n(v, 'vol') * 1e-3 / (n(v, 'dil') || 1));
-        if (!ok(tu)) return { hint: t('Cells, % positive and the virus volume.') };
-        const out = { lines: [L(t('Titer'), `${fmt(tu, 3)} TU/mL`, true)], warnings: [] };
-        if (n(v, 'pos') > 20 || n(v, 'pos') < 1) out.warnings.push(t('Outside 1–20 % positive: the titer is under- or over-estimated.'));
+        const wells = lines(v.raw.list).map(row).filter((r) => r.nums.length >= 2).map((r) => ({ ul: r.nums[r.nums.length - 2], pos: r.nums[r.nums.length - 1] }));
+        const cells = n(v, 'cells');
+        if (!ok(cells) || !wells.length) return { hint: t('Cells, and µL and % positive for each well.') };
+        const titer = (w) => cells * w.pos / 100 / (w.ul * 1e-3);
+        // Only wells with 1–20 % positive: above that many cells carry two
+        // copies, below it the count is noise.
+        const good = wells.filter((w) => w.pos >= 1 && w.pos <= 20);
+        const use = good.length ? good : [wells.reduce((a, w) => (Math.abs(w.pos - 10) < Math.abs(a.pos - 10) ? w : a))];
+        const tu = mean(use.map(titer));
+        const out = { lines: [L(t('Titer'), `${fmt(tu, 3)} TU/mL`, true)], warnings: [],
+          table: { head: [t('µL'), t('Positive'), 'TU/mL', ''], rows: wells.map((w) => [fmt(w.ul), `${fmt(w.pos)} %`, fmt(titer(w), 3), use.includes(w) ? t('used') : '']) } };
+        if (!good.length) out.warnings.push(t('No well had 1–20 % positive: the titer is under- or over-estimated.'));
         return out;
       },
     },
     {
-      id: 'freezing', group: t('Cells'), title: t('Freezing cells down'),
-      blurb: t('Cells and freezing medium for a number of vials.'),
+      id: 'freezing',
       inputs: [
         { key: 'vials', label: t('Vials'), value: '6' }, { key: 'per', label: t('Cells per vial'), value: '2e6' },
         { key: 'vol', label: t('Per vial (mL)'), value: '1' }, { key: 'dmso', label: t('DMSO (%)'), value: '10' },
@@ -963,8 +1250,7 @@
       },
     },
     {
-      id: 'treat', group: t('Cells'), title: t('Treating cells: drug and vehicle'),
-      blurb: t('Stock to add to each well, and how much vehicle (DMSO, ethanol) the cells get.'),
+      id: 'treat',
       inputs: [
         { key: 'stock', label: t('Stock solution'), units: 'molar', unit: 'mM', value: '10' },
         { key: 'final', label: t('Final'), units: 'molar', unit: 'µM', value: '10' },
@@ -978,16 +1264,88 @@
         const out = { lines: [L(t('Stock per well'), show(add, 'volume'), true), L(t('For all wells'), show(add * (n(v, 'wells') || 1), 'volume')),
           L(t('Vehicle in the medium'), `${fmt(pct, 3)} %`)], warnings: [] };
         if (pct > 0.1) out.warnings.push(t('Over 0.1 % vehicle: many cells notice DMSO above that. Use a stronger stock.'));
-        if (add < 0.5e-6) out.warnings.push(t('Under 0.5 µL per well: dilute the stock in medium first and add more of it.'));
+        if (add < 0.5e-6) {
+          const k = 10 ** Math.ceil(Math.log10(1e-6 / add));
+          out.warnings.push(t('Under 0.5 µL per well: dilute the stock 1:%(k)s in medium first, then add %(volume)s of that to each well.', { k: fmt(k), volume: show(add * k, 'volume') }));
+        }
         out.notes = [t('Give the control wells the same volume of vehicle alone.')];
         return out;
       },
     },
 
+    {
+      id: 'doseseries',
+      inputs: [
+        { key: 'top', label: t('Top dose in the well'), units: 'molar', unit: 'µM', value: '10' },
+        { key: 'fold', label: t('Fold per step'), value: '3' }, { key: 'points', label: t('Doses'), value: '8' },
+        { key: 'stock', label: t('Stock in DMSO'), units: 'molar', unit: 'mM', value: '10' },
+        { key: 'well', label: t('Final volume per well (µL)'), value: '200' },
+        { key: 'dmso', label: t('DMSO in every well (%)'), value: '0.1' },
+        { key: 'tube', label: t('DMSO per tube in the series (µL)'), value: '20' },
+      ],
+      compute(v) {
+        // The series is made in DMSO at F× the well, so every dose reaches the
+        // cells with the same DMSO; F is 100 / DMSO %.
+        const F = 100 / n(v, 'dmso'); const f = n(v, 'fold'); const k = Math.round(n(v, 'points'));
+        const topDmso = b(v, 'top') * F; const well = n(v, 'well'); const tube = n(v, 'tube') || 20;
+        if (!ok(F) || !(f > 1) || !(k >= 2 && k <= 24) || !ok(topDmso) || !ok(well) || !ok(b(v, 'stock'))) return { hint: t('Top dose, fold, doses, stock, well volume and DMSO %.') };
+        if (topDmso > b(v, 'stock') * (1 + 1e-9)) {
+          return { error: t('The top dose needs %(need)s in DMSO, stronger than the stock: allow more DMSO or lower the top dose.', { need: show(topDmso, 'molar') }) };
+        }
+        const carry = tube / (f - 1);
+        const first = topDmso / b(v, 'stock') * (tube + carry);   // µL of stock in the first tube
+        const rows = [];
+        for (let i = 0; i < k; i += 1) rows.push([String(i + 1), show(b(v, 'top') / f ** i, 'molar'), show(topDmso / f ** i, 'molar')]);
+        rows.push([t('Vehicle'), '0', t('DMSO alone')]);
+        const direct = well / F;
+        const dmsoFirst = tube + carry - first;
+        const out = { lines: [L(t('First tube'), dmsoFirst > 1e-6 ? t('%(stock)s µL of stock + %(dmso)s µL DMSO', { stock: fmt(first), dmso: fmt(dmsoFirst) })
+          : t('%(stock)s µL of the stock as it is', { stock: fmt(first) }), true),
+          L(t('Then each tube'), t('%(dmso)s µL DMSO, carry %(carry)s µL', { dmso: fmt(tube), carry: fmt(carry) }), true)],
+          table: { head: ['', t('In the well'), t('In DMSO')], rows }, notes: [] };
+        if (direct >= 1) {
+          out.lines.push(L(t('Into each well'), t('%(add)s µL to %(medium)s µL medium', { add: fmt(direct), medium: fmt(well - direct) }), true));
+        } else {
+          out.lines.push(L(t('Into each well'), t('Each 1:%(k)s in medium, then %(add)s µL of that to %(medium)s µL', { k: fmt(F / 10), add: fmt(well / 10), medium: fmt(well - well / 10) }), true));
+        }
+        out.notes.push(t('Every well gets %(pct)s % DMSO; treat the vehicle wells the same way.', { pct: fmt(n(v, 'dmso')) }));
+        return out;
+      },
+    },
+    {
+      id: 'lentipack',
+      inputs: [
+        { key: 'vessel', label: t('Vessel'), type: 'select', options: opt(VESSELS), value: '7' },
+        { key: 'n', label: t('How many'), value: '2' },
+        { key: 'dna', label: t('DNA in all, per 10 cm dish (µg)'), value: '10' },
+        { key: 'ratio', label: t('Transfer : packaging : envelope, by mass'), value: '4:3:1' },
+        { key: 'pei', label: t('PEI (µg per µg DNA)'), value: '3', hint: t('As µL of a 1 mg/mL PEI solution.') },
+        { key: 'opti', label: t('Opti-MEM per 10 cm dish (µL)'), value: '1000' },
+        { key: 'extra', label: t('Extra (%)'), value: '10' },
+      ],
+      compute(v) {
+        const vessel = VESSELS[Number(v.raw.vessel || 7)];
+        const k = vessel[1] / 55;                       // a 10 cm dish is 55 cm²
+        const parts = String(v.raw.ratio || '').split(/[:\s,/]+/).map(num).filter((x) => x > 0);
+        if (parts.length !== 3 || !ok(n(v, 'dna'))) return { hint: t('The DNA, and three parts for the ratio (4:3:1).') };
+        const sum = parts[0] + parts[1] + parts[2];
+        const dna = n(v, 'dna') * k; const many = (n(v, 'n') || 1) * (1 + (n(v, 'extra') || 0) / 100);
+        const each = parts.map((p) => dna * p / sum);
+        const pei = dna * (n(v, 'pei') || 3); const opti = (n(v, 'opti') || 1000) * k;
+        const row = (name, x, unit) => [name, `${fmt(x)} ${unit}`, `${fmt(x * many)} ${unit}`];
+        return {
+          lines: [L(t('DNA per vessel'), `${fmt(dna)} µg`, true), L(t('Medium to harvest'), t('%(volume)s per vessel', { volume: show(vessel[2] * 1e-3, 'volume') }))],
+          table: { head: ['', t('One %(vessel)s', { vessel: t(vessel[0]) }), t('For %(n)s + %(extra)s %', { n: fmt(n(v, 'n') || 1), extra: fmt(n(v, 'extra') || 0) })], rows: [
+            row(t('Transfer plasmid'), each[0], 'µg'), row(t('Packaging (psPAX2)'), each[1], 'µg'), row(t('Envelope (pMD2.G)'), each[2], 'µg'),
+            row(t('PEI, 1 mg/mL'), pei, 'µL'), row('Opti-MEM', opti, 'µL')] },
+          notes: [t('Mix the DNA into half the Opti-MEM and the PEI into the other half, combine, wait 15–20 min, add dropwise. Collect the medium at 48 and 72 h.')],
+        };
+      },
+    },
+
     /* ================================================= Microbes */
     {
-      id: 'od600', group: t('Bacteria & yeast'), title: t('OD₆₀₀: cells and dilution'),
-      blurb: t('Cells per mL from OD₆₀₀, and how to dilute a culture to a starting OD.'),
+      id: 'od600',
       inputs: [
         { key: 'org', label: t('Organism'), type: 'select', options: [['8e8', t('E. coli (≈ 8 × 10⁸ per OD)')], ['3e7', t('Yeast (≈ 3 × 10⁷ per OD)')], ['custom', t('Other')]] },
         { key: 'factor', label: t('Cells per mL at OD 1 (Other)') },
@@ -1009,22 +1367,21 @@
       },
     },
     {
-      id: 'growth', group: t('Bacteria & yeast'), title: t('Time to reach an OD'),
-      blurb: t('In log phase, from its doubling time.'),
+      id: 'growth',
       inputs: [
         { key: 'od', label: t('OD now'), value: '0.05' }, { key: 'target', label: t('Wanted OD'), value: '0.6' },
         { key: 'dt', label: t('Doubling time'), units: 'time', unit: 'min', value: '30' },
+        { key: 'lag', label: t('Lag before growth'), units: 'time', unit: 'min', value: '0', hint: t('30–60 min after diluting back an overnight culture.') },
       ],
       compute(v) {
-        const secs = Math.log2(n(v, 'target') / n(v, 'od')) * b(v, 'dt');
+        const secs = Math.log2(n(v, 'target') / n(v, 'od')) * b(v, 'dt') + (ok(b(v, 'lag')) ? b(v, 'lag') : 0);
         if (!ok(secs) || secs < 0) return { hint: t('OD now, a higher wanted OD and the doubling time.') };
         return { lines: [L(t('Time'), `${fmt(secs / 60, 3)} min (${fmt(secs / 3600, 3)} h)`, true), L(t('Doublings'), fmt(Math.log2(n(v, 'target') / n(v, 'od')), 3))],
           notes: [t('E. coli in LB at 37 °C doubles in about 20–30 min; yeast in YPD at 30 °C in about 90 min.')] };
       },
     },
     {
-      id: 'antibiotic', group: t('Bacteria & yeast'), title: t('Antibiotic for plates and media'),
-      blurb: t('Stock to add for the usual working concentration (change either).'),
+      id: 'antibiotic',
       inputs: [
         { key: 'drug', label: t('Antibiotic'), type: 'select', options: opt(ANTIBIOTICS) },
         { key: 'work', label: t('Working (µg/mL, blank: usual)') }, { key: 'stock', label: t('Stock (mg/mL, blank: usual)') },
@@ -1046,10 +1403,34 @@
       },
     },
 
+    {
+      id: 'plates',
+      inputs: [
+        { key: 'plates', label: t('Plates'), value: '20' },
+        { key: 'each', label: t('mL per plate'), value: '25', hint: t('About 25 mL for a 10 cm plate.') },
+        { key: 'medium', label: t('Medium'), type: 'select', options: [['premix', t('LB agar premix (40 g/L)')], ['broth', t('LB broth (25 g/L) + agar (15 g/L)')]] },
+        { key: 'drug', label: t('Antibiotic'), type: 'select', options: [['', t('None')], ...ANTIBIOTICS.map((r, i) => [String(i), t(r[0])]).filter(([i]) => ANTIBIOTICS[Number(i)][0].includes('E. coli'))] },
+        { key: 'extra', label: t('Extra (%)'), value: '10' },
+      ],
+      compute(v) {
+        const ml = n(v, 'plates') * n(v, 'each') * (1 + (n(v, 'extra') || 0) / 100);
+        if (!ok(ml)) return { hint: t('Plates and mL per plate.') };
+        const litres = ml / 1000;
+        const out = { lines: [L(t('Medium'), show(litres, 'volume'), true)], notes: [] };
+        if (v.raw.medium === 'broth') out.lines.push(L(t('LB broth powder'), `${fmt(25 * litres)} g`, true), L(t('Agar'), `${fmt(15 * litres)} g`, true));
+        else out.lines.push(L(t('LB agar powder'), `${fmt(40 * litres)} g`, true));
+        if (v.raw.drug !== '' && v.raw.drug != null) {
+          const d = ANTIBIOTICS[Number(v.raw.drug)];
+          out.lines.push(L(t('%(drug)s stock (%(stock)s mg/mL)', { drug: t(d[0]), stock: fmt(d[2]) }), show(d[1] / (d[2] * 1000) * litres, 'volume'), true));
+        }
+        out.notes.push(t('Autoclave, cool to about 55 °C (you can hold the bottle), add the antibiotic, swirl and pour.'));
+        return out;
+      },
+    },
+
     /* ================================================= Centrifuge, animals, gels */
     {
-      id: 'rcf', group: t('Centrifuge, animals & gels'), title: t('rpm ↔ × g'),
-      blurb: t('RCF = 1.118 × 10⁻⁵ × radius (cm) × rpm². Give one and the rotor radius.'),
+      id: 'rcf',
       inputs: [
         { key: 'radius', label: t('Rotor radius (cm)'), value: '9.5' }, { key: 'rpm', label: 'rpm' }, { key: 'g', label: '× g', value: '12000' },
       ],
@@ -1062,27 +1443,55 @@
       },
     },
     {
-      id: 'dose', group: t('Centrifuge, animals & gels'), title: t('Dose by body weight'),
-      blurb: t('mg/kg to the amount and volume for each animal (tamoxifen, drugs, anaesthetics).'),
+      id: 'dose',
       inputs: [
         { key: 'dose', label: t('Dose (mg/kg)'), value: '75' }, { key: 'weight', label: t('Body weight'), units: 'weight', unit: 'g', value: '25' },
         { key: 'conc', label: t('Solution (mg/mL)'), value: '20' }, { key: 'animals', label: t('Animals'), value: '5' },
-        { key: 'extra', label: t('Extra (%)'), value: '20' }, { key: 'limit', label: t('Most volume (mL/kg)'), value: '10', hint: t('e.g. 10 mL/kg i.p. in mice') },
+        { key: 'extra', label: t('Extra (%)'), value: '20' }, { key: 'limit', label: t('Max volume (mL/kg)'), value: '10', hint: t('e.g. 10 mL/kg i.p. in mice') },
+        { key: 'days', label: t('Days'), value: '1' },
       ],
       compute(v) {
         const kg = b(v, 'weight') / 1000; const mg = n(v, 'dose') * kg; const ml = mg / n(v, 'conc');
         if (!ok(ml)) return { hint: t('Dose, weight and solution strength.') };
         const out = { lines: [L(t('Amount'), `${fmt(mg)} mg`), L(t('Inject'), `${fmt(ml * 1000)} µL`, true), L(t('Volume per kg'), `${fmt(ml / kg)} mL/kg`)], warnings: [] };
-        const k = (n(v, 'animals') || 1) * (1 + (n(v, 'extra') || 0) / 100);
+        const days = Math.max(1, Math.round(n(v, 'days') || 1));
+        const k = (n(v, 'animals') || 1) * days * (1 + (n(v, 'extra') || 0) / 100);
         const count = n(v, 'animals') || 1;
-        out.lines.push(L(t(count === 1 ? 'Solution for %(n)s animal (+%(extra)s %)' : 'Solution for %(n)s animals (+%(extra)s %)', { n: fmt(count), extra: fmt(n(v, 'extra') || 0) }), `${fmt(ml * k)} mL · ${fmt(ml * k * n(v, 'conc'))} mg`));
+        out.lines.push(L(days > 1 ? t(count === 1 ? 'Solution for %(n)s animal, %(days)s days (+%(extra)s %)' : 'Solution for %(n)s animals, %(days)s days (+%(extra)s %)', { n: fmt(count), days, extra: fmt(n(v, 'extra') || 0) })
+          : t(count === 1 ? 'Solution for %(n)s animal (+%(extra)s %)' : 'Solution for %(n)s animals (+%(extra)s %)', { n: fmt(count), extra: fmt(n(v, 'extra') || 0) }), `${fmt(ml * k)} mL · ${fmt(ml * k * n(v, 'conc'))} mg`));
         if (ok(n(v, 'limit')) && ml / kg > n(v, 'limit')) out.warnings.push(t('More than %(limit)s mL/kg: make the solution stronger or split the dose.', { limit: fmt(n(v, 'limit')) }));
         return out;
       },
     },
     {
-      id: 'agarose', group: t('Centrifuge, animals & gels'), title: t('Agarose gel'),
-      blurb: t('Agarose for a gel, and which % separates your fragments.'),
+      id: 'dosesheet',
+      inputs: [
+        { key: 'list', label: t('Animals'), type: 'textarea', value: 'M1023 24.6\nM1024 26.1\nM1027 22.8\nM1031 25.3',
+          hint: t('One a line: ID, then weight in g.') },
+        { key: 'dose', label: t('Dose (mg/kg)'), value: '75' }, { key: 'conc', label: t('Solution (mg/mL)'), value: '20' },
+        { key: 'days', label: t('Days'), value: '5' }, { key: 'extra', label: t('Extra (%)'), value: '20' },
+        { key: 'limit', label: t('Max volume (mL/kg)'), value: '10' },
+      ],
+      compute(v) {
+        const animals = lines(v.raw.list).map(row).filter((r) => r.nums.length);
+        const dose = n(v, 'dose'); const conc = n(v, 'conc');
+        if (!animals.length || !ok(dose) || !ok(conc)) return { hint: t('Animals with weights, the dose and the solution.') };
+        const days = Math.max(1, Math.round(n(v, 'days') || 1)); const warnings = [];
+        let perDay = 0;
+        const rows = animals.map((a) => {
+          const g = a.nums[a.nums.length - 1]; const ul = dose * g / 1000 / conc * 1000;
+          perDay += ul;
+          if (ok(n(v, 'limit')) && ul / 1000 / (g / 1000) > n(v, 'limit')) warnings.push(t('%(id)s: more than %(limit)s mL/kg.', { id: a.name, limit: fmt(n(v, 'limit')) }));
+          return [a.name || '—', `${fmt(g)} g`, `${fmt(dose * g / 1000, 3)} mg`, `${fmt(ul, 3)} µL`];
+        });
+        const total = perDay * days * (1 + (n(v, 'extra') || 0) / 100) / 1000;    // mL
+        return { lines: [L(t('Make'), t('%(ml)s mL at %(conc)s mg/mL', { ml: fmt(total, 3), conc: fmt(conc) }), true), L(t('Weigh'), `${fmt(total * conc, 3)} mg`, true),
+          L(t('Each day'), `${fmt(perDay, 3)} µL`)], table: { head: [t('Animal'), t('Weight'), t('Dose'), t('Inject each day')], rows }, warnings,
+          notes: [t('Weigh the animals again during a long course; doses follow the weight.')] };
+      },
+    },
+    {
+      id: 'agarose',
       inputs: [{ key: 'pct', label: t('Agarose (%)'), value: '1' }, { key: 'vol', label: t('Gel volume (mL)'), value: '50' },
         { key: 'buf', label: t('Buffer stock (×)'), type: 'select', options: [['50', t('50× TAE')], ['10', t('10× TBE')], ['5', t('5× TBE')]] }],
       compute(v) {
@@ -1094,46 +1503,9 @@
           notes: [t('Stain: 1:10 000 of a SYBR Safe/GelRed stock, or ethidium bromide at 0.5 µg/mL.')] };
       },
     },
-    {
-      id: 'decay', group: t('Centrifuge, animals & gels'), title: t('Radioactive decay'),
-      blurb: t('Activity left after a time, from the isotope\'s half-life.'),
-      inputs: [
-        { key: 'iso', label: t('Isotope'), type: 'select', options: ISOTOPES.map((r, i) => [String(i), `${r[0]} (t½ ${fmt(r[1])} d)`]) },
-        { key: 'a0', label: t('Activity on the reference date'), value: '10' },
-        { key: 'days', label: t('Days since then'), value: '14' },
-      ],
-      compute(v) {
-        const [name, half] = ISOTOPES[Number(v.raw.iso || 0)];
-        const frac = 0.5 ** (n(v, 'days') / half);
-        if (!ok(frac)) return { hint: t('The days since the reference date.') };
-        const out = { lines: [L(t('Left'), `${fmt(frac * 100, 3)} %`, true)] };
-        if (ok(n(v, 'a0'))) out.lines.push(L(t('Activity now'), t('%(n)s (same unit)', { n: fmt(n(v, 'a0') * frac, 3) }), true));
-        out.lines.push(L(t('Volume to use for the same activity'), t('%(x)s× the original', { x: fmt(1 / frac, 3) })));
-        out.notes = [t('%(isotope)s: half-life %(days)s days.', { isotope: name, days: fmt(half) })];
-        return out;
-      },
-    },
 
-    /* ================================================= Numbers */
     {
-      id: 'stats', group: t('Numbers & units'), title: t('Mean, SD, SEM, CV'),
-      blurb: t('Paste numbers (one a line, or separated by spaces or commas).'),
-      inputs: [{ key: 'data', label: t('Values'), type: 'textarea', value: '1.02 0.95 1.10 0.98 1.05' }],
-      compute(v) {
-        const xs = numbers(v.raw.data);
-        if (xs.length < 2) return { hint: t('Two or more numbers.') };
-        const k = xs.length; const mean = xs.reduce((a, c) => a + c, 0) / k;
-        const sd = Math.sqrt(xs.reduce((a, c) => a + (c - mean) ** 2, 0) / (k - 1)); const sem = sd / Math.sqrt(k);
-        const sorted = [...xs].sort((a, c) => a - c);
-        const median = k % 2 ? sorted[(k - 1) / 2] : (sorted[k / 2 - 1] + sorted[k / 2]) / 2;
-        const ci = tcrit(k - 1) * sem;
-        return { lines: [L('n', String(k)), L(t('Mean'), fmt(mean), true), L('SD', fmt(sd), true), L('SEM', fmt(sem)), L('CV', `${fmt(sd / mean * 100, 3)} %`),
-          L(t('Median'), fmt(median)), L(t('Range'), `${fmt(sorted[0])} – ${fmt(sorted[k - 1])}`), L(t('95 % CI of the mean'), `${fmt(mean - ci)} – ${fmt(mean + ci)}`)] };
-      },
-    },
-    {
-      id: 'samplesize', group: t('Numbers & units'), title: t('Animals or samples per group'),
-      blurb: t('For comparing two group means (a two-sided t-test), before an experiment.'),
+      id: 'samplesize',
       inputs: [
         { key: 'diff', label: t('Smallest difference that matters'), value: '10' }, { key: 'sd', label: t('Standard deviation (same unit)'), value: '8' },
         { key: 'alpha', label: t('Significance (α)'), value: '0.05' }, { key: 'power', label: t('Power'), value: '0.8' },
@@ -1148,42 +1520,201 @@
           notes: [t('Normal approximation with a small-sample correction; add animals for expected losses. Ask a statistician for anything but two groups.')] };
       },
     },
-    {
-      id: 'convert', group: t('Numbers & units'), title: t('Unit converter'),
-      blurb: t('Between units of one kind.'),
-      inputs: [
-        { key: 'kind', label: t('Kind'), type: 'select', options: [['mass', t('Mass')], ['volume', t('Volume')], ['molar', t('Molar concentration')], ['massconc', t('Mass concentration')], ['amount', t('Amount (moles)')], ['time', t('Time')], ['temp', t('Temperature')]] },
-        { key: 'value', label: t('Value'), value: '1' }, { key: 'from', label: t('From (unit)'), value: 'mg' },
-      ],
-      compute(v) {
-        const kind = v.raw.kind || 'mass'; const x = n(v, 'value');
-        if (!ok(x)) return { hint: t('A value.') };
-        // The unit as typed: any case, u or μ for µ, µg/µL for mg/mL. A unit
-        // of another kind (mg after switching to Temperature) is refused,
-        // not read as °C.
-        const typed = String(v.raw.from || '').trim().toLowerCase().replace(/[uμ]/g, 'µ').replace(/\s+/g, '');
-        const kindName = (this.inputs[0].options.find(([k]) => k === kind) || [kind, kind])[1];
-        if (kind === 'temp') {
-          const scale = { c: 'C', '°c': 'C', celsius: 'C', f: 'F', '°f': 'F', fahrenheit: 'F', k: 'K', kelvin: 'K' }[typed];
-          if (!scale) return { error: t('%(kind)s: °C, °F or K.', { kind: kindName }) };
-          const c = scale === 'F' ? (x - 32) * 5 / 9 : scale === 'K' ? x - 273.15 : x;
-          return { lines: [L('°C', fmt(c, 5), true), L('°F', fmt(c * 9 / 5 + 32, 5)), L('K', fmt(c + 273.15, 5))] };
-        }
-        const same = { 'µg/µl': 'mg/ml', 'mg/l': 'µg/ml', 'µg/l': 'ng/ml' }[typed] || typed;
-        const row = U[kind].find(([u]) => u.toLowerCase().replace(/\s+/g, '') === same);
-        if (!row) return { error: `${kindName}: ${U[kind].map(([u]) => u).join(', ')}.` };
-        return { lines: U[kind].map(([u, g]) => L(u, fmt(x * row[1] / g, 5))) };
-      },
-    },
   ];
 
   const REFERENCES = [
-    { id: 'ref-vessels', title: t('Culture vessels'), head: [t('Vessel'), t('Growth area (cm²)'), t('Usual medium (mL)')], rows: VESSELS.map((r) => [t(r[0]), fmt(r[1]), fmt(r[2])]) },
-    { id: 'ref-buffers', title: t('Buffers'), head: [t('Buffer'), t('pKa at 25 °C'), t('Range'), t('ΔpKa / °C')], rows: BUFFERS.map((r) => [t(r[0]), fmt(r[1], 3), `${fmt(r[1] - 1, 2)}–${fmt(r[1] + 1, 2)}`, fmt(r[2], 2)]) },
-    { id: 'ref-antibiotics', title: t('Antibiotics'), head: [t('Antibiotic'), t('Working (µg/mL)'), t('Stock (mg/mL)')], rows: ANTIBIOTICS.map((r) => [t(r[0]), fmt(r[1]), fmt(r[2])]) },
-    { id: 'ref-gels', title: t('Agarose gels'), head: [t('Agarose'), t('Separates')], rows: GEL_RANGES },
-    { id: 'ref-isotopes', title: t('Isotopes'), head: [t('Isotope'), t('Half-life (days)')], rows: ISOTOPES.map((r) => [r[0], fmt(r[1])]) },
+    { id: 'ref-vessels', keys: 'vessel well plate flask dish area cm2 medium volume t75 培养皿', title: t('Plates & flasks'), head: [t('Vessel'), t('Growth area (cm²)'), t('Usual medium (mL)')], rows: VESSELS.map((r) => [t(r[0]), fmt(r[1]), fmt(r[2])]) },
+    { id: 'ref-buffers', keys: 'buffer pka range', title: t('Buffer pKa'), head: [t('Buffer'), t('pKa at 25 °C'), t('Range'), t('ΔpKa / °C')], rows: BUFFERS.map((r) => [t(r[0]), fmt(r[1], 3), `${fmt(r[1] - 1, 2)}–${fmt(r[1] + 1, 2)}`, fmt(r[2], 2)]) },
+    { id: 'ref-stocks', keys: 'antibiotic stock storage solvent keep shelf life iptg x-gal dtt pmsf tamoxifen doxycycline 储存 保存', title: t('Stocks & antibiotics'), head: [t('Reagent'), t('Working'), t('Stock'), t('Dissolve in'), t('Keep')],
+      rows: [...ANTIBIOTICS.map((r) => [t(r[0]), `${fmt(r[1])} ${r[0].startsWith('Penicillin') ? 'U/mL' : 'µg/mL'}`, `${fmt(r[2])} ${r[0].startsWith('Penicillin') ? 'kU/mL' : 'mg/mL'}`, t(r[3]), t(r[4])]),
+        ...STOCKS.map((r) => [t(r[0]), '', r[1], t(r[2]), t(r[3])])] },
+    { id: 'ref-gels', keys: 'agarose gel percent fragment size', title: t('Agarose % by size'), head: [t('Agarose'), t('Separates')], rows: GEL_RANGES },
+    { id: 'ref-ladders', keys: 'ladder marker 1kb 100bp band size dna 分子量标准', title: t('DNA ladders'), head: [t('Ladder'), t('Bands (bp)')], rows: LADDERS.map(([name, bands]) => [name, bands.map((x) => fmt(x)).join(' · ')]) },
+    { id: 'ref-concentrates', keys: 'concentrated acid base hcl naoh molarity density bottle 浓盐酸', title: t('Concentrated reagents'), head: [t('Reagent'), '% w/w', 'g/mL', 'M'], rows: REAGENTS.map((r) => [t(r[0]), fmt(r[1]), fmt(r[2]), fmt(r[1] / 100 * r[2] * 1000 / r[3], 3)]) },
   ];
+
+
+  /* ------------------------------------------------------------ the tools
+
+     What Utilities lists: seven groups by bench task, each tool a name, a
+     line on what it gives, the words people search for (the bench's, in
+     English and Chinese), and its modes, each running one calculator above.
+     A mode's `solve` lists the values it can work out ("Work out" on the
+     page); its `example` is what the tool opens on. A tool used in two
+     places names the second group in `also`. */
+  const GROUPS = [
+    { id: 'solutions', name: t('Solutions'), icon: 'flask', does: t('Weigh, dilute, buffer') },
+    { id: 'dna', name: t('DNA & cloning'), icon: 'dna', does: t('Measure, cut, join, run') },
+    { id: 'pcr', name: t('PCR & qPCR'), icon: 'chart', does: t('Mix and analyse') },
+    { id: 'protein', name: t('Protein'), icon: 'gel', does: t('Quantify, load, concentrate') },
+    { id: 'cells', name: t('Cell culture'), icon: 'petri', does: t('Count, seed, treat, infect') },
+    { id: 'microbes', name: t('Bacteria & yeast'), icon: 'bacteria', does: t('Grow and select') },
+    { id: 'bench', name: t('Bench & animals'), icon: 'centrifuge', does: t('Spin, dose, plan') },
+  ];
+  const mode = (calc, label, extra) => ({ calc, label: label || '', ...(extra || {}) });
+  const TOOLS = [
+    { id: 'make', group: 'solutions', name: t('Make a solution'), does: t('What to weigh or measure for a volume and strength.'),
+      keys: 'molarity molar mass weigh grams gram stock solution recipe percent w/v v/v % hydrate anhydrous salt form substitute mw molecular weight powder dissolve reconstitute 1m 0.5m concentrated hcl naoh acetic acid ammonia 37% glycerol pbs media 配溶液 配制 称量 溶解 母液 浓盐酸 百分比',
+      modes: [
+        mode('molarity', t('Weigh a solid'), { example: { chem: 'NaCl', volume: '200', volume_unit: 'mL', conc: '150', conc_unit: 'mM', mw: '58.44' },
+          solve: [['mass', t('Mass')], ['volume', t('Volume')], ['conc', t('Concentration')], ['mw', 'MW']] }),
+        mode('percent', t('Percent')), mode('fromconc', t('From a concentrate')), mode('saltform', t('Other hydrate or salt')),
+      ] },
+    { id: 'dilute', group: 'solutions', name: t('Dilute (C₁V₁)'), does: t('Stock and diluent for a working solution.'),
+      keys: 'c1v1 c1 v1 dilute dilution diluting stock working 10x 1x 50x 1000x 1:1000 1:100 fold concentrate antibody primer final concentration mg/ml um nm convert ethanol etoh 70% 稀释 稀释倍数 终浓度 抗体',
+      modes: [mode('dilution', '', { example: { c1: '10', c1_unit: 'mM', c2: '50', c2_unit: 'µM', v2: '1', v2_unit: 'mL' },
+        solve: [['v1', t('Stock volume')], ['c2', t('Final conc.')], ['v2', t('Final volume')], ['c1', t('Stock conc.')]] })] },
+    { id: 'serial', group: 'solutions', name: t('Serial dilution'), does: t('Tube-by-tube volumes and concentrations.'),
+      keys: 'serial dilution series standards titration two-fold 2-fold 1:10 梯度稀释 倍比稀释',
+      modes: [mode('serialfixed', t('Fixed transfer')), mode('serial', t('Fold per step'))] },
+    { id: 'buffer', group: 'solutions', name: t('Buffer at a pH'), does: t('What to weigh, and the acid or base to titrate with.'),
+      keys: 'buffer ph pka henderson hasselbalch tris hepes mops phosphate titrate 缓冲液 调ph', modes: [mode('buffer')] },
+
+    { id: 'a260', group: 'dna', name: t('DNA / RNA concentration'), does: t('ng/µL and purity from A₂₆₀.'),
+      keys: 'nanodrop a260 od260 dna rna concentration 260/280 260/230 purity ng/ul spectrophotometer 核酸浓度 测浓度',
+      modes: [mode('a260', '', { example: { a260: '0.412', r280: '1.86', r230: '2.05', dilution: '10' } })] },
+    { id: 'copies', group: 'dna', name: t('ng ↔ pmol ↔ copies'), does: t('Moles, nM and copy number from mass and length.'),
+      keys: 'pmol fmol copies copy number moles nm ng/ul molarity dna mass plasmid fragment library 拷贝数', modes: [mode('dnamoles')] },
+    { id: 'primer', group: 'dna', name: t('Primer: Tm & resuspend'), does: t('Tm, GC, annealing temperature, and water for 100 µM.'),
+      keys: 'oligo primer melting temperature tm gc resuspend annealing ta extension time polymerase q5 phusion taq 引物 退火温度',
+      modes: [mode('oligo', '', { example: { seq: 'GTAAAACGACGGCCAGT', seq2: 'CAGGAAACAGCTATGAC', nmol: '25' } })] },
+    { id: 'digest', group: 'dna', name: t('Restriction digest'), does: t('Enzyme, buffer and water for a digest.'),
+      keys: 'restriction digest enzyme ecori bamhi cut cutsmart units glycerol 酶切', modes: [mode('digest')] },
+    { id: 'ligation', group: 'dna', name: t('Ligation'), does: t('Insert for a molar ratio, and the whole reaction.'),
+      keys: 'ligation ligate insert vector ratio molar ratio t4 ligase cloning 3:1 连接',
+      modes: [mode('ligation', '', { example: { iconc: '25', vconc: '50' } })] },
+    { id: 'assembly', group: 'dna', name: t('HiFi / Gibson assembly'), does: t('Volume of each fragment for a reaction.'),
+      keys: 'gibson hifi nebuilder in-fusion infusion assembly fragments pmol 同源重组 无缝克隆', modes: [mode('assembly')] },
+    { id: 'agarose', group: 'dna', name: t('Agarose gel'), does: t('Agarose and buffer, and which % to pour.'),
+      keys: 'agarose dna gel electrophoresis tae tbe percent run gel 琼脂糖 电泳 跑胶', modes: [mode('agarose')] },
+
+    { id: 'mastermix', group: 'pcr', name: t('Master mix'), does: t('Each component for n reactions, with extra.'),
+      keys: 'master mix mastermix premix n+1 pcr qpcr colony pcr reaction sybr taqman cdna rt 预混 体系 配体系', modes: [mode('pcrmix')] },
+    { id: 'ddct', group: 'pcr', name: t('ΔΔCt fold change'), does: t('Fold change ± SD from a table of Ct values.'),
+      keys: 'ddct delta delta ct 2^-ddct livak pfaffl fold change qpcr analysis expression relative quantification 相对定量 相对表达',
+      modes: [mode('ddcttable', t('Table of Cts')), mode('ddct', t('Four Cts'))] },
+    { id: 'efficiency', group: 'pcr', name: t('qPCR efficiency'), does: t('Efficiency and R² from a dilution series.'),
+      keys: 'efficiency slope standard curve qpcr primer validation 扩增效率', modes: [mode('qpcreff')] },
+
+    { id: 'a280', group: 'protein', name: t('Protein concentration (A₂₈₀)'), does: t('mg/mL and µM; ε and MW from the sequence.'),
+      keys: 'a280 nanodrop protein concentration extinction coefficient protparam molecular weight pi isoelectric sequence 蛋白浓度',
+      modes: [mode('a280', t('From A₂₈₀'), { example: { a280: '0.85', eps: '43824', mw: '66430' } }),
+        mode('protparam', t('Sequence only'), { example: { seq: 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG' } })] },
+    { id: 'stdcurve', group: 'protein', name: t('BCA / Bradford curve'), does: t('Read your samples off a standard curve.'),
+      keys: 'bca bradford elisa lowry standard curve protein assay absorbance 标准曲线 蛋白定量', modes: [mode('stdcurve')] },
+    { id: 'loading', group: 'protein', also: ['pcr'], name: t('Equal loading'), does: t('Sample and water so every lane or tube gets the same.'),
+      keys: 'western loading lysate laemmli sample buffer lane equal protein normalise normalize rna input cdna rt template ng 上样 等量 归一',
+      modes: [mode('loading', t('Protein lanes')), mode('normalise', t('RNA / DNA input'))] },
+    { id: 'sdspage', group: 'protein', name: t('SDS-PAGE gel'), does: t('Resolving and stacking recipe for n gels.'),
+      keys: 'sds page sds-page acrylamide gel resolving stacking western cast tris 配胶 分离胶 浓缩胶', modes: [mode('sdspage')] },
+    { id: 'concentrate', group: 'protein', name: t('Concentrate & exchange'), does: t('Spin-down volume; what dialysis leaves behind.'),
+      keys: 'concentrate amicon spin concentrator dialysis buffer exchange desalting imidazole 浓缩 透析 换液',
+      modes: [mode('concentrate', t('Concentrate')), mode('dialysis', t('Dialysis'))] },
+
+    { id: 'count', group: 'cells', name: t('Count cells'), does: t('Cells/mL and viability from a haemocytometer.'),
+      keys: 'count counting cell number hemocytometer haemocytometer hemacytometer trypan blue viability cells/ml neubauer countess 计数 细胞计数 台盼蓝', modes: [mode('count')] },
+    { id: 'seed', group: 'cells', name: t('Seed plates'), does: t('Suspension and medium for each plate.'),
+      keys: 'seed seeding plating plate wells 6 well 96 well density cells per well flask t75 cm2 铺板 接种 种板', modes: [mode('seeding')] },
+    { id: 'split', group: 'cells', name: t('Split & passage'), does: t('How much to seed to be ready on the day.'),
+      keys: 'split splitting passage passaging split ratio confluence subculture doubling time growth rate 传代 分瓶 倍增时间',
+      modes: [mode('split', t('Split')), mode('doubling', t('Doubling time'))] },
+    { id: 'treat', group: 'cells', name: t('Drug & vehicle'), does: t('Stock per well and the DMSO cells get.'),
+      keys: 'drug treat treatment dmso vehicle dose cells inhibitor compound dose response ic50 加药 给药 处理',
+      modes: [mode('treat', t('One dose')), mode('doseseries', t('Dose series'))] },
+    { id: 'transfection', group: 'cells', name: t('Transfection'), does: t('DNA and reagent, scaled to a vessel.'),
+      keys: 'transfection transfect lipofectamine pei fugene dna reagent scale lentivirus packaging pspax2 pmd2.g 293t 转染 包毒',
+      modes: [mode('transfection', t('Scale')), mode('lentipack', t('Lentivirus packaging'))] },
+    { id: 'virus', group: 'cells', name: t('Virus: MOI & titer'), does: t('Virus for an MOI; titer from % positive.'),
+      keys: 'virus multiplicity infection moi transduction transduce lentivirus aav titre titer tu/ml facs flow polybrene 病毒 感染复数 滴度 感染',
+      modes: [mode('moi', t('Volume for an MOI')), mode('titer', t('Titer'))] },
+    { id: 'freeze', group: 'cells', name: t('Freeze cells'), does: t('Cells and freezing medium for n vials.'),
+      keys: 'freeze freezing cryopreserve dmso vials cryo 冻存 冻细胞', modes: [mode('freezing')] },
+
+    { id: 'od600', group: 'microbes', name: t('OD₆₀₀'), does: t('Cells/mL, dilute to a starting OD, time to an OD.'),
+      keys: 'od600 od bacteria yeast optical density culture dilute back time grow induce induction iptg 菌液 od值 诱导',
+      modes: [mode('od600', t('Cells & dilution')), mode('growth', t('Time to an OD'))] },
+    { id: 'antibiotic', group: 'microbes', also: ['cells'], name: t('Antibiotics & plates'), does: t('Antibiotic for media; LB and agar for plates.'),
+      keys: 'antibiotic antibiotics ampicillin amp carbenicillin carb kanamycin kan chloramphenicol cm spectinomycin selection agar plates lb pour plates puromycin puro blasticidin g418 hygromycin pen strep penicillin streptomycin 抗生素 平板 倒板 筛选',
+      modes: [mode('antibiotic', t('Add to media')), mode('plates', t('Pour plates'))] },
+
+    { id: 'rcf', group: 'bench', name: t('rpm ↔ × g'), does: t('Convert for your rotor.'),
+      keys: 'rpm x g xg rcf centrifuge centrifugation g-force spin speed rotor 离心 转速 离心力',
+      modes: [mode('rcf', '', { solve: [['rpm', 'rpm'], ['g', '× g']] })] },
+    { id: 'dose', group: 'bench', name: t('Dosing sheet'), does: t('µL for each animal from mg/kg and its weight.'),
+      keys: 'dose dosing mg/kg injection mouse mice rat animal body weight tamoxifen ip gavage 给药 剂量 小鼠 注射',
+      modes: [mode('dosesheet', t('Sheet')), mode('dose', t('One weight'))] },
+    { id: 'samplesize', group: 'bench', name: t('Sample size'), does: t('Animals or samples per group for a t-test.'),
+      keys: 'sample size power n group animals iacuc 样本量', modes: [mode('samplesize')] },
+  ];
+  // Addresses from before the redesign (…/utilities#dilution, the Home card's
+  // recent list): the calculator's id opens the tool and mode that runs it.
+  const OLD = { molarity: 'make', percent: 'make', saltform: 'make', dilution: 'dilute', xfold: 'dilute', massmolar: 'dilute',
+    serial: 'serial', buffer: 'buffer', a260: 'a260', dnamoles: 'copies', oligo: 'primer', ligation: 'ligation', assembly: 'assembly',
+    pcrmix: 'mastermix', qpcreff: 'efficiency', protparam: 'a280', a280: 'a280', stdcurve: 'stdcurve', sdspage: 'sdspage',
+    seeding: 'seed', doubling: 'split', transfection: 'transfection', moi: 'virus', titer: 'virus', freezing: 'freeze',
+    treat: 'treat', od600: 'od600', growth: 'od600', antibiotic: 'antibiotic', rcf: 'rcf', agarose: 'agarose', samplesize: 'samplesize' };
+  function locate(id) {
+    let tool = TOOLS.find((x) => x.id === id);
+    if (tool) return { tool, mode: 0 };
+    tool = TOOLS.find((x) => x.modes.some((m) => m.calc === id)) || TOOLS.find((x) => x.id === OLD[id]);
+    if (!tool) return null;
+    return { tool, mode: Math.max(0, tool.modes.findIndex((m) => m.calc === id)) };
+  }
+
+  /* Search: the bench's words, any language. Subscripts read as digits, ×
+     as x, Δ as d, µ as u, so "a260", "c1v1", "ddct" and "ng/ul" all find. */
+  const plain = (text) => String(text || '').toLowerCase()
+    .replace(/[₀-₉]/g, (d) => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(d))).replace(/×/g, 'x').replace(/δ/g, 'd')
+    .replace(/↔/g, ' ').replace(/[µμ]/g, 'u').replace(/[()·,;:]/g, ' ').replace(/(\D)-|-(\D)/g, '$1 $2');
+  const STOP = new Set(['to', 'a', 'an', 'the', 'of', 'for', 'how', 'much', 'many', 'and', 'from', 'in', 'my', 'make', 'making',
+    'calculate', 'calculator', 'calculation', 'calc', 'what', 'is', 'do', 'i', 'need', 'work', 'out', 'with', 'into', 'on']);
+  const CJK = /[㐀-鿿]/;
+  const stem = (w) => (w.length > 4 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w.length > 6 && w.endsWith('ing') ? w.slice(0, -3) : w);
+  function near(a, b) {        // a typo: one edit apart, two for long words
+    if (Math.abs(a.length - b.length) > 2) return false;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j += 1) d[0][j] = j;
+    for (let i = 1; i <= a.length; i += 1) {
+      for (let j = 1; j <= b.length; j += 1) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    return d[a.length][b.length] <= (a.length >= 8 ? 2 : 1);
+  }
+  /* The tools (and reference tables) for a query, best first. A word scores
+     its best match: a whole word, then the start of one, then (4+ letters)
+     inside one or a near miss. Tools matching more of the words come first;
+     the name counts more than the search words. Chinese matches as written.
+     `extra` is more to search, by id (the page passes the English names when
+     it shows another language). */
+  function search(q, extra) {
+    const words = plain(q).trim().split(/\s+/).filter((w) => w && !STOP.has(w)).map(stem);
+    if (!words.length) return [];
+    const all = [...TOOLS, ...REFERENCES.map((r) => ({ id: r.id, group: 'reference', name: r.title, does: '', keys: r.keys || '' }))];
+    return all.map((tool) => {
+      const name = plain(tool.name); const more = plain((extra && extra[tool.id]) || '');
+      const nameWords = `${name} ${more}`.split(/\s+/).filter(Boolean).map(stem);
+      const keyText = plain(`${tool.keys} ${tool.does}`);
+      const keyWords = keyText.split(/\s+/).filter(Boolean).map(stem);
+      const compact = name.replace(/[^a-z0-9]/g, '');
+      let score = 0; let hits = 0;
+      words.forEach((w) => {
+        let best = 0;
+        if (CJK.test(w)) {
+          if (keyText.includes(w) || name.includes(w)) best = 5;
+        } else {
+          const grade = (list, weight) => list.forEach((k) => {
+            if (k === w) best = Math.max(best, 5 * weight);
+            else if (w.length >= 2 && k.startsWith(w)) best = Math.max(best, 4 * weight);
+            else if (w.length >= 4 && k.includes(w)) best = Math.max(best, 2 * weight);
+            else if (w.length >= 5 && k.length >= 4 && near(w, k)) best = Math.max(best, 2 * weight);
+          });
+          grade(nameWords, 1.5); grade(keyWords, 1);
+          if (!best && w.length >= 3 && compact.includes(w.replace(/[^a-z0-9]/g, ''))) best = 4;
+        }
+        if (best) { hits += 1; score += best; }
+      });
+      return hits ? { tool, score, hits } : null;
+    }).filter(Boolean).sort((a, b) => b.hits - a.hits || b.score - a.score).map((r) => r.tool);
+  }
 
   /* ------------------------------------------------------------ running */
 
@@ -1211,7 +1742,7 @@
     }
   }
 
-  const api = { CALCS, REFERENCES, UNITS: U, CHEMICALS, run, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq };
+  const api = { CALCS, REFERENCES, GROUPS, TOOLS, UNITS: U, CHEMICALS, run, search, locate, plain, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BenchCalc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

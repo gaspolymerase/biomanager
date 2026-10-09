@@ -208,29 +208,43 @@
         person (switch these notices off under <b>Settings → Notifications</b>). <b>Version history</b> keeps every editing session to
         compare or restore. <b>Tags and search</b> work across every page you can open.</p>
       <h2 id="utilities">Utilities</h2>
-      <p><b>Utilities</b>, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in <b>Find a
-        calculator</b> (plain letters do: <i>a260</i>, <i>ddct</i>, or what you are doing, like <i>nanodrop</i>); the answer changes as you type, each remembers what you last typed in it on this computer, and <b>Reset</b> goes
-        back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.</p>
+      <p><b>Utilities</b>, under Notebook in the sidebar, holds the bench calculators and reference tables. Type in the search at
+        the top what you are doing, in the bench's words: <i>c1v1</i>, <i>nanodrop</i>, <i>× g</i>, <i>MOI</i>, <i>稀释</i>; a typo or a
+        plural still finds it, and a chemical's name (<i>MgCl2</i>) opens <b>Make a solution</b> with it filled in. Or open one from its
+        group. <b>Pin</b> a tool to keep it at the top; the ones you opened last are under <b>Recent</b>.</p>
+      <p>A tool opens on a worked example, with the answer beside what you type, and changes as you type. Where a tool can work out
+        more than one thing, <b>Work out</b> says which (the stock volume, or the final concentration); tools that do related jobs
+        have modes along the top. Each remembers what you last typed on this computer, <b>Reset</b> goes back to the example, and
+        <b>Copy</b> takes the answer, tables too, to paste into a notebook page or a sheet.</p>
       <dl class="gdl">
-        <dt>Solutions &amp; buffers</dt><dd>Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔
-          molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate
-          or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight (<i>MgCl2·6H2O</i> and
-          <i>magnesium chloride hexahydrate</i> are the same one). The lab's own come first: its
+        <dt>Solutions</dt><dd><b>Make a solution</b>: what to weigh for a molarity, a percent, from a concentrated liquid (37 % HCl,
+          glacial acetic acid, 50 % NaOH) or in another hydrate or salt; <b>Dilute (C₁V₁)</b>, which also goes between mg/mL and µM
+          when you give the MW, and takes × stocks; <b>Serial dilution</b>, by a round transfer (10 µL into 90 µL) or a fold per
+          step; <b>Buffer at a pH</b>: what to weigh and how much concentrated acid or base to titrate with, or the two phosphate
+          salts, at the temperature you use it. Type a chemical's name or formula to fill its molecular weight (<i>MgCl2·6H2O</i>
+          and <i>magnesium chloride hexahydrate</i> are the same one). The lab's own come first: its
           <a href="samples-and-orders.html">Chemicals</a> database, by name or abbreviation. One it doesn't know leaves the weight for you to type.</dd>
-        <dt>DNA &amp; RNA</dt><dd>Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation
-          insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change;
-          transformation efficiency.</dd>
-        <dt>Protein</dt><dd>Concentration from A₂₈₀; MW, ε and pI from the sequence; a standard curve (BCA, Bradford, ELISA) read off for
-          your samples; SDS-PAGE gel recipes; µg per lane.</dd>
-        <dt>Cells</dt><dd>Haemocytometer counts; seeding plates (by vessel); doubling time; scaling a transfection; virus for an MOI;
-          lentivirus titer from % positive cells; freezing down; drug and vehicle for treatments.</dd>
-        <dt>Bacteria &amp; yeast</dt><dd>OD₆₀₀ to cells and dilutions; time to reach an OD; antibiotic for plates and media.</dd>
-        <dt>Centrifuge, animals &amp; gels</dt><dd>rpm ↔ × g; dose by body weight; agarose gels; radioactive decay.</dd>
-        <dt>Numbers &amp; units</dt><dd>Mean, SD, SEM and CV; animals or samples per group; a unit converter.</dd>
+        <dt>DNA &amp; cloning</dt><dd>DNA / RNA concentration and purity from A₂₆₀; ng ↔ pmol ↔ copies (and ng/µL to nM); primer Tm,
+          the annealing temperature and extension time for Taq or Q5/Phusion, and the water to resuspend; a restriction digest;
+          ligation, with the whole reaction; HiFi/Gibson assembly; agarose gels.</dd>
+        <dt>PCR &amp; qPCR</dt><dd>Master mixes; ΔΔCt from a pasted table of Ct values (sample, gene, Ct; replicates averaged, fold
+          change ± SD) or from four numbers; qPCR efficiency from a standard curve; equal RNA or DNA input for an RT.</dd>
+        <dt>Protein</dt><dd>Concentration from A₂₈₀, with ε and MW from the sequence (cysteines paired or reduced); a BCA, Bradford or
+          ELISA curve read off for your samples, replicates averaged; equal loading for a gel; SDS-PAGE recipes; concentrating and
+          dialysis.</dd>
+        <dt>Cell culture</dt><dd>Counting cells; seeding plates; splitting so a flask is ready on the day, and doubling time; drug
+          and vehicle, one dose or a dose series that keeps the DMSO the same in every well; transfection, scaled or for lentivirus
+          packaging; virus for an MOI, and the titer from a dilution series; freezing down; antibiotics for selection.</dd>
+        <dt>Bacteria &amp; yeast</dt><dd>OD₆₀₀ to cells, diluting back, and the time to an OD; antibiotics for media, and LB, agar and
+          antibiotic to pour plates.</dd>
+        <dt>Bench &amp; animals</dt><dd>rpm ↔ × g, from one of <b>the lab's rotors</b> (anyone in the lab adds them once, with the radius
+          and top speed); a <b>dosing sheet</b> that turns a list of animals and weights into µL each and the solution to make; sample
+          size per group.</dd>
       </dl>
-      <p><b>Reference tables</b>, below the calculator: culture vessels, buffers, antibiotics, agarose gels, isotopes and molecular
-        weights. A link to a calculator (<code>…/utilities#dilution</code>) opens it.</p>
-      <figure class="gshot"><a href="../assets/screenshots/utilities.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/utilities.webp" alt="Utilities: the list of calculators and a PCR master mix worked out for 12 reactions" loading="lazy" width="2000" height="1250"></a><figcaption>Utilities</figcaption></figure>
+      <p><b>Reference</b> tables: plates and flasks, buffer pKa, stocks and antibiotics (what each is dissolved in and how it keeps),
+        agarose % by size, DNA ladders, concentrated reagents and molecular weights. A link to a tool (<code>…/utilities#dilute</code>)
+        opens it.</p>
+      <figure class="gshot"><a href="../assets/screenshots/utilities.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" loading="lazy" width="2000" height="1250"></a><figcaption>Utilities</figcaption></figure>
     <!-- /page -->
       <nav class="pager" aria-label="Previous / Next"><a class="prev" href="experiments.html"><small>Previous</small>Experiments</a><a class="next" href="sign-a-notebook-page.html"><small>Next</small>Sign a notebook page</a></nav>
       <div class="helpful" data-pagefind-ignore>
@@ -240,7 +254,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 8 min read</p>
+      <p>On this page · 9 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">Experiments and protocols</a></li>

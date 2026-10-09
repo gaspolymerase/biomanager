@@ -520,22 +520,30 @@ database has a name of its own (one another database has is refused), so
     line with the page now, and any version can be restored.
   - **Tags and search** across every page you own or that is shared with
     you, by words, kind, status, tag and date.
-- **Utilities** — 41 bench calculators, answering as you type:
-  solutions and buffers (molarity, dilutions, serial dilutions, percent and
-  ×-fold stocks, buffer pH, osmolarity, another salt or hydrate), DNA and
-  RNA (A₂₆₀, moles and copies, oligo Tm, ligation, HiFi/Gibson assembly,
-  master mixes, qPCR efficiency, ΔΔCt, transformation efficiency), protein
-  (A₂₈₀, MW/ε/pI from the sequence, BCA or Bradford standard curves,
-  SDS-PAGE recipes, µg per lane), cells (counts, seeding, doubling time,
-  transfection, MOI, lentivirus titer, freezing down, drug and vehicle),
-  bacteria (OD₆₀₀, time to an OD, antibiotics), rpm ↔ × g, doses by body
-  weight, agarose gels, radioactive decay, statistics, group sizes and a
-  unit converter. Reference tables for culture vessels, buffers,
-  antibiotics, gels, isotopes and molecular weights (the lab's own first,
-  from its Chemicals database by name or abbreviation).
+- **Utilities** — bench calculators and reference tables, found by a
+  search that knows the bench's words (c1v1, nanodrop, × g, 稀释, a
+  chemical's name), with the tools you pin and opened last on top and the
+  rest in seven groups. Each opens on a worked example and answers as you
+  type: solutions (make a solution by molarity, percent, from a
+  concentrate such as 37 % HCl or in another hydrate; C₁V₁ dilutions, also
+  between mg/mL and µM; serial dilutions; buffers at a pH, with what to
+  weigh and the acid or base to titrate with), DNA and cloning (A₂₆₀,
+  ng ↔ pmol ↔ copies, primer Tm with annealing and extension, restriction
+  digests, ligation, HiFi/Gibson, agarose gels), PCR and qPCR (master mixes,
+  ΔΔCt from a pasted table of Cts, efficiency, equal RNA input), protein
+  (A₂₈₀ with ε from the sequence, BCA/Bradford curves with replicates,
+  equal loading, SDS-PAGE, concentrating and dialysis), cell culture
+  (counts, seeding, splitting for a day, drug and vehicle including a
+  constant-DMSO dose series, transfection and lentivirus packaging, MOI
+  and titer, freezing), bacteria (OD₆₀₀, antibiotics, pouring plates), and
+  rpm ↔ × g from the lab's saved rotors, a dosing sheet for a list of
+  animals and group sizes. Reference tables for plates and flasks, buffer
+  pKa, stocks and how they keep, agarose %, DNA ladders, concentrated
+  reagents and molecular weights (the lab's own first, from its Chemicals
+  database by name or abbreviation).
 
 <p align="center">
-  <img src="docs/screenshots/utilities.webp" alt="Utilities: the list of calculators and a PCR master mix worked out for 12 reactions" width="100%">
+  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" width="100%">
 </p>
 
 <p align="center">

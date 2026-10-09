@@ -204,29 +204,32 @@
         那个人（在 <b>设置 → 通知</b> （Settings → Notifications）里可以关掉这类通知）。<b>版本历史</b> （Version history）保存每一次编辑，可以
         比较或恢复。<b>标签和搜索</b> （Tags and search）覆盖你能打开的所有页面。</p>
       <h2 id="utilities">工具</h2>
-      <p>侧边栏里实验记录本下的 <b>工具</b> （Utilities）收录了 41 个实验台计算器。在列表里找，或在 <b>查找
-        计算器</b> （Find a calculator）里输入（直接输字母就行：<i>a260</i>、<i>ddct</i>，或你正在做的事，比如 <i>nanodrop</i>）；结果随输入即时变化，每个计算器都会在这台电脑上记住你上次输入的值，<b>重置</b> （Reset）恢复
-        到示例值。大多数计算器会求解你留空的那个字段（会有标记），单位可以自己选。</p>
+      <p>侧边栏里实验记录本下的 <b>工具</b> （Utilities）收录了实验计算器和参考表。在顶部的搜索框里用实验台上的说法输入你要做的事：
+        <i>c1v1</i>、<i>nanodrop</i>、<i>× g</i>、<i>MOI</i>、<i>稀释</i>；拼错或用复数也能找到，输入化学品名称（<i>MgCl2</i>）会打开 <b>配溶液</b> （Make a solution）并自动填好。也可以从分组里打开。<b>固定</b> （Pin）的工具会留在顶部，最近打开的在 <b>最近</b> （Recent）里。</p>
+      <p>每个工具打开时都带着一个算好的示例，结果显示在输入旁边，随输入即时变化。一个工具能求不止一个值时，<b>求</b> （Work out）
+        标明求哪一个（母液体积，或终浓度）；相关的计算在顶部分成几种模式。每个工具都会在这台电脑上记住你上次输入的值，<b>重置</b> （Reset）恢复示例，<b>复制</b> （Copy）复制结果（包括表格），可以粘贴到实验记录页或表格里。</p>
       <dl class="gdl">
-        <dt>溶液与缓冲液</dt><dd>摩尔浓度；稀释（C₁V₁ = C₂V₂）；梯度稀释；百分比溶液；×倍储液；质量浓度 ↔
-          摩尔浓度；缓冲液 pH（Henderson–Hasselbalch 方程，考虑温度）；渗透压；化学品换算（配方里是一种形式，手头是另一种
-          水合物或盐）。输入化学品名称或分子式即可填入分子量（<i>MgCl2·6H2O</i> 和
+        <dt>溶液</dt><dd><b>配溶液</b>：按摩尔浓度、百分比、从浓溶液（37 % 盐酸、冰醋酸、50 % 氢氧化钠）配，或换成另一种水合物或盐时
+          要称多少；<b>稀释 (C₁V₁)</b>，填写分子量后也能在 mg/mL 和 µM 之间换算，也接受 × 倍母液；<b>梯度稀释</b>，按固定转移量
+          （10 µL 加入 90 µL）或每步倍数；<b>配指定 pH 的缓冲液</b>：要称多少、用多少浓酸或浓碱滴定，或两种磷酸盐各多少，
+          按使用温度计算。输入化学品名称或分子式即可填入分子量（<i>MgCl2·6H2O</i> 和
           <i>magnesium chloride hexahydrate</i> 是同一种）。实验室自己的优先：它的<a href="samples-and-orders.html">化学品</a>数据库，
           按名称或缩写都能找到。不认识的化学品会留空，由你自己填分子量。</dd>
-        <dt>DNA 与 RNA</dt><dd>由 A₂₆₀ 算浓度；质量 ↔ 摩尔 ↔ 拷贝数；寡核苷酸 Tm、GC、分子量和溶解体积；连接反应
-          插入片段:载体比例；HiFi/Gibson 组装；PCR 和 qPCR 预混液；由标准曲线算 qPCR 扩增效率；ΔΔCt 倍数变化；
-          转化效率。</dd>
-        <dt>蛋白</dt><dd>由 A₂₈₀ 算浓度；由序列算分子量、ε 和 pI；标准曲线（BCA、Bradford、ELISA）读出
-          样品浓度；SDS-PAGE 配胶；每孔上样 µg 数。</dd>
-        <dt>细胞</dt><dd>血球计数板计数；铺板（按培养器皿）；倍增时间；转染体系放大；按 MOI 算病毒量；
-          由阳性细胞百分比算慢病毒滴度；细胞冻存；给药处理的药物和溶剂对照用量。</dd>
-        <dt>细菌与酵母</dt><dd>OD₆₀₀ 换算细胞数和稀释；达到某个 OD 所需时间；平板和培养基中的抗生素用量。</dd>
-        <dt>离心、动物与凝胶</dt><dd>rpm ↔ × g；按体重给药剂量；琼脂糖凝胶；放射性衰变。</dd>
-        <dt>统计与单位</dt><dd>平均值、SD、SEM 和 CV；每组所需动物或样本数；单位换算。</dd>
+        <dt>DNA 和克隆</dt><dd>由 A₂₆₀ 算 DNA / RNA 浓度和纯度；ng ↔ pmol ↔ 拷贝数（以及 ng/µL 换算 nM）；引物 Tm、Taq 或
+          Q5/Phusion 的退火温度和延伸时间，以及溶解用水量；酶切；连接，含整个反应体系；HiFi/Gibson 组装；琼脂糖凝胶。</dd>
+        <dt>PCR 和 qPCR</dt><dd>预混液；由粘贴的 Ct 值表（样本、基因、Ct；复孔取平均，倍数变化 ± SD）或四个数值算 ΔΔCt；
+          由标准曲线算 qPCR 扩增效率；逆转录前让各样本 RNA 或 DNA 投入量相同。</dd>
+        <dt>蛋白</dt><dd>由 A₂₈₀ 算浓度，可由序列算 ε 和分子量（半胱氨酸成对或还原态）；BCA、Bradford 或 ELISA 标准曲线读出
+          样本浓度，复孔取平均；等量上样；SDS-PAGE 配胶；浓缩和透析。</dd>
+        <dt>细胞培养</dt><dd>细胞计数；铺板；传代，让培养瓶在需要的那天正好可用，以及倍增时间；加药和溶剂，单一剂量或每孔 DMSO
+          相同的剂量梯度；转染，按器皿放大或用于慢病毒包装；按 MOI 算病毒量，由稀释梯度算滴度；冻存；筛选用抗生素。</dd>
+        <dt>细菌和酵母</dt><dd>OD₆₀₀ 换算细胞数、稀释菌液，以及长到某个 OD 的时间；培养基中的抗生素，以及倒板所需的 LB、琼脂和
+          抗生素。</dd>
+        <dt>实验台和动物</dt><dd>rpm ↔ × g，可选 <b>实验室的转子</b>（实验室里任何人添加一次，填好半径和最高转速）；<b>给药表</b>，把动物和体重列表换算成每只的 µL 和要配的溶液；每组样本量。</dd>
       </dl>
-      <p>计算器下方的 <b>参考表</b> （Reference tables）：培养器皿、缓冲液、抗生素、琼脂糖凝胶、同位素和分子
-        量。指向某个计算器的链接（<code>…/utilities#dilution</code>）会直接打开它。</p>
-      <figure class="gshot"><a href="../../assets/screenshots/utilities.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/utilities.webp" alt="工具：计算器列表，以及为 12 个反应算好的 PCR 预混液" loading="lazy" width="2000" height="1250"></a><figcaption>工具</figcaption></figure>
+      <p><b>参考</b> （Reference）表：培养板和培养瓶、缓冲液 pKa、母液和抗生素（用什么溶解、怎么保存）、按片段大小选琼脂糖 %、
+        DNA 分子量标准、浓试剂和分子量。指向某个工具的链接（<code>…/utilities#dilute</code>）会直接打开它。</p>
+      <figure class="gshot"><a href="../../assets/screenshots/utilities.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/utilities.webp" alt="工具：搜索框、固定的工具和各组实验计算器" loading="lazy" width="2000" height="1250"></a><figcaption>工具</figcaption></figure>
     <!-- /page -->
       <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="experiments.html"><small>上一页</small>实验</a><a class="next" href="sign-a-notebook-page.html"><small>下一页</small>签名实验记录</a></nav>
       <div class="helpful" data-pagefind-ignore>
@@ -236,7 +239,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 6 分钟</p>
+      <p>本页内容 · 阅读约 7 分钟</p>
       <ol>
         <li class="lvl2"><a href="#pages">页面</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">实验和实验流程</a></li>

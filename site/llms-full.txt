@@ -964,23 +964,25 @@ Share a page to read or edit, with people, everyone in the lab or a [project gro
 
 ### Utilities
 
-**Utilities**, under Notebook in the sidebar, holds 41 bench calculators. Find one in the list or type in **Find a calculator** (plain letters do: *a260*, *ddct*, or what you are doing, like *nanodrop*); the answer changes as you type, each remembers what you last typed in it on this computer, and **Reset** goes back to its example. Most solve for whichever field you leave empty (it is marked), and units are yours to choose.
+**Utilities**, under Notebook in the sidebar, holds the bench calculators and reference tables. Type in the search at the top what you are doing, in the bench's words: *c1v1*, *nanodrop*, *× g*, *MOI*, *稀释*; a typo or a plural still finds it, and a chemical's name (*MgCl2*) opens **Make a solution** with it filled in. Or open one from its group. **Pin** a tool to keep it at the top; the ones you opened last are under **Recent**.
 
-- **Solutions & buffers**: Molarity; dilution (C₁V₁ = C₂V₂); serial dilutions; percent solutions; ×-fold stocks; mass ↔ molar concentration; buffer pH (Henderson–Hasselbalch, with the temperature); osmolarity; another form of a chemical (a hydrate or salt for the one in the recipe). Type a chemical's name or formula to fill its molecular weight (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one). The lab's own come first: its [Chemicals](https://biomanager.org/guide/samples-and-orders) database, by name or abbreviation. One it doesn't know leaves the weight for you to type.
+A tool opens on a worked example, with the answer beside what you type, and changes as you type. Where a tool can work out more than one thing, **Work out** says which (the stock volume, or the final concentration); tools that do related jobs have modes along the top. Each remembers what you last typed on this computer, **Reset** goes back to the example, and **Copy** takes the answer, tables too, to paste into a notebook page or a sheet.
 
-- **DNA & RNA**: Concentration from A₂₆₀; mass ↔ moles ↔ copies; oligo Tm, GC, MW and resuspension volume; ligation insert:vector; HiFi/Gibson assembly; PCR and qPCR master mixes; qPCR efficiency from a standard curve; ΔΔCt fold change; transformation efficiency.
+- **Solutions**: **Make a solution**: what to weigh for a molarity, a percent, from a concentrated liquid (37 % HCl, glacial acetic acid, 50 % NaOH) or in another hydrate or salt; **Dilute (C₁V₁)**, which also goes between mg/mL and µM when you give the MW, and takes × stocks; **Serial dilution**, by a round transfer (10 µL into 90 µL) or a fold per step; **Buffer at a pH**: what to weigh and how much concentrated acid or base to titrate with, or the two phosphate salts, at the temperature you use it. Type a chemical's name or formula to fill its molecular weight (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one). The lab's own come first: its [Chemicals](https://biomanager.org/guide/samples-and-orders) database, by name or abbreviation. One it doesn't know leaves the weight for you to type.
 
-- **Protein**: Concentration from A₂₈₀; MW, ε and pI from the sequence; a standard curve (BCA, Bradford, ELISA) read off for your samples; SDS-PAGE gel recipes; µg per lane.
+- **DNA & cloning**: DNA / RNA concentration and purity from A₂₆₀; ng ↔ pmol ↔ copies (and ng/µL to nM); primer Tm, the annealing temperature and extension time for Taq or Q5/Phusion, and the water to resuspend; a restriction digest; ligation, with the whole reaction; HiFi/Gibson assembly; agarose gels.
 
-- **Cells**: Haemocytometer counts; seeding plates (by vessel); doubling time; scaling a transfection; virus for an MOI; lentivirus titer from % positive cells; freezing down; drug and vehicle for treatments.
+- **PCR & qPCR**: Master mixes; ΔΔCt from a pasted table of Ct values (sample, gene, Ct; replicates averaged, fold change ± SD) or from four numbers; qPCR efficiency from a standard curve; equal RNA or DNA input for an RT.
 
-- **Bacteria & yeast**: OD₆₀₀ to cells and dilutions; time to reach an OD; antibiotic for plates and media.
+- **Protein**: Concentration from A₂₈₀, with ε and MW from the sequence (cysteines paired or reduced); a BCA, Bradford or ELISA curve read off for your samples, replicates averaged; equal loading for a gel; SDS-PAGE recipes; concentrating and dialysis.
 
-- **Centrifuge, animals & gels**: rpm ↔ × g; dose by body weight; agarose gels; radioactive decay.
+- **Cell culture**: Counting cells; seeding plates; splitting so a flask is ready on the day, and doubling time; drug and vehicle, one dose or a dose series that keeps the DMSO the same in every well; transfection, scaled or for lentivirus packaging; virus for an MOI, and the titer from a dilution series; freezing down; antibiotics for selection.
 
-- **Numbers & units**: Mean, SD, SEM and CV; animals or samples per group; a unit converter.
+- **Bacteria & yeast**: OD₆₀₀ to cells, diluting back, and the time to an OD; antibiotics for media, and LB, agar and antibiotic to pour plates.
 
-**Reference tables**, below the calculator: culture vessels, buffers, antibiotics, agarose gels, isotopes and molecular weights. A link to a calculator (`…/utilities#dilution`) opens it.
+- **Bench & animals**: rpm ↔ × g, from one of **the lab's rotors** (anyone in the lab adds them once, with the radius and top speed); a **dosing sheet** that turns a list of animals and weights into µL each and the solution to make; sample size per group.
+
+**Reference** tables: plates and flasks, buffer pKa, stocks and antibiotics (what each is dissolved in and how it keeps), agarose % by size, DNA ladders, concentrated reagents and molecular weights. A link to a tool (`…/utilities#dilute`) opens it.
 
 *Utilities*
 

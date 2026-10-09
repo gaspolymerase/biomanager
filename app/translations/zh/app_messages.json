@@ -524,5 +524,9 @@
   "pLannotate could not annotate this plasmid: %(problem)s.": "pLannotate 无法注释这个质粒：%(problem)s。",
   "pLannotate found nothing this map does not already mark.": "pLannotate 没有找到图谱上尚未标注的内容。",
   "pLannotate marked %(num)s feature: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。",
-  "pLannotate marked %(num)s features: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。"
+  "pLannotate marked %(num)s features: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。",
+  "Guests can't change the lab's rotors.": "访客不能修改实验室的转子。",
+  "Up to 40 rotors.": "最多 40 个转子。",
+  "Each rotor needs a name and a radius between 0.5 and 60 cm.": "每个转子需要名称，半径在 0.5 到 60 cm 之间。",
+  "Bench calculators and reference tables": "实验计算器和参考表"
 }

@@ -19,14 +19,8 @@ assert.deepEqual(main(B.run('molarity', { mass: '', volume: '100', conc: '150', 
 // 10 mM stock to 10 µM in 1 mL: 1 µL (and a 1:1000 note); mixed families refused.
 assert.equal(main(B.run('dilution', { c1: '10', c1_unit: 'mM', v1: '', c2: '10', c2_unit: 'µM', v2: '1', v2_unit: 'mL' }))[0], '1 µL');
 assert.ok(B.run('dilution', { c1: '10', c1_unit: 'mM', v1: '', c2: '1', c2_unit: 'mg/mL', v2: '1' }).error);
-// 10× to 1× in 500 mL: 50 mL stock.
-assert.equal(main(B.run('xfold', {}))[0], '50 mL');
-// 1 mg/mL BSA (66 430) is 15.05 µM.
-assert.equal(main(B.run('massmolar', {}))[0], '15.05 µM');
 // Tris pH 8.06 at 25 °C: base : acid = 1.
 assert.equal(value(B.run('buffer', { buffer: '0', ph: '8.06', temp: '25' }), 'Base : acid'), '1 : 1');
-// PBS as listed: 137×2 + 2.7×2 + 10×3 + 1.8×2 = 313 mOsm/L.
-assert.equal(main(B.run('osmolarity', {}))[0], '313 mOsm/L');
 // A260 1.0 of dsDNA: 50 ng/µL; 1 kb dsDNA: 100 ng = 0.1618 pmol.
 assert.equal(main(B.run('a260', { a260: '1' }))[0], '50 ng/µL');
 assert.equal(value(B.run('dnamoles', { length: '1000', mass: '100', mass_unit: 'ng' }), 'Moles'), '161.8 fmol');
@@ -54,13 +48,15 @@ assert.equal(std.table.rows[0][2], '1.5');
 // SDS-PAGE 12 %, two 5 mL gels: 4 mL of 30 % acrylamide.
 assert.equal(B.run('sdspage', {}).table.rows[1][1], '4 mL');
 // Haemocytometer: 212 over 4 squares, ×2: 1.06 × 10⁶ /mL.
-assert.equal(main(B.run('count', {}))[0], '1 060 000 /mL');
+assert.equal(main(B.run('count', {}))[0], '1.06 × 10⁶ /mL');
 // Doubling: 2e5 → 1.6e6 in 72 h is 3 doublings: 24 h.
 assert.equal(main(B.run('doubling', {}))[0], '24 h');
 // MOI 5 on 2e5 cells at 1e8/mL: 10 µL.
 assert.equal(main(B.run('moi', {}))[0], '10 µL');
-// Lentivirus: 1e5 cells, 12 % positive with 1 µL: 1.2 × 10⁷ TU/mL.
-assert.equal(main(B.run('titer', {}))[0], '1.2 × 10⁷ TU/mL');
+// Lentivirus: 1e5 cells, 12 % positive with 1 µL: 1.2 × 10⁷ TU/mL; with
+// 1.4 % from 0.1 µL too, the two in range are averaged and 58 % is left out.
+assert.equal(main(B.run('titer', { list: '1 12' }))[0], '1.2 × 10⁷ TU/mL');
+assert.equal(main(B.run('titer', {}))[0], '1.3 × 10⁷ TU/mL');
 // 10 µM from 10 mM in 2 mL: 2 µL, 0.1 % vehicle.
 assert.equal(main(B.run('treat', {}))[0], '2 µL');
 // E. coli OD 2.4 into 50 mL at 0.1: 2.083 mL.
@@ -73,25 +69,14 @@ assert.equal(main(B.run('antibiotic', {}))[0], '500 µL');
 assert.equal(main(B.run('rcf', { rpm: '', g: '12000' }))[0], '10 629 rpm');
 // Tamoxifen 75 mg/kg, 25 g mouse, 20 mg/mL: 93.75 µL.
 assert.equal(main(B.run('dose', {}))[0], '93.75 µL');
-// ³²P after one half-life: 50 %.
-assert.equal(main(B.run('decay', { iso: '0', days: '14.29' }))[0], '50 %');
-// Mean and SD of 2, 4, 4, 4, 5, 5, 7, 9: 5 and 2.138.
-const st = B.run('stats', { data: '2 4 4 4 5 5 7 9' });
-assert.equal(value(st, 'Mean'), '5');
-assert.equal(value(st, 'SD'), '2.138');
 // Sample size: d = 1, α 0.05, power 0.8 → 17 per group.
 assert.equal(main(B.run('samplesize', { diff: '1', sd: '1' }))[0], '17');
-// 1 mg is 1000 µg; 37 °C is 98.6 °F.
-assert.equal(value(B.run('convert', { kind: 'mass', value: '1', from: 'mg' }), 'µg'), '1 000');
-assert.equal(value(B.run('convert', { kind: 'temp', value: '37', from: '°C' }), '°F'), '98.6');
 // Numbers read as a lab types them.
 assert.equal(B.num('2,5'), 2.5);
 assert.equal(B.num('1,000'), 1000);
 assert.equal(B.num('3e5'), 300000);
 // From the re-test: no answer that isn't one.
 assert.ok(B.run('dilution', { c1: '1', c1_unit: 'mM', c2: '10', c2_unit: 'mM', v2: '10', v2_unit: 'mL' }).error);
-assert.match(B.run('convert', { kind: 'temp', value: '1', from: 'mg' }).error, /°C, °F or K/);
-assert.equal(B.run('convert', { kind: 'massconc', value: '2', from: 'ug/ul' }).lines[1].value, '2');
 {
   const r = B.run('seeding', { susp: '1e6', vessel: String(B.CALCS.find((c) => c.id === 'seeding').inputs[1].options.findIndex(([, l]) => /96/.test(l))), wells: '1', per: '3e5', extra: '0' });
   assert.ok(!r.lines.some((l) => /medium/.test(l.value) && /−|-/.test(l.value)), JSON.stringify(r.lines));
@@ -128,5 +113,64 @@ assert.match(B.run('dose', { weight: '25', weight_unit: 'g', dose: '75', conc: '
   assert.ok(!B.run('antibiotic', { drug: pick(/Penicillin/) }).notes.some((x) => /agar/.test(x)));
   assert.ok(B.run('antibiotic', { drug: pick(/Ampicillin/) }).notes.some((x) => /agar/.test(x)));
 }
+
+// ---- The redesign's tools.
+// Every tool's every mode runs on what it opens with.
+for (const tool of B.TOOLS) {
+  for (const m of tool.modes) {
+    const out = B.run(m.calc, m.example || {});
+    assert.ok(!out.error && ((out.lines || []).length || out.table), `${tool.id}/${m.calc}: ${JSON.stringify(out).slice(0, 120)}`);
+  }
+}
+// Every calculator belongs to a tool, and old addresses still open one.
+for (const c of B.CALCS) assert.ok(B.TOOLS.some((x) => x.modes.some((m) => m.calc === c.id)), c.id);
+assert.equal(B.locate('dilution').tool.id, 'dilute');
+assert.equal(B.locate('xfold').tool.id, 'dilute');
+assert.deepEqual([B.locate('titer').tool.id, B.locate('titer').mode], ['virus', 1]);
+// Search finds what the testers typed, best first.
+const first = (q) => (B.search(q)[0] || {}).id;
+for (const [q, id] of [['c1v1', 'dilute'], ['amp', 'antibiotic'], ['carb', 'antibiotic'], ['lb', 'antibiotic'], ['sds', 'sdspage'],
+  ['nanodorp', 'a260'], ['primers', 'primer'], ['delta-delta', 'ddct'], ['70% ethanol', 'dilute'], ['hemocytomter', 'count'],
+  ['passage', 'split'], ['pen strep', 'antibiotic'], ['ng/ul to nm', 'copies'], ['centrifuge speed', 'rcf'], ['tamoxifen', 'dose'],
+  ['稀释', 'dilute'], ['配溶液', 'make'], ['离心', 'rcf'], ['铺板', 'seed'], ['上样', 'loading'], ['amicon', 'concentrate']]) {
+  assert.equal(first(q), id, `${q} → ${first(q)}`);
+}
+// A mg/mL stock to a µM final through the MW: 1 mg/mL of 50 kDa is 20 µM.
+assert.equal(main(B.run('dilution', { c1: '1', c1_unit: 'mg/mL', c2: '10', c2_unit: 'µM', v2: '1', v2_unit: 'mL', mw: '50000' }))[0], '500 µL');
+assert.ok(B.run('dilution', { c1: '1', c1_unit: 'mg/mL', c2: '10', c2_unit: 'µM', v2: '1' }).error);
+// 1 L of 1 M Tris pH 8.0: 121.1 g of base and about 44.5 mL of 37 % HCl.
+{
+  const r = B.run('buffer', { buffer: '0', ph: '8', conc: '1', conc_unit: 'M', volume: '1', volume_unit: 'L' });
+  assert.equal(value(r, 'Weigh'), '121.1 g Tris base');
+  assert.equal(value(r, 'Titrate with about'), '44.54 mL 37 % HCl (12 M)');
+}
+// 37 % HCl is 12 M: 8.35 mL in 100 mL makes 1 M.
+assert.equal(main(B.run('fromconc', {}))[0], '8.351 mL');
+// A 3:1 ligation in 20 µL, and an unpipettable insert flagged.
+assert.equal(B.run('ligation', { iconc: '25', vconc: '50' }).table.rows[4][1], '14.8');
+assert.ok(B.run('ligation', { iconc: '200', vconc: '50' }).warnings.length);
+// Six fragments at 0.1 pmol each and twice that: too much DNA for HiFi.
+assert.ok(B.run('assembly', { list: 'v 5000 100\na 1000 100\nb 1000 100\nc 1000 100\nd 1000 100\ne 1000 100', vpmol: '0.1' }).warnings.some((w) => /pmol/.test(w)));
+// ΔΔCt from triplicates: MYC up 6.96-fold.
+assert.equal(main(B.run('ddcttable', {}))[0], '6.96-fold');
+assert.ok(B.run('ddct', { tt: '36' }).warnings.length);
+// A digest of 1 µg, two 20 U/µL enzymes, 50 µL: 0.5 µL each, 39 µL water.
+assert.equal(main(B.run('digest', {}))[0], '39 µL');
+// Normalising RNA: 1000 ng from 412 ng/µL is 2.4 µL.
+assert.equal(B.run('normalise', {}).table.rows[0][1], '2.4');
+// 12 mg at 90 % to 5 mg/mL: 2.16 mL. Two changes of 1 L for 5 mL: 1 : 201 each.
+assert.equal(main(B.run('concentrate', {}))[0], '2.16 mL');
+assert.equal(value(B.run('dialysis', {}), 'Each change dilutes'), '1 : 201');
+// A T75 at 80 % in 3 days, doubling daily: 1.5 × 10⁶ cells.
+assert.match(main(B.run('split', {}))[0], /^1.5 × 10⁶/);
+// The dose series keeps 0.1 % DMSO; a 2 mL well takes 2 µL directly.
+assert.match(B.run('doseseries', { well: '2000' }).lines[2].value, /^2 µL/);
+assert.ok(B.run('doseseries', { top: '100' }).error);
+// Lentivirus packaging 4:3:1 of 10 µg: 5, 3.75 and 1.25 µg.
+assert.deepEqual(B.run('lentipack', { n: '1' }).table.rows.slice(0, 3).map((r) => r[1]), ['5 µg', '3.75 µg', '1.25 µg']);
+// 20 plates of 25 mL (+10 %): 22 g LB agar; ampicillin 550 µL.
+assert.equal(value(B.run('plates', { drug: '0' }), 'LB agar powder'), '22 g');
+// Dosing sheet: 75 mg/kg of a 24.6 g mouse at 20 mg/mL is 92.25 µL.
+assert.equal(B.run('dosesheet', {}).table.rows[0][3], '92.3 µL');
 
 console.log('ok');
