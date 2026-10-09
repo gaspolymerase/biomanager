@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.view.View;
 import android.view.WindowInsets;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -43,6 +44,9 @@ public class MainActivity extends Activity {
     private View offline;
     private TextView offlineDetail;
     private ValueCallback<Uri[]> pendingFiles;
+    private View scanButton;
+    /** The page shows a Scan button of its own (its phone tab bar), so the app's stays hidden. */
+    private boolean pageHasScan;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +69,7 @@ public class MainActivity extends Activity {
             web.reload();
         });
         findViewById(R.id.change_server).setOnClickListener(v -> changeServer());
-        View scanButton = findViewById(R.id.scan);
+        scanButton = findViewById(R.id.scan);
         scanButton.setOnClickListener(v -> scan());
         hideWhileTyping(scanButton);
 
@@ -83,6 +87,7 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);  // tabs and preferences live in localStorage
         settings.setUserAgentString(settings.getUserAgentString() + " BioManagerAndroid/" + BuildConfigVersion.name(this));
+        view.addJavascriptInterface(new PageBridge(), "BioManagerApp");
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -100,6 +105,9 @@ public class MainActivity extends Activity {
             @Override
             public void onPageStarted(WebView v, String url, Bitmap favicon) {
                 progress.setVisibility(View.VISIBLE);
+                // Each page says again whether it has its own Scan.
+                pageHasScan = false;
+                scanButton.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -174,8 +182,36 @@ public class MainActivity extends Activity {
                 root.getWindowVisibleDisplayFrame(visible);
                 typing = visible.height() < root.getRootView().getHeight() * 0.75;
             }
-            button.setVisibility(typing ? View.GONE : View.VISIBLE);
+            button.setVisibility(typing || pageHasScan ? View.GONE : View.VISIBLE);
         });
+    }
+
+    /**
+     * What the lab server's pages may ask of the app (window.BioManagerApp). A page
+     * with the phone tab bar has its own Scan: it hides the app's button and asks
+     * for the scanner from there. Only the server's own pages are answered.
+     */
+    private final class PageBridge {
+        @JavascriptInterface
+        public void pageHasScan() {
+            runOnUiThread(() -> {
+                if (!fromServer()) return;
+                pageHasScan = true;
+                scanButton.setVisibility(View.GONE);
+            });
+        }
+
+        @JavascriptInterface
+        public void scan() {
+            runOnUiThread(() -> {
+                if (fromServer()) MainActivity.this.scan();
+            });
+        }
+
+        private boolean fromServer() {
+            String url = web.getUrl();
+            return url != null && Server.owns(server, Uri.parse(url));
+        }
     }
 
     /** Errors that mean the server could not be reached at all. */

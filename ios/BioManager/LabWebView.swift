@@ -9,6 +9,7 @@ final class LabPage: ObservableObject {
     @Published var offline = false
     @Published var download: URL?          // a finished download, to hand to the share sheet
     @Published var scanForPage = false     // the page (bench mode) asked for the scanner
+    @Published var pageHasScan = false     // the page shows a Scan of its own (its phone tab bar)
     weak var webView: WKWebView?
 
     /// What the scanner read, handed to the page that asked (window.bmScanned).
@@ -75,10 +76,15 @@ struct LabWebView: UIViewRepresentable {
             self.page = page
         }
 
-        /// Only the lab server's own pages may open the scanner.
+        /// Only the lab server's own pages may open the scanner. A page with the
+        /// phone tab bar says "page-has-scan": it has a Scan of its own, which asks
+        /// for the scanner here, so the app's floating button stays hidden.
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
             guard message.name == "bmScan", message.frameInfo.securityOrigin.host == server.host else { return }
-            Task { @MainActor in page.scanForPage = true }
+            let hasOwn = (message.body as? String) == "page-has-scan"
+            Task { @MainActor in
+                if hasOwn { page.pageHasScan = true } else { page.scanForPage = true }
+            }
         }
 
         func observe(_ web: WKWebView) {
@@ -141,7 +147,10 @@ struct LabWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            Task { @MainActor in page.loading = true }
+            Task { @MainActor in
+                page.loading = true
+                page.pageHasScan = false   // each page says again
+            }
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

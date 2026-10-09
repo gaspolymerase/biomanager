@@ -401,6 +401,7 @@
     }
 
     initWindowFrame();
+    initPhone();
     initDrops();
     initSheen();
     initAccountMenu();
@@ -539,6 +540,105 @@
       drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item.is-active',
              key: location.pathname + ':' + index, className: 'seg-drop' });
     });
+  }
+
+  // The phone's tab bar (base.html .phone-tabs). Databases opens a sheet of
+  // the lab's databases, Search the search palette. Scan asks the phone app
+  // for its scanner (iOS: bmScan, which answers through window.bmScanned;
+  // Android: BioManagerApp.scan, which opens the card itself), else reads
+  // the code with the camera here (BarcodeDetector), else says to use the
+  // Camera app, which opens the card's link. The bar shrinks to its icons
+  // while the page scrolls down.
+  function initPhone() {
+    const bar = document.querySelector('.phone-tabs');
+    if (!bar) return;
+    const ios = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmScan;
+    const android = window.BioManagerApp;
+    const phone = window.matchMedia('(max-width: 767px)');
+
+    // The page has its own Scan: the app's floating button can go.
+    const claim = () => {
+      if (!phone.matches) return;
+      if (ios) ios.postMessage('page-has-scan');
+      if (android && android.pageHasScan) android.pageHasScan();
+    };
+    claim();
+    phone.addEventListener('change', claim);
+
+    const sheet = (id) => {
+      const d = document.getElementById(id);
+      if (d && !d.open) d.showModal();
+    };
+    document.querySelectorAll('dialog.phone-sheet').forEach((d) => {
+      d.addEventListener('click', (event) => {
+        if (event.target === d || event.target.closest('[data-phone-sheet-close]')) d.close();
+      });
+    });
+    const dbs = bar.querySelector('[data-phone-dbs]');
+    if (dbs) dbs.addEventListener('click', () => sheet('phone-dbs'));
+    bar.querySelector('[data-phone-search]').addEventListener('click', () => {
+      const search = document.getElementById('app-global-search');
+      if (search) search.click();
+    });
+
+    // What a scan read: a card is a link to its record on this lab.
+    if (!window.bmScanned) {
+      window.bmScanned = (value) => {
+        let url = null;
+        try { url = new URL(String(value || '').trim(), location.href); } catch (e) {}
+        if (url && url.origin === location.origin && /^https?:/.test(String(value).trim())) {
+          location.href = url.href;
+        } else if (window.BiomanagerShell) {
+          toast(bar.dataset.notThisLab, 'danger');
+        }
+      };
+    }
+    async function camera() {
+      const box = document.createElement('div');
+      box.className = 'scan-camera';
+      box.innerHTML = '<video playsinline muted></video><button type="button" class="btn"></button>';
+      box.querySelector('button').textContent = t('Cancel');
+      document.body.appendChild(box);
+      const video = box.querySelector('video');
+      let stream = null;
+      let done = false;
+      const stop = () => { done = true; if (stream) stream.getTracks().forEach((track) => track.stop()); box.remove(); };
+      box.querySelector('button').addEventListener('click', stop);
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        await video.play();
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        const look = async () => {
+          if (done) return;
+          const codes = await detector.detect(video).catch(() => []);
+          if (codes.length) { stop(); window.bmScanned(codes[0].rawValue); return; }
+          setTimeout(look, 120);
+        };
+        look();
+      } catch (e) {
+        stop();
+        sheet('phone-scan-help');
+      }
+    }
+    bar.querySelector('[data-phone-scan]').addEventListener('click', () => {
+      if (android && android.scan) android.scan();
+      else if (ios) ios.postMessage('scan');
+      else if ('BarcodeDetector' in window && navigator.mediaDevices) camera();
+      else sheet('phone-scan-help');
+    });
+
+    // Smaller while reading down the page, full again on the way back up.
+    const scroller = document.getElementById('app-scroll');
+    if (scroller) {
+      let last = scroller.scrollTop;
+      scroller.addEventListener('scroll', () => {
+        const now = scroller.scrollTop;
+        if (now > last + 6 && now > 40) bar.classList.add('is-small');
+        else if (now < last - 6 || now <= 40) bar.classList.remove('is-small');
+        last = now;
+      }, { passive: true });
+    }
   }
 
   // A sheen follows the mouse across glass, as light would.

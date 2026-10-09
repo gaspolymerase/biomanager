@@ -56,6 +56,23 @@ solid with a firmer outline (`prefers-reduced-transparency`,
 `prefers-contrast`). A window in the background shows its selection in
 grey (`html.window-inactive`, from `static/shell.js`).
 
+### On a phone
+
+Below 768px the tab strip and search field give way to a tab bar at the
+bottom (`.phone-tabs` in `base.html`, `initPhone` in `static/shell.js`):
+Home, Calendar and Notebook as the lab has them, **Databases** (a sheet of
+the lab's databases, `#phone-dbs`) and **Scan**, with Search in a round
+button beside it. It shrinks to its icons while the page scrolls down.
+**Scan** asks the phone app for its scanner when there is one — the iPhone
+app's `bmScan` handler (`"scan"`, answered through `window.bmScanned`, which
+opens a card of this lab) or the Android app's `BioManagerApp.scan()`
+(which opens the card itself) — else reads the code with the camera
+(`BarcodeDetector`), else says to point the Camera app at the card. On
+each page the bar tells the apps it has a Scan of its own
+(`"page-has-scan"`, `BioManagerApp.pageHasScan()`), so they hide their
+floating button for that page; a server from before this keeps it.
+**☰** at the top left still brings in the whole sidebar.
+
 ### Type
 
 Inter for the interface and JetBrains Mono for sequences and IDs, both

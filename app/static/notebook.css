@@ -344,6 +344,10 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
   .nb-drawer { top: auto; right: 0; bottom: 0; height: 78vh; width: 100vw; border-radius: 18px 18px 0 0; }
   .nb-timers { right: 8px; left: 8px; width: auto; }
 }
+/* On a phone the formatting bar sits above the tab bar. */
+@media (max-width: 767px) {
+  .editor-toolbar { bottom: calc(80px + env(safe-area-inset-bottom)) !important; }
+}
 
 @media print {
   .notebook-sidebar, .nb-page-tools, .nb-drawer, .nb-callout, .nb-quicklog, .editor-toolbar, .nb-timers, .app-rail, .app-tabbar { display: none !important; }

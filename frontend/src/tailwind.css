@@ -634,7 +634,8 @@
      title row is glass too. */
   .toolbar-actions .btn-group { @apply glass flex h-8 items-center rounded-full; }
   .toolbar-actions .btn-group :is(.btn, .btn-ghost) {
-    @apply h-8 rounded-full border-0 bg-transparent px-3;
+    @apply h-8 rounded-full border-0 px-3;
+    background: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     box-shadow: none;
@@ -1013,6 +1014,84 @@
   @media (min-width: 768px) {
     .rail-scrim, .drawer-trigger { @apply hidden; }
   }
+
+  /* --- Phone: a tab bar at the bottom ------------------------------------
+     Home, Calendar, Databases, Notebook and Scan in a glass capsule, Search
+     a glass circle beside it (base.html, static/shell.js initPhone). It
+     shrinks to icons while the page scrolls down and comes back as it
+     scrolls up. The tab strip and search field it replaces are hidden. */
+  .phone-tabs { @apply hidden; }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+
+  @media (max-width: 767px) {
+    .phone-tabs {
+      @apply fixed z-[38] flex items-center gap-2;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+    .phone-tabs-bar {
+      @apply glass flex h-[58px] min-w-0 flex-1 items-center rounded-full p-1;
+      transition: height 0.3s var(--ease-spring);
+    }
+    .phone-tab {
+      @apply flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5
+             rounded-full border-0 bg-transparent text-[10px] font-semibold text-ink-soft no-underline;
+      transition: background-color 0.15s, color 0.15s, transform 0.3s var(--ease-spring);
+    }
+    .phone-tab:hover { @apply no-underline; }
+    .phone-tab:active { transform: scale(0.94); }
+    .phone-tab svg { @apply size-[19px] shrink-0; }
+    .phone-tab span { @apply max-w-full truncate px-0.5; }
+    .phone-tab.is-on { @apply bg-sand-300/40 text-brand-700; }
+    .phone-tab.is-on svg { @apply text-brand-600; }
+    .phone-search {
+      @apply glass grid size-[58px] shrink-0 cursor-pointer place-items-center rounded-full border-0 text-ink;
+      transition: width 0.3s var(--ease-spring), height 0.3s var(--ease-spring);
+    }
+    .phone-search svg { @apply size-5; }
+    .phone-tabs.is-small .phone-tabs-bar { @apply h-11; }
+    .phone-tabs.is-small .phone-tab span { @apply hidden; }
+    .phone-tabs.is-small .phone-search { @apply size-11; }
+
+    .shell-scroll {
+      padding-bottom: calc(84px + env(safe-area-inset-bottom));
+      scroll-padding-bottom: calc(84px + env(safe-area-inset-bottom));
+    }
+    .toast-host { bottom: calc(84px + env(safe-area-inset-bottom)); }
+    .wtab-strip, .omnibox { @apply hidden; }
+    .topstrip { @apply px-2.5; }
+    .drawer-trigger { @apply glass size-[34px] rounded-full text-ink; }
+
+    /* Databases, and how to scan here: sheets that rise from the bottom. */
+    dialog.phone-sheet {
+      @apply mx-0 mb-0 mt-auto w-full max-w-full rounded-b-none;
+      max-height: 82vh;
+      border-radius: 22px 22px 0 0;
+      padding-bottom: env(safe-area-inset-bottom);
+      animation: sheet-up 0.38s var(--ease-spring);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      dialog.phone-sheet { animation: none; }
+      .phone-tabs-bar, .phone-search, .phone-tab { transition: none; }
+    }
+  }
+  .phone-sheet-head { @apply flex items-center justify-between px-5 pb-1 pt-4; }
+  .phone-sheet-head h3 { @apply text-[17px] font-bold; }
+  .phone-sheet-list { @apply flex flex-col gap-0.5 overflow-y-auto px-3 pb-4 pt-1; }
+  .phone-sheet-item {
+    @apply flex h-12 items-center gap-3 rounded-xl px-3 text-[15px] text-ink no-underline;
+  }
+  .phone-sheet-item:hover, .phone-sheet-item:active { @apply bg-sand-200/60 no-underline; }
+  .phone-sheet-item.is-on { @apply bg-brand-600/14 font-semibold text-brand-800; }
+  .phone-sheet-item > svg:first-child { @apply size-5 text-brand-600; }
+  .phone-sheet-chev { @apply ml-auto size-3.5 text-sand-400; }
+  .phone-sheet-text { @apply px-5 pb-6 pt-1 text-[15px] leading-relaxed text-ink-soft; }
+  /* Scan with the camera here (a browser that reads QR codes itself). */
+  .scan-camera {
+    @apply fixed inset-0 z-100 flex flex-col items-center justify-center gap-3.5 bg-black/85;
+  }
+  .scan-camera video { @apply w-[min(92vw,520px)] rounded-2xl; }
 
   @media print {
     .topstrip, .chrome-edge { display: none !important; }

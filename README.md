@@ -753,7 +753,9 @@ becomes a card with its columns under their names, and rack grids get a
   the download page; **Scan** reads cage cards). On an iPhone or iPad, open
   the lab server in Safari and **Share → Add to Home Screen**: it opens
   full screen like an app, and the camera scans the cards. Phones reach a
-  lab server, or a desktop that shares its lab on the network.
+  lab server, or a desktop that shares its lab on the network. A bar at the
+  bottom of the screen holds **Home**, **Calendar**, **Databases**,
+  **Notebook** and **Scan**, with **Search** beside it.
 
 - **Label printers**: **Print on** chooses a sheet of cards for any
   printer, or a label printer's roll — Brother QL (62 × 29, 90 × 29,

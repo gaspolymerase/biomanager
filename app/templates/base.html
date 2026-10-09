@@ -155,6 +155,9 @@
           {# ---- Top row: tabs, search, notifications, account ---- #}
           {% set current_url = request.path + ('?' + request.query_string.decode('utf-8') if request.query_string else '') %}
           <div class="topstrip">
+            {# On a phone, the sidebar comes in as a sheet from here. #}
+            <button type="button" class="strip-btn drawer-trigger" data-drawer-toggle
+                    aria-label="{{ _('Show sidebar') }}">{{ icon('menu') }}</button>
             <div class="wtab-strip">
               <nav class="wtabs" id="app-tabbar" aria-label="{{ _('Open tabs') }}" data-user="{{ current_user.id }}"
                    data-current-url="{{ current_url }}"
@@ -224,9 +227,6 @@
 
           {# ---- The page's title and actions ---- #}
           <header class="toolbar" id="app-toolbar">
-            <button type="button" class="strip-btn drawer-trigger" data-drawer-toggle
-                    aria-label="{{ _('Show sidebar') }}">{{ icon('menu') }}</button>
-
             <div class="min-w-0">
               <div class="toolbar-title">{{ heading_text or title_text }}</div>
               {% if subtitle_text %}
@@ -272,6 +272,47 @@
           </div>
         </div>
       </div>
+
+      {# ---- Phone: a tab bar at the bottom, Search beside it (static/shell.js, initPhone) ----
+         Home, Calendar and Notebook as the lab has them; Databases opens a sheet
+         of the lab's databases; Scan reads a card with the phone app's scanner,
+         the camera, or says to use the Camera app. #}
+      {% set ws_links = (nav_sections|selectattr('label', 'equalto', 'Workspace')|first or {'links': []}).links %}
+      {% set db_links = (nav_sections|selectattr('label', 'equalto', 'Databases')|first or {'links': []}).links %}
+      {% set phone_ws = {} %}{% for item in ws_links %}{% set _ = phone_ws.update({item.key: item}) %}{% endfor %}
+      <nav class="phone-tabs" aria-label="{{ _('Main places') }}"
+           data-not-this-lab="{{ _('That code is not a card of this lab.') }}">
+        <div class="phone-tabs-bar">
+          {% for key in ('home', 'calendar', 'databases', 'notebook') %}
+            {% if key == 'databases' %}
+              {% if db_links %}
+                <button type="button" class="phone-tab{% if db_links|selectattr('active')|list %} is-on{% endif %}"
+                        data-phone-dbs aria-haspopup="dialog">{{ icon('database') }}<span>{{ _('Databases') }}</span></button>
+              {% endif %}
+            {% elif key in phone_ws %}
+              {% set item = phone_ws[key] %}
+              <a class="phone-tab{% if item.active %} is-on{% endif %}" href="{{ item.url }}"
+                 {% if item.active %}aria-current="page"{% endif %}>{{ icon(item.icon) }}<span>{{ item.label|tr }}</span></a>
+            {% endif %}
+          {% endfor %}
+          <button type="button" class="phone-tab" data-phone-scan>{{ icon('qrcode') }}<span>{{ _('Scan') }}</span></button>
+        </div>
+        <button type="button" class="phone-search" data-phone-search aria-label="{{ _('Search') }}">{{ icon('search') }}</button>
+      </nav>
+      <dialog class="phone-sheet" id="phone-dbs" aria-label="{{ _('Databases') }}">
+        <header class="phone-sheet-head"><h3>{{ _('Databases') }}</h3>
+          <button type="button" class="modal-close" data-phone-sheet-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
+        <div class="phone-sheet-list">
+          {% for item in db_links %}
+            <a class="phone-sheet-item{% if item.active %} is-on{% endif %}" href="{{ item.url }}">{{ icon(item.icon) }}<span>{{ item.label|tr }}</span>{{ icon('chevron-right', 'phone-sheet-chev') }}</a>
+          {% endfor %}
+        </div>
+      </dialog>
+      <dialog class="phone-sheet" id="phone-scan-help" aria-label="{{ _('Scan') }}">
+        <header class="phone-sheet-head"><h3>{{ _('Scan') }}</h3>
+          <button type="button" class="modal-close" data-phone-sheet-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
+        <p class="phone-sheet-text">{{ _("Point your phone's Camera app at the card's QR code: it opens the record here.") }}</p>
+      </dialog>
 
       <script id="tab-icon-rules" type="application/json">{{ tab_icon_rules | tojson }}</script>
 

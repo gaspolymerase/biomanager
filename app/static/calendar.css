@@ -535,6 +535,20 @@
   .cal-side.is-open { display: flex; }
   .cal-side-toggle { display: inline-flex !important; }
 }
+/* A phone's title row takes two lines here: the month, then the steering. */
+@media (max-width: 767px) {
+  body:has(#cal) { --toolbar-h: 92px; }
+  body:has(#cal) .toolbar { flex-wrap: wrap; align-content: center; row-gap: 6px; }
+  body:has(#cal) .toolbar > .min-w-0 { flex-basis: 100%; }
+  body:has(#cal) .toolbar-actions { flex: 1; justify-content: space-between; }
+  body:has(#cal) .toolbar-actions { gap: 6px; }
+  /* A week is seven slivers on a phone: Day and List read better there. */
+  .toolbar-actions .cal-views .seg-item[data-view="week"] { display: none; }
+  .toolbar-actions .cal-views .seg-item { padding-inline: 9px; font-size: 12px; }
+  .toolbar-actions .cal-nav #biocal-today { padding-inline: 8px; }
+  .toolbar-actions .cal-new .cal-new-more { display: none; }
+  .toolbar-actions .cal-new .cal-new-main { border-radius: 999px; padding-inline: 9px; }
+}
 @media (max-width: 640px) {
   .cal-views { max-width: 100%; overflow-x: auto; }
   .cal-list { padding: 4px 10px 18px; }

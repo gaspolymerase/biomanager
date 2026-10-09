@@ -27,7 +27,7 @@ struct MainView: View {
                 OfflineView(server: server, retry: page.reload, changeServer: onChangeServer)
             }
 
-            if !page.offline && !keyboardUp {
+            if !page.offline && !keyboardUp && !page.pageHasScan {
                 Button { scanForPage = false; startScan() } label: {
                     Image(systemName: "qrcode.viewfinder")
                         .font(.system(size: 22, weight: .semibold))

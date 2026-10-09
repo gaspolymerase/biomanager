@@ -33,6 +33,8 @@
   // page itself starts with its title. Moved before anything is wired, and
   // every lookup below is by id or across the document, so nothing minds.
   (function liftHeader() {
+    // A phone's title row has no room for them: they stay in the page there.
+    if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches) return;
     var top = $('.nb-page-top');
     var title = $('#app-toolbar > .min-w-0');
     var actions = $('#app-toolbar .toolbar-actions');

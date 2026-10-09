@@ -246,5 +246,9 @@
   "Code": "通行码",
   "Continue": "继续",
   "One moment": "请稍候",
-  "This computer is opening the lab's master copy. One moment…": "这台电脑正在打开实验室的主副本。请稍候…"
+  "This computer is opening the lab's master copy. One moment…": "这台电脑正在打开实验室的主副本。请稍候…",
+  "Main places": "主要位置",
+  "Scan": "扫描",
+  "That code is not a card of this lab.": "这个二维码不是本实验室的卡片。",
+  "Point your phone's Camera app at the card's QR code: it opens the record here.": "用手机的相机对准卡片上的二维码，就会在这里打开对应的记录。"
 }
