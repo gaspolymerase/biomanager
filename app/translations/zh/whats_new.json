@@ -42,5 +42,10 @@
   "**Update now** there backs up, installs the new version and restarts the lab's server; the page follows it and comes back on the new version.": "那里的 **立即更新** 会先备份，再安装新版本并重启实验室服务器；页面会跟着显示每一步，完成后回到新版本。",
   "**Protocols**, **Recipes** and **Meetings** in the notebook's sidebar open as pages of their own: search them, open one to change it, or add one.": "实验记录本侧边栏里的 **实验流程**、**配方** 和 **会议** 现在各自作为页面打开：可以搜索，打开一个即可修改，也可以新建。",
   "Sort protocols and recipes into the lab's folders, each with an icon you pick; **/protocol** in a page and **Load from library** list them by folder.": "可以把实验流程和配方放进实验室的文件夹，每个文件夹的图标由你选择；页面里的 **/protocol** 和 **Load from library**（从配方库载入）会按文件夹列出它们。",
-  "Icons that were cut off on the right, such as the people and cart icons, now show whole and centred.": "以前右边被截掉的图标（比如人员和购物车图标）现在完整显示，并居中。"
+  "Icons that were cut off on the right, such as the people and cart icons, now show whole and centred.": "以前右边被截掉的图标（比如人员和购物车图标）现在完整显示，并居中。",
+  "Notebook pages write as in Notion: type **/** for headings, **callouts**, **toggles**, **2 or 3 columns**, colours, a table of contents and **reminders**.": "实验记录本页面可以像 Notion 一样写：输入 **/** 插入标题、**标注**、**折叠**、**两栏或三栏**、颜色、目录和 **提醒**。",
+  "**@** a colleague and hover their name to see who they are: their job, email and project groups.": "用 **@** 提到同事，鼠标悬停在名字上可以看到这个人的职位、邮箱和项目组。",
+  "**Utilities** has a search that knows the bench's words, pinned tools, seven groups by task and new calculators; **Make a tool** adds the lab's own.": "**实用工具** 有了懂实验台用语的搜索、置顶工具、按任务分的七组和新的计算器；**新建工具** 可以添加实验室自己的工具。",
+  "The notebook's toolbar fits in one row: **Style** and **Lists** each open a menu, and one button adds a picture or a file.": "实验记录本的工具栏只占一行：**样式** 和 **列表** 各自打开一个菜单，一个按钮就能添加图片或文件。",
+  "A BCA standard curve averages replicate readings and flags ones more than 10 % apart.": "BCA 标准曲线会对重复读数取平均，并标出相差超过 10% 的读数。"
 }

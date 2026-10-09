@@ -30,6 +30,19 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.8": {
+        "new": [
+            "Notebook pages write as in Notion: type **/** for headings, **callouts**, **toggles**, **2 or 3 columns**, colours, a table of contents and **reminders**.",
+            "**@** a colleague and hover their name to see who they are: their job, email and project groups.",
+            "**Utilities** has a search that knows the bench's words, pinned tools, seven groups by task and new calculators; **Make a tool** adds the lab's own.",
+        ],
+        "changed": [
+            "The notebook's toolbar fits in one row: **Style** and **Lists** each open a menu, and one button adds a picture or a file.",
+        ],
+        "fixed": [
+            "A BCA standard curve averages replicate readings and flags ones more than 10 % apart.",
+        ],
+    },
     "1.2.7": {
         "new": [
             "**Protocols**, **Recipes** and **Meetings** in the notebook's sidebar open as pages of their own: search them, open one to change it, or add one.",
