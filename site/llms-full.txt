@@ -185,7 +185,7 @@ About half an hour, once the lab is set up. There are two ways in: **Import from
 
 1. **Make your racks first.** **Cages → Rack grid → New rack**, named as in your sheet and labelled like the stickers on the real racks. Then a sheet with *Rack* and *Position* columns puts every cage in its place; anything without a position waits in *Unplaced* for you to drag on (on a tablet: **Move**, tap the cage, tap its place).
 
-2. **Open Import from Excel.** Every database has it in the toolbar above its sheet — Mice, Fish, Plasmids, fly and worm vials, any organism and every inventory. **Choose a file** (`.xlsx`, CSV or TSV, up to 15 MB and 5,000 rows) and press **Continue**. If the workbook has several sheets, pick one above the matches. No template, no renaming columns.
+2. **Open Import from Excel.** Every database has it under **•••** in the toolbar above its sheet — Mice, Fish, Plasmids, fly and worm vials, any organism and every inventory. **Choose a file** (`.xlsx`, CSV or TSV, up to 15 MB and 5,000 rows) and press **Continue**. If the workbook has several sheets, pick one above the matches. No template, no renaming columns.
 
 3. **Check how the columns were matched.** BioManager matches by meaning, not just by name: *Position*, *Slot* and *Well* are the position, *DOB* and *Born* the date of birth, *Supplier* the vendor, *Cat. No.* the catalogue number. Where a name could mean two things the values decide — a *Location* of `A1`, `B2`… is a position in a box, one of `Freezer 2` is a location. Each match says why; change any of them.
 
@@ -215,7 +215,7 @@ Who and where: Anyone who adds records · Every database
 
 1. For mice, make your racks first: **Cages → Rack grid → New rack**, named as in your sheet. A sheet with *Rack* and *Position* columns then puts every cage in its place; anything without a position waits in *Unplaced*.
 
-2. Open the database and press **Import from Excel** in the toolbar above its sheet (for mice, on the **Mice** tab).
+2. Open the database and press **•••** in the toolbar above its sheet, then **Import from Excel** (for mice, on the **Mice** tab).
 
 3. **Choose a file** (`.xlsx`, CSV or TSV, up to 15 MB and 5,000 rows) and press **Continue**. If the workbook has several sheets, pick one above the matches.
 
@@ -281,7 +281,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
-- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print** gives a clean sheet. Your sort, filters, hidden columns and widths are remembered on that computer.
+- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns and widths are remembered on that computer.
 
 - **On a phone**: A sheet becomes one card per row: the number and its buttons on top, then each column by name. **Columns** still hides what you don't need there.
 

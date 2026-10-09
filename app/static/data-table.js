@@ -111,10 +111,61 @@
       this._applyResizedWidths();
       this._restoreSort();
       this._wireQuickAdd();
+      this._wireMore();
       this.render();
       this._wireStickyParts();
       if (!this._showFresh()) this._revealHashTarget();
       window.addEventListener('hashchange', () => this._revealHashTarget());
+    }
+
+    // The toolbar's rarer actions (Print, Import from Excel: data-dt-more)
+    // go into a ••• menu beside the page's New button, so the toolbar keeps
+    // to one line. They stay inside the sheet, with their own handlers; the
+    // menu is placed on the screen (fixed) so a short sheet can't clip it.
+    _wireMore() {
+      const toolbar = this.card.querySelector(':scope > .dt-toolbar');
+      const items = toolbar ? toolbar.querySelectorAll(':scope > [data-dt-more]') : [];
+      if (!items.length) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'dt-more';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'dt-toolbar-btn dt-more-btn';
+      button.title = t('More');
+      button.setAttribute('aria-label', t('More'));
+      button.setAttribute('aria-haspopup', 'menu');
+      button.setAttribute('aria-expanded', 'false');
+      button.innerHTML = '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#ellipsis"></use></svg>';
+      const menu = document.createElement('div');
+      menu.className = 'menu dt-more-menu';
+      menu.setAttribute('role', 'menu');
+      menu.hidden = true;
+      items.forEach((item) => {
+        item.setAttribute('role', 'menuitem');
+        menu.appendChild(item);
+      });
+      wrap.append(button, menu);
+      toolbar.insertBefore(wrap, toolbar.querySelector(':scope > .btn-primary'));
+
+      const close = () => {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        button.setAttribute('aria-expanded', 'false');
+      };
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (!menu.hidden) { close(); return; }
+        menu.hidden = false;
+        button.setAttribute('aria-expanded', 'true');
+        const r = button.getBoundingClientRect();
+        menu.style.top = (r.bottom + 6) + 'px';
+        menu.style.left = Math.max(8, r.right - menu.offsetWidth) + 'px';
+      });
+      menu.addEventListener('click', () => setTimeout(close));
+      document.addEventListener('click', (event) => { if (!wrap.contains(event.target)) close(); });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+      document.addEventListener('scroll', close, true);
+      window.addEventListener('resize', close);
     }
 
     _restoreSort() {

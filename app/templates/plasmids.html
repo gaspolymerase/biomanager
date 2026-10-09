@@ -72,7 +72,7 @@
     </div>
     <div class="dt-toolbar-spacer"></div>
     {{ sheet_ui.tools() }}
-    <a class="dt-toolbar-btn" href="{{ sheet_import_url('plasmids') }}" title="{{ _('Bring in the Excel or CSV sheet you kept your plasmids in') }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
+    <a class="dt-toolbar-btn" data-dt-more href="{{ sheet_import_url('plasmids') }}" title="{{ _('Bring in the Excel or CSV sheet you kept your plasmids in') }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
     <button type="button" class="dt-toolbar-btn" data-record-edit="plasmid-dialog"
             data-record-payload='{{ dict(new_payload, count=10) | tojson }}'
             title="{{ _('Several plasmids at once: the same construct, or a list of names, with consecutive numbers side by side in a box') }}">{{ icon('duplicate') }} {{ _('Add many') }}</button>

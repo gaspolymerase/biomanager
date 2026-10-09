@@ -123,7 +123,7 @@
       </div>
       <div class="dt-toolbar-spacer"></div>
       {{ sheet_ui.tools() }}
-      <a class="dt-toolbar-btn" href="{{ sheet_import_url('organisms:' ~ module.key) }}" title="{{ _('Bring in the Excel or CSV sheet you kept your %(nouns)s in', nouns=n_orgs) }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
+      <a class="dt-toolbar-btn" data-dt-more href="{{ sheet_import_url('organisms:' ~ module.key) }}" title="{{ _('Bring in the Excel or CSV sheet you kept your %(nouns)s in', nouns=n_orgs) }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
       <button type="button" class="dt-toolbar-btn" title="{{ _('Add several %(nouns)s with the same details', nouns=n_orgs) }}"
               data-org-edit="animal-dialog" data-org-payload="{{ dict(new_payload, how_many=10) | tojson | forceescape }}">
         {{ icon('copy') }} {{ _('Add many') }}

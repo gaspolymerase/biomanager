@@ -134,7 +134,7 @@
         <div class="dt-toolbar-spacer"></div>
         {{ sheet_ui.tools() }}
         <a class="dt-toolbar-btn" href="{{ url_for('labels.stock_cards', key=key) }}" title="{{ _('Labels with a QR code for the %(units)s in use, for any printer or a label printer', units=units_w) }}">{{ icon('qrcode') }} {{ _('Labels') }}</a>
-        <a class="dt-toolbar-btn" href="{{ sheet_import_url('stocks:' ~ key) }}" title="{{ _('Bring in the Excel or CSV sheet you kept your %(units)s in', units=units_w) }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
+        <a class="dt-toolbar-btn" data-dt-more href="{{ sheet_import_url('stocks:' ~ key) }}" title="{{ _('Bring in the Excel or CSV sheet you kept your %(units)s in', units=units_w) }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
         <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]"
                 data-record-edit="unit-dialog" data-record-payload='{{ new_payload | tojson }}'>
           {{ icon('plus') }} {{ _('New %(noun)s', noun=unit_w) }}

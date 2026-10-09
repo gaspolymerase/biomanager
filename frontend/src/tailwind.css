@@ -185,6 +185,8 @@
   --glass-edge:   rgba(255, 255, 255, 0.5);
   --glass-rim:    rgba(0, 0, 0, 0.09);
   --glass-shadow: 0 2px 5px rgb(0 0 0 / 0.06), 0 10px 26px rgb(0 0 0 / 0.11);
+  /* The faint top highlight on a solid button in the page. */
+  --control-hi:   rgba(255, 255, 255, 0.5);
   /* A press swells a control, overshooting a little, like a drop. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Nearly opaque: a menu opening from the top bar can't blur what is
@@ -297,6 +299,7 @@
     --glass-edge:   rgba(255, 255, 255, 0.06);
     --glass-rim:    rgba(0, 0, 0, 0.5);
     --glass-shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.45);
+    --control-hi:   rgba(255, 255, 255, 0.06);
     --material-popover: rgba(44, 44, 46, 0.98);
 
     --shadow-xs:  0 0 0 0.5px rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.3);
@@ -401,32 +404,41 @@
 
 /* --- Push button -------------------------------------------------------- */
 
+/* Buttons in the page are solid, not glass (glass is for what floats
+   over it): a rounded rectangle, as small Mac controls stay, lit from
+   above by a faint top highlight. */
 @utility btn {
   @apply inline-flex h-7 shrink-0 cursor-pointer items-center justify-center gap-1.5
          rounded-md border border-hairline bg-surface px-2.5 text-[13px]
-         font-medium text-ink shadow-xs transition-[background-color,box-shadow] duration-100
-         select-none;
+         font-medium text-ink select-none;
+  box-shadow: inset 0 1px 0 var(--control-hi), 0 1px 1.5px rgb(0 0 0 / 0.06);
+  transition: background-color 0.1s, box-shadow 0.1s, transform 0.25s var(--ease-spring);
   & .icon { @apply size-[14px]; }
   &:hover { @apply bg-sand-50; }
-  &:active { @apply bg-sand-200 shadow-none; }
-  &:disabled { @apply cursor-default bg-sand-50 text-sand-400 shadow-none; }
+  &:active { @apply bg-sand-200; box-shadow: none; transform: scale(0.97); }
+  &:disabled { @apply cursor-default bg-sand-50 text-sand-400; box-shadow: none; transform: none; }
+  @media (prefers-reduced-motion: reduce) { &:active { transform: none; } }
 }
 
 @utility btn-primary {
-  @apply border-transparent bg-brand-600 text-white shadow-sm;
-  &:hover { @apply border-transparent bg-brand-700 text-white; }
-  &:active { @apply bg-brand-800; }
-  &:disabled { @apply border-transparent bg-brand-600/35 text-white/70; }
+  @apply border-transparent text-white;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand-500) 90%, white 10%), var(--color-brand-600));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 1px 2px color-mix(in srgb, var(--color-brand-700) 35%, transparent);
+  &:hover { @apply border-transparent text-white; background: var(--color-brand-600); }
+  &:active { @apply bg-brand-700; }
+  &:disabled { @apply border-transparent text-white/70; background: color-mix(in srgb, var(--color-brand-600) 35%, transparent); }
 }
 
 @utility btn-ghost {
-  @apply border-transparent bg-transparent text-ink shadow-none;
+  @apply border-transparent bg-transparent text-ink;
+  box-shadow: none;
   &:hover { @apply border-transparent bg-sand-200/70; }
   &:active { @apply bg-sand-300/70; }
 }
 
 @utility btn-danger {
-  @apply border-transparent bg-danger-600 text-white shadow-sm;
+  @apply border-transparent bg-danger-600 text-white;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 1px 2px rgb(0 0 0 / 0.12);
   &:hover { @apply border-transparent bg-danger-700 text-white; }
 }
 
@@ -442,7 +454,8 @@
   box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.04);
   &::placeholder { @apply text-sand-500; }
   &:hover { @apply border-sand-400; }
-  &:focus { @apply border-brand-500; box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.04); }
+  &:focus { @apply border-brand-500;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 22%, transparent); }
   &:disabled { @apply cursor-default bg-sand-100 text-sand-500; }
 }
 
@@ -542,7 +555,7 @@
   .card-head-link:hover { @apply text-brand-700; }
 
   .stat-label {
-    @apply truncate text-[10.5px] font-semibold uppercase tracking-[0.08em] text-sand-400;
+    @apply truncate text-[11.5px] font-semibold text-muted;
   }
   .stat-value { @apply text-[26px] font-semibold leading-none tracking-[-0.03em] text-ink; }
   .stat-sub { @apply truncate text-[11.5px] text-muted; }
@@ -559,18 +572,22 @@
   .page-head-actions { @apply flex shrink-0 flex-wrap items-center gap-2; }
 
   /* Segmented sub-navigation — the in-page tab row (Mice / Cages / …). */
+  /* A capsule track; the current item is a raised drop that slides
+     (.seg-drop, static/shell.js). */
   .seg {
-    @apply inline-flex items-center gap-0.5 rounded-xl border border-hairline
-           bg-recess p-0.5 shadow-xs;
+    @apply inline-flex items-center gap-0.5 rounded-full bg-sand-200/70 p-[3px];
   }
   .seg-item {
-    @apply inline-flex h-7.5 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5
-           text-[12.5px] font-medium text-muted transition-all duration-150 select-none;
-    transition-timing-function: var(--ease-out-soft);
+    @apply inline-flex h-7.5 shrink-0 items-center gap-1.5 rounded-full px-3
+           text-[12.5px] font-medium text-ink-soft select-none;
   }
   .seg-item svg { @apply size-[14px]; }
-  .seg-item:hover { @apply bg-surface/70 text-ink-soft; }
-  .seg-item.is-active { @apply bg-surface text-brand-700 shadow-xs ring-1 ring-sand-200/80; }
+  .seg-item:hover { @apply text-ink; }
+  .seg-item.is-active {
+    @apply bg-surface font-semibold text-ink;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+  .seg-item.is-active svg { @apply text-brand-600; }
   .seg-count { @apply ml-0.5 text-[10.5px] font-semibold text-sand-400; }
   .seg-item.is-active .seg-count { @apply text-brand-600/70; }
 
@@ -766,6 +783,8 @@
   .shell-scroll {
     @apply h-full overflow-y-auto overscroll-contain bg-canvas;
     padding-top: calc(var(--tabbar-h) + var(--toolbar-h));
+    /* A link to a #section, or scrollIntoView, stops it below the rows. */
+    scroll-padding-top: calc(var(--tabbar-h) + var(--toolbar-h) + 8px);
   }
   .shell-page { @apply mx-auto w-full max-w-[1100px] px-6 pb-16 pt-1; }
   .shell-page-wide { @apply mx-auto w-full max-w-none px-5 pb-16 pt-1; }
@@ -1003,6 +1022,12 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* A dialog rises into place. */
+@keyframes dialog-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* A menu grows out of the button that opened it. */
 @keyframes menu-grow {
   from { opacity: 0; transform: scale(0.86); }
@@ -1030,13 +1055,28 @@
     background: var(--glass-strong);
     box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-rim), 0 1px 3px rgb(0 0 0 / 0.08);
   }
-  .seg-drop { @apply rounded-[9px] bg-surface shadow-xs ring-1 ring-sand-200/80; }
+  .seg-drop {
+    @apply rounded-full bg-surface;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
+  }
   .wtabs.has-drop .wtab.is-active,
   .seg.has-drop .seg-item.is-active { background: transparent; box-shadow: none; }
   .drop-still .wtab-drop, .drop-still .seg-drop { transition: none; }
 }
 
 @layer utilities {
+  /* The sheet toolbar's ••• menu (data-table.js, _wireMore). */
+  .dt-more { @apply relative shrink-0; }
+  .menu.dt-more-menu { @apply fixed right-auto w-60; }
+  .dt-more-menu > :is(.dt-toolbar-btn, a, button) {
+    @apply flex h-8 w-full justify-start gap-2.5 rounded-[9px] border-0 bg-transparent px-2.5
+           text-[13px] font-normal text-ink no-underline;
+    box-shadow: none;
+  }
+  .dt-more-menu > :is(.dt-toolbar-btn, a, button):hover { @apply bg-brand-600 text-white no-underline; }
+  .dt-more-menu > :is(.dt-toolbar-btn, a, button) svg { @apply text-muted; }
+  .dt-more-menu > :is(.dt-toolbar-btn, a, button):hover svg { @apply text-white; }
+
   .toolbar-actions :is(.btn, .btn-ghost), .omnibox, .wtab-add, .bell-btn, .account-btn, .seg-item {
     transition: transform 0.32s var(--ease-spring), background-color 0.1s, color 0.1s, box-shadow 0.15s;
   }
@@ -1097,7 +1137,7 @@
   .dt-toolbar-spacer { @apply ml-auto; }
 
   .dt-toolbar-search { @apply relative min-w-[180px] flex-1 sm:max-w-[280px]; }
-  .dt-toolbar-search input { @apply field h-8 pl-8 text-[12.5px]; }
+  .dt-toolbar-search input { @apply field h-8 rounded-full pl-8 text-[12.5px]; }
   .dt-toolbar-search .search-icon,
   .dt-toolbar-search > svg {
     @apply pointer-events-none absolute left-2.5 top-1/2 size-[14px] -translate-y-1/2
@@ -1127,8 +1167,8 @@
 
   .dt thead th {
     @apply sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap border-b border-hairline
-           bg-sand-50/95 px-2 py-1.5 text-left align-middle text-[10.5px] font-semibold uppercase
-           tracking-[0.035em] text-muted backdrop-blur;
+           bg-sand-50/95 px-2 py-1.5 text-left align-middle text-[11.5px] font-semibold
+           text-muted backdrop-blur;
   }
 
   .dt tbody tr { @apply transition-colors duration-100; }
@@ -1273,8 +1313,10 @@
   .dt-bottom-count { @apply text-[12px] text-muted; }
   .dt-bottom-action { @apply btn btn-ghost h-7 gap-1.5 px-2 text-[12px]; }
   .dt-bottom-action svg { @apply size-[14px]; }
-  .dt-bottom-action.is-primary { @apply btn-primary; }
-  .dt-bottom-action.is-primary svg { @apply text-white; }
+  /* New at the bottom adds an empty row; it stays plain, so the page's
+     own New (in the toolbar) is its one tinted action. */
+  .dt-bottom-action.is-primary { @apply font-semibold text-brand-700; }
+  .dt-bottom-action.is-primary svg { @apply text-brand-600; }
   /* The New button leads the bottom bar, at its left. */
   .dt-quick-add { @apply m-0 flex; }
   /* A row just added with it, briefly. */
@@ -1304,16 +1346,19 @@
   /* Wider than a phone (Orders' status chips): it scrolls sideways
      instead of running off the card. */
   .dt-chips {
-    @apply inline-flex max-w-full shrink-0 items-center gap-0.5 overflow-x-auto rounded-lg bg-sand-100 p-0.5
+    @apply inline-flex max-w-full shrink-0 items-center gap-0.5 overflow-x-auto rounded-full bg-sand-200/70 p-[3px]
            [scrollbar-width:none];
   }
   .dt-chips > .dt-chip { @apply shrink-0; }
   .dt-chip {
-    @apply inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border-0
-           bg-transparent px-2.5 text-[12px] font-medium text-muted transition-colors;
+    @apply inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border-0
+           bg-transparent px-3 text-[12px] font-medium text-ink-soft transition-colors;
   }
-  .dt-chip:hover { @apply text-ink-soft; }
-  .dt-chip[aria-pressed="true"] { @apply bg-surface text-ink shadow-xs; }
+  .dt-chip:hover { @apply text-ink; }
+  .dt-chip[aria-pressed="true"] {
+    @apply bg-surface font-semibold text-ink;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
+  }
   .dt-chip-count { @apply text-[11px] font-semibold tabular-nums text-sand-400; }
   .dt-chip[aria-pressed="true"] .dt-chip-count { @apply text-brand-600; }
 
@@ -1321,22 +1366,26 @@
 
   .dt-menu {
     @apply fixed z-100 flex min-w-[200px] max-w-[280px] flex-col overflow-y-auto
-           rounded-xl border border-hairline bg-surface p-1 shadow-pop;
-    animation: pop-in 0.12s var(--ease-out-soft);
+           rounded-2xl border border-hairline p-[5px] shadow-pop;
+    background: var(--material-popover);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+    transform-origin: top center;
+    animation: menu-grow 0.24s var(--ease-spring);
   }
   .dt-menu-title {
-    @apply px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.07em]
-           text-sand-400;
+    @apply px-2.5 pb-1 pt-1.5 text-[11.5px] font-semibold
+           text-muted;
   }
   .dt-menu-item {
-    @apply flex w-full cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent
+    @apply flex w-full cursor-pointer items-center gap-2.5 rounded-[9px] border-0 bg-transparent
            px-2.5 py-1.5 text-left text-[12.5px] text-ink-soft transition-colors;
   }
-  .dt-menu-item:hover { @apply bg-sand-100 text-ink; }
+  .dt-menu-item:hover { @apply bg-sand-300/40 text-ink; }
   .dt-menu-item.is-active { @apply font-semibold text-brand-700; }
   .dt-menu-item input { @apply size-3.5 shrink-0 accent-brand-600; }
   .dt-menu-action {
-    @apply mt-1 w-full cursor-pointer rounded-md border-0 border-t border-sand-100
+    @apply mt-1 w-full cursor-pointer rounded-[9px] border-0 border-t border-sand-100
            bg-transparent px-2.5 py-1.5 text-left text-[12px] font-medium text-brand-700;
   }
   .dt-menu-action:hover { @apply bg-brand-50; }
@@ -1564,9 +1613,9 @@
   .record-dialog > form { @apply flex max-h-[86vh] flex-col; }
 
   .record-dialog-head {
-    @apply flex items-start justify-between gap-3 border-b border-sand-100 px-5 pb-3 pt-4;
+    @apply flex items-start justify-between gap-3 px-5 pb-2 pt-4;
   }
-  .record-dialog-head h3 { @apply text-[15px] font-semibold text-ink; }
+  .record-dialog-head h3 { @apply text-[16px] font-bold tracking-[-0.01em] text-ink; }
   .record-dialog-sub { @apply mt-0.5 text-[12px] text-muted; }
 
   .record-dialog-body { @apply flex flex-col gap-4 overflow-y-auto px-5 py-4; }
@@ -1575,7 +1624,7 @@
     @apply m-0 grid grid-cols-1 gap-x-3 gap-y-2.5 border-0 p-0 sm:grid-cols-2;
   }
   .record-group legend {
-    @apply mb-2 p-0 text-[10.5px] font-semibold uppercase tracking-[0.07em] text-sand-400;
+    @apply mb-2 p-0 text-[11.5px] font-semibold text-muted;
   }
   .record-dialog-body label { @apply field-label; }
   .record-dialog-body label > :is(input, select, textarea) {
@@ -1588,8 +1637,7 @@
   .record-dialog-body textarea { @apply min-h-20 resize-y; }
 
   .record-dialog-foot {
-    @apply flex items-center justify-end gap-2 border-t border-sand-100 bg-sand-50/60
-           px-5 py-3;
+    @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-5 py-3;
   }
   .record-dialog-hint { @apply mr-auto text-[12px] text-muted; }
   .record-dialog-narrow { @apply w-[min(460px,calc(100vw-2rem))]; }
@@ -1597,7 +1645,7 @@
   /* What's new after an update (app/templates/_whats_new.html). */
   .whats-new-body { @apply grid gap-3 text-[13px] leading-snug text-ink-soft; }
   .whats-new-version { @apply border-b border-hairline pb-1 text-[12px] font-semibold text-muted; }
-  .whats-new-section h5 { @apply mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted; }
+  .whats-new-section h5 { @apply mb-1 text-[11.5px] font-semibold text-muted; }
   .whats-new-section ul { @apply grid list-disc gap-1 pl-5; }
   .whats-new-section b { @apply font-semibold text-ink; }
   /* BioDialog (static/dialogs.js): the app's confirm, prompt and alert. */
@@ -1608,10 +1656,12 @@
      such as an experiment's Record weight: a card over a dimmed page. */
   .csv-modal { @apply fixed inset-0 z-100 grid place-items-center p-4; }
   .csv-modal[hidden] { @apply hidden; }
-  .csv-modal-backdrop { @apply absolute inset-0 bg-black/35; }
+  .csv-modal-backdrop { @apply absolute inset-0 bg-black/22 backdrop-blur-[3px]; }
   .csv-modal-card {
-    @apply relative flex max-h-[86vh] w-[min(560px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl
-           border border-hairline bg-surface shadow-pop;
+    @apply relative flex max-h-[86vh] w-[min(560px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl
+           bg-surface;
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
+    animation: dialog-rise 0.32s var(--ease-spring);
   }
   .csv-modal-head { @apply flex items-center justify-between gap-3 border-b border-sand-100 px-5 pb-3 pt-4; }
   .csv-modal-head h3 { @apply text-[15px] font-semibold text-ink; }
@@ -1663,7 +1713,7 @@
   .util-none { @apply mt-2 text-[13px] text-muted; }
   .util-shortcuts { @apply mb-4 mt-3.5 flex flex-col gap-2; }
   .util-shortrow { @apply flex flex-wrap items-center gap-2; }
-  .util-shortrow > span { @apply w-16 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted; }
+  .util-shortrow > span { @apply w-16 shrink-0 text-[11.5px] font-semibold text-muted; }
   .util-shortrow em { @apply text-[12px] not-italic text-muted; }
   .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[12.5px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
   .util-chip .icon { @apply size-3 text-amber-500; }
@@ -1712,7 +1762,7 @@
   .util-input select { @apply w-auto shrink-0; }
   .util-hint { @apply text-[11.5px] font-normal text-muted; }
   .util-answer { @apply border-brand-200 xl:sticky xl:top-2; }
-  .util-answer > header { @apply flex items-center justify-between bg-brand-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-800; }
+  .util-answer > header { @apply flex items-center justify-between bg-brand-50 px-4 py-1.5 text-[11.5px] font-bold text-brand-800; }
   .util-answer > header .btn { @apply normal-case tracking-normal; }
   .util-answer-body { @apply flex flex-col gap-2.5 p-4; }
   .util-mains { @apply flex flex-col gap-2; }
@@ -1858,7 +1908,7 @@
     @apply border-brand-400 bg-brand-50;
   }
   .zfish-rack-tray { @apply flex flex-col gap-2 rounded-xl border border-dashed border-sand-300 p-3; }
-  .zfish-rack-tray h4 { @apply text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400; }
+  .zfish-rack-tray h4 { @apply text-[11.5px] font-semibold text-muted; }
   .zfish-rack-tray-items { @apply flex flex-wrap gap-1.5; }
 
   .zfish-tube {
@@ -2051,7 +2101,7 @@
   .biocal-list-group + .biocal-list-group { @apply mt-3; }
   .biocal-list-day {
     @apply rounded-t-xl border border-b-0 border-hairline bg-sand-50 px-3 py-1.5 text-[11px]
-           font-semibold uppercase tracking-[0.06em] text-muted;
+           font-semibold text-muted;
   }
   .biocal-list-rows { @apply m-0 list-none overflow-hidden rounded-b-xl border border-hairline p-0; }
   .biocal-list-row {
@@ -2166,7 +2216,7 @@
   .notebook-new-btn-secondary svg { @apply text-muted; }
 
   .notebook-section-label {
-    @apply px-2 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-sand-400;
+    @apply px-2 pb-1 pt-3 text-[11.5px] font-semibold text-muted;
   }
 
   .notebook-page-list { @apply m-0 flex list-none flex-col gap-px p-0; }
@@ -2321,7 +2371,7 @@
   /* A layout that is a page of its own (the fish tanks' Table / Rack grid). */
   .view-switch .dt-chip[aria-current="page"] { @apply bg-surface text-ink shadow-xs; }
   .rack-chips { @apply flex flex-wrap items-center gap-1.5; }
-  .rack-chips-label { @apply text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400; }
+  .rack-chips-label { @apply text-[11.5px] font-semibold text-muted; }
   .view-switch .dt-chip svg { @apply size-[13px]; }
 
   .rack-view { @apply flex flex-col; }
@@ -2382,7 +2432,7 @@
   .rack-empty { @apply col-span-full py-16 text-center text-[12.5px] text-muted; }
 
   .rack-tray { @apply flex flex-col gap-2 self-start rounded-xl border border-dashed border-sand-300 p-3; }
-  .rack-tray h4 { @apply text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400; }
+  .rack-tray h4 { @apply text-[11.5px] font-semibold text-muted; }
   .rack-tray p { @apply text-[11.5px] leading-snug text-muted; }
   .rack-tray-items { @apply flex flex-col gap-1.5; }
   .rack-tray-items .rack-tile { @apply min-h-11 flex-none; }
@@ -2446,40 +2496,45 @@
 
   .cmdk-overlay { @apply fixed inset-0 z-100 flex items-start justify-center p-4 pt-[12vh]; }
   .cmdk-overlay[hidden] { display: none; }
-  .cmdk-backdrop { @apply absolute inset-0 bg-sand-950/25 backdrop-blur-[2px]; }
+  .cmdk-backdrop { @apply absolute inset-0 bg-sand-950/20 backdrop-blur-[3px]; }
 
   .cmdk-card {
-    @apply relative flex max-h-[62vh] w-full max-w-[560px] flex-col overflow-hidden
-           rounded-2xl border border-hairline bg-surface shadow-pop;
-    animation: pop-in 0.16s var(--ease-out-soft);
+    @apply relative flex max-h-[62vh] w-full max-w-[600px] flex-col overflow-hidden
+           rounded-3xl shadow-pop;
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
+    transform-origin: top center;
+    animation: menu-grow 0.28s var(--ease-spring);
   }
 
   .cmdk-input-row {
-    @apply flex shrink-0 items-center gap-2.5 border-b border-sand-100 px-3.5 py-3;
+    @apply flex shrink-0 items-center gap-3 border-b border-hairline/70 px-4 py-3.5;
   }
   .cmdk-icon { @apply size-[17px] shrink-0 text-sand-400; }
   .cmdk-input-row input {
-    @apply min-w-0 flex-1 border-0 bg-transparent text-[14.5px] text-ink outline-none;
+    @apply min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none;
   }
   .cmdk-input-row input::placeholder { @apply text-sand-400; }
   .cmdk-kbd { @apply kbd-chip shrink-0; }
 
-  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto p-1.5; }
+  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto bg-surface/70 p-1.5; }
   .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[12.5px] text-muted; }
 
   .cmdk-group-label {
-    @apply px-2.5 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.09em]
-           text-sand-400;
+    @apply px-2.5 pb-1 pt-2.5 text-[11px] font-semibold
+           text-muted;
   }
 
   .cmdk-row {
-    @apply flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-ink no-underline
+    @apply flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-ink no-underline
            transition-colors duration-100;
   }
-  .cmdk-row.is-active { @apply bg-brand-50 text-ink; }
+  .cmdk-row.is-active { @apply bg-brand-600/12 text-ink; }
   .cmdk-row-type {
     @apply w-[62px] shrink-0 rounded-md bg-sand-100 px-1.5 py-0.5 text-center
-           text-[10px] font-semibold uppercase tracking-[0.05em] text-muted;
+           text-[11px] font-semibold text-muted;
   }
   .cmdk-row-type-mouse   { @apply bg-info-50 text-info-600; }
   .cmdk-row-type-plasmid { @apply bg-brand-50 text-brand-700; }
@@ -2496,7 +2551,7 @@
   .cmdk-row-sublabel { @apply truncate text-[11.5px] text-muted; }
 
   .cmdk-foot {
-    @apply flex shrink-0 items-center gap-4 border-t border-sand-100 bg-sand-50/70
+    @apply flex shrink-0 items-center gap-4 border-t border-hairline/70 bg-transparent
            px-3.5 py-2 text-[11px] text-muted;
   }
   .cmdk-foot span { @apply inline-flex items-center gap-1; }
@@ -2510,23 +2565,31 @@
 
   /* m-auto restores the centring the browser gives a modal dialog, which
      Tailwind's reset (margin: 0 on everything) removes. */
+  /* A dialog is a card with large corners over the dimmed, softened
+     window; it rises into place. Title left, buttons bottom right, no grey
+     bands between them. */
   dialog {
-    @apply m-auto max-h-[86vh] w-[min(560px,calc(100vw-2rem))] rounded-2xl border
-           border-hairline bg-surface p-0 text-ink shadow-pop;
+    @apply m-auto max-h-[86vh] w-[min(560px,calc(100vw-2rem))] rounded-3xl border-0
+           bg-surface p-0 text-ink;
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
   }
-  dialog::backdrop { @apply bg-sand-950/25; }
-  dialog[open] { animation: pop-in 0.16s var(--ease-out-soft); }
+  dialog::backdrop {
+    background: rgb(0 0 0 / 0.22);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+  dialog[open] { animation: dialog-rise 0.32s var(--ease-spring); }
+  @media (prefers-reduced-motion: reduce) { dialog[open] { animation: none; } }
 
   .modal-topbar {
-    @apply flex items-center justify-between gap-3 border-b border-sand-100 px-4 py-3;
+    @apply flex items-center justify-between gap-3 px-5 pb-2 pt-4;
   }
-  .modal-topbar h3 { @apply text-[14.5px]; }
-  .modal-body { @apply max-h-[62vh] overflow-y-auto p-4; }
+  .modal-topbar h3 { @apply text-[16px] font-bold tracking-[-0.01em]; }
+  .modal-body { @apply max-h-[62vh] overflow-y-auto px-5 py-3; }
   .modal-foot {
-    @apply flex items-center justify-end gap-2 border-t border-sand-100 bg-sand-50/60
-           px-4 py-3;
+    @apply flex items-center justify-end gap-2 px-5 pb-4 pt-2;
   }
-  .modal-close { @apply btn btn-ghost btn-icon size-7; }
+  .modal-close { @apply btn btn-ghost btn-icon size-7 rounded-full bg-sand-200/60; }
   .modal-close svg { @apply size-4; }
 }
 
@@ -2542,15 +2605,19 @@
   }
   .toast-host[popover] { @apply top-auto right-auto m-0 overflow-visible border-0 bg-transparent p-0; }
 
+  /* A glass capsule that rises from the bottom; a dot says how it went. */
   .toast {
-    @apply pointer-events-auto max-w-[min(420px,calc(100vw-2rem))] translate-y-2 rounded-xl
-           border border-sand-800 bg-sand-900 px-3.5 py-2.5 text-[12.5px] font-medium
-           text-white opacity-0 shadow-lg transition-all duration-200;
-    transition-timing-function: var(--ease-out-soft);
+    @apply glass pointer-events-auto flex max-w-[min(440px,calc(100vw-2rem))] translate-y-3 scale-95
+           items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-medium text-ink
+           opacity-0;
+    background: var(--glass-strong);
+    transition: opacity 0.2s, transform 0.4s var(--ease-spring);
   }
-  .toast.is-in { @apply translate-y-0 opacity-100; }
-  .toast-ok     { @apply border-ok-700 bg-ok-700; }
-  .toast-danger { @apply border-danger-700 bg-danger-700; }
+  .toast::before { content: ""; @apply size-2 shrink-0 rounded-full bg-sand-500; }
+  .toast.is-in { @apply translate-y-0 scale-100 opacity-100; }
+  .toast-ok::before     { @apply bg-ok-600; }
+  .toast-danger::before { @apply bg-danger-600; }
+  .toast-danger { @apply text-danger-700; }
 }
 
 /* ===========================================================================
@@ -2755,7 +2822,7 @@
   .litter-form-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5; }
   .litter-form-grid label { @apply flex min-w-0 flex-col gap-px; }
   .litter-form-grid span {
-    @apply truncate text-[9.5px] font-semibold uppercase tracking-[0.05em] text-sand-400;
+    @apply truncate text-[10.5px] font-semibold text-muted;
   }
   .strain-table th:nth-child(5), .strain-table td:nth-child(5) { width: 28%; }
 
@@ -2795,7 +2862,7 @@
   }
   .breeder-head-grid > div { @apply flex min-w-0 flex-col gap-px; }
   .breeder-head-grid span {
-    @apply text-[9.5px] font-semibold uppercase tracking-[0.05em] text-sand-500;
+    @apply text-[10.5px] font-semibold text-sand-500;
   }
   .breeder-head-grid strong { @apply break-words text-[12px] font-semibold text-ink; }
 
@@ -2900,8 +2967,8 @@
   .experiment-card-meta svg { @apply size-[13px] text-sand-400; }
 
   .experiment-status-pill {
-    @apply inline-block rounded-md bg-sand-100 px-2 py-0.5 text-[10px] font-bold uppercase
-           tracking-[0.05em] text-muted;
+    @apply inline-block rounded-md bg-sand-100 px-2 py-0.5 text-[11px] font-bold
+           text-muted;
   }
   .experiment-status-pill[data-status="active"]    { @apply bg-ok-50 text-ok-700; }
   .experiment-status-pill[data-status="paused"]    { @apply bg-warn-50 text-warn-700; }
@@ -3070,7 +3137,7 @@
 
   /* Configure: the column editor. */
   .field-editor { @apply w-full border-collapse text-[12.5px]; }
-  .field-editor th { @apply px-1.5 pb-1.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-sand-400; }
+  .field-editor th { @apply px-1.5 pb-1.5 text-left text-[11.5px] font-semibold text-muted; }
   .field-editor td { @apply px-1.5 py-1 align-middle; }
   .field-editor tr.is-removed td { @apply opacity-40; }
   .field-editor tr.is-removed input[type="text"] { @apply line-through; }
@@ -3443,7 +3510,7 @@
   }
   .setup-step-num .icon { @apply size-3.5; }
   .setup-note { @apply my-2 max-w-[70ch] text-[12.5px] leading-snug text-muted; }
-  .setup-group-label { @apply mt-3 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-500; }
+  .setup-group-label { @apply mt-3 mb-1.5 text-[11.5px] font-semibold text-sand-500; }
   .setup-submit { @apply flex flex-wrap items-center gap-3; }
   .setup-list { @apply flex flex-col divide-y divide-hairline rounded-xl border border-hairline; }
   .setup-row { @apply flex flex-wrap items-center justify-between gap-2 px-3 py-2; }
@@ -3713,7 +3780,7 @@ tr.is-scanned > td:first-child {
 @layer components {
   .icon-picker { @apply grid gap-4 p-4; }
   .icon-picker fieldset { @apply m-0 min-w-0 border-0 p-0; }
-  .icon-picker legend { @apply mb-2 p-0 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400; }
+  .icon-picker legend { @apply mb-2 p-0 text-[11.5px] font-semibold text-muted; }
   .icon-picker-hero { @apply flex items-center gap-4; }
   .icon-picker-hero img { @apply size-24 shrink-0; }
   .icon-picker-hero p { @apply max-w-[46ch] text-[12.5px] leading-snug text-muted; }
@@ -3842,11 +3909,14 @@ tr.is-scanned > td:first-child {
     @apply relative h-[22px] w-[38px] shrink-0 cursor-pointer appearance-none rounded-full bg-sand-200 transition-colors;
   }
   .set-switch::after {
-    content: ""; @apply absolute top-[2px] left-[2px] size-[18px] rounded-full bg-white transition-transform;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    content: ""; @apply absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full bg-white;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 0 0 0.5px rgb(0 0 0 / 0.04);
+    transition: transform 0.3s var(--ease-spring), width 0.2s var(--ease-out-soft);
   }
   .set-switch:checked { @apply bg-brand-600; }
   .set-switch:checked::after { transform: translateX(16px); }
+  .set-switch:active::after { width: 23px; }
+  .set-switch:checked:active::after { transform: translateX(11px); }
   .set-switch:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
   .set-switch:disabled { @apply cursor-default opacity-55; }
 

@@ -65,7 +65,7 @@
   background: var(--color-recess); color: var(--color-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
 }
 .nb-block-grip { cursor: grab; padding: 0 4px; color: var(--color-sand-400); letter-spacing: -2px; user-select: none; }
-.nb-block-label { flex: 1; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10.5px; }
+.nb-block-label { flex: 1; font-size: 11.5px; }
 .nb-block-actions { display: inline-flex; gap: 2px; }
 .nb-block-body { padding: 10px 12px 12px; }
 .nb-block-body input, .nb-block-body select, .nb-block-body textarea {
@@ -164,7 +164,7 @@ tr:has(input[data-c="done"]:checked) .nb-recipe-amount b { text-decoration: line
 .nb-recipe-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .nb-recipe-library { margin-top: 10px; padding: 8px; border: 1px solid var(--color-hairline); border-radius: 8px; max-height: 300px; overflow: auto; background: var(--color-recess); }
 .nb-lib-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.nb-lib-label { margin: 8px 0 2px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-sand-400); }
+.nb-lib-label { margin: 8px 0 2px; font-size: 11.5px; font-weight: 600; color: var(--color-muted); }
 .nb-lib-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 6px; border-radius: 6px; cursor: pointer; color: var(--color-ink); font: inherit; }
 .nb-lib-item:hover { background: var(--color-surface); }
 .nb-lib-item small { display: block; color: var(--color-muted); font-size: 11px; }
@@ -344,7 +344,7 @@ body.nb-run-open .nb-timers { z-index: 85; }
 .nb-exp-title { font-size: 14px; font-weight: 650; color: var(--color-ink); text-decoration: none; }
 .nb-exp-title:hover { text-decoration: underline; }
 .nb-mini.is-on { border-color: var(--color-brand-600); background: color-mix(in srgb, var(--color-brand-600) 10%, var(--color-surface)); color: var(--color-brand-700); }
-.nb-exp-section h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted); }
+.nb-exp-section h4 { margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--color-muted); }
 .nb-exp-subhead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .nb-exp-subhead h4 { margin: 0; }
 .nb-exp-scroll { overflow-x: auto; }

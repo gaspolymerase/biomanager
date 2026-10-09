@@ -48,7 +48,7 @@
   <button type="button" class="dt-toolbar-btn dt-btn-sort">{{ icon('sort') }} {{ _('Sort') }}</button>
   <button type="button" class="dt-toolbar-btn dt-btn-hide">{{ icon('columns') }} {{ _('Columns') }}</button>
   {% if export %}<button type="button" class="dt-toolbar-btn dt-btn-export" title="{{ _('Download the rows shown as CSV') }}">{{ icon('download') }} {{ _('Export') }}</button>{% endif %}
-  {% if print %}<button type="button" class="dt-toolbar-btn dt-btn-print" title="{{ _('Print the rows shown') }}">{{ icon('print') }} {{ _('Print') }}</button>{% endif %}
+  {% if print %}<button type="button" class="dt-toolbar-btn dt-btn-print" data-dt-more title="{{ _('Print the rows shown') }}">{{ icon('print') }} {{ _('Print') }}</button>{% endif %}
 {% endmacro %}
 
 {# The bottom bar's New button (bottom left, staying in view as the sheet

@@ -610,7 +610,7 @@
       ]) }}
       <div class="dt-toolbar-spacer"></div>
       {{ sheet_ui.tools() }}
-      <a class="dt-toolbar-btn" href="{{ sheet_import_url('fish') }}" title="{{ _('Bring in the Excel or CSV sheet you kept your fish in') }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
+      <a class="dt-toolbar-btn" data-dt-more href="{{ sheet_import_url('fish') }}" title="{{ _('Bring in the Excel or CSV sheet you kept your fish in') }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
       {{ new_button(_('New fish'), 'fish-dialog', {'count': 1, 'sex': 'mixed', 'status': 'alive'}) }}
     </div>
     <div class="dt-scroll">

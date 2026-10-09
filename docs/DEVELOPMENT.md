@@ -311,7 +311,13 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   there is put last, its page shown and its first editable cell
   focused. Records that need a name or a tank first (strains, fish, fish
   lines, plasmids, inventories with required columns) open their dialog
-  instead.
+  instead. It is a plain button: the toolbar's **New** (which opens the
+  record's form) is the page's one tinted action.
+- The toolbar's rarer actions carry `data-dt-more` (Print in `tools()`,
+  each **Import from Excel**): `data-table.js` (`_wireMore`) moves them
+  into a **•••** menu before the toolbar's `.btn-primary`, so the toolbar
+  keeps to one line. They stay inside the card, handlers and all; the
+  menu is `position: fixed`, so a short sheet can't clip it.
 - The dot before an ID (`id_cell(..., stage=)`, `.life-dot[data-stage]`)
   is blue/green/red for a living animal's age: `app/life_stage.py` has
   the bands (mouse, zebrafish; organism databases from those presets go by
