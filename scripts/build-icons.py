@@ -312,12 +312,10 @@ CUSTOM["stomach"] = '''
 <path d="M304 120c20-30 30-58 30-88M412 386c34-14 54-44 58-84" fill="none" stroke="currentColor" stroke-width="50" stroke-linecap="round"/>
 '''
 
-# The gut: the colon's arch, scalloped as it is, around the coiled small
-# intestine, which joins it at the bottom. The scallops and the round top
-# keep it from reading as a document at 20px.
+# The gut: one hollow tube winding back and forth, its rows sharing their
+# walls, so it stays open at 15px.
 CUSTOM["intestine"] = '''
-<path d="M50 400a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM50 330a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM50 260a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM51 190a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM79 127a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM140 94a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM209 92a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM279 94a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM340 127a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM369 189a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM370 259a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM370 329a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM370 399a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM314 440a46 46 0 1 0 92 0a46 46 0 1 0 -92 0zM254 462a46 46 0 1 0 92 0a46 46 0 1 0 -92 0z"/>
-<path d="M200 186h100c22 0 36 14 36 34s-14 34-36 34h-88c-22 0-36 14-36 34s14 34 36 34h88c22 0 36 14 36 34s-14 34-36 34h-84c-30 0-52 0-72 20" fill="none" stroke="currentColor" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M344 62L344 96L344 96L128 96A80 80 0 0 0 128 256L384 256L384 256L128 256A80 80 0 0 0 128 416L344 416L344 416L344 450A40 40 0 0 0 424 450L424 416A80 80 0 0 0 344 336L128 336L128 336L384 336A80 80 0 0 0 384 176L128 176L128 176L344 176A80 80 0 0 0 424 96L424 62A40 40 0 0 0 344 62Z" fill="none" stroke="currentColor" stroke-width="36" stroke-linejoin="round"/>
 '''
 
 # An electrophoresis gel: its wells and lanes of bands, a ladder first.
