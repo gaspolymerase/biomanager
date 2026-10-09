@@ -28,6 +28,7 @@ import { SlashMenu } from './extensions/SlashMenu.js';
 import { CommentHighlights } from './extensions/CommentHighlights.js';
 import { RichBlocks } from './extensions/RichBlocks.js';
 import { PeopleChips } from './extensions/PeopleChips.js';
+import { PageLink } from './extensions/PageLinks.js';
 import { LabBlock } from './blocks/index.js';
 import { mountRecipe } from './blocks/recipe.js';
 import { StepTimers, timers } from './timers.js';
@@ -54,7 +55,7 @@ const Shortcuts = Extension.create({
   },
 });
 
-function extensionsFor({ provider, user, onCommentOpen }) {
+function extensionsFor({ provider, user, onCommentOpen, pageId }) {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4] },
@@ -65,7 +66,9 @@ function extensionsFor({ provider, user, onCommentOpen }) {
     Placeholder.configure({
       placeholder: ({ node }) => (node.type.name === 'heading' ? `Heading ${node.attrs.level}` : PLACEHOLDER),
     }),
-    Link.configure({ openOnClick: true, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
+    // Links open in a BioManager tab or the browser (extensions/PageLinks.js).
+    Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: null } }),
+    PageLink.configure({ pageId }),
     Image.configure({ allowBase64: false }),
     TaskList,
     TaskItem.configure({ nested: true }),
@@ -136,7 +139,7 @@ async function mountOnce(options) {
   const editor = new Editor({
     element,
     editable: canEdit,
-    extensions: extensionsFor({ provider, user, onCommentOpen: options.onCommentOpen }),
+    extensions: extensionsFor({ provider, user, onCommentOpen: options.onCommentOpen, pageId: page.id }),
     autofocus: false,
   });
 
@@ -193,6 +196,14 @@ async function mountOnce(options) {
   }) : null;
   const autofill = attachTableAutofill(editor, element);
   attachDropAndPaste(editor, element);
+
+  // Before the page is left for another one (a sub-page just made, a link):
+  // the live document and the saved text are on the server first.
+  editor.storage.pageLink.beforeLeave = async () => {
+    await provider.settle();
+    saveSoon.cancel(); saveLater.cancel();
+    await Promise.resolve(doSave()).catch(() => {});
+  };
 
   const flushOnHide = () => { if (document.visibilityState === 'hidden') saveSoon.flush(); };
   document.addEventListener('visibilitychange', flushOnHide);

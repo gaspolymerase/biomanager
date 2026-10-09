@@ -141,5 +141,19 @@
   "There is a folder of that name already.": "已经有同名的文件夹了。",
   "Choose what to file.": "请选择要归档的内容。",
   "That page is not a protocol.": "这个页面不是实验流程。",
-  "Choose one of the icons shown.": "请从显示的图标中选择一个。"
+  "Choose one of the icons shown.": "请从显示的图标中选择一个。",
+  "Page not found.": "找不到该页面。",
+  "Show or hide its pages": "显示或隐藏其中的页面",
+  "Where this page is": "这个页面所在的位置",
+  "Move to another topic": "移到另一个主题",
+  "Move to a topic…": "移到主题…",
+  "New topic “%(name)s”": "新建主题“%(name)s”",
+  "Kind of page: %(kind)s. Click to change it.": "页面类型：%(kind)s。点击可更改。",
+  "Changing it never moves the page: it stays in its topic.": "更改类型不会移动页面：它仍留在原来的主题中。",
+  "Plain notes": "普通笔记",
+  "Start and finish times, a status, the protocol it follows": "开始和结束时间、状态、所依据的实验流程",
+  "Versions v1, v2…, run step by step, listed in Protocols": "有 v1、v2… 版本，可逐步执行，列在“实验流程”中",
+  "A series, who presents, action items as to-dos": "会议系列、报告人、行动项作为待办",
+  "Notes from a talk": "讲座笔记",
+  "A day's log, where lines can be added for you": "一天的日志，可以自动为你添加记录"
 }

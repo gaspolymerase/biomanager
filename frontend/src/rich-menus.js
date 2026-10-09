@@ -2,7 +2,7 @@
 // colours and highlights, a link to another page, a date, a reminder.
 
 import { COLORS } from './markdown-extras.js';
-import { api, ask, escapeHtml, isoDate } from './util.js';
+import { api, ask, escapeHtml, isoDate, openInApp } from './util.js';
 
 const COLOR_NAMES = {
   gray: 'Gray', brown: 'Brown', orange: 'Orange', yellow: 'Yellow', green: 'Green',
@@ -55,40 +55,123 @@ export function openColorMenu(editor, anchor) {
   });
 }
 
-export function openPagePicker(editor) {
+// Sub-pages and links between pages (extensions/PageLinks.js). A link is
+// a pageLink piece; alone on an empty line it shows as a page in this one.
+const pageLinkNode = (page) => ({ type: 'pageLink', attrs: { id: String(page.id), title: page.title || 'Untitled page' } });
+
+// Put a link to a page where the caret is: on an empty line it fills the
+// line (a page in this one); in a sentence it is a chip; `block` puts it on
+// a line of its own below a line that has text.
+export function insertPageLink(editor, page, { block = false } = {}) {
+  const { $from } = editor.state.selection;
+  const emptyLine = $from.parent.isTextblock && $from.parent.content.size === 0;
+  if (block && !emptyLine && $from.parent.isTextblock) {
+    const after = $from.after();
+    return editor.chain().focus().insertContentAt(after, { type: 'paragraph', content: [pageLinkNode(page)] }).run();
+  }
+  return editor.chain().focus().insertContent(emptyLine ? [pageLinkNode(page)] : [pageLinkNode(page), { type: 'text', text: ' ' }]).run();
+}
+
+// A new page inside the one being written in (in the same topic).
+export async function newSubPage(editor, title = '') {
+  const parent = editor.storage.pageLink && editor.storage.pageLink.pageId;
+  const data = await api('/notebook/api/pages/new', { method: 'POST', body: { parent_page_id: parent, title } });
+  return { id: data.page_id, title: title || 'Untitled page', url: data.url };
+}
+
+function failed(err) {
+  ask.alert(`The page could not be made (${err.message}).`);
+}
+
+// "/page": a new page inside this one, opened in a BioManager tab to write in.
+export async function addSubPage(editor) {
+  try {
+    const page = await newSubPage(editor);
+    insertPageLink(editor, page, { block: true });
+    openInApp(page.url, editor);
+  } catch (err) { failed(err); }
+}
+
+// "Turn into page": this line's words become a new page's title, and the
+// line becomes the link to it.
+export async function turnIntoPage(editor) {
+  const { $from } = editor.state.selection;
+  if (!$from.parent.isTextblock) return;
+  const title = $from.parent.textContent.trim();
+  const from = $from.before();
+  const to = $from.after();
+  try {
+    const page = await newSubPage(editor, title);
+    editor.chain().focus().insertContentAt({ from, to }, { type: 'paragraph', content: [pageLinkNode(page)] }).run();
+  } catch (err) { failed(err); }
+}
+
+// Find a page to link (or, with a name typed, make one inside this page):
+// from "/" Link to page and from typing "[[".
+export function openPagePicker(editor, { inline = false } = {}) {
+  const coords = (() => { try { return editor.view.coordsAtPos(editor.state.selection.from); } catch (_e) { return null; } })();
+  const anchor = inline && coords ? { getBoundingClientRect: () => coords, contains: () => false } : null;
   const { pop, close } = popover('nb-page-picker', `
     <div class="nb-pop-label">Link to a page</div>
     <input type="search" class="field nb-pop-search" placeholder="Search your pages and pages shared with you" aria-label="Search pages">
-    <div class="nb-pop-list"><div class="insert-empty">Loading…</div></div>`, null);
+    <div class="nb-pop-list"><div class="insert-empty">Loading…</div></div>
+    <button type="button" class="nb-pop-row nb-pop-new"><b>＋ New page</b><small>inside this one</small></button>`, anchor);
   const input = pop.querySelector('input');
   const list = pop.querySelector('.nb-pop-list');
+  const addNew = pop.querySelector('.nb-pop-new');
   let results = [];
   let seq = 0;
+  let active = 0;
   const pick = (page) => {
     close();
-    editor.chain().focus()
-      .insertContent([{ type: 'text', text: page.title, marks: [{ type: 'link', attrs: { href: `/notebook?page=${page.id}` } }] }, { type: 'text', text: ' ' }])
-      .run();
+    insertPageLink(editor, page);
+  };
+  const makeNew = async () => {
+    const title = input.value.trim();
+    close();
+    try { insertPageLink(editor, await newSubPage(editor, title)); } catch (err) { failed(err); }
+  };
+  const mark = () => pop.querySelectorAll('.nb-pop-row').forEach((row, i) => row.classList.toggle('is-active', i === active));
+  const paintNew = () => {
+    const q = input.value.trim();
+    addNew.querySelector('b').textContent = q ? `＋ New page “${q}”` : '＋ New page';
   };
   const load = async () => {
     const mine = ++seq;
+    paintNew();
     try {
       const data = await api(`/notebook/api/search?q=${encodeURIComponent(input.value.trim())}`);
       if (mine !== seq) return;
-      results = (data.results || []).slice(0, 12);
+      const here = editor.storage.pageLink && String(editor.storage.pageLink.pageId);
+      results = (data.results || []).filter((p) => String(p.id) !== here).slice(0, 12);
       list.innerHTML = results.length ? results.map((p, i) => `<button type="button" class="nb-pop-row" data-i="${i}"><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.mine ? (p.tab || '') : p.owner_name)}</small></button>`).join('')
         : '<div class="insert-empty">No page matches.</div>';
     } catch (_e) {
       list.innerHTML = '<div class="insert-empty">Pages could not be loaded.</div>';
     }
+    active = 0;
+    mark();
   };
   let timer = null;
-  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 200); });
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && results[0]) { e.preventDefault(); pick(results[0]); } });
+  input.addEventListener('input', () => { paintNew(); clearTimeout(timer); timer = setTimeout(load, 200); });
+  input.addEventListener('keydown', (e) => {
+    const rows = pop.querySelectorAll('.nb-pop-row');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      active = (active + (e.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length;
+      mark();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (rows[active]) rows[active].click();
+    } else if (e.key === 'Escape') {
+      editor.commands.focus();
+    }
+  });
   list.addEventListener('click', (e) => {
     const row = e.target.closest('.nb-pop-row');
     if (row) pick(results[Number(row.dataset.i)]);
   });
+  addNew.addEventListener('click', makeNew);
   load();
   input.focus();
 }

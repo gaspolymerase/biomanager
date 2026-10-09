@@ -6,14 +6,16 @@
 {% block page_shell_class %}shell-page-flush{% endblock %}
 
 {% macro page_link(page, active_id, tab_id=None) -%}
-  <li class="notebook-page-item {% if active_id == page.id %}active{% endif %}"
+  <li class="notebook-page-item {% if active_id == page.id %}active{% endif %}{% if page.children %} has-children{% endif %}"
       data-page-id="{{ page.id }}" data-page-title="{{ page.title|lower }}">
+    {% if page.children %}<button type="button" class="nb-subpages-toggle" aria-expanded="true" aria-label="{{ _('Show or hide its pages') }}" data-subpages="{{ page.id }}">{{ icon('chevron-right') }}</button>{% endif %}
     <a href="{{ url_for('notebook', page=page.id) }}">
       {{ icon(kind_icons.get(page.kind or 'note', 'file'), 'notebook-page-icon') }}
       <span class="page-title-label">{{ page.title if page.title and page.title != 'Untitled page' else _('Untitled page') }}</span>
       {% if page.owner_name %}<span class="nb-side-owner">{{ page.owner_name }}</span>{% endif %}
       {% if page.status %}<span class="nb-status-dot" data-status="{{ page.status }}" title="{{ statuses.get(page.status, '')|tr }}"></span>{% endif %}
     </a>
+    {% if page.children %}<ul class="notebook-page-list notebook-subpages">{% for child in page.children %}{{ page_link(child, active_id) }}{% endfor %}</ul>{% endif %}
   </li>
 {%- endmacro %}
 
@@ -61,7 +63,7 @@
       {% endif %}
 
       {% set recent_pages = [] %}
-      {% for tab in tabs %}{% for page in tab.pages %}{% set _discard = recent_pages.append(page) %}{% endfor %}{% endfor %}
+      {% for tab in tabs %}{% for page in tab.flat %}{% set _discard = recent_pages.append(page) %}{% endfor %}{% endfor %}
       {% set recent_pages = recent_pages | sort(attribute='updated_at', reverse=true) %}
       {% if recent_pages %}
         <div class="notebook-section-label">{{ _('Recents') }}</div>
@@ -135,19 +137,24 @@
       {% set can_edit = p.role in ('owner', 'edit') %}
       <div class="notebook-editor nb-page" data-page-id="{{ p.id }}" data-kind="{{ p.kind }}">
         <div class="nb-page-top">
-          <div class="nb-page-where">
-            {% if can_edit %}
-              <label class="nb-kind-select" title="{{ _('What kind of page this is') }}">
-                {{ icon(kind_icons.get(p.kind, 'file')) }}
-                <select id="nb-kind" aria-label="{{ _('Kind of page') }}">
-                  {% for key, label in kinds.items() %}<option value="{{ key }}" {% if key == p.kind %}selected{% endif %}>{{ label|tr('notebook') }}</option>{% endfor %}
-                </select>
-              </label>
+          {# Where the page is, like a file path: its topic (a folder; click to
+             move it) and the pages it was made in. #}
+          <nav class="nb-page-where nb-breadcrumb" aria-label="{{ _('Where this page is') }}">
+            {% if p.real_role == 'owner' %}
+              <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ icon('folder') }}<span>{{ p.tab_title|tr }}</span></button>
+              <div class="nb-head-menu nb-move-menu" id="nb-move-menu" hidden>
+                <input type="search" class="nb-head-search" id="nb-move-search" placeholder="{{ _('Move to a topic…') }}" aria-label="{{ _('Move to a topic…') }}" autocomplete="off">
+                <div class="nb-head-list" id="nb-move-list">
+                  {% for tab in tabs %}<button type="button" class="nb-head-item{% if tab.id == p.tab_id %} is-on{% endif %}" data-move-to="{{ tab.id }}" data-name="{{ (tab.title|tr)|lower }}">{{ icon('folder') }}<span>{{ tab.title|tr }}</span><small>{% if tab.id == p.tab_id %}✓{% else %}{{ tab.flat|length }}{% endif %}</small></button>{% endfor %}
+                </div>
+                <button type="button" class="nb-head-item nb-head-add" id="nb-move-new">{{ icon('folder-plus') }}<span data-label="{{ _('New topic') }}" data-named="{{ _('New topic “%(name)s”', name='%(name)s') }}">{{ _('New topic') }}</span></button>
+              </div>
             {% else %}
-              <span class="nb-kind-select">{{ icon(kind_icons.get(p.kind, 'file')) }} {{ kinds.get(p.kind, 'Note')|tr('notebook') }}</span>
+              <span class="nb-crumb">{% trans owner=p.owner_name %}by {{ owner }}{% endtrans %} · {{ _('signed') if p.locked else (_('you can edit') if can_edit else _('view only')) }}</span>
             {% endif %}
-            {% if p.real_role != 'owner' %}<span class="nb-crumb">{% trans owner=p.owner_name %}by {{ owner }}{% endtrans %} · {{ _('signed') if p.locked else (_('you can edit') if can_edit else _('view only')) }}</span>{% endif %}
-          </div>
+            {% for parent in p.parents %}<span class="nb-crumb-sep">/</span><a class="nb-crumb-page" href="{{ url_for('notebook', page=parent.id) }}">{{ parent.title }}</a>{% endfor %}
+            <span class="nb-crumb-sep">/</span><span class="nb-crumb-here" id="nb-crumb-here">{{ p.title if p.title and p.title != 'Untitled page' else _('Untitled page') }}</span>
+          </nav>
           <div class="nb-page-tools">
             <div class="nb-presence" id="nb-presence" aria-label="{{ _('Also here') }}"></div>
             <span id="page-saved-state" class="page-saved-state" aria-live="polite"></span>
@@ -172,21 +179,27 @@
           </div>
         </div>
 
-        <input id="page-title" class="page-title" value="{{ '' if p.title == 'Untitled page' else p.title }}" placeholder="{{ _('Untitled page') }}" autocomplete="off" {% if not can_edit %}readonly{% endif %}>
+        <div class="nb-title-row">
+          {# The page's icon is its kind: click it to change what kind of page this is. #}
+          {% set kind_label = kinds.get(p.kind, 'Note')|tr('notebook') %}
+          {% if can_edit %}
+            <button type="button" class="nb-kind-icon" id="nb-kind-btn" data-kind="{{ p.kind }}" aria-haspopup="true" aria-expanded="false" title="{{ _('Kind of page: %(kind)s. Click to change it.', kind=kind_label) }}">{{ icon(kind_icons.get(p.kind, 'file')) }}</button>
+            <div class="nb-head-menu nb-kind-menu" id="nb-kind-menu" hidden>
+              {% for key, label in kinds.items() %}
+                <button type="button" class="nb-head-item{% if key == p.kind %} is-on{% endif %}" data-kind="{{ key }}">{{ icon(kind_icons.get(key, 'file')) }}<span><b>{{ label|tr('notebook') }}</b><small>{{ kind_hints[key]|tr('notebook') }}</small></span>{% if key == p.kind %}<i>✓</i>{% endif %}</button>
+              {% endfor %}
+              <p class="nb-head-note">{{ _('Changing it never moves the page: it stays in its topic.') }}</p>
+            </div>
+          {% else %}
+            <span class="nb-kind-icon" data-kind="{{ p.kind }}" title="{{ kind_label }}">{{ icon(kind_icons.get(p.kind, 'file')) }}</span>
+          {% endif %}
+          <input id="page-title" class="page-title" value="{{ '' if p.title == 'Untitled page' else p.title }}" placeholder="{{ _('Untitled page') }}" autocomplete="off" {% if not can_edit %}readonly{% endif %}>
+        </div>
 
         <div class="page-meta" id="page-meta">
-          <input type="date" id="page-entry-date" class="page-date-input" value="{{ p.entry_date }}" aria-label="{{ _('Page date') }}" {% if not can_edit %}disabled{% endif %}>
-          {% if p.real_role == 'owner' %}
-            <span class="meta-sep">·</span>
-            <label class="topic-mover">{{ _('Topic') }}
-              <select id="page-topic-select">
-                {% for tab in tabs %}<option value="{{ tab.id }}" {% if tab.id == p.tab_id %}selected{% endif %}>{{ tab.title|tr }}</option>{% endfor %}
-              </select>
-            </label>
-          {% endif %}
+          <label class="nb-chip nb-date-chip" title="{{ _('Page date') }}">{{ icon('calendar') }}<input type="date" id="page-entry-date" class="page-date-input" value="{{ p.entry_date }}" aria-label="{{ _('Page date') }}" {% if not can_edit %}disabled{% endif %}></label>
           {% if p.kind == 'experiment' %}
-            <span class="meta-sep">·</span>
-            <span class="nb-status" data-status="{{ p.status }}">
+            <span class="nb-status nb-chip" data-status="{{ p.status }}">
               {% if can_edit %}
                 <select id="nb-status" aria-label="{{ _('Status') }}">
                   {% for key, label in statuses.items() if key %}<option value="{{ key }}" {% if key == p.status %}selected{% endif %}>{{ label|tr }}</option>{% endfor %}
@@ -195,9 +208,10 @@
             </span>
           {% endif %}
           <span class="nb-stamps" id="nb-stamps"></span>
-          <span class="meta-sep">·</span>
           <span class="nb-tags" id="nb-tags"></span>
         </div>
+        {# The pages that link this one, once there are any (notebook-page.js). #}
+        <div class="nb-linked-from" id="nb-linked-from" hidden></div>
 
         {% if p.locked %}
           <div class="nb-callout nb-signed" id="nb-signed-callout">
@@ -375,6 +389,33 @@ async function createPage(tabId) {
   if (data.ok) window.location.href = data.url;
 }
 BioActions.register({ createPage: createPage, createTab: createTab, renameTab: renameTab });
+
+// Sub-pages in the sidebar: the arrow beside a page shows or hides them,
+// remembered in this browser. The open page's own line stays shown.
+(function () {
+  var KEY = 'nb-closed-subpages';
+  var closed = {};
+  try { closed = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { closed = {}; }
+  function paint(li, shut) {
+    li.classList.toggle('is-collapsed', shut);
+    var b = li.querySelector(':scope > .nb-subpages-toggle');
+    if (b) b.setAttribute('aria-expanded', String(!shut));
+  }
+  document.querySelectorAll('.notebook-page-item.has-children').forEach(function (li) {
+    var holdsOpen = li.querySelector('.notebook-subpages .notebook-page-item.active');
+    paint(li, !!closed[li.dataset.pageId] && !holdsOpen);
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.nb-subpages-toggle');
+    if (!b) return;
+    e.preventDefault();
+    var li = b.closest('.notebook-page-item');
+    var shut = !li.classList.contains('is-collapsed');
+    paint(li, shut);
+    if (shut) closed[li.dataset.pageId] = 1; else delete closed[li.dataset.pageId];
+    try { localStorage.setItem(KEY, JSON.stringify(closed)); } catch (err) { /* private window: not remembered */ }
+  });
+})();
 </script>
 {# The inventories a page can @link ("@antibodies 12"), for the editor's @ menu and chips. #}
 <script type="application/json" id="nb-mention-types">{{ mention_types | tojson }}</script>

@@ -44,15 +44,106 @@
 .nb-tag.is-chip button { border: 0; background: none; padding: 0 0 0 2px; color: inherit; cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.6; }
 .nb-tag.is-chip button:hover { opacity: 1; }
 
+/* Sub-pages nest under the page they were made in, with an arrow to fold them. */
+.notebook-page-item.has-children { flex-wrap: wrap; }
+.notebook-page-item.has-children > a { padding-left: 20px; }
+.nb-subpages-toggle {
+  position: absolute; left: 2px; top: 5px; z-index: 1; display: grid; place-items: center; width: 16px; height: 18px; padding: 0; border: 0; border-radius: 4px;
+  background: none; color: var(--color-sand-400); cursor: pointer;
+}
+.nb-subpages-toggle:hover { background: color-mix(in srgb, var(--color-sand-200) 80%, transparent); color: var(--color-ink); }
+.nb-subpages-toggle .icon { width: 11px; height: 11px; transform: rotate(90deg); transition: transform 0.15s; }
+.notebook-page-item.is-collapsed > .nb-subpages-toggle .icon { transform: none; }
+.notebook-subpages { flex-basis: 100%; margin-left: 12px; padding-left: 4px; border-left: 1px solid var(--color-hairline); }
+.notebook-page-item.is-collapsed > .notebook-subpages { display: none; }
+
 /* ---------------------------------------------------------------- page top */
 
 .nb-page { padding-top: 16px; }
 .nb-page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
-.nb-page-where { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--color-muted); font-size: 12px; }
-.nb-kind-select { display: inline-flex; align-items: center; gap: 5px; padding: 2px 4px 2px 8px; border-radius: 999px; background: var(--color-recess); color: var(--color-ink-soft); font-size: 12px; font-weight: 500; }
-.nb-kind-select .icon { width: 12px; height: 12px; color: var(--color-brand-600); }
-.nb-kind-select select { border: 0; background: transparent; color: inherit; font: inherit; padding: 0 2px; cursor: pointer; }
+.nb-page-where { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1 1 260px; color: var(--color-muted); font-size: 12.5px; }
 .nb-crumb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The page's place, like a file path: its topic (a folder) / the pages it sits in / itself. */
+.nb-breadcrumb { position: relative; }
+.nb-crumb-folder {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 40%; padding: 3px 7px; border: 0; border-radius: 6px;
+  background: none; color: var(--color-ink-soft); font: inherit; font-weight: 500; cursor: pointer;
+}
+.nb-crumb-folder:hover, .nb-crumb-folder[aria-expanded="true"] { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-crumb-folder .icon { flex: none; width: 13px; height: 13px; color: var(--color-sand-400); }
+.nb-crumb-folder span, .nb-crumb-page, .nb-crumb-here { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-crumb-sep { flex: none; color: var(--color-sand-300); }
+.nb-crumb-page { min-width: 0; max-width: 28%; padding: 3px 5px; border-radius: 6px; color: var(--color-ink-soft); text-decoration: none; }
+.nb-crumb-page:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-crumb-here { min-width: 0; padding: 3px 5px; color: var(--color-muted); }
+
+/* Small menus that open from the header: Move to a topic, the kind of page. */
+.nb-head-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 45; width: 280px; max-width: calc(100vw - 32px); padding: 5px; border-radius: 10px;
+  border: 1px solid var(--color-hairline); background: var(--color-surface); box-shadow: var(--shadow-pop);
+  color: var(--color-ink); font-size: 13px;
+}
+.nb-head-menu[hidden] { display: none; }
+.nb-head-search {
+  width: 100%; margin-bottom: 4px; padding: 6px 9px; border: 1px solid var(--color-hairline); border-radius: 7px;
+  background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 13px;
+}
+.nb-head-search:focus { outline: none; border-color: var(--color-brand-400); }
+.nb-head-list { max-height: 260px; overflow-y: auto; }
+.nb-head-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 9px; border: 0; border-radius: 6px; background: none;
+  color: var(--color-ink); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.nb-head-item[hidden] { display: none; }
+.nb-head-item > .icon { flex: none; width: 14px; height: 14px; color: var(--color-sand-400); }
+.nb-head-item > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-head-item > small, .nb-head-item > i { flex: none; color: var(--color-sand-400); font-size: 11.5px; font-style: normal; }
+.nb-head-item:hover, .nb-head-item.is-active { background: color-mix(in srgb, var(--color-brand-600) 10%, transparent); }
+.nb-head-item.is-on { font-weight: 600; }
+.nb-head-item.is-on > .icon, .nb-head-item.is-on > i, .nb-head-item.is-on > small { color: var(--color-brand-600); }
+.nb-head-add { margin-top: 3px; border-top: 1px solid var(--color-hairline); border-radius: 0 0 6px 6px; color: var(--color-brand-700); }
+.nb-head-add > .icon { color: var(--color-brand-600); }
+.nb-head-note { margin: 4px 0 0; padding: 6px 9px 3px; border-top: 1px solid var(--color-hairline); color: var(--color-muted); font-size: 11.5px; }
+
+/* The title row: the kind of page is the page's icon; click it to change the kind. */
+.nb-title-row { position: relative; display: flex; align-items: center; gap: 10px; }
+.nb-title-row .page-title { flex: 1 1 auto; min-width: 0; }
+.nb-kind-icon {
+  display: grid; place-items: center; flex: none; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 9px;
+  background: color-mix(in srgb, var(--color-brand-600) 9%, var(--color-surface)); color: var(--color-brand-600);
+}
+button.nb-kind-icon { cursor: pointer; }
+button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { background: color-mix(in srgb, var(--color-brand-600) 16%, var(--color-surface)); }
+.nb-kind-icon .icon { width: 20px; height: 20px; }
+.nb-kind-menu { width: 330px; }
+.nb-kind-menu .nb-head-item { align-items: flex-start; }
+.nb-kind-menu .nb-head-item > .icon { margin-top: 2px; }
+.nb-kind-menu .nb-head-item > span { white-space: normal; }
+.nb-kind-menu b { display: block; font-weight: 600; }
+.nb-kind-menu .nb-head-item small { display: block; color: var(--color-muted); font-size: 11.5px; line-height: 1.35; }
+.nb-kind-menu .nb-head-item > i { margin-top: 2px; }
+
+/* The line under the title: date, status and tags as chips. */
+.nb-chip { display: inline-flex; align-items: center; gap: 4px; padding: 0 2px 0 7px; border-radius: 999px; background: var(--color-recess); color: var(--color-ink-soft); }
+.nb-chip > .icon { flex: none; width: 12px; height: 12px; color: var(--color-sand-400); }
+.nb-date-chip .page-date-input { padding: 1px 4px; border: 0; background: transparent; }
+.nb-date-chip:hover .page-date-input { background: transparent; }
+.nb-chip.nb-status { padding: 1px 4px 1px 6px; }
+
+/* "Linked from 2 pages", under the meta line once another page links here. */
+.nb-linked-from { margin: -12px 0 16px; color: var(--color-muted); font-size: 12px; }
+.nb-linked-from[hidden] { display: none; }
+.nb-linked-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.nb-linked-toggle:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-linked-toggle .icon { width: 12px; height: 12px; transition: transform 0.15s; }
+.nb-linked-toggle[aria-expanded="true"] .icon { transform: rotate(90deg); }
+.nb-linked-list { display: flex; flex-direction: column; gap: 1px; margin: 4px 0 0 18px; padding: 0; list-style: none; }
+.nb-linked-list[hidden] { display: none; }
+.nb-linked-list a { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border-radius: 6px; color: var(--color-ink-soft); text-decoration: none; }
+.nb-linked-list a:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-linked-list .icon { width: 12px; height: 12px; color: var(--color-sand-400); }
+.nb-linked-list small { color: var(--color-sand-400); }
+
 .nb-page-tools { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .nb-tool {
   position: relative; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 9px; border: 1px solid transparent; border-radius: 6px;

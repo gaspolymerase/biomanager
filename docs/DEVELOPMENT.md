@@ -954,7 +954,7 @@ the rules; the editor is `frontend/src/` and the page around it is
 
 | Table | Holds |
 | --- | --- |
-| `notebook_page_info` | kind (note, experiment, protocol, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation |
+| `notebook_page_info` | kind (note, experiment, protocol, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation, and `parent_page_id`: the page a sub-page was made in (revision 0028) |
 | `notebook_shares` | who else may open a page, and whether to view or edit (`*` is the whole lab, guests excepted) |
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
@@ -986,9 +986,43 @@ step timer and leaves time points out (a list of times, "at 24 h", "48 h
 samples"); `tests/js/durations.check.mjs` holds the cases; `timerLabel()` names a
 timer from the words of its own sentence before the duration. The page shows
 times in the lab's zone (`lab.clock_zone()`, `labZone` in `#nb-data`),
-the clock the app writes "Started:" lines on. A new page goes in the topic
-open (`open_tab_id`, sent only when a topic was chosen, `topicChosen`), else
-in *Inbox*, unless it is an experiment or a meeting.
+the clock the app writes "Started:" lines on.
+
+**Topics are folders.** A page's kind never picks its topic:
+`lab_notebook.folder_for()` puts every new page (blank, starter, template,
+today's daily log, a protocol, an experiment from a protocol, a meeting
+note, a colony experiment's **Add to notebook**) in the topic of the page it
+was made from when that topic is the person's own, else the topic open
+(`open_tab_id`, sent only when a topic was chosen, `topicChosen`), else
+*Inbox*. Changing the kind (`/meta`) never moves a page. The page header
+(`templates/notebook.html`) is a breadcrumb: the topic opens **Move to**
+(`#nb-move-menu`, posting `/notebook/pages/<id>/move`, or
+`/notebook/tabs/create` first for a new topic), then `parents_of()`; the
+title row's icon is the kind (`#nb-kind-menu`, hints in `KIND_HINTS`).
+
+**Sub-pages and links between pages.** `/page` posts
+`/notebook/api/pages/new` with `parent_page_id` (a page the person can
+open); the sub-page goes in that page's topic if it is theirs, else in their
+own as above. The sidebar nests sub-pages under their parent within a topic
+(`page_tree()`; a parent elsewhere or a loop shows flat), folded per browser
+(`nb-closed-subpages` in localStorage). Moving a page moves
+`with_subpages()` with it; a sub-page moved alone leaves its parent unless
+the parent is in the topic it goes to. Deleting a parent leaves its
+sub-pages as pages of their topic. In the editor
+(`frontend/src/extensions/PageLinks.js`) a link to a page is a `pageLink`
+inline atom, kept in the Markdown as `[Title](/notebook?page=12)`; it shows
+the title from `/notebook/api/pages/titles?ids=` (pages the reader can
+open; one they cannot is dimmed) and, when editable, writes it back into
+the node so the Markdown carries the current title. Alone in its paragraph
+it is drawn as a block (a decoration, `is-block`). `[[` (an input rule) and
+**Link to page** open `openPagePicker`, which can also make a sub-page;
+**Turn into page** makes the line's text a sub-page's title.
+`/notebook/api/pages/<id>/linked-from` lists the pages the reader can open
+whose body contains `/notebook?page=<id>)`. Every link in a page opens with
+`openInApp()` (the app's pages, in a BioManager tab, after
+`editor.storage.pageLink.beforeLeave` has pushed the live document and saved
+the text) or in the browser (other sites). On `pagehide` the sync provider
+also sends updates not yet pushed (`_sendOnLeave`, a keepalive request).
 
 **Templates.** A name the person already uses answers 409 `exists`, and
 the page asks before sending `replace=1`, which saves over it.

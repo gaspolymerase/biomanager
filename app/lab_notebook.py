@@ -55,6 +55,16 @@ KINDS = {
     "daily": "Daily log",
 }
 STATUSES = {"": "", "planned": "Planned", "running": "Running", "done": "Done", "failed": "Failed"}
+# What each kind adds, for the menu under the page's icon. A kind never
+# chooses the page's topic (folder_for).
+KIND_HINTS = {
+    "note": "Plain notes",
+    "experiment": "Start and finish times, a status, the protocol it follows",
+    "protocol": "Versions v1, v2…, run step by step, listed in Protocols",
+    "meeting": "A series, who presents, action items as to-dos",
+    "seminar": "Notes from a talk",
+    "daily": "A day's log, where lines can be added for you",
+}
 KIND_ICONS = {"note": "file", "experiment": "flask", "protocol": "protocol", "meeting": "users",
               "seminar": "note", "daily": "calendar-clock"}
 ROLES = ("view", "edit")
@@ -70,10 +80,6 @@ SYNC_BATCH = 400
 MAX_UPDATE_BYTES = 4 * 1024 * 1024
 MAX_TAGS = 20
 
-DAILY_TAB = "Daily log"
-EXPERIMENTS_TAB = "Experiments"
-MEETINGS_TAB = "Meetings"
-PROTOCOLS_TAB = "Protocols"
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 MENTION_RE = re.compile(r"(?<![\w@])@([A-Za-z0-9][A-Za-z0-9_.-]{0,79})")
@@ -247,6 +253,9 @@ def delete_page_rows(session, page_ids) -> None:
     for model in (NotebookPageInfo, NotebookShare, NotebookVersion, NotebookSyncUpdate, NotebookPresence,
                   NotebookComment):
         session.execute(delete(model).where(model.page_id_fk.in_(ids)))
+    # Their sub-pages stay, as pages of their topic (a new page given a
+    # reused id must not adopt them).
+    session.execute(update(NotebookPageInfo).where(NotebookPageInfo.parent_page_id.in_(ids)).values(parent_page_id=None))
 
 
 def _next_position(session, tab_id: int) -> int:
@@ -262,6 +271,17 @@ def tab_named(session, owner: str, title: str) -> NotebookTab:
         session.add(tab)
         session.flush()
     return tab
+
+
+def folder_for(session, owner: str, page: NotebookPage | None = None, open_tab: NotebookTab | None = None) -> NotebookTab:
+    """Where a new page goes. Topics are folders and a page's kind never
+    chooses one: the folder of the page it was made from (when that page is
+    in this person's notebook), else the folder they have open, else Inbox."""
+    if page is not None and page.tab is not None and page.tab.owner_username == owner:
+        return page.tab
+    if open_tab is not None and open_tab.owner_username == owner:
+        return open_tab
+    return tab_named(session, owner, "Inbox")
 
 
 def first_tab(session, owner: str) -> NotebookTab:
@@ -600,7 +620,7 @@ def _daily_page(session, me: str, day: date) -> NotebookPage:
                           .where(NotebookTab.owner_username == me, NotebookPageInfo.kind == "daily",
                                  NotebookPageInfo.day == day).limit(1))
     if page is None:
-        tab = tab_named(session, me, DAILY_TAB)
+        tab = folder_for(session, me)
         page = new_page(session, tab, _today_label(day), STARTERS["daily"]["body"], kind="daily", day=day)
         page.entry_date = day
         session.flush()
@@ -684,7 +704,87 @@ def page_payload(session, page: NotebookPage, role: str) -> dict:
         # A protocol: the library folder it is in, and the folders there are.
         "folder_id": info.folder_id if info else None,
         "folders": folder_list(session, "protocol") if info and info.kind == "protocol" else [],
+        # Where it is, for the breadcrumb: its topic (folder) and the pages
+        # it sits under, nearest last.
+        "tab_title": page.tab.title if page.tab else "",
+        "parents": parents_of(session, page),
     }
+
+
+def parents_of(session, page: NotebookPage, limit: int = 4) -> list[dict]:
+    """The pages a sub-page sits under, outermost first, as far as this
+    person can open them (and no further than `limit`, or round a loop)."""
+    chain, seen = [], {page.id}
+    info = info_for(session, page.id)
+    while info is not None and info.parent_page_id and info.parent_page_id not in seen and len(chain) < limit:
+        parent = session.get(NotebookPage, info.parent_page_id)
+        if parent is None or role_for(session, parent) is None:
+            break
+        chain.append({"id": parent.id, "title": parent.title or "Untitled page"})
+        seen.add(parent.id)
+        info = info_for(session, parent.id)
+    return list(reversed(chain))
+
+
+def with_subpages(session, page: NotebookPage) -> list[NotebookPage]:
+    """A page and the sub-pages under it (at any depth) in the same folder."""
+    out, queue, seen = [page], [page], {page.id}
+    while queue:
+        here = queue.pop(0)
+        ids = session.scalars(select(NotebookPageInfo.page_id_fk).where(NotebookPageInfo.parent_page_id == here.id)).all()
+        for child in session.scalars(select(NotebookPage).where(NotebookPage.id.in_(ids))) if ids else []:
+            if child.id not in seen and child.tab_id_fk == page.tab_id_fk:
+                seen.add(child.id)
+                out.append(child)
+                queue.append(child)
+    return out
+
+
+def parent_ids(page_ids: list[int]) -> dict[int, int]:
+    """page id -> the page it was made in, for those that have one."""
+    if not page_ids:
+        return {}
+    with SessionLocal() as s:
+        return {pid: parent for pid, parent in s.execute(
+            select(NotebookPageInfo.page_id_fk, NotebookPageInfo.parent_page_id)
+            .where(NotebookPageInfo.page_id_fk.in_(page_ids), NotebookPageInfo.parent_page_id.is_not(None)))}
+
+
+def page_tree(pages: list[dict]) -> list[dict]:
+    """A folder's pages with each sub-page under its parent (as "children"),
+    in their order; one whose parent is elsewhere stays at the top."""
+    by_id = {p["id"]: dict(p, children=[]) for p in pages}
+    top = []
+    for p in pages:
+        node = by_id[p["id"]]
+        parent = by_id.get(p.get("parent_id"))
+        # Never under itself or its own sub-page (a loop is shown flat).
+        seen, up = {p["id"]}, parent
+        while up is not None and up["id"] not in seen:
+            seen.add(up["id"])
+            up = by_id.get(up.get("parent_id"))
+        if parent is not None and up is None:
+            parent["children"].append(node)
+        else:
+            top.append(node)
+    return top
+
+
+def page_link_pattern(page_id: int) -> str:
+    """How a page is linked in another page's Markdown: [title](/notebook?page=12)."""
+    return f"%/notebook?page={int(page_id)})%"
+
+
+def linked_from(session, page_id: int) -> list[dict]:
+    """The pages this person can open whose text links this one."""
+    stmt = accessible_filter(select(NotebookPage.id, NotebookPage.title, NotebookTab.owner_username)
+                             .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
+                             .where(NotebookPage.id != page_id,
+                                    NotebookPage.body.like(page_link_pattern(page_id))))
+    rows = session.execute(stmt.order_by(NotebookPage.updated_at.desc()).limit(50)).all()
+    names = display_names(session, [r.owner_username for r in rows])
+    return [{"id": r.id, "title": r.title or "Untitled page", "owner_name": names.get(r.owner_username, r.owner_username),
+             "url": page_url(r.id)} for r in rows]
 
 
 def sidebar(session, user=None) -> dict:
@@ -1001,20 +1101,21 @@ def page_new():
                 return _fail(gettext("Template not found."), 404)
             title, body = title or template.title, template.body or ""
             kind = template.kind if template.kind in KINDS and template.kind != "daily" else "note"
+        # A sub-page (/page in a page): made inside a page this person can open.
+        parent = None
+        if data.get("parent_page_id"):
+            parent = s.get(NotebookPage, _int(data["parent_page_id"]) or 0)
+            if parent is None or role_for(s, parent) is None:
+                return _fail(gettext("Page not found."), 404)
         if tab is None:
-            # The topic open in the notebook, for a plain page: started from
-            # the SOPs topic, it belongs there. Experiments and meetings go to
-            # their own topics wherever they're started.
+            # Topics are folders, and a page's kind never picks one: it goes
+            # where it was made (the page it was made in, if that's in your
+            # notebook; else the topic open), and in Inbox when nothing is.
             open_tab = s.get(NotebookTab, _int(data.get("open_tab_id")) or 0) if data.get("open_tab_id") else None
-            if kind == "experiment":
-                tab = tab_named(s, me, EXPERIMENTS_TAB)
-            elif kind in ("meeting", "seminar"):
-                tab = tab_named(s, me, MEETINGS_TAB)
-            elif open_tab is not None and open_tab.owner_username == me:
-                tab = open_tab
-            else:
-                tab = tab_named(s, me, "Inbox")      # not whichever topic happens to be first
+            tab = folder_for(s, me, parent, open_tab)
         extra = {"status": "planned"} if kind == "experiment" else {}
+        if parent is not None:
+            extra["parent_page_id"] = parent.id
         page = new_page(s, tab, title or "Untitled page", body, kind=kind, **extra)
         if body:
             record_edit(s, page)
@@ -1378,6 +1479,29 @@ def tags():
         return jsonify({"ok": True, "tags": tag_counts(s)})
 
 
+@bp.get("/api/pages/<int:page_id>/linked-from")
+def page_linked_from(page_id: int):
+    """The pages that link this one ("Linked from" under its title)."""
+    with SessionLocal() as s:
+        load_page(s, page_id)
+        return jsonify({"ok": True, "pages": linked_from(s, page_id)})
+
+
+@bp.get("/api/pages/titles")
+def page_titles():
+    """The current title and kind of each page asked for (?ids=1,2,3) that
+    this person can open: a link to a page shows its title as it is now."""
+    ids = [int(x) for x in (request.args.get("ids") or "").split(",") if x.strip().isdigit()][:200]
+    with SessionLocal() as s:
+        out = {}
+        for page in s.scalars(select(NotebookPage).where(NotebookPage.id.in_(ids))) if ids else []:
+            if role_for(s, page) is None:
+                continue
+            info = info_for(s, page.id)
+            out[str(page.id)] = {"title": page.title or "Untitled page", "kind": info.kind if info else "note"}
+        return jsonify({"ok": True, "pages": out})
+
+
 @bp.get("/api/people")
 def people_list():
     with SessionLocal() as s:
@@ -1507,7 +1631,7 @@ def protocol_new():
     title = str(data.get("title") or "").strip()[:200] or (preset["title"] if preset else "New protocol")
     with SessionLocal() as s:
         folder = _folder(s, data.get("folder_id"), "protocol")
-        tab = tab_named(s, _me(), PROTOCOLS_TAB)
+        tab = folder_for(s, _me())
         page = new_page(s, tab, title, preset["body"] if preset else BLANK_PROTOCOL, kind="protocol",
                         folder_id=folder.id if folder else None)
         record_edit(s, page)
@@ -1589,7 +1713,7 @@ def start_experiment(page_id: int):
             "## Conclusion\n\n",
         ])
         title = str(data.get("title") or "").strip() or f"{protocol.title} — {started:%d %b %Y}"
-        tab = tab_named(s, me, EXPERIMENTS_TAB)
+        tab = folder_for(s, me, protocol)
         page = new_page(s, tab, title, body, kind="experiment", status="running", started_at=_now(),
                         protocol_page_id=protocol.id, protocol_version=number)
         info = info_for(s, protocol.id)
@@ -1781,7 +1905,7 @@ def create_meeting_note(s, series: NotebookMeetingSeries, when: date | None = No
                  presenter=f"@{presenter}" if presenter else "", now=_clock())
     body = body.replace("**Attendees:** ", f"**Attendees:** {attendees}", 1)
     title = f"{series.name} — {when:%d %b %Y}" + (f" — {names.get(presenter, presenter)}" if presenter else "")
-    page = new_page(s, tab_named(s, me, MEETINGS_TAB), title, body, kind="meeting",
+    page = new_page(s, folder_for(s, me), title, body, kind="meeting",
                     series_id=series.id, presenter=presenter)
     page.entry_date = when
     for member in members:

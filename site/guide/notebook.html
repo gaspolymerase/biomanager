@@ -137,13 +137,18 @@
 
       <h2 id="pages">Pages</h2>
       <ul>
-        <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. A new page goes in the topic you have open, or in
-          <i>Inbox</i> when none is (experiments and meetings go to their own topics). Type <b>/</b> at the start of a line for a menu of
+        <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. Topics are folders: a new page goes in the topic
+          you have open, or in <i>Inbox</i> when none is, whatever kind of page it is. Type <b>/</b> at the start of a line for a menu of
           blocks: tables, plots, protocols, calculators and the rest below. <b>Templates</b>: ⋯ → <b>Save as template</b>, and start new
           pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); <b>Structure only</b> keeps the headings,
           steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results,
           Observations or Conclusion; <b>Share it with the lab</b> offers it to
           everyone.</li>
+        <li>Above the title, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move
+          the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title
+          is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never
+          moves the page. Under the title are its date, status and tags; once other pages link to it, <b>Linked from</b> lists
+          them.</li>
         <li>Write as in Notion: type <b>/</b> and a few letters of what you want (<code>/h2</code>, <code>/toggle</code>; Chinese words
           work too, <code>/分栏</code>).
           <ul>
@@ -156,8 +161,12 @@
               column, removes one, or puts them back one under the other. On a phone they stack.</li>
             <li><b>Colour and highlight</b> (also the <b>A</b> on the toolbar): colours the selected text, or the whole line when
               nothing is selected. Typing <code>==text==</code> highlights it in yellow.</li>
-            <li><b>Link to a page</b>: pick another notebook page; the link shows a page icon. <b>Table of contents</b>: the page's
-              headings, kept up to date, each one a link.</li>
+            <li><b>Page</b>: a new page inside this one, in the same topic, opened in a BioManager tab to write in. In the sidebar
+              it sits under this page; the arrow beside a page shows or hides the pages in it. <b>Link to page</b>, or typing
+              <code>[[</code>, finds a page that exists, or makes a new one named as you typed. <b>Turn into page</b> makes the line a
+              new page with its words as the title. A link to a page shows that page's title as it is now. Clicking it, or any link
+              to a page of the app, opens it in a BioManager tab; links to the web open in your browser.</li>
+            <li><b>Table of contents</b>: the page's headings, kept up to date, each one a link.</li>
             <li><b>Date…</b> inserts a day you pick. <b>Reminder</b> adds a to-do to your calendar on the day and time you choose,
               and writes a link to it in the page (⏰ and the date).</li>
           </ul>
@@ -289,7 +298,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 12 min read</p>
+      <p>On this page · 13 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">Experiments and protocols</a></li>
