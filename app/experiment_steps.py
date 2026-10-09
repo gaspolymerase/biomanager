@@ -859,7 +859,7 @@ def add_to_notebook(experiment_id: int):
             return redirect(ex.page_url(exp))
         page_id = my_notebook_page(s, exp.id)
         if page_id is None:
-            tab = nb.tab_named(s, g.user.username, nb.EXPERIMENTS_TAB)
+            tab = nb.folder_for(s, g.user.username)
             lines = [f"{place.label} experiment [{exp.name}]({ex.page_url(exp)})"
                      + (f", started {exp.start_date.isoformat()}" if exp.start_date else "") + ".", "",
                      block_markdown(exp.id), "", "## Notes", "", "## Deviations", ""]

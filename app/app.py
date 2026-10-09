@@ -5755,18 +5755,15 @@ def _notebook_page(library: str | None = None):
 
         side = lab_notebook.sidebar(db_session)
         kinds = side.pop("kinds_by_page")
-        tabs_data = [
-            {
-                "id": tab.id,
-                "title": tab.title,
-                "pages": [
-                    {"id": page.id, "title": page.title, "tab_id": tab.id, "updated_at": page.updated_at.isoformat(),
-                     "kind": kinds.get(page.id, "note")}
-                    for page in tab.pages
-                ],
-            }
-            for tab in tabs
-        ]
+        parents = lab_notebook.parent_ids([page.id for tab in tabs for page in tab.pages])
+        tabs_data = []
+        for tab in tabs:
+            flat = [{"id": page.id, "title": page.title, "tab_id": tab.id, "updated_at": page.updated_at.isoformat(),
+                     "kind": kinds.get(page.id, "note"), "parent_id": parents.get(page.id)}
+                    for page in tab.pages]
+            # Sub-pages under the page they were made in, when it's in the same
+            # folder; "flat" is every page, for Recent.
+            tabs_data.append({"id": tab.id, "title": tab.title, "pages": lab_notebook.page_tree(flat), "flat": flat})
         selected_page_data = (lab_notebook.page_payload(db_session, selected_page, role)
                               if selected_page is not None else None)
         selected_tab_id_value = selected_tab.id if selected_tab else None
@@ -5787,6 +5784,7 @@ def _notebook_page(library: str | None = None):
         side=side,
         kinds=lab_notebook.KINDS,
         kind_icons=lab_notebook.KIND_ICONS,
+        kind_hints=lab_notebook.KIND_HINTS,
         statuses=lab_notebook.STATUSES,
         me=me,
         mention_types=mention_types,
@@ -6624,11 +6622,20 @@ def notebook_move_page(page_id: int):
         new_tab = db_session.get(NotebookTab, new_tab_id)
         if new_tab is None or new_tab.owner_username != g.user.username:
             return jsonify({"ok": False}), 404
-        page.tab_id_fk = new_tab_id
         max_pos = db_session.scalar(
             select(func.max(NotebookPage.position)).where(NotebookPage.tab_id_fk == new_tab_id)
         ) or 0
-        page.position = max_pos + 1
+        # A folder holds a page with the pages made inside it: they move together.
+        for n, moving in enumerate(lab_notebook.with_subpages(db_session, page)):
+            moving.tab_id_fk = new_tab_id
+            moving.position = max_pos + 1 + n
+        # A sub-page moved on its own is a page of its new folder, unless the
+        # page it was made in is there too.
+        info = lab_notebook.info_for(db_session, page.id)
+        if info is not None and info.parent_page_id:
+            parent = db_session.get(NotebookPage, info.parent_page_id)
+            if parent is None or parent.tab_id_fk != new_tab_id:
+                info.parent_page_id = None
         db_session.commit()
         return jsonify({"ok": True, "tab_id": new_tab_id, "page_id": page.id})
 

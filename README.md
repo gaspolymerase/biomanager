@@ -412,7 +412,10 @@ database has a name of its own (one another database has is refused), so
     Calendar subscribes to, with just your things or the whole lab; it
     updates about every hour, and **Make a new link** stops the old one.
 - **Lab notebook** — pages in topics, written like a document and saved as
-  Markdown. A page links to mice, plasmids, orders and any inventory record
+  Markdown. Topics are folders: a page stays in the one it was made or moved
+  to, whatever its kind (the icon beside its title, which changes the kind
+  and never the place). Above the title its place reads like a path; click
+  the topic to move it. A page links to mice, plasmids, orders and any inventory record
   (`@mouse 12`, `@antibodies 5`): type **@** and a name (written as it is,
   `anti-β-actin` or `Waf1/Cip1`), a catalogue number or lot, a database's
   name (`@antib` offers Antibodies and lists its records) or a colleague's
@@ -429,7 +432,13 @@ database has a name of its own (one another database has is refused), so
     - **toggles** that open to show what they hide (each reader opens their own);
     - **2 or 3 columns** side by side, stacked on a phone;
     - **colour and highlight** for text (`==text==` highlights);
-    - a **link to another page**, a **table of contents**, a date, and a
+    - **pages in pages**: `/page` makes a new page inside this one and opens
+      it; **Link to page** (or typing `[[`) links one that exists, and
+      **Turn into page** makes a line a page. A link shows the page's title
+      as it is now, the sidebar nests a page's pages under it, and **Linked
+      from** on a page lists the pages that link it. Links to the app's own
+      pages open in a BioManager tab;
+    - a **table of contents**, a date, and a
       **reminder**, which puts a to-do in your calendar and links to it.
 
     It all stays readable Markdown: GitHub's `> [!WARNING]` alerts,

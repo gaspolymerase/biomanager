@@ -163,6 +163,16 @@ export async function api(url, { method = 'GET', body, form } = {}) {
   return data;
 }
 
+// Open one of the app's pages in a BioManager tab (the browser's own
+// location where there is no tab bar).
+// Pass the editor to save the page being left first.
+export async function openInApp(url, editor = null) {
+  const leave = editor && editor.storage.pageLink && editor.storage.pageLink.beforeLeave;
+  if (leave) await Promise.race([leave(), new Promise((done) => setTimeout(done, 2500))]).catch(() => {});
+  if (window.BiomanagerTabs && window.BiomanagerTabs.open) window.BiomanagerTabs.open(url);
+  else window.location.href = url;
+}
+
 // A stable colour per person, for cursors and avatars.
 const PEOPLE_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#c98500', '#d55181', '#008300', '#4a3aa7', '#e34948'];
 export function personColor(name) {

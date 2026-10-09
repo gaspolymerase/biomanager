@@ -7,7 +7,7 @@ import { defaultSheet } from './blocks/sheet.js';
 import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { api, ask, escapeHtml, isoDate } from './util.js';
-import { openColorMenu, openDatePicker, openPagePicker, openReminder } from './rich-menus.js';
+import { addSubPage, openColorMenu, openDatePicker, openPagePicker, openReminder, turnIntoPage } from './rich-menus.js';
 
 export const SYMBOLS = [
   ['μ', 'micro'], ['°', 'degree'], ['℃', 'celsius'], ['±', 'plus-minus'], ['×', 'times'],
@@ -102,7 +102,10 @@ export const ITEMS = [
   { id: 'columns2', group: 'Basic', icon: 'columns', label: '2 columns', hint: 'Side by side, e.g. a gel and its notes', keywords: 'columns side by side layout two 分栏 两栏 并排', run: (e) => e.chain().focus().setColumns(2).run() },
   { id: 'columns3', group: 'Basic', icon: 'columns', label: '3 columns', hint: 'Three side by side', keywords: 'columns layout three 分栏 三栏 并排', run: (e) => e.chain().focus().setColumns(3).run() },
   { id: 'color', group: 'Basic', icon: 'palette', label: 'Colour and highlight', hint: 'Colour the selection, or this line', keywords: 'color colour highlight red yellow green blue mark 颜色 高亮 标记 红色', run: (e) => openColorMenu(e, atCaret(e)) },
-  { id: 'page', group: 'Basic', icon: 'page', label: 'Link to a page', hint: 'Another notebook page', keywords: 'page link notebook mention 页面 链接', run: (e) => openPagePicker(e) },
+  // Pages in pages, as Notion makes them: /page is a new page inside this one; or link one that exists ([[ too).
+  { id: 'page', group: 'Basic', icon: 'page', label: 'Page', hint: 'A new page inside this one', keywords: 'page subpage sub-page new child nested 页面 子页面 新页面', run: (e) => addSubPage(e) },
+  { id: 'page-link', group: 'Basic', icon: 'link', label: 'Link to page', hint: 'A page that exists (or type [[)', keywords: 'page link existing notebook mention reference 页面 链接 引用', run: (e) => openPagePicker(e) },
+  { id: 'page-turn', group: 'Basic', icon: 'page', label: 'Turn into page', hint: 'This line becomes a page inside this one', keywords: 'page turn into convert subpage 页面 转换 子页面', run: (e) => turnIntoPage(e) },
   { id: 'toc', group: 'Basic', icon: 'toc', label: 'Table of contents', hint: 'This page’s headings, kept up to date', keywords: 'toc contents outline headings 目录 大纲', run: (e) => e.chain().focus().insertLabBlock('toc').run() },
 
   // ---- Data

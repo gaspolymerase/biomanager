@@ -2125,6 +2125,9 @@ class NotebookPageInfo(Base):
     presenter: Mapped[str] = mapped_column(String(80), default="")
     # The day a daily log page is for.
     day: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    # A sub-page: the page it was made in (/page). The sidebar lists it under
+    # that page; it lives in a topic (folder) like any other page.
+    parent_page_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     edited_by: Mapped[str] = mapped_column(String(80), default="")
     # Bumped when the body is replaced from outside the live editor (a
     # restored version, the plain-text fallback): editors open on the old

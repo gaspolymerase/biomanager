@@ -929,6 +929,8 @@
     if (titleUnsaved === null) return Promise.resolve();
     var value = title.value;
     $$('.notebook-page-item[data-page-id="' + page.id + '"] .page-title-label').forEach(function (el) { el.textContent = value || t('Untitled page'); });
+    var crumbHere = $('#nb-crumb-here');
+    if (crumbHere) crumbHere.textContent = value || t('Untitled page');
     document.title = (value || t('Untitled page')) + document.title.replace(/^[^·|—-]*/, ' ');
     if (window.BiomanagerTabs && window.BiomanagerTabs.retitle) window.BiomanagerTabs.retitle(value || t('Untitled page'));
     return saveField('title', value).then(function () {
@@ -963,12 +965,102 @@
   }
   var dateInput = $('#page-entry-date');
   if (dateInput && canEdit) dateInput.addEventListener('change', function () { saveField('entry_date', dateInput.value); });
-  var topic = $('#page-topic-select');
-  if (topic) topic.addEventListener('change', function () {
+  // Topics are folders. The breadcrumb's topic opens "Move to": the
+  // page (with the pages made inside it) goes to another one, or a new one.
+  function popMenu(btn, menu) {
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = menu.hidden;
+      $$('.nb-head-menu').forEach(function (m) { m.hidden = true; });
+      menu.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      if (open) { var s = $('input', menu); if (s) { s.value = ''; s.dispatchEvent(new Event('input')); s.focus(); } }
+    });
+    document.addEventListener('click', function (e) { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { menu.hidden = true; btn.focus(); } });
+  }
+  function moveTo(tabId) {
     var f = new FormData();
-    f.append('tab_id', topic.value);
-    fetch('/notebook/pages/' + page.id + '/move', { method: 'POST', body: f }).then(function (r) { return r.json(); })
-      .then(function (d) { if (d.ok) go('/notebook?page=' + d.page_id); });
+    f.append('tab_id', tabId);
+    return fetch('/notebook/pages/' + page.id + '/move', { method: 'POST', body: f }).then(function (r) { return r.json(); })
+      .then(function (d) { if (d.ok) go('/notebook?page=' + d.page_id); else toast(t('Could not move the page.'), true); });
+  }
+  var moveBtn = $('#nb-move-btn');
+  var moveMenu = $('#nb-move-menu');
+  popMenu(moveBtn, moveMenu);
+  if (moveMenu) {
+    var moveSearch = $('#nb-move-search');
+    var moveNew = $('#nb-move-new');
+    var newLabel = $('span', moveNew);
+    moveSearch.addEventListener('input', function () {
+      var q = moveSearch.value.trim().toLowerCase();
+      var exact = false;
+      $$('[data-move-to]', moveMenu).forEach(function (b) {
+        b.hidden = q && b.dataset.name.indexOf(q) < 0;
+        if (b.dataset.name === q) exact = true;
+      });
+      newLabel.textContent = q && !exact ? newLabel.dataset.named.replace('%(name)s', moveSearch.value.trim()) : newLabel.dataset.label;
+    });
+    moveSearch.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var first = $$('[data-move-to]', moveMenu).filter(function (b) { return !b.hidden; })[0];
+      if (first && moveSearch.value.trim()) first.click(); else moveNew.click();
+    });
+    moveMenu.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-move-to]');
+      if (b && !b.classList.contains('is-on')) moveTo(b.dataset.moveTo);
+    });
+    moveNew.addEventListener('click', function () {
+      var typed = moveSearch.value.trim();
+      (typed ? Promise.resolve(typed) : BioDialog.prompt(t('New topic'), '', { placeholder: t('e.g. Photometry'), okLabel: t('Create topic') }))
+        .then(function (name) {
+          if (!name || !name.trim()) return;
+          var f = new FormData();
+          f.append('title', name.trim());
+          return fetch('/notebook/tabs/create', { method: 'POST', body: f }).then(function (r) { return r.json(); })
+            .then(function (d) { if (d.ok) return moveTo(d.id); });
+        });
+    });
+  }
+
+  // The page's icon is its kind; changing it never moves the page.
+  var kindBtn = $('#nb-kind-btn');
+  var kindMenu = $('#nb-kind-menu');
+  popMenu(kindBtn, kindMenu);
+  if (kindMenu) kindMenu.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kind]');
+    if (!b || b.classList.contains('is-on')) return;
+    kindMenu.hidden = true;
+    meta({ kind: b.dataset.kind }).then(function () { window.location.reload(); });
+  });
+
+  // "Linked from": the pages whose text links this one.
+  var linkedBox = $('#nb-linked-from');
+  if (linkedBox) api('/notebook/api/pages/' + page.id + '/linked-from').then(function (d) {
+    var pages = d.pages || [];
+    if (!pages.length) return;
+    linkedBox.hidden = false;
+    linkedBox.innerHTML = '<button type="button" class="nb-linked-toggle" aria-expanded="false">' + icon('link') + ' ' +
+      t(pages.length === 1 ? 'Linked from %(n)s page' : 'Linked from %(n)s pages', { n: pages.length }) + '</button>' +
+      '<ul class="nb-linked-list" hidden>' + pages.map(function (x) {
+        return '<li><a href="' + esc(x.url) + '" data-in-tab>' + icon('file') + ' ' + esc(x.title) + '</a>' + (x.owner_name ? ' <small>' + esc(x.owner_name) + '</small>' : '') + '</li>';
+      }).join('') + '</ul>';
+    var toggle = $('.nb-linked-toggle', linkedBox);
+    toggle.addEventListener('click', function () {
+      var list = $('.nb-linked-list', linkedBox);
+      list.hidden = !list.hidden;
+      toggle.setAttribute('aria-expanded', String(!list.hidden));
+    });
+  }).catch(function () {});
+  // Links marked data-in-tab open in a BioManager tab, not a browser one.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-in-tab]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    if (!window.BiomanagerTabs || !window.BiomanagerTabs.open) return;
+    e.preventDefault();
+    window.BiomanagerTabs.open(a.getAttribute('href'));
   });
 
   // Kind, status, start / finish.
@@ -985,8 +1077,6 @@
       .then(function () { toast(folderSel.value ? t('Filed in %(folder)s.', { folder: esc(folderSel.selectedOptions[0].textContent) }) : t('Taken out of its folder.')); })
       .catch(function (err) { toast(esc(err.message), true); });
   });
-  var kindSel = $('#nb-kind');
-  if (kindSel) kindSel.addEventListener('change', function () { meta({ kind: kindSel.value }).then(function () { window.location.reload(); }); });
   var statusSel = $('#nb-status');
   if (statusSel) statusSel.addEventListener('change', function () {
     meta({ status: statusSel.value }).then(function () { statusSel.parentNode.dataset.status = statusSel.value; });

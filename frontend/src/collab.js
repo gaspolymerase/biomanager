@@ -78,7 +78,7 @@ export class HttpSyncProvider {
       }
     };
     this._onVisibility = () => { if (!document.hidden) this._schedulePoll(50); };
-    this._onUnload = () => this._leave();
+    this._onUnload = () => { this._sendOnLeave(); this._leave(); };
   }
 
   // Fetch everything there is. Resolves with { empty } — empty means no one
@@ -145,10 +145,30 @@ export class HttpSyncProvider {
     return this.pending.length > 0 || !!this.pushing;
   }
 
+  // Send what is waiting now and resolve once the server has it (or after
+  // `wait` ms): before leaving the page for another, e.g. a new sub-page.
+  async settle(wait = 2000) {
+    const until = Date.now() + wait;
+    while (this.canEdit && !this.stopped && this.hasUnsent() && Date.now() < until) {
+      if (this.pushing) await this.pushing.catch(() => {});
+      else { clearTimeout(this.pushTimer); await this._push(); }
+    }
+  }
+
   // ---------------------------------------------------------------- internals
 
   _post(url, body) {
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+  }
+
+  // Leaving the page (a link, closing the tab): changes typed in the last
+  // moment go with a request that outlives the page.
+  _sendOnLeave() {
+    if (!this.canEdit || this.stopped || !this.pending.length) return;
+    const updates = this.pending.splice(0);
+    try {
+      this._post(this.base, { client: this.client, gen: this.gen, updates: [bytesToBase64(Y.mergeUpdates(updates))] }).catch(() => {});
+    } catch (_e) { /* nothing more can be done as the page goes */ }
   }
 
   _leave() {

@@ -292,5 +292,8 @@
   "Create": "创建",
   "Saved": "已保存",
   "Saving…": "保存中…",
-  "Edit folder": "编辑文件夹"
+  "Edit folder": "编辑文件夹",
+  "Could not move the page.": "无法移动该页面。",
+  "Linked from %(n)s page": "被 %(n)s 个页面链接",
+  "Linked from %(n)s pages": "被 %(n)s 个页面链接"
 }

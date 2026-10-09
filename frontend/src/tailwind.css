@@ -1910,11 +1910,6 @@
   }
   .page-date-input:hover { @apply bg-sand-100; }
   .page-date-input:focus { @apply border-brand-400 bg-surface outline-none; }
-  .topic-mover { @apply inline-flex items-center gap-1.5 font-medium text-ink-soft; }
-  .topic-mover select {
-    @apply h-6 w-auto cursor-pointer rounded-md border border-hairline bg-surface py-0 pl-2 pr-6
-           text-[12px] text-ink-soft;
-  }
   .page-meta-action { @apply btn btn-ghost btn-sm gap-1.5 text-muted; }
   .page-saved-state { @apply text-[11.5px] text-sand-400; }
 

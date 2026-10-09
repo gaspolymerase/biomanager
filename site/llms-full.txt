@@ -928,7 +928,9 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 ### Pages
 
-- Pages in **Topics**, written like a document and kept as Markdown. A new page goes in the topic you have open, or in *Inbox* when none is (experiments and meetings go to their own topics). Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
+- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders: a new page goes in the topic you have open, or in *Inbox* when none is, whatever kind of page it is. Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
+
+- Above the title, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never moves the page. Under the title are its date, status and tags; once other pages link to it, **Linked from** lists them.
 
 - Write as in Notion: type **/** and a few letters of what you want (`/h2`, `/toggle`; Chinese words work too, `/分栏`).
 
@@ -942,7 +944,9 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Colour and highlight** (also the **A** on the toolbar): colours the selected text, or the whole line when nothing is selected. Typing `==text==` highlights it in yellow.
 
-- **Link to a page**: pick another notebook page; the link shows a page icon. **Table of contents**: the page's headings, kept up to date, each one a link.
+- **Page**: a new page inside this one, in the same topic, opened in a BioManager tab to write in. In the sidebar it sits under this page; the arrow beside a page shows or hides the pages in it. **Link to page**, or typing `[[`, finds a page that exists, or makes a new one named as you typed. **Turn into page** makes the line a new page with its words as the title. A link to a page shows that page's title as it is now. Clicking it, or any link to a page of the app, opens it in a BioManager tab; links to the web open in your browser.
+
+- **Table of contents**: the page's headings, kept up to date, each one a link.
 
 - **Date…** inserts a day you pick. **Reminder** adds a to-do to your calendar on the day and time you choose, and writes a link to it in the page (⏰ and the date).
 

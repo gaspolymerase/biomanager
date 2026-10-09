@@ -318,7 +318,8 @@ class PageKindTests(Notebook):
         self.assertEqual(first.headers["Location"], second.headers["Location"])
         self.assertEqual(one("select count(*) from notebook_page_info i join notebook_pages p on p.id=i.page_id_fk "
                              "join notebook_tabs t on t.id=p.tab_id_fk where t.owner_username=? and i.kind='daily'", user), 1)
-        self.assertEqual(one("select title from notebook_tabs where owner_username=?", user), "Daily log")
+        # Its kind picks no folder: with none open, it is in the Inbox.
+        self.assertEqual(one("select title from notebook_tabs where owner_username=?", user), "Inbox")
 
     def test_starters_fill_the_page_and_file_it_in_a_topic(self):
         user = make_user()
@@ -327,7 +328,7 @@ class PageKindTests(Notebook):
         body = one("select body from notebook_pages where id=?", page)
         self.assertIn("```qpcr", body)
         self.assertIn("```calc", body)
-        self.assertEqual(one("select t.title from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id where p.id=?", page), "Experiments")
+        self.assertEqual(one("select t.title from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id where p.id=?", page), "Inbox")
 
     def test_a_page_started_with_a_topic_open_goes_in_that_topic(self):
         user = make_user()
@@ -339,8 +340,9 @@ class PageKindTests(Notebook):
                                  "where p.id=?", page)
         self.assertEqual(topic(self.new_page(c, starter="blank", open_tab_id=sops)), "SOPs")
         self.assertEqual(topic(self.new_page(c, starter="protocol", open_tab_id=sops)), "SOPs")
-        # Experiments and meetings keep their own topics; someone else's topic is no place.
-        self.assertEqual(topic(self.new_page(c, starter="experiment", open_tab_id=sops)), "Experiments")
+        # A page's kind never picks its folder; someone else's topic is no place.
+        self.assertEqual(topic(self.new_page(c, starter="experiment", open_tab_id=sops)), "SOPs")
+        self.assertEqual(topic(self.new_page(c, starter="meeting", open_tab_id=sops)), "SOPs")
         self.assertNotEqual(topic(self.new_page(self.m, starter="blank", open_tab_id=sops)), "SOPs")
 
     def test_a_page_started_with_no_topic_open_goes_in_the_inbox(self):
@@ -370,6 +372,109 @@ class PageKindTests(Notebook):
             r = self.m.get(f"/notebook?page={page}")
             self.assertEqual(r.status_code, 200, starter)
             self.assertIn(f'data-page-id="{page}"', r.get_data(as_text=True))
+
+
+class SubPageTests(Notebook):
+    """Pages in pages (/page), topics as folders, and links between pages."""
+
+    def topic(self, page):
+        return one("select t.title from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id where p.id=?", page)
+
+    def parent(self, page):
+        return one("select parent_page_id from notebook_page_info where page_id_fk=?", page)
+
+    def test_a_page_made_in_a_page_sits_under_it_in_its_folder(self):
+        user = make_user()
+        c = client_for(user)
+        c.post("/notebook/tabs/create", data={"title": "Photometry"})
+        folder = one("select id from notebook_tabs where owner_username=? and title='Photometry'", user)
+        top = self.new_page(c, title="Cohort 3", open_tab_id=folder)
+        sub = self.new_page(c, parent_page_id=top, title="Day 1")
+        self.assertEqual(self.parent(sub), top)
+        self.assertEqual(self.topic(sub), "Photometry")
+        page = c.get(f"/notebook/api/pages/{sub}").get_json()["page"]
+        self.assertEqual(page["parents"], [{"id": top, "title": "Cohort 3"}])
+        self.assertEqual(page["tab_title"], "Photometry")
+        html = c.get(f"/notebook?page={sub}").get_data(as_text=True)
+        self.assertIn('class="nb-crumb-page"', html)
+        self.assertIn('class="notebook-page-list notebook-subpages"', html)
+
+    def test_a_page_in_someone_else_s_page_goes_to_your_inbox_and_needs_access(self):
+        owner, mate = make_user(), make_user()
+        oc, mc = client_for(owner), client_for(mate)
+        theirs = self.new_page(oc, title="Shared plan")
+        r = self.post_json(mc, "/notebook/api/pages/new", {"parent_page_id": theirs})
+        self.assertEqual(r.status_code, 404)
+        self.share(oc, theirs, mate, "edit")
+        sub = self.new_page(mc, parent_page_id=theirs)
+        self.assertEqual(self.topic(sub), "Inbox")
+        self.assertEqual(one("select t.owner_username from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id where p.id=?", sub), mate)
+
+    def test_moving_a_page_takes_its_sub_pages_and_a_sub_page_moved_alone_leaves_its_parent(self):
+        user = make_user()
+        c = client_for(user)
+        top = self.new_page(c, title="Project")
+        sub = self.new_page(c, parent_page_id=top)
+        subsub = self.new_page(c, parent_page_id=sub)
+        c.post("/notebook/tabs/create", data={"title": "Archive"})
+        archive = one("select id from notebook_tabs where owner_username=? and title='Archive'", user)
+        self.assertTrue(c.post(f"/notebook/pages/{top}/move", data={"tab_id": archive}).get_json()["ok"])
+        self.assertEqual({self.topic(p) for p in (top, sub, subsub)}, {"Archive"})
+        self.assertEqual(self.parent(sub), top)
+        inbox = one("select id from notebook_tabs where owner_username=? and title='Inbox'", user)
+        c.post(f"/notebook/pages/{subsub}/move", data={"tab_id": inbox})
+        self.assertEqual(self.topic(subsub), "Inbox")
+        self.assertIsNone(self.parent(subsub))
+        self.assertEqual(self.topic(sub), "Archive")
+
+    def test_deleting_a_page_keeps_its_sub_pages_as_pages_of_the_topic(self):
+        c = client_for(make_user())
+        top = self.new_page(c, title="Project")
+        sub = self.new_page(c, parent_page_id=top)
+        c.post(f"/notebook/pages/{top}/delete")
+        self.assertEqual(count("notebook_pages", "id=?", top), 0)
+        self.assertIsNone(self.parent(sub))
+        self.assertEqual(self.topic(sub), "Inbox")
+
+    def test_changing_the_kind_never_moves_the_page(self):
+        user = make_user()
+        c = client_for(user)
+        c.post("/notebook/tabs/create", data={"title": "Ideas"})
+        ideas = one("select id from notebook_tabs where owner_username=? and title='Ideas'", user)
+        page = self.new_page(c, open_tab_id=ideas)
+        for kind in ("experiment", "protocol", "meeting", "daily", "note"):
+            self.post_json(c, f"/notebook/api/pages/{page}/meta", {"kind": kind})
+            self.assertEqual(self.topic(page), "Ideas", kind)
+
+    def test_linked_from_lists_the_pages_you_can_open_that_link_here(self):
+        owner, other = make_user(), make_user()
+        c = client_for(owner)
+        target = self.new_page(c, title="Buffer prep")
+        source = self.new_page(c, title="Western 4")
+        self.save(c, source, body=f"Used [Buffer prep](/notebook?page={target}) today.")
+        decoy = self.new_page(c, title="Other")
+        self.save(c, decoy, body=f"[x](/notebook?page={target}1)")   # a different page's id
+        pages = c.get(f"/notebook/api/pages/{target}/linked-from").get_json()["pages"]
+        self.assertEqual([p["id"] for p in pages], [source])
+        hidden = self.new_page(client_for(other), title="Not shared")
+        self.save(client_for(other), hidden, body=f"[Buffer prep](/notebook?page={target})")
+        self.assertEqual([p["id"] for p in c.get(f"/notebook/api/pages/{target}/linked-from").get_json()["pages"]], [source])
+        self.assertEqual(client_for(other).get(f"/notebook/api/pages/{target}/linked-from").status_code, 404)
+
+    def test_titles_are_given_only_for_pages_you_can_open(self):
+        owner, other = make_user(), make_user()
+        mine = self.new_page(client_for(owner), title="Mine", starter="experiment")
+        theirs = self.new_page(client_for(other), title="Theirs")
+        pages = client_for(owner).get(f"/notebook/api/pages/titles?ids={mine},{theirs},x").get_json()["pages"]
+        self.assertEqual(pages, {str(mine): {"title": "Mine", "kind": "experiment"}})
+
+    def test_the_tree_nests_sub_pages_and_shows_a_loop_flat(self):
+        pages = [{"id": 1}, {"id": 2, "parent_id": 1}, {"id": 3, "parent_id": 2}, {"id": 4, "parent_id": 99},
+                 {"id": 5, "parent_id": 6}, {"id": 6, "parent_id": 5}]
+        tree = lab_notebook.page_tree(pages)
+        self.assertEqual([p["id"] for p in tree], [1, 4, 5, 6])
+        self.assertEqual(tree[0]["children"][0]["id"], 2)
+        self.assertEqual(tree[0]["children"][0]["children"][0]["id"], 3)
 
 
 class ProtocolTests(Notebook):
@@ -452,7 +557,7 @@ class ProtocolLibraryTests(Notebook):
         self.assertEqual((page["kind"], page["title"], page["role"]), ("protocol", "Western blot", "owner"))
         self.assertIn("Ponceau", page["body"])
         tab = one("select t.title from notebook_pages p join notebook_tabs t on t.id=p.tab_id_fk where p.id=?", r["page_id"])
-        self.assertEqual(tab, "Protocols")
+        self.assertEqual(tab, "Inbox")
 
     def test_a_new_blank_protocol_and_an_unknown_preset(self):
         blank = self.post_json(self.m, "/notebook/api/protocols/new", {}).get_json()
