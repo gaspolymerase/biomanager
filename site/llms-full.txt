@@ -946,7 +946,15 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Date…** inserts a day you pick. **Reminder** adds a to-do to your calendar on the day and time you choose, and writes a link to it in the page (⏰ and the date).
 
-All of it stays readable Markdown: a callout is GitHub's `> [!WARNING]`, a toggle is `<details>`, and columns are Pandoc's `::: column`, so an exported page reads anywhere.
+The bar at the bottom of the page is one row:
+
+- the text's style (text, headings, quote, code block) and lists;
+
+- bold, italic, strikethrough, colour and link;
+
+- **Picture or file**, the timer, **Insert**, undo, redo and **Run**.
+
+On a narrow screen it scrolls sideways. All of it stays readable Markdown: a callout is GitHub's `> [!WARNING]`, a toggle is `<details>`, and columns are Pandoc's `::: column`, so an exported page reads anywhere.
 
 - Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`). A colleague is shown in their colour, and hovering the name shows who they are: name, what they do, admin, member or guest, email, project groups, and how long they've been in the lab. They're told they were mentioned, and an action item names them. The page and a record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
 

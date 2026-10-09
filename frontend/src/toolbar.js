@@ -9,7 +9,6 @@
 
 import { ICONS } from './icons.js';
 import { ITEMS, pickFile, uploadFile, uploadImage } from './commands.js';
-import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { ask, escapeHtml } from './util.js';
 import { openColorMenu } from './rich-menus.js';
@@ -96,26 +95,32 @@ export function createToolbar(editor, { extra = [] } = {}) {
   tableBar.className = 'editor-toolbar editor-toolbar-secondary';
   tableBar.style.display = 'none';
 
+  // One row: what has a menu of its own (a style, a kind of list) is one
+  // button with that menu; the rest is in Insert and the "/" menu.
+  const styles = [
+    { id: 'p', icon: ICONS.text, label: 'Text', run: (e) => e.chain().focus().setParagraph().run(), isActive: (e) => e.isActive('paragraph') },
+    { id: 'h1', icon: ICONS.h1, label: 'Heading 1', run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(), isActive: (e) => e.isActive('heading', { level: 1 }) },
+    { id: 'h2', icon: ICONS.h2, label: 'Heading 2', run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(), isActive: (e) => e.isActive('heading', { level: 2 }) },
+    { id: 'h3', icon: ICONS.h3, label: 'Heading 3', run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(), isActive: (e) => e.isActive('heading', { level: 3 }) },
+    { id: 'quote', icon: ICONS.quote, label: 'Quote', run: (e) => e.chain().focus().toggleBlockquote().run(), isActive: (e) => e.isActive('blockquote') },
+    { id: 'codeblock', icon: ICONS.code, label: 'Code block', run: (e) => e.chain().focus().toggleCodeBlock().run(), isActive: (e) => e.isActive('codeBlock') },
+  ];
+  const lists = [
+    { id: 'bullet', icon: ICONS.bullet, label: 'Bulleted list', run: (e) => e.chain().focus().toggleBulletList().run(), isActive: (e) => e.isActive('bulletList') },
+    { id: 'ordered', icon: ICONS.ordered, label: 'Numbered list', run: (e) => e.chain().focus().toggleOrderedList().run(), isActive: (e) => e.isActive('orderedList') },
+    { id: 'task', icon: ICONS.task, label: 'Checklist', run: (e) => e.chain().focus().toggleTaskList().run(), isActive: (e) => e.isActive('taskList') },
+  ];
+
   const groups = [
     [
-      { id: 'h1', icon: ICONS.h1, label: 'Heading 1', exec: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(), isActive: (e) => e.isActive('heading', { level: 1 }) },
-      { id: 'h2', icon: ICONS.h2, label: 'Heading 2', exec: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(), isActive: (e) => e.isActive('heading', { level: 2 }) },
-      { id: 'h3', icon: ICONS.h3, label: 'Heading 3', exec: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(), isActive: (e) => e.isActive('heading', { level: 3 }) },
+      { id: 'style', icon: ICONS.text, label: 'Text style: heading, quote, code', choices: styles, renderAsDropdown: true },
+      { id: 'lists', icon: ICONS.bullet, label: 'Lists and checklists', choices: lists, renderAsDropdown: true, isActive: (e) => lists.some((c) => c.isActive(e)) },
     ],
     [
       { id: 'bold', icon: ICONS.bold, label: 'Bold (Cmd-B)', exec: (e) => e.chain().focus().toggleBold().run(), isActive: (e) => e.isActive('bold') },
       { id: 'italic', icon: ICONS.italic, label: 'Italic (Cmd-I)', exec: (e) => e.chain().focus().toggleItalic().run(), isActive: (e) => e.isActive('italic') },
       { id: 'strike', icon: ICONS.strike, label: 'Strikethrough', exec: (e) => e.chain().focus().toggleStrike().run(), isActive: (e) => e.isActive('strike') },
-      { id: 'code', icon: ICONS.code, label: 'Inline code', exec: (e) => e.chain().focus().toggleCode().run(), isActive: (e) => e.isActive('code') },
-    ],
-    [
-      { id: 'bullet', icon: ICONS.bullet, label: 'Bullet list', exec: (e) => e.chain().focus().toggleBulletList().run(), isActive: (e) => e.isActive('bulletList') },
-      { id: 'ordered', icon: ICONS.ordered, label: 'Numbered list', exec: (e) => e.chain().focus().toggleOrderedList().run(), isActive: (e) => e.isActive('orderedList') },
-      { id: 'task', icon: ICONS.task, label: 'Checklist', exec: (e) => e.chain().focus().toggleTaskList().run(), isActive: (e) => e.isActive('taskList') },
-      { id: 'quote', icon: ICONS.quote, label: 'Quote', exec: (e) => e.chain().focus().toggleBlockquote().run(), isActive: (e) => e.isActive('blockquote') },
       { id: 'color', icon: ICONS.palette, label: 'Colour and highlight', exec: (e) => openColorMenu(e, document.querySelector('[data-cmd-id="color"]')), isActive: (e) => e.isActive('tint') },
-    ],
-    [
       {
         id: 'link',
         icon: ICONS.link,
@@ -132,10 +137,19 @@ export function createToolbar(editor, { extra = [] } = {}) {
         },
         isActive: (e) => e.isActive('link'),
       },
-      { id: 'image', icon: ICONS.image, label: 'Picture', exec: async (e) => uploadImage(e, await pickFile('image/*')) },
-      { id: 'attach', icon: ICONS.attach, label: 'Attach file', exec: async (e) => uploadFile(e, await pickFile('')) },
-      { id: 'table', icon: ICONS.table, label: 'Data sheet (plot & stats)', exec: (e) => e.chain().focus().insertLabBlock('sheet').run() },
-      { id: 'stamp', icon: ICONS.clock, label: 'Time stamp (Ctrl+Shift+;)', exec: (e) => stampTime(e) },
+    ],
+    [
+      {
+        id: 'attach',
+        icon: ICONS.attach,
+        label: 'Picture or file',
+        exec: async (e) => {
+          const file = await pickFile('');
+          if (!file) return;
+          if (file.type && file.type.startsWith('image/')) uploadImage(e, file);
+          else uploadFile(e, file);
+        },
+      },
       { id: 'timer', icon: ICONS.timer, label: 'Timer', exec: () => timers().ask() },
       { id: 'insert', icon: ICONS.insert, label: 'Insert… (or type /)', exec: () => openInsertMenu(editor), renderAsDropdown: true },
     ],
@@ -167,6 +181,32 @@ export function createToolbar(editor, { extra = [] } = {}) {
 
   const allButtons = [];
 
+  function openChoices(btn, cmd) {
+    document.querySelectorAll('.toolbar-choices').forEach((m) => m.remove());
+    const menu = document.createElement('div');
+    menu.className = 'insert-menu toolbar-choices';
+    menu.innerHTML = cmd.choices.map((c) => `
+      <button type="button" class="insert-menu-item${c.isActive && c.isActive(editor) ? ' is-active' : ''}" data-id="${c.id}">
+        <span class="insert-menu-icon">${c.icon}</span><span class="insert-menu-title">${escapeHtml(c.label)}</span>
+      </button>`).join('');
+    document.body.appendChild(menu);
+    const r = btn.getBoundingClientRect();
+    const m = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(window.innerWidth - m.width - 8, r.left))}px`;
+    menu.style.top = `${Math.max(8, r.top - m.height - 8)}px`;
+    menu.addEventListener('mousedown', (event) => event.preventDefault());
+    const close = () => { menu.remove(); document.removeEventListener('mousedown', away); };
+    const away = (event) => { if (!menu.contains(event.target) && !btn.contains(event.target)) close(); };
+    setTimeout(() => document.addEventListener('mousedown', away), 0);
+    menu.addEventListener('click', (event) => {
+      const b = event.target.closest('.insert-menu-item');
+      const choice = b && cmd.choices.find((c) => c.id === b.dataset.id);
+      if (!choice) return;
+      close();
+      choice.run(editor);
+    });
+  }
+
   function makeButton(cmd, ed) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -177,7 +217,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
     btn.title = cmd.label;
     btn.innerHTML = cmd.renderAsDropdown ? svgIcon(cmd.icon) + svgIcon(ICONS.caretDown) : svgIcon(cmd.icon);
     btn.addEventListener('mousedown', (event) => event.preventDefault());
-    btn.addEventListener('click', () => cmd.exec(ed));
+    btn.addEventListener('click', () => (cmd.choices ? openChoices(btn, cmd) : cmd.exec(ed)));
     btn._cmd = cmd;
     return btn;
   }
@@ -219,6 +259,11 @@ export function createToolbar(editor, { extra = [] } = {}) {
     allButtons.forEach((btn) => {
       const cmd = btn._cmd;
       if (cmd.isActive) btn.classList.toggle('active', !!cmd.isActive(editor));
+      if (cmd.choices) {
+        const now = cmd.choices.find((c) => c.isActive && c.isActive(editor));
+        const icon = (now || cmd).icon;
+        if (btn._icon !== icon) { btn._icon = icon; btn.firstElementChild.innerHTML = icon; }
+      }
       if (cmd.enabled) {
         try { btn.disabled = !cmd.enabled(editor); } catch (_e) { btn.disabled = false; }
       }
@@ -249,8 +294,8 @@ export function createToolbar(editor, { extra = [] } = {}) {
     toolbar.style.left = x;
     tableBar.style.left = x;
     columnsBar.style.left = x;
-    // No wider than the page: a narrow window wraps it to a second row
-    // instead of pushing it over the sidebar.
+    // No wider than the page: a narrow window scrolls it sideways instead of
+    // pushing it over the sidebar.
     const room = `${Math.max(240, Math.round(box.width - 32))}px`;
     toolbar.style.maxWidth = room;
     tableBar.style.maxWidth = room;
