@@ -201,6 +201,22 @@ MAKE = textwrap.dedent("""
     Path(os.environ["UPLOADS"], "gel.png").write_bytes(b"png")
     with app.app_context():
         lab_transfer.build(Path(os.environ["OUT"]), Path(os.environ["OUT"]).parent / "work")
+    # A broken copy: a key belonging to an account the file doesn't hold.
+    import hashlib, json, sqlite3, zipfile
+    work = Path(os.environ["OUT"]).parent / "broken"
+    work.mkdir()
+    with zipfile.ZipFile(os.environ["OUT"]) as zf:
+        zf.extractall(work)
+    with sqlite3.connect(work / "lab.db") as conn:
+        required = [r[1] for r in conn.execute("PRAGMA table_info(lab_copy_keys)") if r[3] and not r[5]]
+        values = {name: 0 for name in required} | {"user_id_fk": 999, "label": "x", "key_hash": "h"}
+        conn.execute(f"INSERT INTO lab_copy_keys ({', '.join(values)}) VALUES ({', '.join('?' * len(values))})",
+                     list(values.values()))
+    manifest = json.loads((work / "manifest.json").read_text())
+    manifest["sha256"] = hashlib.sha256((work / "lab.db").read_bytes()).hexdigest()
+    with zipfile.ZipFile(os.environ["BROKEN"], "w") as zf:
+        zf.writestr("manifest.json", json.dumps(manifest))
+        zf.write(work / "lab.db", "lab.db")
 """)
 TAKE = textwrap.dedent("""
     import json, os, sys
@@ -214,6 +230,11 @@ TAKE = textwrap.dedent("""
     code = security.setup_code()
     out = {"no_lab": "has no lab yet" in c.get("/").get_data(as_text=True)}
     body = Path(os.environ["FILE"]).read_bytes()
+    r = c.post("/lab/import", data=Path(os.environ["BROKEN"]).read_bytes(),
+               headers={"Content-Type": "application/zip", "X-BioManager-Setup-Code": code})
+    with engine.connect() as conn:
+        out["broken"] = [r.status_code, r.get_json()["problems"], conn.execute(text("select count(*) from users")).scalar()]
+    out["dialect"] = engine.dialect.name
     r = c.post("/lab/import", data=body, headers={"Content-Type": "application/zip", "X-BioManager-Setup-Code": "wrong"})
     out["wrong_code"] = [r.status_code, r.get_json()["error"]]
     r = c.post("/lab/import", data=body, headers={"Content-Type": "application/zip", "X-BioManager-Setup-Code": code,
@@ -234,29 +255,61 @@ TAKE = textwrap.dedent("""
 class ANewServerTakesALab(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if os.environ.get("BIOMANAGER_TEST_DATABASE_URL"):
-            raise unittest.SkipTest("the fresh labs run on their own SQLite files")
         cls.tmp = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.tmp.cleanup)
         tmp = Path(cls.tmp.name)
+        # The desktop's lab is always a SQLite file; the server's database is
+        # SQLite too, or, when the suite runs on PostgreSQL, a fresh database
+        # of its own there, as a lab server's would be.
+        cls.pg = None
+        server_db = {}
+        test_url = os.environ.get("BIOMANAGER_TEST_DATABASE_URL", "")
+        if test_url:
+            from sqlalchemy import create_engine, text
+            from sqlalchemy.engine import make_url
+            url = make_url(test_url.replace("postgres://", "postgresql://", 1)).set(drivername="postgresql+psycopg")
+            cls.pg = (url, f"lab_move_{os.getpid()}")
+            admin = create_engine(url, isolation_level="AUTOCOMMIT")
+            with admin.connect() as conn:
+                conn.execute(text(f'DROP DATABASE IF EXISTS "{cls.pg[1]}"'))
+                conn.execute(text(f'CREATE DATABASE "{cls.pg[1]}"'))
+            admin.dispose()
+            cls.addClassCleanup(cls._drop_database)
+            server_db = {"DATABASE_URL": url.set(database=cls.pg[1]).render_as_string(hide_password=False)}
 
         def run(script, name, **env):
             folder = tmp / name
             (folder / "uploads").mkdir(parents=True)
-            environ = {k: v for k, v in os.environ.items() if k not in ("BIOMANAGER_SEED_DEFAULTS",)}
+            environ = {k: v for k, v in os.environ.items()
+                       if k not in ("BIOMANAGER_SEED_DEFAULTS", "BIOMANAGER_TEST_DATABASE_URL")}
             environ.update(ROOT=ROOT, BIOMANAGER_DATA_DIR=str(folder), DATABASE_URL=f"sqlite:///{folder}/lab.db",
                            BIOMANAGER_UPLOADS_DIR=str(folder / "uploads"), UPLOADS=str(folder / "uploads"),
-                           SECRET_KEY="lab-move-test-key", BIOMANAGER_TELEMETRY="0", **env)
+                           SECRET_KEY="lab-move-test-key", BIOMANAGER_TELEMETRY="0")
+            environ.update(env)
             done = subprocess.run([sys.executable, "-c", script], env=environ, capture_output=True, text=True, timeout=180)
             if done.returncode != 0:
                 raise AssertionError(done.stderr[-3000:])
             return done.stdout
         lab_file = tmp / "rivera.biomanager"
-        run(MAKE, "desktop", OUT=str(lab_file))
-        cls.result = json.loads(run(TAKE, "server", FILE=str(lab_file)).strip().splitlines()[-1])
+        run(MAKE, "desktop", OUT=str(lab_file), BROKEN=str(tmp / "broken.biomanager"))
+        cls.result = json.loads(run(TAKE, "server", FILE=str(lab_file), BROKEN=str(tmp / "broken.biomanager"),
+                                    **server_db).strip().splitlines()[-1])
 
     @classmethod
-    def tearDownClass(cls):
-        cls.tmp.cleanup()
+    def _drop_database(cls):
+        from sqlalchemy import create_engine, text
+        admin = create_engine(cls.pg[0], isolation_level="AUTOCOMMIT")
+        with admin.connect() as conn:
+            conn.execute(text(f'DROP DATABASE IF EXISTS "{cls.pg[1]}"'))
+        admin.dispose()
+
+    def test_it_ran_on_the_database_the_suite_runs_on(self):
+        self.assertEqual(self.result["dialect"], "postgresql" if self.pg else "sqlite")
+
+    def test_a_file_whose_records_dont_fit_together_is_refused_and_nothing_changes(self):
+        status, problems, users = self.result["broken"]
+        self.assertEqual((status, users), (409, 0))
+        self.assertIn("lab_copy_keys", problems[0])
 
     def test_a_new_server_says_it_has_no_lab_until_it_takes_one(self):
         self.assertTrue(self.result["no_lab"])

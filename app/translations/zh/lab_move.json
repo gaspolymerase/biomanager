@@ -70,5 +70,8 @@
   "This lab file was made by a newer BioManager. Update this server first.": "这个实验室文件来自更新版本的 BioManager。请先更新这台服务器。",
   "This lab file holds a path outside it; it was not taken in.": "这个实验室文件里有指向外部的路径，未导入。",
   "The lab file arrived damaged (its database doesn't match its checksum). Make it again.": "实验室文件已损坏（数据库与校验值不符）。请重新生成。",
-  "The lab file was made by BioManager %(theirs)s; this one runs %(ours)s. Update both to the same version, then make the file again.": "实验室文件来自 BioManager %(theirs)s；这里运行的是 %(ours)s。请把两边更新到同一版本，再重新生成文件。"
+  "The lab file was made by BioManager %(theirs)s; this one runs %(ours)s. Update both to the same version, then make the file again.": "实验室文件来自 BioManager %(theirs)s；这里运行的是 %(ours)s。请把两边更新到同一版本，再重新生成文件。",
+  "The lab file’s records don’t fit together (a record in %(table)s points to one that isn’t in the file), so nothing was changed. Save the lab again in the desktop app and bring the new file.": "实验室文件里的记录对不上（%(table)s 里有一条记录指向文件里没有的记录），所以没有做任何改动。请在桌面版里重新保存实验室，再搬入新文件。",
+  "%(table)s, row %(row)s: points to a record in %(parent)s that isn’t in the file.": "%(table)s 第 %(row)s 行：指向 %(parent)s 里一条文件中没有的记录。",
+  "… and %(n)s more like these.": "……还有 %(n)s 条类似的。"
 }

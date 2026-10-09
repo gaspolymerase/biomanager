@@ -377,6 +377,12 @@ def take_in(source: Path, admin: str = "") -> dict:
             rows = lab_transfer.apply(data, uploads)
         except Exception as error:  # noqa: BLE001 — rolled back: say what, and that nothing changed
             current_app.logger.exception("taking in a lab file failed")
+            from sqlalchemy.exc import IntegrityError
+            if isinstance(error, IntegrityError):
+                # Named plainly; the database's own words are for the log.
+                where = getattr(getattr(error.orig, "diag", None), "table_name", "") or ""
+                return {"ok": False, "problems": [str(error.orig).splitlines()[0][:300]],
+                        "error": gettext("The lab file’s records don’t fit together (a record in %(table)s points to one that isn’t in the file), so nothing was changed. Save the lab again in the desktop app and bring the new file.", table=where or "?")}
             return {"ok": False, "error": gettext("Taking the lab in failed, and nothing was changed: %(reason)s", reason=str(error)[:300]), "problems": []}
     security.clear_setup_code()
     result = {"ok": True, "lab": manifest.get("lab") or "", "accounts": manifest.get("accounts", 0),

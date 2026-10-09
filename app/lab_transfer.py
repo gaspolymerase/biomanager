@@ -221,6 +221,14 @@ def check(manifest: dict, database: Path) -> tuple[dict, list[str]]:
         return {}, problems
     strict = engine.dialect.name == "postgresql"
     with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as conn:
+        # A record pointing at one the file doesn't hold would be refused by
+        # the database at the very end; named here first, on any database.
+        dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+        for table, rowid, parent, _ in dangling[:20]:
+            problems.append(gettext("%(table)s, row %(row)s: points to a record in %(parent)s that isn’t in the file.",
+                                    table=table, row=rowid, parent=parent))
+        if len(dangling) > 20:
+            problems.append(gettext("… and %(n)s more like these.", n=len(dangling) - 20))
         have = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         data = {}
         for table in Base.metadata.sorted_tables:
