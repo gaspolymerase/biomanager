@@ -2134,6 +2134,8 @@ class NotebookPageInfo(Base):
     # (base64) when it saved. A save strictly behind it (a background tab
     # that hasn't caught up) is not written over it (lab_notebook.behind).
     body_state: Mapped[str] = mapped_column(Text, default="", server_default="")
+    # A protocol page: the lab's folder it is filed in (NotebookFolder).
+    folder_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
 
 
 class LabGroup(Base):
@@ -2264,8 +2266,27 @@ class NotebookRecipe(Base):
     name: Mapped[str] = mapped_column(String(160))
     owner: Mapped[str] = mapped_column(String(80), default="")
     data: Mapped[str] = mapped_column(Text, default="{}")
+    # The lab's folder it is filed in (NotebookFolder), or none.
+    folder_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class NotebookFolder(Base):
+    """A folder in the lab's protocol or recipe library. The lab shares
+    them: anyone may make one and file what they may edit in it; its maker
+    or an admin renames or deletes it (what was in it is kept, unfiled).
+    A protocol's folder is on its page's NotebookPageInfo, a recipe's on
+    the recipe."""
+    __tablename__ = "notebook_folders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)  # protocol | recipe
+    name: Mapped[str] = mapped_column(String(120))
+    # Its icon in the library (lab_notebook.FOLDER_ICONS); empty: a folder.
+    icon: Mapped[str] = mapped_column(String(40), default="", server_default="")
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class NotebookMeetingSeries(Base):

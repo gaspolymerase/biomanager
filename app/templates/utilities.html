@@ -2,32 +2,24 @@
 
 {% block page_title %}{{ _('Utilities') }}{% endblock %}
 {% block page_heading %}{{ _('Utilities') }}{% endblock %}
-{% block page_subtitle %}{{ _('Bench calculators and reference tables: solutions, DNA, protein, cells, microbes and more') }}{% endblock %}
+{% block page_subtitle %}{{ _('Bench calculators and reference tables') }}{% endblock %}
 
 {% block content %}
-{# Every calculator is data in static/bench-calcs.js, drawn by static/utilities-page.js;
-   the answers change as you type, and each remembers what you last typed in it. #}
-<div class="util" data-util>
-  <nav class="util-nav card" aria-label="{{ _('Calculators') }}">
-    <div class="util-search">
-      {{ icon('search') }}
-      <input type="search" placeholder="{{ _('Find a calculator…') }}" aria-label="{{ _('Find a calculator') }}" data-util-search autocomplete="off">
-    </div>
-    <div class="util-list" data-util-list></div>
-  </nav>
-
-  <section class="util-main">
-    <article class="card util-card" data-util-card aria-live="polite"></article>
-
-    <details class="card util-refs" id="reference">
-      <summary class="card-head"><h2>{{ icon('flask') }} {{ _('Reference tables') }}</h2></summary>
-      <div class="util-refs-body" data-util-refs></div>
-    </details>
-  </section>
+{# The tools and their arithmetic are data in static/bench-calcs.js, drawn by
+   static/utilities-page.js: a search, pinned and recent tools, the groups,
+   one tool open, the reference tables, and the lab's own tools (made on this
+   page, kept for everyone). #}
+<div class="util" data-util data-icons="{{ url_for('static', filename='icons.svg') }}"
+     data-rotors-url="{{ url_for('utilities_rotors') }}" data-rotors-editable="{{ '1' if rotors_editable else '0' }}"
+     data-lab-url="{{ url_for('utilities_lab_tool_save') }}" data-me="{{ g.user.username }}"
+     data-admin="{{ '1' if g.user.role == 'admin' else '0' }}">
+  <div data-util-view aria-live="polite"></div>
 </div>
 
 <datalist id="util-chemicals"></datalist>
 <script type="application/json" id="util-lab-chemicals">{{ chemicals | tojson }}</script>
+<script type="application/json" id="util-rotors">{{ rotors | tojson }}</script>
+<script type="application/json" id="util-lab-tools">{{ lab_tools | tojson }}</script>
 <script src="{{ url_for('static', filename='bench-calcs.js') }}?v={{ asset_version('bench-calcs.js') }}" defer></script>
 <script src="{{ url_for('static', filename='utilities-page.js') }}?v={{ asset_version('utilities-page.js') }}" defer></script>
 {% endblock %}

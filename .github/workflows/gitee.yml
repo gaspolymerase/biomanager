@@ -1,0 +1,41 @@
+name: gitee
+
+# A copy of master and the version tags on Gitee, for people in China, where
+# GitHub can be slow: gitee.com/<the same owner>/<the same name>. It runs on
+# every push, so the copy is never more than a minute behind.
+#
+# It needs the GITEE_TOKEN secret: a Gitee personal access token (Gitee →
+# Settings → Personal access tokens, with "projects") for the account that
+# owns the Gitee copy. Without it, or on a fork, the job does nothing.
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitee
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    env:
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        if: env.GITEE_TOKEN != ''
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Push master and the tags
+        if: env.GITEE_TOKEN != ''
+        run: |
+          remote="https://${GITHUB_REPOSITORY_OWNER}:${GITEE_TOKEN}@gitee.com/${GITHUB_REPOSITORY}.git"
+          git fetch --tags --force origin
+          git push --force "$remote" "origin/master:refs/heads/master"
+          git push --force "$remote" --tags

@@ -1322,50 +1322,120 @@
   .bio-dialog-check { @apply flex flex-wrap items-center gap-x-2 text-[13px] text-ink; }
   .bio-dialog-check > input { @apply h-4 w-4; }
   .bio-dialog-hint { @apply basis-full pl-6 text-[12px] text-muted; }
-  /* Utilities (templates/utilities.html, static/utilities-page.js). */
-  .util { @apply grid grid-cols-1 items-start gap-3 lg:grid-cols-[250px_minmax(0,1fr)]; }
-  .util-nav { @apply flex max-h-[40vh] flex-col gap-1 overflow-y-auto p-2 lg:sticky lg:top-2 lg:max-h-[calc(100vh-150px)]; }
-  .util-answers > div.is-wide { @apply sm:col-span-2; }
-  .util-search { @apply mb-1 flex items-center gap-1.5 rounded-lg border border-hairline bg-surface px-2; }
-  .util-search .icon { @apply size-3.5 shrink-0 text-muted; }
-  .util-search input { @apply h-8 w-full border-0 bg-transparent p-0 text-[13px] outline-none focus:ring-0; }
-  .util-list { @apply flex flex-col gap-2; }
-  .util-group { @apply flex flex-col; }
-  .util-group[hidden], .util-link[hidden] { display: none; }
-  .util-group-label { @apply px-2 pb-0.5 pt-1 text-[11px] font-semibold text-muted; }
-  .util-link { @apply rounded-md px-2 py-1 text-[13px] leading-snug text-ink no-underline hover:bg-sand-100 hover:no-underline; }
-  .util-link.is-active { @apply bg-brand-600 font-medium text-white hover:bg-brand-700; }
-  .util-link-ref { @apply mt-1 border-t border-hairline pt-2 text-muted; }
-  .util-main { @apply flex min-w-0 flex-col gap-3; }
-  .util-head { @apply items-start; }
-  .util-head h2 { @apply text-[15px]; }
-  .util-blurb { @apply mt-0.5 text-[12.5px] font-normal text-muted; }
-  .util-form { @apply grid grid-cols-1 gap-3 px-4 pb-2 pt-3 sm:grid-cols-2 xl:grid-cols-3; }
+  /* Utilities (templates/utilities.html, static/utilities-page.js): a
+     search, pinned and recent tools, the groups as cards; a tool open with
+     its inputs beside the answer, and the groups as a rail on wide screens. */
+  .util { @apply mx-auto w-full max-w-[1180px]; }
+  .util [hidden] { display: none !important; }
+  .util-search { @apply flex h-11 items-center gap-2.5 rounded-xl border border-hairline bg-surface px-3.5 shadow-xs; }
+  .util-search:focus-within { @apply border-brand-500 ring-3 ring-brand-500/20; }
+  .util-search .icon { @apply size-4 shrink-0 text-muted; }
+  .util-search input { @apply h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] text-ink outline-none focus:ring-0; }
+  .util-results { @apply mt-2 flex flex-col; }
+  .util-results a { @apply grid grid-cols-[1fr_auto] gap-x-3 border-t border-hairline px-3.5 py-2 text-ink no-underline first:border-t-0 hover:bg-sand-50 hover:no-underline; }
+  .util-results a.is-first { @apply bg-sand-50; }
+  .util-results small { @apply text-right text-[12px] text-muted; }
+  .util-results a > span { @apply col-span-2 text-[12px] text-muted; }
+  .util-none { @apply mt-2 text-[13px] text-muted; }
+  .util-shortcuts { @apply mb-4 mt-3.5 flex flex-col gap-2; }
+  .util-shortrow { @apply flex flex-wrap items-center gap-2; }
+  .util-shortrow > span { @apply w-16 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted; }
+  .util-shortrow em { @apply text-[12px] not-italic text-muted; }
+  .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[12.5px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
+  .util-chip .icon { @apply size-3 text-amber-500; }
+  .util-groups { @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3; }
+  .util-group { @apply p-3.5 pb-2.5; }
+  .util-group header { @apply mb-2 flex items-center gap-2.5; }
+  .util-gicon { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700; }
+  .util-gicon .icon { @apply size-[18px]; }
+  .util-group h2 { @apply text-[14px] font-semibold text-ink; }
+  .util-group header p { @apply text-[11.5px] text-muted; }
+  .util-group li a { @apply -mx-2 flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-[13px] text-ink no-underline hover:bg-sand-100 hover:text-brand-700 hover:no-underline; }
+  .util-group li small { @apply text-[11px] text-muted; }
+
+  .util-tool { @apply grid grid-cols-1 items-start gap-5 lg:grid-cols-[210px_minmax(0,1fr)]; }
+  .util-rail { @apply hidden max-h-[calc(100vh-150px)] flex-col overflow-y-auto lg:sticky lg:top-2 lg:flex; }
+  .util-rail details { @apply border-t border-hairline; }
+  .util-rail summary { @apply flex cursor-pointer list-none items-center gap-2 px-1 py-1.5 text-[12.5px] font-semibold text-ink-soft; }
+  .util-rail summary::-webkit-details-marker { display: none; }
+  .util-rail summary .icon { @apply size-3.5 text-brand-700; }
+  .util-rail details a { @apply block rounded-md py-1 pl-6 pr-2 text-[12.5px] text-ink-soft no-underline hover:bg-sand-100 hover:no-underline; }
+  .util-rail details a.is-active { @apply bg-brand-600 font-medium text-white hover:bg-brand-700; }
+  .util-back { @apply mb-1.5 inline-flex items-center gap-1 text-[12.5px] text-muted no-underline hover:text-brand-700 hover:no-underline; }
+  .util-back .icon { @apply size-3.5; }
+  .util-back-narrow { @apply lg:hidden; }
+  .util-main { @apply flex min-w-0 flex-col; }
+  .util-head { @apply mb-3 flex flex-wrap items-start gap-3; }
+  .util-crumb { @apply text-[12px] text-muted; }
+  .util-head h2 { @apply text-[19px] font-semibold tracking-[-0.01em] text-ink; }
+  .util-does { @apply mt-0.5 text-[13px] text-ink-soft; }
+  .util-actions { @apply ml-auto flex shrink-0 gap-1.5; }
+  .util-actions .is-pinned { @apply border-amber-400 text-amber-600; }
+  .util-controls { @apply mb-3 flex flex-wrap items-center gap-3; }
+  .util-seg { @apply inline-flex flex-wrap gap-0.5 rounded-lg border border-hairline bg-sand-100 p-0.5; }
+  .util-seg button { @apply h-6.5 rounded-md px-3 text-[12.5px] text-ink-soft; }
+  .util-seg button[aria-pressed="true"] { @apply bg-surface font-semibold text-ink shadow-xs; }
+  .util-solve { @apply flex flex-wrap items-center gap-2; }
+  .util-solve > span { @apply text-[12px] text-muted; }
+  .util-work { @apply grid grid-cols-1 items-start gap-3 xl:grid-cols-2; }
+  .util-form { @apply grid grid-cols-1 gap-3 p-4 sm:grid-cols-2; }
   .util-field { @apply flex min-w-0 flex-col gap-1 text-[12.5px] text-muted; }
-  .util-field.is-wide { @apply sm:col-span-2 xl:col-span-3; }
-  .util-field > span:first-child { @apply font-medium; }
-  .util-field input, .util-field select, .util-field textarea { @apply field w-full min-w-0 text-[13px] text-ink; }
+  .util-field.is-wide { @apply sm:col-span-2; }
+  .util-field > span:first-child { @apply font-medium text-ink-soft; }
+  .util-field input, .util-field select, .util-field textarea { @apply field h-8 w-full min-w-0 text-[13.5px] tabular-nums text-ink; }
   .util-field textarea { @apply h-auto py-1.5 font-mono text-[12.5px]; }
   .util-input { @apply flex min-w-0 gap-1; }
   .util-input select { @apply w-auto shrink-0; }
-  .util-field.is-solved input { @apply border-brand-300 bg-brand-50; }
   .util-hint { @apply text-[11.5px] font-normal text-muted; }
-  .util-results { @apply flex flex-col gap-2 border-t border-hairline px-4 py-3; }
-  .util-answers { @apply grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2; }
-  .util-answers > div { @apply flex items-baseline justify-between gap-3 border-b border-sand-100 py-1; }
-  .util-answers dt { @apply text-[12.5px] text-muted; }
-  .util-answers dd { @apply text-right text-[13.5px] tabular-nums text-ink; }
-  .util-answers .is-main dd { @apply text-[16px] font-semibold text-brand-700; }
+  .util-answer { @apply border-brand-200 xl:sticky xl:top-2; }
+  .util-answer > header { @apply flex items-center justify-between bg-brand-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-800; }
+  .util-answer > header .btn { @apply normal-case tracking-normal; }
+  .util-answer-body { @apply flex flex-col gap-2.5 p-4; }
+  .util-mains { @apply flex flex-col gap-2; }
+  .util-mains dt { @apply text-[12px] text-muted; }
+  .util-mains dd { @apply text-[22px] font-semibold leading-tight tracking-[-0.01em] tabular-nums text-ink; }
+  .util-minors > div { @apply flex items-baseline justify-between gap-3 border-t border-sand-100 py-1; }
+  .util-minors dt { @apply text-[12.5px] text-muted; }
+  .util-minors dd { @apply text-right text-[13px] tabular-nums text-ink; }
   .util-error { @apply rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-[12.5px] text-danger-700; }
-  .util-warn { @apply rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900; }
+  .util-warn { @apply rounded-lg border border-warn-200 bg-warn-50 px-3 py-2 text-[12.5px] text-warn-700; }
   .util-note, .util-muted { @apply text-[12.5px] text-muted; }
   .util-table-wrap { @apply overflow-x-auto; }
   .util-table { @apply w-full border-collapse text-[12.5px]; }
-  .util-table th { @apply border-b border-hairline px-2 py-1 text-left font-semibold text-muted; }
-  .util-table td { @apply border-b border-sand-100 px-2 py-1 tabular-nums text-ink; }
-  .util-refs > summary { @apply cursor-pointer list-none; }
-  .util-refs-body { @apply grid grid-cols-1 gap-4 p-4 xl:grid-cols-2; }
-  .util-ref h3 { @apply mb-1 text-[13px] font-semibold text-ink; }
+  .util-table th { @apply whitespace-nowrap border-b border-hairline px-2 py-1 text-left font-semibold text-muted first:pl-0; }
+  .util-table td { @apply border-b border-sand-100 px-2 py-1 tabular-nums text-ink first:pl-0; }
+  .util-rotors { @apply flex items-end gap-2 sm:col-span-2; }
+  .util-rotors .util-field { @apply flex-1; }
+  .util-rotor-editor { @apply flex flex-col gap-2 rounded-lg bg-sand-50 p-3 sm:col-span-2; }
+  .util-rotor-row { @apply grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-1.5; }
+  .util-rotor-row input { @apply field h-7.5; }
+  .util-rotor-actions { @apply flex items-center gap-1.5; }
+  .util-rotor-actions > span { @apply flex-1; }
+  [data-rotors-editor] { @apply sm:col-span-2; }
+  .util-refs { @apply grid grid-cols-1 gap-3 xl:grid-cols-2; }
+  .util-ref { @apply p-4; }
+  .util-ref .util-table-wrap { @apply max-h-[360px] overflow-y-auto; }
+  .util-ref h3 { @apply mb-1.5 text-[13.5px] font-semibold text-ink; }
+  /* The lab's own tools: making one. */
+  .util-new { @apply mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-brand-700 no-underline hover:no-underline; }
+  .util-new .icon { @apply size-3.5; }
+  .util-lab-head, .util-lab-row { @apply grid items-center gap-1.5; }
+  .util-lab-head.is-input, .util-lab-row.is-input { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.9fr) 1.75rem; }
+  .util-lab-head.is-output, .util-lab-row.is-output { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1fr) 1.75rem; }
+  .util-lab-head small { @apply text-[11px] font-normal text-muted; }
+  .util-lab-row { @apply mb-1.5; }
+  .util-lab-row input { @apply field h-7.5 min-w-0 text-[13px]; }
+  .util-lab-problem { @apply col-span-full text-[11.5px] text-danger-700 empty:hidden; }
+  .util-lab-add { @apply self-start; }
+  .util-lab-actions { @apply flex items-center gap-1.5 sm:col-span-2; }
+  .util-lab-actions > span { @apply flex-1; }
+  .util-form .is-wide { @apply sm:col-span-2; }
+  .util-lab-title { @apply text-[14px] font-semibold text-ink; }
+  .util-work.is-editor { @apply xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]; }
+  @media (max-width: 640px) {
+    .util-lab-head { display: none; }
+    .util-lab-row.is-input, .util-lab-row.is-output { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.75rem; }
+  }
 
   /* A sheet cell the server works out (a primer's length, GC, Tm). */
   .sheet-derived { @apply cursor-default text-muted; }

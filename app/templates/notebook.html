@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block page_title %}{% if selected_page %}{{ selected_page.title }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
+{% block page_title %}{% if library %}{{ libraries[library][0]|tr }}{% elif selected_page %}{{ selected_page.title }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
 {% block page_heading %}{{ _('Notebook') }}{% endblock %}
 {% block page_subtitle %}{{ _('Experiments, protocols, data and meetings. Type / in a page for protocols, sheets, recipes, calculators and diagrams.') }}{% endblock %}
 {% block page_shell_class %}shell-page-flush{% endblock %}
@@ -20,11 +20,12 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='notebook-build/notebook-app.css') }}?v={{ asset_version('notebook-build/notebook-app.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='notebook.css') }}?v={{ asset_version('notebook.css') }}">
+{% if library %}<link rel="stylesheet" href="{{ url_for('static', filename='icon-picker.css') }}?v={{ asset_version('icon-picker.css') }}">{% endif %}
 
 {% set active_id = selected_page.id if selected_page else None %}
-<section class="notebook-shell nb-shell{% if selected_page %} has-page{% endif %}" id="nb-shell">
+<section class="notebook-shell nb-shell{% if selected_page or library %} has-page{% endif %}" id="nb-shell">
   <aside class="notebook-sidebar">
-    {% if selected_page %}
+    {% if selected_page or library %}
       <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
     {% endif %}
     <div class="notebook-sidebar-head">
@@ -45,9 +46,10 @@
     <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
       <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
       <button type="button" data-panel="search">{{ icon('search') }} {{ _('Search & tags') }}</button>
-      <button type="button" data-panel="meetings">{{ icon('users') }} {{ _('Meetings') }}</button>
-      <button type="button" data-panel="protocols">{{ icon('protocol') }} {{ _('Protocols') }}</button>
-      <button type="button" data-panel="recipes">{{ icon('flask') }} {{ _('Recipes') }}</button>
+      {# Each opens its library in the page; /protocol in a page opens the drawer to insert one. #}
+      {% for key, lib in libraries.items() %}
+        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr }}</a>
+      {% endfor %}
     </nav>
 
     <div class="nb-side-scroll">
@@ -123,7 +125,12 @@
   </aside>
 
   <div class="notebook-main">
-    {% if selected_page %}
+    {% if library %}
+      {# Drawn by static/notebook-library.js from /notebook/api/<library>. #}
+      <div class="nb-library" id="nb-library" data-library="{{ library }}">
+        <p class="nb-muted">{{ _('Loading…') }}</p>
+      </div>
+    {% elif selected_page %}
       {% set p = selected_page %}
       {% set can_edit = p.role in ('owner', 'edit') %}
       <div class="notebook-editor nb-page" data-page-id="{{ p.id }}" data-kind="{{ p.kind }}">
@@ -220,6 +227,14 @@
             <button type="button" class="btn btn-primary" data-action="start-experiment">{{ icon('flask') }} {{ _('Start an experiment from it') }}</button>
             {% if can_edit %}<button type="button" class="btn" data-action="release">{{ icon('success') }} {{ _('Save as v%(number)s', number=(p.release or 0) + 1) }}</button>{% endif %}
             <button type="button" class="btn btn-ghost" data-panel="experiments">{{ _('Experiments that used it') }}</button>
+            {% if p.real_role in ('owner', 'edit') %}
+              <label class="nb-folder-select" title="{{ _('The folder it is in, in the lab’s protocols') }}">{{ icon('folder') }}
+                <select id="nb-protocol-folder" aria-label="{{ _('Folder') }}">
+                  <option value="">{{ _('No folder') }}</option>
+                  {% for f in p.folders %}<option value="{{ f.id }}" {% if f.id == p.folder_id %}selected{% endif %}>{{ f.name }}</option>{% endfor %}
+                </select>
+              </label>
+            {% endif %}
           </div>
         {% endif %}
         {% if p.kind == 'meeting' and can_edit %}
@@ -324,6 +339,7 @@
   'topicChosen': topic_chosen,
   'starterTitles': starters | map(attribute='title') | list,
   'labZone': lab_zone,
+  'library': library,
 } | tojson }}</script>
 
 <script nonce="{{ csp_nonce() }}">
@@ -364,4 +380,6 @@ BioActions.register({ createPage: createPage, createTab: createTab, renameTab: r
 <script type="application/json" id="nb-mention-types">{{ mention_types | tojson }}</script>
 <script src="{{ url_for('static', filename='notebook-page.js') }}?v={{ asset_version('notebook-page.js') }}" defer></script>
 <script src="{{ url_for('static', filename='notebook-build/notebook-app.js') }}?v={{ asset_version('notebook-build/notebook-app.js') }}" defer data-missing-flag="__notebookBundleMissing"></script>
+{# After the bundle: a recipe opens in its recipe editor. #}
+{% if library %}<script src="{{ url_for('static', filename='notebook-library.js') }}?v={{ asset_version('notebook-library.js') }}" defer></script>{% endif %}
 {% endblock %}

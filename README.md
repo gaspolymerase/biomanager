@@ -454,11 +454,18 @@ database has a name of its own (one another database has is refused), so
     for it with that block already in.
   - **Protocols** with numbered versions. *Start an experiment from it*
     copies the steps as a checklist and records which version was followed.
-    **Protocols** in the sidebar (or `/protocol` in a page) opens the
-    library: the lab's protocols and a dozen common ones built in
-    (genotyping, perfusion, immunofluorescence, western, BCA,
-    transformation, miniprep, TRIzol, qPCR, passaging, tamoxifen), to insert
-    as a checklist or copy into a protocol of your own.
+    **Protocols** in the notebook's sidebar opens the lab's protocols as a
+    page of their own: search them, open one to read or change it, make one
+    with **New protocol**, and sort them into **folders** (**New folder**,
+    then drag a protocol onto it, or pick its folder on the card or in the
+    protocol's own bar). Each folder has an icon you pick when you make it;
+    **Edit folder** changes its name or icon. Folders are the lab's, shared
+    by everyone. Below
+    them are a dozen common protocols built in (genotyping, perfusion,
+    immunofluorescence, western, BCA, transformation, miniprep, TRIzol,
+    qPCR, passaging, tamoxifen), to read and **Copy** into one of your own.
+    In a page, `/protocol` opens the same protocols beside it, folder by
+    folder, to insert one as a checklist.
     **Run the checklist step by step** (▶) goes through it at the bench one step at a time
     in large type: each tick gets the time, a deviation is written under the
     page's Deviations heading.
@@ -475,7 +482,11 @@ database has a name of its own (one another database has is refused), so
   - **Buffer recipes**: final volume and concentrations in, grams and
     millilitres to add out (from molecular weight or a stock); change the
     volume and every amount follows. Common buffers are built in; the lab's
-    own are saved to a shared library.
+    own are saved to a shared library. **Recipes** in the notebook's
+    sidebar opens that library: open a recipe to change it, make one with
+    **New recipe**, sort them into folders as protocols are, and **Save a
+    copy** of a built-in one to make it yours. **Load from library** in a
+    recipe block lists them by folder.
   - **Formulations** (`/formulation`): what goes into a reaction or a batch,
     by mass. Type a chemical's name, abbreviation or CAS number and pick it
     from the lab's **Chemicals** database; its molecular weight, purity,
@@ -499,7 +510,8 @@ database has a name of its own (one another database has is refused), so
     when they end.
   - **Daily log**: *Today* opens the day's page; each quick entry is added
     with the time.
-  - **Meetings and seminars**: a rotation of who presents next, notes for
+  - **Meetings and seminars** (**Meetings** in the notebook's sidebar,
+    where each series is edited): a rotation of who presents next, notes for
     each meeting shared with everyone in it, the coming meetings on the
     calendar, and action items (`- [ ] @name order primers, due
     2026-10-02`) sent to each person's to-dos, from any page with ⋯ →
@@ -521,22 +533,33 @@ database has a name of its own (one another database has is refused), so
     line with the page now, and any version can be restored.
   - **Tags and search** across every page you own or that is shared with
     you, by words, kind, status, tag and date.
-- **Utilities** — 41 bench calculators, answering as you type:
-  solutions and buffers (molarity, dilutions, serial dilutions, percent and
-  ×-fold stocks, buffer pH, osmolarity, another salt or hydrate), DNA and
-  RNA (A₂₆₀, moles and copies, oligo Tm, ligation, HiFi/Gibson assembly,
-  master mixes, qPCR efficiency, ΔΔCt, transformation efficiency), protein
-  (A₂₈₀, MW/ε/pI from the sequence, BCA or Bradford standard curves,
-  SDS-PAGE recipes, µg per lane), cells (counts, seeding, doubling time,
-  transfection, MOI, lentivirus titer, freezing down, drug and vehicle),
-  bacteria (OD₆₀₀, time to an OD, antibiotics), rpm ↔ × g, doses by body
-  weight, agarose gels, radioactive decay, statistics, group sizes and a
-  unit converter. Reference tables for culture vessels, buffers,
-  antibiotics, gels, isotopes and molecular weights (the lab's own first,
-  from its Chemicals database by name or abbreviation).
+- **Utilities** — bench calculators and reference tables, found by a
+  search that knows the bench's words (c1v1, nanodrop, × g, 稀释, a
+  chemical's name), with the tools you pin and opened last on top and the
+  rest in seven groups. Each opens on a worked example and answers as you
+  type: solutions (make a solution by molarity, percent, from a
+  concentrate such as 37 % HCl or in another hydrate; C₁V₁ dilutions, also
+  between mg/mL and µM; serial dilutions; buffers at a pH, with what to
+  weigh and the acid or base to titrate with), DNA and cloning (A₂₆₀,
+  ng ↔ pmol ↔ copies, primer Tm with annealing and extension, restriction
+  digests, ligation, HiFi/Gibson, agarose gels), PCR and qPCR (master mixes,
+  ΔΔCt from a pasted table of Cts, efficiency, equal RNA input), protein
+  (A₂₈₀ with ε from the sequence, BCA/Bradford curves with replicates,
+  equal loading, SDS-PAGE, concentrating and dialysis), cell culture
+  (counts, seeding, splitting for a day, drug and vehicle including a
+  constant-DMSO dose series, transfection and lentivirus packaging, MOI
+  and titer, freezing), bacteria (OD₆₀₀, antibiotics, pouring plates), and
+  rpm ↔ × g from the lab's saved rotors, a dosing sheet for a list of
+  animals and group sizes. Reference tables for plates and flasks, buffer
+  pKa, stocks and how they keep, agarose %, DNA ladders, concentrated
+  reagents and molecular weights (the lab's own first, from its Chemicals
+  database by name or abbreviation).
+  A lab can add its own tools too: inputs and answers worked out by
+  formulas (`culture * want / (stock - want)`), made on the page and
+  shared with everyone; the maker or an admin changes them.
 
 <p align="center">
-  <img src="docs/screenshots/utilities.webp" alt="Utilities: the list of calculators and a PCR master mix worked out for 12 reactions" width="100%">
+  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" width="100%">
 </p>
 
 <p align="center">

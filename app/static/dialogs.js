@@ -4,6 +4,9 @@
  *   BioDialog.prompt('Name this version:', '').then((text) => …)   // null when cancelled
  *   BioDialog.prompt('Name', '', { checks: [{ name: 'lab', label: 'Share' }] })
  *     .then((answer) => …)   // { value, checks: { lab: true } }, or null
+ *   BioDialog.prompt('Name', '', { icons: { choices: ['folder', 'dna'], value: 'dna' } })
+ *     .then((answer) => …)   // { value, checks: {}, icon: 'dna' }, or null
+ *     (the page loads static/icon-picker.css for the grid)
  *   BioDialog.alert('The picture could not be uploaded.')
  *
  * The browser's own dialogs look like the browser, not the app; they can't
@@ -73,6 +76,30 @@
         if (c.hint) row.appendChild(el("small", "bio-dialog-hint", c.hint));
         body.appendChild(row);
       });
+      // An icon to pick under a prompt ({ icons: { choices, value, label } }),
+      // drawn as templates/_icon_picker.html draws one: the answer then
+      // carries `icon`.
+      var icons = o.kind === "prompt" && o.icons && o.icons.choices && o.icons.choices.length ? o.icons : null;
+      if (icons) {
+        var set = el("fieldset", "icon-picker record-wide");
+        set.appendChild(el("legend", null, icons.label || t("Icon")));
+        var grid = el("div", "icon-picker-grid");
+        icons.choices.forEach(function (name, i) {
+          var choice = el("label", "icon-picker-choice");
+          choice.title = name;
+          var radio = el("input");
+          radio.type = "radio";
+          radio.name = "bio-dialog-icon";
+          radio.value = name;
+          radio.setAttribute("aria-label", name);
+          radio.checked = icons.value ? name === icons.value : i === 0;
+          choice.appendChild(radio);
+          choice.insertAdjacentHTML("beforeend", '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name.replace(/[^a-z0-9-]/g, "") + '"></use></svg>');
+          grid.appendChild(choice);
+        });
+        set.appendChild(grid);
+        body.appendChild(set);
+      }
       var foot = el("footer", "record-dialog-foot");
       var cancel = null;
       if (o.kind !== "alert") {
@@ -103,10 +130,13 @@
       }
       form.addEventListener("submit", function (event) {
         event.preventDefault();
-        if (o.kind === "prompt" && boxes.length) {
+        if (o.kind === "prompt" && (boxes.length || icons)) {
           var checks = {};
           boxes.forEach(function (c) { checks[c.name] = form.elements[c.name].checked; });
-          finish({ value: input.value, checks: checks });
+          var picked = form.querySelector('input[name="bio-dialog-icon"]:checked');
+          var answer = { value: input.value, checks: checks };
+          if (icons) answer.icon = picked ? picked.value : null;
+          finish(answer);
         } else finish(o.kind === "prompt" ? input.value : true);
       });
       if (cancel) cancel.addEventListener("click", function () { finish(o.kind === "prompt" ? null : false); });

@@ -48,7 +48,7 @@ Three sources, all permissively licensed:
 | --- | --- | --- |
 | [Font Awesome Free 6](https://fontawesome.com) | Icons CC BY 4.0 | the UI, plus `worm`, `mosquito`, `fish`, `frog`, `dna`, `vial`, `microscope`, `bacterium`, `virus`, `syringe` |
 | [game-icons.net](https://game-icons.net) by Delapouite | CC BY 3.0 | `mouse` (their *rat*) and `fly`, vendored in `scripts/icon-sources/` |
-| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial` |
+| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood`, `kidney`, `liver`, `stomach`, `intestine`, `gel`, `centrifuge` |
 
 Font Awesome has no laboratory mouse and no plasmid. The plasmid and the
 labware are drawn here; the mouse and the housefly are not, because both
@@ -58,7 +58,12 @@ compound eyes and wings — are all resolved, which is more drawing than a
 away.
 
 Add an icon by adding a name to `FROM_FONTAWESOME`, `FROM_SOURCES` or
-`CUSTOM` in the build script and rebuilding. **Check any new icon at 15px**,
+`CUSTOM` in the build script and rebuilding (`npm pack
+@fortawesome/fontawesome-free@6.7.2` and unpack it for the path). A Font
+Awesome icon keeps its own viewBox (they are 320 to 640 wide), so each is
+centred in its square and none is cut off. Organs, procedures and more
+organisms came in for the notebook's library folders, which offer the
+biology ones (`FOLDER_ICONS` in `app/lab_notebook.py`). **Check any new icon at 15px**,
 not just large — that is where they fail.
 
 ### App icon
@@ -158,17 +163,38 @@ last first (`biomanager:util:recent` in `localStorage`, up to eight).
 ### Utilities
 
 `static/bench-calcs.js` is the arithmetic and its data (molecular weights,
-buffer pKa, vessels, antibiotics, isotopes): each calculator in `CALCS` is
-a description (`id`, `group`, `title`, `inputs` with units) and a
-`compute(v)` that returns `{lines, table, warnings, notes, solved}`;
-`run(id, raw)` reads the typed numbers (decimal commas too) and converts
-each to its base unit first. It loads in Node too, and
-`tests/js/bench-calcs.check.mjs` checks known answers.
-`static/utilities-page.js` draws the list, the open calculator (from the
-address hash) and the reference tables; the lab's chemicals come from the
-page (`/utilities` passes them: its Chemicals databases through
-`lab_notebook.chemicals_search`, each by name and abbreviation, then
-`chemical_references`) ahead of the built-in list.
+buffer pKa and how each is made, vessels, antibiotics and stocks,
+concentrated reagents, ladders): each calculator in `CALCS` is an `id`,
+`inputs` with units and a `compute(v)` that returns `{lines, table,
+warnings, notes, solved}`; `run(id, raw)` reads the typed numbers (decimal
+commas too) and converts each to its base unit first. What the page lists
+is `TOOLS`, in `GROUPS`: a tool has a name, a line on what it gives, the
+words people search for (English and Chinese) and one or more `modes`,
+each running one calculator, with the `example` it opens on and the values
+it can `solve` for. `search(q)` ranks tools by those words (whole word,
+then start of word, then inside a word or one typo), and `locate(id)` turns
+an address into a tool and mode, so an old calculator's `#dilution` still
+opens Dilute. It loads in Node too, and `tests/js/bench-calcs.check.mjs`
+checks known answers and the searches testers typed.
+`static/utilities-page.js` draws the search, Pinned and Recent (kept in
+this browser under `biomanager:util:`; Home's Calculators card reads
+`recent`), the group cards, the open tool (from the address hash) and the
+reference tables. The lab's chemicals come from the page (`/utilities`
+passes them: its Chemicals databases through `lab_notebook.chemicals_search`,
+each by name and abbreviation, then `chemical_references`) ahead of the
+built-in list. The lab's centrifuge rotors (name, radius, top speed) are
+one `app_settings` row, `utilities_rotors`, saved by `POST
+/utilities/rotors` by anyone but a guest.
+
+The lab's own tools are another row, `utilities_lab_tools`: each a name,
+inputs (a formula name, label, unit, example) and answers (label, formula,
+unit, an optional name later answers may use), with its `author`. `POST
+/utilities/lab-tools` makes or changes one (its author or an admin; never
+a guest) and `…/<id>/delete` removes it; the server keeps names and
+formulas to a plain character set. On the page `useLabTools` turns each
+into a calculator and a tool in the group `lab`, and `parseFormula` reads
+a formula by hand (numbers, the tool's names, + − * / ^, brackets and a
+fixed list of functions): nothing a lab types is ever run as code.
 
 ### Database addresses
 
@@ -933,9 +959,27 @@ the rules; the editor is `frontend/src/` and the page around it is
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
 | `notebook_comments` | comments on a page or a quoted passage, and replies |
-| `notebook_recipes` | the lab's buffer library (the built-in ones are `PRESET_RECIPES`) |
+| `notebook_recipes` | the lab's buffer library (the built-in ones are `PRESET_RECIPES`), and the folder each is in |
+| `notebook_folders` | the lab's folders in the protocol and recipe libraries (`kind`, name, icon); a protocol's folder is `notebook_page_info.folder_id` (revision 0027) |
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
+
+**Libraries.** Protocols, Recipes and Meetings in the notebook's sidebar
+are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`,
+`NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
+and `static/notebook-library.js` in the main column. It reads the same
+`/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
+recipe block do, and draws Meetings with notebook-page.js's panel
+(`window.NotebookPage`). A recipe opens in the recipe block's editor
+(`BiomanagerNotebook.recipe`, with `library: true`: no ticks, no Save to /
+Load from library), which saves as it changes. `?folder=`, `?recipe=` and
+`?preset=` say where in a library you are. A folder's icon is one of
+`FOLDER_ICONS` (empty stored for the plain folder), picked in
+`BioDialog.prompt`'s `icons` option. Folders are the lab's: anyone
+but a guest makes one; their maker or an admin renames or deletes one
+(what was in it stays, in none); `/api/folders/file` files a protocol for
+whoever may edit its page, a recipe for its owner or an admin. The
+`/protocol` drawer and Load from library list by folder.
 
 **Durations and clocks.** `frontend/src/durations.js` finds what gets a
 step timer and leaves time points out (a list of times, "at 24 h", "48 h
@@ -1868,6 +1912,12 @@ from master:
 - **gaspolymerase.github.io/biomanager**: GitHub Pages, by
   `.github/workflows/pages.yml`. Every page's canonical address names
   biomanager.org, so search engines count the two as one site.
+
+**The Gitee copy.** `.github/workflows/gitee.yml` pushes master and the
+version tags to gitee.com under the same owner and name on every push, for
+people in China, where GitHub can be slow (the 知乎 and CSDN articles link
+it). It needs the `GITEE_TOKEN` secret, a Gitee personal access token with
+"projects"; without it the job does nothing. Release files stay on GitHub.
 
 **Pages.** The front page (`index.html`: the opening, the feature stage, the
 promises and where to go next), Features (`features.html`: each database,

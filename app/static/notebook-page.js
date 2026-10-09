@@ -1,6 +1,6 @@
 /* The notebook page around the editor: saving, the page's kind, status and
  * tags, and the side panels — sharing, comments, version history, search,
- * meetings, recipes, protocols. The editor itself is the bundle in notebook-build/
+ * meetings, protocols. The editor itself is the bundle in notebook-build/
  * (frontend/src/main.js); without it the page falls back to a plain
  * Markdown textarea so nothing is ever locked away.
  */
@@ -774,39 +774,19 @@
     draw();
   }
 
-  // ---- recipes
-  PANELS.recipes = {
-    title: 'Recipe library',
-    render: function (box) {
-      api('/notebook/api/recipes').then(function (d) {
-        var insertable = !!(nb && canEdit);
-        var row = function (r, mine) {
-          var comps = (r.data.components || []).map(function (c) { return esc(c.name); }).join(', ');
-          return '<li class="nb-list-row nb-recipe-row"><span class="nb-grow"><b>' + esc(r.name) + '</b><small>' + esc(r.data.volume || '') + ' ' + esc(r.data.volumeUnit || '') + ' · ' + comps + '</small></span>' +
-            (insertable ? '<button type="button" class="btn" data-insert="' + esc(r.id) + '">' + tc('notebook', 'Insert') + '</button>' : '') +
-            (mine && r.can_edit ? '<button type="button" class="nb-icon-btn" data-del-recipe="' + r.id + '" aria-label="' + t('Delete') + '">' + icon('trash') + '</button>' : '') + '</li>';
-        };
-        box.innerHTML = '<p class="nb-muted">' + (insertable ? t('Insert one into this page, then change the volume and every amount follows.') : t('Open a page you can edit to insert a recipe.')) + ' ' + t('Save your own from any recipe block.') + '</p>' +
-          (d.recipes.length ? '<div class="notebook-section-label">' + t('Saved by the lab') + '</div><ul class="nb-list">' + d.recipes.map(function (r) { return row(r, true); }).join('') + '</ul>' : '') +
-          '<div class="notebook-section-label">' + t('Common recipes') + '</div><ul class="nb-list">' + d.presets.map(function (r) { return row(r, false); }).join('') + '</ul>';
-        var all = d.recipes.concat(d.presets);
-        box.onclick = function (e) {
-          var ins = e.target.closest('[data-insert]');
-          var del = e.target.closest('[data-del-recipe]');
-          if (ins && nb) {
-            var r = all.filter(function (x) { return String(x.id) === ins.dataset.insert; })[0];
-            var value = JSON.parse(JSON.stringify(r.data));
-            value.name = value.name || r.name;
-            nb.editor.chain().focus().insertLabBlock('recipe', value).run();
-            toast(t('Inserted %(name)s.', { name: esc(r.name) }));
-          }
-          if (del) BioDialog.confirm(t('Delete this recipe from the library?'), { danger: true }).then(function (ok) {
-            if (ok) api('/notebook/api/recipes/' + del.dataset.delRecipe + '/delete', { body: {} }).then(function () { PANELS.recipes.render(box); });
-          });
-        };
-      }).catch(function (e) { box.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
-    },
-  };
+  // The lab's protocols or recipes as the library files them: a part for
+  // each folder with something in it, by name, then what is in none (under
+  // `rest`, or "Not in a folder" when there are folders).
+  function byFolder(items, folders, rest) {
+    var parts = (folders || []).map(function (f) {
+      return { folder: f, label: f.name, items: items.filter(function (x) { return x.folder_id === f.id; }) };
+    }).filter(function (part) { return part.items.length; });
+    var known = {};
+    (folders || []).forEach(function (f) { known[f.id] = true; });
+    var loose = items.filter(function (x) { return !known[x.folder_id]; });
+    if (loose.length) parts.push({ folder: null, label: parts.length ? t('Not in a folder') : rest, items: loose });
+    return parts;
+  }
 
   // ---- protocols: the lab's protocol pages and the common ones built in
   PANELS.protocols = {
@@ -835,9 +815,11 @@
             : t('Open a page you can edit to insert a protocol into it.')) + '</p>' +
           '<div class="nb-panel-actions"><input type="search" class="nb-panel-search" placeholder="' + t('Find a protocol…') + '" aria-label="' + t('Find a protocol') + '">' +
           '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button></div>' +
-          '<div class="notebook-section-label">' + t('Lab protocols') + '</div>' +
-          (d.protocols.length ? '<ul class="nb-list">' + d.protocols.map(labRow).join('') + '</ul>'
-            : '<p class="nb-muted">' + t('None yet. Write one with New protocol, or copy a common one below and make it yours.') + '</p>') +
+          (d.protocols.length ? byFolder(d.protocols, d.folders, t('Lab protocols')).map(function (part) {
+            return '<div class="notebook-section-label">' + (part.folder ? icon(part.folder.icon || 'folder') + ' ' : '') + esc(part.label) + '</div>' +
+              '<ul class="nb-list">' + part.items.map(labRow).join('') + '</ul>';
+          }).join('')
+            : '<div class="notebook-section-label">' + t('Lab protocols') + '</div><p class="nb-muted">' + t('None yet. Write one with New protocol, or copy a common one below and make it yours.') + '</p>') +
           Object.keys(groups).map(function (cat) {
             return '<div class="notebook-section-label">' + esc(t(cat)) + '</div><ul class="nb-list">' + groups[cat].map(presetRow).join('') + '</ul>';
           }).join('');
@@ -879,6 +861,13 @@
         }).join('') + '</ul>' : '<p class="nb-muted">' + t('None yet. “Start an experiment from it” makes one with these steps as a checklist.') + '</p>';
       });
     },
+  };
+
+  // For the protocol, recipe and meeting libraries (static/notebook-library.js).
+  window.NotebookPage = {
+    api: api, esc: esc, icon: icon, toast: toast, tc: tc, timeText: timeText, debounce: debounce,
+    byFolder: byFolder,
+    renderPanel: function (name, box) { PANELS[name].render(box, {}); },
   };
 
   if (!page) return;
@@ -990,6 +979,12 @@
       return d;
     });
   }
+  var folderSel = $('#nb-protocol-folder');
+  if (folderSel) folderSel.addEventListener('change', function () {
+    api('/notebook/api/folders/file', { body: { kind: 'protocol', item_id: page.id, folder_id: folderSel.value || null } })
+      .then(function () { toast(folderSel.value ? t('Filed in %(folder)s.', { folder: esc(folderSel.selectedOptions[0].textContent) }) : t('Taken out of its folder.')); })
+      .catch(function (err) { toast(esc(err.message), true); });
+  });
   var kindSel = $('#nb-kind');
   if (kindSel) kindSel.addEventListener('change', function () { meta({ kind: kindSel.value }).then(function () { window.location.reload(); }); });
   var statusSel = $('#nb-status');

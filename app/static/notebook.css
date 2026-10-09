@@ -21,6 +21,8 @@
 }
 .nb-side-links a:hover, .nb-side-links button:hover { background: color-mix(in srgb, var(--color-sand-200) 60%, transparent); color: var(--color-ink); }
 .nb-side-links .icon { width: 13px; height: 13px; color: var(--color-sand-400); }
+.nb-side-links a.is-active { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); color: var(--color-ink); font-weight: 600; }
+.nb-side-links a.is-active .icon { color: var(--color-brand-600); }
 .nb-side-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
 .nb-side-group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
 .nb-side-group > summary::-webkit-details-marker { display: none; }
@@ -129,7 +131,8 @@
 .nb-drawer-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
 .nb-drawer-body { flex: 1; overflow-y: auto; padding: 12px 16px 80px; font-size: 13px; }
 .nb-drawer-body > * + *, .nb-panel > * + * { margin-top: 10px; }
-.nb-drawer-body select, .nb-drawer-body input:not([type="checkbox"]), .nb-drawer-body textarea {
+.nb-drawer-body select, .nb-drawer-body input:not([type="checkbox"]), .nb-drawer-body textarea,
+.nb-lib-meetings select, .nb-lib-meetings input:not([type="checkbox"]) {
   font: inherit; font-size: 12.5px; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: 6px; padding: 4px 7px; min-width: 0;
 }
 .nb-drawer-body textarea { width: 100%; resize: vertical; }
@@ -267,3 +270,95 @@
 }
 .nb-sig-form .btn { align-self: flex-start; }
 .nb-error { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--color-danger-50); font-size: 12.5px; color: var(--color-danger-700); }
+
+/* ---------------------------------------------------------------- libraries
+   Protocols, Recipes and Meetings, each a page beside the sidebar
+   (static/notebook-library.js). */
+
+.nb-library { max-width: 1120px; margin: 0 auto; padding: 22px 28px 120px; font-size: 13px; }
+@media (max-width: 640px) { .nb-library { padding: 14px 16px 100px; } }
+.nb-lib-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 6px; }
+.nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.nb-lib-crumbs a { display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px; margin: -2px -6px; border-radius: 8px; color: var(--color-ink); text-decoration: none; }
+.nb-lib-crumbs a:hover { background: var(--color-recess); }
+.nb-lib-crumbs a .icon, .nb-lib-crumbs > span > .icon { width: 18px; height: 18px; color: var(--color-brand-600); }
+.nb-lib-crumbs > span:last-child { display: inline-flex; align-items: center; gap: 8px; }
+.nb-lib-crumbs > span:last-child { overflow-wrap: anywhere; min-width: 0; }
+.nb-lib-crumbs:has(> span:last-child) > a:first-child { color: var(--color-muted); }
+.nb-lib-sep { color: var(--color-sand-400); font-weight: 400; }
+.nb-lib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nb-lib-tools .btn .icon { width: 13px; height: 13px; }
+.nb-lib-saved { color: var(--color-muted); font-size: 12px; }
+.nb-lib-search {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; width: 230px; max-width: 100%; padding: 0 9px; border-radius: 7px;
+  border: 1px solid var(--color-hairline); background: var(--color-surface);
+}
+.nb-lib-search:focus-within { outline: 2px solid var(--color-brand-600); outline-offset: -1px; }
+.nb-lib-search .icon { flex: none; width: 13px; height: 13px; color: var(--color-muted); }
+.nb-lib-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: 13px; }
+.nb-lib-search input:focus { outline: none; }
+@media (max-width: 640px) { .nb-lib-search { flex: 1 1 100%; width: auto; } }
+.nb-lib-blurb { max-width: 70ch; margin: 0 0 14px; color: var(--color-muted); font-size: 12.5px; line-height: 1.45; }
+.nb-lib-label { margin: 18px 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-sand-400); }
+.nb-lib-label.is-section { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--color-hairline); }
+.nb-lib-label.is-section + .nb-lib-blurb { margin-top: -2px; }
+.nb-lib-sublabel { margin: 14px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--color-ink-soft); }
+.nb-lib-empty { margin: 4px 0 8px; color: var(--color-muted); font-size: 12.5px; }
+
+.nb-lib-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.nb-lib-folder {
+  display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 10px;
+  background: var(--color-surface); color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-xs);
+}
+.nb-lib-folder:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); }
+.nb-lib-folder > .icon { flex: none; width: 26px; height: 26px; color: var(--color-brand-600); }
+.nb-lib-folder span { min-width: 0; }
+.nb-lib-folder b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-lib-folder small { color: var(--color-muted); font-size: 11.5px; }
+.nb-lib-folder.is-drop, .nb-lib-crumbs a.is-drop { outline: 2px dashed var(--color-brand-600); outline-offset: 2px; background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); }
+
+.nb-lib-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.nb-lib-card {
+  position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 10px; border: 1px solid var(--color-hairline);
+  border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-xs);
+}
+.nb-lib-card:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); }
+.nb-lib-card.is-builtin { background: var(--color-recess); box-shadow: none; }
+.nb-lib-card.is-dragging { opacity: 0.5; }
+.nb-lib-card[draggable="true"] { cursor: grab; }
+.nb-lib-card-link { display: flex; align-items: flex-start; gap: 8px; color: var(--color-ink); text-decoration: none; }
+/* The whole card opens it; its folder menu and buttons sit above. */
+.nb-lib-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.nb-lib-card-link .icon { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--color-brand-600); }
+.nb-lib-card-link b { font-size: 13.5px; line-height: 1.3; overflow-wrap: anywhere; }
+.nb-lib-card p { margin: 0; color: var(--color-ink-soft); font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nb-lib-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
+.nb-lib-card footer small { min-width: 0; color: var(--color-muted); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-lib-card footer .btn { position: relative; z-index: 1; height: 24px; padding: 0 8px; font-size: 12px; }
+.nb-lib-tags { color: var(--color-brand-600); }
+.nb-lib-file {
+  position: relative; z-index: 1; flex: none; display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; color: var(--color-muted); cursor: pointer;
+}
+.nb-lib-file:hover, .nb-lib-file:focus-within { background: var(--color-recess); color: var(--color-ink); }
+.nb-lib-file .icon { width: 14px; height: 14px; }
+.nb-lib-file select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+.nb-lib-read { max-width: 72ch; padding: 4px 0; font-size: 14px; line-height: 1.55; color: var(--color-ink); }
+.nb-lib-read h2, .nb-lib-read h3 { margin: 18px 0 6px; font-size: 15px; }
+.nb-lib-read ol, .nb-lib-read ul { margin: 0 0 8px; padding-left: 22px; }
+.nb-lib-read li + li { margin-top: 3px; }
+.nb-lib-read p { margin: 0 0 8px; }
+.nb-lib-recipe { max-width: 900px; }
+
+.nb-lib-meetings { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+.nb-lib-meetings > p, .nb-lib-meetings > #nb-series-new, .nb-lib-meetings > #nb-series-form { grid-column: 1 / -1; }
+.nb-lib-meetings > #nb-series-new { justify-self: start; }
+.nb-lib-meetings > #nb-series-form:empty { display: none; }
+.nb-lib-meetings .nb-series-form { max-width: 520px; }
+
+/* A protocol page's folder, in its bar; a recipe's, on the Recipes page. */
+.nb-folder-select { display: inline-flex; align-items: center; gap: 5px; color: var(--color-muted); font-size: 12px; }
+.nb-folder-select .icon { width: 13px; height: 13px; }
+.nb-folder-select select { max-width: 180px; padding: 2px 6px; border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 12px; }
+/* New folder / Edit folder: the icon grid inside the name dialog. */
+.bio-dialog .icon-picker { margin-top: 12px; }
