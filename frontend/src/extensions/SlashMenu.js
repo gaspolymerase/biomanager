@@ -7,9 +7,9 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { filterItems } from '../commands.js';
 import { renderMenuItems } from '../toolbar.js';
 
-// One or more words after the slash ("/mind map"); a query with a space
+// One or more words after the slash ("/mind map", "/分栏"); a query with a space
 // that matches nothing closes the menu, so ordinary text is left alone.
-const TRIGGER = /(?:^|\s)\/((?:[\w-]+(?: [\w-]+)*)?)$/;
+const TRIGGER = /(?:^|\s)\/((?:[\p{L}\p{N}_-]+(?: [\p{L}\p{N}_-]+)*)?)$/u;
 
 export const SlashMenu = Extension.create({
   name: 'slashMenu',
@@ -38,7 +38,7 @@ export const SlashMenu = Extension.create({
 
     const paint = () => {
       if (!menu) return;
-      menu.innerHTML = items.length ? renderMenuItems(items.slice(0, 40)) : '<div class="insert-empty">Nothing matches</div>';
+      menu.innerHTML = items.length ? renderMenuItems(items.slice(0, 120)) : '<div class="insert-empty">Nothing matches</div>';
       menu.querySelectorAll('.insert-menu-item').forEach((b, i) => b.classList.toggle('is-active', i === active));
       menu.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
     };

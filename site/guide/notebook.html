@@ -144,10 +144,39 @@
           steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results,
           Observations or Conclusion; <b>Share it with the lab</b> offers it to
           everyone.</li>
+        <li>Write as in Notion: type <b>/</b> and a few letters of what you want (<code>/h2</code>, <code>/toggle</code>; Chinese words
+          work too, <code>/分栏</code>).
+          <ul>
+            <li><b>Heading 1–3</b>, <b>Bulleted list</b>, <b>Numbered list</b>, <b>Checklist</b>, <b>Quote</b> and <b>Divider</b>.</li>
+            <li><b>Callout</b>: a coloured box for what nobody should miss. Its icon picks the kind: note, tip, important, warning or
+              caution. <b>Warning</b> starts as one.</li>
+            <li><b>Toggle</b>: a line that opens to show what it hides, such as raw counts or the long version of a method. Click the
+              arrow to open or close it. That choice is yours alone and doesn't open it for anyone else.</li>
+            <li><b>2 columns</b> or <b>3 columns</b>: a gel picture beside its notes. Inside them, the bar above the toolbar adds a
+              column, removes one, or puts them back one under the other. On a phone they stack.</li>
+            <li><b>Colour and highlight</b> (also the <b>A</b> on the toolbar): colours the selected text, or the whole line when
+              nothing is selected. Typing <code>==text==</code> highlights it in yellow.</li>
+            <li><b>Link to a page</b>: pick another notebook page; the link shows a page icon. <b>Table of contents</b>: the page's
+              headings, kept up to date, each one a link.</li>
+            <li><b>Date…</b> inserts a day you pick. <b>Reminder</b> adds a to-do to your calendar on the day and time you choose,
+              and writes a link to it in the page (⏰ and the date).</li>
+          </ul>
+          The bar at the bottom of the page is one row:
+          <ul>
+            <li>the text's style (text, headings, quote, code block) and lists;</li>
+            <li>bold, italic, strikethrough, colour and link;</li>
+            <li><b>Picture or file</b>, the timer, <b>Insert</b>, undo, redo and <b>Run</b>.</li>
+          </ul>
+          On a narrow screen it scrolls sideways.
+          All of it stays readable Markdown: a callout is GitHub's <code>&gt; [!WARNING]</code>, a toggle is
+          <code>&lt;details&gt;</code>, and columns are Pandoc's <code>::: column</code>, so an exported page reads anywhere.</li>
         <li>Type <code>@</code> to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer
           (<code>@antibodies 5</code>), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like
           <code>@0012</code>, comes first; names such as <i>anti-β-actin</i> or <i>Waf1/Cip1</i> are found as written), a database by its
-          name (<code>@antib</code> offers <i>Antibodies</i>, and picking it lists its records), or a colleague (<code>@jordan</code>, for action items); the page and the record then point at each other,
+          name (<code>@antib</code> offers <i>Antibodies</i>, and picking it lists its records), or a colleague (<code>@jordan</code>). A
+          colleague is shown in their colour, and hovering the name shows who they are: name, what they do, admin, member or guest,
+          email, project groups, and how long they've been in the lab. They're told they were mentioned, and an action item names
+          them. The page and a record then point at each other,
           and the record lists the page under <b>Used in notebook pages</b>. The chip shows the record's name after its number
           (<i>@antibodies 5 · anti-p53</i>). Hover over one for
           its details; clicking it opens the record, and <b>↗</b> (or <kbd>⌘</kbd>/<kbd>Ctrl</kbd>-click) opens it in a new BioManager tab.</li>
@@ -260,7 +289,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 10 min read</p>
+      <p>On this page · 12 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">Experiments and protocols</a></li>

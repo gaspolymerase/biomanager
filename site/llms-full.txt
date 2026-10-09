@@ -930,7 +930,33 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - Pages in **Topics**, written like a document and kept as Markdown. A new page goes in the topic you have open, or in *Inbox* when none is (experiments and meetings go to their own topics). Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
 
-- Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`, for action items); the page and the record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
+- Write as in Notion: type **/** and a few letters of what you want (`/h2`, `/toggle`; Chinese words work too, `/分栏`).
+
+- **Heading 1–3**, **Bulleted list**, **Numbered list**, **Checklist**, **Quote** and **Divider**.
+
+- **Callout**: a coloured box for what nobody should miss. Its icon picks the kind: note, tip, important, warning or caution. **Warning** starts as one.
+
+- **Toggle**: a line that opens to show what it hides, such as raw counts or the long version of a method. Click the arrow to open or close it. That choice is yours alone and doesn't open it for anyone else.
+
+- **2 columns** or **3 columns**: a gel picture beside its notes. Inside them, the bar above the toolbar adds a column, removes one, or puts them back one under the other. On a phone they stack.
+
+- **Colour and highlight** (also the **A** on the toolbar): colours the selected text, or the whole line when nothing is selected. Typing `==text==` highlights it in yellow.
+
+- **Link to a page**: pick another notebook page; the link shows a page icon. **Table of contents**: the page's headings, kept up to date, each one a link.
+
+- **Date…** inserts a day you pick. **Reminder** adds a to-do to your calendar on the day and time you choose, and writes a link to it in the page (⏰ and the date).
+
+The bar at the bottom of the page is one row:
+
+- the text's style (text, headings, quote, code block) and lists;
+
+- bold, italic, strikethrough, colour and link;
+
+- **Picture or file**, the timer, **Insert**, undo, redo and **Run**.
+
+On a narrow screen it scrolls sideways. All of it stays readable Markdown: a callout is GitHub's `> [!WARNING]`, a toggle is `<details>`, and columns are Pandoc's `::: column`, so an exported page reads anywhere.
+
+- Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`). A colleague is shown in their colour, and hovering the name shows who they are: name, what they do, admin, member or guest, email, project groups, and how long they've been in the lab. They're told they were mentioned, and an action item names them. The page and a record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
 
 - **Daily log** (*Today*) and **Meetings**: **Meetings** in the sidebar lists each meeting series, where you edit its day, place and presenting order. A presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
 

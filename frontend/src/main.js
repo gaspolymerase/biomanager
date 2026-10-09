@@ -26,6 +26,8 @@ import { MentionSuggestion } from './extensions/MentionSuggestion.js';
 import { MathInline } from './extensions/MathInline.js';
 import { SlashMenu } from './extensions/SlashMenu.js';
 import { CommentHighlights } from './extensions/CommentHighlights.js';
+import { RichBlocks } from './extensions/RichBlocks.js';
+import { PeopleChips } from './extensions/PeopleChips.js';
 import { LabBlock } from './blocks/index.js';
 import { mountRecipe } from './blocks/recipe.js';
 import { StepTimers, timers } from './timers.js';
@@ -40,7 +42,7 @@ import { debounce, personColor } from './util.js';
 import './styles.css';
 import './blocks.css';
 
-const PLACEHOLDER = 'Write here… type / for sheets, recipes, calculators, diagrams and timers; @ and a name to link a record (a mouse, plasmid, antibody, sample…) or a person.';
+const PLACEHOLDER = 'Write here… type / for headings, callouts, toggles, columns, sheets, recipes, calculators and timers; @ and a name to link a record (a mouse, plasmid, antibody, sample…) or a person.';
 
 const Shortcuts = Extension.create({
   name: 'nbShortcuts',
@@ -73,6 +75,8 @@ function extensionsFor({ provider, user, onCommentOpen }) {
     TableCell,
     MentionDecoration,
     MentionSuggestion,
+    PeopleChips,
+    ...RichBlocks,
     LabBlock,
     MathInline,
     StepTimers,

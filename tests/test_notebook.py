@@ -850,3 +850,39 @@ Use fresh ECL.
         self.assertEqual(self.post_json(other, "/notebook/api/pages/new", {"template_id": private}).status_code, 404)
         self.assertEqual(other.post(f"/notebook/templates/{mine}/delete").status_code, 404)
         self.assertEqual(one("select count(*) from notebook_templates where id=?", mine), 1)
+
+
+class PersonCards(AppTestCase):
+    """@someone in a page shows who they are (/notebook/api/people/<name>)."""
+
+    def setUp(self):
+        super().setUp()
+        from tests.base import execute
+        self.who = make_user(uniq("pat"))
+        execute("update users set display_name=?, role_title=?, email=? where username=?",
+                "Pat Lee", "Postdoc", "pat@example.org", self.who)
+        from tests.test_groups import make_group
+        make_group(uniq("Imaging "), members=(self.who,), leads=(self.who,))
+
+    def test_a_member_sees_name_job_email_and_groups(self):
+        card = self.m.get(f"/notebook/api/people/{self.who}").get_json()["person"]
+        self.assertEqual((card["name"], card["title"], card["role"], card["email"]),
+                         ("Pat Lee", "Postdoc", "member", "pat@example.org"))
+        self.assertTrue(any(g["lead"] for g in card["groups"]))
+        self.assertTrue(card["since"])
+
+    def test_a_guest_sees_no_email_or_groups(self):
+        from tests.base import execute
+        guest = make_user(uniq("guest"))
+        execute("update users set expires_at=? where username=?", "2099-01-01 00:00:00", guest)
+        card = client_for(guest).get(f"/notebook/api/people/{self.who}").get_json()["person"]
+        self.assertNotIn("email", card)
+        self.assertNotIn("groups", card)
+        self.assertEqual(client_for(self.who).get(f"/notebook/api/people/{guest}").get_json()["person"]["role"], "guest")
+
+    def test_someone_not_in_the_lab_is_not_found(self):
+        from tests.base import execute
+        gone = make_user(uniq("gone"))
+        execute("update users set disabled=? where username=?", True, gone)
+        self.assertEqual(self.m.get(f"/notebook/api/people/{gone}").status_code, 404)
+        self.assertEqual(self.m.get("/notebook/api/people/nobody-at-all").status_code, 404)
