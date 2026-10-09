@@ -48,5 +48,10 @@
   "**Utilities** has a search that knows the bench's words, pinned tools, seven groups by task and new calculators; **Make a tool** adds the lab's own.": "**实用工具** 有了懂实验台用语的搜索、置顶工具、按任务分的七组和新的计算器；**新建工具** 可以添加实验室自己的工具。",
   "The notebook's toolbar fits in one row: **Style** and **Lists** each open a menu, and one button adds a picture or a file.": "实验记录本的工具栏只占一行：**样式** 和 **列表** 各自打开一个菜单，一个按钮就能添加图片或文件。",
   "A BCA standard curve averages replicate readings and flags ones more than 10 % apart.": "BCA 标准曲线会对重复读数取平均，并标出相差超过 10% 的读数。",
-  "**中文** works in the desktop app: the download was missing its Chinese, so every page stayed English whatever was chosen.": "桌面版终于能用 **中文** 了：之前下载的安装包里漏了中文翻译，无论怎么选，页面都只显示英文。"
+  "**中文** works in the desktop app: the download was missing its Chinese, so every page stayed English whatever was chosen.": "桌面版终于能用 **中文** 了：之前下载的安装包里漏了中文翻译，无论怎么选，页面都只显示英文。",
+  "**/page** in a notebook page makes a new page inside it; **Link to page** or typing **[[** links one that exists, and the sidebar nests them.": "在实验记录本页面里输入 **/page** 会在其中新建一个页面；**链接到页面** 或输入 **[[** 可以链接已有页面，侧边栏会把它们排在所属页面下面。",
+  "Under a page's title, **Linked from** lists the pages that link to it.": "页面标题下方的 **被 N 个页面链接** 会列出链接到它的页面。",
+  "Topics are folders: a new page goes in the topic it was made from or the one open, whatever its kind, and changing the kind never moves it.": "主题就是文件夹：新页面放进创建它的那个主题或当前打开的主题，不论是哪种页面；更改类型也不会移动页面。",
+  "The top of a page reads like a path: click its topic to move it. The icon beside the title is its kind; click it to change the kind.": "页面顶部像路径一样显示位置：点主题可以移动页面。标题旁的图标是页面类型，点它可以更改类型。",
+  "Links to the app's own pages open in a BioManager tab.": "指向本应用页面的链接会在 BioManager 标签页中打开。"
 }

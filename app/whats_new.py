@@ -30,6 +30,17 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.3.0": {
+        "new": [
+            "**/page** in a notebook page makes a new page inside it; **Link to page** or typing **[[** links one that exists, and the sidebar nests them.",
+            "Under a page's title, **Linked from** lists the pages that link to it.",
+        ],
+        "changed": [
+            "Topics are folders: a new page goes in the topic it was made from or the one open, whatever its kind, and changing the kind never moves it.",
+            "The top of a page reads like a path: click its topic to move it. The icon beside the title is its kind; click it to change the kind.",
+            "Links to the app's own pages open in a BioManager tab.",
+        ],
+    },
     "1.2.9": {
         "fixed": [
             "**中文** works in the desktop app: the download was missing its Chinese, so every page stayed English whatever was chosen.",
