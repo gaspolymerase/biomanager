@@ -521,5 +521,9 @@
   "Penicillin–streptomycin (1×, U/mL pen)": "青霉素–链霉素（1×，按青霉素 U/mL）",
   "Stock solution": "母液",
   "260/280 (optional)": "260/280（可选）",
-  "Not saved. Check the connection and try again.": "未保存。请检查网络连接后再试。"
+  "Not saved. Check the connection and try again.": "未保存。请检查网络连接后再试。",
+  "%(which)s: its readings differ by more than 10 %; check that well.": "%(which)s：重复读数相差超过 10 %，请检查那个孔。",
+  "Replicate readings are averaged.": "重复读数取平均值。",
+  "Worked out with the ε you typed (%(eps)s), not the sequence’s.": "按你输入的 ε（%(eps)s）计算，而不是序列算出的值。",
+  "Worked out with the MW you typed (%(mw)s g/mol), not the sequence’s.": "按你输入的分子量（%(mw)s g/mol）计算，而不是序列算出的值。"
 }

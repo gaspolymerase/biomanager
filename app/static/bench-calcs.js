@@ -153,6 +153,7 @@
     while (parts.length && ok(num(parts[parts.length - 1]))) nums.unshift(num(parts.pop()));
     return { name: parts.join(' '), nums };
   }
+  const mean = (xs) => xs.reduce((a, x) => a + x, 0) / xs.length;
   function numbers(text) {
     return String(text || '').split(/[\s,;\t\n]+/).map(num).filter(ok);
   }
@@ -677,8 +678,14 @@
         const eps = ok(n(v, 'eps')) ? n(v, 'eps') : p && p.epsilon;
         const mw = ok(n(v, 'mw')) ? n(v, 'mw') : p && p.mw;
         const out = { lines: [], notes: [], warnings: [] };
-        if (p) out.notes.push(t('From the sequence: %(length)s aa, %(kda)s kDa, ε₂₈₀ %(eps)s (%(reduced)s reduced).',
-          { length: p.length, kda: fmt(p.mw / 1000, 4), eps: fmt(p.epsilon), reduced: fmt(p.reduced) }));
+        if (p) {
+          out.notes.push(t('From the sequence: %(length)s aa, %(kda)s kDa, ε₂₈₀ %(eps)s (%(reduced)s reduced).',
+            { length: p.length, kda: fmt(p.mw / 1000, 4), eps: fmt(p.epsilon), reduced: fmt(p.reduced) }));
+          // A typed ε or MW wins over the sequence's: say so, not leave the
+          // sequence's figure looking like the one used.
+          if (ok(n(v, 'eps'))) out.notes.push(t('Worked out with the ε you typed (%(eps)s), not the sequence’s.', { eps: fmt(n(v, 'eps')) }));
+          if (ok(n(v, 'mw'))) out.notes.push(t('Worked out with the MW you typed (%(mw)s g/mol), not the sequence’s.', { mw: fmt(n(v, 'mw')) }));
+        }
         if (eps === 0) { out.error = t('No Trp or Tyr: A₂₈₀ can\'t measure this protein; use BCA or A₂₀₅.'); return out; }
         if (!ok(eps) || !ok(n(v, 'a280'))) { out.hint = t('The reading, and ε (or the sequence).'); return out; }
         const molar = n(v, 'a280') / (eps * (n(v, 'path') || 1)) * (n(v, 'dil') || 1);
@@ -711,7 +718,14 @@
         { key: 'dil', label: t('Unknowns diluted (×)'), value: '1' },
       ],
       compute(v) {
-        const std = lines(v.raw.std).map(row).filter((r) => r.nums.length >= 2).map((r) => r.nums.slice(-2));
+        // A standard is its concentration, then one reading or several
+        // (replicates, averaged): "125 0.21 0.22 0.21".
+        const reps = [];
+        const std = lines(v.raw.std).map(row).filter((r) => r.nums.length >= 2).map((r) => {
+          const readings = r.nums.slice(1);
+          if (readings.length > 1) reps.push({ conc: r.nums[0], readings });
+          return [r.nums[0], mean(readings)];
+        });
         if (std.length < 3) return { hint: t('Three or more standards.') };
         const xs = std.map((s) => s[0]); const ys = std.map((s) => s[1]);
         const quad = v.raw.fit !== 'lin' && std.length >= 4;
@@ -735,14 +749,31 @@
         const dil = n(v, 'dil') || 1;
         const top = Math.max(...ys); const bottom = Math.min(...ys);
         const warnings = [];
-        const rows = lines(v.raw.unk).map(row).filter((r) => r.nums.length).map((r) => {
-          const y = r.nums[r.nums.length - 1];
+        // An unknown is its name, then one reading or several (averaged). A
+        // whole number before the readings is part of the name ("Lysate 2
+        // 0.72 0.70"): readings carry a decimal point.
+        const rows = lines(v.raw.unk).map((line) => {
+          const parts = line.split(/[\t;]+|\s+/).filter(Boolean);
+          const readings = [];
+          while (parts.length && ok(num(parts[parts.length - 1])) && /[.,]/.test(parts[parts.length - 1])) readings.unshift(num(parts.pop()));
+          if (!readings.length && parts.length && ok(num(parts[parts.length - 1]))) readings.push(num(parts.pop()));
+          if (readings.length > 1) reps.push({ conc: null, name: parts.join(' '), readings });
+          return { name: parts.join(' '), readings };
+        }).filter((r) => r.readings.length).map((r) => {
+          const y = mean(r.readings);
           if (y > top || y < bottom) warnings.push(t('%(name)s is outside the standards: dilute it and read again.', { name: r.name || fmt(y) }));
           return [r.name || '—', fmt(y), fmt(inv(y)), fmt(inv(y) * dil)];
         });
         const term = (c, x) => (c === 0 || none(c, x === '' ? 0 : x === '·x' ? 1 : 2) ? '' : `${c < 0 ? ' − ' : ' + '}${fmt(Math.abs(c))}${x}`);
         const eq = quad ? `y = ${fmt(f.a)}${term(f.b, '·x')}${term(f.c, '·x²')}` : `y = ${fmt(f.slope)}·x${term(f.intercept, '')}`;
-        return { lines: [L(t('Fit'), eq), L('R²', fmt(f.r2, 4), true)], table: rows.length ? { head: [t('Sample'), t('Reading'), t('On the curve'), `× ${fmt(dil)}`], rows } : null, warnings };
+        reps.forEach((r) => {
+          const m = mean(r.readings);
+          if (m && (Math.max(...r.readings) - Math.min(...r.readings)) / Math.abs(m) > 0.1) {
+            warnings.push(t('%(which)s: its readings differ by more than 10 %; check that well.', { which: r.conc == null ? (r.name || fmt(m)) : fmt(r.conc) }));
+          }
+        });
+        const notes = reps.length ? [t('Replicate readings are averaged.')] : [];
+        return { lines: [L(t('Fit'), eq), L('R²', fmt(f.r2, 4), true)], table: rows.length ? { head: [t('Sample'), t('Reading'), t('On the curve'), `× ${fmt(dil)}`], rows } : null, warnings, notes };
       },
     },
     {
@@ -1006,11 +1037,12 @@
         if (!ok(add)) return { hint: t('The medium volume.') };
         const unit = d[0].startsWith('Penicillin') ? 'U/mL' : 'µg/mL';
         const mammalian = d[0].includes('mammalian');
+        const bacterial = d[0].includes('E. coli');
         return { lines: [L(t('Stock to add'), show(add, 'volume'), true), L(t('Working'), `${fmt(work)} ${unit}`),
           L(t('From a stock of'), `${fmt(stock)} ${unit === 'U/mL' ? 'kU/mL' : 'mg/mL'}${ok(n(v, 'stock')) ? '' : t(' (the usual)')}`),
           L(t('That is'), t('%(x)s× stock', { x: fmt(stock * 1000 / work, 3) }))],
-          notes: [mammalian ? t('For selection, find the lowest dose that kills untransduced cells with a kill curve first.')
-            : t('Add to agar once it has cooled to about 55 °C.')] };
+          notes: mammalian ? [t('For selection, find the lowest dose that kills untransduced cells with a kill curve first.')]
+            : bacterial ? [t('Add to agar once it has cooled to about 55 °C.')] : [] };
       },
     },
 

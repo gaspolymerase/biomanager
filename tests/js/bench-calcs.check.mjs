@@ -104,4 +104,29 @@ assert.equal(B.run('convert', { kind: 'massconc', value: '2', from: 'ug/ul' }).l
 }
 assert.match(B.run('dose', { weight: '25', weight_unit: 'g', dose: '75', conc: '20', animals: '1', extra: '0' }).lines.map((l) => l.label).join(' '), /1 animal /);
 
+// Replicate standards and unknowns are averaged, not read as a
+// concentration and a reading (an unknown near 700 came out as 0.71).
+{
+  const r = B.run('stdcurve', { std: '0 0.10 0.11\n125 0.21 0.22\n250 0.33 0.32\n500 0.55 0.56\n1000 0.95 0.97\n2000 1.62 1.60', unk: 'Lysate 2 0.72 0.70', fit: 'lin' });
+  const read = Number(r.table.rows[0][2].replace(/\s/g, ''));
+  assert.ok(read > 600 && read < 800, r.table.rows[0][2]);
+  assert.equal(r.table.rows[0][0], 'Lysate 2');
+  assert.ok(r.notes.length);
+  assert.ok(B.run('stdcurve', { std: '0 0.1\n125 0.21 0.30\n250 0.33\n500 0.55', unk: 'x 0.3' }).warnings.some((w) => /125/.test(w)));
+}
+// A280 with ε and MW typed over a sequence says it used the typed ones.
+{
+  const r = B.run('a280', { seq: ubq, eps: '2000', mw: '9000', a280: '1' });
+  assert.equal(main(r)[0], '500 µM');
+  assert.ok(r.notes.some((x) => /ε you typed/.test(x)) && r.notes.some((x) => /MW you typed/.test(x)), r.notes.join(' | '));
+  assert.ok(!B.run('a280', { seq: ubq, a280: '0.745' }).notes.some((x) => /you typed/.test(x)));
+}
+// Pen–strep is for culture medium: no "add to agar" note; ampicillin keeps it.
+{
+  const list = B.CALCS.find((c) => c.id === 'antibiotic').inputs[0].options;
+  const pick = (re) => String(list.findIndex(([, l]) => re.test(l)));
+  assert.ok(!B.run('antibiotic', { drug: pick(/Penicillin/) }).notes.some((x) => /agar/.test(x)));
+  assert.ok(B.run('antibiotic', { drug: pick(/Ampicillin/) }).notes.some((x) => /agar/.test(x)));
+}
+
 console.log('ok');
