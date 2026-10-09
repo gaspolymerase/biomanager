@@ -140,6 +140,11 @@ def main() -> int:
         confirm_close=False,
         js_api=desktop_menu.DesktopApi(),
     )
+    # On a Mac the window draws no title bar: the page runs to the top, with
+    # the traffic lights over its sidebar (desktop_mac.py).
+    if sys.platform == "darwin":
+        import desktop_mac
+        window.events.before_show += desktop_mac.prepare
     # gui=None lets pywebview pick the native backend (cocoa on macOS,
     # edgechromium on Windows, gtk/qt on Linux). On a Mac the full menu bar
     # replaces pywebview's once the window is up; elsewhere pywebview's own

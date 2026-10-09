@@ -16,18 +16,64 @@ lab server, see [`deploy/README.md`](../deploy/README.md) and the
 
 ## Interface design
 
-The interface follows Apple's macOS conventions: a translucent vibrant
-sidebar, a Finder-style tab strip, a unified toolbar whose separator only
-appears once content scrolls under it, 13px system type, AppKit control
-metrics (28px buttons, 6px radii) and Apple's system colour palette — with
-full dark mode.
+The interface follows Apple's Liquid Glass design, on the frosted side as
+macOS 27 is. Two layers:
 
-Two Apple things are deliberately **not** used, because their licences do
-not permit it outside Apple platforms:
+- **Content** (sheets, cards, forms, the notebook page, the calendar grid)
+  is opaque and calm.
+- **Glass** is only for what you steer with: the sidebar, the top row of
+  tabs, search and account, the page's buttons in its title row, menus,
+  toasts. `glass` is a utility (`@utility glass` in `frontend/src/tailwind.css`):
+  `--glass` over a backdrop blur, a bright rim and a soft shadow.
+  `--glass-strong` is the frostier tint for raised and large surfaces.
 
-- **SF Symbols** — licensed for Apple-platform apps only, not web.
-- **Shipping SF Pro** — but the system font stack (`-apple-system`)
-  resolves to SF on Apple devices, which is both correct and allowed.
+The page scrolls *beneath* the two rows at the top (`.topstrip`, then
+`.toolbar`), which float over it: `.shell-scroll` is padded at the top by
+`--tabbar-h + --toolbar-h`, so a `sticky top-0` header stops just under
+them. Once the page has scrolled, `.chrome-edge` brings up a frosted band
+behind both rows instead of a hairline.
+
+Corners are concentric (cards 12px, controls inside them 8px, menus 14px
+with 9px items), and anything floating in a bar is a capsule. Small controls
+in the page keep rounded-rectangle corners, as on a Mac.
+
+Reduce Transparency makes glass solid, and Increase Contrast makes it
+solid with a firmer outline (`prefers-reduced-transparency`,
+`prefers-contrast`). A window in the background shows its selection in
+grey (`html.window-inactive`, from `static/shell.js`).
+
+### Type
+
+Inter for the interface and JetBrains Mono for sequences and IDs, both
+bundled in `app/static/fonts` (copied from `@fontsource-variable` by `npm run
+build:fonts`, with their OFL licences), so the packaged app needs no
+network. There is a file per script (Latin, Greek, Cyrillic…), and the
+browser fetches only those a page uses. In cells, fields and IDs, Inter
+tells l from I from 1 (`cv05`, `cv08`).
+
+Chinese comes from each system's own font (`--font-cjk`: PingFang SC,
+Microsoft YaHei UI, Noto Sans CJK SC); a Chinese font is 8–15 MB a weight.
+When the page is in Chinese (`:lang(zh)`), the stack starts with "Inter
+Text CJK", the same Inter without the quotes, ellipsis, em dash and middle
+dot. Those then come from the Chinese font, full width. Chinese is set half
+a point larger with more line height.
+
+SF Symbols are not used: their licence covers Apple-platform apps only, not
+the web.
+
+### The Mac window
+
+On a Mac the desktop window draws no title bar (`desktop_mac.py`, run as
+pywebview's `before_show`). The page runs to the top edge, and the traffic
+lights sit at the top of the sidebar, centred on the top row
+(`ROW_CENTER`, which follows `--tabbar-h`). A script added before each
+page draws marks it `<html class="mac-window">` (plus `is-fullscreen` in
+full screen) so the page leaves room for the lights. The empty parts of the
+two rows stand in for the title bar: `static/shell.js` posts `drag` or
+`zoom` to the `bmWindow` message handler, and the window moves natively
+(`performWindowDragWithEvent:`), or zooms or minimises as the person's
+"Double-click a window's title bar" setting says. Windows and Linux keep
+their own frames.
 
 ### Icons
 

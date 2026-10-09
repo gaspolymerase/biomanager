@@ -140,20 +140,77 @@
 
         <div class="shell-main">
 
-          {# ---- Tab strip ---- #}
+          {# ---- Top row: tabs, search, notifications, account ---- #}
           {% set current_url = request.path + ('?' + request.query_string.decode('utf-8') if request.query_string else '') %}
-          <nav class="topstrip" aria-label="{{ _('Open tabs') }}">
+          <div class="topstrip">
             <div class="wtab-strip">
-              <nav class="wtabs" id="app-tabbar" data-user="{{ current_user.id }}"
+              <nav class="wtabs" id="app-tabbar" aria-label="{{ _('Open tabs') }}" data-user="{{ current_user.id }}"
                    data-current-url="{{ current_url }}"
                    data-current-title="{{ title_text }}"></nav>
               {# "/" sends each person to their own start page (Settings). #}
               <button type="button" class="wtab-add" data-new-tab="{{ url_for('index') }}"
                       aria-label="{{ _('New tab') }}" title="{{ _('New tab, on your start page') }}">{{ icon('plus') }}</button>
             </div>
-          </nav>
 
-          {# ---- Unified toolbar ---- #}
+            <div class="strip-actions">
+              <button type="button" class="omnibox" id="app-global-search"
+                      aria-label="{{ _('Search everything') }}">
+                {{ icon('search') }}
+                <span class="omnibox-label">{{ _('Search') }}</span>
+                <span class="kbd">⌘K</span>
+              </button>
+
+              <div class="strip-you">
+                {# Notifications (app/notify.py): the count is live, the list is fetched when opened. #}
+                <div class="bell" data-bell data-count-url="{{ url_for('lab.notification_count') }}"
+                     data-panel-url="{{ url_for('lab.notification_panel') }}">
+                  <button type="button" class="bell-btn" data-bell-toggle aria-haspopup="true" aria-expanded="false"
+                          aria-label="{% if notification_unread %}{{ _('Notifications: %(count)s unread', count=notification_unread) }}{% else %}{{ _('Notifications') }}{% endif %}">
+                    {{ icon('bell') }}
+                    <span class="bell-badge" data-bell-count {% if not notification_unread %}hidden{% endif %}>{{ notification_unread if notification_unread < 100 else '99+' }}</span>
+                  </button>
+                  <div class="menu notif-menu" data-bell-menu hidden>
+                    <div class="notif-loading">{{ _('Loading…') }}</div>
+                  </div>
+                </div>
+
+                <div class="account" data-account>
+                  <button type="button" class="account-btn" data-account-toggle
+                          aria-haspopup="menu" aria-expanded="false"
+                          aria-label="{{ _('Account menu for %(name)s', name=current_user.display_name or current_user.username) }}">
+                    {{ current_user.username | owner_badge }}
+                    {{ icon('chevron-down') }}
+                  </button>
+                  <div class="menu" data-account-menu hidden role="menu">
+                    <div class="menu-head">
+                      <span class="menu-head-name">{{ current_user.display_name or current_user.username }}</span>
+                      <span class="menu-head-meta">{{ current_user.role_title or current_user.role|tr }}</span>
+                    </div>
+                    <div class="menu-rule"></div>
+                    <a class="menu-item" href="{{ url_for('settings') }}" role="menuitem">
+                      {{ icon('user-gear') }} {{ _('Profile & settings') }}
+                    </a>
+                    <a class="menu-item" href="{{ url_for('lab.notifications') }}" role="menuitem">
+                      {{ icon('bell') }} {{ _('Notifications') }}
+                    </a>
+                    {% if proposals_pending is not none %}
+                      <a class="menu-item" href="{{ url_for('proposals.page') }}" role="menuitem">
+                        {{ icon('list-check') }} {{ _('Proposed changes') }}{% if proposals_pending %} <span class="badge">{{ proposals_pending }}</span>{% endif %}
+                      </a>
+                    {% endif %}
+                    <div class="menu-rule"></div>
+                    <form method="post" action="{{ url_for('logout') }}">
+                      <button type="submit" class="menu-item menu-item-danger" role="menuitem">
+                        {{ icon('sign-out') }} {{ _('Sign out') }}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# ---- The page's title and actions ---- #}
           <header class="toolbar" id="app-toolbar">
             <button type="button" class="strip-btn drawer-trigger" data-drawer-toggle
                     aria-label="{{ _('Show sidebar') }}">{{ icon('menu') }}</button>
@@ -168,64 +225,10 @@
             <div class="toolbar-spacer"></div>
 
             <div class="toolbar-actions">{% block page_actions %}{% endblock %}</div>
-
-            <div class="strip-actions">
-              <button type="button" class="omnibox" id="app-global-search"
-                      aria-label="{{ _('Search everything') }}">
-                {{ icon('search') }}
-                <span class="omnibox-label">{{ _('Search') }}</span>
-                <span class="kbd">⌘K</span>
-              </button>
-
-              {# Notifications (app/notify.py): the count is live, the list is fetched when opened. #}
-              <div class="bell" data-bell data-count-url="{{ url_for('lab.notification_count') }}"
-                   data-panel-url="{{ url_for('lab.notification_panel') }}">
-                <button type="button" class="bell-btn" data-bell-toggle aria-haspopup="true" aria-expanded="false"
-                        aria-label="{% if notification_unread %}{{ _('Notifications: %(count)s unread', count=notification_unread) }}{% else %}{{ _('Notifications') }}{% endif %}">
-                  {{ icon('bell') }}
-                  <span class="bell-badge" data-bell-count {% if not notification_unread %}hidden{% endif %}>{{ notification_unread if notification_unread < 100 else '99+' }}</span>
-                </button>
-                <div class="menu notif-menu" data-bell-menu hidden>
-                  <div class="notif-loading">{{ _('Loading…') }}</div>
-                </div>
-              </div>
-
-              <div class="account" data-account>
-                <button type="button" class="account-btn" data-account-toggle
-                        aria-haspopup="menu" aria-expanded="false"
-                        aria-label="{{ _('Account menu for %(name)s', name=current_user.display_name or current_user.username) }}">
-                  {{ current_user.username | owner_badge }}
-                  {{ icon('chevron-down') }}
-                </button>
-                <div class="menu" data-account-menu hidden role="menu">
-                  <div class="menu-head">
-                    <span class="menu-head-name">{{ current_user.display_name or current_user.username }}</span>
-                    <span class="menu-head-meta">{{ current_user.role_title or current_user.role|tr }}</span>
-                  </div>
-                  <div class="menu-rule"></div>
-                  <a class="menu-item" href="{{ url_for('settings') }}" role="menuitem">
-                    {{ icon('user-gear') }} {{ _('Profile & settings') }}
-                  </a>
-                  <a class="menu-item" href="{{ url_for('lab.notifications') }}" role="menuitem">
-                    {{ icon('bell') }} {{ _('Notifications') }}
-                  </a>
-                  {% if proposals_pending is not none %}
-                    <a class="menu-item" href="{{ url_for('proposals.page') }}" role="menuitem">
-                      {{ icon('list-check') }} {{ _('Proposed changes') }}{% if proposals_pending %} <span class="badge">{{ proposals_pending }}</span>{% endif %}
-                    </a>
-                  {% endif %}
-                  <div class="menu-rule"></div>
-                  <form method="post" action="{{ url_for('logout') }}">
-                    <button type="submit" class="menu-item menu-item-danger" role="menuitem">
-                      {{ icon('sign-out') }} {{ _('Sign out') }}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
           </header>
+          <div class="chrome-edge" aria-hidden="true"></div>
 
-          {# ---- Content ---- #}
+          {# ---- Content (it scrolls beneath both rows) ---- #}
           <div class="shell-scroll" id="app-scroll">
             <div class="{% block page_shell_class %}shell-page{% endblock %}">
               {# Where the lab's master copy is, while it moves or once it has (app/devices.py). #}

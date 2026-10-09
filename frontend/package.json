@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run build:css && npm run build:notebook && npm run build:vendor && npm run build:plasmid && npm run build:calendar",
+    "build": "npm run build:fonts && npm run build:css && npm run build:notebook && npm run build:vendor && npm run build:plasmid && npm run build:calendar",
     "build:notebook": "BUILD_TARGET=notebook vite build",
     "build:plasmid": "cp node_modules/@deltablot/tg-oss-ove-umd/index.umd.js ../app/static/notebook-build/plasmid-app.js && cp node_modules/@deltablot/tg-oss-ove-umd/style.css ../app/static/notebook-build/plasmid-app.css",
     "build:calendar": "cp node_modules/@toast-ui/calendar/dist/toastui-calendar.min.js ../app/static/notebook-build/calendar-app.js && cp node_modules/@toast-ui/calendar/dist/toastui-calendar.min.css ../app/static/notebook-build/calendar-app.css",
@@ -12,7 +12,8 @@
     "dev": "vite",
     "build:css": "tailwindcss -i src/tailwind.css -o ../app/static/tailwind.css --minify",
     "watch:css": "tailwindcss -i src/tailwind.css -o ../app/static/tailwind.css --watch",
-    "build:vendor": "rm -rf ../app/static/notebook-build/vendor && mkdir -p ../app/static/notebook-build/vendor/katex/fonts && cp node_modules/mermaid/dist/mermaid.min.js ../app/static/notebook-build/vendor/ && cp node_modules/katex/dist/katex.min.js node_modules/katex/dist/katex.min.css ../app/static/notebook-build/vendor/katex/ && cp node_modules/katex/dist/fonts/*.woff2 ../app/static/notebook-build/vendor/katex/fonts/"
+    "build:vendor": "rm -rf ../app/static/notebook-build/vendor && mkdir -p ../app/static/notebook-build/vendor/katex/fonts && cp node_modules/mermaid/dist/mermaid.min.js ../app/static/notebook-build/vendor/ && cp node_modules/katex/dist/katex.min.js node_modules/katex/dist/katex.min.css ../app/static/notebook-build/vendor/katex/ && cp node_modules/katex/dist/fonts/*.woff2 ../app/static/notebook-build/vendor/katex/fonts/",
+    "build:fonts": "rm -rf ../app/static/fonts && mkdir -p ../app/static/fonts && cp node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-greek-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-greek-ext-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-cyrillic-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-cyrillic-ext-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-vietnamese-opsz-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-opsz-italic.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-opsz-italic.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-ext-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-greek-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-cyrillic-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-cyrillic-ext-wght-normal.woff2 ../app/static/fonts/ && cp node_modules/@fontsource-variable/inter/LICENSE ../app/static/fonts/Inter-OFL.txt && cp node_modules/@fontsource-variable/jetbrains-mono/LICENSE ../app/static/fonts/JetBrainsMono-OFL.txt"
   },
   "dependencies": {
     "@deltablot/tg-oss-ove-umd": "^0.4.1",
@@ -40,6 +41,8 @@
     "yjs": "^13.6.33"
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@tailwindcss/cli": "^4.3.3",
     "tailwindcss": "^4.3.3",
     "vite": "^5.4.10"

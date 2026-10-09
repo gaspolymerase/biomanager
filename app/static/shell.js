@@ -390,7 +390,8 @@
       document.querySelectorAll('.omnibox .kbd').forEach((el) => { el.textContent = 'Ctrl K'; });
     }
 
-    // macOS toolbars are borderless until content scrolls beneath them.
+    // The page scrolls beneath the two rows; once it does, a frosted band
+    // (.chrome-edge) comes up behind them to keep them readable.
     const scroller = document.getElementById('app-scroll');
     const toolbar = document.getElementById('app-toolbar');
     if (scroller && toolbar) {
@@ -399,9 +400,49 @@
       sync();
     }
 
+    initWindowFrame();
     initAccountMenu();
     initBell();
     initShortcuts();
+  }
+
+  // The window around the page. A window in the background shows its
+  // selection in grey (html.window-inactive), as a Mac's does. In the Mac
+  // app, which draws no title bar (desktop_mac.py), the empty part of the
+  // top row and the title row stands in for one: drag it to move the window,
+  // double-click it to zoom.
+  function initWindowFrame() {
+    const root = document.documentElement;
+    const sync = () => root.classList.toggle('window-inactive', !document.hasFocus());
+    window.addEventListener('focus', sync);
+    window.addEventListener('blur', sync);
+    sync();
+
+    const native = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmWindow;
+    if (!native || !root.classList.contains('mac-window')) return;
+    // The bare rows themselves, and the sidebar's top strip beside the lights.
+    const rowHeight = () => parseFloat(getComputedStyle(root).getPropertyValue('--tabbar-h')) || 46;
+    const bare = (event) => {
+      const el = event.target;
+      if (!el.matches) return false;
+      if (el.matches('.topstrip, .strip-actions, .toolbar, .toolbar > .min-w-0, .toolbar-spacer, .toolbar-title, .toolbar-sub')) return true;
+      return el.matches('.rail, .rail-top') && event.clientY < rowHeight();
+    };
+    let press = null;
+    document.addEventListener('mousedown', (event) => {
+      press = event.button === 0 && bare(event) ? { x: event.screenX, y: event.screenY } : null;
+    });
+    // A drag, not a click: ask once the mouse has moved a little while held.
+    document.addEventListener('mousemove', (event) => {
+      if (!press || !(event.buttons & 1)) { press = null; return; }
+      if (Math.abs(event.screenX - press.x) + Math.abs(event.screenY - press.y) < 3) return;
+      press = null;
+      native.postMessage('drag');
+    });
+    document.addEventListener('mouseup', () => { press = null; });
+    document.addEventListener('dblclick', (event) => {
+      if (bare(event)) native.postMessage('zoom');
+    });
   }
 
   if (document.readyState === 'loading') {

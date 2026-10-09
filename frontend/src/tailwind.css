@@ -21,6 +21,86 @@
 
 @import "tailwindcss";
 
+/* --- Fonts ------------------------------------------------------------------
+   Inter for the interface and JetBrains Mono for sequences and IDs, shipped
+   in static/fonts (npm run build:fonts) so the packaged app needs no network.
+   One file per script; the browser fetches only the ones a page uses.
+   Chinese comes from the system (PingFang SC, Microsoft YaHei UI, Noto Sans
+   CJK SC): a Chinese font is 8-15 MB a weight, and every platform has one.
+
+   "Inter Text CJK" is Inter without the quotes, ellipsis, em dash and middle
+   dot, used when the page is in Chinese: those then come from the Chinese
+   font, full width, as Chinese text sets them. */
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0000-00B6, U+00B8-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-2013, U+2015-2017, U+201A-201B, U+201E-2025, U+2027-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Text"; font-style: italic; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-opsz-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Text CJK"; font-style: italic; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-opsz-italic.woff2") format("woff2");
+  unicode-range: U+0000-00B6, U+00B8-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-2013, U+2015-2017, U+201A-201B, U+201E-2025, U+2027-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Text"; font-style: italic; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-ext-opsz-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Text CJK"; font-style: italic; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-ext-opsz-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-latin-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-greek-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-greek-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-greek-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+1F00-1FFF; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-greek-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+1F00-1FFF; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-cyrillic-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-cyrillic-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-cyrillic-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-cyrillic-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-vietnamese-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Inter Text CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/inter-vietnamese-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "JetBrains Mono BM"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "JetBrains Mono BM"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/jetbrains-mono-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono BM"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/jetbrains-mono-greek-wght-normal.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF; }
+@font-face { font-family: "JetBrains Mono BM"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/jetbrains-mono-cyrillic-wght-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "JetBrains Mono BM"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/jetbrains-mono-cyrillic-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+
 @source "../../app/templates/**/*.html";
 @source "../../app/static/*.js";
 
@@ -75,7 +155,7 @@
   --color-info-600:   #007AFF;
 
   /* --- Surfaces ---------------------------------------------------------- */
-  --color-canvas:   #ECECEE;   /* window background behind content */
+  --color-canvas:   #EEEFF1;   /* window background behind content */
   --color-surface:  #FFFFFF;   /* content / control background */
   --color-recess:   #F5F5F7;
   --color-hairline: #D2D2D7;   /* separator */
@@ -83,29 +163,43 @@
   --color-ink-soft: #48484A;
   --color-muted:    #6E6E73;
 
-  /* Translucent materials. macOS sidebars and toolbars sit on top of what
-     is behind them; these are the tints that go with backdrop-filter. */
-  --material-sidebar: rgba(246, 246, 248, 0.72);
+  /* Translucent materials (Liquid Glass). Glass is for what you steer with
+     (the sidebar, the top row, page actions, menus, toasts), never for
+     content. These are the tints that go with backdrop-filter; on the frosted
+     side, as macOS 27 is, so text on them stays easy to read. */
+  --material-sidebar: rgba(246, 246, 248, 0.84);
   --material-bar:     rgba(255, 255, 255, 0.72);
+  --glass:            rgba(255, 255, 255, 0.70);
+  --glass-strong:     rgba(255, 255, 255, 0.86);
+  /* The bright rim on glass's upper edge, its outline, and its lift. */
+  --glass-hi:     rgba(255, 255, 255, 0.95);
+  --glass-edge:   rgba(255, 255, 255, 0.70);
+  --glass-rim:    rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 6px 22px rgb(0 0 0 / 0.08);
   /* Nearly opaque: a menu opening from the top bar can't blur what is
      behind it (a blur inside a blurred bar isn't drawn), so it must hide it. */
   --material-popover: rgba(252, 252, 254, 0.97);
 
   /* --- Type --------------------------------------------------------------
-     No webfont: the system stack resolves to SF Pro on Apple devices, which
-     is both the correct look and the only licensed way to get it. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-               "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, "JetBrains Mono", monospace;
+     Inter everywhere (the same on a Mac, Windows, Linux and phones), then
+     each platform's Chinese font. The page in Chinese swaps "Inter Text"
+     for "Inter Text CJK" (see :lang(zh) below). */
+  --font-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+              "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC";
+  --font-sans: "Inter Text", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
+               system-ui, sans-serif;
+  --font-mono: "JetBrains Mono BM", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 
   /* --- Radii: macOS control geometry ------------------------------------- */
+  /* Concentric: a control 4px inside a 12px card is 8px, a 9px menu item
+     inside a 14px menu leaves 5px. Anything floating in a bar is a capsule. */
   --radius-xs: 4px;
   --radius-sm: 5px;
-  --radius-md: 6px;    /* push buttons, fields */
-  --radius-lg: 8px;
-  --radius-xl: 10px;   /* grouped boxes */
-  --radius-2xl: 12px;  /* sheets, cards */
-  --radius-3xl: 18px;
+  --radius-md: 7px;    /* push buttons, fields */
+  --radius-lg: 9px;
+  --radius-xl: 12px;   /* grouped boxes, cards */
+  --radius-2xl: 14px;  /* menus, popovers */
+  --radius-3xl: 20px;  /* dialogs */
 
   /* --- Shadows: Apple keeps these very tight ----------------------------- */
   --shadow-xs:  0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 1px rgb(0 0 0 / 0.04);
@@ -118,8 +212,11 @@
 
   --rail-w: 52px;
   --rail-w-open: 220px;
-  --tabbar-h: 38px;
-  --toolbar-h: 52px;
+  /* The top row (tabs, search, you) and the page's title row under it.
+     The page scrolls beneath both. desktop_mac.py centres a Mac's traffic
+     lights on the top row: change ROW_CENTER there with --tabbar-h. */
+  --tabbar-h: 46px;
+  --toolbar-h: 54px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -142,7 +239,7 @@
     --color-sand-900: #F5F5F7;
     --color-sand-950: #FFFFFF;
 
-    --color-canvas:   #1E1E1E;
+    --color-canvas:   #1C1C1E;
     --color-surface:  #2A2A2C;
     --color-recess:   #232325;
     --color-hairline: #3A3A3C;
@@ -176,8 +273,14 @@
     --color-danger-200: #5C2622;
     --color-info-200:   #173E66;
 
-    --material-sidebar: rgba(32, 32, 34, 0.72);
+    --material-sidebar: rgba(36, 36, 39, 0.86);
     --material-bar:     rgba(38, 38, 40, 0.72);
+    --glass:            rgba(44, 44, 48, 0.66);
+    --glass-strong:     rgba(48, 48, 52, 0.88);
+    --glass-hi:     rgba(255, 255, 255, 0.14);
+    --glass-edge:   rgba(255, 255, 255, 0.10);
+    --glass-rim:    rgba(0, 0, 0, 0.45);
+    --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 26px rgb(0 0 0 / 0.42);
     --material-popover: rgba(44, 44, 46, 0.98);
 
     --shadow-xs:  0 0 0 0.5px rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.3);
@@ -188,8 +291,37 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Chinese. Inter Text CJK leaves the quotes and dashes to the Chinese font;
+   Chinese is set half a point larger with more leading, as its characters
+   are denser than Latin letters at the same size.
+   --------------------------------------------------------------------------- */
+:root:lang(zh) {
+  --font-sans: "Inter Text CJK", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
+               system-ui, sans-serif;
+}
+
+/* Reduce Transparency: every glass surface becomes solid. Increase
+   Contrast: solid too, with a firmer outline. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--glass-strong);
+    --material-bar: var(--glass-strong);
+  }
+}
+@media (prefers-contrast: more) {
+  :root {
+    --glass: var(--color-surface);
+    --glass-strong: var(--color-surface);
+    --material-sidebar: var(--color-recess);
+    --material-bar: var(--color-surface);
+    --glass-rim: var(--color-sand-500);
+    --color-hairline: var(--color-sand-500);
+  }
+}
+
 /* ===========================================================================
-   BASE — macOS metrics: 13px body text, tight leading, no webfont.
+   BASE — 13px interface text in Inter, tight leading.
    =========================================================================== */
 
 @layer base {
@@ -204,7 +336,13 @@
     @apply bg-canvas text-ink font-sans text-[13px] antialiased;
     line-height: 1.45;
     letter-spacing: -0.003em;
+    font-optical-sizing: auto;
   }
+  body:lang(zh) { font-size: 13.5px; line-height: 1.6; letter-spacing: 0; }
+
+  /* Where people read IDs, genotypes and numbers (cells, fields, IDs), Inter
+     tells l from I from 1: a tailed l and a serifed I. */
+  td, th, input, textarea, select, .num, .ident { font-feature-settings: "cv05", "cv08"; }
 
   /* Scrollbars stay out of the way; macOS overlays them anyway. */
   * { scrollbar-width: none; -ms-overflow-style: none; }
@@ -434,17 +572,52 @@
   .devices-where p { @apply m-0 rounded-lg border border-hairline bg-sand-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft; }
 }
 
-/* ===========================================================================
-   APP SHELL — a macOS document window: translucent sidebar, unified
-   toolbar, Finder-style tab strip, content on the window background.
+@layer utilities {
+/* The page's buttons float as glass; its main action is tinted. Each
+   button with words is a capsule of its own. In the utilities layer, as
+   `btn` is, so these win over it. */
+  .toolbar-actions :is(.btn, .btn-ghost) {
+    @apply glass h-8 min-w-0 rounded-full border-0 px-3.5 text-[12.5px] font-medium text-ink;
+  }
+  .toolbar-actions :is(.btn, .btn-ghost):hover { background: var(--glass-strong); }
+  .toolbar-actions :is(.btn, .btn-ghost):active { @apply bg-sand-200; }
+  .toolbar-actions .btn-icon { @apply w-8 px-0; }
+  .toolbar-actions .btn-primary {
+    @apply font-semibold text-white;
+    background: color-mix(in srgb, var(--color-brand-600) 92%, transparent);
+    box-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.4), 0 0 0 0.5px rgb(0 0 0 / 0.08),
+                0 4px 14px color-mix(in srgb, var(--color-brand-600) 32%, transparent);
+  }
+  .toolbar-actions .btn-primary:hover { @apply bg-brand-700 text-white; }
+  .toolbar-actions .btn-primary:active { @apply bg-brand-800; }
+  .toolbar-actions .btn-danger { @apply text-danger-600; }
+}
 
-     .shell            grid: sidebar | main
-       .rail           vibrant sidebar, full height
-       .shell-main
-         .topstrip     tab strip (Finder tabs)
-         .toolbar      title + actions, sticky, hairline appears on scroll
-         .shell-scroll the only vertical scroller
+/* ===========================================================================
+   APP SHELL — Liquid Glass: a frosted sidebar on the window's left edge, and
+   the page's controls floating over the page, which scrolls beneath them.
+
+     .shell              grid: sidebar | main
+       .rail             frosted sidebar, full height (on a Mac, the traffic
+                         lights sit at its top: html.mac-window, desktop_mac.py)
+       .shell-main       positions the bars over the scroller
+         .topstrip       top row: tabs (a glass capsule), search, bell, you
+         .toolbar        the page's title, and its actions as glass buttons
+         .chrome-edge    frosted band behind both rows, once the page scrolls
+         .shell-scroll   the only vertical scroller; its top padding is the
+                         height of the two rows, so a `sticky top-0` header
+                         stops just under them and rows slide on beneath
    =========================================================================== */
+
+/* Glass, for one control or a group of them floating over the page
+   (`glass` in markup, `@apply glass` here). */
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: inset 0 0.5px 0 var(--glass-hi), inset 0 0 0 0.5px var(--glass-edge),
+              0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+}
 
 @layer components {
 
@@ -481,16 +654,20 @@
     @apply truncate px-2 pb-1 pt-3.5 text-[11px] font-semibold text-muted;
   }
 
+  /* The current place is a soft tint of the accent, not a solid block. */
   .rail-item {
     @apply relative flex h-7 shrink-0 cursor-pointer items-center gap-2 rounded-md
            border-0 bg-transparent px-2 text-[13px] font-normal text-ink no-underline
            transition-colors duration-75 select-none;
   }
   .rail-item .icon { @apply size-[15px] shrink-0 text-muted transition-colors; }
-  .rail-item:hover { @apply bg-sand-300/45 no-underline; }
-  .rail-item.is-active { @apply bg-brand-600 font-medium text-white; }
-  .rail-item.is-active .icon { @apply text-white; }
-  .rail-item.is-active:hover { @apply bg-brand-700; }
+  .rail-item:hover { @apply bg-sand-300/40 no-underline; }
+  .rail-item.is-active { @apply bg-brand-600/15 font-semibold text-brand-800; }
+  .rail-item.is-active .icon { @apply text-brand-600; }
+  .rail-item.is-active:hover { @apply bg-brand-600/20; }
+  /* A window in the background shows where it is in grey, as a Mac's does. */
+  html.window-inactive .rail-item.is-active { @apply bg-sand-300/50 text-ink; }
+  html.window-inactive .rail-item.is-active .icon { @apply text-muted; }
 
   .rail-label { @apply truncate; }
   .rail-foot { @apply mt-auto flex shrink-0 flex-col gap-px pt-3; }
@@ -525,6 +702,19 @@
   .rail-toggle .icon { @apply size-[13px] transition-transform duration-200; }
   body[data-rail="open"] .rail-toggle .icon { @apply rotate-180; }
 
+  /* A Mac window has no title bar: the traffic lights sit at the top of the
+     sidebar, on the line of the top row, and Hide sidebar beside them. */
+  html.mac-window:not(.is-fullscreen) .rail { padding-top: var(--tabbar-h); }
+  html.mac-window:not(.is-fullscreen) body[data-rail="open"] .rail-toggle {
+    @apply absolute right-2;
+    top: calc((var(--tabbar-h) - 28px) / 2);
+  }
+  /* Collapsed, the sidebar is narrower than the lights: the top row starts
+     after them instead. */
+  html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .topstrip {
+    padding-left: calc(84px - var(--rail-w));
+  }
+
   /* More and Help: a button that opens its menu beside the sidebar
      (placed by static/shell.js, as the sidebar scrolls and clips). */
   .rail-menu { @apply relative flex shrink-0 flex-col; }
@@ -536,52 +726,59 @@
 
   /* --- Main column ------------------------------------------------------ */
 
-  .shell-main { @apply flex min-w-0 flex-col overflow-hidden; }
-  .shell-scroll { @apply flex-1 overflow-y-auto overscroll-contain bg-canvas; }
-  .shell-page { @apply mx-auto w-full max-w-[1100px] px-6 pb-16 pt-5; }
-  .shell-page-wide { @apply mx-auto w-full max-w-none px-5 pb-16 pt-4; }
+  .shell-main { @apply relative min-w-0 overflow-hidden; }
+  .shell-scroll {
+    @apply h-full overflow-y-auto overscroll-contain bg-canvas;
+    padding-top: calc(var(--tabbar-h) + var(--toolbar-h));
+  }
+  .shell-page { @apply mx-auto w-full max-w-[1100px] px-6 pb-16 pt-1; }
+  .shell-page-wide { @apply mx-auto w-full max-w-none px-5 pb-16 pt-1; }
   .shell-page-flush { @apply mx-auto w-full max-w-none p-0; }
 
-  /* --- Tab strip: Finder tabs ------------------------------------------- */
+  /* --- Top row: tabs, search, notifications, you ------------------------ */
 
   /* Stacking, bottom to top: page content (a sheet's sticky header and
-     pinned columns go up to z-30), the toolbar (35) and tab strip (36),
-     whose menus must open over the content, then the sidebar and its
-     scrim (40). */
+     pinned columns go up to z-30), the frosted band (34), the title row
+     (35) and top row (36), whose menus must open over the content, then the
+     sidebar and its scrim (40). The row itself is see-through: on a Mac its
+     empty part drags the window (static/shell.js). */
   .topstrip {
-    @apply sticky top-0 z-[36] flex shrink-0 items-stretch gap-0 px-0;
+    @apply absolute inset-x-0 top-0 z-[36] flex items-center gap-2 px-2.5;
     height: var(--tabbar-h);
-    background: var(--material-bar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
-    box-shadow: inset 0 -0.5px 0 var(--color-hairline);
   }
 
-  .wtab-strip { @apply flex min-w-0 flex-1 items-stretch; }
-  .wtabs { @apply flex min-w-0 shrink items-stretch overflow-x-auto; }
+  /* The open tabs share one glass capsule; the current one is raised. */
+  .wtab-strip {
+    @apply glass flex h-[34px] min-w-0 shrink items-center gap-0.5 rounded-full p-[3px];
+  }
+  .wtabs { @apply flex min-w-0 shrink items-center gap-0.5 overflow-x-auto; }
   .wtabs[data-overflow="both"]  { mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); }
   .wtabs[data-overflow="start"] { mask-image: linear-gradient(90deg, transparent 0, #000 20px); }
   .wtabs[data-overflow="end"]   { mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent 100%); }
 
-  /* Finder tabs are flush cells divided by hairlines, not floating pills. */
   .wtab {
-    @apply relative flex min-w-0 max-w-[220px] shrink-0 cursor-pointer items-center gap-1.5
-           px-3 text-[12px] font-normal text-muted transition-colors duration-75 select-none;
-    box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    @apply relative flex h-7 min-w-0 max-w-[220px] shrink-0 cursor-pointer items-center gap-1.5
+           rounded-full pl-2.5 pr-1.5 text-[12.5px] font-normal text-muted
+           transition-[background-color,color,box-shadow] duration-100 select-none;
   }
-  .wtab:hover { @apply bg-sand-300/30 text-ink; }
-  .wtab.is-active { @apply bg-surface font-medium text-ink; }
+  .wtab:hover { @apply bg-sand-300/35 text-ink; }
+  .wtab.is-active {
+    @apply font-semibold text-ink;
+    background: var(--glass-strong);
+    box-shadow: 0 0 0 0.5px var(--glass-rim), 0 1px 3px rgb(0 0 0 / 0.08);
+  }
   .wtab.is-dragging { @apply opacity-40; }
   .wtab.is-drop-before { box-shadow: inset 2px 0 0 0 var(--color-brand-600); }
   .wtab.is-drop-after  { box-shadow: inset -2px 0 0 0 var(--color-brand-600); }
 
   .wtab-icon { @apply size-[13px] shrink-0 text-sand-500 transition-colors; }
   .wtab.is-active .wtab-icon { @apply text-brand-600; }
+  html.window-inactive .wtab.is-active .wtab-icon { @apply text-sand-500; }
   .wtab-link { @apply min-w-0 flex-1 truncate text-inherit no-underline; }
   .wtab-link:hover { @apply text-inherit no-underline; }
 
   .wtab-close {
-    @apply grid size-[17px] shrink-0 cursor-pointer place-items-center rounded
+    @apply grid size-[17px] shrink-0 cursor-pointer place-items-center rounded-full
            text-sand-500 opacity-0 transition-opacity duration-75;
   }
   .wtab-close .icon, .wtab-close-icon { @apply size-[9px]; }
@@ -590,53 +787,62 @@
   @media (hover: none) { .wtab-close { @apply opacity-100; } }
 
   .wtab-add {
-    @apply grid w-8 shrink-0 cursor-pointer place-items-center text-sand-500
+    @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-sand-500
            transition-colors duration-75;
-    box-shadow: inset -0.5px 0 0 var(--color-hairline);
   }
-  .wtab-add:hover { @apply bg-sand-300/30 text-ink; }
+  .wtab-add:hover { @apply bg-sand-300/35 text-ink; }
   .wtab-add .icon { @apply size-3; }
 
-  /* --- Unified toolbar -------------------------------------------------- */
+  /* Search, then the bell and you in one capsule. */
+  .strip-actions { @apply ml-auto flex shrink-0 items-center gap-2; }
+  .strip-you { @apply glass flex h-[34px] items-center gap-0.5 rounded-full p-[3px]; }
+
+  /* --- Title row: the page's name, and its actions ----------------------- */
 
   .toolbar {
-    @apply sticky z-[35] flex shrink-0 items-center gap-2 px-4;
+    @apply absolute inset-x-0 z-[35] flex items-center gap-2 pl-[18px] pr-2.5;
     top: var(--tabbar-h);
     height: var(--toolbar-h);
-    background: var(--material-bar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
   }
-  /* The separator only appears once content slides under the toolbar. */
-  .toolbar.is-scrolled { box-shadow: inset 0 -0.5px 0 var(--color-hairline); }
 
   .toolbar-title {
-    @apply min-w-0 truncate text-[15px] font-semibold tracking-[-0.012em] text-ink;
+    @apply min-w-0 truncate text-[20px] font-bold leading-tight tracking-[-0.022em] text-ink;
   }
+  .toolbar-title:lang(zh) { @apply tracking-normal; }
   /* The title block keeps its width; buttons give way first. */
   .toolbar > .min-w-0 { @apply flex-1; }
-  .toolbar-actions { @apply shrink; }
-  .toolbar-actions .btn { @apply min-w-0; }
-  .toolbar-actions .btn span { @apply truncate; }
-  .toolbar-sub { @apply truncate text-[11px] text-muted; }
+  .toolbar-sub { @apply mt-0.5 truncate text-[12px] text-muted; }
   .toolbar-spacer { @apply ml-auto; }
-  .toolbar-actions { @apply flex shrink-0 items-center gap-1.5; }
+  .toolbar-actions { @apply flex shrink items-center gap-2; }
+  .toolbar-actions .btn span { @apply truncate; }
 
-  .strip-actions { @apply flex shrink-0 items-center gap-1 pr-2; }
+
+  /* Scroll edge: once the page slides under the two rows, a frosted band
+     behind them keeps the title and buttons readable, softening into the
+     page at its lower edge instead of a hairline. */
+  .chrome-edge {
+    @apply pointer-events-none absolute inset-x-0 top-0 z-[34] opacity-0 transition-opacity duration-200;
+    height: calc(var(--tabbar-h) + var(--toolbar-h));
+    background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 14px), transparent);
+  }
+  .toolbar.is-scrolled ~ .chrome-edge { @apply opacity-100; }
 
   /* --- Search field ----------------------------------------------------- */
 
   .omnibox {
-    @apply flex h-[26px] w-[200px] cursor-pointer items-center gap-1.5 rounded-md
-           border border-hairline bg-surface/70 px-2 text-[12px] text-sand-500
-           transition-colors duration-100 xl:w-[240px];
+    @apply glass flex h-[34px] w-[200px] cursor-pointer items-center gap-1.5 rounded-full
+           border-0 px-3 text-[12.5px] text-sand-500 transition-colors duration-100 xl:w-[240px];
   }
-  .omnibox:hover { @apply border-sand-400 bg-surface; }
+  .omnibox:hover { background: var(--glass-strong); }
   .omnibox .icon { @apply size-[13px] shrink-0; }
   .omnibox-label { @apply flex-1 truncate text-left; }
 
   .strip-btn {
-    @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-md
+    @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-full
            text-muted transition-colors duration-75;
   }
   .strip-btn:hover { @apply bg-sand-300/50 text-ink; }
@@ -646,15 +852,17 @@
 
   .account { @apply relative shrink-0; }
   .account-btn {
-    @apply flex h-7 cursor-pointer items-center gap-1 rounded-md px-1
+    @apply flex h-7 cursor-pointer items-center gap-1 rounded-full px-1
            transition-colors duration-75;
   }
   .account-btn:hover { @apply bg-sand-300/50; }
   .account-btn .icon { @apply size-3 text-sand-500; }
 
+  /* Menus open from their button; frostier than glass, since a menu over a
+     glass bar can't blur what the bar already blurred. */
   .menu {
-    @apply absolute right-0 top-[calc(100%+6px)] z-50 w-60 rounded-xl border
-           border-hairline p-1 shadow-pop;
+    @apply absolute right-0 top-[calc(100%+6px)] z-50 w-60 rounded-2xl border
+           border-hairline p-[5px] shadow-pop;
     background: var(--material-popover);
     -webkit-backdrop-filter: saturate(180%) blur(30px);
     backdrop-filter: saturate(180%) blur(30px);
@@ -664,9 +872,9 @@
   .menu-head { @apply flex flex-col gap-0.5 px-2.5 py-2; }
   .menu-head-name { @apply truncate text-[13px] font-semibold text-ink; }
   .menu-head-meta { @apply truncate text-[11px] text-muted; }
-  .menu-rule { @apply my-1 h-px bg-hairline; }
+  .menu-rule { @apply mx-2 my-1 h-px bg-hairline; }
   .menu-item {
-    @apply flex h-7 w-full cursor-pointer items-center gap-2 rounded-md px-2.5
+    @apply flex h-7 w-full cursor-pointer items-center gap-2 rounded-[9px] px-2.5
            text-[13px] text-ink no-underline transition-colors duration-75;
   }
   .menu-item:hover { @apply bg-brand-600 text-white no-underline; }
@@ -696,14 +904,21 @@
     .rail-toggle { @apply hidden; }
     body:not([data-drawer="open"]) .rail-scrim { @apply pointer-events-none; }
     body[data-drawer="open"] .rail-scrim { @apply opacity-100; }
-    .shell-page, .shell-page-wide { @apply px-4 pt-3; }
-    .omnibox { @apply w-7 justify-center px-0; }
+    .shell-page, .shell-page-wide { @apply px-4 pt-1; }
+    .omnibox { @apply w-[34px] justify-center px-0; }
     .omnibox-label, .omnibox .kbd { @apply hidden; }
-    .toolbar { @apply px-3; }
+    .toolbar { @apply pl-2 pr-2; }
+    .toolbar-title { @apply text-[17px]; }
   }
 
   @media (min-width: 768px) {
     .rail-scrim, .drawer-trigger { @apply hidden; }
+  }
+
+  @media print {
+    .topstrip, .chrome-edge { display: none !important; }
+    .toolbar { position: static !important; }
+    .shell-scroll { padding-top: 0 !important; }
   }
 
   /* --- Owner avatar ----------------------------------------------------- */
