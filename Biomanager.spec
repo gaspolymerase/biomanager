@@ -3,7 +3,8 @@
 # Build:   pyinstaller Biomanager.spec --clean --noconfirm
 # Output:  dist/BioManager.app  (macOS)  /  dist/BioManager/  (Win/Linux)
 #
-# The spec bundles app/static + app/templates as read-only resources. SQLite
+# The spec bundles app/static, app/templates and app/translations as read-only
+# resources (tests/test_i18n.py checks every folder in app/ is here). SQLite
 # DB and user uploads land in ~/Library/Application Support/Biomanager/ at
 # runtime (see app/paths.py).
 
@@ -18,6 +19,8 @@ block_cipher = None
 datas = [
     ("app/static", "app/static"),
     ("app/templates", "app/templates"),
+    # The Chinese (app/i18n.py): without it the desktop app is English whatever is chosen.
+    ("app/translations", "app/translations"),
     # Opening a database an older version made upgrades it (app/upgrade.py).
     ("migrations", "migrations"),
 ]

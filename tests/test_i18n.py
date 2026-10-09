@@ -131,6 +131,13 @@ class TheComputersLanguage(unittest.TestCase):
         spec = (ROOT / "Biomanager.spec").read_text(encoding="utf-8")
         self.assertIn('"CFBundleLocalizations": ["en", "zh-Hans"]', spec)
 
+    def test_the_desktop_app_carries_every_folder_the_app_reads(self):
+        # Missing app/translations left every downloaded app in English (#40).
+        spec = (ROOT / "Biomanager.spec").read_text(encoding="utf-8")
+        for folder in sorted(p for p in (ROOT / "app").iterdir() if p.is_dir() and p.name != "__pycache__"):
+            name = f"app/{folder.name}"
+            self.assertIn(f'("{name}", "{name}")', spec, f"{name} is not bundled into the desktop app")
+
 
 class APersonsChoice(AppTestCase):
     def test_settings_keeps_the_language_for_that_person(self):
