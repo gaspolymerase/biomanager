@@ -1343,7 +1343,7 @@
   .util-shortrow em { @apply text-[12px] not-italic text-muted; }
   .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[12.5px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
   .util-chip .icon { @apply size-3 text-amber-500; }
-  .util-groups { @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4; }
+  .util-groups { @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3; }
   .util-group { @apply p-3.5 pb-2.5; }
   .util-group header { @apply mb-2 flex items-center gap-2.5; }
   .util-gicon { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700; }
@@ -1416,6 +1416,26 @@
   .util-ref { @apply p-4; }
   .util-ref .util-table-wrap { @apply max-h-[360px] overflow-y-auto; }
   .util-ref h3 { @apply mb-1.5 text-[13.5px] font-semibold text-ink; }
+  /* The lab's own tools: making one. */
+  .util-new { @apply mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-brand-700 no-underline hover:no-underline; }
+  .util-new .icon { @apply size-3.5; }
+  .util-lab-head, .util-lab-row { @apply grid items-center gap-1.5; }
+  .util-lab-head.is-input, .util-lab-row.is-input { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.9fr) 1.75rem; }
+  .util-lab-head.is-output, .util-lab-row.is-output { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1fr) 1.75rem; }
+  .util-lab-head small { @apply text-[11px] font-normal text-muted; }
+  .util-lab-row { @apply mb-1.5; }
+  .util-lab-row input { @apply field h-7.5 min-w-0 text-[13px]; }
+  .util-lab-problem { @apply col-span-full text-[11.5px] text-danger-700 empty:hidden; }
+  .util-lab-add { @apply self-start; }
+  .util-lab-actions { @apply flex items-center gap-1.5 sm:col-span-2; }
+  .util-lab-actions > span { @apply flex-1; }
+  .util-form .is-wide { @apply sm:col-span-2; }
+  .util-lab-title { @apply text-[14px] font-semibold text-ink; }
+  .util-work.is-editor { @apply xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]; }
+  @media (max-width: 640px) {
+    .util-lab-head { display: none; }
+    .util-lab-row.is-input, .util-lab-row.is-output { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.75rem; }
+  }
 
   /* A sheet cell the server works out (a primer's length, GC, Tm). */
   .sheet-derived { @apply cursor-default text-muted; }

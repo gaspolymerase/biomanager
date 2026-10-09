@@ -1716,6 +1716,166 @@
     }).filter(Boolean).sort((a, b) => b.hits - a.hits || b.score - a.score).map((r) => r.tool);
   }
 
+
+  /* ------------------------------------------------------ the lab's own
+
+     Tools a lab makes itself: inputs with a name, a label and a unit, and
+     answers worked out by formulas over those names (`mass / (conc * mw)`).
+     A formula is read by hand, never run as code: numbers, the tool's own
+     names, + − × ÷ ^, brackets, and the functions below. */
+  const FORMULA_FUNCS = {
+    sqrt: [1, Math.sqrt], abs: [1, Math.abs], exp: [1, Math.exp], ln: [1, Math.log], log: [1, Math.log10],
+    log10: [1, Math.log10], log2: [1, Math.log2], round: [1, Math.round], ceil: [1, Math.ceil], floor: [1, Math.floor],
+    min: [2, Math.min], max: [2, Math.max], pow: [2, Math.pow],
+  };
+  const FORMULA_CONSTS = { pi: Math.PI, e: Math.E, avogadro: 6.02214076e23 };
+  const NAME = /^[A-Za-z_][A-Za-z0-9_]{0,23}$/;
+
+  // A formula as a tree, or an error a person can act on.
+  function parseFormula(src, names) {
+    const text = String(src || '').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+    const tokens = [];
+    const re = /\s*(?:(\d+\.?\d*(?:e[-+]?\d+)?|\.\d+(?:e[-+]?\d+)?)|([A-Za-z_][A-Za-z0-9_]*)|([-+*/^(),]))/iy;
+    let pos = 0;
+    while (pos < text.length) {
+      if (/^\s*$/.test(text.slice(pos))) break;
+      re.lastIndex = pos;
+      const m = re.exec(text);
+      if (!m) throw new Error(t('“%(text)s” is not something a formula can use.', { text: text.slice(pos).trim().slice(0, 12) }));
+      tokens.push(m[1] ? { num: Number(m[1]) } : m[2] ? { name: m[2] } : { op: m[3] });
+      pos = re.lastIndex;
+    }
+    if (!tokens.length) throw new Error(t('Write a formula.'));
+    let i = 0;
+    const peek = () => tokens[i];
+    const take = (op) => (tokens[i] && tokens[i].op === op ? (i += 1, true) : false);
+    function primary() {
+      const tok = tokens[i];
+      if (!tok) throw new Error(t('The formula stops too soon.'));
+      i += 1;
+      if ('num' in tok) return { num: tok.num };
+      if (tok.op === '(') {
+        const inner = expr();
+        if (!take(')')) throw new Error(t('A bracket is not closed.'));
+        return inner;
+      }
+      if (tok.op === '-') return { neg: power() };
+      if (tok.op === '+') return power();
+      if (tok.name) {
+        const lower = tok.name.toLowerCase();
+        if (peek() && peek().op === '(') {
+          if (!FORMULA_FUNCS[lower]) throw new Error(t('No function called %(name)s.', { name: tok.name }));
+          i += 1;
+          const args = [];
+          if (!take(')')) {
+            do { args.push(expr()); } while (take(','));
+            if (!take(')')) throw new Error(t('A bracket is not closed.'));
+          }
+          const [want] = FORMULA_FUNCS[lower];
+          if (args.length !== want) throw new Error(t('%(name)s takes %(n)s value(s).', { name: lower, n: want }));
+          return { fn: lower, args };
+        }
+        if (names.includes(tok.name)) return { ref: tok.name };
+        if (lower in FORMULA_CONSTS) return { num: FORMULA_CONSTS[lower] };
+        throw new Error(t('No input or answer called %(name)s.', { name: tok.name }));
+      }
+      throw new Error(t('“%(op)s” is out of place.', { op: tok.op }));
+    }
+    function power() {
+      const base = primary();
+      return take('^') ? { op: '^', a: base, b: unary() } : base;
+    }
+    function unary() { return take('-') ? { neg: unary() } : (take('+'), power()); }
+    function term() {
+      let left = unary();
+      while (peek() && (peek().op === '*' || peek().op === '/')) { const op = tokens[i].op; i += 1; left = { op, a: left, b: unary() }; }
+      return left;
+    }
+    function expr() {
+      let left = term();
+      while (peek() && (peek().op === '+' || peek().op === '-')) { const op = tokens[i].op; i += 1; left = { op, a: left, b: term() }; }
+      return left;
+    }
+    const tree = expr();
+    if (i < tokens.length) throw new Error(t('“%(op)s” is out of place.', { op: tokens[i].op || tokens[i].name || tokens[i].num }));
+    return tree;
+  }
+  function evalFormula(node, vars) {
+    if ('num' in node) return node.num;
+    if (node.ref) return vars[node.ref];
+    if (node.neg) return -evalFormula(node.neg, vars);
+    if (node.fn) return FORMULA_FUNCS[node.fn][1](...node.args.map((a) => evalFormula(a, vars)));
+    const a = evalFormula(node.a, vars); const b = evalFormula(node.b, vars);
+    return { '+': a + b, '-': a - b, '*': a * b, '/': a / b, '^': a ** b }[node.op];
+  }
+
+  /* A lab tool as the page lists it: its definition (as saved) becomes a
+     calculator and a tool. Problems with the definition come back as
+     `problems`, one per answer or input, so the editor can show them. */
+  function labTool(def) {
+    const inputs = (def.inputs || []).filter((x) => x && x.name);
+    const outputs = (def.outputs || []).filter((x) => x && x.formula);
+    const problems = {};
+    const names = [];
+    inputs.forEach((x, k) => {
+      if (!NAME.test(x.name)) problems[`in${k}`] = t('A name is letters, digits and _ , starting with a letter.');
+      else if (names.includes(x.name)) problems[`in${k}`] = t('%(name)s is used twice.', { name: x.name });
+      names.push(x.name);
+    });
+    const trees = outputs.map((o, k) => {
+      try {
+        const tree = parseFormula(o.formula, names.slice());
+        if (o.name) {
+          if (!NAME.test(o.name)) problems[`out${k}`] = t('A name is letters, digits and _ , starting with a letter.');
+          else if (names.includes(o.name)) problems[`out${k}`] = t('%(name)s is used twice.', { name: o.name });
+          names.push(o.name);       // later answers may use this one
+        }
+        return tree;
+      } catch (err) {
+        problems[`out${k}`] = err.message;
+        return null;
+      }
+    });
+    const calc = {
+      id: def.id,
+      inputs: inputs.map((x) => ({ key: x.name, label: x.unit ? `${x.label || x.name} (${x.unit})` : (x.label || x.name), value: x.value == null ? '' : String(x.value) })),
+      compute(v) {
+        const vars = {};
+        const missing = inputs.filter((x) => !ok(n(v, x.name))).map((x) => x.label || x.name);
+        if (missing.length) return { hint: t('Fill in %(names)s.', { names: missing.join(', ') }) };
+        inputs.forEach((x) => { vars[x.name] = n(v, x.name); });
+        const lines_ = [];
+        const warnings = [];
+        outputs.forEach((o, k) => {
+          if (!trees[k]) return;
+          const x = evalFormula(trees[k], vars);
+          if (o.name) vars[o.name] = x;
+          if (!ok(x)) warnings.push(t('%(label)s can’t be worked out from these numbers.', { label: o.label || o.formula }));
+          lines_.push(L(o.label || o.formula, ok(x) ? `${fmt(x, Number(o.digits) || 4)}${o.unit ? ` ${o.unit}` : ''}` : '—', k === 0 || !!o.main));
+        });
+        const notes = [def.note, ...outputs.map((o) => `${o.label || o.name || ''} = ${o.formula}`)].filter(Boolean);
+        return { lines: lines_, warnings, notes };
+      },
+    };
+    const tool = { id: def.id, group: 'lab', name: def.name || t('Untitled tool'), does: def.does || '', keys: `${def.keys || ''} ${inputs.map((x) => x.label).join(' ')}`,
+      lab: def, modes: [mode(def.id)] };
+    return { calc, tool, problems };
+  }
+  // Lists the lab's own tools with the rest (the page calls this once it
+  // has them); replaces any listed before.
+  const LAB_GROUP = { id: 'lab', name: t('The lab’s own'), icon: 'users', does: t('Tools made in this lab') };
+  function useLabTools(defs) {
+    for (let k = CALCS.length - 1; k >= 0; k -= 1) if (CALCS[k].lab) CALCS.splice(k, 1);
+    for (let k = TOOLS.length - 1; k >= 0; k -= 1) if (TOOLS[k].group === 'lab') TOOLS.splice(k, 1);
+    if (!GROUPS.includes(LAB_GROUP)) GROUPS.push(LAB_GROUP);
+    (defs || []).forEach((def) => {
+      const made = labTool(def);
+      made.calc.lab = true;
+      CALCS.push(made.calc);
+      TOOLS.push(made.tool);
+    });
+  }
+
   /* ------------------------------------------------------------ running */
 
   // raw: { key: text, key_unit: unit } as the form has them.
@@ -1742,7 +1902,8 @@
     }
   }
 
-  const api = { CALCS, REFERENCES, GROUPS, TOOLS, UNITS: U, CHEMICALS, run, search, locate, plain, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq };
+  const api = { CALCS, REFERENCES, GROUPS, TOOLS, UNITS: U, CHEMICALS, run, search, locate, plain, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq,
+    parseFormula, evalFormula, labTool, useLabTools, FORMULA_FUNCS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BenchCalc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -541,6 +541,9 @@ database has a name of its own (one another database has is refused), so
   pKa, stocks and how they keep, agarose %, DNA ladders, concentrated
   reagents and molecular weights (the lab's own first, from its Chemicals
   database by name or abbreviation).
+  A lab can add its own tools too: inputs and answers worked out by
+  formulas (`culture * want / (stock - want)`), made on the page and
+  shared with everyone; the maker or an admin changes them.
 
 <p align="center">
   <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" width="100%">

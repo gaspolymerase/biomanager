@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import secrets
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 
@@ -8990,7 +8991,8 @@ def utilities():
         chemicals += [{"name": c.name, "mw": c.molecular_weight, "notes": c.notes}
                       for c in db_session.scalars(select(ChemicalReference).order_by(ChemicalReference.name))]
         rotors = _utility_rotors(db_session)
-    return render_template("utilities.html", chemicals=chemicals, rotors=rotors,
+        lab_tools = _lab_tools(db_session)
+    return render_template("utilities.html", chemicals=chemicals, rotors=rotors, lab_tools=lab_tools,
                            rotors_editable=g.user.expires_at is None)
 
 
@@ -9035,6 +9037,114 @@ def utilities_rotors():
         set_setting(db_session, UTILITY_ROTORS_KEY, json.dumps(rotors, ensure_ascii=False))
         db_session.commit()
     return jsonify({"rotors": rotors})
+
+
+# The lab's own tools in Utilities: each a name, inputs (a name used in
+# formulas, a label, a unit, an example) and answers (a label, a formula
+# over the names, a unit). The formulas are read by static/bench-calcs.js,
+# never run as code; here they are only kept to the characters a formula
+# may hold.
+LAB_TOOLS_KEY = "utilities_lab_tools"
+_LAB_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,23}$")
+_LAB_FORMULA = re.compile(r"^[A-Za-z0-9_\s.+\-*/^(),×÷−]{1,300}$")
+
+
+def _lab_tools(db_session) -> list[dict]:
+    try:
+        rows = json.loads(get_setting(db_session, LAB_TOOLS_KEY, "[]") or "[]")
+    except ValueError:
+        return []
+    return [r for r in rows if isinstance(r, dict) and r.get("id")]
+
+
+def _lab_tool_from(data) -> tuple[dict | None, str]:
+    """A tool as typed, cleaned; or None and what is wrong with it."""
+    if not isinstance(data, dict):
+        return None, gettext("That tool could not be read.")
+    text = lambda key, most: str(data.get(key) or "").strip()[:most]  # noqa: E731
+    name = text("name", 80)
+    if not name:
+        return None, gettext("Give the tool a name.")
+    inputs, outputs = [], []
+    for row in (data.get("inputs") or [])[:12]:
+        if not isinstance(row, dict) or not str(row.get("name") or "").strip():
+            continue
+        key = str(row["name"]).strip()
+        if not _LAB_NAME.match(key):
+            return None, gettext("An input's name is letters, digits and _, starting with a letter: %(name)s", name=key[:24])
+        inputs.append({"name": key, "label": str(row.get("label") or "").strip()[:60],
+                       "unit": str(row.get("unit") or "").strip()[:20], "value": str(row.get("value") or "").strip()[:30]})
+    for row in (data.get("outputs") or [])[:8]:
+        if not isinstance(row, dict) or not str(row.get("formula") or "").strip():
+            continue
+        formula = str(row["formula"]).strip()
+        key = str(row.get("name") or "").strip()
+        if not _LAB_FORMULA.match(formula):
+            return None, gettext("A formula holds names, numbers, + − × ÷ ^ and brackets: %(formula)s", formula=formula[:40])
+        if key and not _LAB_NAME.match(key):
+            return None, gettext("An input's name is letters, digits and _, starting with a letter: %(name)s", name=key[:24])
+        try:
+            digits = max(1, min(8, int(row.get("digits") or 4)))
+        except (TypeError, ValueError):
+            digits = 4
+        outputs.append({"label": str(row.get("label") or "").strip()[:60], "formula": formula,
+                        "unit": str(row.get("unit") or "").strip()[:20], "name": key, "digits": digits})
+    if not inputs or not outputs:
+        return None, gettext("A tool needs at least one input and one answer.")
+    return {"name": name, "does": text("does", 160), "note": text("note", 300), "keys": text("keys", 200),
+            "inputs": inputs, "outputs": outputs}, ""
+
+
+def _may_change_lab_tool(tool: dict) -> bool:
+    return tool.get("author") == g.user.username or access.is_admin()
+
+
+@app.route("/utilities/lab-tools", methods=["POST"])
+@login_required
+def utilities_lab_tool_save():
+    """Make a lab tool, or change one (its maker, or an admin)."""
+    if g.user.expires_at is not None:
+        return jsonify({"error": gettext("Guests can use the lab's tools but not make them.")}), 403
+    data = request.get_json(silent=True) or {}
+    tool, problem = _lab_tool_from(data.get("tool"))
+    if tool is None:
+        return jsonify({"error": problem}), 400
+    with SessionLocal() as db_session:
+        tools = _lab_tools(db_session)
+        wanted = str((data.get("tool") or {}).get("id") or "")
+        old = next((t for t in tools if t["id"] == wanted), None) if wanted else None
+        if wanted and old is None:
+            return jsonify({"error": gettext("That tool was deleted.")}), 404
+        if old is not None:
+            if not _may_change_lab_tool(old):
+                return jsonify({"error": gettext("Only the person who made a tool, or an admin, can change it.")}), 403
+            tool.update(id=old["id"], author=old.get("author", ""))
+            tools[tools.index(old)] = tool
+        else:
+            if len(tools) >= 200:
+                return jsonify({"error": gettext("Up to 200 lab tools.")}), 400
+            tool.update(id=f"lab{secrets.token_hex(4)}", author=g.user.username)
+            tools.append(tool)
+        tool["updated"] = date.today().isoformat()
+        set_setting(db_session, LAB_TOOLS_KEY, json.dumps(tools, ensure_ascii=False))
+        db_session.commit()
+    return jsonify({"tools": tools, "id": tool["id"]})
+
+
+@app.route("/utilities/lab-tools/<tool_id>/delete", methods=["POST"])
+@login_required
+def utilities_lab_tool_delete(tool_id):
+    with SessionLocal() as db_session:
+        tools = _lab_tools(db_session)
+        tool = next((t for t in tools if t["id"] == tool_id), None)
+        if tool is None:
+            return jsonify({"tools": tools})
+        if g.user.expires_at is not None or not _may_change_lab_tool(tool):
+            return jsonify({"error": gettext("Only the person who made a tool, or an admin, can change it.")}), 403
+        tools.remove(tool)
+        set_setting(db_session, LAB_TOOLS_KEY, json.dumps(tools, ensure_ascii=False))
+        db_session.commit()
+    return jsonify({"tools": tools})
 
 
 # ---------------------------------------------------------------------------

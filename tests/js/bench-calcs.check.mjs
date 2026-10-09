@@ -173,4 +173,33 @@ assert.equal(value(B.run('plates', { drug: '0' }), 'LB agar powder'), '22 g');
 // Dosing sheet: 75 mg/kg of a 24.6 g mouse at 20 mg/mL is 92.25 µL.
 assert.equal(B.run('dosesheet', {}).table.rows[0][3], '92.3 µL');
 
+// ---- The lab's own tools: formulas read by hand, never run as code.
+{
+  const f = (src, vars = { a: 2, b: 3 }) => B.evalFormula(B.parseFormula(src, Object.keys(vars)), vars);
+  assert.equal(f('a + b * 2'), 8);
+  assert.equal(f('(a + b) * 2'), 10);
+  assert.equal(f('a ^ b ^ 2'), 512);          // right to left, as on paper
+  assert.equal(f('-a ^ 2'), -4);
+  assert.equal(f('a × b ÷ 2 − 1'), 2);
+  assert.equal(f('sqrt(a * 8) + min(a, b) + log10(1000)'), 9);
+  assert.equal(f('1e3 * a + .5'), 2000.5);
+  for (const bad of ['a +', '((a)', 'c + 1', 'foo(a)', 'pow(a)', 'a % b', 'a b', 'alert(1)', 'a.constructor', '', 'this']) {
+    assert.throws(() => B.parseFormula(bad, ['a', 'b']), Error, bad);
+  }
+  const def = { id: 'labtest1', name: 'Glycerol stock', inputs: [{ name: 'culture', label: 'Culture', unit: 'µL', value: '500' },
+    { name: 'want', label: 'Wanted', unit: '%', value: '15' }, { name: 'stock', label: 'Stock', unit: '%', value: '50' }],
+  outputs: [{ label: 'Glycerol to add', formula: 'culture * want / (stock - want)', unit: 'µL', name: 'add' }, { label: 'In all', formula: 'culture + add', unit: 'µL' }] };
+  B.useLabTools([def]);
+  assert.equal(B.locate('labtest1').tool.group, 'lab');
+  assert.equal(main(B.run('labtest1', {}))[0], '214.3 µL');
+  assert.equal(value(B.run('labtest1', {}), 'In all'), '714.3 µL');
+  assert.ok(B.run('labtest1', { stock: '15' }).warnings.length);            // ÷ 0
+  assert.ok(B.run('labtest1', { culture: '' }).hint);
+  assert.equal(first('glycerol stock'), 'labtest1');
+  const made = B.labTool({ id: 'x', inputs: [{ name: '1x' }, { name: 'a' }, { name: 'a' }], outputs: [{ formula: 'a +' }, { formula: 'a', name: 'a' }] });
+  assert.deepEqual(Object.keys(made.problems).sort(), ['in0', 'in2', 'out0', 'out1']);
+  B.useLabTools([]);
+  assert.equal(B.locate('labtest1'), null);
+}
+
 console.log('ok');

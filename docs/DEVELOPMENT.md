@@ -186,6 +186,16 @@ built-in list. The lab's centrifuge rotors (name, radius, top speed) are
 one `app_settings` row, `utilities_rotors`, saved by `POST
 /utilities/rotors` by anyone but a guest.
 
+The lab's own tools are another row, `utilities_lab_tools`: each a name,
+inputs (a formula name, label, unit, example) and answers (label, formula,
+unit, an optional name later answers may use), with its `author`. `POST
+/utilities/lab-tools` makes or changes one (its author or an admin; never
+a guest) and `…/<id>/delete` removes it; the server keeps names and
+formulas to a plain character set. On the page `useLabTools` turns each
+into a calculator and a tool in the group `lab`, and `parseFormula` reads
+a formula by hand (numbers, the tool's names, + − * / ^, brackets and a
+fixed list of functions): nothing a lab types is ever run as code.
+
 ### Database addresses
 
 A database's `key` is its address (`/inventory/<key>`, `/stocks/<key>`,

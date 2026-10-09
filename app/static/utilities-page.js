@@ -14,7 +14,9 @@
 
   const KEY = 'biomanager:util:';
   const ICONS = root.dataset.icons;
-  const canEditRotors = root.dataset.rotorsEditable === '1';
+  const canEditRotors = root.dataset.rotorsEditable === '1';   // anyone but a guest
+  const me = root.dataset.me || '';
+  const isAdmin = root.dataset.admin === '1';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const ico = (name) => `<svg class="icon" aria-hidden="true"><use href="${ICONS}#${name}"></use></svg>`;
   const get = (k, d) => { try { const v = JSON.parse(localStorage.getItem(KEY + k)); return v == null ? d : v; } catch (_) { return d; } };
@@ -78,6 +80,13 @@
   // The rotor a picker value names; '' (type the radius) is none, not the first.
   const rotorAt = (value) => (value === '' || value == null ? null : rotors[Number(value)] || null);
 
+  /* ------------------------------------------------------ the lab's own */
+
+  // Tools the lab made, listed with the rest; their maker or an admin may
+  // change them, and anyone but a guest may make one.
+  B.useLabTools(readJson('util-lab-tools') || []);
+  const mayChange = (def) => canEditRotors && !!def && (def.author === me || isAdmin);
+
   /* ---------------------------------------------------------- the views */
 
   const view = root.querySelector('[data-util-view]');
@@ -107,6 +116,8 @@
         ${B.GROUPS.map((g) => `<section class="card util-group" aria-labelledby="util-g-${g.id}">
           <header><span class="util-gicon">${ico(g.icon)}</span><div><h2 id="util-g-${g.id}">${esc(g.name)}</h2><p>${esc(g.does)}</p></div></header>
           <ul>${inGroup(g.id).map((x) => `<li><a href="#${x.id}" title="${esc(x.does)}"><span>${esc(x.name)}</span>${x.group !== g.id ? `<small>${esc(group(x.group).name)}</small>` : ''}</a></li>`).join('')}</ul>
+          ${g.id === 'lab' ? `${inGroup('lab').length ? '' : `<p class="util-hint">${esc(t('Your own formulas, kept for everyone in the lab.'))}</p>`}
+            ${canEditRotors ? `<a class="util-new" href="#lab-new">${ico('plus')}${esc(t('Make a tool'))}</a>` : ''}` : ''}
         </section>`).join('')}
         <section class="card util-group" aria-labelledby="util-g-ref">
           <header><span class="util-gicon">${ico('table')}</span><div><h2 id="util-g-ref">${esc(t('Reference'))}</h2><p>${esc(t('Tables to look things up'))}</p></div></header>
@@ -269,8 +280,9 @@
       view.innerHTML = `<div class="util-tool">${rail(x)}<div class="util-main">
         <a class="util-back util-back-narrow" href="#">${ico('chevron-left')}${esc(t('All tools'))}</a>
         <header class="util-head">
-          <div><p class="util-crumb">${esc(g.name)}</p><h2>${esc(x.name)}</h2><p class="util-does">${esc(x.does)}</p></div>
+          <div><p class="util-crumb">${esc(g.name)}${x.lab && x.lab.author ? ` · ${esc(t('made by %(name)s', { name: x.lab.author }))}` : ''}</p><h2>${esc(x.name)}</h2><p class="util-does">${esc(x.does)}</p></div>
           <div class="util-actions">
+            ${x.lab && mayChange(x.lab) ? `<a class="btn btn-sm" href="#lab-edit-${esc(x.id)}">${ico('edit')}${esc(t('Edit'))}</a>` : ''}
             <button type="button" class="btn btn-sm${pinned ? ' is-pinned' : ''}" data-pin aria-pressed="${pinned}">${ico('star')}${esc(pinned ? t('Pinned') : t('Pin'))}</button>
             <button type="button" class="btn btn-sm btn-ghost" data-reset title="${esc(t('Back to the example values'))}">${ico('refresh')}${esc(t('Reset'))}</button>
           </div>
@@ -390,11 +402,129 @@
     if (el) el.scrollIntoView({ block: 'start' });
   }
 
+  /* ------------------------------------------- making a tool of the lab's */
+
+  function editor(def) {
+    const editing = !!def;
+    const tool = def ? JSON.parse(JSON.stringify(def)) : {
+      name: '', does: '', note: '',
+      inputs: [{ name: 'mass', label: t('Mass'), unit: 'mg', value: '10' }, { name: 'volume', label: t('Volume'), unit: 'mL', value: '5' }],
+      outputs: [{ label: t('Concentration'), formula: 'mass / volume', unit: 'mg/mL', name: '' }],
+    };
+    document.title = `${editing ? t('Edit a tool') : t('Make a tool')} · ${t('Utilities')}`;
+    const inRow = (x, k) => `<div class="util-lab-row is-input" data-in="${k}">
+      <input data-f="name" value="${esc(x.name)}" placeholder="${esc(t('name'))}" aria-label="${esc(t('Name in formulas'))}" spellcheck="false" class="font-mono">
+      <input data-f="label" value="${esc(x.label)}" placeholder="${esc(t('Label'))}" aria-label="${esc(t('Label'))}">
+      <input data-f="unit" value="${esc(x.unit)}" placeholder="${esc(t('Unit'))}" aria-label="${esc(t('Unit'))}">
+      <input data-f="value" value="${esc(x.value)}" placeholder="${esc(t('Example'))}" aria-label="${esc(t('Example'))}" inputmode="decimal">
+      <button type="button" class="btn btn-sm btn-ghost btn-icon" data-drop title="${esc(t('Remove'))}" aria-label="${esc(t('Remove'))}">${ico('close')}</button>
+      <small class="util-lab-problem" data-problem="in${k}"></small></div>`;
+    const outRow = (x, k) => `<div class="util-lab-row is-output" data-out="${k}">
+      <input data-f="label" value="${esc(x.label)}" placeholder="${esc(t('Label'))}" aria-label="${esc(t('Label'))}">
+      <input data-f="formula" value="${esc(x.formula)}" placeholder="mass / (conc * mw)" aria-label="${esc(t('Formula'))}" spellcheck="false" class="font-mono">
+      <input data-f="unit" value="${esc(x.unit)}" placeholder="${esc(t('Unit'))}" aria-label="${esc(t('Unit'))}">
+      <input data-f="name" value="${esc(x.name || '')}" placeholder="${esc(t('name (optional)'))}" aria-label="${esc(t('Name, to use in later formulas'))}" spellcheck="false" class="font-mono">
+      <button type="button" class="btn btn-sm btn-ghost btn-icon" data-drop title="${esc(t('Remove'))}" aria-label="${esc(t('Remove'))}">${ico('close')}</button>
+      <small class="util-lab-problem" data-problem="out${k}"></small></div>`;
+    view.innerHTML = `<div class="util-tool">${rail({ id: '', group: 'lab' })}<div class="util-main">
+      <a class="util-back util-back-narrow" href="#">${ico('chevron-left')}${esc(t('All tools'))}</a>
+      <header class="util-head"><div><p class="util-crumb">${esc(t('The lab’s own'))}</p><h2>${esc(editing ? t('Edit a tool') : t('Make a tool'))}</h2>
+        <p class="util-does">${esc(t('Inputs with a short name, and answers worked out from those names. Everyone in the lab can use it.'))}</p></div></header>
+      <div class="util-work is-editor">
+        <form class="card util-form util-lab-form" autocomplete="off">
+          <label class="util-field is-wide"><span>${esc(t('Name'))}</span><input data-t="name" value="${esc(tool.name)}" placeholder="${esc(t('e.g. Pellet volume from OD'))}"></label>
+          <label class="util-field is-wide"><span>${esc(t('What it gives, in a line'))}</span><input data-t="does" value="${esc(tool.does)}"></label>
+          <div class="util-field is-wide"><span>${esc(t('Inputs'))}</span>
+            <div class="util-lab-head is-input"><small>${esc(t('Name in formulas'))}</small><small>${esc(t('Label'))}</small><small>${esc(t('Unit'))}</small><small>${esc(t('Example'))}</small></div>
+            <div data-inputs>${tool.inputs.map(inRow).join('')}</div>
+            <button type="button" class="btn btn-sm btn-ghost util-lab-add" data-add-in>${ico('plus')}${esc(t('Add an input'))}</button></div>
+          <div class="util-field is-wide"><span>${esc(t('Answers'))}</span>
+            <div class="util-lab-head is-output"><small>${esc(t('Label'))}</small><small>${esc(t('Formula'))}</small><small>${esc(t('Unit'))}</small><small>${esc(t('Name, to use in later formulas'))}</small></div>
+            <div data-outputs>${tool.outputs.map(outRow).join('')}</div>
+            <button type="button" class="btn btn-sm btn-ghost util-lab-add" data-add-out>${ico('plus')}${esc(t('Add an answer'))}</button>
+            <small class="util-hint">${esc(t('A formula uses the names above, numbers, + − * / ^, brackets, pi, and sqrt, ln, log10, log2, exp, abs, round, min, max, pow. Units are labels: keep the numbers in the units you name.'))}</small></div>
+          <label class="util-field is-wide"><span>${esc(t('A note under the answer (optional)'))}</span><input data-t="note" value="${esc(tool.note || '')}"></label>
+          <div class="util-lab-actions is-wide">
+            ${editing ? `<button type="button" class="btn btn-sm btn-danger" data-delete>${ico('trash')}${esc(t('Delete'))}</button>` : ''}
+            <span></span><a class="btn btn-sm btn-ghost" href="${editing ? `#${esc(def.id)}` : '#'}">${esc(t('Cancel'))}</a>
+            <button type="submit" class="btn btn-sm btn-primary">${esc(t('Save'))}</button></div>
+          <p class="util-error is-wide" data-error hidden></p>
+        </form>
+        <section class="card util-answer" aria-live="polite"><header><span>${esc(t('Preview'))}</span></header><div class="util-answer-body" data-preview></div></section>
+      </div></div></div>`;
+    const form = view.querySelector('form');
+    const read = () => ({
+      ...(editing ? { id: def.id } : {}),
+      name: form.querySelector('[data-t="name"]').value.trim(), does: form.querySelector('[data-t="does"]').value.trim(),
+      note: form.querySelector('[data-t="note"]').value.trim(),
+      inputs: [...form.querySelectorAll('[data-in]')].map((r) => Object.fromEntries([...r.querySelectorAll('[data-f]')].map((i) => [i.dataset.f, i.value.trim()]))),
+      outputs: [...form.querySelectorAll('[data-out]')].map((r) => Object.fromEntries([...r.querySelectorAll('[data-f]')].map((i) => [i.dataset.f, i.value.trim()]))),
+    });
+    let problems = {};
+    const preview = () => {
+      const now = read();
+      const made = B.labTool({ ...now, id: 'preview' });
+      problems = made.problems;
+      form.querySelectorAll('[data-problem]').forEach((el) => { el.textContent = problems[el.dataset.problem] || ''; });
+      const raw = Object.fromEntries(now.inputs.filter((x) => x.name).map((x) => [x.name, x.value]));
+      let out;
+      try { out = made.calc.compute({ raw, num: Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, B.num(v)])), base: {}, unit: {} }); } catch (_) { out = { error: t('That doesn\'t add up: check the numbers.') }; }
+      view.querySelector('[data-preview]').innerHTML = `<h3 class="util-lab-title">${esc(now.name || t('Untitled tool'))}</h3>${results(out)}`;
+    };
+    // Rows renumber after a removal, so each problem shows on its own row.
+    const renumber = () => {
+      form.querySelectorAll('[data-in]').forEach((r, k) => { r.dataset.in = k; r.querySelector('[data-problem]').dataset.problem = `in${k}`; });
+      form.querySelectorAll('[data-out]').forEach((r, k) => { r.dataset.out = k; r.querySelector('[data-problem]').dataset.problem = `out${k}`; });
+    };
+    form.addEventListener('input', preview);
+    form.addEventListener('click', (e) => {
+      if (e.target.closest('[data-drop]')) { e.target.closest('.util-lab-row').remove(); renumber(); preview(); }
+      if (e.target.closest('[data-add-in]')) { const box = form.querySelector('[data-inputs]'); box.insertAdjacentHTML('beforeend', inRow({ name: '', label: '', unit: '', value: '' }, box.children.length)); }
+      if (e.target.closest('[data-add-out]')) { const box = form.querySelector('[data-outputs]'); box.insertAdjacentHTML('beforeend', outRow({ label: '', formula: '', unit: '', name: '' }, box.children.length)); }
+    });
+    const error = form.querySelector('[data-error]');
+    const send = async (url, body) => {
+      error.hidden = true;
+      try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || t('Not saved. Check the connection and try again.'));
+        B.useLabTools(data.tools);
+        return data;
+      } catch (err) {
+        error.textContent = err.message;
+        error.hidden = false;
+        return null;
+      }
+    };
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      preview();
+      if (Object.keys(problems).length) { error.textContent = t('Fix the marked rows first.'); error.hidden = false; return; }
+      const data = await send(root.dataset.labUrl, { tool: read() });
+      if (data) location.hash = data.id;
+    });
+    const del = form.querySelector('[data-delete]');
+    if (del) {
+      del.addEventListener('click', async () => {
+        if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.lastChild.textContent = t('Delete for everyone?'); return; }
+        const data = await send(`${root.dataset.labUrl}/${encodeURIComponent(def.id)}/delete`, {});
+        if (data) location.hash = '';
+      });
+    }
+    preview();
+  }
+
   /* --------------------------------------------------------------- route */
 
   function route() {
     const id = decodeURIComponent(location.hash.slice(1));
     if (id === 'reference' || id.startsWith('ref-')) { reference(id); return; }
+    if (id === 'lab-new' && canEditRotors) { editor(null); window.scrollTo(0, 0); return; }
+    if (id.startsWith('lab-edit-')) {
+      const found = B.locate(id.slice(9));
+      if (found && found.tool.lab && mayChange(found.tool.lab)) { editor(found.tool.lab); window.scrollTo(0, 0); return; }
+    }
     const found = id && B.locate(id);
     if (found) {
       // An address naming a calculator opens its mode; a tool's own name
