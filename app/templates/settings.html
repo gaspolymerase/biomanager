@@ -331,6 +331,19 @@
           <span class="set-label"><b>{{ _('Export my data') }}</b><small>{{ _('Your mice and plasmids, your notebook pages and your profile, in one .zip.') }}</small></span>
           <a class="btn btn-sm" href="{{ url_for('export_my_data') }}">{{ icon('download') }} {{ _('Download .zip') }}</a>
         </div>
+        {% if current_user.role == 'admin' %}
+          {# The whole lab in one file (app/lab_move.py save): a backup, or to bring it to a server or another computer. #}
+          <div class="set-row">
+            <span class="set-label"><b>{{ _('Save the whole lab') }}</b><small>{{ _('Every record, account and uploaded file, in one .biomanager file: a backup, or to bring the lab to a server or another computer.') }}</small></span>
+            <span class="flex gap-1.5">
+              {% if request.args.get('saved_file') and this_computer() %}
+                <form method="post" action="{{ url_for('lab_move.show') }}"><input type="hidden" name="name" value="{{ request.args.get('saved_file') }}">
+                  <button type="submit" class="btn btn-sm btn-ghost">{{ _('Show in folder') }}</button></form>
+              {% endif %}
+              <form method="post" action="{{ url_for('lab_move.save') }}"><button type="submit" class="btn btn-sm">{{ icon('download') }} {{ _('Save') }}</button></form>
+            </span>
+          </div>
+        {% endif %}
         <a class="set-row set-row-link" href="{% if lab_data %}#history{% else %}{{ url_for('batches_view') }}{% endif %}">
           <span class="set-label"><b>{{ _('Batch history') }}</b><small>{{ _('Changes made many records at a time (Add many, bulk edits, imports), each with Undo') }}</small></span>
           {{ icon('chevron-right', 'set-chev') }}
@@ -465,6 +478,19 @@
         </label>
         <datalist id="lab-timezones">{% for zone in timezones %}<option value="{{ zone }}"></option>{% endfor %}</datalist>
       </form>
+      {% if admin and this_computer() %}
+        {# The desktop app: start over, and the way back (app.py start_new_lab, restore_lab). #}
+        <div class="set-group mt-3" id="start-over">
+          <div class="set-row">
+            <span class="set-label"><b>{{ _('Start a new lab') }}</b><small>{{ _('Sets this lab aside, whole, and opens an empty one. Nothing is deleted.') }}</small></span>
+            <a class="btn btn-sm" href="{{ url_for('start_new_lab') }}">{{ _('Start a new lab…') }}</a>
+          </div>
+          <div class="set-row">
+            <span class="set-label"><b>{{ _('Bring back a lab set aside') }}</b><small>{{ _('A lab set aside earlier comes back; the one here now is set aside in its place.') }}</small></span>
+            <a class="btn btn-sm" href="{{ url_for('restore_lab') }}">{{ _('Choose a lab…') }}</a>
+          </div>
+        </div>
+      {% endif %}
     </section>
 
     {# ---------------------------------------------------------------- Databases #}

@@ -7,7 +7,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends restic curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY backup.sh restore-test.sh restore.sh schedule.sh healthcheck.sh /usr/local/bin/
+COPY backup.sh restore-test.sh restore.sh start-over.sh schedule.sh healthcheck.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/*.sh
 
 HEALTHCHECK --interval=15m --timeout=10s --start-period=30m CMD ["/usr/local/bin/healthcheck.sh"]

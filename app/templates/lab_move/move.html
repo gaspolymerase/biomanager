@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{# The desktop app's admin moves the lab to a new server (app/lab_move.py move). #}
+{% block page_title %}{{ _('Move this lab to a server') }}{% endblock %}
+{% block page_heading %}{{ _('Move this lab to a server') }}{% endblock %}
+{% block content %}
+<article class="card max-w-[620px] p-6">
+  <a class="text-[12.5px]" href="{{ url_for('devices.page') }}">‹ {{ _('Back to Devices') }}</a>
+  <p class="mt-3 text-[13px] leading-relaxed text-ink-soft">
+    {{ _('The whole lab goes to the server: every record, account and uploaded file. Everyone then works there, from any computer or phone, and signs in as they do here.') }}
+  </p>
+  <ol class="mt-3 flex list-decimal flex-col gap-1.5 pl-5 text-[13px] leading-snug">
+    <li>{{ _('Set up the server first, with Set up a lab server or the guide. Opened in a browser, it says This server has no lab yet.') }}
+      <a href="{{ url_for('server_setup.page') }}">{{ _('Set up a lab server') }}</a></li>
+    <li>{{ _('Give its address and the setup code from its log below, and press Move.') }}</li>
+    <li>{{ _('This window then opens the server, and this computer keeps a daily copy of the lab. Its own lab stays here, read only, as it was: Use this computer’s own lab again, under Devices, brings it back if you change your mind.') }}</li>
+  </ol>
+  {% if result and not result.ok %}
+    <div class="mt-4 rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-[12.5px] text-danger-700">
+      <p><b>{{ result.error }}</b></p>
+      {% if result.problems %}<ul class="mt-1 list-disc pl-5">{% for p in result.problems %}<li>{{ p }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+  {% endif %}
+  <form method="post" class="mt-4 flex flex-col gap-3" data-move-form>
+    <label class="field-label">{{ _('The server’s address') }}
+      <input name="address" required autocapitalize="off" spellcheck="false" value="{{ address }}" placeholder="lab.example.org" class="font-mono">
+    </label>
+    <label class="field-label">{{ _('Setup code') }}
+      <input name="setup_code" autocomplete="off" spellcheck="false" placeholder="xxxx-xxxx-xxxx" class="font-mono">
+      <small class="field-hint">{{ _('Printed in the server’s log when it started. A server you set up from this app needs none.') }}</small>
+    </label>
+    <div class="flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary btn-lg">{{ _('Move') }}</button>
+      <a class="btn btn-lg" href="{{ url_for('devices.page') }}">{{ _('Cancel') }}</a>
+    </div>
+    <p class="text-[12px] text-muted" data-move-wait hidden>{{ _('Moving the lab… This can take a few minutes for a lab with many files. Nothing can be changed here meanwhile.') }}</p>
+  </form>
+  <script nonce="{{ csp_nonce() }}">
+    (function () {
+      const form = document.querySelector('[data-move-form]');
+      form.addEventListener('submit', () => {
+        form.querySelector('[data-move-wait]').hidden = false;
+        form.querySelector('button[type=submit]').disabled = true;
+      });
+    })();
+  </script>
+</article>
+{% endblock %}

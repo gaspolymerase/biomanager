@@ -1,0 +1,33 @@
+{% extends "door.html" %}
+{# Before any account: bring a lab here from a desktop app (app/door.py bring). #}
+{% from "door/_concept.html" import concept with context %}
+{% block lab %}{{ concept(line=_('A lab already kept in the desktop app can come here whole: its records, accounts and files.')) }}{% endblock %}
+{% block door %}
+  <a class="door-back" href="{{ url_for('index') }}">‹ {{ _('Back') }}</a>
+  <h2 class="door-title">{{ _('Bring a lab here') }}</h2>
+  {% if not here %}
+    <div class="door-banner">
+      <p><b>{{ _('From the desktop app, the simplest way:') }}</b> {{ _('in it, Settings → Devices → Move this lab to a server, with this address and the setup code.') }}</p>
+      <p>{{ _('This server:') }} <code>{{ request.host_url.rstrip('/') }}</code></p>
+    </div>
+    <p class="door-or"><span>{{ _('or with a lab file') }}</span></p>
+  {% endif %}
+  <p class="door-lede">{{ _('A lab file is made in the desktop app: Settings → Your data → Save the whole lab.') }}</p>
+  {% if problems %}
+    <div class="flash-message flash-error"><ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="door-form" data-bring-form>
+    <label class="door-field">{{ _('Lab file') }}
+      <input type="file" name="lab_file" accept=".biomanager" required>
+    </label>
+    {% if needs_setup_code %}
+      <label class="door-field">{{ _('Setup code') }}
+        <input name="setup_code" autocomplete="off" spellcheck="false" required placeholder="xxxx-xxxx-xxxx" class="font-mono">
+        <small>{{ _('Printed in the server’s log when BioManager started.') }}</small>
+      </label>
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Bring the lab here') }}</button>
+    <p class="door-small" data-bring-wait hidden>{{ _('Bringing the lab in… This can take a few minutes for a lab with many files.') }}</p>
+  </form>
+  <p class="door-small">{{ _('Everything is checked first; if anything can’t go in, nothing changes here.') }}</p>
+{% endblock %}

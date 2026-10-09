@@ -1,0 +1,33 @@
+{% extends "door.html" %}
+{# The desktop app: bring back a lab set aside earlier (app.py restore_lab).
+   The lab here now is set aside in its place, so it can come back the same way. #}
+{% block door %}
+  <a class="door-back" href="{{ url_for('settings') if signed_in else url_for('index') }}">‹ {{ _('Back') }}</a>
+  {% if asked %}
+    <h2 class="door-title">{{ _('Close BioManager to finish') }}</h2>
+    <p class="door-lede">{{ _('The lab set aside on %(when)s comes back the next time BioManager opens. The lab here now is set aside in its place, so you can bring it back the same way.', when=asked) }}</p>
+    <button type="button" class="btn btn-primary btn-lg door-wide" data-close-app hidden>{{ _('Close BioManager') }}</button>
+    <form method="post" class="door-form">
+      <button type="submit" name="action" value="keep" class="btn btn-lg door-wide">{{ _('Keep the lab I have') }}</button>
+    </form>
+  {% else %}
+    <h2 class="door-title">{{ _('Bring back a lab set aside') }}</h2>
+    <p class="door-lede">{{ _('Labs set aside by Start a new lab are kept here, whole. Bringing one back sets the lab here now aside in its place; nothing is deleted.') }}</p>
+    {% if labs %}
+      <div class="door-choices">
+        {% for old in labs %}
+          <form method="post" class="door-choice is-row">
+            <input type="hidden" name="folder" value="{{ old.folder }}">
+            <span class="door-mono" aria-hidden="true">{{ (old.name or 'BioManager')|initials }}</span>
+            <span><b>{{ old.name or _('A lab with no name') }}</b>
+              <small>{{ _('Set aside %(when)s', when=old.folder) }} · {{ ngettext('%(num)s account', '%(num)s accounts', old.accounts) }} · {{ (old.size / 1048576)|round(1) }} MB</small></span>
+            <button type="submit" class="btn btn-sm"{{ ' disabled' if not old.has_lab }}>{{ _('Bring back') }}</button>
+          </form>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="door-banner">{{ _('No lab has been set aside on this computer.') }}</p>
+    {% endif %}
+    <p class="door-small">{{ _('They are in this folder:') }} <code>{{ folder }}</code></p>
+  {% endif %}
+{% endblock %}

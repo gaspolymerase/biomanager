@@ -21,7 +21,10 @@
     </a>
   </div>
   <div class="door-others">
-    <p>{{ _('Moving to a new computer?') }} <a href="{{ guide_url|replace('guide.html', 'guide/restore-a-backup.html') }}" target="_blank" rel="noopener">{{ _('Restore a lab from a backup') }}</a></p>
+    <p>{{ _('Moving to a new computer?') }} <a href="{{ url_for('door.bring') }}">{{ _('Bring a lab file here') }}</a></p>
+    {% if old_labs %}
+      <p>{{ _('Started a new lab by mistake?') }} <a href="{{ url_for('restore_lab') }}">{{ _('Bring back a lab set aside') }}</a></p>
+    {% endif %}
     <p>{{ _('Just looking?') }} <a href="{{ guide_url|replace('guide.html', 'guide/try-it-first.html') }}" target="_blank" rel="noopener">{{ _('Try a demo lab') }}</a></p>
   </div>
 {% endblock %}

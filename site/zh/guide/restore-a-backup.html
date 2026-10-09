@@ -146,9 +146,8 @@
     </ol>
     <p class="result">BioManager 打开的实验室就是做那份备份时的样子。</p>
     <div class="callout warn"><b>备份里没有之后的改动</b> 做备份之后录入的一切都不在里面。确认无误之前，留着挪开的那个文件。</div>
-    <div class="callout note"><b>用“新建实验室”移开的实验室</b> 它在 <code>data/old-labs/</code> 里，文件夹以移开的时间命名
-      （见<a href="people-and-guests.html#troubleshooting">人员与权限</a>）。想回到它：退出 BioManager，同样把当前实验室的文件从 <code>data</code> 挪走，
-      再把那个文件夹里的东西都放回 <code>data</code>；其中的 <code>uploads</code> 文件夹放回 <code>data</code> 旁边。</div>
+    <div class="callout note"><b>用“新建实验室”移开的实验室</b> <b>找回已搁置的实验室</b> （Bring back a lab set aside，在 <b>设置 → 实验室</b>、登录页或新实验室的首页）会列出它们；
+      选一个后关闭 BioManager，下次打开时它就回来了。现在的实验室会被搁置在它的位置，所以可以用同样的方法撤回。它们保存在 <code>data/old-labs/</code> 里。</div>
     <h2 id="lab-server">实验室服务器</h2>
     <p>服务器每晚备份一次，每周恢复一次最新备份以证明备份可用。恢复只要一条命令，由负责服务器的人执行，而且不会删掉被替换的数据：
       见服务器安装包里的 <code>deploy/RUNBOOK.md</code> 和<a href="../server.html#safe">保护数据安全</a>。如果只是批量操作出了错，

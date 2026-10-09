@@ -167,9 +167,12 @@ class StartingOrOpeningALab(AppTestCase):
                 mock.patch("app.devices.on_this_computer", return_value=True), \
                 mock.patch("app.devices._save_prefs", side_effect=lambda **kw: saved.update(kw)), \
                 mock.patch.object(door, "_fetch", side_effect=lambda url, timeout=6: pages[url]):
-            html = app.test_client().post("/open-lab", data={"address": "lab.example.org"}).get_data(as_text=True)
-        self.assertIn("Found your lab", html)
-        self.assertIn("Rivera Lab", html)
+            c = app.test_client()
+            html = c.post("/open-lab", data={"address": "lab.example.org"}).get_data(as_text=True)
+            self.assertIn("Found your lab", html)
+            self.assertIn("Rivera Lab", html)
+            self.assertEqual(saved, {})                 # only on Open (tests/test_lab_move.py)
+            c.post("/open-lab", data={"action": "open"})
         self.assertEqual(saved, {"window_url": "https://lab.example.org"})
 
     def test_an_address_that_does_not_answer_says_so(self):

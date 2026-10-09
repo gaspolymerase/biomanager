@@ -63,6 +63,12 @@ class DesktopApi:
                 AppHelper.callAfter(_rebuild_go_menu)
         return True
 
+    def this_computer(self):
+        """Back to this computer's own BioManager, from a lab another device
+        holds (the link on that lab's sign-in, templates/door/signin.html)."""
+        this_computer()
+        return True
+
     def quit(self):
         """Close the app: Start a new lab sets the lab aside at the next start."""
         window = _state["window"]

@@ -38,7 +38,14 @@
 	import tls_{$TLS:internal}
 	encode zstd gzip
 
-	request_body {
+	# A whole lab brought from the desktop app (app/door.py, only before the
+	# server has any account) is one large file; everything else stays small.
+	@lab_import path /lab/import /lab/bring
+	request_body @lab_import {
+		max_size 16GB
+	}
+	@not_lab_import not path /lab/import /lab/bring
+	request_body @not_lab_import {
 		max_size 64MB
 	}
 

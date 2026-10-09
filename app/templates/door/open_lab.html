@@ -11,8 +11,11 @@
       <span class="door-mono" aria-hidden="true">{{ (found.name or 'BioManager')|initials }}</span>
       <span><b>{{ found.name or _('A BioManager lab') }}</b><small>{{ found.host }}</small></span>
     </div>
-    <p class="door-lede">{{ _('This window opens it from now on. Sign in, or ask to join if you’re new.') }}</p>
-    <a class="btn btn-primary btn-lg door-wide" href="{{ found.url }}/">{{ _('Open %(lab)s', lab=found.name) if found.name else _('Open the lab') }}</a>
+    <p class="door-lede">{{ _('Open makes this window open it from now on. To come back to this computer’s own BioManager later, use “Use this computer’s BioManager” on its sign-in, or Go → This Computer’s BioManager.') }}</p>
+    <form method="post" class="door-form">
+      <input type="hidden" name="action" value="open">
+      <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Open %(lab)s', lab=found.name) if found.name else _('Open the lab') }}</button>
+    </form>
   {% else %}
     <a class="door-back" href="{{ url_for('index') }}">‹ {{ _('Back') }}</a>
     <h2 class="door-title">{{ _('Open your lab') }}</h2>

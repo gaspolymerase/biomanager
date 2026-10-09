@@ -148,6 +148,13 @@
       </ul>
       <div class="note warn"><b>不要把 BioManager 的数据放在 Dropbox、OneDrive、Google Drive 或 iCloud Drive 里。</b> 同步会损坏
         数据库文件。BioManager 发现自己在这类文件夹里时会提醒你。</div>
+      <h3 id="whole-lab">把整个实验室存成一个文件</h3>
+      <p><b>设置 → 你的数据 → 保存整个实验室</b> （Save the whole lab，管理员）会把所有记录、账号和上传的文件存成一个
+        <code>.biomanager</code> 文件：桌面版存到“下载”文件夹，服务器上则直接下载。它是一份可以随身带的备份，也是把实验室搬到另一台电脑
+        （新装桌面版首页上的 <b>换了新电脑？把实验室文件搬到这里</b>）或新服务器（<b>从桌面版搬来实验室</b>）的方法。Google 日历等已保存的连接不会包含在内，需要到新地方重新建立。</p>
+      <h3 id="set-aside">搁置的实验室</h3>
+      <p><b>新建实验室</b> （<b>设置 → 实验室</b>，或没人能登录时在登录页上）会把当前实验室整体搁置，打开一个空的。<b>找回已搁置的实验室</b>
+        （<b>设置 → 实验室</b>、登录页或新实验室的首页）会列出它们的名字和账号数；找回时，现在的实验室会被搁置在它的位置，所以两步都可以用同样的方法撤回。不会删除任何东西。</p>
       <h2 id="a-lab-server">实验室服务器</h2>
       <p>服务器每晚备份一次，每周恢复一次最新备份以证明备份可用，还可以把加密副本存到
         异地——见<a href="../server.html#safe">保护数据安全</a>。</p>
@@ -219,9 +226,11 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 4 分钟</p>
+      <p>本页内容 · 阅读约 5 分钟</p>
       <ol>
         <li class="lvl2"><a href="#the-desktop-app">桌面版</a></li>
+        <li class="lvl3"><a href="#whole-lab">把整个实验室存成一个文件</a></li>
+        <li class="lvl3"><a href="#set-aside">搁置的实验室</a></li>
         <li class="lvl2"><a href="#a-lab-server">实验室服务器</a></li>
         <li class="lvl2"><a href="#copies">在你电脑上保留一份实验室副本</a></li>
         <li class="lvl2"><a href="#devices">一个实验室，多台设备</a></li>

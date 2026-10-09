@@ -20,8 +20,9 @@ SKIP = {"/logout", "/calendar/google/connect", "/calendar/google/callback",
         "/api/lab-copy/snapshot", "/api/lab-copy/files", "/lab-copy/status",
         # The desktop app's only (tests/test_server_setup.py, tests/test_start_new_lab.py).
         "/server-setup/", "/start-new-lab",
-        # Before any account, in the desktop app (tests/test_door.py).
-        "/open-lab"}
+        # Before any account, in the desktop app (tests/test_door.py), and the desktop's
+        # way back and move (tests/test_lab_move.py).
+        "/open-lab", "/lab-elsewhere", "/restore-lab", "/settings/devices/move"}
 # /: the sign-in before signing in (app/door.py); /guest: entering a guest code (app/guests.py);
 # /ask: asking the lab's admins; /joined/status: whether this browser's request to join is approved.
 PUBLIC = {"/", "/login", "/register", "/healthz", "/guest", "/ask", "/joined/status", "/favicon.ico",

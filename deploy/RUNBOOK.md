@@ -98,6 +98,31 @@ To check a backup without replacing anything, run a restore test on it:
 that one (with no file named, the newest) into a scratch database, checks it
 and drops it again.
 
+## Starting the lab over
+
+For a lab that should begin again empty (a trial run, the wrong lab moved
+in). Nothing is deleted: the lab is set aside and can be put back.
+
+```bash
+# server
+docker compose stop app
+docker compose --profile restore run --rm --entrypoint start-over.sh restore
+docker compose start app
+docker compose logs app | grep "setup code"
+```
+
+The database is kept as `biomanager_before_start_over_<time>` and the files
+in `/data/.before-start-over-<time>/`. The app opens on an empty lab with a
+new setup code: start a lab, or bring one from the desktop app (below). To
+put the old lab back:
+
+```bash
+# server
+docker compose stop app
+docker compose --profile restore run --rm --entrypoint start-over.sh restore --undo <time>
+docker compose start app
+```
+
 ## The server is lost
 
 The machine was deleted, or its disk is unreadable. Rebuild from a copy of
@@ -176,6 +201,18 @@ The same as [The server is lost](#the-server-is-lost), but first take a
 fresh backup (`docker compose exec backup backup.sh`), copy it off the old
 server (an admin's Mac: `~/Library/Application\ Support/BioManager/pull-backups.sh`),
 and stop the old app (`docker compose stop app`) so nobody writes to it meanwhile.
+
+## Bringing a lab from the desktop app
+
+A server with no account yet takes a whole lab: records, accounts and
+uploaded files. In the desktop app, **Settings → Devices → Move this lab to
+a server**, with the server's address and its setup code
+(`docker compose logs app | grep "setup code"`). Or save it there
+(**Settings → Your data → Save the whole lab**) and open the server's
+address: **This server has no lab yet → Bring a lab from the desktop app**
+takes the `.biomanager` file. Both versions must be the same. Everything is
+checked first; if anything can't go in, nothing changes. Stored connections
+(Google Calendar links) are made again on the server.
 
 ## An admin is locked out
 

@@ -25,9 +25,10 @@ from urllib.request import urlopen
 
 import webview
 
-# Start a new lab, if the sign-in page asked for one: this lab moves aside,
-# whole, before anything opens its database (app/paths.py).
+# Start a new lab, or bring back one set aside, if that was asked for: this
+# lab moves aside, whole, before anything opens its database (app/paths.py).
 from app import paths as _paths  # noqa: E402
+LAB_RESTORED = _paths.restore_asked_for()
 LAB_SET_ASIDE = _paths.set_lab_aside()
 
 from app.app import app  # noqa: E402
@@ -39,6 +40,8 @@ from app.app import app  # noqa: E402
 app.config["LOCAL_SETUP"] = True
 # Said on the sign-in page until the new lab has its first account.
 app.config["LAB_SET_ASIDE"] = str(LAB_SET_ASIDE or "")
+# A lab brought back: the sign-in says so, and where the one it replaced went.
+app.config["LAB_RESTORED"] = LAB_RESTORED if LAB_SET_ASIDE else ""
 # "Automatic" language in this window: the computer's (app/i18n.py).
 from app import i18n  # noqa: E402
 app.config["COMPUTER_LANGUAGE"] = i18n.system_language()
@@ -129,7 +132,10 @@ def main() -> int:
         import desktop_windows
         reason = desktop_windows.missing()
         if reason:
-            desktop_windows.run_in_browser(target, reason)
+            # A browser has no Go menu to come back with: when the window
+            # would open another lab, the browser opens this computer's page
+            # offering that lab or this computer's own (app/door.py elsewhere).
+            desktop_windows.run_in_browser(url + "lab-elsewhere" if target != url else url, reason)
             return 0
     window = webview.create_window(
         "BioManager",

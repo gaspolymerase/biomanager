@@ -174,3 +174,9 @@ body.door { margin: 0; min-height: 100vh; background: var(--color-surface); colo
   .door-main { align-items: flex-start; padding: 24px 20px calc(28px + env(safe-area-inset-bottom, 0px)); }
 }
 .door-banner a { color: var(--color-brand-700); font-weight: 500; text-decoration: none; }
+
+/* A row to choose from with its own button (labs set aside). */
+.door-choice.is-row { grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; }
+.door-choice.is-row .door-mono { width: 44px; height: 44px; border-radius: 12px; background: var(--door-lab); color: var(--door-lab-ink); font-size: 15px; }
+.door-choice.is-row small { overflow-wrap: anywhere; }
+.door-small code { overflow-wrap: anywhere; font-size: 12px; }

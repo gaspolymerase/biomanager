@@ -10,6 +10,7 @@
   </div>
   <p class="door-lede">{{ _('Setting BioManager up for your lab? Start here. You’ll need the setup code printed in the server’s log when it started.') }}</p>
   <a class="btn btn-primary btn-lg door-wide" href="{{ url_for('door.start') }}">{{ _('Start a new lab here') }}</a>
+  <a class="btn btn-lg door-wide" href="{{ url_for('door.bring') }}">{{ _('Bring a lab from the desktop app') }}</a>
   {% if config.LOCAL_SETUP %}
     <div class="door-others"><p><a href="{{ url_for('server_setup.page') }}">{{ _('Set up a lab server') }}</a></p></div>
   {% endif %}

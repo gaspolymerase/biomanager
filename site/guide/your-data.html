@@ -148,6 +148,17 @@
       </ul>
       <div class="note warn"><b>Don't keep BioManager's data in Dropbox, OneDrive, Google Drive or iCloud Drive.</b> Syncing corrupts
         database files. BioManager warns you if it finds itself in one.</div>
+      <h3 id="whole-lab">The whole lab in one file</h3>
+      <p><b>Settings → Your data → Save the whole lab</b> (admins) puts every record, account and uploaded file in one
+        <code>.biomanager</code> file: in Downloads on the desktop app, downloaded from a server. It is a backup you can carry, and
+        the way to bring the lab to another computer (<b>Moving to a new computer? Bring a lab file here</b> on a new desktop app's
+        first page) or to a new server (<b>Bring a lab from the desktop app</b>). Stored connections such as Google Calendar links
+        are left out: they are made again where the lab goes.</p>
+      <h3 id="set-aside">Labs set aside</h3>
+      <p><b>Start a new lab</b> (<b>Settings → Lab</b>, or the sign-in when nobody can sign in) sets the lab aside, whole, and
+        opens an empty one. <b>Bring back a lab set aside</b> (<b>Settings → Lab</b>, the sign-in, or a new lab's first page) lists
+        them with their names and accounts; the lab there now is set aside in its place, so either step can be undone the same
+        way. Nothing is deleted.</p>
       <h2 id="a-lab-server">A lab server</h2>
       <p>A server backs up every night, restores the newest backup every week to prove it works, and can keep encrypted copies
         off-site — see <a href="../server.html#safe">Keeping the data safe</a>.</p>
@@ -219,9 +230,11 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 5 min read</p>
+      <p>On this page · 6 min read</p>
       <ol>
         <li class="lvl2"><a href="#the-desktop-app">The desktop app</a></li>
+        <li class="lvl3"><a href="#whole-lab">The whole lab in one file</a></li>
+        <li class="lvl3"><a href="#set-aside">Labs set aside</a></li>
         <li class="lvl2"><a href="#a-lab-server">A lab server</a></li>
         <li class="lvl2"><a href="#copies">A copy of the lab on your computer</a></li>
         <li class="lvl2"><a href="#devices">One lab on many devices</a></li>

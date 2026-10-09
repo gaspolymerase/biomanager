@@ -113,9 +113,13 @@ def uploads_dir() -> Path:
 # in to): the request is a file in the data folder, and the next start moves
 # the lab aside, whole, before anything opens its database (desktop.py).
 NEW_LAB_REQUEST = "start-new-lab"
+# Restore a lab set aside: the request names the old-labs folder to bring
+# back; the next start sets the present lab aside first, so the restore can
+# itself be undone the same way.
+RESTORE_REQUEST = "restore-lab"
 OLD_LABS = "old-labs"
 # What belongs to the computer rather than to the lab stays where it is.
-COMPUTERS_OWN = {NEW_LAB_REQUEST, OLD_LABS, "desktop-prefs.json", "window"}
+COMPUTERS_OWN = {NEW_LAB_REQUEST, RESTORE_REQUEST, OLD_LABS, "desktop-prefs.json", "window"}
 
 
 def ask_for_new_lab(wanted: bool = True) -> None:
@@ -134,25 +138,96 @@ def old_labs_dir() -> Path:
     return data_dir() / OLD_LABS
 
 
+def old_labs() -> list[dict]:
+    """The labs set aside on this computer, newest first: the folder, when,
+    the lab's name and how many accounts it had (read from its database,
+    which is only read), and its size."""
+    import sqlite3
+    found = []
+    folder = old_labs_dir()
+    for item in sorted(folder.iterdir(), reverse=True) if folder.is_dir() else []:
+        if not item.is_dir():
+            continue
+        name, accounts = "", 0
+        database = item / "biomanager.db"
+        if database.is_file():
+            try:
+                with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as conn:
+                    row = conn.execute("SELECT value FROM app_settings WHERE key='lab_name'").fetchone()
+                    name = row[0] if row else ""
+                    accounts = conn.execute("SELECT count(*) FROM users").fetchone()[0]
+            except sqlite3.Error:
+                pass
+        size = sum(f.stat().st_size for f in item.rglob("*") if f.is_file())
+        found.append({"folder": item.name, "path": str(item), "name": name, "accounts": accounts, "size": size,
+                      "has_lab": database.is_file()})
+    return found
+
+
+def ask_to_restore(folder: str | None) -> bool:
+    """Ask the next start to bring back old-labs/<folder> (None: don't).
+    Only a folder that is there."""
+    request = data_dir() / RESTORE_REQUEST
+    if folder is None:
+        request.unlink(missing_ok=True)
+        return True
+    if not folder or "/" in folder or "\\" in folder or folder.startswith(".") or not (old_labs_dir() / folder).is_dir():
+        return False
+    request.write_text(folder, encoding="utf-8")
+    return True
+
+
+def restore_asked_for() -> str:
+    request = data_dir() / RESTORE_REQUEST
+    return request.read_text(encoding="utf-8").strip() if request.exists() else ""
+
+
+def _set_aside_now(data: Path, uploads: Path) -> Path:
+    stamp = datetime.now().strftime("%Y-%m-%d %H%M%S")
+    target, n = old_labs_dir() / stamp, 2
+    while target.exists():                      # two in one second: each its own folder
+        target, n = old_labs_dir() / f"{stamp} ({n})", n + 1
+    target.mkdir(parents=True)
+    for item in sorted(data.iterdir()):
+        if item.name not in COMPUTERS_OWN:
+            shutil.move(str(item), str(target / item.name))
+    if uploads.exists() and any(uploads.iterdir()):
+        shutil.move(str(uploads), str(target / "uploads"))
+    return target
+
+
 def set_lab_aside() -> Path | None:
     """If a new lab was asked for, move this one (its database, keys, imports
     and uploaded files) into data/old-labs/<when>/ and return that folder.
     Nothing is deleted: putting the files back brings the lab back."""
     data = data_dir()
-    if not (data / NEW_LAB_REQUEST).exists():
+    restore = restore_asked_for()
+    if restore and not (old_labs_dir() / restore).is_dir():
+        # Gone since it was asked for: nothing is moved.
+        (data / RESTORE_REQUEST).unlink(missing_ok=True)
+        restore = ""
+    if not (data / NEW_LAB_REQUEST).exists() and not restore:
         return None
     uploads = uploads_dir()
-    target = old_labs_dir() / datetime.now().strftime("%Y-%m-%d %H%M%S")
     try:
-        target.mkdir(parents=True)
-        for item in sorted(data.iterdir()):
-            if item.name not in COMPUTERS_OWN:
-                shutil.move(str(item), str(target / item.name))
-        if uploads.exists() and any(uploads.iterdir()):
-            shutil.move(str(uploads), str(target / "uploads"))
+        target = _set_aside_now(data, uploads)
+        if restore:
+            # The lab set aside earlier comes back where this one was.
+            back = old_labs_dir() / restore
+            for item in sorted(back.iterdir()) if back.is_dir() else []:
+                if item.name == "uploads":
+                    uploads.mkdir(parents=True, exist_ok=True)
+                    for f in item.iterdir():
+                        shutil.move(str(f), str(uploads / f.name))
+                    item.rmdir()
+                else:
+                    shutil.move(str(item), str(data / item.name))
+            if back.is_dir() and not any(back.iterdir()):
+                back.rmdir()
     except OSError as error:
         # Left asked for: the next start finishes the move, and nothing is lost meanwhile.
         print(f"BioManager: the lab could not be set aside: {error}", file=sys.stderr)
         return None
     (data / NEW_LAB_REQUEST).unlink(missing_ok=True)
+    (data / RESTORE_REQUEST).unlink(missing_ok=True)
     return target

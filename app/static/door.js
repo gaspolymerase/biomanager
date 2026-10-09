@@ -158,6 +158,38 @@
     });
   }
 
+  /* ------------------------------------------- the desktop app's own */
+
+  // Inside the desktop app's window, a lab another device holds offers the
+  // way back to this computer's own BioManager (desktop_menu.py).
+  const desktop = () => window.pywebview && window.pywebview.api && window.pywebview.api.this_computer;
+  const showDesktop = () => {
+    if (!desktop()) return;
+    document.querySelectorAll('[data-desktop-only]').forEach((el) => { el.hidden = false; });
+  };
+  showDesktop();
+  window.addEventListener('pywebviewready', showDesktop);
+  document.querySelectorAll('[data-this-computer]').forEach((button) => {
+    button.addEventListener('click', () => { if (desktop()) window.pywebview.api.this_computer(); });
+  });
+
+  // Close the desktop app (desktop_menu.DesktopApi.quit); a browser can't.
+  document.querySelectorAll('[data-close-app]').forEach((button) => {
+    const ready = () => { if (window.pywebview && window.pywebview.api && window.pywebview.api.quit) button.hidden = false; };
+    ready();
+    window.addEventListener('pywebviewready', ready);
+    button.addEventListener('click', () => window.pywebview.api.quit());
+  });
+
+  // A long upload: say so, and don't send it twice.
+  const bringForm = document.querySelector('[data-bring-form]');
+  if (bringForm) {
+    bringForm.addEventListener('submit', () => {
+      bringForm.querySelector('[data-bring-wait]').hidden = false;
+      bringForm.querySelector('button[type=submit]').disabled = true;
+    });
+  }
+
   /* ------------------------------------------------------------- Copy */
 
   document.querySelectorAll('[data-copy]').forEach((button) => {

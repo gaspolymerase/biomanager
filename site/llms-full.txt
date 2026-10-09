@@ -1235,7 +1235,7 @@ The first account made in a lab becomes its admin, and every account after that 
 
 #### Nobody can sign in to the lab on my computer
 
-On the desktop app, **Start a new lab** at the bottom of the sign-in page sets this computer's lab aside and starts an empty one, whose first account is its admin. Nothing is deleted: the old lab, with its accounts, records and files, is kept in the data folder under `old-labs`, and putting its files back brings it back, as for [a backup](https://biomanager.org/guide/restore-a-backup). Press **Set this lab aside**, then **Close BioManager** and open it again. A lab server has no such button: whoever runs it can reset an admin's password there.
+On the desktop app, **Start a new lab** at the bottom of the sign-in page sets this computer's lab aside and starts an empty one, whose first account is its admin. Nothing is deleted: the old lab, with its accounts, records and files, is kept in the data folder under `old-labs`, and **Bring back a lab set aside** (on the sign-in, a new lab's first page, or **Settings → Lab**) brings it back. Press **Set this lab aside**, then **Close BioManager** and open it again. A lab server has no such button: whoever runs it can reset an admin's password there, or start the lab over ([its runbook](https://biomanager.org/server#after)).
 
 Source: https://biomanager.org/guide/people-and-guests
 
@@ -1332,6 +1332,14 @@ Where your data is kept, how it's backed up, and how to move it.
 
 > **Don't keep BioManager's data in Dropbox, OneDrive, Google Drive or iCloud Drive.** Syncing corrupts database files. BioManager warns you if it finds itself in one.
 
+#### The whole lab in one file
+
+**Settings → Your data → Save the whole lab** (admins) puts every record, account and uploaded file in one `.biomanager` file: in Downloads on the desktop app, downloaded from a server. It is a backup you can carry, and the way to bring the lab to another computer (**Moving to a new computer? Bring a lab file here** on a new desktop app's first page) or to a new server (**Bring a lab from the desktop app**). Stored connections such as Google Calendar links are left out: they are made again where the lab goes.
+
+#### Labs set aside
+
+**Start a new lab** (**Settings → Lab**, or the sign-in when nobody can sign in) sets the lab aside, whole, and opens an empty one. **Bring back a lab set aside** (**Settings → Lab**, the sign-in, or a new lab's first page) lists them with their names and accounts; the lab there now is set aside in its place, so either step can be undone the same way. Nothing is deleted.
+
 ### A lab server
 
 A server backs up every night, restores the newest backup every week to prove it works, and can keep encrypted copies off-site — see [Keeping the data safe](https://biomanager.org/server#safe).
@@ -1406,7 +1414,7 @@ BioManager opens the lab as it was when that backup was made.
 
 > **Newer changes aren't in a backup** Everything entered since the backup was made is not in it. Keep the file you moved aside until you are sure.
 
-> **A lab set aside with Start a new lab** It is in `data/old-labs/`, in a folder named for when it was set aside (see [People and access](https://biomanager.org/guide/people-and-guests#troubleshooting)). To go back to it, quit BioManager and move the current lab's files out of `data` in the same way, then move everything in that folder back into `data`, except its `uploads` folder, which goes back beside `data`.
+> **A lab set aside with Start a new lab** **Bring back a lab set aside** (**Settings → Lab**, the sign-in, or a new lab's first page) lists them; choose one and close BioManager, and it comes back the next time it opens. The lab there now is set aside in its place, so this can be undone the same way. They are kept in `data/old-labs/`.
 
 ### On a lab server
 
@@ -1560,7 +1568,7 @@ Common problems and their fixes, each also on the page it belongs to.
 
 - **My new account is waiting for an admin to approve it**: Only a lab's first account is its admin; later ones wait for its approval. On the desktop app, an account was made on this computer before: sign in with that one. [→ See the page](https://biomanager.org/guide/people-and-guests)
 
-- **Nobody can sign in to the lab on my computer**: On the desktop app, **Start a new lab** on the sign-in page sets the lab aside, without deleting anything, and starts an empty one. [→ See the page](https://biomanager.org/guide/people-and-guests)
+- **Nobody can sign in to the lab on my computer**: On the desktop app, **Start a new lab** on the sign-in page sets the lab aside, without deleting anything, and starts an empty one; **Bring back a lab set aside** undoes it. [→ See the page](https://biomanager.org/guide/people-and-guests)
 
 - **Rows were skipped on import**: The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time. [→ See the page](https://biomanager.org/guide/bring-your-lab-in)
 

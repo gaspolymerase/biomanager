@@ -1,0 +1,17 @@
+{% extends "door.html" %}
+{# The desktop app in a web browser, whose window opens another device's lab
+   (app/door.py elsewhere): that lab, or this computer's own. #}
+{% from "door/_concept.html" import concept with context %}
+{% block lab %}{{ concept(you=True) }}{% endblock %}
+{% block door %}
+  <h2 class="door-title">{{ _('Open your lab') }}</h2>
+  <div class="door-found">
+    <span class="door-mono" aria-hidden="true">{{ lab_host|initials }}</span>
+    <span><b>{{ lab_host }}</b><small>{{ lab_url }}</small></span>
+  </div>
+  <p class="door-lede">{{ _('This computer opens the lab at this address. You can use this computer’s own BioManager instead.') }}</p>
+  <a class="btn btn-primary btn-lg door-wide" href="{{ lab_url }}/">{{ _('Open the lab') }}</a>
+  <form method="post" class="door-form">
+    <button type="submit" class="btn btn-lg door-wide">{{ _('Use this computer’s BioManager') }}</button>
+  </form>
+{% endblock %}

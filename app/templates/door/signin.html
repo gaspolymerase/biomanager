@@ -2,6 +2,9 @@
 {# Signing in to this lab (app/door.py signin). A browser that kept accounts
    ("Remember me on this computer") offers them by name first (static/door.js). #}
 {% block door %}
+  {% if lab_restored %}
+    <p class="door-banner">{{ _('The lab set aside on %(when)s is back. The lab this computer had is kept too: Bring back a lab set aside brings it back the same way.', when=lab_restored) }}</p>
+  {% endif %}
   {% if lab_set_aside %}
     <p class="door-banner">{{ _('This is a new lab: create its first account, which becomes the admin. The lab you set aside is kept in %(folder)s.', folder=lab_set_aside) }}</p>
   {% endif %}
@@ -45,8 +48,13 @@
     <p>{{ _('New to the lab?') }} <a href="{{ url_for('register') }}">{{ _('Ask to join') }}</a></p>
     <p>{{ _('Visiting?') }} <a href="{{ url_for('guests.enter') }}">{{ _('Enter a guest code') }}</a></p>
     <p>{{ _('Forgot your password?') }} <a href="{{ url_for('door.ask', why='password') }}">{{ _('Ask the lab’s admins') }}</a></p>
+    {# Shown only inside the desktop app's window (static/door.js): back to its own BioManager. #}
+    <p data-desktop-only hidden>{{ _('Not your lab?') }} <button type="button" class="door-link" data-this-computer>{{ _('Use this computer’s BioManager') }}</button></p>
     {% if new_lab_offered %}
       <p>{{ _('Nobody can sign in to this lab?') }} <a href="{{ url_for('start_new_lab') }}">{{ _('Start a new lab') }}</a></p>
+    {% endif %}
+    {% if old_labs %}
+      <p>{{ _('Looking for a lab set aside earlier?') }} <a href="{{ url_for('restore_lab') }}">{{ _('Bring it back') }}</a></p>
     {% endif %}
   </div>
 {% endblock %}

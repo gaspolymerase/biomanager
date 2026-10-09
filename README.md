@@ -995,6 +995,17 @@ often do), sets up alerts and backups, and checks that it answers. Every
 step and every command is shown before and while it runs; at the end you
 get the address and the setup code for the admin account.
 
+**A lab already in the desktop app** goes to a new server whole: in the
+desktop app, **Settings → Devices → Move this lab to a server**, with the
+server's address and setup code. Records, accounts and uploaded files go
+there; the desktop then opens the server and keeps a daily copy, and its
+own lab stays as it was, read only (**Use this computer's own lab again**
+brings it back). A server it can't reach takes the lab as a file instead:
+**Save the whole lab** on the desktop, then **Bring a lab from the desktop
+app** on the server's *This server has no lab yet* page. To start a
+server's lab over, `deploy/RUNBOOK.md` has a script that sets the lab
+aside (and puts it back).
+
 **By hand:** the supported setup is the Docker stack in [`deploy/`](deploy/README.md):
 HTTPS, PostgreSQL, and a backup service that dumps the database every
 night, checks each dump and test-restores one every week.
@@ -1151,9 +1162,11 @@ track.
   in **Settings → People & access**; **Approve** lets them in.
 - **A lab nobody can sign in to on the desktop app** (the admin's password
   lost, or someone else made the first account): **Start a new lab** on the
-  sign-in page sets it aside in the data folder under `old-labs`, deleting
-  nothing, and the next start begins an empty lab whose first account is
-  the admin.
+  sign-in page (or **Settings → Lab**) sets it aside in the data folder
+  under `old-labs`, deleting nothing, and the next start begins an empty
+  lab whose first account is the admin. **Bring back a lab set aside**
+  lists them and brings one back, setting the present lab aside in its
+  place, so either step can be undone.
 - **You edit what you own.** Your mice, cages and records are yours.
   **Shared cages and anything marked lab common belong to the whole lab.**
   A Breeder cage starts out shared; any other cage starts personal. Only a
@@ -1286,6 +1299,11 @@ track.
 > **Don't keep the database in a cloud-synced folder** (OneDrive, Dropbox,
 > Google Drive, iCloud Drive). Syncing corrupts SQLite files. BioManager
 > warns you at startup if it spots this.
+
+**Save the whole lab** (**Settings → Your data**, admins) puts every
+record, account and uploaded file in one `.biomanager` file: a backup to
+carry, and the way to bring the lab to another computer (a new desktop
+app's first page: *Bring a lab file here*) or to a new server.
 
 On a single computer, back up BioManager's data folder
 (`~/Library/Application Support/Biomanager/` on a Mac,

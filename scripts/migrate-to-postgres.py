@@ -36,7 +36,6 @@ import os
 import sqlite3
 import sys
 import tempfile
-from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -77,68 +76,6 @@ def bring_up_to_date(copy: Path, scratch: Path):
     return Base.metadata, engine
 
 
-def _parse_date(value, kind):
-    if value in (None, ""):
-        return None
-    if isinstance(value, (date, datetime)):
-        return value
-    text = str(value).strip().replace("T", " ")
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError:
-        parsed = datetime.strptime(text, "%Y/%m/%d") if "/" in text else None
-        if parsed is None:
-            raise
-    return parsed.date() if kind == "date" else parsed
-
-
-def read_rows(sqlite_conn, table, problems: list[str]):
-    """Rows of `table` as dicts ready for PostgreSQL. Values are read raw
-    (SQLite keeps whatever was stored) and converted by the model's type."""
-    from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String
-
-    columns = [c for c in table.columns]
-    present = {row[1] for row in sqlite_conn.execute(f'PRAGMA table_info("{table.name}")')}
-    selected = [c for c in columns if c.name in present]
-    names = ", ".join(f'"{c.name}"' for c in selected)
-    for raw in sqlite_conn.execute(f'SELECT {names} FROM "{table.name}"'):
-        out = {}
-        for column, value in zip(selected, raw):
-            kind = column.type
-            where = f"{table.name}.{column.name}"
-            try:
-                if value is None:
-                    pass
-                elif isinstance(kind, DateTime):
-                    value = _parse_date(value, "datetime")
-                elif isinstance(kind, Date):
-                    value = _parse_date(value, "date")
-                elif isinstance(kind, Boolean):
-                    value = bool(int(value)) if not isinstance(value, bool) else value
-                elif isinstance(kind, Integer):
-                    value = None if value == "" else int(value)
-                elif isinstance(kind, Float):
-                    value = None if value == "" else float(value)
-                elif isinstance(kind, String) and not isinstance(value, str):
-                    value = str(value)
-            except (TypeError, ValueError):
-                problems.append(f"{where} id={raw[0]!r}: {value!r} is not a valid {type(kind).__name__}")
-                continue
-            length = getattr(kind, "length", None)
-            if isinstance(value, str) and length and len(value) > length:
-                problems.append(f"{where} id={raw[0]!r}: {len(value)} characters, the column holds {length}")
-            if value is None and not column.nullable and not column.primary_key:
-                # SQLite let an old row keep NULL where the model now wants a
-                # value; the model's default is what the app would have written.
-                if column.default is not None:
-                    arg = column.default.arg
-                    value = arg(None) if callable(arg) else arg
-                elif column.server_default is None:
-                    problems.append(f"{where} id={raw[0]!r}: empty, but the column requires a value")
-            out[column.name] = value
-        yield out
-
-
 def high_water_marks(sqlite_conn) -> dict[str, int]:
     try:
         return dict(sqlite_conn.execute("SELECT name, seq FROM sqlite_sequence"))
@@ -167,6 +104,8 @@ def main() -> int:
         copy = snapshot(source, scratch)
         print(f"read     : {source} (working on a copy)")
         metadata, sqlite_engine = bring_up_to_date(copy, scratch)
+        # The same checks the app makes when it takes in a lab file (app/lab_transfer.py).
+        from app.lab_transfer import read_rows
         tables = list(metadata.sorted_tables)
         from app import upgrade
         revision = upgrade.current_revision(sqlite_engine) or upgrade.head_revision()   # the copy is at the newest

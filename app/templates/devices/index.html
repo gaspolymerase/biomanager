@@ -49,6 +49,11 @@
                 data-confirm="{{ _('Make this device the master again without what was changed on %(where)s since it took over? Only do this if that computer is lost: otherwise give the master copy back from it.', where=st.label or _('the other computer')) }}">
             <button type="submit" class="btn btn-danger">{{ _('Make this the master again (the other computer is lost)') }}</button>
           </form>
+        {% elif ph == 'away' and here and st.moved %}
+          <form method="post" action="{{ url_for('lab_move.move_back') }}"
+                data-confirm="{{ _('Use this computer’s own lab again? It opens as it was when it moved. The server keeps its lab, and what was changed there since stays there.') }}">
+            <button type="submit" class="btn">{{ _('Use this computer’s own lab again') }}</button>
+          </form>
         {% elif ph == 'away' and here and master.own_backup %}
           <form method="post" action="{{ url_for('devices.own_again') }}"
                 data-confirm="{{ _('Go back to this computer’s own lab, as it was before it took the master copy over? The copy of the lab here is kept in backups.') }}">
@@ -56,6 +61,7 @@
           </form>
         {% endif %}
         {% if here and not master.came_from and ph not in ('away', 'asked', 'frozen') %}
+          <a class="btn" href="{{ url_for('lab_move.move') }}">{{ icon('upload') }} {{ _('Move this lab to a server') }}</a>
           <form method="post" action="{{ url_for('devices.share') }}">
             {% if master.sharing_url %}
               <input type="hidden" name="on" value="0">

@@ -13,8 +13,7 @@
       <li>{{ _('This lab, with its accounts, records and files, is set aside, not deleted, in this folder:') }}
         <code class="mt-1 block break-all text-[12px]">{{ folder }}</code></li>
       <li>{{ _('The next time BioManager opens, the lab is empty, and the first account you create is its admin.') }}</li>
-      <li>{{ _('To go back to this lab, put the files from that folder back in the data folder, as for a backup.') }}
-        <a href="{{ restore_url }}" target="_blank" rel="noopener">{{ _('Restore a backup') }}</a></li>
+      <li>{{ _('To go back to this lab later, choose Bring back a lab set aside: on the first page, the sign-in, or in Settings → Lab.') }}</li>
     </ul>
     <form method="post" class="mt-5 flex flex-col gap-2">
       <button type="submit" class="btn btn-primary btn-lg w-full">{{ _('Set this lab aside') }}</button>

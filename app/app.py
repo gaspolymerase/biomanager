@@ -390,6 +390,11 @@ app.register_blueprint(guests.bp)
 from . import door  # noqa: E402
 app.register_blueprint(door.bp)
 app.jinja_env.filters["initials"] = door.initials
+# The whole lab as one file, and moving it to a server (app/lab_move.py).
+from . import lab_move  # noqa: E402
+app.register_blueprint(lab_move.bp)
+# Whether this request is the desktop app's own window (not a network visitor).
+app.jinja_env.globals["this_computer"] = lambda: devices.on_this_computer()
 
 # Copies of the lab's database on every desktop app (app/lab_copy.py).
 app.register_blueprint(lab_copy.bp)
@@ -2735,6 +2740,26 @@ def start_new_lab():
     return render_template("start_new_lab.html", asked=paths.new_lab_asked_for(),
                            folder=str(paths.old_labs_dir()),
                            restore_url=lab.guide_url().replace("guide.html", "guide/restore-a-backup.html"))
+
+
+@app.route("/restore-lab", methods=["GET", "POST"])
+def restore_lab():
+    """The desktop app: bring back a lab set aside by Start a new lab (or by
+    an earlier restore). The next start sets the present lab aside first, so
+    this can be undone the same way. Only for the person at this computer."""
+    if not devices.on_this_computer():
+        abort(404)
+    from . import paths
+    if request.method == "POST":
+        if request.form.get("action") == "keep":
+            paths.ask_to_restore(None)
+            flash(gettext("Nothing changes: this lab stays as it is."), "success")
+            return redirect(url_for("index"))
+        if not paths.ask_to_restore(request.form.get("folder", "")):
+            flash(gettext("That lab is no longer in the folder."), "error")
+        return redirect(url_for("restore_lab"))
+    return door.render("door/restore.html", labs=paths.old_labs(), asked=paths.restore_asked_for(),
+                       folder=str(paths.old_labs_dir()), signed_in=g.user is not None)
 
 
 @app.route("/logout", methods=["POST"])

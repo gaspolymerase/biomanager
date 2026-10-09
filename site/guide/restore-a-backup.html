@@ -148,10 +148,9 @@
     <p class="result">BioManager opens the lab as it was when that backup was made.</p>
     <div class="callout warn"><b>Newer changes aren't in a backup</b>Everything entered since the backup was made is not in it. Keep the
       file you moved aside until you are sure.</div>
-    <div class="callout note"><b>A lab set aside with Start a new lab</b>It is in <code>data/old-labs/</code>, in a folder named for when it was
-      set aside (see <a href="people-and-guests.html#troubleshooting">People and access</a>). To go back to it, quit BioManager and move
-      the current lab's files out of <code>data</code> in the same way, then move everything in that folder back into <code>data</code>,
-      except its <code>uploads</code> folder, which goes back beside <code>data</code>.</div>
+    <div class="callout note"><b>A lab set aside with Start a new lab</b><b>Bring back a lab set aside</b> (<b>Settings → Lab</b>, the sign-in,
+      or a new lab's first page) lists them; choose one and close BioManager, and it comes back the next time it opens. The lab there
+      now is set aside in its place, so this can be undone the same way. They are kept in <code>data/old-labs/</code>.</div>
     <h2 id="lab-server">On a lab server</h2>
     <p>A server backs up every night and restores the newest backup every week to prove it works. Restoring is one command, run by whoever
       looks after the server, and never deletes what it replaces: see <code>deploy/RUNBOOK.md</code> in the server bundle and

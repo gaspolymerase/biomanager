@@ -15,6 +15,7 @@ import html
 import math
 import re
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -28,10 +29,14 @@ from .i18n import gettext
 from .models import UserAccount
 
 bp = Blueprint("door", __name__)
+FOUND_LAB = "door_found_lab"            # the lab /open-lab found, until Open is pressed
 
 # Someone asking the lab's admins for something, from one address: a few an
 # hour (the form is open to anyone who can reach the server).
 ask_throttle = security.LoginThrottle(limit=4, window=60 * 60)
+# Wrong setup codes with a lab file, from one address.
+import_throttle = security.LoginThrottle(limit=8, window=60 * 60)
+LAB_FILE_MAX = 16 * 1024 ** 3            # a lab with many uploaded files is large
 
 ASK_REASONS = ("guest", "password", "account", "other")
 NEW_LAB_NAME = "door_new_lab_name"      # the session's name for the lab being started
@@ -142,7 +147,8 @@ def front():
     from .app import lab_set_aside
     if no_accounts_yet():
         if devices.on_this_computer():
-            return render("door/first.html", lab_set_aside=lab_set_aside())
+            from . import paths
+            return render("door/first.html", lab_set_aside=lab_set_aside(), old_labs=len(paths.old_labs()))
         return render("door/fresh.html")
     return signin()
 
@@ -150,8 +156,12 @@ def front():
 def signin(status: int = 200, **values):
     from . import devices
     from .app import lab_set_aside
+    from . import paths
+    here = devices.on_this_computer()
     return render("door/signin.html", status, lab_set_aside=lab_set_aside(),
-                  new_lab_offered=devices.on_this_computer() and not no_accounts_yet(),
+                  new_lab_offered=here and not no_accounts_yet(),
+                  old_labs=len(paths.old_labs()) if here else 0,
+                  lab_restored=current_app.config.get("LAB_RESTORED", "") if here else "",
                   prefill=(request.args.get("u") or request.form.get("username") or "").strip()[:40], **values)
 
 
@@ -230,13 +240,36 @@ def open_lab():
     if not devices.on_this_computer() or not no_accounts_yet():
         abort(404)
     found, address = None, (request.form.get("address") or "").strip()
+    if request.method == "POST" and request.form.get("action") == "open":
+        # Only now, on Open: until then Back changes nothing.
+        found = session.pop(FOUND_LAB, None)
+        if not found:
+            return redirect(url_for("door.open_lab"))
+        devices._save_prefs(window_url=found["url"])
+        return redirect(found["url"] + "/")
     if request.method == "POST":
         found = find_lab(address)
         if found is None:
             flash(gettext("No BioManager answered at %(address)s. Check the address with whoever runs your lab’s BioManager, and that this computer is on the lab’s network.", address=address or "—"), "error")
         else:
-            devices._save_prefs(window_url=found["url"])
+            session[FOUND_LAB] = found
+    else:
+        session.pop(FOUND_LAB, None)
     return render("door/open_lab.html", found=found, address=address)
+
+
+@bp.route("/lab-elsewhere", methods=["GET", "POST"])
+def elsewhere():
+    """The desktop app in a web browser (no Go menu), when its window opens
+    another device's lab: open that lab, or this computer's own instead."""
+    from . import devices
+    if not devices.on_this_computer():
+        abort(404)
+    url = devices.window_url()
+    if request.method == "POST" or not url:
+        devices._save_prefs(window_url="")
+        return redirect(url_for("index"))
+    return render("door/elsewhere.html", lab_url=url, lab_host=urlparse(url).netloc)
 
 
 # ---------------------------------------------------------------- after asking to join
@@ -303,3 +336,125 @@ def ask():
             ask_throttle.failed(key)                 # counts requests, not failures
             sent = True
     return render("door/ask.html", reason=reason, sent=sent)
+
+
+# ---------------------------------------------------------------- bringing a lab here
+
+def _may_take_a_lab(code: str) -> str:
+    """Why a lab file can't be taken in here now, or "" when it can: only
+    before there is any account, and on a server with its setup code."""
+    from . import devices
+    if not no_accounts_yet():
+        return gettext("This BioManager already has a lab. A lab can only be brought to one that has none yet.")
+    if devices.on_this_computer() or not security.setup_code_required():
+        return ""
+    key = ("import", request.remote_addr or "")
+    if import_throttle.retry_after(key):
+        return gettext("Too many wrong setup codes from here. Try again in an hour.")
+    if not security.setup_code_matches(code):
+        import_throttle.failed(key)
+        return gettext("That setup code is not right. It is printed in the server log when BioManager starts.")
+    return ""
+
+
+def take_in(source: Path, admin: str = "") -> dict:
+    """Check and take in the lab file at `source`. Returns {"ok", "lab",
+    "accounts", "files", "rows"} or {"ok": False, "error", "problems"}."""
+    import tempfile
+
+    from . import lab_transfer, paths
+    with tempfile.TemporaryDirectory(prefix="lab-import-", dir=paths.data_dir()) as tmp:
+        try:
+            manifest, database, uploads = lab_transfer.open_file(source, Path(tmp))
+        except lab_transfer.LabFileError as error:
+            return {"ok": False, "error": str(error), "problems": []}
+        data, problems = lab_transfer.check(manifest, database)
+        if problems:
+            return {"ok": False, "error": gettext("The lab can't go in as it is; nothing was changed."), "problems": problems[:50]}
+        if not no_accounts_yet():
+            return {"ok": False, "error": gettext("This BioManager already has a lab. A lab can only be brought to one that has none yet."), "problems": []}
+        try:
+            rows = lab_transfer.apply(data, uploads)
+        except Exception as error:  # noqa: BLE001 — rolled back: say what, and that nothing changed
+            current_app.logger.exception("taking in a lab file failed")
+            return {"ok": False, "error": gettext("Taking the lab in failed, and nothing was changed: %(reason)s", reason=str(error)[:300]), "problems": []}
+    security.clear_setup_code()
+    result = {"ok": True, "lab": manifest.get("lab") or "", "accounts": manifest.get("accounts", 0),
+              "files": manifest.get("files", 0), "rows": rows}
+    if admin:
+        result["key"] = _copy_key_for(admin)
+    return result
+
+
+def _copy_key_for(username: str) -> str:
+    """A copy key for the desktop the lab came from, for its admin: so it
+    keeps a copy of the lab here and opens it in its window (app/lab_copy.py)."""
+    from . import lab_copy
+    from .models import LabCopyKey
+    with SessionLocal() as s:
+        user = s.scalar(select(UserAccount).where(UserAccount.username == username))
+        if user is None or user.role != "admin":
+            return ""
+        key = lab_copy.new_key()
+        s.add(LabCopyKey(user_id_fk=user.id, label=gettext("The desktop app it came from"), key_hash=lab_copy.key_hash(key)))
+        s.commit()
+    return key
+
+
+@bp.route("/lab/bring", methods=["GET", "POST"])
+def bring():
+    """Before any account: bring a lab here from a desktop app, as a lab file
+    (Save the whole lab), or from the desktop app itself (Move this lab to a
+    server, which sends it to /lab/import)."""
+    import tempfile
+
+    from . import devices, paths
+    if not no_accounts_yet():
+        return redirect(url_for("index"))
+    if request.method == "POST":
+        request.max_content_length = LAB_FILE_MAX
+        problem = _may_take_a_lab(request.form.get("setup_code", ""))
+        upload = request.files.get("lab_file")
+        if not problem and (upload is None or not upload.filename):
+            problem = gettext("Choose the lab file to bring.")
+        if problem:
+            flash(problem, "error")
+            return render("door/bring.html", needs_setup_code=_needs_code(), problems=[])
+        with tempfile.TemporaryDirectory(prefix="lab-upload-", dir=paths.data_dir()) as tmp:
+            source = Path(tmp) / "lab.biomanager"
+            upload.save(source)
+            result = take_in(source)
+        if not result["ok"]:
+            flash(result["error"], "error")
+            return render("door/bring.html", needs_setup_code=_needs_code(), problems=result["problems"])
+        flash(gettext("%(lab)s is here: sign in as you did in the desktop app.", lab=result["lab"] or gettext("The lab")), "success")
+        return redirect(url_for("login"))
+    return render("door/bring.html", needs_setup_code=_needs_code(), problems=[], here=devices.on_this_computer())
+
+
+def _needs_code() -> bool:
+    from . import devices
+    return not devices.on_this_computer() and security.setup_code_required()
+
+
+@bp.route("/lab/import", methods=["POST"])
+def import_lab():
+    """A desktop app's Move this lab to a server: the lab file as the body,
+    the setup code and the desktop's admin in headers. Answers in JSON."""
+    import tempfile
+
+    from . import paths
+    request.max_content_length = LAB_FILE_MAX
+    problem = _may_take_a_lab(request.headers.get("X-BioManager-Setup-Code", ""))
+    if problem:
+        return jsonify({"ok": False, "error": problem, "problems": []}), 409
+    with tempfile.TemporaryDirectory(prefix="lab-upload-", dir=paths.data_dir()) as tmp:
+        source = Path(tmp) / "lab.biomanager"
+        with open(source, "wb") as out:
+            while True:
+                chunk = request.stream.read(1 << 20)
+                if not chunk:
+                    break
+                out.write(chunk)
+        result = take_in(source, admin=request.headers.get("X-BioManager-Admin", "")[:40])
+    return jsonify(result), (200 if result["ok"] else 409)
