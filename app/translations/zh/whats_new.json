@@ -47,5 +47,6 @@
   "**@** a colleague and hover their name to see who they are: their job, email and project groups.": "用 **@** 提到同事，鼠标悬停在名字上可以看到这个人的职位、邮箱和项目组。",
   "**Utilities** has a search that knows the bench's words, pinned tools, seven groups by task and new calculators; **Make a tool** adds the lab's own.": "**实用工具** 有了懂实验台用语的搜索、置顶工具、按任务分的七组和新的计算器；**新建工具** 可以添加实验室自己的工具。",
   "The notebook's toolbar fits in one row: **Style** and **Lists** each open a menu, and one button adds a picture or a file.": "实验记录本的工具栏只占一行：**样式** 和 **列表** 各自打开一个菜单，一个按钮就能添加图片或文件。",
-  "A BCA standard curve averages replicate readings and flags ones more than 10 % apart.": "BCA 标准曲线会对重复读数取平均，并标出相差超过 10% 的读数。"
+  "A BCA standard curve averages replicate readings and flags ones more than 10 % apart.": "BCA 标准曲线会对重复读数取平均，并标出相差超过 10% 的读数。",
+  "**中文** works in the desktop app: the download was missing its Chinese, so every page stayed English whatever was chosen.": "桌面版终于能用 **中文** 了：之前下载的安装包里漏了中文翻译，无论怎么选，页面都只显示英文。"
 }

@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.9": {
+        "fixed": [
+            "**中文** works in the desktop app: the download was missing its Chinese, so every page stayed English whatever was chosen.",
+        ],
+    },
     "1.2.8": {
         "new": [
             "Notebook pages write as in Notion: type **/** for headings, **callouts**, **toggles**, **2 or 3 columns**, colours, a table of contents and **reminders**.",
