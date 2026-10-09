@@ -24,14 +24,28 @@ macOS 27 is. Two layers:
 - **Glass** is only for what you steer with: the sidebar, the top row of
   tabs, search and account, the page's buttons in its title row, menus,
   toasts. `glass` is a utility (`@utility glass` in `frontend/src/tailwind.css`):
-  `--glass` over a backdrop blur, a bright rim and a soft shadow.
-  `--glass-strong` is the frostier tint for raised and large surfaces.
+  a clear fill (`--glass-fill`) over a light blur, lit like glass: a rim
+  brightest at the top-left and bottom-right (`--glass-light`, drawn by its
+  `::after`), an inner glow, and a sheen that follows the mouse
+  (`--glass-x`/`--glass-y`, set by `static/shell.js`). `--glass-strong` is
+  the frostier tint for raised and large surfaces. Glass doesn't bend what is
+  behind it: Chromium can (`backdrop-filter: url(#svg)`), but WebKit, which
+  the Mac app and Safari use, drops the whole backdrop filter then, so it
+  isn't used.
 
 The page scrolls *beneath* the two rows at the top (`.topstrip`, then
 `.toolbar`), which float over it: `.shell-scroll` is padded at the top by
 `--tabbar-h + --toolbar-h`, so a `sticky top-0` header stops just under
-them. Once the page has scrolled, `.chrome-edge` brings up a frosted band
-behind both rows instead of a hairline.
+them. Once the page has scrolled, `.chrome-edge` softens what passes under
+both rows (its colours still show through the glass), and the title, text
+on no glass, gets a frosted patch of its own.
+
+Motion is what makes it feel liquid. The selection in the tab strip and in
+each segmented control (`.seg`) is one drop (`.wtab-drop`, `.seg-drop`)
+that slides to the item picked, and on into the next page, which starts it
+where the last page left it (`initDrops`, sessionStorage). Glass buttons
+swell a little when pressed, and menus grow out of their button. Reduce
+Motion turns all of it off.
 
 Corners are concentric (cards 12px, controls inside them 8px, menus 14px
 with 9px items), and anything floating in a bar is a capsule. Small controls

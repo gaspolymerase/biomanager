@@ -401,6 +401,8 @@
     }
 
     initWindowFrame();
+    initDrops();
+    initSheen();
     initAccountMenu();
     initBell();
     initShortcuts();
@@ -443,6 +445,125 @@
     document.addEventListener('dblclick', (event) => {
       if (bare(event)) native.postMessage('zoom');
     });
+  }
+
+  // The selection in the tab strip and in each segmented control (.seg) is
+  // one drop that slides to what you pick. Most picks load a new page, so
+  // the drop's last place is kept for the next page (sessionStorage), which
+  // starts it there and slides it on. tab-bar.js redraws the tabs, so their
+  // drop lives in the capsule around them (.wtab-strip).
+  function initDrops() {
+    const remember = (key, box) => {
+      try { sessionStorage.setItem('biomanager:drop:' + key, JSON.stringify(box)); } catch (e) {}
+    };
+    const recall = (key) => {
+      try {
+        const box = JSON.parse(sessionStorage.getItem('biomanager:drop:' + key) || 'null');
+        sessionStorage.removeItem('biomanager:drop:' + key);
+        return box;
+      } catch (e) { return null; }
+    };
+
+    function drop({ holder, list, itemSelector, activeSelector, key, className }) {
+      const el = document.createElement('span');
+      el.className = className;
+      el.setAttribute('aria-hidden', 'true');
+      holder.prepend(el);
+      // Where `item` is, in the drop's own coordinates (inside the
+      // holder's border; moving with its scroll when it scrolls itself).
+      const boxOf = (item) => {
+        const h = holder.getBoundingClientRect();
+        const r = item.getBoundingClientRect();
+        const scroll = holder === list ? holder.scrollLeft : 0;
+        return { x: r.left - h.left - holder.clientLeft + scroll, y: r.top - h.top - holder.clientTop, w: r.width, h: r.height };
+      };
+      const place = (box) => {
+        el.style.transform = `translate(${box.x}px, ${box.y}px)`;
+        el.style.width = box.w + 'px';
+        el.style.height = box.h + 'px';
+      };
+      const still = (fn) => {
+        holder.classList.add('drop-still');
+        fn();
+        void el.offsetWidth;
+        holder.classList.remove('drop-still');
+      };
+      const sync = (animate) => {
+        const active = list.querySelector(activeSelector);
+        el.hidden = !active;
+        list.classList.toggle('has-drop', !!active);
+        if (!active) return;
+        if (animate) place(boxOf(active)); else still(() => place(boxOf(active)));
+      };
+      // The tabs may be drawn after this runs: start once there is a
+      // selection, from where the last page left the drop.
+      let from = recall(key);
+      const start = () => {
+        if (!list.querySelector(activeSelector)) { sync(false); return false; }
+        if (from) {
+          const box = from;
+          from = null;
+          el.hidden = false;
+          list.classList.add('has-drop');
+          // Drawn there with no transition, then moved: the move slides.
+          still(() => place(box));
+          sync(true);
+        } else {
+          sync(false);
+        }
+        return true;
+      };
+      let started = start();
+      // Picked: slide there at once (before any page loads), and remember.
+      list.addEventListener('click', (event) => {
+        const item = event.target.closest(itemSelector);
+        if (!item || !list.contains(item) || event.target.closest('.wtab-close')) return;
+        const active = list.querySelector(activeSelector);
+        if (active) remember(key, boxOf(active));
+        place(boxOf(item));
+      });
+      new MutationObserver(() => {
+        if (started) sync(true); else started = start();
+      }).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      list.addEventListener('scroll', () => sync(false), { passive: true });
+      window.addEventListener('resize', () => sync(false));
+    }
+
+    const strip = document.querySelector('.wtab-strip');
+    const tabs = document.getElementById('app-tabbar');
+    if (strip && tabs) {
+      drop({ holder: strip, list: tabs, itemSelector: '.wtab', activeSelector: '.wtab.is-active', key: 'tabs', className: 'wtab-drop' });
+    }
+    document.querySelectorAll('.seg').forEach((seg, index) => {
+      if (!seg.querySelector('.seg-item')) return;
+      drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item.is-active',
+             key: location.pathname + ':' + index, className: 'seg-drop' });
+    });
+  }
+
+  // A sheen follows the mouse across glass, as light would.
+  function initSheen() {
+    const GLASS = '.wtab-strip, .strip-you, .omnibox, .toolbar-actions .btn, .toolbar-actions .btn-ghost';
+    let lit = null;
+    let frame = 0;
+    const clear = () => {
+      if (lit) { lit.style.removeProperty('--glass-x'); lit.style.removeProperty('--glass-y'); }
+      lit = null;
+    };
+    document.addEventListener('pointermove', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      const glass = event.target.closest && event.target.closest(GLASS);
+      if (glass !== lit) clear();
+      if (!glass) return;
+      lit = glass;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const r = glass.getBoundingClientRect();
+        glass.style.setProperty('--glass-x', (event.clientX - r.left) + 'px');
+        glass.style.setProperty('--glass-y', (event.clientY - r.top) + 'px');
+      });
+    }, { passive: true });
+    document.addEventListener('pointerleave', clear);
   }
 
   if (document.readyState === 'loading') {

@@ -171,11 +171,22 @@
   --material-bar:     rgba(255, 255, 255, 0.72);
   --glass:            rgba(255, 255, 255, 0.70);
   --glass-strong:     rgba(255, 255, 255, 0.86);
-  /* The bright rim on glass's upper edge, its outline, and its lift. */
-  --glass-hi:     rgba(255, 255, 255, 0.95);
-  --glass-edge:   rgba(255, 255, 255, 0.70);
-  --glass-rim:    rgba(0, 0, 0, 0.08);
-  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 6px 22px rgb(0 0 0 / 0.08);
+  /* Glass itself: clear enough for the page's colours to pass through,
+     lighter at the top as if lit from above. */
+  --glass-fill:   linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.42));
+  /* Its light: the rim catches it at the top-left and bottom-right, the
+     inside glows a little, and a sheen follows the pointer. */
+  --glass-light:  linear-gradient(125deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.25) 32%,
+                  rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.7));
+  --glass-glow:   rgba(255, 255, 255, 0.55);
+  --glass-sheen:  rgba(255, 255, 255, 0.6);
+  /* Its top edge, outline, and lift. */
+  --glass-hi:     rgba(255, 255, 255, 1);
+  --glass-edge:   rgba(255, 255, 255, 0.5);
+  --glass-rim:    rgba(0, 0, 0, 0.09);
+  --glass-shadow: 0 2px 5px rgb(0 0 0 / 0.06), 0 10px 26px rgb(0 0 0 / 0.11);
+  /* A press swells a control, overshooting a little, like a drop. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Nearly opaque: a menu opening from the top bar can't blur what is
      behind it (a blur inside a blurred bar isn't drawn), so it must hide it. */
   --material-popover: rgba(252, 252, 254, 0.97);
@@ -277,10 +288,15 @@
     --material-bar:     rgba(38, 38, 40, 0.72);
     --glass:            rgba(44, 44, 48, 0.66);
     --glass-strong:     rgba(48, 48, 52, 0.88);
-    --glass-hi:     rgba(255, 255, 255, 0.14);
-    --glass-edge:   rgba(255, 255, 255, 0.10);
-    --glass-rim:    rgba(0, 0, 0, 0.45);
-    --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 26px rgb(0 0 0 / 0.42);
+    --glass-fill:   linear-gradient(180deg, rgba(66, 66, 72, 0.62), rgba(40, 40, 44, 0.5));
+    --glass-light:  linear-gradient(125deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08) 32%,
+                    rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.22));
+    --glass-glow:   rgba(255, 255, 255, 0.07);
+    --glass-sheen:  rgba(255, 255, 255, 0.16);
+    --glass-hi:     rgba(255, 255, 255, 0.2);
+    --glass-edge:   rgba(255, 255, 255, 0.06);
+    --glass-rim:    rgba(0, 0, 0, 0.5);
+    --glass-shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.45);
     --material-popover: rgba(44, 44, 46, 0.98);
 
     --shadow-xs:  0 0 0 0.5px rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.3);
@@ -306,6 +322,7 @@
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass: var(--glass-strong);
+    --glass-fill: var(--glass-strong);
     --material-bar: var(--glass-strong);
   }
 }
@@ -313,6 +330,9 @@
   :root {
     --glass: var(--color-surface);
     --glass-strong: var(--color-surface);
+    --glass-fill: var(--color-surface);
+    --glass-light: linear-gradient(var(--color-sand-500), var(--color-sand-500));
+    --glass-sheen: transparent;
     --material-sidebar: var(--color-recess);
     --material-bar: var(--color-surface);
     --glass-rim: var(--color-sand-500);
@@ -579,17 +599,18 @@
   .toolbar-actions :is(.btn, .btn-ghost) {
     @apply glass h-8 min-w-0 rounded-full border-0 px-3.5 text-[12.5px] font-medium text-ink;
   }
-  .toolbar-actions :is(.btn, .btn-ghost):hover { background: var(--glass-strong); }
-  .toolbar-actions :is(.btn, .btn-ghost):active { @apply bg-sand-200; }
+  .toolbar-actions :is(.btn, .btn-ghost):hover { @apply text-ink no-underline; }
   .toolbar-actions .btn-icon { @apply w-8 px-0; }
+  /* Tinted glass: the accent, still lit and still a little clear. */
   .toolbar-actions .btn-primary {
     @apply font-semibold text-white;
-    background: color-mix(in srgb, var(--color-brand-600) 92%, transparent);
-    box-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.4), 0 0 0 0.5px rgb(0 0 0 / 0.08),
-                0 4px 14px color-mix(in srgb, var(--color-brand-600) 32%, transparent);
+    background: radial-gradient(90px circle at var(--glass-x, 50%) var(--glass-y, -200px), rgb(255 255 255 / 0.35), transparent),
+                linear-gradient(180deg, color-mix(in srgb, var(--color-brand-500) 88%, white 12%),
+                                        color-mix(in srgb, var(--color-brand-600) 94%, transparent));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), inset 0 0 10px rgb(255 255 255 / 0.18),
+                0 0 0 0.5px rgb(0 0 0 / 0.1), 0 6px 18px color-mix(in srgb, var(--color-brand-600) 34%, transparent);
   }
-  .toolbar-actions .btn-primary:hover { @apply bg-brand-700 text-white; }
-  .toolbar-actions .btn-primary:active { @apply bg-brand-800; }
+  .toolbar-actions .btn-primary:hover { @apply text-white no-underline; }
   .toolbar-actions .btn-danger { @apply text-danger-600; }
 }
 
@@ -612,11 +633,26 @@
 /* Glass, for one control or a group of them floating over the page
    (`glass` in markup, `@apply glass` here). */
 @utility glass {
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  box-shadow: inset 0 0.5px 0 var(--glass-hi), inset 0 0 0 0.5px var(--glass-edge),
-              0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+  position: relative;
+  background: radial-gradient(90px circle at var(--glass-x, 50%) var(--glass-y, -200px), var(--glass-sheen), transparent),
+              var(--glass-fill);
+  -webkit-backdrop-filter: blur(9px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(9px) saturate(200%) brightness(1.05);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 12px var(--glass-glow),
+              inset 0 0 0 0.5px var(--glass-edge), 0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+  /* The lit rim: a gradient ring, brightest where the light falls. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.2px;
+    pointer-events: none;
+    background: var(--glass-light);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
 }
 
 @layer components {
@@ -750,6 +786,7 @@
   /* The open tabs share one glass capsule; the current one is raised. */
   .wtab-strip {
     @apply glass flex h-[34px] min-w-0 shrink items-center gap-0.5 rounded-full p-[3px];
+    overflow: clip;
   }
   .wtabs { @apply flex min-w-0 shrink items-center gap-0.5 overflow-x-auto; }
   .wtabs[data-overflow="both"]  { mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); }
@@ -809,27 +846,47 @@
     @apply min-w-0 truncate text-[20px] font-bold leading-tight tracking-[-0.022em] text-ink;
   }
   .toolbar-title:lang(zh) { @apply tracking-normal; }
-  /* The title block keeps its width; buttons give way first. */
-  .toolbar > .min-w-0 { @apply flex-1; }
+  /* The title block hugs its text (its frosted patch follows it); a long
+     title and the buttons share what room there is. */
+  .toolbar > .min-w-0 { flex: 0 1 auto; }
   .toolbar-sub { @apply mt-0.5 truncate text-[12px] text-muted; }
   .toolbar-spacer { @apply ml-auto; }
   .toolbar-actions { @apply flex shrink items-center gap-2; }
   .toolbar-actions .btn span { @apply truncate; }
 
 
-  /* Scroll edge: once the page slides under the two rows, a frosted band
-     behind them keeps the title and buttons readable, softening into the
-     page at its lower edge instead of a hairline. */
+  /* Scroll edge. The page shows through the glass as it slides beneath,
+     so its colours pass behind the buttons, but softened under both rows so
+     it doesn't compete with them; the title, which is text on no glass, gets
+     a frosted patch of its own that fades out to the right and below. Both
+     come up once the page has scrolled. */
   .chrome-edge {
     @apply pointer-events-none absolute inset-x-0 top-0 z-[34] opacity-0 transition-opacity duration-200;
     height: calc(var(--tabbar-h) + var(--toolbar-h));
-    background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(170%);
-    backdrop-filter: blur(18px) saturate(170%);
-    -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent);
-    mask-image: linear-gradient(#000 calc(100% - 14px), transparent);
+    background: linear-gradient(color-mix(in srgb, var(--color-canvas) 62%, transparent),
+                                color-mix(in srgb, var(--color-canvas) 45%, transparent));
+    -webkit-backdrop-filter: blur(2.5px) saturate(120%);
+    backdrop-filter: blur(2.5px) saturate(120%);
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
   }
   .toolbar.is-scrolled ~ .chrome-edge { @apply opacity-100; }
+  .toolbar > .min-w-0 { @apply relative; }
+  .toolbar > .min-w-0::before {
+    content: "";
+    @apply pointer-events-none absolute -z-10 opacity-0 transition-opacity duration-200;
+    inset: -10px -56px -12px -18px;
+    background: color-mix(in srgb, var(--color-canvas) 84%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent),
+                        linear-gradient(#000 calc(100% - 14px), transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent),
+                linear-gradient(#000 calc(100% - 14px), transparent);
+    mask-composite: intersect;
+  }
+  .toolbar.is-scrolled > .min-w-0::before { @apply opacity-100; }
 
   /* --- Search field ----------------------------------------------------- */
 
@@ -837,7 +894,6 @@
     @apply glass flex h-[34px] w-[200px] cursor-pointer items-center gap-1.5 rounded-full
            border-0 px-3 text-[12.5px] text-sand-500 transition-colors duration-100 xl:w-[240px];
   }
-  .omnibox:hover { background: var(--glass-strong); }
   .omnibox .icon { @apply size-[13px] shrink-0; }
   .omnibox-label { @apply flex-1 truncate text-left; }
 
@@ -945,6 +1001,59 @@
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
   to   { opacity: 1; transform: none; }
+}
+
+/* A menu grows out of the button that opened it. */
+@keyframes menu-grow {
+  from { opacity: 0; transform: scale(0.86); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ===========================================================================
+   MOTION — what makes the glass feel liquid. The selection in the tab strip
+   and in a segmented control is one drop that slides to the item you pick,
+   and on to the next page (static/shell.js, initDrops); controls swell a
+   little when pressed; a sheen follows the pointer across glass
+   (--glass-x/--glass-y). Reduce Motion turns it all off.
+   =========================================================================== */
+@layer components {
+  .wtabs, .seg { position: relative; }
+  .wtab, .seg-item { position: relative; z-index: 1; }
+  .wtab-drop, .seg-drop {
+    @apply pointer-events-none absolute left-0 top-0 z-0;
+    /* A slide that settles, with only a hint of overshoot. */
+    transition: transform 0.4s cubic-bezier(0.3, 1.18, 0.5, 1), width 0.4s cubic-bezier(0.3, 1.18, 0.5, 1), height 0.3s ease;
+  }
+  .wtab-drop {
+    @apply rounded-full;
+    background: var(--glass-strong);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-rim), 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+  .seg-drop { @apply rounded-[9px] bg-surface shadow-xs ring-1 ring-sand-200/80; }
+  .wtabs.has-drop .wtab.is-active,
+  .seg.has-drop .seg-item.is-active { background: transparent; box-shadow: none; }
+  .drop-still .wtab-drop, .drop-still .seg-drop { transition: none; }
+}
+
+@layer utilities {
+  .toolbar-actions :is(.btn, .btn-ghost), .omnibox, .wtab-add, .bell-btn, .account-btn, .seg-item {
+    transition: transform 0.32s var(--ease-spring), background-color 0.1s, color 0.1s, box-shadow 0.15s;
+  }
+  .toolbar-actions :is(.btn, .btn-ghost):active, .omnibox:active, .wtab-add:active,
+  .bell-btn:active, .account-btn:active { transform: scale(1.06); }
+  .seg-item:active { transform: scale(0.96); }
+
+  .menu { transform-origin: top right; animation: menu-grow 0.26s var(--ease-spring); }
+  .menu.rail-pop { transform-origin: left center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wtab-drop, .seg-drop { transition: none; }
+    .toolbar-actions :is(.btn, .btn-ghost), .omnibox, .wtab-add, .bell-btn, .account-btn, .seg-item { transition: none; }
+    .toolbar-actions :is(.btn, .btn-ghost):active, .omnibox:active, .wtab-add:active,
+    .bell-btn:active, .account-btn:active, .seg-item:active { transform: none; }
+    .menu { animation: none; }
+  }
 }
 
 /* ===========================================================================
