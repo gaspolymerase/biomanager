@@ -419,8 +419,21 @@ database has a name of its own (one another database has is refused), so
   name, for `@jordan`; the chip shows the
   record's name after its number, and its popover shows its lot and place. The record's
   dialog lists the pages that link it (**Used in notebook pages**), so the
-  record and the notes point at each other. Type **/** on a new line for
-  everything below.
+  record and the notes point at each other. A colleague's `@name` is shown in
+  their colour, and hovering it shows who they are: name, what they do,
+  admin, member or guest, email, project groups and since when. Type **/** on a new line for
+  everything below (Chinese words find things too, `/分栏`).
+  - **Writing as in Notion**:
+    - headings, lists, checklists, quotes and dividers;
+    - **callouts** (note, tip, important, warning, caution);
+    - **toggles** that open to show what they hide (each reader opens their own);
+    - **2 or 3 columns** side by side, stacked on a phone;
+    - **colour and highlight** for text (`==text==` highlights);
+    - a **link to another page**, a **table of contents**, a date, and a
+      **reminder**, which puts a to-do in your calendar and links to it.
+
+    It all stays readable Markdown: GitHub's `> [!WARNING]` alerts,
+    `<details>`, and Pandoc's `::: column` and `[text]{.red}`.
   - **Experiments**: aim, setup, samples and lot numbers, steps, results
     and a summary.
     *Start* and *Finished* stamp the times; planned, running, done or

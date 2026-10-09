@@ -524,5 +524,6 @@
   "pLannotate could not annotate this plasmid: %(problem)s.": "pLannotate 无法注释这个质粒：%(problem)s。",
   "pLannotate found nothing this map does not already mark.": "pLannotate 没有找到图谱上尚未标注的内容。",
   "pLannotate marked %(num)s feature: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。",
-  "pLannotate marked %(num)s features: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。"
+  "pLannotate marked %(num)s features: %(names)s.": "pLannotate 标注了 %(num)s 个特征：%(names)s。",
+  "Nobody in the lab has that name.": "实验室里没有这个人。"
 }

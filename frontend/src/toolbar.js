@@ -12,6 +12,8 @@ import { ITEMS, pickFile, uploadFile, uploadImage } from './commands.js';
 import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { ask, escapeHtml } from './util.js';
+import { openColorMenu } from './rich-menus.js';
+import { inColumns } from './extensions/RichBlocks.js';
 
 function svgIcon(html) {
   return `<span class="editor-toolbar-icon">${html}</span>`;
@@ -111,6 +113,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
       { id: 'ordered', icon: ICONS.ordered, label: 'Numbered list', exec: (e) => e.chain().focus().toggleOrderedList().run(), isActive: (e) => e.isActive('orderedList') },
       { id: 'task', icon: ICONS.task, label: 'Checklist', exec: (e) => e.chain().focus().toggleTaskList().run(), isActive: (e) => e.isActive('taskList') },
       { id: 'quote', icon: ICONS.quote, label: 'Quote', exec: (e) => e.chain().focus().toggleBlockquote().run(), isActive: (e) => e.isActive('blockquote') },
+      { id: 'color', icon: ICONS.palette, label: 'Colour and highlight', exec: (e) => openColorMenu(e, document.querySelector('[data-cmd-id="color"]')), isActive: (e) => e.isActive('tint') },
     ],
     [
       {
@@ -149,6 +152,17 @@ export function createToolbar(editor, { extra = [] } = {}) {
     { id: 't-add-col', icon: ICONS.colPlus, label: 'Add column right', exec: (e) => e.chain().focus().addColumnAfter().run() },
     { id: 't-del-col', icon: ICONS.colMinus, label: 'Delete column', exec: (e) => e.chain().focus().deleteColumn().run() },
     { id: 't-del-table', icon: ICONS.trash, label: 'Delete table', exec: (e) => e.chain().focus().deleteTable().run() },
+  ];
+
+  // Inside columns, a row like the table's: add a column, remove this one,
+  // or put them back one under the other.
+  const columnsBar = document.createElement('div');
+  columnsBar.className = 'editor-toolbar editor-toolbar-secondary';
+  columnsBar.style.display = 'none';
+  const columnActions = [
+    { id: 'c-add', icon: ICONS.colPlus, label: 'Add a column', exec: (e) => e.chain().focus().addColumn().run(), enabled: (e) => e.can().addColumn() },
+    { id: 'c-del', icon: ICONS.colMinus, label: 'Remove this column (its contents too)', exec: (e) => e.chain().focus().removeColumn().run() },
+    { id: 'c-unset', icon: ICONS.bullet, label: 'Undo columns: one under the other', exec: (e) => e.chain().focus().unsetColumns().run() },
   ];
 
   const allButtons = [];
@@ -191,6 +205,16 @@ export function createToolbar(editor, { extra = [] } = {}) {
     allButtons.push(btn);
   });
 
+  const columnsLabel = document.createElement('span');
+  columnsLabel.className = 'editor-toolbar-meta';
+  columnsLabel.textContent = 'Columns';
+  columnsBar.appendChild(columnsLabel);
+  columnActions.forEach((cmd) => {
+    const btn = makeButton(cmd, editor);
+    columnsBar.appendChild(btn);
+    allButtons.push(btn);
+  });
+
   function updateState() {
     allButtons.forEach((btn) => {
       const cmd = btn._cmd;
@@ -200,9 +224,10 @@ export function createToolbar(editor, { extra = [] } = {}) {
       }
     });
     tableBar.style.display = editor.isActive('table') ? 'inline-flex' : 'none';
+    columnsBar.style.display = !editor.isActive('table') && inColumns(editor) ? 'inline-flex' : 'none';
     const hidden = !editor.isEditable;
     toolbar.hidden = hidden;
-    if (hidden) tableBar.style.display = 'none';
+    if (hidden) { tableBar.style.display = 'none'; columnsBar.style.display = 'none'; }
   }
 
   editor.on('selectionUpdate', updateState);
@@ -212,6 +237,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
 
   document.body.appendChild(toolbar);
   document.body.appendChild(tableBar);
+  document.body.appendChild(columnsBar);
 
   // Centred over the page being written, not the window: centred on the
   // window it sat on the notebook's sidebar and covered its buttons.
@@ -222,12 +248,15 @@ export function createToolbar(editor, { extra = [] } = {}) {
     const x = `${Math.round(box.left + box.width / 2)}px`;
     toolbar.style.left = x;
     tableBar.style.left = x;
+    columnsBar.style.left = x;
     // No wider than the page: a narrow window wraps it to a second row
     // instead of pushing it over the sidebar.
     const room = `${Math.max(240, Math.round(box.width - 32))}px`;
     toolbar.style.maxWidth = room;
     tableBar.style.maxWidth = room;
+    columnsBar.style.maxWidth = room;
     tableBar.style.bottom = `${24 + toolbar.offsetHeight + 8}px`;
+    columnsBar.style.bottom = tableBar.style.bottom;
   };
   centre();
   window.addEventListener('resize', centre);
@@ -245,6 +274,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
       closeInsertMenu();
       if (toolbar.parentNode) toolbar.parentNode.removeChild(toolbar);
       if (tableBar.parentNode) tableBar.parentNode.removeChild(tableBar);
+      if (columnsBar.parentNode) columnsBar.parentNode.removeChild(columnsBar);
     },
   };
 }

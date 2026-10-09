@@ -1380,6 +1380,31 @@ def people_list():
         return jsonify({"ok": True, "people": people(s), "me": _me()})
 
 
+@bp.get("/api/people/<username>")
+def person_card(username: str):
+    """What an @name in a page shows on hover: who they are in the lab.
+    A guest sees the name and part only, not the email or the groups."""
+    with SessionLocal() as s:
+        user = s.scalar(select(UserAccount).where(UserAccount.username == username))
+        if user is None or user.disabled or user.role == "pending":
+            return jsonify({"ok": False, "error": gettext("Nobody in the lab has that name.")}), 404
+        viewer_is_guest = _is_guest(g.user)
+        card = {"username": user.username, "name": user.display_name or user.username,
+                "title": user.role_title or "",
+                "role": "guest" if user.expires_at is not None else ("admin" if user.role == "admin" else "member"),
+                "until": user.expires_at.date().isoformat() if user.expires_at else "",
+                "since": user.created_at.date().isoformat() if user.created_at else "",
+                "me": user.username == _me()}
+        if not viewer_is_guest:
+            from . import groups as project_groups
+            card["email"] = user.email or ""
+            card["groups"] = sorted(({"name": name, "lead": project_groups.is_lead(gid, user)}
+                                     for gid, name in project_groups.names().items()
+                                     if user.username in project_groups.members_of(gid)),
+                                    key=lambda grp: grp["name"].lower())
+        return jsonify({"ok": True, "person": card})
+
+
 # ---------------------------------------------------------------- protocols and experiments
 
 @bp.get("/api/protocols")

@@ -1077,6 +1077,36 @@ attribute is replaced whole. Statistics (`blocks/stats.js`) and formula
 columns (`blocks/formula.js`) are computed in the browser; formulas are
 parsed by hand because the security policy forbids `eval`.
 
+**Rich text.** Callouts, toggles, columns and coloured text are TipTap
+nodes and a mark in `frontend/src/extensions/RichBlocks.js` (`callout`,
+`toggle` with its `toggleSummary`, `columns` of 2–4 `column`, the `tint`
+mark with `color` and `bg`). How each is written in Markdown is in
+`frontend/src/markdown-extras.js`. Its markdown-it rules turn these into
+the HTML the nodes read:
+- GitHub's alerts (`> [!WARNING]`);
+- `<details>` with a `<summary>` line (nested ones counted; the rest of
+  the page's HTML is still escaped);
+- Pandoc's fenced divs (`:::: columns` / `::: column`);
+- bracketed spans (`[text]{.red .bg-yellow}`, only the colours in `COLORS`);
+- `==text==`.
+
+`tests/js/markdown-extras.check.mjs` checks them. A toggle's open or
+closed state is the reader's (the node view's), never saved. A table of
+contents is a `toc` lab block (`blocks/toc.js`) drawn from the headings on
+every change. Lab blocks' `mount()` now gets the `editor`.
+
+`rich-menus.js` has the colour palette, the page picker
+(`/notebook/api/search`, a link to `/notebook?page=<id>`), the date and
+the reminder (a personal `task` posted to `/calendar/items`, then a link
+to `/calendar?date=…`). The "/" menu's items are `commands.js` `ITEMS`;
+keywords hold the Chinese, and the slash trigger takes any letters
+(`\p{L}`).
+
+`@name` for someone in the lab is decorated by
+`extensions/PeopleChips.js` (the names from `/notebook/api/people`);
+hovering shows `/notebook/api/people/<username>`: name, title, role, guest
+until, since, and for a member also email and project groups.
+
 Mermaid and KaTeX are large and most pages use neither: `npm run
 build:vendor` copies them to `app/static/notebook-build/vendor/`, and they
 load the first time a page shows a diagram or an equation.

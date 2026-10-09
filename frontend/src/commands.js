@@ -7,6 +7,7 @@ import { defaultSheet } from './blocks/sheet.js';
 import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { api, ask, escapeHtml, isoDate } from './util.js';
+import { openColorMenu, openDatePicker, openPagePicker, openReminder } from './rich-menus.js';
 
 export const SYMBOLS = [
   ['μ', 'micro'], ['°', 'degree'], ['℃', 'celsius'], ['±', 'plus-minus'], ['×', 'times'],
@@ -78,7 +79,32 @@ function block(kind, value) {
   return (editor) => editor.chain().focus().insertLabBlock(kind, value).run();
 }
 
+// The caret, as something a menu can open beside.
+function atCaret(editor) {
+  const c = editor.view.coordsAtPos(editor.state.selection.from);
+  return { getBoundingClientRect: () => ({ left: c.left, right: c.left, top: c.top, bottom: c.bottom }), contains: () => false };
+}
+
 export const ITEMS = [
+  // ---- Basic: what any page is written with (keywords hold the Chinese, so "/标题" finds them too)
+  { id: 'h1', group: 'Basic', icon: 'h1', label: 'Heading 1', hint: 'Or type # and a space', keywords: 'h1 title heading 标题 一级', run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run() },
+  { id: 'h2', group: 'Basic', icon: 'h2', label: 'Heading 2', hint: 'Or type ## and a space', keywords: 'h2 subtitle heading 标题 二级', run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run() },
+  { id: 'h3', group: 'Basic', icon: 'h3', label: 'Heading 3', hint: 'Or type ### and a space', keywords: 'h3 heading 标题 三级', run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run() },
+  { id: 'text', group: 'Basic', icon: 'text', label: 'Text', hint: 'Plain text', keywords: 'text paragraph plain 正文 文本', run: (e) => e.chain().focus().setParagraph().run() },
+  { id: 'bullet', group: 'Basic', icon: 'bullet', label: 'Bulleted list', hint: 'Or type - and a space', keywords: 'bullet list unordered ul 列表 无序', run: (e) => e.chain().focus().toggleBulletList().run() },
+  { id: 'numbered', group: 'Basic', icon: 'ordered', label: 'Numbered list', hint: 'Or type 1. and a space', keywords: 'numbered ordered list ol 列表 编号 有序', run: (e) => e.chain().focus().toggleOrderedList().run() },
+  { id: 'todo', group: 'Basic', icon: 'task', label: 'Checklist', hint: 'Boxes to tick: to-dos', keywords: 'todo to-do checkbox checklist task 待办 清单 勾选', run: (e) => e.chain().focus().toggleTaskList().run() },
+  { id: 'quote', group: 'Basic', icon: 'quote', label: 'Quote', hint: 'Or type > and a space', keywords: 'quote blockquote citation 引用', run: (e) => e.chain().focus().toggleBlockquote().run() },
+  { id: 'divider', group: 'Basic', icon: 'divider', label: 'Divider', hint: 'A line across the page (or type ---)', keywords: 'divider line rule separator hr 分割线 分隔', run: (e) => e.chain().focus().setHorizontalRule().run() },
+  { id: 'callout', group: 'Basic', icon: 'callout', label: 'Callout', hint: 'A coloured box: note, tip, warning…', keywords: 'callout note tip warning caution important box alert 提示 标注 注意 警告', run: (e) => e.chain().focus().setCallout('note').run() },
+  { id: 'warning', group: 'Basic', icon: 'callout', label: 'Warning', hint: 'A callout for safety and things not to forget', keywords: 'warning caution danger safety hazard callout 警告 注意 安全', run: (e) => e.chain().focus().setCallout('warning').run() },
+  { id: 'toggle', group: 'Basic', icon: 'toggle', label: 'Toggle', hint: 'A line that opens to show what it hides', keywords: 'toggle collapse collapsible details fold expand hide 折叠 展开 隐藏', run: (e) => e.chain().focus().setToggle().run() },
+  { id: 'columns2', group: 'Basic', icon: 'columns', label: '2 columns', hint: 'Side by side, e.g. a gel and its notes', keywords: 'columns side by side layout two 分栏 两栏 并排', run: (e) => e.chain().focus().setColumns(2).run() },
+  { id: 'columns3', group: 'Basic', icon: 'columns', label: '3 columns', hint: 'Three side by side', keywords: 'columns layout three 分栏 三栏 并排', run: (e) => e.chain().focus().setColumns(3).run() },
+  { id: 'color', group: 'Basic', icon: 'palette', label: 'Colour and highlight', hint: 'Colour the selection, or this line', keywords: 'color colour highlight red yellow green blue mark 颜色 高亮 标记 红色', run: (e) => openColorMenu(e, atCaret(e)) },
+  { id: 'page', group: 'Basic', icon: 'page', label: 'Link to a page', hint: 'Another notebook page', keywords: 'page link notebook mention 页面 链接', run: (e) => openPagePicker(e) },
+  { id: 'toc', group: 'Basic', icon: 'toc', label: 'Table of contents', hint: 'This page’s headings, kept up to date', keywords: 'toc contents outline headings 目录 大纲', run: (e) => e.chain().focus().insertLabBlock('toc').run() },
+
   // ---- Data
   { id: 'sheet', group: 'Data', icon: 'table', label: 'Data sheet', hint: 'Enter data; plot it; t-test / ANOVA', keywords: 'table spreadsheet plot chart graph stats', run: block('sheet') },
   { id: 'sheet-xy', group: 'Data', icon: 'chart', label: 'X–Y plot', hint: 'A sheet set up for a scatter with a fitted line', keywords: 'scatter line regression standard curve', run: block('sheet', { ...defaultSheet(), columns: [{ name: 'x', type: 'number' }, { name: 'y', type: 'number' }], rows: [['', ''], ['', ''], ['', ''], ['', '']], chart: { type: 'scatter', x: 0, y: [1], group: -1, error: 'sem', fit: true, logY: false }, showStats: false, stats: { group: 0, value: 1, test: 'none', control: '' } }) },
@@ -95,7 +121,9 @@ export const ITEMS = [
   })),
   { id: 'timer', group: 'Bench', icon: 'timer', label: 'Timer', hint: 'Start a countdown', keywords: 'countdown clock alarm', run: () => timers().ask() },
   { id: 'stamp', group: 'Bench', icon: 'clock', label: 'Time stamp', hint: 'Now, in bold (Ctrl+Shift+;)', keywords: 'time now clock stamp', run: (e) => stampTime(e) },
-  { id: 'date', group: 'Bench', icon: 'calendar', label: "Today's date", hint: isoDate(), keywords: 'date today', run: (e) => e.chain().focus().insertContent(isoDate()).run() },
+  { id: 'date', group: 'Bench', icon: 'calendar', label: "Today's date", hint: isoDate(), keywords: 'date today 今天 日期', run: (e) => e.chain().focus().insertContent(isoDate()).run() },
+  { id: 'pick-date', group: 'Bench', icon: 'calendar', label: 'Date…', hint: 'Pick a day', keywords: 'date day pick calendar 日期', run: (e) => openDatePicker(e) },
+  { id: 'reminder', group: 'Bench', icon: 'bell', label: 'Reminder', hint: 'A to-do in your calendar, linked here', keywords: 'reminder remind alarm todo later follow up 提醒 待办', run: (e) => openReminder(e) },
   { id: 'steps', group: 'Bench', icon: 'task', label: 'Protocol steps', hint: 'A checklist to run step by step', keywords: 'checklist task steps protocol', run: md('\n- [ ] Step one\n- [ ] Incubate 10 min\n- [ ] Step three\n') },
   // ---- Diagrams & maths
   { id: 'mermaid', group: 'Diagrams & maths', icon: 'flow', label: 'Flowchart', hint: 'Mermaid diagram', keywords: 'mermaid diagram flow graph', run: block('mermaid') },
@@ -121,7 +149,13 @@ export const ITEMS = [
 export function filterItems(query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return ITEMS;
-  return ITEMS.filter((i) => `${i.label} ${i.keywords || ''} ${i.group}`.toLowerCase().includes(q));
+  const hits = ITEMS.filter((i) => `${i.label} ${i.keywords || ''} ${i.group}`.toLowerCase().includes(q));
+  // A name that starts with what was typed comes first ("/to": To-do, Toggle, Table of contents).
+  const starts = (i) => {
+    if (i.label.toLowerCase().startsWith(q)) return 0;
+    return (i.keywords || '').toLowerCase().split(' ').some((w) => w.startsWith(q)) ? 1 : 2;
+  };
+  return hits.map((item, n) => ({ item, n })).sort((a, b) => starts(a.item) - starts(b.item) || a.n - b.n).map((x) => x.item);
 }
 
 function overlayMenu(html) {

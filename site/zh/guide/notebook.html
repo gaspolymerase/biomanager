@@ -144,10 +144,28 @@
           步骤和表头，去掉结果、勾选、读数、图片，以及写在 Results、
           Observations 或 Conclusion 下的内容；<b>与实验室共享</b> （Share it with the lab）把它提供给
           所有人。</li>
+        <li>像在 Notion 里一样写：输入 <b>/</b> 和想要的东西的几个字母（<code>/h2</code>、<code>/toggle</code>；中文也可以，比如 <code>/分栏</code>）。
+          <ul>
+            <li><b>标题 1–3</b> （Heading 1–3）、<b>无序列表</b> （Bulleted list）、<b>编号列表</b> （Numbered list）、<b>清单</b> （Checklist）、<b>引用</b> （Quote）和 <b>分割线</b> （Divider）。</li>
+            <li><b>标注</b> （Callout）：一个带颜色的框，放谁都不能错过的内容。点它的图标选择类型：说明、提示、重要、警告或注意。<b>警告</b> （Warning）一插入就是警告类型。</li>
+            <li><b>折叠</b> （Toggle）：点开才显示下面内容的一行，比如原始计数或方法的完整版本。点箭头展开或收起；
+              这只对你自己有效，不会替别人展开。</li>
+            <li><b>两栏</b> （2 columns）或 <b>三栏</b> （3 columns）：比如把胶图和它的说明并排放。光标在栏里时，工具栏上方的一行可以加一栏、
+              删掉当前这一栏，或者把它们恢复成上下排列。在手机上会上下排列。</li>
+            <li><b>颜色和高亮</b> （Colour and highlight，也是工具栏上的 <b>A</b>）：给选中的文字上色；没有选中文字时，给整行上色。
+              输入 <code>==文字==</code> 会用黄色高亮。</li>
+            <li><b>链接到页面</b> （Link to a page）：选择另一个实验记录本页面，链接前会显示页面图标。<b>目录</b> （Table of contents）：
+              列出本页的标题并随时更新，每个标题都可以点击跳转。</li>
+            <li><b>日期…</b> （Date…）插入你选的日期。<b>提醒</b> （Reminder）会在你选的日期和时间往你的日历里加一条待办，
+              并在页面里写下指向它的链接（⏰ 和日期）。</li>
+          </ul>
+          这些都仍然是可读的 Markdown：标注是 GitHub 的 <code>&gt; [!WARNING]</code>，折叠是 <code>&lt;details&gt;</code>，
+          分栏是 Pandoc 的 <code>::: column</code>，所以导出的页面在哪里都能读。</li>
         <li>输入 <code>@</code> 可以链接小鼠、质粒、订购或任何库存记录——抗体、样本、引物
           （<code>@antibodies 5</code>），按名称、货号或批号查找（完整输入的批号或货号，如
           <code>@0012</code>，排在最前；<i>anti-β-actin</i> 或 <i>Waf1/Cip1</i> 这样的名字按原样就能找到），也可以按名称链接一个数据库
-          （<code>@antib</code> 会提示 <i>Antibodies</i>，选中后列出其中的记录），或者链接同事（<code>@jordan</code>，用于待办事项）；之后页面和记录互相链接，
+          （<code>@antib</code> 会提示 <i>Antibodies</i>，选中后列出其中的记录），或者提到同事（<code>@jordan</code>）。同事的名字会显示成他们的颜色，鼠标悬停可以看到这个人的基本信息：姓名、职位、
+          是管理员、成员还是访客、邮箱、所在的项目组，以及加入实验室多久了。被提到的人会收到通知，待办事项也会写上他们的名字。之后页面和记录互相链接，
           记录会在 <b>引用此记录的实验记录本页面</b> （Used in notebook pages）下列出这个页面。链接标签会在编号后显示记录名称
           （<i>@antibodies 5 · anti-p53</i>）。鼠标悬停可以看到
           详细信息；点击打开记录，<b>↗</b> （或 <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+点击）在新的 BioManager 标签页里打开。</li>
@@ -230,7 +248,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 5 分钟</p>
+      <p>本页内容 · 阅读约 6 分钟</p>
       <ol>
         <li class="lvl2"><a href="#pages">页面</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">实验和实验流程</a></li>
