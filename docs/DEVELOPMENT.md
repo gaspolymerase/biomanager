@@ -611,6 +611,40 @@ internet, the name only) and holds what is new around `/login` and
   `localStorage["biomanager:accounts"]` (names only) on the next page, and
   `static/door.js` offers them on the sign-in.
 
+## A whole lab, moved or set aside
+
+- **The lab file** (`app/lab_transfer.py`): a zip of `manifest.json`
+  (format, version, schema revision, lab name, counts, the database's
+  SHA-256), `lab.db` (`lab_copy.write_snapshot`, secrets blanked) and
+  `uploads/`. Settings that are a machine's (`MACHINE_KEYS`: devices,
+  lab copies, update checks, counts, sign-outs) are neither carried nor
+  overwritten. `open_file` refuses anything else (and paths out of the
+  zip, a bad checksum); `check` refuses another schema revision and lists
+  values the target would refuse (`read_rows`, shared with
+  `scripts/migrate-to-postgres.py`); `apply` replaces every table in one
+  transaction (PostgreSQL: deferred keys, sequences past the old ids) and
+  copies the files.
+- **Taking one in** (`app/door.py`): `/lab/bring` (a form) and
+  `/lab/import` (the desktop's push: the file as the body, the setup code
+  and admin in headers, JSON back with a copy key for that admin). Only
+  before any account; on a server with the setup code, throttled. Caddy
+  lets these two paths take up to 16 GB.
+- **The desktop's side** (`app/lab_move.py`): **Save the whole lab**
+  (Downloads, or a download on a server), **Move this lab to a server**
+  (`push`, then `devices.STATE` is AWAY with `moved`, the lab-copy link is
+  set and `window_url` points at the server) and its way back
+  (`/settings/devices/move/back` clears both; the local lab never
+  changed).
+- **Set aside and back** (`app/paths.py`): `start-new-lab` and
+  `restore-lab` request files in the data folder, acted on by
+  `set_lab_aside()` before the database opens (`desktop.py`); a restore
+  sets the present lab aside first. `/restore-lab` lists `old_labs()`.
+- **The window's way back**: `DesktopApi.this_computer` (a lab's sign-in
+  shows *Use this computer's BioManager* inside the window), and, in the
+  Windows browser fallback, `/lab-elsewhere` instead of the other lab.
+- **A server starting over**: `deploy/backup/start-over.sh` renames the
+  database and moves the files aside, `--undo STAMP` puts them back.
+
 ## Lab setup and personal databases
 
 `app/lab.py` decides what the lab uses and who sees which database; the
@@ -930,6 +964,10 @@ crossing the origin keeps `start > end`.
 
 ## Calendar repeats and bookings
 
+(The page: `templates/calendar.html` puts Back / Today / Forward, the view
+switch and **New event** in the title row (`page_actions`), and
+`static/calendar-page.js` writes the month or range into the title.)
+
 `app/lab_calendar.py`. A repeating event is one `calendar_events` row and a
 `calendar_repeats` row (`freq` daily, weekly, monthly or `nthweekday` —
 every month on the weekday of the first date, "the fifth" read as the
@@ -1050,6 +1088,13 @@ everything added in the rebuild lives beside them, in its own tables
 column changes. `app/lab_notebook.py` has the routes (`/notebook/api/…`) and
 the rules; the editor is `frontend/src/` and the page around it is
 `app/static/notebook-page.js` and `app/static/notebook.css`.
+
+The page is a sheet of paper (`.notebook-editor`) beside its list, which
+sits on the window. Its path and tools (`.nb-page-where`, `.nb-page-tools`)
+are written in the page, and `notebook-page.js` (`liftHeader`) moves them
+into the window's title row before anything is wired; every lookup is by
+id or across the document. While a side panel is open the list folds away,
+and the formatting bar centres on the paper (`frontend/src/toolbar.js`).
 
 | Table | Holds |
 | --- | --- |

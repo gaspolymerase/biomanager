@@ -284,9 +284,10 @@ export function createToolbar(editor, { extra = [] } = {}) {
   document.body.appendChild(tableBar);
   document.body.appendChild(columnsBar);
 
-  // Centred over the page being written, not the window: centred on the
-  // window it sat on the notebook's sidebar and covered its buttons.
-  const column = document.querySelector('.notebook-main');
+  // Centred over the page being written (the sheet of paper), not the
+  // window: centred on the window it sat on the notebook's sidebar and
+  // covered its buttons, or ran under a side panel.
+  const column = document.querySelector('.notebook-editor') || document.querySelector('.notebook-main');
   const centre = () => {
     if (!column) return;
     const box = column.getBoundingClientRect();

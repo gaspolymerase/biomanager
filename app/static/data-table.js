@@ -112,6 +112,7 @@
       this._restoreSort();
       this._wireQuickAdd();
       this._wireMore();
+      this._wireTight();
       this.render();
       this._wireStickyParts();
       if (!this._showFresh()) this._revealHashTarget();
@@ -166,6 +167,29 @@
       document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
       document.addEventListener('scroll', close, true);
       window.addEventListener('resize', close);
+    }
+
+    // Where the toolbar would wrap onto a second line (a narrow window, many
+    // chips), its buttons show their icons only (.is-tight), each still
+    // named in its tooltip and to screen readers.
+    _wireTight() {
+      const toolbar = this.card.querySelector(':scope > .dt-toolbar');
+      if (!toolbar || typeof ResizeObserver === 'undefined') return;
+      toolbar.querySelectorAll('.dt-toolbar-btn').forEach((b) => {
+        if (!b.title && b.textContent.trim()) b.title = b.textContent.trim();
+      });
+      const wraps = () => {
+        const items = Array.from(toolbar.children).filter((el) => el.offsetParent !== null);
+        if (items.length < 2) return false;
+        const top = items[0].offsetTop;
+        return items.some((el) => el.offsetTop > top + 8);
+      };
+      const fit = () => {
+        toolbar.classList.remove('is-tight');
+        if (wraps()) toolbar.classList.add('is-tight');
+      };
+      new ResizeObserver(fit).observe(toolbar);
+      fit();
     }
 
     _restoreSort() {

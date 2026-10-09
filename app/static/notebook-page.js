@@ -27,6 +27,23 @@
     });
   }
   function icon(name) { return '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name + '"></use></svg>'; }
+
+  // The page's path and its tools (Share, Comments, Sign, History, •••)
+  // float in the window's title row, in place of the word Notebook, so the
+  // page itself starts with its title. Moved before anything is wired, and
+  // every lookup below is by id or across the document, so nothing minds.
+  (function liftHeader() {
+    var top = $('.nb-page-top');
+    var title = $('#app-toolbar > .min-w-0');
+    var actions = $('#app-toolbar .toolbar-actions');
+    if (!top || !title || !actions) return;
+    var where = $('.nb-page-where', top);
+    var tools = $('.nb-page-tools', top);
+    if (where) { title.textContent = ''; title.appendChild(where); }
+    if (tools) actions.appendChild(tools);
+    document.body.classList.add('nb-header-lifted');
+    top.hidden = true;
+  })();
   // Dates in the page's language; a label that arrives as a value with its
   // meaning here ("notebook::Note": a page, not a note on a record).
   var LOC = window.BM_LANG === 'zh' ? 'zh-CN' : [];

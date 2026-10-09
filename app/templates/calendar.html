@@ -2,7 +2,6 @@
 
 {% block page_title %}{{ _('Calendar') }}{% endblock %}
 {% block page_heading %}{{ _('Calendar') }}{% endblock %}
-{% block page_subtitle %}{{ _("Experiments, colony dates, bookings and who's away, on one timeline") }}{% endblock %}
 {% block page_shell_class %}shell-page-wide{% endblock %}
 
 {% block head_extra %}
@@ -23,24 +22,41 @@
   ("subs", "Connected calendars", "rss", true),
 ] %}
 
+{# The month, steering and New event float in the title row; the script
+   writes the month into the title (static/calendar-page.js). #}
+{% block page_actions %}
+  <button type="button" class="btn btn-icon cal-side-toggle" id="cal-side-toggle"
+          aria-controls="cal-side" aria-expanded="false" aria-label="{{ _('Show calendar options') }}">{{ icon('sliders') }}</button>
+  <div class="cal-nav btn-group">
+    <button type="button" class="btn btn-icon" id="biocal-prev" aria-label="{{ _('Previous') }}">{{ icon('chevron-left') }}</button>
+    <button type="button" class="btn" id="biocal-today">{{ _('Today') }}</button>
+    <button type="button" class="btn btn-icon" id="biocal-next" aria-label="{{ _('Next') }}">{{ icon('chevron-right') }}</button>
+  </div>
+  <div class="seg cal-views" role="tablist" aria-label="{{ _('View') }}">
+    <button type="button" class="seg-item biocal-view-btn is-active" data-view="month">{{ _('Month') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="week">{{ _('Week') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="day">{{ _('Day') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="list">{{ _('List') }}</button>
+  </div>
+  <div class="cal-new">
+    <button type="button" class="btn btn-primary cal-new-main" data-new="event">{{ icon('plus') }} {{ _('New event') }}</button>
+    <button type="button" class="btn btn-primary cal-new-more" id="cal-new-more" aria-haspopup="menu"
+            aria-expanded="false" aria-label="{{ _('Other kinds') }}">{{ icon('chevron-down') }}</button>
+    <div class="menu cal-new-menu" id="cal-new-menu" role="menu" hidden>
+      <button type="button" class="menu-item" role="menuitem" data-new="event">{{ icon('calendar') }} {{ _('Event') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="task">{{ icon('list-check') }} {{ _('To-do') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="booking">{{ icon('calendar-clock') }} {{ _('Book equipment') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="away">{{ icon('user') }} {{ _('Time away') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="protocol">{{ icon('protocol') }} {{ _('Start a protocol') }}</button>
+    </div>
+  </div>
+{% endblock %}
+
 {% block content %}
 <div class="cal" id="cal">
 
   {# ================= Sidebar ================= #}
   <aside class="cal-side" id="cal-side" aria-label="{{ _('Calendar options') }}">
-    <div class="cal-new">
-      <button type="button" class="btn btn-primary cal-new-main" data-new="event">{{ icon('plus') }} {{ _('New event') }}</button>
-      <button type="button" class="btn btn-primary cal-new-more" id="cal-new-more" aria-haspopup="menu"
-              aria-expanded="false" aria-label="{{ _('Other kinds') }}">{{ icon('chevron-down') }}</button>
-      <div class="menu cal-new-menu" id="cal-new-menu" role="menu" hidden>
-        <button type="button" class="menu-item" role="menuitem" data-new="event">{{ icon('calendar') }} {{ _('Event') }}</button>
-        <button type="button" class="menu-item" role="menuitem" data-new="task">{{ icon('list-check') }} {{ _('To-do') }}</button>
-        <button type="button" class="menu-item" role="menuitem" data-new="booking">{{ icon('calendar-clock') }} {{ _('Book equipment') }}</button>
-        <button type="button" class="menu-item" role="menuitem" data-new="away">{{ icon('user') }} {{ _('Time away') }}</button>
-        <button type="button" class="menu-item" role="menuitem" data-new="protocol">{{ icon('protocol') }} {{ _('Start a protocol') }}</button>
-      </div>
-    </div>
-
     <section class="cal-mini" aria-label="{{ _('Pick a day') }}">
       <header class="cal-mini-head">
         <span class="cal-mini-title" id="cal-mini-title"></span>
@@ -100,22 +116,6 @@
 
   {# ================= Main ================= #}
   <section class="cal-main">
-    <header class="cal-head">
-      <button type="button" class="btn btn-icon cal-side-toggle" id="cal-side-toggle"
-              aria-controls="cal-side" aria-expanded="false" aria-label="{{ _('Show calendar options') }}">{{ icon('sliders') }}</button>
-      <h2 class="cal-title" id="biocal-title">&nbsp;</h2>
-      <div class="cal-nav">
-        <button type="button" class="btn btn-icon" id="biocal-prev" aria-label="{{ _('Previous') }}">{{ icon('chevron-left') }}</button>
-        <button type="button" class="btn" id="biocal-today">{{ _('Today') }}</button>
-        <button type="button" class="btn btn-icon" id="biocal-next" aria-label="{{ _('Next') }}">{{ icon('chevron-right') }}</button>
-      </div>
-      <div class="seg cal-views" role="tablist" aria-label="{{ _('View') }}">
-        <button type="button" class="seg-item biocal-view-btn is-active" data-view="month">{{ _('Month') }}</button>
-        <button type="button" class="seg-item biocal-view-btn" data-view="week">{{ _('Week') }}</button>
-        <button type="button" class="seg-item biocal-view-btn" data-view="day">{{ _('Day') }}</button>
-        <button type="button" class="seg-item biocal-view-btn" data-view="list">{{ _('List') }}</button>
-      </div>
-    </header>
     <div class="cal-body">
       <div id="biocal-tui" class="cal-tui"></div>
       <div id="biocal-list" class="cal-list" hidden></div>

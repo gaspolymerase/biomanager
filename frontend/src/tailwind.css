@@ -629,6 +629,30 @@
   }
   .toolbar-actions .btn-primary:hover { @apply text-white no-underline; }
   .toolbar-actions .btn-danger { @apply text-danger-600; }
+  /* Several buttons in one capsule (‹ Today ›): the group is glass and the
+     buttons in it plain, never glass on glass. A segmented control in the
+     title row is glass too. */
+  .toolbar-actions .btn-group { @apply glass flex h-8 items-center rounded-full; }
+  .toolbar-actions .btn-group :is(.btn, .btn-ghost) {
+    @apply h-8 rounded-full border-0 bg-transparent px-3;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .toolbar-actions .btn-group .btn-icon { @apply w-8 px-0; }
+  .toolbar-actions .btn-group :is(.btn, .btn-ghost)::after { content: none; }
+  .toolbar-actions .btn-group :is(.btn, .btn-ghost):hover { @apply bg-sand-300/40; }
+  .toolbar-actions .seg { @apply glass h-8 p-[3px]; }
+  .toolbar-actions .seg .seg-item { @apply h-[26px]; }
+
+  /* A notebook page's path and tools, lifted into the title row
+     (static/notebook-page.js): the path where the title would be, the tools
+     in one glass capsule. */
+  .toolbar .nb-page-where { @apply min-w-0 flex-nowrap text-[13px]; flex: 0 1 auto; }
+  .toolbar .nb-crumb-here { @apply font-semibold text-ink; }
+  .toolbar-actions .nb-page-tools { @apply glass h-8 flex-nowrap gap-0.5 rounded-full px-1; }
+  .toolbar-actions .nb-page-tools .nb-tool { @apply h-[26px] rounded-full; }
+  .toolbar-actions .nb-presence:empty { @apply hidden; }
 }
 
 /* ===========================================================================
@@ -1065,6 +1089,10 @@
 }
 
 @layer utilities {
+  /* A toolbar that would wrap shows its buttons as icons (data-table.js,
+     _wireTight); the name stays in the tooltip and for screen readers. */
+  .dt-toolbar.is-tight > .dt-toolbar-btn:has(svg) { @apply gap-0 px-2 text-[0px]; }
+
   /* The sheet toolbar's ••• menu (data-table.js, _wireMore). */
   .dt-more { @apply relative shrink-0; }
   .menu.dt-more-menu { @apply fixed right-auto w-60; }
@@ -2196,9 +2224,11 @@
 
   /* --- Sidebar --------------------------------------------------------- */
 
+  /* The list sits on the window, not in a panel; the page beside it is a
+     sheet of paper. */
   .notebook-sidebar {
-    @apply flex flex-col gap-1 overflow-y-auto border-b border-hairline bg-sand-50 px-2.5 py-3
-           md:sticky md:top-0 md:border-b-0 md:border-r;
+    @apply flex flex-col gap-1 overflow-y-auto border-b border-hairline px-2.5 pb-3 pt-1
+           md:sticky md:top-0 md:border-b-0;
   }
   @media (min-width: 768px) {
     .notebook-sidebar { height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h)); }
@@ -2229,7 +2259,7 @@
   .notebook-page-item a:hover { @apply bg-sand-200/60 text-ink; }
   .notebook-page-icon { @apply size-[13px] shrink-0 text-sand-400; }
   .page-title-label { @apply truncate; }
-  .notebook-page-item.active a { @apply bg-surface font-medium text-ink shadow-xs; }
+  .notebook-page-item.active a { @apply bg-brand-600/14 font-semibold text-brand-800; }
   .notebook-page-item.active .notebook-page-icon { @apply text-brand-600; }
   .notebook-page-item form { @apply absolute right-1 m-0 opacity-0 transition-opacity; }
   .notebook-page-item:hover form, .notebook-page-item:focus-within form { @apply opacity-100; }
@@ -2266,8 +2296,11 @@
 
   /* --- Page -------------------------------------------------------------- */
 
-  .notebook-main { @apply min-w-0 bg-surface; }
-  .notebook-editor { @apply mx-auto w-full max-w-[860px] px-6 pb-40 pt-8 sm:px-10; }
+  .notebook-main { @apply min-w-0 px-0 pb-6 md:pr-4; }
+  .notebook-editor {
+    @apply mx-auto w-full max-w-[860px] bg-surface px-6 pb-40 pt-8 sm:px-12 md:rounded-xl;
+    box-shadow: 0 0 0 0.5px var(--color-hairline), 0 1px 3px rgb(0 0 0 / 0.05);
+  }
 
   .page-title {
     @apply w-full border-0 bg-transparent p-0 text-[28px] font-bold leading-tight tracking-[-0.02em]
@@ -3829,7 +3862,7 @@ tr.is-scanned > td:first-child {
 
   .settings-nav { @apply flex flex-col gap-0.5 md:sticky md:top-4; }
   .set-search { @apply mb-2; }
-  .set-search input { @apply h-8 text-[13px]; }
+  .set-search input { @apply h-8 rounded-full text-[13px]; }
   .set-me {
     @apply mb-2 flex items-center gap-2.5 rounded-xl px-2 py-2 no-underline text-ink transition-colors;
   }
@@ -3837,22 +3870,21 @@ tr.is-scanned > td:first-child {
   .set-me small { @apply block truncate text-[12px] text-muted; }
   .set-me:hover { @apply bg-sand-100; }
   .set-me.is-on { @apply bg-brand-50; }
-  .set-group-head { @apply mt-3 mb-1 px-2 text-[11px] font-semibold text-sand-400; }
+  .set-group-head { @apply mt-3 mb-1 px-2 text-[11.5px] font-semibold text-muted; }
   .set-link {
     @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13.5px] no-underline text-ink transition-colors;
   }
   .set-link:hover { @apply bg-sand-100; }
-  .set-link.is-on { @apply bg-brand-600 text-white; }
+  /* The open pane: a soft tint of the accent, as in the sidebar. */
+  .set-link.is-on { @apply bg-brand-600/14 font-semibold text-brand-800; }
   .set-link-label { @apply min-w-0 truncate; }
   .set-link-badge { @apply ml-auto shrink-0 rounded-full bg-brand-600 px-1.5 text-[10.5px] font-semibold leading-[17px] text-white; }
-  .set-link.is-on .set-link-badge { @apply bg-white text-brand-700; }
   .set-search-none { @apply px-2 py-2 text-[12.5px] text-muted; }
 
   .set-ico { @apply grid size-[22px] shrink-0 place-items-center rounded-md; }
   .set-ico svg { @apply size-[13px]; }
   .set-ico.is-you { background: color-mix(in srgb, var(--color-brand-600) 15%, transparent); color: var(--color-brand-600); }
   .set-ico.is-lab { background: var(--set-lab-tint); color: var(--set-lab); }
-  .set-link.is-on .set-ico { background: rgb(255 255 255 / 0.22); color: #fff; }
   .set-ico-lg { @apply size-10 rounded-[10px]; }
   .set-ico-lg svg { @apply size-[21px]; }
 

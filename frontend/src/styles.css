@@ -628,14 +628,15 @@
   transform: translateX(-50%);
   /* Over the page, under the app's menus, dialogs and overlays. */
   z-index: 30;
-  background: var(--color-surface);
-  border: 1px solid var(--color-hairline);
-  border-radius: 12px;
-  box-shadow:
-    0 1px 1px rgba(15, 23, 42, 0.04),
-    0 8px 28px rgba(15, 23, 42, 0.12),
-    0 2px 6px rgba(15, 23, 42, 0.05);
-  padding: 4px;
+  /* Glass, as everything floating over the page is (the app's `glass`). */
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: blur(9px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(9px) saturate(200%) brightness(1.05);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 12px var(--glass-glow),
+              0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+  padding: 5px;
   display: inline-flex;
   /* Its own width (capped at the page's by toolbar.js), not what is left
      between its centre and the window's edge. */
@@ -648,17 +649,28 @@
   justify-content: flex-start;
   align-items: center;
   gap: 1px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .editor-toolbar::-webkit-scrollbar { display: none; }
+
+/* Insert is the bar's one tinted button. */
+.editor-toolbar-btn[data-cmd-id="insert"] {
+  margin-left: 2px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand-500) 88%, white 12%), var(--color-brand-600));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 4px 12px color-mix(in srgb, var(--color-brand-600) 30%, transparent);
+}
+.editor-toolbar-btn[data-cmd-id="insert"]:hover:not(:disabled) { background: var(--color-brand-600); }
 
 .editor-toolbar-btn {
   flex: none;
   background: transparent;
   border: none;
   padding: 6px 5px;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   color: var(--color-ink);
   display: inline-flex;

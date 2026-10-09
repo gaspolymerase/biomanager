@@ -15,7 +15,8 @@
 
   const tuiHost = $('#biocal-tui');
   const listHost = $('#biocal-list');
-  const titleEl = $('#biocal-title');
+  // The month is the page's title, in the title row.
+  const titleEl = $('#app-toolbar .toolbar-title');
   const side = $('#cal-side');
 
   const LAYER_KEY = 'biomanager:cal-layers';
