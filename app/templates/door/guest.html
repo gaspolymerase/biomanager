@@ -1,0 +1,18 @@
+{% extends "door.html" %}
+{# A visitor's guest code (app/guests.py enter): four groups of four. #}
+{% block door %}
+  <h2 class="door-title">{{ _('Visit %(lab)s', lab=lab_title) if lab_title else _('Guest access') }}</h2>
+  <p class="door-lede">{{ _('Type the guest code someone in the lab gave you.') }}</p>
+  <form method="post" class="door-form" data-code-form>
+    <input type="hidden" name="code" data-code-value>
+    <div class="door-code" data-code role="group" aria-label="{{ _('Code') }}">
+      {% for i in range(4) %}{% if i %}<span aria-hidden="true">–</span>{% endif %}<input maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="{{ _('Part %(n)s of the code', n=i + 1) }}"{{ ' autofocus' if i == 0 }}>{% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Continue') }}</button>
+  </form>
+  <p class="door-small">{{ _('A guest sees what the lab shared with them, until the code runs out. No password to remember.') }}</p>
+  <div class="door-others">
+    <p>{{ _('No code?') }} <a href="{{ url_for('door.ask', why='guest') }}">{{ _('Ask the lab’s admins for one') }}</a></p>
+    <p>{{ _('In the lab?') }} <a href="{{ url_for('login') }}">{{ _('Sign in') }}</a></p>
+  </div>
+{% endblock %}

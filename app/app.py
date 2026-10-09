@@ -385,6 +385,12 @@ app.register_blueprint(lab_routes.bp)
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
 
+# The way in before signing in: starting or opening a lab, waiting to be
+# approved, asking the admins (app/door.py).
+from . import door  # noqa: E402
+app.register_blueprint(door.bp)
+app.jinja_env.filters["initials"] = door.initials
+
 # Copies of the lab's database on every desktop app (app/lab_copy.py).
 app.register_blueprint(lab_copy.bp)
 # The devices that work on the lab, and which holds its master copy (app/devices.py).
@@ -1766,33 +1772,9 @@ def index():
 
 
 def hello():
-    """The first page someone sees before signing in: what BioManager is,
-    what this lab keeps in it, where the guide is, and the way in. On a
-    brand-new installation it leads to creating the first (admin) account."""
-    from . import inventory_service as inventories
-    from . import organism_service
-    from . import stock_service
-
-    with SessionLocal() as db_session:
-        first_account = db_session.scalar(select(func.count(UserAccount.id))) == 0
-        labels = inventories.builtin_labels(db_session)
-        features = lab.features_on(db_session)
-        # The lab's databases only: personal ones stay out of sight (app/lab.py).
-        databases = [{"label": labels[key], "icon": lab.FEATURES[key].icon}
-                     for key in ("colony", "zebrafish", "plasmids") if features.get(key)]
-        for module in stock_service.list_modules(db_session):
-            databases.append({"label": module.label, "icon": stock_service.view(module).icon})
-        for module in organism_service.list_modules(db_session):
-            databases.append({"label": module.label, "icon": module.icon or "paw"})
-        for module in inventories.list_modules(db_session):
-            databases.append({"label": module.label, "icon": inventories.view(module).icon})
-        lab_title = lab.lab_name(db_session)
-    return render_template(
-        "hello.html", first_account=first_account, databases=databases, lab_title=lab_title,
-        functions=[key for key in ("calendar", "notebook") if features.get(key)],
-        needs_setup_code=first_account and security.setup_code_required(),
-        guide_url=lab.guide_url(),
-    )
+    """The first page someone sees before signing in (app/door.py): the
+    sign-in to this lab, or, before there is any account, starting a lab."""
+    return door.front()
 
 
 @app.route("/home")
@@ -2125,10 +2107,10 @@ def login():
             minutes = -(-wait // 60)
             flash(ngettext("Too many failed sign-in attempts. Try again in %(num)s minute.",
                            "Too many failed sign-in attempts. Try again in %(num)s minutes.", minutes), "error")
-            return render_template("auth.html", mode="login"), 429
+            return door.signin(429)
         if security.https_required_but_missing():
             flash(gettext("This server only accepts sign-ins over HTTPS. Open it with an https:// address."), "error")
-            return render_template("auth.html", mode="login")
+            return door.signin()
         with SessionLocal() as db_session:
             user = db_session.scalar(select(UserAccount).where(UserAccount.username == username))
             if not security.check_password(user, password):
@@ -2141,10 +2123,15 @@ def login():
             else:
                 security.login_throttle.succeeded(*keys)
                 security.start_session(user)
+                if request.form.get("remember") == "1":
+                    # Home writes it to this browser's list (templates/base.html), so
+                    # the next sign-in here offers the account by name.
+                    session["remember_account"] = {"u": user.username, "n": user.display_name or user.username}
                 flash(gettext("Welcome, %(name)s.", name=user.display_name or user.username), "success")
                 return redirect(security.safe_next(request.args.get("next")) or landing_url(user))
-    return render_template("auth.html", mode="login", lab_set_aside=lab_set_aside(),
-                           new_lab_offered=devices.on_this_computer() and not no_accounts_yet())
+    if request.method == "GET" and no_accounts_yet():
+        return redirect(url_for("index"))
+    return door.signin()
 
 
 LANDING_FEATURES = {"colony": "colony", "calendar": "calendar", "notebook": "notebook", "plasmids": "plasmids"}
@@ -2698,13 +2685,23 @@ def register():
                     if not first:
                         security.signup_throttle.failed(signup_key)     # counts sign-ups, not failures
                     if first:
+                        # The lab named on the way here (app/door.py), and its admin
+                        # signed straight in, on to the setup survey.
+                        lab_name = (session.pop(door.NEW_LAB_NAME, "") or "").strip()
+                        if lab_name:
+                            set_setting(db_session, "lab_name", lab_name)
+                            db_session.commit()
                         security.clear_setup_code()
-                        flash(gettext("Admin account created. You can sign in now."), "success")
-                    else:
-                        flash(gettext("Account created. A lab admin needs to approve it before you can sign in."), "success")
-                    return redirect(url_for("login"))
-    return render_template("auth.html", mode="register", first_account=first, needs_setup_code=needs_code,
-                           lab_set_aside=lab_set_aside())
+                        security.start_session(user)
+                        flash(gettext("Admin account created."), "success")
+                        return redirect(url_for("lab.setup"))
+                    session[door.PENDING] = username
+                    flash(gettext("Account created. A lab admin needs to approve it before you can sign in."), "success")
+                    return redirect(url_for("door.joined"))
+    if first:
+        return door.render("door/admin.html", steps=door.setup_steps("admin"), needs_setup_code=needs_code,
+                           lab_name=session.get(door.NEW_LAB_NAME, ""), lab_set_aside=lab_set_aside())
+    return door.render("door/join.html")
 
 
 def no_accounts_yet() -> bool:

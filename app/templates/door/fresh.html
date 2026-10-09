@@ -1,0 +1,16 @@
+{% extends "door.html" %}
+{# A server nobody has set up yet (app/door.py front). #}
+{% from "door/_concept.html" import concept with context %}
+{% block lab %}{{ concept(line=_('This server doesn’t hold a lab yet: whoever sets it up starts one.')) }}{% endblock %}
+{% block door %}
+  <h2 class="door-title">{{ _('This server has no lab yet') }}</h2>
+  <div class="door-banner">
+    <p><b>{{ _('Expected to sign in to your lab?') }}</b></p>
+    <p>{{ _('Then this is probably the wrong address. Ask whoever runs your lab’s BioManager for it.') }}</p>
+  </div>
+  <p class="door-lede">{{ _('Setting BioManager up for your lab? Start here. You’ll need the setup code printed in the server’s log when it started.') }}</p>
+  <a class="btn btn-primary btn-lg door-wide" href="{{ url_for('door.start') }}">{{ _('Start a new lab here') }}</a>
+  {% if config.LOCAL_SETUP %}
+    <div class="door-others"><p><a href="{{ url_for('server_setup.page') }}">{{ _('Set up a lab server') }}</a></p></div>
+  {% endif %}
+{% endblock %}

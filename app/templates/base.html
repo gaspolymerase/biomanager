@@ -38,6 +38,18 @@
         };
       })({{ js_catalog()|tojson }});
     </script>
+    {% set remembered_account = session.pop('remember_account', None) %}
+    {% if remembered_account %}
+    {# Just signed in with "Remember me on this computer": the sign-in page
+       offers this account by name next time (static/door.js). #}
+    <script nonce="{{ csp_nonce() }}">
+      try {
+        var KEY = 'biomanager:accounts', me = {{ remembered_account|tojson }};
+        var list = JSON.parse(localStorage.getItem(KEY) || '[]').filter(function (a) { return a && a.u && a.u !== me.u; });
+        localStorage.setItem(KEY, JSON.stringify([{ u: me.u, n: me.n }].concat(list).slice(0, 6)));
+      } catch (_) { /* storage off */ }
+    </script>
+    {% endif %}
     {# Declarative handlers (data-on-click=…); before any page script registers its actions. #}
     <script src="{{ url_for('static', filename='actions.js') }}?v={{ asset_version('actions.js') }}"></script>
     {# In-app confirm / prompt / alert (BioDialog), for every page script. #}

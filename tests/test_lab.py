@@ -107,10 +107,10 @@ class SetupSurvey(LabSettingsCase):
         r = app.test_client().post("/login", data={"username": admin, "password": PASSWORD})
         self.assertEqual(r.headers["Location"], "/setup")
 
-    def test_answering_it_marks_the_lab_set_up_and_goes_home(self):
+    def test_answering_it_marks_the_lab_set_up_and_shows_it_ready(self):
         execute("delete from app_settings where key='lab_setup_done'")
         r = self.survey(self.a)
-        self.assertFlash(r, "The lab is set up", "success")
+        self.assertIn("Test Lab is ready", r.get_data(as_text=True))
         self.assertTrue(one("select value from app_settings where key='lab_setup_done'"))
         self.assertEqual(one("select value from app_settings where key='lab_name'"), "Test Lab")
 

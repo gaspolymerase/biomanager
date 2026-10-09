@@ -146,9 +146,10 @@ def setup():
                 user.welcomed_at = datetime.utcnow()
                 whats_new.stamp(user)
             db_session.commit()
-            flash(gettext("The lab is set up. Change any of it here whenever you like.") if first_run
-                  else gettext("Lab setup saved."), "success")
-            return redirect(url_for("home_dashboard") if first_run else url_for("settings", _anchor="general"))
+            # The first time, the ready page says it all (templates/door/ready.html).
+            if not first_run:
+                flash(gettext("Lab setup saved."), "success")
+            return redirect(url_for("lab.ready") if first_run else url_for("settings", _anchor="general"))
         state = lab.survey_state(db_session)
         custom = lab.custom_databases(db_session)
         admins = db_session.scalars(select(UserAccount).where(UserAccount.role == "admin",
@@ -169,6 +170,21 @@ def setup():
             date_styles=lab.DATE_STYLES, timezones=lab.timezone_names(), server_timezone=lab.server_timezone(),
             local_setup=bool(current_app.config.get("LOCAL_SETUP")), wean_offset_days=WEAN_OFFSET_DAYS,
             heartbeat_off_by_server=telemetry.off_by_env())
+
+
+@bp.route("/ready")
+def ready():
+    """After the first setup survey: the lab is made, and here is how people
+    join it (templates/door/ready.html)."""
+    blocked = _admin_or_redirect()
+    if blocked:
+        return blocked
+    from . import devices, door
+    here = devices.on_this_computer()
+    # A server's own address; a desktop's only while it shares the lab.
+    address = devices.share_url() if here else request.host_url.rstrip("/")
+    return door.render("door/ready.html", steps=door.setup_steps("ready"), address=address, on_this_computer=here,
+                       admin_name=g.user.display_name or g.user.username)
 
 
 # ---------------------------------------------------------------- welcome tour

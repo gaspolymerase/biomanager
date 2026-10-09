@@ -1,0 +1,39 @@
+{% extends "door.html" %}
+{# Asking to join this lab (app.py register, once there are accounts). #}
+{% block door %}
+  <h2 class="door-title">{{ _('Join %(lab)s', lab=lab_title) if lab_title else _('Join the lab') }}</h2>
+  <p class="door-lede">{{ _('A lab admin approves new people. They are told as soon as you ask.') }}</p>
+  <ol class="door-timeline">
+    <li class="is-done"><b>{{ _('You ask') }}</b><span>{{ _('now') }}</span></li>
+    <li><b>{{ _('An admin approves') }}</b><span>{{ _('you’ll see it here') }}</span></li>
+    <li><b>{{ _('You’re in') }}</b><span>{{ _('sign in as usual') }}</span></li>
+  </ol>
+  <form method="post" class="door-form">
+    <label class="door-field">{{ _('Your name') }}
+      <input name="display_name" autocomplete="name" value="{{ request.form.get('display_name', '') }}" autofocus>
+    </label>
+    <label class="door-field">{{ _('Username') }}
+      <input name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required value="{{ request.form.get('username', '') }}">
+      <small>{{ _('What you’ll sign in with: letters, digits, dots or dashes.') }}</small>
+    </label>
+    <label class="door-field">{{ _('Password') }}
+      <span class="door-input"><input type="password" name="password" autocomplete="new-password" required minlength="{{ min_password_length }}">
+        <button type="button" class="door-peek" data-peek>{{ _('Show') }}</button></span>
+      <small>{{ _('At least %(count)s characters.', count=min_password_length) }}</small>
+    </label>
+    <label class="door-field">{{ _('Confirm password') }}
+      <input type="password" name="confirm_password" autocomplete="new-password" required>
+    </label>
+    <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Ask to join') }}</button>
+  </form>
+  {% if sign_in_providers %}
+    <div class="door-stack">
+      {% for p in sign_in_providers %}
+        <a class="btn btn-lg door-wide" href="{{ url_for('oidc.start', key=p.key) }}">{{ _('Request an account with %(provider)s', provider=p.label) }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="door-others">
+    <p>{{ _('Already in the lab?') }} <a href="{{ url_for('login') }}">{{ _('Sign in') }}</a></p>
+  </div>
+{% endblock %}

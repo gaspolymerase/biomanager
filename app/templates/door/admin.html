@@ -1,0 +1,37 @@
+{% extends "door.html" %}
+{# Starting a lab: its first account, the admin (app.py register, before
+   there is any account). #}
+{% from "door/_steps.html" import forming, progress with context %}
+{% block lab %}{{ forming(lab_name, steps, _('on this computer') if config.LOCAL_SETUP else host) }}{% endblock %}
+{% block door %}
+  {% if lab_set_aside %}
+    <p class="door-banner">{{ _('This is a new lab: create its first account, which becomes the admin. The lab you set aside is kept in %(folder)s.', folder=lab_set_aside) }}</p>
+  {% endif %}
+  <a class="door-back" href="{{ url_for('door.where') if config.LOCAL_SETUP and lab_name else url_for('door.start') }}">‹ {{ _('Back') }}</a>
+  {{ progress(steps) }}
+  <h2 class="door-title">{{ _('You, the admin') }}</h2>
+  <p class="door-lede">{{ _('The admin sets up %(lab)s and approves the people who join. You can add more admins later.', lab=lab_name or _('the lab')) }}</p>
+  <form method="post" class="door-form">
+    <label class="door-field">{{ _('Your name') }}
+      <input name="display_name" autocomplete="name" value="{{ request.form.get('display_name', '') }}" autofocus>
+    </label>
+    <label class="door-field">{{ _('Username') }}
+      <input name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required value="{{ request.form.get('username', '') }}">
+    </label>
+    {% if needs_setup_code %}
+      <label class="door-field">{{ _('Setup code') }}
+        <input name="setup_code" autocomplete="off" spellcheck="false" required placeholder="xxxx-xxxx-xxxx" class="font-mono">
+        <small>{{ _('Printed in the server’s log when BioManager started, so nobody else on the network can make this account first.') }}</small>
+      </label>
+    {% endif %}
+    <label class="door-field">{{ _('Password') }}
+      <span class="door-input"><input type="password" name="password" autocomplete="new-password" required minlength="{{ min_password_length }}">
+        <button type="button" class="door-peek" data-peek>{{ _('Show') }}</button></span>
+      <small>{{ _('At least %(count)s characters.', count=min_password_length) }}</small>
+    </label>
+    <label class="door-field">{{ _('Confirm password') }}
+      <input type="password" name="confirm_password" autocomplete="new-password" required>
+    </label>
+    <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Continue') }}</button>
+  </form>
+{% endblock %}

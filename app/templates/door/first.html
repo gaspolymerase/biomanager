@@ -1,0 +1,27 @@
+{% extends "door.html" %}
+{# The desktop app, opened for the first time (app/door.py front): before
+   anything is made, does the lab already have a BioManager? #}
+{% from "door/_concept.html" import concept with context %}
+{% block lab %}{{ concept(line=_('So the first question is whether your lab has one already.')) }}{% endblock %}
+{% block door %}
+  {% if lab_set_aside %}
+    {# Just after Start a new lab: where the old one went (app/paths.py). #}
+    <p class="door-banner">{{ _('This is a new lab: create its first account, which becomes the admin. The lab you set aside is kept in %(folder)s.', folder=lab_set_aside) }}</p>
+  {% endif %}
+  <h2 class="door-title">{{ _('Welcome to BioManager') }}</h2>
+  <p class="door-lede">{{ _('Does your lab already use BioManager?') }}</p>
+  <div class="door-choices">
+    <a class="door-choice" href="{{ url_for('door.open_lab') }}">
+      <span class="door-choice-icon">{{ icon('database') }}</span>
+      <span><b>{{ _('Yes, open my lab') }}</b><small>{{ _('Connect to the lab’s BioManager and sign in, or ask to join. Nothing is created on this computer.') }}</small></span>
+    </a>
+    <a class="door-choice" href="{{ url_for('door.start') }}">
+      <span class="door-choice-icon">{{ icon('plus') }}</span>
+      <span><b>{{ _('No, start a new lab') }}</b><small>{{ _('Make a new, empty lab, with you as its admin. Others join it later.') }}</small></span>
+    </a>
+  </div>
+  <div class="door-others">
+    <p>{{ _('Moving to a new computer?') }} <a href="{{ guide_url|replace('guide.html', 'guide/restore-a-backup.html') }}" target="_blank" rel="noopener">{{ _('Restore a lab from a backup') }}</a></p>
+    <p>{{ _('Just looking?') }} <a href="{{ guide_url|replace('guide.html', 'guide/try-it-first.html') }}" target="_blank" rel="noopener">{{ _('Try a demo lab') }}</a></p>
+  </div>
+{% endblock %}

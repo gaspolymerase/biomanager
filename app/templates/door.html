@@ -1,0 +1,76 @@
+<!doctype html>
+{# The way in (app/door.py): the lab on the left, the one thing to do on the
+   right. Every page before signing in extends this. #}
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="darkreader-lock">
+  <title>{% block title %}{{ lab_title ~ ' · ' if lab_title }}BioManager{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icon.svg') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='tailwind.css') }}?v={{ asset_version('tailwind.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='door.css') }}?v={{ asset_version('door.css') }}">
+  {# Page scripts translate their words with t("…"), as in base.html. #}
+  <script nonce="{{ csp_nonce() }}">
+    window.BM_LANG = {{ current_language()|tojson }};
+    (function (words) {
+      window.t = function (text, values) {
+        var out = Object.prototype.hasOwnProperty.call(words, text) ? words[text] : text;
+        return values ? out.replace(/%\((\w+)\)[sd]/g, function (m, k) { return k in values ? values[k] : m; }) : out;
+      };
+    })({{ js_catalog()|tojson }});
+  </script>
+</head>
+<body class="door">
+  <div class="door-shell">
+    <aside class="door-lab">
+      {{ door_pattern }}
+      <a class="door-brand" href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='icon.svg') }}" alt="" width="30" height="30">
+        <span>BioManager</span>
+      </a>
+      {% block lab %}
+        {% if lab_title %}
+          <div class="door-ident">
+            <span class="door-mono" aria-hidden="true">{{ lab_initials }}</span>
+            <div><h1>{{ lab_title }}</h1><p>{{ host }}</p></div>
+          </div>
+        {% endif %}
+        {% if databases %}
+          <section class="door-kept" aria-labelledby="door-kept-title">
+            <h2 id="door-kept-title">{{ _('In this lab') }}</h2>
+            <ul>{% for d in databases %}<li>{{ icon(d.icon) }}<span>{{ d.label|tr }}</span></li>{% endfor %}</ul>
+          </section>
+        {% endif %}
+      {% endblock %}
+      <footer class="door-foot">
+        <a href="{{ guide_url }}" target="_blank" rel="noopener">{{ _('User guide') }}</a>
+        <a href="https://biomanager.org/" target="_blank" rel="noopener">{{ _('About BioManager') }}</a>
+      </footer>
+    </aside>
+
+    <main class="door-main">
+      <div class="door-panel">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        {% block door %}{% endblock %}
+        {# This browser's language, before anyone signs in (app/i18n.py). #}
+        <form method="post" action="{{ url_for('choose_language') }}" class="door-lang">
+          <input type="hidden" name="next" value="{{ request.full_path }}">
+          {% for code, name in languages.items() %}
+            <button type="submit" name="language" value="{{ code }}" lang="{{ 'zh-CN' if code == 'zh' else code }}"
+                    {% if code == current_language() %}aria-current="true"{% endif %}>{{ name }}</button>
+          {% endfor %}
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='door.js') }}?v={{ asset_version('door.js') }}" defer></script>
+</body>
+</html>

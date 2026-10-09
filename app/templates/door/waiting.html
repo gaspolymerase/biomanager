@@ -1,0 +1,23 @@
+{% extends "door.html" %}
+{# After asking to join: waiting for an admin, and the moment they approve
+   (static/door.js asks /joined/status while the page is open). #}
+{% block door %}
+  <h2 class="door-title">{{ _('Asked to join') }}</h2>
+  <ol class="door-timeline">
+    <li class="is-done"><b>{{ _('You asked') }}</b><span>{{ _('as %(username)s', username=username) }}</span></li>
+    <li class="is-done" data-wait-step><b>{{ _('Waiting for an admin') }}</b><span>{{ _('they have been told') }}</span></li>
+    <li data-done-step><b>{{ _('You’re in') }}</b><span>{{ _('sign in as usual') }}</span></li>
+  </ol>
+  <div class="door-pending" data-poll="{{ url_for('door.joined_status') }}">
+    <span class="door-spin" aria-hidden="true"></span>
+    <p><b>{{ _('Waiting for a lab admin to approve %(username)s.', username=username) }}</b>
+      <span>{{ _('You can close this page and sign in later; it changes here as soon as you’re approved.') }}</span></p>
+  </div>
+  <div class="door-approved" data-approved hidden>
+    <p><b>{{ _('You’re approved.') }}</b> {{ _('Sign in with %(username)s and your password.', username=username) }}</p>
+    <a class="btn btn-primary btn-lg door-wide" data-approved-link href="{{ url_for('login', u=username) }}">{{ _('Sign in') }}</a>
+  </div>
+  <div class="door-others">
+    <p><a href="{{ url_for('login') }}">{{ _('Back to sign in') }}</a></p>
+  </div>
+{% endblock %}

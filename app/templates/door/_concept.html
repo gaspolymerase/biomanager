@@ -1,0 +1,19 @@
+{# One lab, one shared database, everyone signing in to it: for someone who
+   has never used BioManager. `you` lights the line from this computer. #}
+{% macro concept(you=False, line='') %}
+  <div class="door-concept">
+    <svg class="door-map" viewBox="0 0 380 210" role="img" aria-label="{{ _('One lab database, with everyone in the lab signing in to it') }}">
+      {% for x, y, label in [(60, 40, _('a laptop')), (320, 40, _('a lab computer')), (60, 172, _('a phone')), (320, 172, _('this computer') if you else _('a laptop'))] %}
+        {% set me = you and loop.last %}
+        <line class="door-map-link{{ ' is-you' if me }}" x1="190" y1="105" x2="{{ x }}" y2="{{ y }}"/>
+        <rect class="door-map-node{{ ' is-you' if me }}" x="{{ x - 22 }}" y="{{ y - 15 }}" width="44" height="30" rx="7"/>
+        <text class="door-map-label{{ ' is-you' if me }}" x="{{ x }}" y="{{ y - 22 if y < 100 else y + 32 }}" text-anchor="middle">{{ label }}</text>
+      {% endfor %}
+      <rect class="door-map-db" x="125" y="80" width="130" height="50" rx="12"/>
+      <text class="door-map-dbt" x="190" y="102" text-anchor="middle">{{ _('Your lab') }}</text>
+      <text class="door-map-dbs" x="190" y="118" text-anchor="middle">{{ _('one shared database') }}</text>
+    </svg>
+    <p>{% trans %}<b>Each lab has one BioManager</b>: one database of its animals, stocks, plasmids and supplies. Everyone in the lab signs in to that same one, from a laptop, a lab computer or a phone.{% endtrans %}</p>
+    {% if line %}<p>{{ line }}</p>{% endif %}
+  </div>
+{% endmacro %}

@@ -1,0 +1,22 @@
+{% extends "door.html" %}
+{# Starting a lab, step one: its name (app/door.py start). The left half
+   becomes the lab as it is typed (static/door.js). #}
+{% from "door/_steps.html" import forming, progress with context %}
+{% block lab %}{{ forming(lab_name, steps) }}{% endblock %}
+{% block door %}
+  <a class="door-back" href="{{ url_for('index') }}">‹ {{ _('Back') }}</a>
+  {{ progress(steps) }}
+  <h2 class="door-title">{{ _('Start a new lab') }}</h2>
+  <div class="door-banner">
+    <p><b>{{ _('This makes a new, empty lab database.') }}</b> {{ _('You’ll be its admin, and the people in your lab will join it.') }}</p>
+    <p>{{ _('If your lab already has BioManager, don’t start another.') }}
+      {% if config.LOCAL_SETUP %}<a href="{{ url_for('door.open_lab') }}">{{ _('Open your lab instead') }}</a>{% else %}{{ _('Ask whoever runs it for its address.') }}{% endif %}</p>
+  </div>
+  <form method="post" class="door-form">
+    <label class="door-field">{{ _('What is your lab called?') }}
+      <input name="lab_name" data-lab-name maxlength="80" required value="{{ lab_name }}" placeholder="{{ _('e.g. Rivera Lab') }}" autofocus>
+      <small>{{ _('People see it when they sign in. You can change it later.') }}</small>
+    </label>
+    <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Continue') }}</button>
+  </form>
+{% endblock %}

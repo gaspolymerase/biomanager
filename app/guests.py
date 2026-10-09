@@ -41,7 +41,7 @@ DURATIONS = {1: "1 day", 3: "3 days", 7: "1 week", 30: "30 days"}
 ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
 CODE_LENGTH = 16                     # about 78 bits: guessing is hopeless
 # Anyone on the internet may reach these without a session.
-OPEN_PATHS = ("/guest", "/healthz", "/logout", security.CSP_REPORT_PATH)
+OPEN_PATHS = ("/guest", "/ask", "/healthz", "/logout", security.CSP_REPORT_PATH)
 # A calendar feed link carries its own secret (app/lab_calendar.py), so a
 # phone or Google Calendar can fetch it from outside the lab's network.
 OPEN_PREFIXES = ("/static/", "/calendar/feed/",
@@ -123,7 +123,8 @@ def enter():
             minutes = -(-wait // 60)
             flash(ngettext("Too many wrong codes. Try again in %(num)s minute.",
                            "Too many wrong codes. Try again in %(num)s minutes.", minutes), "error")
-            return render_template("guests/enter.html"), 429
+            from . import door
+            return door.render("door/guest.html", 429)
         code = request.form.get("code", "")
         now = datetime.utcnow()
         with SessionLocal() as s:
@@ -146,7 +147,8 @@ def enter():
                 flash(gettext("Welcome, %(name)s. Your guest access lasts until %(when)s.", name=gp.label, when=when),
                       "success")
                 return redirect(landing_url(user))
-    return render_template("guests/enter.html"), status
+    from . import door
+    return door.render("door/guest.html", status)
 
 
 # ---------------------------------------------------------------------------

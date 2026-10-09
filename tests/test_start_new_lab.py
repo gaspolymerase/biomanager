@@ -94,10 +94,14 @@ class SetAside(AppTestCase):
             self.assertFalse(paths.new_lab_asked_for())
             self.assertIn("Nothing changes", page)
 
-    def test_the_sign_in_page_says_where_the_old_lab_went_until_the_new_one_has_an_account(self):
+    def test_the_first_page_says_where_the_old_lab_went_until_the_new_one_has_an_account(self):
         anyone = app.test_client()
         with self.desktop(LAB_SET_ASIDE="/somewhere/old-labs/2026-10-08 120000"):
             # This test database has accounts, so it is not a new lab.
             self.assertNotIn("/somewhere/old-labs", anyone.get("/login").get_data(as_text=True))
-            with mock.patch("app.app.no_accounts_yet", return_value=True):
-                self.assertIn("/somewhere/old-labs", anyone.get("/login").get_data(as_text=True))
+            with mock.patch("app.app.no_accounts_yet", return_value=True), \
+                    mock.patch("app.door.no_accounts_yet", return_value=True), \
+                    mock.patch("app.devices.on_this_computer", return_value=True):
+                html = anyone.get("/login", follow_redirects=True).get_data(as_text=True)
+                self.assertIn("/somewhere/old-labs", html)
+                self.assertIn("Does your lab already use BioManager?", html)

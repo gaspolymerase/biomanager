@@ -1,0 +1,23 @@
+{# The left half while a lab is being started: the lab as it is named, and
+   the steps (app/door.py setup_steps). #}
+{% macro forming(lab_name, steps, where='') %}
+  <div class="door-ident is-forming">
+    <span class="door-mono{{ '' if lab_name else ' is-empty' }}" aria-hidden="true" data-forming-mono>{{ lab_name|initials if lab_name else '?' }}</span>
+    <div><h1 data-forming-name data-empty="{{ _('Your new lab') }}">{{ lab_name or _('Your new lab') }}</h1>
+      <p>{{ where or _('new') }}</p></div>
+  </div>
+  <section class="door-steps" aria-labelledby="door-steps-title">
+    <h2 id="door-steps-title">{{ _('Starting a new lab') }}</h2>
+    <ol>
+      {% for step in steps %}
+        <li class="{{ 'is-now' if step.now }}{{ ' is-done' if step.done }}"{% if step.now %} aria-current="step"{% endif %}>
+          <span class="door-step-n">{% if step.done %}{{ icon('check') }}{% else %}{{ loop.index }}{% endif %}</span><span>{{ step.label }}</span>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endmacro %}
+
+{% macro progress(steps) %}
+  <div class="door-progress" aria-hidden="true">{% for step in steps %}<i class="{{ 'is-on' if step.done or step.now }}"></i>{% endfor %}</div>
+{% endmacro %}

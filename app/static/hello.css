@@ -1,4 +1,4 @@
-/* templates/hello.html: the page before signing in. Colours are the app's
+/* The bar of templates/server_setup.html (it was the welcome page's, before app/door.py). Colours are the app's
    tokens (tailwind.css), so light and dark follow the system. */
 
 body.hello {

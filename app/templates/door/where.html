@@ -1,0 +1,19 @@
+{% extends "door.html" %}
+{# Starting a lab in the desktop app: here, or on a lab server (app/door.py where). #}
+{% from "door/_steps.html" import forming, progress with context %}
+{% block lab %}{{ forming(lab_name, steps, _('on this computer')) }}{% endblock %}
+{% block door %}
+  <a class="door-back" href="{{ url_for('door.start') }}">‹ {{ _('Back') }}</a>
+  {{ progress(steps) }}
+  <h2 class="door-title">{{ _('Where should %(lab)s live?', lab=lab_name) }}</h2>
+  <div class="door-choices">
+    <a class="door-choice" href="{{ url_for('register') }}">
+      <span class="door-choice-icon">{{ icon('home') }}</span>
+      <span><b>{{ _('On this computer') }}</b><small>{{ _('Right for one person or a small lab. Share it on the network later, and others join it.') }}</small></span>
+    </a>
+    <a class="door-choice" href="{{ url_for('server_setup.page') }}">
+      <span class="door-choice-icon">{{ icon('database') }}</span>
+      <span><b>{{ _('On a lab server') }}</b><small>{{ _('For a whole lab, always on. Set it up on a lab computer or a NAS, step by step from here.') }}</small></span>
+    </a>
+  </div>
+{% endblock %}

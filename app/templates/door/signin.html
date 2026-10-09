@@ -1,0 +1,52 @@
+{% extends "door.html" %}
+{# Signing in to this lab (app/door.py signin). A browser that kept accounts
+   ("Remember me on this computer") offers them by name first (static/door.js). #}
+{% block door %}
+  {% if lab_set_aside %}
+    <p class="door-banner">{{ _('This is a new lab: create its first account, which becomes the admin. The lab you set aside is kept in %(folder)s.', folder=lab_set_aside) }}</p>
+  {% endif %}
+  <h2 class="door-title">{{ _('Sign in to %(lab)s', lab=lab_title) if lab_title else _('Sign in') }}</h2>
+
+  <div class="door-accounts" data-accounts hidden>
+    <p class="door-lede">{{ _('Choose your account.') }}</p>
+    <div class="door-account-list" data-account-list></div>
+    <p class="door-small"><button type="button" class="door-link" data-account-other>{{ _('Use another account') }}</button>
+      · <button type="button" class="door-link" data-account-forget>{{ _('Forget these accounts') }}</button></p>
+  </div>
+
+  <div class="door-signin" data-signin>
+    {% if sign_in_providers %}
+      <div class="door-stack">
+        {% for p in sign_in_providers %}
+          <a class="btn btn-lg door-wide" href="{{ url_for('oidc.start', key=p.key, next=request.args.get('next')) }}">{{ icon('key') }}{{ _('Sign in with %(provider)s', provider=p.label) }}</a>
+        {% endfor %}
+      </div>
+      <p class="door-or"><span>{{ _('or with your BioManager account') }}</span></p>
+    {% endif %}
+    <form method="post" action="{{ url_for('login', next=request.args.get('next')) }}" class="door-form">
+      <div class="door-who" data-who hidden>
+        <span class="door-avatar" data-who-avatar></span>
+        <span><b data-who-name></b><small data-who-user></small></span>
+        <button type="button" class="door-link" data-who-change>{{ _('Not you?') }}</button>
+      </div>
+      <label class="door-field" data-username-field>{{ _('Username') }}
+        <input name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required value="{{ prefill }}" {{ 'autofocus' if not prefill }}>
+      </label>
+      <label class="door-field">{{ _('Password') }}
+        <span class="door-input"><input type="password" name="password" autocomplete="current-password" required {{ 'autofocus' if prefill }}>
+          <button type="button" class="door-peek" data-peek>{{ _('Show') }}</button></span>
+      </label>
+      <label class="door-check"><input type="checkbox" name="remember" value="1"> {{ _('Remember me on this computer') }}</label>
+      <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Sign in') }}</button>
+    </form>
+  </div>
+
+  <div class="door-others">
+    <p>{{ _('New to the lab?') }} <a href="{{ url_for('register') }}">{{ _('Ask to join') }}</a></p>
+    <p>{{ _('Visiting?') }} <a href="{{ url_for('guests.enter') }}">{{ _('Enter a guest code') }}</a></p>
+    <p>{{ _('Forgot your password?') }} <a href="{{ url_for('door.ask', why='password') }}">{{ _('Ask the lab’s admins') }}</a></p>
+    {% if new_lab_offered %}
+      <p>{{ _('Nobody can sign in to this lab?') }} <a href="{{ url_for('start_new_lab') }}">{{ _('Start a new lab') }}</a></p>
+    {% endif %}
+  </div>
+{% endblock %}

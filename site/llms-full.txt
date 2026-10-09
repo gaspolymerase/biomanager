@@ -93,15 +93,15 @@ Install the desktop app, open it the first time, and set up your lab.
 | Linux | Mark `BioManager-Linux.AppImage` executable (right-click → Properties, or `chmod +x`) and open it. |
 | Updates | The desktop app checks for a new version once a day and offers it, with what's new; **BioManager → Check for Updates…** (on Windows and Linux, **Help**) asks now. **Install and Restart** downloads it, checks it, and swaps it in as the app quits; where it can't (the Linux `.tar.gz`, a folder it can't write to), it opens the download to install as above. Your data stays where it is, and before a new version changes it a copy is kept ([Your data](https://biomanager.org/guide/your-data)). Turn the daily check off with **Check for Updates Automatically**. |
 | What's new | After an update, on a desktop or a lab server, the first page you open shows a short **What's new**: what is new, what works differently and what was fixed, with a link to the full notes. **Got it** closes it for good; **Help → What's new** opens it again. |
-| A lab server | Nothing to install: open the address your admin gives you. A welcome page shows what BioManager does and leads to **Sign in** or **Create an account**. Setting one up is on [Run it for your lab](https://biomanager.org/server). |
+| A lab server | Nothing to install: open the address your admin gives you. It opens on your lab's sign-in, with its name and what it keeps; new to the lab, choose **Ask to join**. Setting one up is on [Run it for your lab](https://biomanager.org/server). |
 | Updating a lab server | The server looks for a new version once a day and tells its admins. They find it in **Settings → Devices & copies → Updates**, with what's new and a link to the release notes. **Update now** takes a backup, installs the new version and restarts the server; BioManager is away for a minute or two, and the page comes back by itself on the new version. The phone apps open the server, so they follow it. Turn the daily look off with **Check for new versions every day**. |
 | Phones | The Android app, or your lab server added to an iPhone's home screen: see [Phones and cage cards](https://biomanager.org/guide/phones-and-cage-cards). |
 
 > **Why the warning on a computer?** The apps aren't signed by Apple or Microsoft, so the system asks you to confirm once per version.
 
-#### The set-up survey
+#### Starting a lab
 
-The first account is the lab's **admin** (on a server, it needs the one-time setup code printed when the server started). The admin then answers a short survey, and BioManager builds exactly what you'll use — nothing more:
+The first time the desktop app opens, it asks **Does your lab already use BioManager?** **Yes, open my lab** takes the lab's address and opens it in this window from then on; nothing is made on the computer. **No, start a new lab** makes a new, empty lab, and says so: you name it, choose whether it lives on this computer or a lab server, and make its first account, which is the lab's **admin**. A server nobody has set up says it has no lab yet, and starts the same way, with the one-time setup code printed when the server started. The admin then answers a short survey, and BioManager builds exactly what you'll use — nothing more:
 
 1. **Your lab** — its name, time zone, how dates are written and the genotyping day ([what these do](https://biomanager.org/guide/lab-setup)).
 
@@ -113,7 +113,7 @@ The first account is the lab's **admin** (on a server, it needs the one-time set
 
 Below the questions, **Send BioManager's makers anonymous counts once a day** is ticked; untick it if you'd rather not ([what is sent](https://biomanager.org/guide/your-data#counts)).
 
-BioManager then makes those databases, the racks and incubators too, and takes you Home. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → Your data → See the welcome tour again** brings it back).
+BioManager then makes those databases, the racks and incubators too, and shows the lab ready, with the address people join at. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → Your data → See the welcome tour again** brings it back).
 
 **English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Appearance & language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
 
@@ -1221,7 +1221,7 @@ Who and where: Admins
 
 - **Leaving**: **Settings → Statistics** shows how many animals each person keeps; hand their racks over there (who may change each rack), give their records to someone else with **Set field → Owner**, then disable the account. Their records and history stay.
 
-- **Guests**: For someone outside the lab — a collaborator, a visitor — for a day to a month: **New guest pass** under **Guests** (admins), who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**. On a Tailscale server, the admin can let guests in from the internet without Tailscale ([how](https://biomanager.org/server#guests)).
+- **Guests**: For someone outside the lab — a collaborator, a visitor — for a day to a month: **New guest pass** under **Guests** (admins), who it's for and how long, **Make a code**. They open the link, enter the code, and work as a member with their own account until the pass ends or you press **End now**. On a Tailscale server, the admin can let guests in from the internet without Tailscale ([how](https://biomanager.org/server#guests)). Someone without a code chooses **No code? Ask the lab's admins for one** on the guest page, and every admin gets it as a notification, with how to reach them; **Forgot your password?** on the sign-in page asks the same way.
 
 ### Troubleshooting
 
@@ -1249,7 +1249,7 @@ Who and where: Admins · Lab server
 
 1. Send them your lab server's address.
 
-2. They open it, press **Create an account** and fill it in. They can't sign in until an admin approves it. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in & security**, in **Sign in with another account**.
+2. They open it, press **Ask to join** and fill it in. Every admin is told at once, and their page changes as soon as one approves them; they can't sign in before that. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in & security**, in **Sign in with another account**.
 
 3. Admins are notified of the sign-up. Open **Settings → People & access**: they wait under **Waiting to join**.
 

@@ -1,0 +1,28 @@
+{% extends "door.html" %}
+{# The desktop app, before any account: open the lab's BioManager in this
+   window (app/door.py open_lab). #}
+{% from "door/_concept.html" import concept with context %}
+{% block lab %}{{ concept(you=True, line=_('Opening your lab’s connects this computer to it. Nothing is made here.')) }}{% endblock %}
+{% block door %}
+  {% if found %}
+    <a class="door-back" href="{{ url_for('door.open_lab') }}">‹ {{ _('Back') }}</a>
+    <h2 class="door-title">{{ _('Found your lab') }}</h2>
+    <div class="door-found">
+      <span class="door-mono" aria-hidden="true">{{ (found.name or 'BioManager')|initials }}</span>
+      <span><b>{{ found.name or _('A BioManager lab') }}</b><small>{{ found.host }}</small></span>
+    </div>
+    <p class="door-lede">{{ _('This window opens it from now on. Sign in, or ask to join if you’re new.') }}</p>
+    <a class="btn btn-primary btn-lg door-wide" href="{{ found.url }}/">{{ _('Open %(lab)s', lab=found.name) if found.name else _('Open the lab') }}</a>
+  {% else %}
+    <a class="door-back" href="{{ url_for('index') }}">‹ {{ _('Back') }}</a>
+    <h2 class="door-title">{{ _('Open your lab') }}</h2>
+    <p class="door-lede">{{ _('Type your lab’s BioManager address.') }}</p>
+    <form method="post" class="door-form">
+      <label class="door-field">{{ _('Address') }}
+        <input name="address" required autocapitalize="off" spellcheck="false" class="font-mono" value="{{ address }}" placeholder="lab.example.org" autofocus>
+        <small>{{ _('Whoever runs your lab’s BioManager has it: it’s the address they open it at.') }}</small>
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Find it') }}</button>
+    </form>
+  {% endif %}
+{% endblock %}

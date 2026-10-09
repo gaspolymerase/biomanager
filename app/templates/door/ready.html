@@ -1,0 +1,28 @@
+{% extends "door.html" %}
+{# After the first setup survey: the lab is made, and how people join it
+   (app/lab_routes.py ready). #}
+{% from "door/_steps.html" import forming, progress with context %}
+{% block lab %}{{ forming(lab_title, steps, _('on this computer') if on_this_computer else host) }}
+  {% if databases %}
+    <section class="door-kept" aria-labelledby="door-kept-title">
+      <h2 id="door-kept-title">{{ _('In this lab') }}</h2>
+      <ul>{% for d in databases %}<li>{{ icon(d.icon) }}<span>{{ d.label|tr }}</span></li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+{% endblock %}
+{% block door %}
+  {{ progress(steps) }}
+  <h2 class="door-title">{{ _('%(lab)s is ready', lab=lab_title) if lab_title else _('Your lab is ready') }}</h2>
+  <dl class="door-summary">
+    <div><dt>{{ _('Admin') }}</dt><dd>{{ admin_name }}</dd></div>
+    <div><dt>{{ _('In this lab') }}</dt><dd>{{ databases|map(attribute='label')|map('tr')|join(', ') or _('none yet') }}</dd></div>
+    <div><dt>{{ _('Lives') }}</dt><dd>{{ _('on this computer') if on_this_computer else _('on this server') }}</dd></div>
+  </dl>
+  {% if address %}
+    <p class="door-lede">{{ _('People in the lab join at this address: they open it, and choose Ask to join.') }}</p>
+    <div class="door-address"><code data-copy-text>{{ address }}</code><button type="button" class="btn btn-sm" data-copy>{{ _('Copy') }}</button></div>
+  {% else %}
+    <p class="door-lede">{{ _('When others should join, share the lab on the network in Settings → Devices; it gives the address they open.') }}</p>
+  {% endif %}
+  <a class="btn btn-primary btn-lg door-wide" href="{{ url_for('home_dashboard') }}">{{ _('Open %(lab)s', lab=lab_title) if lab_title else _('Open the lab') }}</a>
+{% endblock %}

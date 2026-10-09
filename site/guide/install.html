@@ -151,8 +151,8 @@
         <tr><th>What's new</th><td>After an update, on a desktop or a lab server, the first page you open shows a short
           <b>What's new</b>: what is new, what works differently and what was fixed, with a link to the full notes. <b>Got it</b> closes
           it for good; <b>Help → What's new</b> opens it again.</td></tr>
-        <tr><th>A lab server</th><td>Nothing to install: open the address your admin gives you. A welcome page shows what
-          BioManager does and leads to <b>Sign in</b> or <b>Create an account</b>. Setting one up is on
+        <tr><th>A lab server</th><td>Nothing to install: open the address your admin gives you. It opens on your lab's sign-in, with
+          its name and what it keeps; new to the lab, choose <b>Ask to join</b>. Setting one up is on
           <a href="../server.html">Run it for your lab</a>.</td></tr>
         <tr><th>Updating a lab server</th><td>The server looks for a new version once a day and tells its admins. They find it in
           <b>Settings → Devices &amp; copies → Updates</b>, with what's new and a link to the release notes. <b>Update now</b>
@@ -165,9 +165,13 @@
       <div class="note"><b>Why the warning on a computer?</b> The apps aren't signed by Apple or Microsoft, so the system asks you to
         confirm once per version.</div>
 
-      <h3 id="first-run">The set-up survey</h3>
-      <p>The first account is the lab's <b>admin</b> (on a server, it needs the one-time setup code printed when the server
-        started). The admin then answers a short survey, and BioManager builds exactly what you'll use — nothing more:</p>
+      <h3 id="first-run">Starting a lab</h3>
+      <p>The first time the desktop app opens, it asks <b>Does your lab already use BioManager?</b> <b>Yes, open my lab</b> takes the
+        lab's address and opens it in this window from then on; nothing is made on the computer. <b>No, start a new lab</b> makes a
+        new, empty lab, and says so: you name it, choose whether it lives on this computer or a lab server, and make its first
+        account, which is the lab's <b>admin</b>. A server nobody has set up says it has no lab yet, and starts the same way, with
+        the one-time setup code printed when the server started. The admin then answers a short survey, and BioManager builds
+        exactly what you'll use — nothing more:</p>
       <ol class="steps-list">
         <li><b>Your lab</b> — its name, time zone, how dates are written and the genotyping day
           (<a href="lab-setup.html">what these do</a>).</li>
@@ -182,7 +186,8 @@
       </ol>
       <p>Below the questions, <b>Send BioManager's makers anonymous counts once a day</b> is ticked; untick it if you'd rather
         not (<a href="your-data.html#counts">what is sent</a>).</p>
-      <p>BioManager then makes those databases, the racks and incubators too, and takes you Home. Everyone who joins later gets a
+      <p>BioManager then makes those databases, the racks and incubators too, and shows the lab ready, with the address people
+        join at. Everyone who joins later gets a
         one-page welcome tour of the lab's databases on first sign-in (<b>Settings → Your data → See the welcome tour again</b> brings it back).</p>
       <p><b>English or 中文.</b> BioManager shows in the language your computer or browser asks for first, English or Simplified
         Chinese; the desktop app follows your computer's. Choose for yourself under <b>Settings → Appearance &amp; language</b>, which changes as
@@ -206,10 +211,10 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 4 min read</p>
+      <p>On this page · 5 min read</p>
       <ol>
         <li class="lvl3"><a href="#install-1">Get it</a></li>
-        <li class="lvl3"><a href="#first-run">The set-up survey</a></li>
+        <li class="lvl3"><a href="#first-run">Starting a lab</a></li>
         <li class="lvl2"><a href="#troubleshooting">Troubleshooting</a></li>
       </ol>
     </nav>

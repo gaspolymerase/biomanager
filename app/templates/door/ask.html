@@ -1,0 +1,38 @@
+{% extends "door.html" %}
+{# Asking the lab's admins for something (app/door.py ask): it reaches each
+   of them as a notification. #}
+{% block door %}
+  {% if sent %}
+    <h2 class="door-title">{{ _('Sent to the lab’s admins') }}</h2>
+    <div class="door-approved">
+      <p><b>{{ _('They see it in their notifications.') }}</b> {{ _('They will reach you at the address you gave, or in person.') }}</p>
+    </div>
+    <div class="door-others">
+      <p><a href="{{ url_for('guests.enter') if reason == 'guest' else url_for('login') }}">{{ _('Back') }}</a></p>
+    </div>
+  {% else %}
+    <h2 class="door-title">{{ _('Ask the lab’s admins') }}</h2>
+    <p class="door-lede">{{ _('They get it as a notification in BioManager.') }}</p>
+    <form method="post" class="door-form">
+      <fieldset class="door-reasons">
+        <legend>{{ _('What do you need?') }}</legend>
+        {% for key, label in [('guest', _('A guest code')), ('password', _('A new password')), ('account', _('An account')), ('other', _('Something else'))] %}
+          <label><input type="radio" name="why" value="{{ key }}"{{ ' checked' if key == reason }}> {{ label }}</label>
+        {% endfor %}
+      </fieldset>
+      <label class="door-field">{{ _('Your name') }}
+        <input name="name" autocomplete="name" required value="{{ request.form.get('name', '') }}" autofocus>
+      </label>
+      <label class="door-field">{{ _('How to reach you') }}
+        <input name="contact" autocomplete="email" value="{{ request.form.get('contact', '') }}" placeholder="{{ _('an email address, or a phone number') }}">
+      </label>
+      <label class="door-field">{{ _('A note (optional)') }}
+        <textarea name="note" rows="3" maxlength="600" placeholder="{{ _('e.g. I am visiting from the Kato lab to look at the cryostat data.') }}">{{ request.form.get('note', '') }}</textarea>
+      </label>
+      <button type="submit" class="btn btn-primary btn-lg door-wide">{{ _('Send to the lab’s admins') }}</button>
+    </form>
+    <div class="door-others">
+      <p><a href="{{ url_for('login') }}">{{ _('Back to sign in') }}</a></p>
+    </div>
+  {% endif %}
+{% endblock %}

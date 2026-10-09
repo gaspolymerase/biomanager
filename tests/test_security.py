@@ -305,7 +305,7 @@ class SignUp(AppTestCase):
     def test_no_setup_code_is_asked_for_once_there_are_accounts(self):
         html = self.get_ok(app.test_client(), "/register")
         self.assertNotIn("setup_code", html)
-        self.assertIn("approves new accounts", html)
+        self.assertIn("approves new people", html)
 
 
 class SetupCode(unittest.TestCase):

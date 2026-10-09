@@ -893,10 +893,14 @@ every computer linked to the lab:
    at the warning choose **More info → Run anyway**. **Linux:** mark
    `BioManager-Linux.AppImage` executable and open it. The apps aren't
    signed by Apple or Microsoft, so the system asks once per version.
-3. Create your account (the first account on a computer is the admin) and
-   answer the short setup survey: tick what your lab keeps, and BioManager
-   creates just those databases, with racks and incubators to match. Home
-   then shows a **Getting started** list of first steps. Before moving a
+3. It asks whether your lab already uses BioManager. **Yes, open my lab**
+   takes the lab's address and opens it in this window; nothing is made on
+   the computer. **No, start a new lab** names the new lab, asks where it
+   lives, and makes your account its admin; then answer the short setup
+   survey: tick what your lab keeps, and BioManager creates just those
+   databases, with racks and incubators to match, and shows the address
+   people join at. Home then shows a **Getting started** list of first
+   steps. Before moving a
    real colony in, the guide's
    [*Try it first*](https://biomanager.org/guide/try-it-first.html) walks
    through a practice rack, a litter and its weaning date, then throws it
@@ -970,7 +974,7 @@ Windows and Linux.
 ### 🏫 Lab server
 
 **The easy way: let the desktop app do it.** In the desktop app, choose
-**Set up a lab server** (on the welcome page, or in **Settings → Devices &
+**Set up a lab server** (when you start a new lab, or in **Settings → Devices &
 copies**) and say where it should run:
 
 - a cloud server reached privately over **Tailscale** (recommended; Oracle's
@@ -1132,10 +1136,15 @@ track.
 
 ## 👥 Accounts, permissions and privacy
 
-- **A welcome page before signing in** says what BioManager is, lists the
-  databases the lab keeps, links the user guide (and the way in from
-  Excel), and leads to **Sign in** or **Create an account**. On a new
-  installation it leads to creating the admin account instead.
+- **The first page is the lab's sign-in**: its name and what it keeps on
+  one side, the form on the other. **Remember me on this computer** offers
+  the account by name next time. **Ask to join** sends a new person's
+  request to every admin, and their page changes the moment one approves;
+  a visitor enters a **guest code**, or, without one, asks the lab's
+  admins for one (a notification to each of them, as **Forgot your
+  password?** is). Before there is any account, it starts a lab instead:
+  on a server it says it has no lab yet; the desktop app first asks
+  whether the lab already has a BioManager to open.
 - **The first account is the admin.** On a server it needs the setup code,
   so nobody else on the network can claim it first.
 - **New sign-ups wait for an admin's approval**, under **Waiting to join**

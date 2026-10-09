@@ -558,6 +558,39 @@ change it (`admin_racks.assign`, autosaved), and what is coming up.
 Cage ownership is backfilled on first run from the mice each cage holds; a
 cage whose mice disagree is left unowned rather than guessed at.
 
+## The way in
+
+Every page before signing in extends `templates/door.html`: the lab on the
+left (the BioManager mark, the lab's name and initials, the lab's shared
+databases, on the helix `door.pattern()` draws once), the one thing to do
+on the right. `app/door.py` gathers that (`door.context()`; from the
+internet, the name only) and holds what is new around `/login` and
+`/register` in `app.py`:
+
+- **`/`** signed out is the sign-in (`door.signin`). Before any account it
+  starts a lab instead: on a server `door/fresh.html` (no lab yet; the wrong
+  address?); in the desktop app (`devices.on_this_computer()`)
+  `door/first.html` asks whether the lab already has a BioManager.
+- **Opening a lab** (`/open-lab`, desktop, before any account): the typed
+  address is tried (https, then http) for `/healthz`, the lab's name read
+  from its page title, and `window_url` saved in the desktop prefs, so the
+  window opens it from then on.
+- **Starting a lab**: `/start` keeps the name in the session
+  (`NEW_LAB_NAME`), `/start/where` (desktop) chooses this computer or the
+  server set-up, `/register` makes the admin, saves the name as `lab_name`,
+  signs them in and sends them to the survey; the survey's first run ends
+  on `/ready` (`lab_routes.py`) with the address people join at.
+- **Joining**: `/register` keeps the username in the session (`PENDING`)
+  and goes to `/joined`, which asks `/joined/status` until an admin
+  approves.
+- **Asking the admins** (`/ask`, open to the internet like `/guest`,
+  `ask_throttle` per address): a notification to every admin, one English
+  title per reason so each reads it in their own language.
+- **Remembered accounts**: "Remember me on this computer" puts
+  `remember_account` in the session; `base.html` moves it to
+  `localStorage["biomanager:accounts"]` (names only) on the next page, and
+  `static/door.js` offers them on the sign-in.
+
 ## Lab setup and personal databases
 
 `app/lab.py` decides what the lab uses and who sees which database; the
