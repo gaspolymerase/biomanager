@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.2.7": {
+        "new": [
+            "**Protocols**, **Recipes** and **Meetings** in the notebook's sidebar open as pages of their own: search them, open one to change it, or add one.",
+            "Sort protocols and recipes into the lab's folders, each with an icon you pick; **/protocol** in a page and **Load from library** list them by folder.",
+        ],
+        "changed": [
+            "Icons that were cut off on the right, such as the people and cart icons, now show whole and centred.",
+        ],
+    },
     "1.2.6": {
         "new": [
             "A lab server tells its admins when a new BioManager is out, in a notification and in **Settings → Devices & copies → Updates**.",

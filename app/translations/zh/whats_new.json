@@ -39,5 +39,8 @@
   "**Set up a lab server** can sign in with a password instead of an SSH key, and asks for the password **sudo** needs when the account has one.": "**搭建实验室服务器** 可以用密码代替 SSH 密钥登录；账号使用 **sudo** 需要密码时，也会向你询问。",
   "**Start a new lab** on the desktop app's sign-in page sets aside a lab nobody can sign in to, deleting nothing, and starts an empty one whose first account is the admin.": "桌面版登录页的 **新建实验室** 会把没人能登录的实验室移开（不删除任何东西），开始一个空的实验室，第一个注册的账号就是管理员。",
   "A lab server tells its admins when a new BioManager is out, in a notification and in **Settings → Devices & copies → Updates**.": "实验室服务器在有新版 BioManager 时会告诉管理员：发一条通知，并显示在 **设置 → 设备与副本 → 更新** 里。",
-  "**Update now** there backs up, installs the new version and restarts the lab's server; the page follows it and comes back on the new version.": "那里的 **立即更新** 会先备份，再安装新版本并重启实验室服务器；页面会跟着显示每一步，完成后回到新版本。"
+  "**Update now** there backs up, installs the new version and restarts the lab's server; the page follows it and comes back on the new version.": "那里的 **立即更新** 会先备份，再安装新版本并重启实验室服务器；页面会跟着显示每一步，完成后回到新版本。",
+  "**Protocols**, **Recipes** and **Meetings** in the notebook's sidebar open as pages of their own: search them, open one to change it, or add one.": "实验记录本侧边栏里的 **实验流程**、**配方** 和 **会议** 现在各自作为页面打开：可以搜索，打开一个即可修改，也可以新建。",
+  "Sort protocols and recipes into the lab's folders, each with an icon you pick; **/protocol** in a page and **Load from library** list them by folder.": "可以把实验流程和配方放进实验室的文件夹，每个文件夹的图标由你选择；页面里的 **/protocol** 和 **Load from library**（从配方库载入）会按文件夹列出它们。",
+  "Icons that were cut off on the right, such as the people and cart icons, now show whole and centred.": "以前右边被截掉的图标（比如人员和购物车图标）现在完整显示，并居中。"
 }
