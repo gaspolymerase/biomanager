@@ -312,7 +312,12 @@ the sequencing reads, gel photos and datasheets that belong with it, and
 they come along in Export my data. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
 where each binds, and **Copy for ordering** or **Export for ordering**
-gives the ticked ones to your oligo supplier.
+gives the ticked ones to your oligo supplier. Before ordering another,
+**Find saved primers** looks through every primer the lab has saved,
+whichever plasmid it was made for, and lists the ones that bind this
+sequence — exact matches, and those matching at the 3′ end with a 5′
+tail — and **Show on map** draws them on the map to look at, without
+saving them into it.
 
 <p align="center">
   <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
@@ -337,7 +342,7 @@ change:
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
 | 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
-| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
+| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, **Find saved primers** on a plasmid lists the ones here that already bind it, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
 | 🧪 **Glycerol stocks** | bacteria carrying each plasmid: the plasmid, strain, colony, resistance, how it was checked and the date frozen, and its place in a −80 °C box; the plasmid's page lists its stocks and where each is |
 | 🧫 **Cell lines** | frozen vials of each line and clone: species, parent, passage, freeze date, cells per vial, mycoplasma result and date, and where each vial sits in the LN₂ boxes |
 | 📝 **Custom** | whatever you define |

@@ -204,5 +204,10 @@
   "Find an element": "查找元件",
   "the first %(n)s — search to narrow it": "仅显示前 %(n)s 个，可用搜索缩小范围",
   "Annotate with pLannotate": "用 pLannotate 注释",
-  "Find features by alignment, including ones a few bases off": "通过序列比对识别特征，相差几个碱基也能找到"
+  "Find features by alignment, including ones a few bases off": "通过序列比对识别特征，相差几个碱基也能找到",
+  "Look through every saved primer for ones that bind this sequence, so nobody orders one the lab already has": "在所有已保存的引物中查找能结合这条序列的引物，以免重复订购实验室已有的引物",
+  "Find saved primers": "查找已有引物",
+  "Drawn on the map to look at; they aren’t saved with the plasmid.": "仅画在图谱上供查看，不会随质粒保存。",
+  "Show on map": "在图谱上显示",
+  "Match": "匹配"
 }

@@ -880,7 +880,27 @@ crossing the origin keeps `start > end`.
   card and `/plasmids/<id>/primers.csv`, and the Primers sheet's
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
-  Used to make leaves Primers databases out.
+  Used to make leaves Primers databases out. **Find saved primers**
+  (GitHub #62): `/plasmids/<id>/primer-sites` (`app.primer_sites`) checks
+  every record of every Primers database the person may see
+  (`saved_primers`: `list_modules` plus `lab.can_see`, so not someone
+  else's own) against the plasmid. `TemplateIndex` maps each 15-base
+  stretch of the top strand (across the origin when circular) to where it
+  starts, looks up each primer's 3′ 15 bases and their reverse complement,
+  and extends the hits with `_site`, the code `binding_sites` uses, so the
+  sites are the same (tests/test_primer_scan.py checks them against
+  `binding_sites` by brute force); 5,000 primers on 15 kb take about 10 ms
+  of matching, the endpoint about 0.1–0.2 s. Primers under 15 bases or
+  with other than ACGT in their 3′ 15 are passed over. The JSON's `hits`
+  are one per site, 1-based, with `exact`, `tail`, `annealed` and
+  `linked` (its Plasmid column names this one); records the Primers card
+  lists are counted in `listed`, not repeated, unless `?all=1` (a
+  record's read-only map, `inventory/sequence.html`). `static/primer-scan.js`
+  draws them on the editor (`#ove-root.oveEditor`) as primers whose ids
+  start `found-primer-`: the plasmid page's `onSave` drops those and skips
+  a save that would store nothing new (drawing re-sends the map), and
+  `_clean_features` drops any that still arrive, so they never reach
+  `features_json` or `sync_from_map`.
 - **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
   the pages, at `/plasmids/assembly`): a tray of fragments taken from the
   lab's plasmids — a whole one, one feature, a region, or a piece a digest

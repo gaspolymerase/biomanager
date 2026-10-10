@@ -144,7 +144,8 @@
           tree answers the question instead of your memory.</td></tr>
         <tr><th>The primers it needs</th><td>Primers the wizard designs, and any you draw on a map yourself, land in the lab's
           <b>Primers</b> database marked <i>to order</i>, with the plasmid beside them. Tick them and
-          <b>Copy for ordering</b> hands the list to your supplier.</td></tr>
+          <b>Copy for ordering</b> hands the list to your supplier — after <b>Find saved primers</b> has shown any the lab
+          already has that bind.</td></tr>
         <tr><th>Checking what you got</th><td><b>Detect features</b> marks the lab's known elements on a new map, and the
           sequencing reads that confirmed the clone live on the plasmid itself under <b>Files</b>, with the gel photo.</td></tr>
         <tr><th>Finding the tube</th><td>Every plasmid has a box position, and the bacteria carrying it sit in
@@ -224,6 +225,13 @@
           <a href="samples-and-orders.html">Primers</a> database, marked <i>to order</i>, with the plasmid in its <b>Plasmid</b> column.
           The <b>Primers</b> card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
           <b>Copy for ordering</b> (name and sequence, one per line, to paste into a supplier's form) or <b>Export for ordering</b> (a CSV).</li>
+        <li>Before you order a new primer, turn on <b>Find saved primers</b> on that card. It looks through every primer saved in the
+          Primers databases you can see — whichever plasmid they were made for — and lists each one that binds this sequence: where,
+          on which strand, and whether it is an <i>exact match</i> or matches only at its 3′ end with a 5′ tail (a restriction site,
+          a homology arm, or a few bases that differ). Its name opens the primer, so you can see whether there is still a tube.
+          <b>Show on map</b> draws them on the map in amber, to look at; they are not saved with the plasmid, and editing the map
+          while they are shown leaves them out. A primer only counts if at least its last 15 bases match exactly. The same switch is
+          on the read-only map that a glycerol stock or virus opens.</li>
       </ul>
       <h2 id="tubes">Tubes, boxes and files</h2>
       <ul>
@@ -249,7 +257,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 8 min read</p>
+      <p>On this page · 9 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your cloning</a></li>
         <li class="lvl2"><a href="#the-sheet">The plasmid sheet</a></li>
