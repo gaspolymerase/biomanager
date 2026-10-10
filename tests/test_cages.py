@@ -841,6 +841,6 @@ class CagePurposeTests(Case):
 
     def test_active_means_living_mice(self):
         empty = self.make_cage(self.m, purpose="Breeder")
-        execute("update mouse_cages set active_override=1 where id=?", empty)   # an older version's flag
+        execute("update mouse_cages set active_override=true where id=?", empty)   # an older version's flag
         with SessionLocal() as s:
             self.assertFalse(services.cage_is_active(s.get(services.CageRecord, empty)))
