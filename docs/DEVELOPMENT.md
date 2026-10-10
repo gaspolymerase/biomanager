@@ -1755,7 +1755,10 @@ to that, and `tests/test_telemetry.py` checks names don't leak.
   checkout has no VERSION file and reports `server`; it does send.
   `scripts/installs.py` lists every installation that has sent (first and
   last day, days seen, members, what is on), leaving out `+dev` builds and
-  the ids in `~/.config/biomanager/own-installs`; `--csv` writes it out.
+  the ids in `~/.config/biomanager/own-installs` (testing, `--mine`); the
+  ids in `~/.config/biomanager/author-installs` (the maintainer's own real
+  use, `--author`) are kept but summed apart from everyone else's;
+  `--csv` writes it out.
 - **app_settings**: `telemetry:enabled` (`on`/`off`, default on; the first
   survey's checkbox, and **Switch on/off** on the Usage report,
   `POST /feedback/usage/heartbeat`), `telemetry:install_id` (a `uuid4`,
