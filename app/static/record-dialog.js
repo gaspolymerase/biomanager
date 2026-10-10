@@ -58,7 +58,9 @@
       if (!el.name) return;
       if (Object.prototype.hasOwnProperty.call(data, el.name)) {
         const value = data[el.name];
-        if (el.type === 'checkbox') el.checked = Boolean(value);
+        // A box of a several-choice field is ticked when its value is in the list.
+        if (el.type === 'checkbox' && 'multi' in el.dataset) el.checked = String(value || '').split(',').map((v) => v.trim()).includes(el.value);
+        else if (el.type === 'checkbox') el.checked = Boolean(value);
         else if (el.tagName === 'SELECT') setChoice(el, value);
         else el.value = value === null || value === undefined ? '' : value;
       }

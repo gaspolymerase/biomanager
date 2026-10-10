@@ -738,6 +738,14 @@ pages are in `app/lab_routes.py`.
 - **Stock kinds:** `inventory_service.RESTOCK_KINDS` (reagents, chemicals,
   antibodies, viruses) are what a received order can become (`STOCK_KINDS`), what
   offers **Order again**, and what Home's *Expiring & low stock* watches.
+- **Several choices:** field type `multiselect` (Reagents' and Chemicals'
+  *Hazard*, `inventory.HAZARDS`) keeps the ticked choices as one text,
+  `"flammable, explosive precursor"`, so search, export and import read it
+  as before. Its sheet cell is a `<details>` menu of checkboxes and the
+  dialog a row of them; both also send `attr_<key>__several`, so a row with
+  none ticked saves as empty (`inventory_routes.several()` orders them by
+  the field's choices and keeps one that isn't among them). Migration 0030
+  moved the Hazard field labs already had onto it.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
   number as text. `_item_from_form` reads a number, `#42`, a name or a

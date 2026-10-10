@@ -635,6 +635,8 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
                     notes.append(gettext("There is no mouse %(id)s in the colony; the source was saved as typed.",
                                          id=value["ref"]))
                 attrs[k] = value
+        elif field["type"] == "multiselect" and (f"attr_{k}" in form or f"attr_{k}__several" in form):
+            attrs[k] = several(form.getlist(f"attr_{k}"), field["options"])
         elif f"attr_{k}" in form:
             value = (form.get(f"attr_{k}") or "").strip()
             if field["type"] == "date" and value:
@@ -690,6 +692,20 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
     if mv.has("storage") and "rack_id" in form and form_changed(form, "rack_id", "position"):
         return svc.apply_position(session, item, form.get("rack_id"), form.get("position")), notes
     return None, notes
+
+
+def several(values, options) -> str:
+    """The ticked choices of a multiselect field as one text, in the order of
+    its choices ("flammable, explosive precursor"); a value that isn't one of
+    them any more (from before, or an import) is kept after them. A box
+    unticked leaves it out: the form also sends attr_<key>__several, so no box
+    ticked still saves as empty."""
+    picked = [part.strip() for v in values for part in str(v).split(",") if part.strip()]
+    return ", ".join([o for o in options if o in picked] + [v for v in dict.fromkeys(picked) if v not in options])
+
+
+def several_values(value) -> list[str]:
+    return [part.strip() for part in str(value or "").split(",") if part.strip()]
 
 
 def _column_value(item: InventoryItem, key: str) -> str:

@@ -41,6 +41,20 @@
       {% for o in field.options %}<option value="{{ o }}" {% if o == value %}selected{% endif %}>{{ o|tr('inventory') }}</option>{% endfor %}
       {% if value and value not in field.options %}<option value="{{ value }}" selected>{{ value }}</option>{% endif %}
     </select>
+  {% elif field.type == 'multiselect' %}
+    {# Several of a list (a chemical's hazards): ticked in a small menu, saved
+       as each box changes; __several says the field was sent with none ticked. #}
+    {% set picked = (value or '').split(',')|map('trim')|reject('equalto', '')|list %}
+    <details class="multi-cell" data-multi-cell>
+      <summary aria-label="{{ flabel }}" data-multi-summary data-empty-text="–">{% for v in picked %}{{ v|tr('inventory') }}{% if not loop.last %}, {% endif %}{% else %}–{% endfor %}</summary>
+      <div class="multi-cell-menu">
+        <input type="hidden" name="{{ name }}__several" form="{{ form_id }}" value="1">
+        {% for o in field.options + (picked|reject('in', field.options)|list) %}
+          <label><input type="checkbox" name="{{ name }}" value="{{ o }}" form="{{ form_id }}" data-autosave="1" data-multi
+                        {% if o in picked %}checked{% endif %} {% if locked %}disabled{% endif %}> <span>{{ o|tr('inventory') }}</span></label>
+        {% endfor %}
+      </div>
+    </details>
   {% elif field.type == 'date' %}
     <input type="date" name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-empty="{{ '0' if value else '1' }}"
            data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
@@ -640,6 +654,11 @@
                 </select>
               </label>
               <label>{{ _('ID in that colony') }} <input name="{{ name }}_ref" data-source-ref autocomplete="off" placeholder="{{ _('e.g. mouse 12, tank T004') }}"></label>
+            {% elif fd.type == 'multiselect' %}
+              <fieldset class="multi-choices col-span-full"><legend>{{ flabel }}{{ star(name) }}</legend>
+                <input type="hidden" name="{{ name }}__several" value="1">
+                {% for o in fd.options %}<label><input type="checkbox" name="{{ name }}" value="{{ o }}" data-multi> {{ o|tr('inventory') }}</label>{% endfor %}
+              </fieldset>
             {% elif fd.type == 'select' %}
               <label><span>{{ flabel }}{{ star(name) }}</span> <select name="{{ name }}"{{ req(name) }}><option value="">{{ _('Not set') }}</option>{% for o in fd.options %}<option value="{{ o }}">{{ o|tr('inventory') }}</option>{% endfor %}</select></label>
             {% elif fd.type == 'plasmid' %}
@@ -1166,5 +1185,36 @@
       search.dispatchEvent(new Event('input', { bubbles: true }));
     }
   });
+</script>
+<script nonce="{{ csp_nonce() }}">
+  // A several-choice cell (a chemical's hazards): its summary follows the
+  // ticked boxes, and an open menu closes when you click elsewhere.
+  document.addEventListener('change', (event) => {
+    const box = event.target.closest('[data-multi-cell] input[type="checkbox"]');
+    if (!box) return;
+    const cell = box.closest('[data-multi-cell]');
+    const names = [...cell.querySelectorAll('input[type="checkbox"]:checked')].map((b) => b.closest('label').textContent.trim());
+    const summary = cell.querySelector('[data-multi-summary]');
+    summary.textContent = names.length ? names.join(', ') : summary.dataset.emptyText;
+  });
+  document.addEventListener('click', (event) => {
+    document.querySelectorAll('[data-multi-cell][open]').forEach((cell) => {
+      if (!cell.contains(event.target)) cell.open = false;
+    });
+  });
+  // The menu is fixed (the sheet's scrolling box would clip it): put it under
+  // its cell, or above when there's no room, and close it if the page scrolls.
+  document.addEventListener('toggle', (event) => {
+    const cell = event.target;
+    if (!cell.matches || !cell.matches('[data-multi-cell]') || !cell.open) return;
+    const menu = cell.querySelector('.multi-cell-menu');
+    const box = cell.querySelector('summary').getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - menu.offsetWidth - 8))}px`;
+    const below = box.bottom + 4;
+    menu.style.top = `${below + menu.offsetHeight > window.innerHeight - 8 ? Math.max(8, box.top - menu.offsetHeight - 4) : below}px`;
+  }, true);
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('[data-multi-cell][open]').forEach((cell) => { cell.open = false; });
+  }, true);
 </script>
 {% endblock %}

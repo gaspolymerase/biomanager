@@ -1679,6 +1679,18 @@
   .plasmid-cell { @apply flex min-w-0 items-center gap-1; }
   .plasmid-cell input { @apply w-14 flex-none; }
   .plasmid-cell-link { @apply min-w-0 truncate text-[12px] font-medium text-brand-700; }
+  /* Several of a list (a chemical's hazards): a menu of boxes in the cell. */
+  .multi-cell { @apply relative min-w-0; }
+  .multi-cell > summary { @apply block cursor-pointer list-none truncate rounded-md px-1 py-0.5 text-[12.5px] hover:bg-sand-300/40; }
+  .multi-cell > summary::-webkit-details-marker { display: none; }
+  .multi-cell-menu {
+    /* Fixed, placed by the page under its cell: the sheet's scrolling box would cut it off. */
+    @apply fixed z-100 flex min-w-[190px] flex-col rounded-2xl border border-hairline p-[5px] shadow-pop;
+    background: var(--material-popover);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+  }
+  .multi-cell-menu label { @apply flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-[12.5px] text-ink hover:bg-sand-300/40; }
   .row-stock-btn svg { @apply size-3; }
   @media (hover: hover) {
     .sheet-table tbody tr .sheet-actions { @apply opacity-40 transition-opacity; }
@@ -1747,6 +1759,11 @@
     @apply cursor-default bg-sand-50 text-ink-soft;
   }
   .record-wide { @apply col-span-full; }
+  /* Several of a list in the dialog: a row of boxes, not full-width fields. */
+  .multi-choices { @apply m-0 flex flex-wrap gap-x-4 gap-y-1.5 border-0 p-0; }
+  .multi-choices legend { @apply mb-1 w-full p-0 text-[11.5px] font-semibold text-muted; }
+  .record-dialog-body .multi-choices label { @apply flex items-center gap-1.5 text-[13px] font-normal normal-case tracking-normal text-ink; }
+  .record-dialog-body .multi-choices label > input[type="checkbox"] { all: revert; }
   .record-dialog-body textarea { @apply min-h-20 resize-y; }
 
   .record-dialog-foot {

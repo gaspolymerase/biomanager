@@ -27,7 +27,8 @@ from __future__ import annotations
 
 import json
 
-FIELD_TYPES = ("text", "textarea", "number", "date", "select", "user", "url", "source", "plasmid")
+# "multiselect": several of a fixed list, kept as one text, "flammable, explosive precursor".
+FIELD_TYPES = ("text", "textarea", "number", "date", "select", "multiselect", "user", "url", "source", "plasmid")
 
 FEATURES = {
     "storage": "Freezer boxes and shelves with positions, shown as a grid",
@@ -40,6 +41,13 @@ FEATURES = {
 }
 
 STORAGE_TEMPS = ["RT", "4 °C", "−20 °C", "−80 °C", "LN₂"]
+# A chemical can be several of these at once. After the hazard classes come
+# the controlled ones a lab's safety office asks about (in China 易制毒,
+# 易制爆, 剧毒, 麻醉/精神药品); a lab adds its own in Configure.
+HAZARDS = ["flammable", "explosive", "corrosive", "toxic", "highly toxic", "oxidiser", "irritant", "biohazard",
+           "drug precursor", "explosive precursor", "narcotic or psychotropic"]
+# The Hazard field as labs got it before it took several (a migration moves those on).
+OLD_HAZARDS = ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"]
 CONC_UNITS = ["ng/µL", "µg/mL", "mg/mL", "nM", "µM", "cells/mL"]
 # What a Nanodrop, Qubit or BCA reading gives, as numbers a sheet can sort
 # and sum (revision 0008 adds them to Samples made before they were here).
@@ -101,8 +109,7 @@ PRESETS: dict[str, dict] = {
             {"key": "cas", "label": "CAS", "type": "text", "icon": "barcode", "width": 92},
             {"key": "concentration", "label": "Concentration", "type": "text", "icon": "amount", "width": 100},
             {"key": "storage_temp", "label": "Stored at", "type": "select", "options": STORAGE_TEMPS, "icon": "snowflake", "width": 88},
-            {"key": "hazard", "label": "Hazard", "type": "select",
-             "options": ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"], "icon": "warning", "width": 92},
+            {"key": "hazard", "label": "Hazard", "type": "multiselect", "options": HAZARDS, "icon": "warning", "width": 140},
         ],
     },
     # The lab's list of chemicals by molecular weight: the notebook's
@@ -127,8 +134,7 @@ PRESETS: dict[str, dict] = {
             {"key": "purity", "label": "Purity (%)", "type": "number", "icon": "gauge", "width": 72},
             {"key": "density", "label": "Density (g/mL)", "type": "number", "icon": "droplet", "width": 84, "in_table": False},
             {"key": "storage_temp", "label": "Stored at", "type": "select", "options": STORAGE_TEMPS, "icon": "snowflake", "width": 88},
-            {"key": "hazard", "label": "Hazard", "type": "select",
-             "options": ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"], "icon": "warning", "width": 92},
+            {"key": "hazard", "label": "Hazard", "type": "multiselect", "options": HAZARDS, "icon": "warning", "width": 140},
         ],
     },
     "antibodies": {
@@ -320,4 +326,4 @@ REQUIRABLE = (
 
 # Icon for a field type, used when a custom field has none.
 FIELD_TYPE_ICONS = {"text": "type", "textarea": "note", "number": "count", "date": "calendar",
-                    "select": "tag", "user": "user", "url": "link", "source": "signpost", "plasmid": "plasmid"}
+                    "select": "tag", "multiselect": "tag", "user": "user", "url": "link", "source": "signpost", "plasmid": "plasmid"}

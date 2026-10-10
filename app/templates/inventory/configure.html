@@ -24,7 +24,7 @@
     </td>
     <td>
       <select name="field_{{ i }}_type" aria-label="{{ _('Type') }}">
-        {% for ft in field_types %}<option value="{{ ft }}" {% if (f.type or 'text') == ft %}selected{% endif %}>{{ {'text': 'Text', 'textarea': 'Long text', 'number': 'Number', 'date': 'Date', 'select': 'Choice', 'user': 'Person', 'url': 'Link', 'source': 'Source animal', 'plasmid': 'A plasmid'}[ft]|tr('field type') }}</option>{% endfor %}
+        {% for ft in field_types %}<option value="{{ ft }}" {% if (f.type or 'text') == ft %}selected{% endif %}>{{ {'text': 'Text', 'textarea': 'Long text', 'number': 'Number', 'date': 'Date', 'select': 'Choice', 'multiselect': 'Several choices', 'user': 'Person', 'url': 'Link', 'source': 'Source animal', 'plasmid': 'A plasmid'}[ft]|tr('field type') }}</option>{% endfor %}
       </select>
     </td>
     <td><input type="text" name="field_{{ i }}_options" value="{{ (f.options or []) | join(', ') }}" placeholder="{{ _('For Choice: a, b, c') }}" aria-label="{{ _('Choices') }}"></td>
