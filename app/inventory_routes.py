@@ -938,12 +938,16 @@ def item_sequence(key: str, item_id: int):
         if plasmid is None or not (plasmid.full_sequence or ""):
             flash(gettext("%(name)s doesn’t name a plasmid with a sequence.", name=item.name or f"#{item.number}"), "info")
             return redirect(url_for("inventory.module", key=key, open=item.id))
+        from . import primer_records
         return render_template(
             "inventory/sequence.html", key=key, m=mv, item=item,
             item_label=item.name or f"#{item.number}",
             plasmid={"row_id": plasmid.id, "number": plasmid.plasmid_id, "name": plasmid.name or "",
                      "length_bp": len(plasmid.full_sequence or ""), "is_circular": bool(plasmid.is_circular),
-                     "url": url_for("plasmid_page", number=plasmid.plasmid_id)})
+                     "url": url_for("plasmid_page", number=plasmid.plasmid_id),
+                     # Find saved primers, as on the plasmid's page.
+                     "can_scan": bool(primer_records.visible_primer_databases(session)),
+                     "scan_url": url_for("plasmid_primer_sites", row_id=plasmid.id, all=1)})
 
 
 @bp.route("/<key>/items/<int:item_id>/update", methods=["POST"])

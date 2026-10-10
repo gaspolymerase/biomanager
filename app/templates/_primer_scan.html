@@ -1,0 +1,30 @@
+{# Find saved primers (app/static/primer-scan.js): a switch, and what it finds.
+   The element around both carries data-primer-scan and data-scan-url. #}
+
+{% macro scan_switch() %}
+  <label class="inline-flex items-center gap-2 text-[12.5px] cursor-pointer"
+         title="{{ _('Look through every saved primer for ones that bind this sequence, so nobody orders one the lab already has') }}">
+    <input type="checkbox" class="set-switch" data-scan-switch> {{ _('Find saved primers') }}
+  </label>
+{% endmacro %}
+
+{% macro scan_panel() %}
+  <div data-scan-panel hidden class="border-t border-[var(--color-line)]">
+    <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-[13px]">
+      <span data-scan-summary aria-live="polite"></span>
+      <label class="ml-auto inline-flex items-center gap-2 text-[12.5px] cursor-pointer" data-scan-map-row hidden
+             title="{{ _('Drawn on the map to look at; they aren’t saved with the plasmid.') }}">
+        <input type="checkbox" class="set-switch" data-scan-map> {{ _('Show on map') }}
+      </label>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-[13px]" data-scan-table hidden>
+        <thead><tr class="text-left text-muted">
+          <th class="px-4 py-2">{{ _('Name') }}</th><th class="py-2">{{ _('Database') }}</th>
+          <th class="py-2">{{ _('Binds') }}</th><th class="py-2">{{ _('Match') }}</th>
+          <th class="py-2">{{ _('Sequence (5′→3′)') }}</th><th class="py-2 pr-4">{{ _('Status') }}</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+{% endmacro %}
