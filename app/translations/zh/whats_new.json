@@ -70,5 +70,6 @@
   "In Chinese, a cage's purposes read alike: 种鼠笼 · 配种笼 · 实验笼 (Breeder, Breeding, Experiment).": "中文界面里，笼的三种用途统一为 种鼠笼 · 配种笼 · 实验笼；配种笼指正在交配的笼。",
   "A chemical or reagent can have several hazards, including the controlled classes: drug precursor, explosive precursor, highly toxic (**Hazard**, ticked in a small menu).": "化学品和试剂可以同时有多种危险类别，包括管控类别：易制毒、易制爆、剧毒（**危险性**，在小菜单里勾选）。",
   "The notebook's **/** menu, **Insert** menu and toolbar are in Chinese, and find things by their Chinese names.": "实验记录本的 **/** 菜单、**插入** 菜单和工具栏都是中文了，也能用中文名称搜索。",
-  "Plasmid editor: **Export** and **Import** have the right icons, and on a Mac the sequence lines up with the ruler.": "质粒编辑器：**导出** 和 **导入** 的图标不再画反；在 Mac 上，序列和标尺对齐了。"
+  "Plasmid editor: **Export** and **Import** have the right icons, and on a Mac the sequence lines up with the ruler.": "质粒编辑器：**导出** 和 **导入** 的图标不再画反；在 Mac 上，序列和标尺对齐了。",
+  "On a Mac, **Open your lab** finds a lab server at an https address; it said no BioManager answered there.": "在 Mac 上，**打开你的实验室** 能找到 https 地址的实验室服务器了；之前会说那里没有 BioManager 应答。"
 }
