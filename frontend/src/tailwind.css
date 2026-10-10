@@ -794,9 +794,9 @@
     top: calc((var(--tabbar-h) - 28px) / 2);
   }
   /* Collapsed, the sidebar is narrower than the lights: the top row starts
-     after them instead. */
+     after them instead (they end 70px in: desktop_mac.py). */
   html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .topstrip {
-    padding-left: calc(84px - var(--rail-w));
+    padding-left: calc(94px - var(--rail-w));
   }
 
   /* More and Help: a button that opens its menu beside the sidebar

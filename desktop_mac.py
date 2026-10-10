@@ -24,7 +24,9 @@ from __future__ import annotations
 import objc
 
 # Where the middle of the traffic lights goes, in points from the window's
-# top: the middle of the page's top row (--tabbar-h in tailwind.css).
+# top: the middle of the page's top row (--tabbar-h in tailwind.css). The
+# close button's middle is as far in from the left edge, so the lights sit
+# square in the corner rather than tucked against the side.
 ROW_CENTER = 23
 
 _SCRIPT = "document.documentElement.classList.add('mac-window'%s);"
@@ -121,11 +123,18 @@ def _place_buttons() -> None:
     # their place measured from its bottom edge.
     height = ROW_CENTER + button.size.height / 2 + button.origin.y
     frame = container.frame()
-    if abs(frame.size.height - height) < 0.5:
-        return
-    frame.size.height = height
-    frame.origin.y = nswindow.frame().size.height - height
-    container.setFrame_(frame)
+    if abs(frame.size.height - height) >= 0.5:
+        frame.size.height = height
+        frame.origin.y = nswindow.frame().size.height - height
+        container.setFrame_(frame)
+    # Across: the three move together, keeping AppKit's spacing.
+    dx = ROW_CENTER - button.size.width / 2 - button.origin.x
+    if abs(dx) >= 0.5:
+        for kind in (AppKit.NSWindowCloseButton, AppKit.NSWindowMiniaturizeButton, AppKit.NSWindowZoomButton):
+            each = nswindow.standardWindowButton_(kind)
+            if each is not None:
+                origin = each.frame().origin
+                each.setFrameOrigin_((origin.x + dx, origin.y))
 
 
 def _double_click_action(nswindow) -> None:

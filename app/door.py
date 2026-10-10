@@ -98,7 +98,8 @@ def pattern() -> Markup:
         return "M" + " L".join(f"{x:.1f} {y:.1f}" for x, y, _ in points)
 
     parts = []
-    for y, amp, wave, opacity, width in ((660, 58, 260, 0.30, 2.4), (830, 30, 180, 0.14, 1.5)):
+    # Low in the panel, under its words (which sit in the middle).
+    for y, amp, wave, opacity, width in ((775, 52, 260, 0.30, 2.4), (872, 26, 180, 0.14, 1.5)):
         front = strand(0, amp, wave, -60, 760, y)
         back = strand(math.pi, amp, wave, -60, 760, y)
         rungs = []
