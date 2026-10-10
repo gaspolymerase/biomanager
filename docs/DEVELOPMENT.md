@@ -2097,6 +2097,15 @@ area (`test_mice.py`, `test_plasmids.py`, `test_stocks.py`, …); shared
 set-up and factories are in `tests/base.py`. Run one module, class or test
 with `scripts/test.sh tests.test_mice` (or `tests.test_mice.SomeClass`).
 
+`benchmarks/` holds measurements rather than checks, on the same throwaway
+database (`tests/base.py`). `benchmarks/import_sheets.py` makes mouse and
+plasmid sheets with known values, spoils each the way labs' sheets are
+spoilt (header names, title lines, merged or filled-down cages, date
+styles, ♂/♀, encodings…), imports them through the real upload and match
+pages with every suggestion accepted, and counts each value as correct,
+kept (in the notes, or warned about), blank or wrong; results go to
+`benchmarks/results/`. See `benchmarks/README.md`.
+
 The same suite runs on PostgreSQL, against an empty database it is allowed
 to wipe (its schema is dropped first):
 
