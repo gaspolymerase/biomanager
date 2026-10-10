@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.1": {
+        "changed": [
+            "In Chinese, a cage's purposes read alike: 种鼠笼 · 配种笼 · 实验笼 (Breeder, Breeding, Experiment).",
+        ],
+    },
     "1.5.0": {
         "changed": [
             "A mouse cage's purpose: **Breeding** is a mating cage, the only one with **Litter born**, **Genotyping** and **Wean**; **Breeder** is the lab's breeding stock, shared, listed under **Breeders**.",

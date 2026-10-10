@@ -84,7 +84,7 @@
         <ul class="flex flex-col gap-1.5">
           {% for option in cage_purposes %}
             <li class="flex items-center gap-2">
-              <span class="status-pill-static" data-status="{{ option.option_value|lower }}">{{ option.option_value|tr }}</span>
+              <span class="status-pill-static" data-status="{{ option.option_value|lower }}">{{ option.option_value|tr('cage purpose') }}</span>
               <span class="text-[12px] text-muted">{{ purpose_hints.get(option.option_value|lower, '')|tr }}</span>
               <form method="post" action="{{ url_for('delete_option', option_id=option.id) }}" class="ml-auto"
                     data-confirm="{{ _('Remove the cage purpose “%(value)s”? Cages that have it keep it.', value=option.option_value) }}">
