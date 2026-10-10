@@ -60,13 +60,23 @@ for node in re.findall(r"<node [^>]*>", sys.stdin.read()):
   done
   return 1
 }
-# Signed out, the app opens the lab's welcome page; its Sign in button leads
-# to the sign-in form. (An older server went straight to /login.)
+# Is there an on-screen element whose text (or description) holds $1?
+has_text() {
+  for _ in $(seq 5); do
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
+    adb exec-out cat /sdcard/ui.xml 2>/dev/null | grep -q "$1" && return 0
+    sleep 2
+  done
+  return 1
+}
+# Signed out, the front page is the sign-in form itself (app/door.py). A
+# server from before 1.3 showed a welcome page whose Sign in button led to
+# the form; one older still went straight to /login.
 for _ in $(seq 30); do grep -q "GET / \|GET /login" "$SERVER_LOG" && break; sleep 2; done
 sleep 3
 shot 2-connected
 grep -q "GET / \|GET /login" "$SERVER_LOG" || { echo "the server never saw the app"; cat "$SERVER_LOG"; exit 1; }
-if ! grep -q "GET /login" "$SERVER_LOG"; then
+if ! grep -q "GET /login" "$SERVER_LOG" && ! has_text 'Username'; then
   tap_text "Sign in" || { shot 2b-welcome; echo "no Sign in button on the welcome page"; exit 1; }
   for _ in $(seq 15); do grep -q "GET /login" "$SERVER_LOG" && break; sleep 2; done
   sleep 3
