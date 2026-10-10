@@ -8,7 +8,7 @@ import json
 from unittest import mock
 
 from tests.base import *  # noqa: F401,F403
-from tests.base import one, uniq
+from tests.base import execute, one, uniq
 from tests.test_inventory import InventoryCase, attrs_of, module_id, settings_of
 from app import inventory  # noqa: E402
 from app.db import engine  # noqa: E402
@@ -75,15 +75,13 @@ class MigrationTests(InventoryCase):
         for f in s["fields"]:
             if f["key"] == "hazard":
                 f.update(type="select", options=options, width=92)
-        with engine.begin() as conn:
-            conn.exec_driver_sql("update inventory_modules set settings=? where key=?", (json.dumps(s), key))
+        execute("update inventory_modules set settings=? where key=?", json.dumps(s), key)
 
     def test_an_untouched_field_gets_the_full_list_and_none_goes(self):
         key = self.new_module(self.a, "chemicals")
         self.as_before(key, ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant", "biohazard"])
         rid = self.make_item(self.a, key, uniq("Salt "))
-        with engine.begin() as conn:
-            conn.exec_driver_sql("update inventory_items set attrs=? where id=?", (json.dumps({"hazard": "none"}), rid))
+        execute("update inventory_items set attrs=? where id=?", json.dumps({"hazard": "none"}), rid)
         self.run_migration()
         hazard = next(f for f in settings_of(key)["fields"] if f["key"] == "hazard")
         self.assertEqual((hazard["type"], hazard["options"]), ("multiselect", inventory.HAZARDS))
