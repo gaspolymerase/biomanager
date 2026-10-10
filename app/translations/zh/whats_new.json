@@ -53,5 +53,14 @@
   "Under a page's title, **Linked from** lists the pages that link to it.": "页面标题下方的 **被 N 个页面链接** 会列出链接到它的页面。",
   "Topics are folders: a new page goes in the topic it was made from or the one open, whatever its kind, and changing the kind never moves it.": "主题就是文件夹：新页面放进创建它的那个主题或当前打开的主题，不论是哪种页面；更改类型也不会移动页面。",
   "The top of a page reads like a path: click its topic to move it. The icon beside the title is its kind; click it to change the kind.": "页面顶部像路径一样显示位置：点主题可以移动页面。标题旁的图标是页面类型，点它可以更改类型。",
-  "Links to the app's own pages open in a BioManager tab.": "指向本应用页面的链接会在 BioManager 标签页中打开。"
+  "Links to the app's own pages open in a BioManager tab.": "指向本应用页面的链接会在 BioManager 标签页中打开。",
+  "A new look after Apple's Liquid Glass: the sidebar, tabs and page buttons float as glass over the page, and the selection slides to what you pick.": "全新外观，参照 Apple 的 Liquid Glass：侧边栏、标签页和页面按钮像玻璃一样浮在页面上，选中项会滑到你点的位置。",
+  "On a Mac the window has no title bar: its buttons sit at the top of the sidebar, beside your tabs.": "Mac 上的窗口不再有标题栏：关闭、最小化和缩放按钮放在侧边栏顶部，紧挨着标签页。",
+  "Text is in Inter, which tells I, l and 1 apart; **Settings → Appearance & language** has **Font** and, in the Mac app, **Text size**.": "文字改用 Inter 字体，能分清 I、l 和 1；**设置 → 外观与语言** 里有 **字体**，Mac 应用里还有 **文字大小**。",
+  "On a phone, a tab bar at the bottom: **Home**, **Calendar**, **Databases**, **Notebook** and **Scan**.": "手机屏幕底部新增标签栏：**首页**、**日历**、**数据库**、**实验记录本** 和 **扫描**。",
+  "The front page is the sign-in to your lab; **Remember me on this computer** offers your account by name next time.": "首页就是你实验室的登录页；勾选 **在这台电脑上记住我**，下次会直接按名字列出你的账户。",
+  "**Save the whole lab** makes one file a new server can take; the desktop app can **Move this lab to a server**.": "**保存整个实验室** 会生成一个文件，新服务器可以直接导入；桌面版还可以 **把这个实验室迁移到服务器**。",
+  "The calendar's month is its title, its steering in the row at the top; a notebook page is a sheet of paper with its tools above it.": "日历以月份为标题，翻页和视图切换放在顶部一行；实验记录本页面像一张纸，工具放在它上方。",
+  "A sheet's toolbar keeps to one line: **Print** and **Import from Excel** are under **•••**.": "表格工具栏保持一行：**打印** 和 **从 Excel 导入** 收进了 **•••**。",
+  "The desktop app's **Go** menu lists your databases again.": "桌面版的 **Go** 菜单重新列出你的数据库。"
 }

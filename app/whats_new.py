@@ -30,6 +30,23 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.4.0": {
+        "new": [
+            "A new look after Apple's Liquid Glass: the sidebar, tabs and page buttons float as glass over the page, and the selection slides to what you pick.",
+            "On a Mac the window has no title bar: its buttons sit at the top of the sidebar, beside your tabs.",
+            "Text is in Inter, which tells I, l and 1 apart; **Settings → Appearance & language** has **Font** and, in the Mac app, **Text size**.",
+            "On a phone, a tab bar at the bottom: **Home**, **Calendar**, **Databases**, **Notebook** and **Scan**.",
+            "The front page is the sign-in to your lab; **Remember me on this computer** offers your account by name next time.",
+            "**Save the whole lab** makes one file a new server can take; the desktop app can **Move this lab to a server**.",
+        ],
+        "changed": [
+            "The calendar's month is its title, its steering in the row at the top; a notebook page is a sheet of paper with its tools above it.",
+            "A sheet's toolbar keeps to one line: **Print** and **Import from Excel** are under **•••**.",
+        ],
+        "fixed": [
+            "The desktop app's **Go** menu lists your databases again.",
+        ],
+    },
     "1.3.0": {
         "new": [
             "**/page** in a notebook page makes a new page inside it; **Link to page** or typing **[[** links one that exists, and the sidebar nests them.",
