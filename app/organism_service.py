@@ -453,6 +453,22 @@ def fields_by_entity(session, module_id: int) -> dict[str, list[ModuleField]]:
     return grouped
 
 
+def move_field(session, row: ModuleField, step: int) -> bool:
+    """Move a field one place up (step -1) or down (1) among the fields of
+    its entity, which is the order its columns take on the sheet. Positions
+    are numbered again in tens, as fields added together may share one."""
+    siblings = fields_for(session, row.module_id_fk, row.entity)
+    at = next((i for i, f in enumerate(siblings) if f.id == row.id), -1)
+    to = at + (1 if step > 0 else -1)
+    if at < 0 or not 0 <= to < len(siblings):
+        return False
+    siblings[at], siblings[to] = siblings[to], siblings[at]
+    for i, f in enumerate(siblings):
+        f.position = (i + 1) * 10
+    session.flush()
+    return True
+
+
 def field_options(row: ModuleField) -> list[str]:
     return [str(v) for v in load_list(row.options)]
 

@@ -716,6 +716,41 @@ class ConfigureTests(InventoryCase):
         self.assertEqual(len({f["key"] for f in fields}), 2)
         self.assertEqual(fields[1]["width"], 130)  # junk width falls back
 
+    def test_the_columns_take_the_order_configure_saves(self):
+        """Move up / Move down number the rows again in the order shown
+        (field_0, field_1…); that order is saved, and the sheet's columns
+        follow it, under a new sheet id so nobody's saved columns misfit."""
+        key = self.new_module(self.a, "reagents")
+        before = [f["key"] for f in settings_of(key)["fields"] if f["in_table"]]
+        self.assertGreaterEqual(len(before), 3)
+        page = self.get_ok(self.a, f"/inventory/{key}/configure")
+        self.assertIn('data-field-move="-1"', page)
+        self.assertIn('data-field-move="1"', page)
+        sheet_id = re.search(r'data-table-id="([^"]+)"', self.get_ok(self.a, f"/inventory/{key}")).group(1)
+
+        form = self.configure_form(key)
+        n = int(form["field_count"])
+        # The last column moved to the top: each row's inputs renumbered.
+        moved = {}
+        for name, value in form.items():
+            m = re.match(r"field_(\d+)_(.+)$", name)
+            if not m:
+                moved[name] = value
+                continue
+            i = int(m.group(1))
+            moved[f"field_{0 if i == n - 1 else i + 1}_{m.group(2)}"] = value
+        self.post(self.a, f"/inventory/{key}/configure", data=moved)
+        after = [f["key"] for f in settings_of(key)["fields"] if f["in_table"]]
+        self.assertEqual(after, before[-1:] + before[:-1])
+
+        html = self.get_ok(self.a, f"/inventory/{key}")
+        thead = html[html.index("<thead>"):html.index("</thead>")]
+        self.assertEqual(re.findall(r'data-sort-key="attr_([^"]+)"', thead), after)
+        self.assertNotEqual(re.search(r'data-table-id="([^"]+)"', html).group(1), sheet_id)
+        # The ID and actions columns stay pinned at the ends.
+        self.assertIn("sheet-pin-1", thead.split("attr_")[0])
+        self.assertIn("sheet-pin-end", thead.rsplit("attr_", 1)[1])
+
     def test_a_member_cannot_configure_an_inventory_they_did_not_create(self):
         key = self.new_module(self.a, "custom")
         label = one("select label from inventory_modules where key=?", key)

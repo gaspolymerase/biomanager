@@ -328,6 +328,26 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
+- Its columns, per sheet in `localStorage`: `dt:<id>:hidden` (column
+  numbers) and `dt:<id>:widths` (number → px), both by the column's number
+  as the template draws it, and `dt:<id>:order`, the movable columns in the
+  order a person dragged them into (header drag, or the arrows in the
+  Columns menu), by key: `data-col-key`, else `data-sort-key`, else the
+  heading's text. On load `_indexColumns` marks every cell with its drawn
+  number (`data-dt-col`) and `_applyOrder` moves the cells themselves, so
+  `sheet.js`'s pasted blocks, the CSV export and a phone's cards read a row
+  in the order shown, while hidden columns and widths still find theirs by
+  `data-dt-col`. A key the saved order lacks (a column added since) goes in
+  after the column it follows in the template; one that has gone is
+  dropped. Pinned columns (`.sheet-pin`), a `th[data-dt-fixed]` (an
+  organism database's code), a header with a checkbox and one with no
+  visible name don't move and can't be dropped among. The order a lab sees
+  first is the template's: an inventory's `fields` list and the built-in
+  databases' own columns in Configure (Move up / Move down renumber
+  `field_<i>_*` in the order shown; an inventory's `col_sig` changes with
+  it, so a sheet keyed by position starts fresh), and an organism
+  database's `ModuleField.position` (`POST /organisms/<key>/field/<id>/move`,
+  `organism_service.move_field`).
 - The page scrolls, not the sheet. `.data-table-card` is `overflow: clip`
   (not a scroller), so its `.dt-toolbar` sticks to the top of
   `.shell-scroll` and its `.dt-bottom-bar` to the bottom;

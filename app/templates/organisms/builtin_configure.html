@@ -12,6 +12,10 @@
 
 {% macro field_row(i, f) %}
   <tr data-field-row>
+    <td class="whitespace-nowrap">
+      <button type="button" class="row-icon-btn" data-field-move="-1" title="{{ _('Move up') }}" aria-label="{{ _('Move up') }}">{{ icon('arrow-up') }}</button>
+      <button type="button" class="row-icon-btn" data-field-move="1" title="{{ _('Move down') }}" aria-label="{{ _('Move down') }}">{{ icon('arrow-down') }}</button>
+    </td>
     <td>
       <input type="hidden" name="field_{{ i }}_key" value="{{ f.key or '' }}">
       <input type="text" name="field_{{ i }}_label" value="{{ f.label or '' }}" placeholder="{{ _('Column name') }}" aria-label="{{ _('Column name') }}">
@@ -52,7 +56,7 @@
         <div class="dt-scroll">
           <table class="dt">
             <thead><tr>
-              <th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th>
+              <th><span class="sr-only">{{ _('Move up') }} / {{ _('Move down') }}</span></th><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th>
               <th>{{ _('Width') }}</th><th class="text-center">{{ _('In table') }}</th><th class="text-center">{{ _('Remove') }}</th>
             </tr></thead>
             <tbody data-field-body>
@@ -145,6 +149,19 @@
       });
       body.addEventListener('change', (e) => {
         if (e.target.matches('[data-remove-toggle]')) e.target.closest('tr').classList.toggle('is-removed', e.target.checked);
+      });
+      /* Move up / Move down: numbered again in the order shown, which is
+         the order the sheet's columns are saved in. */
+      body.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-field-move]');
+        if (!button) return;
+        const row = button.closest('[data-field-row]');
+        if (button.dataset.fieldMove === '-1' && row.previousElementSibling) body.insertBefore(row, row.previousElementSibling);
+        if (button.dataset.fieldMove === '1' && row.nextElementSibling) body.insertBefore(row.nextElementSibling, row);
+        body.querySelectorAll('[data-field-row]').forEach((r, i) => {
+          r.querySelectorAll('[name]').forEach((el) => { el.name = el.name.replace(/^field_\d+_/, `field_${i}_`); });
+        });
+        button.focus();
       });
     })();
   </script>

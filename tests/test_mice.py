@@ -4,6 +4,7 @@ duplicate, delete, weights and transfers."""
 from __future__ import annotations
 
 import json
+import re
 import unittest
 
 from tests.base import *  # noqa: F401,F403
@@ -106,6 +107,18 @@ class ColumnsTheLabAdds(AppTestCase):
         self.assertIn('name="attr_organ_weight"', html)
         self.assertSaved(self.autosave(self.a, f"/colony/mice/{mouse}/update", {"attr_organ_weight": "31.4"}))
         self.assertIn('value="31.4"', self.get_ok(self.a, "/colony?view=mice"))
+
+    def test_the_columns_take_the_order_configure_sends(self):
+        """Configure's Move up / Move down send the rows in the order shown;
+        the sheet's columns follow it, and Configure lists them so."""
+        self.columns({"label": "Organ weight"}, {"label": "Perfused"})
+        self.columns({"label": "Perfused"}, {"label": "Organ weight"})
+        html = self.get_ok(self.a, "/colony?view=mice")
+        thead = html[html.index("<thead>"):html.index("</thead>")]
+        self.assertEqual(re.findall(r'data-sort-key="attr_([^"]+)"', thead), ["perfused", "organ_weight"])
+        page = self.get_ok(self.a, "/organisms/builtin/colony/configure")
+        self.assertIn('data-field-move="-1"', page)
+        self.assertLess(page.index('value="Perfused"'), page.index('value="Organ weight"'))
 
     def test_a_choice_column_offers_its_choices(self):
         self.columns({"label": "Perfused", "type": "select", "options": ["yes", "no"]})

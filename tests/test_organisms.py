@@ -202,6 +202,41 @@ class ConfigureTests(OrganismCase):
         self.assertEqual(count("organism_module_fields", "id=?", fid), 0)
         self.assertEqual(json.loads(one("select attrs from organisms where id=?", animal))[fkey], "blue")
 
+    def test_move_up_and_down_set_the_order_of_the_sheets_columns(self):
+        key = self.make_organism_module(self.a, label=uniq("Ordered "))
+        mid = self.organism_module_id(key)
+        labels = [uniq("Tail "), uniq("Diet "), uniq("Coat ")]
+        for label in labels:
+            self.post(self.a, f"/organisms/{key}/field/add",
+                      {"entity": "organism", "label": label, "field_type": "text", "show_in_table": "1"})
+        ids = [one("select id from organism_module_fields where module_id_fk=? and label=?", mid, label)
+               for label in labels]
+
+        def columns():
+            html = self.get_ok(self.a, f"/organisms/{key}")
+            thead = html[html.index("<thead>"):html.index("</thead>")]
+            # The code (ID) column stays put when the others are dragged.
+            self.assertRegex(thead, r'data-sort-key="code"[^>]*data-dt-fixed')
+            keys = re.findall(r'data-sort-key="attr_([^"]+)"', thead)
+            return [one("select label from organism_module_fields where module_id_fk=? and key=?", mid, k)
+                    for k in keys]
+
+        self.assertEqual(columns(), labels)
+        settings = self.get_ok(self.a, f"/organisms/{key}?view=settings")
+        self.assertIn(f"/organisms/{key}/field/{ids[2]}/move", settings)
+        r = self.a.post(f"/organisms/{key}/field/{ids[2]}/move", data={"step": "-1"})
+        self.assertEqual(location(r), f"/organisms/{key}?view=settings")
+        self.assertEqual(columns(), [labels[0], labels[2], labels[1]])
+        self.post(self.a, f"/organisms/{key}/field/{ids[0]}/move", {"step": "1"})
+        self.assertEqual(columns(), [labels[2], labels[0], labels[1]])
+        # Past either end, nothing moves.
+        self.post(self.a, f"/organisms/{key}/field/{ids[2]}/move", {"step": "-1"})
+        self.assertEqual(columns(), [labels[2], labels[0], labels[1]])
+        # A member can't reorder the lab's columns.
+        r = self.post(self.m, f"/organisms/{key}/field/{ids[1]}/move", {"step": "-1"})
+        self.assertTrue(errors(r))
+        self.assertEqual(columns(), [labels[2], labels[0], labels[1]])
+
     def test_member_cannot_add_or_delete_fields(self):
         label = uniq("Kept ")
         self.post(self.a, f"{self.url}/field/add", {"entity": "housing", "label": label, "field_type": "text"})

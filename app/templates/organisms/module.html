@@ -30,9 +30,10 @@
   {{ db_actions(url_for('organisms.module', key=module.key, view='settings'), can_configure) }}
 {% endblock %}
 
-{# Sortable header cell. #}
+{# Sortable header cell. A record's code (its ID) stays first when the
+   other columns are dragged into another order (data-dt-fixed). #}
 {% macro th(key, label, glyph, width, title='') %}
-  <th class="dt-sortable" data-sort-key="{{ key }}" style="width: {{ width }};"{% if title %} title="{{ title }}"{% endif %}>
+  <th class="dt-sortable" data-sort-key="{{ key }}" style="width: {{ width }};"{% if title %} title="{{ title }}"{% endif %}{% if key == 'code' %} data-dt-fixed{% endif %}>
     <span class="dt-col-head">{{ icon(glyph, 'dt-col-icon') }}{{ label|head }}<span class="dt-sort-indicator"></span></span>
   </th>
 {% endmacro %}
@@ -1573,7 +1574,7 @@
     </form>
 
     {# ---- Custom fields ---- #}
-    <section class="card">
+    <section class="card" id="fields">
       <header class="card-head">
         <h2>{{ icon('columns') }} {{ _('Fields') }}</h2>
         <span class="badge badge-quiet">
@@ -1595,7 +1596,7 @@
             <thead>
               <tr><th style="width:112px;">{{ _('On') }}</th><th>{{ _('Label') }}</th><th style="width:92px;">{{ 'Key'|tr('field') }}</th>
                   <th style="width:92px;">{{ _('Type') }}</th><th style="width:128px;">{{ _('Choices') }}</th>
-                  <th style="width:76px;">{{ _('Default') }}</th><th style="width:68px;">{{ _('In table') }}</th><th style="width:48px;"></th></tr>
+                  <th style="width:76px;">{{ _('Default') }}</th><th style="width:68px;">{{ _('In table') }}</th><th style="width:{{ 104 if can_configure else 48 }}px;"></th></tr>
             </thead>
             <tbody>
               {% for entity_label, field in all_fields %}
@@ -1609,9 +1610,17 @@
                   <td class="text-muted">{{ field.options_list | join(', ') }}</td>
                   <td class="text-muted">{{ field.default_value }}</td>
                   <td>{% if field.show_in_table %}{{ icon('check', 'size-3.5 text-ok-600') }}{% endif %}</td>
-                  <td>
+                  <td class="whitespace-nowrap">
                     {% if can_configure %}
-                      <form method="post" action="{{ url_for('organisms.delete_field', key=module.key, field_id=field.id) }}"
+                      {# Move up / Move down among the fields of the same record:
+                         the order their columns take on the sheet. #}
+                      <form method="post" action="{{ url_for('organisms.move_field', key=module.key, field_id=field.id) }}" class="inline">
+                        <button type="submit" name="step" value="-1" class="row-icon-btn" title="{{ _('Move up') }}" aria-label="{{ _('Move %(name)s up', name=field.label|tr('field')) }}"
+                                {% if loop.first or loop.previtem[0] != entity_label %}disabled{% endif %}>{{ icon('arrow-up') }}</button>
+                        <button type="submit" name="step" value="1" class="row-icon-btn" title="{{ _('Move down') }}" aria-label="{{ _('Move %(name)s down', name=field.label|tr('field')) }}"
+                                {% if loop.last or loop.nextitem[0] != entity_label %}disabled{% endif %}>{{ icon('arrow-down') }}</button>
+                      </form>
+                      <form method="post" class="inline" action="{{ url_for('organisms.delete_field', key=module.key, field_id=field.id) }}"
                             data-confirm="{{ _('Remove %(name)s? Stored values stay in the database.', name=field.label|tr('field')) }}">
                         <button type="submit" class="row-icon-btn danger-button" title="{{ _('Remove') }}">{{ icon('trash') }}</button>
                       </form>

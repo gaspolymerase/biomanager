@@ -2282,6 +2282,23 @@ def delete_field(key: str, field_id: int):
         return _redirect_back(key, "settings")
 
 
+@bp.route("/<key>/field/<int:field_id>/move", methods=["POST"])
+def move_field(key: str, field_id: int):
+    """Move up / Move down in Settings' Fields: the order of its columns on
+    the sheet, as the lab sees it by default."""
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        denied = _deny_configure(module, key)
+        if denied:
+            return denied
+        row = session.get(ModuleField, field_id)
+        if row is None or row.module_id_fk != module.id:
+            abort(404)
+        if svc.move_field(session, row, -1 if request.form.get("step") == "-1" else 1):
+            session.commit()
+        return redirect(url_for("organisms.module", key=key, view="settings", _anchor="fields"))
+
+
 @bp.route("/<key>/rule/save", methods=["POST"])
 def save_rule(key: str):
     with SessionLocal() as session:

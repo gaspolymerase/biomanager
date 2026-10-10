@@ -18,6 +18,10 @@
 
 {% macro field_row(i, f) %}
   <tr data-field-row>
+    <td class="whitespace-nowrap">
+      <button type="button" class="row-icon-btn" data-field-move="-1" title="{{ _('Move up') }}" aria-label="{{ _('Move up') }}">{{ icon('arrow-up') }}</button>
+      <button type="button" class="row-icon-btn" data-field-move="1" title="{{ _('Move down') }}" aria-label="{{ _('Move down') }}">{{ icon('arrow-down') }}</button>
+    </td>
     <td>
       <input type="hidden" name="field_{{ i }}_key" value="{{ f.key or '' }}">
       <input type="text" name="field_{{ i }}_label" value="{{ f.label or '' }}" placeholder="{{ _('Column name') }}" aria-label="{{ _('Column name') }}">
@@ -131,9 +135,10 @@
         <p class="mb-3 text-[12.5px] leading-snug text-muted">
           {% trans trimmed category=m.category_label|tr('inventory')|lower %}Name, owner, {{ category }}, status and the tracked features above are built in.
           Add anything else here. Removing a column only takes it off the page: the values already entered stay stored in each record.{% endtrans %}
+          {{ _('The arrows set the order these columns take on the sheet for the whole lab; anyone can still drag the columns of their own sheet into another order.') }}
         </p>
         <table class="field-editor">
-          <thead><tr><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th><th>{{ _('Icon') }}</th><th>{{ _('Width') }}</th><th>{{ _('In table') }}</th><th>{{ _('Remove') }}</th></tr></thead>
+          <thead><tr><th><span class="sr-only">{{ _('Move up') }} / {{ _('Move down') }}</span></th><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th><th>{{ _('Icon') }}</th><th>{{ _('Width') }}</th><th>{{ _('In table') }}</th><th>{{ _('Remove') }}</th></tr></thead>
           <tbody data-field-body>
             {% for f in m.fields %}{{ field_row(loop.index0, f) }}{% endfor %}
             {{ field_row(m.fields|length, {}) }}
@@ -208,6 +213,23 @@
     });
     body.addEventListener('change', (e) => {
       if (e.target.matches('[data-remove-toggle]')) e.target.closest('tr').classList.toggle('is-removed', e.target.checked);
+    });
+    /* Move up / Move down: the rows are numbered again in the order shown,
+       and the server keeps the columns in that order (field_0, field_1…),
+       which is the order the sheet shows them in. */
+    const renumber = () => {
+      body.querySelectorAll('[data-field-row]').forEach((row, i) => {
+        row.querySelectorAll('[name]').forEach((el) => { el.name = el.name.replace(/^field_\d+_/, `field_${i}_`); });
+      });
+    };
+    body.addEventListener('click', (e) => {
+      const button = e.target.closest('[data-field-move]');
+      if (!button) return;
+      const row = button.closest('[data-field-row]');
+      if (button.dataset.fieldMove === '-1' && row.previousElementSibling) body.insertBefore(row, row.previousElementSibling);
+      if (button.dataset.fieldMove === '1' && row.nextElementSibling) body.insertBefore(row.nextElementSibling, row);
+      renumber();
+      button.focus();
     });
   })();
 
