@@ -734,8 +734,10 @@ in, as it is (up to 15 MB and 5,000 rows):
   *Slot* and *Well* are the position; *DOB* and *Born* the date of birth;
   *Supplier* the vendor; *Cat. No.* the catalogue number. Where a name
   could mean two things the values decide: a *Location* of `A1`, `B2`…
-  is a position in a box, one of `Freezer 2` is a location note. Each match
-  says why it was made, and you can change any of them.
+  is a position in a box, one of `Freezer 2` is a location note. Chinese
+  headers count too (*性别*, *出生日期*, *笼号*, *质粒名称*), in a CSV
+  saved by Excel on a Chinese Windows as well. Each match says why it was
+  made, and you can change any of them.
 - **The database adjusts to your sheet.** A column BioManager doesn't have
   becomes a new column (text, number or date) in inventories and organism
   databases, if you may configure them, and a mouse sheet's columns are
@@ -750,10 +752,13 @@ in, as it is (up to 15 MB and 5,000 rows):
   decided per column and otherwise by the lab's date style in
   **Settings → General**, `12-May-26`,
   or a date number; a future date of birth is left blank and kept in the
-  notes), `Male`/`m`/`♂` → `M`, your lab's own statuses, people by name.
-  A cell merged down over several rows (a *Cage #* typed once for its
-  mice) counts for each, and cages the import makes belong to their mice's
-  owner.
+  notes), `Male`/`m`/`♂`/`公` → `M`, your lab's own statuses, people by
+  name, a plasmid's `152.6 ng/µl` as its concentration. A cell merged down
+  over several rows (a *Cage #* typed once for its mice) counts for each;
+  typed once with blank cells below instead, a cage, rack, box or tank
+  column offers **Its blank cells take the value above them**, ticked
+  (untick it if a blank means none). Cages the import makes belong to
+  their mice's owner.
 - **You see a preview first.** It runs through the same checks as the
   database's own dialogs and lists every row that would be skipped and why,
   by its row number in Excel. A *Total* line under the records is left out,

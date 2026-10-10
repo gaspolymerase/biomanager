@@ -148,17 +148,20 @@
         <li><b>Check how the columns were matched.</b> BioManager matches by meaning, not just by name: <i>Position</i>,
           <i>Slot</i> and <i>Well</i> are the position, <i>DOB</i> and <i>Born</i> the date of birth, <i>Supplier</i> the vendor,
           <i>Cat. No.</i> the catalogue number. Where a name could mean two things the values decide — a <i>Location</i> of
-          <code>A1</code>, <code>B2</code>… is a position in a box, one of <code>Freezer 2</code> is a location. Each match says why;
-          change any of them.</li>
+          <code>A1</code>, <code>B2</code>… is a position in a box, one of <code>Freezer 2</code> is a location. Headers in Chinese
+          count too (<i>性别</i>, <i>出生日期</i>, <i>笼号</i>, <i>质粒名称</i>), in a CSV saved by Excel on a Chinese Windows as well.
+          Each match says why; change any of them.</li>
         <li><b>Nothing is lost unless you say so.</b> A column BioManager doesn't have becomes a new column in an inventory or
           organism database (if you may configure it), or goes <b>Into the notes</b> as <code>Header: value</code>; choose
           <b>Leave out</b> to skip it. A must-have column your sheet lacks, like the owner, gets one value for every row — for
           plasmids and stock, also whether every row is <i>Personal</i> or <i>Lab common</i> (a <i>Lab common</i> column says it row by row). Dates stay
           as Excel wrote them (<code>3/14/2026</code>, <code>14/03/2026</code>, <code>12-May-26</code>): each column decides
           whether day or month comes first, and when it can't tell, the lab's date style (<b>Settings → General</b>) does. A date that can't be read, or a
-          birth date in the future, is left blank and kept in the notes. <i>Male</i>, <i>m</i> and <i>♂</i> all become M;
-          statuses and people are matched by name. A <i>Cage #</i> typed once and merged down over its mice counts for each of
-          them, and the cages the import makes belong to their mice's owner.</li>
+          birth date in the future, is left blank and kept in the notes. <i>Male</i>, <i>m</i>, <i>♂</i> and <i>公</i> all become M;
+          statuses and people are matched by name, and a plasmid's <code>152.6 ng/µl</code> is its concentration. A <i>Cage #</i>
+          typed once and merged down over its mice counts for each of them. Typed once with blank cells below instead, a cage,
+          rack, box or tank column offers <b>Its blank cells take the value above them</b>, ticked; untick it if a blank means
+          none. The cages the import makes belong to their mice's owner.</li>
         <li><b>Preview, then import.</b> <b>Preview the import</b> runs every row through the same checks as the database's own
           form and lists any that would be skipped, by its row number in Excel. A <i>Total</i> line under the records is left
           out, and a mouse whose ID is already taken (in the colony, or by an earlier row) gets the next free one, with yours kept

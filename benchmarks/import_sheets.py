@@ -54,6 +54,7 @@ os.environ.setdefault("BIOMANAGER_TELEMETRY", "0")
 
 # tests.base first: it points the app at a throwaway database before app is imported.
 from tests.base import client_for, make_user  # noqa: E402
+from app import sheet_import as si  # noqa: E402
 from app.db import SessionLocal  # noqa: E402
 from app.models import MouseRecord, PlasmidRecord, UserAccount  # noqa: E402
 from sqlalchemy import func, select  # noqa: E402
@@ -394,7 +395,9 @@ def render(sh: Sheet) -> tuple[str, bytes]:
     # Excel writes every row as wide as the sheet ("Smith lab colony;;;;"), title lines too.
     csv.writer(text, delimiter=delimiter, lineterminator="\r\n").writerows(
         [[str(c) for c in r] + [""] * (width - len(r)) for r in rows])
-    encoding = {"csv-cp1252": "cp1252", "csv-bom": "utf-8-sig"}.get(sh.fmt, "utf-8")
+    # "Windows' encoding" is the one a Windows in that language saves: GBK for a Chinese sheet.
+    chinese = any(re.search(r"[\u3400-\u9fff]", h) for h in sh.headers)
+    encoding = {"csv-cp1252": "gbk" if chinese else "cp1252", "csv-bom": "utf-8-sig"}.get(sh.fmt, "utf-8")
     name = "sheet.tsv" if sh.fmt == "tsv" else "sheet.csv"
     return name, text.getvalue().encode(encoding, errors="replace")
 
@@ -405,11 +408,17 @@ _SELECT = re.compile(r'<select name="((?:map|kind)-\d+)"[^>]*>(.*?)</select>', r
 
 
 def chosen(page: str) -> dict[str, str]:
-    """{select name: the option the match page picked}, as tests/test_sheet_import.py reads it."""
+    """What the match page's form sends untouched: each select's picked
+    option, as tests/test_sheet_import.py reads it, and each ticked box."""
     out = {}
     for name, body in _SELECT.findall(page):
         picked = re.search(r'<option value="([^"]*)" selected', body)
         out[name] = picked.group(1) if picked else ""
+    for name in re.findall(r'<input type="checkbox" name="([\w-]+)" value="1" checked', page):
+        out[name] = "1"
+    hidden = re.search(r'<input type="hidden" name="down-seen" value="1">', page)
+    if hidden:
+        out["down-seen"] = "1"
     return out
 
 
@@ -524,7 +533,9 @@ def score(sh: Sheet, run: dict) -> dict:
                 else:
                     typed = "" if (i, key) in sh.blanked else sh.cells[i][keys.index(key)]
                     typed = typed.isoformat()[:10] if isinstance(typed, datetime) else str(typed).strip()
-                    if (typed and typed.lower() in notes) or told(preview, sheet_row, headers[key], typed):
+                    # A date may be kept as the app read it (26/12/2061 as 2061-12-26).
+                    seen = {typed, *(si.tidy_dates([typed])[0] if key in ("dob",) and typed else [])} - {""}
+                    if any(t.lower() in notes or told(preview, sheet_row, headers[key], t) for t in seen):
                         outcome = "kept"
                     elif got in (None, "", 0):
                         outcome = "blank"
@@ -584,6 +595,10 @@ def version() -> tuple[str, str]:
     try:
         commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
                                 text=True, timeout=5).stdout.strip()
+        # The app's code changed since that commit: say so, as a result of it would mislead.
+        if subprocess.run(["git", "status", "--porcelain", "--", "app"], cwd=ROOT, capture_output=True,
+                          text=True, timeout=5).stdout.strip():
+            commit += "-dirty"
     except (OSError, subprocess.SubprocessError):
         commit = ""
     return app_version(), commit
@@ -651,7 +666,7 @@ def main() -> None:
             md += [f"- **{name}**", *[f"  - {e}" for e in g["examples"]]]
 
     RESULTS.mkdir(parents=True, exist_ok=True)
-    stem = f"import-{ver}-seed{args.seed}"
+    stem = f"import-{ver}-{commit or 'unknown'}-seed{args.seed}"
     (RESULTS / f"{stem}.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     (RESULTS / f"{stem}.json").write_text(json.dumps({
         "version": ver, "commit": commit, "seed": args.seed, "per_mess": args.per_mess, "sink": args.sink,

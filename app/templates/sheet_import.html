@@ -77,6 +77,7 @@
 {% if stage == 'match' %}
 <form method="post" action="{{ url_for('sheet_import.preview', token=token) }}" class="si-stack" data-si-match>
   <input type="hidden" name="sheet" value="{{ sheet }}">
+  <input type="hidden" name="down-seen" value="1">
 
   {% if sheet_names | length > 1 %}
     <nav class="si-sheets" aria-label="{{ _('Sheets in the workbook') }}">
@@ -131,6 +132,14 @@
                   {% endif %}
                 </div>
                 <p class="si-clash" data-si-clash hidden>{{ _('Another column goes here too: only one can.') }}</p>
+                {% if s.down %}
+                  {# Written once per cage or box, blanks below: ticked, unless the person unticked it before. #}
+                  {% set down_on = request.args.get('down-' ~ s.index) == '1' if request.args.get('down-seen') else true %}
+                  <label class="si-down">
+                    <input type="checkbox" name="down-{{ s.index }}" value="1" {% if down_on %}checked{% endif %}>
+                    {{ ngettext('Its blank cell takes the value above it', 'Its %(num)s blank cells take the value above them', s.down) }}
+                  </label>
+                {% endif %}
               </td>
               <td class="si-why si-why-col">
                 {%- if s.why and chosen == s.key -%}

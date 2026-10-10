@@ -460,3 +460,99 @@ class Importing(AppTestCase):
     def test_an_upload_is_only_its_owners(self):
         token, _html = self.upload(self.a, "plasmids", "p.csv", b"Name\npX\n")
         self.assertEqual(self.m.get(f"/import-sheet/file/{token}").status_code, 404)
+
+    # -- sheets as labs keep them (benchmarks/import_sheets.py found these)
+
+    def fields(self, target_key):
+        from app.app import app
+        from app.db import SessionLocal
+        with app.test_request_context(), SessionLocal() as s:
+            return si.target_for(s, target_key).fields
+
+    @staticmethod
+    def ticked(html) -> dict[str, str]:
+        """The checkboxes the match page ticks, as a form sends them."""
+        return {name: "1" for name in re.findall(r'<input type="checkbox" name="(down-\d+)" value="1" checked', html)}
+
+    def test_a_cage_written_once_per_cage_fills_the_rows_below(self):
+        """A sheet filled in by eye writes the cage on its first mouse only;
+        the blanks below are that cage, as merged cells are."""
+        tag = uniq("TG")
+        data = xlsx([["Cage", "Sex", "Strain"], ["C1" + tag, "M", tag], ["", "F", tag], ["", "F", tag],
+                     ["C2" + tag, "M", tag], ["", "M", tag]])
+        token, html = self.upload(self.a, "mice", "colony.xlsx", data)
+        self.assertIn("Its 3 blank cells take the value above them", html)
+        form = {**self.chosen(html), **self.ticked(html), "sheet": "Sheet1", "fill-owner": "me", "down-seen": "1"}
+        self.assertEqual(form.get("down-0"), "1")
+        preview = self.a.post(f"/import-sheet/file/{token}/preview", data=form).get_data(as_text=True)
+        self.assertIn("Cage: 3 blank cells took the value above them.", preview)
+        self.post(self.a, f"/import-sheet/file/{token}/run", data=form)
+        cages = [r[0] for r in rows("select c.cage_id from mice m join mouse_cages c on c.id = m.cage_id_fk "
+                                    "where m.transgene_1=? order by m.id", tag)]
+        self.assertEqual(cages, ["C1" + tag] * 3 + ["C2" + tag] * 2)
+
+    def test_unticked_the_blanks_stay_blank(self):
+        tag = uniq("TG")
+        data = xlsx([["Cage", "Strain"], ["C1" + tag, tag], ["", tag], ["", tag]])
+        token, html = self.upload(self.a, "mice", "colony.xlsx", data)
+        form = {**self.chosen(html), "sheet": "Sheet1", "fill-owner": "me", "down-seen": "1"}   # no down-0
+        self.post(self.a, f"/import-sheet/file/{token}/run", data=form)
+        self.assertEqual(count("mice", "transgene_1=? and cage_id_fk is null", tag), 2)
+        # Back from the preview ("Change the matches"), it stays as the person left it.
+        token, html = self.upload(self.a, "mice", "c.xlsx", data)
+        self.assertIn('name="down-0" value="1" checked', html)
+        again = self.get_ok(self.a, f"/import-sheet/file/{token}?down-seen=1&map-0=cage_id")
+        self.assertNotIn('name="down-0" value="1" checked', again)
+
+    def test_only_a_column_that_looks_filled_down_is_offered(self):
+        self.assertEqual(si.filled_down(["101", "", "", "102", ""]), 3)
+        self.assertEqual(si.filled_down(["101", "101", "", "102"]), 0)    # written on every row: a blank is no cage
+        self.assertEqual(si.filled_down(["101", "", "", "101", "", "102", ""]), 4)   # again after a blank line
+        self.assertEqual(si.filled_down(["", "101", ""]), 0)              # nothing above the first blank
+        self.assertEqual(si.filled_down(["101", "102", "103"]), 0)
+        self.assertEqual(si.fill_down(["a", "", "b", " ", ""]), (["a", "a", "b", "b", "b"], 3))
+        tag = uniq("TG")
+        html = self.upload(self.a, "mice", "c.xlsx", xlsx([["Notes", "Strain"], ["x", tag], ["", tag]]))[1]
+        self.assertNotIn("take the value above", html)                     # notes don't group mice
+
+    def test_chinese_headers_are_matched(self):
+        mice = si.auto_match(["小鼠编号", "性别", "出生日期", "笼号", "基因型", "状态", "负责人", "备注"],
+                             [["1"], ["公"], ["2026-03-01"], ["101"], ["Ai14/+"], ["种鼠"], ["me"], ["x"]],
+                             self.fields("mice"))
+        self.assertEqual([k for k, _s, _w in (mice[i] for i in range(8))],
+                         ["mouse_id", "gender", "date_of_birth", "cage_id", "genotype", "status", "owner", "note"])
+        plasmids = si.auto_match(["质粒名称", "载体", "插入片段", "抗性", "盒子", "位置", "浓度"],
+                                 [["pA"], ["pUC19"], ["EGFP"], ["Amp"], ["Box 1"], ["A1"], ["120"]],
+                                 self.fields("plasmids"))
+        self.assertEqual([k for k, _s, _w in (plasmids[i] for i in range(7))],
+                         ["name", "backbone", "insert_seq", "resistance", "box", "position", "concentration"])
+        self.assertEqual(si.tidy_choice("公", si.SEXES), ("M", True))
+        self.assertEqual(si.tidy_choice("雌", si.SEXES), ("F", True))
+        self.assertEqual(si.tidy_choice("处死", si.MOUSE_STATUSES), ("sac", True))
+
+    def test_a_chinese_sheet_of_mice_comes_in(self):
+        tag = uniq("TG")
+        data = xlsx([["性别", "基因型", "出生日期", "状态"], ["母", tag, "2026-03-01", "种鼠"]])
+        token, html = self.upload(self.a, "mice", "小鼠.xlsx", data)
+        self.post(self.a, f"/import-sheet/file/{token}/run",
+                  data={**self.chosen(html), "sheet": "Sheet1", "fill-owner": "me"})
+        self.assertEqual(row("select gender, status from mice where transgene_1=?", tag), ("F", "breeder"))
+
+    def test_a_concentration_may_carry_its_unit(self):
+        names = [uniq("pConc") for _ in range(3)]
+        data = f"Name,Concentration\n{names[0]},152.6 ng/µl\n{names[1]},98 ng/uL\n{names[2]},1.2 µg/µl\n"
+        token, html = self.upload(self.a, "plasmids", "p.csv", data.encode())
+        self.post(self.a, f"/import-sheet/file/{token}/run", data={**self.chosen(html), "sheet": "Sheet 1"})
+        got = [row("select concentration, notes from plasmids where name=?", n) for n in names]
+        self.assertEqual([g[0] for g in got[:2]], ["152.6", "98"])
+        self.assertEqual(got[2][0], "")                     # another unit isn't guessed at
+        self.assertIn("1.2 µg/µl", got[2][1])               # it's kept in the notes
+
+    def test_a_csv_from_a_chinese_windows_reads_as_chinese(self):
+        """Excel there saves CSV in GBK; a Western one in cp1252 stays as it was."""
+        tag = uniq("TG")
+        data = f"性别,基因型,笼号\r\n公,{tag},101\r\n".encode("gbk")
+        headers, rows, _first = si.split_header(si.read_workbook("小鼠.csv", data)["Sheet 1"])
+        self.assertEqual((headers, rows), (["性别", "基因型", "笼号"], [["公", tag, "101"]]))
+        headers, rows, _first = si.split_header(si.read_workbook("x.csv", "Name,Owner\r\npA,Díaz café\r\n".encode("cp1252"))["Sheet 1"])
+        self.assertEqual(rows, [["pA", "Díaz café"]])

@@ -316,5 +316,9 @@
   "The password you sign in to the server with, as on a NAS. It is used for this set-up only, and never saved; if sudo asks for a password too, this one is tried first.": "你登录这台服务器用的密码（NAS 通常如此）。只用于这次搭建，不会保存；如果 sudo 也要密码，会先试这个。",
   "That password can't be used: it has a line break in it, or is very long.": "这个密码无法使用：其中有换行，或者太长。",
   "This computer's ssh can't take a password from BioManager. Sign in with an SSH key instead.": "这台电脑的 ssh 无法从 BioManager 接收密码。请改用 SSH 密钥登录。",
-  "The server didn't accept this password: check the user name and the password, and that the server allows signing in with a password.": "服务器没有接受这个密码：请检查用户名和密码，以及服务器是否允许用密码登录。"
+  "The server didn't accept this password: check the user name and the password, and that the server allows signing in with a password.": "服务器没有接受这个密码：请检查用户名和密码，以及服务器是否允许用密码登录。",
+  "%(column)s: %(num)s blank cell took the value above it.": "%(column)s：%(num)s 个空白单元格沿用了上方的值。",
+  "%(column)s: %(num)s blank cells took the value above them.": "%(column)s：%(num)s 个空白单元格沿用了上方的值。",
+  "Its blank cell takes the value above it": "空白单元格沿用上方的值",
+  "Its %(num)s blank cells take the value above them": "%(num)s 个空白单元格沿用上方的值"
 }

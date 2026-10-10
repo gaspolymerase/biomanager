@@ -45,5 +45,6 @@ match page's suggestions. Then each value is compared with the truth:
 
 A row is *imported*, *refused* (the preview says why), or *lost*.
 
-Results are written to `results/import-<version>-seed<seed>.md` (tables)
-and `.json` (the counts behind them).
+Results are written to `results/import-<version>-<commit>-seed<seed>.md`
+(tables) and `.json` (the counts behind them); a commit marked `-dirty` had
+changes to the app not yet committed.

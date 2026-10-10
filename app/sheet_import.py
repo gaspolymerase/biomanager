@@ -13,7 +13,14 @@
    where the database has columns of its own (inventories, organism
    databases), or goes into the notes as "Header: value", so nothing is lost.
    A column the database must have and the sheet lacks gets one value for
-   every row (the owner: you).
+   every row (the owner: you). Chinese headers count as their names do
+   (性别, 出生日期, 笼号, 质粒名称…), and a CSV in GBK (Excel on a Chinese
+   Windows) is read as such.
+   A column that groups rows (a cage, a rack, a box, a tank) written once
+   per group with blanks below, as a sheet filled in by eye is, gets
+   "Its blank cells take the value above them", ticked: the blanks become
+   the value above them, as merged cells already do, and the preview says
+   how many.
 3. Preview. The whole import runs through each database's own save code
    (the same checks as its dialogs), each row in a savepoint, and is then
    rolled back: what it would create, and why any row can't be.
@@ -22,8 +29,9 @@
 
 Values are tidied on the way: dates as Excel writes them (3/14/2026,
 14.03.26, or a date number), day or month first decided per column; sexes
-(Male, m, ♂ → M); statuses and purposes by their names; people by user
-name, display name or first name.
+(Male, m, ♂, 公 → M); statuses and purposes by their names; people by user
+name, display name or first name; a plasmid's concentration with its unit
+("152.6 ng/µl").
 
 The uploaded rows wait between steps in data_dir()/imports, one JSON file
 per upload, removed after a day.
@@ -188,8 +196,28 @@ def _fill_merged(rows: list[list[str]], ranges) -> None:
         done[min_col] = end
 
 
+def _looks_chinese(data: bytes) -> bool:
+    """Excel on a Chinese Windows saves CSV in GBK, where each character is
+    two bytes above 0x7F side by side; an accented letter in Windows'
+    Western encoding is one such byte between plain ones (café, Díaz)."""
+    high = [i for i, b in enumerate(data) if b > 0x7F]
+    if not high:
+        return False
+    paired = sum(1 for i in high if (i + 1 < len(data) and data[i + 1] > 0x7F) or (i and data[i - 1] > 0x7F))
+    return paired >= 0.9 * len(high)
+
+
 def _decode(data: bytes) -> str:
-    for encoding in ("utf-8-sig", "cp1252", "latin-1"):
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        pass
+    if _looks_chinese(data):
+        try:
+            return data.decode("gb18030")            # GBK, and the rest of what Chinese Windows writes
+        except UnicodeDecodeError:
+            pass
+    for encoding in ("cp1252", "latin-1"):
         try:
             return data.decode(encoding)
         except UnicodeDecodeError:
@@ -276,11 +304,16 @@ _GENERIC = {"class", "type", "kind", "group", "number", "date", "name", "id", "u
             "amount", "value", "code", "tag", "set up", "item", "sample", "user", "person"}
 
 
+_CJK = re.compile(r"[\u3400-\u9fff]")
+# Chinese words too general to make a column on their own as the end of a header.
+_CJK_GENERIC = {"编号", "名称", "日期", "位置", "类型", "数量", "备注", "状态", "号"}
+
+
 def norm(text: str) -> str:
     """Lower case, punctuation and '#' spelled out, plurals dropped:
-    "Cat. No." → "cat number", "Positions" → "position"."""
+    "Cat. No." → "cat number", "Positions" → "position"; Chinese kept."""
     t = (text or "").lower().replace("#", " number ").replace("♀", " female ").replace("♂", " male ")
-    t = re.sub(r"[^a-z0-9]+", " ", t).strip()
+    t = re.sub(r"[^a-z0-9\u3400-\u9fff]+", " ", t).strip()        # Chinese headers keep their words
     words = []
     for w in t.split():
         if w in _WORD_NUMBER:
@@ -313,11 +346,12 @@ class Field:
     note: str = ""                     # shown beside it on the match page
     custom: bool = False               # one of the database's own columns
     options: tuple = ()                # (value, label) for the "every row gets" choice
+    groups: bool = False               # groups rows (a cage, a box): may be written once per group
 
     def also(self) -> list[str]:
         """A few other names it's known by, for the upload page."""
         own = norm(self.label)
-        return [s for s in self.synonyms if norm(s) != own][:4]
+        return [s for s in self.synonyms if norm(s) != own and not _CJK.search(s)][:4]
 
     def names(self) -> set[str]:
         return {norm(self.label), norm(self.key.replace("_", " ")), *(norm(s) for s in self.synonyms)}
@@ -360,7 +394,9 @@ def score(header: str, values: list[str], f: Field) -> tuple[float, str]:
             # "Rack position" is a position and "Freezer box" a box: a
             # spreadsheet header names its thing last. "Cage colour" is not
             # a cage.
-            if n and n not in _GENERIC and h.endswith(f" {n}") and 0.8 > best:
+            # In Chinese without the space: "小鼠笼号" is a 笼号.
+            cjk_end = bool(n and _CJK.search(n) and len(n) >= 2 and n not in _CJK_GENERIC and h.endswith(n))
+            if n and n not in _GENERIC and (h.endswith(f" {n}") or cjk_end) and 0.8 > best:
                 best, why = 0.8, gettext("“%(header)s” is a kind of %(name)s", header=header, name=n)
             # "Hazard class", "Weight (g)": the name, then a generic word or a unit.
             rest = h[len(n) + 1:].split() if n and h.startswith(f"{n} ") else []
@@ -403,10 +439,36 @@ def auto_match(headers: list[str], columns: list[list[str]], fields: list[Field]
     return out
 
 
+def filled_down(values: list[str]) -> int:
+    """How many blanks a column written once per group would fill: its
+    first row has a value, and it has more blanks than values written again
+    on the next row (a sheet that writes its cage on every row means "no
+    cage" by a blank). 0 when it doesn't look so."""
+    cells = [v.strip() for v in values]
+    if not cells or not cells[0]:
+        return 0
+    blanks = sum(1 for v in cells if not v)
+    repeats = sum(1 for a, b in zip(cells, cells[1:]) if a and a == b)
+    return blanks if blanks > repeats else 0
+
+
+def fill_down(values: list[str]) -> tuple[list[str], int]:
+    """Each blank takes the value above it, as a merged cell does."""
+    out, above, filled = [], "", 0
+    for v in values:
+        if v.strip():
+            above = v
+        elif above:
+            v, filled = above, filled + 1
+        out.append(v)
+    return out, filled
+
+
 # ---------------------------------------------------------------- tidying values
 
 _SLASH = re.compile(r"^\s*(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})\s*$")
-SEXES = {"m": "M", "male": "M", "man": "M", "boy": "M", "f": "F", "female": "F", "woman": "F", "girl": "F"}
+SEXES = {"m": "M", "male": "M", "man": "M", "boy": "M", "f": "F", "female": "F", "woman": "F", "girl": "F",
+         "公": "M", "雄": "M", "雄性": "M", "母": "F", "雌": "F", "雌性": "F"}
 
 
 _NAMED_MONTH = ("%d-%b-%y", "%d-%b-%Y", "%d %b %y", "%d %b %Y", "%d-%B-%Y", "%d %B %Y", "%d-%B-%y",
@@ -570,7 +632,10 @@ MOUSE_STATUSES = {"breeder": "breeder", "breeding": "breeder", "breed": "breeder
                   "exp": "experiment", "experimental": "experiment", "geno": "geno", "genotyping": "geno",
                   "to genotype": "geno", "transfer": "transfer", "transferred": "transfer", "sac": "sac",
                   "sacrificed": "sac", "sacked": "sac", "euthanized": "sac", "euthanised": "sac", "dead": "sac",
-                  "culled": "sac", "stock": "experiment", "holding": "experiment"}
+                  "culled": "sac", "stock": "experiment", "holding": "experiment",
+                  "种鼠": "breeder", "繁殖": "breeder", "配种": "breeder", "实验": "experiment", "实验用": "experiment",
+                  "鉴定": "geno", "待鉴定": "geno", "转移": "transfer", "转出": "transfer", "处死": "sac",
+                  "安乐死": "sac", "死亡": "sac"}
 
 
 class MiceTarget(Target):
@@ -706,34 +771,39 @@ def mice_target(session) -> Target:
         columns_note=gettext("The mouse colony's columns are fixed, so any others go into each mouse's notes."),
         derived=("active", "age week", "age day", "age"),
         fields=[
-            Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "animal id", "animal"),
+            Field("mouse_id", "Mouse ID", ("mouse", "id", "mouse number", "animal id", "animal", "小鼠编号", "鼠号", "小鼠号",
+                                             "动物编号", "编号"),
                   note="Kept when it's a free number; otherwise the next ID, with yours in the notes"),
             # How the mouse is marked (an ear tag, punch or tail tattoo), shown
             # as Custom tag. "ear tag" used to come in as the Mouse ID, for want
             # of anywhere else to put it; it has its own column now.
             Field("ear_tag", "Custom tag", ("custom tag", "ear tag", "eartag", "tag", "ear punch", "ear notch",
                                             "notch", "tattoo", "tail tattoo", "tail mark", "toe clip", "marking",
-                                            "mark", "identification")),
-            Field("gender", "Sex", ("sex", "gender", "m f", "male female"), kind="sex"),
+                                            "mark", "identification", "耳标", "耳号", "剪耳", "剪趾", "标记")),
+            Field("gender", "Sex", ("sex", "gender", "m f", "male female", "性别", "雌雄", "公母"), kind="sex"),
             Field("genotype", "Genotype", ("genotype", "strain", "line", "transgene", "allele", "cre", "gt",
-                                           "transgene 1")),
+                                           "transgene 1", "基因型", "品系")),
             *(Field(f"transgene_{n}", f"Transgene {n}", (f"transgene {n}", f"allele {n}", f"tg {n}"))
               for n in (2, 3, 4)),
             Field("date_of_birth", "Date of birth", ("dob", "birth date", "birthdate", "born", "birthday",
-                                                     "date born", "d o b", "birth"), kind="date"),
-            Field("cage_id", "Cage", ("cage", "cage number", "cage id", "cage card")),
-            Field("cage_rack", "Rack", ("rack", "rack name", "shelf")),
+                                                     "date born", "d o b", "birth", "出生日期", "出生",
+                                                     "生日", "出生时间"), kind="date"),
+            Field("cage_id", "Cage", ("cage", "cage number", "cage id", "cage card", "笼号", "笼子", "鼠笼",
+                                      "笼编号", "笼"), groups=True),
+            Field("cage_rack", "Rack", ("rack", "rack name", "shelf", "鼠架", "笼架", "架子"), groups=True),
             Field("cage_position", "Position in the rack", ("position", "slot", "rack position", "cage position",
-                                                            "pos"), kind="position"),
-            Field("cage_location", "Cage location", ("room", "location", "cage location", "where"), kind="place"),
-            Field("litter_id", "Litter", ("litter", "litter number", "litter id")),
-            Field("status", "Status", ("status", "use", "purpose", "state"), kind="choice",
+                                                            "pos", "笼位", "位置"), kind="position"),
+            Field("cage_location", "Cage location", ("room", "location", "cage location", "where", "房间",
+                                                     "饲养间"), kind="place", groups=True),
+            Field("litter_id", "Litter", ("litter", "litter number", "litter id", "窝号", "窝")),
+            Field("status", "Status", ("status", "use", "purpose", "state", "状态", "用途"), kind="choice",
                   choices=_mouse_statuses(session)),
             Field("owner", "Owner", ("owner", "user", "person", "researcher", "responsible", "who", "investigator",
-                                     "belongs to"), kind="owner", required=True, fill="me"),
+                                     "belongs to", "负责人", "所有人", "饲养人", "使用人"), kind="owner",
+                  required=True, fill="me"),
             Field("date_of_death", "Date of death", ("death date", "date of death", "dod", "sac date",
-                                                     "euthanized", "died"), kind="date"),
-            Field("note", "Notes", ("note", "comment", "remark", "description", "notes")),
+                                                     "euthanized", "died", "死亡日期", "处死日期"), kind="date"),
+            Field("note", "Notes", ("note", "comment", "remark", "description", "notes", "备注", "说明")),
             *custom_import_fields(session, "colony"),
         ])
 
@@ -833,22 +903,24 @@ def fish_target(session) -> Target:
         back_url=url_for("zebrafish", view="fish"),
         columns_note=gettext("The zebrafish columns are fixed, so any others go into the fish's notes."),
         fields=[
-            Field("tank", "Tank", ("tank", "tank number", "tank id", "aquarium"), required=True,
-                  note="New tanks are made, placed from Rack and Position"),
-            Field("line", "Line", ("line", "strain", "fish line", "transgenic line"), note="New lines are made"),
-            Field("genotype", "Genotype", ("genotype", "allele", "transgene")),
-            Field("count", "Count", ("count", "number", "n", "number of fish", "how many", "quantity"), kind="number"),
-            Field("sex", "Sex", ("sex", "gender"), kind="choice", choices=FISH_SEXES),
-            Field("status", "Status", ("status", "state"), kind="choice", choices=FISH_STATUSES),
+            Field("tank", "Tank", ("tank", "tank number", "tank id", "aquarium", "缸号", "鱼缸", "缸"), required=True,
+                  note="New tanks are made, placed from Rack and Position", groups=True),
+            Field("line", "Line", ("line", "strain", "fish line", "transgenic line", "品系"), note="New lines are made"),
+            Field("genotype", "Genotype", ("genotype", "allele", "transgene", "基因型")),
+            Field("count", "Count", ("count", "number", "n", "number of fish", "how many", "quantity", "数量",
+                                     "尾数"), kind="number"),
+            Field("sex", "Sex", ("sex", "gender", "性别"), kind="choice", choices=FISH_SEXES),
+            Field("status", "Status", ("status", "state", "状态"), kind="choice", choices=FISH_STATUSES),
             Field("date_of_fertilization", "Fertilised", ("dof", "fertilized", "date of fertilization",
-                                                          "fertilisation date", "dob", "birth date", "born", "date"),
+                                                          "fertilisation date", "dob", "birth date", "born", "date",
+                                                          "受精日期", "出生日期"),
                   kind="date"),
-            Field("individual_id", "Fish ID", ("fish id", "individual", "individual id", "tag", "id")),
-            Field("rack", "Rack", ("rack", "system", "shelf")),
-            Field("position", "Position", ("position", "slot", "pos"), kind="position"),
-            Field("owner", "Owner", ("owner", "user", "person", "researcher", "responsible"), kind="owner",
+            Field("individual_id", "Fish ID", ("fish id", "individual", "individual id", "tag", "id", "鱼编号", "编号")),
+            Field("rack", "Rack", ("rack", "system", "shelf", "养殖架", "架子"), groups=True),
+            Field("position", "Position", ("position", "slot", "pos", "位置"), kind="position"),
+            Field("owner", "Owner", ("owner", "user", "person", "researcher", "responsible", "负责人"), kind="owner",
                   required=True, fill="me"),
-            Field("notes", "Notes", ("note", "comment", "remark", "description")),
+            Field("notes", "Notes", ("note", "comment", "remark", "description", "备注")),
         ])
 
 
@@ -883,6 +955,8 @@ class PlasmidTarget(Target):
                           location=v.get("location", "")[:120], is_shared=v.get("is_shared") == "1")
         for key, label, limit in (("concentration", "Concentration", 40), ("a260_280", "260/280", 20)):
             value = v.get(key, "").strip().replace(",", ".")
+            if key == "concentration":       # "152.6 ng/µl": the column's own unit (µ, μ or u)
+                value = re.sub(r"\s*ng\s*/\s*[µμu]l\s*$", "", value, flags=re.I)
             try:
                 float(value) if value else None
             except ValueError:
@@ -915,23 +989,29 @@ def plasmid_target(session) -> Target:
         columns_note=gettext("The plasmid columns are fixed, so any others go into each plasmid's notes."),
         fields=[
             Field("plasmid_id", "Plasmid number", ("plasmid number", "plasmid id", "number", "id", "stock number",
-                                                   "pl number", "p number")),
-            Field("name", "Name", ("name", "plasmid", "plasmid name", "construct", "title"), required=True),
-            Field("backbone", "Backbone", ("backbone", "vector", "parent vector", "parent")),
-            Field("insert_seq", "Insert", ("insert", "gene", "cdna", "orf", "insert gene", "gene insert")),
+                                                   "pl number", "p number", "质粒编号", "编号")),
+            Field("name", "Name", ("name", "plasmid", "plasmid name", "construct", "title", "质粒名称", "质粒名",
+                                   "名称", "质粒", "名字"), required=True),
+            Field("backbone", "Backbone", ("backbone", "vector", "parent vector", "parent", "载体", "骨架",
+                                           "骨架载体")),
+            Field("insert_seq", "Insert", ("insert", "gene", "cdna", "orf", "insert gene", "gene insert", "插入片段",
+                                           "插入基因", "目的基因", "基因")),
             Field("resistance", "Resistance", ("resistance", "antibiotic", "selection", "marker",
-                                               "bacterial resistance", "antibiotic resistance")),
-            Field("box", "Box", ("box", "storage box", "freezer box", "plasmid box", "rack")),
-            Field("position", "Position in the box", ("position", "well", "slot", "pos", "box position"),
-                  kind="position"),
-            Field("location", "Location", ("location", "freezer", "storage", "where", "fridge"), kind="place"),
+                                               "bacterial resistance", "antibiotic resistance", "抗性", "抗生素")),
+            Field("box", "Box", ("box", "storage box", "freezer box", "plasmid box", "rack", "盒子", "冻存盒",
+                                 "质粒盒"), groups=True),
+            Field("position", "Position in the box", ("position", "well", "slot", "pos", "box position", "位置",
+                                                      "孔位", "盒内位置"), kind="position"),
+            Field("location", "Location", ("location", "freezer", "storage", "where", "fridge", "存放位置", "冰箱",
+                                           "存放"), kind="place", groups=True),
             Field("concentration", "Concentration (ng/µL)", ("concentration", "conc", "conc.", "ng/ul", "ng/µl",
-                                                            "yield", "dna concentration")),
-            Field("a260_280", "260/280", ("260/280", "a260/280", "a260/a280", "purity")),
-            Field("owner", "Owner", ("owner", "user", "person", "made by", "maker", "researcher", "depositor"),
-                  kind="owner", required=True, fill="me"),
+                                                            "yield", "dna concentration", "浓度")),
+            Field("a260_280", "260/280", ("260/280", "a260/280", "a260/a280", "purity", "纯度")),
+            Field("owner", "Owner", ("owner", "user", "person", "made by", "maker", "researcher", "depositor",
+                                     "负责人", "构建人", "所有人"), kind="owner", required=True, fill="me"),
             shared_field(),
-            Field("notes", "Notes", ("note", "comment", "remark", "description", "source", "reference")),
+            Field("notes", "Notes", ("note", "comment", "remark", "description", "source", "reference", "备注",
+                                     "来源")),
         ])
 
 
@@ -1008,21 +1088,22 @@ def stock_target(session, module) -> Target:
                              db=translate_value(mv.label), thing=translate_value(unit, "import")),
         fields=[
             Field("genotype", "Genotype", ("genotype", "stock", "strain", "line", "name", "stock name",
-                                           "description"), required=True),
-            Field("purpose", "Purpose", ("purpose", "type", "use", "category", "kind")),
+                                           "description", "基因型", "品系"), required=True),
+            Field("purpose", "Purpose", ("purpose", "type", "use", "category", "kind", "用途")),
             Field("female_genotype", "Female genotype", ("female", "virgin", "female genotype", "mother", "mom")),
             Field("male_genotype", "Male genotype", ("male", "male genotype", "father", "dad")),
             Field("stock_number", "Stock number", ("stock number", "bloomington", "bdsc", "vdrc", "cgc",
                                                    "stock center number", "bl", "bloomington number",
-                                                   "bdsc number", "vdrc number", "cgc number", "stock id")),
+                                                   "bdsc number", "vdrc number", "cgc number", "stock id",
+                                                   "品系编号", "库存编号")),
             Field("set_up_on", "Set up", ("set up", "date", "date set up", "setup date", "started", "flipped",
-                                          "last flip", "date flipped"), kind="date"),
-            Field("generation", "Generation", ("generation", "gen", "f")),
-            Field("rack", "Rack", ("rack", "box", "tray", "shelf")),
-            Field("position", "Position", ("position", "slot", "pos", "rack position"), kind="position"),
-            Field("owner", "Owner", ("owner", "user", "person", "researcher"), kind="owner", required=True,
+                                          "last flip", "date flipped", "建立日期", "换管日期"), kind="date"),
+            Field("generation", "Generation", ("generation", "gen", "f", "代数")),
+            Field("rack", "Rack", ("rack", "box", "tray", "shelf", "架子", "盒子"), groups=True),
+            Field("position", "Position", ("position", "slot", "pos", "rack position", "位置"), kind="position"),
+            Field("owner", "Owner", ("owner", "user", "person", "researcher", "负责人"), kind="owner", required=True,
                   fill="me"),
-            Field("notes", "Notes", ("note", "comment", "remark", "phenotype")),
+            Field("notes", "Notes", ("note", "comment", "remark", "phenotype", "备注")),
         ])
 
 
@@ -1114,19 +1195,21 @@ def organism_target(session, module) -> Target:
     from . import organism_service as svc
     mv = svc.view(module)
     fields = [
-        Field("code", "ID", ("id", "code", "animal id", "tag", "name", f"{mv.organism_noun} id")),
-        Field("sex", "Sex", ("sex", "gender"), kind="choice", choices=_sex_choices(mv.sexes)),
-        Field("status", "Status", ("status", "state"), kind="choice", choices={norm(s): s for s in mv.statuses}),
-        Field("birth_on", "Born", ("dob", "birth date", "date of birth", "born", "hatched", "birthday"), kind="date"),
-        Field("death_on", "Died", ("death date", "date of death", "died", "removed", "culled"), kind="date"),
-        Field("genotype", "Genotype", ("genotype", "allele", "transgene")),
-        Field("line", mv.line_noun.capitalize(), ("line", "strain", "stock", mv.line_noun)),
+        Field("code", "ID", ("id", "code", "animal id", "tag", "name", f"{mv.organism_noun} id", "编号")),
+        Field("sex", "Sex", ("sex", "gender", "性别"), kind="choice", choices=_sex_choices(mv.sexes)),
+        Field("status", "Status", ("status", "state", "状态"), kind="choice", choices={norm(s): s for s in mv.statuses}),
+        Field("birth_on", "Born", ("dob", "birth date", "date of birth", "born", "hatched", "birthday", "出生日期"),
+              kind="date"),
+        Field("death_on", "Died", ("death date", "date of death", "died", "removed", "culled", "死亡日期"), kind="date"),
+        Field("genotype", "Genotype", ("genotype", "allele", "transgene", "基因型")),
+        Field("line", mv.line_noun.capitalize(), ("line", "strain", "stock", mv.line_noun, "品系")),
         Field("housing", mv.housing_noun.capitalize(), ("housing", "cage", "tank", "enclosure", "pen", "box",
-                                                        mv.housing_noun, "location")),
-        Field("count", "Count", ("count", "number", "n", "how many", "quantity"), kind="number"),
-        Field("protocol", "Protocol", ("protocol", "iacuc", "license", "licence")),
-        Field("owner", "Owner", ("owner", "user", "person", "researcher"), kind="owner", required=True, fill="me"),
-        Field("notes", "Notes", ("note", "comment", "remark", "description")),
+                                                        mv.housing_noun, "location", "笼号", "饲养位置"), groups=True),
+        Field("count", "Count", ("count", "number", "n", "how many", "quantity", "数量"), kind="number"),
+        Field("protocol", "Protocol", ("protocol", "iacuc", "license", "licence", "伦理批号")),
+        Field("owner", "Owner", ("owner", "user", "person", "researcher", "负责人"), kind="owner", required=True,
+              fill="me"),
+        Field("notes", "Notes", ("note", "comment", "remark", "description", "备注")),
     ]
     for f in svc.fields_for(session, module.id, "organism"):
         kind = {"number": "number", "date": "date"}.get(f.field_type, "text")
@@ -1255,29 +1338,34 @@ def inventory_target(session, module) -> Target:
     fields = [
         Field("name", mv.name_label, ("name", "item", "item name", "product", "product name", "reagent", "antibody", "what",
                                "chemical", "sample", "sample name", "title", "compound", "target", "virus", "virus name",
-                               "construct"),
+                               "construct", "名称", "品名", "名字", "试剂名称", "抗体名称"),
               required="name" in required or mv.row.kind == "orders"),
-        Field("category", mv.category_label, ("category", "type", "kind", "class", "group", "vector type", "virus type")),
-        Field("status", "Status", ("status", "state", "stage")),
-        Field("quantity", "Quantity", ("quantity", "qty", "amount", "volume", "count", "number of", "stock")),
-        Field("unit", "Unit", ("unit", "units", "uom", "size")),
-        Field("vendor", "Vendor", ("vendor", "supplier", "company", "manufacturer", "brand", "made by", "from")),
+        Field("category", mv.category_label, ("category", "type", "kind", "class", "group", "vector type", "virus type",
+                                              "类别", "种类")),
+        Field("status", "Status", ("status", "state", "stage", "状态")),
+        Field("quantity", "Quantity", ("quantity", "qty", "amount", "volume", "count", "number of", "stock", "数量")),
+        Field("unit", "Unit", ("unit", "units", "uom", "size", "单位", "规格")),
+        Field("vendor", "Vendor", ("vendor", "supplier", "company", "manufacturer", "brand", "made by", "from",
+                                   "厂家", "品牌", "供应商", "公司")),
         Field("catalog_number", "Catalog number", ("catalog", "catalog number", "catalogue number", "cat",
                                                    "cat number", "product number", "part number", "sku", "ref",
-                                                   "reference", "item number", "order number")),
-        Field("lot", "Lot", ("lot", "lot number", "batch", "batch number")),
-        Field("rack", "Box", ("box", "rack", "freezer box", "storage box", "shelf", "tray")),
-        Field("position", "Position in the box", ("position", "well", "slot", "pos", "box position"),
+                                                   "reference", "item number", "order number", "货号", "产品编号")),
+        Field("lot", "Lot", ("lot", "lot number", "batch", "batch number", "批号")),
+        Field("rack", "Box", ("box", "rack", "freezer box", "storage box", "shelf", "tray", "盒子", "冻存盒"),
+              groups=True),
+        Field("position", "Position in the box", ("position", "well", "slot", "pos", "box position", "位置", "孔位"),
               kind="position"),
         Field("location_note", "Location", ("location", "freezer", "fridge", "storage", "where", "stored",
-                                            "storage location", "room"), kind="place"),
+                                            "storage location", "room", "存放位置", "冰箱", "存放"), kind="place",
+              groups=True),
         Field("received_on", "Received", ("received", "date received", "arrived", "arrival", "delivered",
-                                          "received date"), kind="date"),
+                                          "received date", "到货日期", "收货日期"), kind="date"),
         Field("expires_on", "Expires", ("expiry", "expiration", "expires", "exp", "exp date", "expiration date",
-                                        "expiry date", "use by", "best before"), kind="date"),
-        Field("owner", "Owner", ("owner", "user", "person", "requested by", "requester", "researcher", "ordered by"),
-              kind="owner", required=True, fill="me"),
-        Field("notes", "Notes", ("note", "comment", "remark", "description")),
+                                        "expiry date", "use by", "best before", "有效期", "过期日期", "失效日期"),
+              kind="date"),
+        Field("owner", "Owner", ("owner", "user", "person", "requested by", "requester", "researcher", "ordered by",
+                                 "负责人", "申请人", "购买人"), kind="owner", required=True, fill="me"),
+        Field("notes", "Notes", ("note", "comment", "remark", "description", "备注")),
     ]
     if mv.has("sharing"):
         fields.insert(-1, shared_field())
@@ -1340,6 +1428,7 @@ class Plan:
     mapping: dict[int, str]              # column → field key, "_new", "_notes" or "_skip"
     fills: dict[str, str]                # field key → value for every row
     new_kinds: dict[int, str] = field(default_factory=dict)
+    fill_down: set[int] = field(default_factory=set)   # columns whose blanks take the value above
 
 
 def plan_from_form(form, headers: list[str]) -> Plan:
@@ -1350,7 +1439,8 @@ def plan_from_form(form, headers: list[str]) -> Plan:
     for name, value in form.items():
         if name.startswith("fill-") and value.strip():
             fills[name[5:]] = value.strip()
-    return Plan(mapping, fills, kinds)
+    down = {i for i in range(len(headers)) if form.get(f"down-{i}") == "1"}
+    return Plan(mapping, fills, kinds, down)
 
 
 def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, commit: bool,
@@ -1375,6 +1465,13 @@ def run(target: Target, headers: list[str], rows: list[list[str]], plan: Plan, c
     # Each mapped column, tidied as a whole (dates are read per column).
     columns = {i: [r[i] if i < len(r) else "" for r in rows] for i in range(len(headers))}
     tidy_notes: list[str] = []
+    for i in sorted(plan.fill_down):
+        if i in columns:
+            columns[i], filled = fill_down(columns[i])
+            if filled:
+                tidy_notes.append(ngettext("%(column)s: %(num)s blank cell took the value above it.",
+                                           "%(column)s: %(num)s blank cells took the value above them.",
+                                           filled, column=headers[i]))
     with SessionLocal() as session:
         day_first = lab.date_style(session) == "day"
     unread: dict[int, dict[int, str]] = {}          # date column -> row -> what the sheet had
@@ -1570,8 +1667,10 @@ def match(token: str):
             if not key:
                 key = "_new" if target.can_add_columns and samples else ("_notes" if samples else "_skip")
             shape = _shape(columns[i])
+            groups = next((f.groups for f in target.fields if f.key == key), False)
             suggestions.append({"index": i, "header": header, "samples": samples, "key": key, "why": why,
-                                "strength": strength, "kind": shape if shape in ("date", "number") else "text"})
+                                "strength": strength, "kind": shape if shape in ("date", "number") else "text",
+                                "down": filled_down(columns[i]) if groups else 0})
         return render_template("sheet_import.html", stage="match", target=target, target_key=payload["target"],
                                token=token, payload=payload, sheet=sheet, headers=headers, rows=rows,
                                suggestions=suggestions, sheet_names=list(payload["sheets"]),

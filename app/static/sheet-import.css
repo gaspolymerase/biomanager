@@ -108,6 +108,7 @@ tr[data-state="new"] select[data-si-map] { border-color: var(--color-brand-600);
 tr[data-state="notes"] .si-header, tr[data-state="skip"] .si-header { color: var(--color-muted); font-weight: 500; }
 tr[data-state="skip"] .si-samples { opacity: 0.45; }
 .si-clash { margin: 4px 0 0; font-size: 12px; color: var(--color-danger-700); }
+.si-down { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12px; color: var(--color-ink-soft); }
 tr.is-clash select[data-si-map] { border-color: var(--color-danger-600); }
 .si-why { font-size: 12px; color: var(--color-ink-soft); }
 .si-strength::before { content: "●"; margin-right: 5px; font-size: 9px; vertical-align: 1px; }
