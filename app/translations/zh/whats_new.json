@@ -76,5 +76,9 @@
   "A reagent, chemical, antibody, virus or primer can have a **Low at** level: when its quantity falls to it, the status turns low and its owner is told; at 0 it is empty.": "试剂、化学品、抗体、病毒和引物可以设 **低库存线**：数量降到这个数时，状态自动变为低库存并提醒它的主人；降到 0 时变为空。",
   "Drag a sheet's column headers into the order you need; **Configure** sets the order the lab starts with.": "拖动表格的列标题，把列排成你需要的顺序；**配置** 里可以设定全实验室默认的列顺序。",
   "A plasmid's **Primers** card can **Find saved primers**: every primer the lab already has that binds it, where and which way, and **Show on map**.": "质粒的 **引物** 卡片可以 **查找已有引物**：列出实验室已有的、能结合这条序列的引物，以及结合的位置和方向，还能 **在图谱上显示**。",
-  "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.": "实验室服务器接收桌面版的实验室时，可能报错“app_settings: 12 read, 13 written”并且不做任何更改；现在不会了。"
+  "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.": "实验室服务器接收桌面版的实验室时，可能报错“app_settings: 12 read, 13 written”并且不做任何更改；现在不会了。",
+  "**Import from Excel** reads Chinese sheets: Chinese headers, 公/母 and 种鼠/处死, and a CSV saved on a Chinese Windows.": "**从 Excel 导入** 能读中文表格：中文表头、公/母、种鼠/处死，以及中文版 Windows 另存的 CSV。",
+  "A cage, rack, box or tank written once with blank cells below: the match page offers **Its blank cells take the value above them**.": "笼、架子、盒子或鱼缸只写了一次、下面留空时，匹配页面会提供 **空白单元格沿用上方的值**。",
+  "A plasmid's concentration written with its unit (152.6 ng/µl) is read as the concentration, not put in the notes.": "写了单位的质粒浓度（152.6 ng/µl）会读成浓度，而不是放进备注。",
+  "On a Mac, the window's buttons sit square in its corner, and the welcome page's name on their line.": "Mac 窗口的三个按钮与角落对齐，欢迎页上的名字和它们在同一行。"
 }

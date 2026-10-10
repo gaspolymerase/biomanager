@@ -30,6 +30,18 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.6": {
+        "new": [
+            "**Import from Excel** reads Chinese sheets: Chinese headers, 公/母 and 种鼠/处死, and a CSV saved on a Chinese Windows.",
+        ],
+        "changed": [
+            "A cage, rack, box or tank written once with blank cells below: the match page offers **Its blank cells take the value above them**.",
+            "On a Mac, the window's buttons sit square in its corner, and the welcome page's name on their line.",
+        ],
+        "fixed": [
+            "A plasmid's concentration written with its unit (152.6 ng/µl) is read as the concentration, not put in the notes.",
+        ],
+    },
     "1.5.5": {
         "new": [
             "A reagent, chemical, antibody, virus or primer can have a **Low at** level: when its quantity falls to it, the status turns low and its owner is told; at 0 it is empty.",
