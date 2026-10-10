@@ -69,7 +69,9 @@ def make_sheet(api, base):
 def excel_import(d):
     d.goto("/colony?view=mice")
     d.start()
-    d.click("a:has-text('Import from Excel')", after=0.8)
+    # Import from Excel is under ••• at the end of the sheet's toolbar.
+    d.click(".dt-more-btn >> visible=true", after=0.5)
+    d.click("a:has-text('Import from Excel') >> visible=true", after=0.8)
     d.move("input[name=file]", 0.6)
     d.page.set_input_files("input[name=file]", str(SHEET))
     d.wait(0.6)

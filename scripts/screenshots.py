@@ -63,10 +63,16 @@ DESKTOP = [
     # Signing opens a panel in the page's drawer, not a dialog — the control
     # is .nb-tool[data-panel=sign] (promo/clips/more.py's sign walk knows the
     # same selectors).
+    # The demo admin has no page of their own: one is made first (PAGE_FIRST).
     ("task-sign", "/notebook", "light", [".nb-tool[data-panel=sign]"], "form.nb-sig-form"),
+    ("task-people", "/settings#people", "light", None, "#people"),
+    ("task-cage-label", "/labels/cards/cages?scope=all", "light", None, ".label-card"),
     # No restore-a-backup shot: its steps are in Finder and the file system,
     # which a browser cannot photograph.
 ]
+# Shots of a new notebook page of alex's own, made first (the crop leaves
+# out its title).
+PAGE_FIRST = {"task-sign"}
 PHONE = [
     ("phone-cage", "/colony?view=cages&scope=all#cage-1", "light"),
     ("phone-home", "/home", "light"),
@@ -145,6 +151,9 @@ with sync_playwright() as p:
         sign_in(page)
         for name, path, want, click, *rest in DESKTOP:
             if want == scheme and (not ONLY or name in ONLY):
+                if name in PAGE_FIRST:
+                    made = page.request.post(f"{BASE}/notebook/pages/create-quick").json()
+                    path = f"/notebook?page={made['page']['id']}"
                 shoot(page, name, path, click, crop=rest[0] if rest else None)
         ctx.close()
 

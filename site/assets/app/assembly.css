@@ -1,0 +1,97 @@
+/* templates/plasmid_assembly.html: the assembly wizard — a tray of
+   fragments on the left, the product's map on the right, one status line
+   under both. */
+
+.assembly-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+.assembly-card { overflow: hidden; }
+@media (max-width: 900px) { .assembly-grid { grid-template-columns: minmax(0, 1fr); } }
+/* On a phone the card's heading comes first; the aside would squeeze it. */
+@media (max-width: 560px) { .assembly-hint { display: none; } }
+
+/* --- the tray --- */
+.assembly-tray { list-style: none; margin: 0; padding: 0; }
+.assembly-empty { padding: 18px 16px; font-size: 13px; color: var(--color-muted); }
+.assembly-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 10px 14px; border-top: 1px solid var(--color-hairline); }
+.assembly-tray > .assembly-row:first-child { border-top: 0; }
+.assembly-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--color-recess); font-size: 11px; font-weight: 600; color: var(--color-ink-soft); }
+.assembly-name { display: block; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assembly-meta { display: block; margin-top: 2px; font-size: 11.5px; color: var(--color-muted); }
+.assembly-meta .ident { font-family: var(--font-mono, ui-monospace, monospace); }
+.assembly-acts { display: flex; gap: 2px; }
+.assembly-acts button { padding: 3px 5px; border: 0; border-radius: 6px; background: none; color: var(--color-ink-soft); cursor: pointer; }
+.assembly-acts button:hover { background: var(--color-recess); color: var(--color-ink); }
+.assembly-acts .icon { width: 13px; height: 13px; display: block; }
+.assembly-role { font-size: 11px; color: var(--color-muted); }
+.assembly-row[data-flipped="1"] .assembly-name::after { content: " ↺"; color: var(--color-muted); }
+
+/* --- a junction, between two rows --- */
+.assembly-join { display: flex; align-items: center; gap: 8px; padding: 4px 14px 4px 46px;
+  border-top: 1px solid var(--color-hairline); background: var(--color-recess); font-size: 11.5px; }
+.assembly-join .bases { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; letter-spacing: 0.04em; }
+.assembly-join .words { color: var(--color-muted); }
+.assembly-join[data-ok="0"] { background: var(--color-danger-50); }
+.assembly-join[data-ok="0"] .words { color: var(--color-danger-700); }
+
+/* --- the product --- */
+.assembly-preview { display: grid; place-items: center; padding: 10px 0 2px; }
+/* Nothing to draw yet: the ring takes no room until there is a product. */
+.assembly-preview:has(.assembly-map:empty) { padding: 0; }
+.assembly-map { width: 100%; max-width: 260px; height: auto; }
+.assembly-map:empty { display: none; }
+.assembly-map .ring { fill: none; stroke: var(--color-hairline); stroke-width: 7; }
+.assembly-map .part { fill: none; stroke-width: 7; stroke-linecap: butt; }
+.assembly-map .mark { fill: none; stroke: var(--color-ink-soft); stroke-width: 3; }
+.assembly-map .bp { font-size: 13px; font-weight: 600; fill: var(--color-ink); text-anchor: middle; }
+.assembly-map .bp-sub { font-size: 9.5px; fill: var(--color-muted); text-anchor: middle; }
+.assembly-fields { display: grid; gap: 10px; padding: 4px 16px 16px; }
+.assembly-fields input, .assembly-fields textarea, .assembly-fields select {
+  width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px); background: var(--color-surface); color: var(--color-ink);
+  font: inherit; font-size: 13px; font-weight: 400; }
+.assembly-options { display: grid; gap: 7px; font-size: 12.5px; }
+/* Grid, not flex: a label's bare text in a flex row shrinks to its longest
+   word and wraps at every space. */
+.assembly-options label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 7px; }
+.assembly-options select { width: auto; }
+
+/* --- the status line and the button under both columns --- */
+.assembly-status { margin: 12px 0 0; padding: 9px 12px; border-radius: var(--radius-md, 8px);
+  background: var(--color-recess); font-size: 13px; color: var(--color-ink); }
+.assembly-status[data-ok="1"] { background: var(--color-ok-50); }
+.assembly-status[data-ok="0"] { background: var(--color-danger-50); color: var(--color-danger-700); }
+.assembly-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+
+/* --- the picker --- */
+.assembly-kinds { display: grid; gap: 5px; }
+.assembly-kinds .seg { justify-self: start; }
+.assembly-pieces { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: start; }
+.assembly-piece-map { width: 150px; height: 150px; }
+/* A hairline is too faint to read as a plasmid; the ring wants to be seen. */
+.assembly-piece-map .ring { fill: none; stroke: var(--color-ink-soft); stroke-width: 7; opacity: 0.5; }
+.assembly-piece-map .piece { fill: none; stroke: var(--color-brand-600); stroke-width: 7; }
+.assembly-piece-map .cut { fill: none; stroke: var(--color-danger-700); stroke-width: 6; }
+.assembly-piece-map .bp { font-size: 12px; font-weight: 600; fill: var(--color-ink); text-anchor: middle; }
+.assembly-piece-map .bp-sub { font-size: 9px; fill: var(--color-muted); text-anchor: middle; }
+@media (max-width: 560px) { .assembly-pieces { grid-template-columns: minmax(0, 1fr); } }
+
+.assembly-region { display: flex; align-items: flex-end; gap: 10px; }
+.assembly-region label { display: flex; flex-direction: column; gap: 4px; }
+.assembly-region input { width: 110px; }
+.assembly-enzymes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 10px;
+  max-height: 150px; overflow: auto; padding: 6px; border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px); }
+.assembly-enzyme { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; }
+.assembly-enzyme span { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; }
+.assembly-enzyme i { margin-left: auto; font-style: normal; font-size: 11px; color: var(--color-muted); }
+.assembly-problem { margin: 0; font-size: 12.5px; color: var(--color-danger-700); }
+
+/* The two list boxes in the picker (features, and the pieces of a digest):
+   a plain multi-line select draws itself without a border or a background. */
+.assembly-list {
+  width: 100%; box-sizing: border-box; padding: 4px; border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px); background: var(--color-surface); color: var(--color-ink);
+  font: inherit; font-size: 12px; font-weight: 400;
+}
+.assembly-list option { padding: 3px 5px; border-radius: 5px; }

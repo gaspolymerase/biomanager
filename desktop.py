@@ -18,6 +18,21 @@ if os.environ.get("BIOMANAGER_ASKPASS") == "1":
     os.write(1, (os.environ.get("BIOMANAGER_SSH_PASSWORD", "") + "\n").encode("utf-8"))
     sys.exit(0)
 
+import ssl
+
+# A packaged Python looks for the certificates it trusts where it was built:
+# a folder on the build machine that no other computer has. Then every https
+# address fails — the lab's server in "Open your lab", updates, moving a lab —
+# and plain http too, where the server sends it on to https. When that folder
+# isn't here, use certifi's list, which the app carries.
+_trust = ssl.get_default_verify_paths()
+if not os.environ.get("SSL_CERT_FILE") and _trust.cafile is None and _trust.capath is None:
+    try:
+        import certifi
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+    except ImportError:
+        pass
+
 import threading
 import time
 from pathlib import Path

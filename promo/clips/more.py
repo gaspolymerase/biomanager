@@ -330,7 +330,14 @@ def protocol(d):
     d.goto(PAGES["protocol"])
     d.start()
     d.wait(0.6)
-    d.click("button[data-panel=protocols]", after=1.0)
+    # The lab's protocols and the common ones: type /protocol on a new line.
+    last = d.page.locator(".ProseMirror > *").last
+    d.click(last, after=0.3)
+    d.key("End", after=0.1)
+    d.key("Enter", after=0.2)
+    d.page.keyboard.type("/protocol", delay=70)
+    d.wait(0.6)
+    d.key("Enter", after=1.0)
     d.move("text=Genotyping PCR and agarose gel", 0.8)
     d.wait(0.5)
     d.click("[data-insert-preset=hotshot]", after=1.4)
@@ -537,6 +544,7 @@ def looks(d):
     d.start()
     d.wait(1.0)
     d.click("a[data-label=Settings]", after=0.8)
+    d.click("a:has-text('Appearance & language') >> visible=true", after=0.8)
     scroll_to(d, "[data-icon-picker]", 150, seconds=1.0)
     d.zoom(box=(245, 90, 880, 330), scale=1.4)
     for glyph, colour in (("fly", None), (None, "lavender"), ("zebrafish", "sky"), ("mouse", "rose")):

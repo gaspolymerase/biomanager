@@ -71,10 +71,14 @@ document.documentElement.classList.add('js');
 
 })();
 
-// Clips. Each browser gets the format it plays best: Apple's browsers MP4,
-// which they play reliably, the others the smaller WebM. A clip plays with
-// no button: one a browser won't start by itself (Safari in Low Power Mode)
-// starts at the visitor's first tap, click or key, wherever it is.
+// Clips. Most are the app itself, replayed (scripts/live-clips.py): a
+// recording of its pages with rrweb, played back here as pages, so the words
+// are as sharp as the text around them on any screen. bmClips.mount(video)
+// puts one in place of a <video> whose poster is the clip's still, which is
+// all a browser without scripts shows. One clip, the AI assistants card's, is
+// a video: Apple's browsers get MP4, which they play reliably, the others the
+// smaller WebM, and one a browser won't start by itself (Safari in Low Power
+// Mode) starts at the visitor's first tap, click or key, wherever it is.
 var bmClips = (function () {
   var ua = navigator.userAgent;
   var apple = /iP(hone|ad|od)/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/.test(ua));
@@ -83,8 +87,190 @@ var bmClips = (function () {
   var waiting = [];
   function retry() { var w = waiting; waiting = []; w.forEach(function (f) { f(); }); }
   ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { document.addEventListener(t, retry, { passive: true }); });
+
+  // The site's root, from this script's own address.
+  var me = document.querySelector('script[src*="site.js"]');
+  var root = me ? me.src.replace(/site\.js(\?.*)?$/, '') : '';
+  var lib = null, clips = {};
+  function replayer() {
+    if (!lib) {
+      lib = new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = root + 'assets/vendor/rrweb-replay.js?v=2.1.7';
+        s.onload = function () { resolve(window.rrwebReplay.Replayer); };
+        s.onerror = function () { lib = null; reject(); };
+        document.head.appendChild(s);
+      });
+    }
+    return lib;
+  }
+  function fetchClip(name) {
+    if (!clips[name]) {
+      clips[name] = fetch(root + 'assets/clips/' + name + '.json')
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(function (text) { return JSON.parse(text.split('%BM%/').join(root + 'assets/app/')); })
+        .catch(function (e) { delete clips[name]; throw e; });
+    }
+    return clips[name];
+  }
+  function ease(x) { x = Math.min(Math.max(x, 0), 1); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  // The camera at t seconds: easing 0.7 s from wherever it was into each keyframe.
+  function camera(zooms, t) {
+    var state = zooms[0][1];
+    for (var i = 1; i < zooms.length && t >= zooms[i][0]; i++) {
+      var from = camera(zooms.slice(0, i), zooms[i][0]), to = zooms[i][1], k = ease((t - zooms[i][0]) / 0.7);
+      state = [0, 1, 2].map(function (j) { return from[j] + (to[j] - from[j]) * k; });
+    }
+    return state;
+  }
+  var live = typeof fetch === 'function' && typeof Promise === 'function' && 'ResizeObserver' in window;
+
+  function mount(video) {
+    var box = document.createElement('div');
+    box.className = 'live-clip';
+    box.setAttribute('role', 'img');
+    if (video.getAttribute('aria-describedby')) box.setAttribute('aria-describedby', video.getAttribute('aria-describedby'));
+    if (video.id) box.id = video.id;
+    var still = document.createElement('img');
+    still.className = 'live-still';
+    still.alt = '';
+    still.decoding = 'async';
+    still.src = video.getAttribute('poster');
+    var screen = document.createElement('div');
+    screen.className = 'live-screen';
+    box.appendChild(still);
+    box.appendChild(screen);
+    video.parentNode.replaceChild(box, video);
+
+    var p = { el: box, loop: false, onended: null, paused: true };
+    var name = null, clip = null, seg = 0, r = null, stage = null, frame = null, raf = 0, last = '';
+    var token = 0;   // a newer show() or unload() makes older loads stop
+
+    function layout() {
+      if (!stage || !clip) return;
+      var s = clip.segments[seg], bw = box.clientWidth, bh = box.clientHeight;
+      if (!bw || !bh) return;
+      var z = camera(s.zooms, r ? r.getCurrentTime() / 1000 : 0);
+      var w = s.width, h = s.height, k, ox = 0, oy = 0;
+      if (s.kind === 'phone') {
+        var ph = bh * 0.92, pw = ph * w / h;
+        frame.style.width = pw + 'px';
+        frame.style.height = ph + 'px';
+        frame.style.left = (bw - pw) / 2 + 'px';
+        frame.style.top = (bh - ph) / 2 + 'px';
+        k = pw / w;
+      } else {
+        k = Math.max(bw / w, bh / h);
+        ox = (bw - w * k) / 2;
+      }
+      var vw = w / z[2], vh = h / z[2];
+      var left = Math.min(Math.max(z[0] - vw / 2, 0), w - vw), top = Math.min(Math.max(z[1] - vh / 2, 0), h - vh);
+      var t = 'translate(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px) scale(' + (k * z[2]).toFixed(5) + ') translate(' +
+        (-left).toFixed(2) + 'px,' + (-top).toFixed(2) + 'px)';
+      if (t !== last) { stage.style.transform = t; last = t; }
+    }
+    function tick() {
+      raf = 0;
+      layout();
+      if (!p.paused) raf = requestAnimationFrame(tick);
+    }
+    function drop() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      if (r) { try { r.pause(); r.destroy && r.destroy(); } catch (e) {} }
+      r = null; stage = null; frame = null; last = '';
+      screen.innerHTML = '';
+      box.classList.remove('live', 'live-on-phone');
+    }
+    function build(Replayer, i) {
+      drop();
+      seg = i;
+      var s = clip.segments[i];
+      stage = document.createElement('div');
+      stage.className = 'live-stage';
+      stage.style.width = s.width + 'px';
+      stage.style.height = s.height + 'px';
+      if (s.kind === 'phone') {
+        frame = document.createElement('div');
+        frame.className = 'live-phone';
+        frame.appendChild(stage);
+        screen.appendChild(frame);
+        box.classList.add('live-on-phone');
+      } else {
+        screen.appendChild(stage);
+      }
+      var mine = token;
+      r = new Replayer(s.events, {
+        root: stage, speed: clip.speed || 1, mouseTail: false, showWarning: false, showDebug: false,
+        triggerFocus: false, skipInactive: false, pauseAnimation: true, UNSAFE_replayCanvas: false
+      });
+      r.on('fullsnapshot-rebuilded', function () {
+        var doc = r && r.iframe.contentDocument;
+        if (!doc) return;
+        // The app as recorded (light unless the recording says dark),
+        // whatever this visitor's system is.
+        // The site's copies of the app's stylesheets are dark where the page
+        // says data-theme=dark (scripts/live-clips.py); the controls follow.
+        var root = doc.documentElement, frame = r.iframe;
+        if (!root.getAttribute('data-theme')) root.setAttribute('data-theme', 'light');
+        var scheme = function () {
+          var cs = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+          frame.style.colorScheme = cs;
+          root.style.colorScheme = cs;      // the page's own controls, too
+        };
+        scheme();
+        new MutationObserver(scheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+        var sheets = Array.prototype.slice.call(doc.querySelectorAll('link[rel~="stylesheet"]'));
+        Promise.all(sheets.map(function (l) {
+          return l.sheet ? null : new Promise(function (done) { l.addEventListener('load', done); l.addEventListener('error', done); setTimeout(done, 3000); });
+        })).then(function () { if (mine === token) box.classList.add('live'); });
+      });
+      r.on('finish', function () {
+        if (mine !== token) return;
+        if (seg + 1 < clip.segments.length) { build(Replayer, seg + 1); return; }
+        if (p.loop) { build(Replayer, 0); return; }
+        p.paused = true;
+        if (p.onended) p.onended();
+      });
+      layout();
+      if (p.paused) { r.pause(0); } else { r.play(0); tick(); }
+    }
+    function start() {
+      var mine = token;
+      Promise.all([replayer(), fetchClip(name)]).then(function (got) {
+        if (mine !== token || p.paused) return;
+        clip = got[1];
+        build(got[0], 0);
+      }, function () {});
+    }
+    new ResizeObserver(function () { layout(); }).observe(box);
+
+    p.show = function (clipName, poster) {
+      token++;
+      drop();
+      p.paused = true;
+      name = clipName; clip = null;
+      if (poster) still.src = poster;
+    };
+    p.play = function () {
+      if (!live || !name || !p.paused) return;
+      p.paused = false;
+      if (r) { r.resume(r.getCurrentTime()); tick(); } else { start(); }
+    };
+    p.pause = function () {
+      p.paused = true;
+      if (r) r.pause();
+    };
+    p.unload = function () { token++; p.paused = true; drop(); };
+    var src = video.getAttribute('data-clip-src') || '';
+    if (src) name = src.replace(/^.*\//, '');
+    return p;
+  }
+
   return {
     ext: ext,
+    live: live,
+    mount: mount,
     // play, or once the browser allows it, do `again` (which checks it is still wanted)
     play: function (video, again) {
       var p = video.play();
@@ -104,9 +290,10 @@ var bmClips = (function () {
   if (!dock || !video) return;
   var tabs = Array.prototype.slice.call(dock.querySelectorAll('[role="tab"]'));
   var screen = video.parentNode;
+  var base = video.getAttribute('poster').replace(/[^/]*$/, '');
+  var player = bmClips.mount(video);
   var title = document.getElementById('stage-title');
   var caption = document.getElementById('stage-caption');
-  var base = video.getAttribute('poster').replace(/[^/]*$/, '');
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var chosen = false;     // the visitor picked a tab: stop moving on by itself
   var inView = false;
@@ -119,13 +306,12 @@ var bmClips = (function () {
   function load(i) {
     if (loaded === i) return;
     loaded = i;
-    video.src = base + clip(i) + bmClips.ext;
-    video.load();
+    player.show(clip(i), base + clip(i) + '.webp');
   }
   function resume() {
-    if (!wanted()) { video.pause(); return; }
+    if (!wanted()) { player.pause(); return; }
     load(current);
-    bmClips.play(video, resume);
+    player.play();
   }
   function show(i, byHand) {
     current = i;
@@ -141,13 +327,12 @@ var bmClips = (function () {
     b.textContent = tabs[i].dataset.claim;
     caption.appendChild(b);
     caption.appendChild(document.createTextNode(' ' + tabs[i].dataset.more));
-    video.loop = chosen;
+    player.loop = chosen;
     screen.classList.add('swapping');
     setTimeout(function () {
-      video.pause();
-      video.setAttribute('poster', base + clip(i) + '.webp');
       loaded = -1;
-      if (wanted()) { resume(); } else { video.removeAttribute('src'); video.load(); }
+      load(i);
+      if (wanted()) resume();
       screen.classList.remove('swapping');
     }, byHand === 'first' ? 0 : 120);
   }
@@ -164,9 +349,9 @@ var bmClips = (function () {
       tabs[j].scrollIntoView({ block: 'nearest', inline: 'center' });
     });
   });
-  video.addEventListener('ended', function () {
+  player.onended = function () {
     if (!chosen) show((current + 1) % tabs.length);
-  });
+  };
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (entries) {
       inView = entries[0].isIntersecting;
@@ -261,11 +446,13 @@ var bmClips = (function () {
     '<video muted loop playsinline disablepictureinpicture></video>' +
     '<div class="clip-text"><p></p><a></a></div>';
   document.body.appendChild(dialog);
-  var video = dialog.querySelector('video');
-  function close() { video.pause(); dialog.close(); }
+  dialog.querySelector('video').setAttribute('poster', base + cards[0].dataset.clip + '.webp');
+  var player = bmClips.mount(dialog.querySelector('video'));
+  player.loop = true;
+  function close() { dialog.close(); }
   dialog.querySelector('.clip-close').addEventListener('click', close);
   dialog.addEventListener('click', function (e) { if (e.target === dialog) close(); });
-  dialog.addEventListener('close', function () { video.pause(); video.removeAttribute('src'); video.load(); });
+  dialog.addEventListener('close', function () { player.unload(); });
   cards.forEach(function (card) {
     card.addEventListener('click', function (e) {
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;   // a new tab: the guide, as the link says
@@ -280,10 +467,9 @@ var bmClips = (function () {
       var a = dialog.querySelector('.clip-text a');
       a.href = card.getAttribute('href');
       a.textContent = zh ? '在用户指南中阅读 →' : 'Read about it in the user guide →';
-      video.poster = base + card.dataset.clip + '.webp';
-      video.src = base + card.dataset.clip + bmClips.ext;
+      player.show(card.dataset.clip, base + card.dataset.clip + '.webp');
       dialog.showModal();
-      bmClips.play(video, function () { if (dialog.open) video.play(); });
+      player.play();
     });
   });
 })();
@@ -352,32 +538,56 @@ var bmClips = (function () {
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var clips = document.querySelectorAll('video[data-clip-src]');
   if (clips.length && 'IntersectionObserver' in window) {
+    // The app's own clips: replayed while in view. Asked for less motion, a
+    // clip stays its still until clicked, and a click pauses it again.
+    var players = new Map();
+    var watch = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var p = players.get(e.target);
+        p.seen = e.isIntersecting;
+        if (!e.isIntersecting) { p.pause(); } else if (!calm || p.wanted) { p.play(); }
+      });
+    }, { threshold: 0.4 });
+    // The AI assistants card's clip, a video: a picture that moves, never a
+    // player; asked for less motion (or not allowed to play), it stays still.
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         var v = e.target;
         if (e.isIntersecting) { v.dataset.seen = '1'; } else { delete v.dataset.seen; }
         if (e.isIntersecting) {
-          // data-clip-still: a picture that moves, never a player; asked for
-          // less motion (or not allowed to play), it stays its still frame.
-          var still = 'clipStill' in v.dataset;
-          if (calm && still) return;
+          if (calm) return;
           if (!v.src) v.src = v.dataset.clipSrc + bmClips.ext;
-          if (calm) { v.controls = true; }
-          else if (still) { bmClips.play(v, function () { if (v.dataset.seen) v.play(); }); }
-          else { var p = v.play(); if (p && p.catch) p.catch(function () { v.controls = true; }); }
+          bmClips.play(v, function () { if (v.dataset.seen) v.play(); });
         } else { v.pause(); }
       });
     }, { threshold: 0.4 });
-    clips.forEach(function (v) { io.observe(v); });
-    // A clip inside a link (the AI assistants card) is not the link: a click
-    // on it stays on the page, and starts it if the browser held it back.
     clips.forEach(function (v) {
-      var frame = v.closest('figure') || v.parentNode;
-      if (!v.closest('a')) return;
-      frame.addEventListener('click', function (e) {
-        e.preventDefault();
-        if (v.src && v.paused && !calm) v.play();
-      });
+      if ('clipStill' in v.dataset) {
+        io.observe(v);
+        // A clip inside a link (the AI assistants card) is not the link: a
+        // click on it stays on the page, and starts it if the browser held it back.
+        var frame = v.closest('figure') || v.parentNode;
+        if (v.closest('a')) {
+          frame.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (v.src && v.paused && !calm) v.play();
+          });
+        }
+        return;
+      }
+      if (!bmClips.live) return;
+      var p = bmClips.mount(v);
+      p.loop = true;
+      players.set(p.el, p);
+      watch.observe(p.el);
+      if (calm) {
+        p.el.classList.add('calm');
+        p.el.addEventListener('click', function () {
+          p.wanted = p.paused;
+          if (p.wanted) { p.play(); } else { p.pause(); }
+          p.el.classList.toggle('playing', !p.paused);
+        });
+      }
     });
   }
 

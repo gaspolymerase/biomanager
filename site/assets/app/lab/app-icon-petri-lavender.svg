@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><title>BioManager</title><defs><linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C4AEFF"/><stop offset="1" stop-color="#7B5CE0"/>
+    </linearGradient>
+    <radialGradient id="bm-light" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bm-white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2F6"/>
+    </linearGradient>
+    <linearGradient id="bm-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="bm-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.55"/>
+    </linearGradient></defs><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-bg)"/><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-light)"/><circle cx="512" cy="512" r="300" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+  <circle cx="512" cy="512" r="250" fill="#fff" fill-opacity="0.16" stroke="#fff" stroke-opacity="0.5" stroke-width="4"/>
+  <g fill="url(#bm-white)"><circle cx="432" cy="440" r="60"/><circle cx="604" cy="414" r="34"/><circle cx="606" cy="604" r="50"/><circle cx="446" cy="626" r="26"/><circle cx="528" cy="520" r="16"/></g>
+  <path d="M288 392 A274 274 0 0 1 392 288" fill="none" stroke="#fff" stroke-opacity="0.9" stroke-width="10" stroke-linecap="round"/><rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/></svg>

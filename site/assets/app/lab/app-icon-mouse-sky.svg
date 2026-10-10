@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><title>BioManager</title><defs><linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#94D7FF"/><stop offset="1" stop-color="#2F86E0"/>
+    </linearGradient>
+    <radialGradient id="bm-light" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bm-white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2F6"/>
+    </linearGradient>
+    <linearGradient id="bm-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="bm-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.55"/>
+    </linearGradient><mask id="bm-mouse" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><g fill="#000" stroke="#000"><circle cx="682" cy="538" r="17"/></g></mask></defs><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-bg)"/><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-light)"/><g transform="translate(512 512) scale(1.16) translate(-494 -560)">
+    <path d="M324 632 C250 640 218 706 268 744 C318 782 404 764 456 742" fill="none" stroke="#fff" stroke-opacity="0.38" stroke-linecap="round" stroke-width="28"/>
+    <circle cx="552" cy="404" r="90" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <g><path d="M318 648 C298 540 382 432 518 432 C630 432 708 506 760 592 C770 610 762 628 742 632 L338 654 C326 654 320 652 318 648 Z" fill="url(#bm-white)" mask="url(#bm-mouse)"/></g>
+  </g><rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/></svg>
