@@ -1,5 +1,10 @@
 // Small helpers shared by the notebook's blocks and panels.
 
+// Text in the page's language: window.t, from the page (base.html), knows the Chinese.
+export function tr(text) {
+  return typeof window !== 'undefined' && typeof window.t === 'function' ? window.t(text) : text;
+}
+
 export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }

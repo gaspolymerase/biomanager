@@ -6,6 +6,7 @@ import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { filterItems } from '../commands.js';
 import { renderMenuItems } from '../toolbar.js';
+import { escapeHtml, tr } from '../util.js';
 
 // One or more words after the slash ("/mind map", "/分栏"); a query with a space
 // that matches nothing closes the menu, so ordinary text is left alone.
@@ -38,7 +39,7 @@ export const SlashMenu = Extension.create({
 
     const paint = () => {
       if (!menu) return;
-      menu.innerHTML = items.length ? renderMenuItems(items.slice(0, 120)) : '<div class="insert-empty">Nothing matches</div>';
+      menu.innerHTML = items.length ? renderMenuItems(items.slice(0, 120)) : `<div class="insert-empty">${escapeHtml(tr('Nothing matches'))}</div>`;
       menu.querySelectorAll('.insert-menu-item').forEach((b, i) => b.classList.toggle('is-active', i === active));
       menu.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
     };

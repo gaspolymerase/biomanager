@@ -10,7 +10,7 @@
 import { ICONS } from './icons.js';
 import { ITEMS, pickFile, uploadFile, uploadImage } from './commands.js';
 import { timers } from './timers.js';
-import { ask, escapeHtml } from './util.js';
+import { ask, escapeHtml, tr } from './util.js';
 import { openColorMenu } from './rich-menus.js';
 import { inColumns } from './extensions/RichBlocks.js';
 
@@ -35,10 +35,10 @@ function onOutsideClick(event) {
 export function renderMenuItems(items) {
   const groups = {};
   items.forEach((item) => { (groups[item.group] = groups[item.group] || []).push(item); });
-  return Object.keys(groups).map((g) => `<div class="insert-menu-label">${escapeHtml(g)}</div>${groups[g].map((item) => `
+  return Object.keys(groups).map((g) => `<div class="insert-menu-label">${escapeHtml(tr(g))}</div>${groups[g].map((item) => `
     <button type="button" class="insert-menu-item" data-id="${item.id}">
       <span class="insert-menu-icon">${ICONS[item.icon] || ICONS.insert}</span>
-      <span class="insert-menu-text"><span class="insert-menu-title">${escapeHtml(item.label)}</span><span class="insert-menu-hint">${escapeHtml(item.hint || '')}</span></span>
+      <span class="insert-menu-text"><span class="insert-menu-title">${escapeHtml(tr(item.label))}</span><span class="insert-menu-hint">${escapeHtml(item.hint ? tr(item.hint) : '')}</span></span>
     </button>`).join('')}`).join('');
 }
 
@@ -48,7 +48,7 @@ function openInsertMenu(editor) {
   const rect = btn ? btn.getBoundingClientRect() : { left: 100, top: 400, width: 0 };
   const menu = document.createElement('div');
   menu.className = 'insert-menu insert-menu-main';
-  menu.innerHTML = `<input class="insert-menu-search" placeholder="Search… (or type / in the page)" aria-label="Search insert menu"><div class="insert-menu-items">${renderMenuItems(ITEMS)}</div>`;
+  menu.innerHTML = `<input class="insert-menu-search" placeholder="${escapeHtml(tr('Search… (or type / in the page)'))}" aria-label="${escapeHtml(tr('Search insert menu'))}"><div class="insert-menu-items">${renderMenuItems(ITEMS)}</div>`;
   document.body.appendChild(menu);
   const menuRect = menu.getBoundingClientRect();
   menu.style.left = `${Math.max(8, Math.min(window.innerWidth - menuRect.width - 8, rect.left - menuRect.width / 2 + rect.width / 2))}px`;
@@ -58,7 +58,7 @@ function openInsertMenu(editor) {
     const q = search.value.trim().toLowerCase();
     menu.querySelectorAll('.insert-menu-item').forEach((b) => {
       const item = ITEMS.find((x) => x.id === b.dataset.id);
-      b.hidden = q && !`${item.label} ${item.keywords || ''} ${item.group}`.toLowerCase().includes(q);
+      b.hidden = q && !`${item.label} ${tr(item.label)} ${item.keywords || ''} ${item.group} ${tr(item.group)}`.toLowerCase().includes(q);
     });
     menu.querySelectorAll('.insert-menu-label').forEach((label) => {
       let n = label.nextElementSibling;
@@ -127,7 +127,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
         label: 'Link',
         exec: async (e) => {
           const previous = e.getAttributes('link')?.href || '';
-          const url = await ask.prompt('Link', previous, { placeholder: 'https://… (leave blank to remove the link)', okLabel: 'Save link' });
+          const url = await ask.prompt(tr('Link'), previous, { placeholder: tr('https://… (leave blank to remove the link)'), okLabel: tr('Save link') });
           if (url === null) return;
           if (url === '') {
             e.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -187,7 +187,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
     menu.className = 'insert-menu toolbar-choices';
     menu.innerHTML = cmd.choices.map((c) => `
       <button type="button" class="insert-menu-item${c.isActive && c.isActive(editor) ? ' is-active' : ''}" data-id="${c.id}">
-        <span class="insert-menu-icon">${c.icon}</span><span class="insert-menu-title">${escapeHtml(c.label)}</span>
+        <span class="insert-menu-icon">${c.icon}</span><span class="insert-menu-title">${escapeHtml(tr(c.label))}</span>
       </button>`).join('');
     document.body.appendChild(menu);
     const r = btn.getBoundingClientRect();
@@ -213,8 +213,8 @@ export function createToolbar(editor, { extra = [] } = {}) {
     btn.className = 'editor-toolbar-btn';
     if (cmd.renderAsDropdown) btn.classList.add('editor-toolbar-btn-dropdown');
     btn.dataset.cmdId = cmd.id;
-    btn.setAttribute('aria-label', cmd.label);
-    btn.title = cmd.label;
+    btn.setAttribute('aria-label', tr(cmd.label));
+    btn.title = tr(cmd.label);
     btn.innerHTML = cmd.renderAsDropdown ? svgIcon(cmd.icon) + svgIcon(ICONS.caretDown) : svgIcon(cmd.icon);
     btn.addEventListener('mousedown', (event) => event.preventDefault());
     btn.addEventListener('click', () => (cmd.choices ? openChoices(btn, cmd) : cmd.exec(ed)));
@@ -237,7 +237,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
 
   const tableLabel = document.createElement('span');
   tableLabel.className = 'editor-toolbar-meta';
-  tableLabel.textContent = 'Table';
+  tableLabel.textContent = tr('Table');
   tableBar.appendChild(tableLabel);
   tableActions.forEach((cmd) => {
     const btn = makeButton(cmd, editor);
@@ -247,7 +247,7 @@ export function createToolbar(editor, { extra = [] } = {}) {
 
   const columnsLabel = document.createElement('span');
   columnsLabel.className = 'editor-toolbar-meta';
-  columnsLabel.textContent = 'Columns';
+  columnsLabel.textContent = tr('Columns');
   columnsBar.appendChild(columnsLabel);
   columnActions.forEach((cmd) => {
     const btn = makeButton(cmd, editor);

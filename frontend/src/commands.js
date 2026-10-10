@@ -6,7 +6,7 @@ import { defaultCalc } from './blocks/calc.js';
 import { defaultSheet } from './blocks/sheet.js';
 import { stampTime } from './docops.js';
 import { timers } from './timers.js';
-import { api, ask, escapeHtml, isoDate } from './util.js';
+import { api, ask, escapeHtml, isoDate, tr } from './util.js';
 import { addSubPage, openColorMenu, openDatePicker, openPagePicker, openReminder, turnIntoPage } from './rich-menus.js';
 
 export const SYMBOLS = [
@@ -152,10 +152,10 @@ export const ITEMS = [
 export function filterItems(query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return ITEMS;
-  const hits = ITEMS.filter((i) => `${i.label} ${i.keywords || ''} ${i.group}`.toLowerCase().includes(q));
+  const hits = ITEMS.filter((i) => `${i.label} ${tr(i.label)} ${i.keywords || ''} ${i.group} ${tr(i.group)}`.toLowerCase().includes(q));
   // A name that starts with what was typed comes first ("/to": To-do, Toggle, Table of contents).
   const starts = (i) => {
-    if (i.label.toLowerCase().startsWith(q)) return 0;
+    if (i.label.toLowerCase().startsWith(q) || tr(i.label).toLowerCase().startsWith(q)) return 0;
     return (i.keywords || '').toLowerCase().split(' ').some((w) => w.startsWith(q)) ? 1 : 2;
   };
   return hits.map((item, n) => ({ item, n })).sort((a, b) => starts(a.item) - starts(b.item) || a.n - b.n).map((x) => x.item);
