@@ -198,6 +198,19 @@
           数量、价格和经费。如果它已经在订购中，按钮会显示 <b>订购中</b> （On order），
           新订购打开时会附一条备注，注明那个未完成的订购和申请人。</li>
       </ol>
+      <h2 id="low-stock">按数量提醒库存不足</h2>
+      <p>试剂、化学品、抗体、病毒和引物在 <b>数量</b> （Qty）和 <b>单位</b> （Unit）旁有一列 <b>低库存线</b> （Low at），
+        记录对话框的<i>采购信息</i>（Supply）里也有。把数量写成数字（<code>12</code>、<code>2.5</code> 或 <code>2,5</code>），
+        再按同一单位填好低库存线，之后状态就跟着数量走：</p>
+      <ul>
+        <li>数量降到低库存线或更少时，状态变为<i>低库存</i>（low）；降到 0 时变为<i>空</i>（empty；病毒和引物里是<i>已用完</i>，used up）。
+          补货到低库存线以上，又回到<i>有库存</i>（in stock）。</li>
+        <li>每次降到低库存线，物品的负责人都会收到一次通知，用他自己的语言（在 设置 → 通知 的<i>订购</i>（Orders）下；
+          自己改的不会通知自己）。低库存的试剂、化学品、抗体和病毒会连同剩余数量列在首页的 <b>即将过期与低库存</b> （Expiring &amp; low stock）里，
+          点 <b>再次订购</b> （Order again）就能下新订单。</li>
+        <li>手动选的状态保持不变。用文字写的数量（<i>半瓶</i>）、已丢弃的物品，或没填低库存线的物品，都不受影响。</li>
+        <li>在表格里，数量和低库存线在离开单元格或按回车时才保存，所以输入 <code>12</code> 时不会先变成 <code>1</code>。</li>
+      </ul>
       <h2 id="every-inventory">所有库存通用</h2>
       <ul>
         <li><b>我的</b> （Mine）和 <b>实验室公用</b> （Lab common）把你自己的库存和实验室共享的分开。</li>
@@ -225,10 +238,11 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 5 分钟</p>
+      <p>本页内容 · 阅读约 6 分钟</p>
       <ol>
         <li class="lvl2"><a href="#a-week">它对你每周的工作意味着什么</a></li>
         <li class="lvl2"><a href="#ordering-start-to-shelf">订购：从下单到上架</a></li>
+        <li class="lvl2"><a href="#low-stock">按数量提醒库存不足</a></li>
         <li class="lvl2"><a href="#every-inventory">所有库存通用</a></li>
       </ol>
     </nav>

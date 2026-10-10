@@ -707,7 +707,7 @@ def item_json(mv, i: InventoryItem) -> dict:
     return {"number": i.number, "name": i.name or "", "category": i.category or "", "status": i.status or "",
             "owner": i.owner or "", "shared": bool(i.is_shared),
             "shared_with": (groups.name_of(i.share_group_id) or None) if i.is_shared and i.share_group_id else None,
-            "quantity": i.quantity or "", "unit": i.unit or "",
+            "quantity": i.quantity or "", "unit": i.unit or "", "low_at": i.low_at,
             "vendor": i.vendor or "", "catalog_number": i.catalog_number or "", "lot": i.lot or "",
             "box": i.rack.name if i.rack else None, "position": (isvc.rack_label(i) or None) if i.rack else None,
             "location_note": i.location_note or "", "received_on": _day(i.received_on),
@@ -761,7 +761,7 @@ def inventory_item(key: str, number: int):
         return jsonify(item_json(mv, _item(s, module, mv, number)))
 
 
-ITEM_FIELDS = ("name", "category", "status", "owner", "shared", "quantity", "unit", "vendor", "catalog_number",
+ITEM_FIELDS = ("name", "category", "status", "owner", "shared", "quantity", "unit", "low_at", "vendor", "catalog_number",
                "lot", "box", "position", "location_note", "received_on", "expires_on", "notes", "fields")
 
 

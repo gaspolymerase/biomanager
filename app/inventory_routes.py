@@ -222,6 +222,7 @@ def _item_payload(mv, item: InventoryItem) -> dict:
         "_locked": not _can_edit(item), "_manage": _can_manage(item),
         "name": item.name, "category": item.category, "status": item.status, "owner": item.owner,
         "is_shared": project_groups.record_value(item), "quantity": item.quantity, "unit": item.unit,
+        "low_at": svc.number_text(item.low_at),
         "vendor": item.vendor, "catalog_number": item.catalog_number, "lot": item.lot,
         "rack_id": item.rack_id_fk or "", "position": svc.rack_label(item),
         "location_note": item.location_note,
@@ -243,7 +244,7 @@ def _item_payload(mv, item: InventoryItem) -> dict:
 # Cells the server may change behind the user's back (a status that stamps
 # a received date, a grid move, a refused owner change); an answer to a
 # save carries their stored values so the row and its "_was" copies match.
-ROW_VALUES = ("status", "owner", "is_shared", "rack_id", "position", "received_on", "expires_on")
+ROW_VALUES = ("status", "owner", "is_shared", "rack_id", "position", "received_on", "expires_on", "low_at")
 
 
 def _row_json(mv, item: InventoryItem) -> dict:
@@ -421,7 +422,8 @@ def module(key: str):
             })
         # Saved column widths / hidden columns are by position, so a
         # reconfigured sheet starts fresh instead of hiding the wrong ones.
-        layout = json.dumps([mv.settings["features"], [f["key"] for f in mv.table_fields], bool(mv.statuses), 2])
+        layout = json.dumps([mv.settings["features"], [f["key"] for f in mv.table_fields], bool(mv.statuses), 2]
+                            + (["low_at"] if svc.tracks_low(mv) else []))
         stock_targets = _stock_targets(session) if row.kind == "orders" else []
         order_module = _order_module(session) if row.kind in STOCK_KINDS else None
         reorder = (_reorder_payload(session, mv, items, request.args.get("reorder", ""))
@@ -430,7 +432,7 @@ def module(key: str):
             reorder = _from_order_payload(session, mv, request.args["from_order"],
                                           shared=request.args.get("shared") == "1")
         context = {
-            "module": mv, "rows": rows, "racks": racks, "col_sig": format(zlib.crc32(layout.encode()), "x"),
+            "module": mv, "rows": rows, "racks": racks, "low_stock": svc.tracks_low(mv), "col_sig": format(zlib.crc32(layout.encode()), "x"),
             "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
             "grid": _grid_payload(mv, racks, all_items) if mv.has("storage") else None,
             "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
@@ -581,6 +583,7 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
     notes: list[str] = []
     manage = creating or _can_manage(item)
     me = access.username()
+    stock_was = (item.status, item.quantity, item.low_at)
     was = {key: _column_value(item, key) for key in mv.required}
 
     def text(name, limit=200):
@@ -615,6 +618,12 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
     for name, limit in (("quantity", 60), ("unit", 30), ("vendor", 120), ("catalog_number", 120),
                         ("lot", 120), ("location_note", 200)):
         text(name, limit=limit)
+    if "low_at" in form and svc.tracks_low(mv):
+        raw = (form.get("low_at") or "").strip()
+        level = svc.amount(raw) if raw else None
+        if raw and level is None:
+            raise Refused(gettext("Low at is a number, in the quantity's unit: “%(value)s” isn't one.", value=raw))
+        item.low_at = level
     for name in ("received_on", "expires_on"):
         if name in form and form_changed(form, name):
             setattr(item, name, _date(form.get(name)))
@@ -683,6 +692,10 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
         problem = svc.apply_status(mv, item, form.get("status"))
         if problem:
             raise Refused(problem)
+    # A quantity or Low at changed, and the status was not set by hand in
+    # the same save: it follows the quantity (in stock, low, empty).
+    if item.status == stock_was[0] and (item.quantity, item.low_at) != stock_was[1:]:
+        svc.follow_stock_level(mv, item)
     # Used up just freed its cell: the dialog still showing that box and
     # position is not a request to put it back.
     freed = place_was[0] and not item.rack_id_fk
@@ -998,7 +1011,7 @@ def duplicate_item(key: str, item_id: int):
             module_id_fk=row.id, number=svc.next_number(session, row.id), name=item.name,
             category=item.category, status=(svc.view(row).statuses or [""])[0], owner=g.user.username,
             is_shared=item.is_shared, share_group_id=item.share_group_id, quantity=item.quantity, unit=item.unit,
-            vendor=item.vendor,
+            low_at=item.low_at, vendor=item.vendor,
             catalog_number=item.catalog_number, lot="", attrs=json.dumps(attrs), notes=item.notes)
         session.add(copy)
         session.commit()

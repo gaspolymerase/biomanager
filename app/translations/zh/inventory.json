@@ -440,5 +440,9 @@
   "drug precursor": "易制毒",
   "explosive precursor": "易制爆",
   "narcotic or psychotropic": "麻醉或精神药品",
-  "field type::Several choices": "多选"
+  "field type::Several choices": "多选",
+  "Low at": "低库存线",
+  "When the quantity falls to this (in its unit), the status turns low; at 0, empty": "数量降到此数（同一单位）时，状态变为低库存；降到 0 时变为空",
+  "e.g. 2": "例如 2",
+  "Low at is a number, in the quantity's unit: “%(value)s” isn't one.": "低库存线须是数字（与数量同一单位）：“%(value)s”不是数字。"
 }

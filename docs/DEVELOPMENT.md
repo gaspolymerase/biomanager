@@ -746,6 +746,25 @@ pages are in `app/lab_routes.py`.
   none ticked saves as empty (`inventory_routes.several()` orders them by
   the field's choices and keeps one that isn't among them). Migration 0030
   moved the Hazard field labs already had onto it.
+- **Low at:** `inventory_items.low_at` (a nullable float, revision 0031)
+  is the level, in the quantity's unit, at which an item is low. Its sheet
+  column and dialog field show where `inventory_service.tracks_low()` holds
+  (the *quantity* feature, and statuses with "in stock" and "low"). The
+  quantity stays free text; `amount()` reads "12", "2.5", "2,5" (a decimal
+  comma) or "1,000" as a number and anything else as none.
+  `_item_from_form` calls `follow_stock_level()` when the quantity or the
+  level changed and the same save didn't set the status by hand: at or
+  below the level "in stock" turns "low", at 0 "empty" (or "used up",
+  whichever the list has; through `apply_status`, so the box cell is
+  freed), and above it again "in stock". Any other status (discarded, or
+  one a lab renamed) and a quantity that isn't a number are left alone. So
+  the sheet, the dialog, Set field and the API all follow it, and
+  `_row_json` sends the new status and `low_at` back. With Low at, the
+  sheet saves the quantity on change, not while typing. Leaving "in stock"
+  this way sets a transient `_ran_low` on the item, which `notify._item`
+  turns into one `orders`-category notice to its owner (not to whoever
+  made the change), so each fall below the level tells them once.
+  `attention_items()` carries the quantity and unit for Home.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
   number as text. `_item_from_form` reads a number, `#42`, a name or a

@@ -520,7 +520,7 @@ def _supply_items(session, today, horizon) -> list[dict]:
             # Low stock has no date of its own: it is on today's list, but it is
             # not as pressing as something due today.
             out.append(_item("supplies", today, gettext("Low: %(name)s", name=a["name"]), today, url,
-                             detail=translate_value(a["module"]),
+                             detail=" · ".join(filter(None, [translate_value(a["module"]), a.get("quantity", "")])),
                              loc=loc, owner=owner, status="soon"))
     return out
 
