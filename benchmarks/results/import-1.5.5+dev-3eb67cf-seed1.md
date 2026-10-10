@@ -1,6 +1,6 @@
 # Import from Excel: messy-sheet benchmark
 
-BioManager 1.5.1+dev (a06da7c), seed 1, 12 sheets per mess and 40 kitchen-sink sheets (4 messes each) per database; 740 sheets, 533 s.
+BioManager 1.5.5+dev (3eb67cf), seed 1, 12 sheets per mess and 40 kitchen-sink sheets (4 messes each) per database; 740 sheets, 563 s.
 
 Imported with every column as the match page suggests. *Kept*: not stored as it should be, but the sheet's text is in the notes or the preview warned; *blank* and *wrong*: silently.
 
@@ -42,7 +42,7 @@ Imported with every column as the match page suggests. *Kept*: not stored as it 
 | tsv | 12 | 100.0% | 100.0% | 0.0% | 0.0% | 0.0% | – |
 | csv-windows-encoding | 12 | 100.0% | 100.0% | 0.0% | 0.0% | 0.0% | – |
 | csv-bom | 12 | 100.0% | 100.0% | 0.0% | 0.0% | 0.0% | – |
-| kitchen-sink | 40 | 100.0% | 93.0% | 6.0% | 1.0% | 0.0% | 100% |
+| kitchen-sink | 40 | 100.0% | 93.0% | 6.1% | 0.9% | 0.0% | 100% |
 
 By column (all sheets):
 

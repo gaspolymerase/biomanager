@@ -1,6 +1,6 @@
 {
- "version": "1.5.1+dev",
- "commit": "a06da7c",
+ "version": "1.5.5+dev",
+ "commit": "5cf6a57",
  "seed": 1,
  "per_mess": 12,
  "sink": 40,
@@ -12,50 +12,42 @@
     "imported": 9571
    },
    "fields": {
-    "correct": 71731,
-    "kept": 2865,
-    "blank": 235
+    "correct": 74672,
+    "kept": 159
    },
    "extras": {
     "kept": 844
    },
    "by_field": {
     "sex": {
-     "correct": 9225,
-     "kept": 346
+     "correct": 9571
     },
     "genotype": {
-     "correct": 9225,
-     "kept": 346
+     "correct": 9571
     },
     "dob": {
-     "correct": 9175,
-     "kept": 393,
-     "blank": 3
+     "correct": 9520,
+     "kept": 51
     },
     "cage": {
-     "correct": 8993,
-     "kept": 346,
-     "blank": 232
+     "correct": 9571
     },
     "status": {
-     "correct": 9225,
-     "kept": 346
+     "correct": 9571
     },
     "owner": {
-     "correct": 9132,
-     "kept": 439
+     "correct": 9478,
+     "kept": 93
     },
     "note": {
      "correct": 4283
     },
     "mouse_id": {
-     "correct": 6455,
-     "kept": 331
+     "correct": 6771,
+     "kept": 15
     },
     "ear_tag": {
-     "correct": 6018,
-     "kept": 318
+     "correct": 6336
     }
    },
    "examples": [
@@ -63,8 +55,8 @@
     "row 3 owner: sheet 'cdiaz' → stored 'bench' (kept)",
     "row 4 owner: sheet 'dpatel' → stored 'bench' (kept)",
     "row 5 owner: sheet 'cdiaz' → stored 'bench' (kept)",
-    "row 2 mouse_id: sheet '37001' → stored 36025 (kept)",
-    "row 2 ear_tag: sheet 'L1' → stored '' (kept)"
+    "row 9 dob: sheet '2061-11-09' → stored None (kept)",
+    "row 9 dob: sheet '2061-09-02' → stored None (kept)"
    ]
   },
   "mice: control": {
@@ -204,47 +196,39 @@
     "imported": 306
    },
    "fields": {
-    "kept": 2390,
-    "correct": 131
+    "correct": 2521
    },
    "extras": {},
    "by_field": {
     "mouse_id": {
-     "kept": 276
+     "correct": 276
     },
     "ear_tag": {
-     "kept": 278
+     "correct": 278
     },
     "sex": {
-     "kept": 306
+     "correct": 306
     },
     "genotype": {
-     "kept": 306
+     "correct": 306
     },
     "dob": {
-     "kept": 306
+     "correct": 306
     },
     "cage": {
-     "kept": 306
+     "correct": 306
     },
     "status": {
-     "kept": 306
+     "correct": 306
     },
     "owner": {
-     "kept": 306
+     "correct": 306
     },
     "note": {
      "correct": 131
     }
    },
-   "examples": [
-    "row 2 mouse_id: sheet '37001' → stored 36025 (kept)",
-    "row 2 ear_tag: sheet 'L1' → stored '' (kept)",
-    "row 2 sex: sheet 'M' → stored '' (kept)",
-    "row 2 genotype: sheet 'fl/fl' → stored '' (kept)",
-    "row 2 ear_tag: sheet 'R1L1' → stored '' (kept)",
-    "row 2 sex: sheet 'F' → stored '' (kept)"
-   ]
+   "examples": []
   },
   "mice: column-order": {
    "sheets": 12,
@@ -501,8 +485,7 @@
     "imported": 264
    },
    "fields": {
-    "correct": 1883,
-    "blank": 173
+    "correct": 2056
    },
    "extras": {},
    "by_field": {
@@ -522,8 +505,7 @@
      "correct": 264
     },
     "cage": {
-     "correct": 91,
-     "blank": 173
+     "correct": 264
     },
     "status": {
      "correct": 264
@@ -535,14 +517,7 @@
      "correct": 171
     }
    },
-   "examples": [
-    "row 3 cage: sheet '' → stored '' (blank)",
-    "row 4 cage: sheet '' → stored '' (blank)",
-    "row 5 cage: sheet '' → stored '' (blank)",
-    "row 7 cage: sheet '' → stored '' (blank)",
-    "row 3 cage: sheet '' → stored '' (blank)",
-    "row 5 cage: sheet '' → stored '' (blank)"
-   ]
+   "examples": []
   },
   "mice: dates-us": {
    "sheets": 12,
@@ -1480,50 +1455,42 @@
     "imported": 825
    },
    "fields": {
-    "correct": 5883,
-    "kept": 381,
-    "blank": 62
+    "correct": 6261,
+    "kept": 65
    },
    "extras": {
     "kept": 326
    },
    "by_field": {
     "cage": {
-     "correct": 726,
-     "blank": 59,
-     "kept": 40
+     "correct": 825
     },
     "owner": {
-     "kept": 60,
-     "correct": 765
+     "kept": 20,
+     "correct": 805
     },
     "sex": {
-     "correct": 785,
-     "kept": 40
+     "correct": 825
     },
     "dob": {
-     "correct": 747,
-     "kept": 75,
-     "blank": 3
+     "correct": 786,
+     "kept": 39
     },
     "note": {
      "correct": 351
     },
     "status": {
-     "correct": 785,
-     "kept": 40
+     "correct": 825
     },
     "genotype": {
-     "correct": 785,
-     "kept": 40
+     "correct": 825
     },
     "mouse_id": {
-     "correct": 527,
-     "kept": 46
+     "correct": 567,
+     "kept": 6
     },
     "ear_tag": {
-     "correct": 412,
-     "kept": 40
+     "correct": 452
     }
    },
    "examples": [
@@ -1538,66 +1505,62 @@
   "plasmids: all": {
    "sheets": 304,
    "rows": {
-    "refused": 362,
-    "imported": 6473
+    "refused": 0,
+    "imported": 6835
    },
    "fields": {
-    "correct": 68752,
-    "blank": 886,
-    "kept": 488
+    "correct": 73997,
+    "kept": 92
    },
    "extras": {
-    "kept": 982
+    "kept": 1052
    },
    "by_field": {
     "plasmid_id": {
-     "correct": 4685
+     "correct": 4888
     },
     "name": {
-     "correct": 6473
+     "correct": 6835
     },
     "backbone": {
-     "correct": 6473
+     "correct": 6835
     },
     "insert": {
-     "correct": 6473
+     "correct": 6835
     },
     "resistance": {
-     "correct": 6473
+     "correct": 6835
     },
     "box": {
-     "correct": 6030,
-     "blank": 443
+     "correct": 6835
     },
     "position": {
-     "correct": 6030,
-     "blank": 443
+     "correct": 6835
     },
     "location": {
-     "correct": 6473
+     "correct": 6835
     },
     "concentration": {
-     "correct": 6077,
-     "kept": 396
+     "correct": 6835
     },
     "owner": {
-     "correct": 6381,
+     "correct": 6743,
      "kept": 92
     },
     "a260_280": {
-     "correct": 4229
+     "correct": 4568
     },
     "note": {
-     "correct": 2955
+     "correct": 3118
     }
    },
    "examples": [
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match "
+    "row 14 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 17 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 20 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 28 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 9 owner: sheet 'Dr. Smith' → stored 'bench' (kept)"
    ]
   },
   "plasmids: control": {
@@ -1753,19 +1716,52 @@
   "plasmids: headers-chinese": {
    "sheets": 12,
    "rows": {
-    "refused": 262
+    "refused": 0,
+    "imported": 262
    },
-   "fields": {},
+   "fields": {
+    "correct": 2855
+   },
    "extras": {},
-   "by_field": {},
-   "examples": [
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
-    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match "
-   ]
+   "by_field": {
+    "plasmid_id": {
+     "correct": 152
+    },
+    "name": {
+     "correct": 262
+    },
+    "backbone": {
+     "correct": 262
+    },
+    "insert": {
+     "correct": 262
+    },
+    "resistance": {
+     "correct": 262
+    },
+    "box": {
+     "correct": 262
+    },
+    "position": {
+     "correct": 262
+    },
+    "location": {
+     "correct": 262
+    },
+    "concentration": {
+     "correct": 262
+    },
+    "a260_280": {
+     "correct": 239
+    },
+    "owner": {
+     "correct": 262
+    },
+    "note": {
+     "correct": 106
+    }
+   },
+   "examples": []
   },
   "plasmids: column-order": {
    "sheets": 12,
@@ -2026,8 +2022,7 @@
     "imported": 207
    },
    "fields": {
-    "correct": 1851,
-    "blank": 382
+    "correct": 2233
    },
    "extras": {},
    "by_field": {
@@ -2047,12 +2042,10 @@
      "correct": 207
     },
     "box": {
-     "correct": 16,
-     "blank": 191
+     "correct": 207
     },
     "position": {
-     "correct": 16,
-     "blank": 191
+     "correct": 207
     },
     "location": {
      "correct": 207
@@ -2070,14 +2063,7 @@
      "correct": 174
     }
    },
-   "examples": [
-    "row 3 box: sheet '' → stored '' (blank)",
-    "row 3 position: sheet 'A2' → stored None (blank)",
-    "row 4 box: sheet '' → stored '' (blank)",
-    "row 4 position: sheet 'A3' → stored None (blank)",
-    "row 3 box: sheet '' → stored '' (blank)",
-    "row 3 position: sheet 'A2' → stored None (blank)"
-   ]
+   "examples": []
   },
   "plasmids: positions-styles": {
    "sheets": 12,
@@ -2186,8 +2172,7 @@
     "imported": 308
    },
    "fields": {
-    "correct": 3011,
-    "kept": 308
+    "correct": 3319
    },
    "extras": {},
    "by_field": {
@@ -2216,7 +2201,7 @@
      "correct": 308
     },
     "concentration": {
-     "kept": 308
+     "correct": 308
     },
     "owner": {
      "correct": 308
@@ -2228,14 +2213,7 @@
      "correct": 123
     }
    },
-   "examples": [
-    "row 2 concentration: sheet '152.6 ng/µl' → stored '' (kept)",
-    "row 3 concentration: sheet '2237.8 ng/µl' → stored '' (kept)",
-    "row 4 concentration: sheet '1204.5 ng/µl' → stored '' (kept)",
-    "row 5 concentration: sheet '299.0 ng/µl' → stored '' (kept)",
-    "row 2 concentration: sheet '1678.5 ng/µl' → stored '' (kept)",
-    "row 3 concentration: sheet '1448.9 ng/µl' → stored '' (kept)"
-   ]
+   "examples": []
   },
   "plasmids: owner-full-names": {
    "sheets": 12,
@@ -2699,66 +2677,62 @@
   "plasmids: kitchen-sink": {
    "sheets": 40,
    "rows": {
-    "refused": 100,
-    "imported": 780
+    "refused": 0,
+    "imported": 880
    },
    "fields": {
-    "correct": 8024,
-    "blank": 504,
-    "kept": 117
+    "correct": 9724,
+    "kept": 29
    },
    "extras": {
-    "kept": 392
+    "kept": 462
    },
    "by_field": {
     "name": {
-     "correct": 780
+     "correct": 880
     },
     "backbone": {
-     "correct": 780
+     "correct": 880
     },
     "insert": {
-     "correct": 780
+     "correct": 880
     },
     "resistance": {
-     "correct": 780
+     "correct": 880
     },
     "box": {
-     "correct": 528,
-     "blank": 252
+     "correct": 880
     },
     "position": {
-     "correct": 528,
-     "blank": 252
+     "correct": 880
     },
     "location": {
-     "correct": 780
+     "correct": 880
     },
     "concentration": {
-     "correct": 692,
-     "kept": 88
+     "correct": 880
     },
     "owner": {
-     "correct": 751,
+     "correct": 851,
      "kept": 29
     },
     "note": {
-     "correct": 435
+     "correct": 492
     },
     "plasmid_id": {
-     "correct": 591
+     "correct": 642
     },
     "a260_280": {
-     "correct": 599
+     "correct": 699
     }
    },
    "examples": [
-    "row 3 box: sheet '' → stored '' (blank)",
-    "row 3 position: sheet 'A2' → stored None (blank)",
-    "row 4 box: sheet '' → stored '' (blank)",
-    "row 4 position: sheet 'A3' → stored None (blank)",
-    "row 4 concentration: sheet '2134.8 ng/µl' → stored '' (kept)",
-    "row 5 concentration: sheet '513.6 ng/µl' → stored '' (kept)"
+    "row 9 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 14 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 15 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 28 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 2 owner: sheet 'Alice' → stored 'bench' (kept)",
+    "row 3 owner: sheet 'Bo' → stored 'bench' (kept)"
    ]
   }
  }

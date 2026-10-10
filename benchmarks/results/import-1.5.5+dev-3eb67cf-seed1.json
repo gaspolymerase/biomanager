@@ -1,0 +1,2763 @@
+{
+ "version": "1.5.5+dev",
+ "commit": "3eb67cf",
+ "seed": 1,
+ "per_mess": 12,
+ "sink": 40,
+ "groups": {
+  "mice: all": {
+   "sheets": 436,
+   "rows": {
+    "refused": 0,
+    "imported": 9571
+   },
+   "fields": {
+    "correct": 71731,
+    "kept": 2868,
+    "blank": 232
+   },
+   "extras": {
+    "kept": 844
+   },
+   "by_field": {
+    "sex": {
+     "correct": 9225,
+     "kept": 346
+    },
+    "genotype": {
+     "correct": 9225,
+     "kept": 346
+    },
+    "dob": {
+     "correct": 9175,
+     "kept": 396
+    },
+    "cage": {
+     "correct": 8993,
+     "kept": 346,
+     "blank": 232
+    },
+    "status": {
+     "correct": 9225,
+     "kept": 346
+    },
+    "owner": {
+     "correct": 9132,
+     "kept": 439
+    },
+    "note": {
+     "correct": 4283
+    },
+    "mouse_id": {
+     "correct": 6455,
+     "kept": 331
+    },
+    "ear_tag": {
+     "correct": 6018,
+     "kept": 318
+    }
+   },
+   "examples": [
+    "row 2 owner: sheet 'cdiaz' → stored 'bench' (kept)",
+    "row 3 owner: sheet 'cdiaz' → stored 'bench' (kept)",
+    "row 4 owner: sheet 'dpatel' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'cdiaz' → stored 'bench' (kept)",
+    "row 2 mouse_id: sheet '37001' → stored 36025 (kept)",
+    "row 2 ear_tag: sheet 'L1' → stored '' (kept)"
+   ]
+  },
+  "mice: control": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 245
+   },
+   "fields": {
+    "correct": 1927
+   },
+   "extras": {},
+   "by_field": {
+    "sex": {
+     "correct": 245
+    },
+    "genotype": {
+     "correct": 245
+    },
+    "dob": {
+     "correct": 245
+    },
+    "cage": {
+     "correct": 245
+    },
+    "status": {
+     "correct": 245
+    },
+    "owner": {
+     "correct": 245
+    },
+    "note": {
+     "correct": 124
+    },
+    "mouse_id": {
+     "correct": 167
+    },
+    "ear_tag": {
+     "correct": 166
+    }
+   },
+   "examples": []
+  },
+  "mice: header-synonyms": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 255
+   },
+   "fields": {
+    "correct": 1974
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 164
+    },
+    "sex": {
+     "correct": 255
+    },
+    "genotype": {
+     "correct": 255
+    },
+    "dob": {
+     "correct": 255
+    },
+    "cage": {
+     "correct": 255
+    },
+    "status": {
+     "correct": 255
+    },
+    "owner": {
+     "correct": 255
+    },
+    "note": {
+     "correct": 143
+    },
+    "ear_tag": {
+     "correct": 137
+    }
+   },
+   "examples": []
+  },
+  "mice: header-typos": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 260
+   },
+   "fields": {
+    "correct": 2065,
+    "kept": 12
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 217
+    },
+    "sex": {
+     "correct": 260
+    },
+    "genotype": {
+     "correct": 260
+    },
+    "dob": {
+     "correct": 260
+    },
+    "cage": {
+     "correct": 260
+    },
+    "status": {
+     "correct": 260
+    },
+    "owner": {
+     "kept": 12,
+     "correct": 248
+    },
+    "note": {
+     "correct": 131
+    },
+    "mouse_id": {
+     "correct": 169
+    }
+   },
+   "examples": [
+    "row 2 owner: sheet 'cdiaz' → stored 'bench' (kept)",
+    "row 3 owner: sheet 'cdiaz' → stored 'bench' (kept)",
+    "row 4 owner: sheet 'dpatel' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'cdiaz' → stored 'bench' (kept)"
+   ]
+  },
+  "mice: headers-chinese": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 306
+   },
+   "fields": {
+    "kept": 2390,
+    "correct": 131
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "kept": 276
+    },
+    "ear_tag": {
+     "kept": 278
+    },
+    "sex": {
+     "kept": 306
+    },
+    "genotype": {
+     "kept": 306
+    },
+    "dob": {
+     "kept": 306
+    },
+    "cage": {
+     "kept": 306
+    },
+    "status": {
+     "kept": 306
+    },
+    "owner": {
+     "kept": 306
+    },
+    "note": {
+     "correct": 131
+    }
+   },
+   "examples": [
+    "row 2 mouse_id: sheet '37001' → stored 36025 (kept)",
+    "row 2 ear_tag: sheet 'L1' → stored '' (kept)",
+    "row 2 sex: sheet 'M' → stored '' (kept)",
+    "row 2 genotype: sheet 'fl/fl' → stored '' (kept)",
+    "row 2 ear_tag: sheet 'R1L1' → stored '' (kept)",
+    "row 2 sex: sheet 'F' → stored '' (kept)"
+   ]
+  },
+  "mice: column-order": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 212
+   },
+   "fields": {
+    "correct": 1690
+   },
+   "extras": {},
+   "by_field": {
+    "genotype": {
+     "correct": 212
+    },
+    "dob": {
+     "correct": 212
+    },
+    "note": {
+     "correct": 136
+    },
+    "cage": {
+     "correct": 212
+    },
+    "sex": {
+     "correct": 212
+    },
+    "status": {
+     "correct": 212
+    },
+    "mouse_id": {
+     "correct": 164
+    },
+    "owner": {
+     "correct": 212
+    },
+    "ear_tag": {
+     "correct": 118
+    }
+   },
+   "examples": []
+  },
+  "mice: title-rows": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 301
+   },
+   "fields": {
+    "correct": 2435
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 291
+    },
+    "sex": {
+     "correct": 301
+    },
+    "genotype": {
+     "correct": 301
+    },
+    "dob": {
+     "correct": 301
+    },
+    "cage": {
+     "correct": 301
+    },
+    "status": {
+     "correct": 301
+    },
+    "owner": {
+     "correct": 301
+    },
+    "note": {
+     "correct": 117
+    },
+    "mouse_id": {
+     "correct": 221
+    }
+   },
+   "examples": []
+  },
+  "mice: blank-rows": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 301
+   },
+   "fields": {
+    "correct": 2325
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 221
+    },
+    "sex": {
+     "correct": 301
+    },
+    "genotype": {
+     "correct": 301
+    },
+    "dob": {
+     "correct": 301
+    },
+    "cage": {
+     "correct": 301
+    },
+    "status": {
+     "correct": 301
+    },
+    "owner": {
+     "correct": 301
+    },
+    "note": {
+     "correct": 120
+    },
+    "ear_tag": {
+     "correct": 178
+    }
+   },
+   "examples": []
+  },
+  "mice: total-row": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 308
+   },
+   "fields": {
+    "correct": 2346
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 183
+    },
+    "sex": {
+     "correct": 308
+    },
+    "genotype": {
+     "correct": 308
+    },
+    "dob": {
+     "correct": 308
+    },
+    "cage": {
+     "correct": 308
+    },
+    "status": {
+     "correct": 308
+    },
+    "owner": {
+     "correct": 308
+    },
+    "note": {
+     "correct": 67
+    },
+    "ear_tag": {
+     "correct": 248
+    }
+   },
+   "examples": []
+  },
+  "mice: extra-columns": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 259
+   },
+   "fields": {
+    "correct": 1947
+   },
+   "extras": {
+    "kept": 518
+   },
+   "by_field": {
+    "mouse_id": {
+     "correct": 86
+    },
+    "ear_tag": {
+     "correct": 181
+    },
+    "sex": {
+     "correct": 259
+    },
+    "genotype": {
+     "correct": 259
+    },
+    "dob": {
+     "correct": 259
+    },
+    "cage": {
+     "correct": 259
+    },
+    "status": {
+     "correct": 259
+    },
+    "owner": {
+     "correct": 259
+    },
+    "note": {
+     "correct": 126
+    }
+   },
+   "examples": []
+  },
+  "mice: merged-cages": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 283
+   },
+   "fields": {
+    "correct": 2131
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 145
+    },
+    "sex": {
+     "correct": 283
+    },
+    "genotype": {
+     "correct": 283
+    },
+    "dob": {
+     "correct": 283
+    },
+    "cage": {
+     "correct": 283
+    },
+    "status": {
+     "correct": 283
+    },
+    "owner": {
+     "correct": 283
+    },
+    "mouse_id": {
+     "correct": 200
+    },
+    "note": {
+     "correct": 88
+    }
+   },
+   "examples": []
+  },
+  "mice: filled-down-cages": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 264
+   },
+   "fields": {
+    "correct": 1883,
+    "blank": 173
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 225
+    },
+    "ear_tag": {
+     "correct": 76
+    },
+    "sex": {
+     "correct": 264
+    },
+    "genotype": {
+     "correct": 264
+    },
+    "dob": {
+     "correct": 264
+    },
+    "cage": {
+     "correct": 91,
+     "blank": 173
+    },
+    "status": {
+     "correct": 264
+    },
+    "owner": {
+     "correct": 264
+    },
+    "note": {
+     "correct": 171
+    }
+   },
+   "examples": [
+    "row 3 cage: sheet '' → stored '' (blank)",
+    "row 4 cage: sheet '' → stored '' (blank)",
+    "row 5 cage: sheet '' → stored '' (blank)",
+    "row 7 cage: sheet '' → stored '' (blank)",
+    "row 3 cage: sheet '' → stored '' (blank)",
+    "row 5 cage: sheet '' → stored '' (blank)"
+   ]
+  },
+  "mice: dates-us": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 222
+   },
+   "fields": {
+    "correct": 1787
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 169
+    },
+    "ear_tag": {
+     "correct": 185
+    },
+    "sex": {
+     "correct": 222
+    },
+    "genotype": {
+     "correct": 222
+    },
+    "dob": {
+     "correct": 222
+    },
+    "cage": {
+     "correct": 222
+    },
+    "status": {
+     "correct": 222
+    },
+    "owner": {
+     "correct": 222
+    },
+    "note": {
+     "correct": 101
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-eu": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 269
+   },
+   "fields": {
+    "correct": 2172
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 256
+    },
+    "ear_tag": {
+     "correct": 180
+    },
+    "sex": {
+     "correct": 269
+    },
+    "genotype": {
+     "correct": 269
+    },
+    "dob": {
+     "correct": 269
+    },
+    "cage": {
+     "correct": 269
+    },
+    "status": {
+     "correct": 269
+    },
+    "owner": {
+     "correct": 269
+    },
+    "note": {
+     "correct": 122
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-eu-dots": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 250
+   },
+   "fields": {
+    "correct": 1873
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 194
+    },
+    "sex": {
+     "correct": 250
+    },
+    "genotype": {
+     "correct": 250
+    },
+    "dob": {
+     "correct": 250
+    },
+    "cage": {
+     "correct": 250
+    },
+    "status": {
+     "correct": 250
+    },
+    "owner": {
+     "correct": 250
+    },
+    "note": {
+     "correct": 71
+    },
+    "ear_tag": {
+     "correct": 108
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-named": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 229
+   },
+   "fields": {
+    "correct": 1754
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 85
+    },
+    "ear_tag": {
+     "correct": 169
+    },
+    "sex": {
+     "correct": 229
+    },
+    "genotype": {
+     "correct": 229
+    },
+    "dob": {
+     "correct": 229
+    },
+    "cage": {
+     "correct": 229
+    },
+    "status": {
+     "correct": 229
+    },
+    "owner": {
+     "correct": 229
+    },
+    "note": {
+     "correct": 126
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-excel-cells": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 291
+   },
+   "fields": {
+    "correct": 2290
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 185
+    },
+    "ear_tag": {
+     "correct": 173
+    },
+    "sex": {
+     "correct": 291
+    },
+    "genotype": {
+     "correct": 291
+    },
+    "dob": {
+     "correct": 291
+    },
+    "cage": {
+     "correct": 291
+    },
+    "status": {
+     "correct": 291
+    },
+    "owner": {
+     "correct": 291
+    },
+    "note": {
+     "correct": 186
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-excel-serial": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 227
+   },
+   "fields": {
+    "correct": 1732
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 91
+    },
+    "sex": {
+     "correct": 227
+    },
+    "genotype": {
+     "correct": 227
+    },
+    "dob": {
+     "correct": 227
+    },
+    "cage": {
+     "correct": 227
+    },
+    "status": {
+     "correct": 227
+    },
+    "owner": {
+     "correct": 227
+    },
+    "note": {
+     "correct": 87
+    },
+    "ear_tag": {
+     "correct": 192
+    }
+   },
+   "examples": []
+  },
+  "mice: dates-mixed": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 225
+   },
+   "fields": {
+    "correct": 1820
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 177
+    },
+    "ear_tag": {
+     "correct": 200
+    },
+    "sex": {
+     "correct": 225
+    },
+    "genotype": {
+     "correct": 225
+    },
+    "dob": {
+     "correct": 225
+    },
+    "cage": {
+     "correct": 225
+    },
+    "status": {
+     "correct": 225
+    },
+    "owner": {
+     "correct": 225
+    },
+    "note": {
+     "correct": 93
+    }
+   },
+   "examples": []
+  },
+  "mice: date-typo-future": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 241
+   },
+   "fields": {
+    "correct": 1928,
+    "kept": 12
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 212
+    },
+    "sex": {
+     "correct": 241
+    },
+    "genotype": {
+     "correct": 241
+    },
+    "dob": {
+     "correct": 229,
+     "kept": 12
+    },
+    "cage": {
+     "correct": 241
+    },
+    "status": {
+     "correct": 241
+    },
+    "owner": {
+     "correct": 241
+    },
+    "ear_tag": {
+     "correct": 174
+    },
+    "note": {
+     "correct": 108
+    }
+   },
+   "examples": [
+    "row 9 dob: sheet '2061-11-09' → stored None (kept)",
+    "row 9 dob: sheet '2061-09-02' → stored None (kept)",
+    "row 3 dob: sheet '2061-12-28' → stored None (kept)",
+    "row 22 dob: sheet '2061-08-07' → stored None (kept)",
+    "row 9 dob: sheet '2060-11-03' → stored None (kept)",
+    "row 8 dob: sheet '2062-06-17' → stored None (kept)"
+   ]
+  },
+  "mice: sex-words": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 251
+   },
+   "fields": {
+    "correct": 1936
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 170
+    },
+    "sex": {
+     "correct": 251
+    },
+    "genotype": {
+     "correct": 251
+    },
+    "dob": {
+     "correct": 251
+    },
+    "cage": {
+     "correct": 251
+    },
+    "status": {
+     "correct": 251
+    },
+    "owner": {
+     "correct": 251
+    },
+    "note": {
+     "correct": 144
+    },
+    "ear_tag": {
+     "correct": 116
+    }
+   },
+   "examples": []
+  },
+  "mice: sex-symbols": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 244
+   },
+   "fields": {
+    "correct": 1914
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 194
+    },
+    "ear_tag": {
+     "correct": 168
+    },
+    "sex": {
+     "correct": 244
+    },
+    "genotype": {
+     "correct": 244
+    },
+    "dob": {
+     "correct": 244
+    },
+    "cage": {
+     "correct": 244
+    },
+    "status": {
+     "correct": 244
+    },
+    "owner": {
+     "correct": 244
+    },
+    "note": {
+     "correct": 88
+    }
+   },
+   "examples": []
+  },
+  "mice: status-words": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 258
+   },
+   "fields": {
+    "correct": 2016
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 189
+    },
+    "sex": {
+     "correct": 258
+    },
+    "genotype": {
+     "correct": 258
+    },
+    "dob": {
+     "correct": 258
+    },
+    "cage": {
+     "correct": 258
+    },
+    "status": {
+     "correct": 258
+    },
+    "owner": {
+     "correct": 258
+    },
+    "note": {
+     "correct": 86
+    },
+    "ear_tag": {
+     "correct": 193
+    }
+   },
+   "examples": []
+  },
+  "mice: owner-full-names": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 276
+   },
+   "fields": {
+    "correct": 2143
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 142
+    },
+    "ear_tag": {
+     "correct": 231
+    },
+    "sex": {
+     "correct": 276
+    },
+    "genotype": {
+     "correct": 276
+    },
+    "dob": {
+     "correct": 276
+    },
+    "cage": {
+     "correct": 276
+    },
+    "status": {
+     "correct": 276
+    },
+    "owner": {
+     "correct": 276
+    },
+    "note": {
+     "correct": 114
+    }
+   },
+   "examples": []
+  },
+  "mice: owner-first-names": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 207
+   },
+   "fields": {
+    "correct": 1664
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 175
+    },
+    "ear_tag": {
+     "correct": 146
+    },
+    "sex": {
+     "correct": 207
+    },
+    "genotype": {
+     "correct": 207
+    },
+    "dob": {
+     "correct": 207
+    },
+    "cage": {
+     "correct": 207
+    },
+    "status": {
+     "correct": 207
+    },
+    "owner": {
+     "correct": 207
+    },
+    "note": {
+     "correct": 101
+    }
+   },
+   "examples": []
+  },
+  "mice: owner-unknown": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 324
+   },
+   "fields": {
+    "correct": 2373,
+    "kept": 61
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 219
+    },
+    "ear_tag": {
+     "correct": 162
+    },
+    "sex": {
+     "correct": 324
+    },
+    "genotype": {
+     "correct": 324
+    },
+    "dob": {
+     "correct": 324
+    },
+    "cage": {
+     "correct": 324
+    },
+    "status": {
+     "correct": 324
+    },
+    "owner": {
+     "correct": 263,
+     "kept": 61
+    },
+    "note": {
+     "correct": 109
+    }
+   },
+   "examples": [
+    "row 3 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 11 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 13 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 10 owner: sheet 'Dr. Smith' → stored 'bench' (kept)"
+   ]
+  },
+  "mice: padding-and-case": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 283
+   },
+   "fields": {
+    "correct": 2282
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 235
+    },
+    "ear_tag": {
+     "correct": 230
+    },
+    "sex": {
+     "correct": 283
+    },
+    "genotype": {
+     "correct": 283
+    },
+    "dob": {
+     "correct": 283
+    },
+    "cage": {
+     "correct": 283
+    },
+    "status": {
+     "correct": 283
+    },
+    "owner": {
+     "correct": 283
+    },
+    "note": {
+     "correct": 119
+    }
+   },
+   "examples": []
+  },
+  "mice: duplicate-ids": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 284
+   },
+   "fields": {
+    "correct": 2221,
+    "kept": 9
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 198,
+     "kept": 9
+    },
+    "ear_tag": {
+     "correct": 164
+    },
+    "sex": {
+     "correct": 284
+    },
+    "genotype": {
+     "correct": 284
+    },
+    "dob": {
+     "correct": 284
+    },
+    "cage": {
+     "correct": 284
+    },
+    "status": {
+     "correct": 284
+    },
+    "owner": {
+     "correct": 284
+    },
+    "note": {
+     "correct": 155
+    }
+   },
+   "examples": [
+    "row 22 mouse_id: sheet '313020' → stored 312033 (kept)",
+    "row 6 mouse_id: sheet '315004' → stored 313052 (kept)",
+    "row 7 mouse_id: sheet '317005' → stored 315024 (kept)",
+    "row 3 mouse_id: sheet '318001' → stored 317020 (kept)",
+    "row 8 mouse_id: sheet '320006' → stored 318046 (kept)",
+    "row 16 mouse_id: sheet '321014' → stored 320024 (kept)"
+   ]
+  },
+  "mice: numbers-as-floats": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 285
+   },
+   "fields": {
+    "correct": 2202
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 184
+    },
+    "ear_tag": {
+     "correct": 144
+    },
+    "sex": {
+     "correct": 285
+    },
+    "genotype": {
+     "correct": 285
+    },
+    "dob": {
+     "correct": 285
+    },
+    "cage": {
+     "correct": 285
+    },
+    "status": {
+     "correct": 285
+    },
+    "owner": {
+     "correct": 285
+    },
+    "note": {
+     "correct": 164
+    }
+   },
+   "examples": []
+  },
+  "mice: csv": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 258
+   },
+   "fields": {
+    "correct": 1953
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 164
+    },
+    "sex": {
+     "correct": 258
+    },
+    "genotype": {
+     "correct": 258
+    },
+    "dob": {
+     "correct": 258
+    },
+    "cage": {
+     "correct": 258
+    },
+    "status": {
+     "correct": 258
+    },
+    "owner": {
+     "correct": 258
+    },
+    "note": {
+     "correct": 84
+    },
+    "mouse_id": {
+     "correct": 157
+    }
+   },
+   "examples": []
+  },
+  "mice: csv-semicolon": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 292
+   },
+   "fields": {
+    "correct": 2384
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 275
+    },
+    "sex": {
+     "correct": 292
+    },
+    "genotype": {
+     "correct": 292
+    },
+    "dob": {
+     "correct": 292
+    },
+    "cage": {
+     "correct": 292
+    },
+    "status": {
+     "correct": 292
+    },
+    "owner": {
+     "correct": 292
+    },
+    "mouse_id": {
+     "correct": 245
+    },
+    "note": {
+     "correct": 112
+    }
+   },
+   "examples": []
+  },
+  "mice: tsv": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 322
+   },
+   "fields": {
+    "correct": 2534
+   },
+   "extras": {},
+   "by_field": {
+    "ear_tag": {
+     "correct": 148
+    },
+    "sex": {
+     "correct": 322
+    },
+    "genotype": {
+     "correct": 322
+    },
+    "dob": {
+     "correct": 322
+    },
+    "cage": {
+     "correct": 322
+    },
+    "status": {
+     "correct": 322
+    },
+    "owner": {
+     "correct": 322
+    },
+    "note": {
+     "correct": 184
+    },
+    "mouse_id": {
+     "correct": 270
+    }
+   },
+   "examples": []
+  },
+  "mice: csv-windows-encoding": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 289
+   },
+   "fields": {
+    "correct": 2268
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 213
+    },
+    "sex": {
+     "correct": 289
+    },
+    "genotype": {
+     "correct": 289
+    },
+    "dob": {
+     "correct": 289
+    },
+    "cage": {
+     "correct": 289
+    },
+    "status": {
+     "correct": 289
+    },
+    "owner": {
+     "correct": 289
+    },
+    "ear_tag": {
+     "correct": 201
+    },
+    "note": {
+     "correct": 120
+    }
+   },
+   "examples": []
+  },
+  "mice: csv-bom": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 225
+   },
+   "fields": {
+    "correct": 1748
+   },
+   "extras": {},
+   "by_field": {
+    "mouse_id": {
+     "correct": 168
+    },
+    "sex": {
+     "correct": 225
+    },
+    "genotype": {
+     "correct": 225
+    },
+    "dob": {
+     "correct": 225
+    },
+    "cage": {
+     "correct": 225
+    },
+    "status": {
+     "correct": 225
+    },
+    "owner": {
+     "correct": 225
+    },
+    "ear_tag": {
+     "correct": 126
+    },
+    "note": {
+     "correct": 104
+    }
+   },
+   "examples": []
+  },
+  "mice: kitchen-sink": {
+   "sheets": 40,
+   "rows": {
+    "refused": 0,
+    "imported": 825
+   },
+   "fields": {
+    "correct": 5883,
+    "kept": 384,
+    "blank": 59
+   },
+   "extras": {
+    "kept": 326
+   },
+   "by_field": {
+    "cage": {
+     "correct": 726,
+     "blank": 59,
+     "kept": 40
+    },
+    "owner": {
+     "kept": 60,
+     "correct": 765
+    },
+    "sex": {
+     "correct": 785,
+     "kept": 40
+    },
+    "dob": {
+     "correct": 747,
+     "kept": 78
+    },
+    "note": {
+     "correct": 351
+    },
+    "status": {
+     "correct": 785,
+     "kept": 40
+    },
+    "genotype": {
+     "correct": 785,
+     "kept": 40
+    },
+    "mouse_id": {
+     "correct": 527,
+     "kept": 46
+    },
+    "ear_tag": {
+     "correct": 412,
+     "kept": 40
+    }
+   },
+   "examples": [
+    "row 4 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 13 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 7 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 6 dob: sheet '2062-01-01' → stored None (kept)",
+    "row 4 mouse_id: sheet '404002' → stored 399079 (kept)",
+    "row 13 dob: sheet '2062-01-11' → stored None (kept)"
+   ]
+  },
+  "plasmids: all": {
+   "sheets": 304,
+   "rows": {
+    "refused": 362,
+    "imported": 6473
+   },
+   "fields": {
+    "correct": 68752,
+    "blank": 886,
+    "kept": 488
+   },
+   "extras": {
+    "kept": 982
+   },
+   "by_field": {
+    "plasmid_id": {
+     "correct": 4685
+    },
+    "name": {
+     "correct": 6473
+    },
+    "backbone": {
+     "correct": 6473
+    },
+    "insert": {
+     "correct": 6473
+    },
+    "resistance": {
+     "correct": 6473
+    },
+    "box": {
+     "correct": 6030,
+     "blank": 443
+    },
+    "position": {
+     "correct": 6030,
+     "blank": 443
+    },
+    "location": {
+     "correct": 6473
+    },
+    "concentration": {
+     "correct": 6077,
+     "kept": 396
+    },
+    "owner": {
+     "correct": 6381,
+     "kept": 92
+    },
+    "a260_280": {
+     "correct": 4229
+    },
+    "note": {
+     "correct": 2955
+    }
+   },
+   "examples": [
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match "
+   ]
+  },
+  "plasmids: control": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 335
+   },
+   "fields": {
+    "correct": 3548
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 206
+    },
+    "name": {
+     "correct": 335
+    },
+    "backbone": {
+     "correct": 335
+    },
+    "insert": {
+     "correct": 335
+    },
+    "resistance": {
+     "correct": 335
+    },
+    "box": {
+     "correct": 335
+    },
+    "position": {
+     "correct": 335
+    },
+    "location": {
+     "correct": 335
+    },
+    "concentration": {
+     "correct": 335
+    },
+    "owner": {
+     "correct": 335
+    },
+    "a260_280": {
+     "correct": 174
+    },
+    "note": {
+     "correct": 153
+    }
+   },
+   "examples": []
+  },
+  "plasmids: header-synonyms": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 274
+   },
+   "fields": {
+    "correct": 2916
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 231
+    },
+    "name": {
+     "correct": 274
+    },
+    "backbone": {
+     "correct": 274
+    },
+    "insert": {
+     "correct": 274
+    },
+    "resistance": {
+     "correct": 274
+    },
+    "box": {
+     "correct": 274
+    },
+    "position": {
+     "correct": 274
+    },
+    "location": {
+     "correct": 274
+    },
+    "concentration": {
+     "correct": 274
+    },
+    "owner": {
+     "correct": 274
+    },
+    "note": {
+     "correct": 112
+    },
+    "a260_280": {
+     "correct": 107
+    }
+   },
+   "examples": []
+  },
+  "plasmids: header-typos": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 339
+   },
+   "fields": {
+    "correct": 3830
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 339
+    },
+    "name": {
+     "correct": 339
+    },
+    "backbone": {
+     "correct": 339
+    },
+    "insert": {
+     "correct": 339
+    },
+    "resistance": {
+     "correct": 339
+    },
+    "box": {
+     "correct": 339
+    },
+    "position": {
+     "correct": 339
+    },
+    "location": {
+     "correct": 339
+    },
+    "concentration": {
+     "correct": 339
+    },
+    "a260_280": {
+     "correct": 262
+    },
+    "owner": {
+     "correct": 339
+    },
+    "note": {
+     "correct": 178
+    }
+   },
+   "examples": []
+  },
+  "plasmids: headers-chinese": {
+   "sheets": 12,
+   "rows": {
+    "refused": 262
+   },
+   "fields": {},
+   "extras": {},
+   "by_field": {},
+   "examples": [
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match ",
+    "import refused: Match a column, or give a value for every row, for: Name. Import from Excel Upload Match columns Check and import Match "
+   ]
+  },
+  "plasmids: column-order": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 266
+   },
+   "fields": {
+    "correct": 2851
+   },
+   "extras": {},
+   "by_field": {
+    "resistance": {
+     "correct": 266
+    },
+    "box": {
+     "correct": 266
+    },
+    "insert": {
+     "correct": 266
+    },
+    "location": {
+     "correct": 266
+    },
+    "backbone": {
+     "correct": 266
+    },
+    "position": {
+     "correct": 266
+    },
+    "name": {
+     "correct": 266
+    },
+    "concentration": {
+     "correct": 266
+    },
+    "owner": {
+     "correct": 266
+    },
+    "note": {
+     "correct": 133
+    },
+    "a260_280": {
+     "correct": 150
+    },
+    "plasmid_id": {
+     "correct": 174
+    }
+   },
+   "examples": []
+  },
+  "plasmids: title-rows": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 256
+   },
+   "fields": {
+    "correct": 2815
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 236
+    },
+    "name": {
+     "correct": 256
+    },
+    "backbone": {
+     "correct": 256
+    },
+    "insert": {
+     "correct": 256
+    },
+    "resistance": {
+     "correct": 256
+    },
+    "box": {
+     "correct": 256
+    },
+    "position": {
+     "correct": 256
+    },
+    "location": {
+     "correct": 256
+    },
+    "concentration": {
+     "correct": 256
+    },
+    "a260_280": {
+     "correct": 152
+    },
+    "owner": {
+     "correct": 256
+    },
+    "note": {
+     "correct": 123
+    }
+   },
+   "examples": []
+  },
+  "plasmids: blank-rows": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 169
+   },
+   "fields": {
+    "correct": 1831
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 150
+    },
+    "name": {
+     "correct": 169
+    },
+    "backbone": {
+     "correct": 169
+    },
+    "insert": {
+     "correct": 169
+    },
+    "resistance": {
+     "correct": 169
+    },
+    "box": {
+     "correct": 169
+    },
+    "position": {
+     "correct": 169
+    },
+    "location": {
+     "correct": 169
+    },
+    "concentration": {
+     "correct": 169
+    },
+    "owner": {
+     "correct": 169
+    },
+    "a260_280": {
+     "correct": 88
+    },
+    "note": {
+     "correct": 72
+    }
+   },
+   "examples": []
+  },
+  "plasmids: total-row": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 232
+   },
+   "fields": {
+    "correct": 2490
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 165
+    },
+    "name": {
+     "correct": 232
+    },
+    "backbone": {
+     "correct": 232
+    },
+    "insert": {
+     "correct": 232
+    },
+    "resistance": {
+     "correct": 232
+    },
+    "box": {
+     "correct": 232
+    },
+    "position": {
+     "correct": 232
+    },
+    "location": {
+     "correct": 232
+    },
+    "concentration": {
+     "correct": 232
+    },
+    "owner": {
+     "correct": 232
+    },
+    "a260_280": {
+     "correct": 133
+    },
+    "note": {
+     "correct": 104
+    }
+   },
+   "examples": []
+  },
+  "plasmids: extra-columns": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 295
+   },
+   "fields": {
+    "correct": 3162
+   },
+   "extras": {
+    "kept": 590
+   },
+   "by_field": {
+    "plasmid_id": {
+     "correct": 219
+    },
+    "name": {
+     "correct": 295
+    },
+    "backbone": {
+     "correct": 295
+    },
+    "insert": {
+     "correct": 295
+    },
+    "resistance": {
+     "correct": 295
+    },
+    "box": {
+     "correct": 295
+    },
+    "position": {
+     "correct": 295
+    },
+    "location": {
+     "correct": 295
+    },
+    "concentration": {
+     "correct": 295
+    },
+    "owner": {
+     "correct": 295
+    },
+    "note": {
+     "correct": 155
+    },
+    "a260_280": {
+     "correct": 133
+    }
+   },
+   "examples": []
+  },
+  "plasmids: filled-down-boxes": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 207
+   },
+   "fields": {
+    "correct": 1851,
+    "blank": 382
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 117
+    },
+    "name": {
+     "correct": 207
+    },
+    "backbone": {
+     "correct": 207
+    },
+    "insert": {
+     "correct": 207
+    },
+    "resistance": {
+     "correct": 207
+    },
+    "box": {
+     "correct": 16,
+     "blank": 191
+    },
+    "position": {
+     "correct": 16,
+     "blank": 191
+    },
+    "location": {
+     "correct": 207
+    },
+    "concentration": {
+     "correct": 207
+    },
+    "owner": {
+     "correct": 207
+    },
+    "note": {
+     "correct": 79
+    },
+    "a260_280": {
+     "correct": 174
+    }
+   },
+   "examples": [
+    "row 3 box: sheet '' → stored '' (blank)",
+    "row 3 position: sheet 'A2' → stored None (blank)",
+    "row 4 box: sheet '' → stored '' (blank)",
+    "row 4 position: sheet 'A3' → stored None (blank)",
+    "row 3 box: sheet '' → stored '' (blank)",
+    "row 3 position: sheet 'A2' → stored None (blank)"
+   ]
+  },
+  "plasmids: positions-styles": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 250
+   },
+   "fields": {
+    "correct": 2655
+   },
+   "extras": {},
+   "by_field": {
+    "name": {
+     "correct": 250
+    },
+    "backbone": {
+     "correct": 250
+    },
+    "insert": {
+     "correct": 250
+    },
+    "resistance": {
+     "correct": 250
+    },
+    "box": {
+     "correct": 250
+    },
+    "position": {
+     "correct": 250
+    },
+    "location": {
+     "correct": 250
+    },
+    "concentration": {
+     "correct": 250
+    },
+    "owner": {
+     "correct": 250
+    },
+    "note": {
+     "correct": 91
+    },
+    "plasmid_id": {
+     "correct": 207
+    },
+    "a260_280": {
+     "correct": 107
+    }
+   },
+   "examples": []
+  },
+  "plasmids: concentration-comma-decimal": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 308
+   },
+   "fields": {
+    "correct": 3386
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 202
+    },
+    "name": {
+     "correct": 308
+    },
+    "backbone": {
+     "correct": 308
+    },
+    "insert": {
+     "correct": 308
+    },
+    "resistance": {
+     "correct": 308
+    },
+    "box": {
+     "correct": 308
+    },
+    "position": {
+     "correct": 308
+    },
+    "location": {
+     "correct": 308
+    },
+    "concentration": {
+     "correct": 308
+    },
+    "a260_280": {
+     "correct": 279
+    },
+    "owner": {
+     "correct": 308
+    },
+    "note": {
+     "correct": 133
+    }
+   },
+   "examples": []
+  },
+  "plasmids: concentration-with-unit": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 308
+   },
+   "fields": {
+    "correct": 3011,
+    "kept": 308
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 168
+    },
+    "name": {
+     "correct": 308
+    },
+    "backbone": {
+     "correct": 308
+    },
+    "insert": {
+     "correct": 308
+    },
+    "resistance": {
+     "correct": 308
+    },
+    "box": {
+     "correct": 308
+    },
+    "position": {
+     "correct": 308
+    },
+    "location": {
+     "correct": 308
+    },
+    "concentration": {
+     "kept": 308
+    },
+    "owner": {
+     "correct": 308
+    },
+    "a260_280": {
+     "correct": 256
+    },
+    "note": {
+     "correct": 123
+    }
+   },
+   "examples": [
+    "row 2 concentration: sheet '152.6 ng/µl' → stored '' (kept)",
+    "row 3 concentration: sheet '2237.8 ng/µl' → stored '' (kept)",
+    "row 4 concentration: sheet '1204.5 ng/µl' → stored '' (kept)",
+    "row 5 concentration: sheet '299.0 ng/µl' → stored '' (kept)",
+    "row 2 concentration: sheet '1678.5 ng/µl' → stored '' (kept)",
+    "row 3 concentration: sheet '1448.9 ng/µl' → stored '' (kept)"
+   ]
+  },
+  "plasmids: owner-full-names": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 263
+   },
+   "fields": {
+    "correct": 2843
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 191
+    },
+    "name": {
+     "correct": 263
+    },
+    "backbone": {
+     "correct": 263
+    },
+    "insert": {
+     "correct": 263
+    },
+    "resistance": {
+     "correct": 263
+    },
+    "box": {
+     "correct": 263
+    },
+    "position": {
+     "correct": 263
+    },
+    "location": {
+     "correct": 263
+    },
+    "concentration": {
+     "correct": 263
+    },
+    "a260_280": {
+     "correct": 186
+    },
+    "owner": {
+     "correct": 263
+    },
+    "note": {
+     "correct": 99
+    }
+   },
+   "examples": []
+  },
+  "plasmids: owner-first-names": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 215
+   },
+   "fields": {
+    "correct": 2448
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 207
+    },
+    "name": {
+     "correct": 215
+    },
+    "backbone": {
+     "correct": 215
+    },
+    "insert": {
+     "correct": 215
+    },
+    "resistance": {
+     "correct": 215
+    },
+    "box": {
+     "correct": 215
+    },
+    "position": {
+     "correct": 215
+    },
+    "location": {
+     "correct": 215
+    },
+    "concentration": {
+     "correct": 215
+    },
+    "a260_280": {
+     "correct": 192
+    },
+    "owner": {
+     "correct": 215
+    },
+    "note": {
+     "correct": 114
+    }
+   },
+   "examples": []
+  },
+  "plasmids: owner-unknown": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 330
+   },
+   "fields": {
+    "correct": 3520,
+    "kept": 63
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 250
+    },
+    "name": {
+     "correct": 330
+    },
+    "backbone": {
+     "correct": 330
+    },
+    "insert": {
+     "correct": 330
+    },
+    "resistance": {
+     "correct": 330
+    },
+    "box": {
+     "correct": 330
+    },
+    "position": {
+     "correct": 330
+    },
+    "location": {
+     "correct": 330
+    },
+    "concentration": {
+     "correct": 330
+    },
+    "owner": {
+     "correct": 267,
+     "kept": 63
+    },
+    "a260_280": {
+     "correct": 257
+    },
+    "note": {
+     "correct": 106
+    }
+   },
+   "examples": [
+    "row 14 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 17 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 20 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 28 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 5 owner: sheet 'Dr. Smith' → stored 'bench' (kept)",
+    "row 9 owner: sheet 'Dr. Smith' → stored 'bench' (kept)"
+   ]
+  },
+  "plasmids: padding": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 360
+   },
+   "fields": {
+    "correct": 3856
+   },
+   "extras": {},
+   "by_field": {
+    "name": {
+     "correct": 360
+    },
+    "backbone": {
+     "correct": 360
+    },
+    "insert": {
+     "correct": 360
+    },
+    "resistance": {
+     "correct": 360
+    },
+    "box": {
+     "correct": 360
+    },
+    "position": {
+     "correct": 360
+    },
+    "location": {
+     "correct": 360
+    },
+    "concentration": {
+     "correct": 360
+    },
+    "a260_280": {
+     "correct": 273
+    },
+    "owner": {
+     "correct": 360
+    },
+    "note": {
+     "correct": 116
+    },
+    "plasmid_id": {
+     "correct": 227
+    }
+   },
+   "examples": []
+  },
+  "plasmids: csv": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 263
+   },
+   "fields": {
+    "correct": 2751
+   },
+   "extras": {},
+   "by_field": {
+    "name": {
+     "correct": 263
+    },
+    "backbone": {
+     "correct": 263
+    },
+    "insert": {
+     "correct": 263
+    },
+    "resistance": {
+     "correct": 263
+    },
+    "box": {
+     "correct": 263
+    },
+    "position": {
+     "correct": 263
+    },
+    "location": {
+     "correct": 263
+    },
+    "concentration": {
+     "correct": 263
+    },
+    "owner": {
+     "correct": 263
+    },
+    "note": {
+     "correct": 104
+    },
+    "plasmid_id": {
+     "correct": 173
+    },
+    "a260_280": {
+     "correct": 107
+    }
+   },
+   "examples": []
+  },
+  "plasmids: csv-semicolon": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 232
+   },
+   "fields": {
+    "correct": 2490
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 138
+    },
+    "name": {
+     "correct": 232
+    },
+    "backbone": {
+     "correct": 232
+    },
+    "insert": {
+     "correct": 232
+    },
+    "resistance": {
+     "correct": 232
+    },
+    "box": {
+     "correct": 232
+    },
+    "position": {
+     "correct": 232
+    },
+    "location": {
+     "correct": 232
+    },
+    "concentration": {
+     "correct": 232
+    },
+    "owner": {
+     "correct": 232
+    },
+    "a260_280": {
+     "correct": 119
+    },
+    "note": {
+     "correct": 145
+    }
+   },
+   "examples": []
+  },
+  "plasmids: tsv": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 250
+   },
+   "fields": {
+    "correct": 2815
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 181
+    },
+    "name": {
+     "correct": 250
+    },
+    "backbone": {
+     "correct": 250
+    },
+    "insert": {
+     "correct": 250
+    },
+    "resistance": {
+     "correct": 250
+    },
+    "box": {
+     "correct": 250
+    },
+    "position": {
+     "correct": 250
+    },
+    "location": {
+     "correct": 250
+    },
+    "concentration": {
+     "correct": 250
+    },
+    "a260_280": {
+     "correct": 230
+    },
+    "owner": {
+     "correct": 250
+    },
+    "note": {
+     "correct": 154
+    }
+   },
+   "examples": []
+  },
+  "plasmids: csv-windows-encoding": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 292
+   },
+   "fields": {
+    "correct": 3096
+   },
+   "extras": {},
+   "by_field": {
+    "plasmid_id": {
+     "correct": 207
+    },
+    "name": {
+     "correct": 292
+    },
+    "backbone": {
+     "correct": 292
+    },
+    "insert": {
+     "correct": 292
+    },
+    "resistance": {
+     "correct": 292
+    },
+    "box": {
+     "correct": 292
+    },
+    "position": {
+     "correct": 292
+    },
+    "location": {
+     "correct": 292
+    },
+    "concentration": {
+     "correct": 292
+    },
+    "owner": {
+     "correct": 292
+    },
+    "note": {
+     "correct": 117
+    },
+    "a260_280": {
+     "correct": 144
+    }
+   },
+   "examples": []
+  },
+  "plasmids: csv-bom": {
+   "sheets": 12,
+   "rows": {
+    "refused": 0,
+    "imported": 249
+   },
+   "fields": {
+    "correct": 2563
+   },
+   "extras": {},
+   "by_field": {
+    "name": {
+     "correct": 249
+    },
+    "backbone": {
+     "correct": 249
+    },
+    "insert": {
+     "correct": 249
+    },
+    "resistance": {
+     "correct": 249
+    },
+    "box": {
+     "correct": 249
+    },
+    "position": {
+     "correct": 249
+    },
+    "location": {
+     "correct": 249
+    },
+    "concentration": {
+     "correct": 249
+    },
+    "owner": {
+     "correct": 249
+    },
+    "a260_280": {
+     "correct": 107
+    },
+    "note": {
+     "correct": 109
+    },
+    "plasmid_id": {
+     "correct": 106
+    }
+   },
+   "examples": []
+  },
+  "plasmids: kitchen-sink": {
+   "sheets": 40,
+   "rows": {
+    "refused": 100,
+    "imported": 780
+   },
+   "fields": {
+    "correct": 8024,
+    "blank": 504,
+    "kept": 117
+   },
+   "extras": {
+    "kept": 392
+   },
+   "by_field": {
+    "name": {
+     "correct": 780
+    },
+    "backbone": {
+     "correct": 780
+    },
+    "insert": {
+     "correct": 780
+    },
+    "resistance": {
+     "correct": 780
+    },
+    "box": {
+     "correct": 528,
+     "blank": 252
+    },
+    "position": {
+     "correct": 528,
+     "blank": 252
+    },
+    "location": {
+     "correct": 780
+    },
+    "concentration": {
+     "correct": 692,
+     "kept": 88
+    },
+    "owner": {
+     "correct": 751,
+     "kept": 29
+    },
+    "note": {
+     "correct": 435
+    },
+    "plasmid_id": {
+     "correct": 591
+    },
+    "a260_280": {
+     "correct": 599
+    }
+   },
+   "examples": [
+    "row 3 box: sheet '' → stored '' (blank)",
+    "row 3 position: sheet 'A2' → stored None (blank)",
+    "row 4 box: sheet '' → stored '' (blank)",
+    "row 4 position: sheet 'A3' → stored None (blank)",
+    "row 4 concentration: sheet '2134.8 ng/µl' → stored '' (kept)",
+    "row 5 concentration: sheet '513.6 ng/µl' → stored '' (kept)"
+   ]
+  }
+ }
+}

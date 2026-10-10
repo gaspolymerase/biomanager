@@ -48,3 +48,24 @@ A row is *imported*, *refused* (the preview says why), or *lost*.
 Results are written to `results/import-<version>-<commit>-seed<seed>.md`
 (tables) and `.json` (the counts behind them); a commit marked `-dirty` had
 changes to the app not yet committed.
+
+### Results so far
+
+Seed 1, 740 sheets, the importer before and after the fixes this benchmark
+led to (`results/import-1.5.5+dev-3eb67cf-seed1.md` and
+`results/import-1.5.5+dev-5cf6a57-seed1.md`):
+
+| | Rows imported | Values correct | Kept, and told | Blank, silently | Wrong, silently |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Mice, before | 100.0% | 95.9% | 3.8% | 0.3% | 0.0% |
+| Mice, after | 100.0% | 99.8% | 0.2% | 0.0% | 0.0% |
+| Plasmids, before | 94.7% | 98.0% | 0.7% | 1.3% | 0.0% |
+| Plasmids, after | 100.0% | 99.9% | 0.1% | 0.0% | 0.0% |
+
+What changed: a cage, rack, box or tank written once with blank cells
+below offers **Its blank cells take the value above them** (filled-down
+cages went from 91.6% to 100% correct, boxes from 82.9%); Chinese headers
+are matched (5.2% and 0% to 100%), and a CSV from a Chinese Windows (GBK)
+is read; a concentration written with `ng/µl` is read (90.7% to 100%).
+What remains *kept* is what can't be known from the sheet: a person not in
+the lab, a mouse number used twice, a birth date in 2062.
