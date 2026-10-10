@@ -27,8 +27,8 @@ each process, the send in a daemon thread), so the desktop app and every
 gunicorn worker behave alike; at most once a day for the installation,
 claimed in the database first so two workers never both send. Never under
 TESTING, never from a build being worked on (`released()`: a `+dev`
-version or a checkout, each of which makes a fresh database every run and
-would count as a new lab each time), never before the setup survey is
+version, which makes a fresh database every run and would count as a new
+lab each time), never before the setup survey is
 answered, never without a
 project key (`PROJECT_KEY`, or `BIOMANAGER_TELEMETRY_KEY`): a build without
 one sends nothing at all. A failed send is logged at debug level only and
@@ -237,14 +237,15 @@ def _post(body: dict) -> bool:
 
 def released() -> bool:
     """A build someone is running, not one being worked on. A development
-    build (`1.0.6+dev`) or a checkout without a VERSION file ("server")
-    makes a fresh database every time it is run — a demo lab, the upgrade
-    check, a screenshot pass — and each of those would otherwise count as a
-    lab of its own, which is how 230 of 234 "installations" came to be this
-    machine."""
+    build (`1.0.6+dev`) makes a fresh database every time it is run — a demo
+    lab, the upgrade check, a screenshot pass — and each of those would
+    otherwise count as a lab of its own, which is how 230 of 234
+    "installations" came to be this machine. "server" is a lab server whose
+    image was built from a checkout (`docker compose up -d --build`, as
+    deploy/README.md offers), which has no VERSION file: a lab, so it counts."""
     from .feedback import app_version
     version = app_version()
-    return bool(version) and "+dev" not in version and version != "server"
+    return bool(version) and "+dev" not in version
 
 
 def allowed(session) -> bool:

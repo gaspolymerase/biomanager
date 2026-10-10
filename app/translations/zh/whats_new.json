@@ -65,5 +65,6 @@
   "The desktop app's **Go** menu lists your databases again.": "桌面版的 **Go** 菜单重新列出你的数据库。",
   "A mouse cage's purpose: **Breeding** is a mating cage, the only one with **Litter born**, **Genotyping** and **Wean**; **Breeder** is the lab's breeding stock, shared, listed under **Breeders**.": "小鼠笼的用途：**繁殖** 是正在交配的笼，只有它有 **产仔**、**基因型鉴定** 和 **断奶**；**种鼠笼** 是实验室的种鼠，默认共享，列在 **种鼠** 里。",
   "No Stock or Retired any more: Stock cages are now Breeder cages, and a cage is **Active** while it holds living mice.": "不再有“保种”和“退役”用途：原来的保种笼现在是种鼠笼；笼里有活鼠时才算 **在用**。",
-  "Above the cages: **All**, **Active**, then a button for each purpose, which an admin sets under **Configure → Cage purposes**.": "笼列表上方：**全部**、**在用**，然后每种用途一个按钮；管理员在 **配置 → 笼的用途** 里设置用途。"
+  "Above the cages: **All**, **Active**, then a button for each purpose, which an admin sets under **Configure → Cage purposes**.": "笼列表上方：**全部**、**在用**，然后每种用途一个按钮；管理员在 **配置 → 笼的用途** 里设置用途。",
+  "A lab server built from the source code sends its anonymous daily counts again; the **Usage report** shows what they hold.": "从源代码构建的实验室服务器重新开始每天发送匿名统计；**使用报告** 会列出其中的内容。"
 }
