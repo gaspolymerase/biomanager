@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build:fonts && npm run build:css && npm run build:notebook && npm run build:vendor && npm run build:plasmid && npm run build:calendar",
     "build:notebook": "BUILD_TARGET=notebook vite build",
-    "build:plasmid": "cp node_modules/@deltablot/tg-oss-ove-umd/index.umd.js ../app/static/notebook-build/plasmid-app.js && cp node_modules/@deltablot/tg-oss-ove-umd/style.css ../app/static/notebook-build/plasmid-app.css",
+    "build:plasmid": "cp node_modules/@deltablot/tg-oss-ove-umd/index.umd.js ../app/static/notebook-build/plasmid-app.js && cp node_modules/@deltablot/tg-oss-ove-umd/style.css ../app/static/notebook-build/plasmid-app.css && node patch-plasmid.mjs",
     "build:calendar": "cp node_modules/@toast-ui/calendar/dist/toastui-calendar.min.js ../app/static/notebook-build/calendar-app.js && cp node_modules/@toast-ui/calendar/dist/toastui-calendar.min.css ../app/static/notebook-build/calendar-app.css",
     "watch": "BUILD_TARGET=notebook vite build --watch",
     "dev": "vite",

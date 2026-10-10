@@ -20679,7 +20679,7 @@ var __async = (__this, __arguments, generator) => {
   }
   __name(getUAString, "getUAString");
   function isLayoutViewport() {
-    return !/^((?!chrome|android).)*safari/i.test(getUAString());
+    return !/^(?!.*(chrome|android)).*(safari|applewebkit)/i.test(getUAString());
   }
   __name(isLayoutViewport, "isLayoutViewport");
   function getBoundingClientRect(element2, includeScale, isFixedStrategy) {
@@ -105628,7 +105628,7 @@ ${latestSubscriptionCallbackError.current.stack}
     ))),
     400
   );
-  const isSafari = /^((?!chrome|android).)*safari/i.test(
+  const isSafari = /^(?!.*(chrome|android)).*(safari|applewebkit)/i.test(
     navigator.userAgent
   );
   function genericCommandFactory(config) {
@@ -170942,7 +170942,7 @@ ${seqDataToCopy}\r
       if (!_Browser.isBrowser()) {
         return false;
       }
-      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      return /^(?!.*(chrome|android)).*(safari|applewebkit)/i.test(navigator.userAgent);
     }
     // Internet Explorer 6-11
     static isIE() {
@@ -172198,7 +172198,7 @@ ${seqDataToCopy}\r
         Dropdown,
         noDropdownIcon: true,
         onIconClick: "toggleDropdown",
-        Icon: /* @__PURE__ */ React$2.createElement(Icon, { "data-test": "veDownloadTool", icon: "import" })
+        Icon: /* @__PURE__ */ React$2.createElement(Icon, { "data-test": "veDownloadTool", icon: "export" })
       }, toolbarItemProps))
     );
   });
@@ -172219,7 +172219,7 @@ ${seqDataToCopy}\r
     return /* @__PURE__ */ React$2.createElement(
       ToolbarItem$1,
       __spreadValues({}, __spreadValues({
-        Icon: /* @__PURE__ */ React$2.createElement(Icon, { "data-test": "veImportTool", icon: "export" }),
+        Icon: /* @__PURE__ */ React$2.createElement(Icon, { "data-test": "veImportTool", icon: "import" }),
         IconWrapper: Dropzone$1,
         IconWrapperProps: {
           multiple: false,
