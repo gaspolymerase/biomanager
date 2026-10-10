@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -312,6 +313,88 @@ def apply_status(mv, item: InventoryItem, new_status, today: date | None = None)
     return None
 
 
+# ---------------------------------------------------------------------------
+# Stock as a number: "Low at"
+#
+# An item's quantity is free text ("12", "2,5", "half a box"). When it reads
+# as a number and the item has a Low at level (same unit), the status
+# follows it: at or below the level "in stock" turns "low", at 0 "empty"
+# (or "used up", whichever the list has), and above it again "in stock".
+# Only between those: a discarded item, or a status a lab renamed, is left
+# as it is, and so is an inventory whose list lacks "in stock" or "low".
+# ---------------------------------------------------------------------------
+
+STOCK_IN, STOCK_LOW, STOCK_EMPTY = "in stock", "low", ("empty", "used up")
+
+
+def amount(raw) -> float | None:
+    """A quantity as a number: "12", "12.5", "2,5" (a decimal comma) or
+    "1,000" (thousands); None for anything else ("2 boxes", "half")."""
+    text = str(raw or "").strip()
+    if re.fullmatch(r"\d{1,3}(,\d{3})+(\.\d+)?", text):
+        text = text.replace(",", "")
+    elif re.fullmatch(r"\d+,\d+", text):
+        text = text.replace(",", ".")
+    if not re.fullmatch(r"\d+(\.\d+)?|\.\d+", text):
+        return None
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    return value if math.isfinite(value) else None
+
+
+def number_text(value: float | None) -> str:
+    """A Low at level as people write it: 2, not 2.0."""
+    return "" if value is None else format(value, "g")
+
+
+def stock_words(mv) -> tuple[str, str, str | None] | None:
+    """The inventory's own spelling of in stock, low and empty (or used up;
+    None if it has neither); None when it doesn't track low stock: no
+    quantity column, or no "in stock" and "low" to move between."""
+    if not mv.has("quantity"):
+        return None
+    in_stock, low = match_status(mv, STOCK_IN), match_status(mv, STOCK_LOW)
+    if in_stock is None or low is None:
+        return None
+    empty = next((s for s in (match_status(mv, w) for w in STOCK_EMPTY) if s), None)
+    return in_stock, low, empty
+
+
+def tracks_low(mv) -> bool:
+    """Whether the sheet and dialog offer Low at."""
+    return stock_words(mv) is not None
+
+
+def follow_stock_level(mv, item: InventoryItem, today: date | None = None) -> str | None:
+    """Move the status to where the quantity says (see above); the status it
+    moved to, or None. One that leaves "in stock" is flagged for its owner's
+    notification (notify._item), so each time it runs low tells them once."""
+    words = stock_words(mv)
+    if words is None or item.low_at is None:
+        return None
+    quantity = amount(item.quantity)
+    if quantity is None:
+        return None
+    in_stock, low, empty = words
+    now = (item.status or "").strip().lower()
+    if now not in {w.lower() for w in words if w}:
+        return None
+    if quantity <= 0 and empty:
+        target = empty
+    elif quantity <= item.low_at:
+        target = low
+    else:
+        target = in_stock
+    if target.lower() == now:
+        return None
+    apply_status(mv, item, target, today=today)
+    if now == in_stock.lower():
+        item._ran_low = True
+    return target
+
+
 def free_cell(session, rack: InventoryRack, taken: set | None = None) -> tuple[int, int] | None:
     """The first empty cell of a box, row by row."""
     used = {(r, c) for r, c in session.execute(select(InventoryItem.rack_row, InventoryItem.rack_col).where(
@@ -436,7 +519,8 @@ def attention_items(session, days: int = 30, limit: int = 12) -> list[dict]:
         module = modules[item.module_id_fk]
         out.append({"id": item.id, "key": module.key, "module": module.label, "name": item.name or f"#{item.number}",
                     "number": item.number, "status": item.status, "expires_on": item.expires_on,
-                    "expiry": expiry_state(item, today), "low": (item.status or "").lower() == "low"})
+                    "expiry": expiry_state(item, today), "low": (item.status or "").lower() == "low",
+                    "quantity": " ".join(filter(None, [(item.quantity or "").strip(), (item.unit or "").strip()]))})
     return out[:limit]
 
 

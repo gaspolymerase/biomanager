@@ -8,7 +8,8 @@ What tells whom (the category decides the Settings switch that silences it):
   genotyping  a genotype was recorded for your animal, or it was marked for
               genotyping, by someone else; once a day, what of yours waits
   orders      an order you placed was ordered, received or cancelled; for
-              admins, a new order request (so nobody has to look for them)
+              admins, a new order request (so nobody has to look for them);
+              stock of yours ran low or out as someone used it (Low at)
   lab         a database or function was added or switched on for the lab
   notebook    pages shared with you, comments, and @you in a page or in the
               notes of any record (a plasmid "for @rowan", an order's note)
@@ -44,7 +45,7 @@ CATEGORIES = {
     "transfer": ("Transfers", "Your animals, cages, tanks or vials moved or given by someone else"),
     "picked": ("Picked from breeders", "Someone took one of your mice from a breeder cage"),
     "genotyping": ("Genotyping", "Genotypes recorded or requested for your animals, and what is waiting"),
-    "orders": ("Orders", "Your orders placed, received or cancelled; for admins, new requests"),
+    "orders": ("Orders", "Your orders placed, received or cancelled, and your stock running low; for admins, new requests"),
     "lab": ("Lab news", "Databases or functions added for the lab"),
     "notebook": ("Notebook and @mentions", "Pages shared with you, comments and @mentions (in pages and in records' notes), "
                              "meeting notes and action items"),
@@ -268,7 +269,33 @@ ORDER_TEMPLATES = {
 }
 
 
+# Stock that ran low or out as its quantity fell to its Low at
+# (inventory_service.follow_stock_level, which flags it).
+LOW_TEMPLATES = {
+    "low": ("%(label)s is running low (updated by %(actor)s)",
+            "%(n)s of your items are running low (updated by %(actor)s): %(items)s"),
+    "empty": ("%(label)s has run out (updated by %(actor)s)",
+              "%(n)s of your items have run out (updated by %(actor)s): %(items)s"),
+}
+
+
+def _ran_low(obj: InventoryItem, actor: str) -> list[dict]:
+    """Its owner is told, once each time it leaves "in stock" that way."""
+    if not obj.__dict__.pop("_ran_low", False) or not obj.owner or obj.owner == actor:
+        return []
+    word = "low" if (obj.status or "").lower() == "low" else "empty"
+    amount = " ".join(filter(None, [(obj.quantity or "").strip(), (obj.unit or "").strip()]))
+    label = " · ".join(filter(None, [obj.name or f"#{obj.number}", amount]))
+    one, many = LOW_TEMPLATES[word]
+    return [_note(obj.owner, "orders", ("low-stock", actor, word, obj.module_id_fk), label, one, many,
+                  ("inventory", obj.module_id_fk), {"actor": actor}, one_link=("inventory-item", obj.id))]
+
+
 def _item(obj: InventoryItem, actor: str) -> list[dict]:
+    return _ran_low(obj, actor) + _order(obj, actor)
+
+
+def _order(obj: InventoryItem, actor: str) -> list[dict]:
     status = _change(obj, "status")
     if not status or not obj.owner or obj.owner == actor:
         return []

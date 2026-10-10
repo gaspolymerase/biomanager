@@ -250,6 +250,7 @@
               {% if r.expiry == 'expired' %}{{ _('expired') }}{% elif r.expiry == 'soon' %}{{ r.expires_on | relative_day }}{% else %}{{ _('low') }}{% endif %}
             </span>
             <span class="min-w-0 flex-1 truncate text-ink-soft">{{ r.name }}</span>
+            {% if r.low and r.quantity %}<span class="shrink-0 text-[11.5px] text-muted">{{ r.quantity }}</span>{% endif %}
             {% if r.low and r.expiry %}<span class="dt-status shrink-0" data-status="low">{{ _('low') }}</span>{% endif %}
             <span class="shrink-0 text-[11.5px] text-sand-400">{{ r.module|tr }}</span>
           </a>

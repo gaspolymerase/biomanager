@@ -333,7 +333,7 @@ change:
 | --- | --- |
 | 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
-| ⚗️ **Reagents** | quantity, concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
+| ⚗️ **Reagents** | quantity (with a **Low at** level that marks a bottle low as it runs down), concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
 | 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
@@ -354,6 +354,13 @@ database has a name of its own (one another database has is refused), so
 - **Expired is red** — a reagent, chemical, antibody or virus past its expiry date
   has a red dot, number, name and date; **Expired** and **Expiring soon**
   show only those.
+- **Low stock says so itself** — give a reagent, chemical, antibody, virus
+  or primer a **Low at** level, in the unit of its quantity. When the
+  quantity falls to it the status turns *low* (at 0, *empty*) and its owner
+  is told; a reagent, chemical, antibody or virus is then listed on Home's
+  **Expiring & low stock** with what is left. Topped up above it, it is
+  *in stock* again. A quantity in words
+  ("half a bottle") is left as it is, and so is a status set by hand.
 - **Nothing half-filled** — an order can't be placed without its item,
   vendor, catalogue number and quantity. Configure chooses what any
   inventory requires.

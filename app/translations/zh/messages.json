@@ -277,5 +277,9 @@
   "Adult · %(clutch)s": "成鱼 · %(clutch)s",
   "Return mating · %(tank)s": "交配鱼归缸 · %(tank)s",
   "BioManager %(version)s is available": "BioManager %(version)s 已发布",
-  "Update the lab's server in Settings → Devices & copies.": "请在“设置 → 设备与副本”中更新实验室服务器。"
+  "Update the lab's server in Settings → Devices & copies.": "请在“设置 → 设备与副本”中更新实验室服务器。",
+  "%(label)s is running low (updated by %(actor)s)": "%(label)s 库存不足（%(actor)s 更新）",
+  "%(n)s of your items are running low (updated by %(actor)s): %(items)s": "你的 %(n)s 项库存不足（%(actor)s 更新）：%(items)s",
+  "%(label)s has run out (updated by %(actor)s)": "%(label)s 已用完（%(actor)s 更新）",
+  "%(n)s of your items have run out (updated by %(actor)s): %(items)s": "你的 %(n)s 项已用完（%(actor)s 更新）：%(items)s"
 }

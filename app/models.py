@@ -1628,6 +1628,10 @@ class InventoryItem(Base, _JsonAttrs):
     share_group_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     quantity: Mapped[str] = mapped_column(String(60), default="")
     unit: Mapped[str] = mapped_column(String(30), default="")
+    # "Low at": when the quantity reads as a number and falls to this (same
+    # unit), the item turns low (inventory_service.follow_stock_level).
+    # Empty: no level, the status is only what people set.
+    low_at: Mapped[float | None] = mapped_column(Float, nullable=True)
     vendor: Mapped[str] = mapped_column(String(120), default="")
     catalog_number: Mapped[str] = mapped_column(String(120), default="")
     lot: Mapped[str] = mapped_column(String(120), default="")
