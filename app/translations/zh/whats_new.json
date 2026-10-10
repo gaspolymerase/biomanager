@@ -76,5 +76,7 @@
   "A reagent, chemical, antibody, virus or primer can have a **Low at** level: when its quantity falls to it, the status turns low and its owner is told; at 0 it is empty.": "试剂、化学品、抗体、病毒和引物可以设 **低库存线**：数量降到这个数时，状态自动变为低库存并提醒它的主人；降到 0 时变为空。",
   "Drag a sheet's column headers into the order you need; **Configure** sets the order the lab starts with.": "拖动表格的列标题，把列排成你需要的顺序；**配置** 里可以设定全实验室默认的列顺序。",
   "A plasmid's **Primers** card can **Find saved primers**: every primer the lab already has that binds it, where and which way, and **Show on map**.": "质粒的 **引物** 卡片可以 **查找已有引物**：列出实验室已有的、能结合这条序列的引物，以及结合的位置和方向，还能 **在图谱上显示**。",
-  "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.": "实验室服务器接收桌面版的实验室时，可能报错“app_settings: 12 read, 13 written”并且不做任何更改；现在不会了。"
+  "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.": "实验室服务器接收桌面版的实验室时，可能报错“app_settings: 12 read, 13 written”并且不做任何更改；现在不会了。",
+  "**Import from Excel** fills a cage, rack or box written once per group into the blank rows below it, reads Chinese column headers, and reads a CSV saved by Excel on a Chinese Windows.": "**从 Excel 导入** 能把每组只写一次的笼号、架号或盒号沿用到下面的空白行，能识别中文列标题，也能读取中文 Windows 下 Excel 保存的 CSV。",
+  "On a Mac, the window's close, minimise and zoom buttons sit in the corner as in other Mac apps, and the welcome page's name and picture no longer crowd them.": "在 Mac 上，窗口左上角的关闭、最小化和缩放按钮与其他 Mac 应用的位置一致；欢迎页的名称和图片不再挤在按钮旁边。"
 }
