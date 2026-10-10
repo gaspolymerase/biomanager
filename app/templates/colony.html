@@ -476,7 +476,7 @@
                 </button>
                 {% for key, label, n in cs.purposes %}
                   <button type="button" class="dt-chip" data-cage-card-filter="purpose:{{ key }}" aria-pressed="false"
-                          title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
+                          title="{{ _('Every %(purpose)s cage', purpose=label|tr('cage purpose')|lower) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
                 {% endfor %}
               </div>
               <div class="dt-toolbar-spacer"></div>
@@ -517,7 +517,7 @@
                 </button>
                 {% for key, label, n in cs.purposes %}
                   <button type="button" class="dt-chip" data-dt-filter="purpose:{{ key }}" aria-pressed="false"
-                          title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
+                          title="{{ _('Every %(purpose)s cage', purpose=label|tr('cage purpose')|lower) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
                 {% endfor %}
               </div>
               <div class="dt-toolbar-spacer"></div>
@@ -634,7 +634,7 @@
                                 data-autosave="1" aria-label="{{ _('Purpose') }}" {% if locked %}disabled{% endif %}>
                           <option value="" {% if not cage.purpose %}selected{% endif %}>–</option>
                           {% for p_value in cs.purpose_choices %}
-                            <option value="{{ p_value }}" {% if p_value == cage.purpose %}selected{% endif %}>{{ p_value|tr }}</option>
+                            <option value="{{ p_value }}" {% if p_value == cage.purpose %}selected{% endif %}>{{ p_value|tr('cage purpose') }}</option>
                           {% endfor %}
                         </select>
                       </td>
@@ -700,7 +700,7 @@
                             <span class="cage-card-where">{{ icon('location') }}
                               {%- if cage.rack_name %} {{ cage.rack_name }}{% if cage.position %} · {{ cage.position }}{% endif %}
                               {%- elif cage.cage_location %} {{ cage.cage_location }}{% else %} {{ _('No rack') }}{% endif %}</span>
-                            {% if cage.purpose %}<span class="status-pill-static" data-status="{{ cage.purpose|lower }}">{{ cage.purpose|tr }}</span>{% endif %}
+                            {% if cage.purpose %}<span class="status-pill-static" data-status="{{ cage.purpose|lower }}">{{ cage.purpose|tr('cage purpose') }}</span>{% endif %}
                             {% if cage.owner %}{{ cage.owner | owner_badge }}{% endif %}
                             {% if cage.genotype_summary or cage.genotype_auto %}
                               <span class="cage-card-geno" title="{{ _('Strain / genotype') }}">{{ cage.genotype_summary or cage.genotype_auto }}</span>
@@ -872,7 +872,7 @@
                 <input type="hidden" name="action" value="purpose">
                 <input type="hidden" name="scope" value="{{ scope }}">
                 <select name="value" aria-label="{{ _('Purpose') }}">
-                  {% for p_value in cs.purpose_choices %}<option value="{{ p_value }}">{{ p_value|tr }}</option>{% endfor %}
+                  {% for p_value in cs.purpose_choices %}<option value="{{ p_value }}">{{ p_value|tr('cage purpose') }}</option>{% endfor %}
                 </select>
                 <button type="submit" class="btn btn-sm">{{ _('Set purpose') }}</button>
               </form>
