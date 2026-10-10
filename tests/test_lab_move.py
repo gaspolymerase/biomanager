@@ -374,8 +374,11 @@ class MovingToAServer(AppTestCase):
 
 class SavingTheWholeLab(AppTestCase):
     def test_an_admin_on_a_server_downloads_it(self):
-        self.assertIn("Save the whole lab", self.get_ok(self.a, "/settings"))
-        self.assertNotIn("Save the whole lab", self.get_ok(self.m, "/settings"))
+        # The admin-only row's Save form (the words alone can also be in the
+        # What's new popup, which a member sees until they close it).
+        save = 'action="/settings/lab-file"'
+        self.assertIn(save, self.get_ok(self.a, "/settings"))
+        self.assertNotIn(save, self.get_ok(self.m, "/settings"))
         r = self.a.post("/settings/lab-file")
         self.assertEqual(r.mimetype, "application/zip")
         self.assertIn(".biomanager", r.headers["Content-Disposition"])
