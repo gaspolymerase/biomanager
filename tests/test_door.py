@@ -27,7 +27,8 @@ class FrontPage(AppTestCase):
         self.assertNotIn("What it does for you", html)
 
     def test_it_names_the_lab_and_lists_its_databases_but_not_personal_ones(self):
-        execute("insert or replace into app_settings (key, value) values ('lab_name', 'Rivera Lab')")
+        execute("delete from app_settings where key='lab_name'")
+        execute("insert into app_settings (key, value) values ('lab_name', 'Rivera Lab')")
         self.a.post("/inventory/new", data={"preset": "custom", "label": "Secret stash", "audience": "me"})
         html = self.get_ok(self.anonymous(), "/")
         self.assertIn("Sign in to Rivera Lab", html)

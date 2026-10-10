@@ -135,8 +135,10 @@ class TheLabFile(AppTestCase):
         return target
 
     def test_it_holds_the_lab_but_not_the_machines_own_settings(self):
-        execute("insert or replace into app_settings (key, value) values ('devices:state', '{\"phase\": \"away\"}')")
-        execute("insert or replace into app_settings (key, value) values ('lab_name', 'Rivera Lab')")
+        execute("delete from app_settings where key='devices:state'")
+        execute("insert into app_settings (key, value) values ('devices:state', '{\"phase\": \"away\"}')")
+        execute("delete from app_settings where key='lab_name'")
+        execute("insert into app_settings (key, value) values ('lab_name', 'Rivera Lab')")
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 made = self.make(Path(tmp))
