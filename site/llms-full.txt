@@ -412,15 +412,23 @@ A colony runs on dates that are easy to get wrong and tedious to keep: when a li
 
 What you stop doing: keeping the wean dates in your head or a wall calendar, retyping a litter into a sheet, rewriting cage cards by hand after a wean, and asking whose mouse a cage holds — every record carries its owner, and [who may change it](https://biomanager.org/guide/who-can-do-what).
 
-Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. In the Cages tab, a chip for each purpose (*Experiments*, *Breeder*…) shows only those cages.
+Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. Above the cages, **All**, **Active** (cages with living mice) and a button for each purpose show only those cages.
 
 *The mouse sheet*
 
 ### Racks and cages
 
-**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner, move them, or **Retire** them.
+**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose, an owner, a room and its mice. The purposes:
 
-The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). *Card ID*, right after the number, is the number on the facility's own cage card, if it has one. A cage's mice show the transgene columns the **Mice** tab shows: show or hide *Transgene 3* or *4* there under **Columns**, and the cages follow. **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and *Active, Breeding, Mine* filters. **Rack grid**: the racks from the front. The page remembers the one you used last.
+- **Breeding**: a mating cage, mating now. Only a Breeding cage has **Litter born**, **Genotyping** and **Wean**.
+
+- **Breeder**: the lab's breeding stock, the mice kept to be bred. Each person keeps part of the lab's stock, so a Breeder cage is shared with the lab unless its owner makes it personal, and the **Breeders** tab lists these cages.
+
+- **Experiment**: mice in an experiment.
+
+An admin changes the list under **Configure → Cage purposes** (or the **Dropdowns** tab, the same list), and each purpose added there gets its button above the cages. A cage counts as **Active** while it holds living mice. Select cages to set purpose or owner, move them, or **Retire** the empty ones: each leaves its rack and loses its purpose.
+
+The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). *Card ID*, right after the number, is the number on the facility's own cage card, if it has one. A cage's mice show the transgene columns the **Mice** tab shows: show or hide *Transgene 3* or *4* there under **Columns**, and the cages follow. **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and the same buttons, starting on *Active*. **Rack grid**: the racks from the front. The page remembers the one you used last.
 
 *A rack grid*
 
@@ -436,7 +444,7 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 ### Breeding: from litter to weaning
 
-On the **Cages** tab, open a breeding cage (its arrow or mice count) or find its card under **Cards**: **Litter born**, **Genotyping** and **Wean** are there, on cages whose purpose is *Breeder* or *Breeding*. **Create litter** numbers each litter L-1, L-2, L-3… (type your own ID instead if you like).
+Set up a mating by putting the breeders in a cage whose purpose is **Breeding**. On the **Cages** tab, open it (its arrow or mice count) or find its card under **Cards**: **Litter born**, **Genotyping** and **Wean** are there, and only on Breeding cages. **Create litter** numbers each litter L-1, L-2, L-3… (type your own ID instead if you like).
 
 1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and records the birth. BioManager works out weaning (P21) and genotyping (P28, or the day set in [Settings → General](https://biomanager.org/guide/lab-setup)), which appear on Home and the calendar when due — the same list in both. A cage holds one litter date, so a new litter replaces the last: if those pups are still in the cage, wean them first.
 
@@ -444,7 +452,7 @@ On the **Cages** tab, open a breeding cage (its arrow or mice count) or find its
 
 3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm.
 
-**Breeders** lists breeding cages — rack and position, how many of each sex — with their productivity, and flags breeders past 30 weeks. **Pick** takes a breeder as yours; its owner is notified.
+**Breeders** lists the Breeder cages, the lab's breeding stock: rack and position, and how many of each sex. Above them, the breeders in Breeder and Breeding cages are counted by genotype, and breeders past 30 weeks are flagged. **Pick** takes a breeder as yours to set up a mating; its owner is notified.
 
 ### Experiments, strains, dropdowns
 

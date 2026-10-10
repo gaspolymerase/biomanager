@@ -408,6 +408,14 @@ def rename_builtin(key: str):
     return redirect(url_for("organisms.configure_builtin", key=key))
 
 
+# What the colony's own cage purposes do (CLAUDE.md, "The mouse colony's words").
+CAGE_PURPOSE_HINTS = {
+    "breeder": "The lab's breeding stock: shared with the lab, listed under Breeders to pick from",
+    "breeding": "A mating cage: the only one with Litter born, Genotyping and Wean",
+    "experiment": "Mice in an experiment",
+}
+
+
 @bp.route("/builtin/<key>/configure")
 def configure_builtin(key: str):
     """Rename the mouse colony, zebrafish or plasmid pages, add columns of
@@ -428,7 +436,13 @@ def configure_builtin(key: str):
         label = inventories.builtin_labels(session)[key]
         on = lab.feature_on(session, key)
         fields = custom_fields.fields(session, key)
+        cage_purposes = None
+        if key == "colony":
+            from .models import DropdownOption
+            cage_purposes = session.scalars(select(DropdownOption).where(DropdownOption.field_name == "purpose")
+                                            .order_by(DropdownOption.option_value)).all()
     return render_template("organisms/builtin_configure.html", key=key, feature=feature, label=label,
+                           cage_purposes=cage_purposes, purpose_hints=CAGE_PURPOSE_HINTS,
                            default=inventories.BUILTIN_DATABASES[key][0], on=on, fields=fields,
                            takes_fields=key in custom_fields.DATABASES,
                            field_types=custom_fields.FIELD_TYPES, record_noun=custom_fields.NOUNS[key],

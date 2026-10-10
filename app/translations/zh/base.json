@@ -71,7 +71,6 @@
   "Devices": "设备",
   "About BioManager": "关于 BioManager",
   "Lab inventory, colonies and notebook in one place.": "实验室库存、动物群和实验记录本，集中在一处。",
-
   "What's new in BioManager %(version)s": "BioManager %(version)s 新功能",
   "BioManager was updated. In short:": "BioManager 已更新。简要说明：",
   "Close": "关闭",
@@ -81,10 +80,9 @@
   "Nothing to tell about this version.": "这个版本没有要特别说明的。",
   "Everything in %(version)s": "%(version)s 的全部更新",
   "Got it": "知道了",
-
   "Mark all read": "全部标为已读",
   "Transfers": "转移",
-  "Picked from breeders": "从繁殖笼取鼠",
+  "Picked from breeders": "从种鼠笼取鼠",
   "Genotyping": "基因型鉴定",
   "Lab news": "实验室动态",
   "Notebook and @mentions": "实验记录本和 @提及",
@@ -102,7 +100,6 @@
   "No unread notifications.": "没有未读通知。",
   "No notifications yet.": "还没有通知。",
   "You're told here when someone moves or gives you animals, records a genotype for yours, or your order is placed or arrives.": "有人移动动物或把动物转给你、为你的动物记录基因型，或你的订购已下单或到货时，会在这里告诉你。",
-
   "Getting started": "入门步骤",
   "%(done)s of %(total)s done": "已完成 %(done)s / %(total)s",
   "Done": "完成",
@@ -145,7 +142,6 @@
   "Request something in Orders": "在订购里提交申请",
   "New order: what, from whom, how many. You are told when it arrives.": "新建订购：买什么、向谁买、买多少。到货时会通知你。",
   "Add a plasmid of yours": "添加一个你的质粒",
-
   "Welcome": "欢迎",
   "A minute on how BioManager works for you": "花一分钟了解 BioManager 如何为你工作",
   "Welcome to %(lab)s, %(name)s": "%(name)s，欢迎来到 %(lab)s",
@@ -177,7 +173,6 @@
   "The <a href=\"%(url)s\" target=\"_blank\" rel=\"noopener\" data-milestone=\"guide\">user guide</a> explains every part of BioManager, step by step. <strong>Help</strong> at the bottom of the sidebar opens it any time.": "<a href=\"%(url)s\" target=\"_blank\" rel=\"noopener\" data-milestone=\"guide\">用户指南</a>一步步讲解 BioManager 的每个部分。随时可以用侧边栏底部的<strong>帮助</strong>打开它。",
   "Get started": "开始使用",
   "You can see this again from Settings.": "以后可以在设置中再次查看。",
-
   "Go home": "回到首页",
   "Back": "返回",
   "You don't have access to that": "你没有权限访问这里",
@@ -191,10 +186,8 @@
   "That page doesn't exist, or what it showed was deleted.": "这个页面不存在，或者它显示的内容已被删除。",
   "Something went wrong": "出了点问题",
   "Something went wrong on the server, so that wasn't done. Try again; if it keeps happening, use Send feedback to say what you were doing.": "服务器出了点问题，所以操作没有完成。请再试一次；如果一直这样，请用发送反馈告诉我们你当时在做什么。",
-
   "%(name)s is switched off: it is hidden from the sidebar and members can't open it.": "%(name)s 已关闭：它不会显示在侧边栏中，成员也无法打开。",
   "<a href=\"%(url)s\">Switch it on in Lab setup</a>.": "<a href=\"%(url)s\">在实验室设置中开启</a>。",
-
   "Overview": "概览",
   "Legacy summary view · the current dashboard lives on <a href=\"%(url)s\">Home</a>": "旧版摘要视图 · 现在的仪表板在<a href=\"%(url)s\">首页</a>",
   "Animals": "动物",
@@ -204,7 +197,6 @@
   "No events yet.": "还没有日程。",
   "Recent tasks": "最近的任务",
   "No tasks yet.": "还没有任务。",
-
   "Help and sign in": "帮助与登录",
   "Sign in": "登录",
   "A new BioManager": "全新的 BioManager",
@@ -240,7 +232,6 @@
   "On your phone": "在手机上查看",
   "Add BioManager to your home screen, or install the Android app.": "把 BioManager 添加到主屏幕，或安装 Android 应用。",
   "BioManager · free and open source · the lab's data stays with the lab": "BioManager · 免费开源 · 实验室的数据留在实验室",
-
   "Guest access": "访客登录",
   "Enter the code the lab gave you. It signs you in for as long as your access lasts.": "输入实验室给你的通行码。在你的访问期限内，它会让你保持登录。",
   "Code": "通行码",

@@ -329,13 +329,13 @@ class CageSharingTests(GroupCase):
         self.assertSaved(self.autosave(self.c, f"/colony/cages/{cage}/update", {"notes": "dosed"}))
 
     def test_the_cage_sheet_filters_by_purpose(self):
-        self.make_cage(self.m, purpose="Experiments")
+        self.make_cage(self.m, purpose="Experiment")
         self.make_cage(self.m, purpose="Breeder")
         html = self.get_ok(self.m, "/colony?view=cages&scope=all")
-        self.assertIn('data-dt-filter="purpose:experiments"', html)
+        self.assertIn('data-dt-filter="purpose:experiment"', html)
         self.assertIn('data-dt-filter="purpose:breeder"', html)
-        self.assertIn('data-cage-card-filter="purpose:experiments"', html)
-        self.assertIn('data-purpose="experiments"', html)
+        self.assertIn('data-cage-card-filter="purpose:experiment"', html)
+        self.assertIn('data-purpose="experiment"', html)
 
 
 class NotebookTests(GroupCase):

@@ -102,12 +102,17 @@ never what you may edit.
   mice inside (with the sex breakdown), litter born and the P21 weaning
   date side by side, then its genotype and owner. Type over a cage's
   number to renumber it; its mice go with it. A cage's mice show the
-  transgene columns the Mice tab shows. A chip for each purpose
-  (Experiments, Breeder…) shows just those cages.
+  transgene columns the Mice tab shows. A cage's purpose is **Breeding**
+  (a mating cage, the only one with Litter born, Genotyping and Wean),
+  **Breeder** (the lab's breeding stock, shared with the lab; each person
+  keeps part of it) or **Experiment**, and an admin can add the lab's own
+  under **Configure → Cage purposes**. Above the cages, **All**,
+  **Active** (cages with living mice) and a button per purpose show just
+  those cages.
   Each cage shows its mice beneath it, to edit right there and wean
   (**Close all** folds them to one row each), or switch to **Cards**: a
   card per cage with its mice and its actions, as on a rack.
-- **Litters** — on a breeding cage, **Litter born** records the birth
+- **Litters** — on a Breeding (mating) cage, **Litter born** records the birth
   once, and the weaning date (P21) and genotyping date (P28, or the day
   the lab sets in **Settings → General**) follow from it, on Home and the
   calendar. **Genotyping** takes the parents' mouse numbers and how many
@@ -117,9 +122,10 @@ never what you may edit.
   each row to a new or existing cage; weaning before P18 asks first, and
   a weaned litter leaves every list. Birth dates in the future are
   refused.
-- **Breeders** — breeding cages at a glance with their productivity,
-  breeders past 30 weeks flagged; **Pick** takes a breeder as yours, and
-  its owner is told.
+- **Breeders** — the Breeder cages, the lab's breeding stock, at a glance,
+  with the breeders counted by genotype and those past 30 weeks flagged;
+  **Pick** takes a breeder as yours to set up a mating, and its owner is
+  told.
 - **Strains** and **Experiments** — your lab's lines with owners, and
   groups of mice under one experiment with a shared treatment group.
   An experiment's page has its details on top; then a **sheet of its

@@ -58,6 +58,30 @@ from before the move update to, and which looks here for every update after.
 - Internal changes with nothing to see (a refactor, a test, a fix that restores
   documented behaviour) need no docs.
 
+## The mouse colony's words
+
+What a cage's **Purpose** means, as the lab's maintainer set it. Don't
+read them as synonyms or add meanings of your own:
+
+- **Breeding** is a mating cage, mating now. It is the only cage with
+  **Litter born**, **Genotyping** and **Wean**, and its litters are its
+  pups (`services.is_breeding_cage`).
+- **Breeder** is the lab's breeding stock: mice kept to be bred. Each
+  person keeps part of the lab's stock, so a Breeder cage starts shared
+  with the lab, and the **Breeders** tab lists these cages for anyone to
+  **Pick** from (`services.is_breeder_cage`, `models._breeder_cages_start_shared`).
+  It has no litter buttons.
+- **Experiment** is a cage of mice in an experiment.
+- There is no **Stock** and no **Retired** purpose. **Active** means the
+  cage holds living mice, nothing else (`services.cage_is_active`); an
+  empty cage is simply not active. **Retire** (a batch action) takes an
+  empty cage out of its rack and clears its purpose.
+- The bar above the cages is **All · Active ·** one button per purpose,
+  and the purposes are the lab's own list: the colony's **Configure →
+  Cage purposes**, the same list as its Settings tab's dropdown choices
+  (`dropdown_options`, field `purpose`). A new lab starts with Breeder,
+  Breeding and Experiment.
+
 ## Two rules the tests enforce
 
 - **One string literal per `gettext()` and `ngettext()` call.** The

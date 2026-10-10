@@ -49,7 +49,7 @@ def fill(n_mice: int, alive: float = 0.05) -> None:
         start_mouse = (s.scalar(select(MouseRecord.mouse_id).order_by(MouseRecord.mouse_id.desc()).limit(1)) or 0) + 1
         n_cages, n_litters = n_mice // 4, n_mice // 6
         t = time.time()
-        s.execute(insert(CageRecord), [{"cage_id": f"L{i:06d}", "owner": rnd.choice(users), "purpose": rnd.choice(["stock", "breeding", "experiment", "holding"]),
+        s.execute(insert(CageRecord), [{"cage_id": f"L{i:06d}", "owner": rnd.choice(users), "purpose": rnd.choice(["Breeder", "Breeding", "Experiment"]),
                                         "room": rnd.choice(["B12", "B14", "C3"]),
                                         "created_at": datetime.utcnow() - timedelta(days=rnd.randint(0, 1800))} for i in range(n_cages)])
         s.execute(insert(LitterRecord), [{"litter_id": f"LT{i:06d}", "date_of_birth": today - timedelta(days=rnd.randint(1, 1800)),

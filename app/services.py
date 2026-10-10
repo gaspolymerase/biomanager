@@ -65,7 +65,7 @@ DEFAULT_CHEMICALS = [
 ]
 DEFAULT_MOUSE_OPTIONS = {
     "gender": ["F", "M", "Unknown"],
-    "purpose": ["Breeder", "Breeding", "Exp"],
+    "purpose": ["Breeder", "Breeding", "Experiment"],
     "status": MOUSE_STATUS_OPTIONS,
     "genotype": ["WT"],
 }
@@ -914,7 +914,7 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
     ages = calculate_age_fields(dob)
     genotype_parts = transgene_parts(mouse)
     can_edit_breeder = current_role == "admin" or mouse.owner == current_username
-    cage_is_breeder = mouse.cage is not None and is_breeder_purpose(mouse.cage.purpose)
+    cage_is_breeder = mouse.cage is not None and holds_breeders(mouse.cage.purpose)
     return {
         "id": mouse.id,
         "mouse_id": mouse.mouse_id,
@@ -947,19 +947,38 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
     }
 
 
-# Cage purposes that make a cage a breeding cage: the Breeders tab lists
-# them and cage cards offer birth / genotyping / weaning on them. Labs
-# write it either way, so both spellings mean the same thing here. (A
-# "breeder" cage starts out shared with the lab: app/access.py.)
-BREEDER_PURPOSES = {"breeder", "breeding"}
+# What a cage's purpose means. They are two different cages; see "The
+# mouse colony's words" in CLAUDE.md before changing either.
+# - Breeding: a mating cage, mating now. Only it offers Litter born,
+#   Genotyping and Wean, and its litters are its pups.
+# - Breeder: the lab's breeding stock, mice kept to be bred. Each person
+#   keeps part of the lab's stock in them, so a Breeder cage starts out
+#   shared with the lab (app/access.py) and the Breeders tab lists them
+#   for anyone to Pick from.
+BREEDING_PURPOSE = "breeding"
+BREEDER_PURPOSE = "breeder"
+BREEDER_PURPOSES = {BREEDER_PURPOSE, BREEDING_PURPOSE}   # either: mice kept for breeding
 
 
-def is_breeder_purpose(purpose: str | None) -> bool:
+def is_breeding_cage(purpose: str | None) -> bool:
+    """A mating cage: the one with litters, genotyping and weaning."""
+    return (purpose or "").strip().lower() == BREEDING_PURPOSE
+
+
+def is_breeder_cage(purpose: str | None) -> bool:
+    """A cage of the lab's breeding stock (the Breeders tab)."""
+    return (purpose or "").strip().lower() == BREEDER_PURPOSE
+
+
+def holds_breeders(purpose: str | None) -> bool:
+    """Breeder or Breeding: its mice are breeders (the breeder summary)."""
     return (purpose or "").strip().lower() in BREEDER_PURPOSES
 
 
 def cage_is_active(cage: CageRecord) -> bool:
-    return cage.active_override or any(mouse_is_active(mouse) for mouse in cage.mice)
+    """Active means it holds living mice, and nothing else: an empty cage
+    is not active, whatever its purpose (there is no Retired purpose)."""
+    return any(mouse_is_active(mouse) for mouse in cage.mice)
 
 
 # Weaning at P21 is the standard; the home dashboard, cage cards and the
@@ -1143,7 +1162,7 @@ def breeder_summary(session) -> list[dict[str, object]]:
     for mouse in session.scalars(living_in_breeders).all():
         if not mouse_is_active(mouse):
             continue
-        if mouse.cage is None or not is_breeder_purpose(mouse.cage.purpose):
+        if mouse.cage is None or not holds_breeders(mouse.cage.purpose):
             continue
         dob = mouse.litter.date_of_birth if mouse.litter else None
         if dob is None:
@@ -1193,7 +1212,9 @@ def breeder_summary(session) -> list[dict[str, object]]:
 def breeder_mice(session, current_username: str | None, current_role: str | None) -> list[dict[str, object]]:
     from sqlalchemy.orm import selectinload
     cages = session.scalars(
-        select(CageRecord).where(func.lower(func.trim(CageRecord.purpose)).in_(BREEDER_PURPOSES))
+        # The lab's breeding stock to pick from: Breeder cages, not the
+        # mating (Breeding) cages, whose mice are in use.
+        select(CageRecord).where(func.lower(func.trim(CageRecord.purpose)) == BREEDER_PURPOSE)
         .options(selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack))
         .order_by(CageRecord.cage_id)
     ).all()

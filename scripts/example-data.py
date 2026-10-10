@@ -126,22 +126,23 @@ for number, name, background, supplier, desc in (
                                                "strain_background": background, "supplier": supplier,
                                                "description": desc})
 
-# cage, owner client, owner, rack, position, purpose, gave birth (days ago)
+# cage, owner client, owner, rack, position, purpose, gave birth (days ago).
+# Breeding: mating, so the cages with litters; Breeder: the lab's breeding stock.
 CAGES = [
     ("101", sam, "ex-sam", rack_a, "A1", "Breeding", 12),
     ("102", sam, "ex-sam", rack_a, "A2", "Breeding", 17),
-    ("103", sam, "ex-sam", rack_a, "A3", "Experiments", None),
-    ("104", sam, "ex-sam", rack_a, "A4", "Experiments", None),
+    ("103", sam, "ex-sam", rack_a, "A3", "Experiment", None),
+    ("104", sam, "ex-sam", rack_a, "A4", "Experiment", None),
     ("105", jordan, "ex-jordan", rack_a, "B1", "Breeding", 5),
-    ("106", jordan, "ex-jordan", rack_a, "B2", "Stock", None),
-    ("107", jordan, "ex-jordan", rack_a, "B3", "Experiments", None),
-    ("108", priya, "ex-priya", rack_a, "C1", "Stock", None),
-    ("109", priya, "ex-priya", rack_a, "C2", "Experiments", None),
+    ("106", jordan, "ex-jordan", rack_a, "B2", "Breeder", None),
+    ("107", jordan, "ex-jordan", rack_a, "B3", "Experiment", None),
+    ("108", priya, "ex-priya", rack_a, "C1", "Breeder", None),
+    ("109", priya, "ex-priya", rack_a, "C2", "Experiment", None),
     ("110", priya, "ex-priya", rack_a, "C3", "Breeding", 19),
-    ("111", alex, ADMIN, rack_b, "A1", "Stock", None),
-    ("112", alex, ADMIN, rack_b, "A2", "Stock", None),
-    ("113", sam, "ex-sam", rack_b, "B1", "Experiments", None),
-    ("114", jordan, "ex-jordan", rack_b, "B2", "Experiments", None),
+    ("111", alex, ADMIN, rack_b, "A1", "Breeder", None),
+    ("112", alex, ADMIN, rack_b, "A2", "Breeder", None),
+    ("113", sam, "ex-sam", rack_b, "B1", "Experiment", None),
+    ("114", jordan, "ex-jordan", rack_b, "B2", "Experiment", None),
 ]
 for code, c, owner, rack, pos, purpose, born in CAGES:
     c.post("/colony/cages/create", data={"cage_id": code, "owner": owner, "rack_id": str(rack),

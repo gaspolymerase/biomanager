@@ -521,9 +521,25 @@ Who may change what lives in one place, `app/access.py`:
   where it meant nothing before). Turning it off or on, or giving the cage
   to someone else, is `access.can_set_sharing()` / `can_manage()` (owner or
   admin; animal care may also reassign), not everyone a shared cage lets
-  edit. The whole lab can edit a shared cage and pick mice out of it. The
-  cage sheet has a chip for each purpose its cages have
-  (`cage_purpose_chips()`).
+  edit. The whole lab can edit a shared cage and pick mice out of it.
+- **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
+  *Breeding* is a mating cage: only it gets Litter born, Genotyping and
+  Wean (`services.is_breeding_cage()`, the row's `can_breed` and
+  `breeding`). *Breeder* is the lab's breeding stock: it starts shared
+  (above) and the Breeders tab lists these cages to Pick from
+  (`services.is_breeder_cage()`, `breeder_mice()`); the breeder summary
+  counts the mice in both (`holds_breeders()`). *Active* is living mice
+  only (`cage_is_active()`; the old `active_override` flag is ignored),
+  and there is no Retired purpose: the Retire batch action clears it.
+  The lab's purposes are the colony's `dropdown_options` rows with
+  `field_name = 'purpose'` (`cage_purposes()`; a new lab gets
+  `CAGE_PURPOSE_CHOICES`), edited on the Dropdowns tab or the colony's
+  Configure page (`organisms.configure_builtin`, posting to the same
+  `create_option` / `delete_option` with `back=configure`). The bar above
+  the cages is All, Active, then one chip per purpose
+  (`cage_purpose_chips()`). Revision 0029 wrote "Exp" and "Experiments" as
+  "Experiment", cleared "Retired", and took Stock and Retired out of the
+  choices.
 - **Unowned records stay open**, so records predating ownership don't lock
   anyone out.
 - **Lab common** (`is_shared`) on inventory items and plasmids

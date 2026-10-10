@@ -465,6 +465,8 @@
                 <input type="text" class="dt-search" placeholder="{{ _('Search cage, mouse, genotype, owner…') }}"
                        autocomplete="off" aria-label="{{ _('Search cage cards') }}" data-cage-card-search>
               </div>
+              {# All · Active (living mice) · one chip per purpose in the lab's
+                 purpose choices (Configure). CLAUDE.md: "The mouse colony's words". #}
               <div class="dt-chips" role="group" aria-label="{{ _('Show') }}">
                 <button type="button" class="dt-chip" data-cage-card-filter="" aria-pressed="false">
                   {{ _('All') }} <span class="dt-chip-count">{{ cage_rows|length }}</span>
@@ -472,26 +474,16 @@
                 <button type="button" class="dt-chip" data-cage-card-filter="active" aria-pressed="true" title="{{ _('Cages with living mice') }}">
                   {{ _('Active') }} <span class="dt-chip-count">{{ cs.active_count }}</span>
                 </button>
-                <button type="button" class="dt-chip" data-cage-card-filter="breeding" aria-pressed="false" title="{{ _('Purpose breeder or breeding') }}">
-                  {{ _('Breeding') }} <span class="dt-chip-count">{{ cs.breeding_count }}</span>
-                </button>
-                <button type="button" class="dt-chip" data-cage-card-filter="mine" aria-pressed="false">
-                  {{ _('Mine') }} <span class="dt-chip-count">{{ cs.mine_count }}</span>
-                </button>
+                {% for key, label, n in cs.purposes %}
+                  <button type="button" class="dt-chip" data-cage-card-filter="purpose:{{ key }}" aria-pressed="false"
+                          title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
+                {% endfor %}
               </div>
-              {% if cs.purposes|length > 1 %}
-                <div class="dt-chips" role="group" aria-label="{{ _('Purpose') }}">
-                  {% for key, label, n in cs.purposes %}
-                    <button type="button" class="dt-chip" data-cage-card-filter="purpose:{{ key }}" aria-pressed="false"
-                            title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
-                  {% endfor %}
-                </div>
-              {% endif %}
               <div class="dt-toolbar-spacer"></div>
               <a class="dt-toolbar-btn" href="{{ url_for('labels.cage_cards', scope=scope) }}"
                  title="{{ _('Printable cards for the cages in this scope') }}">{{ icon('qrcode') }} {{ _('Cage cards') }}</a>
               <button type="button" class="btn btn-primary" data-record-edit="cage-dialog"
-                      data-record-payload='{{ {"purpose": "Experiments", "count": 1} | tojson }}'>
+                      data-record-payload='{{ {"purpose": "Experiment", "count": 1} | tojson }}'>
                 {{ icon('plus') }} {{ _('New cage') }}
               </button>
             </div>
@@ -523,22 +515,11 @@
                         title="{{ _('Cages with living mice') }}">
                   {{ _('Active') }} <span class="dt-chip-count">{{ cs.active_count }}</span>
                 </button>
-                <button type="button" class="dt-chip" data-dt-filter="breeding:1" aria-pressed="false"
-                        title="{{ _('Purpose breeder or breeding') }}">
-                  {{ _('Breeding') }} <span class="dt-chip-count">{{ cs.breeding_count }}</span>
-                </button>
-                <button type="button" class="dt-chip" data-dt-filter="mine:true" aria-pressed="false">
-                  {{ _('Mine') }} <span class="dt-chip-count">{{ cs.mine_count }}</span>
-                </button>
+                {% for key, label, n in cs.purposes %}
+                  <button type="button" class="dt-chip" data-dt-filter="purpose:{{ key }}" aria-pressed="false"
+                          title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
+                {% endfor %}
               </div>
-              {% if cs.purposes|length > 1 %}
-                <div class="dt-chips" role="group" aria-label="{{ _('Purpose') }}">
-                  {% for key, label, n in cs.purposes %}
-                    <button type="button" class="dt-chip" data-dt-filter="purpose:{{ key }}" aria-pressed="false"
-                            title="{{ _('Every %(purpose)s cage', purpose=label|tr|lower) }}">{{ label|tr }} <span class="dt-chip-count">{{ n }}</span></button>
-                  {% endfor %}
-                </div>
-              {% endif %}
               <div class="dt-toolbar-spacer"></div>
               {{ sheet_ui.tools() }}
               <button type="button" class="dt-toolbar-btn" data-cage-expand-all aria-pressed="true"
@@ -546,7 +527,7 @@
               <a class="dt-toolbar-btn" href="{{ url_for('labels.cage_cards', scope=scope) }}"
                  title="{{ _('Printable cards for the cages in this scope') }}">{{ icon('qrcode') }} {{ _('Cage cards') }}</a>
               <button type="button" class="btn btn-primary" data-record-edit="cage-dialog"
-                      data-record-payload='{{ {"purpose": "Experiments", "count": 1} | tojson }}'>
+                      data-record-payload='{{ {"purpose": "Experiment", "count": 1} | tojson }}'>
                 {{ icon('plus') }} {{ _('New cage') }}
               </button>
             </div>
@@ -571,7 +552,7 @@
                     <th class="dt-sortable" data-sort-key="position" style="width: 56px;" data-dt-label="{{ _('Position') }}" title="{{ _("Position in the rack, named by the rack's scheme (e.g. D7)") }}">
                       <span class="dt-col-head">{{ icon('position', 'dt-col-icon') }}{{ _('Pos') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="purpose" style="width: 100px;" title="{{ _('What the cage is for. A Breeder cage is shared with the lab unless its owner makes it personal') }}">
+                    <th class="dt-sortable" data-sort-key="purpose" style="width: 100px;" title="{{ _('What the cage is for. Breeder: the lab’s breeding stock, shared with the lab unless its owner makes it personal. Breeding: mating now; only it has Litter born, Genotyping and Wean. Experiment: in an experiment.') }}">
                       <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="mice" style="width: 64px;" title="{{ _('Living mice, by sex') }}">
@@ -921,7 +902,7 @@
                 <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
               </form>
               <form method="post" action="{{ url_for('bulk_cages') }}" class="selbar-group" data-selection-form
-                    data-confirm="{{ _('Retire {n} cage(s)? Each is taken out of its rack and its purpose set to Retired. Cages that still hold living mice are kept. Undo from Batch history.') }}">
+                    data-confirm="{{ _('Retire {n} cage(s)? Each is taken out of its rack and loses its purpose and sharing. Cages that still hold living mice are kept. Undo from Batch history.') }}">
                 <input type="hidden" name="action" value="retire">
                 <input type="hidden" name="scope" value="{{ scope }}">
                 <button type="submit" class="btn btn-sm btn-danger">{{ icon('archive') }} {{ _('Retire') }}</button>
@@ -968,7 +949,7 @@
                 <input type="number" name="count" min="1" max="20" value="1"
                        title="{{ _('Several new cages get consecutive IDs, and consecutive free positions from the one given') }}">
               </label>
-              <label title="{{ _('What the cage is for: breeding, stock, an experiment…') }}">{{ _('Purpose') }} <input name="purpose" list="options-purpose"></label>
+              <label title="{{ _('Breeder: the lab’s breeding stock. Breeding: a mating cage. Experiment: in an experiment.') }}">{{ _('Purpose') }} <input name="purpose" list="options-purpose"></label>
               <label title="{{ _("The number on the facility's own cage card, if it has one") }}">{{ _('Card ID') }} <input name="card_id"></label>
               <label title="{{ _("A short genotype for the cage card, when the mice's own genotypes are too long") }}">{{ _('Genotype summary') }} <input name="genotype_summary"></label>
               <label>{{ _('Litter born') }} <input type="date" name="date_give_birth"></label>
@@ -1169,7 +1150,7 @@
         <div class="section-head">
           <div>
             <h2>{{ _('Lab breeders') }}</h2>
-            <p>{{ _('Every cage whose purpose is breeder or breeding. Search by cage, location, owner, genotype or any mouse field; Pick takes ownership of a breeder.') }}</p>
+            <p>{{ _('Every Breeder cage: the lab’s breeding stock, which each person keeps part of. Search by cage, location, owner, genotype or any mouse field; Pick takes ownership of a breeder to set up a mating.') }}</p>
           </div>
         </div>
         <div class="breeder-search-bar">
@@ -1239,7 +1220,7 @@
               </div>
             </article>
           {% else %}
-            <p>{{ _("No breeder cages yet. Set a cage's purpose to “breeder” or “breeding” to see it here.") }}</p>
+            <p>{{ _("No Breeder cages yet. Set a cage's purpose to Breeder to see it here.") }}</p>
           {% endfor %}
         </div>
       </section>
@@ -2199,7 +2180,8 @@ function weanDue(born) {
 (function () {
   const sheet = document.querySelector('.cage-sheet');
   if (!sheet) return;
-  const BREEDING = new Set(['breeder', 'breeding']);
+  // Litter born, Genotyping and Wean: a mating (Breeding) cage's only.
+  const BREEDING = new Set(['breeding']);
   const cageRow = (form) => document.getElementById(`cage-${form.id.replace('cage-update-', '')}`);
   const showWean = (row, due, state) => {
     const cell = row && row.querySelector('[data-cage-wean]');
@@ -2279,7 +2261,7 @@ function weanDue(born) {
     grid.querySelectorAll('[data-cage-card]').forEach((card) => {
       const byPurpose = cardFilter.startsWith('purpose:') ? cardFilter.slice(8) : null;
       const ok = (!cardFilter || (byPurpose !== null ? (card.dataset.purpose || '') === byPurpose
-        : cardFilter === 'breeding' ? card.dataset.breeding === '1' : card.dataset[cardFilter] === 'true'))
+        : card.dataset[cardFilter] === 'true'))
         && (!q || card.dataset.search.includes(q));
       card.hidden = !ok;
       if (ok) shown += 1;

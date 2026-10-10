@@ -255,7 +255,7 @@
   "A set-up is already running.": "已经有一个搭建任务在运行。",
   "%(who)s added %(db)s for %(group)s": "%(who)s 为 %(group)s 添加了 %(db)s",
   "%(who)s added %(db)s for the lab": "%(who)s 为实验室添加了 %(db)s",
-  "Mice, cages, litters, breeders, experiments and strains.": "小鼠、笼、窝、繁殖笼、实验和品系。",
+  "Mice, cages, litters, breeders, experiments and strains.": "小鼠、笼、窝、种鼠、实验和品系。",
   "Tanks on racks, fish, lines, clutches and matings.": "架子上的鱼缸、鱼、品系、卵批和配对。",
   "Plasmids with sequence maps, in boxes.": "带序列图谱的质粒，放在冻存盒中。",
   "Lab events, to-dos and colony dates in one calendar.": "实验室日程、待办和鼠群日期，都在一个日历里。",
