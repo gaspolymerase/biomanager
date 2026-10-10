@@ -22,9 +22,15 @@
  *
  * Search filters rows by the union of all data-* attributes. Sort uses
  * th.dt-sortable[data-sort-key]. Column widths and hidden columns are
- * persisted to localStorage keyed by data-table-id. A row may carry a
- * detail row, <tr data-detail-for="<its data-id>" hidden>, which moves and
- * pages with it (the page toggles its `hidden`).
+ * persisted to localStorage keyed by data-table-id, by the column's number
+ * as the page draws it; so is the order a person has dragged the columns
+ * into, by each column's key (its data-sort-key, else its name). A row may
+ * carry a detail row, <tr data-detail-for="<its data-id>" hidden>, which
+ * moves and pages with it (the page toggles its `hidden`).
+ *
+ * Columns that stay put when the others are moved: the pinned ones
+ * (.sheet-pin: the tick boxes, the ID, the actions), any th[data-dt-fixed],
+ * a header holding a checkbox, and one with no visible name.
  */
 
 (function () {
@@ -83,7 +89,9 @@
       this.page = 0;
       this.query = '';
       this.quick = null;   // {attr, value} from a .dt-chip
+      this._indexColumns();
       this.hidden = this._loadHiddenCols();
+      this.order = this._loadOrder();
       this.noun = card.dataset.noun || card.dataset.selectionNoun || 'entry';
       this.nounPlural = card.dataset.nounPlural || card.dataset.selectionNounPlural
         || (this.noun === 'entry' ? 'entries' : this.noun + 's');
@@ -107,6 +115,8 @@
       this._wireResize();
       this._wireExport();
       this._labelCells();
+      this._applyOrder();
+      this._wireColumnDrag();
       this._applyHidden();
       this._applyResizedWidths();
       this._restoreSort();
@@ -545,54 +555,334 @@
       btn.setAttribute('aria-haspopup', 'menu');
       // Pressed only when the columns differ from the page's defaults, so
       // a table that simply starts with empty columns tucked away is calm.
-      const defaults = () => Array.from(this.table.tHead.rows[0].cells)
-        .map((th, idx) => (th.dataset.defaultHidden === '1' ? idx : -1)).filter((i) => i >= 0);
+      const defaults = () => this.headers
+        .map((th, col) => (th.dataset.defaultHidden === '1' ? col : -1)).filter((i) => i >= 0);
       const sync = () => {
         const d = defaults();
         const same = d.length === this.hidden.size && d.every((i) => this.hidden.has(i));
-        btn.classList.toggle('is-active', !same);
+        btn.classList.toggle('is-active', !same || !this._orderIsDefault());
+      };
+      this._syncColumnsButton = sync;
+      /* The menu lists the columns in the order the sheet shows them. Each
+         that can move has ‹ › beside it (Move left / Move right), the way
+         to move one without dragging its header. */
+      const fill = (menu, focus) => {
+        menu.replaceChildren();
+        const title = document.createElement('div');
+        title.className = 'dt-menu-title';
+        title.textContent = t('Columns');
+        menu.appendChild(title);
+        const shown = this.order.filter((c) => this.headers[c].dataset.dtOff !== '1');
+        Array.from(this.table.tHead.rows[0].cells).forEach((th) => {
+          const col = this._col(th);
+          const label = this._columnLabel(th);
+          if (!label || th.dataset.dtOff === '1') return;   // checkbox and action columns, and one turned off
+          const line = document.createElement('div');
+          line.className = 'dt-menu-col';
+          const row = document.createElement('label');
+          row.className = 'dt-menu-item';
+          const box = document.createElement('input');
+          box.type = 'checkbox';
+          box.checked = !this.hidden.has(col);
+          box.addEventListener('change', () => {
+            if (box.checked) this.hidden.delete(col); else this.hidden.add(col);
+            this._saveHiddenCols();
+            this._applyHidden();
+            sync();
+          });
+          row.append(box, document.createTextNode(label));
+          line.appendChild(row);
+          if (this.movable.has(col)) {
+            const at = shown.indexOf(col);
+            [[-1, 'chevron-left', t('Move left'), t('Move %(name)s left', { name: label })],
+             [1, 'chevron-right', t('Move right'), t('Move %(name)s right', { name: label })]].forEach(([step, glyph, tip, said]) => {
+              const move = document.createElement('button');
+              move.type = 'button';
+              move.className = 'dt-menu-move';
+              move.title = tip;
+              move.setAttribute('aria-label', said);
+              move.dataset.col = col;
+              move.dataset.step = step;
+              move.innerHTML = `<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${glyph}"></use></svg>`;
+              move.disabled = at < 0 || !shown[at + step];
+              move.addEventListener('click', (event) => {
+                // The menu is drawn again, so this button leaves the page: kept
+                // from the document's click, which would take it for outside.
+                event.stopPropagation();
+                const order = this.order.slice();
+                const from = order.indexOf(col);
+                const to = order.indexOf(shown[at + step]);
+                if (from < 0 || to < 0) return;
+                order.splice(from, 1);
+                order.splice(to, 0, col);
+                this._setOrder(order);
+                fill(menu, { col, step });
+              });
+              line.appendChild(move);
+            });
+          } else {
+            line.appendChild(document.createElement('span')).className = 'dt-menu-move-gap';
+          }
+          menu.appendChild(line);
+        });
+        const all = document.createElement('button');
+        all.type = 'button';
+        all.className = 'dt-menu-action';
+        all.textContent = t('Show all columns');
+        all.addEventListener('click', () => {
+          this.hidden.clear();
+          this._saveHiddenCols();
+          this._applyHidden();
+          sync();
+          closeMenus();
+        });
+        menu.appendChild(all);
+        if (!this._orderIsDefault()) {
+          const reset = document.createElement('button');
+          reset.type = 'button';
+          reset.className = 'dt-menu-action';
+          reset.textContent = t('Reset column order');
+          reset.addEventListener('click', () => {
+            this._setOrder(this._defaultOrder());
+            closeMenus();
+          });
+          menu.appendChild(reset);
+        }
+        if (focus) {
+          const same = menu.querySelector(`.dt-menu-move[data-col="${focus.col}"][data-step="${focus.step}"]`);
+          const other = menu.querySelector(`.dt-menu-move[data-col="${focus.col}"]:not([data-step="${focus.step}"])`);
+          (same && !same.disabled ? same : other || same)?.focus();
+        }
       };
       btn.addEventListener('click', (event) => {
         event.stopPropagation();
         if (openMenu && openMenu._anchor === btn) { closeMenus(); return; }
-        const headers = Array.from(this.table.tHead.rows[0].cells);
-        this._openMenu(btn, (menu) => {
-          const title = document.createElement('div');
-          title.className = 'dt-menu-title';
-          title.textContent = t('Columns');
-          menu.appendChild(title);
-          headers.forEach((th, idx) => {
-            const label = this._columnLabel(th);
-            if (!label || th.dataset.dtOff === '1') return;   // checkbox and action columns, and one turned off
-            const row = document.createElement('label');
-            row.className = 'dt-menu-item';
-            const box = document.createElement('input');
-            box.type = 'checkbox';
-            box.checked = !this.hidden.has(idx);
-            box.addEventListener('change', () => {
-              if (box.checked) this.hidden.delete(idx); else this.hidden.add(idx);
-              this._saveHiddenCols();
-              this._applyHidden();
-              sync();
-            });
-            row.append(box, document.createTextNode(label));
-            menu.appendChild(row);
-          });
-          const all = document.createElement('button');
-          all.type = 'button';
-          all.className = 'dt-menu-action';
-          all.textContent = t('Show all columns');
-          all.addEventListener('click', () => {
-            this.hidden.clear();
-            this._saveHiddenCols();
-            this._applyHidden();
-            sync();
-            closeMenus();
-          });
-          menu.appendChild(all);
-        });
+        this._openMenu(btn, (menu) => fill(menu));
       });
       sync();
+    }
+
+    // -------- column order -----------------------------------------------
+    /* Every cell is marked with its column's number as the page draws it
+       (data-dt-col), so hidden columns and widths, which are saved by that
+       number, still find their column wherever it has been moved to. */
+    _indexColumns() {
+      this.headers = [];
+      this.colKeys = [];
+      this.movable = new Set();
+      if (!this.table || !this.table.tHead || !this.table.tHead.rows[0]) return;
+      this.headers = Array.from(this.table.tHead.rows[0].cells);
+      const n = this.headers.length;
+      const mark = (row) => {
+        if (row.cells.length !== n) return;
+        Array.from(row.cells).forEach((cell, col) => { cell.dataset.dtCol = String(col); });
+      };
+      Array.from(this.table.tHead.rows).forEach(mark);
+      this.rows.forEach(mark);
+      const seen = new Map();
+      this.colKeys = this.headers.map((th, col) => {
+        const base = th.dataset.colKey || th.dataset.sortKey || this._columnLabel(th) || `#${col}`;
+        const times = (seen.get(base) || 0) + 1;
+        seen.set(base, times);
+        return times > 1 ? `${base}~${times}` : base;
+      });
+      this.headers.forEach((th, col) => { if (!this._isFixedColumn(th)) this.movable.add(col); });
+    }
+
+    _col(cell) {
+      const col = cell && cell.dataset.dtCol;
+      return col === undefined ? -1 : Number(col);
+    }
+
+    _isFixedColumn(th) {
+      if (th.classList.contains('sheet-pin') || th.hasAttribute('data-dt-fixed')) return true;
+      if (th.querySelector('input[type=checkbox]')) return true;
+      const named = th.cloneNode(true);
+      named.querySelectorAll('.sr-only, .dt-col-resize').forEach((el) => el.remove());
+      return !named.textContent.trim();
+    }
+
+    _defaultOrder() {
+      return this.headers.map((th, col) => col).filter((col) => this.movable.has(col));
+    }
+
+    _orderIsDefault() {
+      return this._defaultOrder().every((col, i) => this.order[i] === col);
+    }
+
+    /* The saved order, by column key. A column the saved order doesn't
+       know (one added since) goes in after the column it follows on the
+       page; one that has gone is dropped. */
+    _loadOrder() {
+      const def = this._defaultOrder();
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(`dt:${this.id}:order`) || 'null'); } catch (_) {}
+      if (!Array.isArray(saved)) return def;
+      const byKey = new Map(def.map((col) => [this.colKeys[col], col]));
+      const order = [];
+      saved.forEach((key) => {
+        const col = byKey.get(key);
+        if (col !== undefined && !order.includes(col)) order.push(col);
+      });
+      def.forEach((col, i) => {
+        if (!order.includes(col)) order.splice(i ? order.indexOf(def[i - 1]) + 1 : 0, 0, col);
+      });
+      return order;
+    }
+
+    _setOrder(order) {
+      this.order = order;
+      try {
+        if (this._orderIsDefault()) localStorage.removeItem(`dt:${this.id}:order`);
+        else localStorage.setItem(`dt:${this.id}:order`, JSON.stringify(order.map((col) => this.colKeys[col])));
+      } catch (_) {}
+      this._applyOrder();
+      if (this._syncColumnsButton) this._syncColumnsButton();
+      if (this._measureSticky) this._measureSticky();
+    }
+
+    /* Moves the cells themselves, header and rows alike, so whatever reads
+       a row across (pasting a block, the export, a phone's cards) reads it
+       in the order shown. The fixed columns keep their places. */
+    _applyOrder() {
+      if (!this.headers.length) return;
+      let next = 0;
+      const sequence = this.headers.map((th, col) => (this.movable.has(col) ? this.order[next++] : col));
+      const place = (row) => {
+        const cells = row.cells;
+        if (cells.length !== sequence.length || sequence.every((col, i) => this._col(cells[i]) === col)) return;
+        const byCol = [];
+        Array.from(cells).forEach((cell) => { byCol[this._col(cell)] = cell; });
+        if (sequence.some((col) => !byCol[col])) return;
+        sequence.forEach((col) => row.appendChild(byCol[col]));
+      };
+      Array.from(this.table.tHead.rows).forEach(place);
+      this.rows.forEach(place);
+    }
+
+    /* Drag a column's header along the header row to move the column. A
+       line shows where it will land; it can't land among the fixed columns.
+       A press that doesn't move is still a click, which sorts. */
+    _wireColumnDrag() {
+      if (!this.table || !this.table.tHead || !this.movable.size) return;
+      const headRow = this.table.tHead.rows[0];
+      const scroller = this.table.closest('.dt-scroll');
+      headRow.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) return;
+        const th = event.target.closest('th');
+        if (!th || th.parentElement !== headRow || !this.movable.has(this._col(th))) return;
+        if (event.target.closest('.dt-col-resize, input, select, textarea, button, a')) return;
+        event.preventDefault();   // no text selection while dragging
+        const col = this._col(th);
+        const startX = event.clientX;
+        let dragging = false;
+        let target = null;
+        let lastX = startX;
+        let lastY = event.clientY;
+        let line = null;
+        let ghost = null;
+        let frame = 0;
+
+        const visibleMovable = () => Array.from(headRow.cells)
+          .filter((h) => this.movable.has(this._col(h)) && h.style.display !== 'none');
+        const plan = (x) => {
+          const heads = visibleMovable();
+          if (!heads.length) return null;
+          const before = heads.find((h) => { const r = h.getBoundingClientRect(); return x < r.left + r.width / 2; });
+          const last = heads[heads.length - 1];
+          const order = this.order.filter((c) => c !== col);
+          const at = before ? order.indexOf(this._col(before)) : order.indexOf(this._col(last)) + 1;
+          if (before === th || (!before && last === th) || at < 0) return { same: true };
+          order.splice(at, 0, col);
+          const edge = before ? before.getBoundingClientRect().left : last.getBoundingClientRect().right;
+          return { order, edge, same: order.every((c, i) => c === this.order[i]) };
+        };
+        const draw = () => {
+          target = plan(lastX);
+          if (ghost) { ghost.style.left = `${lastX + 12}px`; ghost.style.top = `${lastY + 12}px`; }
+          if (!target || target.same) { line.hidden = true; return; }
+          const box = this.table.getBoundingClientRect();
+          const clip = scroller ? scroller.getBoundingClientRect() : box;
+          const head = th.getBoundingClientRect();
+          line.hidden = false;
+          line.style.left = `${Math.max(clip.left, Math.min(clip.right, target.edge)) - 1}px`;
+          line.style.top = `${Math.max(0, head.top)}px`;
+          line.style.height = `${Math.max(head.height, Math.min(window.innerHeight, box.bottom) - Math.max(0, head.top))}px`;
+        };
+        // Near the edge of a sheet wider than its card, it scrolls sideways
+        // (inside the pinned columns, which don't move).
+        const pinned = (side) => Array.from(headRow.cells)
+          .filter((h) => h.classList.contains('sheet-pin') && h.style.display !== 'none'
+            && h.classList.contains('sheet-pin-end') === (side === 'right')
+            && getComputedStyle(h).position === 'sticky')
+          .reduce((w, h) => w + h.offsetWidth, 0);
+        let leftPinned = 0;
+        let rightPinned = 0;
+        const roll = () => {
+          frame = 0;
+          if (!dragging || !scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+          const r = scroller.getBoundingClientRect();
+          const from = r.left + leftPinned + 40;
+          const to = r.right - rightPinned - 40;
+          const dx = lastX < from ? -Math.ceil((from - lastX) / 3) : (lastX > to ? Math.ceil((lastX - to) / 3) : 0);
+          if (!dx) return;
+          const before = scroller.scrollLeft;
+          scroller.scrollLeft += dx;
+          if (scroller.scrollLeft === before) return;
+          draw();
+          frame = requestAnimationFrame(roll);
+        };
+        const begin = () => {
+          dragging = true;
+          leftPinned = pinned('left');
+          rightPinned = pinned('right');
+          document.body.classList.add('dt-col-moving');
+          th.classList.add('is-col-moving');
+          line = document.body.appendChild(document.createElement('div'));
+          line.className = 'dt-col-drop';
+          line.hidden = true;
+          ghost = document.body.appendChild(document.createElement('div'));
+          ghost.className = 'dt-col-ghost';
+          ghost.textContent = this._columnLabel(th);
+        };
+        const finish = (drop) => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.removeEventListener('keydown', onKey, true);
+          if (!dragging) return;
+          dragging = false;
+          if (frame) cancelAnimationFrame(frame);
+          document.body.classList.remove('dt-col-moving');
+          th.classList.remove('is-col-moving');
+          line.remove();
+          ghost.remove();
+          // The click that ends a drag is not a sort.
+          const swallow = (e) => { e.stopPropagation(); e.preventDefault(); };
+          window.addEventListener('click', swallow, true);
+          setTimeout(() => window.removeEventListener('click', swallow, true), 0);
+          if (drop && target && !target.same) this._setOrder(target.order);
+        };
+        const onMove = (ev) => {
+          lastX = ev.clientX;
+          lastY = ev.clientY;
+          if (!dragging) {
+            if (Math.abs(lastX - startX) < 6) return;
+            begin();
+          }
+          ev.preventDefault();
+          draw();
+          if (!frame) frame = requestAnimationFrame(roll);
+        };
+        const onUp = () => finish(true);
+        const onKey = (ev) => {
+          if (ev.key !== 'Escape' || !dragging) return;
+          ev.stopPropagation();
+          finish(false);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('keydown', onKey, true);
+      });
     }
 
     _wireSortButton() {
@@ -645,10 +935,11 @@
        "Sheets on a phone"): there is no header row to look up to. */
     _labelCells() {
       if (!this.table || !this.table.tHead || !this.table.tHead.rows[0]) return;
-      const labels = Array.from(this.table.tHead.rows[0].cells).map((th) => this._columnLabel(th));
+      const labels = this.headers.map((th) => this._columnLabel(th));
       this.rows.forEach((tr) => {
         Array.from(tr.cells).forEach((td, idx) => {
-          if (labels[idx] && !td.dataset.label) td.dataset.label = labels[idx];
+          const col = this._col(td) >= 0 ? this._col(td) : idx;
+          if (labels[col] && !td.dataset.label) td.dataset.label = labels[col];
         });
       });
     }
@@ -657,22 +948,21 @@
        whatever the Columns menu says, and is left out of that menu and of
        the export: the page has decided it (Samples' Custom tag, when this
        person hides it on the mouse sheet). It is not saved, so the column
-       numbers the menu saves stay those of the columns as drawn. */
-    _isHidden(idx) {
-      const th = this.table.tHead.rows[0].cells[idx];
-      return this.hidden.has(idx) || Boolean(th && th.dataset.dtOff === '1');
+       numbers the menu saves stay those of the columns as drawn.
+       `col` is that number (a cell's data-dt-col), wherever the column now is. */
+    _isHidden(col) {
+      const th = this.headers[col];
+      return this.hidden.has(col) || Boolean(th && th.dataset.dtOff === '1');
     }
 
     _applyHidden() {
       if (!this.table) return;
-      Array.from(this.table.tHead.rows).forEach((row) => {
-        Array.from(row.cells).forEach((th, idx) => { th.style.display = this._isHidden(idx) ? 'none' : ''; });
-      });
-      this.rows.forEach((tr) => {
-        Array.from(tr.cells).forEach((td, idx) => {
-          td.style.display = this._isHidden(idx) ? 'none' : '';
-        });
-      });
+      const apply = (cell, idx) => {
+        const col = this._col(cell);
+        cell.style.display = this._isHidden(col >= 0 ? col : idx) ? 'none' : '';
+      };
+      Array.from(this.table.tHead.rows).forEach((row) => Array.from(row.cells).forEach(apply));
+      this.rows.forEach((tr) => Array.from(tr.cells).forEach(apply));
     }
 
     /* Saved choice if there is one, else the columns the page marks
@@ -683,11 +973,9 @@
         if (raw) return new Set(JSON.parse(raw));
       } catch (_) { /* storage unavailable */ }
       const defaults = new Set();
-      if (this.table && this.table.tHead) {
-        Array.from(this.table.tHead.rows[0].cells).forEach((th, idx) => {
-          if (th.dataset.defaultHidden === '1') defaults.add(idx);
-        });
-      }
+      this.headers.forEach((th, col) => {
+        if (th.dataset.defaultHidden === '1') defaults.add(col);
+      });
       return defaults;
     }
 
@@ -698,7 +986,7 @@
     // -------- column resize ----------------------------------------------
     _wireResize() {
       if (!this.table || this.table.dataset.resizable !== '1') return;
-      const headers = Array.from(this.table.tHead.rows[0].cells);
+      const headers = this.headers;
       headers.forEach((th, idx) => {
         if (idx === headers.length - 1) return; // no handle on last col
         const handle = document.createElement('div');
@@ -750,7 +1038,7 @@
         const raw = localStorage.getItem(`dt:${this.id}:widths`);
         if (!raw) return;
         const map = JSON.parse(raw);
-        const headers = Array.from(this.table.tHead.rows[0].cells);
+        const headers = this.headers;
         Object.keys(map).forEach((idxStr) => {
           const idx = parseInt(idxStr, 10);
           const width = map[idxStr];
@@ -794,11 +1082,11 @@
     }
 
     /* Columns worth exporting: visible, and not the tick-box or actions
-       column. */
+       column, in the order shown (idx is the cell's place in its row). */
     _exportColumns() {
       const headers = Array.from(this.table.tHead.rows[0].cells);
       return headers.map((th, idx) => ({ th, idx })).filter(({ th, idx }) => {
-        if (this._isHidden(idx)) return false;
+        if (this._isHidden(this._col(th) >= 0 ? this._col(th) : idx)) return false;
         if (th.querySelector('input[type=checkbox]')) return false;
         const label = (th.textContent || '').replace(/\s+/g, ' ').trim();
         return label && label !== 'Actions' && label !== t('Actions');

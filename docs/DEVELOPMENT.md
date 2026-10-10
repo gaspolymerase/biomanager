@@ -328,6 +328,26 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
+- Its columns, per sheet in `localStorage`: `dt:<id>:hidden` (column
+  numbers) and `dt:<id>:widths` (number → px), both by the column's number
+  as the template draws it, and `dt:<id>:order`, the movable columns in the
+  order a person dragged them into (header drag, or the arrows in the
+  Columns menu), by key: `data-col-key`, else `data-sort-key`, else the
+  heading's text. On load `_indexColumns` marks every cell with its drawn
+  number (`data-dt-col`) and `_applyOrder` moves the cells themselves, so
+  `sheet.js`'s pasted blocks, the CSV export and a phone's cards read a row
+  in the order shown, while hidden columns and widths still find theirs by
+  `data-dt-col`. A key the saved order lacks (a column added since) goes in
+  after the column it follows in the template; one that has gone is
+  dropped. Pinned columns (`.sheet-pin`), a `th[data-dt-fixed]` (an
+  organism database's code), a header with a checkbox and one with no
+  visible name don't move and can't be dropped among. The order a lab sees
+  first is the template's: an inventory's `fields` list and the built-in
+  databases' own columns in Configure (Move up / Move down renumber
+  `field_<i>_*` in the order shown; an inventory's `col_sig` changes with
+  it, so a sheet keyed by position starts fresh), and an organism
+  database's `ModuleField.position` (`POST /organisms/<key>/field/<id>/move`,
+  `organism_service.move_field`).
 - The page scrolls, not the sheet. `.data-table-card` is `overflow: clip`
   (not a scroller), so its `.dt-toolbar` sticks to the top of
   `.shell-scroll` and its `.dt-bottom-bar` to the bottom;
@@ -746,6 +766,25 @@ pages are in `app/lab_routes.py`.
   none ticked saves as empty (`inventory_routes.several()` orders them by
   the field's choices and keeps one that isn't among them). Migration 0030
   moved the Hazard field labs already had onto it.
+- **Low at:** `inventory_items.low_at` (a nullable float, revision 0031)
+  is the level, in the quantity's unit, at which an item is low. Its sheet
+  column and dialog field show where `inventory_service.tracks_low()` holds
+  (the *quantity* feature, and statuses with "in stock" and "low"). The
+  quantity stays free text; `amount()` reads "12", "2.5", "2,5" (a decimal
+  comma) or "1,000" as a number and anything else as none.
+  `_item_from_form` calls `follow_stock_level()` when the quantity or the
+  level changed and the same save didn't set the status by hand: at or
+  below the level "in stock" turns "low", at 0 "empty" (or "used up",
+  whichever the list has; through `apply_status`, so the box cell is
+  freed), and above it again "in stock". Any other status (discarded, or
+  one a lab renamed) and a quantity that isn't a number are left alone. So
+  the sheet, the dialog, Set field and the API all follow it, and
+  `_row_json` sends the new status and `low_at` back. With Low at, the
+  sheet saves the quantity on change, not while typing. Leaving "in stock"
+  this way sets a transient `_ran_low` on the item, which `notify._item`
+  turns into one `orders`-category notice to its owner (not to whoever
+  made the change), so each fall below the level tells them once.
+  `attention_items()` carries the quantity and unit for Home.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
   number as text. `_item_from_form` reads a number, `#42`, a name or a
@@ -880,7 +919,27 @@ crossing the origin keeps `start > end`.
   card and `/plasmids/<id>/primers.csv`, and the Primers sheet's
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
-  Used to make leaves Primers databases out.
+  Used to make leaves Primers databases out. **Find saved primers**
+  (GitHub #62): `/plasmids/<id>/primer-sites` (`app.primer_sites`) checks
+  every record of every Primers database the person may see
+  (`saved_primers`: `list_modules` plus `lab.can_see`, so not someone
+  else's own) against the plasmid. `TemplateIndex` maps each 15-base
+  stretch of the top strand (across the origin when circular) to where it
+  starts, looks up each primer's 3′ 15 bases and their reverse complement,
+  and extends the hits with `_site`, the code `binding_sites` uses, so the
+  sites are the same (tests/test_primer_scan.py checks them against
+  `binding_sites` by brute force); 5,000 primers on 15 kb take about 10 ms
+  of matching, the endpoint about 0.1–0.2 s. Primers under 15 bases or
+  with other than ACGT in their 3′ 15 are passed over. The JSON's `hits`
+  are one per site, 1-based, with `exact`, `tail`, `annealed` and
+  `linked` (its Plasmid column names this one); records the Primers card
+  lists are counted in `listed`, not repeated, unless `?all=1` (a
+  record's read-only map, `inventory/sequence.html`). `static/primer-scan.js`
+  draws them on the editor (`#ove-root.oveEditor`) as primers whose ids
+  start `found-primer-`: the plasmid page's `onSave` drops those and skips
+  a save that would store nothing new (drawing re-sends the map), and
+  `_clean_features` drops any that still arrive, so they never reach
+  `features_json` or `sync_from_map`.
 - **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
   the pages, at `/plasmids/assembly`): a tray of fragments taken from the
   lab's plasmids — a whole one, one feature, a region, or a piece a digest

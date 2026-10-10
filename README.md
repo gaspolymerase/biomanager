@@ -312,7 +312,12 @@ the sequencing reads, gel photos and datasheets that belong with it, and
 they come along in Export my data. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
 where each binds, and **Copy for ordering** or **Export for ordering**
-gives the ticked ones to your oligo supplier.
+gives the ticked ones to your oligo supplier. Before ordering another,
+**Find saved primers** looks through every primer the lab has saved,
+whichever plasmid it was made for, and lists the ones that bind this
+sequence — exact matches, and those matching at the 3′ end with a 5′
+tail — and **Show on map** draws them on the map to look at, without
+saving them into it.
 
 <p align="center">
   <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
@@ -333,11 +338,11 @@ change:
 | --- | --- |
 | 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
-| ⚗️ **Reagents** | quantity, concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
+| ⚗️ **Reagents** | quantity (with a **Low at** level that marks a bottle low as it runs down), concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
 | 🦠 **Viruses** | AAV, lentivirus, rabies and other vectors: serotype, promoter, payload, titer, biosafety level, the date made, and the plasmid each was made from — which opens that plasmid, or its sequence and map to read, and whose page lists every virus made from it |
-| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
+| 🧬 **Primers & oligos** | sequence, direction, target and pair, with length, GC % and Tm worked out from the sequence; **Add primer pair** makes the forward and reverse at once, linked and side by side in a box; a primer drawn on a plasmid's map lands here with the plasmid named, **Find saved primers** on a plasmid lists the ones here that already bind it, and **Copy for ordering** / **Export for ordering** hand the ticked ones to your supplier |
 | 🧪 **Glycerol stocks** | bacteria carrying each plasmid: the plasmid, strain, colony, resistance, how it was checked and the date frozen, and its place in a −80 °C box; the plasmid's page lists its stocks and where each is |
 | 🧫 **Cell lines** | frozen vials of each line and clone: species, parent, passage, freeze date, cells per vial, mycoplasma result and date, and where each vial sits in the LN₂ boxes |
 | 📝 **Custom** | whatever you define |
@@ -354,6 +359,13 @@ database has a name of its own (one another database has is refused), so
 - **Expired is red** — a reagent, chemical, antibody or virus past its expiry date
   has a red dot, number, name and date; **Expired** and **Expiring soon**
   show only those.
+- **Low stock says so itself** — give a reagent, chemical, antibody, virus
+  or primer a **Low at** level, in the unit of its quantity. When the
+  quantity falls to it the status turns *low* (at 0, *empty*) and its owner
+  is told; a reagent, chemical, antibody or virus is then listed on Home's
+  **Expiring & low stock** with what is left. Topped up above it, it is
+  *in stock* again. A quantity in words
+  ("half a bottle") is left as it is, and so is a status set by hand.
 - **Nothing half-filled** — an order can't be placed without its item,
   vendor, catalogue number and quantity. Configure chooses what any
   inventory requires.
@@ -609,7 +621,10 @@ database has a name of its own (one another database has is refused), so
       <h4>📊 Spreadsheet-style editing</h4>
       Click a cell and type; it saves as you go. Every table sorts,
       filters, exports to CSV and prints, and keeps your sort and filter
-      (the filter also in its address, for a bookmark). The page scrolls,
+      (the filter also in its address, for a bookmark). Drag a column's
+      heading to put the columns you need first (or use the arrows under
+      <b>Columns</b>); your order is kept, and an admin sets the lab's
+      starting order in <b>Configure</b>. The page scrolls,
       not the table: its search and buttons stay at the top of the window
       and its count at the bottom, with <b>New</b> at the bottom left, which
       adds an empty row at the end to type in (a strain, fish, line, plasmid

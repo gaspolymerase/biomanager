@@ -7293,8 +7293,59 @@ def _plasmid_primers(db_session, p) -> dict:
                      "tm": attrs.get("tm", ""), "status": item.status, "where": where, "more_sites": max(len(sites) - 1, 0),
                      "tail": sites[0]["tail"] if sites else 0, "binds": bool(sites),
                      "url": url_for("inventory.module", key=module.key, open=item.id) if module else ""})
+    # Find saved primers: a sequence to look along, and primers to look through.
+    can_scan = bool(p.full_sequence) and bool(primer_records.visible_primer_databases(db_session))
     return {"rows": rows, "database": module.label if module else "",
-            "url": url_for("inventory.module", key=module.key) if module else ""}
+            "url": url_for("inventory.module", key=module.key) if module else "",
+            "can_scan": can_scan, "scan_url": url_for("plasmid_primer_sites", row_id=p.id)}
+
+
+FOUND_PRIMER_ID = "found-primer-"   # Find saved primers' marks on the map: shown, never saved
+
+
+def primer_sites(db_session, p, with_listed: bool = False) -> dict:
+    """Every saved primer the person may see that binds plasmid `p`, wherever
+    its Plasmid column points (GitHub #62: don't order a primer the lab
+    already has). The ones the plasmid's Primers card lists already are
+    counted, not repeated, unless `with_listed` (a page without that card).
+    Positions are 1-based, as the page shows them; a reverse primer's site
+    runs start→end along the top strand."""
+    template = p.full_sequence or ""
+    index = primer_records.TemplateIndex(template, bool(p.is_circular))
+    listed = set() if with_listed else {i.id for i in primer_records.primers_for(db_session, p)}
+    number = str(p.plasmid_id)
+    hits, scanned, already, found = [], 0, 0, set()
+    for module, item in primer_records.saved_primers(db_session):
+        attrs = item.attrs_dict
+        sequence = re.sub(r"[^A-Za-z]", "", str(attrs.get("sequence") or "")).upper()
+        if not sequence:
+            continue
+        scanned += 1
+        sites = index.sites(sequence)
+        if not sites:
+            continue
+        if item.id in listed:
+            already += 1
+            continue
+        found.add(item.id)
+        for s in sites:
+            forward = s["direction"] > 0
+            hits.append({
+                "id": item.id, "number": item.number, "name": item.name or f"#{item.number}",
+                "database": i18n.translate_value(module.label, "inventory"),
+                "url": url_for("inventory.module", key=module.key, open=item.id),
+                "sequence": sequence, "length": len(sequence),
+                "status": i18n.translate_value(item.status or "", "inventory"),
+                "start": s["start"] + 1, "end": s["end"] + 1,
+                "strand": 1 if forward else -1, "direction": "forward" if forward else "reverse",
+                "where": f"{s['start'] + 1}–{s['end'] + 1} {'→' if forward else '←'}",
+                "annealed": s["annealed"], "tail": s["tail"], "exact": s["tail"] == 0,
+                # Its Plasmid column names this one (in a database the card doesn't list, unless with_listed).
+                "linked": str(attrs.get(primer_records.TEMPLATE_KEY, "")).strip() == number,
+            })
+    hits.sort(key=lambda h: (h["start"], h["name"].lower()))
+    return {"ok": True, "length": len(template), "circular": bool(p.is_circular), "scanned": scanned,
+            "primers": len(found), "sites": len(hits), "listed": already, "hits": hits}
 
 
 def _parent_role_label(role: str) -> str:
@@ -8301,6 +8352,19 @@ def plasmid_primers_csv(row_id: int):
                     headers={"Content-Disposition": f'attachment; filename="{safe}-primers.csv"'})
 
 
+@app.route("/plasmids/<int:row_id>/primer-sites")
+@login_required
+def plasmid_primer_sites(row_id: int):
+    """Find saved primers (the Primers card's switch): JSON of every saved
+    primer that binds this plasmid (primer_sites). ?all=1 includes the ones
+    the plasmid's Primers card lists, for a page without it."""
+    with SessionLocal() as db_session:
+        p = db_session.get(PlasmidRecord, row_id)
+        if p is None:
+            return jsonify({"ok": False, "error": gettext("That plasmid no longer exists.")}), 404
+        return jsonify(primer_sites(db_session, p, with_listed=request.args.get("all") == "1"))
+
+
 @app.route("/plasmids/<int:row_id>/download.<fmt>")
 @login_required
 def plasmid_download(row_id: int, fmt: str):
@@ -8791,6 +8855,9 @@ def _clean_features(raw_features, length: int, kind: str = "feature") -> list[di
     translated = []
     for f in _annotation_list(raw_features):
         if not isinstance(f, dict):
+            continue
+        # Find saved primers draws them on the map to look at; they stay in Primers.
+        if str(f.get("id") or "").startswith(FOUND_PRIMER_ID):
             continue
         try:
             start = int(f.get("start", 0) or 0)

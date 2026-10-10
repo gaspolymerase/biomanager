@@ -5,7 +5,9 @@ record of its own in the lab's Primers database, with the plasmid in its
 **Plasmid** column, so it can be ordered and kept in a box like any primer.
 The plasmid's page lists its primers, finds where each binds, and copies or
 exports several at once for ordering. The assembly wizard saves the primers
-it designs through save_primer too.
+it designs through save_primer too. Find saved primers checks every
+primer the person may see, whatever plasmid it names, against a sequence
+(TemplateIndex), so a lab doesn't order a primer it already has.
 
 Matching keeps it idempotent: the editor saves after every edit and may not
 echo back the record id it was given, so a primer annotation is matched to
@@ -62,38 +64,100 @@ def binding_sites(template: str, circular: bool, primer: str, min_anchor: int = 
     sites = []
     for direction, strand_anchor in ((1, anchor), (-1, reverse_complement(anchor))):
         for m in re.finditer(f"(?={re.escape(strand_anchor)})", search):
-            pos = m.start()
-            if pos >= n:
-                continue
-            if direction == 1:
-                # 3′ end is at pos + anchor_len - 1; extend leftwards.
-                annealed = anchor_len
-                while annealed < len(primer):
-                    i = pos - (annealed - anchor_len) - 1
-                    if i < 0 and not circular:
-                        break
-                    if template[i % n] != primer[-annealed - 1]:
-                        break
-                    annealed += 1
-                end = (pos + anchor_len - 1) % n
-                start = (end - annealed + 1) % n
-            else:
-                # The reverse primer's 3′ end pairs with the template at pos;
-                # its reverse complement reads along the top strand from there.
-                annealed = anchor_len
-                rc = reverse_complement(primer)
-                while annealed < len(primer):
-                    i = pos + annealed
-                    if i >= n and not circular:
-                        break
-                    if template[i % n] != rc[annealed]:
-                        break
-                    annealed += 1
-                start = pos % n
-                end = (pos + annealed - 1) % n
-            sites.append({"start": start, "end": end, "direction": direction, "annealed": annealed,
-                          "tail": len(primer) - annealed})
+            if m.start() < n:
+                sites.append(_site(template, circular, primer, anchor_len, direction, m.start()))
     return sites
+
+
+def _site(template: str, circular: bool, primer: str, anchor_len: int, direction: int, pos: int) -> dict:
+    """The site of a primer whose 3′ `anchor_len` bases (on the reverse
+    strand, their reverse complement) sit at `pos` of the top strand,
+    extended towards the primer's 5′ end while the bases pair."""
+    n = len(template)
+    annealed = anchor_len
+    if direction == 1:
+        # 3′ end is at pos + anchor_len - 1; extend leftwards.
+        while annealed < len(primer):
+            i = pos - (annealed - anchor_len) - 1
+            if i < 0 and not circular:
+                break
+            if template[i % n] != primer[-annealed - 1]:
+                break
+            annealed += 1
+        end = (pos + anchor_len - 1) % n
+        start = (end - annealed + 1) % n
+    else:
+        # The reverse primer's 3′ end pairs with the template at pos;
+        # its reverse complement reads along the top strand from there.
+        rc = reverse_complement(primer)
+        while annealed < len(primer):
+            i = pos + annealed
+            if i >= n and not circular:
+                break
+            if template[i % n] != rc[annealed]:
+                break
+            annealed += 1
+        start = pos % n
+        end = (pos + annealed - 1) % n
+    return {"start": start, "end": end, "direction": direction, "annealed": annealed,
+            "tail": len(primer) - annealed}
+
+
+class TemplateIndex:
+    """Where every MIN_ANCHOR-base stretch of a template's top strand starts,
+    so that the lab's saved primers can be checked against it at once (Find
+    saved primers): a primer binds only where its 3′-terminal MIN_ANCHOR
+    bases, or their reverse complement, start. Each site is then extended as
+    binding_sites does, so the answer is the same as asking binding_sites of
+    every primer, in a fraction of the time."""
+
+    def __init__(self, template: str, circular: bool, k: int = MIN_ANCHOR):
+        self.template = (template or "").upper()
+        self.circular = bool(circular)
+        self.k = k
+        n = len(self.template)
+        # Across the origin too: an anchor may start in the last k-1 bases.
+        search = self.template + (self.template[:k - 1] if self.circular else "")
+        self.starts: dict[str, list[int]] = {}
+        for i in range(min(n, len(search) - k + 1)):
+            self.starts.setdefault(search[i:i + k], []).append(i)
+
+    def sites(self, primer: str) -> list[dict]:
+        """binding_sites(template, circular, primer) for a primer of at
+        least k bases whose 3′ end is plain A, C, G, T (others: [])."""
+        primer = re.sub(r"[^A-Za-z]", "", primer or "").upper()
+        if len(primer) < self.k:
+            return []
+        anchor = primer[-self.k:]
+        if not _PLAIN.fullmatch(anchor):
+            return []
+        return [_site(self.template, self.circular, primer, self.k, direction, pos)
+                for direction, strand_anchor in ((1, anchor), (-1, reverse_complement(anchor)))
+                for pos in self.starts.get(strand_anchor, ())]
+
+
+_PLAIN = re.compile(r"[ACGT]+")
+
+
+def visible_primer_databases(session) -> list[InventoryModule]:
+    """The Primers databases this person may see: the lab's, their own,
+    their project groups' (not someone else's own, nor one switched off)."""
+    from . import inventory_service as inventories
+    from . import lab
+
+    return [m for m in inventories.list_modules(session) if m.kind == "primers" and lab.can_see(m)]
+
+
+def saved_primers(session) -> list[tuple[InventoryModule, InventoryItem]]:
+    """Every record in the Primers databases this person may see, as
+    (database, record) pairs."""
+    modules = visible_primer_databases(session)
+    if not modules:
+        return []
+    by_id = {m.id: m for m in modules}
+    items = session.scalars(select(InventoryItem).where(InventoryItem.module_id_fk.in_(list(by_id)))
+                            .order_by(InventoryItem.module_id_fk, InventoryItem.number))
+    return [(by_id[i.module_id_fk], i) for i in items]
 
 
 def primers_module(session, user: str = "", create: bool = True) -> InventoryModule | None:

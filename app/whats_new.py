@@ -30,6 +30,21 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.5": {
+        "new": [
+            "A reagent, chemical, antibody, virus or primer can have a **Low at** level: when its quantity falls to it, the status turns low and its owner is told; at 0 it is empty.",
+            "Drag a sheet's column headers into the order you need; **Configure** sets the order the lab starts with.",
+            "A plasmid's **Primers** card can **Find saved primers**: every primer the lab already has that binds it, where and which way, and **Show on map**.",
+        ],
+        "fixed": [
+            "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.",
+        ],
+    },
+    "1.5.4": {
+        "fixed": [
+            "In the desktop app, **Open the lab** opens your lab's server in the window; it did nothing, and a second press went back.",
+        ],
+    },
     "1.5.3": {
         "fixed": [
             "On a Mac, **Open your lab** finds a lab server at an https address; it said no BioManager answered there.",

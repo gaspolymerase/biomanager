@@ -36,5 +36,14 @@
   "from the file, or type one": "取自文件，也可自己填写",
   "Copied %(n)s": "已复制 %(n)s 条",
   "%(n)s primer added to Primers": "已将 %(n)s 条引物加入引物库",
-  "%(n)s primers added to Primers": "已将 %(n)s 条引物加入引物库"
+  "%(n)s primers added to Primers": "已将 %(n)s 条引物加入引物库",
+  "exact match": "完全匹配",
+  "3′ %(annealed)s bases match · %(tail)s-base 5′ tail": "3′ 端 %(annealed)s 个碱基匹配 · 5′ 端有 %(tail)s 个碱基的尾巴",
+  "None of the %(n)s saved primers checked binds here.": "查找了 %(n)s 条已保存的引物，没有一条结合此序列。",
+  "1 saved primer binds here, of %(n)s checked.": "查找了 %(n)s 条已保存的引物，其中 1 条结合此序列。",
+  "%(found)s saved primers bind here, of %(n)s checked.": "查找了 %(n)s 条已保存的引物，其中 %(found)s 条结合此序列。",
+  "Those listed above aren’t repeated.": "上方已列出的不再重复。",
+  "names this plasmid": "已关联此质粒",
+  "Looking through the saved primers…": "正在查找已保存的引物…",
+  "Couldn’t look: %(error)s": "无法查找：%(error)s"
 }

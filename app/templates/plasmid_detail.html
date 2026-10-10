@@ -123,16 +123,22 @@
   </div>
 
   {# Primers that name this plasmid in the Primers database; the map's own primers land there (app/primer_records.py). #}
-  {% if primers.rows %}
-    <div class="card mt-4 overflow-hidden" id="plasmid-primers">
+  {# Find saved primers looks through every primer the lab has saved for ones that bind here (GitHub #62). #}
+  {% if primers.rows or primers.can_scan %}
+    {% import "_primer_scan.html" as scan with context %}
+    <div class="card mt-4 overflow-hidden" id="plasmid-primers"{% if primers.can_scan %} data-primer-scan data-scan-url="{{ primers.scan_url }}"{% endif %}>
       <header class="card-head flex flex-wrap items-center gap-3">
-        <h3 class="card-title">{{ _('Primers') }} <span class="badge badge-quiet">{{ primers.rows|length }}</span></h3>
-        <span class="text-[12px] text-muted">{% trans db=primers.database, url=primers.url %}Kept in <a href="{{ url }}">{{ db }}</a>, to order and to find in a box.{% endtrans %}</span>
-        <span class="ml-auto flex gap-2">
-          <button type="button" class="btn btn-sm" data-primers-copy>{{ icon('copy') }} {{ _('Copy for ordering') }}</button>
-          <a class="btn btn-sm" data-primers-export href="{{ url_for('plasmid_primers_csv', row_id=plasmid.row_id) }}">{{ icon('download') }} {{ _('Export for ordering') }}</a>
+        <h3 class="card-title">{{ _('Primers') }}{% if primers.rows %} <span class="badge badge-quiet">{{ primers.rows|length }}</span>{% endif %}</h3>
+        {% if primers.rows %}<span class="text-[12px] text-muted">{% trans db=primers.database, url=primers.url %}Kept in <a href="{{ url }}">{{ db }}</a>, to order and to find in a box.{% endtrans %}</span>{% endif %}
+        <span class="ml-auto flex flex-wrap items-center gap-2">
+          {% if primers.can_scan %}{{ scan.scan_switch() }}{% endif %}
+          {% if primers.rows %}
+            <button type="button" class="btn btn-sm" data-primers-copy>{{ icon('copy') }} {{ _('Copy for ordering') }}</button>
+            <a class="btn btn-sm" data-primers-export href="{{ url_for('plasmid_primers_csv', row_id=plasmid.row_id) }}">{{ icon('download') }} {{ _('Export for ordering') }}</a>
+          {% endif %}
         </span>
       </header>
+      {% if primers.rows %}
       <div class="overflow-x-auto">
         <table class="w-full text-[13px]">
           <thead><tr class="text-left text-muted">
@@ -153,6 +159,8 @@
           </tbody>
         </table>
       </div>
+      {% endif %}
+      {% if primers.can_scan %}{{ scan.scan_panel() }}{% endif %}
     </div>
   {% endif %}
 
@@ -414,7 +422,7 @@
 (function () {
   // The Primers card: tick some (or none for all), then copy or export them for ordering.
   const card = document.getElementById('plasmid-primers');
-  if (!card) return;
+  if (!card || !card.querySelector('[data-primers-export]')) return;
   const rows = () => Array.from(card.querySelectorAll('[data-primer-row]'));
   const picked = () => { const p = rows().filter((r) => r.querySelector('[data-primer-pick]').checked); return p.length ? p : rows(); };
   const exportLink = card.querySelector('[data-primers-export]');
@@ -437,6 +445,7 @@
 })();
 </script>
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
+<script src="{{ url_for('static', filename='primer-scan.js') }}?v={{ asset_version('primer-scan.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
 <script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
@@ -524,14 +533,33 @@
     // Clear our placeholder. OVE renders into an empty container.
     root.innerHTML = '';
 
+    // Find saved primers (primer-scan.js) draws marks whose ids start so on
+    // the map, to look at: they are left out of every save. Drawing them
+    // re-sends the map, so a save that would store nothing new is skipped.
+    const FOUND = 'found-primer-';
+    const listOf = (group) => (Array.isArray(group) ? group : Object.values(group || {})).filter(Boolean);
+    function withoutFound(sd) {
+      return Object.assign({}, sd, { primers: listOf(sd.primers).filter((p) => !String(p.id || '').startsWith(FOUND)) });
+    }
+    function saveKey(sd) {   // what the server keeps of a save (_clean_features)
+      const group = (g) => listOf(g).map((a) => JSON.stringify([a.name, a.start, a.end, a.forward, a.strand, a.type, a.color,
+        a.notes, a.bases, a.inventory_id, a.translationType, (a.locations || []).map((l) => [l.start, l.end])])).sort();
+      return JSON.stringify([sd.sequence, !!sd.circular, sd.name, group(sd.features), group(sd.primers),
+        group(sd.translations), group(sd.parts)]);
+    }
+    let savedKey = null;
+
     const editor = window.createVectorEditor(root, {
       editorName: `plasmid-${plasmidId}`,
       showMenuBar: true,
       readOnly: locked,
       shouldAutosave: !locked,  // calls onSave after every edit
       doNotUseAbsolutePosition: true,
-      onSave: function (event, sequenceData, editorState, onSuccess) {
+      onSave: function (event, rawSequenceData, editorState, onSuccess) {
         if (locked) return;
+        const sequenceData = withoutFound(rawSequenceData);
+        const key = saveKey(sequenceData);
+        if (key === savedKey) { if (onSuccess) onSuccess(); return; }
         say('saving', t('Saving…'));
         fetch(`/plasmids/${plasmidId}/sequence-save`, {
           method: 'POST',
@@ -541,6 +569,7 @@
           .then((r) => r.json().catch(() => ({ ok: false, error: t('The server answered %(status)s.', { status: r.status }) })))
           .then((j) => {
             if (j && j.ok) {
+              savedKey = key;
               const c = j.counts || { features: j.features };
               const parts = [t(c.features === 1 ? '%(n)s feature' : '%(n)s features', { n: c.features })];
               if (c.primers) parts.push(t(c.primers === 1 ? '%(n)s primer' : '%(n)s primers', { n: c.primers }));
@@ -570,6 +599,8 @@
           parts: data.parts || [],
         },
       });
+      const loaded = editor.getState && editor.getState();
+      if (loaded && loaded.sequenceData) savedKey = saveKey(withoutFound(loaded.sequenceData));
     } else {
       // Empty plasmid — start with a blank sequence so user can begin typing.
       editor.updateEditor({
@@ -582,6 +613,7 @@
         },
       });
     }
+    root.oveEditor = editor;   // for Find saved primers' Show on map
   });
 })();
 </script>

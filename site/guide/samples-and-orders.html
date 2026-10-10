@@ -202,6 +202,21 @@
           quantity, price and grant of the last time it was ordered. While it is already on order the button says <b>On order</b>, and
           the new order opens with a note naming the open one and who asked for it.</li>
       </ol>
+      <h2 id="low-stock">Low stock, from the quantity</h2>
+      <p>Reagents, chemicals, antibodies, viruses and primers have a <b>Low at</b> column beside <b>Qty</b> and <b>Unit</b>, and
+        the same field in the record's dialog under <i>Supply</i>. Write the quantity as a number (<code>12</code>, <code>2.5</code>
+        or <code>2,5</code>) and set Low at in the same unit; from then on the status follows it:</p>
+      <ul>
+        <li>When the quantity falls to Low at or below, the status turns <i>low</i>; at 0, <i>empty</i> (<i>used up</i> in Viruses and
+          Primers). Topped up above Low at, it is <i>in stock</i> again.</li>
+        <li>Its owner is told when it runs low, once each time, in their own language (under <i>Orders</i> in Settings → Notifications;
+          not for a change they made themselves). Low reagents, chemicals, antibodies and viruses are listed on Home's
+          <b>Expiring &amp; low stock</b> with what is left, and <b>Order again</b> starts the new order.</li>
+        <li>A status chosen by hand stays as chosen. A quantity in words (<i>half a bottle</i>), a discarded item, or one with no
+          Low at is left alone.</li>
+        <li>In the sheet, a quantity or Low at is saved when you leave the cell or press Enter, so typing <code>12</code> doesn't
+          pass through <code>1</code> on the way.</li>
+      </ul>
       <h2 id="every-inventory">Every inventory</h2>
       <ul>
         <li><b>Mine</b> and <b>Lab common</b> keep your own stock apart from the lab's shared shelf.</li>
@@ -229,10 +244,11 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 6 min read</p>
+      <p>On this page · 7 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#ordering-start-to-shelf">Ordering, start to shelf</a></li>
+        <li class="lvl2"><a href="#low-stock">Low stock, from the quantity</a></li>
         <li class="lvl2"><a href="#every-inventory">Every inventory</a></li>
       </ol>
     </nav>

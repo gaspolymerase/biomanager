@@ -1502,6 +1502,28 @@
            bg-transparent px-2.5 py-1.5 text-left text-[12px] font-medium text-brand-700;
   }
   .dt-menu-action:hover { @apply bg-brand-50; }
+  .dt-menu-action + .dt-menu-action { @apply mt-0 border-t-0; }
+  /* A column in the Columns menu: its tick box, then ‹ › to move it. */
+  .dt-menu-col { @apply flex items-center gap-0.5; }
+  .dt-menu-col > .dt-menu-item { @apply min-w-0 flex-1; }
+  .dt-menu-move {
+    @apply inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md border-0
+           bg-transparent text-sand-400 transition-colors;
+  }
+  .dt-menu-move svg { @apply size-[13px]; }
+  .dt-menu-move:hover:not(:disabled) { @apply bg-sand-300/40 text-ink; }
+  .dt-menu-move:disabled { @apply cursor-default opacity-30; }
+  .dt-menu-move-gap { @apply w-[50px] shrink-0; }
+
+  /* Moving a column by dragging its header (data-table.js): the header
+     lifts, a label follows the pointer and a line shows where it lands. */
+  body.dt-col-moving, body.dt-col-moving * { cursor: grabbing !important; user-select: none; }
+  .dt thead th.is-col-moving { @apply bg-brand-50 text-brand-700; }
+  .dt-col-drop { @apply pointer-events-none fixed z-100 w-0.5 rounded-full bg-brand-500; }
+  .dt-col-ghost {
+    @apply pointer-events-none fixed z-100 max-w-[220px] truncate rounded-lg border border-brand-200 bg-surface
+           px-2 py-1 text-[12px] font-semibold text-brand-700 shadow-pop;
+  }
 
   /* --- The sheet --------------------------------------------------------- */
 

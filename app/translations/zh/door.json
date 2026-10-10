@@ -129,5 +129,7 @@
   "%(who)s asks for an account": "%(who)s 申请账号",
   "%(who)s asks the lab's admins for help": "%(who)s 请实验室管理员帮忙",
   "They wrote: %(note)s Reach them at %(contact)s.": "留言：%(note)s 联系方式：%(contact)s。",
-  "Reach them at %(contact)s.": "联系方式：%(contact)s。"
+  "Reach them at %(contact)s.": "联系方式：%(contact)s。",
+  "Opening %(host)s…": "正在打开 %(host)s…",
+  "Open it": "打开"
 }

@@ -285,8 +285,14 @@ def apply(data: dict, uploads: Path) -> int:
                         conn.execute(text("SELECT setval(:s, :v)"), {"s": seq, "v": highest})
                 conn.execute(text("SET CONSTRAINTS ALL IMMEDIATE"))
             for table in tables:
-                got = conn.execute(select(func.count()).select_from(table)).scalar()
-                want = len(data.get(table.name) or []) + (len(kept) if table.name == "app_settings" else 0)
+                want = len(data.get(table.name) or [])
+                if table.name == "app_settings":
+                    # This machine's own keys are left out: a background job
+                    # (the update check) may write one meanwhile, and on
+                    # PostgreSQL this transaction sees it once it commits.
+                    got = sum(1 for (key,) in conn.execute(select(settings.c.key)) if not _machine_key(key))
+                else:
+                    got = conn.execute(select(func.count()).select_from(table)).scalar()
                 if got != want:
                     raise RuntimeError(f"{table.name}: {want} read, {got} written")
             trans.commit()

@@ -256,6 +256,9 @@
               {% if m.has('quantity') %}
                 <th class="dt-sortable" data-sort-key="quantity" style="width: 60px;"><span class="dt-col-head">{{ icon('count', 'dt-col-icon') }}{{ _('Qty') }}<span class="dt-sort-indicator"></span></span></th>
                 <th style="width: 56px;"><span class="dt-col-head">{{ icon('amount', 'dt-col-icon') }}{{ _('Unit') }}</span></th>
+                {% if low_stock %}
+                  <th class="dt-sortable" data-sort-key="low_at" style="width: 64px;" title="{{ _('When the quantity falls to this (in its unit), the status turns low; at 0, empty') }}"><span class="dt-col-head">{{ icon('bell', 'dt-col-icon') }}{{ _('Low at') }}<span class="dt-sort-indicator"></span></span></th>
+                {% endif %}
               {% endif %}
               {% if m.has('storage') %}
                 <th class="dt-sortable" data-sort-key="rack_id" style="width: 104px;"><span class="dt-col-head">{{ icon('box', 'dt-col-icon') }}{{ _('Box') }}<span class="dt-sort-indicator"></span></span></th>
@@ -345,8 +348,13 @@
                   <td><input class="ident" name="lot" form="{{ f }}" value="{{ i.lot }}" data-autosave="1" aria-label="{{ _('Lot') }}" {% if locked %}disabled{% endif %}></td>
                 {% endif %}
                 {% if m.has('quantity') %}
-                  <td><input name="quantity" form="{{ f }}" value="{{ i.quantity }}"{{ rem('quantity') }} data-autosave="1" aria-label="{{ _('Quantity') }}" {% if locked %}disabled{% endif %}></td>
+                  {# With Low at, a quantity is saved when you leave the cell: typing
+                     "12" over 20 would otherwise pass through "1", low. #}
+                  <td><input name="quantity" form="{{ f }}" value="{{ i.quantity }}"{{ rem('quantity') }} data-autosave="1"{% if low_stock %} data-autosave-on="change"{% endif %} aria-label="{{ _('Quantity') }}" {% if locked %}disabled{% endif %}></td>
                   <td><input name="unit" form="{{ f }}" value="{{ i.unit }}" placeholder="–"{{ rem('unit') }} data-autosave="1" aria-label="{{ _('Unit') }}" {% if locked %}disabled{% endif %}></td>
+                  {% if low_stock %}
+                    <td><input name="low_at" form="{{ f }}" value="{{ r.payload.low_at }}" placeholder="–" inputmode="decimal" data-autosave="1" data-autosave-on="change" aria-label="{{ _('Low at') }}" {% if locked %}disabled{% endif %}></td>
+                  {% endif %}
                 {% endif %}
                 {% if m.has('storage') %}
                   <td>
@@ -439,6 +447,10 @@
           <input type="hidden" name="received_on_was" value="{{ r.item.received_on or '' }}">
           <input type="hidden" name="rack_id_was" value="{{ r.item.rack_id_fk or '' }}">
           <input type="hidden" name="position_was" value="{{ r.position }}">
+          {% if low_stock %}
+            <input type="hidden" name="quantity_was" value="{{ r.item.quantity }}">
+            <input type="hidden" name="low_at_was" value="{{ r.payload.low_at }}">
+          {% endif %}
         </form>
       {% endfor %}
       <div class="dt-bottom-bar">
@@ -637,6 +649,9 @@
           {% if m.has('quantity') %}
             <label><span>{{ _('Quantity') }}{{ star('quantity') }}</span> <input name="quantity"{{ req('quantity') }}{{ rem('quantity') }}></label>
             <label><span>{{ _('Unit') }}{{ star('unit') }}</span> <input name="unit" placeholder="{{ _('mL, mg, µL, kit…') }}"{{ req('unit') }}{{ rem('unit') }}></label>
+            {% if low_stock %}
+              <label title="{{ _('When the quantity falls to this (in its unit), the status turns low; at 0, empty') }}"><span>{{ _('Low at') }}</span> <input name="low_at" inputmode="decimal" placeholder="{{ _('e.g. 2') }}"></label>
+            {% endif %}
           {% endif %}
         </fieldset>
       {% endif %}

@@ -283,7 +283,9 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
-- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns and widths are remembered on that computer.
+- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
+
+- **Put the important columns first**: Drag a column's heading left or right; a line shows where it will land. Without a mouse, open **Columns** and use the arrows beside a column (**Move left**, **Move right**). The tick boxes, the number or ID, and the buttons at the end stay where they are. Pasting a block, **Export** and a phone's cards follow the order you set. **Reset column order**, under **Columns**, puts it back. The order you start from is the lab's: an admin sets it under the database's **Configure**, with the arrows beside each column of your own (**Move up**, **Move down**).
 
 - **On a phone**: A sheet becomes one card per row: the number and its buttons on top, then each column by name. **Columns** still hides what you don't need there.
 
@@ -359,7 +361,7 @@ Source: https://biomanager.org/guide/undo-and-history
 
 The bell and what it tells you: your animals moved, orders arriving, @mentions and genotyping reminders, and how to choose them.
 
-The bell at the top shows what happened while you were away: someone moved your animals or vials, picked from your breeders, recorded a genotype on your mice, an order you placed was ordered, arrived or was cancelled, someone wrote `@you` in a record's notes (a reagent, an order, a plasmid, a cage) or a notebook comment, and lab news such as being made admin. Admins are told of each new order request. A notice about one record opens that record — an order notice opens the order. A daily note reminds you of pups waiting to be genotyped. Choose which kinds you get in **Settings → Notifications**; you're never notified of your own changes.
+The bell at the top shows what happened while you were away: someone moved your animals or vials, picked from your breeders, recorded a genotype on your mice, an order you placed was ordered, arrived or was cancelled, stock of yours [ran low](https://biomanager.org/guide/samples-and-orders#low-stock), someone wrote `@you` in a record's notes (a reagent, an order, a plasmid, a cage) or a notebook comment, and lab news such as being made admin. Admins are told of each new order request. A notice about one record opens that record — an order notice opens the order. A daily note reminds you of pups waiting to be genotyped. Choose which kinds you get in **Settings → Notifications**; you're never notified of your own changes.
 
 If your server sends email, a daily digest of what's overdue or coming up — flips, weanings, returns, expiring stock — goes to the email on your profile (**Settings → Notifications → Reminder email**). Clear the email to stop it.
 
@@ -713,7 +715,7 @@ However many you end up with, the sidebar lists them in the order they were adde
 
 - **Who it is for** — *Just me* (a personal database only you and admins see) or *The whole lab*.
 
-**The mouse colony, zebrafish and plasmids take columns of your own too.** Open the database, press **Configure**, and under **Your own columns** add what it doesn't keep yet — an organ weight as a number, a perfusion as a choice of *yes* / *no*, a date, a lab member, a link. Each one appears in that database's sheet and in each record, edited in place like any other cell, and comes along in **Export my data**. Untick *In table* for something you want on the record but not as a column. Taking a column away hides it and keeps what your records hold in it, so putting it back shows the values again. Only an admin changes them, because they are the lab's columns, the same for everyone.
+**The mouse colony, zebrafish and plasmids take columns of your own too.** Open the database, press **Configure**, and under **Your own columns** add what it doesn't keep yet — an organ weight as a number, a perfusion as a choice of *yes* / *no*, a date, a lab member, a link. Each one appears in that database's sheet and in each record, edited in place like any other cell, and comes along in **Export my data**. Untick *In table* for something you want on the record but not as a column. The arrows beside each (**Move up**, **Move down**) set the order its columns take in the sheet for the whole lab; anyone can still drag the columns of their own sheet into another order. Taking a column away hides it and keeps what your records hold in it, so putting it back shows the values again. Only an admin changes them, because they are the lab's columns, the same for everyone.
 
 A column of your own works like the ones that come with the database: tick rows and **Set field** sets it on all of them at once, **Import from Excel** matches a spreadsheet column to it by name, and search finds a record by what it holds — type the ear-punch code or the batch number into the search box and the records with it come up.
 
@@ -743,7 +745,7 @@ A construct is only as good as what you can still prove about it a year later: w
 
 | Designing it | **Assemble a plasmid** builds the next construct out of the ones you already have — digest and ligate, Gibson or Golden Gate — and the product records what it was made from, so a year later the family tree answers the question instead of your memory. |
 |---|---|
-| The primers it needs | Primers the wizard designs, and any you draw on a map yourself, land in the lab's **Primers** database marked *to order*, with the plasmid beside them. Tick them and **Copy for ordering** hands the list to your supplier. |
+| The primers it needs | Primers the wizard designs, and any you draw on a map yourself, land in the lab's **Primers** database marked *to order*, with the plasmid beside them. Tick them and **Copy for ordering** hands the list to your supplier — after **Find saved primers** has shown any the lab already has that bind. |
 | Checking what you got | **Detect features** marks the lab's known elements on a new map, and the sequencing reads that confirmed the clone live on the plasmid itself under **Files**, with the gel photo. |
 | Finding the tube | Every plasmid has a box position, and the bacteria carrying it sit in **Glycerol stocks** with their own box — so "which tube" has an answer that is not a colleague's memory. |
 | Handing it on | A virus made from it names the plasmid; the plasmid's page lists what was made from it. Download it as GenBank whenever someone outside the lab asks. |
@@ -777,6 +779,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 - **Assemble a plasmid**, from the top of Plasmids or from above any map, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). When you cut a plasmid, only the enzymes that actually have a site in it are offered, with how many sites each has and the single cutters first, and the piece you pick is drawn on a ring of the plasmid it came off, so you can see which part comes out before you take it. Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
 
 - A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
+
+- Before you order a new primer, turn on **Find saved primers** on that card. It looks through every primer saved in the Primers databases you can see — whichever plasmid they were made for — and lists each one that binds this sequence: where, on which strand, and whether it is an *exact match* or matches only at its 3′ end with a 5′ tail (a restriction site, a homology arm, or a few bases that differ). Its name opens the primer, so you can see whether there is still a tube. **Show on map** draws them on the map in amber, to look at; they are not saved with the plasmid, and editing the map while they are shown leaves them out. A primer only counts if at least its last 15 bases match exactly. The same switch is on the read-only map that a glycerol stock or virus opens.
 
 ### Tubes, boxes and files
 
@@ -833,6 +837,18 @@ One engine, ten starting points, each with its own columns and statuses. Viruses
 3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, chemical, antibody or virus with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
 
 4. **Running low?** On any reagent, chemical, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
+
+### Low stock, from the quantity
+
+Reagents, chemicals, antibodies, viruses and primers have a **Low at** column beside **Qty** and **Unit**, and the same field in the record's dialog under *Supply*. Write the quantity as a number (`12`, `2.5` or `2,5`) and set Low at in the same unit; from then on the status follows it:
+
+- When the quantity falls to Low at or below, the status turns *low*; at 0, *empty* (*used up* in Viruses and Primers). Topped up above Low at, it is *in stock* again.
+
+- Its owner is told when it runs low, once each time, in their own language (under *Orders* in Settings → Notifications; not for a change they made themselves). Low reagents, chemicals, antibodies and viruses are listed on Home's **Expiring & low stock** with what is left, and **Order again** starts the new order.
+
+- A status chosen by hand stays as chosen. A quantity in words (*half a bottle*), a discarded item, or one with no Low at is left alone.
+
+- In the sheet, a quantity or Low at is saved when you leave the cell or press Enter, so typing `12` doesn't pass through `1` on the way.
 
 ### Every inventory
 

@@ -71,5 +71,10 @@
   "A chemical or reagent can have several hazards, including the controlled classes: drug precursor, explosive precursor, highly toxic (**Hazard**, ticked in a small menu).": "化学品和试剂可以同时有多种危险类别，包括管控类别：易制毒、易制爆、剧毒（**危险性**，在小菜单里勾选）。",
   "The notebook's **/** menu, **Insert** menu and toolbar are in Chinese, and find things by their Chinese names.": "实验记录本的 **/** 菜单、**插入** 菜单和工具栏都是中文了，也能用中文名称搜索。",
   "Plasmid editor: **Export** and **Import** have the right icons, and on a Mac the sequence lines up with the ruler.": "质粒编辑器：**导出** 和 **导入** 的图标不再画反；在 Mac 上，序列和标尺对齐了。",
-  "On a Mac, **Open your lab** finds a lab server at an https address; it said no BioManager answered there.": "在 Mac 上，**打开你的实验室** 能找到 https 地址的实验室服务器了；之前会说那里没有 BioManager 应答。"
+  "On a Mac, **Open your lab** finds a lab server at an https address; it said no BioManager answered there.": "在 Mac 上，**打开你的实验室** 能找到 https 地址的实验室服务器了；之前会说那里没有 BioManager 应答。",
+  "In the desktop app, **Open the lab** opens your lab's server in the window; it did nothing, and a second press went back.": "桌面版里，**打开实验室** 现在会在窗口中打开实验室的服务器；之前按了没有反应，再按一次会回到上一页。",
+  "A reagent, chemical, antibody, virus or primer can have a **Low at** level: when its quantity falls to it, the status turns low and its owner is told; at 0 it is empty.": "试剂、化学品、抗体、病毒和引物可以设 **低库存线**：数量降到这个数时，状态自动变为低库存并提醒它的主人；降到 0 时变为空。",
+  "Drag a sheet's column headers into the order you need; **Configure** sets the order the lab starts with.": "拖动表格的列标题，把列排成你需要的顺序；**配置** 里可以设定全实验室默认的列顺序。",
+  "A plasmid's **Primers** card can **Find saved primers**: every primer the lab already has that binds it, where and which way, and **Show on map**.": "质粒的 **引物** 卡片可以 **查找已有引物**：列出实验室已有的、能结合这条序列的引物，以及结合的位置和方向，还能 **在图谱上显示**。",
+  "A lab server taking in a lab from the desktop app could stop with “app_settings: 12 read, 13 written” and change nothing.": "实验室服务器接收桌面版的实验室时，可能报错“app_settings: 12 read, 13 written”并且不做任何更改；现在不会了。"
 }
