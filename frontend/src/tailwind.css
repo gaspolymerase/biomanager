@@ -320,6 +320,12 @@
                system-ui, sans-serif;
 }
 
+/* The computer's own font, for whoever picks it (Settings → Appearance):
+   SF Pro on a Mac, Segoe UI on Windows, then the Chinese font. */
+:root[data-font="system"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cjk), system-ui, sans-serif;
+}
+
 /* Reduce Transparency: every glass surface becomes solid. Increase
    Contrast: solid too, with a firmer outline. */
 @media (prefers-reduced-transparency: reduce) {

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}">
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font == 'system' %} data-font="system"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

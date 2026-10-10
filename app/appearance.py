@@ -400,5 +400,22 @@ def set_choice(session, username: str, glyph: str, color: str) -> tuple[str, str
     return glyph, color
 
 
+# The person's font (Settings → Appearance): Inter, which the app ships, or the
+# computer's own (SF Pro on a Mac, Segoe UI on Windows). base.html puts
+# data-font="system" on the page for the latter (frontend/src/tailwind.css).
+FONTS = ("inter", "system")
+
+
+def get_font(session, username: str) -> str:
+    value = inventory_service.get_setting(session, f"font:{username}", "")
+    return value if value in FONTS else FONTS[0]
+
+
+def set_font(session, username: str, font: str) -> str:
+    font = font if font in FONTS else FONTS[0]
+    inventory_service.set_setting(session, f"font:{username}", font)
+    return font
+
+
 def is_default(glyph: str, color: str) -> bool:
     return (glyph, color) == (DEFAULT_GLYPH, DEFAULT_COLOR)

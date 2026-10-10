@@ -258,13 +258,32 @@
 
   /* ------------------------------------------------- the desktop app's menus */
 
+  // A call to the desktop app (desktop_menu.DesktopApi). pywebview builds
+  // window.pywebview.api with new Function() and sends answers back through
+  // eval, both of which the page's CSP refuses; so this uses the call
+  // channel under them, and the app answers, where it needs to, by calling
+  // the page itself (desktop_menu._js).
+  function desktopCall(name, ...args) {
+    const pv = window.pywebview;
+    if (!pv || typeof pv._jsApiCallback !== 'function') return false;
+    pv._jsApiCallback(name, args, String(Math.random()).slice(2));
+    return true;
+  }
+  // Run `fn` once the desktop app's channel is there (pywebview adds it
+  // after the page loads); never outside the app.
+  function whenDesktop(fn) {
+    let tries = 0;
+    const look = () => {
+      if (window.pywebview && typeof window.pywebview._jsApiCallback === 'function') fn();
+      else if (++tries < 50) setTimeout(look, 100);
+    };
+    look();
+  }
+
   // In the desktop app, the Go menu lists what this sidebar shows
-  // (desktop_menu.py, through pywebview's bridge). Anywhere else there is
-  // no window.pywebview and this does nothing.
+  // (desktop_menu.py). Anywhere else this does nothing.
   function shareNavWithDesktop() {
     const send = () => {
-      const api = window.pywebview && window.pywebview.api;
-      if (!api || typeof api.set_nav !== 'function') return;
       const links = (root) => [...root.querySelectorAll('a.rail-item[href], .rail-pop a[href]')]
         .filter((a) => a.getAttribute('href').startsWith('/'))
         .map((a) => ({ label: a.dataset.label || a.textContent.trim(), url: a.getAttribute('href') }));
@@ -279,11 +298,9 @@
           .map((a) => ({ label: a.dataset.label || a.textContent.trim(), url: a.getAttribute('href') }))];
         sections.push({ label: t('More'), links: more });
       }
-      api.set_nav(sections);
+      desktopCall('set_nav', sections);
     };
-    const ready = () => window.pywebview && window.pywebview.api && typeof window.pywebview.api.set_nav === 'function';
-    if (ready()) send();
-    else window.addEventListener('pywebviewready', send, { once: true });
+    whenDesktop(send);
   }
 
   /* ------------------------------------------------- arranging the rail */
@@ -672,7 +689,7 @@
     init();
   }
 
-  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer };
+  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer, desktopCall, whenDesktop };
 })();
 
 /* Confirm before a destructive submit: <form data-confirm="Delete V12?">,

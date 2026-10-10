@@ -117,6 +117,8 @@ BioManager then makes those databases, the racks and incubators too, and shows t
 
 **English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Appearance & language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
 
+**Easier to read.** Text is set in Inter, which tells I, l and 1 apart in IDs and genotypes, with your computer's own Chinese font. **Settings → Appearance & language → Font** switches to the computer's font instead (SF Pro on a Mac, Segoe UI on Windows). **Text size** there makes everything smaller or larger in the Mac app; in a browser, its zoom does the same (`⌘` `+` and `⌘` `−`, or `Ctrl` on Windows).
+
 ### Troubleshooting
 
 #### The app won't open on my Mac

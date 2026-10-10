@@ -50,8 +50,11 @@ DESKTOP = [
      ["[data-layout=cards]", "button:has-text('Genotyping')"], "#genotyping-modal"),
     # Set it back first, so the shot works whether or not this order has
     # already been received: only a change to received raises the offer.
+    # The orders shot left the board showing (the page remembers): the
+    # table first.
     ("task-stock", "/orders", "light",
-     [("select.status-pill", "ordered"), ("select.status-pill", "received")], "#stock-offer-dialog"),
+     ["[data-view-switch] [data-layout=table]", ("select.status-pill", "ordered"), ("select.status-pill", "received")],
+     "#stock-offer-dialog"),
     ("task-booking", "/calendar", "light",
      ["#cal-new-more", "button.menu-item[data-new=booking]"], "#biocal-modal"),
     # Signing opens a panel in the page's drawer, not a dialog — the control

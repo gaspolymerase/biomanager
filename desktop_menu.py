@@ -69,6 +69,29 @@ class DesktopApi:
         this_computer()
         return True
 
+    # Settings → Appearance → Text size: the window's zoom (View → Zoom In /
+    # Out), which only a Mac's window lets us set. Elsewhere these answer
+    # None, and the page names the browser's zoom keys instead.
+    _TEXT_SIZES = {"smaller": 0.9, "default": 1.0, "larger": 1.15}
+
+    def text_size(self):
+        """Tell the page the size now (window.bmTextSize): pywebview's own
+        answer back is refused by the page's CSP."""
+        if sys.platform != "darwin":
+            return None
+        zoom = float(updates.load_prefs().get("zoom") or 1.0)
+        name = min(self._TEXT_SIZES, key=lambda key: abs(self._TEXT_SIZES[key] - zoom))
+        from PyObjCTools import AppHelper
+        AppHelper.callAfter(_js, f"window.bmTextSize && window.bmTextSize({json.dumps(name)});")
+        return name
+
+    def set_text_size(self, name):
+        if sys.platform != "darwin" or name not in self._TEXT_SIZES:
+            return False
+        from PyObjCTools import AppHelper
+        AppHelper.callAfter(_set_zoom, self._TEXT_SIZES[name])
+        return True
+
     def quit(self):
         """Close the app: Start a new lab sets the lab aside at the next start."""
         window = _state["window"]

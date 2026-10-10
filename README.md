@@ -786,10 +786,20 @@ becomes a card with its columns under their names, and rack grids get a
 
 ### 🌗 At home on a Mac, and in the dark
 
-The interface follows macOS conventions and has a full dark mode,
-following the system's setting (in the desktop app, **View → Appearance**
-chooses Light or Dark). It works in any modern browser on Windows and
-Linux too.
+The interface follows Apple's Liquid Glass design: the sidebar, the row of
+tabs and each page's buttons float as frosted glass over the page, which
+scrolls beneath them, while the records themselves sit on solid ground so
+they stay easy to read. On a Mac the desktop app has no title bar; its close,
+minimise and zoom buttons sit at the top of the sidebar. There is a full
+dark mode, following the system's setting (in the desktop app, **View →
+Appearance** chooses Light or Dark), and Reduce Transparency, Increase
+Contrast and Reduce Motion are honoured. It works in any modern browser on
+Windows and Linux too.
+
+Text is set in Inter, which tells I, l and 1 apart in IDs and genotypes and
+looks the same on every computer, with each system's own Chinese font.
+**Settings → Appearance & language → Font** switches to the computer's font,
+and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 on the left (**You**: Profile, Sign-in & security, Appearance & language,

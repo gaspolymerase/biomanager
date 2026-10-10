@@ -662,10 +662,12 @@ def inject_appearance():
     """The person's app icon, and the accent colour that goes with it."""
     user = g.get("user")
     glyph, color = appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR
+    font = appearance.FONTS[0]
     if user is not None:
         with SessionLocal() as db_session:
             glyph, color = appearance.get_choice(db_session, user.username)
-    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color)}
+            font = appearance.get_font(db_session, user.username)
+    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font}
 
 
 # ---------------------------------------------------------------------------
@@ -2209,6 +2211,8 @@ def settings():
                     user.default_landing = landing if landing in ALLOWED_LANDING_ENDPOINTS else ""
                 if "home_layout" in form:
                     home_layouts.set_layout(db_session, user.username, form.get("home_layout", ""))
+                if "ui_font" in form:
+                    appearance.set_font(db_session, user.username, form.get("ui_font", ""))
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     return jsonify({"ok": True})

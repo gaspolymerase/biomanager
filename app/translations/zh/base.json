@@ -250,5 +250,12 @@
   "Main places": "主要位置",
   "Scan": "扫描",
   "That code is not a card of this lab.": "这个二维码不是本实验室的卡片。",
-  "Point your phone's Camera app at the card's QR code: it opens the record here.": "用手机的相机对准卡片上的二维码，就会在这里打开对应的记录。"
+  "Point your phone's Camera app at the card's QR code: it opens the record here.": "用手机的相机对准卡片上的二维码，就会在这里打开对应的记录。",
+  "Font": "字体",
+  "System font": "系统字体",
+  "Text size": "文字大小",
+  "Smaller": "较小",
+  "Larger": "较大",
+  "Inter tells I, l and 1 apart and looks the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.": "Inter 能分清 I、l 和 1，在每台电脑上看起来都一样。系统字体在 Mac 上是 SF Pro，在 Windows 上是 Segoe UI。",
+  "Your browser’s zoom sets it: ⌘ + and ⌘ − on a Mac, Ctrl + and Ctrl − elsewhere.": "由浏览器的缩放决定：Mac 上按 ⌘ + 和 ⌘ −，其他电脑上按 Ctrl + 和 Ctrl −。"
 }

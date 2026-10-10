@@ -89,6 +89,22 @@ Text CJK", the same Inter without the quotes, ellipsis, em dash and middle
 dot. Those then come from the Chinese font, full width. Chinese is set half
 a point larger with more line height.
 
+Settings → Appearance & language → **Font** lets a person pick the
+computer's font instead (`appearance.get_font`, the `font:<user>` setting;
+`base.html` then marks the page `data-font="system"`). **Text size** is the
+window's zoom, which only the Mac app lets a page set
+(`DesktopApi.text_size` / `set_text_size`, the same zoom as View → Zoom
+In / Out); elsewhere the row names the browser's zoom keys. Zooming the page
+in CSS was tried and left out: it makes the window-tall frame overflow.
+
+The desktop app's page bridge: pywebview builds `window.pywebview.api` with
+`new Function()` and sends answers back through `eval`, both refused by the
+page's CSP. `BiomanagerShell.desktopCall(name, …args)` (`static/shell.js`)
+calls through pywebview's channel underneath, and an answer the page needs
+comes back from Python by running the page's own function natively
+(`desktop_menu._js`, e.g. `window.bmTextSize`). The Go menu's
+`set_nav` goes this way too.
+
 SF Symbols are not used: their licence covers Apple-platform apps only, not
 the web.
 

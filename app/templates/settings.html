@@ -219,6 +219,30 @@
         <noscript><button type="submit" class="btn btn-primary justify-self-start">{{ _('Save icon') }}</button></noscript>
       </form>
 
+      {# Font and text size. The font is saved for the person; the size is the
+         window's zoom, which only the Mac app lets the page set (desktop_menu.py
+         DesktopApi.set_text_size): elsewhere the browser's zoom keys do it. #}
+      <div class="set-title">{{ _('Text') }}</div>
+      <form method="post" class="set-group" data-autosave-form>
+        <input type="hidden" name="action" value="profile">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Font') }}</b><small>{{ _('Inter tells I, l and 1 apart and looks the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.') }}</small></span>
+          <select name="ui_font" data-ui-font>
+            <option value="inter" {% if ui_font != 'system' %}selected{% endif %}>Inter</option>
+            <option value="system" {% if ui_font == 'system' %}selected{% endif %}>{{ _('System font') }}</option>
+          </select>
+        </label>
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Text size') }}</b>
+            <small data-text-size-hint>{{ _('Your browser’s zoom sets it: ⌘ + and ⌘ − on a Mac, Ctrl + and Ctrl − elsewhere.') }}</small></span>
+          <div class="seg" data-text-size hidden>
+            <button type="button" class="seg-item" data-size="smaller">{{ _('Smaller') }}</button>
+            <button type="button" class="seg-item" data-size="default">{{ _('Default') }}</button>
+            <button type="button" class="seg-item" data-size="larger">{{ _('Larger') }}</button>
+          </div>
+        </div>
+      </form>
+
       <div class="set-title">{{ _('When you sign in') }}</div>
       <form method="post" class="set-group" data-autosave-form>
         <input type="hidden" name="action" value="profile">
@@ -886,6 +910,42 @@
 
 {% block body_end %}
 <script nonce="{{ csp_nonce() }}">
+  // Font: the page changes at once (the choice saves itself). Text size: in
+  // the Mac app, Smaller / Default / Larger set the window's zoom; elsewhere
+  // the row says which keys do it.
+  (function () {
+    var font = document.querySelector('[data-ui-font]');
+    if (font) font.addEventListener('change', function () {
+      if (font.value === 'system') document.documentElement.setAttribute('data-font', 'system');
+      else document.documentElement.removeAttribute('data-font');
+    });
+    var seg = document.querySelector('[data-text-size]');
+    var hint = document.querySelector('[data-text-size-hint]');
+    if (!seg) return;
+    function mark(size) {
+      seg.querySelectorAll('[data-size]').forEach(function (b) { b.classList.toggle('is-active', b.dataset.size === size); });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      var shell = window.BiomanagerShell;
+      if (!shell || !shell.whenDesktop) return;
+      shell.whenDesktop(function () {
+        // The Mac app answers with the current size; others don't answer.
+        window.bmTextSize = function (size) {
+          seg.hidden = false;
+          if (hint) hint.hidden = true;
+          mark(size);
+        };
+        shell.desktopCall('text_size');
+        seg.addEventListener('click', function (event) {
+          var b = event.target.closest('[data-size]');
+          if (!b) return;
+          mark(b.dataset.size);
+          shell.desktopCall('set_text_size', b.dataset.size);
+        });
+      });
+    });
+  })();
+
   // One pane at a time, picked by the address's #hash. A hash naming
   // something inside a pane (#api-tokens, #lab-copies) opens that pane
   // and scrolls to it, so links from other pages keep working.
