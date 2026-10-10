@@ -632,6 +632,19 @@ def window_url() -> str:
     return str(_prefs().get("window_url") or "")
 
 
+def open_in_window(url: str):
+    """Send this window on to the lab's BioManager at another address, as a
+    form's answer. Not a redirect: the CSP's form-action 'self' covers where
+    a form's answer redirects too, so the browser refuses one to another
+    address and the button seems to do nothing. A page that goes there by
+    itself is an ordinary visit."""
+    from urllib.parse import urlparse
+    url = url.rstrip("/") + "/"
+    if urlparse(url).scheme not in ("http", "https"):
+        abort(400)
+    return render_template("door/going.html", url=url, host=urlparse(url).netloc)
+
+
 # ---------------------------------------------------------------------------
 # Desktop: linked to a master — hello, taking over, giving back
 # ---------------------------------------------------------------------------
@@ -871,7 +884,7 @@ def window():
             flash(gettext("This computer shares its own lab: stop sharing it first."), "error")
             return redirect(url_for("devices.page"))
         _save_prefs(window_url=cfg["server"])
-        return redirect(cfg["server"].rstrip("/") + "/")
+        return open_in_window(cfg["server"])
     _save_prefs(window_url="")
     flash(gettext("This window opens this computer's own BioManager again."), "success")
     return redirect(url_for("devices.page"))
@@ -886,7 +899,7 @@ def give_back_now():
     if not result.get("ok"):
         flash(result["error"], "error")
         return redirect(url_for("devices.page"))
-    return redirect(result["url"] + "/")
+    return open_in_window(result["url"])
 
 
 @bp.route("/settings/devices/own-again", methods=["POST"])

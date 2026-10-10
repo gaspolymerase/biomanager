@@ -19,7 +19,7 @@ body:
     attributes:
       label: Version · 版本
       description: Help → What's new shows it. In the app, Help → Send feedback → Open as a GitHub issue fills it in for you. 在“帮助 → 新功能”里可以看到；在应用里用“帮助 → 发送反馈 → 作为 GitHub issue 打开”会自动填好。
-      placeholder: "1.5.3"
+      placeholder: "1.5.4"
   - type: dropdown
     id: where
     attributes:

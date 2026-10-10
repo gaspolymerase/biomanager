@@ -163,7 +163,7 @@ def _moved(server: str, host: str, key: str):
         s.commit()
     devices.stop_sharing()
     devices._save_prefs(window_url=server)
-    return redirect(server + "/")
+    return devices.open_in_window(server)
 
 
 @bp.route("/settings/devices/move/back", methods=["POST"])
