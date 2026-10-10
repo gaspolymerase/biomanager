@@ -1732,11 +1732,14 @@ to that, and `tests/test_telemetry.py` checks names don't leak.
   conditional UPDATE so two gunicorn workers never both send. A failed
   post (5 s timeout, `urllib`) puts the old stamp back, logs at debug and
   is retried the next hour. Never under `TESTING` (the hook checks), and
-  never from a build being worked on (`released()`: a `+dev` version, or
-  a checkout with no VERSION file). Each dev run, upgrade check and
-  screenshot pass makes its own database and so its own install id;
-  before that guard, 230 of 234 counted "labs" were one developer's
-  machine.
+  never from a build being worked on (`released()`: a `+dev` version).
+  Each dev run, upgrade check and screenshot pass makes its own database
+  and so its own install id; before that guard, 230 of 234 counted "labs"
+  were one developer's machine. A lab server whose image was built from a
+  checkout has no VERSION file and reports `server`; it does send.
+  `scripts/installs.py` lists every installation that has sent (first and
+  last day, days seen, members, what is on), leaving out `+dev` builds and
+  the ids in `~/.config/biomanager/own-installs`; `--csv` writes it out.
 - **app_settings**: `telemetry:enabled` (`on`/`off`, default on; the first
   survey's checkbox, and **Switch on/off** on the Usage report,
   `POST /feedback/usage/heartbeat`), `telemetry:install_id` (a `uuid4`,
