@@ -151,5 +151,10 @@
   "plate populations": "培养皿种群",
   "alive": "存活",
   "ID in that colony": "在该群体中的编号",
-  "value": "值"
+  "value": "值",
+  "Move left": "左移",
+  "Move right": "右移",
+  "Move %(name)s left": "左移%(name)s",
+  "Move %(name)s right": "右移%(name)s",
+  "Reset column order": "恢复默认列顺序"
 }

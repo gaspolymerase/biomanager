@@ -609,7 +609,10 @@ database has a name of its own (one another database has is refused), so
       <h4>📊 Spreadsheet-style editing</h4>
       Click a cell and type; it saves as you go. Every table sorts,
       filters, exports to CSV and prints, and keeps your sort and filter
-      (the filter also in its address, for a bookmark). The page scrolls,
+      (the filter also in its address, for a bookmark). Drag a column's
+      heading to put the columns you need first (or use the arrows under
+      <b>Columns</b>); your order is kept, and an admin sets the lab's
+      starting order in <b>Configure</b>. The page scrolls,
       not the table: its search and buttons stay at the top of the window
       and its count at the bottom, with <b>New</b> at the bottom left, which
       adds an empty row at the end to type in (a strain, fish, line, plasmid

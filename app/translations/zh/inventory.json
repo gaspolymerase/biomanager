@@ -440,5 +440,6 @@
   "drug precursor": "易制毒",
   "explosive precursor": "易制爆",
   "narcotic or psychotropic": "麻醉或精神药品",
-  "field type::Several choices": "多选"
+  "field type::Several choices": "多选",
+  "The arrows set the order these columns take on the sheet for the whole lab; anyone can still drag the columns of their own sheet into another order.": "箭头决定这些列在表格中的顺序，对全实验室生效；每个人仍可在自己的表格里把列拖成别的顺序。"
 }
