@@ -67,5 +67,8 @@
   "No Stock or Retired any more: Stock cages are now Breeder cages, and a cage is **Active** while it holds living mice.": "不再有“保种”和“退役”用途：原来的保种笼现在是种鼠笼；笼里有活鼠时才算 **在用**。",
   "Above the cages: **All**, **Active**, then a button for each purpose, which an admin sets under **Configure → Cage purposes**.": "笼列表上方：**全部**、**在用**，然后每种用途一个按钮；管理员在 **配置 → 笼的用途** 里设置用途。",
   "A lab server built from the source code sends its anonymous daily counts again; the **Usage report** shows what they hold.": "从源代码构建的实验室服务器重新开始每天发送匿名统计；**使用报告** 会列出其中的内容。",
-  "In Chinese, a cage's purposes read alike: 种鼠笼 · 配种笼 · 实验笼 (Breeder, Breeding, Experiment).": "中文界面里，笼的三种用途统一为 种鼠笼 · 配种笼 · 实验笼；配种笼指正在交配的笼。"
+  "In Chinese, a cage's purposes read alike: 种鼠笼 · 配种笼 · 实验笼 (Breeder, Breeding, Experiment).": "中文界面里，笼的三种用途统一为 种鼠笼 · 配种笼 · 实验笼；配种笼指正在交配的笼。",
+  "A chemical or reagent can have several hazards, including the controlled classes: drug precursor, explosive precursor, highly toxic (**Hazard**, ticked in a small menu).": "化学品和试剂可以同时有多种危险类别，包括管控类别：易制毒、易制爆、剧毒（**危险性**，在小菜单里勾选）。",
+  "The notebook's **/** menu, **Insert** menu and toolbar are in Chinese, and find things by their Chinese names.": "实验记录本的 **/** 菜单、**插入** 菜单和工具栏都是中文了，也能用中文名称搜索。",
+  "Plasmid editor: **Export** and **Import** have the right icons, and on a Mac the sequence lines up with the ruler.": "质粒编辑器：**导出** 和 **导入** 的图标不再画反；在 Mac 上，序列和标尺对齐了。"
 }

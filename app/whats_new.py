@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.2": {
+        "new": [
+            "A chemical or reagent can have several hazards, including the controlled classes: drug precursor, explosive precursor, highly toxic (**Hazard**, ticked in a small menu).",
+        ],
+        "fixed": [
+            "The notebook's **/** menu, **Insert** menu and toolbar are in Chinese, and find things by their Chinese names.",
+            "Plasmid editor: **Export** and **Import** have the right icons, and on a Mac the sequence lines up with the ruler.",
+        ],
+    },
     "1.5.1": {
         "changed": [
             "In Chinese, a cage's purposes read alike: 种鼠笼 · 配种笼 · 实验笼 (Breeder, Breeding, Experiment).",
