@@ -104,7 +104,7 @@ class OpeningALab(AppTestCase):
             self.assertIn("Found your lab", html)
             self.assertEqual(saved, {})                              # Back would change nothing
             r = c.post("/open-lab", data={"action": "open"})
-            self.assertEqual(r.headers["Location"], "https://lab.example.org/")
+            self.assertGoesTo(r, "https://lab.example.org/")
             self.assertEqual(saved, {"window_url": "https://lab.example.org"})
             # Open without having found one: nothing to open.
             self.assertEqual(c.post("/open-lab", data={"action": "open"}).headers["Location"], "/open-lab")
@@ -346,7 +346,7 @@ class MovingToAServer(AppTestCase):
                 mock.patch("app.devices._save_prefs", side_effect=lambda **kw: saved.update(kw)):
             self.assertIn("Move this lab to a server", self.get_ok(self.a, "/settings/devices"))
             r = self.a.post("/settings/devices/move", data={"address": "lab.example.org", "setup_code": "abcd"})
-            self.assertEqual(r.headers["Location"], "https://lab.example.org/")
+            self.assertGoesTo(r, "https://lab.example.org/")
             self.assertEqual(push.call_args.args[:2], ("https://lab.example.org", "abcd"))
             self.assertEqual(saved, {"window_url": "https://lab.example.org"})
             state = json.loads(one("select value from app_settings where key='devices:state'"))

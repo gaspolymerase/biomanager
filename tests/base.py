@@ -297,6 +297,15 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue(any(fragment in text and (kind is None or k == kind) for k, text in found),
                         f"no {kind or ''} flash containing {fragment!r}; got {found}")
 
+    def assertGoesTo(self, response, url):
+        """A form's answer that sends the window to another address: a page
+        that goes there by itself (devices.open_in_window), since the CSP's
+        form-action refuses a redirect there."""
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn(f'<meta http-equiv="refresh" content="0;url={url}">', html)
+        self.assertIn(f'href="{url}"', html)
+
     def assertNoErrors(self, response):
         self.assertEqual(errors(response), [])
 

@@ -246,7 +246,7 @@ def open_lab():
         if not found:
             return redirect(url_for("door.open_lab"))
         devices._save_prefs(window_url=found["url"])
-        return redirect(found["url"] + "/")
+        return devices.open_in_window(found["url"])
     if request.method == "POST":
         found = find_lab(address)
         if found is None:

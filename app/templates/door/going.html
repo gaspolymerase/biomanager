@@ -1,0 +1,18 @@
+<!doctype html>
+{# This window, on its way to the lab's BioManager at another address
+   (devices.open_in_window): it goes on by itself, and the link is there
+   should it not. #}
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="refresh" content="0;url={{ url }}">
+  <title>BioManager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tailwind.css') }}?v={{ asset_version('tailwind.css') }}">
+</head>
+<body class="flex min-h-screen items-center justify-center">
+  <p class="text-center text-[15px] text-muted">{{ _('Opening %(host)s…', host=host) }}<br>
+    <a class="font-medium text-brand-600" href="{{ url }}">{{ _('Open it') }}</a></p>
+</body>
+</html>

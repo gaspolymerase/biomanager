@@ -315,7 +315,7 @@ class DesktopDeviceTests(DeviceCase):
 
     def test_open_the_lab_in_this_window_and_come_back(self):
         r = self.a.post("/settings/devices/window", data={"to": "lab"})
-        self.assertEqual(r.headers["Location"], self.server + "/")
+        self.assertGoesTo(r, self.server + "/")
         self.assertEqual(self.prefs["window_url"], self.server)
         self.post(self.a, "/settings/devices/window", data={"to": "here"})
         self.assertEqual(self.prefs["window_url"], "")
