@@ -30,6 +30,13 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.0": {
+        "changed": [
+            "A mouse cage's purpose: **Breeding** is a mating cage, the only one with **Litter born**, **Genotyping** and **Wean**; **Breeder** is the lab's breeding stock, shared, listed under **Breeders**.",
+            "No Stock or Retired any more: Stock cages are now Breeder cages, and a cage is **Active** while it holds living mice.",
+            "Above the cages: **All**, **Active**, then a button for each purpose, which an admin sets under **Configure → Cage purposes**.",
+        ],
+    },
     "1.4.1": {
         "fixed": [
             "A lab server built from the source code sends its anonymous daily counts again; the **Usage report** shows what they hold.",

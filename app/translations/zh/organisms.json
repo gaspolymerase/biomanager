@@ -608,5 +608,13 @@
   "Each one shows in the %(noun)s sheet and in its record, and comes along in Export my data. Removing a column here hides it; what your records hold in it is kept, and putting the column back shows it again.": "每一列都会出现在%(noun)s表格和记录里，导出数据时也会带上。在这里删除某一列只是把它隐藏起来：记录里已填的内容会保留，把列加回来就又能看到。",
   "Save columns": "保存列",
   "Saved %(num)s column of your own.": "已保存 %(num)s 个自定义列。",
-  "Saved %(num)s columns of your own.": "已保存 %(num)s 个自定义列。"
+  "Saved %(num)s columns of your own.": "已保存 %(num)s 个自定义列。",
+  "Cage purposes": "笼的用途",
+  "The Purpose a cage can have, and the buttons above the cages: All, Active, then one for each.": "笼可以设置的用途，也是笼列表上方的筛选按钮：全部、在用，然后每个用途一个。",
+  "Remove the cage purpose “%(value)s”? Cages that have it keep it.": "移除笼的用途“%(value)s”？已经设为这个用途的笼会保留它。",
+  "A purpose of your own, e.g. Holding": "自己的用途，例如 暂养",
+  "New cage purpose": "新的笼用途",
+  "The lab's breeding stock: shared with the lab, listed under Breeders to pick from": "实验室的种鼠：与实验室共享，列在“种鼠”里供大家领用",
+  "A mating cage: the only one with Litter born, Genotyping and Wean": "正在交配的笼：只有它有“产仔”“基因型鉴定”和“断奶”",
+  "Mice in an experiment": "用于实验的小鼠"
 }

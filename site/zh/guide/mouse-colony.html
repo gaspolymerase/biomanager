@@ -152,25 +152,34 @@
       <p>你不用再做的事：把断奶日期记在脑子里或墙上的挂历、把一窝重新敲进表格、断奶后手写笼卡，
         以及追问某个笼里的小鼠是谁的——每条记录都写着负责人，也写着<a href="who-can-do-what.html">谁可以改它</a>。</p>
 
-      <p>顶部的标签页：<b>小鼠</b> （Mice）、<b>笼</b> （Cages）、<b>窝</b> （Litters）、<b>繁殖笼</b> （Breeders）、<b>实验</b> （Experiments）、<b>品系</b> （Strains）和
+      <p>顶部的标签页：<b>小鼠</b> （Mice）、<b>笼</b> （Cages）、<b>窝</b> （Litters）、<b>种鼠</b> （Breeders）、<b>实验</b> （Experiments）、<b>品系</b> （Strains）和
  <b>下拉选项</b> （Dropdowns）。<b>我的鼠群 / 我的项目组 / 共享 / 全实验室</b> （My colony / My groups / Shared / Everyone）开关改变的是你<i>看到</i>什么，而不是你能
         编辑什么：<i>我的鼠群</i>是你自己的加上你参与的共享笼，<i>我的项目组</i>是你所在<a href="project-groups.html">项目组</a>的，
-        <i>共享</i>只显示共享笼，<i>全实验室</i>显示所有笼。在笼标签页里，每种用途都有一个筛选标签（<i>Experiments</i>、
-        <i>Breeder</i>……），只显示那类笼。</p>
+        <i>共享</i>只显示共享笼，<i>全实验室</i>显示所有笼。笼列表上方的 <b>全部</b> （All）、<b>在用</b> （Active，有活鼠的笼）和每种用途各一个的按钮，
+        只显示那类笼。</p>
       <figure class="gshot"><a href="../../assets/screenshots/mice.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/mice.webp" alt="小鼠表格" loading="lazy" width="2000" height="1250"></a><figcaption>小鼠表格</figcaption></figure>
 
       <h2 id="racks-and-cages">笼架和笼</h2>
       <p><b>笼 → 笼架视图 → 新建笼架</b> （Cages → Rack grid → New rack）：设置行数、列数和位置编号方式——<code>D7</code>、<code>4-7</code>、
         <code>7D</code> 或 1 到 80，和实物笼架上的贴纸一样。没有位置的笼会留在<i>未放置</i>（Unplaced）里；把它们拖
-        上去。每个笼都有用途（繁殖、保种、实验）、负责人、房间和笼里的小鼠。选中笼可以设置用途或负责人、
-        移动，或 <b>退役</b> （Retire）。</p>
+        上去。每个笼都有用途、负责人、房间和笼里的小鼠。用途有：</p>
+      <ul>
+        <li><b>繁殖</b> （Breeding）：正在交配的笼。只有繁殖笼有 <b>产仔</b> （Litter born）、<b>基因型鉴定</b> （Genotyping）
+          和 <b>断奶</b> （Wean）。</li>
+        <li><b>种鼠笼</b> （Breeder）：实验室的种鼠，留着用来繁殖的小鼠。每个人负责维护其中一部分，所以种鼠笼默认与实验室共享，
+          除非负责人改为个人；<b>种鼠</b> （Breeders）标签页列出这些笼。</li>
+        <li><b>实验</b> （Experiment）：用于实验的小鼠。</li>
+      </ul>
+      <p>管理员可以在 <b>配置 → 笼的用途</b> （Configure → Cage purposes）里修改这份列表（也可以在 <b>下拉选项</b> （Dropdowns）标签页改，是同一份），
+        在那里加的每个用途都会在笼列表上方多一个按钮。笼里有活鼠时才算 <b>在用</b> （Active）。选中笼可以设置用途或负责人、移动，
+        或把空笼 <b>退役</b> （Retire）：退役的笼会移出鼠架，并清除用途。</p>
       <p>笼有三种显示方式。<b>表格</b> （Table）：每笼一行，小鼠列在下面（可直接编辑），还有操作按钮；
         <i>产仔</i>（Litter born）和<i>断奶到期</i>（Wean due）紧跟在小鼠后面，什么时候该断奶一目了然。直接改写笼号就能
         重新编号（小鼠跟着走；与其他笼重号会被拒绝）。笼号后面的<i>笼卡编号</i>（Card ID）是动物房自己笼卡上的编号（如果有）。
         笼里小鼠显示的转基因列与 <b>小鼠</b> （Mice）标签页一致：在那里的 <b>列</b> （Columns）里显示或隐藏<i>转基因 3</i>、<i>4</i>，
         笼这边也跟着变。<b>全部收起</b> （Close all）把每个笼折叠成一行（页面会记住），<b>全部展开</b> （Open all）再展开；行首的箭头
         或小鼠数量可以单独展开或收起一个笼。<b>卡片</b> （Cards）：每笼一张卡片——位置、用途、负责人、品系、断奶时间、笼里的小鼠和同样的
-        操作——有自己的搜索框和<i>活跃、繁殖、我的</i>（Active、Breeding、Mine）筛选。<b>笼架视图</b> （Rack grid）：从正面看笼架。页面
+        操作——有自己的搜索框和同样的筛选按钮，默认显示<i>在用</i>（Active）。<b>笼架视图</b> （Rack grid）：从正面看笼架。页面
         会记住你上次用的方式。</p>
       <figure class="gshot"><a href="../../assets/screenshots/rack-grid.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/rack-grid.webp" alt="笼架视图" loading="lazy" width="2000" height="1250"></a><figcaption>笼架视图</figcaption></figure>
 
@@ -192,7 +201,7 @@
       </ul>
 
       <h2 id="breeding-from-litter-to-weaning">繁殖：从产仔到断奶</h2>
-      <p>在 <b>笼</b> （Cages）标签页，展开一个繁殖笼（点箭头或小鼠数量），或在 <b>卡片</b> （Cards）里找到它：<b>产仔</b> （Litter born）、<b>基因型鉴定</b> （Genotyping）和 <b>断奶</b> （Wean）按钮都在那里，只出现在用途为 <i>Breeder</i> 或 <i>Breeding</i> 的笼上。<b>创建窝</b> （Create litter）按 L-1、L-2、L-3……
+      <p>配种时，把种鼠放进用途为 <b>繁殖</b> （Breeding）的笼。在 <b>笼</b> （Cages）标签页展开它（点箭头或小鼠数量），或在 <b>卡片</b> （Cards）里找到它：<b>产仔</b> （Litter born）、<b>基因型鉴定</b> （Genotyping）和 <b>断奶</b> （Wean）按钮都在那里，并且只出现在繁殖笼上。<b>创建窝</b> （Create litter）按 L-1、L-2、L-3……
         给每一窝编号（也可以自己输入 ID）。</p>
       <ol class="steps-list">
         <li><b>产仔</b> 会询问出生日期（默认今天，可修改；未来的日期会被拒绝），并记录
@@ -203,9 +212,8 @@
         <li><b>断奶</b> 会打开<i>断奶并分笼</i>（Wean and distribute pups），已经填好这个笼的仔鼠，雌雄分行：<b>断奶并移动</b> （Wean and move）把每一行送到新笼或已有的笼，或者 <b>标记已断奶，稍后再移动幼崽</b> （Mark weaned, move pups later）。无论哪种，这一窝
           都会标为已断奶，并从首页和日历上消失。小于 P18 的仔鼠需要你确认后才能断奶。</li>
       </ol>
-      <p><b>繁殖笼</b> （Breeders）列出繁殖笼——笼架和位置、雌雄各几只——以及它们的繁殖力，并标出超过 30 周的
-        繁殖鼠。<b>领用</b> （Pick）把一个繁殖笼
-        转到你名下；原负责人会收到通知。</p>
+      <p><b>种鼠</b> （Breeders）列出种鼠笼，也就是实验室的种鼠：笼架和位置、雌雄各几只。上方按基因型统计种鼠笼和繁殖笼里的种鼠，
+        并标出超过 30 周的种鼠。<b>领用</b> （Pick）把一只种鼠转到你名下，用来配种；原负责人会收到通知。</p>
 
       <h2 id="experiments-strains-dropdowns">实验、品系、下拉选项</h2>
       <ul>

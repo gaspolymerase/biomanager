@@ -393,14 +393,16 @@ class FutureBirthTests(AppTestCase):
 
 class BreedersTabTests(AppTestCase):
 
-    def test_breeders_tab_lists_breeder_and_breeding_cages_only(self):
+    def test_breeders_tab_lists_the_breeder_cages_only(self):
+        # The lab's breeding stock to pick from: Breeder cages, not the
+        # mating (Breeding) cages, whose mice are in use.
         breeder, breeding, other = uniq("C"), uniq("C"), uniq("C")
         self.make_cage(self.a, breeder, purpose="breeder")
         self.make_cage(self.a, breeding, purpose="Breeding")
-        self.make_cage(self.a, other, purpose="Experiments")
+        self.make_cage(self.a, other, purpose="Experiment")
         html = self.get_ok(self.m, "/colony?view=breeders&scope=all")
         self.assertIn(f">{breeder}</a></strong>", html)
-        self.assertIn(f">{breeding}</a></strong>", html)
+        self.assertNotIn(f">{breeding}</a></strong>", html)
         self.assertNotIn(f">{other}</a></strong>", html)
 
 

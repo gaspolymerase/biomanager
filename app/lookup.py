@@ -212,7 +212,7 @@ def _database_labels(session) -> dict[str, str]:
 def vocabulary(session) -> dict:
     from . import organism_service as org_svc
     from . import stock_service as stock_svc
-    from .app import CAGE_PURPOSE_CHOICES
+    from .app import cage_purposes
     from .models import FISH_SEX_OPTIONS, FISH_STATUS_OPTIONS, MOUSE_STATUS_OPTIONS, TANK_PURPOSE_OPTIONS
     from .services import dropdown_options_map
     features = lab.request_features()
@@ -231,7 +231,7 @@ def vocabulary(session) -> dict:
         out["databases"].append({"kind": "mouse colony", "key": "colony", "label": labels.get("colony", "Mouse colony")})
         out["mouse_colony"] = {
             "statuses": sorted(set(MOUSE_STATUS_OPTIONS) | set(options.get("status", []))),
-            "cage_purposes": sorted(set(CAGE_PURPOSE_CHOICES) | set(options.get("purpose", []))),
+            "cage_purposes": cage_purposes(options),
             "strains": [n for (n,) in session.execute(select(StrainRecord.strain_name).order_by(StrainRecord.strain_name))],
             "transgenes_in_use": sorted(transgenes)[:300],
             "racks": [n for (n,) in session.execute(select(MouseRack.name).order_by(MouseRack.name))],

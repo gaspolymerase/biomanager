@@ -28,7 +28,8 @@ DESKTOP = [
     ("home", "/home", "light", None),
     ("home-dark", "/home", "dark", None),
     ("mice", "/colony?view=mice", "light", None),
-    ("cages", "/colony?view=cages", "light", None),
+    # The whole lab's cages: the Breeding (mating) ones are their owners'.
+    ("cages", "/colony?view=cages&scope=all", "light", None),
     ("rack-grid", "/colony?view=cages", "light", "[data-layout=grid]"),
     ("fly-stocks", "/stocks/drosophila", "light", None),
     ("fly-grid", "/stocks/drosophila", "light", "[data-layout=grid]"),
@@ -41,13 +42,15 @@ DESKTOP = [
     ("cage-cards", "/labels/cards/cages", "light", None),
     # For the task pages: the panel the step is about, not the whole window.
     # The fifth item crops the shot to that element (see shoot).
-    ("task-cage", "/colony?view=cages", "light", "[data-layout=cards]", ".cage-detail-body"),
+    ("task-cage", "/colony?view=cages&scope=all", "light", "[data-layout=cards]", ".cage-detail-body"),
     # No task-litter shot: every breeder cage in the demo lab already has a
     # litter, so the Litter born dialog opens on its "this replaces it"
-    # warning rather than the plain case the guide describes. A breeder cage
+    # warning rather than the plain case the guide describes. A Breeding cage
     # with no litter in scripts/demo-data.py would make it shootable.
-    ("task-genotyping", "/colony?view=cages", "light",
-     ["[data-layout=cards]", "button:has-text('Genotyping')"], "#genotyping-modal"),
+    # Genotyping is on the Breeding (mating) cages only.
+    # The Breeding cages are their owners' (not shared), so the whole lab's view.
+    ("task-genotyping", "/colony?view=cages&scope=all", "light",
+     ["[data-layout=cards]", "[data-breeding-actions]:not(.hidden-row) button:has-text('Genotyping')"], "#genotyping-modal"),
     # Set it back first, so the shot works whether or not this order has
     # already been received: only a change to received raises the offer.
     # The orders shot left the board showing (the page remembers): the

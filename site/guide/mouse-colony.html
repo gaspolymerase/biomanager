@@ -159,15 +159,24 @@
       <p>Tabs across the top: <b>Mice</b>, <b>Cages</b>, <b>Litters</b>, <b>Breeders</b>, <b>Experiments</b>, <b>Strains</b> and
         <b>Dropdowns</b>. The <b>My colony / My groups / Shared / Everyone</b> switch changes what you <i>see</i>, never what you may
         edit: <i>My colony</i> is yours plus the shared cages you work in, <i>My groups</i> your <a href="project-groups.html">project groups'</a>,
-        <i>Shared</i> just the shared cages, <i>Everyone</i> every cage. In the Cages tab, a chip for each purpose (<i>Experiments</i>,
-        <i>Breeder</i>…) shows only those cages.</p>
+        <i>Shared</i> just the shared cages, <i>Everyone</i> every cage. Above the cages, <b>All</b>, <b>Active</b> (cages with
+        living mice) and a button for each purpose show only those cages.</p>
       <figure class="gshot"><a href="../assets/screenshots/mice.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/mice.webp" alt="The mouse sheet" loading="lazy" width="2000" height="1250"></a><figcaption>The mouse sheet</figcaption></figure>
 
       <h2 id="racks-and-cages">Racks and cages</h2>
       <p><b>Cages → Rack grid → New rack</b>: rows, columns and how positions are labelled — <code>D7</code>, <code>4-7</code>,
         <code>7D</code> or 1 to 80, like the stickers on your real racks. Cages without a position wait in <i>Unplaced</i>; drag them
-        on. Each cage has a purpose (breeding, stock, experiments), an owner, a room and its mice. Select cages to set purpose or owner,
-        move them, or <b>Retire</b> them.</p>
+        on. Each cage has a purpose, an owner, a room and its mice. The purposes:</p>
+      <ul>
+        <li><b>Breeding</b>: a mating cage, mating now. Only a Breeding cage has <b>Litter born</b>, <b>Genotyping</b> and
+          <b>Wean</b>.</li>
+        <li><b>Breeder</b>: the lab's breeding stock, the mice kept to be bred. Each person keeps part of the lab's stock, so a
+          Breeder cage is shared with the lab unless its owner makes it personal, and the <b>Breeders</b> tab lists these cages.</li>
+        <li><b>Experiment</b>: mice in an experiment.</li>
+      </ul>
+      <p>An admin changes the list under <b>Configure → Cage purposes</b> (or the <b>Dropdowns</b> tab, the same list), and each
+        purpose added there gets its button above the cages. A cage counts as <b>Active</b> while it holds living mice. Select
+        cages to set purpose or owner, move them, or <b>Retire</b> the empty ones: each leaves its rack and loses its purpose.</p>
       <p>The cages show three ways. <b>Table</b>: one row per cage, each with its mice beneath it (edit them in place) and its actions;
         <i>Litter born</i> and <i>Wean due</i> come right after the mice, so when to wean is in view. Type over a cage's number to
         renumber it (its mice go with it; a number another cage has is refused). <i>Card ID</i>, right after the number, is the
@@ -175,7 +184,7 @@
         show or hide <i>Transgene 3</i> or <i>4</i> there under <b>Columns</b>, and the cages follow.
         <b>Close all</b> folds every cage to its row (the page remembers), and <b>Open all</b> opens them again; the arrow at the
         start of a row or its mice count opens or closes one. <b>Cards</b>: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same
-        actions — with its own search and <i>Active, Breeding, Mine</i> filters. <b>Rack grid</b>: the racks from the front. The page
+        actions — with its own search and the same buttons, starting on <i>Active</i>. <b>Rack grid</b>: the racks from the front. The page
         remembers the one you used last.</p>
       <figure class="gshot"><a href="../assets/screenshots/rack-grid.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/rack-grid.webp" alt="A rack grid" loading="lazy" width="2000" height="1250"></a><figcaption>A rack grid</figcaption></figure>
 
@@ -199,8 +208,9 @@
       </ul>
 
       <h2 id="breeding-from-litter-to-weaning">Breeding: from litter to weaning</h2>
-      <p>On the <b>Cages</b> tab, open a breeding cage (its arrow or mice count) or find its card under <b>Cards</b>:
-        <b>Litter born</b>, <b>Genotyping</b> and <b>Wean</b> are there, on cages whose purpose is <i>Breeder</i> or <i>Breeding</i>. <b>Create litter</b> numbers each litter
+      <p>Set up a mating by putting the breeders in a cage whose purpose is <b>Breeding</b>. On the <b>Cages</b> tab, open it (its
+        arrow or mice count) or find its card under <b>Cards</b>: <b>Litter born</b>, <b>Genotyping</b> and <b>Wean</b> are there,
+        and only on Breeding cages. <b>Create litter</b> numbers each litter
         L-1, L-2, L-3… (type your own ID instead if you like).</p>
       <ol class="steps-list">
         <li><b>Litter born</b> asks for the date of birth (today unless you change it; a date in the future is refused) and records
@@ -212,9 +222,9 @@
           <b>Wean and move</b> sends each row to a new or existing cage, or <b>Mark weaned, move pups later</b>. Either way the litter
           is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm.</li>
       </ol>
-      <p><b>Breeders</b> lists breeding cages — rack and position, how many of each sex — with their productivity, and flags breeders
-        past 30 weeks. <b>Pick</b> takes a breeder as
-        yours; its owner is notified.</p>
+      <p><b>Breeders</b> lists the Breeder cages, the lab's breeding stock: rack and position, and how many of each sex. Above them,
+        the breeders in Breeder and Breeding cages are counted by genotype, and breeders past 30 weeks are flagged. <b>Pick</b>
+        takes a breeder as yours to set up a mating; its owner is notified.</p>
 
       <h2 id="experiments-strains-dropdowns">Experiments, strains, dropdowns</h2>
       <ul>

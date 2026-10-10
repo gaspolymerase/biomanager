@@ -79,7 +79,7 @@ from .services import (
     csv_text,
     add_notification,
     breeder_mice,
-    is_breeder_purpose,
+    is_breeding_cage,
     WEAN_OFFSET_DAYS,
     MIN_WEAN_AGE_DAYS,
     mark_weaned,
@@ -1398,8 +1398,15 @@ def mouse_sheet_meta(mouse_rows: list[dict], dropdowns: dict, racks=()) -> dict:
     }
 
 
-# Cage purposes offered on the cage sheet before the lab's own presets.
-CAGE_PURPOSE_CHOICES = ["Experiments", "Breeding", "Breeder", "Stock", "Retired"]
+# A new lab's cage purposes (CLAUDE.md, "The mouse colony's words"). The
+# lab's own list is the colony's purpose choices (Configure → Dropdown
+# choices), which start as these.
+CAGE_PURPOSE_CHOICES = ["Breeder", "Breeding", "Experiment"]
+
+
+def cage_purposes(dropdowns: dict) -> list[str]:
+    """The lab's cage purposes, as set in the colony's dropdown choices."""
+    return _merged_choices(dropdowns.get("purpose") or CAGE_PURPOSE_CHOICES)
 # A litter still counts as the cage's pups up to this age (days).
 PUP_AGE_DAYS = 28
 
@@ -1477,20 +1484,19 @@ def cage_sheet_values(cage) -> dict:
         # Why the Shared cell can't be changed here, if it can't: only its
         # owner or an admin shares a cage.
         "share_lock": share_lock(cage),
-        "breeding": "1" if is_breeder_purpose(cage.purpose) else "0",
+        "breeding": "1" if is_breeding_cage(cage.purpose) else "0",
     }
 
 
-def cage_purpose_chips(cage_rows) -> list[tuple[str, str, int]]:
-    """(key, label, how many) for each purpose the listed cages have, most
-    used first; the key is the purpose in lower case, as rows carry it."""
-    counts: dict[str, list] = {}
+def cage_purpose_chips(cage_rows, purposes: list[str]) -> list[tuple[str, str, int]]:
+    """(key, label, how many) for each of the lab's cage purposes, in the
+    order its dropdown choices list them; the key is the purpose in lower
+    case, as rows carry it."""
+    counts: dict[str, int] = {}
     for r in cage_rows:
-        label = (r.get("purpose") or "").strip()
-        if label:
-            entry = counts.setdefault(label.lower(), [label, 0])
-            entry[1] += 1
-    return sorted(((key, label, n) for key, (label, n) in counts.items()), key=lambda c: (-c[2], c[1].lower()))
+        key = (r.get("purpose") or "").strip().lower()
+        counts[key] = counts.get(key, 0) + 1
+    return [(label.lower(), label, counts.get(label.lower(), 0)) for label in purposes]
 
 
 def cage_sheet_row(cage) -> dict:
@@ -1530,7 +1536,8 @@ def cage_sheet_row(cage) -> dict:
         "can_edit": access.can_edit_cage(cage),
         # Giving it to someone else is its owner's, an admin's or animal care's.
         "can_reassign": access.can_manage(cage) or access.is_care(),
-        "can_breed": is_breeder_purpose(cage.purpose),
+        # Litter born, Genotyping and Wean: a mating (Breeding) cage's only.
+        "can_breed": is_breeding_cage(cage.purpose),
         "live_count": len(living),
         "total_count": len(cage.mice),
         "sex_label": _sex_label(females, males, len(living) - females - males),
@@ -1730,14 +1737,11 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "cage_racks": cage_racks,
         "cage_rows": cage_rows,
         "cage_sheet": {
-            "purpose_choices": _merged_choices(CAGE_PURPOSE_CHOICES, dropdowns.get("purpose", []),
-                                               (r["purpose"] for r in cage_rows)),
+            # The lab's purposes, then any other word a cage still carries.
+            "purpose_choices": _merged_choices(cage_purposes(dropdowns), (r["purpose"] for r in cage_rows)),
             "active_count": sum(1 for r in cage_rows if r["active"]),
-            "breeding_count": sum(1 for r in cage_rows if r["can_breed"]),
-            "mine_count": sum(1 for r in cage_rows if r["mine"]),
-            # A chip for each purpose the cages have: all the experiment
-            # cages, all the breeder ones…
-            "purposes": cage_purpose_chips(cage_rows),
+            # All · Active · a chip for each of the lab's purposes.
+            "purposes": cage_purpose_chips(cage_rows, cage_purposes(dropdowns)),
             "location_notes_used": any(r["cage_location"] for r in cage_rows),
         },
         "can_edit_presets": access.can_edit_presets(),
@@ -4242,7 +4246,7 @@ def mouse_rack_payload(db_session, cages) -> dict:
                        "cols": r.cols, "room": r.room,
                        **{f"naming_{k}": v for k, v in rack_naming_payload(r).items()}})}} for r in racks],
         "items": items,
-        "create": {"attrs": {"data-record-edit": "cage-dialog"}, "payload": {"purpose": "Experiments"},
+        "create": {"attrs": {"data-record-edit": "cage-dialog"}, "payload": {"purpose": "Experiment"},
                    "rack_field": "rack_id", "text_field": "position"},
     }
 
@@ -4419,9 +4423,10 @@ def bulk_cages():
                                                 "cage %(cage)s still holds %(num)s living mice",
                                                 len(living), cage=cage.cage_id))
                         continue
-                    # Retired: not a breeding or shared cage any more, and
-                    # its rack position is free for the next one.
-                    cage.purpose = "Retired"
+                    # Retired: no purpose (an empty cage is simply not
+                    # active), not shared, and its rack position is free
+                    # for the next one.
+                    cage.purpose = ""
                     cage.is_shared = False
                     cage.share_group_id = None
                     cage.active_override = False
@@ -4889,6 +4894,14 @@ def delete_strain(strain_row_id: int):
     return redirect(url_for("colony", view="strains"))
 
 
+def _presets_back():
+    """Where a preset change returns: the colony's Settings tab, or its
+    Configure page's Cage purposes when it was made there."""
+    if request.form.get("back") == "configure":
+        return redirect(url_for("organisms.configure_builtin", key="colony"))
+    return redirect(url_for("colony", view="settings"))
+
+
 @app.route("/colony/options/create", methods=["POST"])
 @login_required
 def create_option():
@@ -4896,11 +4909,11 @@ def create_option():
     option_value = (request.form.get("option_value") or "").strip()
     if not access.can_edit_presets():
         flash(gettext(PRESETS_DENIED), "error")
-        return redirect(url_for("colony", view="settings"))
+        return _presets_back()
     with SessionLocal() as db_session:
         if not field_name or not option_value:
             flash(gettext("Pick a column and type a value."), "error")
-            return redirect(url_for("colony", view="settings"))
+            return _presets_back()
         existing = db_session.scalar(
             select(DropdownOption).where(
                 DropdownOption.field_name == field_name,
@@ -4910,12 +4923,12 @@ def create_option():
         if existing is not None:
             flash(gettext("“%(value)s” is already a %(column)s preset.", value=existing.option_value,
                           column=i18n.translate_value(field_name)), "error")
-            return redirect(url_for("colony", view="settings"))
+            return _presets_back()
         db_session.add(DropdownOption(field_name=field_name, option_value=option_value))
         db_session.commit()
         flash(gettext("Saved “%(value)s” as a %(column)s preset.", value=option_value,
                       column=i18n.translate_value(field_name)), "success")
-    return redirect(url_for("colony", view="settings"))
+    return _presets_back()
 
 
 @app.route("/colony/options/<int:option_id>/update", methods=["POST"])
@@ -4954,7 +4967,7 @@ def update_option(option_id: int):
 def delete_option(option_id: int):
     if not access.can_edit_presets():
         flash(gettext(PRESETS_DENIED), "error")
-        return redirect(url_for("colony", view="settings"))
+        return _presets_back()
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
         if option is not None:
@@ -4962,7 +4975,7 @@ def delete_option(option_id: int):
             db_session.delete(option)
             db_session.commit()
             flash(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value), "success")
-    return redirect(url_for("colony", view="settings"))
+    return _presets_back()
 
 
 # ---------------------------------------------------------------------------

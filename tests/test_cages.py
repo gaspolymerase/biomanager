@@ -292,10 +292,18 @@ class CageUpdateTests(RackMixin, Case):
         self.assertEqual(cage(self.cage)["owner"], self.other)
 
     def test_a_breeder_cage_starts_shared_and_its_owner_can_make_it_personal(self):
+        # Breeder: the lab's breeding stock, shared; not a mating cage.
         values = self.autosave(self.m, update_url(self.cage), {"purpose": "Breeder"}).get_json()["row"]["values"]
-        self.assertEqual((values["breeding"], values["is_shared"], values["share_lock"]), ("1", "1", ""))
+        self.assertEqual((values["breeding"], values["is_shared"], values["share_lock"]), ("0", "1", ""))
         values = self.autosave(self.m, update_url(self.cage), {"is_shared": "0"}).get_json()["row"]["values"]
         self.assertEqual((values["is_shared"], cage(self.cage)["is_shared"]), ("0", 0))
+
+    def test_only_a_breeding_cage_is_a_mating_cage(self):
+        # Breeding: mating now, the one cage with Litter born, Genotyping and Wean.
+        for purpose, mating in (("Breeding", "1"), ("breeding ", "1"), ("Breeder", "0"), ("Experiment", "0"), ("", "0")):
+            with self.subTest(purpose=purpose):
+                values = self.autosave(self.m, update_url(self.cage), {"purpose": purpose}).get_json()["row"]["values"]
+                self.assertEqual(values["breeding"], mating)
 
     def test_any_cage_starts_personal_and_its_owner_can_share_it(self):
         # Only a breeder cage starts shared; any other its owner may share.
@@ -438,8 +446,11 @@ class CageSheetTests(Case):
         self.assertIn("cage-card-head", detail)
         self.assertIn("Shelf 3", detail)                                    # where it is, with no rack
         self.assertIn('data-record-edit="cage-dialog"', detail)
-        for f in ("active", "breeding", "mine"):
+        # All · Active · one per purpose in the lab's choices.
+        for f in ("active", "purpose:breeder", "purpose:breeding", "purpose:experiment"):
             self.assertIn(f'data-cage-card-filter="{f}"', self.html)
+        for gone in ("breeding", "mine"):
+            self.assertNotIn(f'data-cage-card-filter="{gone}"', self.html)
 
     def test_the_card_id_column_sits_after_the_cage_and_saves(self):
         """The facility's card number, right after the cage's own number."""
@@ -602,7 +613,8 @@ class CageBulkTests(RackMixin, Case):
         self.autosave(self.m, update_url(self.c1), {"rack_id": str(rack), "position": "B3", "is_shared": "1"})
         self.bulk(self.m, "retire", ids=[self.c1])
         c = cage(self.c1)
-        self.assertEqual((c["purpose"], c["rack_id_fk"], c["rack_row"], c["is_shared"]), ("Retired", None, None, 0))
+        # There is no Retired purpose: a retired cage has none (CLAUDE.md, "The mouse colony's words").
+        self.assertEqual((c["purpose"], c["rack_id_fk"], c["rack_row"], c["is_shared"]), ("", None, None, 0))
         self.m.post(f"/batches/{newest_batch(self.member)[0]}/undo")
         c = cage(self.c1)
         self.assertEqual((c["purpose"], c["rack_id_fk"], c["rack_row"], c["rack_col"]), ("Experiments", rack, 2, 3))
@@ -618,7 +630,7 @@ class CageBulkTests(RackMixin, Case):
     def test_retire_ignores_mice_that_are_no_longer_alive(self):
         self.make_mouse(self.m, self.member, cage=cage(self.c1)["cage_id"], status="sac")
         self.bulk(self.m, "retire", ids=[self.c1])
-        self.assertEqual(cage(self.c1)["purpose"], "Retired")
+        self.assertEqual(cage(self.c1)["purpose"], "")
 
     def test_an_unknown_action_is_a_message(self):
         self.bulk(self.m, "explode")
@@ -784,3 +796,51 @@ class CageCardQrTests(Case):
         parsed = urlparse(target)
         html = self.o.get(f"{parsed.path}?{parsed.query}").get_data(as_text=True)
         self.assertIn(f'id="cage-{cage}"', html)
+
+
+class CagePurposeTests(Case):
+    """What a cage's purpose means (CLAUDE.md, "The mouse colony's words"):
+    Breeding is a mating cage, the only one with litter buttons; Breeder is
+    the lab's breeding stock; the bar is All · Active · the lab's purposes."""
+
+    def cages_page(self):
+        return self.m.get("/colony?view=cages&scope=all").get_data(as_text=True)
+
+    def detail(self, html, row_id):
+        start = html.index(f'id="cage-detail-{row_id}"')
+        return html[start:html.index("data-breeding-actions", start) + 40]
+
+    def test_only_a_breeding_cage_shows_litter_born_genotyping_and_wean(self):
+        mating = self.make_cage(self.m, purpose="Breeding")
+        stock = self.make_cage(self.m, purpose="Breeder")
+        html = self.cages_page()
+        self.assertNotIn("hidden-row", self.detail(html, mating))
+        self.assertIn("hidden-row", self.detail(html, stock))
+
+    def test_the_bar_is_all_active_and_the_labs_purposes(self):
+        html = self.cages_page()
+        chips = re.findall(r'data-dt-filter="([^"]*)"', html)
+        self.assertEqual(chips, ["", "active:true", "purpose:breeder", "purpose:breeding", "purpose:experiment"])
+        for gone in ("stock", "retired", "mine:true", "breeding:1"):
+            self.assertNotIn(f'data-dt-filter="{gone}"', html)
+            self.assertNotIn(f'data-dt-filter="purpose:{gone}"', html)
+
+    def test_a_purpose_added_in_configure_gets_its_button_and_removing_it_takes_it_away(self):
+        r = self.a.post("/colony/options/create", data={"field_name": "purpose", "option_value": "Holding",
+                                                        "back": "configure"})
+        self.assertIn("/organisms/builtin/colony/configure", r.headers["Location"])
+        page = self.a.get("/organisms/builtin/colony/configure").get_data(as_text=True)
+        self.assertIn("Holding", page)
+        self.assertIn('data-dt-filter="purpose:holding"', self.cages_page())
+        option = one("select id from dropdown_options where field_name='purpose' and option_value='Holding'")
+        self.a.post(f"/colony/options/{option}/delete", data={"back": "configure"})
+        self.assertNotIn('data-dt-filter="purpose:holding"', self.cages_page())
+        # Only an admin changes the lab's purposes.
+        self.m.post("/colony/options/create", data={"field_name": "purpose", "option_value": "Mine only"})
+        self.assertEqual(count("dropdown_options", "option_value=?", "Mine only"), 0)
+
+    def test_active_means_living_mice(self):
+        empty = self.make_cage(self.m, purpose="Breeder")
+        execute("update mouse_cages set active_override=true where id=?", empty)   # an older version's flag
+        with SessionLocal() as s:
+            self.assertFalse(services.cage_is_active(s.get(services.CageRecord, empty)))

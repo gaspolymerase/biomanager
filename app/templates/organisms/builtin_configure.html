@@ -72,6 +72,38 @@
     </section>
   {% endif %}
 
+  {% if cage_purposes is not none %}
+    {# The colony's cage purposes: the same list as the colony's Settings tab
+       (Dropdown choices → purpose), so either place changes both. The
+       cage filter bar is All · Active · one chip for each. #}
+    <section class="card">
+      <header class="card-head"><h2>{{ icon('tag') }} {{ _('Cage purposes') }}</h2>
+        <span class="text-[12px] text-muted">{{ _('The Purpose a cage can have, and the buttons above the cages: All, Active, then one for each.') }}</span>
+      </header>
+      <div class="flex flex-col gap-3 p-4">
+        <ul class="flex flex-col gap-1.5">
+          {% for option in cage_purposes %}
+            <li class="flex items-center gap-2">
+              <span class="status-pill-static" data-status="{{ option.option_value|lower }}">{{ option.option_value|tr }}</span>
+              <span class="text-[12px] text-muted">{{ purpose_hints.get(option.option_value|lower, '')|tr }}</span>
+              <form method="post" action="{{ url_for('delete_option', option_id=option.id) }}" class="ml-auto"
+                    data-confirm="{{ _('Remove the cage purpose “%(value)s”? Cages that have it keep it.', value=option.option_value) }}">
+                <input type="hidden" name="back" value="configure">
+                <button type="submit" class="btn btn-sm btn-ghost">{{ _('Remove') }}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+        <form method="post" action="{{ url_for('create_option') }}" class="flex items-center gap-2">
+          <input type="hidden" name="field_name" value="purpose">
+          <input type="hidden" name="back" value="configure">
+          <input name="option_value" class="field" placeholder="{{ _('A purpose of your own, e.g. Holding') }}" aria-label="{{ _('New cage purpose') }}" required autocomplete="off">
+          <button type="submit" class="btn">{{ icon('plus') }} {{ _('Add') }}</button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+
   <section class="card">
     <header class="card-head"><h2>{{ icon('database') }} {{ _('In this lab') }}</h2></header>
     <div class="flex flex-col gap-3 p-4">

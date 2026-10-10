@@ -413,7 +413,8 @@ def _mice_died(s, _target, v):
     return calls
 
 
-CAGE_FIELDS = (Field("purpose", "text", "Breeder, Holding, Experiment… as the lab's list has them"),
+CAGE_FIELDS = (Field("purpose", "text", "Breeder (the lab's breeding stock, shared), Breeding (a mating cage, the one "
+                                        "with litters and weaning) or Experiment, as the lab's list has them"),
                Field("owner", "text", "Username of its owner"),
                Field("rack", "rack", "The rack it sits in"),
                Field("position", "text", "Its position in the rack, as the rack names them (B3, 4-7…)"),
@@ -464,7 +465,7 @@ def _cage_said(s, key, value) -> str:
 
 
 @action(name="litter_born", area="mice", title="Litter born",
-        help="A litter was born in this cage (the cage keeps one birth date; weaning is due from it).",
+        help="A litter was born in this mating (Breeding) cage (the cage keeps one birth date; weaning is due from it).",
         target="cage",
         fields=(Field("date", "date", "The day they were born (today if left out)"),),
         describe=lambda _s, c, v: gettext("Litter born in cage %(cage)s%(on)s", cage=c.cage_id,
