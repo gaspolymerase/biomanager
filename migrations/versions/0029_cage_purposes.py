@@ -1,9 +1,12 @@
 """A mouse cage's purposes are Breeder, Breeding and Experiment (see "The
 mouse colony's words" in CLAUDE.md). Retired is no purpose any more (a
 cage without living mice is simply not active), so retired cages lose it;
-"Exp" and "Experiments" are written "Experiment". The colony's purpose
+"Exp" and "Experiments" are written "Experiment". A Stock cage held the
+lab's stock to breed from, which is what Breeder means, so it becomes a
+Breeder cage and, as a new Breeder cage does, shared with the lab (one
+already shared with a project group stays with it). The colony's purpose
 choices (Configure) drop Stock and Retired and gain any of the three they
-lack. A Stock cage keeps its word until someone changes it.
+lack.
 """
 from __future__ import annotations
 
@@ -26,6 +29,8 @@ def upgrade() -> None:
         bind.execute(sa.text("UPDATE mouse_cages SET purpose = 'Experiment' "
                              "WHERE lower(trim(purpose)) IN ('exp', 'experiments')"))
         bind.execute(sa.text("UPDATE mouse_cages SET purpose = '' WHERE lower(trim(purpose)) = 'retired'"))
+        bind.execute(sa.text("UPDATE mouse_cages SET purpose = 'Breeder', is_shared = :yes "
+                             "WHERE lower(trim(purpose)) = 'stock'"), {"yes": True})
     if has_table("dropdown_options"):
         bind.execute(sa.text("DELETE FROM dropdown_options WHERE field_name = 'purpose' "
                              "AND lower(trim(option_value)) IN ('exp', 'experiments', 'stock', 'retired')"))

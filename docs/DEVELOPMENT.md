@@ -538,8 +538,8 @@ Who may change what lives in one place, `app/access.py`:
   `create_option` / `delete_option` with `back=configure`). The bar above
   the cages is All, Active, then one chip per purpose
   (`cage_purpose_chips()`). Revision 0029 wrote "Exp" and "Experiments" as
-  "Experiment", cleared "Retired", and took Stock and Retired out of the
-  choices.
+  "Experiment", made Stock cages shared Breeder cages, cleared "Retired",
+  and took Stock and Retired out of the choices.
 - **Unowned records stay open**, so records predating ownership don't lock
   anyone out.
 - **Lab common** (`is_shared`) on inventory items and plasmids
