@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><title>BioManager</title><defs><linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#94D7FF"/><stop offset="1" stop-color="#2F86E0"/>
+    </linearGradient>
+    <radialGradient id="bm-light" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bm-white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2F6"/>
+    </linearGradient>
+    <linearGradient id="bm-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="bm-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.55"/>
+    </linearGradient><clipPath id="bm-tube"><path d="M406 356 L406 560 C406 622 480 758 496 784 Q512 806 528 784 C544 758 618 622 618 560 L618 356 Z"/></clipPath></defs><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-bg)"/><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-light)"/><g transform="translate(0 -6)">
+    <path d="M406 356 L406 560 C406 622 480 758 496 784 Q512 806 528 784 C544 758 618 622 618 560 L618 356 Z" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <g fill="url(#bm-white)">
+      <g clip-path="url(#bm-tube)"><path d="M380 600 Q512 624 644 600 L644 820 L380 820 Z"/></g>
+      <rect x="378" y="304" width="268" height="52" rx="18"/>
+      <rect x="394" y="238" width="236" height="56" rx="22"/>
+    </g>
+  </g><rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/></svg>

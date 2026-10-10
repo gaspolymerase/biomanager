@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><title>BioManager</title><defs><linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C4AEFF"/><stop offset="1" stop-color="#7B5CE0"/>
+    </linearGradient>
+    <radialGradient id="bm-light" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bm-white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2F6"/>
+    </linearGradient>
+    <linearGradient id="bm-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="bm-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.55"/>
+    </linearGradient><mask id="bm-fish" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><g fill="#000" stroke="#000"><line x1="330" y1="490" x2="680" y2="490" stroke-width="20" stroke-linecap="round"/><line x1="330" y1="538" x2="680" y2="538" stroke-width="20" stroke-linecap="round"/><circle cx="714" cy="494" r="16" stroke="none"/></g></mask></defs><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-bg)"/><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-light)"/><g transform="translate(512 512) scale(1.16) translate(-500 -512)">
+    <path d="M344 512 L230 404 C262 462 270 488 274 512 C270 536 262 562 230 620 Z" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <path d="M458 432 Q514 348 598 426 Z" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <path d="M492 596 Q540 668 612 598 Z" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <g><path d="M300 512 C372 404 604 386 762 498 C776 508 776 516 762 526 C604 638 372 620 300 512 Z" fill="url(#bm-white)" mask="url(#bm-fish)"/></g>
+  </g><rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/></svg>

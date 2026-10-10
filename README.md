@@ -709,8 +709,9 @@ database has a name of its own (one another database has is refused), so
 
 ### 📥 Coming from Excel
 
-Every database has **Import from Excel** beside **Add many**: mice, fish,
-plasmids, fly and worm vials, any organism database and every inventory.
+Every database has **Import from Excel**, under **•••** at the end of the
+toolbar above its sheet: mice, fish, plasmids, fly and worm vials, any
+organism database and every inventory.
 Upload the workbook (.xlsx, any sheet), CSV or TSV you kept your records
 in, as it is (up to 15 MB and 5,000 rows):
 
@@ -1086,7 +1087,7 @@ A walk-through for a mouse colony. The other modules work the same way.
     <td valign="top" width="25%">
       <h4>Day 2 · Bring the mice in</h4>
       <ol>
-        <li><b>Mice → Import from Excel</b>: upload your old spreadsheet as it is and check how its columns were matched.</li>
+        <li><b>Mice → ••• → Import from Excel</b>: upload your old spreadsheet as it is and check how its columns were matched.</li>
         <li>Or <b>Mice → Add many</b>: describe a group of new mice.</li>
         <li>Check the preview; <b>Fill down</b>, <b>Skip</b>, then save.</li>
         <li>Give each cage a purpose and a rack position.</li>

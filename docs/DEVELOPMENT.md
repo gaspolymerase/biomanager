@@ -2235,21 +2235,42 @@ teal in them).
   letter spacing (`:lang(zh)`).
 - **The header** floats above the page and turns to glass once the page
   scrolls (`site.js` adds `.scrolled`).
+- **The clips are the app, replayed, not video** (as Raycast shows its
+  app): `scripts/live-clips.py` runs each walk (the launch posts' walks in
+  `promo/clips/`, plus the site's own census, litter and cage-card walks)
+  in a fresh demo lab, driven by `scripts/feature-clips.py`'s Director, and
+  records the pages with rrweb (`@rrweb/record`, a dev dependency in
+  `frontend/`) instead of filming them. Each clip is
+  `site/assets/clips/<name>.json` (segments: a desktop window or a phone,
+  each with its size, length, zoom keyframes and rrweb events; a few hundred
+  KB, about a tenth of that gzipped) and `<name>.webp`, the first frame at
+  2×, which is the `<video>`'s poster in the page and all a browser
+  without scripts shows. The recordings name the app's files as `%BM%/`;
+  the stylesheets, fonts, `icons.svg` and pictures they load are copied to
+  `site/assets/app/` (pictures the lab served, such as the app icon, to
+  `site/assets/app/lab/`), and the replayer to
+  `site/assets/vendor/rrweb-replay.js`. `bmClips.mount(video)` in `site.js`
+  puts a player in the `<video>`'s place: it loads the replayer and the
+  clip when one is to play, replays it in an iframe scaled to fit (light,
+  whatever the visitor's theme), does the walk's zooms as a transform, plays
+  a phone segment in a phone frame, and loops or says it ended. The words
+  are drawn by the visitor's browser, so they are as sharp as the page on
+  any screen. Rerun `live-clips.py` after a change people would see in a
+  clip; a walk that no longer finds its button fails alone, by name.
 - **The feature stage** (`#see` on the front page; dark on a dark page,
   white with pale glass on a light one) plays a short clip per tab of its
-  dock: `site/assets/clips/<name>.webm` and `.mp4`, with a `.webp`
-  poster. `scripts/site-clips.py` makes them from a fresh demo lab (through
-  `scripts/feature-clips.py --plain`). Only the chosen clip loads; clips follow
-  one another until someone picks a tab, and pause off screen. A tab's caption
-  is in its `data-claim` and `data-more`.
-- **Clips play by themselves** on the front page and Features, with no
-  play button or controls (`bmClips` in `site.js`): Apple's browsers get
-  the `.mp4` (they can stall on WebM), the others the smaller `.webm`; a
-  clip the browser won't start on its own (Safari in Low Power Mode)
-  starts at the visitor's first tap, click or key anywhere on the page,
-  and the browser's own play button is hidden over them. With reduced
-  motion the stage and the AI card stay still (the stage plays the tab
-  someone picks); a Features window plays what was clicked.
+  dock. Only the chosen clip loads; clips follow one another until someone
+  picks a tab, and pause off screen. A tab's caption is in its `data-claim`
+  and `data-more`.
+- **Clips play by themselves** on the front page, Features and the guide,
+  with no play button or controls. With reduced motion the stage stays
+  still (it plays the tab someone picks), a guide clip waits for a click,
+  and a Features window plays what was clicked. The AI assistants card's
+  clip is the one video (`scripts/assistant-clip.py`, which draws the
+  assistant's window): Apple's browsers get its `.mp4` (they can stall on
+  WebM), the others the smaller `.webm`; if the browser won't start it on
+  its own (Safari in Low Power Mode) it starts at the visitor's first tap,
+  click or key, and the browser's own play button is hidden over it.
 - **Features** has no screenshots: each database and each thing that works
   everywhere is a glass and neon card (`.nc`) drawn in the page, with its own
   colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the card on a dark
@@ -2257,7 +2278,7 @@ teal in them).
   the app's own words. On a dark page the card is dark and its drawing
   glows; on a light page it is white with a soft wash of its colour, a
   deeper drawing and white frosted glass. A card with `data-clip` opens that
-  clip (from `site/assets/clips/`, made by `scripts/site-clips.py`) in a
+  clip (from `site/assets/clips/`, made by `scripts/live-clips.py`) in a
   window with a link on to its part of the user guide; without scripts, or
   with ⌘-click, it is just that link. By day every band is white, parted by
   hairlines; on a dark page the header's glass turns dark over the stage and

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><title>BioManager</title><defs><linearGradient id="bm-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFA6C1"/><stop offset="1" stop-color="#E0527F"/>
+    </linearGradient>
+    <radialGradient id="bm-light" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bm-white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF2F6"/>
+    </linearGradient>
+    <linearGradient id="bm-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="bm-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.55"/>
+    </linearGradient><mask id="bm-abdomen" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><g fill="#000" stroke="#000"><ellipse cx="512" cy="446" rx="92" ry="82" fill="none" stroke-width="14"/><rect x="400" y="592" width="224" height="20" stroke="none"/><rect x="400" y="640" width="224" height="20" stroke="none"/><rect x="400" y="688" width="224" height="20" stroke="none"/></g></mask><mask id="bm-head" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><g fill="#000" stroke="#000"><ellipse cx="512" cy="446" rx="92" ry="82" fill="none" stroke-width="14"/><circle cx="460" cy="322" r="32" fill="none" stroke-width="14"/><circle cx="564" cy="322" r="32" fill="none" stroke-width="14"/></g></mask></defs><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-bg)"/><rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#bm-light)"/><g transform="translate(512 512) scale(1.08) translate(-512 -506)">
+    <ellipse cx="622" cy="606" rx="70" ry="182" transform="rotate(-24 622 606)" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <ellipse cx="402" cy="606" rx="70" ry="182" transform="rotate(24 402 606)" fill="url(#bm-glass)" stroke="url(#bm-rim)" stroke-width="4"/>
+    <g fill="url(#bm-white)">
+      <ellipse cx="512" cy="604" rx="78" ry="134" mask="url(#bm-abdomen)"/>
+      <ellipse cx="512" cy="446" rx="92" ry="82"/>
+      <circle cx="512" cy="330" r="52" mask="url(#bm-head)"/>
+      <circle cx="460" cy="322" r="32"/><circle cx="564" cy="322" r="32"/>
+    </g>
+  </g><rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/></svg>

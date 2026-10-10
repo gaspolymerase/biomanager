@@ -1,0 +1,44 @@
+/* templates/_icon_picker.html: icons to click, not names to read. The
+   !important rules beat the form styles that labels and inputs inside
+   dialogs and cards otherwise get. */
+.icon-picker { min-width: 0; margin: 0; padding: 0; border: 0; }
+.icon-picker legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+.icon-picker-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.icon-picker-choice {
+  position: relative;
+  display: inline-grid !important;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 !important;
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  transition: background-color 100ms, color 100ms;
+}
+.icon-picker-choice:hover { background: var(--color-recess); color: var(--color-ink); }
+.icon-picker-choice input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.icon-picker-choice svg.icon { width: 17px; height: 17px; }
+.icon-picker-choice:has(input:checked) {
+  border-color: var(--color-brand-600);
+  background: var(--color-brand-600);
+  color: #fff;
+}
+.icon-picker-choice:has(input:focus-visible) { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }

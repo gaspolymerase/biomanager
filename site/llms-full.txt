@@ -942,7 +942,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - Pages in **Topics**, written like a document and kept as Markdown. Topics are folders: a new page goes in the topic you have open, or in *Inbox* when none is, whatever kind of page it is. Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
 
-- Above the title, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never moves the page. Under the title are its date, status and tags; once other pages link to it, **Linked from** lists them.
+- In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never moves the page. Under the title are its date, status and tags; once other pages link to it, **Linked from** lists them.
 
 - Write as in Notion: type **/** and a few letters of what you want (`/h2`, `/toggle`; Chinese words work too, `/分栏`).
 
@@ -962,7 +962,7 @@ Notebook pages, protocols, data sheets, signing, and the bench calculators.
 
 - **Date…** inserts a day you pick. **Reminder** adds a to-do to your calendar on the day and time you choose, and writes a link to it in the page (⏰ and the date).
 
-The bar at the bottom of the page is one row:
+The formatting bar floats at the bottom of the window, in one row:
 
 - the text's style (text, headings, quote, code block) and lists;
 
@@ -1002,7 +1002,7 @@ When a page should be the record of your work, **Sign** it — your choice, page
 
 ### Working together
 
-Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Tags and search** work across every page you can open.
+Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Share**, **Comments**, **Sign** and **History** are in the row at the top of the page; each opens on the right, and the list of pages folds away while it is open. **Tags and search** work across every page you can open.
 
 ### Utilities
 
@@ -1068,7 +1068,9 @@ Experiments, to-dos and bookings, with the colony's dates filled in for you.
 
 - **Month, Week, Day** and **List** views. Filled in for you: weanings, genotyping and sac reminders, fly and worm flips and egg collections, organism schedules, zebrafish tanks and reagent expiry. Clicking one (once, in every view) opens the record it came from. A link can open a given view and day: `/calendar?view=week&date=2026-10-05`.
 
-- The sidebar has a small month to jump around, a **Show** list with a colour and a count for each kind (events, to-dos, the colony, stocks and organisms, supplies, protocols, equipment, time away, connected calendars), the instruments and the protocols under way.
+- The month (or week, or day) is the page's title. Back, **Today** and Forward, the **Month** / **Week** / **Day** / **List** switch and **New event** are in the row at the top.
+
+- Beside the grid are a small month to jump around, a **Show** list with a colour and a count for each kind (events, to-dos, the colony, stocks and organisms, supplies, protocols, equipment, time away, connected calendars), the instruments and the protocols under way.
 
 - **New event** offers an event, a to-do (due today, tomorrow, next week, or a date), **Book equipment**, **Time away** and **Start a protocol**. Drag an event, to-do or booking to move it.
 
