@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.4.1": {
+        "fixed": [
+            "A lab server built from the source code sends its anonymous daily counts again; the **Usage report** shows what they hold.",
+        ],
+    },
     "1.4.0": {
         "new": [
             "A new look after Apple's Liquid Glass: the sidebar, tabs and page buttons float as glass over the page, and the selection slides to what you pick.",
