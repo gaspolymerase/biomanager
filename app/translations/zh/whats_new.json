@@ -82,5 +82,7 @@
   "A plasmid's concentration written with its unit (152.6 ng/µl) is read as the concentration, not put in the notes.": "写了单位的质粒浓度（152.6 ng/µl）会读成浓度，而不是放进备注。",
   "On a Mac, the window's buttons sit square in its corner, and the welcome page's name on their line.": "Mac 窗口的三个按钮与角落对齐，欢迎页上的名字和它们在同一行。",
   "On macOS 26, the window's close, minimise and zoom buttons are the size other apps' are, and the app has the system's current look.": "在 macOS 26 上，窗口的关闭、最小化和缩放按钮与其他应用一样大，整个应用也换上了系统当前的外观。",
-  "With the sidebar collapsed, the window's buttons sit at the left of the top row, before your tabs, instead of hanging over the sidebar.": "侧边栏收起时，窗口按钮位于顶部一行的左侧、标签页之前，不再压在侧边栏上。"
+  "With the sidebar collapsed, the window's buttons sit at the left of the top row, before your tabs, instead of hanging over the sidebar.": "侧边栏收起时，窗口按钮位于顶部一行的左侧、标签页之前，不再压在侧边栏上。",
+  "In the Mac app, beside the window's buttons: hide the sidebar, search everything, and go back and forward.": "Mac 应用里，窗口按钮旁边多了几个按钮：隐藏侧边栏、全局搜索、后退和前进。",
+  "A collapsed sidebar shows each place's name under its icon, and keeps **Settings** and **Help** at its foot.": "收起的侧边栏在每个图标下面写着名字，**设置** 和 **帮助** 固定在底部。"
 }

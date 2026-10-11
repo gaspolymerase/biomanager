@@ -30,6 +30,14 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.8": {
+        "new": [
+            "In the Mac app, beside the window's buttons: hide the sidebar, search everything, and go back and forward.",
+        ],
+        "changed": [
+            "A collapsed sidebar shows each place's name under its icon, and keeps **Settings** and **Help** at its foot.",
+        ],
+    },
     "1.5.7": {
         "fixed": [
             "On macOS 26, the window's close, minimise and zoom buttons are the size other apps' are, and the app has the system's current look.",
