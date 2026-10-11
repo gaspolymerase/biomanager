@@ -150,6 +150,21 @@
           });
         </script>
 
+        {# The Mac window's own tools, on the top row after its close, minimise
+           and zoom buttons, as in Safari or Claude: the sidebar, search, back
+           and forward (html.mac-window; elsewhere the sidebar keeps its own
+           toggle and the browser has back and forward). #}
+        <div class="wtools" role="toolbar" aria-label="{{ _('Window') }}">
+          <button type="button" class="wtool" data-rail-toggle
+                  aria-label="{{ _('Hide or show the sidebar') }}" title="{{ _('Hide or show the sidebar') }}">{{ icon('sidebar') }}</button>
+          <button type="button" class="wtool" data-wtool-search
+                  aria-label="{{ _('Search everything') }}" title="{{ _('Search everything') }} (⌘K)">{{ icon('search') }}</button>
+          <button type="button" class="wtool" data-wtool-back
+                  aria-label="{{ _('Go back') }}" title="{{ _('Go back') }} (⌘[)">{{ icon('back') }}</button>
+          <button type="button" class="wtool" data-wtool-forward
+                  aria-label="{{ _('Go forward') }}" title="{{ _('Go forward') }} (⌘])">{{ icon('back', 'is-forward') }}</button>
+        </div>
+
         <div class="shell-main">
 
           {# ---- Top row: tabs, search, notifications, account ---- #}

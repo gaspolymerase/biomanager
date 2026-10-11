@@ -223,7 +223,7 @@
 
   --ease-out-soft: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --rail-w: 52px;
+  --rail-w: 76px;
   --rail-w-open: 220px;
   /* The top row (tabs, search, you) and the page's title row under it.
      The page scrolls beneath both. desktop_mac.py centres a Mac's traffic
@@ -756,23 +756,35 @@
   .rail-label { @apply truncate; }
   .rail-foot { @apply mt-auto flex shrink-0 flex-col gap-px pt-3; }
 
-  /* Collapsed: glyphs only, name on hover. */
-  body[data-rail="closed"] .rail-item { @apply justify-center px-0; }
-  body[data-rail="closed"] .rail-label,
+  /* Collapsed, as Benchling's: each place a tile, its glyph over its name
+     in small type (two lines at most), the groups parted by a hairline. */
+  body[data-rail="closed"] .rail { @apply px-1.5; }
+  body[data-rail="closed"] .rail-item {
+    @apply h-auto min-h-[44px] flex-col justify-center gap-[2px] rounded-lg px-0.5 py-1 text-center;
+  }
+  body[data-rail="closed"] .rail-item .icon { @apply size-[17px]; }
+  body[data-rail="closed"] .rail-label {
+    @apply max-w-full overflow-hidden text-[10px] font-medium leading-[12px] text-muted;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  body[data-rail="closed"] .rail-item:hover .rail-label { @apply text-ink; }
+  body[data-rail="closed"] .rail-item.is-active .rail-label { @apply font-semibold text-brand-800; }
+  html.window-inactive body[data-rail="closed"] .rail-item.is-active .rail-label { @apply text-ink; }
   body[data-rail="closed"] .rail-brand-word { @apply hidden; }
   body[data-rail="closed"] .rail-brand { @apply justify-center px-0; }
-  body[data-rail="closed"] .rail-group-label { @apply h-2 overflow-hidden p-0 text-transparent; }
-
-  body[data-rail="closed"] .rail-item[data-label]::after {
-    content: attr(data-label);
-    @apply pointer-events-none absolute left-[calc(100%+8px)] top-1/2 z-50 -translate-y-1/2
-           whitespace-nowrap rounded-md px-2 py-1 text-[12px] font-medium text-ink
-           opacity-0 shadow-md transition-opacity duration-100;
-    background: var(--material-popover);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+  body[data-rail="closed"] .rail-group + .rail-group { @apply mt-1 border-t border-hairline pt-1; }
+  /* Settings and Help stay at the bottom while the places above scroll. */
+  body[data-rail="closed"] .rail-foot {
+    @apply sticky bottom-0 -mx-1.5 -mb-2 mt-auto border-t border-hairline px-1.5 pb-2 pt-1;
+    background: var(--material-sidebar);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
   }
-  body[data-rail="closed"] .rail-item[data-label]:hover::after { @apply opacity-100; }
+  body[data-rail="closed"] .rail-group-label { @apply hidden; }
 
   /* The logo and, beside it, Hide sidebar (above it when collapsed). */
   .rail-top { @apply mb-2 flex shrink-0 items-center justify-between gap-1; }
@@ -786,22 +798,40 @@
   .rail-toggle .icon { @apply size-[13px] transition-transform duration-200; }
   body[data-rail="open"] .rail-toggle .icon { @apply rotate-180; }
 
-  /* A Mac window has no title bar: the traffic lights sit at the top of the
-     sidebar, on the line of the top row, and Hide sidebar beside them. */
-  html.mac-window:not(.is-fullscreen) .rail { padding-top: var(--tabbar-h); }
-  html.mac-window:not(.is-fullscreen) body[data-rail="open"] .rail-toggle {
-    @apply absolute right-2;
+  /* A Mac window has no title bar. Its top row holds the traffic lights
+     (they end 76px in on macOS 26: desktop_mac.py; none in full screen) and,
+     after them, the window's tools (.wtools): the sidebar, search, back and
+     forward, as in Safari or Claude. The sidebar starts below that row; with
+     it collapsed the row runs the window's width and the tabs follow the
+     tools. Search is among the tools, so the top row has no search box. */
+  .wtools { @apply hidden; }
+  html.mac-window {
+    --wtools-left: 88px;
+    --wtools-end: calc(var(--wtools-left) + 4 * 28px + 3 * 2px);
+  }
+  html.mac-window.is-fullscreen { --wtools-left: 12px; }
+  html.mac-window .wtools {
+    @apply fixed z-50 flex gap-0.5;
+    left: var(--wtools-left);
     top: calc((var(--tabbar-h) - 28px) / 2);
   }
-  /* Collapsed, the sidebar is narrower than the lights, so the top row runs
-     the window's width as a Mac's does with its sidebar hidden: the lights
-     at its left (they end 76px in on macOS 26: desktop_mac.py), the tabs
-     after them, and the sidebar's glyphs start below it. */
-  html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .topstrip {
-    padding-left: calc(96px - var(--rail-w));
+  .wtool {
+    @apply flex size-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent
+           text-muted transition-colors duration-75;
   }
-  html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .rail {
-    @apply pt-2.5;
+  .wtool:hover:not(:disabled) { @apply bg-sand-300/45 text-ink; }
+  .wtool:disabled { @apply cursor-default opacity-35; }
+  .wtool .icon { @apply size-[16px]; }
+  .wtool .icon.is-forward { transform: scaleX(-1); }
+  html.window-inactive .wtool { @apply opacity-60; }
+  html.mac-window .rail-toggle,
+  html.mac-window .omnibox { @apply hidden; }
+  html.mac-window .rail { padding-top: var(--tabbar-h); }
+  html.mac-window body[data-rail="closed"] .topstrip {
+    padding-left: calc(var(--wtools-end) + 12px - var(--rail-w));
+  }
+  html.mac-window body[data-rail="closed"] .rail {
+    @apply pt-2;
     margin-top: var(--tabbar-h);
     height: calc(100vh - var(--tabbar-h));
     border-top-right-radius: var(--radius-xl);

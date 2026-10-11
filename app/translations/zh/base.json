@@ -248,5 +248,8 @@
   "Smaller": "较小",
   "Larger": "较大",
   "Inter tells I, l and 1 apart and looks the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.": "Inter 能分清 I、l 和 1，在每台电脑上看起来都一样。系统字体在 Mac 上是 SF Pro，在 Windows 上是 Segoe UI。",
-  "Your browser’s zoom sets it: ⌘ + and ⌘ − on a Mac, Ctrl + and Ctrl − elsewhere.": "由浏览器的缩放决定：Mac 上按 ⌘ + 和 ⌘ −，其他电脑上按 Ctrl + 和 Ctrl −。"
+  "Your browser’s zoom sets it: ⌘ + and ⌘ − on a Mac, Ctrl + and Ctrl − elsewhere.": "由浏览器的缩放决定：Mac 上按 ⌘ + 和 ⌘ −，其他电脑上按 Ctrl + 和 Ctrl −。",
+  "Window": "窗口",
+  "Go back": "后退",
+  "Go forward": "前进"
 }

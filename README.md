@@ -817,7 +817,10 @@ The interface follows Apple's Liquid Glass design: the sidebar, the row of
 tabs and each page's buttons float as frosted glass over the page, which
 scrolls beneath them, while the records themselves sit on solid ground so
 they stay easy to read. On a Mac the desktop app has no title bar; its close,
-minimise and zoom buttons sit at the top of the sidebar. There is a full
+minimise and zoom buttons sit at the top of the sidebar, followed, as in
+Safari, by buttons to hide the sidebar, search everything, and go back and
+forward. Hidden, the sidebar narrows to a column of its places, each icon
+with its name under it. There is a full
 dark mode, following the system's setting (in the desktop app, **View →
 Appearance** chooses Light or Dark), and Reduce Transparency, Increase
 Contrast and Reduce Motion are honoured. It works in any modern browser on

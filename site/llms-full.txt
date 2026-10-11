@@ -331,7 +331,9 @@ Search everything from anywhere, and keep pages open as tabs.
 
 - **Chips** beside it narrow it: *All*, *Alive*, *Mine*, *Lab common*, a status, *Expiring soon*.
 
-- **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open.
+- **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open. The search at the top of the window opens it too; in the Mac app that is the magnifying glass beside the window's buttons.
+
+- **Back and forward.** In the Mac app, the arrows after the magnifying glass go back and forward, as `⌘` `[` and `⌘` `]` do; the button before it hides or shows the sidebar (`⌘` `B`). Hidden, the sidebar is a narrow column of its places, each with its name under it.
 
 - **Tabs.** Following a link moves the tab you're in; **+** opens a new tab on your start page (**Settings → Appearance & language → Open on**; Home if none). Drag to reorder, `Alt` (`⌥ Option` on a Mac) + `1`…`9` to jump. They're still there tomorrow, and they are yours: someone else signing in on the same computer gets their own.
 

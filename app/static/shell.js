@@ -373,6 +373,32 @@
       el.addEventListener('click', () => toast(el.dataset.soon));
     });
 
+    // The Mac window's tools beside its buttons: search as the omnibox does,
+    // and back and forward, greyed where there is nowhere to go (where the
+    // browser can say: the Navigation API).
+    const wtools = document.querySelector('.wtools');
+    if (wtools) {
+      wtools.querySelector('[data-wtool-search]').addEventListener('click', () => {
+        if (window.BiomanagerTabs) window.BiomanagerTabs.cancelNewTab();
+        if (window.BiomanagerSearch) window.BiomanagerSearch.open();
+      });
+      const back = wtools.querySelector('[data-wtool-back]');
+      const forward = wtools.querySelector('[data-wtool-forward]');
+      back.addEventListener('click', () => history.back());
+      forward.addEventListener('click', () => history.forward());
+      const nav = window.navigation;
+      if (nav && 'canGoBack' in nav) {
+        const sync = () => { back.disabled = !nav.canGoBack; forward.disabled = !nav.canGoForward; };
+        sync();
+        nav.addEventListener('currententrychange', sync);
+        // The Mac window's web view fills in what lies ahead a moment after a
+        // page loads, and a page brought back from the back-forward cache
+        // says nothing: ask again then, and as the pointer comes near.
+        window.addEventListener('pageshow', () => { sync(); setTimeout(sync, 400); });
+        wtools.addEventListener('pointerenter', sync);
+      }
+    }
+
     // The omnibox searches in the tab you are already in; "+" (below) opens
     // a new tab on your start page.
     const omnibox = document.querySelector('#app-global-search');

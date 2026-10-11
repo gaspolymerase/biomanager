@@ -119,10 +119,21 @@ full screen) so the page leaves room for the lights. The empty parts of the
 two rows stand in for the title bar: `static/shell.js` posts `drag` or
 `zoom` to the `bmWindow` message handler, and the window moves natively
 (`performWindowDragWithEvent:`), or zooms or minimises as the person's
-"Double-click a window's title bar" setting says. With the sidebar
-collapsed (narrower than the lights) the top row runs the window's width,
-the lights at its left, and the sidebar starts below it. Windows and Linux
-keep their own frames.
+"Double-click a window's title bar" setting says. After the lights come
+the window's tools (`.wtools` in `base.html`, shown under `html.mac-window`):
+the sidebar, search, back and forward, as in Safari or Claude; search
+replaces the top row's search box there, and the sidebar's own toggle is
+hidden. Back and forward grey out by the Navigation API (`canGoBack`,
+`canGoForward`), asked again after `pageshow` and on hover, since the web
+view fills in what lies ahead a moment after a page loads. With the
+sidebar collapsed the top row runs the window's width, the tabs after the
+tools, and the sidebar starts below it. Windows and Linux keep their own
+frames.
+
+Collapsed (`body[data-rail="closed"]`, everywhere), the sidebar is a
+76px column of tiles, as Benchling's: each place's glyph over its name in
+10px type (two lines at most), groups parted by a hairline, and Settings and
+Help pinned to its foot while the rest scrolls.
 
 macOS 26 draws its current look, and the larger lights (14 points, 23
 apart, not 12 and 20), only for an app built with its SDK, judged by the
