@@ -793,10 +793,19 @@
     @apply absolute right-2;
     top: calc((var(--tabbar-h) - 28px) / 2);
   }
-  /* Collapsed, the sidebar is narrower than the lights: the top row starts
-     after them instead (they end 70px in: desktop_mac.py). */
+  /* Collapsed, the sidebar is narrower than the lights, so the top row runs
+     the window's width as a Mac's does with its sidebar hidden: the lights
+     at its left (they end 76px in on macOS 26: desktop_mac.py), the tabs
+     after them, and the sidebar's glyphs start below it. */
   html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .topstrip {
-    padding-left: calc(94px - var(--rail-w));
+    padding-left: calc(96px - var(--rail-w));
+  }
+  html.mac-window:not(.is-fullscreen) body[data-rail="closed"] .rail {
+    @apply pt-2.5;
+    margin-top: var(--tabbar-h);
+    height: calc(100vh - var(--tabbar-h));
+    border-top-right-radius: var(--radius-xl);
+    box-shadow: inset -0.5px 0 0 var(--color-hairline), inset 0 0.5px 0 var(--color-hairline);
   }
 
   /* More and Help: a button that opens its menu beside the sidebar

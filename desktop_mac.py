@@ -12,7 +12,9 @@ and the Dock still show it); it just doesn't draw a bar for it.
   buttons are gone, the mark is `mac-window is-fullscreen`.
 - The buttons are moved down to the middle of the page's top row
   (`ROW_CENTER`), and moved back each time AppKit lays the title bar out
-  again (a resize, leaving full screen).
+  again (a resize, leaving full screen). The window has an empty unified
+  toolbar, without which an app on macOS 26's SDK can't move them (the
+  packaged app is stamped as one: scripts/build-desktop.sh).
 - The empty part of the top row behaves as a title bar: static/shell.js
   posts "drag" when it is dragged and "zoom" when it is double-clicked, to the
   `bmWindow` message handler here, and the window moves with the mouse
@@ -45,6 +47,16 @@ def prepare(window) -> None:
     nswindow.setStyleMask_(nswindow.styleMask() | AppKit.NSWindowStyleMaskFullSizeContentView)
     nswindow.setTitlebarAppearsTransparent_(True)
     nswindow.setTitleVisibility_(AppKit.NSWindowTitleHidden)
+    # An empty toolbar in the unified style. The packaged app counts as built
+    # with macOS 26's SDK (scripts/build-desktop.sh), so it gets the larger
+    # buttons other apps have (14 points, 23 apart); without a toolbar such
+    # an app can't move them down to the top row. Before macOS 26, and run
+    # from source, it changes nothing to see.
+    toolbar = AppKit.NSToolbar.alloc().initWithIdentifier_("biomanager-window")
+    nswindow.setToolbar_(toolbar)
+    nswindow.setToolbarStyle_(AppKit.NSWindowToolbarStyleUnified)
+    if nswindow.respondsToSelector_("setTitlebarSeparatorStyle:"):
+        nswindow.setTitlebarSeparatorStyle_(AppKit.NSTitlebarSeparatorStyleNone)
     # pywebview paints the title bar's container in the window colour (so a
     # normal title bar keeps its colour); here it would be a grey band over
     # the page's top row.

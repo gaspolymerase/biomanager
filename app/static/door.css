@@ -69,7 +69,7 @@ body.door { margin: 0; min-height: 100vh; background: var(--color-surface); colo
    minimise and zoom buttons sit in the panel's top-left corner, and the
    name rides on their line, after them, as a window's title would. */
 html.mac-window:not(.is-fullscreen) .door-lab { padding-top: calc(var(--tabbar-h) + 18px); }
-html.mac-window:not(.is-fullscreen) .door-brand { position: absolute; top: calc((var(--tabbar-h) - 26px) / 2); left: 94px; gap: 9px; font-size: 14px; }
+html.mac-window:not(.is-fullscreen) .door-brand { position: absolute; top: calc((var(--tabbar-h) - 26px) / 2); left: 96px; gap: 9px; font-size: 14px; }
 html.mac-window:not(.is-fullscreen) .door-brand img { width: 26px; height: 26px; border-radius: 7px; }
 .door-foot a { color: var(--door-lab-muted); text-decoration: none; }
 .door-foot a:hover { color: var(--door-lab-ink); }

@@ -119,8 +119,20 @@ full screen) so the page leaves room for the lights. The empty parts of the
 two rows stand in for the title bar: `static/shell.js` posts `drag` or
 `zoom` to the `bmWindow` message handler, and the window moves natively
 (`performWindowDragWithEvent:`), or zooms or minimises as the person's
-"Double-click a window's title bar" setting says. Windows and Linux keep
-their own frames.
+"Double-click a window's title bar" setting says. With the sidebar
+collapsed (narrower than the lights) the top row runs the window's width,
+the lights at its left, and the sidebar starts below it. Windows and Linux
+keep their own frames.
+
+macOS 26 draws its current look, and the larger lights (14 points, 23
+apart, not 12 and 20), only for an app built with its SDK, judged by the
+app's executable. That is PyInstaller's launcher, built with SDK 12, so
+`scripts/build-desktop.sh` restamps it as SDK 26 with `vtool` and signs it
+again. The window also has an empty unified toolbar: with SDK 26 the lights
+can't be moved down to the top row without one. Run from source, the
+window has the interpreter's look; to see the packaged one, run a copy of
+the interpreter restamped the same way (`xcrun vtool -set-build-version
+macos 11.0 26.0 -replace -output <copy> <python>`, then `codesign -s -`).
 
 ### Icons
 

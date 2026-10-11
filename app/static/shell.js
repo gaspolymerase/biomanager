@@ -440,13 +440,14 @@
 
     const native = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmWindow;
     if (!native || !root.classList.contains('mac-window')) return;
-    // The bare rows themselves, and the sidebar's top strip beside the lights.
+    // The bare rows themselves, and the sidebar's top strip beside the lights
+    // (or, with the sidebar collapsed below the top row, the window above it).
     const rowHeight = () => parseFloat(getComputedStyle(root).getPropertyValue('--tabbar-h')) || 46;
     const bare = (event) => {
       const el = event.target;
       if (!el.matches) return false;
       if (el.matches('.topstrip, .strip-actions, .toolbar, .toolbar > .min-w-0, .toolbar-spacer, .toolbar-title, .toolbar-sub')) return true;
-      return el.matches('.rail, .rail-top') && event.clientY < rowHeight();
+      return el.matches('.rail, .rail-top, .shell') && event.clientY < rowHeight();
     };
     let press = null;
     document.addEventListener('mousedown', (event) => {
