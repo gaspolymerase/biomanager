@@ -513,7 +513,8 @@ class Importing(AppTestCase):
         self.assertEqual(si.fill_down(["a", "", "b", " ", ""]), (["a", "a", "b", "b", "b"], 3))
         tag = uniq("TG")
         html = self.upload(self.a, "mice", "c.xlsx", xlsx([["Notes", "Strain"], ["x", tag], ["", tag]]))[1]
-        self.assertNotIn("take the value above", html)                     # notes don't group mice
+        # Notes don't group mice: no fill-down box (What's new may quote its words).
+        self.assertNotRegex(html, r'name="down-\d')
 
     def test_chinese_headers_are_matched(self):
         mice = si.auto_match(["小鼠编号", "性别", "出生日期", "笼号", "基因型", "状态", "负责人", "备注"],
