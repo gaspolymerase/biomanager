@@ -30,6 +30,12 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.5.7": {
+        "fixed": [
+            "On macOS 26, the window's close, minimise and zoom buttons are the size other apps' are, and the app has the system's current look.",
+            "With the sidebar collapsed, the window's buttons sit at the left of the top row, before your tabs, instead of hanging over the sidebar.",
+        ],
+    },
     "1.5.6": {
         "new": [
             "**Import from Excel** reads Chinese sheets: Chinese headers, 公/母 and 种鼠/处死, and a CSV saved on a Chinese Windows.",
