@@ -858,7 +858,7 @@ What you stop doing: ordering a second one because nobody knew the first had arr
 
 One engine, ten starting points, each with its own columns and statuses. Viruses, Primers and Glycerol stocks each name the plasmid they came from, so they sit with [Plasmids](https://biomanager.org/guide/plasmids) as tabs of one area, **Molecular biology** in the sidebar, rather than on their own:
 
-| Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Beside it, **Custom tag** shows that mouse's tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. If you hide **Custom tag** under **Columns** on the Mice tab, it goes from Samples too. Rest the pointer on the arrow after the ID for that mouse's sex, age, genotype, status, owner and cage, and the notebook pages that mention it, as the notebook shows over **@mouse**; click it to open the mouse in the colony. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position, with what was measured as numbers: *Conc.* and its unit, *260/280*, *260/230*, *Volume (µL)*. Available, in use, used up, discarded. |
+| Samples | Tissue and material, linked to the animal it came from — pick the colony and type its ID in the **Source** cell, or tick a whole harvest and set it on all of them at once. Beside it, **Custom tag** shows that mouse's tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. If you hide **Custom tag** under **Columns** on the Mice tab, it goes from Samples too. Rest the pointer on the arrow after the ID for that mouse's sex, age, genotype, status, owner and cage, and the notebook pages that mention it, as the notebook shows over **@mouse**; click it to open the mouse in the colony. A tab for each type, each with its own columns ([Samples by type](https://biomanager.org/guide/samples-and-orders#samples-by-type)): a tissue's *Tissue*, *Fixation* and *Orientation*; a DNA's or RNA's *Conc.* and its unit, *260/280*, *260/230* and *Volume (µL)*; and for every sample its *Genotype* and *Condition*. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position. Available, in use, used up, discarded. |
 |---|---|
 | Orders | What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered, received, cancelled — on a table or a **Board** you drag cards across. |
 | Reagents | Quantity, concentration, CAS number, storage temperature, hazards, lot and expiry. In stock, low, empty, discarded. |
@@ -869,6 +869,24 @@ One engine, ten starting points, each with its own columns and statuses. Viruses
 | Glycerol stocks | Bacteria carrying a plasmid, frozen in glycerol: the plasmid (**Plasmid**), strain, colony, resistance, how it was checked (digest, colony PCR, Sanger, whole plasmid), the date frozen, and its place in a −80 °C box. The plasmid's **Storage** tab lists its glycerol stocks and the box each is in. In stock, low, used up, discarded. |
 | Cell lines | A frozen vial of each line or clone: species, parent, passage, freeze date, cells per vial, medium, selection, mycoplasma result and date, and its place in the LN₂ boxes. In stock, thawed, used up, discarded. |
 | Custom list | Whatever you define. |
+
+### Samples by type
+
+Tissue blocks and tubes of DNA are kept differently and described differently, so Samples has a tab for each type above the sheet: **All**, then **tissue**, **blood**, **serum**, **DNA**, **RNA**, **protein** and the rest, each with how many it holds.
+
+- **A tab shows only its own columns.** **tissue** has *Tissue* (the organ: lung, DRG…), *Fixation* (fresh frozen, 4% PFA, formalin, RNAlater…) and *Orientation* (sagittal, coronal…), and no 260/280; **DNA** and **RNA** have the concentration, its unit, 260/280, 260/230 and volume, and no fixation. **All** shows every column, with a dash where one isn't used for that sample's type.
+
+- **The boxes follow the tab.** In **tissue**, **Box grid** and the box buttons show the boxes holding tissue, and the empty ones; a box still shows everything in it, so a cell another sample is in never looks free.
+
+- **A new sample from a tab is of that type**, and its dialog asks only for that type's columns. Changing the **Type** in the dialog changes the fields it shows.
+
+- **Genotype** comes from the source mouse: left empty, it shows that mouse's genotype from the colony, in grey, and follows it when the mouse is re-genotyped. Type one to give the sample its own. Search finds samples by either.
+
+- **+** at the end of the tabs adds a type (slides, plasma, CSF…): anyone can, and it gets a tab of its own with the columns every type has. Renaming or removing a type is in **Configure**, under *Type choices*.
+
+- Which columns a type has is each column's **Used for** in **Configure**: the types it is for, separated by commas, or empty for every type. Any inventory can have tabs: tick **A tab for each type** under *What it tracks*.
+
+Brought your samples in from another database, with everything in the notes (*Tissue: Lung; Fixation: 4% PFA; control 6OHDA 2w*)? Tick them (**All** under the page size shows every row at once), then **Split notes** in the bar that appears. Each *Column: value* whose name is a column goes into it; the rest stays in the notes. A sample with no type that gets a column of one type only (a fixation) becomes that type. A column already holding something else is left as it is, and a name with no column is listed, so you can add it in Configure and split again. **Batch history** undoes it.
 
 ### Ordering, start to shelf
 

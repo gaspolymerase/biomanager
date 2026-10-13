@@ -414,7 +414,7 @@ change:
 
 | Preset | Tracks |
 | --- | --- |
-| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it and its sex, age, genotype, status, owner and cage on hovering the arrow that opens it; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position, with its concentration, unit, 260/280, 260/230 and volume as numbers |
+| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it and its **Genotype** from the colony, and its sex, age, genotype, status, owner and cage on hovering the arrow that opens it; a tab for each type (tissue, blood, DNA, RNA… and any you add with **+**), each with its own columns: a tissue's **Tissue**, **Fixation** and **Orientation**, a DNA's or RNA's concentration, unit, 260/280, 260/230 and volume as numbers; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
 | ⚗️ **Reagents** | quantity (with a **Low at** level that marks a bottle low as it runs down), concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
@@ -432,6 +432,18 @@ working, so printed labels, bookmarks and `@mentions` still find it. Every
 database has a name of its own (one another database has is refused), so
 `@` and a name in a notebook page always means one database.
 
+- **A tab for each type** — Samples opens on **All**, with a tab beside it
+  for each type: **Tissue** shows only tissue, with the columns a tissue
+  has, and its boxes; **DNA** shows its concentrations and purities. A new
+  sample made from a tab is of that type, and the dialog asks only for the
+  columns used for the type chosen. **+** at the end adds a type; which
+  columns each type uses is **Used for** in Configure, and any inventory can
+  turn on **A tab for each type**.
+- **Split notes** — a sheet brought in from somewhere else often left
+  everything in the notes ("Tissue: Lung; Fixation: 4% PFA; control 2w").
+  Tick the rows and **Split notes**: each "Column: value" goes into the
+  column of that name, the rest stays in the notes, and Batch history can
+  undo it.
 - **Filter orders by status** — one tap shows only what is requested,
   ordered, received or cancelled.
 - **Expired is red** — a reagent, chemical, antibody or virus past its expiry date

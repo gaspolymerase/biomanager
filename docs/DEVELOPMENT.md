@@ -968,8 +968,40 @@ pages are in `app/lab_routes.py`.
   setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
   columns for what was measured (`SAMPLE_MEASURES`), which revision 0008
   adds to Samples databases made earlier unless a column of that key or
-  name is there. The same revision adds `plasmids.concentration`
+  name is there. Samples also has *Tissue*, *Genotype*, *Condition*,
+  *Fixation* and *Orientation* (`SAMPLE_DETAILS`), which revision 0041 adds
+  the same way, and gives the measured columns their types. The same revision adds `plasmids.concentration`
   and `plasmids.a260_280` (typed numbers, checked by `_plasmid_measure`).
+- **Type tabs:** the *tabs* feature (Samples has it; revision 0041 adds it
+  to Samples made earlier) puts a tab for each category above the sheet
+  (`ModuleView.tabs`, the category choices). `?type=` picks one
+  (`ModuleView.tab()`, any case; anything else is All): `module()` keeps
+  that type's items, the columns used for it (`ModuleView.fields_for()`,
+  `inventory.used_for()`), and the boxes holding it or nothing, each still
+  with everything it holds so no taken cell looks free. A field's `types`
+  (Configure's **Used for**, `_used_for()`: the list's spellings, a type
+  renamed in the same save followed, all of them stored as none) names
+  the categories it is for; none is every category, and so is an item with
+  no category. The tab's columns change `col_sig`, so each tab keeps its own
+  widths and hidden columns. Under All, a cell not used for the row's type
+  and empty is a dash (`rows[].unused`). The item dialog wraps each field in
+  `data-for-types` and hides and disables those not for the Type chosen, so
+  they post nothing and keep their values; `_item_from_form` doesn't hold a
+  required column to a type it isn't used for. `add_type` (the **+**,
+  anyone who can open the database) appends a category; renaming and
+  removing stay in Configure, as they relabel items. Samples' *Genotype*
+  (`GENOTYPE_KEY`), empty, shows the source mouse's (`_mouse_links` reads
+  `genotype` with the tag; `_source_genotype`) as an italic placeholder
+  (`input.from-colony`) and as the row's `data-mouse-genotype` for search.
+- **Split notes:** the selection bar's `action=split_notes` runs
+  `inventory_service.split_notes()` on each ticked row: the notes split on
+  `;` (an allele with no header after one, `Ai9/+`, joins the part before
+  it, as a genotype's loci are written: `ALLELE`), and each `Header: value` part whose header is a field's label or key
+  (or the category's label) goes into it, through `_note_value()` (a number
+  or date that doesn't read as one stays); a field already holding another
+  value, a source, person, link or plasmid field, and the rest stay in the
+  notes, in order. An item with no category whose moved fields share exactly
+  one type takes it. Headers naming no column are flashed. One batch.
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
   built-in columns the inventory uses, every custom one and notes) runs
   each ticked row through `_item_from_form` with that one column, inside

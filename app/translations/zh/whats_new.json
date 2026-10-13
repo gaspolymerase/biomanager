@@ -131,5 +131,7 @@
   "A plate can fill another measure beside the main readout, chosen under **Readout** in **Plate layout**; each measure has its own button on the sheet and its own sheet in **Export**.": "一块板可以填进主要指标之外的其他指标，在 **孔板布局** 的 **观测指标** 里选择；每个指标在表格上有自己的按钮，在 **导出** 里也有单独一张表。",
   "Standard curves can be Linear, Log–log or 4PL, chosen under **Curve**, with the curve drawn beside the plate.": "标准曲线可以选线性、双对数或 4PL（在 **曲线** 里选择），并在板旁边画出曲线。",
   "Saving a plate's readings is one **Undo** in **Batch history**.": "保存一块板的读数在 **批量操作记录** 里只需一次 **撤销**。",
-  "The notebook's experiment block shows each day's reagent lot.": "笔记本里的实验块会显示每一天所用试剂的批号。"
+  "The notebook's experiment block shows each day's reagent lot.": "笔记本里的实验块会显示每一天所用试剂的批号。",
+  "Samples has a tab for each type (tissue, DNA, RNA…), each with its own columns, such as **Fixation** for tissue and **260/280** for DNA; **+** adds a type.": "样本库为每种类型（组织、DNA、RNA……）设了一个标签页，各有自己的列，比如组织的 **固定方式**、DNA 的 **260/280**；**+** 可以添加类型。",
+  "**Split notes** moves each *Column: value* in the ticked samples' notes into that column.": "**拆分备注** 会把所勾选样本备注里的每个“列名: 值”移到那一列。"
 }

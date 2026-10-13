@@ -32,6 +32,12 @@
       </select>
     </td>
     <td><input type="text" name="field_{{ i }}_options" value="{{ (f.options or []) | join(', ') }}" placeholder="{{ _('For Choice: a, b, c') }}" aria-label="{{ _('Choices') }}"></td>
+    {% if m.categories %}
+      {# The types it is used for: their tabs show it, the dialog asks for it. #}
+      <td><input type="text" name="field_{{ i }}_types" value="{{ (f.types or []) | join(', ') }}" placeholder="{{ _('Every type') }}"
+                 list="configure-type-options" aria-label="{{ _('Used for') }}"
+                 title="{{ _('The %(label)s choices this column is used for, separated by commas; empty: all of them', label=m.category_label|tr('inventory')) }}"></td>
+    {% endif %}
     <td><input type="text" name="field_{{ i }}_icon" value="{{ f.icon or '' }}" placeholder="{{ _('icon') }}" class="w-24" aria-label="{{ _('Icon') }}"></td>
     <td><input type="number" name="field_{{ i }}_width" value="{{ f.width or 130 }}" min="60" max="400" step="1" class="w-20" aria-label="{{ _('Width') }}"></td>
     <td class="text-center"><input type="checkbox" name="field_{{ i }}_in_table" value="1" {% if f.in_table is not defined or f.in_table %}checked{% endif %} aria-label="{{ _('Show in table') }}"></td>
@@ -110,7 +116,7 @@
                         transition-colors hover:border-sand-300 has-checked:border-brand-300 has-checked:bg-brand-50/50">
             <input type="checkbox" name="features" value="{{ key }}" class="mt-0.5" {% if m.has(key) %}checked{% endif %}>
             <span class="min-w-0">
-              <span class="block text-[12.5px] font-semibold text-ink">{{ {'storage': _('Boxes and positions'), 'board': _('Status board'), 'sharing': _('Mine / lab common'), 'quantity': _('Quantity'), 'supplier': _('Supplier'), 'expiry': _('Expiry'), 'received': _('Received date')}[key] }}</span>
+              <span class="block text-[12.5px] font-semibold text-ink">{{ {'storage': _('Boxes and positions'), 'board': _('Status board'), 'sharing': _('Mine / lab common'), 'quantity': _('Quantity'), 'supplier': _('Supplier'), 'expiry': _('Expiry'), 'received': _('Received date'), 'tabs': _('A tab for each type')}[key] }}</span>
               <span class="block text-[11.5px] leading-snug text-muted">{{ blurb|tr }}</span>
             </span>
           </label>
@@ -136,15 +142,17 @@
           {% trans trimmed category=m.category_label|tr('inventory')|lower %}Name, owner, {{ category }}, status and the tracked features above are built in.
           Add anything else here. Removing a column only takes it off the page: the values already entered stay stored in each record.{% endtrans %}
           {{ _('The arrows set the order these columns take on the sheet for the whole lab; anyone can still drag the columns of their own sheet into another order.') }}
+          {% if m.categories %}{{ _('Used for names the %(label)s choices a column is for (a 260/280 for DNA and RNA): with A tab for each type ticked, each tab shows only its own columns, and a new entry is asked only for those.', label=m.category_label|tr('inventory')) }}{% endif %}
         </p>
         <table class="field-editor">
-          <thead><tr><th><span class="sr-only">{{ _('Move up') }} / {{ _('Move down') }}</span></th><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th><th>{{ _('Icon') }}</th><th>{{ _('Width') }}</th><th>{{ _('In table') }}</th><th>{{ _('Remove') }}</th></tr></thead>
+          <thead><tr><th><span class="sr-only">{{ _('Move up') }} / {{ _('Move down') }}</span></th><th>{{ _('Column') }}</th><th>{{ _('Type') }}</th><th>{{ _('Choices') }}</th>{% if m.categories %}<th>{{ _('Used for') }}</th>{% endif %}<th>{{ _('Icon') }}</th><th>{{ _('Width') }}</th><th>{{ _('In table') }}</th><th>{{ _('Remove') }}</th></tr></thead>
           <tbody data-field-body>
             {% for f in m.fields %}{{ field_row(loop.index0, f) }}{% endfor %}
             {{ field_row(m.fields|length, {}) }}
           </tbody>
         </table>
         <input type="hidden" name="field_count" value="{{ m.fields|length + 1 }}" data-field-count>
+        {% if m.categories %}<datalist id="configure-type-options">{% for c in m.categories %}<option value="{{ c }}"></option>{% endfor %}</datalist>{% endif %}
         <button type="button" class="btn btn-sm mt-2" data-add-field>{{ icon('plus') }} {{ _('Add column') }}</button>
       </div>
     </section>

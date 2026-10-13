@@ -11,11 +11,15 @@ An inventory module's `settings` JSON holds:
                 supplier  vendor, catalogue number, lot
                 expiry    an expiry date, with expired / expiring-soon flags
                 received  a received date
+                tabs      a tab for each category above the sheet, each
+                          showing the columns used for it
   categories  the choices for the category column ("Type", "Kind"…)
   category_label
   statuses    the status workflow, first is the default
   fields      extra, preset-specific columns kept in `attrs`:
-                {key, label, type, options?, icon?, width?, in_table?}
+                {key, label, type, options?, icon?, width?, in_table?, types?}
+              `types` names the categories the column is used for (a
+              Samples column for DNA and RNA only); none: every category.
               type "plasmid" holds a plasmid's number (Plasmids'
               #): the sheet links to that plasmid, and its page lists
               the records made from it.
@@ -38,6 +42,7 @@ FEATURES = {
     "supplier": "Vendor, catalogue number and lot",
     "expiry": "Expiry date, with expired and expiring-soon warnings",
     "received": "Date received",
+    "tabs": "A tab for each type above the sheet, showing the columns used for that type",
 }
 
 STORAGE_TEMPS = ["RT", "4 °C", "−20 °C", "−80 °C", "LN₂"]
@@ -51,12 +56,32 @@ OLD_HAZARDS = ["none", "flammable", "corrosive", "toxic", "oxidiser", "irritant"
 CONC_UNITS = ["ng/µL", "µg/mL", "mg/mL", "nM", "µM", "cells/mL"]
 # What a Nanodrop, Qubit or BCA reading gives, as numbers a sheet can sort
 # and sum (revision 0008 adds them to Samples made before they were here).
+# What each is measured for: a tube of DNA has a 260/280, a block of tissue
+# doesn't (the type tabs show each column only where it is used).
+NUCLEIC = ["DNA", "RNA"]
+EXTRACTS = ["DNA", "RNA", "protein"]
 SAMPLE_MEASURES = [
-    {"key": "concentration", "label": "Conc.", "type": "number", "icon": "amount", "width": 80},
-    {"key": "conc_unit", "label": "Conc. unit", "type": "select", "options": CONC_UNITS, "icon": "amount", "width": 84},
-    {"key": "a260_280", "label": "260/280", "type": "number", "icon": "amount", "width": 72},
-    {"key": "a260_230", "label": "260/230", "type": "number", "icon": "amount", "width": 72},
-    {"key": "volume_ul", "label": "Volume (µL)", "type": "number", "icon": "droplet", "width": 84},
+    {"key": "concentration", "label": "Conc.", "type": "number", "icon": "amount", "width": 80, "types": EXTRACTS},
+    {"key": "conc_unit", "label": "Conc. unit", "type": "select", "options": CONC_UNITS, "icon": "amount", "width": 84,
+     "types": EXTRACTS},
+    {"key": "a260_280", "label": "260/280", "type": "number", "icon": "amount", "width": 72, "types": NUCLEIC},
+    {"key": "a260_230", "label": "260/230", "type": "number", "icon": "amount", "width": 72, "types": NUCLEIC},
+    {"key": "volume_ul", "label": "Volume (µL)", "type": "number", "icon": "droplet", "width": 84,
+     "types": ["blood", "serum", *EXTRACTS]},
+]
+FIXATIONS = ["fresh frozen", "4% PFA", "formalin", "RNAlater", "methanol", "none"]
+ORIENTATIONS = ["sagittal", "coronal", "horizontal", "transverse"]
+# What a block of tissue is, and what any sample came out of (revision 0041
+# adds them to Samples made before they were here). Genotype, empty, shows
+# the source mouse's from the colony.
+SAMPLE_DETAILS = [
+    {"key": "tissue", "label": "Tissue", "type": "text", "icon": "paw", "width": 104, "types": ["tissue", *EXTRACTS]},
+    {"key": "genotype", "label": "Genotype", "type": "text", "icon": "dna", "width": 150},
+    {"key": "condition", "label": "Condition", "type": "text", "icon": "flask", "width": 140},
+    {"key": "fixation", "label": "Fixation", "type": "select", "options": FIXATIONS, "icon": "droplet", "width": 104,
+     "types": ["tissue"]},
+    {"key": "orientation", "label": "Orientation", "type": "select", "options": ORIENTATIONS, "icon": "signpost",
+     "width": 96, "types": ["tissue"]},
 ]
 
 PRESETS: dict[str, dict] = {
@@ -65,7 +90,7 @@ PRESETS: dict[str, dict] = {
         "icon": "vial",
         "item_noun": "sample", "item_noun_plural": "samples",
         "blurb": "Harvested tissue, blood, DNA and RNA, traced back to the animal they came from and kept in freezer boxes.",
-        "features": ["storage", "sharing"],
+        "features": ["storage", "sharing", "tabs"],
         "category_label": "Type",
         "categories": ["tissue", "blood", "serum", "DNA", "RNA", "protein", "organoid", "cells", "other"],
         "statuses": ["available", "in use", "used up", "discarded"],
@@ -74,6 +99,7 @@ PRESETS: dict[str, dict] = {
             # ID in it, both editable in the sheet.
             {"key": "source", "label": "Source", "type": "source", "icon": "signpost", "width": 210},
             {"key": "collected_on", "label": "Collected", "type": "date", "icon": "calendar", "width": 116},
+            *SAMPLE_DETAILS,
             {"key": "amount", "label": "Amount", "type": "text", "icon": "amount", "width": 84},
             *SAMPLE_MEASURES,
             {"key": "storage_temp", "label": "Stored at", "type": "select", "options": STORAGE_TEMPS, "icon": "snowflake", "width": 88},
@@ -294,6 +320,7 @@ def normalise_settings(raw) -> dict:
             "options": [str(o) for o in f.get("options") or []],
             "icon": str(f.get("icon") or ""), "width": int(f.get("width") or 130),
             "in_table": f.get("in_table", True) is not False,
+            "types": [str(t) for t in f.get("types") or [] if str(t).strip()],
         })
     return {
         "features": [x for x in (s.get("features") or []) if x in FEATURES],
@@ -327,3 +354,12 @@ REQUIRABLE = (
 # Icon for a field type, used when a custom field has none.
 FIELD_TYPE_ICONS = {"text": "type", "textarea": "note", "number": "count", "date": "calendar",
                     "select": "tag", "multiselect": "tag", "user": "user", "url": "link", "source": "signpost", "plasmid": "plasmid"}
+
+
+def used_for(field: dict, category: str) -> bool:
+    """Whether a column is used for an entry of this category: every column
+    is, for an entry with none, and a column that names no types is used for
+    all of them."""
+    types = field.get("types") or []
+    category = (category or "").strip().casefold()
+    return not types or not category or category in {t.casefold() for t in types}

@@ -163,8 +163,10 @@
           tag, straight from the colony, so re-tagging a mouse there updates every sample of it at once. If you hide
           <b>Custom tag</b> under <b>Columns</b> on the Mice tab, it goes from Samples too. Rest the pointer on the arrow
           after the ID for that mouse's sex, age, genotype, status, owner and cage, and the notebook pages that mention it, as the
-          notebook shows over <b>@mouse</b>; click it to open the mouse in the colony. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer
-          box position, with what was measured as numbers: <i>Conc.</i> and its unit, <i>260/280</i>, <i>260/230</i>, <i>Volume (µL)</i>.
+          notebook shows over <b>@mouse</b>; click it to open the mouse in the colony. A tab for each type, each with its own
+          columns (<a href="#samples-by-type">Samples by type</a>): a tissue's <i>Tissue</i>, <i>Fixation</i> and <i>Orientation</i>; a
+          DNA's or RNA's <i>Conc.</i> and its unit, <i>260/280</i>, <i>260/230</i> and <i>Volume (µL)</i>; and for every sample its
+          <i>Genotype</i> and <i>Condition</i>. Stored at RT, 4 °C, −20 °C, −80 °C or LN₂ in a freezer box position.
           Available, in use, used up, discarded.</td></tr>
         <tr><th>Orders</th><td>What the lab has asked for: vendor, catalogue number, quantity, price, grant account. Requested, ordered,
           received, cancelled — on a table or a <b>Board</b> you drag cards across.</td></tr>
@@ -193,6 +195,32 @@
           selection, mycoplasma result and date, and its place in the LN₂ boxes. In stock, thawed, used up, discarded.</td></tr>
         <tr><th>Custom list</th><td>Whatever you define.</td></tr>
       </table>
+      <h2 id="samples-by-type">Samples by type</h2>
+      <p>Tissue blocks and tubes of DNA are kept differently and described differently, so Samples has a tab for each type above
+        the sheet: <b>All</b>, then <b>tissue</b>, <b>blood</b>, <b>serum</b>, <b>DNA</b>, <b>RNA</b>, <b>protein</b> and the rest, each
+        with how many it holds.</p>
+      <ul>
+        <li><b>A tab shows only its own columns.</b> <b>tissue</b> has <i>Tissue</i> (the organ: lung, DRG…), <i>Fixation</i> (fresh
+          frozen, 4% PFA, formalin, RNAlater…) and <i>Orientation</i> (sagittal, coronal…), and no 260/280; <b>DNA</b> and
+          <b>RNA</b> have the concentration, its unit, 260/280, 260/230 and volume, and no fixation. <b>All</b> shows every column,
+          with a dash where one isn't used for that sample's type.</li>
+        <li><b>The boxes follow the tab.</b> In <b>tissue</b>, <b>Box grid</b> and the box buttons show the boxes holding tissue, and the
+          empty ones; a box still shows everything in it, so a cell another sample is in never looks free.</li>
+        <li><b>A new sample from a tab is of that type</b>, and its dialog asks only for that type's columns. Changing the
+          <b>Type</b> in the dialog changes the fields it shows.</li>
+        <li><b>Genotype</b> comes from the source mouse: left empty, it shows that mouse's genotype from the colony, in grey, and
+          follows it when the mouse is re-genotyped. Type one to give the sample its own. Search finds samples by either.</li>
+        <li><b>+</b> at the end of the tabs adds a type (slides, plasma, CSF…): anyone can, and it gets a tab of its own with the
+          columns every type has. Renaming or removing a type is in <b>Configure</b>, under <i>Type choices</i>.</li>
+        <li>Which columns a type has is each column's <b>Used for</b> in <b>Configure</b>: the types it is for, separated by commas,
+          or empty for every type. Any inventory can have tabs: tick <b>A tab for each type</b> under <i>What it tracks</i>.</li>
+      </ul>
+      <p>Brought your samples in from another database, with everything in the notes (<i>Tissue: Lung; Fixation: 4% PFA;
+        control 6OHDA 2w</i>)? Tick them (<b>All</b> under the page size shows every row at once), then <b>Split notes</b> in the
+        bar that appears. Each <i>Column: value</i> whose name is a column goes into it; the rest stays in the notes. A sample with
+        no type that gets a column of one type only (a fixation) becomes that type. A column already holding something else is
+        left as it is, and a name with no column is listed, so you can add it in Configure and split again. <b>Batch history</b>
+        undoes it.</p>
       <h2 id="ordering-start-to-shelf">Ordering, start to shelf</h2>
       <ol class="steps-list">
         <li><b>New order.</b> Item, vendor, catalogue number and quantity are required (starred), so no order goes out half-filled.
@@ -259,9 +287,10 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 8 min read</p>
+      <p>On this page · 11 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
+        <li class="lvl2"><a href="#samples-by-type">Samples by type</a></li>
         <li class="lvl2"><a href="#ordering-start-to-shelf">Ordering, start to shelf</a></li>
         <li class="lvl2"><a href="#low-stock">Low stock, from the quantity</a></li>
         <li class="lvl2"><a href="#every-inventory">Every inventory</a></li>

@@ -266,7 +266,7 @@ def _row_json(mv, item: InventoryItem) -> dict:
             "position": payload["position"], "rack_id": payload["rack_id"]}
 
 
-def _grid_payload(mv, racks, items) -> dict:
+def _grid_payload(mv, racks, items, tab: str = "") -> dict:
     return {
         # "group": the fridge or cabinet it is kept in, the grid's first picker.
         "racks": [{"id": r.id, "name": r.name, "rows": r.rows, "cols": r.cols, "group": (r.place or "").strip(),
@@ -293,7 +293,7 @@ def _grid_payload(mv, racks, items) -> dict:
             if i.rack_id_fk or (i.status or "").lower() not in svc.GONE_FROM_BOX],
         "create": {"attrs": {"data-record-edit": "item-dialog"},
                    "payload": {"owner": g.user.username, "status": mv.statuses[0] if mv.statuses else "",
-                               "is_shared": "0"},
+                               "is_shared": "0", **({"category": tab} if tab else {})},
                    "rack_field": "rack_id", "text_field": "position"},
     }
 
@@ -321,10 +321,11 @@ def _mouse_number(ref: str) -> int | None:
 
 
 def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[str, dict]:
-    """{mouse ID typed as a source: {"row", "ear_tag"}} — the row to link to
-    in the colony, and what is written on that mouse, so a sample says which
-    animal it came from in the terms the bench uses. Read from the mouse
-    every time, so changing a tag in the colony changes it here."""
+    """{mouse ID typed as a source: {"row", "ear_tag", "genotype"}} — the row
+    to link to in the colony, what is written on that mouse, so a sample
+    says which animal it came from in the terms the bench uses, and its
+    genotype, which a sample's empty Genotype shows. Read from the mouse
+    every time, so changing a tag or genotype in the colony changes it here."""
     from .models import MouseRecord
 
     refs = set()
@@ -337,9 +338,24 @@ def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[st
                     refs.add(number)
     if not refs:
         return {}
-    return {str(mid): {"row": rid, "ear_tag": tag or ""} for mid, rid, tag in session.execute(
-        select(MouseRecord.mouse_id, MouseRecord.id, MouseRecord.ear_tag)
-        .where(MouseRecord.mouse_id.in_(refs)))}
+    return {str(mid): {"row": rid, "ear_tag": tag or "", "genotype": genotype or ""}
+            for mid, rid, tag, genotype in session.execute(
+                select(MouseRecord.mouse_id, MouseRecord.id, MouseRecord.ear_tag, MouseRecord.genotype)
+                .where(MouseRecord.mouse_id.in_(refs)))}
+
+
+GENOTYPE_KEY = "genotype"
+
+
+def _source_genotype(attrs: dict, fields: list[dict], links: dict) -> str:
+    """The genotype of the mouse a sample came from, as the colony has it."""
+    for f in fields:
+        src = attrs.get(f["key"])
+        if isinstance(src, dict) and src.get("kind") in MOUSE_SOURCE_KINDS:
+            found = links.get(str(src.get("ref") or "").strip())
+            if found and found["genotype"]:
+                return found["genotype"]
+    return ""
 
 
 RECENT_DAYS = 90
@@ -410,6 +426,24 @@ def module(key: str):
         # By the fridge or cabinet each is kept in, then by name.
         racks = sorted(session.scalars(select(InventoryRack).where(InventoryRack.module_id_fk == row.id)),
                        key=svc.box_order)
+        # A type's tab (?type=tissue): its entries, the columns used for it,
+        # and the boxes that hold it or nothing yet; a box keeps showing
+        # all it holds, so no cell taken by another type looks free.
+        tab = mv.tab(request.args.get("type"))
+        tab_counts = {t: 0 for t in mv.tabs}
+        for i in items:
+            found = mv.tab(i.category)
+            if found:
+                tab_counts[found] += 1
+        listed_all = len(items)
+        if tab:
+            mine = lambda i: (i.category or "").strip().casefold() == tab.casefold()
+            items = [i for i in items if mine(i)]
+            holding = {i.rack_id_fk for i in all_items if i.rack_id_fk}
+            racks = [r for r in racks if r.id not in holding or any(i.rack_id_fk == r.id and mine(i) for i in all_items)]
+            shown = {r.id for r in racks}
+            all_items = [i for i in all_items if ((i.rack_id_fk in shown) if i.rack_id_fk else mine(i))]
+        table_fields = [f for f in mv.fields_for(tab) if f["in_table"]]
         me = g.user.username
         source_fields = [f for f in mv.fields if f["type"] == "source"]
         sources = sample_sources(session) if source_fields else []
@@ -433,10 +467,15 @@ def module(key: str):
                 "source_labels": {f["key"]: sample_source_label((attrs.get(f["key"]) or {}).get("kind", ""), sources)
                                   for f in source_fields if isinstance(attrs.get(f["key"]), dict)},
                 "payload": _item_payload(mv, item),
+                # Its source mouse's genotype, which an empty Genotype shows.
+                "mouse_genotype": (_source_genotype(attrs, source_fields, mouse_links)
+                                   if not attrs.get(GENOTYPE_KEY) else ""),
+                # Columns not used for its type (All's tab shows them all).
+                "unused": {f["key"] for f in table_fields if not presets.used_for(f, item.category)},
             })
         # Saved column widths / hidden columns are by position, so a
         # reconfigured sheet starts fresh instead of hiding the wrong ones.
-        layout = json.dumps([mv.settings["features"], [f["key"] for f in mv.table_fields], bool(mv.statuses), 2]
+        layout = json.dumps([mv.settings["features"], [f["key"] for f in table_fields], bool(mv.statuses), 2]
                             + (["low_at"] if svc.tracks_low(mv) else [])
                             + (["pack_size"] if svc.has_pack_size(mv) else []))
         stock_targets = _stock_targets(session) if row.kind == "orders" else []
@@ -448,12 +487,14 @@ def module(key: str):
                                           shared=request.args.get("shared") == "1")
         context = {
             "module": mv, "rows": rows, "racks": racks, "low_stock": svc.tracks_low(mv),
+            "tab": tab, "tab_counts": tab_counts, "listed_all": listed_all, "table_fields": table_fields,
+            "can_add_type": mv.has("tabs"),
             "pack_sizes": svc.has_pack_size(mv), "col_sig": format(zlib.crc32(layout.encode()), "x"),
             "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
             "places": svc.places_in_use(session) if mv.has("storage") else [],
             "box_labels": {r.id: svc.box_label(r) for r in racks},
             "box_width": _box_width(racks),
-            "grid": _grid_payload(mv, racks, all_items) if mv.has("storage") else None,
+            "grid": _grid_payload(mv, racks, all_items, tab) if mv.has("storage") else None,
             "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
             "usernames": current_lab_usernames(session), "sources": sources, "mouse_links": mouse_links,
             "plasmid_links": plasmid_links, "plasmid_options": plasmid_options,
@@ -699,8 +740,10 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
 
     # A new entry needs every required column; an old one may not lose one
     # (but one that never had it can still be saved).
+    # A column not used for its type (a 260/280 on tissue) isn't asked for.
+    unused = {f"attr_{f['key']}" for f in mv.fields if not presets.used_for(f, item.category)}
     missing = [_tr(label) for key, label in mv.required_labels.items()
-               if not _column_value(item, key) and (creating or was[key])]
+               if not _column_value(item, key) and (creating or was[key]) and key not in unused]
     if missing:
         if creating:
             if mv.item_noun[:1] in "aeiou":
@@ -1282,6 +1325,7 @@ BULK_ACTIONS = {
     "owner": "manage",
     "shared": "manage",
     "field": "edit",
+    "split_notes": "edit",
     "delete": "manage",
 }
 
@@ -1334,6 +1378,8 @@ def _bulk_message(action: str, n: int, noun: str, field: str = "") -> str:
         return gettext("Changed who can edit %(n)s %(noun)s.", n=n, noun=noun)
     if action == "field":
         return gettext("Set %(field)s on %(n)s %(noun)s.", field=field, n=n, noun=noun)
+    if action == "split_notes":
+        return gettext("Moved what the notes said into its columns on %(n)s %(noun)s.", n=n, noun=noun)
     return gettext("Deleted %(n)s %(noun)s.", n=n, noun=noun)
 
 
@@ -1377,8 +1423,9 @@ def bulk(key: str):
                 return _done(key, error=gettext("Type what to set %(field)s to. (To empty it on those rows, leave it blank and confirm.)", field=_tr(field["label"])))
         need = BULK_ACTIONS[action]
         refused: list[str] = []
-        done = skipped = 0
+        done = skipped = unsplit = 0
         notes: list[str] = []
+        no_column: list[str] = []
         with audit.batch(session, "delete" if action == "delete" else "update",
                          f"{action} ×{len(items)} {mv.item_noun_plural}", "inventory_items"):
             for item in items:
@@ -1413,6 +1460,20 @@ def bulk(key: str):
                         refused.append(str(problem))
                         skipped += 1
                         continue
+                elif action == "split_notes":
+                    moved, left, unknown = svc.split_notes(mv, item)
+                    no_column += [h for h in unknown if h not in no_column]
+                    if not moved:
+                        unsplit += 1
+                        continue
+                    attrs = item.attrs_dict
+                    for column, found in moved.items():
+                        if column == "category":
+                            item.category = found
+                        else:
+                            attrs[column] = found
+                    item.attrs = json.dumps(attrs)
+                    item.notes = left
                 elif action == "rack":
                     if rack is None:
                         item.rack_id_fk = item.rack_row = item.rack_col = None
@@ -1435,6 +1496,15 @@ def bulk(key: str):
     if skipped:
         message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
                              if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))
+    if unsplit and not done:
+        message = ngettext("%(num)s had nothing in its notes for a column.",
+                           "%(num)s had nothing in their notes for a column.", unsplit)
+    elif unsplit:
+        message = _sentences(message, ngettext("%(num)s had nothing in its notes for a column.",
+                                               "%(num)s had nothing in their notes for a column.", unsplit))
+    if no_column:
+        notes.append(gettext("No column is called %(names)s, so those stay in the notes: add them in Configure and split again.",
+                             names=gettext(", ").join(f"“{h}”" for h in no_column[:6])))
     for note in notes[:5]:
         flash(note, "info")
     if not done:
@@ -1556,9 +1626,11 @@ ICON_CHOICES = ["vial", "vials", "flask", "flask-vial", "antibody", "cart", "box
                 "list", "tag", "archive", "file"]
 
 
-def _fields_from_form(form) -> list[dict]:
+def _fields_from_form(form, categories: list[str] | None = None, renamed: dict | None = None) -> list[dict]:
     """The Columns table; every column gets a key of its own, even two new
-    ones with the same name."""
+    ones with the same name. A column's "Used for" keeps the types it names
+    in the list's own spelling, following a type renamed in the same save
+    (`renamed`: {old: new}); one that isn't a type is dropped."""
     from .organism_service import slugify
 
     fields, used = [], set()
@@ -1580,8 +1652,22 @@ def _fields_from_form(form) -> list[dict]:
             "icon": form.get(f"field_{i}_icon") or "",
             "width": _int(form.get(f"field_{i}_width"), 130, 60, 400),
             "in_table": form.get(f"field_{i}_in_table") == "1",
+            "types": _used_for(form.get(f"field_{i}_types") or "", categories or [], renamed or {}),
         })
     return fields
+
+
+def _used_for(raw: str, categories: list[str], renamed: dict) -> list[str]:
+    known = {c.casefold(): c for c in categories}
+    out = []
+    for typed in raw.split(","):
+        typed = typed.strip()
+        typed = renamed.get(typed, typed)
+        found = known.get(typed.casefold())
+        if found and found not in out:
+            out.append(found)
+    # Every type named is the same as none: used for all.
+    return [] if len(out) == len(categories) else out
 
 
 @bp.route("/<key>/configure", methods=["GET", "POST"])
@@ -1634,7 +1720,10 @@ def configure(key: str):
             settings = json.dumps(presets.normalise_settings({
                 "features": form.getlist("features"),
                 "category_label": (form.get("category_label") or "Category").strip(),
-                "categories": choices["categories"], "statuses": choices["statuses"], "fields": _fields_from_form(form),
+                "categories": choices["categories"], "statuses": choices["statuses"],
+                "fields": _fields_from_form(form, choices["categories"],
+                                            {old: new for old, (new, _how) in plans["category"].relabel.items()}
+                                            if "category" in plans else {}),
                 # An older form without the Required card keeps what was chosen.
                 "required": (form.getlist("required") if "required_sent" in form
                              else presets.normalise_settings(row.settings)["required"]),
@@ -1677,6 +1766,32 @@ def configure(key: str):
                                status_counts=svc.choice_counts(session, row.id, "status"),
                                category_counts=svc.choice_counts(session, row.id, "category"),
                                item_count=len(list(session.scalars(select(InventoryItem.id).where(InventoryItem.module_id_fk == row.id)))))
+
+
+@bp.route("/<key>/types/add", methods=["POST"])
+def add_type(key: str):
+    """A new type from the + at the end of the type tabs: anyone who uses
+    the database may add one (renaming or removing one is Configure's, as
+    that changes entries). It goes last in the list, with no columns of its
+    own yet: its tab shows the columns used for every type."""
+    name = " ".join((request.form.get("name") or "").split())[:80]
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        mv = svc.view(row)
+        if not mv.has("tabs"):
+            return _done(key, error=gettext("%(name)s has no type tabs.", name=_tr(row.label)))
+        if not name:
+            return _done(key, error=gettext("Type the name of the new %(label)s.", label=_tr(mv.category_label).lower()))
+        found = mv.tab(name)
+        if found:
+            flash(gettext("%(type)s is already one of them.", type=_tr(found)), "info")
+            return redirect(url_for("inventory.module", key=row.key, type=found))
+        settings = presets.load(row.settings)
+        settings["categories"] = [*mv.categories, name]
+        row.settings = json.dumps(settings)
+        session.commit()
+        flash(gettext("Added %(type)s. Its tab shows the columns every type has; Configure can give it columns of its own.", type=name), "success")
+        return redirect(url_for("inventory.module", key=row.key, type=name))
 
 
 def _n(count: int, mv) -> str:

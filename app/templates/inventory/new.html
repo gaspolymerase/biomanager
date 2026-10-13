@@ -31,7 +31,7 @@
           <span class="preset-card-title">{{ p.label|tr }}</span>
           <span class="preset-card-blurb">{{ p.blurb|tr }}</span>
           <span class="preset-card-tags">
-            {% for f in p.features %}<span class="badge badge-quiet">{{ {'storage': _('boxes'), 'board': _('board'), 'sharing': _('mine / lab'), 'quantity': _('quantity'), 'supplier': _('vendor'), 'expiry': _('expiry'), 'received': _('received')}[f] }}</span>{% endfor %}
+            {% for f in p.features %}<span class="badge badge-quiet">{{ {'storage': _('boxes'), 'board': _('board'), 'sharing': _('mine / lab'), 'quantity': _('quantity'), 'supplier': _('vendor'), 'expiry': _('expiry'), 'received': _('received'), 'tabs': _('a tab per type')}[f] }}</span>{% endfor %}
           </span>
         </label>
       {% endfor %}

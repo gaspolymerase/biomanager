@@ -38,7 +38,7 @@
 {% endmacro %}
 {% macro star(column) %}{% if column in module.required %}<span class="req-star" title="{{ _('Required') }}">*</span>{% endif %}{% endmacro %}
 
-{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0, sources=[]) %}
+{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0, sources=[], from_mouse='') %}
   {% set name = 'attr_' ~ field.key %}
   {% set flabel = field.label|tr('inventory') %}
   {% if field.type == 'select' %}
@@ -104,6 +104,12 @@
     {# Worked out from another column (a primer's sequence); the server fills it in. #}
     <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" readonly tabindex="-1" class="sheet-derived"
            title="{{ _('Worked out from the sequence') }}" aria-label="{{ flabel }}">
+  {% elif from_mouse and not value %}
+    {# Genotype, empty: the source mouse's, from the colony (re-genotyping
+       it there changes it here); typing one writes this sample's own. #}
+    <input name="{{ name }}" form="{{ form_id }}" value="" placeholder="{{ from_mouse }}" class="from-colony"
+           title="{{ _('%(genotype)s: the source mouse’s, from the colony. Type to give this sample its own.', genotype=from_mouse) }}"
+           {{ rem(name) }} data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
   {% else %}
     <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" {% if field.type == 'number' %}inputmode="decimal"{% endif %}
            {% if field.key == 'sequence' %}class="font-mono" spellcheck="false"{% endif %}
@@ -140,6 +146,27 @@
       </div>
     {% endif %}
   </div>
+  {% if m.tabs %}
+    {# All · one tab per type (Configure's Type choices) · +. A tab shows
+       that type's entries with the columns used for it, and the boxes that
+       hold it; + adds a type. #}
+    {% set others = request.args.to_dict() %}
+    {% set dropped = others.pop('type', none) %}
+    <nav class="mb-3 flex flex-wrap items-center gap-2" aria-label="{{ _('%(label)s tabs', label=category_label) }}" data-type-tabs>
+      <div class="dt-chips">
+        <a class="dt-chip no-underline" href="{{ url_for('inventory.module', key=key, **others) }}" {% if not tab %}aria-current="page"{% endif %}
+           title="{{ _('Every %(noun)s, with every column', noun=noun) }}">{{ _('All') }} <span class="dt-chip-count">{{ listed_all }}</span></a>
+        {% for t in m.tabs %}
+          <a class="dt-chip no-underline" href="{{ url_for('inventory.module', key=key, type=t, **others) }}" {% if t == tab %}aria-current="page"{% endif %}
+             data-type-tab="{{ t }}">{{ t|tr(m.kind) }} <span class="dt-chip-count">{{ tab_counts[t] }}</span></a>
+        {% endfor %}
+        {% if can_add_type %}
+          <button type="button" class="dt-chip" data-on-click="open-dialog" data-arg="type-add-dialog"
+                  title="{{ _('Add a %(label)s: a new tab', label=category_label|lower) }}" aria-label="{{ _('Add a %(label)s', label=category_label|lower) }}">{{ icon('plus') }}</button>
+        {% endif %}
+      </div>
+    </nav>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -166,7 +193,9 @@
   <datalist id="inv-src-{{ loop.index0 }}">{% for ref in source.refs %}<option value="{{ ref }}"></option>{% endfor %}</datalist>
 {% endfor %}
 
-{% set new_payload = {"owner": current_user.username, "status": m.statuses[0] if m.statuses else "", "is_shared": "0"} %}
+{# In a type's tab, a new entry is of that type. #}
+{% set new_payload = dict({"owner": current_user.username, "status": m.statuses[0] if m.statuses else "", "is_shared": "0"},
+                          **({"category": tab} if tab else {})) %}
 
 <div data-layout-scope>
   {# =============================== TABLE =============================== #}
@@ -238,7 +267,7 @@
                   <span class="dt-col-head">{{ icon('status', 'dt-col-icon') }}{{ _('Status') }}<span class="dt-sort-indicator"></span></span>
                 </th>
               {% endif %}
-              {% for f in m.table_fields %}
+              {% for f in table_fields %}
                 <th class="dt-sortable" data-sort-key="attr_{{ f.key }}" style="width: {{ f.width }}px;">
                   <span class="dt-col-head">{{ icon(f.icon or 'type', 'dt-col-icon') }}{{ f.label|tr('inventory')|head }}<span class="dt-sort-indicator"></span></span>
                 </th>
@@ -303,6 +332,7 @@
                   data-active="{{ 'false' if r.available == false else 'true' }}"
                   data-expired="{{ 'true' if r.expiry == 'expired' else 'false' }}"
                   data-expiring="{{ 'true' if r.expiry == 'soon' else 'false' }}"
+                  {% if r.mouse_genotype %}data-mouse-genotype="{{ r.mouse_genotype }}"{% endif %}
                   class="{% if locked %}is-locked{% endif %}{% if r.available == false %} is-inactive{% endif %}{% if r.expiry == 'expired' %} is-expired{% endif %}">
                 <td class="sheet-pin sheet-pin-0">
                   <input type="checkbox" data-select-row value="{{ i.id }}" aria-label="{{ _('Select %(noun)s #%(number)s', noun=noun, number=i.number) }}">
@@ -338,8 +368,13 @@
                     </select>
                   </td>
                 {% endif %}
-                {% for fd in m.table_fields %}
-                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources) }}</td>
+                {% for fd in table_fields %}
+                  {% if fd.key in r.unused and not r.attrs.get(fd.key) %}
+                    <td class="text-muted" title="{{ _('Not used for %(type)s', type=i.category|tr(m.kind)) }}">–</td>
+                  {% else %}
+                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources,
+                                  r.mouse_genotype if fd.key == 'genotype' else '') }}</td>
+                  {% endif %}
                   {% if fd.type == 'source' %}
                     {% set src = r.attrs.get(fd.key) %}
                     {% set tagged = mouse_links.get(src.ref|string) if src is mapping and src.kind in ['mouse', 'colony'] else none %}
@@ -434,7 +469,7 @@
             {% endfor %}
           </tbody>
         </table>
-        {% if m.table_fields|selectattr('type', 'equalto', 'source')|list %}
+        {% if table_fields|selectattr('type', 'equalto', 'source')|list %}
         <script nonce="{{ csp_nonce() }}">
           /* Custom tag goes wherever this person has hidden it on the mouse
              sheet (data-table.js keeps that choice by column number, on this
@@ -525,6 +560,13 @@
           <input name="value" aria-label="{{ _('Value') }}" placeholder="{{ _('value') }}" list="inv-bulk-field-options" data-bulk-value>
           <datalist id="inv-bulk-field-options"></datalist>
           <button type="submit" class="btn btn-sm">{{ _('Set field') }}</button>
+        </form>
+        {# "Tissue: Lung; Fixation: 4% PFA" in the notes (an old sheet's
+           columns) into the columns of those names. #}
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+              title="{{ _('Moves each “Column: value” in the notes into the column of that name; the rest stays in the notes') }}">
+          <input type="hidden" name="action" value="split_notes">
+          <button type="submit" class="btn btn-sm">{{ icon('columns') }} {{ _('Split notes') }}</button>
         </form>
         <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
               title="{{ _('Only for %(nouns)s you own (admins: any)', nouns=nouns) }}">
@@ -681,6 +723,9 @@
           {% for fd in m.fields %}
             {% set name = 'attr_' ~ fd.key %}
             {% set flabel = fd.label|tr('inventory') %}
+            {# A column used for some types only shows while one of them is
+               chosen above (and is then left as it was). #}
+            <div class="contents" {% if fd.types %}data-for-types="{{ fd.types|map('lower')|join('|') }}"{% endif %}>
             {% if fd.type == 'source' %}
               <label>{{ _('%(field)s: from', field=flabel) }}
                 <select name="{{ name }}_kind" data-source-kind>
@@ -708,6 +753,7 @@
               <label><span>{{ flabel }}{{ star(name) }}</span> <input name="{{ name }}"{% if fd.key == 'sequence' %} class="font-mono" spellcheck="false" autocomplete="off"{% endif %} {% if fd.type == 'date' %}type="date"{% elif fd.type == 'url' %}type="url"{% elif fd.type == 'number' %}type="number" step="any"{% endif %}{% if fd.type == 'user' %} list="inv-owner-options"{% else %}{{ rem(name) }}{% endif %}{{ req(name) }}></label>
               {% endif %}
             {% endif %}
+            </div>
           {% endfor %}
         </fieldset>
       {% endif %}
@@ -736,6 +782,28 @@
     </footer>
   </form>
 </dialog>
+
+{% if can_add_type %}
+  {# ============ + AT THE END OF THE TYPE TABS: A NEW TYPE ============ #}
+  <dialog id="type-add-dialog" class="record-dialog record-dialog-narrow" aria-labelledby="type-add-title">
+    <form method="post" action="{{ url_for('inventory.add_type', key=key) }}">
+      <header class="record-dialog-head">
+        <div>
+          <h3 id="type-add-title">{{ _('Add a %(label)s', label=category_label|lower) }}</h3>
+          <p class="record-dialog-sub">{{ _('It gets a tab of its own, with the columns every type has. Configure can give it columns of its own.') }}</p>
+        </div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body">
+        <label>{{ _('Name') }} <input name="name" required maxlength="80" autocomplete="off" placeholder="{{ _('e.g. slides, plasma, CSF') }}"></label>
+      </div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ icon('plus') }} {{ _('Add') }}</button>
+      </footer>
+    </form>
+  </dialog>
+{% endif %}
 
 {% if m.kind == 'primers' %}
 <dialog id="primer-pair-dialog" class="record-dialog" aria-labelledby="primer-pair-title">
@@ -847,6 +915,30 @@
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
 <script src="{{ url_for('static', filename='mouse-peek.js') }}?v={{ asset_version('mouse-peek.js') }}" defer></script>
 <script nonce="{{ csp_nonce() }}">
+  /* The item dialog asks only for the columns used for the type chosen
+     (Configure's Used for); one left out keeps what it held. */
+  (function () {
+    const dialog = document.getElementById('item-dialog');
+    const type = dialog && dialog.querySelector('select[name="category"], input[name="category"]');
+    if (!type) return;
+    const follow = () => {
+      const chosen = String(type.value || '').trim().toLowerCase();
+      dialog.querySelectorAll('[data-for-types]').forEach((group) => {
+        const off = Boolean(chosen) && !group.dataset.forTypes.split('|').includes(chosen);
+        group.hidden = off;
+        group.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (off) { el.dataset.offType = el.disabled ? 'was' : '1'; el.disabled = true; }
+          else if (el.dataset.offType) { el.disabled = el.dataset.offType === 'was'; delete el.dataset.offType; }
+        });
+      });
+    };
+    type.addEventListener('change', follow);
+    type.addEventListener('input', follow);
+    dialog.addEventListener('record-dialog:open', () => {
+      dialog.querySelectorAll('[data-off-type]').forEach((el) => { delete el.dataset.offType; });
+      follow();
+    });
+  })();
   /* "How many" is for a new box only. */
   (function () {
     const dialog = document.getElementById('inv-rack-dialog');

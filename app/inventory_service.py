@@ -44,6 +44,23 @@ class ModuleView:
         return [f for f in self.settings["fields"] if f["in_table"]]
 
     @property
+    def tabs(self) -> list[str]:
+        """The types that get a tab above the sheet (the *tabs* feature):
+        the category choices, in their order."""
+        return self.categories if self.has("tabs") else []
+
+    def tab(self, raw) -> str:
+        """The tab a ?type= names, in the list's own spelling; "" for All
+        or one that isn't a tab."""
+        raw = str(raw or "").strip().casefold()
+        return next((t for t in self.tabs if t.casefold() == raw), "") if raw else ""
+
+    def fields_for(self, category: str) -> list[dict]:
+        """The columns used for entries of this category (all of them for
+        none): what its tab and the dialog show."""
+        return [f for f in self.fields if presets.used_for(f, category)]
+
+    @property
     def statuses(self) -> list[str]:
         return self.settings["statuses"]
 
@@ -964,3 +981,100 @@ def remembered(session, mv: ModuleView, items: list[InventoryItem]) -> dict:
             if folded and folded not in fill[column] and len(fill[column]) < MAX_FILLS:
                 fill[column][folded] = values
     return {"suggest": suggest, "fill": fill}
+
+
+# ---------------------------------------------------------------------------
+# Split notes: "Tissue: Lung; Fixation: 4% PFA; control 2w" into columns
+# ---------------------------------------------------------------------------
+
+# One "Header: value" part of a note; the header is a column's name.
+NOTE_PART = re.compile(r"^\s*([^:;]{1,40}?)\s*[:：]\s*(.+?)\s*$")
+# A field type split notes can fill (a source is two values; a person,
+# a link or a plasmid is checked on save, so it stays in the notes).
+SPLITTABLE = ("text", "textarea", "number", "date", "select", "multiselect")
+# An allele, as genotypes write them: Ai9/+, Cre/Cre, +/-.
+ALLELE = re.compile(r"^\s*[\w.()+\-]+/[\w.()+\-]+\s*$")
+
+
+def split_notes(mv: ModuleView, item: InventoryItem) -> tuple[dict, str, list[str]]:
+    """What the selection bar's Split notes does to one entry: each
+    "Header: value" part of its notes whose header names one of the
+    database's columns (or its category, "Type: tissue") goes into that
+    column, and the rest stays in the notes, in order. A column that already
+    holds another value keeps it, and the part stays; so does a value that
+    doesn't fit (not a number, not a date). With no type, an entry whose
+    moved columns are all used for one type only (Fixation: tissue) takes it.
+
+    Returns ({column key or "category": value}, the notes left, the headers
+    that named no column)."""
+    columns = {}
+    for f in mv.fields:
+        if f["type"] in SPLITTABLE:
+            columns.setdefault(f["label"].strip().casefold(), f)
+            columns.setdefault(f["key"].casefold(), f)
+    category_names = {mv.category_label.strip().casefold(), "category", "type"}
+    attrs = item.attrs_dict
+    moved, kept, unknown = {}, [], []
+    # A genotype's ";" joins its loci ("Vglut2-Cre/+;Ai9/+"): an allele
+    # after one, with no header of its own, belongs to the part before it.
+    went = None   # where the last part went: ("moved", key), ("kept", index)
+    for part in re.split(r"\s*[;；]\s*", item.notes or ""):
+        if not part.strip():
+            continue
+        found = NOTE_PART.match(part)
+        if not found and went and ALLELE.match(part):
+            if went[0] == "moved":
+                moved[went[1]] += ";" + part.strip()
+            else:
+                kept[went[1]] += ";" + part.strip()
+            continue
+        header = found.group(1).strip() if found else ""
+        value = found.group(2).strip() if found else ""
+        if found and header.casefold() in category_names and "category" not in moved:
+            canonical = next((c for c in mv.categories if c.casefold() == value.casefold()), value)
+            if not item.category or item.category.casefold() == canonical.casefold():
+                moved["category"] = item.category or canonical[:80]
+                went = None
+                continue
+        field = columns.get(header.casefold()) if found else None
+        if field is None:
+            if found and not header[:1].isdigit():
+                unknown.append(header)
+            kept.append(part.strip())
+            went = ("kept", len(kept) - 1) if found else None
+            continue
+        value = _note_value(field, value)
+        held = str(attrs.get(field["key"]) or "").strip()
+        if value is None or field["key"] in moved or (held and held.casefold() != value.casefold()):
+            kept.append(part.strip())
+            went = ("kept", len(kept) - 1)
+            continue
+        moved[field["key"]] = held or value
+        went = ("moved", field["key"]) if field["type"] in ("text", "textarea") and not held else None
+    if moved and not item.category and "category" not in moved:
+        typed = [set(f["types"]) for f in mv.fields if f["key"] in moved and f["types"]]
+        both = set.intersection(*typed) if typed else set()
+        if len(both) == 1:
+            moved["category"] = both.pop()
+    return moved, "; ".join(kept), list(dict.fromkeys(unknown))
+
+
+def _note_value(field: dict, raw: str) -> str | None:
+    """A value from the notes as its column keeps it; None when it doesn't
+    fit there."""
+    raw = raw.strip()
+    if field["type"] == "number":
+        text = raw.replace(",", ".") if re.fullmatch(r"-?\d+,\d+", raw) else raw.replace(",", "")
+        try:
+            float(text)
+        except ValueError:
+            return None
+        return text
+    if field["type"] == "date":
+        try:
+            return date.fromisoformat(raw).isoformat()
+        except ValueError:
+            return None
+    if field["type"] in ("select", "multiselect"):
+        return next((o for o in field["options"] if o.casefold() == raw.casefold()), raw)
+    return raw
