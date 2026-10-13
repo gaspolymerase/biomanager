@@ -997,6 +997,12 @@ pages are in `app/lab_routes.py`.
   hidden there. data-table.js keeps such a column hidden, out of the
   Columns menu and the export, without saving it, so the column numbers
   the Samples sheet saves stay those of its columns as drawn.
+  The arrow that opens the mouse carries `data-mouse-peek="<mouse ID>"`
+  (and `data-mouse-peek-tag`, dropped by that same script when the tag is
+  hidden): `static/mouse-peek.js` shows the notebook's @mouse card over
+  it, from the same `/notebook/lookup/mouse/<id>` and
+  `/notebook/backlinks/mouse/<id>`, in `.mouse-peek` (the notebook's
+  `.entity-popover` lives in the editor's own CSS, not on this page).
   What the save would have said
   (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in

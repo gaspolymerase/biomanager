@@ -12,5 +12,11 @@
   "Relabel %(changes)s?": "要改标记吗：%(changes)s？",
   "New…": "新建…",
   "Name": "名称",
-  "Copied %(n)s": "已复制 %(n)s 条"
+  "Copied %(n)s": "已复制 %(n)s 条",
+  "No details yet.": "还没有详细信息。",
+  "In 1 notebook page": "出现在 1 个实验记录本页面中",
+  "In %(n)s notebook pages": "出现在 %(n)s 个实验记录本页面中",
+  "Custom tag": "自定义标识",
+  "Not found.": "未找到。",
+  "Owner": "负责人"
 }

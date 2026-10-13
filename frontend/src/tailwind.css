@@ -3300,6 +3300,31 @@
   /* A sample's source mouse links into the colony. */
   .source-chip-link { @apply text-ink underline decoration-sand-300 underline-offset-2 hover:text-brand-700 hover:decoration-brand-400; }
 
+  /* Hovering it: the mouse's brief, the card the notebook shows over
+     "@mouse 12" (frontend/src/styles.css .entity-popover; static/mouse-peek.js). */
+  .mouse-peek {
+    @apply fixed z-100 w-max min-w-[240px] max-w-[340px] rounded-[10px] border border-hairline bg-surface
+           px-3 pb-3 pt-2.5 text-[0.82rem] text-ink shadow-pop;
+  }
+  .mouse-peek[hidden] { @apply hidden; }
+  .mouse-peek-head { @apply mb-2 flex items-center gap-1.5 border-b border-hairline pb-2; }
+  .mouse-peek-tag { @apply rounded px-2 py-0.5 text-[0.74rem] font-bold text-indigo-700 bg-indigo-500/15; }
+  .mouse-peek-id { @apply text-[0.86rem] font-semibold text-ink-soft; }
+  .mouse-peek-body { @apply grid gap-1; }
+  .mouse-peek-row { @apply grid grid-cols-[88px_1fr] items-baseline gap-2.5; }
+  .mouse-peek-key { @apply text-[0.8rem] font-medium text-muted; }
+  .mouse-peek-val { @apply break-words text-[0.84rem]; }
+  .mouse-peek-note { @apply text-[0.76rem] italic text-muted; }
+  .mouse-peek-pages { @apply mt-2.5 flex flex-col gap-1 border-t border-hairline pt-2.5; }
+  .mouse-peek-pages-head { @apply mb-0.5 text-[0.76rem] font-semibold text-muted; }
+  .mouse-peek-page { @apply block rounded-md px-2 py-1 text-ink no-underline hover:bg-sand-100; }
+  .mouse-peek-page-title { @apply block truncate text-[0.82rem] font-medium; }
+  .mouse-peek-page-snippet { @apply mt-px block truncate text-[0.72rem] text-muted; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .mouse-peek-tag { @apply text-indigo-300; }
+  }
+  :root[data-theme="dark"] .mouse-peek-tag { @apply text-indigo-300; }
+
   /* Expiry: a red date once past, amber within 30 days. */
   .sheet-table td.expiry-expired input { @apply font-semibold text-danger-700; }
   /* An expired item reads red: its dot, number and name as well as the date. */
