@@ -3,7 +3,10 @@
    same /notebook/lookup/mouse/<id> and /notebook/backlinks/mouse/<id>.
    A link opts in with data-mouse-peek="<mouse ID>"; data-mouse-peek-tag
    adds its custom tag, which the page leaves off where the person keeps
-   custom tags hidden. Clicking the link still opens the mouse. */
+   custom tags hidden. Clicking the link still opens the mouse.
+   Anything else can show a brief the page already holds, in the same card:
+   data-peek='{"tag": "Litter", "id": "102", "rows": [["Born", "…"], …]}'
+   (labels already translated; the Litters tab's litter numbers). */
 (function () {
   const lookups = new Map(); // id -> Promise of the lookup, or null when not found
   const mentions = new Map(); // id -> Promise of the notebook pages naming it
@@ -99,7 +102,27 @@
     place(link);
   }
 
+  function drawBrief(link) {
+    let brief;
+    try { brief = JSON.parse(link.dataset.peek); } catch (e) { return; }
+    const rows = (brief.rows || []).map(([k, v]) => row(k, v)).join('');
+    card.innerHTML = `
+      <div class="mouse-peek-head">
+        <span class="mouse-peek-tag">${esc(brief.tag || '')}</span>
+        <span class="mouse-peek-id">${esc(brief.id || '')}</span>
+      </div>
+      <div class="mouse-peek-body">${rows}</div>`;
+    place(link);
+  }
+
   function show(link) {
+    if (link.dataset.peek) {
+      clearTimeout(hideTimer);
+      active = link;
+      ensureCard().hidden = false;
+      drawBrief(link);
+      return;
+    }
     const id = link.dataset.mousePeek;
     if (!id) return;
     clearTimeout(hideTimer);
@@ -134,7 +157,7 @@
   // A pointer resting on the link, not one passing over the sheet on its way.
   document.addEventListener('pointerover', (event) => {
     if (event.pointerType !== 'mouse') return;
-    const link = event.target.closest && event.target.closest('[data-mouse-peek]');
+    const link = event.target.closest && event.target.closest('[data-mouse-peek], [data-peek]');
     if (!link) return;
     clearTimeout(hideTimer);
     if (link === active) return;
@@ -142,17 +165,17 @@
     showTimer = setTimeout(() => show(link), 200);
   });
   document.addEventListener('pointerout', (event) => {
-    const link = event.target.closest && event.target.closest('[data-mouse-peek]');
+    const link = event.target.closest && event.target.closest('[data-mouse-peek], [data-peek]');
     if (!link) return;
     if (event.relatedTarget && (link.contains(event.relatedTarget) || (card && card.contains(event.relatedTarget)))) return;
     hideSoon();
   });
   document.addEventListener('focusin', (event) => {
-    const link = event.target.closest && event.target.closest('[data-mouse-peek]');
+    const link = event.target.closest && event.target.closest('[data-mouse-peek], [data-peek]');
     if (link && link.matches(':focus-visible')) show(link);
   });
   document.addEventListener('focusout', (event) => {
-    if (event.target.closest && event.target.closest('[data-mouse-peek]')) hideSoon();
+    if (event.target.closest && event.target.closest('[data-mouse-peek], [data-peek]')) hideSoon();
   });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && active) hide(); });
   document.addEventListener('scroll', () => { if (active) hide(); }, true);

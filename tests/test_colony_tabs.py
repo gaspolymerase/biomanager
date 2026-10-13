@@ -9,6 +9,7 @@ a strain by whoever added it; presets by admins only. Admins edit anything.
 """
 from __future__ import annotations
 
+import html as html_lib
 import io
 import re
 import unittest
@@ -132,6 +133,29 @@ class LitterUpdateTests(AppTestCase):
         self.assertRegex(locked, r'name="date_of_birth"[^>]*disabled')
         self.assertNotIn("is-locked", open_)
         self.assertNotRegex(open_, r'name="date_of_birth"[^>]*disabled')
+
+    def test_litters_tab_shows_the_parents_genotypes_and_counts_the_pups(self):
+        dad = mouse_number(self.make_mouse(self.m, self.member, gender="M", transgene_1="DBH-Cre/+"))
+        mom = mouse_number(self.make_mouse(self.m, self.member, transgene_1="R26 DTA/DTA"))
+        code = uniq("L")
+        # P40: past every weaning list, so it crowds no other test off Home.
+        litter = self.make_litter(self.m, code, date_of_birth=days_ago(40))
+        self.assertSaved(self.autosave(self.m, f"/colony/litters/{litter}/update",
+                                       {"father_info": str(dad), "mother_info": f"M{mom} ♀", "total_pups": "9"}))
+        for gender in ("M", "F", "F"):
+            self.make_mouse(self.m, self.member, litter=code, gender=gender)
+        html = self.get_ok(self.m, "/colony?view=litters")
+        row = row_html(html, f'data-litter_id="{code}"')
+        self.assertIn('data-father_genotype="DBH-Cre/+"', row)
+        self.assertIn('data-mother_genotype="R26 DTA/DTA"', row)
+        # Pups is the mice listed (3), not the 9 typed before.
+        self.assertIn('data-pups="3"', row)
+        self.assertNotIn('name="total_pups"', row)
+        # Hovering the number: the litter's brief.
+        brief = html_lib.unescape(re.search(r'data-peek="([^"]*)"', row).group(1))
+        self.assertIn(f"{dad} · DBH-Cre/+", brief)
+        self.assertIn("P40", brief)
+        self.assertIn("3 of 3 alive · ♂ 1 · ♀ 2", brief)
 
 
 class LitterAddExistingMouseTests(AppTestCase):

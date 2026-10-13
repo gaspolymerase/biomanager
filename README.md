@@ -130,7 +130,10 @@ never what you may edit.
   own weaning and genotyping dates, or **Correct the date** of the first.
   The cage lists each litter with its age, Home and the calendar show
   each one ("Wean Cage 101 (born Sep 29)"), and **Genotyping** and
-  **Wean** ask which litter, the oldest first.
+  **Wean** ask which litter, the oldest first. The **Litters** tab shows
+  each parent's genotype beside its mouse number, counts **Pups** from
+  the mice the litter lists, and hovering a litter's number shows its
+  brief (age, parents, pups alive by sex, their cages).
 - **Breeders** — the Breeder cages, the lab's breeding stock, at a glance,
   with the breeders counted by genotype and those past 30 weeks flagged;
   **Pick** takes a breeder as yours to set up a mating, and its owner is

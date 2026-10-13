@@ -12,7 +12,7 @@
    data-* hooks (autosave, live availability dot). #}
 
 {% macro id_cell(code, alive=None, locked=False, owner='', noun='record',
-                 alive_title='Available', dead_title='Not available', stage='', stage_title='', aside='') %}
+                 alive_title='Available', dead_title='Not available', stage='', stage_title='', aside='', peek='') %}
   {# stage: "young", "adult" or "old" colours a living animal's dot blue,
      green or red (app/life_stage.py); "expired" makes it red. #}
   {% set alive_title = [alive_title|tr, stage_title|tr] | select | join(' · ') %}
@@ -25,8 +25,9 @@
     {% endif %}
     {# `aside` is what the record carries besides its number — a mouse's ear
        tag — so hovering the number tells you, whether or not its column is
-       shown. #}
-    <span class="ident"{% if aside %} title="{{ aside }}"{% endif %}>{{ code }}</span>
+       shown. `peek` is a brief to show on hovering it instead (JSON;
+       static/mouse-peek.js). #}
+    <span class="ident"{% if aside %} title="{{ aside }}"{% endif %}{% if peek %} data-peek="{{ peek }}" tabindex="0"{% endif %}>{{ code }}</span>
     {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s %(noun)s: read only', owner=owner or _('Someone else'), noun=noun|tr) }}">{{ icon('lock') }}</span>{% endif %}
   </span>
 {% endmacro %}

@@ -124,6 +124,8 @@ from .services import (
     get_or_create_litter,
     init_database,
     mouse_display_row,
+    mouse_genotype_text,
+    litter_parents,
     transgene_columns_used,
     next_cage_id,
     next_litter_id,
@@ -1623,6 +1625,34 @@ def cage_sheet_row(cage) -> dict:
 RECENT_DAYS = 90   # ended mice, empty cages and old litters shown without "Show all"
 
 
+def _litter_brief(litter: LitterRecord, father_geno: str, mother_geno: str) -> str:
+    """What hovering a litter's number on the Litters tab shows (static/
+    mouse-peek.js, data-peek): its age, its parents with their genotypes,
+    its pups and where they are. JSON, labels already translated."""
+    mice = sorted(litter.mice, key=lambda m: m.mouse_id)
+    alive = [m for m in mice if mouse_is_active(m)]
+    born = ""
+    if litter.date_of_birth:
+        born = f"{fmt_day(litter.date_of_birth)} · P{(date.today() - litter.date_of_birth).days}"
+    pups = gettext("none yet")
+    if mice:
+        sexes = " · ".join(f"{sign} {n}" for sign, n in (
+            ("♂", sum(m.gender == "M" for m in alive)), ("♀", sum(m.gender == "F" for m in alive))) if n)
+        pups = gettext("%(alive)s of %(total)s alive", alive=len(alive), total=len(mice))
+        pups = f"{pups} · {sexes}" if sexes else pups
+    rows = [
+        (gettext("Born"), born),
+        (gettext("Father"), " · ".join(p for p in (litter.father_info, father_geno) if p)),
+        (gettext("Mother"), " · ".join(p for p in (litter.mother_info, mother_geno) if p)),
+        (gettext("Pups"), pups),
+        (gettext("Cages"), ", ".join(dict.fromkeys(m.cage.cage_id for m in alive if m.cage))),
+        (gettext("Strain"), ", ".join(dict.fromkeys(m.strain for m in mice if m.strain))),
+        (gettext("Notes"), litter.notes or ""),
+    ]
+    return json.dumps({"tag": gettext("Litter"), "id": litter.litter_id,
+                       "rows": [[k, v] for k, v in rows if v]}, ensure_ascii=False)
+
+
 def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False) -> dict[str, object]:
     """Build the colony page context.
 
@@ -1716,7 +1746,11 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None))))
             .order_by(CageRecord.cage_id))) if active_view == "experiments" else []
         litter_rows = []
+        parents = litter_parents(db_session, litters)
         for litter in litters:
+            father, mother = parents.get(litter.father_info), parents.get(litter.mother_info)
+            father_geno = mouse_genotype_text(father) if father else ""
+            mother_geno = mouse_genotype_text(mother) if mother else ""
             litter_rows.append(
                 {
                     "id": litter.id,
@@ -1725,8 +1759,13 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     "cohort_name": litter.cohort_name,
                     "father_info": litter.father_info,
                     "mother_info": litter.mother_info,
+                    "father_genotype": father_geno,
+                    "mother_genotype": mother_geno,
+                    # Pups: the mice listed in the litter, so the two can't disagree.
+                    "pups": len(litter.mice),
                     "total_pups": litter.total_pups,
                     "notes": litter.notes,
+                    "brief": _litter_brief(litter, father_geno, mother_geno),
                     "editable": access.can_edit_litter(litter),
                     "mice": [mouse_display_row(mouse, g.user.username, g.user.role) for mouse in sorted(litter.mice, key=lambda item: item.mouse_id)],
                 }

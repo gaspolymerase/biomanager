@@ -990,13 +990,15 @@
     {% elif active_view == "litters" %}
       {# Litters as a sheet: one row per litter. Its date of birth is the
          age of every mouse in it, so changing it asks first (as on the
-         mouse sheet), and only someone who may edit all its mice can. #}
-      <section class="data-table-card sheet" data-table-id="litters-v2"
+         mouse sheet), and only someone who may edit all its mice can.
+         litters-v3: the parents' genotype columns moved the later ones, so
+         saved widths and hidden columns (kept by column number) start afresh. #}
+      <section class="data-table-card sheet" data-table-id="litters-v3"
                data-noun="litter" data-noun-plural="litters" data-export-name="litters">
         <div class="dt-toolbar">
           <div class="dt-toolbar-search">
             {{ icon('search', 'search-icon') }}
-            <input type="text" class="dt-search" placeholder="{{ _('Search litter, cohort, parents, mouse…') }}"
+            <input type="text" class="dt-search" placeholder="{{ _('Search litter, parents, mouse…') }}"
                    autocomplete="off" aria-label="{{ _('Search litters') }}">
           </div>
           <div class="dt-toolbar-spacer"></div>
@@ -1016,16 +1018,19 @@
                 <th class="dt-sortable" data-sort-key="date_of_birth" style="width: 112px;" title="{{ _('The date of birth of every mouse in the litter') }}">
                   <span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}{{ _('Born') }}<span class="dt-sort-indicator"></span></span>
                 </th>
-                <th class="dt-sortable" data-sort-key="cohort_name" style="width: 128px;">
-                  <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Cohort') }}<span class="dt-sort-indicator"></span></span>
-                </th>
-                <th class="dt-sortable" data-sort-key="father_info" style="width: 92px;">
+                <th class="dt-sortable" data-sort-key="father_info" style="width: 92px;" title="{{ _('The father’s mouse number') }}">
                   <span class="dt-col-head">{{ icon('male', 'dt-col-icon') }}{{ _('Father') }}<span class="dt-sort-indicator"></span></span>
                 </th>
-                <th class="dt-sortable" data-sort-key="mother_info" style="width: 92px;">
+                <th class="dt-sortable" data-sort-key="father_genotype" style="width: 168px;" title="{{ _('The genotype of the mouse named as father, from its record') }}">
+                  <span class="dt-col-head">{{ icon('male', 'dt-col-icon') }}{{ _('Father’s genotype') }}<span class="dt-sort-indicator"></span></span>
+                </th>
+                <th class="dt-sortable" data-sort-key="mother_info" style="width: 92px;" title="{{ _('The mother’s mouse number') }}">
                   <span class="dt-col-head">{{ icon('female', 'dt-col-icon') }}{{ _('Mother') }}<span class="dt-sort-indicator"></span></span>
                 </th>
-                <th class="dt-sortable" data-sort-key="total_pups" style="width: 60px;">
+                <th class="dt-sortable" data-sort-key="mother_genotype" style="width: 168px;" title="{{ _('The genotype of the mouse named as mother, from its record') }}">
+                  <span class="dt-col-head">{{ icon('female', 'dt-col-icon') }}{{ _('Mother’s genotype') }}<span class="dt-sort-indicator"></span></span>
+                </th>
+                <th class="dt-sortable" data-sort-key="pups" data-sort-type="number" style="width: 60px;" title="{{ _('How many mice the litter lists, counted from its Mice') }}">
                   <span class="dt-col-head">{{ icon('count', 'dt-col-icon') }}{{ _('Pups') }}<span class="dt-sort-indicator"></span></span>
                 </th>
                 <th class="dt-sortable" data-sort-key="mice" style="min-width: 152px;" title="{{ _('Mice linked to the litter; the dot is blue under 8 weeks, green from 8 to 30 weeks, red past 30 weeks, grey once not alive') }}">
@@ -1043,18 +1048,20 @@
                 {% set locked = not litter.editable %}
                 {% set alive = litter.mice|selectattr('active')|list|length %}
                 <tr data-id="{{ litter.id }}" data-litter_id="{{ litter.litter_id }}"
-                    data-mice="{{ litter.mice|length }}"
+                    data-mice="{{ litter.mice|length }}" data-pups="{{ litter.pups }}"
+                    data-father_genotype="{{ litter.father_genotype }}" data-mother_genotype="{{ litter.mother_genotype }}"
                     data-mouse-ids="{{ litter.mice|map(attribute='mouse_id')|join(' ') }}"
                     class="{% if locked %}is-locked{% endif %}">
-                  <td class="sheet-pin sheet-pin-0">{{ sheet_ui.id_cell(litter.litter_id, locked=locked, owner=_('Other members'), noun='litter') }}</td>
+                  <td class="sheet-pin sheet-pin-0">{{ sheet_ui.id_cell(litter.litter_id, locked=locked, owner=_('Other members'), noun='litter', peek=litter.brief) }}</td>
                   <td><input type="date" name="date_of_birth" form="{{ f }}" value="{{ litter.date_of_birth }}"
                              data-empty="{{ '0' if litter.date_of_birth else '1' }}" data-autosave="1" data-litter-dob
                              data-original-dob="{{ litter.date_of_birth }}" data-mice-count="{{ litter.mice|length }}"
                              aria-label="{{ _('Date of birth') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input name="cohort_name" form="{{ f }}" value="{{ litter.cohort_name }}" data-autosave="1" aria-label="{{ _('Cohort') }}" {% if locked %}disabled{% endif %}></td>
                   <td><input class="ident" name="father_info" form="{{ f }}" value="{{ litter.father_info }}" data-autosave="1" aria-label="{{ _('Father') }}" {% if locked %}disabled{% endif %}></td>
+                  <td title="{{ litter.father_genotype }}">{{ litter.father_genotype }}</td>
                   <td><input class="ident" name="mother_info" form="{{ f }}" value="{{ litter.mother_info }}" data-autosave="1" aria-label="{{ _('Mother') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="sheet-num" type="number" min="0" max="99" name="total_pups" form="{{ f }}" value="{{ litter.total_pups or '' }}" data-autosave="1" aria-label="{{ _('Pups') }}" {% if locked %}disabled{% endif %}></td>
+                  <td title="{{ litter.mother_genotype }}">{{ litter.mother_genotype }}</td>
+                  <td class="tabular-nums" title="{{ _('%(alive)s of %(total)s alive', alive=alive, total=litter.pups) }}">{{ litter.pups or '' }}</td>
                   <td class="whitespace-normal" title="{{ _('%(alive)s of %(total)s alive', alive=alive, total=litter.mice|length) }}">
                     {% for mouse in litter.mice %}
                       <a class="litter-mouse" href="{{ url_for('colony', view='mice', scope='all', q=mouse.mouse_id) }}">
@@ -1076,7 +1083,7 @@
                   </td>
                 </tr>
               {% else %}
-                <tr><td class="dt-empty" colspan="9">{{ _('No litters yet. Use <strong>New litter</strong>, or record a litter from a breeding cage’s card.') }}</td></tr>
+                <tr><td class="dt-empty" colspan="10">{{ _('No litters yet. Use <strong>New litter</strong>, or record a litter from a breeding cage’s card.') }}</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -1122,7 +1129,6 @@
               <legend>{{ _('Litter') }}</legend>
               <label>{{ _('Litter ID') }} <input name="litter_id" class="font-mono" placeholder="{{ next_litter_id_value }}"></label>
               <label>{{ _('Born') }} <input type="date" name="date_of_birth"></label>
-              <label class="col-span-full">{{ _('Cohort') }} <input name="cohort_name"></label>
             </fieldset>
             <label class="record-wide">{{ _('Notes') }} <textarea name="notes" rows="2"></textarea></label>
           </div>
@@ -2637,4 +2643,9 @@ document.querySelectorAll('input[list]').forEach((input) => {
 
   BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });
 </script>
+{% endblock %}
+
+{% block body_end %}
+{# Hovering a litter's number shows its brief (static/mouse-peek.js). #}
+{% if active_view == "litters" %}<script src="{{ url_for('static', filename='mouse-peek.js') }}?v={{ asset_version('mouse-peek.js') }}" defer></script>{% endif %}
 {% endblock %}

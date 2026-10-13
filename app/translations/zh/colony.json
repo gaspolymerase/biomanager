@@ -238,7 +238,7 @@
   "Genotype summary": "基因型摘要",
   "Notes": "备注",
   "Cancel": "取消",
-  "Search litter, cohort, parents, mouse…": "搜索窝、队列、亲本、小鼠…",
+  "Search litter, parents, mouse…": "搜索窝、亲本、小鼠…",
   "Search litters": "搜索窝",
   "New litter": "新建窝",
   "The date of birth of every mouse in the litter": "该窝每只小鼠的出生日期",
@@ -383,5 +383,12 @@
   "Cage %(cage)s isn't a Breeding cage: only a mating cage has litters, genotyping and weaning. Set its purpose to Breeding first.": "笼 %(cage)s 不是配种笼：只有正在交配的笼才有产仔、基因型鉴定和断奶。请先把它的用途设为配种笼。",
   "strain": "品系",
   "The mouse’s strain or background, such as C57BL/6J. Pick one or type your own; the choices are under Dropdowns.": "小鼠的品系或遗传背景，例如 C57BL/6J。可以从列表里选，也可以自己输入；选项在“下拉选项”里设置。",
-  "e.g. C57BL/6J": "例如 C57BL/6J"
+  "e.g. C57BL/6J": "例如 C57BL/6J",
+  "The father’s mouse number": "父本的小鼠编号",
+  "The mother’s mouse number": "母本的小鼠编号",
+  "Father’s genotype": "父本基因型",
+  "Mother’s genotype": "母本基因型",
+  "The genotype of the mouse named as father, from its record": "填为父本的那只小鼠的基因型，取自它的记录",
+  "The genotype of the mouse named as mother, from its record": "填为母本的那只小鼠的基因型，取自它的记录",
+  "How many mice the litter lists, counted from its Mice": "这一窝列出的小鼠数，按“小鼠”一栏计数"
 }

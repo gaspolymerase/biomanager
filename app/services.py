@@ -1568,13 +1568,37 @@ def _parent_label(session, info: str) -> str:
     mouse = session.scalar(select(MouseRecord).where(MouseRecord.mouse_id == mouse_id_int))
     if mouse is None:
         return info
-    # Prefer the rolled-up `genotype` field if set; otherwise stitch the
-    # individual transgene slots so we always have something useful.
-    geno = (mouse.genotype or "").strip()
-    if not geno:
-        parts = [p.strip() for p in (mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4) if p and p.strip()]
-        geno = "; ".join(parts)
+    geno = mouse_genotype_text(mouse)
     return f"M{mouse_id_int} ({geno})" if geno else f"M{mouse_id_int}"
+
+
+def mouse_genotype_text(mouse: MouseRecord) -> str:
+    """A mouse's genotype in one line: its rolled-up `genotype` if set,
+    otherwise its transgene slots stitched together."""
+    geno = (mouse.genotype or "").strip()
+    if geno:
+        return geno
+    parts = [p.strip() for p in (mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4) if p and p.strip()]
+    return "; ".join(parts)
+
+
+def litter_parents(session, litters) -> dict[str, MouseRecord]:
+    """The parent mice the litters' Father and Mother name, in one query:
+    each field's text (as typed, e.g. "713" or "M713 ♀") → the mouse whose
+    number is the first number in it. Text naming no mouse is left out."""
+    import re as _re
+
+    numbers = {}
+    for litter in litters:
+        for info in (litter.father_info, litter.mother_info):
+            match = _re.search(r"\d+", info or "")
+            if match:
+                numbers[info] = int(match.group(0))
+    if not numbers:
+        return {}
+    found = {m.mouse_id: m for m in session.scalars(
+        select(MouseRecord).where(MouseRecord.mouse_id.in_(set(numbers.values()))))}
+    return {info: found[n] for info, n in numbers.items() if n in found}
 
 
 def _auto_item(*, kind_tag: str, anchor_id: int, title: str, color: str, day: date,
