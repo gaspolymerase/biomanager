@@ -1182,6 +1182,18 @@ class SampleSourceTests(InventoryCase):
         self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
         self.assertIn('title="Custom tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
 
+    def test_the_brief_on_hovering_the_link_gives_the_mouse_s_age(self):
+        """The card over a sample's mouse (static/mouse-peek.js, the
+        notebook's @mouse card too) reads its age from its litter's birth."""
+        colony = self.make_colony(self.a, self.admin, n_mice=1, dob=days_ago(60))
+        mouse_id = one("select mouse_id from mice where id=?", colony["mice"][0])
+        data = self.a.get(f"/notebook/lookup/mouse/{mouse_id}").get_json()
+        self.assertEqual((data["age_days"], data["age_weeks"]), (60, 8))
+        # A mouse with no birth date has no age, not a wrong one.
+        bare = one("select mouse_id from mice where id=?", self.make_mouse(self.a, self.admin))
+        data = self.a.get(f"/notebook/lookup/mouse/{bare}").get_json()
+        self.assertEqual((data["age_days"], data["age_weeks"]), (None, None))
+
     def test_the_custom_tag_is_a_column_after_the_source(self):
         """Read from the colony, next to the mouse it belongs to; and the
         page knows where this person's mouse-sheet Columns choice is kept,

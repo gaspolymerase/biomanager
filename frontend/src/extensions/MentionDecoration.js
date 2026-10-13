@@ -115,6 +115,7 @@ function renderPopover(type, id, data, errorMsg) {
   if (type === 'mouse') {
     const fields = [
       ['Gender', data.gender],
+      ['Age', data.age_weeks == null ? '' : `${data.age_weeks} weeks · ${data.age_days} days`],
       ['Genotype', data.genotype],
       ['Status', data.status],
       ['Owner', data.owner],

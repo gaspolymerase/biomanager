@@ -18,5 +18,7 @@
   "In %(n)s notebook pages": "出现在 %(n)s 个实验记录本页面中",
   "Custom tag": "自定义标识",
   "Not found.": "未找到。",
-  "Owner": "负责人"
+  "Owner": "负责人",
+  "Age": "年龄",
+  "%(weeks)s weeks · %(days)s days": "%(weeks)s 周 · %(days)s 天"
 }

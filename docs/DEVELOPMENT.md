@@ -1003,6 +1003,8 @@ pages are in `app/lab_routes.py`.
   it, from the same `/notebook/lookup/mouse/<id>` and
   `/notebook/backlinks/mouse/<id>`, in `.mouse-peek` (the notebook's
   `.entity-popover` lives in the editor's own CSS, not on this page).
+  The lookup sends the mouse's `age_days`/`age_weeks` from its litter's
+  birth date (`calculate_age_fields`, as the colony sheet counts it).
   What the save would have said
   (a source naming no mouse in the colony) is flashed once, not per row. Organisms do the same for custom fields (`bulk_animals`,
   `bulk_housing`, `_set_custom`), and their sheet edits custom cells in

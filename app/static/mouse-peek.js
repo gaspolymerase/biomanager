@@ -68,6 +68,7 @@
     else {
       const rows = [
         [t('Sex'), data.gender],
+        [t('Age'), data.age_weeks == null ? '' : t('%(weeks)s weeks · %(days)s days', { weeks: data.age_weeks, days: data.age_days })],
         [t('Genotype'), data.genotype],
         [t('Status'), data.status],
         [t('Owner'), data.owner],

@@ -81,6 +81,7 @@ from .models import (
 from .formutil import arg_int, attr_value_pattern, like_pattern
 from .services import (
     csv_text,
+    calculate_age_fields,
     add_notification,
     breeder_mice,
     is_breeding_cage,
@@ -7112,6 +7113,8 @@ def notebook_lookup_mouse(mouse_id: int):
         if mouse is None:
             return jsonify({"ok": False}), 404
         cage_id = mouse.cage.cage_id if mouse.cage else ""
+        # Its age, from its litter's birth date, as the colony sheet counts it.
+        ages = calculate_age_fields(mouse.litter.date_of_birth if mouse.litter else None)
         label = f"Mouse #{mouse.mouse_id} · {mouse.gender or '?'} · {mouse.genotype or '(no genotype)'} · cage {cage_id or '—'} · {mouse.owner or 'no owner'}"
         return jsonify(
             {
@@ -7123,6 +7126,8 @@ def notebook_lookup_mouse(mouse_id: int):
                 "status": mouse.status,
                 "owner": mouse.owner,
                 "cage_id": cage_id,
+                "age_days": ages["age_days"],
+                "age_weeks": ages["age_weeks"],
             }
         )
 
