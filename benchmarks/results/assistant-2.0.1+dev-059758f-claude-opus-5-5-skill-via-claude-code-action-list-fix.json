@@ -1,0 +1,1277 @@
+{
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "context": "skill",
+  "via": "claude-code",
+  "date": "2026-10-14",
+  "summary": {
+    "by_scenario": {
+      "vague": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "litter": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "move": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "weight": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "died": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "ambiguous": {
+        "correct": 0,
+        "asked": 1,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "unknown": {
+        "correct": 0,
+        "asked": 1,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "wean": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "weights": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "by-sex": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "which-male": {
+        "correct": 0,
+        "asked": 1,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "weekday": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "mixed": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "correction": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "reagent": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      }
+    },
+    "total": {
+      "correct": 12,
+      "asked": 3,
+      "missing": 0,
+      "wrong": 0,
+      "error": 0
+    },
+    "runs": 15
+  },
+  "tokens": {
+    "input": 122,
+    "output": 11453,
+    "cache_read": 878213,
+    "cache_write": 91720,
+    "cost_usd": 1.3682
+  },
+  "runs": [
+    {
+      "scenario": "vague",
+      "says": "I want to change something in BioManager",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 6,
+        "output": 415,
+        "cache_read": 38600,
+        "cache_write": 5632,
+        "cost_usd": 0.1128
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "litter",
+      "says": "Litter in cage 202 yesterday, 7 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 202",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "litter_born"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/202"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Litter born in cage 202 yesterday, 7 pups",
+            "changes": [
+              {
+                "action": "litter_born",
+                "target": {
+                  "kind": "cage",
+                  "id": 1
+                },
+                "fields": {
+                  "date": "2026-10-13",
+                  "pups": 7
+                },
+                "evidence": {
+                  "quote": "Litter in cage 202 yesterday, 7 pups."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 609,
+        "cache_read": 57024,
+        "cache_write": 5532,
+        "cost_usd": 0.0679
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "move",
+      "says": "Moved mouse 1 and mouse 2 from cage 288 to 291 this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 1",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 2",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 288",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 291",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mice_move"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Moved mouse 1 and mouse 2 from cage 288 to 291 this morning.",
+            "changes": [
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 2
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 1
+                    },
+                    {
+                      "kind": "mouse",
+                      "id": 2
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Moved mouse 1 and mouse 2 from cage 288 to 291 this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 766,
+        "cache_read": 40982,
+        "cache_write": 5816,
+        "cost_usd": 0.0701
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "weight",
+      "says": "Weighed mouse 1: 24.1 g.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 1",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mouse_weight"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weighed mouse 1: 24.1 g",
+            "changes": [
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 1
+                },
+                "fields": {
+                  "grams": 24.1,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "Weighed mouse 1: 24.1 g."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 492,
+        "cache_read": 40269,
+        "cache_write": 4955,
+        "cost_usd": 0.0576
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "died",
+      "says": "mouse 1 in cage 412 was found dead this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 1",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 412",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mice_died"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/1"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 1 in cage 412 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": null,
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 1
+                    }
+                  ],
+                  "date": "2026-10-14",
+                  "reason": "found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 1 in cage 412 was found dead this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 778,
+        "cache_read": 57294,
+        "cache_write": 5680,
+        "cost_usd": 0.0725
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "ambiguous",
+      "says": "Moved the breeder from 502 to 591.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 502"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 591"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/502"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "mice",
+            "filters": {
+              "cage": "502",
+              "alive": "true"
+            }
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 10,
+        "output": 698,
+        "cache_read": 72888,
+        "cache_write": 5154,
+        "cost_usd": 0.1305
+      },
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "unknown",
+      "says": "Weaned cage 699 today, 6 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 699"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "wean"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "search",
+          "input": {
+            "q": "699"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "cages",
+            "filters": {
+              "occupied": "true"
+            }
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 722,
+        "cache_read": 57488,
+        "cache_write": 5527,
+        "cost_usd": 0.1324
+      },
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "wean",
+      "says": "Weaned cage 120 today: the 2 female pups into a new cage, the 3 males into cage 125.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 120",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 125",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "wean"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/120"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "mice",
+            "filters": {
+              "alive": "true",
+              "cage": "120"
+            }
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weaned cage 120: 2 female pups into a new cage, 3 males into cage 125",
+            "changes": [
+              {
+                "action": "wean",
+                "target": {
+                  "kind": "cage",
+                  "id": 1
+                },
+                "fields": {
+                  "rows": [
+                    {
+                      "mice": [
+                        3,
+                        4
+                      ],
+                      "sex": "F",
+                      "new_card": ""
+                    },
+                    {
+                      "mice": [
+                        5,
+                        6,
+                        7
+                      ],
+                      "sex": "M",
+                      "cage": {
+                        "kind": "cage",
+                        "id": 2
+                      }
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Weaned cage 120 today: the 2 female pups into a new cage, the 3 males into cage 125."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 1133,
+        "cache_read": 63042,
+        "cache_write": 10482,
+        "cost_usd": 0.1192
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "weights",
+      "says": "Weights today: mouse 1 24.1 g, mouse 2 22.8, mouse 3 25.0.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 1",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 2",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 3",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mouse_weight"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/1"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weights today: mouse 1 24.1 g, mouse 2 22.8 g, mouse 3 25.0 g",
+            "changes": [
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 1
+                },
+                "fields": {
+                  "grams": 24.1,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "Weights today: mouse 1 24.1 g"
+                }
+              },
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 2
+                },
+                "fields": {
+                  "grams": 22.8,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "mouse 2 22.8"
+                }
+              },
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 3
+                },
+                "fields": {
+                  "grams": 25,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "mouse 3 25.0"
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 981,
+        "cache_read": 57556,
+        "cache_write": 6270,
+        "cost_usd": 0.0813
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "by-sex",
+      "says": "Moved the two females from 340 to 341.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 340",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 341",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "mice",
+            "filters": {
+              "alive": "true",
+              "cage": "340"
+            }
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mice_move"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Moved the two females from 340 to 341",
+            "changes": [
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 2
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 1
+                    },
+                    {
+                      "kind": "mouse",
+                      "id": 2
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Moved the two females from 340 to 341."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 744,
+        "cache_read": 57113,
+        "cache_write": 5954,
+        "cost_usd": 0.074
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "which-male",
+      "says": "Weighed the male in cage 380: 26.0 g.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 380",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "mice",
+            "filters": {
+              "alive": "true",
+              "cage": "380"
+            }
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 568,
+        "cache_read": 56341,
+        "cache_write": 4960,
+        "cost_usd": 0.1168
+      },
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "weekday",
+      "says": "Litter in cage 350 on Sunday, 6 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 350",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "litter_born"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/350"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Litter in cage 350 on Sunday, 6 pups",
+            "changes": [
+              {
+                "action": "litter_born",
+                "target": {
+                  "kind": "cage",
+                  "id": 1
+                },
+                "fields": {
+                  "date": "2026-10-11",
+                  "pups": 6
+                },
+                "evidence": {
+                  "quote": "Litter in cage 350 on Sunday, 6 pups."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 695,
+        "cache_read": 57153,
+        "cache_write": 5655,
+        "cost_usd": 0.0706
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "mixed",
+      "says": "Cage 360: mouse 1 found dead this morning, weighed mouse 2 at 21.3 g, and moved mouse 3 to 361.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 360",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 361",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/360"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "mice_died",
+              "mouse_weight",
+              "mice_move"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Cage 360: mouse 1 found dead this morning, mouse 2 weighed 21.3 g, mouse 3 moved to cage 361",
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": null,
+                "fields": {
+                  "mice": [
+                    "1"
+                  ],
+                  "date": "2026-10-14",
+                  "reason": "found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 1 found dead this morning"
+                }
+              },
+              {
+                "action": "mouse_weight",
+                "target": "mouse 2",
+                "fields": {
+                  "grams": 21.3,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "weighed mouse 2 at 21.3 g"
+                }
+              },
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 2
+                },
+                "fields": {
+                  "mice": [
+                    "3"
+                  ]
+                },
+                "evidence": {
+                  "quote": "moved mouse 3 to 361"
+                }
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Cage 360: mouse 1 found dead this morning, mouse 2 weighed 21.3 g, mouse 3 moved to cage 361",
+            "replaces": 1,
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": null,
+                "fields": {
+                  "mice": [
+                    "1"
+                  ],
+                  "date": "2026-10-14",
+                  "reason": "found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 1 found dead this morning"
+                }
+              },
+              {
+                "action": "mouse_weight",
+                "target": "2",
+                "fields": {
+                  "grams": 21.3,
+                  "date": "2026-10-14"
+                },
+                "evidence": {
+                  "quote": "weighed mouse 2 at 21.3 g"
+                }
+              },
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 2
+                },
+                "fields": {
+                  "mice": [
+                    "3"
+                  ]
+                },
+                "evidence": {
+                  "quote": "moved mouse 3 to 361"
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 12,
+        "output": 1424,
+        "cache_read": 91969,
+        "cache_write": 7904,
+        "cost_usd": 0.1102
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "correction",
+      "says": "The litter in cage 370 was born on October 9, not October 12. Can you fix it?",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "litters",
+            "filters": {
+              "cage": "370"
+            }
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 370"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/370"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "cage_change",
+              "litter_born"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Correct the birth date of the litter in cage 370: born 2026-10-09, not 2026-10-12",
+            "changes": [
+              {
+                "action": "litter_born",
+                "target": {
+                  "kind": "cage",
+                  "id": 1
+                },
+                "fields": {
+                  "date": "2026-10-09",
+                  "another": false,
+                  "litter": "2026-10-12"
+                },
+                "evidence": {
+                  "quote": "The litter in cage 370 was born on October 9, not October 12."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 10,
+        "output": 891,
+        "cache_read": 73912,
+        "cache_write": 6646,
+        "cost_usd": 0.0858
+      },
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "reagent",
+      "says": "Used 40 mg of tamoxifen for the injections.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "tamoxifen"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "inventories/reagents/items/1"
+          },
+          "error": null
+        },
+        {
+          "tool": "list_actions",
+          "input": {
+            "names": [
+              "inventory_quantity_used"
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Used 40 mg of tamoxifen for the injections",
+            "changes": [
+              {
+                "action": "inventory_quantity_used",
+                "target": {
+                  "kind": "inventory_item",
+                  "id": 1
+                },
+                "fields": {
+                  "amount": 40,
+                  "unit": "mg"
+                },
+                "evidence": {
+                  "quote": "Used 40 mg of tamoxifen for the injections."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 537,
+        "cache_read": 56582,
+        "cache_write": 5553,
+        "cost_usd": 0.0665
+      },
+      "outcome": "correct",
+      "why": []
+    }
+  ]
+}

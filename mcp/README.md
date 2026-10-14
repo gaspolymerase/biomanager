@@ -117,7 +117,7 @@ someone leaving the lab*.
 | `resolve` | The records a phrase means, each with the reference to use in a proposal |
 | `get`, `list` | Read a record or a list from the API |
 | `whats_due` | What is due, as Home lists it, with the change that records each done |
-| `list_actions` | Everything a proposal may contain, with its fields |
+| `list_actions` | Everything a proposal may contain, briefly; with `names` (or an `area`), those actions in full, with each field's details |
 | `propose_changes` | Send one proposal, each change with its evidence; returns each change's summary, warnings and errors, and the review link |
 | `proposal_status`, `discard_proposal` | Follow a proposal up (sent back: the person's reason), or withdraw it |
 | `list_captures`, `get_capture` | What the person wrote down or photographed at the bench, waiting to become records; a photo comes back as an image |

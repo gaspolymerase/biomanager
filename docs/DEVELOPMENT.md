@@ -2399,7 +2399,16 @@ BioManager"), `resolve`, `get`/`list` limited to the API's read paths
 (`READABLE`; `get` sends a query in its path, `plasmids/14?sequence=1`, as
 query parameters, which every `Api` passes on), `whats_due`, `list_actions`, `propose_changes` → `POST /proposals`,
 `proposal_status`, `discard_proposal`. `propose_changes`' description is
-built from the lab's own `/actions` (`description(api, name)`).
+built from the lab's own `/actions` (`description(api, name)`), and names
+the actions only, by area: assistant apps show only so much of a tool
+(Claude Code cuts a description at about 4,000 characters and saves a long
+reply to a file), and the whole catalogue with its help is some 86,000
+characters. So `list_actions` comes in two steps (`actions_tool`): with
+nothing given, every action briefly (area, title, target, fields with
+`*` for required); with `names` or an `area`, those in full. An action
+that doesn't exist is answered with the nearest
+(`actions.nearest_actions`). `tests/test_mcp.py` keeps both within what
+an app shows.
 `call_tool()` turns an `ApiError` or bad arguments into `{"error": …}` for
 the assistant to read.
 

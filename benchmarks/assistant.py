@@ -735,7 +735,7 @@ def tokens(results: list[dict]) -> dict:
     for r in results:
         for k, v in (r.get("usage") or {}).items():
             total[k] = total.get(k, 0) + v
-    return total
+    return {k: round(v, 4) if isinstance(v, float) else v for k, v in total.items()}
 
 
 def version() -> str:

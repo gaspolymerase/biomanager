@@ -165,3 +165,10 @@ is the same with the higher limit: right by hand again). An assistant app
 that shows the whole catalogue wouldn't meet this; one that keeps tool
 descriptions and replies short, as Claude Code does, sees only the mouse
 actions.
+
+Since `propose_changes` names every action and `list_actions` comes in
+two steps (a short list, then the actions it will use in full), all
+fifteen on 2.0.1 (`-action-list-fix`): 12 **correct** and 3 **asked**,
+none **missing** or **wrong**, with the skill and without it. For the
+reagent the assistant read `inventory_quantity_used` with `list_actions`
+and proposed it at once.
