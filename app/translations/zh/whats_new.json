@@ -151,5 +151,8 @@
   "A measure's **•••** changes its **Kind** too; its readings are worked out again.": "指标的 **•••** 也可以改 **类型**，它的读数会重新计算。",
   "**Verify sequencing** shows the trace around each difference, and says when a read looks like a mix of two clones.": "**验证测序** 会显示每个差异附近的峰图，读段看起来像两个克隆的混合时也会说明。",
   "An AI assistant's breeding plan counts every litter a mating has time for, the pairs already mating, and up to five genes.": "AI 助手的繁殖计划会算上每对在期限前能生的每一窝、已经在配的对，最多五个基因。",
-  "The animal-use report counts your own organisms, and pups under their parents' protocol.": "动物使用报告会统计你们自己的物种，仔鼠算在父母的方案下。"
+  "The animal-use report counts your own organisms, and pups under their parents' protocol.": "动物使用报告会统计你们自己的物种，仔鼠算在父母的方案下。",
+  "Sheets open much faster: the page you see is drawn first, the rest as you turn to it.": "表格打开快多了：先画你看到的这一页，其余的翻到时再画。",
+  "The fish sheet loads its **Tank** list when you open the menu, not on every row.": "鱼表在你打开菜单时才载入 **鱼缸** 列表，不再每一行都带一份。",
+  "Searching a long sheet keeps up with your typing, and the calendar fills faster.": "在长表格里搜索能跟上你打字的速度，日历也填得更快。"
 }

@@ -761,7 +761,9 @@ database has a name of its own (one another database has is refused), so
       or order, which need a name or a tank first, opens its form). Years of history stay quick:
       mice that died, cages emptied, tubes used up and vials discarded
       more than 90 days ago wait behind <b>Show them</b> at the top of
-      the sheet, and are still found by search and in every export.
+      the sheet, and are still found by search and in every export. A
+      sheet of a thousand rows opens in two or three seconds: the browser
+      draws the page you see first, and the rest as you turn to it.
     </td>
   </tr>
   <tr>

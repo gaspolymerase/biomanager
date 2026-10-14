@@ -30,6 +30,13 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.0": {
+        "changed": [
+            "Sheets open much faster: the page you see is drawn first, the rest as you turn to it.",
+            "The fish sheet loads its **Tank** list when you open the menu, not on every row.",
+            "Searching a long sheet keeps up with your typing, and the calendar fills faster.",
+        ],
+    },
     "1.16.0": {
         "new": [
             "**Verify sequencing** shows the trace around each difference, and says when a read looks like a mix of two clones.",
