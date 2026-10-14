@@ -148,7 +148,7 @@
   "Active": "在用",
   "Mine": "我的",
   "Purpose": "用途",
-  "Every %(purpose)s cage": "所有用途为「%(purpose)s」的笼",
+  "%(purpose)s cages with living mice": "用途为「%(purpose)s」、有活鼠的笼",
   "Printable cards for the cages in this scope": "当前范围内各笼的可打印笼卡",
   "Cage cards": "笼卡",
   "New cage": "新建笼",

@@ -152,7 +152,7 @@
       this.sortDir = 1;
       this.page = 0;
       this.query = '';
-      this.quick = null;   // {attr, value} from a .dt-chip
+      this.quick = null;   // [{attr, value}, …] from a .dt-chip
       this._indexColumns();
       this.hidden = this._loadHiddenCols();
       this.order = this._loadOrder();
@@ -543,7 +543,7 @@
       const q = this.query;
       const quick = this.quick;
       this.filtered = this.original.filter((tr) => {
-        if (quick && (tr.dataset[quick.attr] || '') !== quick.value) return false;
+        if (quick && quick.some((c) => (tr.dataset[c.attr] || '') !== c.value)) return false;
         return !q || this._rowText(tr).includes(q);
       });
       if (this.sortKey) this._applySort();
@@ -552,15 +552,21 @@
     }
 
     /* Quick filter chips: <button class="dt-chip" data-dt-filter="active:true">.
-       An empty data-dt-filter means "everything". The choice is remembered. */
+       An empty data-dt-filter means "everything". The choice is remembered.
+       data-dt-also="active:true" adds a condition the row must meet as
+       well (the cage sheet's purpose chips show only cages with living mice). */
     _wireChips() {
       const chips = Array.from(this.card.querySelectorAll('.dt-chip[data-dt-filter]'));
       if (!chips.length) return;
       const apply = (chip, save) => {
         chips.forEach((c) => c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'));
         const spec = chip.dataset.dtFilter || '';
-        const at = spec.indexOf(':');
-        this.quick = at > 0 ? { attr: spec.slice(0, at), value: spec.slice(at + 1) } : null;
+        const parse = (s) => {
+          const at = (s || '').indexOf(':');
+          return at > 0 ? { attr: s.slice(0, at), value: s.slice(at + 1) } : null;
+        };
+        const conditions = [parse(spec), parse(chip.dataset.dtAlso)].filter(Boolean);
+        this.quick = conditions.length ? conditions : null;
         if (save) {
           try { localStorage.setItem(`dt:${this.id}:filter`, spec); } catch (_) {}
           // And in the address, so a bookmark or a link keeps it (?chip=…).

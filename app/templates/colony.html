@@ -485,7 +485,8 @@
                        autocomplete="off" aria-label="{{ _('Search cage cards') }}" data-cage-card-search>
               </div>
               {# All · Active (living mice) · one chip per purpose in the lab's
-                 purpose choices (Configure). CLAUDE.md: "The mouse colony's words". #}
+                 purpose choices (Configure), each showing only its cages with
+                 living mice; past cages stay under All. CLAUDE.md: "The mouse colony's words". #}
               <div class="dt-chips" role="group" aria-label="{{ _('Show') }}">
                 <button type="button" class="dt-chip" data-cage-card-filter="" aria-pressed="false">
                   {{ _('All') }} <span class="dt-chip-count">{{ cage_rows|length }}</span>
@@ -495,7 +496,7 @@
                 </button>
                 {% for key, label, n in cs.purposes %}
                   <button type="button" class="dt-chip" data-cage-card-filter="purpose:{{ key }}" aria-pressed="false"
-                          title="{{ _('Every %(purpose)s cage', purpose=label|tr('cage purpose')|lower) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
+                          title="{{ _('%(purpose)s cages with living mice', purpose=label|tr('cage purpose')) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
                 {% endfor %}
               </div>
               <div class="dt-toolbar-spacer"></div>
@@ -537,8 +538,8 @@
                   {{ _('Active') }} <span class="dt-chip-count">{{ cs.active_count }}</span>
                 </button>
                 {% for key, label, n in cs.purposes %}
-                  <button type="button" class="dt-chip" data-dt-filter="purpose:{{ key }}" aria-pressed="false"
-                          title="{{ _('Every %(purpose)s cage', purpose=label|tr('cage purpose')|lower) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
+                  <button type="button" class="dt-chip" data-dt-filter="purpose:{{ key }}" data-dt-also="active:true" aria-pressed="false"
+                          title="{{ _('%(purpose)s cages with living mice', purpose=label|tr('cage purpose')) }}">{{ label|tr('cage purpose') }} <span class="dt-chip-count">{{ n }}</span></button>
                 {% endfor %}
               </div>
               <div class="dt-toolbar-spacer"></div>
@@ -2416,8 +2417,10 @@ function weanDue(born) {
     const q = (cardsPanel.querySelector('[data-cage-card-search]').value || '').trim().toLowerCase();
     let shown = 0;
     grid.querySelectorAll('[data-cage-card]').forEach((card) => {
+      // A purpose shows only its cages with living mice; All shows past ones too.
       const byPurpose = cardFilter.startsWith('purpose:') ? cardFilter.slice(8) : null;
-      const ok = (!cardFilter || (byPurpose !== null ? (card.dataset.purpose || '') === byPurpose
+      const ok = (!cardFilter || (byPurpose !== null
+        ? (card.dataset.purpose || '') === byPurpose && card.dataset.active === 'true'
         : card.dataset[cardFilter] === 'true'))
         && (!q || card.dataset.search.includes(q));
       card.hidden = !ok;

@@ -825,6 +825,21 @@ class CagePurposeTests(Case):
             self.assertNotIn(f'data-dt-filter="{gone}"', html)
             self.assertNotIn(f'data-dt-filter="purpose:{gone}"', html)
 
+    def test_a_purpose_shows_only_its_cages_with_living_mice(self):
+        """Picking Breeder, Breeding or Experiment leaves past (empty) cages
+        out, so the list is the cages in use; All still has them."""
+        def breeder_chip():
+            html = self.cages_page()
+            chip = re.search(r'data-dt-filter="purpose:breeder"[^>]*>.*?dt-chip-count">(\d+)<', html, re.S)
+            return chip.group(0), int(chip.group(1))
+        chip, before = breeder_chip()
+        self.assertIn('data-dt-also="active:true"', chip)
+        self.make_cage(self.m, purpose="Breeder")                          # empty: a past cage
+        code = uniq("C")
+        self.make_cage(self.m, code, purpose="Breeder")
+        self.make_mouse(self.m, self.member, cage=code)                     # holds a living mouse
+        self.assertEqual(breeder_chip()[1], before + 1)
+
     def test_a_purpose_added_in_configure_gets_its_button_and_removing_it_takes_it_away(self):
         r = self.a.post("/colony/options/create", data={"field_name": "purpose", "option_value": "Holding",
                                                         "back": "configure"})

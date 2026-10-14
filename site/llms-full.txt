@@ -432,7 +432,7 @@ A colony runs on dates that are easy to get wrong and tedious to keep: when a li
 
 What you stop doing: keeping the wean dates in your head or a wall calendar, retyping a litter into a sheet, rewriting cage cards by hand after a wean, and asking whose mouse a cage holds — every record carries its owner, and [who may change it](https://biomanager.org/guide/who-can-do-what).
 
-Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. Above the cages, **All**, **Active** (cages with living mice) and a button for each purpose show only those cages.
+Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experiments**, **Strains** and **Dropdowns**. The **My colony / My groups / Shared / Everyone** switch changes what you *see*, never what you may edit: *My colony* is yours plus the shared cages you work in, *My groups* your [project groups'](https://biomanager.org/guide/project-groups), *Shared* just the shared cages, *Everyone* every cage. Above the cages, **All**, **Active** (cages with living mice) and a button for each purpose show only those cages. A purpose's button shows its cages that still hold living mice, so past cages stay out of the way; **All** still lists them.
 
 *The mouse sheet*
 

@@ -1568,9 +1568,12 @@ def cage_sheet_values(cage) -> dict:
 def cage_purpose_chips(cage_rows, purposes: list[str]) -> list[tuple[str, str, int]]:
     """(key, label, how many) for each of the lab's cage purposes, in the
     order its dropdown choices list them; the key is the purpose in lower
-    case, as rows carry it."""
+    case, as rows carry it. Only active cages count: a purpose's chip shows
+    its cages with living mice, and past cages stay under All."""
     counts: dict[str, int] = {}
     for r in cage_rows:
+        if not r.get("active"):
+            continue
         key = (r.get("purpose") or "").strip().lower()
         counts[key] = counts.get(key, 0) + 1
     return [(label.lower(), label, counts.get(label.lower(), 0)) for label in purposes]
@@ -1858,7 +1861,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             # The lab's purposes, then any other word a cage still carries.
             "purpose_choices": _merged_choices(cage_purposes(dropdowns), (r["purpose"] for r in cage_rows)),
             "active_count": sum(1 for r in cage_rows if r["active"]),
-            # All · Active · a chip for each of the lab's purposes.
+            # All · Active · a chip for each of the lab's purposes (its active cages).
             "purposes": cage_purpose_chips(cage_rows, cage_purposes(dropdowns)),
             "location_notes_used": any(r["cage_location"] for r in cage_rows),
         },

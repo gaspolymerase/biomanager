@@ -111,7 +111,8 @@ never what you may edit.
   keeps part of it) or **Experiment**, and an admin can add the lab's own
   under **Configure → Cage purposes**. Above the cages, **All**,
   **Active** (cages with living mice) and a button per purpose show just
-  those cages.
+  those cages; a purpose's button lists only its cages with living mice,
+  and **All** still shows the past ones.
   Each cage shows its mice beneath it, to edit right there and wean
   (**Close all** folds them to one row each), or switch to **Cards**: a
   card per cage with its mice and its actions, as on a rack.
