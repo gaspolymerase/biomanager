@@ -158,5 +158,9 @@
   "The inventory sheets open about twice as fast: each menu's list comes when you open it.": "库存表打开快了约一倍：每个菜单的列表在你打开时才载入。",
   "The **Breeders** tab opens in seconds: Breeder cages empty for over 90 days, and mice that ended that long ago, wait behind **Show them**.": "**种鼠** 标签页几秒内就能打开：空置超过 90 天的种鼠笼和 90 天前就已结束的小鼠放在 **显示它们** 后面。",
   "A long inventory opens with its first page, and each other page comes as you turn to it; search, sorting and the chips still cover every entry.": "很长的库存表打开时只有第一页，翻到其他页时再载入；搜索、排序和筛选按钮仍覆盖全部记录。",
-  "Turning the pages of a long sheet stays quick: the pages you've left no longer slow down the next search or sort.": "长表格翻页依然很快：翻过的页不再拖慢之后的搜索或排序。"
+  "Turning the pages of a long sheet stays quick: the pages you've left no longer slow down the next search or sort.": "长表格翻页依然很快：翻过的页不再拖慢之后的搜索或排序。",
+  "**Renumber** in an inventory's **•••** gives each record the number in its name (B12 becomes #12), or numbers them in a column's order.": "库存 **•••** 里的 **重新编号** 会让每条记录的 # 等于名称中的数字（B12 成为 #12），或按某一列的顺序编号。",
+  "An AI assistant fixes a notebook page in place: its title, kind, tags or text, shown before and after, the old text kept in the page's **History**.": "AI 助手会直接修正实验记录本的页面：标题、类型、标签或正文，每处更改都显示前后对比，原来的正文保存在页面的 **历史** 里。",
+  "An AI assistant can make a folder in **Protocols**, file protocols in it, and renumber an inventory.": "AI 助手可以在 **实验流程** 里建文件夹、把流程放进去，也可以给库存重新编号。",
+  "An AI assistant sees every change it can propose, so it no longer guesses at one it can't find.": "AI 助手能看到它可以提议的每一种更改，不再因为找不到而乱猜。"
 }

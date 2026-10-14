@@ -30,6 +30,16 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.1.0": {
+        "new": [
+            "**Renumber** in an inventory's **•••** gives each record the number in its name (B12 becomes #12), or numbers them in a column's order.",
+            "An AI assistant fixes a notebook page in place: its title, kind, tags or text, shown before and after, the old text kept in the page's **History**.",
+            "An AI assistant can make a folder in **Protocols**, file protocols in it, and renumber an inventory.",
+        ],
+        "changed": [
+            "An AI assistant sees every change it can propose, so it no longer guesses at one it can't find.",
+        ],
+    },
     "2.0.2": {
         "changed": [
             "A long inventory opens with its first page, and each other page comes as you turn to it; search, sorting and the chips still cover every entry.",
