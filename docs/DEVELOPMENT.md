@@ -1564,6 +1564,22 @@ writes (403), the same check the server makes. `/logout` becomes
 device and forgets the lab. `tests/test_relay.py` runs it against a real
 server thread.
 
+The relay keeps its connections to the server open and uses them again
+(`Relay._take` / `_keep`, at most `KEEP_AT_MOST`), with one TLS context
+for all of them: a new connection for every request cost a TLS handshake,
+two or three round trips to the server and some 20 ms of reading the
+trusted certificates, for every page, script and autosave (20 requests to
+an HTTPS server on the same computer: 960 ms before, 11 ms now). A kept
+connection is used again only while it is open (`_closed`: an idle one has
+nothing to read, so one that can be read from has ended) and for
+`IDLE_REUSE` (30 s); an answer that closes its connection, or one not read
+to its end, is not kept. A request that fails on a kept connection goes
+again, once, on a new one: a server closes an idle connection only between
+requests, so the first never reached it. A body up to `REPLAY_MAX` (2 MB)
+is held for that; a larger one (an upload) always gets a new connection.
+`KeptConnections` in `tests/test_relay.py` counts the connections a test
+server is opened with.
+
 ## Working offline
 
 The offline design: devices record what is done with no signal as a queue

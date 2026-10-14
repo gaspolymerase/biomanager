@@ -14,6 +14,16 @@ come from its own pages (the browser's Sec-Fetch-Site, else Origin or
 Referer), the same check the server makes, since the relay adds the token
 to whatever reaches it.
 
+It keeps its connections to the server open and uses them again (_take,
+_keep): each new one cost a TLS handshake, two or three round trips to the
+server and the setting up of its certificates, for every page, script and
+autosave. A kept one is checked before use (_closed: one the server has
+closed reads as finished) and dropped after IDLE_REUSE seconds; a request
+that fails on one goes again, once, on a new connection (a server closes
+an idle connection only between requests, so the first never reached it).
+A body over REPLAY_MAX (an upload) is not held to send twice: it always
+gets a new connection.
+
 When the server can't be reached, the window gets the offline screens
 (app/static/offline/, at /_offline/) working on this computer's copy of the
 facility and queueing what is done (app/offline_store.py); before there is a
@@ -26,9 +36,11 @@ from __future__ import annotations
 import http.client
 import json
 import mimetypes
+import select
 import socket
 import ssl
 import threading
+import time
 import urllib.request
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -42,6 +54,9 @@ HOP = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", 
 DROPPED_UP = HOP | {"host", "cookie", "authorization", "content-length"}
 DROPPED_DOWN = HOP | {"set-cookie", "strict-transport-security", "content-length"}
 CHUNK = 64 * 1024
+IDLE_REUSE = 30.0             # seconds a kept connection may wait to be used again
+KEEP_AT_MOST = 6              # kept connections, at most (the window asks for a few things at once)
+REPLAY_MAX = 2 * 1024 * 1024  # a request body up to this is held, so it can go again
 LOCAL = "/_relay/"
 OFFLINE = "/_offline/"
 BUNDLE = Path(__file__).resolve().parent / "static" / "offline"
@@ -70,6 +85,42 @@ class Relay:
         self.store = store                  # this computer's copy of the facility (app/offline_store.py)
         self.jar = CookieJar()
         self.base = ""                      # http://127.0.0.1:<port>, once serving
+        # One TLS context for every connection: making one reads the trusted
+        # certificates again, some 20 ms each time.
+        self._context = ssl.create_default_context() if self.https else None
+        self._idle: list[tuple[http.client.HTTPConnection, float]] = []   # (kept connection, since)
+        self._lock = threading.Lock()
+
+    # ------------------------------------------------------------ connections
+    def _connect(self, timeout: float = 120) -> http.client.HTTPConnection:
+        if self.https:
+            return http.client.HTTPSConnection(self.netloc, timeout=timeout, context=self._context)
+        return http.client.HTTPConnection(self.netloc, timeout=timeout)
+
+    def _take(self) -> http.client.HTTPConnection | None:
+        """A kept connection that is still open, or None."""
+        now = time.monotonic()
+        with self._lock:
+            while self._idle:
+                conn, since = self._idle.pop()
+                if now - since <= IDLE_REUSE and not _closed(conn):
+                    return conn
+                conn.close()
+        return None
+
+    def close(self) -> None:
+        """Closes its kept connections (the relay is stopping)."""
+        with self._lock:
+            kept, self._idle = self._idle, []
+        for conn, _ in kept:
+            conn.close()
+
+    def _keep(self, conn: http.client.HTTPConnection) -> None:
+        with self._lock:
+            if len(self._idle) < KEEP_AT_MOST:
+                self._idle.append((conn, time.monotonic()))
+                return
+        conn.close()
 
     # ------------------------------------------------------------ checks
     def _own_host(self, req: Request) -> bool:
@@ -132,16 +183,27 @@ class Relay:
         if cookie_req.has_header("Cookie"):
             headers["Cookie"] = cookie_req.get_header("Cookie")
         body = None
+        replayable = True
         length = req.content_length
         if length:
             headers["Content-Length"] = str(length)
-            body = req.stream
-        if self.https:
-            conn = http.client.HTTPSConnection(self.netloc, timeout=120, context=ssl.create_default_context())
-        else:
-            conn = http.client.HTTPConnection(self.netloc, timeout=120)
-        conn.request(req.method, path, body=body, headers=headers)
-        resp = conn.getresponse()
+            replayable = length <= REPLAY_MAX
+            body = req.get_data() if replayable else req.stream
+        conn = self._take() if replayable else None
+        reused = conn is not None
+        if conn is None:
+            conn = self._connect()
+        try:
+            conn.request(req.method, path, body=body, headers=headers)
+            resp = conn.getresponse()
+        except (OSError, http.client.HTTPException):
+            conn.close()
+            if not reused:
+                raise
+            # The server had closed it between requests: this one never reached it.
+            conn = self._connect()
+            conn.request(req.method, path, body=body, headers=headers)
+            resp = conn.getresponse()
         self.jar.extract_cookies(_Headers(resp.msg), cookie_req)
         out = Response(status=resp.status)
         # Werkzeug starts every Response as text/plain; added beside the
@@ -156,14 +218,20 @@ class Relay:
             out.headers.add(key, value)
 
         def stream():
+            done = False
             try:
                 while True:
                     chunk = resp.read(CHUNK)
                     if not chunk:
+                        done = True
                         break
                     yield chunk
             finally:
-                conn.close()
+                # Read to its end and not closing: ready for the next request.
+                if done and not resp.will_close:
+                    self._keep(conn)
+                else:
+                    conn.close()
         out.response = stream()
         out.direct_passthrough = True
         return out
@@ -222,10 +290,7 @@ class Relay:
         return out
 
     def _call(self, method: str, path: str) -> tuple[int, bytes]:
-        if self.https:
-            conn = http.client.HTTPSConnection(self.netloc, timeout=15, context=ssl.create_default_context())
-        else:
-            conn = http.client.HTTPConnection(self.netloc, timeout=15)
+        conn = self._connect(timeout=15)
         try:
             conn.request(method, path, headers={"Authorization": f"Bearer {self.token()}", "Host": self.netloc,
                                                 "Content-Length": "0", "X-BioManager-Version": self.version})
@@ -233,6 +298,19 @@ class Relay:
             return resp.status, resp.read()
         finally:
             conn.close()
+
+
+def _closed(conn: http.client.HTTPConnection) -> bool:
+    """Whether a kept connection has been closed by the server: an idle one
+    has nothing to read, so one that can be read from has ended."""
+    sock = conn.sock
+    if sock is None:
+        return True
+    try:
+        readable, _, _ = select.select([sock], [], [], 0)
+    except (OSError, ValueError):
+        return True
+    return bool(readable)
 
 
 # ---------------------------------------------------------------- pages of its own
@@ -328,9 +406,12 @@ def start(relay: Relay, preferred_port: int = 0) -> str:
 
 def stop() -> None:
     server = _running.pop("server", None)
+    relay = _running.pop("relay", None)
     _running.clear()
     if server is not None:
         server.shutdown()
+    if relay is not None:
+        relay.close()
 
 
 def address() -> str:

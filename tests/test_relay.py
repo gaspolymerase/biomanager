@@ -5,6 +5,7 @@ from __future__ import annotations
 import http.client
 import logging
 import threading
+import time
 from unittest import mock
 
 from werkzeug.security import generate_password_hash
@@ -230,3 +231,113 @@ class Offline(AppTestCase):
         self.assertEqual(store.snapshot()["cages"][0]["cage_id"], "secret-cage")
         store.forget()
         self.assertIsNone(store.snapshot())
+
+
+class CountingServer:
+    """A server that counts the connections it is opened with and answers
+    each request with what it was asked ("GET /a" and the body). With
+    close_after=True it closes a connection after each answer, as a server
+    closes an idle one."""
+
+    def __init__(self, close_after: bool = False, header_close: bool = False):
+        import socketserver
+        outer = self
+        self.connections = 0
+        self.seen: list[str] = []
+
+        class Handler(socketserver.StreamRequestHandler):
+            def handle(self):
+                outer.connections += 1
+                while True:
+                    line = self.rfile.readline()
+                    if not line:
+                        return
+                    method, path, _ = line.decode().split(" ", 2)
+                    length = 0
+                    while (header := self.rfile.readline()) not in (b"\r\n", b"\n", b""):
+                        name, _, value = header.decode().partition(":")
+                        if name.strip().lower() == "content-length":
+                            length = int(value)
+                    body = self.rfile.read(length).decode() if length else ""
+                    outer.seen.append(f"{method} {path} {body}".strip())
+                    answer = f"{method} {path} {body}".strip().encode()
+                    self.wfile.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+                                     + (b"Connection: close\r\n" if header_close else b"")
+                                     + f"Content-Length: {len(answer)}\r\n\r\n".encode() + answer)
+                    self.wfile.flush()
+                    if close_after or header_close:
+                        return
+
+        self.server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Handler)
+        self.server.daemon_threads = True
+        self.url = f"http://127.0.0.1:{self.server.server_address[1]}"
+
+    def __enter__(self):
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        return self
+
+    def __exit__(self, *exc):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+class KeptConnections(AppTestCase):
+    """The relay keeps its connections to the server open and uses them
+    again, rather than a new one (a TLS handshake) for every request."""
+
+    def through(self, server):
+        from werkzeug.test import Client
+        from app.relay import Relay
+        relay = Relay(server.url, lambda: "token")
+        relay.base = "http://127.0.0.1:5999"
+        self.addCleanup(relay.close)
+        client = Client(relay)
+        get = lambda path: client.get(path, base_url=relay.base).get_data(as_text=True)
+        post = lambda path, body: client.post(path, base_url=relay.base, data=body,
+                                              content_type="text/plain").get_data(as_text=True)
+        return relay, get, post
+
+    def test_one_connection_carries_request_after_request(self):
+        with CountingServer() as server:
+            _, get, post = self.through(server)
+            self.assertEqual(get("/a"), "GET /a")
+            self.assertEqual(post("/b", "x=1"), "POST /b x=1")
+            self.assertEqual(get("/c"), "GET /c")
+            self.assertEqual(server.connections, 1)
+
+    def test_a_connection_the_server_closed_is_not_used_again(self):
+        with CountingServer(close_after=True) as server:
+            _, get, post = self.through(server)
+            self.assertEqual(get("/a"), "GET /a")
+            time.sleep(0.05)                       # the server's close reaches this side
+            self.assertEqual(post("/b", "x=1"), "POST /b x=1")
+            self.assertEqual(server.seen, ["GET /a", "POST /b x=1"])
+            self.assertEqual(server.connections, 2)
+
+    def test_a_request_that_finds_its_connection_gone_goes_again_once(self):
+        # As if the server closed it the moment it was taken: it looked open.
+        with CountingServer(close_after=True) as server, mock.patch("app.relay._closed", return_value=False):
+            _, get, post = self.through(server)
+            self.assertEqual(get("/a"), "GET /a")
+            time.sleep(0.05)
+            self.assertEqual(get("/b"), "GET /b")
+            time.sleep(0.05)
+            self.assertEqual(post("/c", "x=1"), "POST /c x=1")
+            self.assertEqual(server.seen, ["GET /a", "GET /b", "POST /c x=1"])   # each once
+
+    def test_an_answer_that_closes_its_connection_is_not_kept(self):
+        with CountingServer(header_close=True) as server:
+            relay, get, _ = self.through(server)
+            self.assertEqual(get("/a"), "GET /a")
+            self.assertEqual(relay._idle, [])
+            self.assertEqual(get("/b"), "GET /b")
+            self.assertEqual(server.connections, 2)
+
+    def test_a_connection_idle_too_long_is_not_used_again(self):
+        from app import relay as relay_module
+        with CountingServer() as server:
+            relay, get, _ = self.through(server)
+            get("/a")
+            with mock.patch.object(relay_module.time, "monotonic", return_value=time.monotonic() + relay_module.IDLE_REUSE + 1):
+                get("/b")
+            self.assertEqual(server.connections, 2)
