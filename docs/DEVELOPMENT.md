@@ -3031,15 +3031,18 @@ At 100k mice on SQLite (2.0.0), the server makes the mouse, cage and
 litter sheets in 3–6 s, 20–25 MB each, and an inventory in 7 s, 60 MB.
 In Chromium the mouse sheet then opens in 7.5 s (77 s before 2.0.0), the
 tanks in 11 s (127 s), the fly vials in 6.6 s (97 s), the cages and
-litters in about 10 s. Still slow at that size: an inventory (23–27 s:
-its rows carry the most fields, 13 KB of markup a row) and the
-**Breeders** tab (40 s: a card for every breeder cage, a million
-elements, not a sheet). The next step for those, if a lab needs it, is
-paging on the server instead of the sheet's client-side pages.
+litters in about 10 s. After 2.0.0 the **Breeders** tab went from 40 s
+to 2 s (16 MB to 5 MB), and an inventory of about 5,000 listed items
+from 23–27 s to 11–12 s (6 KB of markup a row, from 13 KB). What is
+left there is the size itself: the server takes 3–4 s to write 33 MB of
+rows and the browser 3 s to read them, then 2.5 s in the page's scripts.
+The next step, if a lab needs it, is paging on the server instead of the
+sheet's client-side pages.
 
-In a lab of 4,000 mice, in Chromium (before 2.0.0 → 2.0.0): mice
-6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish 31.5 → 3.2 s,
-reagents 5.2 → 2.6 s, samples 6.0 → 2.8 s.
+In a lab of 4,000 mice, in Chromium (before 2.0.0 → 2.0.0 → after):
+mice 6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish
+31.5 → 3.2 s, reagents 5.2 → 2.6 → 1.8 s, samples 6.0 → 2.8 → 1.8 s,
+Breeders 0.5 s.
 
 ## Languages
 
