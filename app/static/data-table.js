@@ -74,10 +74,36 @@
     if (openMenu && !openMenu.contains(event.target)) closeMenus();
   }, true);
 
+  // A sheet longer than this keeps the rows not yet shown off the page (_parkLater).
+  const PARK_OVER = 1000;
+  const sheets = [];
+
+  /* A sheet's rows, on the page or waiting off it (_parkLater): use these
+     rather than document.querySelector for a row that may not have been
+     shown (a board drag, a grid click, ?open=…).
+       BioSheets.row(id[, el])   the row with that data-id (in el's sheet), or null
+       BioSheets.rows([el])      every row (of el's sheet)
+       BioSheets.show(tr)        turn its sheet to the row, which puts it on the page */
+  window.BioSheets = {
+    rows(el) {
+      const card = el && el.closest ? el.closest('.data-table-card') : null;
+      return sheets.filter((c) => !card || c.card === card).flatMap((c) => c.rows);
+    },
+    row(id, el) {
+      const want = String(id);
+      return this.rows(el).find((tr) => tr.dataset.id === want) || null;
+    },
+    show(tr) {
+      const sheet = sheets.find((c) => c.rows.includes(tr));
+      return Boolean(sheet && sheet.reveal(tr));
+    },
+  };
+
   // Per-table state keyed by table id.
   class DataTableController {
     constructor(card) {
       this.card = card;
+      sheets.push(this);
       this.id = card.dataset.tableId || 'data-table';
       this.table = card.querySelector('table.dt');
       this.tbody = this.table && this.table.tBodies[0];
@@ -85,6 +111,9 @@
       this.original = this.rows.slice();
       this.filtered = this.rows.slice();
       this._laidOut = this.rows.slice();   // the order the rows are in on the page
+      // A row's detail row (<tr data-detail-for="<its data-id>">), wherever it is.
+      this.details = new Map();
+      if (this.tbody) this.tbody.querySelectorAll(':scope > tr[data-detail-for]').forEach((d) => this.details.set(d.dataset.detailFor, d));
       this.sortKey = null;
       this.sortDir = 1;
       this.page = 0;
@@ -128,6 +157,29 @@
       this._wireStickyParts();
       if (!this._showFresh()) this._revealHashTarget();
       window.addEventListener('hashchange', () => this._revealHashTarget());
+      this._parkLater();
+    }
+
+    /* A long sheet's rows that have not been shown wait off the page until
+       they are (render puts them back, and they stay). On the page, every
+       field of every row, shown or not, was read by Chromium's autofill as
+       the page loaded (Chrome, Edge, the Windows app): over a minute for a
+       sheet of a few thousand rows. They leave once every script has seen
+       them as the page loaded (window's DOMContentLoaded comes after the
+       document's), and before Chromium looks. A sheet whose scripts need
+       every row on the page says so with data-dt-keep-rows. Code that
+       looks a row up later uses BioSheets.row(id). */
+    _parkLater() {
+      if (!this.tbody || this.rows.length <= PARK_OVER || this.card.hasAttribute('data-dt-keep-rows')
+          || document.readyState === 'complete') return;
+      window.addEventListener('DOMContentLoaded', () => {
+        this.rows.forEach((tr) => {
+          if (tr.style.display !== 'none' || !tr.isConnected) return;
+          tr.remove();
+          const detail = this.details.get(tr.dataset.id);
+          if (detail) detail.remove();
+        });
+      }, { once: true });
     }
 
     // The toolbar's rarer actions (Print, Import from Excel: data-dt-more)
@@ -248,8 +300,11 @@
       // A sheet row's form sits outside the row, its cells joining it with
       // form="…" (a notification links to #mouse-update-39): find the row by
       // them, whether or not the form is on the page yet (row-forms.js).
-      const byForm = () => this.card.querySelector(`[form="${CSS.escape(id)}"]`)?.closest('tr');
-      const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm())) : byForm());
+      const byForm = () => this.rows.find((tr) => tr.querySelector(`[form="${CSS.escape(id)}"]`));
+      // A row not shown yet is off the page (_parkLater): look in the rows.
+      const inRows = () => this.rows.find((tr) => tr.id === id || tr.querySelector(`[id="${CSS.escape(id)}"]`));
+      const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm()))
+                                : (inRows() || byForm()));
       if (!row || !this.rows.includes(row) || !this.reveal(row)) return;
       requestAnimationFrame(() => row.scrollIntoView({ block: 'center' }));
       row.dispatchEvent(new CustomEvent('dt:revealed', { bubbles: true }));
@@ -1203,13 +1258,16 @@
       // A detail row (<tr data-detail-for="<row's data-id>">, e.g. a cage's
       // mice) follows its row through sorting and paging, and is shown
       // only while its row is; its own `hidden` still opens and closes it.
-      const details = new Map();
-      this.tbody.querySelectorAll(':scope > tr[data-detail-for]').forEach((d) => details.set(d.dataset.detailFor, d));
+      const details = this.details;
       // The rows are put in order only when it has changed (a sort, a
-      // search, a chip): moving every row on each page turn was most of it.
+      // search, a chip) or a row to show is off the page (_parkLater):
+      // moving every row on each page turn was most of it.
       const laidOut = this._laidOut;
-      if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])) {
+      const away = (tr) => !tr.isConnected;
+      if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])
+          || this.filtered.slice(start, end).some(away)) {
         this.filtered.forEach((tr) => {
+          if (away(tr) && !shown.has(tr)) return;
           this.tbody.appendChild(tr);
           const detail = details.get(tr.dataset.id);
           if (detail) this.tbody.appendChild(detail);

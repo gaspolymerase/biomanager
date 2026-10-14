@@ -411,6 +411,22 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   otherwise style and lay out every row first. `render()` then touches only
   the rows whose state changes, and moves rows into a new order only when
   the order has changed (a sort, a search, a chip).
+- A sheet of more than 1,000 rows (`PARK_OVER`) takes the rows it has not
+  shown off the page (`_parkLater`), and `render()` puts each back when it
+  is shown; it then stays. Chromium's autofill reads every field on a page
+  as it loads (Chrome, Edge, the Windows app; not Safari or the Mac app),
+  shown or not: on a sheet of a few thousand rows that took one to two
+  minutes. The rows leave in the window's `DOMContentLoaded`, after the
+  document's, so every script that wires rows as the page loads has seen
+  them, and before Chromium looks. Search, sort, export, print, the count
+  and the column choices work on all of them (`this.rows`). Code that
+  looks a row up later uses `BioSheets.row(id, el)` / `BioSheets.rows(el)`,
+  which find a row off the page too, and `BioSheets.show(tr)` to turn the
+  sheet to it first (a click on a row off the page reaches no listener on
+  the document). `#mouse-update-39` and `#cage-12` links find their row
+  either way. A sheet whose page scripts need every row on the page says
+  `data-dt-keep-rows` (the cage sheet: its cards, **Open all** and a
+  scanned cage look for its rows there).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

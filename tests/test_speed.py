@@ -131,6 +131,13 @@ class RowFormsTests(AppTestCase):
         animal = self.make_animal(self.a, org)
         self.assertFormsWait(f"/organisms/{org}", f"row-a-{animal}")
 
+    def test_the_cage_sheet_keeps_every_row_on_the_page(self):
+        # Its cards, Open all and a scanned cage look for its rows there,
+        # so a long one does not take unseen rows off it (data-table.js).
+        html = self.get_ok(self.a, "/colony?view=cages&scope=all")
+        self.assertRegex(html, r'data-table-id="cages-v3" data-dt-keep-rows')
+        self.assertNotIn("data-dt-keep-rows", self.get_ok(self.a, "/colony?view=mice&scope=all"))
+
     def test_the_script_that_brings_them_is_on_every_page(self):
         self.assertIn("/static/row-forms.js?v=", self.get_ok(self.a, "/home"))
 

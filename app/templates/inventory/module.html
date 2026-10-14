@@ -990,6 +990,13 @@
   (function () {
     const page = JSON.parse(document.getElementById('inv-page-data').textContent);
     const board = document.querySelector('[data-board]');
+    // A row may wait off the page until it is shown (data-table.js, BioSheets).
+    const rowOf = (id) => window.BioSheets.row(id, document.querySelector('.data-table-card'));
+    const cellsOf = (id, name) => {
+      const tr = rowOf(id);
+      return tr ? tr.querySelectorAll(`[form="inv-${id}"]${name ? `[name="${name}"]` : ''}`) : [];
+    };
+    const openOf = (id) => rowOf(id)?.querySelector('[data-open-item]') || null;
 
     function recount() {
       if (!board) return;
@@ -1000,7 +1007,7 @@
 
     /* The Open and per-status chips count rows as they are now. */
     function recountChips() {
-      const rows = Array.from(document.querySelectorAll('.data-table-card tbody tr[data-id]'));
+      const rows = window.BioSheets.rows(document.querySelector('.data-table-card'));
       const show = (chip, n) => { const count = chip.querySelector('.dt-chip-count'); if (count) count.textContent = n; };
       document.querySelectorAll('[data-count-status]').forEach((chip) => {
         show(chip, rows.filter((tr) => tr.dataset.status === chip.dataset.countStatus).length);
@@ -1010,8 +1017,7 @@
     }
 
     function payloadOf(id) {
-      const open = document.querySelector(`tr[data-id="${id}"] [data-open-item]`)
-        || document.querySelector(`.board-card[data-id="${id}"]`);
+      const open = openOf(id) || document.querySelector(`.board-card[data-id="${id}"]`);
       try { return JSON.parse((open && open.dataset.recordPayload) || '{}'); } catch (_) { return {}; }
     }
 
@@ -1034,13 +1040,12 @@
 
     function setPayload(id, payload) {
       const json = JSON.stringify(payload);
-      document.querySelectorAll(`tr[data-id="${id}"] [data-open-item], .board-card[data-id="${id}"]`)
-        .forEach((el) => { el.dataset.recordPayload = json; });
+      [openOf(id), ...document.querySelectorAll(`.board-card[data-id="${id}"]`)]
+        .forEach((el) => { if (el) el.dataset.recordPayload = json; });
     }
 
     function editPayload(id, change) {
-      const open = document.querySelector(`tr[data-id="${id}"] [data-open-item]`)
-        || document.querySelector(`.board-card[data-id="${id}"]`);
+      const open = openOf(id) || document.querySelector(`.board-card[data-id="${id}"]`);
       if (!open) return;
       let payload;
       try { payload = JSON.parse(open.dataset.recordPayload || '{}'); } catch (_) { return; }
@@ -1057,7 +1062,7 @@
           const was = form.querySelector(`[name="${name}_was"]`);
           if (was) was.value = v;
         }
-        document.querySelectorAll(`[form="inv-${id}"][name="${name}"]`).forEach((el) => {
+        cellsOf(id, name).forEach((el) => {
           if (el !== document.activeElement) el.value = v;
           el.dataset.previous = el.value;
           if (el.type === 'date') el.dataset.empty = el.value ? '0' : '1';
@@ -1065,7 +1070,7 @@
           if (el.classList.contains('scope-pill')) el.dataset.scope = el.value === '1' ? 'lab' : 'mine';
         });
       });
-      const tr = document.querySelector(`tr[data-id="${id}"]`);
+      const tr = rowOf(id);
       if (tr && 'active' in row && window.BioSheet) window.BioSheet.refreshDot(tr, row.active);
       if (tr && row.values) {
         const toStock = tr.querySelector('[data-to-stock]');
@@ -1085,7 +1090,7 @@
         setPayload(id, answer.payload);
         if (answer.payload._locked && tr) {
           tr.classList.add('is-locked');
-          document.querySelectorAll(`[form="inv-${id}"]`).forEach((el) => { el.disabled = true; });
+          cellsOf(id).forEach((el) => { el.disabled = true; });
         }
       }
       // A status changed in the sheet moves the card on the board too.
@@ -1300,7 +1305,10 @@
     if (reorder) reorder.click();
     else if (once.offer && /^\d+$/.test(once.offer)) window.InventoryPage.offerStock(once.offer);
     else if (once.open && /^\d+$/.test(once.open)) {
-      const open = document.querySelector(`tr[data-id="${once.open}"] [data-open-item]`);
+      // Its row is brought onto the page first: the dialog opens from a click there.
+      const row = window.BioSheets.row(once.open, document.querySelector('.data-table-card'));
+      if (row) window.BioSheets.show(row);
+      const open = row && row.querySelector('[data-open-item]');
       if (open) open.click();
     }
   });

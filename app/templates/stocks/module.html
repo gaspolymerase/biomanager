@@ -838,10 +838,8 @@
   /* Inline editing is static/sheet.js (data-autosave-sheet on the card).
      What is particular to vials: */
   (function () {
-    const rowOf = (form) => {
-      const cell = document.querySelector(`[form="${form.id}"]`);
-      return cell && cell.closest('tr');
-    };
+    // A row may wait off the page until it is shown (data-table.js, BioSheets).
+    const rowOf = (form) => window.BioSheets.rows().find((tr) => tr.querySelector(`[form="${form.id}"]`)) || null;
     // A new purpose shows or hides the cross parents and the egg button.
     document.addEventListener('sheet:change', (event) => {
       const { input } = event.detail;
@@ -867,7 +865,7 @@
       const { id, rackId, position } = event.detail || {};
       const form = BioRowForms.get(`unit-${id}`);
       if (!form) return;
-      const set = (name, v) => { const el = document.querySelector(`[form="unit-${id}"][name="${name}"]`); if (el) el.value = v || ''; };
+      const set = (name, v) => { const el = rowOf(form)?.querySelector(`[form="unit-${id}"][name="${name}"]`); if (el) el.value = v || ''; };
       set('rack_id', rackId);
       set('position', position);
       form.querySelector('[name="rack_id_was"]').value = rackId || '';

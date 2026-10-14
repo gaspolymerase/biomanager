@@ -507,8 +507,10 @@
           {{ sheet_ui.owners_list(usernames) }}
           {# The cage sheet: one row per cage, laid out like the mouse sheet.
              Cells save as you type (static/sheet.js); the chevron opens a
-             sub-row with the cage's mice and its breeding actions. #}
-          <section class="data-table-card sheet cage-sheet" data-table-id="cages-v3"
+             sub-row with the cage's mice and its breeding actions. Its rows
+             all stay on the page (data-dt-keep-rows): the cards view, Open
+             all and a scanned cage look for them there. #}
+          <section class="data-table-card sheet cage-sheet" data-table-id="cages-v3" data-dt-keep-rows
                    data-noun="cage" data-noun-plural="cages" data-export-name="cages"
                    data-autosave-sheet data-selection-scope="cages"
                    data-selection-noun="cage" data-selection-noun-plural="cages">
@@ -2130,7 +2132,8 @@ function setValue(el, value) {
 }
 
 function syncCage(state, sourceForm) {
-  document.querySelectorAll('.sheet-table tbody tr[data-id]').forEach((tr) => {
+  // Every row, including those waiting off the page (data-table.js, BioSheets).
+  window.BioSheets.rows().forEach((tr) => {
     const cageInput = tr.querySelector('input[name="cage_id"]');
     if (!cageInput || cageInput.value.trim() !== String(state.cage_id)) return;
     setValue(tr.querySelector('select[name="cage_rack"]'), state.rack_id);
