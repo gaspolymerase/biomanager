@@ -25,8 +25,9 @@ person would press Approve, and the records are compared with the truth:
 
 It runs on a throwaway database (tests/base.py), so no lab's data is opened,
 and it needs an Anthropic API key (ANTHROPIC_API_KEY, or a profile from
-`ant auth login`). Results go to benchmarks/results/assistant-<version>-<model>.md
-and .json. Model runs vary: use --repeat to see how much.
+`ant auth login`), or, with --via claude-code, a signed-in `claude` CLI. Results
+go to benchmarks/results/assistant-<version>-<model>-<context>.md and .json.
+Model runs vary: use --repeat to see how much.
 """
 from __future__ import annotations
 
@@ -34,11 +35,15 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Callable
 
@@ -312,6 +317,119 @@ def converse(client, model: str, effort: str, context: str, scenario: Scenario, 
     return {"calls": calls, "questions": questions, "last": last_text, "usage": usage}
 
 
+# ---------------------------------------------------------------- the conversation, through Claude Code
+
+class _McpTools(BaseHTTPRequestHandler):
+    """The same tools, served over MCP (streamable HTTP, JSON replies) for `claude -p`."""
+    api = None
+    calls: list = []
+    show = False
+
+    def log_message(self, *a):
+        pass
+
+    def _reply(self, code: int, obj=None):
+        body = b"" if obj is None else json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8")
+        self.send_response(code)
+        if obj is not None:
+            self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        self._reply(405)
+
+    def do_DELETE(self):
+        self._reply(200)
+
+    def do_POST(self):
+        msg = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+        out = [r for r in map(self._answer, msg if isinstance(msg, list) else [msg]) if r]
+        self._reply(200, out if isinstance(msg, list) else out[0]) if out else self._reply(202)
+
+    def _answer(self, m: dict) -> dict | None:
+        if "id" not in m:
+            return None  # a notification
+        method, params = m.get("method"), m.get("params") or {}
+        if method == "initialize":
+            result = {"protocolVersion": params.get("protocolVersion", "2025-06-18"),
+                      "capabilities": {"tools": {}}, "serverInfo": {"name": "biomanager", "version": "benchmark"}}
+        elif method == "tools/list":
+            result = {"tools": [{"name": t["name"], "description": t["description"], "inputSchema": t["input_schema"]}
+                                for t in tool_list(self.api)]}
+        elif method == "tools/call":
+            name, arguments = params.get("name"), params.get("arguments") or {}
+            out = tools.call_tool(self.api, name, dict(arguments))
+            self.calls.append({"tool": name, "input": arguments, "error": out.get("error")})
+            if self.show:
+                print(f"    → {name}({json.dumps(arguments, ensure_ascii=False)[:200]})", flush=True)
+            result = {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, default=str)}],
+                      "isError": "error" in out}
+        elif method == "ping":
+            result = {}
+        else:
+            return {"jsonrpc": "2.0", "id": m["id"], "error": {"code": -32601, "message": f"No method {method}."}}
+        return {"jsonrpc": "2.0", "id": m["id"], "result": result}
+
+
+def converse_claude_code(model: str, effort: str, context: str, scenario: Scenario, api, says: str,
+                         show: bool) -> dict:
+    """The same conversation through `claude -p` (a signed-in Claude Code, no API key): the same
+    system prompt and tools, with Claude Code's own tools, settings, plugins and other MCP servers
+    left out. Claude Code still frames the conversation a little, so compare runs made the same way."""
+    _McpTools.api, _McpTools.calls, _McpTools.show = api, [], show
+    httpd = HTTPServer(("127.0.0.1", 0), _McpTools)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    work = Path(tempfile.mkdtemp(prefix="biomanager-bench-"))   # no CLAUDE.md or project settings here
+    (work / "mcp.json").write_text(json.dumps({"mcpServers": {"biomanager": {
+        "type": "http", "url": f"http://127.0.0.1:{httpd.server_address[1]}/mcp"}}}), encoding="utf-8")
+    base = [shutil.which("claude") or "claude", "-p", "--output-format", "json", "--model", model,
+            "--effort", effort, "--system-prompt", system_prompt(context), "--tools", "",
+            "--mcp-config", str(work / "mcp.json"), "--strict-mcp-config", "--allowedTools", "mcp__biomanager",
+            "--permission-mode", "dontAsk", "--setting-sources", "", "--disable-slash-commands", "--max-turns", "40"]
+    usage = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "cost_usd": 0.0}
+    questions, session, message, last_text = 0, None, says, ""
+    try:
+        while True:
+            try:
+                p = subprocess.run(base + (["--resume", session] if session else []) + ["--", message], cwd=work,
+                                   env={**os.environ, "ENABLE_TOOL_SEARCH": "false"},
+                                   capture_output=True, text=True, timeout=1200)
+                r = json.loads(p.stdout)
+            except subprocess.TimeoutExpired:
+                return {"error": "claude didn't finish in 20 minutes", "calls": _McpTools.calls, "usage": usage}
+            except ValueError:
+                return {"error": f"claude stopped (exit {p.returncode}): {(p.stderr or p.stdout)[-300:]}",
+                        "calls": _McpTools.calls, "usage": usage}
+            u = r.get("usage") or {}
+            usage["input"] += u.get("input_tokens", 0)
+            usage["output"] += u.get("output_tokens", 0)
+            usage["cache_read"] += u.get("cache_read_input_tokens", 0)
+            usage["cache_write"] += u.get("cache_creation_input_tokens", 0)
+            usage["cost_usd"] = round(usage["cost_usd"] + (r.get("total_cost_usd") or 0), 4)
+            session = r.get("session_id") or session
+            if r.get("is_error") or r.get("subtype") != "success":
+                return {"error": f"claude: {r.get('subtype')}: {str(r.get('result'))[:300]}",
+                        "calls": _McpTools.calls, "usage": usage}
+            text = (r.get("result") or "").strip()
+            if text:
+                last_text = text
+                if show:
+                    print(f"    assistant: {text[:400]}", flush=True)
+            if "?" in text and questions < 3:
+                questions += 1
+                message = person_reply(scenario, text)
+                if show:
+                    print(f"    person: {message}", flush=True)
+                continue
+            break
+    finally:
+        httpd.shutdown()
+        shutil.rmtree(work, ignore_errors=True)
+    return {"calls": _McpTools.calls, "questions": questions, "last": last_text, "usage": usage}
+
+
 # ---------------------------------------------------------------- scoring
 
 def run_one(client, args, scenario: Scenario, n: int) -> dict:
@@ -322,7 +440,10 @@ def run_one(client, args, scenario: Scenario, n: int) -> dict:
              if isinstance(v, int) and one("select 1 from mice where id=?", v)}
     says = scenario.says.format(**{k: f"mouse {v}" for k, v in names.items()})
     api = LabApi(propose_token(lab.client))
-    talk = converse(client, args.model, args.effort, args.context, scenario, api, says, args.show)
+    if args.via == "claude-code":
+        talk = converse_claude_code(args.model, args.effort, args.context, scenario, api, says, args.show)
+    else:
+        talk = converse(client, args.model, args.effort, args.context, scenario, api, says, args.show)
     out = {"scenario": scenario.name, "says": says, **{k: v for k, v in talk.items() if k != "last"}}
     if "error" in talk:
         return {**out, "outcome": "error", "why": [talk["error"]]}
@@ -364,6 +485,35 @@ def summary(results: list[dict]) -> dict:
     return {"by_scenario": by, "total": total, "runs": len(results)}
 
 
+def run_isolated(args, scenario: Scenario, n: int) -> dict:
+    """One conversation in a process of its own, on a fresh throwaway database. In one database
+    the scenarios would see each other's records, and a second --repeat pass couldn't make its
+    cage 202 (cage numbers are unique), so its people would talk about the first pass's cages."""
+    fd, name = tempfile.mkstemp(suffix=".json")
+    os.close(fd)
+    out = Path(name)
+    cmd = [sys.executable, str(Path(__file__).resolve()), "--one", f"{scenario.name}:{n}", "--out", str(out),
+           "--model", args.model, "--effort", args.effort, "--context", args.context, "--via", args.via] \
+        + (["--show"] if args.show else [])
+    try:
+        code = subprocess.run(cmd, cwd=ROOT).returncode
+        try:
+            return json.loads(out.read_text(encoding="utf-8"))
+        except ValueError:
+            return {"scenario": scenario.name, "outcome": "error", "calls": [],
+                    "why": [f"the conversation's process failed (exit {code})"]}
+    finally:
+        out.unlink(missing_ok=True)
+
+
+def tokens(results: list[dict]) -> dict:
+    total = {}
+    for r in results:
+        for k, v in (r.get("usage") or {}).items():
+            total[k] = total.get(k, 0) + v
+    return total
+
+
 def version() -> str:
     try:
         commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
@@ -380,22 +530,27 @@ def version() -> str:
 
 def write(results: list[dict], args) -> Path:
     RESULTS.mkdir(exist_ok=True)
-    stem = RESULTS / f"assistant-{version()}-{args.model}-{args.context}"
-    data = {"model": args.model, "effort": args.effort, "context": args.context, "date": TODAY.isoformat(),
-            "summary": summary(results), "runs": results}
-    stem.with_suffix(".json").write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str),
+    # Not Path.with_suffix: the version's dots ("1.16.0") would cut the name short.
+    stem = f"assistant-{version()}-{args.model}-{args.context}" \
+        + ("-via-claude-code" if args.via == "claude-code" else "") + (f"-{args.label}" if args.label else "")
+    data = {"model": args.model, "effort": args.effort, "context": args.context, "via": args.via,
+            "date": TODAY.isoformat(),
+            "summary": summary(results), "tokens": tokens(results), "runs": results}
+    (RESULTS / f"{stem}.json").write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str),
                                          encoding="utf-8")
     s = data["summary"]
-    lines = [f"# Assistant benchmark: {args.model} ({args.context}, effort {args.effort})", "",
-             f"{s['runs']} conversations, {TODAY.isoformat()}.", "",
+    lines = [f"# Assistant benchmark: {args.model} ({args.context}, effort {args.effort}"
+             + (", through Claude Code" if args.via == "claude-code" else "") + ")", "",
+             f"{s['runs']} conversations, {TODAY.isoformat()}. Tokens: "
+             + (", ".join(f"{v} {k}" for k, v in data["tokens"].items()) or "none recorded") + ".", "",
              "| Scenario | " + " | ".join(OUTCOMES) + " |", "| --- |" + " ---: |" * len(OUTCOMES)]
     for name, counts in s["by_scenario"].items():
         lines.append(f"| {name} | " + " | ".join(str(counts[o]) for o in OUTCOMES) + " |")
     lines.append("| **All** | " + " | ".join(f"**{s['total'][o]}**" for o in OUTCOMES) + " |")
     lines += ["", "## What went wrong", ""]
     lines += [f"- {r['scenario']}: {'; '.join(r['why'])}" for r in results if r["why"]] or ["Nothing."]
-    stem.with_suffix(".md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return stem.with_suffix(".md")
+    (RESULTS / f"{stem}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return RESULTS / f"{stem}.md"
 
 
 def main() -> None:
@@ -408,8 +563,22 @@ def main() -> None:
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--only", default="", help="scenarios, comma-separated")
     ap.add_argument("--show", action="store_true", help="print each conversation")
+    ap.add_argument("--via", default="api", choices=("api", "claude-code"),
+                    help="the Anthropic API (an API key), or a signed-in `claude` CLI (claude -p)")
+    ap.add_argument("--label", default="", help="added to the results' file names, to keep runs apart")
     ap.add_argument("--check", action="store_true", help="build each scenario's lab and list the tools; no model")
+    ap.add_argument("--one", help=argparse.SUPPRESS)   # scenario:pass, in a process of its own (run_isolated)
+    ap.add_argument("--out", help=argparse.SUPPRESS)
     args = ap.parse_args()
+    if args.one:
+        name, n = args.one.split(":")
+        client = None
+        if args.via == "api":
+            import anthropic
+            client = anthropic.Anthropic()
+        r = run_one(client, args, next(s for s in SCENARIOS if s.name == name), int(n))
+        Path(args.out).write_text(json.dumps(r, ensure_ascii=False, default=str), encoding="utf-8")
+        return
     chosen = [s for s in SCENARIOS if not args.only or s.name in args.only.split(",")]
     if args.check:
         for i, sc in enumerate(chosen):
@@ -420,13 +589,11 @@ def main() -> None:
             print(f"{sc.name}: lab built ({len(lab.ids)} records); {len(tool_list(api))} tools; "
                   f"overview has {len(tools.lab_overview(api)['due_today'])} due today")
         return
-    import anthropic
-    client = anthropic.Anthropic()
     results = []
     for n in range(args.repeat):
         for sc in chosen:
-            print(f"{sc.name} ({n + 1}/{args.repeat})")
-            r = run_one(client, args, sc, n)
+            print(f"{sc.name} ({n + 1}/{args.repeat})", flush=True)
+            r = run_isolated(args, sc, n)
             print(f"  {r['outcome']}" + (f": {'; '.join(r['why'])}" if r["why"] else ""))
             results.append(r)
     print(f"\n{summary(results)['total']}\nwrote {write(results, args).relative_to(ROOT)}")
