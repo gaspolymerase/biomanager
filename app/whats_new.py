@@ -30,6 +30,12 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.2": {
+        "changed": [
+            "A long inventory opens with its first page, and each other page comes as you turn to it; search, sorting and the chips still cover every entry.",
+            "Turning the pages of a long sheet stays quick: the pages you've left no longer slow down the next search or sort.",
+        ],
+    },
     "2.0.1": {
         "changed": [
             "The inventory sheets open about twice as fast: each menu's list comes when you open it.",

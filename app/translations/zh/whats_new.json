@@ -156,5 +156,7 @@
   "The fish sheet loads its **Tank** list when you open the menu, not on every row.": "鱼表在你打开菜单时才载入 **鱼缸** 列表，不再每一行都带一份。",
   "Searching a long sheet keeps up with your typing, and the calendar fills faster.": "在长表格里搜索能跟上你打字的速度，日历也填得更快。",
   "The inventory sheets open about twice as fast: each menu's list comes when you open it.": "库存表打开快了约一倍：每个菜单的列表在你打开时才载入。",
-  "The **Breeders** tab opens in seconds: Breeder cages empty for over 90 days, and mice that ended that long ago, wait behind **Show them**.": "**种鼠** 标签页几秒内就能打开：空置超过 90 天的种鼠笼和 90 天前就已结束的小鼠放在 **显示它们** 后面。"
+  "The **Breeders** tab opens in seconds: Breeder cages empty for over 90 days, and mice that ended that long ago, wait behind **Show them**.": "**种鼠** 标签页几秒内就能打开：空置超过 90 天的种鼠笼和 90 天前就已结束的小鼠放在 **显示它们** 后面。",
+  "A long inventory opens with its first page, and each other page comes as you turn to it; search, sorting and the chips still cover every entry.": "很长的库存表打开时只有第一页，翻到其他页时再载入；搜索、排序和筛选按钮仍覆盖全部记录。",
+  "Turning the pages of a long sheet stays quick: the pages you've left no longer slow down the next search or sort.": "长表格翻页依然很快：翻过的页不再拖慢之后的搜索或排序。"
 }

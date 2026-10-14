@@ -9,6 +9,7 @@ up for the window it shows, in one query.
 """
 from __future__ import annotations
 
+import html as htmllib
 import re
 import unittest
 from datetime import date, timedelta
@@ -280,7 +281,7 @@ class InventoryPagingTests(AppTestCase):
         html = self.get_ok(self.a, f"/inventory/{self.key}")
         newest = [str(i) for i in reversed(self.items)]
         self.assertEqual(self.drawn(html), newest[:2])
-        self.assertIn(f'data-dt-rows-url="/inventory/{self.key}/rows"', html)
+        self.assertIn(f'data-dt-rows-url="/inventory/{self.key}/rows?rem=', html)
         stubs = self.stubs(html)
         self.assertEqual([str(s["id"]) for s in stubs], newest[2:])
         oldest = next(s for s in stubs if s["id"] == self.items[0])
@@ -300,7 +301,10 @@ class InventoryPagingTests(AppTestCase):
         with mock.patch.object(inventory_routes, "LAZY_OVER", 1000):
             whole = self.get_ok(self.a, f"/inventory/{self.key}")
         asked = [self.items[0], self.items[2]]
-        r = self.a.get(f"/inventory/{self.key}/rows?ids={asked[0]},{asked[1]},999999")
+        # As the page asks: its rows URL names the columns that offer earlier values.
+        lazy = self.get_ok(self.a, f"/inventory/{self.key}")
+        url = htmllib.unescape(re.search(r'data-dt-rows-url="([^"]+)"', lazy).group(1))
+        r = self.a.get(f"{url}&ids={asked[0]},{asked[1]},999999")
         answer = r.get_json()
         self.assertEqual(answer["ids"], asked)
         same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-")

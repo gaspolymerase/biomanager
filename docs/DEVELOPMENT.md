@@ -3052,8 +3052,9 @@ load event, the main thread's busy time, its DOM nodes and JS heap.
 What keeps the browser's side short is under *Small shared rules*: row
 forms in a `<template>` (`row-forms.js`), long choice lists sent once
 (`data-choices`), the rows past the first page hidden until the sheet is
-drawn, and a sheet of over 1,000 rows keeping the rows it has not shown
-off the page (`_parkLater`).
+drawn, a sheet of over 1,000 rows keeping the rows it has not shown
+off the page (`_parkLater`), and an inventory of over 500 items paged by
+the server (`LAZY_OVER`).
 
 At 100k mice on SQLite (2.0.0), the server makes the mouse, cage and
 litter sheets in 3–6 s, 20–25 MB each, and an inventory in 7 s, 60 MB.
@@ -3061,11 +3062,14 @@ In Chromium the mouse sheet then opens in 7.5 s (77 s before 2.0.0), the
 tanks in 11 s (127 s), the fly vials in 6.6 s (97 s), the cages and
 litters in about 10 s. After 2.0.0 the **Breeders** tab went from 40 s
 to 2 s (16 MB to 5 MB), and an inventory of about 5,000 listed items
-from 23–27 s to 11–12 s (6 KB of markup a row, from 13 KB). What is
-left there is the size itself: the server takes 3–4 s to write 33 MB of
-rows and the browser 3 s to read them, then 2.5 s in the page's scripts.
-The next step, if a lab needs it, is paging on the server instead of the
-sheet's client-side pages.
+from 23–27 s to 11–12 s (6 KB of markup a row, from 13 KB) in 2.0.1, and
+to under 3 s in 2.0.2, paged by the server: the server takes about 1 s
+(it was 4 s) for a 6 MB page (33 MB), and turning a page, a sort, a
+search or a chip takes about a second, its 100 rows fetched in under
+0.1 s. Export and Print, fetching every row, take about 7 s. On the
+mouse sheet (2,400 living mice) a page turn, search or sort takes under
+a second, however many pages have been turned: before 2.0.2 each one
+turned left its rows in the table and the next search took 3–5 s.
 
 In a lab of 4,000 mice, in Chromium (before 2.0.0 → 2.0.0 → after):
 mice 6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish
