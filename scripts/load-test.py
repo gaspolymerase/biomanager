@@ -135,10 +135,15 @@ def time_in_browser(data: Path) -> None:
     import threading
 
     from playwright.sync_api import sync_playwright
-    from werkzeug.serving import make_server
+    from werkzeug.serving import WSGIRequestHandler, make_server
 
     from app.app import app
-    server = make_server("127.0.0.1", 0, app, threaded=True)
+
+    class Quiet(WSGIRequestHandler):
+        def log_request(self, *args, **kwargs):
+            pass
+
+    server = make_server("127.0.0.1", 0, app, threaded=True, request_handler=Quiet)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}"
     password = (data / "demo-password").read_text(encoding="utf-8").strip()

@@ -259,6 +259,13 @@ def signed_out(db) -> bool:
 from flask.sessions import SecureCookieSessionInterface  # noqa: E402
 
 
+def versioned_asset() -> bool:
+    """A script, style or picture the page names with ?v=<its version>:
+    the same file for everyone, never changed at that address."""
+    return (request.path.startswith("/static/") and not request.path.startswith(UPLOADS_PREFIX)
+            and bool(request.args.get("v")))
+
+
 class _SessionInterface(SecureCookieSessionInterface):
     """The API is signed in by its token alone (app/api.py): its replies
     never set or refresh the browser's session cookie."""
@@ -267,6 +274,13 @@ class _SessionInterface(SecureCookieSessionInterface):
         if request.path == "/api/v1" or request.path.startswith("/api/"):
             return False
         return super().should_set_cookie(app, session)
+
+    def save_session(self, app, session, response) -> None:
+        super().save_session(app, session, response)
+        # The session cookie is renewed on every reply, so "Vary: Cookie"
+        # made the browser ask again for a file it had kept.
+        if versioned_asset():
+            response.vary.discard("Cookie")
 
 
 def init_app(app) -> None:

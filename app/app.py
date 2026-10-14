@@ -1042,8 +1042,7 @@ def cache_versioned_assets(response):
     address (a new one has a new time), so the browser keeps it rather than
     asking again on every page: a page names a dozen scripts and styles,
     and a lab server can be far away."""
-    if (request.path.startswith("/static/") and not request.path.startswith(security.UPLOADS_PREFIX)
-            and request.args.get("v") and response.status_code in (200, 304)):
+    if security.versioned_asset() and response.status_code in (200, 304):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 

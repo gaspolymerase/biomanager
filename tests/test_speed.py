@@ -153,6 +153,9 @@ class VersionedAssetsTests(AppTestCase):
         r = self.a.get("/static/shell.js?v=123")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.headers["Cache-Control"], "public, max-age=31536000, immutable")
+        # The session cookie is renewed on every reply: varying by it, the
+        # file would be asked for again on the next page.
+        self.assertNotIn("Cookie", r.headers.get("Vary", ""))
         r.close()
 
     def test_without_a_version_it_is_asked_for_again(self):
