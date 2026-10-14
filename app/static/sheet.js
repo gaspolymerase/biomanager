@@ -118,7 +118,7 @@
   }
 
   function queue(input, delay) {
-    const form = document.getElementById(input.getAttribute('form'));
+    const form = window.BioRowForms.get(input.getAttribute('form'));
     if (!form) return;
     const card = input.closest('[data-autosave-sheet]');
     clearTimeout(timers.get(form.id));
@@ -144,7 +144,7 @@
         if (input.dataset.scopePill !== undefined || input.classList.contains('scope-pill')) {
           input.dataset.scope = input.value === '1' ? 'lab' : (/^g\d+$/.test(input.value) ? 'group' : 'mine');
         }
-        const detail = { input, form: document.getElementById(input.getAttribute('form')), previous };
+        const detail = { input, form: window.BioRowForms.get(input.getAttribute('form')), previous };
         const go = input.dispatchEvent(new CustomEvent('sheet:change', { bubbles: true, cancelable: true, detail }));
         input.dataset.previous = input.value;
         if (input.type === 'date') input.dataset.empty = input.value ? '0' : '1';
@@ -162,15 +162,21 @@
     return el && !el.disabled && !el.readOnly ? el : null;
   }
 
+  // A row's long list of choices comes in when first used (BiomanagerShell.fillChoices).
+  function choices(select) {
+    if (window.BiomanagerShell && window.BiomanagerShell.fillChoices) window.BiomanagerShell.fillChoices(select);
+    return Array.from(select.options);
+  }
+
   function fits(select, value) {
     const want = value.trim().toLowerCase();
-    return Array.from(select.options).some((o) => o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want);
+    return choices(select).some((o) => o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want);
   }
 
   function put(el, value) {
     if (el.tagName === 'SELECT') {
       const want = value.trim().toLowerCase();
-      const option = Array.from(el.options).find((o) => o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want);
+      const option = choices(el).find((o) => o.value.toLowerCase() === want || o.text.trim().toLowerCase() === want);
       if (!option) return false;
       el.value = option.value;
     } else if (el.type === 'date') {

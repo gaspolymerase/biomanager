@@ -304,9 +304,10 @@ def translate_value(value, context: str = "") -> str:
     if value is None:
         return ""
     text = str(value)
-    if current() == DEFAULT:
+    lang = current()
+    if lang == DEFAULT:
         return text
-    words = catalog(current())
+    words = catalog(lang)
     if context and f"{context}::{text}" in words:
         return words[f"{context}::{text}"]
     return words.get(text, text)

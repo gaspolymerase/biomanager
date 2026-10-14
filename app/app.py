@@ -1036,6 +1036,18 @@ def inject_asset_version():
     return {"asset_version": asset_version}
 
 
+@app.after_request
+def cache_versioned_assets(response):
+    """A file the page names with ?v=<its time> never changes at that
+    address (a new one has a new time), so the browser keeps it rather than
+    asking again on every page: a page names a dozen scripts and styles,
+    and a lab server can be far away."""
+    if (request.path.startswith("/static/") and not request.path.startswith(security.UPLOADS_PREFIX)
+            and request.args.get("v") and response.status_code in (200, 304)):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
+
+
 def _get_user_directory():
     """Cache username -> {short_name, display_name} for the current request."""
     cache = g.get("user_directory")
@@ -1673,21 +1685,29 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             mice = sheet_mice(selectinload(MouseRecord.litter))
         cages, hidden_cages = [], 0
         if active_view == "cages":
-            all_cages = db_session.scalars(select(CageRecord).options(
+            cage_query = select(CageRecord).options(
                 selectinload(CageRecord.mice).selectinload(MouseRecord.litter),
                 selectinload(CageRecord.cage_litters).selectinload(CageLitter.litter).selectinload(LitterRecord.mice),
-                selectinload(CageRecord.rack)).order_by(CageRecord.cage_id)).all()
+                selectinload(CageRecord.rack)).order_by(CageRecord.cage_id)
+            if not show_ended:
+                # Only cages that may be shown are loaded, with their mice: a
+                # mouse alive or died lately, or made lately (a colony keeps
+                # every cage it had). The rule itself is below.
+                cage_query = cage_query.where(
+                    CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(
+                        MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
+                    | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
+            all_cages = db_session.scalars(cage_query).all()
             if not show_ended:
                 keep = [c for c in all_cages if cage_is_active(c) or c.created_at and c.created_at.date() >= recent
                         or any(m.date_of_death and m.date_of_death >= recent for m in c.mice)]
-                hidden_cages = len(all_cages) - len(keep)
+                hidden_cages = totals["all_cages"] - len(keep)
                 all_cages = keep
             cages = [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
                                                              group_id=access.cage_group(c))]
         litters, hidden_litters = [], 0
         if active_view == "litters":
-            litter_query = select(LitterRecord).options(
-                selectinload(LitterRecord.mice).selectinload(MouseRecord.cage)).order_by(LitterRecord.litter_id)
+            litter_query = select(LitterRecord).options(selectinload(LitterRecord.mice)).order_by(LitterRecord.litter_id)
             if not show_ended:
                 year_ago = date.today() - timedelta(days=365)
                 with_living = select(MouseRecord.litter_id_fk).where(MouseRecord.date_of_death.is_(None))
@@ -1718,6 +1738,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             .order_by(CageRecord.cage_id))) if active_view == "experiments" else []
         litter_rows = []
         for litter in litters:
+            # Each pup as its cell shows it (number, sex, alive, age): a
+            # litter tab lists every pup the colony had, tens of thousands.
+            pup_age = calculate_age_fields(litter.date_of_birth)["age_days"]
             litter_rows.append(
                 {
                     "id": litter.id,
@@ -1729,7 +1752,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     "total_pups": litter.total_pups,
                     "notes": litter.notes,
                     "editable": access.can_edit_litter(litter),
-                    "mice": [mouse_display_row(mouse, g.user.username, g.user.role) for mouse in sorted(litter.mice, key=lambda item: item.mouse_id)],
+                    "mice": [{"mouse_id": mouse.mouse_id, "gender": mouse.gender, "active": mouse_is_active(mouse),
+                              "age_days": pup_age}
+                             for mouse in sorted(litter.mice, key=lambda item: item.mouse_id)],
                 }
             )
         strain_rows = [

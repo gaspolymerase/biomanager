@@ -232,11 +232,13 @@
         </tbody>
       </table>
     </div>
+    <template data-row-forms>
     {% for r in animal_rows %}
       <form id="row-a-{{ r.o.id }}" method="post" action="{{ url_for('organisms.save_animal', key=module.key) }}" data-record-label="{{ r.o.code or n_org }}">
         <input type="hidden" name="id" value="{{ r.o.id }}">
       </form>
     {% endfor %}
+    </template>
     <div class="dt-bottom-bar">
       {{ sheet_ui.quick_add(url_for('organisms.save_animal', key=module.key), _('New %(noun)s', noun=n_org),
                             {'owner': current_user.username, 'count': 1}) }}
@@ -471,6 +473,7 @@
         </tbody>
       </table>
     </div>
+    <template data-row-forms>
     {% for r in housing_rows %}
       <form id="row-h-{{ r.u.id }}" method="post" action="{{ url_for('organisms.save_housing', key=module.key) }}" data-record-label="{{ r.u.code }}">
         <input type="hidden" name="id" value="{{ r.u.id }}">
@@ -478,6 +481,7 @@
         <input type="hidden" name="position_was" value="{{ unit_positions.get(r.u.id, '') }}">
       </form>
     {% endfor %}
+    </template>
     <div class="dt-bottom-bar">
       {{ sheet_ui.quick_add(url_for('organisms.save_housing', key=module.key), _('New %(noun)s', noun=n_unit),
                             {'owner': current_user.username, 'established_on': today}) }}

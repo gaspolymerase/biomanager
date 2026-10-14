@@ -14,6 +14,14 @@ mice died, most cages emptied and most tubes were used up, on days
 spread over five years. Each page is fetched twice as the demo admin; the
 second time is reported, with the size of the answer. SQLite: a lab
 server on PostgreSQL is usually faster.
+
+    .venv/bin/python scripts/load-test.py /tmp/bm-load --reuse --browser
+
+--browser also opens each page in Chromium (pip install playwright, then
+playwright install chromium; CHROMIUM=<path> to use another), as served
+by the app on this computer, and reports what the person waits for: the
+time to the page's load event, the browser's busy time (scripts, styles,
+layout), the page's DOM nodes and its JS heap, each the median of three.
 """
 from __future__ import annotations
 
@@ -109,7 +117,7 @@ def fill(n_mice: int, alive: float = 0.05) -> None:
 
 def time_pages(data: Path) -> None:
     from app.app import app
-    password = (data / "demo-password").read_text().strip()
+    password = (data / "demo-password").read_text(encoding="utf-8").strip()
     c = app.test_client()
     c.post("/login", data={"username": "alex", "password": password}, headers={"Origin": "http://localhost"})
     print(f"\n{'page':<58} {'ms':>7} {'KB':>8}", flush=True)
@@ -122,6 +130,50 @@ def time_pages(data: Path) -> None:
         print(f"{page[:58]:<58} {ms:7.0f} {len(r.data) / 1024:8.0f}  {r.status_code}{flag}", flush=True)
 
 
+def time_in_browser(data: Path) -> None:
+    import statistics
+    import threading
+
+    from playwright.sync_api import sync_playwright
+    from werkzeug.serving import make_server
+
+    from app.app import app
+    server = make_server("127.0.0.1", 0, app, threaded=True)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    password = (data / "demo-password").read_text(encoding="utf-8").strip()
+    pages = [p for p in PAGES if not p.startswith(("/calendar/events.json", "/admin"))]
+    with sync_playwright() as p:
+        browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM") or None)
+        ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+        tab = ctx.new_page()
+        tab.goto(base + "/login")
+        tab.fill("input[name=username]", "alex")
+        tab.fill("input[name=password]", password)
+        tab.press("input[name=password]", "Enter")
+        tab.wait_for_load_state("load")
+        tab.close()
+        print(f"\n{'in Chromium':<40} {'load ms':>8} {'busy ms':>8} {'nodes':>8} {'heap MB':>8}", flush=True)
+        for page in pages:
+            runs = []
+            for _ in range(3):
+                tab = ctx.new_page()
+                cdp = ctx.new_cdp_session(tab)
+                cdp.send("Performance.enable")
+                tab.goto(base + page, wait_until="load", timeout=600000)
+                tab.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+                load = tab.evaluate("() => performance.getEntriesByType('navigation')[0].loadEventEnd")
+                cdp.send("HeapProfiler.collectGarbage")
+                m = {x["name"]: x["value"] for x in cdp.send("Performance.getMetrics")["metrics"]}
+                runs.append((load, m["TaskDuration"] * 1000, m["Nodes"], m["JSHeapUsedSize"] / 1e6))
+                tab.close()
+            load, busy, nodes, heap = (statistics.median(col) for col in zip(*runs))
+            flag = "  slow" if load > 3000 else ""
+            print(f"{page[:40]:<40} {load:8.0f} {busy:8.0f} {nodes:8.0f} {heap:8.1f}{flag}", flush=True)
+        browser.close()
+    server.shutdown()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
@@ -129,6 +181,7 @@ def main() -> None:
     ap.add_argument("--alive", type=float, default=0.05,
                     help="how many of them are alive now (a colony keeps its history: 0.05 is 5,000 of 100,000)")
     ap.add_argument("--reuse", action="store_true")
+    ap.add_argument("--browser", action="store_true", help="also time each page in Chromium (needs playwright)")
     args = ap.parse_args()
     data = Path(args.folder).expanduser().resolve()
     if not args.reuse:
@@ -141,6 +194,8 @@ def main() -> None:
     if not args.reuse:
         fill(args.mice, args.alive)
     time_pages(data)
+    if args.browser:
+        time_in_browser(data)
 
 
 if __name__ == "__main__":

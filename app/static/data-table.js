@@ -84,6 +84,7 @@
       this.rows = this.tbody ? Array.from(this.tbody.querySelectorAll('tr[data-id]')) : [];
       this.original = this.rows.slice();
       this.filtered = this.rows.slice();
+      this._laidOut = this.rows.slice();   // the order the rows are in on the page
       this.sortKey = null;
       this.sortDir = 1;
       this.page = 0;
@@ -245,27 +246,33 @@
       const id = decodeURIComponent(location.hash.slice(1));
       const target = id && document.getElementById(id);
       // A sheet row's form sits outside the row, its cells joining it with
-      // form="…" (a notification links to #mouse-update-39): find the row by them.
-      const row = target && (target.closest('tr')
-        || (target.tagName === 'FORM' && this.card.querySelector(`[form="${CSS.escape(id)}"]`)?.closest('tr')));
+      // form="…" (a notification links to #mouse-update-39): find the row by
+      // them, whether or not the form is on the page yet (row-forms.js).
+      const byForm = () => this.card.querySelector(`[form="${CSS.escape(id)}"]`)?.closest('tr');
+      const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm())) : byForm());
       if (!row || !this.rows.includes(row) || !this.reveal(row)) return;
       requestAnimationFrame(() => row.scrollIntoView({ block: 'center' }));
       row.dispatchEvent(new CustomEvent('dt:revealed', { bubbles: true }));
     }
 
     /* The page scrolls, not the table: the toolbar and the bottom bar stick
-       to the window's edges (tailwind.css). Their heights go on the card as
-       --dt-toolbar-h and --dt-bottom-h, for the header row to sit under the
-       toolbar and the selection bar above the bottom bar. A table no wider
-       than its card scrolls with the page (.is-fit), which is what lets its
-       header row stay in view; a wider one scrolls sideways in its card. */
+       to the window's edges (tailwind.css). Their heights go to what keeps
+       clear of them, as --dt-toolbar-h on the header row and --dt-bottom-h
+       on the selection bar: set on the card, a change restyled every row of
+       the sheet. A table no wider than its card scrolls with the page
+       (.is-fit), which is what lets its header row stay in view; a wider one
+       scrolls sideways in its card. */
     _wireStickyParts() {
       const toolbar = this.card.querySelector(':scope > .dt-toolbar');
       const bottom = this.card.querySelector(':scope > .dt-bottom-bar');
       const scroller = this.table && this.table.closest('.dt-scroll');
+      const bars = Array.from(this.card.querySelectorAll(':scope > .selbar'));
+      const setVar = (el, name, value) => { if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value); };
       const measure = () => {
-        if (toolbar) this.card.style.setProperty('--dt-toolbar-h', `${toolbar.offsetHeight}px`);
-        if (bottom) this.card.style.setProperty('--dt-bottom-h', `${bottom.offsetHeight}px`);
+        const toolbarH = toolbar ? `${toolbar.offsetHeight}px` : '';
+        const bottomH = bottom ? `${bottom.offsetHeight}px` : '';
+        if (toolbar && this.table && this.table.tHead) setVar(this.table.tHead, '--dt-toolbar-h', toolbarH);
+        if (bottom) bars.forEach((bar) => setVar(bar, '--dt-bottom-h', bottomH));
         if (scroller) {
           // Measured as a scroller, so the answer does not depend on itself.
           scroller.classList.remove('is-fit');
@@ -388,6 +395,14 @@
         this.query = (this.search.value || '').trim().toLowerCase();
         this._refilter();
       });
+      // Each row's text is worked out once while someone types a search,
+      // not again for every row on every key; anything that changes a row
+      // (an edit, a save, a move) starts afresh.
+      this._texts = new WeakMap();
+      const forget = (event) => { if (event.target !== this.search) this._texts = new WeakMap(); };
+      this.search.addEventListener('focus', forget);
+      ['input', 'change'].forEach((type) => this.card.addEventListener(type, forget, true));
+      ['sheet:saved', 'rack-grid:moved'].forEach((type) => document.addEventListener(type, forget));
     }
 
     /* A row's searchable text: what it shows, its data-* attributes, and
@@ -395,6 +410,8 @@
        part of textContent, so an editable sheet would otherwise be
        unsearchable). */
     _rowText(tr) {
+      const known = this._texts && this._texts.get(tr);
+      if (known !== undefined) return known;
       // Not every choice of a menu, only the one chosen (below): a row's Box
       // or Status menu lists them all, so any box name matched every row.
       let blob = '';
@@ -412,6 +429,7 @@
         const shown = el.tagName === 'SELECT' && el.selectedOptions[0] ? el.selectedOptions[0].textContent : '';
         blob += ' ' + String(el.value || '').toLowerCase() + ' ' + shown.toLowerCase();
       });
+      if (this._texts) this._texts.set(tr, blob);
       return blob;
     }
 
@@ -1165,8 +1183,15 @@
       const size = this.pageSize ? parseInt(this.pageSize.value, 10) : 50;
       const start = this.page * size;
       const end = start + size;
-      this.rows.forEach((tr) => { tr.style.display = 'none'; });
-      this.filtered.slice(start, end).forEach((tr) => { tr.style.display = ''; });
+      // Only the rows whose state changes are touched: a long sheet has
+      // thousands, and the stylesheet hides those past the first page until
+      // now (.dt-ready).
+      const shown = new Set(this.filtered.slice(start, end));
+      this.rows.forEach((tr) => {
+        const display = shown.has(tr) ? '' : 'none';
+        if (tr.style.display !== display) tr.style.display = display;
+      });
+      this.card.classList.add('dt-ready');
       const total = this.filtered.length;
       if (this.count) {
         const noun = t(total === 1 ? this.noun : this.nounPlural);
@@ -1180,14 +1205,22 @@
       // only while its row is; its own `hidden` still opens and closes it.
       const details = new Map();
       this.tbody.querySelectorAll(':scope > tr[data-detail-for]').forEach((d) => details.set(d.dataset.detailFor, d));
-      this.filtered.forEach((tr) => {
-        this.tbody.appendChild(tr);
-        const detail = details.get(tr.dataset.id);
-        if (detail) this.tbody.appendChild(detail);
-      });
+      // The rows are put in order only when it has changed (a sort, a
+      // search, a chip): moving every row on each page turn was most of it.
+      const laidOut = this._laidOut;
+      if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])) {
+        this.filtered.forEach((tr) => {
+          this.tbody.appendChild(tr);
+          const detail = details.get(tr.dataset.id);
+          if (detail) this.tbody.appendChild(detail);
+        });
+        this._laidOut = this.filtered.slice();
+      }
+      const byId = new Map(this.rows.map((tr) => [tr.dataset.id, tr]));
       details.forEach((detail, id) => {
-        const owner = this.tbody.querySelector(`:scope > tr[data-id="${id}"]`);
-        detail.style.display = owner && owner.style.display !== 'none' ? '' : 'none';
+        const owner = byId.get(id);
+        const display = owner && owner.style.display !== 'none' ? '' : 'none';
+        if (detail.style.display !== display) detail.style.display = display;
       });
       const totalPages = Math.max(1, Math.ceil(total / size));
       if (this.pageLabel) this.pageLabel.textContent = t('Page %(page)s of %(pages)s', { page: this.page + 1, pages: totalPages });
@@ -1271,7 +1304,11 @@
       // Avoid double-initializing if data-table.js is loaded twice.
       if (card.dataset.dtBound === '1') return;
       card.dataset.dtBound = '1';
-      new DataTableController(card);
+      try {
+        new DataTableController(card);
+      } finally {
+        card.classList.add('dt-ready');   // never leave rows hidden by the stylesheet
+      }
     });
     // Bind resize to any standalone <table data-resizable="1"> not inside a
     // controlled .data-table-card (which already handles resize itself).

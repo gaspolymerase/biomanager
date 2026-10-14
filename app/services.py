@@ -1605,6 +1605,15 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
     link back to its source via raw.href so clicking the item can navigate
     to the originating record."""
     items: list[dict] = []
+    # A parent is looked up once, however many litters name it.
+    parent_labels: dict[str, str] = {}
+
+    def parent_label(info) -> str:
+        if info not in parent_labels:
+            parent_labels[info] = _parent_label(session, info)
+        return parent_labels[info]
+
+    geno_days = genotyping_offset(session)
 
     def _in_window(d: date) -> bool:
         if start_dt and d < (start_dt.date() if hasattr(start_dt, "date") else start_dt):
@@ -1645,10 +1654,10 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         # Resolve father_info / mother_info → "M<id> (genotype)" by looking
         # up the parent mouse. This is what the user actually wants to see
         # on the wean / geno reminder, not just the raw ID.
-        father = _parent_label(session, litter.father_info) if litter else ""
-        mother = _parent_label(session, litter.mother_info) if litter else ""
+        father = parent_label(litter.father_info) if litter else ""
+        mother = parent_label(litter.mother_info) if litter else ""
         if not mother and cl.dam:
-            mother = _parent_label(session, cl.dam)
+            mother = parent_label(cl.dam)
         cage_geno = (cage.genotype_summary or "").strip()
         # Compose the notes line. Always include DOB; include parent geno
         # info when present, otherwise fall back to the cage's own summary.
@@ -1662,7 +1671,7 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         body = " · ".join(body_parts)
 
         # Weaning comes from weaning_due below, the same list Home shows.
-        geno = dob + timedelta(days=genotyping_offset(session))
+        geno = dob + timedelta(days=geno_days)
         if _in_window(geno):
             title = gettext("Genotype - %(where)s", where=location_label)
             if several:
@@ -1689,12 +1698,12 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         cage, litter = wean["cage"], wean["litter"]
         body_parts = [gettext("DOB %(date)s", date=wean["born"].isoformat())]
         if litter is not None:
-            father = _parent_label(session, litter.father_info)
-            mother = _parent_label(session, litter.mother_info)
+            father = parent_label(litter.father_info)
+            mother = parent_label(litter.mother_info)
             body_parts += [gettext("Father: %(mouse)s", mouse=father)] if father else []
             body_parts += [gettext("Mother: %(mouse)s", mouse=mother)] if mother else []
         elif wean["cage_litter"] is not None and wean["cage_litter"].dam:
-            body_parts.append(gettext("Mother: %(mouse)s", mouse=_parent_label(session, wean["cage_litter"].dam)))
+            body_parts.append(gettext("Mother: %(mouse)s", mouse=parent_label(wean["cage_litter"].dam)))
         if cage is not None and (cage.genotype_summary or "").strip() and len(body_parts) == 1:
             body_parts.append(gettext("Genotype: %(genotype)s", genotype=cage.genotype_summary.strip()))
         where = ""
@@ -1713,28 +1722,31 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
     # ----- Old-mouse sac threshold (>= 30 weeks via litter DOB) ----------
     # Mice link to litters; we walk mice whose litter has a DOB. We skip
     # any mouse that's already dead.
-    threshold_days = SAC_THRESHOLD_WEEKS * 7
-    mice = session.scalars(
-        select(MouseRecord)
-        .join(LitterRecord, MouseRecord.litter_id_fk == LitterRecord.id)
-        .where(LitterRecord.date_of_birth.is_not(None))
-        .where(MouseRecord.date_of_death.is_(None))
-    ).all()
-    for m in mice:
-        dob = m.litter.date_of_birth if m.litter else None
-        if dob is None:
-            continue
-        threshold_day = dob + timedelta(days=threshold_days)
+    # Only the mice born early enough to reach it in the window, and only
+    # the three values used: a colony's living mice would otherwise each
+    # load their litter, one query a litter.
+    threshold = timedelta(days=SAC_THRESHOLD_WEEKS * 7)
+    sac_query = (select(MouseRecord.id, MouseRecord.mouse_id, LitterRecord.date_of_birth)
+                 .join(LitterRecord, MouseRecord.litter_id_fk == LitterRecord.id)
+                 .where(LitterRecord.date_of_birth.is_not(None))
+                 .where(MouseRecord.date_of_death.is_(None))
+                 .order_by(MouseRecord.id))
+    if start_dt:
+        sac_query = sac_query.where(LitterRecord.date_of_birth >= _day(start_dt, date.today()) - threshold)
+    if end_dt:
+        sac_query = sac_query.where(LitterRecord.date_of_birth <= _day(end_dt, date.today()) - threshold)
+    for m_id, m_number, dob in session.execute(sac_query):
+        threshold_day = dob + threshold
         if not _in_window(threshold_day):
             continue
         items.append(_auto_item(
-            kind_tag="sac", anchor_id=m.id,
-            title=gettext("Sac reminder · M%(mouse)s", mouse=m.mouse_id),
+            kind_tag="sac", anchor_id=m_id,
+            title=gettext("Sac reminder · M%(mouse)s", mouse=m_number),
             color="#f9a8a8",  # rose — gentle warning
             day=threshold_day,
             body=gettext("%(weeks)s weeks since litter DOB (%(date)s)", weeks=SAC_THRESHOLD_WEEKS, date=dob.isoformat()),
             source="mouse",
-            href=f"/colony?view=mice&scope=all&q={m.mouse_id}",
+            href=f"/colony?view=mice&scope=all&q={m_number}",
         ))
 
     # ----- Experiment start + end --------------------------------------

@@ -238,6 +238,7 @@
           </tbody>
         </table>
       </div>
+      <template data-row-forms>
       {% for r in rows %}
         <form id="unit-{{ r.unit.id }}" method="post" action="{{ url_for('stocks.update_unit', key=key, unit_id=r.unit.id) }}" data-record-label="{{ r.code }}">
           {% for name in ['genotype', 'purpose', 'female_genotype', 'male_genotype', 'owner', 'set_up_on', 'notes', 'rack_id', 'position'] %}
@@ -245,6 +246,7 @@
           {% endfor %}
         </form>
       {% endfor %}
+      </template>
       <div class="dt-bottom-bar">
         {{ sheet_ui.quick_add(url_for('stocks.save_unit', key=key), _('New %(noun)s', noun=unit_w), new_payload) }}
         <span class="dt-bottom-count dt-count">{{ rows|length }} {{ units_w }}</span>
@@ -863,7 +865,7 @@
     // A move on the grid updates the row (cells, stale-guard copies, payload).
     document.addEventListener('rack-grid:moved', (event) => {
       const { id, rackId, position } = event.detail || {};
-      const form = document.getElementById(`unit-${id}`);
+      const form = BioRowForms.get(`unit-${id}`);
       if (!form) return;
       const set = (name, v) => { const el = document.querySelector(`[form="unit-${id}"][name="${name}"]`); if (el) el.value = v || ''; };
       set('rack_id', rackId);

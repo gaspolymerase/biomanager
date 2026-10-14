@@ -491,6 +491,7 @@
          copies are what the row showed: the server only takes a status,
          received date or box that differs, so a row gone stale after a
          board drag or grid move cannot undo it (app/formutil.py). #}
+      <template data-row-forms>
       {% for r in rows %}
         <form id="inv-{{ r.item.id }}" method="post" action="{{ url_for('inventory.update_item', key=key, item_id=r.item.id) }}"
               data-record-label="{{ noun }} #{{ r.item.number }}">
@@ -504,6 +505,7 @@
           {% endif %}
         </form>
       {% endfor %}
+      </template>
       <div class="dt-bottom-bar">
         {# An empty row at once, unless a new one needs fields filled in first
            (an order's name, vendor…): then its form. #}
@@ -1047,7 +1049,7 @@
 
     /* The server's view of a row: cells, "_was" copies, pills, dot, lock. */
     function applyRow(id, answer) {
-      const form = document.getElementById(`inv-${id}`);
+      const form = BioRowForms.get(`inv-${id}`);
       const row = answer.row || {};
       Object.entries(row.values || {}).forEach(([name, value]) => {
         const v = value == null ? '' : String(value);

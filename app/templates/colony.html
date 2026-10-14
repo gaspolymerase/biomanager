@@ -344,7 +344,9 @@
         </div>
 
         {# One form per row. They live outside the table so the markup stays
-           valid; each cell joins its row's form through form="…". #}
+           valid; each cell joins its row's form through form="…". They
+           join the page when used (static/row-forms.js, BioRowForms). #}
+        <template data-row-forms>
         {% for row in mouse_rows %}
           <form id="mouse-update-{{ row.id }}" method="post" action="{{ url_for('update_mouse', mouse_row_id=row.id) }}"
                 data-mouse-label="{{ row.mouse_id }}">
@@ -363,6 +365,7 @@
             {% endfor %}
           </form>
         {% endfor %}
+        </template>
 
         <div class="dt-bottom-bar">
           {{ sheet_ui.quick_add(url_for('create_blank_mouse'), _('New mouse')) }}
@@ -852,6 +855,7 @@
                not write its old value back over them (app/formutil.py). A
                mouse form carries only the fields its sub-row shows, so it
                never moves the mouse or touches its dates. #}
+            <template data-row-forms>
             {% for cage in cage_rows %}
               <form id="cage-update-{{ cage.id }}" method="post" action="{{ url_for('update_cage', cage_row_id=cage.id) }}"
                     data-record-label="{{ _('cage %(id)s', id=cage.cage_id) }}">
@@ -871,6 +875,7 @@
                 </form>
               {% endfor %}
             {% endfor %}
+            </template>
 
             <div class="dt-bottom-bar">
               {{ sheet_ui.quick_add(url_for('create_cage'), _('New cage'), {'count': 1}) }}
@@ -1038,6 +1043,8 @@
               </tr>
             </thead>
             <tbody>
+              {# One link made for all the pups: url_for for each was most of the tab's time. #}
+              {% set pup_url = url_for('colony', view='mice', scope='all') ~ '&q=' %}
               {% for litter in litter_rows %}
                 {% set f = 'litter-update-' ~ litter.id %}
                 {% set locked = not litter.editable %}
@@ -1057,7 +1064,7 @@
                   <td><input class="sheet-num" type="number" min="0" max="99" name="total_pups" form="{{ f }}" value="{{ litter.total_pups or '' }}" data-autosave="1" aria-label="{{ _('Pups') }}" {% if locked %}disabled{% endif %}></td>
                   <td class="whitespace-normal" title="{{ _('%(alive)s of %(total)s alive', alive=alive, total=litter.mice|length) }}">
                     {% for mouse in litter.mice %}
-                      <a class="litter-mouse" href="{{ url_for('colony', view='mice', scope='all', q=mouse.mouse_id) }}">
+                      <a class="litter-mouse" href="{{ pup_url }}{{ mouse.mouse_id }}">
                         {%- set st = life_stage('mouse', mouse.age_days) %}
                         <span class="life-dot{% if mouse.active %} is-alive{% endif %}"{% if st %} data-stage="{{ st }}"{% endif %}></span>{{ mouse.mouse_id }}{% if mouse.gender %} {{ mouse.gender|tr }}{% endif %}</a>
                     {%- else %}<span class="sheet-empty">{{ _('none yet') }}</span>{% endfor %}
@@ -1081,10 +1088,12 @@
             </tbody>
           </table>
         </div>
+        <template data-row-forms>
         {% for litter in litter_rows %}
           <form id="litter-update-{{ litter.id }}" method="post" action="{{ url_for('update_litter', litter_row_id=litter.id) }}"
                 data-record-label="{{ _('litter %(id)s', id=litter.litter_id) }}"></form>
         {% endfor %}
+        </template>
         <div class="dt-bottom-bar">
           {{ sheet_ui.quick_add(url_for('create_litter'), _('New litter'), {'scope': scope}) }}
           <span class="dt-bottom-count dt-count">{{ ngettext('%(num)s litter', '%(num)s litters', litter_rows|length) }}</span>
@@ -1385,10 +1394,12 @@
             </tbody>
           </table>
         </div>
+        <template data-row-forms>
         {% for strain in strain_rows %}
           <form id="strain-update-{{ strain.id }}" method="post" action="{{ url_for('update_strain', strain_row_id=strain.id) }}"
                 data-record-label="{{ _('strain %(name)s', name=strain.strain_name) }}"></form>
         {% endfor %}
+        </template>
         <div class="dt-bottom-bar">
           {# A strain needs its name first, so this opens its form. #}
           <button type="button" class="dt-bottom-action is-primary" data-record-edit="strain-dialog" data-record-payload="{}">
@@ -1939,7 +1950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function autosaveInput(input, options) {
   const immediate = !!(options && options.immediate);
   const formId = input.getAttribute('form') || input.closest('form')?.id;
-  const form = formId ? document.getElementById(formId) : input.closest('form');
+  const form = formId ? BioRowForms.get(formId) : input.closest('form');
   if (!form) return;
   if (!form.dataset.autosaveKey) {
     form.dataset.autosaveKey = formId || `autosave-${Math.random().toString(36).slice(2)}`;
@@ -2011,7 +2022,7 @@ async function confirmDobChange(input) {
   const to = input.value || '';
   if (to === from) return false;
   const formId = input.getAttribute('form');
-  const form = formId ? document.getElementById(formId) : input.closest('form');
+  const form = formId ? BioRowForms.get(formId) : input.closest('form');
   if (input.hasAttribute('data-litter-dob')) {
     // A litter's date of birth is the age of every mouse in it.
     const n = Number(input.dataset.miceCount || 0);
@@ -2125,7 +2136,7 @@ function syncCage(state, sourceForm) {
     setValue(tr.querySelector('select[name="cage_rack"]'), state.rack_id);
     setValue(tr.querySelector('input[name="cage_position"]'), state.position);
     setValue(tr.querySelector('input[name="cage_location"]'), state.location);
-    const rowForm = document.getElementById(`mouse-update-${tr.dataset.id}`);
+    const rowForm = BioRowForms.get(`mouse-update-${tr.dataset.id}`);
     if (rowForm) {
       setValue(rowForm.querySelector('[name="cage_rack_was"]'), state.rack_id);
       setValue(rowForm.querySelector('[name="cage_position_was"]'), state.position);
@@ -2150,7 +2161,7 @@ function syncCage(state, sourceForm) {
    later edit on the row does not post the old position back. */
 document.addEventListener('rack-grid:moved', (event) => {
   const { id, rackId, position } = event.detail || {};
-  const form = document.getElementById(`cage-update-${id}`);
+  const form = BioRowForms.get(`cage-update-${id}`);
   if (!form) return;
   setValue(document.querySelector(`[form="${form.id}"][name="rack_id"]`), rackId || '');
   setValue(document.querySelector(`[form="${form.id}"][name="position"]`), position || '');

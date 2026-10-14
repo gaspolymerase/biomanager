@@ -54,6 +54,8 @@
     <script src="{{ url_for('static', filename='actions.js') }}?v={{ asset_version('actions.js') }}"></script>
     {# In-app confirm / prompt / alert (BioDialog), for every page script. #}
     <script src="{{ url_for('static', filename='dialogs.js') }}?v={{ asset_version('dialogs.js') }}"></script>
+    {# A sheet's row forms, put on the page when used (BioRowForms), for every page script. #}
+    <script src="{{ url_for('static', filename='row-forms.js') }}?v={{ asset_version('row-forms.js') }}"></script>
     {% block head_extra %}{% endblock %}
 
     <script nonce="{{ csp_nonce() }}">

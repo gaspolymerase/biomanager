@@ -335,6 +335,7 @@
        The _was copies are what the row showed: rack, position and owner
        also change from the rack grid and the dialog, and a stale row must
        not write its old value back over them (app/formutil.py). #}
+    <template data-row-forms>
     {% for tr in tank_rows %}
       <form id="utank-{{ tr.row.id }}" method="post" action="{{ url_for('zebrafish_update_tank', tank_row_id=tr.row.id) }}" data-record-label="{{ _('tank %(id)s', id=tr.row.tank_id) }}">
         <input type="hidden" name="rack_id_fk_was" value="{{ tr.row.rack_id_fk or '' }}">
@@ -342,6 +343,7 @@
         <input type="hidden" name="owner_was" value="{{ tr.row.owner }}">
       </form>
     {% endfor %}
+    </template>
     {{ sheet_bottom(ngettext('%(num)s tank', '%(num)s tanks', tank_rows|length), sheet_ui.quick_add(url_for('zebrafish_create_tank'), _('New tank'))) }}
 
     <div class="selbar" data-selection-bar hidden>
@@ -654,8 +656,9 @@
                                     stage=st, stage_title=life_stage_title('zebrafish', st)) }}
               </td>
               <td>
-                <select class="ident font-semibold" form="{{ f }}" name="tank_id_fk" data-autosave="1" aria-label="{{ _('Tank') }}" {% if locked %}disabled{% endif %}>
-                  {{ tank_options(x.tank_id_fk) }}
+                {# Its own tank only: the rest come from choices-zf-tanks, below the table, when it is used (static/shell.js, fillChoices). #}
+                <select class="ident font-semibold" form="{{ f }}" name="tank_id_fk" data-autosave="1" data-choices="zf-tanks" aria-label="{{ _('Tank') }}" {% if locked %}disabled{% endif %}>
+                  {% if fr.tank %}<option value="{{ fr.tank.id }}" selected>{{ fr.tank.tank_id }}</option>{% endif %}
                 </select>
               </td>
               <td>
@@ -705,9 +708,12 @@
         </tbody>
       </table>
     </div>
+    <template id="choices-zf-tanks">{{ tank_options() }}</template>
+    <template data-row-forms>
     {% for fr in fish_rows %}
       <form id="ufish-{{ fr.row.id }}" method="post" action="{{ url_for('zebrafish_update_fish', fish_row_id=fr.row.id) }}" data-record-label="{{ _('fish row #%(id)s', id=fr.row.id) }}"></form>
     {% endfor %}
+    </template>
     {# Fish need their tank first, so this opens the form. #}
     {{ sheet_bottom(ngettext('%(num)s row', '%(num)s rows', fish_rows|length), new_bottom(_('New fish'), 'fish-dialog', {'count': 1, 'sex': 'mixed', 'status': 'alive'})) }}
 
@@ -863,9 +869,11 @@
         </tbody>
       </table>
     </div>
+    <template data-row-forms>
     {% for cr in clutch_rows %}
       <form id="uclutch-{{ cr.row.id }}" method="post" action="{{ url_for('zebrafish_update_clutch', clutch_row_id=cr.row.id) }}" data-record-label="{{ _('clutch %(id)s', id=cr.row.clutch_id) }}"></form>
     {% endfor %}
+    </template>
     {{ sheet_bottom(ngettext('%(num)s clutch', '%(num)s clutches', clutch_rows|length), sheet_ui.quick_add(url_for('zebrafish_create_clutch'), _('New clutch'))) }}
 
     <div class="selbar" data-selection-bar hidden>
@@ -999,9 +1007,11 @@
         </tbody>
       </table>
     </div>
+    <template data-row-forms>
     {% for lr in line_rows %}
       <form id="uline-{{ lr.row.id }}" method="post" action="{{ url_for('zebrafish_update_line', line_id=lr.row.id) }}" data-record-label="{{ _('line %(name)s', name=lr.row.name) }}"></form>
     {% endfor %}
+    </template>
     {{ sheet_bottom(ngettext('%(num)s line', '%(num)s lines', line_rows|length), new_bottom(_('New line'), 'line-dialog', {'owner': me})) }}
 
     <div class="selbar" data-selection-bar hidden>

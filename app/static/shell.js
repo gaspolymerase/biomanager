@@ -353,6 +353,31 @@
 
   /* ------------------------------------------------------------------ init */
 
+  /* A long list of choices shared by every row of a sheet (a fish row's
+     Tank: every tank of the lab) is sent once, as
+     <template id="choices-<key>">, and each row's
+     <select data-choices="<key>"> holds only its own choice until it is
+     used: the page was otherwise that list once a row, megabytes of it. */
+  function fillChoices(select) {
+    if (!select || !select.dataset || !select.dataset.choices || select.dataset.choicesFilled) return;
+    const list = document.getElementById('choices-' + select.dataset.choices);
+    if (!list) return;
+    select.dataset.choicesFilled = '1';
+    const value = select.value;
+    const own = select.selectedOptions[0];
+    const options = list.content.cloneNode(true);
+    const listed = Array.from(options.querySelectorAll('option')).some((o) => o.value === value);
+    select.replaceChildren(options);
+    if (own && !listed) select.prepend(own);
+    select.value = value;
+  }
+  ['pointerdown', 'mousedown', 'touchstart', 'focusin', 'keydown'].forEach((type) => {
+    document.addEventListener(type, (event) => {
+      const el = event.target;
+      if (el && el.tagName === 'SELECT' && el.dataset.choices) fillChoices(el);
+    }, { capture: true, passive: true });
+  });
+
   function init() {
     shareNavWithDesktop();
     setupRailMenus();
@@ -716,7 +741,7 @@
     init();
   }
 
-  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer, desktopCall, whenDesktop };
+  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer, desktopCall, whenDesktop, fillChoices };
 })();
 
 /* Confirm before a destructive submit: <form data-confirm="Delete V12?">,

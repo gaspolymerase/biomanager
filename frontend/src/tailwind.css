@@ -1320,6 +1320,11 @@
      stay in view under the toolbar (data-table.js sets .is-fit). */
   .dt-scroll.is-fit { overflow: visible; }
   .dt-scroll.is-fit .dt thead th { top: var(--dt-toolbar-h, 0px); }
+  /* Until data-table.js has drawn the first page (.dt-ready), the rows past
+     it are not drawn: the browser would otherwise lay out every row of a
+     long sheet, thousands of fields, before the page could be used. 100 is
+     the sheets' first page. */
+  .data-table-card[data-table-id]:not(.dt-ready) .dt > tbody > tr:nth-child(n+101) { display: none; }
 
   .dt { @apply w-full border-collapse text-[12px]; }
   .dt th { @apply relative; }

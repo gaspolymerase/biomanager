@@ -382,7 +382,35 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   most two), and a toast names the first and last rows filled.
 - A sheet's search (`data-table.js`, `_rowText`) reads a menu by its chosen
   option only; the row's `textContent` would hold every option, so a box
-  or status name matched every row.
+  or status name matched every row. Each row's text is kept while someone
+  types a search (`_texts`), and forgotten on the search box's focus and
+  on any edit, save or rack move in the sheet.
+- Each row of a sheet saves through a form of its own, outside the table,
+  that its cells join with `form="…"`. The forms come inside
+  `<template data-row-forms>`, and `static/row-forms.js` (loaded in the
+  head, before any page script) puts a row's form on the page, before its
+  template, when one of its cells is pressed, focused, typed or pasted
+  into. Anything that looks a row's form up by its id uses
+  `BioRowForms.get(id)` (null if there is none); its cells are found by
+  `[form="…"]` as before, whether or not the form has joined. Sent as
+  part of the page, a thousand row forms made Chromium (Chrome, Edge, the
+  Windows app) walk the whole page once for each form's fields as it
+  loaded, up to two seconds on a sheet of a few hundred rows, and the
+  square of that as the sheet grows. `_revealHashTarget` finds the row of
+  a `#mouse-update-39` link by its cells.
+- A long list of choices the same on every row (a fish row's **Tank**: every
+  tank of the lab) is sent once, as `<template id="choices-<key>">`, and each
+  row's `<select data-choices="<key>">` holds only its own choice until it
+  is pressed, focused or typed in (`BiomanagerShell.fillChoices`,
+  `static/shell.js`; `sheet.js`'s pasted blocks fill it before matching).
+  On the fish sheet it was the tank list once a row: 130 KB a row in a lab
+  of 3,000 tanks.
+- Rows past a sheet's first page (100) are `display: none` from the
+  stylesheet until `data-table.js` has drawn it
+  (`.data-table-card[data-table-id]:not(.dt-ready)`): the browser would
+  otherwise style and lay out every row first. `render()` then touches only
+  the rows whose state changes, and moves rows into a new order only when
+  the order has changed (a sort, a search, a chip).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
@@ -409,8 +437,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
 - The page scrolls, not the sheet. `.data-table-card` is `overflow: clip`
   (not a scroller), so its `.dt-toolbar` sticks to the top of
   `.shell-scroll` and its `.dt-bottom-bar` to the bottom;
-  `_wireStickyParts` puts their heights on the card as `--dt-toolbar-h`
-  and `--dt-bottom-h` (the selection bar sits above the bottom bar). A
+  `_wireStickyParts` puts their heights where they are used, as
+  `--dt-toolbar-h` on the table's header row and `--dt-bottom-h` on the
+  selection bar (which sits above the bottom bar): set on the card, a new
+  value restyled every row of the sheet. A
   table no wider than its card gets `.dt-scroll.is-fit` (`overflow:
   visible`), and its header row is CSS-sticky under the toolbar; a wider
   one scrolls sideways in `.dt-scroll`, and its header cells are moved
