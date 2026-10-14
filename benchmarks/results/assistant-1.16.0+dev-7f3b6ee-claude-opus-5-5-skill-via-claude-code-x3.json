@@ -1,0 +1,1374 @@
+{
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "context": "skill",
+  "date": "2026-10-13",
+  "summary": {
+    "by_scenario": {
+      "vague": {
+        "correct": 3,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "litter": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 2,
+        "wrong": 0,
+        "error": 0
+      },
+      "move": {
+        "correct": 1,
+        "asked": 0,
+        "missing": 2,
+        "wrong": 0,
+        "error": 0
+      },
+      "weight": {
+        "correct": 3,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "died": {
+        "correct": 3,
+        "asked": 0,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "ambiguous": {
+        "correct": 0,
+        "asked": 3,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      },
+      "unknown": {
+        "correct": 0,
+        "asked": 3,
+        "missing": 0,
+        "wrong": 0,
+        "error": 0
+      }
+    },
+    "total": {
+      "correct": 11,
+      "asked": 6,
+      "missing": 4,
+      "wrong": 0,
+      "error": 0
+    },
+    "runs": 21
+  },
+  "runs": [
+    {
+      "scenario": "vague",
+      "says": "I want to change something in BioManager",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 6,
+        "output": 402,
+        "cache_read": 41915,
+        "cache_creation": 4034
+      },
+      "cost_usd": 0.0887,
+      "model_turns": 3,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "litter",
+      "says": "Litter in cage 202 yesterday, 7 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 202",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/202"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Litter in cage 202 yesterday, 7 pups",
+            "changes": [
+              {
+                "action": "litter_born",
+                "target": {
+                  "kind": "cage",
+                  "id": 2
+                },
+                "fields": {
+                  "date": "2026-10-12",
+                  "pups": 7
+                },
+                "evidence": {
+                  "quote": "Litter in cage 202 yesterday, 7 pups."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 576,
+        "cache_read": 59028,
+        "cache_creation": 5056
+      },
+      "cost_usd": 0.0638,
+      "model_turns": 5,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "move",
+      "says": "Moved mouse 4 and mouse 5 from cage 288 to 291 this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 4",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 5",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 288",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 291",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Moved mouse 4 and mouse 5 from cage 288 to 291 this morning",
+            "changes": [
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 4
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 4
+                    },
+                    {
+                      "kind": "mouse",
+                      "id": 5
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Moved mouse 4 and mouse 5 from cage 288 to 291 this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 718,
+        "cache_read": 42885,
+        "cache_creation": 5475
+      },
+      "cost_usd": 0.0668,
+      "model_turns": 7,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "weight",
+      "says": "Weighed mouse 7: 24.1 g.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 7",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weighed mouse 7: 24.1 g",
+            "changes": [
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 7
+                },
+                "fields": {
+                  "grams": 24.1,
+                  "date": "2026-10-13"
+                },
+                "evidence": {
+                  "quote": "Weighed mouse 7: 24.1 g."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 424,
+        "cache_read": 42211,
+        "cache_creation": 4682
+      },
+      "cost_usd": 0.0544,
+      "model_turns": 4,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "died",
+      "says": "mouse 9 in cage 412 was found dead this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 9",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 412",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/9"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 9 in cage 412 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": {
+                  "id": 9,
+                  "kind": "mouse"
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "id": 9,
+                      "kind": "mouse"
+                    }
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "Found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 9 in cage 412 was found dead this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 9 in cage 412 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "fields": {
+                  "mice": [
+                    {
+                      "id": 9,
+                      "kind": "mouse"
+                    }
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "Found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 9 in cage 412 was found dead this morning."
+                }
+              }
+            ],
+            "replaces": 4
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 10,
+        "output": 1083,
+        "cache_read": 77284,
+        "cache_creation": 5902
+      },
+      "cost_usd": 0.0844,
+      "model_turns": 7,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "ambiguous",
+      "says": "Moved the breeder from 502 to 591.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 502",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 591",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/502"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/11"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/12"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 10,
+        "output": 672,
+        "cache_read": 77066,
+        "cache_creation": 5275
+      },
+      "cost_usd": 0.1341,
+      "model_turns": 8,
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "unknown",
+      "says": "Weaned cage 699 today, 6 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 699",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "search",
+          "input": {
+            "q": "699"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 559,
+        "cache_read": 58798,
+        "cache_creation": 4443
+      },
+      "cost_usd": 0.1092,
+      "model_turns": 5,
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "vague",
+      "says": "I want to change something in BioManager",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 6,
+        "output": 500,
+        "cache_read": 41977,
+        "cache_creation": 4159
+      },
+      "cost_usd": 0.0934,
+      "model_turns": 3,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "litter",
+      "says": "Litter in cage 202 yesterday, 7 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 202",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/202"
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 454,
+        "cache_read": 42259,
+        "cache_creation": 4443
+      },
+      "cost_usd": 0.0531,
+      "model_turns": 4,
+      "outcome": "missing",
+      "why": [
+        "nothing was proposed"
+      ]
+    },
+    {
+      "scenario": "move",
+      "says": "Moved mouse 17 and mouse 18 from cage 288 to 291 this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 17",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 18",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 288",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 291",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/17"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/18"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/288"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/291"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Moved mouse 17 and mouse 18 from cage 288 to 291 this morning",
+            "changes": [
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 4
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 17
+                    },
+                    {
+                      "kind": "mouse",
+                      "id": 18
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Moved mouse 17 and mouse 18 from cage 288 to 291 this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 8,
+        "output": 1437,
+        "cache_read": 60912,
+        "cache_creation": 6831
+      },
+      "cost_usd": 0.0956,
+      "model_turns": 11,
+      "outcome": "missing",
+      "why": [
+        "nothing was proposed"
+      ]
+    },
+    {
+      "scenario": "weight",
+      "says": "Weighed mouse 20: 24.1 g.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 20",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weighed mouse 20: 24.1 g",
+            "changes": [
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "kind": "mouse",
+                  "id": 20
+                },
+                "fields": {
+                  "grams": 24.1,
+                  "date": "2026-10-13"
+                },
+                "evidence": {
+                  "quote": "Weighed mouse 20: 24.1 g."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 406,
+        "cache_read": 42010,
+        "cache_creation": 5009
+      },
+      "cost_usd": 0.0566,
+      "model_turns": 4,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "died",
+      "says": "mouse 22 in cage 412 was found dead this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 22",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 412",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/22"
+          },
+          "error": null
+        },
+        {
+          "tool": "list",
+          "input": {
+            "path": "mice",
+            "filters": {
+              "alive": "true",
+              "cage": "412"
+            }
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 22 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": {
+                  "id": 22,
+                  "kind": "mouse"
+                },
+                "fields": {
+                  "mice": [
+                    22
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "Found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 22 in cage 412 was found dead this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 22 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "fields": {
+                  "mice": [
+                    22
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "Found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 22 in cage 412 was found dead this morning."
+                }
+              }
+            ],
+            "replaces": 8
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 14,
+        "output": 1785,
+        "cache_read": 113477,
+        "cache_creation": 7210
+      },
+      "cost_usd": 0.1849,
+      "model_turns": 9,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "ambiguous",
+      "says": "Moved the breeder from 502 to 591.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 502",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 591",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/502"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/11"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/12"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 10,
+        "output": 663,
+        "cache_read": 77246,
+        "cache_creation": 5357
+      },
+      "cost_usd": 0.1356,
+      "model_turns": 8,
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "unknown",
+      "says": "Weaned cage 699 today, 6 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 699"
+          },
+          "error": null
+        },
+        {
+          "tool": "search",
+          "input": {
+            "q": "699"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 493,
+        "cache_read": 58865,
+        "cache_creation": 4469
+      },
+      "cost_usd": 0.1078,
+      "model_turns": 5,
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "vague",
+      "says": "I want to change something in BioManager",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "list_captures",
+          "input": {},
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 615,
+        "cache_read": 58764,
+        "cache_creation": 4393
+      },
+      "cost_usd": 0.1016,
+      "model_turns": 4,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "litter",
+      "says": "Litter in cage 202 yesterday, 7 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 202",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/202"
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 412,
+        "cache_read": 42333,
+        "cache_creation": 4513
+      },
+      "cost_usd": 0.0528,
+      "model_turns": 4,
+      "outcome": "missing",
+      "why": [
+        "nothing was proposed"
+      ]
+    },
+    {
+      "scenario": "move",
+      "says": "Moved mouse 30 and mouse 31 from cage 288 to 291 this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 30",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 31",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 291",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 288",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/30"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/31"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/291"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/288"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Moved mouse 30 and mouse 31 from cage 288 to 291 this morning",
+            "changes": [
+              {
+                "action": "mice_move",
+                "target": {
+                  "kind": "cage",
+                  "id": 4
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "kind": "mouse",
+                      "id": 30
+                    },
+                    {
+                      "kind": "mouse",
+                      "id": 31
+                    }
+                  ]
+                },
+                "evidence": {
+                  "quote": "Moved mouse 30 and mouse 31 from cage 288 to 291 this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "discard_proposal",
+          "input": {
+            "proposal_id": 10
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 14,
+        "output": 1925,
+        "cache_read": 118195,
+        "cache_creation": 7971
+      },
+      "cost_usd": 0.2386,
+      "model_turns": 13,
+      "outcome": "missing",
+      "why": [
+        "nothing was proposed"
+      ]
+    },
+    {
+      "scenario": "weight",
+      "says": "Weighed mouse 33: 24.1 g.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 33",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Weighed mouse 33: 24.1 g",
+            "changes": [
+              {
+                "action": "mouse_weight",
+                "target": {
+                  "id": 33,
+                  "kind": "mouse"
+                },
+                "fields": {
+                  "grams": 24.1,
+                  "date": "2026-10-13"
+                },
+                "evidence": {
+                  "quote": "Weighed mouse 33: 24.1 g."
+                }
+              }
+            ]
+          },
+          "error": null
+        }
+      ],
+      "questions": 0,
+      "usage": {
+        "input": 6,
+        "output": 392,
+        "cache_read": 42058,
+        "cache_creation": 5064
+      },
+      "cost_usd": 0.0568,
+      "model_turns": 4,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "died",
+      "says": "mouse 35 in cage 412 was found dead this morning.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "mouse 35",
+            "kinds": "mouse"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 412",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/35"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/412"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/10"
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 35 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "target": {
+                  "id": 35,
+                  "kind": "mouse"
+                },
+                "fields": {
+                  "mice": [
+                    {
+                      "id": 35,
+                      "kind": "mouse"
+                    }
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 35 in cage 412 was found dead this morning."
+                }
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "tool": "propose_changes",
+          "input": {
+            "summary": "Mouse 35 found dead this morning",
+            "changes": [
+              {
+                "action": "mice_died",
+                "fields": {
+                  "mice": [
+                    {
+                      "id": 35,
+                      "kind": "mouse"
+                    }
+                  ],
+                  "date": "2026-10-13",
+                  "reason": "found dead"
+                },
+                "evidence": {
+                  "quote": "mouse 35 in cage 412 was found dead this morning."
+                }
+              }
+            ],
+            "replaces": 12
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 14,
+        "output": 1837,
+        "cache_read": 114639,
+        "cache_creation": 7448
+      },
+      "cost_usd": 0.1911,
+      "model_turns": 10,
+      "outcome": "correct",
+      "why": []
+    },
+    {
+      "scenario": "ambiguous",
+      "says": "Moved the breeder from 502 to 591.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 502",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 591",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "cages/502"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/11"
+          },
+          "error": null
+        },
+        {
+          "tool": "get",
+          "input": {
+            "path": "mice/12"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 10,
+        "output": 736,
+        "cache_read": 77426,
+        "cache_creation": 5464
+      },
+      "cost_usd": 0.1394,
+      "model_turns": 8,
+      "outcome": "asked",
+      "why": []
+    },
+    {
+      "scenario": "unknown",
+      "says": "Weaned cage 699 today, 6 pups.",
+      "calls": [
+        {
+          "tool": "lab_overview",
+          "input": {},
+          "error": null
+        },
+        {
+          "tool": "resolve",
+          "input": {
+            "q": "cage 699",
+            "kinds": "cage"
+          },
+          "error": null
+        },
+        {
+          "tool": "search",
+          "input": {
+            "q": "699"
+          },
+          "error": null
+        }
+      ],
+      "questions": 1,
+      "usage": {
+        "input": 8,
+        "output": 535,
+        "cache_read": 59026,
+        "cache_creation": 4571
+      },
+      "cost_usd": 0.1109,
+      "model_turns": 5,
+      "outcome": "asked",
+      "why": []
+    }
+  ],
+  "runner": "claude CLI (claude -p, signed-in account; benchmark tools over local MCP)",
+  "tokens": {
+    "input": 178,
+    "output": 16624,
+    "cache_read": 1348374,
+    "cache_creation": 111769
+  },
+  "cost_usd_reported": 2.2196,
+  "note": "Passes 2 and 3 don't count. All three passes ran on one database, so the second and third couldn't make their own cages 202, 288 and 291 (cage numbers are unique) and their people talked about the first pass's cages. The 4 missing are those: the assistant declined to record a litter already there and to move mice into another person's cage. Since then each conversation has a database of its own (benchmarks/assistant.py, run_isolated)."
+}

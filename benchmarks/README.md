@@ -81,13 +81,18 @@ member's would be, turns what they say into records.
 ```
 
 It needs an Anthropic API key (`ANTHROPIC_API_KEY`, or a profile from
-`ant auth login`); `--check` builds every scenario without a model.
+`ant auth login`), or, with `--via claude-code`, a signed-in `claude` CLI
+instead: the same prompt and tools go through `claude -p`, with Claude
+Code's own tools, settings and plugins left out (it still frames the
+conversation a little, so compare runs made the same way). `--check` builds
+every scenario without a model.
 `--model` picks the model (default `claude-opus-5-5`), `--context` what it
 knows of BioManager besides the tools: the plugin's skill (default), only
 the MCP server's instructions, or nothing.
 
-**How.** Each scenario makes a small lab of its own through the app's pages
-(as the tests do), then says one thing a person would ("Litter in cage 202
+**How.** Each conversation runs in a process of its own, on a fresh
+throwaway database. Each scenario makes a small lab there through the app's
+pages (as the tests do), then says one thing a person would ("Litter in cage 202
 yesterday, 7 pups"; "Moved the breeder from 502 to 591", where two breeders
 could be meant; "I want to change something in BioManager"). The assistant
 gets exactly the tools an assistant app gets over MCP, as the person, with a
@@ -100,5 +105,30 @@ nothing wrongly: the right outcome when the words can't say); **missing**
 silently: the number that has to stay at zero).
 
 Results go to `results/assistant-<version>-<commit>-<model>-<context>.md`
-and `.json`, with each conversation's tool calls. A model's runs vary, so
+and `.json` (`-via-claude-code` and `--label` are added to the name), with
+each conversation's tool calls and the tokens used. A model's runs vary, so
 compare with `--repeat`.
+
+### Results so far
+
+Release 1.16.0, `claude-opus-5-5`, effort medium, through Claude Code
+(`results/assistant-1.16.0+dev-7f3b6ee-*`): every counted conversation
+ended **correct** or **asked**, and none **wrong**. (These runs came before each
+conversation had a database of its own, so a pass's scenarios saw each
+other's labs: in *unknown* the assistant offered the other scenarios'
+cages as possible matches, and still asked.)
+
+| Context | Runs | Correct | Asked | Missing | Wrong |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| The skill | 4 × 7 | 20 | 8 | 0 | 0 |
+| The server's instructions only | 1 × 7 | 5 | 2 | 0 | 0 |
+| Nothing but the tools | 1 × 7 | 5 | 2 | 0 | 0 |
+
+Each run gave the same outcome in each scenario, and the skill made no
+difference: these seven say too little to tell the contexts apart. In the
+`-x3` file all three passes shared one database: its second and third
+passes found the first pass's cages and are not counted (4 **missing** in
+litter and move, where the assistant rightly declined to record a litter
+already there or to move mice into another person's cage).
+After the change, `assistant-2.0.0+dev-f747cf8-…-isolation-check` ran
+litter and move twice each: all four **correct**.
