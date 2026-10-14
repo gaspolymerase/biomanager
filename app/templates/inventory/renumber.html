@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% set m = module %}
+{% set mlabel = m.label|tr %}
+{% set nouns = m.item_noun_plural|tr('inventory') %}
+
+{% block page_title %}{{ _('%(name)s · Renumber', name=mlabel) }}{% endblock %}
+{% block page_heading %}{{ _('Renumber %(name)s', name=mlabel) }}{% endblock %}
+{% block page_subtitle %}{{ _('Give every record a new #, in the order of one of its columns or as the number in its name. See each change before it is made; Batch history can undo it.') }}{% endblock %}
+{% block page_shell_class %}shell-page workbench{% endblock %}
+
+{% block page_actions %}
+  <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">{{ icon('back') }} {{ _('Back to %(name)s', name=mlabel) }}</a>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto grid max-w-3xl gap-4">
+  <form method="get" action="{{ url_for('inventory.renumber', key=m.key) }}" class="card" data-renumber-choose>
+    <header class="card-head"><h2>{{ icon('sort') }} {{ _('Number them by') }}</h2></header>
+    <div class="flex flex-wrap items-end gap-3 p-4">
+      <label class="field-label grow">{{ _('Column') }}
+        <select name="by">
+          {% for key, label in columns %}
+            <option value="{{ key }}" {% if key == by %}selected{% endif %}>{{ label|tr('inventory') }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field-label">{{ _('Sort order') }}
+        <select name="order">
+          <option value="ascending" {% if order == 'ascending' %}selected{% endif %}>{{ _('Ascending (1 first)') }}</option>
+          <option value="descending" {% if order == 'descending' %}selected{% endif %}>{{ _('Descending') }}</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">{{ icon('eye') }} {{ _('Preview') }}</button>
+      <p class="basis-full text-[12.5px] leading-snug text-muted">{{ _('By a column, the numbers read as numbers (B2 before B10), and empty values come last. By the number in the name, “B12” becomes #12: every name needs one, none twice, none missing.') }}</p>
+    </div>
+  </form>
+
+  {% if not choose %}
+    {% if plan.problems %}
+      <section class="card border-danger-200" data-renumber-problems>
+        <header class="card-head"><h2 class="text-danger-700">{{ icon('error') }} {{ _("Can't renumber them like this") }}</h2></header>
+        <ul class="grid gap-1 p-4 text-[13px] leading-snug">
+          {% for problem in plan.problems %}<li>{{ problem }}</li>{% endfor %}
+        </ul>
+      </section>
+    {% else %}
+      <section class="card" data-renumber-preview>
+        <header class="card-head"><h2>{{ _('%(changed)s of %(count)s %(nouns)s get a new #', changed=plan.moves|length, count=plan.count, nouns=nouns) }}</h2></header>
+        <div class="grid gap-1 px-4 pt-3 text-[12.5px] leading-snug text-warn-700">
+          <p>{{ icon('error') }} {{ _('Labels printed before show the old numbers; their QR codes still open the right items.') }}</p>
+          {% if locked %}<p>{{ icon('error') }} {{ _('Signed pages keep the old numbers in their links: %(pages)s.', pages=locked|join(', ')) }}</p>{% endif %}
+          <p class="text-muted">{{ _('Links to them in the notebook (@%(key)s 12), orders put into stock and the samples an experiment made follow the new numbers.', key=m.key) }}</p>
+        </div>
+        <div class="dt-scroll max-h-[60vh] p-4">
+          <table class="dt">
+            <thead><tr><th>{{ _('# now') }}</th><th>{{ _('New #') }}</th><th>{{ _('Name') }}</th></tr></thead>
+            <tbody>
+              {% for item, old, new in plan.moves %}
+                <tr data-renumber-row><td class="tabular-nums">#{{ old }}</td><td class="tabular-nums font-medium">#{{ new }}</td><td>{{ item.name }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <form method="post" action="{{ url_for('inventory.renumber', key=m.key) }}" class="flex justify-end gap-2 p-4 pt-0">
+          <input type="hidden" name="by" value="{{ by }}">
+          <input type="hidden" name="order" value="{{ order }}">
+          <a class="btn" href="{{ url_for('inventory.module', key=m.key) }}">{{ _('Cancel') }}</a>
+          <button type="submit" class="btn btn-primary">{{ icon('sort') }} {{ _('Renumber') }}</button>
+        </form>
+      </section>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

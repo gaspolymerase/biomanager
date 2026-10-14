@@ -966,6 +966,31 @@ pages are in `app/lab_routes.py`.
   → "10 mL"). It changes nothing on the page: `actions._used` reads it,
   so an amount used in its unit, or one of the same family (`UNITS`), comes
   off as part of one (2 mL of 10 mL ampoules is 0.2).
+- **Renumber:** an item's # (`number`, given by `next_number()`, the
+  highest + 1) follows the order items were made in, so after an import it
+  follows the file. **Renumber** (the sheet's More menu, for an admin or
+  the inventory's maker; `/inventory/<key>/renumber`) gives every item a new
+  #, by a column (`inventory_renumber.natural()`: B2 before B10, empty last;
+  ascending or descending) or `name_number`, the last number in each name
+  ("B12" is #12), refused, naming the items, when a name has none, two have
+  one number, or one is missing. The page previews each # now → new #; the
+  POST is one `audit.batch`. `inventory_renumber.apply()` first moves the
+  items to `-id` with a core UPDATE (not in the change history), then sets
+  each new number as an ordinary change, so no two items share a number
+  at any moment (there is no unique index on `(module_id_fk, number)`;
+  this keeps it safe if one comes) and undo puts each back. In the same
+  batch it rewrites what stores a number: an order's `stocked_as`, an
+  order's notes "Reorder of <inventory> #n" (`_same_thing` reads them), a
+  stock record's "From <order> #n", and the `number` in an experiment
+  day's `samples`. "@<key> n" in notebook pages, templates, comments and
+  pending inserts (every key the inventory has had; "@order n" for the
+  first orders inventory) has no change history, so `follow_text()`
+  rewrites it, resetting a page's live editors, and `undo.undo` calls
+  `inventory_renumber.undone()` for the numbers it puts back. A signed,
+  locked page and earlier versions keep the old numbers; the preview names
+  the locked pages, and says that printed labels show the old # (their QR
+  code holds the row id, so it still opens the item). The assistant's
+  `inventory_renumber` posts to the same page.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
   number as text. `_item_from_form` reads a number, `#42`, a name or a
@@ -2297,11 +2322,33 @@ page itself.
   are items in those inventories, and a primer pair goes through
   `/items/pair`. `notebook_page_new` makes the page through the notebook's
   Import, from a template or starter if given, starting with "Drafted by
-  <source>" and never signed. `notebook_page_append` adds a section with the
+  <source>" and never signed; with `folder` (kind protocol only) Import also
+  files it in that folder of the protocol library (`folder_id` on the
+  import form). `notebook_page_append` adds a section with the
   plain-text save and is refused while the page is open in the editor.
+  `notebook_page_change` fixes a page instead of making a new one: its
+  `title`, `kind`, `tags` and its text, all of it (`body`; a "Drafted by"
+  line at the old text's top stays) or parts (`edits`, each `{find,
+  replace}`, `find` there exactly once). It asks what the web editor asks
+  (`_editable_page`: may edit, not signed and locked, not open in the
+  editor), keeps the text as it was as a version of its own ("Before the
+  change by <source>", `POST /notebook/api/pages/<id>/versions`) so History
+  restores it, sets kind and tags through `/meta` and saves title and text
+  through the plain-text save. The notebook keeps no change history, so its
+  `shows` (an `Action`'s optional records of what the change history
+  doesn't keep, added to `records`) gives the before → after: title, kind,
+  tags and each part of the text that changes, by line (difflib).
+  `protocol_folder_new` posts to `/notebook/api/folders` (kind protocol;
+  a name a folder has already is refused) and `protocol_file` to
+  `/notebook/api/folders/file` (`folder: ""` takes it out); the kind
+  `protocol_folder` is a folder of the protocol library by name or id.
+  `/api/v1/notebook/pages/<id>` reads a page the person may open, with its
+  text, so an assistant edits from the page as it is now; resolve gives
+  pages that path, and `_pages_titled` only finds pages the person may read.
+  `inventory_renumber` posts to the inventory's **Renumber** page (below).
   `calendar_event_new` posts to `/calendar/items` and `equipment_booking_new`
-  to `/calendar/bookings`. The kinds `inventory_item`, `plasmid`, `equipment`
-  and `notebook_template` are found by `/resolve`, and `/vocabulary` lists
+  to `/calendar/bookings`. The kinds `inventory_item`, `plasmid`, `equipment`,
+  `notebook_page`, `protocol_folder` and `notebook_template` are found by `/resolve`, and `/vocabulary` lists
   each inventory's statuses, categories, columns and boxes, plasmid boxes,
   instruments and templates. `experiment_new` makes a **planned** experiment
   (*Planned experiments and changes from the plan*, above); no action starts
@@ -2329,7 +2376,10 @@ page itself.
   so SQLite's lock is not held across it.
 - `approve()` refuses unless pending; refuses when a record the preview
   changed (not one it made) has a change-history row after `audit_mark`
-  (`changed_since`, naming it); otherwise runs `actions.run(apply=True)`
+  (`changed_since`, naming it), or when a notebook page it changes (a
+  `notebook_pages` record from `shows`; the notebook keeps no change
+  history) was saved after the proposal was made (`_pages_changed_since`,
+  by `updated_at`); otherwise runs `actions.run(apply=True)`
   with `label()` / `description()` ("Proposal #12: … (via Claude)") and
   keeps it only if every change went through. `expire_old()` is applied
   lazily wherever proposals are read.

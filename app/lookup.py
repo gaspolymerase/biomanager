@@ -39,7 +39,8 @@ KIND_WORDS = {"cage": ["cage"], "mouse": ["mouse"], "mice": ["mouse"], "litter":
               "plate": ["stock_unit"], "fish": ["fish_line", "tank"], "cross": ["org_cross"],
               "cohort": ["org_cohort"], "experiment": ["experiment"], "page": ["notebook_page"],
               "plasmid": ["plasmid"], "item": ["inventory_item"], "instrument": ["equipment"],
-              "equipment": ["equipment"], "template": ["notebook_template"]}
+              "equipment": ["equipment"], "template": ["notebook_template"],
+              "protocol": ["notebook_page", "protocol_folder"], "folder": ["protocol_folder"]}
 # Words that name a kind of inventory ("primer 12"): only its items.
 INVENTORY_WORDS = {"sample": "samples", "order": "orders", "reagent": "reagents", "chemical": "chemicals",
                    "antibody": "antibodies", "virus": "viruses", "primer": "primers", "oligo": "primers",
@@ -68,6 +69,8 @@ def path_of(session, kind: str, row) -> str | None:
         return f"plasmids/{row.plasmid_id}"
     if kind == "experiment":
         return f"experiments/{row.id}"
+    if kind == "notebook_page":
+        return f"notebook/pages/{row.id}"
     if kind == "inventory_item" and session is not None:
         from .models import InventoryModule
         module = session.get(InventoryModule, row.module_id_fk)
@@ -175,12 +178,24 @@ def resolve(session, q: str, kinds: set[str] | None = None) -> list[dict]:
                             e.name.lower() == q.lower()))
     if want("notebook_page") and features.get("notebook", True):
         from .lab_notebook import accessible_filter
-        from .models import NotebookPage, NotebookTab
+        from .models import NotebookPage, NotebookPageInfo, NotebookTab
         stmt = accessible_filter(select(NotebookPage).join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
                                  .where(_match(NotebookPage.title, q)).order_by(NotebookPage.updated_at.desc())
                                  .limit(PER_KIND))
-        for p in session.scalars(stmt):
-            out.append(_hit("notebook_page", p, f"Page {p.title}", "Notebook", p.title.lower() == q.lower()))
+        pages = session.scalars(stmt).all()
+        kinds = dict(session.execute(select(NotebookPageInfo.page_id_fk, NotebookPageInfo.kind).where(
+            NotebookPageInfo.page_id_fk.in_([p.id for p in pages] or [0]))).all())
+        for p in pages:
+            kind = kinds.get(p.id) or "note"
+            out.append(_hit("notebook_page", p, f"Page {p.title}" + (f" · {kind}" if kind != "note" else ""),
+                            "Notebook", p.title.lower() == q.lower()))
+    if want("protocol_folder") and features.get("notebook", True):
+        from .models import NotebookFolder
+        rows = session.scalars(select(NotebookFolder).where(NotebookFolder.kind == "protocol",
+                                                            _match(NotebookFolder.name, q)).limit(50)).all()
+        for f in _ranked(rows, lambda f: f.name.lower() == q.lower()):
+            out.append(_hit("protocol_folder", f, f"Folder {f.name} · protocols", "Notebook",
+                            f.name.lower() == q.lower()))
     out += _resolve_inventories(session, q, want, inventory_kind)
     if features.get("plasmids", True):
         out += _resolve_plasmids(session, q, want)
@@ -571,6 +586,26 @@ def record(session, kind: str, ref):
     if row is None or not _visible(session, home, row):
         shown = f"#{ref['id']}" if isinstance(ref, dict) else str(ref)
         raise LookupError(f"There is no {kind.replace('_', ' ')} {shown} that you can open.")
+    return row
+
+
+def notebook_page(session, ref):
+    """A notebook page this person may read, by its reference or title."""
+    from . import actions
+    from .lab_notebook import role_for
+    from .models import NotebookPage
+    row = None
+    if isinstance(ref, dict):
+        row = session.get(NotebookPage, ref["id"]) if ref.get("kind") == "notebook_page" and isinstance(
+            ref.get("id"), int) else None
+    else:
+        try:
+            row = actions.find(session, "notebook_page", ref)
+        except actions.ActionError as e:
+            raise LookupError(str(e)) from None
+    if row is None or not lab.request_features().get("notebook", True) or role_for(session, row) is None:
+        shown = f"#{ref['id']}" if isinstance(ref, dict) else str(ref)
+        raise LookupError(f"There is no notebook page {shown} that you can open.")
     return row
 
 

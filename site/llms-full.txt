@@ -237,6 +237,10 @@ The rows are saved as one batch, which **Settings → History** can undo. Dates 
 
 The preview lists each one by its row number in Excel and says why. Fix those rows and import just them: importing the whole sheet again would add the other rows a second time.
 
+#### An inventory's # doesn't match our IDs
+
+Each record's # follows the order of the rows it came in with. **•••** → **Renumber** gives each the number in its name (*B12* becomes #12), or numbers them in the order of a column ([Samples and orders](https://biomanager.org/guide/samples-and-orders#every-inventory)).
+
 Related: [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in) [Coming from Excel](https://biomanager.org/guide/coming-from-excel) [Undo and history](https://biomanager.org/guide/undo-and-history)
 
 Source: https://biomanager.org/guide/import-from-excel
@@ -925,6 +929,8 @@ Reagents, chemicals, antibodies, viruses and primers have a **Low at** column be
 - **Kept in**, in a box's dialog, says which fridge, freezer or cabinet the box, shelf or drawer is in: *Fridge 2*, *Explosion-proof cabinet*. The **Box** column, labels and search then read *Fridge 2 › Box A · B3*, and the **Box grid** picks the fridge or cabinet first, then the box. Type a cabinet's name in the sheet's search to list everything in it, such as the solvents in the explosion-proof cabinet. A place typed once is offered again in every inventory.
 
 - **Used in notebook pages**, at the bottom of a record's dialog, lists the pages that link it (`@antibodies 5`; see [Notebook](https://biomanager.org/guide/notebook)).
+
+- **Renumber**, under **•••** (its creator, or an admin): each record's **#** is given when it is made, so after an import it follows the sheet's order. Renumber gives every record a new #, in the order of a column (B2 before B10), or as the number in its name (*B12* becomes #12, when every name has one, none twice and none missing; it names the records in the way). It lists each # now and new before anything changes. Links to them in the notebook (`@samples 12`) and orders put into stock follow; labels already printed keep the old #, but their QR code still opens the right record. **Settings → History** can undo it.
 
 - **Configure** (its creator, or an admin): the name, what it tracks, the choices and statuses (renaming one relabels its items), your own columns, and which fields are **needed for a new item**.
 
@@ -1706,13 +1712,13 @@ At the rack you rarely have time for a conversation. **Capture** keeps what you'
 
 - In the mouse colony, zebrafish, fly and worm databases and any other organism's: the everyday records. New animals, cages, tanks and vials; litters (with how many pups were born), weaning, moves and deaths; crosses, clutches and flips; weights and readings; scheduled jobs done.
 
-- In your inventories: a new item, a change, an amount used (the item turns low at its **Low at**; say it in another unit of weight or volume, *40 mg* of an item kept in g, and BioManager converts it; *2 mL* of one kept in ampoules once it has a **Pack size**), an order received (and added to stock under the name, amount and unit your stock keeps), a sample taken from an animal.
+- In your inventories: a new item, a change, an amount used (the item turns low at its **Low at**; say it in another unit of weight or volume, *40 mg* of an item kept in g, and BioManager converts it; *2 mL* of one kept in ampoules once it has a **Pack size**), an order received (and added to stock under the name, amount and unit your stock keeps), a sample taken from an animal; and an inventory renumbered, so each # is the number in its name (**Renumber**, [below](https://biomanager.org/guide/samples-and-orders#every-inventory)).
 
 - In plasmids: a new plasmid (with its sequence pasted as GenBank or FASTA), a change, a glycerol stock, a primer or a primer pair.
 
 - In an experiment: a step done (with the reagent and lot used: the step's own, unless you name another bottle or lot; an unknown lot is refused, and with several bottles of the same name it asks which), a readout, animals added, its status, a note; and a new, **planned** experiment ([below](https://biomanager.org/guide/ai-assistants#plan)).
 
-- In the notebook: a line in today's daily log; a new page (marked *Drafted by* the assistant, never signed); a section added to a page, unless someone has it open.
+- In the notebook: a line in today's daily log; a new page (marked *Drafted by* the assistant, never signed); a section added to a page, unless someone has it open. To fix a page it made, or one of yours, it changes that page rather than making another: its title, kind, tags, or its text, all of it or a few parts (steps rewritten as a checklist, so **Run** can tick them off). You see each change before and after; the text as it was is kept in the page's **History**, and a signed page, or one someone has open, is left alone. It can also make a folder in **Protocols** and file protocols in it.
 
 - In the calendar: an event, or an instrument booking.
 

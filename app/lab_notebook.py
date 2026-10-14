@@ -927,12 +927,18 @@ def page_import():
         heading = re.search(r"^#\s+(.+)$", text, re.M)
         title = heading.group(1).strip() if heading else re.sub(r"\.(md|markdown|txt)$", "", upload.filename, flags=re.I)
     with SessionLocal() as s:
+        # A protocol may be filed in a folder of the library as it comes in.
+        folder = _folder(s, request.form.get("folder_id"), "protocol")
+        if folder is not None and kind != "protocol":
+            return _fail(gettext("That page is not a protocol."))
         tab_id = request.form.get("tab_id", type=int)
         tab = s.get(NotebookTab, tab_id) if tab_id else None
         if tab is None or tab.owner_username != _me():
             tab = first_tab(s, _me())
         page = new_page(s, tab, title, text.lstrip("\n"), kind=kind)
         info_for(s, page.id).tags = normalize_tags(tags)
+        if folder is not None:
+            info_for(s, page.id).folder_id = folder.id
         record_edit(s, page)
         s.commit()
         return jsonify({"ok": True, "page_id": page.id, "tab_id": tab.id, "url": page_url(page.id)})

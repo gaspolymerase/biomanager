@@ -907,6 +907,14 @@ in, as it is (up to 15 MB and 5,000 rows):
   and a mouse whose ID is taken (by the colony or an earlier row) gets the
   next free one, with the preview saying so. The import itself is one
   batch, so **Settings → History** can undo it.
+- **Then renumber, if you like.** An inventory record's **#** follows the
+  order its rows came in. **•••** → **Renumber** (for the inventory's
+  creator or an admin) gives every record the number in its name (*B12*
+  becomes #12, when every name has one, none twice and none missing; it
+  names the records in the way) or numbers them in the order of a column
+  (B2 before B10). It shows each # now and new first; notebook links
+  (`@samples 12`) and orders put into stock follow, printed labels keep the
+  old # (their QR code still opens the record), and it is one batch to undo.
 
 ### 📱 Cage cards that open on your phone
 
@@ -1484,7 +1492,13 @@ track.
   would and keeps under **Proposed changes** (in your account menu and in
   **Settings → AI assistant & tokens**, with a notification) as one plain summary, with warnings
   for what else a change would do (a cage no longer shared with the lab, an
-  item of that name already in stock). **Approve** makes every change at
+  item of that name already in stock). To fix what is there it changes it
+  rather than adding another: a notebook page's title, kind, tags or text
+  (all of it, or a few parts: a protocol's steps made a checklist for **Run**),
+  with each change shown before and after and the old text kept in the
+  page's **History**, never on a signed page or one someone has open; a
+  protocol filed in a folder of **Protocols**; an inventory renumbered. It
+  reads a page's current text first (`/api/v1/notebook/pages/<id>`). **Approve** makes every change at
   once, as one batch you can undo; **Discard** makes none; only you, signed
   in, can approve, or **Send back** with a reason for the assistant to
   correct: its corrected proposal takes the old one's place. **Connect an AI assistant**, at the top of the same

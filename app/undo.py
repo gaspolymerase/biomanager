@@ -163,6 +163,7 @@ def undo(session, batch: BatchRecord, actor: str, force: bool = False) -> dict:
     notes: list[str] = []
     touched: list = []       # rows this undo edited or re-inserted
     previous: dict = {}      # (id(row), field) -> value before the undo
+    renumbered: list = []    # (item id, its number's [before, after]) put back
 
     # The reversal is itself a batch, so the log shows both directions.
     with audit.batch(session, "update", f"undo of batch #{batch.id}",
@@ -207,6 +208,8 @@ def undo(session, batch: BatchRecord, actor: str, force: bool = False) -> dict:
                 for field, pair in changes.items():
                     if not isinstance(pair, list) or len(pair) != 2:
                         continue
+                    if entry.table_name == "inventory_items" and field == "number":
+                        renumbered.append((entry.record_id, pair))
                     if hasattr(row, field):
                         previous.setdefault((id(row), field), getattr(row, field))
                         setattr(row, field, audit._decode(pair[0]))
@@ -243,6 +246,12 @@ def undo(session, batch: BatchRecord, actor: str, force: bool = False) -> dict:
                     reverted -= 1
                     skipped += 1
                     break
+
+        if renumbered:
+            # The notebook's "@samples 12" keeps no history of its own: it
+            # follows the items' numbers back (app/inventory_renumber.py).
+            from . import inventory_renumber
+            inventory_renumber.undone(session, renumbered)
 
         batch.undone_at = datetime.utcnow()
         batch.undone_by = actor

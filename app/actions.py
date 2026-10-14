@@ -82,6 +82,10 @@ class Action:
     # What the person should know before approving, beyond what the pages
     # say (an item of the same name already there): warnings, in words.
     warn: Callable[[Any, Any, dict], list[str]] | None = None
+    # What it changes that the change history doesn't keep (a notebook
+    # page's text, its tags), as records like the history's: shown with
+    # the records the change wrote, before → after.
+    shows: Callable[[Any, Any, dict], list[dict]] | None = None
 
     def schema(self) -> dict:
         """JSON Schema for this action's fields (the MCP server's tools)."""
@@ -138,6 +142,10 @@ _DESIGN_STEP = {"type": "object", "additionalProperties": False, "required": ["d
     "duration": {"type": "string", "description": "How long it lasts, e.g. 30 min or 10 s on / 20 s off"},
     "group": {"type": "string", "description": "The group it is for (every animal if left out)"},
     "notes": {"type": "string"}}}
+# notebook_page_change's edits: parts of the text, changed where they are.
+_TEXT_EDIT = {"type": "object", "additionalProperties": False, "required": ["find", "replace"], "properties": {
+    "find": {"type": "string", "description": "Text now on the page, exactly as it is there, found once only"},
+    "replace": {"type": "string", "description": "What it becomes (empty: taken out)"}}}
 
 
 def _field_schema(f: Field) -> dict:
@@ -148,7 +156,8 @@ def _field_schema(f: Field) -> dict:
              "object": {"type": "object"},
              "amount": {"type": ["number", "string"]},
              "groups": {"type": "array", "items": _DESIGN_GROUP},
-             "steps": {"type": "array", "items": _DESIGN_STEP}}
+             "steps": {"type": "array", "items": _DESIGN_STEP},
+             "edits": {"type": "array", "items": _TEXT_EDIT, "minItems": 1}}
     if f.kind in kinds:
         out = dict(kinds[f.kind])
     elif f.kind in KINDS:
@@ -308,6 +317,13 @@ def clean(act: Action, raw: dict) -> dict:
         elif f.kind in ("mice", "rows"):
             if not isinstance(v, list) or not v:
                 raise ActionError(gettext("%(field)s is a list.", field=name))
+        elif f.kind == "edits":
+            if not isinstance(v, list) or not v or not all(
+                    isinstance(e, dict) and isinstance(e.get("find"), str) and e["find"]
+                    and isinstance(e.get("replace", ""), str) and not set(e) - {"find", "replace"} for e in v):
+                raise ActionError(gettext("%(field)s is a list of {find, replace}, each find some text on the page.", field=name))
+            v = [{"find": e["find"].replace("\r\n", "\n"), "replace": e.get("replace", "").replace("\r\n", "\n")}
+                 for e in v]
         elif f.kind == "object":
             if not isinstance(v, dict):
                 raise ActionError(gettext("%(field)s is an object.", field=name))
@@ -1802,8 +1818,12 @@ def _experiment_new(s, _target, v):
 # ---------------------------------------------------------------- notebook
 
 def _pages_titled(s, title: str) -> list:
+    """Pages this person may read, by title (any case) or id: another's
+    page of the same title neither shows nor makes it ambiguous."""
+    from .lab_notebook import role_for
     from .models import NotebookPage
     rows = list(s.scalars(select(NotebookPage).where(func.lower(NotebookPage.title) == title.lower())))
+    rows = [r for r in rows if role_for(s, r) is not None]
     return rows or ([s.get(NotebookPage, int(title))] if title.isdigit() else [])
 
 
@@ -1885,7 +1905,9 @@ PAGE_KINDS = ("note", "experiment", "protocol", "meeting", "seminar")
                 Field("template", "notebook_template", "A saved template to start from, by its title"),
                 Field("starter", "text", "Or a built-in starter to start from", choices=_starters()),
                 Field("kind", "text", "What kind of page it is (a note if left out)", choices=PAGE_KINDS),
-                Field("tags", "list", "Tags")),
+                Field("tags", "list", "Tags"),
+                Field("folder", "protocol_folder", "For a protocol: the folder of the protocol library to file it "
+                                                   "in, by its name (one made earlier in the same proposal too)")),
         describe=lambda s, _t, v: gettext("Notebook: new page “%(title)s”%(start)s", title=v["title"],
                                           start=_page_from(s, v)))
 def _notebook_page_new(s, _target, v):
@@ -1914,17 +1936,40 @@ def _notebook_page_new(s, _target, v):
     if tags:
         front.append("tags: [" + ", ".join(tags) + "]")
     text = "\n".join(front) + "\n---\n\n" + "\n\n".join(p for p in parts if p) + "\n"
+    form = [("file", (io.BytesIO(text.encode("utf-8")), "page.md"))]
+    folder = _protocol_folder(s, v.get("folder"))
+    if folder is not None:
+        if kind != "protocol":
+            raise ActionError(gettext("Only a protocol is filed in a folder: give kind protocol too."))
+        form.append(("folder_id", str(folder.id)))
     # The notebook's Import (a Markdown file), the one page that takes a
     # page's whole text at once.
-    return [Call("POST", "/notebook/api/import", form=[("file", (io.BytesIO(text.encode("utf-8")), "page.md"))])]
+    return [Call("POST", "/notebook/api/import", form=form)]
 
 
 def _page_from(s, v) -> str:
+    said = ""
     if v.get("template") not in (None, ""):
-        return gettext(", from the template “%(name)s”", name=find(s, "notebook_template", v["template"]).title)
-    if v.get("starter"):
-        return gettext(", from the starter “%(name)s”", name=v["starter"])
-    return ""
+        said = gettext(", from the template “%(name)s”", name=find(s, "notebook_template", v["template"]).title)
+    elif v.get("starter"):
+        said = gettext(", from the starter “%(name)s”", name=v["starter"])
+    folder = _protocol_folder(s, v.get("folder"))
+    if folder is not None:
+        said += gettext(", filed in “%(folder)s”", folder=folder.name)
+    return said
+
+
+def _not_open(s, page) -> None:
+    """Refused while someone has the page open in the editor: its text is
+    saved over by the open editor, so what is written here could be lost."""
+    from datetime import datetime
+    from .lab_notebook import PRESENCE_TTL
+    from .models import NotebookPresence
+    there = s.scalar(select(NotebookPresence.username).where(
+        NotebookPresence.page_id_fk == page.id,
+        NotebookPresence.updated_at >= datetime.utcnow() - PRESENCE_TTL).limit(1))
+    if there:
+        raise ActionError(gettext("“%(page)s” is open in the editor (%(who)s): add it there, or propose it again once the page is closed.", page=page.title, who=there))
 
 
 @action(name="notebook_page_append", area="notebook", title="Add a section to a notebook page",
@@ -1937,17 +1982,8 @@ def _page_from(s, v) -> str:
                                          heading=f" “{v['heading']}”" if v.get("heading") else "",
                                          page=_readable_page(s, p).title))
 def _notebook_page_append(s, page, v):
-    from datetime import datetime
-    from .lab_notebook import PRESENCE_TTL
-    from .models import NotebookPresence
     _readable_page(s, page)
-    there = s.scalar(select(NotebookPresence.username).where(
-        NotebookPresence.page_id_fk == page.id,
-        NotebookPresence.updated_at >= datetime.utcnow() - PRESENCE_TTL).limit(1))
-    if there:
-        # The page's text is saved over by its open editor: what is added
-        # here could be lost, so it waits until the page is closed.
-        raise ActionError(gettext("“%(page)s” is open in the editor (%(who)s): add it there, or propose it again once the page is closed.", page=page.title, who=there))
+    _not_open(s, page)
     section = [f"## {' '.join(v['heading'].split())}"] if v.get("heading") else []
     section += [_drafted_line(), v["text"].strip()]
     body = (page.body or "").rstrip("\n")
@@ -1955,6 +1991,250 @@ def _notebook_page_append(s, page, v):
     # The page's own save, as its plain-text editor sends it: the live
     # editors start again from the new text.
     return [Call("POST", f"/notebook/pages/{page.id}/update", form=[("body", text)])]
+
+
+def _editable_page(s, page):
+    """The page, if this person may change it now, as its editor would let
+    them: they may edit it, it is not signed and locked, and no one has it
+    open in the editor."""
+    from . import lab_notebook, signatures
+    _readable_page(s, page)
+    if not lab_notebook.can_edit_role(lab_notebook.role_for(s, page)):
+        raise ActionError(gettext("“%(page)s” is shared with you to read, not to edit.", page=page.title))
+    if signatures.is_locked(s, page.id):
+        raise ActionError(gettext("“%(page)s” is signed and locked. Its owner can amend it to change it.", page=page.title))
+    _not_open(s, page)
+    return page
+
+
+DRAFTED = re.compile(r"^_Drafted by [^\n]*_$", re.M)
+
+
+def _edited_text(page, v) -> str:
+    """The page's text once the change's body or edits are made."""
+    old = (page.body or "").replace("\r\n", "\n")
+    if "body" in v:
+        new = v["body"].replace("\r\n", "\n").strip() + "\n"
+        drafted = DRAFTED.match(old.lstrip("\n"))
+        if drafted and not DRAFTED.search(new):
+            # Drafted by an assistant: the line saying so stays at its top.
+            new = drafted.group(0) + "\n\n" + new
+        return new
+    new = old
+    for edit in v.get("edits", []):
+        times = new.count(edit["find"])
+        if times != 1:
+            shown = " ".join(edit["find"].split())
+            shown = shown if len(shown) <= 80 else shown[:79] + "…"
+            raise ActionError(gettext("“%(text)s” is not on “%(page)s”; get the page and copy the text as it is there.", text=shown, page=page.title)
+                              if not times else
+                              gettext("“%(text)s” is on “%(page)s” %(times)s times; make find longer, so it is found once.", text=shown, page=page.title, times=times))  # noqa: E501
+        new = new.replace(edit["find"], edit["replace"], 1)
+    return new
+
+
+def _page_now_and_after(s, page, v) -> tuple[dict, dict]:
+    """The page's title, kind, tags and text now and after the change."""
+    from . import lab_notebook
+    info = lab_notebook.info_for(s, page.id)
+    now = {"title": page.title or "", "kind": info.kind if info else "note",
+           "tags": lab_notebook.tag_list(info.tags if info else ""), "body": (page.body or "").replace("\r\n", "\n")}
+    after = dict(now)
+    if "body" in v and "edits" in v:
+        raise ActionError(gettext("Give body (the whole new text) or edits (parts of it), not both."))
+    if "title" in v:
+        after["title"] = " ".join(v["title"].split())
+        if not after["title"]:
+            raise ActionError(gettext("A page needs a title."))
+    if "kind" in v:
+        after["kind"] = v["kind"]
+    if "tags" in v:
+        after["tags"] = lab_notebook.tag_list(lab_notebook.normalize_tags(v["tags"]))
+    if "body" in v or "edits" in v:
+        after["body"] = _edited_text(page, v)
+    if after == now:
+        raise ActionError(gettext("“%(page)s” already says this: nothing would change.", page=page.title))
+    return now, after
+
+
+def _lines(text: str) -> list[str]:
+    return text.rstrip("\n").split("\n") if text.strip() else []
+
+
+def _text_counts(old: str, new: str) -> tuple[int, int]:
+    """(lines put in, lines taken out) from old to new."""
+    import difflib
+    added = removed = 0
+    for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, _lines(old), _lines(new), autojunk=False).get_opcodes():
+        if op != "equal":
+            removed, added = removed + i2 - i1, added + j2 - j1
+    return added, removed
+
+
+def _shown_lines(lines: list[str], width: int = 300) -> str:
+    text = " ↵ ".join(lines)
+    return text if len(text) <= width else text[:width - 1] + "…"
+
+
+MAX_HUNKS = 30
+
+
+def _page_change_shows(s, page, v) -> list[dict]:
+    """The change as before → after: title, kind and tags, and each part of
+    the text that changes, by the line it starts at."""
+    import difflib
+    now, after = _page_now_and_after(s, page, v)
+    fields: dict[str, list] = {}
+    for key, name in (("title", gettext("Title")), ("kind", gettext("Kind"))):
+        if now[key] != after[key]:
+            fields[name] = [translate_value(now[key]), translate_value(after[key])]
+    if now["tags"] != after["tags"]:
+        fields[gettext("Tags")] = [", ".join(now["tags"]), ", ".join(after["tags"])]
+    old, new = _lines(now["body"]), _lines(after["body"])
+    hunks = [h for h in difflib.SequenceMatcher(None, old, new, autojunk=False).get_opcodes() if h[0] != "equal"]
+    for op, i1, i2, j1, j2 in hunks[:MAX_HUNKS]:
+        fields[gettext("Text, line %(line)s", line=(i1 if op == "insert" else i1 + 1) or 1)] = [
+            _shown_lines(old[i1:i2]), _shown_lines(new[j1:j2])]
+    if len(hunks) > MAX_HUNKS:
+        fields[gettext("Text, further on")] = ["", ngettext("%(num)s more change", "%(num)s more changes",
+                                                           len(hunks) - MAX_HUNKS)]
+    return [{"table": "notebook_pages", "id": page.id, "label": page.title, "action": "update", "details": "",
+             "changes": {"changes": fields}}]
+
+
+def _page_change_said(s, page, v) -> str:
+    now, after = _page_now_and_after(s, _readable_page(s, page), v)
+    parts = []
+    if now["title"] != after["title"]:
+        parts.append(gettext("title → “%(title)s”", title=after["title"]))
+    if now["kind"] != after["kind"]:
+        parts.append(gettext("kind %(before)s → %(after)s", before=translate_value(now["kind"]),
+                             after=translate_value(after["kind"])))
+    if now["tags"] != after["tags"]:
+        parts.append(gettext("tags %(before)s → %(after)s", before=", ".join(now["tags"]) or "-",
+                             after=", ".join(after["tags"]) or "-"))
+    if now["body"] != after["body"]:
+        added, removed = _text_counts(now["body"], after["body"])
+        parts.append(gettext("text: %(added)s lines in, %(removed)s out", added=added, removed=removed)
+                     if "edits" in v or not now["body"].strip() else
+                     gettext("text rewritten: %(added)s lines in, %(removed)s out", added=added, removed=removed))
+    return gettext("Notebook: “%(page)s”: %(changes)s", page=now["title"], changes="; ".join(parts))
+
+
+@action(name="notebook_page_change", area="notebook", title="Change a notebook page",
+        help="Change a notebook page you may edit: its title, kind, tags, and its text, either all of it (body: "
+             "the whole new Markdown, as get reads it at notebook/pages/<id>) or parts of it (edits: each find, "
+             "exactly as on the page and there once, becomes its replace). What is left out stays as it is. The "
+             "text as it was is kept in the page's History, to restore. Refused while someone has the page open in "
+             "the editor, and for a signed page. Use it to fix a page, rather than making a new one.",
+        target="notebook_page",
+        fields=(Field("title", "text", "Its new title"),
+                Field("body", "text", "Its whole new text, in Markdown (replaces it; a line saying an assistant "
+                                      "drafted the page stays at its top)"),
+                Field("edits", "edits", "Or parts of the text to change, each {find, replace}, in order"),
+                Field("kind", "text", "What kind of page it is", choices=PAGE_KINDS),
+                Field("tags", "list", "Its tags (replaces them all)")),
+        describe=_page_change_said, shows=_page_change_shows)
+def _notebook_page_change(s, page, v):
+    from flask import g
+    _editable_page(s, page)
+    now, after = _page_now_and_after(s, page, v)
+    calls = []
+    if now["title"] != after["title"] or now["body"] != after["body"]:
+        source = g.get("proposal_source") or ""
+        label = (gettext("Before the change by %(source)s", source=source) if source
+                 else gettext("Before an assistant's change"))
+        # Kept as it is now, as a version of its own: History restores it.
+        calls.append(Call("POST", f"/notebook/api/pages/{page.id}/versions", json={"label": label}))
+    meta = {k: after[k] for k in ("kind", "tags") if now[k] != after[k]}
+    if meta:
+        calls.append(Call("POST", f"/notebook/api/pages/{page.id}/meta", json=meta))
+    form = [(k, after[k]) for k in ("title", "body") if now[k] != after[k]]
+    if form:
+        # The page's own save, as its plain-text editor sends it: the live
+        # editors start again from the new text.
+        calls.append(Call("POST", f"/notebook/pages/{page.id}/update", form=form))
+    return calls
+
+
+# ---------------------------------------------------------------- protocol library
+
+def _folders_named(s, name: str) -> list:
+    """Folders of the protocol library, by name (any case) or id."""
+    from .models import NotebookFolder
+    rows = list(s.scalars(select(NotebookFolder).where(NotebookFolder.kind == "protocol",
+                                                       func.lower(NotebookFolder.name) == name.lower())))
+    if rows or not name.isdigit():
+        return rows
+    folder = s.get(NotebookFolder, int(name))
+    return [folder] if folder is not None and folder.kind == "protocol" else []
+
+
+def _folder_kind():
+    from .models import NotebookFolder
+    return (NotebookFolder, None, _folders_named)
+
+
+KINDS["protocol_folder"] = _folder_kind()
+
+
+def _protocol_folder(s, ref):
+    """The protocol library's folder `ref` names, or None for none ("")."""
+    if ref in ("", None) or (isinstance(ref, str) and not ref.strip()):
+        return None
+    folder = find(s, "protocol_folder", ref)
+    if isinstance(ref, dict) and folder.kind != "protocol":
+        raise ActionError(gettext("There is no %(kind)s %(ref)s.", kind="protocol folder", ref=_show(ref)))
+    return folder
+
+
+def _icons() -> tuple[str, ...]:
+    from .lab_notebook import FOLDER_ICONS
+    return FOLDER_ICONS
+
+
+@action(name="protocol_folder_new", area="notebook", title="New folder of protocols",
+        help="A folder in the lab's protocol library (Notebook → Protocols), shared with the lab. Its name must not "
+             "be a folder's already. File protocols in it with protocol_file, or with folder on notebook_page_new.",
+        target=None,
+        fields=(Field("name", "text", "Its name", required=True),
+                Field("icon", "text", "Its icon (a plain folder if left out)", choices=_icons())),
+        describe=lambda _s, _t, v: gettext("Protocols: new folder “%(name)s”", name=" ".join(v["name"].split())))
+def _protocol_folder_new(s, _target, v):
+    from .models import NotebookFolder
+    name = " ".join(v["name"].split())
+    if s.scalar(select(NotebookFolder.id).where(NotebookFolder.kind == "protocol",
+                                                func.lower(NotebookFolder.name) == name.lower())):
+        raise ActionError(gettext("There is a folder of protocols called “%(name)s” already: file them in it.", name=name))
+    return [Call("POST", "/notebook/api/folders", json={"kind": "protocol", "name": name,
+                                                        "icon": v.get("icon", "folder")})]
+
+
+def _file_said(s, page, v) -> str:
+    folder = _protocol_folder(s, v["folder"])
+    page = _readable_page(s, page)
+    if folder is None:
+        return gettext("Protocols: “%(page)s” taken out of its folder", page=page.title)
+    return gettext("Protocols: “%(page)s” filed in “%(folder)s”", page=page.title, folder=folder.name)
+
+
+@action(name="protocol_file", area="notebook", title="File a protocol in a folder",
+        help="File a protocol (a notebook page of kind protocol, which you may edit) in a folder of the protocol "
+             "library, or take it out of its folder (folder: \"\").", target="notebook_page",
+        fields=(Field("folder", "protocol_folder", "The folder, by its name or reference; \"\" for none",
+                      required=True),),
+        describe=_file_said)
+def _protocol_file(s, page, v):
+    from . import lab_notebook
+    folder = _protocol_folder(s, v["folder"])
+    _readable_page(s, page)
+    if not lab_notebook.can_edit_role(lab_notebook.role_for(s, page)):
+        raise ActionError(gettext("“%(page)s” is shared with you to read, not to edit.", page=page.title))
+    info = lab_notebook.info_for(s, page.id)
+    if info is None or info.kind != "protocol":
+        raise ActionError(gettext("“%(page)s” is not a protocol: make it one first (notebook_page_change, kind protocol).", page=page.title))
+    return [Call("POST", "/notebook/api/folders/file", json={"kind": "protocol", "item_id": page.id,
+                                                             "folder_id": folder.id if folder else None})]
 
 
 # ---------------------------------------------------------------- inventories
@@ -1998,9 +2278,19 @@ def _inventory_items(s, code: str) -> list:
 
 def _inventory_kinds():
     from .models import Equipment, InventoryItem, PlasmidRecord
+    from .models import InventoryModule
     return {"inventory_item": (InventoryItem, None, _inventory_items),
+            "inventory": (InventoryModule, None, _inventories_named),
             "plasmid": (PlasmidRecord, None, _plasmids_named),
             "equipment": (Equipment, "name", "name")}
+
+
+def _inventories_named(s, code: str) -> list:
+    """An inventory this person can open, by its key or its name."""
+    try:
+        return [_inventory(s, code)]
+    except ActionError:
+        return []
 
 
 def _plasmids_named(s, code: str) -> list:
@@ -2100,6 +2390,55 @@ def _inventory_item_change(s, item, v):
         raise ActionError(gettext("Say what to change on %(item)s.", item=_item_label(s, item)))
     return [Call("PATCH", f"/api/v1/inventories/{_item_module(s, item).key}/items/{item.number}",
                  json=_item_body(v))]
+
+
+def _renumber_plan(s, module, v):
+    from . import inventory_renumber as rn
+    from .lab import can_see
+    if not can_see(module):
+        raise ActionError(gettext("There is no inventory “%(key)s”.", key=module.key))
+    plan = rn.plan(s, module, v.get("by", rn.NAME_NUMBER), v.get("order", "ascending"))
+    if plan.problems:
+        raise ActionError(" ".join(plan.problems))
+    return plan
+
+
+def _renumber_said(s, module, v) -> str:
+    from . import inventory_renumber as rn
+    plan = _renumber_plan(s, module, v)
+    by = v.get("by", rn.NAME_NUMBER)
+    how = (gettext("to the number in each name") if by == rn.NAME_NUMBER else
+           gettext("by %(column)s, %(order)s", column=translate_value(dict(rn.columns(module)).get(by, by)),
+                   order=translate_value(plan.order)))
+    first = "; ".join(f"#{old} → #{new}" + (f" {item.name}" if item.name else "")
+                      for item, old, new in plan.moves[:5])
+    return gettext("%(database)s renumbered %(how)s: %(changed)s of %(count)s get a new # (%(first)s%(more)s)",
+                   database=translate_value(module.label), how=how, changed=len(plan.moves), count=plan.count,
+                   first=first, more="; …" if len(plan.moves) > 5 else "")
+
+
+def _renumber_columns_help() -> str:
+    from . import inventory_renumber as rn
+    return ", ".join(rn.COLUMNS)
+
+
+@action(name="inventory_renumber", area="inventory", title="Renumber an inventory",
+        help="Give every item of an inventory a new # (1, 2, 3…): to the number in its name (by: name_number, "
+             "\"B12\" becomes #12; refused, naming the items, when a name has none, two names have one number or "
+             "a number is missing), or in the order of a column (by: a column key: " + _renumber_columns_help() +
+             ", or one of the inventory's own; natural order, B2 before B10). Links to the items in the notebook, "
+             "orders put into stock and an experiment's samples follow; the records list every change. Only an "
+             "admin or whoever created the inventory may. One batch: Batch history can undo it.",
+        target="inventory",
+        fields=(Field("by", "text", "name_number (the default), or a column's key"),
+                Field("order", "text", "ascending (the default) or descending, for a column",
+                      choices=("ascending", "descending"))),
+        describe=_renumber_said)
+def _inventory_renumber(s, module, v):
+    _renumber_plan(s, module, v)
+    from . import inventory_renumber as rn
+    return [Call("POST", f"/inventory/{module.key}/renumber",
+                 form=[("by", v.get("by", rn.NAME_NUMBER)), ("order", v.get("order", "ascending"))])]
 
 
 def _left_after(s, item, used: float) -> tuple[str, str]:
@@ -2792,13 +3131,14 @@ def _run(app, username, changes, apply, label, description, lang) -> Outcome:
                     record = _target(s, act, raw)
                     values = clean(act, raw)
                     out.summary = act.describe(s, record, values)
+                    shown = act.shows(s, record, values) if act.shows is not None else []
                     calls = act.build(s, record, values)
                     if act.warn is not None:
                         out.warnings += act.warn(s, record, values)
             except ActionError as exc:
                 out.ok = False
                 out.errors.append(str(exc))
-                calls = []
+                calls, shown = [], []
             for call in calls:
                 result = contained.run(app, username, call.method, call.path, data=call.form, json_body=call.json,
                                        batch_id=batch_id, label=label, lang=lang)
@@ -2814,6 +3154,7 @@ def _run(app, username, changes, apply, label, description, lang) -> Outcome:
                 step.commit()
                 with SessionLocal() as s:
                     out.records, last = _entries_since(s, last)
+                out.records += shown
                 out.warnings += side_effects(values, out.records)
             else:
                 step.rollback()

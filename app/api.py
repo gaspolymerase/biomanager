@@ -1035,6 +1035,33 @@ def experiments():
 PAGE_ONLY = ("kinds", "regimens", "reagents", "sample_inventories", "tests")
 
 
+@bp.get("/notebook/pages/<int:page_id>")
+def notebook_page(page_id: int):
+    """A notebook page this person may read: its title, kind, tags, its
+    text as it is now (for an assistant to change it from), and whether
+    they may change it."""
+    from . import lab_notebook, signatures
+    from .models import NotebookFolder, NotebookPage
+    _feature("notebook")
+    with SessionLocal() as s:
+        page = s.get(NotebookPage, page_id)
+        role = lab_notebook.role_for(s, page) if page is not None else None
+        if role is None:
+            abort(404, f"There is no notebook page {page_id} that you can open.")
+        info = lab_notebook.info_for(s, page.id)
+        folder = s.get(NotebookFolder, info.folder_id) if info and info.folder_id else None
+        locked = signatures.is_locked(s, page.id)
+        return jsonify({"id": page.id, "ref": {"kind": "notebook_page", "id": page.id}, "title": page.title,
+                        "kind": info.kind if info else "note", "tags": lab_notebook.tag_list(info.tags if info else ""),
+                        "folder": {"ref": {"kind": "protocol_folder", "id": folder.id}, "name": folder.name}
+                        if folder else None,
+                        "owner": lab_notebook.owner_of(page), "updated_at": _stamp(page.updated_at),
+                        "signed": signatures.is_signed(s, page.id), "locked": locked,
+                        "can_edit": lab_notebook.can_edit_role(role) and not locked,
+                        "url": request.host_url.rstrip("/") + lab_notebook.page_url(page.id),
+                        "body": page.body or ""})
+
+
 @bp.get("/experiments/<int:experiment_id>")
 def experiment(experiment_id: int):
     """The experiment, its animals, its readout table (with tests by day)
@@ -1265,7 +1292,7 @@ def record_path():
     kind, ref = _ref_arg()
     with SessionLocal() as s:
         try:
-            row = lookup.record(s, kind, ref)
+            row = lookup.notebook_page(s, ref) if kind == "notebook_page" else lookup.record(s, kind, ref)
         except LookupError as e:
             abort(404, str(e))
         path = lookup.path_of(s, kind, row)
@@ -1594,6 +1621,9 @@ ENDPOINTS = [
     ("GET", "/api/v1/experiments/{experiment_id}", "read", "One experiment: animals, readout table, manipulations, the plan kept at Start and the changes from it", ()),
     ("POST", "/api/v1/experiments/{experiment_id}/readings", "write",
      "Record the readout: {date, values}, or for a readout BioManager works out {date, inputs}", ()),
+    ("GET", "/api/v1/notebook/pages/{page_id}", "read",
+     "One notebook page you may read: title, kind, tags, its protocol folder, whether you may change it, and its "
+     "text", ()),
     ("GET", "/api/v1/resolve", "read", "The records a phrase could mean, with references", ("q", "kinds")),
     ("GET", "/api/v1/vocabulary", "read", "What this lab calls things", ()),
     ("GET", "/api/v1/due", "read", "What is due (Home's list), with the change that records each done", ("days",)),

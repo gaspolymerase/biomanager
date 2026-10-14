@@ -47,6 +47,9 @@ changed until they press Approve there.
 Dates are YYYY-MM-DD; "today" is in lab_overview. Never invent animals, numbers or results.
 A question that only reads ("what's in cage 88?") needs no proposal: just answer it, reading each record \
 with get at the path resolve gives it.
+To correct something already there, change it rather than making it again: a notebook page or protocol with \
+notebook_page_change (read its text first with get, at the path resolve gives it), a protocol's folder with \
+protocol_file, an inventory's numbering with inventory_renumber.
 
 BioManager computes; you talk. Never work out a number yourself that a BioManager tool can: how many \
 animals fit (availability), breeding odds and matings (breeding_plan), group allocation (randomize), \
@@ -96,7 +99,7 @@ class Api:
 
 # What `get` and `list_records` may read: the API's own read paths.
 READABLE = ("mice", "cages", "litters", "strains", "tanks", "fish", "plasmids", "stocks", "inventories",
-            "experiments", "proposals", "me", "regimens")
+            "experiments", "proposals", "me", "regimens", "notebook")
 
 
 def _readable(path: str) -> str:
@@ -243,9 +246,9 @@ TOOLS = {
         _obj({}), lambda api, a: lab_overview(api)),
     "resolve": (
         "Find the records a phrase means (\"cage 88\", \"#1043\", \"FV12\", a line or experiment's name), each with "
-        "the reference to use in a proposal, and (for a mouse, cage, plasmid, inventory item or experiment) the "
-        "path to read it with get. kinds narrows it (comma-separated: cage, mouse, litter, tank, stock_unit, "
-        "experiment, notebook_page…). Several matches: ask the person which.",
+        "the reference to use in a proposal, and (for a mouse, cage, plasmid, inventory item, experiment or notebook "
+        "page) the path to read it with get. kinds narrows it (comma-separated: cage, mouse, litter, tank, "
+        "stock_unit, experiment, notebook_page, protocol_folder…). Several matches: ask the person which.",
         _obj({"q": {"type": "string", "description": "What the person called it"},
               "kinds": {"type": "string", "description": "Only these kinds, comma-separated"}}, ("q",)),
         lambda api, a: {"matches": resolve(api, a["q"], a.get("kinds", ""))}),
@@ -255,7 +258,9 @@ TOOLS = {
         "plasmids/14 (its number; with its box, position and glycerol stocks, and its DNA sequence and map "
         "annotations only as plasmids/14?sequence=1), "
         "inventories/reagents/items/1 (the inventory's key, then the item's number), "
-        "experiments/12 (its id; with its plan, steps, animals and groups, and readouts); lists such as stocks, "
+        "experiments/12 (its id; with its plan, steps, animals and groups, and readouts), "
+        "notebook/pages/31 (its id; with its text as it is now: read it before changing a page with "
+        "notebook_page_change); lists such as stocks, "
         "inventories, inventories/reagents/items. Easiest: the path resolve gives, or ref instead of path.",
         _obj({"path": {"type": "string", "description": "e.g. mice/1043, cages/88, inventories/reagents/items/1"},
               "ref": {"type": "object", "description": "Instead of path: a reference {\"kind\", \"id\"} from resolve "

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 from sqlalchemy import func, select, update
 
@@ -232,18 +233,37 @@ def changed_since(session, p: Proposal) -> list[str]:
     after it, as "Cage 88 (by alex, 10:50)"."""
     touched = {(r["table"], r["id"]) for c in changes_of(session, p)
                for r in json.loads(c.records_json or "[]") if r.get("action") != "create" and r.get("id")}
+    out = _pages_changed_since(session, p, {i for t, i in touched if t == "notebook_pages"})
+    touched = {(t, i) for t, i in touched if t != "notebook_pages"}
     if not touched:
-        return []
+        return out
     later = session.scalars(select(AuditEntry).where(AuditEntry.id > p.audit_mark,
                                                      AuditEntry.table_name.in_({t for t, _ in touched}))
                             .order_by(AuditEntry.id)).all()
-    out = []
     for e in later:
         if (e.table_name, e.record_id) in touched:
             from .app import local_time
             out.append(gettext("%(record)s (by %(who)s, %(when)s)", record=e.record_label or f"#{e.record_id}",
                                who=e.changed_by, when=local_time(e.changed_at).strftime("%H:%M")))
             touched.discard((e.table_name, e.record_id))
+    return out
+
+
+def _pages_changed_since(session, p: Proposal, page_ids: set) -> list[str]:
+    """Notebook pages the preview changed (actions.notebook_page_change) that
+    were saved after it: the notebook keeps no change history, so their
+    last save tells."""
+    if not page_ids:
+        return []
+    from .lab_notebook import info_for
+    from .models import NotebookPage
+    out = []
+    for page in session.scalars(select(NotebookPage).where(NotebookPage.id.in_(page_ids),
+                                                           NotebookPage.updated_at > p.created_at)):
+        from .app import local_time
+        out.append(gettext("%(record)s (by %(who)s, %(when)s)", record=page.title,
+                           who=(info_for(session, page.id) or SimpleNamespace(edited_by="")).edited_by or "-",
+                           when=local_time(page.updated_at).strftime("%H:%M")))
     return out
 
 

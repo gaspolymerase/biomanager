@@ -233,6 +233,9 @@
         <div class="dt-toolbar-spacer"></div>
         {{ sheet_ui.tools() }}
         <a class="dt-toolbar-btn" data-dt-more href="{{ sheet_import_url('inventory:' ~ key) }}" title="{{ _('Bring in the Excel or CSV sheet you kept your %(nouns)s in', nouns=nouns) }}">{{ icon('import') }} {{ _('Import from Excel') }}</a>
+        {% if can_configure %}
+          <a class="dt-toolbar-btn" data-dt-more href="{{ url_for('inventory.renumber', key=key) }}" title="{{ _('Give every %(noun)s a new #, in the order of a column or as the number in its name', noun=noun) }}">{{ icon('sort') }} {{ _('Renumber') }}</a>
+        {% endif %}
         <button type="button" class="dt-toolbar-btn" data-record-edit="item-dialog" data-record-payload='{{ dict(new_payload, count=10) | tojson }}'
                 title="{{ _('Several %(nouns)s at once: identical copies, or one per pasted name', nouns=nouns) }}">{{ icon('plus') }} {{ _('Add many') }}</button>
         {% if m.kind == 'primers' %}

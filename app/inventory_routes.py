@@ -1672,6 +1672,50 @@ def _used_for(raw: str, categories: list[str], renamed: dict) -> list[str]:
     return [] if len(out) == len(categories) else out
 
 
+@bp.route("/<key>/renumber", methods=["GET", "POST"])
+def renumber(key: str):
+    """Give every item a new #, by one of its columns or the number in its
+    name (app/inventory_renumber.py): a preview of each change, then one
+    batch, undone as one."""
+    from . import inventory_renumber as rn
+    by = (request.values.get("by") or rn.NAME_NUMBER).strip()
+    order = (request.values.get("order") or "ascending").strip()
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _can_configure(row):
+            flash(gettext("Only an admin, or whoever created %(name)s, can renumber it.",
+                          name=i18n.translate_value(row.label)), "error")
+            return redirect(url_for("inventory.module", key=key))
+        plan = rn.plan(session, row, by, order)
+        locked = rn.locked_mentions(session, row, plan.mapping) if plan.moves else []
+        if request.method == "GET":
+            return render_template("inventory/renumber.html", module=row, plan=plan, columns=rn.columns(row), by=by,
+                                   order=order, locked=locked, choose="by" not in request.args)
+        if plan.problems:
+            for problem in plan.problems:
+                flash(problem, "error")
+            return redirect(url_for("inventory.renumber", key=key, by=by, order=order))
+        mv = svc.view(row)
+        with audit.batch(session, "update", f"renumber {row.label} by {by}", "inventory_items"):
+            changed = rn.apply(session, row, plan)
+        session.commit()
+        flash(ngettext("Renumbered %(num)s %(noun)s. Batch history can undo it.",
+                       "Renumbered %(num)s %(nouns)s. Batch history can undo it.", changed,
+                       noun=_tr(mv.item_noun), nouns=_tr(mv.item_noun_plural)), "success")
+        for warning in renumber_warnings(locked):
+            flash(warning, "warning")
+        return redirect(url_for("inventory.module", key=key))
+
+
+def renumber_warnings(locked: list[str]) -> list[str]:
+    """What a renumber leaves with the old numbers."""
+    out = [gettext("Labels printed before show the old numbers; their QR codes still open the right items.")]
+    if locked:
+        out.append(gettext("Signed pages keep the old numbers in their links: %(pages)s.", pages=", ".join(locked[:10])
+                           + ("…" if len(locked) > 10 else "")))
+    return out
+
+
 @bp.route("/<key>/configure", methods=["GET", "POST"])
 def configure(key: str):
     with SessionLocal() as session:
