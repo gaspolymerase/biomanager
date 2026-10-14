@@ -1,6 +1,6 @@
 {
   "name": "biomanager",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Tell your assistant what you did in the lab, in your words or with a photo of your notes; it proposes the records in your lab's BioManager, and you approve them there.",
   "keywords": [
     "lab",
