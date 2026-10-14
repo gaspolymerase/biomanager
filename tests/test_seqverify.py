@@ -59,14 +59,37 @@ def mutate(seq: str, changes: dict[int, str], deletions=(), insertions: dict[int
     return "".join(out)
 
 
+SPACING = 12          # trace samples between called bases in the made-up traces
+
+
+def traces(bases: str, second: dict[int, str] | None = None, order: str = "GATC") -> list[tuple]:
+    """ABIF entries for a made-up trace: a peak of 1000 for each called base
+    every SPACING samples, and a second peak of 600 under the bases
+    `second` names (index → the other base)."""
+    size = SPACING * len(bases) + SPACING
+    channels = {b: [5] * size for b in "ACGT"}
+    for i, base in enumerate(bases):
+        centre = SPACING * i + SPACING // 2
+        for b, height in [(base, 1000), *(((second[i], 600),) if second and i in second else ())]:
+            if b in channels:
+                for dx in range(-3, 4):
+                    channels[b][centre + dx] = max(channels[b][centre + dx], int(height * (1 - abs(dx) / 4)))
+    out = [("FWO_", 1, 2, 1, 4, order.encode())]
+    for n, b in zip(range(9, 13), order):
+        out.append(("DATA", n, 4, 2, size, struct.pack(f">{size}h", *channels[b])))
+    out.append(("PLOC", 2, 4, 2, len(bases), struct.pack(f">{len(bases)}h",
+                                                          *(SPACING * i + SPACING // 2 for i in range(len(bases))))))
+    return out
+
+
 def abif(bases: str, quality: list[int], sample: str = "clone3_T7", number: int = 2, macbinary: bool = False,
-         quality_tag: bool = True) -> bytes:
+         quality_tag: bool = True, trace: list[tuple] | None = None) -> bytes:
     """A small ABI chromatogram: the 128-byte header, the data, then the
     directory, as an ABI sequencer writes one."""
     entries = [("SMPL", 1, 18, 1, len(sample) + 1, bytes([len(sample)]) + sample.encode()),
                ("PBAS", number, 2, 1, len(bases), bases.encode()),
                ("LANE", 1, 4, 2, 1, struct.pack(">h", 7)),                      # small: in the offset field
-               ("DATA", 9, 4, 2, 4, struct.pack(">4h", 1, 2, 3, 4))]
+               *(trace or [("DATA", 9, 4, 2, 4, struct.pack(">4h", 1, 2, 3, 4))])]
     if quality_tag:
         entries.insert(2, ("PCON", number, 2, 1, len(quality), bytes(quality)))
     blob, directory, offset = b"", b"", 128
@@ -233,6 +256,46 @@ class Alignment(unittest.TestCase):
         self.assertEqual(out["covered_bp"], 1000)
         self.assertTrue(out["verdict"].startswith("1 difference from the map: T→C at 1,005 in GeneF (L2P)."))
         self.assertIn("1 read doesn't match or was too poor to check.", out["verdict"])
+
+    def test_a_difference_carries_its_trace(self):
+        bases = mutate(SEQ[900:1500], {1004: "C"}, start=900)
+        read = sv.read_abif(abif(bases, [40] * len(bases), trace=traces(bases)), "clone.ab1")
+        self.assertEqual(sorted(read.extra["trace"]["channels"]), list("ACGT"))
+        out = check(read)
+        [d] = out["reads"][0]["differences"]
+        picture = d["trace"]
+        self.assertEqual(sorted(picture["channels"]), list("ACGT"))
+        self.assertLessEqual(len(picture["channels"]["A"]), sv.TRACE_POINTS)
+        [at] = [b for b in picture["bases"] if b["at"]]
+        self.assertEqual(at["base"], "C")
+        self.assertEqual(len(picture["bases"]), 2 * sv.TRACE_FLANK + 1)
+        self.assertNotIn("mixed", out["reads"][0])
+        # The words alone for the API and the assistants.
+        lean = sv.without_traces(out)
+        self.assertNotIn("trace", lean["differences"][0])
+        self.assertTrue(lean["differences"][0]["has_trace"])
+        # A text read has none.
+        self.assertNotIn("trace", check(sv.Read("r", bases))["reads"][0]["differences"][0])
+
+    def test_second_peaks_all_along_look_like_a_mix(self):
+        bases = SEQ[900:1500]
+        other = {i: "ACGT"[("ACGT".index(b) + 1) % 4] for i, b in enumerate(bases) if i % 6 == 0}
+        read = sv.read_abif(abif(bases, [40] * len(bases), trace=traces(bases, other)), "mix.ab1")
+        out = check(read)
+        mixed = out["reads"][0]["mixed"]
+        self.assertGreaterEqual(mixed["bases"], 90)
+        self.assertIsNone(mixed["from_read"])
+        self.assertIn("may be a mix of two clones", out["reads"][0]["verdict"])
+        self.assertIn("mix.ab1 looks like a mix of two clones", out["verdict"])
+
+    def test_two_sequences_from_one_place_are_an_indel_mixture(self):
+        bases = SEQ[900:1500]
+        other = {i: "ACGT"[("ACGT".index(bases[i]) + 2) % 4] for i in range(300, len(bases))}
+        read = sv.read_abif(abif(bases, [40] * len(bases), trace=traces(bases, other)), "indel.ab1")
+        out = check(read)
+        mixed = out["reads"][0]["mixed"]
+        self.assertEqual((mixed["from_read"], mixed["from_plasmid"]), (301, 1201))
+        self.assertIn("From read base 301 (near 1,201 on the map)", out["reads"][0]["verdict"])
 
     def test_a_1kb_read_against_15kb_is_quick(self):
         plasmid = _random(15000)

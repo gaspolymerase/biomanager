@@ -207,6 +207,31 @@ class AnimalUse(Reports):
         self.assertEqual((row["born"], row["died_or_euthanized"], row["breeding"]), (12, 3, 9))
         self.assertEqual(row["died_by_reason"], {"End of experiment or tissue collection": 3})
 
+    def test_pups_are_under_their_parents_protocol_with_or_without_a_record(self):
+        p = uniq("IACUC-")
+        mother = self.mouse(p, days_ago(400), gender="F")
+        pup = self.mouse("", days_ago(20))
+        litter = one("select litter_id_fk from mice where id=?", pup)
+        execute("update litters set mother_info=?, total_pups=6 where id=?",
+                f"#{one('select mouse_id from mice where id=?', mother)} ♀", litter)
+        out = self.ok(self.get(f"/animal-use?protocol={p}"))
+        self.assertEqual(out["totals"]["born"], 6)             # the pup with a record, and 5 counted by the litter
+        self.assertGreaterEqual(out["litters"]["pups_without_records"], 5)
+        self.assertTrue(any("their parents' protocol" in n for n in out["notes"]), out["notes"])
+        self.assertTrue(any("mother's" in n for n in out["notes"]), out["notes"])
+
+    def test_the_labs_own_organisms_are_counted_under_their_protocol(self):
+        p = uniq("RAT-")
+        key = self.make_organism_module(self.a)
+        animal = self.make_animal(self.a, key)
+        execute("update organisms set protocol=?, birth_on=? where id=?", p, date.fromisoformat(days_ago(30)), animal)
+        label = one("select label from organism_modules where key=?", key)
+        out = self.ok(self.get(f"/animal-use?protocol={p}"))
+        [row] = out["rows"]
+        self.assertEqual((row["species"], row["born"]), (label, 1))
+        self.assertIn("own Protocol", out["basis"]["protocol"])
+        self.assertFalse(any(n.startswith("Not counted") for n in out["notes"]))
+
     def test_anyone_in_the_lab_may_ask(self):
         self.ok(self.get("/animal-use", self.token(self.o, scope="read")))
         self.assertEqual(self.bare.get("/api/v1/animal-use").status_code, 401)

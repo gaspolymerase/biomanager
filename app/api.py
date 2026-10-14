@@ -763,7 +763,8 @@ def plasmid_verify(plasmid_id: int):
             annotations = json.loads(p.features_json) if p.features_json else []
         except (TypeError, ValueError):
             annotations = []
-        report = seqverify.verify(p.full_sequence, bool(p.is_circular), annotations, reads, name=p.name or "")
+        report = seqverify.without_traces(
+            seqverify.verify(p.full_sequence, bool(p.is_circular), annotations, reads, name=p.name or ""))
         report["plasmid"]["plasmid_id"] = p.plasmid_id
         report["problems"] = problems
         return jsonify(report)
@@ -1291,14 +1292,16 @@ def availability():
 @bp.post("/breeding-plan")
 def breeding_plan():
     """{want: {locus: wt|het|hom|carrier}, sex, count, age_min_days,
-    age_max_days, by, crosses, confidence}: matings to set up, and when."""
+    age_max_days, by, crosses, confidence, litters_per_mating}: matings to set
+    up, and when."""
     from . import assistant_compute as ac
     data = _json()
     with SessionLocal() as s:
         return _answer(lambda: ac.breeding_plan(
             s, data.get("want"), sex=data.get("sex") or "", count=_whole(data.get("count"), 1),
             age_min_days=_whole(data.get("age_min_days")), age_max_days=_whole(data.get("age_max_days")),
-            by=data.get("by"), crosses=data.get("crosses"), confidence=float(data.get("confidence") or 0.9)))
+            by=data.get("by"), crosses=data.get("crosses"), confidence=float(data.get("confidence") or 0.9),
+            litters_per_mating=_whole(data.get("litters_per_mating"))))
 
 
 @bp.post("/randomize")

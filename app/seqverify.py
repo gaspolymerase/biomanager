@@ -30,6 +30,14 @@ Pure functions, no database and no Flask: the plasmid page
   difference where the quality is under `GOOD_QUALITY` is listed but
   marked a likely sequencing error. Then the clone as a whole: what the
   reads cover together, the distinct differences, and one sentence.
+- **The trace.** An .ab1 keeps its four dye channels (DATA9–12, in the
+  order FWO_ names) and where each called base's peak is (PLOC). Each
+  difference carries the stretch of trace around it (`trace_window`), for
+  the page to draw. A read whose good bases often have a second peak at
+  least `MIXED_RATIO` of the called one (`second_peaks`) is said to look
+  mixed: two templates at once, from two clones (or a heterozygous
+  edit). When the second peaks start at one place and go on (`mixed_from`),
+  the two differ by an insertion or deletion near there.
 """
 from __future__ import annotations
 
@@ -52,6 +60,12 @@ MIN_TRIMMED = 30       # good bases a read needs to be checked at all
 MAX_READS = 24
 MAX_READ_BASES = 20_000
 MAX_FILE = 5 * 1024 * 1024
+MIXED_RATIO = 0.35     # a second peak at least this share of the called base's
+MIXED_SHARE = 0.05     # good bases with one, for a read to look mixed
+MIXED_MIN = 8          # and at least this many
+ONSET_RUN = 20         # bases after a point, most of them with a second peak: two sequences from there
+TRACE_FLANK = 8        # called bases either side of a difference in its picture
+TRACE_POINTS = 160     # trace samples per channel in a picture, at most
 READ_SUFFIXES = (".ab1", ".abi", ".ab", ".seq", ".fa", ".fasta", ".fas", ".fna", ".txt")
 
 MATCH, MISMATCH, GAP_OPEN, GAP_EXTEND = 2, -4, -5, -2
@@ -152,8 +166,94 @@ def read_abif(data: bytes, name: str = "") -> Read:
         raw = smpl[3]
         sample = raw[1:1 + raw[0]].decode("latin-1", "replace").strip() if smpl[0] == 18 else \
             raw.decode("latin-1", "replace").strip("\x00 ")
-    return Read(name=name or sample or "read", bases=bases, quality=quality, source="ab1",
-                extra={"sample": sample})
+    extra = {"sample": sample}
+    trace = _abif_trace(entries, bases_entry, ("PBAS", 2) in entries)
+    if trace is not None:
+        extra["trace"] = trace
+    return Read(name=name or sample or "read", bases=bases, quality=quality, source="ab1", extra=extra)
+
+
+def _abif_trace(entries: dict, bases_entry, base_caller: bool) -> dict | None:
+    """The four analysed dye channels in A, C, G, T order, and each called
+    base's peak (an index into them); None when the file hasn't them or
+    they don't line up with the bases."""
+    order = entries.get(("FWO_", 1))
+    if order is None or len(order[3]) < 4:
+        return None
+    letters = order[3][:4].decode("latin-1").upper()
+    if sorted(letters) != list("ACGT"):
+        return None
+    channels = {}
+    for n, base in zip(range(9, 13), letters):
+        entry = entries.get(("DATA", n))
+        if entry is None or entry[1] != 2 or not entry[2]:
+            return None
+        channels[base] = list(struct.unpack(f">{entry[2]}h", entry[3][:2 * entry[2]]))
+    if len({len(v) for v in channels.values()}) != 1:
+        return None
+    ploc = entries.get(("PLOC", 2 if base_caller else 1)) or entries.get(("PLOC", 2)) or entries.get(("PLOC", 1))
+    if ploc is None or ploc[1] != 2:
+        return None
+    peaks = list(struct.unpack(f">{ploc[2]}h", ploc[3][:2 * ploc[2]]))
+    raw = bases_entry[3]
+    if len(peaks) != len(raw):
+        return None
+    peaks = [p for p, b in zip(peaks, raw) if chr(b).isalpha()]       # as the bases were kept
+    size = len(channels["A"])
+    if not peaks or any(not 0 <= p < size for p in peaks):
+        return None
+    return {"channels": channels, "peaks": peaks}
+
+
+def second_peaks(read: Read, start: int, end: int) -> list[int]:
+    """The read's bases in [start, end) under which another dye's peak is at
+    least MIXED_RATIO of the called base's."""
+    trace = (read.extra or {}).get("trace")
+    if not trace:
+        return []
+    ch, peaks, out = trace["channels"], trace["peaks"], []
+    for i in range(max(0, start), min(end, len(peaks), len(read.bases))):
+        heights = {b: ch[b][peaks[i]] for b in "ACGT"}
+        called = read.bases[i] if read.bases[i] in heights else max(heights, key=heights.get)
+        main = heights[called]
+        if main <= 0:
+            continue
+        other = max(v for b, v in heights.items() if b != called)
+        if other >= MIXED_RATIO * main:
+            out.append(i)
+    return out
+
+
+def mixed_from(marked: list[int], start: int, end: int) -> int | None:
+    """Where two sequences start in a read, when they do: the first base
+    from which most of the next ONSET_RUN have a second peak, with few
+    before it. None for second peaks scattered all along."""
+    if not marked:
+        return None
+    hits = set(marked)
+    for i in range(start, max(start, end - ONSET_RUN)):
+        if i in hits and sum(1 for j in range(i, i + ONSET_RUN) if j in hits) >= ONSET_RUN * 0.6:
+            before = sum(1 for j in range(start, i) if j in hits)
+            return i if before <= max(2, 0.1 * (i - start)) else None
+    return None
+
+
+def trace_window(read: Read, index: int, strand: str) -> dict | None:
+    """The trace around one of the read's bases, for a picture: each dye's
+    samples (at most TRACE_POINTS), the called bases at their x, and which
+    one is `index`. As the read runs: a reverse read's is the other strand."""
+    trace = (read.extra or {}).get("trace")
+    if not trace or not 0 <= index < len(trace["peaks"]):
+        return None
+    peaks = trace["peaks"]
+    lo, hi = max(0, index - TRACE_FLANK), min(len(peaks) - 1, index + TRACE_FLANK)
+    x0 = max(0, peaks[lo] - 6)
+    x1 = min(len(trace["channels"]["A"]) - 1, peaks[hi] + 6)
+    step = max(1, -(-(x1 - x0 + 1) // TRACE_POINTS))
+    channels = {b: trace["channels"][b][x0:x1 + 1:step] for b in "ACGT"}
+    return {"channels": channels, "step": step, "x0": x0, "strand": strand,
+            "bases": [{"base": read.bases[i], "x": (peaks[i] - x0) / step, "at": i == index} for i in range(lo, hi + 1)
+                      if i < len(read.bases)]}
 
 
 def reads_in_text(text: str, name: str = "") -> list[Read]:
@@ -663,6 +763,9 @@ def check_read(read: Read, target: Target, features: list[dict]) -> dict:
                     "quality": q}
         item["read_position"] = read_index(d["q"][0]) + 1
         item["confident"] = q is None or q >= GOOD_QUALITY
+        picture = trace_window(read, read_index(d["q"][0]), strand)
+        if picture is not None:
+            item["trace"] = picture
         item["_pos"] = pos
         reported.append(item)
 
@@ -711,6 +814,24 @@ def check_read(read: Read, target: Target, features: list[dict]) -> dict:
     if partial:
         out["verdict"] += " " + gettext("Only bases %(start)s–%(end)s of the read follow the map: the rest is something else (an insert, a deletion, another plasmid?).",
                                         start=_n(out["read_span"][0]), end=_n(out["read_span"][1]))
+    # Two templates at once: second peaks under many good bases.
+    marked = second_peaks(read, start, end)
+    if len(marked) >= MIXED_MIN and len(marked) >= MIXED_SHARE * (end - start):
+        onset = mixed_from(marked, start, end)
+        at_plasmid = None
+        if onset is not None:
+            qi = onset - start if strand == "forward" else end - 1 - onset
+            near = [tj for op, q2, tj in ops if op == "M" and q2 >= qi] or [tj for op, q2, tj in ops if op == "M"]
+            at_plasmid = (near[0] if strand == "forward" else near[-1]) % L + 1 if near else None
+        out["mixed"] = {"bases": len(marked), "share": round(len(marked) / (end - start), 3),
+                        "from_read": onset + 1 if onset is not None else None, "from_plasmid": at_plasmid,
+                        "trace": trace_window(read, onset if onset is not None else marked[0], strand)}
+        if onset is not None:
+            out["verdict"] += " " + gettext("From read base %(read)s (near %(position)s on the map) the trace shows two sequences at once: probably two clones that differ by an insertion or deletion there. Pick a single colony and sequence it again.",  # noqa: E501
+                                            read=_n(onset + 1), position=_n(at_plasmid) if at_plasmid else "?")
+        else:
+            out["verdict"] += " " + gettext("The trace has a second peak under %(num)s of its good bases (%(share)s): it may be a mix of two clones. Pick a single colony and sequence it again.",  # noqa: E501
+                                            num=_n(len(marked)), share=f"{100 * len(marked) / (end - start):.0f}%")
     return out
 
 
@@ -805,6 +926,11 @@ def verify(sequence: str, circular: bool, annotations: list, reads: list[Read], 
     if placed and unplaced:
         verdict += " " + ngettext("%(num)s read doesn't match or was too poor to check.",
                                   "%(num)s reads don't match or were too poor to check.", len(unplaced))
+    mixed = [r["name"] for r in placed if r.get("mixed")]
+    if mixed:
+        verdict += " " + ngettext("%(names)s looks like a mix of two clones: see its trace.",
+                                  "%(names)s look like a mix of two clones: see their traces.", len(mixed),
+                                  names=_join(mixed))
     low = [d for d in differences if not d["confident"]]
     if placed and low and not confident:
         verdict += " " + ngettext("%(num)s difference at low quality is likely a sequencing error.",
@@ -814,6 +940,16 @@ def verify(sequence: str, circular: bool, annotations: list, reads: list[Read], 
             "features_covered": whole, "features_partly": partly, "differences": differences,
             "map": [{"name": f["name"], "type": f["type"], "ranges": [[s + 1, e + 1] for s, e in f["ranges"]],
                      "direction": f["direction"]} for f in features]}
+
+
+def without_traces(report: dict) -> dict:
+    """The report without the pictures' samples (for the API and the
+    assistants, who read the words): `has_trace` says one was there."""
+    for item in [*report.get("differences", []), *(d for r in report.get("reads", []) for d in r.get("differences", [])),
+                 *(r["mixed"] for r in report.get("reads", []) if r.get("mixed"))]:
+        if item.pop("trace", None) is not None:
+            item["has_trace"] = True
+    return report
 
 
 def reads_from_uploads(files: list[tuple[str, bytes]], text: str = "") -> tuple[list[Read], list[str]]:

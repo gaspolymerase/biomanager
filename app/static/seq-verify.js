@@ -3,7 +3,8 @@
    /plasmids/<id>/verify, which checks them against the map
    (app/seqverify.py, where all of the biology is) and answers with a report.
    This draws it: the clone's verdict, where the reads lie over the map with
-   each difference marked, the reads, and the list of differences. */
+   each difference marked, the reads, and the list of differences, each
+   with the stretch of chromatogram around it when the read was an .ab1. */
 (function () {
   const tr = (text, values) => (typeof window.t === 'function' ? window.t(text, values) : text);
   const SVG = 'http://www.w3.org/2000/svg';
@@ -102,6 +103,33 @@
     return svg;
   }
 
+  // A stretch of chromatogram: the four dyes in the usual colours (G in the
+  // page's ink, so it shows in the dark), the called bases under it, the
+  // one in question shaded.
+  const DYES = { A: '#16a34a', C: '#2563eb', G: 'var(--color-ink)', T: '#dc2626' };
+  function drawTrace(picture) {
+    const W = 220;
+    const H = 70;
+    const n = picture.channels.A.length;
+    const top = Math.max(1, ...['A', 'C', 'G', 'T'].flatMap((b) => picture.channels[b]));
+    const x = (i) => (i / Math.max(n - 1, 1)) * W;
+    const y = (v) => 4 + (1 - Math.max(v, 0) / top) * (H - 22);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'block', role: 'img',
+      'aria-label': tr('Trace around this base') });
+    picture.bases.filter((b) => b.at).forEach((b) => {
+      svg.appendChild(el('rect', { x: x(b.x) - 6, y: 0, width: 12, height: H, fill: 'var(--color-accent-soft, rgba(250,204,21,.25))' }));
+    });
+    ['A', 'C', 'G', 'T'].forEach((b) => {
+      const points = picture.channels[b].map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+      svg.appendChild(el('polyline', { points, fill: 'none', 'stroke-width': 1.2, style: `stroke:${DYES[b]}` }));
+    });
+    picture.bases.forEach((b) => {
+      svg.appendChild(el('text', { x: x(b.x), y: H - 4, 'text-anchor': 'middle', 'font-size': 10,
+        'font-family': 'ui-monospace, monospace', 'font-weight': b.at ? 700 : 400, style: `fill:${DYES[b.base] || 'currentColor'}` }, b.base));
+    });
+    return svg;
+  }
+
   function changeText(d) {
     if (d.kind === 'mismatch') return `${d.plasmid}→${d.read}`;
     if (d.kind === 'deletion') return `−${d.plasmid.length > 12 ? tr('%(n)s bp', { n: d.length }) : d.plasmid}`;
@@ -135,24 +163,33 @@
         <td class="py-2 whitespace-nowrap">${r.placed ? esc(r.strand === 'reverse' ? tr('reverse') : tr('forward')) : '—'}</td>
         <td class="py-2 whitespace-nowrap tabular-nums">${r.placed ? `${num(r.start)}–${num(r.end)}` : '—'}</td>
         <td class="py-2 tabular-nums">${r.identity != null ? `${r.identity}` : '—'}</td>
-        <td class="py-2 pr-4">${badge(r.status)} ${esc(r.verdict)}</td></tr>`).join('')}
+        <td class="py-2 pr-4">${badge(r.status)} ${esc(r.verdict)}${r.mixed && r.mixed.trace ? `<div class="mt-1" data-trace-mixed="${esc(r.name)}"></div>` : ''}</td></tr>`).join('')}
       </tbody></table></div>`);
     if (report.differences.length) {
       parts.push(`<div class="overflow-x-auto border-t border-[var(--color-line)]"><table class="w-full text-[13px]">
         <thead><tr class="text-left text-muted"><th class="px-4 py-2">${esc(tr('Position'))}</th><th class="py-2">${esc(tr('Change'))}</th>
         <th class="py-2">${esc(tr('Falls in'))}</th><th class="py-2">${esc(tr('Effect'))}</th><th class="py-2">${esc(tr('Quality'))}</th>
-        <th class="py-2 pr-4">${esc(tr('Seen in'))}</th></tr></thead><tbody>
-        ${report.differences.map((d) => `<tr class="border-t border-[var(--color-line)]${d.confident ? '' : ' text-muted'}">
+        <th class="py-2">${esc(tr('Seen in'))}</th><th class="py-2 pr-4">${esc(tr('Trace'))}</th></tr></thead><tbody>
+        ${report.differences.map((d, i) => `<tr class="border-t border-[var(--color-line)]${d.confident ? '' : ' text-muted'}">
           <td class="px-4 py-2 whitespace-nowrap tabular-nums">${esc(where(d))}</td>
           <td class="py-2 font-mono text-[12px] break-all">${esc(changeText(d))}</td>
           <td class="py-2">${esc(d.features.join(', ') || '—')}</td>
           <td class="py-2">${esc(d.effect ? d.effect.text : '—')}</td>
           <td class="py-2 whitespace-nowrap tabular-nums">${d.quality == null ? '—' : `Q${d.quality}`}${d.confident ? '' : ` · ${esc(tr('low quality'))}`}</td>
-          <td class="py-2 pr-4 whitespace-nowrap">${esc(tr('%(seen)s of %(covering)s reads', { seen: d.reads.length, covering: d.reads_covering }))}</td></tr>`).join('')}
+          <td class="py-2 whitespace-nowrap">${esc(tr('%(seen)s of %(covering)s reads', { seen: d.reads.length, covering: d.reads_covering }))}</td>
+          <td class="py-2 pr-4" data-trace-diff="${i}">${d.trace ? '' : '—'}</td></tr>`).join('')}
         </tbody></table></div>`);
     }
     result.innerHTML = parts.join('');
     result.hidden = false;
+    report.differences.forEach((d, i) => {
+      const cell = result.querySelector(`[data-trace-diff="${i}"]`);
+      if (cell && d.trace) cell.appendChild(drawTrace(d.trace));
+    });
+    report.reads.filter((r) => r.mixed && r.mixed.trace).forEach((r) => {
+      const cell = [...result.querySelectorAll('[data-trace-mixed]')].find((c) => c.dataset.traceMixed === r.name);
+      if (cell) cell.appendChild(drawTrace(r.mixed.trace));
+    });
     const map = result.querySelector('[data-verify-map]');
     if (report.reads.some((r) => r.placed)) map.appendChild(drawMap(report, map.clientWidth));
     else map.remove();

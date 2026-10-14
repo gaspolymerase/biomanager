@@ -52,5 +52,9 @@
   "Or reads kept with this plasmid": "或使用与此质粒一起保存的读段",
   "Paste reads instead (FASTA or plain bases)": "改为粘贴读段（FASTA 或纯碱基）",
   "Verify": "核对",
-  "Keep the reads and the result with this plasmid’s files": "将读段和结果保存到此质粒的文件中"
+  "Keep the reads and the result with this plasmid’s files": "将读段和结果保存到此质粒的文件中",
+  "From read base %(read)s (near %(position)s on the map) the trace shows two sequences at once: probably two clones that differ by an insertion or deletion there. Pick a single colony and sequence it again.": "从测序读段第 %(read)s 个碱基起（图谱上约 %(position)s 处），峰图同时显示两条序列：很可能是两个克隆在那里相差一个插入或缺失。请挑单克隆重新测序。",
+  "The trace has a second peak under %(num)s of its good bases (%(share)s): it may be a mix of two clones. Pick a single colony and sequence it again.": "峰图在 %(num)s 个高质量碱基下有第二个峰（%(share)s）：可能是两个克隆的混合。请挑单克隆重新测序。",
+  "%(names)s looks like a mix of two clones: see its trace.": "%(names)s 看起来是两个克隆的混合：见它的峰图。",
+  "%(names)s look like a mix of two clones: see their traces.": "%(names)s 看起来是两个克隆的混合：见它们的峰图。"
 }

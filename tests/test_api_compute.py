@@ -228,9 +228,57 @@ class BreedingPlan(Compute):
         self.assertEqual(out["crosses"][0]["odds"], 0.5)
         self.assertIsNone(out["timing"])
         for body in ({"want": {}}, {"want": {"A": "purple"}}, {"want": {"A": "hom"}, "sex": "X"},
-                     {"want": {"A": "hom", "B": "hom", "C": "hom", "D": "hom"}}, {"want": {"A": "hom"}, "count": "many"},
+                     {"want": {k: "hom" for k in "ABCDEF"}}, {"want": {"A": "hom"}, "count": "many"},
+                     {"want": {"A": "hom"}, "litters_per_mating": 9},
                      {"want": {"A": "hom"}, "age_min_days": 2.5}):
             self.assertEqual(self.post_json("/breeding-plan", body).status_code, 400, body)
+
+
+    def test_five_loci_and_more_litters_from_a_mating_given_time(self):
+        out = self.ok(self.post_json("/breeding-plan", {"want": {k: "het" for k in "ABCDE"}, "count": 2,
+                                                        "crosses": [{"female": {k: "hom" for k in "ABCDE"},
+                                                                     "male": {}}]}))
+        self.assertEqual(out["crosses"][0]["odds"], 1.0)
+        one_each = self.ok(self.post_json("/breeding-plan", {"want": {"A": "hom"}, "count": 12,
+                                                             "crosses": [{"female": {"A": "het"}, "male": {"A": "het"}}]}))
+        self.assertEqual(one_each["litters_per_mating"], 1)
+        # Wanted in 200 days, any age past weaning: a mating has time for several litters.
+        roomy = self.ok(self.post_json("/breeding-plan", {"want": {"A": "hom"}, "count": 12, "by": days_ahead(200),
+                                                          "crosses": [{"female": {"A": "het"}, "male": {"A": "het"}}]}))
+        self.assertGreater(roomy["litters_per_mating"], 1)
+        self.assertLess(roomy["crosses"][0]["matings"], one_each["crosses"][0]["matings"])
+        asked = self.ok(self.post_json("/breeding-plan", {"want": {"A": "hom"}, "count": 12, "litters_per_mating": 2,
+                                                          "crosses": [{"female": {"A": "het"}, "male": {"A": "het"}}]}))
+        self.assertEqual(asked["crosses"][0]["litters_per_mating"], 2)
+
+    def test_matings_under_way_breeders_in_experiments_and_clashes(self):
+        locus = uniq("Gx")
+        stock, pair = uniq("C"), uniq("C")
+        self.make_cage(self.m, stock, purpose="Breeder")
+        self.make_cage(self.m, pair, purpose="Breeding")
+        het = {"transgene_1": f"{locus} fl/+"}
+        free_f = self.make_mouse(self.m, self.member, cage=stock, litter=uniq("L"), date_of_birth=days_ago(70),
+                                 gender="F", **het)
+        busy_f = self.make_mouse(self.m, self.member, cage=stock, litter=uniq("L"), date_of_birth=days_ago(70),
+                                 gender="F", **het)
+        self.add(self.m, self.experiment(self.m), busy_f, "Vehicle")
+        self.make_mouse(self.m, self.member, cage=stock, litter=uniq("L"), date_of_birth=days_ago(70), gender="M", **het)
+        for sex in ("F", "M"):                              # a het × het pair mating now
+            self.make_mouse(self.m, self.member, cage=pair, litter=uniq("L"), date_of_birth=days_ago(70), gender=sex,
+                            **het)
+        hom_m = self.make_mouse(self.m, self.member, cage=stock, litter=uniq("L"), date_of_birth=days_ago(70),
+                                gender="M", transgene_1=f"{locus} fl/fl")
+        out = self.ok(self.post_json("/breeding-plan", {"want": {locus: "hom"}, "count": 4}))
+        het_het = next(c for c in out["crosses"] if c["male"] == f"{locus} het")
+        self.assertEqual(het_het["matings_under_way"], 1)
+        self.assertEqual(het_het["cages_under_way"], [pair])
+        self.assertEqual(het_het["females"], 1)                         # one free: one mating, one in an experiment
+        self.assertEqual(het_het["to_set_up"], het_het["matings"] - 1)
+        self.assertEqual([b["mouse"] for b in het_het["in_experiments"]], [self.number(busy_f)])
+        # Het females are wanted by both the het and the hom male's cross: a clash, said so.
+        self.assertTrue(any(c["sex"] == "F" and len(c["crosses"]) == 2 for c in out["clashes"]), out["clashes"])
+        self.assertTrue(any(c["male"] == f"{locus} hom" for c in out["crosses"]), hom_m)
+        self.assertNotEqual(free_f, busy_f)
 
 
 class Randomize(Compute):

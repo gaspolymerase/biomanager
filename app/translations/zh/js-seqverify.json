@@ -23,5 +23,7 @@
   "low quality": "质量低",
   "%(seen)s of %(covering)s reads": "覆盖此处的 %(covering)s 条读段中的 %(seen)s 条",
   "Checking the reads…": "正在检查读段…",
-  "Couldn’t check: %(error)s": "无法检查：%(error)s"
+  "Couldn’t check: %(error)s": "无法检查：%(error)s",
+  "Trace": "峰图",
+  "Trace around this base": "这个碱基附近的峰图"
 }

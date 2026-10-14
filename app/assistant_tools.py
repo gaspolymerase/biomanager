@@ -469,15 +469,21 @@ TOOLS.update({
     "breeding_plan": (
         "Plan breeding for a genotype, worked out by BioManager: Mendelian odds for each mating type among the "
         "lab's own breeders (or the crosses given), the lab's own litter size, weaning at P21, and how many matings "
-        "to set up by which date for `count` mice of that genotype and sex, aged within the window on `by`. Tell "
-        "the person the assumptions it lists, and which breeders it was unsure how to read.",
+        "to set up by which date for `count` mice of that genotype and sex, aged within the window on `by`; up to "
+        "5 loci. Each mating counts the litters born in time (or litters_per_mating); Breeding cages already "
+        "pairing a cross count as matings under way, and crosses that would need the same breeders are listed in "
+        "clashes. Tell the person the assumptions it lists, which breeders it was unsure how to read, and any "
+        "clashes or breeders in experiments.",
         _obj({"want": _WANT, "sex": {"type": "string", "enum": ["F", "M"]},
               "count": {"type": "integer", "description": "How many mice are wanted"},
               "age_min_days": {"type": "integer"}, "age_max_days": {"type": "integer"},
               "by": {"type": "string", "description": "When they are needed, YYYY-MM-DD"},
               "crosses": {"type": "array", "items": {"type": "object"},
                           "description": "Instead of the lab's breeders: [{female: {locus: state}, male: {…}}]"},
-              "confidence": {"type": "number", "description": "How sure to be of having enough (default 0.9)"}},
+              "confidence": {"type": "number", "description": "How sure to be of having enough (default 0.9)"},
+              "litters_per_mating": {"type": "integer", "description": "Litters to count from each mating, 1 to 6 "
+                                                                       "(default: as many as are born in time for "
+                                                                       "`by`, else 1)"}},
              ("want",)),
         lambda api, a: breeding_plan(api, a)),
     "randomize": (
@@ -602,7 +608,8 @@ TOOLS.update({
 TOOLS.update({
     "animal_use": (
         "Animal use for an IACUC or animal-care annual review, counted by BioManager: for a period (the last twelve "
-        "months unless start and end are given) and optionally one protocol, the mice and zebrafish per protocol, "
+        "months unless start and end are given) and optionally one protocol, the mice, zebrafish and the lab's own "
+        "organisms per protocol, "
         "species and strain: born, added to the records, new (both), used in experiments, died or euthanized (with "
         "each reason, died_by_reason), and breeding; each per protocol and in all. basis says what each count is "
         "based on, flags what the records can't say (animals with no protocol, deaths with no reason). Use its "
@@ -629,7 +636,9 @@ TOOLS.update({
         "in and what it does to a coding sequence's amino acid; then a verdict for each read and for the clone. "
         "Give the reads as captures (ids from list_captures: an .ab1 chromatogram or a FASTA the person uploaded) "
         "or as reads (their bases, FASTA or plain). Changes nothing. Give its verdict and differences as they are; "
-        "a difference marked not confident is at low quality and likely the read's error.",
+        "a difference marked not confident is at low quality and likely the read's error. A read's mixed says "
+        "its chromatogram has second peaks under many good bases (a mix of two clones; from_plasmid, when they "
+        "start at one place: two clones differing by an indel there): tell the person to pick a single colony.",
         _obj({"plasmid": {"type": "string", "description": "The plasmid's number, e.g. 14"},
               "ref": {"type": "object", "description": "Instead of plasmid: its reference from resolve"},
               "captures": {"type": "array", "items": {"type": "integer"},

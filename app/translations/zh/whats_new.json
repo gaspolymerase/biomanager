@@ -148,5 +148,8 @@
   "An AI assistant no longer offers an admin other people's mice as theirs to use.": "AI 助手不再把别人的小鼠当作管理员自己可用的小鼠。",
   "A **Stimulation** in the regimen keeps its **Frequency**, **Intensity**, **Pulse width** and **Duration**.": "处理方案里的 **刺激** 会记下它的 **频率**、**强度**、**脉宽** 和 **时长**。",
   "**New experiment** offers ΔCt, ΔΔCt and fold change as the readout, with the **Control group**.": "**新建实验** 可以直接选 ΔCt、ΔΔCt 和倍数变化作为观测指标，并填写 **对照组**。",
-  "A measure's **•••** changes its **Kind** too; its readings are worked out again.": "指标的 **•••** 也可以改 **类型**，它的读数会重新计算。"
+  "A measure's **•••** changes its **Kind** too; its readings are worked out again.": "指标的 **•••** 也可以改 **类型**，它的读数会重新计算。",
+  "**Verify sequencing** shows the trace around each difference, and says when a read looks like a mix of two clones.": "**验证测序** 会显示每个差异附近的峰图，读段看起来像两个克隆的混合时也会说明。",
+  "An AI assistant's breeding plan counts every litter a mating has time for, the pairs already mating, and up to five genes.": "AI 助手的繁殖计划会算上每对在期限前能生的每一窝、已经在配的对，最多五个基因。",
+  "The animal-use report counts your own organisms, and pups under their parents' protocol.": "动物使用报告会统计你们自己的物种，仔鼠算在父母的方案下。"
 }

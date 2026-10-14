@@ -57,7 +57,7 @@ SAY = {"wt": "wt", "het": "het", "hom": "hom", "carrier": "carrier", "any": "any
        "+/-": "het", "heterozygous": "het", "hemizygous": "het", "hemi": "het",
        "-/-": "hom", "homozygous": "hom",
        "positive": "carrier", "pos": "carrier", "+": "carrier"}
-MAX_LOCI = 3
+MAX_LOCI = 5             # 3⁵ genotypes a parent: 59,049 pairs to weigh, still quick
 
 
 def state(value, wanted: bool = False) -> str:
@@ -589,6 +589,8 @@ def arrive(facts: dict) -> list[dict]:
 
 BUSY = ("planned", "active", "paused")   # an experiment whose animals are taken (a planned one has them booked)
 PAIRING_TO_BIRTH = 21               # days from setting up a mating to the litter
+LITTER_INTERVAL = 28                # days between a pair's litters (mated again after each)
+MOST_LITTERS = 6                    # litters counted from one mating at most
 FALLBACK_LITTER = 6.0               # mice, when the lab has too few litters to say
 MIN_LITTERS = 3
 
@@ -851,8 +853,9 @@ def lab_breeders(session, loci: list[str], today: date, strains: list[str] | Non
     as their genotype names it), each read at the loci."""
     from sqlalchemy.orm import selectinload
     from .models import CageRecord, MouseRecord
-    from .services import SAC_THRESHOLD_WEEKS, holds_breeders, mouse_is_active, split_genotype
+    from .services import SAC_THRESHOLD_WEEKS, holds_breeders, is_breeding_cage, mouse_is_active, split_genotype
     known = lab_strains(session)
+    busy = _busy_mice(session)
     out = []
     for m in session.scalars(select(MouseRecord).join(CageRecord, MouseRecord.cage_id_fk == CageRecord.id)
                              .options(selectinload(MouseRecord.cage), selectinload(MouseRecord.litter))
@@ -874,16 +877,32 @@ def lab_breeders(session, loci: list[str], today: date, strains: list[str] | Non
         out.append({"mouse": m.mouse_id, "ref": {"kind": "mouse", "id": m.id}, "sex": m.gender.upper(),
                     "genotype": m.genotype or "", "read_as": {k: v[0] for k, v in read.items()},
                     "sure": all(v[1] for v in read.values()), "also_carries": also,
-                    "cage": m.cage.cage_id, "purpose": m.cage.purpose,
+                    "cage": m.cage.cage_id, "purpose": m.cage.purpose, "mating": is_breeding_cage(m.cage.purpose),
+                    "in_experiment": busy.get(m.id),
                     "age_weeks": weeks, "past_breeding_age": weeks is not None and weeks >= SAC_THRESHOLD_WEEKS})
     return out
 
 
+def litters_by(today: date, born_from: date | None, born_by: date) -> int:
+    """How many litters one mating set up today can give with pups born in
+    the window: the first PAIRING_TO_BIRTH days on, then one every
+    LITTER_INTERVAL days (0 when the window has closed)."""
+    first = today + timedelta(days=PAIRING_TO_BIRTH)
+    if first > born_by:
+        return 0
+    n = 1 + (born_by - first).days // LITTER_INTERVAL
+    if born_from is not None and born_from > first:
+        n -= -(-(born_from - first).days // LITTER_INTERVAL)       # litters born before the window don't count
+    return max(0, min(n, MOST_LITTERS))
+
+
 def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_days: int | None = None,
                   age_max_days: int | None = None, by=None, crosses: list | None = None, confidence: float = 0.9,
-                  today: date | None = None) -> dict:
+                  today: date | None = None, litters_per_mating: int | None = None) -> dict:
     """How to breed `count` mice of a genotype (and sex), aged within a
-    window on a day: the odds per mating, how many matings, and by when."""
+    window on a day: the odds per mating, how many matings (each giving
+    `litters_per_mating` litters, else as many as fit before `by`, else
+    one), the matings already under way, and by when."""
     from .services import weaning_offset
     wean_days = weaning_offset(session)
     today = today or date.today()
@@ -923,6 +942,13 @@ def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_da
     litter = lab_litter_size(session, loci or strains)
     pups = litter["mean"] * litter["kept"]
     p_sex = 0.5 if sex else 1.0
+    if litters_per_mating is not None and not 1 <= litters_per_mating <= MOST_LITTERS:
+        raise ValueError(f"litters_per_mating is 1 to {MOST_LITTERS}.")
+    born_from = born_by = None
+    if by is not None:
+        born_by = by - timedelta(days=age_min_days if age_min_days is not None else wean_days)
+        born_from = by - timedelta(days=age_max_days) if age_max_days is not None else None
+    litters = litters_per_mating or (max(1, litters_by(today, born_from, born_by)) if born_by else 1)
 
     plans = []
     if crosses:
@@ -945,29 +971,59 @@ def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_da
                     continue
                 odds = cross_odds(females[0]["read_as"], males[0]["read_as"], want)
                 if odds > 0:
+                    # A mating under way: a Breeding cage with one of each kind.
+                    fcages = {b["cage"] for b in females if b["mating"]}
+                    mcages = {b["cage"] for b in males if b["mating"]}
+                    free = lambda mice: [b for b in mice if not b["mating"] and not b["in_experiment"]]  # noqa: E731
                     plans.append({"female": flabel + "".join(f" + {a}" for a in falso),
                                   "male": mlabel + "".join(f" + {a}" for a in malso), "odds": odds,
                                   "also_carries": sorted(set(falso) | set(malso)),
-                                  "females": len(females), "males": len(males),
+                                  "females": len(free(females)), "males": len(free(males)),
+                                  "matings_under_way": len(fcages & mcages),
+                                  "cages_under_way": sorted(fcages & mcages),
+                                  "in_experiments": [{"mouse": b["mouse"], "experiment": b["in_experiment"]}
+                                                     for b in females + males if b["in_experiment"]],
+                                  "_kinds": ((fsex, flabel, falso), (msex, mlabel, malso)),
                                   "female_mice": [b["mouse"] for b in females][:20],
                                   "male_mice": [b["mouse"] for b in males][:20],
                                   "past_breeding_age": [b["mouse"] for b in females + males if b["past_breeding_age"]]})
     for plan in plans:
         p = plan["odds"] * p_sex
-        need = matings_needed(count, p, pups, confidence)
+        need = matings_needed(count, p, pups * litters, confidence)
         plan.update({"odds": round(plan["odds"], 4), "odds_with_sex": round(p, 4), "matings_on_average": need["expected"],
-                     "matings": need["sure"], "wanted_per_litter": need.get("wanted_per_litter")})
+                     "matings": need["sure"], "litters_per_mating": litters,
+                     "wanted_per_litter": round(need["wanted_per_litter"] / litters, 2)
+                     if need.get("wanted_per_litter") is not None else None})
         if plan["females"] is not None and need["sure"] is not None:
-            plan["females_short"] = max(0, need["sure"] - plan["females"])
-            plan["males_short"] = max(0, -(-need["sure"] // 2) - plan["males"])     # a male with up to two females
-    # Crosses whose pups carry nothing beyond the genotype asked come first.
-    plans.sort(key=lambda x: (x["matings"] is None, bool(x.get("also_carries")), x["matings"] or 0, -x["odds"]))
+            to_set_up = max(0, need["sure"] - plan["matings_under_way"])
+            plan["to_set_up"] = to_set_up
+            plan["females_short"] = max(0, to_set_up - plan["females"])
+            plan["males_short"] = max(0, -(-to_set_up // 2) - plan["males"])     # a male with up to two females
+    # The same breeders can't be in two matings at once: crosses listed
+    # that would need them say so.
+    clashes = []
+    shown = sorted(plans, key=lambda x: (x["matings"] is None, bool(x.get("also_carries")),
+                                         x["matings"] or 0, -x["odds"]))[:12]
+    uses: dict[tuple, list[int]] = {}
+    for i, plan in enumerate(shown):
+        for kind in plan.get("_kinds") or ():
+            uses.setdefault(kind, []).append(i)
+    for kind, idx in uses.items():
+        if len(idx) > 1:
+            mice = next(b for b in breeders if (b["sex"], named(b["read_as"]), tuple(b["also_carries"])) == kind)
+            sex_word = "females" if kind[0] == "F" else "males"
+            clashes.append({"breeders": kind[1] + "".join(f" + {a}" for a in kind[2]), "sex": kind[0],
+                            "crosses": [i + 1 for i in idx],
+                            "note": f"Crosses {', '.join(str(i + 1) for i in idx)} would use the same {sex_word} "
+                                    f"({mice['mouse']}…): each can be in one mating at a time, so set up one of "
+                                    "them, or split the breeders between them."})
+    for plan in plans:
+        plan.pop("_kinds", None)
+    plans = shown
+    # Crosses whose pups carry nothing beyond the genotype asked come first (sorted above).
 
     timing = None
     if by is not None:
-        youngest = age_min_days if age_min_days is not None else wean_days
-        born_by = by - timedelta(days=youngest)
-        born_from = by - timedelta(days=age_max_days) if age_max_days is not None else None
         set_up_by = born_by - timedelta(days=PAIRING_TO_BIRTH)
         timing = {"born_from": born_from.isoformat() if born_from else None, "born_by": born_by.isoformat(),
                   "set_up_from": max(born_from - timedelta(days=PAIRING_TO_BIRTH), today).isoformat()
@@ -985,12 +1041,20 @@ def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_da
         "Each parent's genotype is read from what the lab wrote: an unwritten locus is wild type, a transgene "
         "written without het or hom is hemizygous (het). Mice marked sure: false were read that way; check them.",
         f"Litter size: {litter['source']}; pups that reach weaning: {litter['kept_source']}.",
-        f"One litter counted per mating, {PAIRING_TO_BIRTH} days from setting it up to the birth (19–21 days' "
-        f"gestation), weaning at P{wean_days}." + (" Half the pups taken as each sex." if sex else ""),
+        (f"{litters} litters counted per mating, as asked" if litters_per_mating else
+         f"{litters} litter{'s' if litters > 1 else ''} counted per mating: as many as are born in the window"
+         f" (the first {PAIRING_TO_BIRTH} days after setting it up, then one every {LITTER_INTERVAL} days)"
+         if born_by else "One litter counted per mating (say by, or litters_per_mating, to count more)")
+        + f"; {PAIRING_TO_BIRTH} days from setting a mating up to the birth (19–21 days' gestation), weaning at "
+        f"P{wean_days}." + (" Half the pups taken as each sex." if sex else ""),
         f"matings: enough to have {count} with {confidence:.0%} confidence (binomial); matings_on_average: "
         "enough on average. males_short counts a male with up to two females at a time (a trio).",
         "A breeder that carries more than the loci asked (also_carries) can pass that on too; those crosses "
         "come after the ones that don't.",
+        "matings_under_way: Breeding cages that already hold a female and a male of the cross, counted as matings "
+        "already set up (to_set_up is what is left); their litters born before now aren't counted. females and "
+        "males count only the breeders free to pair: not in a Breeding cage now, and not in a planned, active or "
+        "paused experiment (in_experiments lists those). clashes: crosses listed that would need the same breeders.",
     ]
     for strain in strains:
         assumptions.insert(0, f"{strain} is a strain (a background), not a locus: an inbred strain breeds true, so "
@@ -1005,7 +1069,8 @@ def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_da
         cross["female"] = "; ".join(filter(None, [*strains, cross["female"]]))
         cross["male"] = "; ".join(filter(None, [*strains, cross["male"]]))
     return {"want": want, "strains": strains, "sex": sex or "any", "count": count, "litter_size": litter["mean"],
-            "pups_weaned_per_litter": round(pups, 2), "crosses": plans[:12],
+            "pups_weaned_per_litter": round(pups, 2), "litters_per_mating": litters, "crosses": plans[:12],
+            "clashes": clashes,
             "best_possible": best, "timing": timing,
             "breeders": breeders[:200], "assumptions": assumptions}
 

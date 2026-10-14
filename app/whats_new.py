@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "1.16.0": {
+        "new": [
+            "**Verify sequencing** shows the trace around each difference, and says when a read looks like a mix of two clones.",
+        ],
+        "changed": [
+            "An AI assistant's breeding plan counts every litter a mating has time for, the pairs already mating, and up to five genes.",
+            "The animal-use report counts your own organisms, and pups under their parents' protocol.",
+        ],
+    },
     "1.15.0": {
         "new": [
             "A **Stimulation** in the regimen keeps its **Frequency**, **Intensity**, **Pulse width** and **Duration**.",

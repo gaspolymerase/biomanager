@@ -391,7 +391,10 @@ the map across 425–1,359, covering EGFP", or "1 difference from the map:
 C→A at 740 in EGFP (A14D)"), where the reads lie over the map, and every
 mismatch, insertion and deletion with the read's quality there, the
 features it falls in and what it does to a coding sequence's amino acid;
-one at low quality is marked as a likely sequencing error. **Keep the
+one at low quality is marked as a likely sequencing error. From an
+`.ab1`, each difference shows its stretch of trace, and a read with
+second peaks under many bases is said to look like a mix of two clones
+(and where they part, when an insertion or deletion splits them). **Keep the
 reads and the result with this plasmid's files** files them under
 **Files**, each noted with what it showed, to check again later. An
 assistant can do the same with `verify_sequencing`, from reads uploaded

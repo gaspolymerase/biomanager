@@ -1230,7 +1230,15 @@ crossing the origin keeps `start > end`.
   (`confident` at Q20 or more), the map's features (not primers or parts)
   and, in a CDS (`codon_start` honoured, joins followed, either strand),
   `_substitution_effect` with the mismatches of one codon taken together
-  (the standard code, `CODE`) or a frameshift / in-frame indel. `verify`
+  (the standard code, `CODE`) or a frameshift / in-frame indel. An .ab1's
+  trace (`_abif_trace`: DATA9–12 in FWO_'s order, PLOC2 peaks, kept only
+  when they line up with the bases) gives each difference a `trace`
+  (`trace_window`: ±`TRACE_FLANK` bases, at most `TRACE_POINTS` samples a
+  dye) and the read a `mixed` when `second_peaks` (another dye at
+  `MIXED_RATIO` of the called one) marks `MIXED_SHARE` of its good bases,
+  with `from_read`/`from_plasmid` when `mixed_from` finds them starting at
+  one place; the API and the assistants get the report `without_traces`
+  (`has_trace`). `verify`
   adds the clone: coverage runs, features covered whole or in part, the
   differences merged across reads (`reads`, `strands`, `reads_covering`)
   and one `verdict` sentence, in the page's language. Three ways in, none
@@ -2390,10 +2398,16 @@ record in a database they can't open, history shows only their own changes
 unless they are an admin, and search is the ⌘K search
 (`app.search_results`, which gives each match a `ref`). The genotype model
 counts copies of the allele that matters at each autosomal, unlinked locus
-(one to three loci); a strain or background wanted (`is_strain`: the
+(one to five loci, `MAX_LOCI`); a strain or background wanted (`is_strain`: the
 `BACKGROUND` pattern, C57BL/6J, BALB/c…, or a background in the lab's
 Strains, `lab_strains`) is no locus but both parents of it, odds 1, with
 breeders whose genotype names it (and asking it het or wt is refused);
+`breeding_plan` counts each mating's litters as `litters_per_mating`, or
+`litters_by` (born in the window: the first `PAIRING_TO_BIRTH` days on,
+then every `LITTER_INTERVAL`), else one; a Breeding cage holding a female
+and a male of a cross is a mating under way (`to_set_up` is the rest),
+and only breeders in no Breeding cage and no busy experiment count as
+free; `clashes` names breeder kinds two listed crosses would both need;
 litter sizes are the line's own mean when it has three
 litters with pup counts, else the lab's, else 6; power is exact, from the
 noncentral F distribution over `exp_stats.inc_beta` (two groups are the t² =
@@ -2421,7 +2435,8 @@ them.
 
 **Write-ups (`app/assistant_reports.py`).** BioManager counts and lists;
 the model writes. `GET /animal-use?start=&end=&protocol=` (the twelve months
-to `end`, today, unless asked; `year_before`) counts mice and zebrafish per
+to `end`, today, unless asked; `year_before`) counts mice, zebrafish and each
+organism database the person may see (`_organism_entries`) per
 protocol, species and strain: `born`, `added` (record made in the period,
 born before it or undated), `new`, `used_in_experiments` (in an experiment
 whose status isn't planned and which ran during the period), `died_or_euthanized`
@@ -2430,7 +2445,10 @@ in `totals`, with `basis` (what each column is based on) and `flags` (no
 protocol, no reason, no birth date, transfers). The schema has no protocol on a
 mouse or a mouse strain, so a mouse's is the colony's own column (custom_fields)
 whose key or label matches `PROTOCOL_COLUMN` (`protocol_columns`,
-`protocol_of`); a zebrafish row's is its tank's such column, else its line's
+`protocol_of`), else its litter's mother's, else father's (`from_parents`);
+a litter's pups without records (`total_pups` less its mice) are one entry
+under the parents' protocol and strain, counted as born; an organism's is
+its `protocol`, else its housing's, else its line's; a zebrafish row's is its tank's such column, else its line's
 `iacuc_protocol`. A mouse's strain is the lab's Strain named in its genotype
 (`strain_of`), else the genotype. A death's reason is read from the words of
 the mouse's note or the sac log's reason (`REASONS`, in order), else its status

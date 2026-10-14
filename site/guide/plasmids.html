@@ -250,10 +250,14 @@
           a strip showing where each read lies over the map's features with every difference marked in red, a line for each read
           (strand, the bases it covers, how much of it agrees), and a table of the differences: the position, the change, the
           features it falls in, what it does to a coding sequence (<i>silent</i>, an amino-acid change such as <i>A14D</i>, a
-          stop codon, or a frameshift), the read's quality there, and how many of the reads covering that base show it.</li>
-        <li>A difference where the read's quality is below 20 is greyed and called a likely sequencing error: look at the trace
-          there, or read that stretch again from the other strand. A read that doesn't match the plasmid at all is said too,
+          stop codon, or a frameshift), the read's quality there, how many of the reads covering that base show it, and, for an
+          <code>.ab1</code>, the stretch of trace around it, the base in question shaded.</li>
+        <li>A difference where the read's quality is below 20 is greyed and called a likely sequencing error: look at its trace,
+          or read that stretch again from the other strand. A read that doesn't match the plasmid at all is said too,
           as is one that follows the map only partway (an insert, a deletion, or the wrong plasmid).</li>
+        <li>A chromatogram with a second peak under many of its good bases is said to look like a <b>mix of two clones</b>, with
+          its trace: pick a single colony and sequence it again. When the second peaks start at one place and carry on, it says
+          where: two clones that differ by an insertion or deletion there.</li>
         <li>Turn on <b>Keep the reads and the result with this plasmid's files</b> to file the reads under <b>Files</b>, each
           noted with the date and what it showed. Checking changes nothing else; anyone who can open the plasmid can check reads,
           and keeping them needs the right to edit it.</li>

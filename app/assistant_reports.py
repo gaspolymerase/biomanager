@@ -211,7 +211,21 @@ def _mouse_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
     litters = session.scalars(select(LitterRecord).options(selectinload(LitterRecord.mice)).where(
         LitterRecord.date_of_birth >= start, LitterRecord.date_of_birth <= end)).all()
     parents = {n for lt in litters for n in (_first_number(lt.father_info), _first_number(lt.mother_info)) if n}
-    entries, facts = [], {"no_birth_date": 0, "transferred": 0, "columns": [f["label"] for f in columns]}
+    # Each mouse's own protocol and strain by its number, for the pups that
+    # have none of their own: a pup is under its parents' protocol.
+    own: dict[int, tuple[str, str, str]] = {}
+    for m in session.scalars(select(MouseRecord)):
+        p, column = protocol_of(custom_fields.values(m), columns)
+        own[m.mouse_id] = (p, column, strain_of(m.genotype or "; ".join(transgene_parts(m)), strains))
+
+    def from_parents(litter) -> tuple[str, str]:
+        for who, info in (("mother", litter.mother_info), ("father", litter.father_info)):
+            p, column, _strain = own.get(_first_number(info), ("", "", ""))
+            if p:
+                return p, f"its {who}'s “{column}”"
+        return "", ""
+    entries, facts = [], {"no_birth_date": 0, "transferred": 0, "columns": [f["label"] for f in columns],
+                          "from_parents": 0}
     stmt = select(MouseRecord).options(selectinload(MouseRecord.cage), selectinload(MouseRecord.litter)).where(
         or_(MouseRecord.date_of_death.is_(None), MouseRecord.date_of_death >= start),
         MouseRecord.created_at < _from(end + timedelta(days=1)))
@@ -222,6 +236,9 @@ def _mouse_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
         ended = m.date_of_death
         alive_then = ended is None or ended >= start
         protocol, column = protocol_of(custom_fields.values(m), columns)
+        if not protocol and m.litter is not None:
+            protocol, column = from_parents(m.litter)
+            facts["from_parents"] += bool(protocol)
         reason = death_reason(m.status, m.note)[0] if ended is not None else ""
         entry = {"species": MOUSE, "strain": strain_of(m.genotype or "; ".join(transgene_parts(m)), strains),
                  "protocol": protocol, "protocol_from": column, "born": born,
@@ -233,8 +250,20 @@ def _mouse_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
             facts["no_birth_date"] += born is None
             facts["transferred"] += normalize_status(m.status or "") == "transfer"
         entries.append(entry)
+    # Pups a litter counted that have no record of their own: born, under
+    # their parents' protocol and strain, though what became of them isn't kept.
+    unrecorded = 0
+    for lt in litters:
+        n = (lt.total_pups or 0) - len(lt.mice)
+        if n <= 0:
+            continue
+        protocol, column = from_parents(lt)
+        mother = own.get(_first_number(lt.mother_info)) or own.get(_first_number(lt.father_info))
+        entries.append({"species": MOUSE, "strain": mother[2] if mother else "(not recorded)", "protocol": protocol,
+                        "protocol_from": column, "count": n, "born": lt.date_of_birth, "unrecorded_pups": True})
+        unrecorded += n
     facts["litters"] = {"born": len(litters), "pups_born": sum(lt.total_pups or 0 for lt in litters),
-                        "pups_with_records": sum(len(lt.mice) for lt in litters),
+                        "pups_with_records": sum(len(lt.mice) for lt in litters), "pups_without_records": unrecorded,
                         "without_a_pup_count": sum(1 for lt in litters if not lt.total_pups)}
     return entries, facts
 
@@ -293,6 +322,44 @@ def _fish_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
     return entries, {"columns": [f["label"] for f in columns]}
 
 
+def _organism_entries(session, start: date, end: date) -> tuple[list[dict], list[str]]:
+    """The lab's own organisms (each database it may see): an animal or a
+    group at its count, its protocol its own, else its housing's, else its
+    line's."""
+    from . import organism_service
+    from .models import ExperimentSubject, OrgHousing, OrgLine, Organism
+    used = {sid: n for sid, n in session.execute(
+        select(ExperimentSubject.subject_id, ExperimentSubject.start_count).where(
+            ExperimentSubject.subject_kind == "organism",
+            ExperimentSubject.experiment_id_fk.in_(_ran_during(session, start, end))))}
+    entries, names = [], []
+    for module in organism_service.list_modules(session):
+        if not lab.can_see(module):
+            continue
+        mv = organism_service.view(module)
+        species = module.label
+        names.append(species)
+        lines = {ln.id: ln for ln in session.scalars(select(OrgLine).where(OrgLine.module_id_fk == module.id))}
+        housing = {h.id: h for h in session.scalars(select(OrgHousing).where(OrgHousing.module_id_fk == module.id))}
+        for o in session.scalars(select(Organism).where(Organism.module_id_fk == module.id,
+                                                        Organism.created_at < _from(end + timedelta(days=1)))):
+            line, home = lines.get(o.line_id_fk), housing.get(o.housing_id_fk)
+            mine, theirs = " ".join((o.protocol or "").split()), " ".join(((home.protocol if home else "") or "").split())
+            from_line = " ".join(((line.protocol if line else "") or "").split())
+            protocol, column = ((mine, "Protocol") if mine else (theirs, f"its {mv.housing_noun}'s Protocol") if theirs
+                                else (from_line, f"its {mv.line_noun}'s Protocol") if from_line else ("", ""))
+            n = o.count or 1
+            alive = mv.is_alive(o)
+            entries.append({"species": species, "strain": (line.code if line else "") or o.genotype or "(no line)",
+                            "protocol": protocol, "protocol_from": column, "count": n, "born": o.birth_on,
+                            "added": _day_of(o.created_at), "ended": o.death_on,
+                            "reason": death_reason(o.status, o.notes)[0] if o.death_on else "",
+                            "used": (used[o.id] if used[o.id] is not None else n) if o.id in used else 0,
+                            "breeding": n if alive and home is not None and home.active
+                            and re.search(r"breed|mating|cross", home.purpose or "", re.I) else 0})
+    return entries, names
+
+
 def animal_use(session, start=None, end=None, protocol: str = "", today: date | None = None) -> dict:
     """Animals per protocol, species and strain over a period (the twelve
     months to today unless asked), for an annual review."""
@@ -316,13 +383,15 @@ def animal_use(session, start=None, end=None, protocol: str = "", today: date | 
         entries += found
     else:
         notes.append("Zebrafish is switched off for this lab: no fish are counted.")
+    others, other_names = _organism_entries(session, start, end)
+    entries += others
     out = tally(entries, start, end, protocol)
 
     # What the records can't say, over every protocol (some of these may be this one's).
     def unassigned(species: str) -> int:
         return sum(max(counted(e, start, end).values()) for e in entries
                    if e["species"] == species and not e.get("protocol"))
-    for species, noun in ((MOUSE, "mice"), (FISH, "zebrafish")):
+    for species, noun in ((MOUSE, "mice"), (FISH, "zebrafish"), *((name, name) for name in other_names)):
         n = unassigned(species)
         if n:
             flags.append({"what": "no_protocol", "species": species, "count": n,
@@ -345,14 +414,16 @@ def animal_use(session, start=None, end=None, protocol: str = "", today: date | 
         lt = mice["litters"]
         if lt["born"]:
             notes.append(f"{lt['born']} litters were born in the period, {lt['pups_born']} pups by their litters' "
-                         f"counts; {lt['pups_with_records']} of the pups have a record of their own (and are "
-                         "counted above as born)" + (f"; {lt['without_a_pup_count']} litters have no pup count"
-                                                    if lt["without_a_pup_count"] else "") + ".")
+                         f"counts; {lt['pups_with_records']} of the pups have a record of their own"
+                         + (f", and the other {lt['pups_without_records']} are counted as born under their "
+                            "parents' protocol and strain (what became of them isn't recorded)"
+                            if lt["pups_without_records"] else "")
+                         + (f"; {lt['without_a_pup_count']} litters have no pup count"
+                            if lt["without_a_pup_count"] else "") + ".")
         out["litters"] = lt
-    from . import organism_service
-    others = [m.label for m in organism_service.list_modules(session) if lab.can_see(m)]
-    if others:
-        notes.append(f"Not counted: {', '.join(others)} (only the mouse colony and zebrafish are).")
+        if mice["from_parents"]:
+            notes.append(f"{mice['from_parents']} mice with no protocol of their own are counted under their "
+                         "mother's (else father's), as the litter names them.")
     mouse_columns = (mice or {}).get("columns") or []
     fish_columns = (fish or {}).get("columns") or []
     basis = {
@@ -360,11 +431,13 @@ def animal_use(session, start=None, end=None, protocol: str = "", today: date | 
                      if mouse_columns else
                      "The colony has no protocol column, so no mouse has a protocol: add one (Configure → Your own "
                      "columns, e.g. “IACUC #”) and fill it in")
-                    + ". Mouse strains keep no protocol in BioManager, so a mouse inherits none. A zebrafish row's is "
+                    + ", else (a pup) its mother's, else its father's, by the litter's parents; a litter's pups with "
+                    "no record of their own are under its parents' too. A zebrafish row's is "
                     + (f"its tank's own column ({', '.join(fish_columns)}), else " if fish_columns else "")
-                    + "its line's IACUC #, else its tank's line's.",
+                    + "its line's IACUC #, else its tank's line's. Another organism's is its own Protocol, else its "
+                    "housing's, else its line's.",
         "strain": "A mouse's strain is the lab's Strain whose name its genotype holds, else its genotype as written; "
-                  "a zebrafish row's is its line.",
+                  "a zebrafish row's is its line; another organism's its line's code, else its genotype.",
         "born": "Mice whose litter's date of birth is in the period; zebrafish rows whose date of fertilisation is, "
                 "each at its count now plus the fish sac'd from it since.",
         "added": "Animals whose record was made in the period though born before it (or with no birth date): "
