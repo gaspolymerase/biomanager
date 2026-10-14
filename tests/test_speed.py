@@ -246,6 +246,90 @@ class InventorySheetSpeedTests(AppTestCase):
         self.assertIn('data-list="inv-src-0"', html)
 
 
+class InventoryPagingTests(AppTestCase):
+    """A sheet of more than LAZY_OVER items draws its first FIRST_PAGE rows;
+    the others come as entries for the sheet's script, and their rows from
+    /<key>/rows, drawn as the page draws them."""
+
+    def setUp(self):
+        from unittest import mock
+        from app import inventory_routes
+        from tests.test_inventory import InventoryCase
+        self.key = InventoryCase.new_module(self.a, "reagents")
+        self.items = [self.make_item(self.a, self.key, name=uniq("pg"), vendor=uniq("V")) for _ in range(5)]
+        self.patches = [mock.patch.object(inventory_routes, "LAZY_OVER", 3),
+                        mock.patch.object(inventory_routes, "FIRST_PAGE", 2)]
+        for patch in self.patches:
+            patch.start()
+
+    def tearDown(self):
+        for patch in self.patches:
+            patch.stop()
+
+    @staticmethod
+    def drawn(html: str) -> list[str]:
+        return re.findall(r'<tr data-id="(\d+)"', html)
+
+    @staticmethod
+    def stubs(html: str) -> list[dict]:
+        import json
+        found = re.search(r'<script type="application/json" data-dt-stubs>(.*?)</script>', html, re.S)
+        return json.loads(found.group(1)) if found else []
+
+    def test_the_page_draws_its_first_rows_and_lists_the_others(self):
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        newest = [str(i) for i in reversed(self.items)]
+        self.assertEqual(self.drawn(html), newest[:2])
+        self.assertIn(f'data-dt-rows-url="/inventory/{self.key}/rows"', html)
+        stubs = self.stubs(html)
+        self.assertEqual([str(s["id"]) for s in stubs], newest[2:])
+        oldest = next(s for s in stubs if s["id"] == self.items[0])
+        self.assertEqual(oldest["e"], f"item-{self.items[0]}")
+        self.assertEqual(oldest["d"]["mine"], "true")
+        self.assertEqual(oldest["d"]["number"], str(one("select number from inventory_items where id=?", self.items[0])))
+        vendor = one("select vendor from inventory_items where id=?", self.items[0])
+        self.assertEqual(oldest["k"]["vendor"], vendor)
+        self.assertIn(vendor.lower(), oldest["s"])
+        # The count, the chips and the forms: every row, or the drawn ones.
+        self.assertIn("5 reagents", html)
+        self.assertEqual(html.count('<form id="inv-'), 2)
+
+    def test_rows_come_as_the_page_would_draw_them(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 1000):
+            whole = self.get_ok(self.a, f"/inventory/{self.key}")
+        asked = [self.items[0], self.items[2]]
+        r = self.a.get(f"/inventory/{self.key}/rows?ids={asked[0]},{asked[1]},999999")
+        answer = r.get_json()
+        self.assertEqual(answer["ids"], asked)
+        same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-")
+        for item in asked:
+            row = re.search(rf'<tr data-id="{item}".*?</tr>', whole, re.S).group(0)
+            self.assertEqual(same(re.search(rf'<tr data-id="{item}".*?</tr>', answer["rows"], re.S).group(0)), same(row))
+            self.assertIn(f'<form id="inv-{item}"', answer["forms"])
+        self.assertNotIn("dt-empty", answer["rows"])
+
+    def test_rows_of_another_inventory_are_not_given(self):
+        other = self.make_item(self.a, "reagents")
+        answer = self.a.get(f"/inventory/{self.key}/rows?ids={other},{self.items[0]}").get_json()
+        self.assertEqual(answer["ids"], [self.items[0]])
+
+    def test_a_short_sheet_draws_every_row(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 5):
+            html = self.get_ok(self.a, f"/inventory/{self.key}")
+        self.assertEqual(len(self.drawn(html)), 5)
+        self.assertNotIn("data-dt-rows-url", html)
+        self.assertNotIn("data-dt-stubs", html)
+
+    def test_rows_need_someone_signed_in(self):
+        from app.app import app
+        r = app.test_client().get(f"/inventory/{self.key}/rows?ids={self.items[0]}")
+        self.assertEqual(r.status_code, 302)
+
+
 class VersionedAssetsTests(AppTestCase):
 
     def test_a_file_named_with_its_version_is_kept_by_the_browser(self):

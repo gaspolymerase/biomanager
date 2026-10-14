@@ -402,125 +402,250 @@ def order_sheet(key: str, fmt: str):
                     headers={"Content-Disposition": f'attachment; filename="{name}-order.csv"'})
 
 
+# A sheet of more than LAZY_OVER items is paged by the server: the page
+# carries its first FIRST_PAGE rows (the sheet's first page) and, for each
+# other item, only what search, sort, the chips and the counts read
+# (_row_stub); static/data-table.js fetches a page's rows from
+# /<key>/rows when it is turned to. Thousands of rows of fields took the
+# server seconds to write and the browser seconds more to read.
+LAZY_OVER = 500
+FIRST_PAGE = 100
+ROWS_AT_ONCE = 500   # the most rows one /rows request returns
+
+
 @bp.route("/<key>")
 def module(key: str):
+    with SessionLocal() as session:
+        context = _sheet_context(session, key)
+        return render_template("inventory/module.html", **context)
+
+
+@bp.route("/<key>/rows")
+def sheet_rows(key: str):
+    """Rows of the sheet by id (?ids=3,1,2, with the page's own ?type= and
+    ?ended=), as the page would have drawn them, and their row forms."""
+    ids = [int(x) for x in request.args.get("ids", "").split(",") if x.strip().isdigit()][:ROWS_AT_ONCE]
+    with SessionLocal() as session:
+        context = _sheet_context(session, key, only=ids)
+        return jsonify({"rows": render_template("inventory/_sheet_rows.html", fragment=True, **context),
+                        "forms": render_template("inventory/_row_forms.html", **context),
+                        "ids": [r["item"].id for r in context["sheet_rows"]]})
+
+
+def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
+    """What the sheet's page draws, or with `only` (item ids) what its rows
+    of those items need, in that order."""
     from .services import current_lab_usernames, sample_sources, sample_source_label
 
-    with SessionLocal() as session:
-        row = _module_or_404(session, key)
-        mv = svc.view(row)
-        items = list(session.scalars(select(InventoryItem).where(InventoryItem.module_id_fk == row.id)
-                                     .order_by(InventoryItem.number.desc())))
-        # An inventory keeps what it ever held: what was used up, discarded or
-        # cancelled (or, for orders, received) over RECENT_DAYS ago waits
-        # behind "Show them", as on the colony's sheets.
-        show_ended = request.args.get("ended") == "all"
-        hidden_old = 0
-        all_items = items
-        if not show_ended:
-            listed, hidden_old = _recent_items(mv, items)
-            # The box grid still shows whatever sits in a box, however old.
-            kept = {i.id for i in listed}
-            all_items = [i for i in items if i.id in kept or i.rack_id_fk]
-            items = listed
-        # By the fridge or cabinet each is kept in, then by name.
-        racks = sorted(session.scalars(select(InventoryRack).where(InventoryRack.module_id_fk == row.id)),
-                       key=svc.box_order)
-        # A type's tab (?type=tissue): its entries, the columns used for it,
-        # and the boxes that hold it or nothing yet; a box keeps showing
-        # all it holds, so no cell taken by another type looks free.
-        tab = mv.tab(request.args.get("type"))
-        tab_counts = {t: 0 for t in mv.tabs}
-        for i in items:
-            found = mv.tab(i.category)
-            if found:
-                tab_counts[found] += 1
-        listed_all = len(items)
-        if tab:
-            mine = lambda i: (i.category or "").strip().casefold() == tab.casefold()
-            items = [i for i in items if mine(i)]
-            holding = {i.rack_id_fk for i in all_items if i.rack_id_fk}
-            racks = [r for r in racks if r.id not in holding or any(i.rack_id_fk == r.id and mine(i) for i in all_items)]
-            shown = {r.id for r in racks}
-            all_items = [i for i in all_items if ((i.rack_id_fk in shown) if i.rack_id_fk else mine(i))]
-        table_fields = [f for f in mv.fields_for(tab) if f["in_table"]]
-        me = g.user.username
-        source_fields = [f for f in mv.fields if f["type"] == "source"]
-        sources = sample_sources(session) if source_fields else []
-        mouse_links = _mouse_links(session, [i.attrs_dict for i in items], source_fields) if source_fields else {}
-        # A plasmid column: each cell links to its plasmid; the dialog offers the lab's plasmids.
-        plasmid_keys = [f["key"] for f in svc.plasmid_fields(mv)]
-        plasmid_links = svc.plasmid_links(session, [i.attrs_dict.get(k, "") for i in items for k in plasmid_keys])
-        plasmid_options = _plasmid_options(session) if plasmid_keys else []
-        rows = []
-        for item in items:
-            attrs = item.attrs_dict
-            rows.append({
-                "item": item, "attrs": attrs,
-                "editable": _can_edit(item),
-                "manageable": _can_manage(item),
-                "mine": item.owner == me,
-                "position": svc.rack_label(item),
-                "expiry": svc.expiry_state(item),
-                "available": svc.is_available(mv, item.status),
-                "ended_on": attrs.get(svc.ENDED_ATTR, ""),
-                "source_labels": {f["key"]: sample_source_label((attrs.get(f["key"]) or {}).get("kind", ""), sources)
-                                  for f in source_fields if isinstance(attrs.get(f["key"]), dict)},
-                "payload": _item_payload(mv, item),
-                # Its source mouse's genotype, which an empty Genotype shows.
-                "mouse_genotype": (_source_genotype(attrs, source_fields, mouse_links)
-                                   if not attrs.get(GENOTYPE_KEY) else ""),
-                # Columns not used for its type (All's tab shows them all).
-                "unused": {f["key"] for f in table_fields if not presets.used_for(f, item.category)},
-            })
-        # Saved column widths / hidden columns are by position, so a
-        # reconfigured sheet starts fresh instead of hiding the wrong ones.
-        layout = json.dumps([mv.settings["features"], [f["key"] for f in table_fields], bool(mv.statuses), 2]
-                            + (["low_at"] if svc.tracks_low(mv) else [])
-                            + (["pack_size"] if svc.has_pack_size(mv) else []))
-        stock_targets = _stock_targets(session) if row.kind == "orders" else []
-        order_module = _order_module(session) if row.kind in STOCK_KINDS else None
-        reorder = (_reorder_payload(session, mv, items, request.args.get("reorder", ""))
-                   if row.kind == "orders" and request.args.get("reorder") else None)
-        if row.kind in STOCK_KINDS and request.args.get("from_order"):
-            reorder = _from_order_payload(session, mv, request.args["from_order"],
-                                          shared=request.args.get("shared") == "1")
-        context = {
-            "module": mv, "rows": rows, "racks": racks, "low_stock": svc.tracks_low(mv),
-            "tab": tab, "tab_counts": tab_counts, "listed_all": listed_all, "table_fields": table_fields,
-            "can_add_type": mv.has("tabs"),
-            "pack_sizes": svc.has_pack_size(mv), "col_sig": format(zlib.crc32(layout.encode()), "x"),
-            "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
-            "places": svc.places_in_use(session) if mv.has("storage") else [],
-            "box_labels": {r.id: svc.box_label(r) for r in racks},
-            "box_width": _box_width(racks),
-            "grid": _grid_payload(mv, racks, all_items, tab) if mv.has("storage") else None,
-            "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
-            "usernames": current_lab_usernames(session), "sources": sources, "mouse_links": mouse_links,
-            "plasmid_links": plasmid_links, "plasmid_options": plasmid_options,
-            "next_number": svc.next_number(session, row.id),
-            "stock_targets": stock_targets, "order_module": order_module, "reorder": reorder,
-            "stock_links": _order_stock_links(session, row, items),
-            "on_order": ({i: gettext("Already on order: %(orders)s", orders=gettext("; ").join(_on_order_text(o) for o in found[:3]))
-                          for i, found in _open_orders_of(session, row, items).items()}
-                         if row.kind in STOCK_KINDS else {}),
-            "remembered": svc.remembered(session, mv, items),
-            "can_configure": _can_configure(row), "is_admin": access.is_admin(),
-            "bulk_fields": bulk_fields(mv),
-            "stored_at_field": svc.stored_at_field(mv),
-            "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
-            "terminal_statuses": sorted(svc.TERMINAL_STATUSES),
-            "counts": {
-                "all": len(items),
-                "mine": sum(1 for i in items if i.owner == me),
-                "lab": sum(1 for i in items if i.is_shared),
-                "open": sum(1 for i in items if i.status in mv.open_statuses),
-                "expired": sum(1 for r in rows if r["expiry"] == "expired"),
-                "soon": sum(1 for r in rows if r["expiry"] == "soon"),
-                "status": {st: sum(1 for i in items if (i.status or "").lower() == st.lower()) for st in mv.statuses},
-            },
-        }
-    return render_template("inventory/module.html", **context)
+    row = _module_or_404(session, key)
+    mv = svc.view(row)
+    query = select(InventoryItem).where(InventoryItem.module_id_fk == row.id)
+    if only is not None:
+        # Only those asked for: whether the sheet lists each is decided below.
+        query = query.where(InventoryItem.id.in_(only))
+    items = list(session.scalars(query.order_by(InventoryItem.number.desc())))
+    # An inventory keeps what it ever held: what was used up, discarded or
+    # cancelled (or, for orders, received) over RECENT_DAYS ago waits
+    # behind "Show them", as on the colony's sheets.
+    show_ended = request.args.get("ended") == "all"
+    hidden_old = 0
+    all_items = items
+    if not show_ended:
+        listed, hidden_old = _recent_items(mv, items)
+        # The box grid still shows whatever sits in a box, however old.
+        kept = {i.id for i in listed}
+        all_items = [i for i in items if i.id in kept or i.rack_id_fk]
+        items = listed
+    # By the fridge or cabinet each is kept in, then by name.
+    racks = sorted(session.scalars(select(InventoryRack).where(InventoryRack.module_id_fk == row.id)),
+                   key=svc.box_order)
+    # A type's tab (?type=tissue): its entries, the columns used for it,
+    # and the boxes that hold it or nothing yet; a box keeps showing
+    # all it holds, so no cell taken by another type looks free.
+    tab = mv.tab(request.args.get("type"))
+    tab_counts = {t: 0 for t in mv.tabs}
+    for i in items:
+        found = mv.tab(i.category)
+        if found:
+            tab_counts[found] += 1
+    listed_all = len(items)
+    if tab:
+        mine = lambda i: (i.category or "").strip().casefold() == tab.casefold()
+        items = [i for i in items if mine(i)]
+        holding = {i.rack_id_fk for i in all_items if i.rack_id_fk}
+        racks = [r for r in racks if r.id not in holding or any(i.rack_id_fk == r.id and mine(i) for i in all_items)]
+        shown = {r.id for r in racks}
+        all_items = [i for i in all_items if ((i.rack_id_fk in shown) if i.rack_id_fk else mine(i))]
+    table_fields = [f for f in mv.fields_for(tab) if f["in_table"]]
+    me = g.user.username
+    listed_items = items
+    if only is not None:
+        # The rows asked for, in the order asked, of those the sheet lists.
+        by_id = {i.id: i for i in items}
+        items = [by_id[i] for i in dict.fromkeys(only) if i in by_id]
+        # The columns that offer earlier values, as the page found them
+        # (?rem= in its rows URL): finding them reads every item.
+        remembered = {"suggest": {c: True for c in request.args.get("rem", "").split(",") if c}}
+    else:
+        remembered = svc.remembered(session, mv, listed_items)
+    source_fields = [f for f in mv.fields if f["type"] == "source"]
+    sources = sample_sources(session, refs=only is None) if source_fields else []
+    mouse_links = _mouse_links(session, [i.attrs_dict for i in items], source_fields) if source_fields else {}
+    # A plasmid column: each cell links to its plasmid; the dialog offers the lab's plasmids.
+    plasmid_keys = [f["key"] for f in svc.plasmid_fields(mv)]
+    plasmid_links = svc.plasmid_links(session, [i.attrs_dict.get(k, "") for i in items for k in plasmid_keys])
+    plasmid_options = _plasmid_options(session) if plasmid_keys and only is None else []
+    rows = []
+    for item in items:
+        attrs = item.attrs_dict
+        rows.append({
+            "item": item, "attrs": attrs,
+            "editable": _can_edit(item),
+            "manageable": _can_manage(item),
+            "mine": item.owner == me,
+            "position": svc.rack_label(item),
+            "expiry": svc.expiry_state(item),
+            "available": svc.is_available(mv, item.status),
+            "ended_on": attrs.get(svc.ENDED_ATTR, ""),
+            "source_labels": {f["key"]: sample_source_label((attrs.get(f["key"]) or {}).get("kind", ""), sources)
+                              for f in source_fields if isinstance(attrs.get(f["key"]), dict)},
+            "payload": _item_payload(mv, item),
+            # Its source mouse's genotype, which an empty Genotype shows.
+            "mouse_genotype": (_source_genotype(attrs, source_fields, mouse_links)
+                               if not attrs.get(GENOTYPE_KEY) else ""),
+            # Columns not used for its type (All's tab shows them all).
+            "unused": {f["key"] for f in table_fields if not presets.used_for(f, item.category)},
+        })
+    # Saved column widths / hidden columns are by position, so a
+    # reconfigured sheet starts fresh instead of hiding the wrong ones.
+    layout = json.dumps([mv.settings["features"], [f["key"] for f in table_fields], bool(mv.statuses), 2]
+                        + (["low_at"] if svc.tracks_low(mv) else [])
+                        + (["pack_size"] if svc.has_pack_size(mv) else []))
+    stock_targets = _stock_targets(session) if row.kind == "orders" else []
+    order_module = _order_module(session) if row.kind in STOCK_KINDS else None
+    box_labels = {r.id: svc.box_label(r) for r in racks}
+    common = {
+        "module": mv, "low_stock": svc.tracks_low(mv), "tab": tab, "table_fields": table_fields,
+        "pack_sizes": svc.has_pack_size(mv), "box_labels": box_labels, "sources": sources,
+        "mouse_links": mouse_links, "plasmid_links": plasmid_links,
+        "stock_targets": stock_targets, "order_module": order_module,
+        "stock_links": _order_stock_links(session, row, items),
+        "on_order": ({i: gettext("Already on order: %(orders)s", orders=gettext("; ").join(_on_order_text(o) for o in found[:3]))
+                      for i, found in _open_orders_of(session, row, items).items()}
+                     if row.kind in STOCK_KINDS else {}),
+        "remembered": remembered,
+        "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
+    }
+    if only is not None:
+        return {**common, "rows": rows, "sheet_rows": rows}
+    lazy = len(rows) > LAZY_OVER
+    reorder = (_reorder_payload(session, mv, items, request.args.get("reorder", ""))
+               if row.kind == "orders" and request.args.get("reorder") else None)
+    if row.kind in STOCK_KINDS and request.args.get("from_order"):
+        reorder = _from_order_payload(session, mv, request.args["from_order"],
+                                      shared=request.args.get("shared") == "1")
+    context = {
+        **common,
+        # rows: every row the sheet lists (the board's cards, the counts);
+        # sheet_rows: those drawn in the table; stubs: the others (lazy).
+        "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
+        "stubs": [_row_stub(mv, r, table_fields, box_labels, mouse_links, plasmid_links)
+                  for r in rows[FIRST_PAGE:]] if lazy else [],
+        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v))
+                    if lazy else "",
+        "racks": racks,
+        "tab_counts": tab_counts, "listed_all": listed_all,
+        "can_add_type": mv.has("tabs"),
+        "col_sig": format(zlib.crc32(layout.encode()), "x"),
+        "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
+        "places": svc.places_in_use(session) if mv.has("storage") else [],
+        "box_width": _box_width(racks),
+        "grid": _grid_payload(mv, racks, all_items, tab) if mv.has("storage") else None,
+        "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
+        "usernames": current_lab_usernames(session),
+        "plasmid_options": plasmid_options,
+        "next_number": svc.next_number(session, row.id),
+        "reorder": reorder,
+        "can_configure": _can_configure(row), "is_admin": access.is_admin(),
+        "bulk_fields": bulk_fields(mv),
+        "stored_at_field": svc.stored_at_field(mv),
+        "terminal_statuses": sorted(svc.TERMINAL_STATUSES),
+        "counts": {
+            "all": len(items),
+            "mine": sum(1 for i in items if i.owner == me),
+            "lab": sum(1 for i in items if i.is_shared),
+            "open": sum(1 for i in items if i.status in mv.open_statuses),
+            "expired": sum(1 for r in rows if r["expiry"] == "expired"),
+            "soon": sum(1 for r in rows if r["expiry"] == "soon"),
+            "status": {st: sum(1 for i in items if (i.status or "").lower() == st.lower()) for st in mv.statuses},
+        },
+    }
+    return context
+
+
+def _row_stub(mv, r: dict, table_fields: list[dict], box_labels: dict, mouse_links: dict, plasmid_links: dict) -> dict:
+    """A row the page does not draw, as the sheet's script reads one: its
+    data-* (the chips), each sortable cell's value ("k", as the cell holds
+    it: a box by its id) and the text a search looks in ("s", what the row
+    shows and holds, lower-cased). The keys are the row's own (data-table.js)."""
+    item, payload, attrs = r["item"], r["payload"], r["attrs"]
+    status = item.status or ""
+    data = {
+        "number": str(item.number), "mine": "true" if r["mine"] else "false",
+        "shared": "true" if item.is_shared else "false",
+        "open": "true" if item.status in mv.open_statuses else "false", "status": status.lower(),
+        "active": "false" if r["available"] is False else "true",
+        "expired": "true" if r["expiry"] == "expired" else "false",
+        "expiring": "true" if r["expiry"] == "soon" else "false",
+    }
+    if r["mouse_genotype"]:
+        data["mouseGenotype"] = r["mouse_genotype"]
+    keys = ["name", "category", "status", "is_shared", "owner", "vendor", "catalog_number", "lot", "quantity",
+            "low_at", "rack_id", "position", "location_note", "received_on", "expires_on"]
+    keys += [f"attr_{f['key']}" for f in table_fields if f["type"] != "source"]
+    sort = {}
+    for k in keys:
+        value = payload.get(k)
+        if value in (None, "") or isinstance(value, (dict, list)):
+            continue
+        if k.startswith("attr_") and any(f["type"] == "multiselect" and k == f"attr_{f['key']}" for f in table_fields):
+            value = str(value).split(",")[0].strip()    # the cell's first ticked choice
+        sort[k] = str(value)
+    # As data-table.js reads a drawn row (_rowText): its text, its data-*,
+    # then each cell's value and, for a menu, the choice it shows.
+    words = [str(item.number)]
+    for f in table_fields:
+        value = attrs.get(f["key"])
+        if f["type"] == "multiselect" and value:
+            words.append(", ".join(_tr(v.strip()) for v in str(value).split(",") if v.strip()))
+        elif f["type"] == "source" and isinstance(value, dict):
+            tagged = mouse_links.get(str(value.get("ref", "")))
+            if tagged and tagged.get("ear_tag"):
+                words.append(tagged["ear_tag"])
+            words += [value.get("kind", ""), i18n.translate_value(r["source_labels"].get(f["key"], ""), ""),
+                      str(value.get("ref", ""))]
+        elif f["type"] == "plasmid" and value:
+            plasmid = plasmid_links.get(str(value))
+            if plasmid:
+                words.append(plasmid["name"] or f"#{plasmid['number']}")
+    words += [str(item.id), *data.values()]
+    for k, value in payload.items():
+        if k.startswith("_") or k == "id" or not isinstance(value, (str, int, float)) or value == "":
+            continue
+        if any(f["type"] == "multiselect" and k == f"attr_{f['key']}" for f in table_fields):
+            continue    # ticked in a menu: its shown text, above
+        words.append(str(value))
+        field = next((f for f in table_fields if k == f"attr_{f['key']}"), None)
+        if k == "status":
+            words.append(_tr(value) if value in mv.statuses else str(value))
+        elif k == "category":
+            words.append(i18n.translate_value(value, mv.kind) if value in mv.categories else str(value))
+        elif field and field["type"] == "select":
+            words.append(_tr(value) if value in field["options"] else str(value))
+    words.append(project_groups.label(item.is_shared, item.share_group_id, personal=i18n.translate_value("Personal", ""),
+                                      lab=i18n.translate_value("Lab common", "")))
+    words.append(box_labels.get(item.rack_id_fk, ""))
+    return {"id": item.id, "e": f"item-{item.id}", "d": data, "k": sort, "s": " ".join(w for w in words if w).lower()}
 
 
 def _same_thing(order: InventoryItem, stock: InventoryItem, source: InventoryModule) -> bool:

@@ -452,7 +452,35 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `data-dt-keep-rows` (the cage sheet: its cards, **Open all** and a
   scanned cage look for its rows there). Until then nothing measures the
   page (a measure lays out every row): the toolbar's `is-tight` waits for
-  its `ResizeObserver`.
+  its `ResizeObserver`. Once parked, the table holds only the page shown
+  (and its detail rows): `render()` takes the others off, so the rows of
+  pages turned past don't pile up in it, hidden, for every later search
+  or sort to restyle.
+- An inventory of more than 500 listed items (`inventory_routes.LAZY_OVER`)
+  is paged by the server. The page draws its first 100 rows (`FIRST_PAGE`,
+  the sheet's first page, in its own order) and, for each other item, an
+  entry in `<script type="application/json" data-dt-stubs>`
+  (`_row_stub`): its id and element id, its `data-*` (what the chips
+  read), each sortable cell's value as the cell holds it (`k`: a box by
+  its id, a status by its value) and the text a search looks in (`s`:
+  what `_rowText` reads from a drawn row, its menus' shown choices
+  included). `data-table.js` puts each in the sheet as an empty `<tr>`
+  (a stub, `tr._stub`), so search, sort, the chips, the count and the
+  pages work as before over every item; `_rowText` and `_sortValue` read
+  a stub's entry. A page with stubs on it is drawn once their rows have
+  come from `data-dt-rows-url` (`/inventory/<key>/rows?ids=…`, with the
+  page's own `?type=` and `?ended=`, and `?rem=`: the columns that offer
+  earlier values, which would otherwise take reading every item):
+  `inventory/_sheet_rows.html` and `_row_forms.html`, the same templates
+  the page draws its rows with, the forms going into a `<template
+  data-row-forms>`. `_takeRows` swaps each stub for its row wherever the
+  sheet keeps it, gives the row its column order, labels and hidden
+  columns, and sends `dt:rows-loaded` (the samples sheet's Custom tag
+  listens). Export and Print fetch every row first (`_whenDrawn`, 500 a
+  request, one after another). Code that needs a row's cells uses
+  `BioSheets.ready(tr)`, a Promise of the row, fetched if it is a stub
+  (`?open=`, `#item-12`). A request that fails leaves the page as it was
+  and says so; the next page turn, search or sort asks again.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

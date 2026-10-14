@@ -1325,6 +1325,9 @@
      long sheet, thousands of fields, before the page could be used. 100 is
      the sheets' first page. */
   .data-table-card[data-table-id]:not(.dt-ready) .dt > tbody > tr:nth-child(n+101) { display: none; }
+  /* A page of a sheet the server pages, on its way (data-table.js). */
+  .data-table-card.dt-loading .dt > tbody { opacity: 0.55; transition: opacity 0.15s 0.15s; }
+  .data-table-card.dt-loading { cursor: progress; }
 
   .dt { @apply w-full border-collapse text-[12px]; }
   .dt th { @apply relative; }

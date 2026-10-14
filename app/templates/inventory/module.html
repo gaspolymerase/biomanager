@@ -38,84 +38,6 @@
 {% endmacro %}
 {% macro star(column) %}{% if column in module.required %}<span class="req-star" title="{{ _('Required') }}">*</span>{% endif %}{% endmacro %}
 
-{% macro field_cell(field, value, form_id, locked, src_label='', links={}, item_id=0, sources=[], from_mouse='') %}
-  {% set name = 'attr_' ~ field.key %}
-  {% set flabel = field.label|tr('inventory') %}
-  {% if field.type == 'select' %}
-    {# Its own choice only: the column's list comes when it is used (choices-inv-f-<key>, below the table; static/shell.js). #}
-    <select name="{{ name }}" form="{{ form_id }}" data-autosave="1" data-choices="inv-f-{{ field.key }}" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-      {% if value %}<option value="{{ value }}" selected>{{ value|tr('inventory') if value in field.options else value }}</option>{% else %}<option value="" selected>–</option>{% endif %}
-    </select>
-  {% elif field.type == 'multiselect' %}
-    {# Several of a list (a chemical's hazards): ticked in a small menu, saved
-       as each box changes; __several says the field was sent with none ticked. #}
-    {% set picked = (value or '').split(',')|map('trim')|reject('equalto', '')|list %}
-    {# Until it is opened, the ticked ones only, as hidden fields the row
-       sends; opening it makes the boxes from choices-inv-m-<key> (the
-       script after the table). #}
-    <details class="multi-cell" data-multi-cell data-multi-choices="inv-m-{{ field.key }}" {% if locked %}data-locked{% endif %}>
-      <summary aria-label="{{ flabel }}" data-multi-summary data-empty-text="–">{% for v in picked %}{{ v|tr('inventory') }}{% if not loop.last %}, {% endif %}{% else %}–{% endfor %}</summary>
-      <div class="multi-cell-menu">
-        <input type="hidden" name="{{ name }}__several" form="{{ form_id }}" value="1">
-        {% for o in picked %}<input type="hidden" name="{{ name }}" value="{{ o }}" form="{{ form_id }}" data-multi-picked>{% endfor %}
-      </div>
-    </details>
-  {% elif field.type == 'date' %}
-    <input type="date" name="{{ name }}" form="{{ form_id }}" value="{{ value }}" data-empty="{{ '0' if value else '1' }}"
-           data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-  {% elif field.type == 'source' %}
-    {# Which colony, and the ID in it: two boxes, saved as you type like
-       every other cell. The mouse it names stays one click away. #}
-    {% set src = value if value is mapping else {} %}
-    {% set mouse = links.get(src.ref|string) if src.kind in ['mouse', 'colony'] else none %}
-    <span class="plasmid-cell source-cell">
-      <select name="{{ name }}_kind" form="{{ form_id }}" data-autosave="1" data-source-kind
-              aria-label="{{ _('%(field)s: from', field=flabel) }}" {% if locked %}disabled{% endif %}>
-        <option value="">–</option>
-        {% for source in sources %}<option value="{{ source.kind }}" data-list="inv-src-{{ loop.index0 }}" {% if source.kind == src.kind %}selected{% endif %}>{{ source.label|tr }}</option>{% endfor %}
-        {% if src.kind and src.kind not in sources|map(attribute='kind')|list %}<option value="{{ src.kind }}" selected>{{ (src_label or src.kind)|tr }}</option>{% endif %}
-      </select>
-      <input class="ident" name="{{ name }}_ref" form="{{ form_id }}" value="{{ src.ref or '' }}" data-source-ref
-             placeholder="{{ _('ID') }}" data-autosave="1" aria-label="{{ _('ID in that colony') }}"
-             {% if src.kind in ['mouse', 'colony'] and src.ref and not mouse %}title="{{ _('No mouse %(id)s in the colony', id=src.ref) }}"
-             {%- elif mouse and mouse.ear_tag %}title="{{ _('Custom tag %(tag)s', tag=mouse.ear_tag) }}" data-mouse-tag-title{% endif %}
-             {% if locked %}disabled{% endif %}>
-      {# Hovering it shows the mouse's brief, as the notebook does (static/mouse-peek.js). #}
-      {% if mouse %}<a class="source-chip-link flex-none" href="{{ url_for('colony', view='mice', scope='all') }}#mouse-update-{{ mouse.row }}"
-         data-mouse-peek="{{ src.ref }}" {% if mouse.ear_tag %}data-mouse-peek-tag="{{ mouse.ear_tag }}"{% endif %}
-         aria-label="{{ _('Open mouse %(id)s in the colony', id=src.ref) }}">{{ icon('external') }}</a>{% endif %}
-    </span>
-  {% elif field.type == 'plasmid' %}
-    {# The plasmid's number, editable; its name links to the plasmid when there is one. #}
-    {% set plasmid = plasmid_links.get(value|string) %}
-    <span class="plasmid-cell">
-      <input class="ident" name="{{ name }}" form="{{ form_id }}" value="{{ value }}" list="inv-plasmid-options" placeholder="#"
-             data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-      {% if plasmid %}<a class="plasmid-cell-link" href="{{ url_for('plasmid_page', number=plasmid.number) }}"
-         title="{{ _('Open plasmid #%(number)s', number=plasmid.number) }}">{{ plasmid.name or ('#' ~ plasmid.number) }}</a>{% endif %}
-      {# Its sequence and map, to read (the plasmid's own page is where it is edited). #}
-      {% if plasmid and plasmid.has_sequence and item_id %}<a class="plasmid-cell-link flex-none" href="{{ url_for('inventory.item_sequence', key=key, item_id=item_id) }}"
-         title="{{ _('See the sequence of plasmid #%(number)s', number=plasmid.number) }}">{{ icon('dna') }}</a>{% endif %}
-    </span>
-  {% elif field.type == 'url' and value %}
-    <a class="sheet-link font-normal" href="{{ value }}" target="_blank" rel="noopener">{{ value|replace('https://', '')|truncate(28) }}</a>
-  {% elif field.key in derived_fields %}
-    {# Worked out from another column (a primer's sequence); the server fills it in. #}
-    <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" readonly tabindex="-1" class="sheet-derived"
-           title="{{ _('Worked out from the sequence') }}" aria-label="{{ flabel }}">
-  {% elif from_mouse and not value %}
-    {# Genotype, empty: the source mouse's, from the colony (re-genotyping
-       it there changes it here); typing one writes this sample's own. #}
-    <input name="{{ name }}" form="{{ form_id }}" value="" placeholder="{{ from_mouse }}" class="from-colony"
-           title="{{ _('%(genotype)s: the source mouse’s, from the colony. Type to give this sample its own.', genotype=from_mouse) }}"
-           {{ rem(name) }} data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-  {% else %}
-    <input name="{{ name }}" form="{{ form_id }}" value="{{ value }}" {% if field.type == 'number' %}inputmode="decimal"{% endif %}
-           {% if field.key == 'sequence' %}class="font-mono" spellcheck="false"{% endif %}
-           {% if field.type == 'user' %}list="inv-owner-options"{% else %}{{ rem(name) }}{% endif %}
-           data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-  {% endif %}
-{% endmacro %}
 
 {% block page_nav %}
   {% include "_plasmid_tabs.html" %}
@@ -204,7 +126,8 @@
        dot is green while an item is usable (or, for orders, open). #}
     <section class="data-table-card sheet" data-table-id="inv-{{ key }}-{{ col_sig }}" data-autosave-sheet
              data-noun="{{ noun }}" data-noun-plural="{{ nouns }}" data-export-name="{{ key }}"
-             data-selection-scope data-selection-noun="{{ noun }}" data-selection-noun-plural="{{ nouns }}">
+             data-selection-scope data-selection-noun="{{ noun }}" data-selection-noun-plural="{{ nouns }}"
+             {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %}>
       <div class="dt-toolbar">
         <div class="dt-toolbar-search">
           {{ icon('search', 'search-icon') }}
@@ -320,178 +243,12 @@
             </tr>
           </thead>
           <tbody>
-            {# The indentation between tags left out: a long inventory's rows were a third spaces (app.py, tight). #}
-            {# The labels every row repeats, translated once for the sheet. #}
-            {# Each column's label and suggestion list, worked out once. #}
-            {% set cell_label = {} %}{% set cell_list = {} %}
-            {% for fd in table_fields %}{% set _ = cell_label.update({fd.key: fd.label|tr('inventory')}) %}{% set _ = cell_list.update({fd.key: (' list="inv-owner-options"'|safe) if fd.type == 'user' else rem('attr_' ~ fd.key)}) %}{% endfor %}
-            {% set row_text = {'Status': _('Status'), 'Belongs to': _('Belongs to'), 'its owner': _('its owner'), 'Vendor': _('Vendor'), 'Catalog number': _('Catalog number'), 'Lot': _('Lot'), 'Quantity': _('Quantity'), 'Unit': _('Unit'), 'Low at': _('Low at'), 'Pack size': _('Pack size'), 'Box': _('Box'), 'Position': _('Position'), 'Location': _('Location'), 'Received': _('Received'), 'Expired': _('Expired'), 'Expires within 30 days': _('Expires within 30 days'), 'Expires': _('Expires'), 'Notes': _('Notes'), 'Add it to Reagents or Antibodies as a new record': _('Add it to Reagents or Antibodies as a new record'), 'To stock': _('To stock'), 'On order': _('On order'), 'Open': _('Open'), 'Delete': _('Delete')} %}
-            {# And what is the same on every row: its buttons' icons, links and titles (the item's id put in). #}
-            {% set row_icon = {'cart': icon('cart'), 'flask': icon('flask'), 'edit': icon('edit'), 'copy': icon('copy'), 'trash': icon('trash')} %}
-            {% set select_label = _('Select %(noun)s #%(number)s', noun=noun, number='{number}') %}
-            {% set duplicate_url = url_for('inventory.duplicate_item', key=key, item_id=0)|replace('/0/', '/{id}/') %}
-            {% set delete_url = url_for('inventory.delete_item', key=key, item_id=0)|replace('/0/', '/{id}/') %}
-            {% set duplicate_title = _('Duplicate as a new %(noun)s of yours', noun=noun) %}
-            {% if order_module %}
-              {% set reorder_url = url_for('inventory.module', key=order_module.key) %}
-              {% set reorder_title = _('Order again: a new order in %(database)s with these details', database=order_module.label|tr) %}
-            {% endif %}
-            {% filter tight %}
-            {% for r in rows %}
-              {% set i = r.item %}
-              {% set f = 'inv-' ~ i.id %}
-              {% set locked = not r.editable %}
-              {% set fixed = locked or not r.manageable %}
-              <tr data-id="{{ i.id }}" id="item-{{ i.id }}" data-number="{{ i.number }}"
-                  data-mine="{{ 'true' if r.mine else 'false' }}" data-shared="{{ 'true' if i.is_shared else 'false' }}"
-                  data-open="{{ 'true' if i.status in m.open_statuses else 'false' }}" data-status="{{ (i.status or '')|lower }}"
-                  data-active="{{ 'false' if r.available == false else 'true' }}"
-                  data-expired="{{ 'true' if r.expiry == 'expired' else 'false' }}"
-                  data-expiring="{{ 'true' if r.expiry == 'soon' else 'false' }}"
-                  {% if r.mouse_genotype %}data-mouse-genotype="{{ r.mouse_genotype }}"{% endif %}
-                  class="{% if locked %}is-locked{% endif %}{% if r.available == false %} is-inactive{% endif %}{% if r.expiry == 'expired' %} is-expired{% endif %}">
-                <td class="sheet-pin sheet-pin-0">
-                  <input type="checkbox" data-select-row value="{{ i.id }}" aria-label="{{ select_label|replace('{number}', i.number) }}">
-                </td>
-                <td class="sheet-pin sheet-pin-1">
-                  {# An expired one's dot is red (a database without statuses shows it then too). #}
-                  {% set expired = r.expiry == 'expired' %}
-                  {{ sheet_ui.id_cell(i.number, alive=(r.available if r.available is not none else (true if expired else none)),
-                                      locked=locked, owner=i.owner, noun=noun,
-                                      alive_title=alive_title if r.available is not none else '',
-                                      dead_title=_('%(status)s since %(date)s', status=i.status|tr('inventory')|capitalize, date=r.ended_on) if r.ended_on else dead_title,
-                                      stage='expired' if expired else '',
-                                      stage_title=_('Expired %(date)s', date=i.expires_on) if expired else '') }}
-                </td>
-                <td><input class="font-medium" name="name" form="{{ f }}" value="{{ i.name }}" title="{{ i.name }}"{{ rem('name') }} data-autosave="1" aria-label="{{ name_label }}" {% if m.kind == 'orders' %}required{% endif %} {% if locked %}disabled{% endif %}></td>
-                <td>
-                  {% if m.categories %}
-                    <select name="category" form="{{ f }}" data-autosave="1" data-choices="inv-category" aria-label="{{ category_label }}" {% if locked %}disabled{% endif %}>
-                      {% if i.category %}<option value="{{ i.category }}" selected>{{ i.category|tr(m.kind) if i.category in m.categories else i.category }}</option>{% else %}<option value="" selected>–</option>{% endif %}
-                    </select>
-                  {% else %}
-                    <input name="category" form="{{ f }}" value="{{ i.category }}"{{ rem('category') }} data-autosave="1" aria-label="{{ category_label }}" {% if locked %}disabled{% endif %}>
-                  {% endif %}
-                </td>
-                {% if m.statuses %}
-                  <td>
-                    <select class="status-pill" name="status" form="{{ f }}" data-status="{{ i.status|lower }}" data-autosave="1" aria-label="{{ row_text['Status'] }}"
-                            data-alive-values="{{ m.available_statuses | join(',') }}" data-choices="inv-status" {% if locked %}disabled{% endif %}>
-                      <option value="{{ i.status }}" selected>{{ i.status|tr('inventory') if i.status in m.statuses else (i.status or '–') }}</option>
-                    </select>
-                  </td>
-                {% endif %}
-                {% for fd in table_fields %}
-                  {% if fd.key in r.unused and not r.attrs.get(fd.key) %}
-                    <td class="text-muted" title="{{ _('Not used for %(type)s', type=i.category|tr(m.kind)) }}">–</td>
-                  {% else %}
-                    {% set v = r.attrs.get(fd.key, '') %}
-                    {# A plain box written here, as field_cell would: a macro call a cell was a third of the sheet's time. #}
-                    {% if fd.type in ('text', 'textarea', 'number', 'user') and fd.key not in derived_fields and not (fd.key == 'genotype' and r.mouse_genotype and not v) %}
-                      <td><input name="attr_{{ fd.key }}" form="{{ f }}" value="{{ v }}"{% if fd.type == 'number' %} inputmode="decimal"{% endif %}{% if fd.key == 'sequence' %} class="font-mono" spellcheck="false"{% endif %}{{ cell_list[fd.key] }} data-autosave="1" aria-label="{{ cell_label[fd.key] }}"{% if locked %} disabled{% endif %}></td>
-                    {% elif fd.type == 'select' %}
-                      <td><select name="attr_{{ fd.key }}" form="{{ f }}" data-autosave="1" data-choices="inv-f-{{ fd.key }}" aria-label="{{ cell_label[fd.key] }}" {% if locked %}disabled{% endif %}>{% if v %}<option value="{{ v }}" selected>{{ v|tr('inventory') if v in fd.options else v }}</option>{% else %}<option value="" selected>–</option>{% endif %}</select></td>
-                    {% elif fd.type == 'date' %}
-                      <td><input type="date" name="attr_{{ fd.key }}" form="{{ f }}" value="{{ v }}" data-empty="{{ '0' if v else '1' }}" data-autosave="1" aria-label="{{ cell_label[fd.key] }}"{% if locked %} disabled{% endif %}></td>
-                    {% else %}
-                      <td>{{ field_cell(fd, v, f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources,
-                                        r.mouse_genotype if fd.key == 'genotype' else '') }}</td>
-                    {% endif %}
-                  {% endif %}
-                  {% if fd.type == 'source' %}
-                    {% set src = r.attrs.get(fd.key) %}
-                    {% set tagged = mouse_links.get(src.ref|string) if src is mapping and src.kind in ['mouse', 'colony'] else none %}
-                    <td class="ident" data-mouse-tag>{{ tagged.ear_tag if tagged else '' }}</td>
-                  {% endif %}
-                {% endfor %}
-                {% if m.has('sharing') %}
-                  <td>
-                    {% set share_value = groups_api.value(i) %}
-                    <select class="scope-pill" name="is_shared" form="{{ f }}" data-scope="{{ sharing.scope_of(share_value) }}" data-autosave="1" aria-label="{{ row_text['Belongs to'] }}"
-                            {% if fixed %}disabled {% if not locked %}title="{{ _('Only %(who)s or an admin can make it personal', who=i.owner or row_text['its owner']) }}"{% endif %}{% endif %}>
-                      {{ sharing.sharing_options(share_value, i.share_group_id, lab="Lab common") }}
-                    </select>
-                  </td>
-                {% endif %}
-                <td>{{ sheet_ui.owner_cell(i.owner, f, fixed, list_id='inv-owner-options', label=owner_label) }}</td>
-                {% if m.has('supplier') %}
-                  <td><input name="vendor" form="{{ f }}" value="{{ i.vendor }}"{{ rem('vendor') }} data-autosave="1" aria-label="{{ row_text['Vendor'] }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="ident" name="catalog_number" form="{{ f }}" value="{{ i.catalog_number }}"{{ rem('catalog_number') }} data-autosave="1" aria-label="{{ row_text['Catalog number'] }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="ident" name="lot" form="{{ f }}" value="{{ i.lot }}" data-autosave="1" aria-label="{{ row_text['Lot'] }}" {% if locked %}disabled{% endif %}></td>
-                {% endif %}
-                {% if m.has('quantity') %}
-                  {# With Low at, a quantity is saved when you leave the cell: typing
-                     "12" over 20 would otherwise pass through "1", low. #}
-                  <td><input name="quantity" form="{{ f }}" value="{{ i.quantity }}"{{ rem('quantity') }} data-autosave="1"{% if low_stock %} data-autosave-on="change"{% endif %} aria-label="{{ row_text['Quantity'] }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input name="unit" form="{{ f }}" value="{{ i.unit }}" placeholder="–"{{ rem('unit') }} data-autosave="1" aria-label="{{ row_text['Unit'] }}" {% if locked %}disabled{% endif %}></td>
-                  {% if low_stock %}
-                    <td><input name="low_at" form="{{ f }}" value="{{ r.payload.low_at }}" placeholder="–" inputmode="decimal" data-autosave="1" data-autosave-on="change" aria-label="{{ row_text['Low at'] }}" {% if locked %}disabled{% endif %}></td>
-                  {% endif %}
-                  {% if pack_sizes %}
-                    <td><input name="pack_size" form="{{ f }}" value="{{ i.pack_size }}" placeholder="–" data-autosave="1" data-autosave-on="change" aria-label="{{ row_text['Pack size'] }}" {% if locked %}disabled{% endif %}></td>
-                  {% endif %}
-                {% endif %}
-                {% if m.has('storage') %}
-                  <td>
-                    <select name="rack_id" form="{{ f }}" data-autosave="1" data-choices="inv-box" aria-label="{{ row_text['Box'] }}" {% if locked %}disabled{% endif %}>
-                      {% if i.rack_id_fk and i.rack_id_fk in box_labels %}<option value="{{ i.rack_id_fk }}" selected>{{ box_labels[i.rack_id_fk] }}</option>{% else %}<option value="" selected>–</option>{% endif %}
-                    </select>
-                  </td>
-                  <td><input class="ident" name="position" form="{{ f }}" value="{{ r.position }}" placeholder="–" data-autosave="1" aria-label="{{ row_text['Position'] }}" {% if locked %}disabled{% endif %}></td>
-                {% else %}
-                  <td><input name="location_note" form="{{ f }}" value="{{ i.location_note }}"{{ rem('location_note') }} data-autosave="1" aria-label="{{ row_text['Location'] }}" {% if locked %}disabled{% endif %}></td>
-                {% endif %}
-                {% if m.has('received') %}
-                  <td><input type="date" name="received_on" form="{{ f }}" value="{{ i.received_on or '' }}" data-empty="{{ '0' if i.received_on else '1' }}" data-autosave="1" aria-label="{{ row_text['Received'] }}" {% if locked %}disabled{% endif %}></td>
-                {% endif %}
-                {% if m.has('expiry') %}
-                  <td class="{% if r.expiry %}expiry-{{ r.expiry }}{% endif %}" {% if r.expiry == 'expired' %}title="{{ row_text['Expired'] }}"{% elif r.expiry == 'soon' %}title="{{ row_text['Expires within 30 days'] }}"{% endif %}>
-                    <input type="date" name="expires_on" form="{{ f }}" value="{{ i.expires_on or '' }}" data-empty="{{ '0' if i.expires_on else '1' }}" data-autosave="1" aria-label="{{ row_text['Expires'] }}" {% if locked %}disabled{% endif %}>
-                  </td>
-                {% endif %}
-                <td><input class="note-cell" name="notes" form="{{ f }}" value="{{ i.notes }}" title="{{ i.notes }}" data-autosave="1" aria-label="{{ row_text['Notes'] }}" {% if locked %}disabled{% endif %}></td>
-                <td class="sheet-pin sheet-pin-end">
-                  <div class="sheet-actions">
-                    {% set link = stock_links.get(i.id) %}
-                    {% if link %}
-                      {# The other side of "To stock": the reagent an order became, or the order a reagent came from. #}
-                      <a class="row-stock-btn row-stock-link" href="{{ link.url }}" title="{{ link.title }}">{{ icon(link.icon) }}{{ link.label }}</a>
-                    {% endif %}
-                    {% if m.kind == 'orders' and stock_targets and not r.attrs.get('stocked_as') and not locked %}
-                      {# Shown once the order is received (also after a board drag); gone once stocked. #}
-                      {# Labelled: on a touch screen there is no tooltip to say what a flask means. #}
-                      <button type="button" class="row-stock-btn" data-to-stock data-on-click="offer-stock" data-arg="{{ i.id }}"
-                              title="{{ row_text['Add it to Reagents or Antibodies as a new record'] }}" {% if i.status|lower != 'received' %}hidden{% endif %}>{{ row_icon['flask'] }}{{ row_text['To stock'] }}</button>
-                    {% endif %}
-                    {% if order_module %}
-                      {# A button like its neighbours (a form that only opens a page), not a link. #}
-                      <form method="get" action="{{ reorder_url }}">
-                        <input type="hidden" name="reorder" value="{{ key }}:{{ i.id }}">
-                        {% if on_order.get(i.id) %}
-                          <button type="submit" class="row-stock-btn row-stock-link" title="{{ _('%(orders)s. Order again anyway?', orders=on_order[i.id]) }}">{{ row_icon['cart'] }}{{ row_text['On order'] }}</button>
-                        {% else %}
-                          <button type="submit" class="row-icon-btn" title="{{ reorder_title }}">{{ row_icon['cart'] }}</button>
-                        {% endif %}
-                      </form>
-                    {% endif %}
-                    <button type="button" class="row-icon-btn" title="{{ row_text['Open'] }}" data-record-edit="item-dialog" data-open-item
-                            data-record-payload='{{ r.payload | tojson }}'>{{ row_icon['edit'] }}</button>
-                    <form method="post" action="{{ duplicate_url|replace('{id}', i.id) }}">
-                      <button type="submit" class="row-icon-btn" title="{{ duplicate_title }}">{{ row_icon['copy'] }}</button>
-                    </form>
-                    <form method="post" action="{{ delete_url|replace('{id}', i.id) }}"
-                          data-confirm="{% if i.name %}{{ _('Delete %(noun)s #%(number)s (%(name)s)?', noun=noun, number=i.number, name=i.name) }}{% else %}{{ _('Delete %(noun)s #%(number)s?', noun=noun, number=i.number) }}{% endif %}">
-                      <button type="submit" class="row-icon-btn danger-button" {% if not r.manageable %}disabled title="{{ _('Only %(who)s or an admin can delete it', who=i.owner or row_text['its owner']) }}"{% else %}title="{{ row_text['Delete'] }}"{% endif %}>{{ row_icon['trash'] }}</button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            {% else %}
-              <tr><td class="dt-empty" colspan="40"><span class="dt-empty-msg">{% trans nouns=nouns, new=_('New %(noun)s', noun=noun) %}No {{ nouns }} yet. Use <strong>{{ new }}</strong>, or <strong>Import from Excel</strong> for the sheet you kept them in.{% endtrans %}</span></td></tr>
-            {% endfor %}
-            {% endfilter %}
+            {% include "inventory/_sheet_rows.html" %}
           </tbody>
         </table>
+        {# The rows not drawn, for search, sort, the chips and the count; each
+           page's rows come when it is shown (inventory_routes.LAZY_OVER). #}
+        {% if stubs %}<script type="application/json" data-dt-stubs>{{ stubs | tojson }}</script>{% endif %}
         {# Each list a row's menu offers, sent once: a row holds only its own
            choice until the menu is used (static/shell.js, fillChoices). #}
         {% if m.categories %}<template id="choices-inv-category"><option value="">–</option>{% for c in m.categories %}<option value="{{ c }}">{{ c|tr(m.kind) }}</option>{% endfor %}</template>{% endif %}
@@ -511,10 +268,15 @@
             let hidden = [];
             try { hidden = JSON.parse(localStorage.getItem({{ ('dt:' ~ mouse_table_id ~ ':hidden') | tojson }}) || '[]'); } catch (_) { return; }
             if (!hidden.includes({{ mouse_tag_column }})) return;
-            const sheet = document.currentScript.previousElementSibling;
+            const sheet = document.currentScript.closest('.dt-scroll').querySelector('table');
             sheet.querySelectorAll('th[data-mouse-tag]').forEach((th) => { th.dataset.dtOff = '1'; });
-            sheet.querySelectorAll('[data-mouse-tag-title]').forEach((el) => { el.removeAttribute('title'); });
-            sheet.querySelectorAll('[data-mouse-peek-tag]').forEach((el) => { el.removeAttribute('data-mouse-peek-tag'); });
+            const untag = (root) => {
+              root.querySelectorAll('[data-mouse-tag-title]').forEach((el) => { el.removeAttribute('title'); });
+              root.querySelectorAll('[data-mouse-peek-tag]').forEach((el) => { el.removeAttribute('data-mouse-peek-tag'); });
+            };
+            untag(sheet);
+            // And the rows of a sheet the server pages, as they come.
+            sheet.closest('.data-table-card').addEventListener('dt:rows-loaded', (event) => event.detail.rows.forEach(untag));
           })();
         </script>
         {% endif %}
@@ -524,19 +286,7 @@
          received date or box that differs, so a row gone stale after a
          board drag or grid move cannot undo it (app/formutil.py). #}
       <template data-row-forms>
-      {% for r in rows %}
-        <form id="inv-{{ r.item.id }}" method="post" action="{{ url_for('inventory.update_item', key=key, item_id=r.item.id) }}"
-              data-record-label="{{ noun }} #{{ r.item.number }}">
-          <input type="hidden" name="status_was" value="{{ r.item.status }}">
-          <input type="hidden" name="received_on_was" value="{{ r.item.received_on or '' }}">
-          <input type="hidden" name="rack_id_was" value="{{ r.item.rack_id_fk or '' }}">
-          <input type="hidden" name="position_was" value="{{ r.position }}">
-          {% if low_stock %}
-            <input type="hidden" name="quantity_was" value="{{ r.item.quantity }}">
-            <input type="hidden" name="low_at_was" value="{{ r.payload.low_at }}">
-          {% endif %}
-        </form>
-      {% endfor %}
+        {% include "inventory/_row_forms.html" %}
       </template>
       <div class="dt-bottom-bar">
         {# An empty row at once, unless a new one needs fields filled in first
@@ -1363,8 +1113,10 @@
       // Its row is brought onto the page first: the dialog opens from a click there.
       const row = window.BioSheets.row(once.open, document.querySelector('.data-table-card'));
       if (row) window.BioSheets.show(row);
-      const open = row && row.querySelector('[data-open-item]');
-      if (open) open.click();
+      window.BioSheets.ready(row).then((tr) => {
+        const open = tr && tr.querySelector('[data-open-item]');
+        if (open) open.click();
+      });
     }
   });
 

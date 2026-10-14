@@ -1904,25 +1904,30 @@ def rebuild_samples_table() -> None:
                     "WHERE animal_id_fk IS NOT NULL AND source_kind = ''"))
 
 
-def sample_sources(session) -> list[dict]:
+def sample_sources(session, refs: bool = True) -> list[dict]:
     """Where a sample can come from: each colony, with the identifiers it
-    uses, for the source picker. Order follows the sidebar."""
+    uses, for the source picker. Order follows the sidebar. Without `refs`,
+    each colony's identifiers are left out (a sheet's rows need only its
+    name)."""
     from . import organism_service as organisms
     from .models import Organism, OrgHousing, OrgLine
 
     sources = [{
         "kind": "mouse", "label": "Mouse",
-        "refs": [str(m) for m in session.scalars(select(MouseRecord.mouse_id).order_by(MouseRecord.mouse_id))],
+        "refs": [str(m) for m in session.scalars(select(MouseRecord.mouse_id).order_by(MouseRecord.mouse_id))]
+        if refs else [],
     }]
-    fish_refs = list(session.scalars(select(TankRecord.tank_id).order_by(TankRecord.tank_id)))
-    fish_refs += [i for i in session.scalars(select(FishRecord.individual_id).order_by(FishRecord.individual_id)) if i]
+    fish_refs = []
+    if refs:
+        fish_refs = list(session.scalars(select(TankRecord.tank_id).order_by(TankRecord.tank_id)))
+        fish_refs += [i for i in session.scalars(select(FishRecord.individual_id).order_by(FishRecord.individual_id)) if i]
     sources.append({"kind": "fish", "label": "Fish", "refs": fish_refs})
     for module in organisms.list_modules(session):
-        refs = []
-        for model in (OrgLine, OrgHousing, Organism):
-            refs += [c for c in session.scalars(
+        found = []
+        for model in (OrgLine, OrgHousing, Organism) if refs else ():
+            found += [c for c in session.scalars(
                 select(model.code).where(model.module_id_fk == module.id).order_by(model.code)) if c]
-        sources.append({"kind": f"organism:{module.key}", "label": module.label, "refs": refs})
+        sources.append({"kind": f"organism:{module.key}", "label": module.label, "refs": found})
     sources.append({"kind": "other", "label": "Other", "refs": []})
     return sources
 

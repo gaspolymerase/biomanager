@@ -1,0 +1,17 @@
+{#- One form per row of the sheet; cells join it through form="…" (drawn
+    inside <template data-row-forms> by the page, or fetched with the rows). -#}
+{% set key = module.key %}
+{% set noun = module.item_noun|tr('inventory') %}
+{% for r in sheet_rows %}
+  <form id="inv-{{ r.item.id }}" method="post" action="{{ url_for('inventory.update_item', key=key, item_id=r.item.id) }}"
+        data-record-label="{{ noun }} #{{ r.item.number }}">
+    <input type="hidden" name="status_was" value="{{ r.item.status }}">
+    <input type="hidden" name="received_on_was" value="{{ r.item.received_on or '' }}">
+    <input type="hidden" name="rack_id_was" value="{{ r.item.rack_id_fk or '' }}">
+    <input type="hidden" name="position_was" value="{{ r.position }}">
+    {% if low_stock %}
+      <input type="hidden" name="quantity_was" value="{{ r.item.quantity }}">
+      <input type="hidden" name="low_at_was" value="{{ r.payload.low_at }}">
+    {% endif %}
+  </form>
+{% endfor %}

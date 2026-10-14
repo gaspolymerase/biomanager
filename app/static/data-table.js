@@ -31,6 +31,15 @@
  * Columns that stay put when the others are moved: the pinned ones
  * (.sheet-pin: the tick boxes, the ID, the actions), any th[data-dt-fixed],
  * a header holding a checkbox, and one with no visible name.
+ *
+ * A sheet the server pages (data-dt-rows-url on the card) draws only its
+ * first rows; each other row comes as an entry in
+ * <script type="application/json" data-dt-stubs>: {id, e: its element id,
+ * d: its data-*, k: each sortable cell's value, s: its search text}. It
+ * stands in the sheet as an empty <tr> (a stub) until its page is shown,
+ * or the sheet is exported or printed; its rows then come from
+ * <rows-url>?ids=…, {rows: "<tr>…", forms: "<form>…"}, the forms going
+ * into a <template data-row-forms> (row-forms.js).
  */
 
 (function () {
@@ -97,7 +106,26 @@
       const sheet = sheets.find((c) => c.rows.includes(tr));
       return Boolean(sheet && sheet.reveal(tr));
     },
+    // The row itself, fetched if it is still a stub (a sheet the server
+    // pages): a Promise of the <tr>, or of null if it has gone.
+    ready(tr) {
+      const sheet = tr && sheets.find((c) => c.rows.includes(tr));
+      if (!sheet || !tr._stub) return Promise.resolve(tr || null);
+      const id = tr.dataset.id;
+      return sheet._loadRows([tr]).then(() => sheet.rows.find((r) => r.dataset.id === id) || null);
+    },
   };
+
+  // A row the server has not drawn yet (see the top of this file).
+  function makeStub(entry) {
+    const tr = document.createElement('tr');
+    tr.dataset.id = String(entry.id);
+    if (entry.e) tr.id = entry.e;
+    Object.entries(entry.d || {}).forEach(([key, value]) => { tr.dataset[key] = value; });
+    tr._stub = { k: entry.k || {}, s: entry.s || '' };
+    return tr;
+  }
+  const ROWS_AT_ONCE = 500;
 
   // Per-table state keyed by table id.
   class DataTableController {
@@ -108,6 +136,12 @@
       this.table = card.querySelector('table.dt');
       this.tbody = this.table && this.table.tBodies[0];
       this.rows = this.tbody ? Array.from(this.tbody.querySelectorAll('tr[data-id]')) : [];
+      this.rowsUrl = card.dataset.dtRowsUrl || '';
+      const stubs = card.querySelector('script[data-dt-stubs]');
+      if (stubs && this.rowsUrl && this.tbody) {
+        try { JSON.parse(stubs.textContent).forEach((entry) => this.rows.push(makeStub(entry))); } catch (_) { /* drawn rows only */ }
+        stubs.remove();
+      }
       this.original = this.rows.slice();
       this.filtered = this.rows.slice();
       this._laidOut = this.rows.slice();   // the order the rows are in on the page
@@ -170,7 +204,8 @@
        every row on the page says so with data-dt-keep-rows. Code that
        looks a row up later uses BioSheets.row(id). */
     _parkLater() {
-      if (!this.tbody || this.rows.length <= PARK_OVER || this.card.hasAttribute('data-dt-keep-rows')
+      // A sheet the server pages has drawn only its first page.
+      if (!this.tbody || this.rows.length <= PARK_OVER || this.rowsUrl || this.card.hasAttribute('data-dt-keep-rows')
           || document.readyState === 'complete') return;
       window.addEventListener('DOMContentLoaded', () => {
         // All of the body's rows lifted out at once, the shown ones put back
@@ -181,6 +216,7 @@
         const rows = new Set(this.rows);
         const byId = new Map(this.rows.map((tr) => [tr.dataset.id, tr]));
         const shown = (tr) => tr.style.display !== 'none';
+        this._parked = true;
         const back = Array.from(away.children).filter((tr) => {
           if (tr.dataset.detailFor !== undefined) {
             const owner = byId.get(tr.dataset.detailFor);
@@ -317,8 +353,11 @@
       const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm()))
                                 : (inRows() || byForm()));
       if (!row || !this.rows.includes(row) || !this.reveal(row)) return;
-      requestAnimationFrame(() => row.scrollIntoView({ block: 'center' }));
-      row.dispatchEvent(new CustomEvent('dt:revealed', { bubbles: true }));
+      window.BioSheets.ready(row).then((tr) => {
+        if (!tr) return;
+        requestAnimationFrame(() => tr.scrollIntoView({ block: 'center' }));
+        tr.dispatchEvent(new CustomEvent('dt:revealed', { bubbles: true }));
+      });
     }
 
     /* The page scrolls, not the table: the toolbar and the bottom bar stick
@@ -476,6 +515,7 @@
        part of textContent, so an editable sheet would otherwise be
        unsearchable). */
     _rowText(tr) {
+      if (tr._stub) return tr._stub.s;
       const known = this._texts && this._texts.get(tr);
       if (known !== undefined) return known;
       // Not every choice of a menu, only the one chosen (below): a row's Box
@@ -560,6 +600,7 @@
        text rather than inputs (e.g. a database's custom fields):
        <td data-sort-for="attr_size" data-sort-value="12.5">. */
     _sortValue(tr, key) {
+      if (tr._stub) return key in tr._stub.k ? tr._stub.k[key] : (tr.dataset[key] || '');
       const cell = tr.querySelector(`[name="${key}"]`);
       if (cell) return String(cell.value || '');
       const valued = tr.querySelector(`[data-sort-for="${key}"]`);
@@ -773,13 +814,8 @@
       this.movable = new Set();
       if (!this.table || !this.table.tHead || !this.table.tHead.rows[0]) return;
       this.headers = Array.from(this.table.tHead.rows[0].cells);
-      const n = this.headers.length;
-      const mark = (row) => {
-        if (row.cells.length !== n) return;
-        Array.from(row.cells).forEach((cell, col) => { cell.dataset.dtCol = String(col); });
-      };
-      Array.from(this.table.tHead.rows).forEach(mark);
-      this.rows.forEach(mark);
+      Array.from(this.table.tHead.rows).forEach((row) => this._markRow(row));
+      this.rows.forEach((row) => this._markRow(row));
       const seen = new Map();
       this.colKeys = this.headers.map((th, col) => {
         const base = th.dataset.colKey || th.dataset.sortKey || this._columnLabel(th) || `#${col}`;
@@ -788,6 +824,11 @@
         return times > 1 ? `${base}~${times}` : base;
       });
       this.headers.forEach((th, col) => { if (!this._isFixedColumn(th)) this.movable.add(col); });
+    }
+
+    _markRow(row) {
+      if (row.cells.length !== this.headers.length) return;
+      Array.from(row.cells).forEach((cell, col) => { cell.dataset.dtCol = String(col); });
     }
 
     _col(cell) {
@@ -845,7 +886,7 @@
     /* Moves the cells themselves, header and rows alike, so whatever reads
        a row across (pasting a block, the export, a phone's cards) reads it
        in the order shown. The fixed columns keep their places. */
-    _applyOrder() {
+    _applyOrder(rows) {
       if (!this.headers.length) return;
       let next = 0;
       const sequence = this.headers.map((th, col) => (this.movable.has(col) ? this.order[next++] : col));
@@ -857,8 +898,8 @@
         if (sequence.some((col) => !byCol[col])) return;
         sequence.forEach((col) => row.appendChild(byCol[col]));
       };
-      Array.from(this.table.tHead.rows).forEach(place);
-      this.rows.forEach(place);
+      if (!rows) Array.from(this.table.tHead.rows).forEach(place);
+      (rows || this.rows).forEach(place);
     }
 
     /* Drag a column's header along the header row to move the column. A
@@ -1034,10 +1075,10 @@
     /* Each cell carries its column's name, which a phone shows beside the
        value when the sheet turns into one card per row (tailwind.css,
        "Sheets on a phone"): there is no header row to look up to. */
-    _labelCells() {
+    _labelCells(rows) {
       if (!this.table || !this.table.tHead || !this.table.tHead.rows[0]) return;
       const labels = this.headers.map((th) => this._columnLabel(th));
-      this.rows.forEach((tr) => {
+      (rows || this.rows).forEach((tr) => {
         Array.from(tr.cells).forEach((td, idx) => {
           const col = this._col(td) >= 0 ? this._col(td) : idx;
           if (labels[col] && !td.dataset.label) td.dataset.label = labels[col];
@@ -1056,15 +1097,15 @@
       return this.hidden.has(col) || Boolean(th && th.dataset.dtOff === '1');
     }
 
-    _applyHidden() {
+    _applyHidden(rows) {
       if (!this.table) return;
       const apply = (cell, idx) => {
         const col = this._col(cell);
         const display = this._isHidden(col >= 0 ? col : idx) ? 'none' : '';
         if (cell.style.display !== display) cell.style.display = display;   // a long sheet has 100,000 cells
       };
-      Array.from(this.table.tHead.rows).forEach((row) => Array.from(row.cells).forEach(apply));
-      this.rows.forEach((tr) => Array.from(tr.cells).forEach(apply));
+      if (!rows) Array.from(this.table.tHead.rows).forEach((row) => Array.from(row.cells).forEach(apply));
+      (rows || this.rows).forEach((tr) => Array.from(tr.cells).forEach(apply));
     }
 
     /* Saved choice if there is one, else the columns the page marks
@@ -1200,7 +1241,7 @@
     _wireExport() {
       const exportBtn = this.card.querySelector('.dt-btn-export');
       if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
+        exportBtn.addEventListener('click', () => this._whenDrawn(this.filtered, () => {
           const columns = this._exportColumns();
           const quote = (v) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
           const lines = [columns.map((c) => quote(c.label)).join(',')];
@@ -1216,11 +1257,11 @@
           link.click();
           link.remove();
           setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        });
+        }));
       }
       const printBtn = this.card.querySelector('.dt-btn-print');
       if (printBtn) {
-        printBtn.addEventListener('click', () => {
+        printBtn.addEventListener('click', () => this._whenDrawn(this.filtered, () => {
           // Print every filtered row, then put the page back.
           const size = this.pageSize;
           const before = size ? size.value : null;
@@ -1241,8 +1282,95 @@
           };
           window.addEventListener('afterprint', restore);
           window.print();
-        });
+        }));
       }
+    }
+
+    // -------- rows the server pages --------------------------------------
+    /* Fetches the rows of these stubs (a Promise, done when all are in):
+       ROWS_AT_ONCE a request, one request after another. */
+    _loadRows(list) {
+      const waiting = [];
+      const want = [];
+      list.forEach((tr) => {
+        if (!tr._stub) return;
+        if (tr._loading) waiting.push(tr._loading); else want.push(tr);
+      });
+      let chain = Promise.resolve();
+      for (let i = 0; i < want.length; i += ROWS_AT_ONCE) {
+        const chunk = want.slice(i, i + ROWS_AT_ONCE);
+        chain = chain.then(() => this._fetchRows(chunk));
+        chunk.forEach((tr) => { tr._loading = chain; });
+      }
+      return Promise.all([...waiting, chain]);
+    }
+
+    _fetchRows(stubs) {
+      const url = new URL(this.rowsUrl, window.location.href);
+      // The page's own choices (?type=, ?ended=): the same rows, drawn the same.
+      new URLSearchParams(window.location.search).forEach((value, key) => url.searchParams.set(key, value));
+      url.searchParams.set('ids', stubs.map((tr) => tr.dataset.id).join(','));
+      return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+        .then((answer) => this._takeRows(stubs, answer))
+        .catch((error) => { stubs.forEach((tr) => { tr._loading = null; }); throw error; });
+    }
+
+    /* Each stub's place in the sheet goes to its row; one the answer leaves
+       out (deleted meanwhile) leaves the sheet. */
+    _takeRows(stubs, answer) {
+      if (answer.forms) {
+        const forms = document.createElement('template');
+        forms.setAttribute('data-row-forms', '');
+        forms.innerHTML = answer.forms;
+        this.card.appendChild(forms);
+      }
+      const holder = document.createElement('template');
+      holder.innerHTML = answer.rows || '';
+      const drawn = new Map(Array.from(holder.content.children)
+        .filter((tr) => tr.tagName === 'TR' && tr.dataset.id).map((tr) => [tr.dataset.id, tr]));
+      const swap = new Map();
+      const fresh = [];
+      stubs.forEach((stub) => {
+        const tr = drawn.get(stub.dataset.id);
+        if (tr && !tr._stub) {
+          document.adoptNode(tr);
+          tr.style.display = 'none';
+          fresh.push(tr);
+        }
+        swap.set(stub, tr || null);
+      });
+      [this.rows, this.original, this.filtered, this._laidOut].forEach((list) => {
+        for (let i = list.length - 1; i >= 0; i--) {
+          if (!swap.has(list[i])) continue;
+          const tr = swap.get(list[i]);
+          if (tr) list[i] = tr; else list.splice(i, 1);
+        }
+      });
+      fresh.forEach((tr) => this._markRow(tr));
+      this._applyOrder(fresh);
+      this._labelCells(fresh);
+      this._applyHidden(fresh);
+      this.card.dispatchEvent(new CustomEvent('dt:rows-loaded', { bubbles: true, detail: { rows: fresh } }));
+    }
+
+    /* Runs `then` once these rows are all drawn (an export or a print of
+       every row the search and chips let through). */
+    _whenDrawn(rows, then) {
+      if (!this.rowsUrl || !rows.some((tr) => tr._stub)) { then(); return; }
+      this.card.classList.add('dt-loading');
+      this._loadRows(rows).then(() => {
+        this.card.classList.remove('dt-loading');
+        then();
+      }, () => {
+        this.card.classList.remove('dt-loading');
+        this._sayNotLoaded();
+      });
+    }
+
+    _sayNotLoaded() {
+      const say = window.BiomanagerShell && window.BiomanagerShell.toast;
+      if (say) say(t('Some rows could not be loaded. Check the connection and try again.'), 'error');
     }
 
     // -------- render -----------------------------------------------------
@@ -1250,6 +1378,23 @@
       const size = this.pageSize ? parseInt(this.pageSize.value, 10) : 50;
       const start = this.page * size;
       const end = start + size;
+      // A page with stubs on it waits for their rows (a sheet the server
+      // pages); the page shown until then stays.
+      const page = this.filtered.slice(start, end);
+      if (this.rowsUrl && page.some((tr) => tr._stub) && !this._notLoaded) {
+        this.card.classList.add('dt-loading');
+        this._loadRows(page).then(() => {
+          this.card.classList.remove('dt-loading');
+          this.render();
+        }, () => {
+          this.card.classList.remove('dt-loading');
+          this._sayNotLoaded();
+          this._notLoaded = true;   // this once: the next turn, search or sort asks again
+          this.render();
+        });
+        return;
+      }
+      this._notLoaded = false;
       // Only the rows whose state changes are touched: a long sheet has
       // thousands, and the stylesheet hides those past the first page until
       // now (.dt-ready).
@@ -1276,7 +1421,26 @@
       // moving every row on each page turn was most of it.
       const laidOut = this._laidOut;
       const away = (tr) => !tr.isConnected;
-      if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])
+      if (this.rowsUrl || this._parked) {
+        // A long sheet (one the server pages, or one whose unseen rows left
+        // the page as it loaded) holds only the page shown, with its detail
+        // rows: the rows of pages turned past piled up in it, hidden, and
+        // every later search or sort restyled them all. A ticked row stays,
+        // hidden, for the selection bar to act on.
+        const keep = new Set();
+        const page = this.filtered.slice(start, end);
+        page.forEach((tr) => { keep.add(tr); const detail = details.get(tr.dataset.id); if (detail) keep.add(detail); });
+        Array.from(this.tbody.children).forEach((tr) => {
+          if ((tr.dataset.id || tr.dataset.detailFor !== undefined) && !keep.has(tr)
+              && !tr.querySelector('.mouse-select:checked, [data-select-row]:checked, .dt-row-check:checked')) tr.remove();
+        });
+        page.forEach((tr) => {
+          this.tbody.appendChild(tr);
+          const detail = details.get(tr.dataset.id);
+          if (detail) this.tbody.appendChild(detail);
+        });
+        this._laidOut = this.filtered.slice();
+      } else if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])
           || this.filtered.slice(start, end).some(away)) {
         this.filtered.forEach((tr) => {
           if (away(tr) && !shown.has(tr)) return;
