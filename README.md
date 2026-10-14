@@ -134,7 +134,8 @@ never what you may edit.
 - **Breeders** — the Breeder cages, the lab's breeding stock, at a glance,
   with the breeders counted by genotype and those past 30 weeks flagged;
   **Pick** takes a breeder as yours to set up a mating, and its owner is
-  told.
+  told. A Breeder cage left empty for over 90 days, and a mouse in one
+  that ended that long ago, wait behind **Show them**.
 - **Strains** and **Experiments** — your lab's lines with owners, and
   groups of mice under one experiment with a shared treatment group.
   An experiment's page has its details on top; then a **sheet of its

@@ -1,9 +1,11 @@
 """What keeps a long sheet quick to open, and the calendar quick to fill.
 
-A sheet sends its long lists of choices once (a fish row's Tank), its row
-forms inside a <template> (static/row-forms.js), and the browser keeps the
-scripts and styles a page names with ?v=. The calendar's sac reminders
-are looked up for the window it shows, in one query.
+A sheet sends its long lists of choices once (a fish row's Tank, an
+inventory row's menus), its row forms inside a <template>
+(static/row-forms.js), and the browser keeps the scripts and styles a page
+names with ?v=. A page's icons point to symbols at its end. The Breeders
+tab leaves out what ended long ago. The calendar's sac reminders are looked
+up for the window it shows, in one query.
 """
 from __future__ import annotations
 
@@ -152,6 +154,96 @@ class LittersTabTests(AppTestCase):
             self.assertIn(f'href="/colony?view=mice&amp;scope=all&amp;q={number}"', html)
         row = re.search(rf'<tr data-id="{col["litter_id"]}".*?</tr>', html, re.S).group(0)
         self.assertIn('title="2 of 2 alive"', row)
+
+
+class BreedersTabSpeedTests(AppTestCase):
+    """The Breeders tab leaves out what the cage sheet does: a Breeder cage
+    long empty, and a mouse that ended long ago, behind "Show them"."""
+
+    def test_a_long_empty_breeder_cage_waits_behind_show_them(self):
+        old, new = uniq("C"), uniq("C")
+        old_row = self.make_cage(self.a, old, purpose="Breeder")
+        execute("update mouse_cages set created_at=? where id=?", days_ago(400) + " 00:00:00", old_row)
+        self.make_cage(self.a, new, purpose="Breeder")
+        html = self.get_ok(self.a, "/colony?view=breeders&scope=all")
+        self.assertNotIn(f">{old}</a></strong>", html)
+        self.assertIn(f">{new}</a></strong>", html)          # made today: still listed
+        self.assertIn("/colony?view=breeders&amp;scope=all&amp;ended=all", html)
+        self.assertIn(f">{old}</a></strong>", self.get_ok(self.a, "/colony?view=breeders&scope=all&ended=all"))
+
+    def test_a_mouse_that_ended_long_ago_is_left_off_its_card(self):
+        cage = uniq("C")
+        self.make_cage(self.a, cage, purpose="Breeder")
+        living = self.make_mouse(self.a, self.admin, cage=cage, date_of_birth=days_ago(90))
+        gone = self.make_mouse(self.a, self.admin, cage=cage, date_of_birth=days_ago(400),
+                               status="sac", date_of_death=days_ago(200))
+        numbers = {m: one("select mouse_id from mice where id=?", m) for m in (living, gone)}
+        card = lambda html: re.search(rf">{cage}</a></strong>.*?</article>", html, re.S).group(0)
+        html = self.get_ok(self.a, "/colony?view=breeders&scope=all")
+        self.assertIn(f"<td>{numbers[living]}</td>", card(html))
+        self.assertNotIn(f"<td>{numbers[gone]}</td>", card(html))
+        self.assertIn("mice that ended over 90 days ago", html)
+        self.assertIn(f"<td>{numbers[gone]}</td>", card(self.get_ok(self.a, "/colony?view=breeders&scope=all&ended=all")))
+
+    def test_pick_buttons_post_through_one_form(self):
+        cage = uniq("C")
+        self.make_cage(self.a, cage, purpose="Breeder")
+        mouse = self.make_mouse(self.a, self.admin, cage=cage, date_of_birth=days_ago(60))
+        html = self.get_ok(self.m, "/colony?view=breeders&scope=all")
+        self.assertIn(f'data-pick-action="/colony/mice/{mouse}/pick"', html)
+        self.assertEqual(html.count('<form id="breeder-pick"'), 1)
+        self.assertNotIn('form="breeder-pick"', html)
+
+
+class InventorySheetSpeedTests(AppTestCase):
+    """An inventory row holds its own choice in each menu, the lists come
+    once below the table; its icons point within the page; the colonies'
+    IDs come as data, made a list when an ID box is used."""
+
+    def test_each_menu_holds_its_own_choice_and_the_lists_are_sent_once(self):
+        item = self.make_item(self.a, "reagents", category="buffer", status="in stock")
+        html = self.get_ok(self.a, "/inventory/reagents")
+        row = re.search(rf'<tr data-id="{item}".*?</tr>', html, re.S).group(0)
+        category = re.search(r'<select name="category"[^>]*>(.*?)</select>', row, re.S)
+        self.assertIn('data-choices="inv-category"', category.group(0))
+        self.assertEqual(re.findall(r"<option ", category.group(1)), ["<option "])
+        self.assertIn('value="buffer" selected', category.group(1))
+        status = re.search(r'<select class="status-pill" name="status"[^>]*>(.*?)</select>', row, re.S)
+        self.assertIn('data-choices="inv-status"', status.group(0))
+        self.assertEqual(html.count('<template id="choices-inv-category">'), 1)
+        self.assertIn('value="buffer"', re.search(r'<template id="choices-inv-category">(.*?)</template>', html, re.S).group(1))
+        self.assertEqual(html.count('<template id="choices-inv-status">'), 1)
+        # Between a row's tags, nothing (app.py, tight).
+        self.assertNotRegex(row, r">\s+<")
+
+    def test_a_changed_choice_still_saves(self):
+        item = self.make_item(self.a, "reagents", category="buffer")
+        self.assertSaved(self.autosave(self.a, f"/inventory/reagents/items/{item}/update",
+                                       {"name": one("select name from inventory_items where id=?", item),
+                                        "category": "enzyme", "status": "in stock", "is_shared": "0"}))
+        self.assertEqual(one("select category from inventory_items where id=?", item), "enzyme")
+
+    def test_icons_point_to_the_pages_own_symbols(self):
+        self.make_item(self.a, "reagents")
+        html = self.get_ok(self.a, "/inventory/reagents")
+        used = set(re.findall(r'<use href="#i-([\w-]+)">', html))
+        self.assertIn("trash", used)
+        self.assertNotIn('<use href="/static/icons.svg#', html)
+        sprite = re.search(r'<svg aria-hidden="true" style="display:none">(.*?)</svg>\s*</body>', html, re.S).group(1)
+        self.assertEqual(set(re.findall(r'<symbol id="i-([\w-]+)"', sprite)), used)
+
+    def test_an_icon_drawn_outside_a_page_points_to_the_shared_file(self):
+        from flask import render_template_string
+        from app.app import app
+        with app.test_request_context("/"):
+            self.assertIn('<use href="/static/icons.svg#trash">', render_template_string("{{ icon('trash') }}"))
+
+    def test_the_colonies_ids_come_as_data(self):
+        self.make_item(self.a, "samples")
+        html = self.get_ok(self.a, "/inventory/samples")
+        self.assertNotIn('<datalist id="inv-src-', html)
+        self.assertIn('<script type="application/json" id="inv-src-data">', html)
+        self.assertIn('data-list="inv-src-0"', html)
 
 
 class VersionedAssetsTests(AppTestCase):

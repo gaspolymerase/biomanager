@@ -425,8 +425,9 @@
 
     function applySearch() {
       const q = search ? search.value.trim().toLowerCase() : '';
+      const byId = new Map(items.map((i) => [String(i.id), i]));   // not a search of the list for every tile
       root.querySelectorAll('.rack-tile').forEach((el) => {
-        const item = items.find((i) => String(i.id) === el.dataset.id);
+        const item = byId.get(el.dataset.id);
         const hay = item ? (item.search || `${item.label} ${item.sub || ''}`).toLowerCase() : '';
         el.classList.toggle('is-dimmed', Boolean(q) && !hay.includes(q));
         el.classList.toggle('is-match', Boolean(q) && hay.includes(q));
@@ -448,7 +449,19 @@
       render();
     });
     if (search) search.addEventListener('input', applySearch);
-    render();
+    // Drawn when first shown: behind the table, a long list's Unplaced tray
+    // was thousands of tiles nobody saw.
+    const panel = root.closest('[data-layout-panel]');
+    if (panel && panel.hidden) {
+      const shown = () => {
+        if (panel.hidden) return;
+        document.removeEventListener('layout:change', shown);
+        render();
+      };
+      document.addEventListener('layout:change', shown);
+    } else {
+      render();
+    }
   }
 
   /* Table / grid switch, remembered per page:

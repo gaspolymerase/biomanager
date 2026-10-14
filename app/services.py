@@ -1343,15 +1343,35 @@ def breeder_summary(session) -> list[dict[str, object]]:
     return rows
 
 
-def breeder_mice(session, current_username: str | None, current_role: str | None) -> list[dict[str, object]]:
+def breeder_mice(session, current_username: str | None, current_role: str | None,
+                 recent: date | None = None) -> tuple[list[dict[str, object]], dict[str, int]]:
+    """The Breeders tab's cards, one a Breeder cage, and what it left out.
+
+    With `recent` (a day), as the cage sheet does: a cage that holds no
+    living mouse and had nothing since that day (made, or a mouse died) is
+    left out, and so is a mouse that ended before it (a colony keeps every
+    cage and mouse it had; years of them made the tab take a minute). The
+    card's counts and its search still go by all its mice. The second value
+    says how many were left out: {"cages": n, "mice": n}."""
     from sqlalchemy.orm import selectinload
-    cages = session.scalars(
-        # The lab's breeding stock to pick from: Breeder cages, not the
-        # mating (Breeding) cages, whose mice are in use.
-        select(CageRecord).where(func.lower(func.trim(CageRecord.purpose)) == BREEDER_PURPOSE)
-        .options(selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack))
-        .order_by(CageRecord.cage_id)
-    ).all()
+    is_breeder = func.lower(func.trim(CageRecord.purpose)) == BREEDER_PURPOSE
+    # The lab's breeding stock to pick from: Breeder cages, not the
+    # mating (Breeding) cages, whose mice are in use.
+    query = (select(CageRecord).where(is_breeder)
+             .options(selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack))
+             .order_by(CageRecord.cage_id))
+    if recent is not None:
+        # Only cages that may be shown are loaded; the rule itself is below.
+        query = query.where(
+            CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(
+                MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
+            | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
+    cages = session.scalars(query).all()
+    left_out = {"cages": 0, "mice": 0}
+    if recent is not None:
+        cages = [c for c in cages if cage_is_active(c) or c.created_at and c.created_at.date() >= recent
+                 or any(m.date_of_death and m.date_of_death >= recent for m in c.mice)]
+        left_out["cages"] = (session.scalar(select(func.count(CageRecord.id)).where(is_breeder)) or 0) - len(cages)
     grouped: list[dict[str, object]] = []
     for cage in cages:
         owner_name = ""
@@ -1360,7 +1380,10 @@ def breeder_mice(session, current_username: str | None, current_role: str | None
                 owner_name = mouse.owner
                 break
         sorted_mice = sorted(cage.mice, key=lambda item: item.mouse_id)
-        mouse_rows = [mouse_display_row(mouse, current_username, current_role) for mouse in sorted_mice]
+        listed = sorted_mice if recent is None else [
+            mouse for mouse in sorted_mice if mouse.date_of_death is None or mouse.date_of_death >= recent]
+        left_out["mice"] += len(sorted_mice) - len(listed)
+        mouse_rows = [mouse_display_row(mouse, current_username, current_role) for mouse in listed]
         search_parts: list[str] = [
             cage.cage_id or "",
             cage.cage_location or "",
@@ -1412,7 +1435,7 @@ def breeder_mice(session, current_username: str | None, current_role: str | None
                 "editable": current_role == "admin" or owner_name == current_username,
             }
         )
-    return grouped
+    return grouped, left_out
 
 
 def next_litter_id(session) -> str:

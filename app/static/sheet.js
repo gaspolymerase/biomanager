@@ -125,32 +125,56 @@
     timers.set(form.id, setTimeout(() => save(form, card), delay));
   }
 
+  // The value a cell had when the page came, for one changed before it was
+  // ever focused (a pasted block).
+  function startValue(el) {
+    if (el.tagName === 'SELECT') {
+      const option = Array.from(el.options).find((o) => o.defaultSelected);
+      return option ? option.value : '';
+    }
+    return el.defaultValue || '';
+  }
+
+  /* One listener on the sheet for all its cells, not one on each: a long
+     sheet has a hundred thousand fields, and cells made later (a hazard
+     menu opened) save too. */
   function wire(card) {
     card.addEventListener('paste', (event) => pasteBlock(card, event));
-    card.querySelectorAll('[data-autosave="1"][form]').forEach((input) => {
+    // A cell of this sheet (not of one inside it: each saves its own).
+    const cellOf = (el) => (el && el.matches && el.matches('[data-autosave="1"][form]')
+      && el.closest('[data-autosave-sheet]') === card ? el : null);
+    // What a cell held before this edit (sheet:change's `previous`).
+    const remember = (event) => {
+      const el = cellOf(event.target);
+      if (el && el.dataset.previous === undefined) el.dataset.previous = el.value;
+    };
+    card.addEventListener('focusin', remember, true);
+    card.addEventListener('pointerdown', remember, true);
+    card.addEventListener('input', (event) => {
+      const input = cellOf(event.target);
+      if (!input) return;
+      input.dataset.dirty = '1';
+      // data-autosave-on="change": saved when you leave the cell or press
+      // Enter, not while typing (a cage's number: "1", "12" and "120" are
+      // all numbers other cages may have).
+      if (input.tagName !== 'SELECT' && input.type !== 'date' && input.dataset.autosaveOn !== 'change') queue(input, 450);
+    });
+    card.addEventListener('change', (event) => {
+      const input = cellOf(event.target);
+      if (!input) return;
+      input.dataset.dirty = '1';
+      const previous = (input.dataset.previous !== undefined ? input.dataset.previous : startValue(input)) || '';
+      if (input.classList.contains('status-pill')) input.dataset.status = input.value.toLowerCase();
+      if (input.classList.contains('sex-pill')) input.dataset.sex = input.value;
+      if (input.dataset.scopePill !== undefined || input.classList.contains('scope-pill')) {
+        input.dataset.scope = input.value === '1' ? 'lab' : (/^g\d+$/.test(input.value) ? 'group' : 'mine');
+      }
+      const detail = { input, form: window.BioRowForms.get(input.getAttribute('form')), previous };
+      const go = input.dispatchEvent(new CustomEvent('sheet:change', { bubbles: true, cancelable: true, detail }));
       input.dataset.previous = input.value;
-      input.addEventListener('input', () => {
-        input.dataset.dirty = '1';
-        // data-autosave-on="change": saved when you leave the cell or press
-        // Enter, not while typing (a cage's number: "1", "12" and "120" are
-        // all numbers other cages may have).
-        if (input.tagName !== 'SELECT' && input.type !== 'date' && input.dataset.autosaveOn !== 'change') queue(input, 450);
-      });
-      input.addEventListener('change', () => {
-        input.dataset.dirty = '1';
-        const previous = input.dataset.previous || '';
-        if (input.classList.contains('status-pill')) input.dataset.status = input.value.toLowerCase();
-        if (input.classList.contains('sex-pill')) input.dataset.sex = input.value;
-        if (input.dataset.scopePill !== undefined || input.classList.contains('scope-pill')) {
-          input.dataset.scope = input.value === '1' ? 'lab' : (/^g\d+$/.test(input.value) ? 'group' : 'mine');
-        }
-        const detail = { input, form: window.BioRowForms.get(input.getAttribute('form')), previous };
-        const go = input.dispatchEvent(new CustomEvent('sheet:change', { bubbles: true, cancelable: true, detail }));
-        input.dataset.previous = input.value;
-        if (input.type === 'date') input.dataset.empty = input.value ? '0' : '1';
-        refreshDot(input.closest('tr'));
-        if (go) queue(input, 0);
-      });
+      if (input.type === 'date') input.dataset.empty = input.value ? '0' : '1';
+      refreshDot(input.closest('tr'));
+      if (go) queue(input, 0);
     });
   }
 

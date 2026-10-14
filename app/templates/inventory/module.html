@@ -42,23 +42,22 @@
   {% set name = 'attr_' ~ field.key %}
   {% set flabel = field.label|tr('inventory') %}
   {% if field.type == 'select' %}
-    <select name="{{ name }}" form="{{ form_id }}" data-autosave="1" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
-      <option value="">–</option>
-      {% for o in field.options %}<option value="{{ o }}" {% if o == value %}selected{% endif %}>{{ o|tr('inventory') }}</option>{% endfor %}
-      {% if value and value not in field.options %}<option value="{{ value }}" selected>{{ value }}</option>{% endif %}
+    {# Its own choice only: the column's list comes when it is used (choices-inv-f-<key>, below the table; static/shell.js). #}
+    <select name="{{ name }}" form="{{ form_id }}" data-autosave="1" data-choices="inv-f-{{ field.key }}" aria-label="{{ flabel }}" {% if locked %}disabled{% endif %}>
+      {% if value %}<option value="{{ value }}" selected>{{ value|tr('inventory') if value in field.options else value }}</option>{% else %}<option value="" selected>–</option>{% endif %}
     </select>
   {% elif field.type == 'multiselect' %}
     {# Several of a list (a chemical's hazards): ticked in a small menu, saved
        as each box changes; __several says the field was sent with none ticked. #}
     {% set picked = (value or '').split(',')|map('trim')|reject('equalto', '')|list %}
-    <details class="multi-cell" data-multi-cell>
+    {# Until it is opened, the ticked ones only, as hidden fields the row
+       sends; opening it makes the boxes from choices-inv-m-<key> (the
+       script after the table). #}
+    <details class="multi-cell" data-multi-cell data-multi-choices="inv-m-{{ field.key }}" {% if locked %}data-locked{% endif %}>
       <summary aria-label="{{ flabel }}" data-multi-summary data-empty-text="–">{% for v in picked %}{{ v|tr('inventory') }}{% if not loop.last %}, {% endif %}{% else %}–{% endfor %}</summary>
       <div class="multi-cell-menu">
         <input type="hidden" name="{{ name }}__several" form="{{ form_id }}" value="1">
-        {% for o in field.options + (picked|reject('in', field.options)|list) %}
-          <label><input type="checkbox" name="{{ name }}" value="{{ o }}" form="{{ form_id }}" data-autosave="1" data-multi
-                        {% if o in picked %}checked{% endif %} {% if locked %}disabled{% endif %}> <span>{{ o|tr('inventory') }}</span></label>
-        {% endfor %}
+        {% for o in picked %}<input type="hidden" name="{{ name }}" value="{{ o }}" form="{{ form_id }}" data-multi-picked>{% endfor %}
       </div>
     </details>
   {% elif field.type == 'date' %}
@@ -189,9 +188,9 @@
 {% if m.has('storage') %}
   <datalist id="inv-box-places">{% for place in places %}<option value="{{ place }}"></option>{% endfor %}</datalist>
 {% endif %}
-{% for source in sources %}
-  <datalist id="inv-src-{{ loop.index0 }}">{% for ref in source.refs %}<option value="{{ ref }}"></option>{% endfor %}</datalist>
-{% endfor %}
+{# A colony's IDs (a mouse colony's can run to 100,000) become a list
+   when an ID box is first used, not as the page loads. #}
+{% if sources %}<script type="application/json" id="inv-src-data">{{ sources | map(attribute='refs') | list | tojson }}</script>{% endif %}
 
 {# In a type's tab, a new entry is of that type. #}
 {% set new_payload = dict({"owner": current_user.username, "status": m.statuses[0] if m.statuses else "", "is_shared": "0"},
@@ -321,6 +320,23 @@
             </tr>
           </thead>
           <tbody>
+            {# The indentation between tags left out: a long inventory's rows were a third spaces (app.py, tight). #}
+            {# The labels every row repeats, translated once for the sheet. #}
+            {# Each column's label and suggestion list, worked out once. #}
+            {% set cell_label = {} %}{% set cell_list = {} %}
+            {% for fd in table_fields %}{% set _ = cell_label.update({fd.key: fd.label|tr('inventory')}) %}{% set _ = cell_list.update({fd.key: (' list="inv-owner-options"'|safe) if fd.type == 'user' else rem('attr_' ~ fd.key)}) %}{% endfor %}
+            {% set row_text = {'Status': _('Status'), 'Belongs to': _('Belongs to'), 'its owner': _('its owner'), 'Vendor': _('Vendor'), 'Catalog number': _('Catalog number'), 'Lot': _('Lot'), 'Quantity': _('Quantity'), 'Unit': _('Unit'), 'Low at': _('Low at'), 'Pack size': _('Pack size'), 'Box': _('Box'), 'Position': _('Position'), 'Location': _('Location'), 'Received': _('Received'), 'Expired': _('Expired'), 'Expires within 30 days': _('Expires within 30 days'), 'Expires': _('Expires'), 'Notes': _('Notes'), 'Add it to Reagents or Antibodies as a new record': _('Add it to Reagents or Antibodies as a new record'), 'To stock': _('To stock'), 'On order': _('On order'), 'Open': _('Open'), 'Delete': _('Delete')} %}
+            {# And what is the same on every row: its buttons' icons, links and titles (the item's id put in). #}
+            {% set row_icon = {'cart': icon('cart'), 'flask': icon('flask'), 'edit': icon('edit'), 'copy': icon('copy'), 'trash': icon('trash')} %}
+            {% set select_label = _('Select %(noun)s #%(number)s', noun=noun, number='{number}') %}
+            {% set duplicate_url = url_for('inventory.duplicate_item', key=key, item_id=0)|replace('/0/', '/{id}/') %}
+            {% set delete_url = url_for('inventory.delete_item', key=key, item_id=0)|replace('/0/', '/{id}/') %}
+            {% set duplicate_title = _('Duplicate as a new %(noun)s of yours', noun=noun) %}
+            {% if order_module %}
+              {% set reorder_url = url_for('inventory.module', key=order_module.key) %}
+              {% set reorder_title = _('Order again: a new order in %(database)s with these details', database=order_module.label|tr) %}
+            {% endif %}
+            {% filter tight %}
             {% for r in rows %}
               {% set i = r.item %}
               {% set f = 'inv-' ~ i.id %}
@@ -335,7 +351,7 @@
                   {% if r.mouse_genotype %}data-mouse-genotype="{{ r.mouse_genotype }}"{% endif %}
                   class="{% if locked %}is-locked{% endif %}{% if r.available == false %} is-inactive{% endif %}{% if r.expiry == 'expired' %} is-expired{% endif %}">
                 <td class="sheet-pin sheet-pin-0">
-                  <input type="checkbox" data-select-row value="{{ i.id }}" aria-label="{{ _('Select %(noun)s #%(number)s', noun=noun, number=i.number) }}">
+                  <input type="checkbox" data-select-row value="{{ i.id }}" aria-label="{{ select_label|replace('{number}', i.number) }}">
                 </td>
                 <td class="sheet-pin sheet-pin-1">
                   {# An expired one's dot is red (a database without statuses shows it then too). #}
@@ -350,10 +366,8 @@
                 <td><input class="font-medium" name="name" form="{{ f }}" value="{{ i.name }}" title="{{ i.name }}"{{ rem('name') }} data-autosave="1" aria-label="{{ name_label }}" {% if m.kind == 'orders' %}required{% endif %} {% if locked %}disabled{% endif %}></td>
                 <td>
                   {% if m.categories %}
-                    <select name="category" form="{{ f }}" data-autosave="1" aria-label="{{ category_label }}" {% if locked %}disabled{% endif %}>
-                      <option value="">–</option>
-                      {% for c in m.categories %}<option value="{{ c }}" {% if c == i.category %}selected{% endif %}>{{ c|tr(m.kind) }}</option>{% endfor %}
-                      {% if i.category and i.category not in m.categories %}<option value="{{ i.category }}" selected>{{ i.category }}</option>{% endif %}
+                    <select name="category" form="{{ f }}" data-autosave="1" data-choices="inv-category" aria-label="{{ category_label }}" {% if locked %}disabled{% endif %}>
+                      {% if i.category %}<option value="{{ i.category }}" selected>{{ i.category|tr(m.kind) if i.category in m.categories else i.category }}</option>{% else %}<option value="" selected>–</option>{% endif %}
                     </select>
                   {% else %}
                     <input name="category" form="{{ f }}" value="{{ i.category }}"{{ rem('category') }} data-autosave="1" aria-label="{{ category_label }}" {% if locked %}disabled{% endif %}>
@@ -361,10 +375,9 @@
                 </td>
                 {% if m.statuses %}
                   <td>
-                    <select class="status-pill" name="status" form="{{ f }}" data-status="{{ i.status|lower }}" data-autosave="1" aria-label="{{ _('Status') }}"
-                            data-alive-values="{{ m.available_statuses | join(',') }}" {% if locked %}disabled{% endif %}>
-                      {% for s in m.statuses %}<option value="{{ s }}" {% if s == i.status %}selected{% endif %}>{{ s|tr('inventory') }}</option>{% endfor %}
-                      {% if i.status not in m.statuses %}<option value="{{ i.status }}" selected>{{ i.status or '–' }}</option>{% endif %}
+                    <select class="status-pill" name="status" form="{{ f }}" data-status="{{ i.status|lower }}" data-autosave="1" aria-label="{{ row_text['Status'] }}"
+                            data-alive-values="{{ m.available_statuses | join(',') }}" data-choices="inv-status" {% if locked %}disabled{% endif %}>
+                      <option value="{{ i.status }}" selected>{{ i.status|tr('inventory') if i.status in m.statuses else (i.status or '–') }}</option>
                     </select>
                   </td>
                 {% endif %}
@@ -372,8 +385,18 @@
                   {% if fd.key in r.unused and not r.attrs.get(fd.key) %}
                     <td class="text-muted" title="{{ _('Not used for %(type)s', type=i.category|tr(m.kind)) }}">–</td>
                   {% else %}
-                  <td>{{ field_cell(fd, r.attrs.get(fd.key, ''), f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources,
-                                  r.mouse_genotype if fd.key == 'genotype' else '') }}</td>
+                    {% set v = r.attrs.get(fd.key, '') %}
+                    {# A plain box written here, as field_cell would: a macro call a cell was a third of the sheet's time. #}
+                    {% if fd.type in ('text', 'textarea', 'number', 'user') and fd.key not in derived_fields and not (fd.key == 'genotype' and r.mouse_genotype and not v) %}
+                      <td><input name="attr_{{ fd.key }}" form="{{ f }}" value="{{ v }}"{% if fd.type == 'number' %} inputmode="decimal"{% endif %}{% if fd.key == 'sequence' %} class="font-mono" spellcheck="false"{% endif %}{{ cell_list[fd.key] }} data-autosave="1" aria-label="{{ cell_label[fd.key] }}"{% if locked %} disabled{% endif %}></td>
+                    {% elif fd.type == 'select' %}
+                      <td><select name="attr_{{ fd.key }}" form="{{ f }}" data-autosave="1" data-choices="inv-f-{{ fd.key }}" aria-label="{{ cell_label[fd.key] }}" {% if locked %}disabled{% endif %}>{% if v %}<option value="{{ v }}" selected>{{ v|tr('inventory') if v in fd.options else v }}</option>{% else %}<option value="" selected>–</option>{% endif %}</select></td>
+                    {% elif fd.type == 'date' %}
+                      <td><input type="date" name="attr_{{ fd.key }}" form="{{ f }}" value="{{ v }}" data-empty="{{ '0' if v else '1' }}" data-autosave="1" aria-label="{{ cell_label[fd.key] }}"{% if locked %} disabled{% endif %}></td>
+                    {% else %}
+                      <td>{{ field_cell(fd, v, f, locked, r.source_labels.get(fd.key, ''), mouse_links, i.id, sources,
+                                        r.mouse_genotype if fd.key == 'genotype' else '') }}</td>
+                    {% endif %}
                   {% endif %}
                   {% if fd.type == 'source' %}
                     {% set src = r.attrs.get(fd.key) %}
@@ -384,50 +407,49 @@
                 {% if m.has('sharing') %}
                   <td>
                     {% set share_value = groups_api.value(i) %}
-                    <select class="scope-pill" name="is_shared" form="{{ f }}" data-scope="{{ sharing.scope_of(share_value) }}" data-autosave="1" aria-label="{{ _('Belongs to') }}"
-                            {% if fixed %}disabled {% if not locked %}title="{{ _('Only %(who)s or an admin can make it personal', who=i.owner or _('its owner')) }}"{% endif %}{% endif %}>
+                    <select class="scope-pill" name="is_shared" form="{{ f }}" data-scope="{{ sharing.scope_of(share_value) }}" data-autosave="1" aria-label="{{ row_text['Belongs to'] }}"
+                            {% if fixed %}disabled {% if not locked %}title="{{ _('Only %(who)s or an admin can make it personal', who=i.owner or row_text['its owner']) }}"{% endif %}{% endif %}>
                       {{ sharing.sharing_options(share_value, i.share_group_id, lab="Lab common") }}
                     </select>
                   </td>
                 {% endif %}
                 <td>{{ sheet_ui.owner_cell(i.owner, f, fixed, list_id='inv-owner-options', label=owner_label) }}</td>
                 {% if m.has('supplier') %}
-                  <td><input name="vendor" form="{{ f }}" value="{{ i.vendor }}"{{ rem('vendor') }} data-autosave="1" aria-label="{{ _('Vendor') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="ident" name="catalog_number" form="{{ f }}" value="{{ i.catalog_number }}"{{ rem('catalog_number') }} data-autosave="1" aria-label="{{ _('Catalog number') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="ident" name="lot" form="{{ f }}" value="{{ i.lot }}" data-autosave="1" aria-label="{{ _('Lot') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="vendor" form="{{ f }}" value="{{ i.vendor }}"{{ rem('vendor') }} data-autosave="1" aria-label="{{ row_text['Vendor'] }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="ident" name="catalog_number" form="{{ f }}" value="{{ i.catalog_number }}"{{ rem('catalog_number') }} data-autosave="1" aria-label="{{ row_text['Catalog number'] }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="ident" name="lot" form="{{ f }}" value="{{ i.lot }}" data-autosave="1" aria-label="{{ row_text['Lot'] }}" {% if locked %}disabled{% endif %}></td>
                 {% endif %}
                 {% if m.has('quantity') %}
                   {# With Low at, a quantity is saved when you leave the cell: typing
                      "12" over 20 would otherwise pass through "1", low. #}
-                  <td><input name="quantity" form="{{ f }}" value="{{ i.quantity }}"{{ rem('quantity') }} data-autosave="1"{% if low_stock %} data-autosave-on="change"{% endif %} aria-label="{{ _('Quantity') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input name="unit" form="{{ f }}" value="{{ i.unit }}" placeholder="–"{{ rem('unit') }} data-autosave="1" aria-label="{{ _('Unit') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="quantity" form="{{ f }}" value="{{ i.quantity }}"{{ rem('quantity') }} data-autosave="1"{% if low_stock %} data-autosave-on="change"{% endif %} aria-label="{{ row_text['Quantity'] }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="unit" form="{{ f }}" value="{{ i.unit }}" placeholder="–"{{ rem('unit') }} data-autosave="1" aria-label="{{ row_text['Unit'] }}" {% if locked %}disabled{% endif %}></td>
                   {% if low_stock %}
-                    <td><input name="low_at" form="{{ f }}" value="{{ r.payload.low_at }}" placeholder="–" inputmode="decimal" data-autosave="1" data-autosave-on="change" aria-label="{{ _('Low at') }}" {% if locked %}disabled{% endif %}></td>
+                    <td><input name="low_at" form="{{ f }}" value="{{ r.payload.low_at }}" placeholder="–" inputmode="decimal" data-autosave="1" data-autosave-on="change" aria-label="{{ row_text['Low at'] }}" {% if locked %}disabled{% endif %}></td>
                   {% endif %}
                   {% if pack_sizes %}
-                    <td><input name="pack_size" form="{{ f }}" value="{{ i.pack_size }}" placeholder="–" data-autosave="1" data-autosave-on="change" aria-label="{{ _('Pack size') }}" {% if locked %}disabled{% endif %}></td>
+                    <td><input name="pack_size" form="{{ f }}" value="{{ i.pack_size }}" placeholder="–" data-autosave="1" data-autosave-on="change" aria-label="{{ row_text['Pack size'] }}" {% if locked %}disabled{% endif %}></td>
                   {% endif %}
                 {% endif %}
                 {% if m.has('storage') %}
                   <td>
-                    <select name="rack_id" form="{{ f }}" data-autosave="1" aria-label="{{ _('Box') }}" {% if locked %}disabled{% endif %}>
-                      <option value="">–</option>
-                      {{ box_options(i.rack_id_fk) }}
+                    <select name="rack_id" form="{{ f }}" data-autosave="1" data-choices="inv-box" aria-label="{{ row_text['Box'] }}" {% if locked %}disabled{% endif %}>
+                      {% if i.rack_id_fk and i.rack_id_fk in box_labels %}<option value="{{ i.rack_id_fk }}" selected>{{ box_labels[i.rack_id_fk] }}</option>{% else %}<option value="" selected>–</option>{% endif %}
                     </select>
                   </td>
-                  <td><input class="ident" name="position" form="{{ f }}" value="{{ r.position }}" placeholder="–" data-autosave="1" aria-label="{{ _('Position') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="ident" name="position" form="{{ f }}" value="{{ r.position }}" placeholder="–" data-autosave="1" aria-label="{{ row_text['Position'] }}" {% if locked %}disabled{% endif %}></td>
                 {% else %}
-                  <td><input name="location_note" form="{{ f }}" value="{{ i.location_note }}"{{ rem('location_note') }} data-autosave="1" aria-label="{{ _('Location') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="location_note" form="{{ f }}" value="{{ i.location_note }}"{{ rem('location_note') }} data-autosave="1" aria-label="{{ row_text['Location'] }}" {% if locked %}disabled{% endif %}></td>
                 {% endif %}
                 {% if m.has('received') %}
-                  <td><input type="date" name="received_on" form="{{ f }}" value="{{ i.received_on or '' }}" data-empty="{{ '0' if i.received_on else '1' }}" data-autosave="1" aria-label="{{ _('Received') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input type="date" name="received_on" form="{{ f }}" value="{{ i.received_on or '' }}" data-empty="{{ '0' if i.received_on else '1' }}" data-autosave="1" aria-label="{{ row_text['Received'] }}" {% if locked %}disabled{% endif %}></td>
                 {% endif %}
                 {% if m.has('expiry') %}
-                  <td class="{% if r.expiry %}expiry-{{ r.expiry }}{% endif %}" {% if r.expiry == 'expired' %}title="{{ _('Expired') }}"{% elif r.expiry == 'soon' %}title="{{ _('Expires within 30 days') }}"{% endif %}>
-                    <input type="date" name="expires_on" form="{{ f }}" value="{{ i.expires_on or '' }}" data-empty="{{ '0' if i.expires_on else '1' }}" data-autosave="1" aria-label="{{ _('Expires') }}" {% if locked %}disabled{% endif %}>
+                  <td class="{% if r.expiry %}expiry-{{ r.expiry }}{% endif %}" {% if r.expiry == 'expired' %}title="{{ row_text['Expired'] }}"{% elif r.expiry == 'soon' %}title="{{ row_text['Expires within 30 days'] }}"{% endif %}>
+                    <input type="date" name="expires_on" form="{{ f }}" value="{{ i.expires_on or '' }}" data-empty="{{ '0' if i.expires_on else '1' }}" data-autosave="1" aria-label="{{ row_text['Expires'] }}" {% if locked %}disabled{% endif %}>
                   </td>
                 {% endif %}
-                <td><input class="note-cell" name="notes" form="{{ f }}" value="{{ i.notes }}" title="{{ i.notes }}" data-autosave="1" aria-label="{{ _('Notes') }}" {% if locked %}disabled{% endif %}></td>
+                <td><input class="note-cell" name="notes" form="{{ f }}" value="{{ i.notes }}" title="{{ i.notes }}" data-autosave="1" aria-label="{{ row_text['Notes'] }}" {% if locked %}disabled{% endif %}></td>
                 <td class="sheet-pin sheet-pin-end">
                   <div class="sheet-actions">
                     {% set link = stock_links.get(i.id) %}
@@ -439,27 +461,27 @@
                       {# Shown once the order is received (also after a board drag); gone once stocked. #}
                       {# Labelled: on a touch screen there is no tooltip to say what a flask means. #}
                       <button type="button" class="row-stock-btn" data-to-stock data-on-click="offer-stock" data-arg="{{ i.id }}"
-                              title="{{ _('Add it to Reagents or Antibodies as a new record') }}" {% if i.status|lower != 'received' %}hidden{% endif %}>{{ icon('flask') }}{{ _('To stock') }}</button>
+                              title="{{ row_text['Add it to Reagents or Antibodies as a new record'] }}" {% if i.status|lower != 'received' %}hidden{% endif %}>{{ row_icon['flask'] }}{{ row_text['To stock'] }}</button>
                     {% endif %}
                     {% if order_module %}
                       {# A button like its neighbours (a form that only opens a page), not a link. #}
-                      <form method="get" action="{{ url_for('inventory.module', key=order_module.key) }}">
+                      <form method="get" action="{{ reorder_url }}">
                         <input type="hidden" name="reorder" value="{{ key }}:{{ i.id }}">
                         {% if on_order.get(i.id) %}
-                          <button type="submit" class="row-stock-btn row-stock-link" title="{{ _('%(orders)s. Order again anyway?', orders=on_order[i.id]) }}">{{ icon('cart') }}{{ _('On order') }}</button>
+                          <button type="submit" class="row-stock-btn row-stock-link" title="{{ _('%(orders)s. Order again anyway?', orders=on_order[i.id]) }}">{{ row_icon['cart'] }}{{ row_text['On order'] }}</button>
                         {% else %}
-                          <button type="submit" class="row-icon-btn" title="{{ _('Order again: a new order in %(database)s with these details', database=order_module.label|tr) }}">{{ icon('cart') }}</button>
+                          <button type="submit" class="row-icon-btn" title="{{ reorder_title }}">{{ row_icon['cart'] }}</button>
                         {% endif %}
                       </form>
                     {% endif %}
-                    <button type="button" class="row-icon-btn" title="{{ _('Open') }}" data-record-edit="item-dialog" data-open-item
-                            data-record-payload="{{ r.payload | tojson | forceescape }}">{{ icon('edit') }}</button>
-                    <form method="post" action="{{ url_for('inventory.duplicate_item', key=key, item_id=i.id) }}">
-                      <button type="submit" class="row-icon-btn" title="{{ _('Duplicate as a new %(noun)s of yours', noun=noun) }}">{{ icon('copy') }}</button>
+                    <button type="button" class="row-icon-btn" title="{{ row_text['Open'] }}" data-record-edit="item-dialog" data-open-item
+                            data-record-payload='{{ r.payload | tojson }}'>{{ row_icon['edit'] }}</button>
+                    <form method="post" action="{{ duplicate_url|replace('{id}', i.id) }}">
+                      <button type="submit" class="row-icon-btn" title="{{ duplicate_title }}">{{ row_icon['copy'] }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('inventory.delete_item', key=key, item_id=i.id) }}"
+                    <form method="post" action="{{ delete_url|replace('{id}', i.id) }}"
                           data-confirm="{% if i.name %}{{ _('Delete %(noun)s #%(number)s (%(name)s)?', noun=noun, number=i.number, name=i.name) }}{% else %}{{ _('Delete %(noun)s #%(number)s?', noun=noun, number=i.number) }}{% endif %}">
-                      <button type="submit" class="row-icon-btn danger-button" {% if not r.manageable %}disabled title="{{ _('Only %(who)s or an admin can delete it', who=i.owner or _('its owner')) }}"{% else %}title="{{ _('Delete') }}"{% endif %}>{{ icon('trash') }}</button>
+                      <button type="submit" class="row-icon-btn danger-button" {% if not r.manageable %}disabled title="{{ _('Only %(who)s or an admin can delete it', who=i.owner or row_text['its owner']) }}"{% else %}title="{{ row_text['Delete'] }}"{% endif %}>{{ row_icon['trash'] }}</button>
                     </form>
                   </div>
                 </td>
@@ -467,8 +489,18 @@
             {% else %}
               <tr><td class="dt-empty" colspan="40"><span class="dt-empty-msg">{% trans nouns=nouns, new=_('New %(noun)s', noun=noun) %}No {{ nouns }} yet. Use <strong>{{ new }}</strong>, or <strong>Import from Excel</strong> for the sheet you kept them in.{% endtrans %}</span></td></tr>
             {% endfor %}
+            {% endfilter %}
           </tbody>
         </table>
+        {# Each list a row's menu offers, sent once: a row holds only its own
+           choice until the menu is used (static/shell.js, fillChoices). #}
+        {% if m.categories %}<template id="choices-inv-category"><option value="">–</option>{% for c in m.categories %}<option value="{{ c }}">{{ c|tr(m.kind) }}</option>{% endfor %}</template>{% endif %}
+        {% if m.statuses %}<template id="choices-inv-status">{% for st in m.statuses %}<option value="{{ st }}">{{ st|tr('inventory') }}</option>{% endfor %}</template>{% endif %}
+        {% if m.has('storage') %}<template id="choices-inv-box"><option value="">–</option>{{ box_options() }}</template>{% endif %}
+        {% for fd in table_fields %}
+          {% if fd.type == 'select' %}<template id="choices-inv-f-{{ fd.key }}"><option value="">–</option>{% for o in fd.options %}<option value="{{ o }}">{{ o|tr('inventory') }}</option>{% endfor %}</template>
+          {% elif fd.type == 'multiselect' %}<template id="choices-inv-m-{{ fd.key }}">{% for o in fd.options %}<label><input type="checkbox" value="{{ o }}"> <span>{{ o|tr('inventory') }}</span></label>{% endfor %}</template>{% endif %}
+        {% endfor %}
         {% if table_fields|selectattr('type', 'equalto', 'source')|list %}
         <script nonce="{{ csp_nonce() }}">
           /* Custom tag goes wherever this person has hidden it on the mouse
@@ -633,7 +665,7 @@
               {% for r in col_rows %}
                 {% set i = r.item %}
                 <article class="board-card" draggable="{{ 'true' if r.editable else 'false' }}" data-id="{{ i.id }}" data-record-edit="item-dialog"
-                         data-record-payload="{{ r.payload | tojson | forceescape }}">
+                         data-record-payload='{{ r.payload | tojson }}'>
                   <div class="board-card-top"><span class="ident text-muted">#{{ i.number }}</span>{% if i.owner %}{{ i.owner | owner_badge }}{% endif %}</div>
                   <div class="board-card-name">{{ i.name or _('(unnamed)') }}</div>
                   <div class="board-card-meta">{{ [i.vendor, i.catalog_number, (i.quantity ~ ' ' ~ i.unit)|trim] | select | join(' · ') }}</div>
@@ -848,7 +880,7 @@
 {% if reorder %}
   {# "Order again" from a reagent or antibody: the new-order dialog opens with it on load. #}
   <button type="button" hidden data-record-edit="item-dialog" data-reorder-open
-          data-record-payload="{{ reorder | tojson | forceescape }}"></button>
+          data-record-payload='{{ reorder | tojson }}'></button>
 {% endif %}
 
 {% if m.kind == 'orders' and stock_targets %}
@@ -1165,19 +1197,42 @@
     const ref = dialog.querySelector('[data-source-ref]');
     /* The ID box offers the identifiers of whichever colony is chosen —
        in the dialog, and in every source cell in the sheet. */
+    let sourceRefs = null;
+    const sourceList = (id) => {
+      if (!document.getElementById(id)) {
+        if (!sourceRefs) {
+          const data = document.getElementById('inv-src-data');
+          sourceRefs = data ? JSON.parse(data.textContent) : [];
+        }
+        const datalist = document.createElement('datalist');
+        datalist.id = id;
+        (sourceRefs[Number(id.replace('inv-src-', ''))] || []).forEach((value) => {
+          const option = document.createElement('option');
+          option.value = value;
+          datalist.append(option);
+        });
+        document.body.append(datalist);
+      }
+      return id;
+    };
     const pair = (from) => {
       const box = from.closest('.source-cell, label, fieldset, .record-dialog-body');
       const to = box && box.querySelector('[data-source-ref]');
       if (!to) return;
       const list = from.selectedOptions[0] && from.selectedOptions[0].dataset.list;
-      if (list) to.setAttribute('list', list); else to.removeAttribute('list');
+      if (list) to.setAttribute('list', sourceList(list)); else to.removeAttribute('list');
     };
     const sync = () => { if (kind && ref) pair(kind); };
     document.addEventListener('change', (event) => {
       const from = event.target.closest && event.target.closest('[data-source-kind]');
       if (from) pair(from);
     });
-    document.querySelectorAll('.source-cell [data-source-kind]').forEach(pair);
+    // A row's ID box gets its colony's list when it is used, not every row's as the page loads.
+    document.addEventListener('focusin', (event) => {
+      const to = event.target.closest && event.target.closest('.source-cell [data-source-ref]');
+      const from = to && to.closest('.source-cell').querySelector('[data-source-kind]');
+      if (from) pair(from);
+    });
     dialog.addEventListener('record-dialog:open', (event) => {
       const { data, isNew } = event.detail || {};
       if (kind && ref) sync();
@@ -1331,6 +1386,42 @@
 <script nonce="{{ csp_nonce() }}">
   // A several-choice cell (a chemical's hazards): its summary follows the
   // ticked boxes, and an open menu closes when you click elsewhere.
+  // Until first opened it holds only the ticked values, as hidden fields its
+  // row sends; opening it makes the boxes from its list (choices-inv-m-…).
+  function buildMulti(cell) {
+    if (!cell || cell.dataset.multiBuilt || !cell.dataset.multiChoices) return;
+    cell.dataset.multiBuilt = '1';
+    const menu = cell.querySelector('.multi-cell-menu');
+    const several = menu.querySelector('input[name$="__several"]');
+    const name = several.name.replace(/__several$/, '');
+    const picked = Array.from(menu.querySelectorAll('[data-multi-picked]')).map((el) => el.value);
+    const list = document.getElementById(`choices-${cell.dataset.multiChoices}`);
+    const boxes = list ? list.content.cloneNode(true) : document.createDocumentFragment();
+    const listed = new Set(Array.from(boxes.querySelectorAll('input')).map((b) => b.value));
+    picked.filter((v) => !listed.has(v)).forEach((v) => {   // one the list no longer has
+      const label = document.createElement('label');
+      const box = label.appendChild(document.createElement('input'));
+      box.type = 'checkbox';
+      box.value = v;
+      label.append(' ');
+      label.appendChild(document.createElement('span')).textContent = v;
+      boxes.appendChild(label);
+    });
+    boxes.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+      box.name = name;
+      box.setAttribute('form', several.getAttribute('form'));
+      box.dataset.autosave = '1';
+      box.dataset.multi = '';
+      box.checked = picked.includes(box.value);
+      box.disabled = cell.hasAttribute('data-locked');
+    });
+    menu.querySelectorAll('[data-multi-picked]').forEach((el) => el.remove());
+    menu.appendChild(boxes);
+  }
+  document.addEventListener('click', (event) => {
+    const summary = event.target.closest && event.target.closest('[data-multi-cell] > summary');
+    if (summary) buildMulti(summary.parentElement);
+  }, true);
   document.addEventListener('change', (event) => {
     const box = event.target.closest('[data-multi-cell] input[type="checkbox"]');
     if (!box) return;
@@ -1349,6 +1440,7 @@
   document.addEventListener('toggle', (event) => {
     const cell = event.target;
     if (!cell.matches || !cell.matches('[data-multi-cell]') || !cell.open) return;
+    buildMulti(cell);
     const menu = cell.querySelector('.multi-cell-menu');
     const box = cell.querySelector('summary').getBoundingClientRect();
     menu.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - menu.offsetWidth - 8))}px`;

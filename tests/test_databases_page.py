@@ -85,7 +85,8 @@ class IconPickerTests(AppTestCase):
         picker = picker[:picker.index("</fieldset>")]
         radios = re.findall(r'<input type="radio" name="icon" value="([\w-]+)"', picker)
         self.assertIn("flask", radios)
-        self.assertIn('<use href="/static/icons.svg#flask">', picker)
+        self.assertIn('<use href="#i-flask">', picker)
+        self.assertIn('<symbol id="i-flask"', html)
         self.assertNotIn("<select", picker)
 
 

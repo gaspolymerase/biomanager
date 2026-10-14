@@ -3067,6 +3067,10 @@
   }
 
   .breeder-card { @apply card p-3; }
+  /* A lab can have a thousand Breeder cages: the cards out of view are not
+     laid out or drawn until they come near (find in page and screen
+     readers still see them). The height stands in until then. */
+  .breeder-card { content-visibility: auto; contain-intrinsic-size: auto 240px; }
   .breeder-head-grid {
     @apply mb-2.5 grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 rounded-lg
            border border-brand-200/70 bg-brand-50/50 px-2 py-1.5;

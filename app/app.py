@@ -649,21 +649,38 @@ def inject_icon():
 
     Icons live in a single static/icons.svg sprite referenced with <use>,
     so they inherit currentColor, need no JavaScript, cost one cached
-    request, and work offline in the packaged app.
+    request, and work offline in the packaged app. Within a page (base.html,
+    between icon_sprite_start() and icon_sprite_end()) an icon points to a
+    copy of its symbol at the end of the page instead (icons.page_sprite).
     """
     from markupsafe import Markup
 
-    from .icons import resolve
+    from .icons import page_sprite, resolve
 
     def icon(name: str, extra: str = "") -> Markup:
         classes = ("icon " + extra).strip()
-        return Markup(
-            f'<svg class="{classes}" aria-hidden="true">'
-            f'<use href="/static/icons.svg#{resolve(name)}"></use></svg>'
-        )
+        ref = resolve(name)
+        drawn = g.get("icons_drawn")
+        if drawn is not None:
+            drawn.add(ref)
+            href = f"#i-{ref}"
+        else:
+            href = f"/static/icons.svg#{ref}"
+        return Markup(f'<svg class="{classes}" aria-hidden="true"><use href="{href}"></use></svg>')
+
+    def icon_sprite_start() -> str:
+        g.icons_drawn = set()
+        return ""
+
+    def icon_sprite_end() -> Markup:
+        # Anything drawn after the page (another template in the same
+        # request) points to the shared file again.
+        drawn = g.pop("icons_drawn", None)
+        return Markup(page_sprite(drawn)) if drawn else Markup("")
 
     from .icons import PICKER_ICONS
-    return {"icon": icon, "picker_icons": PICKER_ICONS}
+    return {"icon": icon, "icon_sprite_start": icon_sprite_start, "icon_sprite_end": icon_sprite_end,
+            "picker_icons": PICKER_ICONS}
 
 
 @app.context_processor
@@ -1144,6 +1161,18 @@ def fmt_day(value, with_time: bool = False) -> str:
 
 
 app.jinja_env.filters["day"] = fmt_day
+
+_BETWEEN_TAGS = re.compile(r">[ \t\r\n]+<")
+
+
+@app.template_filter("tight")
+def tight(html) -> Markup:
+    """`{% filter tight %}` around a long sheet's rows: the template's
+    indentation between one tag and the next, a third of a row's markup,
+    left out. Only where it could not show: put it around rows whose cells
+    keep side-by-side pieces in flex boxes, never around text, <pre> or a
+    <textarea>. Values are escaped, so a > or < here is always markup."""
+    return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
 @app.template_filter("head")
@@ -1770,8 +1799,11 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             for strain in strains
         ]
         breeder_rows, breeder_summary_rows = [], []
+        hidden_breeders = {"cages": 0, "mice": 0}
         if active_view == "breeders":
-            breeder_rows = breeder_mice(db_session, g.user.username if g.user else None, g.user.role if g.user else None)
+            breeder_rows, hidden_breeders = breeder_mice(db_session, g.user.username if g.user else None,
+                                                         g.user.role if g.user else None,
+                                                         recent=None if show_ended else recent)
             breeder_summary_rows = breeder_summary(db_session)
         next_mouse_id_value = next_mouse_id(db_session)
         next_cage_id_value = next_cage_id(db_session)
@@ -1834,6 +1866,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "litter_rows": litter_rows,
         "cage_ids": cage_ids,
         "hidden": {"mice": hidden_mice, "cages": hidden_cages, "litters": hidden_litters,
+                   "breeder_cages": hidden_breeders["cages"], "breeder_mice": hidden_breeders["mice"],
                    "show_ended": show_ended, "days": RECENT_DAYS},
         "strain_rows": strain_rows,
         "dropdowns": dropdowns,

@@ -156,7 +156,14 @@ python scripts/build-icons.py path/to/fontawesome-free-6.7.2
 Referenced as `{{ icon('mouse') }}` in templates, which emits
 `<svg class="icon"><use href="/static/icons.svg#mouse"></svg>` — one cached
 request, inherits `currentColor`, no JavaScript, works offline in the
-packaged app.
+packaged app. Within a page made from `base.html` it emits
+`<use href="#i-mouse">` instead, and `icon_sprite_end()` puts a copy of
+each symbol the page drew at its end (`icons.page_sprite`; the `i-` keeps
+them apart from the page's own ids): Chromium loads and announces each
+`<use>` of the file separately, a second of a long sheet's opening for its
+rows' icons. Anything drawn outside a page (a template rendered for a
+fragment or after the page) still points to the file; so do the icons
+scripts write.
 
 Three sources, all permissively licensed:
 
@@ -404,7 +411,24 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   is pressed, focused or typed in (`BiomanagerShell.fillChoices`,
   `static/shell.js`; `sheet.js`'s pasted blocks fill it before matching).
   On the fish sheet it was the tank list once a row: 130 KB a row in a lab
-  of 3,000 tanks.
+  of 3,000 tanks. An inventory row's **Kind**, **Status**, **Box** and each
+  `select` column (`choices-inv-category`, `-inv-status`, `-inv-box`,
+  `-inv-f-<key>`) work the same way; a `multiselect` cell (**Hazard**)
+  holds its ticked choices as hidden fields and makes its checkboxes from
+  `choices-inv-m-<key>` when it is opened (`buildMulti`). A source cell's
+  ID box gets its colony's list (`inv-src-<n>`) when it is first focused or
+  its colony changed, made from the `inv-src-data` JSON: a mouse colony's
+  IDs were 3 MB of `<option>`s on the samples sheet.
+- Rows are written without the indentation between their tags
+  (`{% filter tight %}`, `app.py`), which was a third of a long inventory;
+  the labels, links, titles and icons every row repeats are worked out
+  once before the loop, and plain cells are written in the loop rather
+  than by a macro call each.
+- `sheet.js` listens on the sheet (`focusin`, `pointerdown`, `input`,
+  `change`), not on each cell, and remembers a cell's value as it is
+  first used (`data-previous`; `fillChoices` sets it before filling a
+  menu). The box grid (`rack-grid.js`) is drawn when its panel is first
+  shown (`layout:change`), not while the sheet loads behind it.
 - Rows past a sheet's first page (100) are `display: none` from the
   stylesheet until `data-table.js` has drawn it
   (`.data-table-card[data-table-id]:not(.dt-ready)`): the browser would
@@ -426,7 +450,9 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   the document). `#mouse-update-39` and `#cage-12` links find their row
   either way. A sheet whose page scripts need every row on the page says
   `data-dt-keep-rows` (the cage sheet: its cards, **Open all** and a
-  scanned cage look for its rows there).
+  scanned cage look for its rows there). Until then nothing measures the
+  page (a measure lays out every row): the toolbar's `is-tight` waits for
+  its `ResizeObserver`.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
@@ -2979,8 +3005,13 @@ What keeps the sheets usable at that size:
   litters over a year old with no living pup (colony), used-up or
   cancelled items and received orders (`inventory_routes._recent_items`,
   by `attrs.used_up_on` and `received_on`), discarded vials
-  (`stock_routes`). The sheet says how many and links to them. Search,
-  exports and the box grid still see everything.
+  (`stock_routes`), and on the **Breeders** tab a Breeder cage with no
+  living mouse and nothing since (made, or a mouse died) and a mouse that
+  ended before then (`services.breeder_mice`, `recent`). The sheet says
+  how many and links to them. Search, exports and the box grid still see
+  everything; a breeder card's counts and search still go by all its mice.
+  The tab's **Pick** buttons post through one form (`breeder-pick`), and
+  its cards are `content-visibility: auto`.
 
 What a person waits for is mostly the browser, not the server:
 `--browser` also opens each page in Chromium and reports the time to its

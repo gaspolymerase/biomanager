@@ -61,6 +61,7 @@
   "%(n_hidden)s mice that ended over %(days)s days ago aren't listed. <a href=\"%(url)s\">Show them</a>.": "%(n_hidden)s 只在 %(days)s 天前就已结束的小鼠未列出。<a href=\"%(url)s\">显示它们</a>。",
   "%(n_hidden)s empty cages, unused for over %(days)s days ago aren't listed. <a href=\"%(url)s\">Show them</a>.": "%(n_hidden)s 个超过 %(days)s 天未使用的空笼未列出。<a href=\"%(url)s\">显示它们</a>。",
   "%(n_hidden)s litters born over a year ago, all ended, aren't listed. <a href=\"%(url)s\">Show them</a>.": "%(n_hidden)s 窝一年多以前出生、已全部结束的小鼠未列出。<a href=\"%(url)s\">显示它们</a>。",
+  "Breeder cages left empty for over %(days)s days (%(cages)s), and mice that ended over %(days)s days ago (%(mice)s), aren't listed. <a href=\"%(url)s\">Show them</a>.": "超过 %(days)s 天空置的种鼠笼（%(cages)s 个）和 %(days)s 天前就已结束的小鼠（%(mice)s 只）未列出。<a href=\"%(url)s\">显示它们</a>。",
   "Showing everything, however long ago it ended. <a href=\"%(url)s\">Only recent</a>.": "正在显示全部记录，无论结束了多久。<a href=\"%(url)s\">只看近期</a>。",
   "Search ID, genotype, cage, note…": "搜索编号、基因型、笼、备注…",
   "Search mice": "搜索小鼠",

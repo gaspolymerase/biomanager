@@ -68,6 +68,7 @@
   </head>
 
   <body data-rail="open">
+    {{- icon_sprite_start() }}
     <script nonce="{{ csp_nonce() }}">
       document.body.dataset.rail = document.documentElement.dataset.railBoot || 'open';
     </script>
@@ -382,5 +383,6 @@
     <script src="{{ url_for('static', filename='csv-import.js') }}?v={{ asset_version('csv-import.js') }}" defer></script>
     <script src="{{ url_for('static', filename='global-search.js') }}?v={{ asset_version('global-search.js') }}" defer></script>
     {% block body_end %}{% endblock %}
+    {{ icon_sprite_end() }}
   </body>
 </html>

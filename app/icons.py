@@ -52,6 +52,28 @@ def known() -> frozenset[str]:
         return frozenset()
 
 
+@lru_cache(maxsize=1)
+def symbols() -> dict[str, str]:
+    """Each symbol of the sprite as markup, its id given the page's "i-"
+    prefix (a page's own ids, like "calendar", stay its own)."""
+    try:
+        sprite = SPRITE.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    return {m.group(1): m.group(0).replace(f'id="{m.group(1)}"', f'id="i-{m.group(1)}"', 1)
+            for m in re.finditer(r'<symbol id="([^"]+)".*?</symbol>', sprite, re.S)}
+
+
+def page_sprite(names) -> str:
+    """The symbols a page drew, for the end of the page: its icons then
+    point within the page (#i-edit). Each <use> of the shared file was a
+    resource of its own, loaded and announced one by one: a second of a
+    long sheet's opening went to its rows' icons."""
+    have = symbols()
+    return ('<svg aria-hidden="true" style="display:none">'
+            + "".join(have[n] for n in sorted(names) if n in have) + "</svg>")
+
+
 def resolve(name: str | None) -> str:
     """The sprite name to draw for `name`."""
     name = (name or "").strip()

@@ -19,7 +19,8 @@ def payload_of(html: str, marker: str) -> dict:
     """The data-record-payload of the element carrying `marker`."""
     tag = re.search(rf"<button [^>]*{marker}[^>]*>", html)
     assert tag, f"no element with {marker}"
-    return json.loads(htmllib.unescape(re.search(r'data-record-payload="([^"]*)"', tag.group(0)).group(1)))
+    found = re.search(r"""data-record-payload=(?:"([^"]*)"|'([^']*)')""", tag.group(0))
+    return json.loads(htmllib.unescape(found.group(1) if found.group(1) is not None else found.group(2)))
 
 
 def datalist(html: str, column: str) -> list[str]:

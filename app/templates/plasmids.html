@@ -205,7 +205,7 @@
               <td class="sheet-pin sheet-pin-end">
                 <div class="sheet-actions">
                   <button type="button" class="row-icon-btn" title="{{ _('Open plasmid #%(id)s', id=p.plasmid_id) }}" data-record-edit="plasmid-dialog"
-                          data-open-payload data-record-payload="{{ r.payload | tojson | forceescape }}">{{ icon('edit') }}</button>
+                          data-open-payload data-record-payload='{{ r.payload | tojson }}'>{{ icon('edit') }}</button>
                   <form method="post" action="{{ url_for('duplicate_plasmid', row_id=p.id) }}">
                     <button type="submit" class="row-icon-btn" title="{{ _('Duplicate plasmid #%(id)s (sequence included)', id=p.plasmid_id) }}">{{ icon('copy') }}</button>
                   </form>

@@ -87,14 +87,14 @@
 
 {% macro new_bottom(label, dialog_id, payload) %}
   <button type="button" class="dt-bottom-action is-primary"
-          data-record-edit="{{ dialog_id }}" data-record-payload="{{ payload | tojson | forceescape }}">
+          data-record-edit="{{ dialog_id }}" data-record-payload='{{ payload | tojson }}'>
     {{ icon('plus') }} {{ label }}
   </button>
 {% endmacro %}
 
 {% macro new_button(label, dialog_id, payload) %}
   <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]"
-          data-record-edit="{{ dialog_id }}" data-record-payload="{{ payload | tojson | forceescape }}">
+          data-record-edit="{{ dialog_id }}" data-record-payload='{{ payload | tojson }}'>
     {{ icon('plus') }} {{ label }}
   </button>
 {% endmacro %}
@@ -184,7 +184,7 @@
    T001", already in the page's language. #}
 {% macro row_actions(dialog_id, payload, label, duplicate_url, delete_url, confirm, locked, delete_block='') %}
   <button type="button" class="row-icon-btn" title="{{ _('Open %(what)s', what=label) }}"
-          data-record-edit="{{ dialog_id }}" data-record-payload="{{ payload | tojson | forceescape }}">{{ icon('edit') }}</button>
+          data-record-edit="{{ dialog_id }}" data-record-payload='{{ payload | tojson }}'>{{ icon('edit') }}</button>
   {{ caller() if caller else '' }}
   <form method="post" action="{{ duplicate_url }}">
     <button type="submit" class="row-icon-btn" title="{{ _('Duplicate %(what)s', what=label) }}">{{ icon('copy') }}</button>
@@ -218,7 +218,7 @@
       {{ sheet_ui.tools() }}
       <a class="dt-toolbar-btn" href="{{ url_for('labels.tank_cards') }}" title="{{ _('Labels with a QR code for every tank in use') }}">{{ icon('qrcode') }} {{ _('Tank labels') }}</a>
       <button type="button" class="dt-toolbar-btn" title="{{ _('Several tanks with consecutive IDs, side by side in a rack') }}"
-              data-record-edit="tank-dialog" data-record-payload="{{ {'tank_id': next_tank_id, 'owner': me, 'purpose': 'stock', 'active': '1', 'how_many': 10} | tojson | forceescape }}">
+              data-record-edit="tank-dialog" data-record-payload='{{ {'tank_id': next_tank_id, 'owner': me, 'purpose': 'stock', 'active': '1', 'how_many': 10} | tojson }}'>
         {{ icon('duplicate') }} {{ _('Add many') }}
       </button>
       {{ new_button(_('New tank'), 'tank-dialog', {'tank_id': next_tank_id, 'owner': me, 'purpose': 'stock', 'active': '1'}) }}

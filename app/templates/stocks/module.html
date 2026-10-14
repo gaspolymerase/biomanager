@@ -216,7 +216,7 @@
                       </form>
                     {% endif %}
                     <button type="button" class="row-icon-btn" title="{{ _('Open') }}" data-record-edit="unit-dialog" data-open-payload
-                            data-record-payload="{{ r.payload | tojson | forceescape }}">{{ icon('edit') }}</button>
+                            data-record-payload='{{ r.payload | tojson }}'>{{ icon('edit') }}</button>
                     <form method="post" action="{{ url_for('stocks.duplicate_unit', key=key, unit_id=u.id) }}">
                       <button type="submit" class="row-icon-btn" title="{{ _('Copy to a new %(unit)s', unit=unit_w) }}">{{ icon('copy') }}</button>
                     </form>
@@ -396,7 +396,7 @@
               {% endif %}
               {% if it.unit %}
                 <button type="button" class="row-icon-btn" title="{{ _('Open') }}" data-record-edit="unit-dialog"
-                        data-record-payload="{{ (rows | selectattr('unit.id', 'equalto', it.unit.id) | map(attribute='payload') | first) | tojson | forceescape }}">{{ icon('edit') }}</button>
+                        data-record-payload='{{ (rows | selectattr('unit.id', 'equalto', it.unit.id) | map(attribute='payload') | first) | tojson }}'>{{ icon('edit') }}</button>
               {% endif %}
             </span>
           </li>
@@ -444,9 +444,9 @@
               <td class="sheet-pin sheet-pin-end">
                 <div class="sheet-actions">
                   <button type="button" class="row-icon-btn" title="{{ _('New %(unit)s of this genotype', unit=unit_w) }}" data-record-edit="unit-dialog"
-                          data-record-payload="{{ dict(new_payload, genotype=gt.genotype) | tojson | forceescape }}">{{ icon('plus') }}</button>
+                          data-record-payload='{{ dict(new_payload, genotype=gt.genotype) | tojson }}'>{{ icon('plus') }}</button>
                   <button type="button" class="row-icon-btn" title="{{ _('Edit') }}" data-record-edit="genotype-dialog"
-                          data-record-payload="{{ {'id': gt.id, '_label': gt.genotype, '_uses': n, 'genotype': gt.genotype, 'alias': gt.alias, 'source': gt.source, 'stock_number': gt.stock_number, 'notes': gt.notes} | tojson | forceescape }}">{{ icon('edit') }}</button>
+                          data-record-payload='{{ {'id': gt.id, '_label': gt.genotype, '_uses': n, 'genotype': gt.genotype, 'alias': gt.alias, 'source': gt.source, 'stock_number': gt.stock_number, 'notes': gt.notes} | tojson }}'>{{ icon('edit') }}</button>
                   <form method="post" action="{{ url_for('stocks.delete_genotype', key=key, gid=gt.id) }}" data-confirm="{{ _('Remove %(genotype)s from the list?', genotype=gt.genotype) }}">
                     <button type="submit" class="row-icon-btn danger-button" title="{{ _('Remove') }}" {% if n %}disabled{% endif %}>{{ icon('trash') }}</button>
                   </form>
@@ -505,7 +505,7 @@
               <td>{{ racks | selectattr('incubator_id_fk', 'equalto', inc.id) | list | length }}</td>
               <td class="text-right">
                 <button type="button" class="row-icon-btn" title="{{ _('Edit') }}" data-record-edit="incubator-dialog"
-                        data-record-payload="{{ {'id': inc.id, '_label': inc.name, 'name': inc.name, 'temperature': inc.temperature, 'notes': inc.notes} | tojson | forceescape }}">{{ icon('edit') }}</button>
+                        data-record-payload='{{ {'id': inc.id, '_label': inc.name, 'name': inc.name, 'temperature': inc.temperature, 'notes': inc.notes} | tojson }}'>{{ icon('edit') }}</button>
               </td>
             </tr>
           {% else %}
@@ -539,7 +539,7 @@
                   <form method="post" action="{{ url_for('stocks.rack_flipped', key=key, rack_id=r.id) }}">
                     <button type="submit" class="btn btn-sm" title="{{ _('Record a %(verb)s today', verb=flip_verb|lower) }}">{{ icon('refresh') }} {{ _('%(done)s today', done=flip_done) }}</button>
                   </form>
-                  <button type="button" class="row-icon-btn" title="{{ _('Edit') }}" data-record-edit="rack-dialog" data-record-payload="{{ rr.payload | tojson | forceescape }}">{{ icon('edit') }}</button>
+                  <button type="button" class="row-icon-btn" title="{{ _('Edit') }}" data-record-edit="rack-dialog" data-record-payload='{{ rr.payload | tojson }}'>{{ icon('edit') }}</button>
                 </div>
               </td>
             </tr>
@@ -637,7 +637,7 @@
                     <button type="submit" class="row-icon-btn" title="{{ _('Thaw one onto a new %(unit)s', unit=unit_w) }}" {% if lot.vials_left <= 0 %}disabled{% endif %}>{{ icon('temperature') }}</button>
                   </form>
                   <button type="button" class="row-icon-btn" title="{{ _('Edit') }}" data-record-edit="frozen-dialog"
-                          data-record-payload="{{ {'id': lot.id, '_label': lot.genotype, 'genotype': lot.genotype, 'frozen_on': (lot.frozen_on or '')|string, 'vials': lot.vials, 'vials_left': lot.vials_left, 'location': lot.location, 'thaw_tested_on': (lot.thaw_tested_on or '')|string, 'thaw_ok': ('1' if lot.thaw_ok else '0' if lot.thaw_ok == false else ''), 'owner': lot.owner, 'notes': lot.notes} | tojson | forceescape }}">{{ icon('edit') }}</button>
+                          data-record-payload='{{ {'id': lot.id, '_label': lot.genotype, 'genotype': lot.genotype, 'frozen_on': (lot.frozen_on or '')|string, 'vials': lot.vials, 'vials_left': lot.vials_left, 'location': lot.location, 'thaw_tested_on': (lot.thaw_tested_on or '')|string, 'thaw_ok': ('1' if lot.thaw_ok else '0' if lot.thaw_ok == false else ''), 'owner': lot.owner, 'notes': lot.notes} | tojson }}'>{{ icon('edit') }}</button>
                   <form method="post" action="{{ url_for('stocks.frozen_action', key=key, fid=lot.id, action='delete') }}" data-confirm="{{ _('Delete the frozen lot of %(genotype)s?', genotype=lot.genotype) }}">
                     <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete') }}">{{ icon('trash') }}</button>
                   </form>

@@ -364,6 +364,8 @@
     if (!list) return;
     select.dataset.choicesFilled = '1';
     const value = select.value;
+    // Its own option goes; what it held stays known (sheet.js's `previous`).
+    if (select.dataset.previous === undefined) select.dataset.previous = value;
     const own = select.selectedOptions[0];
     const options = list.content.cloneNode(true);
     const listed = Array.from(options.querySelectorAll('option')).some((o) => o.value === value);

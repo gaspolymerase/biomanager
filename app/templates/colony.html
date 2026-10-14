@@ -79,7 +79,15 @@
     {% endif %}
     {# The colony keeps every mouse it ever had: what ended long ago waits behind a link. #}
     {% set hidden_here = hidden[active_view] if active_view in ('mice', 'cages', 'litters') else 0 %}
-    {% if hidden_here %}
+    {% if active_view == 'breeders' and (hidden.breeder_cages or hidden.breeder_mice) %}
+      <span class="text-[12px] text-muted" data-hidden-ended>
+        {% set cages = '{:,}'.format(hidden.breeder_cages) %}{% set mice = '{:,}'.format(hidden.breeder_mice) %}{% set days = hidden.days %}
+        {% set url = url_for('colony', view='breeders', scope=scope, ended='all') %}
+        {% if hidden.breeder_cages and hidden.breeder_mice %}{% trans %}Breeder cages left empty for over {{ days }} days ({{ cages }}), and mice that ended over {{ days }} days ago ({{ mice }}), aren't listed. <a href="{{ url }}">Show them</a>.{% endtrans %}
+        {% elif hidden.breeder_cages %}{% set n_hidden = cages %}{% trans %}{{ n_hidden }} empty cages, unused for over {{ days }} days ago aren't listed. <a href="{{ url }}">Show them</a>.{% endtrans %}
+        {% else %}{% set n_hidden = mice %}{% trans %}{{ n_hidden }} mice that ended over {{ days }} days ago aren't listed. <a href="{{ url }}">Show them</a>.{% endtrans %}{% endif %}
+      </span>
+    {% elif hidden_here %}
       <span class="text-[12px] text-muted" data-hidden-ended>
         {% set n_hidden = '{:,}'.format(hidden_here) %}{% set days = hidden.days %}
         {% set url = url_for('colony', view=active_view, scope=scope, ended='all') %}
@@ -1195,11 +1203,14 @@
           <button type="button" data-on-click="resetBreederSearch">{{ _('Reset') }}</button>
           <span id="breeder-count" class="muted-inline"></span>
         </div>
+        <form id="breeder-pick" method="post" hidden></form>
         <div class="cage-stack" id="breeder-stack">
+          {% set cages_url = url_for('colony', view='cages', scope='all') %}
+          {% set pick_url = url_for('pick_mouse', mouse_row_id=0) %}
           {% for breeder_group in breeder_rows %}
             <article class="cage-card breeder-card" data-breeder-search="{{ breeder_group.search_blob }}" data-active-count="{{ breeder_group.active_count }}">
               <div class="breeder-head-grid">
-                <div><span>{{ _('Cage') }}</span><strong><a href="{{ url_for('colony', view='cages', scope='all') }}#cage-{{ breeder_group.id }}" title="{{ _('Open cage %(id)s', id=breeder_group.cage_id) }}">{{ breeder_group.cage_id }}</a></strong></div>
+                <div><span>{{ _('Cage') }}</span><strong><a href="{{ cages_url }}#cage-{{ breeder_group.id }}" title="{{ _('Open cage %(id)s', id=breeder_group.cage_id) }}">{{ breeder_group.cage_id }}</a></strong></div>
                 <div><span>{{ _('Rack') }}</span><strong>{% if breeder_group.rack %}{{ breeder_group.rack }}{% if breeder_group.position %} · {{ breeder_group.position }}{% endif %}{% else %}—{% endif %}</strong></div>
                 <div><span>{{ _('Location') }}</span><strong>{{ breeder_group.cage_location or '—' }}</strong></div>
                 <div><span>{{ _('Location detail') }}</span><strong>{{ breeder_group.location_detail or '—' }}</strong></div>
@@ -1241,10 +1252,9 @@
                         <td>{{ mouse.note }}</td>
                         <td>
                           {% if mouse.owner != current_user.username %}
-                            <form method="post" action="{{ url_for('pick_mouse', mouse_row_id=mouse.id) }}"
-                                  data-confirm="{{ _('Take mouse %(id)s as yours? %(owner)s is notified.', id=mouse.mouse_id, owner=mouse.owner or _('Its owner')) }}">
-                              <button type="submit">{{ _('Pick') }}</button>
-                            </form>
+                            {# Posted through the tab's one form (breeder-pick): a form a row, or a button joined to one, made the browser's work as the page loaded grow with the rows. #}
+                            <button type="button" data-pick-action="{{ pick_url|replace('/0/', '/' ~ mouse.id ~ '/') }}"
+                                    data-pick-confirm="{{ _('Take mouse %(id)s as yours? %(owner)s is notified.', id=mouse.mouse_id, owner=mouse.owner or _('Its owner')) }}">{{ _('Pick') }}</button>
                           {% else %}<span class="text-[11.5px] text-muted">{{ _('Yours') }}</span>{% endif %}
                         </td>
                       </tr>
@@ -2617,6 +2627,19 @@ function filterBreeders() {
     counter.textContent = text;
   }
 }
+
+// Pick: asks, then posts the tab's one form to that mouse's address.
+document.addEventListener('click', (event) => {
+  const button = event.target.closest && event.target.closest('[data-pick-action]');
+  if (!button) return;
+  const text = button.dataset.pickConfirm;
+  window.BioDialog.confirm(text, { danger: window.BioDialog.looksDestructive(text) }).then((ok) => {
+    if (!ok) return;
+    const form = document.getElementById('breeder-pick');
+    form.action = button.dataset.pickAction;
+    form.submit();
+  });
+});
 
 function resetBreederSearch() {
   const searchInput = document.getElementById('breeder-search');

@@ -173,12 +173,22 @@
       if (!this.tbody || this.rows.length <= PARK_OVER || this.card.hasAttribute('data-dt-keep-rows')
           || document.readyState === 'complete') return;
       window.addEventListener('DOMContentLoaded', () => {
-        this.rows.forEach((tr) => {
-          if (tr.style.display !== 'none' || !tr.isConnected) return;
-          tr.remove();
-          const detail = this.details.get(tr.dataset.id);
-          if (detail) detail.remove();
+        // All of the body's rows lifted out at once, the shown ones put back
+        // in their order: one row at a time took a second on a long sheet.
+        const range = document.createRange();
+        range.selectNodeContents(this.tbody);
+        const away = range.extractContents();
+        const rows = new Set(this.rows);
+        const byId = new Map(this.rows.map((tr) => [tr.dataset.id, tr]));
+        const shown = (tr) => tr.style.display !== 'none';
+        const back = Array.from(away.children).filter((tr) => {
+          if (tr.dataset.detailFor !== undefined) {
+            const owner = byId.get(tr.dataset.detailFor);
+            return !owner || shown(owner);
+          }
+          return !rows.has(tr) || shown(tr);
         });
+        this.tbody.append(...back);
       }, { once: true });
     }
 
@@ -257,8 +267,9 @@
         toolbar.classList.remove('is-tight');
         if (wraps()) toolbar.classList.add('is-tight');
       };
+      // Its first call comes with the first frame, not now: measuring now
+      // laid out every row of a long sheet before the unseen ones left.
       new ResizeObserver(fit).observe(toolbar);
-      fit();
     }
 
     _restoreSort() {
@@ -1049,7 +1060,8 @@
       if (!this.table) return;
       const apply = (cell, idx) => {
         const col = this._col(cell);
-        cell.style.display = this._isHidden(col >= 0 ? col : idx) ? 'none' : '';
+        const display = this._isHidden(col >= 0 ? col : idx) ? 'none' : '';
+        if (cell.style.display !== display) cell.style.display = display;   // a long sheet has 100,000 cells
       };
       Array.from(this.table.tHead.rows).forEach((row) => Array.from(row.cells).forEach(apply));
       this.rows.forEach((tr) => Array.from(tr.cells).forEach(apply));
