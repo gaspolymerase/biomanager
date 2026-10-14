@@ -62,7 +62,7 @@ VOXCPM2 = "mlx-community/VoxCPM2-8bit"
 QWEN_API = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
 
 # qwen3-tts-flash's dialect voices (Model Studio's Qwen-TTS voice list)
-API_VOICES = {"粤语": "Kiki", "四川话": "Sunny", "上海话": "Jada", "闽南话": "Roy"}
+API_VOICES = {"粤语": "Kiki", "四川话": "Sunny", "上海话": "Jada", "闽南话": "Roy", "南京话": "Li"}
 # what CosyVoice 3's instructions call each dialect
 COSY_NAMES = {"粤语": "广东话"}
 

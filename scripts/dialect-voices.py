@@ -15,8 +15,9 @@ to promo/voices/<name>.wav and adds it to voices.json, after which the
 video scripts can use it as "qwen:<name>".
 
 VoxCPM2 won a blind listening test of dialect TTS (scripts/dialect-bakeoff.py):
-a described voice sounded right in Cantonese, Sichuanese, Shanghainese and
-Hokkien, and none did in Northeastern, so there is no Northeastern narrator.
+a described voice sounded right in Cantonese, Sichuanese, Shanghainese,
+Hokkien and Shandong, and none did in Northeastern or Nanjing, so there is no
+narrator for those two.
 """
 from __future__ import annotations
 
@@ -46,6 +47,8 @@ NARRATORS = {
                    "记老鼠、管试剂侪老方便额，一打开就晓得今朝要做啥，勿要再去翻簿子了。"),
     "minnan-a": ("闽南话", "逐家好！今仔日想欲共恁分享一个真好用的实验室小工具，实在会使共你省真济时间。",
                  "记鸟鼠、管试剂攏真方便，一下拍开就知影今仔日欲做啥，免閣去掀簿仔矣。"),
+    "shandong-a": ("山东话", "大伙儿好！俺今儿个跟恁拉拉呱，说说一个怪好使的实验室小工具，真能帮恁省不老少时间嘞。",
+                   "记耗子、管试剂都怪方便嘞，一打开就知道今儿个该干么，甭再去翻本子了，杠赛来！"),
 }
 
 
