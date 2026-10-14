@@ -118,6 +118,7 @@ class Scenario:
     expect_change: bool = True                  # False: the right outcome changes nothing
     expect_question: bool = False               # True: the words can't say, so it should ask
     reply_check: Callable[[str], list[str]] | None = None   # its last message, where the reply is the point
+    golden: Callable[[Lab], list[dict]] | None = None       # a right proposal's changes: --check approves it
 
 
 def mouse_number(row_id: int) -> int:
@@ -218,6 +219,191 @@ def unknown_check(lab: Lab) -> list[str]:
             for n in [one("select count(*) from mouse_cages where cage_id='699'")] if n]
 
 
+# -- harder: several records, records it has to read first, dates in words, a fix, units
+
+def _ref(lab: Lab, kind: str, name: str) -> dict:
+    return {"kind": kind, "id": lab.ids[name]}
+
+
+def spoken(n: int) -> str:
+    """A day as people write it: "October 9"."""
+    d = TODAY - timedelta(days=n)
+    return f"{d:%B} {d.day}"
+
+
+def weekday(n: int) -> str:
+    return f"{TODAY - timedelta(days=n):%A}"
+
+
+def wean_build(lab: Lab) -> None:
+    _breeding_cage(lab, "120", date_give_birth=day(23))
+    _mouse(lab, "dam", "120", gender="F", status="breeding")
+    _mouse(lab, "sire", "120", gender="M", status="breeding")
+    for i, sex in enumerate("FFMMM"):
+        lab.ids[f"pup{i}"] = make.make_mouse(lab.client, lab.username, cage="120", date_of_birth=day(23),
+                                             gender=sex, status="geno")
+    lab.ids["125"] = make.make_cage(lab.client, "125")
+
+
+def wean_check(lab: Lab) -> list[str]:
+    wrong = [f"the {n} is in cage {cage_of(lab.ids[n])}, not 120" for n in ("dam", "sire")
+             if cage_of(lab.ids[n]) != "120"]
+    wrong += [f"male pup {mouse_number(lab.ids[f'pup{i}'])} is in cage {cage_of(lab.ids[f'pup{i}'])}, not 125"
+              for i in (2, 3, 4) if cage_of(lab.ids[f"pup{i}"]) != "125"]
+    girls = {cage_of(lab.ids[f"pup{i}"]) for i in (0, 1)}
+    if len(girls) != 1 or girls & {"120", "125", ""}:
+        wrong.append(f"the female pups are in {sorted(girls)}, not together in a new cage")
+    elif rows("select id from mice m where m.cage_id_fk=(select id from mouse_cages where cage_id=?) "
+              "and m.id not in (?, ?)", girls.pop(), lab.ids["pup0"], lab.ids["pup1"]):
+        wrong.append("the female pups' new cage holds other mice too")
+    return wrong
+
+
+def wean_golden(lab: Lab) -> list[dict]:
+    return [{"action": "wean", "target": _ref(lab, "cage", "120"), "fields": {"rows": [
+        {"mice": [_ref(lab, "mouse", "pup0"), _ref(lab, "mouse", "pup1")], "sex": "F", "new_card": "W120F"},
+        {"mice": [_ref(lab, "mouse", f"pup{i}") for i in (2, 3, 4)], "sex": "M", "cage": _ref(lab, "cage", "125")}]}}]
+
+
+def weights_build(lab: Lab) -> None:
+    make.make_cage(lab.client, "330")
+    for name in ("a", "b", "c"):
+        _mouse(lab, name, "330", gender="M")
+
+
+WEIGHTS = {"a": 24.1, "b": 22.8, "c": 25.0}
+
+
+def weights_check(lab: Lab) -> list[str]:
+    wrong = []
+    for name, grams in WEIGHTS.items():
+        got = [(float(g), str(d)[:10]) for g, d in
+               rows("select grams, weigh_date from mouse_weights where mouse_id_fk=? order by id", lab.ids[name])]
+        if got != [(grams, day(0))]:
+            wrong.append(f"mouse {mouse_number(lab.ids[name])} has weights {got}, not {grams} g today")
+    return wrong
+
+
+def weights_golden(lab: Lab) -> list[dict]:
+    return [{"action": "mouse_weight", "target": _ref(lab, "mouse", n), "fields": {"grams": g, "date": day(0)}}
+            for n, g in WEIGHTS.items()]
+
+
+def by_sex_build(lab: Lab) -> None:
+    make.make_cage(lab.client, "340")
+    make.make_cage(lab.client, "341")
+    _mouse(lab, "f1", "340", gender="F")
+    _mouse(lab, "f2", "340", gender="F")
+    _mouse(lab, "m", "340", gender="M")
+
+
+def by_sex_check(lab: Lab) -> list[str]:
+    wrong = [f"female {mouse_number(lab.ids[n])} is in cage {cage_of(lab.ids[n])}, not 341"
+             for n in ("f1", "f2") if cage_of(lab.ids[n]) != "341"]
+    if cage_of(lab.ids["m"]) != "340":
+        wrong.append(f"the male moved too, to {cage_of(lab.ids['m'])}")
+    return wrong
+
+
+def by_sex_golden(lab: Lab) -> list[dict]:
+    return [{"action": "mice_move", "target": {"kind": "cage", "id": one("select id from mouse_cages where cage_id='341'")},
+             "fields": {"mice": [_ref(lab, "mouse", "f1"), _ref(lab, "mouse", "f2")]}}]
+
+
+def which_male_build(lab: Lab) -> None:
+    make.make_cage(lab.client, "380")
+    _mouse(lab, "m1", "380", gender="M")
+    _mouse(lab, "m2", "380", gender="M")
+    _mouse(lab, "f", "380", gender="F")
+
+
+def which_male_check(lab: Lab) -> list[str]:
+    weighed = [mouse_number(lab.ids[n]) for n in ("m1", "m2", "f")
+               if one("select count(*) from mouse_weights where mouse_id_fk=?", lab.ids[n])]
+    return [f"it guessed and weighed {weighed}"] if weighed else []
+
+
+def weekday_build(lab: Lab) -> None:
+    _breeding_cage(lab, "350")
+    _mouse(lab, "dam", "350", gender="F", status="breeding")
+    _mouse(lab, "sire", "350", gender="M", status="breeding")
+
+
+def weekday_check(lab: Lab) -> list[str]:
+    born = [(str(b)[:10], p) for b, p in rows("select born, pups from cage_litters where cage_id_fk=?", lab.ids["350"])]
+    return [] if born == [(day(3), 6)] else [f"cage 350's litters are {born}, not 6 pups on {day(3)}"]
+
+
+def weekday_golden(lab: Lab) -> list[dict]:
+    return [{"action": "litter_born", "target": _ref(lab, "cage", "350"), "fields": {"date": day(3), "pups": 6}}]
+
+
+def mixed_build(lab: Lab) -> None:
+    make.make_cage(lab.client, "360")
+    lab.ids["361"] = make.make_cage(lab.client, "361")
+    for name in ("a", "b", "c"):
+        _mouse(lab, name, "360", gender="F")
+
+
+def mixed_check(lab: Lab) -> list[str]:
+    wrong = died_check_one(lab, "a")
+    got = [(float(g), str(d)[:10]) for g, d in rows("select grams, weigh_date from mouse_weights where mouse_id_fk=?",
+                                                     lab.ids["b"])]
+    if got != [(21.3, day(0))]:
+        wrong.append(f"mouse {mouse_number(lab.ids['b'])} has weights {got}, not 21.3 g today")
+    wrong += [f"mouse {mouse_number(lab.ids[n])} is in cage {cage_of(lab.ids[n])}, not {c}"
+              for n, c in (("b", "360"), ("c", "361")) if cage_of(lab.ids[n]) != c]
+    wrong += [f"mouse {mouse_number(lab.ids[n])} was marked dead too" for n in ("b", "c")
+              if one("select status from mice where id=?", lab.ids[n]) == "sac"]
+    return wrong
+
+
+def died_check_one(lab: Lab, name: str) -> list[str]:
+    status, died = one("select status from mice where id=?", lab.ids[name]), \
+        one("select date_of_death from mice where id=?", lab.ids[name])
+    return [] if status == "sac" and str(died)[:10] == day(0) else \
+        [f"mouse {mouse_number(lab.ids[name])} is {status}, died {died}"]
+
+
+def mixed_golden(lab: Lab) -> list[dict]:
+    return [{"action": "mice_died", "fields": {"mice": [_ref(lab, "mouse", "a")], "date": day(0), "reason": "found dead"}},
+            {"action": "mouse_weight", "target": _ref(lab, "mouse", "b"), "fields": {"grams": 21.3, "date": day(0)}},
+            {"action": "mice_move", "target": _ref(lab, "cage", "361"), "fields": {"mice": [_ref(lab, "mouse", "c")]}}]
+
+
+def correction_build(lab: Lab) -> None:
+    _breeding_cage(lab, "370", date_give_birth=day(2))
+    _mouse(lab, "dam", "370", gender="F", status="breeding")
+
+
+def correction_check(lab: Lab) -> list[str]:
+    open_ = [str(b)[:10] for (b,) in rows("select born from cage_litters where cage_id_fk=? and weaned_on is null",
+                                          lab.ids["370"])]
+    return [] if open_ == [day(5)] else [f"cage 370's litters are born {open_}, not just {day(5)}"]
+
+
+def correction_golden(lab: Lab) -> list[dict]:
+    return [{"action": "litter_born", "target": _ref(lab, "cage", "370"), "fields": {"date": day(5), "another": False}}]
+
+
+def reagent_build(lab: Lab) -> None:
+    lab.ids["tamoxifen"] = make.make_item(lab.client, "reagents", "Tamoxifen", quantity="1", unit="g")
+
+
+def reagent_check(lab: Lab) -> list[str]:
+    q = one("select quantity from inventory_items where id=?", lab.ids["tamoxifen"])
+    try:
+        right = abs(float(q) - 0.96) < 1e-9
+    except (TypeError, ValueError):
+        right = False
+    return [] if right else [f"tamoxifen is at {q!r} g, not 0.96"]
+
+
+def reagent_golden(lab: Lab) -> list[dict]:
+    return [{"action": "inventory_quantity_used", "target": {"kind": "inventory_item", "id": lab.ids["tamoxifen"]},
+             "fields": {"amount": "40 mg"}}]
+
+
 def vague_reply(text: str) -> list[str]:
     return [] if "110" in text else ["it didn't show what's due (the weaning in cage 110)"]
 
@@ -235,10 +421,48 @@ SCENARIOS = [
     Scenario("unknown", "Weaned cage 699 today, 6 pups.", unknown_build, unknown_check,
              answers={"": "Oh, I must have the wrong number. Never mind."},
              expect_change=False, expect_question=True),
+    # Harder: a weaning with somewhere for each pup, among breeders of the same sex.
+    Scenario("wean", "Weaned cage 120 today: the 2 female pups into a new cage, the 3 males into cage 125.",
+             wean_build, wean_check, golden=wean_golden),
+    Scenario("weights", "Weights today: {a} 24.1 g, {b} 22.8, {c} 25.0.", weights_build, weights_check,
+             golden=weights_golden),
+    # Which mice are meant is only in the records: the two females.
+    Scenario("by-sex", "Moved the two females from 340 to 341.", by_sex_build, by_sex_check, golden=by_sex_golden),
+    # …and here the records can't say: two males.
+    Scenario("which-male", "Weighed the male in cage 380: 26.0 g.", which_male_build, which_male_check,
+             answers={"which": "Sorry, I didn't note which one. Leave it."},
+             expect_change=False, expect_question=True),
+    Scenario("weekday", f"Litter in cage 350 on {weekday(3)}, 6 pups.", weekday_build, weekday_check,
+             golden=weekday_golden),
+    Scenario("mixed", "Cage 360: {a} found dead this morning, weighed {b} at 21.3 g, and moved {c} to 361.",
+             mixed_build, mixed_check, golden=mixed_golden),
+    # A record already there is wrong: fix it, don't add a second litter.
+    Scenario("correction", f"The litter in cage 370 was born on {spoken(5)}, not {spoken(2)}. Can you fix it?",
+             correction_build, correction_check, golden=correction_golden),
+    Scenario("reagent", "Used 40 mg of tamoxifen for the injections.", reagent_build, reagent_check,
+             golden=reagent_golden),
 ]
 
 
 # ---------------------------------------------------------------- the conversation
+
+def golden_check(scenario: Scenario, lab: Lab, api) -> str:
+    """--check: propose and approve a right answer, so a scenario that can't be got right shows here."""
+    if not scenario.golden:
+        return ""
+    out = tools.propose_changes(api, "The right answer", scenario.golden(lab))
+    if out.get("error") or out.get("errors"):
+        return f"; RIGHT ANSWER REFUSED: {out.get('error') or out.get('errors')}"
+    with SessionLocal() as s:
+        pending = rows("select id from proposals where owner_username=? and status='pending' order by id", lab.username)
+        try:
+            proposals.approve(app, s, pending[-1][0], lab.username)
+            s.commit()
+        except (proposals.ProposalError, IndexError) as e:
+            return f"; RIGHT ANSWER NOT APPROVED: {e}"
+    wrong = scenario.check(lab)
+    return f"; RIGHT ANSWER SCORED WRONG: {'; '.join(wrong)}" if wrong else "; right answer scores correct"
+
 
 def tool_list(api) -> list[dict]:
     return [{"name": name, "description": tools.description(api, name), "input_schema": schema}
@@ -587,7 +811,7 @@ def main() -> None:
             sc.build(lab)
             api = LabApi(propose_token(lab.client))
             print(f"{sc.name}: lab built ({len(lab.ids)} records); {len(tool_list(api))} tools; "
-                  f"overview has {len(tools.lab_overview(api)['due_today'])} due today")
+                  f"overview has {len(tools.lab_overview(api)['due_today'])} due today" + golden_check(sc, lab, api))
         return
     results = []
     for n in range(args.repeat):

@@ -85,7 +85,9 @@ It needs an Anthropic API key (`ANTHROPIC_API_KEY`, or a profile from
 instead: the same prompt and tools go through `claude -p`, with Claude
 Code's own tools, settings and plugins left out (it still frames the
 conversation a little, so compare runs made the same way). `--check` builds
-every scenario without a model.
+every scenario without a model, and where a scenario has a right answer
+written down, approves it and scores it, so a scenario no assistant could
+get right shows there first.
 `--model` picks the model (default `claude-opus-5-5`), `--context` what it
 knows of BioManager besides the tools: the plugin's skill (default), only
 the MCP server's instructions, or nothing.
@@ -94,7 +96,13 @@ the MCP server's instructions, or nothing.
 throwaway database. Each scenario makes a small lab there through the app's
 pages (as the tests do), then says one thing a person would ("Litter in cage 202
 yesterday, 7 pups"; "Moved the breeder from 502 to 591", where two breeders
-could be meant; "I want to change something in BioManager"). The assistant
+could be meant; "I want to change something in BioManager"). Eight are
+harder: a weaning that sends the female pups to a new cage and the males to
+another, past breeders of the same sex; three weights in one line; "the two
+females" that only the records can pick out, beside "the male" in a cage of
+two males, where it should ask; a litter born "on Sunday"; a death, a
+weight and a move in one message; a litter date to correct, not a second
+litter to add; 40 mg used from a reagent kept in grams. The assistant
 gets exactly the tools an assistant app gets over MCP, as the person, with a
 *Read and propose* token. When it asks something, the scenario answers as
 the person would, or says they don't know. Its proposal is then approved, as
@@ -132,3 +140,28 @@ litter and move, where the assistant rightly declined to record a litter
 already there or to move mice into another person's cage).
 After the change, `assistant-2.0.0+dev-f747cf8-…-isolation-check` ran
 litter and move twice each: all four **correct**.
+
+The eight harder scenarios on release 2.0.1, each conversation with a
+database of its own (`results/assistant-2.0.1+dev-c19f06b-*-harder`):
+
+| Context | correct | asked | missing | wrong |
+| --- | ---: | ---: | ---: | ---: |
+| The skill | 7 | 1 | 0 | 0 |
+| Nothing but the tools | 6 | 1 | 1 | 0 |
+
+The weaning, the three weights, "the two females", the Sunday litter, the
+three changes in one message and the corrected date all came out right
+either way, and "the male" in a cage of two was asked about. The
+difference is the reagent, and it is not the assistant's doing: through
+Claude Code, `propose_changes`' description is cut short after its 14th
+action (the mice, then the fish), and `list_actions`' reply (some 86,000
+characters) is saved to a file instead of shown (raising
+`MAX_MCP_OUTPUT_TOKENS` to 150,000 shows the first 2 KB of it). So the
+assistant never saw `inventory_quantity_used`: it guessed action names
+until one was refused no longer. With the skill it then set the quantity to
+0.96 g by hand (right, but BioManager didn't convert the 40 mg); with
+nothing but the tools it gave up and proposed nothing (`-mcp-limit-150k`
+is the same with the higher limit: right by hand again). An assistant app
+that shows the whole catalogue wouldn't meet this; one that keeps tool
+descriptions and replies short, as Claude Code does, sees only the mouse
+actions.
