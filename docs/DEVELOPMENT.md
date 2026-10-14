@@ -2982,10 +2982,33 @@ What keeps the sheets usable at that size:
   (`stock_routes`). The sheet says how many and links to them. Search,
   exports and the box grid still see everything.
 
-At 100k mice on SQLite, the mouse and cage sheets take 2–3 s and stream
-30–60 MB of rows (about 3 KB a row, a third of it whitespace). The next
-step, if a lab needs it, is paging on the server instead of the sheet's
-client-side pages.
+What a person waits for is mostly the browser, not the server:
+`--browser` also opens each page in Chromium and reports the time to its
+load event, the main thread's busy time, its DOM nodes and JS heap.
+
+```bash
+.venv/bin/python scripts/load-test.py /tmp/bm-load --reuse --browser
+```
+
+What keeps the browser's side short is under *Small shared rules*: row
+forms in a `<template>` (`row-forms.js`), long choice lists sent once
+(`data-choices`), the rows past the first page hidden until the sheet is
+drawn, and a sheet of over 1,000 rows keeping the rows it has not shown
+off the page (`_parkLater`).
+
+At 100k mice on SQLite (2.0.0), the server makes the mouse, cage and
+litter sheets in 3–6 s, 20–25 MB each, and an inventory in 7 s, 60 MB.
+In Chromium the mouse sheet then opens in 7.5 s (77 s before 2.0.0), the
+tanks in 11 s (127 s), the fly vials in 6.6 s (97 s), the cages and
+litters in about 10 s. Still slow at that size: an inventory (23–27 s:
+its rows carry the most fields, 13 KB of markup a row) and the
+**Breeders** tab (40 s: a card for every breeder cage, a million
+elements, not a sheet). The next step for those, if a lab needs it, is
+paging on the server instead of the sheet's client-side pages.
+
+In a lab of 4,000 mice, in Chromium (before 2.0.0 → 2.0.0): mice
+6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish 31.5 → 3.2 s,
+reagents 5.2 → 2.6 s, samples 6.0 → 2.8 s.
 
 ## Languages
 
