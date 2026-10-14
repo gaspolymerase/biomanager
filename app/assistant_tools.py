@@ -160,6 +160,35 @@ def list_actions(api: Api) -> list:
     return api.request("GET", "actions")["data"]
 
 
+def _fields_brief(a: dict) -> str:
+    return ", ".join(f"{name}{'*' if name in a['fields'].get('required', []) else ''}"
+                     for name in a["fields"].get("properties", {}))
+
+
+def actions_tool(api: Api, names=None, area: str = "") -> dict:
+    """list_actions: every action briefly, or the ones asked for in full. The whole catalogue in full is
+    some 86,000 characters, more than an assistant app shows of one reply (Claude Code saves it to a
+    file), so it comes in two steps."""
+    actions = list_actions(api)
+    if isinstance(names, str):
+        names = [names]
+    wanted = {str(n).strip() for n in names or [] if str(n).strip()}
+    area = (area or "").strip().lower()
+    if not wanted and not area:
+        return {"actions": [{"name": a["name"], "area": a["area"], "title": a["title"], "target": a.get("target"),
+                             "fields": _fields_brief(a)} for a in actions],
+                "details": "Call list_actions with names (or an area) for an action's help and each field's "
+                           "details. * marks a required field."}
+    out = {"actions": [a for a in actions if a["name"] in wanted or a["area"] == area]}
+    unknown = sorted(wanted - {a["name"] for a in actions})
+    if unknown:
+        from .actions import nearest_actions
+        out["unknown"] = {n: nearest_actions(n) for n in unknown}
+    if area and not any(a["area"] == area for a in actions):
+        out["areas"] = sorted({a["area"] for a in actions})
+    return out
+
+
 def propose_changes(api: Api, summary: str, changes: list, replaces: int | None = None,
                     source: str | None = None, captures: list | None = None) -> dict:
     body = {"summary": summary, "changes": changes,
@@ -203,21 +232,20 @@ def discard_proposal(api: Api, proposal_id: int) -> dict:
 
 
 def describe_actions(actions: list) -> str:
-    """The catalogue, briefly, for propose_changes' description."""
-    lines = []
+    """The catalogue's names by area, for propose_changes' description. Names only: assistant apps cut a
+    tool's description short (Claude Code at about 4,000 characters), and the actions past the cut would
+    be unknown to the assistant; list_actions gives their fields."""
+    areas: dict[str, list[str]] = {}
     for a in actions:
-        fields = ", ".join(f"{name}{'*' if name in a['fields'].get('required', []) else ''}"
-                           for name in a["fields"].get("properties", {}))
-        target = f" target: {a['target']};" if a.get("target") else ""
-        lines.append(f"- {a['name']} ({a['area']}):{target} fields: {fields or '-'}. {a['help']}")
-    return "\n".join(lines)
+        areas.setdefault(a["area"], []).append(a["name"])
+    return "\n".join(f"- {area}: {', '.join(names)}" for area, names in areas.items())
 
 
 PROPOSE_HELP = """\
 Send changes to BioManager as one proposal for the person to approve. Nothing changes until they \
 press Approve in BioManager. changes is a list of {"action", "target", "fields", "evidence"}: target is a \
 reference from resolve ({"kind": "cage", "id": 412}) or what the lab writes on the record (cage \
-88, mouse 1043, FV12); fields as below (* required; list_actions has each field's details). Give each \
+88, mouse 1043, FV12); fields as list_actions gives them (call it with the names you will use). Give each \
 change its evidence, shown to the person beside it: {"quote": the words of their notes it comes from, or \
 what the photo shows (at most 300 characters), "capture": the capture's id, "where": where in it}. Made \
 from captures? Set captures to their ids: they are marked used when the person approves. The \
@@ -277,8 +305,12 @@ TOOLS = {
         _obj({"days": {"type": "integer", "description": "How many days ahead (default 7)"}}),
         lambda api, a: {"due": whats_due(api, a.get("days", 7))}),
     "list_actions": (
-        "Every action a proposal may contain, with its target and fields (JSON Schema).",
-        _obj({}), lambda api, a: {"actions": list_actions(api)}),
+        "What a proposal may contain. With nothing given: every action, briefly (its area, title, target and "
+        "fields, * required). With names, or an area (mice, inventory…): those actions in full, with their "
+        "help and each field's details (JSON Schema). Read the ones you will use before proposing.",
+        _obj({"names": {"type": "array", "items": {"type": "string"}, "description": "Actions to give in full"},
+              "area": {"type": "string", "description": "Give every action of this area in full"}}),
+        lambda api, a: actions_tool(api, a.get("names"), a.get("area", ""))),
     "propose_changes": (
         None,  # PROPOSE_HELP and the lab's own actions: propose_description()
         _obj({"summary": {"type": "string", "description": "What this proposal records, in the person's words"},
@@ -654,7 +686,7 @@ def propose_description(api: Api) -> str:
         catalogue = describe_actions(list_actions(api))
     except ApiError as e:
         catalogue = f"(The list of actions couldn't be read now: {e} Call list_actions.)"
-    return f"{PROPOSE_HELP}\n\nActions:\n{catalogue}"
+    return f"{PROPOSE_HELP}\n\nActions, by area:\n{catalogue}"
 
 
 def description(api: Api, name: str) -> str:

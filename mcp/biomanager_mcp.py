@@ -83,8 +83,8 @@ def build_server(api: Api):
         return call_tool(api, "whats_due", {"days": days})
 
     @server.tool(name="list_actions", description=description(api, "list_actions"))
-    def list_actions_tool() -> dict:
-        return call_tool(api, "list_actions", {})
+    def list_actions_tool(names: list[str] | None = None, area: str = "") -> dict:
+        return call_tool(api, "list_actions", {"names": names, "area": area})
 
     @server.tool(name="propose_changes", description=description(api, "propose_changes"))
     def propose_changes_tool(summary: str, changes: list[dict], replaces: int | None = None,

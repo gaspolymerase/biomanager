@@ -24,6 +24,7 @@ litter's ID, a mouse's number.
 """
 from __future__ import annotations
 
+import difflib
 import json
 import re
 from dataclasses import dataclass, field
@@ -91,6 +92,20 @@ class Action:
 
 
 CATALOGUE: dict[str, Action] = {}
+
+
+def nearest_actions(name: str, n: int = 3) -> list[str]:
+    """The actions a mistyped or guessed name most likely meant ("item_use": inventory_quantity_used…),
+    for the error, so an assistant that guessed is shown the way."""
+    words = [w for w in re.split(r"[^a-z]+", str(name).lower()) if len(w) > 2]
+
+    def score(candidate: str) -> float:
+        theirs = candidate.split("_")
+        shared = sum(any(t.startswith(w) or w.startswith(t) for t in theirs) for w in words)
+        return shared + difflib.SequenceMatcher(None, str(name).lower(), candidate).ratio()
+
+    ranked = sorted(CATALOGUE, key=score, reverse=True)
+    return [c for c in ranked[:n] if score(c) >= 0.6]
 
 
 def action(**kwargs):
@@ -2787,6 +2802,10 @@ def _run(app, username, changes, apply, label, description, lang) -> Outcome:
                     raise ActionError(gettext("Each change is an object: {action, target, fields}."))
                 act = CATALOGUE.get(out.action)
                 if act is None:
+                    near = nearest_actions(out.action)
+                    if near:
+                        raise ActionError(gettext("There is no action called “%(action)s”. The nearest: %(names)s.",
+                                                  action=out.action, names=", ".join(near)))
                     raise ActionError(gettext("There is no action called “%(action)s”.", action=out.action))
                 with SessionLocal() as s:
                     record = _target(s, act, raw)

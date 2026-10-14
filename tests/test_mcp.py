@@ -54,6 +54,30 @@ class Tools(Base):
         self.assertEqual(bm.proposal_status(api, out["id"])["status"], "pending")
         self.assertEqual(bm.discard_proposal(api, out["id"])["status"], "discarded")
 
+    def test_every_action_fits_what_an_assistant_app_shows(self):
+        # Claude Code cuts a tool's description at about 4,000 characters and saves a long reply to a
+        # file: the catalogue in full (some 86,000) left the assistant knowing only the mouse actions.
+        api = TestApi(self.token(self.m, scope="propose"))
+        names = [a["name"] for a in bm.list_actions(api)]
+        described = bm.description(api, "propose_changes")
+        self.assertLess(len(described), 3500)
+        for name in names:
+            self.assertIn(name, described)
+        brief = bm.call_tool(api, "list_actions", {})
+        self.assertEqual([a["name"] for a in brief["actions"]], names)
+        self.assertLess(len(str(brief)), 20000)
+        self.assertNotIn("help", brief["actions"][0])
+        used = next(a for a in brief["actions"] if a["name"] == "inventory_quantity_used")
+        self.assertEqual(used["fields"], "amount*, unit")
+        full = bm.call_tool(api, "list_actions", {"names": ["wean", "item_use"]})
+        [wean] = full["actions"]
+        self.assertIn("rows", wean["fields"]["properties"])
+        self.assertIn("inventory_quantity_used", full["unknown"]["item_use"])
+        self.assertEqual({a["area"] for a in bm.call_tool(api, "list_actions", {"area": "inventory"})["actions"]},
+                         {"inventory"})
+        out = bm.propose_changes(api, "Used 40 mg", [{"action": "item_use", "fields": {"amount": "40 mg"}}])
+        self.assertIn("inventory_quantity_used", str(out))
+
     def test_reads_stay_within_the_api(self):
         api = TestApi(self.token(self.m, scope="read"))
         mouse = self.make_mouse(self.m, self.member, cage=uniq("C"))
