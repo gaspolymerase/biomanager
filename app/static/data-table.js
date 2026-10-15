@@ -537,6 +537,10 @@
         const shown = el.tagName === 'SELECT' && el.selectedOptions[0] ? el.selectedOptions[0].textContent : '';
         blob += ' ' + String(el.value || '').toLowerCase() + ' ' + shown.toLowerCase();
       });
+      // A cell drawn as text (static/text-cells.js): its field's value too (a date as 2026-10-14).
+      tr.querySelectorAll('.cell-text[data-sort-value]').forEach((el) => {
+        blob += ' ' + el.dataset.sortValue.toLowerCase();
+      });
       if (this._texts) this._texts.set(tr, blob);
       return blob;
     }
@@ -1224,8 +1228,12 @@
     /* What a cell shows: an editable cell's value (a select's chosen
        label), otherwise its text. */
     _cellText(td) {
-      const text = td.querySelector(':scope > .cell-text');   // a test: static/text-cells.js
-      if (text) return text.classList.contains('is-placeholder') ? '' : text.textContent.trim();
+      // A cell drawn as text until used (static/text-cells.js): what its field would give.
+      const text = td.querySelector(':scope > .cell-text');
+      if (text) {
+        if (text.classList.contains('is-placeholder')) return '';
+        return text.classList.contains('is-date') ? (text.dataset.sortValue || '') : text.textContent.trim();
+      }
       const field = td.querySelector('select, textarea, input:not([type=checkbox]):not([type=hidden]):not([type=radio])');
       if (field) {
         if (field.tagName === 'SELECT') return field.selectedOptions[0] ? field.selectedOptions[0].textContent.trim() : '';

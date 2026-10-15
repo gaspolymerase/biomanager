@@ -769,7 +769,10 @@ database has a name of its own (one another database has is refused), so
       inventory of more than 500 entries is paged by the server: it opens
       with its first page and fetches each other page as you turn to it,
       while search, sorting, the chips and the count still cover every
-      entry (<b>Export</b> and <b>Print</b> fetch every row first).
+      entry (<b>Export</b> and <b>Print</b> fetch every row first). In
+      Chrome, Edge and the Windows app an inventory's cells are drawn as
+      text and become boxes and menus when you click, tap or Tab to them,
+      which opens the sheet a fifth to a third sooner.
     </td>
   </tr>
   <tr>

@@ -1175,10 +1175,11 @@ def tight(html) -> Markup:
     return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
-# A TEST (not released): a sheet's cells drawn as text until used
-# (?cells=text on an inventory; static/text-cells.js turns one back into its
-# field). Each <td> holding just one field: the field's own markup goes in
-# data-field, and the text it shows is drawn instead.
+# An inventory's cells drawn as text until used (inventory_routes._text_cells;
+# static/text-cells.js turns one back into its field). Each <td> holding just
+# one field: the field's own markup goes in data-field, and the text it shows
+# is drawn instead, as the field would show it (a menu's chosen label, an
+# input's placeholder when empty). Gzipped, a page grows by about a tenth.
 _ONE_FIELD = re.compile(r'<td((?: [^>]*)?)>(<input\b[^>]*>|<select\b[^>]*>.*?</select>)</td>', re.S)
 _ATTR = re.compile(r'\b(name|value|class|placeholder|title|data-status|data-scope|type)="([^"]*)"')
 _CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')

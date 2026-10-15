@@ -95,6 +95,9 @@
         const was = form.querySelector(`[name="${name}_was"]`);
         if (was) was.value = value == null ? '' : value;
         document.querySelectorAll(`[form="${form.id}"][name="${name}"]`).forEach((el) => {
+          // A menu holding only its own choice (shell.js) takes its list first,
+          // or a value the server set (Low when the quantity fell) shows blank.
+          if (el.tagName === 'SELECT' && window.BiomanagerShell) window.BiomanagerShell.fillChoices(el);
           if (el !== document.activeElement && el.type !== 'checkbox') el.value = value == null ? '' : value;
           if (el.type === 'date') el.dataset.empty = el.value ? '0' : '1';
         });
@@ -182,7 +185,7 @@
      the rows shown from that cell, a copied range of a spreadsheet across
      and down, each cell saved as if typed. One value pastes as usual. */
   function editable(td) {
-    // A cell drawn as text (a test: static/text-cells.js) becomes its field first.
+    // A cell drawn as text (static/text-cells.js) becomes its field first.
     const text = td && window.BioTextCells && td.querySelector(':scope > .cell-text');
     if (text) window.BioTextCells.open(text);
     const el = td && td.querySelector('[data-autosave="1"][form]');
@@ -259,7 +262,10 @@
     const say = window.BiomanagerShell && window.BiomanagerShell.toast;
     // Which rows it went into, first and last, as the sheet shows them, so a
     // list pasted in another order than the rows is seen at once.
-    const nameOf = (row) => { const el = row && row.querySelector('[name="name"]'); return el ? el.value : ''; };
+    const nameOf = (row) => {
+      const el = row && row.querySelector('[name="name"], .cell-text[data-sort-for="name"]');
+      return !el ? '' : (el.value !== undefined ? el.value : el.dataset.sortValue || '');
+    };
     if (say && filled.length) {
       const a = nameOf(filled[0]); const z = nameOf(filled[filled.length - 1]);
       const pastedRows = new Set(filled).size;

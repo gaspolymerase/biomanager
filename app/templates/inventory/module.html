@@ -842,10 +842,13 @@
     function applyRow(id, answer) {
       const form = BioRowForms.get(`inv-${id}`);
       const row = answer.row || {};
-      // A cell drawn as text (a test: static/text-cells.js) becomes its field, to take the value.
+      // A cell drawn as text (static/text-cells.js) whose value the server
+      // changed becomes its field, to take the new one.
       const drawn = window.BioTextCells && rowOf(id);
-      if (drawn) Object.keys(row.values || {}).forEach((name) => {
-        drawn.querySelectorAll(`.cell-text[data-sort-for="${name}"]`).forEach((span) => window.BioTextCells.open(span));
+      if (drawn) Object.entries(row.values || {}).forEach(([name, value]) => {
+        drawn.querySelectorAll(`.cell-text[data-sort-for="${name}"]`).forEach((span) => {
+          if ((span.dataset.sortValue || '') !== (value == null ? '' : String(value))) window.BioTextCells.open(span);
+        });
       });
       Object.entries(row.values || {}).forEach(([name, value]) => {
         const v = value == null ? '' : String(value);
@@ -854,6 +857,7 @@
           if (was) was.value = v;
         }
         cellsOf(id, name).forEach((el) => {
+          if (el.tagName === 'SELECT' && window.BiomanagerShell) window.BiomanagerShell.fillChoices(el);   // its list first (shell.js)
           if (el !== document.activeElement) el.value = v;
           el.dataset.previous = el.value;
           if (el.type === 'date') el.dataset.empty = el.value ? '0' : '1';
@@ -882,6 +886,7 @@
         if (answer.payload._locked && tr) {
           tr.classList.add('is-locked');
           cellsOf(id).forEach((el) => { el.disabled = true; });
+          tr.querySelectorAll('.cell-text').forEach((span) => { span.classList.add('is-disabled'); span.removeAttribute('tabindex'); });
         }
       }
       // A status changed in the sheet moves the card on the board too.

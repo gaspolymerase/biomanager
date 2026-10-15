@@ -1,12 +1,14 @@
-/* A TEST, not released (?cells=text on an inventory): a sheet's cells are
- * drawn as text, each carrying its field's own markup in data-field
- * (app.py, as_text_cells), and become that field when used: pressed,
- * reached with Tab, pasted into, or given a value by the page's script.
+/* An inventory's cells drawn as text until used (inventory_routes._text_cells).
+ * Each carries its field's own markup in data-field (app.py, as_text_cells)
+ * and becomes that field when used: pressed, reached with Tab, pasted into
+ * (sheet.js), or given a value by the page's script (module.html, applyRow).
+ * Chromium reads every field on a page as it loads; text it leaves alone.
  *
  *   BioTextCells.open(span)   the field, in the text's place (and its partner's)
  *
  * The field then stays. Box and Position are saved together, so opening one
- * opens the other in its row.
+ * opens the other in its row. A date shows as its field would, in the
+ * browser's language (data-sort-value keeps 2026-10-14 for sort and export).
  */
 (function () {
   'use strict';
@@ -64,6 +66,22 @@
       const end = field.value.length;
       try { field.setSelectionRange(offset === null ? end : offset, offset === null ? end : offset); } catch (_) { /* a number field */ }
     }
+  });
+
+  // A date field shows the date in the browser's own way (10/14/2026,
+  // 2026/10/14): its text does the same.
+  const dateFormat = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  function showDates(root) {
+    root.querySelectorAll('.cell-text.is-date').forEach((span) => {
+      const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(span.dataset.sortValue || '');
+      if (parts) span.textContent = dateFormat.format(new Date(+parts[1], parts[2] - 1, +parts[3]));
+    });
+  }
+  // Here before the sheet takes its unseen rows off the page (data-table.js,
+  // window's DOMContentLoaded); rows the server sends later come with dt:rows-loaded.
+  showDates(document);
+  document.addEventListener('dt:rows-loaded', (event) => {
+    ((event.detail && event.detail.rows) || []).forEach(showDates);
   });
 
   window.BioTextCells = { open };
