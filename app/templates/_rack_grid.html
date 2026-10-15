@@ -14,9 +14,12 @@
 
 {% macro rack_grid(key, payload, move_url, rack_noun='rack', rack_dialog_id=None, new_rack_payload=None,
                    index_base=1, rack_field='rack_id', row_field='row', col_field='col',
-                   empty_text='Add a rack to start placing.', hint='', group_label=None, no_group=None) %}
-  {# no_group: what the first picker calls the racks in no group ("Not in one"). #}
+                   empty_text='Add a rack to start placing.', hint='', group_label=None, no_group=None, src=None) %}
+  {# no_group: what the first picker calls the racks in no group ("Not in one").
+     src: where its payload comes from when it is first shown, instead of
+     being in the page (rack-grid.js). #}
   <div class="rack-view" data-rack-view="{{ key }}" data-move-url="{{ move_url }}"
+       {% if src %}data-rack-src="{{ src }}"{% endif %}
        {% if no_group %}data-no-group-text="{{ no_group }}"{% endif %}
        data-index-base="{{ index_base }}" data-rack-field="{{ rack_field }}"
        data-row-field="{{ row_field }}" data-col-field="{{ col_field }}" data-empty-text="{{ empty_text|tr }}">
@@ -55,7 +58,7 @@
         <div class="rack-tray-items" data-rack-tray-items></div>
       </aside>
     </div>
-    <script type="application/json" data-rack-data>{{ payload | tojson }}</script>
+    {% if not src %}<script type="application/json" data-rack-data>{{ payload | tojson }}</script>{% endif %}
   </div>
 {% endmacro %}
 

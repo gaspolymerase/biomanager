@@ -55,7 +55,7 @@
         {% for rack in racks %}
           {% if rack.id in manageable_racks %}
             <button type="button" class="btn btn-sm" data-record-edit="inv-rack-dialog"
-                    data-record-payload="{{ grid.racks[loop.index0].edit['data-record-payload'] }}">{{ icon('sliders') }} {{ box_labels[rack.id] }}</button>
+                    data-record-payload="{{ rack_edits[rack.id] }}">{{ icon('sliders') }} {{ box_labels[rack.id] }}</button>
           {% else %}
             <span class="btn btn-sm is-static" title="{{ _('Only %(who)s or an admin can change this %(kind)s', who=rack.created_by, kind=rack.kind|tr('inventory')) }}">{{ icon('lock') }} {{ box_labels[rack.id] }}</span>
           {% endif %}
@@ -394,7 +394,7 @@
   {% if m.has('storage') %}
     <div data-layout-panel="grid" hidden>
       <section class="data-table-card">
-        {{ rack_grid('inv-' ~ key, grid, url_for('inventory.place_item', key=key, item_id=0)|replace('/0/', '/{id}/'),
+        {{ rack_grid('inv-' ~ key, None, url_for('inventory.place_item', key=key, item_id=0)|replace('/0/', '/{id}/'), src=grid_url,
                      rack_noun='box', rack_dialog_id='inv-rack-dialog',
                      new_rack_payload={'rows': 9, 'cols': 9, 'kind': 'box'},
                      empty_text=_('No boxes yet. Use New box to add a freezer box or shelf.'),

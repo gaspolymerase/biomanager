@@ -334,6 +334,30 @@ class InventoryPagingTests(AppTestCase):
         self.assertEqual(r.status_code, 302)
 
 
+class InventoryGridLaterTests(AppTestCase):
+    """An inventory's box grid is not in its page: its boxes and tiles come
+    from /<key>/grid when the grid is first shown (rack-grid.js)."""
+
+    def test_the_grid_comes_from_its_own_address(self):
+        from tests.test_inventory import InventoryCase
+        key = InventoryCase.new_module(self.a, "samples")
+        self.a.post(f"/inventory/{key}/racks/save", data={"id": "", "name": "Box G", "rows": "9", "cols": "9"})
+        rack = one("select max(id) from inventory_racks")
+        item = self.make_item(self.a, key, name=uniq("tube"), rack_id=str(rack), position="A1")
+        page = self.get_ok(self.a, f"/inventory/{key}?type=tissue")
+        self.assertNotIn("data-rack-data>", page)
+        src = htmllib.unescape(re.search(r'data-rack-src="([^"]+)"', page).group(1))
+        self.assertIn("type=tissue", src)
+        grid = self.a.get(f"/inventory/{key}/grid").get_json()
+        self.assertIn(rack, [r["id"] for r in grid["racks"]])
+        tile = next(i for i in grid["items"] if i["id"] == item)
+        self.assertEqual((tile["rack"], tile["row"], tile["col"]), (rack, 1, 1))
+        self.assertIn("data-record-payload", tile["edit"])
+        # The box's own dialog, above the sheet, still opens with what it needs.
+        self.assertIn('data-record-edit="inv-rack-dialog"', page)
+        self.assertEqual(self.a.get("/inventory/orders/grid").status_code, 404)
+
+
 class TextCellsTests(AppTestCase):
     """In Chromium an inventory's cells come as text, each with its field's
     own markup to become when used (app.py as_text_cells, static/text-cells.js);

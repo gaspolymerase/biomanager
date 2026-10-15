@@ -428,7 +428,12 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `change`), not on each cell, and remembers a cell's value as it is
   first used (`data-previous`; `fillChoices` sets it before filling a
   menu). The box grid (`rack-grid.js`) is drawn when its panel is first
-  shown (`layout:change`), not while the sheet loads behind it.
+  shown (`layout:change`), not while the sheet loads behind it. An
+  inventory's grid is not in its page at all (each tile carries its item's
+  whole dialog, megabytes on a long inventory): the macro's `src`
+  (`data-rack-src`) is `/inventory/<key>/grid` (`grid_data`, the page's
+  `?type=` and `?ended=`), fetched then; the Boxes buttons above the sheet
+  take their dialogs from `rack_edits`.
 - Rows past a sheet's first page (100) are `display: none` from the
   stylesheet until `data-table.js` has drawn it
   (`.data-table-card[data-table-id]:not(.dt-ready)`): the browser would
@@ -502,8 +507,12 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   data-row-forms>`. `_takeRows` swaps each stub for its row wherever the
   sheet keeps it, gives the row its column order, labels and hidden
   columns, and sends `dt:rows-loaded` (the samples sheet's Custom tag
-  listens). Export and Print fetch every row first (`_whenDrawn`, 500 a
-  request, one after another). Code that needs a row's cells uses
+  listens). Print fetches every row first (`_whenDrawn`, 500 a request,
+  one after another). Export needs only the words: `_withTexts` asks
+  `/rows?as=text` (three requests at a time, kept for the next export),
+  which draws the rows with the same template and reads each cell as
+  `_cellText` would (`app/cell_text.py`), sending `{id: [each cell's
+  words]}`; a column moved on the page is found by its `data-dt-col`. Code that needs a row's cells uses
   `BioSheets.ready(tr)`, a Promise of the row, fetched if it is a stub
   (`?open=`, `#item-12`). A request that fails leaves the page as it was
   and says so; the next page turn, search or sort asks again.
@@ -3167,7 +3176,10 @@ from 23–27 s to 11–12 s (6 KB of markup a row, from 13 KB) in 2.0.1, and
 to under 3 s in 2.0.2, paged by the server: the server takes about 1 s
 (it was 4 s) for a 6 MB page (33 MB), and turning a page, a sort, a
 search or a chip takes about a second, its 100 rows fetched in under
-0.1 s. Export and Print, fetching every row, take about 7 s. On the
+0.1 s. Print, fetching every row, takes about 7 s; Export, fetching
+only their words (2.0.7), 5 s the first time on one worker (it was 10 s)
+and under half a second after, and the page is 3.8 MB, its box grid
+fetched when shown. On the
 mouse sheet (2,400 living mice) a page turn, search or sort takes under
 a second, however many pages have been turned: before 2.0.2 each one
 turned left its rows in the table and the next search took 3–5 s.

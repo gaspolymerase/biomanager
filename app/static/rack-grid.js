@@ -70,9 +70,42 @@
     button.remove();
   }
 
+  /* A grid whose payload is not in the page (data-rack-src: an inventory's
+     box grid, every tile carrying its item's dialog) asks for it the first
+     time its panel is shown, then draws as any other. */
+  function setupLater(root) {
+    const panel = root.closest('[data-layout-panel]');
+    const status = root.querySelector('[data-rack-status]');
+    let asked = false;
+    const load = async () => {
+      if (asked) return;
+      asked = true;
+      if (status) status.textContent = t('Loading…');
+      try {
+        const response = await fetch(root.dataset.rackSrc, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(t('The server answered %(status)s.', { status: response.status }));
+        const node = document.createElement('script');
+        node.type = 'application/json';
+        node.dataset.rackData = '';
+        node.textContent = await response.text();
+        root.appendChild(node);
+        if (status) status.textContent = '';
+        setup(root);
+      } catch (error) {
+        asked = false;
+        if (status) status.textContent = t('Couldn’t load the grid: %(error)s', { error: error.message });
+      }
+    };
+    if (!panel || !panel.hidden) { load(); return; }
+    document.addEventListener('layout:change', () => { if (!panel.hidden) load(); });
+  }
+
   function setup(root) {
     const dataNode = root.querySelector('script[data-rack-data]');
-    if (!dataNode) return;
+    if (!dataNode) {
+      if (root.dataset.rackSrc) setupLater(root);
+      return;
+    }
     let data;
     try { data = JSON.parse(dataNode.textContent); } catch (e) { console.error(e); return; }
     const racks = data.racks || [];

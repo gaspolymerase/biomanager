@@ -73,7 +73,10 @@ class PlaceTests(InventoryCase):
         page = self.get_ok(self.a, f"/inventory/{self.key}")
         box = one("select name from inventory_racks where id=?", self.box)
         self.assertIn(f'<option value="{self.box}" selected>{self.cabinet} › {box}</option>', page)
-        grid = json.loads(re.search(r'data-rack-data>(.*?)</script>', page, re.S).group(1))
+        # The grid's tiles come when it is first shown, from its own address.
+        self.assertNotIn("data-rack-data>", page)
+        src = re.search(r'data-rack-src="([^"]+)"', page).group(1)
+        grid = self.a.get(src.replace("&amp;", "&")).get_json()
         racks = {r["id"]: r for r in grid["racks"]}
         self.assertEqual(racks[self.box]["group"], self.cabinet)
         self.assertEqual(racks[self.loose]["group"], "")
