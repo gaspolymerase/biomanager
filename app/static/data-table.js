@@ -35,7 +35,7 @@
  * A sheet the server pages (data-dt-rows-url on the card) draws only its
  * first rows; each other row comes as an entry in
  * <script type="application/json" data-dt-stubs>: {id, e: its element id,
- * d: its data-*, k: each sortable cell's value, s: its search text}. It
+ * f: its row form, d: its data-*, k: each sortable cell's value, s: its search text}. It
  * stands in the sheet as an empty <tr> (a stub) until its page is shown,
  * or the sheet is exported or printed; its rows then come from
  * <rows-url>?ids=…, {rows: "<tr>…", forms: "<form>…"}, the forms going
@@ -124,7 +124,7 @@
     tr.dataset.id = String(entry.id);
     if (entry.e) tr.id = entry.e;
     Object.entries(entry.d || {}).forEach(([key, value]) => { tr.dataset[key] = value; });
-    tr._stub = { k: entry.k || {}, s: entry.s || '' };
+    tr._stub = { k: entry.k || {}, s: entry.s || '', form: entry.f || '' };
     return tr;
   }
   const ROWS_AT_ONCE = 500;
@@ -360,7 +360,7 @@
       // them, whether or not the form is on the page yet (row-forms.js).
       // A cell drawn as text names its form in data-form; a row the server
       // pages and has not drawn, in data-row-form.
-      const byForm = () => this.rows.find((tr) => tr.dataset.rowForm === id
+      const byForm = () => this.rows.find((tr) => tr.dataset.rowForm === id || (tr._stub && tr._stub.form === id)
         || tr.querySelector(`[form="${CSS.escape(id)}"], [data-form="${CSS.escape(id)}"]`));
       // A row not shown yet is off the page (_parkLater): look in the rows.
       const inRows = () => this.rows.find((tr) => tr.id === id || tr.querySelector(`[id="${CSS.escape(id)}"]`));

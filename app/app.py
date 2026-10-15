@@ -153,6 +153,7 @@ init_database()
 from .organism_routes import bp as organism_bp  # noqa: E402
 from .inventory_routes import bp as inventory_bp  # noqa: E402
 from . import inventory_routes  # noqa: E402  (its paging limits, shared by the mouse sheet)
+from . import sheet_paging  # noqa: E402
 from .stock_routes import bp as stocks_bp  # noqa: E402
 from .labels import bp as labels_bp  # noqa: E402
 from .admin_racks import bp as admin_racks_bp  # noqa: E402
@@ -1728,7 +1729,8 @@ def cage_sheet_row(cage) -> dict:
 RECENT_DAYS = 90   # ended mice, empty cages and old litters shown without "Show all"
 
 
-def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False) -> dict[str, object]:
+def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False,
+                   only: set[int] | None = None) -> dict[str, object]:
     """Build the colony page context.
 
     `scope` filters which slice of the colony is listed — your own animals,
@@ -1740,6 +1742,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
     loaded in a few queries rather than one per row. A colony keeps every
     mouse it ever had, so the Mice, Cages and Litters tabs show the living
     and what ended in the last RECENT_DAYS days; `show_ended` shows it all.
+    `only`: the litters to draw, by id (a long litter sheet's rows, fetched
+    as they are shown: app/sheet_paging.py).
     """
     from sqlalchemy.orm import selectinload
     me = g.user.username if g.user else ""
@@ -1807,6 +1811,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                            | LitterRecord.id.in_(with_living))
                 hidden_litters = count_of(select(func.count(LitterRecord.id)).where(~visible))
                 litter_query = litter_query.where(visible)
+            if only is not None:
+                litter_query = litter_query.where(LitterRecord.id.in_(sorted(only)))
             # L-2 before L-10: by number, not letter by letter.
             litters = sorted(db_session.scalars(litter_query).all(), key=lambda l: positions.place_order(l.litter_id or ""))
         strains = db_session.scalars(select(StrainRecord).order_by(StrainRecord.strain_name)).all()
@@ -3001,8 +3007,25 @@ def colony():
         # An unknown or stale tab name lands on the mouse sheet rather than
         # on whichever tab happens to be the template's fallback.
         active_view = "mice"
+    html = render_template("colony.html", **_colony_page_context(active_view))
+    # A long litter sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
+    return sheet_paging.page(html, "litters-v2", url_for("colony_litter_rows")) if active_view == "litters" else html
+
+
+@app.route("/colony/litters/rows")
+@login_required
+def colony_litter_rows():
+    """Rows of a long litter sheet by id (?ids=…, with the page's own
+    arguments), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    keep = set(ids)
+    context = _colony_page_context("litters", only=keep)
+    return sheet_paging.answer(render_template("colony.html", **context), "litters-v2", ids, request)
+
+
+def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict:
     scope = access.resolve_scope(request.args.get("scope"))
-    context = colony_context(active_view, scope, show_ended=request.args.get("ended") == "all")
+    context = colony_context(active_view, scope, show_ended=request.args.get("ended") == "all", only=only)
     context["scope"] = scope
     context["scopes"] = access.scopes_for()
     context["scope_hints"] = access.SCOPE_HINTS
@@ -3022,7 +3045,7 @@ def colony():
         context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
         context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
         context["mouse_rows_url"] = url_for("colony_mouse_rows")
-    return render_template("colony.html", **context)
+    return context
 
 
 def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:
@@ -3049,7 +3072,7 @@ def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:
         value = text(row["attrs"].get(fd["key"], ""))
         if value and fd.get("type") in ("select", "multiselect"):
             words.append(i18n.translate_value(value))
-    return {"id": row["id"], "d": data, "k": {k: v for k, v in cells.items() if v},
+    return {"id": row["id"], "f": f"mouse-update-{row['id']}", "d": data, "k": {k: v for k, v in cells.items() if v},
             "s": " ".join(w for w in words if w).lower()}
 
 
@@ -10374,7 +10397,21 @@ def zebrafish():
         return redirect(url_for("zebrafish", view="tanks", mode=ZEBRAFISH_VIEW_ALIASES[view]))
     if view not in ZEBRAFISH_VIEWS:
         view = "tanks"
-    return render_template("zebrafish.html", **_zebrafish_context(view))
+    html = render_template("zebrafish.html", **_zebrafish_context(view))
+    # A long tank sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
+    return sheet_paging.page(html, "zf-tanks-v2", url_for("zebrafish_tank_rows")) if view == "tanks" else html
+
+
+@app.route("/zebrafish/tanks/rows")
+@login_required
+def zebrafish_tank_rows():
+    """Rows of a long tank sheet by id (?ids=…, with the page's own
+    arguments), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    keep = set(ids)
+    context = _zebrafish_context("tanks")
+    context["tank_rows"] = [tr for tr in context["tank_rows"] if tr["row"].id in keep]
+    return sheet_paging.answer(render_template("zebrafish.html", **context), "zf-tanks-v2", ids, request)
 
 
 def zebrafish_home_summary() -> dict:

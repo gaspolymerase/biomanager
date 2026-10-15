@@ -765,11 +765,12 @@ database has a name of its own (one another database has is refused), so
       more than 90 days ago wait behind <b>Show them</b> at the top of
       the sheet, and are still found by search and in every export. A
       sheet of a thousand rows opens in two or three seconds: the browser
-      draws the page you see first, and the rest as you turn to it. An
-      inventory of more than 500 entries is paged by the server: it opens
-      with its first page and fetches each other page as you turn to it,
-      while search, sorting, the chips and the count still cover every
-      entry (<b>Print</b> fetches every row first). In
+      draws the page you see first, and the rest as you turn to it. A
+      sheet of more than 500 entries (an inventory, the mice, litters, fish
+      tanks, vials) is paged by the server: it opens with its first page
+      and fetches each other page as you turn to it, while search, sorting,
+      the chips and the count still cover every entry (<b>Print</b> fetches
+      every row first). In
       Chrome, Edge, the Windows app and on Android a sheet's cells are drawn
       as text and become boxes and menus when you click, tap or Tab to them,
       which opens the sheet up to a third sooner.

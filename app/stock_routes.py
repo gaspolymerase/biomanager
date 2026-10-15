@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 
 from . import access, audit, database_keys, i18n, positions
 from . import groups as project_groups
+from . import sheet_paging
 from . import stock_service as svc
 from . import stocks as presets
 from .db import SessionLocal
@@ -355,6 +356,21 @@ def rack_payload(mv, rack: StockRack) -> dict:
 
 @bp.route("/<key>")
 def module(key: str):
+    html = _module_page(key)
+    # A long sheet of vials: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
+    return sheet_paging.page(html, f"stock-{key}-v2-", url_for("stocks.unit_rows", key=key))
+
+
+@bp.route("/<key>/units/rows")
+def unit_rows(key: str):
+    """Rows of a long sheet of vials by id (?ids=…, with the page's own
+    arguments), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    return sheet_paging.answer(_module_page(key, keep=set(ids)), f"stock-{key}-v2-", ids, request)
+
+
+def _module_page(key: str, keep: set[int] | None = None) -> str:
+    """The module's page; with `keep`, its sheet of vials draws only those."""
     from .services import current_lab_usernames
 
     view_name = request.args.get("view", "units")
@@ -384,6 +400,8 @@ def module(key: str):
         me = g.user.username
         rows = []
         for u in units:
+            if keep is not None and u.id not in keep:
+                continue
             nxt = _next_due(mv, u, today) if u.active else None
             rows.append({"unit": u, "code": mv.code(u), "editable": can_edit(u), "mine": u.owner == me,
                          "position": svc.position_label(u), "temp": svc.unit_temperature(mv, u),
