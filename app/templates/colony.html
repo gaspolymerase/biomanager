@@ -1060,6 +1060,8 @@
               </tr>
             </thead>
             <tbody>
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
               {# One link made for all the pups: url_for for each was most of the tab's time. #}
               {% set pup_url = url_for('colony', view='mice', scope='all') ~ '&q=' %}
               {% for litter in litter_rows %}
@@ -1102,6 +1104,7 @@
               {% else %}
                 <tr><td class="dt-empty" colspan="9">{{ _('No litters yet. Use <strong>New litter</strong>, or record a litter from a breeding cage’s card.') }}</td></tr>
               {% endfor %}
+              {% endfilter %}
             </tbody>
           </table>
         </div>
@@ -1381,6 +1384,8 @@
               </tr>
             </thead>
             <tbody>
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
               {% for strain in strain_rows %}
                 {% set f = 'strain-update-' ~ strain.id %}
                 {% set locked = not strain.editable %}
@@ -1410,6 +1415,7 @@
               {% else %}
                 <tr><td class="dt-empty" colspan="6">{{ _('No strains yet. Use <strong>New strain</strong> to start the list.') }}</td></tr>
               {% endfor %}
+              {% endfilter %}
             </tbody>
           </table>
         </div>
