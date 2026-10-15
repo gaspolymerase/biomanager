@@ -285,7 +285,7 @@
     if (!cages.length) { main.innerHTML = '<p class="empty">' + esc(t("No cages with mice in this copy.")) + "</p>"; return; }
     var groups = {};
     cages.forEach(function (c) { var k = rackName(c.rack) || t("Not in a rack"); (groups[k] = groups[k] || []).push(c); });
-    main.innerHTML = Object.keys(groups).sort().map(function (k) {
+    main.innerHTML = Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); }).map(function (k) {
       return "<h3>" + esc(k) + '</h3><div class="list">' + groups[k].map(cageItem).join("") + "</div>";
     }).join("");
   }

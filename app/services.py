@@ -20,6 +20,7 @@ from .db import BASE_DIR, Base, SessionLocal, engine
 from .i18n import gettext
 from .integrity import ensure_integrity
 from .paths import uploads_dir
+from .positions import natural, natural_sorted, place_order
 from . import custom_fields
 from .models import (
     AnimalRecord,
@@ -125,16 +126,17 @@ def init_database() -> None:
             lab.start_empty(session)
             session.commit()
     # Nothing is numbered for devices (app/sync_clock.py) until Alembic has
-    # given the records their sync_version: the steps before it save records.
-    from . import sync_clock
-    sync_clock.enabled = False
+    # given the records their sync_version, nor a cage placed_at stamped:
+    # the steps before it save records.
+    from . import models, sync_clock
+    sync_clock.enabled = models.stamp_placements = False
     ensure_schema_updates()
     rebuild_samples_table()
     ensure_integrity()  # ids never reused, foreign keys enforced (app/integrity.py)
     migrate_cage_locations()
     backfill_cage_owners()
     upgrade.migrate(engine, the_plan)
-    sync_clock.enabled = True
+    sync_clock.enabled = models.stamp_placements = True
     warn_if_database_is_synced()
     # A lab server's backup service locks each backup with the lab's key
     # (deploy/compose.yaml: the labkey volume; app/lab_key.py).
@@ -830,7 +832,7 @@ def migrate_cage_locations() -> int:
 
 def mouse_racks(session) -> list:
     from .models import MouseRack
-    return list(session.scalars(select(MouseRack).order_by(MouseRack.position, MouseRack.name)))
+    return sorted(session.scalars(select(MouseRack)), key=lambda r: (r.position or 0, place_order(r.name)))
 
 
 def get_or_create_cage(session, cage_code: str) -> CageRecord:
@@ -1000,6 +1002,38 @@ def cage_is_active(cage: CageRecord) -> bool:
     return any(mouse_is_active(mouse) for mouse in cage.mice)
 
 
+# A place in a rack may hold more than one cage: a cage is often set up in a
+# place before the one there is ended. The rack shows one of them, and marks
+# the place with "!" while two or more there are active.
+def placed_when(cage: CageRecord) -> tuple:
+    """The later of two cages in one place sorts last: when it was put
+    there (placed_at), else, for a cage placed before 2.0.8, when it was
+    made; then the later record."""
+    return (cage.placed_at or cage.created_at or datetime.min, cage.id or 0)
+
+
+def slot_order(cages) -> list[CageRecord]:
+    """The cages of one place in the order the rack lists them: the one it
+    shows first. That is the latest placed of those with living mice, or,
+    when none has any, the latest placed."""
+    return sorted(cages, key=lambda c: (cage_is_active(c), placed_when(c)), reverse=True)
+
+
+def slot_cages(cages) -> dict[tuple[int, int, int], list[CageRecord]]:
+    """Placed cages by their place (rack id, row, col), each place's in
+    slot_order."""
+    places: dict[tuple[int, int, int], list[CageRecord]] = defaultdict(list)
+    for cage in cages:
+        if cage.rack_id_fk and cage.rack_row and cage.rack_col:
+            places[(cage.rack_id_fk, cage.rack_row, cage.rack_col)].append(cage)
+    return {place: slot_order(here) for place, here in places.items()}
+
+
+def crowded(cages) -> bool:
+    """Whether a place's cages earn its "!": two or more are active."""
+    return sum(1 for c in cages if cage_is_active(c)) > 1
+
+
 # Weaning at P21 and genotyping at P28 are the defaults; the lab may choose
 # other days (Lab setup, Settings). The home dashboard, cage cards and the
 # calendar all read weaning_offset and genotyping_offset: the cage, the
@@ -1158,8 +1192,8 @@ def weaning_due(session, start: date, end: date) -> list[dict]:
         items.append({"born": litter.date_of_birth, "due": litter.date_of_birth + timedelta(days=wean_days),
                       "cage": cage, "litter": litter, "pups": litter.total_pups or len(living),
                       "cage_litter": None, "several": False})
-    items.sort(key=lambda item: (item["due"], item["litter"].litter_id if item["litter"] else "",
-                                 item["cage"].cage_id if item["cage"] else ""))
+    items.sort(key=lambda item: (item["due"], natural(item["litter"].litter_id if item["litter"] else ""),
+                                 natural(item["cage"].cage_id if item["cage"] else "")))
     return items
 
 
@@ -1358,15 +1392,14 @@ def breeder_mice(session, current_username: str | None, current_role: str | None
     # The lab's breeding stock to pick from: Breeder cages, not the
     # mating (Breeding) cages, whose mice are in use.
     query = (select(CageRecord).where(is_breeder)
-             .options(selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack))
-             .order_by(CageRecord.cage_id))
+             .options(selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack)))
     if recent is not None:
         # Only cages that may be shown are loaded; the rule itself is below.
         query = query.where(
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(
                 MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
             | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
-    cages = session.scalars(query).all()
+    cages = natural_sorted(session.scalars(query).all(), key=lambda c: c.cage_id)
     left_out = {"cages": 0, "mice": 0}
     if recent is not None:
         cages = [c for c in cages if cage_is_active(c) or c.created_at and c.created_at.date() >= recent
@@ -1919,14 +1952,14 @@ def sample_sources(session, refs: bool = True) -> list[dict]:
     }]
     fish_refs = []
     if refs:
-        fish_refs = list(session.scalars(select(TankRecord.tank_id).order_by(TankRecord.tank_id)))
-        fish_refs += [i for i in session.scalars(select(FishRecord.individual_id).order_by(FishRecord.individual_id)) if i]
+        fish_refs = natural_sorted(session.scalars(select(TankRecord.tank_id)))
+        fish_refs += natural_sorted(i for i in session.scalars(select(FishRecord.individual_id)) if i)
     sources.append({"kind": "fish", "label": "Fish", "refs": fish_refs})
     for module in organisms.list_modules(session):
         found = []
         for model in (OrgLine, OrgHousing, Organism) if refs else ():
-            found += [c for c in session.scalars(
-                select(model.code).where(model.module_id_fk == module.id).order_by(model.code)) if c]
+            found += natural_sorted(c for c in session.scalars(
+                select(model.code).where(model.module_id_fk == module.id)) if c)
         sources.append({"kind": f"organism:{module.key}", "label": module.label, "refs": found})
     sources.append({"kind": "other", "label": "Other", "refs": []})
     return sources

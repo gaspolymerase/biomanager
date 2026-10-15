@@ -14,6 +14,12 @@
  * A rack's optional "group" (an incubator, a room) fills a first picker,
  * [data-rack-group], that narrows the rack picker to the racks inside it.
  *
+ * A position may hold more than one item (mouse cages: a cage set up there
+ * before the old one is ended). The cell shows one: the latest placed
+ * ("placed", an ISO time) of those that are "live", else the latest. With
+ * two or more live there, a "!" on the cell lists them all; each opens,
+ * drags and moves like any tile.
+ *
  * Rows and columns are 1-based in the payload. A page whose storage is
  * 0-based (fish tanks) sets data-index-base="0" and this script converts on
  * the way out.
@@ -143,7 +149,7 @@
     const groupSelect = root.querySelector('[data-rack-group]');
     const NO_GROUP = '\u0000';
     const groupOf = (rack) => (rack && rack.group) || NO_GROUP;
-    const groups = [...new Set(racks.map(groupOf))].sort((a, b) => (a === NO_GROUP) - (b === NO_GROUP) || a.localeCompare(b));
+    const groups = [...new Set(racks.map(groupOf))].sort((a, b) => (a === NO_GROUP) - (b === NO_GROUP) || a.localeCompare(b, undefined, { numeric: true }));
     if (groupSelect) {
       groups.forEach((name) => {
         const option = document.createElement('option');
@@ -189,6 +195,15 @@
     const placedIn = (rack, item) => item.rack === rack.id && item.row >= 1 && item.col >= 1
       && item.row <= rack.rows && item.col <= rack.cols;
     const isPlacedAnywhere = (item) => racks.some((rack) => placedIn(rack, item));
+    // Everything at one position, the one the cell shows first: live before
+    // not, then the latest placed (mirrors services.slot_order).
+    const shownFirst = (a, b) => (!!b.live - !!a.live) || String(b.placed || '').localeCompare(String(a.placed || ''))
+      || b.id - a.id;
+    const itemsAt = (rack, r, c, except) => items.filter((i) => i !== except && i.rack === rack.id
+      && i.row === r && i.col === c).sort(shownFirst);
+    // A move puts an item there now: later than anything placed before.
+    let moves = 0;
+    const justNow = () => `~${String(moves += 1).padStart(6, '0')}`;
 
     // `where`: the cell's own name ("A1"), shown on a placed tile so a long
     // name doesn't hide which position it is.
@@ -225,6 +240,80 @@
       return el;
     }
 
+    /* The "!" on a position holding two or more live items: hover or tap it
+       for all of them, each a tile that opens, drags or (in Move) is picked
+       like the one shown. The list is a popover, so the grid's scrolling
+       box doesn't cut it off. */
+    const canPop = typeof HTMLElement.prototype.showPopover === 'function';
+    const stackOpen = (list) => (canPop ? list.matches(':popover-open') : !list.hidden);
+    const closeStack = (list) => {
+      if (!stackOpen(list)) return;
+      if (canPop) list.hidePopover(); else list.hidden = true;
+    };
+    document.addEventListener('pointerdown', (event) => {
+      if (event.target.closest && event.target.closest('.rack-stack, .rack-stack-toggle')) return;
+      root.querySelectorAll('.rack-stack').forEach(closeStack);
+    });
+    function stack(rack, r, c, all) {
+      const where = whereText(rack, r, c);
+      const live = all.filter((i) => i.live).length;
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'rack-stack-toggle';
+      toggle.textContent = '!';
+      toggle.dataset.ids = all.map((i) => i.id).join(' ');
+      const said = t('%(where)s holds %(n)s cages with living mice. The rack shows the latest; open the others to move or end them.', { where, n: live });
+      toggle.title = said;
+      toggle.setAttribute('aria-label', said);
+      const list = document.createElement('div');
+      list.className = 'rack-stack';
+      const head = document.createElement('p');
+      head.className = 'rack-stack-head';
+      head.textContent = said;
+      list.appendChild(head);
+      all.forEach((item) => list.appendChild(tile(item)));
+      list.addEventListener('click', (event) => { if (event.target.closest('.rack-tile') && !moving) hide(); });
+      // Manual: a tap on the "!" toggles it, a tap elsewhere closes it (below).
+      if (canPop) list.popover = 'manual';
+      else list.hidden = true;
+      let timer = null;
+      // Opened by hovering, it closes when the mouse leaves; a click pins it.
+      let hovered = false;
+      const open = () => {
+        clearTimeout(timer);
+        if (stackOpen(list)) return;
+        root.querySelectorAll('.rack-stack').forEach(closeStack);
+        if (canPop) list.showPopover(); else list.hidden = false;
+        // Under the cell, so the cage shown stays in view (above it near the bottom).
+        const box = (toggle.closest('.rack-cell') || toggle).getBoundingClientRect();
+        const left = Math.max(8, Math.min(box.left, window.innerWidth - list.offsetWidth - 8));
+        const below = box.bottom + 4 + list.offsetHeight <= window.innerHeight;
+        list.style.left = `${left}px`;
+        list.style.top = `${below ? box.bottom + 4 : Math.max(8, box.top - 4 - list.offsetHeight)}px`;
+      };
+      function hide() {
+        clearTimeout(timer);
+        hovered = false;
+        closeStack(list);
+      }
+      const later = () => { clearTimeout(timer); if (hovered) timer = setTimeout(hide, 250); };
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (hovered) { hovered = false; clearTimeout(timer); return; }
+        if (stackOpen(list)) hide(); else open();
+      });
+      // Hovering opens it; a mouse leaving both closes it. A touch screen taps.
+      toggle.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'mouse' && !stackOpen(list)) { open(); hovered = true; }
+      });
+      toggle.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') later(); });
+      list.addEventListener('pointerenter', () => clearTimeout(timer));
+      list.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') later(); });
+      const holder = document.createDocumentFragment();
+      holder.append(toggle, list);
+      return holder;
+    }
+
     // The position alone ("D7"); the rack is a separate field.
     const positionText = (rack, row, col) => cellLabel(row, col, rack.naming, rack.cols);
     const whereText = (rack, row, col) => `${rack.name} · ${positionText(rack, row, col)}`;
@@ -256,7 +345,7 @@
       if (!rack) {
         grid.innerHTML = `<div class="rack-empty">${escapeHtml(root.dataset.emptyText || t('Add a rack to start placing.'))}</div>`;
       } else {
-        const occupied = items.filter((item) => placedIn(rack, item)).length;
+        const occupied = new Set(items.filter((item) => placedIn(rack, item)).map((i) => `${i.row}:${i.col}`)).size;
         if (meta) {
           // A rack may carry a note for this line, e.g. a fly rack's last flip.
           const note = rack.note && rack.note.text
@@ -281,9 +370,11 @@
             cell.dataset.row = r;
             cell.dataset.col = c;
             cell.title = whereText(rack, r, c);
-            const here = items.find((item) => item.rack === rack.id && item.row === r && item.col === c);
+            const all = itemsAt(rack, r, c);
+            const here = all[0];
             if (here) {
               cell.appendChild(tile(here, positionText(rack, r, c)));
+              if (all.filter((i) => i.live).length > 1) cell.appendChild(stack(rack, r, c, all));
             } else {
               // An empty cell shows its own name, so what the sheet calls D7
               // is visibly the D7 here.
@@ -369,6 +460,8 @@
       moveTo(picked, null, null, null);
     });
     root.addEventListener('keydown', (event) => {
+      const lists = [...root.querySelectorAll('.rack-stack')].filter(stackOpen);
+      if (event.key === 'Escape' && lists.length) { event.stopPropagation(); lists.forEach(closeStack); return; }
       if (event.key === 'Escape' && moving) { event.stopPropagation(); setMoving(false); }
     });
 
@@ -391,7 +484,8 @@
       if (!item) return;
       if (rack && item.rack === rack.id && item.row === r && item.col === c) return;
       const previous = { rack: item.rack, row: item.row, col: item.col };
-      const occupant = rack ? items.find((i) => i !== item && i.rack === rack.id && i.row === r && i.col === c) : null;
+      // A swap is with the one the cell shows; any others there stay.
+      const occupant = rack ? itemsAt(rack, r, c, item)[0] || null : null;
       if (occupant && occupant.locked) {
         say('error', occupant.owner
           ? t('%(where)s holds %(item)s (%(owner)s\'s), which you may not move. Pick an empty position.',
@@ -412,8 +506,8 @@
         const result = await response.json().catch(() => ({}));
         if (!response.ok || result.ok === false) throw new Error(result.error || t('The server answered %(status)s.', { status: response.status }));
         // Mirror the server: the moved item takes the cell, an occupant swaps.
-        Object.assign(item, rack ? { rack: rack.id, row: r, col: c } : { rack: null, row: null, col: null });
-        if (occupant) Object.assign(occupant, previous);
+        Object.assign(item, rack ? { rack: rack.id, row: r, col: c, placed: justNow() } : { rack: null, row: null, col: null });
+        if (occupant) Object.assign(occupant, previous, { placed: justNow() });
         syncEditPayload(item);
         if (occupant) syncEditPayload(occupant);
         // Let the page update anything else showing these records.
@@ -459,11 +553,16 @@
     function applySearch() {
       const q = search ? search.value.trim().toLowerCase() : '';
       const byId = new Map(items.map((i) => [String(i.id), i]));   // not a search of the list for every tile
+      const hit = (item) => Boolean(q) && Boolean(item)
+        && (item.search || `${item.label} ${item.sub || ''}`).toLowerCase().includes(q);
       root.querySelectorAll('.rack-tile').forEach((el) => {
-        const item = byId.get(el.dataset.id);
-        const hay = item ? (item.search || `${item.label} ${item.sub || ''}`).toLowerCase() : '';
-        el.classList.toggle('is-dimmed', Boolean(q) && !hay.includes(q));
-        el.classList.toggle('is-match', Boolean(q) && hay.includes(q));
+        const found = hit(byId.get(el.dataset.id));
+        el.classList.toggle('is-dimmed', Boolean(q) && !found);
+        el.classList.toggle('is-match', found);
+      });
+      // A match hidden under a position's "!" lights the "!".
+      root.querySelectorAll('.rack-stack-toggle').forEach((el) => {
+        el.classList.toggle('is-match', el.dataset.ids.split(' ').some((id) => hit(byId.get(id))));
       });
     }
 

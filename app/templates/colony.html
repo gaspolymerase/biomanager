@@ -260,17 +260,25 @@
 
           <form method="post" action="{{ url_for('bulk_update_mice') }}"
                 class="selbar-group" data-selection-form>
-            <select name="field" aria-label="{{ _('Field to set') }}">
-              <option value="owner">{{ _('Owner') }}</option>
-              <option value="status">{{ _('Status') }}</option>
-              <option value="genotype">{{ _('Transgenes (“Ai14; Cre”)') }}</option>
+            {# The value box follows the field chosen (static/selection-bar.js):
+               a date picker for a date, the field's own choices offered. #}
+            <select name="field" aria-label="{{ _('Field to set') }}" data-bulk-field>
+              <option value="owner" data-options="{{ usernames|join('\n') }}">{{ _('Owner') }}</option>
+              <option value="status" data-options="{{ sheet.status_choices|join('\n') }}">{{ _('Status') }}</option>
+              <option value="strain" data-options="{{ dropdowns.get('strain', [])|join('\n') }}">{{ _('Strain') }}</option>
+              <option value="gender" data-options="{{ sheet.gender_choices|join('\n') }}">{{ _('Sex') }}</option>
+              <option value="genotype" data-options="{{ strain_rows|map(attribute='strain_name')|join('\n') }}">{{ _('Transgenes (“Ai14; Cre”)') }}</option>
               <option value="cage_id">{{ _('Cage') }}</option>
+              <option value="litter_id">{{ _('Litter') }}</option>
+              <option value="date_of_birth" data-type="date">{{ _('Date of birth') }}</option>
+              <option value="date_of_death" data-type="date">{{ _('Date of death') }}</option>
               <option value="note">{{ _('Note') }}</option>
-              <option value="date_of_death">{{ _('Date of death') }}</option>
-              {% for fd in custom_columns_all %}<option value="attr_{{ fd.key }}">{{ fd.label|tr }}</option>{% endfor %}
+              {% for fd in custom_columns_all %}<option value="attr_{{ fd.key }}" data-type="{{ fd.type }}"
+                {%- if fd.type == 'user' %} data-options="{{ usernames|join('\n') }}"{% elif fd.options %} data-options="{{ fd.options|join('\n') }}"{% endif %}>{{ fd.label|tr }}</option>{% endfor %}
             </select>
-            <input name="value" placeholder="{{ _('new value') }}" list="owner-name-options"
-                   aria-label="{{ _('New value') }}">
+            <input name="value" placeholder="{{ _('new value') }}" list="mouse-bulk-value-options"
+                   aria-label="{{ _('New value') }}" data-bulk-value>
+            <datalist id="mouse-bulk-value-options"></datalist>
             <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
           </form>
 

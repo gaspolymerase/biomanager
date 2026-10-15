@@ -156,6 +156,26 @@ _DASHES = str.maketrans({"−": "-", "‒": "-", "–": "-", "—": "-", " ": "
 _PLACE_PARTS = re.compile(r"(?:^|(?<=\s))-\d+(?:\.\d+)?|\d+(?:\.\d+)?|\D+")
 
 
+_DIGIT_RUNS = re.compile(r"([0-9]+)")
+
+
+def natural(value) -> tuple:
+    """A sort key for what people number (cages, tanks, racks, codes):
+    digits as numbers, the rest without case, so 2 comes before 10, A2
+    before A10 and C-99 before C-104 (as text, 10 and 101 came before 2)."""
+    text = str(value if value is not None else "").strip().casefold()
+    parts = _DIGIT_RUNS.split(text)
+    return tuple((0, int(p), "") if i % 2 else (1, 0, p) for i, p in enumerate(parts) if p), text
+
+
+def natural_sorted(rows, key=lambda row: row) -> list:
+    """`rows` in natural order of `key` (a name, or a tuple of them)."""
+    def order(row):
+        value = key(row)
+        return tuple(map(natural, value)) if isinstance(value, tuple) else natural(value)
+    return sorted(rows, key=order)
+
+
 def place_order(*names: str) -> tuple:
     """A sort key for freezers, boxes and racks by their names: numbers as
     numbers, a leading minus as a sign, whichever dash was typed. "−80 A",

@@ -44,6 +44,21 @@ REPLACEABLE = ("pending", "sent_back", "invalid")
 AREAS = {"mice": "Mouse colony", "zebrafish": "Zebrafish", "stocks": "Flies and worms",
          "organisms": "Other organisms", "experiments": "Experiments", "notebook": "Notebook",
          "inventory": "Inventories", "plasmids": "Plasmids", "calendar": "Calendar"}
+# Each change's icon on Proposed changes: by its action, else by its area;
+# and the tint of its tile, by its area.
+ACTION_ICONS = {"cage_new": "cage", "cage_change": "cage", "wean": "cage", "litter_born": "litter",
+                "litter_genotyping": "litter", "note_add": "note", "tank_new": "tank", "tank_change": "tank",
+                "mating_set_up": "tank", "mating_returned": "tank", "water_reading": "droplet",
+                "frozen_new": "snowflake", "frozen_change": "snowflake", "org_reading": "temperature",
+                "org_genotype": "dna", "org_due_done": "list-check", "protocol_folder_new": "protocol",
+                "protocol_file": "protocol", "order_received": "cart", "sample_from_animal": "microtube",
+                "primer_new": "dna", "task_done": "list-check", "equipment_booking_new": "calendar-clock"}
+AREA_ICONS = {"mice": "mouse", "zebrafish": "fish", "stocks": "culture-vial", "organisms": "paw",
+              "experiments": "flask", "notebook": "notebook", "inventory": "vials", "plasmids": "plasmid",
+              "calendar": "calendar"}
+AREA_TONES = {"mice": "animals", "zebrafish": "animals", "stocks": "animals", "organisms": "animals",
+              "experiments": "experiments", "notebook": "notebook", "inventory": "inventory",
+              "plasmids": "plasmids", "calendar": "experiments"}
 
 
 class ProposalError(ValueError):
@@ -345,13 +360,16 @@ def _card(session, p: Proposal) -> dict:
                                        if isinstance(v, list) and len(v) == 2]})
         groups.setdefault(AREAS.get(c.area, c.area or "Other"), []).append({
             "summary": c.summary or c.action, "ok": c.ok, "errors": json.loads(c.errors_json or "[]"),
+            "icon": ACTION_ICONS.get(c.action) or AREA_ICONS.get(c.area, "circle"),
+            "tone": AREA_TONES.get(c.area, "other"),
             "warnings": json.loads(c.warnings_json or "[]"), "records": records,
             "evidence": evidence_of(json.loads(c.request_json or "{}"))})
     warnings = [w for items in groups.values() for item in items for w in item["warnings"]]
     errors = [e for items in groups.values() for item in items for e in item["errors"]]
     from . import captures as lab_captures
+    captures = lab_captures.proposal_cards(session, p.owner_username, p.captures_json)
     return {"p": p, "groups": groups, "count": len(rows), "warnings": warnings, "errors": errors,
-            "captures": lab_captures.proposal_cards(session, p.owner_username, p.captures_json)}
+            "captures": captures, "photos": {cap["c"].id for cap in captures if cap["image"]}}
 
 
 def _shown(value) -> str:

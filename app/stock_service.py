@@ -198,8 +198,8 @@ def racks_of(session, module_id: int) -> list[StockRack]:
 
 
 def incubators_of(session, module_id: int) -> list[StockIncubator]:
-    return list(session.scalars(select(StockIncubator).where(StockIncubator.module_id_fk == module_id)
-                                .order_by(StockIncubator.name)))
+    return sorted(session.scalars(select(StockIncubator).where(StockIncubator.module_id_fk == module_id)),
+                  key=lambda i: positions.place_order(i.name))
 
 
 def rack_temperature(mv: ModuleView, rack: StockRack | None) -> str:

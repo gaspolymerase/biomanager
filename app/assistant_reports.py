@@ -23,7 +23,7 @@ from datetime import date, datetime, timedelta, timezone
 from flask import url_for
 from sqlalchemy import or_, select
 
-from . import custom_fields, lab
+from . import custom_fields, lab, positions
 from .assistant_compute import _base, _cage_url, _day, _mouse_url
 
 # ================================================================ the pure parts
@@ -479,7 +479,6 @@ def owner_actions() -> dict[str, str]:
 
 
 def _place(rack, row, col) -> str:
-    from . import positions
     return positions.label(row, col, rack.naming, rack.cols) if rack is not None and row and col else ""
 
 
@@ -575,8 +574,8 @@ def _handover_colony(session, who: str, due_by_ref: dict) -> dict:
                  "where": c.location_detail or c.cage_location or "", "shared": bool(c.is_shared),
                  "mice": mine, "others_mice": len(living) - len(mine), "empty": not living,
                  "due": due_by_ref.get(("cage", c.id), []), "url": _cage_url(c),
-                 "_order": (c.rack is None, c.rack.name.lower() if c.rack else "", c.rack_row or 0, c.rack_col or 0,
-                            c.cage_id)}
+                 "_order": (c.rack is None, positions.place_order(c.rack.name if c.rack else ""), c.rack_row or 0,
+                            c.rack_col or 0, positions.natural(c.cage_id))}
         cages.append(entry)
         if is_breeding_cage(c.purpose) and yours:
             breeding.append({"cage": c.cage_id, "ref": ref, "rack": entry["rack"], "position": entry["position"],
@@ -609,7 +608,7 @@ def _handover_tanks(session, who: str, due_by_ref: dict) -> list[dict]:
                     "fish": sum(f.count or 0 for f in t.fish if (f.status or "alive") == "alive"),
                     "due": due_by_ref.get(("tank", t.id), []),
                     "url": _base() + url_for("zebrafish", view="tanks") + f"#tank-{t.id}"})
-    out.sort(key=lambda t: (t["rack"] is None, (t["rack"] or "").lower(), t["tank"]))
+    out.sort(key=lambda t: (t["rack"] is None, positions.place_order(t["rack"] or ""), positions.natural(t["tank"])))
     return out
 
 
@@ -689,9 +688,9 @@ def _handover_organisms(session, who: str) -> list[dict]:
             OrgLocation.module_id_fk == module.id))}
         housing = [{"code": h.code, "ref": {"kind": "org_housing", "id": h.id}, "purpose": h.purpose or "",
                     "where": places.get(h.location_id_fk, "")}
-                   for h in session.scalars(select(OrgHousing).where(
-                       OrgHousing.module_id_fk == module.id, OrgHousing.owner == who, OrgHousing.active.is_(True))
-                       .order_by(OrgHousing.code))]
+                   for h in positions.natural_sorted(session.scalars(select(OrgHousing).where(
+                       OrgHousing.module_id_fk == module.id, OrgHousing.owner == who, OrgHousing.active.is_(True))),
+                       key=lambda h: h.code)]
         animals = session.scalar(select(func.coalesce(func.sum(Organism.count), 0)).where(
             Organism.module_id_fk == module.id, Organism.owner == who, Organism.death_on.is_(None))) or 0
         if housing or animals:

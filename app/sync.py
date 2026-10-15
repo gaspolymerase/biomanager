@@ -48,6 +48,7 @@ from sqlalchemy.orm import selectinload
 from . import access, actions, lab, sync_clock
 from .db import SessionLocal
 from .i18n import gettext
+from .positions import natural_sorted
 from .models import (AuditEntry, CageRecord, FishRack, HeldChange, LabDevice, LitterRecord, MouseRack, MouseRecord,
                      MouseWeight, StockModule, StockRack, StockUnit, SyncDeletion, SyncOp, TankRecord, TaskItem,
                      UserAccount)
@@ -186,9 +187,9 @@ def snapshot():
     today = date.today()
     with SessionLocal() as s:
         cursor = sync_clock.current(s)          # first: what changes meanwhile comes again with the next changes
-        racks = [rack_row(r) for r in s.scalars(select(MouseRack).order_by(MouseRack.position, MouseRack.name))]
-        cages = [cage_row(c, user) for c in s.scalars(select(CageRecord).options(selectinload(CageRecord.cage_litters))
-                                                      .order_by(CageRecord.cage_id))]
+        racks = [rack_row(r) for r in services.mouse_racks(s)]
+        cages = [cage_row(c, user) for c in natural_sorted(
+            s.scalars(select(CageRecord).options(selectinload(CageRecord.cage_litters))), key=lambda c: c.cage_id)]
         mice_rows = list(s.scalars(select(MouseRecord).where(
             MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= today - timedelta(days=DEAD_DAYS)))
             .order_by(MouseRecord.mouse_id)))
@@ -208,8 +209,8 @@ def snapshot():
             TaskItem.due_date.is_(None) | (TaskItem.due_date <= today + timedelta(days=TASK_DAYS)))
             .order_by(TaskItem.due_date))]
         groups = _groups(user)
-        tanks = [tank_row(t) for t in s.scalars(select(TankRecord).where(TankRecord.active.is_(True))
-                                                .order_by(TankRecord.tank_id)) if _tank_visible(t, user, groups)]
+        tanks = [tank_row(t) for t in natural_sorted(s.scalars(select(TankRecord).where(TankRecord.active.is_(True))),
+                                                     key=lambda t: t.tank_id) if _tank_visible(t, user, groups)]
         fish_racks = [{"id": r.id, "name": r.name} for r in s.scalars(select(FishRack))]
         modules = _stock_modules(s, user)
         units = [unit_row(u, modules) for u in s.scalars(select(StockUnit).where(

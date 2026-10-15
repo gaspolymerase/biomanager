@@ -651,10 +651,12 @@
           return av.localeCompare(bv, undefined, { numeric: type === 'text' }) * dir;
         }
         const aNum = parseFloat(av), bNum = parseFloat(bv);
-        if (!isNaN(aNum) && !isNaN(bNum) && av.trim() && bv.trim()) return (aNum - bNum) * dir;
+        if (!isNaN(aNum) && !isNaN(bNum) && av.trim() && bv.trim() && aNum !== bNum) return (aNum - bNum) * dir;
         // A number column with a non-number in it: numbers first.
         if (type === 'number' && isNaN(aNum) !== isNaN(bNum)) return isNaN(aNum) ? 1 : -1;
-        return av.localeCompare(bv) * dir;
+        // Anything else as text with its numbers as numbers: C-99 before
+        // C-104, A2 before A10, 1A before 1B.
+        return av.localeCompare(bv, undefined, { numeric: true }) * dir;
       });
     }
 

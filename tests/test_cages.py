@@ -142,14 +142,15 @@ class CageCreateTests(RackMixin, Case):
         self.assertSaved(self.autosave(self.m, "/colony/cages/create", {"cage_id": "", "count": "1"}))
         self.assertIsNotNone(cage_id_of(str(high + 1)))
 
-    def test_a_single_cage_at_a_taken_position_is_created_but_not_placed(self):
+    def test_a_single_cage_at_a_taken_position_is_placed_there_too(self):
+        # A cage is often set up in a place before the one there is ended.
         rack = self.make_rack(self.m)
         self.make_cage(self.m, rack_id=str(rack), position="A1")
         code = uniq("C")
         take_flashes(self.m)
         self.m.post("/colony/cages/create", data={"cage_id": code, "rack_id": str(rack), "position": "A1"})
-        self.assertIn("not placed", flash_texts(self.m, "error"))
-        self.assertIsNone(cage(cage_id_of(code))["rack_row"])
+        self.assertNotIn("not placed", flash_texts(self.m, "error"))
+        self.assertEqual((cage(cage_id_of(code))["rack_row"], cage(cage_id_of(code))["rack_col"]), (1, 1))
 
 
 class HowManyCagesTests(RackMixin, Case):
@@ -266,13 +267,12 @@ class CageUpdateTests(RackMixin, Case):
         self.assertEqual((cage(self.cage)["rack_row"], cage(self.cage)["rack_col"]), (3, 3))
         self.assertEqual((r.get_json()["row"]["values"]["position"], r.get_json()["cage"]["position"]), ("C3", "C3"))
 
-    def test_a_taken_position_is_refused(self):
+    def test_a_taken_position_takes_this_cage_too_and_the_other_stays(self):
         rack = self.make_rack(self.m)
         holder = self.make_cage(self.m, rack_id=str(rack), position="A1")
-        r = self.autosave(self.m, update_url(self.cage), {"rack_id": str(rack), "position": "A1"})
-        self.assertRefused(r)
-        self.assertIn(f"already holds cage {cage(holder)['cage_id']}", r.get_json()["error"])
-        self.assertIsNone(cage(self.cage)["rack_id_fk"])
+        self.assertSaved(self.autosave(self.m, update_url(self.cage), {"rack_id": str(rack), "position": "A1"}))
+        for each in (self.cage, holder):
+            self.assertEqual((cage(each)["rack_id_fk"], cage(each)["rack_row"], cage(each)["rack_col"]), (rack, 1, 1))
 
     def test_a_position_outside_the_rack_is_refused(self):
         rack = self.make_rack(self.m, rows_=3, cols=3)
@@ -728,6 +728,19 @@ class PlaceCageTests(RackMixin, Case):
         self.assertEqual((cage(self.cage)["rack_row"], cage(self.cage)["rack_col"]), (3, 3))
         self.assertEqual((cage(holder)["rack_row"], cage(holder)["rack_col"]), (1, 1))
 
+    def test_dropping_on_a_shared_position_swaps_with_the_one_shown(self):
+        """Two cages with mice at C3: the later one is shown, and is the one
+        that comes back to A1; the other stays at C3."""
+        older, newer = uniq("C"), uniq("C")
+        self.make_cage(self.m, cage_id=older, rack_id=str(self.rack), position="C3")
+        self.make_cage(self.m, cage_id=newer, rack_id=str(self.rack), position="C3")
+        for code in (older, newer):
+            self.make_mouse(self.m, self.member, cage=code)
+        self.assertTrue(self.place(self.m, self.cage, rack_id=str(self.rack), row="3", col="3").get_json()["ok"])
+        self.assertEqual((cage(self.cage)["rack_row"], cage(self.cage)["rack_col"]), (3, 3))
+        self.assertEqual((cage(cage_id_of(newer))["rack_row"], cage(cage_id_of(newer))["rack_col"]), (1, 1))
+        self.assertEqual((cage(cage_id_of(older))["rack_row"], cage(cage_id_of(older))["rack_col"]), (3, 3))
+
     def test_a_swap_with_a_cage_you_may_not_move_is_refused(self):
         theirs = self.make_cage(self.o, purpose="Experiments", rack_id=str(self.rack), position="B1")
         r = self.place(self.m, self.cage, rack_id=str(self.rack), row="2", col="1")
@@ -763,6 +776,93 @@ class PlaceCageTests(RackMixin, Case):
         r = self.place(self.m, theirs, rack_id=str(self.rack), row="3", col="3")
         self.assertEqual(r.status_code, 403)
         self.assertIsNone(cage(theirs)["rack_id_fk"])
+
+
+class SharedPositionTests(RackMixin, Case):
+    """More than one cage may be recorded at a position. The rack shows the
+    latest placed of those with living mice (services.slot_order) and marks
+    the position "!" while two or more there have living mice."""
+
+    def setUp(self):
+        super().setUp()
+        self.rack = self.make_rack(self.m, rows_=3, cols=3)
+
+    def at_b2(self, mice: int = 1, status: str = "experiment") -> str:
+        code = uniq("C")
+        self.make_cage(self.m, cage_id=code, purpose="Experiment", rack_id=str(self.rack), position="B2")
+        for _ in range(mice):
+            self.make_mouse(self.m, self.member, cage=code, status=status)
+        return code
+
+    def b2(self) -> tuple[list[str], bool]:
+        """B2's cages, the one shown first, and whether it has its "!"."""
+        from app.models import CageRecord
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        with SessionLocal() as s:
+            places = services.slot_cages(s.scalars(select(CageRecord).options(selectinload(CageRecord.mice))
+                                                   .where(CageRecord.rack_id_fk == self.rack)))
+            return [c.cage_id for c in places.get((self.rack, 2, 2), [])], services.crowded(places.get((self.rack, 2, 2), []))
+
+    def grid_items(self) -> dict:
+        import json
+        html = self.m.get("/colony?view=cages&scope=mine").get_data(as_text=True)
+        blob = re.search(r'<script type="application/json" data-rack-data>(.*?)</script>', html, re.S)
+        return {i["label"]: i for i in json.loads(blob.group(1))["items"]}
+
+    def test_two_cages_saved_to_one_position_from_the_sheet_and_the_form(self):
+        first = self.at_b2()
+        moved = self.make_cage(self.m, purpose="Experiment")
+        self.assertSaved(self.autosave(self.m, update_url(moved), {"rack_id": str(self.rack), "position": "B2"}))
+        made = uniq("C")
+        self.m.post("/colony/cages/create", data={"cage_id": made, "rack_id": str(self.rack), "position": "B2"})
+        self.assertEqual(count("mouse_cages", "rack_id_fk=? and rack_row=2 and rack_col=2", self.rack), 3)
+        self.assertEqual(set(self.b2()[0]), {first, cage(moved)["cage_id"], made})
+
+    def test_two_active_cages_show_the_latest_with_a_mark(self):
+        older, newer = self.at_b2(), self.at_b2()
+        self.assertEqual(self.b2(), ([newer, older], True))
+        items = self.grid_items()
+        # The grid draws it from each cage's live and placed (rack-grid.js).
+        self.assertTrue(items[older]["live"] and items[newer]["live"])
+        self.assertGreater(items[newer]["placed"], items[older]["placed"])
+        self.assertEqual([(items[c]["row"], items[c]["col"]) for c in (older, newer)], [(2, 2), (2, 2)])
+
+    def test_the_latest_is_the_last_put_there_not_the_last_made(self):
+        older, newer = self.at_b2(), self.at_b2()
+        self.autosave(self.m, update_url(cage_id_of(older)), {"rack_id": str(self.rack), "position": "A1"})
+        self.autosave(self.m, update_url(cage_id_of(older)), {"rack_id": str(self.rack), "position": "B2"})
+        self.assertEqual(self.b2(), ([older, newer], True))
+
+    def test_no_mark_when_the_older_cage_is_ended_or_empty(self):
+        ended = self.at_b2(status="sac")
+        empty = self.at_b2(mice=0)
+        live = self.at_b2()
+        self.assertEqual(self.b2(), ([live, empty, ended], False))
+        self.assertFalse(self.grid_items()[ended]["live"])
+
+    def test_a_cage_in_use_shows_over_a_later_empty_one(self):
+        # A cage set up at the place before the old one is ended: it is
+        # empty until its mice go in, so the old one is still shown.
+        live = self.at_b2()
+        new = self.at_b2(mice=0)
+        self.assertEqual(self.b2(), ([live, new], False))
+
+    def test_placing_beside_an_active_cage_warns(self):
+        live = self.at_b2()
+        moved = self.make_cage(self.m, purpose="Experiment")
+        take_flashes(self.m)
+        self.m.post(update_url(moved), data={"rack_id": str(self.rack), "position": "B2"})
+        said = flash_texts(self.m, "warning")
+        self.assertIn(f"also holds cage {live} (active)", said)
+        self.assertIn("mark the position with !", said)
+
+    def test_placing_beside_an_ended_cage_says_nothing(self):
+        self.at_b2(status="sac")
+        moved = self.make_cage(self.m, purpose="Experiment")
+        take_flashes(self.m)
+        self.m.post(update_url(moved), data={"rack_id": str(self.rack), "position": "B2"})
+        self.assertEqual(flash_texts(self.m, "warning"), "")
 
 
 if __name__ == "__main__":

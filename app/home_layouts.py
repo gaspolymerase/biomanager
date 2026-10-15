@@ -26,7 +26,7 @@ from . import i18n, inventory_service, organism_service, positions, stock_servic
 from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
-from .services import cage_litter_json, is_breeding_cage, weaning_offset, weaning_due, weaning_title
+from .services import cage_litter_json, crowded, is_breeding_cage, slot_cages, weaning_offset, weaning_due, weaning_title
 
 LAYOUTS = {
     "classic": ("Classic", "columns"),
@@ -348,11 +348,11 @@ def _cage_loc(cage: CageRecord | None) -> dict | None:
         pos = positions.label(cage.rack_row, cage.rack_col, rack.naming, rack.cols)
         return {"kind": "mouse", "rack_id": rack.id, "row": cage.rack_row, "col": cage.rack_col,
                 "text": gettext("cage %(cage)s · %(rack)s · %(pos)s", cage=cage.cage_id, rack=rack.name, pos=pos),
-                "order": (0, rack.position or 0, rack.name, cage.rack_row, cage.rack_col)}
+                "order": (0, rack.position or 0, positions.place_order(rack.name), cage.rack_row, cage.rack_col)}
     text = (gettext("cage %(cage)s · %(where)s", cage=cage.cage_id, where=cage.cage_location) if cage.cage_location
             else gettext("cage %(cage)s", cage=cage.cage_id))
     return {"kind": "mouse", "rack_id": None, "row": None, "col": None,
-            "text": text, "order": (3, 0, cage.cage_id, 0, 0)}
+            "text": text, "order": (3, 0, positions.natural(cage.cage_id), 0, 0)}
 
 
 def _stock_loc(unit: StockUnit | None, rack: StockRack | None) -> dict | None:
@@ -369,7 +369,7 @@ def _stock_loc(unit: StockUnit | None, rack: StockRack | None) -> dict | None:
     if row and col:
         where += f" · {positions.label(row, col, rack.naming, rack.cols)}"
     return {"kind": "stock", "rack_id": rack.id, "row": row, "col": col, "text": where,
-            "order": (1, rack.incubator_id_fk or 0, rack.name, row or 0, col or 0)}
+            "order": (1, rack.incubator_id_fk or 0, positions.place_order(rack.name), row or 0, col or 0)}
 
 
 def _mouse_ids(mice) -> str:
@@ -527,7 +527,7 @@ def _supply_items(session, today, horizon) -> list[dict]:
         if item is not None and (item.rack is not None or item.location_note):
             where = " · ".join(b for b in (inventory_service.where_label(item), item.location_note) if b)
             loc = {"kind": "inventory", "rack_id": None, "row": None, "col": None, "text": where,
-                   "order": (2, 0, where, 0, 0)}
+                   "order": (2, 0, positions.place_order(where), 0, 0)}
         url = url_for("inventory.module", key=a["key"], q=a["name"])
         owner = item.owner if item is not None else ""
         ref = {"kind": "inventory_item", "id": a["id"]}
@@ -751,9 +751,10 @@ def freezer_view(session, agenda: list[dict], today: date, username: str = "") -
     def rack_flags(kind, rack_id):
         return sum(1 for k in flags if k[0] == kind and k[1] == rack_id)
 
-    mouse_racks = session.scalars(select(MouseRack).order_by(MouseRack.position, MouseRack.name)).all()
-    stock_racks = session.scalars(select(StockRack).options(selectinload(StockRack.incubator))
-                                  .order_by(StockRack.name)).all()
+    mouse_racks = sorted(session.scalars(select(MouseRack)).all(),
+                         key=lambda r: (r.position or 0, positions.place_order(r.name)))
+    stock_racks = sorted(session.scalars(select(StockRack).options(selectinload(StockRack.incubator))).all(),
+                         key=lambda r: positions.place_order(r.name))
     candidates = [("mouse", r, rack_flags("mouse", r.id)) for r in mouse_racks]
     candidates += [("stock", r, rack_flags("stock", r.id)) for r in stock_racks]
     # The racks with the most to do, your own work first.
@@ -768,11 +769,16 @@ def freezer_view(session, agenda: list[dict], today: date, username: str = "") -
     for kind, rack, _n in chosen:
         cells: dict[tuple[int, int], dict] = {}
         if kind == "mouse":
-            for cage in session.scalars(select(CageRecord).where(
-                    CageRecord.rack_id_fk == rack.id, CageRecord.rack_row.is_not(None))):
-                cells[(cage.rack_row, cage.rack_col)] = {"label": cage.cage_id, "hue": _hue(cage.owner),
-                                                         "title": gettext("Cage %(cage)s", cage=cage.cage_id)
-                                                         + (f" · {cage.owner}" if cage.owner else "")}
+            # A position may hold more than one cage: it shows the latest in
+            # use, with "!" when two or more there have living mice.
+            placed = slot_cages(session.scalars(select(CageRecord).options(selectinload(CageRecord.mice)).where(
+                CageRecord.rack_id_fk == rack.id, CageRecord.rack_row.is_not(None))))
+            for (_rack, row, col), here in placed.items():
+                cage = here[0]
+                cells[(row, col)] = {"label": cage.cage_id, "hue": _hue(cage.owner),
+                                     "title": " · ".join(gettext("Cage %(cage)s", cage=c.cage_id)
+                                                         + (f" ({c.owner})" if c.owner else "") for c in here),
+                                     "crowd": crowded(here)}
             sub = rack.room or gettext("mouse rack")
             url = url_for("colony", view="cages")
         else:

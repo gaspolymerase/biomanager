@@ -158,5 +158,6 @@
   "Move %(name)s right": "右移%(name)s",
   "Reset column order": "恢复默认列顺序",
   "Some rows could not be loaded. Check the connection and try again.": "有些行没能载入。请检查网络连接后再试。",
-  "Couldn’t load the grid: %(error)s": "无法加载网格：%(error)s"
+  "Couldn’t load the grid: %(error)s": "无法加载网格：%(error)s",
+  "%(where)s holds %(n)s cages with living mice. The rack shows the latest; open the others to move or end them.": "%(where)s 放着 %(n)s 个有活鼠的笼。笼架上显示最新的那个；打开其他的笼来移走或结束它们。"
 }

@@ -34,6 +34,7 @@ from .models import (
     OrganismModule,
 )
 from .formutil import like_pattern
+from . import positions
 from .organisms import (
     AUTO_SEED_PRESETS,
     CAPABILITY_BY_KEY,
@@ -1122,13 +1123,8 @@ def available_presets() -> list:
 
 
 def location_tree(session, module_id: int) -> list[OrgLocation]:
-    return list(
-        session.scalars(
-            select(OrgLocation)
-            .where(OrgLocation.module_id_fk == module_id)
-            .order_by(OrgLocation.kind, OrgLocation.name)
-        ).all()
-    )
+    return sorted(session.scalars(select(OrgLocation).where(OrgLocation.module_id_fk == module_id)).all(),
+                  key=lambda loc: (loc.kind or "", positions.place_order(loc.name)))
 
 
 # What to offer a module that turned on environment logging without saying

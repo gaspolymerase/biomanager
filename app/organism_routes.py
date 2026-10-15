@@ -636,16 +636,12 @@ def module(key: str):
             for entity, rows in fields.items()
         }
 
-        lines = session.scalars(
-            select(OrgLine).where(OrgLine.module_id_fk == row.id)
-            .order_by(OrgLine.retired, OrgLine.code)
-        ).all()
+        lines = sorted(session.scalars(select(OrgLine).where(OrgLine.module_id_fk == row.id)).all(),
+                       key=lambda ln: (bool(ln.retired), positions.natural(ln.code)))
         ctx["lines"] = lines
 
-        housing = session.scalars(
-            select(OrgHousing).where(OrgHousing.module_id_fk == row.id)
-            .order_by(OrgHousing.active.desc(), OrgHousing.code)
-        ).all()
+        housing = sorted(session.scalars(select(OrgHousing).where(OrgHousing.module_id_fk == row.id)).all(),
+                         key=lambda u: (not u.active, positions.natural(u.code)))
         ctx["housing_units"] = housing
 
         if active == "animals":
@@ -662,10 +658,8 @@ def module(key: str):
                 "alive": sum(1 for r in ctx["animal_rows"] if r["alive"]),
                 "mine": sum(1 for r in ctx["animal_rows"] if r["mine"]),
             }
-            ctx["cohorts"] = session.scalars(
-                select(OrgCohort).where(OrgCohort.module_id_fk == row.id)
-                .order_by(OrgCohort.code)
-            ).all()
+            ctx["cohorts"] = positions.natural_sorted(session.scalars(
+                select(OrgCohort).where(OrgCohort.module_id_fk == row.id)).all(), key=lambda c: c.code)
             ctx["next_code"] = svc.next_code(session, row, "organism")
             if mv.has("genotyping"):
                 ctx["latest_calls"] = svc.latest_calls(session, row.id)
@@ -705,9 +699,8 @@ def module(key: str):
                 select(OrgCohort).where(OrgCohort.module_id_fk == row.id)
                 .order_by(OrgCohort.birth_on.desc())
             ).all()
-            ctx["crosses"] = session.scalars(
-                select(OrgCross).where(OrgCross.module_id_fk == row.id).order_by(OrgCross.code)
-            ).all()
+            ctx["crosses"] = positions.natural_sorted(session.scalars(
+                select(OrgCross).where(OrgCross.module_id_fk == row.id)).all(), key=lambda c: c.code)
             ctx["locations"] = svc.location_tree(session, row.id)
             ctx["next_code"] = svc.next_code(session, row, "cohort")
 
@@ -756,9 +749,8 @@ def module(key: str):
 def _genotyping_context(session, module: OrganismModule, mv, me: str) -> dict:
     """Rows for the Genotyping sheet: every call, newest first, then one row
     per living record that has never been called (the Pending chip)."""
-    organisms = session.scalars(
-        select(Organism).where(Organism.module_id_fk == module.id)
-        .order_by(Organism.death_on.is_(None).desc(), Organism.code, Organism.id)).all()
+    organisms = sorted(session.scalars(select(Organism).where(Organism.module_id_fk == module.id)).all(),
+                       key=lambda o: (o.death_on is not None, positions.natural(o.code), o.id))
     by_id = {o.id: o for o in organisms}
     units = {u.id: u for u in session.scalars(
         select(OrgHousing).where(OrgHousing.module_id_fk == module.id))}

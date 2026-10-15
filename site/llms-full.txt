@@ -257,7 +257,7 @@ Home is where each day starts: only what needs attention, from every database yo
 
 - **Tracks**: Every dated job on one ruler of days, one track per kind of work, coloured overdue, today, within 3 days or scheduled. Choose 1, 2 or 4 weeks. *Needs you now* and *Busy days* sit beside it. On a phone it becomes a list of days.
 
-- **Freezer**: Your racks seen from above, lit where something is due, with a **Pull list** of the next three days' jobs in walking order, to take into the room. A cage's cap colour shows its owner.
+- **Freezer**: Your racks seen from above, lit where something is due, with a **Pull list** of the next three days' jobs in walking order, to take into the room. A cage's cap colour shows its owner. A **!** on a cage means two or more cages with living mice are recorded in that position; it shows the latest, and its tooltip names them all.
 
 **Customize**, beside the layout chips, arranges Classic your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. Four cards start switched off and are there to add: *Your to-dos* (due this week or undated), *Bookings* (instruments booked in the next week), *Recent pages* of your notebook, and *Calculators* (the ones you opened last, then the usual ones). Under the cards, *Counts* lists a number for every database: the first five show until you tick the ones you want. **Back to the usual** puts everything back, after asking. Like the layout, it is yours alone.
 
@@ -301,7 +301,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
-- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
+- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
 
 - **Put the important columns first**: Drag a column's heading left or right; a line shows where it will land. Without a mouse, open **Columns** and use the arrows beside a column (**Move left**, **Move right**). The tick boxes, the number or ID, and the buttons at the end stay where they are. Pasting a block, **Export** and a phone's cards follow the order you set. **Reset column order**, under **Columns**, puts it back. The order you start from is the lab's: an admin sets it under the database's **Configure**, with the arrows beside each column of your own (**Move up**, **Move down**).
 
@@ -456,6 +456,8 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 *A rack grid*
 
+**Two cages in one position.** A new cage is often set up in a position before the cage there is ended, so a position can hold more than one cage. The cage's form, the sheet, an import or an assistant's proposal puts it there and says which cage with living mice is there already. The rack grid shows the cage put there last (one with living mice before an empty one) and marks the position with **!** while two or more there have living mice. Hover over or tap the **!** to list every cage in that position, and click one to open it, move it or end it. Empty and ended cages don't count. Dragging a cage onto a position still swaps it with the cage shown there.
+
 ### Mice
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
@@ -466,7 +468,7 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 - **Strain**, after the custom tag, is the mouse's background: *C57BL/6J*, *BALB/cJ*, *129S1/SvImJ*, *FVB/NJ* and the other strains most labs keep are offered as you type, and you can type one of your own. Change the list on the colony's **Dropdowns** tab (Column: *strain*). **Add many** sets one strain for the whole batch, search finds a mouse by it, and a spreadsheet column called *strain* or *background* comes into it when you import.
 
-- Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
+- Select mice to set a field (owner, status, strain, sex, transgenes, cage, litter, date of birth, date of death, note, or one of your own columns), **Add to experiment**, or **Sac**. A date of birth belongs to the litter: when you select every mouse of a litter, the litter itself takes the new date; mice picked from part of a litter move together into a new litter of that date. Setting sac or a date of death ends the record; it stays in the history.
 
 ### Breeding: from litter to weaning
 
@@ -1762,7 +1764,7 @@ For anything with a right answer, the assistant asks BioManager, which works it 
 
 A proposal tells you (the bell) and waits under **Proposed changes** in your account menu.
 
-- Each proposal is one summary in plain words: what will change in each database, with any warnings at the top (a litter date that would be replaced, pups too young to wean, a cage that would stop being shared with the lab, an item of that name already in stock). **Show each change** lists every record, before → after, and under each, what it came from: *From your notes: "…"*, or the capture and its photo.
+- Each proposal is one summary in plain words, with any warnings at the top (a litter date that would be replaced, pups too young to wean, a cage that would stop being shared with the lab, an item of that name already in stock), then one line for each change, its database's icon beside it. On the right of a line is what it came from: *You said* (point at it to read your words), or *Photo* and the line of the page it read. **Show each change** lists every record, before → after, with your words for each change.
 
 - **Approve** makes every change at once; **Discard** makes none. If something is wrong, **Send back** with a line saying what: the assistant reads it and proposes again, corrected, and the new proposal takes the old one's place.
 

@@ -9,6 +9,8 @@ from functools import wraps
 
 from flask import Flask, Response, abort, flash, g, get_flashed_messages, has_request_context, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import Markup, escape
+from jinja2 import pass_environment
+from jinja2.filters import make_attrgetter
 from werkzeug.datastructures import ImmutableMultiDict
 from sqlalchemy import case, func, select
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
@@ -108,6 +110,8 @@ from .services import (
     breeder_summary,
     cage_derived_dates,
     cage_is_active,
+    placed_when,
+    slot_order,
     current_lab_usernames,
     mouse_is_active,
     apply_status_rules,
@@ -609,12 +613,9 @@ def handle_integrity_error(error: IntegrityError):
         column = match.group(1).split(",")[-1].strip().strip('"').split(".")[-1]
         field = column.replace("_id", " ID").replace("_", " ")
         if request.path.startswith("/api/"):
-            message = ("That place in the rack has a cage already (someone may have just put one there), "
-                       "so nothing was saved." if column in ("rack_col", "rack_row")
-                       else f"That {field} is already used. Choose another.")
+            message = f"That {field} is already used. Choose another."
         else:
-            message = (gettext("That place in the rack has a cage already (someone may have just put one there), so nothing was saved.") if column in ("rack_col", "rack_row")
-                       else gettext("That %(field)s is already used. Choose another.", field=field))
+            message = gettext("That %(field)s is already used. Choose another.", field=field)
     else:
         message = _said("That change conflicts with an existing record, so it was not saved.")
     app.logger.warning("integrity error on %s: %s", request.path, detail)
@@ -1246,6 +1247,27 @@ def column_head(label) -> Markup:
 app.jinja_env.filters["day_time"] = lambda value: fmt_day(value, with_time=True)
 
 
+@app.template_filter("natural_sort")
+@pass_environment
+def natural_sort_filter(environment, rows, attribute: str):
+    """Like Jinja's sort(attribute=...), with numbers as numbers: tank 2
+    before tank 10."""
+    get = make_attrgetter(environment, attribute)
+    return positions.natural_sorted(rows, key=get)
+
+
+@app.template_filter("group_in_order")
+@pass_environment
+def group_in_order_filter(environment, rows, attribute: str) -> list:
+    """Like Jinja's groupby, but in the order the rows come (boxes in
+    freezer order, −80 before −20), not re-sorted as text."""
+    get = make_attrgetter(environment, attribute)
+    groups: dict = {}
+    for row in rows:
+        groups.setdefault(get(row), []).append(row)
+    return list(groups.items())
+
+
 @app.template_filter("owner_short")
 def owner_short_filter(name: str) -> str:
     if not name:
@@ -1799,8 +1821,10 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                         or any(m.date_of_death and m.date_of_death >= recent for m in c.mice)]
                 hidden_cages = totals["all_cages"] - len(keep)
                 all_cages = keep
-            cages = [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
-                                                             group_id=access.cage_group(c))]
+            # Cage 2 before cage 10: by number, not letter by letter.
+            cages = positions.natural_sorted(
+                [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
+                                                         group_id=access.cage_group(c))], key=lambda c: c.cage_id)
         litters, hidden_litters = [], 0
         if active_view == "litters":
             litter_query = select(LitterRecord).options(selectinload(LitterRecord.mice)).order_by(LitterRecord.litter_id)
@@ -1814,8 +1838,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             if only is not None:
                 litter_query = litter_query.where(LitterRecord.id.in_(sorted(only)))
             # L-2 before L-10: by number, not letter by letter.
-            litters = sorted(db_session.scalars(litter_query).all(), key=lambda l: positions.place_order(l.litter_id or ""))
-        strains = db_session.scalars(select(StrainRecord).order_by(StrainRecord.strain_name)).all()
+            litters = positions.natural_sorted(db_session.scalars(litter_query).all(), key=lambda l: l.litter_id)
+        strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
         dropdowns = dropdown_options_map(db_session)
         dropdown_records = dropdown_records_map(db_session)
         usernames = current_lab_usernames(db_session)
@@ -1831,9 +1855,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             row["editable"] = can_edit_mouse(mouse)
         cage_rows = [cage_sheet_row(cage) for cage in cages]
         # The Experiments tab's "start with a cage" only lists cage numbers.
-        cage_ids = list(db_session.scalars(select(CageRecord.cage_id).where(
-            CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None))))
-            .order_by(CageRecord.cage_id))) if active_view == "experiments" else []
+        cage_ids = positions.natural_sorted(db_session.scalars(select(CageRecord.cage_id).where(
+            CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))
+        ) if active_view == "experiments" else []
         litter_rows = []
         for litter in litters:
             # Each pup as its cell shows it (number, sex, alive, age): a
@@ -2630,9 +2654,8 @@ def export_my_data():
                    m.litter.litter_id if m.litter else "", iso(m.litter.date_of_birth) if m.litter else "",
                    iso(m.date_of_death), m.note] for m in mice)]))
 
-            cages = db_session.scalars(
-                select(CageRecord).where(CageRecord.owner == username).order_by(CageRecord.cage_id)
-            ).all()
+            cages = positions.natural_sorted(db_session.scalars(
+                select(CageRecord).where(CageRecord.owner == username)).all(), key=lambda c: c.cage_id)
             zf.writestr("cages.csv", csv_text([
                 ["cage_id", "purpose", "location", "rack", "row", "column", "shared", "litter_born", "notes"],
                 *([c.cage_id, c.purpose, c.cage_location, c.rack.name if c.rack else "", c.rack_row or "",
@@ -3682,18 +3705,26 @@ def _report(changed: int, skipped: int, what: str) -> None:
 BULK_FIELDS = {
     "owner": "Owner",
     "status": "Status",
+    "strain": "Strain",
+    "gender": "Sex",
     "genotype": "Transgenes",
     "cage_id": "Cage",
+    "litter_id": "Litter",
     "note": "Note",
+    "date_of_birth": "Date of birth",
     "date_of_death": "Date of death",
 }
 # What _report says was done, for each field.
 BULK_DONE = {
     "owner": "Set owner",
     "status": "Set status",
+    "strain": "Set strain",
+    "gender": "Set sex",
     "genotype": "Set transgenes",
     "cage_id": "Set cage",
+    "litter_id": "Set litter",
     "note": "Set note",
+    "date_of_birth": "Set date of birth",
     "date_of_death": "Set date of death",
 }
 
@@ -3753,6 +3784,24 @@ def bulk_update_mice():
         if field == "date_of_death" and value and parse_date(value) is None:
             flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value), "error")
             return redirect(back)
+        # A mouse's age is its date of birth: never blanked by a slip.
+        born = parse_date(value) if field == "date_of_birth" else None
+        if field == "date_of_birth" and born is None:
+            flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value or gettext("(blank)")), "error")
+            return redirect(back)
+        refused = future_birth({"date_of_birth": value}) if born else None
+        if refused:
+            flash(refused, "error")
+            return redirect(back)
+        if field == "gender" and value:
+            # The sheet's Sex cell offers these only; a typo would make a
+            # third sex nobody can pick.
+            choices = _merged_choices(["F", "M", "Unknown"], dropdown_options_map(db_session).get("gender", []))
+            value = next((c for c in choices if c.lower() == value.lower()), "")
+            if not value:
+                flash(gettext("“%(value)s” is not one of the sexes here (%(choices)s), so nothing changed.",
+                              value=request.form.get("value", "").strip(), choices=", ".join(choices)), "error")
+                return redirect(back)
         if field == "cage_id" and value and value.lower() != "new":
             existing_cage = db_session.scalar(select(CageRecord).where(CageRecord.cage_id == value))
             if existing_cage is not None and not access.can_edit_cage(existing_cage):
@@ -3762,10 +3811,22 @@ def bulk_update_mice():
         # "new" is one new cage for the whole selection — the mice were
         # picked together to be housed together — made only when at least
         # one selected mouse may move.
-        target_cage = None
+        target_cage = target_litter = None
+        selected = _selected_mice(db_session, request.form)
+        # A date of birth belongs to the litter. A litter whose every mouse
+        # is in the selection (and yours to change) is re-dated, as on the
+        # Litters tab, and keeps its parents; the rest of the selection
+        # leaves its litter for one new litter of that date, as one row of
+        # the sheet does.
+        whole_litters = set()
+        if field == "date_of_birth":
+            mine = {m.id for m in selected if can_edit_mouse(m)}
+            whole_litters = {m.litter.id for m in selected
+                             if m.id in mine and m.litter is not None
+                             and all(sib.id in mine for sib in m.litter.mice)}
         with audit.batch(db_session, "update",
                          f"set {BULK_FIELDS[field].lower()} = {value or '(blank)'}", "mice") as batch_row:
-            for mouse in _selected_mice(db_session, request.form):
+            for mouse in selected:
                 if not can_edit_mouse(mouse):
                     skipped += 1
                     continue
@@ -3782,6 +3843,23 @@ def bulk_update_mice():
                     # them ("Ai14; Cre" -> transgene 1 and 2) and keeps the
                     # combined genotype string in step.
                     sync_mouse_transgenes(mouse, split_genotype(value)[:4])
+                elif field == "litter_id":
+                    # Joining a litter takes its date of birth; a blank
+                    # takes the mice out of theirs, as the sheet's cell does.
+                    if value and target_litter is None:
+                        target_litter = get_or_create_litter(db_session, value[:80])
+                    set_mouse_litter(mouse, target_litter)
+                elif field == "date_of_birth":
+                    litter = mouse.litter
+                    if litter is not None and litter.id in whole_litters:
+                        litter.date_of_birth = born
+                    elif litter is None or litter.date_of_birth != born:
+                        if target_litter is None:
+                            # Made inside the batch, so undo removes it too.
+                            target_litter = get_or_create_litter(db_session, next_litter_id(db_session), born)
+                        set_mouse_litter(mouse, target_litter)
+                elif field == "strain":
+                    mouse.strain = value[:120]
                 elif field == "date_of_death":
                     mouse.date_of_death = parse_date(value)
                 elif field == "status":
@@ -4312,7 +4390,7 @@ def create_cage():
             codes = [requested] if count == 1 else [str(int(requested) + i) for i in range(count)]
             taken = db_session.scalars(select(CageRecord.cage_id).where(CageRecord.cage_id.in_(codes))).all()
             if taken:
-                flash(gettext("Cage %(cage)s already exists; nothing was changed. Leave the ID blank to take the next free one.", cage=", ".join(sorted(taken))), "error")
+                flash(gettext("Cage %(cage)s already exists; nothing was changed. Leave the ID blank to take the next free one.", cage=", ".join(positions.natural_sorted(taken))), "error")
                 return autosave_response("cages")
         else:
             codes = reserve_cage_ids(db_session, count)
@@ -4423,9 +4501,10 @@ def cage_state(cage) -> dict | None:
 def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
     """Put `cage` in the rack and position a person typed; return an error
     message instead of guessing. An empty rack takes the cage out of racks;
-    a rack with no position keeps it in that rack but unplaced. Typing a
-    position that another cage holds is refused rather than moving that
-    cage (dragging on the grid is how you swap)."""
+    a rack with no position keeps it in that rack but unplaced. A position
+    another cage holds takes this one too (a cage is often set up there
+    before the old one is ended), with a warning when one there is active;
+    that cage stays where it is (dragging on the grid is how you swap)."""
     rack_raw = str(rack_raw or "").strip()
     position_raw = str(position_raw or "").strip()
     if not rack_raw:
@@ -4444,15 +4523,16 @@ def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
         last = positions.label(rack.rows, rack.cols, rack.naming, rack.cols)
         return gettext("“%(position)s” is not a position in rack %(rack)s (%(first)s–%(last)s).",
                        position=position_raw, rack=rack.name, first=first, last=last)
-    holder = db_session.scalar(select(CageRecord).where(
-        CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == cell[0],
-        CageRecord.rack_col == cell[1], CageRecord.id != (cage.id or 0)))
-    if holder is not None:
-        name = positions.label(*cell, rack.naming, rack.cols)
-        return gettext("%(rack)s · %(position)s already holds cage %(cage)s. Drag on the rack grid to swap.",
-                       rack=rack.name, position=name, cage=holder.cage_id)
-
+    moved = (cage.rack_id_fk, cage.rack_row, cage.rack_col) != (rack.id, *cell)
     cage.rack_id_fk, (cage.rack_row, cage.rack_col) = rack.id, cell
+    others = [c for c in slot_order(db_session.scalars(select(CageRecord).where(
+        CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == cell[0],
+        CageRecord.rack_col == cell[1], CageRecord.id != (cage.id or 0)))) if cage_is_active(c)]
+    if moved and others:
+        flash(ngettext("%(rack)s · %(position)s also holds cage %(cages)s (active); the rack will show the latest and mark the position with !",
+                       "%(rack)s · %(position)s also holds cages %(cages)s (active); the rack will show the latest and mark the position with !",
+                       len(others), rack=rack.name, position=positions.label(*cell, rack.naming, rack.cols),
+                       cages=", ".join(c.cage_id for c in others)), "warning")
     return None
 
 
@@ -4509,7 +4589,8 @@ def delete_mouse_rack(rack_id: int):
 @login_required
 def place_cage(cage_row_id: int):
     """Move a cage on the rack grid; answers JSON. Dropping onto an occupied
-    position swaps the two cages; an empty rack id unplaces the cage."""
+    position swaps the cage with the one shown there (the others in that
+    position stay); an empty rack id unplaces the cage."""
     with SessionLocal() as db_session:
         cage = db_session.get(CageRecord, cage_row_id)
         if cage is None:
@@ -4529,20 +4610,15 @@ def place_cage(cage_row_id: int):
             return jsonify({"ok": False, "error": gettext("Missing row or column.")}), 400
         if rack is None or not (1 <= row <= rack.rows and 1 <= col <= rack.cols):
             return jsonify({"ok": False, "error": gettext("That position is not in the rack.")}), 400
-        holder = db_session.scalar(select(CageRecord).where(
+        here = slot_order(db_session.scalars(select(CageRecord).where(
             CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == row,
-            CageRecord.rack_col == col, CageRecord.id != cage.id))
+            CageRecord.rack_col == col, CageRecord.id != cage.id)))
+        holder = here[0] if here else None
         if holder is not None:
             if not can_edit_cage(holder):
                 return jsonify({"ok": False, "error": gettext("That position holds cage %(cage)s, which you may not move.",
                                                               cage=holder.cage_id)}), 403
-            # A swap, in steps: one cage per place holds at every moment
-            # (the unique index on the place), so the dropped cage leaves first.
-            old = (cage.rack_id_fk, cage.rack_row, cage.rack_col)
-            cage.rack_id_fk = cage.rack_row = cage.rack_col = None
-            db_session.flush()
-            holder.rack_id_fk, holder.rack_row, holder.rack_col = old
-            db_session.flush()
+            holder.rack_id_fk, holder.rack_row, holder.rack_col = cage.rack_id_fk, cage.rack_row, cage.rack_col
         cage.rack_id_fk, cage.rack_row, cage.rack_col = rack.id, row, col
         db_session.commit()
     return jsonify({"ok": True})
@@ -4567,6 +4643,10 @@ def mouse_rack_payload(db_session, cages) -> dict:
         items.append({
             "id": cage.id,
             "label": cage.cage_id,
+            # Of cages sharing a position, the grid shows the latest live one
+            # and marks the position "!" (services.slot_order).
+            "live": bool(live),
+            "placed": placed_when(cage)[0].isoformat(),
             "sub": cage.genotype_summary or ", ".join(strains[:2]) or cage.purpose or "",
             "badge": f"{len(live)}" if live else "",
             "tone": "other" if outside else (normalize_status(cage.purpose) if live else "inactive"),
@@ -6484,7 +6564,7 @@ def search_results(q: str, limit: int = 5) -> tuple[str, list[dict]]:
             CageRecord.cage_id.ilike(like, escape="\\") | CageRecord.purpose.ilike(like, escape="\\")
             | CageRecord.genotype_summary.ilike(like, escape="\\") | CageRecord.card_id.ilike(like, escape="\\")
             | CageRecord.notes.ilike(like, escape="\\") | CageRecord.room.ilike(like, escape="\\"))
-        for cage in db_session.scalars(cage_stmt.order_by(CageRecord.cage_id).limit(limit)).all():
+        for cage in positions.natural_sorted(db_session.scalars(cage_stmt).all(), key=lambda c: c.cage_id)[:limit]:
             live = sum(1 for mouse in cage.mice if mouse_is_active(mouse))
             results.append({
                 "type": "cage",
@@ -6497,7 +6577,7 @@ def search_results(q: str, limit: int = 5) -> tuple[str, list[dict]]:
         litter_stmt = select(LitterRecord).where(
             LitterRecord.litter_id.ilike(like, escape="\\") | LitterRecord.cohort_name.ilike(like, escape="\\")
             | LitterRecord.notes.ilike(like, escape="\\"))
-        for litter in db_session.scalars(litter_stmt.order_by(LitterRecord.litter_id).limit(limit)).all():
+        for litter in positions.natural_sorted(db_session.scalars(litter_stmt).all(), key=lambda l: l.litter_id)[:limit]:
             results.append({
                 "type": "litter",
                 "id": litter.id,
@@ -6629,12 +6709,12 @@ PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like,
             })
 
         # Zebrafish tanks, lines and clutches.
-        for t in db_session.scalars(
+        for t in positions.natural_sorted(db_session.scalars(
                 select(TankRecord).options(joinedload(TankRecord.line))
                 .where(TankRecord.tank_id.ilike(like, escape="\\") | TankRecord.card_id.ilike(like, escape="\\")
                        | TankRecord.attrs.ilike(like, escape="\\")
                        | TankRecord.owner.ilike(like, escape="\\") | TankRecord.notes.ilike(like, escape="\\"))
-                .order_by(TankRecord.tank_id).limit(limit)).all():
+                ).all(), key=lambda t: t.tank_id)[:limit]:
             results.append({
                 "type": "tank", "id": t.id, "ref": {"kind": "tank", "id": t.id}, "label": gettext("Tank %(id)s", id=t.tank_id),
                 "sublabel": " · ".join(filter(None, [t.purpose, t.line.name if t.line else "", t.owner])),
@@ -10121,17 +10201,17 @@ def _zebrafish_context(active_view: str):
     me = access.username()
     today = date.today()
     with SessionLocal() as s:
-        systems = s.scalars(select(WaterSystem).order_by(WaterSystem.name)).all()
-        racks = s.scalars(select(FishRack).order_by(FishRack.name)).all()
-        lines = s.scalars(select(FishLine).order_by(FishLine.name)).all()
+        systems = sorted(s.scalars(select(WaterSystem)).all(), key=lambda w: positions.place_order(w.name))
+        racks = sorted(s.scalars(select(FishRack)).all(), key=lambda r: positions.place_order(r.name))
+        lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda ln: ln.name)
         # Eager-load what the template reads after the session closes.
         tanks = s.scalars(
             select(TankRecord)
             .options(joinedload(TankRecord.line),
                      joinedload(TankRecord.rack),
                      selectinload(TankRecord.fish))
-            .order_by(TankRecord.tank_id)
         ).unique().all()
+        tanks = positions.natural_sorted(tanks, key=lambda t: t.tank_id)
         fish = s.scalars(
             select(FishRecord).options(joinedload(FishRecord.line), joinedload(FishRecord.tank))
             .order_by(FishRecord.id.desc()).limit(500)
@@ -10426,9 +10506,9 @@ def zebrafish_home_summary() -> dict:
                    TankRecord.mating_return_at <= horizon)
             .order_by(TankRecord.mating_return_at).limit(8)).all()
         codes = dict(s.execute(select(TankRecord.id, TankRecord.tank_id)).all())
-        geno = s.scalars(
+        geno = positions.natural_sorted(s.scalars(
             select(TankRecord).options(joinedload(TankRecord.line))
-            .where(TankRecord.needs_genotyping.is_(True)).order_by(TankRecord.tank_id)).all()
+            .where(TankRecord.needs_genotyping.is_(True))).all(), key=lambda t: t.tank_id)
         return {
             "any": bool(s.scalar(select(func.count(TankRecord.id)))),
             "mating": [{"id": t.id, "tank_id": t.tank_id, "due": t.mating_return_at, "owner": t.owner,
@@ -10541,7 +10621,7 @@ def zf_code_run(s, first: str, n: int) -> list[str]:
     codes = [f"{prefix}{int(digits) + i:0{len(digits)}d}" for i in range(n)]
     if any(len(c) > 80 for c in codes):
         raise ZfInputError(gettext("Keep the tank ID under %(max)s characters.", max=80))
-    taken = sorted(set(s.scalars(select(TankRecord.tank_id).where(TankRecord.tank_id.in_(codes)))))
+    taken = positions.natural_sorted(set(s.scalars(select(TankRecord.tank_id).where(TankRecord.tank_id.in_(codes)))))
     if taken:
         raise ZfInputError(ngettext("%(tanks)s is already used. Start from another tank ID.",
                                     "%(tanks)s are already used. Start from another tank ID.", len(taken),
@@ -11300,13 +11380,12 @@ def zebrafish_line_detail(line_id: int):
 
         # Tanks currently holding this line.
         # Racks are read after the session closes, so load them now.
-        line_tanks = s.scalars(
+        line_tanks = positions.natural_sorted(s.scalars(
             select(TankRecord).options(joinedload(TankRecord.rack))
-            .where(TankRecord.line_id_fk == ln.id).order_by(TankRecord.tank_id)
-        ).all()
+            .where(TankRecord.line_id_fk == ln.id)).all(), key=lambda t: t.tank_id)
         tank_positions = {t.id: fish_position_label(t) for t in line_tanks}
 
-        all_lines = s.scalars(select(FishLine).order_by(FishLine.name)).all()
+        all_lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda line: line.name)
         editable = zf_can_edit(ln)
         denied = "" if editable else zf_denied(ln)
         usernames = current_lab_usernames(s)

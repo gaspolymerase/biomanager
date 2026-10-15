@@ -21,6 +21,7 @@
                  {% if c.hue is number %}style="--h: {{ c.hue }}"{% endif %}>
               {% if c.label %}<span>{{ c.label }}</span>{% endif %}
               {% if c.num %}<em>{{ c.num }}</em>{% endif %}
+              {% if c.crowd %}<b class="frz-crowd" title="{{ _('Two or more cages with living mice are recorded here') }}">!</b>{% endif %}
             </div>
           {% endfor %}
         </div>

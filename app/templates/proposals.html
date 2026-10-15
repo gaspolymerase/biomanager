@@ -10,31 +10,43 @@
 {% endblock %}
 
 {% macro change_list(card, open_records=False) %}
-  {% for area, items in card.groups.items() %}
-    <div class="mt-3">
-      <p class="text-[11.5px] font-semibold uppercase tracking-wide text-muted">{{ area|tr }}</p>
-      <ul class="mt-1 grid gap-1">
-        {% for item in items %}
-          <li class="text-[13.5px] leading-snug text-ink">
-            {% if not item.ok %}<span class="text-warn-700">{{ icon('error') }}</span>{% endif %}
-            {{ item.summary }}
-            {% if item.evidence %}
-              <span class="block text-[12px] text-muted" data-evidence>
-                {%- if item.evidence.quote %}{{ _('From your notes: “%(quote)s”', quote=item.evidence.quote) }}{% endif %}
-                {%- if item.evidence.capture %}{% if item.evidence.quote %} · {% endif %}{{ _('Capture #%(id)s', id=item.evidence.capture) }}{% if item.evidence.where %}, {{ item.evidence.where }}{% endif %}{% endif -%}
-              </span>
-            {% endif %}
-            {% for e in item.errors %}<span class="block text-[12px] text-warn-700">{{ e }}</span>{% endfor %}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endfor %}
+  {# One row a change: its icon, what it does, and where it came from. #}
+  <ul class="prop-list mt-3">
+    {% for area, items in card.groups.items() %}
+      {% for item in items %}
+        {% set ev = item.evidence %}
+        <li class="prop-row">
+          <span class="prop-tile" data-tone="{{ item.tone if item.ok else 'warn' }}" title="{{ area|tr }}">
+            {{ icon(item.icon if item.ok else 'error') }}
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[14px] leading-snug text-ink">{{ item.summary }}</p>
+            {% for e in item.errors %}<p class="mt-0.5 text-[12px] text-warn-700">{{ e }}</p>{% endfor %}
+          </div>
+          {% if ev %}
+            {% set said %}
+              {%- if ev.quote %}{{ _('From your notes: “%(quote)s”', quote=ev.quote) }}{% endif %}
+              {%- if ev.capture is not none %}{% if ev.quote %} · {% endif %}{{ _('Capture #%(id)s', id=ev.capture) }}{% if ev.where %}, {{ ev.where }}{% endif %}{% endif -%}
+            {% endset %}
+            <span class="prop-chip" data-evidence title="{{ said }}">
+              {%- if ev.capture is none %}{{ _('You said') }}
+              {%- elif ev.capture in card.photos %}{{ _('Photo') }}
+              {%- else %}{{ _('Capture #%(id)s', id=ev.capture) }}{% endif %}
+              {%- if ev.where %} · {{ ev.where }}{% endif -%}
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    {% endfor %}
+  </ul>
   <details class="mt-3" {% if open_records %}open{% endif %}>
     <summary class="cursor-pointer text-[12.5px] text-muted">{{ _('Show each change') }}</summary>
     <div class="mt-2 grid gap-2">
       {% for area, items in card.groups.items() %}
         {% for item in items %}
+          {% if item.evidence and item.evidence.quote %}
+            <p class="text-[12.5px] leading-snug text-muted">{{ item.summary }} · {{ _('From your notes: “%(quote)s”', quote=item.evidence.quote) }}</p>
+          {% endif %}
           {% for r in item.records %}
             <div class="text-[12.5px] leading-snug">
               <span class="font-medium text-ink">{{ r.table|tr }} · {{ r.label }}</span>
@@ -85,7 +97,7 @@
         {{ _('From %(source)s, %(when)s', source=card.p.source or 'API', when=card.p.created_at|when) }}
         · {{ ngettext('%(num)s change', '%(num)s changes', card.count) }} · #{{ card.p.id }}
       </p>
-      {% if card.p.summary %}<p class="mt-2 whitespace-pre-line text-[14px] text-ink">{{ card.p.summary }}</p>{% endif %}
+      {% if card.p.summary %}<p class="mt-2 whitespace-pre-line text-[15px] leading-snug text-ink">{{ card.p.summary }}</p>{% endif %}
       {% if card.warnings %}
         <div class="mt-3 grid gap-1 rounded-lg bg-sand-100 p-3">
           {% for w in card.warnings %}<p class="text-[12.5px] leading-snug text-warn-700">{{ icon('error') }} {{ w }}</p>{% endfor %}

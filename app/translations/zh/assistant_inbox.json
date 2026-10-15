@@ -11,6 +11,7 @@
   "Captures": "速记",
   "From your notes: “%(quote)s”": "来自你的记录：“%(quote)s”",
   "Capture #%(id)s": "速记 #%(id)s",
+  "You said": "你说的",
   "The photo of capture #%(id)s": "速记 #%(id)s 的照片",
   "From capture #%(id)s": "来自速记 #%(id)s",
   "Send back": "退回",

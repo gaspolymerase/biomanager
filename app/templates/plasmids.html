@@ -29,7 +29,7 @@
 {# Box choices, grouped by the freezer (or shelf) each box is kept in. #}
 {% macro box_options(selected='', empty='') %}
   <option value="">{{ empty or _('Not in a box') }}</option>
-  {% for location, group in boxes | groupby('location') %}
+  {% for location, group in boxes | group_in_order('location') %}
     {% if location %}<optgroup label="{{ location }}">{% endif %}
     {% for b in group %}<option value="{{ b.id }}" {% if selected and b.id == selected %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
     {% if location %}</optgroup>{% endif %}

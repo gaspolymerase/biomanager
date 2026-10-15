@@ -163,5 +163,9 @@
   "Picking a purpose above the cages (**Breeder**, **Breeding**, **Experiment**) shows only its cages with living mice; **All** still shows the old ones.": "在笼列表上方选一个用途（**种鼠笼**、**繁殖**、**实验**）时只显示还有活鼠的笼；点 **全部** 仍能看到以前的笼。",
   "A sheet of more than 300 rows opens faster in Chrome, Edge and the Windows app: the rows you haven't turned to wait off the page (it was 1,000 rows).": "超过 300 行的表格在 Chrome、Edge 和 Windows 版里打开更快：还没翻到的行先放在页面外（以前是 1,000 行）。",
   "An inventory's cells are drawn as text until you click, tap or Tab to them, so it opens a fifth to a third sooner in Chrome, Edge, the Windows app and on Android.": "库存表的单元格先显示为文字，点击、轻触或按 Tab 时才变成输入框，因此在 Chrome、Edge、Windows 版和 Android 上打开快五分之一到三分之一。",
-  "A menu the app changed while saving (a status turned to low) shows its new value at once, not blank.": "保存时被应用改动的菜单（例如状态变为低）会立即显示新的值，不再是空白。"
+  "A menu the app changed while saving (a status turned to low) shows its new value at once, not blank.": "保存时被应用改动的菜单（例如状态变为低）会立即显示新的值，不再是空白。",
+  "Ticked mice can be given a strain, sex, litter or date of birth at once: **Set** on **Mice** offers them, and the value box offers each field's own choices.": "勾选的小鼠可以一次设置品系、性别、窝或出生日期：**小鼠** 里的 **设置** 提供这些字段，填值的框会列出每个字段自己的选项。",
+  "A rack position can hold more than one cage: the **Rack grid** shows the one put there last and marks the position **!** while two or more there have living mice; hover over or tap it to list them all.": "一个笼架位置上可以有不止一个笼：**笼架视图** 显示最后放进去的那个，那里有两个或更多有活鼠的笼时标上 **!**；把鼠标移到上面或点一下可列出所有笼。",
+  "Numbers sort as numbers in every list: cage 2 comes before cage 10, and A2 before A10.": "所有列表里的编号都按数字大小排序：笼 2 排在笼 10 前面，A2 排在 A10 前面。",
+  "On **Proposed changes**, each change is one line with its database's icon, and a chip on the right says what it came from (what you said, or the photo and the line it read).": "在 **修改提议** 里，每项修改占一行，带有所属数据库的图标，右边的标签说明它来自哪里（你说的话，或照片及读到的那一行）。"
 }

@@ -26,6 +26,7 @@ from sqlalchemy import func, or_, select
 
 from . import lab
 from .formutil import like_pattern
+from .positions import natural_sorted, place_order
 from .models import (CageRecord, ClutchRecord, DropdownOption, Experiment, ExperimentStep, FishLine, FishRack,
                      LitterRecord, MouseRack,
                      MouseRecord, OrgCohort, OrgCross, OrgHousing, OrgLine, OrgLocation, Organism, StockRack,
@@ -121,9 +122,9 @@ def resolve(session, q: str, kinds: set[str] | None = None) -> list[dict]:
                         "dead" if m.date_of_death else "", m.owner or ""]
                 out.append(_hit("mouse", m, " · ".join(b for b in bits if b), colony, True))
         if want("cage"):
-            rows = session.scalars(select(CageRecord).where(or_(_match(CageRecord.cage_id, q),
-                                                                _match(CageRecord.card_id, q)))
-                                   .order_by(CageRecord.cage_id).limit(50)).all()
+            rows = natural_sorted(session.scalars(select(CageRecord).where(or_(_match(CageRecord.cage_id, q),
+                                                                               _match(CageRecord.card_id, q)))).all(),
+                                  key=lambda c: c.cage_id)[:50]
             for c in _ranked(rows, lambda c: c.cage_id.lower() == q.lower()):
                 live = [m for m in c.mice if m.date_of_death is None]
                 bits = [f"Cage {c.cage_id}", _rack_where(c.rack, c.rack_row, c.rack_col), c.purpose or "",
@@ -144,9 +145,9 @@ def resolve(session, q: str, kinds: set[str] | None = None) -> list[dict]:
     if features.get("zebrafish", True):
         zf = labels.get("zebrafish", "Zebrafish")
         if want("tank"):
-            rows = session.scalars(select(TankRecord).where(or_(_match(TankRecord.tank_id, q),
-                                                                _match(TankRecord.card_id, q)))
-                                   .order_by(TankRecord.tank_id).limit(50)).all()
+            rows = natural_sorted(session.scalars(select(TankRecord).where(or_(_match(TankRecord.tank_id, q),
+                                                                               _match(TankRecord.card_id, q)))).all(),
+                                  key=lambda t: t.tank_id)[:50]
             for t in _ranked(rows, lambda t: t.tank_id.lower() == q.lower()):
                 bits = [f"Tank {t.tank_id}", t.line.name if t.line else "", t.purpose or "",
                         "" if t.active else "retired", t.owner or ""]
@@ -352,17 +353,17 @@ def vocabulary(session) -> dict:
             # own, then any others its mice have (app.mouse_sheet_meta).
             "statuses": _merged_choices(MOUSE_STATUS_OPTIONS, options.get("status", []), in_use),
             "cage_purposes": cage_purposes(options),
-            "strains": [n for (n,) in session.execute(select(StrainRecord.strain_name).order_by(StrainRecord.strain_name))],
+            "strains": natural_sorted(n for (n,) in session.execute(select(StrainRecord.strain_name))),
             "transgenes_in_use": sorted(transgenes)[:300],
-            "racks": [n for (n,) in session.execute(select(MouseRack.name).order_by(MouseRack.name))],
+            "racks": sorted((n for (n,) in session.execute(select(MouseRack.name))), key=place_order),
             "presets": {k: v for k, v in options.items() if v},
         }
     if features.get("zebrafish", True):
         out["databases"].append({"kind": "zebrafish", "key": "zebrafish", "label": labels.get("zebrafish", "Zebrafish")})
         out["zebrafish"] = {
-            "lines": [n for (n,) in session.execute(select(FishLine.name).order_by(FishLine.name))],
-            "racks": [n for (n,) in session.execute(select(FishRack.name).order_by(FishRack.name))],
-            "water_systems": [n for (n,) in session.execute(select(WaterSystem.name).order_by(WaterSystem.name))],
+            "lines": natural_sorted(n for (n,) in session.execute(select(FishLine.name))),
+            "racks": sorted((n for (n,) in session.execute(select(FishRack.name))), key=place_order),
+            "water_systems": sorted((n for (n,) in session.execute(select(WaterSystem.name))), key=place_order),
             "tank_purposes": list(TANK_PURPOSE_OPTIONS), "fish_sexes": list(FISH_SEX_OPTIONS),
             "fish_statuses": list(FISH_STATUS_OPTIONS),
         }
@@ -371,8 +372,8 @@ def vocabulary(session) -> dict:
         out["databases"].append({
             "kind": module.kind, "key": module.key, "label": mv.label, "code_prefix": mv.s.get("code_prefix") or "",
             "purposes": [p["key"] for p in mv.purposes],
-            "racks": [n for (n,) in session.execute(select(StockRack.name).where(StockRack.module_id_fk == module.id)
-                                                    .order_by(StockRack.name))]})
+            "racks": sorted((n for (n,) in session.execute(
+                select(StockRack.name).where(StockRack.module_id_fk == module.id))), key=place_order)})
     for module in org_svc.list_modules(session):
         mv = org_svc.view(module)
         fields = {}
@@ -388,17 +389,17 @@ def vocabulary(session) -> dict:
             "fields": fields,
             "readings": [{"key": m["key"], "label": m.get("label", ""), "unit": m.get("unit", "")}
                          for m in org_svc.measurement_metrics(mv)],
-            "locations": [n for (n,) in session.execute(select(OrgLocation.name)
-                                                        .where(OrgLocation.module_id_fk == module.id)
-                                                        .order_by(OrgLocation.name))]})
+            "locations": sorted((n for (n,) in session.execute(select(OrgLocation.name)
+                                                        .where(OrgLocation.module_id_fk == module.id))),
+                                key=place_order)})
     out["databases"] += _inventory_vocabulary(session)
     if features.get("plasmids", True):
         from .models import PlasmidBox
-        out["plasmid_boxes"] = [n for (n,) in session.execute(select(PlasmidBox.name).order_by(PlasmidBox.name))]
+        out["plasmid_boxes"] = sorted((n for (n,) in session.execute(select(PlasmidBox.name))), key=place_order)
     if features.get("calendar", True):
         from .models import Equipment
-        out["instruments"] = [n for (n,) in session.execute(select(Equipment.name).where(Equipment.active.is_(True))
-                                                            .order_by(Equipment.name))]
+        out["instruments"] = natural_sorted(n for (n,) in session.execute(
+            select(Equipment.name).where(Equipment.active.is_(True))))
     if features.get("notebook", True):
         from . import access
         from .models import NotebookTemplate
@@ -423,9 +424,9 @@ def _inventory_vocabulary(session) -> list[dict]:
                     "noun": mv.item_noun, "statuses": list(mv.statuses), "categories": list(mv.categories),
                     "fields": [{"key": f["key"], "label": f["label"], "type": f["type"]} for f in mv.fields],
                     "required": list(mv.required),
-                    "boxes": [n for (n,) in session.execute(select(InventoryRack.name)
-                                                            .where(InventoryRack.module_id_fk == module.id)
-                                                            .order_by(InventoryRack.name))]})
+                    "boxes": sorted((n for (n,) in session.execute(select(InventoryRack.name)
+                                                            .where(InventoryRack.module_id_fk == module.id))),
+                             key=place_order)})
     return out
 
 

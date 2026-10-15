@@ -709,6 +709,47 @@ class MouseBatchEditTests(Case):
         self.assertIn("not a date", flash_texts(self.m, "error"))
         self.assertEqual({mouse(i)["date_of_death"] for i in self.ids}, {""})
 
+    def test_batch_strain_and_sex(self):
+        self.bulk("strain", "C57BL/6J")
+        self.bulk("gender", "m")
+        self.assertEqual({(one("select strain from mice where id=?", i), mouse(i)["gender"]) for i in self.ids},
+                         {("C57BL/6J", "M")})
+
+    def test_batch_sex_must_be_one_of_the_choices(self):
+        before = {mouse(i)["gender"] for i in self.ids}
+        self.bulk("gender", "boy")
+        self.assertIn("not one of the sexes", flash_texts(self.m, "error"))
+        self.assertEqual({mouse(i)["gender"] for i in self.ids}, before)
+
+    def test_batch_litter_puts_the_mice_in_it_and_undo_takes_them_out(self):
+        code = uniq("L")
+        self.bulk("litter_id", code)
+        litter = one("select id from litters where litter_id=?", code)
+        self.assertEqual({mouse(i)["litter_id_fk"] for i in self.ids}, {litter})
+        self.m.post(f"/batches/{newest_batch(self.member)[0]}/undo")
+        self.assertEqual(count("litters", "litter_id=?", code), 0)
+
+    def test_batch_date_of_birth_redates_a_whole_litter_and_splits_off_part_of_one(self):
+        code = uniq("L")
+        self.bulk("litter_id", code)
+        litter = one("select id from litters where litter_id=?", code)
+        self.bulk("date_of_birth", "2025-03-01")                 # every mouse of the litter
+        self.assertEqual(one("select date_of_birth from litters where id=?", litter), "2025-03-01")
+        self.assertEqual({mouse(i)["litter_id_fk"] for i in self.ids}, {litter})
+        self.bulk("date_of_birth", "2025-02-01", self.ids[:1])   # one of two: it leaves the litter
+        self.assertEqual(one("select date_of_birth from litters where id=?", litter), "2025-03-01")
+        moved = mouse(self.ids[0])["litter_id_fk"]
+        self.assertNotEqual(moved, litter)
+        self.assertEqual(one("select date_of_birth from litters where id=?", moved), "2025-02-01")
+
+    def test_batch_date_of_birth_must_be_a_past_date(self):
+        before = {mouse(i)["litter_id_fk"] for i in self.ids}
+        self.bulk("date_of_birth", "")
+        self.assertIn("not a date", flash_texts(self.m, "error"))
+        self.bulk("date_of_birth", "2999-01-01")
+        self.assertIn("can't be in the future", flash_texts(self.m, "error"))
+        self.assertEqual({mouse(i)["litter_id_fk"] for i in self.ids}, before)
+
     def test_batch_edit_of_an_unknown_field_is_refused(self):
         self.bulk("mouse_id", "1")
         self.assertIn("Pick a field", flash_texts(self.m, "error"))

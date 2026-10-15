@@ -390,6 +390,21 @@ a.trk-lab:hover .trk-name { color: var(--color-brand-700); }
   font-style: normal;
   text-align: center;
 }
+/* Two or more cages with living mice recorded in one place (the hole
+   shows the latest; its tooltip names them all). */
+.frz-hole .frz-crowd {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  z-index: 1;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--color-warn-600);
+  color: #fff;
+  font: 700 11px/17px var(--font-sans);
+  text-align: center;
+}
 .frz-key {
   display: flex;
   flex-wrap: wrap;
