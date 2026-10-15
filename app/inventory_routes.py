@@ -535,6 +535,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
                      if row.kind in STOCK_KINDS else {}),
         "remembered": remembered,
         "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
+        # A TEST, not released: the cells drawn as text until used (app.py, as_text_cells).
+        "text_cells": request.args.get("cells") == "text",
     }
     if only is not None:
         return {**common, "rows": rows, "sheet_rows": rows}
