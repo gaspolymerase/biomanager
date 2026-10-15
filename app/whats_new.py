@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.8": {
+        "new": [
+            "A rack position can hold more than one cage: the **Rack grid** shows the one put there last and marks the position **!** while two or more there have living mice; hover over or tap it to list them all.",
+        ],
+        "changed": [
+            "Numbers sort as numbers in every list: cage 2 comes before cage 10, and A2 before A10.",
+            "On **Proposed changes**, each change is one line with its database's icon, and a chip on the right says what it came from (what you said, or the photo and the line it read).",
+        ],
+    },
     "2.0.7": {
         "new": [
             "Ticked mice can be given a strain, sex, litter or date of birth at once: **Set** on **Mice** offers them, and the value box offers each field's own choices.",
