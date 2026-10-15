@@ -466,7 +466,7 @@ The cages show three ways. **Table**: one row per cage, each with its mice benea
 
 - **Strain**, after the custom tag, is the mouse's background: *C57BL/6J*, *BALB/cJ*, *129S1/SvImJ*, *FVB/NJ* and the other strains most labs keep are offered as you type, and you can type one of your own. Change the list on the colony's **Dropdowns** tab (Column: *strain*). **Add many** sets one strain for the whole batch, search finds a mouse by it, and a spreadsheet column called *strain* or *background* comes into it when you import.
 
-- Select mice to set a field (owner, status, transgenes, cage, note, date of death), **Add to experiment**, or **Sac**. Setting sac or a date of death ends the record; it stays in the history.
+- Select mice to set a field (owner, status, strain, sex, transgenes, cage, litter, date of birth, date of death, note, or one of your own columns), **Add to experiment**, or **Sac**. A date of birth belongs to the litter: when you select every mouse of a litter, the litter itself takes the new date; mice picked from part of a litter move together into a new litter of that date. Setting sac or a date of death ends the record; it stays in the history.
 
 ### Breeding: from litter to weaning
 

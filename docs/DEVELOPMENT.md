@@ -2914,8 +2914,11 @@ Two directions of the same idea: one specification applied to many records.
 **Acting on records that exist** — tick rows in the mice table and a
 selection bar rises from the bottom of the viewport:
 
-- **Set** one field (owner, status, genotype, cage, note, date of death)
-  across the selection
+- **Set** one field (owner, status, strain, sex, genotype, cage, litter,
+  date of birth, date of death, note, or a lab's own column) across the
+  selection (`app.BULK_FIELDS`). Sex must be one of the sheet's choices; a
+  date of birth re-dates a litter whose every mouse is selected and moves
+  the rest into one new litter of that date, made inside the batch
 - **Add to experiment** with a shared treatment group — this is the "N mice
   under the same manipulation" case
 - **Sac**, with a confirmation naming the count
