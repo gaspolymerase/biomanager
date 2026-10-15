@@ -126,16 +126,17 @@ def init_database() -> None:
             lab.start_empty(session)
             session.commit()
     # Nothing is numbered for devices (app/sync_clock.py) until Alembic has
-    # given the records their sync_version: the steps before it save records.
-    from . import sync_clock
-    sync_clock.enabled = False
+    # given the records their sync_version, nor a cage placed_at stamped:
+    # the steps before it save records.
+    from . import models, sync_clock
+    sync_clock.enabled = models.stamp_placements = False
     ensure_schema_updates()
     rebuild_samples_table()
     ensure_integrity()  # ids never reused, foreign keys enforced (app/integrity.py)
     migrate_cage_locations()
     backfill_cage_owners()
     upgrade.migrate(engine, the_plan)
-    sync_clock.enabled = True
+    sync_clock.enabled = models.stamp_placements = True
     warn_if_database_is_synced()
     # A lab server's backup service locks each backup with the lab's key
     # (deploy/compose.yaml: the labkey volume; app/lab_key.py).
@@ -999,6 +1000,38 @@ def cage_is_active(cage: CageRecord) -> bool:
     """Active means it holds living mice, and nothing else: an empty cage
     is not active, whatever its purpose (there is no Retired purpose)."""
     return any(mouse_is_active(mouse) for mouse in cage.mice)
+
+
+# A place in a rack may hold more than one cage: a cage is often set up in a
+# place before the one there is ended. The rack shows one of them, and marks
+# the place with "!" while two or more there are active.
+def placed_when(cage: CageRecord) -> tuple:
+    """The later of two cages in one place sorts last: when it was put
+    there (placed_at), else, for a cage placed before 2.0.8, when it was
+    made; then the later record."""
+    return (cage.placed_at or cage.created_at or datetime.min, cage.id or 0)
+
+
+def slot_order(cages) -> list[CageRecord]:
+    """The cages of one place in the order the rack lists them: the one it
+    shows first. That is the latest placed of those with living mice, or,
+    when none has any, the latest placed."""
+    return sorted(cages, key=lambda c: (cage_is_active(c), placed_when(c)), reverse=True)
+
+
+def slot_cages(cages) -> dict[tuple[int, int, int], list[CageRecord]]:
+    """Placed cages by their place (rack id, row, col), each place's in
+    slot_order."""
+    places: dict[tuple[int, int, int], list[CageRecord]] = defaultdict(list)
+    for cage in cages:
+        if cage.rack_id_fk and cage.rack_row and cage.rack_col:
+            places[(cage.rack_id_fk, cage.rack_row, cage.rack_col)].append(cage)
+    return {place: slot_order(here) for place, here in places.items()}
+
+
+def crowded(cages) -> bool:
+    """Whether a place's cages earn its "!": two or more are active."""
+    return sum(1 for c in cages if cage_is_active(c)) > 1
 
 
 # Weaning at P21 and genotyping at P28 are the defaults; the lab may choose

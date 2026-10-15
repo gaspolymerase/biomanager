@@ -26,7 +26,7 @@ from . import i18n, inventory_service, organism_service, positions, stock_servic
 from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
-from .services import cage_litter_json, is_breeding_cage, weaning_offset, weaning_due, weaning_title
+from .services import cage_litter_json, crowded, is_breeding_cage, slot_cages, weaning_offset, weaning_due, weaning_title
 
 LAYOUTS = {
     "classic": ("Classic", "columns"),
@@ -769,11 +769,16 @@ def freezer_view(session, agenda: list[dict], today: date, username: str = "") -
     for kind, rack, _n in chosen:
         cells: dict[tuple[int, int], dict] = {}
         if kind == "mouse":
-            for cage in session.scalars(select(CageRecord).where(
-                    CageRecord.rack_id_fk == rack.id, CageRecord.rack_row.is_not(None))):
-                cells[(cage.rack_row, cage.rack_col)] = {"label": cage.cage_id, "hue": _hue(cage.owner),
-                                                         "title": gettext("Cage %(cage)s", cage=cage.cage_id)
-                                                         + (f" · {cage.owner}" if cage.owner else "")}
+            # A position may hold more than one cage: it shows the latest in
+            # use, with "!" when two or more there have living mice.
+            placed = slot_cages(session.scalars(select(CageRecord).options(selectinload(CageRecord.mice)).where(
+                CageRecord.rack_id_fk == rack.id, CageRecord.rack_row.is_not(None))))
+            for (_rack, row, col), here in placed.items():
+                cage = here[0]
+                cells[(row, col)] = {"label": cage.cage_id, "hue": _hue(cage.owner),
+                                     "title": " · ".join(gettext("Cage %(cage)s", cage=c.cage_id)
+                                                         + (f" ({c.owner})" if c.owner else "") for c in here),
+                                     "crowd": crowded(here)}
             sub = rack.room or gettext("mouse rack")
             url = url_for("colony", view="cages")
         else:

@@ -198,6 +198,25 @@ class EachActionDoesWhatThePageDoes(AppTestCase):
         self.assertEqual(row("select rack_row, rack_col, room, purpose from mouse_cages where id=?", cage),
                          (1, 2, "B12", "Breeder"))
 
+    def test_a_cage_into_a_taken_position_is_a_warning_not_an_error(self):
+        rack = uniq("R")
+        self.m.post("/colony/racks/save", data={"id": "", "name": rack, "rows": "8", "cols": "8"})
+        rack_id = one("select id from mouse_racks where name=?", rack)
+        there, moved = uniq("C"), uniq("C")
+        self.m.post("/colony/cages/create", data={"cage_id": there, "rack_id": str(rack_id), "position": "G6"})
+        self.make_mouse(self.m, self.member, cage=there)
+        self.make_cage(self.m, moved, purpose="Experiment")
+        change = {"action": "cage_change", "target": moved, "fields": {"rack": rack, "position": "G6"}}
+        out = actions.run(app, self.member, [change])
+        self.assertTrue(out.ok, [c.as_dict() for c in out.changes])
+        self.assertEqual(out.changes[0].errors, [])
+        self.assertEqual(out.changes[0].warnings, [
+            f"{rack} · G6 also holds cage {there} (active); the rack will show the latest and mark the position with !"])
+        self.assertIsNone(one("select rack_row from mouse_cages where cage_id=?", moved))   # a preview keeps nothing
+        self.apply(change)
+        self.assertEqual(rows("select cage_id from mouse_cages where rack_id_fk=? and rack_row=7 and rack_col=6 "
+                              "order by cage_id", rack_id), sorted([(there,), (moved,)]))
+
     def test_notes_add_to_what_is_there(self):
         cage = self.make_cage(self.m, purpose="Breeding", notes="first")
         litter = self.make_litter(self.m, notes="born at night")

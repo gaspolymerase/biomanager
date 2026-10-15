@@ -2716,6 +2716,25 @@
   .rack-tile[data-tone="other"] { @apply border-dashed bg-sand-100 opacity-55; }
   .rack-tile[data-locked="true"] { @apply cursor-not-allowed; }
 
+  /* "!" on a position where two or more cages with living mice are
+     recorded: the cell shows the latest; the list (a popover, placed by
+     rack-grid.js) holds them all. */
+  .rack-stack-toggle {
+    @apply absolute -top-1.5 -left-1.5 z-10 grid size-4.5 cursor-pointer place-items-center rounded-full border-0
+           bg-warn-600 text-[11px] leading-none font-bold text-white shadow-xs;
+  }
+  .rack-stack-toggle:hover, .rack-stack-toggle:focus-visible { @apply ring-2 ring-warn-200; }
+  .rack-stack-toggle.is-match { @apply ring-2 ring-brand-500; }
+  .rack-stack {
+    @apply fixed m-0 flex w-56 flex-col gap-1.5 rounded-xl border border-hairline bg-surface p-2 text-ink;
+    inset: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .rack-stack[hidden] { display: none; }
+  .rack-stack:not([hidden]):not(:popover-open)[popover] { display: none; }
+  .rack-stack-head { @apply text-[11.5px] leading-snug text-muted; }
+  .rack-stack .rack-tile { @apply min-h-11 flex-none; }
+
   /* Rack dialog: the delete form sits under the main form. */
   .rack-delete {
     @apply flex items-center gap-3 border-t border-sand-100 bg-sand-50/60 px-5 py-3 text-[11.5px] text-muted;

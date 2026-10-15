@@ -2994,8 +2994,26 @@ Add many, New cage, litters, Wean and distribute, the CSV import) are
 wrapped in `next_number_retried`: two people saving at once read the same
 highest number, the database refuses the second, and the save is tried
 again with a fresh one instead of reporting an ID the person never typed.
-One cage per rack place is a unique index (`uq_mouse_cages_place`,
-revision 0006); a swap on the rack grid moves the cages in steps.
+A rack place may hold more than one cage: a cage is often set up there
+before the one there is ended. Revision 0043 dropped the unique index
+revision 0006 had put on the place (`uq_mouse_cages_place`), and added
+`mouse_cages.placed_at`, stamped whenever a cage's rack, row or column
+changes, by any route (`models._stamp_cage_placements`, a `before_flush`;
+off, like the sync clock, while the start-up steps before Alembic run).
+`services.slot_order` puts a place's cages in the order they are shown:
+those with living mice (`cage_is_active`) first, then the latest placed
+(`placed_when`: `placed_at`, else `created_at` for a cage placed before
+it, then the id). `slot_cages` groups cages by place and `crowded` says
+whether a place earns its "!" (two or more active). `apply_cage_position`
+no longer refuses a taken place; it flashes a warning naming the active
+cages already there, which a `cage_change` or `cage_new` proposal's
+preview shows as a warning. On the grid, `mouse_rack_payload` gives each
+cage `live` and `placed`; `rack-grid.js` draws the first by the same
+order and, with two or more live, a `.rack-stack-toggle` "!" whose
+popover (`.rack-stack`) holds a tile for each. A drop on a taken place
+(`place_cage`) swaps with the cage shown there; the others stay. Home's
+Freezer layout shows the same cage and a `.frz-crowd` "!". Fish tanks,
+fly and worm racks and inventory boxes still take one record per place.
 
 **The Cages tab's three layouts.** `view_switch(..., cards_label=)` in
 `_rack_grid.html` adds a Cards button; `rack-grid.js` shows one

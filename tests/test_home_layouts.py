@@ -87,6 +87,28 @@ class FreezerTests(AppTestCase):
         self.assertIn("frz-hole is-full is-red", box[:box.index("</article>")])
         self.assertIn(f"<span>{colony['cage']}</span>", box)
 
+    def test_a_place_with_two_cages_in_use_shows_the_latest_and_a_mark(self):
+        rack = uniq("Rack")
+        self.m.post("/colony/racks/save", data={"id": "", "name": rack, "rows": "3", "cols": "3"})
+        rack_id = self.get_rack(rack)
+        colony = self.make_colony(self.m, self.member, n_mice=1, dob=days_ago(30 * 7 + 10),
+                                  rack_id=str(rack_id), position="B2")
+        newer = uniq("C")
+        self.make_cage(self.m, newer, rack_id=str(rack_id), position="B2")
+
+        def box(html):
+            html = html[html.index(f">{rack}<"):]
+            return html[:html.index("</article>")]
+        # Empty, the new cage doesn't hide the one in use.
+        html = box(self.get_ok(self.m, "/home"))
+        self.assertIn(f"<span>{colony['cage']}</span>", html)
+        self.assertNotIn("frz-crowd", html)
+        self.make_mouse(self.m, self.member, cage=newer)
+        html = box(self.get_ok(self.m, "/home"))
+        self.assertIn(f"<span>{newer}</span>", html)
+        self.assertNotIn(f"<span>{colony['cage']}</span>", html)
+        self.assertIn("frz-crowd", html)
+
     @staticmethod
     def get_rack(name: str) -> int:
         from tests.base import one

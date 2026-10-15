@@ -169,5 +169,6 @@
   "Open plasmids": "打开质粒",
   "Untitled": "未命名",
   "No sequence": "没有序列",
-  "No plasmids yet. <a href=\"%(url)s\">Add one</a>.": "还没有质粒。<a href=\"%(url)s\">添加一个</a>。"
+  "No plasmids yet. <a href=\"%(url)s\">Add one</a>.": "还没有质粒。<a href=\"%(url)s\">添加一个</a>。",
+  "Two or more cages with living mice are recorded here": "这里记着两个或更多有活鼠的笼"
 }

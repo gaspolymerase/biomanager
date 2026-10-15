@@ -110,6 +110,8 @@ from .services import (
     breeder_summary,
     cage_derived_dates,
     cage_is_active,
+    placed_when,
+    slot_order,
     current_lab_usernames,
     mouse_is_active,
     apply_status_rules,
@@ -609,12 +611,9 @@ def handle_integrity_error(error: IntegrityError):
         column = match.group(1).split(",")[-1].strip().strip('"').split(".")[-1]
         field = column.replace("_id", " ID").replace("_", " ")
         if request.path.startswith("/api/"):
-            message = ("That place in the rack has a cage already (someone may have just put one there), "
-                       "so nothing was saved." if column in ("rack_col", "rack_row")
-                       else f"That {field} is already used. Choose another.")
+            message = f"That {field} is already used. Choose another."
         else:
-            message = (gettext("That place in the rack has a cage already (someone may have just put one there), so nothing was saved.") if column in ("rack_col", "rack_row")
-                       else gettext("That %(field)s is already used. Choose another.", field=field))
+            message = gettext("That %(field)s is already used. Choose another.", field=field)
     else:
         message = _said("That change conflicts with an existing record, so it was not saved.")
     app.logger.warning("integrity error on %s: %s", request.path, detail)
@@ -4396,9 +4395,10 @@ def cage_state(cage) -> dict | None:
 def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
     """Put `cage` in the rack and position a person typed; return an error
     message instead of guessing. An empty rack takes the cage out of racks;
-    a rack with no position keeps it in that rack but unplaced. Typing a
-    position that another cage holds is refused rather than moving that
-    cage (dragging on the grid is how you swap)."""
+    a rack with no position keeps it in that rack but unplaced. A position
+    another cage holds takes this one too (a cage is often set up there
+    before the old one is ended), with a warning when one there is active;
+    that cage stays where it is (dragging on the grid is how you swap)."""
     rack_raw = str(rack_raw or "").strip()
     position_raw = str(position_raw or "").strip()
     if not rack_raw:
@@ -4417,15 +4417,16 @@ def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
         last = positions.label(rack.rows, rack.cols, rack.naming, rack.cols)
         return gettext("“%(position)s” is not a position in rack %(rack)s (%(first)s–%(last)s).",
                        position=position_raw, rack=rack.name, first=first, last=last)
-    holder = db_session.scalar(select(CageRecord).where(
-        CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == cell[0],
-        CageRecord.rack_col == cell[1], CageRecord.id != (cage.id or 0)))
-    if holder is not None:
-        name = positions.label(*cell, rack.naming, rack.cols)
-        return gettext("%(rack)s · %(position)s already holds cage %(cage)s. Drag on the rack grid to swap.",
-                       rack=rack.name, position=name, cage=holder.cage_id)
-
+    moved = (cage.rack_id_fk, cage.rack_row, cage.rack_col) != (rack.id, *cell)
     cage.rack_id_fk, (cage.rack_row, cage.rack_col) = rack.id, cell
+    others = [c for c in slot_order(db_session.scalars(select(CageRecord).where(
+        CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == cell[0],
+        CageRecord.rack_col == cell[1], CageRecord.id != (cage.id or 0)))) if cage_is_active(c)]
+    if moved and others:
+        flash(ngettext("%(rack)s · %(position)s also holds cage %(cages)s (active); the rack will show the latest and mark the position with !",
+                       "%(rack)s · %(position)s also holds cages %(cages)s (active); the rack will show the latest and mark the position with !",
+                       len(others), rack=rack.name, position=positions.label(*cell, rack.naming, rack.cols),
+                       cages=", ".join(c.cage_id for c in others)), "warning")
     return None
 
 
@@ -4482,7 +4483,8 @@ def delete_mouse_rack(rack_id: int):
 @login_required
 def place_cage(cage_row_id: int):
     """Move a cage on the rack grid; answers JSON. Dropping onto an occupied
-    position swaps the two cages; an empty rack id unplaces the cage."""
+    position swaps the cage with the one shown there (the others in that
+    position stay); an empty rack id unplaces the cage."""
     with SessionLocal() as db_session:
         cage = db_session.get(CageRecord, cage_row_id)
         if cage is None:
@@ -4502,20 +4504,15 @@ def place_cage(cage_row_id: int):
             return jsonify({"ok": False, "error": gettext("Missing row or column.")}), 400
         if rack is None or not (1 <= row <= rack.rows and 1 <= col <= rack.cols):
             return jsonify({"ok": False, "error": gettext("That position is not in the rack.")}), 400
-        holder = db_session.scalar(select(CageRecord).where(
+        here = slot_order(db_session.scalars(select(CageRecord).where(
             CageRecord.rack_id_fk == rack.id, CageRecord.rack_row == row,
-            CageRecord.rack_col == col, CageRecord.id != cage.id))
+            CageRecord.rack_col == col, CageRecord.id != cage.id)))
+        holder = here[0] if here else None
         if holder is not None:
             if not can_edit_cage(holder):
                 return jsonify({"ok": False, "error": gettext("That position holds cage %(cage)s, which you may not move.",
                                                               cage=holder.cage_id)}), 403
-            # A swap, in steps: one cage per place holds at every moment
-            # (the unique index on the place), so the dropped cage leaves first.
-            old = (cage.rack_id_fk, cage.rack_row, cage.rack_col)
-            cage.rack_id_fk = cage.rack_row = cage.rack_col = None
-            db_session.flush()
-            holder.rack_id_fk, holder.rack_row, holder.rack_col = old
-            db_session.flush()
+            holder.rack_id_fk, holder.rack_row, holder.rack_col = cage.rack_id_fk, cage.rack_row, cage.rack_col
         cage.rack_id_fk, cage.rack_row, cage.rack_col = rack.id, row, col
         db_session.commit()
     return jsonify({"ok": True})
@@ -4540,6 +4537,10 @@ def mouse_rack_payload(db_session, cages) -> dict:
         items.append({
             "id": cage.id,
             "label": cage.cage_id,
+            # Of cages sharing a position, the grid shows the latest live one
+            # and marks the position "!" (services.slot_order).
+            "live": bool(live),
+            "placed": placed_when(cage)[0].isoformat(),
             "sub": cage.genotype_summary or ", ".join(strains[:2]) or cage.purpose or "",
             "badge": f"{len(live)}" if live else "",
             "tone": "other" if outside else (normalize_status(cage.purpose) if live else "inactive"),

@@ -432,14 +432,14 @@ class WhereThingsAreTests(AppTestCase):
         self.make_mouse(self.a, self.admin, cage=code, gender="M")
         return rack, code
 
-    def test_one_cage_per_place_even_when_two_arrive_at_once(self):
+    def test_a_place_may_hold_two_cages_and_a_drop_there_still_swaps(self):
         rack, code = self.placed_cage()
         rack_id = one("select id from mouse_racks where name=?", rack)
         other = self.make_cage(self.a, uniq("C"))
-        # What a second drop at the same moment would write: refused by the database.
-        with self.assertRaises(Exception):
-            execute("update mouse_cages set rack_id_fk=?, rack_row=2, rack_col=3 where id=?", rack_id, other)
-        # A drop onto the taken place is a swap, in steps the rule allows.
+        # A cage set up at a place before the one there is ended: the database takes it.
+        execute("update mouse_cages set rack_id_fk=?, rack_row=2, rack_col=3 where id=?", rack_id, other)
+        self.assertEqual(count("mouse_cages", "rack_id_fk=? and rack_row=2 and rack_col=3", rack_id), 2)
+        # A drop onto a taken place is a swap.
         placed = one("select id from mouse_cages where cage_id=?", code)
         execute("update mouse_cages set rack_id_fk=?, rack_row=1, rack_col=1 where id=?", rack_id, other)
         r = self.a.post(f"/colony/cages/{other}/place", data={"rack_id": rack_id, "row": 2, "col": 3})

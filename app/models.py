@@ -4,9 +4,10 @@ from datetime import date, datetime
 
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text, TypeDecorator, UniqueConstraint
 from sqlalchemy import event
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy import false as sa_false
 from sqlalchemy import true as sa_true
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
 from .db import Base
 
@@ -285,9 +286,9 @@ class MouseRack(Base):
 
 class CageRecord(Base):
     __tablename__ = "mouse_cages"
-    # One cage per place in a rack, even when two people drop cages on the
-    # same place at once (migrations/versions/0006_one_cage_per_place.py).
-    __table_args__ = (Index("uq_mouse_cages_place", "rack_id_fk", "rack_row", "rack_col", unique=True),)
+    # A place in a rack may hold more than one cage: a cage is often set up
+    # in a place before the one there is ended (revision 0043 dropped the
+    # one-cage index). The rack grid shows the latest (services.slot_cages).
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     # Where this record stands in the lab's sequence of changes (app/sync.py):
@@ -318,6 +319,9 @@ class CageRecord(Base):
     rack_id_fk: Mapped[int | None] = mapped_column(ForeignKey("mouse_racks.id"), nullable=True, index=True)
     rack_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rack_col: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # When it was last put in its place (_stamp_cage_placements below);
+    # none for a cage placed before 2.0.8, which counts from created_at.
+    placed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     mice: Mapped[list["MouseRecord"]] = relationship(back_populates="cage")
@@ -368,6 +372,25 @@ def _breeder_cages_start_shared(cage, value, oldvalue, _initiator):
         cage.is_shared = True
     elif breeder(oldvalue) and not breeder(value):
         cage.is_shared, cage.share_group_id = False, None
+
+
+# Off while the start-up steps before Alembic save cages (services.init_database):
+# placed_at may not be a column yet.
+stamp_placements = True
+
+
+@event.listens_for(Session, "before_flush")
+def _stamp_cage_placements(session, _flush_context, _instances):
+    """A cage put in a place of a rack, by any page, import or proposal,
+    records when: of two cages in one place, the later is the one shown."""
+    if not stamp_placements:
+        return
+    for cage in [*session.new, *session.dirty]:
+        if not isinstance(cage, CageRecord) or cage.rack_row is None or cage.rack_col is None:
+            continue
+        state = sa_inspect(cage)
+        if any(state.attrs[name].history.has_changes() for name in ("rack_id_fk", "rack_row", "rack_col")):
+            cage.placed_at = datetime.utcnow()
 
 
 class MouseRecord(Base):

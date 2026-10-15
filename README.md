@@ -116,6 +116,10 @@ never what you may edit.
   Each cage shows its mice beneath it, to edit right there and wean
   (**Close all** folds them to one row each), or switch to **Cards**: a
   card per cage with its mice and its actions, as on a rack.
+  A position in a rack can hold more than one cage (a new cage is often
+  set up there before the old one is ended): the **Rack grid** shows the
+  one put there last and marks the position **!** while two or more there
+  have living mice; hover over or tap the **!** to list and open them all.
 - **Litters** — on a Breeding (mating) cage, **Litter born** records the birth
   once, and the weaning date (P21) and genotyping date (P28), or the days
   the lab sets in **Settings → General**, follow from it, on Home and the

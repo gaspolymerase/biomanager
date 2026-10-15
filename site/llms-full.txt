@@ -257,7 +257,7 @@ Home is where each day starts: only what needs attention, from every database yo
 
 - **Tracks**: Every dated job on one ruler of days, one track per kind of work, coloured overdue, today, within 3 days or scheduled. Choose 1, 2 or 4 weeks. *Needs you now* and *Busy days* sit beside it. On a phone it becomes a list of days.
 
-- **Freezer**: Your racks seen from above, lit where something is due, with a **Pull list** of the next three days' jobs in walking order, to take into the room. A cage's cap colour shows its owner.
+- **Freezer**: Your racks seen from above, lit where something is due, with a **Pull list** of the next three days' jobs in walking order, to take into the room. A cage's cap colour shows its owner. A **!** on a cage means two or more cages with living mice are recorded in that position; it shows the latest, and its tooltip names them all.
 
 **Customize**, beside the layout chips, arranges Classic your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. Four cards start switched off and are there to add: *Your to-dos* (due this week or undated), *Bookings* (instruments booked in the next week), *Recent pages* of your notebook, and *Calculators* (the ones you opened last, then the usual ones). Under the cards, *Counts* lists a number for every database: the first five show until you tick the ones you want. **Back to the usual** puts everything back, after asking. Like the layout, it is yours alone.
 
@@ -455,6 +455,8 @@ An admin changes the list under **Configure → Cage purposes** (or the **Dropdo
 The cages show three ways. **Table**: one row per cage, each with its mice beneath it (edit them in place) and its actions; *Litter born* and *Wean due* come right after the mice, so when to wean is in view. Type over a cage's number to renumber it (its mice go with it; a number another cage has is refused). *Card ID*, right after the number, is the number on the facility's own cage card, if it has one. A cage's mice show the transgene columns the **Mice** tab shows: show or hide *Transgene 3* or *4* there under **Columns**, and the cages follow. **Close all** folds every cage to its row (the page remembers), and **Open all** opens them again; the arrow at the start of a row or its mice count opens or closes one. **Cards**: a card for each cage — where it is, its purpose, owner, strain and when to wean, its mice and the same actions — with its own search and the same buttons, starting on *Active*. **Rack grid**: the racks from the front. The page remembers the one you used last.
 
 *A rack grid*
+
+**Two cages in one position.** A new cage is often set up in a position before the cage there is ended, so a position can hold more than one cage. The cage's form, the sheet, an import or an assistant's proposal puts it there and says which cage with living mice is there already. The rack grid shows the cage put there last (one with living mice before an empty one) and marks the position with **!** while two or more there have living mice. Hover over or tap the **!** to list every cage in that position, and click one to open it, move it or end it. Empty and ended cages don't count. Dragging a cage onto a position still swaps it with the cage shown there.
 
 ### Mice
 
