@@ -1594,7 +1594,6 @@
   .sheet-table tbody tr.is-selected td { @apply bg-brand-50; }
   .sheet-table tbody tr.is-inactive td { @apply text-sand-400; }
   .sheet-table tbody tr.is-inactive :is(input, select) { @apply text-sand-400; }
-  .sheet-table tbody tr.is-inactive .cell-text { @apply text-sand-400; }   /* a test: static/text-cells.js */
 
   /* Pinned columns: the checkbox and ID on the left, actions on the right. */
   .sheet-pin { @apply sticky z-10; }
@@ -1655,31 +1654,6 @@
   .sheet-table td > input.from-colony::placeholder { @apply text-ink-soft italic; }
   .sheet-table td > :is(input, select):disabled { @apply cursor-default opacity-100; }
   .sheet-table input.ident { @apply font-mono text-[11.5px]; }
-
-  /* A TEST, not released (?cells=text): a cell drawn as text until used
-     (static/text-cells.js), looking as its field does. */
-  .sheet-table .cell-text {
-    @apply block h-6.5 w-full min-w-0 cursor-text truncate rounded-md border border-transparent pr-1 pl-2
-           text-[12px] leading-6 text-ink-soft transition-colors duration-100;
-  }
-  .sheet-table .cell-text:hover { @apply border-hairline bg-surface; }
-  .sheet-table .cell-text:focus { @apply border-brand-400 bg-surface text-ink outline-none; }
-  .sheet-table .cell-text.is-empty { @apply text-sand-300; }
-  /* As a disabled field reads: greyed, and nothing happens on hover. */
-  .sheet-table .cell-text.is-disabled { @apply cursor-default text-ink-soft/50; }
-  .sheet-table .cell-text.is-disabled:hover { @apply border-transparent bg-transparent; }
-  .sheet-table .cell-text.status-pill.is-empty { @apply bg-transparent; }
-  .sheet-table .cell-text.ident { @apply font-mono text-[11.5px]; }
-  .sheet-table .cell-text.is-date { @apply tabular-nums; }
-  .sheet-table .cell-text.status-pill {
-    @apply inline-block h-5.5 w-auto max-w-full rounded-full px-2 pr-5 align-middle text-[11px] font-semibold capitalize leading-5;
-  }
-  .sheet-table .cell-text.scope-pill {
-    @apply inline-block h-6 w-auto max-w-full rounded-full bg-sand-100 px-2.5 pr-4 align-middle text-[11.5px]
-           font-semibold text-muted leading-6;
-  }
-  .sheet-table .cell-text.scope-pill[data-scope="lab"] { @apply bg-violet-50 text-violet-700; }
-  .sheet-table .cell-text.scope-pill[data-scope="group"] { @apply bg-teal-50 text-teal-700; }
   .sheet-table input.note-cell { @apply truncate; }
 
   /* A native date field keeps its full "mm/dd/yyyy"; the picker glyph

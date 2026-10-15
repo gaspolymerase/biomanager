@@ -1175,53 +1175,6 @@ def tight(html) -> Markup:
     return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
-# A TEST (not released): a sheet's cells drawn as text until used
-# (?cells=text on an inventory; static/text-cells.js turns one back into its
-# field). Each <td> holding just one field: the field's own markup goes in
-# data-field, and the text it shows is drawn instead.
-_ONE_FIELD = re.compile(r'<td((?: [^>]*)?)>(<input\b[^>]*>|<select\b[^>]*>.*?</select>)</td>', re.S)
-_ATTR = re.compile(r'\b(name|value|class|placeholder|title|data-status|data-scope|type)="([^"]*)"')
-_CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
-
-
-@app.template_filter("as_text_cells")
-def as_text_cells(html, on: bool = True) -> Markup:
-    html = str(html)
-    if not on:
-        return Markup(html)
-    from markupsafe import escape
-
-    def cell(m):
-        td_attrs, field = m.group(1), m.group(2)
-        tag = field[1:field.index(" ") if " " in field[:8] else 7]
-        head = field[:field.index(">") + 1]
-        attrs = dict(_ATTR.findall(head))
-        if attrs.get("type") in ("checkbox", "hidden", "radio") or "name" not in attrs:
-            return m.group(0)
-        if tag == "select":
-            chosen = _CHOSEN.search(field)
-            value, shown = (chosen.group(1), chosen.group(2)) if chosen else ("", "")
-        else:
-            value = shown = attrs.get("value", "")
-        empty = not value
-        if not shown and "note-cell" not in attrs.get("class", ""):
-            shown = attrs.get("placeholder", "")
-        locked = re.search(r"\sdisabled\b", head) is not None
-        classes = " ".join(c for c in ["cell-text", attrs.get("class", ""), "is-empty" if empty else "",
-                                       "is-date" if attrs.get("type") == "date" else "",
-                                       "is-disabled" if locked else "",
-                                       # an input's placeholder, shown for an empty one: not its value
-                                       "is-placeholder" if tag != "select" and not value and shown else ""] if c)
-        extra = "".join(f' {k}="{attrs[k]}"' for k in ("title", "data-status", "data-scope") if k in attrs)
-        # A field that can't be changed stays text: nothing to open.
-        reach = "" if locked else ' tabindex="0"'
-        return (f'<td{td_attrs}><span class="{classes}"{reach} data-field="{escape(field)}" '
-                f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"'
-                f'{extra}>{shown}</span></td>')
-
-    return Markup(_ONE_FIELD.sub(cell, html))
-
-
 @app.template_filter("head")
 def column_head(label) -> Markup:
     """A column heading, which the sheet writes in capitals: a micro sign

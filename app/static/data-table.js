@@ -1222,8 +1222,6 @@
     /* What a cell shows: an editable cell's value (a select's chosen
        label), otherwise its text. */
     _cellText(td) {
-      const text = td.querySelector(':scope > .cell-text');   // a test: static/text-cells.js
-      if (text) return text.classList.contains('is-placeholder') ? '' : text.textContent.trim();
       const field = td.querySelector('select, textarea, input:not([type=checkbox]):not([type=hidden]):not([type=radio])');
       if (field) {
         if (field.tagName === 'SELECT') return field.selectedOptions[0] ? field.selectedOptions[0].textContent.trim() : '';

@@ -110,7 +110,7 @@
   {% set reorder_url = url_for('inventory.module', key=order_module.key) %}
   {% set reorder_title = _('Order again: a new order in %(database)s with these details', database=order_module.label|tr) %}
 {% endif %}
-{% filter as_text_cells(text_cells) %}{% filter tight %}
+{% filter tight %}
 {% for r in sheet_rows %}
   {% set i = r.item %}
   {% set f = 'inv-' ~ i.id %}
@@ -263,4 +263,4 @@
 {% else %}{% if not fragment %}
   <tr><td class="dt-empty" colspan="40"><span class="dt-empty-msg">{% trans nouns=nouns, new=_('New %(noun)s', noun=noun) %}No {{ nouns }} yet. Use <strong>{{ new }}</strong>, or <strong>Import from Excel</strong> for the sheet you kept them in.{% endtrans %}</span></td></tr>
 {% endif %}{% endfor %}
-{% endfilter %}{% endfilter %}
+{% endfilter %}
