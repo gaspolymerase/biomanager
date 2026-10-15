@@ -610,6 +610,8 @@
                   </tr>
                 </thead>
                 <tbody>
+                  {# In Chromium, its cells (and its mice's) drawn as text until used (app.py, as_text_cells). #}
+                  {% filter as_text_cells(text_cells_on()) %}
                   {% for cage in cage_rows %}
                     {% set f = 'cage-update-' ~ cage.id %}
                     {% set locked = not cage.can_edit %}
@@ -857,6 +859,7 @@
                   {% else %}
                     <tr><td class="dt-empty" colspan="14">{{ _('No cages here yet. Use <strong>New cage</strong>, or type a new cage number on a mouse.') }}</td></tr>
                   {% endfor %}
+                  {% endfilter %}
                 </tbody>
               </table>
             </div>
@@ -2551,8 +2554,9 @@ function weanDue(born) {
       if (title) title.textContent = values.cage_id;
       if (card) card.setAttribute('aria-label', t('Cage %(id)s', { id: values.cage_id }));
     }
-    const rack = row.querySelector('select[name="rack_id"]');
-    row.dataset.rack_name = rack && rack.value ? rack.selectedOptions[0].textContent.trim() : '';
+    // Read as the row shows it, whether a field or a cell drawn as text (static/text-cells.js).
+    const rack = BioTextCells.read(row, 'rack_id');
+    row.dataset.rack_name = rack && rack.value ? rack.text : '';
     if ('purpose' in values) {
       row.dataset.purpose = String(values.purpose || '').trim().toLowerCase();
       const card = document.querySelector(`[data-cage-card="${row.dataset.id}"]`);
@@ -2560,7 +2564,14 @@ function weanDue(born) {
     }
     // Only its owner or an admin shares a cage: the server says why not
     // (share_lock) and what it is now.
-    const shared = row.querySelector('select[name="is_shared"]');
+    // Drawn as text, the menu becomes its field only when its lock or its value changed.
+    let shared = row.querySelector('select[name="is_shared"]');
+    const drawn = !shared && row.querySelector('.cell-text[data-sort-for="is_shared"]');
+    if (drawn && !row.classList.contains('is-locked')
+        && (Boolean(values.share_lock) !== drawn.classList.contains('is-disabled')
+            || ('is_shared' in values && String(values.is_shared) !== (drawn.dataset.sortValue || '')))) {
+      shared = BioTextCells.open(drawn, true);
+    }
     if (shared && !shared.closest('tr').classList.contains('is-locked')) {
       const lock = values.share_lock || '';
       shared.disabled = Boolean(lock);
@@ -2571,6 +2582,10 @@ function weanDue(born) {
     }
     const genotype = row.querySelector('input[name="genotype_summary"]');
     if (genotype) genotype.title = genotype.value || genotype.placeholder;
+    else {
+      const text = row.querySelector('.cell-text[data-sort-for="genotype_summary"]');
+      if (text) text.title = text.textContent.trim();
+    }
     const detail = document.getElementById(`cage-detail-${row.dataset.id}`);
     const breeding = detail && detail.querySelector('[data-breeding-actions]');
     if (breeding) breeding.classList.toggle('hidden-row', !BREEDING.has(String(values.purpose || '').trim().toLowerCase()));
