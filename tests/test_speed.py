@@ -334,6 +334,90 @@ class InventoryPagingTests(AppTestCase):
         self.assertEqual(r.status_code, 302)
 
 
+class TextCellsTests(AppTestCase):
+    """In Chromium an inventory's cells come as text, each with its field's
+    own markup to become when used (app.py as_text_cells, static/text-cells.js);
+    other browsers get the fields, and ?cells= chooses either."""
+
+    CHROME = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                            "(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"}
+    SAFARI = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
+                            "(KHTML, like Gecko) Version/18.0 Safari/605.1.15"}
+
+    def setUp(self):
+        from tests.test_inventory import InventoryCase
+        self.key = InventoryCase.new_module(self.a, "reagents")
+        self.vendor = uniq("Vendor")
+        self.item = self.make_item(self.a, self.key, name=uniq("tc"), vendor=self.vendor, status="in stock",
+                                   received_on="2026-03-04")
+
+    def page(self, headers, query=""):
+        r = self.a.get(f"/inventory/{self.key}{query}", headers=headers)
+        self.assertEqual(r.status_code, 200)
+        return r.get_data(as_text=True)
+
+    @staticmethod
+    def cell(html: str, name: str):
+        found = re.search(r'<span class="cell-text[^"]*"[^>]*data-sort-for="%s"[^>]*>[^<]*</span>' % name, html)
+        return found.group(0) if found else None
+
+    def test_chromium_gets_text_other_browsers_fields(self):
+        chrome = self.page(self.CHROME)
+        self.assertIsNotNone(self.cell(chrome, "vendor"))
+        self.assertIn("/static/text-cells.js?v=", chrome)
+        self.assertNotIn(f'name="vendor" value="{self.vendor}"', chrome)
+        for headers in (self.SAFARI, {}):
+            fields = self.page(headers)
+            self.assertIsNone(self.cell(fields, "vendor"))
+            self.assertNotIn("/static/text-cells.js?v=", fields)
+            self.assertRegex(fields, rf'<input[^>]*name="vendor"[^>]*value="{self.vendor}"')
+
+    def test_the_address_chooses_either(self):
+        self.assertIsNotNone(self.cell(self.page(self.SAFARI, "?cells=text"), "vendor"))
+        self.assertIsNone(self.cell(self.page(self.CHROME, "?cells=fields"), "vendor"))
+
+    def test_a_text_cell_is_its_field_until_used(self):
+        fields = self.page(self.SAFARI)
+        text = self.page(self.CHROME)
+        span = self.cell(text, "vendor")
+        self.assertIn(f">{self.vendor}</span>", span)
+        self.assertIn(f'data-sort-value="{self.vendor}"', span)
+        self.assertIn('tabindex="0"', span)
+        field = htmllib.unescape(re.search(r'data-field="([^"]*)"', span).group(1))
+        self.assertIn(field, fields)
+        # A menu shows its chosen label, coloured as its pill; a date its value.
+        status = self.cell(text, "status")
+        self.assertIn('data-status="in stock"', status)
+        self.assertRegex(status, r">\s*[Ii]n stock</span>")
+        received = self.cell(text, "received_on")
+        self.assertIn("is-date", received)
+        self.assertIn('data-sort-value="2026-03-04"', received)
+        # The row's checkbox stays as it is.
+        self.assertRegex(text, rf'<input[^>]*type="checkbox"[^>]*value="{self.item}"|<input[^>]*value="{self.item}"[^>]*type="checkbox"')
+
+    def test_a_save_of_one_cell_leaves_the_others(self):
+        r = self.a.post(f"/inventory/{self.key}/items/{self.item}/update", data={"notes": "opened one cell"},
+                        headers={"X-Autosave": "1"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(one("select notes from inventory_items where id=?", self.item), "opened one cell")
+        self.assertEqual(one("select vendor from inventory_items where id=?", self.item), self.vendor)
+        self.assertEqual(one("select status from inventory_items where id=?", self.item), "in stock")
+
+    def test_rows_fetched_later_come_as_the_page_drew_them(self):
+        from unittest import mock
+        from app import inventory_routes
+        for _ in range(3):
+            self.make_item(self.a, self.key, name=uniq("tc"))
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 2), mock.patch.object(inventory_routes, "FIRST_PAGE", 1):
+            for headers, query, text in ((self.CHROME, "", True), (self.SAFARI, "", False),
+                                         (self.CHROME, "?cells=fields", False)):
+                html = self.page(headers, query)
+                url = htmllib.unescape(re.search(r'data-dt-rows-url="([^"]+)"', html).group(1))
+                self.assertEqual("cells=fields" in url, query == "?cells=fields")
+                rows = self.a.get(f"{url}&ids={self.item}", headers=headers).get_json()["rows"]
+                self.assertEqual(self.cell(rows, "vendor") is not None, text, (headers, query))
+
+
 class VersionedAssetsTests(AppTestCase):
 
     def test_a_file_named_with_its_version_is_kept_by_the_browser(self):

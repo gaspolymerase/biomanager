@@ -30,6 +30,14 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.6": {
+        "changed": [
+            "An inventory's cells are drawn as text until you click, tap or Tab to them, so it opens a fifth to a third sooner in Chrome, Edge, the Windows app and on Android.",
+        ],
+        "fixed": [
+            "A menu the app changed while saving (a status turned to low) shows its new value at once, not blank.",
+        ],
+    },
     "2.0.5": {
         "changed": [
             "A sheet of more than 300 rows opens faster in Chrome, Edge and the Windows app: the rows you haven't turned to wait off the page (it was 1,000 rows).",

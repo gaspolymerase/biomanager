@@ -535,6 +535,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
                      if row.kind in STOCK_KINDS else {}),
         "remembered": remembered,
         "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
+        "text_cells": _text_cells(),
     }
     if only is not None:
         return {**common, "rows": rows, "sheet_rows": rows}
@@ -551,7 +552,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
         "stubs": [_row_stub(mv, r, table_fields, box_labels, mouse_links, plasmid_links)
                   for r in rows[FIRST_PAGE:]] if lazy else [],
-        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v))
+        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
+                            cells=request.args.get("cells"))
                     if lazy else "",
         "racks": racks,
         "tab_counts": tab_counts, "listed_all": listed_all,
@@ -581,6 +583,19 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         },
     }
     return context
+
+
+def _text_cells() -> bool:
+    """Whether the sheet's cells are drawn as text until used (app.py,
+    as_text_cells; static/text-cells.js). Chromium (Chrome, Edge, the
+    Windows app, Android) reads every field on a page as it loads, so there a
+    sheet of text opens a fifth to a third sooner. Safari and the Mac app
+    keep their fields: they never had that wait. ?cells=text or
+    ?cells=fields chooses either in any browser."""
+    choice = request.args.get("cells")
+    if choice in ("text", "fields"):
+        return choice == "text"
+    return "Chrome/" in request.headers.get("User-Agent", "")
 
 
 def _row_stub(mv, r: dict, table_fields: list[dict], box_labels: dict, mouse_links: dict, plasmid_links: dict) -> dict:

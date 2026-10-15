@@ -458,6 +458,30 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   (and its detail rows): `render()` takes the others off, so the rows of
   pages turned past don't pile up in it, hidden, for every later search
   or sort to restyle.
+- In Chromium an inventory's cells are drawn as text until used
+  (`inventory_routes._text_cells`, by the browser's `Chrome/`; `?cells=text`
+  or `?cells=fields` chooses either anywhere, and the rows URL carries it).
+  The `as_text_cells` filter in `app.py` turns each `<td>` holding a single
+  input or menu into a `<span class="cell-text">`: the text the field
+  shows (a menu's chosen label, an input's placeholder when empty), the
+  field's own markup in `data-field`, its value in `data-sort-value` and
+  `data-sort-for` its name; a disabled field's span has no `tabindex`. Cells
+  with more than one field (a source, a ticked-choices menu) stay as they
+  are. `static/text-cells.js` puts the field back when the span is focused
+  (pressed, or reached with Tab), with the caret where it was pressed and a
+  menu's list opened; Box opens Position with it. Anything else that needs
+  the field opens it with `BioTextCells.open(span)`: a paste
+  (`sheet.js`, `editable`) and a save whose answer changed the cell's value
+  (`applyRow`). A save sends the fields open in its row, and the item's
+  update changes only the fields it is sent (`if name in form`), so the
+  cells still drawn keep their values. `_cellText` and `_rowText` read
+  `data-sort-value`, so export, sort and search give what the fields would.
+  A date's text is written in the browser's own date order as the page
+  loads and with each `dt:rows-loaded`. A sheet opens a fifth to a third
+  sooner (418 samples, parked: 3.5–3.9 → 2.8–3.0 s; 199: 2.15 → 1.75 s);
+  the page is 30–45% bigger, a tenth once compressed. Safari and the Mac
+  app keep the fields: they never had autofill's wait, and the text cells
+  are not tried there.
 - An inventory of more than 500 listed items (`inventory_routes.LAZY_OVER`)
   is paged by the server. The page draws its first 100 rows (`FIRST_PAGE`,
   the sheet's first page, in its own order) and, for each other item, an
