@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.7": {
+        "new": [
+            "Ticked mice can be given a strain, sex, litter or date of birth at once: **Set** on **Mice** offers them, and the value box offers each field's own choices.",
+        ],
+    },
     "2.0.6": {
         "changed": [
             "An inventory's cells are drawn as text until you click, tap or Tab to them, so it opens a fifth to a third sooner in Chrome, Edge, the Windows app and on Android.",
