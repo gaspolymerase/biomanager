@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.5": {
+        "changed": [
+            "A sheet of more than 300 rows opens faster in Chrome, Edge and the Windows app: the rows you haven't turned to wait off the page (it was 1,000 rows).",
+        ],
+    },
     "2.0.4": {
         "changed": [
             "Picking a purpose above the cages (**Breeder**, **Breeding**, **Experiment**) shows only its cages with living mice; **All** still shows the old ones.",

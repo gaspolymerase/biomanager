@@ -435,12 +435,14 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   otherwise style and lay out every row first. `render()` then touches only
   the rows whose state changes, and moves rows into a new order only when
   the order has changed (a sort, a search, a chip).
-- A sheet of more than 1,000 rows (`PARK_OVER`) takes the rows it has not
+- A sheet of more than 300 rows (`PARK_OVER`) takes the rows it has not
   shown off the page (`_parkLater`), and `render()` puts each back when it
   is shown; it then stays. Chromium's autofill reads every field on a page
   as it loads (Chrome, Edge, the Windows app; not Safari or the Mac app),
   shown or not: on a sheet of a few thousand rows that took one to two
-  minutes. The rows leave in the window's `DOMContentLoaded`, after the
+  minutes, and on a mouse sheet of 950 rows 20 s (5 s parked). Below about
+  300 rows, taking them off and putting them back costs as much as it
+  saves (it was 1,000 until 2.0.5). The rows leave in the window's `DOMContentLoaded`, after the
   document's, so every script that wires rows as the page loads has seen
   them, and before Chromium looks. Search, sort, export, print, the count
   and the column choices work on all of them (`this.rows`). Code that
@@ -3127,7 +3129,7 @@ load event, the main thread's busy time, its DOM nodes and JS heap.
 What keeps the browser's side short is under *Small shared rules*: row
 forms in a `<template>` (`row-forms.js`), long choice lists sent once
 (`data-choices`), the rows past the first page hidden until the sheet is
-drawn, a sheet of over 1,000 rows keeping the rows it has not shown
+drawn, a sheet of over 300 rows keeping the rows it has not shown
 off the page (`_parkLater`), and an inventory of over 500 items paged by
 the server (`LAZY_OVER`).
 
@@ -3149,7 +3151,9 @@ turned left its rows in the table and the next search took 3–5 s.
 In a lab of 4,000 mice, in Chromium (before 2.0.0 → 2.0.0 → after):
 mice 6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish
 31.5 → 3.2 s, reagents 5.2 → 2.6 → 1.8 s, samples 6.0 → 2.8 → 1.8 s,
-Breeders 0.5 s.
+Breeders 0.5 s. With rows taken off the page from 300 (2.0.5,
+was 1,000): one person's 950 living mice 20 → 5 s, 500 fish 5–6 → 3 s;
+sheets under 300 rows are unchanged.
 
 ## Languages
 

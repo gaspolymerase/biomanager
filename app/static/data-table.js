@@ -83,8 +83,10 @@
     if (openMenu && !openMenu.contains(event.target)) closeMenus();
   }, true);
 
-  // A sheet longer than this keeps the rows not yet shown off the page (_parkLater).
-  const PARK_OVER = 1000;
+  // A sheet longer than this keeps the rows not yet shown off the page
+  // (_parkLater). Below it, putting rows back costs more than Chromium's
+  // reading them as the page loads.
+  const PARK_OVER = 300;
   const sheets = [];
 
   /* A sheet's rows, on the page or waiting off it (_parkLater): use these
