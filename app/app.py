@@ -3528,18 +3528,26 @@ def _report(changed: int, skipped: int, what: str) -> None:
 BULK_FIELDS = {
     "owner": "Owner",
     "status": "Status",
+    "strain": "Strain",
+    "gender": "Sex",
     "genotype": "Transgenes",
     "cage_id": "Cage",
+    "litter_id": "Litter",
     "note": "Note",
+    "date_of_birth": "Date of birth",
     "date_of_death": "Date of death",
 }
 # What _report says was done, for each field.
 BULK_DONE = {
     "owner": "Set owner",
     "status": "Set status",
+    "strain": "Set strain",
+    "gender": "Set sex",
     "genotype": "Set transgenes",
     "cage_id": "Set cage",
+    "litter_id": "Set litter",
     "note": "Set note",
+    "date_of_birth": "Set date of birth",
     "date_of_death": "Set date of death",
 }
 
@@ -3599,6 +3607,24 @@ def bulk_update_mice():
         if field == "date_of_death" and value and parse_date(value) is None:
             flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value), "error")
             return redirect(back)
+        # A mouse's age is its date of birth: never blanked by a slip.
+        born = parse_date(value) if field == "date_of_birth" else None
+        if field == "date_of_birth" and born is None:
+            flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value or gettext("(blank)")), "error")
+            return redirect(back)
+        refused = future_birth({"date_of_birth": value}) if born else None
+        if refused:
+            flash(refused, "error")
+            return redirect(back)
+        if field == "gender" and value:
+            # The sheet's Sex cell offers these only; a typo would make a
+            # third sex nobody can pick.
+            choices = _merged_choices(["F", "M", "Unknown"], dropdown_options_map(db_session).get("gender", []))
+            value = next((c for c in choices if c.lower() == value.lower()), "")
+            if not value:
+                flash(gettext("“%(value)s” is not one of the sexes here (%(choices)s), so nothing changed.",
+                              value=request.form.get("value", "").strip(), choices=", ".join(choices)), "error")
+                return redirect(back)
         if field == "cage_id" and value and value.lower() != "new":
             existing_cage = db_session.scalar(select(CageRecord).where(CageRecord.cage_id == value))
             if existing_cage is not None and not access.can_edit_cage(existing_cage):
@@ -3608,10 +3634,22 @@ def bulk_update_mice():
         # "new" is one new cage for the whole selection — the mice were
         # picked together to be housed together — made only when at least
         # one selected mouse may move.
-        target_cage = None
+        target_cage = target_litter = None
+        selected = _selected_mice(db_session, request.form)
+        # A date of birth belongs to the litter. A litter whose every mouse
+        # is in the selection (and yours to change) is re-dated, as on the
+        # Litters tab, and keeps its parents; the rest of the selection
+        # leaves its litter for one new litter of that date, as one row of
+        # the sheet does.
+        whole_litters = set()
+        if field == "date_of_birth":
+            mine = {m.id for m in selected if can_edit_mouse(m)}
+            whole_litters = {m.litter.id for m in selected
+                             if m.id in mine and m.litter is not None
+                             and all(sib.id in mine for sib in m.litter.mice)}
         with audit.batch(db_session, "update",
                          f"set {BULK_FIELDS[field].lower()} = {value or '(blank)'}", "mice") as batch_row:
-            for mouse in _selected_mice(db_session, request.form):
+            for mouse in selected:
                 if not can_edit_mouse(mouse):
                     skipped += 1
                     continue
@@ -3628,6 +3666,23 @@ def bulk_update_mice():
                     # them ("Ai14; Cre" -> transgene 1 and 2) and keeps the
                     # combined genotype string in step.
                     sync_mouse_transgenes(mouse, split_genotype(value)[:4])
+                elif field == "litter_id":
+                    # Joining a litter takes its date of birth; a blank
+                    # takes the mice out of theirs, as the sheet's cell does.
+                    if value and target_litter is None:
+                        target_litter = get_or_create_litter(db_session, value[:80])
+                    set_mouse_litter(mouse, target_litter)
+                elif field == "date_of_birth":
+                    litter = mouse.litter
+                    if litter is not None and litter.id in whole_litters:
+                        litter.date_of_birth = born
+                    elif litter is None or litter.date_of_birth != born:
+                        if target_litter is None:
+                            # Made inside the batch, so undo removes it too.
+                            target_litter = get_or_create_litter(db_session, next_litter_id(db_session), born)
+                        set_mouse_litter(mouse, target_litter)
+                elif field == "strain":
+                    mouse.strain = value[:120]
                 elif field == "date_of_death":
                     mouse.date_of_death = parse_date(value)
                 elif field == "status":
