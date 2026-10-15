@@ -110,7 +110,7 @@
     const groupSelect = root.querySelector('[data-rack-group]');
     const NO_GROUP = '\u0000';
     const groupOf = (rack) => (rack && rack.group) || NO_GROUP;
-    const groups = [...new Set(racks.map(groupOf))].sort((a, b) => (a === NO_GROUP) - (b === NO_GROUP) || a.localeCompare(b));
+    const groups = [...new Set(racks.map(groupOf))].sort((a, b) => (a === NO_GROUP) - (b === NO_GROUP) || a.localeCompare(b, undefined, { numeric: true }));
     if (groupSelect) {
       groups.forEach((name) => {
         const option = document.createElement('option');

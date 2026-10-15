@@ -562,9 +562,10 @@ def litter_json(lt: LitterRecord) -> dict:
     # moved out at weaning; services.weaning_due reads it the same way):
     # `cage` is where most of its living pups are, `cages` every one.
     held = Counter(m.cage.cage_id for m in lt.mice if m.date_of_death is None and m.cage is not None)
-    cages = sorted(held, key=lambda code: (-held[code], code))
+    from .positions import natural, natural_sorted
+    cages = sorted(held, key=lambda code: (-held[code], natural(code)))
     return {"litter_id": lt.litter_id, "date_of_birth": _day(lt.date_of_birth), "weaned_on": _day(lt.weaned_on),
-            "cage": cages[0] if cages else None, "cages": sorted(held),
+            "cage": cages[0] if cages else None, "cages": natural_sorted(held),
             "cohort": lt.cohort_name or "", "father": lt.father_info or "", "mother": lt.mother_info or "",
             "total_pups": lt.total_pups, "notes": lt.notes or "", "mice": sorted(m.mouse_id for m in lt.mice)}
 

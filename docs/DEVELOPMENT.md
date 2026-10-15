@@ -378,6 +378,13 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
 
 - Box, rack and freezer lists sort with `positions.place_order()`: numbers
   as numbers and a leading minus (any dash) as a sign, so −80, −20, 4 °C.
+- What people number (cage, tank, litter, housing and cohort IDs, strain and
+  line names) sorts with `positions.natural()` / `natural_sorted()`: runs of
+  digits as whole numbers, the rest without case, so 2, 10, 101 and C-99
+  before C-104. These columns are text, so lists are sorted in Python after
+  the query (and `.limit()` after the sort); templates have `natural_sort`
+  and `group_in_order` in place of Jinja's `sort` and `groupby`. A sheet's
+  heading sort (`static/data-table.js`) compares text with `numeric: true`.
 - `positions.parse()` reads a plain number on a lettered box as its nth
   place along the rows (imports that mix "A1" and "3").
 - Global search (`global_search`) orders plasmids, inventory records and

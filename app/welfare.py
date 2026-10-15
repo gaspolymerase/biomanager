@@ -399,7 +399,8 @@ def not_weighed(session, today: date, owner: str | None = None) -> list[dict]:
                         "experiment": exp.name, "experiment_ref": {"kind": "experiment", "id": exp.id},
                         "group": em.treatment_group or "", "last_weighed": weighed.isoformat() if weighed else None,
                         "days": days, "every_days": every, "url": ex.page_url(exp)})
-    out.sort(key=lambda x: (-x["days"], str(x.get("mouse") or x.get("label") or "")))
+    from .positions import natural
+    out.sort(key=lambda x: (-x["days"], natural(x.get("mouse") or x.get("label") or "")))
     return out
 
 

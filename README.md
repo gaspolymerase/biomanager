@@ -751,8 +751,9 @@ database has a name of its own (one another database has is refused), so
     </td>
     <td width="50%" valign="top">
       <h4>📊 Spreadsheet-style editing</h4>
-      Click a cell and type; it saves as you go. Every table sorts,
-      filters, exports to CSV and prints, and keeps your sort and filter
+      Click a cell and type; it saves as you go. Every table sorts
+      (numbers as numbers: cage 2 before cage 10), filters, exports to CSV
+      and prints, and keeps your sort and filter
       (the filter also in its address, for a bookmark). Drag a column's
       heading to put the columns you need first (or use the arrows under
       <b>Columns</b>); your order is kept, and an admin sets the lab's

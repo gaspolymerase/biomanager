@@ -1376,7 +1376,8 @@ def _empty_cages(session, today: date, days: int, owner: str | None) -> list[dic
     if owner:
         stmt = stmt.where(CageRecord.owner == owner)
     out = []
-    for c in session.scalars(stmt.order_by(CageRecord.cage_id)):
+    from .positions import natural_sorted
+    for c in natural_sorted(session.scalars(stmt), key=lambda c: c.cage_id):
         if cage_is_active(c):
             continue
         ref = {"kind": "cage", "id": c.id}

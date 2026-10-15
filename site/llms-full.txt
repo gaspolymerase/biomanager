@@ -301,7 +301,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
-- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
+- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
 
 - **Put the important columns first**: Drag a column's heading left or right; a line shows where it will land. Without a mouse, open **Columns** and use the arrows beside a column (**Move left**, **Move right**). The tick boxes, the number or ID, and the buttons at the end stay where they are. Pasting a block, **Export** and a phone's cards follow the order you set. **Reset column order**, under **Columns**, puts it back. The order you start from is the lab's: an admin sets it under the database's **Configure**, with the arrows beside each column of your own (**Move up**, **Move down**).
 

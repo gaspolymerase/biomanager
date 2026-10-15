@@ -141,10 +141,10 @@ def _cage_cards(session) -> dict:
     after setting up a rack)."""
     scope = access.resolve_scope(request.values.get("scope"))
     ids = _ids()
-    stmt = select(CageRecord).options(selectinload(CageRecord.mice), selectinload(CageRecord.rack)).order_by(CageRecord.cage_id)
+    stmt = select(CageRecord).options(selectinload(CageRecord.mice), selectinload(CageRecord.rack))
     if ids:
         stmt = stmt.where(CageRecord.id.in_(ids))
-    cages = [c for c in session.scalars(stmt).all()
+    cages = [c for c in positions.natural_sorted(session.scalars(stmt).all(), key=lambda c: c.cage_id)
              if ids or access.in_scope(c, scope, shared=access.cage_shared_with(c),
                                                     group_id=access.cage_group(c))]
     cards = []
@@ -181,10 +181,10 @@ def _tank_cards(session) -> dict:
     from .app import fish_position_label
     ids = _ids()
     stmt = select(TankRecord).options(selectinload(TankRecord.fish), selectinload(TankRecord.line),
-                                      selectinload(TankRecord.rack)).order_by(TankRecord.tank_id)
+                                      selectinload(TankRecord.rack))
     stmt = stmt.where(TankRecord.id.in_(ids)) if ids else stmt.where(TankRecord.active.is_(True))
     cards = []
-    for tank in session.scalars(stmt):
+    for tank in positions.natural_sorted(session.scalars(stmt), key=lambda t: t.tank_id):
         alive = [f for f in tank.fish if (f.status or "alive") == "alive"]
         genotypes = sorted({(f.genotype or "").strip() for f in alive if (f.genotype or "").strip()})
         where = (tank.rack.name + (" · " + fish_position_label(tank) if fish_position_label(tank) else "")) if tank.rack else "—"
@@ -211,7 +211,7 @@ def _module_cards(session, module_key: str) -> dict:
         abort(404)
     mv = svc.view(module)
     ids = _ids()
-    stmt = select(OrgHousing).where(OrgHousing.module_id_fk == module.id).order_by(OrgHousing.code)
+    stmt = select(OrgHousing).where(OrgHousing.module_id_fk == module.id)
     if ids:
         stmt = stmt.where(OrgHousing.id.in_(ids))
     elif request.args.get("active", "1") == "1":
@@ -219,7 +219,7 @@ def _module_cards(session, module_key: str) -> dict:
     fields = svc.fields_for(session, module.id, "housing")
     shown = [f for f in fields if f.show_in_table][:2]
     cards = []
-    for unit in session.scalars(stmt):
+    for unit in positions.natural_sorted(session.scalars(stmt), key=lambda u: u.code):
         attrs = unit.attrs_dict
         rows = [
             (mv.line_noun.title(), unit.line.code if unit.line else "—"),

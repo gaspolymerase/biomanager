@@ -33,7 +33,7 @@ from datetime import date, datetime
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import func, select
 
-from . import access, derived, i18n, lab
+from . import access, derived, i18n, lab, positions
 from .db import SessionLocal
 from .i18n import gettext, ngettext
 from .models import (CageRecord, ClutchRecord, Experiment, ExperimentMouse, ExperimentReading, ExperimentSubject,
@@ -590,7 +590,7 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
     have = {s.key for s in subjects(session, exp, place)}
     groups, single = [], []
     if place.subject_kind == "mouse":
-        for c in session.scalars(select(CageRecord).order_by(CageRecord.cage_id)):
+        for c in positions.natural_sorted(session.scalars(select(CageRecord)), key=lambda c: c.cage_id):
             n = sum(1 for m in c.mice if mouse_is_active(m) and f"mouse:{m.id}" not in have)
             if n:
                 groups.append((c.cage_id, gettext("Cage %(cage)s", cage=c.cage_id), n))
@@ -598,7 +598,8 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
             if f"mouse:{m.id}" not in have and mouse_is_active(m) and can_edit_mouse(m):
                 single.append((str(m.id), f"#{m.mouse_id} · {m.gender or '?'} · {m.genotype or gettext('no genotype')}"))
     elif place.subject_kind == "fish":
-        for t in session.scalars(select(TankRecord).where(TankRecord.active.is_(True)).order_by(TankRecord.tank_id)):
+        for t in positions.natural_sorted(session.scalars(select(TankRecord).where(TankRecord.active.is_(True))),
+                                          key=lambda t: t.tank_id):
             live = [f for f in t.fish if f.status == "alive" and f"fish:{f.id}" not in have]
             if live:
                 groups.append((str(t.id), gettext("Tank %(tank)s", tank=t.tank_id), len(live)))
@@ -621,7 +622,7 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
             if u.rack is not None:
                 racks.setdefault((u.rack.id, u.rack.name), []).append(u)
             single.append((str(u.id), f"{place.mv.code(u)} · {u.genotype or gettext('no genotype')}"))
-        groups = [(str(rid), f"{i18n.translate_value(place.housing).capitalize()} {name}", len(us)) for (rid, name), us in sorted(racks.items(), key=lambda kv: kv[0][1])]
+        groups = [(str(rid), f"{i18n.translate_value(place.housing).capitalize()} {name}", len(us)) for (rid, name), us in sorted(racks.items(), key=lambda kv: positions.place_order(kv[0][1]))]
     else:
         from .models import OrgHousing
         rows = session.scalars(select(Organism).where(Organism.module_id_fk == place.module.id).order_by(Organism.id)).all()
@@ -633,9 +634,10 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
                 houses.setdefault(o.housing_id_fk, []).append(o)
             single.append((f"organism:{o.id}", " · ".join(filter(None, [o.code or f"{o.count} {i18n.translate_value(place.nouns)}", o.sex, o.genotype]))))
         codes = {h.id: h.code for h in session.scalars(select(OrgHousing).where(OrgHousing.id.in_(list(houses) or [0])))}
-        groups = [(str(hid), f"{i18n.translate_value(place.housing).capitalize()} {codes.get(hid, hid)}", len(v)) for hid, v in houses.items()]
+        groups = [(str(hid), f"{i18n.translate_value(place.housing).capitalize()} {codes.get(hid, hid)}", len(v)) for hid, v in sorted(houses.items(), key=lambda kv: positions.natural(codes.get(kv[0], kv[0])))]
         cohort_noun = i18n.translate_value((place.mv.cohort_noun if place.mv else "") or "cohort").capitalize()
-        for c in session.scalars(select(OrgCohort).where(OrgCohort.module_id_fk == place.module.id).order_by(OrgCohort.code)):
+        for c in positions.natural_sorted(session.scalars(select(OrgCohort).where(OrgCohort.module_id_fk == place.module.id)),
+                                          key=lambda c: c.code):
             if f"cohort:{c.id}" not in have and c.count_current:
                 single.append((f"cohort:{c.id}", f"{cohort_noun} {c.code} · {c.count_current}"))
     return {"groups": groups, "single": single}

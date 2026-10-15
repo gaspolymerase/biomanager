@@ -440,7 +440,7 @@
       <label>{{ _('Fish row') }}
         <select name="fish_id_fk" data-sac-fish>
           <option value="">{{ _('None (no row)') }}</option>
-          {% for fr in fish_rows | selectattr('alive') | selectattr('editable') | sort(attribute='tank.tank_id') if fr.row.count %}
+          {% for fr in fish_rows | selectattr('alive') | selectattr('editable') | natural_sort('tank.tank_id') if fr.row.count %}
             <option value="{{ fr.row.id }}" data-count="{{ fr.row.count }}">{{ fr.tank.tank_id }} · {{ fr.row.line.name if fr.row.line else (fr.tank.line.name if fr.tank.line else _('no line')) }} · {{ fr.row.sex|tr('zebrafish') }} · {{ _('%(n)s fish', n=fr.row.count) }}{% if fr.row.individual_id %} · {{ fr.row.individual_id }}{% endif %}</option>
           {% endfor %}
         </select>

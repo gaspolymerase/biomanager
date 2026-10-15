@@ -9,6 +9,8 @@ from functools import wraps
 
 from flask import Flask, Response, abort, flash, g, get_flashed_messages, has_request_context, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import Markup, escape
+from jinja2 import pass_environment
+from jinja2.filters import make_attrgetter
 from werkzeug.datastructures import ImmutableMultiDict
 from sqlalchemy import case, func, select
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
@@ -1235,6 +1237,27 @@ def column_head(label) -> Markup:
 app.jinja_env.filters["day_time"] = lambda value: fmt_day(value, with_time=True)
 
 
+@app.template_filter("natural_sort")
+@pass_environment
+def natural_sort_filter(environment, rows, attribute: str):
+    """Like Jinja's sort(attribute=...), with numbers as numbers: tank 2
+    before tank 10."""
+    get = make_attrgetter(environment, attribute)
+    return positions.natural_sorted(rows, key=get)
+
+
+@app.template_filter("group_in_order")
+@pass_environment
+def group_in_order_filter(environment, rows, attribute: str) -> list:
+    """Like Jinja's groupby, but in the order the rows come (boxes in
+    freezer order, −80 before −20), not re-sorted as text."""
+    get = make_attrgetter(environment, attribute)
+    groups: dict = {}
+    for row in rows:
+        groups.setdefault(get(row), []).append(row)
+    return list(groups.items())
+
+
 @app.template_filter("owner_short")
 def owner_short_filter(name: str) -> str:
     if not name:
@@ -1782,8 +1805,10 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                         or any(m.date_of_death and m.date_of_death >= recent for m in c.mice)]
                 hidden_cages = totals["all_cages"] - len(keep)
                 all_cages = keep
-            cages = [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
-                                                             group_id=access.cage_group(c))]
+            # Cage 2 before cage 10: by number, not letter by letter.
+            cages = positions.natural_sorted(
+                [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
+                                                         group_id=access.cage_group(c))], key=lambda c: c.cage_id)
         litters, hidden_litters = [], 0
         if active_view == "litters":
             litter_query = select(LitterRecord).options(selectinload(LitterRecord.mice)).order_by(LitterRecord.litter_id)
@@ -1795,8 +1820,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 hidden_litters = count_of(select(func.count(LitterRecord.id)).where(~visible))
                 litter_query = litter_query.where(visible)
             # L-2 before L-10: by number, not letter by letter.
-            litters = sorted(db_session.scalars(litter_query).all(), key=lambda l: positions.place_order(l.litter_id or ""))
-        strains = db_session.scalars(select(StrainRecord).order_by(StrainRecord.strain_name)).all()
+            litters = positions.natural_sorted(db_session.scalars(litter_query).all(), key=lambda l: l.litter_id)
+        strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
         dropdowns = dropdown_options_map(db_session)
         dropdown_records = dropdown_records_map(db_session)
         usernames = current_lab_usernames(db_session)
@@ -1812,9 +1837,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             row["editable"] = can_edit_mouse(mouse)
         cage_rows = [cage_sheet_row(cage) for cage in cages]
         # The Experiments tab's "start with a cage" only lists cage numbers.
-        cage_ids = list(db_session.scalars(select(CageRecord.cage_id).where(
-            CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None))))
-            .order_by(CageRecord.cage_id))) if active_view == "experiments" else []
+        cage_ids = positions.natural_sorted(db_session.scalars(select(CageRecord.cage_id).where(
+            CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))
+        ) if active_view == "experiments" else []
         litter_rows = []
         for litter in litters:
             # Each pup as its cell shows it (number, sex, alive, age): a
@@ -2611,9 +2636,8 @@ def export_my_data():
                    m.litter.litter_id if m.litter else "", iso(m.litter.date_of_birth) if m.litter else "",
                    iso(m.date_of_death), m.note] for m in mice)]))
 
-            cages = db_session.scalars(
-                select(CageRecord).where(CageRecord.owner == username).order_by(CageRecord.cage_id)
-            ).all()
+            cages = positions.natural_sorted(db_session.scalars(
+                select(CageRecord).where(CageRecord.owner == username)).all(), key=lambda c: c.cage_id)
             zf.writestr("cages.csv", csv_text([
                 ["cage_id", "purpose", "location", "rack", "row", "column", "shared", "litter_born", "notes"],
                 *([c.cage_id, c.purpose, c.cage_location, c.rack.name if c.rack else "", c.rack_row or "",
@@ -4261,7 +4285,7 @@ def create_cage():
             codes = [requested] if count == 1 else [str(int(requested) + i) for i in range(count)]
             taken = db_session.scalars(select(CageRecord.cage_id).where(CageRecord.cage_id.in_(codes))).all()
             if taken:
-                flash(gettext("Cage %(cage)s already exists; nothing was changed. Leave the ID blank to take the next free one.", cage=", ".join(sorted(taken))), "error")
+                flash(gettext("Cage %(cage)s already exists; nothing was changed. Leave the ID blank to take the next free one.", cage=", ".join(positions.natural_sorted(taken))), "error")
                 return autosave_response("cages")
         else:
             codes = reserve_cage_ids(db_session, count)
@@ -6433,7 +6457,7 @@ def search_results(q: str, limit: int = 5) -> tuple[str, list[dict]]:
             CageRecord.cage_id.ilike(like, escape="\\") | CageRecord.purpose.ilike(like, escape="\\")
             | CageRecord.genotype_summary.ilike(like, escape="\\") | CageRecord.card_id.ilike(like, escape="\\")
             | CageRecord.notes.ilike(like, escape="\\") | CageRecord.room.ilike(like, escape="\\"))
-        for cage in db_session.scalars(cage_stmt.order_by(CageRecord.cage_id).limit(limit)).all():
+        for cage in positions.natural_sorted(db_session.scalars(cage_stmt).all(), key=lambda c: c.cage_id)[:limit]:
             live = sum(1 for mouse in cage.mice if mouse_is_active(mouse))
             results.append({
                 "type": "cage",
@@ -6446,7 +6470,7 @@ def search_results(q: str, limit: int = 5) -> tuple[str, list[dict]]:
         litter_stmt = select(LitterRecord).where(
             LitterRecord.litter_id.ilike(like, escape="\\") | LitterRecord.cohort_name.ilike(like, escape="\\")
             | LitterRecord.notes.ilike(like, escape="\\"))
-        for litter in db_session.scalars(litter_stmt.order_by(LitterRecord.litter_id).limit(limit)).all():
+        for litter in positions.natural_sorted(db_session.scalars(litter_stmt).all(), key=lambda l: l.litter_id)[:limit]:
             results.append({
                 "type": "litter",
                 "id": litter.id,
@@ -6578,12 +6602,12 @@ PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like,
             })
 
         # Zebrafish tanks, lines and clutches.
-        for t in db_session.scalars(
+        for t in positions.natural_sorted(db_session.scalars(
                 select(TankRecord).options(joinedload(TankRecord.line))
                 .where(TankRecord.tank_id.ilike(like, escape="\\") | TankRecord.card_id.ilike(like, escape="\\")
                        | TankRecord.attrs.ilike(like, escape="\\")
                        | TankRecord.owner.ilike(like, escape="\\") | TankRecord.notes.ilike(like, escape="\\"))
-                .order_by(TankRecord.tank_id).limit(limit)).all():
+                ).all(), key=lambda t: t.tank_id)[:limit]:
             results.append({
                 "type": "tank", "id": t.id, "ref": {"kind": "tank", "id": t.id}, "label": gettext("Tank %(id)s", id=t.tank_id),
                 "sublabel": " · ".join(filter(None, [t.purpose, t.line.name if t.line else "", t.owner])),
@@ -10070,17 +10094,17 @@ def _zebrafish_context(active_view: str):
     me = access.username()
     today = date.today()
     with SessionLocal() as s:
-        systems = s.scalars(select(WaterSystem).order_by(WaterSystem.name)).all()
-        racks = s.scalars(select(FishRack).order_by(FishRack.name)).all()
-        lines = s.scalars(select(FishLine).order_by(FishLine.name)).all()
+        systems = sorted(s.scalars(select(WaterSystem)).all(), key=lambda w: positions.place_order(w.name))
+        racks = sorted(s.scalars(select(FishRack)).all(), key=lambda r: positions.place_order(r.name))
+        lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda ln: ln.name)
         # Eager-load what the template reads after the session closes.
         tanks = s.scalars(
             select(TankRecord)
             .options(joinedload(TankRecord.line),
                      joinedload(TankRecord.rack),
                      selectinload(TankRecord.fish))
-            .order_by(TankRecord.tank_id)
         ).unique().all()
+        tanks = positions.natural_sorted(tanks, key=lambda t: t.tank_id)
         fish = s.scalars(
             select(FishRecord).options(joinedload(FishRecord.line), joinedload(FishRecord.tank))
             .order_by(FishRecord.id.desc()).limit(500)
@@ -10361,9 +10385,9 @@ def zebrafish_home_summary() -> dict:
                    TankRecord.mating_return_at <= horizon)
             .order_by(TankRecord.mating_return_at).limit(8)).all()
         codes = dict(s.execute(select(TankRecord.id, TankRecord.tank_id)).all())
-        geno = s.scalars(
+        geno = positions.natural_sorted(s.scalars(
             select(TankRecord).options(joinedload(TankRecord.line))
-            .where(TankRecord.needs_genotyping.is_(True)).order_by(TankRecord.tank_id)).all()
+            .where(TankRecord.needs_genotyping.is_(True))).all(), key=lambda t: t.tank_id)
         return {
             "any": bool(s.scalar(select(func.count(TankRecord.id)))),
             "mating": [{"id": t.id, "tank_id": t.tank_id, "due": t.mating_return_at, "owner": t.owner,
@@ -10476,7 +10500,7 @@ def zf_code_run(s, first: str, n: int) -> list[str]:
     codes = [f"{prefix}{int(digits) + i:0{len(digits)}d}" for i in range(n)]
     if any(len(c) > 80 for c in codes):
         raise ZfInputError(gettext("Keep the tank ID under %(max)s characters.", max=80))
-    taken = sorted(set(s.scalars(select(TankRecord.tank_id).where(TankRecord.tank_id.in_(codes)))))
+    taken = positions.natural_sorted(set(s.scalars(select(TankRecord.tank_id).where(TankRecord.tank_id.in_(codes)))))
     if taken:
         raise ZfInputError(ngettext("%(tanks)s is already used. Start from another tank ID.",
                                     "%(tanks)s are already used. Start from another tank ID.", len(taken),
@@ -11235,13 +11259,12 @@ def zebrafish_line_detail(line_id: int):
 
         # Tanks currently holding this line.
         # Racks are read after the session closes, so load them now.
-        line_tanks = s.scalars(
+        line_tanks = positions.natural_sorted(s.scalars(
             select(TankRecord).options(joinedload(TankRecord.rack))
-            .where(TankRecord.line_id_fk == ln.id).order_by(TankRecord.tank_id)
-        ).all()
+            .where(TankRecord.line_id_fk == ln.id)).all(), key=lambda t: t.tank_id)
         tank_positions = {t.id: fish_position_label(t) for t in line_tanks}
 
-        all_lines = s.scalars(select(FishLine).order_by(FishLine.name)).all()
+        all_lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda line: line.name)
         editable = zf_can_edit(ln)
         denied = "" if editable else zf_denied(ln)
         usernames = current_lab_usernames(s)
