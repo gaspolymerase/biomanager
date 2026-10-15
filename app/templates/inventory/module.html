@@ -764,7 +764,6 @@
   })();
 </script>
 {% endif %}
-{% if text_cells %}<script src="{{ url_for('static', filename='text-cells.js') }}?v={{ asset_version('text-cells.js') }}"></script>{% endif %}
 <script type="application/json" id="inv-page-data">{{ {"isAdmin": is_admin, "me": current_user.username,
                                                         "openStatuses": m.open_statuses | map('lower') | list} | tojson }}</script>
 <script type="application/json" id="inv-fill-data">{{ remembered.fill | tojson }}</script>

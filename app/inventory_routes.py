@@ -569,7 +569,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
                      if row.kind in STOCK_KINDS else {}),
         "remembered": remembered,
         "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
-        "text_cells": _text_cells(),
+        "text_cells": cell_text.text_cells_on(),
     }
     if only is not None:
         return {**common, "rows": rows, "sheet_rows": rows}
@@ -621,19 +621,6 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         },
     }
     return context
-
-
-def _text_cells() -> bool:
-    """Whether the sheet's cells are drawn as text until used (app.py,
-    as_text_cells; static/text-cells.js). Chromium (Chrome, Edge, the
-    Windows app, Android) reads every field on a page as it loads, so there a
-    sheet of text opens a fifth to a third sooner. Safari and the Mac app
-    keep their fields: they never had that wait. ?cells=text or
-    ?cells=fields chooses either in any browser."""
-    choice = request.args.get("cells")
-    if choice in ("text", "fields"):
-        return choice == "text"
-    return "Chrome/" in request.headers.get("User-Agent", "")
 
 
 def _row_stub(mv, r: dict, table_fields: list[dict], box_labels: dict, mouse_links: dict, plasmid_links: dict) -> dict:

@@ -236,6 +236,8 @@
               </tr>
             </thead>
             <tbody>
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
               {% for row in mouse_rows %}
                 {% set f = 'mouse-update-' ~ row.id %}
                 {% set locked = not row.editable %}
@@ -347,6 +349,7 @@
                   {{ _('No mice here yet. Use <strong>New mouse</strong>, or <strong>Add many</strong> to import a batch.') }}
                 </td></tr>
               {% endfor %}
+              {% endfilter %}
             </tbody>
           </table>
         </div>
@@ -1988,18 +1991,25 @@ function localToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+/* A row's field (a cell drawn as text becomes its field: static/text-cells.js),
+   and a cell's value, read without that. */
 function sheetField(formId, name) {
-  return document.querySelector(`[form="${formId}"][name="${name}"]`);
+  return BioTextCells.field(document, name, formId);
+}
+function sheetValue(formId, name) {
+  const cell = BioTextCells.read(document, name, formId);
+  return cell ? cell.value : '';
+}
+function sheetRow(formId) {
+  return document.querySelector(`[form="${formId}"]:not([type=hidden]), .cell-text[data-form="${formId}"]`)?.closest('tr') || null;
 }
 function refreshLife(formId, activeFromServer) {
-  const status = sheetField(formId, 'status');
-  const dod = sheetField(formId, 'date_of_death');
-  const row = (status || dod)?.closest('tr');
+  const row = sheetRow(formId);
   if (!row) return;
-  const now = (status?.value || '').trim().toLowerCase();
+  const now = sheetValue(formId, 'status').trim().toLowerCase();
   const alive = typeof activeFromServer === 'boolean'
     ? activeFromServer
-    : !(dod && dod.value) && !END_STATUSES.has(now) && now !== 'transfer';
+    : !sheetValue(formId, 'date_of_death') && !END_STATUSES.has(now) && now !== 'transfer';
   const dot = row.querySelector('.life-dot');
   if (dot) {
     dot.classList.toggle('is-alive', alive);
@@ -2091,16 +2101,18 @@ function wireDobInput(input) {
   input.addEventListener('blur', () => { if (timer) settle(); });
 }
 
-/* After a save, the server's view of the mouse wins. */
+/* After a save, the server's view of the mouse wins. A cell drawn as text
+   becomes its field only to take a value that changed; the birth date's
+   always, as it keeps what was saved for the next question. */
 function syncMouse(form, state) {
-  const dod = sheetField(form.id, 'date_of_death');
+  const dod = sheetValue(form.id, 'date_of_death') !== (state.date_of_death || '') ? sheetField(form.id, 'date_of_death') : null;
   if (dod && document.activeElement !== dod) {
     dod.value = state.date_of_death || '';
     dod.dataset.empty = dod.value ? '0' : '1';
   }
-  const litter = sheetField(form.id, 'litter_id');
+  const litter = 'litter_id' in state && sheetValue(form.id, 'litter_id') !== (state.litter_id || '') ? sheetField(form.id, 'litter_id') : null;
   const dob = sheetField(form.id, 'date_of_birth');
-  if (litter && 'litter_id' in state && document.activeElement !== litter) litter.value = state.litter_id || '';
+  if (litter && document.activeElement !== litter) litter.value = state.litter_id || '';
   if (dob) {
     dob.dataset.originalLitter = state.litter_id || '';
     dob.dataset.originalDob = state.date_of_birth || '';
@@ -2108,6 +2120,11 @@ function syncMouse(form, state) {
   }
   const hidden = form.querySelector('input[name="confirm_cohort_dob_change"]');
   if (hidden) hidden.value = '0';
+  // The server's values (a status rule may set the date of death) are what the row shows.
+  ['status', 'date_of_death', 'litter_id', 'date_of_birth'].forEach((name) => {
+    const was = form.querySelector(`[name="${name}_was"]`);
+    if (was && name in state) was.value = state[name] || '';
+  });
   refreshLife(form.id, state.active);
 }
 
@@ -2144,12 +2161,17 @@ function setValue(el, value) {
 
 function syncCage(state, sourceForm) {
   // Every row, including those waiting off the page (data-table.js, BioSheets).
+  // A cell drawn as text becomes its field only where the value changed.
+  const put = (tr, name, value) => {
+    const cell = BioTextCells.read(tr, name);
+    if (cell && cell.value !== (value == null ? '' : String(value))) setValue(BioTextCells.field(tr, name, undefined, true), value);
+  };
   window.BioSheets.rows().forEach((tr) => {
-    const cageInput = tr.querySelector('input[name="cage_id"]');
-    if (!cageInput || cageInput.value.trim() !== String(state.cage_id)) return;
-    setValue(tr.querySelector('select[name="cage_rack"]'), state.rack_id);
-    setValue(tr.querySelector('input[name="cage_position"]'), state.position);
-    setValue(tr.querySelector('input[name="cage_location"]'), state.location);
+    const cage = BioTextCells.read(tr, 'cage_id');
+    if (!cage || cage.value.trim() !== String(state.cage_id)) return;
+    put(tr, 'cage_rack', state.rack_id);
+    put(tr, 'cage_position', state.position);
+    put(tr, 'cage_location', state.location);
     const rowForm = BioRowForms.get(`mouse-update-${tr.dataset.id}`);
     if (rowForm) {
       setValue(rowForm.querySelector('[name="cage_rack_was"]'), state.rack_id);
@@ -2177,8 +2199,8 @@ document.addEventListener('rack-grid:moved', (event) => {
   const { id, rackId, position } = event.detail || {};
   const form = BioRowForms.get(`cage-update-${id}`);
   if (!form) return;
-  setValue(document.querySelector(`[form="${form.id}"][name="rack_id"]`), rackId || '');
-  setValue(document.querySelector(`[form="${form.id}"][name="position"]`), position || '');
+  setValue(BioTextCells.field(document, 'rack_id', form.id, true), rackId || '');
+  setValue(BioTextCells.field(document, 'position', form.id, true), position || '');
   setValue(form.querySelector('[name="rack_id_was"]'), rackId || '');
   setValue(form.querySelector('[name="position_was"]'), position || '');
 });
@@ -2188,10 +2210,11 @@ async function saveFormInBackground(form) {
   savesInFlight += 1;
   showSaveStatus('saving', t('Saving…'));
   const label = form.dataset.mouseLabel ? t('mouse %(id)s', { id: form.dataset.mouseLabel }) : (form.dataset.recordLabel || t('this change'));
+  const sent = new FormData(form);
   try {
     const response = await fetch(form.action, {
       method: form.method || 'POST',
-      body: new FormData(form),
+      body: sent,
       headers: { 'X-Autosave': '1' },
     });
     let body = {};
@@ -2200,6 +2223,13 @@ async function saveFormInBackground(form) {
       throw new Error(body.error || t('The server answered %(status)s.', { status: response.status }));
     }
     form.dataset.saveState = 'saved';
+    // What was just saved is what the row now shows: its "_was" copies say
+    // so, or setting a cell back (sac by mistake, then its old status)
+    // would read as no change and not be saved.
+    sent.forEach((value, name) => {
+      const was = typeof value === 'string' && form.querySelector(`[name="${name}_was"]`);
+      if (was) was.value = value;
+    });
     if (body.cage) syncCage(body.cage, form);
     if (body.mouse) syncMouse(form, body.mouse);
     rowsForForm(form).forEach((el) => el.closest('td')?.classList.remove('has-error'));
@@ -2216,7 +2246,7 @@ async function saveFormInBackground(form) {
   }
 }
 
-document.querySelectorAll('[data-autosave="1"]').forEach((input) => {
+function wireAutosave(input) {
   if (input.closest('[data-autosave-sheet]')) return;  // static/sheet.js saves these
   if (input.name === 'date_of_birth') { wireDobInput(input); return; }
   input.addEventListener('input', () => { input.dataset.dirty = '1'; autosaveInput(input); });
@@ -2233,7 +2263,8 @@ document.querySelectorAll('[data-autosave="1"]').forEach((input) => {
     if (input.name === 'date_of_death' && input.getAttribute('form')) refreshLife(input.getAttribute('form'));
     autosaveInput(input, { immediate: true });
   });
-});
+}
+document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
 
 /* New / open mouse dialog. Buttons carry the row as data attributes; the
    same form creates (no id) or updates (id present). */
@@ -2568,11 +2599,12 @@ function weanDue(born) {
 // Keep the note input's `title` attribute in sync with its current value so
 // hovering always shows the latest text — without this, the tooltip would be
 // stuck on whatever was server-rendered until the page is refreshed.
-document.querySelectorAll('input.note-cell').forEach((input) => {
+function wireNote(input) {
   const sync = () => { input.title = input.value || ''; };
   input.addEventListener('input', sync);
   input.addEventListener('change', sync);
-});
+}
+document.querySelectorAll('input.note-cell').forEach(wireNote);
 
 function filterBreeders() {
   const searchInput = document.getElementById('breeder-search');
@@ -2656,7 +2688,7 @@ if (document.getElementById('breeder-search')) {
   filterBreeders();
 }
 
-document.querySelectorAll('input[list]').forEach((input) => {
+function wireList(input) {
   if (input.readOnly || input.disabled) return;
   let stashed = null;
   input.addEventListener('focus', () => {
@@ -2674,6 +2706,16 @@ document.querySelectorAll('input[list]').forEach((input) => {
   input.addEventListener('change', () => {
     stashed = null;
   });
+}
+document.querySelectorAll('input[list]').forEach(wireList);
+
+/* A cell drawn as text that becomes its field (static/text-cells.js) is
+   wired as the fields were when the page loaded. */
+document.addEventListener('text-cells:open', (event) => {
+  const input = event.target;
+  if (input.matches('[data-autosave="1"]')) wireAutosave(input);
+  if (input.matches('input.note-cell')) wireNote(input);
+  if (input.matches('input[list]')) wireList(input);
 });
 
   BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });

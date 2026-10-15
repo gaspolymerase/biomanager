@@ -388,12 +388,10 @@ class TextCellsTests(AppTestCase):
     def test_chromium_gets_text_other_browsers_fields(self):
         chrome = self.page(self.CHROME)
         self.assertIsNotNone(self.cell(chrome, "vendor"))
-        self.assertIn("/static/text-cells.js?v=", chrome)
         self.assertNotIn(f'name="vendor" value="{self.vendor}"', chrome)
         for headers in (self.SAFARI, {}):
             fields = self.page(headers)
             self.assertIsNone(self.cell(fields, "vendor"))
-            self.assertNotIn("/static/text-cells.js?v=", fields)
             self.assertRegex(fields, rf'<input[^>]*name="vendor"[^>]*value="{self.vendor}"')
 
     def test_the_address_chooses_either(self):

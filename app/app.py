@@ -17,7 +17,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import SessionLocal
-from . import access, i18n, lab, positions, security
+from . import access, cell_text, i18n, lab, positions, security
 from .i18n import gettext, ngettext, pgettext
 from .formutil import form_changed
 # Importing this registers the SQLAlchemy flush listener that writes
@@ -1175,14 +1175,19 @@ def tight(html) -> Markup:
     return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
-# An inventory's cells drawn as text until used (inventory_routes._text_cells;
+# A sheet's cells drawn as text until used, in Chromium (cell_text.text_cells_on;
 # static/text-cells.js turns one back into its field). Each <td> holding just
 # one field: the field's own markup goes in data-field, and the text it shows
-# is drawn instead, as the field would show it (a menu's chosen label, an
-# input's placeholder when empty). Gzipped, a page grows by about a tenth.
-_ONE_FIELD = re.compile(r'<td((?: [^>]*)?)>(<input\b[^>]*>|<select\b[^>]*>.*?</select>)</td>', re.S)
-_ATTR = re.compile(r'\b(name|value|class|placeholder|title|data-status|data-scope|type)="([^"]*)"')
+# is drawn instead, as the field would show it (a menu's chosen label, else
+# its first; an input's placeholder when empty). Gzipped, a page grows by
+# about a tenth.
+_ONE_FIELD = re.compile(r'<td((?:\s[^>]*)?)>\s*(<input\b[^>]*>|<select\b[^>]*>.*?</select>)\s*</td>', re.S)
+_ATTR = re.compile(r'\s(name|value|class|placeholder|title|type|form|data-status|data-scope|data-sex'
+                   r'|data-alive-values|data-dead-values|data-dead-if-set)(?:="([^"]*)")?')
 _CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
+_FIRST = re.compile(r'<option\b[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
+# Copied onto the text: what the page's styles and scripts read from the field.
+_KEPT = ("title", "data-status", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
 
 
 @app.template_filter("as_text_cells")
@@ -1190,17 +1195,17 @@ def as_text_cells(html, on: bool = True) -> Markup:
     html = str(html)
     if not on:
         return Markup(html)
-    from markupsafe import escape
 
     def cell(m):
         td_attrs, field = m.group(1), m.group(2)
-        tag = field[1:field.index(" ") if " " in field[:8] else 7]
+        tag = "select" if field.startswith("<select") else "input"
         head = field[:field.index(">") + 1]
         attrs = dict(_ATTR.findall(head))
         if attrs.get("type") in ("checkbox", "hidden", "radio") or "name" not in attrs:
             return m.group(0)
         if tag == "select":
-            chosen = _CHOSEN.search(field)
+            # As the browser shows it: the chosen option, else the first.
+            chosen = _CHOSEN.search(field) or _FIRST.search(field)
             value, shown = (chosen.group(1), chosen.group(2)) if chosen else ("", "")
         else:
             value = shown = attrs.get("value", "")
@@ -1213,14 +1218,18 @@ def as_text_cells(html, on: bool = True) -> Markup:
                                        "is-disabled" if locked else "",
                                        # an input's placeholder, shown for an empty one: not its value
                                        "is-placeholder" if tag != "select" and not value and shown else ""] if c)
-        extra = "".join(f' {k}="{attrs[k]}"' for k in ("title", "data-status", "data-scope") if k in attrs)
-        # A field that can't be changed stays text: nothing to open.
-        reach = "" if locked else ' tabindex="0"'
+        extra = "".join(f' {k}="{attrs[k]}"' for k in _KEPT if k in attrs)
+        form = f' data-form="{attrs["form"]}"' if attrs.get("form") else ""
+        # A field that can't be changed (or only shows what is worked out) stays text.
+        reach = "" if locked or re.search(r"\sreadonly\b", head) else ' tabindex="0"'
         return (f'<td{td_attrs}><span class="{classes}"{reach} data-field="{escape(field)}" '
-                f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"'
+                f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"{form}'
                 f'{extra}>{shown}</span></td>')
 
     return Markup(_ONE_FIELD.sub(cell, html))
+
+
+app.jinja_env.globals["text_cells_on"] = cell_text.text_cells_on
 
 
 @app.template_filter("head")
@@ -1423,7 +1432,10 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
 
     stored = [mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4]
     if form_changed(form, *(f"transgene_{n}" for n in range(1, 5))):
-        transgenes = [_keep_lines(old, new) for old, new in zip(stored, transgene_values_from_form(form))]
+        # One the form does not send (a cell still drawn as text, which
+        # sends nothing) stays as it is.
+        transgenes = [_keep_lines(old, new) if f"transgene_{n}" in form else (old or "")
+                      for n, (old, new) in enumerate(zip(stored, transgene_values_from_form(form)), 1)]
         sync_mouse_transgenes(mouse, transgenes)
     if form_changed(form, "gender"):
         mouse.gender = form.get("gender", "").strip()

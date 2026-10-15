@@ -1675,6 +1675,10 @@
   .sheet-table .cell-text.status-pill {
     @apply inline-block h-5.5 w-auto max-w-full rounded-full px-2 pr-5 align-middle text-[11px] font-semibold capitalize leading-5;
   }
+  .sheet-table .cell-text.sex-pill {
+    @apply inline-block h-5.5 w-9 rounded-full px-0 text-center align-middle text-[11px] font-semibold leading-5;
+  }
+  .sheet-table .cell-text.sex-pill.is-empty { @apply bg-transparent; }
   .sheet-table .cell-text.scope-pill {
     @apply inline-block h-6 w-auto max-w-full rounded-full bg-sand-100 px-2.5 pr-4 align-middle text-[11.5px]
            font-semibold text-muted leading-6;

@@ -15,6 +15,8 @@ from __future__ import annotations
 import html
 import re
 
+from flask import request
+
 _ROW = re.compile(r'<tr\b[^>]*?\bdata-id="(\d+)"[^>]*>(.*?)</tr>', re.S)
 _CELL = re.compile(r"<td\b[^>]*>(.*?)</td>", re.S)
 _ATTR = re.compile(r'([\w:-]+)(?:="([^"]*)")?')
@@ -68,3 +70,16 @@ def row_texts(rows_html: str) -> dict[int, list[str]]:
     """{item id: each of its row's cells' words, in the row's order}."""
     return {int(row_id): [cell_text(inner) for inner in _CELL.findall(body)]
             for row_id, body in _ROW.findall(rows_html)}
+
+
+def text_cells_on() -> bool:
+    """Whether a sheet's cells are drawn as text until used (app.py,
+    as_text_cells; static/text-cells.js). Chromium (Chrome, Edge, the
+    Windows app, Android) reads every field on a page as it loads, so there
+    a sheet of text opens a fifth to a third sooner. Safari and the Mac app
+    keep their fields: they never had that wait. ?cells=text or
+    ?cells=fields chooses either in any browser."""
+    choice = request.args.get("cells")
+    if choice in ("text", "fields"):
+        return choice == "text"
+    return "Chrome/" in request.headers.get("User-Agent", "")
