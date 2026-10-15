@@ -265,6 +265,14 @@ class AppTestCase(unittest.TestCase):
         from app import security
         security.signup_throttle.reset()
         security.password_check_throttle.reset()
+        # The run's one database outgrows LAZY_OVER (every test's mice on one
+        # sheet), and a row a test just made would wait past the first page.
+        # A test of paging sets its own (tests/test_speed.py).
+        from unittest import mock
+        from app import inventory_routes
+        lazy = mock.patch.object(inventory_routes, "LAZY_OVER", 100000)
+        lazy.start()
+        self.addCleanup(lazy.stop)
 
     @classmethod
     def setUpClass(cls):
