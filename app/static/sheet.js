@@ -182,6 +182,9 @@
      the rows shown from that cell, a copied range of a spreadsheet across
      and down, each cell saved as if typed. One value pastes as usual. */
   function editable(td) {
+    // A cell drawn as text (a test: static/text-cells.js) becomes its field first.
+    const text = td && window.BioTextCells && td.querySelector(':scope > .cell-text');
+    if (text) window.BioTextCells.open(text);
     const el = td && td.querySelector('[data-autosave="1"][form]');
     return el && !el.disabled && !el.readOnly ? el : null;
   }
