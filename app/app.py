@@ -152,6 +152,7 @@ init_database()
 # belong in this file. See app/organisms.py for the capability vocabulary.
 from .organism_routes import bp as organism_bp  # noqa: E402
 from .inventory_routes import bp as inventory_bp  # noqa: E402
+from . import inventory_routes  # noqa: E402  (its paging limits, shared by the mouse sheet)
 from .stock_routes import bp as stocks_bp  # noqa: E402
 from .labels import bp as labels_bp  # noqa: E402
 from .admin_racks import bp as admin_racks_bp  # noqa: E402
@@ -3011,7 +3012,77 @@ def colony():
         defined = custom_fields.fields(db_session, "colony")
     context["custom_columns"] = custom_fields.in_table(defined)
     context["custom_columns_all"] = defined
+    # A long mouse sheet is paged by the server, as a long inventory is
+    # (inventory_routes.LAZY_OVER): its first page drawn, the other mice as
+    # entries data-table.js sorts, searches and counts, their rows fetched
+    # from /colony/mice/rows when shown.
+    rows = context["mouse_rows"]
+    context["mouse_sheet_rows"], context["mouse_stubs"], context["mouse_rows_url"] = rows, [], ""
+    if active_view == "mice" and len(rows) > inventory_routes.LAZY_OVER:
+        context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
+        context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
+        context["mouse_rows_url"] = url_for("colony_mouse_rows")
     return render_template("colony.html", **context)
+
+
+def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:
+    """A mouse the sheet does not draw, as data-table.js reads a drawn row
+    (_mouse_rows.html): its data-* (the chips), each sortable cell's value
+    ("k", as the cell holds it: a rack by its id) and the words a search
+    looks in ("s": what the row shows and holds, lower-cased)."""
+    text = lambda value: "" if value is None else str(value)  # noqa: E731
+    data = {"active": "true" if row["active"] else "false", "mouse_id": text(row["mouse_id"]),
+            "ear_tag": text(row["ear_tag"]), "age": text(row["age_days"]), "rowForm": f"mouse-update-{row['id']}"}
+    cells = {name: text(row[name]) for name in (
+        "ear_tag", "strain", "gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4",
+        "cage_id", "cage_position", "owner", "litter_id", "date_of_birth", "date_of_death", "cage_location", "note")}
+    cells["cage_rack"] = text(row["cage_rack_id"])
+    for fd in custom_columns:
+        cells[f"attr_{fd['key']}"] = text(row["attrs"].get(fd["key"], ""))
+    gender = row["gender"] or ""
+    words = [str(row["id"]), *data.values(), *cells.values(), row["cage_rack"] or "",
+             gettext("U") if gender == "Unknown" else i18n.translate_value(gender),
+             i18n.translate_value(row["status"] or ""),
+             f"{row['age_weeks']}{gettext('w')}" if row["age_weeks"] is not None else "",
+             re.sub(r"<[^>]+>", "", str(owner_badge_filter(row["owner"])))]
+    for fd in custom_columns:
+        value = text(row["attrs"].get(fd["key"], ""))
+        if value and fd.get("type") in ("select", "multiselect"):
+            words.append(i18n.translate_value(value))
+    return {"id": row["id"], "d": data, "k": {k: v for k, v in cells.items() if v},
+            "s": " ".join(w for w in words if w).lower()}
+
+
+@app.route("/colony/mice/rows")
+@login_required
+def colony_mouse_rows():
+    """Rows of the mouse sheet by id (?ids=3,1,2), as its page would have
+    drawn them, and their row forms; with ?as=text each row's cells' words
+    only (an export, cell_text)."""
+    ids = [int(x) for x in request.args.get("ids", "").split(",") if x.strip().isdigit()][:inventory_routes.ROWS_AT_ONCE]
+    from sqlalchemy.orm import selectinload
+    with SessionLocal() as db_session:
+        found = {m.id: m for m in db_session.scalars(select(MouseRecord).where(MouseRecord.id.in_(ids)).options(
+            selectinload(MouseRecord.cage).selectinload(CageRecord.rack), selectinload(MouseRecord.litter)))}
+        mice = [found[i] for i in dict.fromkeys(ids) if i in found]
+        rows = [mouse_display_row(m, g.user.username, g.user.role) for m in mice]
+        for mouse, row in zip(mice, rows):
+            row["editable"] = can_edit_mouse(mouse)
+        # The choices every row offers: the lab's, and any its mice hold.
+        held = db_session.execute(select(MouseRecord.status, MouseRecord.gender).distinct()).all()
+        sheet = mouse_sheet_meta(rows, dropdown_options_map(db_session), mouse_racks(db_session))
+        sheet["status_choices"] = _merged_choices(sheet["status_choices"], (st for st, _ in held))
+        sheet["gender_choices"] = _merged_choices(sheet["gender_choices"], (gd for _, gd in held))
+        defined = custom_fields.fields(db_session, "colony")
+    context = {"sheet_rows": rows, "sheet": sheet, "fragment": True,
+               "custom_columns": custom_fields.in_table(defined), "custom_columns_all": defined}
+    if request.args.get("as") == "text":
+        drawn = render_template("_mouse_rows.html", **dict(context))
+        texts = cell_text.row_texts(drawn)
+        return jsonify({"texts": {str(i): texts[i] for i in texts}, "ids": list(texts)})
+    return jsonify({"rows": render_template("_mouse_rows.html", **context),
+                    "forms": render_template("_mouse_row_forms.html", **context),
+                    "ids": [r["id"] for r in rows]})
 
 
 # ---------------------------------------------------------------------------

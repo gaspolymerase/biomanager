@@ -110,10 +110,15 @@
   // A date field shows the date in the browser's own way (10/14/2026,
   // 2026/10/14): its text does the same.
   const dateFormat = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  // 2026-10-14 as this browser writes it, or '' for anything else.
+  function dateText(iso) {
+    const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return parts ? dateFormat.format(new Date(+parts[1], parts[2] - 1, +parts[3])) : '';
+  }
   function showDates(root) {
     root.querySelectorAll('.cell-text.is-date').forEach((span) => {
-      const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(span.dataset.sortValue || '');
-      if (parts) span.textContent = dateFormat.format(new Date(+parts[1], parts[2] - 1, +parts[3]));
+      const shown = dateText(span.dataset.sortValue);
+      if (shown) span.textContent = shown;
     });
   }
   // Before a sheet takes its unseen rows off the page (data-table.js, on
@@ -125,5 +130,5 @@
     ((event.detail && event.detail.rows) || []).forEach(showDates);
   });
 
-  window.BioTextCells = { open, field, read };
+  window.BioTextCells = { open, field, read, dateText };
 })();

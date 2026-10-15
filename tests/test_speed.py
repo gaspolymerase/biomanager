@@ -440,6 +440,78 @@ class TextCellsTests(AppTestCase):
                 self.assertEqual(self.cell(rows, "vendor") is not None, text, (headers, query))
 
 
+class MouseSheetPagingTests(AppTestCase):
+    """A mouse sheet of more than LAZY_OVER mice draws its first FIRST_PAGE
+    rows; the others come as entries for the sheet's script, and their rows
+    from /colony/mice/rows, drawn as the page draws them."""
+
+    def setUp(self):
+        from unittest import mock
+        from app import inventory_routes
+        self.cage = uniq("PG")
+        self.mice = [self.make_mouse(self.a, "alex", cage=self.cage, note=uniq("n")) for _ in range(5)]
+        self.patches = [mock.patch.object(inventory_routes, "LAZY_OVER", 3),
+                        mock.patch.object(inventory_routes, "FIRST_PAGE", 2)]
+        for patch in self.patches:
+            patch.start()
+
+    def tearDown(self):
+        for patch in self.patches:
+            patch.stop()
+
+    @staticmethod
+    def stubs(html: str) -> list[dict]:
+        import json
+        found = re.search(r'<script type="application/json" data-dt-stubs>(.*?)</script>', html, re.S)
+        return json.loads(found.group(1)) if found else []
+
+    def page(self, url="/colony?view=mice&scope=all&ended=all"):
+        return self.get_ok(self.a, url)
+
+    def test_the_page_draws_its_first_rows_and_lists_the_others(self):
+        html = self.page()
+        drawn = re.findall(r'<tr data-id="(\d+)" data-row-form="mouse-update-\d+"', html)
+        stubs = self.stubs(html)
+        self.assertEqual(len(drawn), 2)
+        self.assertIn('data-dt-rows-url="/colony/mice/rows"', html)
+        self.assertEqual(len(drawn) + len(stubs), one("select count(*) from mice where date_of_death is null or 1"))
+        mine = next(s for s in stubs if s["id"] == self.mice[-1])
+        self.assertEqual(mine["d"]["rowForm"], f"mouse-update-{self.mice[-1]}")
+        self.assertEqual(mine["d"]["active"], "true")
+        self.assertEqual(mine["k"]["cage_id"], self.cage)
+        note = one("select note from mice where id=?", self.mice[-1])
+        self.assertEqual(mine["k"]["note"], note)
+        self.assertIn(note.lower(), mine["s"])
+        self.assertIn(self.cage.lower(), mine["s"])
+        # Its row form comes with its row, not in the page.
+        self.assertNotIn(f'id="mouse-update-{self.mice[-1]}"', html)
+
+    def test_rows_come_as_the_page_would_draw_them(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            whole = self.page()
+        answer = self.a.get(f"/colony/mice/rows?ids={self.mice[-1]},{self.mice[0]},999999999").get_json()
+        self.assertEqual(answer["ids"], [self.mice[-1], self.mice[0]])
+        # A fragment's icons come from the sprite file, the page's from its inline sprite.
+        same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-").strip()
+        for mid in (self.mice[-1], self.mice[0]):
+            pattern = r'<tr data-id="%d".*?</tr>' % mid
+            self.assertEqual(same(re.search(pattern, answer["rows"], re.S).group(0)),
+                             same(re.search(pattern, whole, re.S).group(0)))
+            self.assertIn(f'id="mouse-update-{mid}"', answer["forms"])
+        words = self.a.get(f"/colony/mice/rows?ids={self.mice[0]}&as=text").get_json()["texts"][str(self.mice[0])]
+        self.assertIn(self.cage, words)
+
+    def test_a_short_sheet_is_drawn_whole(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            html = self.page()
+        self.assertNotIn("data-dt-rows-url", html)
+        self.assertNotIn("data-dt-stubs", html)
+
+
 class VersionedAssetsTests(AppTestCase):
 
     def test_a_file_named_with_its_version_is_kept_by_the_browser(self):

@@ -6,3 +6,21 @@
 {% set mouse_table_id = 'mice-v5' %}
 {% set mouse_tag_column = 2 %}
 {% set mouse_tg1_column = 7 %}
+
+{# What the mouse dialog opens with: the Mice sheet's rows and the cage
+   sheet's sub-rows pass the same payload. #}
+{% macro mouse_payload(row, locked) -%}
+{%- set payload = {
+  "id": row.id, "mouse_id": row.mouse_id, "locked": locked,
+  "ear_tag": row.ear_tag, "strain": row.strain, "gender": row.gender, "transgene_1": row.transgene_1, "transgene_2": row.transgene_2,
+  "transgene_3": row.transgene_3, "transgene_4": row.transgene_4,
+  "cage_id": row.cage_id, "cage_rack": row.cage_rack_id or "", "cage_position": row.cage_position,
+  "cage_location": row.cage_location, "owner": row.owner,
+  "cage_rack_was": row.cage_rack_id or "", "cage_position_was": row.cage_position,
+  "cage_location_was": row.cage_location,
+  "litter_id": row.litter_id, "date_of_birth": row.date_of_birth, "status": row.status,
+  "date_of_death": row.date_of_death, "note": row.note } -%}
+{#- The lab's own columns travel under the names the dialog's fields have. -#}
+{%- for fd in custom_columns_all %}{% set _ = payload.update({"attr_" ~ fd.key: row.attrs.get(fd.key, "")}) %}{% endfor -%}
+{{ payload | tojson }}
+{%- endmacro %}

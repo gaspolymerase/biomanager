@@ -143,6 +143,15 @@
       if (stubs && this.rowsUrl && this.tbody) {
         try { JSON.parse(stubs.textContent).forEach((entry) => this.rows.push(makeStub(entry))); } catch (_) { /* drawn rows only */ }
         stubs.remove();
+        // A sheet that shows its dates as text (static/text-cells.js) shows
+        // them as the browser writes them (10/14/2026), and a search for
+        // that finds a drawn row: it finds one not drawn yet too.
+        const dated = window.BioTextCells && this.tbody.querySelector('.cell-text.is-date');
+        if (dated) this.rows.forEach((tr) => {
+          if (!tr._stub) return;
+          const shown = Object.values(tr._stub.k).map((v) => window.BioTextCells.dateText(v)).filter(Boolean);
+          if (shown.length) tr._stub.s += ' ' + shown.join(' ').toLowerCase();
+        });
       }
       this.original = this.rows.slice();
       this.filtered = this.rows.slice();
@@ -349,7 +358,10 @@
       // A sheet row's form sits outside the row, its cells joining it with
       // form="…" (a notification links to #mouse-update-39): find the row by
       // them, whether or not the form is on the page yet (row-forms.js).
-      const byForm = () => this.rows.find((tr) => tr.querySelector(`[form="${CSS.escape(id)}"]`));
+      // A cell drawn as text names its form in data-form; a row the server
+      // pages and has not drawn, in data-row-form.
+      const byForm = () => this.rows.find((tr) => tr.dataset.rowForm === id
+        || tr.querySelector(`[form="${CSS.escape(id)}"], [data-form="${CSS.escape(id)}"]`));
       // A row not shown yet is off the page (_parkLater): look in the rows.
       const inRows = () => this.rows.find((tr) => tr.id === id || tr.querySelector(`[id="${CSS.escape(id)}"]`));
       const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm()))
