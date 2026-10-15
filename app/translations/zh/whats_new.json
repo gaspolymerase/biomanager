@@ -159,5 +159,6 @@
   "The **Breeders** tab opens in seconds: Breeder cages empty for over 90 days, and mice that ended that long ago, wait behind **Show them**.": "**种鼠** 标签页几秒内就能打开：空置超过 90 天的种鼠笼和 90 天前就已结束的小鼠放在 **显示它们** 后面。",
   "A long inventory opens with its first page, and each other page comes as you turn to it; search, sorting and the chips still cover every entry.": "很长的库存表打开时只有第一页，翻到其他页时再载入；搜索、排序和筛选按钮仍覆盖全部记录。",
   "Turning the pages of a long sheet stays quick: the pages you've left no longer slow down the next search or sort.": "长表格翻页依然很快：翻过的页不再拖慢之后的搜索或排序。",
-  "The desktop app keeps its connection to your lab's server open, so each page and each save no longer waits for a new one.": "桌面应用与实验室服务器的连接会一直保持，每打开一页、每保存一次都不用再重新建立连接。"
+  "The desktop app keeps its connection to your lab's server open, so each page and each save no longer waits for a new one.": "桌面应用与实验室服务器的连接会一直保持，每打开一页、每保存一次都不用再重新建立连接。",
+  "Picking a purpose above the cages (**Breeder**, **Breeding**, **Experiment**) shows only its cages with living mice; **All** still shows the old ones.": "在笼列表上方选一个用途（**种鼠笼**、**繁殖**、**实验**）时只显示还有活鼠的笼；点 **全部** 仍能看到以前的笼。"
 }
