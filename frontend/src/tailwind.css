@@ -2720,6 +2720,29 @@
   .rack-delete {
     @apply flex items-center gap-3 border-t border-sand-100 bg-sand-50/60 px-5 py-3 text-[11.5px] text-muted;
   }
+
+  /* Proposed changes: one row a change, its icon in a tile tinted by its
+     database, and on the right where it came from (a photo, your words). */
+  .prop-list { @apply grid; }
+  .prop-row { @apply flex items-center gap-3 border-t border-sand-100 py-2; }
+  .prop-row:first-child { @apply border-t-0; }
+  .prop-tile {
+    @apply grid size-7 shrink-0 place-items-center rounded-lg bg-sand-100 text-muted;
+    & svg { @apply size-4; }
+  }
+  .prop-tile[data-tone="animals"] { @apply bg-brand-50 text-brand-700; }
+  .prop-tile[data-tone="experiments"] { @apply bg-info-50 text-info-600; }
+  .prop-tile[data-tone="notebook"] { @apply bg-violet-50 text-violet-600; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .prop-tile[data-tone="notebook"] { @apply bg-violet-500/15 text-violet-300; }
+  }
+  :root[data-theme="dark"] .prop-tile[data-tone="notebook"] { @apply bg-violet-500/15 text-violet-300; }
+  .prop-tile[data-tone="inventory"] { @apply bg-warn-50 text-warn-600; }
+  .prop-tile[data-tone="plasmids"] { @apply bg-ok-50 text-ok-600; }
+  .prop-tile[data-tone="warn"] { @apply bg-warn-50 text-warn-700; }
+  .prop-chip {
+    @apply max-w-[45%] shrink-0 truncate rounded-md bg-sand-100 px-2 py-0.5 text-[11.5px] text-muted;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

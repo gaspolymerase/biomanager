@@ -2535,7 +2535,11 @@ the assistant to read.
 **Evidence, Send back and Captures.** A proposed change may carry
 `evidence` (`{quote, capture, where}` or a string; `proposals.evidence_of`),
 kept in `request_json`, shown on Proposed changes and stripped by
-`_runnable` before `actions.run`. **Send back** (`proposals.send_back`,
+`_runnable` before `actions.run`. The page lists one row a change: an icon
+by its action (`ACTION_ICONS`, else its area's, `AREA_ICONS`) in a tile
+tinted by its area (`AREA_TONES`, the `prop-*` classes), and its evidence
+as a chip on the right (*You said*, or *Photo* / *Capture #n* and where),
+the quote in its title and under **Show each change**. **Send back** (`proposals.send_back`,
 `POST /proposals/<id>/send-back`) sets `sent_back` with `proposals.reason`;
 `as_dict` then gives `reason` and a `next` telling the assistant to propose
 again with `replaces`. Captures (`app/captures.py`, table `captures`,

@@ -1762,7 +1762,7 @@ For anything with a right answer, the assistant asks BioManager, which works it 
 
 A proposal tells you (the bell) and waits under **Proposed changes** in your account menu.
 
-- Each proposal is one summary in plain words: what will change in each database, with any warnings at the top (a litter date that would be replaced, pups too young to wean, a cage that would stop being shared with the lab, an item of that name already in stock). **Show each change** lists every record, before → after, and under each, what it came from: *From your notes: "…"*, or the capture and its photo.
+- Each proposal is one summary in plain words, with any warnings at the top (a litter date that would be replaced, pups too young to wean, a cage that would stop being shared with the lab, an item of that name already in stock), then one line for each change, its database's icon beside it. On the right of a line is what it came from: *You said* (point at it to read your words), or *Photo* and the line of the page it read. **Show each change** lists every record, before → after, with your words for each change.
 
 - **Approve** makes every change at once; **Discard** makes none. If something is wrong, **Send back** with a line saying what: the assistant reads it and proposes again, corrected, and the new proposal takes the old one's place.
 
