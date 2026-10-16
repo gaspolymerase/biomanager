@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.9": {
+        "new": [
+            "Changing a rack's rows, columns or position names asks first what happens to the cages in it: **Keep each position name** (they move to the cell called that now) or **Keep each in the same cell** (their names change). Fish racks, fly and worm racks and boxes ask the same.",
+        ],
+    },
     "2.0.8": {
         "new": [
             "A rack position can hold more than one cage: the **Rack grid** shows the one put there last and marks the position **!** while two or more there have living mice; hover over or tap it to list them all.",
