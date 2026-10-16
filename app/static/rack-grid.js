@@ -655,8 +655,64 @@
     update();
   }
 
+  /* Rack dialog: a new layout may give the places of what is in the rack
+     other names, or leave some out (app/rack_layout.py). Before saving, ask
+     the server what would change; if anything would, show every one and
+     ask whether each keeps its position name or its cell. Cancel saves
+     nothing. The choice goes with the form as "cages". */
+  function setupLayoutCheck(form) {
+    const ask = document.getElementById(form.dataset.layoutDialog);
+    const choice = form.elements.cages;
+    if (!ask || !choice) return;
+    let asked = false;
+    form.closest('dialog').addEventListener('record-dialog:open', () => { choice.value = ''; });
+    const send = () => {
+      asked = true;
+      if (form.requestSubmit) form.requestSubmit(); else form.submit();
+      asked = false;
+    };
+    form.addEventListener('submit', async (event) => {
+      const id = form.elements.id ? form.elements.id.value : '';
+      if (asked || !id) return;
+      event.preventDefault();
+      choice.value = '';
+      let plan = null;
+      try {
+        const response = await fetch(form.dataset.layoutPreview.replace('/0/', `/${id}/`), {
+          method: 'POST', body: new FormData(form),
+        });
+        if (response.ok) plan = await response.json();
+      } catch (e) { plan = null; }
+      // Nothing would change (or no answer: the server refuses a save that
+      // needs a choice, saying so).
+      if (!plan || !plan.affected || !plan.affected.length) { send(); return; }
+      const rows = ask.querySelector('[data-layout-rows]');
+      const none = `<span class="rack-layout-none">${escapeHtml(rows.dataset.none)}</span>`;
+      rows.innerHTML = plan.affected.map((a) => `<tr><td class="rack-layout-code">${escapeHtml(a.code)}</td>`
+        + `<td>${escapeHtml(a.now)}</td><td>${a.keep_names ? escapeHtml(a.keep_names) : none}</td>`
+        + `<td>${a.keep_cells ? escapeHtml(a.keep_cells) : none}</td></tr>`).join('');
+      ask.querySelector('[data-layout-summary]').textContent = plan.summary || '';
+      ask.querySelectorAll('[data-layout-note]').forEach((el) => {
+        el.textContent = (plan.notes || {})[el.dataset.layoutNote] || '';
+        el.hidden = !el.textContent;
+      });
+      const pick = ask.querySelector(`input[name="layout_choice"][value="${plan.default}"]`);
+      if (pick) pick.checked = true;
+      ask.showModal();
+    });
+    ask.querySelectorAll('[data-layout-cancel]').forEach((button) => button.addEventListener('click', () => ask.close()));
+    ask.querySelector('[data-layout-save]').addEventListener('click', () => {
+      const picked = ask.querySelector('input[name="layout_choice"]:checked');
+      if (!picked) return;
+      choice.value = picked.value;
+      ask.close();
+      send();
+    });
+  }
+
   function init() {
     document.querySelectorAll('[data-rack-naming]').forEach(setupNamingPreview);
+    document.querySelectorAll('form[data-layout-preview]').forEach(setupLayoutCheck);
     document.querySelectorAll('[data-view-switch]').forEach(setupSwitch);
     document.querySelectorAll('[data-rack-view]').forEach(setup);
   }

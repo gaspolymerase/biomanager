@@ -16,7 +16,7 @@ from flask import (
 )
 from sqlalchemy import func, select
 
-from . import access, audit, database_keys, i18n, positions
+from . import access, audit, database_keys, i18n, positions, rack_layout
 from . import groups as project_groups
 from . import sheet_paging
 from . import stock_service as svc
@@ -920,14 +920,13 @@ def save_rack(key: str):
                                                           name=rack.name))
         rows = max(1, min(26, _int(form.get("rows"), mv.s["rack_rows"])))
         cols = max(1, min(40, _int(form.get("cols"), mv.s["rack_cols"])))
-        if rack is not None and (rows < rack.rows or cols < rack.cols):
-            outside = session.scalar(select(func.count(StockUnit.id)).where(
-                StockUnit.rack_id_fk == rack.id, StockUnit.active.is_(True),
-                (StockUnit.rack_row > rows) | (StockUnit.rack_col > cols))) or 0
-            if outside:
-                return _back(key, view="setup", error=gettext(
-                    "%(count)s %(units)s sit outside %(rows)s × %(cols)s; move them before shrinking %(rack)s.",
-                    count=outside, units=_n(mv, outside), rows=rows, cols=cols, rack=rack.name))
+        # A new layout that renames the places of vials in the rack, or leaves
+        # some out, says whether each keeps its name or its cell (app/rack_layout.py).
+        change, refused = rack_layout.check(session, rack_layout.kind("stock_rack"), rack,
+                                            rack_layout.Layout(rows, cols, rack_layout.form_naming(form, rack)),
+                                            form.get(rack_layout.FIELD))
+        if refused:
+            return _back(key, view="setup", error=refused)
         inc = form.get("incubator_id", "").strip()
         incubator = session.get(StockIncubator, int(inc)) if inc.isdigit() else None
         if incubator is not None and incubator.module_id_fk != row.id:
@@ -940,16 +939,18 @@ def save_rack(key: str):
         if rack is None:
             rack = StockRack(module_id_fk=row.id, created_by=g.user.username)
             session.add(rack)
-        rack.name = (form.get("name") or "").strip() or mv.rack_noun.capitalize()
-        rack.rows, rack.cols = rows, cols
-        rack.naming = json.dumps(positions.scheme_from_form(form))
-        rack.incubator_id_fk = incubator.id if incubator else None
-        rack.flip_days = _int(form.get("flip_days")) or None
-        if "last_flipped_on" in form:
-            rack.last_flipped_on = last
-        rack.notes = (form.get("notes") or "").strip()
+        with rack_layout.batch(session, change):
+            rack.name = (form.get("name") or "").strip() or mv.rack_noun.capitalize()
+            rack.rows, rack.cols = rows, cols
+            rack.naming = json.dumps(rack_layout.form_naming(form, rack))
+            rack.incubator_id_fk = incubator.id if incubator else None
+            rack.flip_days = _int(form.get("flip_days")) or None
+            if "last_flipped_on" in form:
+                rack.last_flipped_on = last
+            rack.notes = (form.get("notes") or "").strip()
+            rack_layout.apply(session, change)
         session.commit()
-        return _back(key, view="setup", message=gettext("Saved %(name)s.", name=rack.name))
+        return _back(key, view="setup", message=gettext("Saved %(name)s.", name=rack.name) + rack_layout.outcome(change))
 
 
 @bp.route("/<key>/racks/<int:rack_id>/delete", methods=["POST"])

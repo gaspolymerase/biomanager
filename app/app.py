@@ -161,12 +161,15 @@ from . import sheet_paging  # noqa: E402
 from .stock_routes import bp as stocks_bp  # noqa: E402
 from .labels import bp as labels_bp  # noqa: E402
 from .admin_racks import bp as admin_racks_bp  # noqa: E402
+from . import rack_layout  # noqa: E402
 
 app.register_blueprint(organism_bp)
 app.register_blueprint(inventory_bp)
 app.register_blueprint(stocks_bp)
 app.register_blueprint(labels_bp)
 app.register_blueprint(admin_racks_bp)
+# A rack's new layout: what happens to what is in it (app/rack_layout.py).
+app.register_blueprint(rack_layout.bp)
 
 # Sign in with Google or Microsoft (app/oidc.py); offered only when configured.
 from . import oidc  # noqa: E402
@@ -4476,25 +4479,36 @@ def rack_naming_payload(rack) -> dict:
     return positions.scheme(rack.naming)
 
 
-def _mouse_rack_from_form(db_session, rack, form) -> str | None:
+def _mouse_rack_from_form(db_session, rack, form) -> tuple[str | None, dict | None]:
+    """Check the rack dialog's form and set it on `rack`: (an error, None),
+    or (None, the layout change that moves cages in it, if any). A new
+    layout may rename the places of cages in it or leave them out; the
+    form says whether each keeps its name or its cell (app/rack_layout.py),
+    and they move with the rack's change, as one batch."""
     name = (form.get("name") or "").strip()
     if not name:
-        return gettext("A rack needs a name.")
+        return gettext("A rack needs a name."), None
     clash = db_session.scalar(select(MouseRack.id).where(
         func.lower(MouseRack.name) == name.lower(), MouseRack.id != (rack.id or 0)))
     if clash:
-        return gettext("There is already a rack called %(name)s.", name=name)
+        return gettext("There is already a rack called %(name)s.", name=name), None
     try:
         rows = int(form.get("rows") or 8)
         cols = int(form.get("cols") or 10)
     except ValueError:
-        return gettext("Rows and columns must be whole numbers.")
-    rack.name = name
-    rack.rows = max(1, min(26, rows))
-    rack.cols = max(1, min(40, cols))
-    rack.room = (form.get("room") or "").strip()
-    rack.naming = json.dumps(positions.scheme_from_form(form))
-    return None
+        return gettext("Rows and columns must be whole numbers."), None
+    new = rack_layout.Layout(max(1, min(26, rows)), max(1, min(40, cols)), rack_layout.form_naming(form, rack))
+    change, refused = rack_layout.check(db_session, rack_layout.kind("mouse_rack"), rack, new,
+                                        form.get(rack_layout.FIELD))
+    if refused:
+        return refused, None
+    with rack_layout.batch(db_session, change):
+        rack.name = name
+        rack.rows, rack.cols = new.rows, new.cols
+        rack.room = (form.get("room") or "").strip()
+        rack.naming = json.dumps(new.naming)
+        rack_layout.apply(db_session, change)
+    return None, change
 
 
 def cage_state(cage) -> dict | None:
@@ -4564,14 +4578,15 @@ def save_mouse_rack():
         if rack.id is not None and not access.can_edit_rack(rack):
             flash(gettext("Only whoever added rack %(rack)s, or an admin, can change it.", rack=rack.name), "error")
             return redirect(url_for("colony", view="cages"))
-        error = _mouse_rack_from_form(db_session, rack, request.form)
+        error, change = _mouse_rack_from_form(db_session, rack, request.form)
         if error:
+            db_session.rollback()
             flash(error, "error")
             return redirect(url_for("colony", view="cages"))
         if rack.id is None:
             db_session.add(rack)
         db_session.commit()
-        flash(gettext("Saved rack %(rack)s.", rack=rack.name), "success")
+        flash(gettext("Saved rack %(rack)s.", rack=rack.name) + rack_layout.outcome(change), "success")
     return redirect(url_for("colony", view="cages"))
 
 
@@ -8665,8 +8680,10 @@ def _plasmids_page(box_id: int | None = None):
 @app.route("/plasmids/boxes/save", methods=["POST"])
 @login_required
 def save_plasmid_box():
-    """New box (anyone), or change one: its creator or an admin. A box
-    cannot shrink past a plasmid; a rename follows onto its plasmids."""
+    """New box (anyone), or change one: its creator or an admin. A layout
+    that renames the places of plasmids in it, or leaves some out, says
+    whether each keeps its name or its cell (app/rack_layout.py); a rename
+    follows onto its plasmids."""
     form = request.form
 
     def number(name, default, top):
@@ -8692,37 +8709,35 @@ def save_plasmid_box():
             return _plasmids_page(clash.id)
         rows = number("rows", box.rows if box else pbox.DEFAULT_ROWS, pbox.MAX_ROWS)
         cols = number("cols", box.cols if box else pbox.DEFAULT_COLS, pbox.MAX_COLS)
-        if box is not None and (rows < box.rows or cols < box.cols):
-            outside = db_session.scalars(select(PlasmidRecord).where(
-                PlasmidRecord.box_id_fk == box.id,
-                (PlasmidRecord.box_row >= rows) | (PlasmidRecord.box_col >= cols))
-                .order_by(PlasmidRecord.plasmid_id)).all()
-            if outside:
-                n = len(outside)
-                listed = ", ".join("#" + str(p.plasmid_id) for p in outside[:5]) + ("…" if n > 5 else "")
-                flash(ngettext("%(box)s cannot shrink to %(rows)s × %(cols)s: %(num)s plasmid sits outside that (%(listed)s). Move them first.",
-                               "%(box)s cannot shrink to %(rows)s × %(cols)s: %(num)s plasmids sit outside that (%(listed)s). Move them first.", n, box=box.name, rows=rows, cols=cols,
-                               listed=listed), "error")
-                return _plasmids_page(box.id)
+        # A new layout that renames the places of plasmids in the box, or leaves
+        # some out, says whether each keeps its name or its cell (app/rack_layout.py).
+        change, refused = rack_layout.check(db_session, rack_layout.kind("plasmid_box"), box,
+                                            rack_layout.Layout(rows, cols, rack_layout.form_naming(form, box)),
+                                            form.get(rack_layout.FIELD))
+        if refused:
+            flash(refused, "error")
+            return _plasmids_page(box.id)
         created = box is None
         if created:
             box = PlasmidBox(created_by=g.user.username)
             db_session.add(box)
         renamed = not created and box.name != name
-        box.name, box.rows, box.cols = name, rows, cols
-        box.naming = json.dumps(positions.scheme_from_form(form))
-        box.location = (form.get("location") or "").strip()[:120]
-        if "notes" in form:
-            box.notes = (form.get("notes") or "").strip()
-        db_session.flush()
-        if renamed:
-            for p in db_session.scalars(select(PlasmidRecord).where(PlasmidRecord.box_id_fk == box.id)):
-                p.storage_box = name
+        with rack_layout.batch(db_session, change):
+            box.name, box.rows, box.cols = name, rows, cols
+            box.naming = json.dumps(rack_layout.form_naming(form, box))
+            box.location = (form.get("location") or "").strip()[:120]
+            if "notes" in form:
+                box.notes = (form.get("notes") or "").strip()
+            db_session.flush()
+            if renamed:
+                for p in db_session.scalars(select(PlasmidRecord).where(PlasmidRecord.box_id_fk == box.id)):
+                    p.storage_box = name
+            rack_layout.apply(db_session, change)
         db_session.commit()
         flash(gettext("Added box %(box)s (%(rows)s × %(cols)s, positions %(span)s).", box=box.name, rows=rows,
                       cols=cols, span=pbox.span(box)) if created else
               gettext("Saved box %(box)s (%(rows)s × %(cols)s, positions %(span)s).", box=box.name, rows=rows,
-                      cols=cols, span=pbox.span(box)), "success")
+                      cols=cols, span=pbox.span(box)) + rack_layout.outcome(change), "success")
         return _plasmids_page(box.id)
 
 
@@ -11445,8 +11460,9 @@ def zebrafish_create_rack():
 @app.route("/zebrafish/racks/<int:rack_id>/update", methods=["POST"])
 @login_required
 def zebrafish_update_rack(rack_id: int):
-    """Rename or resize a rack. Tanks outside a smaller grid keep their
-    numbers and show as unplaced until moved."""
+    """Rename, resize or rename the positions of a rack. A layout that
+    renames the places of tanks in it, or leaves some out, says whether each
+    keeps its position name or its row and column (app/rack_layout.py)."""
     with SessionLocal() as s:
         r = s.get(FishRack, rack_id)
         if r is None:
@@ -11457,14 +11473,23 @@ def zebrafish_update_rack(rack_id: int):
             # mouse and fly racks, only whoever added it or an admin.
             flash(gettext("Only whoever added rack %(rack)s, or an admin, can change it.", rack=r.name), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
+        form = request.form
         try:
-            zf_rack_fields(s, r, request.form)
+            new = rack_layout.Layout(max(1, min(26, zf_int(form, "rows", "Rows", default=r.rows or 8))),
+                                     max(1, min(40, zf_int(form, "cols", "Columns", default=r.cols or 10))),
+                                     rack_layout.form_naming(form, r))
+            change, refused = rack_layout.check(s, rack_layout.kind("fish_rack"), r, new, form.get(rack_layout.FIELD))
+            if refused:
+                raise ZfInputError(refused)
+            with rack_layout.batch(s, change):
+                zf_rack_fields(s, r, form)
+                rack_layout.apply(s, change)
         except ZfInputError as error:
             s.rollback()
             flash(str(error), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         s.commit()
-        flash(gettext("Saved rack %(rack)s.", rack=r.name), "success")
+        flash(gettext("Saved rack %(rack)s.", rack=r.name) + rack_layout.outcome(change), "success")
     return redirect(url_for("zebrafish", view="tanks", mode="grid"))
 
 

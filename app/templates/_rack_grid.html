@@ -64,10 +64,16 @@
 
 {# The fields every rack has; pages add their own (kind, room, system…)
    through the caller block. The delete form sits outside the main form,
-   because forms cannot nest, and shows only when editing. #}
-{% macro rack_dialog(id, save_action, update_action, delete_action, noun='rack') %}
+   because forms cannot nest, and shows only when editing.
+   layout_kind (app/rack_layout.py: mouse_rack, fish_rack, inventory_box,
+   stock_rack, plasmid_box): before saving a layout that renames or leaves
+   out the places of what is in the rack, ask whether each keeps its
+   position name or its cell (the second dialog; rack-grid.js). #}
+{% macro rack_dialog(id, save_action, update_action, delete_action, noun='rack', layout_kind=None) %}
   <dialog id="{{ id }}" class="record-dialog" aria-labelledby="{{ id }}-title">
     <form method="post" data-record-form
+          {% if layout_kind %}data-layout-preview="{{ url_for('rack_layout.preview', key=layout_kind, rack_id=0) }}"
+          data-layout-dialog="{{ id }}-layout"{% endif %}
           data-create-action="{{ save_action }}" data-update-action="{{ update_action }}"
           data-new-title="{{ _('New %(noun)s', noun=noun|tr) }}" data-edit-title="{{ _('%(noun)s {label}', noun=(noun|capitalize)|tr) }}"
           data-new-submit="{{ _('Create %(noun)s', noun=noun|tr) }}" data-edit-submit="{{ _('Save') }}">
@@ -81,6 +87,7 @@
       <div class="record-dialog-body">
         <input type="hidden" name="id">
         <input type="hidden" name="return_to" value="grid">
+        {% if layout_kind %}<input type="hidden" name="cages">{% endif %}
         <label class="record-wide">{{ _('Name') }} <input name="name" required autocomplete="off"></label>
         <fieldset class="record-group">
           <legend>{{ _('Size') }}</legend>
@@ -143,4 +150,40 @@
       <span>{{ _('Nothing inside is deleted. It moves to Unplaced.') }}</span>
     </form>
   </dialog>
+  {% if layout_kind %}
+  <dialog id="{{ id }}-layout" class="record-dialog rack-layout-dialog" aria-labelledby="{{ id }}-layout-title">
+    <header class="record-dialog-head">
+      <div>
+        <h3 id="{{ id }}-layout-title">{{ _('The new layout renames positions in use') }}</h3>
+        <p class="record-dialog-sub" data-layout-summary></p>
+      </div>
+      <button type="button" class="modal-close" data-layout-cancel aria-label="{{ _('Cancel') }}">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body rack-layout-body">
+      <p class="record-wide rack-layout-lead">{{ _('Nothing has moved in real life. Choose what each keeps:') }}</p>
+      <label class="record-wide rack-layout-choice">
+        <input type="radio" name="layout_choice" value="keep_names">
+        <span><strong>{{ _('Keep each position name') }}</strong>
+          <span class="rack-layout-hint">{{ _('G6 stays G6: it moves to the cell that has that name now.') }}</span>
+          <span class="rack-layout-note" data-layout-note="keep_names"></span></span>
+      </label>
+      <label class="record-wide rack-layout-choice">
+        <input type="radio" name="layout_choice" value="keep_cells">
+        <span><strong>{{ _('Keep each in the same cell') }}</strong>
+          <span class="rack-layout-hint">{{ _('Its row and column stay; the name of its position changes.') }}</span>
+          <span class="rack-layout-note" data-layout-note="keep_cells"></span></span>
+      </label>
+      <div class="record-wide rack-layout-table">
+        <table>
+          <thead><tr><th></th><th>{{ _('Now') }}</th><th>{{ _('Keeping names') }}</th><th>{{ _('Keeping cells') }}</th></tr></thead>
+          <tbody data-layout-rows data-none="{{ _('No position') }}"></tbody>
+        </table>
+      </div>
+    </div>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn" data-layout-cancel>{{ _('Cancel') }}</button>
+      <button type="button" class="btn btn-primary" data-layout-save>{{ _('Save') }}</button>
+    </footer>
+  </dialog>
+  {% endif %}
 {% endmacro %}

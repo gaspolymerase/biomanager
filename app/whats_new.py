@@ -30,7 +30,7 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
-    "2.0.9": {
+    "2.0.10": {
         "changed": [
             "Every sheet's cells are drawn as text until you click, tap or Tab to them, as an inventory's are, so **Mice**, **Cages**, **Litters**, tanks, vials and **Plasmids** open sooner in Chrome, Edge, the Windows app and on Android.",
             "A mouse, litter, tank or vial sheet of more than 500 entries opens with its first page and brings each other page as you turn to it; search, sorting, **Export** and **Print** still go by every entry.",
@@ -38,6 +38,11 @@ NOTES: dict[str, dict[str, list[str]]] = {
         ],
         "fixed": [
             "On **Mice**, a cell changed and then changed back to what it was when the page opened is saved, not left as it was.",
+        ],
+    },
+    "2.0.9": {
+        "new": [
+            "Changing a rack's rows, columns or position names asks first what happens to the cages in it: **Keep each position name** (they move to the cell called that now) or **Keep each in the same cell** (their names change). Fish racks, fly and worm racks and boxes ask the same.",
         ],
     },
     "2.0.8": {

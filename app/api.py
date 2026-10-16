@@ -557,6 +557,70 @@ def cage(cage_id: str):
         return jsonify(cage_json(c))
 
 
+RACK_FIELDS = ("name", "rows", "cols", "room", "naming", "cages")
+
+
+def rack_json(session, r) -> dict:
+    from . import positions
+    held = session.scalar(select(func.count(CageRecord.id)).where(CageRecord.rack_id_fk == r.id)) or 0
+    return {"name": r.name, "rows": r.rows, "cols": r.cols, "room": r.room or "",
+            "naming": positions.scheme(r.naming), "positions": positions.example(r.naming, r.rows, r.cols),
+            "cages": held, "created_by": r.created_by or None}
+
+
+@bp.get("/racks")
+def racks():
+    """The colony's cage racks: size, how positions are named, cages in each."""
+    _feature("colony")
+    from .services import mouse_racks
+    with SessionLocal() as s:
+        return jsonify({"data": [rack_json(s, r) for r in mouse_racks(s)], "next": None})
+
+
+@bp.patch("/racks/<name>")
+def rack_update(name: str):
+    """Change a cage rack: any of RACK_FIELDS. A change that renames the
+    places of cages in it, or leaves some out, needs "cages": "keep_names"
+    (each cage keeps its position name and moves to the cell that has it
+    now) or "keep_cells" (each keeps its row and column, and its name
+    changes); without one it is refused (409) with what each would do."""
+    from . import rack_layout
+    from .app import _mouse_rack_from_form
+    from .models import MouseRack
+    _feature("colony")
+    data = _json()
+    unknown = sorted(set(data) - set(RACK_FIELDS))
+    if unknown:
+        abort(400, f"A rack has no {', '.join(unknown)} to change; it has {', '.join(RACK_FIELDS)}.")
+    with SessionLocal() as s:
+        r = s.scalar(select(MouseRack).where(func.lower(MouseRack.name) == name.strip().lower()))
+        if r is None:
+            abort(404, f"There is no rack {name}.")
+        if not access.can_edit_rack(r):
+            abort(403, f"Only whoever added rack {r.name}, or an admin, can change it.")
+        try:
+            naming = rack_layout.json_naming(data, r)
+        except ValueError:
+            abort(400, "naming is {mode, rows, cols, order, separator, start}.")
+        form = MultiDict({"name": str(data.get("name", r.name) or ""), "rows": str(data.get("rows", r.rows)),
+                          "cols": str(data.get("cols", r.cols)), "room": str(data.get("room", r.room) or ""),
+                          **{f"naming_{k}": str(v) for k, v in naming.items()},
+                          rack_layout.FIELD: str(data.get("cages") or "")})
+        if form[rack_layout.FIELD] and form[rack_layout.FIELD] not in rack_layout.CHOICES:
+            abort(400, "cages is keep_names or keep_cells.")
+        if not form[rack_layout.FIELD] and form["rows"].isdigit() and form["cols"].isdigit():
+            new = rack_layout.Layout(max(1, min(26, int(form["rows"]))), max(1, min(40, int(form["cols"]))), naming)
+            preview = rack_layout.plan(s, rack_layout.kind("mouse_rack"), r, new)
+            if preview["affected"]:
+                return _error(409, rack_layout.refusal(preview), preview=rack_layout.public(preview))
+        error, change = _mouse_rack_from_form(s, r, form)
+        if error:
+            s.rollback()
+            abort(400, error)
+        s.commit()
+        return jsonify({**rack_json(s, r), "warnings": [rack_layout.outcome(change).strip()] if change else []})
+
+
 def litter_json(lt: LitterRecord) -> dict:
     # A litter is in a cage through its pups (made in the cage at genotyping,
     # moved out at weaning; services.weaning_due reads it the same way):
@@ -1601,6 +1665,11 @@ ENDPOINTS = [
     ("POST", "/api/v1/mice/{mouse_id}/weights", "write", "Record a weight: {grams, date, notes}", ()),
     ("GET", "/api/v1/cages", "read", "Cages, with their living mice", ("occupied", "owner", "purpose", "room")),
     ("GET", "/api/v1/cages/{cage_id}", "read", "One cage", ()),
+    ("GET", "/api/v1/racks", "read", "Cage racks: size, how positions are named, how many cages", ()),
+    ("PATCH", "/api/v1/racks/{name}", "write",
+     "Change a cage rack: " + ", ".join(RACK_FIELDS) + ". A layout that renames or leaves out cages' places needs "
+     "cages: keep_names (each keeps its position name) or keep_cells (each keeps its row and column); without "
+     "one it is refused (409) with what each would do", ()),
     ("GET", "/api/v1/litters", "read", "Litters, with the cage their pups are in", ("born_since", "cage")),
     ("GET", "/api/v1/strains", "read", "Strains", ()),
     ("GET", "/api/v1/tanks", "read", "Zebrafish tanks", ("active", "owner")),
@@ -1673,7 +1742,7 @@ ENDPOINTS = [
     ("GET", "/api/v1/captures/{capture_id}", "read", "One capture: its text, and its photo (base64) or file's text", ()),
     ("POST", "/api/v1/mcp", "propose", "MCP (streamable HTTP) for assistant apps: the tools of mcp/biomanager_mcp.py", ()),
 ]
-NOT_PAGED = {"/", "/me", "/resolve", "/vocabulary", "/due", "/actions", "/proposals", "/mcp", "/captures", "/search",
+NOT_PAGED = {"/", "/me", "/racks", "/resolve", "/vocabulary", "/due", "/actions", "/proposals", "/mcp", "/captures", "/search",
              "/history", "/lineage", "/path", "/availability", "/reorder-forecast", "/lab-checks", "/regimens",
              "/animal-use", "/handover"}
 PARAM_HELP = {

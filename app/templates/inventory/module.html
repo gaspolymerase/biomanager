@@ -671,7 +671,7 @@
 
 {% if m.has('storage') %}
   {% call rack_dialog('inv-rack-dialog', url_for('inventory.save_rack', key=key), url_for('inventory.save_rack', key=key),
-                      url_for('inventory.delete_rack', key=key, rack_id=0), noun='box') %}
+                      url_for('inventory.delete_rack', key=key, rack_id=0), noun='box', layout_kind='inventory_box') %}
     <label class="col-span-full">{{ _('Kind') }}
       <select name="kind">
         {% for kind in ['box', 'rack', 'shelf', 'drawer', 'freezer'] %}<option value="{{ kind }}">{{ kind|tr('inventory')|capitalize }}</option>{% endfor %}

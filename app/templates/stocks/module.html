@@ -587,7 +587,7 @@
 {% if view in ('units', 'setup') %}
   <datalist id="stock-temps">{% for t in m.temp_values %}<option value="{{ t }}"></option>{% endfor %}</datalist>
   {% call rack_dialog('rack-dialog', url_for('stocks.save_rack', key=key), url_for('stocks.save_rack', key=key),
-                      url_for('stocks.delete_rack', key=key, rack_id=0), noun=rack_w) %}
+                      url_for('stocks.delete_rack', key=key, rack_id=0), noun=rack_w, layout_kind='stock_rack') %}
     <label class="col-span-full">{{ room_w|capitalize }}
       <select name="incubator_id">
         <option value="">{{ _('Not in a %(room)s', room=room_w) }}</option>

@@ -317,14 +317,20 @@ class BoxTests(InventoryCase):
         self.assertEqual(count("inventory_racks", "id=?", bid), 1)
         self.assertEqual((item(rid)["rack_id_fk"], item(rid)["rack_row"], item(rid)["rack_col"]), (bid, 3, 3))
 
-    def test_a_box_cannot_shrink_past_the_items_it_holds(self):
+    def test_shrinking_a_box_past_its_items_asks_what_happens_to_them(self):
         name = uniq("Box")
         bid = self.make_rack(self.a, self.key, name)
-        self.make_item(self.a, self.key, uniq("R"), rack_id=str(bid), position="E5")
-        r = self.post(self.a, f"/inventory/{self.key}/racks/save",
-                      data={"id": str(bid), "name": name, "rows": "4", "cols": "4", **GRID_NAMING})
-        self.assertFlash(r, "cannot shrink to 4 × 4", "error")
+        item = self.make_item(self.a, self.key, uniq("R"), rack_id=str(bid), position="E5")
+        data = {"id": str(bid), "name": name, "rows": "4", "cols": "4", **GRID_NAMING}
+        r = self.post(self.a, f"/inventory/{self.key}/racks/save", data=data)
+        self.assertFlash(r, "changes the positions of 1 item", "error")
         self.assertEqual(row("select rows, cols from inventory_racks where id=?", bid), (9, 9))
+        # Told what to do, the box shrinks and the item stays in it with no position.
+        r = self.post(self.a, f"/inventory/{self.key}/racks/save", data={**data, "cages": "keep_cells"})
+        self.assertFlash(r, "no position", "success")
+        self.assertEqual(row("select rows, cols from inventory_racks where id=?", bid), (4, 4))
+        self.assertEqual(row("select rack_id_fk, rack_row, rack_col from inventory_items where id=?", item),
+                         (bid, None, None))
 
     def test_a_box_may_shrink_when_its_items_still_fit(self):
         name = uniq("Box")

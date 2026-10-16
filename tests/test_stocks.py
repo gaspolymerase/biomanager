@@ -584,13 +584,16 @@ class UnitActionTests(StockCase):
         self.assertEqual(r.status_code, 404)
         self.assertEqual(unit(vial)["genotype"], "mine")
 
-    def test_shrinking_a_rack_over_its_vials_is_refused(self):
+    def test_shrinking_a_rack_over_its_vials_asks_what_happens_to_them(self):
         rack = self.rack(rows=6, cols=8)
         self.make_vial(self.a, self.key, rack_id=rack, position="F8")
-        r = self.post(self.a, self.url(self.key, "/racks/save"),
-                      {"id": rack, "name": rack_cols(rack)["name"], "rows": 3, "cols": 3, **GRID_NAMING})
-        self.assertFlash(r, "move them before shrinking", "error")
+        data = {"id": rack, "name": rack_cols(rack)["name"], "rows": 3, "cols": 3, **GRID_NAMING}
+        r = self.post(self.a, self.url(self.key, "/racks/save"), data)
+        self.assertFlash(r, "changes the positions of 1 vial", "error")
         self.assertEqual((rack_cols(rack)["rows"], rack_cols(rack)["cols"]), (6, 8))
+        r = self.post(self.a, self.url(self.key, "/racks/save"), {**data, "cages": "keep_names"})
+        self.assertFlash(r, "no position", "success")
+        self.assertEqual((rack_cols(rack)["rows"], rack_cols(rack)["cols"]), (3, 3))
 
     def test_rack_save_without_a_flip_date_field_keeps_the_old_one(self):
         rack = self.rack(last_flipped_on=days_ago(2))
