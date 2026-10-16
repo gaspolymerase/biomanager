@@ -59,7 +59,8 @@
                                 data-autosave="1" aria-label="{{ _('Purpose') }}" {% if locked %}disabled{% endif %}>
                           <option value="" {% if not cage.purpose %}selected{% endif %}>–</option>
                           {% for p_value in cs.purpose_choices %}
-                            <option value="{{ p_value }}" {% if p_value == cage.purpose %}selected{% endif %}>{{ p_value|tr('cage purpose') }}</option>
+                            {# Its own word, whatever its case ("BREEDER" from an import is Breeder). #}
+                            <option value="{{ p_value }}" {% if p_value|lower == (cage.purpose or '')|lower %}selected{% endif %}>{{ p_value|tr('cage purpose') }}</option>
                           {% endfor %}
                         </select>
                       </td>

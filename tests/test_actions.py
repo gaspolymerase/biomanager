@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 
 from tests.base import *  # noqa: F401,F403
-from tests.base import AppTestCase, count, days_ago, one, row, rows, uniq
+from tests.base import AppTestCase, count, days_ago, execute, one, row, rows, uniq
 
 from app import actions
 from app.app import app
@@ -499,6 +499,7 @@ class ExperimentActions(AppTestCase):
     def test_due_lists_the_days_not_yet_done(self):
         from app import api
         api.rate.reset()
+        execute("delete from app_settings where key='members_api_tokens'")  # another test may have left it off
         r = self.m.post("/settings/api-tokens", data={"label": uniq("T"), "scope": "read", "expires": "90"})
         import re
         tok = re.search(r'id="api-token"[^>]*>(bmt_\w+)<', r.get_data(as_text=True)).group(1)

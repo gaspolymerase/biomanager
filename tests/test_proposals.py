@@ -48,6 +48,7 @@ class Proposing(Base):
 
     def test_connect_an_assistant_gives_the_setup_to_copy(self):
         self.assertTrue("/settings/assistant" in self.get_ok(self.m, "/settings"))
+        execute("delete from app_settings where key='members_api_tokens'")  # another test may have left it off
         r = self.m.post("/settings/api-tokens", data={"label": "AI assistant", "scope": "propose", "expires": "365"})
         page = r.get_data(as_text=True)
         for needed in ('"mcpServers"', '"BIOMANAGER_URL": "http://localhost"', '"url": "http://localhost/api/v1/mcp"',

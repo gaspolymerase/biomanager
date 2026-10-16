@@ -83,6 +83,9 @@ class LabSettingsCase(AppTestCase):
         data = {f"feature:{k}": "1" for k in lab.FEATURES}
         data.update({f"stock:{k}": "1" for k in lab.STOCK_CHOICES})
         data.update({f"inventory:{k}": "1" for k in lab.INVENTORY_CHOICES})
+        # What members may do as a new lab starts (each unticked box is saved
+        # off, and the next test would find, say, API tokens refused).
+        data.update({key: "1" for key, spec in lab.MEMBER_PERMISSIONS.items() if spec[2]})
         data.update({"members_create_databases": "1", "members_share_databases": "1", "lab_name": "Test Lab"})
         for key, value in overrides.items():
             key = key.replace("__", ":")

@@ -3112,7 +3112,8 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
     if active_view == "cages" and only is None and len(rows) > inventory_routes.LAZY_OVER:
         context["cage_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
         groups = project_groups.names()
-        context["cage_stubs"] = [cage_stub(r, groups) for r in rows[inventory_routes.FIRST_PAGE:]]
+        purposes = context["cage_sheet"]["purpose_choices"]
+        context["cage_stubs"] = [cage_stub(r, groups, purposes) for r in rows[inventory_routes.FIRST_PAGE:]]
         context["cage_rows_url"] = url_for("colony_cage_rows", **{
             k: request.args[k] for k in ("scope", "ended") if request.args.get(k)})
     # A long litter sheet the same way (_litter_rows.html, /colony/litters/rows).
@@ -3145,13 +3146,15 @@ def litter_stub(row: dict) -> dict:
             "s": " ".join(w for w in words if w).lower()}
 
 
-def cage_stub(row: dict, groups: dict[int, str]) -> dict:
+def cage_stub(row: dict, groups: dict[int, str], purposes: list[str]) -> dict:
     """A cage the sheet does not draw, as data-table.js reads a drawn row
     (_cage_rows.html): its data-*, each named cell's value ("k") and the
     words a search looks in ("s": what the row shows, its data-* and each
     field's value and the choice it shows, lower-cased). `groups`:
-    project_groups.names(), for a cage shared with a group."""
+    project_groups.names(), for a cage shared with a group; `purposes`: the
+    Purpose menu's choices, one of which is its purpose whatever its case."""
     text = lambda value: "" if value is None else str(value)  # noqa: E731
+    purpose = next((p for p in purposes if p.lower() == text(row["purpose"]).lower()), "")
     data = {"id": str(row["id"]), "cageRowId": str(row["id"]), "cage_id": text(row["cage_id"]),
             "active": "true" if row["active"] else "false", "breeding": text(row["breeding"]),
             "mine": "true" if row["mine"] else "false", "purpose": text(row["purpose"]).strip().lower(),
@@ -3159,7 +3162,7 @@ def cage_stub(row: dict, groups: dict[int, str]) -> dict:
             "wean_due": text(row["wean_due"]), "mouseIds": " ".join(text(m["mouse_id"]) for m in row["mice"]),
             "genotypes": text(row["genotype_auto"])}
     cells = {"cage_id": text(row["cage_id"]), "card_id": text(row["card_id"]), "rack_id": text(row["rack_id"]),
-             "position": text(row["position"]), "purpose": text(row["purpose"]),
+             "position": text(row["position"]), "purpose": purpose,
              "date_give_birth": text(row["date_give_birth"]), "genotype_summary": text(row["genotype_summary"]),
              "owner": text(row["owner"]), "is_shared": text(row["share_value"]),
              "cage_location": text(row["cage_location"]), "notes": text(row["notes"])}
@@ -3178,7 +3181,7 @@ def cage_stub(row: dict, groups: dict[int, str]) -> dict:
              re.sub(r"<[^>]+>", "", str(owner_badge_filter(row["owner"]))),
              *data.values(), *cells.values(),
              row["rack_name"] if row["rack_id"] else "–",
-             i18n.translate_value(row["purpose"], "cage purpose") if row["purpose"] else "–",
+             i18n.translate_value(purpose, "cage purpose") if purpose else "–",
              shown_share]
     # Drawn as text (cell_text.text_cells_on), an empty Card ID, Pos or
     # Strain / genotype shows its placeholder, "–".

@@ -661,7 +661,13 @@ class SheetPagingTests(AppTestCase):
         self.make_colony(self.a, self.admin, n_mice=2, purpose="Breeding", card_id="F-1", notes="a note")
         self.make_colony(self.m, self.member, n_mice=1, purpose="Experiment")
         self.make_cage(self.a, uniq("C"))   # empty
+        shouting = self.make_cage(self.a, uniq("C"))
+        execute("update mouse_cages set purpose='BREEDER' where id=?", shouting)   # as an import may write it
         url = "/colony?view=cages&scope=all"
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            whole = self.get_ok(self.a, url)
+        menu = re.search(r'<select class="status-pill" name="purpose" form="cage-update-%d".*?</select>' % shouting, whole, re.S).group(0)
+        self.assertRegex(menu, r'<option value="Breeder" selected>')   # its own word, whatever its case
         for client in (self.a, self.m):
             for ua in ("Mozilla/5.0 Chrome/141.0 Safari/537.36", "Firefox"):
                 with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
