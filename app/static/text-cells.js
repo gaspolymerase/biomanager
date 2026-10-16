@@ -127,7 +127,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => showDates(document));
   else showDates(document);
   document.addEventListener('dt:rows-loaded', (event) => {
-    ((event.detail && event.detail.rows) || []).forEach(showDates);
+    const detail = event.detail || {};
+    [...(detail.rows || []), ...(detail.details || [])].forEach(showDates);
   });
 
   window.BioTextCells = { open, field, read, dateText };

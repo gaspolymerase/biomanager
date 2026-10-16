@@ -50,5 +50,6 @@
   "%(n)s cages": "%(n)s 个笼",
   "%(shown)s / %(total)s cages": "%(shown)s / %(total)s 个笼",
   "%(n)s match": "%(n)s 处匹配",
-  "%(n)s matches": "%(n)s 处匹配"
+  "%(n)s matches": "%(n)s 处匹配",
+  "Couldn’t load the cages: %(error)s": "无法加载笼：%(error)s"
 }

@@ -621,6 +621,74 @@ class SheetPagingTests(AppTestCase):
         answer = self.a.get(f"/colony/litters/rows?scope=all&ended=all&ids={old}").get_json()
         self.assertEqual(answer["ids"], [old])
 
+    def test_cages(self):
+        cols = [self.make_colony(self.a, self.admin, n_mice=1) for _ in range(3)]
+        ids = [c["cage_id"] for c in cols]
+        url = "/colony?view=cages&scope=all"
+        html = self.get_ok(self.a, url)
+        self.assertIn('data-dt-rows-url="/colony/cages/rows?scope=all"', html)
+        stubs = self.stubs(html)
+        stub = next(s for s in stubs if s["id"] == ids[-1])
+        self.assertEqual((stub["e"], stub["f"]), (f"cage-{ids[-1]}", f"cage-update-{ids[-1]}"))
+        mouse = cols[-1]["mice"][0]
+        self.assertNotIn(f'id="cage-update-{ids[-1]}"', html)
+        self.assertNotIn(f'id="cage-mouse-update-{mouse}"', html)
+        answer = self.a.get(f"/colony/cages/rows?scope=all&ids={ids[-1]},999999").get_json()
+        self.assertEqual(answer["ids"], [ids[-1]])
+        # The cage's row, its detail row (its mice), and both kinds of form.
+        self.assertIn(f'<tr id="cage-{ids[-1]}"', answer["rows"])
+        self.assertIn(f'id="cage-detail-{ids[-1]}" data-detail-for="{ids[-1]}"', answer["rows"])
+        self.assertIn(f'id="cage-update-{ids[-1]}"', answer["forms"])
+        self.assertIn(f'id="cage-mouse-update-{mouse}"', answer["forms"])
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            whole = self.get_ok(self.a, url)
+        same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-").strip()
+        for pattern in (r'<tr id="cage-%d".*?</tr>' % ids[-1], r'<tr class="cage-detail" id="cage-detail-%d".*?</article>' % ids[-1]):
+            self.assertEqual(same(re.search(pattern, answer["rows"], re.S).group(0)),
+                             same(re.search(pattern, whole, re.S).group(0)))
+        words = self.a.get(f"/colony/cages/rows?scope=all&ids={ids[-1]}&as=text").get_json()["texts"][str(ids[-1])]
+        self.assertIn(cols[-1]["cage"], words)
+
+    def test_a_cage_not_drawn_reads_as_its_row_would(self):
+        """app.cage_stub builds an undrawn cage from its data; it must be
+        what data-table.js would read from its row (cell_text.row_stub),
+        for its owner and for someone who may not edit it."""
+        from unittest import mock
+        from app import inventory_routes
+        from app.cell_text import row_stub
+        self.make_colony(self.a, self.admin, n_mice=2, purpose="Breeding", card_id="F-1", notes="a note")
+        self.make_colony(self.m, self.member, n_mice=1, purpose="Experiment")
+        self.make_cage(self.a, uniq("C"))   # empty
+        url = "/colony?view=cages&scope=all"
+        for client in (self.a, self.m):
+            for ua in ("Mozilla/5.0 Chrome/141.0 Safari/537.36", "Firefox"):
+                with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+                    whole = client.get(url, headers={"User-Agent": ua}).get_data(as_text=True)
+                stubs = {s["id"]: s for s in self.stubs(client.get(url, headers={"User-Agent": ua}).get_data(as_text=True))}
+                read = {}
+                for attrs, body in re.findall(r'<tr (id="cage-\d+"[^>]*)>(.*?)</tr>', whole, re.S):
+                    drawn = row_stub(attrs, body)
+                    read[drawn["id"]] = drawn
+                checked = 0
+                for cid, want in read.items():
+                    if cid not in stubs:
+                        continue
+                    got = stubs[cid]
+                    self.assertEqual((got["d"], got["k"], got["e"], got["f"]), (want["d"], want["k"], want["e"], want["f"]), ua)
+                    self.assertEqual(set(got["s"].split()), set(want["s"].split()), (cid, ua))
+                    checked += 1
+                self.assertEqual(sorted([*stubs, *(set(read) - set(stubs))]), sorted(read))
+                self.assertGreaterEqual(checked, 2)
+
+    def test_a_cage_of_ended_mice_comes_when_the_page_shows_them(self):
+        cages = [self.make_cage(self.a, uniq("C")) for _ in range(4)]
+        html = self.get_ok(self.a, "/colony?view=cages&scope=all&ended=all")
+        self.assertIn('data-dt-rows-url="/colony/cages/rows?scope=all&amp;ended=all"', html)
+        answer = self.a.get(f"/colony/cages/rows?scope=all&ended=all&ids={cages[0]}").get_json()
+        self.assertEqual(answer["ids"], [cages[0]])
+
     def test_vials(self):
         key = self.make_stock_module(self.a, "fly")
         ids = [self.make_vial(self.a, key) for _ in range(4)]

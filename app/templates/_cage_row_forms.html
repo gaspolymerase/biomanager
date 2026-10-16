@@ -1,0 +1,20 @@
+{#- The cage sheet's row forms (row-forms.js): each drawn cage's, and its mice's (colony.html says what they carry). -#}
+            {% for cage in sheet_rows %}
+              <form id="cage-update-{{ cage.id }}" method="post" action="{{ url_for('update_cage', cage_row_id=cage.id) }}"
+                    data-record-label="{{ _('cage %(id)s', id=cage.cage_id) }}">
+                <input type="hidden" name="cage_id_was" value="{{ cage.cage_id }}">
+                <input type="hidden" name="rack_id_was" value="{{ cage.rack_id }}">
+                <input type="hidden" name="position_was" value="{{ cage.position }}">
+                <input type="hidden" name="cage_location_was" value="{{ cage.cage_location }}">
+                <input type="hidden" name="owner_was" value="{{ cage.owner }}">
+                <input type="hidden" name="date_give_birth_was" value="{{ cage.date_give_birth }}">
+              </form>
+              {% for mouse in cage.mice %}
+                <form id="cage-mouse-update-{{ mouse.id }}" method="post" action="{{ url_for('update_mouse', mouse_row_id=mouse.id) }}"
+                      data-record-label="{{ _('mouse %(id)s', id=mouse.mouse_id) }}">
+                  {% for n in range(3, 5) %}{% if not mouse_sheet.tg_used[n - 1] %}
+                    <input type="hidden" name="transgene_{{ n }}" value="{{ mouse['transgene_' ~ n] }}">
+                  {% endif %}{% endfor %}
+                </form>
+              {% endfor %}
+            {% endfor %}

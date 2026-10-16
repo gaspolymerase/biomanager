@@ -1773,8 +1773,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
     loaded in a few queries rather than one per row. A colony keeps every
     mouse it ever had, so the Mice, Cages and Litters tabs show the living
     and what ended in the last RECENT_DAYS days; `show_ended` shows it all.
-    `only`: the litters to draw, by id (a long litter sheet's rows, fetched
-    as they are shown: app/sheet_paging.py).
+    `only`: the cages or litters to draw, by id (a long sheet's rows,
+    fetched as they are shown: colony_cage_rows, colony_litter_rows).
     """
     from sqlalchemy.orm import selectinload
     me = g.user.username if g.user else ""
@@ -1794,11 +1794,13 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 CageRecord.is_shared.is_(True), CageRecord.share_group_id.in_(sorted(my_groups)))
             totals["group_mice"] = count_of(select(func.count(MouseRecord.id)).where(
                 MouseRecord.owner.in_(sorted(project_groups.colleagues())) | MouseRecord.cage_id_fk.in_(group_cages)))
-        def sheet_mice(*options):
+        def sheet_mice(*options, where=None):
             """The mice the mouse sheet lists: in scope and, unless asked
-            for, none that ended long ago."""
+            for, none that ended long ago (`where`: of these only)."""
             query = select(MouseRecord).options(selectinload(MouseRecord.cage).selectinload(CageRecord.rack),
                                                 *options).order_by(MouseRecord.mouse_id)
+            if where is not None:
+                query = query.where(where)
             if not show_ended:
                 query = query.where(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
             return [m for m in db_session.scalars(query).all()
@@ -1824,6 +1826,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(
                         MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
                     | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
+            if only is not None:
+                cage_query = cage_query.where(CageRecord.id.in_(sorted(only)))
             all_cages = db_session.scalars(cage_query).all()
             if not show_ended:
                 keep = [c for c in all_cages if cage_is_active(c) or c.created_at and c.created_at.date() >= recent
@@ -1957,8 +1961,15 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         mouse_sheet = mouse_sheet_meta(mouse_rows, dropdowns, sheet_racks)
         if active_view == "cages":
             # A cage's mice show the transgene columns the mouse sheet shows,
-            # which go by the mice it lists, not just this page's cages.
-            mouse_sheet["tg_used"] = transgene_columns_used(sheet_mice())
+            # which go by the mice it lists, not just this page's cages. Only
+            # Transgene 3 and 4 start hidden when empty, and only a mouse
+            # with one of them, or with a genotype instead of transgenes,
+            # can fill them (services.transgene_parts): those mice only.
+            blank = lambda column: func.coalesce(column, "") == ""  # noqa: E731
+            could = sheet_mice(where=~blank(MouseRecord.transgene_3) | ~blank(MouseRecord.transgene_4)
+                               | (blank(MouseRecord.transgene_1) & blank(MouseRecord.transgene_2)
+                                  & ~blank(MouseRecord.genotype)))
+            mouse_sheet["tg_used"] = [True, True, *transgene_columns_used(could)[2:]]
 
     return {
         "active_view": active_view,
@@ -3091,6 +3102,16 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
         context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
         context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
         context["mouse_rows_url"] = url_for("colony_mouse_rows")
+    # A long cage sheet the same way (_cage_rows.html, /colony/cages/rows):
+    # the cards view and Open all fetch what they need (colony.html).
+    rows = context["cage_rows"]
+    context["cage_sheet_rows"], context["cage_stubs"], context["cage_rows_url"] = rows, [], ""
+    if active_view == "cages" and only is None and len(rows) > inventory_routes.LAZY_OVER:
+        context["cage_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
+        groups = project_groups.names()
+        context["cage_stubs"] = [cage_stub(r, groups) for r in rows[inventory_routes.FIRST_PAGE:]]
+        context["cage_rows_url"] = url_for("colony_cage_rows", **{
+            k: request.args[k] for k in ("scope", "ended") if request.args.get(k)})
     # A long litter sheet the same way (_litter_rows.html, /colony/litters/rows).
     rows = context["litter_rows"]
     context["litter_sheet_rows"], context["litter_stubs"], context["litter_rows_url"] = rows, [], ""
@@ -3119,6 +3140,68 @@ def litter_stub(row: dict) -> dict:
     words = [data["litter_id"], *pups, *data.values(), *cells.values()]
     return {"id": row["id"], "f": f"litter-update-{row['id']}", "d": data, "k": cells,
             "s": " ".join(w for w in words if w).lower()}
+
+
+def cage_stub(row: dict, groups: dict[int, str]) -> dict:
+    """A cage the sheet does not draw, as data-table.js reads a drawn row
+    (_cage_rows.html): its data-*, each named cell's value ("k") and the
+    words a search looks in ("s": what the row shows, its data-* and each
+    field's value and the choice it shows, lower-cased). `groups`:
+    project_groups.names(), for a cage shared with a group."""
+    text = lambda value: "" if value is None else str(value)  # noqa: E731
+    data = {"id": str(row["id"]), "cageRowId": str(row["id"]), "cage_id": text(row["cage_id"]),
+            "active": "true" if row["active"] else "false", "breeding": text(row["breeding"]),
+            "mine": "true" if row["mine"] else "false", "purpose": text(row["purpose"]).strip().lower(),
+            "card_id": text(row["card_id"]), "rack_name": text(row["rack_name"]), "mice": text(row["live_count"]),
+            "wean_due": text(row["wean_due"]), "mouseIds": " ".join(text(m["mouse_id"]) for m in row["mice"]),
+            "genotypes": text(row["genotype_auto"])}
+    cells = {"cage_id": text(row["cage_id"]), "card_id": text(row["card_id"]), "rack_id": text(row["rack_id"]),
+             "position": text(row["position"]), "purpose": text(row["purpose"]),
+             "date_give_birth": text(row["date_give_birth"]), "genotype_summary": text(row["genotype_summary"]),
+             "owner": text(row["owner"]), "is_shared": text(row["share_value"]),
+             "cage_location": text(row["cage_location"]), "notes": text(row["notes"])}
+    share = row["share_value"]
+    shown_share = (i18n.translate_value("Shared") if share == "1"
+                   else groups.get(int(share[1:]), "") if share.startswith("g") and share[1:].isdigit() else "")
+    if not shown_share:
+        shown_share = i18n.translate_value("Personal")
+    if row["live_count"]:
+        count = [str(row["live_count"]), row["sex_label"]]
+    elif row["total_count"]:
+        count = [gettext("0 of %(total)s", total=row["total_count"])]
+    else:
+        count = [gettext("empty")]
+    words = [*count, row["pup_litter"], row["wean_due"] or "–",
+             re.sub(r"<[^>]+>", "", str(owner_badge_filter(row["owner"]))),
+             *data.values(), *cells.values(),
+             row["rack_name"] if row["rack_id"] else "–",
+             i18n.translate_value(row["purpose"], "cage purpose") if row["purpose"] else "–",
+             shown_share]
+    # Drawn as text (cell_text.text_cells_on), an empty Card ID, Pos or
+    # Strain / genotype shows its placeholder, "–".
+    if cell_text.text_cells_on() and not (row["card_id"] and row["position"]
+                                          and (row["genotype_summary"] or row["genotype_auto"])):
+        words.append("–")
+    return {"id": row["id"], "e": f"cage-{row['id']}", "f": f"cage-update-{row['id']}", "d": data, "k": cells,
+            "s": " ".join(text(w) for w in words if w).lower()}
+
+
+@app.route("/colony/cages/rows")
+@login_required
+def colony_cage_rows():
+    """Rows of a long cage sheet by id (?ids=…, with the page's scope and
+    ended), each with its detail row, as the page draws them, and their
+    forms (the cage's and its mice's); ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    context = _colony_page_context("cages", only=set(ids))
+    found = {row["id"]: row for row in context["cage_rows"]}
+    rows = [found[i] for i in dict.fromkeys(ids) if i in found]
+    drawn = render_template("_cage_rows.html", **{**context, "sheet_rows": rows, "fragment": True})
+    if request.args.get("as") == "text":
+        texts = cell_text.row_texts(drawn)
+        return jsonify({"texts": {str(i): texts[i] for i in texts}, "ids": list(texts)})
+    return jsonify({"rows": drawn, "forms": render_template("_cage_row_forms.html", **{**context, "sheet_rows": rows}),
+                    "ids": [row["id"] for row in rows]})
 
 
 def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:

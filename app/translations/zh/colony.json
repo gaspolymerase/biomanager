@@ -384,5 +384,6 @@
   "Cage %(cage)s isn't a Breeding cage: only a mating cage has litters, genotyping and weaning. Set its purpose to Breeding first.": "笼 %(cage)s 不是配种笼：只有正在交配的笼才有产仔、基因型鉴定和断奶。请先把它的用途设为配种笼。",
   "strain": "品系",
   "The mouse’s strain or background, such as C57BL/6J. Pick one or type your own; the choices are under Dropdowns.": "小鼠的品系或遗传背景，例如 C57BL/6J。可以从列表里选，也可以自己输入；选项在“下拉选项”里设置。",
-  "e.g. C57BL/6J": "例如 C57BL/6J"
+  "e.g. C57BL/6J": "例如 C57BL/6J",
+  "Loading the cages…": "正在加载笼…"
 }

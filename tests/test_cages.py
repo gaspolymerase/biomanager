@@ -497,6 +497,20 @@ class CageSheetTests(Case):
         mice = self.get_ok(self.m, "/colony?view=mice&scope=all")
         self.assertNotRegex(mice, r'data-sort-key="transgene_3"[^>]*data-default-hidden')
 
+    def test_a_genotype_with_more_parts_than_two_shows_the_columns_too(self):
+        """A mouse with no transgenes but a genotype of four parts fills all
+        four transgene columns (services.transgene_parts): the cage sheet
+        shows Transgene 3 and 4 for it, as the mouse sheet does."""
+        mid = self.colony["mice"][0]
+        execute("update mice set transgene_1='', transgene_2='', transgene_3='', transgene_4='', genotype=? where id=?",
+                "TgA/+; TgB/+; TgC/+; TgD/+", mid)
+        mice = self.get_ok(self.m, "/colony?view=mice&scope=all")
+        for n in (3, 4):
+            self.assertNotRegex(mice, rf'data-sort-key="transgene_{n}"[^>]*data-default-hidden')
+        panel = between(self.get_ok(self.m, "/colony?view=cages&scope=all"), f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
+        for n in (3, 4):
+            self.assertNotIn("hidden", re.search(rf'<th data-tg="{n}"[^>]*>', panel).group(0), n)
+
     def test_someone_elses_cage_is_read_only(self):
         tr = between(self.html, f'<tr id="cage-{self.theirs}"', "</tr>")
         self.assertIn("is-locked", tr)

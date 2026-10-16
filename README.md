@@ -778,8 +778,8 @@ database has a name of its own (one another database has is refused), so
       the sheet, and are still found by search and in every export. A
       sheet of a thousand rows opens in two or three seconds: the browser
       draws the page you see first, and the rest as you turn to it. A
-      sheet of more than 500 entries (an inventory, the mice, litters, fish
-      tanks, vials) is paged by the server: it opens with its first page
+      sheet of more than 500 entries (an inventory, the mice, cages,
+      litters, fish tanks, vials) is paged by the server: it opens with its first page
       and fetches each other page as you turn to it, while search, sorting,
       the chips and the count still cover every entry (<b>Print</b> fetches
       every row first). In

@@ -116,6 +116,19 @@
       const id = tr.dataset.id;
       return sheet._loadRows([tr]).then(() => sheet.rows.find((r) => r.dataset.id === id) || null);
     },
+    // Every row of the sheet `el` is in, fetched if some are still stubs: a
+    // Promise of them all (the cage sheet's cards need every cage's panel).
+    readyAll(el) {
+      const card = el && el.closest ? el.closest('.data-table-card') : null;
+      const sheet = sheets.find((c) => c.card === card);
+      if (!sheet) return Promise.resolve([]);
+      return sheet._loadRows(sheet.rows).then(() => sheet.rows.slice());
+    },
+    // A row's detail row (<tr data-detail-for>), on the page or not.
+    detail(tr) {
+      const sheet = tr && sheets.find((c) => c.rows.includes(tr));
+      return (sheet && sheet.details.get(tr.dataset.id)) || null;
+    },
   };
 
   // A row the server has not drawn yet (see the top of this file).
@@ -1328,7 +1341,8 @@
 
     // -------- rows the server pages --------------------------------------
     /* Fetches the rows of these stubs (a Promise, done when all are in):
-       ROWS_AT_ONCE a request, one request after another. */
+       ROWS_AT_ONCE a request, up to three requests at a time (the cage
+       sheet's cards ask for every cage). */
     _loadRows(list) {
       const waiting = [];
       const want = [];
@@ -1336,13 +1350,14 @@
         if (!tr._stub) return;
         if (tr._loading) waiting.push(tr._loading); else want.push(tr);
       });
-      let chain = Promise.resolve();
-      for (let i = 0; i < want.length; i += ROWS_AT_ONCE) {
+      const lanes = [Promise.resolve(), Promise.resolve(), Promise.resolve()];
+      for (let i = 0, n = 0; i < want.length; i += ROWS_AT_ONCE, n += 1) {
         const chunk = want.slice(i, i + ROWS_AT_ONCE);
-        chain = chain.then(() => this._fetchRows(chunk));
-        chunk.forEach((tr) => { tr._loading = chain; });
+        const lane = n % lanes.length;
+        lanes[lane] = lanes[lane].then(() => this._fetchRows(chunk));
+        chunk.forEach((tr) => { tr._loading = lanes[lane]; });
       }
-      return Promise.all([...waiting, chain]);
+      return Promise.all([...waiting, ...lanes]);
     }
 
     _fetchRows(stubs) {
@@ -1369,6 +1384,13 @@
       holder.innerHTML = answer.rows || '';
       const drawn = new Map(Array.from(holder.content.children)
         .filter((tr) => tr.tagName === 'TR' && tr.dataset.id).map((tr) => [tr.dataset.id, tr]));
+      // A row's detail row comes with it, and goes where the row goes.
+      const details = Array.from(holder.content.children)
+        .filter((tr) => tr.tagName === 'TR' && tr.dataset.detailFor !== undefined && drawn.has(tr.dataset.detailFor));
+      details.forEach((detail) => {
+        document.adoptNode(detail);
+        this.details.set(detail.dataset.detailFor, detail);
+      });
       const swap = new Map();
       const fresh = [];
       stubs.forEach((stub) => {
@@ -1391,7 +1413,8 @@
       this._applyOrder(fresh);
       this._labelCells(fresh);
       this._applyHidden(fresh);
-      this.card.dispatchEvent(new CustomEvent('dt:rows-loaded', { bubbles: true, detail: { rows: fresh } }));
+      // The page wires them as its own rows (their detail rows too: details).
+      this.card.dispatchEvent(new CustomEvent('dt:rows-loaded', { bubbles: true, detail: { rows: fresh, details } }));
     }
 
     /* Runs `then` once these rows are all drawn (an export or a print of

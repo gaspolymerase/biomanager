@@ -463,8 +463,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   sheet to it first (a click on a row off the page reaches no listener on
   the document). `#mouse-update-39` and `#cage-12` links find their row
   either way. A sheet whose page scripts need every row on the page says
-  `data-dt-keep-rows` (the cage sheet: its cards, **Open all** and a
-  scanned cage look for its rows there). Until then nothing measures the
+  `data-dt-keep-rows` (the cage sheet, when it is not paged). Until then nothing measures the
   page (a measure lays out every row): the toolbar's `is-tight` waits for
   its `ResizeObserver`. Once parked, the table holds only the page shown
   (and its detail rows): `render()` takes the others off, so the rows of
@@ -537,20 +536,33 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `BioSheets.ready(tr)`, a Promise of the row, fetched if it is a stub
   (`?open=`, `#item-12`). A request that fails leaves the page as it was
   and says so; the next page turn, search or sort asks again.
-- The mouse and litter sheets are paged the same way past `LAZY_OVER`
-  rows: the colony route draws the first `FIRST_PAGE` rows through
-  `_mouse_rows.html` / `_litter_rows.html` and their `_…_row_forms.html`
-  (the page's and `/colony/mice/rows`'s / `/colony/litters/rows`'s), each
-  other row as `app.mouse_stub` / `app.litter_stub`, built from the row's
-  data (a stub carries its row form, so a `#mouse-update-N` link finds
-  it). `tests/test_speed.py` holds `litter_stub` to `cell_text.row_stub`
-  of the drawn row. The litter rows address carries the page's `scope`
-  and `ended`, and loads only the litters asked for
-  (`colony_context(only=…)`); a litter's pups are loaded with only the
-  columns their cell shows (and, for someone who is not an admin, their
-  cages: who may edit a litter is who may edit all its pups). Rows fetched
-  are wired as the page's own (`dt:rows-loaded` in `colony.html`). At
-  100,000 mice the litters (6,634) open in 3.2 s instead of 9.1.
+- The mouse, cage and litter sheets are paged the same way past
+  `LAZY_OVER` rows: the colony route draws the first `FIRST_PAGE` rows
+  through `_mouse_rows.html` / `_cage_rows.html` / `_litter_rows.html` and
+  their `_…_row_forms.html` (the page's and `/colony/mice/rows`'s,
+  `/colony/cages/rows`'s, `/colony/litters/rows`'s), each other row as
+  `app.mouse_stub` / `app.cage_stub` / `app.litter_stub`, built from the
+  row's data (a stub carries its row form, so a `#mouse-update-N` link
+  finds it). `tests/test_speed.py` holds `cage_stub` and `litter_stub` to
+  `cell_text.row_stub` of the drawn row. The cage and litter rows
+  addresses carry the page's `scope` and `ended`, and load only the rows
+  asked for (`colony_context(only=…)`); a litter's pups are loaded with
+  only the columns their cell shows (and, for someone who is not an
+  admin, their cages: who may edit a litter is who may edit all its pups).
+  Rows fetched are wired as the page's own (`dt:rows-loaded` in
+  `colony.html`, which carries their detail rows as `details`).
+  - A cage's detail row (its mice, data-detail-for) comes with its row
+    and is kept in the sheet's `details` (`BioSheets.detail(tr)`, on the
+    page or not). **Open all** / **Close all** reach every cage loaded
+    (`BioSheets.rows`), and a cage fetched later opens or closes as the
+    sheet is. The **Cards** layout fetches every cage first
+    (`BioSheets.readyAll`, three requests at a time) and moves each
+    detail row's card into its grid, and back. The cage tab works out
+    which transgene columns the mouse sheet shows from the mice that can
+    fill Transgene 3 or 4 only.
+  - At 100,000 mice the litters (6,634) open in 3.2 s instead of 9.1, the
+    cages (1,368 listed) in 3.1 s instead of 7.6 (26 MB of page to 3.8);
+    their **Cards**, page and cards together, in 9.7 s instead of 10.4.
 - Tanks and vials are drawn whole by their page and paged after
   (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
   sheet's first page, makes each other row a stub with
@@ -563,8 +575,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   its row form (`f`) for links. The server still draws every row once for
   the page; the browser builds only a page of them. At 100,000 mice:
   3,337 tanks open in 5.4 s (14.2), vials 3.8 s (4.5), a page turn
-  0.1–0.9 s. The cage sheet is not paged: its cards and Open all need
-  every cage on the page (`data-dt-keep-rows`).
+  0.1–0.9 s.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
