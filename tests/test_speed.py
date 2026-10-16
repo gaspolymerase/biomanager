@@ -474,7 +474,7 @@ class MouseSheetPagingTests(AppTestCase):
         stubs = self.stubs(html)
         self.assertEqual(len(drawn), 2)
         self.assertIn('data-dt-rows-url="/colony/mice/rows"', html)
-        self.assertEqual(len(drawn) + len(stubs), one("select count(*) from mice where date_of_death is null or 1"))
+        self.assertEqual(len(drawn) + len(stubs), one("select count(*) from mice"))
         mine = next(s for s in stubs if s["id"] == self.mice[-1])
         self.assertEqual(mine["d"]["rowForm"], f"mouse-update-{self.mice[-1]}")
         self.assertEqual(mine["d"]["active"], "true")

@@ -1541,6 +1541,12 @@ def _merged_choices(*groups) -> list[str]:
     return out
 
 
+def _in_word_order(values) -> list[str]:
+    """Values the mice hold, A to Z: the same order however the rows came
+    (a sheet's page, or its rows fetched later, /colony/mice/rows)."""
+    return sorted({(v or "").strip() for v in values} - {""}, key=lambda v: (v.lower(), v))
+
+
 def mouse_sheet_meta(mouse_rows: list[dict], dropdowns: dict, racks=()) -> dict:
     """What the mouse sheet needs beyond the rows themselves: the choices
     for its dropdown cells, and which transgene columns hold anything (an
@@ -1548,10 +1554,10 @@ def mouse_sheet_meta(mouse_rows: list[dict], dropdowns: dict, racks=()) -> dict:
     return {
         "status_choices": _merged_choices(
             MOUSE_STATUS_OPTIONS, dropdowns.get("status", []),
-            (r["status"] for r in mouse_rows)),
+            _in_word_order(r["status"] for r in mouse_rows)),
         "gender_choices": _merged_choices(
             ["F", "M", "Unknown"], dropdowns.get("gender", []),
-            (r["gender"] for r in mouse_rows)),
+            _in_word_order(r["gender"] for r in mouse_rows)),
         "tg_used": [any(r[f"transgene_{n}"] for r in mouse_rows) for n in range(1, 5)],
         "active_count": sum(1 for r in mouse_rows if r["active"]),
         "racks": [{"id": r.id, "name": r.name} for r in racks],
@@ -3116,9 +3122,12 @@ def colony_mouse_rows():
             row["editable"] = can_edit_mouse(mouse)
         # The choices every row offers: the lab's, and any its mice hold.
         held = db_session.execute(select(MouseRecord.status, MouseRecord.gender).distinct()).all()
-        sheet = mouse_sheet_meta(rows, dropdown_options_map(db_session), mouse_racks(db_session))
-        sheet["status_choices"] = _merged_choices(sheet["status_choices"], (st for st, _ in held))
-        sheet["gender_choices"] = _merged_choices(sheet["gender_choices"], (gd for _, gd in held))
+        dropdowns = dropdown_options_map(db_session)
+        sheet = mouse_sheet_meta(rows, dropdowns, mouse_racks(db_session))
+        sheet["status_choices"] = _merged_choices(MOUSE_STATUS_OPTIONS, dropdowns.get("status", []),
+                                                  _in_word_order(st for st, _ in held))
+        sheet["gender_choices"] = _merged_choices(["F", "M", "Unknown"], dropdowns.get("gender", []),
+                                                  _in_word_order(gd for _, gd in held))
         defined = custom_fields.fields(db_session, "colony")
     context = {"sheet_rows": rows, "sheet": sheet, "fragment": True,
                "custom_columns": custom_fields.in_table(defined), "custom_columns_all": defined}
