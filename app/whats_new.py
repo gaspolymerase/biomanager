@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.11": {
+        "changed": [
+            "On **Cages → Rack grid**, **Unplaced** lists only the cages with living mice that have no position yet; empty cages stay in the sheet.",
+        ],
+    },
     "2.0.10": {
         "changed": [
             "Every sheet's cells are drawn as text until you click, tap or Tab to them, as an inventory's are, so **Mice**, **Cages**, **Litters**, tanks, vials and **Plasmids** open sooner in Chrome, Edge, the Windows app and on Android.",
