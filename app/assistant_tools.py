@@ -36,8 +36,9 @@ How to work:
 racks, people, each database's fields).
 2. For every record the person mentions, call resolve and use the reference it returns. If a \
 phrase matches several records, or none, ask the person; never guess.
-3. Call list_actions to see what can be proposed and the fields each takes. Use the lab's own \
-values (from lab_overview) for statuses, purposes and the like.
+3. Call list_actions to see what can be proposed, then list_actions with the names you will use for \
+their help and each field's details. Use the lab's own values (from lab_overview) for statuses, \
+purposes and the like.
 4. Put everything from one conversation in one propose_changes call, with a short summary in the \
 person's words, and give each change its evidence: the words of their notes it comes from, or what \
 the photo shows (and the capture's id). If BioManager reports errors, or the person sends it back \
