@@ -660,9 +660,15 @@ class ThePrimersAGibsonNeeds(AppTestCase):
                        {"plasmid": self.number, "kind": "region", "start": 1344, "end": 2686}]
 
     def primers(self, plasmid_row: int | None = None):
-        where = "" if plasmid_row is None else f" and attrs like '%\"{one('select plasmid_id from plasmids where id=?', plasmid_row)}\"%'"
-        return rows("select name, status, attrs from inventory_items where module_id_fk="
-                    "(select id from inventory_modules where kind='primers')" + where + " order by id")
+        """The Primers database's records, or those made against this plasmid
+        (their template: its number, primer_records.TEMPLATE_KEY)."""
+        from app.primer_records import TEMPLATE_KEY
+        found = rows("select name, status, attrs from inventory_items where module_id_fk="
+                     "(select id from inventory_modules where kind='primers') order by id")
+        if plasmid_row is None:
+            return found
+        number = str(one("select plasmid_id from plasmids where id=?", plasmid_row))
+        return [r for r in found if str(json.loads(r[2] or "{}").get(TEMPLATE_KEY, "")).strip() == number]
 
     def test_the_primers_are_saved_to_order_against_their_template(self):
         name = uniq("pGib")

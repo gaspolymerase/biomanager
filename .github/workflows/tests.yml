@@ -11,8 +11,9 @@ on:
 jobs:
   unittest:
     runs-on: ubuntu-latest
-    # The Postgres run takes 17 to 30 minutes, depending on the runner.
-    timeout-minutes: 45
+    # Four processes at once (scripts/test-parallel.py): about 3 minutes on
+    # SQLite and 4 on PostgreSQL, where one process took 17 to 30.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -49,4 +50,4 @@ jobs:
           # Words the maintainers keep out of what ships (tests/test_deploy.py); a secret, so
           # this public repository never lists them. Empty on forks: that check is skipped.
           BIOMANAGER_PRIVATE_WORDS: ${{ secrets.PRIVATE_WORDS }}
-        run: python -m unittest discover -s tests -t .
+        run: python scripts/test-parallel.py -j 4

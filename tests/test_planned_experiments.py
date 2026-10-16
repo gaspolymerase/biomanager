@@ -11,7 +11,7 @@ import re
 from datetime import date, timedelta
 
 from tests.base import *  # noqa: F401,F403
-from tests.base import AppTestCase, count, location, one, rows, uniq
+from tests.base import AppTestCase, count, execute, location, one, rows, uniq
 
 from app import actions
 from app.app import app
@@ -108,6 +108,7 @@ class Designing(Planned):
                 items = xs.calendar_items(s, TODAY - timedelta(days=5), TODAY + timedelta(days=10))
         self.assertFalse([i for i in items if i["raw"]["anchor_id"] == exp])
         api.rate.reset()
+        execute("delete from app_settings where key='members_api_tokens'")  # another test may have left it off
         r = self.m.post("/settings/api-tokens", data={"label": uniq("T"), "scope": "read", "expires": "90"})
         tok = re.search(r'id="api-token"[^>]*>(bmt_\w+)<', r.get_data(as_text=True)).group(1)
         due = app.test_client().get("/api/v1/due", headers={"Authorization": f"Bearer {tok}"}).get_json()["data"]
@@ -288,6 +289,7 @@ class ChangesFromThePlan(Planned):
         exp = self.started()
         self.autosave(self.m, f"/experiments/{exp}/update", {"readout_day": "4", "reason": "Weekend"})
         api.rate.reset()
+        execute("delete from app_settings where key='members_api_tokens'")  # another test may have left it off
         r = self.m.post("/settings/api-tokens", data={"label": uniq("T"), "scope": "read", "expires": "90"})
         tok = re.search(r'id="api-token"[^>]*>(bmt_\w+)<', r.get_data(as_text=True)).group(1)
         body = app.test_client().get(f"/api/v1/experiments/{exp}", headers={"Authorization": f"Bearer {tok}"}).get_json()

@@ -110,10 +110,13 @@ class Applying(AppTestCase):
         dest = self.make_cage(self.m, purpose="Breeding")
         code, dest_code = (one("select cage_id from mouse_cages where id=?", c) for c in (cage, dest))
         mice = count("mice")
+        # The app names a proposal's batch "Proposal #<its number>": numbers
+        # no real proposal has, in a database of any size.
+        first, second = (f"Proposal #{uniq('t')}" for _ in range(2))
         out = actions.run(app, self.member, [
             {"action": "litter_born", "target": cage_ref(cage), "fields": {"date": days_ago(25)}},
             {"action": "litter_genotyping", "target": cage_ref(cage), "fields": {"pups": 4}},
-        ], apply=True, label="Proposal #1 (via Claude)", description="Proposal #1: a litter (via Claude)")
+        ], apply=True, label=f"{first} (via Claude)", description=f"{first}: a litter (via Claude)")
         self.assertTrue(out.ok, out.errors)
         pups = [r[0] for r in rows("select mouse_id from mice where cage_id_fk=? order by mouse_id", cage)]
         self.assertEqual(len(pups), 4)
@@ -121,16 +124,16 @@ class Applying(AppTestCase):
             {"action": "wean", "target": code, "fields": {"rows": [
                 {"mice": pups[:2], "sex": "F", "cage": dest_code},
                 {"mice": pups[2:], "sex": "M", "new_card": "males"}]}},
-        ], apply=True, label="Proposal #2 (via Claude)", description="Proposal #2: weaned (via Claude)")
+        ], apply=True, label=f"{second} (via Claude)", description=f"{second}: weaned (via Claude)")
         self.assertTrue(out2.ok, out2.errors)
         self.assertEqual(count("mice", "cage_id_fk=?", dest), 2)
         self.assertEqual(count("mice", "cage_id_fk=?", cage), 0)
-        self.assertEqual(count("batches", "description like ?", "Proposal #2%"), 1)
+        self.assertEqual(count("batches", "description like ?", f"{second}:%"), 1)
         # Every row it wrote belongs to that one batch, labelled with it.
         batch = out2.batch_id
         self.assertEqual(row("select description, actor, action from batches where id=?", batch),
-                         ("Proposal #2: weaned (via Claude)", self.member, "mixed"))
-        self.assertEqual(count("audit_log", "batch_id_fk=? and details not like ?", batch, "[Proposal #2%"), 0)
+                         (f"{second}: weaned (via Claude)", self.member, "mixed"))
+        self.assertEqual(count("audit_log", "batch_id_fk=? and details not like ?", batch, f"[{second}%"), 0)
         self.assertGreaterEqual(count("audit_log", "batch_id_fk=?", batch), 5)
         self.assertEqual(count("batches", "id>? and id<>?", out.batch_id, batch), 0)  # no page made its own
         self.post(self.m, f"/batches/{batch}/undo")

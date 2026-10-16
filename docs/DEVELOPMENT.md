@@ -3212,6 +3212,8 @@ kept in `data/secret_key` (readable by you only).
 ```bash
 scripts/test.sh
 # which is:
+.venv/bin/python scripts/test-parallel.py         # -j N: N processes (at most 4 by default)
+# or, in one process:
 .venv/bin/python -m unittest discover -s tests -t .
 ```
 
@@ -3223,6 +3225,14 @@ permissions and validation are checked along with behaviour. One module per
 area (`test_mice.py`, `test_plasmids.py`, `test_stocks.py`, …); shared
 set-up and factories are in `tests/base.py`. Run one module, class or test
 with `scripts/test.sh tests.test_mice` (or `tests.test_mice.SomeClass`).
+
+`scripts/test-parallel.py` shares the test classes out to up to four
+processes as they ask for more (the ones with most tests first), each on
+a database of its own, and reports as `unittest` does: the whole suite in
+about 2½ minutes on SQLite and 4 on PostgreSQL, where one process takes
+20 and 30. On PostgreSQL the processes after the first use databases named
+after the one given (`biomanager_test_2`, …), made when missing, which
+needs the CREATEDB right.
 
 `benchmarks/` holds measurements rather than checks, on the same throwaway
 database (`tests/base.py`). `benchmarks/import_sheets.py` makes mouse and
@@ -3244,12 +3254,14 @@ Tests of SQLite-only machinery (`app/integrity.py`) skip there, and the
 SQLite → PostgreSQL migration tests only run there. CI runs both.
 
 Every test makes its own uniquely named records and must not depend on
-another test having run. A test marked `@unittest.expectedFailure`
+another test having run, or on the ids a fresh database hands out (a
+worker's database starts at 1: "Proposal #2" is a real proposal's name
+there). A test marked `@unittest.expectedFailure`
 documents a known bug; when the bug is fixed it shows up as an "unexpected
 success" — remove the marker then. GitHub Actions runs the suite on every
-pull request and every push to master, on SQLite and on PostgreSQL
-(`.github/workflows/tests.yml`; Actions → tests → *Run workflow* tests a
-branch with no pull request).
+pull request and every push to master, on SQLite and on PostgreSQL, with
+`scripts/test-parallel.py -j 4` (`.github/workflows/tests.yml`; Actions →
+tests → *Run workflow* tests a branch with no pull request).
 
 ### A big lab: the load test
 

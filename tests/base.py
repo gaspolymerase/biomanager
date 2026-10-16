@@ -13,9 +13,11 @@ Its public schema is dropped and recreated first, so never point this at
 a database whose data you want.
 
 Isolation: all test modules share that one database, so no test may rely
-on another test having run, or on a table being empty. Each TestCase makes
-its own uniquely named users and records (see `uniq`) and looks rows up by
-the names it gave them. Factories go through the real HTTP routes, so
+on another test having run, or on a table being empty. scripts/test-parallel.py
+(what scripts/test.sh and CI run) shares the test classes out to several
+processes, each on its own database, so no test may rely on the ids a fresh
+database hands out either. Each TestCase makes its own uniquely named users
+and records (see `uniq`) and looks rows up by the names it gave them. Factories go through the real HTTP routes, so
 permissions and validation are exercised too.
 """
 from __future__ import annotations
