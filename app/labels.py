@@ -144,6 +144,9 @@ def _cage_cards(session) -> dict:
     stmt = select(CageRecord).options(selectinload(CageRecord.mice), selectinload(CageRecord.rack))
     if ids:
         stmt = stmt.where(CageRecord.id.in_(ids))
+    else:
+        # Only the cages the scope can list (a superset; in_scope decides).
+        stmt = stmt.where(access.scope_superset(CageRecord.owner, CageRecord.is_shared.is_(True), scope))
     cages = [c for c in positions.natural_sorted(session.scalars(stmt).all(), key=lambda c: c.cage_id)
              if ids or access.in_scope(c, scope, shared=access.cage_shared_with(c),
                                                     group_id=access.cage_group(c))]

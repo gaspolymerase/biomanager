@@ -295,6 +295,23 @@ def cage_group(cage):
     return getattr(cage, "share_group_id", None) if is_shared_cage(cage) else None
 
 
+def scope_superset(owner_column, in_shared_cage, scope: str, user=None):
+    """A database condition for the records `in_scope` may list in this
+    scope, and maybe a few it won't: a list loads only these, then asks
+    in_scope of each. `owner_column` is the record's owner; `in_shared_cage`
+    a condition true when it is (or sits in) a cage shared with anyone."""
+    from sqlalchemy import func, true
+    owner = func.trim(func.coalesce(owner_column, ""))
+    if scope == "mine":
+        return (owner == username(user)) | (owner == "") | in_shared_cage
+    if scope == "shared":
+        return in_shared_cage
+    if scope == "groups":
+        from . import groups
+        return owner.in_(sorted(groups.colleagues(user))) | in_shared_cage
+    return true()
+
+
 def in_scope(record, scope: str, shared: bool = False, user=None, group_id=None) -> bool:
     """Filter predicate for list views. Applied in Python rather than SQL
     because 'shared' depends on the cage a mouse happens to sit in.

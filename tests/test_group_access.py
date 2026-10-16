@@ -157,3 +157,47 @@ class LabPanesTests(AppTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ScopeSupersetTests(GroupCase):
+    """A list loads only what access.scope_superset lets through, then asks
+    access.in_scope of each: everything in_scope would list must get
+    through, for each person and each scope."""
+
+    def test_the_database_lets_through_all_a_scope_lists(self):
+        from flask import g
+        from app import access
+        from app.app import app
+        from app.db import SessionLocal
+        from app.models import CageRecord, MouseRecord, UserAccount
+        from sqlalchemy import select
+        lab_cage = self.make_cage(self.o, purpose="Breeder")
+        self.assertSaved(self.autosave(self.o, f"/colony/cages/{lab_cage}/update", {"is_shared": "1"}))
+        group_cage = self.make_cage(self.c, purpose="Breeder")
+        self.assertSaved(self.autosave(self.c, f"/colony/cages/{group_cage}/update", {"is_shared": f"g{self.gid}"}))
+        codes = {c: one("select cage_id from mouse_cages where id=?", c) for c in (lab_cage, group_cage)}
+        made = [self.make_mouse(self.m, self.member), self.make_mouse(self.c, self.colleague),
+                self.make_mouse(self.o, self.other), self.make_mouse(self.o, self.other, cage=codes[lab_cage]),
+                self.make_mouse(self.c, self.colleague, cage=codes[group_cage]), self.make_mouse(self.a, "")]
+        execute("update mice set owner=' ' where id=?", made[-1])   # unowned, as an import may leave it
+        shared = CageRecord.is_shared.is_(True)
+        for who in (self.member, self.colleague, self.other, self.admin):
+            with app.test_request_context(), SessionLocal() as s:
+                g.user = s.scalar(select(UserAccount).where(UserAccount.username == who))
+                for scope in ("mine", "shared", "groups", "all"):
+                    mice = s.scalars(select(MouseRecord)).all()
+                    listed = {m.id for m in mice if access.in_scope(m, scope, shared=access.cage_shared_with(m.cage),
+                                                                    group_id=access.cage_group(m.cage))}
+                    loaded = set(s.scalars(select(MouseRecord.id).where(access.scope_superset(
+                        MouseRecord.owner, MouseRecord.cage_id_fk.in_(select(CageRecord.id).where(shared)), scope))))
+                    self.assertLessEqual(listed, loaded, (who, scope, "mice"))
+                    if who == self.member and scope == "mine":   # own, unowned, in the lab's shared cage
+                        self.assertLessEqual({made[0], made[3], made[5]}, listed)
+                        self.assertNotIn(made[2], loaded)          # someone else's, in no shared cage
+                    cages = s.scalars(select(CageRecord)).all()
+                    listed = {c.id for c in cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
+                                                                     group_id=access.cage_group(c))}
+                    loaded = set(s.scalars(select(CageRecord.id).where(
+                        access.scope_superset(CageRecord.owner, shared, scope))))
+                    self.assertLessEqual(listed, loaded, (who, scope, "cages"))
+

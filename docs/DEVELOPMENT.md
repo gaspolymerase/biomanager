@@ -855,6 +855,13 @@ Visibility is deliberately *not* restricted — a census with holes is not a
 census. The **My colony / My groups / Shared / Everyone** switch on the
 colony page is a view filter (`access.scopes_for()` offers My groups only to
 someone in a group); edit rights are per record and don't change with it.
+`access.in_scope` decides each record in Python (a mouse's sharing is its
+cage's); the mouse and cage sheets and the cage cards first ask the database
+for `access.scope_superset` (own or unowned, or in a shared cage; …), a
+superset that spares loading everyone's records, and
+`tests/test_group_access.py` holds it to letting through all that in_scope
+lists. The cage sheet counts the cages its 90-day rule leaves out over the
+whole colony, from its mice's dates and statuses only.
 
 ### Uploaded files
 

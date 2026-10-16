@@ -6,6 +6,7 @@ import re
 import secrets
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
+from types import SimpleNamespace
 
 from flask import Flask, Response, abort, flash, g, get_flashed_messages, has_request_context, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import Markup, escape
@@ -1804,14 +1805,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             # Only the mice the scope can list are loaded (a big colony keeps
             # thousands of everyone's): a superset, which access.in_scope
             # below then decides on exactly.
-            in_shared_cage = MouseRecord.cage_id_fk.in_(select(CageRecord.id).where(CageRecord.is_shared.is_(True)))
-            owner = func.trim(func.coalesce(MouseRecord.owner, ""))
-            if scope == "mine":
-                query = query.where((owner == me) | (owner == "") | in_shared_cage)
-            elif scope == "shared":
-                query = query.where(in_shared_cage)
-            elif scope == "groups":
-                query = query.where(owner.in_(sorted(project_groups.colleagues())) | in_shared_cage)
+            query = query.where(access.scope_superset(
+                MouseRecord.owner, MouseRecord.cage_id_fk.in_(select(CageRecord.id).where(CageRecord.is_shared.is_(True))),
+                scope))
             if not show_ended:
                 query = query.where(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
             return [m for m in db_session.scalars(query).all()
@@ -1839,12 +1835,27 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                     | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
             if only is not None:
                 cage_query = cage_query.where(CageRecord.id.in_(sorted(only)))
+            # Only the cages the scope can list are loaded, with their mice
+            # and litters: a superset, which access.in_scope below decides on.
+            cage_query = cage_query.where(access.scope_superset(CageRecord.owner, CageRecord.is_shared.is_(True), scope))
             all_cages = db_session.scalars(cage_query).all()
             if not show_ended:
-                keep = [c for c in all_cages if cage_is_active(c) or c.created_at and c.created_at.date() >= recent
-                        or any(m.date_of_death and m.date_of_death >= recent for m in c.mice)]
-                hidden_cages = totals["all_cages"] - len(keep)
-                all_cages = keep
+                def shown(c) -> bool:
+                    return (cage_is_active(c) or bool(c.created_at and c.created_at.date() >= recent)
+                            or any(m.date_of_death and m.date_of_death >= recent for m in c.mice))
+                all_cages = [c for c in all_cages if shown(c)]
+                # How many the rule leaves out of the whole colony, whatever
+                # the scope: from each cage's mice's dates and statuses only.
+                kept = {cid for cid, in db_session.execute(select(CageRecord.id).where(
+                    CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))}
+                for cid, died, status in db_session.execute(
+                        select(MouseRecord.cage_id_fk, MouseRecord.date_of_death, MouseRecord.status)
+                        .where(MouseRecord.cage_id_fk.is_not(None),
+                               MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))):
+                    if cid not in kept and (died is not None or mouse_is_active(
+                            SimpleNamespace(date_of_death=died, status=status))):
+                        kept.add(cid)
+                hidden_cages = totals["all_cages"] - len(kept)
             # Cage 2 before cage 10: by number, not letter by letter.
             cages = positions.natural_sorted(
                 [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
