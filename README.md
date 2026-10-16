@@ -120,6 +120,8 @@ never what you may edit.
   set up there before the old one is ended): the **Rack grid** shows the
   one put there last and marks the position **!** while two or more there
   have living mice; hover over or tap the **!** to list and open them all.
+  Its **Unplaced** list holds the cages with living mice that have no
+  position yet; empty cages stay out of it (the table still lists them).
   Changing a rack's rows, columns or position names asks first what
   happens to the cages in it, listing each: **Keep each position name**
   (F7 stays F7, in the cell called that now) or **Keep each in the same

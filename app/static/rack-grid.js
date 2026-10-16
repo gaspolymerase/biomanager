@@ -18,7 +18,8 @@
  * before the old one is ended). The cell shows one: the latest placed
  * ("placed", an ISO time) of those that are "live", else the latest. With
  * two or more live there, a "!" on the cell lists them all; each opens,
- * drags and moves like any tile.
+ * drags and moves like any tile. An item that is "live": false (an empty
+ * cage) is left out of the Unplaced tray.
  *
  * Rows and columns are 1-based in the payload. A page whose storage is
  * 0-based (fish tanks) sets data-index-base="0" and this script converts on
@@ -364,9 +365,15 @@
           }
         }
       }
-      // Unplaced: no valid position in any rack.
-      items.filter((item) => !isPlacedAnywhere(item)).forEach((item) => tray.appendChild(tile(item)));
+      // Unplaced: no valid position in any rack. A cage with no living
+      // mice ("live": false) has nothing to put on a shelf, so it stays out
+      // of the tray; the table still lists it.
+      const unplaced = items.filter((item) => !isPlacedAnywhere(item));
+      unplaced.filter((item) => item.live !== false).forEach((item) => tray.appendChild(tile(item)));
       if (!tray.children.length) tray.innerHTML = `<div class="rack-tray-empty">${escapeHtml(t('Everything is placed.'))}</div>`;
+      if (unplaced.some((item) => item.live === false)) {
+        tray.insertAdjacentHTML('beforeend', `<div class="rack-tray-empty">${escapeHtml(t('Empty cages are not listed here; the table shows them.'))}</div>`);
+      }
       applySearch();
     }
 

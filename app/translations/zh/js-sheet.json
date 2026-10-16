@@ -31,6 +31,7 @@
   "%(n)s of %(total)s filled": "已放 %(n)s / %(total)s",
   "New at %(where)s": "在 %(where)s 新建",
   "Everything is placed.": "全部已放置。",
+  "Empty cages are not listed here; the table shows them.": "空笼不列在这里；表格里能看到它们。",
   "Tap where %(item)s goes: an empty position, another tile to swap, or Unplaced.": "点 %(item)s 要去的地方：一个空位、另一个方块（互换）或「未放置」。",
   "Tap the tile to move.": "点要移动的方块。",
   "%(item)s is %(owner)s's; you may not move it.": "%(item)s 属于 %(owner)s，你不能移动它。",

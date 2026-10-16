@@ -442,7 +442,7 @@ Tabs across the top: **Mice**, **Cages**, **Litters**, **Breeders**, **Experimen
 
 ### Racks and cages
 
-**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. Each cage has a purpose, an owner, a room and its mice. The purposes:
+**Cages → Rack grid → New rack**: rows, columns and how positions are labelled — `D7`, `4-7`, `7D` or 1 to 80, like the stickers on your real racks. Cages without a position wait in *Unplaced*; drag them on. An empty cage, with no living mice, isn't listed there; the table still shows it. Each cage has a purpose, an owner, a room and its mice. The purposes:
 
 - **Breeding**: a mating cage, mating now. Only a Breeding cage has **Litter born**, **Genotyping** and **Wean**.
 

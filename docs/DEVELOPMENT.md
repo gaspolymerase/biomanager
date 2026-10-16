@@ -3017,7 +3017,8 @@ cages already there, which a `cage_change` or `cage_new` proposal's
 preview shows as a warning. On the grid, `mouse_rack_payload` gives each
 cage `live` and `placed`; `rack-grid.js` draws the first by the same
 order and, with two or more live, a `.rack-stack-toggle` "!" whose
-popover (`.rack-stack`) holds a tile for each. A drop on a taken place
+popover (`.rack-stack`) holds a tile for each. The Unplaced tray leaves
+out items with `live` false (empty cages), with a line saying so. A drop on a taken place
 (`place_cage`) swaps with the cage shown there; the others stay. Home's
 Freezer layout shows the same cage and a `.frz-crowd` "!". Fish tanks,
 fly and worm racks and inventory boxes still take one record per place.
