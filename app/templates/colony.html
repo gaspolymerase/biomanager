@@ -9,25 +9,9 @@
    checkbox is 0): the Cages tab reads the Columns choice people made there,
    which data-table.js keeps by column number. A new column before the
    transgenes moves both: a new id, so saved choices start afresh. #}
-{% from "_mouse_sheet.html" import mouse_table_id, mouse_tg1_column %}
+{% from "_mouse_sheet.html" import mouse_table_id, mouse_tg1_column, mouse_payload with context %}
 
-{# What the mouse dialog opens with: the Mice sheet's rows and the cage
-   sheet's sub-rows pass the same payload. #}
-{% macro mouse_payload(row, locked) -%}
-{%- set payload = {
-  "id": row.id, "mouse_id": row.mouse_id, "locked": locked,
-  "ear_tag": row.ear_tag, "strain": row.strain, "gender": row.gender, "transgene_1": row.transgene_1, "transgene_2": row.transgene_2,
-  "transgene_3": row.transgene_3, "transgene_4": row.transgene_4,
-  "cage_id": row.cage_id, "cage_rack": row.cage_rack_id or "", "cage_position": row.cage_position,
-  "cage_location": row.cage_location, "owner": row.owner,
-  "cage_rack_was": row.cage_rack_id or "", "cage_position_was": row.cage_position,
-  "cage_location_was": row.cage_location,
-  "litter_id": row.litter_id, "date_of_birth": row.date_of_birth, "status": row.status,
-  "date_of_death": row.date_of_death, "note": row.note } -%}
-{#- The lab's own columns travel under the names the dialog's fields have. -#}
-{%- for fd in custom_columns_all %}{% set _ = payload.update({"attr_" ~ fd.key: row.attrs.get(fd.key, "")}) %}{% endfor -%}
-{{ payload | tojson }}
-{%- endmacro %}
+
 
 {% block page_actions %}{{ db_actions(url_for('organisms.configure_builtin', key='colony'), current_user.role == 'admin') }}{% endblock %}
 {% block page_title %}{{ db_labels.get('colony', 'Mouse colony')|tr }} · {{ view_meta.get('label', active_view|title)|tr }}{% endblock %}
@@ -132,6 +116,7 @@
          scrolls sideways instead, with the ID column and row actions
          pinned. #}
       <section class="data-table-card sheet" data-table-id="{{ mouse_table_id }}"
+               {% if mouse_rows_url %}data-dt-rows-url="{{ mouse_rows_url }}"{% endif %}
                data-selection-scope="mice"
                data-selection-noun="mouse" data-selection-noun-plural="mice">
         <div class="dt-toolbar">
@@ -236,143 +221,18 @@
               </tr>
             </thead>
             <tbody>
-              {% for row in mouse_rows %}
-                {% set f = 'mouse-update-' ~ row.id %}
-                {% set locked = not row.editable %}
-                <tr data-id="{{ row.id }}"
-                    data-active="{{ 'true' if row.active else 'false' }}"
-                    data-mouse_id="{{ row.mouse_id }}"
-                    data-ear_tag="{{ row.ear_tag }}"
-                    data-age="{{ row.age_days if row.age_days is not none else '' }}"
-                    class="{% if not row.active %}is-inactive{% endif %}{% if locked %} is-locked{% endif %}">
-                  <td class="sheet-pin sheet-pin-0">
-                    <input type="checkbox" class="mouse-select" value="{{ row.id }}" aria-label="{{ _('Select mouse %(id)s', id=row.mouse_id) }}">
-                  </td>
-                  <td class="sheet-pin sheet-pin-1">
-                    {% set st = life_stage('mouse', row.age_days) %}
-                    <span class="sheet-id">
-                      <span class="life-dot{% if row.active %} is-alive{% endif %}"{% if st %} data-stage="{{ st }}"{% endif %}
-                            data-alive-title="{{ _('Alive') }}{% if st %} · {{ life_stage_title('mouse', st)|tr }}{% endif %}"
-                            title="{{ (_('Alive') ~ (' · ' ~ life_stage_title('mouse', st)|tr if st else '')) if row.active else _('Not alive') }}"></span>
-                      <span class="ident"{% if row.ear_tag %} title="{{ _('Custom tag %(tag)s', tag=row.ear_tag) }}"{% endif %}>{{ row.mouse_id }}</span>
-                      {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s mouse: read only', owner=row.owner) }}">{{ icon('lock') }}</span>{% endif %}
-                    </span>
-                  </td>
-                  <td>
-                    <input class="ident" name="ear_tag" form="{{ f }}" value="{{ row.ear_tag }}" maxlength="40"
-                           placeholder="–" data-autosave="1" aria-label="{{ _('Custom tag') }}" {% if locked %}disabled{% endif %}>
-                  </td>
-                  <td>
-                    <input name="strain" form="{{ f }}" value="{{ row.strain }}" maxlength="120" list="options-strain"
-                           placeholder="–" data-autosave="1" aria-label="{{ _('Strain') }}" {% if locked %}disabled{% endif %}>
-                  </td>
-                  <td>
-                    <select class="sex-pill" name="gender" form="{{ f }}" data-sex="{{ row.gender }}" data-autosave="1"
-                            aria-label="{{ _('Sex') }}" {% if locked %}disabled{% endif %}>
-                      <option value="" {% if not row.gender %}selected{% endif %}>–</option>
-                      {% for g_value in sheet.gender_choices %}
-                        <option value="{{ g_value }}" {% if g_value == row.gender %}selected{% endif %}>{{ _('U') if g_value == 'Unknown' else g_value|tr }}</option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                  <td class="sheet-num" title="{% if row.age_weeks is not none %}{{ _('%(weeks)s weeks · %(days)s days', weeks=row.age_weeks, days=row.age_days) }}{% endif %}">
-                    {% if row.age_weeks is not none %}{{ row.age_weeks }}<span class="sheet-unit">{{ _('w') }}</span>{% else %}<span class="sheet-empty">–</span>{% endif %}
-                  </td>
-                  <td>
-                    <select class="status-pill" name="status" form="{{ f }}" data-status="{{ row.status|lower }}"
-                            data-autosave="1" aria-label="{{ _('Status') }}" {% if locked %}disabled{% endif %}>
-                      <option value="" {% if not row.status %}selected{% endif %}>–</option>
-                      {% for s_value in sheet.status_choices %}
-                        <option value="{{ s_value }}" {% if s_value == row.status %}selected{% endif %}>{{ s_value|tr }}</option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                  {% for n in range(1, 5) %}
-                    <td><input name="transgene_{{ n }}" form="{{ f }}" value="{{ row['transgene_' ~ n] }}"
-                               list="strain-name-options" data-autosave="1" aria-label="{{ _('Transgene %(n)s', n=n) }}"
-                               {% if locked %}disabled{% endif %}></td>
-                  {% endfor %}
-                  <td><input class="ident" name="cage_id" form="{{ f }}" value="{{ row.cage_id }}" placeholder="–"
-                             data-autosave="1" aria-label="{{ _('Cage') }}" {% if locked %}disabled{% endif %}></td>
-                  <td>
-                    <select name="cage_rack" form="{{ f }}" data-autosave="1" aria-label="{{ _('Rack') }}" {% if locked %}disabled{% endif %}>
-                      <option value="">–</option>
-                      {% for rack in sheet.racks %}
-                        <option value="{{ rack.id }}" {% if rack.id == row.cage_rack_id %}selected{% endif %}>{{ rack.name }}</option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                  <td><input class="ident" name="cage_position" form="{{ f }}" value="{{ row.cage_position }}" placeholder="–"
-                             data-autosave="1" aria-label="{{ _('Position in the rack') }}" {% if locked %}disabled{% endif %}></td>
-                  <td>
-                    <div class="owner-cell-wrap{% if row.owner %} has-badge{% endif %}">
-                      {% if row.owner %}{{ row.owner | owner_badge }}{% endif %}
-                      <input name="owner" form="{{ f }}" value="{{ row.owner }}" list="owner-name-options"
-                             data-autosave="1" aria-label="{{ _('Owner') }}" {% if locked %}disabled{% endif %}>
-                    </div>
-                  </td>
-                  <td><input class="ident" name="litter_id" form="{{ f }}" value="{{ row.litter_id }}" placeholder="–"
-                             data-autosave="1" aria-label="{{ _('Litter') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input type="date" name="date_of_birth" form="{{ f }}" value="{{ row.date_of_birth }}" data-empty="{{ '0' if row.date_of_birth else '1' }}"
-                             data-autosave="1" data-original-dob="{{ row.date_of_birth }}" data-original-litter="{{ row.litter_id }}"
-                             aria-label="{{ _('Date of birth') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input type="date" name="date_of_death" form="{{ f }}" value="{{ row.date_of_death }}" data-empty="{{ '0' if row.date_of_death else '1' }}"
-                             data-autosave="1" aria-label="{{ _('Date of death') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input name="cage_location" form="{{ f }}" value="{{ row.cage_location }}" title="{{ row.cage_location }}"
-                             list="options-cage_location" data-autosave="1" aria-label="{{ _('Location note') }}" {% if locked %}disabled{% endif %}></td>
-                  <td><input class="note-cell" name="note" form="{{ f }}" value="{{ row.note }}" title="{{ row.note }}" placeholder="{{ _('Add a note') }}"
-                             data-autosave="1" aria-label="{{ _('Note') }}" {% if locked %}disabled{% endif %}></td>
-                  {% for fd in custom_columns %}
-                    <td>{{ sheet_ui.custom_cell(fd, row.attrs.get(fd.key, ''), f, locked, 'owner-name-options') }}</td>
-                  {% endfor %}
-                  <td class="sheet-pin sheet-pin-end">
-                    <div class="sheet-actions">
-                      <button type="button" class="row-icon-btn" title="{{ _('Open mouse %(id)s', id=row.mouse_id) }}"
-                              data-mouse-edit data-mouse-payload='{{ mouse_payload(row, locked) }}'>
-                        {{ icon('edit') }}
-                      </button>
-                      <form method="post" action="{{ url_for('duplicate_mouse', mouse_row_id=row.id) }}">
-                        <button type="submit" class="row-icon-btn" title="{{ _('Duplicate mouse %(id)s', id=row.mouse_id) }}">{{ icon('copy') }}</button>
-                      </form>
-                      <form method="post" action="{{ url_for('delete_mouse', mouse_row_id=row.id) }}"
-                            data-confirm="{{ _('Delete mouse %(id)s? This can be undone from Batch history only if it was part of a batch.', id=row.mouse_id) }}">
-                        <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete mouse %(id)s', id=row.mouse_id) }}"
-                                {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              {% else %}
-                <tr><td class="dt-empty" colspan="20">
-                  {{ _('No mice here yet. Use <strong>New mouse</strong>, or <strong>Add many</strong> to import a batch.') }}
-                </td></tr>
-              {% endfor %}
+              {% with sheet_rows=mouse_sheet_rows, fragment=False %}{% include "_mouse_rows.html" %}{% endwith %}
             </tbody>
           </table>
+          {# A sheet the server pages: the mice not drawn, as data-table.js reads a row (app.py, mouse_stub). #}
+          {% if mouse_stubs %}<script type="application/json" data-dt-stubs>{{ mouse_stubs | tojson }}</script>{% endif %}
         </div>
 
         {# One form per row. They live outside the table so the markup stays
            valid; each cell joins its row's form through form="…". They
            join the page when used (static/row-forms.js, BioRowForms). #}
         <template data-row-forms>
-        {% for row in mouse_rows %}
-          <form id="mouse-update-{{ row.id }}" method="post" action="{{ url_for('update_mouse', mouse_row_id=row.id) }}"
-                data-mouse-label="{{ row.mouse_id }}">
-            <input type="hidden" name="confirm_cohort_dob_change" value="0">
-            {# What this row's cage cells showed; the server only changes a
-               cage field that differs, so a stale row cannot undo an edit
-               made on another row of the same cage. #}
-            <input type="hidden" name="cage_rack_was" value="{{ row.cage_rack_id or '' }}">
-            <input type="hidden" name="cage_position_was" value="{{ row.cage_position }}">
-            <input type="hidden" name="cage_location_was" value="{{ row.cage_location }}">
-            {# The same for the mouse's own cells: one left as it was is left
-               as the database has it (a colleague may have changed it since). #}
-            {% for name in ("gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4", "owner",
-                            "note", "cage_id", "litter_id", "date_of_birth", "date_of_death") %}
-              <input type="hidden" name="{{ name }}_was" value="{{ row[name] if row[name] is not none else '' }}">
-            {% endfor %}
-          </form>
-        {% endfor %}
+        {% with sheet_rows=mouse_sheet_rows %}{% include "_mouse_row_forms.html" %}{% endwith %}
         </template>
 
         <div class="dt-bottom-bar">
@@ -615,6 +475,8 @@
                   </tr>
                 </thead>
                 <tbody>
+                  {# In Chromium, its cells (and its mice's) drawn as text until used (app.py, as_text_cells). #}
+                  {% filter as_text_cells(text_cells_on()) %}
                   {% for cage in cage_rows %}
                     {% set f = 'cage-update-' ~ cage.id %}
                     {% set locked = not cage.can_edit %}
@@ -862,6 +724,7 @@
                   {% else %}
                     <tr><td class="dt-empty" colspan="14">{{ _('No cages here yet. Use <strong>New cage</strong>, or type a new cage number on a mouse.') }}</td></tr>
                   {% endfor %}
+                  {% endfilter %}
                 </tbody>
               </table>
             </div>
@@ -1062,6 +925,8 @@
               </tr>
             </thead>
             <tbody>
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
               {# One link made for all the pups: url_for for each was most of the tab's time. #}
               {% set pup_url = url_for('colony', view='mice', scope='all') ~ '&q=' %}
               {% for litter in litter_rows %}
@@ -1104,6 +969,7 @@
               {% else %}
                 <tr><td class="dt-empty" colspan="9">{{ _('No litters yet. Use <strong>New litter</strong>, or record a litter from a breeding cage’s card.') }}</td></tr>
               {% endfor %}
+              {% endfilter %}
             </tbody>
           </table>
         </div>
@@ -1383,6 +1249,8 @@
               </tr>
             </thead>
             <tbody>
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
               {% for strain in strain_rows %}
                 {% set f = 'strain-update-' ~ strain.id %}
                 {% set locked = not strain.editable %}
@@ -1412,6 +1280,7 @@
               {% else %}
                 <tr><td class="dt-empty" colspan="6">{{ _('No strains yet. Use <strong>New strain</strong> to start the list.') }}</td></tr>
               {% endfor %}
+              {% endfilter %}
             </tbody>
           </table>
         </div>
@@ -1996,18 +1865,25 @@ function localToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+/* A row's field (a cell drawn as text becomes its field: static/text-cells.js),
+   and a cell's value, read without that. */
 function sheetField(formId, name) {
-  return document.querySelector(`[form="${formId}"][name="${name}"]`);
+  return BioTextCells.field(document, name, formId);
+}
+function sheetValue(formId, name) {
+  const cell = BioTextCells.read(document, name, formId);
+  return cell ? cell.value : '';
+}
+function sheetRow(formId) {
+  return document.querySelector(`[form="${formId}"]:not([type=hidden]), .cell-text[data-form="${formId}"]`)?.closest('tr') || null;
 }
 function refreshLife(formId, activeFromServer) {
-  const status = sheetField(formId, 'status');
-  const dod = sheetField(formId, 'date_of_death');
-  const row = (status || dod)?.closest('tr');
+  const row = sheetRow(formId);
   if (!row) return;
-  const now = (status?.value || '').trim().toLowerCase();
+  const now = sheetValue(formId, 'status').trim().toLowerCase();
   const alive = typeof activeFromServer === 'boolean'
     ? activeFromServer
-    : !(dod && dod.value) && !END_STATUSES.has(now) && now !== 'transfer';
+    : !sheetValue(formId, 'date_of_death') && !END_STATUSES.has(now) && now !== 'transfer';
   const dot = row.querySelector('.life-dot');
   if (dot) {
     dot.classList.toggle('is-alive', alive);
@@ -2099,16 +1975,18 @@ function wireDobInput(input) {
   input.addEventListener('blur', () => { if (timer) settle(); });
 }
 
-/* After a save, the server's view of the mouse wins. */
+/* After a save, the server's view of the mouse wins. A cell drawn as text
+   becomes its field only to take a value that changed; the birth date's
+   always, as it keeps what was saved for the next question. */
 function syncMouse(form, state) {
-  const dod = sheetField(form.id, 'date_of_death');
+  const dod = sheetValue(form.id, 'date_of_death') !== (state.date_of_death || '') ? sheetField(form.id, 'date_of_death') : null;
   if (dod && document.activeElement !== dod) {
     dod.value = state.date_of_death || '';
     dod.dataset.empty = dod.value ? '0' : '1';
   }
-  const litter = sheetField(form.id, 'litter_id');
+  const litter = 'litter_id' in state && sheetValue(form.id, 'litter_id') !== (state.litter_id || '') ? sheetField(form.id, 'litter_id') : null;
   const dob = sheetField(form.id, 'date_of_birth');
-  if (litter && 'litter_id' in state && document.activeElement !== litter) litter.value = state.litter_id || '';
+  if (litter && document.activeElement !== litter) litter.value = state.litter_id || '';
   if (dob) {
     dob.dataset.originalLitter = state.litter_id || '';
     dob.dataset.originalDob = state.date_of_birth || '';
@@ -2116,6 +1994,11 @@ function syncMouse(form, state) {
   }
   const hidden = form.querySelector('input[name="confirm_cohort_dob_change"]');
   if (hidden) hidden.value = '0';
+  // The server's values (a status rule may set the date of death) are what the row shows.
+  ['status', 'date_of_death', 'litter_id', 'date_of_birth'].forEach((name) => {
+    const was = form.querySelector(`[name="${name}_was"]`);
+    if (was && name in state) was.value = state[name] || '';
+  });
   refreshLife(form.id, state.active);
 }
 
@@ -2152,12 +2035,17 @@ function setValue(el, value) {
 
 function syncCage(state, sourceForm) {
   // Every row, including those waiting off the page (data-table.js, BioSheets).
+  // A cell drawn as text becomes its field only where the value changed.
+  const put = (tr, name, value) => {
+    const cell = BioTextCells.read(tr, name);
+    if (cell && cell.value !== (value == null ? '' : String(value))) setValue(BioTextCells.field(tr, name, undefined, true), value);
+  };
   window.BioSheets.rows().forEach((tr) => {
-    const cageInput = tr.querySelector('input[name="cage_id"]');
-    if (!cageInput || cageInput.value.trim() !== String(state.cage_id)) return;
-    setValue(tr.querySelector('select[name="cage_rack"]'), state.rack_id);
-    setValue(tr.querySelector('input[name="cage_position"]'), state.position);
-    setValue(tr.querySelector('input[name="cage_location"]'), state.location);
+    const cage = BioTextCells.read(tr, 'cage_id');
+    if (!cage || cage.value.trim() !== String(state.cage_id)) return;
+    put(tr, 'cage_rack', state.rack_id);
+    put(tr, 'cage_position', state.position);
+    put(tr, 'cage_location', state.location);
     const rowForm = BioRowForms.get(`mouse-update-${tr.dataset.id}`);
     if (rowForm) {
       setValue(rowForm.querySelector('[name="cage_rack_was"]'), state.rack_id);
@@ -2185,8 +2073,8 @@ document.addEventListener('rack-grid:moved', (event) => {
   const { id, rackId, position } = event.detail || {};
   const form = BioRowForms.get(`cage-update-${id}`);
   if (!form) return;
-  setValue(document.querySelector(`[form="${form.id}"][name="rack_id"]`), rackId || '');
-  setValue(document.querySelector(`[form="${form.id}"][name="position"]`), position || '');
+  setValue(BioTextCells.field(document, 'rack_id', form.id, true), rackId || '');
+  setValue(BioTextCells.field(document, 'position', form.id, true), position || '');
   setValue(form.querySelector('[name="rack_id_was"]'), rackId || '');
   setValue(form.querySelector('[name="position_was"]'), position || '');
 });
@@ -2196,10 +2084,11 @@ async function saveFormInBackground(form) {
   savesInFlight += 1;
   showSaveStatus('saving', t('Saving…'));
   const label = form.dataset.mouseLabel ? t('mouse %(id)s', { id: form.dataset.mouseLabel }) : (form.dataset.recordLabel || t('this change'));
+  const sent = new FormData(form);
   try {
     const response = await fetch(form.action, {
       method: form.method || 'POST',
-      body: new FormData(form),
+      body: sent,
       headers: { 'X-Autosave': '1' },
     });
     let body = {};
@@ -2208,6 +2097,13 @@ async function saveFormInBackground(form) {
       throw new Error(body.error || t('The server answered %(status)s.', { status: response.status }));
     }
     form.dataset.saveState = 'saved';
+    // What was just saved is what the row now shows: its "_was" copies say
+    // so, or setting a cell back (sac by mistake, then its old status)
+    // would read as no change and not be saved.
+    sent.forEach((value, name) => {
+      const was = typeof value === 'string' && form.querySelector(`[name="${name}_was"]`);
+      if (was) was.value = value;
+    });
     if (body.cage) syncCage(body.cage, form);
     if (body.mouse) syncMouse(form, body.mouse);
     rowsForForm(form).forEach((el) => el.closest('td')?.classList.remove('has-error'));
@@ -2224,7 +2120,7 @@ async function saveFormInBackground(form) {
   }
 }
 
-document.querySelectorAll('[data-autosave="1"]').forEach((input) => {
+function wireAutosave(input) {
   if (input.closest('[data-autosave-sheet]')) return;  // static/sheet.js saves these
   if (input.name === 'date_of_birth') { wireDobInput(input); return; }
   input.addEventListener('input', () => { input.dataset.dirty = '1'; autosaveInput(input); });
@@ -2241,7 +2137,8 @@ document.querySelectorAll('[data-autosave="1"]').forEach((input) => {
     if (input.name === 'date_of_death' && input.getAttribute('form')) refreshLife(input.getAttribute('form'));
     autosaveInput(input, { immediate: true });
   });
-});
+}
+document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
 
 /* New / open mouse dialog. Buttons carry the row as data attributes; the
    same form creates (no id) or updates (id present). */
@@ -2528,8 +2425,9 @@ function weanDue(born) {
       if (title) title.textContent = values.cage_id;
       if (card) card.setAttribute('aria-label', t('Cage %(id)s', { id: values.cage_id }));
     }
-    const rack = row.querySelector('select[name="rack_id"]');
-    row.dataset.rack_name = rack && rack.value ? rack.selectedOptions[0].textContent.trim() : '';
+    // Read as the row shows it, whether a field or a cell drawn as text (static/text-cells.js).
+    const rack = BioTextCells.read(row, 'rack_id');
+    row.dataset.rack_name = rack && rack.value ? rack.text : '';
     if ('purpose' in values) {
       row.dataset.purpose = String(values.purpose || '').trim().toLowerCase();
       const card = document.querySelector(`[data-cage-card="${row.dataset.id}"]`);
@@ -2537,7 +2435,14 @@ function weanDue(born) {
     }
     // Only its owner or an admin shares a cage: the server says why not
     // (share_lock) and what it is now.
-    const shared = row.querySelector('select[name="is_shared"]');
+    // Drawn as text, the menu becomes its field only when its lock or its value changed.
+    let shared = row.querySelector('select[name="is_shared"]');
+    const drawn = !shared && row.querySelector('.cell-text[data-sort-for="is_shared"]');
+    if (drawn && !row.classList.contains('is-locked')
+        && (Boolean(values.share_lock) !== drawn.classList.contains('is-disabled')
+            || ('is_shared' in values && String(values.is_shared) !== (drawn.dataset.sortValue || '')))) {
+      shared = BioTextCells.open(drawn, true);
+    }
     if (shared && !shared.closest('tr').classList.contains('is-locked')) {
       const lock = values.share_lock || '';
       shared.disabled = Boolean(lock);
@@ -2548,6 +2453,10 @@ function weanDue(born) {
     }
     const genotype = row.querySelector('input[name="genotype_summary"]');
     if (genotype) genotype.title = genotype.value || genotype.placeholder;
+    else {
+      const text = row.querySelector('.cell-text[data-sort-for="genotype_summary"]');
+      if (text) text.title = text.textContent.trim();
+    }
     const detail = document.getElementById(`cage-detail-${row.dataset.id}`);
     const breeding = detail && detail.querySelector('[data-breeding-actions]');
     if (breeding) breeding.classList.toggle('hidden-row', !BREEDING.has(String(values.purpose || '').trim().toLowerCase()));
@@ -2576,11 +2485,12 @@ function weanDue(born) {
 // Keep the note input's `title` attribute in sync with its current value so
 // hovering always shows the latest text — without this, the tooltip would be
 // stuck on whatever was server-rendered until the page is refreshed.
-document.querySelectorAll('input.note-cell').forEach((input) => {
+function wireNote(input) {
   const sync = () => { input.title = input.value || ''; };
   input.addEventListener('input', sync);
   input.addEventListener('change', sync);
-});
+}
+document.querySelectorAll('input.note-cell').forEach(wireNote);
 
 function filterBreeders() {
   const searchInput = document.getElementById('breeder-search');
@@ -2664,7 +2574,7 @@ if (document.getElementById('breeder-search')) {
   filterBreeders();
 }
 
-document.querySelectorAll('input[list]').forEach((input) => {
+function wireList(input) {
   if (input.readOnly || input.disabled) return;
   let stashed = null;
   input.addEventListener('focus', () => {
@@ -2682,6 +2592,26 @@ document.querySelectorAll('input[list]').forEach((input) => {
   input.addEventListener('change', () => {
     stashed = null;
   });
+}
+document.querySelectorAll('input[list]').forEach(wireList);
+
+/* Rows of a long mouse sheet that come from the server as they are shown
+   (data-table.js) are wired as the page's own rows were. */
+document.addEventListener('dt:rows-loaded', (event) => {
+  ((event.detail && event.detail.rows) || []).forEach((tr) => {
+    tr.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
+    tr.querySelectorAll('input.note-cell').forEach(wireNote);
+    tr.querySelectorAll('input[list]').forEach(wireList);
+  });
+});
+
+/* A cell drawn as text that becomes its field (static/text-cells.js) is
+   wired as the fields were when the page loaded. */
+document.addEventListener('text-cells:open', (event) => {
+  const input = event.target;
+  if (input.matches('[data-autosave="1"]')) wireAutosave(input);
+  if (input.matches('input.note-cell')) wireNote(input);
+  if (input.matches('input[list]')) wireList(input);
 });
 
   BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });

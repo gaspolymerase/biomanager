@@ -56,6 +56,8 @@
     <script src="{{ url_for('static', filename='dialogs.js') }}?v={{ asset_version('dialogs.js') }}"></script>
     {# A sheet's row forms, put on the page when used (BioRowForms), for every page script. #}
     <script src="{{ url_for('static', filename='row-forms.js') }}?v={{ asset_version('row-forms.js') }}"></script>
+    {# A sheet's cells drawn as text until used (app.py, as_text_cells): here, before the page's own scripts use it. #}
+    <script src="{{ url_for('static', filename='text-cells.js') }}?v={{ asset_version('text-cells.js') }}"></script>
     {% block head_extra %}{% endblock %}
 
     <script nonce="{{ csp_nonce() }}">

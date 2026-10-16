@@ -1,0 +1,120 @@
+{#- The mouse sheet's rows: drawn in its page (colony.html) and, for a
+    sheet the server pages, fetched by data-table.js from /colony/mice/rows
+    (app.py, colony_mouse_rows, fragment=True). The same context either way:
+    `sheet_rows` are the rows to draw, `sheet` the sheet's choices. -#}
+{% import "_sheet.html" as sheet_ui with context %}
+{% from "_mouse_sheet.html" import mouse_payload with context %}
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
+              {% for row in sheet_rows %}
+                {% set f = 'mouse-update-' ~ row.id %}
+                {% set locked = not row.editable %}
+                <tr data-id="{{ row.id }}" data-row-form="{{ f }}"
+                    data-active="{{ 'true' if row.active else 'false' }}"
+                    data-mouse_id="{{ row.mouse_id }}"
+                    data-ear_tag="{{ row.ear_tag }}"
+                    data-age="{{ row.age_days if row.age_days is not none else '' }}"
+                    class="{% if not row.active %}is-inactive{% endif %}{% if locked %} is-locked{% endif %}">
+                  <td class="sheet-pin sheet-pin-0">
+                    <input type="checkbox" class="mouse-select" value="{{ row.id }}" aria-label="{{ _('Select mouse %(id)s', id=row.mouse_id) }}">
+                  </td>
+                  <td class="sheet-pin sheet-pin-1">
+                    {% set st = life_stage('mouse', row.age_days) %}
+                    <span class="sheet-id">
+                      <span class="life-dot{% if row.active %} is-alive{% endif %}"{% if st %} data-stage="{{ st }}"{% endif %}
+                            data-alive-title="{{ _('Alive') }}{% if st %} · {{ life_stage_title('mouse', st)|tr }}{% endif %}"
+                            title="{{ (_('Alive') ~ (' · ' ~ life_stage_title('mouse', st)|tr if st else '')) if row.active else _('Not alive') }}"></span>
+                      <span class="ident"{% if row.ear_tag %} title="{{ _('Custom tag %(tag)s', tag=row.ear_tag) }}"{% endif %}>{{ row.mouse_id }}</span>
+                      {% if locked %}<span class="sheet-lock" title="{{ _('%(owner)s’s mouse: read only', owner=row.owner) }}">{{ icon('lock') }}</span>{% endif %}
+                    </span>
+                  </td>
+                  <td>
+                    <input class="ident" name="ear_tag" form="{{ f }}" value="{{ row.ear_tag }}" maxlength="40"
+                           placeholder="–" data-autosave="1" aria-label="{{ _('Custom tag') }}" {% if locked %}disabled{% endif %}>
+                  </td>
+                  <td>
+                    <input name="strain" form="{{ f }}" value="{{ row.strain }}" maxlength="120" list="options-strain"
+                           placeholder="–" data-autosave="1" aria-label="{{ _('Strain') }}" {% if locked %}disabled{% endif %}>
+                  </td>
+                  <td>
+                    <select class="sex-pill" name="gender" form="{{ f }}" data-sex="{{ row.gender }}" data-autosave="1"
+                            aria-label="{{ _('Sex') }}" {% if locked %}disabled{% endif %}>
+                      <option value="" {% if not row.gender %}selected{% endif %}>–</option>
+                      {% for g_value in sheet.gender_choices %}
+                        <option value="{{ g_value }}" {% if g_value == row.gender %}selected{% endif %}>{{ _('U') if g_value == 'Unknown' else g_value|tr }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td class="sheet-num" title="{% if row.age_weeks is not none %}{{ _('%(weeks)s weeks · %(days)s days', weeks=row.age_weeks, days=row.age_days) }}{% endif %}">
+                    {% if row.age_weeks is not none %}{{ row.age_weeks }}<span class="sheet-unit">{{ _('w') }}</span>{% else %}<span class="sheet-empty">–</span>{% endif %}
+                  </td>
+                  <td>
+                    <select class="status-pill" name="status" form="{{ f }}" data-status="{{ row.status|lower }}"
+                            data-autosave="1" aria-label="{{ _('Status') }}" {% if locked %}disabled{% endif %}>
+                      <option value="" {% if not row.status %}selected{% endif %}>–</option>
+                      {% for s_value in sheet.status_choices %}
+                        <option value="{{ s_value }}" {% if s_value == row.status %}selected{% endif %}>{{ s_value|tr }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  {% for n in range(1, 5) %}
+                    <td><input name="transgene_{{ n }}" form="{{ f }}" value="{{ row['transgene_' ~ n] }}"
+                               list="strain-name-options" data-autosave="1" aria-label="{{ _('Transgene %(n)s', n=n) }}"
+                               {% if locked %}disabled{% endif %}></td>
+                  {% endfor %}
+                  <td><input class="ident" name="cage_id" form="{{ f }}" value="{{ row.cage_id }}" placeholder="–"
+                             data-autosave="1" aria-label="{{ _('Cage') }}" {% if locked %}disabled{% endif %}></td>
+                  <td>
+                    <select name="cage_rack" form="{{ f }}" data-autosave="1" aria-label="{{ _('Rack') }}" {% if locked %}disabled{% endif %}>
+                      <option value="">–</option>
+                      {% for rack in sheet.racks %}
+                        <option value="{{ rack.id }}" {% if rack.id == row.cage_rack_id %}selected{% endif %}>{{ rack.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td><input class="ident" name="cage_position" form="{{ f }}" value="{{ row.cage_position }}" placeholder="–"
+                             data-autosave="1" aria-label="{{ _('Position in the rack') }}" {% if locked %}disabled{% endif %}></td>
+                  <td>
+                    <div class="owner-cell-wrap{% if row.owner %} has-badge{% endif %}">
+                      {% if row.owner %}{{ row.owner | owner_badge }}{% endif %}
+                      <input name="owner" form="{{ f }}" value="{{ row.owner }}" list="owner-name-options"
+                             data-autosave="1" aria-label="{{ _('Owner') }}" {% if locked %}disabled{% endif %}>
+                    </div>
+                  </td>
+                  <td><input class="ident" name="litter_id" form="{{ f }}" value="{{ row.litter_id }}" placeholder="–"
+                             data-autosave="1" aria-label="{{ _('Litter') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input type="date" name="date_of_birth" form="{{ f }}" value="{{ row.date_of_birth }}" data-empty="{{ '0' if row.date_of_birth else '1' }}"
+                             data-autosave="1" data-original-dob="{{ row.date_of_birth }}" data-original-litter="{{ row.litter_id }}"
+                             aria-label="{{ _('Date of birth') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input type="date" name="date_of_death" form="{{ f }}" value="{{ row.date_of_death }}" data-empty="{{ '0' if row.date_of_death else '1' }}"
+                             data-autosave="1" aria-label="{{ _('Date of death') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="cage_location" form="{{ f }}" value="{{ row.cage_location }}" title="{{ row.cage_location }}"
+                             list="options-cage_location" data-autosave="1" aria-label="{{ _('Location note') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="note-cell" name="note" form="{{ f }}" value="{{ row.note }}" title="{{ row.note }}" placeholder="{{ _('Add a note') }}"
+                             data-autosave="1" aria-label="{{ _('Note') }}" {% if locked %}disabled{% endif %}></td>
+                  {% for fd in custom_columns %}
+                    <td>{{ sheet_ui.custom_cell(fd, row.attrs.get(fd.key, ''), f, locked, 'owner-name-options') }}</td>
+                  {% endfor %}
+                  <td class="sheet-pin sheet-pin-end">
+                    <div class="sheet-actions">
+                      <button type="button" class="row-icon-btn" title="{{ _('Open mouse %(id)s', id=row.mouse_id) }}"
+                              data-mouse-edit data-mouse-payload='{{ mouse_payload(row, locked) }}'>
+                        {{ icon('edit') }}
+                      </button>
+                      <form method="post" action="{{ url_for('duplicate_mouse', mouse_row_id=row.id) }}">
+                        <button type="submit" class="row-icon-btn" title="{{ _('Duplicate mouse %(id)s', id=row.mouse_id) }}">{{ icon('copy') }}</button>
+                      </form>
+                      <form method="post" action="{{ url_for('delete_mouse', mouse_row_id=row.id) }}"
+                            data-confirm="{{ _('Delete mouse %(id)s? This can be undone from Batch history only if it was part of a batch.', id=row.mouse_id) }}">
+                        <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete mouse %(id)s', id=row.mouse_id) }}"
+                                {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% else %}{% if not fragment %}
+                <tr><td class="dt-empty" colspan="20">
+                  {{ _('No mice here yet. Use <strong>New mouse</strong>, or <strong>Add many</strong> to import a batch.') }}
+                </td></tr>
+              {% endif %}{% endfor %}
+              {% endfilter %}

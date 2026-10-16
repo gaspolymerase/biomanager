@@ -35,7 +35,7 @@
  * A sheet the server pages (data-dt-rows-url on the card) draws only its
  * first rows; each other row comes as an entry in
  * <script type="application/json" data-dt-stubs>: {id, e: its element id,
- * d: its data-*, k: each sortable cell's value, s: its search text}. It
+ * f: its row form, d: its data-*, k: each sortable cell's value, s: its search text}. It
  * stands in the sheet as an empty <tr> (a stub) until its page is shown,
  * or the sheet is exported or printed; its rows then come from
  * <rows-url>?ids=…, {rows: "<tr>…", forms: "<form>…"}, the forms going
@@ -124,7 +124,7 @@
     tr.dataset.id = String(entry.id);
     if (entry.e) tr.id = entry.e;
     Object.entries(entry.d || {}).forEach(([key, value]) => { tr.dataset[key] = value; });
-    tr._stub = { k: entry.k || {}, s: entry.s || '' };
+    tr._stub = { k: entry.k || {}, s: entry.s || '', form: entry.f || '' };
     return tr;
   }
   const ROWS_AT_ONCE = 500;
@@ -143,6 +143,15 @@
       if (stubs && this.rowsUrl && this.tbody) {
         try { JSON.parse(stubs.textContent).forEach((entry) => this.rows.push(makeStub(entry))); } catch (_) { /* drawn rows only */ }
         stubs.remove();
+        // A sheet that shows its dates as text (static/text-cells.js) shows
+        // them as the browser writes them (10/14/2026), and a search for
+        // that finds a drawn row: it finds one not drawn yet too.
+        const dated = window.BioTextCells && this.tbody.querySelector('.cell-text.is-date');
+        if (dated) this.rows.forEach((tr) => {
+          if (!tr._stub) return;
+          const shown = Object.values(tr._stub.k).map((v) => window.BioTextCells.dateText(v)).filter(Boolean);
+          if (shown.length) tr._stub.s += ' ' + shown.join(' ').toLowerCase();
+        });
       }
       this.original = this.rows.slice();
       this.filtered = this.rows.slice();
@@ -349,7 +358,10 @@
       // A sheet row's form sits outside the row, its cells joining it with
       // form="…" (a notification links to #mouse-update-39): find the row by
       // them, whether or not the form is on the page yet (row-forms.js).
-      const byForm = () => this.rows.find((tr) => tr.querySelector(`[form="${CSS.escape(id)}"]`));
+      // A cell drawn as text names its form in data-form; a row the server
+      // pages and has not drawn, in data-row-form.
+      const byForm = () => this.rows.find((tr) => tr.dataset.rowForm === id || (tr._stub && tr._stub.form === id)
+        || tr.querySelector(`[form="${CSS.escape(id)}"], [data-form="${CSS.escape(id)}"]`));
       // A row not shown yet is off the page (_parkLater): look in the rows.
       const inRows = () => this.rows.find((tr) => tr.id === id || tr.querySelector(`[id="${CSS.escape(id)}"]`));
       const row = id && (target ? (target.closest('tr') || (target.tagName === 'FORM' && byForm()))
@@ -1253,7 +1265,9 @@
         if (th.querySelector('input[type=checkbox]')) return false;
         const label = (th.textContent || '').replace(/\s+/g, ' ').trim();
         return label && label !== 'Actions' && label !== t('Actions');
-      }).map(({ th, idx }) => ({ idx, label: (th.textContent || '').replace(/\s+/g, ' ').trim() }));
+      // col: its place as the page drew it (a row the server sends has its cells in that order).
+      }).map(({ th, idx }) => ({ idx, col: this._col(th) >= 0 ? this._col(th) : idx,
+                                 label: (th.textContent || '').replace(/\s+/g, ' ').trim() }));
     }
 
     /* Toolbar buttons .dt-btn-export (CSV of every row the filters and
@@ -1261,11 +1275,17 @@
     _wireExport() {
       const exportBtn = this.card.querySelector('.dt-btn-export');
       if (exportBtn) {
-        exportBtn.addEventListener('click', () => this._whenDrawn(this.filtered, () => {
+        exportBtn.addEventListener('click', () => this._withTexts(this.filtered, (texts) => {
           const columns = this._exportColumns();
           const quote = (v) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
           const lines = [columns.map((c) => quote(c.label)).join(',')];
           this.filtered.forEach((tr) => {
+            if (tr._stub) {
+              // A row the server pages and has not drawn: its words, from the server.
+              const words = texts.get(tr.dataset.id);
+              if (words) lines.push(columns.map((c) => quote(words[c.col] || '')).join(','));
+              return;
+            }
             lines.push(columns.map((c) => quote(tr.cells[c.idx] ? this._cellText(tr.cells[c.idx]) : '')).join(','));
           });
           const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -1382,6 +1402,41 @@
       this._loadRows(rows).then(() => {
         this.card.classList.remove('dt-loading');
         then();
+      }, () => {
+        this.card.classList.remove('dt-loading');
+        this._sayNotLoaded();
+      });
+    }
+
+    /* Runs `then` with the words of these rows' cells that the server
+       pages and has not drawn ({id: [each cell's text]}, as _cellText reads
+       a drawn row): an export needs only those, not the rows themselves,
+       which on a long inventory were megabytes to fetch and build. A few
+       requests at a time. */
+    _withTexts(rows, then) {
+      // Kept for the next export: a row not drawn is not edited here, and
+      // one turned to is drawn, its cells read as they are.
+      const texts = this._words || (this._words = new Map());
+      const stubs = this.rowsUrl ? rows.filter((tr) => tr._stub && !texts.has(tr.dataset.id)) : [];
+      if (!stubs.length) { then(texts); return; }
+      this.card.classList.add('dt-loading');
+      const chunks = [];
+      for (let i = 0; i < stubs.length; i += ROWS_AT_ONCE) chunks.push(stubs.slice(i, i + ROWS_AT_ONCE));
+      const next = () => {
+        const chunk = chunks.shift();
+        if (!chunk) return Promise.resolve();
+        const url = new URL(this.rowsUrl, window.location.href);
+        new URLSearchParams(window.location.search).forEach((value, key) => url.searchParams.set(key, value));
+        url.searchParams.set('as', 'text');
+        url.searchParams.set('ids', chunk.map((tr) => tr.dataset.id).join(','));
+        return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+          .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+          .then((answer) => { Object.entries(answer.texts || {}).forEach(([id, words]) => texts.set(id, words)); })
+          .then(next);
+      };
+      Promise.all([next(), next(), next()]).then(() => {
+        this.card.classList.remove('dt-loading');
+        then(texts);
       }, () => {
         this.card.classList.remove('dt-loading');
         this._sayNotLoaded();

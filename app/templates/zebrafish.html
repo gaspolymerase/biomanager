@@ -253,6 +253,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for tr in tank_rows %}
             {% set t = tr.row %}
             {% set f = 'utank-' ~ t.id %}
@@ -328,6 +330,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="14">{{ _('No tanks yet. Use <strong>New tank</strong>.') }}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -567,6 +570,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for tr in geno_queue %}
             {% set t = tr.row %}
             <tr data-id="{{ t.id }}" data-tank_id="{{ t.tank_id }}" data-line="{{ t.line.name if t.line else '' }}"
@@ -590,6 +595,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="7">{{ _('The genotyping queue is empty. Flag tanks in the Table view.') }}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -640,6 +646,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for fr in fish_rows %}
             {% set x = fr.row %}
             {% set f = 'ufish-' ~ x.id %}
@@ -705,6 +713,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="15">{% if tanks %}{{ _('No fish yet. Use <strong>New fish</strong>.') }}{% else %}{{ _('No fish yet. Use <strong>New fish</strong> once you have a tank.') }}{% endif %}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -826,6 +835,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for cr in clutch_rows %}
             {% set c = cr.row %}
             {% set f = 'uclutch-' ~ c.id %}
@@ -866,6 +877,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="16">{{ _('No clutches yet. Set up a mating above, or use <strong>New clutch</strong>.') }}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -962,6 +974,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for lr in line_rows %}
             {% set ln = lr.row %}
             {% set f = 'uline-' ~ ln.id %}
@@ -1004,6 +1018,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="13">{{ _('No lines yet. Use <strong>New line</strong>.') }}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>

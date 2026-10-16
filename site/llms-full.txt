@@ -315,7 +315,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **What ended long ago**: Mice that died, cages emptied, tubes used up and vials discarded over 90 days ago aren't listed, so a colony with years of history opens quickly. A line at the top says how many; **Show them** lists everything. Search still finds them, and the mouse export includes them.
 
-- **A long inventory**: An inventory of more than 500 entries opens with its first page, and each other page comes as you turn to it, in a second or so. Search, sorting, the buttons above the sheet and its count still go by every entry. **Export** and **Print** fetch every row first, a few seconds for thousands of entries.
+- **A long sheet**: A sheet of more than 500 entries (an inventory, the mice, litters, fish tanks or vials) opens with its first page, and each other page comes as you turn to it, in a second or so. Search, sorting, the buttons above the sheet and its count still go by every entry. **Export** takes a few seconds for thousands of entries the first time, and **Print** fetches every row first. The **Box grid** comes when you switch to it.
 
 ### Troubleshooting
 

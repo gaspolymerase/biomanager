@@ -143,6 +143,8 @@
           </tr>
         </thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for r in rows %}
             {% set p = r.p %}
             {% set f = 'plasmid-' ~ p.id %}
@@ -221,6 +223,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="13">{% trans %}No plasmids yet. Use <strong>New plasmid</strong>, <strong>Add many</strong>, or <strong>Import from Excel</strong>.{% endtrans %}</td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -566,7 +569,11 @@
       const form = BioRowForms.get(`plasmid-${id}`);
       if (!form) return;
       const set = (name, v) => {
-        rowOf(id)?.querySelectorAll(`[form="plasmid-${id}"][name="${name}"]`).forEach((el) => { el.value = v; });
+        // A cell drawn as text (static/text-cells.js) becomes its field to take the value.
+        const tr = rowOf(id);
+        const cell = tr && BioTextCells.read(tr, name, `plasmid-${id}`);
+        if (cell && cell.value !== v) BioTextCells.field(tr, name, `plasmid-${id}`, true);
+        tr?.querySelectorAll(`[form="plasmid-${id}"][name="${name}"]`).forEach((el) => { el.value = v; });
         const was = form.querySelector(`[name="${name}_was"]`);
         if (was) was.value = v;
       };

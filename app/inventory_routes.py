@@ -29,7 +29,7 @@ from flask import (
 )
 from sqlalchemy import select
 
-from . import access, audit, database_keys, i18n, positions, rack_layout
+from . import access, audit, cell_text, database_keys, i18n, positions, rack_layout
 from . import inventory as presets
 from . import inventory_service as svc
 from .db import SessionLocal
@@ -266,16 +266,19 @@ def _row_json(mv, item: InventoryItem) -> dict:
             "position": payload["position"], "rack_id": payload["rack_id"]}
 
 
+def _rack_edit(r) -> str:
+    """What a box's dialog opens with (Boxes above the sheet, the grid's Edit)."""
+    return json.dumps({"id": r.id, "_label": r.name, "name": r.name, "rows": r.rows, "cols": r.cols,
+                       "kind": r.kind, "stored_at": r.stored_at, "place": r.place or "",
+                       **{f"naming_{k}": v for k, v in positions.scheme(r.naming).items()}})
+
+
 def _grid_payload(mv, racks, items, tab: str = "") -> dict:
     return {
         # "group": the fridge or cabinet it is kept in, the grid's first picker.
         "racks": [{"id": r.id, "name": r.name, "rows": r.rows, "cols": r.cols, "group": (r.place or "").strip(),
                    "naming": positions.scheme(r.naming),
-                   **({"edit": {"data-record-payload": json.dumps({
-                       "id": r.id, "_label": r.name, "name": r.name, "rows": r.rows, "cols": r.cols,
-                       "kind": r.kind, "stored_at": r.stored_at, "place": r.place or "",
-                       **{f"naming_{k}": v for k, v in positions.scheme(r.naming).items()}})}}
-                      if _can_manage_rack(r) else {})}
+                   **({"edit": {"data-record-payload": _rack_edit(r)}} if _can_manage_rack(r) else {})}
                   for r in racks],
         "items": [{
             "id": i.id, "label": i.name or f"#{i.number}",
@@ -427,18 +430,34 @@ def sheet_rows(key: str):
     ids = [int(x) for x in request.args.get("ids", "").split(",") if x.strip().isdigit()][:ROWS_AT_ONCE]
     with SessionLocal() as session:
         context = _sheet_context(session, key, only=ids)
+        if request.args.get("as") == "text":
+            # An export: each row's cells' words only, read as the page reads
+            # a drawn row (cell_text), not the rows themselves. Drawn with
+            # their fields, which read the same as text cells and draw in half the time.
+            drawn = render_template("inventory/_sheet_rows.html", fragment=True, **dict(context, text_cells=False))
+            texts = cell_text.row_texts(drawn)
+            return jsonify({"texts": {str(i): texts[i] for i in texts}, "ids": list(texts)})
         return jsonify({"rows": render_template("inventory/_sheet_rows.html", fragment=True, **context),
                         "forms": render_template("inventory/_row_forms.html", **context),
                         "ids": [r["item"].id for r in context["sheet_rows"]]})
 
 
-def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
-    """What the sheet's page draws, or with `only` (item ids) what its rows
-    of those items need, in that order."""
-    from .services import current_lab_usernames, sample_sources, sample_source_label
+@bp.route("/<key>/grid")
+def grid_data(key: str):
+    """The box grid's boxes and tiles (rack-grid.js), for the page's ?type=
+    and ?ended=, asked for when the grid is first shown."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        mv = svc.view(row)
+        if not mv.has("storage"):
+            abort(404)
+        chosen = _chosen(session, row, mv)
+        return jsonify(_grid_payload(mv, chosen["racks"], chosen["all_items"], chosen["tab"]))
 
-    row = _module_or_404(session, key)
-    mv = svc.view(row)
+
+def _chosen(session, row, mv, only: list[int] | None = None) -> dict:
+    """The items the sheet lists (items), what its box grid shows
+    (all_items, racks), for the page's ?type= and ?ended=."""
     query = select(InventoryItem).where(InventoryItem.module_id_fk == row.id)
     if only is not None:
         # Only those asked for: whether the sheet lists each is decided below.
@@ -476,6 +495,21 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         racks = [r for r in racks if r.id not in holding or any(i.rack_id_fk == r.id and mine(i) for i in all_items)]
         shown = {r.id for r in racks}
         all_items = [i for i in all_items if ((i.rack_id_fk in shown) if i.rack_id_fk else mine(i))]
+    return {"items": items, "all_items": all_items, "racks": racks, "tab": tab, "tab_counts": tab_counts,
+            "listed_all": listed_all, "hidden_old": hidden_old, "show_ended": show_ended}
+
+
+def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
+    """What the sheet's page draws, or with `only` (item ids) what its rows
+    of those items need, in that order."""
+    from .services import current_lab_usernames, sample_sources, sample_source_label
+
+    row = _module_or_404(session, key)
+    mv = svc.view(row)
+    chosen = _chosen(session, row, mv, only)
+    items, all_items, racks, tab = chosen["items"], chosen["all_items"], chosen["racks"], chosen["tab"]
+    tab_counts, listed_all, hidden_old, show_ended = (chosen["tab_counts"], chosen["listed_all"],
+                                                      chosen["hidden_old"], chosen["show_ended"])
     table_fields = [f for f in mv.fields_for(tab) if f["in_table"]]
     me = g.user.username
     listed_items = items
@@ -535,7 +569,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
                      if row.kind in STOCK_KINDS else {}),
         "remembered": remembered,
         "derived_fields": svc.PRIMER_DERIVED if row.kind == "primers" else (),
-        "text_cells": _text_cells(),
+        "text_cells": cell_text.text_cells_on(),
     }
     if only is not None:
         return {**common, "rows": rows, "sheet_rows": rows}
@@ -562,7 +596,11 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
         "places": svc.places_in_use(session) if mv.has("storage") else [],
         "box_width": _box_width(racks),
-        "grid": _grid_payload(mv, racks, all_items, tab) if mv.has("storage") else None,
+        # The box grid's tiles come when the grid is first shown (grid_data):
+        # a tile carries its item's whole dialog, megabytes on a long inventory.
+        "grid_url": url_for("inventory.grid_data", key=key, type=request.args.get("type"),
+                            ended=request.args.get("ended")) if mv.has("storage") else "",
+        "rack_edits": {r.id: _rack_edit(r) for r in racks if _can_manage_rack(r)},
         "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
         "usernames": current_lab_usernames(session),
         "plasmid_options": plasmid_options,
@@ -583,19 +621,6 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         },
     }
     return context
-
-
-def _text_cells() -> bool:
-    """Whether the sheet's cells are drawn as text until used (app.py,
-    as_text_cells; static/text-cells.js). Chromium (Chrome, Edge, the
-    Windows app, Android) reads every field on a page as it loads, so there a
-    sheet of text opens a fifth to a third sooner. Safari and the Mac app
-    keep their fields: they never had that wait. ?cells=text or
-    ?cells=fields chooses either in any browser."""
-    choice = request.args.get("cells")
-    if choice in ("text", "fields"):
-        return choice == "text"
-    return "Chrome/" in request.headers.get("User-Agent", "")
 
 
 def _row_stub(mv, r: dict, table_fields: list[dict], box_labels: dict, mouse_links: dict, plasmid_links: dict) -> dict:

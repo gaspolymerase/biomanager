@@ -163,6 +163,8 @@
             </tr>
           </thead>
           <tbody>
+            {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+            {% filter as_text_cells(text_cells_on()) %}
             {% for r in rows %}
               {% set u = r.unit %}
               {% set f = 'unit-' ~ u.id %}
@@ -235,6 +237,7 @@
             {% else %}
               <tr><td class="dt-empty" colspan="14"><span class="dt-empty-msg">{% if not racks %}{% trans units=units_w, unit=unit_w, url=url_for('stocks.module', key=key, view='setup'), setup=tab_labels.setup %}No {{ units }} yet. Start in <a href="{{ url }}">{{ setup }}</a>, then use <strong>New {{ unit }}</strong>.{% endtrans %}{% else %}{% trans units=units_w, unit=unit_w %}No {{ units }} yet. Use <strong>New {{ unit }}</strong>.{% endtrans %}{% endif %}</span></td></tr>
             {% endfor %}
+            {% endfilter %}
           </tbody>
         </table>
       </div>
@@ -432,6 +435,8 @@
           <th class="sheet-pin sheet-pin-end" style="width: 100px;"><span class="sr-only">{{ _('Actions') }}</span></th>
         </tr></thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for gt in genotypes %}
             {% set n = active_counts.get(gt.genotype, 0) %}
             <tr data-id="{{ gt.id }}" data-genotype="{{ gt.genotype }}" data-alias="{{ gt.alias }}" data-source="{{ gt.source }}" data-stock_number="{{ gt.stock_number }}" data-vials="{{ n }}">
@@ -456,6 +461,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="7"><span class="dt-empty-msg">{% trans units=units_w %}No genotypes yet. They appear as you label {{ units }}.{% endtrans %}</span></td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -618,6 +624,8 @@
           <th class="sheet-pin sheet-pin-end" style="width: 120px;"><span class="sr-only">{{ _('Actions') }}</span></th>
         </tr></thead>
         <tbody>
+          {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {% filter as_text_cells(text_cells_on()) %}
           {% for lot in frozen %}
             <tr data-id="{{ lot.id }}" data-genotype="{{ lot.genotype }}" data-frozen="{{ lot.frozen_on or '' }}">
               <td><span class="sheet-cell-text ident">{{ lot.genotype }}</span></td>
@@ -647,6 +655,7 @@
           {% else %}
             <tr><td class="dt-empty" colspan="8"><span class="dt-empty-msg">{{ _('No frozen stocks recorded.') }}</span></td></tr>
           {% endfor %}
+          {% endfilter %}
         </tbody>
       </table>
     </div>
@@ -839,7 +848,7 @@
      What is particular to vials: */
   (function () {
     // A row may wait off the page until it is shown (data-table.js, BioSheets).
-    const rowOf = (form) => window.BioSheets.rows().find((tr) => tr.querySelector(`[form="${form.id}"]`)) || null;
+    const rowOf = (form) => window.BioSheets.rows().find((tr) => tr.querySelector(`[form="${form.id}"], .cell-text[data-form="${form.id}"]`)) || null;
     // A new purpose shows or hides the cross parents and the egg button.
     document.addEventListener('sheet:change', (event) => {
       const { input } = event.detail;
@@ -865,7 +874,8 @@
       const { id, rackId, position } = event.detail || {};
       const form = BioRowForms.get(`unit-${id}`);
       if (!form) return;
-      const set = (name, v) => { const el = rowOf(form)?.querySelector(`[form="unit-${id}"][name="${name}"]`); if (el) el.value = v || ''; };
+      // A cell drawn as text (static/text-cells.js) becomes its field to take the value.
+      const set = (name, v) => { const tr = rowOf(form); const el = tr && BioTextCells.field(tr, name, `unit-${id}`, true); if (el) el.value = v || ''; };
       set('rack_id', rackId);
       set('position', position);
       form.querySelector('[name="rack_id_was"]').value = rackId || '';

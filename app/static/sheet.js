@@ -57,7 +57,8 @@
       alive = activeFromServer;
     } else {
       row.querySelectorAll('[data-alive-values], [data-dead-values], [data-dead-if-set]').forEach((el) => {
-        const value = String(el.value || '').trim().toLowerCase();
+        // A cell drawn as text (static/text-cells.js) holds its value in data-sort-value.
+        const value = String((el.value !== undefined ? el.value : el.dataset.sortValue) || '').trim().toLowerCase();
         if (el.hasAttribute('data-dead-if-set') && value) alive = false;
         if (el.dataset.aliveValues !== undefined) {
           const ok = el.dataset.aliveValues.toLowerCase().split(',').map((v) => v.trim());
@@ -90,6 +91,12 @@
       cellsOf(form).forEach((el) => {
         const was = el.name && el.type !== 'checkbox' && form.querySelector(`[name="${el.name}_was"]`);
         if (was) was.value = el.value;
+      });
+      // A cell drawn as text whose value the server changed becomes its field, to take it.
+      if (window.BioTextCells) Object.entries(row.values || {}).forEach(([name, value]) => {
+        document.querySelectorAll(`.cell-text[data-form="${form.id}"][data-sort-for="${name}"]`).forEach((span) => {
+          if ((span.dataset.sortValue || '') !== (value == null ? '' : String(value))) window.BioTextCells.open(span, true);
+        });
       });
       Object.entries(row.values || {}).forEach(([name, value]) => {
         const was = form.querySelector(`[name="${name}_was"]`);

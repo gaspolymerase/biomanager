@@ -334,6 +334,30 @@ class InventoryPagingTests(AppTestCase):
         self.assertEqual(r.status_code, 302)
 
 
+class InventoryGridLaterTests(AppTestCase):
+    """An inventory's box grid is not in its page: its boxes and tiles come
+    from /<key>/grid when the grid is first shown (rack-grid.js)."""
+
+    def test_the_grid_comes_from_its_own_address(self):
+        from tests.test_inventory import InventoryCase
+        key = InventoryCase.new_module(self.a, "samples")
+        self.a.post(f"/inventory/{key}/racks/save", data={"id": "", "name": "Box G", "rows": "9", "cols": "9"})
+        rack = one("select max(id) from inventory_racks")
+        item = self.make_item(self.a, key, name=uniq("tube"), rack_id=str(rack), position="A1")
+        page = self.get_ok(self.a, f"/inventory/{key}?type=tissue")
+        self.assertNotIn("data-rack-data>", page)
+        src = htmllib.unescape(re.search(r'data-rack-src="([^"]+)"', page).group(1))
+        self.assertIn("type=tissue", src)
+        grid = self.a.get(f"/inventory/{key}/grid").get_json()
+        self.assertIn(rack, [r["id"] for r in grid["racks"]])
+        tile = next(i for i in grid["items"] if i["id"] == item)
+        self.assertEqual((tile["rack"], tile["row"], tile["col"]), (rack, 1, 1))
+        self.assertIn("data-record-payload", tile["edit"])
+        # The box's own dialog, above the sheet, still opens with what it needs.
+        self.assertIn('data-record-edit="inv-rack-dialog"', page)
+        self.assertEqual(self.a.get("/inventory/orders/grid").status_code, 404)
+
+
 class TextCellsTests(AppTestCase):
     """In Chromium an inventory's cells come as text, each with its field's
     own markup to become when used (app.py as_text_cells, static/text-cells.js);
@@ -364,12 +388,10 @@ class TextCellsTests(AppTestCase):
     def test_chromium_gets_text_other_browsers_fields(self):
         chrome = self.page(self.CHROME)
         self.assertIsNotNone(self.cell(chrome, "vendor"))
-        self.assertIn("/static/text-cells.js?v=", chrome)
         self.assertNotIn(f'name="vendor" value="{self.vendor}"', chrome)
         for headers in (self.SAFARI, {}):
             fields = self.page(headers)
             self.assertIsNone(self.cell(fields, "vendor"))
-            self.assertNotIn("/static/text-cells.js?v=", fields)
             self.assertRegex(fields, rf'<input[^>]*name="vendor"[^>]*value="{self.vendor}"')
 
     def test_the_address_chooses_either(self):
@@ -416,6 +438,147 @@ class TextCellsTests(AppTestCase):
                 self.assertEqual("cells=fields" in url, query == "?cells=fields")
                 rows = self.a.get(f"{url}&ids={self.item}", headers=headers).get_json()["rows"]
                 self.assertEqual(self.cell(rows, "vendor") is not None, text, (headers, query))
+
+
+class MouseSheetPagingTests(AppTestCase):
+    """A mouse sheet of more than LAZY_OVER mice draws its first FIRST_PAGE
+    rows; the others come as entries for the sheet's script, and their rows
+    from /colony/mice/rows, drawn as the page draws them."""
+
+    def setUp(self):
+        from unittest import mock
+        from app import inventory_routes
+        self.cage = uniq("PG")
+        self.mice = [self.make_mouse(self.a, "alex", cage=self.cage, note=uniq("n")) for _ in range(5)]
+        self.patches = [mock.patch.object(inventory_routes, "LAZY_OVER", 3),
+                        mock.patch.object(inventory_routes, "FIRST_PAGE", 2)]
+        for patch in self.patches:
+            patch.start()
+
+    def tearDown(self):
+        for patch in self.patches:
+            patch.stop()
+
+    @staticmethod
+    def stubs(html: str) -> list[dict]:
+        import json
+        found = re.search(r'<script type="application/json" data-dt-stubs>(.*?)</script>', html, re.S)
+        return json.loads(found.group(1)) if found else []
+
+    def page(self, url="/colony?view=mice&scope=all&ended=all"):
+        return self.get_ok(self.a, url)
+
+    def test_the_page_draws_its_first_rows_and_lists_the_others(self):
+        html = self.page()
+        drawn = re.findall(r'<tr data-id="(\d+)" data-row-form="mouse-update-\d+"', html)
+        stubs = self.stubs(html)
+        self.assertEqual(len(drawn), 2)
+        self.assertIn('data-dt-rows-url="/colony/mice/rows"', html)
+        self.assertEqual(len(drawn) + len(stubs), one("select count(*) from mice"))
+        mine = next(s for s in stubs if s["id"] == self.mice[-1])
+        self.assertEqual(mine["d"]["rowForm"], f"mouse-update-{self.mice[-1]}")
+        self.assertEqual(mine["d"]["active"], "true")
+        self.assertEqual(mine["k"]["cage_id"], self.cage)
+        note = one("select note from mice where id=?", self.mice[-1])
+        self.assertEqual(mine["k"]["note"], note)
+        self.assertIn(note.lower(), mine["s"])
+        self.assertIn(self.cage.lower(), mine["s"])
+        # Its row form comes with its row, not in the page.
+        self.assertNotIn(f'id="mouse-update-{self.mice[-1]}"', html)
+
+    def test_rows_come_as_the_page_would_draw_them(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            whole = self.page()
+        answer = self.a.get(f"/colony/mice/rows?ids={self.mice[-1]},{self.mice[0]},999999999").get_json()
+        self.assertEqual(answer["ids"], [self.mice[-1], self.mice[0]])
+        # A fragment's icons come from the sprite file, the page's from its inline sprite.
+        same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-").strip()
+        for mid in (self.mice[-1], self.mice[0]):
+            pattern = r'<tr data-id="%d".*?</tr>' % mid
+            self.assertEqual(same(re.search(pattern, answer["rows"], re.S).group(0)),
+                             same(re.search(pattern, whole, re.S).group(0)))
+            self.assertIn(f'id="mouse-update-{mid}"', answer["forms"])
+        words = self.a.get(f"/colony/mice/rows?ids={self.mice[0]}&as=text").get_json()["texts"][str(self.mice[0])]
+        self.assertIn(self.cage, words)
+
+    def test_a_short_sheet_is_drawn_whole(self):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            html = self.page()
+        self.assertNotIn("data-dt-rows-url", html)
+        self.assertNotIn("data-dt-stubs", html)
+
+
+class SheetPagingTests(AppTestCase):
+    """Tanks, litters and vials are drawn by their page and paged by
+    app/sheet_paging.py: past LAZY_OVER rows the page keeps its first page,
+    the rest standing as stubs read from the rows as drawn, and the sheet's
+    /rows address answers with rows drawn as the page draws them."""
+
+    def setUp(self):
+        from unittest import mock
+        from app import inventory_routes
+        self.patches = [mock.patch.object(inventory_routes, "LAZY_OVER", 2),
+                        mock.patch.object(inventory_routes, "FIRST_PAGE", 1)]
+        for patch in self.patches:
+            patch.start()
+
+    def tearDown(self):
+        for patch in self.patches:
+            patch.stop()
+
+    @staticmethod
+    def stubs(html: str) -> list[dict]:
+        import json
+        found = re.search(r'<script type="application/json" data-dt-stubs>(.*?)</script>', html, re.S)
+        return json.loads(found.group(1)) if found else []
+
+    def check_sheet(self, url, ids, rows_path, row_pattern, form_of):
+        from unittest import mock
+        from app import inventory_routes
+        with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+            whole = self.get_ok(self.a, url)
+        html = self.get_ok(self.a, url)
+        self.assertIn(f'data-dt-rows-url="{rows_path}"', html)
+        stubs = self.stubs(html)
+        listed = re.findall(r'<tr\b[^>]*\bdata-id="(\d+)"', whole[whole.index("<tbody"):])
+        drawn = re.findall(r'<tr\b[^>]*\bdata-id="(\d+)"', html[html.index("<tbody"):html.index("</tbody>")])
+        self.assertEqual(len(drawn), 1)
+        self.assertEqual(sorted(drawn + [str(s["id"]) for s in stubs]), sorted(set(listed)))
+        stub = next(s for s in stubs if s["id"] == ids[-1]) if any(s["id"] == ids[-1] for s in stubs) else stubs[0]
+        self.assertEqual(stub["f"], form_of(stub["id"]))
+        # A stub's form is not on the page; its row brings it.
+        self.assertNotIn(f'id="{stub["f"]}"', html)
+        sep = "&" if "?" in rows_path else "?"
+        query = url.split("?", 1)[1] if "?" in url else ""
+        answer = self.a.get(f"{rows_path}{sep}{query}&ids={stub['id']},999999").get_json()
+        self.assertEqual(answer["ids"], [stub["id"]])
+        self.assertIn(f'id="{stub["f"]}"', answer["forms"])
+        same = lambda text: re.sub(r"\s+", " ", text).replace("/static/icons.svg#", "#i-").strip()
+        pattern = row_pattern % stub["id"]
+        self.assertEqual(same(re.search(pattern, answer["rows"], re.S).group(0)),
+                         same(re.search(pattern, whole, re.S).group(0)))
+        words = self.a.get(f"{rows_path}{sep}{query}&ids={stub['id']}&as=text").get_json()["texts"][str(stub["id"])]
+        self.assertTrue(any(words))
+
+    def test_tanks(self):
+        ids = [self.make_tank(self.a, notes=uniq("tank note")) for _ in range(4)]
+        self.check_sheet("/zebrafish?view=tanks", ids, "/zebrafish/tanks/rows",
+                         r'<tr id="tank-%d".*?</tr>', lambda i: f"utank-{i}")
+
+    def test_litters(self):
+        ids = [self.make_litter(self.a, date_of_birth=days_ago(10)) for _ in range(4)]
+        self.check_sheet("/colony?view=litters", ids, "/colony/litters/rows",
+                         r'<tr data-id="%d".*?</tr>', lambda i: f"litter-update-{i}")
+
+    def test_vials(self):
+        key = self.make_stock_module(self.a, "fly")
+        ids = [self.make_vial(self.a, key) for _ in range(4)]
+        self.check_sheet(f"/stocks/{key}", ids, f"/stocks/{key}/units/rows",
+                         r'<tr\b[^>]*\bdata-id="%d".*?</tr>', lambda i: f"unit-{i}")
 
 
 class VersionedAssetsTests(AppTestCase):

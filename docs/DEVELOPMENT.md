@@ -435,7 +435,12 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `change`), not on each cell, and remembers a cell's value as it is
   first used (`data-previous`; `fillChoices` sets it before filling a
   menu). The box grid (`rack-grid.js`) is drawn when its panel is first
-  shown (`layout:change`), not while the sheet loads behind it.
+  shown (`layout:change`), not while the sheet loads behind it. An
+  inventory's grid is not in its page at all (each tile carries its item's
+  whole dialog, megabytes on a long inventory): the macro's `src`
+  (`data-rack-src`) is `/inventory/<key>/grid` (`grid_data`, the page's
+  `?type=` and `?ended=`), fetched then; the Boxes buttons above the sheet
+  take their dialogs from `rack_edits`.
 - Rows past a sheet's first page (100) are `display: none` from the
   stylesheet until `data-table.js` has drawn it
   (`.data-table-card[data-table-id]:not(.dt-ready)`): the browser would
@@ -465,30 +470,44 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   (and its detail rows): `render()` takes the others off, so the rows of
   pages turned past don't pile up in it, hidden, for every later search
   or sort to restyle.
-- In Chromium an inventory's cells are drawn as text until used
-  (`inventory_routes._text_cells`, by the browser's `Chrome/`; `?cells=text`
-  or `?cells=fields` chooses either anywhere, and the rows URL carries it).
-  The `as_text_cells` filter in `app.py` turns each `<td>` holding a single
-  input or menu into a `<span class="cell-text">`: the text the field
-  shows (a menu's chosen label, an input's placeholder when empty), the
-  field's own markup in `data-field`, its value in `data-sort-value` and
-  `data-sort-for` its name; a disabled field's span has no `tabindex`. Cells
-  with more than one field (a source, a ticked-choices menu) stay as they
-  are. `static/text-cells.js` puts the field back when the span is focused
-  (pressed, or reached with Tab), with the caret where it was pressed and a
-  menu's list opened; Box opens Position with it. Anything else that needs
-  the field opens it with `BioTextCells.open(span)`: a paste
-  (`sheet.js`, `editable`) and a save whose answer changed the cell's value
-  (`applyRow`). A save sends the fields open in its row, and the item's
-  update changes only the fields it is sent (`if name in form`), so the
-  cells still drawn keep their values. `_cellText` and `_rowText` read
-  `data-sort-value`, so export, sort and search give what the fields would.
-  A date's text is written in the browser's own date order as the page
-  loads and with each `dt:rows-loaded`. A sheet opens a fifth to a third
-  sooner (418 samples, parked: 3.5–3.9 → 2.8–3.0 s; 199: 2.15 → 1.75 s);
-  the page is 30–45% bigger, a tenth once compressed. Safari and the Mac
-  app keep the fields: they never had autofill's wait, and the text cells
-  are not tried there.
+- In Chromium a sheet's cells are drawn as text until used
+  (`cell_text.text_cells_on`, a template global, by the browser's
+  `Chrome/`; `?cells=text` or `?cells=fields` chooses either anywhere, and
+  an inventory's rows URL carries it). A sheet's `<tbody>` wraps its rows in
+  `{% filter as_text_cells(text_cells_on()) %}`: the inventories, the mice,
+  the cages and the mice in each, litters, strains, fish, tanks, clutches,
+  lines and the genotyping queue, vials, a stock's genotypes and frozen
+  lots, plasmids. The filter (`app.py`) turns each `<td>` holding a single
+  input or menu (spaces around it allowed) into a `<span class="cell-text">`:
+  the text the field shows (a menu's chosen label, else its first; an
+  input's placeholder when empty), the field's own markup in `data-field`,
+  its value in `data-sort-value`, its name in `data-sort-for`, its row form
+  in `data-form`, and the attributes styles and scripts read (`data-status`,
+  `data-sex`, `data-scope`, the alive and dead values, `title`); a disabled
+  or read-only field's span has no `tabindex`. Cells with more than one
+  field (a source, a ticked-choices menu, a cage number beside its dot)
+  stay as they are. `static/text-cells.js`, in every page's head so a
+  page's own scripts can use it as they run, puts the field back when the
+  span is focused (pressed, or reached with Tab), with the caret where it
+  was pressed and a menu's list opened; a rack or box opens its position
+  with it, as they are saved together. A page's scripts use
+  `BioTextCells.field(root, name, form)` for a field (put back if it was
+  text) and `BioTextCells.read(root, name, form)` for `{value, text}`
+  without that; a field put back sends `text-cells:open`, which the colony
+  page listens for to wire it as its fields were wired on load. `sheet.js`
+  puts back a cell whose value a save changed (any sheet), reads text cells
+  for the life dot, and opens a pasted-into cell (`editable`). A save sends
+  the fields open in its row, and every update route changes only the
+  fields it is sent (`if name in form`, `form_changed`), so the cells still
+  drawn keep their values: a mouse's transgenes did not, and now keep one
+  not sent. `_cellText` and `_rowText` read `data-sort-value`, so export,
+  sort and search give what the fields would. A date's text is written in
+  the browser's own date order as the page loads and with each
+  `dt:rows-loaded`. Inventories open a fifth to a third sooner (418 samples,
+  parked: 3.5–3.9 → 2.8–3.0 s), 956 mice 3.2 → 2.6 s, the lab's 734 cages
+  5.8 → 4.5 s, vials 1.05 → 0.8 s; the page is 30–45% bigger, a tenth once
+  compressed. Safari and the Mac app keep the fields: they never had
+  autofill's wait, and the text cells are not tried there.
 - An inventory of more than 500 listed items (`inventory_routes.LAZY_OVER`)
   is paged by the server. The page draws its first 100 rows (`FIRST_PAGE`,
   the sheet's first page, in its own order) and, for each other item, an
@@ -509,11 +528,37 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   data-row-forms>`. `_takeRows` swaps each stub for its row wherever the
   sheet keeps it, gives the row its column order, labels and hidden
   columns, and sends `dt:rows-loaded` (the samples sheet's Custom tag
-  listens). Export and Print fetch every row first (`_whenDrawn`, 500 a
-  request, one after another). Code that needs a row's cells uses
+  listens). Print fetches every row first (`_whenDrawn`, 500 a request,
+  one after another). Export needs only the words: `_withTexts` asks
+  `/rows?as=text` (three requests at a time, kept for the next export),
+  which draws the rows with the same template and reads each cell as
+  `_cellText` would (`app/cell_text.py`), sending `{id: [each cell's
+  words]}`; a column moved on the page is found by its `data-dt-col`. Code that needs a row's cells uses
   `BioSheets.ready(tr)`, a Promise of the row, fetched if it is a stub
   (`?open=`, `#item-12`). A request that fails leaves the page as it was
   and says so; the next page turn, search or sort asks again.
+- The mouse sheet is paged the same way past `LAZY_OVER` mice: the colony
+  route draws its first `FIRST_PAGE` rows through `_mouse_rows.html` and
+  `_mouse_row_forms.html` (the page's and `/colony/mice/rows`'s), each other
+  mouse as `app.mouse_stub` (its `data-row-form`, so a `#mouse-update-N`
+  link finds a stub). Rows fetched are wired as the page's own
+  (`dt:rows-loaded` in `colony.html`).
+- Tanks, litters and vials are drawn whole by their page and paged after
+  (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
+  sheet's first page, makes each other row a stub with
+  `cell_text.row_stub` (read from the row as drawn, as `_sortValue` and
+  `_rowText` read it, so it needs no code per sheet), takes those rows'
+  forms out of its `<template data-row-forms>`, and gives the sheet its
+  rows address: `/zebrafish/tanks/rows`, `/colony/litters/rows` (which
+  loads only the litters asked for: `colony_context(only=…)`),
+  `/stocks/<key>/units/rows`. That address builds the page's context with
+  only the rows asked for, draws the page, and `rows_of` lifts them and
+  their forms out. A stub carries its row form (`f`) for links. The
+  server still draws every row once for the page; the browser builds only
+  a page of them. At 100,000 mice: 3,337 tanks open in 5.4 s (14.2),
+  litters 7.2 s (7.5: the server's), vials 3.8 s (4.5), a page turn
+  0.1–0.9 s. The cage sheet is not paged: its cards and Open all need
+  every cage on the page (`data-dt-keep-rows`).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
@@ -3185,7 +3230,9 @@ Every test makes its own uniquely named records and must not depend on
 another test having run. A test marked `@unittest.expectedFailure`
 documents a known bug; when the bug is fixed it shows up as an "unexpected
 success" — remove the marker then. GitHub Actions runs the suite on every
-push (`.github/workflows/tests.yml`).
+pull request and every push to master, on SQLite and on PostgreSQL
+(`.github/workflows/tests.yml`; Actions → tests → *Run workflow* tests a
+branch with no pull request).
 
 ### A big lab: the load test
 
@@ -3241,7 +3288,10 @@ from 23–27 s to 11–12 s (6 KB of markup a row, from 13 KB) in 2.0.1, and
 to under 3 s in 2.0.2, paged by the server: the server takes about 1 s
 (it was 4 s) for a 6 MB page (33 MB), and turning a page, a sort, a
 search or a chip takes about a second, its 100 rows fetched in under
-0.1 s. Export and Print, fetching every row, take about 7 s. On the
+0.1 s. Print, fetching every row, takes about 7 s; Export, fetching
+only their words (2.0.7), 5 s the first time on one worker (it was 10 s)
+and under half a second after, and the page is 3.8 MB, its box grid
+fetched when shown. On the
 mouse sheet (2,400 living mice) a page turn, search or sort takes under
 a second, however many pages have been turned: before 2.0.2 each one
 turned left its rows in the table and the next search took 3–5 s.

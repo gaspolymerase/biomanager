@@ -1,13 +1,18 @@
 name: tests
 
 on:
+  # A pull request is tested once, by pull_request; a push is tested on
+  # master only (a branch's push would run the same tests a second time).
   push:
+    branches: [master]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   unittest:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The Postgres run takes 17 to 30 minutes, depending on the runner.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

@@ -835,6 +835,33 @@ class MouseBatchEditTests(Case):
 
 # ---------------------------------------------------------------- lifecycle
 
+class OneCellSavesTests(Case):
+    """In Chromium a mouse row's cells are drawn as text until used and a
+    cell still drawn sends nothing (static/text-cells.js): a save carries
+    the cells that were opened, and every other cell stays as stored."""
+
+    def test_a_save_of_some_cells_leaves_the_rest(self):
+        c = self.make_colony(self.a, "alex", n_mice=1)
+        mid = c["mice"][0]
+        self.a.post(update_url(mid), data={"transgene_1": "Cre", "transgene_2": "Ai14", "note": "keep me", "ear_tag": "E7"})
+        before = mouse(mid)
+        self.assertEqual((before["transgene_1"], before["transgene_2"]), ("Cre", "Ai14"))
+        # Only transgene 1 opened and changed: transgene 2 is not sent.
+        r = self.a.post(update_url(mid), data={"transgene_1": "Cre/+", "transgene_1_was": "Cre"}, headers={"X-Autosave": "1"})
+        self.assertEqual(r.status_code, 200)
+        after = mouse(mid)
+        self.assertEqual((after["transgene_1"], after["transgene_2"]), ("Cre/+", "Ai14"))
+        for key in ("note", "status", "gender", "owner", "cage_id", "litter_id", "date_of_birth", "date_of_death"):
+            self.assertEqual(after[key], before[key], key)
+        self.assertEqual(one("select ear_tag from mice where id=?", mid), "E7")
+        # Only the status: the date of death follows it, nothing else moves.
+        self.a.post(update_url(mid), data={"status": "sac", "status_was": before["status"]}, headers={"X-Autosave": "1"})
+        after = mouse(mid)
+        self.assertEqual(after["status"], "sac")
+        self.assertTrue(after["date_of_death"])
+        self.assertEqual((after["transgene_1"], after["transgene_2"], after["note"]), ("Cre/+", "Ai14", "keep me"))
+
+
 class MouseLifecycleTests(Case):
 
     def test_duplicate_copies_cage_litter_and_transgenes_as_a_living_mouse(self):

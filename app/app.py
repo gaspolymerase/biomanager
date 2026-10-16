@@ -19,7 +19,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import SessionLocal
-from . import access, i18n, lab, positions, security
+from . import access, cell_text, i18n, lab, positions, security
 from .i18n import gettext, ngettext, pgettext
 from .formutil import form_changed
 # Importing this registers the SQLAlchemy flush listener that writes
@@ -156,6 +156,8 @@ init_database()
 # belong in this file. See app/organisms.py for the capability vocabulary.
 from .organism_routes import bp as organism_bp  # noqa: E402
 from .inventory_routes import bp as inventory_bp  # noqa: E402
+from . import inventory_routes  # noqa: E402  (its paging limits, shared by the mouse sheet)
+from . import sheet_paging  # noqa: E402
 from .stock_routes import bp as stocks_bp  # noqa: E402
 from .labels import bp as labels_bp  # noqa: E402
 from .admin_racks import bp as admin_racks_bp  # noqa: E402
@@ -1179,14 +1181,19 @@ def tight(html) -> Markup:
     return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
-# An inventory's cells drawn as text until used (inventory_routes._text_cells;
+# A sheet's cells drawn as text until used, in Chromium (cell_text.text_cells_on;
 # static/text-cells.js turns one back into its field). Each <td> holding just
 # one field: the field's own markup goes in data-field, and the text it shows
-# is drawn instead, as the field would show it (a menu's chosen label, an
-# input's placeholder when empty). Gzipped, a page grows by about a tenth.
-_ONE_FIELD = re.compile(r'<td((?: [^>]*)?)>(<input\b[^>]*>|<select\b[^>]*>.*?</select>)</td>', re.S)
-_ATTR = re.compile(r'\b(name|value|class|placeholder|title|data-status|data-scope|type)="([^"]*)"')
+# is drawn instead, as the field would show it (a menu's chosen label, else
+# its first; an input's placeholder when empty). Gzipped, a page grows by
+# about a tenth.
+_ONE_FIELD = re.compile(r'<td((?:\s[^>]*)?)>\s*(<input\b[^>]*>|<select\b[^>]*>.*?</select>)\s*</td>', re.S)
+_ATTR = re.compile(r'\s(name|value|class|placeholder|title|type|form|data-status|data-scope|data-sex'
+                   r'|data-alive-values|data-dead-values|data-dead-if-set)(?:="([^"]*)")?')
 _CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
+_FIRST = re.compile(r'<option\b[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
+# Copied onto the text: what the page's styles and scripts read from the field.
+_KEPT = ("title", "data-status", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
 
 
 @app.template_filter("as_text_cells")
@@ -1194,17 +1201,17 @@ def as_text_cells(html, on: bool = True) -> Markup:
     html = str(html)
     if not on:
         return Markup(html)
-    from markupsafe import escape
 
     def cell(m):
         td_attrs, field = m.group(1), m.group(2)
-        tag = field[1:field.index(" ") if " " in field[:8] else 7]
+        tag = "select" if field.startswith("<select") else "input"
         head = field[:field.index(">") + 1]
         attrs = dict(_ATTR.findall(head))
         if attrs.get("type") in ("checkbox", "hidden", "radio") or "name" not in attrs:
             return m.group(0)
         if tag == "select":
-            chosen = _CHOSEN.search(field)
+            # As the browser shows it: the chosen option, else the first.
+            chosen = _CHOSEN.search(field) or _FIRST.search(field)
             value, shown = (chosen.group(1), chosen.group(2)) if chosen else ("", "")
         else:
             value = shown = attrs.get("value", "")
@@ -1217,14 +1224,18 @@ def as_text_cells(html, on: bool = True) -> Markup:
                                        "is-disabled" if locked else "",
                                        # an input's placeholder, shown for an empty one: not its value
                                        "is-placeholder" if tag != "select" and not value and shown else ""] if c)
-        extra = "".join(f' {k}="{attrs[k]}"' for k in ("title", "data-status", "data-scope") if k in attrs)
-        # A field that can't be changed stays text: nothing to open.
-        reach = "" if locked else ' tabindex="0"'
+        extra = "".join(f' {k}="{attrs[k]}"' for k in _KEPT if k in attrs)
+        form = f' data-form="{attrs["form"]}"' if attrs.get("form") else ""
+        # A field that can't be changed (or only shows what is worked out) stays text.
+        reach = "" if locked or re.search(r"\sreadonly\b", head) else ' tabindex="0"'
         return (f'<td{td_attrs}><span class="{classes}"{reach} data-field="{escape(field)}" '
-                f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"'
+                f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"{form}'
                 f'{extra}>{shown}</span></td>')
 
     return Markup(_ONE_FIELD.sub(cell, html))
+
+
+app.jinja_env.globals["text_cells_on"] = cell_text.text_cells_on
 
 
 @app.template_filter("head")
@@ -1448,7 +1459,10 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
 
     stored = [mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4]
     if form_changed(form, *(f"transgene_{n}" for n in range(1, 5))):
-        transgenes = [_keep_lines(old, new) for old, new in zip(stored, transgene_values_from_form(form))]
+        # One the form does not send (a cell still drawn as text, which
+        # sends nothing) stays as it is.
+        transgenes = [_keep_lines(old, new) if f"transgene_{n}" in form else (old or "")
+                      for n, (old, new) in enumerate(zip(stored, transgene_values_from_form(form)), 1)]
         sync_mouse_transgenes(mouse, transgenes)
     if form_changed(form, "gender"):
         mouse.gender = form.get("gender", "").strip()
@@ -1530,6 +1544,12 @@ def _merged_choices(*groups) -> list[str]:
     return out
 
 
+def _in_word_order(values) -> list[str]:
+    """Values the mice hold, A to Z: the same order however the rows came
+    (a sheet's page, or its rows fetched later, /colony/mice/rows)."""
+    return sorted({(v or "").strip() for v in values} - {""}, key=lambda v: (v.lower(), v))
+
+
 def mouse_sheet_meta(mouse_rows: list[dict], dropdowns: dict, racks=()) -> dict:
     """What the mouse sheet needs beyond the rows themselves: the choices
     for its dropdown cells, and which transgene columns hold anything (an
@@ -1537,10 +1557,10 @@ def mouse_sheet_meta(mouse_rows: list[dict], dropdowns: dict, racks=()) -> dict:
     return {
         "status_choices": _merged_choices(
             MOUSE_STATUS_OPTIONS, dropdowns.get("status", []),
-            (r["status"] for r in mouse_rows)),
+            _in_word_order(r["status"] for r in mouse_rows)),
         "gender_choices": _merged_choices(
             ["F", "M", "Unknown"], dropdowns.get("gender", []),
-            (r["gender"] for r in mouse_rows)),
+            _in_word_order(r["gender"] for r in mouse_rows)),
         "tg_used": [any(r[f"transgene_{n}"] for r in mouse_rows) for n in range(1, 5)],
         "active_count": sum(1 for r in mouse_rows if r["active"]),
         "racks": [{"id": r.id, "name": r.name} for r in racks],
@@ -1740,7 +1760,8 @@ def cage_sheet_row(cage) -> dict:
 RECENT_DAYS = 90   # ended mice, empty cages and old litters shown without "Show all"
 
 
-def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False) -> dict[str, object]:
+def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False,
+                   only: set[int] | None = None) -> dict[str, object]:
     """Build the colony page context.
 
     `scope` filters which slice of the colony is listed — your own animals,
@@ -1752,6 +1773,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
     loaded in a few queries rather than one per row. A colony keeps every
     mouse it ever had, so the Mice, Cages and Litters tabs show the living
     and what ended in the last RECENT_DAYS days; `show_ended` shows it all.
+    `only`: the litters to draw, by id (a long litter sheet's rows, fetched
+    as they are shown: app/sheet_paging.py).
     """
     from sqlalchemy.orm import selectinload
     me = g.user.username if g.user else ""
@@ -1821,6 +1844,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                            | LitterRecord.id.in_(with_living))
                 hidden_litters = count_of(select(func.count(LitterRecord.id)).where(~visible))
                 litter_query = litter_query.where(visible)
+            if only is not None:
+                litter_query = litter_query.where(LitterRecord.id.in_(sorted(only)))
             # L-2 before L-10: by number, not letter by letter.
             litters = positions.natural_sorted(db_session.scalars(litter_query).all(), key=lambda l: l.litter_id)
         strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
@@ -3014,8 +3039,25 @@ def colony():
         # An unknown or stale tab name lands on the mouse sheet rather than
         # on whichever tab happens to be the template's fallback.
         active_view = "mice"
+    html = render_template("colony.html", **_colony_page_context(active_view))
+    # A long litter sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
+    return sheet_paging.page(html, "litters-v2", url_for("colony_litter_rows")) if active_view == "litters" else html
+
+
+@app.route("/colony/litters/rows")
+@login_required
+def colony_litter_rows():
+    """Rows of a long litter sheet by id (?ids=…, with the page's own
+    arguments), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    keep = set(ids)
+    context = _colony_page_context("litters", only=keep)
+    return sheet_paging.answer(render_template("colony.html", **context), "litters-v2", ids, request)
+
+
+def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict:
     scope = access.resolve_scope(request.args.get("scope"))
-    context = colony_context(active_view, scope, show_ended=request.args.get("ended") == "all")
+    context = colony_context(active_view, scope, show_ended=request.args.get("ended") == "all", only=only)
     context["scope"] = scope
     context["scopes"] = access.scopes_for()
     context["scope_hints"] = access.SCOPE_HINTS
@@ -3025,7 +3067,80 @@ def colony():
         defined = custom_fields.fields(db_session, "colony")
     context["custom_columns"] = custom_fields.in_table(defined)
     context["custom_columns_all"] = defined
-    return render_template("colony.html", **context)
+    # A long mouse sheet is paged by the server, as a long inventory is
+    # (inventory_routes.LAZY_OVER): its first page drawn, the other mice as
+    # entries data-table.js sorts, searches and counts, their rows fetched
+    # from /colony/mice/rows when shown.
+    rows = context["mouse_rows"]
+    context["mouse_sheet_rows"], context["mouse_stubs"], context["mouse_rows_url"] = rows, [], ""
+    if active_view == "mice" and len(rows) > inventory_routes.LAZY_OVER:
+        context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
+        context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
+        context["mouse_rows_url"] = url_for("colony_mouse_rows")
+    return context
+
+
+def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:
+    """A mouse the sheet does not draw, as data-table.js reads a drawn row
+    (_mouse_rows.html): its data-* (the chips), each sortable cell's value
+    ("k", as the cell holds it: a rack by its id) and the words a search
+    looks in ("s": what the row shows and holds, lower-cased)."""
+    text = lambda value: "" if value is None else str(value)  # noqa: E731
+    data = {"active": "true" if row["active"] else "false", "mouse_id": text(row["mouse_id"]),
+            "ear_tag": text(row["ear_tag"]), "age": text(row["age_days"]), "rowForm": f"mouse-update-{row['id']}"}
+    cells = {name: text(row[name]) for name in (
+        "ear_tag", "strain", "gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4",
+        "cage_id", "cage_position", "owner", "litter_id", "date_of_birth", "date_of_death", "cage_location", "note")}
+    cells["cage_rack"] = text(row["cage_rack_id"])
+    for fd in custom_columns:
+        cells[f"attr_{fd['key']}"] = text(row["attrs"].get(fd["key"], ""))
+    gender = row["gender"] or ""
+    words = [str(row["id"]), *data.values(), *cells.values(), row["cage_rack"] or "",
+             gettext("U") if gender == "Unknown" else i18n.translate_value(gender),
+             i18n.translate_value(row["status"] or ""),
+             f"{row['age_weeks']}{gettext('w')}" if row["age_weeks"] is not None else "",
+             re.sub(r"<[^>]+>", "", str(owner_badge_filter(row["owner"])))]
+    for fd in custom_columns:
+        value = text(row["attrs"].get(fd["key"], ""))
+        if value and fd.get("type") in ("select", "multiselect"):
+            words.append(i18n.translate_value(value))
+    return {"id": row["id"], "f": f"mouse-update-{row['id']}", "d": data, "k": {k: v for k, v in cells.items() if v},
+            "s": " ".join(w for w in words if w).lower()}
+
+
+@app.route("/colony/mice/rows")
+@login_required
+def colony_mouse_rows():
+    """Rows of the mouse sheet by id (?ids=3,1,2), as its page would have
+    drawn them, and their row forms; with ?as=text each row's cells' words
+    only (an export, cell_text)."""
+    ids = [int(x) for x in request.args.get("ids", "").split(",") if x.strip().isdigit()][:inventory_routes.ROWS_AT_ONCE]
+    from sqlalchemy.orm import selectinload
+    with SessionLocal() as db_session:
+        found = {m.id: m for m in db_session.scalars(select(MouseRecord).where(MouseRecord.id.in_(ids)).options(
+            selectinload(MouseRecord.cage).selectinload(CageRecord.rack), selectinload(MouseRecord.litter)))}
+        mice = [found[i] for i in dict.fromkeys(ids) if i in found]
+        rows = [mouse_display_row(m, g.user.username, g.user.role) for m in mice]
+        for mouse, row in zip(mice, rows):
+            row["editable"] = can_edit_mouse(mouse)
+        # The choices every row offers: the lab's, and any its mice hold.
+        held = db_session.execute(select(MouseRecord.status, MouseRecord.gender).distinct()).all()
+        dropdowns = dropdown_options_map(db_session)
+        sheet = mouse_sheet_meta(rows, dropdowns, mouse_racks(db_session))
+        sheet["status_choices"] = _merged_choices(MOUSE_STATUS_OPTIONS, dropdowns.get("status", []),
+                                                  _in_word_order(st for st, _ in held))
+        sheet["gender_choices"] = _merged_choices(["F", "M", "Unknown"], dropdowns.get("gender", []),
+                                                  _in_word_order(gd for _, gd in held))
+        defined = custom_fields.fields(db_session, "colony")
+    context = {"sheet_rows": rows, "sheet": sheet, "fragment": True,
+               "custom_columns": custom_fields.in_table(defined), "custom_columns_all": defined}
+    if request.args.get("as") == "text":
+        drawn = render_template("_mouse_rows.html", **dict(context))
+        texts = cell_text.row_texts(drawn)
+        return jsonify({"texts": {str(i): texts[i] for i in texts}, "ids": list(texts)})
+    return jsonify({"rows": render_template("_mouse_rows.html", **context),
+                    "forms": render_template("_mouse_row_forms.html", **context),
+                    "ids": [r["id"] for r in rows]})
 
 
 # ---------------------------------------------------------------------------
@@ -10386,7 +10501,21 @@ def zebrafish():
         return redirect(url_for("zebrafish", view="tanks", mode=ZEBRAFISH_VIEW_ALIASES[view]))
     if view not in ZEBRAFISH_VIEWS:
         view = "tanks"
-    return render_template("zebrafish.html", **_zebrafish_context(view))
+    html = render_template("zebrafish.html", **_zebrafish_context(view))
+    # A long tank sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
+    return sheet_paging.page(html, "zf-tanks-v2", url_for("zebrafish_tank_rows")) if view == "tanks" else html
+
+
+@app.route("/zebrafish/tanks/rows")
+@login_required
+def zebrafish_tank_rows():
+    """Rows of a long tank sheet by id (?ids=…, with the page's own
+    arguments), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    keep = set(ids)
+    context = _zebrafish_context("tanks")
+    context["tank_rows"] = [tr for tr in context["tank_rows"] if tr["row"].id in keep]
+    return sheet_paging.answer(render_template("zebrafish.html", **context), "zf-tanks-v2", ids, request)
 
 
 def zebrafish_home_summary() -> dict:
