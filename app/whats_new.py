@@ -34,6 +34,7 @@ NOTES: dict[str, dict[str, list[str]]] = {
         "changed": [
             "A **Cages** sheet of more than 500 cages opens with its first page and brings each other page as you turn to it, as the mice and litters do; **Cards** loads the cages when you switch to it.",
             "A long **Litters** sheet opens about three times sooner.",
+            "On **Mice**, the server reads only the mice the chosen view lists, so a large lab's sheet comes sooner.",
         ],
         "fixed": [
             "A cage whose purpose was written in capitals (BREEDER) shows it in its **Purpose** menu, not “–”.",

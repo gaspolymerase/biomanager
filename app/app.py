@@ -1801,6 +1801,17 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                                                 *options).order_by(MouseRecord.mouse_id)
             if where is not None:
                 query = query.where(where)
+            # Only the mice the scope can list are loaded (a big colony keeps
+            # thousands of everyone's): a superset, which access.in_scope
+            # below then decides on exactly.
+            in_shared_cage = MouseRecord.cage_id_fk.in_(select(CageRecord.id).where(CageRecord.is_shared.is_(True)))
+            owner = func.trim(func.coalesce(MouseRecord.owner, ""))
+            if scope == "mine":
+                query = query.where((owner == me) | (owner == "") | in_shared_cage)
+            elif scope == "shared":
+                query = query.where(in_shared_cage)
+            elif scope == "groups":
+                query = query.where(owner.in_(sorted(project_groups.colleagues())) | in_shared_cage)
             if not show_ended:
                 query = query.where(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
             return [m for m in db_session.scalars(query).all()
