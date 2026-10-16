@@ -172,3 +172,8 @@ fifteen on 2.0.1 (`-action-list-fix`): 12 **correct** and 3 **asked**,
 none **missing** or **wrong**, with the skill and without it. For the
 reagent the assistant read `inventory_quantity_used` with `list_actions`
 and proposed it at once.
+
+Three passes of all fifteen on 2.0.11, with the skill
+(`-x3`): 36 **correct** and 9 **asked**, none **missing** or **wrong**.
+Every scenario came out the same in all three passes, in nearly the same
+number of tool calls (most exactly the same, `mixed` from 7 to 9).
