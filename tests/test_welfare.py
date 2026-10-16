@@ -46,11 +46,13 @@ class Welfare(Base):
         with app.test_request_context(), SessionLocal() as s:
             return {c["id"]: c for c in welfare.checks(s, TODAY, owner, pct)}
 
-    def ids(self, check, owner=None, pct=None):
-        return [i["ref"]["id"] for i in self.checks(owner, pct)[check]["items"]]
+    # A mouse's row id, which another kind's (a fish's, an animal's) may
+    # share in a database of any size: matched with its kind.
+    def ids(self, check, owner=None, pct=None, kind="mouse"):
+        return [i["ref"]["id"] for i in self.checks(owner, pct)[check]["items"] if i["ref"]["kind"] == kind]
 
-    def item(self, check, row, owner=None, pct=None):
-        found = [i for i in self.checks(owner, pct)[check]["items"] if i["ref"]["id"] == row]
+    def item(self, check, row, owner=None, pct=None, kind="mouse"):
+        found = [i for i in self.checks(owner, pct)[check]["items"] if i["ref"] == {"kind": kind, "id": row}]
         self.assertEqual(len(found), 1, found)
         return found[0]
 
