@@ -419,7 +419,7 @@
 {# Boxes: size, position names and freezer. Resizing, renaming and deleting
    are for whoever made the box, or an admin (access.can_edit_rack). #}
 {% call rack_dialog('plasmid-box-dialog', url_for('save_plasmid_box'), url_for('save_plasmid_box'),
-                    url_for('delete_plasmid_box', box_id=0), noun='box') %}
+                    url_for('delete_plasmid_box', box_id=0), noun='box', layout_kind='plasmid_box') %}
   <label class="col-span-full">{{ _('Freezer / shelf') }} <input name="location" list="plasmid-box-locations" placeholder="{{ _('e.g. −80 freezer 2, shelf 3') }}" autocomplete="off"></label>
   <label class="col-span-full">{{ _('Notes') }} <input name="notes" placeholder="{{ _('Optional') }}"></label>
   <p class="plasmid-box-locked col-span-full" data-box-locked hidden></p>

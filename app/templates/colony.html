@@ -964,7 +964,7 @@
       </div>
 
 {% call rack_dialog('mouse-rack-dialog', url_for('save_mouse_rack'), url_for('save_mouse_rack'),
-                          url_for('delete_mouse_rack', rack_id=0)) %}
+                          url_for('delete_mouse_rack', rack_id=0), layout_kind='mouse_rack') %}
         <label class="col-span-full">{{ _('Room') }} <input name="room" placeholder="{{ _('Optional') }}"></label>
       {% endcall %}
 

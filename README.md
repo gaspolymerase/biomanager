@@ -120,6 +120,11 @@ never what you may edit.
   set up there before the old one is ended): the **Rack grid** shows the
   one put there last and marks the position **!** while two or more there
   have living mice; hover over or tap the **!** to list and open them all.
+  Changing a rack's rows, columns or position names asks first what
+  happens to the cages in it, listing each: **Keep each position name**
+  (F7 stays F7, in the cell called that now) or **Keep each in the same
+  cell** (its name changes); one the new layout has no place for stays in
+  the rack, unplaced. Fish racks, fly and worm racks and boxes ask the same.
 - **Litters** — on a Breeding (mating) cage, **Litter born** records the birth
   once, and the weaning date (P21) and genotyping date (P28), or the days
   the lab sets in **Settings → General**, follow from it, on Home and the
@@ -808,7 +813,8 @@ database has a name of its own (one another database has is refused), so
       <h4>🗄️ Racks named your way</h4>
       <code>D7</code>, <code>4-7</code>, <code>7D</code>, <code>G12</code>
       or plain 1 to 80. Each rack keeps its own scheme, and a grid shows
-      what is where.
+      what is where. Change a rack's layout and it asks whether each cage
+      keeps its position name or its cell.
     </td>
     <td valign="top">
       <h4>🔎 Search and tabs</h4>

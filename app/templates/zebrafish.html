@@ -489,7 +489,7 @@
   </section>
 
   {% call rack_dialog('fish-rack-dialog', url_for('zebrafish_create_rack'),
-                      url_for('zebrafish_update_rack', rack_id=0), url_for('zebrafish_delete_rack', rack_id=0), noun=rack_word) %}
+                      url_for('zebrafish_update_rack', rack_id=0), url_for('zebrafish_delete_rack', rack_id=0), noun=rack_word, layout_kind='fish_rack') %}
     <label class="col-span-full">{{ _('Water system') }}
       <select name="system_id_fk">
         <option value="">{{ _('None') }}</option>

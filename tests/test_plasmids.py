@@ -985,14 +985,19 @@ class BoxTests(AppTestCase):
         self.assertFlash(r, "Give the box a name", "error")
         self.assertEqual(count("plasmid_boxes"), before)
 
-    def test_box_cannot_shrink_past_a_plasmid(self):
+    def test_shrinking_a_box_past_a_plasmid_asks_what_happens_to_it(self):
         name = uniq("Shrink")
         box = self.make_box(self.a, name)
-        pid = one("select plasmid_id from plasmids where id=?", self.make_plasmid(self.a, box_id=box, position="E5"))
+        rid = self.make_plasmid(self.a, box_id=box, position="E5")
         r = self.post(self.a, "/plasmids/boxes/save", {"id": str(box), "name": name, "rows": "3", "cols": "9"})
-        self.assertFlash(r, "cannot shrink", "error")
-        self.assertFlash(r, f"#{pid}", "error")
+        self.assertFlash(r, "changes the positions of 1 plasmid", "error")
         self.assertEqual(one("select rows from plasmid_boxes where id=?", box), 9)
+        preview = self.a.post(f"/racks/plasmid_box/{box}/layout", data={"rows": "3", "cols": "9"}).get_json()
+        self.assertEqual([(a["now"], a["keep_cells"]) for a in preview["affected"]], [("E5", "")])
+        self.post(self.a, "/plasmids/boxes/save",
+                  {"id": str(box), "name": name, "rows": "3", "cols": "9", "cages": "keep_cells"})
+        self.assertEqual(one("select rows from plasmid_boxes where id=?", box), 3)
+        self.assertEqual(row("select box_id_fk, box_row, box_col from plasmids where id=?", rid), (box, None, None))
 
     def test_rename_follows_onto_its_plasmids(self):
         box = self.make_box(self.a)

@@ -29,7 +29,7 @@ from flask import (
 )
 from sqlalchemy import select
 
-from . import access, audit, database_keys, i18n, positions
+from . import access, audit, database_keys, i18n, positions, rack_layout
 from . import inventory as presets
 from . import inventory_service as svc
 from .db import SessionLocal
@@ -1675,39 +1675,37 @@ def save_rack(key: str):
             return redirect(url_for("inventory.module", key=key))
         rows = _int(form.get("rows"), rack.rows if rack else 9, 1, 26)
         cols = _int(form.get("cols"), rack.cols if rack else 9, 1, 40)
-        if rack is not None and (rows < rack.rows or cols < rack.cols):
-            outside = session.scalars(select(InventoryItem).where(
-                InventoryItem.rack_id_fk == rack.id,
-                (InventoryItem.rack_row > rows) | (InventoryItem.rack_col > cols))).all()
-            if outside:
-                n = len(outside)
-                flash(gettext("%(box)s cannot shrink to %(rows)s × %(cols)s: %(n)s %(nouns)s sit outside that (%(items)s). Move them first.",
-                              box=rack.name, rows=rows, cols=cols, n=n,
-                              nouns=_tr(mv.item_noun if n == 1 else mv.item_noun_plural),
-                              items=", ".join(i.name or "#" + str(i.number) for i in outside[:4]) + ("…" if n > 4 else "")),
-                      "error")
-                return redirect(url_for("inventory.module", key=key))
+        # A new layout that renames the places of items in the box, or leaves
+        # some out, says whether each keeps its name or its cell (app/rack_layout.py).
+        change, refused = rack_layout.check(session, rack_layout.kind("inventory_box"), rack,
+                                            rack_layout.Layout(rows, cols, rack_layout.form_naming(form, rack)),
+                                            form.get(rack_layout.FIELD))
+        if refused:
+            flash(refused, "error")
+            return redirect(url_for("inventory.module", key=key))
         count = _int(form.get("count"), 1, 1, MAX_BOXES_AT_ONCE) if rack is None else 1
         if count > 1:
             return _create_boxes(session, row, mv, form, rows, cols, count)
         if rack is None:
             rack = InventoryRack(module_id_fk=row.id, created_by=g.user.username)
             session.add(rack)
-        rack.name = (form.get("name") or "").strip()[:120] or "Box"
-        rack.kind = (form.get("kind") or "box").strip()[:40]
-        if "place" in form:   # where it is kept; what is in it goes along
-            rack.place = (form.get("place") or "").strip()[:120]
-        if "stored_at" in form:
-            stored_at = form.get("stored_at", "").strip()[:40]
-            moved = rack.id is not None and stored_at != (rack.stored_at or "")
-            rack.stored_at = stored_at
-            if moved:  # the box went somewhere else, and its tubes with it
-                for item in session.scalars(select(InventoryItem).where(InventoryItem.rack_id_fk == rack.id)):
-                    svc.follow_box(session, item)
-        rack.rows, rack.cols = rows, cols
-        rack.naming = json.dumps(positions.scheme_from_form(form))
+        with rack_layout.batch(session, change):
+            rack.name = (form.get("name") or "").strip()[:120] or "Box"
+            rack.kind = (form.get("kind") or "box").strip()[:40]
+            if "place" in form:   # where it is kept; what is in it goes along
+                rack.place = (form.get("place") or "").strip()[:120]
+            if "stored_at" in form:
+                stored_at = form.get("stored_at", "").strip()[:40]
+                moved = rack.id is not None and stored_at != (rack.stored_at or "")
+                rack.stored_at = stored_at
+                if moved:  # the box went somewhere else, and its tubes with it
+                    for item in session.scalars(select(InventoryItem).where(InventoryItem.rack_id_fk == rack.id)):
+                        svc.follow_box(session, item)
+            rack.rows, rack.cols = rows, cols
+            rack.naming = json.dumps(rack_layout.form_naming(form, rack))
+            rack_layout.apply(session, change)
         session.commit()
-        flash(gettext("Saved %(name)s.", name=rack.name), "success")
+        flash(gettext("Saved %(name)s.", name=rack.name) + rack_layout.outcome(change), "success")
     return redirect(url_for("inventory.module", key=key))
 
 

@@ -2343,6 +2343,13 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`can_edit_mouse`, `_can_edit`, `can_edit`,
   `access.can_edit_experiment`). A switched-off built-in database is a 404.
+- **Racks**: `GET /racks` lists the colony's cage racks (`rack_json`:
+  size, `naming`, example `positions`, how many cages); `PATCH
+  /racks/<name>` takes `RACK_FIELDS` (`naming` merged over the rack's own,
+  `rack_layout.json_naming`) through `_mouse_rack_from_form`. A change that
+  renames or leaves out cages' places needs `cages`: `keep_names` or
+  `keep_cells`; without it the answer is 409 with the `preview`
+  (`rack_layout.public(plan)`), so a script can show it and send again.
 
 - **For assistants** (`app/lookup.py`): `/resolve?q=` finds the records a
   phrase means across every database the person can open ("cage 88" looks
@@ -3014,6 +3021,40 @@ popover (`.rack-stack`) holds a tile for each. A drop on a taken place
 (`place_cage`) swaps with the cage shown there; the others stay. Home's
 Freezer layout shows the same cage and a `.frz-crowd` "!". Fish tanks,
 fly and worm racks and inventory boxes still take one record per place.
+
+**A rack's new layout** (`app/rack_layout.py`). A cage, tank, vial, item or
+plasmid keeps its place as a row and a column (0-based for tanks and
+plasmids); its name comes from the rack's `rows`, `cols` and `naming`
+(`positions.label`). So a save that changes those can rename the places of
+what is in the rack, or leave some out, though nothing moved. `KINDS`
+(`mouse_rack`, `fish_rack`, `inventory_box`, `stock_rack`, `plasmid_box`)
+says, for each kind of rack, what sits in it and in which columns. `plan`
+works out, for each thing placed, its name now and its name under each
+choice: `keep_names` (to the cell the new layout calls by its name,
+`Layout.cell`, which ignores the separator but not "37" counting along a
+lettered rack) and `keep_cells` (same row and column); a thing that keeps
+both its cell and its name is not listed, and one already outside the old
+grid is left where it is. It also counts, per choice, what ends with no
+position and the places left holding more than one live thing. `default`
+is `keep_names` when the naming changed, else `keep_cells`. Every save
+route (`save_mouse_rack` through `_mouse_rack_from_form`,
+`zebrafish_update_rack`, `inventory_routes.save_rack`,
+`stock_routes.save_rack`, `save_plasmid_box`) calls `check` before
+changing anything: with something listed and no `cages=keep_names|keep_cells`
+in the form, the save is refused (`refusal`). Otherwise the rack's change
+and `apply` run inside `batch` (an `audit.batch` named by `describe`), so
+Batch history undoes both together; what has no place left keeps its rack
+with no row or column (Unplaced). `form_naming` keeps the rack's naming
+when a form sends no `naming_mode`. The old "move them first" refusals on
+shrinking a box or rack are gone: shrinking is the same question.
+In the page, `rack_dialog(..., layout_kind=)` (`_rack_grid.html`) gives
+the form `data-layout-preview` and a hidden `cages`, and a second dialog;
+`rack-grid.js` (`setupLayoutCheck`) posts the form to
+`/racks/<kind>/<id>/layout` (`rack_layout.preview`, for whoever may change
+the rack) before an edit is sent, and shows the list and the two choices
+when anything is listed. Racks of the other databases (`OrgLocation`) keep
+their naming in `settings`, are not in the audit, and already unplace what
+falls outside a smaller grid; they are not covered.
 
 **The Cages tab's three layouts.** `view_switch(..., cards_label=)` in
 `_rack_grid.html` adds a Cards button; `rack-grid.js` shows one

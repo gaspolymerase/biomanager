@@ -198,6 +198,21 @@
         before an empty one) and marks the position with <b>!</b> while two or more there have living mice. Hover over or tap
         the <b>!</b> to list every cage in that position, and click one to open it, move it or end it. Empty and ended cages
         don't count. Dragging a cage onto a position still swaps it with the cage shown there.</p>
+      <p><b>Changing a rack's layout.</b> A cage's place is kept as a row and a column, and the rack's layout gives it its name.
+        So when you change the rows, the columns or how positions are named (<b>Edit</b> on the rack grid), cages with living
+        mice or not may get another position name though nobody moved them: swap letters and numbers, and the cage at
+        <code>F7</code> would read <code>G6</code>. Before saving such a change, BioManager lists every cage it touches, with
+        its position now and after each choice, and asks:</p>
+      <ul>
+        <li><b>Keep each position name</b> (chosen first when the naming changed): <code>F7</code> stays F7 and moves to the cell
+          that is called F7 now.</li>
+        <li><b>Keep each in the same cell</b>: the cage stays in its row and column, and its position name changes.</li>
+      </ul>
+      <p>A cage whose name or cell the new layout doesn't have (a smaller rack) stays in the rack with no position, under
+        <i>Unplaced</i>, and the dialog counts them, and any position that would hold more than one cage with living mice.
+        <b>Cancel</b> saves nothing. Renaming a rack, or making it bigger, asks nothing. The change and the moves are one batch,
+        so <b>Batch history</b> can undo them together. Fish racks, fly and worm racks, inventory boxes and plasmid boxes ask
+        the same.</p>
 
       <h2 id="mice">Mice</h2>
       <ul>
@@ -265,7 +280,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 9 min read</p>
+      <p>On this page · 10 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#racks-and-cages">Racks and cages</a></li>
