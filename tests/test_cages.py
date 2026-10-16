@@ -94,6 +94,8 @@ class CageCreateTests(RackMixin, Case):
         self.assertIsNotNone(cage_id_of(expected))
 
     def test_a_low_numbered_latest_cage_does_not_pull_the_next_id_down(self):
+        # A cage numbered well above 2 (a fresh database may have none yet).
+        self.make_cage(self.m, str(max(highest_cage_number(), 3) + 5))
         high = highest_cage_number()
         # Typed on a mouse, the latest cage is "2A…": its number is 2.
         self.make_mouse(self.m, self.member, cage="2A" + uniq("z"))
