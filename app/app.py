@@ -1922,6 +1922,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                                                          recent=None if show_ended else recent)
             breeder_summary_rows = breeder_summary(db_session)
         next_mouse_id_value = next_mouse_id(db_session)
+        held_purposes = _in_word_order(db_session.scalars(select(CageRecord.purpose).distinct())) \
+            if active_view == "cages" else []
         # Each reads every cage or litter ID: only the tab whose New dialog says it.
         next_cage_id_value = next_cage_id(db_session) if active_view == "cages" else ""
         next_litter_id_value = next_litter_id(db_session) if active_view == "litters" else ""
@@ -1979,8 +1981,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "cage_racks": cage_racks,
         "cage_rows": cage_rows,
         "cage_sheet": {
-            # The lab's purposes, then any other word a cage still carries.
-            "purpose_choices": _merged_choices(cage_purposes(dropdowns), (r["purpose"] for r in cage_rows)),
+            # The lab's purposes, then any other word a cage still carries,
+            # A to Z: the same for a cage fetched later (colony_cage_rows).
+            "purpose_choices": _merged_choices(cage_purposes(dropdowns), held_purposes),
             "active_count": sum(1 for r in cage_rows if r["active"]),
             # All · Active · a chip for each of the lab's purposes (its active cages).
             "purposes": cage_purpose_chips(cage_rows, cage_purposes(dropdowns)),
