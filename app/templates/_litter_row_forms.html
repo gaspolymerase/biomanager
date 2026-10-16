@@ -1,0 +1,5 @@
+{#- The litter sheet's row forms (row-forms.js), for the rows drawn: the page's and /colony/litters/rows's. -#}
+        {% for litter in sheet_rows %}
+          <form id="litter-update-{{ litter.id }}" method="post" action="{{ url_for('update_litter', litter_row_id=litter.id) }}"
+                data-record-label="{{ _('litter %(id)s', id=litter.litter_id) }}"></form>
+        {% endfor %}

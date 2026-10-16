@@ -1,9 +1,9 @@
 """A long sheet paged by the server, for a page that draws its sheet whole.
 
-The inventories and the mouse sheet draw their first page through their own
-row templates (inventory_routes, app.colony_mouse_rows). Other sheets (fish
-tanks, fly vials, litters) are drawn by their page as before and trimmed
-here: past LAZY_OVER rows, the rows after the first page leave the page
+The inventories and the mouse and litter sheets draw their first page
+through their own row templates (inventory_routes, app.colony_mouse_rows,
+app.colony_litter_rows). Other sheets (fish tanks, fly vials) are drawn by
+their page as before and trimmed here: past LAZY_OVER rows, the rows after the first page leave the page
 and stand as stubs (cell_text.row_stub, read from the rows as drawn, as
 data-table.js reads a row), their row forms leave its <template
 data-row-forms>, and the sheet gets data-dt-rows-url. That address draws

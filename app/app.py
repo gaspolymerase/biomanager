@@ -1836,7 +1836,16 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                                                          group_id=access.cage_group(c))], key=lambda c: c.cage_id)
         litters, hidden_litters = [], 0
         if active_view == "litters":
-            litter_query = select(LitterRecord).options(selectinload(LitterRecord.mice)).order_by(LitterRecord.litter_id)
+            # Of each pup, only what its cell shows and who may edit it: a
+            # long colony's litters hold tens of thousands of mice.
+            pups = selectinload(LitterRecord.mice).load_only(
+                MouseRecord.mouse_id, MouseRecord.gender, MouseRecord.status, MouseRecord.date_of_death,
+                MouseRecord.owner, MouseRecord.cage_id_fk, MouseRecord.litter_id_fk)
+            if not (access.is_admin() or access.is_care()):
+                # Who may edit a litter is who may edit all its pups, which
+                # asks each pup's cage (access.can_edit_litter).
+                pups = pups.selectinload(MouseRecord.cage)
+            litter_query = select(LitterRecord).options(pups).order_by(LitterRecord.litter_id)
             if not show_ended:
                 year_ago = date.today() - timedelta(days=365)
                 with_living = select(MouseRecord.litter_id_fk).where(MouseRecord.date_of_death.is_(None))
@@ -1909,8 +1918,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                                                          recent=None if show_ended else recent)
             breeder_summary_rows = breeder_summary(db_session)
         next_mouse_id_value = next_mouse_id(db_session)
-        next_cage_id_value = next_cage_id(db_session)
-        next_litter_id_value = next_litter_id(db_session)
+        # Each reads every cage or litter ID: only the tab whose New dialog says it.
+        next_cage_id_value = next_cage_id(db_session) if active_view == "cages" else ""
+        next_litter_id_value = next_litter_id(db_session) if active_view == "litters" else ""
         # The mice view needs the open experiments too: the selection bar
         # offers "add to experiment", so the list has to be there even when
         # you are not on the experiments tab.
@@ -3039,9 +3049,7 @@ def colony():
         # An unknown or stale tab name lands on the mouse sheet rather than
         # on whichever tab happens to be the template's fallback.
         active_view = "mice"
-    html = render_template("colony.html", **_colony_page_context(active_view))
-    # A long litter sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
-    return sheet_paging.page(html, "litters-v2", url_for("colony_litter_rows")) if active_view == "litters" else html
+    return render_template("colony.html", **_colony_page_context(active_view))
 
 
 @app.route("/colony/litters/rows")
@@ -3050,9 +3058,15 @@ def colony_litter_rows():
     """Rows of a long litter sheet by id (?ids=…, with the page's own
     arguments), as the page draws them; ?as=text for their words."""
     ids = sheet_paging.ids_asked(request)
-    keep = set(ids)
-    context = _colony_page_context("litters", only=keep)
-    return sheet_paging.answer(render_template("colony.html", **context), "litters-v2", ids, request)
+    context = _colony_page_context("litters", only=set(ids))
+    found = {row["id"]: row for row in context["litter_rows"]}
+    rows = [found[i] for i in dict.fromkeys(ids) if i in found]
+    drawn = render_template("_litter_rows.html", **{**context, "sheet_rows": rows, "fragment": True})
+    if request.args.get("as") == "text":
+        texts = cell_text.row_texts(drawn)
+        return jsonify({"texts": {str(i): texts[i] for i in texts}, "ids": list(texts)})
+    return jsonify({"rows": drawn, "forms": render_template("_litter_row_forms.html", sheet_rows=rows),
+                    "ids": [row["id"] for row in rows]})
 
 
 def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict:
@@ -3077,7 +3091,34 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
         context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
         context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
         context["mouse_rows_url"] = url_for("colony_mouse_rows")
+    # A long litter sheet the same way (_litter_rows.html, /colony/litters/rows).
+    rows = context["litter_rows"]
+    context["litter_sheet_rows"], context["litter_stubs"], context["litter_rows_url"] = rows, [], ""
+    if active_view == "litters" and only is None and len(rows) > inventory_routes.LAZY_OVER:
+        context["litter_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
+        context["litter_stubs"] = [litter_stub(r) for r in rows[inventory_routes.FIRST_PAGE:]]
+        # With the page's scope and ended=all: a litter it lists is one the address can fetch.
+        context["litter_rows_url"] = url_for("colony_litter_rows", **{
+            k: request.args[k] for k in ("scope", "ended") if request.args.get(k)})
     return context
+
+
+def litter_stub(row: dict) -> dict:
+    """A litter the sheet does not draw, as data-table.js reads a drawn row
+    (_litter_rows.html): its data-*, each sortable cell's value ("k") and
+    the words a search looks in ("s", lower-cased)."""
+    text = lambda value: "" if value is None else str(value)  # noqa: E731
+    mouse_ids = [text(m["mouse_id"]) for m in row["mice"]]
+    data = {"id": str(row["id"]), "litter_id": text(row["litter_id"]), "mice": str(len(mouse_ids)),
+            "mouseIds": " ".join(mouse_ids)}
+    cells = {"date_of_birth": text(row["date_of_birth"]), "cohort_name": text(row["cohort_name"]),
+             "father_info": text(row["father_info"]), "mother_info": text(row["mother_info"]),
+             "total_pups": text(row["total_pups"] or ""), "notes": text(row["notes"])}
+    pups = [f"{text(m['mouse_id'])} {i18n.translate_value(m['gender'])}" if m["gender"] else text(m["mouse_id"])
+            for m in row["mice"]] or [gettext("none yet")]
+    words = [data["litter_id"], *pups, *data.values(), *cells.values()]
+    return {"id": row["id"], "f": f"litter-update-{row['id']}", "d": data, "k": cells,
+            "s": " ".join(w for w in words if w).lower()}
 
 
 def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:

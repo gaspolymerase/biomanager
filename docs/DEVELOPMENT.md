@@ -537,26 +537,32 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `BioSheets.ready(tr)`, a Promise of the row, fetched if it is a stub
   (`?open=`, `#item-12`). A request that fails leaves the page as it was
   and says so; the next page turn, search or sort asks again.
-- The mouse sheet is paged the same way past `LAZY_OVER` mice: the colony
-  route draws its first `FIRST_PAGE` rows through `_mouse_rows.html` and
-  `_mouse_row_forms.html` (the page's and `/colony/mice/rows`'s), each other
-  mouse as `app.mouse_stub` (its `data-row-form`, so a `#mouse-update-N`
-  link finds a stub). Rows fetched are wired as the page's own
-  (`dt:rows-loaded` in `colony.html`).
-- Tanks, litters and vials are drawn whole by their page and paged after
+- The mouse and litter sheets are paged the same way past `LAZY_OVER`
+  rows: the colony route draws the first `FIRST_PAGE` rows through
+  `_mouse_rows.html` / `_litter_rows.html` and their `_…_row_forms.html`
+  (the page's and `/colony/mice/rows`'s / `/colony/litters/rows`'s), each
+  other row as `app.mouse_stub` / `app.litter_stub`, built from the row's
+  data (a stub carries its row form, so a `#mouse-update-N` link finds
+  it). `tests/test_speed.py` holds `litter_stub` to `cell_text.row_stub`
+  of the drawn row. The litter rows address carries the page's `scope`
+  and `ended`, and loads only the litters asked for
+  (`colony_context(only=…)`); a litter's pups are loaded with only the
+  columns their cell shows (and, for someone who is not an admin, their
+  cages: who may edit a litter is who may edit all its pups). Rows fetched
+  are wired as the page's own (`dt:rows-loaded` in `colony.html`). At
+  100,000 mice the litters (6,634) open in 3.2 s instead of 9.1.
+- Tanks and vials are drawn whole by their page and paged after
   (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
   sheet's first page, makes each other row a stub with
   `cell_text.row_stub` (read from the row as drawn, as `_sortValue` and
   `_rowText` read it, so it needs no code per sheet), takes those rows'
   forms out of its `<template data-row-forms>`, and gives the sheet its
-  rows address: `/zebrafish/tanks/rows`, `/colony/litters/rows` (which
-  loads only the litters asked for: `colony_context(only=…)`),
-  `/stocks/<key>/units/rows`. That address builds the page's context with
-  only the rows asked for, draws the page, and `rows_of` lifts them and
-  their forms out. A stub carries its row form (`f`) for links. The
-  server still draws every row once for the page; the browser builds only
-  a page of them. At 100,000 mice: 3,337 tanks open in 5.4 s (14.2),
-  litters 7.2 s (7.5: the server's), vials 3.8 s (4.5), a page turn
+  rows address: `/zebrafish/tanks/rows`, `/stocks/<key>/units/rows`. That
+  address builds the page's context with only the rows asked for, draws
+  the page, and `rows_of` lifts them and their forms out. A stub carries
+  its row form (`f`) for links. The server still draws every row once for
+  the page; the browser builds only a page of them. At 100,000 mice:
+  3,337 tanks open in 5.4 s (14.2), vials 3.8 s (4.5), a page turn
   0.1–0.9 s. The cage sheet is not paged: its cards and Open all need
   every cage on the page (`data-dt-keep-rows`).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`

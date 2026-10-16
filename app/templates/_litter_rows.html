@@ -1,0 +1,50 @@
+{#- The litter sheet's rows: drawn in its page (colony.html) and, for a
+    sheet the server pages, fetched by data-table.js from /colony/litters/rows
+    (app.py, colony_litter_rows, fragment=True). `sheet_rows` are the rows to
+    draw; app.litter_stub reads an undrawn row as data-table.js reads these. -#}
+{% import "_sheet.html" as sheet_ui with context %}
+              {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+              {% filter as_text_cells(text_cells_on()) %}
+              {# One link made for all the pups: url_for for each was most of the tab's time. #}
+              {% set pup_url = url_for('colony', view='mice', scope='all') ~ '&q=' %}
+              {% for litter in sheet_rows %}
+                {% set f = 'litter-update-' ~ litter.id %}
+                {% set locked = not litter.editable %}
+                {% set alive = litter.mice|selectattr('active')|list|length %}
+                <tr data-id="{{ litter.id }}" data-litter_id="{{ litter.litter_id }}"
+                    data-mice="{{ litter.mice|length }}"
+                    data-mouse-ids="{{ litter.mice|map(attribute='mouse_id')|join(' ') }}"
+                    class="{% if locked %}is-locked{% endif %}">
+                  <td class="sheet-pin sheet-pin-0">{{ sheet_ui.id_cell(litter.litter_id, locked=locked, owner=_('Other members'), noun='litter') }}</td>
+                  <td><input type="date" name="date_of_birth" form="{{ f }}" value="{{ litter.date_of_birth }}"
+                             data-empty="{{ '0' if litter.date_of_birth else '1' }}" data-autosave="1" data-litter-dob
+                             data-original-dob="{{ litter.date_of_birth }}" data-mice-count="{{ litter.mice|length }}"
+                             aria-label="{{ _('Date of birth') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input name="cohort_name" form="{{ f }}" value="{{ litter.cohort_name }}" data-autosave="1" aria-label="{{ _('Cohort') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="ident" name="father_info" form="{{ f }}" value="{{ litter.father_info }}" data-autosave="1" aria-label="{{ _('Father') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="ident" name="mother_info" form="{{ f }}" value="{{ litter.mother_info }}" data-autosave="1" aria-label="{{ _('Mother') }}" {% if locked %}disabled{% endif %}></td>
+                  <td><input class="sheet-num" type="number" min="0" max="99" name="total_pups" form="{{ f }}" value="{{ litter.total_pups or '' }}" data-autosave="1" aria-label="{{ _('Pups') }}" {% if locked %}disabled{% endif %}></td>
+                  <td class="whitespace-normal" title="{{ _('%(alive)s of %(total)s alive', alive=alive, total=litter.mice|length) }}">
+                    {% for mouse in litter.mice %}
+                      <a class="litter-mouse" href="{{ pup_url }}{{ mouse.mouse_id }}">
+                        {%- set st = life_stage('mouse', mouse.age_days) %}
+                        <span class="life-dot{% if mouse.active %} is-alive{% endif %}"{% if st %} data-stage="{{ st }}"{% endif %}></span>{{ mouse.mouse_id }}{% if mouse.gender %} {{ mouse.gender|tr }}{% endif %}</a>
+                    {%- else %}<span class="sheet-empty">{{ _('none yet') }}</span>{% endfor %}
+                  </td>
+                  <td><input class="note-cell" name="notes" form="{{ f }}" value="{{ litter.notes }}" title="{{ litter.notes }}" placeholder="{{ _('Add a note') }}"
+                             data-autosave="1" aria-label="{{ _('Notes') }}" {% if locked %}disabled{% endif %}></td>
+                  <td class="sheet-pin sheet-pin-end">
+                    <div class="sheet-actions">
+                      {% if not locked %}
+                        <button type="button" class="row-icon-btn" title="{{ _('Add an existing mouse to litter %(id)s', id=litter.litter_id) }}"
+                                data-add-existing-mouse data-litter
+                                data-action="{{ url_for('add_existing_mouse_to_litter', litter_row_id=litter.id) }}"
+                                data-target-label="{{ litter.litter_id }}">{{ icon('plus') }}</button>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% else %}{% if not fragment %}
+                <tr><td class="dt-empty" colspan="9">{{ _('No litters yet. Use <strong>New litter</strong>, or record a litter from a breeding cage’s card.') }}</td></tr>
+              {% endif %}{% endfor %}
+              {% endfilter %}

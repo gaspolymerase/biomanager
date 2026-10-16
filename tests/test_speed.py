@@ -574,6 +574,53 @@ class SheetPagingTests(AppTestCase):
         self.check_sheet("/colony?view=litters", ids, "/colony/litters/rows",
                          r'<tr data-id="%d".*?</tr>', lambda i: f"litter-update-{i}")
 
+    def test_a_litter_not_drawn_reads_as_its_row_would(self):
+        """app.litter_stub builds an undrawn litter from its data; it must
+        be what data-table.js would read from the row (cell_text.row_stub
+        reads it as the browser does), in either way of drawing cells."""
+        from unittest import mock
+        from app import inventory_routes
+        from app.cell_text import _ROW_FULL, row_stub
+        code = uniq("L")
+        self.make_mouse(self.a, self.admin, litter=code, date_of_birth=days_ago(20), gender="M")
+        self.make_mouse(self.a, self.admin, litter=code, date_of_birth=days_ago(20), gender="Unknown",
+                        status="sacrificed")
+        self.make_litter(self.a, date_of_birth=days_ago(5), cohort_name="Cohort & co", father_info="M-7",
+                         mother_info="F-9", total_pups="6", notes='said "hello"')
+        theirs = uniq("L")
+        self.make_mouse(self.m, self.member, litter=theirs, date_of_birth=days_ago(15))
+        url = "/colony?view=litters&scope=all"
+        for headers in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
+                        {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
+            with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+                whole = self.a.get(url, headers=headers).get_data(as_text=True)
+            stubs = {s["id"]: s for s in self.stubs(self.a.get(url, headers=headers).get_data(as_text=True))}
+            if "Accept-Language" in headers:
+                self.assertIn('<html lang="zh', whole)   # a pup's sex in Chinese, its words too
+            body = whole[whole.index("<tbody"):whole.index("</tbody>")]
+            read = {}
+            for m in _ROW_FULL.finditer(body):
+                drawn = row_stub(m.group(1), m.group(2))
+                read[drawn["id"]] = drawn
+            mine = [one("select id from litters where litter_id=?", c) for c in (code, theirs)]
+            for lid in [*mine, *list(stubs)[:20]]:
+                if lid not in stubs:
+                    continue
+                want, got = read[lid], stubs[lid]
+                self.assertEqual(got["d"], want["d"], headers)
+                self.assertEqual(got["k"], want["k"], headers)
+                self.assertEqual(got["f"], want["f"])
+                self.assertEqual(set(got["s"].split()), set(want["s"].split()), (lid, headers))
+
+    def test_a_litter_of_ended_mice_comes_when_the_page_shows_them(self):
+        old = self.make_litter(self.a, date_of_birth=days_ago(800))
+        for _ in range(3):
+            self.make_litter(self.a, date_of_birth=days_ago(800))
+        html = self.get_ok(self.a, "/colony?view=litters&scope=all&ended=all")
+        self.assertIn('data-dt-rows-url="/colony/litters/rows?scope=all&amp;ended=all"', html)
+        answer = self.a.get(f"/colony/litters/rows?scope=all&ended=all&ids={old}").get_json()
+        self.assertEqual(answer["ids"], [old])
+
     def test_vials(self):
         key = self.make_stock_module(self.a, "fly")
         ids = [self.make_vial(self.a, key) for _ in range(4)]
