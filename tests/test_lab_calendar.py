@@ -133,8 +133,11 @@ class EverythingWithADateTests(Calendar):
 class AutoItemLinkTests(Calendar):
     def test_every_item_the_colony_puts_on_the_calendar_opens_a_page(self):
         from tests.base import execute
-        colony = self.make_colony(self.a, self.admin, n_mice=1, dob=(TODAY - timedelta(days=30 * 7 - 5)).isoformat())
-        execute("update mouse_cages set date_give_birth=? where id=?", TODAY - timedelta(days=20), colony["cage_id"])
+        # A Breeding cage: only a mating cage has a litter to wean on the calendar.
+        colony = self.make_colony(self.a, self.admin, n_mice=1, dob=(TODAY - timedelta(days=30 * 7 - 5)).isoformat(),
+                                  purpose="Breeding")
+        # Its litter born 20 days ago: weaning and genotyping are due (Litter born, as on the sheet).
+        self.a.post(f"/colony/cages/{colony['cage_id']}/give-birth", data={"date_give_birth": iso(TODAY - timedelta(days=20))})
         execute("update litters set date_of_birth=? where id=?", TODAY - timedelta(days=30 * 7 - 5), colony["litter_id"])
         name = uniq("Exp ")
         self.a.post("/colony/experiments/create", data={"name": name, "from_cage_id": colony["cage"]})

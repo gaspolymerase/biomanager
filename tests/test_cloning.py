@@ -422,6 +422,8 @@ def annotations(number: int) -> list[dict]:
 class TheWizardPage(AppTestCase):
 
     def test_each_way_of_putting_things_together_has_its_page(self):
+        # The parts come from plasmids with a sequence: one of the member's own.
+        self.make_plasmid(self.m, uniq("pWiz-"), sequence_text=genbank("pUC19", PUC19))
         for method in cloning.METHODS:
             with self.subTest(method=method):
                 page = self.get_ok(self.m, f"/plasmids/assembly/?method={method}")
