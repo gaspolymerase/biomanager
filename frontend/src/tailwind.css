@@ -373,6 +373,14 @@
      tells l from I from 1: a tailed l and a serifed I. */
   td, th, input, textarea, select, .num, .ident { font-feature-settings: "cv05", "cv08"; }
 
+  /* A placeholder's colour: a field's own (--placeholder, the workbench's
+     bare fields), else Tailwind's. Bare fields could not say it with a
+     :not([class])::placeholder rule: the browser then restyled all of an
+     element whenever any class on it changed, a whole sheet at a time. */
+  @supports (color: color-mix(in lab, red, red)) {
+    ::placeholder { color: var(--placeholder, color-mix(in oklab, currentcolor 50%, transparent)); }
+  }
+
   /* Scrollbars stay out of the way; macOS overlays them anyway. */
   * { scrollbar-width: none; -ms-overflow-style: none; }
   *::-webkit-scrollbar { width: 0; height: 0; }
@@ -455,10 +463,16 @@
 /* --- Text field --------------------------------------------------------- */
 
 @utility field {
+  @apply field-box;
+  &::placeholder { @apply text-sand-500; }
+}
+
+/* A text field without its placeholder's colour: for a rule that cannot
+   carry a ::placeholder of its own (the workbench's bare fields). */
+@utility field-box {
   @apply h-7 w-full rounded-md border border-hairline bg-surface px-2 text-[13px]
          text-ink transition-colors duration-100;
   box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.04);
-  &::placeholder { @apply text-sand-500; }
   &:hover { @apply border-sand-400; }
   &:focus { @apply border-brand-500;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 22%, transparent); }
@@ -1320,11 +1334,13 @@
      stay in view under the toolbar (data-table.js sets .is-fit). */
   .dt-scroll.is-fit { overflow: visible; }
   .dt-scroll.is-fit .dt thead th { top: var(--dt-toolbar-h, 0px); }
-  /* Until data-table.js has drawn the first page (.dt-ready), the rows past
-     it are not drawn: the browser would otherwise lay out every row of a
-     long sheet, thousands of fields, before the page could be used. 100 is
-     the sheets' first page. */
-  .data-table-card[data-table-id]:not(.dt-ready) .dt > tbody > tr:nth-child(n+101) { display: none; }
+  /* Until data-table.js has drawn the first page (it takes off .dt-held),
+     the rows past it are not drawn: the browser would otherwise lay out
+     every row of a long sheet, thousands of fields, before the page could
+     be used. 100 is the sheets' first page. A class taken off, not one
+     put on: a :not(.dt-ready) rule had the browser restyle the whole card
+     when the class came. */
+  .data-table-card.dt-held .dt > tbody > tr:nth-child(n+101) { display: none; }
   /* A page of a sheet the server pages, on its way (data-table.js). */
   .data-table-card.dt-loading .dt > tbody { opacity: 0.55; transition: opacity 0.15s 0.15s; }
   .data-table-card.dt-loading { cursor: progress; }
@@ -1338,9 +1354,18 @@
            text-muted backdrop-blur;
   }
 
+  /* A table's last row has no rule under it. Its cells take the rule's
+     width from their row (--row-rule), so a row that stops being the last
+     restyles only itself: a `tr:last-child td` rule had the browser
+     restyle every cell of a sheet each time the page grew as it loaded. */
+  :where(tr) { --row-rule: 1px; }
+  :where(tbody > tr:last-child) { --row-rule: 0px; }
+
   .dt tbody tr { @apply transition-colors duration-100; }
-  .dt tbody td { @apply border-b border-sand-100 px-2 py-1 align-middle text-ink-soft; }
-  .dt tbody tr:last-child td { @apply border-b-0; }
+  .dt tbody td {
+    @apply border-b border-sand-100 px-2 py-1 align-middle text-ink-soft;
+    border-bottom-width: var(--row-rule);
+  }
   .dt tbody tr:hover { @apply bg-sand-50/80; }
   .dt tbody tr.is-selected { @apply bg-brand-50/60; }
 
@@ -2961,7 +2986,7 @@
     input:not([type="checkbox"]):not([type="radio"]):not([class]),
     select:not([class]),
     textarea:not([class])
-  ) { @apply field; }
+  ) { @apply field-box; --placeholder: var(--color-sand-500); }
 
   .workbench :where(input[type="checkbox"], input[type="radio"]) {
     @apply size-3.5 shrink-0 cursor-pointer accent-brand-600;
@@ -2998,7 +3023,7 @@
            align-bottom text-[10.5px] font-semibold leading-tight text-muted;
   }
   .dense-table td { @apply border-b border-sand-100 px-1 py-px align-middle; }
-  .dense-table tbody tr:last-child td { @apply border-b-0; }
+  .dense-table tbody td { border-bottom-width: var(--row-rule); }   /* none under the last row */
   .dense-table tbody tr { @apply transition-colors duration-100; }
   .dense-table tbody tr:hover { @apply bg-sand-50/70; }
   .fit-table th, .fit-table td { @apply px-1.5 py-1; }
@@ -3764,9 +3789,11 @@
   .cage-card-grid .breeding-actions { @apply inline-flex flex-wrap items-center gap-1.5; }
   .cage-card-grid .breeding-actions.hidden-row { display: none; }
   .cage-card-grid .cage-mice-table { @apply w-full; }
-  .cage-card-grid .cage-mice-table tbody td { @apply h-8 border-b border-sand-100 bg-surface px-1; }
+  .cage-card-grid .cage-mice-table tbody td {
+    @apply h-8 border-b border-sand-100 bg-surface px-1;
+    border-bottom-width: var(--row-rule);
+  }
   .cage-card-grid .cage-mice-table tbody tr:hover td { @apply bg-sand-50; }
-  .cage-card-grid .cage-mice-table tbody tr:last-child td { @apply border-b-0; }
 
   .cage-mice-table { @apply w-max border-separate border-spacing-0 rounded-lg border border-hairline bg-surface; }
   .cage-mice-table thead th {
@@ -3780,10 +3807,12 @@
   .cage-mice-table thead th:first-child { @apply rounded-tl-lg; }
   .cage-mice-table thead th:last-child { @apply rounded-tr-lg; }
   /* Hovering the sub-row must not tint every cell of the table in it. */
-  .sheet-table tr.cage-detail .cage-mice-table tbody td { @apply h-8 border-b border-sand-100 bg-surface px-1; }
+  .sheet-table tr.cage-detail .cage-mice-table tbody td {
+    @apply h-8 border-b border-sand-100 bg-surface px-1;
+    border-bottom-width: var(--row-rule);
+  }
   .sheet-table tr.cage-detail:hover .cage-mice-table tbody td { @apply bg-surface; }
   .sheet-table tr.cage-detail .cage-mice-table tbody tr:hover td { @apply bg-sand-50; }
-  .sheet-table tr.cage-detail .cage-mice-table tbody tr:last-child td { @apply border-b-0; }
   .cage-mice-table td > input:not([type="checkbox"]) { @apply w-[8.5rem]; }
   .cage-mice-table td > input.ident { @apply w-20; }
   .cage-mice-table td > input.note-cell { @apply w-56; }

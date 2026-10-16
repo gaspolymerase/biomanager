@@ -5,7 +5,7 @@
 {% block page_subtitle %}{{ _('Every tracked create, edit and delete · admin only · %(count)s entries (last 200)', count=entries|length) }}{% endblock %}
 
 {% block content %}
-<section class="data-table-card" data-table-id="audit">
+<section class="data-table-card dt-held" data-table-id="audit">
   <div class="dt-toolbar">
     <div class="dt-toolbar-search">
       {{ icon('search', 'search-icon') }}

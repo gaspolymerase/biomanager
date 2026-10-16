@@ -436,7 +436,9 @@
         requestAnimationFrame(() => { ticking = false; follow(); });
       }, { passive: true });
       this._measureSticky = () => { measure(); follow(); };
-      measure();
+      // At the next frame, once every script has drawn: measuring now laid
+      // the whole page out once more as it loaded.
+      requestAnimationFrame(measure);
       if (typeof ResizeObserver === 'function') {
         let queued = false;
         const observer = new ResizeObserver(() => {
@@ -1495,13 +1497,12 @@
       this._notLoaded = false;
       // Only the rows whose state changes are touched: a long sheet has
       // thousands, and the stylesheet hides those past the first page until
-      // now (.dt-ready).
+      // now (.dt-held).
       const shown = new Set(this.filtered.slice(start, end));
       this.rows.forEach((tr) => {
         const display = shown.has(tr) ? '' : 'none';
         if (tr.style.display !== display) tr.style.display = display;
       });
-      this.card.classList.add('dt-ready');
       const total = this.filtered.length;
       if (this.count) {
         const noun = t(total === 1 ? this.noun : this.nounPlural);
@@ -1532,11 +1533,19 @@
           if ((tr.dataset.id || tr.dataset.detailFor !== undefined) && !keep.has(tr)
               && !tr.querySelector('.mouse-select:checked, [data-select-row]:checked, .dt-row-check:checked')) tr.remove();
         });
+        const order = [];
         page.forEach((tr) => {
-          this.tbody.appendChild(tr);
+          order.push(tr);
           const detail = details.get(tr.dataset.id);
-          if (detail) this.tbody.appendChild(detail);
+          if (detail) order.push(detail);
         });
+        // Moved only when not already the last rows, in this order: moving
+        // the page the server drew restyled every cell of it as it opened.
+        const kids = this.tbody.children;
+        const from = kids.length - order.length;
+        if (from < 0 || order.some((tr, i) => kids[from + i] !== tr)) {
+          order.forEach((tr) => this.tbody.appendChild(tr));
+        }
         this._laidOut = this.filtered.slice();
       } else if (laidOut.length !== this.filtered.length || this.filtered.some((tr, i) => tr !== laidOut[i])
           || this.filtered.slice(start, end).some(away)) {
@@ -1558,6 +1567,7 @@
       if (this.pageLabel) this.pageLabel.textContent = t('Page %(page)s of %(pages)s', { page: this.page + 1, pages: totalPages });
       if (this.prev) this.prev.disabled = this.page === 0;
       if (this.next) this.next.disabled = this.page >= totalPages - 1;
+      this.card.classList.remove('dt-held');
     }
   }
 
@@ -1639,7 +1649,7 @@
       try {
         new DataTableController(card);
       } finally {
-        card.classList.add('dt-ready');   // never leave rows hidden by the stylesheet
+        card.classList.remove('dt-held');   // never leave rows hidden by the stylesheet
       }
     });
     // Bind resize to any standalone <table data-resizable="1"> not inside a

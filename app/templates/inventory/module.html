@@ -124,7 +124,7 @@
     {# Same card, toolbar and bottom bar as the mouse sheet: cells save as
        you type (static/sheet.js), ticked rows get the selection bar, the
        dot is green while an item is usable (or, for orders, open). #}
-    <section class="data-table-card sheet" data-table-id="inv-{{ key }}-{{ col_sig }}" data-autosave-sheet
+    <section class="data-table-card sheet dt-held" data-table-id="inv-{{ key }}-{{ col_sig }}" data-autosave-sheet
              data-noun="{{ noun }}" data-noun-plural="{{ nouns }}" data-export-name="{{ key }}"
              data-selection-scope data-selection-noun="{{ noun }}" data-selection-noun-plural="{{ nouns }}"
              {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %}>

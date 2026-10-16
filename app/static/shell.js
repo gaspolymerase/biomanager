@@ -467,7 +467,9 @@
     if (scroller && toolbar) {
       const sync = () => toolbar.classList.toggle('is-scrolled', scroller.scrollTop > 2);
       scroller.addEventListener('scroll', sync, { passive: true });
-      sync();
+      // At the next frame: reading scrollTop now would lay out the page
+      // before its own scripts have drawn their sheets.
+      requestAnimationFrame(sync);
     }
 
     initWindowFrame();

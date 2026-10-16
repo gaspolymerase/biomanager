@@ -443,10 +443,25 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   take their dialogs from `rack_edits`.
 - Rows past a sheet's first page (100) are `display: none` from the
   stylesheet until `data-table.js` has drawn it
-  (`.data-table-card[data-table-id]:not(.dt-ready)`): the browser would
+  (`.data-table-card.dt-held`, which the script takes off): the browser would
   otherwise style and lay out every row first. `render()` then touches only
   the rows whose state changes, and moves rows into a new order only when
-  the order has changed (a sort, a search, a chip).
+  the order has changed (a sort, a search, a chip); a paged sheet's page
+  the server drew is already in place and is not moved.
+- The browser restyles a sheet as it loads only as far as a rule makes it.
+  Three kinds of rule made it restyle every cell, over and over: a class
+  that takes rows out of a `:not()` (`:not(.dt-ready)` was the hold above,
+  so the class coming restyled the whole card; a class taken off is
+  narrow), `tr:last-child td` (each row the page added restyled every cell
+  of the table: a cell takes its row's rule from `--row-rule`, which only
+  `tr:last-child` sets), and any rule pairing `[class]` with
+  `::placeholder` (`.workbench`'s bare fields: any class changing on an
+  element restyled all of it; their placeholder's colour is now their
+  `--placeholder`). The mouse sheet's style work went from about 310 ms to
+  130 ms. Chrome's trace with `disabled-by-default-devtools.timeline.invalidationTracking`
+  says which change restyled what. `shell.js` and `data-table.js` read the
+  page's scroll and sizes at the next frame, not as their scripts run,
+  which laid the page out before it was drawn.
 - A sheet of more than 300 rows (`PARK_OVER`) takes the rows it has not
   shown off the page (`_parkLater`), and `render()` puts each back when it
   is shown; it then stays. Chromium's autofill reads every field on a page

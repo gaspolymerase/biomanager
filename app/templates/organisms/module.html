@@ -109,7 +109,7 @@
   {% set own_fields = fields.get('organism', []) %}
   {% set dead_values = module.dead_statuses | join(',') %}
   {% set new_payload = {'count': 1, 'code': next_code, 'attrs': attr_defaults.get('organism', {})} %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-animals-v2" data-autosave-sheet
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-animals-v2" data-autosave-sheet
            data-noun="{{ n_org }}" data-noun-plural="{{ n_orgs }}"
            data-selection-scope data-selection-noun="{{ n_org }}" data-selection-noun-plural="{{ n_orgs }}">
     <div class="dt-toolbar">
@@ -377,7 +377,7 @@
     </div>
   {% endif %}
   <div data-layout-panel="table">
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-housing-v2" data-autosave-sheet
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-housing-v2" data-autosave-sheet
            data-noun="{{ n_unit }}" data-noun-plural="{{ n_units }}"
            data-selection-scope data-selection-noun="{{ n_unit }}" data-selection-noun-plural="{{ n_units }}">
     <div class="dt-toolbar">
@@ -684,7 +684,7 @@
    ===================================================================== #}
 {% if active_view == 'lines' %}
   {% set own_fields = fields.get('line', []) %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-lines-v2"
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-lines-v2"
            data-noun="{{ n_line }}" data-noun-plural="{{ n_lines }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
@@ -804,7 +804,7 @@
    ===================================================================== #}
 {% if active_view == 'crosses' %}
   {% set own_fields = fields.get('cross', []) %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-crosses-v2"
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-crosses-v2"
            data-noun="{{ n_cross }}" data-noun-plural="{{ n_crosses }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
@@ -935,7 +935,7 @@
    ===================================================================== #}
 {% if active_view == 'cohorts' %}
   {% set own_fields = fields.get('cohort', []) %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-cohorts-v2"
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-cohorts-v2"
            data-noun="{{ n_cohort }}" data-noun-plural="{{ n_cohorts }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
@@ -1058,7 +1058,7 @@
    ===================================================================== #}
 {% if active_view == 'genotyping' %}
   {% set new_call = {'called_on': today} %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-genotyping-v1"
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-genotyping-v1"
            data-noun="{{ _('genotype call') }}" data-noun-plural="{{ _('genotype calls') }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
@@ -1346,7 +1346,7 @@
    PRESERVATION
    ===================================================================== #}
 {% if active_view == 'preservation' %}
-  <section class="data-table-card sheet" data-table-id="org-{{ module.key }}-lots-v2" data-noun="{{ _('lot') }}" data-noun-plural="{{ _('lots') }}">
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-lots-v2" data-noun="{{ _('lot') }}" data-noun-plural="{{ _('lots') }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
         {{ icon('search', 'search-icon') }}

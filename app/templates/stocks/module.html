@@ -112,7 +112,7 @@
   </div>
 
   <div data-layout-panel="table">
-    <section class="data-table-card sheet" data-table-id="stock-{{ key }}-v2-{{ col_sig }}" data-noun="{{ unit_w }}" data-noun-plural="{{ units_w }}"
+    <section class="data-table-card sheet dt-held" data-table-id="stock-{{ key }}-v2-{{ col_sig }}" data-noun="{{ unit_w }}" data-noun-plural="{{ units_w }}"
              data-export-name="{{ m.key }}-{{ m.units }}" data-autosave-sheet
              data-selection-scope data-selection-noun="{{ unit_w }}" data-selection-noun-plural="{{ units_w }}">
       <div class="dt-toolbar">
@@ -413,7 +413,7 @@
    GENOTYPES
    ===================================================================== #}
 {% if view == 'genotypes' %}
-  <section class="data-table-card sheet" data-table-id="stock-{{ key }}-genotypes" data-noun="{{ _('genotype') }}" data-noun-plural="{{ _('genotypes') }}">
+  <section class="data-table-card sheet dt-held" data-table-id="stock-{{ key }}-genotypes" data-noun="{{ _('genotype') }}" data-noun-plural="{{ _('genotypes') }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
         {{ icon('search', 'search-icon') }}
@@ -603,7 +603,7 @@
    FROZEN (worms)
    ===================================================================== #}
 {% if view == 'frozen' %}
-  <section class="data-table-card sheet" data-table-id="stock-{{ key }}-frozen" data-noun="{{ _('lot') }}" data-noun-plural="{{ _('lots') }}">
+  <section class="data-table-card sheet dt-held" data-table-id="stock-{{ key }}-frozen" data-noun="{{ _('lot') }}" data-noun-plural="{{ _('lots') }}">
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">{{ icon('search', 'search-icon') }}<input type="text" class="dt-search" placeholder="{{ _('Search frozen stocks…') }}" aria-label="{{ _('Search') }}"></div>
       <p class="text-[12px] text-muted">{{ _('Thaw one vial of each new lot to check it recovers. A lot without a passed thaw test is a lot you might not have.') }}</p>

@@ -115,7 +115,7 @@
          content so dates, statuses and IDs never truncate — the sheet
          scrolls sideways instead, with the ID column and row actions
          pinned. #}
-      <section class="data-table-card sheet" data-table-id="{{ mouse_table_id }}"
+      <section class="data-table-card sheet dt-held" data-table-id="{{ mouse_table_id }}"
                {% if mouse_rows_url %}data-dt-rows-url="{{ mouse_rows_url }}"{% endif %}
                data-selection-scope="mice"
                data-selection-noun="mouse" data-selection-noun-plural="mice">
@@ -388,7 +388,7 @@
              sub-row with the cage's mice and its breeding actions. Its rows
              all stay on the page (data-dt-keep-rows): the cards view, Open
              all and a scanned cage look for them there. #}
-          <section class="data-table-card sheet cage-sheet" data-table-id="cages-v3" data-dt-keep-rows
+          <section class="data-table-card sheet cage-sheet dt-held" data-table-id="cages-v3" data-dt-keep-rows
                    {% if cage_rows_url %}data-dt-rows-url="{{ cage_rows_url }}"{% endif %}
                    data-noun="cage" data-noun-plural="cages" data-export-name="cages"
                    data-autosave-sheet data-selection-scope="cages"
@@ -615,7 +615,7 @@
       {# Litters as a sheet: one row per litter. Its date of birth is the
          age of every mouse in it, so changing it asks first (as on the
          mouse sheet), and only someone who may edit all its mice can. #}
-      <section class="data-table-card sheet" data-table-id="litters-v2"
+      <section class="data-table-card sheet dt-held" data-table-id="litters-v2"
                data-noun="litter" data-noun-plural="litters" data-export-name="litters"
                {% if litter_rows_url %}data-dt-rows-url="{{ litter_rows_url }}"{% endif %}>
         <div class="dt-toolbar">
@@ -903,7 +903,7 @@
           {{ icon('info') }} {{ _('Anyone can add a strain. Renaming or removing one is for whoever added it, or an admin; the others are read only here but can still be picked on every mouse.') }}
         </p>
       {% endif %}
-      <section class="data-table-card sheet" data-table-id="strains-v2"
+      <section class="data-table-card sheet dt-held" data-table-id="strains-v2"
                data-noun="strain" data-noun-plural="strains" data-export-name="strains">
         <div class="dt-toolbar">
           <div class="dt-toolbar-search">

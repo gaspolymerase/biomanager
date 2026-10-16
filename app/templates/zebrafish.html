@@ -204,7 +204,7 @@
 {% if active_view == "tanks" and tanks_sub == 'table' %}
   {% set any_mating = tank_rows | selectattr('row.mating_return_at') | list %}
   {% set any_returnable = tank_rows | selectattr('returnable') | list %}
-  <section class="data-table-card sheet" data-table-id="zf-tanks-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-tanks"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-tanks-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-tanks"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('tank') }}" data-selection-noun-plural="{{ _('tanks') }}">
     <div class="dt-toolbar">
       {{ search_box(_('Search tank, line, owner…')) }}
@@ -547,7 +547,7 @@
 {% endif %}
 
 {% if active_view == "tanks" and tanks_sub == 'geno' %}
-  <section class="data-table-card sheet" data-table-id="zf-geno-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-genotyping">
+  <section class="data-table-card sheet dt-held" data-table-id="zf-geno-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-genotyping">
     <div class="dt-toolbar">
       {{ search_box(_('Search the queue…')) }}
       <span class="text-[12px] text-muted">{{ _('Clear a tank’s flag when its fish are genotyped.') }}</span>
@@ -606,7 +606,7 @@
 {# ================================= FISH ================================= #}
 {% if active_view == "fish" %}
   {% set sex_labels = {'M': _('M'), 'F': _('F'), 'mixed': zf('Mix'), 'unknown': '?'} %}
-  <section class="data-table-card sheet" data-table-id="zf-fish-v2" data-noun="{{ _('row') }}" data-noun-plural="{{ _('rows') }}" data-export-name="zebrafish-fish"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-fish-v2" data-noun="{{ _('row') }}" data-noun-plural="{{ _('rows') }}" data-export-name="zebrafish-fish"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('fish row') }}" data-selection-noun-plural="{{ _('fish rows') }}">
     <div class="dt-toolbar">
       {{ search_box(_('Search tank, line, genotype…')) }}
@@ -797,7 +797,7 @@
     <p class="px-4 pb-2 text-[12px] text-muted">{{ _('The fish you move go into the new mating tank; <strong>Returned</strong> on its row puts them back in their tanks.') }}</p>
   </details>
 
-  <section class="data-table-card sheet" data-table-id="zf-clutches-v2" data-noun="{{ _('clutch') }}" data-noun-plural="{{ _('clutches') }}" data-export-name="zebrafish-clutches"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-clutches-v2" data-noun="{{ _('clutch') }}" data-noun-plural="{{ _('clutches') }}" data-export-name="zebrafish-clutches"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('clutch') }}" data-selection-noun-plural="{{ _('clutches') }}">
     <div class="dt-toolbar">
       {{ search_box(_('Search clutch, line, notes…')) }}
@@ -937,7 +937,7 @@
 
 {# ================================= LINES ================================ #}
 {% if active_view == "lines" %}
-  <section class="data-table-card sheet" data-table-id="zf-lines-v2" data-noun="{{ _('line') }}" data-noun-plural="{{ _('lines') }}" data-export-name="zebrafish-lines"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-lines-v2" data-noun="{{ _('line') }}" data-noun-plural="{{ _('lines') }}" data-export-name="zebrafish-lines"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('line') }}" data-selection-noun-plural="{{ _('lines') }}">
     <div class="dt-toolbar">
       {{ search_box(_('Search line, ZFIN, allele…')) }}
