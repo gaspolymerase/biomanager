@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.12": {
+        "changed": [
+            "A **Cages** sheet of more than 500 cages opens with its first page and brings each other page as you turn to it, as the mice and litters do; **Cards** loads the cages when you switch to it.",
+            "A long **Litters** sheet opens about three times sooner.",
+        ],
+        "fixed": [
+            "A cage whose purpose was written in capitals (BREEDER) shows it in its **Purpose** menu, not “–”.",
+        ],
+    },
     "2.0.11": {
         "changed": [
             "On **Cages → Rack grid**, **Unplaced** lists only the cages with living mice that have no position yet; empty cages stay in the sheet.",

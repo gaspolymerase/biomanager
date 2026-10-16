@@ -173,5 +173,8 @@
   "A mouse, litter, tank or vial sheet of more than 500 entries opens with its first page and brings each other page as you turn to it; search, sorting, **Export** and **Print** still go by every entry.": "超过 500 条记录的小鼠、窝、鱼缸或果蝇管表格打开时只有第一页，翻到其他页时再载入；搜索、排序、**导出** 和 **打印** 仍按全部记录来算。",
   "An inventory's **Box grid** comes when you switch to it, and **Export** of a long inventory takes about half the time.": "库存的 **冻存盒视图** 在切换到它时才载入，很长的库存表 **导出** 用时约减半。",
   "On **Mice**, a cell changed and then changed back to what it was when the page opened is saved, not left as it was.": "在 **小鼠** 里，改了一个单元格后再改回页面打开时的值，现在会保存，不再保持原样。",
-  "On **Cages → Rack grid**, **Unplaced** lists only the cages with living mice that have no position yet; empty cages stay in the sheet.": "在 **笼 → 笼架视图** 里，**未放置** 只列出有活鼠、还没有位置的笼；空笼留在表格里。"
+  "On **Cages → Rack grid**, **Unplaced** lists only the cages with living mice that have no position yet; empty cages stay in the sheet.": "在 **笼 → 笼架视图** 里，**未放置** 只列出有活鼠、还没有位置的笼；空笼留在表格里。",
+  "A **Cages** sheet of more than 500 cages opens with its first page and brings each other page as you turn to it, as the mice and litters do; **Cards** loads the cages when you switch to it.": "超过 500 个笼的 **笼** 表格打开时只有第一页，翻到其他页时再载入，和小鼠、窝一样；**卡片** 视图切换过去时才载入笼。",
+  "A long **Litters** sheet opens about three times sooner.": "很长的 **窝** 表格打开快约三倍。",
+  "A cage whose purpose was written in capitals (BREEDER) shows it in its **Purpose** menu, not “–”.": "用途写成大写（BREEDER）的笼，在 **用途** 菜单里显示它的用途，不再是“–”。"
 }
