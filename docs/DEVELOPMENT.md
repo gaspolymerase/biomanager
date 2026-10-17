@@ -424,8 +424,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   holds its ticked choices as hidden fields and makes its checkboxes from
   `choices-inv-m-<key>` when it is opened (`buildMulti`). A source cell's
   ID box gets its colony's list (`inv-src-<n>`) when it is first focused or
-  its colony changed, made from the `inv-src-data` JSON: a mouse colony's
-  IDs were 3 MB of `<option>`s on the samples sheet.
+  its colony changed, made from `/inventory/<key>/sources` (`source_ids`:
+  each colony's IDs in the order of the page's menus), fetched once, the
+  first time: a mouse colony's IDs were 3 MB of `<option>`s on the samples
+  sheet, and then a fifth of its server time as JSON in the page.
 - Rows are written without the indentation between their tags
   (`{% filter tight %}`, `app.py`), which was a third of a long inventory;
   the labels, links, titles and icons every row repeats are worked out
@@ -526,7 +528,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   is paged by the server. The page draws its first 100 rows (`FIRST_PAGE`,
   the sheet's first page, in its own order) and, for each other item, an
   entry in `<script type="application/json" data-dt-stubs>`
-  (`_row_stub`): its id and element id, its `data-*` (what the chips
+  (`_row_stubs`): its id and element id, its `data-*` (what the chips
   read), each sortable cell's value as the cell holds it (`k`: a box by
   its id, a status by its value) and the text a search looks in (`s`:
   what `_rowText` reads from a drawn row, its menus' shown choices
@@ -578,6 +580,47 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   - At 100,000 mice the litters (6,634) open in 3.2 s instead of 9.1, the
     cages (1,368 listed) in 3.1 s instead of 7.6 (26 MB of page to 3.8);
     their **Cards**, page and cards together, in 9.7 s instead of 10.4.
+- What a long sheet costs the server, and what keeps it down:
+  - Its records are read as plain rows, not ORM objects
+    (`app/plain_records.py`): the mouse sheet's mice with their cages,
+    racks and litters (`mice`), the litter sheet's litters with each pup's
+    number and sex (`litters`; `full_pups` reads the rest, and the pups'
+    cages, for the rows drawn only), an inventory's items (`inventory_items`,
+    each with its box, and its `attrs_dict` decoded once). They carry the
+    models' names (`access.can_edit` tells records apart by class name) and
+    the columns the sheets read, so the rows, stubs and access rules read
+    them as they read the models. They are for reading: every write loads
+    its record through the ORM by id.
+  - The mouse sheet's rows and their forms are written by
+    `app/mouse_rows.py` (`mouse_rows_html`, `mouse_row_forms_html`), the
+    same markup `_mouse_rows.html` wrote, character for character, and the
+    text cells told what it already knows of each field (`app.text_cell`)
+    rather than reading it back from the tag. A change to a mouse row's
+    cells is made there.
+  - Stubs (`mouse_stubs`, `cage_stubs`, `litter_stubs`, `_row_stubs`) work
+    out what every row shares (the words for a sex, a status, a choice, an
+    owner's badge, which column is which) once a sheet, and are written by
+    `|stubs_json`: `|tojson`'s escaping without sorting thousands of rows'
+    keys. A mouse row's cage cells are worked out once a cage
+    (`services.mouse_display_row(cages=…)`), and `positions.natural()` and a
+    rack's labels are cached.
+  - Indexes for what the colony asks (`0044_colony_indexes`): a mouse's
+    date of death, owner and cage, a cage's created date, a litter's date of
+    birth, and `ix_mice_litter_pups`, which holds every column of a pup the
+    litter sheet reads, so the database answers from it alone. The sheet
+    reads the mice it lists without `ORDER BY mouse_id` and sorts them
+    itself: asked for them in order, SQLite walked every mouse by its
+    number. SQLite keeps 64 MB of pages in memory (`db.SQLITE_CACHE_KB`).
+  - `app.py` sets the garbage collector to look for cycles once in 10,000
+    new objects (`gc.set_threshold`): at Python's default, a long sheet's
+    hundreds of thousands of objects were walked many times a page, a fifth
+    of an inventory's time.
+  - At 100,000 mice (`scripts/load-test.py`), the server's time against
+    2.0.13's on the same machine: the mouse sheet (alex's 2,349 mice) 0.18 s
+    (0.49), the litters (6,725) 0.4 s (2.4), the cages 0.75 s (1.15); an
+    inventory of 20,000 samples 0.7 s (1.85), of 20,000 reagents 0.7 s
+    (1.4); the fish tab 0.7 s (1.9), which no longer loads every tank's
+    fish. The Tanks tab still does, and draws every tank: 4.6 s.
 - Tanks and vials are drawn whole by their page and paged after
   (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
   sheet's first page, makes each other row a stub with
