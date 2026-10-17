@@ -395,6 +395,10 @@ def _stamp_cage_placements(session, _flush_context, _instances):
 
 class MouseRecord(Base):
     __tablename__ = "mice"
+    # A litter's pups, read from the index alone (revision 0044): the litter
+    # sheet lists every pup of the year's litters, tens of thousands.
+    __table_args__ = (Index("ix_mice_litter_pups", "litter_id_fk", "mouse_id", "gender", "status", "date_of_death",
+                            "owner", "cage_id_fk"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     # Where this record stands in the lab's sequence of changes (app/sync.py):
@@ -423,7 +427,7 @@ class MouseRecord(Base):
     owner: Mapped[str] = mapped_column(String(120), default="", index=True)
     note: Mapped[str] = mapped_column(Text, default="")
     cage_id_fk: Mapped[int | None] = mapped_column(ForeignKey("mouse_cages.id"), nullable=True, index=True)
-    litter_id_fk: Mapped[int | None] = mapped_column(ForeignKey("litters.id"), nullable=True, index=True)
+    litter_id_fk: Mapped[int | None] = mapped_column(ForeignKey("litters.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_by: Mapped[str] = mapped_column(String(80), default="")

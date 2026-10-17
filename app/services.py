@@ -747,10 +747,15 @@ def reserve_mouse_ids(session, count: int) -> list[int]:
     return ids
 
 
+_DIGITS = re.compile(r"\d+")
+
+
 def _cage_number(code: str | None) -> int:
     """The number a cage ID stands for: "12" -> 12, "2A" -> 2, "B-12" -> 12.
     Only the first run of digits counts, so "B12-3" is 12, not 123."""
-    match = re.search(r"\d+", code or "")
+    if code and code.isdigit():
+        return int(code)   # most are: a lab's thousands, asked for at once
+    match = _DIGITS.search(code or "")
     return int(match.group()) if match else 0
 
 
@@ -764,7 +769,8 @@ def reserve_cage_ids(session, count: int) -> list[str]:
         return []
     # See next_mouse_id: pending rows are invisible without a flush.
     session.flush()
-    codes = set(session.scalars(select(CageRecord.cage_id)).all())
+    # The column alone, not through the ORM: a lab has tens of thousands.
+    codes = {code for code, in session.execute(select(CageRecord.__table__.c.cage_id))}
     highest = max((_cage_number(code) for code in codes), default=0)
     ids: list[str] = []
     candidate = highest
@@ -1472,13 +1478,16 @@ def breeder_mice(session, current_username: str | None, current_role: str | None
     return grouped, left_out
 
 
+_LITTER_NUMBER = re.compile(r"[Ll]-(\d+)")
+
+
 def next_litter_id(session) -> str:
     """The next litter ID: L-1, L-2, L-3… one past the highest L-number the
     lab has (litters named another way, imported ones, don't count), and
     never one that is taken."""
     session.flush()
-    codes = {(code or "").strip() for code in session.scalars(select(LitterRecord.litter_id))}
-    numbers = [int(m.group(1)) for m in (re.fullmatch(r"[Ll]-(\d+)", code) for code in codes) if m]
+    codes = {(code or "").strip() for code, in session.execute(select(LitterRecord.__table__.c.litter_id))}
+    numbers = [int(m.group(1)) for m in map(_LITTER_NUMBER.fullmatch, codes) if m]
     n = max(numbers, default=0) + 1
     while f"L-{n}" in codes:
         n += 1

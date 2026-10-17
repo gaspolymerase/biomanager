@@ -2,8 +2,9 @@
 and its sheets list the living and what ended lately: without these, each
 of them read every mouse (a hundred thousand in a large lab) to find the
 few thousand it shows, and the counts above them did the same. The mice by
-date of death, owner, cage and litter; the cages by when they were made;
-the litters by date of birth.
+date of death, owner and cage, and a litter's pups with what the litter
+sheet shows of each (read from the index alone); the cages by when they
+were made; the litters by date of birth.
 """
 from __future__ import annotations
 
@@ -16,16 +17,18 @@ depends_on = None
 
 # As the models name them (index=True): ix_<table>_<column>.
 INDEXES = {
-    "mice": ["date_of_death", "owner", "cage_id_fk", "litter_id_fk"],
+    "mice": ["date_of_death", "owner", "cage_id_fk"],
     "mouse_cages": ["created_at"],
     "litters": ["date_of_birth"],
 }
+PUPS = ["litter_id_fk", "mouse_id", "gender", "status", "date_of_death", "owner", "cage_id_fk"]
 
 
 def upgrade() -> None:
     for table, columns in INDEXES.items():
         for column in columns:
             create_index(table, f"ix_{table}_{column}", [column])
+    create_index("mice", "ix_mice_litter_pups", PUPS)
 
 
 def downgrade() -> None:

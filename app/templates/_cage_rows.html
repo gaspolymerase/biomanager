@@ -243,7 +243,7 @@
                                                data-autosave="1" aria-label="{{ _('Note on mouse %(id)s', id=mouse.mouse_id) }}" {% if mlocked %}disabled{% endif %}></td>
                                     <td>
                                       <button type="button" class="row-icon-btn" title="{{ _('Open mouse %(id)s', id=mouse.mouse_id) }}"
-                                              data-mouse-edit data-mouse-payload='{{ mouse_payload(mouse, mlocked) }}'>{{ icon('edit') }}</button>
+                                              data-mouse-edit data-mouse-payload='{{ mouse_payload_json(mouse, mlocked, custom_columns_all) }}'>{{ icon('edit') }}</button>
                                     </td>
                                   </tr>
                                 {% endfor %}

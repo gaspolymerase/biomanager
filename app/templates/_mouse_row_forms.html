@@ -1,20 +1,3 @@
-{#- The mouse sheet's row forms (row-forms.js), for the rows drawn: the page's and /colony/mice/rows's. -#}
-        {%- set update_url = id_url('update_mouse', 'mouse_row_id') -%}
-        {% for row in sheet_rows %}
-          <form id="mouse-update-{{ row.id }}" method="post" action="{{ update_url(row.id) }}"
-                data-mouse-label="{{ row.mouse_id }}">
-            <input type="hidden" name="confirm_cohort_dob_change" value="0">
-            {# What this row's cage cells showed; the server only changes a
-               cage field that differs, so a stale row cannot undo an edit
-               made on another row of the same cage. #}
-            <input type="hidden" name="cage_rack_was" value="{{ row.cage_rack_id or '' }}">
-            <input type="hidden" name="cage_position_was" value="{{ row.cage_position }}">
-            <input type="hidden" name="cage_location_was" value="{{ row.cage_location }}">
-            {# The same for the mouse's own cells: one left as it was is left
-               as the database has it (a colleague may have changed it since). #}
-            {% for name in ("gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4", "owner",
-                            "note", "cage_id", "litter_id", "date_of_birth", "date_of_death") %}
-              <input type="hidden" name="{{ name }}_was" value="{{ row[name] if row[name] is not none else '' }}">
-            {% endfor %}
-          </form>
-        {% endfor %}
+{#- The mouse sheet's row forms (row-forms.js), for the rows drawn: the page's and /colony/mice/rows's,
+    written by app/mouse_rows.py (forms_html). -#}
+{{ mouse_row_forms_html(sheet_rows) }}
