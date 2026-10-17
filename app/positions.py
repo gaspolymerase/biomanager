@@ -12,6 +12,7 @@ Rows and columns are 1-based everywhere in this module.
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 
@@ -93,11 +94,18 @@ def axis_label(n: int, style: str, start: int) -> str:
     return _letters(n) if style == "letters" else str(n - 1 + start)
 
 
+@functools.lru_cache(maxsize=64)
+def _stored_scheme(text: str) -> dict:
+    """scheme() of a rack's stored JSON, read once: a sheet names thousands
+    of places in a few racks. Shared, so read it, never change it."""
+    return scheme(text)
+
+
 def label(row: int | None, col: int | None, raw_scheme, cols: int) -> str:
     """The name of a cell, e.g. "D7"; empty when not placed."""
     if not row or not col:
         return ""
-    s = scheme(raw_scheme)
+    s = _stored_scheme(raw_scheme) if isinstance(raw_scheme, str) else scheme(raw_scheme)
     if s["mode"] == "sequential":
         return str((row - 1) * cols + col - 1 + s["start"])
     r = axis_label(row, s["rows"], s["start"])

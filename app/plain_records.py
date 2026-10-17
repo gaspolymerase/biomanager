@@ -14,27 +14,36 @@ models' names, as access.can_edit tells records apart by class name
 """
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 from sqlalchemy import select
 
 from . import models
 
 
-class MouseRecord(SimpleNamespace):
+class _Plain:
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.__dict__!r})"
+
+
+class MouseRecord(_Plain):
     pass
 
 
-class CageRecord(SimpleNamespace):
+class CageRecord(_Plain):
     pass
 
 
-class MouseRack(SimpleNamespace):
+class MouseRack(_Plain):
     pass
 
 
-class LitterRecord(SimpleNamespace):
+class LitterRecord(_Plain):
     pass
+
+
+def _made(kind, names, values):
+    record = object.__new__(kind)
+    record.__dict__ = dict(zip(names, values))
+    return record
 
 
 # What each record carries: what the mouse sheet's rows and the access rules
@@ -73,24 +82,24 @@ def mice(session, *where) -> list[MouseRecord]:
     litters: dict[int, LitterRecord] = {}
     out = []
     for row in session.execute(stmt):
-        mouse = MouseRecord(**dict(zip(m_names, row[m0:m1])))
+        mouse = _made(MouseRecord, m_names, row[m0:m1])
         cage = None
         if row[c0] is not None:
             cage = cages.get(row[c0])
             if cage is None:
-                cage = cages[row[c0]] = CageRecord(**dict(zip(c_names, row[c0:c1])))
+                cage = cages[row[c0]] = _made(CageRecord, c_names, row[c0:c1])
                 rack = None
                 if row[r0] is not None:
                     rack = racks.get(row[r0])
                     if rack is None:
-                        rack = racks[row[r0]] = MouseRack(**dict(zip(r_names, row[r0:r1])))
+                        rack = racks[row[r0]] = _made(MouseRack, r_names, row[r0:r1])
                 cage.rack = rack
         mouse.cage = cage
         litter = None
         if row[l0] is not None:
             litter = litters.get(row[l0])
             if litter is None:
-                litter = litters[row[l0]] = LitterRecord(**dict(zip(l_names, row[l0:l1])))
+                litter = litters[row[l0]] = _made(LitterRecord, l_names, row[l0:l1])
         mouse.litter = litter
         out.append(mouse)
     # Sorted here, not by the database: asked to give them in order, SQLite

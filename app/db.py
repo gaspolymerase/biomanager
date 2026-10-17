@@ -75,6 +75,19 @@ def _sqlite_foreign_keys(dbapi_connection, connection_record) -> None:
     cursor.close()
 
 
+# SQLite keeps 2 MB of the database in memory a connection by default; a
+# colony's sheet reads its few thousand mice from all over the file, which
+# then came from the disk's cache a page at a time, and took twice as long.
+# The cache grows only as pages are read, up to this.
+SQLITE_CACHE_KB = 64 * 1024
+
+
+def _sqlite_cache(dbapi_connection, connection_record) -> None:
+    cursor = dbapi_connection.cursor()
+    cursor.execute(f"PRAGMA cache_size=-{SQLITE_CACHE_KB}")
+    cursor.close()
+
+
 # SQLite's own lower() folds A-Z only, so a case-insensitive search
 # (ilike is lower(x) LIKE lower(y) there) missed "Δ-Cre" for "δ-cre"
 # and "Café" for "CAFÉ", which PostgreSQL finds. Python's lower() folds
@@ -100,6 +113,7 @@ def _sqlite_rollback_on_return(dbapi_connection, connection_record) -> None:
 if engine.dialect.name == "sqlite":
     event.listen(engine, "connect", _sqlite_foreign_keys)
     event.listen(engine, "connect", _sqlite_unicode_lower)
+    event.listen(engine, "connect", _sqlite_cache)
     event.listen(engine, "checkin", _sqlite_rollback_on_return)
 
 
@@ -120,6 +134,7 @@ def contained_engine():
         _contained = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
         event.listen(_contained, "connect", _sqlite_foreign_keys)
         event.listen(_contained, "connect", _sqlite_unicode_lower)
+        event.listen(_contained, "connect", _sqlite_cache)
         event.listen(_contained, "checkin", _sqlite_rollback_on_return)
 
         @event.listens_for(_contained, "connect")
