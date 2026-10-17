@@ -910,9 +910,11 @@ def apply_status_rules(mouse: MouseRecord, previous_status: str | None) -> None:
         mouse.date_of_death = None
 
 
+_INACTIVE_STATUSES = frozenset(END_STATUSES | {"transfer"})
+
+
 def mouse_is_active(mouse: MouseRecord) -> bool:
-    inactive_statuses = END_STATUSES | {"transfer"}
-    return mouse.date_of_death is None and normalize_status(mouse.status or "") not in inactive_statuses
+    return mouse.date_of_death is None and normalize_status(mouse.status or "") not in _INACTIVE_STATUSES
 
 
 def _cage_position(cage) -> str:
@@ -937,7 +939,7 @@ def transgene_columns_used(mice) -> list[bool]:
 
 def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, current_role: str | None = None) -> dict[str, object]:
     dob = mouse.litter.date_of_birth if mouse.litter else None
-    ages = calculate_age_fields(dob)
+    age_days = max((date.today() - dob).days, 0) if dob is not None else None   # calculate_age_fields
     genotype_parts = transgene_parts(mouse)
     can_edit_breeder = current_role == "admin" or mouse.owner == current_username
     cage_is_breeder = mouse.cage is not None and holds_breeders(mouse.cage.purpose)
@@ -950,8 +952,8 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
         "attrs": custom_fields.values(mouse),
         "active": active,
         "active_label": "Y" if active else "N",
-        "age_weeks": ages["age_weeks"],
-        "age_days": ages["age_days"],
+        "age_weeks": age_days // 7 if age_days is not None else None,
+        "age_days": age_days,
         "gender": mouse.gender,
         "genotype": mouse.genotype,
         "genotype_full": mouse.genotype or "",

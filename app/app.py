@@ -1892,9 +1892,21 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 scope))
             if not show_ended:
                 conditions.append(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
-            return [m for m in plain_records.mice(db_session, *conditions)
-                    if access.in_scope(m, scope, shared=access.cage_shared_with(m.cage),
-                                       group_id=access.cage_group(m.cage))]
+            # A cage's sharing is the same for each of its mice: asked once.
+            shared_with: dict[int, tuple] = {}
+
+            def sharing(cage) -> tuple:
+                key = cage.id if cage is not None else None
+                if key not in shared_with:
+                    shared_with[key] = (access.cage_shared_with(cage), access.cage_group(cage))
+                return shared_with[key]
+
+            listed = []
+            for m in plain_records.mice(db_session, *conditions):
+                shared, group_id = sharing(m.cage)
+                if access.in_scope(m, scope, shared=shared, group_id=group_id):
+                    listed.append(m)
+            return listed
 
         mice, hidden_mice = [], 0
         if active_view == "mice":
@@ -3371,14 +3383,17 @@ def mouse_stubs(rows: list[dict], custom_columns: list[dict]) -> list[dict]:
 
     out = []
     for row in rows:
+        row_id, days = row["id"], row["age_days"]
         data = {"active": "true" if row["active"] else "false", "mouse_id": text(row["mouse_id"]),
-                "ear_tag": text(row["ear_tag"]), "age": text(row["age_days"]), "rowForm": f"mouse-update-{row['id']}"}
-        cells = {name: text(row[name]) for name in named}
+                "ear_tag": row["ear_tag"] or "", "age": "" if days is None else str(days),
+                "rowForm": f"mouse-update-{row_id}"}
+        # Each of these is text or None (services.mouse_display_row).
+        cells = {name: row[name] or "" for name in named}
         cells["cage_rack"] = text(row["cage_rack_id"])
         for fd in custom_columns:
             cells[f"attr_{fd['key']}"] = text(row["attrs"].get(fd["key"], ""))
         gender = row["gender"] or ""
-        words = [str(row["id"]), *data.values(), *cells.values(), row["cage_rack"] or "",
+        words = [str(row_id), *data.values(), *cells.values(), row["cage_rack"] or "",
                  sexes[gender] if gender in sexes else shown(gender),
                  shown(row["status"] or ""),
                  f"{row['age_weeks']}{weeks_unit}" if row["age_weeks"] is not None else "",
@@ -3387,9 +3402,9 @@ def mouse_stubs(rows: list[dict], custom_columns: list[dict]) -> list[dict]:
             value = text(row["attrs"].get(fd["key"], ""))
             if value and fd.get("type") in ("select", "multiselect"):
                 words.append(shown(value))
-        out.append({"id": row["id"], "f": f"mouse-update-{row['id']}", "d": data,
+        out.append({"id": row_id, "f": data["rowForm"], "d": data,
                     "k": {k: v for k, v in cells.items() if v},
-                    "s": " ".join(w for w in words if w).lower()})
+                    "s": " ".join(filter(None, words)).lower()})
     return out
 
 

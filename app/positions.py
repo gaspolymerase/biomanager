@@ -105,7 +105,19 @@ def label(row: int | None, col: int | None, raw_scheme, cols: int) -> str:
     """The name of a cell, e.g. "D7"; empty when not placed."""
     if not row or not col:
         return ""
-    s = _stored_scheme(raw_scheme) if isinstance(raw_scheme, str) else scheme(raw_scheme)
+    if isinstance(raw_scheme, str):
+        return _stored_label(row, col, raw_scheme, cols)
+    return _label(row, col, scheme(raw_scheme), cols)
+
+
+@functools.lru_cache(maxsize=4096)
+def _stored_label(row: int, col: int, text: str, cols: int) -> str:
+    """label() in a rack whose scheme is stored JSON: a sheet names the
+    same few places over and over."""
+    return _label(row, col, _stored_scheme(text), cols)
+
+
+def _label(row: int, col: int, s: dict, cols: int) -> str:
     if s["mode"] == "sequential":
         return str((row - 1) * cols + col - 1 + s["start"])
     r = axis_label(row, s["rows"], s["start"])
