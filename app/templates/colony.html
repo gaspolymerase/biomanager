@@ -225,7 +225,7 @@
             </tbody>
           </table>
           {# A sheet the server pages: the mice not drawn, as data-table.js reads a row (app.py, mouse_stub). #}
-          {% if mouse_stubs %}<script type="application/json" data-dt-stubs>{{ mouse_stubs | tojson }}</script>{% endif %}
+          {% if mouse_stubs %}<script type="application/json" data-dt-stubs>{{ mouse_stubs | stubs_json }}</script>{% endif %}
         </div>
 
         {# One form per row. They live outside the table so the markup stays
@@ -481,7 +481,7 @@
                 </tbody>
               </table>
               {# A sheet the server pages: the cages not drawn, as data-table.js reads a row (app.py, cage_stub). #}
-              {% if cage_stubs %}<script type="application/json" data-dt-stubs>{{ cage_stubs | tojson }}</script>{% endif %}
+              {% if cage_stubs %}<script type="application/json" data-dt-stubs>{{ cage_stubs | stubs_json }}</script>{% endif %}
             </div>
 
             {# One form per cage and per mouse, outside the table; cells join
@@ -666,7 +666,7 @@
               {% with sheet_rows=litter_sheet_rows, fragment=False %}{% include "_litter_rows.html" %}{% endwith %}
             </tbody>
           </table>
-          {% if litter_stubs %}<script type="application/json" data-dt-stubs>{{ litter_stubs | tojson }}</script>{% endif %}
+          {% if litter_stubs %}<script type="application/json" data-dt-stubs>{{ litter_stubs | stubs_json }}</script>{% endif %}
         </div>
         <template data-row-forms>
         {% with sheet_rows=litter_sheet_rows %}{% include "_litter_row_forms.html" %}{% endwith %}

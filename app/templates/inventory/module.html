@@ -110,10 +110,6 @@
 {% if m.has('storage') %}
   <datalist id="inv-box-places">{% for place in places %}<option value="{{ place }}"></option>{% endfor %}</datalist>
 {% endif %}
-{# A colony's IDs (a mouse colony's can run to 100,000) become a list
-   when an ID box is first used, not as the page loads. #}
-{% if sources %}<script type="application/json" id="inv-src-data">{{ sources | map(attribute='refs') | list | tojson }}</script>{% endif %}
-
 {# In a type's tab, a new entry is of that type. #}
 {% set new_payload = dict({"owner": current_user.username, "status": m.statuses[0] if m.statuses else "", "is_shared": "0"},
                           **({"category": tab} if tab else {})) %}
@@ -251,7 +247,7 @@
         </table>
         {# The rows not drawn, for search, sort, the chips and the count; each
            page's rows come when it is shown (inventory_routes.LAZY_OVER). #}
-        {% if stubs %}<script type="application/json" data-dt-stubs>{{ stubs | tojson }}</script>{% endif %}
+        {% if stubs %}<script type="application/json" data-dt-stubs>{{ stubs | stubs_json }}</script>{% endif %}
         {# Each list a row's menu offers, sent once: a row holds only its own
            choice until the menu is used (static/shell.js, fillChoices). #}
         {% if m.categories %}<template id="choices-inv-category"><option value="">–</option>{% for c in m.categories %}<option value="{{ c }}">{{ c|tr(m.kind) }}</option>{% endfor %}</template>{% endif %}
@@ -764,8 +760,11 @@
   })();
 </script>
 {% endif %}
+{# A colony's IDs (a mouse colony's can run to 100,000) are fetched from
+   sourcesUrl when an ID box is first used, not sent with the page. #}
 <script type="application/json" id="inv-page-data">{{ {"isAdmin": is_admin, "me": current_user.username,
-                                                        "openStatuses": m.open_statuses | map('lower') | list} | tojson }}</script>
+                                                        "openStatuses": m.open_statuses | map('lower') | list,
+                                                        "sourcesUrl": url_for('inventory.source_ids', key=key) if sources else ""} | tojson }}</script>
 <script type="application/json" id="inv-fill-data">{{ remembered.fill | tojson }}</script>
 <script nonce="{{ csp_nonce() }}">
   /* Keep everything that shows an item in step after a save, a board drag
@@ -960,21 +959,26 @@
     const ref = dialog.querySelector('[data-source-ref]');
     /* The ID box offers the identifiers of whichever colony is chosen —
        in the dialog, and in every source cell in the sheet. */
-    let sourceRefs = null;
+    let sourceRefs = null;   // fetched once, the first time an ID box is used
     const sourceList = (id) => {
       if (!document.getElementById(id)) {
-        if (!sourceRefs) {
-          const data = document.getElementById('inv-src-data');
-          sourceRefs = data ? JSON.parse(data.textContent) : [];
-        }
         const datalist = document.createElement('datalist');
         datalist.id = id;
-        (sourceRefs[Number(id.replace('inv-src-', ''))] || []).forEach((value) => {
-          const option = document.createElement('option');
-          option.value = value;
-          datalist.append(option);
-        });
         document.body.append(datalist);
+        if (!sourceRefs) {
+          sourceRefs = page.sourcesUrl
+            ? fetch(page.sourcesUrl, { credentials: 'same-origin' })
+              .then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then((data) => data.refs)
+            : Promise.resolve([]);
+          sourceRefs.catch(() => { sourceRefs = null; });   // asked again next time
+        }
+        sourceRefs.then((refs) => {
+          (refs[Number(id.replace('inv-src-', ''))] || []).forEach((value) => {
+            const option = document.createElement('option');
+            option.value = value;
+            datalist.append(option);
+          });
+        }, () => datalist.remove());
       }
       return id;
     };

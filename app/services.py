@@ -937,12 +937,33 @@ def transgene_columns_used(mice) -> list[bool]:
     return [any(c >= n for c in counts) for n in range(1, 5)]
 
 
-def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, current_role: str | None = None) -> dict[str, object]:
+def _cage_cells(cage) -> tuple:
+    """What a mouse's row shows of its cage (mouse_display_row): its number,
+    location, rack (id and name), position, and whether it holds breeders."""
+    if cage is None:
+        return "", "", None, "", "", False
+    return (cage.cage_id, cage.cage_location, cage.rack_id_fk, cage.rack.name if cage.rack else "",
+            _cage_position(cage), holds_breeders(cage.purpose))
+
+
+def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, current_role: str | None = None,
+                      cages: dict | None = None, today: date | None = None) -> dict[str, object]:
+    """A mouse's row on the sheets. For a sheet's thousands: `cages`, a dict
+    the caller keeps for what each cage's mice's rows show of it (worked out
+    once a cage), and `today`, the day their ages count to."""
     dob = mouse.litter.date_of_birth if mouse.litter else None
-    age_days = max((date.today() - dob).days, 0) if dob is not None else None   # calculate_age_fields
+    age_days = max(((today or date.today()) - dob).days, 0) if dob is not None else None   # calculate_age_fields
     genotype_parts = transgene_parts(mouse)
     can_edit_breeder = current_role == "admin" or mouse.owner == current_username
-    cage_is_breeder = mouse.cage is not None and holds_breeders(mouse.cage.purpose)
+    cage = mouse.cage
+    if cages is None:
+        cage_cells = _cage_cells(cage)
+    else:
+        key = None if cage is None else cage.id
+        cage_cells = cages.get(key)
+        if cage_cells is None:
+            cage_cells = cages[key] = _cage_cells(cage)
+    cage_id, cage_location, cage_rack_id, cage_rack, cage_position, cage_is_breeder = cage_cells
     active = mouse_is_active(mouse)
     return {
         "id": mouse.id,
@@ -962,11 +983,11 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
         "transgene_2": genotype_parts[1] if len(genotype_parts) > 1 else "",
         "transgene_3": genotype_parts[2] if len(genotype_parts) > 2 else "",
         "transgene_4": genotype_parts[3] if len(genotype_parts) > 3 else "",
-        "cage_id": mouse.cage.cage_id if mouse.cage else "",
-        "cage_location": mouse.cage.cage_location if mouse.cage else "",
-        "cage_rack_id": mouse.cage.rack_id_fk if mouse.cage else None,
-        "cage_rack": mouse.cage.rack.name if mouse.cage and mouse.cage.rack else "",
-        "cage_position": _cage_position(mouse.cage),
+        "cage_id": cage_id,
+        "cage_location": cage_location,
+        "cage_rack_id": cage_rack_id,
+        "cage_rack": cage_rack,
+        "cage_position": cage_position,
         "owner": mouse.owner,
         "litter_id": mouse.litter.litter_id if mouse.litter else "",
         "date_of_birth": dob.isoformat() if dob else "",

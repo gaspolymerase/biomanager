@@ -442,6 +442,20 @@ def sheet_rows(key: str):
                         "ids": [r["item"].id for r in context["sheet_rows"]]})
 
 
+@bp.route("/<key>/sources")
+def source_ids(key: str):
+    """Each colony's identifiers (services.sample_sources), in the order the
+    page's source menus list the colonies: asked for when a source cell's ID
+    box is first used. A mouse colony's alone run to 100,000, which read for
+    every page took a fifth of the samples sheet's time."""
+    from .services import sample_sources
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not any(f["type"] == "source" for f in svc.view(row).fields):
+            abort(404)
+        return jsonify({"refs": [source["refs"] for source in sample_sources(session)]})
+
+
 @bp.route("/<key>/grid")
 def grid_data(key: str):
     """The box grid's boxes and tiles (rack-grid.js), for the page's ?type=
@@ -523,7 +537,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     else:
         remembered = svc.remembered(session, mv, listed_items)
     source_fields = [f for f in mv.fields if f["type"] == "source"]
-    sources = sample_sources(session, refs=only is None) if source_fields else []
+    # Each colony's identifiers come when an ID box is first used (source_ids).
+    sources = sample_sources(session, refs=False) if source_fields else []
     mouse_links = _mouse_links(session, [i.attrs_dict for i in items], source_fields) if source_fields else {}
     # A plasmid column: each cell links to its plasmid; the dialog offers the lab's plasmids.
     plasmid_keys = [f["key"] for f in svc.plasmid_fields(mv)]

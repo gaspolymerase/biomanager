@@ -239,12 +239,25 @@ class InventorySheetSpeedTests(AppTestCase):
         with app.test_request_context("/"):
             self.assertIn('<use href="/static/icons.svg#trash">', render_template_string("{{ icon('trash') }}"))
 
-    def test_the_colonies_ids_come_as_data(self):
+    def test_the_colonies_ids_come_when_asked(self):
         self.make_item(self.a, "samples")
         html = self.get_ok(self.a, "/inventory/samples")
         self.assertNotIn('<datalist id="inv-src-', html)
-        self.assertIn('<script type="application/json" id="inv-src-data">', html)
+        self.assertNotIn('id="inv-src-data"', html)
         self.assertIn('data-list="inv-src-0"', html)
+        self.assertIn('"sourcesUrl": "/inventory/samples/sources"', html)
+        refs = self.a.get("/inventory/samples/sources").get_json()["refs"]
+        self.assertEqual(refs[0], [str(m) for m in sorted(self.mouse_ids())])   # the mice, by number
+        self.assertEqual(refs[-1], [])   # Other
+        # A sheet with no source column has none to give.
+        self.assertEqual(self.a.get("/inventory/reagents/sources").status_code, 404)
+
+    def mouse_ids(self):
+        from sqlalchemy import select
+        from app.db import SessionLocal
+        from app.models import MouseRecord
+        with SessionLocal() as session:
+            return list(session.scalars(select(MouseRecord.mouse_id)))
 
 
 class InventoryPagingTests(AppTestCase):

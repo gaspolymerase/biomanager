@@ -1297,6 +1297,15 @@ def mouse_payload_json(row: dict, locked: bool, fields: list[dict]) -> Markup:
 app.jinja_env.globals["mouse_payload_json"] = mouse_payload_json
 
 
+@app.template_filter("stubs_json")
+def stubs_json(stubs: list[dict]) -> Markup:
+    """A long sheet's stubs (mouse_stubs, inventory_routes' stubs…) for its
+    <script type="application/json" data-dt-stubs>, safe in the page as
+    `|tojson` writes them, but with each row's keys in the order made and no
+    spaces: sorting thousands of rows' keys took longer than writing them."""
+    return htmlsafe_json_dumps(stubs, dumps=json.dumps, default=app.json.default, separators=(",", ":"))
+
+
 def mouse_rows_html(rows, sheet, custom_columns, custom_columns_all, fragment, as_text, custom_cell,
                     icon) -> Markup:
     """The mouse sheet's rows (app/mouse_rows.py), for _mouse_rows.html,
@@ -1992,7 +2001,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         notifications = recent_notifications(db_session, g.user.username if g.user else "", limit=10) if g.user else []
 
         me_name, my_role = (g.user.username, g.user.role) if g.user else (None, None)
-        mouse_rows = [mouse_display_row(mouse, me_name, my_role) for mouse in mice]
+        cage_cells, today = {}, date.today()
+        mouse_rows = [mouse_display_row(mouse, me_name, my_role, cage_cells, today) for mouse in mice]
         cage_racks = mouse_rack_payload(db_session, cages) if active_view == "cages" else None
         sheet_racks = mouse_racks(db_session)
         # The sheet renders rows you may not edit as read-only, using the
