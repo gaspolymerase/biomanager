@@ -177,5 +177,7 @@
   "A **Cages** sheet of more than 500 cages opens with its first page and brings each other page as you turn to it, as the mice and litters do; **Cards** loads the cages when you switch to it.": "超过 500 个笼的 **笼** 表格打开时只有第一页，翻到其他页时再载入，和小鼠、窝一样；**卡片** 视图切换过去时才载入笼。",
   "A long **Litters** sheet opens about three times sooner.": "很长的 **窝** 表格打开快约三倍。",
   "A cage whose purpose was written in capitals (BREEDER) shows it in its **Purpose** menu, not “–”.": "用途写成大写（BREEDER）的笼，在 **用途** 菜单里显示它的用途，不再是“–”。",
-  "On **Mice**, the server reads only the mice the chosen view lists, so a large lab's sheet comes sooner.": "在 **小鼠** 里，服务器只读取当前视图列出的小鼠，大实验室的表格来得更快。"
+  "On **Mice**, the server reads only the mice the chosen view lists, so a large lab's sheet comes sooner.": "在 **小鼠** 里，服务器只读取当前视图列出的小鼠，大实验室的表格来得更快。",
+  "Sheets are ready to use sooner once they arrive: the browser styles each cell about once as a sheet opens, not several times over.": "表格到达后更快可用：浏览器打开表格时每个单元格的样式大约只算一遍，不再反复重算。",
+  "**Cages** and **Cage cards** read only the cages the chosen view lists, so a large lab's cages come sooner.": "**笼** 和 **笼卡** 只读取当前视图列出的笼，大实验室的笼来得更快。"
 }
