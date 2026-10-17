@@ -174,15 +174,14 @@ def full_pups(session, litters: list[LitterRecord], cages: bool = True) -> None:
 
 
 
-# What an inventory sheet reads of an item: every column but when it was
-# made and last changed, which the database driver must parse.
-INVENTORY_ITEM_COLUMNS = tuple(column.name for column in models.InventoryItem.__table__.columns
-                               if column.name not in ("created_at", "updated_at"))
+# An inventory sheet's item has every column: what its rows, stubs, box grid,
+# reorder dialog and "already on order" notes read between them is most.
+INVENTORY_ITEM_COLUMNS = tuple(column.name for column in models.InventoryItem.__table__.columns)
 
 
 class InventoryItem(namedtuple("InventoryItem", (*INVENTORY_ITEM_COLUMNS, "rack", "decoded"))):
     """An inventory item as its sheet reads it (inventory_routes._chosen):
-    the columns above, its `rack` (the ORM's, or None), and `attrs_dict`,
+    its columns, its `rack` (the ORM's, or None), and `attrs_dict`,
     decoded once rather than each of the many times a sheet asks for it
     (`decoded` holds it). Read it only: what attrs_dict gives is shared."""
     __slots__ = ()
