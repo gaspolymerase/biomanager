@@ -29,7 +29,7 @@ from flask import (
 )
 from sqlalchemy import select
 
-from . import access, audit, cell_text, database_keys, i18n, positions, rack_layout
+from . import access, audit, cell_text, database_keys, i18n, plain_records, positions, rack_layout
 from . import inventory as presets
 from . import inventory_service as svc
 from .db import SessionLocal
@@ -408,7 +408,7 @@ def order_sheet(key: str, fmt: str):
 # A sheet of more than LAZY_OVER items is paged by the server: the page
 # carries its first FIRST_PAGE rows (the sheet's first page) and, for each
 # other item, only what search, sort, the chips and the counts read
-# (_row_stub); static/data-table.js fetches a page's rows from
+# (_row_stubs); static/data-table.js fetches a page's rows from
 # /<key>/rows when it is turned to. Thousands of rows of fields took the
 # server seconds to write and the browser seconds more to read.
 LAZY_OVER = 500
@@ -472,11 +472,17 @@ def grid_data(key: str):
 def _chosen(session, row, mv, only: list[int] | None = None) -> dict:
     """The items the sheet lists (items), what its box grid shows
     (all_items, racks), for the page's ?type= and ?ended=."""
-    query = select(InventoryItem).where(InventoryItem.module_id_fk == row.id)
+    # By the fridge or cabinet each is kept in, then by name.
+    racks = sorted(session.scalars(select(InventoryRack).where(InventoryRack.module_id_fk == row.id)),
+                   key=svc.box_order)
+    where = [InventoryItem.module_id_fk == row.id]
     if only is not None:
         # Only those asked for: whether the sheet lists each is decided below.
-        query = query.where(InventoryItem.id.in_(only))
-    items = list(session.scalars(query.order_by(InventoryItem.number.desc())))
+        where.append(InventoryItem.id.in_(only))
+    # Read as plain records (app/plain_records.py): the ORM's objects took
+    # half the page's time over a long inventory's thousands.
+    items = plain_records.inventory_items(session, *where, order_by=[InventoryItem.number.desc()],
+                                          racks={r.id: r for r in racks})
     # An inventory keeps what it ever held: what was used up, discarded or
     # cancelled (or, for orders, received) over RECENT_DAYS ago waits
     # behind "Show them", as on the colony's sheets.
@@ -489,9 +495,6 @@ def _chosen(session, row, mv, only: list[int] | None = None) -> dict:
         kept = {i.id for i in listed}
         all_items = [i for i in items if i.id in kept or i.rack_id_fk]
         items = listed
-    # By the fridge or cabinet each is kept in, then by name.
-    racks = sorted(session.scalars(select(InventoryRack).where(InventoryRack.module_id_fk == row.id)),
-                   key=svc.box_order)
     # A type's tab (?type=tissue): its entries, the columns used for it,
     # and the boxes that hold it or nothing yet; a box keeps showing
     # all it holds, so no cell taken by another type looks free.
@@ -599,8 +602,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         # rows: every row the sheet lists (the board's cards, the counts);
         # sheet_rows: those drawn in the table; stubs: the others (lazy).
         "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
-        "stubs": [_row_stub(mv, r, table_fields, box_labels, mouse_links, plasmid_links)
-                  for r in rows[FIRST_PAGE:]] if lazy else [],
+        "stubs": _row_stubs(mv, rows[FIRST_PAGE:], table_fields, box_labels, mouse_links, plasmid_links)
+        if lazy else [],
         "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
                             cells=request.args.get("cells"))
                     if lazy else "",
@@ -638,69 +641,96 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     return context
 
 
-def _row_stub(mv, r: dict, table_fields: list[dict], box_labels: dict, mouse_links: dict, plasmid_links: dict) -> dict:
-    """A row the page does not draw, as the sheet's script reads one: its
+def _row_stubs(mv, rows: list[dict], table_fields: list[dict], box_labels: dict, mouse_links: dict,
+               plasmid_links: dict) -> list[dict]:
+    """The rows the page does not draw, as the sheet's script reads one: its
     data-* (the chips), each sortable cell's value ("k", as the cell holds
     it: a box by its id) and the text a search looks in ("s", what the row
-    shows and holds, lower-cased). The keys are the row's own (data-table.js)."""
-    item, payload, attrs = r["item"], r["payload"], r["attrs"]
-    status = item.status or ""
-    data = {
-        "number": str(item.number), "mine": "true" if r["mine"] else "false",
-        "shared": "true" if item.is_shared else "false",
-        "open": "true" if item.status in mv.open_statuses else "false", "status": status.lower(),
-        "active": "false" if r["available"] is False else "true",
-        "expired": "true" if r["expiry"] == "expired" else "false",
-        "expiring": "true" if r["expiry"] == "soon" else "false",
-    }
-    if r["mouse_genotype"]:
-        data["mouseGenotype"] = r["mouse_genotype"]
+    shows and holds, lower-cased). The keys are the row's own (data-table.js).
+    What the rows share (which column is which, the words for a status, a
+    kind or a choice) is worked out once: a long inventory has thousands."""
     keys = ["name", "category", "status", "is_shared", "owner", "vendor", "catalog_number", "lot", "quantity",
             "low_at", "rack_id", "position", "location_note", "received_on", "expires_on"]
     keys += [f"attr_{f['key']}" for f in table_fields if f["type"] != "source"]
-    sort = {}
-    for k in keys:
-        value = payload.get(k)
-        if value in (None, "") or isinstance(value, (dict, list)):
-            continue
-        if k.startswith("attr_") and any(f["type"] == "multiselect" and k == f"attr_{f['key']}" for f in table_fields):
-            value = str(value).split(",")[0].strip()    # the cell's first ticked choice
-        sort[k] = str(value)
-    # As data-table.js reads a drawn row (_rowText): its text, its data-*,
-    # then each cell's value and, for a menu, the choice it shows.
-    words = [str(item.number)]
+    several = {f"attr_{f['key']}" for f in table_fields if f["type"] == "multiselect"}
+    field_of: dict[str, dict] = {}
     for f in table_fields:
-        value = attrs.get(f["key"])
-        if f["type"] == "multiselect" and value:
-            words.append(", ".join(_tr(v.strip()) for v in str(value).split(",") if v.strip()))
-        elif f["type"] == "source" and isinstance(value, dict):
-            tagged = mouse_links.get(str(value.get("ref", "")))
-            if tagged and tagged.get("ear_tag"):
-                words.append(tagged["ear_tag"])
-            words += [value.get("kind", ""), i18n.translate_value(r["source_labels"].get(f["key"], ""), ""),
-                      str(value.get("ref", ""))]
-        elif f["type"] == "plasmid" and value:
-            plasmid = plasmid_links.get(str(value))
-            if plasmid:
-                words.append(plasmid["name"] or f"#{plasmid['number']}")
-    words += [str(item.id), *data.values()]
-    for k, value in payload.items():
-        if k.startswith("_") or k == "id" or not isinstance(value, (str, int, float)) or value == "":
-            continue
-        if any(f["type"] == "multiselect" and k == f"attr_{f['key']}" for f in table_fields):
-            continue    # ticked in a menu: its shown text, above
-        words.append(str(value))
-        field = next((f for f in table_fields if k == f"attr_{f['key']}"), None)
-        if k == "status":
-            words.append(_tr(value) if value in mv.statuses else str(value))
-        elif k == "category":
-            words.append(i18n.translate_value(value, mv.kind) if value in mv.categories else str(value))
-        elif field and field["type"] == "select":
-            words.append(_tr(value) if value in field["options"] else str(value))
-    words.append(project_groups.label(item.is_shared, item.share_group_id, personal=i18n.translate_value("Personal", ""),
-                                      lab=i18n.translate_value("Lab common", "")))
-    words.append(box_labels.get(item.rack_id_fk, ""))
-    return {"id": item.id, "e": f"item-{item.id}", "d": data, "k": sort, "s": " ".join(w for w in words if w).lower()}
+        field_of.setdefault(f"attr_{f['key']}", f)
+    open_statuses, statuses, categories = mv.open_statuses, set(mv.statuses), set(mv.categories)
+    personal, lab = i18n.translate_value("Personal", ""), i18n.translate_value("Lab common", "")
+    said: dict[tuple, str] = {}
+
+    def say(how: str, value: str) -> str:
+        """`value` in the page's words, as _tr ("tr"), as a kind ("kind")
+        or as a source's colony ("source") reads it: each word worked out once."""
+        key = (how, value)
+        if key not in said:
+            said[key] = (_tr(value) if how == "tr" else i18n.translate_value(value, mv.kind) if how == "kind"
+                         else i18n.translate_value(value, ""))
+        return said[key]
+
+    groups: dict[tuple, str] = {}
+    out = []
+    for r in rows:
+        item, payload, attrs = r["item"], r["payload"], r["attrs"]
+        status = item.status or ""
+        data = {
+            "number": str(item.number), "mine": "true" if r["mine"] else "false",
+            "shared": "true" if item.is_shared else "false",
+            "open": "true" if item.status in open_statuses else "false", "status": status.lower(),
+            "active": "false" if r["available"] is False else "true",
+            "expired": "true" if r["expiry"] == "expired" else "false",
+            "expiring": "true" if r["expiry"] == "soon" else "false",
+        }
+        if r["mouse_genotype"]:
+            data["mouseGenotype"] = r["mouse_genotype"]
+        sort = {}
+        for k in keys:
+            value = payload.get(k)
+            if value in (None, "") or isinstance(value, (dict, list)):
+                continue
+            if k in several:
+                value = str(value).split(",")[0].strip()    # the cell's first ticked choice
+            sort[k] = str(value)
+        # As data-table.js reads a drawn row (_rowText): its text, its data-*,
+        # then each cell's value and, for a menu, the choice it shows.
+        words = [str(item.number)]
+        for f in table_fields:
+            value = attrs.get(f["key"])
+            if f["type"] == "multiselect" and value:
+                words.append(", ".join(say("tr", v.strip()) for v in str(value).split(",") if v.strip()))
+            elif f["type"] == "source" and isinstance(value, dict):
+                tagged = mouse_links.get(str(value.get("ref", "")))
+                if tagged and tagged.get("ear_tag"):
+                    words.append(tagged["ear_tag"])
+                words += [value.get("kind", ""), say("source", r["source_labels"].get(f["key"], "")),
+                          str(value.get("ref", ""))]
+            elif f["type"] == "plasmid" and value:
+                plasmid = plasmid_links.get(str(value))
+                if plasmid:
+                    words.append(plasmid["name"] or f"#{plasmid['number']}")
+        words += [str(item.id), *data.values()]
+        for k, value in payload.items():
+            if k.startswith("_") or k == "id" or not isinstance(value, (str, int, float)) or value == "":
+                continue
+            if k in several:
+                continue    # ticked in a menu: its shown text, above
+            words.append(str(value))
+            field = field_of.get(k)
+            if k == "status":
+                words.append(say("tr", value) if value in statuses else str(value))
+            elif k == "category":
+                words.append(say("kind", value) if value in categories else str(value))
+            elif field and field["type"] == "select":
+                words.append(say("tr", value) if value in field["options"] else str(value))
+        group = (item.is_shared, item.share_group_id)
+        if group not in groups:
+            groups[group] = project_groups.label(item.is_shared, item.share_group_id, personal=personal, lab=lab)
+        words.append(groups[group])
+        words.append(box_labels.get(item.rack_id_fk, ""))
+        out.append({"id": item.id, "e": f"item-{item.id}", "d": data, "k": sort,
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
 
 
 def _same_thing(order: InventoryItem, stock: InventoryItem, source: InventoryModule) -> bool:

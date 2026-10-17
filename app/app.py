@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import os
 import re
@@ -146,6 +147,13 @@ from .services import (
 
 
 app = Flask(__name__)
+
+# Python looks for objects that only point at each other once a few hundred
+# new ones have piled up, and every so often walks all it holds. A long
+# sheet makes hundreds of thousands (each row's dicts, its words, its
+# record): those looks were a fifth of an inventory's page. Once in 10,000,
+# they are a handful a page; what is freed is the same.
+gc.set_threshold(10_000, 10, 10)
 # English or Chinese: _() in templates, gettext() in Python (app/i18n.py).
 i18n.init_app(app)
 # See app/security.py: a key from SECRET_KEY, or one made once and kept in

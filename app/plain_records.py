@@ -171,3 +171,43 @@ def full_pups(session, litters: list[LitterRecord], cages: bool = True) -> None:
         by_id[row[at_litter]].mice.append(Pup(*row[:width], cage))
     for litter in litters:
         litter.mice.sort(key=_by_number)
+
+
+
+# What an inventory sheet reads of an item: every column but when it was
+# made and last changed, which the database driver must parse.
+INVENTORY_ITEM_COLUMNS = tuple(column.name for column in models.InventoryItem.__table__.columns
+                               if column.name not in ("created_at", "updated_at"))
+
+
+class InventoryItem(namedtuple("InventoryItem", (*INVENTORY_ITEM_COLUMNS, "rack", "decoded"))):
+    """An inventory item as its sheet reads it (inventory_routes._chosen):
+    the columns above, its `rack` (the ORM's, or None), and `attrs_dict`,
+    decoded once rather than each of the many times a sheet asks for it
+    (`decoded` holds it). Read it only: what attrs_dict gives is shared."""
+    __slots__ = ()
+    # Its table, as the model's: access._peer_editable reads it.
+    __table__ = models.InventoryItem.__table__
+
+    @property
+    def attrs_dict(self) -> dict:
+        decoded = self.decoded
+        if not decoded:
+            decoded.append(models.InventoryItem.attrs_dict.fget(self))
+        return decoded[0]
+
+
+def inventory_items(session, *where, order_by=(), racks: dict | None = None) -> list[InventoryItem]:
+    """The inventory items matching `where`, in `order_by`'s order, each
+    with its `rack`: from `racks` (by id) when there, else read."""
+    t = models.InventoryItem.__table__
+    rows = session.execute(select(*(t.c[name] for name in INVENTORY_ITEM_COLUMNS)).where(*where)
+                           .order_by(*order_by)).all()
+    racks = dict(racks or {})
+    at_rack = INVENTORY_ITEM_COLUMNS.index("rack_id_fk")
+    missing = {row[at_rack] for row in rows if row[at_rack] is not None} - set(racks)
+    if missing:
+        racks.update((r.id, r) for r in session.scalars(
+            select(models.InventoryRack).where(models.InventoryRack.id.in_(sorted(missing)))))
+    racks[None] = None
+    return [InventoryItem(*row, racks[row[at_rack]], []) for row in rows]
