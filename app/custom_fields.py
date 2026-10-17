@@ -103,8 +103,11 @@ def set_fields(session, database: str, raw) -> list[dict]:
 
 def values(record) -> dict:
     """What a record carries in its own columns."""
+    raw = getattr(record, "attrs", "") or "{}"
+    if raw == "{}":
+        return {}   # most records: a long sheet asks thousands of times
     try:
-        found = json.loads(getattr(record, "attrs", "") or "{}")
+        found = json.loads(raw)
     except (TypeError, ValueError):
         return {}
     return found if isinstance(found, dict) else {}

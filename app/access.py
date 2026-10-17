@@ -21,6 +21,7 @@ route is how they drift apart.
 from __future__ import annotations
 
 from flask import g
+from flask.globals import _cv_app   # g without its proxy: asked for once a row
 
 # The cage purpose that starts out shared with the lab: a breeder cage
 # (app/models.py), which stays so unless its owner or an admin makes it
@@ -30,7 +31,8 @@ STARTS_SHARED_PURPOSES = {"breeder"}
 
 
 def current_user():
-    return g.get("user") if g else None
+    context = _cv_app.get(None)
+    return context.g.__dict__.get("user") if context is not None else None
 
 
 # The roles an admin gives (Manage users), besides pending and guest:

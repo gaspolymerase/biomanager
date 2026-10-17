@@ -52,6 +52,17 @@ def version() -> str:
             return text
     except OSError:
         pass
+    if not _from_git:
+        _from_git.append(_git_version())
+    return _from_git[0]
+
+
+# From source, git is asked once: pages ask for the version as they are made,
+# and a git process a time took longer than the rest of a small page.
+_from_git: list[str] = []
+
+
+def _git_version() -> str:
     try:
         out = subprocess.run(["git", "describe", "--tags", "--abbrev=0"], cwd=_ROOT, capture_output=True,
                              text=True, timeout=3)

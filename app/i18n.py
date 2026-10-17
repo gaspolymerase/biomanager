@@ -25,6 +25,10 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from flask import current_app, g, has_request_context, request, session
+# Flask's own context variables (Flask is pinned): read directly, a page's
+# language costs a lookup rather than two proxies, and a long sheet asks
+# for it tens of thousands of times.
+from flask.globals import _cv_app, _cv_request
 
 LANGUAGES = {"en": "English", "zh": "中文"}
 DEFAULT = "en"
@@ -62,11 +66,12 @@ def current() -> str:
     """The language of the page being made (English outside a request)."""
     if _override:
         return _override[-1]
-    if not has_request_context():
+    if _cv_request.get(None) is None:
         return DEFAULT
-    lang = g.get("lang")
+    page = _cv_app.get().g
+    lang = page.__dict__.get("lang")
     if lang is None:
-        lang = g.lang = choose()
+        lang = page.lang = choose()
     return lang
 
 

@@ -935,14 +935,15 @@ def mouse_display_row(mouse: MouseRecord, current_username: str | None = None, c
     genotype_parts = transgene_parts(mouse)
     can_edit_breeder = current_role == "admin" or mouse.owner == current_username
     cage_is_breeder = mouse.cage is not None and holds_breeders(mouse.cage.purpose)
+    active = mouse_is_active(mouse)
     return {
         "id": mouse.id,
         "mouse_id": mouse.mouse_id,
         "ear_tag": mouse.ear_tag or "",
         "strain": mouse.strain or "",
         "attrs": custom_fields.values(mouse),
-        "active": mouse_is_active(mouse),
-        "active_label": "Y" if mouse_is_active(mouse) else "N",
+        "active": active,
+        "active_label": "Y" if active else "N",
         "age_weeks": ages["age_weeks"],
         "age_days": ages["age_days"],
         "gender": mouse.gender,

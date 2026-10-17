@@ -1,6 +1,7 @@
 {#- The mouse sheet's row forms (row-forms.js), for the rows drawn: the page's and /colony/mice/rows's. -#}
+        {%- set update_url = id_url('update_mouse', 'mouse_row_id') -%}
         {% for row in sheet_rows %}
-          <form id="mouse-update-{{ row.id }}" method="post" action="{{ url_for('update_mouse', mouse_row_id=row.id) }}"
+          <form id="mouse-update-{{ row.id }}" method="post" action="{{ update_url(row.id) }}"
                 data-mouse-label="{{ row.mouse_id }}">
             <input type="hidden" name="confirm_cohort_dob_change" value="0">
             {# What this row's cage cells showed; the server only changes a

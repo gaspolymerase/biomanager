@@ -245,7 +245,7 @@ class LitterRecord(Base):
     # since it last looked, and tell whether the record changed since it read it.
     sync_version: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0", index=True)
     litter_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
-    date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     cohort_name: Mapped[str] = mapped_column(String(120), default="")
     father_info: Mapped[str] = mapped_column(String(120), default="")
     mother_info: Mapped[str] = mapped_column(String(120), default="")
@@ -322,7 +322,7 @@ class CageRecord(Base):
     # When it was last put in its place (_stamp_cage_placements below);
     # none for a cage placed before 2.0.8, which counts from created_at.
     placed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
     mice: Mapped[list["MouseRecord"]] = relationship(back_populates="cage")
     rack: Mapped["MouseRack | None"] = relationship()
@@ -412,7 +412,7 @@ class MouseRecord(Base):
     # Columns the lab added to this built-in database (app/custom_fields.py):
     # the same JSON an inventory item has carried from the start (0025).
     attrs: Mapped[str] = mapped_column(Text, default="", server_default="")
-    date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     gender: Mapped[str] = mapped_column(String(20), default="")
     transgene_1: Mapped[str] = mapped_column(String(200), default="")
     transgene_2: Mapped[str] = mapped_column(String(200), default="")
@@ -420,10 +420,10 @@ class MouseRecord(Base):
     transgene_4: Mapped[str] = mapped_column(String(200), default="")
     genotype: Mapped[str] = mapped_column(String(200), default="")
     status: Mapped[str] = mapped_column(String(80), default="")
-    owner: Mapped[str] = mapped_column(String(120), default="")
+    owner: Mapped[str] = mapped_column(String(120), default="", index=True)
     note: Mapped[str] = mapped_column(Text, default="")
-    cage_id_fk: Mapped[int | None] = mapped_column(ForeignKey("mouse_cages.id"), nullable=True)
-    litter_id_fk: Mapped[int | None] = mapped_column(ForeignKey("litters.id"), nullable=True)
+    cage_id_fk: Mapped[int | None] = mapped_column(ForeignKey("mouse_cages.id"), nullable=True, index=True)
+    litter_id_fk: Mapped[int | None] = mapped_column(ForeignKey("litters.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_by: Mapped[str] = mapped_column(String(80), default="")

@@ -20,7 +20,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import SessionLocal
-from . import access, cell_text, i18n, lab, positions, security
+from . import access, cell_text, i18n, lab, plain_records, positions, security
 from .i18n import gettext, ngettext, pgettext
 from .formutil import form_changed
 # Importing this registers the SQLAlchemy flush listener that writes
@@ -1239,6 +1239,21 @@ def as_text_cells(html, on: bool = True) -> Markup:
 app.jinja_env.globals["text_cells_on"] = cell_text.text_cells_on
 
 
+def id_url(endpoint: str, arg: str):
+    """url_for(endpoint, arg=…) for a sheet's rows: built once, then each
+    row's id put in its place (`{% set update_url = id_url('update_mouse',
+    'mouse_row_id') %}` … `{{ update_url(row.id) }}`). A route built a row
+    at a time, a few on each, was a tenth of drawing a sheet."""
+    marker = 918273645
+    head, found, tail = url_for(endpoint, **{arg: marker}).partition(str(marker))
+    if not found:   # a converter that changed it: build each one
+        return lambda value: url_for(endpoint, **{arg: value})
+    return lambda value: f"{head}{value}{tail}"
+
+
+app.jinja_env.globals["id_url"] = id_url
+
+
 @app.template_filter("head")
 def column_head(label) -> Markup:
     """A column heading, which the sheet writes in capitals: a micro sign
@@ -1782,9 +1797,10 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
     recent = date.today() - timedelta(days=RECENT_DAYS)
     with SessionLocal() as db_session:
         count_of = lambda stmt: db_session.scalar(stmt) or 0  # noqa: E731
+        # count(*), not count(id): SQLite answers it without reading every row.
         totals = {
-            "all_mice": count_of(select(func.count(MouseRecord.id))),
-            "all_cages": count_of(select(func.count(CageRecord.id))),
+            "all_mice": count_of(select(func.count()).select_from(MouseRecord)),
+            "all_cages": count_of(select(func.count()).select_from(CageRecord)),
             "my_mice": count_of(select(func.count(MouseRecord.id)).where(MouseRecord.owner == me)),
             "my_cages": count_of(select(func.count(CageRecord.id)).where(CageRecord.owner == me)),
             "shared_cages": count_of(select(func.count(CageRecord.id)).where(CageRecord.is_shared.is_(True))),
@@ -1795,30 +1811,31 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 CageRecord.is_shared.is_(True), CageRecord.share_group_id.in_(sorted(my_groups)))
             totals["group_mice"] = count_of(select(func.count(MouseRecord.id)).where(
                 MouseRecord.owner.in_(sorted(project_groups.colleagues())) | MouseRecord.cage_id_fk.in_(group_cages)))
-        def sheet_mice(*options, where=None):
+        def sheet_mice(where=None):
             """The mice the mouse sheet lists: in scope and, unless asked
-            for, none that ended long ago (`where`: of these only)."""
-            query = select(MouseRecord).options(selectinload(MouseRecord.cage).selectinload(CageRecord.rack),
-                                                *options).order_by(MouseRecord.mouse_id)
-            if where is not None:
-                query = query.where(where)
+            for, none that ended long ago (`where`: of these only). Read as
+            plain rows (app/plain_records.py), each with its cage, rack and
+            litter: the ORM took most of the page's time over them."""
+            conditions = [] if where is None else [where]
             # Only the mice the scope can list are loaded (a big colony keeps
             # thousands of everyone's): a superset, which access.in_scope
             # below then decides on exactly.
-            query = query.where(access.scope_superset(
+            conditions.append(access.scope_superset(
                 MouseRecord.owner, MouseRecord.cage_id_fk.in_(select(CageRecord.id).where(CageRecord.is_shared.is_(True))),
                 scope))
             if not show_ended:
-                query = query.where(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
-            return [m for m in db_session.scalars(query).all()
+                conditions.append(MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent))
+            return [m for m in plain_records.mice(db_session, *conditions)
                     if access.in_scope(m, scope, shared=access.cage_shared_with(m.cage),
                                        group_id=access.cage_group(m.cage))]
 
         mice, hidden_mice = [], 0
         if active_view == "mice":
             if not show_ended:
-                hidden_mice = count_of(select(func.count(MouseRecord.id)).where(MouseRecord.date_of_death < recent))
-            mice = sheet_mice(selectinload(MouseRecord.litter))
+                # Every mouse but the few alive or ended lately (ix_mice_date_of_death).
+                hidden_mice = totals["all_mice"] - count_of(select(func.count()).select_from(MouseRecord).where(
+                    MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
+            mice = sheet_mice()
         cages, hidden_cages = [], 0
         if active_view == "cages":
             cage_query = select(CageRecord).options(
@@ -1889,7 +1906,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         usernames = current_lab_usernames(db_session)
         notifications = recent_notifications(db_session, g.user.username if g.user else "", limit=10) if g.user else []
 
-        mouse_rows = [mouse_display_row(mouse, g.user.username if g.user else None, g.user.role if g.user else None) for mouse in mice]
+        me_name, my_role = (g.user.username, g.user.role) if g.user else (None, None)
+        mouse_rows = [mouse_display_row(mouse, me_name, my_role) for mouse in mice]
         cage_racks = mouse_rack_payload(db_session, cages) if active_view == "cages" else None
         sheet_racks = mouse_racks(db_session)
         # The sheet renders rows you may not edit as read-only, using the
@@ -3125,7 +3143,7 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
     context["mouse_sheet_rows"], context["mouse_stubs"], context["mouse_rows_url"] = rows, [], ""
     if active_view == "mice" and len(rows) > inventory_routes.LAZY_OVER:
         context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
-        context["mouse_stubs"] = [mouse_stub(r, context["custom_columns"]) for r in rows[inventory_routes.FIRST_PAGE:]]
+        context["mouse_stubs"] = mouse_stubs(rows[inventory_routes.FIRST_PAGE:], context["custom_columns"])
         context["mouse_rows_url"] = url_for("colony_mouse_rows")
     # A long cage sheet the same way (_cage_rows.html, /colony/cages/rows):
     # the cards view and Open all fetch what they need (colony.html).
@@ -3232,32 +3250,54 @@ def colony_cage_rows():
                     "ids": [row["id"] for row in rows]})
 
 
-def mouse_stub(row: dict, custom_columns: list[dict]) -> dict:
-    """A mouse the sheet does not draw, as data-table.js reads a drawn row
-    (_mouse_rows.html): its data-* (the chips), each sortable cell's value
-    ("k", as the cell holds it: a rack by its id) and the words a search
-    looks in ("s": what the row shows and holds, lower-cased)."""
+def mouse_stubs(rows: list[dict], custom_columns: list[dict]) -> list[dict]:
+    """Mice the sheet does not draw, as data-table.js reads a drawn row
+    (_mouse_rows.html): each one's data-* (the chips), each sortable cell's
+    value ("k", as the cell holds it: a rack by its id) and the words a
+    search looks in ("s": what the row shows and holds, lower-cased). What
+    the rows share (the owners' badges, the words for a sex or a status) is
+    worked out once: a long sheet has thousands."""
     text = lambda value: "" if value is None else str(value)  # noqa: E731
-    data = {"active": "true" if row["active"] else "false", "mouse_id": text(row["mouse_id"]),
-            "ear_tag": text(row["ear_tag"]), "age": text(row["age_days"]), "rowForm": f"mouse-update-{row['id']}"}
-    cells = {name: text(row[name]) for name in (
-        "ear_tag", "strain", "gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4",
-        "cage_id", "cage_position", "owner", "litter_id", "date_of_birth", "date_of_death", "cage_location", "note")}
-    cells["cage_rack"] = text(row["cage_rack_id"])
-    for fd in custom_columns:
-        cells[f"attr_{fd['key']}"] = text(row["attrs"].get(fd["key"], ""))
-    gender = row["gender"] or ""
-    words = [str(row["id"]), *data.values(), *cells.values(), row["cage_rack"] or "",
-             gettext("U") if gender == "Unknown" else i18n.translate_value(gender),
-             i18n.translate_value(row["status"] or ""),
-             f"{row['age_weeks']}{gettext('w')}" if row["age_weeks"] is not None else "",
-             re.sub(r"<[^>]+>", "", str(owner_badge_filter(row["owner"])))]
-    for fd in custom_columns:
-        value = text(row["attrs"].get(fd["key"], ""))
-        if value and fd.get("type") in ("select", "multiselect"):
-            words.append(i18n.translate_value(value))
-    return {"id": row["id"], "f": f"mouse-update-{row['id']}", "d": data, "k": {k: v for k, v in cells.items() if v},
-            "s": " ".join(w for w in words if w).lower()}
+    named = ("ear_tag", "strain", "gender", "status", "transgene_1", "transgene_2", "transgene_3", "transgene_4",
+             "cage_id", "cage_position", "owner", "litter_id", "date_of_birth", "date_of_death", "cage_location", "note")
+    weeks_unit = gettext("w")
+    sexes = {"Unknown": gettext("U")}
+    words_of: dict[str, str] = {}   # a value's words as the page shows it (its translation)
+    badges: dict[str, str] = {}
+
+    def shown(value: str) -> str:
+        if value not in words_of:
+            words_of[value] = i18n.translate_value(value)
+        return words_of[value]
+
+    def badge(owner) -> str:
+        key = owner or ""
+        if key not in badges:
+            badges[key] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
+        return badges[key]
+
+    out = []
+    for row in rows:
+        data = {"active": "true" if row["active"] else "false", "mouse_id": text(row["mouse_id"]),
+                "ear_tag": text(row["ear_tag"]), "age": text(row["age_days"]), "rowForm": f"mouse-update-{row['id']}"}
+        cells = {name: text(row[name]) for name in named}
+        cells["cage_rack"] = text(row["cage_rack_id"])
+        for fd in custom_columns:
+            cells[f"attr_{fd['key']}"] = text(row["attrs"].get(fd["key"], ""))
+        gender = row["gender"] or ""
+        words = [str(row["id"]), *data.values(), *cells.values(), row["cage_rack"] or "",
+                 sexes[gender] if gender in sexes else shown(gender),
+                 shown(row["status"] or ""),
+                 f"{row['age_weeks']}{weeks_unit}" if row["age_weeks"] is not None else "",
+                 badge(row["owner"])]
+        for fd in custom_columns:
+            value = text(row["attrs"].get(fd["key"], ""))
+            if value and fd.get("type") in ("select", "multiselect"):
+                words.append(shown(value))
+        out.append({"id": row["id"], "f": f"mouse-update-{row['id']}", "d": data,
+                    "k": {k: v for k, v in cells.items() if v},
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
 
 
 @app.route("/colony/mice/rows")
