@@ -1956,7 +1956,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             cages = positions.natural_sorted(
                 [c for c in all_cages if access.in_scope(c, scope, shared=access.cage_shared_with(c),
                                                          group_id=access.cage_group(c))], key=lambda c: c.cage_id)
-        litters, hidden_litters = [], 0
+        litters, drawn_litters, hidden_litters = [], [], 0
         if active_view == "litters":
             # Of each pup, only what its cell shows and who may edit it, read
             # as plain rows (app/plain_records.py): a long colony's litters
@@ -1971,15 +1971,20 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 litter_where.append(visible)
             if only is not None:
                 litter_where.append(LitterRecord.id.in_(sorted(only)))
-            # Who may edit a litter is who may edit all its pups, which asks
-            # each pup's cage (access.can_edit_litter): not for those who may
-            # edit any mouse.
-            litters = plain_records.litters(db_session, *litter_where,
-                                            cages=not (access.is_admin() or access.is_care()))
+            litters = plain_records.litters(db_session, *litter_where)
             # L-2 before L-10: by number, not letter by letter (and two that
             # number alike, by their IDs).
             litters.sort(key=lambda l: l.litter_id)
             litters = positions.natural_sorted(litters, key=lambda l: l.litter_id)
+            # A long sheet draws its first page (_colony_page_context); the
+            # others are stubs (litter_stubs), which read a pup's number and
+            # sex only. Each pup in full, and who may edit the litter, only
+            # for the rows drawn. Who may edit a litter is who may edit all
+            # its pups, which asks each pup's cage (access.can_edit_litter):
+            # not for those who may edit any mouse.
+            drawn_litters = litters if len(litters) <= inventory_routes.LAZY_OVER \
+                else litters[:inventory_routes.FIRST_PAGE]
+            plain_records.full_pups(db_session, drawn_litters, cages=not (access.is_admin() or access.is_care()))
         strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
         dropdowns = dropdown_options_map(db_session)
         dropdown_records = dropdown_records_map(db_session)
@@ -2004,12 +2009,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))
         ) if active_view == "experiments" else []
         litter_rows = []
-        # A long sheet draws its first page (_colony_page_context); the
-        # others are stubs (litter_stubs), which read a pup's number and sex
-        # only: who may edit a litter, and each pup as its cell shows it,
-        # only for the rows drawn. A year's litters have tens of thousands
-        # of pups.
-        drawn = len(litters) if len(litters) <= inventory_routes.LAZY_OVER else inventory_routes.FIRST_PAGE
+        drawn = len(drawn_litters)
         for n, litter in enumerate(litters):
             row = {
                 "id": litter.id,
@@ -2020,7 +2020,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
                 "mother_info": litter.mother_info,
                 "total_pups": litter.total_pups,
                 "notes": litter.notes,
-                "mice": litter.mice,   # by number (plain_records.litters): .mouse_id, .gender
+                "mice": litter.mice,   # by number (plain_records.PupName): .mouse_id, .gender
             }
             if n < drawn:
                 # Each pup as its cell shows it (number, sex, alive, age).

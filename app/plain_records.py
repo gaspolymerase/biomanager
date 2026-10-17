@@ -110,33 +110,55 @@ def mice(session, *where) -> list[SheetMouse]:
 
 LITTER_COLUMNS = ("id", "litter_id", "date_of_birth", "cohort_name", "father_info", "mother_info", "total_pups",
                   "notes")
-# A pup as the litter sheet shows it (number, sex, alive) and who may edit it:
-# the columns of ix_mice_litter_pups, so the database reads them from the
-# index alone. A tuple: a year's litters have tens of thousands of pups.
+# A pup as every litter's row knows it (number and sex: what a search finds),
+# and as a drawn row shows it (alive or not) with who may edit it. The
+# columns of ix_mice_litter_pups, so the database reads them from the index
+# alone. Tuples: a year's litters have tens of thousands of pups.
+PupName = namedtuple("PupName", ("mouse_id", "gender"))
+_by_number = attrgetter("mouse_id")
 PUP_COLUMNS = ("id", "mouse_id", "gender", "status", "date_of_death", "owner", "cage_id_fk", "litter_id_fk")
 Pup = namedtuple("MouseRecord", (*PUP_COLUMNS, "cage"))
 PUP_CAGE_COLUMNS = ("id", "owner", "is_shared", "share_group_id")
 
 
-def litters(session, *where, cages: bool = True) -> list[LitterRecord]:
+def litters(session, *where) -> list[LitterRecord]:
     """The litters matching `where` (conditions on models.LitterRecord),
-    each with its `mice` by mouse number. `cages`: each pup with its cage
-    (who may edit a litter is who may edit all its pups, which asks each
-    pup's cage: access.can_edit_litter); else `cage` is None, for someone
-    who may edit any mouse."""
-    l, m, c = models.LitterRecord.__table__, models.MouseRecord.__table__, models.CageRecord.__table__
+    each with its `mice` by mouse number: each pup's number and sex only
+    (PupName). full_pups reads the rest for the litters a page draws."""
+    l, m = models.LitterRecord.__table__, models.MouseRecord.__table__
     found = {row[0]: _made(LitterRecord, LITTER_COLUMNS, row)
              for row in session.execute(select(*(l.c[name] for name in LITTER_COLUMNS)).where(*where))}
-    for litter in found.values():
-        litter.mice = []
     if not found:
         return []
-    chosen = select(l.c.id).where(*where)
+    pups: dict[int, list] = {litter_id: [] for litter_id in found}
+    stmt = select(m.c.litter_id_fk, m.c.mouse_id, m.c.gender).where(
+        m.c.litter_id_fk.in_(select(l.c.id).where(*where)))
+    for litter_id, mouse_id, gender in session.execute(stmt):
+        held = pups.get(litter_id)
+        if held is not None:
+            held.append(PupName(mouse_id, gender))
+    for litter_id, litter in found.items():
+        litter.mice = sorted(pups[litter_id], key=_by_number)
+    return list(found.values())
+
+
+def full_pups(session, litters: list[LitterRecord], cages: bool = True) -> None:
+    """Gives each of `litters` its `mice` in full (Pup), by mouse number.
+    `cages`: each pup with its cage (who may edit a litter is who may edit
+    all its pups, which asks each pup's cage: access.can_edit_litter); else
+    `cage` is None, for someone who may edit any mouse."""
+    if not litters:
+        return
+    m, c = models.MouseRecord.__table__, models.CageRecord.__table__
+    by_id = {litter.id: litter for litter in litters}
+    for litter in litters:
+        litter.mice = []
     pup_columns = [m.c[name] for name in PUP_COLUMNS]
-    stmt = select(*pup_columns).where(m.c.litter_id_fk.in_(chosen))
+    chosen = m.c.litter_id_fk.in_(sorted(by_id))
+    stmt = select(*pup_columns).where(chosen)
     if cages:
         stmt = select(*pup_columns, *(c.c[name].label(f"cage__{name}") for name in PUP_CAGE_COLUMNS)).select_from(
-            m.outerjoin(c, c.c.id == m.c.cage_id_fk)).where(m.c.litter_id_fk.in_(chosen))
+            m.outerjoin(c, c.c.id == m.c.cage_id_fk)).where(chosen)
     held: dict[int, CageRecord] = {}
     width = len(PUP_COLUMNS)
     at_litter = PUP_COLUMNS.index("litter_id_fk")
@@ -146,9 +168,6 @@ def litters(session, *where, cages: bool = True) -> list[LitterRecord]:
             cage = held.get(row[width])
             if cage is None:
                 cage = held[row[width]] = _made(CageRecord, PUP_CAGE_COLUMNS, row[width:])
-        litter = found.get(row[at_litter])
-        if litter is not None:
-            litter.mice.append(Pup(*row[:width], cage))
-    for litter in found.values():
-        litter.mice.sort(key=lambda mouse: mouse.mouse_id)
-    return list(found.values())
+        by_id[row[at_litter]].mice.append(Pup(*row[:width], cage))
+    for litter in litters:
+        litter.mice.sort(key=_by_number)
