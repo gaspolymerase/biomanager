@@ -10551,13 +10551,15 @@ def _zebrafish_context(active_view: str):
         systems = sorted(s.scalars(select(WaterSystem)).all(), key=lambda w: positions.place_order(w.name))
         racks = sorted(s.scalars(select(FishRack)).all(), key=lambda r: positions.place_order(r.name))
         lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda ln: ln.name)
-        # Eager-load what the template reads after the session closes.
-        tanks = s.scalars(
-            select(TankRecord)
-            .options(joinedload(TankRecord.line),
-                     joinedload(TankRecord.rack),
-                     selectinload(TankRecord.fish))
-        ).unique().all()
+        # Eager-load what the template reads after the session closes. Each
+        # tank's rows (its fish, what deleting it would say, its tile on the
+        # rack grid) only for the Tanks tab: every fish the lab has, the
+        # other tabs took most of their time over them.
+        tank_tab = active_view == "tanks"
+        tank_query = select(TankRecord).options(joinedload(TankRecord.line), joinedload(TankRecord.rack))
+        if tank_tab:
+            tank_query = tank_query.options(selectinload(TankRecord.fish))
+        tanks = s.scalars(tank_query).unique().all()
         tanks = positions.natural_sorted(tanks, key=lambda t: t.tank_id)
         fish = s.scalars(
             select(FishRecord).options(joinedload(FishRecord.line), joinedload(FishRecord.tank))
@@ -10598,7 +10600,7 @@ def _zebrafish_context(active_view: str):
 
         # ---- Tanks ----
         tank_rows = []
-        for t in tanks:
+        for t in tanks if tank_tab else []:
             total = sum(f.count or 0 for f in t.fish if fish_alive(f))
             editable = zf_can_edit(t)
             position = fish_position_label(t)
@@ -10739,7 +10741,10 @@ def _zebrafish_context(active_view: str):
         usernames = current_lab_usernames(s)
         census = {
             "tanks": sum(1 for t in tanks if t.active),
-            "fish": sum(f.count or 0 for t in tanks for f in t.fish if fish_alive(f)),
+            "fish": (sum(f.count or 0 for t in tanks for f in t.fish if fish_alive(f)) if tank_tab else
+                     sum(f.count or 0 for f in s.execute(
+                         select(FishRecord.count, FishRecord.status, FishRecord.sac_date)
+                         .join(TankRecord, FishRecord.tank_id_fk == TankRecord.id)) if fish_alive(f))),
             "clutches": s.scalar(select(func.count(ClutchRecord.id))) or 0,
             "lines": len(lines),
             "experiments": experiment_pages.tab_count(s, "zebrafish"),
