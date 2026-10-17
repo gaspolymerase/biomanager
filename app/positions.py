@@ -183,6 +183,17 @@ def natural(value) -> tuple:
     """A sort key for what people number (cages, tanks, racks, codes):
     digits as numbers, the rest without case, so 2 comes before 10, A2
     before A10 and C-99 before C-104 (as text, 10 and 101 came before 2)."""
+    return _natural_text(value) if type(value) is str else _natural(value)
+
+
+@functools.lru_cache(maxsize=1 << 16)
+def _natural_text(value: str) -> tuple:
+    """natural() of a name, kept: a sheet sorts its thousands of IDs each
+    time it is opened."""
+    return _natural(value)
+
+
+def _natural(value) -> tuple:
     text = str(value if value is not None else "").strip().casefold()
     parts = _DIGIT_RUNS.split(text)
     return tuple((0, int(p), "") if i % 2 else (1, 0, p) for i, p in enumerate(parts) if p), text

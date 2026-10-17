@@ -2004,26 +2004,31 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))
         ) if active_view == "experiments" else []
         litter_rows = []
-        for litter in litters:
-            # Each pup as its cell shows it (number, sex, alive, age): a
-            # litter tab lists every pup the colony had, tens of thousands.
-            pup_age = calculate_age_fields(litter.date_of_birth)["age_days"]
-            litter_rows.append(
-                {
-                    "id": litter.id,
-                    "litter_id": litter.litter_id,
-                    "date_of_birth": litter.date_of_birth.isoformat() if litter.date_of_birth else "",
-                    "cohort_name": litter.cohort_name,
-                    "father_info": litter.father_info,
-                    "mother_info": litter.mother_info,
-                    "total_pups": litter.total_pups,
-                    "notes": litter.notes,
-                    "editable": access.can_edit_litter(litter),
-                    "mice": [{"mouse_id": mouse.mouse_id, "gender": mouse.gender, "active": mouse_is_active(mouse),
-                              "age_days": pup_age}
-                             for mouse in sorted(litter.mice, key=lambda item: item.mouse_id)],
-                }
-            )
+        # A long sheet draws its first page (_colony_page_context); the
+        # others are stubs (litter_stubs), which read a pup's number and sex
+        # only: who may edit a litter, and each pup as its cell shows it,
+        # only for the rows drawn. A year's litters have tens of thousands
+        # of pups.
+        drawn = len(litters) if len(litters) <= inventory_routes.LAZY_OVER else inventory_routes.FIRST_PAGE
+        for n, litter in enumerate(litters):
+            row = {
+                "id": litter.id,
+                "litter_id": litter.litter_id,
+                "date_of_birth": litter.date_of_birth.isoformat() if litter.date_of_birth else "",
+                "cohort_name": litter.cohort_name,
+                "father_info": litter.father_info,
+                "mother_info": litter.mother_info,
+                "total_pups": litter.total_pups,
+                "notes": litter.notes,
+                "mice": litter.mice,   # by number (plain_records.litters): .mouse_id, .gender
+            }
+            if n < drawn:
+                # Each pup as its cell shows it (number, sex, alive, age).
+                pup_age = calculate_age_fields(litter.date_of_birth)["age_days"]
+                row["editable"] = access.can_edit_litter(litter)
+                row["mice"] = [{"mouse_id": mouse.mouse_id, "gender": mouse.gender, "active": mouse_is_active(mouse),
+                                "age_days": pup_age} for mouse in litter.mice]
+            litter_rows.append(row)
         strain_rows = [
             {
                 "id": strain.id,
@@ -3250,32 +3255,32 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
 def litter_stubs(rows: list[dict]) -> list[dict]:
     """Litters the sheet does not draw, as data-table.js reads a drawn row
     (_litter_rows.html): each one's data-*, each sortable cell's value
-    ("k") and the words a search looks in ("s", lower-cased). A pup's sex
+    ("k") and the words a search looks in ("s", lower-cased). Their `mice`
+    are the pups as read (.mouse_id, .gender; colony_context). A pup's sex
     in the page's words is worked out once: a year's litters have tens of
     thousands of pups."""
     text = lambda value: "" if value is None else str(value)  # noqa: E731
-    sexes: dict[str, str] = {}
+
+    class Sexes(dict):
+        def __missing__(self, sex):
+            self[sex] = i18n.translate_value(sex)
+            return self[sex]
+
+    sexes = Sexes()
     none_yet = [gettext("none yet")]
     out = []
     for row in rows:
-        mouse_ids = [text(m["mouse_id"]) for m in row["mice"]]
+        mice = row["mice"]
+        mouse_ids = [str(m.mouse_id) for m in mice]   # a mouse always has its number
         data = {"id": str(row["id"]), "litter_id": text(row["litter_id"]), "mice": str(len(mouse_ids)),
                 "mouseIds": " ".join(mouse_ids)}
         cells = {"date_of_birth": text(row["date_of_birth"]), "cohort_name": text(row["cohort_name"]),
                  "father_info": text(row["father_info"]), "mother_info": text(row["mother_info"]),
                  "total_pups": text(row["total_pups"] or ""), "notes": text(row["notes"])}
-        pups = []
-        for m, number in zip(row["mice"], mouse_ids):
-            sex = m["gender"]
-            if sex:
-                if sex not in sexes:
-                    sexes[sex] = i18n.translate_value(sex)
-                pups.append(f"{number} {sexes[sex]}")
-            else:
-                pups.append(number)
+        pups = [f"{number} {sexes[m.gender]}" if m.gender else number for m, number in zip(mice, mouse_ids)]
         words = [data["litter_id"], *(pups or none_yet), *data.values(), *cells.values()]
         out.append({"id": row["id"], "f": f"litter-update-{row['id']}", "d": data, "k": cells,
-                    "s": " ".join(w for w in words if w).lower()})
+                    "s": " ".join(filter(None, words)).lower()})
     return out
 
 
