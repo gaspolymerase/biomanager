@@ -1382,8 +1382,21 @@ def table_label_filter(name: str) -> str:
 
 @app.template_filter("owner_badge")
 def owner_badge_filter(name: str) -> Markup:
+    """A person's initials in their colour. Made once a name for the
+    request: a long sheet or the Breeders tab shows the same few thousands
+    of times."""
     if not name:
         return Markup("")
+    made = g.get("owner_badges")
+    if made is None:
+        made = g.owner_badges = {}
+    found = made.get(name)
+    if found is None:
+        found = made[name] = _owner_badge(name)
+    return found
+
+
+def _owner_badge(name: str) -> Markup:
     info = _get_user_directory().get(name)
     if info and info["short"]:
         text = info["short"][:3].upper() if len(info["short"]) > 3 else info["short"].upper()
