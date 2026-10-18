@@ -179,5 +179,9 @@
   "A cage whose purpose was written in capitals (BREEDER) shows it in its **Purpose** menu, not “–”.": "用途写成大写（BREEDER）的笼，在 **用途** 菜单里显示它的用途，不再是“–”。",
   "On **Mice**, the server reads only the mice the chosen view lists, so a large lab's sheet comes sooner.": "在 **小鼠** 里，服务器只读取当前视图列出的小鼠，大实验室的表格来得更快。",
   "Sheets are ready to use sooner once they arrive: the browser styles each cell about once as a sheet opens, not several times over.": "表格到达后更快可用：浏览器打开表格时每个单元格的样式大约只算一遍，不再反复重算。",
-  "**Cages** and **Cage cards** read only the cages the chosen view lists, so a large lab's cages come sooner.": "**笼** 和 **笼卡** 只读取当前视图列出的笼，大实验室的笼来得更快。"
+  "**Cages** and **Cage cards** read only the cages the chosen view lists, so a large lab's cages come sooner.": "**笼** 和 **笼卡** 只读取当前视图列出的笼，大实验室的笼来得更快。",
+  "In a large lab the server answers the **Mice**, **Litters**, **Cages** and **Breeders** tabs two to six times sooner: **Mice** in under a fifth of a second.": "在大实验室里，服务器应答 **小鼠**、**窝**、**笼** 和 **种鼠** 表格快两到六倍：**小鼠** 不到 0.2 秒。",
+  "The zebrafish **Tanks** sheet opens with its first page and brings each other page as you turn to it, as the mouse sheets do; the **Fish** tab comes sooner too.": "斑马鱼的 **鱼缸** 表格打开时只有第一页，翻到其他页时再载入，和小鼠表格一样；**鱼** 表格也来得更快。",
+  "Inventories such as **Samples** and **Reagents** come about twice as fast; a sample's source box suggests IDs the first time you type in it.": "**样本**、**试剂** 等库存表格快约一倍；样本来源的编号框在第一次输入时给出编号建议。",
+  "The **Cages** tab's **Rack grid** loads its cages when you switch to it.": "**笼** 表格的 **笼架网格** 切换过去时才载入笼。"
 }
