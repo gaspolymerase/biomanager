@@ -621,19 +621,35 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     inventory of 20,000 samples 0.7 s (1.85), of 20,000 reagents 0.7 s
     (1.4); the fish tab 0.7 s (1.9), which no longer loads every tank's
     fish. The Tanks tab still does, and draws every tank: 4.6 s.
-- Tanks and vials are drawn whole by their page and paged after
+- Vials are drawn whole by their page and paged after
   (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
   sheet's first page, makes each other row a stub with
   `cell_text.row_stub` (read from the row as drawn, as `_sortValue` and
   `_rowText` read it, so it needs no code per sheet), takes those rows'
   forms out of its `<template data-row-forms>`, and gives the sheet its
-  rows address: `/zebrafish/tanks/rows`, `/stocks/<key>/units/rows`. That
-  address builds the page's context with only the rows asked for, draws
-  the page, and `rows_of` lifts them and their forms out. A stub carries
-  its row form (`f`) for links. The server still draws every row once for
-  the page; the browser builds only a page of them. At 100,000 mice:
-  3,337 tanks open in 5.4 s (14.2), vials 3.8 s (4.5), a page turn
-  0.1–0.9 s.
+  rows address: `/stocks/<key>/units/rows`. That address builds the
+  page's context with only the rows asked for, draws the page, and
+  `rows_of` lifts them and their forms out. A stub carries its row form
+  (`f`) for links. The server still draws every row once for the page;
+  the browser builds only a page of them. At 100,000 mice: vials 3.8 s
+  (4.5), a page turn 0.1–0.9 s.
+- The tank sheet was paged that way, and drawing 3,337 tanks then reading
+  them back took 4.6 s. Now `_zebrafish_context` draws its first page
+  (`tank_sheet_rows`) and makes each other tank's stub from its data
+  (`zf_tank_stubs`: its `data-*`, each field's value, a menu's shown
+  choice, the owner's initials, the genotyping label, and in text cells
+  an empty Pos's "–"; a lab's own columns are drawn with `custom_cell` and
+  read with `row_stub`). `tests/test_speed.py` holds every stub to
+  `cell_text.row_stub` of its drawn row, with and without the lab's own
+  columns, in both ways of drawing cells and in Chinese.
+  `/zebrafish/tanks/rows` draws only the tanks asked for
+  (`_zebrafish_context(tank_ids=…)`). Each tank's fish are read as plain
+  rows (its count of live fish, its fish rows); only a mating tank still
+  out loads its fish in full, for its Returned dialog, and only the
+  tanks drawn (and those) get their dialog's payload and delete prompt.
+  The rack grid's tiles are made only for the grid (`?mode=grid`). The
+  other tabs read no tank's fish at all. At 100,000 mice the tank sheet
+  answers in 0.45–0.5 s.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

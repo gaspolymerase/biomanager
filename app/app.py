@@ -10544,7 +10544,70 @@ def zf_report(changed: int, skipped: int, what: str, noun: str, plural: str, blo
 # ---- Page ------------------------------------------------------------------
 
 
-def _zebrafish_context(active_view: str):
+def zf_tank_stubs(rows: list[dict], custom_columns: list[dict], racks: list, lines: list) -> list[dict]:
+    """Tanks the sheet does not draw, as data-table.js reads a drawn row
+    (zebrafish.html's tank rows, as cell_text.row_stub reads them): its
+    data-*, each field's value ("k"), its row form, and the words a search
+    looks in ("s": what the row shows, its data-* and each field's value
+    and the choice it shows). Built from each tank's data rather than drawn:
+    a lab's thousands of tanks took seconds to draw and read back.
+    tests/test_speed.py holds each to the row it stands for."""
+    from .cell_text import row_stub
+    as_text = cell_text.text_cells_on()
+    rack_name = {r.id: r.name for r in racks}
+    line_name = {ln.id: ln.name for ln in lines}
+    queued, no = gettext("Queued"), gettext("No")
+    purposes: dict[str, str] = {}
+    badges: dict[str, str] = {}
+    custom_cell = app.jinja_env.get_template("_sheet.html").module.custom_cell if custom_columns else None
+
+    def menu(chosen, names: dict) -> tuple[str, str]:
+        """A rack or line menu's (value, words): the blank "–" when none is
+        chosen, or one that is no longer there."""
+        return (str(chosen), names[chosen]) if chosen and chosen in names else ("", "–")
+
+    def purpose_of(purpose) -> tuple[str, str]:
+        """The Purpose menu's choice: its own word, one from before the
+        list as itself, else the first (the menu's macro, options())."""
+        if purpose in TANK_PURPOSE_OPTIONS:
+            if purpose not in purposes:
+                purposes[purpose] = i18n.translate_value(purpose, "zebrafish")
+            return purpose, purposes[purpose]
+        if purpose:
+            return purpose, purpose
+        return purpose_of(TANK_PURPOSE_OPTIONS[0])
+
+    out = []
+    for tr in rows:
+        t = tr["row"]
+        rack, line, purpose = menu(t.rack_id_fk, rack_name), menu(t.line_id_fk, line_name), purpose_of(t.purpose)
+        owner = t.owner or ""
+        if owner not in badges:
+            badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
+        data = {"id": str(t.id), "tank_id": str(t.tank_id), "active": "true" if t.active else "false",
+                "mine": "true" if tr["mine"] else "false", "shared": "true" if tr["shared"] else "false",
+                "rack": t.rack.name if t.rack else "", "line": t.line.name if t.line else "",
+                "fish": str(tr["total_fish"]), "geno": "1" if t.needs_genotyping else "",
+                "return": str(t.mating_return_at or "")}
+        sort = {"rack_id_fk": rack[0], "position": tr["position"], "purpose": purpose[0], "line_id_fk": line[0],
+                "owner": owner, "card_id": str(t.card_id), "notes": str(t.notes)}
+        words = [str(t.tank_id), rack[1], purpose[1], line[1], str(tr["total_fish"]), badges[owner],
+                 queued if t.needs_genotyping else no, fmt_day(t.mating_return_at), *data.values(), *sort.values()]
+        if as_text and not tr["position"]:
+            words.append("–")   # an empty Pos shows its placeholder
+        for fd in custom_columns:
+            cell = f'<td>{custom_cell(fd, tr["attrs"].get(fd["key"], ""), f"utank-{t.id}", not tr["editable"], "owner-name-options")}</td>'
+            read = row_stub("", str(as_text_cells(cell, as_text)))
+            sort.update({k: v for k, v in read["k"].items() if k not in sort})
+            words.append(read["s"])
+        out.append({"id": t.id, "e": f"tank-{t.id}", "f": f"utank-{t.id}", "d": data, "k": sort,
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
+
+
+def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
+    """What zebrafish.html draws for a tab. On the Tanks tab, `tank_ids`:
+    only these tanks' rows are drawn (zebrafish_tank_rows)."""
     me = access.username()
     today = date.today()
     with SessionLocal() as s:
@@ -10552,14 +10615,11 @@ def _zebrafish_context(active_view: str):
         racks = sorted(s.scalars(select(FishRack)).all(), key=lambda r: positions.place_order(r.name))
         lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda ln: ln.name)
         # Eager-load what the template reads after the session closes. Each
-        # tank's rows (its fish, what deleting it would say, its tile on the
-        # rack grid) only for the Tanks tab: every fish the lab has, the
-        # other tabs took most of their time over them.
+        # tank's row only for the Tanks tab: the other tabs took most of
+        # their time over every tank's fish.
         tank_tab = active_view == "tanks"
-        tank_query = select(TankRecord).options(joinedload(TankRecord.line), joinedload(TankRecord.rack))
-        if tank_tab:
-            tank_query = tank_query.options(selectinload(TankRecord.fish))
-        tanks = s.scalars(tank_query).unique().all()
+        tanks = s.scalars(select(TankRecord).options(joinedload(TankRecord.line), joinedload(TankRecord.rack))
+                          ).unique().all()
         tanks = positions.natural_sorted(tanks, key=lambda t: t.tank_id)
         fish = s.scalars(
             select(FishRecord).options(joinedload(FishRecord.line), joinedload(FishRecord.tank))
@@ -10599,11 +10659,44 @@ def _zebrafish_context(active_view: str):
                 mating_refs[tid] = mating_refs.get(tid, 0) + 1
 
         # ---- Tanks ----
-        tank_rows = []
-        for t in tanks if tank_tab else []:
-            total = sum(f.count or 0 for f in t.fish if fish_alive(f))
+        # Each tank's fish as plain rows (how many, alive or not): a lab's
+        # tanks hold tens of thousands of fish rows. A mating tank still out
+        # has its fish in full, for where each group goes back to.
+        fish_in: dict[int, list] = {}
+        if tank_tab:
+            for f in s.execute(select(FishRecord.tank_id_fk, FishRecord.count, FishRecord.status, FishRecord.sac_date)):
+                fish_in.setdefault(f[0], []).append(f)
+        returning: dict[int, list] = {}
+        out_now = [t.id for t in tanks if tank_tab and zf_is_mating(t) and t.active]
+        if out_now:
+            for f in s.scalars(select(FishRecord).options(joinedload(FishRecord.line))
+                               .where(FishRecord.tank_id_fk.in_(out_now)).order_by(FishRecord.id)):
+                returning.setdefault(f.tank_id_fk, []).append(f)
+        # A long tank sheet draws its first page; each other tank is a stub
+        # (zf_tank_stubs), made from what its row needs to be found and
+        # sorted. Its row in full (what deleting it would say, its dialog's
+        # payload) only for the tanks drawn, a mating tank still out, and
+        # the rack grid's tiles.
+        tank_mode = request.args.get("mode", "table")
+        paged = (tank_tab and tank_mode == "table" and tank_ids is None
+                 and len(tanks) > inventory_routes.LAZY_OVER)
+        tank_rows, tank_sheet_rows = [], []
+        for n, t in enumerate(tanks if tank_tab else []):
+            groups = fish_in.get(t.id, [])
+            total = sum(f.count or 0 for f in groups if fish_alive(f))
             editable = zf_can_edit(t)
             position = fish_position_label(t)
+            returnable = zf_is_mating(t) and t.active
+            drawn = (tank_ids is None and (not paged or n < inventory_routes.FIRST_PAGE)) or (
+                tank_ids is not None and t.id in tank_ids)
+            if not (drawn or returnable or tank_mode != "table"):
+                tank_rows.append({
+                    "row": t, "total_fish": total, "position": position, "editable": editable,
+                    "attrs": custom_fields.values(t), "mine": t.owner == me, "shared": zf_tank_shared(t),
+                    "fish_rows": len(groups), "returnable": False, "return_plan": []})
+                continue
+            if drawn:
+                tank_sheet_rows.append(len(tank_rows))   # where its row goes in tank_rows, below
             refs = []
             if parent_refs.get(t.id, 0):
                 refs.append(ngettext("%(num)s clutch will no longer name it as a parent",
@@ -10616,14 +10709,14 @@ def _zebrafish_context(active_view: str):
                                      "%(num)s sac-log entries will lose its tank", sac_refs[t.id]))
             affected = "; ".join(refs)
             # A mating tank still out: where each live group goes back to.
-            returnable = zf_is_mating(t) and t.active
             plan = [{"fish": f, "home": home if home in tank_by_id else None,
                      "home_code": tank_by_id[home].tank_id if home in tank_by_id else ""}
-                    for f in t.fish if fish_alive(f) for home in [zf_mating_home(f, t)]] if returnable else []
+                    for f in returning.get(t.id, []) if fish_alive(f)
+                    for home in [zf_mating_home(f, t)]] if returnable else []
             tank_rows.append({
                 "row": t, "total_fish": total, "position": position, "editable": editable,
                 "attrs": custom_fields.values(t),
-                "mine": t.owner == me, "shared": zf_tank_shared(t), "fish_rows": len(t.fish),
+                "mine": t.owner == me, "shared": zf_tank_shared(t), "fish_rows": len(groups),
                 "share_group": project_groups.name_of(t.share_group_id) if zf_tank_shared(t) else "",
                 "returnable": returnable, "return_plan": plan,
                 "return_ready": all(p["home"] for p in plan),
@@ -10639,6 +10732,10 @@ def _zebrafish_context(active_view: str):
                     "share_group": project_groups.value_of(True, t.share_group_id),
                     "rack_id_fk_was": t.rack_id_fk or "", "position_was": position, "owner_was": t.owner},
             })
+
+        drawn_at = set(tank_sheet_rows)
+        tank_sheet_rows = [tank_rows[i] for i in tank_sheet_rows]
+        undrawn = [tr for i, tr in enumerate(tank_rows) if i not in drawn_at] if paged else []
 
         # ---- Fish ----
         fish_rows = []
@@ -10741,7 +10838,7 @@ def _zebrafish_context(active_view: str):
         usernames = current_lab_usernames(s)
         census = {
             "tanks": sum(1 for t in tanks if t.active),
-            "fish": (sum(f.count or 0 for t in tanks for f in t.fish if fish_alive(f)) if tank_tab else
+            "fish": (sum(tr["total_fish"] for tr in tank_rows) if tank_tab else
                      sum(f.count or 0 for f in s.execute(
                          select(FishRecord.count, FishRecord.status, FishRecord.sac_date)
                          .join(TankRecord, FishRecord.tank_id_fk == TankRecord.id)) if fish_alive(f))),
@@ -10779,7 +10876,7 @@ def _zebrafish_context(active_view: str):
             "search": " ".join(filter(None, [tr["row"].tank_id, tr["row"].purpose, tr["row"].owner, tr["row"].card_id,
                                              tr["row"].line.name if tr["row"].line else ""])).lower(),
             "edit": {"data-record-edit": "tank-dialog", "data-record-payload": json.dumps(tr["payload"])},
-        } for tr in tank_rows],
+        } for tr in (tank_rows if tank_mode == "grid" else [])],   # the tiles: only the grid shows them
         "create": {"attrs": {"data-record-edit": "tank-dialog"},
                    "payload": {"tank_id": next_tank_id, "purpose": "stock", "owner": me, "active": "1"},
                    "rack_field": "rack_id_fk", "text_field": "position"},
@@ -10789,6 +10886,11 @@ def _zebrafish_context(active_view: str):
         zf_columns = custom_fields.fields(s, "zebrafish")
     return {
         "active_view": active_view,
+        # The Tanks tab's sheet: the rows it draws, a stub for each other
+        # tank, and where its script fetches their rows.
+        "tank_sheet_rows": tank_sheet_rows,
+        "tank_stubs": zf_tank_stubs(undrawn, custom_fields.in_table(zf_columns), racks, lines) if undrawn else [],
+        "tank_rows_url": url_for("zebrafish_tank_rows") if undrawn else "",
         "zebrafish_views": ZEBRAFISH_VIEWS,
         "custom_columns": custom_fields.in_table(zf_columns),
         "custom_columns_all": zf_columns,
@@ -10829,9 +10931,8 @@ def zebrafish():
         return redirect(url_for("zebrafish", view="tanks", mode=ZEBRAFISH_VIEW_ALIASES[view]))
     if view not in ZEBRAFISH_VIEWS:
         view = "tanks"
-    html = render_template("zebrafish.html", **_zebrafish_context(view))
-    # A long tank sheet: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
-    return sheet_paging.page(html, "zf-tanks-v2", url_for("zebrafish_tank_rows")) if view == "tanks" else html
+    # A long tank sheet draws its first page, the rest fetched as shown (_zebrafish_context).
+    return render_template("zebrafish.html", **_zebrafish_context(view))
 
 
 @app.route("/zebrafish/tanks/rows")
@@ -10840,9 +10941,7 @@ def zebrafish_tank_rows():
     """Rows of a long tank sheet by id (?ids=…, with the page's own
     arguments), as the page draws them; ?as=text for their words."""
     ids = sheet_paging.ids_asked(request)
-    keep = set(ids)
-    context = _zebrafish_context("tanks")
-    context["tank_rows"] = [tr for tr in context["tank_rows"] if tr["row"].id in keep]
+    context = _zebrafish_context("tanks", tank_ids=set(ids))
     return sheet_paging.answer(render_template("zebrafish.html", **context), "zf-tanks-v2", ids, request)
 
 

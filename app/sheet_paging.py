@@ -1,18 +1,19 @@
 """A long sheet paged by the server, for a page that draws its sheet whole.
 
-The inventories and the mouse and litter sheets draw their first page
-through their own row templates (inventory_routes, app.colony_mouse_rows,
-app.colony_litter_rows). Other sheets (fish tanks, fly vials) are drawn by
-their page as before and trimmed here: past LAZY_OVER rows, the rows after the first page leave the page
+The inventories, the mouse, cage and litter sheets and the fish tanks draw
+their first page through their own row templates and make the other rows'
+stubs from data (inventory_routes, app.colony_mouse_rows, app.zf_tank_stubs);
+their rows addresses use answer() here. Other sheets (fly vials) are drawn
+by their page as before and trimmed here: past LAZY_OVER rows, the rows after the first page leave the page
 and stand as stubs (cell_text.row_stub, read from the rows as drawn, as
 data-table.js reads a row), their row forms leave its <template
 data-row-forms>, and the sheet gets data-dt-rows-url. That address draws
 the page again with only the rows asked for (`keep`), and rows_of lifts
 them and their forms out of it.
 
-Drawing is most of such a page's time on the server (3,337 tanks: 2.2 s of
-2.8), and nearly all of it in the browser, which no longer builds rows it
-does not show.
+Drawing is most of such a page's time on the server (3,337 tanks took
+2.2 s of 2.8, and trimming them more), and nearly all of it in the browser,
+which no longer builds rows it does not show.
 """
 from __future__ import annotations
 

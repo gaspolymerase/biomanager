@@ -205,7 +205,7 @@
   {% set any_mating = tank_rows | selectattr('row.mating_return_at') | list %}
   {% set any_returnable = tank_rows | selectattr('returnable') | list %}
   <section class="data-table-card sheet dt-held" data-table-id="zf-tanks-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-tanks"
-           data-autosave-sheet data-selection-scope data-selection-noun="{{ _('tank') }}" data-selection-noun-plural="{{ _('tanks') }}">
+           data-autosave-sheet data-selection-scope data-selection-noun="{{ _('tank') }}" data-selection-noun-plural="{{ _('tanks') }}"{% if tank_rows_url %} data-dt-rows-url="{{ tank_rows_url }}"{% endif %}>
     <div class="dt-toolbar">
       {{ search_box(_('Search tank, line, owner…')) }}
       {{ chips([
@@ -255,7 +255,8 @@
         <tbody>
           {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
           {% filter as_text_cells(text_cells_on()) %}
-          {% for tr in tank_rows %}
+          {# A long sheet draws its first page; the other tanks are stubs (zf_tank_stubs), their rows fetched as shown. #}
+          {% for tr in tank_sheet_rows %}
             {% set t = tr.row %}
             {% set f = 'utank-' ~ t.id %}
             {% set locked = not tr.editable %}
@@ -332,14 +333,14 @@
           {% endfor %}
           {% endfilter %}
         </tbody>
-      </table>
+      </table>{% if tank_stubs %}<script type="application/json" data-dt-stubs>{{ tank_stubs | stubs_json }}</script>{% endif %}
     </div>
     {# One form per row, outside the table; cells join it through form="…".
        The _was copies are what the row showed: rack, position and owner
        also change from the rack grid and the dialog, and a stale row must
        not write its old value back over them (app/formutil.py). #}
     <template data-row-forms>
-    {% for tr in tank_rows %}
+    {% for tr in tank_sheet_rows %}
       <form id="utank-{{ tr.row.id }}" method="post" action="{{ url_for('zebrafish_update_tank', tank_row_id=tr.row.id) }}" data-record-label="{{ _('tank %(id)s', id=tr.row.tank_id) }}">
         <input type="hidden" name="rack_id_fk_was" value="{{ tr.row.rack_id_fk or '' }}">
         <input type="hidden" name="position_was" value="{{ tr.position }}">
