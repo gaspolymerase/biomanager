@@ -51,7 +51,7 @@ COLUMNS = {
     "mouse_cages": ("id", "cage_id", "cage_location", "purpose", "owner", "is_shared", "share_group_id",
                     "rack_id_fk", "rack_row", "rack_col"),
     "mouse_racks": ("id", "name", "rows", "cols", "naming"),
-    "litters": ("id", "litter_id", "date_of_birth"),
+    "litters": ("id", "litter_id", "date_of_birth", "weaned_on"),
 }
 
 
@@ -116,6 +116,7 @@ LITTER_COLUMNS = ("id", "litter_id", "date_of_birth", "cohort_name", "father_inf
 # alone. Tuples: a year's litters have tens of thousands of pups.
 PupName = namedtuple("PupName", ("mouse_id", "gender"))
 _by_number = attrgetter("mouse_id")
+_by_id = attrgetter("id")
 PUP_COLUMNS = ("id", "mouse_id", "gender", "status", "date_of_death", "owner", "cage_id_fk", "litter_id_fk")
 Pup = namedtuple("MouseRecord", (*PUP_COLUMNS, "cage"))
 PUP_CAGE_COLUMNS = ("id", "owner", "is_shared", "share_group_id")
@@ -210,3 +211,33 @@ def inventory_items(session, *where, order_by=(), racks: dict | None = None) -> 
             select(models.InventoryRack).where(models.InventoryRack.id.in_(sorted(missing)))))
     racks[None] = None
     return [InventoryItem(*row, racks[row[at_rack]], []) for row in rows]
+
+
+# A cage as the cage sheet reads it (cages): every column, its rack and its
+# mice (SheetMouse, each with its litter).
+CAGE_COLUMNS = tuple(column.name for column in models.CageRecord.__table__.columns)
+SheetCageFull = namedtuple("CageRecord", (*CAGE_COLUMNS, "rack", "mice"))
+
+
+def cages(session, *where, order_by=()) -> list[SheetCageFull]:
+    """The cages matching `where`, in `order_by`'s order, each with its
+    rack and its mice (each with its litter): what the cage
+    sheet reads of the cages it does not draw, its stubs, its chips and its
+    rack grid. A cage's own row in full (its litters born in it, who may
+    edit what) is the ORM's (app.cage_sheet_row)."""
+    t, r = models.CageRecord.__table__, models.MouseRack.__table__
+    racks = {row[0]: SheetRack(*row) for row in session.execute(select(*(r.c[name] for name in COLUMNS["mouse_racks"])))}
+    at_rack = CAGE_COLUMNS.index("rack_id_fk")
+    out = [SheetCageFull(*row, racks.get(row[at_rack]), [])
+           for row in session.execute(select(*(t.c[name] for name in CAGE_COLUMNS)).where(*where).order_by(*order_by))]
+    if out:
+        by_id = {cage.id: cage for cage in out}
+        chosen = select(t.c.id).where(*where)
+        for mouse in mice(session, models.MouseRecord.cage_id_fk.in_(chosen)):
+            held = by_id.get(mouse.cage_id_fk)
+            if held is not None:
+                held.mice.append(mouse)
+        # In the order they were added, as the ORM's cage.mice gives them.
+        for cage in out:
+            cage.mice.sort(key=_by_id)
+    return out

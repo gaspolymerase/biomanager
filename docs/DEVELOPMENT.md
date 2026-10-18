@@ -624,11 +624,16 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     new objects (`gc.set_threshold`): at Python's default, a long sheet's
     hundreds of thousands of objects were walked many times a page, a fifth
     of an inventory's time.
-  - The cage sheet builds a cage's row in full (`cage_sheet_row`: each of
-    its mice's rows, its litters to wean, who may edit what) only for the
-    cages it draws; each other cage gets what its stub, the chips and the
-    counts read (`cage_stub_row`), and its litters born in it are loaded
-    for the cages drawn only. The Breeders tab reads its cages, racks and
+  - The cage sheet reads its cages as plain rows (`plain_records.cages`:
+    every column, the rack, the mice with their litters, in the order they
+    were added as the ORM gives them) and builds a cage's row in full
+    (`cage_sheet_row`: each of its mice's rows, its litters to wean, who
+    may edit what) only for the cages it draws, which it reads through the
+    ORM with their litters born in them; each other cage gets what its
+    stub, the chips and the counts read (`cage_stub_row`). The rack grid's
+    tiles (`/colony/cages/grid`) are made from the same plain rows. The
+    New cage dialog's next number reads every cage's in one pass
+    (`services._FIRST_NUMBERS`, each one's first run of digits). The Breeders tab reads its cages, racks and
     mice as plain rows (`services.breeder_mice`), and its summary in one
     query (`breeder_summary`). The words every cage row or Breeders card
     says alike are put in the page's words once a draw (`app/cage_rows.py`,

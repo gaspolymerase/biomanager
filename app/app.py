@@ -1997,24 +1997,24 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             mice = sheet_mice()
         cages, hidden_cages = [], 0
         if active_view == "cages":
-            # Each cage's litters born in it come below, for the rows drawn only.
-            cage_query = select(CageRecord).options(
-                selectinload(CageRecord.mice).selectinload(MouseRecord.litter),
-                selectinload(CageRecord.rack)).order_by(CageRecord.cage_id)
+            # Read as plain rows (app/plain_records.py), each with its rack
+            # and its mice: the ORM took a third of the sheet's time. The
+            # cages drawn are read through the ORM below, with their litters.
+            cage_where = []
             if not show_ended:
                 # Only cages that may be shown are loaded, with their mice: a
                 # mouse alive or died lately, or made lately (a colony keeps
                 # every cage it had). The rule itself is below.
-                cage_query = cage_query.where(
+                cage_where.append(
                     CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(
                         MouseRecord.date_of_death.is_(None) | (MouseRecord.date_of_death >= recent)))
                     | (CageRecord.created_at >= datetime.combine(recent, datetime.min.time())))
             if only is not None:
-                cage_query = cage_query.where(CageRecord.id.in_(sorted(only)))
+                cage_where.append(CageRecord.id.in_(sorted(only)))
             # Only the cages the scope can list are loaded, with their mice
             # and litters: a superset, which access.in_scope below decides on.
-            cage_query = cage_query.where(access.scope_superset(CageRecord.owner, CageRecord.is_shared.is_(True), scope))
-            all_cages = db_session.scalars(cage_query).all()
+            cage_where.append(access.scope_superset(CageRecord.owner, CageRecord.is_shared.is_(True), scope))
+            all_cages = plain_records.cages(db_session, *cage_where, order_by=[CageRecord.cage_id])
             if not show_ended:
                 def shown(c) -> bool:
                     return (cage_is_active(c) or bool(c.created_at and c.created_at.date() >= recent)
@@ -2090,11 +2090,15 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         # edit what, only for the rows drawn.
         drawn = len(cages) if only is not None or len(cages) <= inventory_routes.LAZY_OVER \
             else inventory_routes.FIRST_PAGE
-        if cages:
-            db_session.scalars(select(CageRecord).where(CageRecord.id.in_([c.id for c in cages[:drawn]])).options(
-                selectinload(CageRecord.cage_litters).selectinload(CageLitter.litter).selectinload(LitterRecord.mice)
-            )).all()
-        cage_rows = [cage_sheet_row(cage) if n < drawn else cage_stub_row(cage) for n, cage in enumerate(cages)]
+        # The cages drawn, through the ORM: their rows ask their litters born
+        # in them, the Wean dialog's pups and who may edit what.
+        in_full = {c.id: c for c in db_session.scalars(
+            select(CageRecord).where(CageRecord.id.in_([c.id for c in cages[:drawn]])).options(
+                selectinload(CageRecord.mice).selectinload(MouseRecord.litter), selectinload(CageRecord.rack),
+                selectinload(CageRecord.cage_litters).selectinload(CageLitter.litter).selectinload(LitterRecord.mice))
+        )} if cages else {}
+        cage_rows = [cage_sheet_row(in_full[cage.id]) if n < drawn else cage_stub_row(cage)
+                     for n, cage in enumerate(cages)]
         # The Experiments tab's "start with a cage" only lists cage numbers.
         cage_ids = positions.natural_sorted(db_session.scalars(select(CageRecord.cage_id).where(
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))

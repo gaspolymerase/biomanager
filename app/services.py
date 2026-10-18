@@ -748,6 +748,7 @@ def reserve_mouse_ids(session, count: int) -> list[int]:
 
 
 _DIGITS = re.compile(r"\d+")
+_FIRST_NUMBERS = re.compile(r"^[^\d\n]*(\d+)", re.M)
 
 
 def _cage_number(code: str | None) -> int:
@@ -769,9 +770,13 @@ def reserve_cage_ids(session, count: int) -> list[str]:
         return []
     # See next_mouse_id: pending rows are invisible without a flush.
     session.flush()
-    # The column alone, not through the ORM: a lab has tens of thousands.
-    codes = {code for code, in session.execute(select(CageRecord.__table__.c.cage_id))}
-    highest = max((_cage_number(code) for code in codes), default=0)
+    # The column alone, not through the ORM: a lab has tens of thousands,
+    # and their numbers read in one pass over them all (_FIRST_NUMBERS: each
+    # line's first run of digits, as _cage_number reads one).
+    codes = set(session.scalars(select(CageRecord.__table__.c.cage_id)))
+    one_line = [code for code in codes if code and "\n" not in code]
+    highest = max(map(int, _FIRST_NUMBERS.findall("\n".join(one_line))), default=0)
+    highest = max([highest, *(_cage_number(code) for code in codes if code and "\n" in code)])
     ids: list[str] = []
     candidate = highest
     while len(ids) < count:
