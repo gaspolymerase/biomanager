@@ -604,9 +604,9 @@ class SheetPagingTests(AppTestCase):
                self.make_tank(self.a, purpose="quarantine"),
                self.make_tank(self.a, rack_id_fk=str(rack), position="A3", line_id_fk=str(line))]
         execute("update tanks set row=NULL, col=NULL where id=?", ids[4])   # in a rack, at no place: Pos shows "–"
-        execute("update tanks set needs_genotyping=1, mating_return_at=? where id=?", days_ahead(3), ids[1])
+        execute("update tanks set needs_genotyping=?, mating_return_at=? where id=?", True, days_ahead(3), ids[1])
         execute("update tanks set purpose='TANK OF OLD' where id=?", ids[3])   # from before the list
-        execute("update tanks set active=0 where id=?", ids[2])
+        execute("update tanks set active=? where id=?", False, ids[2])
         from tests.test_zebrafish import make_fish
         make_fish(self.a, ids[0], 4, sex="M")
         make_fish(self.a, ids[0], 2, sex="F", status="sac")

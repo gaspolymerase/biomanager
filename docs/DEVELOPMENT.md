@@ -442,7 +442,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   whole dialog, megabytes on a long inventory): the macro's `src`
   (`data-rack-src`) is `/inventory/<key>/grid` (`grid_data`, the page's
   `?type=` and `?ended=`), fetched then; the Boxes buttons above the sheet
-  take their dialogs from `rack_edits`.
+  take their dialogs from `rack_edits`. The cage sheet's rack grid the
+  same: its tiles come from `/colony/cages/grid` (`colony_cage_grid`, the
+  page's `scope` and `ended`; `mouse_rack_payload(tiles=True)`), and the
+  page carries the racks only, for its Racks buttons and Rack menus.
 - Rows past a sheet's first page (100) are `display: none` from the
   stylesheet until `data-table.js` has drawn it
   (`.data-table-card.dt-held`, which the script takes off): the browser would
@@ -615,12 +618,22 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     new objects (`gc.set_threshold`): at Python's default, a long sheet's
     hundreds of thousands of objects were walked many times a page, a fifth
     of an inventory's time.
+  - The cage sheet builds a cage's row in full (`cage_sheet_row`: each of
+    its mice's rows, its litters to wean, who may edit what) only for the
+    cages it draws; each other cage gets what its stub, the chips and the
+    counts read (`cage_stub_row`), and its litters born in it are loaded
+    for the cages drawn only. The Breeders tab reads its cages, racks and
+    mice as plain rows (`services.breeder_mice`), and its summary in one
+    query (`breeder_summary`). The words every cage row or Breeders card
+    says alike are put in the page's words once a draw (`w` in
+    `_cage_rows.html`, `w_…` in `colony.html`), and an owner's badge is
+    made once a name for the request (`owner_badge_filter`).
   - At 100,000 mice (`scripts/load-test.py`), the server's time against
-    2.0.13's on the same machine: the mouse sheet (alex's 2,349 mice) 0.18 s
-    (0.49), the litters (6,725) 0.4 s (2.4), the cages 0.75 s (1.15); an
-    inventory of 20,000 samples 0.7 s (1.85), of 20,000 reagents 0.7 s
-    (1.4); the fish tab 0.7 s (1.9), which no longer loads every tank's
-    fish. The Tanks tab still does, and draws every tank: 4.6 s.
+    2.0.13's on the same machine: the mouse sheet (alex's 2,349 mice) 0.17 s
+    (0.49), the litters (6,725) 0.4 s (2.4), the cages 0.5 s (1.15), the
+    Breeders tab (1,602 cages) 0.43 s (1.07); an inventory of 20,000
+    samples 0.7 s (1.85), of 20,000 reagents 0.7 s (1.4); the fish tab
+    0.7 s (1.9); the tanks (3,337) 0.5 s (4.6).
 - Vials are drawn whole by their page and paged after
   (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
   sheet's first page, makes each other row a stub with
