@@ -336,7 +336,8 @@
             {{ rack_grid('mouse-cages', cage_racks,
                          url_for('place_cage', cage_row_id=0)|replace('/0/', '/{id}/'),
                          rack_noun='rack', rack_dialog_id='mouse-rack-dialog',
-                         empty_text=_('No racks yet. Use New rack to add one; cages whose location names it will appear.')) }}
+                         empty_text=_('No racks yet. Use New rack to add one; cages whose location names it will appear.'),
+                         src=cage_grid_url) }}
           </section>
         </div>
 

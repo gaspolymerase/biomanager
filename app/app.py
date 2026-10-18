@@ -1779,6 +1779,32 @@ def cage_purpose_chips(cage_rows, purposes: list[str]) -> list[tuple[str, str, i
     return [(label.lower(), label, counts.get(label.lower(), 0)) for label in purposes]
 
 
+def cage_stub_row(cage) -> dict:
+    """What cage_stubs (and the sheet's chips and counts) read of a cage the
+    sheet does not draw: cage_sheet_row's cells, without each mouse's row,
+    the litters to wean or who may edit what."""
+    living = [m for m in cage.mice if mouse_is_active(m)]
+    females = sum(1 for m in living if m.gender == "F")
+    males = sum(1 for m in living if m.gender == "M")
+    pups = cage_pup_litter(cage)
+    shared = access.is_shared_cage(cage)
+    return {
+        **cage_sheet_values(cage),
+        "id": cage.id,
+        "active": bool(living),
+        "rack_name": cage.rack.name if cage.rack else "",
+        "card_id": cage.card_id,
+        "genotype_auto": cage_genotype_auto(cage),
+        "share_value": project_groups.record_value(cage) if shared else "0",
+        "mine": access.owns(cage),
+        "live_count": len(living),
+        "total_count": len(cage.mice),
+        "sex_label": _sex_label(females, males, len(living) - females - males),
+        "pup_litter": pups.litter_id if pups else "",
+        "mice": [{"mouse_id": m.mouse_id} for m in sorted(cage.mice, key=lambda item: item.mouse_id)],
+    }
+
+
 def cage_sheet_row(cage) -> dict:
     """One row of the cage sheet, with the cage's mice for its sub-row."""
     derived = cage_derived_dates(cage)
@@ -1868,7 +1894,7 @@ RECENT_DAYS = 90   # ended mice, empty cages and old litters shown without "Show
 
 
 def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False,
-                   only: set[int] | None = None) -> dict[str, object]:
+                   only: set[int] | None = None, rack_tiles: bool = False) -> dict[str, object]:
     """Build the colony page context.
 
     `scope` filters which slice of the colony is listed — your own animals,
@@ -1882,6 +1908,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
     and what ended in the last RECENT_DAYS days; `show_ended` shows it all.
     `only`: the cages or litters to draw, by id (a long sheet's rows,
     fetched as they are shown: colony_cage_rows, colony_litter_rows).
+    `rack_tiles`: the rack grid's tiles too (colony_cage_grid); else only
+    its racks, which the sheet's menus and buttons need.
     """
     from sqlalchemy.orm import selectinload
     me = g.user.username if g.user else ""
@@ -1947,9 +1975,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
             mice = sheet_mice()
         cages, hidden_cages = [], 0
         if active_view == "cages":
+            # Each cage's litters born in it come below, for the rows drawn only.
             cage_query = select(CageRecord).options(
                 selectinload(CageRecord.mice).selectinload(MouseRecord.litter),
-                selectinload(CageRecord.cage_litters).selectinload(CageLitter.litter).selectinload(LitterRecord.mice),
                 selectinload(CageRecord.rack)).order_by(CageRecord.cage_id)
             if not show_ended:
                 # Only cages that may be shown are loaded, with their mice: a
@@ -2024,7 +2052,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         me_name, my_role = (g.user.username, g.user.role) if g.user else (None, None)
         cage_cells, today = {}, date.today()
         mouse_rows = [mouse_display_row(mouse, me_name, my_role, cage_cells, today) for mouse in mice]
-        cage_racks = mouse_rack_payload(db_session, cages) if active_view == "cages" else None
+        cage_racks = mouse_rack_payload(db_session, cages, tiles=rack_tiles) if active_view == "cages" else None
         sheet_racks = mouse_racks(db_session)
         # The sheet renders rows you may not edit as read-only, using the
         # same rule the update routes enforce, rather than letting an edit
@@ -2034,7 +2062,17 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         drawn = mice if len(mice) <= inventory_routes.LAZY_OVER else mice[:inventory_routes.FIRST_PAGE]
         for mouse, row in zip(drawn, mouse_rows):
             row["editable"] = can_edit_mouse(mouse)
-        cage_rows = [cage_sheet_row(cage) for cage in cages]
+        # A long sheet draws its first page (_colony_page_context); each other
+        # cage is a stub (cage_stubs), which reads only what cage_stub_row
+        # gives: each of its mice's rows, its litters to wean and who may
+        # edit what, only for the rows drawn.
+        drawn = len(cages) if only is not None or len(cages) <= inventory_routes.LAZY_OVER \
+            else inventory_routes.FIRST_PAGE
+        if cages:
+            db_session.scalars(select(CageRecord).where(CageRecord.id.in_([c.id for c in cages[:drawn]])).options(
+                selectinload(CageRecord.cage_litters).selectinload(CageLitter.litter).selectinload(LitterRecord.mice)
+            )).all()
+        cage_rows = [cage_sheet_row(cage) if n < drawn else cage_stub_row(cage) for n, cage in enumerate(cages)]
         # The Experiments tab's "start with a cage" only lists cage numbers.
         cage_ids = positions.natural_sorted(db_session.scalars(select(CageRecord.cage_id).where(
             CageRecord.id.in_(select(MouseRecord.cage_id_fk).where(MouseRecord.date_of_death.is_(None)))))
@@ -3260,6 +3298,10 @@ def _colony_page_context(active_view: str, only: set[int] | None = None) -> dict
         context["mouse_sheet_rows"] = rows[:inventory_routes.FIRST_PAGE]
         context["mouse_stubs"] = mouse_stubs(rows[inventory_routes.FIRST_PAGE:], context["custom_columns"])
         context["mouse_rows_url"] = url_for("colony_mouse_rows")
+    if active_view == "cages":
+        # The rack grid's tiles come when it is first shown (colony_cage_grid).
+        context["cage_grid_url"] = url_for("colony_cage_grid", **{
+            k: request.args[k] for k in ("scope", "ended") if request.args.get(k)})
     # A long cage sheet the same way (_cage_rows.html, /colony/cages/rows):
     # the cards view and Open all fetch what they need (colony.html).
     rows = context["cage_rows"]
@@ -3371,6 +3413,16 @@ def cage_stubs(rows: list[dict], groups: dict[int, str], purposes: list[str]) ->
         out.append({"id": row["id"], "e": f"cage-{row['id']}", "f": f"cage-update-{row['id']}", "d": data,
                     "k": cells, "s": " ".join(text(w) for w in words if w).lower()})
     return out
+
+
+@app.route("/colony/cages/grid")
+@login_required
+def colony_cage_grid():
+    """The cage rack grid's racks and tiles (rack-grid.js), for the page's
+    scope and ended, asked for when the grid is first shown."""
+    scope = access.resolve_scope(request.args.get("scope"))
+    context = colony_context("cages", scope, show_ended=request.args.get("ended") == "all", rack_tiles=True)
+    return jsonify(context["cage_racks"])
 
 
 @app.route("/colony/cages/rows")
@@ -4984,17 +5036,20 @@ def place_cage(cage_row_id: int):
     return jsonify({"ok": True})
 
 
-def mouse_rack_payload(db_session, cages) -> dict:
+def mouse_rack_payload(db_session, cages, tiles: bool = True) -> dict:
     """Racks and the cages in scope, for the rack grid. Cages outside the
     scope that sit in a rack are drawn too, dimmed (and locked if you may
     not move them): a cell that looks empty must be empty, or a drop there
-    would move someone else's cage without anyone seeing it."""
+    would move someone else's cage without anyone seeing it. Without
+    `tiles`, the racks only: the grid asks for its tiles when it is first
+    shown (colony_cage_grid), each carrying its cage's dialog."""
     racks = mouse_racks(db_session)
     items = []
     in_scope = {cage.id for cage in cages}
-    others = [c for c in db_session.scalars(select(CageRecord).where(CageRecord.rack_id_fk.is_not(None)))
-              if c.id not in in_scope and c.rack_row]
-    for cage in [*cages, *others]:
+    others = [c for c in db_session.scalars(select(CageRecord).where(CageRecord.rack_id_fk.is_not(None))
+                                            .options(selectinload(CageRecord.mice), selectinload(CageRecord.rack)))
+              if c.id not in in_scope and c.rack_row] if tiles else []
+    for cage in [*cages, *others] if tiles else []:
         outside = cage.id not in in_scope
         live = [m for m in cage.mice if mouse_is_active(m)]
         strains = sorted({(m.transgene_1 or "").strip() for m in live if (m.transgene_1 or "").strip()})

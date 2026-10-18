@@ -772,9 +772,11 @@ class PlaceCageTests(RackMixin, Case):
         theirs_code = uniq("T")
         self.make_cage(self.o, cage_id=theirs_code, purpose="Experiments", rack_id=str(self.rack), position="B2")
         html = self.m.get("/colony?view=cages&scope=mine").get_data(as_text=True)
-        blob = _re.search(r'<script type="application/json" data-rack-data>(.*?)</script>', html, _re.S)
-        self.assertIsNotNone(blob, "no rack grid data on the page")
-        items = json.loads(blob.group(1))["items"]
+        # The grid's tiles come from its own address when it is first shown.
+        self.assertNotIn("data-rack-data>", html)
+        src = _re.search(r'data-rack-src="([^"]+)"', html).group(1).replace("&amp;", "&")
+        self.assertEqual(src, "/colony/cages/grid?scope=mine")
+        items = self.m.get(src).get_json()["items"]
         theirs = next(i for i in items if i["label"] == theirs_code)
         self.assertEqual((theirs["row"], theirs["col"], theirs["tone"], theirs["locked"]), (2, 2, "other", True))
 
@@ -822,9 +824,7 @@ class SharedPositionTests(RackMixin, Case):
 
     def grid_items(self) -> dict:
         import json
-        html = self.m.get("/colony?view=cages&scope=mine").get_data(as_text=True)
-        blob = re.search(r'<script type="application/json" data-rack-data>(.*?)</script>', html, re.S)
-        return {i["label"]: i for i in json.loads(blob.group(1))["items"]}
+        return {i["label"]: i for i in self.m.get("/colony/cages/grid?scope=mine").get_json()["items"]}
 
     def test_two_cages_saved_to_one_position_from_the_sheet_and_the_form(self):
         first = self.at_b2()

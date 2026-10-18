@@ -33,6 +33,6 @@ class CageSheet(AppTestCase):
         html = self.get_ok(self.m, "/colony?view=cages&scope=mine")
         at = {code: html.index(f'<tr id="cage-{row}"') for code, row in ids.items()}
         self.assertEqual(sorted(at, key=at.get), ["1", "2", "10", "101"])
-        payload = json.loads(re.search(r"data-rack-data>(.*?)</script>", html, re.S).group(1))
+        payload = self.m.get("/colony/cages/grid?scope=mine").get_json()   # the grid's, when it is shown
         tray = [i["label"] for i in payload["items"] if i["label"].startswith(prefix + "-")]
         self.assertEqual(tray, [f"{prefix}-{code}" for code in ("1", "2", "10", "101")])
