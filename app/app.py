@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 from flask import Flask, Response, abort, flash, g, get_flashed_messages, has_request_context, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import Markup, escape
-from jinja2 import pass_environment
+from jinja2 import pass_context, pass_environment
 from jinja2.filters import make_attrgetter
 from jinja2.utils import htmlsafe_json_dumps
 from werkzeug.datastructures import ImmutableMultiDict
@@ -22,7 +22,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import SessionLocal
-from . import access, cell_text, i18n, lab, mouse_rows, plain_records, positions, security
+from . import access, cage_rows, cell_text, i18n, lab, mouse_rows, plain_records, positions, security
 from .i18n import gettext, ngettext, pgettext
 from .formutil import form_changed
 # Importing this registers the SQLAlchemy flush listener that writes
@@ -1328,6 +1328,28 @@ def mouse_rows_html(rows, sheet, custom_columns, custom_columns_all, fragment, a
 
 
 app.jinja_env.globals["mouse_rows_html"] = mouse_rows_html
+
+
+@pass_context
+def cage_rows_html(ctx, rows, fragment) -> Markup:
+    """The cage sheet's rows and their detail rows (app/cage_rows.py), for
+    _cage_rows.html, from what the page's context has: the racks, the
+    purposes, the mouse sheet's choices and the template's helpers. In
+    Chromium their cells are drawn as text (cell_text.text_cells_on), by the
+    writer itself, which knows each field's attributes."""
+    policies = app.jinja_env.policies
+    return cage_rows.html(
+        rows, fragment=fragment, racks=ctx["cage_racks"]["racks"], purposes=ctx["cage_sheet"]["purpose_choices"],
+        mouse_sheet=ctx["mouse_sheet"], end_statuses=ctx["end_statuses"], custom_columns_all=ctx["custom_columns_all"],
+        wean_offset_days=ctx["wean_offset_days"], icon=ctx["icon"], owner_badge=owner_badge_filter,
+        payload=mouse_payload_json,
+        json_attr=lambda value: htmlsafe_json_dumps(value, dumps=policies["json.dumps_function"],
+                                                    **policies["json.dumps_kwargs"]),
+        url_for=url_for, id_url=id_url, group_choices=project_groups.choices,
+        as_text=cell_text.text_cells_on(), text_cell=text_cell)
+
+
+app.jinja_env.globals["cage_rows_html"] = cage_rows_html
 app.jinja_env.globals["mouse_row_forms_html"] = lambda rows: mouse_rows.forms_html(
     rows, id_url("update_mouse", "mouse_row_id"))
 

@@ -599,7 +599,13 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     same markup `_mouse_rows.html` wrote, character for character, and the
     text cells told what it already knows of each field (`app.text_cell`)
     rather than reading it back from the tag. A change to a mouse row's
-    cells is made there.
+    cells is made there. The cage sheet's rows the same: each cage's cells,
+    its detail row and its mice's cells are written by `app/cage_rows.py`
+    (`cage_rows_html`, from `_cage_rows.html`), as the template wrote them,
+    and drawn as text cells by it; `_sheet.html`'s `id_cell` and
+    `owner_cell` and `_sharing.html`'s `sharing_options`, which it writes
+    as they do, are still the macros everywhere else. A page of cages is
+    drawn in about a quarter of the time the template took.
   - Stubs (`mouse_stubs`, `cage_stubs`, `litter_stubs`, `_row_stubs`) work
     out what every row shares (the words for a sex, a status, a choice, an
     owner's badge, which column is which) once a sheet, and are written by
@@ -625,8 +631,8 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     for the cages drawn only. The Breeders tab reads its cages, racks and
     mice as plain rows (`services.breeder_mice`), and its summary in one
     query (`breeder_summary`). The words every cage row or Breeders card
-    says alike are put in the page's words once a draw (`w` in
-    `_cage_rows.html`, `w_…` in `colony.html`), and an owner's badge is
+    says alike are put in the page's words once a draw (`app/cage_rows.py`,
+    `w_…` in `colony.html`), and an owner's badge is
     made once a name for the request (`owner_badge_filter`).
   - At 100,000 mice (`scripts/load-test.py`), the server's time against
     2.0.13's on the same machine: the mouse sheet (alex's 2,349 mice) 0.17 s
