@@ -608,6 +608,7 @@ def _litter_born_said(_s, c, v) -> str:
         target="cage",
         fields=(Field("date", "date", "The day they were born (today if left out)"),
                 Field("pups", "int", "How many pups were born (1–40), if counted"),
+                Field("father", "text", "The father, if known (a mouse number or a note)"),
                 Field("mother", "text", "The mother, if known (a mouse number or a note)"),
                 Field("another", "bool", "true: a second litter beside the one not yet weaned (both kept); "
                                          "false: this corrects that litter's date"),
@@ -624,7 +625,7 @@ def _litter_born(_s, cage, v):
                                   born=_days(still)))
     choice = "" if "another" not in v else ("another" if v["another"] else "correct")
     form = [("date_give_birth", v.get("date", "")), ("pups", str(v.get("pups", ""))),
-            ("dam", v.get("mother", "")), ("litter_choice", choice), ("litter", v.get("litter", ""))]
+            ("sire", v.get("father", "")), ("dam", v.get("mother", "")), ("litter_choice", choice), ("litter", v.get("litter", ""))]
     return [Call("POST", f"/colony/cages/{cage.id}/give-birth", form=form)]
 
 

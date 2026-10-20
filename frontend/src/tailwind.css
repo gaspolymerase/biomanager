@@ -3252,12 +3252,12 @@
   .modal-grid button[type="submit"] {
     @apply btn btn-primary sticky bottom-0 col-span-full mt-2 justify-self-end px-4 shadow-sm;
   }
-  /* A checkbox reads as one line: box, then its label. */
-  :is(.modal-grid, .record-dialog-body) label:has(> input[type="checkbox"]) {
+  /* A checkbox or a radio reads as one line: box, then its label. */
+  :is(.modal-grid, .record-dialog-body) label:has(> input:is([type="checkbox"], [type="radio"])) {
     @apply flex flex-row items-center gap-2 self-center text-[12.5px] font-normal normal-case
            tracking-normal text-ink-soft;
   }
-  :is(.modal-grid, .record-dialog-body) label > input[type="checkbox"] {
+  :is(.modal-grid, .record-dialog-body) label > input:is([type="checkbox"], [type="radio"]) {
     @apply m-0 size-3.5 shrink-0 accent-brand-600;
   }
   .wean-actions { @apply mt-3 flex items-center gap-2; }

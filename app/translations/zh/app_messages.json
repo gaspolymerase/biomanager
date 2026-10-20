@@ -543,5 +543,6 @@
   "Guests can use the lab's tools but not make them.": "访客可以使用实验室的工具，但不能新建。",
   "That tool was deleted.": "这个工具已被删除。",
   "Only the person who made a tool, or an admin, can change it.": "只有创建者或管理员可以修改这个工具。",
-  "Up to 200 lab tools.": "最多 200 个实验室工具。"
+  "Up to 200 lab tools.": "最多 200 个实验室工具。",
+  "Created litter %(litter)s in cage %(cage)s, with no pups yet: add them to it once they are counted.": "已在笼 %(cage)s 中创建窝 %(litter)s，还没有幼崽：数过之后再加到窝里。"
 }

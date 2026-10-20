@@ -168,6 +168,16 @@ class GenotypingAndWeaning(Base):
         litter = row("select date_of_birth, total_pups, mother_info from litters order by id desc limit 1")
         self.assertEqual((str(litter[0])[:10], litter[1], litter[2]), (days_ago(8), 5, "77"))
 
+    def test_the_father_and_mother_from_litter_born_reach_genotyping(self):
+        cage = self.make_cage(self.m, purpose="Breeding")
+        self.assertNoErrors(self.post(self.m, f"/colony/cages/{cage}/give-birth",
+                                      {"date_give_birth": days_ago(10), "pups": "4", "sire": "31", "dam": "32"}))
+        html = self.get_ok(self.m, "/colony?view=cages")
+        self.assertIn("&#34;sire&#34;: &#34;31&#34;", html)
+        self.assertNoErrors(self.post(self.m, f"/colony/cages/{cage}/genotyping", {}))
+        litter = row("select total_pups, father_info, mother_info from litters order by id desc limit 1")
+        self.assertEqual(tuple(litter), (4, "31", "32"))
+
     def test_wean_takes_the_oldest_and_leaves_the_other_due(self):
         cage, code = self.trio(22, 8)
         r = self.post(self.m, f"/colony/cages/{cage}/wean")
