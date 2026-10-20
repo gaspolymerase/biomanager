@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.0.15": {
+        "changed": [
+            "A large lab's **Cages** tab comes from the server a quarter to a third sooner.",
+        ],
+    },
     "2.0.14": {
         "changed": [
             "In a large lab the server answers the **Mice**, **Litters**, **Cages** and **Breeders** tabs two to six times sooner: **Mice** in under a fifth of a second.",
