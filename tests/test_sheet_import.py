@@ -137,7 +137,10 @@ class Tidying(AppTestCase):
         with app.test_request_context(), SessionLocal() as s:
             choices = si._mouse_statuses(s)
         self.assertEqual(si.tidy_choice("stock", choices), ("Stock", True))
-        self.assertEqual(si.tidy_choice("Sacrificed", choices), ("sac", True))
+        # A word the lab does not use still reads as the built-in status. Not
+        # "Sacrificed": a mouse another test left with that status makes it
+        # the lab's own word, which then rightly wins.
+        self.assertEqual(si.tidy_choice("Euthanised", choices), ("sac", True))
         execute("delete from dropdown_options where field_name='status' and option_value='Stock'")
 
     def test_a_total_line_is_not_a_record(self):
