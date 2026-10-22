@@ -778,9 +778,9 @@ A module declares:
   These are what the UI calls things, so a fly database says "vial" and "stock".
 - **Identity mode** — individuals (mice), groups with a headcount (flies, worms),
   or hybrid (fish: groups that can resolve into named individuals).
-- **Capabilities** — 19 switches covering crosses, cohorts, a nursery stage,
-  genotyping, environment logs, cryo inventory, protocol/census, billing and more.
-  See `app/organisms.py`.
+- **Capabilities** — 20 switches covering crosses, cohorts, a nursery stage,
+  genotyping, environment logs, cryo inventory, seed lots, protocol/census,
+  billing and more. See `app/organisms.py`.
 - **Schedule rules** — `anchor date + offset`, optionally varying by rearing
   temperature. One rule covers "flip flies every 14 days at 25 °C, 28 at 18 °C".
   `complete_due()` takes the day it was done (never later than today) and
@@ -790,6 +790,17 @@ A module declares:
   completion in `recompute_due()`.
 - **Custom fields** — typed per-module columns stored in each row's `attrs`
   JSON, which generate their own form inputs, table columns and validation.
+  A `plasmid` field holds a plasmid's number: the page suggests the lab's
+  plasmids (`inventory_routes._plasmid_options`) and links each to its page
+  (`inventory_service.plasmid_links`).
+- **Its own words and lists**, in `settings` (Configure): `born_word` and
+  `ended_word` for the two dates (`ModuleView.born_word`, `ended_word`,
+  `cohort_born_word`; empty keeps Born and Died / removed), `stages` for a
+  cohort, `location_kinds` for a rack or room, `seed_units`, and
+  `stage_bands` `{young, old}` in days for the dot before an ID
+  (`life_stage.for_module`, else the preset's bands). An empty `sexes`
+  list stays empty (`create_module` defaults only a missing one) and the
+  Sex column goes.
 
 Drosophila and C. elegans are seeded automatically on first run
 (`organisms.AUTO_SEED_PRESETS`). Zebrafish and mouse exist as presets so the
@@ -816,9 +827,47 @@ migration.
 | `organism_measurements` | weights, water chemistry, temperatures |
 | `organism_genotypes` | genotyping calls |
 | `organism_preservation` | frozen lots, vials remaining, recovery tests |
+| `organism_seed_lots` | seed lots: amount left, storage, generation, germination, a selection plate's counts |
 
 Every row carries `module_id_fk`, and every relation is resolved through
 `_ref()` in `app/organism_routes.py` so a reference can never cross modules.
+
+### Plants and seed lots
+
+The **Plants** and **Field crops** presets (`plant`, `field_crop`) are
+organism modules like any other, shaped on what plant labs' own tools keep
+(Phytotracker, SeedUSoon, LabCollector's plant manager; BMS and Breedbase for
+field breeding): no sexes, *Sown* and *Harvested / removed*, plant stages,
+growth rooms, greenhouses, nurseries and fields as places, and the
+`seed_bank` capability. A field is a location with rows and columns, its
+plots housing units on that grid.
+
+`OrgSeedLot` (`organism_seed_lots`, revision 0045) is seed kept to sow
+again. Where it came from is a soft link, `source_kind` (organism / cohort
+/ cross) and `source_id`, as the logs keep theirs; a cohort sown from it
+points back by `OrgCohort.seed_lot_id_fk` (also soft: deleting the lot
+clears it) and carries its `generation`. So a line's descent runs
+lot → cohort → plant → lot, and `organism_service.SeedBook` (read once per
+page by `seed_book()`) walks it back to the first lot.
+
+- **Harvest** is `/organisms/<key>/seedlot/save` with a source: the lot
+  takes the source's line, and its generation from `harvest_generation()`
+  (selfed seed is `next_generation()` of the plant's cohort, T1 → T2;
+  seed from a cross between two parents is F1). `end_source` ends the
+  plants (`_end_with_harvest`: the database's status that says harvest,
+  and the date) or collects the cross.
+- **Sow** is `/organisms/<key>/cohort/save` with `seed_lot_id_fk`: the
+  cohort takes the lot's line and generation unless given, and
+  `seed_taken` comes off `amount_left` (`take_seed()`, refused beyond
+  what is left; counted in seeds, it is also the cohort's initial count).
+- `segregation(resistant, sensitive)` tests a selection plate against 3:1
+  and 15:1 by χ² (1 df, p 0.05; all resistant from 30 seedlings up reads
+  homozygous), for the Seeds sheet's Selection column.
+- A seed lot is a schedule subject (`seedlot`, anchors `harvested_on` and
+  `germination_tested_on`); one with nothing left drops off the schedule
+  and the census. Labels print at `/labels/cards/seeds/<key>`; search and
+  the assistant's lookup (`org_seedlot`) find lots; the change history
+  tracks the table.
 
 ### Columns a lab adds to a built-in database
 

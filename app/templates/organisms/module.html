@@ -72,6 +72,75 @@
   </p>
 {% endmacro %}
 
+{# The seed lot dialog: a new lot, an edit, or a harvest from a plant, a
+   sowing or a cross (the payload's source_kind and source_id; the From and
+   "mark harvested" rows show only then). Every view with Harvest buttons
+   includes it. #}
+{% macro seedlot_dialog(return_view) %}
+  {% set own_fields = fields.get('seedlot', []) %}
+  <dialog id="seedlot-dialog" class="mouse-modal">
+    <form method="dialog" class="modal-topbar">
+      <h3>{{ _('Seed lot') }}</h3>
+      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+    </form>
+    <form method="post" action="{{ url_for('organisms.save_seedlot', key=module.key) }}"
+          class="modal-body modal-grid" data-entity-form>
+      <input type="hidden" name="id">
+      <input type="hidden" name="_full" value="1">
+      <input type="hidden" name="return_view" value="{{ return_view }}">
+      <input type="hidden" name="source_kind">
+      <input type="hidden" name="source_id">
+      {{ locked_note() }}
+      <label class="field-label" data-source-only>{{ _('Harvested from') }}<input name="source_label" readonly tabindex="-1"></label>
+      <label class="field-label">{{ _('Lot') }}<input name="code" placeholder="{{ _('auto') }}"></label>
+      {% if module.has('lines') %}
+        <label class="field-label">{{ n_line|capitalize }}<select name="line_id_fk">{{ line_options() }}</select></label>
+      {% endif %}
+      <label class="field-label">{{ _('Generation') }}<input name="generation" placeholder="{{ _('e.g. T2, F3') }}" class="font-mono text-[12px]">
+        <span class="field-hint normal-case tracking-normal">{{ _('Selfed seed is one generation on from the plants; seed from a cross is F1.') }}</span>
+      </label>
+      <label class="field-label">{{ _('Harvested') }}<input type="date" name="harvested_on"></label>
+      <label class="field-label">{{ _('Amount harvested') }}<input type="number" step="any" min="0" name="amount"></label>
+      <label class="field-label">{{ _('Left') }}<input type="number" step="any" min="0" name="amount_left">
+        <span class="field-hint normal-case tracking-normal">{{ _('Goes down as it is sown. Empty on a new lot: all of it.') }}</span>
+      </label>
+      <label class="field-label">{{ _('Unit') }}<input name="unit" list="org-seed-units" placeholder="{{ module.seed_units[0] }}"></label>
+      <label class="field-label">{{ _('Storage') }}<input name="storage_text" placeholder="{{ _('e.g. Seed cabinet, box 3') }}"></label>
+      <label class="field-label">{{ _('Position') }}<input name="position" placeholder="{{ _('box / slot') }}"></label>
+      <label class="field-label">{{ _('Germination tested') }}<input type="date" name="germination_tested_on"></label>
+      <label class="field-label">{{ _('Germination') }} (%)<input type="number" step="any" min="0" max="100" name="germination_pct"></label>
+      <label class="field-label">{{ _('Selection') }}<input name="selection" placeholder="{{ _('e.g. kanamycin') }}"></label>
+      <label class="field-label">{{ _('Resistant') }}<input type="number" min="0" name="resistant">
+        <span class="field-hint normal-case tracking-normal">{{ _('Seedlings that grew on the selection plate.') }}</span>
+      </label>
+      <label class="field-label">{{ _('Sensitive') }}<input type="number" min="0" name="sensitive">
+        <span class="field-hint normal-case tracking-normal">{{ _('Seedlings that died on it. With both, the sheet says whether they fit 3:1 or 15:1.') }}</span>
+      </label>
+      <label class="field-label">{{ _('Owner') }}<select name="owner">{{ owner_options() }}</select></label>
+      {% for field in own_fields %}{{ F.field_input(field, {}, lines, usernames) }}{% endfor %}
+      <label class="inline-check col-span-full" data-source-only>
+        <input type="checkbox" name="end_source" value="1">
+        {{ _('Mark what it was harvested from as harvested (a cross as collected)') }}
+      </label>
+      <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
+      <button type="submit">{{ _('Save') }}</button>
+    </form>
+  </dialog>
+  <datalist id="org-seed-units">{% for unit in module.seed_units %}<option value="{{ unit }}"></option>{% endfor %}</datalist>
+{% endmacro %}
+
+{# A Harvest button: opens the seed lot dialog for this plant, sowing or
+   cross, with its line and the generation its seed will be. #}
+{% macro harvest_button(kind, row_id, label, line_id, generation, locked=false) %}
+  <button type="button" class="row-icon-btn" title="{{ _('Harvest seed') }}" aria-label="{{ _('Harvest seed from %(name)s', name=label) }}"
+          data-org-edit="seedlot-dialog" {% if locked %}disabled{% endif %}
+          data-org-payload="{{ {'source_kind': kind, 'source_id': row_id, 'source_label': label, 'line_id_fk': line_id or '',
+                                'generation': generation, 'harvested_on': today, 'code': next_seed_code,
+                                'unit': module.seed_units[0], 'end_source': 1,
+                                'heading': _('Harvest seed from %(name)s', name=label),
+                                'attrs': attr_defaults.get('seedlot', {})} | tojson | forceescape }}">{{ icon('wheat') }}</button>
+{% endmacro %}
+
 {% block page_nav %}
   <div class="mb-4 flex flex-wrap items-center gap-3">
     <nav class="seg max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
@@ -93,6 +162,9 @@
       {% if module.has('preservation') and census.frozen_vials %}
         <span class="badge">{% trans count=census.frozen_vials %}{{ count }} vial frozen{% pluralize %}{{ count }} vials frozen{% endtrans %}</span>
       {% endif %}
+      {% if module.has('seed_bank') and census.seed_lots %}
+        <span class="badge">{% trans count=census.seed_lots %}{{ count }} seed lot{% pluralize %}{{ count }} seed lots{% endtrans %}</span>
+      {% endif %}
     </div>
   </div>
 {% endblock %}
@@ -101,6 +173,9 @@
 {% from "_switched_off.html" import switched_off_notice with context %}
 {{ switched_off_notice(module.row) }}
 {{ sheet_ui.owners_list(usernames, 'org-owners') }}
+{% if plasmid_options %}
+  <datalist id="org-plasmid-options">{% for number, pname in plasmid_options %}<option value="{{ number }}">#{{ number }} · {{ pname }}</option>{% endfor %}</datalist>
+{% endif %}
 
 {# =====================================================================
    ANIMALS
@@ -140,15 +215,16 @@
         <thead>
           <tr>
             <th class="sheet-pin sheet-pin-start" style="width: 48px; min-width: 48px;"><input type="checkbox" data-select-all aria-label="{{ _('Select all visible %(nouns)s', nouns=n_orgs) }}"></th>
-            {{ th('code', _('ID'), module.icon, '104px', _('The dot shows a living one; in a mouse or zebrafish database its colour is its age (blue young, green adult, red old)')) }}
+            {{ th('code', _('ID'), module.icon, '104px', _('The dot shows a living one; where the database sets ages for it (Configure), its colour is its age: blue young, green adult, red old')) }}
             {% if module.tracks_groups %}{{ th('count', _('Count'), 'count', '64px') }}{% endif %}
             {% if module.has('housing') %}{{ th('housing', n_unit|capitalize, housing_icon, '112px') }}{% endif %}
             {% if module.has('lines') %}{{ th('line', n_line|capitalize, 'sitemap', '128px') }}{% endif %}
-            {{ th('sex', _('Sex'), 'sex', '80px') }}
+            {% if module.sexes %}{{ th('sex', _('Sex'), 'sex', '80px') }}{% endif %}
             {{ th('status', _('Status'), 'status', '104px') }}
-            {{ th('birth_on', _('Born'), 'born', '112px') }}
+            {{ th('birth_on', module.born_word|tr, 'born', '112px') }}
             {{ th('age', _('Age'), 'age', '60px') }}
-            {{ th('death_on', _('Died / removed'), 'died', '112px') }}
+            {% if module.has('seed_bank') %}{{ th('generation', _('Generation'), 'sitemap', '76px', _('Its sowing’s generation')) }}{% endif %}
+            {{ th('death_on', module.ended_word|tr, 'died', '112px') }}
             {% if module.has('genotyping') %}
               {{ th('genotype', _('Genotype'), 'dna', '136px') }}
               {{ th('call', _('Latest call'), 'microscope', '136px', _('The most recent genotyping call (Genotyping tab)')) }}
@@ -156,7 +232,7 @@
             {{ F.table_headers(own_fields) }}
             {{ th('owner', _('Owner'), 'user', '80px') }}
             <th style="min-width: 152px;"><span class="dt-col-head">{{ icon('note', 'dt-col-icon') }}{{ _('Notes') }}</span></th>
-            <th class="sheet-pin sheet-pin-end" style="width: 84px; min-width: 84px;"><span class="sr-only">{{ _('Actions') }}</span></th>
+            <th class="sheet-pin sheet-pin-end" style="width: {{ 112 if module.has('seed_bank') else 84 }}px; min-width: {{ 112 if module.has('seed_bank') else 84 }}px;"><span class="sr-only">{{ _('Actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -173,11 +249,11 @@
                 {% if call %}data-call="{{ (call.result ~ ' ' ~ call.zygosity) | trim }}"{% endif %}
                 class="{% if not r.alive %}is-inactive{% endif %}{% if locked %} is-locked{% endif %}">
               <td class="sheet-pin sheet-pin-start"><input type="checkbox" data-select-row value="{{ row.id }}" aria-label="{{ _('Select %(name)s', name=row.code or n_org) }}"></td>
-              {# Mouse and zebrafish databases colour the dot by age (app/life_stage.py). #}
-              {% set st = life_stage(module.preset_key, (today_date - row.birth_on).days) if row.birth_on else '' %}
+              {# The dot's colour is its age, in the database's own bands or its preset's (app/life_stage.py). #}
+              {% set st = org_stage(module, (today_date - row.birth_on).days) if row.birth_on else '' %}
               <td>{{ sheet_ui.id_cell(row.code or '—', alive=r.alive, locked=locked, owner=row.owner, noun=n_org,
                                       alive_title='Alive', dead_title='Dead or removed',
-                                      stage=st, stage_title=life_stage_title(module.preset_key, st)) }}</td>
+                                      stage=st, stage_title=org_stage_title(module, st)) }}</td>
               {% if module.tracks_groups %}
                 <td><input type="number" min="1" class="sheet-num" name="count" form="{{ f }}" value="{{ row.count }}" data-autosave="1" aria-label="{{ _('Count') }}" {% if locked %}disabled{% endif %}></td>
               {% endif %}
@@ -187,16 +263,17 @@
               {% if module.has('lines') %}
                 <td><select name="line_id_fk" form="{{ f }}" data-autosave="1" aria-label="{{ n_line|capitalize }}" {% if locked %}disabled{% endif %}>{{ line_options(row.line_id_fk, '–') }}</select></td>
               {% endif %}
-              <td><select name="sex" form="{{ f }}" data-autosave="1" aria-label="{{ _('Sex') }}" {% if locked %}disabled{% endif %}>{{ choice_options(module.sexes, row.sex, '–') }}</select></td>
+              {% if module.sexes %}<td><select name="sex" form="{{ f }}" data-autosave="1" aria-label="{{ _('Sex') }}" {% if locked %}disabled{% endif %}>{{ choice_options(module.sexes, row.sex, '–') }}</select></td>{% endif %}
               <td>
                 <select class="status-pill" name="status" form="{{ f }}" data-status="{{ row.status|lower }}" data-autosave="1"
                         data-dead-values="{{ dead_values }}" aria-label="{{ _('Status') }}" {% if locked %}disabled{% endif %}>
                   {{ choice_options(module.statuses, row.status, '–') }}
                 </select>
               </td>
-              <td><input type="date" name="birth_on" form="{{ f }}" value="{{ row.birth_on or '' }}" data-empty="{{ '0' if row.birth_on else '1' }}" data-autosave="1" aria-label="{{ _('Born') }}" {% if locked %}disabled{% endif %}></td>
+              <td><input type="date" name="birth_on" form="{{ f }}" value="{{ row.birth_on or '' }}" data-empty="{{ '0' if row.birth_on else '1' }}" data-autosave="1" aria-label="{{ module.born_word|tr }}" {% if locked %}disabled{% endif %}></td>
               <td class="sheet-num" {% if module_row.age_unit in ('passages', 'generations') %}title="{{ _('From its Passage column; days since born when that is empty') if module_row.age_unit == 'passages' else _('From its Generation column; days since born when that is empty') }}"{% endif %}>{{ age_label(module_row, row.birth_on, row.death_on, attrs) or '–' }}</td>
-              <td><input type="date" name="death_on" form="{{ f }}" value="{{ row.death_on or '' }}" data-empty="{{ '0' if row.death_on else '1' }}" data-autosave="1" data-dead-if-set aria-label="{{ _('Died or removed') }}" {% if locked %}disabled{% endif %}></td>
+              {% if module.has('seed_bank') %}<td><span class="ident">{{ generations.get(row.cohort_id_fk, '') }}</span></td>{% endif %}
+              <td><input type="date" name="death_on" form="{{ f }}" value="{{ row.death_on or '' }}" data-empty="{{ '0' if row.death_on else '1' }}" data-autosave="1" data-dead-if-set aria-label="{{ module.ended_word|tr }}" {% if locked %}disabled{% endif %}></td>
               {% if module.has('genotyping') %}
                 <td><input class="ident" name="genotype" form="{{ f }}" value="{{ row.genotype }}" title="{{ row.genotype }}" data-autosave="1" aria-label="{{ _('Genotype') }}" {% if locked %}disabled{% endif %}></td>
                 <td>
@@ -217,6 +294,10 @@
                 <div class="sheet-actions">
                   <button type="button" class="row-icon-btn" title="{{ 'View'|tr('action') if locked else _('Edit') }}"
                           data-org-edit="animal-dialog" data-org-payload="{{ org_animal_payload(row, module) | tojson | forceescape }}">{{ icon('eye' if locked else 'edit') }}</button>
+                  {% if module.has('seed_bank') and r.alive %}
+                    {{ harvest_button('organism', row.id, row.code or (n_org ~ ' #' ~ row.id), row.line_id_fk,
+                                      next_generation(generations.get(row.cohort_id_fk, '')), locked) }}
+                  {% endif %}
                   <form method="post" action="{{ url_for('organisms.delete_row', key=module.key, entity='animal', row_id=row.id) }}"
                         data-confirm="{{ _('Delete %(name)s?', name=row.code) if row.code else _('Delete this %(noun)s?', noun=n_org) }}">
                     <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete') }}" {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
@@ -328,13 +409,13 @@
           </select>
         </label>
       {% endif %}
-      <label class="field-label">{{ _('Sex') }}<select name="sex">{{ choice_options(module.sexes, None) }}</select></label>
+      {% if module.sexes %}<label class="field-label">{{ _('Sex') }}<select name="sex">{{ choice_options(module.sexes, None) }}</select></label>{% endif %}
       <label class="field-label">{{ _('Status') }}
         <select name="status" data-dead-values="{{ dead_values }}">{{ choice_options(module.statuses, None) }}</select>
         {% if module.dead_statuses %}<span class="field-hint normal-case tracking-normal">{{ _('%(statuses)s set the date removed.', statuses=module.dead_statuses | map('tr', 'organism') | join(', ')) }}</span>{% endif %}
       </label>
-      <label class="field-label">{{ _('Born') }}<input type="date" name="birth_on"></label>
-      <label class="field-label">{{ _('Died / removed') }}<input type="date" name="death_on"></label>
+      <label class="field-label">{{ module.born_word|tr }}<input type="date" name="birth_on"></label>
+      <label class="field-label">{{ module.ended_word|tr }}<input type="date" name="death_on"></label>
       {% if module.has('genotyping') %}
         <label class="field-label">{{ _('Genotype') }}<input name="genotype" class="font-mono text-[12px]"></label>
       {% endif %}
@@ -350,6 +431,7 @@
   {% if module.has('genotyping') %}
     <datalist id="org-assays">{% for assay in assays %}<option value="{{ assay }}"></option>{% endfor %}</datalist>
   {% endif %}
+  {% if module.has('seed_bank') %}{{ seedlot_dialog('animals') }}{% endif %}
 {% endif %}
 
 {# =====================================================================
@@ -633,7 +715,7 @@
           <label class="field-label">{{ _('Name') }}<input name="name" required placeholder="{{ _('e.g. Incubator 25 °C') }}"></label>
           <label class="field-label">{{ _('Kind') }}
             <select name="kind">
-              {% for kind in ['facility', 'room', 'system', 'rack', 'incubator', 'shelf', 'tray'] %}
+              {% for kind in module.location_kinds %}
                 <option value="{{ kind }}" {% if kind == module.container_noun %}selected{% endif %}>{{ kind|tr('noun') }}</option>
               {% endfor %}
             </select>
@@ -835,7 +917,7 @@
             {{ th('collected', _('Collected'), 'calendar', '92px') }}
             {{ F.table_headers(own_fields) }}
             {{ th('owner', _('Owner'), 'user', '80px') }}
-            <th class="sheet-pin sheet-pin-end" style="width: 84px; min-width: 84px;"><span class="sr-only">{{ _('Actions') }}</span></th>
+            <th class="sheet-pin sheet-pin-end" style="width: {{ 112 if module.has('seed_bank') else 84 }}px; min-width: {{ 112 if module.has('seed_bank') else 84 }}px;"><span class="sr-only">{{ _('Actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -873,6 +955,10 @@
                             'expected_on': cross.expected_on.isoformat() if cross.expected_on else '',
                             'collected_on': cross.collected_on.isoformat() if cross.collected_on else '',
                             'owner': cross.owner, 'notes': cross.notes, 'attrs': attrs, 'locked': locked } | tojson | forceescape }}">{{ icon('eye' if locked else 'edit') }}</button>
+                  {% if module.has('seed_bank') %}
+                    {{ harvest_button('cross', cross.id, cross.code, cross.dam_line_id_fk or cross.sire_line_id_fk,
+                                      '' if cross.cross_type == 'self' else 'F1', locked) }}
+                  {% endif %}
                   <form method="post" action="{{ url_for('organisms.delete_row', key=module.key, entity='cross', row_id=cross.id) }}"
                         data-confirm="{{ _('Delete %(name)s?', name=cross.code) }}">
                     <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete') }}" {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
@@ -928,6 +1014,7 @@
       <button type="submit">{{ _('Save') }}</button>
     </form>
   </dialog>
+  {% if module.has('seed_bank') %}{{ seedlot_dialog('crosses') }}{% endif %}
 {% endif %}
 
 {# =====================================================================
@@ -955,21 +1042,27 @@
           <tr>
             {{ th('code', 'Code'|tr('record'), 'barcode', '120px') }}
             {% if module.has('lines') %}{{ th('line', n_line|capitalize, 'sitemap', '128px') }}{% endif %}
-            {{ th('born', _('Born'), 'born', '104px') }}
+            {{ th('born', module.born_word|tr, 'born', '104px') }}
             {{ th('age', _('Age'), 'age', '60px') }}
+            {% if module.has('seed_bank') %}
+              {{ th('generation', _('Generation'), 'sitemap', '76px') }}
+              {{ th('lot', _('From lot'), 'wheat', '104px', _('The seed lot it was sown from')) }}
+            {% endif %}
             {% if module.has('nursery') %}{{ th('stage', _('Stage'), 'layers', '92px') }}{% endif %}
             {{ th('initial', _('Initial'), 'count', '68px') }}
             {{ th('now', _('Now'), 'count', '68px') }}
             {{ F.table_headers(own_fields) }}
             {{ th('owner', _('Owner'), 'user', '80px') }}
-            <th class="sheet-pin sheet-pin-end" style="width: 84px; min-width: 84px;"><span class="sr-only">{{ _('Actions') }}</span></th>
+            <th class="sheet-pin sheet-pin-end" style="width: {{ 112 if module.has('seed_bank') else 84 }}px; min-width: {{ 112 if module.has('seed_bank') else 84 }}px;"><span class="sr-only">{{ _('Actions') }}</span></th>
           </tr>
         </thead>
         <tbody>
           {% for cohort in cohorts %}
             {% set attrs = cohort.attrs_dict %}
             {% set locked = cohort.owner and cohort.owner != me and current_user.role != 'admin' %}
+            {% set lot = lots_by_id.get(cohort.seed_lot_id_fk) if module.has('seed_bank') else none %}
             <tr data-id="{{ cohort.id }}" data-code="{{ cohort.code }}" data-line="{{ cohort.line.code if cohort.line else '' }}"
+                data-generation="{{ cohort.generation }}" data-lot="{{ lot.code if lot else '' }}"
                 data-born="{{ cohort.birth_on or '' }}" data-age="{{ (today_date - cohort.birth_on).days if cohort.birth_on else '' }}" data-stage="{{ cohort.stage }}"
                 data-initial="{{ cohort.count_initial }}" data-now="{{ cohort.count_current }}" data-owner="{{ cohort.owner }}"
                 class="{% if locked %}is-locked{% endif %}">
@@ -977,6 +1070,10 @@
               {% if module.has('lines') %}<td><span class="sheet-cell-text">{{ cohort.line.code if cohort.line else '' }}</span></td>{% endif %}
               <td><span class="sheet-cell-text">{{ cohort.birth_on | day }}</span></td>
               <td class="sheet-num">{{ age_label(module_row, cohort.birth_on) }}</td>
+              {% if module.has('seed_bank') %}
+                <td><span class="ident">{{ cohort.generation }}</span></td>
+                <td>{% if lot %}<a class="ident" href="{{ url_for('organisms.module', key=module.key, view='seeds') }}#lot-{{ lot.id }}">{{ lot.code }}</a>{% endif %}</td>
+              {% endif %}
               {% if module.has('nursery') %}
                 <td>{% if cohort.stage %}<span class="badge badge-quiet">{{ cohort.stage|tr('organism') }}</span>{% endif %}</td>
               {% endif %}
@@ -993,7 +1090,11 @@
                             'birth_on': cohort.birth_on.isoformat() if cohort.birth_on else '',
                             'stage': cohort.stage, 'location_id_fk': cohort.location_id_fk,
                             'count_initial': cohort.count_initial, 'count_current': cohort.count_current,
+                            'seed_lot_id_fk': cohort.seed_lot_id_fk or '', 'generation': cohort.generation,
                             'owner': cohort.owner, 'notes': cohort.notes, 'attrs': attrs, 'locked': locked } | tojson | forceescape }}">{{ icon('eye' if locked else 'edit') }}</button>
+                  {% if module.has('seed_bank') %}
+                    {{ harvest_button('cohort', cohort.id, cohort.code, cohort.line_id_fk, next_generation(cohort.generation), locked) }}
+                  {% endif %}
                   <form method="post" action="{{ url_for('organisms.delete_row', key=module.key, entity='cohort', row_id=cohort.id) }}"
                         data-confirm="{{ _('Delete %(name)s?', name=cohort.code) }}">
                     <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete') }}" {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
@@ -1003,7 +1104,7 @@
             </tr>
           {% else %}
             <tr><td class="dt-empty" colspan="12"><span class="dt-empty-msg">
-              {% trans nouns=n_cohorts, noun=n_cohort %}No {{ nouns }} yet. Use <strong>New {{ noun }}</strong>: its birth date drives every derived date.{% endtrans %}
+              {% trans nouns=n_cohorts, noun=n_cohort, date=module.cohort_born_word|tr|lower %}No {{ nouns }} yet. Use <strong>New {{ noun }}</strong>: its date ({{ date }}) drives every derived date.{% endtrans %}
             </span></td></tr>
           {% endfor %}
         </tbody>
@@ -1034,10 +1135,23 @@
           </select>
         </label>
       {% endif %}
-      <label class="field-label">{{ _('Born / fertilised') }}<input type="date" name="birth_on"></label>
+      <label class="field-label">{{ module.cohort_born_word|tr }}<input type="date" name="birth_on"></label>
+      {% if module.has('seed_bank') %}
+        <label class="field-label">{{ _('Sown from lot') }}
+          <select name="seed_lot_id_fk">
+            <option value="">—</option>
+            {% for lot in seed_lots %}<option value="{{ lot.id }}">{{ lot.code }}{% if lot.generation %} · {{ lot.generation }}{% endif %}{% if lot.amount_left is not none %} · {{ fmt_amount(lot.amount_left) }} {{ lot.unit }}{% endif %}</option>{% endfor %}
+          </select>
+          <span class="field-hint normal-case tracking-normal">{{ _('Its line and generation come with it unless you set them.') }}</span>
+        </label>
+        <label class="field-label" data-new-only>{{ _('Seed taken') }}<input type="number" step="any" min="0" name="seed_taken">
+          <span class="field-hint normal-case tracking-normal">{{ _('In the lot’s own unit; it comes off what is left.') }}</span>
+        </label>
+        <label class="field-label">{{ _('Generation') }}<input name="generation" class="font-mono text-[12px]" placeholder="{{ _('e.g. T2, F3') }}"></label>
+      {% endif %}
       {% if module.has('nursery') %}
         <label class="field-label">{{ _('Stage') }}
-          <select name="stage">{{ choice_options(['embryo', 'larva', 'nursery', 'juvenile', 'graduated', 'adult'], None) }}</select>
+          <select name="stage">{{ choice_options(module.stages, None) }}</select>
         </label>
         <label class="field-label">{{ n_box|capitalize }}<select name="location_id_fk">{{ location_options() }}</select></label>
       {% endif %}
@@ -1049,6 +1163,7 @@
       <button type="submit">{{ _('Save') }}</button>
     </form>
   </dialog>
+  {% if module.has('seed_bank') %}{{ seedlot_dialog('cohorts') }}{% endif %}
 {% endif %}
 
 {# =====================================================================
@@ -1461,6 +1576,181 @@
 {% endif %}
 
 {# =====================================================================
+   SEEDS
+   One row per seed lot, those with seed left first: where it came from
+   and its descent, how much is left and where, germination and the
+   selection plate. Sow makes a sowing from it (the Sowings tab).
+   ===================================================================== #}
+{% if active_view == 'seeds' %}
+  {% set own_fields = fields.get('seedlot', []) %}
+  {% set verdicts = {
+    'one_insertion': (_('fits 3:1, one insertion'), 'badge-ok'),
+    'two_insertions': (_('fits 15:1, two insertions'), 'badge-ok'),
+    'either': (_('fits 3:1 or 15:1: count more'), 'badge-warn'),
+    'neither': (_('fits neither 3:1 nor 15:1'), 'badge-danger'),
+    'homozygous': (_('all resistant: homozygous'), 'badge-ok'),
+    'all_resistant_few': (_('all resistant: count more to be sure'), 'badge-warn'),
+    'all_sensitive': (_('all sensitive'), 'badge-danger'),
+  } %}
+  {% set kinds = {'organism': n_org, 'cohort': n_cohort, 'cross': n_cross} %}
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-seeds-v1"
+           data-noun="{{ _('seed lot') }}" data-noun-plural="{{ _('seed lots') }}">
+    <div class="dt-toolbar">
+      <div class="dt-toolbar-search">
+        {{ icon('search', 'search-icon') }}
+        <input type="text" class="dt-search" placeholder="{{ _('Search seed lots…') }}" autocomplete="off" aria-label="{{ _('Search') }}">
+      </div>
+      <div class="dt-chips" role="group" aria-label="{{ _('Show') }}">
+        <button type="button" class="dt-chip" data-dt-filter="" aria-pressed="false">{{ _('All') }} <span class="dt-chip-count">{{ chip_counts.all }}</span></button>
+        <button type="button" class="dt-chip" data-dt-filter="active:true" aria-pressed="true">{{ _('With seed left') }} <span class="dt-chip-count">{{ chip_counts.left }}</span></button>
+        <button type="button" class="dt-chip" data-dt-filter="mine:true" aria-pressed="false">{{ _('Mine') }} <span class="dt-chip-count">{{ chip_counts.mine }}</span></button>
+      </div>
+      <div class="dt-toolbar-spacer"></div>
+      {{ sheet_ui.tools() }}
+      <a class="dt-toolbar-btn" href="{{ url_for('labels.seed_cards', key=module.key) }}" title="{{ _('Labels for the seed lots with seed left') }}">{{ icon('print') }} {{ _('Labels') }}</a>
+      <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]"
+              data-org-edit="seedlot-dialog" data-org-payload="{{ {'code': next_seed_code, 'harvested_on': today, 'unit': module.seed_units[0], 'attrs': attr_defaults.get('seedlot', {})} | tojson | forceescape }}">
+        {{ icon('plus') }} {{ _('New seed lot') }}
+      </button>
+    </div>
+    <div class="dt-scroll">
+      <table class="dt sheet-table" data-resizable="1">
+        <thead>
+          <tr>
+            {{ th('code', _('Lot'), 'wheat', '112px') }}
+            {% if module.has('lines') %}{{ th('line', n_line|capitalize, 'sitemap', '120px') }}{% endif %}
+            {{ th('generation', _('Generation'), 'sitemap', '76px') }}
+            {{ th('from', _('Harvested from'), 'seedling', '200px', _('Its descent, newest first: lot ‹ plant ‹ sowing ‹ the lot that was sown')) }}
+            {{ th('harvested', _('Harvested'), 'calendar', '96px') }}
+            {{ th('left', _('Left'), 'amount', '104px') }}
+            {{ th('storage', _('Storage'), 'box', '144px') }}
+            {{ th('germination', _('Germination'), 'seedling', '104px') }}
+            {{ th('selection', _('Selection'), 'resistance', '264px', _('Resistant : sensitive on the selection plate, against 3:1 (one insertion) and 15:1 (two)')) }}
+            {{ F.table_headers(own_fields) }}
+            {{ th('owner', _('Owner'), 'user', '80px') }}
+            <th class="sheet-pin sheet-pin-end" style="width: 112px; min-width: 112px;"><span class="sr-only">{{ _('Actions') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in seed_rows %}
+            {% set lot = r.lot %}
+            {% set attrs = lot.attrs_dict %}
+            {% set locked = not r.editable %}
+            {% set seg = r.segregation %}
+            {% set descent = r.descent[1:] %}
+            <tr id="lot-{{ lot.id }}" data-id="{{ lot.id }}" data-code="{{ lot.code }}" data-line="{{ lot.line.code if lot.line else '' }}"
+                data-generation="{{ lot.generation }}" data-from="{{ r.source }}" data-harvested="{{ lot.harvested_on or '' }}"
+                data-left="{{ '' if lot.amount_left is none else lot.amount_left }}" data-storage="{{ lot.storage_text }}"
+                data-germination="{{ '' if lot.germination_pct is none else lot.germination_pct }}"
+                data-selection="{{ seg.pct if seg else '' }}" data-owner="{{ lot.owner }}"
+                data-active="{{ 'true' if r.left else 'false' }}" data-mine="{{ 'true' if r.mine else 'false' }}"
+                class="{% if not r.left %}is-inactive{% endif %}{% if locked %} is-locked{% endif %}">
+              <td>{{ sheet_ui.id_cell(lot.code, alive=r.left, locked=locked, owner=lot.owner, noun=_('seed lot'),
+                                      alive_title='Seed left', dead_title='None left') }}</td>
+              {% if module.has('lines') %}<td><span class="sheet-cell-text">{{ lot.line.code if lot.line else '' }}</span></td>{% endif %}
+              <td><span class="ident">{{ lot.generation }}</span></td>
+              <td>
+                {% if descent %}
+                  <span class="sheet-cell-text" title="{% for step in r.descent %}{{ step.code }}{% if step.generation %} ({{ step.generation }}){% endif %}{% if not loop.last %} ‹ {% endif %}{% endfor %}">
+                    {%- for step in descent -%}
+                      {%- if step.kind == 'seedlot' -%}<a class="ident" href="#lot-{{ step.id }}">{{ step.code }}</a>{%- else -%}<span class="ident">{{ step.code }}</span>{%- endif -%}
+                      {%- if not loop.last %} ‹ {% endif -%}
+                    {%- endfor -%}
+                  </span>
+                {% else %}<span class="text-sand-300">—</span>{% endif %}
+              </td>
+              <td><span class="sheet-cell-text">{{ lot.harvested_on | day }}</span></td>
+              <td class="font-medium">
+                {% if lot.amount_left is not none %}{{ fmt_amount(lot.amount_left) }}{% if lot.amount is not none %} / {{ fmt_amount(lot.amount) }}{% endif %} {{ lot.unit }}{% else %}<span class="text-sand-300">—</span>{% endif %}
+              </td>
+              <td><span class="sheet-cell-text">{{ lot.storage_text }}{% if lot.position %} · <span class="ident">{{ lot.position }}</span>{% endif %}</span></td>
+              <td>
+                {% if lot.germination_pct is not none %}
+                  <span class="badge {{ 'badge-ok' if lot.germination_pct >= 80 else ('badge-warn' if lot.germination_pct >= 50 else 'badge-danger') }}"
+                        title="{{ lot.germination_tested_on | day }}">{{ fmt_amount(lot.germination_pct) }}%</span>
+                {% else %}<span class="badge badge-quiet">{{ _('untested') }}</span>{% endif %}
+              </td>
+              <td>
+                {% if seg %}
+                  {% set v = verdicts[seg.verdict] %}
+                  <span class="whitespace-nowrap" title="{{ lot.selection }} · χ² 3:1 {{ seg.chi_3 }}, 15:1 {{ seg.chi_15 }}">
+                    <span class="ident">{{ lot.resistant }} : {{ lot.sensitive }}</span> <span class="badge {{ v[1] }}">{{ v[0] }}</span>
+                  </span>
+                {% elif lot.selection %}<span class="sheet-cell-text">{{ lot.selection }}</span>{% endif %}
+              </td>
+              {{ F.table_cells(own_fields, attrs) }}
+              <td>{% if lot.owner %}{{ lot.owner | owner_badge }}{% endif %}</td>
+              <td class="sheet-pin sheet-pin-end">
+                <div class="sheet-actions">
+                  <button type="button" class="row-icon-btn" title="{{ 'View'|tr('action') if locked else _('Edit') }}"
+                          data-org-edit="seedlot-dialog" data-org-payload="{{ {
+                            'id': lot.id, 'code': lot.code, 'line_id_fk': lot.line_id_fk or '', 'generation': lot.generation,
+                            'harvested_on': lot.harvested_on.isoformat() if lot.harvested_on else '',
+                            'amount': '' if lot.amount is none else lot.amount,
+                            'amount_left': '' if lot.amount_left is none else lot.amount_left, 'unit': lot.unit,
+                            'storage_text': lot.storage_text, 'position': lot.position,
+                            'germination_tested_on': lot.germination_tested_on.isoformat() if lot.germination_tested_on else '',
+                            'germination_pct': '' if lot.germination_pct is none else lot.germination_pct,
+                            'selection': lot.selection, 'resistant': '' if lot.resistant is none else lot.resistant,
+                            'sensitive': '' if lot.sensitive is none else lot.sensitive,
+                            'owner': lot.owner, 'notes': lot.notes, 'attrs': attrs, 'locked': locked } | tojson | forceescape }}">{{ icon('eye' if locked else 'edit') }}</button>
+                  {% if module.has('cohorts') and r.left %}
+                    <button type="button" class="row-icon-btn" title="{{ _('Sow') }}" aria-label="{{ _('Sow from %(name)s', name=lot.code) }}"
+                            {% if locked %}disabled{% endif %} data-org-edit="sow-dialog" data-org-payload="{{ {
+                              'seed_lot_id_fk': lot.id, 'lot_label': lot.code ~ (' · ' ~ fmt_amount(lot.amount_left) ~ ' ' ~ lot.unit if lot.amount_left is not none else ''),
+                              'code': next_cohort_code, 'birth_on': today, 'heading': _('Sow from %(name)s', name=lot.code),
+                              'attrs': attr_defaults.get('cohort', {}) } | tojson | forceescape }}">{{ icon('seedling') }}</button>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('organisms.delete_row', key=module.key, entity='seedlot', row_id=lot.id) }}"
+                        data-confirm="{{ _('Delete seed lot %(name)s? Sowings from it keep their line and generation.', name=lot.code) }}">
+                    <button type="submit" class="row-icon-btn danger-button" title="{{ _('Delete') }}" {% if locked %}disabled{% endif %}>{{ icon('trash') }}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td class="dt-empty" colspan="14"><span class="dt-empty-msg">
+              {% trans plants=n_orgs, sowings=n_cohorts %}No seed lots yet. Harvest seed with the wheat button on {{ plants }} or {{ sowings }}, or use <strong>New seed lot</strong> for seed you already have.{% endtrans %}
+            </span></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{% trans count=chip_counts.left %}{{ count }} lot with seed left{% pluralize %}{{ count }} lots with seed left{% endtrans %}</span></div>
+  </section>
+  {{ seedlot_dialog('seeds') }}
+
+  {% if module.has('cohorts') %}
+    {# Sow: a new sowing from the lot, on the Sowings tab. #}
+    <dialog id="sow-dialog" class="mouse-modal">
+      <form method="dialog" class="modal-topbar">
+        <h3>{{ n_cohort|capitalize }}</h3>
+        <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </form>
+      <form method="post" action="{{ url_for('organisms.save_cohort', key=module.key) }}"
+            class="modal-body modal-grid" data-entity-form>
+        <input type="hidden" name="seed_lot_id_fk">
+        <input type="hidden" name="owner">
+        <label class="field-label">{{ _('From lot') }}<input name="lot_label" readonly tabindex="-1"></label>
+        <label class="field-label">{{ 'Code'|tr('record') }}<input name="code" placeholder="{{ _('auto') }}"></label>
+        <label class="field-label">{{ module.cohort_born_word|tr }}<input type="date" name="birth_on"></label>
+        <label class="field-label">{{ _('Seed taken') }}<input type="number" step="any" min="0" name="seed_taken">
+          <span class="field-hint normal-case tracking-normal">{{ _('In the lot’s own unit; it comes off what is left.') }}</span>
+        </label>
+        <label class="field-label">{{ _('Initial count') }}<input type="number" name="count_initial" min="0">
+          <span class="field-hint normal-case tracking-normal">{{ _('How many were sown, if counted.') }}</span>
+        </label>
+        {% if module.has('nursery') %}
+          <label class="field-label">{{ _('Stage') }}<select name="stage">{{ choice_options(module.stages, None) }}</select></label>
+        {% endif %}
+        <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
+        <button type="submit">{{ _('Save') }}</button>
+      </form>
+    </dialog>
+  {% endif %}
+{% endif %}
+
+{# =====================================================================
    CONFIGURE
    ===================================================================== #}
 {% if active_view == 'experiments' and experiments_tab %}
@@ -1526,12 +1816,46 @@
           </label>
           <label class="field-label">{{ _('Sexes') }}
             <input name="sexes" value="{{ module.sexes | join(', ') }}">
+            <span class="field-hint normal-case tracking-normal">{{ _('Empty for none: the Sex column goes.') }}</span>
           </label>
           <label class="field-label sm:col-span-2 lg:col-span-3">{{ _('Statuses that end a record') }}
             <input name="dead_statuses" value="{{ module.dead_statuses | join(', ') }}">
             <span class="field-hint normal-case tracking-normal">
               {{ _('Choosing one of these sets the date died / removed to today (if empty) and stops the record counting as alive; changing back to any other status clears it again.') }}
             </span>
+          </label>
+
+          {# The database's own words for its two dates, and its lists. #}
+          <label class="field-label">{{ _('Start date is called') }}
+            <input name="born_word" value="{{ module.settings.get('born_word', '') }}" placeholder="{{ 'Born'|tr }}">
+            <span class="field-hint normal-case tracking-normal">{{ _('e.g. Sown. Empty: Born.') }}</span>
+          </label>
+          <label class="field-label">{{ _('End date is called') }}
+            <input name="ended_word" value="{{ module.settings.get('ended_word', '') }}" placeholder="{{ 'Died / removed'|tr }}">
+            <span class="field-hint normal-case tracking-normal">{{ _('e.g. Harvested / removed. Empty: Died / removed.') }}</span>
+          </label>
+          <label class="field-label">{{ _('Kinds of place') }}
+            <input name="location_kinds" value="{{ module.location_kinds | join(', ') }}">
+            <span class="field-hint normal-case tracking-normal">{{ _('What a rack or room can be: greenhouse, field, nursery…') }}</span>
+          </label>
+          {% if module.has('nursery') %}
+            <label class="field-label sm:col-span-2 lg:col-span-3">{{ _('Stages') }}
+              <input name="stages" value="{{ module.stages | join(', ') }}">
+              <span class="field-hint normal-case tracking-normal">{{ _('What a %(noun)s goes through, in order. Comma-separated.', noun=n_cohort) }}</span>
+            </label>
+          {% endif %}
+          {% if module.has('seed_bank') %}
+            <label class="field-label sm:col-span-2">{{ _('Seed amounts in') }}
+              <input name="seed_units" value="{{ module.seed_units | join(', ') }}">
+              <span class="field-hint normal-case tracking-normal">{{ _('The units a seed lot offers, the first the usual one.') }}</span>
+            </label>
+          {% endif %}
+          <label class="field-label">{{ _('Young until (days)') }}
+            <input type="number" min="1" name="stage_young" value="{{ module.stage_bands[0] if module.stage_bands else '' }}">
+          </label>
+          <label class="field-label">{{ _('Old after (days)') }}
+            <input type="number" min="1" name="stage_old" value="{{ module.stage_bands[1] if module.stage_bands else '' }}">
+            <span class="field-hint normal-case tracking-normal">{{ _('The dot before an ID: blue while young, green, then red. Empty for none.') }}</span>
           </label>
         </div>
 
@@ -1546,7 +1870,9 @@
                        {% if cap.core %}onclick="event.preventDefault()"{% endif %}>
                 <span class="min-w-0">
                   <span class="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
-                    {{ icon(cap.icon, "text-sand-500") }}{{ cap.label|tr('capability') }}
+                    {# Named as this database names them: Sowings, not Birth cohorts. #}
+                    {% set own = {'cohorts': n_cohorts, 'crosses': n_crosses, 'lines': n_lines}.get(cap.key) %}
+                    {{ icon(cap.icon, "text-sand-500") }}{{ own|capitalize if own else cap.label|tr('capability') }}
                   </span>
                   <span class="block text-[11.5px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
                 </span>
@@ -1720,16 +2046,16 @@
             <label class="field-label">{{ _('Label') }}<input name="label" required placeholder="{{ _('e.g. Flip to fresh food') }}"></label>
             <label class="field-label">{{ _('Applies to') }}
               <select name="applies_to" id="rule-subject">
-                {% for subject in schedule_anchors.keys() %}
+                {% for subject in schedule_anchors.keys() if subject != 'seedlot' or module.has('seed_bank') %}
                   <option value="{{ subject }}">{{ subject|tr('subject') }}</option>
                 {% endfor %}
               </select>
             </label>
             <label class="field-label">{{ _('Counting from') }}
               <select name="anchor" id="rule-anchor">
-                {% for subject, anchors in schedule_anchors.items() %}
+                {% for subject, anchors in schedule_anchors.items() if subject != 'seedlot' or module.has('seed_bank') %}
                   {% for value, label in anchors %}
-                    <option value="{{ value }}" data-subject="{{ subject }}">{{ label|tr }}</option>
+                    <option value="{{ value }}" data-subject="{{ subject }}">{{ module.born_word|tr if value == 'birth_on' and module.settings.get('born_word') else label|tr }}</option>
                   {% endfor %}
                 {% endfor %}
               </select>
@@ -1807,7 +2133,7 @@
     };
 
     Object.entries(payload || {}).forEach(([key, value]) => {
-      if (key === 'attrs' || key === 'locked') return;
+      if (key === 'attrs' || key === 'locked' || key === 'heading') return;
       set(key, value);
     });
     Object.entries((payload && payload.attrs) || {}).forEach(([key, value]) => {
@@ -1829,6 +2155,13 @@
       el.hidden = !isNew;
       el.querySelectorAll('input, select').forEach((input) => { input.disabled = locked || !isNew; });
     });
+    // Rows for a harvest only (the seed lot dialog's From): shown when the
+    // payload names what the seed came from.
+    const harvesting = isNew && Boolean(payload && payload.source_kind);
+    form.querySelectorAll('[data-source-only]').forEach((el) => {
+      el.hidden = !harvesting;
+      el.querySelectorAll('input, select').forEach((input) => { input.disabled = locked || !harvesting; });
+    });
     const note = form.querySelector('[data-locked-note]');
     if (note) {
       note.hidden = !locked;
@@ -1844,7 +2177,8 @@
       heading.dataset.base = heading.dataset.base || heading.textContent.trim();
       const base = heading.dataset.base;
       const noun = base.charAt(0).toLowerCase() + base.slice(1);
-      heading.textContent = isNew ? t('New %(noun)s', { noun: noun })
+      heading.textContent = (payload && payload.heading) ? payload.heading
+        : isNew ? t('New %(noun)s', { noun: noun })
         : (locked ? t('View %(noun)s', { noun: noun }) : t('Edit %(noun)s', { noun: noun }));
     }
 

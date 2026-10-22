@@ -1570,6 +1570,10 @@ class OrgCohort(Base, _JsonAttrs):
     attrs: Mapped[str] = mapped_column(Text, default="{}")
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # A sowing's seed: the lot it came from (a soft link, as the logs keep
+    # theirs: deleting the lot clears it) and its generation, T2 or F3 (0045).
+    seed_lot_id_fk: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    generation: Mapped[str] = mapped_column(String(20), default="", server_default="")
 
     line: Mapped[OrgLine | None] = relationship()
     cross: Mapped[OrgCross | None] = relationship()
@@ -1722,6 +1726,45 @@ class OrgPreservationLot(Base):
     recovery_ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    line: Mapped[OrgLine | None] = relationship()
+
+
+class OrgSeedLot(Base, _JsonAttrs):
+    """Seed harvested from plants, a sowing or a cross, kept to sow again
+    (0045). Where it came from is a soft link (`source_kind` organism /
+    cohort / cross, `source_id`), as the logs keep theirs; a sowing from it
+    points back through `OrgCohort.seed_lot_id_fk`, so a line's descent runs
+    lot → sowing → plants → lot. `amount_left` goes down as it is sown.
+    `resistant` / `sensitive` are a selection plate's counts (a T2's 3:1)."""
+    __tablename__ = "organism_seed_lots"
+    __table_args__ = (UniqueConstraint("module_id_fk", "code", name="uq_seed_lot_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    module_id_fk: Mapped[int] = mapped_column(ForeignKey("organism_modules.id"), index=True)
+    code: Mapped[str] = mapped_column(String(120), index=True)
+    line_id_fk: Mapped[int | None] = mapped_column(ForeignKey("organism_lines.id"), nullable=True, index=True)
+    generation: Mapped[str] = mapped_column(String(20), default="")
+    source_kind: Mapped[str] = mapped_column(String(20), default="")
+    source_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    harvested_on: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    harvested_by: Mapped[str] = mapped_column(String(80), default="")
+    amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    amount_left: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit: Mapped[str] = mapped_column(String(20), default="")
+    storage_text: Mapped[str] = mapped_column(String(200), default="")
+    position: Mapped[str] = mapped_column(String(80), default="")
+    germination_tested_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    germination_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    selection: Mapped[str] = mapped_column(String(80), default="")
+    resistant: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sensitive: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    owner: Mapped[str] = mapped_column(String(80), default="", index=True)
+    attrs: Mapped[str] = mapped_column(Text, default="{}")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_by: Mapped[str] = mapped_column(String(80), default="")
 
     line: Mapped[OrgLine | None] = relationship()
 

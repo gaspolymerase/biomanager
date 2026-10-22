@@ -79,10 +79,11 @@
             <li><a href="print-cage-cards.html">打印笼卡</a></li>
             <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
           </ol></li>
-        <li class="docs-group"><span>鱼、果蝇和其他动物</span>
+        <li class="docs-group"><span>鱼、果蝇、植物及其他</span>
           <ol>
             <li><a href="zebrafish.html">斑马鱼</a></li>
             <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="plants.html">植物与大田作物</a></li>
             <li><a href="any-organism.html" aria-current="page">其他任意物种</a></li>
           </ol></li>
         <li class="docs-group"><span>分子生物学</span>
@@ -140,7 +141,8 @@
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 其他任意物种</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/new-database.webp" data-clip-src="../../assets/clips/new-database"></video></div></figure>
 
       <p>侧边栏里的 <b>添加数据库</b> （Add database）可以为其他任何东西建数据库——非洲爪蟾、蝾螈、细胞系、酵母。从
-        类小鼠、类斑马鱼或空白物种开始，然后描述它：</p>
+        类小鼠、类斑马鱼或空白物种开始，然后描述它。植物有自己的起点 <b>植物</b> （Plants）和 <b>大田作物</b> （Field crops），
+        并带有种子批次：见<a href="plants.html">植物与大田作物</a>。</p>
       <p>数据库多了以后，侧边栏按添加的先后排列，而这往往不是你干活的顺序。管理员可以在任意页面直接在侧边栏里拖动：
         按住数据库的名字上下拖到想要的位置再松开，新顺序立即保存。<b>所有数据库 → 侧边栏顺序</b>
         （All databases → Order in the sidebar）以列表形式做同样的事：按住左边的手柄拖动，或用箭头，然后按 <b>保存顺序</b>
@@ -152,11 +154,13 @@
           记录自己的 <i>Passage</i> 或 <i>Generation</i> 列，如 <i>P12</i>）。之后整个界面都用你的说法。</li>
         <li><b>怎么计数</b>——按个体、按群体计数，或按群体、需要时再细分到个体。</li>
         <li><b>需要哪些功能</b>——勾选你要的：饲养单元和笼架位置、品系、杂交和队列、系谱、基因型鉴定、
-          按日期推算的计划、环境读数、健康、体重、处死记录、冻存等等。每项在页面上都有一行
+          按日期推算的计划、环境读数、健康、体重、处死记录、冻存、种子批次等等。每项在页面上都有一行
           提示。在 <b>计划</b> （Schedule）里，<b>完成</b> （Done）记录实际完成的日期；每条规则从自己上一次
           完成算起，所以每两天一次的喂食不会让每四天一次的分缸重新计时。</li>
-        <li><b>你自己的列</b>——文本、长文本、基因型代码、数字、日期、选项、是/否、实验室成员、品系链接，
-          或网页链接。它们和其他列一样在表格里编辑，<b>设置字段</b> （Set field）可以一次给所有勾选的行设置。</li>
+        <li><b>你自己的列</b>——文本、长文本、基因型代码、数字、日期、选项、是/否、实验室成员、品系链接、
+          质粒数据库中的质粒，或网页链接。它们和其他列一样在表格里编辑，<b>设置字段</b> （Set field）可以一次给所有勾选的行设置。</li>
+        <li><b>自己的说法</b>——在 <b>配置</b> （Configure）里设置两个日期的名称（<b>起始日期名称</b>：孵化、播种；<b>结束日期名称</b>）、
+          一批个体经历的 <b>阶段</b>，以及笼架和房间可以是哪些 <b>场所类型</b>。把 <b>性别</b> 留空，性别列就会隐藏。<b>幼龄截至</b> 和 <b>老龄始于</b>（天）决定编号前圆点的颜色：幼龄为蓝色，之后绿色，再后红色。</li>
         <li><b>给谁用</b>——<i>仅自己</i>（Just me，只有你和管理员能看到的个人数据库）或<i>全实验室</i>（The whole lab）。</li>
       </ul>
       <p><b>小鼠库、斑马鱼和质粒也可以加自己的列。</b> 打开那个数据库，点 <b>配置</b> （Configure），在 <b>你自己的列</b>
@@ -181,7 +185,7 @@
           他本人和管理员能看到；也可能是管理员把它关闭了。</p>
     </section>
     <!-- /page -->
-      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="flies-and-worms.html"><small>上一页</small>果蝇和线虫</a><a class="next" href="plasmids.html"><small>下一页</small>质粒、引物与菌种</a></nav>
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="plants.html"><small>上一页</small>植物与大田作物</a><a class="next" href="plasmids.html"><small>下一页</small>质粒、引物与菌种</a></nav>
       <div class="helpful" data-pagefind-ignore>
         <span>这一页对你有帮助吗？</span>
         <button type="button" data-helpful="yes" aria-pressed="false">有</button>
@@ -195,8 +199,8 @@
   <div class="wrap footer-inner">
     <div class="footer-gh">
       <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=d44b577819#star"/></svg>在 GitHub 上标星</a>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=d44b577819#github"/></svg>提交反馈</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#star"/></svg>在 GitHub 上标星</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#github"/></svg>提交反馈</a>
     </div>
     <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     <p><a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本和更新内容</a> · <a href="../../privacy.html">隐私</a> · <a href="../../terms.html">使用条款</a></p>

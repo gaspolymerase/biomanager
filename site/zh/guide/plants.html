@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Language" content="zh-CN">
+  <title>植物与大田作物 — BioManager 用户指南</title>
+  <meta name="description" content="播种批次、托盘或小区，以及收获后再次播种的种子，一代接一代。">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://biomanager.org/zh/guide/plants">
+  <link rel="alternate" hreflang="en" href="https://biomanager.org/guide/plants">
+  <link rel="alternate" hreflang="zh-CN" href="https://biomanager.org/zh/guide/plants">
+  <link rel="alternate" hreflang="x-default" href="https://biomanager.org/guide/plants">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="BioManager">
+  <meta property="og:url" content="https://biomanager.org/zh/guide/plants">
+  <meta property="og:title" content="植物与大田作物 — BioManager 用户指南">
+  <meta property="og:description" content="播种批次、托盘或小区，以及收获后再次播种的种子，一代接一代。">
+  <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+  <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css?v=e8999d1d34">
+</head>
+<body class="docs-page">
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="../../features.html">功能</a>
+      <a href="../../server.html">为实验室部署</a>
+      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+    </nav>
+    <a class="lang-link" href="../../guide/plants.html" hreflang="en" lang="en" data-lang="en">English</a>
+    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="docs-nav" aria-label="目录">
+    <button type="button" class="docs-search" data-search data-pagefind="../../pagefind/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>搜索用户指南</span><kbd>/</kbd>
+    </button>
+    <details class="docs-toc" open>
+      <summary>目录</summary>
+      <ol>
+        <li class="docs-group"><span>入门</span>
+          <ol>
+            <li><a href="../guide.html">指南首页</a></li>
+            <li><a href="what-it-is.html">BioManager 是什么</a></li>
+            <li><a href="coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="install.html">安装与设置</a></li>
+            <li><a href="try-it-first.html">先试一遍</a></li>
+            <li><a href="bring-your-lab-in.html">把实验室搬进来</a></li>
+            <li><a href="import-from-excel.html">从 Excel 导入</a></li>
+            <li><a href="home-page.html">首页</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日常操作</span>
+          <ol>
+            <li><a href="sheets.html">在表格里工作</a></li>
+            <li><a href="many-at-once.html">批量操作</a></li>
+            <li><a href="finding-things.html">查找</a></li>
+            <li><a href="undo-and-history.html">撤销与历史</a></li>
+            <li><a href="notifications.html">通知</a></li>
+            <li><a href="keyboard-shortcuts.html">快捷键</a></li>
+          </ol></li>
+        <li class="docs-group"><span>小鼠鼠群</span>
+          <ol>
+            <li><a href="mouse-colony.html">小鼠鼠群</a></li>
+            <li><a href="record-a-litter.html">记录产仔</a></li>
+            <li><a href="genotype-a-litter.html">鉴定一窝的基因型</a></li>
+            <li><a href="wean-a-litter.html">断奶分笼</a></li>
+            <li><a href="print-cage-cards.html">打印笼卡</a></li>
+            <li><a href="phones-and-cage-cards.html">在实验台：手机与笼卡</a></li>
+          </ol></li>
+        <li class="docs-group"><span>鱼、果蝇、植物及其他</span>
+          <ol>
+            <li><a href="zebrafish.html">斑马鱼</a></li>
+            <li><a href="flies-and-worms.html">果蝇和线虫</a></li>
+            <li><a href="plants.html" aria-current="page">植物与大田作物</a></li>
+            <li><a href="any-organism.html">其他任意物种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>分子生物学</span>
+          <ol>
+            <li><a href="plasmids.html">质粒、引物与菌种</a></li>
+          </ol></li>
+        <li class="docs-group"><span>样本与采购</span>
+          <ol>
+            <li><a href="samples-and-orders.html">样本、试剂、抗体、病毒</a></li>
+            <li><a href="receive-an-order.html">订单到货入库</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验与记录本</span>
+          <ol>
+            <li><a href="experiments.html">实验</a></li>
+            <li><a href="notebook.html">实验记录本与工具</a></li>
+            <li><a href="sign-a-notebook-page.html">签名实验记录</a></li>
+          </ol></li>
+        <li class="docs-group"><span>日程安排</span>
+          <ol>
+            <li><a href="calendar.html">日历</a></li>
+            <li><a href="book-equipment.html">预约仪器</a></li>
+          </ol></li>
+        <li class="docs-group"><span>实验室协作</span>
+          <ol>
+            <li><a href="who-can-do-what.html">谁能做什么</a></li>
+            <li><a href="project-groups.html">项目组</a></li>
+            <li><a href="people-and-guests.html">成员与访客</a></li>
+            <li><a href="invite-someone.html">邀请成员</a></li>
+            <li><a href="lab-setup.html">实验室设置</a></li>
+          </ol></li>
+        <li class="docs-group"><span>你的数据</span>
+          <ol>
+            <li><a href="your-data.html">数据与备份</a></li>
+            <li><a href="restore-a-backup.html">从备份恢复</a></li>
+            <li><a href="scripts-and-api.html">脚本与 API</a></li>
+          </ol></li>
+        <li class="docs-group"><span>AI 助手</span>
+          <ol>
+            <li><a href="ai-assistants.html">AI 助手</a></li>
+            <li><a href="connect-an-ai-assistant.html">连接 AI 助手</a></li>
+          </ol></li>
+        <li class="docs-group"><span>帮助</span>
+          <ol>
+            <li><a href="troubleshooting.html">疑难解答</a></li>
+            <li><a href="feedback.html">反馈</a></li>
+          </ol></li>
+      </ol>
+    </details>
+  </aside>
+  <main class="docs-main" data-pagefind-body>
+    <!-- page -->
+    <p class="eyebrow">你的数据库</p>
+    <h1>植物与大田作物</h1>
+    <p class="summary">播种批次、托盘或小区，以及收获后再次播种的种子，一代接一代。</p>
+
+      <p>侧边栏的 <b>添加数据库</b> （Add database）为植物提供两个起点。<b>植物</b> 适用于生长室、人工气候箱或温室里的盆钵和托盘，就像拟南芥、烟草或水稻实验室那样。<b>大田作物</b> 适用于试验田中的小区，先在苗圃（育苗床）育苗，再移栽。两者都记录播种和收获，而不是出生和死亡，也没有性别。</p>
+
+      <h2 id="what-it-keeps">它记录什么</h2>
+      <ul>
+        <li><b>植株</b> — 每株一行，或每组植株一行并记数量。<b>播种</b> 是播种日期，年龄是播种后的天数；把状态设为<i>已收获</i>时会填上 <b>收获 / 移除</b> 日期。</li>
+        <li><b>托盘</b>（或 <b>小区</b>）— 植株所在的位置，放在生长室、温室或试验田的网格上。试验田就是小区组成的网格，正如笼架是笼子组成的网格：
+          设置行数和列数，再把每个小区拖到对应位置。</li>
+        <li><b>品系</b> — 记录遗传背景（Col-0 或品种）、来源和保种编号、筛选标记、是否 <b>转基因</b> 及对应的 <b>生物安全许可</b>，
+          以及 <b>构建体</b>：转化所用的质粒，从质粒数据库中选择并链接过去。</li>
+        <li><b>播种批次</b> — 同一次播下的一批，记录日期、播了多少、来自哪个种子批次、<b>代数</b>（T2、F3）以及阶段：
+          种子、低温层积中、幼苗、已移栽、开花、结实、已收获；大田作物还有<i>在苗圃</i>。在苗圃中的播种批次可以把苗圃设为它的位置。</li>
+        <li><b>杂交</b> — 两个亲本品系、授粉日期和采种日期。</li>
+        <li><b>环境</b> — 每个生长室或试验田的读数：温度、湿度、光照和日长。</li>
+      </ul>
+
+      <h2 id="seed-lots">种子批次</h2>
+      <p><b>种子</b> （Seeds）标签页列出所有种子批次，尚有种子的排在前面。每个批次都有品系和代数、收获来源、收获量和剩余量（单位为 mg、g、粒、管或袋）、
+        存放位置、发芽率和筛选平板结果。</p>
+      <ul>
+        <li><b>收种</b> （Harvest seed）— 在植株、播种批次或杂交上点麦穗按钮，会打开一个已填好的新批次：品系、今天的日期和代数。
+          自交植株收获的种子比植株晚一代（T1 植株收获 T2 种子）；杂交收获的种子为 F1。保持勾选 <b>将收获来源标记为已收获</b>，
+          植株就会被标记为已收获并填上日期，杂交则被标记为已采集。</li>
+        <li><b>播种</b> （Sow）— 在种子批次上点幼苗按钮，会在播种批次标签页中新建一次播种。它带入该批次的品系和代数，<b>取用种子量</b> 中填写的数量会从剩余量中扣除（按批次自己的单位）。单位为粒时，还会填上播种数量。取用量不能超过剩余量。</li>
+        <li><b>收获自</b> 显示批次的来历，由近及远：它来自哪株植株、该植株的播种批次、那次播种所用的批次，一直追溯到最初的批次。
+          点其中的批次即可跳到该批次。</li>
+        <li><b>标签</b> （Labels）为每个尚有种子的批次打印标签，可贴在管子或纸袋上，带有打开该批次的二维码。</li>
+        <li><b>新建种子批次</b> （New seed lot）用于已有的种子：来自保种中心、同事或抽屉里。</li>
+      </ul>
+
+      <h2 id="selection">筛选平板</h2>
+      <p>把 T2 批次种在筛选培养基上（卡那霉素、潮霉素、Basta），填写 <b>抗性苗</b> 和 <b>敏感苗</b> 的数量。<b>筛选</b> 列会按 p = 0.05 的 χ² 检验说明结果：
+        <i>符合 3:1，单拷贝插入</i>；<i>符合 15:1，两个插入位点</i>；<i>全部抗性：纯合</i>（30 株以上）；或两者都不符合，或需要多计数才能判断。
+        鼠标悬停可看到 χ² 值。</p>
+
+      <h2 id="schedule">日程</h2>
+      <p><b>日程</b> 按每次播种后的天数计算：3 天后结束低温层积，第 7 天统计发芽，第 14 天移栽，第 70 天收种（长日照下的拟南芥）。
+        大田作物在第 30 天从苗圃移栽，第 90 天开花，第 120 天收获。库存种子每两年提醒一次发芽检测。
+        在 <b>配置 → 日程规则</b> 里按你的物种修改；首页会显示到期事项。</p>
+
+      <h2 id="your-words">用你自己的说法</h2>
+      <p>这里的一切都是 <b>配置</b> （Configure）中的设置：植株、托盘、生长室和播种批次的叫法；两个日期的名称（<b>起始日期名称</b>、<b>结束日期名称</b>）；
+        播种批次经历的 <b>阶段</b>；<b>场所类型</b>（生长室、温室、苗圃、试验田）；种子数量的单位；以及 <b>幼龄截至</b> 和 <b>老龄始于</b>，
+        这两个天数决定植株编号前圆点的颜色：幼苗为蓝色，之后绿色，再后红色。还可以给植株、托盘、品系、播种批次、杂交或种子批次添加自己的列，
+        方法见<a href="any-organism.html">其他任意物种</a>。</p>
+
+    <section class="trouble">
+      <h2 id="troubleshooting">疑难解答</h2>
+      <h3>没有种子标签页</h3>
+      <p>这个数据库建于种子批次功能之前，或建时没有勾选。在 <b>配置</b> 中勾选 <b>种子库存</b> 并保存。</p>
+      <h3>收种得到的代数不对</h3>
+      <p>代数取自植株所在的播种批次；如果那次播种没有代数，批次也没有。直接在批次中填写，并给播种批次补上代数，下一次收获就会顺延。</p>
+      <h3>批次上的播种按钮是灰色的</h3>
+      <p>这个批次属于别人：取用种子会改动它，所以和其他记录一样受权限限制。请找批次的主人或管理员，或者新建播种批次时在 <b>播种所用批次</b> 中选择它，但不填取用量。</p>
+      <h3>播种时提示“只剩 5 mg”</h3>
+      <p>批次剩余的种子少于 <b>取用种子量</b>。检查数量；如果批次后来补充过种子，就修改它的 <b>剩余</b>。</p>
+    </section>
+    <!-- /page -->
+      <nav class="pager" aria-label="上一页 / 下一页"><a class="prev" href="flies-and-worms.html"><small>上一页</small>果蝇和线虫</a><a class="next" href="any-organism.html"><small>下一页</small>其他任意物种</a></nav>
+      <div class="helpful" data-pagefind-ignore>
+        <span>这一页对你有帮助吗？</span>
+        <button type="button" data-helpful="yes" aria-pressed="false">有</button>
+        <a class="btn btn-small" data-helpful="no" href="https://github.com/gaspolymerase/biomanager/issues/new?title=用户指南：植物与大田作物&amp;body=页面：https://biomanager.org/zh/guide/plants%0A%0A哪里不清楚或缺了什么：" target="_blank" rel="noopener">没有</a>
+      </div>
+  </main>
+  <nav class="docs-rail" aria-label="本页内容">
+      <p>本页内容 · 阅读约 4 分钟</p>
+      <ol>
+        <li class="lvl2"><a href="#what-it-keeps">它记录什么</a></li>
+        <li class="lvl2"><a href="#seed-lots">种子批次</a></li>
+        <li class="lvl2"><a href="#selection">筛选平板</a></li>
+        <li class="lvl2"><a href="#schedule">日程</a></li>
+        <li class="lvl2"><a href="#your-words">用你自己的说法</a></li>
+        <li class="lvl2"><a href="#troubleshooting">疑难解答</a></li>
+      </ol>
+    </nav>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-gh">
+      <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#star"/></svg>在 GitHub 上标星</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#github"/></svg>提交反馈</a>
+    </div>
+    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+    <p><a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本和更新内容</a> · <a href="../../privacy.html">隐私</a> · <a href="../../terms.html">使用条款</a></p>
+  </div>
+</footer>
+<script src="../../site.js?v=ab8d9aa6a0"></script>
+</body>
+</html>

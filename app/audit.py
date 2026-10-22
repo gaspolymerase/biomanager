@@ -45,6 +45,7 @@ TRACKED_TABLES |= {"experiment_deviations"}   # changes from an experiment's pla
 TRACKED_TABLES |= {"mouse_weights"}   # a weight is a record of the animal, kept and undone like one
 TRACKED_TABLES |= {"plate_layouts", "plate_reads"}   # an experiment's plate layouts, and the plates read onto them
 TRACKED_TABLES |= {"cage_litters"}   # each litter born in a cage: weaning one is undone with its cage
+TRACKED_TABLES |= {"organism_seed_lots"}   # a plant database's seed lots: harvested, sown, undone like any record
 TRACKED_TABLES |= {"user_identities"}   # who connected which Google/Microsoft account, and when   # so deleting a box (which unplaces its plasmids) can be undone
 
 # What each table is, for the Audit log and Batch history (not "inventory_items").
@@ -66,6 +67,7 @@ TABLE_LABELS = {
     "experiment_deviations": "Changes from the plan",
     "mouse_weights": "Weights", "cage_litters": "Litters born",
     "plate_layouts": "Plate layouts", "plate_reads": "Plates read",
+    "organism_seed_lots": "Seed lots",
 }
 
 

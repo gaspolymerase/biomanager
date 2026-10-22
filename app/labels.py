@@ -37,8 +37,8 @@ from sqlalchemy.orm import selectinload
 from .formutil import arg_int
 from .db import SessionLocal
 from .i18n import gettext, ngettext, translate_value
-from .models import CageRecord, InventoryItem, OrgHousing, StockUnit, TankRecord
-from . import access, positions
+from .models import CageRecord, InventoryItem, OrgHousing, OrgSeedLot, StockUnit, TankRecord
+from . import access, lab, positions
 from . import organism_service as svc
 
 bp = Blueprint("labels", __name__, url_prefix="/labels")
@@ -243,6 +243,40 @@ def _module_cards(session, module_key: str) -> dict:
                                                units=translate_value(mv.housing_noun)),
             "size": CARD_SIZES.get("vial" if mv.housing_noun in ("vial", "plate") else "tank"),
             "kind": module_key, "back_url": url_for("organisms.module", key=module.key, view="housing")}
+
+
+def _seed_cards(session, module_key: str) -> dict:
+    """A plant database's seed lots, for the tube or packet: `ids`, or every
+    lot with seed left."""
+    module = svc.get_module(session, module_key)
+    if module is None or not lab.can_see(module):
+        abort(404)
+    mv = svc.view(module)
+    ids = _ids()
+    stmt = select(OrgSeedLot).where(OrgSeedLot.module_id_fk == module.id)
+    if ids:
+        stmt = stmt.where(OrgSeedLot.id.in_(ids))
+    else:
+        stmt = stmt.where(OrgSeedLot.amount_left.is_(None) | (OrgSeedLot.amount_left > 0))
+    cards = []
+    for lot in positions.natural_sorted(session.scalars(stmt), key=lambda s: s.code):
+        rows = [(mv.line_noun.title(), lot.line.code if lot.line else "—"),
+                ("Generation", lot.generation or "—"),
+                ("Harvested", lot.harvested_on.isoformat() if lot.harvested_on else "—")]
+        if lot.storage_text or lot.position:
+            rows.append(("Where", " · ".join(filter(None, [lot.storage_text, lot.position]))))
+        if lot.selection:
+            rows.append(("Selection", lot.selection))
+        rows.append(("Owner", lot.owner or "—"))
+        cards.append({
+            "title": lot.code,
+            "target": _absolute(url_for("organisms.module", key=module.key, view="seeds") + f"#lot-{lot.id}"),
+            "rows": rows,
+            "shared": False,
+        })
+    return {"cards": cards, "heading": gettext("%(name)s · seed lot labels", name=translate_value(mv.label)),
+            "size": CARD_SIZES["tube"], "kind": f"seeds/{module.key}",
+            "back_url": url_for("organisms.module", key=module.key, view="seeds")}
 
 
 def _stock_cards(session, key: str) -> dict:
@@ -511,6 +545,8 @@ def _build(kind: str, key: str = "") -> dict:
             return _stock_cards(session, key)
         if kind == "inventory":
             return _inventory_cards(session, key)
+        if kind == "seeds":
+            return _seed_cards(session, key)
         return _module_cards(session, key)
 
 
@@ -533,6 +569,12 @@ def stock_cards(key: str):
 @bp.route("/cards/inventory/<key>")
 def inventory_cards(key: str):
     return _page(_build("inventory", key))
+
+
+@bp.route("/cards/seeds/<key>")
+def seed_cards(key: str):
+    """Labels for a plant database's seed lots: tubes or packets."""
+    return _page(_build("seeds", key))
 
 
 @bp.route("/cards/<module_key>")
