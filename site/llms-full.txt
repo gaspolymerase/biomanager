@@ -743,11 +743,79 @@ Source: https://biomanager.org/guide/flies-and-worms
 
 ---
 
+## Plants and field crops
+
+Sowings, trays or plots, and the seed you harvest and sow again, a generation at a time.
+
+**Add database** in the sidebar offers two starting points for plants. **Plants** is for pots and trays in growth rooms, growth chambers or a greenhouse, as an Arabidopsis, tobacco or rice lab keeps them. **Field crops** is for plots in a field, raised first in a nursery (a seedbed) and transplanted. Either one is sown and harvested rather than born and dead, and has no sex.
+
+### What it keeps
+
+- **Plants** — one row per plant, or per group of plants with a count. **Sown** is its sowing date, and Age is days after sowing; **Harvested / removed** is filled in when you set its status to *harvested*.
+
+- **Trays** (or **Plots**) — where the plants are, placed on the grid of a growth room, greenhouse or field. A field is a grid of plots, the way a rack is a grid of cages: give it rows and columns, and drag each plot into place.
+
+- **Lines** — each with its background (Col-0, a variety), source and stock number, selection marker, whether it is **Transgenic** and under which **Biosafety permit**, and its **Construct**: the plasmid it was transformed with, chosen from the Plasmids database and linked to it.
+
+- **Sowings** — a batch sown together, with its date, how many were sown, the seed lot it came from, its **Generation** (T2, F3) and its stage: seed, stratifying, seedling, transplanted, flowering, seed set and harvested, or *in the nursery* for a field crop. A sowing in the nursery can sit in the nursery (苗圃) as its place.
+
+- **Crosses** — the two parent lines, when it was pollinated, and when its seed was collected.
+
+- **Environment** — readings for each growth room or field: temperature, humidity, light and day length.
+
+### Seed lots
+
+The **Seeds** tab lists every seed lot, those with seed left first. Each has its line and generation, what it was harvested from, how much was harvested and how much is left (in mg, g, seeds, tubes or packets), where it is kept, its germination and its selection plate.
+
+- **Harvest seed** — the wheat button on a plant, a sowing or a cross opens a new lot already filled in: its line, today's date, and its generation. Seed from a selfed plant is one generation on from the plant (a T1 plant gives T2 seed); seed from a cross is F1. Leave **Mark what it was harvested from as harvested** ticked and the plants are marked harvested and dated, and a cross is marked collected.
+
+- **Sow** — the seedling button on a lot starts a sowing from it, on the Sowings tab. The sowing takes the lot's line and generation, and what you type in **Seed taken** comes off what is left (in the lot's own unit). Counted in seeds, it also fills in how many were sown. A lot can't give more than it has.
+
+- **Harvested from** shows a lot's descent, newest first: the plant it came from, that plant's sowing, the lot that sowing came from, and so on back to the first lot. Click a lot in it to go to that lot.
+
+- **Labels** prints a label for each lot with seed left, for a tube or a packet, with a QR code that opens the lot.
+
+- **New seed lot** is for seed you already have: from a stock centre, a colleague or a drawer.
+
+### The selection plate
+
+Grow a T2 lot on its selection (kanamycin, hygromycin, Basta) and type how many seedlings were **Resistant** and how many **Sensitive**. The **Selection** column says what the counts mean, by a χ² test at p = 0.05: *fits 3:1, one insertion*; *fits 15:1, two insertions*; *all resistant: homozygous* (from 30 seedlings up); or that they fit neither, or that more need counting to tell. Hover over it for the χ² values.
+
+### The schedule
+
+The **Schedule** counts days after each sowing: move it out of the cold after 3 days, count germination at 7, transplant at 14, harvest at 70 (Arabidopsis under long days). A field crop transplants from the nursery at 30 days, flowers at 90 and is harvested at 120. Stored seed comes up for a germination test every two years. Change any of them under **Configure → Schedule rules** for your species; Home shows what is due.
+
+### In your own words
+
+Everything here is a setting, under **Configure**: what a plant, a tray, a growth room and a sowing are called; the words for the two dates (**Start date is called**, **End date is called**); the **Stages** a sowing goes through; the **Kinds of place** (growth room, greenhouse, nursery, field); the units seed is counted in; and **Young until** and **Old after**, the days that colour the dot before a plant's ID blue (a seedling), then green, then red. Add columns of your own, to plants, trays, lines, sowings, crosses or seed lots, as in [Any other organism](https://biomanager.org/guide/any-organism).
+
+### Troubleshooting
+
+#### The Seeds tab isn't there
+
+Its database was made before seed lots, or without them. Under **Configure**, tick **Seed stocks** and save.
+
+#### A harvest gave the wrong generation
+
+The generation follows the plant's sowing; if that sowing has none, the lot has none either. Type it in the lot, and give the sowing its generation so the next harvest follows on.
+
+#### Sow is greyed out on a lot
+
+The lot is someone else's: taking seed from it changes it, so it follows the same rule as any record. Ask them or an admin, or make a sowing and pick the lot under **Sown from lot** without taking seed.
+
+#### "Only 5 mg left" when sowing
+
+The lot has less seed than **Seed taken**. Check the amount, or correct the lot's **Left** if seed was added to it.
+
+Source: https://biomanager.org/guide/plants
+
+---
+
 ## Any other organism
 
 A database for any other organism, described in your own words.
 
-**Add database** in the sidebar builds a database for anything else — Xenopus, axolotls, cell lines, yeast. Start from a mouse-like, zebrafish-like or blank organism and describe it:
+**Add database** in the sidebar builds a database for anything else — Xenopus, axolotls, cell lines, yeast. Start from a mouse-like, zebrafish-like or blank organism and describe it. Plants have starting points of their own, **Plants** and **Field crops**, with seed lots: see [Plants and field crops](https://biomanager.org/guide/plants).
 
 However many you end up with, the sidebar lists them in the order they were added, which is rarely the order you work in. An admin drags them into place right in the sidebar, on any page: hold a database's name, move it up or down, and let go; the new order is saved at once. **All databases → Order in the sidebar** does the same as a list, with a grip to drag or arrows, then **Save the order**. Put the ones you open every day at the top; a database you add later joins the end rather than pushing into the middle of your arrangement. An admin arranges it, and it is the lab's order, the same for everyone.
 
@@ -755,9 +823,11 @@ However many you end up with, the sidebar lists them in the order they were adde
 
 - **How animals are counted** — individuals, groups with a headcount, or groups with individuals when needed.
 
-- **What it does** — tick what you need: housing and rack positions, lines, crosses and cohorts, pedigree, genotyping, schedules worked out from dates, environment readings, health, weights, a cull log, cryo stocks and more. Each has a one-line hint on the page. On the **Schedule**, **Done** takes the day it was really done; each rule counts from its own last Done, so feeding every two days doesn't restart a split due every four.
+- **What it does** — tick what you need: housing and rack positions, lines, crosses and cohorts, pedigree, genotyping, schedules worked out from dates, environment readings, health, weights, a cull log, cryo stocks, seed lots and more. Each has a one-line hint on the page. On the **Schedule**, **Done** takes the day it was really done; each rule counts from its own last Done, so feeding every two days doesn't restart a split due every four.
 
-- **Your own columns** — text, long text, a genotype code, number, date, a choice, yes/no, a lab member, a link to a line, or a web link. They are edited in the sheet like the others, and **Set field** sets one on every ticked row.
+- **Your own columns** — text, long text, a genotype code, number, date, a choice, yes/no, a lab member, a link to a line, a plasmid from the Plasmids database, or a web link. They are edited in the sheet like the others, and **Set field** sets one on every ticked row.
+
+- **Its own words** — under **Configure**, what its two dates are called (**Start date is called**: Hatched, Sown; **End date is called**), the **Stages** a cohort goes through, and the **Kinds of place** its racks and rooms can be. Leave **Sexes** empty and the Sex column goes. **Young until** and **Old after** (days) colour the dot before an ID: blue while young, green, then red.
 
 - **Who it is for** — *Just me* (a personal database only you and admins see) or *The whole lab*.
 

@@ -9,7 +9,9 @@ in `organism_modules` that declares:
 
   * the nouns it uses            — cage / tank / vial / plate, litter / clutch
   * how it counts animals        — individuals, groups, or both
-  * which capabilities are on    — crosses, nursery, genotyping, water quality…
+    (plants too: "animal" is the engine's word for what a database keeps)
+  * which capabilities are on    — crosses, nursery, genotyping, water quality,
+                                   seed lots…
   * its schedule rules           — wean at P21, flip every 14 days at 25 °C
   * any extra fields             — arbitrary per-module columns
 
@@ -140,6 +142,12 @@ CAPABILITIES: tuple[Capability, ...] = (
         "verification.",
         "snowflake",
     ),
+    Capability(
+        "seed_bank", "Seed stocks", "Husbandry",
+        "Seed lots harvested from plants or crosses: how much is left, where "
+        "it is kept, its generation and germination, and sowing from it.",
+        "wheat",
+    ),
     # --- Compliance --------------------------------------------------------
     Capability(
         "protocol", "Protocol & census", "Compliance",
@@ -212,6 +220,7 @@ FIELD_TYPES: tuple[FieldType, ...] = (
     FieldType("checkbox", "Yes / no", "A checkbox."),
     FieldType("user", "Lab member", "Pick a registered user."),
     FieldType("line", "Line reference", "Pick one of this module's lines."),
+    FieldType("plasmid", "Plasmid", "A plasmid from the Plasmids database, e.g. the construct a line was transformed with."),
     FieldType("url", "Link", "An external URL, e.g. a stock centre page."),
 )
 
@@ -224,6 +233,7 @@ FIELD_ENTITIES = (
     ("line", "Line"),
     ("cohort", "Cohort"),
     ("cross", "Cross"),
+    ("seedlot", "Seed lot"),
 )
 FIELD_ENTITY_KEYS = tuple(k for k, _ in FIELD_ENTITIES)
 
@@ -241,7 +251,7 @@ FIELD_ENTITY_KEYS = tuple(k for k, _ in FIELD_ENTITIES)
 class ScheduleRule:
     key: str
     label: str
-    applies_to: str          # "cohort" | "housing" | "line" | "organism"
+    applies_to: str          # "cohort" | "housing" | "line" | "organism" | "seedlot"
     anchor: str              # attribute on the subject holding the start date
     offset_days: int
     icon: str = "calendar-clock"
@@ -274,6 +284,7 @@ SCHEDULE_ANCHORS = {
         ("last_frozen_on", "Last freeze"),
     ],
     "organism": [("birth_on", "Birth date"), ("last_procedure_on", "Last procedure")],
+    "seedlot": [("harvested_on", "Harvest date"), ("germination_tested_on", "Last germination test")],
 }
 
 # Anchors that record when routine work was last done. Completing a
@@ -284,6 +295,7 @@ SCHEDULE_ANCHORS = {
 # organism_service.recompute_due).
 SERVICE_ANCHORS = frozenset({
     "last_serviced_on", "last_refreshed_on", "last_frozen_on", "last_procedure_on",
+    "germination_tested_on",
 })
 
 
@@ -306,6 +318,7 @@ def anchor_allowed(subject: str, anchor: str) -> bool:
 END_STATUS_WORDS = frozenset({
     "dead", "died", "found dead", "euthanized", "euthanised", "sac", "sacrificed",
     "culled", "removed", "discarded", "lost", "transferred", "exported", "retired",
+    "harvested",
 })
 
 
@@ -613,6 +626,159 @@ PRESETS: tuple[Preset, ...] = (
         settings={"protocol_required": True, "regulated": True, "billing_unit": "housing"},
         notes="A bespoke mouse colony module already ships with this app; this preset is "
               "the reference expression of it in the configurable engine.",
+    ),
+
+    # --- Plants in pots and trays ------------------------------------------
+    #
+    # Shaped on how a plant lab keeps its seed (Phytotracker, SeedUSoon,
+    # LabCollector's plant manager): seed lot → sowing → plants → harvest →
+    # a new seed lot, a generation on. The days are Arabidopsis under long
+    # days; a lab growing something else changes them in Configure.
+    Preset(
+        key="plant",
+        label="Plants",
+        label_plural="Plants",
+        icon="seedling",
+        blurb="Plants in pots and trays in growth rooms or a greenhouse. Each sowing has its "
+              "date, harvests become seed lots that are sown again, and generations "
+              "(T1, T2, F2…) follow along.",
+        organism_noun="plant", organism_noun_plural="plants",
+        housing_noun="tray", housing_noun_plural="trays",
+        container_noun="growth room",
+        line_noun="line", line_noun_plural="lines",
+        cohort_noun="sowing", cohort_noun_plural="sowings",
+        cross_noun="cross",
+        identity_mode="hybrid",
+        age_unit="days",
+        capabilities=[
+            "housing", "housing_grid", "group_counts", "individuals", "lines", "crosses",
+            "cohorts", "nursery", "pedigree", "genotyping", "schedule", "environment",
+            "samples", "seed_bank",
+        ],
+        schedule_rules=[
+            ScheduleRule("out_of_cold", "Move out of the cold", "cohort", "birth_on", 3,
+                         icon="temperature"),
+            ScheduleRule("germination", "Count germination", "cohort", "birth_on", 7,
+                         icon="seedling"),
+            ScheduleRule("transplant", "Transplant seedlings", "cohort", "birth_on", 14,
+                         icon="seedling"),
+            ScheduleRule("harvest", "Harvest seed", "cohort", "birth_on", 70, icon="wheat"),
+            ScheduleRule("germination_test", "Test stored seed", "seedlot", "harvested_on", 730,
+                         icon="wheat", recurring=True),
+        ],
+        housing_purposes=["stock", "cross", "selection", "experiment", "bulk"],
+        statuses=["growing", "flowering", "harvested", "dead", "discarded"],
+        sexes=[],
+        fields=[
+            {"entity": "line", "key": "background", "label": "Background",
+             "field_type": "text", "show_in_table": True, "help_text": "Ecotype or variety, e.g. Col-0."},
+            {"entity": "line", "key": "source", "label": "Source",
+             "field_type": "select", "options": ["ABRC", "NASC", "RIKEN", "own", "gift"]},
+            {"entity": "line", "key": "stock_number", "label": "Stock number", "field_type": "text"},
+            {"entity": "line", "key": "selection_marker", "label": "Selection marker",
+             "field_type": "select", "options": ["kanamycin", "hygromycin", "Basta", "none"],
+             "show_in_table": True},
+            {"entity": "line", "key": "construct", "label": "Construct", "field_type": "plasmid",
+             "show_in_table": True, "help_text": "The plasmid it was transformed with."},
+            {"entity": "line", "key": "transgenic", "label": "Transgenic", "field_type": "checkbox",
+             "show_in_table": True, "help_text": "Kept under the lab's biosafety permit."},
+            {"entity": "line", "key": "biosafety_permit", "label": "Biosafety permit", "field_type": "text"},
+            {"entity": "housing", "key": "light", "label": "Light", "field_type": "select",
+             "options": ["long day (16 h)", "short day (8 h)", "continuous light"],
+             "default_value": "long day (16 h)", "show_in_table": True},
+            {"entity": "housing", "key": "medium", "label": "Medium", "field_type": "select",
+             "options": ["soil", "MS plate", "hydroponics"], "default_value": "soil"},
+            {"entity": "organism", "key": "flowered_on", "label": "Flowered", "field_type": "date",
+             "show_in_table": True},
+        ],
+        settings={
+            "protocol_required": False, "regulated": False,
+            "born_word": "Sown", "ended_word": "Harvested / removed",
+            "dead_statuses": ["harvested", "dead", "discarded"],
+            "stages": ["seed", "stratifying", "seedling", "transplanted", "vegetative",
+                       "flowering", "seed set", "harvested"],
+            "location_kinds": ["growth room", "growth chamber", "greenhouse", "nursery", "bench",
+                               "shelf", "tray"],
+            "stage_bands": {"young": 14, "old": 70},
+            "seed_units": ["mg", "g", "seeds", "tubes", "packets"],
+            "environment_metrics": [
+                {"key": "temperature_c", "label": "Temperature", "unit": "°C"},
+                {"key": "humidity", "label": "Humidity", "unit": "%"},
+                {"key": "light", "label": "Light", "unit": "µmol/m²/s"},
+                {"key": "day_length", "label": "Day length", "unit": "h"},
+            ],
+        },
+        notes="No sexes and no animal protocol. The days in its schedule are Arabidopsis under "
+              "long days: change them for your species.",
+    ),
+
+    # --- Field crops ---------------------------------------------------------
+    #
+    # Plots in a field, raised first in a nursery (苗圃, a seedbed) and
+    # transplanted, as rice and vegetable breeders do; the breeding programs'
+    # own systems (BMS, Breedbase) call a planting a nursery too.
+    Preset(
+        key="field_crop",
+        label="Field crops",
+        label_plural="Field crops",
+        icon="wheat",
+        blurb="Plots in a field, raised first in a nursery and transplanted. Sowing and "
+              "harvest dates, seed lots from each harvest and the generation of each line.",
+        organism_noun="plant", organism_noun_plural="plants",
+        housing_noun="plot", housing_noun_plural="plots",
+        container_noun="field",
+        line_noun="line", line_noun_plural="lines",
+        cohort_noun="sowing", cohort_noun_plural="sowings",
+        cross_noun="cross",
+        identity_mode="hybrid",
+        age_unit="days",
+        capabilities=[
+            "housing", "housing_grid", "group_counts", "individuals", "lines", "crosses",
+            "cohorts", "nursery", "pedigree", "genotyping", "schedule", "environment",
+            "samples", "seed_bank",
+        ],
+        schedule_rules=[
+            ScheduleRule("transplant", "Transplant from the nursery", "cohort", "birth_on", 30,
+                         icon="seedling"),
+            ScheduleRule("flowering", "Expect flowering", "cohort", "birth_on", 90, icon="leaf"),
+            ScheduleRule("harvest", "Harvest", "cohort", "birth_on", 120, icon="wheat"),
+        ],
+        housing_purposes=["nursery", "trial", "crossing block", "multiplication", "experiment"],
+        statuses=["growing", "flowering", "harvested", "lost"],
+        sexes=[],
+        fields=[
+            {"entity": "line", "key": "species", "label": "Species", "field_type": "text",
+             "show_in_table": True},
+            {"entity": "line", "key": "background", "label": "Background",
+             "field_type": "text", "show_in_table": True, "help_text": "Variety or cultivar."},
+            {"entity": "line", "key": "source", "label": "Source", "field_type": "text"},
+            {"entity": "line", "key": "transgenic", "label": "Transgenic", "field_type": "checkbox",
+             "show_in_table": True, "help_text": "Kept under the lab's biosafety permit."},
+            {"entity": "line", "key": "biosafety_permit", "label": "Biosafety permit", "field_type": "text"},
+            {"entity": "housing", "key": "season", "label": "Season", "field_type": "text",
+             "show_in_table": True, "help_text": "e.g. 2026 summer"},
+            {"entity": "housing", "key": "replicate", "label": "Replicate", "field_type": "number",
+             "show_in_table": True},
+            {"entity": "organism", "key": "plant_height_cm", "label": "Plant height (cm)",
+             "field_type": "number"},
+        ],
+        settings={
+            "protocol_required": False, "regulated": False,
+            "born_word": "Sown", "ended_word": "Harvested / removed",
+            "dead_statuses": ["harvested", "lost"],
+            "stages": ["seed", "in the nursery", "transplanted", "vegetative", "flowering",
+                       "ripening", "harvested"],
+            "location_kinds": ["field", "nursery", "greenhouse", "net house", "seed store"],
+            "stage_bands": {"young": 30, "old": 120},
+            "seed_units": ["g", "kg", "seeds", "packets"],
+            "environment_metrics": [
+                {"key": "temperature_c", "label": "Temperature", "unit": "°C"},
+                {"key": "rainfall", "label": "Rainfall", "unit": "mm"},
+                {"key": "humidity", "label": "Humidity", "unit": "%"},
+            ],
+        },
+        notes="A field is a grid of plots: give it rows and columns, and place each plot in it. "
+              "The days are rice-like: change them for your crop.",
     ),
 
     # --- Blank -------------------------------------------------------------

@@ -30,6 +30,7 @@ from .models import (
     OrgLocation,
     OrgMeasurement,
     OrgPreservationLot,
+    OrgSeedLot,
     Organism,
     OrganismModule,
 )
@@ -136,6 +137,57 @@ class ModuleView:
     def cross_noun_plural(self) -> str:
         return self.settings.get("cross_noun_plural") or pluralise(self.row.cross_noun)
 
+    # --- Words a database may set for itself (Configure) ------------------
+    # A plant database is sown and harvested where an animal is born and
+    # dies; the English here is a built-in label, so |tr translates it.
+    @property
+    def born_word(self) -> str:
+        return self.settings.get("born_word") or "Born"
+
+    @property
+    def ended_word(self) -> str:
+        return self.settings.get("ended_word") or "Died / removed"
+
+    @property
+    def cohort_born_word(self) -> str:
+        """What a cohort's date is called: a litter is born or fertilised, a
+        sowing is sown."""
+        return self.settings.get("born_word") or "Born / fertilised"
+
+    @property
+    def stages(self) -> list[str]:
+        """The stages a cohort moves through (the Rearing stage capability)."""
+        found = self.settings.get("stages")
+        return [str(s) for s in found] if isinstance(found, list) and found else list(DEFAULT_STAGES)
+
+    @property
+    def location_kinds(self) -> list[str]:
+        """What a rack or room can be: the database's own list, else the
+        animal ones; its container noun is always among them."""
+        found = self.settings.get("location_kinds")
+        kinds = [str(k) for k in found] if isinstance(found, list) and found else list(DEFAULT_LOCATION_KINDS)
+        if self.container_noun and self.container_noun not in kinds:
+            kinds.insert(0, self.container_noun)
+        return kinds
+
+    @property
+    def seed_units(self) -> list[str]:
+        found = self.settings.get("seed_units")
+        return [str(u) for u in found] if isinstance(found, list) and found else list(DEFAULT_SEED_UNITS)
+
+    @property
+    def stage_bands(self) -> tuple[int, int] | None:
+        """(young below, old above) in days, for the dot before a record's ID
+        (app/life_stage.py); None when the database sets none."""
+        bands = self.settings.get("stage_bands")
+        if not isinstance(bands, dict):
+            return None
+        try:
+            young, old = int(bands.get("young")), int(bands.get("old"))
+        except (TypeError, ValueError):
+            return None
+        return (young, old) if 0 < young < old else None
+
     # --- Statuses that end a record (see organisms.END_STATUS_WORDS) ------
     @property
     def dead_statuses(self) -> list[str]:
@@ -168,6 +220,13 @@ class ModuleView:
 
     def rule(self, key: str) -> dict | None:
         return next((r for r in self.schedule_rules if r.get("key") == key), None)
+
+
+# What a cohort's stage, a location's kind and a seed lot's amount can be
+# when a database names none of its own.
+DEFAULT_STAGES = ("embryo", "larva", "nursery", "juvenile", "graduated", "adult")
+DEFAULT_LOCATION_KINDS = ("facility", "room", "system", "rack", "incubator", "shelf", "tray")
+DEFAULT_SEED_UNITS = ("mg", "g", "seeds", "tubes", "packets")
 
 
 def view(module: OrganismModule) -> ModuleView:
@@ -277,7 +336,9 @@ def create_module(session, spec: dict, created_by: str = "") -> OrganismModule:
         schedule_rules=dump(spec.get("schedule_rules") or []),
         housing_purposes=dump(spec.get("housing_purposes") or []),
         statuses=dump(spec.get("statuses") or ["alive", "removed"]),
-        sexes=dump(spec.get("sexes") or ["mixed", "female", "male", "unknown"]),
+        # A plant database has none: an empty list given stays empty.
+        sexes=dump(spec["sexes"] if isinstance(spec.get("sexes"), list)
+                   else ["mixed", "female", "male", "unknown"]),
         settings=dump(spec.get("settings") or {}),
         preset_key=spec.get("preset_key") or "",
         position=int(spec.get("position") or 100),
@@ -573,8 +634,9 @@ ENTITY_MODELS = {
     "line": OrgLine,
     "cohort": OrgCohort,
     "cross": OrgCross,
+    "seedlot": OrgSeedLot,
 }
-ENTITY_LETTER = {"organism": "A", "housing": "H", "line": "L", "cohort": "C", "cross": "X"}
+ENTITY_LETTER = {"organism": "A", "housing": "H", "line": "L", "cohort": "C", "cross": "X", "seedlot": "S"}
 
 
 def code_prefix(module: OrganismModule, entity: str) -> str:
@@ -721,6 +783,7 @@ RULE_SUBJECTS = {
     "housing": OrgHousing,
     "line": OrgLine,
     "organism": Organism,
+    "seedlot": OrgSeedLot,
 }
 
 
@@ -774,6 +837,8 @@ def recompute_due(session, module: OrganismModule) -> int:
             stmt = stmt.where(model.retired.is_(False))
         if hasattr(model, "death_on"):
             stmt = stmt.where(model.death_on.is_(None))
+        if hasattr(model, "amount_left"):       # a seed lot sown to the last seed
+            stmt = stmt.where(model.amount_left.is_(None) | (model.amount_left > 0))
 
         for subject in session.scalars(stmt).all():
             start = getattr(subject, anchor, None)
@@ -870,7 +935,7 @@ def schedule_is_fresh(session, module_id: int) -> bool:
 def _touched_module_id(obj):
     if isinstance(obj, OrganismModule):
         return obj.id
-    if isinstance(obj, (Organism, OrgHousing, OrgLine, OrgCohort)):
+    if isinstance(obj, (Organism, OrgHousing, OrgLine, OrgCohort, OrgSeedLot)):
         return getattr(obj, "module_id_fk", None)
     return None
 
@@ -1071,6 +1136,11 @@ def census(session, module: OrganismModule) -> dict:
             select(func.coalesce(func.sum(OrgPreservationLot.vials_remaining), 0))
             .where(OrgPreservationLot.module_id_fk == mid)
         ) or 0,
+        "seed_lots": session.scalar(
+            select(func.count(OrgSeedLot.id)).where(
+                OrgSeedLot.module_id_fk == mid,
+                OrgSeedLot.amount_left.is_(None) | (OrgSeedLot.amount_left > 0))
+        ) or 0,
     }
 
 
@@ -1205,6 +1275,8 @@ def line_references(session, line: OrgLine) -> dict[str, int]:
             (OrgCross.sire_line_id_fk == lid) | (OrgCross.dam_line_id_fk == lid))) or 0,
         "frozen lot": session.scalar(select(func.count(OrgPreservationLot.id)).where(
             OrgPreservationLot.module_id_fk == mid, OrgPreservationLot.line_id_fk == lid)) or 0,
+        "seed lot": session.scalar(select(func.count(OrgSeedLot.id)).where(
+            OrgSeedLot.module_id_fk == mid, OrgSeedLot.line_id_fk == lid)) or 0,
         "derived line": session.scalar(select(func.count(OrgLine.id)).where(
             OrgLine.module_id_fk == mid, OrgLine.parent_line_id_fk == lid)) or 0,
     }
@@ -1214,6 +1286,169 @@ def line_references(session, line: OrgLine) -> dict[str, int]:
 def due_subject(session, row: OrgDue):
     model = RULE_SUBJECTS.get(row.subject_kind)
     return session.get(model, row.subject_id) if model is not None else None
+
+
+# ---------------------------------------------------------------------------
+# Seed lots
+#
+# A plant lab's loop: a lot is sown (a cohort, `seed_lot_id_fk`), its plants
+# are harvested into a new lot (`source_kind` organism / cohort / cross), a
+# generation on. These follow it; nothing here knows what species it is.
+# ---------------------------------------------------------------------------
+
+SEED_SOURCES = ("organism", "cohort", "cross")
+
+
+def next_generation(generation: str | None) -> str:
+    """The generation a selfed harvest is: T1 → T2, F2 → F3, BC1F1 → BC1F2.
+    One with no number at the end ("WT") stays as it is."""
+    text = (generation or "").strip()
+    match = re.search(r"(\d+)$", text)
+    if not match:
+        return text
+    return f"{text[:match.start()]}{int(match.group(1)) + 1}"
+
+
+def harvest_generation(session, source_kind: str, source) -> str:
+    """What seed harvested from `source` is: selfed seed is one generation
+    on from the sowing it grew from; seed from a cross between two parents
+    is F1. Empty when nothing says."""
+    if source is None:
+        return ""
+    if source_kind == "cross":
+        return "" if (source.cross_type or "") == "self" else "F1"
+    cohort = source if source_kind == "cohort" else (
+        session.get(OrgCohort, source.cohort_id_fk) if getattr(source, "cohort_id_fk", None) else None)
+    return next_generation(cohort.generation) if cohort is not None else ""
+
+
+def seed_source(session, module_id: int, kind: str, source_id) -> object | None:
+    """The plant, sowing or cross a lot was harvested from, if it is one of
+    this database's."""
+    model = {"organism": Organism, "cohort": OrgCohort, "cross": OrgCross}.get(kind or "")
+    try:
+        row = session.get(model, int(source_id)) if model is not None and source_id else None
+    except (TypeError, ValueError):
+        return None
+    return row if row is not None and row.module_id_fk == module_id else None
+
+
+def source_label(kind: str, row) -> str:
+    if row is None:
+        return ""
+    return organism_label(row) if kind == "organism" else (row.code or f"#{row.id}")
+
+
+@dataclass
+class SeedBook:
+    """A database's seed lots and what they point at, read once, so the
+    descent of every lot on a page costs no further reads."""
+    lots: dict
+    cohorts: dict
+    plants: dict
+    crosses: dict
+
+    def source(self, lot):
+        return {"organism": self.plants, "cohort": self.cohorts, "cross": self.crosses}.get(
+            lot.source_kind, {}).get(lot.source_id)
+
+    def descent(self, lot, depth: int = 12) -> list[dict]:
+        """The lot, then what it was harvested from, back to the first lot:
+        [{kind, code, generation, id}], newest first. A cross ends it (its
+        parents are two lines)."""
+        steps: list[dict] = []
+        seen: set[int] = set()
+        while lot is not None and lot.id not in seen and len(seen) < depth:
+            seen.add(lot.id)
+            steps.append({"kind": "seedlot", "id": lot.id, "code": lot.code, "generation": lot.generation})
+            source = self.source(lot)
+            if source is None:
+                break
+            if lot.source_kind == "cross":
+                steps.append({"kind": "cross", "id": source.id, "code": source.code, "generation": ""})
+                break
+            cohort = source
+            if lot.source_kind == "organism":
+                cohort = self.cohorts.get(source.cohort_id_fk)
+                steps.append({"kind": "organism", "id": source.id, "code": organism_label(source),
+                              "generation": cohort.generation if cohort is not None else ""})
+            if cohort is None:
+                break
+            steps.append({"kind": "cohort", "id": cohort.id, "code": cohort.code, "generation": cohort.generation})
+            lot = self.lots.get(cohort.seed_lot_id_fk)
+        return steps
+
+
+def seed_book(session, module_id: int) -> SeedBook:
+    lots = {row.id: row for row in session.scalars(select(OrgSeedLot).where(OrgSeedLot.module_id_fk == module_id))}
+    cohorts = {row.id: row for row in session.scalars(select(OrgCohort).where(OrgCohort.module_id_fk == module_id))}
+    crosses = {row.id: row for row in session.scalars(select(OrgCross).where(OrgCross.module_id_fk == module_id))}
+    wanted = {lot.source_id for lot in lots.values() if lot.source_kind == "organism" and lot.source_id}
+    plants = {row.id: row for row in session.scalars(select(Organism).where(
+        Organism.module_id_fk == module_id, Organism.id.in_(wanted)))} if wanted else {}
+    return SeedBook(lots=lots, cohorts=cohorts, plants=plants, crosses=crosses)
+
+
+def take_seed(lot: OrgSeedLot, amount) -> str | None:
+    """Take `amount` (in the lot's unit) out of a lot. None when done (or
+    nothing was asked for); "not_amount" or "too_much" when it can't be,
+    and the lot is left as it was."""
+    raw = str(amount if amount is not None else "").strip()
+    if not raw:
+        return None
+    try:
+        taken = float(raw)
+    except ValueError:
+        return "not_amount"
+    if taken < 0 or taken != taken:
+        return "not_amount"
+    if lot.amount_left is not None:
+        if taken > lot.amount_left + 1e-9:
+            return "too_much"
+        lot.amount_left = round(lot.amount_left - taken, 6)
+    return None
+
+
+def fmt_amount(value) -> str:
+    """12.0 → "12", 0.25 → "0.25"; "" for none."""
+    if value is None:
+        return ""
+    return f"{value:g}"
+
+
+# The χ² a 1-degree-of-freedom test needs at p = 0.05.
+CHI2_05 = 3.841
+# All resistant out of at least this many: a single insertion would have
+# left a sensitive seedling in 99.98% of such plates (0.75³⁰ ≈ 0.0002).
+HOMOZYGOUS_FROM = 30
+
+
+def segregation(resistant, sensitive) -> dict | None:
+    """What a selection plate's counts say about a T2 lot: resistant to
+    sensitive against 3:1 (one insertion) and 15:1 (two), by χ² at p = 0.05.
+    `verdict` is one of: one_insertion, two_insertions, either, neither,
+    homozygous, all_resistant_few, all_sensitive. None without both counts."""
+    if resistant is None or sensitive is None or resistant < 0 or sensitive < 0:
+        return None
+    total = resistant + sensitive
+    if total == 0:
+        return None
+
+    def chi2(ratio_resistant: float) -> float:
+        er, es = total * ratio_resistant, total * (1 - ratio_resistant)
+        return (resistant - er) ** 2 / er + (sensitive - es) ** 2 / es
+
+    chi_3, chi_15 = chi2(0.75), chi2(15 / 16)
+    if sensitive == 0:
+        verdict = "homozygous" if total >= HOMOZYGOUS_FROM else "all_resistant_few"
+    elif resistant == 0:
+        verdict = "all_sensitive"
+    else:
+        fits_3, fits_15 = chi_3 < CHI2_05, chi_15 < CHI2_05
+        verdict = ("either" if fits_3 and fits_15 else "one_insertion" if fits_3
+                   else "two_insertions" if fits_15 else "neither")
+    return {"total": total, "pct": round(100 * resistant / total, 1),
+            "chi_3": round(chi_3, 2), "chi_15": round(chi_15, 2), "verdict": verdict}
 
 
 # ---------------------------------------------------------------------------
@@ -1233,7 +1468,7 @@ def search(session, q: str, limit: int = 5) -> list[dict]:
     # Only the databases this person may open: not someone else's own (app/lab.py).
     modules = {m.id: m for m in list_modules(session)}
     out: list[dict] = []
-    kinds = {"animals": "org_animal", "housing": "org_housing", "lines": "org_line"}
+    kinds = {"animals": "org_animal", "housing": "org_housing", "lines": "org_line", "seeds": "org_seedlot"}
 
     def add(module, entity_view, label, sub, row_id):
         out.append({
@@ -1263,6 +1498,14 @@ def search(session, q: str, limit: int = 5) -> list[dict]:
         if module is not None:
             add(module, "lines", f"{row.code}{' · ' + row.name if row.name else ''}",
                 [module.line_noun, row.genotype, row.owner], row.id)
+    for row in session.scalars(select(OrgSeedLot).where(
+            OrgSeedLot.code.ilike(like, escape="\\") | OrgSeedLot.storage_text.ilike(like, escape="\\")
+            | OrgSeedLot.notes.ilike(like, escape="\\") | OrgSeedLot.attrs.ilike(like, escape="\\"))
+            .order_by(OrgSeedLot.id.desc()).limit(limit)):
+        module = modules.get(row.module_id_fk)
+        if module is not None:
+            add(module, "seeds", f"{row.code}{' · ' + row.generation if row.generation else ''}",
+                [row.line.code if row.line else "", row.storage_text, row.owner], row.id)
     return out
 
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>功能 — BioManager</title>
-  <meta name="description" content="BioManager 的每个数据库：鼠群、笼架、果蝇和线虫、质粒、样本、采购、试剂、任何其他物种、日历和电子实验记录本，以及所有数据库都通用的功能。">
+  <meta name="description" content="BioManager 的每个数据库：鼠群、笼架、果蝇和线虫、植物与大田作物、质粒、样本、采购、试剂、任何其他物种、日历和电子实验记录本，以及所有数据库都通用的功能。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -18,7 +18,7 @@
   <meta property="og:url" content="https://biomanager.org/zh/features">
   <meta property="og:locale" content="zh_CN">
   <meta property="og:title" content="BioManager 功能">
-  <meta property="og:description" content="BioManager 的每个数据库：鼠群、笼架、果蝇和线虫、质粒、样本、采购、试剂、任何其他物种、日历和电子实验记录本，以及所有数据库都通用的功能。">
+  <meta property="og:description" content="BioManager 的每个数据库：鼠群、笼架、果蝇和线虫、植物与大田作物、质粒、样本、采购、试剂、任何其他物种、日历和电子实验记录本，以及所有数据库都通用的功能。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="640">
@@ -64,7 +64,7 @@
       <div class="nc-grid">
         <a data-clip="census" class="nc rise" href="guide/mouse-colony.html" style="--c1:#3ed0b2;--c2:#b5f5e6;--a:#073229;--b:#06120f">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#mouse"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#mouse"/></svg></span>
             <h3>鼠群</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -76,7 +76,7 @@
         </a>
         <a data-clip="new-database" class="nc nc-wide rise" href="guide/any-organism.html" style="--c1:#8fdc6a;--c2:#3ed0b2;--a:#12320f;--b:#071209">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#database"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#database"/></svg></span>
             <h3>你养的任何动物</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -88,7 +88,7 @@
         </a>
         <a data-clip="census" class="nc rise" href="guide/mouse-colony.html" style="--c1:#c9d6db;--c2:#7aa7ff;--a:#1a2932;--b:#0a1013">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#grid"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#grid"/></svg></span>
             <h3>笼架编号，随你定</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -100,7 +100,7 @@
         </a>
         <a data-clip="flies" class="nc rise" href="guide/flies-and-worms.html" style="--c1:#ffd166;--c2:#ff9f43;--a:#382a06;--b:#140f04">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#fly"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#fly"/></svg></span>
             <h3>果蝇和线虫</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -110,9 +110,21 @@
             <div class="nc-glass"><div class="gl-row"><b>25 °C</b> 转管间隔<span>14 天</span></div><div class="gl-row"><b>18 °C</b> 转管间隔<span>28 天</span></div><div class="gl-row">B 架<span>今天转管</span></div></div>
           </div>
         </a>
+        <a class="nc rise" href="guide/plants.html" style="--c1:#b8e986;--c2:#5ccf7a;--a:#1b3410;--b:#0a1307">
+          <div class="nc-head">
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#seedling"/></svg></span>
+            <h3>植物与大田作物</h3>
+            <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
+          </div>
+          <p>托盘或小区里的播种批次，先在苗圃育苗再移栽。收获的种子存为批次，下一代再播种，还能看出 T2 是否符合 3:1。</p>
+          <div class="nc-art" aria-hidden="true">
+            <svg class="neon" viewBox="0 0 200 140"><defs><linearGradient id="ng-db-plants" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8e986"/><stop offset="1" stop-color="#5ccf7a"/></linearGradient></defs><g stroke="url(#ng-db-plants)"><path d="M100 124V70"/><path d="M100 84c-4-22-22-34-44-32 2 22 20 34 44 32z"/><path d="M100 72c4-24 22-38 46-36-2 24-20 38-46 36z"/><path d="M60 124h80"/><path d="M68 124l6-20h52l6 20"/><circle cx="34" cy="40" r="5"/><circle cx="24" cy="58" r="4"/><circle cx="44" cy="60" r="4"/></g></svg>
+            <div class="nc-glass"><div class="gl-row"><b>批次 S-012</b><span>T3 · 40 mg</span></div><div class="gl-row">播种<span>14 天前</span></div><div class="gl-row">76 : 24<span>符合 3:1</span></div></div>
+          </div>
+        </a>
         <a data-clip="plasmid" class="nc rise" href="guide/plasmids.html" style="--c1:#ffb35c;--c2:#ff6b3d;--a:#3a2208;--b:#140c05">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#plasmid"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#plasmid"/></svg></span>
             <h3>质粒</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -124,7 +136,7 @@
         </a>
         <a data-clip="orders" class="nc rise" href="guide/samples-and-orders.html" style="--c1:#ff8fb1;--c2:#ff4d6d;--a:#3a0d22;--b:#13060c">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#flask"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#flask"/></svg></span>
             <h3>样本、订购和试剂</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -136,7 +148,7 @@
         </a>
         <a data-clip="calendar" class="nc rise" href="guide/calendar.html" style="--c1:#7aa7ff;--c2:#b79cff;--a:#13214f;--b:#090d22">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#calendar"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#calendar"/></svg></span>
             <h3>日历和实验记录本</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -148,7 +160,7 @@
         </a>
         <a data-clip="cards" class="nc rise" href="guide/phones-and-cage-cards.html" style="--c1:#4be1ff;--c2:#3ed0b2;--a:#0b2a3a;--b:#061219">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#qrcode"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#qrcode"/></svg></span>
             <h3>笼卡和手机</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -160,7 +172,7 @@
         </a>
         <a data-clip="offline" class="nc rise" href="guide/phones-and-cage-cards.html#offline" style="--c1:#ffd27a;--c2:#3ed0b2;--a:#2e2408;--b:#0f0d05">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg?v=d44b577819#phone"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#phone"/></svg></span>
             <h3>没信号也能工作</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -185,7 +197,7 @@
         <a class="nc nc-full ai-card rise" href="guide/ai-assistants.html" style="--c1:#7aa7ff;--c2:#b79cff;--a:#0d1a44;--b:#060a18">
           <div class="nc-copy">
             <div class="nc-head">
-              <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#list-check"/></svg></span>
+              <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#list-check"/></svg></span>
               <h3>告诉你的 AI 助手</h3>
               <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
             </div>
@@ -202,7 +214,7 @@
         </a>
         <a data-clip="home" class="nc rise" href="guide/home-page.html" style="--c1:#ffb35c;--c2:#ff6b3d;--a:#3a2208;--b:#140c05">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#home"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#home"/></svg></span>
             <h3>首页：今天要做的事</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -214,7 +226,7 @@
         </a>
         <a class="nc rise" href="guide/notebook.html#utilities" style="--c1:#7aa7ff;--c2:#4be1ff;--a:#13214f;--b:#090d22">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#calculator"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#calculator"/></svg></span>
             <h3>41 个常用实验计算器</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
           </div>
@@ -226,7 +238,7 @@
         </a>
         <a data-clip="census" class="nc rise" href="guide/sheets.html" style="--c1:#3ed0b2;--c2:#b5f5e6;--a:#073229;--b:#06120f">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#table"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#table"/></svg></span>
             <h3>像 Excel 一样直接改</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -238,7 +250,7 @@
         </a>
         <a data-clip="import" class="nc rise" href="guide/bring-your-lab-in.html" style="--c1:#8fdc6a;--c2:#3ed0b2;--a:#12320f;--b:#071209">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#import"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#import"/></svg></span>
             <h3>原有表格直接导入</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -250,7 +262,7 @@
         </a>
         <a class="nc rise" href="guide/undo-and-history.html" style="--c1:#ff7ab6;--c2:#ffb35c;--a:#381032;--b:#13070f">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#undo"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#undo"/></svg></span>
             <h3>批量修改可撤销</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
           </div>
@@ -262,7 +274,7 @@
         </a>
         <a class="nc rise" href="guide/undo-and-history.html" style="--c1:#c9d6db;--c2:#7aa7ff;--a:#1a2932;--b:#0a1013">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#history"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#history"/></svg></span>
             <h3>完整的修改记录</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span>
           </div>
@@ -274,7 +286,7 @@
         </a>
         <a data-clip="search" class="nc rise" href="guide/finding-things.html" style="--c1:#b79cff;--c2:#ff6bd6;--a:#26135a;--b:#0e0822">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#search"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#search"/></svg></span>
             <h3>什么都能搜</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -286,7 +298,7 @@
         </a>
         <a data-clip="phone" class="nc rise" href="guide/who-can-do-what.html" style="--c1:#ff8fb1;--c2:#ff4d6d;--a:#3a0d22;--b:#13060c">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#users"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#users"/></svg></span>
             <h3>全组一起用</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -298,7 +310,7 @@
         </a>
         <a data-clip="looks" class="nc rise" href="guide/install.html" style="--c1:#3ed0b2;--c2:#7aa7ff;--a:#0d2446;--b:#071122">
           <div class="nc-head">
-            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#sparkle"/></svg></span>
+            <span class="nc-tile"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#sparkle"/></svg></span>
             <h3>在 Mac 上用着顺手</h3>
             <span class="nc-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg></span>
           </div>
@@ -321,7 +333,7 @@
       </div>
       <div class="duo">
         <div class="card big rise">
-          <span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#laptop"/></svg></span>
+          <span class="ic ic-blue"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#laptop"/></svg></span>
           <h3>桌面版</h3>
           <p>一个人、一台电脑。下载、打开，就能用。数据是用户文件夹里的一个文件，
             只存在这台电脑上，以后一步就能迁到服务器。也可以
@@ -329,7 +341,7 @@
           <a class="btn btn-primary" href="download.html">下载</a>
         </div>
         <div class="card big rise">
-          <span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#server"/></svg></span>
+          <span class="ic ic-teal"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#server"/></svg></span>
           <h3>实验室服务器（网页版）</h3>
           <p>全实验室一起用，任何浏览器、Android 应用或 iPhone 主屏幕都能打开。HTTPS、PostgreSQL，
             每晚自动备份，每周做一次恢复测试。用云服务器加 Tailscale 可以免费运行；
@@ -345,8 +357,8 @@
   <div class="wrap footer-inner">
     <div class="footer-gh">
       <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#star"/></svg>在 GitHub 上标星</a>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=d44b577819#github"/></svg>提交反馈</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#star"/></svg>在 GitHub 上标星</a>
+      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#github"/></svg>提交反馈</a>
     </div>
     <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
     <p>以 <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT 许可证</a>发布。图标来自

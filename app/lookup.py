@@ -29,7 +29,7 @@ from .formutil import like_pattern
 from .positions import natural_sorted, place_order
 from .models import (CageRecord, ClutchRecord, DropdownOption, Experiment, ExperimentStep, FishLine, FishRack,
                      LitterRecord, MouseRack,
-                     MouseRecord, OrgCohort, OrgCross, OrgHousing, OrgLine, OrgLocation, Organism, StockRack,
+                     MouseRecord, OrgCohort, OrgCross, OrgHousing, OrgLine, OrgLocation, OrgSeedLot, Organism, StockRack,
                      StockUnit, StrainRecord, TankRecord, UserAccount, WaterSystem)
 
 PER_KIND = 8
@@ -38,7 +38,8 @@ KIND_WORDS = {"cage": ["cage"], "mouse": ["mouse"], "mice": ["mouse"], "litter":
               "tank": ["tank", "org_housing"], "rack": ["rack", "fish_rack", "stock_rack", "org_location"],
               "clutch": ["clutch"], "line": ["fish_line", "org_line"], "vial": ["stock_unit"],
               "plate": ["stock_unit"], "fish": ["fish_line", "tank"], "cross": ["org_cross"],
-              "cohort": ["org_cohort"], "experiment": ["experiment"], "page": ["notebook_page"],
+              "cohort": ["org_cohort"], "sowing": ["org_cohort"], "seed": ["org_seedlot"], "lot": ["org_seedlot"],
+              "experiment": ["experiment"], "page": ["notebook_page"],
               "plasmid": ["plasmid"], "item": ["inventory_item"], "instrument": ["equipment"],
               "equipment": ["equipment"], "template": ["notebook_template"],
               "protocol": ["notebook_page", "protocol_folder"], "folder": ["protocol_folder"]}
@@ -302,7 +303,7 @@ def _resolve_organisms(session, q: str, want) -> list[dict]:
         mv = svc.view(module)
         for kind, model, noun in (("org_animal", Organism, mv.organism_noun), ("org_housing", OrgHousing, mv.housing_noun),
                                   ("org_line", OrgLine, "line"), ("org_cross", OrgCross, "cross"),
-                                  ("org_cohort", OrgCohort, "cohort")):
+                                  ("org_cohort", OrgCohort, "cohort"), ("org_seedlot", OrgSeedLot, "seed lot")):
             if not want(kind):
                 continue
             clause = _match(model.code, q)
@@ -540,6 +541,7 @@ RECORD_KINDS = {
     "org_animal": (Organism, "organisms", "organisms"), "org_housing": (OrgHousing, "organism_housing", "organisms"),
     "org_line": (OrgLine, "organism_lines", "organisms"), "org_cohort": (OrgCohort, "organism_cohorts", "organisms"),
     "org_cross": (OrgCross, "organism_crosses", "organisms"),
+    "org_seedlot": (OrgSeedLot, "organism_seed_lots", "organisms"),
     "experiment": (Experiment, "experiments", "experiments"),
 }
 

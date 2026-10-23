@@ -62,6 +62,11 @@
       <input name="{{ name }}" value="{{ value or '' }}" class="font-mono text-[12px]"
              {% if field.required %}required{% endif %}>
 
+    {% elif field.field_type == 'plasmid' %}
+      {# Its number in the Plasmids database (the page lists them, org-plasmid-options). #}
+      <input name="{{ name }}" value="{{ value or '' }}" class="ident" list="org-plasmid-options" autocomplete="off"
+             placeholder="{{ _('Plasmid # or name') }}" {% if field.required %}required{% endif %}>
+
     {% else %}
       <input name="{{ name }}" value="{{ value or '' }}" {% if field.required %}required{% endif %}>
     {% endif %}
@@ -83,6 +88,11 @@
     <span class="ident">{{ value }}</span>
   {% elif field.field_type == 'url' %}
     <a href="{{ value }}" target="_blank" rel="noopener">{{ _('link') }}</a>
+  {% elif field.field_type == 'plasmid' %}
+    {% set plasmid = (plasmid_links or {}).get(value|string|replace('#', '')|trim) %}
+    {% if plasmid %}<a class="ident" href="{{ url_for('plasmid_page', number=plasmid.number) }}"
+       title="{{ _('Open plasmid #%(number)s', number=plasmid.number) }}">#{{ plasmid.number }}{% if plasmid.name %} {{ plasmid.name }}{% endif %}</a>
+    {% else %}<span class="ident">{{ value }}</span>{% endif %}
   {% else %}
     {{ value }}
   {% endif %}

@@ -57,8 +57,8 @@ everyone signs in to from a browser, including on their phone at the rack.
     </td>
     <td width="33%" valign="top">
       <h3>🧬 Multi-organism labs</h3>
-      Mice, fish, flies and worms side by side — plus a database for any
-      other organism, set up in a few clicks.
+      Mice, fish, flies, worms and plants side by side — plus a database
+      for any other organism, set up in a few clicks.
     </td>
   </tr>
 </table>
@@ -72,6 +72,7 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🐭 | [**Mouse colony**](#-mouse-colony) | Mice, cages, litters, breeders, strains, experiments and racks |
 | 🐟 | [**Zebrafish**](#-zebrafish) | Lines, tanks, fish, clutches, matings and water systems |
 | 🪰 | [**Drosophila & C. elegans**](#-drosophila-and-c-elegans) | Vials and plates, crosses, and temperature-aware flip schedules |
+| 🌱 | [**Plants and field crops**](#-plants-and-field-crops) | Sowings, trays or plots, harvests kept as seed lots and sown again, generations and the 3:1 |
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
 | 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
 | 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks, cell lines, or a list of your own |
@@ -311,10 +312,41 @@ boxes, inside incubators, each incubator at its own temperature.
   </tr>
 </table>
 
+### 🌱 Plants and field crops
+
+**Add database → Plants** (pots and trays in growth rooms or a greenhouse)
+or **Field crops** (plots in a field, raised first in a nursery and
+transplanted) makes a database that speaks of plants: it is **Sown** and
+**Harvested**, not born and dead, and has no sex.
+
+- **Sowings** — each with its date, the seed lot it came from, its
+  generation (T2, F3) and its stage (seedling, transplanted, flowering…,
+  or the nursery for a field crop). The **Schedule** counts days after
+  sowing: out of the cold, count germination, transplant, harvest.
+- **Seeds** — every seed lot: its line and generation, where it was
+  harvested from, how much is left (mg, g, seeds or tubes), where it is
+  kept, its germination, and its **descent** back through each sowing and
+  harvest to the first lot. The wheat button on a plant, a sowing or a
+  cross **harvests** its seed into a new lot a generation on (seed from a
+  cross is F1) and can mark the plants harvested; **Sow** on a lot starts a
+  sowing from it and takes the seed off what is left. **Labels** prints
+  them for tubes or packets.
+- **The selection plate** — type a T2 lot's resistant and sensitive
+  seedlings and the sheet says whether they fit 3:1 (one insertion),
+  15:1 (two), or all resistant (homozygous), by χ².
+- **Lines** keep their background, source and stock number, selection
+  marker, whether they are transgenic and under which biosafety permit,
+  and the **construct**: a plasmid from the Plasmids database, linked.
+- **Places** are growth rooms, growth chambers, greenhouses, nurseries or
+  fields; a field is a grid of plots, as a rack is of cages. Readings log
+  temperature, humidity, light and day length.
+- A plant's dot is blue while it is a seedling (under 14 days), green, then
+  red past 70; every number and word here can be changed in **Configure**.
+
 ### 🦎 Any other organism
 
 Choose **Add database** in the sidebar, start from a mouse-like,
-zebrafish-like or blank organism, and describe it:
+zebrafish-like, plant-like or blank organism, and describe it:
 
 - **The words it uses** — cage, tank, vial or plate; strain, line or
   stock; litter, clutch or progeny. The interface then speaks your
@@ -323,13 +355,19 @@ zebrafish-like or blank organism, and describe it:
 - **How it is counted** — individual animals, groups with a headcount,
   or both.
 - **What it needs**, from a checklist — crosses, cohorts, a nursery
-  stage, genotyping, environment logs, cryo inventory, census and more.
+  stage, genotyping, environment logs, cryo inventory, seed lots, census
+  and more.
+- **Its own words** for its dates (Hatched, Sown), its stages and the
+  kinds of place it keeps them in, under **Configure**; leave **Sexes**
+  empty and the Sex column goes. **Young until** and **Old after** colour
+  the dot before an ID by age.
 - **Schedules** like "wean at P21", which can vary with rearing
   temperature. Each rule counts from its own last **Done** (feeding
   doesn't restart the split's clock), and Done can be dated to the day it
   was really done.
-- **Your own columns** — text, numbers, dates, dropdowns, people or links,
-  edited in the sheet like the others and set on many rows at once.
+- **Your own columns** — text, numbers, dates, dropdowns, people, links
+  or a plasmid, edited in the sheet like the others and set on many rows
+  at once.
 - An **Experiments** tab, the same as the mouse colony's, on your
   animals, groups or cohorts (a housing's at once), with body weight,
   length, survival or your own readout.
@@ -1367,8 +1405,8 @@ edit, the change history shows what the value used to be.
 <summary><b>🦎 When you need a new kind of database</b></summary>
 
 Choose **Add database**, pick a preset (Drosophila, C. elegans, zebrafish,
-mouse) or start blank, name things your way and choose what it needs to
-track.
+mouse, plants, field crops) or start blank, name things your way and choose
+what it needs to track.
 </details>
 
 <details>

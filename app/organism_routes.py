@@ -45,6 +45,7 @@ from .models import (
     OrgLocation,
     OrgMeasurement,
     OrgPreservationLot,
+    OrgSeedLot,
     Organism,
     OrganismModule,
 )
@@ -53,7 +54,7 @@ from . import audit, database_keys
 from . import organism_service as svc
 from . import inventory as inventory_presets
 from . import stocks as stock_presets
-from . import positions
+from . import life_stage, positions
 from .icons import housing_icon
 from .organisms import (
     AGE_UNITS,
@@ -84,6 +85,7 @@ MODULE_VIEWS = [
     ("schedule", "calendar-clock", "schedule"),
     ("environment", "droplet", "environment"),
     ("preservation", "snowflake", "preservation"),
+    ("seeds", "wheat", "seed_bank"),
     ("settings", "sliders", None),
 ]
 
@@ -92,6 +94,7 @@ MODULE_VIEWS = [
 FIELD_ICONS = {
     "text": "type", "textarea": "note", "mono": "dna", "number": "count", "date": "calendar",
     "select": "tag", "checkbox": "check", "user": "user", "line": "sitemap", "url": "link",
+    "plasmid": "plasmid",
 }
 
 
@@ -109,7 +112,9 @@ def _word(noun: str) -> str:
 def inject_helpers():
     """Helpers the module templates need. `age_label` renders an age in the
     unit the organism's community uses, which only the module knows."""
-    return {"age_label": svc.age_label, "field_icon": field_icon}
+    return {"age_label": svc.age_label, "field_icon": field_icon, "fmt_amount": svc.fmt_amount,
+            "next_generation": svc.next_generation,
+            "org_stage": life_stage.for_module, "org_stage_title": life_stage.describe_module}
 
 
 @bp.before_request
@@ -171,7 +176,7 @@ def _views_for(mv: svc.ModuleView) -> list[dict]:
         "cohorts": _word(mv.cohort_noun_plural), "genotyping": gettext("Genotyping"),
         "schedule": gettext("Schedule"), "environment": gettext("Environment"),
         "preservation": gettext("Cryo"), "settings": gettext("Configure"),
-        "experiments": gettext("Experiments"),
+        "experiments": gettext("Experiments"), "seeds": gettext("Seeds"),
     }
     out = []
     for key, icon, capability in MODULE_VIEWS:
@@ -635,6 +640,24 @@ def module(key: str):
             entity: {f.key: f.default_value for f in rows if f.default_value}
             for entity, rows in fields.items()
         }
+        # A plasmid column (a line's construct) suggests the lab's plasmids
+        # and links each to its page.
+        plasmid_fields = [(entity, f.key) for entity, rows in fields.items()
+                          for f in rows if f.field_type == "plasmid"]
+        ctx["plasmid_options"], ctx["plasmid_links"] = [], {}
+        if plasmid_fields:
+            from . import inventory_service
+            from .inventory_routes import _plasmid_options
+            ctx["plasmid_options"] = _plasmid_options(session)
+            values = [str(v) for ln in session.scalars(select(OrgLine).where(OrgLine.module_id_fk == row.id))
+                      for entity, k in plasmid_fields if entity == "line"
+                      for v in [str(ln.attrs_dict.get(k) or "").replace("#", "").strip()] if v]
+            ctx["plasmid_links"] = inventory_service.plasmid_links(session, values)
+        # Seed lots a sowing can come from, and the harvest dialog's choices.
+        if mv.has("seed_bank"):
+            ctx["seed_lots"] = positions.natural_sorted(session.scalars(
+                select(OrgSeedLot).where(OrgSeedLot.module_id_fk == row.id)).all(), key=lambda s: s.code)
+            ctx["next_seed_code"] = svc.next_code(session, row, "seedlot")
 
         lines = sorted(session.scalars(select(OrgLine).where(OrgLine.module_id_fk == row.id)).all(),
                        key=lambda ln: (bool(ln.retired), positions.natural(ln.code)))
@@ -660,6 +683,7 @@ def module(key: str):
             }
             ctx["cohorts"] = positions.natural_sorted(session.scalars(
                 select(OrgCohort).where(OrgCohort.module_id_fk == row.id)).all(), key=lambda c: c.code)
+            ctx["generations"] = {c.id: c.generation for c in ctx["cohorts"] if c.generation}
             ctx["next_code"] = svc.next_code(session, row, "organism")
             if mv.has("genotyping"):
                 ctx["latest_calls"] = svc.latest_calls(session, row.id)
@@ -703,6 +727,7 @@ def module(key: str):
                 select(OrgCross).where(OrgCross.module_id_fk == row.id)).all(), key=lambda c: c.code)
             ctx["locations"] = svc.location_tree(session, row.id)
             ctx["next_code"] = svc.next_code(session, row, "cohort")
+            ctx["lots_by_id"] = {s.id: s for s in ctx.get("seed_lots", [])}
 
         elif active == "genotyping":
             ctx.update(_genotyping_context(session, row, mv, me))
@@ -737,6 +762,9 @@ def module(key: str):
                 "-80 °C", "liquid nitrogen", "sperm", "embryo"
             ]
 
+        elif active == "seeds":
+            ctx.update(_seeds_context(session, row, mv, me))
+
         if active == "experiments":
             from . import experiments as experiment_pages
             place = experiment_pages.place_for(session, f"organisms:{row.key}")
@@ -744,6 +772,30 @@ def module(key: str):
 
         ctx["today_iso"] = date.today().isoformat()
         return render_template("organisms/module.html", **ctx)
+
+
+def _seeds_context(session, module: OrganismModule, mv, me: str) -> dict:
+    """Rows for the Seeds sheet: every lot, the ones with seed left first,
+    each with where it came from, its descent and its selection plate."""
+    book = svc.seed_book(session, module.id)
+    rows = []
+    for lot in book.lots.values():
+        source = book.source(lot)
+        rows.append({
+            "lot": lot, "editable": access.can_edit(lot), "mine": bool(me) and lot.owner == me,
+            "left": lot.amount_left is None or lot.amount_left > 0,
+            "source": svc.source_label(lot.source_kind, source), "source_kind": lot.source_kind,
+            "descent": book.descent(lot),
+            "segregation": svc.segregation(lot.resistant, lot.sensitive),
+            "sown": sum(1 for c in book.cohorts.values() if c.seed_lot_id_fk == lot.id),
+        })
+    rows.sort(key=lambda r: (not r["left"], positions.natural(r["lot"].code)))
+    return {
+        "seed_rows": rows,
+        "chip_counts": {"all": len(rows), "left": sum(1 for r in rows if r["left"]),
+                        "mine": sum(1 for r in rows if r["mine"])},
+        "next_cohort_code": svc.next_code(session, module, "cohort"),
+    }
 
 
 def _genotyping_context(session, module: OrganismModule, mv, me: str) -> dict:
@@ -1475,11 +1527,35 @@ def save_cohort(key: str):
         if "code" in form or not row_id:
             row.code = (form.get("code") or "").strip() or svc.next_code(session, module, "cohort")
         for name, model in (("line_id_fk", OrgLine), ("cross_id_fk", OrgCross),
-                            ("location_id_fk", OrgLocation)):
+                            ("location_id_fk", OrgLocation), ("seed_lot_id_fk", OrgSeedLot)):
             _set_ref(session, row, form, name, model, module.id)
         _set_date(row, form, "birth_on")
         for name in ("stage", "owner", "notes"):
             _set_text(row, form, name)
+        _set_text(row, form, "generation", limit=20)
+        # Sown from a lot: the sowing is of its line and generation unless
+        # the form says otherwise, and what was sown comes out of the lot.
+        lot = session.get(OrgSeedLot, row.seed_lot_id_fk) if row.seed_lot_id_fk else None
+        if lot is not None:
+            if not row.line_id_fk:
+                row.line_id_fk = lot.line_id_fk
+            if not row.generation:
+                row.generation = lot.generation
+            taken = (form.get("seed_taken") or "").strip()
+            if taken and not access.can_edit(lot):      # taking seed changes the lot: it follows the lot's owner
+                session.rollback()
+                return _fail(key, "cohorts", access.reason_denied(lot), 403)
+            problem = svc.take_seed(lot, taken)
+            if problem == "not_amount":
+                session.rollback()
+                return _fail(key, "cohorts", gettext("“%(typed)s” is not an amount of seed.", typed=taken))
+            if problem == "too_much":
+                session.rollback()
+                return _fail(key, "cohorts", gettext("Only %(left)s %(unit)s left in %(lot)s.",
+                                                     left=svc.fmt_amount(lot.amount_left), unit=lot.unit, lot=lot.code))
+            if taken and lot.unit == "seeds" and not (form.get("count_initial") or "").strip() and not row_id:
+                form = form.copy()
+                form["count_initial"] = str(int(float(taken)))
         counts = {}
         for name in ("count_initial", "count_current"):
             raw = (form.get(name) or "").strip()
@@ -1666,6 +1742,162 @@ def save_lot(key: str):
         session.commit()
         flash(gettext("Saved frozen lot."), "success")
         return _redirect_back(key, "preservation")
+
+
+SEED_VIEWS = ("seeds", "animals", "cohorts", "crosses")
+
+
+def _float(raw) -> tuple[float | None, bool]:
+    """(value, ok) for an optional number typed in a form."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None, True
+    try:
+        value = float(raw)
+    except ValueError:
+        return None, False
+    return (value, True) if value == value and value >= 0 else (None, False)
+
+
+def _harvest_status(mv) -> str:
+    """The status a harvested plant takes: the database's own that says
+    harvested, when it has one."""
+    return next((s for s in mv.statuses if "harvest" in s.lower()), "")
+
+
+def _end_with_harvest(session, module, mv, kind: str, source, day, user: str) -> int:
+    """Harvesting seed ends the plants it came from (a plant, or every
+    living one of a sowing) and closes a cross. Returns how many plant
+    records it ended."""
+    if kind == "cross":
+        if source.collected_on is None:
+            source.collected_on = day
+        return 0
+    plants = [source] if kind == "organism" else list(session.scalars(select(Organism).where(
+        Organism.module_id_fk == module.id, Organism.cohort_id_fk == source.id)))
+    status = _harvest_status(mv)
+    ended = 0
+    for plant in plants:
+        if not mv.is_alive(plant) or not access.can_edit(plant):
+            continue
+        previous = plant.status
+        if status:
+            plant.status = status
+        if plant.death_on is None:
+            plant.death_on = day
+        svc.apply_status_rules(mv, plant, previous, death_given=True)
+        plant.updated_at, plant.updated_by = datetime.utcnow(), user
+        svc.log_event(session, module, "organism", plant.id, "harvest", occurred_on=day, recorded_by=user)
+        ended += 1
+    return ended
+
+
+@bp.route("/<key>/seedlot/save", methods=["POST"])
+def save_seedlot(key: str):
+    """A seed lot: a new one, one harvested from a plant, a sowing or a
+    cross (`source_kind`, `source_id`: its line and generation follow from
+    it), or an edit."""
+    with SessionLocal() as session:
+        module = _module_or_404(session, key)
+        mv = svc.view(module)
+        form = request.form
+        back = form.get("return_view") if form.get("return_view") in SEED_VIEWS else "seeds"
+        row_id = _int(form.get("id"), 0)
+        if row_id:
+            row, denied = _load_owned(session, OrgSeedLot, module, row_id, key, back)
+            if denied:
+                return denied
+        else:
+            row = OrgSeedLot(module_id_fk=module.id, owner=g.user.username, harvested_by=g.user.username)
+            session.add(row)
+
+        source, kind = None, (form.get("source_kind") or "").strip()
+        if not row_id and kind:
+            source = svc.seed_source(session, module.id, kind, form.get("source_id"))
+            if source is None:
+                session.rollback()
+                return _fail(key, back, gettext("What it was harvested from is no longer in this database."))
+            row.source_kind, row.source_id = kind, source.id
+
+        if "code" in form or not row_id:
+            code = (form.get("code") or "").strip()[:120] or svc.next_code(session, module, "seedlot")
+            clash = session.scalar(select(OrgSeedLot.id).where(
+                OrgSeedLot.module_id_fk == module.id, OrgSeedLot.code == code, OrgSeedLot.id != (row_id or 0)))
+            if clash:
+                session.rollback()
+                return _fail(key, back, gettext("There is already a seed lot %(code)s.", code=code))
+            row.code = code
+        _set_ref(session, row, form, "line_id_fk", OrgLine, module.id)
+        if source is not None and not row.line_id_fk:
+            row.line_id_fk = (getattr(source, "line_id_fk", None) or getattr(source, "dam_line_id_fk", None)
+                              or getattr(source, "sire_line_id_fk", None))
+        _set_text(row, form, "generation", limit=20)
+        if source is not None and not row.generation:
+            row.generation = svc.harvest_generation(session, kind, source)
+        _set_date(row, form, "harvested_on")
+        _set_date(row, form, "germination_tested_on")
+        if not row_id and row.harvested_on is None:
+            row.harvested_on = date.today()
+        for name, limit in (("unit", 20), ("storage_text", 200), ("position", 80), ("selection", 80),
+                            ("owner", 80), ("notes", None)):
+            _set_text(row, form, name, limit=limit)
+
+        numbers = {}
+        for name in ("amount", "amount_left", "germination_pct", "resistant", "sensitive"):
+            if name not in form:
+                continue
+            value, ok = _float(form.get(name))
+            if not ok:
+                session.rollback()
+                return _fail(key, back, gettext("“%(typed)s” is not a number of 0 or more.", typed=form.get(name)))
+            numbers[name] = value
+        if "germination_pct" in numbers and (numbers["germination_pct"] or 0) > 100:
+            session.rollback()
+            return _fail(key, back, gettext("Germination is a percentage, from 0 to 100."))
+        for name in ("resistant", "sensitive"):
+            if name in numbers:
+                if numbers[name] is not None and not float(numbers[name]).is_integer():
+                    session.rollback()
+                    return _fail(key, back, gettext("Counts must be whole numbers of 0 or more (got “%(typed)s”).",
+                                                    typed=form.get(name)))
+                setattr(row, name, None if numbers[name] is None else int(numbers[name]))
+        for name in ("amount", "amount_left", "germination_pct"):
+            if name in numbers:
+                setattr(row, name, numbers[name])
+        if not row_id and "amount_left" not in numbers:
+            row.amount_left = row.amount
+        if row.amount is not None and row.amount_left is not None and row.amount_left > row.amount + 1e-9:
+            session.rollback()
+            return _fail(key, back, gettext("Left (%(left)s) cannot be more than was harvested (%(amount)s).",
+                                            left=svc.fmt_amount(row.amount_left), amount=svc.fmt_amount(row.amount)))
+        attrs, errors = _read_attrs(session, module, "seedlot", form, row, creating=not row_id)
+        if errors:
+            session.rollback()
+            return _fail(key, back, " ".join(errors))
+        row.attrs = svc.dump(attrs)
+        row.updated_at, row.updated_by = datetime.utcnow(), g.user.username
+
+        ended = 0
+        if source is not None and form.get("end_source"):
+            ended = _end_with_harvest(session, module, mv, kind, source, row.harvested_on, g.user.username)
+        session.flush()
+        svc.log_event(session, module, "seedlot", row.id, "harvest" if source is not None else (
+            "update" if row_id else "create"), occurred_on=row.harvested_on if source is not None else None,
+            recorded_by=g.user.username)
+        svc.recompute_due(session, module)
+        session.commit()
+        if _autosave():
+            return jsonify({"ok": True, "row": {"values": {"code": row.code}}})
+        if source is not None:
+            message = gettext("Harvested %(lot)s from %(source)s.", lot=row.code,
+                              source=svc.source_label(kind, source))
+            if ended:
+                message += " " + ngettext("%(num)s %(noun)s marked harvested.", "%(num)s %(nouns)s marked harvested.",
+                                          ended, noun=_word(mv.organism_noun), nouns=_word(mv.organism_noun_plural))
+            flash(message, "success")
+            return _redirect_back(key, "seeds")
+        flash(gettext("Saved seed lot %(code)s.", code=row.code), "success")
+        return _redirect_back(key, back)
 
 
 GENOTYPE_SUBJECTS = {"organism": Organism, "housing": OrgHousing, "line": OrgLine, "cohort": OrgCohort}
@@ -1857,12 +2089,12 @@ def complete_due(key: str, due_id: int):
 DELETABLE = {
     "line": OrgLine, "housing": OrgHousing, "animal": Organism,
     "cross": OrgCross, "cohort": OrgCohort, "location": OrgLocation,
-    "lot": OrgPreservationLot,
+    "lot": OrgPreservationLot, "seedlot": OrgSeedLot,
 }
 DELETE_RETURN = {
     "line": "lines", "housing": "housing", "animal": "animals",
     "cross": "crosses", "cohort": "cohorts", "location": "housing",
-    "lot": "preservation",
+    "lot": "preservation", "seedlot": "seeds",
 }
 
 
@@ -1922,6 +2154,10 @@ def _delete_one(session, module, mv, entity: str, row, user: str) -> tuple[bool,
     elif entity == "cohort":
         for member in session.scalars(select(Organism).where(Organism.cohort_id_fk == row.id)):
             member.cohort_id_fk = None
+    elif entity == "seedlot":
+        # Sowings from it keep their line and generation, not the lot.
+        for cohort in session.scalars(select(OrgCohort).where(OrgCohort.seed_lot_id_fk == row.id)):
+            cohort.seed_lot_id_fk = None
     session.flush()
     session.delete(row)
     svc.log_event(session, module, entity, row.id, "delete", recorded_by=user, notes=f"Deleted {label}")
@@ -2190,6 +2426,29 @@ def configure(key: str):
             settings["environment_metrics"] = svc.metrics_from_text(raw_metrics)
         if "dead_statuses" in form:
             settings["dead_statuses"] = [v.strip() for v in form.get("dead_statuses", "").split(",") if v.strip()]
+        # Its own words for dates and lists; left empty, the built-in ones.
+        for name in ("born_word", "ended_word"):
+            if name in form:
+                value = (form.get(name) or "").strip()[:40]
+                if value:
+                    settings[name] = value
+                else:
+                    settings.pop(name, None)
+        for name in ("stages", "location_kinds", "seed_units"):
+            if name in form:
+                values = [v.strip()[:40] for v in (form.get(name) or "").split(",") if v.strip()]
+                if values:
+                    settings[name] = values
+                else:
+                    settings.pop(name, None)
+        if "stage_young" in form or "stage_old" in form:
+            young, old = _int(form.get("stage_young"), 0), _int(form.get("stage_old"), 0)
+            if 0 < young < old:
+                settings["stage_bands"] = {"young": young, "old": old}
+            elif not (form.get("stage_young") or "").strip() and not (form.get("stage_old") or "").strip():
+                settings.pop("stage_bands", None)
+            else:
+                flash(gettext("Young and old are days, the first smaller than the second; the colours are left as they were."), "error")
         if "cross_noun_plural" in form:
             plural = (form.get("cross_noun_plural") or "").strip()
             if plural and plural != pluralise(module.cross_noun):
@@ -2377,7 +2636,7 @@ def delete_module(key: str):
         label = module.label
         # Child rows are removed explicitly: the soft subject_kind/subject_id
         # references in the log tables have no FK to cascade from.
-        for model in (Organism, OrgHousing, OrgCohort, OrgCross, OrgLine,
+        for model in (Organism, OrgHousing, OrgCohort, OrgCross, OrgSeedLot, OrgLine,
                       OrgLocation, OrgPreservationLot):
             session.query(model).filter(model.module_id_fk == module.id).delete(
                 synchronize_session=False)

@@ -56,9 +56,10 @@ PAGES = [
         ("print-cage-cards", "Print cage cards", "打印笼卡"),
         ("phones-and-cage-cards", "At the bench: phones and cage cards", "在实验台：手机与笼卡"),
     ]),
-    (("Fish, flies and other animals", "鱼、果蝇和其他动物"), [
+    (("Fish, flies, plants and more", "鱼、果蝇、植物及其他"), [
         ("zebrafish", "Zebrafish", "斑马鱼"),
         ("flies-and-worms", "Flies and worms", "果蝇和线虫"),
+        ("plants", "Plants and field crops", "植物与大田作物"),
         ("any-organism", "Any other organism", "其他任意物种"),
     ]),
     (("Molecular biology", "分子生物学"), [
