@@ -188,5 +188,7 @@
   "**Add database** offers **Plants** and **Field crops**: sown and harvested, no sexes, plant stages, growth rooms, greenhouses, nurseries and fields.": "**添加数据库** 新增 **植物** 和 **大田作物**：记录播种和收获，没有性别，有植物的生长阶段，场所可以是生长室、温室、苗圃和试验田。",
   "A plant database's **Seeds** tab: harvest seed from a plant, a sowing or a cross into a lot a generation on, and **Sow** from it; each lot shows its descent and a T2's fit to 3:1.": "植物数据库的 **种子** 标签页：从植株、播种批次或杂交收种，生成晚一代的批次，再用它 **播种**；每个批次都显示来历，以及 T2 是否符合 3:1。",
   "A column of your own can be a **Plasmid**, linked to the Plasmids database: a line's construct.": "自己加的列可以是 **质粒**，并链接到质粒数据库：用来记下品系的构建体。",
-  "Any organism database can name its own dates, stages and kinds of place, leave out the Sex column, and colour the dot before an ID by age (**Configure**).": "任何物种数据库都可以自己命名日期、阶段和场所类型，去掉性别列，并按年龄给编号前的圆点上色（**配置**）。"
+  "Any organism database can name its own dates, stages and kinds of place, leave out the Sex column, and colour the dot before an ID by age (**Configure**).": "任何物种数据库都可以自己命名日期、阶段和场所类型，去掉性别列，并按年龄给编号前的圆点上色（**配置**）。",
+  "**Litter born** asks for the father too, and **Genotyping** fills in both parents from it. Nothing in either is required.": "**产仔** 时也会询问父本，**基因型鉴定** 会据此填入父本和母本。两处都没有必填项。",
+  "**Genotyping** with **Pups** left empty makes the litter now: add its pups once they are counted.": "**基因型鉴定** 时 **幼崽数** 留空，会先建好这一窝，数清后再加入幼崽。"
 }
