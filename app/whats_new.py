@@ -30,6 +30,12 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.1.1": {
+        "changed": [
+            "**Litter born** asks for the father too, and **Genotyping** fills in both parents from it. Nothing in either is required.",
+            "**Genotyping** with **Pups** left empty makes the litter now: add its pups once they are counted.",
+        ],
+    },
     "2.1.0": {
         "new": [
             "**Add database** offers **Plants** and **Field crops**: sown and harvested, no sexes, plant stages, growth rooms, greenhouses, nurseries and fields.",

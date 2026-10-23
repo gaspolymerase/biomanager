@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 from migrations.helpers import add_column
 
-revision = "0045_litter_sire"
-down_revision = "0044_colony_indexes"
+revision = "0046_litter_sire"
+down_revision = "0045_seed_lots"
 branch_labels = None
 depends_on = None
 
