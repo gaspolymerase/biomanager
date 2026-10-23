@@ -267,6 +267,8 @@ ADMIN_ONLY = ("api_tokens", "lab_copy_keys", "guest_passes", "user_identities", 
               "lab_devices", "device_pairings", "sync_ops", "held_changes", "lab_keys")
 OWN_ROWS = {"notifications": "recipient_username", "calendar_subscriptions": "owner",
             "google_calendar_links": "owner", "calendar_feeds": "owner", "notebook_templates": "owner_username",
+            # Someone's Zotero library, read to make their paper notes (its key is blanked in every copy).
+            "zotero_links": "owner",
             # Batch history: a member's own, as the Batches page shows them
             # (a description can name someone's personal database or file).
             "batches": "actor",

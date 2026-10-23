@@ -42,7 +42,7 @@ from .models import (CalendarEvent, NotebookComment, NotebookFolder, NotebookMee
                      NotebookPageInfo,
                      NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
                      NotebookTab,
-                     NotebookTemplate, NotebookVersion, TaskItem, UserAccount)
+                     NotebookTemplate, NotebookVersion, TaskItem, UserAccount, ZoteroLink)
 
 bp = Blueprint("nb", __name__, url_prefix="/notebook")
 
@@ -1527,6 +1527,110 @@ def reading():
                 "entry_date": _iso(page.entry_date), "updated_at": _iso(page.updated_at),
             })
         return jsonify({"ok": True, "items": items})
+
+
+# ---------------------------------------------------------------- Zotero (app/zotero.py)
+
+def _zotero_tab(s, raw) -> int | None:
+    tab = s.get(NotebookTab, _int(raw) or 0) if raw else None
+    return tab.id if tab is not None and tab.owner_username == _me() else None
+
+
+@bp.get("/api/zotero")
+def zotero_get():
+    from . import zotero
+    with SessionLocal() as s:
+        return jsonify({"ok": True, "zotero": zotero.state(zotero.link_for(s, _me()))})
+
+
+@bp.post("/api/zotero/libraries")
+def zotero_libraries():
+    """The libraries and collections a key may read (the key typed, or the
+    one already kept)."""
+    from . import zotero
+    key = str(_json_body().get("api_key") or "").strip()
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        key = key or (link.api_key if link else "")
+    if not key:
+        return _fail(gettext("Paste your Zotero API key first."))
+    try:
+        return jsonify({"ok": True, **zotero.libraries(key)})
+    except zotero.ZoteroError as e:
+        return _fail(str(e), 502)
+
+
+@bp.post("/api/zotero")
+def zotero_save():
+    """Connect (or change) the person's Zotero library, then check it."""
+    from . import zotero
+    data = _json_body()
+    library = str(data.get("library") or "")
+    if not re.fullmatch(r"(users|groups)/\d{1,12}", library):
+        return _fail(gettext("Pick a library."))
+    collection = str(data.get("collection") or "")
+    if collection and not re.fullmatch(r"[A-Z0-9]{8}", collection):
+        return _fail(gettext("Pick a collection, or the whole library."))
+    with SessionLocal() as s:
+        me = _me()
+        link = zotero.link_for(s, me)
+        key = str(data.get("api_key") or "").strip() or (link.api_key if link else "")
+        if not key:
+            return _fail(gettext("Paste your Zotero API key first."))
+        if link is None:
+            link = ZoteroLink(owner=me)
+            s.add(link)
+        # A new key for the same library and collection carries on from where it was.
+        changed = (link.library, link.collection) != (library, collection)
+        link.api_key, link.library, link.collection = key, library, collection
+        link.library_name = str(data.get("library_name") or "")[:200]
+        link.collection_name = str(data.get("collection_name") or "")[:200] if collection else ""
+        link.tab_id_fk = _zotero_tab(s, data.get("tab_id"))
+        made, error = [], ""
+        try:
+            if changed:
+                # From now on, unless the papers already there are wanted too.
+                link.version = 0 if data.get("include_existing") else zotero.latest_version(link)
+            made = zotero.check(s, link)
+        except zotero.ZoteroError as e:
+            error = str(e)
+            if link.id is None:
+                s.rollback()
+                return _fail(error, 502)
+        s.commit()
+        return jsonify({"ok": True, "made": made, "error": error, "zotero": zotero.state(link)})
+
+
+@bp.post("/api/zotero/check")
+def zotero_check():
+    """New papers in the person's Zotero library as paper notes: at most
+    every few minutes, unless asked now (`now`)."""
+    from . import zotero
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        if link is None:
+            return jsonify({"ok": True, "made": [], "zotero": zotero.state(None)})
+        if not zotero.claim(s, link, now=bool(_json_body().get("now"))):
+            return jsonify({"ok": True, "made": [], "zotero": zotero.state(link)})
+        try:
+            made = zotero.check(s, link)
+            error = ""
+        except zotero.ZoteroError as e:
+            made, error = [], str(e)
+        s.commit()
+        return jsonify({"ok": True, "made": made, "error": error, "zotero": zotero.state(link)})
+
+
+@bp.post("/api/zotero/delete")
+def zotero_delete():
+    """Stop: the key is forgotten; the notes made stay."""
+    from . import zotero
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        if link is not None:
+            s.delete(link)
+            s.commit()
+        return jsonify({"ok": True})
 
 
 def _snippet(body: str, terms: list[str], width: int = 160) -> str:

@@ -350,6 +350,8 @@
   'page': selected_page,
   'me': me,
   'tabs': tabs | map(attribute='id') | list,
+  'tabTitles': tabs | map(attribute='title') | list,
+  'zotero': zotero,
   'kinds': kinds,
   'kindIcons': kind_icons,
   'kindFields': kind_fields,

@@ -6838,6 +6838,8 @@ def _notebook_page(library: str | None = None):
         # before a rename still reads as one.
         mention_types = [{"key": key, "label": m.label, "noun": m.item_noun, **({"old": True} if key != m.key else {})}
                          for key, m in _mention_modules(db_session, with_old=True).items()]
+        from . import zotero
+        zotero_state = zotero.state(zotero.link_for(db_session, g.user.username))
 
     return render_template(
         "notebook.html",
@@ -6861,6 +6863,7 @@ def _notebook_page(library: str | None = None):
                   for key, st in lab_notebook.STARTERS.items()],
         library=library,
         libraries=NOTEBOOK_LIBRARIES,
+        zotero=zotero_state,
     )
 
 

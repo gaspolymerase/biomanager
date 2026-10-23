@@ -968,11 +968,142 @@
     },
   };
 
+  // ------------------------------------------------------------ Zotero
+
+  // A paper added to your Zotero library (or one collection of it) becomes
+  // a paper note here (app/zotero.py). Connected from Reading's Zotero
+  // button; checked when the notebook opens, at most every few minutes.
+  var zotero = DATA.zotero || { connected: false };
+  function zoteroMade(made) {
+    if (!made || !made.length) return;
+    toast(t(made.length === 1 ? 'A paper note from Zotero: %(titles)s' : '%(n)s paper notes from Zotero: %(titles)s', {
+      n: made.length,
+      titles: made.slice(0, 3).map(function (m) { return '<a href="' + esc(m.url) + '">' + esc(m.title) + '</a>'; }).join(', ') + (made.length > 3 ? '…' : ''),
+    }));
+    window.dispatchEvent(new CustomEvent('nb:zotero-made', { detail: { made: made } }));
+  }
+  function zoteroCheck(now) {
+    return api('/notebook/api/zotero/check', { body: { now: !!now } }).then(function (d) {
+      zotero = d.zotero || zotero;
+      zoteroMade(d.made);
+      window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+      return d;
+    });
+  }
+  if (zotero.connected) {
+    var lastCheck = zotero.checked_at ? when(zotero.checked_at) : null;
+    if (!lastCheck || Date.now() - lastCheck.getTime() > 5 * 60 * 1000) zoteroCheck(false).catch(function () { /* said next time */ });
+  }
+
+  function zoteroDialog() {
+    var tabs = (DATA.tabs || []).map(function (id, i) { return [id, (DATA.tabTitles || [])[i] || '']; });
+    var libs = [];
+    var overlay = document.createElement('div');
+    overlay.className = 'notebook-modal';
+    overlay.innerHTML = '<div class="notebook-modal-backdrop" data-x></div>' +
+      '<form class="notebook-modal-card nb-new-card nb-zotero-card" role="dialog" aria-label="Zotero" autocomplete="off">' +
+      '<header class="notebook-modal-head"><h3>' + t('Paper notes from Zotero') + '</h3><button type="button" class="modal-close" data-x aria-label="' + t('Close') + '">' + icon('close') + '</button></header>' +
+      '<div class="notebook-modal-body nb-new">' +
+      '<p class="nb-new-note nb-zotero-intro">' + t('Each paper you add to Zotero becomes a paper note here, with its details filled in. Zotero has to sync to zotero.org.') + '</p>' +
+      '<div class="nb-new-field nb-new-cite"><span class="nb-new-label">' + t('API key') + '</span><div>' +
+      '<div class="nb-new-cite-row"><input name="api_key" type="password" placeholder="' + esc(zotero.connected ? t('Kept. Paste a new one to change it.') : t('Paste your Zotero API key')) + '" aria-label="' + t('API key') + '">' +
+      '<button type="button" class="btn" data-connect>' + (zotero.connected ? t('Reload') : t('Connect')) + '</button></div>' +
+      '<small class="nb-new-help">' + t('Make one at <a href="https://www.zotero.org/settings/keys/new" target="_blank" rel="noopener">zotero.org → Settings → Security</a>: tick “Allow library access” (read only), and for a lab group, read access to groups.') + '</small>' +
+      '<small class="nb-new-found" data-said hidden></small></div></div>' +
+      '<div data-step2 hidden>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Library') + '</span><select name="library"></select></label>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Collection') + '</span><select name="collection"></select></label>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Topic') + '</span><select name="tab_id"><option value="">' + t('Inbox') + '</option>' +
+      tabs.map(function (tb) { return '<option value="' + tb[0] + '"' + (zotero.tab_id === tb[0] ? ' selected' : '') + '>' + esc(t(tb[1])) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="nb-new-check"><input type="checkbox" name="include_existing" value="1"><span><b>' + t('Also the papers already there') + '</b><small>' +
+      t('Otherwise only papers added from now on become notes.') + '</small></span></label></div>' +
+      (zotero.connected ? '<p class="nb-new-note">' + esc(t('Connected: %(where)s. %(n)s notes made so far.', {
+        where: [zotero.library_name, zotero.collection_name].filter(Boolean).join(' › '), n: zotero.made })) +
+        (zotero.error ? ' <span class="nb-warn">' + esc(zotero.error) + '</span>' : '') + '</p>' : '') +
+      '</div><footer class="nb-new-foot">' +
+      (zotero.connected ? '<button type="button" class="btn btn-ghost is-danger" data-disconnect>' + t('Disconnect') + '</button><button type="button" class="btn btn-ghost" data-check>' + icon('refresh') + ' ' + t('Check now') + '</button>' : '') +
+      '<span class="nb-grow"></span><button type="button" class="btn" data-x>' + t('Cancel') + '</button>' +
+      '<button type="submit" class="btn btn-primary" disabled>' + t('Save') + '</button></footer></form>';
+    document.body.appendChild(overlay);
+    var form = $('form', overlay);
+    var said = $('[data-said]', overlay);
+    var save = $('button[type="submit"]', overlay);
+    function say(text, isError) { said.hidden = !text; said.textContent = text || ''; said.classList.toggle('is-error', !!isError); }
+    function close() { overlay.remove(); }
+    function fillCollections() {
+      var lib = libs.filter(function (l) { return l.library === form.library.value; })[0] || { collections: [] };
+      form.collection.innerHTML = '<option value="">' + t('The whole library') + '</option>' + lib.collections.map(function (c) {
+        return '<option value="' + esc(c.key) + '"' + (c.key === zotero.collection && lib.library === zotero.library ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+      }).join('');
+    }
+    function connect() {
+      var b = $('[data-connect]', overlay);
+      b.disabled = true;
+      say(t('Asking Zotero…'));
+      api('/notebook/api/zotero/libraries', { body: { api_key: form.api_key.value.trim() } }).then(function (d) {
+        libs = d.libraries;
+        form.library.innerHTML = libs.map(function (l) {
+          return '<option value="' + esc(l.library) + '"' + (l.library === zotero.library ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+        }).join('');
+        fillCollections();
+        $('[data-step2]', overlay).hidden = false;
+        save.disabled = false;
+        say(d.username ? t('Zotero account: %(name)s', { name: d.username }) : '');
+      }).catch(function (err) { say(err.message, true); }).then(function () { b.disabled = false; });
+    }
+    form.addEventListener('change', function (e) { if (e.target.name === 'library') fillCollections(); });
+    form.api_key.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); connect(); } });
+    overlay.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    overlay.addEventListener('click', function (e) {
+      if (e.target.closest('[data-x]')) close();
+      if (e.target.closest('[data-connect]')) connect();
+      if (e.target.closest('[data-check]')) {
+        zoteroCheck(true).then(function (d) {
+          if (d.error) toast(esc(d.error), true);
+          else if (!d.made.length) toast(t('Nothing new in Zotero.'));
+          close();
+        }).catch(function (err) { toast(esc(err.message), true); });
+      }
+      if (e.target.closest('[data-disconnect]')) {
+        BioDialog.confirm(t('Stop making paper notes from Zotero? The notes made stay.'), { okLabel: t('Disconnect') }).then(function (ok) {
+          if (!ok) return;
+          api('/notebook/api/zotero/delete', { body: {} }).then(function () {
+            zotero = { connected: false };
+            window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+            close();
+          });
+        });
+      }
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var lib = form.library.selectedOptions[0];
+      var col = form.collection.selectedOptions[0];
+      save.disabled = true;
+      say(t('Saving, and reading Zotero…'));
+      api('/notebook/api/zotero', { body: {
+        api_key: form.api_key.value.trim(), library: form.library.value, library_name: lib ? lib.textContent : '',
+        collection: form.collection.value, collection_name: col && form.collection.value ? col.textContent : '',
+        tab_id: form.tab_id.value, include_existing: form.include_existing.checked,
+      } }).then(function (d) {
+        zotero = d.zotero;
+        window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+        close();
+        if (d.error) toast(esc(d.error), true);
+        else if (d.made.length) zoteroMade(d.made);
+        else toast(t('Connected. Papers you add to Zotero will become paper notes.'));
+      }).catch(function (err) { save.disabled = false; say(err.message, true); });
+    });
+    if (zotero.connected) connect(); else form.api_key.focus();
+  }
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-zotero]')) zoteroDialog(); });
+
   // For the protocol, recipe and meeting libraries (static/notebook-library.js).
   window.NotebookPage = {
     api: api, esc: esc, icon: icon, toast: toast, tc: tc, timeText: timeText, debounce: debounce,
     byFolder: byFolder,
     renderPanel: function (name, box) { PANELS[name].render(box, {}); },
+    zotero: function () { return zotero; },
   };
 
   if (!page) return;

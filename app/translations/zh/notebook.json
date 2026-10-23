@@ -204,5 +204,14 @@
   "Start from": "起始内容",
   "Today's log": "今天的日志",
   "You can read and comment; %(owner)s can let you edit.": "你可以阅读和评论；%(owner)s 可以允许你编辑。",
-  "Your own templates: ••• → Save as template on any page.": "你自己的模板：在任意页面点 ••• → 另存为模板。"
+  "Your own templates: ••• → Save as template on any page.": "你自己的模板：在任意页面点 ••• → 另存为模板。",
+  "Could not reach Zotero. Check the internet connection.": "无法连接 Zotero。请检查网络连接。",
+  "My library": "我的文献库",
+  "Paste your Zotero API key first.": "请先粘贴你的 Zotero API 密钥。",
+  "Pick a collection, or the whole library.": "请选择一个分类，或整个文献库。",
+  "Pick a library.": "请选择一个文献库。",
+  "That key can't read any library. Allow library access when you make it.": "这个密钥读不了任何文献库。创建时请允许访问文献库。",
+  "Zotero answered %(code)s. Try again in a while.": "Zotero 返回了 %(code)s。请稍后再试。",
+  "Zotero has no such library or collection any more.": "Zotero 中已经没有这个文献库或分类了。",
+  "Zotero refused that key. Make a new one with library access.": "Zotero 拒绝了这个密钥。请新建一个允许访问文献库的密钥。"
 }

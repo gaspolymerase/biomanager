@@ -541,7 +541,9 @@
       '<div class="seg" role="group" aria-label="' + t('Layout') + '">' +
       '<button type="button" class="seg-item" data-layout="cards" title="' + t('Cards') + '">' + icon('grid') + '</button>' +
       '<button type="button" class="seg-item" data-layout="pictures" title="' + t('Pictures') + '">' + icon('image') + '</button></div>' +
+      '<button type="button" class="btn" data-zotero>' + icon('book-open') + ' Zotero</button>' +
       '<button type="button" class="btn btn-primary" data-new-page-kind="reading">' + icon('plus') + ' ' + t('Paper notes') + '</button>') +
+      '<p class="nb-lib-blurb nb-zotero-line" id="nb-zotero-line"></p>' +
       '<div id="nb-read-out"><p class="nb-muted">' + t('Loading…') + '</p></div>';
     var out = document.getElementById('nb-read-out');
     function text(x) {
@@ -596,8 +598,24 @@
         out.innerHTML = state.layout === 'pictures' ? pictures(list) : '<div class="nb-read-grid">' + list.map(card).join('') + '</div>';
       }
     }
-    api('/notebook/api/reading').then(function (d) { state.items = d.items; paint(); })
-      .catch(function (e) { out.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
+    function load() {
+      return api('/notebook/api/reading').then(function (d) { state.items = d.items; paint(); })
+        .catch(function (e) { out.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
+    }
+    load();
+    // Where paper notes come from: Zotero, once connected (notebook-page.js).
+    function zoteroLine(z) {
+      var line = document.getElementById('nb-zotero-line');
+      if (!line) return;
+      line.innerHTML = z && z.connected
+        ? icon('book-open') + ' ' + esc(t('New papers in Zotero (%(where)s) become notes here.', {
+          where: [z.library_name, z.collection_name].filter(Boolean).join(' › ') })) +
+          (z.error ? ' <span class="nb-warn">' + esc(z.error) + '</span>' : '')
+        : t('Connect Zotero, and each paper you add there becomes a note here.');
+    }
+    zoteroLine(NP.zotero ? NP.zotero() : null);
+    window.addEventListener('nb:zotero-state', function (e) { zoteroLine(e.detail); });
+    window.addEventListener('nb:zotero-made', load);
     var search = document.getElementById('nb-lib-q');
     search.addEventListener('input', function () { state.q = search.value.trim(); paint(); });
     root.onchange = null;

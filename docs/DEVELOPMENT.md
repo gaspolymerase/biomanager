@@ -2030,7 +2030,30 @@ zotero.org address becomes its `zotero://select/library/items/<KEY>` (or
 pages the person may open with their fields, cover and the pictures in
 their Markdown (`page_images`), which `notebook-library.js` draws as cards
 or as one wall of pictures (`nb-reading-view` in localStorage), filtered in
-the browser. The notebook's "Reading" is `notebook::Reading` in the
+the browser.
+
+**Paper notes from Zotero** (`app/zotero.py`, `zotero_links`, revision
+0047). A person's link holds a read-only Zotero API key (`EncryptedText`,
+blanked in lab copies, `zotero_links` in `lab_copy.OWN_ROWS`), the library
+(`users/<id>` or `groups/<id>`, from `/keys/current` and the user's
+groups), a collection or none, the topic, the library `version` last read
+and `seen`, the item keys a note was made for. A check (`zotero.check`)
+asks `/<library>[/collections/<key>]/items/top?since=<version>`, 100 at a
+time and at most 200 notes a check, skips notes, attachments and
+annotations, and makes a Reading page per new item key (`fields()`: the
+authors, not editors; the DOI from `DOI` or Zotero's Extra; the item's
+Zotero tags as page tags; its abstract above the Paper notes starter). The
+version moves on only once every page was read, and `seen` keeps a paper
+from getting a second note when it changes or its note is deleted.
+Connecting starts at the library's current version unless
+`include_existing`. `notebook-page.js` posts `/notebook/api/zotero/check`
+when a notebook page opens and the last check is over five minutes old
+(`zotero.due` says the same on the server); **Check now** sends `now`.
+`zotero.claim` takes each check for one request (it moves `checked_at` only
+if nobody moved it since it was read, committed before Zotero is asked), so
+two notebook tabs opened at once don't both make a paper's note. A new key
+for the same library and collection carries on from the version it was at.
+Tests replace `zotero._get` with `tests/test_notebook.FakeZotero`. The notebook's "Reading" is `notebook::Reading` in the
 translations: plain "Reading" is a measurement's.
 
 **Durations and clocks.** `frontend/src/durations.js` finds what gets a

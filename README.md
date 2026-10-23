@@ -665,6 +665,15 @@ database has a name of its own (one another database has is refused), so
     talk you can open as cards with their covers, or as every picture in
     them, to find a paper by a figure you remember; search reads titles,
     authors, journals, DOIs, tags and picture captions.
+  - **Paper notes straight from Zotero**: **Zotero** on the Reading page
+    takes a read-only API key from zotero.org, then which library (yours
+    or a lab group's), which collection (or all of it) and which topic.
+    Each paper you add there becomes a paper note, with its authors,
+    journal, year, DOI, abstract, tags and **Open in Zotero** link filled
+    in, the next time you open the notebook (it looks at most every five
+    minutes; **Check now** looks at once). A paper gets one note, ever,
+    and the papers already there are left out unless you ask for them.
+    Zotero has to sync to zotero.org, and BioManager has to reach it.
   - **Protocols** with numbered versions. **Start experiment**
     copies the steps as a checklist and records which version was followed.
     **Protocols** in the notebook's sidebar opens the lab's protocols as a

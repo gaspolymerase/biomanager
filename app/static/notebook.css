@@ -653,3 +653,14 @@ a.nb-starter { text-decoration: none; }
 .nb-read-pic span { display: block; padding: 6px 9px 8px; font-size: 11.5px; color: var(--color-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nb-read-pic:hover { border-color: var(--color-brand-400); }
 @media (max-width: 560px) { .nb-prop-label { width: 96px; } }
+
+/* Paper notes from Zotero: the dialog (notebook-page.js), and the line under Reading's title. */
+.nb-zotero-card { max-width: 560px !important; }
+.nb-zotero-intro { margin: 0 !important; }
+.nb-new-help { display: block; margin-top: 5px; color: var(--color-muted); font-size: 11.5px; line-height: 1.4; }
+.nb-new-help a { color: var(--color-brand-700); }
+[data-step2] { display: flex; flex-direction: column; gap: 14px; }
+[data-step2][hidden] { display: none; }
+.nb-zotero-line { margin: 2px 0 6px; }
+.nb-zotero-line .icon { width: 12px; height: 12px; vertical-align: -1px; color: var(--color-brand-600); }
+.btn-ghost.is-danger { color: var(--color-danger-600); }
