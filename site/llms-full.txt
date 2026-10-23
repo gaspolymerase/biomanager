@@ -1185,13 +1185,33 @@ Source: https://biomanager.org/guide/experiments
 
 ## Notebook and utilities
 
-Notebook pages, protocols, data sheets, signing, and the bench calculators.
+Notebook pages, paper notes, protocols, data sheets, signing, and the bench calculators.
 
 ### Pages
 
-- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders: a new page goes in the topic you have open, or in *Inbox* when none is, whatever kind of page it is. Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below. **Templates**: ⋯ → **Save as template**, and start new pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion; **Share it with the lab** offers it to everyone.
+- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar: **+** beside *Topics* names a new one, a topic's own **+** starts a page in it, and its **•••** renames it or deletes it with its pages. Drag a page onto a topic to move it there. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
 
-- In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never moves the page. Under the title are its date, status and tags; once other pages link to it, **Linked from** lists them.
+- **New page** asks four things, each labelled: the **Title**, the **Topic** it goes in, its **Kind**, and what to **Start from**. Each kind says what it adds:
+
+- **Note**: just the page.
+
+- **Experiment**: a status, the times it started and finished, and the protocol it follows.
+
+- **Protocol**: numbered versions, **Run** step by step, and experiments started from it.
+
+- **Reading**: a paper, with its authors, DOI, Zotero link and a cover, listed in **Reading** (below).
+
+- **Meeting**: a presenter rotation, and tasks naming `@someone` sent to their calendar.
+
+- **Seminar**: the speaker and their affiliation, listed in **Reading** beside the papers.
+
+- **Daily log** is *Today*, one page a day.
+
+**Start from** lists the built-in starters of that kind (an Experiment can start as *Cloning*, *Western blot* or *qPCR*), an empty page, and your templates of that kind. **Import .md** at the bottom brings in a Markdown file instead. Type **/** at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below.
+
+- **Templates**: ⋯ → **Save as template** asks for a name and **Who can use it** (just you, everyone in the lab, or a project group); a name you already use asks before replacing that template. It keeps the page's kind (an Experiment template makes Experiments) and is listed under **Start from** for that kind. **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion.
+
+- In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. Above the title is the page's kind: click it to change it, which never moves the page. Hover there for **Add cover**, a picture across the top of the page (uploaded, or one of the page's own pictures); **Change cover** and **Remove** are on the cover. The title wraps onto as many lines as it needs. Under it are its date, status and tags; once other pages link to it, **Linked from** lists them.
 
 - Write as in Notion: type **/** and a few letters of what you want (`/h2`, `/toggle`; Chinese words work too, `/分栏`).
 
@@ -1227,13 +1247,23 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
 
+### Paper notes and Reading
+
+- A **Reading** page (start one with **Paper notes**) keeps the paper's **Authors**, **Journal**, **Year**, **DOI**, **Link** and **Zotero** link as rows under its title; click a row to type in it. The ↗ beside the DOI, the link or the Zotero link opens it; the Zotero one opens the item in Zotero on your computer.
+
+- **Fill in**: paste a DOI, a doi.org link, or the item copied from Zotero and press `Enter`, and the rows and an empty title are filled in. In Zotero, set **Settings → Export → Item Format** (Quick Copy) to BibTeX, RIS or CSL JSON, select the paper and press `Ctrl`+`Shift`+`C` (`⌘`+`Shift`+`C` on a Mac). CSL JSON also brings the Zotero link. A DOI on its own is looked up at Crossref, which needs the internet; pasting from Zotero doesn't. **Paper** in New page does the same before the page is made, and names the page after the paper.
+
+- Give a paper notes a **cover**: its key figure, uploaded or picked from the pictures in the page.
+
+- **Reading** in the notebook's sidebar lists every paper and talk you can open, yours and those shared with you, as cards with their covers. **Papers** and **Talks** narrow it, and the picture button shows every picture in them instead, so you can find a paper by a figure you remember; click one to open its page. The search reads titles, authors, journals, DOIs, tags and the captions of pictures. The notebook's own search finds a paper by its authors and DOI too.
+
 ### Experiments and protocols
 
-- **Experiments**: aim, setup, samples and lot numbers, steps, results and a summary. *Start* and *Finished* stamp the times; planned, running, done or failed shows in the sidebar. (The colony's **Experiments** tab groups the animals.)
+- **Experiments**: aim, setup, samples and lot numbers, steps, results and a summary. **Start experiment**, beside the status, and **Finished** stamp the times; running experiments are listed at the top of the sidebar. (The colony's **Experiments** tab groups the animals.)
 
 - **Colony experiment** (`/experiment`) shows an experiment on any of your animals in the page: each day's manipulation, the reagent and lot it used (*(expired)* when the lot was past its expiry that day), when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first weight, with the manipulation days marked). When the experiment has other measures beside its main readout (an ELISA a plate filled), a button for each switches the table and chart to it, and the page keeps the one you picked. It stays up to date; **Freeze a copy** keeps what it shows now in the page, so later changes to the experiment don't alter your record. On the experiment itself, **Add to notebook** makes your page for it with this block already in.
 
-- **Protocols** with numbered versions. *Start an experiment from it* copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
+- **Protocols** with numbered versions. **Start experiment**, in the protocol's bar, copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
 
 - **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one.
 

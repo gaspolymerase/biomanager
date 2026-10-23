@@ -23,9 +23,50 @@
 .nb-side-links .icon { width: 13px; height: 13px; color: var(--color-sand-400); }
 .nb-side-links a.is-active { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); color: var(--color-ink); font-weight: 600; }
 .nb-side-links a.is-active .icon { color: var(--color-brand-600); }
-.nb-side-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
-.nb-side-group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nb-side-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px 12px; }
+.nb-side-group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 .nb-side-group > summary::-webkit-details-marker { display: none; }
+.nb-side-group[open] > summary .notebook-tab-caret { transform: rotate(90deg); }
+
+/* Hiding and showing the sidebar (Ctrl+\): its own button, and one at the
+   start of the page's path (or of the page, in a library) while it's hidden. */
+.nb-side-hide, .nb-side-show > button, .nb-crumb-side {
+  display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 7px;
+  background: none; color: var(--color-muted); cursor: pointer;
+}
+.nb-side-hide:hover, .nb-side-show > button:hover, .nb-crumb-side:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-side-hide .icon, .nb-side-show .icon, .nb-crumb-side .icon { width: 15px; height: 15px; }
+.nb-side-show { display: none; gap: 2px; margin: 6px 0 0 4px; }
+.nb-crumb-side { display: none; width: 26px; height: 26px; margin-right: 2px; }
+@media (min-width: 768px) {
+  body.nb-side-is-closed .nb-crumb-side { display: grid; }
+  body.nb-side-is-closed:not(.nb-header-lifted) .nb-side-show { display: flex; }
+}
+@media (max-width: 767px) { .nb-side-hide { display: none; } }
+
+/* Topics: a heading with +, each topic's own + and ••• on hover. */
+.nb-side-section { display: flex; align-items: center; justify-content: space-between; padding-right: 2px; }
+.nb-side-section .notebook-section-label { flex: 1; }
+.nb-side-add {
+  display: grid; place-items: center; width: 22px; height: 22px; margin-top: 8px; padding: 0; border: 0; border-radius: 6px;
+  background: none; color: var(--color-sand-400); cursor: pointer;
+}
+.nb-side-add:hover { background: color-mix(in srgb, var(--color-sand-200) 80%, transparent); color: var(--color-ink); }
+.nb-side-add .icon { width: 12px; height: 12px; }
+.nb-topic-new { display: flex; align-items: center; gap: 6px; margin: 2px 0 4px; padding: 3px 6px; border: 1px solid var(--color-brand-400); border-radius: 7px; background: var(--color-surface); }
+.nb-topic-new[hidden] { display: none; }
+.nb-topic-new .icon { flex: none; width: 13px; height: 13px; color: var(--color-sand-400); }
+.nb-topic-new input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: 12.5px; outline: none; }
+.tab-count { flex: none; color: var(--color-sand-400); font-size: 11px; font-weight: 500; }
+.notebook-tab > summary:hover .tab-count, .notebook-tab > summary:focus-within .tab-count { display: none; }
+.tab-rename {
+  flex: 1; min-width: 0; padding: 1px 5px; border: 1px solid var(--color-brand-400); border-radius: 5px;
+  background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: 600; outline: none;
+}
+.notebook-tab > summary.is-drop { background: color-mix(in srgb, var(--color-brand-600) 14%, transparent); outline: 1.5px dashed var(--color-brand-500); outline-offset: -1.5px; }
+.nb-head-menu.nb-topic-menu { width: 230px; }
+.nb-head-item.is-danger { color: var(--color-danger-600); }
+.nb-head-item.is-danger > .icon { color: var(--color-danger-600); }
 .nb-count { font-weight: 500; color: var(--color-sand-400); letter-spacing: 0; }
 .nb-side-owner { margin-left: auto; padding-left: 6px; color: var(--color-sand-400); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
 .nb-status-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; margin-left: auto; background: var(--color-sand-300); }
@@ -105,17 +146,29 @@
 .nb-head-add > .icon { color: var(--color-brand-600); }
 .nb-head-note { margin: 4px 0 0; padding: 6px 9px 3px; border-top: 1px solid var(--color-hairline); color: var(--color-muted); font-size: 11.5px; }
 
-/* The title row: the kind of page is the page's icon; click it to change the kind. */
-.nb-title-row { position: relative; display: flex; align-items: center; gap: 10px; }
-.nb-title-row .page-title { flex: 1 1 auto; min-width: 0; }
+/* The title, as on a Notion page: above it the kind of page (click to
+   change it) and, on hover, Add cover; the title itself wraps. */
+.nb-title-row { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.nb-title-icons { position: relative; display: flex; align-items: center; gap: 6px; min-height: 26px; }
 .nb-kind-icon {
-  display: grid; place-items: center; flex: none; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 9px;
-  background: color-mix(in srgb, var(--color-brand-600) 9%, var(--color-surface)); color: var(--color-brand-600);
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border: 0; border-radius: 7px;
+  background: color-mix(in srgb, var(--color-brand-600) 9%, var(--color-surface)); color: var(--color-brand-700);
+  font: inherit; font-size: 12.5px; font-weight: 600;
 }
 button.nb-kind-icon { cursor: pointer; }
 button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { background: color-mix(in srgb, var(--color-brand-600) 16%, var(--color-surface)); }
-.nb-kind-icon .icon { width: 20px; height: 20px; }
-.nb-kind-menu { width: 330px; }
+.nb-kind-icon .icon { width: 14px; height: 14px; color: var(--color-brand-600); }
+.nb-kind-icon .icon:last-child:not(:first-child) { width: 10px; height: 10px; opacity: 0.6; }
+.nb-add-cover {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border: 0; border-radius: 7px;
+  background: none; color: var(--color-muted); font: inherit; font-size: 12.5px; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+}
+.nb-add-cover[hidden] { display: none; }
+.nb-title-row:hover .nb-add-cover, .nb-add-cover:focus-visible { opacity: 1; }
+.nb-add-cover:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
+.nb-add-cover .icon { width: 13px; height: 13px; }
+@media (hover: none) { .nb-add-cover { opacity: 1; } }
+.nb-kind-menu { width: 340px; }
 .nb-kind-menu .nb-head-item { align-items: flex-start; }
 .nb-kind-menu .nb-head-item > .icon { margin-top: 2px; }
 .nb-kind-menu .nb-head-item > span { white-space: normal; }
@@ -129,6 +182,57 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 .nb-date-chip .page-date-input { padding: 1px 4px; border: 0; background: transparent; }
 .nb-date-chip:hover .page-date-input { background: transparent; }
 .nb-chip.nb-status { padding: 1px 4px 1px 6px; }
+/* A page's own actions, small, beside what they act on: Start experiment
+   by the status, a protocol's version and Start experiment in its bar. */
+.nb-chip-btn {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border: 1px solid var(--color-hairline); border-radius: 999px;
+  background: var(--color-surface); color: var(--color-ink-soft); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.nb-chip-btn:hover { border-color: var(--color-brand-400); color: var(--color-ink); }
+.nb-chip-btn .icon { width: 12px; height: 12px; }
+.nb-chip-btn.is-primary { border-color: transparent; background: var(--color-brand-600); color: #fff; }
+.nb-chip-btn.is-primary:hover { background: var(--color-brand-700); color: #fff; }
+.nb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: -8px 0 16px; font-size: 12.5px; color: var(--color-ink-soft); }
+.nb-bar-text .icon { width: 13px; height: 13px; vertical-align: -2px; color: var(--color-sand-400); }
+
+/* A paper's or a talk's details under the title, a row each, as Notion's properties. */
+.nb-props { display: flex; flex-direction: column; gap: 1px; margin: -10px 0 18px; }
+.nb-props[hidden] { display: none; }
+.nb-prop { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.nb-prop-label { flex: none; display: inline-flex; align-items: center; gap: 7px; width: 132px; color: var(--color-muted); font-size: 13px; }
+.nb-prop-label .icon { flex: none; width: 13px; height: 13px; color: var(--color-sand-400); }
+.nb-prop-value {
+  flex: 1; min-width: 0; height: 28px; padding: 0 7px; border: 1px solid transparent; border-radius: 6px; background: transparent;
+  color: var(--color-ink); font: inherit; font-size: 13.5px;
+}
+.nb-prop-value::placeholder { color: var(--color-sand-300); }
+.nb-prop-value:not([readonly]):hover { background: color-mix(in srgb, var(--color-sand-200) 50%, transparent); }
+.nb-prop-value:focus { outline: none; border-color: var(--color-brand-400); background: var(--color-surface); }
+.nb-prop-open { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 6px; color: var(--color-muted); }
+.nb-prop-open:hover { background: var(--color-recess); color: var(--color-brand-700); }
+.nb-prop-open .icon { width: 12px; height: 12px; }
+.nb-prop-fill .nb-prop-label, .nb-prop-fill .nb-prop-label .icon { color: var(--color-brand-600); }
+
+/* The cover runs the paper's width at its top. */
+.nb-cover { position: relative; height: 210px; margin: -16px -24px 18px; overflow: hidden; border-radius: 12px 12px 0 0; background: var(--color-recess); }
+@media (min-width: 640px) { .nb-cover { margin: -16px -48px 22px; } }
+.nb-cover[hidden] { display: none; }
+.nb-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nb-cover-tools { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+.nb-cover:hover .nb-cover-tools, .nb-cover-tools:focus-within { opacity: 1; }
+@media (hover: none) { .nb-cover-tools { opacity: 1; } }
+.nb-cover-tools button {
+  height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-ink); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; box-shadow: var(--shadow-xs);
+}
+.nb-cover-tools button:hover { background: var(--color-surface); }
+.nb-head-menu.nb-cover-menu { width: 300px; top: calc(100% + 4px); }
+.nb-cover .nb-head-menu.nb-cover-menu { top: auto; bottom: 42px; left: auto; right: 12px; }
+.nb-cover-menu-label { margin: 2px 4px 6px; color: var(--color-muted); font-size: 11.5px; font-weight: 600; }
+.nb-cover-pics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.nb-cover-pics button { padding: 0; border: 2px solid transparent; border-radius: 6px; background: var(--color-recess); cursor: pointer; overflow: hidden; aspect-ratio: 4 / 3; }
+.nb-cover-pics button:hover { border-color: var(--color-brand-500); }
+.nb-cover-pics img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* "Linked from 2 pages", under the meta line once another page links here. */
 .nb-linked-from { margin: -12px 0 16px; color: var(--color-muted); font-size: 12px; }
@@ -196,9 +300,9 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 
 /* ---------------------------------------------------------------- welcome */
 
-.nb-welcome { max-width: 760px !important; min-height: 70vh; }
-.nb-starter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; width: 100%; margin: 8px 0 12px; }
-.nb-starter-grid.is-compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.nb-welcome { max-width: 780px; margin: 0 auto; padding: 48px 24px 80px; }
+.nb-welcome h2 { margin: 0 0 14px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; color: var(--color-ink); }
+.nb-starter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; width: 100%; margin: 8px 0 12px; }
 .nb-starter {
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 10px;
   background: var(--color-surface); color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow-xs);
@@ -207,7 +311,59 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 .nb-starter .icon { width: 18px; height: 18px; color: var(--color-brand-600); margin-bottom: 4px; }
 .nb-starter b { font-size: 13px; }
 .nb-starter small { color: var(--color-muted); font-size: 11.5px; line-height: 1.35; }
-.is-compact .nb-starter { padding: 9px 10px; }
+a.nb-starter { text-decoration: none; }
+
+/* ---------------------------------------------------------------- new page
+
+   Title, Topic, Kind, Start from: a label each, in that order. */
+
+.nb-new-card { max-width: 660px !important; }
+.nb-new { gap: 14px !important; }
+.nb-new-field { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: 10px; }
+.nb-new-field[hidden] { display: none; }
+.nb-new-label { color: var(--color-ink-soft); font-size: 12.5px; font-weight: 600; }
+.nb-new-field input, .nb-new-field select, .nb-new-cite-row input {
+  width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--color-hairline); border-radius: 8px;
+  background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 13.5px;
+}
+.nb-new-field input[name="title"] { font-size: 15px; font-weight: 600; }
+.nb-new-field input:focus, .nb-new-field select:focus, .nb-new-cite-row input:focus { outline: 2px solid var(--color-brand-600); outline-offset: -1px; }
+.nb-new-cite { align-items: start; }
+.nb-new-cite > .nb-new-label { padding-top: 8px; }
+.nb-new-cite-row { display: flex; gap: 6px; }
+.nb-new-found { grid-column: 2; color: var(--color-ok-700); font-size: 12px; line-height: 1.4; }
+.nb-new-found.is-error { color: var(--color-danger-600); }
+.nb-new-group { margin: 0; padding: 0; border: 0; min-width: 0; }
+.nb-new-group > legend { padding: 0; margin-bottom: 6px; }
+.nb-new-kinds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 560px) { .nb-new-kinds { grid-template-columns: 1fr; } .nb-new-field { grid-template-columns: 1fr; gap: 4px; } .nb-new-found { grid-column: 1; } }
+.nb-new-kind {
+  position: relative; display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px; border: 1px solid var(--color-hairline); border-radius: 10px;
+  background: var(--color-surface); cursor: pointer;
+}
+.nb-new-kind:hover { border-color: var(--color-brand-400); }
+.nb-new-kind input { position: absolute; opacity: 0; pointer-events: none; }
+.nb-new-kind:has(input:checked) { border-color: var(--color-brand-600); background: color-mix(in srgb, var(--color-brand-600) 7%, var(--color-surface)); box-shadow: 0 0 0 1px var(--color-brand-600); }
+.nb-new-kind:has(input:focus-visible) { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+.nb-new-kind-icon { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 7px; background: color-mix(in srgb, var(--color-brand-600) 10%, var(--color-surface)); color: var(--color-brand-600); }
+.nb-new-kind-icon .icon { width: 15px; height: 15px; }
+.nb-new-kind b { display: block; font-size: 13px; color: var(--color-ink); }
+.nb-new-kind small { display: block; margin-top: 1px; color: var(--color-muted); font-size: 11.5px; line-height: 1.35; }
+.nb-new-starts { display: flex; flex-direction: column; gap: 2px; max-height: 210px; overflow-y: auto; }
+.nb-new-start { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.nb-new-start:hover { background: var(--color-recess); }
+.nb-new-start:has(input:checked) { background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); }
+.nb-new-start input { flex: none; accent-color: var(--color-brand-600); margin: 0; }
+.nb-new-start b { display: block; font-size: 13px; font-weight: 600; color: var(--color-ink); }
+.nb-new-start b em { margin-left: 4px; font-style: normal; font-weight: 500; }
+.nb-new-start small { display: block; color: var(--color-muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-new-note { margin: 6px 0 0; color: var(--color-muted); font-size: 11.5px; }
+.nb-new-check { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; }
+.nb-new-check input { margin-top: 3px; accent-color: var(--color-brand-600); }
+.nb-new-check b { display: block; font-size: 13px; }
+.nb-new-check small { display: block; color: var(--color-muted); font-size: 11.5px; line-height: 1.4; }
+.nb-new-foot { display: flex; align-items: center; gap: 8px; padding: 12px 20px 14px; border-top: 1px solid var(--color-sand-100); }
+.nb-tpl-card { max-width: 480px !important; }
 
 /* ---------------------------------------------------------------- drawer */
 
@@ -267,6 +423,8 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 .nb-diff-del { background: color-mix(in srgb, var(--color-danger-600) 12%, transparent); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--color-danger-600) 45%, transparent); }
 .nb-diff-skip { color: var(--color-muted); background: var(--color-recess); font-family: var(--font-sans); font-size: 11px; }
 .nb-result { display: block; padding: 8px; border-radius: 8px; color: var(--color-ink); text-decoration: none; }
+.nb-result.has-cover { display: flow-root; }
+.nb-result-cover { float: right; width: 64px; height: 44px; margin: 0 0 4px 8px; border-radius: 6px; object-fit: cover; }
 .nb-result:hover { background: var(--color-recess); }
 .nb-result b { display: block; font-size: 13px; }
 .nb-result small { display: block; color: var(--color-muted); font-size: 11.5px; }
@@ -468,3 +626,30 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 .nb-folder-select select { max-width: 180px; padding: 2px 6px; border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 12px; }
 /* New folder / Edit folder: the icon grid inside the name dialog. */
 .bio-dialog .icon-picker { margin-top: 12px; }
+
+/* Reading: papers and talks as cards with their covers, or every picture
+   in them, to find a paper by a figure (static/notebook-library.js). */
+.nb-lib-tools .seg .seg-item .icon { width: 13px; height: 13px; }
+.nb-read-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+.nb-read-card {
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--color-hairline); border-radius: 12px;
+  background: var(--color-surface); color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-xs);
+}
+.nb-read-card:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); }
+.nb-read-cover { display: grid; place-items: center; aspect-ratio: 16 / 9; overflow: hidden; background: var(--color-recess); }
+.nb-read-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nb-read-cover.is-empty { background: color-mix(in srgb, var(--color-brand-600) 7%, var(--color-surface)); }
+.nb-read-cover.is-empty .icon { width: 26px; height: 26px; color: color-mix(in srgb, var(--color-brand-600) 55%, transparent); }
+.nb-read-body { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 12px; }
+.nb-read-body b { font-size: 13.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nb-read-by { color: var(--color-ink-soft); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-read-body small { color: var(--color-muted); font-size: 11.5px; }
+.nb-read-pics { columns: 4 200px; column-gap: 10px; margin-top: 10px; }
+.nb-read-pic {
+  position: relative; display: block; margin: 0 0 10px; break-inside: avoid; overflow: hidden; border-radius: 10px;
+  border: 1px solid var(--color-hairline); background: var(--color-surface); color: var(--color-ink); text-decoration: none;
+}
+.nb-read-pic img { display: block; width: 100%; height: auto; }
+.nb-read-pic span { display: block; padding: 6px 9px 8px; font-size: 11.5px; color: var(--color-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-read-pic:hover { border-color: var(--color-brand-400); }
+@media (max-width: 560px) { .nb-prop-label { width: 96px; } }

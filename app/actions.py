@@ -1909,7 +1909,7 @@ def _starters() -> tuple[str, ...]:
     return tuple(k for k in STARTERS if k not in ("blank", "daily"))
 
 
-PAGE_KINDS = ("note", "experiment", "protocol", "meeting", "seminar")
+PAGE_KINDS = ("note", "experiment", "protocol", "reading", "meeting", "seminar")
 
 
 @action(name="notebook_page_new", area="notebook", title="New notebook page",

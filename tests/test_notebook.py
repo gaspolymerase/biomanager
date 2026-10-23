@@ -361,17 +361,101 @@ class PageKindTests(Notebook):
             html = self.m.get(f"/notebook?page={page}").get_data(as_text=True)
         self.assertIn('"labZone": "America/New_York"', html)
 
-    def test_a_new_page_s_title_box_starts_empty(self):
+    def test_a_new_page_s_title_box_starts_empty_and_wraps(self):
         page = self.new_page(self.m, starter="blank")
         html = self.m.get(f"/notebook?page={page}").get_data(as_text=True)
-        self.assertIn('id="page-title" class="page-title" value="" placeholder="Untitled page"', html)
+        # A box that wraps a long title onto more lines, not a one-line input that cuts it off.
+        self.assertRegex(html, r'<textarea id="page-title" class="page-title" rows="1" placeholder="Untitled page"[^>]*></textarea>')
 
     def test_the_notebook_page_renders_every_kind(self):
-        for starter in ("blank", "experiment", "protocol", "meeting", "seminar", "daily", "cloning", "western"):
+        for starter in ("blank", "experiment", "protocol", "reading", "meeting", "seminar", "daily", "cloning", "western"):
             page = self.new_page(self.m, starter=starter)
             r = self.m.get(f"/notebook?page={page}")
             self.assertEqual(r.status_code, 200, starter)
             self.assertIn(f'data-page-id="{page}"', r.get_data(as_text=True))
+
+
+class ReadingTests(Notebook):
+    """Reading notes: a paper's details under the title (the page's
+    properties), filled in from a DOI or what Zotero copies, a cover, and
+    Reading, which lists the papers and talks with their pictures."""
+
+    BIBTEX = ("@article{xu_2025, title = {Learning reshapes the {Visual} cortex}, author = {Xu, Ming and Lee, Jordan},"
+              " journal = {Nature Neuroscience}, year = {2025}, doi = {10.1038/s41593-025-01234-5}}")
+
+    def test_what_zotero_copies_is_read_in_each_format(self):
+        from app import citations
+        bib = citations.read(self.BIBTEX)
+        self.assertEqual(bib["title"], "Learning reshapes the Visual cortex")
+        self.assertEqual(bib["authors"], "Ming Xu; Jordan Lee")
+        self.assertEqual((bib["journal"], bib["year"], bib["doi"]), ("Nature Neuroscience", "2025", "10.1038/s41593-025-01234-5"))
+        ris = citations.read("TY  - JOUR\nTI  - Learning in mice\nAU  - Lee, Jordan\nT2  - Neuron\nPY  - 2023/01/02\nER  - ")
+        self.assertEqual((ris["title"], ris["authors"], ris["journal"], ris["year"]), ("Learning in mice", "Jordan Lee", "Neuron", "2023"))
+        csl = citations.read(json.dumps([{"id": "http://zotero.org/groups/77/items/ABCD1234", "title": "T", "container-title": "Cell",
+                                          "author": [{"family": "Doe", "given": "Jo"}], "issued": {"date-parts": [[2021, 3]]}}]))
+        self.assertEqual((csl["authors"], csl["year"]), ("Jo Doe", "2021"))
+        # Its Zotero address becomes a link that opens it in Zotero.
+        self.assertEqual(csl["zotero"], "zotero://select/groups/77/items/ABCD1234")
+        self.assertEqual(citations.read("zotero://select/library/items/WXYZ9876"), {"zotero": "zotero://select/library/items/WXYZ9876"})
+
+    def test_a_doi_alone_is_looked_up_and_a_failed_look_up_is_said_in_words(self):
+        from unittest import mock
+        from app import citations
+        found = {"title": "Looked up", "authors": "A B", "doi": "10.1234/x"}
+        with mock.patch.object(citations, "crossref", return_value=dict(found)) as lookup:
+            r = self.post_json(self.m, "/notebook/api/cite", {"text": "https://doi.org/10.1234/x"})
+        lookup.assert_called_once_with("10.1234/x")
+        self.assertEqual(r.get_json()["fields"]["title"], "Looked up")
+        with mock.patch.object(citations, "crossref", side_effect=citations.CitationError("offline")):
+            r = self.post_json(self.m, "/notebook/api/cite", {"text": "10.1234/x"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("Crossref", r.get_json()["error"])
+        self.assertEqual(self.post_json(self.m, "/notebook/api/cite", {"text": "just words"}).status_code, 400)
+
+    def test_a_reading_note_keeps_its_details_and_reading_lists_it(self):
+        page = self.new_page(self.m, kind="reading", title=uniq("Visual cortex"), properties=[
+            {"key": "authors", "value": "Ming Xu; Jordan Lee"}, {"key": "doi", "value": "10.1/x"},
+            {"key": "journal", "value": ""}, {"nonsense": 1}, "nope"])
+        info = self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]
+        self.assertEqual(info["kind"], "reading")
+        # Empty fields and anything not a field are dropped.
+        self.assertEqual(info["properties"], [{"key": "authors", "value": "Ming Xu; Jordan Lee"}, {"key": "doi", "value": "10.1/x"}])
+        picture = "/static/uploads/fig1.png"
+        self.save(self.m, page, body=f"## Key findings\n\n![Fig. 1 orientation maps]({picture})\n",
+                  properties=json.dumps(info["properties"] + [{"key": "cover", "value": picture}]))
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["cover"], picture)
+        listed = {x["id"]: x for x in self.m.get("/notebook/api/reading").get_json()["items"]}
+        self.assertEqual(listed[page]["fields"]["authors"], "Ming Xu; Jordan Lee")
+        self.assertEqual(listed[page]["fields"]["zotero"], "")
+        self.assertEqual(listed[page]["cover"], picture)
+        self.assertEqual(listed[page]["images"], [{"src": picture, "alt": "Fig. 1 orientation maps"}])
+        # Search reads the details too: a paper is found by its author.
+        found = self.m.get("/notebook/api/search?q=Jordan").get_json()["results"]
+        self.assertIn(page, [x["id"] for x in found])
+        self.assertEqual(next(x for x in found if x["id"] == page)["cover"], picture)
+
+    def test_reading_lists_papers_and_talks_the_person_may_open(self):
+        mine = self.new_page(self.m, starter="seminar")
+        theirs = self.new_page(client_for(make_user()), kind="reading", title=uniq("not shared"))
+        note = self.new_page(self.m, kind="note")
+        ids = [x["id"] for x in self.m.get("/notebook/api/reading").get_json()["items"]]
+        self.assertIn(mine, ids)
+        self.assertNotIn(theirs, ids)
+        self.assertNotIn(note, ids)
+
+    def test_a_page_from_before_keeps_its_named_properties(self):
+        page = self.new_page(self.m)
+        old = [{"name": "Cell line", "type": "text", "value": "HEK293"}]
+        self.save(self.m, page, properties=json.dumps(old))
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["properties"], old)
+
+    def test_an_empty_page_of_a_kind(self):
+        page = self.new_page(self.m, kind="protocol", title=uniq("Blank protocol"))
+        info = self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]
+        self.assertEqual((info["kind"], info["body"]), ("protocol", ""))
+        # A daily log is made by Today, one a day, not here.
+        page = self.new_page(self.m, kind="daily")
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["kind"], "note")
 
 
 class SubPageTests(Notebook):
@@ -567,7 +651,7 @@ class ProtocolLibraryTests(Notebook):
 
     def test_the_sidebar_opens_each_library_as_a_page(self):
         html = self.get_ok(self.m, "/notebook")
-        for key in ("protocols", "recipes", "meetings"):
+        for key in ("protocols", "recipes", "meetings", "reading"):
             self.assertIn(f'href="/notebook/{key}"', html)
             page = self.get_ok(self.m, f"/notebook/{key}")
             self.assertIn(f'data-library="{key}"', page)

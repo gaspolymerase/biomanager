@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Notebook and utilities — BioManager user guide</title>
-  <meta name="description" content="Notebook pages, protocols, data sheets, signing, and the bench calculators.">
+  <meta name="description" content="Notebook pages, paper notes, protocols, data sheets, signing, and the bench calculators.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/guide/notebook">
   <meta property="og:title" content="Notebook and utilities — BioManager user guide">
-  <meta property="og:description" content="Notebook pages, protocols, data sheets, signing, and the bench calculators.">
+  <meta property="og:description" content="Notebook pages, paper notes, protocols, data sheets, signing, and the bench calculators.">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
@@ -137,23 +137,41 @@
     <!-- page -->
     <p class="eyebrow">Your databases</p>
     <h1>Notebook and utilities</h1>
-    <p class="summary">Notebook pages, protocols, data sheets, signing, and the bench calculators.</p>
+    <p class="summary">Notebook pages, paper notes, protocols, data sheets, signing, and the bench calculators.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Notebook and utilities</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/protocol.webp" data-clip-src="../assets/clips/protocol"></video></div></figure>
 
       <h2 id="pages">Pages</h2>
       <ul>
-        <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. Topics are folders: a new page goes in the topic
-          you have open, or in <i>Inbox</i> when none is, whatever kind of page it is. Type <b>/</b> at the start of a line for a menu of
-          blocks: tables, plots, protocols, calculators and the rest below. <b>Templates</b>: ⋯ → <b>Save as template</b>, and start new
-          pages from it (a name you already use asks before replacing that template). It keeps the page's type (an Experiment template makes Experiments); <b>Structure only</b> keeps the headings,
+        <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. Topics are folders, listed in the notebook's
+          sidebar: <b>+</b> beside <i>Topics</i> names a new one, a topic's own <b>+</b> starts a page in it, and its <b>•••</b>
+          renames it or deletes it with its pages. Drag a page onto a topic to move it there. The sidebar's button at the top (or
+          <kbd>Ctrl</kbd>+<kbd>\</kbd>, <kbd>⌘</kbd>+<kbd>\</kbd> on a Mac) hides it, so the page has the window; the same button
+          beside the page's place brings it back.</li>
+        <li><b>New page</b> asks four things, each labelled: the <b>Title</b>, the <b>Topic</b> it goes in, its <b>Kind</b>, and what
+          to <b>Start from</b>. Each kind says what it adds:
+          <ul>
+            <li><b>Note</b>: just the page.</li>
+            <li><b>Experiment</b>: a status, the times it started and finished, and the protocol it follows.</li>
+            <li><b>Protocol</b>: numbered versions, <b>Run</b> step by step, and experiments started from it.</li>
+            <li><b>Reading</b>: a paper, with its authors, DOI, Zotero link and a cover, listed in <b>Reading</b> (below).</li>
+            <li><b>Meeting</b>: a presenter rotation, and tasks naming <code>@someone</code> sent to their calendar.</li>
+            <li><b>Seminar</b>: the speaker and their affiliation, listed in <b>Reading</b> beside the papers.</li>
+            <li><b>Daily log</b> is <i>Today</i>, one page a day.</li>
+          </ul>
+          <b>Start from</b> lists the built-in starters of that kind (an Experiment can start as <i>Cloning</i>, <i>Western blot</i> or
+          <i>qPCR</i>), an empty page, and your templates of that kind. <b>Import .md</b> at the bottom brings in a Markdown file instead.
+          Type <b>/</b> at the start of a line for a menu of blocks: tables, plots, protocols, calculators and the rest below.</li>
+        <li><b>Templates</b>: ⋯ → <b>Save as template</b> asks for a name and <b>Who can use it</b> (just you, everyone in the lab,
+          or a project group); a name you already use asks before replacing that template. It keeps the page's kind (an Experiment
+          template makes Experiments) and is listed under <b>Start from</b> for that kind. <b>Structure only</b> keeps the headings,
           steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results,
-          Observations or Conclusion; <b>Share it with the lab</b> offers it to
-          everyone.</li>
+          Observations or Conclusion.</li>
         <li>In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move
-          the page: search your topics, or type a new name to make one. The pages inside it move with it. The icon beside the title
-          is the page's kind (note, experiment, protocol, meeting, seminar or daily log): click it to change the kind, which never
-          moves the page. Under the title are its date, status and tags; once other pages link to it, <b>Linked from</b> lists
-          them.</li>
+          the page: search your topics, or type a new name to make one. The pages inside it move with it. Above the title is the
+          page's kind: click it to change it, which never moves the page. Hover there for <b>Add cover</b>, a picture across the top of
+          the page (uploaded, or one of the page's own pictures); <b>Change cover</b> and <b>Remove</b> are on the cover. The title
+          wraps onto as many lines as it needs. Under it are its date, status and tags; once other pages link to it, <b>Linked from</b>
+          lists them.</li>
         <li>Write as in Notion: type <b>/</b> and a few letters of what you want (<code>/h2</code>, <code>/toggle</code>; Chinese words
           work too, <code>/分栏</code>).
           <ul>
@@ -201,17 +219,34 @@
           (<a href="ai-assistants.html">AI assistants</a>). If the page is open, the line
           appears in it within a few seconds.</li>
       </ul>
+      <h2 id="reading">Paper notes and Reading</h2>
+      <ul>
+        <li>A <b>Reading</b> page (start one with <b>Paper notes</b>) keeps the paper's <b>Authors</b>, <b>Journal</b>, <b>Year</b>,
+          <b>DOI</b>, <b>Link</b> and <b>Zotero</b> link as rows under its title; click a row to type in it. The ↗ beside the DOI,
+          the link or the Zotero link opens it; the Zotero one opens the item in Zotero on your computer.</li>
+        <li><b>Fill in</b>: paste a DOI, a doi.org link, or the item copied from Zotero and press <kbd>Enter</kbd>, and the rows and an
+          empty title are filled in. In Zotero, set <b>Settings → Export → Item Format</b> (Quick Copy) to BibTeX, RIS or CSL JSON, select
+          the paper and press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> on a Mac).
+          CSL JSON also brings the Zotero link. A DOI on its own is looked up at Crossref, which needs the internet; pasting from
+          Zotero doesn't. <b>Paper</b> in New page does the same before the page is made, and names the page after the paper.</li>
+        <li>Give a paper notes a <b>cover</b>: its key figure, uploaded or picked from the pictures in the page.</li>
+        <li><b>Reading</b> in the notebook's sidebar lists every paper and talk you can open, yours and those shared with you, as
+          cards with their covers. <b>Papers</b> and <b>Talks</b> narrow it, and the picture button shows every picture in them
+          instead, so you can find a paper by a figure you remember; click one to open its page. The search reads titles,
+          authors, journals, DOIs, tags and the captions of pictures. The notebook's own search finds a paper by its authors and
+          DOI too.</li>
+      </ul>
       <h2 id="experiments-and-protocols">Experiments and protocols</h2>
       <ul>
-        <li><b>Experiments</b>: aim, setup, samples and lot numbers, steps, results and a summary. <i>Start</i> and <i>Finished</i> stamp the times;
-          planned, running, done or failed shows in the sidebar. (The colony's <b>Experiments</b> tab groups the animals.)</li>
+        <li><b>Experiments</b>: aim, setup, samples and lot numbers, steps, results and a summary. <b>Start experiment</b>, beside the status,
+          and <b>Finished</b> stamp the times; running experiments are listed at the top of the sidebar. (The colony's <b>Experiments</b> tab groups the animals.)</li>
         <li><b>Colony experiment</b> (<code>/experiment</code>) shows an experiment on any of your animals in the page: each day's manipulation, the
           reagent and lot it used (<i>(expired)</i> when the lot was past its expiry that day), when it was done and by whom, the amount each mouse got, and the body weights as a table and a chart (grams or % of the first
           weight, with the manipulation days marked). When the experiment has other measures beside its main readout (an ELISA a plate
           filled), a button for each switches the table and chart to it, and the page keeps the one you picked. It stays up to date; <b>Freeze a copy</b> keeps what it shows now in the page,
           so later changes to the experiment don't alter your record. On the experiment itself, <b>Add to notebook</b> makes your
           page for it with this block already in.</li>
-        <li><b>Protocols</b> with numbered versions. <i>Start an experiment from it</i> copies the steps as a checklist and records the
+        <li><b>Protocols</b> with numbered versions. <b>Start experiment</b>, in the protocol's bar, copies the steps as a checklist and records the
           version; <b>Run mode</b> takes you through it at the bench, one step at a time.</li>
         <li><b>Protocols</b> in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or
           make one with <b>New protocol</b>. Sort them into folders: <b>New folder</b>, then drag a protocol onto it, or pick its
@@ -305,9 +340,10 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 13 min read</p>
+      <p>On this page · 16 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
+        <li class="lvl2"><a href="#reading">Paper notes and Reading</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">Experiments and protocols</a></li>
         <li class="lvl2"><a href="#data-and-calculators">Data and calculators</a></li>
         <li class="lvl2"><a href="#signing">Signing a page</a></li>

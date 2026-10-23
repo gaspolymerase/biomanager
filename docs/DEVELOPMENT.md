@@ -1959,10 +1959,28 @@ are written in the page, and `notebook-page.js` (`liftHeader`) moves them
 into the window's title row before anything is wired; every lookup is by
 id or across the document. While a side panel is open the list folds away,
 and the formatting bar centres on the paper (`frontend/src/toolbar.js`).
+The list also hides on its own (`[data-side-toggle]`, Ctrl+\ / ⌘\):
+`nb-side` in localStorage, read by an inline script before the page draws
+(`#nb-shell.is-side-closed`, and `body.nb-side-is-closed` for the buttons
+in the lifted path). The title is a `<textarea>` that grows with what it
+holds (`fitTitle`; a pasted line break becomes a space), 40px over the
+editor's 30/24/20px headings and 16px text (`frontend/src/styles.css`), as
+Notion sets them.
+
+The sidebar's topics are run by the template's own script, so they work
+without the editor bundle: **+** names a new topic in place
+(`/notebook/tabs/create`), a topic's **•••** (`#nb-topic-menu`) renames it
+in place or deletes it, and a page dragged onto a topic posts
+`/notebook/pages/<id>/move`. **New page** (`#nb-new-form`,
+`window.NotebookNewPage.open({kind, tab})`) asks for a title, topic, kind
+and what to start from: the `STARTERS` of that kind, an empty page (`kind`
+alone to `/notebook/api/pages/new`) and the person's templates of that
+kind; **Save as template** is its own small form (name, who can use it,
+structure only).
 
 | Table | Holds |
 | --- | --- |
-| `notebook_page_info` | kind (note, experiment, protocol, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation, and `parent_page_id`: the page a sub-page was made in (revision 0028) |
+| `notebook_page_info` | kind (note, experiment, protocol, reading, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation, and `parent_page_id`: the page a sub-page was made in (revision 0028) |
 | `notebook_shares` | who else may open a page, and whether to view or edit (`*` is the whole lab, guests excepted) |
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
@@ -1972,8 +1990,8 @@ and the formatting bar centres on the paper (`frontend/src/toolbar.js`).
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
 
-**Libraries.** Protocols, Recipes and Meetings in the notebook's sidebar
-are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`,
+**Libraries.** Protocols, Recipes, Meetings and Reading in the notebook's sidebar
+are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`, `/notebook/reading`,
 `NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
 and `static/notebook-library.js` in the main column. It reads the same
 `/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
@@ -1988,6 +2006,32 @@ but a guest makes one; their maker or an admin renames or deletes one
 (what was in it stays, in none); `/api/folders/file` files a protocol for
 whoever may edit its page, a recipe for its owner or an admin. The
 `/protocol` drawer and Load from library list by folder.
+
+**A page's details and cover.** `notebook_pages.properties` (JSON, a
+column from before 0.8) holds them: `[{"key", "value"}]` for a kind's
+fields (`KIND_FIELDS`: a reading page's authors, journal, year, DOI, link
+and Zotero link; a seminar's speaker, affiliation and link) and `cover`,
+an uploaded picture's address, which any page may have. Entries from before
+(`{"name", "type", "value"}`) are kept as they were and shown as rows.
+`clean_properties` trims whatever is sent (`/update`, `/api/pages/new`):
+text only, an empty field dropped, at most 40. The uploads hook owns a cover
+for the page like any picture in it (its text names it). Search reads the
+properties too, and its results carry the cover. `KIND_HINTS` says what
+each kind adds, in the kind menu and New page; the template gets
+`KIND_FIELDS` as `[key, label]` pairs, since `tojson` sorts a dict's keys.
+
+**Reading notes.** `app/citations.py` reads what a person pastes into
+**Fill in** or New page's **Paper** (`/notebook/api/cite`): CSL JSON, BibTeX
+or RIS (what Zotero's Quick Copy or Export gives), a `zotero://select/…`
+link, or a DOI, which alone is looked up at `api.crossref.org` (the only
+host, 8 s; a failure is `CitationError`, said in words). A CSL JSON item's
+zotero.org address becomes its `zotero://select/library/items/<KEY>` (or
+`groups/<n>`) link. `/notebook/api/reading` lists the reading and seminar
+pages the person may open with their fields, cover and the pictures in
+their Markdown (`page_images`), which `notebook-library.js` draws as cards
+or as one wall of pictures (`nb-reading-view` in localStorage), filtered in
+the browser. The notebook's "Reading" is `notebook::Reading` in the
+translations: plain "Reading" is a measurement's.
 
 **Durations and clocks.** `frontend/src/durations.js` finds what gets a
 step timer and leaves time points out (a list of times, "at 24 h", "48 h
@@ -2006,7 +2050,7 @@ was made from when that topic is the person's own, else the topic open
 (`templates/notebook.html`) is a breadcrumb: the topic opens **Move to**
 (`#nb-move-menu`, posting `/notebook/pages/<id>/move`, or
 `/notebook/tabs/create` first for a new topic), then `parents_of()`; the
-title row's icon is the kind (`#nb-kind-menu`, hints in `KIND_HINTS`).
+kind sits above the title (`#nb-kind-menu`, hints in `KIND_HINTS`).
 
 **Sub-pages and links between pages.** `/page` posts
 `/notebook/api/pages/new` with `parent_page_id` (a page the person can
