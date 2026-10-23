@@ -1857,7 +1857,7 @@ def cage_sheet_row(cage) -> dict:
         due = cl.born + timedelta(days=weaning_offset())
         left = (due - today).days
         return {"born": cl.born.isoformat(), "label": fmt_day(cl.born), "age": (today - cl.born).days,
-                "pups": cl.pups or "", "dam": cl.dam or "", "litter": cl.litter.litter_id if cl.litter else "",
+                "pups": cl.pups or "", "dam": cl.dam or "", "sire": cl.sire or "", "litter": cl.litter.litter_id if cl.litter else "",
                 "genotyped": cl.litter_id_fk is not None,
                 "wean_due": fmt_day(due), "wean_state": "overdue" if left < 0 else "soon" if left <= 3 else "",
                 "genotyping_due": fmt_day(cl.born + timedelta(days=genotyping_offset())),
@@ -5381,8 +5381,8 @@ def cage_give_birth(cage_row_id: int):
     another litter (`litter_choice=another`; both are kept) or corrects the
     earlier one's date (`correct`, and with two, `litter`: the birth date of
     the one to correct). Without saying, nothing is changed: guessing either
-    way loses a litter's reminders. The same date again only adds the count
-    or the mother to that litter."""
+    way loses a litter's reminders. The same date again only adds the count,
+    the father or the mother to that litter."""
     with SessionLocal() as db_session:
         cage = db_session.get(CageRecord, cage_row_id)
         blocked = deny(cage, "cages")
@@ -5416,6 +5416,7 @@ def _record_birth(db_session, cage, form) -> str | None:
         return gettext("Pups must be a whole number from 1 to 40, not “%(value)s”. Nothing was changed.", value=raw_pups)
     pups = int(raw_pups) if raw_pups else None
     dam = (form.get("dam") or "").strip()[:120]
+    sire = (form.get("sire") or "").strip()[:120]
     choice = (form.get("litter_choice") or "").strip().lower()
     still = open_litters(cage)
     wean = fmt_day(born + timedelta(days=weaning_offset()))
@@ -5431,6 +5432,8 @@ def _record_birth(db_session, cage, form) -> str | None:
             same.pups = pups
         if dam:
             same.dam = dam
+        if sire:
+            same.sire = sire
         refresh_birth_date(cage)
         earlier = [cl for cl in still if cl is not same]
         if earlier and choice == "another":
@@ -5466,6 +5469,8 @@ def _record_birth(db_session, cage, form) -> str | None:
         wrong.pups = pups
     if dam:
         wrong.dam = dam
+    if sire:
+        wrong.sire = sire
     refresh_birth_date(cage)
     flash(gettext("Corrected the litter in cage %(cage)s: born %(born)s, not %(was)s. Weaning is due %(wean)s.",
                   cage=cage.cage_id, born=fmt_day(born), was=fmt_day(was), wean=wean), "success")
@@ -5510,15 +5515,17 @@ def cage_genotyping(cage_row_id: int):
         if refused:
             flash(refused, "error")
             return redirect(url_for("colony", view="cages"))
+        # Nothing is required: pups not counted yet make the litter without
+        # its mice, which can be added to it later.
         raw_pups = (request.form.get("total_pups") or "").strip()
         if not raw_pups and born_in is not None and born_in.pups:
             raw_pups = str(born_in.pups)       # counted when the litter was recorded
-        if not raw_pups.isdigit() or not 1 <= int(raw_pups) <= 40:
+        if raw_pups and (not raw_pups.isdigit() or not 1 <= int(raw_pups) <= 40):
             flash(gettext("Pups must be a whole number from 1 to 40, not “%(value)s”. No litter was created.",
-                          value=raw_pups or gettext("(blank)")), "error")
+                          value=raw_pups), "error")
             return redirect(url_for("colony", view="cages"))
-        total_pups = int(raw_pups)
-        father_info = request.form.get("father_info", "").strip()
+        total_pups = int(raw_pups) if raw_pups else 0
+        father_info = request.form.get("father_info", "").strip() or (born_in.sire if born_in is not None else "")
         mother_info = request.form.get("mother_info", "").strip() or (born_in.dam if born_in is not None else "")
         litter = LitterRecord(litter_id=generate_litter_id(db_session, cage),
                               date_of_birth=born_in.born if born_in is not None else (cage.date_give_birth or date.today()))
@@ -5531,7 +5538,7 @@ def cage_genotyping(cage_row_id: int):
         db_session.flush()  # the litter's id, for the pups' column
         if born_in is not None and born_in.litter_id_fk is None:
             born_in.litter = litter
-            if not born_in.pups:
+            if not born_in.pups and total_pups:
                 born_in.pups = total_pups
         for _ in range(total_pups):
             mouse = MouseRecord(
@@ -5544,8 +5551,11 @@ def cage_genotyping(cage_row_id: int):
             db_session.add(mouse)
             db_session.flush()
         db_session.commit()
-        flash(gettext("Created litter %(litter)s with %(pups)s pups in cage %(cage)s.", litter=litter.litter_id,
-                      pups=total_pups, cage=cage.cage_id), "success")
+        if total_pups:
+            flash(gettext("Created litter %(litter)s with %(pups)s pups in cage %(cage)s.", litter=litter.litter_id,
+                          pups=total_pups, cage=cage.cage_id), "success")
+        else:
+            flash(gettext("Created litter %(litter)s in cage %(cage)s, with no pups yet: add them to it once they are counted.", litter=litter.litter_id, cage=cage.cage_id), "success")
     return redirect(url_for("colony", view="cages"))
 
 

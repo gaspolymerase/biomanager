@@ -482,9 +482,9 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 
 Set up a mating by putting the breeders in a cage whose purpose is **Breeding**. On the **Cages** tab, open it (its arrow or mice count) or find its card under **Cards**: **Litter born**, **Genotyping** and **Wean** are there, and only on Breeding cages. **Create litter** numbers each litter L-1, L-2, L-3… (type your own ID instead if you like).
 
-1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and records the birth. BioManager works out weaning (P21) and genotyping (P28), or the days set in [Settings → General](https://biomanager.org/guide/lab-setup), which appear on Home and the calendar when due — the same list in both. A cage can have two litters at once (a trio's second female): when it has one not yet weaned, **Litter born** asks whether this is **Another litter**, kept beside the first with its own dates, or **Correct the date** of the first. The cage then lists each litter with its age, and Home and the calendar show each one, with the day it was born.
+1. **Litter born** asks for the date of birth (today unless you change it; a date in the future is refused) and, if you know them, the pups, the father and the mother, and records the birth; none of it is required. BioManager works out weaning (P21) and genotyping (P28), or the days set in [Settings → General](https://biomanager.org/guide/lab-setup), which appear on Home and the calendar when due — the same list in both. A cage can have two litters at once (a trio's second female): when it has one not yet weaned, **Litter born** asks whether this is **Another litter**, kept beside the first with its own dates, or **Correct the date** of the first. The cage then lists each litter with its age, and Home and the calendar show each one, with the day it was born.
 
-2. **Genotyping** asks for the mouse numbers of the father and mother, and how many pups were born; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it. With two litters, it asks whose pups, the oldest not yet genotyped first.
+2. **Genotyping** asks for the mouse numbers of the father and mother, and how many pups were born, filled in from **Litter born** when you gave them there; **Create litter** makes the litter and a mouse for each pup, set to *geno*. They wait in the genotyping queue on Home until you change their **Status** from *geno*; entering a genotype alone doesn't take them off it. With two litters, it asks whose pups, the oldest not yet genotyped first.
 
 3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm. With two litters, it asks which, the oldest first; the other stays, with its own weaning date.
 
@@ -514,7 +514,7 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 
 3. Press **Litter born**.
 
-4. Check the **Date of birth**: it is today unless you change it, and a date in the future is refused. **Pups** and **Mother** are there too, if you know them; Genotyping starts from them.
+4. Check the **Date of birth**: it is today unless you change it, and a date in the future is refused. **Pups**, **Father** and **Mother** are there too, if you know them; Genotyping fills them in. Every field can be left empty.
 
 5. If the cage has a litter that isn't weaned yet, choose what this one is: **Another litter** (a second female's, a week or two after the first: both are kept) or **Correct the date** (the earlier date was wrong). With two litters there, **Which litter** says whose date you are correcting. Nothing is recorded until you choose.
 
@@ -540,7 +540,7 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 
 1. Once the litter is [recorded](https://biomanager.org/guide/record-a-litter), open the breeding cage on the **Cages** tab and press **Genotyping**.
 
-2. In **Father** and **Mother**, type the parents' mouse numbers, and in **Pups**, how many pups were born. Father and mother start as the mouse numbers of the cage's first male and female (the mother and pups you gave at **Litter born**, if you did). Pups is a whole number from 1 to 40.
+2. In **Father** and **Mother**, type the parents' mouse numbers, and in **Pups**, how many pups were born. The father, mother and pups you gave at **Litter born** are filled in; otherwise father and mother start as the mouse numbers of the cage's first male and female. Nothing is required: Pups is a whole number from 1 to 40, or left empty to make the litter now and add its pups later.
 
 3. If the cage has two litters, choose whose pups these are under **Litter**. It starts on the oldest litter not yet genotyped.
 

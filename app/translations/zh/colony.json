@@ -385,5 +385,14 @@
   "strain": "品系",
   "The mouse’s strain or background, such as C57BL/6J. Pick one or type your own; the choices are under Dropdowns.": "小鼠的品系或遗传背景，例如 C57BL/6J。可以从列表里选，也可以自己输入；选项在“下拉选项”里设置。",
   "e.g. C57BL/6J": "例如 C57BL/6J",
-  "Loading the cages…": "正在加载笼…"
+  "Loading the cages…": "正在加载笼…",
+  "Record the day the pups were born: weaning and genotyping are then due from it. Every field can be left empty and filled in later.": "记录幼崽出生的日期：断奶和基因型鉴定的日期都从这天算起。每一项都可以留空，之后再补。",
+  "Today unless you change it.": "默认今天，可以改。",
+  "How many were born, if you have counted them.": "生了几只，数过的话填上。",
+  "The father’s mouse number, or a note. Genotyping fills it in.": "父本的小鼠编号，或一句备注。基因型鉴定时会自动填上。",
+  "The mother’s mouse number, or a note. Genotyping fills it in.": "母本的小鼠编号，或一句备注。基因型鉴定时会自动填上。",
+  "The father and mother recorded at Litter born are filled in. Nothing here is required.": "产仔时记下的父本和母本会自动填上。这里每一项都不是必填。",
+  "The father’s mouse number, or a note.": "父本的小鼠编号，或一句备注。",
+  "The mother’s mouse number, or a note.": "母本的小鼠编号，或一句备注。",
+  "How many pups: one mouse is made for each. Empty makes the litter now, and its pups can be added later.": "幼崽数：每只建一只小鼠。留空则先创建窝，幼崽之后再加。"
 }

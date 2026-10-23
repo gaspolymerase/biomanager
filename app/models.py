@@ -334,7 +334,7 @@ class CageRecord(Base):
 
 class CageLitter(Base):
     """A litter born in a cage (Litter born on a Breeding cage): its birth
-    date, how many pups if counted, its dam if known, and its own weaning
+    date, how many pups if counted, its dam and sire if known, and its own weaning
     and genotyping days, until it is weaned. Genotyping makes its pups a
     litter of mice (`litter`). The cage's date_give_birth is its oldest
     litter not yet weaned (services.refresh_birth_date), so everything that
@@ -347,6 +347,7 @@ class CageLitter(Base):
     born: Mapped[date] = mapped_column(Date)
     pups: Mapped[int | None] = mapped_column(Integer, nullable=True)
     dam: Mapped[str] = mapped_column(String(120), default="", server_default="")
+    sire: Mapped[str] = mapped_column(String(120), default="", server_default="")  # revision 0045
     litter_id_fk: Mapped[int | None] = mapped_column(ForeignKey("litters.id"), nullable=True, index=True)
     weaned_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -112,7 +112,7 @@ def cage_litters(c: CageRecord) -> list[dict]:
     """The cage's litters not yet weaned, oldest first: what the phone lists
     and what its Genotyping and Wean ask between (litter: the birth date)."""
     from . import services
-    return [{"born": _d(cl.born), "pups": cl.pups, "dam": cl.dam or "", "litter": cl.litter_id_fk,
+    return [{"born": _d(cl.born), "pups": cl.pups, "dam": cl.dam or "", "sire": cl.sire or "", "litter": cl.litter_id_fk,
              "wean_due": _d(services.litter_wean_due(cl)), "genotyping_due": _d(services.litter_genotyping_due(cl))}
             for cl in services.open_litters(c)]
 

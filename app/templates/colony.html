@@ -1229,16 +1229,24 @@
   </div>
 </dialog>
 
-{# Litter born: the date is confirmed (today unless changed), never assumed. #}
+{# Litter born: the date is confirmed (today unless changed), never assumed.
+   Nothing is required: a blank date is today, and the father and mother
+   recorded here are what Genotyping fills in. #}
 <dialog id="litter-born-modal" class="mouse-modal">
   <form method="dialog" class="modal-topbar">
     <h3>{{ _('Litter born') }} <small id="litter-born-cage" class="muted-inline"></small></h3>
     <button type="submit" class="ghost-button">{{ _('Close') }}</button>
   </form>
-  <form method="post" id="litter-born-form" class="modal-grid">
-    <label>{{ _('Date of birth') }} <input type="date" id="litter-born-date" name="date_give_birth" required></label>
-    <label>{{ _('Pups') }} <input type="number" min="1" max="40" name="pups"></label>
-    <label>{{ _('Mother') }} <input name="dam"></label>
+  <form method="post" id="litter-born-form" class="modal-grid items-start">
+    <p class="muted-inline col-span-full">{{ _('Record the day the pups were born: weaning and genotyping are then due from it. Every field can be left empty and filled in later.') }}</p>
+    <label>{{ _('Date of birth') }} <input type="date" id="litter-born-date" name="date_give_birth">
+      <span class="field-hint normal-case tracking-normal">{{ _('Today unless you change it.') }}</span></label>
+    <label>{{ _('Pups') }} <input type="number" min="1" max="40" name="pups">
+      <span class="field-hint normal-case tracking-normal">{{ _('How many were born, if you have counted them.') }}</span></label>
+    <label>{{ _('Father') }} <input name="sire">
+      <span class="field-hint normal-case tracking-normal">{{ _('The father’s mouse number, or a note. Genotyping fills it in.') }}</span></label>
+    <label>{{ _('Mother') }} <input name="dam">
+      <span class="field-hint normal-case tracking-normal">{{ _('The mother’s mouse number, or a note. Genotyping fills it in.') }}</span></label>
     {# A cage with a litter not yet weaned: a second female's litter, or a
        wrong date? Asked, never guessed (app.py _record_birth). #}
     <fieldset class="col-span-full grid gap-1" id="litter-born-choice" hidden>
@@ -1258,11 +1266,15 @@
     <h3>{{ _('Genotyping') }}</h3>
     <button type="submit" class="ghost-button">{{ _('Close') }}</button>
   </form>
-  <form method="post" id="genotyping-form" class="modal-grid">
-    <p class="muted-inline col-span-full">{{ _('Type the mouse numbers of the father and the mother, and how many pups were born. Create litter makes a mouse for each pup, ready to genotype.') }}</p>
-    <label>{{ _('Father') }} <input id="genotyping-father" name="father_info"></label>
-    <label>{{ _('Mother') }} <input id="genotyping-mother" name="mother_info"></label>
-    <label>{{ _('Pups') }} <input type="number" min="1" max="40" value="1" name="total_pups" required></label>
+  <form method="post" id="genotyping-form" class="modal-grid items-start">
+    <p class="muted-inline col-span-full">{{ _('Type the mouse numbers of the father and the mother, and how many pups were born. Create litter makes a mouse for each pup, ready to genotype.') }}
+      {{ _('The father and mother recorded at Litter born are filled in. Nothing here is required.') }}</p>
+    <label>{{ _('Father') }} <input id="genotyping-father" name="father_info">
+      <span class="field-hint normal-case tracking-normal">{{ _('The father’s mouse number, or a note.') }}</span></label>
+    <label>{{ _('Mother') }} <input id="genotyping-mother" name="mother_info">
+      <span class="field-hint normal-case tracking-normal">{{ _('The mother’s mouse number, or a note.') }}</span></label>
+    <label>{{ _('Pups') }} <input type="number" min="1" max="40" name="total_pups">
+      <span class="field-hint normal-case tracking-normal">{{ _('How many pups: one mouse is made for each. Empty makes the litter now, and its pups can be added later.') }}</span></label>
     {# A cage with two litters waiting: which one's pups (the oldest not yet genotyped first). #}
     <label id="genotyping-which" hidden>{{ _('Litter') }} <select name="litter" disabled></select></label>
     <button type="submit">{{ _('Create litter') }}</button>
@@ -1337,6 +1349,7 @@ document.addEventListener('click', (event) => {
     day.value = today;
     day.max = today;
     form.elements.pups.value = '';
+    form.elements.sire.value = '';
     form.elements.dam.value = '';
     // A litter not yet weaned: ask whether this is another one or a
     // correction (the server refuses to guess). The same date again
@@ -1361,9 +1374,9 @@ document.addEventListener('click', (event) => {
     form.action = geno.dataset.action;
     document.getElementById('genotyping-father').value = geno.dataset.father || '';
     document.getElementById('genotyping-mother').value = geno.dataset.mother || '';
-    form.elements.total_pups.value = '1';
+    form.elements.total_pups.value = '';
     // Which litter's pups, when the cage has two waiting: the oldest not
-    // yet genotyped first; its count and mother fill in when recorded.
+    // yet genotyped first; its count, father and mother fill in when recorded.
     let litters = [];
     try { litters = JSON.parse(geno.dataset.litters || '[]'); } catch (_) {}
     const pick = form.elements.litter;
@@ -1373,7 +1386,8 @@ document.addEventListener('click', (event) => {
     document.getElementById('genotyping-which').hidden = litters.length < 2;
     const fill = () => {
       const chosen = litters.find((l) => l.born === pick.value) || litters[0];
-      if (chosen && chosen.pups) form.elements.total_pups.value = chosen.pups;
+      form.elements.total_pups.value = (chosen && chosen.pups) || '';
+      document.getElementById('genotyping-father').value = (chosen && chosen.sire) || geno.dataset.father || '';
       document.getElementById('genotyping-mother').value = (chosen && chosen.dam) || geno.dataset.mother || '';
     };
     pick.onchange = fill;
@@ -1396,7 +1410,8 @@ function litterOptionLabel(l) {
 let litterBornEarlier = [];
 function showLitterBornChoice() {
   const form = document.getElementById('litter-born-form');
-  const date = form.elements.date_give_birth.value;
+  // A blank date is today, as the server reads it.
+  const date = form.elements.date_give_birth.value || form.elements.date_give_birth.max;
   const ask = litterBornEarlier.length > 0 && !litterBornEarlier.some((l) => l.born === date);
   document.getElementById('litter-born-choice').hidden = !ask;
   form.querySelectorAll('input[name="litter_choice"]').forEach((radio) => { radio.required = ask; });

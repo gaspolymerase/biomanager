@@ -1259,9 +1259,9 @@ def weaning_title(item: dict) -> str:
 def cage_litter_json(cl: CageLitter) -> dict:
     """A cage's litter as the API, the due list and an assistant see it:
     its birth date (what `litter` takes in litter_genotyping and wean), its
-    pups and dam if recorded, the litter Genotyping made of its pups, and
+    pups, dam and sire if recorded, the litter Genotyping made of its pups, and
     its own days."""
-    return {"born": cl.born.isoformat(), "pups": cl.pups, "dam": cl.dam or "",
+    return {"born": cl.born.isoformat(), "pups": cl.pups, "dam": cl.dam or "", "sire": cl.sire or "",
             "litter": cl.litter.litter_id if cl.litter is not None else None,
             "age_days": (date.today() - cl.born).days,
             "wean_due": litter_wean_due(cl).isoformat(),
@@ -1771,6 +1771,8 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
         # on the wean / geno reminder, not just the raw ID.
         father = parent_label(litter.father_info) if litter else ""
         mother = parent_label(litter.mother_info) if litter else ""
+        if not father and cl.sire:
+            father = parent_label(cl.sire)
         if not mother and cl.dam:
             mother = parent_label(cl.dam)
         cage_geno = (cage.genotype_summary or "").strip()
@@ -1817,8 +1819,10 @@ def derive_auto_calendar_items(session, start_dt=None, end_dt=None) -> list[dict
             mother = parent_label(litter.mother_info)
             body_parts += [gettext("Father: %(mouse)s", mouse=father)] if father else []
             body_parts += [gettext("Mother: %(mouse)s", mouse=mother)] if mother else []
-        elif wean["cage_litter"] is not None and wean["cage_litter"].dam:
-            body_parts.append(gettext("Mother: %(mouse)s", mouse=parent_label(wean["cage_litter"].dam)))
+        elif wean["cage_litter"] is not None:
+            sire, dam = wean["cage_litter"].sire, wean["cage_litter"].dam
+            body_parts += [gettext("Father: %(mouse)s", mouse=parent_label(sire))] if sire else []
+            body_parts += [gettext("Mother: %(mouse)s", mouse=parent_label(dam))] if dam else []
         if cage is not None and (cage.genotype_summary or "").strip() and len(body_parts) == 1:
             body_parts.append(gettext("Genotype: %(genotype)s", genotype=cage.genotype_summary.strip()))
         where = ""

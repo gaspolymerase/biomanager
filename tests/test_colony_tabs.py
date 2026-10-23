@@ -198,7 +198,9 @@ class GiveBirthGenotypingTests(AppTestCase):
         self.assertIsNotNone(button)
         self.assertIn("Litter born", button.group(1))
         self.assertNotIn("today", button.group(1))
-        self.assertIn('id="litter-born-date" name="date_give_birth" required', html)
+        # Asked, not required: left empty it is today, as the dialog says.
+        self.assertIn('id="litter-born-date" name="date_give_birth">', html)
+        self.assertIn("Today unless you change it.", html)
 
     def test_member_cannot_record_a_birth_in_someone_elses_cage(self):
         cage = self.make_cage(self.o, purpose="Experiments")
@@ -261,11 +263,18 @@ class GiveBirthGenotypingTests(AppTestCase):
     def test_genotyping_rejects_pups_that_are_not_1_to_40(self):
         cage = self.make_cage(self.m, purpose="Breeding")
         litters, mice = count("litters"), count("mice")
-        for raw in ("abc", "0", "41", ""):
+        for raw in ("abc", "0", "41"):
             with self.subTest(total_pups=raw):
                 r = self.post(self.m, f"/colony/cages/{cage}/genotyping", {"total_pups": raw})
                 self.assertFlash(r, "whole number from 1 to 40", "error")
         self.assertEqual((count("litters"), count("mice")), (litters, mice))
+
+    def test_genotyping_without_a_count_makes_the_litter_without_mice(self):
+        cage = self.make_cage(self.m, purpose="Breeding")
+        litters, mice = count("litters"), count("mice")
+        r = self.post(self.m, f"/colony/cages/{cage}/genotyping", {"total_pups": ""})
+        self.assertFlash(r, "with no pups yet", "success")
+        self.assertEqual((count("litters"), count("mice")), (litters + 1, mice))
 
     def test_member_cannot_genotype_someone_elses_cage(self):
         cage = self.make_cage(self.o, purpose="Experiments")
