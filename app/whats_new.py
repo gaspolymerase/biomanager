@@ -30,6 +30,16 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.1.0": {
+        "new": [
+            "**Add database** offers **Plants** and **Field crops**: sown and harvested, no sexes, plant stages, growth rooms, greenhouses, nurseries and fields.",
+            "A plant database's **Seeds** tab: harvest seed from a plant, a sowing or a cross into a lot a generation on, and **Sow** from it; each lot shows its descent and a T2's fit to 3:1.",
+            "A column of your own can be a **Plasmid**, linked to the Plasmids database: a line's construct.",
+        ],
+        "changed": [
+            "Any organism database can name its own dates, stages and kinds of place, leave out the Sex column, and colour the dot before an ID by age (**Configure**).",
+        ],
+    },
     "2.0.15": {
         "changed": [
             "A large lab's **Cages** tab comes from the server a quarter to a third sooner.",

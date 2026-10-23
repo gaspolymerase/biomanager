@@ -184,5 +184,9 @@
   "The zebrafish **Tanks** sheet opens with its first page and brings each other page as you turn to it, as the mouse sheets do; the **Fish** tab comes sooner too.": "斑马鱼的 **鱼缸** 表格打开时只有第一页，翻到其他页时再载入，和小鼠表格一样；**鱼** 表格也来得更快。",
   "Inventories such as **Samples** and **Reagents** come about twice as fast; a sample's source box suggests IDs the first time you type in it.": "**样本**、**试剂** 等库存表格快约一倍；样本来源的编号框在第一次输入时给出编号建议。",
   "The **Cages** tab's **Rack grid** loads its cages when you switch to it.": "**笼** 表格的 **笼架网格** 切换过去时才载入笼。",
-  "A large lab's **Cages** tab comes from the server a quarter to a third sooner.": "大实验室的 **笼** 表格从服务器来得快四分之一到三分之一。"
+  "A large lab's **Cages** tab comes from the server a quarter to a third sooner.": "大实验室的 **笼** 表格从服务器来得快四分之一到三分之一。",
+  "**Add database** offers **Plants** and **Field crops**: sown and harvested, no sexes, plant stages, growth rooms, greenhouses, nurseries and fields.": "**添加数据库** 新增 **植物** 和 **大田作物**：记录播种和收获，没有性别，有植物的生长阶段，场所可以是生长室、温室、苗圃和试验田。",
+  "A plant database's **Seeds** tab: harvest seed from a plant, a sowing or a cross into a lot a generation on, and **Sow** from it; each lot shows its descent and a T2's fit to 3:1.": "植物数据库的 **种子** 标签页：从植株、播种批次或杂交收种，生成晚一代的批次，再用它 **播种**；每个批次都显示来历，以及 T2 是否符合 3:1。",
+  "A column of your own can be a **Plasmid**, linked to the Plasmids database: a line's construct.": "自己加的列可以是 **质粒**，并链接到质粒数据库：用来记下品系的构建体。",
+  "Any organism database can name its own dates, stages and kinds of place, leave out the Sex column, and colour the dot before an ID by age (**Configure**).": "任何物种数据库都可以自己命名日期、阶段和场所类型，去掉性别列，并按年龄给编号前的圆点上色（**配置**）。"
 }
