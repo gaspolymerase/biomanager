@@ -1025,8 +1025,8 @@ def plasmid_target(session) -> Target:
 class StockTarget(Target):
     def prepare(self, session):
         from .models import StockRack
-        from .stock_routes import _lab_users
-        return {"people": _people(session), "users": set(_lab_users(session)),
+        from .stewardship import lab_members
+        return {"people": _people(session), "users": lab_members(session),
                 "racks": {r.name.lower(): r for r in session.scalars(
                     select(StockRack).where(StockRack.module_id_fk == self.module.id))}}
 

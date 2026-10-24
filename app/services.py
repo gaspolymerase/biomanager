@@ -1234,7 +1234,7 @@ def weaning_due(session, start: date, end: date) -> list[dict]:
 
 def born_day(day: date) -> str:
     """A litter's birth day as the lab writes dates ("29 Sep")."""
-    from .app import fmt_day
+    from .days import fmt_day
     return fmt_day(day)
 
 

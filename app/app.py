@@ -450,6 +450,9 @@ app.register_blueprint(devices.bp)
 # Project groups: a layer between a person and the lab (app/groups.py).
 from . import groups as project_groups  # noqa: E402
 app.register_blueprint(project_groups.bp)
+# Who may give a record to someone else, or share it (app/stewardship.py),
+# and the batch actions every database's selection bar runs (app/bulk.py).
+from . import stewardship, bulk  # noqa: E402
 # What's new: a short note once after an update (app/whats_new.py).
 from . import whats_new  # noqa: E402
 app.register_blueprint(whats_new.bp)
@@ -1137,44 +1140,7 @@ def relative_day_filter(value) -> str:
     return fmt_day(value)
 
 
-def _lab_date_style() -> str:
-    if has_request_context():
-        if "date_style" not in g:
-            with SessionLocal() as db_session:
-                g.date_style = lab.date_style(db_session)
-        return g.date_style
-    return "month"
-
-
-def fmt_day(value, with_time: bool = False) -> str:
-    """A date as the lab writes it (Lab setup → Dates): "Sep 26", "26 Sep"
-    or "2026-09-26"; the year is added when it is not this year. Takes a
-    date, a datetime or an ISO string; with_time adds "· 14:05"."""
-    if value in (None, ""):
-        return ""
-    if isinstance(value, str):
-        try:
-            value = datetime.fromisoformat(value) if "T" in value or " " in value else date.fromisoformat(value)
-        except ValueError:
-            return value
-    moment = value if isinstance(value, datetime) else None
-    day = value.date() if isinstance(value, datetime) else value
-    style = _lab_date_style()
-    if style == "iso":
-        text = day.isoformat()
-    elif i18n.current() == "zh":
-        # A Chinese reader writes the month first, whatever the lab's style.
-        text = f"{day.month}月{day.day}日" if day.year == date.today().year else f"{day.year}年{day.month}月{day.day}日"
-    else:
-        this_year = day.year == date.today().year
-        if style == "day":
-            text = f"{day.day} {day:%b}" + ("" if this_year else f" {day.year}")
-        else:
-            text = f"{day:%b} {day.day}" + ("" if this_year else f", {day.year}")
-    if with_time and moment is not None:
-        text += f" · {moment:%H:%M}"
-    return text
-
+from .days import fmt_day  # noqa: E402  (the lab's way of writing a day)
 
 app.jinja_env.filters["day"] = fmt_day
 
@@ -4067,23 +4033,19 @@ def pick_mouse(mouse_row_id: int):
 @app.route("/colony/mice/bulk-sac", methods=["POST"])
 @login_required
 def bulk_sac_mice():
-    ids = [int(value) for value in request.form.getlist("selected_ids") if value.isdigit()]
-    with SessionLocal() as db_session, audit.batch(
-            db_session, "update", "mark as sac", "mice") as batch_row:
-        mice = db_session.scalars(select(MouseRecord).where(MouseRecord.id.in_(ids))).all() if ids else []
-        done = 0
-        for mouse in mice:
-            if can_edit_mouse(mouse):
-                mouse.status = "sac"
-                # A mouse that died earlier keeps its day; only the living die today.
-                mouse.date_of_death = mouse.date_of_death or date.today()
-                stamp_updated(mouse)
-                done += 1
-        batch_row.record_count = done
+    def sac(mouse):
+        mouse.status = "sac"
+        # A mouse that died earlier keeps its day; only the living die today.
+        mouse.date_of_death = mouse.date_of_death or date.today()
+        stamp_updated(mouse)
+
+    with SessionLocal() as db_session:
+        done = bulk.run(db_session, bulk.selected(db_session, MouseRecord, request.form), sac,
+                        may_edit=can_edit_mouse, action="update", what="mark as sac", table="mice")
         db_session.commit()
     # Say what happened, like every other batch action, and go back to the
     # view (and scope) it was done from.
-    _report(done, len(mice) - done, gettext("Recorded sac"))
+    bulk.report(done, gettext("Recorded sac"), "mouse")
     return _back_to_colony("mice")
 
 
@@ -4102,29 +4064,6 @@ def _back_to_colony(view: str):
 # user may edit, skip the rest, and say how many were skipped rather than
 # failing the whole operation.
 # ---------------------------------------------------------------------------
-
-
-def _selected_mice(db_session, form) -> list:
-    ids = [int(v) for v in form.getlist("selected_ids") if v.isdigit()]
-    if not ids:
-        return []
-    return list(db_session.scalars(
-        select(MouseRecord).where(MouseRecord.id.in_(ids))
-    ).all())
-
-
-def _report(changed: int, skipped: int, what: str) -> None:
-    """`what` is already in the page's language ("Set owner", "Recorded sac")."""
-    if changed and skipped:
-        flash(ngettext("%(what)s on %(num)s mouse. %(skipped)s skipped — not yours to edit.",
-                       "%(what)s on %(num)s mice. %(skipped)s skipped — not yours to edit.",
-                       changed, what=what, skipped=skipped), "success")
-    elif changed:
-        flash(ngettext("%(what)s on %(num)s mouse.", "%(what)s on %(num)s mice.", changed, what=what), "success")
-    elif skipped:
-        flash(gettext("Nothing changed — %(skipped)s record(s) are not yours to edit.", skipped=skipped), "error")
-    else:
-        flash(gettext("Nothing was selected."), "error")
 
 
 # Fields the bulk editor may set, and how to apply each one.
@@ -4169,18 +4108,15 @@ def _bulk_custom_column(db_session, database: str, field: dict, value: str, back
     """Set one of the lab's own columns on the ticked records, in one batch
     so Batch history can undo it. Records the person may not change are
     skipped and counted, as every other bulk action does."""
-    changed = skipped = 0
-    with audit.batch(db_session, "update", f"set {field['label'].lower()} = {value or '(blank)'}", table) as batch_row:
-        for record in records:
-            if not may_edit(record):
-                skipped += 1
-                continue
-            custom_fields.apply_form(record, {f"attr_{field['key']}": value}, [field])
-            stamp_updated(record)
-            changed += 1
-        batch_row.record_count = changed
+    def apply(record):
+        custom_fields.apply_form(record, {f"attr_{field['key']}": value}, [field])
+        stamp_updated(record)
+
+    done = bulk.run(db_session, list(records), apply, may_edit=may_edit, action="update",
+                    what=f"set {field['label'].lower()} = {value or '(blank)'}", table=table)
     db_session.commit()
-    _report(changed, skipped, gettext("Set %(column)s", column=field["label"]))
+    bulk.report(done, gettext("Set %(column)s", column=i18n.translate_value(field["label"], "field")),
+                {"mice": "mouse", "tanks": "tank", "plasmids": "plasmid"}.get(table, table))
     return redirect(back)
 
 
@@ -4191,7 +4127,6 @@ def bulk_update_mice():
     field = (request.form.get("field") or "").strip()
     value = (request.form.get("value") or "").strip()
     back = request.referrer or url_for("colony", view="mice")
-    changed = skipped = 0
     with SessionLocal() as db_session:
         # A column the lab added (app/custom_fields.py) is set like any
         # other: one column, one value, across the ticked rows.
@@ -4202,10 +4137,11 @@ def bulk_update_mice():
             return redirect(back)
         if own is not None:
             return _bulk_custom_column(db_session, "colony", own, value, back,
-                                       _selected_mice(db_session, request.form), can_edit_mouse, "mice")
-        if field == "owner" and value not in current_lab_usernames(db_session):
-            flash(gettext("“%(value)s” is not a lab member, so no owner was changed. Pick a username from the list.",
-                          value=value or gettext("(blank)")), "error")
+                                       bulk.selected(db_session, MouseRecord, request.form), can_edit_mouse, "mice")
+        refused = (stewardship.batch_owner_refused(stewardship.lab_members(db_session), value)
+                   if field == "owner" else None)
+        if refused:
+            flash(refused, "error")
             return redirect(back)
         if field == "date_of_death" and value and parse_date(value) is None:
             flash(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=value), "error")
@@ -4238,7 +4174,7 @@ def bulk_update_mice():
         # picked together to be housed together — made only when at least
         # one selected mouse may move.
         target_cage = target_litter = None
-        selected = _selected_mice(db_session, request.form)
+        selected = bulk.selected(db_session, MouseRecord, request.form)
         # A date of birth belongs to the litter. A litter whose every mouse
         # is in the selection (and yours to change) is re-dated, as on the
         # Litters tab, and keeps its parents; the rest of the selection
@@ -4250,55 +4186,52 @@ def bulk_update_mice():
             whole_litters = {m.litter.id for m in selected
                              if m.id in mine and m.litter is not None
                              and all(sib.id in mine for sib in m.litter.mice)}
-        with audit.batch(db_session, "update",
-                         f"set {BULK_FIELDS[field].lower()} = {value or '(blank)'}", "mice") as batch_row:
-            for mouse in selected:
-                if not can_edit_mouse(mouse):
-                    skipped += 1
-                    continue
-                if field == "cage_id":
-                    if value and target_cage is None:
+        def apply(mouse):
+            nonlocal target_cage, target_litter
+            if field == "cage_id":
+                if value and target_cage is None:
+                    # Made inside the batch, so undo removes it too.
+                    target_cage = (new_owned_cage(db_session) if value.lower() == "new"
+                                   else get_or_create_cage(db_session, value))
+                # The column, not the relationship: the audit listener
+                # records column changes, and undo needs this one.
+                mouse.cage_id_fk = target_cage.id if target_cage else None
+            elif field == "genotype":
+                # The sheet shows transgene columns, so "genotype" fills
+                # them ("Ai14; Cre" -> transgene 1 and 2) and keeps the
+                # combined genotype string in step.
+                sync_mouse_transgenes(mouse, split_genotype(value)[:4])
+            elif field == "litter_id":
+                # Joining a litter takes its date of birth; a blank
+                # takes the mice out of theirs, as the sheet's cell does.
+                if value and target_litter is None:
+                    target_litter = get_or_create_litter(db_session, value[:80])
+                set_mouse_litter(mouse, target_litter)
+            elif field == "date_of_birth":
+                litter = mouse.litter
+                if litter is not None and litter.id in whole_litters:
+                    litter.date_of_birth = born
+                elif litter is None or litter.date_of_birth != born:
+                    if target_litter is None:
                         # Made inside the batch, so undo removes it too.
-                        target_cage = (new_owned_cage(db_session) if value.lower() == "new"
-                                       else get_or_create_cage(db_session, value))
-                    # The column, not the relationship: the audit listener
-                    # records column changes, and undo needs this one.
-                    mouse.cage_id_fk = target_cage.id if target_cage else None
-                elif field == "genotype":
-                    # The sheet shows transgene columns, so "genotype" fills
-                    # them ("Ai14; Cre" -> transgene 1 and 2) and keeps the
-                    # combined genotype string in step.
-                    sync_mouse_transgenes(mouse, split_genotype(value)[:4])
-                elif field == "litter_id":
-                    # Joining a litter takes its date of birth; a blank
-                    # takes the mice out of theirs, as the sheet's cell does.
-                    if value and target_litter is None:
-                        target_litter = get_or_create_litter(db_session, value[:80])
+                        target_litter = get_or_create_litter(db_session, next_litter_id(db_session), born)
                     set_mouse_litter(mouse, target_litter)
-                elif field == "date_of_birth":
-                    litter = mouse.litter
-                    if litter is not None and litter.id in whole_litters:
-                        litter.date_of_birth = born
-                    elif litter is None or litter.date_of_birth != born:
-                        if target_litter is None:
-                            # Made inside the batch, so undo removes it too.
-                            target_litter = get_or_create_litter(db_session, next_litter_id(db_session), born)
-                        set_mouse_litter(mouse, target_litter)
-                elif field == "strain":
-                    mouse.strain = value[:120]
-                elif field == "date_of_death":
-                    mouse.date_of_death = parse_date(value)
-                elif field == "status":
-                    previous_status = mouse.status
-                    mouse.status = value
-                    apply_status_rules(mouse, previous_status)
-                else:
-                    setattr(mouse, field, value)
-                stamp_updated(mouse)
-                changed += 1
-            batch_row.record_count = changed
+            elif field == "strain":
+                mouse.strain = value[:120]
+            elif field == "date_of_death":
+                mouse.date_of_death = parse_date(value)
+            elif field == "status":
+                previous_status = mouse.status
+                mouse.status = value
+                apply_status_rules(mouse, previous_status)
+            else:
+                setattr(mouse, field, value)
+            stamp_updated(mouse)
+
+        done = bulk.run(db_session, selected, apply, may_edit=can_edit_mouse, action="update",
+                        what=f"set {BULK_FIELDS[field].lower()} = {value or '(blank)'}", table="mice")
         db_session.commit()
-    _report(changed, skipped, gettext(BULK_DONE[field]))
+    bulk.report(done, gettext(BULK_DONE[field]), "mouse")
     return redirect(back)
 
 
@@ -4329,7 +4262,7 @@ def bulk_add_to_experiment():
         batch_row = batch_ctx.__enter__()
         existing = {em.mouse_id_fk for em in exp.memberships}
         before = _experiment_members_before(db_session, exp)
-        for mouse in _selected_mice(db_session, request.form):
+        for mouse in bulk.selected(db_session, MouseRecord, request.form):
             if not can_edit_mouse(mouse):
                 skipped += 1
                 continue
@@ -5174,26 +5107,17 @@ def apply_cage_form(db_session, cage, form) -> str | None:
         # The cell is the cage's oldest litter not yet weaned: a date there
         # corrects it (or records the first), clearing it removes it.
         set_birth_date(cage, parse_date(form.get("date_give_birth")))
-    # Sharing is for a breeder cage only, and is its owner's (or an
-    # admin's) to decide; on any other cage the field means nothing.
-    # Shared with the lab ("1") or with one project group ("g<id>").
-    if "is_shared" in form and access.can_be_shared(cage):
-        if project_groups.differs(cage, form.get("is_shared")):
-            if not access.can_set_sharing(cage):
-                return gettext("Only %(owner)s or an admin can make cage %(cage)s shared or personal.",
-                               owner=cage.owner or gettext("its owner"), cage=cage.cage_id)
-            refused = project_groups.apply(cage, form.get("is_shared"))
-            if refused:
-                return refused
+    # Any cage may be shared, with the lab ("1") or one project group
+    # ("g<id>"); whose it is and whom it is shared with are its owner's (or
+    # an admin's) to decide (app/stewardship.py).
+    if "is_shared" in form:
+        refused = stewardship.change_sharing(cage, form.get("is_shared"), "cage", cage.cage_id)
+        if refused:
+            return refused
     if "owner" in form and form_changed(form, "owner"):
-        owner = (form.get("owner") or "").strip()
-        if owner != (cage.owner or "") and not (access.can_manage(cage) or access.is_care()):
-            # Else anyone could take a shared cage and then make it personal.
-            return gettext("Only %(owner)s or an admin can give cage %(cage)s to someone else.",
-                           owner=cage.owner or gettext("its owner"), cage=cage.cage_id)
-        if owner and owner not in current_lab_usernames(db_session):
-            return gettext("“%(owner)s” is not a lab member. Pick a username from the list.", owner=owner)
-        cage.owner = owner
+        refused = stewardship.change_owner(db_session, cage, form.get("owner"), "cage", cage.cage_id)
+        if refused:
+            return refused
     if "rack_id" in form and form_changed(form, "rack_id", "position"):
         return apply_cage_position(db_session, cage, form.get("rack_id"), form.get("position"))
     return None
@@ -5245,14 +5169,12 @@ def bulk_cages():
     if action not in CAGE_BULK_LABELS:
         flash(gettext("Pick an action."), "error")
         return redirect(back)
-    ids = [int(v) for v in form.getlist("selected_ids") if v.isdigit()]
-    changed = skipped = unshareable = 0
-    blocked: list[str] = []
     with SessionLocal() as db_session:
         rack = None
-        if action == "owner" and value not in current_lab_usernames(db_session):
-            flash(gettext("“%(value)s” is not a lab member, so no owner was changed. Pick a username from the list.",
-                          value=value or gettext("(blank)")), "error")
+        members = stewardship.lab_members(db_session) if action == "owner" else set()
+        refused = stewardship.batch_owner_refused(members, value) if action == "owner" else None
+        if refused:
+            flash(refused, "error")
             return redirect(back)
         share_group = project_groups.parse(value)[1] if action == "shared" else None
         if share_group is not None and not project_groups.may_share_with(share_group):
@@ -5269,67 +5191,42 @@ def bulk_cages():
                 "shared": (f"share cages with {project_groups.name_of(share_group)}" if share_group
                            else "mark cages shared" if value == "1" else "mark cages not shared"),
                 "retire": "retire cages"}[action]
-        cages = db_session.scalars(select(CageRecord).where(CageRecord.id.in_(ids))).all() if ids else []
-        with audit.batch(db_session, "update", what, "mouse_cages") as batch_row:
-            for cage in cages:
-                if not can_edit_cage(cage):
-                    skipped += 1
-                    continue
-                if action == "purpose":
-                    cage.purpose = value
-                elif action == "owner":
-                    if value != (cage.owner or "") and not (access.can_manage(cage) or access.is_care()):
-                        skipped += 1
-                        continue
-                    cage.owner = value
-                elif action == "shared":
-                    # Only by its owner or an admin.
-                    if not access.can_set_sharing(cage):
-                        unshareable += 1
-                        continue
-                    project_groups.apply(cage, value)
-                elif action == "rack":
-                    if rack is not None and cage.rack_id_fk == rack.id:
-                        continue
-                    # Into the rack without a position: dragging on the
-                    # rack grid places each one.
-                    cage.rack_id_fk = rack.id if rack else None
-                    cage.rack_row = cage.rack_col = None
-                elif action == "retire":
-                    living = [m for m in cage.mice if mouse_is_active(m)]
-                    if living:
-                        blocked.append(ngettext("cage %(cage)s still holds %(num)s living mouse",
-                                                "cage %(cage)s still holds %(num)s living mice",
-                                                len(living), cage=cage.cage_id))
-                        continue
-                    # Retired: no purpose (an empty cage is simply not
-                    # active), not shared, and its rack position is free
-                    # for the next one.
-                    cage.purpose = ""
-                    cage.is_shared = False
-                    cage.share_group_id = None
-                    cage.active_override = False
-                    cage.rack_id_fk = cage.rack_row = cage.rack_col = None
-                changed += 1
-            batch_row.record_count = changed
+
+        def apply(cage):
+            if action == "purpose":
+                cage.purpose = value
+            elif action == "owner":
+                if not stewardship.may_give_away(cage):
+                    return bulk.NOT_YOURS
+                return stewardship.change_owner(db_session, cage, value, "cage", cage.cage_id, members)
+            elif action == "shared":
+                return stewardship.change_sharing(cage, value, "cage", cage.cage_id)
+            elif action == "rack":
+                if rack is not None and cage.rack_id_fk == rack.id:
+                    return bulk.UNCHANGED
+                # Into the rack without a position: dragging on the rack
+                # grid places each one.
+                cage.rack_id_fk = rack.id if rack else None
+                cage.rack_row = cage.rack_col = None
+            elif action == "retire":
+                living = [m for m in cage.mice if mouse_is_active(m)]
+                if living:
+                    return ngettext("Not retired: cage %(cage)s still holds %(num)s living mouse. Move or end it first.",
+                                    "Not retired: cage %(cage)s still holds %(num)s living mice. Move or end them first.",
+                                    len(living), cage=cage.cage_id)
+                # Retired: no purpose (an empty cage is simply not active),
+                # not shared, and its rack position is free for the next one.
+                cage.purpose = ""
+                cage.is_shared = False
+                cage.share_group_id = None
+                cage.active_override = False
+                cage.rack_id_fk = cage.rack_row = cage.rack_col = None
+            return None
+
+        done = bulk.run(db_session, bulk.selected(db_session, CageRecord, form), apply,
+                        may_edit=can_edit_cage, action="update", what=what, table="mouse_cages")
         db_session.commit()
-    what = gettext(CAGE_BULK_LABELS[action])
-    if changed and skipped:
-        flash(ngettext("%(what)s on %(num)s cage. %(skipped)s skipped — not yours to edit.",
-                       "%(what)s on %(num)s cages. %(skipped)s skipped — not yours to edit.",
-                       changed, what=what, skipped=skipped), "success")
-    elif changed:
-        flash(ngettext("%(what)s on %(num)s cage.", "%(what)s on %(num)s cages.", changed, what=what), "success")
-    elif skipped:
-        flash(ngettext("Nothing changed — %(num)s cage are not yours to edit.",
-                       "Nothing changed — %(num)s cages are not yours to edit.", skipped), "error")
-    elif not blocked and not unshareable:
-        flash(gettext("Nothing was changed."), "error")
-    if unshareable:
-        flash(ngettext("%(num)s cage left as they were: only a cage's owner or an admin can share it or make it personal.",
-                       "%(num)s cages left as they were: only a cage's owner or an admin can share it or make it personal.", unshareable), "error")
-    if blocked:
-        flash(gettext("Not retired: %(cages)s. Move or end its mice first.", cages="; ".join(blocked)), "error")
+    bulk.report(done, gettext(CAGE_BULK_LABELS[action]), "cage")
     return redirect(back)
 
 
@@ -8879,11 +8776,16 @@ def update_plasmid(row_id: int):
             return _plasmid_answer(db_session, p, status=403, error=gettext(
                 "Plasmid #%(id)s is lab common, so you can edit it, but only %(owner)s or an admin can change whose it is.", id=p.plasmid_id, owner=owner))
         if sharing_changes:
-            refused = project_groups.apply(p, form.get("is_shared"))
+            refused = stewardship.change_sharing(p, form.get("is_shared"), "plasmid", f"#{p.plasmid_id}")
             if refused:
                 return _plasmid_answer(db_session, p, error=refused, status=403)
+        if owner_changes:
+            refused = stewardship.change_owner(db_session, p, form.get("owner"), "plasmid", f"#{p.plasmid_id}")
+            if refused:
+                db_session.rollback()
+                return _plasmid_answer(db_session, p, error=refused, status=400)
         for field, limit in (("name", 200), ("backbone", 200), ("insert_seq", 200),
-                             ("resistance", 80), ("owner", 120), ("location", 120)):
+                             ("resistance", 80), ("location", 120)):
             if field in form:
                 setattr(p, field, (form.get(field) or "").strip()[:limit])
         for field, _label, _limit in PLASMID_MEASURES:
@@ -9028,6 +8930,11 @@ def bulk_plasmids():
         if share_group is not None and not project_groups.may_share_with(share_group):
             flash(project_groups.refusal(share_group), "error")
             return redirect(url_for("plasmids"))
+        members = stewardship.lab_members(db_session) if action == "owner" else set()
+        refused = stewardship.batch_owner_refused(members, value) if action == "owner" else None
+        if refused:
+            flash(refused, "error")
+            return redirect(url_for("plasmids"))
         common = (f"shared with {project_groups.name_of(share_group)}" if share_group
                   else "lab common" if value == "1" else "personal")
         editable = [p for p in records if allowed(p)]
@@ -9045,9 +8952,11 @@ def bulk_plasmids():
                          descriptions[action], "plasmids") as batch_row:
             batch_row.record_count = len(editable)
             if action in ("owner", "resistance"):
-                limit = 120 if action == "owner" else 80
                 for p in editable:
-                    setattr(p, action, value[:limit])
+                    if action == "owner":
+                        stewardship.change_owner(db_session, p, value, "plasmid", f"#{p.plasmid_id}", members)
+                    else:
+                        p.resistance = value[:80]
                     stamp_updated(p)
                     done += 1
                 message = (ngettext("Set owner on %(num)s plasmid.", "Set owner on %(num)s plasmids.", done)
@@ -10613,44 +10522,6 @@ def zf_unique(s, column, raw, noun: str, own_id=None, max_len: int = 80) -> str:
     return value
 
 
-def zf_selected(s, model, form) -> list:
-    ids = [int(v) for v in form.getlist("selected_ids") if v.isdigit()]
-    return list(s.scalars(select(model).where(model.id.in_(ids)))) if ids else []
-
-
-def _zf_count(n: int, noun: str, plural: str) -> str:
-    """"3 tanks", in the page's language."""
-    if noun == "tank":
-        return ngettext("%(num)s tank", "%(num)s tanks", n)
-    if noun == "fish row":
-        return ngettext("%(num)s fish row", "%(num)s fish rows", n)
-    if noun == "line":
-        return ngettext("%(num)s line", "%(num)s lines", n)
-    if noun == "clutch":
-        return ngettext("%(num)s clutch", "%(num)s clutches", n)
-    if noun == "child line":
-        return ngettext("%(num)s child line", "%(num)s child lines", n)
-    return f"{n} {noun if n == 1 else plural}"
-
-
-def zf_report(changed: int, skipped: int, what: str, noun: str, plural: str, blocked: list | None = None) -> None:
-    """Flash a batch result: applied to what you may edit, the rest counted."""
-    blocked = blocked or []
-    what = gettext(what)
-    if changed and skipped:
-        flash(gettext("%(what)s: %(things)s. %(skipped)s skipped — not yours to edit.", what=what,
-                      things=_zf_count(changed, noun, plural), skipped=skipped), "success")
-    elif changed:
-        flash(gettext("%(what)s: %(things)s.", what=what, things=_zf_count(changed, noun, plural)), "success")
-    elif skipped:
-        flash(gettext("Nothing changed — %(things)s are not yours to edit.", things=_zf_count(skipped, noun, plural)),
-              "error")
-    elif not blocked:
-        flash(gettext("Nothing was selected."), "error")
-    for reason in blocked[:5]:
-        flash(reason, "error")
-
-
 # ---- Page ------------------------------------------------------------------
 
 
@@ -10906,7 +10777,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
             uses = [(n_tanks, "tank", "tanks"), (fish_line_refs.get(ln.id, 0), "fish row", "fish rows"),
                     (clutch_line_refs.get(ln.id, 0), "clutch", "clutches"),
                     (children.get(ln.id, 0), "child line", "child lines")]
-            used = ", ".join(_zf_count(n, one, many) for n, one, many in uses if n)
+            used = ", ".join(bulk.count(n, one, many) for n, one, many in uses if n)
             live = live_by_line.get(ln.id, 0)
             line_editable = zf_can_edit(ln)
             line_rows.append({
@@ -11318,7 +11189,9 @@ def zebrafish_update_tank(tank_row_id: int):
             # Owner, rack and position also show on the rack grid and the
             # dialog, so a stale row only writes what it actually changed.
             if "owner" in form and form_changed(form, "owner"):
-                t.owner = (form.get("owner") or "").strip()
+                refused = stewardship.change_owner(s, t, form.get("owner"), "tank", t.tank_id)
+                if refused:
+                    raise ZfInputError(refused)
             for fld in ("card_id", "notes"):
                 if fld in form:
                     setattr(t, fld, (form.get(fld) or "").strip())
@@ -11327,11 +11200,9 @@ def zebrafish_update_tank(tank_row_id: int):
             if "active" in form:
                 t.active = zf_active_flag(form.get("active"))
             # Which group a breeding or shared tank is for ("1": the lab's).
-            if "share_group" in form and project_groups.differs(t, form.get("share_group"), shared=True):
-                if not access.can_manage(t):
-                    raise ZfInputError(gettext("Only %(owner)s or an admin can change whom tank %(tank)s is shared with.",
-                                               owner=t.owner or gettext("its owner"), tank=t.tank_id))
-                refused = project_groups.apply(t, form.get("share_group") or "1", set_shared=False)
+            if "share_group" in form:
+                refused = stewardship.change_sharing(t, form.get("share_group") or "1", "tank", t.tank_id,
+                                                     shared=True, set_shared=False)
                 if refused:
                     raise ZfInputError(refused)
         except ZfInputError as error:
@@ -11502,12 +11373,15 @@ def zebrafish_bulk_tanks():
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="tanks"))
-    changed = skipped = 0
-    blocked: list[str] = []
     with SessionLocal() as s:
+        members = stewardship.lab_members(s) if action == "owner" else set()
         try:
             if action == "purpose":
                 value = zf_choice(value, TANK_PURPOSE_OPTIONS, "Purpose")
+            elif action == "owner":
+                refused = stewardship.batch_owner_refused(members, value)
+                if refused:
+                    raise ZfInputError(refused)
             rack = s.get(FishRack, zf_ref(s, FishRack, value, "rack")) if action == "rack" and value else None
         except ZfInputError as error:
             flash(str(error), "error")
@@ -11515,44 +11389,41 @@ def zebrafish_bulk_tanks():
         what = {"purpose": f"set purpose = {value}", "owner": f"set owner = {value or '(blank)'}",
                 "rack": f"move to {rack.name if rack else '(no rack)'}", "geno": f"genotyping flag {'on' if value != '0' else 'off'}",
                 "return": "return mating tanks", "delete": "delete tanks"}[action]
-        with audit.batch(s, "delete" if action == "delete" else "update", what, "tanks") as batch_row:
-            for t in zf_selected(s, TankRecord, form):
-                if not zf_can_edit(t):
-                    skipped += 1
-                    continue
-                if action == "purpose":
-                    t.purpose = value
-                elif action == "owner":
-                    t.owner = value
-                elif action == "geno":
-                    t.needs_genotyping = value != "0"
-                elif action == "rack":
-                    if rack is not None and t.rack_id_fk == rack.id and t.row is not None:
-                        continue
-                    error = apply_fish_position(s, t, rack.id if rack else "", "")
-                    if error:
-                        blocked.append(f"{t.tank_id}: {error}")
-                        continue
-                    s.flush()
-                elif action == "return":
-                    error, _ = zf_return_mating(s, t, {})
-                    if error:
-                        # Messages that already begin with the tank are not prefixed with it again.
-                        names_it = (gettext("Tank %(tank)s is not a mating tank.", tank=t.tank_id),
-                                    gettext("Mating tank %(tank)s was already returned.", tank=t.tank_id),
-                                    zf_denied(t))
-                        blocked.append(error if error in names_it else f"{t.tank_id}: {error}")
-                        continue
-                    s.flush()
-                elif action == "delete":
-                    error = zf_delete_tank(s, t)
-                    if error:
-                        blocked.append(error)
-                        continue
-                changed += 1
-            batch_row.record_count = changed
+
+        def apply(t):
+            if action == "purpose":
+                t.purpose = value
+            elif action == "owner":
+                # Editing a shared breeding tank doesn't make it yours to give away.
+                if not stewardship.may_give_away(t):
+                    return bulk.NOT_YOURS
+                return stewardship.change_owner(s, t, value, "tank", t.tank_id, members)
+            elif action == "geno":
+                t.needs_genotyping = value != "0"
+            elif action == "rack":
+                if rack is not None and t.rack_id_fk == rack.id and t.row is not None:
+                    return bulk.UNCHANGED
+                error = apply_fish_position(s, t, rack.id if rack else "", "")
+                if error:
+                    return f"{t.tank_id}: {error}"
+                s.flush()
+            elif action == "return":
+                error, _ = zf_return_mating(s, t, {})
+                if error:
+                    # Messages that already begin with the tank are not prefixed with it again.
+                    names_it = (gettext("Tank %(tank)s is not a mating tank.", tank=t.tank_id),
+                                gettext("Mating tank %(tank)s was already returned.", tank=t.tank_id),
+                                zf_denied(t))
+                    return error if error in names_it else f"{t.tank_id}: {error}"
+                s.flush()
+            elif action == "delete":
+                return zf_delete_tank(s, t)
+            return None
+
+        done = bulk.run(s, bulk.selected(s, TankRecord, form), apply, may_edit=zf_can_edit,
+                        action="delete" if action == "delete" else "update", what=what, table="tanks")
         s.commit()
-    zf_report(changed, skipped, labels[action], "tank", "tanks", blocked)
+    bulk.report(done, gettext(labels[action]), "tank")
     return redirect(url_for("zebrafish", view="tanks"))
 
 
@@ -11708,8 +11579,6 @@ def zebrafish_bulk_fish():
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="fish"))
-    changed = skipped = 0
-    blocked: list[str] = []
     with SessionLocal() as s:
         try:
             if action == "status":
@@ -11725,23 +11594,22 @@ def zebrafish_bulk_fish():
             return redirect(url_for("zebrafish", view="fish"))
         what = {"status": f"set status = {value}", "tank": f"move to tank {tank.tank_id if tank else ''}",
                 "sac": "sac fish"}[action]
-        with audit.batch(s, "update", what, "fish") as batch_row:
-            for f in zf_selected(s, FishRecord, form):
-                if not zf_can_edit(f):
-                    skipped += 1
-                    continue
-                previous = f.status
-                if action == "tank":
-                    f.tank_id_fk, f.tank = tank.id, tank  # the column too, so undo can move them back
-                else:
-                    if action == "sac" and (f.status or "").lower() in FISH_DEAD_STATUSES:
-                        continue
-                    f.status = "sac" if action == "sac" else value
-                    zf_apply_fish_status(s, f, previous)
-                changed += 1
-            batch_row.record_count = changed
+
+        def apply(f):
+            previous = f.status
+            if action == "tank":
+                f.tank_id_fk, f.tank = tank.id, tank  # the column too, so undo can move them back
+                return None
+            if action == "sac" and (f.status or "").lower() in FISH_DEAD_STATUSES:
+                return bulk.UNCHANGED
+            f.status = "sac" if action == "sac" else value
+            zf_apply_fish_status(s, f, previous)
+            return None
+
+        done = bulk.run(s, bulk.selected(s, FishRecord, form), apply, may_edit=zf_can_edit,
+                        action="update", what=what, table="fish")
         s.commit()
-    zf_report(changed, skipped, labels[action], "fish row", "fish rows", blocked)
+    bulk.report(done, gettext(labels[action]), "fish row")
     return redirect(url_for("zebrafish", view="fish"))
 
 
@@ -11804,7 +11672,9 @@ def zebrafish_update_line(line_id: int):
             if "parent_line_id_fk" in form:
                 ln.parent_line_id_fk = zf_line_parent(s, ln.id, form.get("parent_line_id_fk"))
             if "owner" in form:
-                ln.owner = (form.get("owner") or "").strip()[:80]
+                refused = stewardship.change_owner(s, ln, form.get("owner"), "line", ln.name)
+                if refused:
+                    raise ZfInputError(refused)
         except ZfInputError as error:
             s.rollback()
             return zf_reply("lines", str(error))
@@ -11821,7 +11691,7 @@ def zf_line_uses(s, ln) -> str:
         (s.scalar(select(func.count(ClutchRecord.id)).where(ClutchRecord.line_id_fk == ln.id)), "clutch", "clutches"),
         (s.scalar(select(func.count(FishLine.id)).where(FishLine.parent_line_id_fk == ln.id)), "child line", "child lines"),
     ]
-    return ", ".join(_zf_count(n, one, many) for n, one, many in uses if n)
+    return ", ".join(bulk.count(n, one, many) for n, one, many in uses if n)
 
 
 def zf_delete_line(s, ln) -> str | None:
@@ -11891,27 +11761,32 @@ def zebrafish_bulk_lines():
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="lines"))
-    changed = skipped = 0
-    blocked: list[str] = []
     with SessionLocal() as s:
+        members = stewardship.lab_members(s) if action == "owner" else set()
+        refused = stewardship.batch_owner_refused(members, value) if action == "owner" else None
+        if refused:
+            flash(refused, "error")
+            return redirect(url_for("zebrafish", view="lines"))
         what = "delete lines" if action == "delete" else f"{labels[action].lower()} = {value or '(blank)'}"
-        with audit.batch(s, "delete" if action == "delete" else "update", what, "fish_lines") as batch_row:
-            for ln in zf_selected(s, FishLine, form):
-                if not zf_can_edit(ln):
-                    skipped += 1
-                    continue
-                if action == "delete":
-                    error = zf_delete_line(s, ln)
-                    if error:
-                        blocked.append(error)
-                        continue
-                    s.flush()
-                else:
-                    setattr(ln, action, value)
-                changed += 1
-            batch_row.record_count = changed
+
+        def apply(ln):
+            if action == "delete":
+                error = zf_delete_line(s, ln)
+                if error:
+                    return error
+                s.flush()
+            elif action == "owner":
+                if not stewardship.may_give_away(ln):
+                    return bulk.NOT_YOURS
+                return stewardship.change_owner(s, ln, value, "line", ln.name, members)
+            else:
+                setattr(ln, action, value)
+            return None
+
+        done = bulk.run(s, bulk.selected(s, FishLine, form), apply, may_edit=zf_can_edit,
+                        action="delete" if action == "delete" else "update", what=what, table="fish_lines")
         s.commit()
-    zf_report(changed, skipped, labels[action], "line", "lines", blocked)
+    bulk.report(done, gettext(labels[action]), "line")
     return redirect(url_for("zebrafish", view="lines"))
 
 
@@ -12095,7 +11970,7 @@ def zf_system_uses(s, system) -> str:
     racks = ngettext("%(num)s rack", "%(num)s racks", len(rack_ids))
     if not n_tanks:
         return racks
-    return gettext("%(racks)s holding %(tanks)s", racks=racks, tanks=_zf_count(n_tanks, "tank", "tanks"))
+    return gettext("%(racks)s holding %(tanks)s", racks=racks, tanks=bulk.count(n_tanks, "tank", "tanks"))
 
 
 @app.route("/zebrafish/systems/<int:system_id>/delete", methods=["POST"])
@@ -12210,7 +12085,9 @@ def zf_clutch_from_form(s, c, form) -> None:
         if fld in form:
             setattr(c, fld, zf_int(form, fld, label, default=0, lo=0, hi=1000000))
     if "owner" in form:
-        c.owner = (form.get("owner") or "").strip()
+        refused = stewardship.change_owner(s, c, form.get("owner"), "clutch", c.clutch_id)
+        if refused:
+            raise ZfInputError(refused)
     if "notes" in form:
         c.notes = (form.get("notes") or "").strip()
 
@@ -12305,22 +12182,26 @@ def zebrafish_bulk_clutches():
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="clutches"))
-    changed = skipped = 0
     with SessionLocal() as s:
+        members = stewardship.lab_members(s) if action == "owner" else set()
+        refused = stewardship.batch_owner_refused(members, value) if action == "owner" else None
+        if refused:
+            flash(refused, "error")
+            return redirect(url_for("zebrafish", view="clutches"))
         what = "delete clutches" if action == "delete" else f"set owner = {value or '(blank)'}"
-        with audit.batch(s, "delete" if action == "delete" else "update", what, "clutches") as batch_row:
-            for c in zf_selected(s, ClutchRecord, form):
-                if not zf_can_edit(c):
-                    skipped += 1
-                    continue
-                if action == "delete":
-                    zf_delete_clutch(s, c)
-                else:
-                    c.owner = value
-                changed += 1
-            batch_row.record_count = changed
+
+        def apply(c):
+            if action == "delete":
+                zf_delete_clutch(s, c)
+                return None
+            if not stewardship.may_give_away(c):
+                return bulk.NOT_YOURS
+            return stewardship.change_owner(s, c, value, "clutch", c.clutch_id, members)
+
+        done = bulk.run(s, bulk.selected(s, ClutchRecord, form), apply, may_edit=zf_can_edit,
+                        action="delete" if action == "delete" else "update", what=what, table="clutches")
         s.commit()
-    zf_report(changed, skipped, labels[action], "clutch", "clutches")
+    bulk.report(done, gettext(labels[action]), "clutch")
     return redirect(url_for("zebrafish", view="clutches"))
 
 

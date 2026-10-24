@@ -359,7 +359,7 @@ class CageUpdateTests(RackMixin, Case):
         theirs = self.make_cage(self.o, purpose="Breeder")
         r = self.autosave(self.m, update_url(theirs), {"is_shared": "0"})
         self.assertRefused(r)
-        self.assertIn("shared or personal", r.get_json()["error"])
+        self.assertIn("can change whom cage", r.get_json()["error"])
         r = self.autosave(self.m, update_url(theirs), {"owner": self.member, "owner_was": self.other})
         self.assertRefused(r)
         self.assertEqual((cage(theirs)["is_shared"], cage(theirs)["owner"]), (1, self.other))
