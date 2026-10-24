@@ -6,7 +6,7 @@ from __future__ import annotations
 from migrations.helpers import create_table
 
 revision = "0047_zotero_links"
-down_revision = "0046_join_heads"
+down_revision = "0046_litter_sire"
 branch_labels = None
 depends_on = None
 
