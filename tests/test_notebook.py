@@ -361,17 +361,251 @@ class PageKindTests(Notebook):
             html = self.m.get(f"/notebook?page={page}").get_data(as_text=True)
         self.assertIn('"labZone": "America/New_York"', html)
 
-    def test_a_new_page_s_title_box_starts_empty(self):
+    def test_a_new_page_s_title_box_starts_empty_and_wraps(self):
         page = self.new_page(self.m, starter="blank")
         html = self.m.get(f"/notebook?page={page}").get_data(as_text=True)
-        self.assertIn('id="page-title" class="page-title" value="" placeholder="Untitled page"', html)
+        # A box that wraps a long title onto more lines, not a one-line input that cuts it off.
+        self.assertRegex(html, r'<textarea id="page-title" class="page-title" rows="1" placeholder="Untitled page"[^>]*></textarea>')
 
     def test_the_notebook_page_renders_every_kind(self):
-        for starter in ("blank", "experiment", "protocol", "meeting", "seminar", "daily", "cloning", "western"):
+        for starter in ("blank", "experiment", "protocol", "reading", "meeting", "seminar", "daily", "cloning", "western"):
             page = self.new_page(self.m, starter=starter)
             r = self.m.get(f"/notebook?page={page}")
             self.assertEqual(r.status_code, 200, starter)
             self.assertIn(f'data-page-id="{page}"', r.get_data(as_text=True))
+
+
+class ReadingTests(Notebook):
+    """Reading notes: a paper's details under the title (the page's
+    properties), filled in from a DOI or what Zotero copies, a cover, and
+    Reading, which lists the papers and talks with their pictures."""
+
+    BIBTEX = ("@article{xu_2025, title = {Learning reshapes the {Visual} cortex}, author = {Xu, Ming and Lee, Jordan},"
+              " journal = {Nature Neuroscience}, year = {2025}, doi = {10.1038/s41593-025-01234-5}}")
+
+    def test_what_zotero_copies_is_read_in_each_format(self):
+        from app import citations
+        bib = citations.read(self.BIBTEX)
+        self.assertEqual(bib["title"], "Learning reshapes the Visual cortex")
+        self.assertEqual(bib["authors"], "Ming Xu; Jordan Lee")
+        self.assertEqual((bib["journal"], bib["year"], bib["doi"]), ("Nature Neuroscience", "2025", "10.1038/s41593-025-01234-5"))
+        ris = citations.read("TY  - JOUR\nTI  - Learning in mice\nAU  - Lee, Jordan\nT2  - Neuron\nPY  - 2023/01/02\nER  - ")
+        self.assertEqual((ris["title"], ris["authors"], ris["journal"], ris["year"]), ("Learning in mice", "Jordan Lee", "Neuron", "2023"))
+        csl = citations.read(json.dumps([{"id": "http://zotero.org/groups/77/items/ABCD1234", "title": "T", "container-title": "Cell",
+                                          "author": [{"family": "Doe", "given": "Jo"}], "issued": {"date-parts": [[2021, 3]]}}]))
+        self.assertEqual((csl["authors"], csl["year"]), ("Jo Doe", "2021"))
+        # Its Zotero address becomes a link that opens it in Zotero.
+        self.assertEqual(csl["zotero"], "zotero://select/groups/77/items/ABCD1234")
+        self.assertEqual(citations.read("zotero://select/library/items/WXYZ9876"), {"zotero": "zotero://select/library/items/WXYZ9876"})
+
+    def test_a_doi_alone_is_looked_up_and_a_failed_look_up_is_said_in_words(self):
+        from unittest import mock
+        from app import citations
+        found = {"title": "Looked up", "authors": "A B", "doi": "10.1234/x"}
+        with mock.patch.object(citations, "crossref", return_value=dict(found)) as lookup:
+            r = self.post_json(self.m, "/notebook/api/cite", {"text": "https://doi.org/10.1234/x"})
+        lookup.assert_called_once_with("10.1234/x")
+        self.assertEqual(r.get_json()["fields"]["title"], "Looked up")
+        with mock.patch.object(citations, "crossref", side_effect=citations.CitationError("offline")):
+            r = self.post_json(self.m, "/notebook/api/cite", {"text": "10.1234/x"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("Crossref", r.get_json()["error"])
+        self.assertEqual(self.post_json(self.m, "/notebook/api/cite", {"text": "just words"}).status_code, 400)
+
+    def test_a_reading_note_keeps_its_details_and_reading_lists_it(self):
+        page = self.new_page(self.m, kind="reading", title=uniq("Visual cortex"), properties=[
+            {"key": "authors", "value": "Ming Xu; Jordan Lee"}, {"key": "doi", "value": "10.1/x"},
+            {"key": "journal", "value": ""}, {"nonsense": 1}, "nope"])
+        info = self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]
+        self.assertEqual(info["kind"], "reading")
+        # Empty fields and anything not a field are dropped.
+        self.assertEqual(info["properties"], [{"key": "authors", "value": "Ming Xu; Jordan Lee"}, {"key": "doi", "value": "10.1/x"}])
+        picture = "/static/uploads/fig1.png"
+        self.save(self.m, page, body=f"## Key findings\n\n![Fig. 1 orientation maps]({picture})\n",
+                  properties=json.dumps(info["properties"] + [{"key": "cover", "value": picture}]))
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["cover"], picture)
+        listed = {x["id"]: x for x in self.m.get("/notebook/api/reading").get_json()["items"]}
+        self.assertEqual(listed[page]["fields"]["authors"], "Ming Xu; Jordan Lee")
+        self.assertEqual(listed[page]["fields"]["zotero"], "")
+        self.assertEqual(listed[page]["cover"], picture)
+        self.assertEqual(listed[page]["images"], [{"src": picture, "alt": "Fig. 1 orientation maps"}])
+        # Search reads the details too: a paper is found by its author.
+        found = self.m.get("/notebook/api/search?q=Jordan").get_json()["results"]
+        self.assertIn(page, [x["id"] for x in found])
+        self.assertEqual(next(x for x in found if x["id"] == page)["cover"], picture)
+
+    def test_reading_lists_papers_and_talks_the_person_may_open(self):
+        mine = self.new_page(self.m, starter="seminar")
+        theirs = self.new_page(client_for(make_user()), kind="reading", title=uniq("not shared"))
+        note = self.new_page(self.m, kind="note")
+        ids = [x["id"] for x in self.m.get("/notebook/api/reading").get_json()["items"]]
+        self.assertIn(mine, ids)
+        self.assertNotIn(theirs, ids)
+        self.assertNotIn(note, ids)
+
+    def test_a_page_from_before_keeps_its_named_properties(self):
+        page = self.new_page(self.m)
+        old = [{"name": "Cell line", "type": "text", "value": "HEK293"}]
+        self.save(self.m, page, properties=json.dumps(old))
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["properties"], old)
+
+    def test_an_empty_page_of_a_kind(self):
+        page = self.new_page(self.m, kind="protocol", title=uniq("Blank protocol"))
+        info = self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]
+        self.assertEqual((info["kind"], info["body"]), ("protocol", ""))
+        # A daily log is made by Today, one a day, not here.
+        page = self.new_page(self.m, kind="daily")
+        self.assertEqual(self.m.get(f"/notebook/api/pages/{page}").get_json()["page"]["kind"], "note")
+
+
+class FakeZotero:
+    """Zotero's web API as app/zotero.py reads it: a key, a library with one
+    collection, a group, and items that each carry the library version they
+    were last changed in."""
+
+    def __init__(self):
+        self.version = 5
+        self.items = [self.item("OLDPAPER", "A paper already there", 5)]
+        self.calls = []
+
+    @staticmethod
+    def item(key, title, version, **data):
+        return {"key": key, "version": version, "data": {
+            "key": key, "itemType": "journalArticle", "title": title, "publicationTitle": "Neuron", "date": "2024-05-01",
+            "creators": [{"creatorType": "author", "firstName": "Jordan", "lastName": "Lee"},
+                         {"creatorType": "editor", "name": "Not An Author"}],
+            "extra": "DOI: 10.1016/j.neuron.2024.01.002", "abstractNote": "We watched mice learn.",
+            "tags": [{"tag": "Visual cortex"}], **data}}
+
+    def add(self, key, title, **data):
+        self.version += 1
+        self.items.append(self.item(key, title, self.version, **data))
+
+    def get(self, path, key, params=None):
+        from app.zotero import ZoteroError
+        self.calls.append(path)
+        if key != "secret-key-1":
+            raise ZoteroError("Zotero refused that key. Make a new one with library access.")
+        if path == "/keys/current":
+            return {"userID": 123, "username": "jlee", "access": {"user": {"library": True}, "groups": {"all": {"library": True}}}}, {}
+        if path == "/users/123/groups":
+            return [{"id": 77, "data": {"name": "Lab group"}}], {}
+        if path == "/users/123/collections":
+            return [{"key": "COLL0001", "data": {"name": "BioManager", "parentCollection": False}}], {}
+        if path == "/groups/77/collections":
+            return [], {}
+        if path.endswith("/items/top"):
+            since = int((params or {}).get("since") or 0)
+            fresh = [i for i in self.items if i["version"] > since]
+            start, limit = int((params or {}).get("start") or 0), int((params or {}).get("limit") or 100)
+            return fresh[start:start + limit], {"Last-Modified-Version": str(self.version)}
+        raise AssertionError(path)
+
+
+class ZoteroTests(Notebook):
+    """Paper notes made from a Zotero library (app/zotero.py): the key is all
+    a person types, a paper added to Zotero becomes one note, ever."""
+
+    def setUp(self):
+        super().setUp()
+        from unittest import mock
+        from app import zotero
+        self.fake = FakeZotero()
+        patcher = mock.patch.object(zotero, "_get", side_effect=self.fake.get)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.who = make_user()
+        self.c = client_for(self.who)
+
+    def connect(self, **extra):
+        r = self.post_json(self.c, "/notebook/api/zotero", {"api_key": "secret-key-1", "library": "users/123",
+                                                            "library_name": "My library", "collection": "COLL0001",
+                                                            "collection_name": "BioManager", **extra})
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        return r.get_json()
+
+    def reading(self):
+        return [x for x in self.c.get("/notebook/api/reading").get_json()["items"]]
+
+    def test_the_key_says_which_libraries_and_collections_it_reads(self):
+        d = self.post_json(self.c, "/notebook/api/zotero/libraries", {"api_key": "secret-key-1"}).get_json()
+        self.assertEqual(d["username"], "jlee")
+        self.assertEqual([(l["library"], l["name"]) for l in d["libraries"]], [("users/123", "My library"), ("groups/77", "Lab group")])
+        self.assertEqual(d["libraries"][0]["collections"], [{"key": "COLL0001", "name": "BioManager"}])
+        bad = self.post_json(self.c, "/notebook/api/zotero/libraries", {"api_key": "wrong"})
+        self.assertEqual(bad.status_code, 502)
+        self.assertIn("refused", bad.get_json()["error"])
+
+    def test_a_paper_added_to_zotero_becomes_one_note(self):
+        tab = self.c.post("/notebook/tabs/create", data={"title": "Papers"}).get_json()["id"]
+        d = self.connect(tab_id=tab)
+        # From now on: the paper already there makes no note.
+        self.assertEqual(d["made"], [])
+        self.assertEqual(self.reading(), [])
+        self.fake.add("NEWPAPER", "Mice learn to see")
+        made = self.post_json(self.c, "/notebook/api/zotero/check", {"now": True}).get_json()["made"]
+        self.assertEqual([m["title"] for m in made], ["Mice learn to see"])
+        page = self.c.get(f"/notebook/api/pages/{made[0]['id']}").get_json()["page"]
+        self.assertEqual((page["kind"], page["tab_id"]), ("reading", tab))
+        props = {p["key"]: p["value"] for p in page["properties"]}
+        self.assertEqual(props["authors"], "Jordan Lee")         # authors, not the editor
+        self.assertEqual((props["journal"], props["year"]), ("Neuron", "2024"))
+        self.assertEqual(props["doi"], "10.1016/j.neuron.2024.01.002")       # from Zotero's Extra
+        self.assertEqual(props["zotero"], "zotero://select/library/items/NEWPAPER")
+        self.assertEqual(page["tags"], ["visual cortex"])
+        self.assertTrue(page["body"].startswith("## Abstract\n\nWe watched mice learn."))
+        # Changed in Zotero, or its note deleted: no second note.
+        self.fake.items[-1]["version"] = self.fake.version = self.fake.version + 1
+        self.c.post(f"/notebook/pages/{made[0]['id']}/delete", headers={"X-Requested-With": "fetch"})
+        again = self.post_json(self.c, "/notebook/api/zotero/check", {"now": True}).get_json()
+        self.assertEqual(again["made"], [])
+
+    def test_the_papers_already_there_too_when_asked(self):
+        d = self.connect(include_existing=True)
+        self.assertEqual([m["title"] for m in d["made"]], ["A paper already there"])
+
+    def test_a_check_waits_a_few_minutes_unless_asked_now(self):
+        self.connect()
+        calls = len(self.fake.calls)
+        self.post_json(self.c, "/notebook/api/zotero/check", {})
+        self.assertEqual(len(self.fake.calls), calls)
+        self.post_json(self.c, "/notebook/api/zotero/check", {"now": True})
+        self.assertGreater(len(self.fake.calls), calls)
+
+    def test_the_key_is_kept_encrypted_and_never_shown(self):
+        self.connect()
+        shown = self.c.get("/notebook/api/zotero").get_json()["zotero"]
+        self.assertTrue(shown["connected"])
+        self.assertNotIn("secret-key-1", json.dumps(shown))
+        self.assertNotIn("secret-key-1", one("select api_key from zotero_links where owner=?", self.who))
+        # Someone else has no connection of their own.
+        self.assertFalse(self.m.get("/notebook/api/zotero").get_json()["zotero"]["connected"])
+
+    def test_zotero_out_of_reach_is_said_and_kept(self):
+        from unittest import mock
+        from app import zotero
+        self.connect()
+        with mock.patch.object(zotero, "_get", side_effect=zotero.ZoteroError("Could not reach Zotero.")):
+            d = self.post_json(self.c, "/notebook/api/zotero/check", {"now": True}).get_json()
+        self.assertEqual(d["error"], "Could not reach Zotero.")
+        self.assertEqual(self.c.get("/notebook/api/zotero").get_json()["zotero"]["error"], "Could not reach Zotero.")
+
+    def test_two_checks_at_once_make_one_note(self):
+        from app import zotero
+        from app.db import SessionLocal
+        self.connect()
+        self.fake.add("NEWPAPER", "Mice learn to see")
+        with SessionLocal() as a, SessionLocal() as b:
+            first, second = zotero.link_for(a, self.who), zotero.link_for(b, self.who)
+            self.assertTrue(zotero.claim(a, first, now=True))
+            # The other tab read the link before the first claimed it.
+            self.assertFalse(zotero.claim(b, second, now=True))
+
+    def test_disconnecting_keeps_the_notes(self):
+        d = self.connect(include_existing=True)
+        self.post_json(self.c, "/notebook/api/zotero/delete", {})
+        self.assertFalse(self.c.get("/notebook/api/zotero").get_json()["zotero"]["connected"])
+        self.assertEqual(self.c.get(f"/notebook/api/pages/{d['made'][0]['id']}").status_code, 200)
 
 
 class SubPageTests(Notebook):
@@ -567,7 +801,7 @@ class ProtocolLibraryTests(Notebook):
 
     def test_the_sidebar_opens_each_library_as_a_page(self):
         html = self.get_ok(self.m, "/notebook")
-        for key in ("protocols", "recipes", "meetings"):
+        for key in ("protocols", "recipes", "meetings", "reading"):
             self.assertIn(f'href="/notebook/{key}"', html)
             page = self.get_ok(self.m, f"/notebook/{key}")
             self.assertIn(f'data-library="{key}"', page)

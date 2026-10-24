@@ -76,7 +76,7 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
 | 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
 | 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks, cell lines, or a list of your own |
-| 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols and meeting notes |
+| 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols, paper notes and meeting notes |
 
 ### 🐭 Mouse colony
 
@@ -599,9 +599,17 @@ database has a name of its own (one another database has is refused), so
     updates about every hour, and **Make a new link** stops the old one.
 - **Lab notebook** — pages in topics, written like a document and saved as
   Markdown. Topics are folders: a page stays in the one it was made or moved
-  to, whatever its kind (the icon beside its title, which changes the kind
-  and never the place). Above the title its place reads like a path; click
-  the topic to move it. A page links to mice, plasmids, orders and any inventory record
+  to, whatever its kind. In the sidebar, **+** beside *Topics* names a new
+  one, a topic's own **+** starts a page in it and **•••** renames or
+  deletes it, and a page dragged onto a topic moves there. The sidebar
+  hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
+  **New page** asks for a title, the topic, the kind of page and what to
+  start from (a built-in starter or one of your templates). A page's kind
+  sits above its title, saying what it adds; click it to change the kind,
+  which never moves the page. A long title wraps onto more lines, set well
+  above the page's headings as in Notion, and **Add cover** puts a picture
+  across the top. Above the page its place reads like a path; click the
+  topic to move it. A page links to mice, plasmids, orders and any inventory record
   (`@mouse 12`, `@antibodies 5`): type **@** and a name (written as it is,
   `anti-β-actin` or `Waf1/Cip1`), a catalogue number or lot, a database's
   name (`@antib` offers Antibodies and lists its records) or a colleague's
@@ -631,8 +639,8 @@ database has a name of its own (one another database has is refused), so
     `<details>`, and Pandoc's `::: column` and `[text]{.red}`.
   - **Experiments**: aim, setup, samples and lot numbers, steps, results
     and a summary.
-    *Start* and *Finished* stamp the times; planned, running, done or
-    failed shows in the sidebar.
+    **Start experiment** (beside the status) and **Finished** stamp the
+    times; running ones are listed at the top of the sidebar.
   - **Sign** a page when it should be the record of your work (your
     choice, page by page): you confirm who you are, its exact text is
     fingerprinted and kept, any live experiment in it is frozen, and it is
@@ -650,7 +658,27 @@ database has a name of its own (one another database has is refused), so
     **Freeze a copy** keeps what it shows at that moment in the page. On
     the experiment itself, **Add to notebook** makes your notebook page
     for it with that block already in.
-  - **Protocols** with numbered versions. *Start an experiment from it*
+  - **Reading notes** for papers: authors, journal, year, DOI, a link and a
+    **Zotero** link as rows under the title. Paste a DOI, a link, or an
+    item copied from Zotero (BibTeX, RIS or CSL JSON: set Zotero's Quick
+    Copy to one of them) into **Fill in**, or into **Paper** in New page,
+    and they are filled in, title too; a DOI alone is looked up at Crossref.
+    **Open in Zotero** opens the item in Zotero. Give the note a **cover**
+    (a figure from the paper, uploaded or picked from the page's own
+    pictures). **Reading** in the notebook's sidebar lists every paper and
+    talk you can open as cards with their covers, or as every picture in
+    them, to find a paper by a figure you remember; search reads titles,
+    authors, journals, DOIs, tags and picture captions.
+  - **Paper notes straight from Zotero**: **Zotero** on the Reading page
+    takes a read-only API key from zotero.org, then which library (yours
+    or a lab group's), which collection (or all of it) and which topic.
+    Each paper you add there becomes a paper note, with its authors,
+    journal, year, DOI, abstract, tags and **Open in Zotero** link filled
+    in, the next time you open the notebook (it looks at most every five
+    minutes; **Check now** looks at once). A paper gets one note, ever,
+    and the papers already there are left out unless you ask for them.
+    Zotero has to sync to zotero.org, and BioManager has to reach it.
+  - **Protocols** with numbered versions. **Start experiment**
     copies the steps as a checklist and records which version was followed.
     **Protocols** in the notebook's sidebar opens the lab's protocols as a
     page of their own: search them, open one to read or change it, make one
@@ -697,12 +725,13 @@ database has a name of its own (one another database has is refused), so
     dilution, ligation insert, cell counting and seeding, agarose gel,
     DNA/RNA concentration and copy number, and protein concentration from
     A₂₈₀ (µM and mg/mL, with ε and MW worked out from a pasted sequence).
-  - **Templates**: **Save as template** keeps the page's type (an
-    Experiment template makes Experiments). **Structure only** keeps the
+  - **Templates**: ••• → **Save as template** keeps the page's type (an
+    Experiment template makes Experiments) and lists it under **Start
+    from** when someone makes a page of that kind. **Structure only** keeps the
     headings, steps and table headers and leaves out the results, ticks,
     readings, pictures and the writing under Results, Observations or
-    Conclusion; **Share it with the lab** lets everyone start a
-    page from it.
+    Conclusion; **Who can use it** is you, the whole lab or a project
+    group.
   - **Timers**: every duration written in a step ("incubate 30 min") gets a
     ⏱ button, named from the step's words; timers keep running across pages and ring, vibrate and notify
     when they end.
@@ -713,7 +742,9 @@ database has a name of its own (one another database has is refused), so
     each meeting shared with everyone in it, the coming meetings on the
     calendar, and action items (`- [ ] @name order primers, due
     2026-10-02`) sent to each person's to-dos, from any page with ⋯ →
-    **Send @name tasks as to-dos**.
+    **Send @name tasks as to-dos**. A **Seminar** page keeps the speaker
+    and their affiliation under its title and is listed in **Reading**
+    beside the papers.
   - **Markdown, plus**: tables, checklists, code, equations in LaTeX
     (`$…$` inline or an equation block), Mermaid diagrams (flowcharts,
     sequence, Gantt timelines) and mind maps from an indented list. Edit

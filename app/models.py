@@ -2612,6 +2612,34 @@ class NotebookFolder(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class ZoteroLink(Base):
+    """A person's Zotero library, read to make a paper note for each paper
+    added to it (app/zotero.py). The API key is Zotero's, read-only, kept
+    encrypted; `version` is the library's version last read, so a check asks
+    only for what changed since."""
+    __tablename__ = "zotero_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    user_id: Mapped[str] = mapped_column(String(20), default="")
+    api_key: Mapped[str] = mapped_column(EncryptedText, default="")
+    # "users/<id>" or "groups/<id>", as Zotero's API names a library.
+    library: Mapped[str] = mapped_column(String(40), default="")
+    library_name: Mapped[str] = mapped_column(String(200), default="")
+    # Only the papers in this collection; empty: the whole library.
+    collection: Mapped[str] = mapped_column(String(20), default="")
+    collection_name: Mapped[str] = mapped_column(String(200), default="")
+    # The topic the notes go in (Inbox when it has gone).
+    tab_id_fk: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=0)
+    # The item keys a note was made for, comma separated: one note a paper, ever.
+    seen: Mapped[str] = mapped_column(Text, default="")
+    checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    made: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str] = mapped_column(String(300), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class NotebookMeetingSeries(Base):
     """A recurring meeting (lab meeting, journal club) and its rotation:
     `members` is a JSON list of usernames in presenting order, and

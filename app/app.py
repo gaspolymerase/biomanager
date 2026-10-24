@@ -6775,6 +6775,7 @@ NOTEBOOK_LIBRARIES = {
     "protocols": ("Protocols", "protocol"),
     "recipes": ("Recipes", "flask"),
     "meetings": ("Meetings", "users"),
+    "reading": ("Reading", "book-open"),
 }
 
 
@@ -6784,11 +6785,11 @@ def notebook():
     return _notebook_page()
 
 
-@app.route("/notebook/<any(protocols, recipes, meetings):library>")
+@app.route("/notebook/<any(protocols, recipes, meetings, reading):library>")
 @login_required
 def notebook_library(library: str):
-    """The lab's protocols, recipes or meetings, to look through, open,
-    add to and sort into folders."""
+    """The lab's protocols, recipes or meetings, or the papers and talks
+    read, to look through, open, add to and sort into folders."""
     return _notebook_page(library)
 
 
@@ -6837,6 +6838,8 @@ def _notebook_page(library: str | None = None):
         # before a rename still reads as one.
         mention_types = [{"key": key, "label": m.label, "noun": m.item_noun, **({"old": True} if key != m.key else {})}
                          for key, m in _mention_modules(db_session, with_old=True).items()]
+        from . import zotero
+        zotero_state = zotero.state(zotero.link_for(db_session, g.user.username))
 
     return render_template(
         "notebook.html",
@@ -6850,6 +6853,8 @@ def _notebook_page(library: str | None = None):
         kinds=lab_notebook.KINDS,
         kind_icons=lab_notebook.KIND_ICONS,
         kind_hints=lab_notebook.KIND_HINTS,
+        # As [key, label] pairs: tojson sorts a dict's keys, and the rows keep this order.
+        kind_fields={kind: list(fields.items()) for kind, fields in lab_notebook.KIND_FIELDS.items()},
         statuses=lab_notebook.STATUSES,
         me=me,
         mention_types=mention_types,
@@ -6858,6 +6863,7 @@ def _notebook_page(library: str | None = None):
                   for key, st in lab_notebook.STARTERS.items()],
         library=library,
         libraries=NOTEBOOK_LIBRARIES,
+        zotero=zotero_state,
     )
 
 
@@ -7777,14 +7783,14 @@ def notebook_update_page(page_id: int):
             raw_date = (request.form.get("entry_date") or "").strip()
             page.entry_date = parse_date(raw_date) if raw_date else None
         if "properties" in request.form:
-            # JSON blob from the client — validated/normalized server-side.
+            # The page's details (a paper's DOI, a cover): kept to what a page holds.
             import json as _json
             try:
                 parsed = _json.loads(request.form.get("properties") or "[]")
-                if isinstance(parsed, list):
-                    page.properties = _json.dumps(parsed)
             except _json.JSONDecodeError:
-                pass
+                parsed = None
+            if isinstance(parsed, list):
+                page.properties = _json.dumps(lab_notebook.clean_properties(parsed))
         page.updated_at = datetime.utcnow()
         if changed:
             live = request.headers.get("X-Collab-Gen") is not None
