@@ -531,5 +531,6 @@
   "Not retired: cage %(cage)s still holds %(num)s living mouse. Move or end it first.": "未退役：笼 %(cage)s 中还有 %(num)s 只存活小鼠。请先移走或结束它。",
   "Not retired: cage %(cage)s still holds %(num)s living mice. Move or end them first.": "未退役：笼 %(cage)s 中还有 %(num)s 只存活小鼠。请先移走或结束它们。",
   "Only %(owner)s or an admin can give %(what)s to someone else.": "只有 %(owner)s 或管理员可以把%(what)s转给别人。",
-  "Only %(owner)s or an admin can change whom %(what)s is shared with.": "只有 %(owner)s 或管理员可以更改%(what)s共享给谁。"
+  "Only %(owner)s or an admin can change whom %(what)s is shared with.": "只有 %(owner)s 或管理员可以更改%(what)s共享给谁。",
+  "A date of death can't be in the future (%(day)s). Nothing was saved.": "死亡日期不能晚于今天（%(day)s）。什么都没有保存。"
 }

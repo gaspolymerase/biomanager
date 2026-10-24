@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import gc
 import json
 import os
@@ -1506,7 +1507,13 @@ def _keep_lines(stored: str | None, sent: str) -> str:
     return sent
 
 
-def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owner_on_transfer: bool = True) -> tuple[str | None, str | None]:
+def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owner_on_transfer: bool = True,
+                             warnings: list[str] | None = None) -> tuple[str | None, str | None]:
+    """Copy what the form says onto the mouse. What it could not do (a move
+    into someone's private cage, a rack position taken) goes to `warnings`,
+    or is flashed; the rest is saved. change_mouse is the whole change,
+    rules and all: use it to change a mouse a person asked to change."""
+    warn = warnings.append if warnings is not None else (lambda text: flash(text, "error"))
     # A sheet row sends every cell, and with each a "<name>_was" copy of
     # what the row showed (form_changed): a cell it didn't change is left as
     # the database has it, so saving one cell of a row open since before a
@@ -1537,8 +1544,8 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         if existing_cage is not None and existing_cage is not mouse.cage and not access.can_edit_cage(existing_cage):
             # The same rule as "Add existing mouse" on the cage: a private
             # cage takes mice only from its owner (or an admin).
-            flash(gettext("Cage %(cage)s is %(owner)s’s private cage, so the mouse stays where it is. Ask them, or have the cage marked shared.", cage=existing_cage.cage_id,
-                          owner=existing_cage.owner or gettext("someone else")), "error")
+            warn(gettext("Cage %(cage)s is %(owner)s’s private cage, so the mouse stays where it is. Ask them, or have the cage marked shared.", cage=existing_cage.cage_id,
+                         owner=existing_cage.owner or gettext("someone else")))
         elif cage_input:
             set_mouse_cage(mouse, get_or_create_cage(db_session, cage_input))
         elif form.get("auto_new_cage") == "1":
@@ -1553,7 +1560,7 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         if "cage_rack" in form and form_changed(form, "cage_rack", "cage_position"):
             error = apply_cage_position(db_session, mouse.cage, form.get("cage_rack"), form.get("cage_position"))
             if error:
-                flash(error, "error")
+                warn(error)
 
     stored = [mouse.transgene_1, mouse.transgene_2, mouse.transgene_3, mouse.transgene_4]
     if form_changed(form, *(f"transgene_{n}" for n in range(1, 5))):
@@ -1598,6 +1605,50 @@ def populate_mouse_from_form(db_session, mouse: MouseRecord, form, preserve_owne
         mouse.owner = requested_owner
 
     return transfer_recipient, original_owner
+
+
+@dataclasses.dataclass
+class MouseChange:
+    """What change_mouse did: the refusal (nothing was changed), or what
+    it could not do while saving the rest."""
+    refused: str | None = None
+    warnings: list[str] = dataclasses.field(default_factory=list)
+
+
+def change_mouse(db_session, mouse: MouseRecord, form, confirm_cohort: bool = False) -> MouseChange:
+    """Change a mouse as `form` says (a sheet row, a dialog, or the API's
+    JSON as one), with every rule a change to a mouse has, wherever it comes
+    from: no date of birth or death in the future, a new owner only from the
+    lab, and a date of birth that belongs to a cohort changed only once the
+    person confirms (`confirm_cohort`), which takes the mouse out of it.
+    Leaves the session to the caller to commit, or roll back on a refusal."""
+    refused = future_birth(form)
+    died = parse_date(form.get("date_of_death")) if form_changed(form, "date_of_death") else None
+    if not refused and died is not None and died > date.today():
+        refused = gettext("A date of death can't be in the future (%(day)s). Nothing was saved.", day=fmt_day(died))
+    owner = (form.get("owner") or "").strip() if form_changed(form, "owner") else ""
+    if not refused and owner and owner != (mouse.owner or "") \
+            and owner not in stewardship.lab_members(db_session):
+        refused = stewardship.not_a_member(owner)
+    original_litter_id = mouse.litter.litter_id if mouse.litter else ""
+    original_dob = mouse.litter.date_of_birth if mouse.litter else None
+    requested_dob = parse_date(form.get("date_of_birth"))
+    keeping_same_litter = bool(original_litter_id) and (form.get("litter_id") or "").strip() == original_litter_id
+    moving_cohort = keeping_same_litter and requested_dob and requested_dob != original_dob
+    if not refused and moving_cohort and not confirm_cohort:
+        refused = gettext("DOB belongs to the cohort. Confirm to remove this mouse from the cohort before changing DOB.")
+    if refused:
+        return MouseChange(refused)
+    done = MouseChange()
+    recipient, sender = populate_mouse_from_form(db_session, mouse, form, warnings=done.warnings)
+    if moving_cohort:
+        if mouse.litter is not None and mouse.litter.litter_id == original_litter_id:
+            mouse.litter.date_of_birth = original_dob
+        set_mouse_litter(mouse, get_or_create_litter(db_session, next_litter_id(db_session), requested_dob))
+    if recipient:
+        create_transfer_copy(db_session, mouse, recipient, sender)
+    stamp_updated(mouse)
+    return done
 
 
 def create_transfer_copy(db_session, source_mouse: MouseRecord, recipient_username: str, sender_username: str | None) -> MouseRecord:
@@ -3912,31 +3963,14 @@ def update_mouse(mouse_row_id: int):
             flash(access.reason_denied(mouse), "error")
             return autosave_response("mice")
 
-        refused = future_birth(request.form)
-        if refused:
-            flash(refused, "error")
+        done = change_mouse(db_session, mouse, request.form,
+                            confirm_cohort=request.form.get("confirm_cohort_dob_change") == "1")
+        if done.refused:
+            db_session.rollback()
+            flash(done.refused, "error")
             return autosave_response("mice")
-        original_litter_id = mouse.litter.litter_id if mouse.litter else ""
-        original_dob = mouse.litter.date_of_birth if mouse.litter else None
-        form_litter_id = request.form.get("litter_id", "").strip()
-        confirm_cohort_change = request.form.get("confirm_cohort_dob_change") == "1"
-        requested_dob = parse_date(request.form.get("date_of_birth"))
-        keeping_same_litter = bool(original_litter_id) and form_litter_id == original_litter_id
-
-        if keeping_same_litter and requested_dob and requested_dob != original_dob and not confirm_cohort_change:
-            flash(gettext("DOB belongs to the cohort. Confirm to remove this mouse from the cohort before changing DOB."), "error")
-            return autosave_response("mice")
-
-        transfer_recipient, sender_username = populate_mouse_from_form(db_session, mouse, request.form)
-
-        if keeping_same_litter and requested_dob and requested_dob != original_dob and confirm_cohort_change:
-            if mouse.litter is not None and mouse.litter.litter_id == original_litter_id:
-                mouse.litter.date_of_birth = original_dob
-            new_litter = get_or_create_litter(db_session, next_litter_id(db_session), requested_dob)
-            set_mouse_litter(mouse, new_litter)
-        if transfer_recipient:
-            create_transfer_copy(db_session, mouse, transfer_recipient, sender_username)
-        stamp_updated(mouse)
+        for warning in done.warnings:
+            flash(warning, "error")
         db_session.commit()
         state = cage_state(mouse.cage)
         litter = mouse.litter
