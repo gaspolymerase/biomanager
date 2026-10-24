@@ -297,12 +297,19 @@ class Overlaps(unittest.TestCase):
 
 def clean_bases(n: int, seed, enzyme: str) -> str:
     """Filler with no site of its own: random DNA carries a six-base word
-    about once in two thousand bases, which would cut the part in half."""
+    about once in two thousand bases, which would cut the part in half.
+    Nor does it start or end with part of one, which whatever sits beside
+    it could finish (a filler ending GAGAC before a C is a reversed BsaI
+    site), so no site forms where it meets the rest."""
     site = cloning.ENZYMES[enzyme].site
-    for attempt in range(50):
+    words = (site, rc(site))
+    for attempt in range(200):
         made = bases(n, f"{seed}-{attempt}")
-        if site not in made and rc(site) not in made:
-            return made
+        if any(word in made for word in words):
+            continue
+        if any(made.endswith(word[:k]) or made.startswith(word[-k:]) for word in words for k in range(1, len(word))):
+            continue
+        return made
     raise AssertionError("no clean filler")
 
 
