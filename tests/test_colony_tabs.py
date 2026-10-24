@@ -213,7 +213,10 @@ class GiveBirthGenotypingTests(AppTestCase):
         # even through the route the page only shows on a Breeding cage.
         for purpose in ("Breeder", "BREEDER", "Experiments", ""):
             with self.subTest(purpose=purpose):
-                cage = self.make_cage(self.m, purpose=purpose, date_give_birth=days_ago(21))
+                # A litter from when it was a Breeding cage (none can be dated
+                # on another cage now: tests/test_second_litters.py).
+                cage = self.make_cage(self.m, purpose="Breeding", date_give_birth=days_ago(21))
+                execute("update mouse_cages set purpose=? where id=?", purpose, cage)
                 r = self.post(self.m, f"/colony/cages/{cage}/give-birth", {"date_give_birth": days_ago(1)})
                 self.assertFlash(r, "isn't a Breeding cage", "error")
                 self.assertEqual(one("select date_give_birth from mouse_cages where id=?", cage), days_ago(21))
@@ -294,7 +297,7 @@ class WeanDueTests(AppTestCase):
         return values["wean_due"], values["wean_state"]
 
     def test_wean_due_is_21_days_after_the_birth_date_soon_then_overdue(self):
-        cage = self.make_cage(self.m)
+        cage = self.make_cage(self.m, purpose="Breeding")
         self.assertEqual(self.wean_due(cage, date_give_birth=days_ago(5)), (days_ahead(16), ""))
         self.assertEqual(self.wean_due(cage, date_give_birth=days_ago(19)), (days_ahead(2), "soon"))
         self.assertEqual(self.wean_due(cage, date_give_birth=days_ago(25)), (days_ago(4), "overdue"))

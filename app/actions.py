@@ -572,15 +572,10 @@ def _cage_litter(s, cage, ref, what: str):
 def _which_said(s, cage, v, what: str) -> str:
     """Which litter a change on a cage with two litters is about, in words
     ("" for a cage with one): the one named, or the page's default."""
-    from .services import waiting_litters
-    still = _open_litters(cage)
-    if len(still) < 2:
+    from . import litters
+    if len(_open_litters(cage)) < 2:
         return ""
-    chosen = _cage_litter(s, cage, v.get("litter"), what)
-    if chosen is None:
-        waiting = waiting_litters(cage) or still
-        chosen = (next((cl for cl in waiting if cl.litter_id_fk is None), waiting[0]) if what == "genotyping"
-                  else waiting[0])
+    chosen = _cage_litter(s, cage, v.get("litter"), what) or litters.default(cage, what)
     return gettext(" (the litter born %(born)s)", born=chosen.born.isoformat())
 
 
@@ -616,8 +611,9 @@ def _litter_born_said(_s, c, v) -> str:
                                         "correct")),
         describe=_litter_born_said)
 def _litter_born(_s, cage, v):
-    if "pups" in v and not 1 <= v["pups"] <= MAX_REPEAT:
-        raise ActionError(gettext("pups is a whole number from 1 to %(max)s.", max=MAX_REPEAT))
+    from .litters import MAX_PUPS
+    if "pups" in v and not 1 <= v["pups"] <= MAX_PUPS:
+        raise ActionError(gettext("pups is a whole number from 1 to %(max)s.", max=MAX_PUPS))
     born = v.get("date") or date.today().isoformat()
     still = _open_litters(cage)
     if still and "another" not in v and all(cl.born.isoformat() != born for cl in still):

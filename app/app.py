@@ -453,6 +453,9 @@ app.register_blueprint(project_groups.bp)
 # Who may give a record to someone else, or share it (app/stewardship.py),
 # and the batch actions every database's selection bar runs (app/bulk.py).
 from . import stewardship, bulk  # noqa: E402
+# A Breeding cage's litters: Litter born, Genotyping and Wean (app/litters.py).
+from . import litters  # noqa: E402
+from .litters import PUP_AGE_DAYS, pup_litter as cage_pup_litter  # noqa: E402,F401
 # What's new: a short note once after an update (app/whats_new.py).
 from . import whats_new  # noqa: E402
 app.register_blueprint(whats_new.bp)
@@ -1673,24 +1676,10 @@ def cage_purposes(dropdowns: dict) -> list[str]:
     """The lab's cage purposes, as set in the colony's dropdown choices."""
     return _merged_choices(dropdowns.get("purpose") or CAGE_PURPOSE_CHOICES)
 # A litter still counts as the cage's pups up to this age (days).
-PUP_AGE_DAYS = 28
-
-
 def _sex_label(females: int, males: int, other: int) -> str:
     """"2♀ 1♂" for the living mice in a cage; unknown sex shown as "?"."""
     parts = [f"{n}{sign}" for n, sign in ((females, "♀"), (males, "♂"), (other, "?")) if n]
     return " ".join(parts)
-
-
-def cage_pup_litter(cage) -> LitterRecord | None:
-    """The youngest litter among the cage's living mice, if it is still
-    pups (born within PUP_AGE_DAYS)."""
-    today = date.today()
-    litters = {m.litter.id: m.litter for m in cage.mice
-               if mouse_is_active(m) and m.litter is not None and m.litter.date_of_birth
-               and m.litter.weaned_on is None
-               and 0 <= (today - m.litter.date_of_birth).days <= PUP_AGE_DAYS}
-    return max(litters.values(), key=lambda lit: lit.date_of_birth) if litters else None
 
 
 def cage_wean_due(cage) -> tuple[str, str]:
@@ -4737,6 +4726,10 @@ def create_cage():
         return autosave_response("cages")
     count = int(raw_count)
     refused = future_birth(form, "date_give_birth", "A litter's birth date")
+    if not refused and parse_date(form.get("date_give_birth")) is not None:
+        # Only a Breeding cage has litters (app/litters.py).
+        refused = litters.not_breeding(SimpleNamespace(purpose=form.get("purpose", ""),
+                                                       cage_id=requested or gettext("new")))
     if refused:
         flash(refused, "error")
         return autosave_response("cages")
@@ -4784,7 +4777,7 @@ def create_cage():
             cage.cage_location = form.get("cage_location", "").strip()
             cage.purpose = form.get("purpose", "").strip()
             cage.notes = form.get("notes", "").strip()
-            set_birth_date(cage, parse_date(form.get("date_give_birth")))
+            litters.set_born(cage, parse_date(form.get("date_give_birth")))
             cage.card_id = form.get("card_id", "").strip()
             cage.genotype_summary = form.get("genotype_summary", "").strip()
             cage.location_detail = form.get("location_detail", "").strip()
@@ -5106,7 +5099,9 @@ def apply_cage_form(db_session, cage, form) -> str | None:
             return refused
         # The cell is the cage's oldest litter not yet weaned: a date there
         # corrects it (or records the first), clearing it removes it.
-        set_birth_date(cage, parse_date(form.get("date_give_birth")))
+        refused = litters.set_born(cage, parse_date(form.get("date_give_birth")))
+        if refused:
+            return refused
     # Any cage may be shared, with the lab ("1") or one project group
     # ("g<id>"); whose it is and whom it is shared with are its owner's (or
     # an admin's) to decide (app/stewardship.py).
@@ -5259,16 +5254,6 @@ def add_mouse_from_cage(cage_row_id: int):
     return redirect(url_for("colony", view="cages"))
 
 
-def _not_breeding(cage) -> str | None:
-    """Litters, genotyping and weaning are a Breeding (mating) cage's alone
-    (services.is_breeding_cage). The page shows the buttons only there; the
-    server says so too, for the API, an assistant's proposals and a phone
-    syncing what was done offline."""
-    if cage is None or is_breeding_cage(cage.purpose):
-        return None
-    return gettext("Cage %(cage)s isn't a Breeding cage: only a mating cage has litters, genotyping and weaning. Set its purpose to Breeding first.", cage=cage.cage_id)
-
-
 @app.route("/colony/cages/<int:cage_row_id>/give-birth", methods=["POST"])
 @login_required
 def cage_give_birth(cage_row_id: int):
@@ -5285,111 +5270,27 @@ def cage_give_birth(cage_row_id: int):
         blocked = deny(cage, "cages")
         if blocked:
             return blocked
-        not_breeding = _not_breeding(cage)
+        not_breeding = litters.not_breeding(cage)
         if not_breeding:
             flash(not_breeding, "error")
             return _back_to_colony("cages")
         if cage is not None:
-            refused = _record_birth(db_session, cage, request.form)
+            form = request.form
+            refused = future_birth(form, "date_give_birth", "A litter's birth date")
+            count, refused = (None, refused) if refused else litters.pups(form.get("pups"))
+            said = None
+            if not refused:
+                refused, said = litters.record_birth(
+                    cage, parse_date(form.get("date_give_birth")) or date.today(), count,
+                    dam=(form.get("dam") or "").strip(), sire=(form.get("sire") or "").strip(),
+                    choice=form.get("litter_choice") or "", named=parse_date(form.get("litter")))
             if refused:
                 db_session.rollback()
                 flash(refused, "error")
                 return _back_to_colony("cages")
             db_session.commit()
+            flash(said, "success")
     return _back_to_colony("cages")
-
-
-def _record_birth(db_session, cage, form) -> str | None:
-    """Litter born on `cage` from its form; the refusal in words, or None
-    once it is recorded (and said)."""
-    # The date the person confirmed in the Litter born dialog (today when a
-    # form sends none).
-    refused = future_birth(form, "date_give_birth", "A litter's birth date")
-    if refused:
-        return refused
-    born = parse_date(form.get("date_give_birth")) or date.today()
-    raw_pups = (form.get("pups") or "").strip()
-    if raw_pups and (not raw_pups.isdigit() or not 1 <= int(raw_pups) <= 40):
-        return gettext("Pups must be a whole number from 1 to 40, not “%(value)s”. Nothing was changed.", value=raw_pups)
-    pups = int(raw_pups) if raw_pups else None
-    dam = (form.get("dam") or "").strip()[:120]
-    sire = (form.get("sire") or "").strip()[:120]
-    choice = (form.get("litter_choice") or "").strip().lower()
-    still = open_litters(cage)
-    wean = fmt_day(born + timedelta(days=weaning_offset()))
-    same = find_open_litter(cage, born)
-    named = parse_date(form.get("litter"))
-    correcting_another = choice == "correct" and named not in (None, born)
-    if (same is not None and not correcting_another) or not still or choice == "another":
-        # The first litter, another one, or the same one again with its count.
-        if same is None:
-            same = CageLitter(born=born)
-            cage.cage_litters.append(same)
-        if pups:
-            same.pups = pups
-        if dam:
-            same.dam = dam
-        if sire:
-            same.sire = sire
-        refresh_birth_date(cage)
-        earlier = [cl for cl in still if cl is not same]
-        if earlier and choice == "another":
-            flash(gettext("Recorded another litter in cage %(cage)s, born %(born)s: weaning is due %(wean)s. The earlier litter (born %(earlier)s) is kept, with its own reminders.", cage=cage.cage_id, born=fmt_day(born), wean=wean,
-                          earlier=", ".join(fmt_day(cl.born) for cl in earlier)), "success")
-        elif born == date.today():
-            flash(gettext("Recorded a litter born today in cage %(cage)s: weaning is due %(wean)s.",
-                          cage=cage.cage_id, wean=wean), "success")
-        else:
-            flash(gettext("Recorded a litter born on %(born)s in cage %(cage)s: weaning is due %(wean)s.",
-                          born=fmt_day(born), cage=cage.cage_id, wean=wean), "success")
-        return None
-    days = ", ".join(fmt_day(cl.born) for cl in still)
-    if choice != "correct":
-        return ngettext("Cage %(cage)s already has a litter born %(born)s that isn't weaned. Say whether this is another litter (a second female: both are kept) or corrects that date. Nothing was changed.",
-                        "Cage %(cage)s already has litters born %(born)s that aren't weaned. Say whether this is another litter (both are kept) or corrects one of their dates. Nothing was changed.",
-                        len(still), cage=cage.cage_id, born=days)
-    if named is not None:
-        wrong = find_open_litter(cage, named)
-        if wrong is None:
-            return gettext("Cage %(cage)s has no litter born %(born)s that isn't weaned (it has %(have)s). Nothing was changed.", cage=cage.cage_id, born=fmt_day(named),
-                           have=days)
-    elif len(still) == 1:
-        wrong = still[0]
-    else:
-        return gettext("Cage %(cage)s has litters born %(born)s: say which one's date to correct. Nothing was changed.", cage=cage.cage_id, born=days)
-    if same is not None and same is not wrong:
-        return gettext("Cage %(cage)s already has a litter born %(born)s. Nothing was changed.", cage=cage.cage_id,
-                       born=fmt_day(born))
-    was = wrong.born
-    wrong.born = born
-    if pups:
-        wrong.pups = pups
-    if dam:
-        wrong.dam = dam
-    if sire:
-        wrong.sire = sire
-    refresh_birth_date(cage)
-    flash(gettext("Corrected the litter in cage %(cage)s: born %(born)s, not %(was)s. Weaning is due %(wean)s.",
-                  cage=cage.cage_id, born=fmt_day(born), was=fmt_day(was), wean=wean), "success")
-    return None
-
-
-def _which_litter(cage, form, what: str):
-    """(the cage's litter the form names by its birth date, `litter`, or the
-    default; a refusal in words). The default is the oldest still waiting:
-    for Genotyping the oldest whose pups aren't mice yet."""
-    named = parse_date(form.get("litter"))
-    if named is not None:
-        chosen = find_open_litter(cage, named)
-        if chosen is None:
-            have = ", ".join(fmt_day(cl.born) for cl in open_litters(cage)) or "-"
-            return None, gettext("Cage %(cage)s has no litter born %(born)s that isn't weaned (it has %(have)s). Nothing was changed.", cage=cage.cage_id, born=fmt_day(named),
-                                 have=have)
-        return chosen, None
-    waiting = waiting_litters(cage) or open_litters(cage)
-    if what == "genotyping":
-        return next((cl for cl in waiting if cl.litter_id_fk is None), waiting[0] if waiting else None), None
-    return (waiting[0] if waiting else None), None
 
 
 @app.route("/colony/cages/<int:cage_row_id>/genotyping", methods=["POST"])
@@ -5402,26 +5303,24 @@ def cage_genotyping(cage_row_id: int):
         blocked = deny(cage, "cages")
         if blocked:
             return blocked
-        not_breeding = _not_breeding(cage)
+        not_breeding = litters.not_breeding(cage)
         if not_breeding:
             flash(not_breeding, "error")
             return redirect(url_for("colony", view="cages"))
         # Which litter's pups: the one the dialog names (a cage with two
         # litters asks), else the oldest whose pups aren't mice yet.
-        born_in, refused = _which_litter(cage, request.form, "genotyping")
-        if refused:
-            flash(refused, "error")
-            return redirect(url_for("colony", view="cages"))
+        born_in, refused = litters.choose(cage, parse_date(request.form.get("litter")), "genotyping")
         # Nothing is required: pups not counted yet make the litter without
         # its mice, which can be added to it later.
         raw_pups = (request.form.get("total_pups") or "").strip()
         if not raw_pups and born_in is not None and born_in.pups:
             raw_pups = str(born_in.pups)       # counted when the litter was recorded
-        if raw_pups and (not raw_pups.isdigit() or not 1 <= int(raw_pups) <= 40):
-            flash(gettext("Pups must be a whole number from 1 to 40, not “%(value)s”. No litter was created.",
-                          value=raw_pups), "error")
+        total_pups, bad_count = litters.pups(raw_pups, "genotyping")
+        refused = refused or bad_count
+        if refused:
+            flash(refused, "error")
             return redirect(url_for("colony", view="cages"))
-        total_pups = int(raw_pups) if raw_pups else 0
+        total_pups = total_pups or 0
         father_info = request.form.get("father_info", "").strip() or (born_in.sire if born_in is not None else "")
         mother_info = request.form.get("mother_info", "").strip() or (born_in.dam if born_in is not None else "")
         litter = LitterRecord(litter_id=generate_litter_id(db_session, cage),
@@ -5465,56 +5364,21 @@ def cage_wean(cage_row_id: int):
         blocked = deny(cage, "cages")
         if blocked:
             return blocked
-        not_breeding = _not_breeding(cage)
+        not_breeding = litters.not_breeding(cage)
         if not_breeding:
             flash(not_breeding, "error")
             return _back_to_colony("cages")
         if cage is not None:
-            weaning, refused = _which_litter(cage, request.form, "wean")
-            young = refused or _too_young_to_wean(cage, weaning)
+            weaning, refused = litters.choose(cage, parse_date(request.form.get("litter")), "wean")
+            young = refused or litters.too_young(cage, weaning, early=bool(request.form.get("early")))
             if young:
                 flash(young, "error")
                 return _back_to_colony("cages")
             mark_weaned(cage, cage_litter=weaning)
             batch_row.description, batch_row.record_count = f"wean cage {cage.cage_id}"[:200], 1
             db_session.commit()
-            _say_weaned(cage, weaning)
+            flash(litters.weaned_said(cage, weaning), "success")
     return _back_to_colony("cages")
-
-
-def _say_weaned(cage, weaned) -> None:
-    """Cage 12 is weaned; or, when it has another litter still to wean,
-    which one was and which is left."""
-    left = waiting_litters(cage)
-    if weaned is not None and left:
-        flash(gettext("Weaned the litter born %(born)s in cage %(cage)s. Its litter born %(next)s is still to wean (due %(due)s).", born=fmt_day(weaned.born), cage=cage.cage_id,
-                      next=fmt_day(left[0].born), due=fmt_day(left[0].born + timedelta(days=weaning_offset()))),
-              "success")
-    else:
-        flash(gettext("Cage %(cage)s is weaned.", cage=cage.cage_id), "success")
-
-
-def _too_young_to_wean(cage, weaning=None) -> str | None:
-    """Why weaning this cage (its litter `weaning`) now needs a second
-    look, or None. The form sends early=1 once the person has confirmed
-    (colony.html asks)."""
-    if request.form.get("early"):
-        return None
-    born = weaning.born if weaning is not None else None
-    if born is None:
-        litter = cage_pup_litter(cage)
-        born = litter.date_of_birth if litter else None
-    if born is None:
-        return None
-    age = (date.today() - born).days
-    if age >= min(MIN_WEAN_AGE_DAYS, weaning_offset()):
-        return None
-    due = born + timedelta(days=weaning_offset())
-    if age < 0:
-        return gettext("Cage %(cage)s's litter is dated %(born)s, in the future. Correct its date before weaning.",
-                       cage=cage.cage_id, born=fmt_day(born))
-    return gettext("The pups in cage %(cage)s are %(age)s days old; weaning is due %(due)s (P%(days)s). Nothing was changed. To wean them early anyway, confirm it when asked.", cage=cage.cage_id, age=age,
-                   due=fmt_day(due), days=weaning_offset())
 
 
 @app.route("/colony/cages/<int:cage_row_id>/wean-distribute", methods=["POST"])
@@ -5554,12 +5418,12 @@ def cage_wean_distribute(cage_row_id: int):
         if blocked:
             return blocked
         source_cage_label = source_cage.cage_id
-        not_breeding = _not_breeding(source_cage)
+        not_breeding = litters.not_breeding(source_cage)
         if not_breeding:
             flash(not_breeding, "error")
             return redirect(url_for("colony", view="cages"))
-        weaning, refused = _which_litter(source_cage, request.form, "wean")
-        young = refused or _too_young_to_wean(source_cage, weaning)
+        weaning, refused = litters.choose(source_cage, parse_date(request.form.get("litter")), "wean")
+        young = refused or litters.too_young(source_cage, weaning, early=bool(request.form.get("early")))
         if young:
             flash(young, "error")
             return redirect(url_for("colony", view="cages"))
