@@ -793,19 +793,6 @@ class ProtocolLibraryTests(Notebook):
         tab = one("select t.title from notebook_pages p join notebook_tabs t on t.id=p.tab_id_fk where p.id=?", r["page_id"])
         self.assertEqual(tab, "Inbox")
 
-    def test_inbox_leaves_protocols_to_the_library_but_a_topic_lists_them(self):
-        user = make_user()
-        c = client_for(user)
-        note = self.new_page(c, starter="blank")
-        protocol = self.post_json(c, "/notebook/api/protocols/new", {}).get_json()["page_id"]
-        html = self.get_ok(c, f"/notebook?page={note}")
-        self.assertNotIn(f'data-page-id="{protocol}"', html)
-        self.assertIn('<span class="tab-count">1</span>', html)
-        c.post("/notebook/tabs/create", data={"title": "Flow"})
-        flow = one("select id from notebook_tabs where owner_username=? and title='Flow'", user)
-        c.post(f"/notebook/pages/{protocol}/move", data={"tab_id": flow})
-        self.assertIn(f'data-page-id="{protocol}"', self.get_ok(c, f"/notebook?page={note}"))
-
     def test_a_new_blank_protocol_and_an_unknown_preset(self):
         blank = self.post_json(self.m, "/notebook/api/protocols/new", {}).get_json()
         self.assertIn("## Steps", self.m.get(f"/notebook/api/pages/{blank['page_id']}").get_json()["page"]["body"])
@@ -1238,3 +1225,191 @@ class PersonCards(AppTestCase):
         execute("update users set disabled=? where username=?", True, gone)
         self.assertEqual(self.m.get(f"/notebook/api/people/{gone}").status_code, 404)
         self.assertEqual(self.m.get("/notebook/api/people/nobody-at-all").status_code, 404)
+
+
+class TopicTests(Notebook):
+    """Topics as folders that hold topics, in an order of one's own; a
+    topic's page of cards; the notebook's home; favourites; and Inbox,
+    which leaves to the libraries what they list."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.c = client_for(self.user)
+
+    def topic(self, title, **form):
+        r = self.c.post("/notebook/tabs/create", data={"title": title, **form})
+        self.assertTrue(r.get_json()["ok"])
+        return r.get_json()["id"]
+
+    def parent_of(self, tab_id):
+        return one("select parent_tab_id from notebook_tabs where id=?", tab_id)
+
+    def html(self, url="/notebook"):
+        return self.get_ok(self.c, url)
+
+    def test_inbox_leaves_protocols_papers_and_series_notes_to_their_libraries(self):
+        note = self.new_page(self.c, starter="blank")
+        protocol = self.post_json(self.c, "/notebook/api/protocols/new", {}).get_json()["page_id"]
+        paper = self.new_page(self.c, kind="reading")
+        talk = self.new_page(self.c, kind="seminar")
+        lone_meeting = self.new_page(self.c, kind="meeting")
+        series = self.post_json(self.c, "/notebook/api/meetings", {"name": uniq("Lab meeting"), "members": [self.user]}).get_json()["series"]
+        series_note = self.post_json(self.c, f"/notebook/api/meetings/{series['id']}/note").get_json()["page_id"]
+        inbox = one("select id from notebook_tabs where owner_username=? and title='Inbox'", self.user)
+        self.assertEqual(one("select count(*) from notebook_pages where tab_id_fk=?", inbox), 6)
+        html = self.html(f"/notebook?tab={inbox}")
+        for shown in (note, lone_meeting):
+            self.assertIn(f'data-page-id="{shown}"', html)
+        for hidden in (protocol, paper, talk, series_note):
+            self.assertNotIn(f'data-page-id="{hidden}"', html)
+        self.assertIn('<span class="tab-count">2</span>', html)
+        # One moved into a topic of one's own is listed there.
+        flow = self.topic("Flow")
+        self.post_json(self.c, f"/notebook/api/pages/{protocol}/place", {"tab_id": flow})
+        self.assertIn(f'data-page-id="{protocol}"', self.html(f"/notebook?tab={flow}"))
+
+    def test_a_topic_goes_inside_another_and_never_inside_itself(self):
+        projects, lung, flow = self.topic("Projects"), self.topic("Lung"), self.topic("Flow")
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{lung}/place", {"parent_id": projects}).status_code, 200)
+        self.assertEqual(self.parent_of(lung), projects)
+        inner = self.topic("Gating", parent_id=lung)
+        self.assertEqual(self.parent_of(inner), lung)
+        # Not inside itself, nor inside a topic inside it.
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{projects}/place", {"parent_id": projects}).status_code, 400)
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{projects}/place", {"parent_id": inner}).status_code, 400)
+        self.assertEqual(self.parent_of(projects), None)
+        # Inbox stays at the top, with nothing inside it.
+        self.new_page(self.c, starter="blank")
+        inbox = one("select id from notebook_tabs where owner_username=? and title='Inbox'", self.user)
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{flow}/place", {"parent_id": inbox}).status_code, 400)
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{inbox}/place", {"parent_id": flow}).status_code, 400)
+        self.c.post("/notebook/tabs/create", data={"title": "Not in the inbox", "parent_id": inbox})
+        self.assertIsNone(one("select parent_tab_id from notebook_tabs where title='Not in the inbox' and owner_username=?", self.user))
+        # The sidebar draws it inside; a page in it shows the whole path.
+        html = self.html(f"/notebook?tab={inner}")
+        self.assertIn(f'data-tab-id="{inner}" data-parent-id="{lung}"', html)
+        page = self.new_page(self.c, starter="blank", tab_id=inner)
+        crumbs = self.html(f"/notebook?page={page}").split('aria-label="Where this page is"')[1].split("</nav>")[0]
+        self.assertLess(crumbs.index("Projects"), crumbs.index("Lung"))
+        self.assertLess(crumbs.index("Lung"), crumbs.index("Gating"))
+        # Back to the top, after another topic.
+        self.post_json(self.c, f"/notebook/api/topics/{lung}/place", {"parent_id": None, "after_id": flow})
+        self.assertIsNone(self.parent_of(lung))
+        order = [r[0] for r in rows("select id from notebook_tabs where owner_username=? and parent_tab_id is null "
+                                    "order by position", self.user)]
+        self.assertEqual(order.index(lung), order.index(flow) + 1)
+
+    def test_someone_elses_topic_cannot_be_changed_or_used(self):
+        theirs = self.topic("Theirs")
+        mine = client_for(make_user())
+        self.assertEqual(self.post_json(mine, f"/notebook/api/topics/{theirs}", {"title": "Mine"}).status_code, 404)
+        self.assertEqual(self.post_json(mine, f"/notebook/api/topics/{theirs}/place", {"parent_id": None}).status_code, 404)
+        page = self.new_page(self.c, starter="blank")
+        self.assertEqual(self.post_json(mine, f"/notebook/api/pages/{page}/place", {"tab_id": theirs}).status_code, 404)
+
+    def test_a_topic_has_a_name_and_an_icon_of_those_offered(self):
+        tab = self.topic("Cloning")
+        r = self.post_json(self.c, f"/notebook/api/topics/{tab}", {"title": "  Cloning  v2 ", "icon": "dna"})
+        self.assertEqual((r.get_json()["title"], r.get_json()["icon"]), ("Cloning v2", "dna"))
+        self.assertIn('data-icon="dna"', self.html(f"/notebook?tab={tab}"))
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{tab}", {"icon": "rocket"}).status_code, 400)
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/topics/{tab}", {"title": " "}).status_code, 400)
+
+    def test_deleting_a_topic_keeps_the_topics_inside_it_one_level_up(self):
+        outer, middle = self.topic("Outer"), self.topic("Middle")
+        self.post_json(self.c, f"/notebook/api/topics/{middle}/place", {"parent_id": outer})
+        inner = self.topic("Inner", parent_id=middle)
+        kept = self.new_page(self.c, starter="blank", tab_id=inner)
+        gone = self.new_page(self.c, starter="blank", tab_id=middle)
+        self.c.post(f"/notebook/tabs/{middle}/delete")
+        self.assertEqual(self.parent_of(inner), outer)
+        self.assertEqual(count("notebook_pages", "id=?", kept), 1)
+        self.assertEqual(count("notebook_pages", "id=?", gone), 0)
+
+    def test_a_page_goes_before_or_after_another_and_under_the_page_beside_it(self):
+        tab = self.topic("Order")
+        a, b, c = (self.new_page(self.c, starter="blank", tab_id=tab, title=x) for x in "abc")
+        order = lambda: [r[0] for r in rows("select id from notebook_pages where tab_id_fk=? order by position", tab)]
+        self.assertEqual(order(), [a, b, c])
+        self.post_json(self.c, f"/notebook/api/pages/{c}/place", {"tab_id": tab, "before_id": a})
+        self.assertEqual(order(), [c, a, b])
+        self.post_json(self.c, f"/notebook/api/pages/{c}/place", {"tab_id": tab, "after_id": b})
+        self.assertEqual(order(), [a, b, c])
+        # Beside a sub-page: under the same page.
+        sub = self.new_page(self.c, starter="blank", parent_page_id=a)
+        self.post_json(self.c, f"/notebook/api/pages/{c}/place", {"tab_id": tab, "after_id": sub, "parent_page_id": a})
+        self.assertEqual(one("select parent_page_id from notebook_page_info where page_id_fk=?", c), a)
+        # Never under itself or a page inside it.
+        self.post_json(self.c, f"/notebook/api/pages/{a}/place", {"tab_id": tab, "parent_page_id": sub})
+        self.assertIsNone(one("select parent_page_id from notebook_page_info where page_id_fk=?", a))
+        # To another topic, with the pages inside it.
+        other = self.topic("Other")
+        self.post_json(self.c, f"/notebook/api/pages/{a}/place", {"tab_id": other, "parent_page_id": None})
+        self.assertEqual({r[0] for r in rows("select id from notebook_pages where tab_id_fk=?", other)}, {a, sub, c})
+        # Someone else's page stays where it is.
+        theirs = self.new_page(self.m, starter="blank")
+        self.share(self.m, theirs, self.user, "edit")
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/pages/{theirs}/place", {"tab_id": tab}).status_code, 404)
+
+    def test_a_topic_page_shows_its_topics_and_its_pages_newest_by_name_or_in_order(self):
+        tab = self.topic("Cards")
+        inside = self.topic("Inside", parent_id=tab)
+        first = self.new_page(self.c, starter="blank", tab_id=tab, title="Zebra")
+        second = self.new_page(self.c, starter="blank", tab_id=tab, title="Aardvark")
+        self.save(self.c, first, body="Zebra finch song\n")
+        html = self.html(f"/notebook?tab={tab}")
+        self.assertIn('id="nb-topic"', html)
+        self.assertIn(f'data-drop-topic="{inside}"', html)
+        self.assertIn("Zebra finch song", html)
+        cards = lambda h: [int(x.split('"')[0]) for x in h.split('<article class="nb-card" data-page-id="')[1:]]
+        self.assertEqual(cards(html), [first, second])                       # last edited first
+        self.assertEqual(cards(self.html(f"/notebook?tab={tab}&sort=name")), [second, first])
+        self.assertEqual(cards(self.html(f"/notebook?tab={tab}&sort=order")), [first, second])
+        # Opening a topic opens no page.
+        self.assertNotIn('id="editor-mount"', html)
+
+    def test_favourites_are_ones_own_and_listed_at_the_top_and_on_the_home(self):
+        a = self.new_page(self.c, starter="blank", title=uniq("Starred"))
+        b = self.new_page(self.c, starter="blank", title=uniq("Also"))
+        for page in (a, b):
+            self.assertTrue(self.post_json(self.c, f"/notebook/api/pages/{page}/favorite", {"on": True}).get_json()["favorite"])
+        self.post_json(self.c, f"/notebook/api/pages/{a}/favorite", {"on": True})          # twice: once
+        self.assertEqual(count("notebook_favorites", "username=?", self.user), 2)
+        home = self.html()
+        side = home.split('id="nb-favorite-list"')[1].split("</ul>")[0]
+        self.assertLess(side.index(f'data-page-id="{a}"'), side.index(f'data-page-id="{b}"'))
+        self.assertIn('id="nb-home"', home)
+        self.post_json(self.c, f"/notebook/api/favorites/{b}/place", {"before_id": a})
+        side = self.html().split('id="nb-favorite-list"')[1].split("</ul>")[0]
+        self.assertLess(side.index(f'data-page-id="{b}"'), side.index(f'data-page-id="{a}"'))
+        self.assertTrue(self.c.get(f"/notebook/api/pages/{a}").get_json()["page"]["favorite"])
+        # Off again; and a page one may not open cannot be starred.
+        self.post_json(self.c, f"/notebook/api/pages/{b}/favorite", {"on": False})
+        self.assertEqual(count("notebook_favorites", "username=?", self.user), 1)
+        private = self.new_page(self.m, starter="blank")
+        self.assertEqual(self.post_json(self.c, f"/notebook/api/pages/{private}/favorite", {"on": True}).status_code, 404)
+        # Deleting the page takes its star with it.
+        tab = one("select tab_id_fk from notebook_pages where id=?", a)
+        self.c.post(f"/notebook/tabs/{tab}/delete")
+        self.assertEqual(count("notebook_favorites", "username=?", self.user), 0)
+
+    def test_a_star_on_a_shared_page_goes_when_the_sharing_does(self):
+        page = self.new_page(self.m, starter="blank", title=uniq("Lab page"))
+        self.share(self.m, page, self.user, "view")
+        self.post_json(self.c, f"/notebook/api/pages/{page}/favorite", {"on": True})
+        self.assertIn(f'data-page-id="{page}"', self.html().split('id="nb-favorite-list"')[1].split("</ul>")[0])
+        from app.db import SessionLocal
+        from app.models import NotebookShare
+        with SessionLocal() as s:
+            s.query(NotebookShare).filter_by(page_id_fk=page, username=self.user).delete()
+            s.commit()
+        self.assertNotIn(f'data-page-id="{page}"', self.html().split('id="nb-favorite-list"')[1].split("</ul>")[0])
+
+    def test_the_home_lists_recent_pages_and_the_topics(self):
+        tab = self.topic("Home topic")
+        page = self.new_page(self.c, starter="blank", tab_id=tab, title=uniq("Recent"))
+        home = self.html()
+        recent = home.split("Recently edited")[1]
+        self.assertIn(f'data-page-id="{page}"', recent)
+        self.assertIn(f'href="/notebook?tab={tab}"', recent)

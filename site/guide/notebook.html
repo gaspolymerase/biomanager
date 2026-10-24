@@ -143,10 +143,27 @@
       <h2 id="pages">Pages</h2>
       <ul>
         <li>Pages in <b>Topics</b>, written like a document and kept as Markdown. Topics are folders, listed in the notebook's
-          sidebar: <b>+</b> beside <i>Topics</i> names a new one, a topic's own <b>+</b> starts a page in it, and its <b>•••</b>
-          renames it or deletes it with its pages. Drag a page onto a topic to move it there. The sidebar's button at the top (or
+          sidebar, and a topic can hold topics of its own, as deep as you like (<i>Projects</i>, in it <i>Lung neurons</i>, in that
+          <i>Flow</i>). <b>+</b> beside <i>Topics</i> names a new one. A topic's own <b>+</b> starts a page in it, and its <b>•••</b>
+          makes a <b>New topic inside</b> it, changes its <b>Name and icon</b>, moves it into another topic (<b>Move to…</b>), or
+          deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the
+          notebook remembers which you left open. The sidebar's button at the top (or
           <kbd>Ctrl</kbd>+<kbd>\</kbd>, <kbd>⌘</kbd>+<kbd>\</kbd> on a Mac) hides it, so the page has the window; the same button
           beside the page's place brings it back.</li>
+        <li>Tidy up by dragging, in the sidebar: a page onto a topic moves it there, and a page between two others puts it there,
+          beside them (under the page they sit in). A topic onto another goes inside it; near the top or bottom of one, it goes
+          above or below. The pages inside a page move with it.</li>
+        <li>Click a topic's name for its own page: the topics inside it as tiles, then its pages as cards, each with its first
+          line, when it last changed and its status. Sort them by <b>Last edited</b>, <b>Name</b> or <b>Your order</b> (the
+          sidebar's; drag a card to change it), show them as cards or as a list, and move one to another topic with the folder
+          button on its card. Drag a card onto a tile to move it into that topic.</li>
+        <li><b>Favorites</b>, at the top of the sidebar: the star at the top of a page, or on its card, keeps it there. Any page
+          you can open may be a favourite, a lab mate's shared page too. Drag a page into Favorites to star it, and drag the
+          favourites into your own order; the star again takes one out.</li>
+        <li><b>Home</b>, at the top of the sidebar, is where the notebook opens: your favourites, the pages edited most recently
+          (yours and those shared with you), and your topics.</li>
+        <li><b>Inbox</b> holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series
+          have places of their own (<b>Protocols</b>, <b>Reading</b> and <b>Meetings</b>, below), so Inbox leaves them out.</li>
         <li><b>New page</b> asks four things, each labelled: the <b>Title</b>, the <b>Topic</b> it goes in, its <b>Kind</b>, and what
           to <b>Start from</b>. Each kind says what it adds:
           <ul>
@@ -166,7 +183,8 @@
           template makes Experiments) and is listed under <b>Start from</b> for that kind. <b>Structure only</b> keeps the headings,
           steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results,
           Observations or Conclusion.</li>
-        <li>In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move
+        <li>In the row at the top of the window, the page's place reads like a file path: the topics its topic sits in, its topic,
+          then the pages it sits in. Click the star there to make it a favourite. Click the topic to move
           the page: search your topics, or type a new name to make one. The pages inside it move with it. Above the title is the
           page's kind: click it to change it, which never moves the page. Hover there for <b>Add cover</b>, a picture across the top of
           the page (uploaded, or one of the page's own pictures); <b>Change cover</b> and <b>Remove</b> are on the cover. The title
@@ -350,7 +368,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 17 min read</p>
+      <p>On this page · 18 min read</p>
       <ol>
         <li class="lvl2"><a href="#pages">Pages</a></li>
         <li class="lvl2"><a href="#reading">Paper notes and Reading</a></li>

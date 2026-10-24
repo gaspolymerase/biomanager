@@ -273,9 +273,12 @@ OWN_ROWS = {"notifications": "recipient_username", "calendar_subscriptions": "ow
             # (a description can name someone's personal database or file).
             "batches": "actor",
             # What someone wrote down or photographed at the bench (app/captures.py).
-            "captures": "owner_username"}
+            "captures": "owner_username",
+            # The pages someone starred (and only those they may open: PAGE_ROWS).
+            "notebook_favorites": "username"}
 PAGE_ROWS = ("notebook_comments", "notebook_page_info", "notebook_presence", "notebook_shares",
-             "notebook_sync_updates", "notebook_versions", "record_signatures", "notebook_pending_inserts")
+             "notebook_sync_updates", "notebook_versions", "record_signatures", "notebook_pending_inserts",
+             "notebook_favorites")
 PERSONAL_DATABASES = ("inventory_modules", "stock_modules", "organism_modules")
 # To-dos and calendar events: a member sees their own, the lab's and their
 # project groups' (app.task_visible_clause, lab_calendar's event filter);

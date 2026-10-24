@@ -544,5 +544,12 @@
   "Asking Zotero…": "正在询问 Zotero…",
   "Connect Zotero, and each paper you add there becomes a note here.": "连接 Zotero 后，你在那里添加的每篇论文都会在这里变成一篇笔记。",
   "New papers in Zotero (%(where)s) become notes here.": "Zotero（%(where)s）中的新论文会在这里变成笔记。",
-  "Disconnect": "断开"
+  "Disconnect": "断开",
+  "Name and icon": "名称和图标",
+  "New topic inside %(name)s": "在“%(name)s”里新建主题",
+  "Name the topic": "主题名称",
+  "Delete the topic “%(name)s” and every page in it? The topics inside it stay, one level up.": "删除主题“%(name)s”及其中的所有页面？里面的主题会保留，上移一层。",
+  "At the top": "最上层",
+  "Added to Favorites.": "已加入收藏夹。",
+  "Taken out of Favorites.": "已移出收藏夹。"
 }

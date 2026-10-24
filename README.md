@@ -594,18 +594,29 @@ database has a name of its own (one another database has is refused), so
     Calendar subscribes to, with just your things or the whole lab; it
     updates about every hour, and **Make a new link** stops the old one.
 - **Lab notebook** — pages in topics, written like a document and saved as
-  Markdown. Topics are folders: a page stays in the one it was made or moved
-  to, whatever its kind. In the sidebar, **+** beside *Topics* names a new
-  one, a topic's own **+** starts a page in it and **•••** renames or
-  deletes it, and a page dragged onto a topic moves there. The sidebar
-  hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
+  Markdown. Topics are folders, and a topic can hold topics of its own, as
+  deep as you like: a page stays in the one it was made or moved to,
+  whatever its kind. In the sidebar, **+** beside *Topics* names a new one,
+  a topic's own **+** starts a page in it, and **•••** makes a **New topic
+  inside**, changes its **Name and icon**, moves it (**Move to…**) or
+  deletes it (the topics inside it stay, one level up). Drag to tidy up: a
+  page onto a topic moves it there, between two pages puts it there, and a
+  topic onto another goes inside it (or above or below, near its edge).
+  A topic's name opens its own page: the topics inside it as tiles, then
+  its pages as cards or a list, by **Last edited**, **Name** or **Your
+  order**. The star on a page or a card keeps it in **Favorites** at the
+  top of the sidebar, in your order. The notebook opens on **Home**: your
+  favourites, what was edited lately and your topics. **Inbox** holds the
+  pages in no topic yet; protocols, papers and talks, and a meeting series'
+  notes are in **Protocols**, **Reading** and **Meetings** instead. The
+  sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
   **New page** asks for a title, the topic, the kind of page and what to
   start from (a built-in starter or one of your templates). A page's kind
   sits above its title, saying what it adds; click it to change the kind,
   which never moves the page. A long title wraps onto more lines, set well
   above the page's headings as in Notion, and **Add cover** puts a picture
-  across the top. Above the page its place reads like a path; click the
-  topic to move it. A page links to mice, plasmids, orders and any inventory record
+  across the top. Above the page its place reads like a path (the topics
+  its topic sits in, then its topic); click the topic to move it. A page links to mice, plasmids, orders and any inventory record
   (`@mouse 12`, `@antibodies 5`): type **@** and a name (written as it is,
   `anti-β-actin` or `Waf1/Cip1`), a catalogue number or lot, a database's
   name (`@antib` offers Antibodies and lists its records) or a colleague's
