@@ -3,6 +3,12 @@
 This is a one-time setup so users can click "Connect Google Calendar" in
 BioManager's calendar page.
 
+It shows Google Calendar inside BioManager, read-only. The other way, putting
+BioManager's calendar into Google Calendar, needs none of this: a lab server
+open to the internet offers each person a private link (**On your phone**),
+and the desktop app on a Mac writes it into the Mac's own Calendar, which
+passes it on to Google (**Mac Calendar**, `app/mac_calendar.py`).
+
 ## 1. Create a Google Cloud OAuth client
 
 1. Visit [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
@@ -45,7 +51,7 @@ Restart the server.
 ## 3. Connect from inside BioManager
 
 1. Open `/calendar`.
-2. Click **Calendars** in the toolbar.
+2. Click **Connected calendars** at the bottom of the calendar's sidebar.
 3. Under "Google Calendar", click **Connect Google Calendar**.
 4. Approve the consent screen → you're redirected back to the calendar.
 5. Your primary Google Calendar events appear in red. Toggle them off

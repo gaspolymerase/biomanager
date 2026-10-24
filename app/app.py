@@ -455,6 +455,10 @@ from . import whats_new  # noqa: E402
 app.register_blueprint(whats_new.bp)
 # Repeats, protocols, equipment, away days and the phone feed (app/lab_calendar.py).
 app.register_blueprint(lab_calendar.bp)
+# The calendar in the Mac's own Calendar app, from the desktop app (app/mac_calendar.py).
+from . import mac_calendar  # noqa: E402
+app.register_blueprint(mac_calendar.bp)
+app.jinja_env.globals["mac_calendar_offered"] = mac_calendar.offered
 # Setting up a lab server from the desktop app (app/server_setup.py).
 from . import server_setup  # noqa: E402
 app.register_blueprint(server_setup.bp)

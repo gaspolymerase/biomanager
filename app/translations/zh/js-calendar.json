@@ -135,5 +135,15 @@
   "A deleted group": "已删除的组",
   "Zebrafish": "斑马鱼",
   "Drosophila": "果蝇",
-  "C. elegans": "线虫"
+  "C. elegans": "线虫",
+  "A new BioManager calendar in": "新建 BioManager 日历于",
+  "Calendars called BioManager": "名为 BioManager 的日历",
+  "Kept up to date in %(title)s (%(account)s) for %(who)s.": "正在为 %(who)s 让 %(title)s（%(account)s）保持最新。",
+  "Kept up to date in %(title)s (%(account)s).": "正在让 %(title)s（%(account)s）保持最新。",
+  "Last updated %(when)s · %(n)s events.": "上次更新：%(when)s · %(n)s 个日程。",
+  "No calendar accounts on this Mac. Turn on iCloud, or add an account in System Settings → Internet Accounts.": "这台 Mac 上没有日历账户。请打开 iCloud，或在“系统设置 → 互联网账户”中添加一个账户。",
+  "Not updated yet.": "还没有更新。",
+  "Stop, and empty the calendar %(title)s?": "停止，并清空日历 %(title)s？",
+  "Stop, and remove the BioManager calendar from %(account)s?": "停止，并从 %(account)s 中删除 BioManager 日历？",
+  "Updated.": "已更新。"
 }
