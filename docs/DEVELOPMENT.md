@@ -2069,7 +2069,10 @@ today's daily log, a protocol, an experiment from a protocol, a meeting
 note, a colony experiment's **Add to notebook**) in the topic of the page it
 was made from when that topic is the person's own, else the topic open
 (`open_tab_id`, sent only when a topic was chosen, `topicChosen`), else
-*Inbox*. Changing the kind (`/meta`) never moves a page. The page header
+*Inbox*. The sidebar's *Inbox* leaves out protocols (`_notebook_page()` in
+`app.py`): their place is the Protocols library, which files them in its own
+folders; a protocol moved into another topic is listed there. Changing the
+kind (`/meta`) never moves a page. The page header
 (`templates/notebook.html`) is a breadcrumb: the topic opens **Move to**
 (`#nb-move-menu`, posting `/notebook/pages/<id>/move`, or
 `/notebook/tabs/create` first for a new topic), then `parents_of()`; the

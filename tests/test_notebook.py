@@ -793,6 +793,19 @@ class ProtocolLibraryTests(Notebook):
         tab = one("select t.title from notebook_pages p join notebook_tabs t on t.id=p.tab_id_fk where p.id=?", r["page_id"])
         self.assertEqual(tab, "Inbox")
 
+    def test_inbox_leaves_protocols_to_the_library_but_a_topic_lists_them(self):
+        user = make_user()
+        c = client_for(user)
+        note = self.new_page(c, starter="blank")
+        protocol = self.post_json(c, "/notebook/api/protocols/new", {}).get_json()["page_id"]
+        html = self.get_ok(c, f"/notebook?page={note}")
+        self.assertNotIn(f'data-page-id="{protocol}"', html)
+        self.assertIn('<span class="tab-count">1</span>', html)
+        c.post("/notebook/tabs/create", data={"title": "Flow"})
+        flow = one("select id from notebook_tabs where owner_username=? and title='Flow'", user)
+        c.post(f"/notebook/pages/{protocol}/move", data={"tab_id": flow})
+        self.assertIn(f'data-page-id="{protocol}"', self.get_ok(c, f"/notebook?page={note}"))
+
     def test_a_new_blank_protocol_and_an_unknown_preset(self):
         blank = self.post_json(self.m, "/notebook/api/protocols/new", {}).get_json()
         self.assertIn("## Steps", self.m.get(f"/notebook/api/pages/{blank['page_id']}").get_json()["page"]["body"])

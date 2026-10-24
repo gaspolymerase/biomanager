@@ -6827,6 +6827,10 @@ def _notebook_page(library: str | None = None):
             flat = [{"id": page.id, "title": page.title, "tab_id": tab.id, "updated_at": page.updated_at.isoformat(),
                      "kind": kinds.get(page.id, "note"), "parent_id": parents.get(page.id)}
                     for page in tab.pages]
+            # Inbox holds what has no place yet; a protocol's place is the
+            # Protocols library, so it shows there, not here as well.
+            if tab.title == "Inbox":
+                flat = [page for page in flat if page["kind"] != "protocol"]
             # Sub-pages under the page they were made in, when it's in the same
             # folder; "flat" is every page, for Recent.
             tabs_data.append({"id": tab.id, "title": tab.title, "pages": lab_notebook.page_tree(flat), "flat": flat})
