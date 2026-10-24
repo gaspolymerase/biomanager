@@ -353,7 +353,7 @@ def protocol(d):
     d.click("[data-insert-preset=hotshot]", after=1.4)
     d.click("#nb-drawer-close", after=0.6)
     chip = d.page.locator(".nb-timer-chip").first
-    scroll_to(d, "text=Steps", 150, seconds=1.2)
+    scroll_to(d, ".ProseMirror >> text=Steps", 150, seconds=1.2)
     d.zoom(box=(530, 150, 700, 330), scale=1.5)
     d.move(chip, 0.8)
     d.wait(1.2)

@@ -2455,8 +2455,13 @@
 @layer components {
 
   .notebook-shell {
-    @apply grid grid-cols-1 md:grid-cols-[264px_minmax(0,1fr)];
+    @apply grid grid-cols-1 md:grid-cols-[248px_minmax(0,1fr)];
     min-height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h));
+  }
+  /* Hidden (Ctrl+\ or the sidebar button): the page has the window. */
+  @media (min-width: 768px) {
+    .notebook-shell.is-side-closed { grid-template-columns: minmax(0, 1fr); }
+    .notebook-shell.is-side-closed .notebook-sidebar { display: none; }
   }
 
   /* --- Sidebar --------------------------------------------------------- */
@@ -2471,16 +2476,13 @@
     .notebook-sidebar { height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h)); }
   }
 
-  .notebook-sidebar-head { @apply mb-2 flex flex-col gap-2 px-0.5; }
-  .notebook-search-row { @apply relative; }
+  .notebook-sidebar-head { @apply mb-2 flex items-center gap-1 px-0.5; }
+  .notebook-search-row { @apply relative min-w-0 flex-1; }
   .notebook-search-row input { @apply field h-8 pl-8 text-[12.5px]; }
   .notebook-search-icon {
     @apply pointer-events-none absolute left-2.5 top-1/2 size-[14px] -translate-y-1/2 text-sand-400;
   }
-  .sidebar-head-actions { @apply flex gap-1.5; }
-  .notebook-new-btn { @apply btn btn-primary h-8 flex-1 justify-center gap-1.5 text-[12.5px]; }
-  .notebook-new-btn-secondary { @apply btn h-8 w-8 flex-none justify-center px-0; }
-  .notebook-new-btn-secondary svg { @apply text-muted; }
+  .notebook-new-btn { @apply btn btn-primary mx-0.5 mb-2 h-8 justify-center gap-1.5 text-[12.5px]; }
 
   .notebook-section-label {
     @apply px-2 pb-1 pt-3 text-[11.5px] font-semibold text-muted;
@@ -2528,8 +2530,6 @@
 
   .notebook-empty, .notebook-empty-topics { @apply px-2 py-1.5 text-[12px] text-muted; }
 
-  .notebook-sidebar-footer { @apply mt-auto border-t border-hairline pt-2; }
-  .notebook-sidebar-foot-btn { @apply btn btn-ghost h-8 w-full justify-start gap-2 text-[12.5px] text-muted; }
 
   /* --- Page -------------------------------------------------------------- */
 
@@ -2539,10 +2539,15 @@
     box-shadow: 0 0 0 0.5px var(--color-hairline), 0 1px 3px rgb(0 0 0 / 0.05);
   }
 
+  /* As Notion sets it: the title well above the page's headings (h1 30px,
+     h2 24px, h3 20px, text 16px: frontend/src/styles.css), wrapping onto
+     as many lines as it needs. */
   .page-title {
-    @apply w-full border-0 bg-transparent p-0 text-[28px] font-bold leading-tight tracking-[-0.02em]
-           text-ink shadow-none outline-none placeholder:text-sand-300;
+    @apply block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[40px] font-bold leading-[1.2]
+           tracking-[-0.02em] text-ink shadow-none outline-none placeholder:text-sand-300;
+    field-sizing: content;
   }
+  @media (max-width: 640px) { .page-title { font-size: 32px; } }
   .page-meta {
     @apply mb-5 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-sand-100 pb-3
            text-[12px] text-muted;
@@ -2592,42 +2597,6 @@
   .notebook-modal-head h3 { @apply text-[15px] font-semibold text-ink; }
   .notebook-modal-body { @apply flex flex-col gap-3 overflow-y-auto px-5 py-4; }
 
-  .notebook-template-list { @apply flex flex-col gap-1.5; }
-  .notebook-template-loading, .notebook-template-empty { @apply empty-state py-6; }
-  .notebook-template-row { @apply flex items-stretch gap-1; }
-  .notebook-template-pick {
-    @apply flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-hairline
-           bg-surface px-3 py-2.5 text-left transition-colors;
-  }
-  .notebook-template-pick:hover { @apply border-brand-300 bg-brand-50/50; }
-  .notebook-template-icon {
-    @apply grid size-8 shrink-0 place-items-center rounded-lg bg-sand-100 text-[16px] text-muted;
-  }
-  .notebook-template-icon svg { @apply size-4; }
-  .notebook-template-meta { @apply flex min-w-0 flex-col; }
-  .notebook-template-title { @apply truncate text-[13px] font-medium text-ink; }
-  .notebook-template-preview { @apply truncate text-[11.5px] text-muted; }
-  .notebook-template-del {
-    @apply grid w-8 cursor-pointer place-items-center rounded-lg border-0 bg-transparent text-sand-400
-           opacity-0 transition;
-  }
-  .notebook-template-row:hover .notebook-template-del,
-  .notebook-template-del:focus-visible { @apply opacity-100; }
-  .notebook-template-del:hover { @apply bg-danger-50 text-danger-600; }
-  .notebook-template-del svg { @apply size-3.5; }
-
-  .notebook-template-new { @apply rounded-xl border border-dashed border-sand-300; }
-  .notebook-template-new > summary {
-    @apply flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-[12.5px] font-medium
-           text-brand-700;
-  }
-  .notebook-template-new > summary::-webkit-details-marker { display: none; }
-  .notebook-template-new > summary svg { @apply size-3.5; }
-  .notebook-template-new form { @apply flex flex-col gap-2.5 border-t border-sand-100 px-3 py-3; }
-  .notebook-template-new label { @apply field-label; }
-  .notebook-template-new label > :is(input, textarea) { @apply field mt-1 normal-case tracking-normal; }
-  .notebook-template-new textarea { @apply min-h-28 font-mono text-[12px]; }
-  .notebook-template-form-actions { @apply flex justify-end; }
 }
 
 /* ===========================================================================

@@ -1,5 +1,5 @@
 /* The notebook's libraries, each a page beside the sidebar
- * (/notebook/protocols, /notebook/recipes, /notebook/meetings):
+ * (/notebook/protocols, /notebook/recipes, /notebook/meetings, /notebook/reading):
  *
  * - Protocols and Recipes: the lab's folders, then what is in none, then
  *   the common ones built in. Search finds across all of them. A card
@@ -8,6 +8,8 @@
  *   folder button. ?folder=, ?recipe= and ?preset= are the place, so Back
  *   and a link come back to it.
  * - Meetings: the meeting series, drawn by notebook-page.js's panel.
+ * - Reading: the papers and talks (reading and seminar pages), as cards
+ *   with their covers or as every picture in them.
  *
  * notebook-page.js supplies the helpers (window.NotebookPage); the recipe
  * editor is the notebook bundle's (BiomanagerNotebook.recipe).
@@ -77,9 +79,9 @@
 
   // The top of every view: where you are, then the view's own buttons.
   function head(crumbs, tools, blurb) {
-    var home = { protocols: ['Protocols', 'protocol'], recipes: ['Recipes', 'flask'], meetings: ['Meetings', 'users'] }[KIND];
+    var home = { protocols: ['Protocols', 'protocol'], recipes: ['Recipes', 'flask'], meetings: ['Meetings', 'users'], reading: ['Reading', 'book-open'] }[KIND];
     var trail = [
-      '<a href="' + BASE + '" data-nav="" data-drop-folder="">' + icon(home[1]) + ' ' + esc(t(home[0])) + '</a>',
+      '<a href="' + BASE + '" data-nav="" data-drop-folder="">' + icon(home[1]) + ' ' + esc(NP.tc('notebook', home[0])) + '</a>',
     ].concat(crumbs.map(function (c) {
       return '<span class="nb-lib-sep" aria-hidden="true">›</span>' +
         (c.params ? '<a href="' + link(c.params) + '" data-nav="' + esc(JSON.stringify(c.params)) + '">' + (c.icon ? icon(c.icon) + ' ' : '') + esc(c.label) + '</a>'
@@ -195,6 +197,7 @@
     if (editor) { try { editor.destroy(); } catch (_) { /* gone already */ } editor = null; }
     if (KIND === 'protocols') protocols();
     else if (KIND === 'recipes') recipes();
+    else if (KIND === 'reading') reading();
     else meetings();
   }
 
@@ -222,7 +225,7 @@
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button>';
       root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
-        folder ? '' : t('The lab’s protocols. Open one to read or change it, drag it onto a folder to file it, or start an experiment from it. In a page, type /protocol to insert one.')) +
+        folder ? '' : t('Drag one onto a folder to file it. In a page, type /protocol to insert one.')) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
       function card(p) {
@@ -362,7 +365,7 @@
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-recipe>' + icon('plus') + ' ' + t('New recipe') + '</button>';
       root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
-        folder ? '' : t('The lab’s buffer and media recipes. Open one to change it; in a page, type /recipe and load one, then change the volume and every amount follows.')) +
+        folder ? '' : t('In a page, type /recipe to load one; change its volume and every amount follows.')) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
       function card(r, builtIn) {
@@ -513,11 +516,120 @@
 
   function meetings() {
     view = null;
-    root.innerHTML = head([], '', t('Lab meetings and journal clubs: who presents next, the notes for the next meeting, and the past ones. Edit a series to change its day, place or presenting order.')) +
+    root.innerHTML = head([], '', t('Who presents next, and the notes of each meeting.')) +
       '<div class="nb-lib-meetings" id="nb-lib-meetings"><p class="nb-muted">' + t('Loading…') + '</p></div>';
     root.onclick = null;
     root.onchange = null;
     NP.renderPanel('meetings', document.getElementById('nb-lib-meetings'));
+  }
+
+  // ------------------------------------------------------------ reading
+
+  // Papers (reading notes) and talks (seminar notes): a card each with its
+  // cover, or every picture in them, to find one by a figure remembered.
+  // Search reads titles, authors, journals, DOIs, tags and picture captions.
+  var READ_VIEW_KEY = 'nb-reading-view';
+  function readingView() { try { return localStorage.getItem(READ_VIEW_KEY) === 'pictures' ? 'pictures' : 'cards'; } catch (_) { return 'cards'; } }
+  function reading() {
+    view = null;
+    var state = { q: '', only: '', layout: readingView(), items: null };
+    root.innerHTML = head([], searchBox(t('Title, author, journal, DOI or tag'), '') +
+      '<div class="seg" role="group" aria-label="' + t('Show') + '">' +
+      '<button type="button" class="seg-item is-active" data-only="">' + t('All') + '</button>' +
+      '<button type="button" class="seg-item" data-only="reading">' + t('Papers') + '</button>' +
+      '<button type="button" class="seg-item" data-only="seminar">' + t('Talks') + '</button></div>' +
+      '<div class="seg" role="group" aria-label="' + t('Layout') + '">' +
+      '<button type="button" class="seg-item" data-layout="cards" title="' + t('Cards') + '">' + icon('grid') + '</button>' +
+      '<button type="button" class="seg-item" data-layout="pictures" title="' + t('Pictures') + '">' + icon('image') + '</button></div>' +
+      '<button type="button" class="btn" data-zotero>' + icon('book-open') + ' Zotero</button>' +
+      '<button type="button" class="btn btn-primary" data-new-page-kind="reading">' + icon('plus') + ' ' + t('Paper notes') + '</button>') +
+      '<p class="nb-lib-blurb nb-zotero-line" id="nb-zotero-line"></p>' +
+      '<div id="nb-read-out"><p class="nb-muted">' + t('Loading…') + '</p></div>';
+    var out = document.getElementById('nb-read-out');
+    function text(x) {
+      var f = x.fields || {};
+      return [x.title, f.authors, f.journal, f.year, f.doi, f.speaker, f.affiliation, (x.tags || []).join(' '),
+        (x.images || []).map(function (i) { return i.alt; }).join(' ')].join(' ').toLowerCase();
+    }
+    function byline(x) {
+      var f = x.fields || {};
+      if (x.kind === 'seminar') return [f.speaker, f.affiliation].filter(Boolean).join(' · ');
+      return f.authors || '';
+    }
+    function source(x) {
+      var f = x.fields || {};
+      return x.kind === 'seminar' ? [t('Talk'), x.entry_date].filter(Boolean).join(' · ') : [f.journal, f.year].filter(Boolean).join(' · ');
+    }
+    function card(x) {
+      var pic = x.cover || (x.images[0] && x.images[0].src) || '';
+      return '<a class="nb-read-card" href="' + esc(x.url) + '">' +
+        '<span class="nb-read-cover' + (pic ? '' : ' is-empty') + '">' + (pic ? '<img src="' + esc(pic) + '" alt="" loading="lazy">' : icon(x.kind === 'seminar' ? 'person-chalkboard' : 'book-open')) + '</span>' +
+        '<span class="nb-read-body"><b>' + esc(x.title) + '</b>' +
+        (byline(x) ? '<span class="nb-read-by">' + esc(byline(x)) + '</span>' : '') +
+        (source(x) ? '<small>' + esc(source(x)) + '</small>' : '') +
+        (x.tags.length ? '<small class="nb-lib-tags">' + x.tags.map(function (g) { return '#' + esc(g); }).join(' ') + '</small>' : '') +
+        (!x.mine ? '<small>' + esc(t('by %(name)s', { name: x.owner_name })) + '</small>' : '') + '</span></a>';
+    }
+    function pictures(list) {
+      var pics = [];
+      list.forEach(function (x) {
+        var seen = {};
+        (x.cover ? [{ src: x.cover, alt: '' }] : []).concat(x.images).forEach(function (img) {
+          if (seen[img.src]) return;
+          seen[img.src] = true;
+          pics.push('<a class="nb-read-pic" href="' + esc(x.url) + '" title="' + esc(x.title) + '"><img src="' + esc(img.src) + '" alt="' + esc(img.alt) + '" loading="lazy">' +
+            '<span>' + esc(img.alt || x.title) + '</span></a>');
+        });
+      });
+      return pics.length ? '<div class="nb-read-pics">' + pics.join('') + '</div>'
+        : '<p class="nb-lib-empty">' + t('No pictures yet. A cover or a picture pasted into a paper’s notes shows here.') + '</p>';
+    }
+    function paint() {
+      root.querySelectorAll('[data-only]').forEach(function (b) { b.classList.toggle('is-active', b.dataset.only === state.only); });
+      root.querySelectorAll('[data-layout]').forEach(function (b) { b.classList.toggle('is-active', b.dataset.layout === state.layout); });
+      if (!state.items) return;
+      var q = state.q.toLowerCase();
+      var list = state.items.filter(function (x) { return (!state.only || x.kind === state.only) && matches(text(x), q); });
+      if (!state.items.length) {
+        out.innerHTML = '<p class="nb-lib-empty">' + t('No papers or talks yet. Paper notes and Seminar pages show here, yours and those shared with you.') + '</p>';
+      } else if (!list.length) {
+        out.innerHTML = '<p class="nb-lib-empty">' + t('Nothing matches.') + '</p>';
+      } else {
+        out.innerHTML = state.layout === 'pictures' ? pictures(list) : '<div class="nb-read-grid">' + list.map(card).join('') + '</div>';
+      }
+    }
+    function load() {
+      return api('/notebook/api/reading').then(function (d) { state.items = d.items; paint(); })
+        .catch(function (e) { out.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
+    }
+    load();
+    // Where paper notes come from: Zotero, once connected (notebook-page.js).
+    function zoteroLine(z) {
+      var line = document.getElementById('nb-zotero-line');
+      if (!line) return;
+      line.innerHTML = z && z.connected
+        ? icon('book-open') + ' ' + esc(t('New papers in Zotero (%(where)s) become notes here.', {
+          where: [z.library_name, z.collection_name].filter(Boolean).join(' › ') })) +
+          (z.error ? ' <span class="nb-warn">' + esc(z.error) + '</span>' : '')
+        : t('Connect Zotero, and each paper you add there becomes a note here.');
+    }
+    zoteroLine(NP.zotero ? NP.zotero() : null);
+    window.addEventListener('nb:zotero-state', function (e) { zoteroLine(e.detail); });
+    window.addEventListener('nb:zotero-made', load);
+    var search = document.getElementById('nb-lib-q');
+    search.addEventListener('input', function () { state.q = search.value.trim(); paint(); });
+    root.onchange = null;
+    root.onclick = function (e) {
+      var only = e.target.closest('[data-only]');
+      var layout = e.target.closest('[data-layout]');
+      if (only) { state.only = only.dataset.only; paint(); }
+      if (layout) {
+        state.layout = layout.dataset.layout;
+        try { localStorage.setItem(READ_VIEW_KEY, state.layout); } catch (_) { /* not remembered */ }
+        paint();
+      }
+    };
+    paint();
   }
 
   draw();

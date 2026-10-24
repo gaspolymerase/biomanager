@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="zh-CN">
   <title>实验记录本与工具 — BioManager 用户指南</title>
-  <meta name="description" content="实验记录页、实验流程、数据表、签名，以及实验计算器。">
+  <meta name="description" content="实验记录页、论文笔记、实验流程、数据表、签名，以及实验计算器。">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/zh/guide/notebook">
   <meta property="og:title" content="实验记录本与工具 — BioManager 用户指南">
-  <meta property="og:description" content="实验记录页、实验流程、数据表、签名，以及实验计算器。">
+  <meta property="og:description" content="实验记录页、论文笔记、实验流程、数据表、签名，以及实验计算器。">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml">
@@ -137,21 +137,34 @@
     <!-- page -->
     <p class="eyebrow">数据库</p>
     <h1>实验记录本与工具</h1>
-    <p class="summary">实验记录页、实验流程、数据表、签名，以及实验计算器。</p>
+    <p class="summary">实验记录页、论文笔记、实验流程、数据表、签名，以及实验计算器。</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 实验记录本与工具</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/protocol.webp" data-clip-src="../../assets/clips/protocol"></video></div></figure>
 
       <h2 id="pages">页面</h2>
       <ul>
-        <li>页面放在 <b>主题</b> （Topics）里，像写文档一样写，以 Markdown 格式保存。主题就是文件夹：新页面放进你当前打开的主题，没有打开主题时放进
-          <i>收件箱</i>（Inbox），不论它是哪种页面。在行首输入 <b>/</b> 会弹出
-          模块菜单：表格、图表、实验流程、计算器以及下面介绍的其他模块。<b>模板</b> （Templates）：⋯ → <b>存为模板</b> （Save as template），之后就能用它新建
-          页面（与已有模板重名时，会先询问是否替换）。模板保留页面类型（实验模板建出来的是实验页面）；<b>仅保留结构</b> （Structure only）保留标题、
-          步骤和表头，去掉结果、勾选、读数、图片，以及写在 Results、
-          Observations 或 Conclusion 下的内容；<b>与实验室共享</b> （Share it with the lab）把它提供给
-          所有人。</li>
+        <li>页面放在 <b>主题</b> （Topics）里，像写文档一样写，以 Markdown 格式保存。主题就是文件夹，列在实验记录本的侧边栏里：
+          <i>主题</i> 旁边的 <b>+</b> 新建一个主题，主题自己的 <b>+</b> 在其中新建页面，它的 <b>•••</b> 可以重命名，或者连同其中的页面一起删除。
+          把页面拖到某个主题上，就移到那个主题里。侧边栏顶部的按钮（或 <kbd>Ctrl</kbd>+<kbd>\</kbd>，Mac 上是 <kbd>⌘</kbd>+<kbd>\</kbd>）
+          可以把侧边栏收起，让页面占满窗口；页面位置旁边的同一个按钮再把它显示出来。</li>
+        <li><b>新建页面</b> （New page）问四件事，每项都有标签：<b>标题</b> （Title）、放在哪个 <b>主题</b> （Topic）、<b>类型</b> （Kind），
+          以及从什么 <b>起始内容</b> （Start from）开始。每种类型都写明它多了什么：
+          <ul>
+            <li><b>笔记</b> （Note）：只有页面本身。</li>
+            <li><b>实验</b> （Experiment）：状态、开始和结束时间，以及所遵循的实验流程。</li>
+            <li><b>实验流程</b> （Protocol）：带编号的版本，可以逐步 <b>运行</b> （Run），也可以由它开始实验。</li>
+            <li><b>文献</b> （Reading）：一篇论文，带作者、DOI、Zotero 链接和封面，列在 <b>文献</b> 里（见下文）。</li>
+            <li><b>会议</b> （Meeting）：报告人轮值，写了 <code>@某人</code> 的任务会发到他们的日历。</li>
+            <li><b>讲座</b> （Seminar）：报告人和单位，与论文一起列在 <b>文献</b> 里。</li>
+            <li><b>每日日志</b> （Daily log）就是 <i>Today</i>，每天一页。</li>
+          </ul> <b>起始内容</b> 列出这种类型的内置模板（实验可以从 <i>克隆</i>、<i>蛋白印迹</i> 或 <i>qPCR</i> 开始）、空白页面，以及你自己这种类型的模板。
+          底部的 <b>导入 .md</b> 则导入一个 Markdown 文件。在行首输入 <b>/</b> 会弹出模块菜单：表格、图表、实验流程、计算器以及下面介绍的其他模块。</li>
+        <li><b>模板</b> （Templates）：⋯ → <b>另存为模板</b> （Save as template）会问名称和 <b>谁可以使用</b> （Who can use it：只有我、全实验室，
+          或某个项目组）；与已有模板重名时，会先询问是否替换。模板保留页面类型（实验模板建出来的是实验页面），并列在这种类型的 <b>起始内容</b> 里。<b>仅结构</b> （Structure only）保留标题、步骤和表头，去掉结果、勾选、读数、图片，以及写在 Results、
+          Observations 或 Conclusion 下的内容。</li>
         <li>窗口顶部那一行像文件路径一样显示页面所在的位置：先是它的主题，再是它所在的页面。点主题可以移动页面：搜索你的主题，或者输入新名字新建一个，
-          页面里的子页面会一起移过去。标题旁边的图标是页面类型（笔记、实验、实验流程、会议、讲座或每日日志）：点它可以更改类型，
-          更改类型不会移动页面。标题下面是日期、状态和标签；有其他页面链接到它时，<b>被 N 个页面链接</b> （Linked from）会列出这些页面。</li>
+          页面里的子页面会一起移过去。标题上方是页面类型：点它可以更改类型，更改类型不会移动页面。鼠标移到那里会出现 <b>添加封面</b>
+          （Add cover），在页面顶部放一张图片（上传，或从本页的图片中选）；封面上有 <b>更换封面</b> 和 <b>移除</b>。标题再长也会换行完整显示。
+          标题下面是日期、状态和标签；有其他页面链接到它时，<b>被 N 个页面链接</b> （Linked from）会列出这些页面。</li>
         <li>像在 Notion 里一样写：输入 <b>/</b> 和想要的东西的几个字母（<code>/h2</code>、<code>/toggle</code>；中文也可以，比如 <code>/分栏</code>）。
           <ul>
             <li><b>标题 1–3</b> （Heading 1–3）、<b>无序列表</b> （Bulleted list）、<b>编号列表</b> （Numbered list）、<b>清单</b> （Checklist）、<b>引用</b> （Quote）和 <b>分割线</b> （Divider）。</li>
@@ -194,17 +207,36 @@
         <li>你连接的 AI 助手可以在今天每日记录的 <b>日志</b> （Log）里加几行，前提是你批准了
           （见<a href="ai-assistants.html">AI 助手</a>）。如果页面正开着，几秒钟内就会出现。</li>
       </ul>
+      <h2 id="reading">论文笔记和文献</h2>
+      <ul>
+        <li><b>文献</b> （Reading）页面（用 <b>论文笔记</b> 开始一页）在标题下面按行保存论文的 <b>作者</b>、<b>期刊</b>、<b>年份</b>、<b>DOI</b>、<b>链接</b> 和 <b>Zotero</b> 链接；点一行即可输入。DOI、链接或 Zotero 链接旁边的 ↗ 会打开它，Zotero 链接会在你电脑上的
+          Zotero 里打开这个条目。</li>
+        <li><b>填写</b> （Fill in）：粘贴 DOI、doi.org 链接，或从 Zotero 复制的条目，按 <kbd>Enter</kbd>，各行和空着的标题就会填好。
+          在 Zotero 里把 <b>设置 → 导出 → 条目格式</b>（快速复制）设为 BibTeX、RIS 或 CSL JSON，选中论文，按
+          <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>（Mac 上是 <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>）。CSL JSON 还会带上 Zotero 链接。
+          只有 DOI 时会到 Crossref 查找，这需要联网；从 Zotero 粘贴则不需要。新建页面里的 <b>论文</b> （Paper）在建页面之前做同样的事，
+          并用论文的题目命名页面。</li>
+        <li>给论文笔记加一张 <b>封面</b>：它的关键图表，上传，或者从页面里的图片中选。</li>
+        <li>实验记录本侧边栏里的 <b>文献</b> 列出你能打开的每一篇论文和每一场讲座（你的，以及与你共享的），以带封面的卡片显示。<b>论文</b> 和 <b>讲座</b> 可以只看其中一种，图片按钮则改为显示其中所有的图片，这样你可以凭记得的一张图找到论文；点图片打开它所在的页面。
+          搜索会查标题、作者、期刊、DOI、标签和图片说明。实验记录本自己的搜索也能按作者和 DOI 找到论文。</li>
+        <li><b>来自 Zotero 的论文笔记</b>：你添加到 Zotero 的每篇论文都可以自动变成一篇论文笔记。在 zotero.org 打开 <b>Settings → Security → Create new private key</b>，勾选 <b>Allow library access</b>（要用实验室的群组文献库，再给群组只读权限），保存。
+          在 BioManager 的文献页面点 <b>Zotero</b>：粘贴密钥，点 <b>连接</b>，再选择 <b>文献库</b>、一个 <b>分类</b>（比如叫 <i>BioManager</i>
+          的分类，这样只有你放进去的论文才生成笔记）和笔记要放进的 <b>主题</b>。之后，在那里添加的论文会在你下次打开实验记录本时变成笔记，
+          作者、期刊、摘要和标签等都已填好；<b>立即检查</b> 马上查看。勾选 <b>也包括已有的论文</b> 会为已有的论文也生成笔记。
+          每篇论文只生成一篇笔记，即使你在 Zotero 里修改它或删掉它的笔记。Zotero 需要同步到 zotero.org，运行 BioManager
+          的电脑或服务器也需要能访问它。<b>断开</b> 会忘掉密钥，已生成的笔记保留。</li>
+      </ul>
       <h2 id="experiments-and-protocols">实验和实验流程</h2>
       <ul>
-        <li><b>实验</b> （Experiments）：目的、实验设计、样本和批号、步骤、结果和小结。<i>开始</i>（Start）和<i>完成</i>（Finished）会记下时间；
-          计划中、进行中、已完成或失败会显示在侧边栏。（鼠群里的 <b>实验</b> 标签页管理的是动物分组。）</li>
+        <li><b>实验</b> （Experiments）：目的、实验设计、样本和批号、步骤、结果和小结。状态旁边的 <b>开始实验</b> （Start experiment）和 <b>完成</b> （Finished）会记下时间；
+          进行中的实验列在侧边栏顶部。（鼠群里的 <b>实验</b> 标签页管理的是动物分组。）</li>
         <li><b>鼠群实验</b> （Colony experiment，<code>/experiment</code>）在页面里显示你任何动物上的一个实验：每天的处理、
           所用的试剂和批号（批号当天已过期时标出<i>（已过期）</i>）、完成时间和操作人、每只小鼠的给药量，以及体重的表格和图表（克数或相对第一次
           体重的百分比，并标出处理日）。实验在主要观测指标之外还有其他指标（比如酶标板填入的 ELISA）时，每个指标有一个按钮，
           点一下表格和图表就换成它，页面会记住你选的那个。它会保持更新；<b>冻结副本</b> （Freeze a copy）把当前显示的内容固定在页面里，
           这样之后实验再改，也不会改动你的记录。在实验本身的页面上，<b>添加到实验记录本</b> （Add to notebook）会为它新建一页
           你的记录，里面已经放好这个模块。</li>
-        <li><b>实验流程</b> （Protocols）有版本编号。<i>由此开始实验</i>（Start an experiment from it）把步骤复制为检查清单，并记录
+        <li><b>实验流程</b> （Protocols）有版本编号。流程栏里的 <b>开始实验</b> （Start experiment）把步骤复制为检查清单，并记录
           所用版本；<b>执行模式</b> （Run mode）在实验台前一步一步带你完成。</li>
         <li>侧边栏里的 <b>实验流程</b> 把实验室的流程作为一个页面打开：可以搜索，打开一个阅读或修改，
           或用 <b>新建实验流程</b> 新建一个。可以把流程放进文件夹：点 <b>新建文件夹</b>，再把流程拖到文件夹上，或者用卡片上、
@@ -226,8 +258,7 @@
           打开配方库：打开一个即可修改，用 <b>新建配方</b> 新建，像流程一样放进文件夹，或把内置配方 <b>另存一份</b>。
           配方模块里的 <b>Load from library</b>（从配方库载入）按文件夹列出它们。<b>计算器</b> （Calculators）
           包括稀释、摩尔浓度、预混液、梯度稀释、连接、细胞、凝胶、DNA/RNA 和 <b>蛋白（A₂₈₀）</b> （Protein (A₂₈₀)）：粘贴
-          序列（或给出 ε 和分子量）和读数，就能得到 µM 和 mg/mL。步骤里的时长会带一个
- <b>⏱</b> 计时器，以步骤自己的文字命名；时间点（<i>6, 24, 48 h</i>、<i>at 24 h</i>、<i>the 48 h samples</i>）不会。页面上的时间（<i>started
+          序列（或给出 ε 和分子量）和读数，就能得到 µM 和 mg/mL。步骤里的时长会带一个 <b>⏱</b> 计时器，以步骤自己的文字命名；时间点（<i>6, 24, 48 h</i>、<i>at 24 h</i>、<i>the 48 h samples</i>）不会。页面上的时间（<i>started
           16:00</i>）按实验室的时区计算，不管你电脑设的是哪个时区。</li>
       </ul>
       <h2 id="signing">给页面签名</h2>
@@ -283,9 +314,10 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 10 分钟</p>
+      <p>本页内容 · 阅读约 12 分钟</p>
       <ol>
         <li class="lvl2"><a href="#pages">页面</a></li>
+        <li class="lvl2"><a href="#reading">论文笔记和文献</a></li>
         <li class="lvl2"><a href="#experiments-and-protocols">实验和实验流程</a></li>
         <li class="lvl2"><a href="#data-and-calculators">数据和计算器</a></li>
         <li class="lvl2"><a href="#signing">给页面签名</a></li>

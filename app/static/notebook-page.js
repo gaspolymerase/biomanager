@@ -163,64 +163,149 @@
     sideToggle.setAttribute('aria-expanded', String(open));
   });
 
-  // ------------------------------------------------------------ new pages, templates, import
-
-  var modal = $('#notebook-template-modal');
-  function openNewPage() {
-    if (!modal) return;
-    modal.hidden = false;
-    loadTemplates();
+  // The sidebar folds away to give the page the window (Ctrl+\ or ⌘\, as
+  // in Notion), remembered in this browser.
+  var shell = $('#nb-shell');
+  function setSide(closed) {
+    if (!shell) return;
+    shell.classList.toggle('is-side-closed', closed);
+    document.body.classList.toggle('nb-side-is-closed', closed);
+    try { localStorage.setItem('nb-side', closed ? 'closed' : 'open'); } catch (_e) { /* private window: not remembered */ }
   }
-  function closeNewPage() { if (modal) modal.hidden = true; }
-  $$('[data-close-modal]').forEach(function (b) { b.addEventListener('click', closeNewPage); });
-  var newBtn = $('#nb-new-page');
-  if (newBtn) newBtn.addEventListener('click', openNewPage);
-
-  $$('[data-starter]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var body = { starter: b.dataset.starter, open_tab_id: DATA.topicChosen ? DATA.selectedTab || '' : '' };
-      api('/notebook/api/pages/new', { body: body }).then(function (d) { go(d.url); })
-        .catch(function (e) { toast(t('Could not make the page: %(error)s', { error: esc(e.message) }), true); });
-    });
+  $$('[data-side-toggle]').forEach(function (b) {
+    b.addEventListener('click', function () { setSide(!shell.classList.contains('is-side-closed')); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '\\' && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      setSide(!shell.classList.contains('is-side-closed'));
+    }
   });
 
-  function loadTemplates() {
-    var list = $('#notebook-template-list');
-    if (!list) return;
-    list.innerHTML = '<div class="notebook-template-loading">' + t('Loading…') + '</div>';
-    api('/notebook/templates').then(function (d) {
-      if (!d.templates.length) {
-        list.innerHTML = '<div class="notebook-template-empty">' + t('None yet. Use “Save as template” on any page, or make one below.') + '</div>';
-        return;
-      }
-      list.innerHTML = d.templates.map(function (tpl) {
-        var tags = (tpl.kind && tpl.kind !== 'note' ? '<span class="badge badge-quiet">' + esc(tc('notebook', tpl.kind_label)) + '</span>' : '') +
-          (tpl.lab ? '<span class="badge badge-brand" title="' + (tpl.group ? t('Everyone in %(group)s can use it', { group: esc(tpl.group) }) : t('Everyone in the lab can use it')) + '">' +
-            (tpl.group ? esc(tpl.group) : t('Lab')) + (tpl.mine ? '' : ' · ' + esc(tpl.owner_name)) + '</span>' : '');
-        return '<div class="notebook-template-row"><button type="button" class="notebook-template-pick" data-template="' + tpl.id + '">' +
-          '<span class="notebook-template-icon">' + (tpl.icon ? esc(tpl.icon) : icon('file')) + '</span>' +
-          '<span class="notebook-template-meta"><span class="notebook-template-title">' + esc(tpl.title) + ' ' + tags + '</span>' +
-          '<span class="notebook-template-preview">' + esc(tpl.body_preview || '') + '</span></span></button>' +
-          (tpl.can_delete ? '<button type="button" class="notebook-template-del" title="' + t('Delete template') + '" aria-label="' + t('Delete template') + '" data-del-template="' + tpl.id + '">' + icon('trash') + '</button>' : '') + '</div>';
-      }).join('');
-    }).catch(function () { list.innerHTML = '<div class="notebook-template-empty">' + t('Could not load templates.') + '</div>'; });
-  }
-  if (modal) {
-    modal.addEventListener('click', function (event) {
-      var pick = event.target.closest('[data-template]');
-      var del = event.target.closest('[data-del-template]');
-      if (pick) {
-        api('/notebook/api/pages/new', { body: { template_id: Number(pick.dataset.template), open_tab_id: DATA.topicChosen ? DATA.selectedTab || '' : '' } }).then(function (d) { go(d.url); });
-      } else if (del) {
-        BioDialog.confirm(t('Delete this template?'), { danger: true }).then(function (ok) {
-          if (ok) fetch('/notebook/templates/' + del.dataset.delTemplate + '/delete', { method: 'POST' }).then(loadTemplates);
-        });
-      }
+  // ------------------------------------------------------------ new pages, templates, import
+
+  // New page asks four things, each labelled: a title, the topic, the kind
+  // of page (what it does), and what to start from (the starters and your
+  // templates of that kind). A reading note can take its paper's details
+  // from a DOI or Zotero here too.
+  var modal = $('#notebook-template-modal');
+  var newForm = $('#nb-new-form');
+  var templates = null;
+  var cited = null;
+  function checkedKind() { var r = newForm && $('input[name="kind"]:checked', newForm); return r ? r.value : 'note'; }
+  function drawStarts() {
+    var box = $('#nb-new-starts');
+    if (!box) return;
+    var kind = checkedKind();
+    var rows = (DATA.starters || []).filter(function (s) { return s.kind === kind && s.key !== 'blank' && s.key !== 'daily'; }).map(function (s) {
+      return { value: 'starter:' + s.key, title: tc('notebook', s.title), hint: t(s.hint) };
     });
-    var tform = $('#notebook-template-form');
-    if (tform) tform.addEventListener('submit', function (event) {
-      event.preventDefault();
-      saveTemplate(new FormData(tform)).then(function (d) { if (d && d.ok) { tform.reset(); loadTemplates(); } });
+    rows.push({ value: 'empty', title: t('Empty page'), hint: '' });
+    (templates || []).filter(function (tpl) { return (tpl.kind || 'note') === kind; }).forEach(function (tpl) {
+      rows.push({ value: 'template:' + tpl.id, title: tpl.title, hint: tpl.body_preview || '', mine: tpl.can_delete, id: tpl.id,
+        badge: tpl.lab ? (tpl.group || t('Lab')) + (tpl.mine ? '' : ' · ' + tpl.owner_name) : t('Your template') });
+    });
+    box.innerHTML = rows.map(function (r, i) {
+      return '<label class="nb-new-start"><input type="radio" name="start" value="' + esc(r.value) + '"' + (i === 0 ? ' checked' : '') + '>' +
+        '<span class="nb-grow"><b>' + esc(r.title) + (r.badge ? ' <em class="badge badge-quiet">' + esc(r.badge) + '</em>' : '') + '</b>' +
+        (r.hint ? '<small>' + esc(r.hint) + '</small>' : '') + '</span>' +
+        (r.mine ? '<button type="button" class="nb-icon-btn" data-del-template="' + r.id + '" title="' + t('Delete template') + '" aria-label="' + t('Delete template') + '">' + icon('trash') + '</button>' : '') +
+        '</label>';
+    }).join('');
+    $$('[data-only-kind]', newForm).forEach(function (el) { el.hidden = el.dataset.onlyKind !== kind; });
+  }
+  function loadTemplates() {
+    return api('/notebook/templates').then(function (d) { templates = d.templates || []; drawStarts(); })
+      .catch(function () { templates = []; drawStarts(); });
+  }
+  function openNewPage(opts) {
+    if (!modal || !newForm) return;
+    opts = opts || {};
+    newForm.reset();
+    cited = null;
+    var found = $('#nb-new-found');
+    if (found) found.hidden = true;
+    if (opts.kind) { var r = $('input[name="kind"][value="' + opts.kind + '"]', newForm); if (r) r.checked = true; }
+    if (opts.tab && newForm.tab_id) newForm.tab_id.value = String(opts.tab);
+    modal.hidden = false;
+    drawStarts();
+    loadTemplates();
+    setTimeout(function () { newForm.title.focus(); }, 0);
+  }
+  function closeNewPage() { if (modal) modal.hidden = true; }
+  window.NotebookNewPage = { open: openNewPage };
+  $$('[data-close-modal]').forEach(function (b) { b.addEventListener('click', closeNewPage); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal && !modal.hidden) closeNewPage(); });
+  var newBtn = $('#nb-new-page');
+  if (newBtn) newBtn.addEventListener('click', function () { openNewPage({ tab: DATA.topicChosen ? DATA.selectedTab : null }); });
+  $$('[data-new-kind]').forEach(function (b) {
+    b.addEventListener('click', function () { openNewPage({ kind: b.dataset.newKind, tab: DATA.topicChosen ? DATA.selectedTab : null }); });
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-new-page-kind]');
+    if (b) openNewPage({ kind: b.dataset.newPageKind, tab: DATA.topicChosen ? DATA.selectedTab : null });
+  });
+
+  // What a pasted DOI or Zotero item says, as a reading note's details.
+  function lookUp(text) {
+    return api('/notebook/api/cite', { body: { text: text } }).then(function (d) { return d.fields || {}; });
+  }
+  function fieldsToProperties(fields, kind) {
+    var keys = ((DATA.kindFields || {})[kind] || []).map(function (f) { return f[0]; });
+    return keys.filter(function (k) { return fields[k]; }).map(function (k) { return { key: k, value: fields[k] }; });
+  }
+  if (newForm) {
+    newForm.addEventListener('change', function (e) { if (e.target.name === 'kind') drawStarts(); });
+    var citeGo = $('#nb-new-cite-go');
+    var citeLookup = function () {
+      var text = newForm.cite.value.trim();
+      if (!text) return Promise.resolve();
+      citeGo.disabled = true;
+      return lookUp(text).then(function (fields) {
+        cited = fields;
+        var found = $('#nb-new-found');
+        found.hidden = false;
+        found.classList.remove('is-error');
+        found.textContent = [fields.title, fields.authors, [fields.journal, fields.year].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+        if (fields.title && !newForm.title.value.trim()) newForm.title.value = fields.title;
+      }).catch(function (err) {
+        var found = $('#nb-new-found');
+        found.hidden = false;
+        found.classList.add('is-error');
+        found.textContent = err.message;
+      }).then(function () { citeGo.disabled = false; });
+    };
+    if (citeGo) citeGo.addEventListener('click', citeLookup);
+    newForm.cite.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); citeLookup(); } });
+    newForm.addEventListener('click', function (e) {
+      var del = e.target.closest('[data-del-template]');
+      if (!del) return;
+      e.preventDefault();
+      BioDialog.confirm(t('Delete this template?'), { danger: true }).then(function (ok) {
+        if (ok) fetch('/notebook/templates/' + del.dataset.delTemplate + '/delete', { method: 'POST' }).then(loadTemplates);
+      });
+    });
+    newForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var kind = checkedKind();
+      var start = (($('input[name="start"]:checked', newForm) || {}).value) || 'empty';
+      var body = { title: newForm.title.value.trim(), kind: kind };
+      if (newForm.tab_id) body.tab_id = newForm.tab_id.value;
+      else body.open_tab_id = DATA.topicChosen ? DATA.selectedTab || '' : '';
+      if (start.indexOf('starter:') === 0) body.starter = start.slice(8);
+      if (start.indexOf('template:') === 0) body.template_id = Number(start.slice(9));
+      var submit = $('button[type="submit"]', newForm);
+      submit.disabled = true;
+      // A DOI typed and not looked up yet is looked up now.
+      var ready = kind === 'reading' && newForm.cite.value.trim() && !cited ? citeLookup() : Promise.resolve();
+      ready.then(function () {
+        if (kind === 'reading' && cited) {
+          body.properties = fieldsToProperties(cited, kind);
+          if (!body.title && cited.title) body.title = cited.title;
+        }
+        return api('/notebook/api/pages/new', { body: body });
+      }).then(function (d) { go(d.url); })
+        .catch(function (err) { submit.disabled = false; toast(t('Could not make the page: %(error)s', { error: esc(err.message) }), true); });
     });
   }
 
@@ -246,13 +331,14 @@
       if (!input.files[0]) return;
       var form = new FormData();
       form.append('file', input.files[0]);
-      if (DATA.selectedTab) form.append('tab_id', DATA.selectedTab);
+      var tab = newForm && newForm.tab_id ? newForm.tab_id.value : DATA.selectedTab;
+      if (tab) form.append('tab_id', tab);
       api('/notebook/api/import', { form: form }).then(function (d) { go(d.url); })
         .catch(function (e) { toast(t('Could not import: %(error)s', { error: esc(e.message) }), true); });
     });
     input.click();
   }
-  ['#nb-import', '#nb-import-2'].forEach(function (sel) { var b = $(sel); if (b) b.addEventListener('click', importMarkdown); });
+  ['#nb-import'].forEach(function (sel) { var b = $(sel); if (b) b.addEventListener('click', importMarkdown); });
 
   // ------------------------------------------------------------ drawer
 
@@ -308,7 +394,7 @@
         if (groupOptions) options = (options ? '<optgroup label="' + t('People') + '">' + options + '</optgroup>' : '') +
           '<optgroup label="' + t('Project groups') + '">' + groupOptions + '</optgroup>';
         box.innerHTML =
-          '<p class="nb-muted">' + t('People you share with see this page under <b>Shared with me</b>. Editors write in it with you, live. Share with a project group and everyone in it can.') + '</p>' +
+          '<p class="nb-muted">' + t('They find it under <b>Shared with me</b>.') + '</p>' +
           '<div class="nb-field-row"><label>' + t('Everyone in the lab') + ' <select id="nb-share-lab">' +
           '<option value="">' + t('can’t see it') + '</option><option value="view"' + (lab && lab.role === 'view' ? ' selected' : '') + '>' + t('can view') + '</option>' +
           '<option value="edit"' + (lab && lab.role === 'edit' ? ' selected' : '') + '>' + t('can edit') + '</option></select></label></div>' +
@@ -684,7 +770,7 @@
         var out = $('#nb-search-results', box);
         api('/notebook/api/search?' + params.toString()).then(function (d) {
           out.innerHTML = d.results.length ? '<p class="nb-muted">' + t(d.results.length === 1 ? '%(n)s page' : '%(n)s pages', { n: d.results.length + (d.results.length === 100 ? '+' : '') }) + '</p><ul class="nb-list">' + d.results.map(function (r) {
-            return '<li><a class="nb-result" href="' + esc(r.url) + '"><b>' + esc(r.title) + '</b>' +
+            return '<li><a class="nb-result' + (r.cover ? ' has-cover' : '') + '" href="' + esc(r.url) + '">' + (r.cover ? '<img class="nb-result-cover" src="' + esc(r.cover) + '" alt="">' : '') + '<b>' + esc(r.title) + '</b>' +
               '<small>' + esc(tc('notebook', kinds[r.kind] || 'Note')) + (r.status ? ' · ' + esc(t(statuses[r.status])) : '') + ' · ' + esc(r.mine ? t(r.tab) : t('by %(name)s', { name: r.owner_name })) + ' · ' + esc(r.entry_date || timeText(r.updated_at)) + '</small>' +
               (r.snippet ? '<span class="nb-snippet">' + esc(r.snippet) + '</span>' : '') +
               (r.tags.length ? '<span class="nb-result-tags">' + r.tags.map(function (t) { return '#' + esc(t); }).join(' ') + '</span>' : '') + '</a></li>';
@@ -882,11 +968,142 @@
     },
   };
 
+  // ------------------------------------------------------------ Zotero
+
+  // A paper added to your Zotero library (or one collection of it) becomes
+  // a paper note here (app/zotero.py). Connected from Reading's Zotero
+  // button; checked when the notebook opens, at most every few minutes.
+  var zotero = DATA.zotero || { connected: false };
+  function zoteroMade(made) {
+    if (!made || !made.length) return;
+    toast(t(made.length === 1 ? 'A paper note from Zotero: %(titles)s' : '%(n)s paper notes from Zotero: %(titles)s', {
+      n: made.length,
+      titles: made.slice(0, 3).map(function (m) { return '<a href="' + esc(m.url) + '">' + esc(m.title) + '</a>'; }).join(', ') + (made.length > 3 ? '…' : ''),
+    }));
+    window.dispatchEvent(new CustomEvent('nb:zotero-made', { detail: { made: made } }));
+  }
+  function zoteroCheck(now) {
+    return api('/notebook/api/zotero/check', { body: { now: !!now } }).then(function (d) {
+      zotero = d.zotero || zotero;
+      zoteroMade(d.made);
+      window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+      return d;
+    });
+  }
+  if (zotero.connected) {
+    var lastCheck = zotero.checked_at ? when(zotero.checked_at) : null;
+    if (!lastCheck || Date.now() - lastCheck.getTime() > 5 * 60 * 1000) zoteroCheck(false).catch(function () { /* said next time */ });
+  }
+
+  function zoteroDialog() {
+    var tabs = (DATA.tabs || []).map(function (id, i) { return [id, (DATA.tabTitles || [])[i] || '']; });
+    var libs = [];
+    var overlay = document.createElement('div');
+    overlay.className = 'notebook-modal';
+    overlay.innerHTML = '<div class="notebook-modal-backdrop" data-x></div>' +
+      '<form class="notebook-modal-card nb-new-card nb-zotero-card" role="dialog" aria-label="Zotero" autocomplete="off">' +
+      '<header class="notebook-modal-head"><h3>' + t('Paper notes from Zotero') + '</h3><button type="button" class="modal-close" data-x aria-label="' + t('Close') + '">' + icon('close') + '</button></header>' +
+      '<div class="notebook-modal-body nb-new">' +
+      '<p class="nb-new-note nb-zotero-intro">' + t('Each paper you add to Zotero becomes a paper note here, with its details filled in. Zotero has to sync to zotero.org.') + '</p>' +
+      '<div class="nb-new-field nb-new-cite"><span class="nb-new-label">' + t('API key') + '</span><div>' +
+      '<div class="nb-new-cite-row"><input name="api_key" type="password" placeholder="' + esc(zotero.connected ? t('Kept. Paste a new one to change it.') : t('Paste your Zotero API key')) + '" aria-label="' + t('API key') + '">' +
+      '<button type="button" class="btn" data-connect>' + (zotero.connected ? t('Reload') : t('Connect')) + '</button></div>' +
+      '<small class="nb-new-help">' + t('Make one at <a href="https://www.zotero.org/settings/keys/new" target="_blank" rel="noopener">zotero.org → Settings → Security</a>: tick “Allow library access” (read only), and for a lab group, read access to groups.') + '</small>' +
+      '<small class="nb-new-found" data-said hidden></small></div></div>' +
+      '<div data-step2 hidden>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Library') + '</span><select name="library"></select></label>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Collection') + '</span><select name="collection"></select></label>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Topic') + '</span><select name="tab_id"><option value="">' + t('Inbox') + '</option>' +
+      tabs.map(function (tb) { return '<option value="' + tb[0] + '"' + (zotero.tab_id === tb[0] ? ' selected' : '') + '>' + esc(t(tb[1])) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="nb-new-check"><input type="checkbox" name="include_existing" value="1"><span><b>' + t('Also the papers already there') + '</b><small>' +
+      t('Otherwise only papers added from now on become notes.') + '</small></span></label></div>' +
+      (zotero.connected ? '<p class="nb-new-note">' + esc(t('Connected: %(where)s. %(n)s notes made so far.', {
+        where: [zotero.library_name, zotero.collection_name].filter(Boolean).join(' › '), n: zotero.made })) +
+        (zotero.error ? ' <span class="nb-warn">' + esc(zotero.error) + '</span>' : '') + '</p>' : '') +
+      '</div><footer class="nb-new-foot">' +
+      (zotero.connected ? '<button type="button" class="btn btn-ghost is-danger" data-disconnect>' + t('Disconnect') + '</button><button type="button" class="btn btn-ghost" data-check>' + icon('refresh') + ' ' + t('Check now') + '</button>' : '') +
+      '<span class="nb-grow"></span><button type="button" class="btn" data-x>' + t('Cancel') + '</button>' +
+      '<button type="submit" class="btn btn-primary" disabled>' + t('Save') + '</button></footer></form>';
+    document.body.appendChild(overlay);
+    var form = $('form', overlay);
+    var said = $('[data-said]', overlay);
+    var save = $('button[type="submit"]', overlay);
+    function say(text, isError) { said.hidden = !text; said.textContent = text || ''; said.classList.toggle('is-error', !!isError); }
+    function close() { overlay.remove(); }
+    function fillCollections() {
+      var lib = libs.filter(function (l) { return l.library === form.library.value; })[0] || { collections: [] };
+      form.collection.innerHTML = '<option value="">' + t('The whole library') + '</option>' + lib.collections.map(function (c) {
+        return '<option value="' + esc(c.key) + '"' + (c.key === zotero.collection && lib.library === zotero.library ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+      }).join('');
+    }
+    function connect() {
+      var b = $('[data-connect]', overlay);
+      b.disabled = true;
+      say(t('Asking Zotero…'));
+      api('/notebook/api/zotero/libraries', { body: { api_key: form.api_key.value.trim() } }).then(function (d) {
+        libs = d.libraries;
+        form.library.innerHTML = libs.map(function (l) {
+          return '<option value="' + esc(l.library) + '"' + (l.library === zotero.library ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+        }).join('');
+        fillCollections();
+        $('[data-step2]', overlay).hidden = false;
+        save.disabled = false;
+        say(d.username ? t('Zotero account: %(name)s', { name: d.username }) : '');
+      }).catch(function (err) { say(err.message, true); }).then(function () { b.disabled = false; });
+    }
+    form.addEventListener('change', function (e) { if (e.target.name === 'library') fillCollections(); });
+    form.api_key.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); connect(); } });
+    overlay.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    overlay.addEventListener('click', function (e) {
+      if (e.target.closest('[data-x]')) close();
+      if (e.target.closest('[data-connect]')) connect();
+      if (e.target.closest('[data-check]')) {
+        zoteroCheck(true).then(function (d) {
+          if (d.error) toast(esc(d.error), true);
+          else if (!d.made.length) toast(t('Nothing new in Zotero.'));
+          close();
+        }).catch(function (err) { toast(esc(err.message), true); });
+      }
+      if (e.target.closest('[data-disconnect]')) {
+        BioDialog.confirm(t('Stop making paper notes from Zotero? The notes made stay.'), { okLabel: t('Disconnect') }).then(function (ok) {
+          if (!ok) return;
+          api('/notebook/api/zotero/delete', { body: {} }).then(function () {
+            zotero = { connected: false };
+            window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+            close();
+          });
+        });
+      }
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var lib = form.library.selectedOptions[0];
+      var col = form.collection.selectedOptions[0];
+      save.disabled = true;
+      say(t('Saving, and reading Zotero…'));
+      api('/notebook/api/zotero', { body: {
+        api_key: form.api_key.value.trim(), library: form.library.value, library_name: lib ? lib.textContent : '',
+        collection: form.collection.value, collection_name: col && form.collection.value ? col.textContent : '',
+        tab_id: form.tab_id.value, include_existing: form.include_existing.checked,
+      } }).then(function (d) {
+        zotero = d.zotero;
+        window.dispatchEvent(new CustomEvent('nb:zotero-state', { detail: zotero }));
+        close();
+        if (d.error) toast(esc(d.error), true);
+        else if (d.made.length) zoteroMade(d.made);
+        else toast(t('Connected. Papers you add to Zotero will become paper notes.'));
+      }).catch(function (err) { save.disabled = false; say(err.message, true); });
+    });
+    if (zotero.connected) connect(); else form.api_key.focus();
+  }
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-zotero]')) zoteroDialog(); });
+
   // For the protocol, recipe and meeting libraries (static/notebook-library.js).
   window.NotebookPage = {
     api: api, esc: esc, icon: icon, toast: toast, tc: tc, timeText: timeText, debounce: debounce,
     byFolder: byFolder,
     renderPanel: function (name, box) { PANELS[name].render(box, {}); },
+    zotero: function () { return zotero; },
   };
 
   if (!page) return;
@@ -1180,6 +1397,197 @@
     drawTags();
   }
 
+  // ---- the title: one line of text that wraps, however long
+  function fitTitle() {
+    if (!title || title.tagName !== 'TEXTAREA') return;
+    title.style.height = 'auto';
+    title.style.height = title.scrollHeight + 'px';
+  }
+  if (title) {
+    title.addEventListener('input', function () {
+      // A title is one line: a pasted line break becomes a space.
+      if (/[\r\n]/.test(title.value)) {
+        var at = title.selectionStart;
+        title.value = title.value.replace(/\s*[\r\n]+\s*/g, ' ');
+        title.selectionStart = title.selectionEnd = Math.min(at, title.value.length);
+        titleUnsaved = title.value;
+      }
+      fitTitle();
+    });
+    window.addEventListener('resize', debounce(fitTitle, 100));
+    fitTitle();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
+  }
+
+  // ---- details: a paper's or a talk's fields, and the cover. All are the
+  // page's properties ([{key, value}]); entries from before ({name, value})
+  // are kept and shown as they were.
+  var props = (page.properties || []).slice();
+  var FIELDS = (DATA.kindFields || {})[page.kind] || [];     // [key, label] pairs, in order
+  var FIELD_ICONS = { authors: 'users', journal: 'book-open', year: 'calendar', doi: 'link', url: 'external', zotero: 'book-open',
+    speaker: 'person-chalkboard', affiliation: 'location' };
+  function prop(key) {
+    var item = props.filter(function (p) { return p.key === key; })[0];
+    return item ? item.value || '' : '';
+  }
+  function setProp(key, value) {
+    props = props.filter(function (p) { return p.key !== key; });
+    if (value) props.push({ key: key, value: value });
+  }
+  function saveProps() {
+    return saveField('properties', JSON.stringify(props)).then(function () { page.properties = props.slice(); });
+  }
+  function linkFor(key, value) {
+    if (!value) return '';
+    if (key === 'doi') return 'https://doi.org/' + value.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    if (key === 'url' && /^https?:\/\//i.test(value)) return value;
+    if (key === 'zotero' && /^(zotero:\/\/|https:\/\/(www\.)?zotero\.org\/)/i.test(value)) return value;
+    return '';
+  }
+  var propsBox = $('#nb-props');
+  function drawProps() {
+    if (!propsBox) return;
+    var keys = FIELDS.map(function (f) { return f[0]; });
+    var old = props.filter(function (p) { return !p.key && p.name; });
+    propsBox.hidden = !keys.length && !old.length;
+    if (propsBox.hidden) return;
+    var row = function (key, label, value, iconName, legacy) {
+      var href = legacy ? '' : linkFor(key, value);
+      var placeholder = key === 'zotero' ? t('zotero:// link') : key === 'doi' ? '10.xxxx/…' : tc('notebook', 'Empty');
+      return '<div class="nb-prop"><span class="nb-prop-label">' + icon(iconName || 'tag') + esc(label) + '</span>' +
+        '<input class="nb-prop-value" ' + (legacy ? 'data-name="' + esc(key) + '"' : 'data-key="' + esc(key) + '"') + ' value="' + esc(value) + '" placeholder="' + esc(canEdit ? placeholder : '') + '"' + (canEdit ? '' : ' readonly') + ' aria-label="' + esc(label) + '">' +
+        (href ? '<a class="nb-prop-open" href="' + esc(href) + '" target="_blank" rel="noopener" title="' + (key === 'zotero' ? t('Open in Zotero') : t('Open')) + '">' + icon('external') + '</a>' : '') + '</div>';
+    };
+    propsBox.innerHTML = FIELDS.map(function (f) { return row(f[0], tc('notebook', f[1]), prop(f[0]), FIELD_ICONS[f[0]]); }).join('') +
+      old.map(function (p) { return row(p.name, p.name, p.value || '', 'tag', true); }).join('') +
+      (canEdit && page.kind === 'reading' ? '<div class="nb-prop nb-prop-fill"><span class="nb-prop-label">' + icon('sparkle') + t('Fill in') + '</span>' +
+        '<input class="nb-prop-value" id="nb-cite" placeholder="' + t('Paste a DOI, link or an item copied from Zotero, then Enter') + '" aria-label="' + t('Fill in from a DOI or Zotero') + '"></div>' : '');
+  }
+  if (propsBox) {
+    drawProps();
+    propsBox.addEventListener('change', function (e) {
+      var input = e.target.closest('.nb-prop-value');
+      if (!input || !canEdit || input.id === 'nb-cite') return;
+      if (input.dataset.key) setProp(input.dataset.key, input.value.trim());
+      else props.forEach(function (p) { if (!p.key && p.name === input.dataset.name) p.value = input.value; });
+      saveProps().then(drawProps);
+    });
+    propsBox.addEventListener('keydown', function (e) {
+      var input = e.target.closest('.nb-prop-value');
+      if (!input || e.key !== 'Enter') return;
+      e.preventDefault();
+      if (input.id !== 'nb-cite') { input.blur(); return; }
+      var text = input.value.trim();
+      if (!text) return;
+      input.disabled = true;
+      lookUp(text).then(function (fields) {
+        FIELDS.forEach(function (f) { if (fields[f[0]]) setProp(f[0], fields[f[0]]); });
+        var named = title && (!title.value.trim() || starterTitle);
+        if (fields.title && named) {
+          title.value = fields.title;
+          titleUnsaved = fields.title;
+          fitTitle();
+          saveTitleNow();
+        }
+        return saveProps().then(function () { drawProps(); toast(t('Filled in.')); });
+      }).catch(function (err) { input.disabled = false; toast(esc(err.message), true); });
+    });
+  }
+
+  // ---- the cover
+  var coverBox = $('#nb-cover');
+  var addCover = $('#nb-add-cover');
+  function drawCover() {
+    var src = prop('cover');
+    if (coverBox) { coverBox.hidden = !src; $('#nb-cover-img').src = src || ''; }
+    if (addCover) addCover.hidden = !!src;
+    var paper = $('.nb-page');
+    if (paper) paper.classList.toggle('has-cover', !!src);
+  }
+  function setCover(src) {
+    setProp('cover', src);
+    drawCover();
+    return saveProps();
+  }
+  function uploadCover() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', function () {
+      if (!input.files[0]) return;
+      var form = new FormData();
+      form.append('image', input.files[0]);
+      form.append('page_id', page.id);
+      api('/notebook/upload-image', { form: form }).then(function (d) { setCover(d.url); })
+        .catch(function () { toast(t('Could not upload that picture.'), true); });
+    });
+    input.click();
+  }
+  // A cover from this page's own pictures (a paper's figure), or a new one.
+  function chooseCover(anchor) {
+    var pics = $$('.ProseMirror img').map(function (img) { return img.getAttribute('src'); })
+      .filter(function (src, i, all) { return src && all.indexOf(src) === i; });
+    if (!pics.length) { uploadCover(); return; }
+    var menu = document.createElement('div');
+    menu.className = 'nb-head-menu nb-cover-menu';
+    menu.innerHTML = '<p class="nb-cover-menu-label">' + t('A picture from this page') + '</p><div class="nb-cover-pics">' +
+      pics.slice(0, 12).map(function (src) { return '<button type="button" data-pic="' + esc(src) + '"><img src="' + esc(src) + '" alt=""></button>'; }).join('') +
+      '</div><button type="button" class="nb-head-item nb-head-add" data-upload>' + icon('upload') + '<span>' + t('Upload a picture…') + '</span></button>';
+    anchor.parentNode.appendChild(menu);
+    var close = function (e) { if (!e || !menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close, true); } };
+    setTimeout(function () { document.addEventListener('click', close, true); }, 0);
+    menu.addEventListener('click', function (e) {
+      var pic = e.target.closest('[data-pic]');
+      if (pic) setCover(pic.dataset.pic);
+      if (e.target.closest('[data-upload]')) uploadCover();
+      if (pic || e.target.closest('[data-upload]')) close();
+    });
+  }
+  if (addCover) addCover.addEventListener('click', function () { chooseCover(addCover); });
+  if (coverBox) coverBox.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cover]');
+    if (!b) return;
+    if (b.dataset.cover === 'remove') setCover('');
+    else chooseCover(b);
+  });
+
+  // ---- Save as template: a name, who may use it, and whether to keep
+  // only the page's structure.
+  function templateDialog() {
+    var groupsHtml = (DATA.templateGroups || []).map(function (g) { return '<option value="g' + g[0] + '">' + esc(g[1]) + '</option>'; }).join('');
+    var overlay = document.createElement('div');
+    overlay.className = 'notebook-modal';
+    overlay.innerHTML = '<div class="notebook-modal-backdrop" data-x></div>' +
+      '<form class="notebook-modal-card nb-new-card nb-tpl-card" role="dialog" aria-label="' + t('Save as template') + '">' +
+      '<header class="notebook-modal-head"><h3>' + t('Save as template') + '</h3><button type="button" class="modal-close" data-x aria-label="' + t('Close') + '">' + icon('close') + '</button></header>' +
+      '<div class="notebook-modal-body nb-new">' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Name') + '</span><input name="title" required maxlength="200" value="' + esc(page.title && page.title !== 'Untitled page' ? page.title : '') + '" placeholder="' + t('e.g. PCR protocol') + '"></label>' +
+      '<label class="nb-new-field"><span class="nb-new-label">' + t('Who can use it') + '</span><select name="lab"><option value="">' + t('Just me') + '</option><option value="1">' + t('Everyone in the lab') + '</option>' + groupsHtml + '</select></label>' +
+      '<label class="nb-new-check"><input type="checkbox" name="structure_only" value="1" checked><span><b>' + t('Structure only') + '</b><small>' +
+      t('Keeps the headings, steps and table headers; leaves out the results, ticks, readings and pictures.') + '</small></span></label>' +
+      '<p class="nb-new-note">' + t('New pages of this kind list it under Start from.') + '</p></div>' +
+      '<footer class="nb-new-foot"><span class="nb-grow"></span><button type="button" class="btn" data-x>' + t('Cancel') + '</button><button type="submit" class="btn btn-primary">' + t('Save template') + '</button></footer></form>';
+    document.body.appendChild(overlay);
+    var form = $('form', overlay);
+    form.title.focus();
+    form.title.select();
+    overlay.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) overlay.remove(); });
+    overlay.addEventListener('keydown', function (e) { if (e.key === 'Escape') overlay.remove(); });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = form.title.value.trim();
+      if (!name) return;
+      var f = new FormData();
+      f.append('title', name);
+      f.append('from_page_id', page.id);
+      if (form.structure_only.checked) f.append('structure_only', '1');
+      if (form.lab.value) f.append('lab', form.lab.value);
+      overlay.remove();
+      flushed().then(function () { return saveTemplate(f); })
+        .then(function (d) { if (d && d.ok) toast(t('Saved as the template “%(name)s”.', { name: esc(name) })); });
+    });
+  }
+
   // More menu.
   var moreBtn = $('#nb-more-btn');
   var moreMenu = $('#nb-more-menu');
@@ -1198,26 +1606,7 @@
       if (what === 'print') window.print();
       if (what === 'source') openSource();
       if (what === 'version') saveNamedVersion();
-      if (what === 'template') {
-        BioDialog.prompt(t('Save this page as a template named'), page.title || t('Untitled template'), {
-          okLabel: t('Save template'),
-          checks: [
-            { name: 'structure_only', label: t('Structure only'), checked: true,
-              hint: t('Keeps the headings, steps and table headers; leaves out the results, ticks, readings and pictures.') },
-            { name: 'lab', label: t('Share it with the lab'), hint: t('Everyone can start a page from it.') },
-          ],
-        }).then(function (answer) {
-          var name = answer && answer.value;
-          if (!name) return;
-          var f = new FormData();
-          f.append('title', name);
-          f.append('from_page_id', page.id);
-          if (answer.checks.structure_only) f.append('structure_only', '1');
-          if (answer.checks.lab) f.append('lab', '1');
-          flushed().then(function () { return saveTemplate(f); })
-            .then(function (d) { if (d && d.ok) toast(t('Saved as the template “%(name)s”.', { name: esc(name) })); });
-        });
-      }
+      if (what === 'template') templateDialog();
       if (what === 'delete') {
         BioDialog.confirm(t('Delete “%(title)s”? Its history and comments go with it.', { title: page.title || t('Untitled page') }), { danger: true, okLabel: t('Delete page') }).then(function (ok) {
           if (!ok) return;
@@ -1314,7 +1703,7 @@
       onStatus: function (s) { if (s === 'offline') setSaved(t('Offline — changes will be sent when back'), true); },
       onMeta: function (m) {
         var shown = m.title === 'Untitled page' ? '' : m.title;
-        if (m.title && title && titleUnsaved === null && document.activeElement !== title && title.value !== shown) title.value = shown;
+        if (m.title && title && titleUnsaved === null && document.activeElement !== title && title.value !== shown) { title.value = shown; fitTitle(); }
       },
       onReset: restartEditor,
       onCommentOpen: function (id) { openPanel('comments', { focus: id }); },

@@ -35,14 +35,14 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, request, url
 from sqlalchemy import delete, func, or_, select, update
 
 from .formutil import like_pattern
-from . import access, groups, i18n, notebook_protocols, notify
+from . import access, citations, groups, i18n, notebook_protocols, notify
 from .db import SessionLocal
 from .i18n import gettext
 from .models import (CalendarEvent, NotebookComment, NotebookFolder, NotebookMeetingSeries, NotebookPage,
                      NotebookPageInfo,
                      NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
                      NotebookTab,
-                     NotebookTemplate, NotebookVersion, TaskItem, UserAccount)
+                     NotebookTemplate, NotebookVersion, TaskItem, UserAccount, ZoteroLink)
 
 bp = Blueprint("nb", __name__, url_prefix="/notebook")
 
@@ -50,23 +50,36 @@ KINDS = {
     "note": "Note",
     "experiment": "Experiment",
     "protocol": "Protocol",
+    "reading": "Reading",
     "meeting": "Meeting",
     "seminar": "Seminar",
     "daily": "Daily log",
 }
 STATUSES = {"": "", "planned": "Planned", "running": "Running", "done": "Done", "failed": "Failed"}
-# What each kind adds, for the menu under the page's icon. A kind never
-# chooses the page's topic (folder_for).
+# What each kind does that the others don't, for the menu under the page's
+# icon and the New page dialog. A kind never chooses the page's topic
+# (folder_for).
 KIND_HINTS = {
-    "note": "Plain notes",
-    "experiment": "Start and finish times, a status, the protocol it follows",
-    "protocol": "Versions v1, v2…, run step by step, listed in Protocols",
-    "meeting": "A series, who presents, action items as to-dos",
-    "seminar": "Notes from a talk",
-    "daily": "A day's log, where lines can be added for you",
+    "note": "Just the page, nothing added",
+    "experiment": "Status, Start and Finish times, the protocol it follows",
+    "protocol": "Numbered versions; Run steps; start experiments from it",
+    "reading": "A paper: authors, DOI, Zotero link and cover; in Reading",
+    "meeting": "Presenter rotation; @name tasks go to their calendars",
+    "seminar": "Speaker and affiliation; in Reading beside papers",
+    "daily": "One page a day; the Log box adds lines with the time",
 }
-KIND_ICONS = {"note": "file", "experiment": "flask", "protocol": "protocol", "meeting": "users",
-              "seminar": "note", "daily": "calendar-clock"}
+KIND_ICONS = {"note": "file", "experiment": "flask", "protocol": "protocol", "reading": "book-open",
+              "meeting": "users", "seminar": "person-chalkboard", "daily": "calendar-clock"}
+# The details a kind of page keeps under its title, in the page's
+# properties ([{"key", "value"}], notebook_pages.properties): key -> label.
+# Any page may also have a "cover" (an uploaded picture's address).
+KIND_FIELDS = {
+    "reading": {"authors": "Authors", "journal": "Journal", "year": "Year", "doi": "DOI", "url": "Link",
+                "zotero": "Zotero"},
+    "seminar": {"speaker": "Speaker", "affiliation": "Affiliation", "url": "Link"},
+}
+# Reading lists papers and talks: the kinds with a library of their own.
+READING_KINDS = ("reading", "seminar")
 ROLES = ("view", "edit")
 EVERYONE = "*"
 
@@ -683,6 +696,7 @@ def page_payload(session, page: NotebookPage, role: str) -> dict:
         "locked": locked, "signed": signatures.is_signed(session, page.id), "real_role": role,
         "id": page.id, "tab_id": page.tab_id_fk, "title": page.title, "body": page.body or "",
         "entry_date": _iso(page.entry_date), "properties": props if isinstance(props, list) else [],
+        "cover": property_map(page.properties).get(COVER, ""),
         "created_at": _iso(page.created_at), "updated_at": _iso(page.updated_at),
         "role": "view" if locked else role, "owner": owner, "owner_name": names.get(owner, owner),
         "kind": info.kind if info else "note", "status": info.status if info else "",
@@ -1107,6 +1121,8 @@ def page_new():
                 return _fail(gettext("Template not found."), 404)
             title, body = title or template.title, template.body or ""
             kind = template.kind if template.kind in KINDS and template.kind != "daily" else "note"
+        elif data.get("kind") in KINDS and data.get("kind") != "daily":
+            kind = data["kind"]         # an empty page of that kind
         # A sub-page (/page in a page): made inside a page this person can open.
         parent = None
         if data.get("parent_page_id"):
@@ -1122,7 +1138,11 @@ def page_new():
         extra = {"status": "planned"} if kind == "experiment" else {}
         if parent is not None:
             extra["parent_page_id"] = parent.id
-        page = new_page(s, tab, title or "Untitled page", body, kind=kind, **extra)
+        page = new_page(s, tab, title[:200] or "Untitled page", body, kind=kind, **extra)
+        # A reading note's details, filled in from a DOI or Zotero in New page.
+        properties = clean_properties(data.get("properties"))
+        if properties:
+            page.properties = json.dumps(properties)
         if body:
             record_edit(s, page)
         s.commit()
@@ -1419,6 +1439,200 @@ def comment_delete(comment_id: int):
 
 # ---------------------------------------------------------------- search and tags
 
+# ---------------------------------------------------------------- a page's details
+
+COVER = "cover"
+PROPERTY_MAX = 40
+IMAGE_MD = re.compile(r"!\[([^\]]*)\]\(\s*<?([^)\s>]+)")
+
+
+def clean_properties(raw) -> list[dict]:
+    """A page's properties as sent, kept to what a page holds: up to 40
+    entries, each {"key", "value"} (a kind's field, or "cover") or, as pages
+    from before kept them, {"name", "type", "value", "options"}; text only,
+    trimmed. A field left empty is dropped."""
+    out = []
+    for item in raw if isinstance(raw, list) else []:
+        if not isinstance(item, dict) or len(out) >= PROPERTY_MAX:
+            continue
+        value = item.get("value")
+        value = "" if value is None or isinstance(value, (dict, list)) else str(value).strip()[:2000]
+        kept = {k: str(item[k]).strip()[:80] for k in ("key", "name", "type") if isinstance(item.get(k), str)}
+        if not (kept.get("key") or kept.get("name")):
+            continue
+        if kept.get("key") and not value:
+            continue
+        kept["value"] = value
+        if isinstance(item.get("options"), list):
+            kept["options"] = [str(o)[:80] for o in item["options"][:40]]
+        out.append(kept)
+    return out
+
+
+def property_map(stored) -> dict[str, str]:
+    """The keyed properties of a page (its kind's fields and cover)."""
+    try:
+        items = json.loads(stored) if stored else []
+    except ValueError:
+        return {}
+    return {str(i["key"]): str(i.get("value") or "") for i in items if isinstance(i, dict) and i.get("key")} \
+        if isinstance(items, list) else {}
+
+
+def page_images(body: str, limit: int = 12) -> list[dict]:
+    """The pictures in a page's text, as Reading shows them."""
+    out = []
+    for alt, src in IMAGE_MD.findall(body or ""):
+        if src.startswith(("/", "https://", "http://")) and len(out) < limit:
+            out.append({"src": src, "alt": alt.strip()})
+    return out
+
+
+@bp.post("/api/cite")
+def cite():
+    """What a reading note needs from a pasted DOI, link or Zotero item
+    (app/citations.py), to fill its details in."""
+    text = str(_json_body().get("text") or "")
+    try:
+        fields = citations.read(text)
+    except citations.CitationError:
+        return _fail(gettext("Could not look that DOI up at Crossref. Check it, or paste the item from Zotero as BibTeX or RIS."), 502)
+    if not fields:
+        return _fail(gettext("Nothing to fill in there. Paste a DOI, a link, or an item copied from Zotero."))
+    return jsonify({"ok": True, "fields": fields})
+
+
+@bp.get("/api/reading")
+def reading():
+    """Reading: the papers and talks (reading and seminar pages) this person
+    may open, with their details, cover and pictures."""
+    with SessionLocal() as s:
+        me = _me()
+        stmt = accessible_filter(
+            select(NotebookPage, NotebookTab.owner_username, NotebookPageInfo.kind, NotebookPageInfo.tags)
+            .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
+            .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
+            .where(NotebookPageInfo.kind.in_(READING_KINDS)))
+        rows = s.execute(stmt.order_by(NotebookPage.updated_at.desc()).limit(500)).all()
+        names = display_names(s, [r.owner_username for r in rows])
+        items = []
+        for r in rows:
+            page, props = r.NotebookPage, property_map(r.NotebookPage.properties)
+            items.append({
+                "id": page.id, "title": page.title or "Untitled page", "kind": r.kind, "url": page_url(page.id),
+                "fields": {key: props.get(key, "") for key in KIND_FIELDS[r.kind]},
+                "cover": props.get(COVER, ""), "images": page_images(page.body),
+                "tags": tag_list(r.tags or ""), "snippet": _snippet(page.body, [], 180),
+                "mine": r.owner_username == me, "owner_name": names.get(r.owner_username, r.owner_username),
+                "entry_date": _iso(page.entry_date), "updated_at": _iso(page.updated_at),
+            })
+        return jsonify({"ok": True, "items": items})
+
+
+# ---------------------------------------------------------------- Zotero (app/zotero.py)
+
+def _zotero_tab(s, raw) -> int | None:
+    tab = s.get(NotebookTab, _int(raw) or 0) if raw else None
+    return tab.id if tab is not None and tab.owner_username == _me() else None
+
+
+@bp.get("/api/zotero")
+def zotero_get():
+    from . import zotero
+    with SessionLocal() as s:
+        return jsonify({"ok": True, "zotero": zotero.state(zotero.link_for(s, _me()))})
+
+
+@bp.post("/api/zotero/libraries")
+def zotero_libraries():
+    """The libraries and collections a key may read (the key typed, or the
+    one already kept)."""
+    from . import zotero
+    key = str(_json_body().get("api_key") or "").strip()
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        key = key or (link.api_key if link else "")
+    if not key:
+        return _fail(gettext("Paste your Zotero API key first."))
+    try:
+        return jsonify({"ok": True, **zotero.libraries(key)})
+    except zotero.ZoteroError as e:
+        return _fail(str(e), 502)
+
+
+@bp.post("/api/zotero")
+def zotero_save():
+    """Connect (or change) the person's Zotero library, then check it."""
+    from . import zotero
+    data = _json_body()
+    library = str(data.get("library") or "")
+    if not re.fullmatch(r"(users|groups)/\d{1,12}", library):
+        return _fail(gettext("Pick a library."))
+    collection = str(data.get("collection") or "")
+    if collection and not re.fullmatch(r"[A-Z0-9]{8}", collection):
+        return _fail(gettext("Pick a collection, or the whole library."))
+    with SessionLocal() as s:
+        me = _me()
+        link = zotero.link_for(s, me)
+        key = str(data.get("api_key") or "").strip() or (link.api_key if link else "")
+        if not key:
+            return _fail(gettext("Paste your Zotero API key first."))
+        if link is None:
+            link = ZoteroLink(owner=me)
+            s.add(link)
+        # A new key for the same library and collection carries on from where it was.
+        changed = (link.library, link.collection) != (library, collection)
+        link.api_key, link.library, link.collection = key, library, collection
+        link.library_name = str(data.get("library_name") or "")[:200]
+        link.collection_name = str(data.get("collection_name") or "")[:200] if collection else ""
+        link.tab_id_fk = _zotero_tab(s, data.get("tab_id"))
+        made, error = [], ""
+        try:
+            if changed:
+                # From now on, unless the papers already there are wanted too.
+                link.version = 0 if data.get("include_existing") else zotero.latest_version(link)
+            made = zotero.check(s, link)
+        except zotero.ZoteroError as e:
+            error = str(e)
+            if link.id is None:
+                s.rollback()
+                return _fail(error, 502)
+        s.commit()
+        return jsonify({"ok": True, "made": made, "error": error, "zotero": zotero.state(link)})
+
+
+@bp.post("/api/zotero/check")
+def zotero_check():
+    """New papers in the person's Zotero library as paper notes: at most
+    every few minutes, unless asked now (`now`)."""
+    from . import zotero
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        if link is None:
+            return jsonify({"ok": True, "made": [], "zotero": zotero.state(None)})
+        if not zotero.claim(s, link, now=bool(_json_body().get("now"))):
+            return jsonify({"ok": True, "made": [], "zotero": zotero.state(link)})
+        try:
+            made = zotero.check(s, link)
+            error = ""
+        except zotero.ZoteroError as e:
+            made, error = [], str(e)
+        s.commit()
+        return jsonify({"ok": True, "made": made, "error": error, "zotero": zotero.state(link)})
+
+
+@bp.post("/api/zotero/delete")
+def zotero_delete():
+    """Stop: the key is forgotten; the notes made stay."""
+    from . import zotero
+    with SessionLocal() as s:
+        link = zotero.link_for(s, _me())
+        if link is not None:
+            s.delete(link)
+            s.commit()
+        return jsonify({"ok": True})
+
+
 def _snippet(body: str, terms: list[str], width: int = 160) -> str:
     text = re.sub(r"```[a-z]*\n.*?```", " ", body or "", flags=re.S)
     text = re.sub(r"[#>*_`|\[\]]+", " ", text)
@@ -1454,7 +1668,8 @@ def search():
             stmt = stmt.where(NotebookTab.owner_username != me)
         for term in terms:
             like = like_pattern(term)
-            stmt = stmt.where(or_(NotebookPage.title.ilike(like, escape="\\"), NotebookPage.body.ilike(like, escape="\\")))
+            stmt = stmt.where(or_(NotebookPage.title.ilike(like, escape="\\"), NotebookPage.body.ilike(like, escape="\\"),
+                                  NotebookPage.properties.ilike(like, escape="\\")))
         if tag:
             stmt = stmt.where(NotebookPageInfo.tags.like(f"%,{tag},%"))
         if kind in KINDS:
@@ -1475,7 +1690,7 @@ def search():
             "mine": r.owner_username == me, "kind": r.kind or "note", "status": r.status or "",
             "tags": tag_list(r.tags or ""), "entry_date": _iso(r.NotebookPage.entry_date),
             "updated_at": _iso(r.NotebookPage.updated_at), "snippet": _snippet(r.NotebookPage.body, terms),
-            "url": page_url(r.NotebookPage.id),
+            "url": page_url(r.NotebookPage.id), "cover": property_map(r.NotebookPage.properties).get(COVER, ""),
         } for r in rows]})
 
 
@@ -2472,6 +2687,23 @@ STARTERS = {
 
 ## References
 """},
+    "reading": {
+        "title": "Paper notes", "kind": "reading", "icon": "book-open",
+        "hint": "The question, approach, key figures, what it means for us",
+        "body": """## In one sentence
+
+## Question
+
+## Approach
+
+## Key findings
+
+- Fig. 1:
+
+## What it means for our work
+
+## Doubts and open questions
+"""},
     "meeting": {
         "title": "Lab meeting", "kind": "meeting", "icon": "users",
         "hint": "Agenda, notes, decisions and action items",
@@ -2492,13 +2724,9 @@ STARTERS = {
 - [ ] @name what to do, due YYYY-MM-DD
 """},
     "seminar": {
-        "title": "Seminar notes", "kind": "seminar", "icon": "note",
-        "hint": "Speaker, key points, ideas for our work",
-        "body": """**Speaker:**  · **Affiliation:**  · **Date:** {date}
-
-## Talk title
-
-## Key points
+        "title": "Seminar notes", "kind": "seminar", "icon": "person-chalkboard",
+        "hint": "Key points, methods worth trying, ideas for our work",
+        "body": """## Key points
 
 - Main finding
 
