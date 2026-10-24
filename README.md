@@ -344,6 +344,10 @@ transplanted) makes a database that speaks of plants: it is **Sown** and
 - A plant's dot is blue while it is a seedling (under 14 days), green, then
   red past 70; every number and word here can be changed in **Configure**.
 
+<p align="center">
+  <img src="docs/screenshots/plant-seeds.webp" alt="The Seeds tab: seed lots with their line, generation, descent, amount left, germination and a selection plate that fits 3:1" width="100%">
+</p>
+
 ### 🦎 Any other organism
 
 Choose **Add database** in the sidebar, start from a mouse-like,

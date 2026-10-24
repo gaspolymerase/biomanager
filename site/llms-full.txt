@@ -777,6 +777,8 @@ The **Seeds** tab lists every seed lot, those with seed left first. Each has its
 
 - **New seed lot** is for seed you already have: from a stock centre, a colleague or a drawer.
 
+*The Seeds tab: S-003 is T2 seed from plant P-01, and its selection plate fits 3:1*
+
 ### The selection plate
 
 Grow a T2 lot on its selection (kanamycin, hygromycin, Basta) and type how many seedlings were **Resistant** and how many **Sensitive**. The **Selection** column says what the counts mean, by a χ² test at p = 0.05: *fits 3:1, one insertion*; *fits 15:1, two insertions*; *all resistant: homozygous* (from 30 seedlings up); or that they fit neither, or that more need counting to tell. Hover over it for the χ² values.

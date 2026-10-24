@@ -272,6 +272,90 @@ for geno, purpose, rack, pos in VIALS:
     priya.post(f"/stocks/{fly}/units/save", data={"id": "", "genotype": geno, "purpose": purpose, "count": 1,
                                                   "rack_id": rack, "position": pos})
 
+# ------------------------------------------------------------------ plants
+
+# An Arabidopsis database from the Plants preset (app/organisms.py): a growth
+# room of trays, seed lots harvested and sown again a generation on, a T2's
+# selection plate, and a cross. Its Seeds tab is the plant-seeds shot.
+from app.organisms import PRESET_BY_KEY  # noqa: E402
+
+PLANT = PRESET_BY_KEY["plant"]
+r = alex.post("/organisms/new", data={"audience": "lab", "preset_key": "plant", "label": "Arabidopsis",
+                                      "blurb": PLANT.blurb, "icon": PLANT.icon, "identity_mode": PLANT.identity_mode,
+                                      "capabilities": PLANT.capabilities})
+plants = r.headers.get("Location", "").split("?")[0].rstrip("/").rsplit("/", 1)[-1]
+plants_id = one("select id from organism_modules where key=?", plants)
+P = f"/organisms/{plants}"
+alex.post(f"{P}/location/save", data={"name": "Growth room 2", "kind": "growth room", "rows": "3", "cols": "4", **GRID})
+room = one("select id from organism_locations where module_id_fk=? and name='Growth room 2'", plants_id)
+for code, purpose, pos in (("T-01", "selection", "A1"), ("T-02", "selection", "A2"), ("T-03", "cross", "B1"),
+                           ("T-04", "stock", "B2")):
+    priya.post(f"{P}/housing/save", data={"code": code, "purpose": purpose, "owner": "priya", "_full": "1",
+                                          "location_id_fk": str(room), "position": pos,
+                                          "attr_light": "long day (16 h)", "attr_medium": "soil"})
+tray = {code: one("select id from organism_housing where module_id_fk=? and code=?", plants_id, code)
+        for code in ("T-01", "T-02", "T-03", "T-04")}
+for code, name, background, source, number, marker, transgenic in (
+    ("Col-0", "wild type", "Col-0", "ABRC", "CS70000", "none", ""),
+    ("35S:GFP-PIN1", "PIN1-GFP", "Col-0", "own", "", "kanamycin", "1"),
+    ("pif4-2", "pif4 mutant", "Col-0", "NASC", "N66043", "Basta", ""),
+):
+    priya.post(f"{P}/line/save", data={"code": code, "name": name, "owner": "priya", "_full": "1",
+                                       "attr_background": background, "attr_source": source,
+                                       "attr_stock_number": number, "attr_selection_marker": marker,
+                                       **({"attr_transgenic": "1", "attr_biosafety_permit": "IBC-2026-014"}
+                                          if transgenic else {})})
+line = {code: one("select id from organism_lines where module_id_fk=? and code=?", plants_id, code)
+        for code in ("Col-0", "35S:GFP-PIN1", "pif4-2")}
+
+
+def lot(code: str, **fields) -> int:
+    priya.post(f"{P}/seedlot/save", data={"code": code, "owner": "priya", "storage_text": "Seed cabinet, box 1",
+                                          **fields})
+    return one("select id from organism_seed_lots where module_id_fk=? and code=?", plants_id, code)
+
+
+def sowing(code: str, **fields) -> int:
+    priya.post(f"{P}/cohort/save", data={"code": code, "owner": "priya", **fields})
+    return one("select id from organism_cohorts where module_id_fk=? and code=?", plants_id, code)
+
+
+lot("S-001", line_id_fk=line["Col-0"], amount="500", amount_left="320", unit="mg", harvested_on=ago(400),
+    position="A1", germination_pct="96", germination_tested_on=ago(30))
+t1 = lot("S-002", line_id_fk=line["35S:GFP-PIN1"], generation="T1", amount="40", unit="mg", harvested_on=ago(150),
+         position="A2", germination_pct="91", germination_tested_on=ago(120))
+first = sowing("SOW-01", seed_lot_id_fk=str(t1), birth_on=ago(82), seed_taken="10", count_initial="48",
+               stage="seed set", location_id_fk=str(room))
+for n in range(1, 5):
+    priya.post(f"{P}/animal/save", data={"code": f"P-0{n}", "count": "1", "status": "flowering", "owner": "priya",
+                                         "cohort_id_fk": str(first), "line_id_fk": str(line["35S:GFP-PIN1"]),
+                                         "housing_id_fk": str(tray["T-01"]), "birth_on": ago(82),
+                                         "attr_flowered_on": ago(48 - n)})
+p01 = one("select id from organisms where module_id_fk=? and code='P-01'", plants_id)
+t2 = lot("S-003", source_kind="organism", source_id=str(p01), amount="60", unit="mg", harvested_on=ago(12),
+         end_source="1", position="A3", selection="kanamycin", resistant="152", sensitive="49",
+         germination_pct="94", germination_tested_on=ago(10))
+second = sowing("SOW-02", seed_lot_id_fk=str(t2), birth_on=ago(9), seed_taken="5", count_initial="36",
+                stage="seedling", location_id_fk=str(room))
+priya.post(f"{P}/animal/save", data={"code": "", "count": "34", "status": "growing", "owner": "priya",
+                                     "cohort_id_fk": str(second), "line_id_fk": str(line["35S:GFP-PIN1"]),
+                                     "housing_id_fk": str(tray["T-02"]), "birth_on": ago(9)})
+priya.post(f"{P}/cross/save", data={"code": "X-01", "cross_type": "pair", "owner": "priya", "_full": "1",
+                                    "dam_line_id_fk": str(line["pif4-2"]), "sire_line_id_fk": str(line["35S:GFP-PIN1"]),
+                                    "housing_id_fk": str(tray["T-03"]), "set_up_on": ago(30)})
+cross = one("select id from organism_crosses where module_id_fk=? and code='X-01'", plants_id)
+lot("S-004", source_kind="cross", source_id=str(cross), amount="120", unit="seeds", harvested_on=ago(6),
+    end_source="1", position="A4")
+alex.post(f"{P}/reading/save", data={"location_id_fk": str(room), "metric_temperature_c": "22",
+                                     "metric_humidity": "60", "metric_light": "120", "metric_day_length": "16"})
+# A lab in good order has ticked off what fell due before today, on its day.
+with SessionLocal() as s:
+    past = s.execute(__import__("sqlalchemy").text(
+        "SELECT id, due_on FROM organism_due WHERE module_id_fk = :m AND done_on IS NULL AND due_on < :t"),
+        {"m": plants_id, "t": TODAY}).all()
+for due_id, due_on in past:
+    priya.post(f"{P}/due/{due_id}/done", data={"done_on": str(due_on)[:10]})
+
 # ------------------------------------------------------------------ plasmids
 
 alex.post("/plasmids/boxes/save", data={"id": "", "name": "Plasmid box 1", "rows": "9", "cols": "9",
@@ -423,6 +507,7 @@ with SessionLocal() as s:
 
 counts = {t: one(f"select count(*) from {t}") for t in
           ("mice", "mouse_cages", "litters", "strains", "tanks", "fish_lines", "stock_units",
-           "plasmids", "inventory_items", "calendar_events", "tasks", "notebook_pages")}
+           "plasmids", "inventory_items", "calendar_events", "tasks", "notebook_pages",
+           "organism_seed_lots")}
 print(json.dumps(counts, indent=1))
 print(f"Demo lab ready in {DATA}. Sign in as 'alex'; the password is in {pw_file}.")
