@@ -38,6 +38,8 @@ DESKTOP = [
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),
     ("new-database", "/organisms/new", "light", None),
+    # The Arabidopsis database's seed lots (scripts/demo-data.py, plants).
+    ("plant-seeds", "/organisms/arabidopsis?view=seeds", "light", None),
     ("utilities", "/utilities", "light", None),
     ("cage-cards", "/labels/cards/cages", "light", None),
     # For the task pages: the panel the step is about, not the whole window.
@@ -118,6 +120,7 @@ def shoot(page, name, path, click=None, full=False, crop=None):
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(400)
     page.wait_for_timeout(800)  # let maps, grids and fonts settle
+    page.mouse.move(0, 0)       # no hover left from a click (a tab underlined, a tooltip)
     if "#" not in path:  # a page that focuses a field scrolls to it; start at the top
         page.evaluate("document.activeElement && document.activeElement.blur();"
                       "document.querySelectorAll('*').forEach(e => { if (e.scrollTop) e.scrollTop = 0 });"

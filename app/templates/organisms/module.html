@@ -1623,9 +1623,9 @@
             {{ th('from', _('Harvested from'), 'seedling', '200px', _('Its descent, newest first: lot ‹ plant ‹ sowing ‹ the lot that was sown')) }}
             {{ th('harvested', _('Harvested'), 'calendar', '96px') }}
             {{ th('left', _('Left'), 'amount', '104px') }}
-            {{ th('storage', _('Storage'), 'box', '144px') }}
             {{ th('germination', _('Germination'), 'seedling', '104px') }}
             {{ th('selection', _('Selection'), 'resistance', '264px', _('Resistant : sensitive on the selection plate, against 3:1 (one insertion) and 15:1 (two)')) }}
+            {{ th('storage', _('Storage'), 'box', '144px') }}
             {{ F.table_headers(own_fields) }}
             {{ th('owner', _('Owner'), 'user', '80px') }}
             <th class="sheet-pin sheet-pin-end" style="width: 112px; min-width: 112px;"><span class="sr-only">{{ _('Actions') }}</span></th>
@@ -1663,7 +1663,6 @@
               <td class="font-medium">
                 {% if lot.amount_left is not none %}{{ fmt_amount(lot.amount_left) }}{% if lot.amount is not none %} / {{ fmt_amount(lot.amount) }}{% endif %} {{ lot.unit }}{% else %}<span class="text-sand-300">—</span>{% endif %}
               </td>
-              <td><span class="sheet-cell-text">{{ lot.storage_text }}{% if lot.position %} · <span class="ident">{{ lot.position }}</span>{% endif %}</span></td>
               <td>
                 {% if lot.germination_pct is not none %}
                   <span class="badge {{ 'badge-ok' if lot.germination_pct >= 80 else ('badge-warn' if lot.germination_pct >= 50 else 'badge-danger') }}"
@@ -1678,6 +1677,7 @@
                   </span>
                 {% elif lot.selection %}<span class="sheet-cell-text">{{ lot.selection }}</span>{% endif %}
               </td>
+              <td><span class="sheet-cell-text">{{ lot.storage_text }}{% if lot.position %} · <span class="ident">{{ lot.position }}</span>{% endif %}</span></td>
               {{ F.table_cells(own_fields, attrs) }}
               <td>{% if lot.owner %}{{ lot.owner | owner_badge }}{% endif %}</td>
               <td class="sheet-pin sheet-pin-end">
