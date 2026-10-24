@@ -328,7 +328,7 @@ def welfare_notes(session, today: date, owner: str | None = None, features: dict
                          "owner": t.owner or "", "where": "note", "url": f"{tanks_path}#tank-{t.id}"},
                         t.notes, day_of(changed[("tanks", t.id)]))
         if fish_ids:
-            from .app import fish_alive
+            from .zebrafish_routes import fish_alive
             for f in session.scalars(select(FishRecord).options(selectinload(FishRecord.tank)).where(
                     FishRecord.id.in_(fish_ids))):
                 t = f.tank

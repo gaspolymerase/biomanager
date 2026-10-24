@@ -661,7 +661,7 @@ def strains():
 # ---------------------------------------------------------------- zebrafish
 
 def tank_json(t: TankRecord) -> dict:
-    from .app import fish_position_label
+    from .zebrafish_routes import fish_position_label
     alive = [f for f in t.fish if (f.status or "alive") == "alive"]
     return {"tank_id": t.tank_id, "line": t.line.name if t.line else None, "purpose": t.purpose or "",
             "owner": t.owner or "", "active": bool(t.active), "rack": t.rack.name if t.rack else None,

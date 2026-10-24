@@ -181,7 +181,7 @@ def _cage_cards(session) -> dict:
 
 def _tank_cards(session) -> dict:
     """Zebrafish tanks: `ids`, or every active tank."""
-    from .app import fish_position_label
+    from .zebrafish_routes import fish_position_label
     ids = _ids()
     stmt = select(TankRecord).options(selectinload(TankRecord.fish), selectinload(TankRecord.line),
                                       selectinload(TankRecord.rack))

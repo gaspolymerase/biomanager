@@ -848,8 +848,8 @@ class FishTarget(Target):
                 "racks": {r.name.lower(): r for r in session.scalars(select(FishRack))}}
 
     def create(self, session, ctx, v, extras):
-        from .app import (ZfInputError, apply_fish_position, zf_apply_fish_status, zf_can_edit, zf_denied,
-                          zf_fish_from_form)
+        from .zebrafish_routes import (ZfInputError, apply_fish_position, zf_apply_fish_status, zf_can_edit,
+                                       zf_denied, zf_fish_from_form)
         from .models import FishLine, FishRecord, TankRecord
         warnings: list[str] = []
         code = v.get("tank", "").strip()
