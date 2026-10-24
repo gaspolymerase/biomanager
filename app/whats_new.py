@@ -30,6 +30,16 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.2.0": {
+        "new": [
+            "Notebook pages can be **Reading** pages: a paper's authors, journal, year, DOI and **Zotero** link, filled in from a DOI or from Zotero.",
+            "**Zotero** on the **Reading** page: each paper you add to a Zotero collection becomes a paper note by itself.",
+            "**Reading** lists your papers and talks as cards with covers, or as every picture in them; **Add cover** puts a picture on any page.",
+        ],
+        "changed": [
+            "The notebook's sidebar hides (Ctrl+\\ or ⌘\\), topics are made and renamed in place, and **New page** asks for the title, topic, kind and what to start from.",
+        ],
+    },
     "2.1.1": {
         "changed": [
             "**Litter born** asks for the father too, and **Genotyping** fills in both parents from it. Nothing in either is required.",
