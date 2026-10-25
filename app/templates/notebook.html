@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block page_title %}{% if library %}{{ libraries[library][0]|tr('notebook') }}{% elif selected_page %}{{ selected_page.title }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
+{% block page_title %}{% if library %}{{ libraries[library][0]|tr('notebook') }}{% elif selected_page %}{{ selected_page.title }}{% elif topic_view %}{{ topic_view.title|tr }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
 {% block page_heading %}{{ _('Notebook') }}{% endblock %}
 {% block page_shell_class %}shell-page-flush{% endblock %}
 
 {% macro page_link(page, active_id, tab_id=None) -%}
   <li class="notebook-page-item {% if active_id == page.id %}active{% endif %}{% if page.children %} has-children{% endif %}"
-      data-page-id="{{ page.id }}" data-page-title="{{ page.title|lower }}">
+      data-page-id="{{ page.id }}" data-page-title="{{ page.title|lower }}"{% if page.tab_id %} data-tab-id="{{ page.tab_id }}"{% endif %}>
     {% if page.children %}<button type="button" class="nb-subpages-toggle" aria-expanded="true" aria-label="{{ _('Show or hide its pages') }}" data-subpages="{{ page.id }}">{{ icon('chevron-right') }}</button>{% endif %}
     <a href="{{ url_for('notebook', page=page.id) }}">
       {{ icon(kind_icons.get(page.kind or 'note', 'file'), 'notebook-page-icon') }}
@@ -18,17 +18,71 @@
   </li>
 {%- endmacro %}
 
+{# A topic in the sidebar, as a folder: its name opens its page of cards,
+   the arrow folds it, and inside are its topics, then its pages. Drag a
+   topic onto another to put it inside, or above or below one to reorder. #}
+{% macro topic_node(tab, active_id) -%}
+  <details class="notebook-tab{% if tab.inbox %} is-inbox{% endif %}" {% if tab.id in open_topics %}open{% endif %} data-tab-id="{{ tab.id }}" data-parent-id="{{ tab.parent_id or '' }}" data-icon="{{ tab.icon }}">
+    <summary{% if not tab.inbox %} draggable="true"{% endif %}>
+      {{ icon('chevron-right', 'notebook-tab-caret') }}
+      {{ icon(tab.icon, 'nb-tab-icon') }}
+      <a class="tab-title" href="{{ url_for('notebook', tab=tab.id) }}" draggable="false"{% if topic_view and topic_view.id == tab.id %} aria-current="page"{% endif %}>{{ tab.title|tr }}</a>
+      <span class="tab-count">{{ tab.flat|length or '' }}</span>
+      <span class="tab-actions">
+        <button type="button" title="{{ _('New page in this topic') }}" aria-label="{{ _('New page in this topic') }}" data-topic-new-page="{{ tab.id }}">{{ icon('plus') }}</button>
+        <button type="button" title="{{ _('More') }}" aria-label="{{ _('More') }}" aria-haspopup="true" data-topic-menu="{{ tab.id }}"{% if tab.inbox %} data-inbox{% endif %}>{{ icon('ellipsis') }}</button>
+      </span>
+    </summary>
+    {% if tab.topics %}<div class="notebook-subtopics">{% for child in tab.topics %}{{ topic_node(child, active_id) }}{% endfor %}</div>{% endif %}
+    <ul class="notebook-page-list notebook-tab-pages">
+      {% for page in tab.pages %}{{ page_link(page, active_id) }}{% else %}{% if not tab.topics %}<li class="notebook-empty">{{ _('No pages yet.') }}</li>{% endif %}{% endfor %}
+    </ul>
+  </details>
+{%- endmacro %}
+
+{# A topic chosen from a list: indented under the topic it sits in. #}
+{% macro topic_label(tab) -%}{{ tab.indent }}{{ tab.title|tr }}{%- endmacro %}
+
+{# A page as a card, on a topic's page and the notebook's home: open it,
+   star it, and (a page of your own in a topic) move it to another topic. #}
+{% macro page_card(c, movable=False) -%}
+  <article class="nb-card" data-page-id="{{ c.id }}" data-kind="{{ c.kind }}"{% if movable %} draggable="true"{% endif %}>
+    {% if c.cover %}<div class="nb-card-cover"><img src="{{ c.cover }}" alt="" loading="lazy"></div>{% endif %}
+    <a class="nb-card-link" href="{{ url_for('notebook', page=c.id) }}" draggable="false">
+      <span class="nb-card-icon" data-kind="{{ c.kind }}">{{ icon(kind_icons.get(c.kind, 'file')) }}</span>
+      <b>{{ c.title if c.title != 'Untitled page' else _('Untitled page') }}</b>
+    </a>
+    <p class="nb-card-gist">{{ c.gist }}</p>
+    <footer>
+      <small>
+        <time datetime="{{ c.updated_at }}" data-when>{{ c.updated_at[:10] }}</time>
+        {%- if c.owner_name %} · {{ c.owner_name }}{% endif %}
+        {%- if c.inside %} · {{ ngettext('%(num)s page inside', '%(num)s pages inside', c.inside) }}{% endif %}
+      </small>
+      {% if c.status %}<span class="nb-card-status" data-status="{{ c.status }}">{{ statuses.get(c.status, '')|tr }}</span>{% endif %}
+      <button type="button" class="nb-star{% if c.favorite %} is-on{% endif %}" data-star="{{ c.id }}" aria-pressed="{{ 'true' if c.favorite else 'false' }}" title="{{ _('Favorite') }}" aria-label="{{ _('Favorite') }}">{{ icon('star') }}</button>
+      {% if movable %}
+        <label class="nb-lib-file" title="{{ _('Move to another topic') }}">{{ icon('folder') }}
+          <select data-move-page="{{ c.id }}" aria-label="{{ _('Move to another topic') }}">
+            {% for tab in tabs %}<option value="{{ tab.id }}"{% if topic_view and tab.id == topic_view.id %} selected{% endif %}>{{ topic_label(tab) }}</option>{% endfor %}
+          </select>
+        </label>
+      {% endif %}
+    </footer>
+  </article>
+{%- endmacro %}
+
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='notebook-build/notebook-app.css') }}?v={{ asset_version('notebook-build/notebook-app.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='notebook.css') }}?v={{ asset_version('notebook.css') }}">
-{% if library %}<link rel="stylesheet" href="{{ url_for('static', filename='icon-picker.css') }}?v={{ asset_version('icon-picker.css') }}">{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', filename='icon-picker.css') }}?v={{ asset_version('icon-picker.css') }}">
 
 {% set active_id = selected_page.id if selected_page else None %}
-<section class="notebook-shell nb-shell{% if selected_page or library %} has-page{% endif %}" id="nb-shell">
+<section class="notebook-shell nb-shell{% if selected_page or library or topic_view or home %} has-page{% endif %}" id="nb-shell">
   {# Hidden sidebar, as this browser left it: set before the page draws, so it doesn't flash. #}
   <script nonce="{{ csp_nonce() }}">try { if (localStorage.getItem('nb-side') === 'closed') { document.getElementById('nb-shell').classList.add('is-side-closed'); document.body.classList.add('nb-side-is-closed'); } } catch (e) {}</script>
   <aside class="notebook-sidebar" id="nb-sidebar" aria-label="{{ _('Pages') }}">
-    {% if selected_page or library %}
+    {% if selected_page or library or topic_view or home %}
       <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
     {% endif %}
     <div class="notebook-sidebar-head">
@@ -41,6 +95,7 @@
     <button type="button" class="notebook-new-btn" id="nb-new-page">{{ icon('plus') }}<span>{{ _('New page') }}</span></button>
 
     <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
+      <a href="{{ url_for('notebook') }}"{% if home %} class="is-active" aria-current="page"{% endif %}>{{ icon('home') }} {{ _('Home') }}</a>
       <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
       <button type="button" data-panel="search">{{ icon('search') }} {{ _('Search & tags') }}</button>
       {# Each opens its library in the page; /protocol in a page opens the drawer to insert one. #}
@@ -50,6 +105,15 @@
     </nav>
 
     <div class="nb-side-scroll">
+      {# Starred pages, in your order: drag one to reorder, or a page here to star it. #}
+      <div class="nb-favorites{% if not side.favorites %} is-empty{% endif %}" id="nb-favorites">
+        <div class="notebook-section-label">{{ _('Favorites') }}</div>
+        <ul class="notebook-page-list" id="nb-favorite-list">
+          {% for p in side.favorites %}{{ page_link(p, active_id) }}{% endfor %}
+        </ul>
+        <p class="nb-fav-hint">{{ _('Star a page, or drag one here.') }}</p>
+      </div>
+
       {% if side.running %}
         <div class="notebook-section-label">{{ _('Running experiments') }}</div>
         <ul class="notebook-page-list">
@@ -64,38 +128,20 @@
         </ul>
       {% endif %}
 
-      {# Topics are your folders: + makes one, ••• renames or deletes it, and a page dragged onto one moves there. #}
-      <div class="nb-side-section">
+      {# Topics are your folders: + makes one, ••• renames, moves or deletes it, and a page dragged onto one moves there. #}
+      <div class="nb-side-section" id="nb-topics-head">
         <span class="notebook-section-label">{{ _('Topics') }}</span>
         <button type="button" class="nb-side-add" id="nb-topic-add" title="{{ _('New topic') }}" aria-label="{{ _('New topic') }}">{{ icon('plus') }}</button>
       </div>
       <form class="nb-topic-new" id="nb-topic-new" hidden>
-        {{ icon('folder') }}<input name="title" placeholder="{{ _('Name the topic, then Enter') }}" aria-label="{{ _('New topic') }}" autocomplete="off" maxlength="200">
+        {{ icon('folder') }}<input name="title" placeholder="{{ _('Name the topic, then Enter') }}" aria-label="{{ _('New topic') }}" autocomplete="off" maxlength="160">
       </form>
       <div class="notebook-tabs" id="notebook-tabs">
-        {% for tab in tabs %}
-          <details class="notebook-tab" {% if tab.id == selected_tab_id %}open{% endif %} data-tab-id="{{ tab.id }}">
-            <summary>
-              {{ icon('chevron-right', 'notebook-tab-caret') }}
-              <span class="tab-title">{{ tab.title|tr }}</span>
-              <span class="tab-count">{{ tab.flat|length }}</span>
-              <span class="tab-actions">
-                <button type="button" title="{{ _('New page in this topic') }}" aria-label="{{ _('New page in this topic') }}" data-topic-new-page="{{ tab.id }}">{{ icon('plus') }}</button>
-                <button type="button" title="{{ _('Rename or delete') }}" aria-label="{{ _('Rename or delete') }}" aria-haspopup="true" data-topic-menu="{{ tab.id }}">{{ icon('ellipsis') }}</button>
-              </span>
-            </summary>
-            <ul class="notebook-page-list notebook-tab-pages">
-              {% for page in tab.pages %}{{ page_link(page, active_id) }}{% else %}<li class="notebook-empty">{{ _('No pages yet.') }}</li>{% endfor %}
-            </ul>
-          </details>
+        {% for tab in tabs if tab.depth == 0 %}
+          {{ topic_node(tab, active_id) }}
         {% else %}
           <p class="notebook-empty-topics">{{ _('No topics yet.') }}</p>
         {% endfor %}
-      </div>
-      <div class="nb-head-menu nb-topic-menu" id="nb-topic-menu" hidden role="menu">
-        <button type="button" class="nb-head-item" data-topic-do="page">{{ icon('plus') }}<span>{{ _('New page in this topic') }}</span></button>
-        <button type="button" class="nb-head-item" data-topic-do="rename">{{ icon('edit') }}<span>{{ _('Rename') }}</span></button>
-        <button type="button" class="nb-head-item is-danger" data-topic-do="delete">{{ icon('trash') }}<span>{{ _('Delete topic and its pages…') }}</span></button>
       </div>
 
       {% if side.tags %}
@@ -130,11 +176,12 @@
             <button type="button" class="nb-crumb-side" data-side-toggle title="{{ _('Show the sidebar') }} (Ctrl+\)" aria-label="{{ _('Show the sidebar') }}">{{ icon('sidebar') }}</button>
             <button type="button" class="nb-crumb-side" data-new-page-kind="" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
             {% if p.real_role == 'owner' %}
-              <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ icon('folder') }}<span>{{ p.tab_title|tr }}</span></button>
+              {% for up in p.tab_path %}<a class="nb-crumb-page nb-crumb-topic" href="{{ url_for('notebook', tab=up.id) }}">{{ icon(up.icon) }}{{ up.title|tr }}</a><span class="nb-crumb-sep">/</span>{% endfor %}
+              <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ icon(p.tab_icon) }}<span>{{ p.tab_title|tr }}</span></button>
               <div class="nb-head-menu nb-move-menu" id="nb-move-menu" hidden>
                 <input type="search" class="nb-head-search" id="nb-move-search" placeholder="{{ _('Move to a topic…') }}" aria-label="{{ _('Move to a topic…') }}" autocomplete="off">
                 <div class="nb-head-list" id="nb-move-list">
-                  {% for tab in tabs %}<button type="button" class="nb-head-item{% if tab.id == p.tab_id %} is-on{% endif %}" data-move-to="{{ tab.id }}" data-name="{{ (tab.title|tr)|lower }}">{{ icon('folder') }}<span>{{ tab.title|tr }}</span><small>{% if tab.id == p.tab_id %}✓{% else %}{{ tab.flat|length }}{% endif %}</small></button>{% endfor %}
+                  {% for tab in tabs %}<button type="button" class="nb-head-item{% if tab.id == p.tab_id %} is-on{% endif %}" data-move-to="{{ tab.id }}" data-name="{{ (tab.title|tr)|lower }}" style="padding-left: {{ 8 + 14 * tab.depth }}px">{{ icon(tab.icon) }}<span>{{ tab.title|tr }}</span><small>{% if tab.id == p.tab_id %}✓{% else %}{{ tab.flat|length }}{% endif %}</small></button>{% endfor %}
                 </div>
                 <button type="button" class="nb-head-item nb-head-add" id="nb-move-new">{{ icon('folder-plus') }}<span data-label="{{ _('New topic') }}" data-named="{{ _('New topic “%(name)s”', name='%(name)s') }}">{{ _('New topic') }}</span></button>
               </div>
@@ -147,6 +194,7 @@
           <div class="nb-page-tools">
             <div class="nb-presence" id="nb-presence" aria-label="{{ _('Also here') }}"></div>
             <span id="page-saved-state" class="page-saved-state" aria-live="polite"></span>
+            <button type="button" class="nb-tool nb-star{% if p.favorite %} is-on{% endif %}" data-star="{{ p.id }}" aria-pressed="{{ 'true' if p.favorite else 'false' }}" title="{{ _('Favorite') }}" aria-label="{{ _('Favorite') }}">{{ icon('star') }}</button>
             {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="{{ _('Share with lab mates') }}">{{ icon('users') }}<span>{% if p.shared %}{{ _('Shared') }}{% else %}{{ _('Share') }}{% endif %}</span></button>{% endif %}
             <button type="button" class="nb-tool" data-panel="comments" title="{{ _('Comments') }}">{{ icon('note') }}<span>{{ _('Comments') }}</span>{% if p.open_comments %}<b class="nb-badge" id="nb-comment-count">{{ p.open_comments }}</b>{% endif %}</button>
             <button type="button" class="nb-tool{% if p.locked %} is-signed{% endif %}" data-panel="sign" title="{{ _('Signed and locked: see the signatures, witness it, or amend it') if p.locked else _('Sign this page as the record of your work, which locks it') }}">{{ icon('success' if p.locked else 'edit') }}<span class="nb-hide-sm">{{ _('Signed') if p.locked else _('Sign') }}</span></button>
@@ -265,6 +313,92 @@
         <div id="editor-mount" class="tiptap-editor-host"></div>
         <textarea id="initial-body" hidden aria-hidden="true">{{ p.body }}</textarea>
       </div>
+    {% elif topic_view %}
+      {# A topic's own page, as Notability shows a subject: the topics inside
+         it, then its pages as cards or a list, newest, by name or in your order. #}
+      {% set tv = topic_view %}
+      <div class="nb-topic" id="nb-topic" data-topic-id="{{ tv.id }}">
+        <nav class="nb-topic-trail" aria-label="{{ _('Where you are') }}">
+          <a href="{{ url_for('notebook') }}">{{ icon('home') }}{{ _('Notebook') }}</a>
+          {% for up in tv.trail[:-1] %}<span class="nb-crumb-sep">/</span><a href="{{ url_for('notebook', tab=up.id) }}" data-drop-topic="{{ up.id }}">{{ icon(up.icon) }}{{ up.title|tr }}</a>{% endfor %}
+        </nav>
+        <header class="nb-topic-head">
+          {% if tv.inbox %}
+            <span class="nb-topic-icon">{{ icon(tv.icon) }}</span>
+          {% else %}
+            <button type="button" class="nb-topic-icon" data-topic-edit="{{ tv.id }}" title="{{ _('Name and icon') }}" aria-label="{{ _('Name and icon') }}">{{ icon(tv.icon) }}</button>
+          {% endif %}
+          <h1 class="nb-topic-title">{{ tv.title|tr }}</h1>
+          <div class="nb-topic-tools">
+            {% if not tv.inbox %}<button type="button" class="btn" data-topic-new-sub="{{ tv.id }}">{{ icon('folder-plus') }} {{ _('New topic inside') }}</button>{% endif %}
+            <button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>
+            <button type="button" class="btn nb-icon-only" data-topic-menu="{{ tv.id }}"{% if tv.inbox %} data-inbox{% endif %} aria-haspopup="true" title="{{ _('More') }}" aria-label="{{ _('More') }}">{{ icon('ellipsis') }}</button>
+          </div>
+        </header>
+        {% if tv.inbox %}<p class="nb-lib-blurb">{{ _('Pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series are kept in Protocols, Reading and Meetings instead.') }}</p>{% endif %}
+
+        {% if tv.topics %}
+          <h2 class="nb-lib-label">{{ _('Topics') }}</h2>
+          <div class="nb-lib-folders nb-topic-folders">
+            {% for sub in tv.topics %}
+              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ icon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="nb-topic-bar">
+          <h2 class="nb-lib-label">{{ _('Pages') }} <span class="nb-count">{{ tv.flat|length }}</span></h2>
+          {% if tv.cards %}
+            <div class="seg" role="group" aria-label="{{ _('Sort') }}">
+              {% for key, label in sorts.items() %}<a class="seg-item{% if tv.sort == key %} is-active{% endif %}" href="{{ url_for('notebook', tab=tv.id, sort=key if key != 'edited' else None) }}"{% if tv.sort == key %} aria-current="true"{% endif %}>{{ label|tr }}</a>{% endfor %}
+            </div>
+            <div class="seg" role="group" aria-label="{{ _('Layout') }}">
+              <button type="button" class="seg-item is-active" data-cards-view="cards" title="{{ _('Cards') }}" aria-label="{{ _('Cards') }}">{{ icon('grid') }}</button>
+              <button type="button" class="seg-item" data-cards-view="list" title="{{ _('List') }}" aria-label="{{ _('List') }}">{{ icon('list') }}</button>
+            </div>
+          {% endif %}
+        </div>
+        {% if tv.cards %}
+          <div class="nb-cards" id="nb-cards" data-sort="{{ tv.sort }}">
+            {% for c in tv.cards %}{{ page_card(c, True) }}{% endfor %}
+          </div>
+          {% if tv.sort == 'order' %}<p class="nb-muted nb-topic-note">{{ _('Drag a card, or a page in the sidebar, to change the order.') }}</p>{% endif %}
+        {% else %}
+          <div class="nb-topic-empty">
+            {{ icon('file') }}
+            <p>{{ _('No pages here yet.') }}</p>
+            <button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>
+          </div>
+        {% endif %}
+      </div>
+    {% elif home and (home.recent or home.topics) %}
+      {# The notebook's home: what you starred, what changed lately, and your topics. #}
+      <div class="nb-home" id="nb-home">
+        <header class="nb-topic-head">
+          <span class="nb-topic-icon">{{ icon('notebook') }}</span>
+          <h1 class="nb-topic-title">{{ _('%(name)s’s notebook', name=me.name) }}</h1>
+          <div class="nb-topic-tools">
+            <a class="btn" href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _("Today's log") }}</a>
+            <button type="button" class="btn btn-primary" data-new-page-kind="">{{ icon('plus') }} {{ _('New page') }}</button>
+          </div>
+        </header>
+        {% if home.favorites %}
+          <h2 class="nb-lib-label">{{ icon('star') }} {{ _('Favorites') }}</h2>
+          <div class="nb-cards">{% for c in home.favorites %}{{ page_card(c) }}{% endfor %}</div>
+        {% endif %}
+        {% if home.recent %}
+          <h2 class="nb-lib-label">{{ icon('clock') }} {{ _('Recently edited') }}</h2>
+          <div class="nb-cards">{% for c in home.recent %}{{ page_card(c) }}{% endfor %}</div>
+        {% endif %}
+        {% if home.topics %}
+          <h2 class="nb-lib-label">{{ icon('folder') }} {{ _('Topics') }}</h2>
+          <div class="nb-lib-folders nb-topic-folders">
+            {% for sub in home.topics %}
+              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ icon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
     {% else %}
       <div class="nb-welcome">
         <h2>{{ _('Start a page') }}</h2>
@@ -278,6 +412,14 @@
         </div>
       </div>
     {% endif %}
+  </div>
+
+  <div class="nb-head-menu nb-topic-menu" id="nb-topic-menu" hidden role="menu">
+    <button type="button" class="nb-head-item" data-topic-do="page">{{ icon('plus') }}<span>{{ _('New page in this topic') }}</span></button>
+    <button type="button" class="nb-head-item" data-topic-do="sub" data-not-inbox>{{ icon('folder-plus') }}<span>{{ _('New topic inside') }}</span></button>
+    <button type="button" class="nb-head-item" data-topic-do="edit" data-not-inbox>{{ icon('edit') }}<span>{{ _('Name and icon') }}</span></button>
+    <button type="button" class="nb-head-item" data-topic-do="move" data-not-inbox>{{ icon('sitemap') }}<span>{{ _('Move to…') }}</span></button>
+    <button type="button" class="nb-head-item is-danger" data-topic-do="delete">{{ icon('trash') }}<span>{{ _('Delete topic and its pages…') }}</span></button>
   </div>
 
   <aside class="nb-drawer" id="nb-drawer" hidden aria-live="polite">
@@ -303,7 +445,7 @@
         <label class="nb-new-field">
           <span class="nb-new-label">{{ _('Topic') }}</span>
           <select name="tab_id">
-            {% for tab in tabs %}<option value="{{ tab.id }}"{% if (topic_chosen and tab.id == selected_tab_id) or (not topic_chosen and tab.title == 'Inbox') %} selected{% endif %}>{{ tab.title|tr }}</option>{% endfor %}
+            {% for tab in tabs %}<option value="{{ tab.id }}"{% if (topic_chosen and tab.id == selected_tab_id) or (not topic_chosen and tab.inbox) %} selected{% endif %}>{{ topic_label(tab) }}</option>{% endfor %}
           </select>
         </label>
       {% endif %}
@@ -351,6 +493,8 @@
   'me': me,
   'tabs': tabs | map(attribute='id') | list,
   'tabTitles': tabs | map(attribute='title') | list,
+  'tabIndents': tabs | map(attribute='indent') | list,
+  'folderIcons': folder_icons,
   'zotero': zotero,
   'kinds': kinds,
   'kindIcons': kind_icons,
@@ -365,184 +509,11 @@
   'library': library,
 } | tojson }}</script>
 
-<script nonce="{{ csp_nonce() }}">
-// Topics stay here so the sidebar works even without the editor bundle:
-// + names a new one in place, ••• renames it in place or deletes it, and a
-// page dragged onto a topic moves there.
-(function () {
-  function post(url, fields) {
-    var form = new FormData();
-    Object.keys(fields || {}).forEach(function (k) { form.append(k, fields[k]); });
-    return fetch(url, { method: 'POST', body: form, headers: { 'X-Requested-With': 'fetch' } })
-      .then(function (r) { return r.json().catch(function () { return { ok: r.ok }; }); });
-  }
-  var addBtn = document.getElementById('nb-topic-add');
-  var addForm = document.getElementById('nb-topic-new');
-  if (addBtn && addForm) {
-    var addInput = addForm.querySelector('input');
-    addBtn.addEventListener('click', function () {
-      addForm.hidden = false;
-      addInput.value = '';
-      addInput.focus();
-    });
-    addForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var title = addInput.value.trim();
-      if (!title) { addForm.hidden = true; return; }
-      post('/notebook/tabs/create', { title: title }).then(function (d) { if (d.ok) window.location.href = '/notebook?tab=' + d.id; });
-    });
-    addInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') { addForm.hidden = true; addBtn.focus(); } });
-    addInput.addEventListener('blur', function () { if (!addInput.value.trim()) addForm.hidden = true; });
-  }
-
-  function newPageIn(tabId) {
-    if (window.NotebookNewPage) window.NotebookNewPage.open({ tab: tabId });
-    else fetch('/notebook/api/pages/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tab_id: tabId }) })
-      .then(function (r) { return r.json(); }).then(function (d) { if (d.ok) window.location.href = d.url; });
-  }
-
-  function rename(tabId) {
-    var label = document.querySelector('.notebook-tab[data-tab-id="' + tabId + '"] .tab-title');
-    if (!label) return;
-    var details = label.closest('details');
-    var input = document.createElement('input');
-    input.className = 'tab-rename';
-    input.value = label.textContent.trim();
-    input.setAttribute('aria-label', t('Rename'));
-    input.maxLength = 200;
-    label.hidden = true;
-    label.after(input);
-    input.focus();
-    input.select();
-    var done = false;
-    function finish(save) {
-      if (done) return;
-      done = true;
-      var title = input.value.trim();
-      input.remove();
-      label.hidden = false;
-      if (!save || !title || title === label.textContent.trim()) return;
-      label.textContent = title;
-      post('/notebook/tabs/' + tabId + '/rename', { title: title }).then(function (d) {
-        if (d.ok) document.querySelectorAll('[data-move-to="' + tabId + '"] span').forEach(function (el) { el.textContent = d.title; });
-      });
-    }
-    // Typing a space or Enter in the box must not fold the topic.
-    input.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
-    input.addEventListener('keydown', function (e) {
-      e.stopPropagation();
-      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-    });
-    input.addEventListener('keyup', function (e) { e.preventDefault(); });
-    input.addEventListener('blur', function () { finish(true); });
-    if (details) details.open = details.open;
-  }
-
-  function remove(tabId) {
-    var label = document.querySelector('.notebook-tab[data-tab-id="' + tabId + '"] .tab-title');
-    var name = label ? label.textContent.trim() : '';
-    BioDialog.confirm(t('Delete the topic “%(name)s” and every page in it?', { name: name }), { danger: true, okLabel: t('Delete topic') }).then(function (ok) {
-      if (ok) post('/notebook/tabs/' + tabId + '/delete', {}).then(function () { window.location.href = '/notebook'; });
-    });
-  }
-
-  var menu = document.getElementById('nb-topic-menu');
-  var menuTab = null;
-  function closeMenu() { if (menu) menu.hidden = true; menuTab = null; }
-  document.addEventListener('click', function (e) {
-    var plus = e.target.closest('[data-topic-new-page]');
-    var dots = e.target.closest('[data-topic-menu]');
-    var act = e.target.closest('[data-topic-do]');
-    if (plus) { e.preventDefault(); e.stopPropagation(); newPageIn(plus.dataset.topicNewPage); return; }
-    if (dots && menu) {
-      e.preventDefault(); e.stopPropagation();
-      if (menuTab === dots.dataset.topicMenu && !menu.hidden) { closeMenu(); return; }
-      menuTab = dots.dataset.topicMenu;
-      menu.hidden = false;           // shown first: a hidden menu has no offsetParent to place it in
-      var box = dots.getBoundingClientRect();
-      var holder = menu.offsetParent || document.body;
-      var side = holder.getBoundingClientRect();
-      menu.style.top = (box.bottom - side.top + holder.scrollTop + 4) + 'px';
-      menu.style.left = Math.max(4, box.right - side.left - menu.offsetWidth) + 'px';
-      return;
-    }
-    if (act && menuTab) {
-      var tabId = menuTab;
-      closeMenu();
-      if (act.dataset.topicDo === 'page') newPageIn(tabId);
-      if (act.dataset.topicDo === 'rename') rename(tabId);
-      if (act.dataset.topicDo === 'delete') remove(tabId);
-      return;
-    }
-    if (menu && !menu.hidden && !menu.contains(e.target)) closeMenu();
-  });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && menu && !menu.hidden) closeMenu(); });
-  document.querySelectorAll('.notebook-tab .tab-title').forEach(function (label) {
-    label.addEventListener('dblclick', function (e) { e.preventDefault(); rename(label.closest('.notebook-tab').dataset.tabId); });
-  });
-
-  // Drag a page of yours onto a topic to move it there (with its sub-pages).
-  var dragged = null;
-  document.querySelectorAll('.notebook-tab .notebook-page-item > a').forEach(function (a) {
-    a.addEventListener('dragstart', function (e) {
-      dragged = a.closest('.notebook-page-item').dataset.pageId;
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', a.href);
-    });
-    a.addEventListener('dragend', function () { dragged = null; });
-  });
-  document.querySelectorAll('.notebook-tab > summary').forEach(function (summary) {
-    var tabId = summary.parentNode.dataset.tabId;
-    summary.addEventListener('dragover', function (e) {
-      if (!dragged) return;
-      e.preventDefault();
-      summary.classList.add('is-drop');
-    });
-    summary.addEventListener('dragleave', function () { summary.classList.remove('is-drop'); });
-    summary.addEventListener('drop', function (e) {
-      summary.classList.remove('is-drop');
-      if (!dragged) return;
-      e.preventDefault();
-      var page = dragged;
-      dragged = null;
-      post('/notebook/pages/' + page + '/move', { tab_id: tabId }).then(function (d) {
-        if (d.ok) window.location.reload();
-      });
-    });
-  });
-})();
-
-// Sub-pages in the sidebar: the arrow beside a page shows or hides them,
-// remembered in this browser. The open page's own line stays shown.
-(function () {
-  var KEY = 'nb-closed-subpages';
-  var closed = {};
-  try { closed = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { closed = {}; }
-  function paint(li, shut) {
-    li.classList.toggle('is-collapsed', shut);
-    var b = li.querySelector(':scope > .nb-subpages-toggle');
-    if (b) b.setAttribute('aria-expanded', String(!shut));
-  }
-  document.querySelectorAll('.notebook-page-item.has-children').forEach(function (li) {
-    var holdsOpen = li.querySelector('.notebook-subpages .notebook-page-item.active');
-    paint(li, !!closed[li.dataset.pageId] && !holdsOpen);
-  });
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest('.nb-subpages-toggle');
-    if (!b) return;
-    e.preventDefault();
-    var li = b.closest('.notebook-page-item');
-    var shut = !li.classList.contains('is-collapsed');
-    paint(li, shut);
-    if (shut) closed[li.dataset.pageId] = 1; else delete closed[li.dataset.pageId];
-    try { localStorage.setItem(KEY, JSON.stringify(closed)); } catch (err) { /* private window: not remembered */ }
-  });
-})();
-</script>
 {# The inventories a page can @link ("@antibodies 12"), for the editor's @ menu and chips. #}
 <script type="application/json" id="nb-mention-types">{{ mention_types | tojson }}</script>
 <script src="{{ url_for('static', filename='notebook-page.js') }}?v={{ asset_version('notebook-page.js') }}" defer></script>
+{# Topics, favourites and dragging: after notebook-page.js, whose helpers it borrows when they are there. #}
+<script src="{{ url_for('static', filename='notebook-topics.js') }}?v={{ asset_version('notebook-topics.js') }}" defer></script>
 <script src="{{ url_for('static', filename='notebook-build/notebook-app.js') }}?v={{ asset_version('notebook-build/notebook-app.js') }}" defer data-missing-flag="__notebookBundleMissing"></script>
 {# After the bundle: a recipe opens in its recipe editor. #}
 {% if library %}<script src="{{ url_for('static', filename='notebook-library.js') }}?v={{ asset_version('notebook-library.js') }}" defer></script>{% endif %}

@@ -2065,11 +2065,42 @@ holds (`fitTitle`; a pasted line break becomes a space), 40px over the
 editor's 30/24/20px headings and 16px text (`frontend/src/styles.css`), as
 Notion sets them.
 
-The sidebar's topics are run by the template's own script, so they work
-without the editor bundle: **+** names a new topic in place
-(`/notebook/tabs/create`), a topic's **•••** (`#nb-topic-menu`) renames it
-in place or deletes it, and a page dragged onto a topic posts
-`/notebook/pages/<id>/move`. **New page** (`#nb-new-form`,
+**Topics, favourites, the home.** Topics nest: `notebook_tabs.parent_tab_id`
+(none: at the top) and `position` among the topics beside it, with an
+`icon` (`FOLDER_ICONS`, as the library folders; revision 0048).
+`lab_notebook.topic_tree()` lists one person's topics in the sidebar's
+order, each after the one it sits in (`depth`, `path`, `topics` inside,
+`pages` as `page_tree()`), and `topic_parents()` puts at the top a topic
+whose parent has gone or that sits round a loop. *Inbox* (`is_inbox()`: so
+named, at the top) never holds a topic and leaves out what a library lists
+(`library_page_ids()`: protocols, reading and seminar pages, and meeting
+notes of a series; one of no series stays, as no library lists it). The
+sidebar and the topic's page are drawn from that tree
+(`templates/notebook.html`: `topic_node`, recursive).
+`/notebook?tab=<id>` is the topic's own page (`topic_view`: the topics in it,
+its top-level pages as `page_cards()`, `?sort=edited|name|order`), and
+`/notebook` with nothing asked for is the home (`home`: favourites, the
+eight pages most recently changed that the person may open, the top-level
+topics); neither opens a page any more. Deleting a topic moves the topics
+in it up one level.
+
+`app/static/notebook-topics.js` runs the sidebar's topics, favourites and
+dragging, without the editor bundle (it borrows `window.NotebookPage`'s
+toast and times when they are there): **+** names a new topic in place
+(`/notebook/tabs/create`, with `parent_id` for **New topic inside**); the
+topic menu (`#nb-topic-menu`, outside the sidebar, `position: fixed`, so a
+topic's page opens it on a phone too) posts `/notebook/api/topics/<id>`
+(name and icon) and `/notebook/api/topics/<id>/place` (`parent_id`,
+`before_id`/`after_id`: it refuses a loop and Inbox), or deletes the topic.
+A page dragged in the sidebar, or a card in **Your order**, posts
+`/notebook/api/pages/<id>/place` (`tab_id`, `before_id`/`after_id`,
+`parent_page_id`): `move_page()` brings its sub-pages, then the topic's
+pages are numbered again. Favourites are `notebook_favorites` (username,
+page, `position`): `/notebook/api/pages/<id>/favorite` (`on`) and
+`/notebook/api/favorites/<id>/place`; `favorite_ids()` lists only pages the
+person may still open, and `delete_page_rows()` takes a page's stars with
+it. Which topics are open is `nb-open-topics` in localStorage, the cards
+or list `nb-cards-view`. **New page** (`#nb-new-form`,
 `window.NotebookNewPage.open({kind, tab})`) asks for a title, topic, kind
 and what to start from: the `STARTERS` of that kind, an empty page (`kind`
 alone to `/notebook/api/pages/new`) and the person's templates of that
@@ -2084,6 +2115,7 @@ structure only).
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
 | `notebook_comments` | comments on a page or a quoted passage, and replies |
 | `notebook_recipes` | the lab's buffer library (the built-in ones are `PRESET_RECIPES`), and the folder each is in |
+| `notebook_favorites` | the pages someone starred, in their order (`position`; revision 0048) |
 | `notebook_folders` | the lab's folders in the protocol and recipe libraries (`kind`, name, icon); a protocol's folder is `notebook_page_info.folder_id` (revision 0027) |
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
@@ -2167,8 +2199,10 @@ today's daily log, a protocol, an experiment from a protocol, a meeting
 note, a colony experiment's **Add to notebook**) in the topic of the page it
 was made from when that topic is the person's own, else the topic open
 (`open_tab_id`, sent only when a topic was chosen, `topicChosen`), else
-*Inbox*. Changing the kind (`/meta`) never moves a page. The page header
-(`templates/notebook.html`) is a breadcrumb: the topic opens **Move to**
+*Inbox*, which lists only what no library does (above). Changing the
+kind (`/meta`) never moves a page. The page header
+(`templates/notebook.html`) is a breadcrumb: the topics its topic sits in
+(`tab_path`, each a link to its page), then the topic, which opens **Move to**
 (`#nb-move-menu`, posting `/notebook/pages/<id>/move`, or
 `/notebook/tabs/create` first for a new topic), then `parents_of()`; the
 kind sits above the title (`#nb-kind-menu`, hints in `KIND_HINTS`).
