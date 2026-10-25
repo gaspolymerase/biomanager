@@ -330,7 +330,8 @@ class CageUpdateTests(RackMixin, Case):
         self.assertEqual(cage(self.cage)["is_shared"], 0)
 
     def test_a_litter_born_today_is_due_to_wean_in_21_days(self):
-        values = self.autosave(self.m, update_url(self.cage), {"date_give_birth": T}).get_json()["row"]["values"]
+        values = self.autosave(self.m, update_url(self.cage), {"purpose": "Breeding", "date_give_birth": T}
+                               ).get_json()["row"]["values"]
         self.assertEqual(values["wean_due"], (TODAY + timedelta(days=21)).isoformat())
 
     def test_a_dialog_save_writes_every_field_it_carries(self):
@@ -359,7 +360,7 @@ class CageUpdateTests(RackMixin, Case):
         theirs = self.make_cage(self.o, purpose="Breeder")
         r = self.autosave(self.m, update_url(theirs), {"is_shared": "0"})
         self.assertRefused(r)
-        self.assertIn("shared or personal", r.get_json()["error"])
+        self.assertIn("can change whom cage", r.get_json()["error"])
         r = self.autosave(self.m, update_url(theirs), {"owner": self.member, "owner_was": self.other})
         self.assertRefused(r)
         self.assertEqual((cage(theirs)["is_shared"], cage(theirs)["owner"]), (1, self.other))

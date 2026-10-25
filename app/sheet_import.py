@@ -848,8 +848,8 @@ class FishTarget(Target):
                 "racks": {r.name.lower(): r for r in session.scalars(select(FishRack))}}
 
     def create(self, session, ctx, v, extras):
-        from .app import (ZfInputError, apply_fish_position, zf_apply_fish_status, zf_can_edit, zf_denied,
-                          zf_fish_from_form)
+        from .zebrafish_routes import (ZfInputError, apply_fish_position, zf_apply_fish_status, zf_can_edit,
+                                       zf_denied, zf_fish_from_form)
         from .models import FishLine, FishRecord, TankRecord
         warnings: list[str] = []
         code = v.get("tank", "").strip()
@@ -1025,8 +1025,8 @@ def plasmid_target(session) -> Target:
 class StockTarget(Target):
     def prepare(self, session):
         from .models import StockRack
-        from .stock_routes import _lab_users
-        return {"people": _people(session), "users": set(_lab_users(session)),
+        from .stewardship import lab_members
+        return {"people": _people(session), "users": lab_members(session),
                 "racks": {r.name.lower(): r for r in session.scalars(
                     select(StockRack).where(StockRack.module_id_fk == self.module.id))}}
 

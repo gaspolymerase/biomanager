@@ -190,5 +190,9 @@
   "A column of your own can be a **Plasmid**, linked to the Plasmids database: a line's construct.": "自己加的列可以是 **质粒**，并链接到质粒数据库：用来记下品系的构建体。",
   "Any organism database can name its own dates, stages and kinds of place, leave out the Sex column, and colour the dot before an ID by age (**Configure**).": "任何物种数据库都可以自己命名日期、阶段和场所类型，去掉性别列，并按年龄给编号前的圆点上色（**配置**）。",
   "**Litter born** asks for the father too, and **Genotyping** fills in both parents from it. Nothing in either is required.": "**产仔** 时也会询问父本，**基因型鉴定** 会据此填入父本和母本。两处都没有必填项。",
-  "**Genotyping** with **Pups** left empty makes the litter now: add its pups once they are counted.": "**基因型鉴定** 时 **幼崽数** 留空，会先建好这一窝，数清后再加入幼崽。"
+  "**Genotyping** with **Pups** left empty makes the litter now: add its pups once they are counted.": "**基因型鉴定** 时 **幼崽数** 留空，会先建好这一窝，数清后再加入幼崽。",
+  "Notebook pages can be **Reading** pages: a paper's authors, journal, year, DOI and **Zotero** link, filled in from a DOI or from Zotero.": "实验记录本页面可以是 **文献** 页面：论文的作者、期刊、年份、DOI 和 **Zotero** 链接，可从 DOI 或 Zotero 自动填好。",
+  "**Zotero** on the **Reading** page: each paper you add to a Zotero collection becomes a paper note by itself.": "**文献** 页面上的 **Zotero**：你添加到某个 Zotero 分类的每篇论文都会自动变成一篇论文笔记。",
+  "**Reading** lists your papers and talks as cards with covers, or as every picture in them; **Add cover** puts a picture on any page.": "**文献** 以带封面的卡片列出你的论文和讲座，也可以显示其中所有的图片；**添加封面** 可以给任何页面加一张图片。",
+  "The notebook's sidebar hides (Ctrl+\\ or ⌘\\), topics are made and renamed in place, and **New page** asks for the title, topic, kind and what to start from.": "实验记录本的侧边栏可以收起（Ctrl+\\ 或 ⌘\\），主题可以直接新建和重命名，**新建页面** 会依次问标题、主题、类型和起始内容。"
 }

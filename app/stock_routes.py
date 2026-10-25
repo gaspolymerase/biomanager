@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 
 from . import access, audit, database_keys, i18n, positions, rack_layout
 from . import groups as project_groups
+from . import stewardship
 from . import sheet_paging
 from . import stock_service as svc
 from . import stocks as presets
@@ -132,11 +133,6 @@ def _checked_date(form, name: str) -> date | None:
         return date.fromisoformat(raw)
     except ValueError:
         raise Invalid(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=raw)) from None
-
-
-def _lab_users(session) -> set[str]:
-    from .services import current_lab_usernames
-    return set(current_lab_usernames(session))
 
 
 # The fields a vial row and the vial dialog edit; each form also carries
@@ -464,17 +460,14 @@ def _unit_from_form(session, mv, unit: StockUnit, form, placing: bool = True, us
         if changed(name):
             setattr(unit, name, (form.get(name) or "").strip()[:limit])
     if changed("owner"):
-        owner = (form.get("owner") or "").strip()[:80]
-        if owner and owner not in (users if users is not None else _lab_users(session)):
-            raise Invalid(gettext("“%(name)s” is not a lab member.", name=owner))
-        unit.owner = owner
+        refused = stewardship.change_owner(session, unit, (form.get("owner") or "").strip()[:80],
+                                           mv.unit, mv.code(unit) if unit.number else "", users)
+        if refused:
+            raise Invalid(refused)
     # Which project group a lab stock is for ("1": the lab's).
-    if "share_group" in form and project_groups.differs(unit, form.get("share_group"), shared=True):
-        if not access.can_manage(unit):
-            raise Invalid(gettext("Only %(owner)s or an admin can change whom it is shared with.",
-                                  owner=unit.owner) if unit.owner else
-                          gettext("Only its owner or an admin can change whom it is shared with."))
-        refused = project_groups.apply(unit, form.get("share_group") or "1", set_shared=False)
+    if "share_group" in form:
+        refused = stewardship.change_sharing(unit, form.get("share_group") or "1", mv.unit,
+                                             mv.code(unit) if unit.number else "", shared=True, set_shared=False)
         if refused:
             raise Invalid(refused)
     if changed("purpose"):
@@ -528,7 +521,7 @@ def save_unit(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         mv = svc.view(row)
-        users = _lab_users(session)
+        users = stewardship.lab_members(session)
         unit_id = request.form.get("id", "").strip()
         if unit_id.isdigit():
             unit = session.get(StockUnit, int(unit_id))
@@ -823,7 +816,7 @@ def bulk(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         mv = svc.view(row)
-        users = _lab_users(session)
+        users = stewardship.lab_members(session)
         units = [u for u in session.scalars(select(StockUnit).where(
             StockUnit.module_id_fk == row.id, StockUnit.id.in_(ids)).order_by(StockUnit.number))]
         if not units:
@@ -839,6 +832,14 @@ def bulk(key: str):
                     value = (request.form.get("value") or "").strip()
                     if field not in BULK_FIELDS:
                         return _back(key, error=gettext("Pick what to set."))
+                    if field == "owner":
+                        refused = stewardship.batch_owner_refused(users, value)
+                        if refused:
+                            return _back(key, error=refused)
+                        # Editing a lab stock doesn't make it yours to give away.
+                        mine = [u for u in editable if stewardship.may_give_away(u)]
+                        skipped += len(editable) - len(mine)
+                        editable = mine
                     for u in editable:
                         if not u.active:
                             continue
@@ -1163,8 +1164,8 @@ def save_frozen(key: str):
             if vials_left > vials:
                 raise Invalid(gettext("%(left)s vials left is more than the %(frozen)s frozen.",
                                       left=vials_left, frozen=vials))
-            if owner and owner not in _lab_users(session):
-                raise Invalid(gettext("“%(name)s” is not a lab member.", name=owner))
+            if owner and owner not in stewardship.lab_members(session):
+                raise Invalid(stewardship.not_a_member(owner))
         except Invalid as error:
             return _back(key, view="frozen", error=gettext("Not saved: %(error)s", error=error))
         if lot is None:

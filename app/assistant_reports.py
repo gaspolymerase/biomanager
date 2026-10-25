@@ -270,7 +270,7 @@ def _mouse_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
 
 def _fish_entries(session, start: date, end: date) -> tuple[list[dict], dict]:
     from sqlalchemy.orm import selectinload
-    from .app import FISH_STATUS_SAC_REASON
+    from .zebrafish_routes import FISH_STATUS_SAC_REASON
     from .models import ExperimentSubject, FishLine, FishRecord, FishSacLog, TankRecord
     columns = protocol_columns(custom_fields.fields(session, "zebrafish"))
     lines = {ln.id: ln for ln in session.scalars(select(FishLine))}
@@ -596,7 +596,7 @@ def _handover_colony(session, who: str, due_by_ref: dict) -> dict:
 
 def _handover_tanks(session, who: str, due_by_ref: dict) -> list[dict]:
     from sqlalchemy.orm import selectinload
-    from .app import fish_position_label
+    from .zebrafish_routes import fish_position_label
     from .models import TankRecord
     out = []
     for t in session.scalars(select(TankRecord).options(selectinload(TankRecord.fish), selectinload(TankRecord.line),
