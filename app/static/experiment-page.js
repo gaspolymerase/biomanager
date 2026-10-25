@@ -89,9 +89,7 @@
   // and it is sent again with it.
   async function askReason(message, checks) {
     for (;;) {
-      const answer = window.BioDialog && BioDialog.prompt
-        ? await BioDialog.prompt(t('Why the change from the plan?'), '', { message, placeholder: t('A reason, in a line'), okLabel: t('Save with this reason'), checks: checks || undefined })
-        : window.prompt(message);
+      const answer = await BioDialog.prompt(t('Why the change from the plan?'), '', { message, placeholder: t('A reason, in a line'), okLabel: t('Save with this reason'), checks: checks || undefined });
       if (answer === null || answer === undefined) return null;
       const out = typeof answer === 'string' ? { value: answer, checks: {} } : answer;
       if (String(out.value || '').trim()) return { value: String(out.value).trim(), checks: out.checks || {} };
@@ -149,9 +147,8 @@
     drawLabels();
   }
 
-  const confirmAsk = (text, danger) => (window.BioDialog && BioDialog.confirm
-    ? BioDialog.confirm(text, { danger: Boolean(danger) }) : Promise.resolve(window.confirm(text)));
-  const alertSay = (text) => (window.BioDialog && BioDialog.alert ? BioDialog.alert(text) : window.alert(text));
+  const confirmAsk = (text, danger) => BioDialog.confirm(text, { danger: Boolean(danger) });
+  const alertSay = (text) => BioDialog.alert(text);
 
   // ---------------------------------------------------------------- labels that follow the readout
 
@@ -355,9 +352,7 @@
           if (data) apply(data);
           return;
         }
-        const answer = window.BioDialog && BioDialog.prompt
-          ? await BioDialog.prompt(t('Leave %(label)s out of the analysis?', { label: s ? s.label : '' }), '', { message: t('Its readout stays in the sheet; the tests by day and the chart leave it out. Say why.'), placeholder: t('A reason, in a line'), okLabel: t('Leave it out') })
-          : window.prompt(t('Leave %(label)s out of the analysis?', { label: s ? s.label : '' }));
+        const answer = await BioDialog.prompt(t('Leave %(label)s out of the analysis?', { label: s ? s.label : '' }), '', { message: t('Its readout stays in the sheet; the tests by day and the chart leave it out. Say why.'), placeholder: t('A reason, in a line'), okLabel: t('Leave it out') });
         if (answer === null || answer === undefined || !String(answer).trim()) return;
         apply(await send(url, { reason: String(answer).trim() }));
       } catch (_e) { /* shown */ }
@@ -673,7 +668,7 @@
       if (btn.matches('[data-xp-plan-new]')) resetStepForm(dialog, null);
       if (btn.matches('[data-xp-regimen-save]')) {
         if (!D.steps.length) return showError(dialog, t('Plan something first: this experiment has nothing to save yet.'));
-        const name = await (window.BioDialog ? BioDialog.prompt(t('Name this regimen'), '') : Promise.resolve(window.prompt(t('Name this regimen'))));
+        const name = await BioDialog.prompt(t('Name this regimen'), '');
         if (!name) return undefined;
         try { const data = await send(`${API}/regimens/save`, { name }); apply(data); openPlan(dialog); say('saved', data.message); } catch (error) { showError(dialog, error.message); }
       }

@@ -330,6 +330,20 @@
     --color-danger-200: #5C2622;
     --color-info-200:   #173E66;
 
+    /* The extra pill colours (a purpose, a sex, a tag): a tint of the
+       colour behind light text of it, as the named tones above do. */
+    --color-violet-50:  rgb(139 92 246 / 0.16);
+    --color-violet-200: rgb(139 92 246 / 0.32);
+    --color-violet-700: #C4B5FD;
+    --color-pink-50:    rgb(236 72 153 / 0.16);
+    --color-pink-200:   rgb(236 72 153 / 0.32);
+    --color-pink-700:   #F9A8D4;
+    --color-sky-50:     rgb(14 165 233 / 0.16);
+    --color-sky-700:    #7DD3FC;
+    --color-teal-50:    rgb(20 184 166 / 0.16);
+    --color-teal-700:   #5EEAD4;
+    --color-indigo-700: #A5B4FC;
+
     --material-sidebar: rgba(36, 36, 39, 0.86);
     --material-bar:     rgba(38, 38, 40, 0.72);
     --glass:            rgba(44, 44, 48, 0.66);
@@ -2256,7 +2270,7 @@
   .record-fill-hint {
     @apply -mt-2 rounded-lg border border-brand-100 bg-brand-50 px-2.5 py-1.5 text-[12px] leading-snug text-brand-800;
   }
-  .record-fill-hint.is-warning { @apply border-amber-200 bg-amber-50 text-amber-900; }
+  .record-fill-hint.is-warning { @apply border-warn-200 bg-warn-50 text-warn-700; }
   .record-dialog-body label > .is-filled { @apply border-brand-200 bg-brand-50/60; }
   /* A tick under a BioDialog prompt (static/dialogs.js). */
   .bio-dialog-check { @apply flex flex-wrap items-center gap-x-2 text-[13px] text-ink; }
@@ -3691,8 +3705,13 @@
   /* Personal vs lab common: the same pill shape, violet for the lab. */
   .sheet-table select.scope-pill {
     @apply h-6 w-auto max-w-full cursor-pointer appearance-none rounded-full border-transparent
-           bg-sand-100 px-2.5 text-[12px] font-semibold text-muted;
+           bg-sand-100 px-2.5 pr-5 text-[12px] font-semibold text-muted;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 13px 13px;
   }
+  .sheet-table select.scope-pill:not(:disabled):hover { background-image: var(--chevron); }
   .sheet-table select.scope-pill[data-scope="lab"] { @apply bg-violet-50 text-violet-700; }
   .sheet-table select.scope-pill[data-scope="group"] { @apply bg-teal-50 text-teal-700; }
   .sheet-table select.scope-pill:focus { @apply ring-2 ring-brand-400/40; }
@@ -4316,6 +4335,8 @@
     min-height: 36px;
   }
   .row-stock-btn { min-height: 32px; }
+  /* Fields sized for 12px text grow with the 16px above. */
+  .cage-born-cell > input { width: auto; min-width: 10rem; }
   select, .status-pill, .sex-pill, .scope-pill {
     min-height: 32px;
   }

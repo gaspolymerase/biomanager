@@ -58,7 +58,9 @@ DESKTOP = [
     # The orders shot left the board showing (the page remembers): the
     # table first.
     ("task-stock", "/orders", "light",
-     ["[data-view-switch] [data-layout=table]", ("select.status-pill", "ordered"), ("select.status-pill", "received")],
+     # A sheet's cells are drawn as text until used: clicking the first
+     # status opens its menu.
+     ["[data-view-switch] [data-layout=table]", "td .status-pill", ("select.status-pill", "ordered"), ("select.status-pill", "received")],
      "#stock-offer-dialog"),
     ("task-booking", "/calendar", "light",
      ["#cal-new-more", "button.menu-item[data-new=booking]"], "#biocal-modal"),

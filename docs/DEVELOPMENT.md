@@ -56,6 +56,64 @@ solid with a firmer outline (`prefers-reduced-transparency`,
 `prefers-contrast`). A window in the background shows its selection in
 grey (`html.window-inactive`, from `static/shell.js`).
 
+### The pieces, and the rules that keep them one
+
+Everything is built from a few shared pieces in `frontend/src/tailwind.css`;
+a page's own stylesheet keeps only what is truly its own. `tests/test_design.py`
+reads the source for the rules marked *(tested)*.
+
+- **Tokens.** Colours, the field look (`--field-bg`, `--field-border`,
+  `--field-h` 30px, `-sm` 26, `-lg` 36), `--focus-ring`, `--scrim`, the
+  dropdown `--chevron` and the empty-sheet `--empty-icon` are variables on
+  `:root`, redefined for dark mode. Raw Tailwind tints used for pills
+  (violet, pink, sky, teal) are remapped there too, so a `bg-violet-50
+  text-violet-700` pill works in both themes.
+- **Type scale** *(tested)*: 10 (dense grids), 11, 12, 13 (body), 15, 17
+  (dialog titles), 22, 28; 16 is a phone's fields, 32 and 40 display
+  numbers. On a touch screen every field is 16px, `!important`, so iOS
+  never zooms in.
+- **Fields.** Every `<select>`, and every unclassed input and textarea, is a
+  `field-box`: one height, fill, border, radius (8px) and focus ring; a
+  select draws `--chevron` instead of the browser's arrow. Checkboxes and
+  radios are drawn (16px, brand fill). A page stylesheet that sizes its own
+  fields uses the same tokens.
+- **Suggestions.** An `<input list>` and its `<datalist>` are written as
+  usual; `static/combobox.js` takes each over (on the page or added later)
+  and shows the choices in the app's menu, read from the datalist each time
+  it opens. Typing filters; ↓/↑, Enter and Esc; in a sheet ↓ moves a row,
+  so Alt+↓ opens it. A pick sends `input` and `change`, so a sheet saves it.
+- **Segmented controls.** `.seg` with `.seg-item`s, or a `.dt-chips` group
+  of `.dt-chip`s (filters, layout switches): the drop slides to the one that
+  is `.is-active`, `aria-pressed`, `aria-current` or a checked radio inside a
+  `label.seg-item`. A database's own tabs are `.seg.page-tabs` (a line, not
+  a capsule) in a `.page-tabs-row`, with its counts (`.page-stats`) or its
+  scope switch in `.page-tabs-side`. Help that used to sit on the page as a
+  paragraph is behind an ⓘ (`details.info-tip[data-popover]`).
+- **Dialogs** *(tested: a class and an accessible name)*: a `<dialog
+  class="record-dialog">` (`-narrow` 460, default 640, `-wide` 880) with a
+  `.record-dialog-head` (title, optional `.record-dialog-sub`, × as
+  `.modal-close`), a `.record-dialog-body` that scrolls, and a
+  `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
+  the left. Below 640px it is a bottom sheet. A choice of formats or kinds
+  inside one is a `.choice-list` or `.choice-cards`.
+- **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
+  (the Mac app's web view answers them with no); `BioDialog.alert /
+  confirm / prompt` (`static/dialogs.js`).
+- **Menus and hover cards** float on `pop-surface` (frosted, 14px corners,
+  `shadow-pop`); a row's hover is the brand fill with white text, in every
+  menu. A `<details data-popover>` closes on a click outside, on Esc and
+  when another opens (`initPopovers`).
+- **Toasts**: one, `BiomanagerShell.toast(message, kind, {html})`, in the top
+  layer, announced to screen readers, above a phone's tab bar.
+- **Tooltips** from `data-tooltip` also show for a moment on a tap.
+- **Purpose pills** take `data-tone` from the lab's purpose list
+  (`cage_rows.purpose_tones`): Breeding brand, Breeder green, Experiment
+  blue, the lab's own the next colours in order.
+- **Scroll cues.** Tabs or a sheet wider than their box fade at the edge
+  that hides more (`initScrollCues`, `data-clip`).
+- **Empty** sheets and lists: a soft icon over one sentence (`.dt-empty`,
+  `empty-state`), with at most one action.
+
 ### On a phone
 
 Below 768px the tab strip and search field give way to a tab bar at the

@@ -825,7 +825,7 @@
                         <td>{{ w_yes if mouse.active else w_no }}</td>
                         <td>{{ mouse.gender|tr }}</td>
                         <td>{{ mouse.age_weeks if mouse.age_weeks is not none else '' }}</td>
-                        <td>{{ mouse.date_of_birth }}</td>
+                        <td class="whitespace-nowrap tabular-nums">{{ mouse.date_of_birth }}</td>
                         <td>{{ mouse.status|tr }}</td>
                         <td class="genotype-full">{{ mouse.genotype_full }}</td>
                         <td>{% if mouse.owner %}{{ mouse.owner | owner_badge }}{% endif %}</td>

@@ -471,10 +471,10 @@
     <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{% trans count=genotypes|length %}{{ count }} genotype{% pluralize %}{{ count }} genotypes{% endtrans %}</span></div>
   </section>
 
-  <dialog id="genotype-dialog" class="record-dialog">
+  <dialog id="genotype-dialog" class="record-dialog" aria-labelledby="genotype-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_genotype', key=key) }}" data-update-action="{{ url_for('stocks.save_genotype', key=key) }}"
           data-new-title="{{ _('New genotype') }}" data-edit-title="{{ _('Genotype') }}" data-new-submit="{{ _('Add') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New genotype') }}</h3>
+      <header class="record-dialog-head"><div><h3 id="genotype-dialog-title" data-record-title>{{ _('New genotype') }}</h3>
         <p class="record-dialog-sub">{% trans unit=unit_w %}Renaming relabels every {{ unit }} (and cross parent) written with the old text.{% endtrans %}</p></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
@@ -560,10 +560,10 @@
     </section>
   </div>
 
-  <dialog id="incubator-dialog" class="record-dialog">
+  <dialog id="incubator-dialog" class="record-dialog" aria-labelledby="incubator-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_incubator', key=key) }}" data-update-action="{{ url_for('stocks.save_incubator', key=key) }}"
           data-new-title="{{ _('New %(noun)s', noun=room_w) }}" data-edit-title="{{ room_w|capitalize }} {label}" data-new-submit="{{ _('Create') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New %(noun)s', noun=room_w) }}</h3>
+      <header class="record-dialog-head"><div><h3 id="incubator-dialog-title" data-record-title>{{ _('New %(noun)s', noun=room_w) }}</h3>
         <p class="record-dialog-sub">{% trans verb=flip_verb|lower %}Its temperature sets the {{ verb }} interval and development time of everything inside.{% endtrans %}</p></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
@@ -663,10 +663,10 @@
       </table>
     </div>
   </section>
-  <dialog id="frozen-dialog" class="record-dialog">
+  <dialog id="frozen-dialog" class="record-dialog" aria-labelledby="frozen-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_frozen', key=key) }}" data-update-action="{{ url_for('stocks.save_frozen', key=key) }}"
           data-new-title="{{ _('New frozen lot') }}" data-edit-title="{{ _('Frozen {label}') }}" data-new-submit="{{ _('Add') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New frozen lot') }}</h3></div>
+      <header class="record-dialog-head"><div><h3 id="frozen-dialog-title" data-record-title>{{ _('New frozen lot') }}</h3></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
         <input type="hidden" name="id">
