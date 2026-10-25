@@ -179,12 +179,12 @@
              data-length="{{ plasmid.length_bp }}">
       <summary>{{ icon('list-check') }} {{ _('Verify sequencing') }}</summary>
       <form class="flex flex-col gap-3 px-4 py-3.5" data-verify-form>
-        <p class="text-[12.5px] text-muted">{{ _('Check Sanger reads of a miniprep or clone against this map: where each read lies, and every base that differs from it.') }}</p>
+        <p class="text-[13px] text-muted">{{ _('Check Sanger reads of a miniprep or clone against this map: where each read lies, and every base that differs from it.') }}</p>
         <label class="field-label">{{ _('Sequencing reads: .ab1 chromatograms, or FASTA or text') }}
-          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
         </label>
         {% if kept_reads %}
-          <div class="text-[12.5px]">
+          <div class="text-[13px]">
             <p class="field-label mb-1">{{ _('Or reads kept with this plasmid') }}</p>
             <div class="flex flex-wrap gap-x-4 gap-y-1">
               {% for f in kept_reads %}
@@ -200,11 +200,11 @@
         <div class="flex flex-wrap items-center gap-3">
           <button type="submit" class="btn btn-primary" data-verify-go>{{ icon('list-check') }} {{ _('Verify') }}</button>
           {% if not locked %}
-            <label class="inline-flex items-center gap-2 text-[12.5px] cursor-pointer">
+            <label class="inline-flex items-center gap-2 text-[13px] cursor-pointer">
               <input type="checkbox" class="set-switch" name="keep" value="1"> {{ _('Keep the reads and the result with this plasmid’s files') }}
             </label>
           {% endif %}
-          <span class="text-[12.5px] text-muted" data-verify-status aria-live="polite"></span>
+          <span class="text-[13px] text-muted" data-verify-status aria-live="polite"></span>
         </div>
       </form>
       <div data-verify-result hidden class="border-t border-[var(--color-line)]"></div>
@@ -219,7 +219,7 @@
             enctype="multipart/form-data" class="flex flex-col gap-3 px-4 py-3.5"
             {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? You can restore it from its versions.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
         <label class="field-label">{{ _('SnapGene .dna, GenBank .gb / .gbk, or FASTA') }}
-          <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+          <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
         </label>
         <details class="dropzone-paste">
           <summary>{{ _('Paste annotated text instead (FASTA or GenBank)') }}</summary>
@@ -319,9 +319,9 @@
         {% endfor %}
       </div>
     {% elif glycerol.url %}
-      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A glycerol stock whose <b>Plasmid</b> is #{{ number }} shows here, with the box it's in.{% endtrans %}</p>
+      <p class="px-4 py-3 text-[13px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A glycerol stock whose <b>Plasmid</b> is #{{ number }} shows here, with the box it's in.{% endtrans %}</p>
     {% else %}
-      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans url=glycerol.new_url %}Keep the bacteria carrying each plasmid in a <a href="{{ url }}">Glycerol stocks</a> database; each stock then shows here with the box it's in.{% endtrans %}</p>
+      <p class="px-4 py-3 text-[13px] text-muted">{% trans url=glycerol.new_url %}Keep the bacteria carrying each plasmid in a <a href="{{ url }}">Glycerol stocks</a> database; each stock then shows here with the box it's in.{% endtrans %}</p>
     {% endif %}
   </article>
   {# Files kept with it: sequencing traces, a gel photo, a vendor's map. #}
@@ -352,13 +352,13 @@
         {% endfor %}
       </div>
     {% else %}
-      <p class="px-4 py-3 text-[12.5px] text-muted">{{ _('Nothing yet. Keep the sequencing reads, gel photos and datasheets of this plasmid here.') }}</p>
+      <p class="px-4 py-3 text-[13px] text-muted">{{ _('Nothing yet. Keep the sequencing reads, gel photos and datasheets of this plasmid here.') }}</p>
     {% endif %}
     {% if not locked %}
       <form method="post" action="{{ url_for('plasmid_add_files', row_id=plasmid.row_id) }}" enctype="multipart/form-data"
             class="flex flex-wrap items-end gap-3 border-t border-hairline px-4 py-3">
         <label class="field-label">{{ _('Sequencing reads (.ab1), gel photos, datasheets') }}
-          <input type="file" name="files" multiple class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+          <input type="file" name="files" multiple class="mt-1.5 text-[13px] normal-case tracking-normal">
         </label>
         <label class="field-label flex-1">{{ _('What they show (optional)') }}
           <input type="text" name="notes" maxlength="300" class="mt-1.5" placeholder="{{ _('Sanger from the T7 primer, clone 3') }}">
@@ -382,7 +382,7 @@
         {% endfor %}
       </div>
     {% else %}
-      <p class="px-4 py-3 text-[12.5px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A virus whose <b>Made from</b> names plasmid #{{ number }} shows here.{% endtrans %}</p>
+      <p class="px-4 py-3 text-[13px] text-muted">{% trans number=plasmid.plasmid_id %}Nothing yet. A virus whose <b>Made from</b> names plasmid #{{ number }} shows here.{% endtrans %}</p>
     {% endif %}
   </article>
   <article class="card mt-3 max-w-[760px] used-in" data-used-in="plasmid" data-used-in-number="{{ plasmid.plasmid_id }}" hidden>

@@ -32,7 +32,7 @@
         </select>
       </label>
       <button type="submit" class="btn">{{ icon('eye') }} {{ _('Preview') }}</button>
-      <p class="basis-full text-[12.5px] leading-snug text-muted">{{ _('By a column, the numbers read as numbers (B2 before B10), and empty values come last. By the number in the name, “B12” becomes #12: every name needs one, none twice, none missing.') }}</p>
+      <p class="basis-full text-[13px] leading-snug text-muted">{{ _('By a column, the numbers read as numbers (B2 before B10), and empty values come last. By the number in the name, “B12” becomes #12: every name needs one, none twice, none missing.') }}</p>
     </div>
   </form>
 
@@ -47,7 +47,7 @@
     {% else %}
       <section class="card" data-renumber-preview>
         <header class="card-head"><h2>{{ _('%(changed)s of %(count)s %(nouns)s get a new #', changed=plan.moves|length, count=plan.count, nouns=nouns) }}</h2></header>
-        <div class="grid gap-1 px-4 pt-3 text-[12.5px] leading-snug text-warn-700">
+        <div class="grid gap-1 px-4 pt-3 text-[13px] leading-snug text-warn-700">
           <p>{{ icon('error') }} {{ _('Labels printed before show the old numbers; their QR codes still open the right items.') }}</p>
           {% if locked %}<p>{{ icon('error') }} {{ _('Signed pages keep the old numbers in their links: %(pages)s.', pages=locked|join(', ')) }}</p>{% endif %}
           <p class="text-muted">{{ _('Links to them in the notebook (@%(key)s 12), orders put into stock and the samples an experiment made follow the new numbers.', key=m.key) }}</p>

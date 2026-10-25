@@ -804,7 +804,7 @@
 .insert-menu-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.32);
+  background: var(--scrim, rgba(15, 23, 42, 0.32));
   z-index: 250;
   display: flex;
   align-items: center;

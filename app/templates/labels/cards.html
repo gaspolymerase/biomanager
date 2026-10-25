@@ -98,7 +98,7 @@
   .label-setup select, .label-setup input { min-width: 0; }
   .label-fields { display: flex; flex-wrap: wrap; gap: 4px 12px; border: 0; padding: 0; margin: 0; }
   .label-fields legend { font-size: 12px; color: var(--muted, #6b757d); margin-bottom: 3px; }
-  .label-setup .label-field { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: inherit; }
+  .label-setup .label-field { display: flex; align-items: center; gap: 4px; font-size: 13px; color: inherit; }
   {% if wrap %}
   /* Two lines for long text: a name or place wraps instead of being cut. */
   .label-title, .label-val {
@@ -150,7 +150,7 @@
     <a class="btn btn-sm btn-ghost" href="{{ request.path }}?{{ dict(base_args, stock=stock, format='zpl', dpi=dpi) | urlencode }}"
        title="{{ _("The labels in Zebra's own language, ZPL, for Zebra Setup Utilities or the printer's web page") }}">{{ icon('download') }} {{ _('Download for Zebra (.zpl)') }}</a>
   </form>
-  <p class="no-print mb-4 text-[12.5px] text-muted">
+  <p class="no-print mb-4 text-[13px] text-muted">
     {% trans trimmed printed_on=printed_on %}Printed {{ printed_on }}. Each code opens its record on this server — scan it with
     any phone camera on the same network.{% endtrans %}
     {% if layout %}
@@ -159,13 +159,13 @@
     {% endif %}
   </p>
   {% if left_out %}
-    <p class="no-print mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">
+    <p class="no-print mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
       {% trans trimmed fields=left_out | map('tr') | join(', ') %}Not on these labels, for lack of room: <b>{{ fields }}</b>. Tick fewer fields, turn off
       <b>Two lines for long text</b>, or print on a bigger label.{% endtrans %}
     </p>
   {% endif %}
   {% if can_set_printer %}
-    <details class="no-print mb-4 text-[12.5px]">
+    <details class="no-print mb-4 text-[13px]">
       <summary class="cursor-pointer text-muted">{{ _('Zebra on the network: %(printer)s (%(dpi)s dpi)', printer=printer, dpi=dpi) if printer else _('Send labels straight to a Zebra on the network') }}</summary>
       <form method="post" action="{{ url_for('labels.set_printer') }}" class="label-setup mt-2">
         <input type="hidden" name="back" value="{{ here }}">

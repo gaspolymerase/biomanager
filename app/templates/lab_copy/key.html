@@ -12,12 +12,12 @@
 <div class="grid max-w-[760px] grid-cols-1 gap-3">
   <section class="card border-brand-200 p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('Copy this key now') }}</h2>
-    <p class="mt-1 text-[12.5px] leading-snug text-muted">
+    <p class="mt-1 text-[13px] leading-snug text-muted">
       {% trans %}It is shown only once. If it gets lost, revoke it in Settings and make a new one. Treat it like a password:
       with it, a computer can download the whole lab.{% endtrans %}
     </p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
-      <code id="lab-copy-key" class="rounded-lg bg-sand-100 px-3 py-2 font-mono text-[14px] text-ink">{{ key }}</code>
+      <code id="lab-copy-key" class="rounded-lg bg-sand-100 px-3 py-2 font-mono text-[15px] text-ink">{{ key }}</code>
       <button type="button" class="btn" data-on-click="copy-text" data-arg="lab-copy-key">{{ icon('copy') }} {{ _('Copy key') }}</button>
     </div>
   </section>

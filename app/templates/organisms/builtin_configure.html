@@ -111,7 +111,7 @@
   <section class="card">
     <header class="card-head"><h2>{{ icon('database') }} {{ _('In this lab') }}</h2></header>
     <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
+      <p class="text-[13px] leading-snug text-muted">
         {{ _("Take %(name)s out of the lab if it isn't used. It leaves the sidebar, Home and the calendar and its pages close; nothing is deleted. Add it back from New database and every record is there.", name=label|tr) }}
       </p>
       <form method="post" action="{{ url_for('organisms.switch_builtin', key=key) }}"

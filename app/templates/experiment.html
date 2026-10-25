@@ -47,7 +47,7 @@
 {% block content %}
 {% set locked = not experiment.editable %}
 {% if locked %}
-  <p class="inset mb-3 flex items-center gap-2 text-[12.5px] text-muted">
+  <p class="inset mb-3 flex items-center gap-2 text-[13px] text-muted">
     {{ icon('lock') }} {{ _('This is %(owner)s’s experiment, so it is read only. They, or an admin, can change it.', owner=experiment.owner or _('another member')) }}
   </p>
 {% endif %}
@@ -165,9 +165,9 @@
 
 {% if experiment.editable %}
 {# Add animals #}
-<dialog class="xp-dialog" id="xp-add" aria-labelledby="xp-add-title">
+<dialog class="xp-dialog record-dialog" id="xp-add" aria-labelledby="xp-add-title">
   <form method="dialog" class="xp-form" data-xp-form="add">
-    <header class="xp-dialog-head"><h3 id="xp-add-title">{{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</h3><button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+    <header class="record-dialog-head"><h3 id="xp-add-title">{{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</h3><button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body xp-grid">
       <label>{{ _('All in a %(housing)s', housing=place.housing|tr) }}
         <select name="group_value" data-xp-add-groups>
@@ -185,18 +185,18 @@
       <p class="xp-sub xp-wide">{% if place.subject_kind == 'mouse' %}{{ _('Living mice you may edit.') }}{% else %}{{ _('Only %(nouns)s still in use.', nouns=place.nouns|tr) }}{% endif %}</p>
       <p class="xp-error xp-wide" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
-      <button type="submit" class="dt-bottom-action is-primary">{{ _('Add') }}</button></footer>
+    <footer class="record-dialog-foot"><span class="xp-spacer"></span>
+      <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Add') }}</button></footer>
   </form>
 </dialog>
 
 {# The plan #}
-<dialog class="xp-dialog xp-dialog-wide" id="xp-plan" aria-labelledby="xp-plan-title">
+<dialog class="xp-dialog record-dialog record-dialog-wide" id="xp-plan" aria-labelledby="xp-plan-title">
   <form method="dialog" class="xp-form" data-xp-form="plan">
-    <header class="xp-dialog-head"><div><h3 id="xp-plan-title">{{ _('Regimen') }}</h3>
+    <header class="record-dialog-head"><div><h3 id="xp-plan-title">{{ _('Regimen') }}</h3>
       <p class="xp-sub">{{ _('What is to be done, and on which days (day 1 is the start date). The days show on the calendar and in your notifications; each is still recorded here as it is done.') }}</p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <div class="xp-regimens" data-xp-regimens></div>
       <div class="table-wrap" data-xp-plan-list></div>
@@ -219,18 +219,18 @@
       </div>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot"><button type="button" class="dt-bottom-action" data-xp-plan-new hidden>{{ pgettext('experiment', 'New line') }}</button>
-      <button type="button" class="dt-bottom-action" data-xp-regimen-save title="{{ _('Keep these lines to start the next experiment from') }}">{{ _('Save as a regimen…') }}</button><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Done') }}</button>
-      <button type="submit" class="dt-bottom-action is-primary" data-xp-plan-save>{{ _('Add to the regimen') }}</button></footer>
+    <footer class="record-dialog-foot"><button type="button" class="btn" data-xp-plan-new hidden>{{ pgettext('experiment', 'New line') }}</button>
+      <button type="button" class="btn" data-xp-regimen-save title="{{ _('Keep these lines to start the next experiment from') }}">{{ _('Save as a regimen…') }}</button><span class="xp-spacer"></span>
+      <button type="button" class="btn" data-xp-close>{{ _('Done') }}</button>
+      <button type="submit" class="btn btn-primary" data-xp-plan-save>{{ _('Add to the regimen') }}</button></footer>
   </form>
 </dialog>
 
 {# Record a manipulation: a planned day, or one that isn't in the plan #}
-<dialog class="xp-dialog xp-dialog-wide" id="xp-record" aria-labelledby="xp-record-title">
+<dialog class="xp-dialog record-dialog record-dialog-wide" id="xp-record" aria-labelledby="xp-record-title">
   <form method="dialog" class="xp-form" data-xp-form="record">
-    <header class="xp-dialog-head"><div><h3 id="xp-record-title">{{ _('Record manipulation') }}</h3><p class="xp-sub" data-xp-record-sub></p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+    <header class="record-dialog-head"><div><h3 id="xp-record-title">{{ _('Record manipulation') }}</h3><p class="xp-sub" data-xp-record-sub></p></div>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <div class="xp-grid">
         <label class="xp-wide">{{ _('What was done') }} <select name="which" data-xp-which></select></label>
@@ -270,19 +270,19 @@
       <label class="xp-wide">{{ _('Note') }} <textarea name="note" rows="2" placeholder="{{ _('Anything that differed: one missed, a leak, a reaction') }}"></textarea></label>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot">
-      <button type="button" class="dt-bottom-action xp-undo" data-xp-undo hidden>{{ _('Undo: not done') }}</button><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
-      <button type="submit" class="dt-bottom-action is-primary" data-xp-record-save>{{ _('Record as done') }}</button></footer>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn btn-ghost xp-undo" data-xp-undo hidden>{{ _('Undo: not done') }}</button><span class="xp-spacer"></span>
+      <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="btn btn-primary" data-xp-record-save>{{ _('Record as done') }}</button></footer>
   </form>
 </dialog>
 
 {# Plate layouts: which animal is in which well, and a plate's export read onto it (static/plate-layout.js, app/plates.py) #}
-<dialog class="xp-dialog pl-dialog" id="xp-plate" aria-labelledby="xp-plate-title">
+<dialog class="xp-dialog record-dialog pl-dialog" id="xp-plate" aria-labelledby="xp-plate-title">
   <form method="dialog" class="xp-form" data-plate-form>
-    <header class="xp-dialog-head"><div><h3 id="xp-plate-title">{{ _('Plate layout') }}</h3>
+    <header class="record-dialog-head"><div><h3 id="xp-plate-title">{{ _('Plate layout') }}</h3>
       <p class="xp-sub">{{ _("Which animal is in which well. Then read a plate reader's or qPCR machine's export onto it: each animal's wells are averaged, and nothing is saved until you press Save readings.") }}</p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <section class="pl-step" data-plate-step="layout">
         <div class="pl-bar">
@@ -299,8 +299,8 @@
           <label>{{ _('Wells for each animal') }} <input type="number" class="xp-num" min="1" max="24" value="2" data-plate-reps></label>
           <label>{{ _('Filled') }}
             <select data-plate-dir><option value="rows">{{ _('across the rows') }}</option><option value="cols">{{ _('down the columns') }}</option></select></label>
-          <button type="button" class="dt-bottom-action" data-plate-fill title="{{ _('Each animal not yet on the plate, in the order of the sheet, from the first empty well') }}">{{ _('Fill in order') }}</button>
-          <button type="button" class="dt-bottom-action" data-plate-clear>{{ _('Clear the plate') }}</button>
+          <button type="button" class="btn" data-plate-fill title="{{ _('Each animal not yet on the plate, in the order of the sheet, from the first empty well') }}">{{ _('Fill in order') }}</button>
+          <button type="button" class="btn" data-plate-clear>{{ _('Clear the plate') }}</button>
         </div>
         <p class="xp-sub">{{ _('Pick an animal, Blank or Standard, then click a well or drag across several; a row letter or column number takes the whole row or column. Several wells for one animal are its replicates.') }}</p>
         <div class="pl-reads" data-plate-reads hidden></div>
@@ -331,39 +331,39 @@
       </section>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot">
-      <button type="button" class="dt-bottom-action xp-undo" data-plate-delete data-plate-for="layout" hidden>{{ _('Delete layout') }}</button>
-      <button type="button" class="dt-bottom-action" data-plate-back data-plate-for="read" hidden>{{ _('← Layout') }}</button>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn btn-ghost xp-undo" data-plate-delete data-plate-for="layout" hidden>{{ _('Delete layout') }}</button>
+      <button type="button" class="btn" data-plate-back data-plate-for="read" hidden>{{ _('← Layout') }}</button>
       <span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
-      <button type="button" class="dt-bottom-action" data-plate-save-layout data-plate-for="layout">{{ _('Save layout') }}</button>
-      <button type="button" class="dt-bottom-action is-primary" data-plate-next data-plate-for="layout">{{ _('Read a plate →') }}</button>
-      <button type="button" class="dt-bottom-action is-primary" data-plate-save data-plate-for="read" hidden disabled>{{ _('Save readings') }}</button>
+      <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="button" class="btn" data-plate-save-layout data-plate-for="layout">{{ _('Save layout') }}</button>
+      <button type="button" class="btn btn-primary" data-plate-next data-plate-for="layout">{{ _('Read a plate →') }}</button>
+      <button type="button" class="btn btn-primary" data-plate-save data-plate-for="read" hidden disabled>{{ _('Save readings') }}</button>
     </footer>
   </form>
 </dialog>
 
 {# A readout day for every animal #}
-<dialog class="xp-dialog" id="xp-reading" aria-labelledby="xp-reading-title">
+<dialog class="xp-dialog record-dialog" id="xp-reading" aria-labelledby="xp-reading-title">
   <form method="dialog" class="xp-form" data-xp-form="reading">
-    <header class="xp-dialog-head"><div><h3 id="xp-reading-title"></h3><p class="xp-sub" data-xp-reading-sub></p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+    <header class="record-dialog-head"><div><h3 id="xp-reading-title"></h3><p class="xp-sub" data-xp-reading-sub></p></div>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <label class="xp-date">{{ pgettext('experiment', 'Day') }} <input type="date" name="on" required></label>
       <div class="table-wrap"><table class="dense-table fit-table xp-animals"><tbody data-xp-reading-rows></tbody></table></div>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
-      <button type="submit" class="dt-bottom-action is-primary">{{ _('Save') }}</button></footer>
+    <footer class="record-dialog-foot"><span class="xp-spacer"></span>
+      <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Save') }}</button></footer>
   </form>
 </dialog>
 
 {# Another measure, from the ••• beside its button: renamed or another kind (its readings stay) or deleted with them #}
-<dialog class="xp-dialog" id="xp-measure" aria-labelledby="xp-measure-title">
+<dialog class="xp-dialog record-dialog" id="xp-measure" aria-labelledby="xp-measure-title">
   <form method="dialog" class="xp-form" data-xp-form="measure">
-    <header class="xp-dialog-head"><div><h3 id="xp-measure-title">{{ _('Measure') }}</h3><p class="xp-sub" data-xp-measure-kind></p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+    <header class="record-dialog-head"><div><h3 id="xp-measure-title">{{ _('Measure') }}</h3><p class="xp-sub" data-xp-measure-kind></p></div>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <div class="xp-grid">
         <label class="xp-span2">{{ _('Name') }} <input name="label" maxlength="60" required autocomplete="off"></label>
@@ -380,27 +380,27 @@
       <p class="xp-sub" data-xp-measure-count></p>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="csv-modal-foot">
-      <button type="button" class="dt-bottom-action xp-undo" data-xp-measure-delete>{{ _('Delete measure') }}</button>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn btn-ghost xp-undo" data-xp-measure-delete>{{ _('Delete measure') }}</button>
       <span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Cancel') }}</button>
-      <button type="submit" class="dt-bottom-action is-primary">{{ _('Save') }}</button></footer>
+      <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Save') }}</button></footer>
   </form>
 </dialog>
 {% endif %}
 
 {# Bench mode on a phone #}
-<dialog class="xp-dialog" id="xp-bench" aria-labelledby="xp-bench-title">
+<dialog class="xp-dialog record-dialog" id="xp-bench" aria-labelledby="xp-bench-title">
   <form method="dialog" class="xp-form">
-    <header class="xp-dialog-head"><div><h3 id="xp-bench-title">{{ _('Bench mode') }}</h3>
+    <header class="record-dialog-head"><div><h3 id="xp-bench-title">{{ _('Bench mode') }}</h3>
       <p class="xp-sub">{{ _("One %(noun)s at a time with big numbers: %(verb)s each, or give each today's manipulation and tick it. Scan this with a phone that can reach this BioManager, or open it here.", noun=place.noun|tr, verb=(readout.verb|tr("readout"))|lower) }}</p></div>
-      <button type="button" class="csv-modal-close" data-xp-close aria-label="{{ _('Close') }}">×</button></header>
+      <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body xp-bench-qr">
       <img src="{{ url_for('experiments.bench_qr', experiment_id=experiment.id) }}" alt="{{ _('A QR code that opens bench mode') }}" width="200" height="200" loading="lazy">
     </div>
-    <footer class="csv-modal-foot"><span class="xp-spacer"></span>
-      <button type="button" class="dt-bottom-action" data-xp-close>{{ _('Close') }}</button>
-      <a class="dt-bottom-action is-primary" href="{{ url_for('experiments.bench', experiment_id=experiment.id) }}">{{ _('Open here') }}</a></footer>
+    <footer class="record-dialog-foot"><span class="xp-spacer"></span>
+      <button type="button" class="btn" data-xp-close>{{ _('Close') }}</button>
+      <a class="btn btn-primary" href="{{ url_for('experiments.bench', experiment_id=experiment.id) }}">{{ _('Open here') }}</a></footer>
   </form>
 </dialog>
 

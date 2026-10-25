@@ -45,7 +45,7 @@
 </form>
 
 {% if items %}
-  <h2 class="mb-2 text-[14px] font-semibold">
+  <h2 class="mb-2 text-[15px] font-semibold">
     {{ _("The lab's feedback") if admin else _("What you've sent") }}
     {% if admin and open_count %}<span class="badge badge-quiet ml-1">{{ _('%(count)s open', count=open_count) }}</span>{% endif %}
   </h2>
@@ -69,7 +69,7 @@
               <td>{{ kinds.get(item.kind, item.kind)|tr }}</td>
               <td class="whitespace-normal">
                 <span class="whitespace-pre-line">{{ item.text }}</span>
-                {% if item.page %}<span class="block text-[11.5px] text-muted">{{ item.page }}</span>{% endif %}
+                {% if item.page %}<span class="block text-[12px] text-muted">{{ item.page }}</span>{% endif %}
               </td>
               <td>
                 <a class="btn btn-sm" href="{{ issue_url(item) }}" target="_blank" rel="noopener">{{ icon('external') }} {{ _('GitHub issue') }}</a>

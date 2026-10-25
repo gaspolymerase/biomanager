@@ -113,7 +113,7 @@ def send(to: str, subject: str, text: str, html: str | None = None) -> bool:
 
 STYLE = (
     "font-family:-apple-system,Segoe UI,Roboto,sans-serif;"
-    "font-size:14px;line-height:1.55;color:#15191d;"
+    "font-size:15px;line-height:1.55;color:#15191d;"
 )
 
 
@@ -134,7 +134,7 @@ def render_digest(display_name: str, sections: list[dict], base_url: str) -> tup
         if not section["items"]:
             continue
         lines.append(section["title"].upper())
-        html.append(f'<h3 style="margin:18px 0 6px;font-size:14px;">{section["title"]}</h3>')
+        html.append(f'<h3 style="margin:18px 0 6px;font-size:15px;">{section["title"]}</h3>')
         html.append('<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">')
         for item in section["items"]:
             flag = {"overdue": gettext("OVERDUE"), "today": gettext("today"), "soon": ""}.get(item.get("urgency", ""), "")

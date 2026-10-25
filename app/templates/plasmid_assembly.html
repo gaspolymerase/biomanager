@@ -19,7 +19,7 @@
       <a class="seg-item{% if key == method %} is-active{% endif %}" href="{{ url_for('cloning.wizard', method=key, **({'from': start} if start else {})) }}">{{ method_labels[key]|tr }}</a>
     {% endfor %}
   </nav>
-  <p class="mb-3 text-[12.5px] text-muted">{{ method_blurbs[method]|tr }}</p>
+  <p class="mb-3 text-[13px] text-muted">{{ method_blurbs[method]|tr }}</p>
 {% endblock %}
 
 {% block content %}
@@ -137,7 +137,7 @@
         </label>
         <p class="assembly-problem record-wide" data-pick-problem hidden></p>
       {% else %}
-        <p class="record-wide text-[12.5px] text-muted">{% trans url=url_for('plasmids') %}No plasmid in the lab has a sequence yet. <a href="{{ url }}">Add one</a> and come back.{% endtrans %}</p>
+        <p class="record-wide text-[13px] text-muted">{% trans url=url_for('plasmids') %}No plasmid in the lab has a sequence yet. <a href="{{ url }}">Add one</a> and come back.{% endtrans %}</p>
       {% endif %}
     </div>
     <footer class="record-dialog-foot">

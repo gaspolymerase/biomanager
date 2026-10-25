@@ -208,7 +208,7 @@
      inside a 14px menu leaves 5px. Anything floating in a bar is a capsule. */
   --radius-xs: 4px;
   --radius-sm: 5px;
-  --radius-md: 7px;    /* push buttons, fields */
+  --radius-md: 8px;    /* push buttons, fields */
   --radius-lg: 9px;
   --radius-xl: 12px;   /* grouped boxes, cards */
   --radius-2xl: 14px;  /* menus, popovers */
@@ -230,6 +230,48 @@
      lights on the top row: change ROW_CENTER there with --tabbar-h. */
   --tabbar-h: 46px;
   --toolbar-h: 54px;
+}
+
+/* ---------------------------------------------------------------------------
+   Component tokens. Not Tailwind theme values (no classes come from them):
+   what every field, focus ring, backdrop and layer reads, so a dialog, a
+   sheet cell and a page's own stylesheet all draw them the same way.
+
+   Type scale (px): 10 dense grids only · 11 captions, counts · 12 labels,
+   secondary text · 13 the interface · 15 card and section titles · 17
+   dialog titles · 22 page titles · 28 large numbers. 16 is kept for fields
+   on touch screens (iOS zooms into anything smaller).
+   --------------------------------------------------------------------------- */
+:root {
+  /* Fields: a little recessed from the panel they sit on, in both themes. */
+  --field-bg: var(--color-surface);
+  --field-border: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --field-border-hover: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  --field-shadow: inset 0 1px 1px rgb(0 0 0 / 0.04);
+  --field-h: 30px;        /* forms and dialogs */
+  --field-h-sm: 26px;     /* sheet cells, toolbars */
+  --field-h-lg: 36px;     /* phones, main actions */
+  --field-disabled-bg: var(--color-recess);
+  --field-disabled-ink: var(--color-muted);
+  --placeholder-ink: color-mix(in srgb, var(--color-ink) 38%, transparent);
+  /* The chevron every dropdown draws (its colour per theme below). */
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236E6E73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 6.5 3 3 3-3'/%3E%3C/svg%3E");
+  /* Keyboard focus: one ring for every control. */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 30%, transparent);
+  --focus-border: var(--color-brand-500);
+  /* Behind a dialog or sheet. */
+  --scrim: rgb(15 18 20 / 0.32);
+  --scrim-blur: 4px;
+  /* Layers, lowest first. */
+  --z-sticky: 20;
+  --z-bars: 40;
+  --z-popover: 60;
+  --z-dialog: 80;
+  --z-toast: 100;
+  /* Motion. */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --dur-slow: 320ms;
 }
 
 /* ---------------------------------------------------------------------------
@@ -302,6 +344,17 @@
     --control-hi:   rgba(255, 255, 255, 0.06);
     --material-popover: rgba(44, 44, 46, 0.98);
 
+    /* Fields sit darker than the panel they are on, with a rim you can see:
+       on a dark dialog a field the panel's own grey reads as no field. */
+    --field-bg: #1E1E20;
+    --field-border: rgb(255 255 255 / 0.14);
+    --field-border-hover: rgb(255 255 255 / 0.24);
+    --field-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35);
+    --field-disabled-bg: #252527;
+    --placeholder-ink: rgb(255 255 255 / 0.36);
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23A1A1A6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 6.5 3 3 3-3'/%3E%3C/svg%3E");
+    --scrim: rgb(0 0 0 / 0.55);
+
     --shadow-xs:  0 0 0 0.5px rgb(255 255 255 / 0.06), 0 1px 1px rgb(0 0 0 / 0.3);
     --shadow-sm:  0 0 0 0.5px rgb(255 255 255 / 0.07), 0 1px 3px rgb(0 0 0 / 0.4);
     --shadow-md:  0 0 0 0.5px rgb(255 255 255 / 0.08), 0 4px 14px rgb(0 0 0 / 0.5);
@@ -367,7 +420,7 @@
     letter-spacing: -0.003em;
     font-optical-sizing: auto;
   }
-  body:lang(zh) { font-size: 13.5px; line-height: 1.6; letter-spacing: 0; }
+  body:lang(zh) { font-size: 13px; line-height: 1.6; letter-spacing: 0; }
 
   /* Where people read IDs, genotypes and numbers (cells, fields, IDs), Inter
      tells l from I from 1: a tailed l and a serifed I. */
@@ -378,7 +431,7 @@
      :not([class])::placeholder rule: the browser then restyled all of an
      element whenever any class on it changed, a whole sheet at a time. */
   @supports (color: color-mix(in lab, red, red)) {
-    ::placeholder { color: var(--placeholder, color-mix(in oklab, currentcolor 50%, transparent)); }
+    ::placeholder { color: var(--placeholder, var(--placeholder-ink)); }
   }
 
   /* Scrollbars stay out of the way; macOS overlays them anyway. */
@@ -403,6 +456,107 @@
 
   td, th, .num { font-variant-numeric: tabular-nums; }
   ::selection { @apply bg-brand-200/60; }
+
+  /* --- Controls, by default -------------------------------------------
+     Every dropdown draws the same chevron (no browser arrow), and a field
+     that no stylesheet styles still looks like a field. A context that
+     styles its own (a sheet cell, a pill, a segmented choice) wins over
+     these: it is in a later layer. */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 16px 16px;
+    padding-right: 28px;
+  }
+  select[multiple], select[size]:not([size="1"]) { background-image: none; padding-right: 0.5rem; }
+  select:disabled { cursor: default; }
+  select:not([class]), textarea:not([class]),
+  input:not([class]):is(:not([type]), [type="text"], [type="search"], [type="email"], [type="url"], [type="tel"],
+                         [type="password"], [type="number"], [type="date"], [type="datetime-local"],
+                         [type="time"], [type="month"]) {
+    @apply field-box;
+  }
+  textarea:not([class]) { @apply h-auto min-h-20 py-2 leading-relaxed; }
+  select:not([class]) { padding-right: 28px; }
+  ::placeholder { color: var(--placeholder-ink); }
+
+  /* Numbers are typed, not stepped with tiny arrows. */
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  /* A date field's calendar button: quiet until reached for. */
+  input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; transition: opacity var(--dur-fast); }
+  input:hover::-webkit-calendar-picker-indicator, input:focus::-webkit-calendar-picker-indicator { opacity: 0.85; }
+
+  /* Choose a file: the app's own button, not the system's. */
+  input[type="file"] { @apply text-[13px] text-muted; }
+  input[type="file"]::file-selector-button {
+    @apply mr-2.5 h-7 cursor-pointer rounded-md border px-2.5 text-[13px] font-medium text-ink;
+    background-color: var(--color-surface);
+    border-color: var(--field-border);
+    box-shadow: inset 0 1px 0 var(--control-hi), 0 1px 1.5px rgb(0 0 0 / 0.06);
+  }
+  input[type="file"]::file-selector-button:hover { background-color: var(--color-recess); }
+
+  /* Checkboxes and radio buttons: drawn, in the app's colour, one size. */
+  input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-grid;
+    place-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    vertical-align: -3px;
+    cursor: pointer;
+    border: 1px solid var(--field-border-hover);
+    border-radius: 4.5px;
+    background-color: var(--field-bg);
+    box-shadow: var(--field-shadow);
+    transition: background-color var(--dur-fast), border-color var(--dur-fast);
+  }
+  input[type="radio"] { border-radius: 9999px; }
+  input[type="checkbox"]::before, input[type="radio"]::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    transform: scale(0);
+    transition: transform var(--dur-fast) var(--ease-spring);
+    background-color: #fff;
+  }
+  input[type="checkbox"]::before {
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  input[type="checkbox"]:indeterminate::before {
+    -webkit-mask: none; mask: none; width: 8px; height: 2px; border-radius: 1px;
+  }
+  input[type="radio"]::before { width: 6px; height: 6px; border-radius: 9999px; }
+  input[type="checkbox"]:is(:checked, :indeterminate), input[type="radio"]:checked {
+    border-color: transparent;
+    background-color: var(--color-brand-600);
+  }
+  input[type="checkbox"]:is(:checked, :indeterminate)::before, input[type="radio"]:checked::before { transform: scale(1); }
+  input[type="checkbox"]:hover:not(:checked, :disabled), input[type="radio"]:hover:not(:checked, :disabled) {
+    border-color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+  }
+  input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-shadow: var(--focus-ring); }
+  input[type="checkbox"]:disabled, input[type="radio"]:disabled { cursor: default; opacity: 0.45; }
+  input[type="color"] {
+    @apply h-7.5 w-10 cursor-pointer rounded-md border p-0.5;
+    border-color: var(--field-border);
+    background-color: var(--field-bg);
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+  @media (prefers-reduced-motion: reduce) {
+    input[type="checkbox"]::before, input[type="radio"]::before { transition: none; }
+  }
 
   /* Every icon is one <use> of the shared sprite, so it inherits colour. */
   svg.icon {
@@ -470,20 +624,21 @@
 /* A text field without its placeholder's colour: for a rule that cannot
    carry a ::placeholder of its own (the workbench's bare fields). */
 @utility field-box {
-  @apply h-7 w-full rounded-md border border-hairline bg-surface px-2 text-[13px]
-         text-ink transition-colors duration-100;
-  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.04);
-  &:hover { @apply border-sand-400; }
-  &:focus { @apply border-brand-500;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 22%, transparent); }
-  &:disabled { @apply cursor-default bg-sand-100 text-sand-500; }
+  @apply w-full rounded-md border px-2.5 text-[13px] text-ink transition-[border-color,box-shadow] duration-100;
+  height: var(--field-h);
+  background-color: var(--field-bg);
+  border-color: var(--field-border);
+  box-shadow: var(--field-shadow);
+  &:hover { border-color: var(--field-border-hover); }
+  &:focus { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+  &:disabled { @apply cursor-default; background-color: var(--field-disabled-bg); color: var(--field-disabled-ink); }
 }
 
-/* A label stacked over its control. */
+/* A label stacked over its control: as legible as the value under it. */
 @utility field-label {
-  @apply flex flex-col gap-1 text-[11px] font-medium text-muted;
+  @apply flex flex-col gap-1.5 text-[12px] font-medium text-ink-soft;
 }
-@utility field-hint { @apply text-[11px] leading-snug text-muted; }
+@utility field-hint { @apply text-[12px] leading-snug text-muted; }
 
 /* --- Badges ------------------------------------------------------------- */
 
@@ -503,7 +658,7 @@
 
 @utility kbd-chip {
   @apply inline-flex h-[17px] min-w-[17px] items-center justify-center rounded
-         bg-sand-200/80 px-1 font-sans text-[10.5px] font-medium leading-none text-muted;
+         bg-sand-200/80 px-1 font-sans text-[11px] font-medium leading-none text-muted;
 }
 
 /* --- Grouped box -------------------------------------------------------- */
@@ -542,11 +697,7 @@
 
 @layer components {
 
-  select.field {
-    @apply cursor-pointer appearance-none bg-no-repeat pr-7;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b8981' stroke-width='1.75' stroke-linecap='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
-    background-position: right 8px center;
-  }
+  select.field { padding-right: 28px; }
   textarea.field { @apply h-auto min-h-20 py-2 leading-relaxed; }
 
   .field-label > input:not([type="checkbox"]):not([type="radio"]),
@@ -575,10 +726,10 @@
   .card-head-link:hover { @apply text-brand-700; }
 
   .stat-label {
-    @apply truncate text-[11.5px] font-semibold text-muted;
+    @apply truncate text-[12px] font-semibold text-muted;
   }
-  .stat-value { @apply text-[26px] font-semibold leading-none tracking-[-0.03em] text-ink; }
-  .stat-sub { @apply truncate text-[11.5px] text-muted; }
+  .stat-value { @apply text-[28px] font-semibold leading-none tracking-[-0.03em] text-ink; }
+  .stat-sub { @apply truncate text-[12px] text-muted; }
   .stat:hover .stat-value { @apply text-brand-700; }
 
   /* --- Page header (rendered by base.html above the content block) ------ */
@@ -587,8 +738,8 @@
     @apply mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3;
   }
   .page-head-titles { @apply min-w-0; }
-  .page-head h1 { @apply truncate text-[21px] leading-tight; }
-  .page-head-sub { @apply mt-1 text-[12.5px] leading-snug text-muted; }
+  .page-head h1 { @apply truncate text-[22px] leading-tight; }
+  .page-head-sub { @apply mt-1 text-[13px] leading-snug text-muted; }
   .page-head-actions { @apply flex shrink-0 flex-wrap items-center gap-2; }
 
   /* Segmented sub-navigation — the in-page tab row (Mice / Cages / …). */
@@ -599,7 +750,7 @@
   }
   .seg-item {
     @apply inline-flex h-7.5 shrink-0 items-center gap-1.5 rounded-full px-3
-           text-[12.5px] font-medium text-ink-soft select-none;
+           text-[13px] font-medium text-ink-soft select-none;
   }
   .seg-item svg { @apply size-[14px]; }
   .seg-item:hover { @apply text-ink; }
@@ -608,7 +759,7 @@
     box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
   }
   .seg-item.is-active svg { @apply text-brand-600; }
-  .seg-count { @apply ml-0.5 text-[10.5px] font-semibold text-sand-400; }
+  .seg-count { @apply ml-0.5 text-[11px] font-semibold text-sand-400; }
   .seg-item.is-active .seg-count { @apply text-brand-600/70; }
 
   /* --- Flash messages --------------------------------------------------- */
@@ -616,7 +767,7 @@
   .flash-stack { @apply mb-4 flex flex-col gap-2; }
   .flash-message {
     @apply flex items-start gap-2 rounded-xl border border-hairline bg-sand-50 px-3.5 py-2.5
-           text-[12.5px] font-medium text-ink-soft;
+           text-[13px] font-medium text-ink-soft;
   }
   .flash-success { @apply border-ok-200 bg-ok-50 text-ok-700; }
   .flash-error   { @apply border-danger-200 bg-danger-50 text-danger-700; }
@@ -634,7 +785,7 @@
    button with words is a capsule of its own. In the utilities layer, as
    `btn` is, so these win over it. */
   .toolbar-actions :is(.btn, .btn-ghost) {
-    @apply glass h-8 min-w-0 rounded-full border-0 px-3.5 text-[12.5px] font-medium text-ink;
+    @apply glass h-8 min-w-0 rounded-full border-0 px-3.5 text-[13px] font-medium text-ink;
   }
   .toolbar-actions :is(.btn, .btn-ghost):hover { @apply text-ink no-underline; }
   .toolbar-actions .btn-icon { @apply w-8 px-0; }
@@ -905,7 +1056,7 @@
 
   .wtab {
     @apply relative flex h-7 min-w-0 max-w-[220px] shrink-0 cursor-pointer items-center gap-1.5
-           rounded-full pl-2.5 pr-1.5 text-[12.5px] font-normal text-muted
+           rounded-full pl-2.5 pr-1.5 text-[13px] font-normal text-muted
            transition-[background-color,color,box-shadow] duration-100 select-none;
   }
   .wtab:hover { @apply bg-sand-300/35 text-ink; }
@@ -953,7 +1104,7 @@
   }
 
   .toolbar-title {
-    @apply min-w-0 truncate text-[20px] font-bold leading-tight tracking-[-0.022em] text-ink;
+    @apply min-w-0 truncate text-[22px] font-bold leading-tight tracking-[-0.022em] text-ink;
   }
   .toolbar-title:lang(zh) { @apply tracking-normal; }
   /* The title block hugs its text (its frosted patch follows it); a long
@@ -1002,7 +1153,7 @@
 
   .omnibox {
     @apply glass flex h-[34px] w-[200px] cursor-pointer items-center gap-1.5 rounded-full
-           border-0 px-3 text-[12.5px] text-sand-500 transition-colors duration-100 xl:w-[240px];
+           border-0 px-3 text-[13px] text-sand-500 transition-colors duration-100 xl:w-[240px];
   }
   .omnibox .icon { @apply size-[13px] shrink-0; }
   .omnibox-label { @apply flex-1 truncate text-left; }
@@ -1169,7 +1320,7 @@
 
   .owner-badge {
     @apply relative inline-flex h-[18px] min-w-[18px] cursor-default select-none
-           items-center justify-center rounded-full px-1 align-middle text-[9.5px]
+           items-center justify-center rounded-full px-1 align-middle text-[10px]
            font-semibold leading-none;
   }
   .owner-badge[data-tooltip]:hover::after {
@@ -1310,7 +1461,7 @@
   .dt-toolbar-spacer { @apply ml-auto; }
 
   .dt-toolbar-search { @apply relative min-w-[180px] flex-1 sm:max-w-[280px]; }
-  .dt-toolbar-search input { @apply field h-8 rounded-full pl-8 text-[12.5px]; }
+  .dt-toolbar-search input { @apply field h-8 rounded-full pl-8 text-[13px]; }
   .dt-toolbar-search .search-icon,
   .dt-toolbar-search > svg {
     @apply pointer-events-none absolute left-2.5 top-1/2 size-[14px] -translate-y-1/2
@@ -1350,7 +1501,7 @@
 
   .dt thead th {
     @apply sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap border-b border-hairline
-           bg-sand-50/95 px-2 py-1.5 text-left align-middle text-[11.5px] font-semibold
+           bg-sand-50/95 px-2 py-1.5 text-left align-middle text-[12px] font-semibold
            text-muted backdrop-blur;
   }
 
@@ -1392,7 +1543,7 @@
   .dt-col-type.is-text::before { content: "Aa"; }
   .dt-col-type.is-number { @apply text-[11px] font-semibold text-sand-500; }
   .dt-col-type.is-number::before { content: "#"; }
-  .dt-col-type.is-id { @apply text-[9px] font-bold text-sand-500; }
+  .dt-col-type.is-id { @apply text-[10px] font-bold text-sand-500; }
   .dt-col-type.is-id::before { content: "ID"; }
 
   /* Row glyph in the primary-name column (also an injected inline SVG). */
@@ -1488,7 +1639,7 @@
 
   /* Lives on a <td colspan>, so it must stay a table cell — a flex empty
      state here would collapse the text into one column's width. */
-  .dt-empty { @apply px-4 py-12 text-center text-[12.5px] text-muted; }
+  .dt-empty { @apply px-4 py-12 text-center text-[13px] text-muted; }
   .dt-empty strong { @apply font-semibold text-ink-soft; }
   /* In a table wider than its card the message stays in view. */
   .dt-empty:has(> .dt-empty-msg) { @apply text-left; }
@@ -1566,12 +1717,12 @@
     animation: menu-grow 0.24s var(--ease-spring);
   }
   .dt-menu-title {
-    @apply px-2.5 pb-1 pt-1.5 text-[11.5px] font-semibold
+    @apply px-2.5 pb-1 pt-1.5 text-[12px] font-semibold
            text-muted;
   }
   .dt-menu-item {
     @apply flex w-full cursor-pointer items-center gap-2.5 rounded-[9px] border-0 bg-transparent
-           px-2.5 py-1.5 text-left text-[12.5px] text-ink-soft transition-colors;
+           px-2.5 py-1.5 text-left text-[13px] text-ink-soft transition-colors;
   }
   .dt-menu-item:hover { @apply bg-sand-300/40 text-ink; }
   .dt-menu-item.is-active { @apply font-semibold text-brand-700; }
@@ -1652,7 +1803,7 @@
   .sheet-table td > input:not([type="checkbox"]),
   .sheet-table td > select,
   .sheet-table .owner-cell-wrap > input {
-    @apply h-6.5 w-full min-w-0 rounded-md border border-transparent bg-transparent px-1
+    @apply h-6.5 w-full min-w-0 rounded-md border border-transparent bg-transparent px-2
            text-[12px] text-ink-soft shadow-none transition-colors duration-100;
   }
   .sheet-table td > input:not([type="checkbox"]):not(:disabled):hover,
@@ -1667,24 +1818,26 @@
      cells beside them, without a native arrow taking up room; a quiet one
      appears when you reach for it. */
   .sheet-table td > select:not(.status-pill, .sex-pill, .scope-pill) {
-    @apply cursor-pointer appearance-none bg-no-repeat pr-4;
-    background-position: right 4px center;
-    background-size: 9px;
+    @apply cursor-pointer pr-5 pl-2;
+    background-image: none;
+    background-position: right 3px center;
+    background-size: 14px 14px;
   }
   .sheet-table td > select:not(.status-pill, .sex-pill, .scope-pill):not(:disabled):is(:hover, :focus) {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: var(--chevron);
   }
   .sheet-table td > input::placeholder { @apply text-sand-300; }
   /* A value read from elsewhere (a sample's Genotype, from its source
      mouse): shown, softer than typed, but not as faint as an empty cell. */
   .sheet-table td > input.from-colony::placeholder { @apply text-ink-soft italic; }
-  .sheet-table td > :is(input, select):disabled { @apply cursor-default opacity-100; }
-  .sheet-table input.ident { @apply font-mono text-[11.5px]; }
+  /* Someone else's row: read, not edited; as the text cells draw it. */
+  .sheet-table td > :is(input, select):disabled { @apply cursor-default text-ink-soft/50 opacity-100; }
+  .sheet-table input.ident { @apply font-mono text-[12px]; }
 
   /* An inventory's cell drawn as text until used (static/text-cells.js),
      looking as its field does. */
   .sheet-table .cell-text {
-    @apply block h-6.5 w-full min-w-0 cursor-text truncate rounded-md border border-transparent pr-1 pl-2
+    @apply block h-6.5 w-full min-w-0 cursor-text truncate rounded-md border border-transparent pr-5 pl-2
            text-[12px] leading-6 text-ink-soft transition-colors duration-100;
   }
   .sheet-table .cell-text:hover { @apply border-hairline bg-surface; }
@@ -1694,7 +1847,7 @@
   .sheet-table .cell-text.is-disabled { @apply cursor-default text-ink-soft/50; }
   .sheet-table .cell-text.is-disabled:hover { @apply border-transparent bg-transparent; }
   .sheet-table .cell-text.status-pill.is-empty { @apply bg-transparent; }
-  .sheet-table .cell-text.ident { @apply font-mono text-[11.5px]; }
+  .sheet-table .cell-text.ident { @apply font-mono text-[12px]; }
   .sheet-table .cell-text.from-colony.is-placeholder { @apply text-ink-soft italic; }
   .sheet-table .cell-text.is-date { @apply tabular-nums; }
   .sheet-table .cell-text.status-pill {
@@ -1705,7 +1858,7 @@
   }
   .sheet-table .cell-text.sex-pill.is-empty { @apply bg-transparent; }
   .sheet-table .cell-text.scope-pill {
-    @apply inline-block h-6 w-auto max-w-full rounded-full bg-sand-100 px-2.5 pr-4 align-middle text-[11.5px]
+    @apply inline-block h-6 w-auto max-w-full rounded-full bg-sand-100 px-2.5 pr-4 align-middle text-[12px]
            font-semibold text-muted leading-6;
   }
   .sheet-table .cell-text.scope-pill[data-scope="lab"] { @apply bg-violet-50 text-violet-700; }
@@ -1754,18 +1907,17 @@
      chevron returns on hover so they still read as choosable. */
   .sheet-table select.sex-pill,
   .sheet-table select.status-pill {
-    @apply h-5.5 cursor-pointer appearance-none rounded-full border-transparent px-2
+    @apply h-5.5 cursor-pointer rounded-full border-transparent px-2
            text-[11px] font-semibold;
+    background-image: none;
     background-repeat: no-repeat;
-    background-position: right 6px center;
-    background-size: 9px;
+    background-position: right 4px center;
+    background-size: 13px 13px;
   }
   .sheet-table select.sex-pill { @apply w-9 px-0 text-center; text-align-last: center; }
   .sheet-table select.status-pill { @apply w-auto max-w-full pr-5 capitalize; }
   .sheet-table select.status-pill:not(:disabled):hover,
-  .sheet-table select.status-pill:focus {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
+  .sheet-table select.status-pill:focus { background-image: var(--chevron); }
 
   .sex-pill { @apply bg-sand-100 text-muted; }
   .sex-pill[data-sex="F"] { @apply bg-pink-50 text-pink-700; }
@@ -1806,7 +1958,7 @@
   /* A received order's "To stock": labelled, so it says what it does. */
   .row-stock-btn {
     @apply inline-flex h-6 shrink-0 cursor-pointer items-center gap-1 rounded-full border-0 bg-brand-50 px-2
-           text-[11.5px] font-semibold whitespace-nowrap text-brand-700 transition-colors hover:bg-brand-100;
+           text-[12px] font-semibold whitespace-nowrap text-brand-700 transition-colors hover:bg-brand-100;
   }
   .row-stock-btn[hidden] { @apply hidden; }
   .row-stock-link { @apply bg-sand-100 font-medium text-ink-soft no-underline hover:bg-sand-200; }
@@ -1816,7 +1968,7 @@
   .plasmid-cell-link { @apply min-w-0 truncate text-[12px] font-medium text-brand-700; }
   /* Several of a list (a chemical's hazards): a menu of boxes in the cell. */
   .multi-cell { @apply relative min-w-0; }
-  .multi-cell > summary { @apply block cursor-pointer list-none truncate rounded-md px-1 py-0.5 text-[12.5px] hover:bg-sand-300/40; }
+  .multi-cell > summary { @apply block cursor-pointer list-none truncate rounded-md px-1 py-0.5 text-[13px] hover:bg-sand-300/40; }
   .multi-cell > summary::-webkit-details-marker { display: none; }
   .multi-cell-menu {
     /* Fixed, placed by the page under its cell: the sheet's scrolling box would cut it off. */
@@ -1825,7 +1977,7 @@
     -webkit-backdrop-filter: saturate(180%) blur(30px);
     backdrop-filter: saturate(180%) blur(30px);
   }
-  .multi-cell-menu label { @apply flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-[12.5px] text-ink hover:bg-sand-300/40; }
+  .multi-cell-menu label { @apply flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-[13px] text-ink hover:bg-sand-300/40; }
   .row-stock-btn svg { @apply size-3; }
   @media (hover: hover) {
     .sheet-table tbody tr .sheet-actions { @apply opacity-40 transition-opacity; }
@@ -1852,7 +2004,7 @@
   .sheet-table tbody tr:hover td.has-error { @apply bg-danger-50; }
 
   /* Toolbar save indicator. */
-  .sheet-save { @apply max-w-[40ch] truncate text-[11.5px] text-muted; }
+  .sheet-save { @apply max-w-[40ch] truncate text-[12px] text-muted; }
   .sheet-save[data-state="saving"] { @apply text-sand-400; }
   .sheet-save[data-state="saved"] { @apply text-ok-700; }
   .sheet-save[data-state="error"] { @apply font-medium text-danger-700; }
@@ -1872,45 +2024,72 @@
   .record-dialog { @apply w-[min(640px,calc(100vw-2rem))]; }
   .record-dialog > form { @apply flex max-h-[86vh] flex-col; }
 
+  /* One dialog, everywhere: the title (and a line saying what it does) with
+     a close button, a body that scrolls, and a footer with Cancel and the
+     one main action at the right (anything that ends or deletes alone at
+     the left). */
   .record-dialog-head {
-    @apply flex items-start justify-between gap-3 px-5 pb-2 pt-4;
+    @apply flex items-start justify-between gap-4 px-6 pb-3 pt-5;
   }
-  .record-dialog-head h3 { @apply text-[16px] font-bold tracking-[-0.01em] text-ink; }
-  .record-dialog-sub { @apply mt-0.5 text-[12px] text-muted; }
+  .record-dialog-head h3 { @apply text-[17px] font-semibold tracking-[-0.015em] text-ink; line-height: 1.3; }
+  .record-dialog-head h3 small { @apply ml-1 text-[13px] font-normal text-muted; }
+  .record-dialog-sub { @apply mt-1 max-w-[62ch] text-[13px] leading-snug text-muted; }
 
-  .record-dialog-body { @apply flex flex-col gap-4 overflow-y-auto px-5 py-4; }
+  .record-dialog-body { @apply flex flex-col gap-5 overflow-y-auto px-6 pb-5 pt-2; }
 
   .record-group {
     @apply m-0 grid grid-cols-1 gap-x-3 gap-y-2.5 border-0 p-0 sm:grid-cols-2;
   }
   .record-group legend {
-    @apply mb-2 p-0 text-[11.5px] font-semibold text-muted;
+    @apply mb-2.5 p-0 text-[11px] font-semibold tracking-[0.04em] text-muted uppercase;
   }
+  :lang(zh) .record-group legend { @apply text-[12px] tracking-normal normal-case; }
   .record-dialog-body label { @apply field-label; }
-  .record-dialog-body label > :is(input, select, textarea) {
-    @apply field mt-1 normal-case tracking-normal;
-  }
-  .record-dialog-body label > :is(input, select, textarea):disabled {
-    @apply cursor-default bg-sand-50 text-ink-soft;
+  .record-dialog-body label > :is(input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), select, textarea) {
+    @apply field normal-case tracking-normal;
   }
   .record-wide { @apply col-span-full; }
   /* Several of a list in the dialog: a row of boxes, not full-width fields. */
   .multi-choices { @apply m-0 flex flex-wrap gap-x-4 gap-y-1.5 border-0 p-0; }
-  .multi-choices legend { @apply mb-1 w-full p-0 text-[11.5px] font-semibold text-muted; }
+  .multi-choices legend { @apply mb-1 w-full p-0 text-[12px] font-semibold text-muted; }
   .record-dialog-body .multi-choices label { @apply flex items-center gap-1.5 text-[13px] font-normal normal-case tracking-normal text-ink; }
-  .record-dialog-body .multi-choices label > input[type="checkbox"] { all: revert; }
   .record-dialog-body textarea { @apply min-h-20 resize-y; }
 
   .record-dialog-foot {
-    @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-5 py-3;
+    @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-6 py-4;
   }
+  .record-dialog-foot .btn { @apply h-8 px-3.5; }
   .record-dialog-hint { @apply mr-auto text-[12px] text-muted; }
   .record-dialog-narrow { @apply w-[min(460px,calc(100vw-2rem))]; }
+  .record-dialog-wide { @apply w-[min(880px,calc(100vw-2rem))]; }
+
+  /* A short list of ways to do one thing (export as…): a row each. */
+  .choice-list { @apply -mx-2 flex flex-col gap-0.5; }
+  .choice-row {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-ink no-underline transition-colors duration-100;
+  }
+  .choice-row:hover { @apply bg-sand-100 no-underline; }
+  .choice-row > .icon:first-child {
+    @apply size-9 shrink-0 rounded-lg bg-brand-50 p-2 text-brand-700;
+  }
+  .choice-row > span { @apply flex min-w-0 flex-1 flex-col; }
+  .choice-row b { @apply text-[13px] font-semibold; }
+  .choice-row small { @apply text-[12px] text-muted; }
+  .choice-row > .icon:last-child { @apply size-4 text-sand-400; }
+
+  /* Choose one of a few, each said in a sentence: a card each. */
+  .choice-cards { @apply m-0 grid gap-2 border-0 p-0; }
+  .choice-cards legend { @apply mb-2 p-0 text-[13px] text-ink-soft; }
+  .record-dialog-body .choice-cards > label.choice-card {
+    @apply flex-row items-start gap-3 text-[13px] font-normal text-ink;
+  }
+  .choice-card b { @apply block font-semibold; }
+  .choice-card small { @apply block text-[12px] leading-snug text-muted; }
 
   /* What's new after an update (app/templates/_whats_new.html). */
   .whats-new-body { @apply grid gap-3 text-[13px] leading-snug text-ink-soft; }
   .whats-new-version { @apply border-b border-hairline pb-1 text-[12px] font-semibold text-muted; }
-  .whats-new-section h5 { @apply mb-1 text-[11.5px] font-semibold text-muted; }
+  .whats-new-section h5 { @apply mb-1 text-[12px] font-semibold text-muted; }
   .whats-new-section ul { @apply grid list-disc gap-1 pl-5; }
   .whats-new-section b { @apply font-semibold text-ink; }
   /* BioDialog (static/dialogs.js): the app's confirm, prompt and alert. */
@@ -1921,27 +2100,44 @@
      such as an experiment's Record weight: a card over a dimmed page. */
   .csv-modal { @apply fixed inset-0 z-100 grid place-items-center p-4; }
   .csv-modal[hidden] { @apply hidden; }
-  .csv-modal-backdrop { @apply absolute inset-0 bg-black/22 backdrop-blur-[3px]; }
+  /* Popups drawn as a div (CSV import, the notebook's) look as a dialog
+     does: the same backdrop, corners, header, close button and footer. */
+  :is(.csv-modal-backdrop, .notebook-modal-backdrop, .cmdk-backdrop) {
+    @apply absolute inset-0;
+    background: var(--scrim);
+    -webkit-backdrop-filter: blur(var(--scrim-blur));
+    backdrop-filter: blur(var(--scrim-blur));
+  }
   .csv-modal-card {
     @apply relative flex max-h-[86vh] w-[min(560px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl
            bg-surface;
     box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
     animation: dialog-rise 0.32s var(--ease-spring);
   }
-  .csv-modal-head { @apply flex items-center justify-between gap-3 border-b border-sand-100 px-5 pb-3 pt-4; }
-  .csv-modal-head h3 { @apply text-[15px] font-semibold text-ink; }
+  :is(.csv-modal-head, .notebook-modal-head) { @apply flex items-start justify-between gap-4 px-6 pb-3 pt-5; }
+  :is(.csv-modal-head, .notebook-modal-head) h3 { @apply text-[17px] font-semibold tracking-[-0.015em] text-ink; }
   .csv-modal-close {
-    @apply grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[18px] leading-none
-           text-sand-500 hover:bg-sand-100 hover:text-ink;
+    @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-sand-200/60 text-[17px] leading-none
+           text-ink-soft hover:bg-sand-300/60 hover:text-ink;
   }
-  .csv-modal-body { @apply flex flex-col gap-3 overflow-y-auto px-5 py-4 text-[13px] text-ink-soft; }
+  .csv-modal-body { @apply flex flex-col gap-3 overflow-y-auto px-6 pb-5 pt-2 text-[13px] text-ink-soft; }
   .csv-modal-body label { @apply field-label; }
   .csv-modal-body label > :is(input, select, textarea) { @apply field mt-1 normal-case tracking-normal; }
-  .csv-modal-foot { @apply flex items-center justify-end gap-2 border-t border-sand-100 bg-sand-50/60 px-5 py-3; }
-  .csv-modal-hint { @apply text-[12.5px] leading-snug text-muted; }
+  .csv-modal-foot { @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-6 py-4; }
+  .csv-modal-foot .btn { @apply h-8 px-3.5; }
+  @media (max-width: 640px) {
+    :is(.csv-modal, .notebook-modal) { @apply place-items-end p-0; }
+    :is(.csv-modal-card, .notebook-modal-card) {
+      @apply w-screen max-w-none rounded-t-[22px] rounded-b-none;
+      max-height: 92dvh;
+      animation: sheet-up 0.34s var(--ease-out-soft);
+    }
+    .csv-modal-foot { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  }
+  .csv-modal-hint { @apply text-[13px] leading-snug text-muted; }
   .csv-template-line { @apply flex flex-wrap gap-2; }
   .csv-template-btn { @apply btn btn-sm; }
-  .csv-modal-result { @apply text-[12.5px] leading-snug; }
+  .csv-modal-result { @apply text-[13px] leading-snug; }
   .csv-loading { @apply text-muted; }
   .csv-success { @apply rounded-lg bg-ok-50 px-3 py-2 text-ok-700; }
   .csv-error { @apply text-danger-700; }
@@ -1978,69 +2174,69 @@
   .util-none { @apply mt-2 text-[13px] text-muted; }
   .util-shortcuts { @apply mb-4 mt-3.5 flex flex-col gap-2; }
   .util-shortrow { @apply flex flex-wrap items-center gap-2; }
-  .util-shortrow > span { @apply w-16 shrink-0 text-[11.5px] font-semibold text-muted; }
+  .util-shortrow > span { @apply w-16 shrink-0 text-[12px] font-semibold text-muted; }
   .util-shortrow em { @apply text-[12px] not-italic text-muted; }
-  .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[12.5px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
+  .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[13px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
   .util-chip .icon { @apply size-3 text-amber-500; }
   .util-groups { @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3; }
   .util-group { @apply p-3.5 pb-2.5; }
   .util-group header { @apply mb-2 flex items-center gap-2.5; }
   .util-gicon { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700; }
   .util-gicon .icon { @apply size-[18px]; }
-  .util-group h2 { @apply text-[14px] font-semibold text-ink; }
-  .util-group header p { @apply text-[11.5px] text-muted; }
+  .util-group h2 { @apply text-[15px] font-semibold text-ink; }
+  .util-group header p { @apply text-[12px] text-muted; }
   .util-group li a { @apply -mx-2 flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-[13px] text-ink no-underline hover:bg-sand-100 hover:text-brand-700 hover:no-underline; }
   .util-group li small { @apply text-[11px] text-muted; }
 
   .util-tool { @apply grid grid-cols-1 items-start gap-5 lg:grid-cols-[210px_minmax(0,1fr)]; }
   .util-rail { @apply hidden max-h-[calc(100vh-150px)] flex-col overflow-y-auto lg:sticky lg:top-2 lg:flex; }
   .util-rail details { @apply border-t border-hairline; }
-  .util-rail summary { @apply flex cursor-pointer list-none items-center gap-2 px-1 py-1.5 text-[12.5px] font-semibold text-ink-soft; }
+  .util-rail summary { @apply flex cursor-pointer list-none items-center gap-2 px-1 py-1.5 text-[13px] font-semibold text-ink-soft; }
   .util-rail summary::-webkit-details-marker { display: none; }
   .util-rail summary .icon { @apply size-3.5 text-brand-700; }
-  .util-rail details a { @apply block rounded-md py-1 pl-6 pr-2 text-[12.5px] text-ink-soft no-underline hover:bg-sand-100 hover:no-underline; }
+  .util-rail details a { @apply block rounded-md py-1 pl-6 pr-2 text-[13px] text-ink-soft no-underline hover:bg-sand-100 hover:no-underline; }
   .util-rail details a.is-active { @apply bg-brand-600 font-medium text-white hover:bg-brand-700; }
-  .util-back { @apply mb-1.5 inline-flex items-center gap-1 text-[12.5px] text-muted no-underline hover:text-brand-700 hover:no-underline; }
+  .util-back { @apply mb-1.5 inline-flex items-center gap-1 text-[13px] text-muted no-underline hover:text-brand-700 hover:no-underline; }
   .util-back .icon { @apply size-3.5; }
   .util-back-narrow { @apply lg:hidden; }
   .util-main { @apply flex min-w-0 flex-col; }
   .util-head { @apply mb-3 flex flex-wrap items-start gap-3; }
   .util-crumb { @apply text-[12px] text-muted; }
-  .util-head h2 { @apply text-[19px] font-semibold tracking-[-0.01em] text-ink; }
+  .util-head h2 { @apply text-[22px] font-semibold tracking-[-0.01em] text-ink; }
   .util-does { @apply mt-0.5 text-[13px] text-ink-soft; }
   .util-actions { @apply ml-auto flex shrink-0 gap-1.5; }
   .util-actions .is-pinned { @apply border-amber-400 text-amber-600; }
   .util-controls { @apply mb-3 flex flex-wrap items-center gap-3; }
   .util-seg { @apply inline-flex flex-wrap gap-0.5 rounded-lg border border-hairline bg-sand-100 p-0.5; }
-  .util-seg button { @apply h-6.5 rounded-md px-3 text-[12.5px] text-ink-soft; }
+  .util-seg button { @apply h-6.5 rounded-md px-3 text-[13px] text-ink-soft; }
   .util-seg button[aria-pressed="true"] { @apply bg-surface font-semibold text-ink shadow-xs; }
   .util-solve { @apply flex flex-wrap items-center gap-2; }
   .util-solve > span { @apply text-[12px] text-muted; }
   .util-work { @apply grid grid-cols-1 items-start gap-3 xl:grid-cols-2; }
   .util-form { @apply grid grid-cols-1 gap-3 p-4 sm:grid-cols-2; }
-  .util-field { @apply flex min-w-0 flex-col gap-1 text-[12.5px] text-muted; }
+  .util-field { @apply flex min-w-0 flex-col gap-1 text-[13px] text-muted; }
   .util-field.is-wide { @apply sm:col-span-2; }
   .util-field > span:first-child { @apply font-medium text-ink-soft; }
-  .util-field input, .util-field select, .util-field textarea { @apply field h-8 w-full min-w-0 text-[13.5px] tabular-nums text-ink; }
-  .util-field textarea { @apply h-auto py-1.5 font-mono text-[12.5px]; }
+  .util-field input, .util-field select, .util-field textarea { @apply field h-8 w-full min-w-0 text-[13px] tabular-nums text-ink; }
+  .util-field textarea { @apply h-auto py-1.5 font-mono text-[13px]; }
   .util-input { @apply flex min-w-0 gap-1; }
   .util-input select { @apply w-auto shrink-0; }
-  .util-hint { @apply text-[11.5px] font-normal text-muted; }
+  .util-hint { @apply text-[12px] font-normal text-muted; }
   .util-answer { @apply border-brand-200 xl:sticky xl:top-2; }
-  .util-answer > header { @apply flex items-center justify-between bg-brand-50 px-4 py-1.5 text-[11.5px] font-bold text-brand-800; }
+  .util-answer > header { @apply flex items-center justify-between bg-brand-50 px-4 py-1.5 text-[12px] font-bold text-brand-800; }
   .util-answer > header .btn { @apply normal-case tracking-normal; }
   .util-answer-body { @apply flex flex-col gap-2.5 p-4; }
   .util-mains { @apply flex flex-col gap-2; }
   .util-mains dt { @apply text-[12px] text-muted; }
   .util-mains dd { @apply text-[22px] font-semibold leading-tight tracking-[-0.01em] tabular-nums text-ink; }
   .util-minors > div { @apply flex items-baseline justify-between gap-3 border-t border-sand-100 py-1; }
-  .util-minors dt { @apply text-[12.5px] text-muted; }
+  .util-minors dt { @apply text-[13px] text-muted; }
   .util-minors dd { @apply text-right text-[13px] tabular-nums text-ink; }
-  .util-error { @apply rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-[12.5px] text-danger-700; }
-  .util-warn { @apply rounded-lg border border-warn-200 bg-warn-50 px-3 py-2 text-[12.5px] text-warn-700; }
-  .util-note, .util-muted { @apply text-[12.5px] text-muted; }
+  .util-error { @apply rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-[13px] text-danger-700; }
+  .util-warn { @apply rounded-lg border border-warn-200 bg-warn-50 px-3 py-2 text-[13px] text-warn-700; }
+  .util-note, .util-muted { @apply text-[13px] text-muted; }
   .util-table-wrap { @apply overflow-x-auto; }
-  .util-table { @apply w-full border-collapse text-[12.5px]; }
+  .util-table { @apply w-full border-collapse text-[13px]; }
   .util-table th { @apply whitespace-nowrap border-b border-hairline px-2 py-1 text-left font-semibold text-muted first:pl-0; }
   .util-table td { @apply border-b border-sand-100 px-2 py-1 tabular-nums text-ink first:pl-0; }
   .util-rotors { @apply flex items-end gap-2 sm:col-span-2; }
@@ -2054,9 +2250,9 @@
   .util-refs { @apply grid grid-cols-1 gap-3 xl:grid-cols-2; }
   .util-ref { @apply p-4; }
   .util-ref .util-table-wrap { @apply max-h-[360px] overflow-y-auto; }
-  .util-ref h3 { @apply mb-1.5 text-[13.5px] font-semibold text-ink; }
+  .util-ref h3 { @apply mb-1.5 text-[13px] font-semibold text-ink; }
   /* The lab's own tools: making one. */
-  .util-new { @apply mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-brand-700 no-underline hover:no-underline; }
+  .util-new { @apply mt-1.5 inline-flex items-center gap-1 text-[13px] font-medium text-brand-700 no-underline hover:no-underline; }
   .util-new .icon { @apply size-3.5; }
   .util-lab-head, .util-lab-row { @apply grid items-center gap-1.5; }
   .util-lab-head.is-input, .util-lab-row.is-input { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.9fr) 1.75rem; }
@@ -2064,12 +2260,12 @@
   .util-lab-head small { @apply text-[11px] font-normal text-muted; }
   .util-lab-row { @apply mb-1.5; }
   .util-lab-row input { @apply field h-7.5 min-w-0 text-[13px]; }
-  .util-lab-problem { @apply col-span-full text-[11.5px] text-danger-700 empty:hidden; }
+  .util-lab-problem { @apply col-span-full text-[12px] text-danger-700 empty:hidden; }
   .util-lab-add { @apply self-start; }
   .util-lab-actions { @apply flex items-center gap-1.5 sm:col-span-2; }
   .util-lab-actions > span { @apply flex-1; }
   .util-form .is-wide { @apply sm:col-span-2; }
-  .util-lab-title { @apply text-[14px] font-semibold text-ink; }
+  .util-lab-title { @apply text-[15px] font-semibold text-ink; }
   .util-work.is-editor { @apply xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]; }
   @media (max-width: 640px) {
     .util-lab-head { display: none; }
@@ -2079,10 +2275,10 @@
   /* A sheet cell the server works out (a primer's length, GC, Tm). */
   .sheet-derived { @apply cursor-default text-muted; }
   /* "Used in notebook pages" (static/used-in.js). */
-  .used-in h4 { @apply mb-1 text-[12.5px] font-semibold text-ink; }
+  .used-in h4 { @apply mb-1 text-[13px] font-semibold text-ink; }
   .used-in-hint { @apply mb-1.5 text-[12px] text-muted; }
-  .used-in-hint code { @apply rounded bg-sand-100 px-1 font-mono text-[11.5px] text-ink; }
-  .used-in [data-used-in-list] { @apply flex flex-col text-[12.5px] text-muted; }
+  .used-in-hint code { @apply rounded bg-sand-100 px-1 font-mono text-[12px] text-ink; }
+  .used-in [data-used-in-list] { @apply flex flex-col text-[13px] text-muted; }
   .used-in-row { @apply flex items-baseline gap-2 rounded-md px-1.5 py-1 no-underline hover:bg-sand-50; }
   .used-in-title { @apply min-w-0 flex-1 truncate font-medium text-ink; }
   .used-in-when { @apply shrink-0 text-[12px] text-muted; }
@@ -2100,7 +2296,7 @@
 
   /* A pill that is only a label (no dropdown). */
   .status-pill-static {
-    @apply inline-flex h-6 items-center rounded-full bg-sand-100 px-2.5 text-[11.5px]
+    @apply inline-flex h-6 items-center rounded-full bg-sand-100 px-2.5 text-[12px]
            font-semibold capitalize text-muted;
   }
 
@@ -2118,7 +2314,7 @@
   /* On/off flag (a tank waiting for genotyping). */
   .flag-toggle {
     @apply inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full border-0
-           bg-sand-100 px-2.5 text-[11.5px] font-medium text-muted transition-colors;
+           bg-sand-100 px-2.5 text-[12px] font-medium text-muted transition-colors;
   }
   .flag-toggle:hover { @apply bg-sand-200 text-ink-soft; }
   .flag-toggle-dot { @apply size-[7px] rounded-full bg-sand-300 transition-colors; }
@@ -2126,7 +2322,7 @@
   .flag-toggle[aria-pressed="true"] .flag-toggle-dot { @apply bg-warn-600; }
 
   /* Link in a pinned name cell. */
-  .sheet-link { @apply block truncate px-1.5 text-[12.5px] font-semibold text-ink no-underline; }
+  .sheet-link { @apply block truncate px-1.5 text-[13px] font-semibold text-ink no-underline; }
   .sheet-link:hover { @apply text-brand-700 underline; }
 
   /* A secondary panel that folds away (sacrifice log, mating, new system). */
@@ -2163,7 +2359,7 @@
   .zfish-rack-grid { @apply grid gap-1 overflow-x-auto rounded-xl bg-sand-100 p-2; }
   .zfish-rack-corner { @apply size-full; }
   .zfish-rack-col-label, .zfish-rack-row-label {
-    @apply grid place-items-center text-[10.5px] font-semibold text-sand-400;
+    @apply grid place-items-center text-[11px] font-semibold text-sand-400;
   }
   .zfish-rack-cell {
     @apply flex min-h-[52px] flex-col gap-1 rounded-lg border border-dashed border-sand-300
@@ -2173,7 +2369,7 @@
     @apply border-brand-400 bg-brand-50;
   }
   .zfish-rack-tray { @apply flex flex-col gap-2 rounded-xl border border-dashed border-sand-300 p-3; }
-  .zfish-rack-tray h4 { @apply text-[11.5px] font-semibold text-muted; }
+  .zfish-rack-tray h4 { @apply text-[12px] font-semibold text-muted; }
   .zfish-rack-tray-items { @apply flex flex-wrap gap-1.5; }
 
   .zfish-tube {
@@ -2192,7 +2388,7 @@
 
   .lineage { @apply flex flex-wrap items-center gap-1.5 p-4; }
   .lineage-node {
-    @apply rounded-lg border border-hairline bg-surface px-2.5 py-1 text-[12.5px] font-medium
+    @apply rounded-lg border border-hairline bg-surface px-2.5 py-1 text-[13px] font-medium
            text-ink-soft no-underline transition-colors;
   }
   a.lineage-node:hover { @apply border-brand-300 text-brand-700; }
@@ -2206,12 +2402,12 @@
   .water-log-form { @apply grid grid-cols-2 content-start gap-x-3 gap-y-2.5; }
   .water-log-form label { @apply field-label; }
   .water-log-form label > input:not([type="checkbox"]) { @apply field mt-1 normal-case tracking-normal; }
-  .water-alarm { @apply flex items-center gap-2 normal-case tracking-normal text-[12.5px] text-ink-soft; }
+  .water-alarm { @apply flex items-center gap-2 normal-case tracking-normal text-[13px] text-ink-soft; }
   .water-alarm input { @apply size-3.5 accent-danger-600; }
   .water-chart { @apply flex min-h-40 flex-col justify-center rounded-xl bg-sand-50 p-3; }
   .water-chart-svg { @apply h-[140px] w-full; }
-  .water-chart-empty { @apply text-center text-[12.5px] text-muted; }
-  .water-legend { @apply mt-2 flex gap-4 text-[11.5px] text-muted; }
+  .water-chart-empty { @apply text-center text-[13px] text-muted; }
+  .water-legend { @apply mt-2 flex gap-4 text-[12px] text-muted; }
   .water-legend span { @apply inline-flex items-center gap-1.5; }
   .water-legend i { @apply inline-block size-2 rounded-full; }
 }
@@ -2250,7 +2446,7 @@
   /* Sequence file drop zone (new plasmid dialog) */
   .dropzone {
     @apply flex items-center gap-3 rounded-xl border border-dashed border-sand-300 bg-sand-50
-           px-4 py-3.5 text-[12.5px] text-muted transition-colors;
+           px-4 py-3.5 text-[13px] text-muted transition-colors;
   }
   .dropzone > svg { @apply size-5 shrink-0 text-sand-400; }
   .dropzone strong { @apply block font-semibold text-ink-soft; }
@@ -2258,9 +2454,9 @@
   .dropzone-browse {
     @apply cursor-pointer border-0 bg-transparent p-0 font-medium text-brand-700 underline;
   }
-  .dropzone-file { @apply ml-auto truncate font-mono text-[11.5px] text-ink-soft; }
+  .dropzone-file { @apply ml-auto truncate font-mono text-[12px] text-ink-soft; }
   .dropzone-paste > summary { @apply cursor-pointer text-[12px] font-medium text-brand-700; }
-  .dropzone-paste textarea { @apply field mt-2 min-h-24 font-mono text-[11.5px]; }
+  .dropzone-paste textarea { @apply field mt-2 min-h-24 font-mono text-[12px]; }
 }
 
 /* ===========================================================================
@@ -2347,14 +2543,14 @@
   /* Hover card */
   .biocal-hover-card {
     @apply pointer-events-auto fixed z-100 w-80 max-w-[90vw] overflow-hidden rounded-xl border
-           border-hairline bg-surface text-[12.5px] text-ink shadow-pop;
+           border-hairline bg-surface text-[13px] text-ink shadow-pop;
   }
   .biocal-hover-card[hidden] { display: none; }
   .biocal-hover-strip { @apply h-[3px]; }
   .biocal-hover-body { @apply flex flex-col gap-1.5 px-3.5 py-3; }
-  .biocal-hover-title { @apply text-[14px] font-semibold leading-snug text-ink; }
+  .biocal-hover-title { @apply text-[15px] font-semibold leading-snug text-ink; }
   .biocal-hover-date { @apply text-[12px] text-muted tabular-nums; }
-  .biocal-hover-tag { @apply inline-flex items-center gap-1.5 text-[11.5px] text-muted; }
+  .biocal-hover-tag { @apply inline-flex items-center gap-1.5 text-[12px] text-muted; }
   .biocal-hover-dot { @apply inline-block size-2 rounded-full; }
   .biocal-hover-readonly { @apply text-sand-400; }
   .biocal-hover-notes {
@@ -2371,7 +2567,7 @@
   .biocal-list-rows { @apply m-0 list-none overflow-hidden rounded-b-xl border border-hairline p-0; }
   .biocal-list-row {
     @apply grid cursor-pointer grid-cols-[20px_110px_minmax(0,1fr)_minmax(0,2fr)] items-center gap-3
-           border-b border-sand-100 px-3 py-2 text-[12.5px] transition-colors;
+           border-b border-sand-100 px-3 py-2 text-[13px] transition-colors;
   }
   .biocal-list-row:last-child { @apply border-b-0; }
   .biocal-list-row:hover { @apply bg-sand-50; }
@@ -2429,9 +2625,9 @@
            border-hairline bg-surface px-3 py-2.5;
   }
   .biocal-sub-swatch { @apply inline-block size-2.5 rounded-full; }
-  .biocal-sub-name { @apply text-[12.5px] font-medium text-ink; }
-  .biocal-sub-url, .biocal-sub-meta { @apply truncate text-[11.5px] text-muted; }
-  .biocal-sub-error { @apply mt-0.5 text-[11.5px] text-danger-700; }
+  .biocal-sub-name { @apply text-[13px] font-medium text-ink; }
+  .biocal-sub-url, .biocal-sub-meta { @apply truncate text-[12px] text-muted; }
+  .biocal-sub-error { @apply mt-0.5 text-[12px] text-danger-700; }
   .biocal-sub-toggle { @apply cursor-pointer; }
   .biocal-sub-toggle input[type="checkbox"] { @apply size-3.5 accent-brand-600; }
   .biocal-subs-empty { @apply empty-state py-4; }
@@ -2439,11 +2635,11 @@
   .biocal-sub-row .biocal-btn { @apply btn-icon size-7; }
   .biocal-google-status .biocal-btn.is-primary { @apply btn-primary; }
 
-  .biocal-google-status { @apply rounded-xl bg-sand-50 p-3 text-[12.5px]; }
+  .biocal-google-status { @apply rounded-xl bg-sand-50 p-3 text-[13px]; }
   .biocal-google-connected { @apply flex flex-wrap items-center justify-between gap-2.5; }
   .biocal-google-connect { @apply no-underline; }
-  .biocal-google-unconfigured { @apply text-[12.5px] text-muted; }
-  .biocal-google-unconfigured code { @apply rounded bg-surface px-1 py-0.5 font-mono text-[11.5px]; }
+  .biocal-google-unconfigured { @apply text-[13px] text-muted; }
+  .biocal-google-unconfigured code { @apply rounded bg-surface px-1 py-0.5 font-mono text-[12px]; }
 }
 
 /* ===========================================================================
@@ -2478,21 +2674,21 @@
 
   .notebook-sidebar-head { @apply mb-2 flex items-center gap-1 px-0.5; }
   .notebook-search-row { @apply relative min-w-0 flex-1; }
-  .notebook-search-row input { @apply field h-8 pl-8 text-[12.5px]; }
+  .notebook-search-row input { @apply field h-8 pl-8 text-[13px]; }
   .notebook-search-icon {
     @apply pointer-events-none absolute left-2.5 top-1/2 size-[14px] -translate-y-1/2 text-sand-400;
   }
-  .notebook-new-btn { @apply btn btn-primary mx-0.5 mb-2 h-8 justify-center gap-1.5 text-[12.5px]; }
+  .notebook-new-btn { @apply btn btn-primary mx-0.5 mb-2 h-8 justify-center gap-1.5 text-[13px]; }
 
   .notebook-section-label {
-    @apply px-2 pb-1 pt-3 text-[11.5px] font-semibold text-muted;
+    @apply px-2 pb-1 pt-3 text-[12px] font-semibold text-muted;
   }
 
   .notebook-page-list { @apply m-0 flex list-none flex-col gap-px p-0; }
   .notebook-tab-pages { @apply ml-3 border-l border-hairline pl-1.5; }
   .notebook-page-item { @apply relative flex items-center rounded-md; }
   .notebook-page-item a {
-    @apply flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] text-ink-soft
+    @apply flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-ink-soft
            no-underline transition-colors;
   }
   .notebook-page-item a:hover { @apply bg-sand-200/60 text-ink; }
@@ -2515,7 +2711,7 @@
 
   .notebook-tabs { @apply flex flex-col gap-px; }
   .notebook-tab > summary {
-    @apply flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1.5 py-1.5 text-[12.5px]
+    @apply flex cursor-pointer list-none items-center gap-1.5 rounded-md px-1.5 py-1.5 text-[13px]
            font-semibold text-ink select-none;
   }
   .notebook-tab > summary::-webkit-details-marker { display: none; }
@@ -2560,7 +2756,7 @@
   .page-date-input:hover { @apply bg-sand-100; }
   .page-date-input:focus { @apply border-brand-400 bg-surface outline-none; }
   .page-meta-action { @apply btn btn-ghost btn-sm gap-1.5 text-muted; }
-  .page-saved-state { @apply text-[11.5px] text-sand-400; }
+  .page-saved-state { @apply text-[12px] text-sand-400; }
 
   .notebook-empty-state {
     @apply mx-auto grid min-h-[60vh] max-w-sm place-content-center justify-items-center gap-3 px-6
@@ -2571,7 +2767,7 @@
 
 
   .notebook-banner {
-    @apply mb-4 rounded-xl border border-warn-200 bg-warn-50 px-4 py-3 text-[12.5px] leading-relaxed
+    @apply mb-4 rounded-xl border border-warn-200 bg-warn-50 px-4 py-3 text-[13px] leading-relaxed
            text-warn-700;
   }
   .notebook-banner pre {
@@ -2585,17 +2781,12 @@
 
   .notebook-modal { @apply fixed inset-0 z-100 grid place-items-center p-4; }
   .notebook-modal[hidden] { display: none; }
-  .notebook-modal-backdrop { @apply absolute inset-0 bg-sand-950/25; }
   .notebook-modal-card {
-    @apply relative flex max-h-[84vh] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl border
-           border-hairline bg-surface shadow-pop;
-    animation: pop-in 0.16s var(--ease-out-soft);
+    @apply relative flex max-h-[86vh] w-full max-w-[560px] flex-col overflow-hidden rounded-3xl bg-surface;
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
+    animation: dialog-rise 0.32s var(--ease-spring);
   }
-  .notebook-modal-head {
-    @apply flex items-center justify-between border-b border-sand-100 px-5 pb-3 pt-4;
-  }
-  .notebook-modal-head h3 { @apply text-[15px] font-semibold text-ink; }
-  .notebook-modal-body { @apply flex flex-col gap-3 overflow-y-auto px-5 py-4; }
+  .notebook-modal-body { @apply flex flex-col gap-3 overflow-y-auto px-6 pb-5 pt-2; }
 
 }
 
@@ -2610,20 +2801,20 @@
   /* A layout that is a page of its own (the fish tanks' Table / Rack grid). */
   .view-switch .dt-chip[aria-current="page"] { @apply bg-surface text-ink shadow-xs; }
   .rack-chips { @apply flex flex-wrap items-center gap-1.5; }
-  .rack-chips-label { @apply text-[11.5px] font-semibold text-muted; }
+  .rack-chips-label { @apply text-[12px] font-semibold text-muted; }
   .view-switch .dt-chip svg { @apply size-[13px]; }
 
   .rack-view { @apply flex flex-col; }
   .rack-bar { @apply relative flex flex-wrap items-center gap-2 border-b border-sand-100 px-3 py-2.5; }
   .rack-picker { @apply flex items-center gap-2 text-[12px] font-medium text-muted; }
-  .rack-picker select { @apply field h-8 w-auto min-w-36 py-0 text-[12.5px] font-semibold text-ink; }
+  .rack-picker select { @apply field h-8 w-auto min-w-36 py-0 text-[13px] font-semibold text-ink; }
   .rack-meta { @apply text-[12px] text-muted tabular-nums; }
   /* "Moved cage 12 to A1" floats just under the bar: it appears and fades
      after every drop, and taking a place in the bar made the bar wrap and
      the grid jump under the pointer mid-drag. */
   .rack-status {
     @apply pointer-events-none absolute right-3 top-full z-20 mt-1.5 max-w-[44ch] truncate rounded-md border
-           border-hairline bg-surface px-2 py-1 text-[11.5px] text-muted shadow-xs;
+           border-hairline bg-surface px-2 py-1 text-[12px] text-muted shadow-xs;
   }
   .rack-status:empty { @apply hidden; }
   .rack-status[data-state="saved"] { @apply text-ok-700; }
@@ -2645,7 +2836,7 @@
   }
   .rack-corner { @apply size-full; }
   .rack-col-label, .rack-row-label {
-    @apply grid place-items-center text-[10.5px] font-semibold text-sand-400 tabular-nums;
+    @apply grid place-items-center text-[11px] font-semibold text-sand-400 tabular-nums;
   }
   .rack-col-label { @apply h-5; }
   .rack-cell {
@@ -2664,15 +2855,15 @@
   /* An empty cell shows its own name, faintly, so the grid reads like the
      labels on the physical rack. */
   .rack-cell-name {
-    @apply m-auto select-none font-mono text-[10.5px] font-medium text-sand-300 tabular-nums;
+    @apply m-auto select-none font-mono text-[11px] font-medium text-sand-300 tabular-nums;
   }
   .rack-naming-example { @apply rounded-lg bg-sand-50 px-3 py-2 text-[12px] text-muted; }
   .rack-naming-example .ident { @apply font-semibold text-ink; }
-  .rack-empty { @apply col-span-full py-16 text-center text-[12.5px] text-muted; }
+  .rack-empty { @apply col-span-full py-16 text-center text-[13px] text-muted; }
 
   .rack-tray { @apply flex flex-col gap-2 self-start rounded-xl border border-dashed border-sand-300 p-3; }
-  .rack-tray h4 { @apply text-[11.5px] font-semibold text-muted; }
-  .rack-tray p { @apply text-[11.5px] leading-snug text-muted; }
+  .rack-tray h4 { @apply text-[12px] font-semibold text-muted; }
+  .rack-tray p { @apply text-[12px] leading-snug text-muted; }
   .rack-tray-items { @apply flex flex-col gap-1.5; }
   .rack-tray-items .rack-tile { @apply min-h-11 flex-none; }
   .rack-tray-empty { @apply text-[12px] text-muted; }
@@ -2700,8 +2891,8 @@
            text-muted tabular-nums;
   }
   .rack-tile-foot { @apply flex min-w-0 items-baseline gap-1; }
-  .rack-tile-sub { @apply min-w-0 truncate text-[10.5px] text-muted; }
-  .rack-tile-pos { @apply ml-auto shrink-0 font-mono text-[9.5px] font-medium text-sand-400 tabular-nums; }
+  .rack-tile-sub { @apply min-w-0 truncate text-[11px] text-muted; }
+  .rack-tile-pos { @apply ml-auto shrink-0 font-mono text-[10px] font-medium text-sand-400 tabular-nums; }
 
   /* Tone by purpose — the same palette as the status pills. */
   .rack-tile:is([data-tone="breeder"], [data-tone="breeding"], [data-tone="mating"]) { @apply border-brand-200 bg-brand-50; }
@@ -2730,12 +2921,12 @@
   }
   .rack-stack[hidden] { display: none; }
   .rack-stack:not([hidden]):not(:popover-open)[popover] { display: none; }
-  .rack-stack-head { @apply text-[11.5px] leading-snug text-muted; }
+  .rack-stack-head { @apply text-[12px] leading-snug text-muted; }
   .rack-stack .rack-tile { @apply min-h-11 flex-none; }
 
   /* Rack dialog: the delete form sits under the main form. */
   .rack-delete {
-    @apply flex items-center gap-3 border-t border-sand-100 bg-sand-50/60 px-5 py-3 text-[11.5px] text-muted;
+    @apply flex items-center gap-3 border-t border-sand-100 bg-sand-50/60 px-5 py-3 text-[12px] text-muted;
   }
 
   /* Rack dialog's second question: a new layout renames positions in use,
@@ -2743,14 +2934,14 @@
      the built file can carry it without a rebuild. */
   .rack-layout-dialog { width: min(40rem, calc(100vw - 2rem)); }
   .rack-layout-body { display: flex; flex-direction: column; gap: calc(var(--spacing) * 2.5); }
-  .rack-layout-lead { margin: 0; font-size: 12.5px; color: var(--color-muted); }
+  .rack-layout-lead { margin: 0; font-size: 13px; color: var(--color-muted); }
   .record-dialog-body label.rack-layout-choice {
     display: flex; flex-direction: row; align-items: flex-start; gap: calc(var(--spacing) * 2.5); cursor: pointer;
     border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
     font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--color-ink);
   }
   .record-dialog-body label.rack-layout-choice:has(input:checked) { border-color: var(--color-brand-500); background-color: var(--color-brand-50); }
-  .record-dialog-body label.rack-layout-choice > input[type="radio"] { all: revert; margin-top: 3px; }
+  .record-dialog-body label.rack-layout-choice > input[type="radio"] { margin-top: 1px; }
   .rack-layout-choice > span { display: flex; flex-direction: column; gap: 2px; }
   .rack-layout-hint { font-size: 12px; color: var(--color-muted); }
   .rack-layout-note { font-size: 12px; font-weight: 600; color: var(--color-warn-600); }
@@ -2758,10 +2949,10 @@
   .rack-layout-table {
     max-height: 16rem; overflow: auto; border: 1px solid var(--color-hairline); border-radius: var(--radius-lg);
   }
-  .rack-layout-table table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .rack-layout-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
   .rack-layout-table th {
     position: sticky; top: 0; background-color: var(--color-sand-50); padding: 6px 10px; text-align: left;
-    font-size: 11.5px; font-weight: 600; color: var(--color-muted);
+    font-size: 12px; font-weight: 600; color: var(--color-muted);
   }
   .rack-layout-table td { border-top: 1px solid var(--color-sand-100); padding: 5px 10px; font-family: var(--font-mono); }
   .rack-layout-code { font-weight: 600; }
@@ -2787,7 +2978,7 @@
   .prop-tile[data-tone="plasmids"] { @apply bg-ok-50 text-ok-600; }
   .prop-tile[data-tone="warn"] { @apply bg-warn-50 text-warn-700; }
   .prop-chip {
-    @apply max-w-[45%] shrink-0 truncate rounded-md bg-sand-100 px-2 py-0.5 text-[11.5px] text-muted;
+    @apply max-w-[45%] shrink-0 truncate rounded-md bg-sand-100 px-2 py-0.5 text-[12px] text-muted;
   }
 }
 
@@ -2806,7 +2997,6 @@
 
   .cmdk-overlay { @apply fixed inset-0 z-100 flex items-start justify-center p-4 pt-[12vh]; }
   .cmdk-overlay[hidden] { display: none; }
-  .cmdk-backdrop { @apply absolute inset-0 bg-sand-950/20 backdrop-blur-[3px]; }
 
   .cmdk-card {
     @apply relative flex max-h-[62vh] w-full max-w-[600px] flex-col overflow-hidden
@@ -2830,7 +3020,7 @@
   .cmdk-kbd { @apply kbd-chip shrink-0; }
 
   .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto bg-surface/70 p-1.5; }
-  .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[12.5px] text-muted; }
+  .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[13px] text-muted; }
 
   .cmdk-group-label {
     @apply px-2.5 pb-1 pt-2.5 text-[11px] font-semibold
@@ -2858,7 +3048,7 @@
 
   .cmdk-row-text { @apply flex min-w-0 flex-col; }
   .cmdk-row-label { @apply truncate text-[13px] font-medium text-ink; }
-  .cmdk-row-sublabel { @apply truncate text-[11.5px] text-muted; }
+  .cmdk-row-sublabel { @apply truncate text-[12px] text-muted; }
 
   .cmdk-foot {
     @apply flex shrink-0 items-center gap-4 border-t border-hairline/70 bg-transparent
@@ -2879,17 +3069,39 @@
      window; it rises into place. Title left, buttons bottom right, no grey
      bands between them. */
   dialog {
-    @apply m-auto max-h-[86vh] w-[min(560px,calc(100vw-2rem))] rounded-3xl border-0
+    @apply m-auto max-h-[86dvh] w-[min(560px,calc(100vw-2rem))] rounded-3xl border-0
            bg-surface p-0 text-ink;
     box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
   }
   dialog::backdrop {
-    background: rgb(0 0 0 / 0.22);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    background: var(--scrim);
+    -webkit-backdrop-filter: blur(var(--scrim-blur));
+    backdrop-filter: blur(var(--scrim-blur));
   }
   dialog[open] { animation: dialog-rise 0.32s var(--ease-spring); }
   @media (prefers-reduced-motion: reduce) { dialog[open] { animation: none; } }
+
+  /* On a phone every dialog is a sheet: it rises from the bottom edge, full
+     width, its buttons above the home indicator and easy to reach. */
+  @media (max-width: 640px) {
+    dialog:not(.phone-sheet):not(.cmdk-dialog) {
+      @apply mb-0 w-screen max-w-none rounded-t-[22px] rounded-b-none;
+      max-height: 92dvh;
+      animation: sheet-up 0.34s var(--ease-out-soft);
+    }
+    .record-dialog > form, .record-dialog > div { max-height: 92dvh; }
+    .record-dialog-head { @apply px-5 pt-4; }
+    .record-dialog-head::before {
+      content: ""; @apply absolute top-1.5 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-sand-300;
+    }
+    .record-dialog-body { @apply px-5; }
+    .record-dialog-foot { @apply flex-wrap px-5 pt-3; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+    .record-dialog-foot .btn { @apply h-10 flex-1 text-[15px]; }
+    .record-dialog-foot .record-dialog-hint { @apply w-full flex-none; }
+  }
+  @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+    dialog:not(.phone-sheet):not(.cmdk-dialog) { animation: none; }
+  }
 
   .modal-topbar {
     @apply flex items-center justify-between gap-3 px-5 pb-2 pt-4;
@@ -2968,14 +3180,14 @@
 
   .section-head { @apply mb-3.5 flex items-start justify-between gap-4; }
   .section-head h2 { @apply mb-0.5; }
-  .section-head p { @apply m-0 text-[12.5px] leading-snug text-muted; }
+  .section-head p { @apply m-0 text-[13px] leading-snug text-muted; }
   .compact-head { @apply mb-2; }
 
   .grid { @apply grid gap-4; }
   .two-col { @apply grid-cols-[repeat(auto-fit,minmax(300px,1fr))]; }
   .cards { @apply grid-cols-[repeat(auto-fit,minmax(150px,1fr))]; }
   .top-gap { @apply mt-4; }
-  .muted-inline { @apply text-[11.5px] text-muted; }
+  .muted-inline { @apply text-[12px] text-muted; }
   .meta-sep { @apply text-sand-400; }
 
   /* --- Dense table ------------------------------------------------------ */
@@ -2985,11 +3197,11 @@
            border-hairline bg-surface;
   }
 
-  .dense-table { @apply w-full min-w-0 table-fixed text-[11.5px]; }
+  .dense-table { @apply w-full min-w-0 table-fixed text-[12px]; }
 
   .dense-table th {
     @apply relative border-b border-hairline bg-sand-50 px-1.5 py-1.5 text-left
-           align-bottom text-[10.5px] font-semibold leading-tight text-muted;
+           align-bottom text-[11px] font-semibold leading-tight text-muted;
   }
   .dense-table td { @apply border-b border-sand-100 px-1 py-px align-middle; }
   .dense-table tbody td { border-bottom-width: var(--row-rule); }   /* none under the last row */
@@ -3023,7 +3235,7 @@
   .dense-table select,
   .dense-table textarea {
     @apply h-auto min-w-0 w-full rounded-md border border-transparent bg-transparent
-           px-1 py-1 text-[11.5px] leading-tight text-ink-soft shadow-none
+           px-1 py-1 text-[12px] leading-tight text-ink-soft shadow-none
            transition-all duration-100;
   }
   .dense-table input:hover:not([readonly]):not([type="checkbox"]),
@@ -3049,7 +3261,7 @@
   }
   .mouse-table input[name="gender"].sex-f { @apply border-pink-200 bg-pink-50 text-pink-700; }
   .mouse-table input[name="gender"].sex-m { @apply border-sky-200 bg-sky-50 text-sky-700; }
-  .genotype-full { @apply whitespace-normal break-words text-[11.5px] leading-snug text-ink-soft; }
+  .genotype-full { @apply whitespace-normal break-words text-[12px] leading-snug text-ink-soft; }
 
   /* Small circular row action (duplicate / delete). */
   .row-icon-btn {
@@ -3122,7 +3334,7 @@
   .cage-card:hover { @apply shadow-sm; }
   /* Mice of a litter, on the Litters sheet. */
   .litter-mouse {
-    @apply mr-1.5 inline-flex items-center gap-1 whitespace-nowrap font-mono text-[11.5px] text-ink-soft no-underline;
+    @apply mr-1.5 inline-flex items-center gap-1 whitespace-nowrap font-mono text-[12px] text-ink-soft no-underline;
   }
   .litter-mouse:hover { @apply text-brand-700 underline; }
 
@@ -3132,7 +3344,7 @@
   .litter-form-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5; }
   .litter-form-grid label { @apply flex min-w-0 flex-col gap-px; }
   .litter-form-grid span {
-    @apply truncate text-[10.5px] font-semibold text-muted;
+    @apply truncate text-[11px] font-semibold text-muted;
   }
   .strain-table th:nth-child(5), .strain-table td:nth-child(5) { width: 28%; }
 
@@ -3176,7 +3388,7 @@
   }
   .breeder-head-grid > div { @apply flex min-w-0 flex-col gap-px; }
   .breeder-head-grid span {
-    @apply text-[10.5px] font-semibold text-sand-500;
+    @apply text-[11px] font-semibold text-sand-500;
   }
   .breeder-head-grid strong { @apply break-words text-[12px] font-semibold text-ink; }
 
@@ -3200,7 +3412,7 @@
   .notice-item { @apply rounded-xl border border-hairline bg-sand-50 px-3 py-2.5 transition-colors; }
   .notice-item:hover { @apply border-sand-300; }
   .notice-item strong { @apply text-[13px] font-semibold text-ink; }
-  .notice-item p { @apply my-1 text-[12.5px] leading-snug text-ink-soft; }
+  .notice-item p { @apply my-1 text-[13px] leading-snug text-ink-soft; }
   .notice-item small { @apply text-[11px] text-muted; }
   .notice-item.unread { @apply border-brand-200 bg-brand-50/60; }
 
@@ -3223,7 +3435,7 @@
   }
   /* A checkbox or a radio reads as one line: box, then its label. */
   :is(.modal-grid, .record-dialog-body) label:has(> input:is([type="checkbox"], [type="radio"])) {
-    @apply flex flex-row items-center gap-2 self-center text-[12.5px] font-normal normal-case
+    @apply flex flex-row items-center gap-2 self-center text-[13px] font-normal normal-case
            tracking-normal text-ink-soft;
   }
   :is(.modal-grid, .record-dialog-body) label > input:is([type="checkbox"], [type="radio"]) {
@@ -3236,7 +3448,7 @@
 
   .danger-button {
     @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-transparent
-           bg-transparent px-2 py-1 text-[12.5px] font-medium text-danger-700 transition-colors;
+           bg-transparent px-2 py-1 text-[13px] font-medium text-danger-700 transition-colors;
   }
   .danger-button:hover { @apply bg-danger-50 text-danger-700; }
   .danger-link { @apply text-danger-700; }
@@ -3249,7 +3461,7 @@
   /* --- Calculator result ------------------------------------------------ */
 
   .result-box { @apply inset mt-1 flex flex-col gap-0.5 border-brand-200 bg-brand-50/60; }
-  .result-box strong { @apply text-[20px] font-semibold tracking-[-0.02em] text-brand-700; }
+  .result-box strong { @apply text-[22px] font-semibold tracking-[-0.02em] text-brand-700; }
 
   /* --- Legacy list rows ------------------------------------------------- */
 
@@ -3272,11 +3484,11 @@
     transition-timing-function: var(--ease-out-soft);
   }
   .experiment-card:hover { @apply border-brand-300 text-ink shadow-sm; }
-  .experiment-card h3 { @apply m-0 text-[14.5px]; }
-  .experiment-card p { @apply m-0 line-clamp-2 text-[12.5px] leading-snug text-muted; }
+  .experiment-card h3 { @apply m-0 text-[15px]; }
+  .experiment-card p { @apply m-0 line-clamp-2 text-[13px] leading-snug text-muted; }
   .experiment-card-head { @apply flex items-center justify-between gap-2; }
   .experiment-card-owner { @apply shrink-0; }
-  .experiment-card-meta { @apply mt-1 flex flex-wrap gap-3 text-[11.5px] text-muted; }
+  .experiment-card-meta { @apply mt-1 flex flex-wrap gap-3 text-[12px] text-muted; }
   .experiment-card-meta span { @apply inline-flex items-center gap-1; }
   .experiment-card-meta svg { @apply size-[13px] text-sand-400; }
 
@@ -3296,7 +3508,7 @@
     @apply mb-3 flex flex-wrap items-center gap-2 border-b border-sand-100 pb-3;
   }
   .experiment-add-cage, .experiment-add-mouse { @apply inline-flex flex-wrap items-center gap-1.5; }
-  .experiment-add-row input, .experiment-add-row select { @apply field h-8 w-auto text-[12.5px]; }
+  .experiment-add-row input, .experiment-add-row select { @apply field h-8 w-auto text-[13px]; }
   .experiment-add-row button { @apply btn; }
 
   .experiment-member-table th, .experiment-member-table td { @apply px-2 py-1.5 text-[12px]; }
@@ -3318,7 +3530,7 @@
   }
   .weight-add-btn { @apply btn btn-ghost btn-sm; }
   .sparkline-empty, .sparkline-single { @apply text-[12px] text-sand-300; }
-  .weight-matrix-table { @apply text-[11.5px]; font-variant-numeric: tabular-nums; }
+  .weight-matrix-table { @apply text-[12px]; font-variant-numeric: tabular-nums; }
   .weight-matrix-table th, .weight-matrix-table td { @apply whitespace-nowrap px-2 py-1 text-right; }
   .weight-matrix-table th:first-child, .weight-matrix-table td:first-child,
   .weight-matrix-table th:nth-child(2), .weight-matrix-table td:nth-child(2) { @apply text-left; }
@@ -3343,7 +3555,7 @@
   .selbar[hidden] { display: none; }
 
   .selbar-count {
-    @apply shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-[12.5px] font-semibold text-brand-800;
+    @apply shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-[13px] font-semibold text-brand-800;
   }
 
   .selbar-group {
@@ -3391,7 +3603,7 @@
   /* Personal vs lab common: the same pill shape, violet for the lab. */
   .sheet-table select.scope-pill {
     @apply h-6 w-auto max-w-full cursor-pointer appearance-none rounded-full border-transparent
-           bg-sand-100 px-2.5 text-[11.5px] font-semibold text-muted;
+           bg-sand-100 px-2.5 text-[12px] font-semibold text-muted;
   }
   .sheet-table select.scope-pill[data-scope="lab"] { @apply bg-violet-50 text-violet-700; }
   .sheet-table select.scope-pill[data-scope="group"] { @apply bg-teal-50 text-teal-700; }
@@ -3450,7 +3662,7 @@
   }
   .board-col.is-drop-target { @apply border-brand-300 bg-brand-50/60; }
   .board-col-head { @apply flex items-center justify-between px-1.5 pb-2 pt-1; }
-  .board-count { @apply text-[11.5px] font-semibold text-muted tabular-nums; }
+  .board-count { @apply text-[12px] font-semibold text-muted tabular-nums; }
   .board-cards { @apply flex flex-1 flex-col gap-1.5; }
   .board-card {
     @apply cursor-grab rounded-xl border border-hairline bg-surface px-3 py-2 shadow-xs
@@ -3459,7 +3671,7 @@
   .board-card.is-dragging { @apply cursor-grabbing opacity-50; }
   .board-card-top { @apply flex items-center justify-between gap-2 text-[11px]; }
   .board-card-name { @apply mt-0.5 truncate text-[13px] font-semibold text-ink; }
-  .board-card-meta { @apply truncate text-[11.5px] text-muted; }
+  .board-card-meta { @apply truncate text-[12px] text-muted; }
 
   /* New inventory: preset cards. */
   .preset-grid { @apply grid gap-3; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
@@ -3470,23 +3682,23 @@
   .preset-card:has(input:checked) { @apply border-brand-400 ring-2 ring-brand-400/30; }
   .preset-card input[type="radio"] { @apply sr-only; }
   .preset-card-icon { @apply grid size-9 place-items-center rounded-xl bg-sand-100 text-ink; }
-  .preset-card-title { @apply text-[14px] font-semibold text-ink; }
+  .preset-card-title { @apply text-[15px] font-semibold text-ink; }
   .preset-card-blurb { @apply text-[12px] leading-snug text-muted; }
   .preset-card-tags { @apply mt-auto flex flex-wrap gap-1 pt-1; }
 
   /* Configure: the column editor. */
-  .field-editor { @apply w-full border-collapse text-[12.5px]; }
-  .field-editor th { @apply px-1.5 pb-1.5 text-left text-[11.5px] font-semibold text-muted; }
+  .field-editor { @apply w-full border-collapse text-[13px]; }
+  .field-editor th { @apply px-1.5 pb-1.5 text-left text-[12px] font-semibold text-muted; }
   .field-editor td { @apply px-1.5 py-1 align-middle; }
   .field-editor tr.is-removed td { @apply opacity-40; }
   .field-editor tr.is-removed input[type="text"] { @apply line-through; }
   /* Statuses / categories: one row per value, with how many items hold it
      and, once removed, what they become (not dimmed: it needs an answer). */
-  .choice-editor td.choice-usage { @apply whitespace-nowrap text-[11.5px] tabular-nums text-muted; }
+  .choice-editor td.choice-usage { @apply whitespace-nowrap text-[12px] tabular-nums text-muted; }
   .choice-editor tr.is-removed td.choice-replace { @apply opacity-100; }
-  .choice-editor .choice-replace label { @apply flex items-center gap-1.5 whitespace-nowrap text-[11.5px] text-muted normal-case tracking-normal; }
+  .choice-editor .choice-replace label { @apply flex items-center gap-1.5 whitespace-nowrap text-[12px] text-muted normal-case tracking-normal; }
   .choice-editor .choice-replace select { @apply h-7 min-w-[120px] text-[12px]; }
-  .add-many-hint { @apply text-[11.5px] leading-snug text-muted normal-case tracking-normal; }
+  .add-many-hint { @apply text-[12px] leading-snug text-muted normal-case tracking-normal; }
 }
 
 /* ===========================================================================
@@ -3618,7 +3830,7 @@
 @layer components {
   /* A read-only dialog or Configure page says why. */
   .org-locked-note {
-    @apply m-0 flex items-center gap-2 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[12.5px] text-muted;
+    @apply m-0 flex items-center gap-2 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[13px] text-muted;
   }
   .org-locked-note svg { @apply size-3.5 shrink-0 text-sand-400; }
   .org-locked-note[hidden] { display: none; }
@@ -3643,7 +3855,7 @@
    PLASMID BOXES — the New plasmid dialog's "How many", and the box dialog.
    =========================================================================== */
 @layer components {
-  .plasmid-many-hint { @apply col-span-full m-0 text-[11.5px] leading-snug text-muted; }
+  .plasmid-many-hint { @apply col-span-full m-0 text-[12px] leading-snug text-muted; }
   .record-dialog label.is-muted { @apply opacity-60; }
   .plasmid-box-locked {
     @apply m-0 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[12px] text-muted;
@@ -3661,7 +3873,7 @@
 
   .cage-sheet .dt-toolbar > .btn-primary { @apply h-8 gap-1.5 px-2.5 text-[12px]; }
   .cage-sheet .cage-mice-count strong { @apply font-semibold text-ink; }
-  .cage-sheet .cage-sexes { @apply ml-1 text-[11.5px] font-normal text-muted; }
+  .cage-sheet .cage-sexes { @apply ml-1 text-[12px] font-normal text-muted; }
   .cage-born-cell { @apply flex items-center gap-1; }
   /* Room for every column at a glance: a column's name wraps onto a second
      line rather than widening it past what it holds, the purpose pill fills
@@ -3679,7 +3891,7 @@
            font-medium text-warn-700 no-underline;
   }
   .cage-pups svg { @apply size-3; }
-  .cage-wean { @apply text-[12.5px] text-ink-soft; }
+  .cage-wean { @apply text-[13px] text-ink-soft; }
   .cage-wean[data-state="soon"] { @apply font-semibold text-warn-700; }
   .cage-wean[data-state="overdue"] { @apply font-semibold text-danger-700; }
 
@@ -3718,13 +3930,13 @@
   }
   .cage-detail-tools { @apply mb-2 flex flex-wrap items-center gap-1.5; }
   .cage-detail-tools form { @apply m-0; }
-  .cage-detail-title { @apply mr-2 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink; }
+  .cage-detail-title { @apply mr-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink; }
   .cage-detail-title svg { @apply size-3.5 text-muted; }
   .cage-detail-title .text-muted { @apply font-normal; }
   .cage-detail-spacer { @apply flex-1; }
   .cage-detail .breeding-actions { @apply inline-flex flex-wrap items-center gap-1.5; }
   .cage-detail .breeding-actions.hidden-row { display: none; }
-  .cage-detail-lock { @apply inline-flex items-center gap-1 text-[11.5px] text-muted; }
+  .cage-detail-lock { @apply inline-flex items-center gap-1 text-[12px] text-muted; }
   .cage-detail-lock svg { @apply size-3; }
   .cage-detail-empty { @apply m-0 py-1 text-[12px] text-muted; }
 
@@ -3754,7 +3966,7 @@
   .cage-card-geno { @apply max-w-48 truncate text-muted; }
   .cage-card-head .cage-wean { @apply inline-flex items-center gap-1 text-[12px]; }
   .cage-card-head .cage-wean svg { @apply size-3.5; }
-  .cage-card-grid .cage-detail-title { @apply text-[14px]; }
+  .cage-card-grid .cage-detail-title { @apply text-[15px]; }
   .cage-card-grid .breeding-actions { @apply inline-flex flex-wrap items-center gap-1.5; }
   .cage-card-grid .breeding-actions.hidden-row { display: none; }
   .cage-card-grid .cage-mice-table { @apply w-full; }
@@ -3790,14 +4002,14 @@
   /* Strains: a lock beside a name you may not change. */
   .strain-name-cell { @apply flex items-center gap-1 pr-1.5; }
   .strain-name-cell > input {
-    @apply h-7 w-full min-w-0 rounded-md border border-transparent bg-transparent px-1.5 text-[12.5px] text-ink-soft;
+    @apply h-7 w-full min-w-0 rounded-md border border-transparent bg-transparent px-1.5 text-[13px] text-ink-soft;
   }
   .strain-name-cell > input:not(:disabled):hover { @apply border-hairline bg-surface; }
   .strain-name-cell > input:focus { @apply border-brand-400 bg-surface text-ink; }
 
   /* Presets are the admin's; members read them. */
   .preset-readonly-note {
-    @apply my-2 flex items-center gap-2 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[12.5px] text-muted;
+    @apply my-2 flex items-center gap-2 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[13px] text-muted;
   }
   .preset-readonly-note svg { @apply size-3.5 shrink-0 text-sand-400; }
   .preset-edit-form input:disabled { @apply cursor-default bg-transparent; }
@@ -3841,8 +4053,8 @@
 @layer components {
   .setup-page { @apply mx-auto flex max-w-[860px] flex-col gap-4; }
   .setup-intro { @apply rounded-2xl border border-brand-100 bg-brand-50/60 px-5 py-4; }
-  .setup-intro h2 { @apply m-0 text-[19px] font-semibold text-ink; text-wrap: balance; }
-  .setup-intro p { @apply mt-1.5 mb-0 max-w-[68ch] text-[13.5px] leading-relaxed text-ink-soft; }
+  .setup-intro h2 { @apply m-0 text-[22px] font-semibold text-ink; text-wrap: balance; }
+  .setup-intro p { @apply mt-1.5 mb-0 max-w-[68ch] text-[13px] leading-relaxed text-ink-soft; }
   .setup-form { @apply flex flex-col gap-4; }
   .setup-step { @apply rounded-2xl border border-hairline bg-surface px-5 py-4; }
   .setup-step-head { @apply mb-2 flex items-center gap-2.5; }
@@ -3852,8 +4064,8 @@
            text-[12px] font-bold text-brand-700;
   }
   .setup-step-num .icon { @apply size-3.5; }
-  .setup-note { @apply my-2 max-w-[70ch] text-[12.5px] leading-snug text-muted; }
-  .setup-group-label { @apply mt-3 mb-1.5 text-[11.5px] font-semibold text-sand-500; }
+  .setup-note { @apply my-2 max-w-[70ch] text-[13px] leading-snug text-muted; }
+  .setup-group-label { @apply mt-3 mb-1.5 text-[12px] font-semibold text-sand-500; }
   .setup-submit { @apply flex flex-wrap items-center gap-3; }
   .setup-list { @apply flex flex-col divide-y divide-hairline rounded-xl border border-hairline; }
   .setup-row { @apply flex flex-wrap items-center justify-between gap-2 px-3 py-2; }
@@ -3881,7 +4093,7 @@
   .choice-card:has(input:checked) .choice-icon { @apply text-brand-700; }
   .choice-icon .icon { @apply size-4; }
   .choice-text { @apply flex min-w-0 flex-1 flex-col; }
-  .choice-title { @apply text-[13.5px] font-semibold text-ink; }
+  .choice-title { @apply text-[13px] font-semibold text-ink; }
   .choice-blurb { @apply text-[12px] leading-snug text-muted; }
   .choice-check {
     @apply inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-sand-300
@@ -3971,8 +4183,8 @@
   .notif-item.is-unread .notif-text { @apply font-semibold; }
   .notif-sub { @apply text-[12px] leading-snug text-muted; }
   .notif-meta { @apply text-[11px] text-sand-500; }
-  .notif-empty, .notif-loading { @apply px-4 py-6 text-center text-[12.5px] leading-snug text-muted; }
-  .notif-all { @apply block px-3 py-2 text-center text-[12.5px] font-medium text-brand-700 no-underline; }
+  .notif-empty, .notif-loading { @apply px-4 py-6 text-center text-[13px] leading-snug text-muted; }
+  .notif-all { @apply block px-3 py-2 text-center text-[13px] font-medium text-brand-700 no-underline; }
   .notif-all:hover { @apply bg-sand-100 no-underline; }
   .notif-list { @apply overflow-hidden p-0; }
   .notif-list .notif-item:last-child { @apply border-b-0; }
@@ -4088,7 +4300,7 @@
     content: attr(data-label);
     flex: 0 0 7.5rem;
     margin-right: 8px;
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--color-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -4123,19 +4335,19 @@ tr.is-scanned > td:first-child {
 @layer components {
   .icon-picker { @apply grid gap-4 p-4; }
   .icon-picker fieldset { @apply m-0 min-w-0 border-0 p-0; }
-  .icon-picker legend { @apply mb-2 p-0 text-[11.5px] font-semibold text-muted; }
+  .icon-picker legend { @apply mb-2 p-0 text-[12px] font-semibold text-muted; }
   .icon-picker-hero { @apply flex items-center gap-4; }
   .icon-picker-hero img { @apply size-24 shrink-0; }
-  .icon-picker-hero p { @apply max-w-[46ch] text-[12.5px] leading-snug text-muted; }
+  .icon-picker-hero p { @apply max-w-[46ch] text-[13px] leading-snug text-muted; }
   .icon-picker-glyphs { @apply grid grid-cols-4 gap-1.5 sm:grid-cols-8; }
   .icon-pick {
-    @apply relative grid cursor-pointer justify-items-center gap-1 rounded-xl border-[1.5px] border-transparent px-1 pt-1.5 pb-1 text-center text-[11.5px] leading-tight text-ink-soft transition-colors;
+    @apply relative grid cursor-pointer justify-items-center gap-1 rounded-xl border-[1.5px] border-transparent px-1 pt-1.5 pb-1 text-center text-[12px] leading-tight text-ink-soft transition-colors;
   }
   .icon-pick:hover { @apply bg-sand-100; }
   .icon-pick img { @apply size-14 max-w-full; }
   .icon-pick:has(input:checked) { @apply border-brand-600 bg-brand-50 font-semibold text-ink; }
   .icon-picker-swatches { @apply flex flex-wrap gap-3.5; }
-  .icon-swatch { @apply relative grid cursor-pointer justify-items-center gap-1.5 text-[11.5px] text-muted; }
+  .icon-swatch { @apply relative grid cursor-pointer justify-items-center gap-1.5 text-[12px] text-muted; }
   .icon-swatch i {
     @apply block size-8 rounded-full;
     background: linear-gradient(var(--top), var(--bottom));
@@ -4176,20 +4388,20 @@ tr.is-scanned > td:first-child {
   .set-me {
     @apply mb-2 flex items-center gap-2.5 rounded-xl px-2 py-2 no-underline text-ink transition-colors;
   }
-  .set-me b { @apply block truncate text-[13.5px] font-semibold; }
+  .set-me b { @apply block truncate text-[13px] font-semibold; }
   .set-me small { @apply block truncate text-[12px] text-muted; }
   .set-me:hover { @apply bg-sand-100; }
   .set-me.is-on { @apply bg-brand-50; }
-  .set-group-head { @apply mt-3 mb-1 px-2 text-[11.5px] font-semibold text-muted; }
+  .set-group-head { @apply mt-3 mb-1 px-2 text-[12px] font-semibold text-muted; }
   .set-link {
-    @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13.5px] no-underline text-ink transition-colors;
+    @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13px] no-underline text-ink transition-colors;
   }
   .set-link:hover { @apply bg-sand-100; }
   /* The open pane: a soft tint of the accent, as in the sidebar. */
   .set-link.is-on { @apply bg-brand-600/14 font-semibold text-brand-800; }
   .set-link-label { @apply min-w-0 truncate; }
-  .set-link-badge { @apply ml-auto shrink-0 rounded-full bg-brand-600 px-1.5 text-[10.5px] font-semibold leading-[17px] text-white; }
-  .set-search-none { @apply px-2 py-2 text-[12.5px] text-muted; }
+  .set-link-badge { @apply ml-auto shrink-0 rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold leading-[17px] text-white; }
+  .set-search-none { @apply px-2 py-2 text-[13px] text-muted; }
 
   .set-ico { @apply grid size-[22px] shrink-0 place-items-center rounded-md; }
   .set-ico svg { @apply size-[13px]; }
@@ -4206,8 +4418,8 @@ tr.is-scanned > td:first-child {
   .set-back { @apply mb-3 hidden items-center gap-1 text-[13px] font-medium text-brand-700 no-underline; }
   .set-back svg { @apply size-4; }
   .set-head { @apply mb-4 flex items-center gap-3; }
-  .set-head h2 { @apply m-0 text-[19px] font-semibold leading-tight tracking-[-0.015em] text-ink; }
-  .set-head p { @apply mt-0.5 mb-0 text-[12.5px] leading-snug text-muted; }
+  .set-head h2 { @apply m-0 text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink; }
+  .set-head p { @apply mt-0.5 mb-0 text-[13px] leading-snug text-muted; }
   .set-head p svg { @apply inline size-3 align-[-1px]; }
   .set-head a { @apply text-brand-700; }
   .set-me-badge .owner-badge, .set-me-badge > span { @apply scale-125; }
@@ -4221,9 +4433,9 @@ tr.is-scanned > td:first-child {
     @apply overflow-hidden rounded-xl border border-hairline bg-surface;
   }
   .set-group-pad { @apply flex flex-col gap-3 p-4; }
-  .set-note { @apply m-0 text-[12.5px] leading-snug text-muted; }
+  .set-note { @apply m-0 text-[13px] leading-snug text-muted; }
   .set-row {
-    @apply flex min-h-11 items-center gap-3 px-3.5 py-2 text-[13.5px] text-ink no-underline;
+    @apply flex min-h-11 items-center gap-3 px-3.5 py-2 text-[13px] text-ink no-underline;
   }
   .set-group > .set-row + .set-row,
   .set-group > * + .set-row,
@@ -4235,7 +4447,7 @@ tr.is-scanned > td:first-child {
   .set-value { @apply shrink-0 text-[13px] text-muted; }
   .set-row > input:not([type="checkbox"]):not([type="radio"]),
   .set-row > select {
-    @apply w-[min(240px,50%)] shrink-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-[13.5px] text-ink-soft;
+    @apply w-[min(240px,50%)] shrink-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-[13px] text-ink-soft;
   }
   .set-row > select { @apply w-auto max-w-[55%] cursor-pointer text-right; }
   .set-row > input:not([type="checkbox"]):not([type="radio"]):hover,
@@ -4268,15 +4480,15 @@ tr.is-scanned > td:first-child {
   .set-password { @apply grid grid-cols-1 gap-3 border-t border-hairline px-3.5 py-3 sm:grid-cols-3; }
   .set-password > div { @apply sm:col-span-3; }
   .set-more { @apply border-t border-hairline px-3.5 py-3 text-[12px] text-muted; }
-  .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[11.5px] leading-relaxed text-ink-soft; }
+  .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[12px] leading-relaxed text-ink-soft; }
   .set-more p { @apply m-0; }
   .set-more .set-notes { @apply max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-[12px]; }
 
   .set-group.icon-picker { @apply p-4; }
 
   /* Only admins (or a group's leads) change it: a quiet note, not an error. */
-  .set-readonly { @apply mb-2 rounded-lg bg-brand-50 px-3 py-2 text-[12.5px] leading-snug text-ink-soft; }
-  .set-subtitle { @apply mt-3 mb-1 px-1 text-[11.5px] font-medium text-muted; }
+  .set-readonly { @apply mb-2 rounded-lg bg-brand-50 px-3 py-2 text-[13px] leading-snug text-ink-soft; }
+  .set-subtitle { @apply mt-3 mb-1 px-1 text-[12px] font-medium text-muted; }
 
   /* Statistics: the totals, one bar per person, how full each rack is. */
   .set-stats { @apply grid grid-cols-2 gap-2.5 sm:grid-cols-4; }
@@ -4293,7 +4505,7 @@ tr.is-scanned > td:first-child {
   /* Tabs inside a pane (People & access), each a #hash. */
   .set-tabs { @apply mb-3 flex flex-wrap gap-1; }
   .set-tabs a { @apply rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted no-underline transition-colors; }
-  .set-tabs a span { @apply ml-0.5 text-[11.5px] text-sand-400; }
+  .set-tabs a span { @apply ml-0.5 text-[12px] text-sand-400; }
   .set-tabs a:hover { @apply bg-sand-100 text-ink-soft; }
   .set-tabs a.is-on { @apply bg-brand-50 text-brand-700; }
   .settings.is-ready [data-tabpane]:not(.is-on) { @apply hidden; }
@@ -4322,5 +4534,16 @@ tr.is-scanned > td:first-child {
     .settings.is-ready[data-open] .settings-nav { @apply hidden; }
     .settings.is-ready .set-back { @apply inline-flex; }
     .set-row > input:not([type="checkbox"]):not([type="radio"]) { @apply w-[50%]; }
+  }
+}
+
+/* Reduce Motion: nothing slides, swells or rises anywhere, whichever
+   stylesheet animates it (a popup, a toast, a sheet, a drop). */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

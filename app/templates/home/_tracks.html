@@ -127,7 +127,7 @@
           <a class="row-line" href="{{ i.url }}">
             <i class="trk-swatch" data-status="{{ i.status }}"></i>
             <span class="min-w-0 flex-1 truncate text-ink-soft">{{ i.title }}</span>
-            <span class="shrink-0 text-[11.5px] text-muted">{{ t.tracks | selectattr('key', 'equalto', i.track) | map(attribute='group') | first | tr }}</span>
+            <span class="shrink-0 text-[12px] text-muted">{{ t.tracks | selectattr('key', 'equalto', i.track) | map(attribute='group') | first | tr }}</span>
           </a>
         {% endfor %}
       </section>

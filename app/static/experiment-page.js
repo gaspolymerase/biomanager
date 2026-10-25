@@ -617,7 +617,7 @@
     const saved = D.regimens || [];
     $('[data-xp-regimens]', dialog).innerHTML = saved.length ? `<label class="xp-regimen-pick">${t('Start from a saved regimen')}
       <span class="xp-row"><select data-xp-regimen>${saved.map((r) => `<option value="${r.id}">${esc(r.name)} — ${esc(r.summary)}${r.mine ? '' : ` (${esc(r.owner)})`}</option>`).join('')}</select>
-      <button type="button" class="dt-bottom-action" data-xp-regimen-apply>${t('Plan it')}</button>
+      <button type="button" class="btn btn-sm" data-xp-regimen-apply>${t('Plan it')}</button>
       <button type="button" class="xp-link xp-danger" data-xp-regimen-delete aria-label="${esc(t('Delete this saved regimen'))}" title="${esc(t('Delete this saved regimen'))}">×</button></span></label>
       <p class="xp-sub">${t('Planning one adds its days here; each is still recorded as it is done.')}</p>` : '';
     const list = $('[data-xp-plan-list]', dialog);

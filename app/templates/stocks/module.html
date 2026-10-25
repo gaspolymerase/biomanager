@@ -336,7 +336,7 @@
   {% set kinds = {
     'flip': ('refresh', flip_verb), 'collect': ('egg', collect_verb), 'ready': ('seedling', ready_label),
     'shift': ('temperature', _('Temperature shift')), 'score': ('microscope', _('Score'))} %}
-  <div class="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
+  <div class="mb-3 flex flex-wrap items-center gap-2 text-[13px] text-muted">
     <span>{{ _('Showing what is due in the next') }}</span>
     {% for h in [7, 14, 30] %}
       <a class="dt-chip" aria-pressed="{{ 'true' if (request.args.get('horizon', '14')|int) == h else 'false' }}"
@@ -713,10 +713,10 @@
           <label class="field-label">{{ _('Progeny due is called') }} <input name="ready_label" value="{{ S.ready_label }}"></label>
           <label class="field-label">{{ _('Cross, one side') }} <input name="parent_female" value="{{ S.parents.female }}"></label>
           <label class="field-label">{{ _('Cross, other side') }} <input name="parent_male" value="{{ S.parents.male }}"></label>
-          <label class="flex items-center gap-2 text-[12.5px] sm:col-span-2">
+          <label class="flex items-center gap-2 text-[13px] sm:col-span-2">
             <input type="hidden" name="enabled" value="0"><input type="checkbox" name="enabled" value="1" {% if m.enabled %}checked{% endif %}> {{ _('Show in the sidebar') }}
           </label>
-          <label class="flex items-center gap-2 text-[12.5px] sm:col-span-2">
+          <label class="flex items-center gap-2 text-[13px] sm:col-span-2">
             <input type="hidden" name="frozen" value="0"><input type="checkbox" name="frozen" value="1" {% if S.frozen %}checked{% endif %}> {{ _('Keep a frozen-stock list') }}
           </label>
         </div>
@@ -735,7 +735,7 @@
       <section class="card">
         <header class="card-head"><h2>{{ icon('temperature') }} {{ _('Temperatures and timing') }}</h2></header>
         <div class="overflow-x-auto p-4">
-          <p class="mb-3 text-[12.5px] leading-snug text-muted">
+          <p class="mb-3 text-[13px] leading-snug text-muted">
             {% trans trimmed verb=flip_verb|lower, rack=rack_w %}
             Per incubator temperature: days between {{ verb }}s of a {{ rack }}, days from egg to adult
             (when collected progeny are due), and days between egg collections from a cross.
@@ -757,7 +757,7 @@
             </tbody>
           </table>
           <input type="hidden" name="temp_count" value="{{ m.temperatures|length + 1 }}">
-          <p class="mt-2 text-[11.5px] text-muted">{{ _('Fill the empty row to add a temperature.') }}</p>
+          <p class="mt-2 text-[12px] text-muted">{{ _('Fill the empty row to add a temperature.') }}</p>
         </div>
       </section>
 
@@ -767,7 +767,7 @@
     <form method="post" action="{{ url_for('stocks.delete_module', key=key) }}" class="card border-danger-200">
       <header class="card-head"><h2 class="text-danger-700">{{ icon('trash') }} {{ _('Delete this database') }}</h2></header>
       <div class="flex flex-wrap items-end gap-3 p-4">
-        <p class="basis-full text-[12.5px] leading-snug text-muted">{% trans name=m.label, unit=unit_w, rack=rack_w, room=room_w %}Deletes {{ name }} with every {{ unit }}, {{ rack }}, {{ room }} and genotype in it. To keep the data but hide it, untick “Show in the sidebar” instead.{% endtrans %}</p>
+        <p class="basis-full text-[13px] leading-snug text-muted">{% trans name=m.label, unit=unit_w, rack=rack_w, room=room_w %}Deletes {{ name }} with every {{ unit }}, {{ rack }}, {{ room }} and genotype in it. To keep the data but hide it, untick “Show in the sidebar” instead.{% endtrans %}</p>
         <label class="field-label grow">{{ _('Type “%(name)s” to confirm', name=m.label) }} <input name="confirm" autocomplete="off"></label>
         <button type="submit" class="btn btn-danger">{{ _('Delete') }}</button>
       </div>
@@ -815,7 +815,7 @@
         <legend>{{ _('Cross') }}</legend>
         <label>{{ parent_female }} <input name="female_genotype" list="stock-genotypes" class="font-mono" autocomplete="off"></label>
         <label>{{ parent_male }} <input name="male_genotype" list="stock-genotypes" class="font-mono" autocomplete="off"></label>
-        <p class="col-span-full text-[11.5px] leading-snug text-muted" data-show-for="cross">
+        <p class="col-span-full text-[12px] leading-snug text-muted" data-show-for="cross">
           {% trans verb=collect_verb, egg=icon('egg', 'inline size-3'), unit=unit_w %}Use <strong>{{ verb }}</strong> ({{ egg }} on the row, or in Schedule) to move the parents on and keep the eggs: a new {{ unit }} is made for the progeny, with this cross written on it.{% endtrans %}
         </p>
         <label data-show-for="progeny">{{ _('%(label)s on', label=ready_label) }} <input type="date" name="ready_on"></label>

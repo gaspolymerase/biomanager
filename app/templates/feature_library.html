@@ -34,7 +34,7 @@
         class="flex flex-wrap items-end gap-3 px-4 py-3">
     <label class="field-label">{{ _('Annotated files (GenBank, SnapGene .dna, FASTA)') }}
       <input type="file" name="files" multiple accept=".dna,.gb,.gbk,.fasta,.fa,.txt"
-             class="mt-1.5 text-[12.5px] normal-case tracking-normal">
+             class="mt-1.5 text-[13px] normal-case tracking-normal">
     </label>
     <button type="submit" class="btn">{{ icon('import') }} {{ _('Read elements from files') }}</button>
     <span class="flex-1 text-[12px] text-muted">{{ _('Every named feature in them joins the library, by its sequence. Nothing is made up: the elements are the ones your own maps carry.') }}</span>
@@ -102,7 +102,7 @@
               <td><span class="inline-block h-2.5 w-2.5 rounded-full align-middle" style="background: {{ e.color or '#cbd5e1' }}"></span> <span class="font-medium text-ink">{{ e.name }}</span></td>
               <td class="text-muted">{{ e.type }}</td>
               <td class="text-muted">{{ e.length }} bp</td>
-              <td><code class="block max-w-[420px] truncate text-[11.5px]">{{ e.sequence }}{% if e.more %}<span class="text-muted">…+{{ e.more }}</span>{% endif %}</code></td>
+              <td><code class="block max-w-[420px] truncate text-[12px]">{{ e.sequence }}{% if e.more %}<span class="text-muted">…+{{ e.more }}</span>{% endif %}</code></td>
               <td class="text-muted">{% if e.from_pack %}{{ e.from_pack }}{% elif e.source %}<a href="{{ e.source.url }}">#{{ e.source.number }} {{ e.source.name }}</a>{% endif %}{% if e.by and not e.from_pack %} · {{ e.by }}{% endif %}</td>
               <td>
                 {% if e.may_delete %}

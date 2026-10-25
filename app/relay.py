@@ -327,7 +327,7 @@ body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:
 font:15px/1.5 -apple-system,"Segoe UI",system-ui,sans-serif;background:#f4f6f6;color:#17201f}}
 @media (prefers-color-scheme:dark){{body{{background:#121817;color:#e4ecea}} .card{{background:#1a2221!important}}}}
 .card{{max-width:440px;padding:28px 30px;border-radius:18px;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.08)}}
-h1{{font-size:20px;margin:0 0 8px}} p{{margin:0 0 12px;color:#4a5654}} .row{{display:flex;gap:8px;margin-top:16px}}
+h1{{font-size:22px;margin:0 0 8px}} p{{margin:0 0 12px;color:#4a5654}} .row{{display:flex;gap:8px;margin-top:16px}}
 button,a.btn{{font:inherit;padding:8px 16px;border-radius:999px;border:1px solid #c8d2d0;background:transparent;
 color:inherit;text-decoration:none;cursor:pointer}} .primary{{background:#0f7a6b!important;border-color:#0f7a6b!important;color:#fff!important}}
 </style></head><body><main class="card">{body}</main></body></html>"""
