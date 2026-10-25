@@ -1509,6 +1509,19 @@
      _wireTight); the name stays in the tooltip and for screen readers. */
   .dt-toolbar.is-tight > .dt-toolbar-btn:has(svg) { @apply gap-0 px-2 text-[0px]; }
 
+  /* A phone: less above the first record. A sheet's New is a round +
+     beside its other buttons (its words stay for screen readers), and the
+     rack and box settings, which the grid layout reaches too, step aside. */
+  @media (max-width: 640px) {
+    /* Important: the button's own size classes are utilities too. */
+    .dt-toolbar > .btn-primary:has(svg) {
+      margin-left: auto; flex-shrink: 0; width: 36px !important; height: 36px !important; padding: 0 !important;
+      gap: 0 !important; border-radius: 9999px; font-size: 0 !important;
+    }
+    .dt-toolbar > .btn-primary:has(svg) svg { width: 18px; height: 18px; }
+    .rack-chips, .rack-chips + .info-tip { @apply hidden; }
+  }
+
   /* The sheet toolbar's ••• menu (data-table.js, _wireMore). */
   .dt-more { @apply relative shrink-0; }
   .menu.dt-more-menu { @apply fixed right-auto w-60; }
@@ -1907,7 +1920,7 @@
 
   /* Read-only cells: long text stays on one line and shows in full on hover. */
   .sheet-table td.sheet-text { @apply max-w-0 truncate px-2; }
-  .sheet-table tbody td:not(:has(input, select, .sheet-actions, .sheet-id)) { @apply px-2; }
+  .sheet-table tbody td:not(:has(input, select, .cell-text, .sheet-actions, .sheet-id)) { @apply px-2; }
   .sheet-title { @apply truncate text-[12px] font-semibold text-ink; }
 
   /* "Mouse · 12" — where a sample came from. */
@@ -3988,6 +4001,9 @@
      takes what is left instead of its input's own width. */
   .cage-sheet .sheet-table > thead th { @apply whitespace-normal; }
   .cage-sheet .sheet-table > thead .dt-col-head { @apply w-0 min-w-full leading-tight; }
+  /* The cage sheet fits a laptop (1280 wide, the sidebar open) as its
+     columns are set: they don't widen for a long first row (w-max would). */
+  .cage-sheet .sheet-table { width: 1px; }
   .cage-sheet .cage-wean { @apply whitespace-nowrap text-[12px]; }
   .cage-sheet .sheet-table > tbody > tr > td > select.status-pill[name="purpose"] { @apply w-full px-1.5; }
   .cage-sheet .sheet-table > tbody > tr > td > input.note-cell { @apply w-0 min-w-full; }
@@ -3995,7 +4011,7 @@
      one to fill in (app/litters.py): on any other cage an empty date is a
      dash, not a field. A date left from when it was one still shows. */
   .cage-born-cell > input {
-    @apply h-6.5 w-[7.75rem] min-w-0 shrink-0 rounded-md border border-transparent bg-transparent px-2
+    @apply h-6.5 w-full max-w-[7.75rem] min-w-0 shrink rounded-md border border-transparent bg-transparent px-2
            text-[12px] text-ink-soft shadow-none transition-colors duration-100;
   }
   .cage-born-cell > input:not(:disabled):hover { @apply border-hairline bg-surface; }
