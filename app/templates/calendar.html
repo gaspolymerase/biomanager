@@ -110,6 +110,9 @@
 
     <footer class="cal-side-foot">
       <button type="button" class="cal-foot-btn" id="cal-feed-btn">{{ icon('link') }} {{ _('On your phone') }}</button>
+      {% if mac_calendar_offered() %}
+      <button type="button" class="cal-foot-btn" id="cal-mac-btn">{{ icon('calendar') }} {{ _('Mac Calendar') }}</button>
+      {% endif %}
       <button type="button" class="cal-foot-btn" id="biocal-subs-btn">{{ icon('rss') }} {{ _('Connected calendars') }}</button>
     </footer>
   </aside>
@@ -418,6 +421,54 @@
     </footer>
   </div>
 </dialog>
+
+{# ================= Mac Calendar (app/mac_calendar.py) ================= #}
+{% if mac_calendar_offered() %}
+<dialog id="cal-mac-modal" class="record-dialog record-dialog-narrow cal-dialog" aria-labelledby="cal-mac-title">
+  <div class="cal-dialog-inner">
+    <header class="record-dialog-head">
+      <div>
+        <h3 id="cal-mac-title">{{ _('The calendar in your Mac’s Calendar') }}</h3>
+        <p class="record-dialog-sub">{{ _('BioManager keeps a calendar called BioManager up to date in the Mac’s Calendar app, which takes it on to iCloud, Google or Outlook, and so to your phone. No lab server needed. It updates while BioManager is open.') }}</p>
+      </div>
+      <button type="button" class="modal-close" data-on-click="close-dialog-id" data-arg="cal-mac-modal" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
+      <p id="cal-mac-ask" hidden>{{ _('First, let BioManager use this Mac’s calendars. The Mac asks you once.') }}</p>
+      <p class="cal-error" id="cal-mac-denied" hidden>{{ _("BioManager isn't allowed to use this Mac's calendars. Turn it on in System Settings → Privacy & Security → Calendars, then try again.") }}</p>
+      <div id="cal-mac-on" hidden>
+        <p id="cal-mac-where"></p>
+        <p class="cal-hint" id="cal-mac-last"></p>
+      </div>
+      <fieldset class="cal-feed-scope" id="cal-mac-scope" hidden>
+        <legend class="field-label">{{ _('What it shows') }}</legend>
+        <label class="cal-radio"><input type="radio" name="mac_scope" value="mine" checked>
+          <span><b>{{ _('Just mine') }}</b><small>{{ _('Your events, to-dos, animals, vials, protocols, bookings, and time away you cover') }}</small></span></label>
+        <label class="cal-radio"><input type="radio" name="mac_scope" value="lab">
+          <span><b>{{ _('The whole lab calendar') }}</b><small>{{ _('Everything on this page except calendars you connected') }}</small></span></label>
+      </fieldset>
+      <div id="cal-mac-choose" hidden>
+        <label class="field-label" for="cal-mac-target">{{ _('Where it goes') }}</label>
+        <select id="cal-mac-target"></select>
+        <ul class="cal-feed-how">
+          <li>{% trans %}<b>Google Calendar:</b> add your Google account in System Settings → Internet Accounts, with Calendars on. A Mac can’t add a calendar to a Google account, so make one called BioManager in Google Calendar on the web (Settings → Add calendar → Create new calendar); it shows in the list here within a few minutes.{% endtrans %}</li>
+          <li>{% trans %}<b>iPhone:</b> choose iCloud.{% endtrans %}</li>
+          <li>{% trans %}<b>Outlook:</b> add the account in System Settings → Internet Accounts, then choose it.{% endtrans %}</li>
+        </ul>
+        <p class="cal-hint">{{ _('The calendar is BioManager’s alone: anything else put in it is taken out at the next update.') }}</p>
+      </div>
+      <p class="cal-error" id="cal-mac-error" role="alert" hidden></p>
+    </div>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn btn-danger" id="cal-mac-stop" hidden>{{ _('Stop') }}</button>
+      <span class="mr-auto"></span>
+      <button type="button" class="btn" id="cal-mac-now" hidden>{{ icon('refresh') }} {{ _('Update now') }}</button>
+      <button type="button" class="btn btn-primary" id="cal-mac-allow" hidden>{{ _('Allow access') }}</button>
+      <button type="button" class="btn btn-primary" id="cal-mac-start" hidden>{{ _('Start') }}</button>
+    </footer>
+  </div>
+</dialog>
+{% endif %}
 
 {# ================= Connected calendars ================= #}
 <dialog id="biocal-subs-modal" class="record-dialog biocal-subs-modal" aria-labelledby="biocal-subs-title">

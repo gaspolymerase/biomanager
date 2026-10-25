@@ -1381,7 +1381,19 @@ Experiments, to-dos and bookings, with the colony's dates filled in for you.
 
 - **Connected calendars** shows Google Calendar and any iCal subscription alongside, read-only.
 
-- **On your phone**: a private link (just your things, or the whole lab's) for Apple, Google or Outlook Calendar. It updates about every hour. **Make a new link** stops the old one working.
+- **On your phone**: a private link (just your things, or the whole lab's) for Apple, Google or Outlook Calendar. It updates about every hour. **Make a new link** stops the old one working. Google fetches the link from the internet, so it works only when the server is open to the internet; with no server, use **Mac Calendar**.
+
+- **Mac Calendar**, in the desktop app on a Mac, needs no server. BioManager keeps a calendar called BioManager up to date in the Mac's own Calendar app, and the Mac takes it on to the account it is in, so it shows in Google Calendar or on your iPhone. Click **Allow access** once, choose *Just mine* or *The whole lab calendar* and where it goes, then **Start**.
+
+- **iPhone**: choose iCloud.
+
+- **Google Calendar**: add your Google account in System Settings → Internet Accounts, with Calendars on. A Mac can't add a calendar to a Google account, so first make one called BioManager in Google Calendar on the web (Settings → Add calendar → Create new calendar), then choose it once it shows in the list.
+
+- It updates while BioManager is open: every 15 minutes, and soon after a change. **Update now** does it straight away.
+
+- The calendar is BioManager's alone: anything else put in it is taken out at the next update, and changes made there don't come back to BioManager.
+
+- **Stop** removes the calendar BioManager made, or empties the one you made.
 
 *The calendar*
 
@@ -1718,6 +1730,8 @@ Your records never leave your computer or your lab's server. BioManager is free,
 - a random id for the installation, so a lab counts once.
 
 Never names, email addresses, anything anyone wrote, what your databases are called, or the computer's name or address. It goes to PostHog, which is asked not to work out where it came from. Admins see exactly what is sent on the **Usage report** (**Help → Send feedback → Usage report**). The counts are on unless an admin switches off **Share anonymous counts with BioManager's makers** in **Settings → General** (or **Switch off** on the Usage report). On a server, `BIOMANAGER_TELEMETRY=0` (or `DO_NOT_TRACK=1`) in `.env` turns it off for good.
+
+Apart from these counts, the only words of yours that reach BioManager's makers are a feedback note you send them yourself, with **Also send this to BioManager's makers** ticked ([Feedback](https://biomanager.org/guide/feedback)): that note, its page and the version, and a way to reach you if you gave one.
 
 Source: https://biomanager.org/guide/your-data
 
@@ -2134,9 +2148,13 @@ Source: https://biomanager.org/guide/troubleshooting
 
 ## Feedback
 
-Send feedback to your lab's admins from any page, or open it as a GitHub issue for BioManager's makers.
+Send feedback to your lab's admins from any page, and to BioManager's makers so they can fix it.
 
-**Send feedback**, under Help in the sidebar, is for something that went wrong, an idea or a question, from the page you're on. It is kept in your lab: its admins are told, read it on the same page and mark it **Done**. To tell BioManager's makers too, **Open as a GitHub issue**: a new issue opens with your text, the page, the version and the browser filled in (not your server's address, nor your name), for you to check and submit. You need a GitHub account.
+**Send feedback**, under Help in the sidebar, is for something that went wrong, an idea or a question, from the page you're on. It is kept in your lab: its admins are told, read it on the same page and mark it **Done**.
+
+To tell BioManager's makers too, leave **Also send this to BioManager's makers** ticked (in the desktop app it is ticked for you; on a lab server, tick it). It sends what you wrote, its kind, the page, the version and where BioManager runs, and, if you give one, a way to reach you for an answer (an e-mail or WeChat); never your name, your lab's records or the server's address. The lab's admins see which notes were sent. Without internet the note stays in the lab, and the page says so. A lab server whose anonymous counts are switched off for good ([more](https://biomanager.org/guide/your-data#counts)) doesn't offer it.
+
+Or **Open as a GitHub issue**: a new issue opens with your text, the page, the version and the browser filled in (not your server's address, nor your name), for you to check and submit. You need a GitHub account.
 
 Admins also find a **Usage report** there: for each of the last eight weeks, how many people changed something and how many changes in each area, and what the lab holds now. Counts only — no names, nothing anyone wrote — and the report is not sent anywhere: copy the text at the bottom into an email, for instance to whoever runs a pilot with your lab. Below it, **Anonymous counts for BioManager's makers** shows the daily message word for word, with **Switch off** ([more](https://biomanager.org/guide/your-data#counts)).
 

@@ -134,6 +134,10 @@ def main() -> int:
     # say hello to the lab it is linked to (app/devices.py).
     from app import devices
     devices.start_background(app)
+    # On a Mac, the calendar in the Mac's own Calendar app, if it is set up
+    # (Calendar → Mac Calendar; app/mac_calendar.py).
+    from app import mac_calendar
+    mac_calendar.start_background(app)
 
     import desktop_menu
     desktop_menu._state["local_url"] = url

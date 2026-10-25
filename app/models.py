@@ -2393,7 +2393,9 @@ class Feedback(Base):
     """Something someone in the lab reported from Send feedback
     (app/feedback.py): a problem, an idea or a question. It stays in the
     lab's own database for its admins; it reaches BioManager's makers only
-    if someone opens it as a GitHub issue."""
+    as its sender chooses: Also send this to BioManager's makers (the ids
+    sent are kept in app_settings, feedback:sent_to_makers), or a GitHub
+    issue they open themselves."""
     __tablename__ = "feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

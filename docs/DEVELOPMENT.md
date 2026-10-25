@@ -1796,6 +1796,42 @@ series' `skip` in the same transaction. A new booking may carry
 lists the slots (at most `MAX_REPEATED_BOOKINGS`), every one is checked
 for a clash first, and each becomes an `equipment_bookings` row of its own.
 
+### The phone feed and the Mac's Calendar
+
+`lab_calendar.feed_items(s, user, scope)` is what a feed holds: `calendar_items`
+read as its owner, for `mine` (their own things) or `lab`, from
+`FEED_BACK_DAYS` ago to `FEED_AHEAD_DAYS` ahead, without connected
+calendars. `/calendar/feed/<token>.ics` renders it (`render_ics`), and
+`app/mac_calendar.py` writes it into the Mac's own Calendar, for a lab with
+no server that Google could fetch the feed from.
+
+`mac_calendar` runs in the desktop app on a Mac only (`offered()`:
+`LOCAL_SETUP`, `devices.on_this_computer()`, and EventKit importable from
+`pyobjc-framework-EventKit`). `EventKitStore` wraps EventKit; tests swap in
+a fake with `use_store()`. The setting is one per lab, `mac_calendar` in
+`app_settings`: `{user, scope, calendar, source, title, account, created,
+last_ok, count, error}`. `update(app)` runs in an app and request context
+of its own (its `g.user` is the calendar's owner, its `g.lang` theirs),
+turns each item into an `Entry` (title, all day, start, end, notes: dates
+for an all-day event, the last day included, else Unix seconds), reads the
+events already in the calendar the same way, and `plan()` matches the two
+as multisets: what is wanted and missing is added, the rest of what's
+there is removed, one commit. No ids: EventKit's change when an account
+syncs afresh. Events that started before the window are left alone. Since
+everything else in the calendar is removed, `_start` takes only a new
+calendar (`new:<source>`, `created`) or an existing one whose title starts
+with BioManager (`cal:<id>`, `dedicated()`); a Mac can't add a calendar to a
+Google account, and EventKit's refusal becomes the message telling the
+person to make one on the web. **Stop** removes a calendar it created and
+empties one it didn't. `start_background()` (from `desktop.py`) updates a
+minute after start, every `UPDATE_EVERY`, and `SETTLE` seconds after any
+request that changed something (`_after` sets `_nudge`). The packaged app
+needs `NSCalendarsFullAccessUsageDescription` and
+`NSCalendarsUsageDescription` in `Biomanager.spec`'s Info.plist (macOS
+stops an app that asks without them) and
+`com.apple.security.personal-information.calendars` in
+`desktop/entitlements.plist` for the hardened runtime.
+
 ## Copies of the lab on every computer
 
 `app/lab_copy.py`. On a server, someone who may (admins; members when Lab
@@ -3199,7 +3235,23 @@ and each admin gets a notification. Admins see every note and mark it done;
 members see their own. `issue_url()` builds a GitHub "new issue" link on
 gaspolymerase/biomanager with the text, path, version and platform —
 never the server's host or the person — which the person submits
-themselves: nothing is sent by the server.
+themselves.
+
+**Also send this to BioManager's makers** (`tell_makers`, with an optional
+`contact`) sends the note at once as one PostHog event, `feedback`, through
+`telemetry._post` to the same project and key as the daily counts:
+`makers_payload()` is exactly what goes (kind, text, path, version, the
+platform string, desktop or server, OS family, language, contact, the
+installation's random id as `distinct_id`, `$geoip_disable`). It is offered
+by `can_tell_makers()` (a project key, `telemetry.released()`, not
+`telemetry.off_by_env()`; the lab's own counts switch doesn't hide it, as
+the person chooses per note) and ticked by `tell_makers_by_default()` on a
+desktop (`LOCAL_SETUP`) only. A sent note's id goes into `app_settings`
+`feedback:sent_to_makers` (a JSON list, the last 2,000), so the page says
+"Sent to BioManager's makers"; a failed send (offline) redirects with
+`told=failed` and the note stays only in the lab. `scripts/feedback.py`
+reads them back from PostHog with the personal key `scripts/installs.py`
+uses.
 
 `/feedback/usage` (admins) is `usage()`: for each of the last eight weeks
 (Monday to Sunday), the distinct lab accounts in the change history and

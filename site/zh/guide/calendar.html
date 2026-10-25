@@ -169,7 +169,19 @@
           待办、预约、流程步骤——并询问由谁代管；被指定的人会收到通知。</li>
         <li><b>关联日历</b> （Connected calendars）把 Google 日历和任何 iCal 订阅并排显示，只读。</li>
         <li><b>在手机上</b>：一个私人链接（只含你自己的事，或全实验室的），可添加到 Apple、Google 或 Outlook 日历。大约
-          每小时更新一次。<b>生成新链接</b> （Make a new link）会让旧链接失效。</li>
+          每小时更新一次。<b>生成新链接</b> （Make a new link）会让旧链接失效。Google 从互联网上读取这个链接，所以只有服务器能从互联网访问时才可用；
+          没有服务器时，请用 <b>Mac 日历</b>。</li>
+        <li id="mac-calendar"><b>Mac 日历</b> （Mac Calendar）：Mac 上的桌面版专有，不需要服务器。BioManager 会在 Mac 自带的日历 App
+          里让一个名为 BioManager 的日历保持最新，Mac 再把它同步到所在的账户，于是它会出现在 Google 日历或你的 iPhone 上。点一次 <b>允许访问</b> （Allow access），
+          选择 <i>只有我的</i> 或 <i>整个实验室的日历</i> 以及放在哪里，然后点 <b>开始</b> （Start）。
+          <ul>
+            <li><b>iPhone</b>：选择 iCloud。</li>
+            <li><b>Google 日历</b>：在“系统设置 → 互联网账户”中添加你的 Google 账户，并打开“日历”。Mac 不能在 Google 账户里新建日历，
+              所以请先在网页版 Google 日历中建一个名为 BioManager 的日历（设置 → 添加日历 → 创建新日历），等它出现在列表里再选择它。</li>
+            <li>BioManager 打开时才会更新：每 15 分钟一次，有改动后很快也会更新。<b>立即更新</b> （Update now）马上更新一次。</li>
+            <li>这个日历只属于 BioManager：放进去的其他内容会在下次更新时被移除，在那里做的修改也不会回到 BioManager。</li>
+            <li><b>停止</b> （Stop）会删除 BioManager 建的日历，或清空你自己建的那个。</li>
+          </ul></li>
       </ul>
       <figure class="gshot"><a href="../../assets/screenshots/calendar.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/calendar.webp" alt="日历" loading="lazy" width="2000" height="1250"></a><figcaption>日历</figcaption></figure>
     <!-- /page -->

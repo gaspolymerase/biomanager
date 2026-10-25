@@ -15,7 +15,8 @@
   listed, and whoever is chosen to cover it is told.
 - A private link per person that Apple, Google or Outlook Calendar can
   subscribe to (an iCalendar feed), for the whole lab calendar or only
-  their own things.
+  their own things. The Mac app can put the same into the Mac's own
+  Calendar instead (app/mac_calendar.py, from `feed_items`).
 """
 from __future__ import annotations
 
@@ -848,6 +849,28 @@ def _fold(line: str) -> str:
     return "\r\n ".join(out)
 
 
+def shown_title(item: dict) -> str:
+    """An item's title on another calendar, where a to-do has no tick box."""
+    title = item["title"]
+    if item.get("kind") == "task":
+        title = (gettext("Done: %(title)s", title=title) if (item.get("raw") or {}).get("done")
+                 else gettext("To-do: %(title)s", title=title))
+    return title
+
+
+def feed_items(s, user: UserAccount, scope: str) -> tuple[list[dict], str]:
+    """What a feed of `scope` ("mine" or "lab") holds, read as its owner,
+    so what they may see is what it shows, in the page's language; and its
+    name. Called with g ready to take g.user."""
+    from .app import calendar_items
+    g.user = user
+    today = date.today()
+    items = calendar_items(s, today - timedelta(days=FEED_BACK_DAYS), today + timedelta(days=FEED_AHEAD_DAYS),
+                           owner=user.username if scope == "mine" else None, external=False)
+    name = f"BioManager · {user.display_name or user.username}" if scope == "mine" else gettext("BioManager · lab")
+    return items, name
+
+
 def render_ics(items: list[dict], name: str, base_url: str) -> str:
     stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BioManager//Lab calendar//EN", "CALSCALE:GREGORIAN",
@@ -857,10 +880,7 @@ def render_ics(items: list[dict], name: str, base_url: str) -> str:
         start, end = _dt(item["start"]), _dt(item["end"])
         if start is None or end is None:
             continue
-        title = item["title"]
-        if item.get("kind") == "task":
-            title = (gettext("Done: %(title)s", title=title) if (item.get("raw") or {}).get("done")
-                     else gettext("To-do: %(title)s", title=title))
+        title = shown_title(item)
         lines += ["BEGIN:VEVENT", f"UID:{item['id']}@biomanager", f"DTSTAMP:{stamp}"]
         if item.get("isAllday"):
             lines += [f"DTSTART;VALUE=DATE:{start:%Y%m%d}",
@@ -882,22 +902,15 @@ def render_ics(items: list[dict], name: str, base_url: str) -> str:
 def feed_ics(token: str):
     """The subscribed calendar. The token in the link is the only key, as
     with Google's secret iCal address; resetting it stops the old link."""
-    from .app import calendar_items
     with SessionLocal() as s:
         feed = s.scalar(select(CalendarFeed).where(CalendarFeed.token_hash == _hash(token)))
         user = s.scalar(select(UserAccount).where(UserAccount.username == feed.owner)) if feed else None
         if feed is None or user is None or user.disabled:
             abort(404)
-        # The feed is read as its owner, so what they may see is what it
-        # shows, in their language (a phone's calendar app asks for none).
-        g.user = user
+        # In its owner's language: a phone's calendar app asks for none.
         lang = i18n.language_for(s, user.username)
-        today = date.today()
         with i18n.using(lang):
-            items = calendar_items(s, today - timedelta(days=FEED_BACK_DAYS), today + timedelta(days=FEED_AHEAD_DAYS),
-                                   owner=user.username if feed.scope == "mine" else None, external=False)
-            scope = "mine" if feed.scope == "mine" else "lab"
-            name = f"BioManager · {user.display_name or user.username}" if scope == "mine" else gettext("BioManager · lab")
+            items, name = feed_items(s, user, "mine" if feed.scope == "mine" else "lab")
         feed.last_used_at = datetime.utcnow()
         s.commit()
     with i18n.using(lang):
