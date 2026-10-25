@@ -30,6 +30,22 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.3.0": {
+        "new": [
+            "A new look, the same everywhere: every dialog has **Cancel** beside one main button, and on a phone it slides up from the bottom.",
+            "A field's suggestions open in the app's own list: type to narrow it, ↓ and Enter to pick (Alt+↓ in a sheet).",
+            "Notebook topics hold other topics, each has its own page, and the notebook opens on **Home** with your **Favorites**.",
+            "In the Mac app, **Calendar → Mac Calendar** keeps the calendar in your Mac's Calendar, and so on your phone, with no server.",
+            "**Send feedback** can also send your note to BioManager's makers.",
+        ],
+        "changed": [
+            "Home's views are **Overview**, **Timeline** and **By place** (they were Classic, Tracks and Freezer), as tabs under the greeting.",
+            "The cage sheet fits a laptop: Card ID and Note start hidden; tick them under **Columns**.",
+        ],
+        "fixed": [
+            "Only a Breeding cage takes a **Litter born** date, and only a record's owner, an admin or animal care can give it away.",
+        ],
+    },
     "2.2.0": {
         "new": [
             "Notebook pages can be **Reading** pages: a paper's authors, journal, year, DOI and **Zotero** link, filled in from a DOI or from Zotero.",
