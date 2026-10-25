@@ -996,7 +996,7 @@
   }
 
   function zoteroDialog() {
-    var tabs = (DATA.tabs || []).map(function (id, i) { return [id, (DATA.tabTitles || [])[i] || '']; });
+    var tabs = (DATA.tabs || []).map(function (id, i) { return [id, (DATA.tabTitles || [])[i] || '', (DATA.tabIndents || [])[i] || '']; });
     var libs = [];
     var overlay = document.createElement('div');
     overlay.className = 'notebook-modal';
@@ -1014,7 +1014,7 @@
       '<label class="nb-new-field"><span class="nb-new-label">' + t('Library') + '</span><select name="library"></select></label>' +
       '<label class="nb-new-field"><span class="nb-new-label">' + t('Collection') + '</span><select name="collection"></select></label>' +
       '<label class="nb-new-field"><span class="nb-new-label">' + t('Topic') + '</span><select name="tab_id"><option value="">' + t('Inbox') + '</option>' +
-      tabs.map(function (tb) { return '<option value="' + tb[0] + '"' + (zotero.tab_id === tb[0] ? ' selected' : '') + '>' + esc(t(tb[1])) + '</option>'; }).join('') + '</select></label>' +
+      tabs.map(function (tb) { return '<option value="' + tb[0] + '"' + (zotero.tab_id === tb[0] ? ' selected' : '') + '>' + tb[2] + esc(t(tb[1])) + '</option>'; }).join('') + '</select></label>' +
       '<label class="nb-new-check"><input type="checkbox" name="include_existing" value="1"><span><b>' + t('Also the papers already there') + '</b><small>' +
       t('Otherwise only papers added from now on become notes.') + '</small></span></label></div>' +
       (zotero.connected ? '<p class="nb-new-note">' + esc(t('Connected: %(where)s. %(n)s notes made so far.', {

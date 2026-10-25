@@ -80,7 +80,7 @@ def table_label(name: str) -> str:
 # out of the admins' Audit log.
 IGNORED_TABLES = {
     "audit_log", "batches", "notifications", "calendar_events", "tasks",
-    "notebook_pages", "notebook_entries", "notebook_tabs",
+    "notebook_pages", "notebook_entries", "notebook_tabs", "notebook_favorites",
     "organism_events", "organism_due", "organism_measurements",
     "dropdown_options", "water_logs",
 }

@@ -717,6 +717,11 @@ class NotebookTab(Base):
     owner_username: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(160), default="Untitled topic")
     position: Mapped[int] = mapped_column(Integer, default=0)
+    # The topic it sits in (a topic holds topics, as a folder does); None:
+    # at the top. Position orders it among the topics beside it.
+    parent_tab_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Its icon in the sidebar (lab_notebook.FOLDER_ICONS); empty: a folder.
+    icon: Mapped[str] = mapped_column(String(40), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     pages: Mapped[list["NotebookPage"]] = relationship(
@@ -2512,6 +2517,19 @@ class NotebookShare(Base):
     username: Mapped[str] = mapped_column(String(80), index=True)
     role: Mapped[str] = mapped_column(String(10), default="view")  # view | edit
     shared_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class NotebookFavorite(Base):
+    """A page someone starred: it is listed under Favorites at the top of
+    their notebook's sidebar, in their order. Any page they may open."""
+    __tablename__ = "notebook_favorites"
+    __table_args__ = (UniqueConstraint("username", "page_id_fk", name="uq_notebook_favorite"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(80), index=True)
+    page_id_fk: Mapped[int] = mapped_column(ForeignKey("notebook_pages.id"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

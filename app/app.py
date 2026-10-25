@@ -16,7 +16,7 @@ from jinja2 import pass_context, pass_environment
 from jinja2.filters import make_attrgetter
 from jinja2.utils import htmlsafe_json_dumps
 from werkzeug.datastructures import ImmutableMultiDict
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, update
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import StaleDataError
@@ -6592,11 +6592,15 @@ def notebook_library(library: str):
     return _notebook_page(library)
 
 
+# How a topic's page lists its pages: ?sort= -> its label.
+NOTEBOOK_SORTS = {"edited": "Last edited", "name": "Name", "order": "Your order"}
+
+
 def _notebook_page(library: str | None = None):
     selected_tab_id = arg_int("tab", None)
     selected_page_id = arg_int("page", None) if library is None else None
     with SessionLocal() as db_session:
-        tabs = db_session.scalars(
+        tab_rows = db_session.scalars(
             _notebook_owner_filter(select(NotebookTab)).order_by(NotebookTab.position, NotebookTab.id)
         ).all()
         selected_page = None
@@ -6608,27 +6612,44 @@ def _notebook_page(library: str | None = None):
                 selected_page = candidate
         selected_tab = None
         if selected_page is not None and role == "owner":
-            selected_tab = next((tab for tab in tabs if tab.id == selected_page.tab_id_fk), None)
-        if selected_tab is None and selected_page is None and library is None:
-            if selected_tab_id is not None:
-                selected_tab = next((tab for tab in tabs if tab.id == selected_tab_id), None)
-            if selected_tab is None and tabs:
-                selected_tab = tabs[0]
-            if selected_tab is not None and selected_tab.pages:
-                selected_page = selected_tab.pages[0]
-                role = "owner"
+            selected_tab = next((tab for tab in tab_rows if tab.id == selected_page.tab_id_fk), None)
+        # No page asked for: a topic's page (?tab=), or the notebook's home.
+        if selected_page is None and library is None and selected_tab_id is not None:
+            selected_tab = next((tab for tab in tab_rows if tab.id == selected_tab_id), None)
 
         side = lab_notebook.sidebar(db_session)
         kinds = side.pop("kinds_by_page")
-        parents = lab_notebook.parent_ids([page.id for tab in tabs for page in tab.pages])
-        tabs_data = []
-        for tab in tabs:
-            flat = [{"id": page.id, "title": page.title, "tab_id": tab.id, "updated_at": page.updated_at.isoformat(),
-                     "kind": kinds.get(page.id, "note"), "parent_id": parents.get(page.id)}
-                    for page in tab.pages]
-            # Sub-pages under the page they were made in, when it's in the same
-            # folder; "flat" is every page, for Recent.
-            tabs_data.append({"id": tab.id, "title": tab.title, "pages": lab_notebook.page_tree(flat), "flat": flat})
+        parents = lab_notebook.parent_ids([page.id for tab in tab_rows for page in tab.pages])
+        tabs_data = lab_notebook.topic_tree(db_session, tab_rows, kinds, parents)
+        by_id = {node["id"]: node for node in tabs_data}
+        # The open topic and the topics it sits in start unfolded.
+        open_topics = set()
+        here = selected_tab.id if selected_tab is not None else None
+        while here is not None and here not in open_topics:
+            open_topics.add(here)
+            here = by_id[here]["parent_id"] if here in by_id else None
+        topic_view = home = None
+        sort = request.args.get("sort") if request.args.get("sort") in NOTEBOOK_SORTS else "edited"
+        if selected_page is None and library is None and selected_tab is not None:
+            node = by_id[selected_tab.id]
+            pages = {page.id: page for page in selected_tab.pages}
+            top = [pages[p["id"]] for p in node["pages"]]
+            if sort == "edited":
+                top.sort(key=lambda page: page.updated_at or datetime.min, reverse=True)
+            elif sort == "name":
+                top.sort(key=lambda page: (page.title or "").casefold())
+            topic_view = {**node, "cards": lab_notebook.page_cards(db_session, top), "sort": sort,
+                          "trail": [by_id[i] for i in _topic_trail(by_id, node["id"])]}
+        elif selected_page is None and library is None:
+            favorites = lab_notebook.favorite_ids(db_session)
+            recent = db_session.scalars(lab_notebook.accessible_filter(
+                select(NotebookPage).join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id))
+                .order_by(NotebookPage.updated_at.desc()).limit(8)).all()
+            starred = {page.id: page for page in db_session.scalars(
+                select(NotebookPage).where(NotebookPage.id.in_(favorites)))} if favorites else {}
+            home = {"favorites": lab_notebook.page_cards(db_session, [starred[i] for i in favorites if i in starred]),
+                    "recent": lab_notebook.page_cards(db_session, recent),
+                    "topics": [node for node in tabs_data if node["depth"] == 0]}
         selected_page_data = (lab_notebook.page_payload(db_session, selected_page, role)
                               if selected_page is not None else None)
         selected_tab_id_value = selected_tab.id if selected_tab else None
@@ -6643,6 +6664,11 @@ def _notebook_page(library: str | None = None):
     return render_template(
         "notebook.html",
         tabs=tabs_data,
+        open_topics=open_topics,
+        topic_view=topic_view,
+        home=home,
+        sorts=NOTEBOOK_SORTS,
+        folder_icons=lab_notebook.FOLDER_ICONS,
         selected_tab_id=selected_tab_id_value,
         # A topic the person opened (?tab= or one of its pages), not the
         # first one shown when nothing was: a new page goes there.
@@ -6666,15 +6692,29 @@ def _notebook_page(library: str | None = None):
     )
 
 
+def _topic_trail(by_id: dict, topic_id: int) -> list[int]:
+    """The topics a topic sits in, outermost first, then itself."""
+    chain = []
+    while topic_id is not None and topic_id in by_id and topic_id not in chain:
+        chain.append(topic_id)
+        topic_id = by_id[topic_id]["parent_id"]
+    return list(reversed(chain))
+
+
 @app.route("/notebook/tabs/create", methods=["POST"])
 @login_required
 def notebook_create_tab():
     title = (request.form.get("title") or "New topic").strip() or "New topic"
     with SessionLocal() as db_session:
+        # Inside another topic of theirs (?parent_id=), Inbox aside; else at the top.
+        parent = db_session.get(NotebookTab, request.form.get("parent_id", type=int) or 0)
+        if parent is not None and (parent.owner_username != g.user.username or lab_notebook.is_inbox(parent)):
+            parent = None
         max_pos = db_session.scalar(
             _notebook_owner_filter(select(func.max(NotebookTab.position)))
         ) or 0
-        tab = NotebookTab(owner_username=g.user.username, title=title, position=max_pos + 1)
+        tab = NotebookTab(owner_username=g.user.username, title=title, position=max_pos + 1,
+                          parent_tab_id=parent.id if parent is not None else None)
         db_session.add(tab)
         db_session.commit()
         return jsonify({"ok": True, "id": tab.id, "title": tab.title})
@@ -6700,6 +6740,10 @@ def notebook_delete_tab(tab_id: int):
         tab = db_session.get(NotebookTab, tab_id)
         if tab is not None and tab.owner_username == g.user.username:
             lab_notebook.delete_page_rows(db_session, [page.id for page in tab.pages])
+            # The topics inside it stay, one level up.
+            db_session.execute(update(NotebookTab).where(NotebookTab.owner_username == g.user.username,
+                                                         NotebookTab.parent_tab_id == tab.id)
+                               .values(parent_tab_id=tab.parent_tab_id))
             db_session.delete(tab)
             db_session.commit()
     return redirect(url_for("notebook"))
@@ -7515,20 +7559,8 @@ def notebook_move_page(page_id: int):
         new_tab = db_session.get(NotebookTab, new_tab_id)
         if new_tab is None or new_tab.owner_username != g.user.username:
             return jsonify({"ok": False}), 404
-        max_pos = db_session.scalar(
-            select(func.max(NotebookPage.position)).where(NotebookPage.tab_id_fk == new_tab_id)
-        ) or 0
         # A folder holds a page with the pages made inside it: they move together.
-        for n, moving in enumerate(lab_notebook.with_subpages(db_session, page)):
-            moving.tab_id_fk = new_tab_id
-            moving.position = max_pos + 1 + n
-        # A sub-page moved on its own is a page of its new folder, unless the
-        # page it was made in is there too.
-        info = lab_notebook.info_for(db_session, page.id)
-        if info is not None and info.parent_page_id:
-            parent = db_session.get(NotebookPage, info.parent_page_id)
-            if parent is None or parent.tab_id_fk != new_tab_id:
-                info.parent_page_id = None
+        lab_notebook.move_page(db_session, page, new_tab)
         db_session.commit()
         return jsonify({"ok": True, "tab_id": new_tab_id, "page_id": page.id})
 
