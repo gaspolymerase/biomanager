@@ -644,7 +644,7 @@
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
       </header>
       <div class="record-dialog-body">
-        <p class="record-wide text-[12.5px] leading-snug text-muted">
+        <p class="record-wide text-[13px] leading-snug text-muted">
           {% trans trimmed %}A new record in stock, with its name, vendor, catalog #, lot and quantity already filled in.
           Then add where it is kept.{% endtrans %}
         </p>
@@ -755,7 +755,7 @@
       } else {
         write = Promise.reject();
       }
-      write.then(done, () => text.then((s) => window.prompt('', s)));
+      write.then(done, () => text.then((s) => BioDialog.prompt(t('Copy the text below.'), s, { okLabel: t('Done') })));
     });
   })();
 </script>

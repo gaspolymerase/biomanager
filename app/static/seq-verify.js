@@ -150,9 +150,9 @@
     parts.push(`<div class="px-4 py-3 text-[13px]"><div class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">${badge(report.status)}
       <span class="text-[12px] text-muted tabular-nums">${esc(tr('%(covered)s of %(length)s bp covered', { covered: num(report.covered_bp), length: num(length) }))}</span></div>
       <p>${esc(report.verdict)}</p></div>`);
-    (j.problems || []).forEach((p) => parts.push(`<p class="px-4 pb-2 text-[12.5px] text-danger-700">${esc(p)}</p>`));
+    (j.problems || []).forEach((p) => parts.push(`<p class="px-4 pb-2 text-[13px] text-danger-700">${esc(p)}</p>`));
     if (j.kept && j.kept.length) {
-      parts.push(`<p class="px-4 pb-2 text-[12.5px] text-muted">${esc(tr('Kept with this plasmid’s files (Storage → Files): %(names)s.', { names: j.kept.join(', ') }))}</p>`);
+      parts.push(`<p class="px-4 pb-2 text-[13px] text-muted">${esc(tr('Kept with this plasmid’s files (Storage → Files): %(names)s.', { names: j.kept.join(', ') }))}</p>`);
     }
     parts.push('<div class="px-4 pb-3" data-verify-map></div>');
     parts.push(`<div class="overflow-x-auto border-t border-[var(--color-line)]"><table class="w-full text-[13px]">

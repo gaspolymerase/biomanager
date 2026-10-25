@@ -1,12 +1,16 @@
-"""Home page layouts: Classic (the cards), Tracks and Freezer.
+"""Home page views: Overview (the cards), Timeline and By place.
 
-Classic is the original dashboard. The other two draw the same work in
+Overview is the dashboard of cards. The other two draw the same work in
 another shape:
 
-- Tracks lays everything with a date on one shared day ruler, a track per
-  kind of work, like annotations in a genome browser.
-- Freezer starts from where things sit: the racks holding something that
-  needs doing, and a pull list in the order you would walk the room.
+- Timeline ("tracks") lays everything with a date on one shared row of
+  days, a row per kind of work.
+- By place ("freezer") starts from where things sit: the racks holding
+  something that needs doing, and a list in the order you would walk the
+  room.
+
+The keys are the names the views had first (classic, tracks, freezer), as
+each person's choice is saved under them.
 
 Both read one agenda (`build_agenda`): every dated piece of work across the
 lab's databases, with where it lives. Each person's choice is kept in
@@ -30,9 +34,9 @@ from . import litters
 from .services import cage_litter_json, crowded, slot_cages, weaning_offset, weaning_due, weaning_title
 
 LAYOUTS = {
-    "classic": ("Classic", "columns"),
-    "tracks": ("Tracks", "dna"),
-    "freezer": ("Freezer", "snowflake"),
+    "classic": ("Overview", "columns"),
+    "tracks": ("Timeline", "calendar-clock"),
+    "freezer": ("By place", "grid"),
 }
 DEFAULT_LAYOUT = "classic"
 SPANS = (7, 14, 28)
@@ -98,8 +102,9 @@ INVENTORY_CARDS = {"orders": "orders", **{kind: "restock" for kind in inventory_
 # The cards there were before each database had its own, and the prefix of
 # the cards that took their place (a saved arrangement keeps their spot).
 SPLIT_CARDS = {"stocks": "stock:", "organisms": "org:"}
-# Cards a new person doesn't see until they add them in Customize.
-OFF_AT_FIRST = {"todos", "bookings", "notebook", "utilities"}
+# Cards a new person doesn't see until they add them in Customize. Your
+# databases repeats the sidebar and the Counts tiles, which open each one too.
+OFF_AT_FIRST = {"databases", "todos", "bookings", "notebook", "utilities"}
 # How many of the Counts tiles show until someone chooses.
 TILES_AT_FIRST = 5
 
@@ -600,7 +605,7 @@ def _when(due: date, today: date) -> str:
     return i18n.strftime(due, "%a %d") if days < 7 else i18n.strftime(due, "%b %d")
 
 
-# ---------------------------------------------------------------- Tracks
+# ---------------------------------------------------------------- Timeline (tracks)
 
 # Label widths are estimated to stack features that would overlap: about
 # 6.6px per character of the 11px mono label, on a track area near 640px.
@@ -669,44 +674,8 @@ def tracks_view(agenda: list[dict], track_meta: dict, today: date, span: int) ->
     counts = {s: sum(1 for i in agenda if i["status"] == s and (i["due"] - today).days < span) for s in SEVERITY}
     return {"span": span, "spans": SPANS, "days": days, "tracks": tracks, "now": now[:8], "now_total": len(now),
             "counts": counts, "total": sum(counts.values()),
-            "busy": busy[:3], "ideogram": _ideogram(today, span), "until": today + timedelta(days=span - 1),
+            "busy": busy[:3], "until": today + timedelta(days=span - 1),
             "list": _day_list(agenda, today, span)}
-
-
-def _ideogram(today: date, span: int) -> dict:
-    """The months around the window drawn like a chromosome: one arm per
-    month, weekends as the dark bands, a box over the days on screen."""
-    start = today.replace(day=1)
-    last = today + timedelta(days=span - 1)
-    end = (last.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-    total = (end - start).days + 1
-    width, left, gap = 1000, 110, 6
-    months = 0
-    cursor = start
-    while cursor <= end:
-        months += 1
-        cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
-    unit = (width - left - 10 - gap * (months - 1)) / total
-    arms, bands = [], []
-    cursor = start
-    x = left
-    while cursor <= end:
-        nxt = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
-        n = (nxt - cursor).days
-        arms.append({"x": round(x, 2), "w": round(n * unit, 2), "label": i18n.strftime(cursor, "%b"), "start": cursor})
-        for k in range(n):
-            if (cursor + timedelta(days=k)).weekday() >= 5:
-                bands.append({"x": round(x + k * unit, 2), "w": round(unit + 0.3, 2)})
-        x += n * unit + gap
-        cursor = nxt
-
-    def x_of(d: date) -> float:
-        arm = [a for a in arms if a["start"] <= d][-1]
-        return arm["x"] + (d - arm["start"]).days * unit
-
-    return {"arms": arms, "bands": bands, "box_x": round(x_of(today), 2),
-            "box_w": round(x_of(last) + unit - x_of(today), 2),
-            "title": i18n.strftime(start, "%b") + "–" + i18n.strftime(end, "%b %Y")}
 
 
 def _day_list(agenda: list[dict], today: date, span: int) -> list[dict]:
@@ -721,7 +690,7 @@ def _day_list(agenda: list[dict], today: date, span: int) -> list[dict]:
     return list(groups.values())
 
 
-# ---------------------------------------------------------------- Freezer
+# ---------------------------------------------------------------- By place (freezer)
 
 def _hue(name: str) -> int | None:
     if not name:

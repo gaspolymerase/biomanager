@@ -17,7 +17,7 @@
 .assembly-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px;
   background: var(--color-recess); font-size: 11px; font-weight: 600; color: var(--color-ink-soft); }
 .assembly-name { display: block; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.assembly-meta { display: block; margin-top: 2px; font-size: 11.5px; color: var(--color-muted); }
+.assembly-meta { display: block; margin-top: 2px; font-size: 12px; color: var(--color-muted); }
 .assembly-meta .ident { font-family: var(--font-mono, ui-monospace, monospace); }
 .assembly-acts { display: flex; gap: 2px; }
 .assembly-acts button { padding: 3px 5px; border: 0; border-radius: 6px; background: none; color: var(--color-ink-soft); cursor: pointer; }
@@ -28,7 +28,7 @@
 
 /* --- a junction, between two rows --- */
 .assembly-join { display: flex; align-items: center; gap: 8px; padding: 4px 14px 4px 46px;
-  border-top: 1px solid var(--color-hairline); background: var(--color-recess); font-size: 11.5px; }
+  border-top: 1px solid var(--color-hairline); background: var(--color-recess); font-size: 12px; }
 .assembly-join .bases { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; letter-spacing: 0.04em; }
 .assembly-join .words { color: var(--color-muted); }
 .assembly-join[data-ok="0"] { background: var(--color-danger-50); }
@@ -44,13 +44,13 @@
 .assembly-map .part { fill: none; stroke-width: 7; stroke-linecap: butt; }
 .assembly-map .mark { fill: none; stroke: var(--color-ink-soft); stroke-width: 3; }
 .assembly-map .bp { font-size: 13px; font-weight: 600; fill: var(--color-ink); text-anchor: middle; }
-.assembly-map .bp-sub { font-size: 9.5px; fill: var(--color-muted); text-anchor: middle; }
+.assembly-map .bp-sub { font-size: 10px; fill: var(--color-muted); text-anchor: middle; }
 .assembly-fields { display: grid; gap: 10px; padding: 4px 16px 16px; }
 .assembly-fields input, .assembly-fields textarea, .assembly-fields select {
-  width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-md, 8px); background: var(--color-surface); color: var(--color-ink);
+  width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--field-border);
+  border-radius: var(--radius-md); background-color: var(--field-bg); color: var(--color-ink);
   font: inherit; font-size: 13px; font-weight: 400; }
-.assembly-options { display: grid; gap: 7px; font-size: 12.5px; }
+.assembly-options { display: grid; gap: 7px; font-size: 13px; }
 /* Grid, not flex: a label's bare text in a flex row shrinks to its longest
    word and wraps at every space. */
 .assembly-options label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 7px; }
@@ -73,7 +73,7 @@
 .assembly-piece-map .piece { fill: none; stroke: var(--color-brand-600); stroke-width: 7; }
 .assembly-piece-map .cut { fill: none; stroke: var(--color-danger-700); stroke-width: 6; }
 .assembly-piece-map .bp { font-size: 12px; font-weight: 600; fill: var(--color-ink); text-anchor: middle; }
-.assembly-piece-map .bp-sub { font-size: 9px; fill: var(--color-muted); text-anchor: middle; }
+.assembly-piece-map .bp-sub { font-size: 10px; fill: var(--color-muted); text-anchor: middle; }
 @media (max-width: 560px) { .assembly-pieces { grid-template-columns: minmax(0, 1fr); } }
 
 .assembly-region { display: flex; align-items: flex-end; gap: 10px; }
@@ -83,9 +83,9 @@
   max-height: 150px; overflow: auto; padding: 6px; border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md, 8px); }
 .assembly-enzyme { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; }
-.assembly-enzyme span { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; }
+.assembly-enzyme span { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; }
 .assembly-enzyme i { margin-left: auto; font-style: normal; font-size: 11px; color: var(--color-muted); }
-.assembly-problem { margin: 0; font-size: 12.5px; color: var(--color-danger-700); }
+.assembly-problem { margin: 0; font-size: 13px; color: var(--color-danger-700); }
 
 /* The two list boxes in the picker (features, and the pieces of a digest):
    a plain multi-line select draws itself without a border or a background. */
@@ -95,3 +95,8 @@
   font: inherit; font-size: 12px; font-weight: 400;
 }
 .assembly-list option { padding: 3px 5px; border-radius: 5px; }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.assembly-fields :is(input, textarea, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.assembly-fields :is(input, textarea, select)) { padding-right: 28px; }

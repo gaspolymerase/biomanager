@@ -65,8 +65,8 @@
 {% endmacro %}
 
 {% block page_nav %}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
-    <nav class="seg max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=m.label|tr) }}">
+  <div class="page-tabs-row">
+    <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=m.label|tr) }}">
       {% for v in ['units', 'schedule', 'experiments', 'genotypes', 'setup'] + (['frozen'] if S.frozen else []) + ['settings'] %}
         <a class="seg-item {% if view == v %}is-active{% endif %}" role="tab" aria-selected="{{ 'true' if view == v else 'false' }}"
            href="{{ url_for('stocks.module', key=key, view=v) }}">
@@ -75,10 +75,10 @@
         </a>
       {% endfor %}
     </nav>
-    <div class="flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-      <span class="badge">{{ counts.active }} {{ (m.unit if counts.active == 1 else m.units)|tr('stocks') }}</span>
-      {% if counts.cross %}<span class="badge">{% trans count=counts.cross %}{{ count }} cross{% pluralize %}{{ count }} crosses{% endtrans %}</span>{% endif %}
-      <span class="badge">{{ racks|length }} {{ (m.rack_noun if racks|length == 1 else m.racks_noun)|tr('stocks') }}</span>
+    <div class="page-tabs-side page-stats">
+      <span class="page-stat">{{ counts.active }} {{ (m.unit if counts.active == 1 else m.units)|tr('stocks') }}</span>
+      {% if counts.cross %}<span class="page-stat">{% trans count=counts.cross %}{{ count }} cross{% pluralize %}{{ count }} crosses{% endtrans %}</span>{% endif %}
+      <span class="page-stat">{{ racks|length }} {{ (m.rack_noun if racks|length == 1 else m.racks_noun)|tr('stocks') }}</span>
     </div>
   </div>
 {% endblock %}
@@ -108,7 +108,10 @@
       <button type="button" class="dt-chip" data-layout="table">{{ icon('table') }}{{ _('Table') }}</button>
       <button type="button" class="dt-chip" data-layout="grid">{{ icon('grid') }}{{ _('Grid') }}</button>
     </div>
-    <p class="text-[12px] text-muted">{% trans room=room_w, rack=rack_w, units=units_w %}In Grid, pick the {{ room }} and then the {{ rack }} to see and edit {{ units }} where they sit.{% endtrans %}</p>
+    <details class="info-tip" data-popover>
+      <summary aria-label="{{ _('Layout') }}" title="{{ _('Layout') }}">{{ icon('info') }}</summary>
+      <div class="info-tip-pop">{% trans room=room_w, rack=rack_w, units=units_w %}In Grid, pick the {{ room }} and then the {{ rack }} to see and edit {{ units }} where they sit.{% endtrans %}</div>
+    </details>
   </div>
 
   <div data-layout-panel="table">
@@ -152,7 +155,7 @@
               <th class="dt-sortable" data-sort-key="purpose" style="width: 104px;"><span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="female_genotype" style="width: 144px;"><span class="dt-col-head">{{ icon('female', 'dt-col-icon') }}{{ parent_female }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="male_genotype" style="width: 144px;"><span class="dt-col-head">{{ icon('male', 'dt-col-icon') }}{{ parent_male }}<span class="dt-sort-indicator"></span></span></th>
-              <th class="dt-sortable" data-sort-key="incubator" style="width: 104px;"><span class="dt-col-head">{{ icon('temperature', 'dt-col-icon') }}{{ room_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
+              <th class="dt-sortable" data-sort-key="incubator" style="width: 132px;"><span class="dt-col-head">{{ icon('temperature', 'dt-col-icon') }}{{ room_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="rackname" style="width: 104px;"><span class="dt-col-head">{{ icon('box', 'dt-col-icon') }}{{ rack_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="position" style="width: 68px;"><span class="dt-col-head">{{ icon('position', 'dt-col-icon') }}{{ _('Position') }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="set_up_on" style="width: 112px;"><span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}{{ 'Set up'|tr('stocks') }}<span class="dt-sort-indicator"></span></span></th>
@@ -189,7 +192,7 @@
                 </td>
                 <td class="parent-cell"><input name="female_genotype" form="{{ f }}" value="{{ u.female_genotype }}" title="{{ u.female_genotype }}" list="stock-genotypes" data-autosave="1" aria-label="{{ parent_female }}" {% if locked %}disabled{% endif %}></td>
                 <td class="parent-cell"><input name="male_genotype" form="{{ f }}" value="{{ u.male_genotype }}" title="{{ u.male_genotype }}" list="stock-genotypes" data-autosave="1" aria-label="{{ parent_male }}" {% if locked %}disabled{% endif %}></td>
-                <td><span class="sheet-cell-text" data-incubator-cell>{{ r.incubator or '–' }}{% if r.incubator %} <span class="sheet-unit">{{ r.temp }} °C</span>{% endif %}</span></td>
+                <td><span class="sheet-cell-text block truncate" data-incubator-cell title="{{ r.incubator or '' }}">{{ r.incubator or '–' }}{% if r.incubator and r.temp ~ ' °C' not in r.incubator %} <span class="sheet-unit">{{ r.temp }} °C</span>{% endif %}</span></td>
                 <td>
                   <select name="rack_id" form="{{ f }}" data-autosave="1" aria-label="{{ rack_w|capitalize }}" {% if locked %}disabled{% endif %}>
                     {{ rack_options(u.rack_id_fk, '–') }}
@@ -336,7 +339,7 @@
   {% set kinds = {
     'flip': ('refresh', flip_verb), 'collect': ('egg', collect_verb), 'ready': ('seedling', ready_label),
     'shift': ('temperature', _('Temperature shift')), 'score': ('microscope', _('Score'))} %}
-  <div class="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
+  <div class="mb-3 flex flex-wrap items-center gap-2 text-[13px] text-muted">
     <span>{{ _('Showing what is due in the next') }}</span>
     {% for h in [7, 14, 30] %}
       <a class="dt-chip" aria-pressed="{{ 'true' if (request.args.get('horizon', '14')|int) == h else 'false' }}"
@@ -379,7 +382,7 @@
                 </form>
               {% elif it.kind == 'shift' %}
                 <form method="post" action="{{ url_for('stocks.unit_action', key=key, unit_id=it.unit.id, action='shifted') }}" class="flex items-center gap-1.5">
-                  <select name="rack_id" class="h-7 text-[12px]" aria-label="{{ _('Move to') }}">
+                  <select name="rack_id" class="field h-7 w-auto text-[12px]" aria-label="{{ _('Move to') }}">
                     <option value="">{{ _('Stay in place') }}</option>
                     {% for inc in incubators %}
                       {% set inside = racks | selectattr('incubator_id_fk', 'equalto', inc.id) | list %}
@@ -468,10 +471,10 @@
     <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{% trans count=genotypes|length %}{{ count }} genotype{% pluralize %}{{ count }} genotypes{% endtrans %}</span></div>
   </section>
 
-  <dialog id="genotype-dialog" class="record-dialog">
+  <dialog id="genotype-dialog" class="record-dialog" aria-labelledby="genotype-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_genotype', key=key) }}" data-update-action="{{ url_for('stocks.save_genotype', key=key) }}"
           data-new-title="{{ _('New genotype') }}" data-edit-title="{{ _('Genotype') }}" data-new-submit="{{ _('Add') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New genotype') }}</h3>
+      <header class="record-dialog-head"><div><h3 id="genotype-dialog-title" data-record-title>{{ _('New genotype') }}</h3>
         <p class="record-dialog-sub">{% trans unit=unit_w %}Renaming relabels every {{ unit }} (and cross parent) written with the old text.{% endtrans %}</p></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
@@ -557,10 +560,10 @@
     </section>
   </div>
 
-  <dialog id="incubator-dialog" class="record-dialog">
+  <dialog id="incubator-dialog" class="record-dialog" aria-labelledby="incubator-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_incubator', key=key) }}" data-update-action="{{ url_for('stocks.save_incubator', key=key) }}"
           data-new-title="{{ _('New %(noun)s', noun=room_w) }}" data-edit-title="{{ room_w|capitalize }} {label}" data-new-submit="{{ _('Create') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New %(noun)s', noun=room_w) }}</h3>
+      <header class="record-dialog-head"><div><h3 id="incubator-dialog-title" data-record-title>{{ _('New %(noun)s', noun=room_w) }}</h3>
         <p class="record-dialog-sub">{% trans verb=flip_verb|lower %}Its temperature sets the {{ verb }} interval and development time of everything inside.{% endtrans %}</p></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
@@ -660,10 +663,10 @@
       </table>
     </div>
   </section>
-  <dialog id="frozen-dialog" class="record-dialog">
+  <dialog id="frozen-dialog" class="record-dialog" aria-labelledby="frozen-dialog-title">
     <form method="post" data-record-form data-create-action="{{ url_for('stocks.save_frozen', key=key) }}" data-update-action="{{ url_for('stocks.save_frozen', key=key) }}"
           data-new-title="{{ _('New frozen lot') }}" data-edit-title="{{ _('Frozen {label}') }}" data-new-submit="{{ _('Add') }}" data-edit-submit="{{ _('Save') }}">
-      <header class="record-dialog-head"><div><h3 data-record-title>{{ _('New frozen lot') }}</h3></div>
+      <header class="record-dialog-head"><div><h3 id="frozen-dialog-title" data-record-title>{{ _('New frozen lot') }}</h3></div>
         <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
       <div class="record-dialog-body">
         <input type="hidden" name="id">
@@ -713,10 +716,10 @@
           <label class="field-label">{{ _('Progeny due is called') }} <input name="ready_label" value="{{ S.ready_label }}"></label>
           <label class="field-label">{{ _('Cross, one side') }} <input name="parent_female" value="{{ S.parents.female }}"></label>
           <label class="field-label">{{ _('Cross, other side') }} <input name="parent_male" value="{{ S.parents.male }}"></label>
-          <label class="flex items-center gap-2 text-[12.5px] sm:col-span-2">
+          <label class="flex items-center gap-2 text-[13px] sm:col-span-2">
             <input type="hidden" name="enabled" value="0"><input type="checkbox" name="enabled" value="1" {% if m.enabled %}checked{% endif %}> {{ _('Show in the sidebar') }}
           </label>
-          <label class="flex items-center gap-2 text-[12.5px] sm:col-span-2">
+          <label class="flex items-center gap-2 text-[13px] sm:col-span-2">
             <input type="hidden" name="frozen" value="0"><input type="checkbox" name="frozen" value="1" {% if S.frozen %}checked{% endif %}> {{ _('Keep a frozen-stock list') }}
           </label>
         </div>
@@ -735,7 +738,7 @@
       <section class="card">
         <header class="card-head"><h2>{{ icon('temperature') }} {{ _('Temperatures and timing') }}</h2></header>
         <div class="overflow-x-auto p-4">
-          <p class="mb-3 text-[12.5px] leading-snug text-muted">
+          <p class="mb-3 text-[13px] leading-snug text-muted">
             {% trans trimmed verb=flip_verb|lower, rack=rack_w %}
             Per incubator temperature: days between {{ verb }}s of a {{ rack }}, days from egg to adult
             (when collected progeny are due), and days between egg collections from a cross.
@@ -757,7 +760,7 @@
             </tbody>
           </table>
           <input type="hidden" name="temp_count" value="{{ m.temperatures|length + 1 }}">
-          <p class="mt-2 text-[11.5px] text-muted">{{ _('Fill the empty row to add a temperature.') }}</p>
+          <p class="mt-2 text-[12px] text-muted">{{ _('Fill the empty row to add a temperature.') }}</p>
         </div>
       </section>
 
@@ -767,7 +770,7 @@
     <form method="post" action="{{ url_for('stocks.delete_module', key=key) }}" class="card border-danger-200">
       <header class="card-head"><h2 class="text-danger-700">{{ icon('trash') }} {{ _('Delete this database') }}</h2></header>
       <div class="flex flex-wrap items-end gap-3 p-4">
-        <p class="basis-full text-[12.5px] leading-snug text-muted">{% trans name=m.label, unit=unit_w, rack=rack_w, room=room_w %}Deletes {{ name }} with every {{ unit }}, {{ rack }}, {{ room }} and genotype in it. To keep the data but hide it, untick “Show in the sidebar” instead.{% endtrans %}</p>
+        <p class="basis-full text-[13px] leading-snug text-muted">{% trans name=m.label, unit=unit_w, rack=rack_w, room=room_w %}Deletes {{ name }} with every {{ unit }}, {{ rack }}, {{ room }} and genotype in it. To keep the data but hide it, untick “Show in the sidebar” instead.{% endtrans %}</p>
         <label class="field-label grow">{{ _('Type “%(name)s” to confirm', name=m.label) }} <input name="confirm" autocomplete="off"></label>
         <button type="submit" class="btn btn-danger">{{ _('Delete') }}</button>
       </div>
@@ -815,7 +818,7 @@
         <legend>{{ _('Cross') }}</legend>
         <label>{{ parent_female }} <input name="female_genotype" list="stock-genotypes" class="font-mono" autocomplete="off"></label>
         <label>{{ parent_male }} <input name="male_genotype" list="stock-genotypes" class="font-mono" autocomplete="off"></label>
-        <p class="col-span-full text-[11.5px] leading-snug text-muted" data-show-for="cross">
+        <p class="col-span-full text-[12px] leading-snug text-muted" data-show-for="cross">
           {% trans verb=collect_verb, egg=icon('egg', 'inline size-3'), unit=unit_w %}Use <strong>{{ verb }}</strong> ({{ egg }} on the row, or in Schedule) to move the parents on and keep the eggs: a new {{ unit }} is made for the progeny, with this cross written on it.{% endtrans %}
         </p>
         <label data-show-for="progeny">{{ _('%(label)s on', label=ready_label) }} <input type="date" name="ready_on"></label>
@@ -865,7 +868,11 @@
       const row = rowOf(form);
       if (!row) return;
       const cell = row.querySelector('[data-incubator-cell]');
-      if (cell && 'incubator' in body) cell.textContent = body.incubator ? `${body.incubator} · ${body.temp} °C` : '–';
+      if (cell && 'incubator' in body) {
+        const named = body.incubator && String(body.incubator).includes(`${body.temp} °C`);
+        cell.textContent = body.incubator ? (named ? body.incubator : `${body.incubator} · ${body.temp} °C`) : '–';
+        cell.title = body.incubator || '';
+      }
       const open = row.querySelector('[data-open-payload]');
       if (open && body.payload) open.dataset.recordPayload = JSON.stringify(body.payload);
     });

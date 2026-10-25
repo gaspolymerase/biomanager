@@ -257,7 +257,7 @@
           </select>
         </label>
         <label class="set-row">
-          <span class="set-label"><b>{{ _('Home layout') }}</b><small>{{ _('Cards, the next weeks on a ruler, or your racks and a pull list. Also switchable on Home.') }}</small></span>
+          <span class="set-label"><b>{{ _('Home view') }}</b><small>{{ _('Overview: your cards. Timeline: the next weeks, a row per kind of work. By place: your racks, and where to go. Also switchable on Home.') }}</small></span>
           <select name="home_layout">
             {% for key, (label, _icon) in home_layout_choices.items() %}
               <option value="{{ key }}" {% if user_settings.home_layout == key %}selected{% endif %}>{{ label|tr }}</option>
@@ -634,7 +634,7 @@
               {% if u.disabled %}<span class="badge badge-danger">{{ _('disabled') }}</span>{% endif %}
               <span class="badge {{ 'badge-brand' if u.role == 'admin' else 'badge-quiet' }}" {% if roles.get(u.role) %}title="{{ roles[u.role][1]|tr }}"{% endif %}>{{ roles[u.role][0]|tr if roles.get(u.role) else u.role }}</span>
               {% if admin and not u.me %}
-                <details class="set-menu">
+                <details class="set-menu" data-popover>
                   <summary class="btn btn-sm" aria-label="{{ _('Change %(name)s', name=u.name) }}">···</summary>
                   <div class="set-menu-pop">
                     <form method="post" action="{{ url_for('admin_toggle_role', user_id=u.id) }}" class="set-menu-row"
@@ -847,6 +847,12 @@
         {% if version_info.notes %}
           <a class="set-row set-row-link" href="{{ version_info.notes }}" target="_blank" rel="noopener">
             <span class="set-label"><b>{{ _('Release notes') }}</b><small>{{ _('Everything in this version, on GitHub.') }}</small></span>
+            {{ icon('chevron-right', 'set-chev') }}
+          </a>
+        {% endif %}
+        {% if current_user.role == 'admin' %}
+          <a class="set-row set-row-link" href="{{ url_for('design_gallery') }}">
+            <span class="set-label"><b>{{ _('Design gallery') }}</b><small>{{ _('Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.') }}</small></span>
             {{ icon('chevron-right', 'set-chev') }}
           </a>
         {% endif %}

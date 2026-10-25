@@ -11,18 +11,14 @@
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_nav %}
-  {% include "_plasmid_tabs.html" %}
-  <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-    <span class="badge">{% trans count=counts.all %}{{ count }} plasmid{% pluralize %}{{ count }} plasmids{% endtrans %}</span>
-    <span class="badge">{% trans n=counts.sequence %}{{ n }} with a sequence{% endtrans %}</span>
-    <span class="badge">{% trans n=counts.stored %}{{ n }} in a box{% endtrans %}</span>
-    <span class="badge">{% trans count=boxes|length %}{{ count }} box{% pluralize %}{{ count }} boxes{% endtrans %}</span>
-    <a class="badge" href="{{ url_for('feature_library_page') }}">{{ icon('dna') }} {{ _('Feature library') }}</a>
-    <a class="badge" href="{{ url_for('cloning.wizard') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
-    <span class="ml-1.5">
-      {% if current_user.role == 'admin' %}{{ _('Admin — you can edit anything.') }}
-      {% else %}{{ _('Plasmids owned by other people are read-only, unless they are lab common.') }}{% endif %}
-    </span>
+  <div class="page-tabs-row">
+    {% include "_plasmid_tabs.html" %}
+    <div class="page-tabs-side page-stats">
+      <span class="page-stat">{% trans count=counts.all %}{{ count }} plasmid{% pluralize %}{{ count }} plasmids{% endtrans %}</span>
+      <span class="page-stat">{% trans n=counts.sequence %}{{ n }} with a sequence{% endtrans %}</span>
+      <span class="page-stat">{% trans n=counts.stored %}{{ n }} in a box{% endtrans %}</span>
+      <span class="page-stat">{% trans count=boxes|length %}{{ count }} box{% pluralize %}{{ count }} boxes{% endtrans %}</span>
+    </div>
   </div>
 {% endblock %}
 
@@ -53,6 +49,15 @@
     <button type="button" class="dt-chip plasmid-view-btn" data-view="cards" aria-pressed="false" title="{{ _('Where each plasmid sits in its storage box') }}">{{ icon('grid') }}{{ _('Boxes') }}</button>
     <button type="button" class="dt-chip plasmid-view-btn" data-view="list" aria-pressed="false">{{ icon('list') }}{{ _('List') }}</button>
   </div>
+  <a class="btn btn-sm" href="{{ url_for('feature_library_page') }}">{{ icon('dna') }} {{ _('Feature library') }}</a>
+  <a class="btn btn-sm" href="{{ url_for('cloning.wizard') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
+  <details class="info-tip" data-popover>
+    <summary aria-label="{{ _('Whose records these are') }}" title="{{ _('Whose records these are') }}">{{ icon('info') }}</summary>
+    <div class="info-tip-pop">
+      {% if current_user.role == 'admin' %}{{ _('Admin — you can edit anything.') }}
+      {% else %}{{ _('Plasmids owned by other people are read-only, unless they are lab common.') }}{% endif %}
+    </div>
+  </details>
 </div>
 
 <section class="data-table-card sheet plasmid-sheet dt-held" data-table-id="plasmids-v5" data-noun="plasmid" id="plasmids-section"

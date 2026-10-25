@@ -58,7 +58,7 @@
             <td title="{{ e.table_name }}">{{ e.table_name | table_label }}</td>
             <td><span class="dt-row-icon"></span><span class="dt-row-name">{{ e.record_label }}</span></td>
             <td>{% if e.changed_by %}<span class="owner-cell">{{ e.changed_by | owner_badge }}<span>{{ e.changed_by }}</span></span>{% endif %}</td>
-            <td class="whitespace-normal break-words font-mono text-[11.5px] leading-snug text-muted">{{ e.details }}</td>
+            <td class="whitespace-normal break-words font-mono text-[12px] leading-snug text-muted">{{ e.details }}</td>
           </tr>
         {% else %}
           <tr><td class="dt-empty" colspan="6">{{ _('No audit entries yet. Deletions in the colony / plasmids tables will show up here.') }}</td></tr>

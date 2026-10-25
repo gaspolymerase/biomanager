@@ -55,8 +55,7 @@
   }
 
   // The app's own dialog: the Mac app's web view answers the browser's confirm() with no.
-  const ask = (message, danger = false) => (window.BioDialog && BioDialog.confirm
-    ? BioDialog.confirm(message, { danger }) : Promise.resolve(window.confirm(message)));
+  const ask = (message, danger = false) => BioDialog.confirm(message, { danger });
 
   // ---------------------------------------------------------------- wells
 

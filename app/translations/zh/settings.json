@@ -34,10 +34,6 @@
   "Plasmids": "质粒",
   "Samples": "样本",
   "Where you arrive after signing in.": "登录后首先打开的页面。",
-  "Home layout": "首页布局",
-  "Classic": "经典",
-  "Tracks": "时间轴",
-  "Freezer": "冰箱",
   "Classic cards, Tracks (the next weeks on one day ruler) or Freezer (your racks and a pull list). Also switchable on Home.": "经典（卡片）、时间轴（未来几周排在同一条日期尺上）或冰箱（你的笼架和取样清单）。也可以在首页切换。",
   "Save profile": "保存资料",
   "App icon": "应用图标",
@@ -247,7 +243,6 @@
   "When you sign in": "登录之后",
   "Open on": "打开",
   "The page you arrive at after signing in.": "登录后最先看到的页面。",
-  "Cards, the next weeks on a ruler, or your racks and a pull list. Also switchable on Home.": "卡片、按天排开的未来几周，或你的架子和取用清单。也可以在首页切换。",
   "What the %(bell)s at the top tells you about. Never your own changes.": "顶部的 %(bell)s 会提醒你哪些事。你自己做的修改不会提醒。",
   "Reminder email": "提醒邮件",
   "Daily email": "每日邮件",
@@ -424,5 +419,12 @@
   "In its deploy folder: take a backup (docker compose exec backup backup.sh), then git pull and docker compose up -d --build. To have Update now here instead, move the server to the release bundle once, as the runbook’s “Updating the app” says.": "在它的 deploy 文件夹里：先备份（docker compose exec backup backup.sh），再运行 git pull 和 docker compose up -d --build。如果想在这里用“立即更新”，按运维手册“Updating the app”一节，把服务器换成发布包一次即可。",
   "Share anonymous counts with BioManager's makers": "与 BioManager 开发者分享匿名统计",
   "BioManager is free. Once a day it sends its makers a few anonymous counts, so they can show that labs rely on it and see which parts to improve first: the version, how many members (as a range) and which databases are on. Never a name, nor anything anyone wrote.": "BioManager 是免费的。它每天向开发者发送几项匿名统计，让他们能说明有实验室在依靠它，并知道该先改进哪些部分：版本、成员人数（一个范围）以及开启了哪些数据库。绝不包括姓名，也不包括任何人写的内容。",
-  "See exactly what is sent": "查看发送的确切内容"
+  "See exactly what is sent": "查看发送的确切内容",
+  "Overview: your cards. Timeline: the next weeks, a row per kind of work. By place: your racks, and where to go. Also switchable on Home.": "概览：你的卡片。时间线：接下来几周，每类工作一行。按位置：你的架子，以及要去的地方。也可以在首页切换。",
+  "Overview": "概览",
+  "Timeline": "时间线",
+  "By place": "按位置",
+  "Home view": "首页视图",
+  "Design gallery": "设计样例",
+  "Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.": "应用里的每种控件、对话框、菜单和标签都在这一页上：用来检查外观上的改动。"
 }

@@ -46,7 +46,7 @@
   }
   function toast(text, isError) {
     if (window.NotebookPage) window.NotebookPage.toast(esc(text), isError);
-    else if (isError) window.alert(text);
+    else window.BiomanagerShell.toast(text, isError ? 'danger' : '');
   }
   function fail(err) { toast(err.message, true); }
   function reload() { window.location.reload(); }

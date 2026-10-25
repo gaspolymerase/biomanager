@@ -15,10 +15,14 @@
 
   let toastHost = null;
 
-  function toast(message, kind) {
+  // kind: 'ok' or 'danger' colours its dot; opts.html sets a message that
+  // was built as (escaped) HTML, such as one with a link in it.
+  function toast(message, kind, opts) {
     if (!toastHost) {
       toastHost = document.createElement('div');
       toastHost.className = 'toast-host';
+      toastHost.setAttribute('role', 'status');
+      toastHost.setAttribute('aria-live', 'polite');
       // In the top layer, so a message sent from an open dialog shows in
       // front of it rather than behind its backdrop.
       if ('popover' in toastHost) toastHost.popover = 'manual';
@@ -29,14 +33,17 @@
     }
     const el = document.createElement('div');
     el.className = 'toast' + (kind ? ' toast-' + kind : '');
-    el.textContent = message;
+    if (opts && opts.html) el.innerHTML = message;
+    else el.textContent = message;
     toastHost.appendChild(el);
     // Let the element land in the DOM before animating it in.
     requestAnimationFrame(() => el.classList.add('is-in'));
+    // Long enough to read: longer messages stay longer.
+    const shown = Math.min(8000, Math.max(3200, el.textContent.length * 60));
     setTimeout(() => {
       el.classList.remove('is-in');
       setTimeout(() => el.remove(), 220);
-    }, 3200);
+    }, shown);
   }
 
   /* ------------------------------------------------------------------ rail */
@@ -479,6 +486,76 @@
     initAccountMenu();
     initBell();
     initShortcuts();
+    initPopovers();
+    initTouchTips();
+    initScrollCues();
+  }
+
+  // A small popover written as <details data-popover> (an info tip, a
+  // menu of options): it closes on a click outside it, on Escape, and when
+  // another one opens, as the app's menus do.
+  // A tooltip drawn from data-tooltip shows on hover; a finger has no
+  // hover, so a tap shows it for a moment instead.
+  function initTouchTips() {
+    let shown = null;
+    let timer = null;
+    document.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'touch') return;
+      const tip = event.target.closest('[data-tooltip]');
+      if (shown && shown !== tip) shown.classList.remove('is-tip');
+      shown = tip;
+      if (!tip) return;
+      tip.classList.add('is-tip');
+      clearTimeout(timer);
+      timer = setTimeout(() => tip.classList.remove('is-tip'), 2200);
+    }, { passive: true });
+  }
+
+  // Tabs or a sheet wider than their box scroll sideways; a fade on the
+  // edge that hides more says so (data-clip="start", "end" or both).
+  function initScrollCues() {
+    const mark = (el) => {
+      const more = el.scrollWidth - el.clientWidth;
+      const clip = [];
+      if (more > 1 && el.scrollLeft > 1) clip.push('start');
+      if (more > 1 && el.scrollLeft < more - 1) clip.push('end');
+      const value = clip.join(' ');
+      if ((el.dataset.clip || '') !== value) el.dataset.clip = value;
+    };
+    const watched = new WeakSet();
+    const watch = (root) => {
+      (root || document).querySelectorAll('.page-tabs, .dt-scroll').forEach((el) => {
+        if (watched.has(el)) return;
+        watched.add(el);
+        el.addEventListener('scroll', () => mark(el), { passive: true });
+        if (window.ResizeObserver) new ResizeObserver(() => mark(el)).observe(el);
+        // The sheet inside grows as its rows load or columns show.
+        const inner = el.firstElementChild;
+        if (inner && window.ResizeObserver) new ResizeObserver(() => mark(el)).observe(inner);
+        mark(el);
+      });
+    };
+    watch();
+    document.addEventListener('dt:rows-loaded', () => watch());
+  }
+
+  function initPopovers() {
+    const openOnes = () => document.querySelectorAll('details[data-popover][open]');
+    document.addEventListener('click', (event) => {
+      openOnes().forEach((d) => { if (!d.contains(event.target)) d.open = false; });
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      openOnes().forEach((d) => {
+        d.open = false;
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener('toggle', (event) => {
+      const d = event.target;
+      if (!(d instanceof HTMLDetailsElement) || !d.matches('[data-popover]') || !d.open) return;
+      openOnes().forEach((other) => { if (other !== d) other.open = false; });
+    }, true);
   }
 
   // The window around the page. A window in the background shows its
@@ -598,9 +675,14 @@
       });
       new MutationObserver(() => {
         if (started) sync(true); else started = start();
-      }).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      }).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-current'] });
+      // A radio's checked state is no attribute: follow its change instead.
+      list.addEventListener('change', () => { if (started) sync(true); else started = start(); });
       list.addEventListener('scroll', () => sync(false), { passive: true });
       window.addEventListener('resize', () => sync(false));
+      // Drawn while hidden (in a closed dialog, a folded panel): placed
+      // once it shows.
+      if (window.ResizeObserver) new ResizeObserver(() => { if (started) sync(false); else started = start(); }).observe(list);
     }
 
     const strip = document.querySelector('.wtab-strip');
@@ -610,8 +692,15 @@
     }
     document.querySelectorAll('.seg').forEach((seg, index) => {
       if (!seg.querySelector('.seg-item')) return;
-      drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item.is-active',
+      drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item:is(.is-active, :has(> input[type="radio"]:checked))',
              key: location.pathname + ':' + index, className: 'seg-drop' });
+    });
+    // A sheet's filter chips and layout switches are segmented controls too.
+    document.querySelectorAll('.dt-chips').forEach((chips, index) => {
+      if (!chips.querySelector('.dt-chip')) return;
+      drop({ holder: chips, list: chips, itemSelector: '.dt-chip',
+             activeSelector: '.dt-chip:is([aria-pressed="true"], [aria-current="page"], [aria-selected="true"], .is-active)',
+             key: location.pathname + ':chips:' + index, className: 'seg-drop' });
     });
   }
 

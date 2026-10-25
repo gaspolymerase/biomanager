@@ -48,7 +48,7 @@
   <section class="card" id="your-devices">
     <header class="card-head"><h2>{{ icon('user') }} {{ _('Your devices') }}</h2></header>
     <div class="flex flex-col gap-3 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
+      <p class="text-[13px] leading-snug text-muted">
         {{ _('Every computer, phone and browser you are signed in on. The desktop app and the phone apps join the lab as a device of yours; signing one out here ends it there at once.') }}
       </p>
       <div class="overflow-x-auto">
@@ -82,7 +82,7 @@
   {# ---- Where the master copy is ---- #}
   <section class="card p-5" id="master">
     <h2 class="flex items-center gap-2 text-[15px] font-semibold text-ink">{{ icon('database') }} {{ _('The lab’s master copy') }}</h2>
-    <p class="mt-1 text-[12.5px] leading-snug text-muted">
+    <p class="mt-1 text-[13px] leading-snug text-muted">
       {{ _('One device holds the lab’s records; every other one works on them through its address, so nothing is ever merged and nothing written in two places can be lost. A lab server holds them unless an admin hands them to a desktop.') }}
     </p>
     <div class="devices-where mt-3">
@@ -159,7 +159,7 @@
     <section class="card" id="linked">
       <header class="card-head"><h2>{{ icon('users') }} {{ _('Computers linked to this lab') }}</h2></header>
       <div class="flex flex-col gap-3 p-4">
-        <p class="text-[12.5px] leading-snug text-muted">
+        <p class="text-[13px] leading-snug text-muted">
           {% trans link=url_for('settings') ~ '#lab-copies' %}A desktop is linked by a key from <a href="{{ link }}">Copies of the lab</a>, entered
           on it under <b>Settings → Devices &amp; copies</b>. It keeps a daily copy, can open the lab in its window,
           and can be handed the master copy: it then takes a last copy, keeps its own data as a backup, and shares the lab on
@@ -187,7 +187,7 @@
                           <button type="submit" class="btn btn-sm btn-primary">{{ _('Make it the master') }}</button>
                         </form>
                       {% elif not k.revoked_at and ph == '' %}
-                        <span class="text-[11.5px] text-muted" title="{{ d.why_not|tr }}">{{ d.why_not|tr }}</span>
+                        <span class="text-[12px] text-muted" title="{{ d.why_not|tr }}">{{ d.why_not|tr }}</span>
                       {% endif %}
                     </td>
                   </tr>
@@ -196,7 +196,7 @@
             </table>
           </div>
         {% else %}
-          <p class="text-[12.5px] text-muted">{{ _('No computer is linked yet.') }}</p>
+          <p class="text-[13px] text-muted">{{ _('No computer is linked yet.') }}</p>
         {% endif %}
       </div>
     </section>
@@ -207,7 +207,7 @@
     <section class="card p-5" id="this-computer">
       <h2 class="flex items-center gap-2 text-[15px] font-semibold text-ink">{{ icon('home') }} {{ _('This computer') }}</h2>
       {% if here.linked %}
-        <p class="mt-1 text-[12.5px] leading-snug text-ink-soft">
+        <p class="mt-1 text-[13px] leading-snug text-ink-soft">
           {% trans server=here.server %}Linked to <code class="ident">{{ server }}</code>{% endtrans %}
           {%- if here.hello.at %} · {{ _('last heard %(time)s UTC', time=here.hello.at | replace('T', ' ')) }}{% endif %}.
           {% if here.hello.error %}<span class="text-danger-600">{{ here.hello.error }}</span>{% endif %}
@@ -227,7 +227,7 @@
           computer’s own BioManager, use <b>Go → This Computer's BioManager</b> in the menu.{% endtrans %}
         </p>
       {% else %}
-        <p class="mt-1 text-[12.5px] leading-snug text-muted">
+        <p class="mt-1 text-[13px] leading-snug text-muted">
           {% trans link=url_for('settings') ~ '#lab-copy' %}To work on a lab that another device holds — the lab server, or a computer that shares its lab on the network —
           link this computer to it: its address and a key, under <a href="{{ link }}">Keep a copy of your lab server</a>.{% endtrans %}
         </p>

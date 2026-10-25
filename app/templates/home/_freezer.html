@@ -1,17 +1,17 @@
-{# Freezer layout (app/home_layouts.py → freezer_view): the racks holding
-   something that needs doing, seen from above, and a pull list in the order
-   you would walk the room. Cap colour is the owner; a ring means the numbered
-   job on the pull list is in that cage or vial. #}
+{# By place (app/home_layouts.py → freezer_view): the racks holding
+   something that needs doing, seen from above, and the jobs in the order
+   you would walk the room. A cage's colour is its owner; a ring means the
+   numbered job on the list is in that cage or vial. #}
 {% set f = layout_view %}
 
-<section class="frz" aria-label="{{ _('Freezer') }}">
+<section class="frz" aria-label="{{ _('By place') }}">
   <div class="frz-boxes">
     {% for b in f.boxes %}
       <article class="frz-box{% if b.cols > 9 %} is-wide{% endif %}">
         <header class="frz-box-h">
           {% if b.url %}<a href="{{ b.url }}">{{ b.name }}</a>{% else %}<b>{{ b.name }}</b>{% endif %}
           <span class="frz-box-sub">{{ b.sub|tr }} · {{ b.rows }} × {{ b.cols }} · {{ _('%(filled)s of %(total)s', filled=b.filled, total=b.rows * b.cols) }}</span>
-          {% if b.rack_flag %}<span class="frz-rack-flag" title="{{ _('Pull list job %(n)s is this whole rack', n=b.rack_flag) }}">{{ b.rack_flag }}</span>{% endif %}
+          {% if b.rack_flag %}<span class="frz-rack-flag" title="{{ _('Job %(n)s on the list is this whole rack', n=b.rack_flag) }}">{{ b.rack_flag }}</span>{% endif %}
           {% if b.temp %}<span class="frz-temp">{{ b.temp }}</span>{% endif %}
         </header>
         <div class="frz-grid" style="--cols: {{ b.cols }}">
@@ -41,27 +41,29 @@
         {% for o in f.owners %}
           <span><i class="frz-cap" style="--h: {{ o.hue }}"></i>{{ o.name | owner_short }}</span>
         {% endfor %}
-        <span class="frz-key-note">{{ _('Cap = owner · ring = on the pull list') }}</span>
+        <span class="frz-key-note">{{ _('Colour = owner · ring = on the list') }}</span>
       </p>
     {% endif %}
   </div>
 
-  <aside class="frz-pull" aria-label="{{ _('Pull list') }}">
+  <aside class="frz-pull" aria-label="{{ _('Where to go') }}">
     <header class="frz-pull-h">
-      <b>{{ _('Pull list') }}</b>
-      <span>{{ ngettext('%(num)s job', '%(num)s jobs', f.pull|length) }}{% if f.places %} · {{ ngettext('%(num)s place', '%(num)s places', f.places) }}{% endif %} · {{ _('walk order') }}</span>
+      <b>{{ _('Where to go') }}</b>
+      <span>{{ ngettext('%(num)s job', '%(num)s jobs', f.pull|length) }}{% if f.places %} · {{ ngettext('%(num)s place', '%(num)s places', f.places) }}{% endif %} · {{ _('in walking order') }}</span>
     </header>
     {% for i in f.pull %}
       <a class="frz-tape" href="{{ i.url }}" data-status="{{ i.status }}"
          {% if i.hue is number %}style="--h: {{ i.hue }}"{% endif %}
          title="{{ i.title }}{% if i.detail %} · {{ i.detail }}{% endif %}">
         <span class="frz-num">{{ i.num }}</span>
+        <span class="frz-text">
+          <span class="frz-hw">{{ i.title }}</span>
+          <span class="frz-meta">{{ i.loc.text if i.loc else (i.detail or _('no location recorded')) }}</span>
+        </span>
         <span class="frz-when">{{ i.when|tr }}</span>
-        <span class="frz-hw">{{ i.title }}</span>
-        <span class="frz-meta">{{ i.loc.text if i.loc else (i.detail or _('no location recorded')) }}</span>
       </a>
     {% else %}
-      <p class="frz-pull-empty">{{ _('Nothing to pull in the next %(n)s days.', n=f.pull_days) }}</p>
+      <p class="frz-pull-empty">{{ _('Nothing to do on your racks in the next %(n)s days.', n=f.pull_days) }}</p>
     {% endfor %}
   </aside>
 </section>

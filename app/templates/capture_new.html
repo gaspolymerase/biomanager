@@ -19,7 +19,7 @@
   <input type="hidden" name="id" value="{{ record_id if label else '' }}" data-capture-id>
   <input type="hidden" name="card" value="" data-capture-card>
   <input type="hidden" name="back" value="{{ back }}">
-  <p class="text-[12.5px] text-muted" data-capture-at {% if not label %}hidden{% endif %}>
+  <p class="text-[13px] text-muted" data-capture-at {% if not label %}hidden{% endif %}>
     {{ icon('location') }} <span data-capture-at-label>{% if label %}{{ _('At %(record)s', record=label) }}{% endif %}</span>
   </p>
   <label class="grid gap-1 text-[13px]">
@@ -36,7 +36,7 @@
   </div>
   <div class="flex items-center gap-3" data-capture-preview hidden>
     <img alt="" hidden style="width: 96px; height: 96px; object-fit: cover; border-radius: 8px;">
-    <span class="min-w-0 text-[12.5px] text-muted" data-capture-name></span>
+    <span class="min-w-0 text-[13px] text-muted" data-capture-name></span>
   </div>
   <div><button type="submit" class="btn btn-primary">{{ icon('check') }} {{ _('Save') }}</button></div>
   <p class="text-[12px] text-muted">{{ _('Only you see your captures. Add a photo, or a small CSV or text file.') }}</p>

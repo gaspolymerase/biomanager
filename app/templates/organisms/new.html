@@ -16,7 +16,7 @@
 {% if builtin_choices %}
 <section class="mb-6">
   <h2 class="mb-1 flex items-center gap-2">{{ icon('database', 'size-[17px] text-brand-600') }} {{ _('Ready-made databases') }}</h2>
-  <p class="mb-3 text-[12.5px] text-muted">
+  <p class="mb-3 text-[13px] text-muted">
     {{ _("Full databases of their own, with the lab's racks, tanks or boxes. Anything added to one before comes back with it.") }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -26,7 +26,7 @@
         <button type="submit" class="card flex flex-col gap-2 p-4 text-left transition-all hover:border-brand-300 hover:shadow-sm">
           <span class="flex items-center gap-2">
             {{ icon(f.icon, "size-[17px] text-brand-600") }}
-            <span class="text-[14px] font-semibold text-ink">{{ f.label|tr }}</span>
+            <span class="text-[15px] font-semibold text-ink">{{ f.label|tr }}</span>
           </span>
           <span class="text-[12px] leading-snug text-muted">{{ f.blurb|tr }}</span>
         </button>
@@ -39,7 +39,7 @@
 {# ---- Fly and worm stocks ------------------------------------------------ #}
 <section class="mb-6">
   <h2 class="mb-1 flex items-center gap-2">{{ icon('fly', 'size-[17px] text-brand-600') }} {{ _('Fly or worm stocks') }}</h2>
-  <p class="mb-3 text-[12.5px] text-muted">
+  <p class="mb-3 text-[13px] text-muted">
     {{ _('Vials or plates in racks inside incubators: genotype, purpose, crosses, egg collection, flip schedule and temperature shifts.') }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -48,7 +48,7 @@
          href="{{ url_for('stocks.new_module', kind=key) }}">
         <span class="flex items-center gap-2">
           {{ icon(p.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ p.label|tr }}</span>
+          <span class="text-[15px] font-semibold text-ink">{{ p.label|tr }}</span>
         </span>
         <span class="text-[12px] leading-snug text-muted">{{ p.blurb|tr }}</span>
       </a>
@@ -59,7 +59,7 @@
 {# ---- Lab inventories ---------------------------------------------------- #}
 <section class="mb-6">
   <h2 class="mb-1 flex items-center gap-2">{{ icon('flask', 'size-[17px] text-brand-600') }} {{ _('Lab inventory') }}</h2>
-  <p class="mb-3 text-[12.5px] text-muted">
+  <p class="mb-3 text-[13px] text-muted">
     {{ _('Samples, orders, reagents, antibodies or a list of your own, with freezer boxes, mine / lab common stock, and status boards. Pick one to name it.') }}
   </p>
   <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
@@ -68,7 +68,7 @@
          href="{{ url_for('inventory.new_module', preset=key) }}">
         <span class="flex items-center gap-2">
           {{ icon(p.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ p.label|tr }}</span>
+          <span class="text-[15px] font-semibold text-ink">{{ p.label|tr }}</span>
         </span>
         <span class="text-[12px] leading-snug text-muted">{{ p.blurb|tr }}</span>
       </a>
@@ -84,7 +84,7 @@
     <span class="grid size-5 place-items-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">1</span>
     {{ _('Pick a starting point') }}
   </h2>
-  <p class="mb-3 pl-7 text-[12.5px] text-muted">
+  <p class="mb-3 pl-7 text-[13px] text-muted">
     {{ _("A preset fills in the nouns, capabilities, schedule rules and fields that organism's community actually uses. Everything stays editable afterwards.") }}
   </p>
 
@@ -95,14 +95,14 @@
          href="{{ url_for('organisms.new_module', preset=preset.key) }}" data-preset-link>
         <span class="flex items-center gap-2">
           {{ icon(preset.icon, "size-[17px] text-brand-600") }}
-          <span class="text-[14px] font-semibold text-ink">{{ preset.label|tr }}</span>
+          <span class="text-[15px] font-semibold text-ink">{{ preset.label|tr }}</span>
           {% if preset_key == preset.key %}
             <svg class="icon ml-auto size-4 text-brand-600" aria-hidden="true"><use href="/static/icons.svg#check"></use></svg>
           {% endif %}
         </span>
         <span class="text-[12px] leading-snug text-muted">{{ preset.blurb|tr }}</span>
         {% if preset.notes %}
-          <span class="text-[11.5px] leading-snug text-sand-400">{{ preset.notes|tr }}</span>
+          <span class="text-[12px] leading-snug text-sand-400">{{ preset.notes|tr }}</span>
         {% endif %}
       </a>
     {% endfor %}
@@ -121,7 +121,7 @@
       </h2>
     </header>
     <div class="p-4">
-      <p class="mb-3.5 text-[12.5px] leading-snug text-muted">
+      <p class="mb-3.5 text-[13px] leading-snug text-muted">
         {% trans %}These words are what the interface will call things. A fly database says <em>vial</em> and <em>stock</em> where the mouse colony says <em>cage</em> and <em>strain</em>.{% endtrans %}
       </p>
 
@@ -196,7 +196,7 @@
       </h2>
     </header>
     <div class="p-4">
-      <p class="mb-3.5 text-[12.5px] leading-snug text-muted">
+      <p class="mb-3.5 text-[13px] leading-snug text-muted">
         {{ _('The one choice that shapes everything else. Mice are individuals; flies and worms are counted in bulk; fish are groups that occasionally need a named individual.') }}
       </p>
       <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-3">
@@ -226,7 +226,7 @@
       <span class="badge badge-quiet" id="cap-count">{{ _('%(n)s selected', n=0) }}</span>
     </header>
     <div class="flex flex-col gap-4 p-4">
-      <p class="text-[12.5px] leading-snug text-muted">
+      <p class="text-[13px] leading-snug text-muted">
         {{ _("Each one adds a view and the records behind it. Leave out what the organism doesn't have — flies need no protocol or census, worms need no water chemistry.") }}
       </p>
 
@@ -241,11 +241,11 @@
                 <input type="checkbox" name="capabilities" value="{{ cap.key }}" class="mt-0.5 cap-box"
                        {% if checked %}checked{% endif %} {% if cap.core %}data-core="1"{% endif %}>
                 <span class="min-w-0">
-                  <span class="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                  <span class="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
                     {{ icon(cap.icon, "text-sand-500") }}{{ cap.label|tr('capability') }}
                     {% if cap.core %}<span class="badge badge-quiet">{{ _('always on') }}</span>{% endif %}
                   </span>
-                  <span class="block text-[11.5px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
+                  <span class="block text-[12px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
                   {% if cap.requires %}
                     <span class="block text-[11px] text-sand-400">{{ _('needs: %(list)s', list=cap.requires|map('tr', 'capability')|join(', ')) }}</span>
                   {% endif %}

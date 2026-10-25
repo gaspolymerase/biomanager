@@ -26,6 +26,26 @@ def _lower(value) -> str:
     return str(value or "").lower()
 
 
+# A purpose pill's colour: the three a lab starts with keep theirs, and the
+# lab's own purposes take the next colours in the order of its list
+# (Configure → Cage purposes), so no two read alike.
+_PURPOSE_TONES = {"breeding": "brand", "breeder": "ok", "experiment": "info"}
+_MORE_TONES = ("violet", "warn", "pink", "sky")
+
+
+def purpose_tones(purposes: list[str]) -> dict[str, str]:
+    """Each purpose's tone, by its lower-case name."""
+    tones, extra = {}, 0
+    for p in purposes:
+        low = _lower(p).strip()
+        if low in _PURPOSE_TONES:
+            tones[low] = _PURPOSE_TONES[low]
+        elif low and low not in tones:
+            tones[low] = _MORE_TONES[extra % len(_MORE_TONES)]
+            extra += 1
+    return tones
+
+
 def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[str], mouse_sheet: dict,
          end_statuses: list[str], custom_columns_all: list[dict], wean_offset_days, icon, owner_badge,
          payload, json_attr, url_for, id_url, group_choices, as_text: bool, text_cell) -> Markup:
@@ -62,6 +82,7 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
     genders = [(g, _t("U") if g == "Unknown" else escape(i18n.translate_value(g))) for g in mouse_sheet["gender_choices"]]
     statuses = [(s, escape(i18n.translate_value(s))) for s in mouse_sheet["status_choices"]]
     purpose_words = [(p, escape(p), _lower(p), escape(i18n.translate_value(p, "cage purpose"))) for p in purposes]
+    tones = purpose_tones(purposes)
     icons: dict[str, str] = {}
 
     def ic(name: str) -> str:
@@ -230,8 +251,9 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
             f'\n                          ' for r in racks)
         chosen = _lower(purpose)
         purpose_options = "".join(
-            f'\n                            \n                            <option value="{written}" {"selected" if low == chosen else ""}>{label}</option>'
+            f'\n                            \n                            <option data-tone="{tones.get(low.strip(), "")}" value="{written}" {"selected" if low == chosen else ""}>{label}</option>'
             f'\n                          ' for _p, written, low, label in purpose_words)
+        e_tone = tones.get(chosen.strip(), "")
         live, total = cage["live_count"], cage["total_count"]
         if live:
             count = f'<strong>{escape(live)}</strong> <span class="cage-sexes">{escape(cage["sex_label"])}</span>\n                        '
@@ -264,11 +286,11 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
                                   f'\n                                 data-autosave="1" aria-label="{w["Position in the rack"]}" {off}>', "",
                           {"class": "ident", "name": "position", "form": f, "value": e_place, "placeholder": "–"}, locked)
         purpose_cell = cell("", "\n                        ",
-                            f'<select class="status-pill" name="purpose" form="{f}" data-status="{e_purpose}"'
+                            f'<select class="status-pill" name="purpose" form="{f}" data-status="{e_purpose}" data-tone="{e_tone}"'
                             f'\n                                data-autosave="1" aria-label="{w["Purpose"]}" {off}>'
                             f'\n                          <option value="" {"" if purpose else "selected"}>–</option>'
                             f'\n                          {purpose_options}\n                        </select>', "\n                      ",
-                            {"class": "status-pill", "name": "purpose", "form": f, "data-status": e_purpose}, locked)
+                            {"class": "status-pill", "name": "purpose", "form": f, "data-status": e_purpose, "data-tone": e_tone}, locked)
         e_auto, e_title = escape(auto or "–"), escape(genotype or auto)
         genotype_cell = cell("", "", f'<input name="genotype_summary" form="{f}" value="{e_genotype}"'
                                      f'\n                                 placeholder="{e_auto}" title="{e_title}"'
@@ -308,7 +330,7 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
         else:
             where = f" {w['No rack']}"
         head = ""
-        head += (f'<span class="status-pill-static" data-status="{escape(_lower(purpose))}">'
+        head += (f'<span class="status-pill-static" data-status="{escape(_lower(purpose))}" data-tone="{tones.get(_lower(purpose).strip(), "")}">'
                  f'{escape(i18n.translate_value(purpose, "cage purpose"))}</span>' if purpose else "")
         badge = owner_badge(owner) if owner else ""
         geno_span = (f'\n                              <span class="cage-card-geno" title="{w["Strain / genotype"]}">{escape(genotype or auto)}</span>'

@@ -56,6 +56,69 @@ solid with a firmer outline (`prefers-reduced-transparency`,
 `prefers-contrast`). A window in the background shows its selection in
 grey (`html.window-inactive`, from `static/shell.js`).
 
+### The pieces, and the rules that keep them one
+
+Everything is built from a few shared pieces in `frontend/src/tailwind.css`;
+a page's own stylesheet keeps only what is truly its own. `tests/test_design.py`
+reads the source for the rules marked *(tested)*.
+
+- **Tokens.** Colours, the field look (`--field-bg`, `--field-border`,
+  `--field-h` 30px, `-sm` 26, `-lg` 36), `--focus-ring`, `--scrim`, the
+  dropdown `--chevron` and the empty-sheet `--empty-icon` are variables on
+  `:root`, redefined for dark mode. Raw Tailwind tints used for pills
+  (violet, pink, sky, teal) are remapped there too, so a `bg-violet-50
+  text-violet-700` pill works in both themes.
+- **Type scale** *(tested)*: 10 (dense grids), 11, 12, 13 (body), 15, 17
+  (dialog titles), 22, 28; 16 is a phone's fields, 32 and 40 display
+  numbers. On a touch screen every field is 16px, `!important`, so iOS
+  never zooms in.
+- **Fields.** Every `<select>`, and every unclassed input and textarea, is a
+  `field-box`: one height, fill, border, radius (8px) and focus ring; a
+  select draws `--chevron` instead of the browser's arrow. Checkboxes and
+  radios are drawn (16px, brand fill). A page stylesheet that sizes its own
+  fields uses the same tokens.
+- **Suggestions.** An `<input list>` and its `<datalist>` are written as
+  usual; `static/combobox.js` takes each over (on the page or added later)
+  and shows the choices in the app's menu, read from the datalist each time
+  it opens. Typing filters; ↓/↑, Enter and Esc; in a sheet ↓ moves a row,
+  so Alt+↓ opens it. A pick sends `input` and `change`, so a sheet saves it.
+- **Segmented controls.** `.seg` with `.seg-item`s, or a `.dt-chips` group
+  of `.dt-chip`s (filters, layout switches): the drop slides to the one that
+  is `.is-active`, `aria-pressed`, `aria-current` or a checked radio inside a
+  `label.seg-item`. A database's own tabs are `.seg.page-tabs` (a line, not
+  a capsule) in a `.page-tabs-row`, with its counts (`.page-stats`) or its
+  scope switch in `.page-tabs-side`. Help that used to sit on the page as a
+  paragraph is behind an ⓘ (`details.info-tip[data-popover]`).
+- **Dialogs** *(tested: a class and an accessible name)*: a `<dialog
+  class="record-dialog">` (`-narrow` 460, default 640, `-wide` 880) with a
+  `.record-dialog-head` (title, optional `.record-dialog-sub`, × as
+  `.modal-close`), a `.record-dialog-body` that scrolls, and a
+  `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
+  the left. Below 640px it is a bottom sheet. A choice of formats or kinds
+  inside one is a `.choice-list` or `.choice-cards`.
+- **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
+  (the Mac app's web view answers them with no); `BioDialog.alert /
+  confirm / prompt` (`static/dialogs.js`).
+- **Menus and hover cards** float on `pop-surface` (frosted, 14px corners,
+  `shadow-pop`); a row's hover is the brand fill with white text, in every
+  menu. A `<details data-popover>` closes on a click outside, on Esc and
+  when another opens (`initPopovers`).
+- **Toasts**: one, `BiomanagerShell.toast(message, kind, {html})`, in the top
+  layer, announced to screen readers, above a phone's tab bar.
+- **Tooltips** from `data-tooltip` also show for a moment on a tap.
+- **Purpose pills** take `data-tone` from the lab's purpose list
+  (`cage_rows.purpose_tones`): Breeding brand, Breeder green, Experiment
+  blue, the lab's own the next colours in order.
+- **Scroll cues.** Tabs or a sheet wider than their box fade at the edge
+  that hides more (`initScrollCues`, `data-clip`).
+- **Empty** sheets and lists: a soft icon over one sentence (`.dt-empty`,
+  `empty-state`), with at most one action.
+
+**The design gallery**, `/design` (admins; Settings → Version), draws
+every piece above on one page as the app does (`templates/design_gallery.html`,
+in English only, as a maintainer's tool): check a change there in light,
+dark and at a phone's width before looking page by page.
+
 ### On a phone
 
 Below 768px the tab strip and search field give way to a tab bar at the
@@ -257,6 +320,19 @@ their panes.
 
 ### Home
 
+Home has three views, tabs under the greeting (`templates/home.html`, a
+`.page-tabs-row` form posting to `/home/layout`): **Overview**, the cards
+below; **Timeline** (`home/_tracks.html`, `tracks_view`), every dated job
+on one row of days, a row per kind of work, with 1, 2 or 4 weeks beside
+the tabs; and **By place** (`home/_freezer.html`, `freezer_view`), the
+racks with work in them and the jobs numbered in walking order. They are
+saved under their first names, `classic`, `tracks` and `freezer`
+(`home_layouts.LAYOUTS`, the `home_layout:<user>` setting), so a choice
+made before the rename still holds. Customize shows on Overview only; on
+the other two For you is one line (`.home-for-you`). Both read one agenda,
+`build_agenda`; their styles are `static/home-layouts.css`, in the app's
+type and tokens.
+
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
 the ones in this person's sidebar, in the lab's order (as the rail does,
 leaving out the inventories that are tabs of Plasmids). `lab_cards` turns
@@ -278,8 +354,9 @@ card that replaced them, at their place. `get_cards`, `set_cards` and
 show; `POST /home/cards` saves the Customize dialog
 (`templates/home/_customize.html`; the tiles only when it sends
 `tiles=1`). `home.html` captures each card with `{% set %}` into a dict
-and draws them in the person's order; `_home_extra_cards` loads the four
-off at first (to-dos, bookings, recent pages, calculators) and Recent
+and draws them in the person's order; `_home_extra_cards` loads the cards
+off at first (to-dos, bookings, recent pages, calculators; Your databases
+too, which repeats the sidebar and the Counts tiles) and Recent
 plasmids. The calculators card puts the ones Utilities opened
 last first (`biomanager:util:recent` in `localStorage`, up to eight).
 
@@ -3423,7 +3500,7 @@ order and, with two or more live, a `.rack-stack-toggle` "!" whose
 popover (`.rack-stack`) holds a tile for each. The Unplaced tray leaves
 out items with `live` false (empty cages), with a line saying so. A drop on a taken place
 (`place_cage`) swaps with the cage shown there; the others stay. Home's
-Freezer layout shows the same cage and a `.frz-crowd` "!". Fish tanks,
+By place view shows the same cage and a `.frz-crowd` "!". Fish tanks,
 fly and worm racks and inventory boxes still take one record per place.
 
 **A rack's new layout** (`app/rack_layout.py`). A cage, tank, vial, item or

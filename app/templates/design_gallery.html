@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{# The design gallery (/design, admins): every shared piece of the interface
+   in its real styles, to check a change against all of them at once — in
+   light, dark (the system's setting) and at a phone's width. Each piece is
+   the markup the app uses; docs/DEVELOPMENT.md → Interface design says
+   when to use which. For maintainers, so in English, with no _(). #}
+
+{% block page_title %}Design gallery{% endblock %}
+{% block page_heading %}Design gallery{% endblock %}
+{% block page_subtitle %}Every shared piece of the interface, as the app draws it{% endblock %}
+
+{% block content %}
+<nav class="gallery-index" aria-label="Sections">
+  {% for id, name in [('type', 'Type'), ('colour', 'Colour'), ('buttons', 'Buttons'), ('fields', 'Fields'),
+                      ('choices', 'Choices'), ('pills', 'Pills and badges'), ('sheet', 'A sheet'),
+                      ('cards', 'Cards'), ('menus', 'Menus and popovers'), ('dialogs', 'Dialogs'),
+                      ('toasts', 'Toasts and notices')] %}
+    <a href="#g-{{ id }}">{{ name }}</a>
+  {% endfor %}
+</nav>
+
+{# ---- Type ---------------------------------------------------------- #}
+<section class="gallery-section" id="g-type">
+  <h2 class="gallery-h">Type</h2>
+  <p class="gallery-note">The scale: 10 (dense grids), 11, 12, 13 (body), 15, 17 (dialog titles), 22, 28; 16 is a phone's fields, 32 and 40 display numbers. Inter, with JetBrains Mono for IDs and sequences.</p>
+  <div class="card card-pad flex flex-col gap-2">
+    {% for size, use in [(28, 'Page title on a wide screen'), (22, 'Page title'), (17, 'Dialog title'), (15, 'Card and section heading'),
+                         (13, 'Body, fields, buttons'), (12, 'Labels, hints, sheet cells'), (11, 'Counts, badges'), (10, 'Dense grids, sidebar tiles')] %}
+      <div class="gallery-type-row"><span class="gallery-type-px">{{ size }}</span>
+        <span class="gallery-type-sample" style="font-size: {{ size }}px">{{ use }}</span></div>
+    {% endfor %}
+    <div class="gallery-type-row"><span class="gallery-type-px">mono</span><span class="ident">M-1042 · pAAV-hSyn-DIO · GATTACA</span></div>
+  </div>
+</section>
+
+{# ---- Colour -------------------------------------------------------- #}
+<section class="gallery-section" id="g-colour">
+  <h2 class="gallery-h">Colour</h2>
+  <p class="gallery-note">Tokens on :root, redefined for dark mode. Brand is the one accent; ok, warn, danger and info say how something stands.</p>
+  <div class="gallery-swatches">
+    {% for name in ['brand-600', 'brand-50', 'ok-600', 'ok-50', 'warn-600', 'warn-50', 'danger-600', 'danger-50', 'info-600', 'info-50',
+                    'ink', 'ink-soft', 'muted', 'hairline', 'surface', 'canvas', 'recess', 'sand-100', 'sand-200', 'sand-400'] %}
+      <div class="gallery-swatch"><i style="background: var(--color-{{ name }})"></i><span>{{ name }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ---- Buttons ------------------------------------------------------- #}
+<section class="gallery-section" id="g-buttons">
+  <h2 class="gallery-h">Buttons</h2>
+  <p class="gallery-note">One primary per view. Ghost for tools in a row, danger only where it removes something.</p>
+  <div class="card card-pad gallery-row">
+    <button type="button" class="btn btn-primary">{{ icon('plus') }} New mouse</button>
+    <button type="button" class="btn">{{ icon('download') }} Export</button>
+    <button type="button" class="btn btn-ghost">{{ icon('sort') }} Sort</button>
+    <button type="button" class="btn btn-danger">{{ icon('trash') }} Delete</button>
+    <button type="button" class="btn" disabled>Disabled</button>
+    <button type="button" class="btn btn-sm">Small</button>
+    <button type="button" class="btn btn-lg btn-primary">Large</button>
+    <button type="button" class="btn btn-icon" aria-label="Edit">{{ icon('edit') }}</button>
+    <button type="button" class="row-icon-btn" aria-label="Edit">{{ icon('edit') }}</button>
+    <span class="kbd-chip">⌘K</span>
+  </div>
+</section>
+
+{# ---- Fields -------------------------------------------------------- #}
+<section class="gallery-section" id="g-fields">
+  <h2 class="gallery-h">Fields</h2>
+  <p class="gallery-note">Every select and unclassed input is a field-box: one height, fill, border and focus ring. An input with a list opens the app's suggestions menu (static/combobox.js).</p>
+  <div class="card card-pad gallery-fields">
+    <label class="field-label">Name <input placeholder="e.g. Rack C"></label>
+    <label class="field-label">Count <input type="number" value="12"></label>
+    <label class="field-label">Born <input type="date"></label>
+    <label class="field-label">When <input type="datetime-local"></label>
+    <label class="field-label">Status
+      <select><option>Alive</option><option>Sacrificed</option><option>Transferred</option></select></label>
+    <label class="field-label">Strain (suggestions)
+      <input list="gallery-strains" placeholder="Type or pick">
+      <datalist id="gallery-strains"><option value="C57BL/6J"></option><option value="C57BL/6N"></option><option value="BALB/c"></option><option value="DAT-IRES-Cre"></option><option value="Ai14"></option></datalist></label>
+    <label class="field-label">Disabled <input value="Can't change this" disabled></label>
+    <label class="field-label">With a hint <input value="F-20422"><span class="field-hint">The number on the facility's own card.</span></label>
+    <label class="field-label gallery-wide">Notes <textarea placeholder="Anything worth knowing"></textarea></label>
+    <label class="field-label">File <input type="file"></label>
+    <label class="field-label">Colour <input type="color" value="#17a38f"></label>
+  </div>
+</section>
+
+{# ---- Choices: checks, radios, switch, segmented -------------------- #}
+<section class="gallery-section" id="g-choices">
+  <h2 class="gallery-h">Choices</h2>
+  <p class="gallery-note">Checkboxes and radios are drawn (16px, brand fill). A segmented control's highlight slides to the item picked; a database's tabs are a line, not a capsule.</p>
+  <div class="card card-pad flex flex-col gap-4">
+    <div class="gallery-row">
+      <label class="gallery-check"><input type="checkbox" checked> Alive only</label>
+      <label class="gallery-check"><input type="checkbox"> Show ended</label>
+      <label class="gallery-check"><input type="radio" name="g-radio" checked> Mine</label>
+      <label class="gallery-check"><input type="radio" name="g-radio"> The lab's</label>
+      <label class="gallery-check"><input type="checkbox" class="set-switch" checked> Switch</label>
+      <label class="gallery-check"><input type="checkbox" class="set-switch"> Off</label>
+    </div>
+    <div class="gallery-row">
+      <div class="seg" role="radiogroup" aria-label="Kind">
+        <label class="seg-item"><input type="radio" name="g-seg" checked> Event</label>
+        <label class="seg-item"><input type="radio" name="g-seg"> To-do</label>
+        <label class="seg-item"><input type="radio" name="g-seg"> Booking</label>
+      </div>
+      <div class="seg seg-sm" role="group" aria-label="Scope">
+        <button type="button" class="seg-item is-active">My colony <span class="seg-count">5</span></button>
+        <button type="button" class="seg-item">Shared <span class="seg-count">4</span></button>
+        <button type="button" class="seg-item">Everyone <span class="seg-count">39</span></button>
+      </div>
+      <div class="dt-chips" role="group" aria-label="Show">
+        <button type="button" class="dt-chip" aria-pressed="true">All <span class="dt-chip-count">14</span></button>
+        <button type="button" class="dt-chip" aria-pressed="false">Active <span class="dt-chip-count">12</span></button>
+        <button type="button" class="dt-chip" aria-pressed="false">Breeding <span class="dt-chip-count">3</span></button>
+      </div>
+    </div>
+    <nav class="seg page-tabs" aria-label="Database tabs">
+      <a class="seg-item is-active" href="#g-choices">{{ icon('mouse') }}Mice</a>
+      <a class="seg-item" href="#g-choices">{{ icon('cage') }}Cages</a>
+      <a class="seg-item" href="#g-choices">{{ icon('litter') }}Litters</a>
+      <a class="seg-item" href="#g-choices">{{ icon('heart') }}Breeders</a>
+    </nav>
+  </div>
+</section>
+
+{# ---- Pills and badges ---------------------------------------------- #}
+<section class="gallery-section" id="g-pills">
+  <h2 class="gallery-h">Pills and badges</h2>
+  <p class="gallery-note">A cage's purpose takes its colour from the lab's list (cage_rows.purpose_tones); a person is a round avatar in a stable colour.</p>
+  <div class="card card-pad flex flex-col gap-3">
+    <div class="gallery-row">
+      {% for word, tone in [('Breeding', 'brand'), ('Breeder', 'ok'), ('Experiment', 'info'), ('Holding', 'violet'), ('Quarantine', 'warn'), ('Behaviour', 'pink'), ('Imaging', 'sky'), ('No purpose', '')] %}
+        <span class="status-pill-static" data-tone="{{ tone }}">{{ word }}</span>
+      {% endfor %}
+    </div>
+    <div class="gallery-row">
+      {% for s in ['alive', 'geno', 'transfer', 'sac', 'requested', 'ordered'] %}
+        <span class="status-pill-static" data-status="{{ s }}">{{ s }}</span>
+      {% endfor %}
+    </div>
+    <div class="gallery-row">
+      <span class="badge">Badge</span><span class="badge badge-brand">Admin</span><span class="badge badge-ok">In stock</span>
+      <span class="badge badge-warn">2 overdue</span><span class="badge badge-danger">Expired</span><span class="badge badge-info">New</span>
+      <span class="badge badge-quiet">Member</span>
+      {{ 'alex' | owner_badge }} {{ 'jordan' | owner_badge }} {{ 'priya' | owner_badge }} {{ 'sam' | owner_badge }}
+    </div>
+  </div>
+</section>
+
+{# ---- A sheet ------------------------------------------------------- #}
+<section class="gallery-section" id="g-sheet">
+  <h2 class="gallery-h">A sheet</h2>
+  <p class="gallery-note">Cells stay borderless until hovered or focused; a dropdown's chevron shows on hover. Not wired to anything here.</p>
+  <section class="data-table-card sheet">
+    <div class="dt-toolbar">
+      <div class="dt-toolbar-search">{{ icon('search', 'search-icon') }}<input type="search" placeholder="Search…" aria-label="Search"></div>
+      <div class="dt-chips" role="group" aria-label="Show">
+        <button type="button" class="dt-chip" aria-pressed="true">All <span class="dt-chip-count">3</span></button>
+        <button type="button" class="dt-chip" aria-pressed="false">Alive <span class="dt-chip-count">2</span></button>
+      </div>
+      <div class="dt-toolbar-spacer"></div>
+      <button type="button" class="dt-toolbar-btn">{{ icon('sort') }} Sort</button>
+      <button type="button" class="dt-toolbar-btn">{{ icon('columns') }} Columns</button>
+      <button type="button" class="btn btn-primary">{{ icon('plus') }} New mouse</button>
+    </div>
+    <div class="dt-scroll">
+      <table class="dt sheet-table">
+        <thead><tr>
+          <th style="width: 120px;"><span class="dt-col-head">{{ icon('mouse', 'dt-col-icon') }}Mouse</span></th>
+          <th style="width: 72px;"><span class="dt-col-head">{{ icon('sex', 'dt-col-icon') }}Sex</span></th>
+          <th style="width: 140px;"><span class="dt-col-head">{{ icon('dna', 'dt-col-icon') }}Strain</span></th>
+          <th style="width: 120px;"><span class="dt-col-head">{{ icon('status', 'dt-col-icon') }}Status</span></th>
+          <th style="width: 120px;"><span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}Born</span></th>
+          <th style="width: 80px;"><span class="dt-col-head">{{ icon('user', 'dt-col-icon') }}Owner</span></th>
+        </tr></thead>
+        <tbody>
+          {% for id, sex, strain, status, born, who in [('M-101', 'F', 'C57BL/6J', 'Alive', '2026-07-21', 'alex'), ('M-102', 'M', 'DAT-IRES-Cre/+', 'Geno', '2026-08-03', 'jordan'), ('M-103', 'F', '', 'Sac', '', 'sam')] %}
+            <tr>
+              <td><span class="ident">{{ id }}</span></td>
+              <td><select class="sex-pill" data-sex="{{ sex }}" aria-label="Sex"><option>F</option><option {% if sex == 'M' %}selected{% endif %}>M</option></select></td>
+              <td><input value="{{ strain }}" placeholder="–" list="gallery-strains" aria-label="Strain"></td>
+              <td><select class="status-pill" data-status="{{ status|lower }}" aria-label="Status">
+                {% for s in ['Alive', 'Geno', 'Sac'] %}<option {% if s == status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></td>
+              <td><input type="date" value="{{ born }}" aria-label="Born"></td>
+              <td>{{ who | owner_badge }}</td>
+            </tr>
+          {% endfor %}
+          <tr><td class="dt-empty" colspan="6">An empty sheet says so in one sentence. Use <strong>New mouse</strong>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="dt-bottom-bar">
+      <span class="dt-bottom-count">3 mice</span>
+      <div class="dt-bottom-spacer"></div>
+      <div class="dt-pagination"><span class="dt-page-label">Page 1 of 1</span></div>
+    </div>
+  </section>
+</section>
+
+{# ---- Cards --------------------------------------------------------- #}
+<section class="gallery-section" id="g-cards">
+  <h2 class="gallery-h">Cards</h2>
+  <div class="grid gap-3 lg:grid-cols-2">
+    <section class="card flex flex-col">
+      <header class="card-head"><h2>{{ icon('baby') }} Upcoming weanings</h2><a class="card-head-link" href="#g-cards">View all</a></header>
+      <a class="row-line" href="#g-cards"><span class="min-w-0 flex-1 truncate text-ink">Litter L-12 · cage 106</span><span class="badge badge-warn">Tue 27</span></a>
+      <a class="row-line" href="#g-cards"><span class="min-w-0 flex-1 truncate text-ink">Litter L-14 · cage 108</span><span class="badge badge-quiet">Nov 2</span></a>
+    </section>
+    <section class="card flex flex-col">
+      <header class="card-head"><h2>{{ icon('cart') }} Recent orders</h2></header>
+      <div class="empty-state">{{ icon('cart') }}<p>No orders yet. Create one.</p></div>
+    </section>
+  </div>
+</section>
+
+{# ---- Menus and popovers -------------------------------------------- #}
+<section class="gallery-section" id="g-menus">
+  <h2 class="gallery-h">Menus and popovers</h2>
+  <p class="gallery-note">Everything that floats is pop-surface glass; a row's hover is the brand fill. A details[data-popover] closes on a click outside and on Esc.</p>
+  <div class="card card-pad gallery-row items-start">
+    <div class="gallery-menu-demo">
+      <div class="menu" style="position: static; display: block;">
+        <div class="menu-head"><span class="menu-head-name">Alex Rivera</span><span class="menu-head-meta">alex · Admin</span></div>
+        <div class="menu-rule"></div>
+        <a class="menu-item" href="#g-menus">{{ icon('settings') }} Settings</a>
+        <a class="menu-item" href="#g-menus">{{ icon('history') }} History</a>
+        <div class="menu-rule"></div>
+        <a class="menu-item menu-item-danger" href="#g-menus">{{ icon('sign-out') }} Sign out</a>
+      </div>
+    </div>
+    <details class="info-tip" data-popover>
+      <summary aria-label="About this" title="About this">{{ icon('info') }}</summary>
+      <div class="info-tip-pop">A sentence or two of help, here instead of a paragraph that stays on the page.</div>
+    </details>
+    <details class="set-menu" data-popover>
+      <summary class="btn btn-sm" aria-label="More">···</summary>
+      <div class="set-menu-pop">
+        <div class="set-menu-row"><select aria-label="Role"><option>Member</option><option>Admin</option></select><button type="button" class="btn btn-sm">Set role</button></div>
+        <button type="button" class="btn btn-sm btn-danger">Disable the account</button>
+      </div>
+    </details>
+  </div>
+</section>
+
+{# ---- Dialogs ------------------------------------------------------- #}
+<section class="gallery-section" id="g-dialogs">
+  <h2 class="gallery-h">Dialogs</h2>
+  <p class="gallery-note">One record-dialog: title, ×, a body that scrolls, Cancel then the one primary. Narrow 460, default 640, wide 880; a bottom sheet on a phone. Asking is BioDialog, never the browser's.</p>
+  <div class="card card-pad gallery-row">
+    <button type="button" class="btn" data-on-click="open-dialog" data-arg="gallery-dialog">Record dialog</button>
+    <button type="button" class="btn" data-on-click="open-dialog" data-arg="gallery-choice">Choice list</button>
+    <button type="button" class="btn" data-on-click="gallery-confirm">Confirm</button>
+    <button type="button" class="btn" data-on-click="gallery-danger">Confirm, removing</button>
+    <button type="button" class="btn" data-on-click="gallery-prompt">Prompt</button>
+    <button type="button" class="btn" data-on-click="gallery-alert">Alert</button>
+  </div>
+</section>
+
+<dialog id="gallery-dialog" class="record-dialog" aria-labelledby="gallery-dialog-title">
+  <form method="dialog">
+    <header class="record-dialog-head">
+      <div><h3 id="gallery-dialog-title">New cage</h3>
+        <p class="record-dialog-sub">A one-line subtitle says what happens.</p></div>
+      <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="Close">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
+      <div class="modal-grid">
+        <label>Rack <select><option>Rack A</option><option>Rack B</option></select></label>
+        <label>Position <input placeholder="e.g. D7"></label>
+        <label>Purpose <input list="gallery-strains"></label>
+        <label>Litter born <input type="date"></label>
+      </div>
+      <fieldset class="choice-cards">
+        <legend>A choice of kinds</legend>
+        <label class="choice-card"><input type="radio" name="g-kind" checked><span><b>Another litter</b> <small>Both are kept.</small></span></label>
+        <label class="choice-card"><input type="radio" name="g-kind"><span><b>Correct the date</b> <small>This one replaces it.</small></span></label>
+      </fieldset>
+    </div>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn" data-on-click="close-dialog">Cancel</button>
+      <button type="submit" class="btn btn-primary">Create cage</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="gallery-choice" class="record-dialog record-dialog-narrow" aria-labelledby="gallery-choice-title">
+  <div class="flex max-h-[86vh] flex-col">
+    <header class="record-dialog-head">
+      <div><h3 id="gallery-choice-title">Export mice</h3><p class="record-dialog-sub">The mice you are looking at, as a file.</p></div>
+      <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="Close">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
+      <nav class="choice-list">
+        <a class="choice-row" href="#g-dialogs">{{ icon('file') }}<span><b>CSV</b><small>For a spreadsheet or another program.</small></span>{{ icon('download') }}</a>
+        <a class="choice-row" href="#g-dialogs">{{ icon('table') }}<span><b>Excel</b><small>A workbook, ready to open.</small></span>{{ icon('download') }}</a>
+      </nav>
+    </div>
+    <footer class="record-dialog-foot"><button type="button" class="btn" data-on-click="close-dialog">Done</button></footer>
+  </div>
+</dialog>
+
+{# ---- Toasts and notices -------------------------------------------- #}
+<section class="gallery-section" id="g-toasts">
+  <h2 class="gallery-h">Toasts and notices</h2>
+  <p class="gallery-note">One toast (BiomanagerShell.toast), above a phone's tab bar and in front of an open dialog. A flash stays on the page until read.</p>
+  <div class="card card-pad flex flex-col gap-3">
+    <div class="gallery-row">
+      <button type="button" class="btn" data-on-click="gallery-toast" data-arg="">Toast</button>
+      <button type="button" class="btn" data-on-click="gallery-toast" data-arg="ok">Toast, done</button>
+      <button type="button" class="btn" data-on-click="gallery-toast" data-arg="danger">Toast, failed</button>
+    </div>
+    <div class="flash-message flash-success">Saved the cage.</div>
+    <div class="flash-message flash-warning">Two cages share position B2.</div>
+    <div class="flash-message flash-error">Could not save: the rack is full.</div>
+  </div>
+</section>
+
+<script nonce="{{ csp_nonce() }}">
+  function galleryToast(kind) {
+    BiomanagerShell.toast(kind === 'ok' ? 'Saved the order of the databases.' : kind === 'danger' ? 'Could not save. Try again.' : 'Copied.', kind);
+  }
+  function galleryConfirm() { BioDialog.confirm('Move 3 cages to Rack B?'); }
+  function galleryDanger() { BioDialog.confirm('Delete reagent #7?', { danger: true }); }
+  function galleryPrompt() { BioDialog.prompt('Name this regimen', ''); }
+  function galleryAlert() { BioDialog.alert('The camera could not be opened here.'); }
+  BioActions.register({ 'gallery-toast': galleryToast, 'gallery-confirm': galleryConfirm, 'gallery-danger': galleryDanger,
+                        'gallery-prompt': galleryPrompt, 'gallery-alert': galleryAlert });
+</script>
+{% endblock %}

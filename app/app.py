@@ -1178,7 +1178,7 @@ _ATTR = re.compile(r'\s([\w:-]+)(?:="([^"]*)")?')
 _CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
 _FIRST = re.compile(r'<option\b[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
 # Copied onto the text: what the page's styles and scripts read from the field.
-_KEPT = ("title", "data-status", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
+_KEPT = ("title", "data-status", "data-tone", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
 _DISABLED = re.compile(r"\sdisabled\b")
 _READONLY = re.compile(r"\sreadonly\b")
 
@@ -1394,20 +1394,20 @@ def owner_badge_filter(name: str) -> Markup:
 
 def _owner_badge(name: str) -> Markup:
     info = _get_user_directory().get(name)
-    if info and info["short"]:
-        text = info["short"][:3].upper() if len(info["short"]) > 3 else info["short"].upper()
-        tooltip = info["display"] or name
+    display = (info["display"] if info else "") or name
+    tooltip = display
+    # Two initials, from the person's name as the lab knows it (Jordan Lee:
+    # JL), else from their username (jordan: JO).
+    parts = [p for p in re.split(r"[\s._-]+", display.strip()) if p]
+    if len(parts) >= 2:
+        text = (parts[0][0] + parts[-1][0]).upper()
     else:
-        cleaned = name.strip()
-        parts = cleaned.split()
-        if len(parts) >= 2:
-            text = (parts[0][0] + parts[1][0]).upper()
-        else:
-            text = cleaned[:2].upper()
-        tooltip = name
-    hue, sat, light = _name_color(name)
-    bg = f"hsl({hue}, {sat}%, 90%)"
-    fg = f"hsl({hue}, {sat}%, {light}%)"
+        text = (parts[0][:2] if parts else name[:2]).upper()
+    hue, _sat, _light = _name_color(name)
+    # Soft in light and dark alike: the colour tells people apart, the
+    # initials stay readable on it.
+    bg = f"hsl({hue} 70% 55% / 0.2)"
+    fg = f"hsl({hue} 55% 30%);color:light-dark(hsl({hue} 55% 30%), hsl({hue} 75% 78%))"
     # data-tooltip drives the CSS popover; aria-label keeps it accessible.
     # We deliberately avoid the native `title` attribute so the browser doesn't
     # show its own delayed tooltip on top of ours.
@@ -2582,11 +2582,21 @@ ALLOWED_LANDING_ENDPOINTS = {"colony", "notebook", "calendar", "orders", "sample
 @app.route("/home/layout", methods=["POST"])
 @login_required
 def set_home_layout():
-    """Switch Home between Classic, Tracks and Freezer; kept per person."""
+    """Switch Home between Overview, Timeline and By place; kept per person."""
     with SessionLocal() as db_session:
         home_layouts.set_layout(db_session, g.user.username, request.form.get("layout", ""))
         db_session.commit()
     return redirect(url_for("home_dashboard"))
+
+
+@app.route("/design")
+@admin_required
+def design_gallery():
+    """Every shared piece of the interface on one page, in its real styles
+    (docs/DEVELOPMENT.md → Interface design): to check a change against all
+    of them at once, in light, dark and on a phone. For maintainers, so in
+    English only."""
+    return render_template("design_gallery.html")
 
 
 @app.route("/login", methods=["GET", "POST"])

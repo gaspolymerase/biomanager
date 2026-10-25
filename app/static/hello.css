@@ -8,7 +8,7 @@ body.hello {
     radial-gradient(1200px 520px at 85% -10%, color-mix(in srgb, var(--color-brand-600) 14%, transparent), transparent 70%),
     var(--color-canvas);
   color: var(--color-ink);
-  font-size: 14px;
+  font-size: 15px;
 }
 .hello main { display: flex; flex-direction: column; gap: 56px; max-width: 1180px; margin: 0 auto; padding: 16px 24px 56px; }
 
@@ -61,7 +61,7 @@ body.hello {
 }
 .hello-lede { margin: 18px 0 0; max-width: 34em; font-size: 16px; line-height: 1.55; color: var(--color-ink-soft); }
 .hello-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
-.hello-fine { margin: 16px 0 0; max-width: 34em; font-size: 12.5px; line-height: 1.5; color: var(--color-muted); }
+.hello-fine { margin: 16px 0 0; max-width: 34em; font-size: 13px; line-height: 1.5; color: var(--color-muted); }
 .hello-shot { margin: 0; }
 .hello-shot img {
   display: block;
@@ -72,7 +72,7 @@ body.hello {
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 24px 60px -24px rgb(0 0 0 / 0.35);
 }
 
-.hello-section h2 { margin: 0 0 16px; font-size: 20px; font-weight: 650; letter-spacing: -0.015em; }
+.hello-section h2 { margin: 0 0 16px; font-size: 22px; font-weight: 650; letter-spacing: -0.015em; }
 .hello-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .hello-chips li {
   display: inline-flex;
@@ -124,8 +124,8 @@ body.hello {
 }
 .hello-link:hover { background: var(--color-surface); border-color: var(--color-brand-300); }
 .hello-link span:last-child { display: flex; flex-direction: column; gap: 3px; }
-.hello-link b { font-size: 14px; font-weight: 600; }
-.hello-link small { font-size: 12.5px; line-height: 1.45; color: var(--color-muted); }
+.hello-link b { font-size: 15px; font-weight: 600; }
+.hello-link small { font-size: 13px; line-height: 1.45; color: var(--color-muted); }
 .hello-link-icon { flex: none; color: var(--color-brand-600); padding-top: 1px; }
 .hello-link-icon .icon { width: 18px; height: 18px; }
 

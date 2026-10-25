@@ -37,7 +37,7 @@
                     {% if not r.active %}<span class="badge badge-quiet">{{ _('revoked') }}</span>
                     {% elif k.last_used_at %}
                       <span class="{{ 'text-ink' if r.fresh else 'text-danger-600' }}">{{ (k.last_used_at | local).strftime('%Y-%m-%d %H:%M') }}</span>
-                      {% if not r.fresh %}<span class="text-[11.5px] text-danger-600">· {{ _('over a day ago') }}</span>{% endif %}
+                      {% if not r.fresh %}<span class="text-[12px] text-danger-600">· {{ _('over a day ago') }}</span>{% endif %}
                     {% else %}<span class="text-muted">{{ 'not yet'|tr('last') }}</span>{% endif %}
                   </td>
                   <td class="text-muted">{{ k.last_bytes | filesizeformat if k.last_bytes else '—' }}</td>
@@ -93,7 +93,7 @@
         </div>
       </form>
 
-      <div class="rounded-lg border border-hairline bg-sand-50 px-3 py-2.5 text-[12.5px] leading-snug" data-lab-copy-status
+      <div class="rounded-lg border border-hairline bg-sand-50 px-3 py-2.5 text-[13px] leading-snug" data-lab-copy-status
            data-url="{{ url_for('lab_copy.status_json') }}" data-running="{{ '1' if desktop.running else '0' }}">
         {% if desktop.running %}
           {% trans %}<b>Copying now…</b> This page updates when it's done.{% endtrans %}

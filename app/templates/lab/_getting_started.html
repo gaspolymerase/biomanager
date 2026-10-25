@@ -1,30 +1,48 @@
 {# Getting started: the first steps for what the lab keeps (app/lab.py).
-   Shown on the home page until every step is done or the person hides it. #}
+   Shown on the home page until every step is done or the person hides it.
+   What is left comes first; what is done folds away under one line. #}
 {% set gs = getting_started_card() %}
 {% if gs %}
-  <section class="card mb-3 flex flex-col" aria-labelledby="getting-started-title">
+  {% set todo = gs.steps|rejectattr('done')|list %}
+  {% set done = gs.steps|selectattr('done')|list %}
+  <section class="card mb-3 flex flex-col gs-card" aria-labelledby="getting-started-title">
     <header class="card-head">
       <h2 id="getting-started-title">{{ icon('sparkle') }} {{ _('Getting started') }}</h2>
-      <span class="card-head-link">{{ _('%(done)s of %(total)s done', done=gs.done, total=gs.total) }}</span>
+      <span class="gs-progress" title="{{ _('%(done)s of %(total)s done', done=gs.done, total=gs.total) }}">
+        <span class="gs-meter" aria-hidden="true"><span style="width: {{ (100 * gs.done / gs.total)|round|int if gs.total else 0 }}%"></span></span>
+        <span class="card-head-link">{{ _('%(done)s of %(total)s done', done=gs.done, total=gs.total) }}</span>
+      </span>
     </header>
     <div class="flex flex-col">
-      {% for s in gs.steps %}
-        <a class="row-line" href="{{ s.url }}"{% if s.external %} target="_blank" rel="noopener" data-milestone="guide"{% endif %}
-           {% if s.done %}style="opacity: .55"{% endif %}>
-          <span class="shrink-0" style="width: 18px; color: var(--color-brand-600, #0f8f7c)">
-            {% if s.done %}{{ icon('check') }}{% else %}<span aria-hidden="true" style="display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%; opacity: .6"></span>{% endif %}
-          </span>
+      {% for s in todo %}
+        <a class="row-line gs-step" href="{{ s.url }}"{% if s.external %} target="_blank" rel="noopener" data-milestone="guide"{% endif %}>
+          <span class="gs-mark" aria-hidden="true"></span>
           <span class="min-w-0 flex-1">
-            <span class="font-medium text-ink"{% if s.done %} style="text-decoration: line-through"{% endif %}>{{ s.title|tr }}</span>
-            {% if not s.done %}<span class="text-muted" style="display: block; font-size: 12px">{{ s.hint|tr }}</span>{% endif %}
+            <span class="gs-title">{{ s.title|tr }}</span>
+            <span class="gs-hint">{{ s.hint|tr }}</span>
           </span>
-          <span class="sr-only">{{ _('Done') if s.done else _('To do') }}</span>
+          <span class="sr-only">{{ _('To do') }}</span>
+          {{ icon('chevron-right') }}
         </a>
       {% endfor %}
     </div>
-    <form method="post" action="{{ url_for('lab.hide_getting_started') }}" class="flex items-center gap-2" style="padding: 8px 12px">
+    {% if done %}
+      <details class="gs-done">
+        <summary>{{ icon('check') }} {% trans n=done|length %}{{ n }} done{% endtrans %}</summary>
+        <div class="flex flex-col">
+          {% for s in done %}
+            <a class="row-line gs-step is-done" href="{{ s.url }}"{% if s.external %} target="_blank" rel="noopener" data-milestone="guide"{% endif %}>
+              <span class="gs-mark" aria-hidden="true">{{ icon('check') }}</span>
+              <span class="gs-title min-w-0 flex-1">{{ s.title|tr }}</span>
+              <span class="sr-only">{{ _('Done') }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </details>
+    {% endif %}
+    <form method="post" action="{{ url_for('lab.hide_getting_started') }}" class="gs-foot">
       <button type="submit" class="btn btn-sm btn-ghost">{{ _('Hide this list') }}</button>
-      <a class="text-muted" style="font-size: 12px" href="{{ guide_url }}" target="_blank" rel="noopener" data-milestone="guide">{{ _('Open the user guide') }}</a>
+      <a href="{{ guide_url }}" target="_blank" rel="noopener" data-milestone="guide">{{ _('Open the user guide') }}</a>
     </form>
   </section>
 {% endif %}

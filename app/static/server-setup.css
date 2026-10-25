@@ -47,8 +47,8 @@
 }
 .ss-pane { display: flex; flex-direction: column; gap: 16px; }
 .ss-pane h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.02em; }
-.ss-lede { margin: 0; max-width: 60ch; font-size: 14px; line-height: 1.55; color: var(--color-ink-soft); }
-.ss-fine { margin: 0; max-width: 64ch; font-size: 12.5px; line-height: 1.55; color: var(--color-muted); }
+.ss-lede { margin: 0; max-width: 60ch; font-size: 15px; line-height: 1.55; color: var(--color-ink-soft); }
+.ss-fine { margin: 0; max-width: 64ch; font-size: 13px; line-height: 1.55; color: var(--color-muted); }
 .ss-fine code, .ss-howto code { font-size: 12px; }
 .ss-note {
   margin: 0;
@@ -75,17 +75,17 @@
 .ss-choice:has(input:disabled) { opacity: 0.55; cursor: default; }
 .ss-choice input { margin-top: 3px; accent-color: var(--color-brand-600); }
 .ss-choice-body { display: flex; flex-direction: column; gap: 3px; }
-.ss-choice-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.ss-choice-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
 .ss-choice-text { font-size: 13px; line-height: 1.5; color: var(--color-ink-soft); }
 .ss-choice-needs { font-size: 12px; color: var(--color-muted); }
 
 .ss-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
 .ss-form input, .ss-form select {
-  height: 34px;
+  height: var(--field-h);
   padding: 0 10px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
   font-size: 13px;
@@ -101,7 +101,7 @@
 .ss-facts li[data-kind="bad"]::before { content: "✕"; color: var(--color-danger-700); }
 .ss-howto { display: flex; flex-direction: column; gap: 6px; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.5; color: var(--color-ink-soft); }
 
-.ss-summary { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 13.5px; }
+.ss-summary { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 13px; }
 .ss-summary dt { color: var(--color-muted); }
 .ss-summary dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 .ss-error { margin: 0; padding: 9px 12px; border-radius: 8px; background: var(--color-danger-50); font-size: 13px; color: var(--color-danger-700); }
@@ -118,7 +118,7 @@
   white-space: pre;
 }
 
-.ss-progress { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.ss-progress { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 15px; }
 .ss-progress li { display: flex; align-items: center; gap: 10px; }
 .ss-progress li::before {
   content: "";
@@ -135,7 +135,7 @@
 @keyframes ss-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ss-progress li[data-state="now"]::before { animation: none; } }
 
-.ss-result { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 12px; background: var(--color-ok-50); font-size: 13.5px; line-height: 1.55; }
+.ss-result { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 12px; background: var(--color-ok-50); font-size: 13px; line-height: 1.55; }
 .ss-result p { margin: 0; }
 .ss-failed { background: var(--color-danger-50); }
 .ss-address { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; }
@@ -151,3 +151,8 @@
   .ss-form { grid-template-columns: minmax(0, 1fr); }
   .ss-main { padding: 18px 16px; }
 }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.ss-form :is(input, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.ss-form :is(input, select)) { padding-right: 28px; }

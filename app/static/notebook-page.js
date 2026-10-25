@@ -91,21 +91,9 @@
       });
     });
   }
-  var toastTimer = null;
+  // Messages here are built as escaped HTML (some carry a link).
   function toast(message, isError) {
-    var el = $('#nb-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'nb-toast';
-      el.className = 'nb-toast';
-      el.setAttribute('role', 'status');
-      document.body.appendChild(el);
-    }
-    el.innerHTML = message;
-    el.classList.toggle('is-error', !!isError);
-    el.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.hidden = true; }, 4200);
+    window.BiomanagerShell.toast(message, isError ? 'danger' : '', { html: true });
   }
   function debounce(fn, ms) {
     var t = null;

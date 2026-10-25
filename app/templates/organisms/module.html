@@ -78,13 +78,13 @@
    includes it. #}
 {% macro seedlot_dialog(return_view) %}
   {% set own_fields = fields.get('seedlot', []) %}
-  <dialog id="seedlot-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ _('Seed lot') }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_seedlot', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="seedlot-dialog" class="record-dialog" aria-labelledby="seedlot-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_seedlot', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="seedlot-dialog-title">{{ _('Seed lot') }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       <input type="hidden" name="return_view" value="{{ return_view }}">
@@ -123,7 +123,11 @@
         {{ _('Mark what it was harvested from as harvested (a cross as collected)') }}
       </label>
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
   <datalist id="org-seed-units">{% for unit in module.seed_units %}<option value="{{ unit }}"></option>{% endfor %}</datalist>
@@ -142,8 +146,8 @@
 {% endmacro %}
 
 {% block page_nav %}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
-    <nav class="seg max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
+  <div class="page-tabs-row">
+    <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
       {% for v in views %}
         <a class="seg-item {% if active_view == v.key %}is-active{% endif %}"
            href="{{ url_for('organisms.module', key=module.key, view=v.key) }}" role="tab"
@@ -154,16 +158,16 @@
       {% endfor %}
     </nav>
 
-    <div class="flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-      <span class="badge">{{ census.animals }} {{ n_org if census.animals == 1 else n_orgs }}</span>
-      {% if module.has('housing') %}<span class="badge">{{ census.housing }} {{ n_unit if census.housing == 1 else n_units }}</span>{% endif %}
-      {% if module.has('lines') %}<span class="badge">{{ census.lines }} {{ n_line if census.lines == 1 else n_lines }}</span>{% endif %}
+    <div class="page-tabs-side page-stats">
+      <span class="page-stat">{{ census.animals }} {{ n_org if census.animals == 1 else n_orgs }}</span>
+      {% if module.has('housing') %}<span class="page-stat">{{ census.housing }} {{ n_unit if census.housing == 1 else n_units }}</span>{% endif %}
+      {% if module.has('lines') %}<span class="page-stat">{{ census.lines }} {{ n_line if census.lines == 1 else n_lines }}</span>{% endif %}
       {% if census.overdue %}<span class="badge badge-warn">{{ _('%(n)s overdue', n=census.overdue) }}</span>{% endif %}
       {% if module.has('preservation') and census.frozen_vials %}
-        <span class="badge">{% trans count=census.frozen_vials %}{{ count }} vial frozen{% pluralize %}{{ count }} vials frozen{% endtrans %}</span>
+        <span class="page-stat">{% trans count=census.frozen_vials %}{{ count }} vial frozen{% pluralize %}{{ count }} vials frozen{% endtrans %}</span>
       {% endif %}
       {% if module.has('seed_bank') and census.seed_lots %}
-        <span class="badge">{% trans count=census.seed_lots %}{{ count }} seed lot{% pluralize %}{{ count }} seed lots{% endtrans %}</span>
+        <span class="page-stat">{% trans count=census.seed_lots %}{{ count }} seed lot{% pluralize %}{{ count }} seed lots{% endtrans %}</span>
       {% endif %}
     </div>
   </div>
@@ -373,13 +377,13 @@
     </div>
   </section>
 
-  <dialog id="animal-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ n_org|capitalize }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_animal', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="animal-dialog" class="record-dialog" aria-labelledby="animal-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_animal', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="animal-dialog-title">{{ n_org|capitalize }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       {{ locked_note() }}
@@ -425,7 +429,11 @@
       {% endif %}
       {% for field in own_fields %}{{ F.field_input(field, {}, lines, usernames) }}{% endfor %}
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
   {% if module.has('genotyping') %}
@@ -629,13 +637,13 @@
     {% endcall %}
   {% endif %}
 
-  <dialog id="housing-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ n_unit|capitalize }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_housing', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="housing-dialog" class="record-dialog" aria-labelledby="housing-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_housing', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="housing-dialog-title">{{ n_unit|capitalize }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       {{ locked_note() }}
@@ -672,16 +680,21 @@
       <label class="inline-check col-span-full"><input type="checkbox" name="needs_attention" value="1"> {{ _('Needs attention') }}</label>
       <label class="inline-check col-span-full"><input type="checkbox" name="retired" value="1"> {{ _('Retired / inactive') }}</label>
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
 
-  <dialog id="location-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ _('%(noun)ss &amp; locations', noun=n_box|capitalize) }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <div class="modal-body flex flex-col gap-3">
+  <dialog id="location-dialog" class="record-dialog" aria-labelledby="location-dialog-title">
+   <div class="flex max-h-[86dvh] flex-col">
+    <header class="record-dialog-head">
+      <div><h3 id="location-dialog-title">{{ _('%(noun)ss &amp; locations', noun=n_box|capitalize) }}</h3></div>
+      <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
       {% if locations %}
         <div class="table-wrap">
           <table class="dense-table fit-table">
@@ -726,8 +739,10 @@
             <label class="field-label">{{ _('Rows') }}<input type="number" name="rows" min="1" value="8"></label>
             <label class="field-label">{{ _('Columns') }}<input type="number" name="cols" min="1" value="10"></label>
           {% endif %}
-          <button type="submit" data-location-submit>{{ _('Add location') }}</button>
-          <button type="button" class="ghost-button" data-location-cancel hidden>{{ _('Cancel edit') }}</button>
+          <div class="col-span-full flex justify-end gap-2">
+            <button type="button" class="btn" data-location-cancel hidden>{{ _('Cancel edit') }}</button>
+            <button type="submit" class="btn btn-primary" data-location-submit>{{ _('Add location') }}</button>
+          </div>
         </form>
         <script nonce="{{ csp_nonce() }}">
           /* Edit a rack or room in the same form that adds one. */
@@ -755,9 +770,13 @@
           })();
         </script>
       {% else %}
-        <p class="text-[12.5px] text-muted">{{ _('Only an admin or whoever created this database can add or remove %(noun)ss.', noun=n_box) }}</p>
+        <p class="text-[13px] text-muted">{{ _('Only an admin or whoever created this database can add or remove %(noun)ss.', noun=n_box) }}</p>
       {% endif %}
     </div>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn" data-on-click="close-dialog">{{ _('Done') }}</button>
+    </footer>
+   </div>
   </dialog>
 {% endif %}
 
@@ -842,13 +861,13 @@
     <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{{ lines|length }} {{ n_line if lines|length == 1 else n_lines }}</span></div>
   </section>
 
-  <dialog id="line-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ n_line|capitalize }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_line', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="line-dialog" class="record-dialog" aria-labelledby="line-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_line', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="line-dialog-title">{{ n_line|capitalize }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       {{ locked_note() }}
@@ -876,7 +895,11 @@
       {% for field in own_fields %}{{ F.field_input(field, {}, lines, usernames) }}{% endfor %}
       <label class="inline-check col-span-full"><input type="checkbox" name="retired" value="1"> {{ _('Retired') }}</label>
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
 {% endif %}
@@ -975,13 +998,13 @@
     <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{{ crosses|length }} {{ n_cross if crosses|length == 1 else n_crosses }}</span></div>
   </section>
 
-  <dialog id="cross-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ n_cross|capitalize }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_cross', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="cross-dialog" class="record-dialog" aria-labelledby="cross-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_cross', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="cross-dialog-title">{{ n_cross|capitalize }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       {{ locked_note() }}
@@ -1011,7 +1034,11 @@
       <label class="field-label">{{ _('Owner') }}<select name="owner">{{ owner_options() }}</select></label>
       {% for field in own_fields %}{{ F.field_input(field, {}, lines, usernames) }}{% endfor %}
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
   {% if module.has('seed_bank') %}{{ seedlot_dialog('crosses') }}{% endif %}
@@ -1113,13 +1140,13 @@
     <div class="dt-bottom-bar"><span class="dt-bottom-count dt-count">{{ cohorts|length }} {{ n_cohort if cohorts|length == 1 else n_cohorts }}</span></div>
   </section>
 
-  <dialog id="cohort-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ n_cohort|capitalize }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_cohort', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="cohort-dialog" class="record-dialog" aria-labelledby="cohort-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_cohort', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="cohort-dialog-title">{{ n_cohort|capitalize }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <input type="hidden" name="_full" value="1">
       {{ locked_note() }}
@@ -1160,7 +1187,11 @@
       <label class="field-label">{{ _('Owner') }}<select name="owner">{{ owner_options() }}</select></label>
       {% for field in own_fields %}{{ F.field_input(field, {}, lines, usernames) }}{% endfor %}
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
   {% if module.has('seed_bank') %}{{ seedlot_dialog('cohorts') }}{% endif %}
@@ -1285,13 +1316,13 @@
   <datalist id="org-subjects">{% for s in subject_choices %}<option value="{{ s.value }}">{{ s.hint }}</option>{% endfor %}</datalist>
   <datalist id="org-assays">{% for assay in assays %}<option value="{{ assay }}"></option>{% endfor %}</datalist>
 
-  <dialog id="genotype-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ _('Genotype call') }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_genotype', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="genotype-dialog" class="record-dialog" aria-labelledby="genotype-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_genotype', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="genotype-dialog-title">{{ _('Genotype call') }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="return_view" value="genotyping">
       <label class="field-label">{{ n_org|capitalize }}
         <input name="subject" list="org-subjects" required autocomplete="off" class="font-mono" placeholder="{{ _('ID') }}">
@@ -1303,7 +1334,11 @@
       <label class="field-label">{{ _('Called on') }}<input type="date" name="called_on"></label>
       <label class="field-label">{{ _('Gel image') }}<input type="url" name="image_path" placeholder="https://"></label>
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
 {% endif %}
@@ -1330,7 +1365,7 @@
             {{ icon(item.icon, "shrink-0 " + ("text-danger-600" if item.overdue else "text-sand-400")) }}
             <span class="w-[150px] shrink-0 font-medium text-ink">{{ item.label|tr('rule') }}</span>
             <span class="ident w-[140px] shrink-0">{{ item.subject_label }}</span>
-            <span class="hidden w-[90px] shrink-0 text-[11.5px] text-muted sm:block">{{ item.subject_kind|tr('subject') }}</span>
+            <span class="hidden w-[90px] shrink-0 text-[12px] text-muted sm:block">{{ item.subject_kind|tr('subject') }}</span>
             <span class="min-w-0 flex-1 text-[12px] text-muted">{{ item.due_on | day }}</span>
             {% if item.overdue %}
               <span class="badge badge-danger shrink-0">{{ _('%(n)sd overdue', n=-item.days) }}</span>
@@ -1537,13 +1572,13 @@
     </div>
   </section>
 
-  <dialog id="lot-dialog" class="mouse-modal">
-    <form method="dialog" class="modal-topbar">
-      <h3>{{ _('Frozen lot') }}</h3>
-      <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('organisms.save_lot', key=module.key) }}"
-          class="modal-body modal-grid" data-entity-form>
+  <dialog id="lot-dialog" class="record-dialog" aria-labelledby="lot-dialog-title">
+    <form method="post" action="{{ url_for('organisms.save_lot', key=module.key) }}" data-entity-form>
+      <header class="record-dialog-head">
+        <div><h3 id="lot-dialog-title">{{ _('Frozen lot') }}</h3></div>
+        <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+      </header>
+      <div class="record-dialog-body"><div class="modal-grid">
       <input type="hidden" name="id">
       <label class="field-label">{{ n_line|capitalize }}
         <select name="line_id_fk" required>{{ line_options() }}</select>
@@ -1570,7 +1605,11 @@
         </select>
       </label>
       <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-      <button type="submit">{{ _('Save') }}</button>
+      </div></div>
+      <footer class="record-dialog-foot">
+        <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+      </footer>
     </form>
   </dialog>
 {% endif %}
@@ -1722,13 +1761,13 @@
 
   {% if module.has('cohorts') %}
     {# Sow: a new sowing from the lot, on the Sowings tab. #}
-    <dialog id="sow-dialog" class="mouse-modal">
-      <form method="dialog" class="modal-topbar">
-        <h3>{{ n_cohort|capitalize }}</h3>
-        <button type="submit" class="modal-close" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
-      </form>
-      <form method="post" action="{{ url_for('organisms.save_cohort', key=module.key) }}"
-            class="modal-body modal-grid" data-entity-form>
+    <dialog id="sow-dialog" class="record-dialog" aria-labelledby="sow-dialog-title">
+      <form method="post" action="{{ url_for('organisms.save_cohort', key=module.key) }}" data-entity-form>
+        <header class="record-dialog-head">
+          <div><h3 id="sow-dialog-title">{{ n_cohort|capitalize }}</h3></div>
+          <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+        </header>
+        <div class="record-dialog-body"><div class="modal-grid">
         <input type="hidden" name="seed_lot_id_fk">
         <input type="hidden" name="owner">
         <label class="field-label">{{ _('From lot') }}<input name="lot_label" readonly tabindex="-1"></label>
@@ -1744,7 +1783,11 @@
           <label class="field-label">{{ _('Stage') }}<select name="stage">{{ choice_options(module.stages, None) }}</select></label>
         {% endif %}
         <label class="field-label col-span-full">{{ _('Notes') }}<textarea name="notes" rows="2"></textarea></label>
-        <button type="submit">{{ _('Save') }}</button>
+        </div></div>
+        <footer class="record-dialog-foot">
+          <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+          <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+        </footer>
       </form>
     </dialog>
   {% endif %}
@@ -1869,12 +1912,12 @@
                        {% if cap.key in module.capabilities %}checked{% endif %}
                        {% if cap.core %}onclick="event.preventDefault()"{% endif %}>
                 <span class="min-w-0">
-                  <span class="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                  <span class="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
                     {# Named as this database names them: Sowings, not Birth cohorts. #}
                     {% set own = {'cohorts': n_cohorts, 'crosses': n_crosses, 'lines': n_lines}.get(cap.key) %}
                     {{ icon(cap.icon, "text-sand-500") }}{{ own|capitalize if own else cap.label|tr('capability') }}
                   </span>
-                  <span class="block text-[11.5px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
+                  <span class="block text-[12px] leading-snug text-muted">{{ cap.blurb|tr }}</span>
                 </span>
               </label>
             {% endfor %}
@@ -2086,7 +2129,7 @@
         </header>
         <form method="post" action="{{ url_for('organisms.delete_module', key=module.key) }}"
               class="flex flex-wrap items-end gap-3 p-4">
-          <p class="w-full text-[12.5px] leading-snug text-muted">
+          <p class="w-full text-[13px] leading-snug text-muted">
             {% trans count=census.all_records, noun=n_org, units=census.housing ~ ' ' ~ n_units, lines=census.lines ~ ' ' ~ n_lines %}Removes the module and every record in it — {{ count }} {{ noun }} record, {{ units }}, {{ lines }}. This cannot be undone.{% pluralize %}Removes the module and every record in it — {{ count }} {{ noun }} records, {{ units }}, {{ lines }}. This cannot be undone.{% endtrans %}
           </p>
           <label class="field-label">{% trans name=module.label %}Type <strong class="font-semibold text-ink">{{ name }}</strong> to confirm{% endtrans %}
@@ -2172,7 +2215,7 @@
     }
 
     // "New vial" / "Edit vial" rather than a bare noun.
-    const heading = dialog.querySelector('.modal-topbar h3');
+    const heading = dialog.querySelector('.record-dialog-head h3');
     if (heading) {
       heading.dataset.base = heading.dataset.base || heading.textContent.trim();
       const base = heading.dataset.base;

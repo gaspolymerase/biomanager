@@ -394,5 +394,11 @@
   "The father and mother recorded at Litter born are filled in. Nothing here is required.": "产仔时记下的父本和母本会自动填上。这里每一项都不是必填。",
   "The father’s mouse number, or a note.": "父本的小鼠编号，或一句备注。",
   "The mother’s mouse number, or a note.": "母本的小鼠编号，或一句备注。",
-  "How many pups: one mouse is made for each. Empty makes the litter now, and its pups can be added later.": "幼崽数：每只建一只小鼠。留空则先创建窝，幼崽之后再加。"
+  "How many pups: one mouse is made for each. Empty makes the litter now, and its pups can be added later.": "幼崽数：每只建一只小鼠。留空则先创建窝，幼崽之后再加。",
+  "The mice you are looking at, as a file.": "你正在看的小鼠，导出为文件。",
+  "For a spreadsheet or another program.": "用于电子表格或其他程序。",
+  "A workbook, ready to open.": "一个工作簿，直接打开即可。",
+  "A page to print or save as PDF.": "一页可打印或存为 PDF 的内容。",
+  "About racks and positions": "关于笼架和位置",
+  "Whose records these are": "这些记录是谁的"
 }

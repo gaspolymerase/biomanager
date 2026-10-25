@@ -36,7 +36,7 @@
       </header>
 
       <div class="p-4">
-        <p class="mb-3.5 text-[12.5px] leading-snug text-muted">
+        <p class="mb-3.5 text-[13px] leading-snug text-muted">
           {% trans trimmed %}Everything here is copied to every mouse. You can change individual
           rows in the next step — nothing is written until you confirm.{% endtrans %}
         </p>
@@ -113,7 +113,7 @@
           <label class="field-label">{{ _('Males') }}
             <input type="number" name="count_male" min="0" max="{{ max_batch }}" placeholder="0">
           </label>
-          <label class="inline-check sm:col-span-2 self-end text-[12.5px]" title="{{ _('With Cage set to new, females and males otherwise go into two new cages') }}">
+          <label class="inline-check sm:col-span-2 self-end text-[13px]" title="{{ _('With Cage set to new, females and males otherwise go into two new cages') }}">
             <input type="checkbox" name="one_new_cage" value="1">
             {{ _('Keep both sexes in one new cage (to breed)') }}
           </label>
@@ -134,7 +134,7 @@
         <h2>{{ icon('upload') }} {{ _('Or load a CSV') }}</h2>
       </header>
       <div class="flex flex-col gap-3 p-4">
-        <p class="text-[12.5px] leading-snug text-muted">
+        <p class="text-[13px] leading-snug text-muted">
           {{ _('Lands in the same preview, so you can fix anything before it is written.') }}
         </p>
         <label class="field-label">{{ _('CSV file') }}
@@ -145,10 +145,10 @@
           <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-sand-400">
             {{ _('Columns it understands') }}
           </p>
-          <p class="font-mono text-[11.5px] leading-relaxed text-ink-soft">
+          <p class="font-mono text-[12px] leading-relaxed text-ink-soft">
             {{ template_headers | join(' · ') }}
           </p>
-          <p class="mt-2 text-[11.5px] leading-snug text-muted">
+          <p class="mt-2 text-[12px] leading-snug text-muted">
             {% trans trimmed %}Easiest: download the template, fill it in Excel or Sheets and save
             it as CSV. Dates may be written as in Excel (3/14/2026 or
             14/03/2026). A <code class="ident">genotype</code> column with no

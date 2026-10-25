@@ -15,7 +15,7 @@
     <p class="mt-2 text-[13px] leading-relaxed text-ink-soft">
       {{ _('If the server and every admin’s computer were lost, the recovery key is the only way to open a backup. Keep it on paper or in a password manager, away from the backups themselves. Anyone with it can read the lab’s backups.') }}
     </p>
-    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[12.5px]">
+    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
       <dt class="text-muted">{{ _('Key') }}</dt><dd class="font-mono">{{ info.key_id }}</dd>
       <dt class="text-muted">{{ _('Made') }}</dt><dd>{{ (info.made | local).strftime('%Y-%m-%d') }}</dd>
       <dt class="text-muted">{{ _('Recovery key') }}</dt>
@@ -27,7 +27,7 @@
   <section class="card p-5" id="recovery-key">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('The recovery key') }}</h2>
     {% if shown %}
-      <p class="mt-2 text-[12.5px] text-muted">{{ _('Write it down or store it now. Letters and spaces both count; case doesn’t.') }}</p>
+      <p class="mt-2 text-[13px] text-muted">{{ _('Write it down or store it now. Letters and spaces both count; case doesn’t.') }}</p>
       <pre class="mt-2 whitespace-pre-wrap break-all rounded-lg border border-hairline bg-canvas p-3 font-mono text-[13px] leading-relaxed text-ink" data-recovery>{{ shown }}</pre>
       <button type="button" class="btn btn-sm mt-2" data-copy-recovery>{{ icon('copy') }} {{ _('Copy') }}</button>
       <script nonce="{{ csp_nonce() }}">
@@ -50,7 +50,7 @@
 
   <section class="card p-5">
     <h2 class="text-[15px] font-semibold text-ink">{{ _('A lab back without its key') }}</h2>
-    <p class="mt-1 text-[12.5px] leading-snug text-muted">{{ _('A server put back from a backup on a new machine can’t read the key it had. Enter the lab’s recovery key, and the backups and lab files it locked open here again.') }}</p>
+    <p class="mt-1 text-[13px] leading-snug text-muted">{{ _('A server put back from a backup on a new machine can’t read the key it had. Enter the lab’s recovery key, and the backups and lab files it locked open here again.') }}</p>
     <form method="post" class="mt-3 flex flex-col gap-3">
       <input type="hidden" name="action" value="adopt">
       <label class="field-label">{{ _('Lab recovery key') }}
