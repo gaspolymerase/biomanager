@@ -1941,28 +1941,12 @@ document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
 
 
 /* The cage sheet. static/sheet.js saves the cells; this keeps the parts it
-   does not know about in step: the sub-row of mice, the wean-due date,
-   the shared cell of breeder cages, the chips' data, and the dialog. */
-function formatDateForInput(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-/* The lab's weaning day, as the server reckons it (services.weaning_offset). */
-function weanDue(born) {
-  if (!born) return { due: '', state: '' };
-  const weaningDate = new Date(`${born}T00:00:00`);
-  weaningDate.setDate(weaningDate.getDate() + {{ wean_offset_days | int }});
-  const today = new Date(`${localToday()}T00:00:00`);
-  const left = Math.round((weaningDate - today) / 86400000);
-  return { due: formatDateForInput(weaningDate), state: left < 0 ? 'overdue' : (left <= 3 ? 'soon' : '') };
-}
+   does not know about in step: the sub-row of mice, the wean-due date
+   (as the server answers it), the shared cell of breeder cages, the chips'
+   data, and the dialog. */
 (function () {
   const sheet = document.querySelector('.cage-sheet');
   if (!sheet) return;
-  // Litter born, Genotyping and Wean: a mating (Breeding) cage's only.
-  const BREEDING = new Set(['breeding']);
   const cageRow = (form) => document.getElementById(`cage-${form.id.replace('cage-update-', '')}`);
   const showWean = (row, due, state) => {
     const cell = row && row.querySelector('[data-cage-wean]');
@@ -2137,16 +2121,6 @@ function weanDue(born) {
     if (button && detail && detail.hidden) button.click();
   });
 
-  // Wean due follows the litter-born date as soon as it changes.
-  sheet.addEventListener('sheet:change', (event) => {
-    const { input, form } = event.detail || {};
-    if (!input || !form || !form.id.startsWith('cage-update-')) return;
-    if (input.name === 'date_give_birth' && input.value) {
-      const { due, state } = weanDue(input.value);
-      showWean(cageRow(form), due, state);
-    }
-  });
-
   sheet.addEventListener('sheet:saved', (event) => {
     const { form, body } = event.detail || {};
     if (!form) return;
@@ -2213,7 +2187,9 @@ function weanDue(born) {
     }
     const detail = document.getElementById(`cage-detail-${row.dataset.id}`);
     const breeding = detail && detail.querySelector('[data-breeding-actions]');
-    if (breeding) breeding.classList.toggle('hidden-row', !BREEDING.has(String(values.purpose || '').trim().toLowerCase()));
+    // Litter born, Genotyping and Wean: a mating (Breeding) cage's only, as
+    // the server says (app/litters.py).
+    if (breeding && 'breeding' in values) breeding.classList.toggle('hidden-row', values.breeding !== '1');
     // The dialog opens with what the row now shows.
     const open = row.querySelector('[data-record-edit="cage-dialog"]');
     if (open) {

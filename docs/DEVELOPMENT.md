@@ -768,7 +768,10 @@ they follow the app's palette and dark mode.
 
 ## Organism modules (configurable species databases)
 
-Mouse colony and zebrafish are hand-written modules with their own tables.
+Mouse colony and zebrafish are hand-written modules with their own tables:
+the colony's pages are in `app/app.py`, the zebrafish database's in
+`app/zebrafish_routes.py` (registered on the same Flask app, so its
+endpoints keep the names every page links to; `app.py` imports it last).
 Everything else is configurable: an **organism module** is a row in
 `organism_modules` that describes a species, and one generic engine serves it.
 
@@ -939,9 +942,21 @@ Who may change what lives in one place, `app/access.py`:
   `CageRecord.purpose` in `models.py`; revision 0013 set the flag on the
   breeder cages a lab already had, and 0015 cleared it on the other cages,
   where it meant nothing before). Turning it off or on, or giving the cage
-  to someone else, is `access.can_set_sharing()` / `can_manage()` (owner or
-  admin; animal care may also reassign), not everyone a shared cage lets
-  edit. The whole lab can edit a shared cage and pick mice out of it.
+  to someone else, is its owner's or an admin's (animal care may also
+  reassign), not everyone a shared cage lets edit. The whole lab can edit a
+  shared cage and pick mice out of it.
+- **Giving a record away, or sharing it** is one rule for every database,
+  in `app/stewardship.py`: `change_owner()` (with `may_give_away()`:
+  `access.can_manage()`, or animal care on `access.CARE_RECORDS`; and the
+  new owner one of `lab_members()`, or nobody), `batch_owner_refused()`
+  for a batch's Set owner (a lab member, never blank), and
+  `change_sharing()` (`can_manage()`, then `groups.apply`). Cages, tanks,
+  fish lines, clutches, plasmids, inventory items, vials and frozen lots,
+  and every organism record (`organism_routes._set_owner`) call it from
+  their dialogs, sheet rows and batch actions; each answers with the
+  refusal in words or None. Mice stay the colony's: anyone who may edit a
+  mouse in a shared cage may take it (Pick), so `app.change_mouse` checks
+  only that the new owner is in the lab. `tests/test_stewardship.py`.
 - **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
   *Breeding* is a mating cage: only it gets Litter born, Genotyping and
   Wean (`services.is_breeding_cage()`, the row's `can_breed` and
@@ -968,14 +983,20 @@ Who may change what lives in one place, `app/access.py`:
   litter not yet weaned (`services.refresh_birth_date`, called wherever
   litters change), so the sheet's *Litter born* cell, the sync view, the
   exports and every other reader of one date read as before; typing in that
-  cell corrects the oldest (`set_birth_date`; the row's `date_give_birth_was`
-  keeps a stale row from writing it back). `open_litters()` are the ones
+  cell corrects the oldest (`litters.set_born`, then `services.set_birth_date`;
+  the row's `date_give_birth_was` keeps a stale row from writing it back),
+  and only on a Breeding cage, like New cage's date; clearing it works on any. `open_litters()` are the ones
   not weaned, `waiting_litters()` those whose pups aren't all recorded
-  dead. **Litter born** (`app._record_birth`) on a cage with one open and a
+  dead. The rules live in `app/litters.py`, which the routes, `actions.py`
+  (`_which_said`), Home's proposals and the cage sheet's answer (`can_breed`,
+  `breeding`, `wean_due`) all read: `not_breeding()`, `pups()`, `choose()` /
+  `default()`, `record_birth()`, `too_young()`, each returning its refusal
+  or what was done, in words, for the route to flash.
+  **Litter born** (`litters.record_birth`) on a cage with one open and a
   new date wants `litter_choice` *another* or *correct* (and `litter`, the
   birth date corrected, when there are two) and changes nothing without it;
   the same date again only adds the count or mother. **Genotyping** and
-  **Wean** take `litter` (a birth date; `app._which_litter`), defaulting to
+  **Wean** take `litter` (a birth date; `litters.choose`), defaulting to
   the oldest waiting (Genotyping: the oldest not yet genotyped);
   `mark_weaned(cage, cage_litter=…)` weans that one and the litters of mice
   born that day, and moves the cage's date on. `weaning_due` lists each
@@ -2618,7 +2639,10 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
   fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `populate_mouse_from_form` (flashed refusals come back as `warnings`;
+  `app.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  birth or death in the future, an owner from the lab, a cohort's date of
+  birth only once confirmed) whose refusal is a 400, and what it couldn't
+  do while saving the rest (a private cage) comes back as `warnings`;
   a `version` that isn't the mouse's `sync_version` now is a 409, so a
   client that sends back what it read never overwrites a change since);
   inventory items go through `inventory_routes._item_from_form`, vials
@@ -3223,6 +3247,16 @@ selection bar rises from the bottom of the viewport:
 Shift-click extends a range, the header checkbox selects everything
 *visible* (never filtered-out rows), and each action applies only to records
 you may edit, reporting how many were skipped rather than failing outright.
+That rule is `app/bulk.py`: `selected()` reads the ticked ids, `run()`
+applies a database's own `apply(record)` to each record `may_edit` allows
+inside one `audit.batch` (it returns None for changed, `bulk.UNCHANGED`,
+`bulk.NOT_YOURS`, or a refusal in words) and counts them in a `Done`, and
+`report()` flashes "Set owner: 3 tanks. 1 skipped — not yours to edit." with
+`count()`'s noun in the page's language. Cages, tanks, fish, lines,
+clutches, mice, a lab's own column, and the inventory and organism
+databases run their batches through it (the last two keep their own
+wording); plasmids, vials and Add to experiment, which act on the whole
+selection at once, keep their own loops.
 
 The bar is generic — `static/selection-bar.js` reads a markup contract, so
 another table gets batch actions by adding `data-selection-scope`, row
@@ -3575,7 +3609,7 @@ written in English and wrapped, and the Chinese is looked up by the English:
 - **Dates**: `{{ day|date_format('%a %d %b') }}` and `i18n.strftime(day, "%b %d, %Y")`
   instead of `.strftime()` with month or weekday names: the same English
   patterns come out as a Chinese reader writes them (10月3日, 2026年10月3日 周六).
-  `fmt_day` and `relative_day` already follow the language.
+  `fmt_day` (`app/days.py`) and `relative_day` already follow the language.
 - **Notifications and emails** are written in their recipient's language,
   not the sender's: `notify.send(s, who, "%(who)s shared “%(title)s” with you",
   values={…})` translates the English title for each recipient

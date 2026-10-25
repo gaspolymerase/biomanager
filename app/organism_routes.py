@@ -49,7 +49,8 @@ from .models import (
     Organism,
     OrganismModule,
 )
-from . import access
+from . import access, stewardship
+from . import bulk as bulk_actions
 from . import audit, database_keys
 from . import organism_service as svc
 from . import inventory as inventory_presets
@@ -220,6 +221,14 @@ def _set_text(row, form, name: str, attr: str | None = None, limit: int | None =
     if name in form:
         value = (form.get(name) or "").strip()
         setattr(row, attr or name, value[:limit] if limit else value)
+
+
+def _set_owner(session, row, form, noun: str) -> str | None:
+    """Give the record to the person the form names, or say why not: its
+    owner's or an admin's to do, and only to a lab member (app/stewardship.py)."""
+    if "owner" not in form:
+        return None
+    return stewardship.change_owner(session, row, form.get("owner"), noun, getattr(row, "code", "") or "")
 
 
 def _set_date(row, form, name: str) -> None:
@@ -924,8 +933,12 @@ def save_line(key: str):
 
         if "code" in form or not row_id:
             row.code = (form.get("code") or "").strip() or svc.next_code(session, module, "line")
-        for name in ("name", "genotype", "owner", "protocol", "source", "external_ref", "notes"):
+        for name in ("name", "genotype", "protocol", "source", "external_ref", "notes"):
             _set_text(row, form, name)
+        refused = _set_owner(session, row, form, "line")
+        if refused:
+            session.rollback()
+            return _fail(key, "lines", refused)
         if "parent_line_id_fk" in form:
             parent = _ref(session, OrgLine, module.id, form.get("parent_line_id_fk"))
             row.parent_line_id_fk = parent if parent != row.id else None
@@ -953,8 +966,11 @@ def save_line(key: str):
 def _fill_housing(session, module, row, form, row_id: int) -> str | None:
     """Write the submitted fields (not the code or position) onto a housing
     unit; an error message when the form cannot be saved."""
-    for name in ("purpose", "owner", "protocol", "card_id", "notes"):
+    for name in ("purpose", "protocol", "card_id", "notes"):
         _set_text(row, form, name)
+    refused = _set_owner(session, row, form, svc.view(module).housing_noun)
+    if refused:
+        return refused
     _set_ref(session, row, form, "line_id_fk", OrgLine, module.id)
     _set_date(row, form, "established_on")
     _set_date(row, form, "last_serviced_on")
@@ -1329,8 +1345,11 @@ def _fill_animal(session, module, mv, row, form, row_id: int) -> str | None:
                         ("cohort_id_fk", OrgCohort), ("parent_a_id_fk", Organism),
                         ("parent_b_id_fk", Organism)):
         _set_ref(session, row, form, name, model, module.id)
-    for name in ("sex", "status", "genotype", "owner", "protocol", "notes"):
+    for name in ("sex", "status", "genotype", "protocol", "notes"):
         _set_text(row, form, name)
+    refused = _set_owner(session, row, form, mv.organism_noun)
+    if refused:
+        return refused
     _set_date(row, form, "birth_on")
     _set_date(row, form, "death_on")
     _set_date(row, form, "last_procedure_on")
@@ -1489,8 +1508,12 @@ def save_cross(key: str):
         for name, model in (("housing_id_fk", OrgHousing), ("sire_line_id_fk", OrgLine),
                             ("dam_line_id_fk", OrgLine)):
             _set_ref(session, row, form, name, model, module.id)
-        for name in ("sire_label", "dam_label", "owner", "notes"):
+        for name in ("sire_label", "dam_label", "notes"):
             _set_text(row, form, name)
+        refused = _set_owner(session, row, form, "cross")
+        if refused:
+            session.rollback()
+            return _fail(key, "crosses", refused)
         for name in ("set_up_on", "expected_on", "collected_on"):
             _set_date(row, form, name)
         attrs, errors = _read_attrs(session, module, "cross", form, row, creating=not row_id)
@@ -1530,8 +1553,12 @@ def save_cohort(key: str):
                             ("location_id_fk", OrgLocation), ("seed_lot_id_fk", OrgSeedLot)):
             _set_ref(session, row, form, name, model, module.id)
         _set_date(row, form, "birth_on")
-        for name in ("stage", "owner", "notes"):
+        for name in ("stage", "notes"):
             _set_text(row, form, name)
+        refused = _set_owner(session, row, form, "cohort")
+        if refused:
+            session.rollback()
+            return _fail(key, "cohorts", refused)
         _set_text(row, form, "generation", limit=20)
         # Sown from a lot: the sowing is of its line and generation unless
         # the form says otherwise, and what was sown comes out of the lot.
@@ -1839,8 +1866,12 @@ def save_seedlot(key: str):
         if not row_id and row.harvested_on is None:
             row.harvested_on = date.today()
         for name, limit in (("unit", 20), ("storage_text", 200), ("position", 80), ("selection", 80),
-                            ("owner", 80), ("notes", None)):
+                            ("notes", None)):
             _set_text(row, form, name, limit=limit)
+        refused = _set_owner(session, row, form, "seed lot")
+        if refused:
+            session.rollback()
+            return _fail(key, back, refused)
 
         numbers = {}
         for name in ("amount", "amount_left", "germination_pct", "resistant", "sensitive"):
@@ -2239,8 +2270,6 @@ def bulk_animals(key: str):
         if not rows:
             flash(gettext("No %(nouns)s selected, so nothing changed.", nouns=_word(mv.organism_noun_plural)), "info")
             return _redirect_back(key, "animals")
-        editable = [r for r in rows if access.can_edit(r)]
-        skipped = len(rows) - len(editable)
         noun = lambda n: mv.organism_noun if n == 1 else mv.organism_noun_plural
         custom = _custom_field(session, module, "organism", field) if action == "set" else None
         if action == "set" and field not in ("status", "housing_id_fk", "owner") and custom is None:
@@ -2256,32 +2285,46 @@ def bulk_animals(key: str):
             housing_id = _ref(session, OrgHousing, module.id, value)
             if housing_id is None:
                 return _fail(key, "animals", gettext("That %(noun)s no longer exists.", noun=_word(mv.housing_noun)))
-        with audit.batch(session, "delete" if action == "delete" else "update",
-                         f"{'delete' if action == 'delete' else 'set ' + field} ×{len(editable)} "
-                         f"{mv.organism_noun_plural} ({mv.label})", "organisms"):
-            for row in editable:
-                if action == "delete":
-                    _delete_one(session, module, mv, "animal", row, g.user.username)
-                    continue
-                if field == "status":
-                    previous = row.status
-                    row.status = value
-                    svc.apply_status_rules(mv, row, previous)
-                elif field == "housing_id_fk":
-                    row.housing_id_fk = housing_id
-                elif custom is not None:
-                    problem = _set_custom(row, custom, value)
-                    if problem:
-                        return _fail(key, "animals", problem)
-                else:
-                    row.owner = value
-                row.updated_at, row.updated_by = datetime.utcnow(), g.user.username
-                svc.log_event(session, module, "organism", row.id, "update", count=row.count,
-                              recorded_by=g.user.username, notes=f"Batch: {field} → {value or '—'}")
+        members = stewardship.lab_members(session) if field == "owner" else set()
+        if action == "set" and field == "owner" and stewardship.batch_owner_refused(members, value):
+            return _fail(key, "animals", stewardship.batch_owner_refused(members, value))
+
+        def apply(row):
+            if action == "delete":
+                _delete_one(session, module, mv, "animal", row, g.user.username)
+                return None
+            if field == "status":
+                previous = row.status
+                row.status = value
+                svc.apply_status_rules(mv, row, previous)
+            elif field == "housing_id_fk":
+                row.housing_id_fk = housing_id
+            elif custom is not None:
+                problem = _set_custom(row, custom, value)
+                if problem:
+                    return problem
+            else:
+                if not stewardship.may_give_away(row):
+                    return bulk_actions.NOT_YOURS
+                refused = stewardship.change_owner(session, row, value, mv.organism_noun, row.code, members)
+                if refused:
+                    return refused
+            row.updated_at, row.updated_by = datetime.utcnow(), g.user.username
+            svc.log_event(session, module, "organism", row.id, "update", count=row.count,
+                          recorded_by=g.user.username, notes=f"Batch: {field} → {value or '—'}")
+            return None
+
+        done = bulk_actions.run(session, rows, apply, may_edit=access.can_edit,
+                                action="delete" if action == "delete" else "update",
+                                what=f"{'delete' if action == 'delete' else 'set ' + field} ×{len(rows)} "
+                                     f"{mv.organism_noun_plural} ({mv.label})", table="organisms")
+        if done.blocked:
+            session.rollback()
+            return _fail(key, "animals", done.blocked[0])
         session.flush()
         svc.recompute_due(session, module)
         session.commit()
-        n = len(editable)
+        n, skipped, editable = done.changed, done.skipped, done.changed
         if action == "delete":
             message = gettext("Deleted %(n)s %(nouns)s.", n=n, nouns=_word(noun(n)))
         else:
@@ -2309,8 +2352,6 @@ def bulk_housing(key: str):
         if not units:
             flash(gettext("No %(nouns)s selected, so nothing changed.", nouns=_word(mv.housing_noun_plural)), "info")
             return _redirect_back(key, "housing")
-        editable = [u for u in units if access.can_edit(u)]
-        skipped = len(units) - len(editable)
         noun = lambda n: mv.housing_noun if n == 1 else mv.housing_noun_plural
         custom = _custom_field(session, module, "housing", field) if action == "set" else None
         if action == "set" and field not in ("purpose", "owner", "location_id_fk") and custom is None:
@@ -2326,32 +2367,49 @@ def bulk_housing(key: str):
             location_id = _ref(session, OrgLocation, module.id, value)
             if location_id is None:
                 return _fail(key, "housing", gettext("That %(noun)s no longer exists.", noun=_word(mv.container_noun)))
+        members = stewardship.lab_members(session) if field == "owner" else set()
+        if action == "set" and field == "owner" and stewardship.batch_owner_refused(members, value):
+            return _fail(key, "housing", stewardship.batch_owner_refused(members, value))
         unassigned = 0
-        with audit.batch(session, "delete" if action == "delete" else "update",
-                         f"{'delete' if action == 'delete' else 'set ' + field} ×{len(editable)} "
-                         f"{mv.housing_noun_plural} ({mv.label})", "organism_housing"):
-            for unit in editable:
-                if action == "delete":
-                    unassigned += _unassign_residents(session, module, unit, g.user.username)
-                    _delete_one(session, module, mv, "housing", unit, g.user.username)
-                    continue
-                if field == "location_id_fk":
-                    if unit.location_id_fk != location_id:
-                        unit.location_id_fk = location_id
-                        unit.row = unit.col = None
-                elif custom is not None:
-                    problem = _set_custom(unit, custom, value)
-                    if problem:
-                        return _fail(key, "housing", problem)
-                else:
-                    setattr(unit, field, value)
-                unit.updated_at, unit.updated_by = datetime.utcnow(), g.user.username
-                svc.log_event(session, module, "housing", unit.id, "update",
-                              recorded_by=g.user.username, notes=f"Batch: {field} → {value or '—'}")
+
+        def apply(unit):
+            nonlocal unassigned
+            if action == "delete":
+                unassigned += _unassign_residents(session, module, unit, g.user.username)
+                _delete_one(session, module, mv, "housing", unit, g.user.username)
+                return None
+            if field == "location_id_fk":
+                if unit.location_id_fk != location_id:
+                    unit.location_id_fk = location_id
+                    unit.row = unit.col = None
+            elif custom is not None:
+                problem = _set_custom(unit, custom, value)
+                if problem:
+                    return problem
+            elif field == "owner":
+                if not stewardship.may_give_away(unit):
+                    return bulk_actions.NOT_YOURS
+                refused = stewardship.change_owner(session, unit, value, mv.housing_noun, unit.code, members)
+                if refused:
+                    return refused
+            else:
+                setattr(unit, field, value)
+            unit.updated_at, unit.updated_by = datetime.utcnow(), g.user.username
+            svc.log_event(session, module, "housing", unit.id, "update",
+                          recorded_by=g.user.username, notes=f"Batch: {field} → {value or '—'}")
+            return None
+
+        done = bulk_actions.run(session, units, apply, may_edit=access.can_edit,
+                                action="delete" if action == "delete" else "update",
+                                what=f"{'delete' if action == 'delete' else 'set ' + field} ×{len(units)} "
+                                     f"{mv.housing_noun_plural} ({mv.label})", table="organism_housing")
+        if done.blocked:
+            session.rollback()
+            return _fail(key, "housing", done.blocked[0])
         session.flush()
         svc.recompute_due(session, module)
         session.commit()
-        n = len(editable)
+        n, skipped, editable = done.changed, done.skipped, done.changed
         if action == "delete":
             message = gettext("Deleted %(n)s %(nouns)s.", n=n, nouns=_word(noun(n)))
             if unassigned:

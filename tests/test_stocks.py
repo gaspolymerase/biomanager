@@ -894,11 +894,11 @@ class BulkAndUndoTests(StockCase):
 
     def test_bulk_set_with_a_bad_value_changes_nothing(self):
         ids = [self.make_vial(self.a, self.key, set_up_on=days_ago(1)) for _ in range(2)]
-        for field, value, message in (("set_up_on", "25/09/2026", "not a date"),
-                                      ("owner", uniq("nobody"), "not a lab member")):
+        for field, value, nothing, message in (("set_up_on", "25/09/2026", "Nothing changed", "not a date"),
+                                               ("owner", uniq("nobody"), "no owner was changed", "not a lab member")):
             with self.subTest(field=field):
                 r = self.bulk(self.a, self.key, "set", ids, field=field, value=value)
-                self.assertFlash(r, "Nothing changed", "error")
+                self.assertFlash(r, nothing, "error")
                 self.assertFlash(r, message, "error")
         self.assertEqual({(unit(i)["set_up_on"], unit(i)["owner"]) for i in ids}, {(days_ago(1), self.admin)})
 

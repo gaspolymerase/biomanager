@@ -18,7 +18,7 @@ cross-site check (security.py) does not apply here. No cookie is set.
 Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
-Writes go through the same checks as the pages (app.populate_mouse_from_form,
+Writes go through the same checks as the pages (app.change_mouse,
 inventory_routes._item_from_form, stock_routes._unit_from_form,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
@@ -406,8 +406,7 @@ def mouse_update(mouse_id: int):
     """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
     "version" (as the mouse was read), a mouse changed since is refused (409)
     instead of overwritten."""
-    from .app import (can_edit_mouse, create_transfer_copy, current_lab_usernames, populate_mouse_from_form,
-                      stamp_updated)
+    from .app import can_edit_mouse, change_mouse
     from .services import mouse_display_row, split_genotype
     data = dict(_json())
     seen = data.pop("version", None)
@@ -440,10 +439,7 @@ def mouse_update(mouse_id: int):
             if key in data:
                 form[key] = str(data[key] or "")
         if "owner" in data:
-            owner = str(data["owner"] or "").strip()
-            if owner and owner not in set(current_lab_usernames(s)):
-                abort(400, f"“{owner}” is not a lab member.")
-            form["owner"] = owner
+            form["owner"] = str(data["owner"] or "").strip()
         if "cage" in data:
             form["cage_id"] = str(data["cage"] or "")
         if "litter" in data:
@@ -451,18 +447,19 @@ def mouse_update(mouse_id: int):
         if "date_of_death" in data:
             raw = str(data["date_of_death"] or "")
             try:
-                if raw and date.fromisoformat(raw[:10]) > date.today():
-                    abort(400, "date_of_death can't be in the future.")
+                if raw:
+                    date.fromisoformat(raw[:10])
             except ValueError:
                 abort(400, "date_of_death is a date, 2026-09-28.")
             form["date_of_death"] = raw[:10]
-        recipient, sender = populate_mouse_from_form(s, m, form)
-        if recipient:
-            create_transfer_copy(s, m, recipient, sender)
-        stamp_updated(m)
+        # The same change, with the same rules, as a row of the mouse sheet.
+        done = change_mouse(s, m, form)
+        if done.refused:
+            s.rollback()
+            abort(400, done.refused)
         s.commit()
         m = _mouse(s, mouse_id)
-        return jsonify({**mouse_json(m), "warnings": _warnings()})
+        return jsonify({**mouse_json(m), "warnings": done.warnings + _warnings()})
 
 
 @bp.get("/mice/<int:mouse_id>/weights")
@@ -664,7 +661,7 @@ def strains():
 # ---------------------------------------------------------------- zebrafish
 
 def tank_json(t: TankRecord) -> dict:
-    from .app import fish_position_label
+    from .zebrafish_routes import fish_position_label
     alive = [f for f in t.fish if (f.status or "alive") == "alive"]
     return {"tank_id": t.tank_id, "line": t.line.name if t.line else None, "purpose": t.purpose or "",
             "owner": t.owner or "", "active": bool(t.active), "rack": t.rack.name if t.rack else None,
