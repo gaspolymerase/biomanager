@@ -8,7 +8,8 @@ from tests.base import AppTestCase, GRID_NAMING, one, rows, uniq, days_ago
 
 import unittest
 
-from app.app import ZEBRAFISH_VIEWS, app
+from app.app import app
+from app.zebrafish_routes import ZEBRAFISH_VIEWS
 from app.models import COLONY_VIEWS
 from app.organism_routes import MODULE_VIEWS
 from app.stock_routes import VIEWS as STOCK_VIEWS

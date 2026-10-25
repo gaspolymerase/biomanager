@@ -470,7 +470,7 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
 
-- Each mouse has a **Custom tag**, strain, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth can't be in the future.
+- Each mouse has a **Custom tag**, strain, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth or of death can't be in the future, and a mouse's owner is someone in the lab. The same holds when an [AI assistant](https://biomanager.org/guide/ai-assistants) or a script changes it.
 
 - The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Custom tag**, beside it, is however the animal itself is marked — an ear tag number, an ear punch such as *RF* or *LB*, a tail tattoo, or your lab's own way. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *custom tag*, *ear tag*, *notch*, *tattoo* or *tail tattoo* comes into it when you import. Point at a mouse's number and its tag shows there too. If your lab doesn't mark its mice, untick **Custom tag** under **Columns** to hide it.
 
@@ -510,7 +510,7 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 
 1. In the mouse colony, open the **Cages** tab. Not there? The **My colony / My groups / Shared / Everyone** switch changes which cages you see.
 
-2. Find the breeding cage and open it with the arrow at the start of its row or its mice count, or find its card under **Cards**. **Litter born**, **Genotyping** and **Wean** are on cages whose purpose is *Breeder* or *Breeding*.
+2. Find the breeding cage and open it with the arrow at the start of its row or its mice count, or find its card under **Cards**. **Litter born**, **Genotyping** and **Wean** are only on cages whose purpose is *Breeding*, a mating cage. A *Breeder* cage is the lab's breeding stock and has no litters.
 
 3. Press **Litter born**.
 
@@ -520,7 +520,7 @@ Who and where: Anyone who may edit the cage · Desktop and lab server
 
 6. Press **Record the litter**.
 
-BioManager works out weaning (P21) and genotyping (P28), or the days set in [Settings → General](https://biomanager.org/guide/lab-setup), which appear on Home and the calendar when due — the same list in both. In the cage's row, *Litter born* and *Wean due* come right after the mice. To make a record for each pup, go on to [Genotype a litter](https://biomanager.org/guide/genotype-a-litter).
+BioManager works out weaning (P21) and genotyping (P28), or the days set in [Settings → General](https://biomanager.org/guide/lab-setup), which appear on Home and the calendar when due — the same list in both. In the cage's row, *Litter born* and *Wean due* come right after the mice. Typing a date in *Litter born* there, or in **New cage**, works the same way, and only on a *Breeding* cage: set its purpose first. Clearing the date works on any cage. To make a record for each pup, go on to [Genotype a litter](https://biomanager.org/guide/genotype-a-litter).
 
 > **Two litters in one cage** A trio's second female often gives birth before the first litter is weaned. Record it as **Another litter**: each litter keeps its own weaning and genotyping dates, the cage lists both with their ages, and Home and the calendar show each one, such as *Wean Cage 101 (born Sep 29)*. **Genotyping** and **Wean** then ask which litter, the oldest first.
 
@@ -1441,6 +1441,8 @@ You may change a record if *any one* of these is true: you own it; it is shared 
 - **You edit what you own** — your mice, cages, vials, plasmids and items.
 
 - **Shared cages and anything marked lab common** belong to the whole lab. A cage whose purpose is *Breeder* starts out *Shared*; any other cage (an experiment cage, a *Breeding* one) starts *Personal*. Only its owner or an admin shares a cage, makes it personal or gives it to someone else; admins and animal care can still see and change every cage.
+
+- **Giving something away is its owner's call**, in every database. You may edit a shared breeding tank, a lab stock vial or a lab-common plasmid, but only its owner or an admin changes its **Owner** or whom it is shared with (animal care may too, for the animals, cages, tanks and vials they look after). A new owner is always someone in the lab: pick them from the list.
 
 - **Everyone sees the lab's databases**, because a census with holes is not a census.
 

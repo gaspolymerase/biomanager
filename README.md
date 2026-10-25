@@ -129,7 +129,8 @@ never what you may edit.
   cell** (its name changes); one the new layout has no place for stays in
   the rack, unplaced. Fish racks, fly and worm racks and boxes ask the same.
 - **Litters** — on a Breeding (mating) cage, **Litter born** records the birth
-  once, and the weaning date (P21) and genotyping date (P28), or the days
+  (or type the date in the cage's **Litter born** cell, which only a Breeding
+  cage takes) once, and the weaning date (P21) and genotyping date (P28), or the days
   the lab sets in **Settings → General**, follow from it, on Home and the
   calendar. **Genotyping** takes the parents' mouse numbers and how many
   pups were born, and makes the litter (numbered L-1, L-2, L-3…) and a
@@ -1499,6 +1500,11 @@ what it needs to track.
   **Shared cages and anything marked lab common belong to the whole lab.**
   A Breeder cage starts out shared; any other cage starts personal. Only a
   cage's owner or an admin shares it, makes it personal or gives it away.
+  The same goes for everything with an owner, in every database: editing
+  a shared breeding tank, a lab stock vial or a lab-common plasmid doesn't
+  make it yours to give away (animal care may, for the animals, cages,
+  tanks and vials they look after), and a new owner must be someone in
+  the lab, picked from the list.
   Admins can change anything, and when a record isn't yours, BioManager
   says whose it is. **Racks & boxes**, in **Settings → Statistics**, says
   who may change each rack, box and incubator.

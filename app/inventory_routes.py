@@ -38,6 +38,7 @@ from .lab import lab_audience
 from .formutil import MAX_ID, form_changed
 from .i18n import gettext, ngettext
 from . import groups as project_groups
+from . import bulk as bulk_actions, stewardship
 from .models import InventoryItem, InventoryModule, InventoryRack
 
 bp = Blueprint("inventory", __name__, url_prefix="/inventory")
@@ -877,7 +878,9 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
         if owner != (item.owner or ""):
             if not manage:
                 raise Refused(_manage_denied(mv, item, "owner"), 403)
-            item.owner = owner
+            refused = stewardship.change_owner(session, item, owner, mv.item_noun, item.name)
+            if refused:
+                raise Refused(refused)
     if "is_shared" in form and project_groups.differs(item, form.get("is_shared")):
         if not manage:
             raise Refused(_manage_denied(mv, item, "personal"), 403)
@@ -1634,77 +1637,78 @@ def bulk(key: str):
             if not value.strip() and request.form.get("clear") != "1":
                 return _done(key, error=gettext("Type what to set %(field)s to. (To empty it on those rows, leave it blank and confirm.)", field=_tr(field["label"])))
         need = BULK_ACTIONS[action]
-        refused: list[str] = []
-        done = skipped = unsplit = 0
+        members = stewardship.lab_members(session) if action == "owner" else set()
+        if action == "owner" and value[:80] not in members:
+            return _done(key, error=stewardship.batch_owner_refused(members, value[:80]))
+        unsplit = 0
         notes: list[str] = []
         no_column: list[str] = []
-        with audit.batch(session, "delete" if action == "delete" else "update",
-                         f"{action} ×{len(items)} {mv.item_noun_plural}", "inventory_items"):
-            for item in items:
-                allowed = _can_edit(item) if need == "edit" else _can_manage(item)
-                if not allowed:
-                    skipped += 1
-                    continue
-                if action == "delete":
-                    session.delete(item)
-                    done += 1
-                    continue
-                if action == "status":
-                    svc.apply_status(mv, item, value)
-                elif action == "owner":
-                    item.owner = value[:80]
-                elif action == "shared":
-                    project_groups.apply(item, value)
-                elif action == "field":
-                    # Through the dialog's own checks (a number column takes
-                    # numbers, a date a date), one column only.
-                    kept = {c.key: getattr(item, c.key) for c in InventoryItem.__table__.columns}
-                    try:
-                        # What the save wants to say — a source that names no
-                        # mouse in the colony — is worth hearing once here too,
-                        # not thirty times.
-                        _problem, said = _item_from_form(
-                            session, mv, item, ImmutableMultiDict(_bulk_value(field, value, request.form)))
-                        notes += [n for n in said if n not in notes]
-                    except Refused as problem:
-                        for column, old in kept.items():     # this one stays as it was
-                            setattr(item, column, old)
-                        refused.append(str(problem))
-                        skipped += 1
-                        continue
-                elif action == "split_notes":
-                    moved, left, unknown = svc.split_notes(mv, item)
-                    no_column += [h for h in unknown if h not in no_column]
-                    if not moved:
-                        unsplit += 1
-                        continue
-                    attrs = item.attrs_dict
-                    for column, found in moved.items():
-                        if column == "category":
-                            item.category = found
-                        else:
-                            attrs[column] = found
-                    item.attrs = json.dumps(attrs)
-                    item.notes = left
-                elif action == "rack":
-                    if rack is None:
-                        item.rack_id_fk = item.rack_row = item.rack_col = None
-                    elif item.rack_id_fk != rack.id:
-                        cell = svc.free_cell(session, rack)
-                        item.rack_id_fk = rack.id
-                        item.rack_row, item.rack_col = cell if cell else (None, None)
-                        if cell is None:
-                            notes.append(gettext("%(box)s is full: %(item)s is in it without a position.",
-                                                 box=rack.name, item=item.name or "#" + str(item.number)))
-                        session.flush()  # the next item sees this cell as taken
-                item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
-                done += 1
+
+        def apply(item):
+            nonlocal unsplit
+            if action == "delete":
+                session.delete(item)
+                return None
+            if action == "status":
+                svc.apply_status(mv, item, value)
+            elif action == "owner":
+                refused = stewardship.change_owner(session, item, value[:80], mv.item_noun, item.name, members)
+                if refused:
+                    return refused
+            elif action == "shared":
+                project_groups.apply(item, value)
+            elif action == "field":
+                # Through the dialog's own checks (a number column takes
+                # numbers, a date a date), one column only.
+                kept = {c.key: getattr(item, c.key) for c in InventoryItem.__table__.columns}
+                try:
+                    # What the save wants to say — a source that names no
+                    # mouse in the colony — is worth hearing once here too,
+                    # not thirty times.
+                    _problem, said = _item_from_form(
+                        session, mv, item, ImmutableMultiDict(_bulk_value(field, value, request.form)))
+                    notes.extend(n for n in said if n not in notes)
+                except Refused as problem:
+                    for column, old in kept.items():     # this one stays as it was
+                        setattr(item, column, old)
+                    return str(problem)
+            elif action == "split_notes":
+                moved, left, unknown = svc.split_notes(mv, item)
+                no_column.extend(h for h in unknown if h not in no_column)
+                if not moved:
+                    unsplit += 1
+                    return bulk_actions.UNCHANGED
+                attrs = item.attrs_dict
+                for column, found in moved.items():
+                    if column == "category":
+                        item.category = found
+                    else:
+                        attrs[column] = found
+                item.attrs = json.dumps(attrs)
+                item.notes = left
+            elif action == "rack":
+                if rack is None:
+                    item.rack_id_fk = item.rack_row = item.rack_col = None
+                elif item.rack_id_fk != rack.id:
+                    cell = svc.free_cell(session, rack)
+                    item.rack_id_fk = rack.id
+                    item.rack_row, item.rack_col = cell if cell else (None, None)
+                    if cell is None:
+                        notes.append(gettext("%(box)s is full: %(item)s is in it without a position.",
+                                             box=rack.name, item=item.name or "#" + str(item.number)))
+                    session.flush()  # the next item sees this cell as taken
+            item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
+            return None
+
+        result = bulk_actions.run(session, items, apply, may_edit=_can_edit if need == "edit" else _can_manage,
+                          action="delete" if action == "delete" else "update",
+                          what=f"{action} ×{len(items)} {mv.item_noun_plural}", table="inventory_items")
+        done, skipped, refused = result.changed, result.skipped, result.blocked
         noun = _tr(mv.item_noun if done == 1 else mv.item_noun_plural)
         session.commit()
     message = _bulk_message(action, done, noun, _tr(field["label"]) if field else "")
     if refused:
         flash(gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error")
-        skipped -= len(refused)
     if skipped:
         message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
                              if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))

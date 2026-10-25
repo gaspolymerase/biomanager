@@ -341,3 +341,33 @@ class TheUpgrade(Base):
 
     def test_a_new_database_has_the_table_from_its_model(self):
         self.assertIn("cage_litters", sa.inspect(engine).get_table_names())
+
+
+
+class OnlyABreedingCageHasLitters(AppTestCase):
+    """A litter belongs to a Breeding (mating) cage alone (app/litters.py),
+    however its date arrives: the sheet's Litter born cell, the cage dialog
+    or New cage."""
+
+    def test_the_litter_born_cell_of_another_cage_is_refused(self):
+        cage = self.make_cage(self.m, purpose="Experiment")
+        r = self.autosave(self.m, f"/colony/cages/{cage}/update",
+                          {"date_give_birth": days_ago(3), "date_give_birth_was": ""})
+        self.assertRefused(r)
+        self.assertIn("isn't a Breeding cage", r.get_json()["error"])
+        self.assertEqual((litters_of(cage), birth_date(cage)), ([], None))
+
+    def test_new_cage_with_a_birth_date_must_be_a_breeding_cage(self):
+        code = uniq("C")
+        r = self.post(self.m, "/colony/cages/create", {"cage_id": code, "purpose": "Experiment",
+                                                      "date_give_birth": days_ago(3)})
+        self.assertFlash(r, "isn't a Breeding cage", "error")
+        self.assertEqual(count("cage_litters", "cage_id_fk=(select id from mouse_cages where cage_id=?)", code), 0)
+
+    def test_a_breeding_cage_takes_its_date_and_any_cage_may_clear_one(self):
+        cage = self.make_cage(self.m, purpose="Breeding", date_give_birth=days_ago(3))
+        self.assertEqual(birth_date(cage), days_ago(3))
+        self.assertSaved(self.autosave(self.m, f"/colony/cages/{cage}/update", {"purpose": "Experiment"}))
+        self.assertSaved(self.autosave(self.m, f"/colony/cages/{cage}/update",
+                                       {"date_give_birth": "", "date_give_birth_was": days_ago(3)}))
+        self.assertEqual((litters_of(cage), birth_date(cage)), ([], None))
