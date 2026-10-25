@@ -20,5 +20,6 @@
   "Not found.": "未找到。",
   "Owner": "负责人",
   "Age": "年龄",
-  "%(weeks)s weeks · %(days)s days": "%(weeks)s 周 · %(days)s 天"
+  "%(weeks)s weeks · %(days)s days": "%(weeks)s 周 · %(days)s 天",
+  "Copy the text below.": "复制下面的文字。"
 }

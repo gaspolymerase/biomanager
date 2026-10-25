@@ -1517,18 +1517,7 @@
       .catch(() => ({ ok: false, error: t('The server did not answer. Check the connection and try again.') }));
   }
 
-  let toastTimer = null;
-  const toastEl = document.createElement('div');
-  toastEl.className = 'cal-toast';
-  toastEl.setAttribute('role', 'status');
-  toastEl.hidden = true;
-  document.body.appendChild(toastEl);
-  function toast(message) {
-    toastEl.textContent = message;
-    toastEl.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 3600);
-  }
+  function toast(message) { window.BiomanagerShell.toast(message); }
 
   function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
   function firstOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }

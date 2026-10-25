@@ -487,7 +487,7 @@
     const lines = picked().map((r) => `${r.dataset.name}\t${r.dataset.sequence}`).join('\n');
     const button = e.currentTarget;
     const done = () => { button.lastChild.textContent = ' ' + t('Copied %(n)s', { n: picked().length }); };
-    if (navigator.clipboard) navigator.clipboard.writeText(lines).then(done, () => window.prompt('', lines));
+    if (navigator.clipboard) navigator.clipboard.writeText(lines).then(done, () => BioDialog.prompt(t('Copy the text below.'), lines, { okLabel: t('Done') }));
   });
 })();
 </script>

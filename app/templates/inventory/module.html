@@ -755,7 +755,7 @@
       } else {
         write = Promise.reject();
       }
-      write.then(done, () => text.then((s) => window.prompt('', s)));
+      write.then(done, () => text.then((s) => BioDialog.prompt(t('Copy the text below.'), s, { okLabel: t('Done') })));
     });
   })();
 </script>

@@ -413,6 +413,9 @@
     -moz-osx-font-smoothing: grayscale;
     color-scheme: light dark;
   }
+  /* A theme chosen in the app wins over the system's, light-dark() too. */
+  html[data-theme="light"] { color-scheme: light; }
+  html[data-theme="dark"] { color-scheme: dark; }
 
   body {
     @apply bg-canvas text-ink font-sans text-[13px] antialiased;
@@ -653,6 +656,15 @@
 @utility badge-danger { @apply bg-danger-50 text-danger-700; }
 @utility badge-info   { @apply bg-info-50 text-info-600; }
 @utility badge-quiet  { @apply bg-sand-200/70 text-muted; }
+
+/* Anything that floats over the page — a menu, a hover card — is frosted
+   glass with one border, shadow and radius. */
+@utility pop-surface {
+  @apply rounded-2xl border border-hairline shadow-pop;
+  background: var(--material-popover);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  backdrop-filter: saturate(180%) blur(30px);
+}
 
 @utility ident { @apply font-mono text-[12px] tracking-[-0.01em] text-ink-soft; }
 
@@ -1178,11 +1190,7 @@
   /* Menus open from their button; frostier than glass, since a menu over a
      glass bar can't blur what the bar already blurred. */
   .menu {
-    @apply absolute right-0 top-[calc(100%+6px)] z-50 w-60 rounded-2xl border
-           border-hairline p-[5px] shadow-pop;
-    background: var(--material-popover);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
+    @apply pop-surface absolute right-0 top-[calc(100%+6px)] z-50 w-60 p-[5px];
     animation: pop-in 0.12s var(--ease-out-soft);
   }
   .menu[hidden] { display: none; }
@@ -1326,7 +1334,7 @@
            font-semibold leading-none tracking-[0.02em];
     box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
   }
-  .owner-badge[data-tooltip]:hover::after {
+  .owner-badge[data-tooltip]:is(:hover, .is-tip)::after {
     content: attr(data-tooltip);
     @apply pointer-events-none absolute left-1/2 top-[calc(100%+5px)] z-50 -translate-x-1/2
            whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium tracking-normal
@@ -1768,11 +1776,7 @@
   /* --- Popover menu (Columns, Sort) ------------------------------------ */
 
   .dt-menu {
-    @apply fixed z-100 flex min-w-[200px] max-w-[280px] flex-col overflow-y-auto
-           rounded-2xl border border-hairline p-[5px] shadow-pop;
-    background: var(--material-popover);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
+    @apply pop-surface fixed z-100 flex min-w-[200px] max-w-[280px] flex-col overflow-y-auto p-[5px];
     transform-origin: top center;
     animation: menu-grow 0.24s var(--ease-spring);
   }
@@ -1784,7 +1788,9 @@
     @apply flex w-full cursor-pointer items-center gap-2.5 rounded-[9px] border-0 bg-transparent
            px-2.5 py-1.5 text-left text-[13px] text-ink-soft transition-colors;
   }
-  .dt-menu-item:hover { @apply bg-sand-300/40 text-ink; }
+  .dt-menu-item:hover { @apply bg-brand-600 text-white; }
+  .dt-menu-item.is-active:hover { @apply text-white; }
+  .dt-menu-item:hover input:is(:checked, :indeterminate) { border-color: rgb(255 255 255 / 0.8); }
   .dt-menu-item.is-active { @apply font-semibold text-brand-700; }
   .dt-menu-item input { @apply size-3.5 shrink-0 accent-brand-600; }
   .dt-menu-action {
@@ -2602,8 +2608,7 @@
 
   /* Hover card */
   .biocal-hover-card {
-    @apply pointer-events-auto fixed z-100 w-80 max-w-[90vw] overflow-hidden rounded-xl border
-           border-hairline bg-surface text-[13px] text-ink shadow-pop;
+    @apply pop-surface pointer-events-auto fixed z-100 w-80 max-w-[90vw] overflow-hidden text-[13px] text-ink;
   }
   .biocal-hover-card[hidden] { display: none; }
   .biocal-hover-strip { @apply h-[3px]; }
@@ -3190,7 +3195,7 @@
   /* A glass capsule that rises from the bottom; a dot says how it went. */
   .toast {
     @apply glass pointer-events-auto flex max-w-[min(440px,calc(100vw-2rem))] translate-y-3 scale-95
-           items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-medium text-ink
+           items-center gap-2 rounded-[20px] px-4 py-2.5 text-[13px] font-medium text-ink
            opacity-0;
     background: var(--glass-strong);
     transition: opacity 0.2s, transform 0.4s var(--ease-spring);
@@ -3200,6 +3205,7 @@
   .toast-ok::before     { @apply bg-ok-600; }
   .toast-danger::before { @apply bg-danger-600; }
   .toast-danger { @apply text-danger-700; }
+  .toast a { @apply font-semibold text-brand-700 underline; }
 }
 
 /* ===========================================================================
@@ -3686,23 +3692,23 @@
   /* Hovering it: the mouse's brief, the card the notebook shows over
      "@mouse 12" (frontend/src/styles.css .entity-popover; static/mouse-peek.js). */
   .mouse-peek {
-    @apply fixed z-100 w-max min-w-[240px] max-w-[340px] rounded-[10px] border border-hairline bg-surface
-           px-3 pb-3 pt-2.5 text-[0.82rem] text-ink shadow-pop;
+    @apply pop-surface fixed z-100 w-max min-w-[240px] max-w-[340px] px-3 pb-3 pt-2.5 text-[13px] text-ink;
   }
   .mouse-peek[hidden] { @apply hidden; }
   .mouse-peek-head { @apply mb-2 flex items-center gap-1.5 border-b border-hairline pb-2; }
-  .mouse-peek-tag { @apply rounded px-2 py-0.5 text-[0.74rem] font-bold text-indigo-700 bg-indigo-500/15; }
-  .mouse-peek-id { @apply text-[0.86rem] font-semibold text-ink-soft; }
+  .mouse-peek-tag { @apply rounded px-2 py-0.5 text-[12px] font-bold text-indigo-700 bg-indigo-500/15; }
+  .mouse-peek-id { @apply text-[13px] font-semibold text-ink-soft; }
   .mouse-peek-body { @apply grid gap-1; }
   .mouse-peek-row { @apply grid grid-cols-[88px_1fr] items-baseline gap-2.5; }
-  .mouse-peek-key { @apply text-[0.8rem] font-medium text-muted; }
-  .mouse-peek-val { @apply break-words text-[0.84rem]; }
-  .mouse-peek-note { @apply text-[0.76rem] italic text-muted; }
+  .mouse-peek-key { @apply text-[12px] font-medium text-muted; }
+  .mouse-peek-val { @apply break-words text-[13px]; }
+  .mouse-peek-note { @apply text-[12px] italic text-muted; }
   .mouse-peek-pages { @apply mt-2.5 flex flex-col gap-1 border-t border-hairline pt-2.5; }
-  .mouse-peek-pages-head { @apply mb-0.5 text-[0.76rem] font-semibold text-muted; }
-  .mouse-peek-page { @apply block rounded-md px-2 py-1 text-ink no-underline hover:bg-sand-100; }
-  .mouse-peek-page-title { @apply block truncate text-[0.82rem] font-medium; }
-  .mouse-peek-page-snippet { @apply mt-px block truncate text-[0.72rem] text-muted; }
+  .mouse-peek-pages-head { @apply mb-0.5 text-[12px] font-semibold text-muted; }
+  .mouse-peek-page { @apply block rounded-[9px] px-2 py-1 text-ink no-underline hover:bg-brand-600 hover:text-white; }
+  .mouse-peek-page:hover .mouse-peek-page-snippet { @apply text-white/80; }
+  .mouse-peek-page-title { @apply block truncate text-[13px] font-medium; }
+  .mouse-peek-page-snippet { @apply mt-px block truncate text-[12px] text-muted; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .mouse-peek-tag { @apply text-indigo-300; }
   }
@@ -4594,7 +4600,8 @@ tr.is-scanned > td:first-child {
   .set-menu > summary { @apply cursor-pointer list-none; }
   .set-menu > summary::-webkit-details-marker { @apply hidden; }
   .set-menu-pop {
-    @apply absolute right-0 z-20 mt-1 flex w-[300px] flex-col gap-2 rounded-xl border border-hairline bg-surface p-3 shadow-lg;
+    @apply pop-surface absolute right-0 top-[calc(100%+6px)] z-50 flex w-[300px] flex-col gap-2 p-3;
+    animation: pop-in 0.12s var(--ease-out-soft);
   }
   .set-menu-row { @apply flex items-center gap-1.5; }
   .set-menu-row > input, .set-menu-row > select { @apply field h-7 min-w-0 flex-1 text-[12px]; }

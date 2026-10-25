@@ -522,21 +522,6 @@
 }
 .cal-feed-how { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; padding-left: 18px; font-size: 13px; color: var(--color-ink-soft); }
 
-.cal-toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  z-index: 80;
-  max-width: min(520px, calc(100vw - 32px));
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: var(--color-sand-900);
-  box-shadow: var(--shadow-lg);
-  font-size: 13px;
-  color: var(--color-sand-25);
-  transform: translateX(-50%);
-}
-
 /* ---- Narrow screens ------------------------------------------------------ */
 
 @media (max-width: 1080px) {

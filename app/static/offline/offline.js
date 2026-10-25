@@ -574,13 +574,13 @@
       return;
     }
     var act = ACTS[el.dataset.act];
-    if (act) Promise.resolve(act(el.dataset.id)).catch(function (err) { alert(err.message); });
+    if (act) Promise.resolve(act(el.dataset.id)).catch(function (err) { note(err.message); });
   });
   document.addEventListener("change", function (e) {
     var box = e.target.closest("[data-task]");
     if (!box || !box.checked) return;
     var raw = box.dataset.task, id = /^\d+$/.test(raw) ? Number(raw) : raw;
-    record("task_done", ref("task", id), {}, {}).catch(function (err) { box.checked = false; alert(err.message); });
+    record("task_done", ref("task", id), {}, {}).catch(function (err) { box.checked = false; note(err.message); });
   });
   document.getElementById("find").addEventListener("input", function () { location.hash = ""; render(); });
   // A card scanned in the phone app: its link names the cage (…#cage-12).

@@ -634,7 +634,7 @@
               {% if u.disabled %}<span class="badge badge-danger">{{ _('disabled') }}</span>{% endif %}
               <span class="badge {{ 'badge-brand' if u.role == 'admin' else 'badge-quiet' }}" {% if roles.get(u.role) %}title="{{ roles[u.role][1]|tr }}"{% endif %}>{{ roles[u.role][0]|tr if roles.get(u.role) else u.role }}</span>
               {% if admin and not u.me %}
-                <details class="set-menu">
+                <details class="set-menu" data-popover>
                   <summary class="btn btn-sm" aria-label="{{ _('Change %(name)s', name=u.name) }}">···</summary>
                   <div class="set-menu-pop">
                     <form method="post" action="{{ url_for('admin_toggle_role', user_id=u.id) }}" class="set-menu-row"
