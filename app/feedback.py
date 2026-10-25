@@ -2,11 +2,24 @@
 
 - **Send feedback** (the rail, under Help): anyone says what went wrong,
   an idea or a question. It is kept in the lab's own database, where the
-  lab's admins read it and mark it done. Nothing leaves the lab unless
-  someone presses **Open as a GitHub issue**, which opens a new issue on
-  BioManager's repository with the text filled in (the page's
-  path, the version and the browser, never the server's address or who
-  sent it) for them to check and submit themselves.
+  lab's admins read it and mark it done. It leaves the lab only as its
+  sender chooses:
+  - **Also send this to BioManager's makers** (ticked on a desktop, where
+    the sender is usually the lab's only admin, so the note would reach no
+    one else; unticked on a lab server): the note goes to the makers as one
+    PostHog event, like the daily counts (app/telemetry.py: the same
+    project and key), with the kind, the text, the page's path, the
+    version, where it runs (desktop or server, browser, database), the
+    language, the installation's random id, and a way to reach them if the
+    sender gave one. Never the sender's name, other records, or the
+    server's address. Offered only on a released build with a project key
+    and the server's switches on (`telemetry.off_by_env`). Which notes went
+    is kept in `app_settings` (`feedback:sent_to_makers`, their ids), so
+    the list says so. `scripts/feedback.py` reads them.
+  - **Open as a GitHub issue** opens a new issue on BioManager's
+    repository with the text filled in (the page's path, the version and
+    the browser, never the server's address or who sent it) for them to
+    check and submit themselves.
 - **Usage report** (admins): the last eight weeks in counts only — how
   many people changed something, how many changes in each area, notebook
   pages and calendar events added — and what is in the lab now. No names,
@@ -38,6 +51,9 @@ KINDS = {
     "question": "A question",
 }
 WEEKS = 8
+SENT_KEY = "feedback:sent_to_makers"     # app_settings: ids of the notes sent to BioManager's makers
+SENT_KEEP = 2000
+EVENT = "feedback"
 
 # The areas of the app, by the tables the change history records.
 AREAS = [
@@ -98,6 +114,70 @@ def issue_url(item: Feedback) -> str:
     return ISSUES_URL + "?" + urlencode({"title": title, "body": body})
 
 
+def can_tell_makers() -> bool:
+    """Whether a note can go to BioManager's makers from here: a released
+    build with the makers' key, and nothing on the server turning it off."""
+    from . import telemetry
+    return bool(telemetry.project_key()) and not telemetry.off_by_env() and telemetry.released()
+
+
+def tell_makers_by_default() -> bool:
+    """Ticked on a desktop (its admin is usually the only person who would
+    read the note), unticked on a lab server, whose notes are for its admins."""
+    from flask import current_app
+    return bool(current_app.config.get("LOCAL_SETUP"))
+
+
+def sent_ids(session) -> set[int]:
+    from .inventory_service import get_setting
+    try:
+        return {int(x) for x in json.loads(get_setting(session, SENT_KEY, "") or "[]")}
+    except (ValueError, TypeError):
+        return set()
+
+
+def _mark_sent(session, item_id: int) -> None:
+    from .inventory_service import set_setting
+    ids = sorted(sent_ids(session) | {item_id})[-SENT_KEEP:]
+    set_setting(session, SENT_KEY, json.dumps(ids))
+
+
+def makers_payload(session, item: Feedback, contact: str) -> dict:
+    """Exactly what goes to BioManager's makers: the note and where it came
+    from, never who sent it or anything else in the lab."""
+    import platform as _platform_module
+    from flask import current_app
+    from . import i18n, telemetry
+    return {
+        "api_key": telemetry.project_key(),
+        "event": EVENT,
+        "distinct_id": telemetry.install_id(session),
+        "properties": {
+            "kind": item.kind,
+            "text": item.text,
+            "page": item.page,
+            "version": item.app_version,
+            "where": item.platform,
+            "install_kind": "desktop" if current_app.config.get("LOCAL_SETUP") else "server",
+            "os": _platform_module.system() or "unknown",
+            "language": i18n.current(),
+            "contact": contact[:200],
+            "$geoip_disable": True,
+            "$process_person_profile": False,
+        },
+    }
+
+
+def _tell_makers(session, item: Feedback, contact: str) -> bool:
+    """Send the note on now; True if it arrived. A failure (no network)
+    leaves it saved in the lab, as it always was."""
+    from . import telemetry
+    try:
+        return telemetry._post(makers_payload(session, item, contact))
+    except Exception:  # noqa: BLE001 — offline, a proxy, PostHog down
+        return False
+
+
 def _from_page() -> str:
     """The page someone came from, as a path on this server (never its address)."""
     raw = request.values.get("from") or request.referrer or ""
@@ -122,7 +202,9 @@ def index():
         if sent is not None and sent.username != g.user.username:
             sent = None
         return render_template("feedback.html", items=items, kinds=KINDS, admin=admin, sent=sent,
-                               issue_url=issue_url, from_page=_from_page(), open_count=sum(i.status == "open" for i in items))
+                               issue_url=issue_url, from_page=_from_page(), open_count=sum(i.status == "open" for i in items),
+                               can_tell=can_tell_makers(), tell_default=tell_makers_by_default(), told=sent_ids(s),
+                               told_failed=request.args.get("told") == "failed")
 
 
 @bp.post("")
@@ -137,6 +219,12 @@ def send():
                         app_version=app_version(), platform=_platform()[:200])
         s.add(item)
         s.commit()
+        told = None
+        if request.form.get("tell_makers") == "1" and can_tell_makers():
+            told = _tell_makers(s, item, (request.form.get("contact") or "").strip())
+            if told:
+                _mark_sent(s, item.id)
+                s.commit()
         admins = [u for u in _admin_usernames(s) if u != g.user.username]
         if admins:
             from . import notify
@@ -145,7 +233,7 @@ def send():
                             link=url_for("feedback.index"), actor=g.user.username,
                             values={"who": g.user.display_name or g.user.username})
             s.commit()
-        return redirect(url_for("feedback.index", sent=item.id))
+        return redirect(url_for("feedback.index", sent=item.id, **({"told": "failed"} if told is False else {})))
 
 
 def _admin_usernames(session) -> list[str]:

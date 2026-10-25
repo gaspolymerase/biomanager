@@ -212,5 +212,12 @@
   "Experiments, in every database": "所有数据库中的实验",
   "One experiment: animals, readout table, manipulations": "一个实验：动物、观测指标表、处理",
   "Record the readout": "记录观测指标",
-  "BioManager is free. These counts are how its makers can show that labs rely on it, and see which parts to improve first. Leaving them on is a small way to help keep it going.": "BioManager 是免费的。开发者靠这些统计说明有实验室在依靠它，并知道该先改进哪些部分。保持开启，就是帮它继续做下去的一点小小支持。"
+  "BioManager is free. These counts are how its makers can show that labs rely on it, and see which parts to improve first. Leaving them on is a small way to help keep it going.": "BioManager 是免费的。开发者靠这些统计说明有实验室在依靠它，并知道该先改进哪些部分。保持开启，就是帮它继续做下去的一点小小支持。",
+  "BioManager's makers have it too, and will read it.": "BioManager 的开发者也收到了，会认真看。",
+  "It couldn't reach BioManager's makers just now (no internet?). It is saved here; to send it on, open it as a GitHub issue.": "刚才没能发给 BioManager 的开发者（没有网络？）。它已保存在这里；想转给开发者，可以作为 GitHub issue 打开。",
+  "Also send this to BioManager's makers": "同时发给 BioManager 的开发者",
+  "So they can fix it or build it. It sends what you wrote, the kind, the page, the version and where BioManager runs; not your name, your lab's records or this server's address.": "方便他们修复或加上这个功能。发送的是你写的内容、类型、页面、版本和 BioManager 的运行方式；不包括你的名字、实验室的记录，也不包括这台服务器的地址。",
+  "A way to reach you, if you would like an answer (optional)": "如果希望得到回复，留个联系方式（可不填）",
+  "e-mail or WeChat": "邮箱或微信",
+  "Sent to BioManager's makers": "已发给 BioManager 的开发者"
 }

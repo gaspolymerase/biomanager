@@ -941,8 +941,10 @@ database has a name of its own (one another database has is refused), so
       <h4>💬 Feedback, kept in the lab</h4>
       <b>Send feedback</b>, under Help in the sidebar: say what went wrong, an idea or a
       question, from the page you're on. The lab's admins read it and mark
-      it done; <b>Open as a GitHub issue</b> sends it on to BioManager's
-      makers, only if you choose.
+      it done. <b>Also send this to BioManager's makers</b> (ticked in the
+      desktop app) sends it to them as well, with a way to reach you if
+      you give one, never your name or the lab's records; or <b>Open as a
+      GitHub issue</b>.
     </td>
     <td valign="top">
       <h4>📈 A usage report for a pilot</h4>
@@ -1656,7 +1658,9 @@ what it needs to track.
 - **Your data stays with you** — on your computer or your lab's server.
   None of it is sent anywhere unless you connect Google Calendar, put the
   calendar in your Mac's Calendar (which passes it to that account), Google
-  or Microsoft sign-in, or reminder emails, or a tool you gave a token asks.
+  or Microsoft sign-in, or reminder emails, or a tool you gave a token asks,
+  or you leave **Also send this to BioManager's makers** ticked on a
+  feedback note (then that note goes, with its page and version).
 - **Anonymous counts, once a day.** BioManager is free; these counts are
   how its makers can show that labs rely on it and see which parts to
   improve first. Each installation sends one short message a day: the

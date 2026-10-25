@@ -3158,7 +3158,23 @@ and each admin gets a notification. Admins see every note and mark it done;
 members see their own. `issue_url()` builds a GitHub "new issue" link on
 gaspolymerase/biomanager with the text, path, version and platform —
 never the server's host or the person — which the person submits
-themselves: nothing is sent by the server.
+themselves.
+
+**Also send this to BioManager's makers** (`tell_makers`, with an optional
+`contact`) sends the note at once as one PostHog event, `feedback`, through
+`telemetry._post` to the same project and key as the daily counts:
+`makers_payload()` is exactly what goes (kind, text, path, version, the
+platform string, desktop or server, OS family, language, contact, the
+installation's random id as `distinct_id`, `$geoip_disable`). It is offered
+by `can_tell_makers()` (a project key, `telemetry.released()`, not
+`telemetry.off_by_env()`; the lab's own counts switch doesn't hide it, as
+the person chooses per note) and ticked by `tell_makers_by_default()` on a
+desktop (`LOCAL_SETUP`) only. A sent note's id goes into `app_settings`
+`feedback:sent_to_makers` (a JSON list, the last 2,000), so the page says
+"Sent to BioManager's makers"; a failed send (offline) redirects with
+`told=failed` and the note stays only in the lab. `scripts/feedback.py`
+reads them back from PostHog with the personal key `scripts/installs.py`
+uses.
 
 `/feedback/usage` (admins) is `usage()`: for each of the last eight weeks
 (Monday to Sunday), the distinct lab accounts in the change history and
