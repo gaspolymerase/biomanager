@@ -254,6 +254,8 @@
   --field-disabled-bg: var(--color-recess);
   --field-disabled-ink: var(--color-muted);
   --placeholder-ink: color-mix(in srgb, var(--color-ink) 38%, transparent);
+  /* An empty sheet's icon (an empty tray), per theme like the chevron. */
+  --empty-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A9AA0' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E");
   /* The chevron every dropdown draws (its colour per theme below). */
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236E6E73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 6.5 3 3 3-3'/%3E%3C/svg%3E");
   /* Keyboard focus: one ring for every control. */
@@ -683,10 +685,13 @@
 @utility card-pad { @apply p-4; }
 @utility inset { @apply rounded-lg bg-sand-100 px-3 py-2.5; }
 
+/* Nothing here yet: a soft icon, one sentence, at most one action. A
+   sheet's empty row (.dt-empty) draws the same icon by itself. */
 @utility empty-state {
   @apply flex flex-col items-center justify-center gap-2 px-4 py-12 text-center;
+  & > .icon:first-child { @apply mb-1 size-10 rounded-full bg-sand-100 p-2.5 text-sand-500; }
   & .icon { @apply size-6 text-sand-400; }
-  & p { @apply text-[13px] text-muted; }
+  & p { @apply max-w-[46ch] text-[13px] leading-relaxed text-muted; }
 }
 
 @utility stat {
@@ -1725,7 +1730,16 @@
 
   /* Lives on a <td colspan>, so it must stay a table cell — a flex empty
      state here would collapse the text into one column's width. */
-  .dt-empty { @apply px-4 py-12 text-center text-[13px] text-muted; }
+  .dt-empty { @apply px-4 py-12 text-center text-[13px] leading-relaxed text-muted; }
+  .dt-empty:not(:has(> .dt-empty-msg))::before, .dt-empty-msg::before {
+    content: "";
+    @apply mx-auto mb-3 block size-10 rounded-full bg-sand-100;
+    background-image: var(--empty-icon);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px 20px;
+  }
+  .dt-empty-msg::before { @apply mx-0; }
   .dt-empty strong { @apply font-semibold text-ink-soft; }
   /* In a table wider than its card the message stays in view. */
   .dt-empty:has(> .dt-empty-msg) { @apply text-left; }
