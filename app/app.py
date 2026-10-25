@@ -2578,11 +2578,21 @@ ALLOWED_LANDING_ENDPOINTS = {"colony", "notebook", "calendar", "orders", "sample
 @app.route("/home/layout", methods=["POST"])
 @login_required
 def set_home_layout():
-    """Switch Home between Classic, Tracks and Freezer; kept per person."""
+    """Switch Home between Overview, Timeline and By place; kept per person."""
     with SessionLocal() as db_session:
         home_layouts.set_layout(db_session, g.user.username, request.form.get("layout", ""))
         db_session.commit()
     return redirect(url_for("home_dashboard"))
+
+
+@app.route("/design")
+@admin_required
+def design_gallery():
+    """Every shared piece of the interface on one page, in its real styles
+    (docs/DEVELOPMENT.md → Interface design): to check a change against all
+    of them at once, in light, dark and on a phone. For maintainers, so in
+    English only."""
+    return render_template("design_gallery.html")
 
 
 @app.route("/login", methods=["GET", "POST"])

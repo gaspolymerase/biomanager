@@ -424,5 +424,7 @@
   "Overview": "概览",
   "Timeline": "时间线",
   "By place": "按位置",
-  "Home view": "首页视图"
+  "Home view": "首页视图",
+  "Design gallery": "设计样例",
+  "Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.": "应用里的每种控件、对话框、菜单和标签都在这一页上：用来检查外观上的改动。"
 }

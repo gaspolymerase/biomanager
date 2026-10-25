@@ -731,7 +731,7 @@
   select.field { padding-right: 28px; }
   textarea.field { @apply h-auto min-h-20 py-2 leading-relaxed; }
 
-  .field-label > input:not([type="checkbox"]):not([type="radio"]),
+  .field-label > input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]),
   .field-label > select,
   .field-label > textarea { @apply field mt-0.5 normal-case tracking-normal; }
   .field-label > textarea { @apply h-auto min-h-20 py-2 leading-relaxed; }
@@ -4740,4 +4740,26 @@ tr.is-scanned > td:first-child {
   .gs-done > summary .icon { @apply size-3.5 text-brand-600; }
   .gs-foot { @apply flex items-center gap-3 border-t border-hairline px-3 py-2 text-[12px]; }
   .gs-foot a { @apply text-muted; }
+}
+
+/* The design gallery (/design, templates/design_gallery.html): only its own
+   layout here; every piece it shows uses the app's styles. */
+@layer components {
+  .gallery-index { @apply mb-6 flex flex-wrap gap-1.5; }
+  .gallery-index a { @apply rounded-full border border-hairline bg-surface px-3 py-1 text-[12px] font-medium text-ink-soft no-underline; }
+  .gallery-index a:hover { @apply border-brand-600 text-brand-700; }
+  .gallery-section { @apply mb-8 scroll-mt-28; }
+  .gallery-h { @apply mb-1 text-[17px] font-semibold text-ink; }
+  .gallery-note { @apply mb-3 max-w-[80ch] text-[13px] leading-relaxed text-muted; }
+  .gallery-row { @apply flex flex-wrap items-center gap-2.5; }
+  .gallery-type-row { @apply flex items-baseline gap-4; }
+  .gallery-type-px { @apply w-12 shrink-0 text-right text-[11px] font-semibold text-muted tabular-nums; }
+  .gallery-type-sample { @apply min-w-0 truncate text-ink; }
+  .gallery-swatches { @apply grid gap-2; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .gallery-swatch { @apply flex items-center gap-2 rounded-xl border border-hairline bg-surface p-2 text-[12px] text-ink-soft; }
+  .gallery-swatch i { @apply size-8 shrink-0 rounded-lg; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08); }
+  .gallery-fields { @apply grid gap-3; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .gallery-wide { grid-column: 1 / -1; }
+  .gallery-check { @apply inline-flex items-center gap-2 text-[13px] text-ink; }
+  .gallery-menu-demo { @apply relative w-60; }
 }

@@ -8,6 +8,8 @@ import re
 import unittest
 from pathlib import Path
 
+from tests.base import AppTestCase
+
 ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT / "app"
 
@@ -78,6 +80,20 @@ class TextSizes(unittest.TestCase):
                     if float(m.group(1)) not in SCALE:
                         found.append(f"{_where(path, text, m.start())} {m.group(0)}")
         self.assertEqual(found, [], f"text sizes come from the scale: {sorted(SCALE)}")
+
+
+class Gallery(AppTestCase):
+    """/design shows the shared pieces to an admin, and to no one else."""
+
+    def test_an_admin_sees_every_piece(self):
+        html = self.get_ok(self.a, "/design")
+        for piece in ('class="record-dialog', 'class="seg', 'class="dt-chips"', 'class="menu"', 'data-tone="brand"',
+                      'class="empty-state"', 'class="dt-empty"', '<datalist id="gallery-strains">'):
+            self.assertIn(piece, html)
+
+    def test_a_member_is_turned_away(self):
+        response = self.m.get("/design")
+        self.assertEqual(response.status_code, 302)
 
 
 if __name__ == "__main__":

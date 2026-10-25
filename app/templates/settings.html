@@ -850,6 +850,12 @@
             {{ icon('chevron-right', 'set-chev') }}
           </a>
         {% endif %}
+        {% if current_user.role == 'admin' %}
+          <a class="set-row set-row-link" href="{{ url_for('design_gallery') }}">
+            <span class="set-label"><b>{{ _('Design gallery') }}</b><small>{{ _('Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.') }}</small></span>
+            {{ icon('chevron-right', 'set-chev') }}
+          </a>
+        {% endif %}
       </div>
       {% if version_info.desktop %}
         <div class="set-title">{{ _('Updates') }}</div>
