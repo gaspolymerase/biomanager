@@ -812,15 +812,15 @@ database has a name of its own (one another database has is refused), so
       colony, zebrafish tanks to return, recent plasmids, and a card of
       its own for each fly, worm or other animal database with what is
       due — then expiring stock, the next 14 days and recent orders.
-      Three layouts, chosen with <b>Layout</b> at the top of Home (or in
-      <b>Settings → Appearance &amp; language</b>), each person's own:
-      <b>Classic</b> cards, <b>Tracks</b> (the coming weeks on one day
-      ruler, a track per kind of work) and <b>Freezer</b> (your racks from
-      above, with a pull list in the order you'd walk the room).
-      <b>Customize</b> chooses which cards Classic shows, in what order
-      and how wide, and which counts it shows, with your to-dos,
-      bookings, recent pages and calculators (the ones you opened last)
-      to add.
+      Three views, tabs under the greeting (or in <b>Settings →
+      Appearance &amp; language</b>), each person's own: <b>Overview</b>
+      cards, <b>Timeline</b> (the coming weeks on one row of days, a row
+      per kind of work) and <b>By place</b> (your racks from above, with
+      the jobs numbered in the order you'd walk the room).
+      <b>Customize</b> chooses which cards Overview shows, in what order
+      and how wide, and which counts it shows, with your databases,
+      to-dos, bookings, recent pages and calculators (the ones you
+      opened last) to add.
       <br><br><b>Animals that may need a look</b> says what the records
       show, never a diagnosis: a living mouse whose latest weight is 15%
       or more below its peak of the last 30 days, or below its first

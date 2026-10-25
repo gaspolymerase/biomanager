@@ -114,6 +114,11 @@ reads the source for the rules marked *(tested)*.
 - **Empty** sheets and lists: a soft icon over one sentence (`.dt-empty`,
   `empty-state`), with at most one action.
 
+**The design gallery**, `/design` (admins; Settings → Version), draws
+every piece above on one page as the app does (`templates/design_gallery.html`,
+in English only, as a maintainer's tool): check a change there in light,
+dark and at a phone's width before looking page by page.
+
 ### On a phone
 
 Below 768px the tab strip and search field give way to a tab bar at the
@@ -315,6 +320,19 @@ their panes.
 
 ### Home
 
+Home has three views, tabs under the greeting (`templates/home.html`, a
+`.page-tabs-row` form posting to `/home/layout`): **Overview**, the cards
+below; **Timeline** (`home/_tracks.html`, `tracks_view`), every dated job
+on one row of days, a row per kind of work, with 1, 2 or 4 weeks beside
+the tabs; and **By place** (`home/_freezer.html`, `freezer_view`), the
+racks with work in them and the jobs numbered in walking order. They are
+saved under their first names, `classic`, `tracks` and `freezer`
+(`home_layouts.LAYOUTS`, the `home_layout:<user>` setting), so a choice
+made before the rename still holds. Customize shows on Overview only; on
+the other two For you is one line (`.home-for-you`). Both read one agenda,
+`build_agenda`; their styles are `static/home-layouts.css`, in the app's
+type and tokens.
+
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
 the ones in this person's sidebar, in the lab's order (as the rail does,
 leaving out the inventories that are tabs of Plasmids). `lab_cards` turns
@@ -336,8 +354,9 @@ card that replaced them, at their place. `get_cards`, `set_cards` and
 show; `POST /home/cards` saves the Customize dialog
 (`templates/home/_customize.html`; the tiles only when it sends
 `tiles=1`). `home.html` captures each card with `{% set %}` into a dict
-and draws them in the person's order; `_home_extra_cards` loads the four
-off at first (to-dos, bookings, recent pages, calculators) and Recent
+and draws them in the person's order; `_home_extra_cards` loads the cards
+off at first (to-dos, bookings, recent pages, calculators; Your databases
+too, which repeats the sidebar and the Counts tiles) and Recent
 plasmids. The calculators card puts the ones Utilities opened
 last first (`biomanager:util:recent` in `localStorage`, up to eight).
 
@@ -3395,7 +3414,7 @@ order and, with two or more live, a `.rack-stack-toggle` "!" whose
 popover (`.rack-stack`) holds a tile for each. The Unplaced tray leaves
 out items with `live` false (empty cages), with a line saying so. A drop on a taken place
 (`place_cage`) swaps with the cage shown there; the others stay. Home's
-Freezer layout shows the same cage and a `.frz-crowd` "!". Fish tanks,
+By place view shows the same cage and a `.frz-crowd` "!". Fish tanks,
 fly and worm racks and inventory boxes still take one record per place.
 
 **A rack's new layout** (`app/rack_layout.py`). A cage, tank, vial, item or

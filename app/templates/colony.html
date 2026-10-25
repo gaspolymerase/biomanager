@@ -451,33 +451,33 @@
                     <th class="dt-sortable" data-sort-key="position" style="width: 60px;" data-dt-label="{{ _('Position') }}" title="{{ _("Position in the rack, named by the rack's scheme (e.g. D7)") }}">
                       <span class="dt-col-head">{{ icon('position', 'dt-col-icon') }}{{ _('Pos') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="purpose" style="width: 92px;" title="{{ _('What the cage is for. Breeder: the lab’s breeding stock, shared with the lab unless its owner makes it personal. Breeding: mating now; only it has Litter born, Genotyping and Wean. Experiment: in an experiment.') }}">
+                    <th class="dt-sortable" data-sort-key="purpose" style="width: 104px;" title="{{ _('What the cage is for. Breeder: the lab’s breeding stock, shared with the lab unless its owner makes it personal. Breeding: mating now; only it has Litter born, Genotyping and Wean. Experiment: in an experiment.') }}">
                       <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="mice" style="width: 60px;" title="{{ _('Living mice, by sex') }}">
                       <span class="dt-col-head">{{ icon('mouse', 'dt-col-icon') }}{{ _('Mice') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="date_give_birth" style="width: 104px;" title="{{ _("When the cage's litter was born; its pups' litter, if any") }}">
+                    <th class="dt-sortable" data-sort-key="date_give_birth" style="width: 116px;" title="{{ _("When the cage's litter was born; its pups' litter, if any") }}">
                       <span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}{{ _('Litter born') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="wean_due" style="width: 100px;" title="{{ _('Litter born + %(days)s days (P%(days)s)', days=wean_offset_days) }}">
                       <span class="dt-col-head">{{ icon('calendar-clock', 'dt-col-icon') }}{{ _('Wean due') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="genotype_summary" style="width: 112px;"
+                    <th class="dt-sortable" data-sort-key="genotype_summary" style="width: 136px;"
                         title="{{ _("The cage's genotype summary; when empty, what its living mice carry is shown in grey") }}">
                       <span class="dt-col-head">{{ icon('dna', 'dt-col-icon') }}{{ _('Strain / genotype') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="owner" style="width: 60px;">
                       <span class="dt-col-head">{{ icon('user', 'dt-col-icon') }}{{ _('Owner') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="is_shared" style="width: 86px;" title="{{ _('A shared cage is editable by the whole lab, or by one project group') }}">
+                    <th class="dt-sortable" data-sort-key="is_shared" style="width: 96px;" title="{{ _('A shared cage is editable by the whole lab, or by one project group') }}">
                       <span class="dt-col-head">{{ icon('users', 'dt-col-icon') }}{{ _('Shared') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="cage_location" style="width: 112px;" title="{{ _('Free-text location note (room, shelf…)') }}"
                         {% if not cs.location_notes_used %}data-default-hidden="1"{% endif %}>
                       <span class="dt-col-head">{{ icon('location', 'dt-col-icon') }}{{ _('Location note') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="notes" style="width: 72px; min-width: 72px;">
+                    <th class="dt-sortable" data-sort-key="notes" style="width: 120px; min-width: 80px;" data-default-hidden="1">
                       <span class="dt-col-head">{{ icon('note', 'dt-col-icon') }}{{ _('Note') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="sheet-pin sheet-pin-end" style="width: 64px; min-width: 64px;"><span class="sr-only">{{ _('Actions') }}</span></th>

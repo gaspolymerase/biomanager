@@ -317,14 +317,14 @@
 </section>
 
 <script nonce="{{ csp_nonce() }}">
-  BioActions.register({
-    'gallery-toast': function (kind) {
-      BiomanagerShell.toast(kind === 'ok' ? 'Saved the order of the databases.' : kind === 'danger' ? 'Could not save. Try again.' : 'Copied.', kind);
-    },
-    'gallery-confirm': function () { BioDialog.confirm('Move 3 cages to Rack B?'); },
-    'gallery-danger': function () { BioDialog.confirm('Delete reagent #7?', { danger: true }); },
-    'gallery-prompt': function () { BioDialog.prompt('Name this regimen', ''); },
-    'gallery-alert': function () { BioDialog.alert('The camera could not be opened here.'); },
-  });
+  function galleryToast(kind) {
+    BiomanagerShell.toast(kind === 'ok' ? 'Saved the order of the databases.' : kind === 'danger' ? 'Could not save. Try again.' : 'Copied.', kind);
+  }
+  function galleryConfirm() { BioDialog.confirm('Move 3 cages to Rack B?'); }
+  function galleryDanger() { BioDialog.confirm('Delete reagent #7?', { danger: true }); }
+  function galleryPrompt() { BioDialog.prompt('Name this regimen', ''); }
+  function galleryAlert() { BioDialog.alert('The camera could not be opened here.'); }
+  BioActions.register({ 'gallery-toast': galleryToast, 'gallery-confirm': galleryConfirm, 'gallery-danger': galleryDanger,
+                        'gallery-prompt': galleryPrompt, 'gallery-alert': galleryAlert });
 </script>
 {% endblock %}
