@@ -257,7 +257,7 @@
           </select>
         </label>
         <label class="set-row">
-          <span class="set-label"><b>{{ _('Home layout') }}</b><small>{{ _('Cards, the next weeks on a ruler, or your racks and a pull list. Also switchable on Home.') }}</small></span>
+          <span class="set-label"><b>{{ _('Home view') }}</b><small>{{ _('Overview: your cards. Timeline: the next weeks, a row per kind of work. By place: your racks, and where to go. Also switchable on Home.') }}</small></span>
           <select name="home_layout">
             {% for key, (label, _icon) in home_layout_choices.items() %}
               <option value="{{ key }}" {% if user_settings.home_layout == key %}selected{% endif %}>{{ label|tr }}</option>

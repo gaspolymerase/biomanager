@@ -28,17 +28,29 @@
 
 {% block content %}
 
-{# ---- Layout: Classic, Tracks or Freezer (app/home_layouts.py) ---------- #}
-<form class="home-layout-bar" method="post" action="{{ url_for('set_home_layout') }}">
-  <span class="home-layout-label">{{ _('Layout') }}</span>
-  <div class="dt-chips" role="group" aria-label="{{ _('Home layout') }}">
+{# ---- The view: Overview, Timeline or By place (app/home_layouts.py) -----
+     Tabs, as a database's are; what belongs to the view sits beside them. #}
+<form class="page-tabs-row" method="post" action="{{ url_for('set_home_layout') }}">
+  <nav class="seg page-tabs" role="tablist" aria-label="{{ _('Home view') }}">
     {% for key, (label, icon_name) in layout_choices.items() %}
-      <button type="submit" name="layout" value="{{ key }}" class="dt-chip"
+      <button type="submit" name="layout" value="{{ key }}" class="seg-item{% if home_layout == key %} is-active{% endif %}"
+              role="tab" aria-selected="{{ 'true' if home_layout == key else 'false' }}"
               aria-pressed="{{ 'true' if home_layout == key else 'false' }}">{{ icon(icon_name) }}{{ label|tr }}</button>
     {% endfor %}
+  </nav>
+  <div class="page-tabs-side">
+    {% if home_layout == 'tracks' %}
+      <nav class="seg seg-sm" aria-label="{{ _('Days shown') }}">
+        {% for s in layout_view.spans %}
+          <a class="seg-item{% if s == layout_view.span %} is-active{% endif %}" href="{{ url_for('home_dashboard', span=s) }}"
+             {% if s == layout_view.span %}aria-current="true"{% endif %}>{{ ngettext('%(num)s week', '%(num)s weeks', s // 7) }}</a>
+        {% endfor %}
+      </nav>
+    {% elif home_layout == 'classic' %}
+      <button type="button" class="btn btn-sm" data-on-click="open-dialog" data-arg="home-customize"
+              title="{{ _('Choose which cards Home shows, their order and which are full width') }}">{{ icon('sliders') }} {{ _('Customize') }}</button>
+    {% endif %}
   </div>
-  <button type="button" class="btn btn-sm ml-auto" data-on-click="open-dialog" data-arg="home-customize"
-          title="{{ _('Choose which cards Home shows, their order and which are full width') }}">{{ icon('sliders') }} {{ _('Customize') }}</button>
 </form>
 
 {% if setup_needed %}
@@ -523,8 +535,14 @@
 {% endset %}{% set _discard = cards.update({"orders": c}) %}{% endif %}
 
 {% if home_layout == 'tracks' or home_layout == 'freezer' %}
-  {# The other layouts keep For you above them. #}
-  {% if 'for_you' in cards and 'for_you' in shown_cards %}<div class="mb-3">{{ cards['for_you'] }}</div>{% endif %}
+  {# For you, in one line: the bell has the rest. #}
+  {% if for_you and 'for_you' in shown_cards %}
+    <a class="home-for-you" href="{{ url_for('lab.notifications', show='unread') }}">
+      {{ icon('bell') }}<b>{{ _('For you') }}</b>
+      <span class="home-for-you-latest">{{ for_you[0].title }}</span>
+      <span class="home-for-you-n">{{ _('%(n)s unread', n=notification_unread) }}</span>{{ icon('chevron-right') }}
+    </a>
+  {% endif %}
   {% if home_layout == 'tracks' %}{% include "home/_tracks.html" %}{% else %}{% include "home/_freezer.html" %}{% endif %}
 {% else %}
   <section class="home-grid">

@@ -1,21 +1,13 @@
-{# Tracks layout (app/home_layouts.py → tracks_view): every dated piece of
-   work on one day ruler, a track per kind of work. On a phone it becomes
-   a list of days. #}
+{# Timeline (app/home_layouts.py → tracks_view): every dated piece of work
+   on one row of days, a row per kind of work, and what needs you now beside
+   it. On a phone it becomes a list of days. #}
 {% set t = layout_view %}
 {% set status_words = {'overdue': _('overdue'), 'today': _('today'), 'soon': _('within 3 days'), 'later': _('scheduled')} %}
 
-<section class="trk" aria-label="{{ _('Tracks') }}">
+<section class="trk" aria-label="{{ _('Timeline') }}">
   <div class="trk-head">
-    <div class="trk-locus">
-      <span class="trk-dim">lab:</span>{{ t.days[0].date.isoformat() }}<span class="trk-dim">..</span>{{ t.until.isoformat() }}
-      <span class="trk-dim trk-locus-n">{{ t.span }} d</span>
-    </div>
-    <nav class="dt-chips" aria-label="{{ _('Days shown') }}">
-      {% for s in t.spans %}
-        <a class="dt-chip" href="{{ url_for('home_dashboard', span=s) }}"
-           aria-pressed="{{ 'true' if s == t.span else 'false' }}">{{ ngettext('%(num)s week', '%(num)s weeks', s // 7) }}</a>
-      {% endfor %}
-    </nav>
+    <h2 class="trk-title">{{ t.days[0].date|date_format('%b %d')|replace(' 0', ' ') }} – {{ t.until|date_format('%b %d')|replace(' 0', ' ') }}</h2>
+    <span class="trk-total">{{ ngettext('%(num)s item', '%(num)s items', t.total) }}</span>
     <div class="trk-legend" aria-label="{{ _('Colours') }}">
       {% for key, word in status_words.items() %}
         <span><i class="trk-swatch" data-status="{{ key }}"></i>{{ word }}</span>
@@ -23,32 +15,10 @@
     </div>
   </div>
 
-  {# The months around the window as a chromosome: weekends are the dark bands. #}
-  <div class="trk-ideo">
-    <svg viewBox="0 0 1000 46" preserveAspectRatio="xMinYMid meet" role="img"
-         aria-label="{{ _('%(title)s, with the days shown boxed', title=t.ideogram.title) }}">
-      <defs>
-        <clipPath id="trk-arms">
-          {% for a in t.ideogram.arms %}<rect x="{{ a.x }}" y="12" width="{{ a.w }}" height="16" rx="8"/>{% endfor %}
-        </clipPath>
-      </defs>
-      <text class="trk-ideo-title" x="0" y="24">{{ t.ideogram.title }}</text>
-      {% for a in t.ideogram.arms %}<rect class="trk-arm" x="{{ a.x }}" y="12" width="{{ a.w }}" height="16" rx="8"/>{% endfor %}
-      <g clip-path="url(#trk-arms)">
-        {% for b in t.ideogram.bands %}<rect class="trk-band" x="{{ b.x }}" y="12" width="{{ b.w }}" height="16"/>{% endfor %}
-      </g>
-      {% for a in t.ideogram.arms %}<rect class="trk-arm-edge" x="{{ a.x }}" y="12" width="{{ a.w }}" height="16" rx="8"/>{% endfor %}
-      {% for a in t.ideogram.arms %}<text class="trk-ideo-month" x="{{ a.x + 4 }}" y="42">{{ a.label }}</text>{% endfor %}
-      <rect class="trk-ideo-box" x="{{ t.ideogram.box_x }}" y="7" width="{{ t.ideogram.box_w }}" height="26" rx="3"/>
-    </svg>
-  </div>
-
   <div class="trk-body">
     <div class="trk-browser" style="--span: {{ t.span }}">
       <div class="trk-row trk-ruler-row">
-        <div class="trk-lab trk-corner">
-          <span class="trk-group">{{ ngettext('%(num)s item', '%(num)s items', t.total) }}</span>
-        </div>
+        <div class="trk-lab trk-corner"></div>
         <div class="trk-ruler">
           {% for d in t.days %}
             <div class="trk-day{% if d.weekend %} is-weekend{% endif %}{% if d.today %} is-today{% endif %}">

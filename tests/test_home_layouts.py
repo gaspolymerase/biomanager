@@ -1,7 +1,8 @@
-"""Home layouts: Classic, Tracks and Freezer (app/home_layouts.py).
+"""Home's views: Overview, Timeline and By place (app/home_layouts.py),
+kept under their first names: classic, tracks and freezer.
 
-Each person picks one; it is kept for them alone. Tracks and Freezer read
-the same agenda the Classic cards show."""
+Each person picks one; it is kept for them alone. Timeline and By place
+read the same agenda the Overview cards show."""
 from __future__ import annotations
 
 import re
@@ -38,7 +39,7 @@ class HomeLayoutTests(AppTestCase):
     def test_settings_saves_the_layout_too(self):
         self.post(self.m, "/settings", {"action": "profile", "display_name": "", "home_layout": "freezer"})
         self.assertIn('class="frz"', self.home())
-        self.assertIn('<option value="freezer" selected>Freezer</option>', self.get_ok(self.m, "/settings"))
+        self.assertIn('<option value="freezer" selected>By place</option>', self.get_ok(self.m, "/settings"))
 
     def test_settings_without_the_field_leaves_the_layout_alone(self):
         self.post(self.m, "/home/layout", {"layout": "tracks"})
@@ -64,10 +65,13 @@ class TracksTests(AppTestCase):
         self.assertIn(f"cage {colony['cage']}", html)
 
     def test_span_chooses_the_days_and_ignores_odd_values(self):
-        self.assertIn("7 d", self.get_ok(self.m, "/home?span=7"))
-        self.assertIn("28 d", self.get_ok(self.m, "/home?span=28"))
-        self.assertIn("14 d", self.get_ok(self.m, "/home?span=999"))
-        self.assertIn("14 d", self.get_ok(self.m, "/home?span=abc"))
+        def shown(query):
+            html = self.get_ok(self.m, "/home" + query)
+            return int(re.search(r'class="seg-item is-active" href="[^"]*span=(\d+)"', html).group(1))
+        self.assertEqual(shown("?span=7"), 7)
+        self.assertEqual(shown("?span=28"), 28)
+        self.assertEqual(shown("?span=999"), 14)
+        self.assertEqual(shown("?span=abc"), 14)
 
 
 class FreezerTests(AppTestCase):

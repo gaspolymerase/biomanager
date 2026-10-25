@@ -4230,7 +4230,7 @@
   .tour-list { @apply my-2 flex max-w-[70ch] flex-col gap-1.5 pl-5 text-[13px] leading-snug text-ink-soft; }
 
   /* The databases row on the home page. */
-  .home-dbs { @apply flex gap-2 overflow-x-auto pb-1; scrollbar-width: none; }
+  .home-dbs { @apply flex flex-wrap gap-2; }
   /* Home's cards, in each person's order (templates/home.html). */
   .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2; }
   .home-card { @apply flex min-w-0 flex-col; }
