@@ -1436,12 +1436,32 @@
 
   /* The tabs with what filters every tab (whose records) at their right,
      on one line. */
+  /* More beyond the edge (shell.js, initScrollCues): that edge fades. */
+  :is(.page-tabs, .dt-scroll)[data-clip="end"] {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+  :is(.page-tabs, .dt-scroll)[data-clip="start"] {
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+  }
+  :is(.page-tabs, .dt-scroll)[data-clip="start end"] {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  }
+
   .page-tabs-row {
     @apply mb-4 flex flex-wrap items-end gap-x-4 gap-y-2;
     box-shadow: inset 0 -1px 0 var(--color-hairline);
   }
-  .page-tabs-row > .seg.page-tabs { @apply mb-0 w-auto min-w-0 flex-1; box-shadow: none; }
+  /* The tabs take what room they need; the side goes under them when both
+     don't fit, and the tabs then scroll. */
+  .page-tabs-row > .seg.page-tabs { @apply mb-0 w-auto min-w-0; flex: 1 1 auto; box-shadow: none; }
   .page-tabs-side { @apply mb-1.5 ml-auto flex shrink-0 items-center gap-1; }
+  /* A database's counts, quiet beside its tabs: "37 plants · 4 trays". */
+  .page-stats { @apply flex-wrap gap-0 text-[12px] text-muted tabular-nums; }
+  .page-stat + .page-stat::before { content: "·"; @apply mx-1.5 text-sand-400; }
+  .page-stats .badge { @apply ml-2; }
   .seg.seg-sm { @apply p-[2px]; }
   .seg-sm .seg-item { @apply h-6.5 px-2.5 text-[12px]; }
   .info-tip-end .info-tip-pop { @apply right-0 left-auto; transform-origin: top right; }
@@ -1719,6 +1739,13 @@
   }
   .data-table-card > .dt-bottom-bar { @apply sticky bottom-0 z-[32]; }
   .dt-bottom-spacer { @apply ml-auto; }
+  /* A phone: one line over the tab bar. The page size and its words go;
+     ‹ › and the page stay. */
+  @media (max-width: 640px) {
+    .dt-bottom-bar { @apply flex-nowrap gap-1 px-2; }
+    .dt-bottom-bar .dt-pagination > :is(.dt-page-size, span:last-child:not(.dt-page-label)) { @apply hidden; }
+    .dt-bottom-bar .dt-bottom-count { @apply truncate; }
+  }
   .dt-bottom-count { @apply text-[12px] text-muted; }
   .dt-bottom-action { @apply btn btn-ghost h-7 gap-1.5 px-2 text-[12px]; }
   .dt-bottom-action svg { @apply size-[14px]; }

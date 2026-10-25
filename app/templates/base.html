@@ -261,7 +261,7 @@
             <div class="min-w-0">
               <div class="toolbar-title">{{ heading_text or title_text }}</div>
               {% if subtitle_text %}
-                <div class="toolbar-sub">{% block page_subtitle %}{% endblock %}</div>
+                <div class="toolbar-sub" title="{{ subtitle_text }}">{% block page_subtitle %}{% endblock %}</div>
               {% endif %}
             </div>
 

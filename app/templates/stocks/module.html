@@ -65,7 +65,7 @@
 {% endmacro %}
 
 {% block page_nav %}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
+  <div class="page-tabs-row">
     <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=m.label|tr) }}">
       {% for v in ['units', 'schedule', 'experiments', 'genotypes', 'setup'] + (['frozen'] if S.frozen else []) + ['settings'] %}
         <a class="seg-item {% if view == v %}is-active{% endif %}" role="tab" aria-selected="{{ 'true' if view == v else 'false' }}"
@@ -75,10 +75,10 @@
         </a>
       {% endfor %}
     </nav>
-    <div class="flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-      <span class="badge">{{ counts.active }} {{ (m.unit if counts.active == 1 else m.units)|tr('stocks') }}</span>
-      {% if counts.cross %}<span class="badge">{% trans count=counts.cross %}{{ count }} cross{% pluralize %}{{ count }} crosses{% endtrans %}</span>{% endif %}
-      <span class="badge">{{ racks|length }} {{ (m.rack_noun if racks|length == 1 else m.racks_noun)|tr('stocks') }}</span>
+    <div class="page-tabs-side page-stats">
+      <span class="page-stat">{{ counts.active }} {{ (m.unit if counts.active == 1 else m.units)|tr('stocks') }}</span>
+      {% if counts.cross %}<span class="page-stat">{% trans count=counts.cross %}{{ count }} cross{% pluralize %}{{ count }} crosses{% endtrans %}</span>{% endif %}
+      <span class="page-stat">{{ racks|length }} {{ (m.rack_noun if racks|length == 1 else m.racks_noun)|tr('stocks') }}</span>
     </div>
   </div>
 {% endblock %}
@@ -108,7 +108,10 @@
       <button type="button" class="dt-chip" data-layout="table">{{ icon('table') }}{{ _('Table') }}</button>
       <button type="button" class="dt-chip" data-layout="grid">{{ icon('grid') }}{{ _('Grid') }}</button>
     </div>
-    <p class="text-[12px] text-muted">{% trans room=room_w, rack=rack_w, units=units_w %}In Grid, pick the {{ room }} and then the {{ rack }} to see and edit {{ units }} where they sit.{% endtrans %}</p>
+    <details class="info-tip" data-popover>
+      <summary aria-label="{{ _('Layout') }}" title="{{ _('Layout') }}">{{ icon('info') }}</summary>
+      <div class="info-tip-pop">{% trans room=room_w, rack=rack_w, units=units_w %}In Grid, pick the {{ room }} and then the {{ rack }} to see and edit {{ units }} where they sit.{% endtrans %}</div>
+    </details>
   </div>
 
   <div data-layout-panel="table">

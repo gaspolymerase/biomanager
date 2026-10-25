@@ -146,7 +146,7 @@
 {% endmacro %}
 
 {% block page_nav %}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
+  <div class="page-tabs-row">
     <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
       {% for v in views %}
         <a class="seg-item {% if active_view == v.key %}is-active{% endif %}"
@@ -158,16 +158,16 @@
       {% endfor %}
     </nav>
 
-    <div class="flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-      <span class="badge">{{ census.animals }} {{ n_org if census.animals == 1 else n_orgs }}</span>
-      {% if module.has('housing') %}<span class="badge">{{ census.housing }} {{ n_unit if census.housing == 1 else n_units }}</span>{% endif %}
-      {% if module.has('lines') %}<span class="badge">{{ census.lines }} {{ n_line if census.lines == 1 else n_lines }}</span>{% endif %}
+    <div class="page-tabs-side page-stats">
+      <span class="page-stat">{{ census.animals }} {{ n_org if census.animals == 1 else n_orgs }}</span>
+      {% if module.has('housing') %}<span class="page-stat">{{ census.housing }} {{ n_unit if census.housing == 1 else n_units }}</span>{% endif %}
+      {% if module.has('lines') %}<span class="page-stat">{{ census.lines }} {{ n_line if census.lines == 1 else n_lines }}</span>{% endif %}
       {% if census.overdue %}<span class="badge badge-warn">{{ _('%(n)s overdue', n=census.overdue) }}</span>{% endif %}
       {% if module.has('preservation') and census.frozen_vials %}
-        <span class="badge">{% trans count=census.frozen_vials %}{{ count }} vial frozen{% pluralize %}{{ count }} vials frozen{% endtrans %}</span>
+        <span class="page-stat">{% trans count=census.frozen_vials %}{{ count }} vial frozen{% pluralize %}{{ count }} vials frozen{% endtrans %}</span>
       {% endif %}
       {% if module.has('seed_bank') and census.seed_lots %}
-        <span class="badge">{% trans count=census.seed_lots %}{{ count }} seed lot{% pluralize %}{{ count }} seed lots{% endtrans %}</span>
+        <span class="page-stat">{% trans count=census.seed_lots %}{{ count }} seed lot{% pluralize %}{{ count }} seed lots{% endtrans %}</span>
       {% endif %}
     </div>
   </div>

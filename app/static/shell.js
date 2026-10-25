@@ -488,6 +488,7 @@
     initShortcuts();
     initPopovers();
     initTouchTips();
+    initScrollCues();
   }
 
   // A small popover written as <details data-popover> (an info tip, a
@@ -508,6 +509,34 @@
       clearTimeout(timer);
       timer = setTimeout(() => tip.classList.remove('is-tip'), 2200);
     }, { passive: true });
+  }
+
+  // Tabs or a sheet wider than their box scroll sideways; a fade on the
+  // edge that hides more says so (data-clip="start", "end" or both).
+  function initScrollCues() {
+    const mark = (el) => {
+      const more = el.scrollWidth - el.clientWidth;
+      const clip = [];
+      if (more > 1 && el.scrollLeft > 1) clip.push('start');
+      if (more > 1 && el.scrollLeft < more - 1) clip.push('end');
+      const value = clip.join(' ');
+      if ((el.dataset.clip || '') !== value) el.dataset.clip = value;
+    };
+    const watched = new WeakSet();
+    const watch = (root) => {
+      (root || document).querySelectorAll('.page-tabs, .dt-scroll').forEach((el) => {
+        if (watched.has(el)) return;
+        watched.add(el);
+        el.addEventListener('scroll', () => mark(el), { passive: true });
+        if (window.ResizeObserver) new ResizeObserver(() => mark(el)).observe(el);
+        // The sheet inside grows as its rows load or columns show.
+        const inner = el.firstElementChild;
+        if (inner && window.ResizeObserver) new ResizeObserver(() => mark(el)).observe(inner);
+        mark(el);
+      });
+    };
+    watch();
+    document.addEventListener('dt:rows-loaded', () => watch());
   }
 
   function initPopovers() {
