@@ -158,5 +158,22 @@
   "Everyone sees it in their sidebar, and is told it was added.": "每个人的侧边栏里都会出现它，并收到添加的通知。",
   "Only lab admins add databases for everyone. Make it yours now; an admin can share it later.": "只有实验室管理员能为所有人添加数据库。现在先建成你自己的，以后管理员可以共享出去。",
   "A project group: its members see it in their sidebar, and are told it was added. Nobody else does, but admins.": "项目组：组员的侧边栏里会出现它，并收到添加的通知。除管理员外，其他人看不到。",
-  "Google Calendar": "Google 日历"
+  "Google Calendar": "Google 日历",
+  "BioManager isn't allowed to use this Mac's calendars. Turn it on in System Settings → Privacy & Security → Calendars, then try again.": "BioManager 没有使用这台 Mac 日历的权限。请在“系统设置 → 隐私与安全性 → 日历”中打开，然后再试一次。",
+  "The Mac's Calendar didn't take the change: %(why)s": "Mac 的日历没有接受这次更改：%(why)s",
+  "%(who)s can no longer sign in. Choose Stop, then start it again.": "%(who)s 已不能登录。请点“停止”，然后重新开始。",
+  "The calendar %(name)s is no longer on this Mac. Choose Stop, then choose another.": "日历 %(name)s 已不在这台 Mac 上。请点“停止”，再选另一个。",
+  "It is already on. Choose Stop first to send it somewhere else.": "已经开启。要放到别处，请先点“停止”。",
+  "%(account)s doesn't let this Mac add a calendar. Make one called BioManager there (for Google: in Google Calendar on the web, Settings → Add calendar → Create new calendar), then choose it here once it shows.": "%(account)s 不允许这台 Mac 添加日历。请在那里建一个名为 BioManager 的日历（Google：在网页版 Google 日历中，设置 → 添加日历 → 创建新日历），等它出现后在这里选择它。",
+  "Only a calendar called BioManager can be chosen: everything in it is replaced by BioManager's.": "只能选择名为 BioManager 的日历：其中的所有内容都会被 BioManager 的日程替换。",
+  "Choose where the calendar goes.": "请选择日历放在哪里。",
+  "Mac Calendar": "Mac 日历",
+  "The calendar in your Mac’s Calendar": "放进 Mac 的日历 App",
+  "BioManager keeps a calendar called BioManager up to date in the Mac’s Calendar app, which takes it on to iCloud, Google or Outlook, and so to your phone. No lab server needed. It updates while BioManager is open.": "BioManager 会在 Mac 的日历 App 里让一个名为 BioManager 的日历保持最新，日历 App 再把它同步到 iCloud、Google 或 Outlook，进而同步到你的手机。不需要实验室服务器。BioManager 打开时才会更新。",
+  "First, let BioManager use this Mac’s calendars. The Mac asks you once.": "首先，允许 BioManager 使用这台 Mac 的日历。Mac 只会问你一次。",
+  "<b>Google Calendar:</b> add your Google account in System Settings → Internet Accounts, with Calendars on. A Mac can’t add a calendar to a Google account, so make one called BioManager in Google Calendar on the web (Settings → Add calendar → Create new calendar); it shows in the list here within a few minutes.": "<b>Google 日历：</b>在“系统设置 → 互联网账户”中添加你的 Google 账户，并打开“日历”。Mac 不能在 Google 账户里新建日历，所以请在网页版 Google 日历中建一个名为 BioManager 的日历（设置 → 添加日历 → 创建新日历）；几分钟内它就会出现在这里的列表中。",
+  "<b>iPhone:</b> choose iCloud.": "<b>iPhone：</b>选择 iCloud。",
+  "<b>Outlook:</b> add the account in System Settings → Internet Accounts, then choose it.": "<b>Outlook：</b>在“系统设置 → 互联网账户”中添加该账户，然后选择它。",
+  "The calendar is BioManager’s alone: anything else put in it is taken out at the next update.": "这个日历只属于 BioManager：放进去的其他内容会在下次更新时被移除。",
+  "Allow access": "允许访问"
 }

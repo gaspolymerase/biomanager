@@ -598,6 +598,17 @@ database has a name of its own (one another database has is refused), so
   - **On your phone**: a private link that Apple, Google or Outlook
     Calendar subscribes to, with just your things or the whole lab; it
     updates about every hour, and **Make a new link** stops the old one.
+    Google fetches the link from the internet, so it needs a server open
+    to the internet.
+  - **Mac Calendar**, in the desktop app on a Mac, with no server needed:
+    BioManager keeps a calendar called BioManager up to date in the Mac's
+    own Calendar app, which takes it on to iCloud, Google or Outlook, and
+    so to your phone. Choose just your things or the whole lab, and where
+    it goes. For Google, first make a calendar called BioManager in Google
+    Calendar on the web, because a Mac can't add one to a Google account.
+    It updates while the app is open: every 15 minutes, and soon after a
+    change. The calendar is BioManager's alone, and **Stop** takes it out
+    again.
 - **Lab notebook** — pages in topics, written like a document and saved as
   Markdown. Topics are folders, and a topic can hold topics of its own, as
   deep as you like: a page stays in the one it was made or moved to,
@@ -1643,8 +1654,9 @@ what it needs to track.
   signs out every other session. A forgotten password is reset by an
   admin, from the **···** beside you in **Settings → People & access**.
 - **Your data stays with you** — on your computer or your lab's server.
-  None of it is sent anywhere unless you connect Google Calendar, Google or
-  Microsoft sign-in, or reminder emails, or a tool you gave a token asks.
+  None of it is sent anywhere unless you connect Google Calendar, put the
+  calendar in your Mac's Calendar (which passes it to that account), Google
+  or Microsoft sign-in, or reminder emails, or a tool you gave a token asks.
 - **Anonymous counts, once a day.** BioManager is free; these counts are
   how its makers can show that labs rely on it and see which parts to
   improve first. Each installation sends one short message a day: the

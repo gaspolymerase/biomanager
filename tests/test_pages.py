@@ -26,6 +26,8 @@ SKIP = {"/logout", "/calendar/google/connect", "/calendar/google/callback",
         "/api/sync/changes",
         # The desktop app's only (tests/test_server_setup.py, tests/test_start_new_lab.py).
         "/server-setup/", "/start-new-lab",
+        # The Mac app's only (tests/test_mac_calendar.py).
+        "/calendar/mac",
         # Before any account, in the desktop app (tests/test_door.py), and the desktop's
         # way back and move (tests/test_lab_move.py).
         "/open-lab", "/lab-elsewhere", "/restore-lab", "/settings/devices/move"}

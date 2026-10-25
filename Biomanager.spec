@@ -45,6 +45,9 @@ hiddenimports = (
     # each revision's migrations.helpers.
     + ["json", "logging.config", "logging.handlers", "migrations", "migrations.helpers"]
 )
+if sys.platform == "darwin":
+    # The Mac's own Calendar (app/mac_calendar.py), imported only once asked for.
+    hiddenimports += ["EventKit", "Foundation", "objc"]
 if sys.platform.startswith("linux"):
     # On Linux the window is Qt WebEngine (pip install "pywebview[qt]"),
     # which pywebview imports only once it has picked a backend.
@@ -121,5 +124,10 @@ app = BUNDLE(
         "CFBundleDevelopmentRegion": "en",
         "CFBundleLocalizations": ["en", "zh-Hans"],
         "CFBundleAllowMixedLocalizations": True,
+        # What macOS says when the app first asks for the calendars (Calendar
+        # → Mac Calendar, app/mac_calendar.py). Without them macOS stops the
+        # app the moment it asks. The first for macOS 14 and later.
+        "NSCalendarsFullAccessUsageDescription": "BioManager keeps a calendar called BioManager up to date with your lab's calendar.",
+        "NSCalendarsUsageDescription": "BioManager keeps a calendar called BioManager up to date with your lab's calendar.",
     },
 )

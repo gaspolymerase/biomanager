@@ -1374,6 +1374,97 @@
     }
   });
 
+  // ================================================================ Mac Calendar
+
+  // The desktop app on a Mac only (app/mac_calendar.py): BioManager's
+  // calendar in the Mac's own Calendar app, and so in iCloud or Google.
+  const macModal = $('#cal-mac-modal');
+  if (macModal) {
+    let macSeq = 0;
+    let macState = null;
+    const macBusy = (on) => $$('.record-dialog-foot .btn', macModal).forEach((b) => { b.disabled = on; });
+    const macCall = (promise) => {
+      const seq = ++macSeq;
+      macBusy(true);
+      return promise.then((j) => { if (seq === macSeq) { macBusy(false); showMac(j); } return j; });
+    };
+    const macPost = (body) => macCall(postJson('/calendar/mac', body));
+    $('#cal-mac-btn').addEventListener('click', () => {
+      macCall(fetch('/calendar/mac').then((r) => r.json()).catch(() => ({ ok: false })));
+      macModal.showModal();
+    });
+    const macScope = () => (macModal.querySelector('input[name="mac_scope"]:checked') || {}).value || 'mine';
+    function macTargets(j) {
+      const select = $('#cal-mac-target');
+      const keep = select.value;
+      select.textContent = '';
+      const group = (label, options) => {
+        if (!options.length) return;
+        const og = document.createElement('optgroup');
+        og.label = label;
+        options.forEach(([value, text]) => { const o = document.createElement('option'); o.value = value; o.textContent = text; og.appendChild(o); });
+        select.appendChild(og);
+      };
+      group(t('Calendars called BioManager'), (j.calendars || []).map((c) => [`cal:${c.id}`, `${c.title} · ${c.account}`]));
+      group(t('A new BioManager calendar in'), (j.accounts || []).map((a) => [`new:${a.id}`, a.title]));
+      const values = Array.from(select.options).map((o) => o.value);
+      const icloud = (j.accounts || []).find((a) => /icloud/i.test(a.title));
+      select.value = values.includes(keep) ? keep : (j.calendars || []).length ? values[0] : icloud ? `new:${icloud.id}` : (values[0] || '');
+      return values.length;
+    }
+    function showMac(j) {
+      if (!j || j.ok === false) {
+        if (j && j.access) macState = j;
+        return showError($('#cal-mac-error'), (j && j.error) || t('The server did not answer. Check the connection and try again.'));
+      }
+      macState = j;
+      const setup = j.setup;
+      const granted = j.access === 'granted';
+      $('#cal-mac-ask').hidden = j.access !== 'ask';
+      $('#cal-mac-denied').hidden = granted || j.access === 'ask';
+      $('#cal-mac-allow').hidden = j.access !== 'ask';
+      $('#cal-mac-on').hidden = !setup;
+      $('#cal-mac-scope').hidden = !(setup || granted);
+      $('#cal-mac-choose').hidden = !!setup || !granted;
+      $('#cal-mac-stop').hidden = !setup;
+      $('#cal-mac-now').hidden = !setup;
+      $('#cal-mac-start').hidden = !!setup || !granted;
+      let problem = '';
+      if (setup) {
+        const values = { title: setup.title, account: setup.account, who: setup.who };
+        $('#cal-mac-where').textContent = setup.mine ? t('Kept up to date in %(title)s (%(account)s).', values)
+          : t('Kept up to date in %(title)s (%(account)s) for %(who)s.', values);
+        $('#cal-mac-last').textContent = setup.last_ok
+          ? t('Last updated %(when)s · %(n)s events.', { when: new Date(setup.last_ok).toLocaleString(LOCALE), n: setup.count || 0 })
+          : t('Not updated yet.');
+        problem = setup.error || '';
+      } else if (granted && !macTargets(j)) {
+        problem = t('No calendar accounts on this Mac. Turn on iCloud, or add an account in System Settings → Internet Accounts.');
+        $('#cal-mac-start').hidden = true;
+      }
+      const radio = macModal.querySelector(`input[name="mac_scope"][value="${(setup && setup.scope) || macScope()}"]`);
+      if (radio) radio.checked = true;
+      showError($('#cal-mac-error'), problem);
+      return undefined;
+    }
+    $('#cal-mac-allow').addEventListener('click', () => macPost({ action: 'allow' }));
+    $('#cal-mac-start').addEventListener('click', () => macPost({ action: 'start', scope: macScope(), target: $('#cal-mac-target').value }));
+    $('#cal-mac-now').addEventListener('click', () => macPost({ action: 'now' }).then((j) => {
+      if (j && j.ok && j.setup && !j.setup.error) toast(t('Updated.'));
+    }));
+    $$('input[name="mac_scope"]', macModal).forEach((r) => r.addEventListener('change', () => {
+      if (macState && macState.setup) macPost({ action: 'scope', scope: macScope() });
+    }));
+    $('#cal-mac-stop').addEventListener('click', async () => {
+      const setup = (macState && macState.setup) || {};
+      const question = setup.created
+        ? t('Stop, and remove the BioManager calendar from %(account)s?', { account: setup.account })
+        : t('Stop, and empty the calendar %(title)s?', { title: setup.title });
+      if (!(await BioDialog.confirm(question, { danger: true }))) return;
+      macPost({ action: 'stop' });
+    });
+  }
+
   // ================================================================ hover card
 
   const hoverCard = document.createElement('div');

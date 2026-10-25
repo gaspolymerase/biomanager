@@ -169,7 +169,23 @@
           to-dos, bookings, protocol steps — and asks who covers it; that person is told.</li>
         <li><b>Connected calendars</b> shows Google Calendar and any iCal subscription alongside, read-only.</li>
         <li><b>On your phone</b>: a private link (just your things, or the whole lab's) for Apple, Google or Outlook Calendar. It updates
-          about every hour. <b>Make a new link</b> stops the old one working.</li>
+          about every hour. <b>Make a new link</b> stops the old one working. Google fetches the link from the internet, so it works only
+          when the server is open to the internet; with no server, use <b>Mac Calendar</b>.</li>
+        <li id="mac-calendar"><b>Mac Calendar</b>, in the desktop app on a Mac, needs no server. BioManager keeps a calendar called
+          BioManager up to date in the Mac's own Calendar app, and the Mac takes it on to the account it is in, so it shows in Google
+          Calendar or on your iPhone. Click <b>Allow access</b> once, choose <i>Just mine</i> or <i>The whole lab calendar</i> and where
+          it goes, then <b>Start</b>.
+          <ul>
+            <li><b>iPhone</b>: choose iCloud.</li>
+            <li><b>Google Calendar</b>: add your Google account in System Settings → Internet Accounts, with Calendars on. A Mac can't
+              add a calendar to a Google account, so first make one called BioManager in Google Calendar on the web (Settings → Add
+              calendar → Create new calendar), then choose it once it shows in the list.</li>
+            <li>It updates while BioManager is open: every 15 minutes, and soon after a change. <b>Update now</b> does it straight
+              away.</li>
+            <li>The calendar is BioManager's alone: anything else put in it is taken out at the next update, and changes made there
+              don't come back to BioManager.</li>
+            <li><b>Stop</b> removes the calendar BioManager made, or empties the one you made.</li>
+          </ul></li>
       </ul>
       <figure class="gshot"><a href="../assets/screenshots/calendar.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/calendar.webp" alt="The calendar" loading="lazy" width="2000" height="1250"></a><figcaption>The calendar</figcaption></figure>
     <!-- /page -->
