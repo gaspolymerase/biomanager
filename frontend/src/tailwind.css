@@ -771,6 +771,14 @@
     box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
   }
   .seg-item.is-active svg { @apply text-brand-600; }
+  /* A choice of one made of radios: <label class="seg-item"><input type="radio"> …</label>. */
+  label.seg-item { @apply cursor-pointer; }
+  .seg-item > input[type="radio"] { @apply sr-only; }
+  .seg-item:has(> input[type="radio"]:checked) {
+    @apply bg-surface font-semibold text-ink;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+  .seg-item:has(> input:focus-visible) { box-shadow: var(--focus-ring); }
   .seg-count { @apply ml-0.5 text-[11px] font-semibold text-sand-400; }
   .seg-item.is-active .seg-count { @apply text-brand-600/70; }
 
@@ -1391,7 +1399,12 @@
     box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
   }
   .wtabs.has-drop .wtab.is-active,
-  .seg.has-drop .seg-item.is-active { background: transparent; box-shadow: none; }
+  .seg.has-drop .seg-item:is(.is-active, :has(> input[type="radio"]:checked)),
+  .dt-chips.has-drop .dt-chip:is([aria-pressed="true"], [aria-current="page"], [aria-selected="true"], .is-active) {
+    background: transparent; box-shadow: none;
+  }
+  .dt-chips { position: relative; }
+  .dt-chip { position: relative; z-index: 1; }
   .drop-still .wtab-drop, .drop-still .seg-drop { transition: none; }
 }
 
@@ -1668,21 +1681,6 @@
   .dt-status[data-status="cancelled"]::before, .dt-status[data-status="euthanized"]::before,
   .dt-status[data-status="euthanized moribund"]::before,
   .dt-status[data-status="euthanized per protocol"]::before { @apply bg-danger-600; }
-
-  /* --- Inline editing --------------------------------------------------- */
-
-  /* Editable cells stay borderless until hovered or focused, so a dense
-     table does not read as a wall of input boxes. */
-  .dt-edit input, .dt-edit select, .dt-edit textarea {
-    @apply w-full rounded-md border border-transparent bg-transparent px-1 py-0.5
-           text-[12px] text-ink-soft transition-all duration-100;
-  }
-  .dt-edit input:hover, .dt-edit select:hover, .dt-edit textarea:hover {
-    @apply border-hairline bg-surface;
-  }
-  .dt-edit input:focus, .dt-edit select:focus, .dt-edit textarea:focus {
-    @apply border-sand-500 bg-surface text-ink;
-  }
 
   .dt-row-check, .dt-select-all { @apply size-3.5 shrink-0 cursor-pointer accent-brand-600; }
 
@@ -2377,6 +2375,32 @@
   :is(.status-pill, .status-pill-static)[data-status="transfer"] { @apply bg-violet-50 text-violet-700; }
   :is(.status-pill, .status-pill-static)[data-status="sac"] { @apply bg-danger-50 text-danger-700; }
 
+  /* A cage's purpose, coloured from the lab's list of purposes
+     (cage_rows.purpose_tones); one with no tone stays grey. After the
+     status colours, so a purpose named like a status reads as a purpose. */
+  :is(.status-pill, .status-pill-static)[data-tone=""] { @apply bg-sand-100 text-muted; }
+  :is(.status-pill, .status-pill-static)[data-tone="brand"] { @apply bg-brand-50 text-brand-700; }
+  :is(.status-pill, .status-pill-static)[data-tone="ok"] { @apply bg-ok-50 text-ok-700; }
+  :is(.status-pill, .status-pill-static)[data-tone="info"] { @apply bg-info-50 text-info-600; }
+  :is(.status-pill, .status-pill-static)[data-tone="violet"] { @apply bg-violet-50 text-violet-700; }
+  :is(.status-pill, .status-pill-static)[data-tone="warn"] { @apply bg-warn-50 text-warn-700; }
+  :is(.status-pill, .status-pill-static)[data-tone="pink"] { @apply bg-pink-50 text-pink-700; }
+  :is(.status-pill, .status-pill-static)[data-tone="sky"] { @apply bg-sky-50 text-sky-700; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) :is(.status-pill, .status-pill-static):is([data-tone="violet"], [data-tone="pink"], [data-tone="sky"]) {
+      background: color-mix(in srgb, currentColor 16%, transparent);
+    }
+    :root:not([data-theme="light"]) :is(.status-pill, .status-pill-static)[data-tone="violet"] { @apply text-violet-300; }
+    :root:not([data-theme="light"]) :is(.status-pill, .status-pill-static)[data-tone="pink"] { @apply text-pink-300; }
+    :root:not([data-theme="light"]) :is(.status-pill, .status-pill-static)[data-tone="sky"] { @apply text-sky-300; }
+  }
+  :root[data-theme="dark"] :is(.status-pill, .status-pill-static):is([data-tone="violet"], [data-tone="pink"], [data-tone="sky"]) {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+  }
+  :root[data-theme="dark"] :is(.status-pill, .status-pill-static)[data-tone="violet"] { @apply text-violet-300; }
+  :root[data-theme="dark"] :is(.status-pill, .status-pill-static)[data-tone="pink"] { @apply text-pink-300; }
+  :root[data-theme="dark"] :is(.status-pill, .status-pill-static)[data-tone="sky"] { @apply text-sky-300; }
+
   /* On/off flag (a tank waiting for genotyping). */
   .flag-toggle {
     @apply inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full border-0
@@ -2566,33 +2590,7 @@
   .biocal-nav { @apply inline-flex items-center gap-1.5; }
   .biocal-title { @apply ml-1.5 min-w-[9ch] text-[15px] font-semibold tracking-[-0.01em] text-ink; }
   .biocal-actions { @apply ml-auto inline-flex items-center gap-1.5; }
-  .biocal-filters { @apply inline-flex flex-wrap items-center gap-1.5; }
 
-  /* Filter chip: a coloured dot for the lane it controls. */
-  .biocal-toggle {
-    --biocal-tone: var(--color-brand-600);
-    @apply relative inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border
-           border-hairline bg-surface px-2.5 text-[12px] font-medium text-muted transition-colors
-           select-none;
-  }
-  .biocal-toggle input { @apply absolute inset-0 m-0 cursor-pointer opacity-0; }
-  .biocal-toggle-dot {
-    @apply size-2 rounded-full border-[1.5px] transition-colors;
-    border-color: var(--biocal-tone);
-  }
-  .biocal-toggle:hover { @apply border-sand-300 text-ink-soft; }
-  .biocal-toggle:has(input:checked) {
-    @apply text-ink;
-    border-color: color-mix(in srgb, var(--biocal-tone) 40%, transparent);
-    background: color-mix(in srgb, var(--biocal-tone) 10%, var(--color-surface));
-  }
-  .biocal-toggle:has(input:checked) .biocal-toggle-dot { background: var(--biocal-tone); }
-  .biocal-toggle:has(input:focus-visible) { @apply ring-[3px] ring-brand-500/35; }
-  .biocal-toggle[data-tone="events"] { --biocal-tone: #17a38f; }
-  .biocal-toggle[data-tone="tasks"]  { --biocal-tone: #007aff; }
-  .biocal-toggle[data-tone="auto"]   { --biocal-tone: #ff9500; }
-  .biocal-toggle[data-tone="subs"]   { --biocal-tone: #34c759; }
-  .biocal-toggle[data-tone="done"]   { --biocal-tone: #8e8e93; }
 
   /* TOAST UI's month grid is absolutely positioned inside: it needs a real
      height or every week row collapses to zero. */
@@ -2648,10 +2646,7 @@
 
   /* New / edit dialog */
   .biocal-modal > form { @apply flex max-h-[86vh] flex-col; }
-  .biocal-kind { @apply cursor-pointer; }
-  .biocal-kind input { @apply sr-only; }
-  .biocal-kind:has(input:checked) { @apply bg-surface text-brand-700 shadow-xs ring-1 ring-sand-200/80; }
-  .biocal-kind:has(input:focus-visible) { @apply ring-[3px] ring-brand-500/35; }
+
 
   .biocal-due-presets { @apply mt-1.5 flex flex-wrap gap-1.5; }
   .biocal-due-btn {
@@ -3168,14 +3163,7 @@
     dialog:not(.phone-sheet):not(.cmdk-dialog) { animation: none; }
   }
 
-  .modal-topbar {
-    @apply flex items-center justify-between gap-3 px-5 pb-2 pt-4;
-  }
-  .modal-topbar h3 { @apply text-[16px] font-bold tracking-[-0.01em]; }
   .modal-body { @apply max-h-[62vh] overflow-y-auto px-5 py-3; }
-  .modal-foot {
-    @apply flex items-center justify-end gap-2 px-5 pb-4 pt-2;
-  }
   .modal-close { @apply btn btn-ghost btn-icon size-7 rounded-full bg-sand-200/60; }
   .modal-close svg { @apply size-4; }
 }
@@ -3274,7 +3262,6 @@
   .dense-table tbody tr { @apply transition-colors duration-100; }
   .dense-table tbody tr:hover { @apply bg-sand-50/70; }
   .fit-table th, .fit-table td { @apply px-1.5 py-1; }
-  .dense-table.mouse-table { @apply min-w-[1180px]; }
   .dense-table.zfish-table { @apply min-w-[1040px]; }
 
   /* Scrollbars are hidden app-wide, but a wide table needs the affordance —
@@ -3321,12 +3308,6 @@
 
   /* Sex chips (toggled by the colony page's inline script). Muted on
      purpose — the old saturated fills fought everything around them. */
-  .mouse-table input[name="gender"].sex-f,
-  .mouse-table input[name="gender"].sex-m {
-    @apply text-center font-semibold;
-  }
-  .mouse-table input[name="gender"].sex-f { @apply border-pink-200 bg-pink-50 text-pink-700; }
-  .mouse-table input[name="gender"].sex-m { @apply border-sky-200 bg-sky-50 text-sky-700; }
   .genotype-full { @apply whitespace-normal break-words text-[12px] leading-snug text-ink-soft; }
 
   /* Small circular row action (duplicate / delete). */
@@ -3947,7 +3928,7 @@
      takes what is left instead of its input's own width. */
   .cage-sheet .sheet-table > thead th { @apply whitespace-normal; }
   .cage-sheet .sheet-table > thead .dt-col-head { @apply w-0 min-w-full leading-tight; }
-  .cage-sheet .cage-wean { @apply whitespace-nowrap; }
+  .cage-sheet .cage-wean { @apply whitespace-nowrap text-[12px]; }
   .cage-sheet .sheet-table > tbody > tr > td > select.status-pill[name="purpose"] { @apply w-full px-1.5; }
   .cage-sheet .sheet-table > tbody > tr > td > input.note-cell { @apply w-0 min-w-full; }
   /* Litter born reads as the cells beside it, and only a Breeding cage has
@@ -4523,12 +4504,17 @@ tr.is-scanned > td:first-child {
   .set-label small { @apply mt-px block text-[12px] leading-snug text-muted; }
   .set-value { @apply shrink-0 text-[13px] text-muted; }
   .set-row > input:not([type="checkbox"]):not([type="radio"]),
-  .set-row > select {
+  .set-row > :is(select, form > select) {
     @apply w-[min(240px,50%)] shrink-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-[13px] text-ink-soft;
+    height: auto;
+    box-shadow: none;
   }
-  .set-row > select { @apply w-auto max-w-[55%] cursor-pointer text-right; }
+  .set-row > :is(select, form > select) { @apply w-auto max-w-[55%] cursor-pointer text-right; padding-right: 26px; }
+  .set-row > form:has(> select) { @apply flex max-w-[55%] shrink-0 justify-end; }
+  .set-row > form > select { @apply max-w-full; }
   .set-row > input:not([type="checkbox"]):not([type="radio"]):hover,
-  .set-row > select:hover { @apply bg-sand-50; }
+  .set-row > :is(select, form > select):hover { @apply bg-sand-50; }
+  .set-row > :is(select, form > select):focus-visible { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
   .set-row > input:not([type="checkbox"]):not([type="radio"]):focus { @apply border-hairline bg-sand-50 text-left outline-none; }
   .set-row > .set-input-short { @apply w-24; }
   a.set-row-link { @apply cursor-pointer transition-colors; }
@@ -4544,6 +4530,8 @@ tr.is-scanned > td:first-child {
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 0 0 0.5px rgb(0 0 0 / 0.04);
     transition: transform 0.3s var(--ease-spring), width 0.2s var(--ease-out-soft);
   }
+  .set-switch, .set-switch:hover:not(:checked, :disabled) { border: 0; }
+  .set-switch::before { content: none; }
   .set-switch:checked { @apply bg-brand-600; }
   .set-switch:checked::after { transform: translateX(16px); }
   .set-switch:active::after { width: 23px; }

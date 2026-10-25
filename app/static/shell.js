@@ -646,9 +646,14 @@
       });
       new MutationObserver(() => {
         if (started) sync(true); else started = start();
-      }).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      }).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-current'] });
+      // A radio's checked state is no attribute: follow its change instead.
+      list.addEventListener('change', () => { if (started) sync(true); else started = start(); });
       list.addEventListener('scroll', () => sync(false), { passive: true });
       window.addEventListener('resize', () => sync(false));
+      // Drawn while hidden (in a closed dialog, a folded panel): placed
+      // once it shows.
+      if (window.ResizeObserver) new ResizeObserver(() => { if (started) sync(false); else started = start(); }).observe(list);
     }
 
     const strip = document.querySelector('.wtab-strip');
@@ -658,8 +663,15 @@
     }
     document.querySelectorAll('.seg').forEach((seg, index) => {
       if (!seg.querySelector('.seg-item')) return;
-      drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item.is-active',
+      drop({ holder: seg, list: seg, itemSelector: '.seg-item', activeSelector: '.seg-item:is(.is-active, :has(> input[type="radio"]:checked))',
              key: location.pathname + ':' + index, className: 'seg-drop' });
+    });
+    // A sheet's filter chips and layout switches are segmented controls too.
+    document.querySelectorAll('.dt-chips').forEach((chips, index) => {
+      if (!chips.querySelector('.dt-chip')) return;
+      drop({ holder: chips, list: chips, itemSelector: '.dt-chip',
+             activeSelector: '.dt-chip:is([aria-pressed="true"], [aria-current="page"], [aria-selected="true"], .is-active)',
+             key: location.pathname + ':chips:' + index, className: 'seg-drop' });
     });
   }
 

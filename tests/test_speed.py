@@ -741,7 +741,7 @@ class SheetPagingTests(AppTestCase):
         with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
             whole = self.get_ok(self.a, url)
         menu = re.search(r'<select class="status-pill" name="purpose" form="cage-update-%d".*?</select>' % shouting, whole, re.S).group(0)
-        self.assertRegex(menu, r'<option value="Breeder" selected>')   # its own word, whatever its case
+        self.assertRegex(menu, r'<option data-tone="ok" value="Breeder" selected>')   # its own word, whatever its case, and colour
         for client in (self.a, self.m):
             for ua in ("Mozilla/5.0 Chrome/141.0 Safari/537.36", "Firefox"):
                 with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):

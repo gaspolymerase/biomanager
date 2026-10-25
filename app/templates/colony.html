@@ -1889,6 +1889,7 @@ function wireAutosave(input) {
     if (input.classList.contains('status-pill')) {
       const previous = input.dataset.status || '';
       input.dataset.status = input.value.toLowerCase();
+      if (input.dataset.tone !== undefined) input.dataset.tone = (input.selectedOptions[0] && input.selectedOptions[0].dataset.tone) || '';
       applyStatusChange(input, previous);
     }
     if (input.type === 'date') input.dataset.empty = input.value ? '0' : '1';

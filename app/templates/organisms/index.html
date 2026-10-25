@@ -30,7 +30,7 @@
   {% set to_groups = groups_api.choices() if row.private_to and (row.private_to == current_user.username or current_user.role == 'admin') else [] %}
   {% if to_groups %}
     <form method="post" action="{{ url_for('lab.audience', kind=kind, key=row.key) }}" class="flex items-center gap-1">
-      <select name="to" aria-label="{{ _('Give it to a project group') }}" class="h-7 text-[12px]">
+      <select name="to" aria-label="{{ _('Give it to a project group') }}" class="field h-7 w-auto text-[12px]">
         {% for gid, name in to_groups %}<option value="group:{{ gid }}">{{ name }}</option>{% endfor %}
       </select>
       <button type="submit" class="btn btn-sm btn-ghost whitespace-nowrap">{{ icon('users') }} {{ _('Share with the group') }}</button>

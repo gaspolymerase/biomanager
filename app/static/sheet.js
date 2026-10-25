@@ -175,6 +175,8 @@
       input.dataset.dirty = '1';
       const previous = (input.dataset.previous !== undefined ? input.dataset.previous : startValue(input)) || '';
       if (input.classList.contains('status-pill')) input.dataset.status = input.value.toLowerCase();
+      // A pill coloured by its choice (a cage's purpose): its option says how.
+      if (input.dataset.tone !== undefined && input.selectedOptions) input.dataset.tone = (input.selectedOptions[0] && input.selectedOptions[0].dataset.tone) || '';
       if (input.classList.contains('sex-pill')) input.dataset.sex = input.value;
       if (input.dataset.scopePill !== undefined || input.classList.contains('scope-pill')) {
         input.dataset.scope = input.value === '1' ? 'lab' : (/^g\d+$/.test(input.value) ? 'group' : 'mine');

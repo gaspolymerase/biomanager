@@ -152,7 +152,7 @@
               <th class="dt-sortable" data-sort-key="purpose" style="width: 104px;"><span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="female_genotype" style="width: 144px;"><span class="dt-col-head">{{ icon('female', 'dt-col-icon') }}{{ parent_female }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="male_genotype" style="width: 144px;"><span class="dt-col-head">{{ icon('male', 'dt-col-icon') }}{{ parent_male }}<span class="dt-sort-indicator"></span></span></th>
-              <th class="dt-sortable" data-sort-key="incubator" style="width: 104px;"><span class="dt-col-head">{{ icon('temperature', 'dt-col-icon') }}{{ room_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
+              <th class="dt-sortable" data-sort-key="incubator" style="width: 132px;"><span class="dt-col-head">{{ icon('temperature', 'dt-col-icon') }}{{ room_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="rackname" style="width: 104px;"><span class="dt-col-head">{{ icon('box', 'dt-col-icon') }}{{ rack_w|capitalize }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="position" style="width: 68px;"><span class="dt-col-head">{{ icon('position', 'dt-col-icon') }}{{ _('Position') }}<span class="dt-sort-indicator"></span></span></th>
               <th class="dt-sortable" data-sort-key="set_up_on" style="width: 112px;"><span class="dt-col-head">{{ icon('born', 'dt-col-icon') }}{{ 'Set up'|tr('stocks') }}<span class="dt-sort-indicator"></span></span></th>
@@ -189,7 +189,7 @@
                 </td>
                 <td class="parent-cell"><input name="female_genotype" form="{{ f }}" value="{{ u.female_genotype }}" title="{{ u.female_genotype }}" list="stock-genotypes" data-autosave="1" aria-label="{{ parent_female }}" {% if locked %}disabled{% endif %}></td>
                 <td class="parent-cell"><input name="male_genotype" form="{{ f }}" value="{{ u.male_genotype }}" title="{{ u.male_genotype }}" list="stock-genotypes" data-autosave="1" aria-label="{{ parent_male }}" {% if locked %}disabled{% endif %}></td>
-                <td><span class="sheet-cell-text" data-incubator-cell>{{ r.incubator or '–' }}{% if r.incubator %} <span class="sheet-unit">{{ r.temp }} °C</span>{% endif %}</span></td>
+                <td><span class="sheet-cell-text block truncate" data-incubator-cell title="{{ r.incubator or '' }}">{{ r.incubator or '–' }}{% if r.incubator and r.temp ~ ' °C' not in r.incubator %} <span class="sheet-unit">{{ r.temp }} °C</span>{% endif %}</span></td>
                 <td>
                   <select name="rack_id" form="{{ f }}" data-autosave="1" aria-label="{{ rack_w|capitalize }}" {% if locked %}disabled{% endif %}>
                     {{ rack_options(u.rack_id_fk, '–') }}
@@ -379,7 +379,7 @@
                 </form>
               {% elif it.kind == 'shift' %}
                 <form method="post" action="{{ url_for('stocks.unit_action', key=key, unit_id=it.unit.id, action='shifted') }}" class="flex items-center gap-1.5">
-                  <select name="rack_id" class="h-7 text-[12px]" aria-label="{{ _('Move to') }}">
+                  <select name="rack_id" class="field h-7 w-auto text-[12px]" aria-label="{{ _('Move to') }}">
                     <option value="">{{ _('Stay in place') }}</option>
                     {% for inc in incubators %}
                       {% set inside = racks | selectattr('incubator_id_fk', 'equalto', inc.id) | list %}
@@ -865,7 +865,11 @@
       const row = rowOf(form);
       if (!row) return;
       const cell = row.querySelector('[data-incubator-cell]');
-      if (cell && 'incubator' in body) cell.textContent = body.incubator ? `${body.incubator} · ${body.temp} °C` : '–';
+      if (cell && 'incubator' in body) {
+        const named = body.incubator && String(body.incubator).includes(`${body.temp} °C`);
+        cell.textContent = body.incubator ? (named ? body.incubator : `${body.incubator} · ${body.temp} °C`) : '–';
+        cell.title = body.incubator || '';
+      }
       const open = row.querySelector('[data-open-payload]');
       if (open && body.payload) open.dataset.recordPayload = JSON.stringify(body.payload);
     });

@@ -1174,7 +1174,7 @@ _ATTR = re.compile(r'\s([\w:-]+)(?:="([^"]*)")?')
 _CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
 _FIRST = re.compile(r'<option\b[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
 # Copied onto the text: what the page's styles and scripts read from the field.
-_KEPT = ("title", "data-status", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
+_KEPT = ("title", "data-status", "data-tone", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
 _DISABLED = re.compile(r"\sdisabled\b")
 _READONLY = re.compile(r"\sreadonly\b")
 
