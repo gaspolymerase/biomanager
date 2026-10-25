@@ -32,13 +32,13 @@ import re
 from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, request, url_for
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import and_, delete, func, or_, select, update
 
 from .formutil import like_pattern
 from . import access, citations, groups, i18n, notebook_protocols, notify
 from .db import SessionLocal
 from .i18n import gettext
-from .models import (CalendarEvent, NotebookComment, NotebookFolder, NotebookMeetingSeries, NotebookPage,
+from .models import (CalendarEvent, NotebookComment, NotebookFavorite, NotebookFolder, NotebookMeetingSeries, NotebookPage,
                      NotebookPageInfo,
                      NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
                      NotebookTab,
@@ -264,7 +264,7 @@ def delete_page_rows(session, page_ids) -> None:
     if not ids:
         return
     for model in (NotebookPageInfo, NotebookShare, NotebookVersion, NotebookSyncUpdate, NotebookPresence,
-                  NotebookComment):
+                  NotebookComment, NotebookFavorite):
         session.execute(delete(model).where(model.page_id_fk.in_(ids)))
     # Their sub-pages stay, as pages of their topic (a new page given a
     # reused id must not adopt them).
@@ -721,8 +721,24 @@ def page_payload(session, page: NotebookPage, role: str) -> dict:
         # Where it is, for the breadcrumb: its topic (folder) and the pages
         # it sits under, nearest last.
         "tab_title": page.tab.title if page.tab else "",
+        "tab_icon": topic_icon(page.tab) if page.tab else "folder",
+        # The topics that topic sits in, outermost first (only its owner's).
+        "tab_path": topic_path(session, page.tab) if page.tab and role == "owner" else [],
         "parents": parents_of(session, page),
+        "favorite": session.scalar(select(NotebookFavorite.id).where(
+            NotebookFavorite.username == _me(), NotebookFavorite.page_id_fk == page.id)) is not None,
     }
+
+
+def topic_path(session, tab: NotebookTab) -> list[dict]:
+    """The topics a topic sits in, outermost first (not itself)."""
+    mine = session.scalars(select(NotebookTab).where(NotebookTab.owner_username == tab.owner_username)).all()
+    up, by_id = topic_parents(mine), {t.id: t for t in mine}
+    chain, here = [], up.get(tab.id)
+    while here is not None:
+        chain.append({"id": here, "title": by_id[here].title, "icon": topic_icon(by_id[here])})
+        here = up.get(here)
+    return list(reversed(chain))
 
 
 def parents_of(session, page: NotebookPage, limit: int = 4) -> list[dict]:
@@ -824,6 +840,9 @@ def sidebar(session, user=None) -> dict:
                                          NotebookPageInfo.status.in_(["planned", "running"]))
                               .order_by(NotebookPage.updated_at.desc()).limit(20)).all()
     names.update(display_names(session, [r.owner_username for r in protocols]))
+    starred = favorite_ids(session, user)
+    titles = dict(session.execute(select(NotebookPage.id, NotebookPage.title)
+                                  .where(NotebookPage.id.in_(starred))).all()) if starred else {}
     return {
         "shared": [{"id": r.id, "title": r.title, "owner": r.owner_username,
                     "owner_name": names.get(r.owner_username, r.owner_username), "kind": kinds.get(r.id, "note"),
@@ -831,6 +850,8 @@ def sidebar(session, user=None) -> dict:
         "protocols": [{"id": r.id, "title": r.title, "owner": r.owner_username,
                        "owner_name": names.get(r.owner_username, r.owner_username)} for r in protocols],
         "running": [{"id": r.id, "title": r.title, "status": r.status} for r in running],
+        "favorites": [{"id": pid, "title": titles.get(pid) or "Untitled page", "kind": kinds.get(pid, "note")}
+                      for pid in starred],
         "tags": tag_counts(session, user)[:30],
         "kinds_by_page": kinds,
     }
@@ -846,6 +867,278 @@ def tag_counts(session, user=None) -> list[dict]:
         for tag in tag_list(stored):
             counts[tag] = counts.get(tag, 0) + 1
     return [{"tag": t, "count": c} for t, c in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
+
+
+# ---------------------------------------------------------------- topics, their order, favourites
+
+# Inbox holds what has no place yet. A page that one of the notebook's
+# libraries lists has one: a protocol (Protocols), a paper or a talk
+# (Reading), a meeting series' note (Meetings). Inbox leaves those to it; a
+# meeting note of no series stays, as no library lists it.
+INBOX = "Inbox"
+
+
+def library_page_ids(session, page_ids) -> set[int]:
+    """Of these pages, those a library of the notebook lists."""
+    ids = list(page_ids)
+    if not ids:
+        return set()
+    return set(session.scalars(select(NotebookPageInfo.page_id_fk).where(
+        NotebookPageInfo.page_id_fk.in_(ids),
+        or_(NotebookPageInfo.kind.in_(("protocol",) + READING_KINDS),
+            and_(NotebookPageInfo.kind == "meeting", NotebookPageInfo.series_id.is_not(None))))).all())
+
+
+def is_inbox(tab: NotebookTab) -> bool:
+    return tab.title == INBOX and tab.parent_tab_id is None
+
+
+def topic_icon(tab: NotebookTab) -> str:
+    if is_inbox(tab):
+        return "archive"
+    return tab.icon if tab.icon in FOLDER_ICONS else "folder"
+
+
+def topic_parents(tabs) -> dict[int, int | None]:
+    """topic id -> the topic it sits in, among these (one person's topics):
+    None for one at the top, or whose topic has gone, or round a loop."""
+    by_id = {t.id: t for t in tabs}
+    out = {}
+    for tab in tabs:
+        parent, seen = by_id.get(tab.parent_tab_id), {tab.id}
+        up = parent
+        while up is not None and up.id not in seen:
+            seen.add(up.id)
+            up = by_id.get(up.parent_tab_id)
+        out[tab.id] = parent.id if parent is not None and up is None else None
+    return out
+
+
+def topic_tree(session, tabs, kinds: dict[int, str], parents: dict[int, int] | None = None) -> list[dict]:
+    """One person's topics, in the sidebar's order, as a list where each
+    comes after the topic it sits in ("depth" deep, "path" the titles down
+    to it), with its pages ("pages" nested as sub-pages, "flat" all) and the
+    topics inside it ("topics", the same dicts). Inbox leaves out what a
+    library lists."""
+    tabs = sorted(tabs, key=lambda t: (t.position or 0, t.id))
+    up = topic_parents(tabs)
+    hidden = library_page_ids(session, [p.id for t in tabs if is_inbox(t) for p in t.pages])
+    nodes = {}
+    for tab in tabs:
+        flat = [{"id": page.id, "title": page.title, "tab_id": tab.id, "updated_at": _iso(page.updated_at),
+                 "kind": kinds.get(page.id, "note"), "parent_id": (parents or {}).get(page.id)}
+                for page in tab.pages if page.id not in hidden]
+        nodes[tab.id] = {"id": tab.id, "title": tab.title, "icon": topic_icon(tab), "inbox": is_inbox(tab),
+                         "parent_id": up[tab.id], "pages": page_tree(flat), "flat": flat, "topics": []}
+    roots = []
+    for tab in tabs:
+        node = nodes[tab.id]
+        (nodes[node["parent_id"]]["topics"] if node["parent_id"] else roots).append(node)
+    out = []
+
+    def walk(node, depth, path):
+        node["depth"], node["path"] = depth, path + [node["title"]]
+        node["indent"] = "\u2003" * depth        # em spaces, to indent it in a menu
+        out.append(node)
+        for child in node["topics"]:
+            walk(child, depth + 1, node["path"])
+    for node in roots:
+        walk(node, 0, [])
+    return out
+
+
+def _my_topic(session, raw) -> NotebookTab:
+    tab = session.get(NotebookTab, _int(raw) or 0)
+    if tab is None or tab.owner_username != _me():
+        abort(404)
+    return tab
+
+
+def _place(items, item, before=None, after=None) -> list:
+    """The items with `item` taken out and put back before `before`, after
+    `after`, or at the end."""
+    rest = [x for x in items if x is not item]
+    if before is not None and before in rest:
+        rest.insert(rest.index(before), item)
+    elif after is not None and after in rest:
+        rest.insert(rest.index(after) + 1, item)
+    else:
+        rest.append(item)
+    return rest
+
+
+def move_page(session, page: NotebookPage, tab: NotebookTab) -> None:
+    """Put a page in a topic, at its end, with the pages made inside it. A
+    sub-page moved on its own is a page of its new topic, unless the page
+    it was made in is there too."""
+    if page.tab_id_fk == tab.id:
+        return
+    top = _next_position(session, tab.id)
+    for n, moving in enumerate(with_subpages(session, page)):
+        moving.tab_id_fk = tab.id
+        moving.position = top + n
+    info = info_for(session, page.id)
+    if info is not None and info.parent_page_id:
+        parent = session.get(NotebookPage, info.parent_page_id)
+        if parent is None or parent.tab_id_fk != tab.id:
+            info.parent_page_id = None
+
+
+@bp.post("/api/topics/<int:tab_id>")
+def topic_edit(tab_id: int):
+    """A topic's name and icon."""
+    data = _json_body()
+    with SessionLocal() as s:
+        tab = _my_topic(s, tab_id)
+        if "title" in data:
+            title = " ".join(str(data.get("title") or "").split())[:160]
+            if not title:
+                return _fail(gettext("A topic needs a name."))
+            tab.title = title
+        if "icon" in data:
+            icon = _folder_icon(data.get("icon"))
+            if icon is None:
+                return _fail(gettext("Choose one of the icons shown."))
+            tab.icon = icon
+        s.commit()
+        return jsonify({"ok": True, "id": tab.id, "title": tab.title, "icon": topic_icon(tab)})
+
+
+@bp.post("/api/topics/<int:tab_id>/place")
+def topic_place(tab_id: int):
+    """Put a topic inside another ("parent_id"; none: at the top), before or
+    after one beside it there ("before_id", "after_id"; neither: last).
+    Inbox stays at the top, and holds no topics."""
+    data = _json_body()
+    with SessionLocal() as s:
+        tab = _my_topic(s, tab_id)
+        mine = s.scalars(select(NotebookTab).where(NotebookTab.owner_username == _me())).all()
+        up = topic_parents(mine)
+        parent = _my_topic(s, data["parent_id"]) if data.get("parent_id") else None
+        if parent is not None:
+            if is_inbox(tab) or is_inbox(parent):
+                return _fail(gettext("Inbox stays at the top, with no topics inside it."))
+            here = parent.id
+            while here is not None:
+                if here == tab.id:
+                    return _fail(gettext("A topic cannot go inside itself or a topic inside it."))
+                here = up.get(here)
+        tab.parent_tab_id = parent.id if parent is not None else None
+        up[tab.id] = tab.parent_tab_id
+        siblings = sorted((t for t in mine if up[t.id] == tab.parent_tab_id),
+                          key=lambda t: (t.position or 0, t.id))
+        by_id = {t.id: t for t in siblings}
+        order = _place(siblings, tab, by_id.get(_int(data.get("before_id"))), by_id.get(_int(data.get("after_id"))))
+        for n, sibling in enumerate(order, start=1):
+            sibling.position = n
+        s.commit()
+        return jsonify({"ok": True, "id": tab.id, "parent_id": tab.parent_tab_id})
+
+
+@bp.post("/api/pages/<int:page_id>/place")
+def page_place(page_id: int):
+    """Put a page of one's own in a topic ("tab_id"), before or after a page
+    there ("before_id", "after_id"; neither: last), under the page it then
+    sits beside ("parent_page_id"; none: a page of the topic itself). The
+    pages made inside it come along."""
+    data = _json_body()
+    with SessionLocal() as s:
+        page = s.get(NotebookPage, page_id)
+        if page is None or owner_of(page) != _me():
+            abort(404)
+        tab = _my_topic(s, data.get("tab_id") or page.tab_id_fk)
+        move_page(s, page, tab)
+        s.flush()
+        info = info_for(s, page.id, create=True)
+        parent_id = _int(data.get("parent_page_id"))
+        if "parent_page_id" in data:
+            block = {p.id for p in with_subpages(s, page)}
+            parent = s.get(NotebookPage, parent_id or 0)
+            info.parent_page_id = parent.id if parent is not None and parent.tab_id_fk == tab.id and parent.id not in block else None
+        pages = s.scalars(select(NotebookPage).where(NotebookPage.tab_id_fk == tab.id)
+                          .order_by(NotebookPage.position, NotebookPage.id)).all()
+        by_id = {p.id: p for p in pages}
+        order = _place(pages, page, by_id.get(_int(data.get("before_id"))), by_id.get(_int(data.get("after_id"))))
+        for n, each in enumerate(order, start=1):
+            each.position = n
+        s.commit()
+        return jsonify({"ok": True, "tab_id": tab.id, "page_id": page.id})
+
+
+def page_cards(session, pages, user=None) -> list[dict]:
+    """Pages as the topic view and the notebook's home show them: kind,
+    status, first words, when, whose, starred, how many pages inside."""
+    pages = list(pages)
+    ids = [p.id for p in pages]
+    if not ids:
+        return []
+    infos = {i.page_id_fk: i for i in session.scalars(select(NotebookPageInfo).where(NotebookPageInfo.page_id_fk.in_(ids)))}
+    inside = dict(session.execute(select(NotebookPageInfo.parent_page_id, func.count(NotebookPageInfo.id))
+                                  .where(NotebookPageInfo.parent_page_id.in_(ids))
+                                  .group_by(NotebookPageInfo.parent_page_id)).all())
+    starred = set(favorite_ids(session, user))
+    me = access.username(user)
+    owners = {p.id: owner_of(p) for p in pages}
+    names = display_names(session, [o for o in owners.values() if o != me])
+    out = []
+    for page in pages:
+        info = infos.get(page.id)
+        owner = owners[page.id]
+        out.append({"id": page.id, "title": page.title or "Untitled page", "kind": info.kind if info else "note",
+                    "status": info.status if info else "", "gist": _gist(page.body),
+                    "cover": property_map(page.properties).get(COVER, ""),
+                    "updated_at": _iso(page.updated_at), "entry_date": _iso(page.entry_date),
+                    "favorite": page.id in starred, "inside": inside.get(page.id, 0),
+                    "owner_name": "" if owner == me else names.get(owner, owner)})
+    return out
+
+
+def favorite_ids(session, user=None) -> list[int]:
+    """The pages this person starred that they may still open, in their order."""
+    me = access.username(user)
+    rows = session.execute(accessible_filter(
+        select(NotebookFavorite.page_id_fk).join(NotebookPage, NotebookFavorite.page_id_fk == NotebookPage.id)
+        .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
+        .where(NotebookFavorite.username == me), user)
+        .order_by(NotebookFavorite.position, NotebookFavorite.id)).all()
+    return [r[0] for r in rows]
+
+
+@bp.post("/api/pages/<int:page_id>/favorite")
+def page_favorite(page_id: int):
+    """Star a page, to keep it under Favorites ("on": false takes it off)."""
+    data = _json_body()
+    with SessionLocal() as s:
+        page, _role = load_page(s, page_id)
+        me = _me()
+        row = s.scalar(select(NotebookFavorite).where(NotebookFavorite.username == me,
+                                                      NotebookFavorite.page_id_fk == page.id))
+        on = bool(data.get("on", True))
+        if on and row is None:
+            top = s.scalar(select(func.max(NotebookFavorite.position)).where(NotebookFavorite.username == me)) or 0
+            s.add(NotebookFavorite(username=me, page_id_fk=page.id, position=top + 1, created_at=_now()))
+        elif not on and row is not None:
+            s.delete(row)
+        s.commit()
+        return jsonify({"ok": True, "page_id": page.id, "favorite": on})
+
+
+@bp.post("/api/favorites/<int:page_id>/place")
+def favorite_place(page_id: int):
+    """Move a starred page before or after another in Favorites."""
+    data = _json_body()
+    with SessionLocal() as s:
+        rows = s.scalars(select(NotebookFavorite).where(NotebookFavorite.username == _me())
+                         .order_by(NotebookFavorite.position, NotebookFavorite.id)).all()
+        by_page = {r.page_id_fk: r for r in rows}
+        if page_id not in by_page:
+            abort(404)
+        order = _place(rows, by_page[page_id], by_page.get(_int(data.get("before_id"))),
+                       by_page.get(_int(data.get("after_id"))))
+        for n, row in enumerate(order, start=1):
+            row.position = n
+        s.commit()
+        return jsonify({"ok": True})
 
 
 @bp.get("/api/pages/<int:page_id>")

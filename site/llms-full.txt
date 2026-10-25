@@ -1191,7 +1191,17 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 ### Pages
 
-- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar: **+** beside *Topics* names a new one, a topic's own **+** starts a page in it, and its **•••** renames it or deletes it with its pages. Drag a page onto a topic to move it there. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
+- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar, and a topic can hold topics of its own, as deep as you like (*Projects*, in it *Lung neurons*, in that *Flow*). **+** beside *Topics* names a new one. A topic's own **+** starts a page in it, and its **•••** makes a **New topic inside** it, changes its **Name and icon**, moves it into another topic (**Move to…**), or deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the notebook remembers which you left open. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
+
+- Tidy up by dragging, in the sidebar: a page onto a topic moves it there, and a page between two others puts it there, beside them (under the page they sit in). A topic onto another goes inside it; near the top or bottom of one, it goes above or below. The pages inside a page move with it.
+
+- Click a topic's name for its own page: the topics inside it as tiles, then its pages as cards, each with its first line, when it last changed and its status. Sort them by **Last edited**, **Name** or **Your order** (the sidebar's; drag a card to change it), show them as cards or as a list, and move one to another topic with the folder button on its card. Drag a card onto a tile to move it into that topic.
+
+- **Favorites**, at the top of the sidebar: the star at the top of a page, or on its card, keeps it there. Any page you can open may be a favourite, a lab mate's shared page too. Drag a page into Favorites to star it, and drag the favourites into your own order; the star again takes one out.
+
+- **Home**, at the top of the sidebar, is where the notebook opens: your favourites, the pages edited most recently (yours and those shared with you), and your topics.
+
+- **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols**, **Reading** and **Meetings**, below), so Inbox leaves them out.
 
 - **New page** asks four things, each labelled: the **Title**, the **Topic** it goes in, its **Kind**, and what to **Start from**. Each kind says what it adds:
 
@@ -1213,7 +1223,7 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 - **Templates**: ⋯ → **Save as template** asks for a name and **Who can use it** (just you, everyone in the lab, or a project group); a name you already use asks before replacing that template. It keeps the page's kind (an Experiment template makes Experiments) and is listed under **Start from** for that kind. **Structure only** keeps the headings, steps and table headers and leaves out the results, ticks, readings, pictures and what was written under Results, Observations or Conclusion.
 
-- In the row at the top of the window, the page's place reads like a file path: its topic, then the pages it sits in. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. Above the title is the page's kind: click it to change it, which never moves the page. Hover there for **Add cover**, a picture across the top of the page (uploaded, or one of the page's own pictures); **Change cover** and **Remove** are on the cover. The title wraps onto as many lines as it needs. Under it are its date, status and tags; once other pages link to it, **Linked from** lists them.
+- In the row at the top of the window, the page's place reads like a file path: the topics its topic sits in, its topic, then the pages it sits in. Click the star there to make it a favourite. Click the topic to move the page: search your topics, or type a new name to make one. The pages inside it move with it. Above the title is the page's kind: click it to change it, which never moves the page. Hover there for **Add cover**, a picture across the top of the page (uploaded, or one of the page's own pictures); **Change cover** and **Remove** are on the cover. The title wraps onto as many lines as it needs. Under it are its date, status and tags; once other pages link to it, **Linked from** lists them.
 
 - Write as in Notion: type **/** and a few letters of what you want (`/h2`, `/toggle`; Chinese words work too, `/分栏`).
 
@@ -1269,7 +1279,7 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - **Protocols** with numbered versions. **Start experiment**, in the protocol's bar, copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
 
-- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one.
+- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one. Your protocols live here rather than in *Inbox*; one you move into a topic of yours is listed in that topic as well.
 
 ### Data and calculators
 
