@@ -2344,34 +2344,12 @@ if (document.getElementById('breeder-search')) {
   filterBreeders();
 }
 
-function wireList(input) {
-  if (input.readOnly || input.disabled) return;
-  let stashed = null;
-  input.addEventListener('focus', () => {
-    stashed = input.value || null;
-    if (input.value) {
-      input.value = '';
-    }
-  });
-  input.addEventListener('blur', () => {
-    if (stashed && !input.value) {
-      input.value = stashed;
-    }
-    stashed = null;
-  });
-  input.addEventListener('change', () => {
-    stashed = null;
-  });
-}
-document.querySelectorAll('input[list]').forEach(wireList);
-
 /* Rows of a long mouse sheet that come from the server as they are shown
    (data-table.js) are wired as the page's own rows were. */
 document.addEventListener('dt:rows-loaded', (event) => {
   [...((event.detail && event.detail.rows) || []), ...((event.detail && event.detail.details) || [])].forEach((tr) => {
     tr.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
     tr.querySelectorAll('input.note-cell').forEach(wireNote);
-    tr.querySelectorAll('input[list]').forEach(wireList);
   });
 });
 
@@ -2381,7 +2359,6 @@ document.addEventListener('text-cells:open', (event) => {
   const input = event.target;
   if (input.matches('[data-autosave="1"]')) wireAutosave(input);
   if (input.matches('input.note-cell')) wireNote(input);
-  if (input.matches('input[list]')) wireList(input);
 });
 
   BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });

@@ -4593,6 +4593,37 @@ tr.is-scanned > td:first-child {
   .set-inline-form { @apply mt-2.5 flex flex-wrap items-center gap-2; }
   .set-inline-form input { @apply field h-8 max-w-[320px] flex-1 text-[13px]; }
 
+  /* A field's suggestions (static/combobox.js): the menu under it, and a
+     chevron saying there are some, as on a dropdown. In a sheet the
+     chevron shows on hover, as a sheet's dropdowns do. */
+  .combo-pop {
+    @apply pop-surface fixed z-100 m-0 flex max-h-[264px] max-w-[min(420px,calc(100vw-16px))] flex-col
+           overflow-y-auto p-[5px] text-[13px] text-ink;
+    inset: auto;
+  }
+  .combo-pop[hidden] { display: none; }
+  .combo-opt {
+    @apply flex min-h-7 cursor-pointer items-center gap-2 rounded-[9px] px-2.5 py-1;
+  }
+  .combo-opt > span { @apply min-w-0 flex-1 truncate; }
+  .combo-opt > small { @apply shrink-0 truncate text-[12px] text-muted; }
+  .combo-opt.is-active { @apply bg-brand-600 text-white; }
+  .combo-opt.is-active > small { @apply text-white/80; }
+  input[data-combo-list]:not(.sheet-table input) {
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 16px 16px;
+    padding-right: 28px;
+  }
+  .sheet-table input[data-combo-list]:is(:hover, :focus):not(:disabled) {
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 3px center;
+    background-size: 14px 14px;
+  }
+  @media (max-width: 640px) { .combo-opt { @apply min-h-10 text-[15px]; } }
+
   /* A person's ··· menu: role, password, disable. */
   .set-menu { @apply relative shrink-0; }
   /* The menu opens over the rows below, so its group may not clip it. */
