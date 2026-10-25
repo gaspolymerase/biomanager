@@ -193,7 +193,7 @@
 .cal-cover-jobs li { display: flex; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-cover-jobs span { flex: none; width: 44px; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .cal-cover-pick { display: flex; align-items: center; gap: 6px; color: var(--color-muted); }
-.cal-cover-pick select { flex: 1; min-width: 0; height: 26px; padding: 0 6px; border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-surface); color: var(--color-ink); font-size: 12px; }
+.cal-cover-pick select { flex: 1; min-width: 0; height: var(--field-h-sm); padding: 0 6px; border: 1px solid var(--field-border); border-radius: var(--radius-md); background-color: var(--field-bg); color: var(--color-ink); font-size: 12px; }
 .cal-cover-who { margin: 0; color: var(--color-muted); }
 
 /* Equipment and protocol runs */
@@ -413,11 +413,11 @@
 .cal-repeat legend { margin-bottom: 4px; padding: 0; font-size: 12px; font-weight: 600; color: var(--color-sand-500); }
 .cal-repeat-row, .cal-repeat-more { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--color-ink-soft); }
 .cal-repeat select, .cal-repeat input {
-  height: 30px;
+  height: var(--field-h);
   padding: 0 8px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
 }
@@ -473,12 +473,12 @@
 .cal-steps-head { margin-top: 6px; font-size: 11px; color: var(--color-muted); }
 .cal-steps { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; padding: 0; list-style: none; }
 .cal-step-row input {
-  height: 30px;
+  height: var(--field-h);
   min-width: 0;
   padding: 0 8px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
   font-size: 13px;
@@ -511,9 +511,9 @@
 .cal-feed-url input {
   flex: 1;
   min-width: 0;
-  height: 32px;
+  height: var(--field-h);
   padding: 0 8px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
   background: var(--color-recess);
   font-family: var(--font-mono);
@@ -553,3 +553,8 @@
   .cal-tpl-body { grid-template-columns: minmax(0, 1fr); }
   .cal-steps-head, .cal-step-row { grid-template-columns: 56px 56px minmax(0, 1fr) 28px; }
 }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.cal-cover-pick select, .cal-repeat :is(select, input), .cal-step-row input, .cal-feed-url input):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.cal-cover-pick select, .cal-repeat :is(select, input), .cal-step-row input, .cal-feed-url input) { padding-right: 28px; }

@@ -81,11 +81,11 @@
 
 .ss-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
 .ss-form input, .ss-form select {
-  height: 34px;
+  height: var(--field-h);
   padding: 0 10px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
   font-size: 13px;
@@ -151,3 +151,8 @@
   .ss-form { grid-template-columns: minmax(0, 1fr); }
   .ss-main { padding: 18px 16px; }
 }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.ss-form :is(input, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.ss-form :is(input, select)) { padding-right: 28px; }

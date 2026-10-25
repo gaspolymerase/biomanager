@@ -47,8 +47,8 @@
 .assembly-map .bp-sub { font-size: 10px; fill: var(--color-muted); text-anchor: middle; }
 .assembly-fields { display: grid; gap: 10px; padding: 4px 16px 16px; }
 .assembly-fields input, .assembly-fields textarea, .assembly-fields select {
-  width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-md, 8px); background: var(--color-surface); color: var(--color-ink);
+  width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--field-border);
+  border-radius: var(--radius-md); background-color: var(--field-bg); color: var(--color-ink);
   font: inherit; font-size: 13px; font-weight: 400; }
 .assembly-options { display: grid; gap: 7px; font-size: 13px; }
 /* Grid, not flex: a label's bare text in a flex row shrinks to its longest
@@ -95,3 +95,8 @@
   font: inherit; font-size: 12px; font-weight: 400;
 }
 .assembly-list option { padding: 3px 5px; border-radius: 5px; }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.assembly-fields :is(input, textarea, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.assembly-fields :is(input, textarea, select)) { padding-right: 28px; }

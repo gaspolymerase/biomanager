@@ -93,11 +93,11 @@
 }
 .si-choose { display: flex; gap: 6px; }
 .si-choose select {
-  height: 32px;
+  height: var(--field-h);
   padding: 0 8px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
   font-size: 13px;
@@ -117,11 +117,11 @@ tr.is-clash select[data-si-map] { border-color: var(--color-danger-600); }
 
 .si-fill { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
 .si-fill input, .si-fill select {
-  height: 32px;
+  height: var(--field-h);
   padding: 0 9px;
-  border: 1px solid var(--color-hairline);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background-color: var(--field-bg);
   color: var(--color-ink);
   font: inherit;
   font-size: 13px;
@@ -151,3 +151,8 @@ tr.is-clash select[data-si-map] { border-color: var(--color-danger-600); }
   .si-choose { flex-direction: row; }
   .si-choose select[data-si-map] { flex: 1; }
 }
+
+/* Its fields focus as every field in the app does (tailwind.css field-box),
+   and its dropdowns keep room for their chevron. */
+:is(.si-choose select, .si-fill :is(input, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+select:is(.si-choose select, .si-fill :is(input, select)) { padding-right: 28px; }
