@@ -266,14 +266,22 @@ class OnTheMac(AppTestCase):
         self.assertTrue(mac_calendar._nudge.is_set())
 
     def test_the_calendar_offers_it_in_the_mac_window_only(self):
-        self.assertIn("Mac Calendar", self.c.get("/calendar").get_data(as_text=True))
+        # The button and its dialog, not the words: What's new may name them anywhere.
+        offered = ('id="cal-mac-btn"', 'id="cal-mac-modal"')
+        html = self.c.get("/calendar").get_data(as_text=True)
+        for piece in offered:
+            self.assertIn(piece, html)
         # A device reaching a desktop that shares its lab: neither the button nor the routes.
         lan = {"biomanager.lan": "1"}
-        self.assertNotIn("Mac Calendar", self.c.get("/calendar", environ_overrides=lan).get_data(as_text=True))
+        html = self.c.get("/calendar", environ_overrides=lan).get_data(as_text=True)
+        for piece in offered:
+            self.assertNotIn(piece, html)
         self.assertEqual(self.c.get("/calendar/mac", environ_overrides=lan).status_code, 404)
         # A lab server.
         app.config.pop("LOCAL_SETUP")
-        self.assertNotIn("Mac Calendar", self.c.get("/calendar").get_data(as_text=True))
+        html = self.c.get("/calendar").get_data(as_text=True)
+        for piece in offered:
+            self.assertNotIn(piece, html)
         self.assertEqual(self.c.get("/calendar/mac").status_code, 404)
         self.assertEqual(self.call(action="now").status_code, 404)
 

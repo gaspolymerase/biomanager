@@ -194,5 +194,13 @@
   "Notebook pages can be **Reading** pages: a paper's authors, journal, year, DOI and **Zotero** link, filled in from a DOI or from Zotero.": "实验记录本页面可以是 **文献** 页面：论文的作者、期刊、年份、DOI 和 **Zotero** 链接，可从 DOI 或 Zotero 自动填好。",
   "**Zotero** on the **Reading** page: each paper you add to a Zotero collection becomes a paper note by itself.": "**文献** 页面上的 **Zotero**：你添加到某个 Zotero 分类的每篇论文都会自动变成一篇论文笔记。",
   "**Reading** lists your papers and talks as cards with covers, or as every picture in them; **Add cover** puts a picture on any page.": "**文献** 以带封面的卡片列出你的论文和讲座，也可以显示其中所有的图片；**添加封面** 可以给任何页面加一张图片。",
-  "The notebook's sidebar hides (Ctrl+\\ or ⌘\\), topics are made and renamed in place, and **New page** asks for the title, topic, kind and what to start from.": "实验记录本的侧边栏可以收起（Ctrl+\\ 或 ⌘\\），主题可以直接新建和重命名，**新建页面** 会依次问标题、主题、类型和起始内容。"
+  "The notebook's sidebar hides (Ctrl+\\ or ⌘\\), topics are made and renamed in place, and **New page** asks for the title, topic, kind and what to start from.": "实验记录本的侧边栏可以收起（Ctrl+\\ 或 ⌘\\），主题可以直接新建和重命名，**新建页面** 会依次问标题、主题、类型和起始内容。",
+  "A new look, the same everywhere: every dialog has **Cancel** beside one main button, and on a phone it slides up from the bottom.": "全新外观，处处一致：每个对话框都是 **取消** 和一个主按钮并排，在手机上从底部滑出。",
+  "A field's suggestions open in the app's own list: type to narrow it, ↓ and Enter to pick (Alt+↓ in a sheet).": "输入框的建议在应用自己的列表里打开：输入缩小范围，↓ 和回车选中（表格里用 Alt+↓）。",
+  "Notebook topics hold other topics, each has its own page, and the notebook opens on **Home** with your **Favorites**.": "实验记录本的主题可以包含其他主题，每个主题有自己的页面，实验记录本打开时显示 **首页** 和你的 **收藏夹**。",
+  "In the Mac app, **Calendar → Mac Calendar** keeps the calendar in your Mac's Calendar, and so on your phone, with no server.": "在 Mac 应用里，**日历 → Mac 日历** 把日程放进 Mac 的日历，从而同步到手机，不需要服务器。",
+  "**Send feedback** can also send your note to BioManager's makers.": "**发送反馈** 也可以把你的留言发给 BioManager 的开发者。",
+  "Home's views are **Overview**, **Timeline** and **By place** (they were Classic, Tracks and Freezer), as tabs under the greeting.": "首页的视图改名为 **概览**、**时间线** 和 **按位置**（原来是经典、时间轴和冰箱），就是问候语下方的标签。",
+  "Only a Breeding cage takes a **Litter born** date, and only a record's owner, an admin or animal care can give it away.": "只有配种笼能记录 **产仔** 日期；只有记录的负责人、管理员或动物护理人员能把它转给别人。",
+  "The cage sheet fits a laptop: Card ID and Note start hidden; tick them under **Columns**.": "笼表格在笔记本电脑上放得下：笼卡编号和备注默认隐藏，在 **列** 里勾选即可显示。"
 }
