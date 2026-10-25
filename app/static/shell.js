@@ -479,6 +479,29 @@
     initAccountMenu();
     initBell();
     initShortcuts();
+    initPopovers();
+  }
+
+  // A small popover written as <details data-popover> (an info tip, a
+  // menu of options): it closes on a click outside it, on Escape, and when
+  // another one opens, as the app's menus do.
+  function initPopovers() {
+    const openOnes = () => document.querySelectorAll('details[data-popover][open]');
+    document.addEventListener('click', (event) => {
+      openOnes().forEach((d) => { if (!d.contains(event.target)) d.open = false; });
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      openOnes().forEach((d) => {
+        d.open = false;
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener('toggle', (event) => {
+      const d = event.target;
+      if (!(d instanceof HTMLDetailsElement) || !d.matches('[data-popover]') || !d.open) return;
+      openOnes().forEach((other) => { if (other !== d) other.open = false; });
+    }, true);
   }
 
   // The window around the page. A window in the background shows its

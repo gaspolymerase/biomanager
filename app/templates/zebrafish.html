@@ -37,7 +37,7 @@
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_nav %}
-  <nav class="seg mb-3 max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('Zebrafish views') }}">
+  <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('Zebrafish views') }}">
     {% for view_key, view_label, view_icon, view_count, count_title in zfish_views %}
       <a class="seg-item {% if active_view == view_key %}is-active{% endif %}"
          href="{{ url_for('zebrafish', view=view_key) }}" role="tab"

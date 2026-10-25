@@ -147,7 +147,7 @@
 
 {% block page_nav %}
   <div class="mb-4 flex flex-wrap items-center gap-3">
-    <nav class="seg max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
+    <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=module.label|tr) }}">
       {% for v in views %}
         <a class="seg-item {% if active_view == v.key %}is-active{% endif %}"
            href="{{ url_for('organisms.module', key=module.key, view=v.key) }}" role="tab"

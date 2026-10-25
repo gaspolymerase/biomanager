@@ -1390,20 +1390,20 @@ def owner_badge_filter(name: str) -> Markup:
 
 def _owner_badge(name: str) -> Markup:
     info = _get_user_directory().get(name)
-    if info and info["short"]:
-        text = info["short"][:3].upper() if len(info["short"]) > 3 else info["short"].upper()
-        tooltip = info["display"] or name
+    display = (info["display"] if info else "") or name
+    tooltip = display
+    # Two initials, from the person's name as the lab knows it (Jordan Lee:
+    # JL), else from their username (jordan: JO).
+    parts = [p for p in re.split(r"[\s._-]+", display.strip()) if p]
+    if len(parts) >= 2:
+        text = (parts[0][0] + parts[-1][0]).upper()
     else:
-        cleaned = name.strip()
-        parts = cleaned.split()
-        if len(parts) >= 2:
-            text = (parts[0][0] + parts[1][0]).upper()
-        else:
-            text = cleaned[:2].upper()
-        tooltip = name
-    hue, sat, light = _name_color(name)
-    bg = f"hsl({hue}, {sat}%, 90%)"
-    fg = f"hsl({hue}, {sat}%, {light}%)"
+        text = (parts[0][:2] if parts else name[:2]).upper()
+    hue, _sat, _light = _name_color(name)
+    # Soft in light and dark alike: the colour tells people apart, the
+    # initials stay readable on it.
+    bg = f"hsl({hue} 70% 55% / 0.2)"
+    fg = f"hsl({hue} 55% 30%);color:light-dark(hsl({hue} 55% 30%), hsl({hue} 75% 78%))"
     # data-tooltip drives the CSS popover; aria-label keeps it accessible.
     # We deliberately avoid the native `title` attribute so the browser doesn't
     # show its own delayed tooltip on top of ours.

@@ -1318,10 +1318,13 @@
 
   /* --- Owner avatar ----------------------------------------------------- */
 
+  /* A person: their initials on a round avatar in a colour of their own;
+     their name on hover. */
   .owner-badge {
-    @apply relative inline-flex h-[18px] min-w-[18px] cursor-default select-none
-           items-center justify-center rounded-full px-1 align-middle text-[10px]
-           font-semibold leading-none;
+    @apply relative inline-flex size-[22px] shrink-0 cursor-default select-none
+           items-center justify-center rounded-full align-middle text-[10px]
+           font-semibold leading-none tracking-[0.02em];
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
   }
   .owner-badge[data-tooltip]:hover::after {
     content: attr(data-tooltip);
@@ -1332,7 +1335,7 @@
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
   }
-  .owner-badge-lg { @apply size-7 min-w-7 text-[11px]; }
+  .owner-badge-lg { @apply size-7 text-[11px]; }
   .owner-cell { @apply inline-flex min-w-0 items-center gap-1.5; }
   .owner-cell-name { @apply truncate text-[12px] text-ink-soft; }
 }
@@ -1382,6 +1385,63 @@
   .wtabs.has-drop .wtab.is-active,
   .seg.has-drop .seg-item.is-active { background: transparent; box-shadow: none; }
   .drop-still .wtab-drop, .drop-still .seg-drop { transition: none; }
+}
+
+/* A database's own tabs (Mice · Cages · Litters …, under its title): a tab
+   bar with a line under it, not a capsule of buttons, so the page reads as
+   one place with parts. The drop is the line under the current tab. */
+@layer components {
+  .seg.page-tabs {
+    @apply mb-4 flex w-full max-w-full gap-1 overflow-x-auto rounded-none bg-transparent p-0;
+    box-shadow: inset 0 -1px 0 var(--color-hairline);
+  }
+  .page-tabs .seg-item {
+    @apply h-9 rounded-none px-2.5 text-[13px] font-medium text-muted;
+  }
+  .page-tabs .seg-item:hover { @apply text-ink; }
+  .page-tabs .seg-item svg { @apply text-sand-400; }
+  .page-tabs .seg-item.is-active { @apply bg-transparent font-semibold text-ink; box-shadow: inset 0 -2px 0 var(--color-brand-600); }
+  .page-tabs.has-drop .seg-item.is-active { box-shadow: none; }
+  .page-tabs .seg-item.is-active svg { @apply text-brand-600; }
+  .page-tabs .seg-item:active { transform: none; }
+  .page-tabs .seg-drop {
+    @apply rounded-full bg-brand-600;
+    height: 2px !important;
+    margin-top: 34px;
+    box-shadow: none;
+  }
+  .page-tabs .seg-count { @apply rounded-full bg-sand-200/70 px-1.5 text-[11px] text-muted; }
+  .page-tabs .seg-count.is-alert { @apply bg-danger-50 text-danger-700; }
+
+  /* The tabs with what filters every tab (whose records) at their right,
+     on one line. */
+  .page-tabs-row {
+    @apply mb-4 flex flex-wrap items-end gap-x-4 gap-y-2;
+    box-shadow: inset 0 -1px 0 var(--color-hairline);
+  }
+  .page-tabs-row > .seg.page-tabs { @apply mb-0 w-auto min-w-0 flex-1; box-shadow: none; }
+  .page-tabs-side { @apply mb-1.5 ml-auto flex shrink-0 items-center gap-1; }
+  .seg.seg-sm { @apply p-[2px]; }
+  .seg-sm .seg-item { @apply h-6.5 px-2.5 text-[12px]; }
+  .info-tip-end .info-tip-pop { @apply right-0 left-auto; transform-origin: top right; }
+
+  /* An ⓘ that opens a sentence or two of help in place, instead of a
+     paragraph that sits on the page for good. */
+  .info-tip { @apply relative inline-flex; }
+  .info-tip > summary {
+    @apply grid size-7 cursor-pointer list-none place-items-center rounded-full text-sand-500 transition-colors;
+  }
+  .info-tip > summary::-webkit-details-marker { display: none; }
+  .info-tip > summary:hover, .info-tip[open] > summary { @apply bg-sand-200/70 text-ink; }
+  .info-tip > summary .icon { @apply size-4; }
+  .info-tip-pop {
+    @apply absolute top-9 left-0 z-60 w-[min(340px,calc(100vw-2rem))] rounded-2xl p-3.5 text-[13px] leading-snug text-ink-soft;
+    background: var(--material-popover);
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-lg);
+    animation: menu-grow 0.22s var(--ease-spring);
+    transform-origin: top left;
+  }
+  .info-tip-pop strong { @apply font-semibold text-ink; }
 }
 
 @layer utilities {
@@ -1826,7 +1886,7 @@
   .sheet-table td > select:not(.status-pill, .sex-pill, .scope-pill):not(:disabled):is(:hover, :focus) {
     background-image: var(--chevron);
   }
-  .sheet-table td > input::placeholder { @apply text-sand-300; }
+  .sheet-table td > input::placeholder { color: var(--placeholder-ink); }
   /* A value read from elsewhere (a sample's Genotype, from its source
      mouse): shown, softer than typed, but not as faint as an empty cell. */
   .sheet-table td > input.from-colony::placeholder { @apply text-ink-soft italic; }
@@ -1842,7 +1902,7 @@
   }
   .sheet-table .cell-text:hover { @apply border-hairline bg-surface; }
   .sheet-table .cell-text:focus { @apply border-brand-400 bg-surface text-ink outline-none; }
-  .sheet-table .cell-text.is-empty { @apply text-sand-300; }
+  .sheet-table .cell-text.is-empty { color: var(--placeholder-ink); }
   /* As a disabled field reads: greyed, and nothing happens on hover. */
   .sheet-table .cell-text.is-disabled { @apply cursor-default text-ink-soft/50; }
   .sheet-table .cell-text.is-disabled:hover { @apply border-transparent bg-transparent; }
@@ -3884,7 +3944,18 @@
   .cage-sheet .cage-wean { @apply whitespace-nowrap; }
   .cage-sheet .sheet-table > tbody > tr > td > select.status-pill[name="purpose"] { @apply w-full px-1.5; }
   .cage-sheet .sheet-table > tbody > tr > td > input.note-cell { @apply w-0 min-w-full; }
-  .cage-born-cell > input { @apply h-6.5 w-[7.75rem] min-w-0 shrink-0; }
+  /* Litter born reads as the cells beside it, and only a Breeding cage has
+     one to fill in (app/litters.py): on any other cage an empty date is a
+     dash, not a field. A date left from when it was one still shows. */
+  .cage-born-cell > input {
+    @apply h-6.5 w-[7.75rem] min-w-0 shrink-0 rounded-md border border-transparent bg-transparent px-2
+           text-[12px] text-ink-soft shadow-none transition-colors duration-100;
+  }
+  .cage-born-cell > input:not(:disabled):hover { @apply border-hairline bg-surface; }
+  .cage-born-cell > input:focus { @apply border-brand-400 bg-surface text-ink; }
+  .cage-born-cell > input[data-empty="1"]:not(:focus)::-webkit-datetime-edit { color: var(--placeholder-ink); }
+  tr[data-breeding="0"] .cage-born-cell > input[data-empty="1"] { display: none; }
+  tr[data-breeding="0"] .cage-born-cell:not(:has(> input:not([data-empty="1"])))::before { content: "–"; @apply px-2 text-sand-400; }
   .cage-sheet .cage-mice-count { @apply whitespace-nowrap; }
   .cage-pups {
     @apply inline-flex shrink-0 items-center gap-1 rounded-md bg-warn-50 px-1.5 py-px font-mono text-[11px]
@@ -4546,4 +4617,26 @@ tr.is-scanned > td:first-child {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+@layer components {
+  .gs-progress { @apply flex items-center gap-2.5; }
+  .gs-meter { @apply block h-1.5 w-24 overflow-hidden rounded-full bg-sand-200; }
+  .gs-meter > span { @apply block h-full rounded-full bg-brand-600; }
+  .gs-step { @apply gap-3 py-2.5; }
+  .gs-step > .icon:last-child { @apply size-3.5 text-sand-400; }
+  .gs-mark { @apply grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] border-sand-400; }
+  .gs-step.is-done .gs-mark { @apply border-0 bg-brand-600 text-white; }
+  .gs-mark .icon { @apply size-2.5; }
+  .gs-title { @apply block text-[13px] font-medium text-ink; }
+  .gs-hint { @apply block text-[12px] text-muted; }
+  .gs-step.is-done .gs-title { @apply font-normal text-muted; }
+  .gs-done { @apply border-t border-hairline; }
+  .gs-done > summary {
+    @apply flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-muted hover:text-ink;
+  }
+  .gs-done > summary::-webkit-details-marker { display: none; }
+  .gs-done > summary .icon { @apply size-3.5 text-brand-600; }
+  .gs-foot { @apply flex items-center gap-3 border-t border-hairline px-3 py-2 text-[12px]; }
+  .gs-foot a { @apply text-muted; }
 }

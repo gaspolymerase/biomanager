@@ -66,7 +66,7 @@
 
 {% block page_nav %}
   <div class="mb-4 flex flex-wrap items-center gap-3">
-    <nav class="seg max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=m.label|tr) }}">
+    <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('%(name)s views', name=m.label|tr) }}">
       {% for v in ['units', 'schedule', 'experiments', 'genotypes', 'setup'] + (['frozen'] if S.frozen else []) + ['settings'] %}
         <a class="seg-item {% if view == v %}is-active{% endif %}" role="tab" aria-selected="{{ 'true' if view == v else 'false' }}"
            href="{{ url_for('stocks.module', key=key, view=v) }}">

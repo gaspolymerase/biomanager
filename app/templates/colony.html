@@ -20,7 +20,8 @@
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 
 {% block page_nav %}
-  <nav class="seg mb-4 max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('Colony views') }}">
+  <div class="page-tabs-row">
+  <nav class="seg page-tabs max-w-full overflow-x-auto" role="tablist" aria-label="{{ _('Colony views') }}">
     {% for view_key, _code in colony_views %}
       {% set meta = colony_view_meta.get(view_key, {}) %}
       <a class="seg-item {% if active_view == view_key %}is-active{% endif %}"
@@ -33,8 +34,8 @@
 
   {# Which slice of the colony is listed. A view filter only — what you may
      edit is decided per record, and does not change with the scope. #}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
-    <nav class="seg" aria-label="{{ _('Whose records to show') }}">
+  <div class="page-tabs-side">
+    <nav class="seg seg-sm" aria-label="{{ _('Whose records to show') }}">
       {% for value, label in scopes %}
         <a class="seg-item {% if scope == value %}is-active{% endif %}"
            href="{{ url_for('colony', view=active_view, scope=value) }}" title="{{ scope_hints[value]|tr }}">
@@ -48,19 +49,21 @@
         </a>
       {% endfor %}
     </nav>
-    {% if scope != 'all' %}
-      <span class="text-[12px] text-muted">
-        {% trans url=url_for('colony', view=active_view, scope='all') %}Showing your animals and the shared cages you work in. <a href="{{ url }}">See everyone's</a>.{% endtrans %}
-      </span>
-    {% elif current_user.role != 'admin' %}
-      <span class="text-[12px] text-muted">
-        {{ _('Records owned by other people are read-only.') }}
-      </span>
-    {% else %}
-      <span class="text-[12px] text-muted">
-        {% trans url=url_for('settings', _anchor='stats') %}Admin — you can edit anything. <a href="{{ url }}">The lab in numbers</a>.{% endtrans %}
-      </span>
-    {% endif %}
+    <details class="info-tip info-tip-end" data-popover>
+      <summary aria-label="{{ _('Whose records these are') }}" title="{{ _('Whose records these are') }}">{{ icon('info') }}</summary>
+      <div class="info-tip-pop">
+        {% if scope != 'all' %}
+          {% trans url=url_for('colony', view=active_view, scope='all') %}Showing your animals and the shared cages you work in. <a href="{{ url }}">See everyone's</a>.{% endtrans %}
+        {% elif current_user.role != 'admin' %}
+          {{ _('Records owned by other people are read-only.') }}
+        {% else %}
+          {% trans url=url_for('settings', _anchor='stats') %}Admin — you can edit anything. <a href="{{ url }}">The lab in numbers</a>.{% endtrans %}
+        {% endif %}
+      </div>
+    </details>
+  </div>
+  </div>
+  <div class="mb-3 flex flex-wrap items-center gap-3 [&:not(:has(*))]:hidden">
     {# The colony keeps every mouse it ever had: what ended long ago waits behind a link. #}
     {% set hidden_here = hidden[active_view] if active_view in ('mice', 'cages', 'litters') else 0 %}
     {% if active_view == 'breeders' and (hidden.breeder_cages or hidden.breeder_mice) %}
@@ -325,11 +328,14 @@
               {{ icon('plus') }} {{ _('New rack') }}
             </button>
           </div>
+          <details class="info-tip" data-popover>
+            <summary aria-label="{{ _('About racks and positions') }}" title="{{ _('About racks and positions') }}">{{ icon('info') }}</summary>
+            <div class="info-tip-pop">
+              {{ _('Set a cage’s <strong>Rack</strong> and <strong>Position</strong> here, in the mouse sheet, or by dragging on the rack grid.') }}
+              {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it under the rack’s button above.') }}
+            </div>
+          </details>
         </div>
-        <p class="-mt-1.5 mb-3 text-[12px] text-muted">
-          {{ _('Set a cage’s <strong>Rack</strong> and <strong>Position</strong> here, in the mouse sheet, or by dragging on the rack grid.') }}
-          {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it under the rack’s button above.') }}
-        </p>
 
         <div data-layout-panel="grid" hidden>
           <section class="data-table-card">
