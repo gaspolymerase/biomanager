@@ -14,7 +14,7 @@ on:
       - requirements.txt
       - .github/workflows/mac-calendar.yml
   push:
-    branches: [master]
+    branches: [master, claude/exciting-pasteur-1t2m27]   # TEMPORARY
     paths:
       - app/mac_calendar.py
       - app/lab_calendar.py
@@ -54,3 +54,36 @@ jobs:
         if: ${{ !cancelled() }}
         env: { TZ: UTC }
         run: python scripts/mac-calendar-check/live.py TheStore
+
+  # TEMPORARY: the release workflow's "Check the Mac Calendar" step, run
+  # as written there, on an app built from this branch.
+  built-app:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: python -m pip install -r requirements.txt pyinstaller pyyaml
+      - run: BIOMANAGER_VERSION=2.3.1 ./scripts/build-desktop.sh
+      - name: The release workflow's step, as written there
+        run: |
+          python - <<'PY'
+          import yaml, os
+          steps = yaml.safe_load(open(".github/workflows/release.yml"))["jobs"]["desktop"]["steps"]
+          step = next(s for s in steps if s.get("name") == "Check the Mac Calendar")
+          with open("step.sh", "w") as f:
+              for k, v in step["env"].items():
+                  v = str(v).replace("${{ runner.temp }}", os.environ["RUNNER_TEMP"])
+                  f.write(f'export {k}="{v}"\n')
+              f.write(step["run"])
+          PY
+          cat step.sh
+          bash -e step.sh
