@@ -202,5 +202,8 @@
   "**Send feedback** can also send your note to BioManager's makers.": "**发送反馈** 也可以把你的留言发给 BioManager 的开发者。",
   "Home's views are **Overview**, **Timeline** and **By place** (they were Classic, Tracks and Freezer), as tabs under the greeting.": "首页的视图改名为 **概览**、**时间线** 和 **按位置**（原来是经典、时间轴和冰箱），就是问候语下方的标签。",
   "Only a Breeding cage takes a **Litter born** date, and only a record's owner, an admin or animal care can give it away.": "只有配种笼能记录 **产仔** 日期；只有记录的负责人、管理员或动物护理人员能把它转给别人。",
-  "The cage sheet fits a laptop: Card ID and Note start hidden; tick them under **Columns**.": "笼表格在笔记本电脑上放得下：笼卡编号和备注默认隐藏，在 **列** 里勾选即可显示。"
+  "The cage sheet fits a laptop: Card ID and Note start hidden; tick them under **Columns**.": "笼表格在笔记本电脑上放得下：笼卡编号和备注默认隐藏，在 **列** 里勾选即可显示。",
+  "On macOS 14, an event in the **Mac Calendar** that runs across the night the clocks go back no longer shows ending an hour late.": "在 macOS 14 上，**Mac 日历** 里跨过时钟回拨那一夜的活动不再显示晚一小时结束。",
+  "The **Mac Calendar** calls the Mac's own account **On My Mac**.": "**Mac 日历** 把 Mac 自己的账户叫作 **我的 Mac**。",
+  "On Linux, when the window can't open, BioManager opens in your web browser instead.": "在 Linux 上，窗口打不开时，BioManager 会改在浏览器里打开。"
 }
