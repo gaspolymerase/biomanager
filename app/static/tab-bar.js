@@ -166,8 +166,6 @@
       el.className = 'wtab' + (isActive ? ' is-active' : '');
       el.dataset.url = tab.url;
       el.dataset.index = String(index);
-      el.setAttribute('role', 'tab');
-      el.setAttribute('aria-selected', String(isActive));
       el.draggable = true;
 
       el.insertAdjacentHTML('beforeend', svgIcon(iconFor(tab.url), 'wtab-icon'));
@@ -177,6 +175,8 @@
       link.href = tab.url;
       link.title = tab.title || tab.url;
       link.textContent = tab.title || tab.url;
+      // Links to pages in a <nav>, not tabs of one page: the open one is the current page.
+      if (isActive) link.setAttribute('aria-current', 'page');
       el.appendChild(link);
 
       const close = document.createElement('button');

@@ -50,6 +50,9 @@
 
   function setRail(state) {
     document.body.dataset.rail = state;
+    // A page that folds the sidebar itself (the notebook) leaves your choice
+    // for every other page as it was.
+    if (document.documentElement.dataset.railMode === 'compact') return;
     try { localStorage.setItem(RAIL_KEY, state); } catch (e) {}
   }
 

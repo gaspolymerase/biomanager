@@ -229,13 +229,26 @@
   // Topics: open as you left them (the open page's topic always is).
   var OPEN = 'nb-open-topics';
   var opened = remembered(OPEN);
-  $$('.notebook-tab').forEach(function (d) { if (opened[d.dataset.tabId]) d.open = true; });
+  function folded(d) {
+    var b = d.querySelector(':scope > summary > .nb-tab-fold');
+    if (b) b.setAttribute('aria-expanded', String(d.open));
+  }
+  $$('.notebook-tab').forEach(function (d) { if (opened[d.dataset.tabId]) d.open = true; folded(d); });
   document.addEventListener('toggle', function (e) {
     var d = e.target;
     if (!d.classList || !d.classList.contains('notebook-tab')) return;
+    folded(d);
     if (d.open) opened[d.dataset.tabId] = 1; else delete opened[d.dataset.tabId];
     remember(OPEN, opened);
   }, true);
+  // A button inside the row doesn't fold it by itself, as the row does: the arrow does it here.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.nb-tab-fold');
+    if (!b) return;
+    e.preventDefault();
+    var d = b.closest('.notebook-tab');
+    d.open = !d.open;
+  });
 
   // Sub-pages: the arrow beside a page shows or hides them. The open
   // page's own line stays shown.

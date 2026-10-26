@@ -184,7 +184,8 @@
     const muted = 'var(--color-muted, #86868b)';
     const brand = 'var(--color-brand-600, #17a38f)';
     const tint = tone(brand, '12%', surface);
-    const sand = 'var(--color-sand-400, #c7c7cc)';
+    // The other month's days: quieter than this month's, still readable.
+    const sand = 'var(--color-muted, #66666b)';
     return {
       common: {
         backgroundColor: surface, border: line,
@@ -378,7 +379,10 @@
 
   function setView(view, refetch) {
     currentView = view;
-    $$('.biocal-view-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
+    $$('.biocal-view-btn').forEach((b) => {
+      b.classList.toggle('is-active', b.dataset.view === view);
+      b.setAttribute('aria-pressed', String(b.dataset.view === view));
+    });
     try { localStorage.setItem(VIEW_KEY, view); } catch (_) {}
     const isList = view === 'list';
     tuiHost.hidden = isList;

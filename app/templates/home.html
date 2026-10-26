@@ -31,10 +31,9 @@
 {# ---- The view: Overview, Timeline or By place (app/home_layouts.py) -----
      Tabs, as a database's are; what belongs to the view sits beside them. #}
 <form class="page-tabs-row" method="post" action="{{ url_for('set_home_layout') }}">
-  <nav class="seg page-tabs" role="tablist" aria-label="{{ _('Home view') }}">
+  <nav class="seg page-tabs" aria-label="{{ _('Home view') }}">
     {% for key, (label, icon_name) in layout_choices.items() %}
       <button type="submit" name="layout" value="{{ key }}" class="seg-item{% if home_layout == key %} is-active{% endif %}"
-              role="tab" aria-selected="{{ 'true' if home_layout == key else 'false' }}"
               aria-pressed="{{ 'true' if home_layout == key else 'false' }}">{{ icon(icon_name) }}{{ label|tr }}</button>
     {% endfor %}
   </nav>

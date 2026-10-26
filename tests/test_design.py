@@ -82,6 +82,42 @@ class TextSizes(unittest.TestCase):
         self.assertEqual(found, [], f"text sizes come from the scale: {sorted(SCALE)}")
 
 
+class TextColours(unittest.TestCase):
+    """Text tokens are readable on what they sit on: 4.5:1 (WCAG AA) in light
+    and dark mode, read from the tokens in frontend/src/tailwind.css."""
+
+    # (text, background): the pairs the interface uses for words.
+    PAIRS = [("muted", bg) for bg in ("canvas", "surface", "recess", "sand-200")] + [
+        ("ink-soft", "canvas"), ("ink-soft", "surface"),
+        ("brand-700", "canvas"), ("brand-700", "surface"), ("brand-700", "brand-50"),
+        ("info-700", "info-50"), ("ok-700", "ok-50"), ("warn-700", "warn-50"), ("danger-700", "danger-50"),
+        ("on-brand", "brand-700"),
+    ]
+
+    @staticmethod
+    def tokens(block: str) -> dict:
+        return dict(re.findall(r"--color-([a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})", block))
+
+    @staticmethod
+    def ratio(a: str, b: str) -> float:
+        def lum(h):
+            c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+            c = [v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4 for v in c]
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+        hi, lo = sorted((lum(a), lum(b)), reverse=True)
+        return (hi + 0.05) / (lo + 0.05)
+
+    def test_text_is_readable_in_light_and_dark(self):
+        css = _read(ROOT / "frontend" / "src" / "tailwind.css")
+        light = self.tokens(css[css.index("@theme {"):css.index("@media (prefers-color-scheme: dark)")])
+        dark_block = css[css.index("@media (prefers-color-scheme: dark)"):]
+        dark = {**light, **self.tokens(dark_block[:dark_block.index("\n}\n")])}
+        low = [f"{mode}: {fg} on {bg} {self.ratio(colours[fg], colours[bg]):.2f}"
+               for mode, colours in (("light", light), ("dark", dark)) for fg, bg in self.PAIRS
+               if self.ratio(colours[fg], colours[bg]) < 4.5]
+        self.assertEqual(low, [], "text needs 4.5:1 on its background")
+
+
 class Gallery(AppTestCase):
     """/design shows the shared pieces to an admin, and to no one else."""
 

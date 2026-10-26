@@ -3,6 +3,8 @@
 {% block page_title %}{% if library %}{{ libraries[library][0]|tr('notebook') }}{% elif selected_page %}{{ selected_page.title }}{% elif topic_view %}{{ topic_view.title|tr }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
 {% block page_heading %}{{ _('Notebook') }}{% endblock %}
 {% block page_shell_class %}shell-page-flush{% endblock %}
+{# One sidebar, as Notion has: the app's folds to its icons, and the notebook's is the sidebar. #}
+{% block rail_mode %}compact{% endblock %}
 
 {% macro page_link(page, active_id, tab_id=None) -%}
   <li class="notebook-page-item {% if active_id == page.id %}active{% endif %}{% if page.children %} has-children{% endif %}"
@@ -23,8 +25,10 @@
    topic onto another to put it inside, or above or below one to reorder. #}
 {% macro topic_node(tab, active_id) -%}
   <details class="notebook-tab{% if tab.inbox %} is-inbox{% endif %}" {% if tab.id in open_topics %}open{% endif %} data-tab-id="{{ tab.id }}" data-parent-id="{{ tab.parent_id or '' }}" data-icon="{{ tab.icon }}">
-    <summary{% if not tab.inbox %} draggable="true"{% endif %}>
-      {{ icon('chevron-right', 'notebook-tab-caret') }}
+    {# The row itself is a group, out of the Tab order: its arrow is the
+       button that folds it, beside its link and its own buttons. #}
+    <summary role="group" tabindex="-1" aria-label="{{ tab.title|tr }}"{% if not tab.inbox %} draggable="true"{% endif %}>
+      <button type="button" class="nb-tab-fold" aria-expanded="{{ 'true' if tab.id in open_topics else 'false' }}" aria-label="{{ _('Show or hide its pages') }}">{{ icon('chevron-right', 'notebook-tab-caret') }}</button>
       {{ icon(tab.icon, 'nb-tab-icon') }}
       <a class="tab-title" href="{{ url_for('notebook', tab=tab.id) }}" draggable="false"{% if topic_view and topic_view.id == tab.id %} aria-current="page"{% endif %}>{{ tab.title|tr }}</a>
       <span class="tab-count">{{ tab.flat|length or '' }}</span>
@@ -85,24 +89,20 @@
     {% if selected_page or library or topic_view or home %}
       <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
     {% endif %}
+    {# Its name (the notebook's home), the one New page (into the topic you are
+       in), and hiding it; then one search: typing narrows the pages here, Enter
+       searches inside them. #}
     <div class="notebook-sidebar-head">
-      <form class="notebook-search-row" id="nb-search-form" role="search">
-        {{ icon('search', 'notebook-search-icon') }}
-        <input id="notebook-page-filter" type="search" placeholder="{{ _('Search every page…') }}" autocomplete="off" aria-label="{{ _('Search the notebook') }}">
-      </form>
+      <a class="nb-side-home{% if home %} is-active{% endif %}" href="{{ url_for('notebook') }}"{% if home %} aria-current="page"{% endif %}>
+        <span class="nb-side-home-icon">{{ icon('notebook') }}</span><span class="nb-side-home-name">{{ _('%(name)s’s notebook', name=me.name) }}</span>
+      </a>
+      <button type="button" class="nb-side-hide" id="nb-new-page" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
       <button type="button" class="nb-side-hide" data-side-toggle title="{{ _('Hide the sidebar') }} (Ctrl+\)" aria-label="{{ _('Hide the sidebar') }}">{{ icon('sidebar') }}</button>
     </div>
-    <button type="button" class="notebook-new-btn" id="nb-new-page">{{ icon('plus') }}<span>{{ _('New page') }}</span></button>
-
-    <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
-      <a href="{{ url_for('notebook') }}"{% if home %} class="is-active" aria-current="page"{% endif %}>{{ icon('home') }} {{ _('Home') }}</a>
-      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
-      <button type="button" data-panel="search">{{ icon('search') }} {{ _('Search & tags') }}</button>
-      {# Each opens its library in the page; /protocol in a page opens the drawer to insert one. #}
-      {% for key, lib in libraries.items() %}
-        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
-      {% endfor %}
-    </nav>
+    <form class="notebook-search-row" id="nb-search-form" role="search" title="{{ _('Type to narrow the pages here; Enter searches inside them') }}">
+      {{ icon('search', 'notebook-search-icon') }}
+      <input id="notebook-page-filter" type="search" placeholder="{{ _('Find a page…') }}" autocomplete="off" aria-label="{{ _('Search the notebook') }}">
+    </form>
 
     <div class="nb-side-scroll">
       {# Starred pages, in your order: drag one to reorder, or a page here to star it. #}
@@ -153,7 +153,31 @@
         </details>
       {% endif %}
     </div>
+
+    {# The day's log and the lab's libraries, always at the foot. Each opens in
+       the page; /protocol in a page opens the drawer to insert one. #}
+    <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
+      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
+      {% for key, lib in libraries.items() %}
+        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
+      {% endfor %}
+    </nav>
   </aside>
+  {# On a wider window it is docked beside the scrolling page, from below the
+     tabs to the bottom, so it never scrolls with the page (notebook.css). #}
+  <script nonce="{{ csp_nonce() }}">
+    (function () {
+      var side = document.getElementById('nb-sidebar'), home = side.parentNode, after = side.nextSibling;
+      var dock = document.querySelector('.shell-main');
+      var wide = window.matchMedia('(min-width: 768px)');
+      function place() {
+        if (wide.matches && dock) { side.classList.add('is-docked'); dock.appendChild(side); }
+        else if (side.parentNode !== home) { side.classList.remove('is-docked'); home.insertBefore(side, after); }
+      }
+      place();
+      if (wide.addEventListener) wide.addEventListener('change', place);
+    })();
+  </script>
 
   <div class="notebook-main">
     <div class="nb-side-show">
@@ -192,7 +216,7 @@
             <span class="nb-crumb-sep">/</span><span class="nb-crumb-here" id="nb-crumb-here">{{ p.title if p.title and p.title != 'Untitled page' else _('Untitled page') }}</span>
           </nav>
           <div class="nb-page-tools">
-            <div class="nb-presence" id="nb-presence" aria-label="{{ _('Also here') }}"></div>
+            <div class="nb-presence" id="nb-presence" role="group" aria-label="{{ _('Also here') }}"></div>
             <span id="page-saved-state" class="page-saved-state" aria-live="polite"></span>
             <button type="button" class="nb-tool nb-star{% if p.favorite %} is-on{% endif %}" data-star="{{ p.id }}" aria-pressed="{{ 'true' if p.favorite else 'false' }}" title="{{ _('Favorite') }}" aria-label="{{ _('Favorite') }}">{{ icon('star') }}</button>
             {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="{{ _('Share with lab mates') }}">{{ icon('users') }}<span>{% if p.shared %}{{ _('Shared') }}{% else %}{{ _('Share') }}{% endif %}</span></button>{% endif %}
@@ -330,8 +354,6 @@
           {% endif %}
           <h1 class="nb-topic-title">{{ tv.title|tr }}</h1>
           <div class="nb-topic-tools">
-            {% if not tv.inbox %}<button type="button" class="btn" data-topic-new-sub="{{ tv.id }}">{{ icon('folder-plus') }} {{ _('New topic inside') }}</button>{% endif %}
-            <button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>
             <button type="button" class="btn nb-icon-only" data-topic-menu="{{ tv.id }}"{% if tv.inbox %} data-inbox{% endif %} aria-haspopup="true" title="{{ _('More') }}" aria-label="{{ _('More') }}">{{ icon('ellipsis') }}</button>
           </div>
         </header>
@@ -377,10 +399,6 @@
         <header class="nb-topic-head">
           <span class="nb-topic-icon">{{ icon('notebook') }}</span>
           <h1 class="nb-topic-title">{{ _('%(name)s’s notebook', name=me.name) }}</h1>
-          <div class="nb-topic-tools">
-            <a class="btn" href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _("Today's log") }}</a>
-            <button type="button" class="btn btn-primary" data-new-page-kind="">{{ icon('plus') }} {{ _('New page') }}</button>
-          </div>
         </header>
         {% if home.favorites %}
           <h2 class="nb-lib-label">{{ icon('star') }} {{ _('Favorites') }}</h2>
@@ -506,6 +524,7 @@
   'starterTitles': starters | map(attribute='title') | list,
   'templateGroups': groups_api.choices(),
   'labZone': lab_zone,
+  'shorts': shorts,
   'library': library,
 } | tojson }}</script>
 

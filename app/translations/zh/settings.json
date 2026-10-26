@@ -224,7 +224,6 @@
   "Devices & copies": "设备与副本",
   "No setting matches.": "没有匹配的设置。",
   "joined %(date)s": "%(date)s 加入",
-  "Shown on your records in tables. Up to 5 letters.": "显示在表格中你的记录上，最多 5 个字符。",
   "Where reminders and password resets are sent.": "提醒和重置密码的邮件发到这里。",
   "Job": "职位",
   "e.g. PhD Year 3": "例如：博士三年级",
@@ -426,5 +425,6 @@
   "By place": "按位置",
   "Home view": "首页视图",
   "Design gallery": "设计样例",
-  "Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.": "应用里的每种控件、对话框、菜单和标签都在这一页上：用来检查外观上的改动。"
+  "Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.": "应用里的每种控件、对话框、菜单和标签都在这一页上：用来检查外观上的改动。",
+  "On your round badge and your records in tables. Up to 5 letters.": "显示在你的圆形头像和表格中你的记录上，最多 5 个字符。"
 }

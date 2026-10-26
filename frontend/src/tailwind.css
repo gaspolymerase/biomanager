@@ -116,10 +116,13 @@
   --color-brand-400: #3EB8A4;
   --color-brand-500: #1FA890;
   --color-brand-600: #17A38F;
-  --color-brand-700: #0F8577;
+  --color-brand-700: #0B7468;   /* the accent as text and links: 4.5:1 on the greys */
   --color-brand-800: #0B6A5F;
   --color-brand-900: #09524A;
   --color-brand-950: #05332E;
+  /* Text on a solid accent (today's date, a chosen day): white here, near-black in dark mode, where the accent is light.
+     No utility uses it, so Tailwind leaves it out: write var(--color-on-brand, #fff). */
+  --color-on-brand:  #FFFFFF;
 
   /* --- Neutrals: Apple's system grays -----------------------------------
      Kept under the existing `sand-*` names so every component picks the new
@@ -131,7 +134,7 @@
   --color-sand-300: #D1D1D6;   /* systemGray4 */
   --color-sand-400: #C7C7CC;   /* systemGray3 */
   --color-sand-500: #8E8E93;   /* systemGray  */
-  --color-sand-600: #6E6E73;   /* secondaryLabel */
+  --color-sand-600: #66666B;   /* secondaryLabel, darkened to 4.5:1 on every grey here */
   --color-sand-700: #48484A;
   --color-sand-800: #2C2C2E;
   --color-sand-900: #1D1D1F;   /* label */
@@ -153,6 +156,7 @@
   --color-info-50:    #E8F1FF;
   --color-info-200:   #BAD6FF;
   --color-info-600:   #007AFF;
+  --color-info-700:   #0060C9;   /* blue as text, on its tint */
 
   /* --- Surfaces ---------------------------------------------------------- */
   --color-canvas:   #EEEFF1;   /* window background behind content */
@@ -161,7 +165,7 @@
   --color-hairline: #D2D2D7;   /* separator */
   --color-ink:      #1D1D1F;
   --color-ink-soft: #48484A;
-  --color-muted:    #6E6E73;
+  --color-muted:    #66666B;   /* 4.5:1 or more on the canvas, the recess and grey controls */
 
   /* Translucent materials (Liquid Glass). Glass is for what you steer with
      (the sidebar, the top row, page actions, menus, toasts), never for
@@ -290,7 +294,7 @@
     --color-sand-300: #48484A;
     --color-sand-400: #636366;
     --color-sand-500: #8E8E93;
-    --color-sand-600: #98989D;
+    --color-sand-600: #A4A4A9;
     --color-sand-700: #C7C7CC;
     --color-sand-800: #E5E5EA;
     --color-sand-900: #F5F5F7;
@@ -302,15 +306,17 @@
     --color-hairline: #3A3A3C;
     --color-ink:      #F5F5F7;
     --color-ink-soft: #C7C7CC;
-    --color-muted:    #98989D;
+    --color-muted:    #A4A4A9;
 
     --color-brand-600: #2FC2A8;
-    --color-brand-700: #24A68F;
+    --color-on-brand:  #0A1F1B;
+    --color-brand-700: #31BDA3;
     --color-brand-50:  #10312C;
     --color-brand-100: #123B34;
     --color-brand-200: #17544A;
 
     --color-info-600:   #0A84FF;
+    --color-info-700:   #409CFF;
     --color-ok-600:     #30D158;
     --color-warn-600:   #FF9F0A;
     --color-danger-600: #FF453A;
@@ -798,7 +804,7 @@
     box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
   }
   .seg-item:has(> input:focus-visible) { box-shadow: var(--focus-ring); }
-  .seg-count { @apply ml-0.5 text-[11px] font-semibold text-sand-400; }
+  .seg-count { @apply ml-0.5 text-[11px] font-semibold text-muted; }
   .seg-item.is-active .seg-count { @apply text-brand-600/70; }
 
   /* --- Flash messages --------------------------------------------------- */
@@ -1370,7 +1376,10 @@
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
   }
+  /* A short name of three to five letters (THX) is a pill: a circle holds two. */
+  .owner-badge:is([data-len="3"], [data-len="4"], [data-len="5"]) { @apply w-auto min-w-[22px] px-[5px] tracking-normal; }
   .owner-badge-lg { @apply size-7 text-[11px]; }
+  .owner-badge-lg:is([data-len="3"], [data-len="4"], [data-len="5"]) { @apply w-auto min-w-7 px-1.5; }
   .owner-cell { @apply inline-flex min-w-0 items-center gap-1.5; }
   .owner-cell-name { @apply truncate text-[12px] text-ink-soft; }
 }
@@ -1723,7 +1732,7 @@
     @apply bg-ok-600;
   }
   .dt-status[data-status="ordered"], .dt-status[data-status="in_progress"],
-  .dt-status[data-status="requested"] { @apply bg-info-50 text-info-600; }
+  .dt-status[data-status="requested"] { @apply bg-info-50 text-info-700; }
   .dt-status[data-status="ordered"]::before, .dt-status[data-status="in_progress"]::before,
   .dt-status[data-status="requested"]::before { @apply bg-info-600; }
 
@@ -1836,8 +1845,8 @@
     @apply bg-surface font-semibold text-ink;
     box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.12);
   }
-  .dt-chip-count { @apply text-[11px] font-semibold tabular-nums text-sand-400; }
-  .dt-chip[aria-pressed="true"] .dt-chip-count { @apply text-brand-600; }
+  .dt-chip-count { @apply text-[11px] font-semibold tabular-nums text-muted; }
+  .dt-chip[aria-pressed="true"] .dt-chip-count { @apply text-brand-700; }
 
   /* --- Popover menu (Columns, Sort) ------------------------------------ */
 
@@ -1900,9 +1909,9 @@
   .sheet-table tbody td { @apply h-8 bg-surface px-1 py-0; }
   .sheet-table tbody tr:hover td { @apply bg-sand-50; }
   .sheet-table tbody tr.is-selected td { @apply bg-brand-50; }
-  .sheet-table tbody tr.is-inactive td { @apply text-sand-400; }
-  .sheet-table tbody tr.is-inactive :is(input, select) { @apply text-sand-400; }
-  .sheet-table tbody tr.is-inactive .cell-text { @apply text-sand-400; }
+  .sheet-table tbody tr.is-inactive td { @apply text-muted; }
+  .sheet-table tbody tr.is-inactive :is(input, select) { @apply text-muted; }
+  .sheet-table tbody tr.is-inactive .cell-text { @apply text-muted; }
 
   /* Pinned columns: the checkbox and ID on the left, actions on the right. */
   .sheet-pin { @apply sticky z-10; }
@@ -1981,6 +1990,7 @@
   .sheet-table .cell-text.status-pill.is-empty { @apply bg-transparent; }
   .sheet-table .cell-text.ident { @apply font-mono text-[12px]; }
   .sheet-table .cell-text.from-colony.is-placeholder { @apply text-ink-soft italic; }
+  .sheet-table .cell-text.is-empty.is-placeholder:not(.from-colony) { @apply text-muted; }
   .sheet-table .cell-text.is-date { @apply tabular-nums; }
   .sheet-table .cell-text.status-pill {
     @apply inline-block h-5.5 w-auto max-w-full rounded-full px-2 pr-5 align-middle text-[11px] font-semibold capitalize leading-5;
@@ -2032,7 +2042,7 @@
   .sheet-lock svg { @apply size-3; }
 
   .sheet-num { @apply px-2 text-right font-medium tabular-nums text-ink-soft; }
-  .sheet-unit { @apply ml-0.5 text-[11px] font-normal text-sand-400; }
+  .sheet-unit { @apply ml-0.5 text-[11px] font-normal text-muted; }
   .sheet-empty { @apply text-sand-300; }
 
   /* Pill dropdowns. appearance:none drops the native arrow; a quiet
@@ -2067,7 +2077,7 @@
 
   .status-pill { @apply bg-sand-100 text-muted; }
   .status-pill[data-status="experiment"],
-  .status-pill[data-status="experimental"] { @apply bg-info-50 text-info-600; }
+  .status-pill[data-status="experimental"] { @apply bg-info-50 text-info-700; }
   .status-pill[data-status="breeder"],
   .status-pill[data-status="breeding"] { @apply bg-brand-50 text-brand-700; }
   .status-pill[data-status="geno"] { @apply bg-warn-50 text-warn-700; }
@@ -2077,7 +2087,7 @@
   .status-pill[data-status="sac"] { @apply bg-danger-50 text-danger-700; }
   /* Orders */
   .status-pill[data-status="requested"] { @apply bg-warn-50 text-warn-700; }
-  .status-pill[data-status="ordered"] { @apply bg-info-50 text-info-600; }
+  .status-pill[data-status="ordered"] { @apply bg-info-50 text-info-700; }
   .status-pill[data-status="received"] { @apply bg-ok-50 text-ok-700; }
   .status-pill[data-status="cancelled"] { @apply bg-sand-100 text-sand-500 line-through; }
   .sheet-table select.status-pill:focus,
@@ -2112,9 +2122,9 @@
   .multi-cell-menu label { @apply flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-[13px] text-ink hover:bg-sand-300/40; }
   .row-stock-btn svg { @apply size-3; }
   @media (hover: hover) {
-    .sheet-table tbody tr .sheet-actions { @apply opacity-40 transition-opacity; }
-    .sheet-table tbody tr:hover .sheet-actions,
-    .sheet-table tbody tr:focus-within .sheet-actions { @apply opacity-100; }
+    .sheet-table tbody tr .sheet-actions > :not(.row-stock-btn, .row-stock-link) { @apply opacity-40 transition-opacity; }
+    .sheet-table tbody tr:hover .sheet-actions > *,
+    .sheet-table tbody tr:focus-within .sheet-actions > * { @apply opacity-100; }
   }
   .sheet .row-icon-btn.danger-button:hover { @apply bg-danger-50 text-danger-600; }
 
@@ -2137,7 +2147,7 @@
 
   /* Toolbar save indicator. */
   .sheet-save { @apply max-w-[40ch] truncate text-[12px] text-muted; }
-  .sheet-save[data-state="saving"] { @apply text-sand-400; }
+  .sheet-save[data-state="saving"] { @apply text-muted; }
   .sheet-save[data-state="saved"] { @apply text-ok-700; }
   .sheet-save[data-state="error"] { @apply font-medium text-danger-700; }
 
@@ -2517,7 +2527,7 @@
   .zfish-rack-grid { @apply grid gap-1 overflow-x-auto rounded-xl bg-sand-100 p-2; }
   .zfish-rack-corner { @apply size-full; }
   .zfish-rack-col-label, .zfish-rack-row-label {
-    @apply grid place-items-center text-[11px] font-semibold text-sand-400;
+    @apply grid place-items-center text-[11px] font-semibold text-muted;
   }
   .zfish-rack-cell {
     @apply flex min-h-[52px] flex-col gap-1 rounded-lg border border-dashed border-sand-300
@@ -2683,7 +2693,7 @@
   .biocal-hover-date { @apply text-[12px] text-muted tabular-nums; }
   .biocal-hover-tag { @apply inline-flex items-center gap-1.5 text-[12px] text-muted; }
   .biocal-hover-dot { @apply inline-block size-2 rounded-full; }
-  .biocal-hover-readonly { @apply text-sand-400; }
+  .biocal-hover-readonly { @apply text-muted; }
   .biocal-hover-notes {
     @apply mt-1 whitespace-pre-wrap border-t border-sand-100 pt-2 text-[12px] leading-relaxed text-ink-soft;
   }
@@ -2707,7 +2717,7 @@
   .biocal-list-dot { @apply inline-block size-2 rounded-full; }
   .biocal-list-time { @apply text-[12px] text-muted tabular-nums; }
   .biocal-list-title { @apply truncate font-medium text-ink; }
-  .biocal-list-meta { @apply truncate text-[12px] text-sand-400; }
+  .biocal-list-meta { @apply truncate text-[12px] text-muted; }
 
   .biocal-empty { @apply m-4 empty-state; }
   .biocal-empty code { @apply rounded bg-surface px-1.5 py-0.5 font-mono text-[12px] text-ink; }
@@ -2884,7 +2894,7 @@
   .page-date-input:hover { @apply bg-sand-100; }
   .page-date-input:focus { @apply border-brand-400 bg-surface outline-none; }
   .page-meta-action { @apply btn btn-ghost btn-sm gap-1.5 text-muted; }
-  .page-saved-state { @apply text-[12px] text-sand-400; }
+  .page-saved-state { @apply text-[12px] text-muted; }
 
   .notebook-empty-state {
     @apply mx-auto grid min-h-[60vh] max-w-sm place-content-center justify-items-center gap-3 px-6
@@ -2964,7 +2974,7 @@
   }
   .rack-corner { @apply size-full; }
   .rack-col-label, .rack-row-label {
-    @apply grid place-items-center text-[11px] font-semibold text-sand-400 tabular-nums;
+    @apply grid place-items-center text-[11px] font-semibold text-muted tabular-nums;
   }
   .rack-col-label { @apply h-5; }
   .rack-cell {
@@ -3020,7 +3030,7 @@
   }
   .rack-tile-foot { @apply flex min-w-0 items-baseline gap-1; }
   .rack-tile-sub { @apply min-w-0 truncate text-[11px] text-muted; }
-  .rack-tile-pos { @apply ml-auto shrink-0 font-mono text-[10px] font-medium text-sand-400 tabular-nums; }
+  .rack-tile-pos { @apply ml-auto shrink-0 font-mono text-[10px] font-medium text-muted tabular-nums; }
 
   /* Tone by purpose — the same palette as the status pills. */
   .rack-tile:is([data-tone="breeder"], [data-tone="breeding"], [data-tone="mating"]) { @apply border-brand-200 bg-brand-50; }
@@ -4159,8 +4169,8 @@
 /* TOAST UI hard-codes its blue for today's date circle and a few accents
    that the calendar's theme option does not reach. */
 .biocal-tui .toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date.toastui-calendar-weekday-grid-date-decorator {
-  background-color: var(--color-brand-600);
-  color: #fff;
+  background-color: var(--color-brand-700);
+  color: var(--color-on-brand, #fff);
   font-weight: 600;
 }
 .biocal-tui .toastui-calendar-see-more { color: var(--color-brand-700); }
@@ -4559,7 +4569,7 @@ tr.is-scanned > td:first-child {
   .set-saved { @apply ml-auto shrink-0 text-[12px] font-medium text-brand-700 opacity-0 transition-opacity; }
   .set-saved.is-shown { @apply opacity-100; }
 
-  .set-title { @apply mt-5 mb-1.5 px-1 text-[12px] font-semibold text-sand-500; }
+  .set-title { @apply mt-5 mb-1.5 px-1 text-[12px] font-semibold text-muted; }
   .set-title-row { @apply flex items-center justify-between gap-3; }
   .set-title-row a { @apply text-[12px] font-medium text-brand-700 no-underline; }
   .set-group {
@@ -4645,7 +4655,7 @@ tr.is-scanned > td:first-child {
   /* Tabs inside a pane (People & access), each a #hash. */
   .set-tabs { @apply mb-3 flex flex-wrap gap-1; }
   .set-tabs a { @apply rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted no-underline transition-colors; }
-  .set-tabs a span { @apply ml-0.5 text-[12px] text-sand-400; }
+  .set-tabs a span { @apply ml-0.5 text-[12px] text-muted; }
   .set-tabs a:hover { @apply bg-sand-100 text-ink-soft; }
   .set-tabs a.is-on { @apply bg-brand-50 text-brand-700; }
   .settings.is-ready [data-tabpane]:not(.is-on) { @apply hidden; }

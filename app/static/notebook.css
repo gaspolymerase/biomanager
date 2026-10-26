@@ -13,8 +13,57 @@
 
 /* ---------------------------------------------------------------- sidebar */
 
-.nb-shell .notebook-sidebar { gap: 0; }
-.nb-side-links { display: flex; flex-direction: column; gap: 1px; margin-bottom: 4px; }
+.notebook-sidebar { gap: 0; }
+
+/* One sidebar, as Notion has (the app's folds to its icons: block rail_mode
+   in notebook.html). On a wider window it is docked beside the scrolling
+   page (moved there by the script after it), from below the tabs to the
+   bottom, and the title row (the page's path and tools) starts after it.
+   A phone keeps the list above the page (All pages). */
+@media (min-width: 768px) {
+  body:has(#nb-shell) { --nb-side-w: 264px; }
+  .notebook-shell:not(:has(> .notebook-sidebar)) { grid-template-columns: minmax(0, 1fr); padding-left: var(--nb-side-w); }
+  body.nb-side-is-closed .notebook-shell { padding-left: 0; }
+  .notebook-sidebar.is-docked {
+    position: absolute; top: var(--tabbar-h); bottom: 0; left: 0; z-index: 36;
+    width: var(--nb-side-w); height: auto; padding: 6px 8px 0; overflow: hidden;
+    background: var(--material-sidebar);
+    -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px);
+    box-shadow: inset -0.5px 0 0 var(--color-hairline);
+  }
+  body.nb-side-is-closed .notebook-sidebar.is-docked { display: none; }
+  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) :is(.toolbar, .chrome-edge) { left: var(--nb-side-w); }
+  /* A page is the paper itself, from the title row to the bottom, with no
+     box around it; Home, a topic and the libraries keep their cards on the window. */
+  .nb-shell:has(.notebook-editor) { margin-top: calc(-1 * var(--toolbar-h)); }
+  .nb-shell:has(.notebook-editor) .notebook-main {
+    min-height: calc(100dvh - var(--tabbar-h)); padding-top: var(--toolbar-h); background: var(--color-surface);
+  }
+  .nb-shell .notebook-editor { border-radius: 0; background: transparent; box-shadow: none; }
+  /* The words "Notebook" there would repeat the sidebar's name: a page's
+     path and tools take the row instead (notebook-page.js liftHeader). */
+  body:has(#nb-shell):not(.nb-header-lifted) .toolbar-title { visibility: hidden; }
+}
+
+/* Its top: the notebook's name (its home), New page and hide; then search. */
+.notebook-sidebar-head { display: flex; align-items: center; gap: 2px; margin: 0 0 6px; padding: 0; }
+.nb-side-home {
+  display: flex; flex: 1 1 auto; align-items: center; gap: 8px; min-width: 0; height: 30px; padding: 0 6px;
+  border-radius: 7px; color: var(--color-ink); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.nb-side-home:hover { background: color-mix(in srgb, var(--color-sand-200) 60%, transparent); text-decoration: none; }
+.nb-side-home.is-active { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); }
+.nb-side-home-icon { display: grid; flex: none; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--color-brand-600); color: #fff; }
+.nb-side-home-icon .icon { width: 12px; height: 12px; }
+.nb-side-home-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notebook-sidebar .notebook-search-row { flex: none; margin: 0 0 6px; }
+.notebook-sidebar .notebook-search-row input { height: 30px; }
+
+/* Today and the libraries, pinned at its foot. */
+.nb-side-links {
+  display: flex; flex: none; flex-direction: column; gap: 1px; margin: 0 -8px; padding: 6px 8px 8px;
+  border-top: 1px solid var(--color-hairline);
+}
 .nb-side-links a, .nb-side-links button {
   display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 0; border-radius: 6px; background: none;
   color: var(--color-ink-soft); font: inherit; font-size: 13px; text-decoration: none; text-align: left; cursor: pointer;
@@ -57,7 +106,10 @@
 .nb-topic-new[hidden] { display: none; }
 .nb-topic-new .icon { flex: none; width: 13px; height: 13px; color: var(--color-sand-400); }
 .nb-topic-new input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: 13px; outline: none; }
-.tab-count { flex: none; color: var(--color-sand-400); font-size: 11px; font-weight: 500; }
+.nb-tab-fold { display: grid; flex: none; place-items: center; width: 16px; height: 16px; margin: 0 -2px; padding: 0; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
+.nb-tab-fold:hover { background: color-mix(in srgb, var(--color-sand-300) 60%, transparent); }
+.nb-tab-fold:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 1px; }
+.tab-count { flex: none; color: var(--color-muted); font-size: 11px; font-weight: 500; }
 .notebook-tab > summary:hover .tab-count, .notebook-tab > summary:focus-within .tab-count { display: none; }
 .tab-rename {
   flex: 1; min-width: 0; padding: 1px 5px; border: 1px solid var(--color-brand-400); border-radius: 5px;
@@ -67,8 +119,8 @@
 .nb-head-menu.nb-topic-menu { width: 230px; }
 .nb-head-item.is-danger { color: var(--color-danger-600); }
 .nb-head-item.is-danger > .icon { color: var(--color-danger-600); }
-.nb-count { font-weight: 500; color: var(--color-sand-400); letter-spacing: 0; }
-.nb-side-owner { margin-left: auto; padding-left: 6px; color: var(--color-sand-400); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.nb-count { font-weight: 500; color: var(--color-muted); letter-spacing: 0; }
+.nb-side-owner { margin-left: auto; padding-left: 6px; color: var(--color-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
 .nb-status-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; margin-left: auto; background: var(--color-sand-300); }
 .nb-side-owner + .nb-status-dot { margin-left: 6px; }
 .nb-status-dot[data-status="running"] { background: var(--color-ok-600); }
@@ -79,7 +131,7 @@
   display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border: 1px solid var(--color-hairline); border-radius: 999px;
   background: var(--color-surface); color: var(--color-ink-soft); font: inherit; font-size: 12px; cursor: pointer; line-height: 18px;
 }
-.nb-tag span { color: var(--color-sand-400); }
+.nb-tag span { color: var(--color-muted); }
 .nb-tag:hover { border-color: var(--color-brand-400); color: var(--color-brand-700); }
 .nb-tag.is-chip { cursor: default; background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); border-color: transparent; color: var(--color-brand-700); }
 .nb-tag.is-chip button { border: 0; background: none; padding: 0 0 0 2px; color: inherit; cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.6; }
@@ -139,7 +191,7 @@
 .nb-head-item[hidden] { display: none; }
 .nb-head-item > .icon { flex: none; width: 14px; height: 14px; color: var(--color-sand-400); }
 .nb-head-item > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nb-head-item > small, .nb-head-item > i { flex: none; color: var(--color-sand-400); font-size: 12px; font-style: normal; }
+.nb-head-item > small, .nb-head-item > i { flex: none; color: var(--color-muted); font-size: 12px; font-style: normal; }
 .nb-head-item:hover, .nb-head-item.is-active { background: var(--color-brand-600); color: #fff; }
 .nb-head-item:is(:hover, .is-active) :is(.icon, small, i) { color: #fff !important; }
 .nb-head-item.is-on { font-weight: 600; }
@@ -263,6 +315,9 @@ button.nb-kind-icon:hover, button.nb-kind-icon[aria-expanded="true"] { backgroun
 .nb-presence .nb-avatar:first-child { margin-left: 0; }
 .nb-avatar { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
 .nb-avatar.is-lg { width: 40px; height: 40px; font-size: 15px; }
+/* A short name of three to five letters (THX) is a pill: a circle holds two. */
+.nb-avatar.is-wide { width: auto; min-width: 24px; padding: 0 5px; border-radius: 999px; letter-spacing: 0; }
+.nb-avatar.is-lg.is-wide { min-width: 40px; padding: 0 9px; }
 .page-saved-state.is-error { color: var(--color-danger-600); }
 .nb-more { position: relative; }
 .nb-more-menu {
@@ -451,6 +506,7 @@ a.nb-starter { text-decoration: none; }
 .nb-comment-head time { color: var(--color-muted); font-size: 11px; }
 .nb-comment-head .nb-icon-btn { margin-left: auto; }
 .nb-comment-head .nb-avatar { width: 20px; height: 20px; font-size: 10px; }
+.nb-comment-head .nb-avatar.is-wide { width: auto; min-width: 20px; }
 .nb-comment-body { margin: 3px 0 0 26px; line-height: 1.45; }
 .nb-mention { color: var(--color-brand-700); font-weight: 600; }
 .nb-reply { display: flex; gap: 6px; align-items: flex-start; margin: 8px 0 4px 26px; position: relative; }
@@ -703,6 +759,9 @@ a.nb-starter { text-decoration: none; }
 
 /* Favorites: the starred pages, or (none yet) a line saying how. */
 .nb-fav-hint { display: none; margin: 0 0 2px; padding: 5px 8px; border-radius: 6px; color: var(--color-muted); font-size: 11px; }
+/* No favorites yet: nothing shows, until a page is dragged (to drop it here). */
+.nb-favorites.is-empty { display: none; }
+body.nb-dragging-page .nb-favorites.is-empty { display: block; }
 .nb-favorites.is-empty .nb-fav-hint { display: block; }
 body.nb-dragging-page .nb-favorites.is-empty .nb-fav-hint { outline: 1px dashed var(--color-sand-300); outline-offset: -1px; }
 

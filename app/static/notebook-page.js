@@ -111,6 +111,13 @@
     var parts = String(name || '?').trim().split(/\s+/);
     return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
   }
+  // A person's round badge: the short name they chose (THX), else their initials.
+  function avatar(username, name, extra) {
+    var short = (DATA.shorts || {})[username];
+    var text = short || initials(name);
+    return '<span class="nb-avatar' + (extra ? ' ' + extra : '') + (text.length > 2 ? ' is-wide' : '') +
+      '" style="background:' + colorFor(username) + '">' + esc(text) + '</span>';
+  }
   var COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#c98500', '#d55181', '#008300', '#4a3aa7', '#e34948'];
   function colorFor(name) {
     var h = 0;
@@ -391,7 +398,7 @@
           '<button class="btn btn-primary" type="submit">' + t('Share') + '</button></form>' +
           '<ul class="nb-list">' + (shared.length ? shared.map(function (s) {
             var avatar = s.group ? '<span class="nb-avatar" style="background:#0d9488">' + icon('users') + '</span>'
-              : '<span class="nb-avatar" style="background:' + colorFor(s.username) + '">' + esc(initials(s.name)) + '</span>';
+              : avatar(s.username, s.name);
             return '<li class="nb-list-row">' + avatar + '<span class="nb-grow">' + esc(s.name) + '</span>' +
               '<select data-share-role="' + esc(s.username) + '"><option value="edit"' + (s.role === 'edit' ? ' selected' : '') + '>' + t('can edit') + '</option><option value="view"' + (s.role === 'view' ? ' selected' : '') + '>' + t('can view') + '</option></select>' +
               '<button type="button" class="nb-icon-btn" data-share-remove="' + esc(s.username) + '" aria-label="' + t('Stop sharing') + '">' + icon('close') + '</button></li>';
@@ -503,7 +510,7 @@
   }
   function commentHtml(c, isReply) {
     return '<div class="nb-comment' + (isReply ? ' is-reply' : '') + '" id="comment-' + c.id + '">' +
-      '<div class="nb-comment-head"><span class="nb-avatar" style="background:' + colorFor(c.author) + '">' + esc(initials(c.author_name)) + '</span>' +
+      '<div class="nb-comment-head">' + avatar(c.author, c.author_name) +
       '<b>' + esc(c.author_name) + '</b><time>' + esc(timeText(c.created_at)) + (c.updated_at ? ' · ' + t('edited') : '') + '</time>' +
       (c.can_delete ? '<button type="button" class="nb-icon-btn" data-comment-delete="' + c.id + '" aria-label="' + t('Delete comment') + '">' + icon('trash') + '</button>' : '') + '</div>' +
       '<div class="nb-comment-body">' + mentionize(c.body) + '</div></div>';
@@ -687,7 +694,7 @@
             var head = day !== lastDay ? '<li class="nb-list-day">' + esc((when(v.saved_at) || new Date()).toLocaleDateString(LOC, inLab({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))) + '</li>' : '';
             lastDay = day;
             var label = v.kind === 'release' ? '<b class="nb-pill">v' + v.number + '</b> ' : v.kind === 'manual' ? '<b class="nb-pill is-quiet">' + t('saved') + '</b> ' : v.kind === 'restore' ? '<b class="nb-pill is-quiet">' + t('restored') + '</b> ' : '';
-            return head + '<li class="nb-list-row nb-version" data-version="' + v.id + '"><span class="nb-avatar" style="background:' + colorFor(v.saved_by) + '">' + esc(initials(v.saved_by_name)) + '</span>' +
+            return head + '<li class="nb-list-row nb-version" data-version="' + v.id + '">' + avatar(v.saved_by, v.saved_by_name) +
               '<span class="nb-grow"><span>' + label + esc(v.label ? t(v.label) : (i === 0 ? tc('notebook', 'Latest') : t('Edits'))) + '</span><small>' + esc(v.saved_by_name) + ' · ' + esc((when(v.saved_at) || new Date()).toLocaleTimeString(LOC, inLab({ hour: '2-digit', minute: '2-digit' }))) + '</small></span></li>';
           }).join('') + '</ul><div id="nb-version-view"></div>';
         var save = $('#nb-save-version', box);
@@ -782,7 +789,7 @@
           var next = s.next;
           return '<article class="nb-series" data-series="' + s.id + '">' +
             '<header><b>' + esc(s.name) + '</b><small>' + esc([s.weekday_name ? t(s.weekday_name + 's') : '', s.time, s.location].filter(Boolean).join(' · ')) + '</small></header>' +
-            (next ? '<div class="nb-next"><span class="nb-avatar is-lg" style="background:' + colorFor(next.presenter) + '">' + esc(initials(next.name)) + '</span><div><small>' + t('Next to present') + (next.date ? ' · ' + esc(new Date(next.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'short', day: 'numeric', month: 'short' })) : '') + '</small><b>' + esc(next.name) + '</b></div></div>' : '<p class="nb-muted">' + t('No one in the rotation yet.') + '</p>') +
+            (next ? '<div class="nb-next">' + avatar(next.presenter, next.name, 'is-lg') + '<div><small>' + t('Next to present') + (next.date ? ' · ' + esc(new Date(next.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'short', day: 'numeric', month: 'short' })) : '') + '</small><b>' + esc(next.name) + '</b></div></div>' : '<p class="nb-muted">' + t('No one in the rotation yet.') + '</p>') +
             (s.upcoming.length > 1 ? '<ol class="nb-rotation">' + s.upcoming.slice(1).map(function (u) { return '<li><span>' + esc(u.name) + '</span><small>' + esc(u.date ? new Date(u.date + 'T12:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }) : '') + '</small></li>'; }).join('') + '</ol>' : '') +
             '<div class="nb-field-row">' +
             '<button type="button" class="btn btn-primary" data-note="' + s.id + '">' + icon('note') + ' ' + t('Notes for the next meeting') + '</button>' +
@@ -1637,7 +1644,7 @@
     // Your own other tabs are not company.
     peers = peers.filter(function (p) { return p.username !== me.username; });
     box.innerHTML = peers.map(function (p) {
-      return '<span class="nb-avatar" style="background:' + colorFor(p.username) + '" title="' + esc(t('%(name)s is here', { name: p.name })) + '">' + esc(initials(p.name)) + '</span>';
+      return avatar(p.username, p.name).replace('<span ', '<span title="' + esc(t('%(name)s is here', { name: p.name })) + '" ');
     }).join('');
     box.title = peers.length ? t(peers.length > 1 ? '%(names)s are on this page' : '%(names)s is on this page', { names: peers.map(function (p) { return p.name; }).join(', ') }) : '';
   }

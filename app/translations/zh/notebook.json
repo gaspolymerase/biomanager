@@ -235,5 +235,7 @@
   "%(name)s’s notebook": "%(name)s 的实验记录本",
   "Recently edited": "最近编辑",
   "Last edited": "编辑时间",
-  "Your order": "自定顺序"
+  "Your order": "自定顺序",
+  "Find a page…": "查找页面…",
+  "Type to narrow the pages here; Enter searches inside them": "输入可筛选这里的页面；按回车在页面内容里搜索"
 }

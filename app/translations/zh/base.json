@@ -362,5 +362,6 @@
   "Their change stays; yours was dropped.": "保留他们的更改；你的已放弃。",
   "Set it by hand: your offline change was dropped.": "请手动设置：你的离线更改已放弃。",
   "Only the BioManager phone app asks for this.": "只有 BioManager 手机应用会请求这个。",
-  "A mouse read from the API carries its version. Send it back with a change (\"version\": 17) and a mouse someone changed meanwhile is refused with 409 instead of overwritten.": "从 API 读取的小鼠带有版本号。修改时把它一起发回（\"version\": 17），期间被别人改过的小鼠会以 409 拒绝，而不会被覆盖。"
+  "A mouse read from the API carries its version. Send it back with a change (\"version\": 17) and a mouse someone changed meanwhile is refused with 409 instead of overwritten.": "从 API 读取的小鼠带有版本号。修改时把它一起发回（\"version\": 17），期间被别人改过的小鼠会以 409 拒绝，而不会被覆盖。",
+  "BioManager home": "BioManager 首页"
 }

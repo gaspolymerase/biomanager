@@ -50,6 +50,16 @@ class SavedAsYouChangeTests(AppTestCase):
         self.assertEqual(tuple(row("select display_name, short_name, default_landing from users where username=?", who)),
                          ("Rosalind Franklin", "RF", "notebook"))
 
+    def test_your_badge_shows_your_short_name(self):
+        # The round badge (top right, and on your records) says what you chose
+        # as your short name; without one, your initials.
+        who = make_user(uniq("badge"))
+        c = client_for(who)
+        self.autosave(c, "/settings", {"action": "profile", "display_name": "Tang Hao Xuan", "short_name": ""})
+        self.assertRegex(self.get_ok(c, "/settings"), r'class="owner-badge"[^>]*data-len="2"[^>]*>TX</span>')
+        self.autosave(c, "/settings", {"action": "profile", "display_name": "Tang Hao Xuan", "short_name": "THX"})
+        self.assertRegex(self.get_ok(c, "/settings"), r'class="owner-badge"[^>]*data-len="3"[^>]*>THX</span>')
+
     def test_notifications_save_in_the_background(self):
         who = make_user(uniq("noti"))
         r = self.autosave(client_for(who), "/settings", {"action": "notifications", "notify_orders": "1"})
