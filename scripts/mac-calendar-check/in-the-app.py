@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -79,7 +80,14 @@ if len(held) != setup["count"]:
 
 status, text = call("/calendar/mac", body={"action": "stop"})
 print("stop:", status, json.loads(text).get("setup"))
-with store.pool():
-    if store.find(made[0]["id"], mine["id"], "BioManager") is not None:
-        fail("Stop left the calendar on the Mac")
+# A store opened before Stop still has the calendar cached: ask a new one,
+# and give the Mac's calendar service a moment.
+for _ in range(10):
+    fresh = EventKitStore()
+    with fresh.pool():
+        if fresh.find(made[0]["id"], mine["id"], "BioManager") is None:
+            break
+    time.sleep(1)
+else:
+    fail("Stop left the calendar on the Mac")
 print("Mac Calendar: OK")

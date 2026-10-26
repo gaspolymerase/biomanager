@@ -325,6 +325,28 @@ class TheAccountsAsTheMacNamesThem(AppTestCase):
             self.assertEqual(st.accounts()[0]["title"], "我的 Mac")
 
 
+class AMomentIsKeptAsOne(unittest.TestCase):
+    """A timed event goes in with UTC as its time zone (macOS 14 returns one
+    across the clocks' change an hour longer in the Mac's own); an all-day
+    one keeps its days, with no zone."""
+
+    def added(self, e):
+        st = mac_calendar.EventKitStore.__new__(mac_calendar.EventKitStore)
+        st.ek, st.fd, st.store = mock.MagicMock(), mock.MagicMock(), mock.MagicMock()
+        st.store.saveEvent_span_commit_error_.return_value = (True, None)
+        st.add("cal", e)
+        return st, st.ek.EKEvent.eventWithEventStore_.return_value
+
+    def test_timed_in_utc(self):
+        st, ev = self.added(Entry("Perfuse", False, 1793509200, 1793541600, ""))
+        st.fd.NSTimeZone.timeZoneWithName_.assert_called_with("UTC")
+        ev.setTimeZone_.assert_called_once_with(st.fd.NSTimeZone.timeZoneWithName_.return_value)
+
+    def test_all_day_without_a_zone(self):
+        _st, ev = self.added(Entry("Wean", True, date(2026, 11, 1), date(2026, 11, 1), ""))
+        ev.setTimeZone_.assert_not_called()
+
+
 class ThePackagedMacApp(unittest.TestCase):
     """macOS stops an app that asks for the calendars without saying why,
     and a signed app may not ask without the entitlement."""

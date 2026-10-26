@@ -556,6 +556,11 @@ class EventKitStore:
             ev.setStartDate_(self._date(e.start))
             ev.setEndDate_(self._date(e.end, end_of_day=True))
         else:
+            # A moment, kept as one. In the Mac's own zone, macOS 14 gives
+            # an event across the night the clocks change back an hour
+            # longer than it took (scripts/mac-calendar-check/live.py);
+            # the Mac's Calendar still shows it in the Mac's time.
+            ev.setTimeZone_(self.fd.NSTimeZone.timeZoneWithName_("UTC"))
             ev.setStartDate_(self.fd.NSDate.dateWithTimeIntervalSince1970_(e.start))
             ev.setEndDate_(self.fd.NSDate.dateWithTimeIntervalSince1970_(e.end))
         ok, error = self.store.saveEvent_span_commit_error_(ev, self.ek.EKSpanThisEvent, False, None)

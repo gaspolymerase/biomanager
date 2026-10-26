@@ -88,32 +88,3 @@ jobs:
           cat step.sh
           bash -e step.sh
 
-  # TEMPORARY: the clocks-change round trip, the Mac set to Los Angeles.
-  experiment:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-14, macos-15]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-      - run: python -m pip install -r requirements.txt
-      - run: |
-          PY=$(python -c 'import os, sys; print(os.path.realpath(sys.executable))')
-          sudo /usr/bin/python3 scripts/mac-calendar-check/grant.py "$PY" $(scripts/mac-calendar-check/chain.sh) /bin/bash
-      - name: TZ for this program only (the Mac on UTC)
-        env: { TZ: America/Los_Angeles }
-        run: python scripts/mac-calendar-check/_experiment.py
-      - name: The whole Mac in Los Angeles
-        if: ${{ !cancelled() }}
-        run: |
-          sudo systemsetup -settimezone America/Los_Angeles || sudo ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
-          sleep 3
-          python scripts/mac-calendar-check/_experiment.py
-      - name: live.py, the whole Mac in Los Angeles
-        if: ${{ !cancelled() }}
-        run: python scripts/mac-calendar-check/live.py

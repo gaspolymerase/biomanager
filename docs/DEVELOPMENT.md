@@ -1835,6 +1835,11 @@ stops an app that asks without them) and
 
 EventKit names the Mac's own account (`EKSourceTypeLocal`) "Default";
 `EventKitStore._account` shows it as On My Mac, as the Mac's Calendar does.
+A timed event goes in with UTC as its time zone: in the Mac's own zone,
+macOS 14 hands back an event that runs across the night the clocks go back
+an hour longer than it went in (15 doesn't), so `plan()` would replace it
+at every update and the Mac would show it ending an hour late. Calendar
+still shows it in the Mac's time. All-day events have no zone.
 
 The stand-in can't show how EventKit keeps dates, so the real one is
 checked on GitHub's Macs. `scripts/mac-calendar-check/live.py` runs
