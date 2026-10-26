@@ -30,6 +30,13 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.3.1": {
+        "fixed": [
+            "On macOS 14, an event in the **Mac Calendar** that runs across the night the clocks go back no longer shows ending an hour late.",
+            "The **Mac Calendar** calls the Mac's own account **On My Mac**.",
+            "On Linux, when the window can't open, BioManager opens in your web browser instead.",
+        ],
+    },
     "2.3.0": {
         "new": [
             "A new look, the same everywhere: every dialog has **Cancel** beside one main button, and on a phone it slides up from the bottom.",
