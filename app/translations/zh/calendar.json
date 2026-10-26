@@ -175,5 +175,6 @@
   "<b>iPhone:</b> choose iCloud.": "<b>iPhone：</b>选择 iCloud。",
   "<b>Outlook:</b> add the account in System Settings → Internet Accounts, then choose it.": "<b>Outlook：</b>在“系统设置 → 互联网账户”中添加该账户，然后选择它。",
   "The calendar is BioManager’s alone: anything else put in it is taken out at the next update.": "这个日历只属于 BioManager：放进去的其他内容会在下次更新时被移除。",
-  "Allow access": "允许访问"
+  "Allow access": "允许访问",
+  "On My Mac": "我的 Mac"
 }

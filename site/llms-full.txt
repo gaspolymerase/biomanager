@@ -12,7 +12,7 @@ Everything BioManager does, and how to move a lab into it: from a first launch t
 
 Six steps, in order. New here, or coming from spreadsheets? Read [Coming from Excel](https://biomanager.org/guide/coming-from-excel) first: it takes ten minutes and saves you days.
 
-1. [**Install BioManager**: Download, unzip and open it. On a Mac, right-click → Open the first time. (2 min)](https://biomanager.org/guide/install)
+1. [**Install BioManager**: Download, unzip and open it. On a Mac, the first time: System Settings → Privacy & Security → Open Anyway. (2 min)](https://biomanager.org/guide/install)
 
 2. [**Set up your lab**: Create the first account, which is the admin, and tick what your lab keeps. (3 min)](https://biomanager.org/guide/install#first-run)
 
@@ -87,10 +87,10 @@ Install the desktop app, open it the first time, and set up your lab.
 
 #### Get it
 
-| macOS | [Download](https://biomanager.org/download), unzip, drag **BioManager** into Applications. The first time, **right-click it → Open**, then Open. |
+| macOS | [Download](https://biomanager.org/download), unzip, drag **BioManager** into Applications. The first time, macOS won't open it: choose **Done**, then **System Settings → Privacy & Security**, scroll down and choose **Open Anyway**. Before macOS 15, **right-click it → Open** is enough. |
 |---|---|
 | Windows | Extract the zip, open the **BioManager** folder, run **BioManager.exe**. At the warning choose **More info → Run anyway**. Its window uses Microsoft Edge WebView2, which Windows 11 has; on a Windows 10 PC without it, BioManager offers to download it from Microsoft and opens in your web browser meanwhile. Install it, then open BioManager again for its own window. |
-| Linux | Mark `BioManager-Linux.AppImage` executable (right-click → Properties, or `chmod +x`) and open it. |
+| Linux | Mark `BioManager-Linux.AppImage` executable (right-click → Properties, or `chmod +x`) and open it. On a computer without the graphics libraries its window needs, BioManager opens in your web browser instead; leave its message open while you use it. |
 | Updates | The desktop app checks for a new version once a day and offers it, with what's new; **BioManager → Check for Updates…** (on Windows and Linux, **Help**) asks now. **Install and Restart** downloads it, checks it, and swaps it in as the app quits; where it can't (the Linux `.tar.gz`, a folder it can't write to), it opens the download to install as above. Your data stays where it is, and before a new version changes it a copy is kept ([Your data](https://biomanager.org/guide/your-data)). Turn the daily check off with **Check for Updates Automatically**. |
 | What's new | After an update, on a desktop or a lab server, the first page you open shows a short **What's new**: what is new, what works differently and what was fixed, with a link to the full notes. **Got it** closes it for good; **Help → What's new** opens it again. |
 | A lab server | Nothing to install: open the address your admin gives you. It opens on your lab's sign-in, with its name and what it keeps; new to the lab, choose **Ask to join**. Setting one up is on [Run it for your lab](https://biomanager.org/server). |
@@ -123,7 +123,7 @@ BioManager then makes those databases, the racks and incubators too, and shows t
 
 #### The app won't open on my Mac
 
-Right-click it and choose **Open**. If macOS says it's damaged, move it to Applications first, then try again.
+Open **System Settings → Privacy & Security**, scroll down to **“BioManager” was blocked** and choose **Open Anyway** (on macOS 14 and earlier, right-clicking it and choosing **Open** does the same). If macOS says it's damaged, move it to Applications first, then try again.
 
 #### Linux: the AppImage does nothing
 
@@ -2116,7 +2116,7 @@ Source: https://biomanager.org/guide/connect-an-ai-assistant
 
 Common problems and their fixes, each also on the page it belongs to.
 
-- **The app won't open on my Mac**: Right-click it and choose **Open**. If macOS says it's damaged, move it to Applications first, then try again. [→ See the page](https://biomanager.org/guide/install)
+- **The app won't open on my Mac**: **System Settings → Privacy & Security**, scroll down, **Open Anyway** (on macOS 14 and earlier, right-click it and choose **Open**). If macOS says it's damaged, move it to Applications first, then try again. [→ See the page](https://biomanager.org/guide/install)
 
 - **Linux: the AppImage does nothing**: Mark it executable. If it still won't start, install `libfuse2`, or use the `.tar.gz` and run `BioManager/BioManager`. [→ See the page](https://biomanager.org/guide/install)
 

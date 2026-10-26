@@ -162,7 +162,8 @@ in CSS was tried and left out: it makes the window-tall frame overflow.
 
 The desktop app's page bridge: pywebview builds `window.pywebview.api` with
 `new Function()` and sends answers back through `eval`, both refused by the
-page's CSP. `BiomanagerShell.desktopCall(name, …args)` (`static/shell.js`)
+page's CSP (the desktop app doesn't log the report of that eval, from its
+own window: `security._the_desktop_window_s_own`). `BiomanagerShell.desktopCall(name, …args)` (`static/shell.js`)
 calls through pywebview's channel underneath, and an answer the page needs
 comes back from Python by running the page's own function natively
 (`desktop_menu._js`, e.g. `window.bmTextSize`). The Go menu's
@@ -1831,6 +1832,32 @@ needs `NSCalendarsFullAccessUsageDescription` and
 stops an app that asks without them) and
 `com.apple.security.personal-information.calendars` in
 `desktop/entitlements.plist` for the hardened runtime.
+
+EventKit names the Mac's own account (`EKSourceTypeLocal`) "Default";
+`EventKitStore._account` shows it as On My Mac, as the Mac's Calendar does.
+A timed event goes in with UTC as its time zone: in the Mac's own zone,
+macOS 14 hands back an event that runs across the night the clocks go back
+an hour longer than it went in (15 doesn't), so `plan()` would replace it
+at every update and the Mac would show it ending an hour late. Calendar
+still shows it in the Mac's time. All-day events have no zone.
+
+The stand-in can't show how EventKit keeps dates, so the real one is
+checked on GitHub's Macs. `scripts/mac-calendar-check/live.py` runs
+`TheStore` (an `Entry` of every kind, a multi-day event, Chinese, notes with
+Windows line ends, two the same, the night the clocks change, read back by
+a fresh store and matched by `plan()` with nothing to add or remove: else
+every update would empty and refill the calendar) and `TheApp` (start in On
+My Mac, an update with nothing new changes nothing, a deleted item and one
+put there by hand go, the whole lab, stop) against the real calendars, in
+Los Angeles, Shanghai and UTC (`.github/workflows/mac-calendar.yml`, on a
+change to the code it uses). The release workflow's Mac jobs then run
+`in-the-app.py` on the app just built: on a demo lab, through the app's own
+`/calendar/mac`, it must fill a BioManager calendar in On My Mac with as
+many events as it says and take it away on Stop. A CI Mac can't click
+Allow, so `grant.py` writes the permission into macOS's TCC databases for
+the app's bundle id and for whatever runs the step (`chain.sh`); GitHub's
+Macs have SIP off, which lets it. The prompt itself is the one part left
+untested.
 
 ## Copies of the lab on every computer
 
@@ -4077,6 +4104,15 @@ the message. Before any of it, a frozen build's `unblock()` deletes the
 unpacked from a downloaded zip, and .NET won't load a marked assembly
 (HRESULT 0x80131515). The release workflow's Windows job fails if
 `missing()` finds anything lacking on the runner, which has both.
+
+**Linux without the window's libraries** (`desktop_linux.py`). The Linux
+window is Qt WebEngine, which loads the computer's own libEGL, Wayland
+and OpenGL libraries; a server edition, WSL or a trimmed desktop may lack
+one, and `webview.start()` then raises before any window shows. On Linux
+`desktop.main()` catches that and calls `run_in_browser()`: the app in the
+default browser, and a zenity or kdialog message whose OK ends the process;
+with neither, it runs until stopped (Ctrl+C), and says so on stderr. A Qt
+that aborts in C++ (no usable GLX on the display) can't be caught there.
 
 **Windows in Chinese: always name the encoding.** On Windows, Python opens
 a text file without `encoding=` in the system code page: GBK on a Chinese
