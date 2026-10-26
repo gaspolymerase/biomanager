@@ -1,6 +1,7 @@
 """Running on a network: cross-site requests, sign-in, sign-up approval,
 sessions, uploads, the signing key and the production entry points
 (app/security.py)."""
+import json
 import html as html_lib
 
 from tests.base import *  # noqa: F401,F403
@@ -546,6 +547,24 @@ class ContentSecurityPolicy(AppTestCase):
         r = app.test_client().post("/csp-report", data=body, content_type="application/csp-report",
                                    headers={"Sec-Fetch-Site": "same-origin"})
         self.assertEqual(r.status_code, 204)
+
+    def test_the_desktop_window_s_own_eval_is_not_logged(self):
+        def report(blocked):
+            body = json.dumps({"csp-report": {"document-uri": "http://127.0.0.1:5870/home", "blocked-uri": blocked,
+                                              "violated-directive": "script-src"}})
+            with self.assertLogs("biomanager.security", "WARNING") as logs:
+                security.log.warning("marker")
+                r = app.test_client().post("/csp-report", data=body, content_type="application/csp-report",
+                                           headers={"Sec-Fetch-Site": "same-origin"},
+                                           environ_base={"REMOTE_ADDR": "127.0.0.1"})
+            self.assertEqual(r.status_code, 204)
+            return [line for line in logs.output if "marker" not in line]
+        app.config["LOCAL_SETUP"] = True
+        self.addCleanup(app.config.pop, "LOCAL_SETUP", None)
+        self.assertEqual(report("eval"), [])                  # pywebview's bridge
+        self.assertEqual(len(report("inline")), 1)            # anything else is still told
+        app.config.pop("LOCAL_SETUP")
+        self.assertEqual(len(report("eval")), 1)              # and on a lab server, eval too
 
     def test_uploads_keep_their_own_sandbox_policy(self):
         with app.test_request_context("/static/uploads/x.html"):

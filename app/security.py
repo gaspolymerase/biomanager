@@ -409,23 +409,36 @@ def content_security_policy() -> str:
     ])
 
 
+def _the_desktop_window_s_own(report: dict) -> bool:
+    """pywebview's bridge in the desktop app's own window: it builds its API
+    with eval, which the policy refuses, on every page (docs/DEVELOPMENT.md,
+    "The desktop app's page bridge"). The app's own scripts never eval, so on
+    the desktop, from this computer, that one is expected."""
+    from . import devices
+    blocked = str(report.get("blocked-uri") or report.get("blockedURL") or "")
+    return blocked == "eval" and devices.on_this_computer()
+
+
 def csp_report():
     """Browsers post here what the policy blocked. Logged, nothing stored."""
     # Anyone can post here, so: a few a minute per address, and each value
     # one short line (a newline in a field wrote a fake log line).
     if report_throttle.retry_after(("csp", request.remote_addr or "")):
         return "", 204
-    report_throttle.failed(("csp", request.remote_addr or ""))
     raw = request.get_data(cache=False, as_text=True)[:8192]
     one_line = lambda v: repr(str(v or "")[:200])
     try:
         import json
         body = json.loads(raw or "{}")
         report = body.get("csp-report", body)
+        if _the_desktop_window_s_own(report):
+            return "", 204
+        report_throttle.failed(("csp", request.remote_addr or ""))
         log.warning("CSP blocked %s on %s (%s)", one_line(report.get("blocked-uri") or report.get("blockedURL")),
                     one_line(report.get("document-uri") or report.get("documentURL")),
                     one_line(report.get("violated-directive") or report.get("effectiveDirective")))
     except (ValueError, AttributeError):
+        report_throttle.failed(("csp", request.remote_addr or ""))
         log.warning("CSP report that could not be read: %r", raw[:300])
     return "", 204
 

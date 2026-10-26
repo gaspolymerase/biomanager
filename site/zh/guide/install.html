@@ -141,13 +141,15 @@
 
       <h3 id="install-1">获取</h3>
       <table class="gtable">
-        <tr><th>macOS</th><td><a href="../download.html">下载</a>，解压，把 <b>BioManager</b> 拖进“应用程序”。第一次打开时，<b>右键点它
-          → 打开</b> （Open），再点“打开”。</td></tr>
+        <tr><th>macOS</th><td><a href="../download.html">下载</a>，解压，把 <b>BioManager</b> 拖进“应用程序”。第一次打开时 macOS
+          不让打开：选 <b>完成</b>，再到 <b>系统设置 → 隐私与安全性</b>，往下滚动，选 <b>仍要打开</b>。macOS 15
+          之前，<b>右键点它 → 打开</b> 即可。</td></tr>
         <tr><th>Windows</th><td>解压 zip，打开 <b>BioManager</b> 文件夹，运行 <b>BioManager.exe</b>。出现警告时选
  <b>更多信息 → 仍要运行</b> （More info → Run anyway）。它的窗口使用 Microsoft Edge WebView2，Windows 11 自带；如果 Windows 10 电脑上
           没有，BioManager 会提出从微软下载，并先在你的浏览器里打开。装好后
           再打开一次 BioManager，就会用它自己的窗口了。</td></tr>
-        <tr><th>Linux</th><td>给 <code>BioManager-Linux.AppImage</code> 加上可执行权限（右键 → 属性，或 <code>chmod +x</code>），然后打开。</td></tr>
+        <tr><th>Linux</th><td>给 <code>BioManager-Linux.AppImage</code> 加上可执行权限（右键 → 属性，或 <code>chmod +x</code>），然后打开。电脑缺少窗口需要的图形库时，
+          BioManager 会改在浏览器里打开；使用期间请不要关掉它的提示窗口。</td></tr>
         <tr><th>更新</th><td>桌面版每天检查一次新版本，有新版本时会提示，并附上新功能说明；<b>BioManager →
           检查更新…</b> （Check for Updates…；Windows 和 Linux 在 <b>帮助</b> （Help）菜单里）可以立即检查。<b>安装并重启</b> （Install and Restart）会下载新版本、校验，
           并在应用退出时替换；无法自动替换时（Linux 的 <code>.tar.gz</code>，或没有写入权限的文件夹），它会打开下载
@@ -200,7 +202,8 @@
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
       <h3>应用在 Mac 上打不开</h3>
-      <p>右键点它，选 <b>打开</b> （Open）。如果 macOS 提示已损坏，先把它移到“应用程序”文件夹，
+      <p>打开 <b>系统设置 → 隐私与安全性</b>，往下滚动到 <b>已阻止“BioManager”</b>，选 <b>仍要打开</b>
+          （macOS 14 及更早版本，右键点它选 <b>打开</b> 也一样）。如果 macOS 提示已损坏，先把它移到“应用程序”文件夹，
           再试一次。</p>
       <h3>Linux：AppImage 没反应</h3>
       <p>给它加上可执行权限。如果还是启动不了，安装 <code>libfuse2</code>，或者改用

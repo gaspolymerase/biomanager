@@ -141,13 +141,15 @@
 
       <h3 id="install-1">Get it</h3>
       <table class="gtable">
-        <tr><th>macOS</th><td><a href="../download.html">Download</a>, unzip, drag <b>BioManager</b> into Applications. The first time, <b>right-click
-          it → Open</b>, then Open.</td></tr>
+        <tr><th>macOS</th><td><a href="../download.html">Download</a>, unzip, drag <b>BioManager</b> into Applications. The first time, macOS
+          won't open it: choose <b>Done</b>, then <b>System Settings → Privacy &amp; Security</b>, scroll down and choose
+          <b>Open Anyway</b>. Before macOS 15, <b>right-click it → Open</b> is enough.</td></tr>
         <tr><th>Windows</th><td>Extract the zip, open the <b>BioManager</b> folder, run <b>BioManager.exe</b>. At the warning choose
           <b>More info → Run anyway</b>. Its window uses Microsoft Edge WebView2, which Windows 11 has; on a Windows 10 PC
           without it, BioManager offers to download it from Microsoft and opens in your web browser meanwhile. Install it,
           then open BioManager again for its own window.</td></tr>
-        <tr><th>Linux</th><td>Mark <code>BioManager-Linux.AppImage</code> executable (right-click → Properties, or <code>chmod +x</code>) and open it.</td></tr>
+        <tr><th>Linux</th><td>Mark <code>BioManager-Linux.AppImage</code> executable (right-click → Properties, or <code>chmod +x</code>) and open it. On a computer without the graphics
+          libraries its window needs, BioManager opens in your web browser instead; leave its message open while you use it.</td></tr>
         <tr><th>Updates</th><td>The desktop app checks for a new version once a day and offers it, with what's new; <b>BioManager →
           Check for Updates…</b> (on Windows and Linux, <b>Help</b>) asks now. <b>Install and Restart</b> downloads it, checks it, and
           swaps it in as the app quits; where it can't (the Linux <code>.tar.gz</code>, a folder it can't write to), it opens the download
@@ -208,8 +210,9 @@
     <section class="trouble">
       <h2 id="troubleshooting">Troubleshooting</h2>
       <h3>The app won't open on my Mac</h3>
-      <p>Right-click it and choose <b>Open</b>. If macOS says it's damaged, move it to Applications
-          first, then try again.</p>
+      <p>Open <b>System Settings → Privacy &amp; Security</b>, scroll down to <b>“BioManager” was blocked</b> and choose
+          <b>Open Anyway</b> (on macOS 14 and earlier, right-clicking it and choosing <b>Open</b> does the same). If macOS
+          says it's damaged, move it to Applications first, then try again.</p>
       <h3>Linux: the AppImage does nothing</h3>
       <p>Mark it executable. If it still won't start, install <code>libfuse2</code>, or use the
           <code>.tar.gz</code> and run <code>BioManager/BioManager</code>.</p>
@@ -223,7 +226,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 5 min read</p>
+      <p>On this page · 6 min read</p>
       <ol>
         <li class="lvl3"><a href="#install-1">Get it</a></li>
         <li class="lvl3"><a href="#first-run">Starting a lab</a></li>

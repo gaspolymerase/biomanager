@@ -459,8 +459,16 @@ class EventKitStore:
     def _sources(self) -> list:
         return [src for src in (self.store.sources() or []) if int(src.sourceType()) in WRITABLE_SOURCES]
 
+    @staticmethod
+    def _account(src) -> str:
+        """An account's name as the Mac's Calendar shows it: EventKit calls
+        the Mac's own (EKSourceTypeLocal) "Default"."""
+        if int(src.sourceType()) == 0:
+            return gettext("On My Mac")
+        return str(src.title())
+
     def accounts(self) -> list[dict]:
-        return [{"id": str(src.sourceIdentifier()), "title": str(src.title())} for src in self._sources()]
+        return [{"id": str(src.sourceIdentifier()), "title": self._account(src)} for src in self._sources()]
 
     def calendars(self) -> list[dict]:
         out = []
@@ -469,7 +477,7 @@ class EventKitStore:
                 continue
             src = cal.source()
             out.append({"id": str(cal.calendarIdentifier()), "title": str(cal.title()),
-                        "account": str(src.title()) if src is not None else "",
+                        "account": self._account(src) if src is not None else "",
                         "source": str(src.sourceIdentifier()) if src is not None else ""})
         return out
 

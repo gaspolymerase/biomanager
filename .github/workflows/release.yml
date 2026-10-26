@@ -165,6 +165,27 @@ jobs:
           done
           echo "the app never answered"; cat smoke.log; exit 1
 
+      # Calendar → Mac Calendar in what was just built, on a demo lab: the
+      # Mac's calendars are allowed to it as if Allow were clicked, and it
+      # must fill a BioManager calendar in On My Mac and take it away again
+      # (scripts/mac-calendar-check/in-the-app.py).
+      - name: Check the Mac Calendar
+        if: runner.os == 'macOS'
+        env:
+          BIOMANAGER_PORT: "5098"
+          PORT: "5098"
+          DATA: ${{ runner.temp }}/calendar-demo
+        run: |
+          python scripts/demo-data.py "$DATA" | tail -1
+          APP="$PWD/dist/BioManager.app"
+          PY=$(python -c 'import os, sys; print(os.path.realpath(sys.executable))')
+          sudo /usr/bin/python3 scripts/mac-calendar-check/grant.py bundle:org.biomanager.desktop \
+            "$APP/Contents/MacOS/BioManager" "$PY" $(scripts/mac-calendar-check/chain.sh) /bin/bash
+          BIOMANAGER_DATA_DIR="$DATA" DATABASE_URL="sqlite:///$DATA/biomanager.db" \
+            "$APP/Contents/MacOS/BioManager" > calendar.log 2>&1 &
+          for i in $(seq 90); do curl -fsS -o /dev/null "http://127.0.0.1:$PORT/login" && break; sleep 2; done
+          python scripts/mac-calendar-check/in-the-app.py || { cat calendar.log; exit 1; }
+
       - uses: actions/upload-artifact@v7
         with:
           name: desktop-${{ matrix.os }}

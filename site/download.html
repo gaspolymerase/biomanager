@@ -137,7 +137,7 @@
 
       <div class="steps">
         <div class="step rise"><span>1</span><div><h4>Unzip and move it</h4><p>On a Mac, drag <b>BioManager</b> into Applications. On Windows, extract the whole zip first (right-click → <b>Extract All</b>), then open <b>BioManager.exe</b> in the extracted folder, not from inside the zip. On Linux, mark the AppImage executable and open it.</p></div></div>
-        <div class="step rise"><span>2</span><div><h4>Open it the first time</h4><p>macOS: <b>right-click → Open</b>, then Open. Windows: <b>More info → Run anyway</b>. They ask once, because the app isn't signed by Apple or Microsoft.</p></div></div>
+        <div class="step rise"><span>2</span><div><h4>Open it the first time</h4><p>macOS: open it, choose <b>Done</b> at the warning, then <b>System Settings → Privacy &amp; Security → Open Anyway</b> (before macOS 15, <b>right-click → Open</b> is enough). Windows: <b>More info → Run anyway</b>. They ask once, because the app isn't signed by Apple or Microsoft.</p></div></div>
         <div class="step rise"><span>3</span><div><h4>Set up your lab</h4><p>Create your account (the first is the admin) and tick what your lab keeps. BioManager makes just those databases, then <b>Getting started</b> walks you through the first steps. The <a href="guide.html">user guide</a> has the rest.</p></div></div>
       </div>
     </div>
@@ -192,7 +192,8 @@
           message open while you use it. Once WebView2 is installed, open BioManager again and it has its own window.</p></details>
       <details><summary>Why does my computer warn me when I first open it?</summary>
         <p>BioManager isn't signed with an Apple or Microsoft developer certificate, so the system asks you to
-          confirm once. On a Mac, right-click the app and choose Open; on Windows, choose More info, then Run anyway.</p></details>
+          confirm once. On a Mac, choose Done at the warning, then System Settings → Privacy &amp; Security → Open Anyway
+          (before macOS 15, right-click the app and choose Open); on Windows, choose More info, then Run anyway.</p></details>
       <details><summary>Does it work for organisms other than mice?</summary>
         <p>Zebrafish, Drosophila and C. elegans have their own modules. For anything else, <b>Add database</b>
           lets you describe the organism — its words, how it's counted, what it needs — without any programming.</p></details>

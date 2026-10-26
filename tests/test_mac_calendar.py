@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest import mock
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -293,6 +294,35 @@ class NotOnAMac(AppTestCase):
             self.skipTest("EventKit is here")
         self.assertIsNone(mac_calendar.start_background(app, first_delay=0))
         self.assertEqual(mac_calendar.update(app), {})
+
+
+class TheAccountsAsTheMacNamesThem(AppTestCase):
+    """EventKit calls the Mac's own account "Default"; the Mac's Calendar
+    shows it as On My Mac. Subscribed calendars can't take one."""
+
+    class Source:
+        def __init__(self, kind, title, ident):
+            self.kind, self.name, self.ident = kind, title, ident
+
+        def sourceType(self):
+            return self.kind
+
+        def title(self):
+            return self.name
+
+        def sourceIdentifier(self):
+            return self.ident
+
+    def test_on_my_mac(self):
+        st = mac_calendar.EventKitStore.__new__(mac_calendar.EventKitStore)
+        st.store = mock.Mock(sources=lambda: [self.Source(0, "Default", "local"), self.Source(2, "iCloud", "icloud"),
+                                              self.Source(4, "Subscribed Calendars", "subs")])
+        with app.test_request_context("/"):
+            self.assertEqual(st.accounts(), [{"id": "local", "title": "On My Mac"}, {"id": "icloud", "title": "iCloud"}])
+        with app.test_request_context("/", headers={"Accept-Language": "zh-CN"}):
+            from flask import g
+            g.lang = "zh"
+            self.assertEqual(st.accounts()[0]["title"], "我的 Mac")
 
 
 class ThePackagedMacApp(unittest.TestCase):

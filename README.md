@@ -1227,7 +1227,9 @@ reason.
    [**BioManager website**](https://biomanager.org/download.html),
    or build it yourself (below).
 2. **macOS:** open the download and drag BioManager into Applications.
-   The first time, **right-click the app and choose Open**. **Windows:**
+   The first time, macOS won't open it: choose **Done**, then
+   **System Settings → Privacy & Security → Open Anyway** (before macOS 15,
+   right-clicking the app and choosing **Open** is enough). **Windows:**
    extract the zip, open the BioManager folder and run `BioManager.exe`;
    at the warning choose **More info → Run anyway**. **Linux:** mark
    `BioManager-Linux.AppImage` executable and open it. The apps aren't

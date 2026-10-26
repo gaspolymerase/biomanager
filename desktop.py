@@ -197,9 +197,15 @@ def main() -> int:
         webview.start(desktop_menu.start, (window,), debug=False, menu=menus,
                       private_mode=False, storage_path=str(storage))
     except Exception as error:
-        if sys.platform != "win32":
+        if sys.platform == "win32":
+            desktop_windows.run_in_browser(target, "failed", error)
+        elif sys.platform.startswith("linux"):
+            # A computer without the graphics libraries Qt's window needs
+            # (desktop_linux.py).
+            import desktop_linux
+            desktop_linux.run_in_browser(url + "lab-elsewhere" if target != url else url, error)
+        else:
             raise
-        desktop_windows.run_in_browser(target, "failed", error)
     return 0
 
 
