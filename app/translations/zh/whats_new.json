@@ -205,5 +205,10 @@
   "The cage sheet fits a laptop: Card ID and Note start hidden; tick them under **Columns**.": "笼表格在笔记本电脑上放得下：笼卡编号和备注默认隐藏，在 **列** 里勾选即可显示。",
   "On macOS 14, an event in the **Mac Calendar** that runs across the night the clocks go back no longer shows ending an hour late.": "在 macOS 14 上，**Mac 日历** 里跨过时钟回拨那一夜的活动不再显示晚一小时结束。",
   "The **Mac Calendar** calls the Mac's own account **On My Mac**.": "**Mac 日历** 把 Mac 自己的账户叫作 **我的 Mac**。",
-  "On Linux, when the window can't open, BioManager opens in your web browser instead.": "在 Linux 上，窗口打不开时，BioManager 会改在浏览器里打开。"
+  "On Linux, when the window can't open, BioManager opens in your web browser instead.": "在 Linux 上，窗口打不开时，BioManager 会改在浏览器里打开。",
+  "A notebook topic's icon can be any emoji, or an SVG of your own: **Name and icon** → **Emoji** or **SVG**.": "实验记录本主题的图标可以是任意表情，或你自己的 SVG：**名称和图标** → **表情** 或 **SVG**。",
+  "The notebook has one sidebar, the full height of the window: your notebook's name opens **Home**, **+** makes a page, and **Find a page…** searches.": "实验记录本只有一个侧边栏，从窗口顶部一直到底：点记录本名称打开 **首页**，**+** 新建页面，**查找页面…** 用来搜索。",
+  "Your round badge shows your **Short name** (up to 5 letters), set in **Settings**.": "圆形头像标记显示你的 **简称**（最多 5 个字母），在 **设置** 里填写。",
+  "Grey and coloured text is easier to read, in light and dark mode.": "灰色和彩色的文字更容易看清，浅色和深色模式都是如此。",
+  "On Linux, a computer without working graphics opens BioManager's window instead of stopping.": "在 Linux 上，没有可用显卡加速的电脑也能打开 BioManager 的窗口，不会再直接退出。"
 }
