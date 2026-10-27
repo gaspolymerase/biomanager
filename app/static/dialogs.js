@@ -78,26 +78,138 @@
       });
       // An icon to pick under a prompt ({ icons: { choices, value, label } }),
       // drawn as templates/_icon_picker.html draws one: the answer then
-      // carries `icon`.
+      // carries `icon`. With `emoji` (a list) and `uploadUrl`, it also offers
+      // an emoji, the computer's own picker for any other, and an SVG of
+      // one's own (a notebook topic's, app/topic_icons.py): "emoji:🧪",
+      // "svg:uploads/…".
       var icons = o.kind === "prompt" && o.icons && o.icons.choices && o.icons.choices.length ? o.icons : null;
       if (icons) {
         var set = el("fieldset", "icon-picker record-wide");
         set.appendChild(el("legend", null, icons.label || t("Icon")));
-        var grid = el("div", "icon-picker-grid");
-        icons.choices.forEach(function (name, i) {
+        var chosen = icons.value || icons.choices[0];
+        var iconNode = function (v) {
+          if (v.indexOf("emoji:") === 0) return el("span", "icon-picker-emoji", v.slice(6));
+          if (v.indexOf("svg:uploads/") === 0) {
+            var img = el("img", "icon-picker-svg");
+            img.src = "/static/" + v.slice(4);
+            img.alt = "";
+            return img;
+          }
+          var holder = el("span");
+          holder.innerHTML = '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + v.replace(/[^a-z0-9-]/g, "") + '"></use></svg>';
+          return holder.firstChild;
+        };
+        var choiceEl = function (v) {
           var choice = el("label", "icon-picker-choice");
+          var name = v.indexOf("emoji:") === 0 ? v.slice(6) : v.indexOf("svg:") === 0 ? t("Your SVG") : v;
           choice.title = name;
           var radio = el("input");
           radio.type = "radio";
           radio.name = "bio-dialog-icon";
-          radio.value = name;
+          radio.value = v;
           radio.setAttribute("aria-label", name);
-          radio.checked = icons.value ? name === icons.value : i === 0;
+          radio.checked = v === chosen;
           choice.appendChild(radio);
-          choice.insertAdjacentHTML("beforeend", '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name.replace(/[^a-z0-9-]/g, "") + '"></use></svg>');
-          grid.appendChild(choice);
-        });
-        set.appendChild(grid);
+          choice.appendChild(iconNode(v));
+          return choice;
+        };
+        var gridOf = function (values) {
+          var g = el("div", "icon-picker-grid");
+          values.forEach(function (v) { g.appendChild(choiceEl(v)); });
+          return g;
+        };
+        if (!chosen || icons.choices.indexOf(chosen) < 0 && chosen.indexOf(":") < 0) chosen = icons.choices[0];
+        var builtIn = gridOf(icons.choices);
+        if (!icons.emoji && !icons.uploadUrl) {
+          set.appendChild(builtIn);
+        } else {
+          // Emoji: a few for the bench, and any other from the computer's own picker.
+          var emojiValues = (icons.emoji || []).map(function (e) { return "emoji:" + e; });
+          if (chosen.indexOf("emoji:") === 0 && emojiValues.indexOf(chosen) < 0) emojiValues.unshift(chosen);
+          var emojiGrid = gridOf(emojiValues);
+          var emojiPane = el("div", "icon-picker-pane");
+          var own = el("label", "icon-picker-own");
+          own.appendChild(el("span", null, t("Any emoji")));
+          var ownInput = el("input");
+          ownInput.type = "text";
+          ownInput.maxLength = 16;
+          ownInput.placeholder = "🙂";
+          ownInput.setAttribute("autocomplete", "off");
+          own.appendChild(ownInput);
+          ownInput.addEventListener("input", function () {
+            var v = ownInput.value.trim();
+            if (!v) return;
+            var value = "emoji:" + v;
+            var radio = Array.prototype.find.call(emojiGrid.querySelectorAll("input"), function (r) { return r.value === value; });
+            if (!radio) {
+              var c = choiceEl(value);
+              emojiGrid.insertBefore(c, emojiGrid.firstChild);
+              radio = c.querySelector("input");
+            }
+            radio.checked = true;
+          });
+          var mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+          emojiPane.appendChild(emojiGrid);
+          emojiPane.appendChild(own);
+          emojiPane.appendChild(el("small", "icon-picker-hint", mac ? t("Control-Command-Space opens the Mac's own emoji.") : t("Windows key + . opens the emoji panel (Control-Command-Space on a Mac).")));
+          // An SVG of one's own: cleaned on the server, then one of the choices.
+          var svgPane = el("div", "icon-picker-pane");
+          var svgGrid = gridOf(chosen.indexOf("svg:") === 0 ? [chosen] : []);
+          var file = el("input");
+          file.type = "file";
+          file.accept = ".svg,image/svg+xml";
+          file.hidden = true;
+          var pick = el("button", "btn btn-sm", t("Upload an SVG…"));
+          pick.type = "button";
+          var problem = el("small", "icon-picker-error");
+          pick.addEventListener("click", function () { file.click(); });
+          file.addEventListener("change", function () {
+            if (!file.files.length) return;
+            var body = new FormData();
+            body.append("svg", file.files[0]);
+            pick.disabled = true;
+            fetch(icons.uploadUrl, { method: "POST", body: body, headers: { "X-Requested-With": "fetch" } })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d.ok) { problem.textContent = d.error || t("That SVG couldn't be used."); return; }
+                problem.textContent = "";
+                var c = choiceEl(d.icon);
+                svgGrid.appendChild(c);
+                c.querySelector("input").checked = true;
+              })
+              .catch(function () { problem.textContent = t("That SVG couldn't be used."); })
+              .then(function () { pick.disabled = false; file.value = ""; });
+          });
+          svgPane.appendChild(svgGrid);
+          svgPane.appendChild(pick);
+          svgPane.appendChild(file);
+          svgPane.appendChild(el("small", "icon-picker-hint", t("A drawing in an .svg file, up to 100 KB. Scripts and links in it are taken out.")));
+          svgPane.appendChild(problem);
+          // Icons · Emoji · SVG, starting on the kind already chosen.
+          var panes = [["icons", t("Icons"), builtIn], ["emoji", t("Emoji"), emojiPane], ["svg", "SVG", svgPane]];
+          if (!icons.uploadUrl) panes.pop();
+          var bar = el("div", "seg seg-sm icon-picker-tabs");
+          bar.setAttribute("role", "group");
+          bar.setAttribute("aria-label", icons.label || t("Icon"));
+          var start = chosen.indexOf("emoji:") === 0 ? "emoji" : chosen.indexOf("svg:") === 0 ? "svg" : "icons";
+          var showPane = function (key) {
+            panes.forEach(function (p) {
+              p[2].hidden = p[0] !== key;
+              p[3].classList.toggle("is-active", p[0] === key);
+              p[3].setAttribute("aria-pressed", String(p[0] === key));
+            });
+          };
+          panes.forEach(function (p) {
+            var b = el("button", "seg-item", p[1]);
+            b.type = "button";
+            b.addEventListener("click", function () { showPane(p[0]); });
+            p.push(b);
+            bar.appendChild(b);
+          });
+          set.appendChild(bar);
+          panes.forEach(function (p) { set.appendChild(p[2]); });
+          showPane(start);
+        }
         body.appendChild(set);
       }
       var foot = el("footer", "record-dialog-foot");

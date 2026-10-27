@@ -4344,10 +4344,11 @@
   /* iOS Safari zooms the whole page into any field whose text is under 16px
      when it is tapped, and leaves it zoomed. Important: a page's own
      stylesheet (the notebook's, the calendar's, the door's) sizes its fields
-     with more specific rules, and none of them may win here. */
+     with more specific rules, and none of them may win here. A notebook
+     page's title is far above 16px already, and stays that size. */
   input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"]),
   select,
-  textarea {
+  textarea:not(.page-title) {
     font-size: 16px !important;
   }
 

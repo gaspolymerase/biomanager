@@ -27,6 +27,20 @@
     });
   }
   function icon(name) { return '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name + '"></use></svg>'; }
+  // A topic's icon: one of ours, an emoji or an SVG of its own (app/topic_icons.py).
+  function topicIcon(value) {
+    value = value || 'folder';
+    if (value.indexOf('emoji:') === 0) return '<span class="ti-emoji" aria-hidden="true">' + esc(value.slice(6)) + '</span>';
+    if (value.indexOf('svg:uploads/') === 0) return '<img class="ti-svg" src="/static/' + esc(value.slice(4)) + '" alt="">';
+    return icon(value);
+  }
+  // The emoji offered first; the computer's own picker gives any other.
+  var EMOJI = ['🧪', '🧫', '🧬', '🔬', '🧠', '🫀', '🫁', '🦴', '🩸', '💉', '💊', '🩺', '⚗️', '🧲', '🧊', '🌡️',
+    '☢️', '☣️', '🐭', '🐁', '🐀', '🐟', '🐠', '🪰', '🪱', '🐸', '🐔', '🐣', '🌱', '🌿', '🌾', '🦠',
+    '📈', '📊', '📋', '📌', '📁', '📒', '📚', '✏️', '💡', '🎯', '⭐', '🚀', '✅', '⚠️', '🔥', '❄️'];
+  function iconChoices(value) {
+    return { choices: DATA.folderIcons || [], value: value || 'folder', emoji: EMOJI, uploadUrl: '/notebook/api/topic-icons' };
+  }
   function api(url, body) {
     return fetch(url, {
       method: 'POST', body: JSON.stringify(body || {}),
@@ -93,7 +107,7 @@
   function editTopic(tabId) {
     var el = topicEl(tabId);
     BioDialog.prompt(t('Name and icon'), topicName(tabId), {
-      okLabel: t('Save'), icons: { choices: DATA.folderIcons || [], value: (el && el.dataset.icon) || 'folder' },
+      okLabel: t('Save'), icons: iconChoices(el && el.dataset.icon),
     }).then(function (answer) {
       if (!answer || !answer.value.trim()) return;
       api('/notebook/api/topics/' + tabId, { title: answer.value.trim(), icon: answer.icon }).then(reload).catch(fail);
@@ -102,7 +116,7 @@
 
   function newTopicIn(tabId) {
     BioDialog.prompt(t('New topic inside %(name)s', { name: topicName(tabId) }), '', {
-      placeholder: t('Name the topic'), okLabel: t('Create'), icons: { choices: DATA.folderIcons || [], value: 'folder' },
+      placeholder: t('Name the topic'), okLabel: t('Create'), icons: iconChoices('folder'),
     }).then(function (answer) {
       if (!answer || !answer.value.trim()) return;
       post('/notebook/tabs/create', { title: answer.value.trim(), parent_id: tabId }).then(function (d) {
@@ -159,7 +173,7 @@
       '<button type="button" class="nb-head-item' + (parent ? '' : ' is-on') + '" data-pick="">' + icon('sitemap') + '<span>' + esc(t('At the top')) + '</span></button>' +
       rows.map(function (r) {
         return '<button type="button" class="nb-head-item' + (String(r.id) === parent ? ' is-on' : '') + '" data-pick="' + r.id + '" style="padding-left:' + (8 + 14 * r.indent) + 'px">' +
-          icon((topicEl(r.id) && topicEl(r.id).dataset.icon) || 'folder') + '<span>' + esc(r.title) + '</span></button>';
+          topicIcon(topicEl(r.id) && topicEl(r.id).dataset.icon) + '<span>' + esc(r.title) + '</span></button>';
       }).join('') + '</div>';
     document.body.appendChild(picker);
     openAt(picker, button);

@@ -25,7 +25,7 @@
   .notebook-shell:not(:has(> .notebook-sidebar)) { grid-template-columns: minmax(0, 1fr); padding-left: var(--nb-side-w); }
   body.nb-side-is-closed .notebook-shell { padding-left: 0; }
   .notebook-sidebar.is-docked {
-    position: absolute; top: var(--tabbar-h); bottom: 0; left: 0; z-index: 36;
+    position: absolute; top: 0; bottom: 0; left: 0; z-index: 37;
     width: var(--nb-side-w); height: auto; padding: 6px 8px 0; overflow: hidden;
     background: var(--material-sidebar);
     -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px);
@@ -33,6 +33,16 @@
   }
   body.nb-side-is-closed .notebook-sidebar.is-docked { display: none; }
   body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) :is(.toolbar, .chrome-edge) { left: var(--nb-side-w); }
+  /* It runs the window's height, as Notion's does: the tabs start after it,
+     not over it, so no corner shows where they meet. */
+  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) .topstrip { left: var(--nb-side-w); padding-left: 10px; }
+  /* The Mac window: the lights and the window's tools sit on its top, the
+     folded app sidebar beside it runs the window's height too (no corner). */
+  html.mac-window .notebook-sidebar.is-docked { padding-top: var(--tabbar-h); }
+  html.mac-window body[data-rail="closed"]:has(#nb-shell) .rail {
+    height: 100vh; margin-top: 0; padding-top: var(--tabbar-h);
+    border-top-right-radius: 0; box-shadow: inset -0.5px 0 0 var(--color-hairline);
+  }
   /* A page is the paper itself, from the title row to the bottom, with no
      box around it; Home, a topic and the libraries keep their cards on the window. */
   .nb-shell:has(.notebook-editor) { margin-top: calc(-1 * var(--toolbar-h)); }
@@ -873,3 +883,24 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
    and its dropdowns keep room for their chevron. */
 :is(.nb-new-field :is(input, select), .nb-new-cite-row input, .nb-lib-meetings :is(select, input:not([type="checkbox"])), .nb-sig-form :is(input, select, textarea), .nb-folder-select select):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
 select:is(.nb-new-field :is(input, select), .nb-new-cite-row input, .nb-lib-meetings :is(select, input:not([type="checkbox"])), .nb-sig-form :is(input, select, textarea), .nb-folder-select select) { padding-right: 28px; }
+
+/* A topic's emoji or SVG of its own (app/topic_icons.py) where its icon
+   would be, at that icon's size: the emoji in the system's emoji font. */
+.ti-emoji {
+  display: inline-grid; flex: none; place-items: center; width: 14px; height: 14px; overflow: visible;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 13px; line-height: 1;
+}
+.ti-svg { flex: none; width: 14px; height: 14px; object-fit: contain; }
+.nb-tab-icon.ti-emoji, .nb-tab-icon.ti-svg { width: 16px; height: 16px; }
+.nb-tab-icon.ti-emoji { font-size: 15px; }
+.nb-crumb-topic :is(.ti-emoji, .ti-svg), .nb-crumb-folder :is(.ti-emoji, .ti-svg) { width: 13px; height: 13px; }
+.nb-crumb-topic .ti-emoji, .nb-crumb-folder .ti-emoji { font-size: 12px; }
+.nb-topic-icon .ti-emoji { width: 26px; height: 26px; font-size: 22px; }
+.nb-topic-icon .ti-svg { width: 24px; height: 24px; }
+.nb-lib-folder > .ti-emoji { width: 26px; height: 26px; font-size: 22px; }
+.nb-lib-folder > .ti-svg { width: 26px; height: 26px; }
+.nb-topic-folders .nb-lib-folder > :is(.ti-emoji, .ti-svg) {
+  width: 22px; height: 22px; padding: 7px; box-sizing: content-box; border-radius: 9px;
+  background: color-mix(in srgb, var(--color-brand-600) 12%, var(--color-surface));
+}
+.nb-topic-folders .nb-lib-folder > .ti-emoji { font-size: 17px; }

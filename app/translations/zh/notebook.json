@@ -237,5 +237,8 @@
   "Last edited": "编辑时间",
   "Your order": "自定顺序",
   "Find a page…": "查找页面…",
-  "Type to narrow the pages here; Enter searches inside them": "输入可筛选这里的页面；按回车在页面内容里搜索"
+  "Type to narrow the pages here; Enter searches inside them": "输入可筛选这里的页面；按回车在页面内容里搜索",
+  "Choose one of the icons shown, an emoji or an SVG.": "请选择列出的图标、一个表情或一个 SVG。",
+  "That SVG is too big: up to 100 KB.": "这个 SVG 太大了：最大 100 KB。",
+  "That isn't an SVG drawing BioManager can show.": "这不是 BioManager 能显示的 SVG 图形。"
 }

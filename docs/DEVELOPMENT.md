@@ -2130,9 +2130,11 @@ puts `data-rail-mode` on `<html>`, so base.html's boot script starts the
 app's sidebar folded to its icons (shell.js doesn't save that as your choice
 when it is toggled there). On a window 768px or wider the notebook's list
 (`#nb-sidebar`) is moved, by the inline script after it, into `.shell-main`
-beside the scrolling page (`.is-docked`: absolute from below the tabs to the
-bottom, so it never scrolls), and the title row and its frosted band start
-after it (`--nb-side-w`). A sticky list in the scrolling page was tried:
+beside the scrolling page (`.is-docked`: absolute from the window's top to
+the bottom, so it never scrolls), and the tabs, the title row and its
+frosted band start after it (`--nb-side-w`). In the Mac window the list
+runs under the traffic lights (padded by `--tabbar-h`), and the folded app
+sidebar runs to the top too, square, with no rounded corner beside it. A sticky list in the scrolling page was tried:
 Chrome measures a sticky top from inside the scroll box's padding (the two
 rows' height), so it slid down on a short page. Its head is the notebook's
 name (Home), the one New page (`#nb-new-page`, into the chosen topic) and
@@ -2183,6 +2185,19 @@ topic menu (`#nb-topic-menu`, outside the sidebar, `position: fixed`, so a
 topic's page opens it on a phone too) posts `/notebook/api/topics/<id>`
 (name and icon) and `/notebook/api/topics/<id>/place` (`parent_id`,
 `before_id`/`after_id`: it refuses a loop and Inbox), or deletes the topic.
+A topic's icon (`notebook_tabs.icon`, `app/topic_icons.py`) is one of
+`FOLDER_ICONS` by name, an emoji (`emoji:🧪`, as the system's emoji picker
+types it; `is_emoji`) or an SVG of the person's own (`svg:uploads/ti_<hex>.svg`).
+The icon picker (`BioDialog.prompt` with `icons.emoji` and `icons.uploadUrl`,
+`app/static/dialogs.js`) has **Icons · Emoji · SVG**; an SVG goes to
+`/notebook/api/topic-icons`, where `clean_svg` keeps only drawing elements
+and attributes (no script, `on…`, `<a>`, `<image>`, `<foreignObject>`,
+DOCTYPE, or `href`/`url()`/`@import` leaving the file) and saves it as an
+upload: the topic's row names it, so backups, lab copies and
+`app/uploads.py` treat it as any other file. Templates draw any of the
+three with notebook.html's `ticon` macro (an `<img>` for an SVG, where
+nothing in it runs), the move menu with `topicIcon` in
+`notebook-topics.js`.
 A page dragged in the sidebar, or a card in **Your order**, posts
 `/notebook/api/pages/<id>/place` (`tab_id`, `before_id`/`after_id`,
 `parent_page_id`): `move_page()` brings its sub-pages, then the topic's

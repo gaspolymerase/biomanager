@@ -896,7 +896,9 @@ def is_inbox(tab: NotebookTab) -> bool:
 def topic_icon(tab: NotebookTab) -> str:
     if is_inbox(tab):
         return "archive"
-    return tab.icon if tab.icon in FOLDER_ICONS else "folder"
+    # One of ours, an emoji or an SVG of their own (app/topic_icons.py).
+    from . import topic_icons
+    return tab.icon if tab.icon and topic_icons.valid(tab.icon, FOLDER_ICONS) else "folder"
 
 
 def topic_parents(tabs) -> dict[int, int | None]:
@@ -996,12 +998,32 @@ def topic_edit(tab_id: int):
                 return _fail(gettext("A topic needs a name."))
             tab.title = title
         if "icon" in data:
-            icon = _folder_icon(data.get("icon"))
+            from . import topic_icons
+            icon = topic_icons.from_form(data.get("icon"), FOLDER_ICONS)
             if icon is None:
-                return _fail(gettext("Choose one of the icons shown."))
+                return _fail(gettext("Choose one of the icons shown, an emoji or an SVG."))
             tab.icon = icon
         s.commit()
         return jsonify({"ok": True, "id": tab.id, "title": tab.title, "icon": topic_icon(tab)})
+
+
+@bp.post("/api/topic-icons")
+def topic_icon_upload():
+    """An SVG of one's own for a topic's icon: cleaned, kept as an upload,
+    and its value for the topic ("svg:uploads/…", app/topic_icons.py)."""
+    from pathlib import Path
+    from . import services, topic_icons, uploads
+    upload = request.files.get("svg")
+    data = upload.read(topic_icons.SVG_MAX + 1) if upload else b""
+    if len(data) > topic_icons.SVG_MAX:
+        return _fail(gettext("That SVG is too big: up to 100 KB."))
+    value = topic_icons.save_svg(data, Path(services.UPLOAD_DIR))
+    if value is None:
+        return _fail(gettext("That isn't an SVG drawing BioManager can show."))
+    with SessionLocal() as s:
+        uploads.note_uploader(s, value[len(topic_icons.SVG):], _me())
+        s.commit()
+    return jsonify({"ok": True, "icon": value, "url": "/static/" + value[len(topic_icons.SVG):]})
 
 
 @bp.post("/api/topics/<int:tab_id>/place")

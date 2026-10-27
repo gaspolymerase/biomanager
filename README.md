@@ -618,7 +618,9 @@ database has a name of its own (one another database has is refused), so
   narrows the list as you type (Enter searches inside every page); **Today**
   and the libraries stay at its foot. In the sidebar, **+** beside *Topics* names a new one,
   a topic's own **+** starts a page in it, and **•••** makes a **New topic
-  inside**, changes its **Name and icon**, moves it (**Move to…**) or
+  inside**, changes its **Name and icon** (one of BioManager's icons, any
+  emoji from your computer's emoji picker, or an SVG drawing of your own),
+  moves it (**Move to…**) or
   deletes it (the topics inside it stay, one level up). Drag to tidy up: a
   page onto a topic moves it there, between two pages puts it there, and a
   topic onto another goes inside it (or above or below, near its edge).
