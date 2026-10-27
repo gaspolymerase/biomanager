@@ -720,7 +720,8 @@ class NotebookTab(Base):
     # The topic it sits in (a topic holds topics, as a folder does); None:
     # at the top. Position orders it among the topics beside it.
     parent_tab_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    # Its icon in the sidebar (lab_notebook.FOLDER_ICONS); empty: a folder.
+    # Its icon in the sidebar: one of lab_notebook.FOLDER_ICONS, an emoji or
+    # an SVG of one's own (app/topic_icons.py); empty: a folder.
     icon: Mapped[str] = mapped_column(String(40), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

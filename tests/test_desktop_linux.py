@@ -3,6 +3,7 @@ the web browser instead, and a message whose OK closes the app. Nothing here
 opens a browser or shows a dialog."""
 from __future__ import annotations
 
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -44,7 +45,47 @@ class InTheBrowser(unittest.TestCase):
 
     def test_desktop_py_falls_back_on_linux(self):
         text = (ROOT / "desktop.py").read_text(encoding="utf-8")
+        self.assertIn("desktop_linux.software_rendering(", text)
+        self.assertIn("window.events.shown", text)
+
+    def test_desktop_py_opens_in_the_browser_on_linux(self):
+        text = (ROOT / "desktop.py").read_text(encoding="utf-8")
         self.assertIn("desktop_linux.run_in_browser(", text)
+
+
+class DrawnInSoftware(unittest.TestCase):
+    """A display without working OpenGL stops Qt in C++: the window is drawn
+    in software where it would (desktop_linux.software_rendering)."""
+
+    def choose(self, marker=False, prefs=None, device=True, environ=None):
+        env = dict(environ or {})
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "window-starting"
+            if marker:
+                path.write_text("1", encoding="utf-8")
+            why = dl.software_rendering(path, prefs or {}, environ=env, has_device=lambda: device)
+        return why, env
+
+    def test_a_computer_with_graphics_draws_as_usual(self):
+        self.assertEqual(self.choose(), (None, {}))
+
+    def test_no_graphics_device(self):
+        why, env = self.choose(device=False)
+        self.assertEqual(why, "no graphics device")
+        self.assertEqual((env["QT_XCB_GL_INTEGRATION"], env["QT_QUICK_BACKEND"]), ("none", "software"))
+        self.assertEqual(env["QTWEBENGINE_CHROMIUM_FLAGS"], "--disable-gpu")
+
+    def test_a_window_that_never_appeared_last_time(self):
+        why, env = self.choose(marker=True, environ={"QTWEBENGINE_CHROMIUM_FLAGS": "--no-sandbox"})
+        self.assertEqual(why, "the window didn't open last time")
+        self.assertEqual(env["QTWEBENGINE_CHROMIUM_FLAGS"], "--no-sandbox --disable-gpu")
+
+    def test_and_from_then_on(self):
+        self.assertEqual(self.choose(prefs={"software_window": True})[0], "chosen before")
+
+    def test_someone_s_own_setting_is_kept(self):
+        why, env = self.choose(device=False, environ={"QT_XCB_GL_INTEGRATION": "xcb_egl"})
+        self.assertEqual((why, env), (None, {"QT_XCB_GL_INTEGRATION": "xcb_egl"}))
 
 
 if __name__ == "__main__":

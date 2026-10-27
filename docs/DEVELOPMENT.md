@@ -68,6 +68,14 @@ reads the source for the rules marked *(tested)*.
   `:root`, redefined for dark mode. Raw Tailwind tints used for pills
   (violet, pink, sky, teal) are remapped there too, so a `bg-violet-50
   text-violet-700` pill works in both themes.
+- **Text colour** *(tested)*: words are 4.5:1 or more on what they sit on,
+  in light and dark (`tests/test_design.py` `TextColours` reads the tokens):
+  `muted` on the canvas, the recess and grey controls, `brand-700` as link
+  text, `info-700` for blue words on their tint, `on-brand` on a solid
+  accent (write `var(--color-on-brand, #fff)`: no utility uses it, so
+  Tailwind leaves the variable out). The faint grey (`sand-400`) is for
+  icons, separators and disabled fields, never for words; checked page by
+  page with axe-core (`color-contrast`).
 - **Type scale** *(tested)*: 10 (dense grids), 11, 12, 13 (body), 15, 17
   (dialog titles), 22, 28; 16 is a phone's fields, 32 and 40 display
   numbers. On a touch screen every field is 16px, `!important`, so iOS
@@ -716,7 +724,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     query (`breeder_summary`). The words every cage row or Breeders card
     says alike are put in the page's words once a draw (`app/cage_rows.py`,
     `w_…` in `colony.html`), and an owner's badge is
-    made once a name for the request (`owner_badge_filter`).
+    made once a name for the request (`owner_badge_filter`): the short name
+    the person chose (Settings → Profile, up to 5 letters; 3 or more make the
+    round badge a pill, `data-len`), else two initials. The notebook's own
+    badges (`notebook-page.js` `avatar`) read the same short names (`shorts`).
   - At 100,000 mice (`scripts/load-test.py`), the server's time against
     2.0.13's on the same machine: the mouse sheet (alex's 2,349 mice) 0.17 s
     (0.49), the litters (6,725) 0.4 s (2.4), the cages 0.5 s (1.15), the
@@ -2114,8 +2125,27 @@ column changes. `app/lab_notebook.py` has the routes (`/notebook/api/…`) and
 the rules; the editor is `frontend/src/` and the page around it is
 `app/static/notebook-page.js` and `app/static/notebook.css`.
 
-The page is a sheet of paper (`.notebook-editor`) beside its list, which
-sits on the window. Its path and tools (`.nb-page-where`, `.nb-page-tools`)
+One sidebar, as Notion has: the notebook's `{% block rail_mode %}compact`
+puts `data-rail-mode` on `<html>`, so base.html's boot script starts the
+app's sidebar folded to its icons (shell.js doesn't save that as your choice
+when it is toggled there). On a window 768px or wider the notebook's list
+(`#nb-sidebar`) is moved, by the inline script after it, into `.shell-main`
+beside the scrolling page (`.is-docked`: absolute from the window's top to
+the bottom, so it never scrolls), and the tabs, the title row and its
+frosted band start after it (`--nb-side-w`). In the Mac window the list
+runs under the traffic lights (padded by `--tabbar-h`), and the folded app
+sidebar runs to the top too, square, with no rounded corner beside it. A sticky list in the scrolling page was tried:
+Chrome measures a sticky top from inside the scroll box's padding (the two
+rows' height), so it slid down on a short page. Its head is the notebook's
+name (Home), the one New page (`#nb-new-page`, into the chosen topic) and
+hide; then one search (typing filters the list, Enter opens the search
+panel with tags); Today and the libraries are its pinned foot. A topic row
+(`<summary>`) is a named group out of the Tab order: its arrow
+(`.nb-tab-fold`, `aria-expanded`) is the button that folds it, since the row
+holds a link and buttons of its own.
+
+The page is the paper itself (`.notebook-editor` without a box; the page
+column is `--color-surface` from the title row down) beside its list. Its path and tools (`.nb-page-where`, `.nb-page-tools`)
 are written in the page, and `notebook-page.js` (`liftHeader`) moves them
 into the window's title row before anything is wired; every lookup is by
 id or across the document. While a side panel is open the list folds away,
@@ -2155,6 +2185,19 @@ topic menu (`#nb-topic-menu`, outside the sidebar, `position: fixed`, so a
 topic's page opens it on a phone too) posts `/notebook/api/topics/<id>`
 (name and icon) and `/notebook/api/topics/<id>/place` (`parent_id`,
 `before_id`/`after_id`: it refuses a loop and Inbox), or deletes the topic.
+A topic's icon (`notebook_tabs.icon`, `app/topic_icons.py`) is one of
+`FOLDER_ICONS` by name, an emoji (`emoji:🧪`, as the system's emoji picker
+types it; `is_emoji`) or an SVG of the person's own (`svg:uploads/ti_<hex>.svg`).
+The icon picker (`BioDialog.prompt` with `icons.emoji` and `icons.uploadUrl`,
+`app/static/dialogs.js`) has **Icons · Emoji · SVG**; an SVG goes to
+`/notebook/api/topic-icons`, where `clean_svg` keeps only drawing elements
+and attributes (no script, `on…`, `<a>`, `<image>`, `<foreignObject>`,
+DOCTYPE, or `href`/`url()`/`@import` leaving the file) and saves it as an
+upload: the topic's row names it, so backups, lab copies and
+`app/uploads.py` treat it as any other file. Templates draw any of the
+three with notebook.html's `ticon` macro (an `<img>` for an SVG, where
+nothing in it runs), the move menu with `topicIcon` in
+`notebook-topics.js`.
 A page dragged in the sidebar, or a card in **Your order**, posts
 `/notebook/api/pages/<id>/place` (`tab_id`, `before_id`/`after_id`,
 `parent_page_id`): `move_page()` brings its sub-pages, then the topic's
@@ -4111,8 +4154,20 @@ and OpenGL libraries; a server edition, WSL or a trimmed desktop may lack
 one, and `webview.start()` then raises before any window shows. On Linux
 `desktop.main()` catches that and calls `run_in_browser()`: the app in the
 default browser, and a zenity or kdialog message whose OK ends the process;
-with neither, it runs until stopped (Ctrl+C), and says so on stderr. A Qt
-that aborts in C++ (no usable GLX on the display) can't be caught there.
+with neither, it runs until stopped (Ctrl+C), and says so on stderr.
+A display without working OpenGL (a VM, remote X, a virtual screen) is
+worse: Qt aborts in C++ ("Could not initialize GLX"), past any except. So
+`desktop_linux.software_rendering` draws the window in software
+(`QT_XCB_GL_INTEGRATION=none`, `QT_QUICK_BACKEND=software` and Chromium's
+`--disable-gpu`: without the first and last it still aborts, without the
+second the window is black) when there is no graphics device (`/dev/dri`),
+or when the window didn't appear last time: `window-starting` in the data
+folder is written before `webview.start()` and removed on `events.shown`,
+and once it was found the choice is kept (`software_window` in
+`desktop-prefs.json`). Someone's own `QT_XCB_GL_INTEGRATION` wins. The
+release workflow's Linux job runs `scripts/bare-linux-check.sh` on the
+AppImage: Ubuntu 22.04 in Docker with none of those libraries, where it must
+open in the browser and keep answering.
 
 **Windows in Chinese: always name the encoding.** On Windows, Python opens
 a text file without `encoding=` in the system code page: GBK on a Chinese

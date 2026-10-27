@@ -141,6 +141,8 @@ async function mountOnce(options) {
     editable: canEdit,
     extensions: extensionsFor({ provider, user, onCommentOpen: options.onCommentOpen, pageId: page.id }),
     autofocus: false,
+    // Named by the page's title, for a screen reader.
+    editorProps: { attributes: { 'aria-labelledby': 'page-title' } },
   });
   editor.bmPageId = page.id;     // uploads name their page (commands.uploadImage)
 

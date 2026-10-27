@@ -612,16 +612,22 @@ database has a name of its own (one another database has is refused), so
 - **Lab notebook** — pages in topics, written like a document and saved as
   Markdown. Topics are folders, and a topic can hold topics of its own, as
   deep as you like: a page stays in the one it was made or moved to,
-  whatever its kind. In the sidebar, **+** beside *Topics* names a new one,
+  whatever its kind. The notebook has one sidebar of its own (BioManager's
+  folds to its icons there): at its top your notebook's name opens **Home**,
+  **+** makes a **New page** in the topic you are in, and **Find a page…**
+  narrows the list as you type (Enter searches inside every page); **Today**
+  and the libraries stay at its foot. In the sidebar, **+** beside *Topics* names a new one,
   a topic's own **+** starts a page in it, and **•••** makes a **New topic
-  inside**, changes its **Name and icon**, moves it (**Move to…**) or
+  inside**, changes its **Name and icon** (one of BioManager's icons, any
+  emoji from your computer's emoji picker, or an SVG drawing of your own),
+  moves it (**Move to…**) or
   deletes it (the topics inside it stay, one level up). Drag to tidy up: a
   page onto a topic moves it there, between two pages puts it there, and a
   topic onto another goes inside it (or above or below, near its edge).
   A topic's name opens its own page: the topics inside it as tiles, then
   its pages as cards or a list, by **Last edited**, **Name** or **Your
   order**. The star on a page or a card keeps it in **Favorites** at the
-  top of the sidebar, in your order. The notebook opens on **Home**: your
+  top of the sidebar (once there is one), in your order. The notebook opens on **Home**: your
   favourites, what was edited lately and your topics. **Inbox** holds the
   pages in no topic yet; protocols, papers and talks, and a meeting series'
   notes are in **Protocols**, **Reading** and **Meetings** instead. The
@@ -1108,7 +1114,9 @@ Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
 General, Databases, People & access, Devices & copies, History) and the
 chosen one beside it, its settings in grouped rows with a short line on what
 each does. A change is saved as it is made, and the search box at the top
-finds a setting by name. The lab's panes hold its setup and its admin
+finds a setting by name. Your **Short name** under Profile (up to 5
+letters, THX) is what your round badge says, at the top right and on your
+records; without one it shows your initials. The lab's panes hold its setup and its admin
 pages: everyone sees them, admins change them. **Statistics** counts the lab's mice, fish tanks and fly and worm
 vials, by person, and shows how full each rack and box is.
 

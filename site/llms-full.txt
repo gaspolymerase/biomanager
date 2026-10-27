@@ -1193,15 +1193,19 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 ### Pages
 
+- The notebook has one sidebar, its own: BioManager's sidebar folds to its icons while you are in it (the **»** at its top opens it for a moment). At the top of the notebook's sidebar, your notebook's name opens its **Home**, **+** beside it makes a **New page** (in the topic you are in), and **Find a page…** under it narrows the pages listed as you type; **Enter** searches inside every page, with its tags. **Today**, **Protocols**, **Recipes**, **Meetings** and **Reading** stay at its foot.
+
 - Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar, and a topic can hold topics of its own, as deep as you like (*Projects*, in it *Lung neurons*, in that *Flow*). **+** beside *Topics* names a new one. A topic's own **+** starts a page in it, and its **•••** makes a **New topic inside** it, changes its **Name and icon**, moves it into another topic (**Move to…**), or deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the notebook remembers which you left open. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
+
+- A topic's icon is yours to choose, in **Name and icon** (or click the icon on the topic's page): **Icons** are BioManager's own; **Emoji** offers the lab's usual ones, and **Any emoji** takes whatever you type there, so your computer's emoji panel gives you all of them (`Control`+`⌘`+`Space` on a Mac, Windows key + `.` on Windows); **SVG** lets you **Upload an SVG…** of your own, up to 100 KB, such as your lab's logo or a drawing of your model organism. Scripts and links in an SVG are taken out, and it is kept with the lab's other files, in its backups.
 
 - Tidy up by dragging, in the sidebar: a page onto a topic moves it there, and a page between two others puts it there, beside them (under the page they sit in). A topic onto another goes inside it; near the top or bottom of one, it goes above or below. The pages inside a page move with it.
 
 - Click a topic's name for its own page: the topics inside it as tiles, then its pages as cards, each with its first line, when it last changed and its status. Sort them by **Last edited**, **Name** or **Your order** (the sidebar's; drag a card to change it), show them as cards or as a list, and move one to another topic with the folder button on its card. Drag a card onto a tile to move it into that topic.
 
-- **Favorites**, at the top of the sidebar: the star at the top of a page, or on its card, keeps it there. Any page you can open may be a favourite, a lab mate's shared page too. Drag a page into Favorites to star it, and drag the favourites into your own order; the star again takes one out.
+- **Favorites**, at the top of the sidebar once you have one: the star at the top of a page, or on its card, keeps it there. Any page you can open may be a favourite, a lab mate's shared page too. Drag a page into Favorites to star it, and drag the favourites into your own order; the star again takes one out.
 
-- **Home**, at the top of the sidebar, is where the notebook opens: your favourites, the pages edited most recently (yours and those shared with you), and your topics.
+- **Home** (your notebook's name, at the top of the sidebar) is where the notebook opens: your favourites, the pages edited most recently (yours and those shared with you), and your topics.
 
 - **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols**, **Reading** and **Meetings**, below), so Inbox leaves them out.
 

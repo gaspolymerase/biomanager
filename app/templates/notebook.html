@@ -3,6 +3,16 @@
 {% block page_title %}{% if library %}{{ libraries[library][0]|tr('notebook') }}{% elif selected_page %}{{ selected_page.title }}{% elif topic_view %}{{ topic_view.title|tr }}{% else %}{{ _('Notebook') }}{% endif %}{% endblock %}
 {% block page_heading %}{{ _('Notebook') }}{% endblock %}
 {% block page_shell_class %}shell-page-flush{% endblock %}
+{# One sidebar, as Notion has: the app's folds to its icons, and the notebook's is the sidebar. #}
+{% block rail_mode %}compact{% endblock %}
+
+{# A topic's icon: one of ours, an emoji (the system's own) or an SVG of the
+   person's own, drawn as a picture (app/topic_icons.py). #}
+{% macro ticon(value, cls='') -%}
+  {%- if value and value.startswith('emoji:') -%}<span class="ti-emoji{{ ' ' ~ cls if cls }}" aria-hidden="true">{{ value[6:] }}</span>
+  {%- elif value and value.startswith('svg:uploads/') -%}<img class="ti-svg{{ ' ' ~ cls if cls }}" src="{{ url_for('static', filename=value[4:]) }}" alt="" loading="lazy">
+  {%- else -%}{{ icon(value or 'folder', cls) if cls else icon(value or 'folder') }}{%- endif -%}
+{%- endmacro %}
 
 {% macro page_link(page, active_id, tab_id=None) -%}
   <li class="notebook-page-item {% if active_id == page.id %}active{% endif %}{% if page.children %} has-children{% endif %}"
@@ -23,9 +33,11 @@
    topic onto another to put it inside, or above or below one to reorder. #}
 {% macro topic_node(tab, active_id) -%}
   <details class="notebook-tab{% if tab.inbox %} is-inbox{% endif %}" {% if tab.id in open_topics %}open{% endif %} data-tab-id="{{ tab.id }}" data-parent-id="{{ tab.parent_id or '' }}" data-icon="{{ tab.icon }}">
-    <summary{% if not tab.inbox %} draggable="true"{% endif %}>
-      {{ icon('chevron-right', 'notebook-tab-caret') }}
-      {{ icon(tab.icon, 'nb-tab-icon') }}
+    {# The row itself is a group, out of the Tab order: its arrow is the
+       button that folds it, beside its link and its own buttons. #}
+    <summary role="group" tabindex="-1" aria-label="{{ tab.title|tr }}"{% if not tab.inbox %} draggable="true"{% endif %}>
+      <button type="button" class="nb-tab-fold" aria-expanded="{{ 'true' if tab.id in open_topics else 'false' }}" aria-label="{{ _('Show or hide its pages') }}">{{ icon('chevron-right', 'notebook-tab-caret') }}</button>
+      {{ ticon(tab.icon, 'nb-tab-icon') }}
       <a class="tab-title" href="{{ url_for('notebook', tab=tab.id) }}" draggable="false"{% if topic_view and topic_view.id == tab.id %} aria-current="page"{% endif %}>{{ tab.title|tr }}</a>
       <span class="tab-count">{{ tab.flat|length or '' }}</span>
       <span class="tab-actions">
@@ -85,24 +97,20 @@
     {% if selected_page or library or topic_view or home %}
       <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
     {% endif %}
+    {# Its name (the notebook's home), the one New page (into the topic you are
+       in), and hiding it; then one search: typing narrows the pages here, Enter
+       searches inside them. #}
     <div class="notebook-sidebar-head">
-      <form class="notebook-search-row" id="nb-search-form" role="search">
-        {{ icon('search', 'notebook-search-icon') }}
-        <input id="notebook-page-filter" type="search" placeholder="{{ _('Search every page…') }}" autocomplete="off" aria-label="{{ _('Search the notebook') }}">
-      </form>
+      <a class="nb-side-home{% if home %} is-active{% endif %}" href="{{ url_for('notebook') }}"{% if home %} aria-current="page"{% endif %}>
+        <span class="nb-side-home-icon">{{ icon('notebook') }}</span><span class="nb-side-home-name">{{ _('%(name)s’s notebook', name=me.name) }}</span>
+      </a>
+      <button type="button" class="nb-side-hide" id="nb-new-page" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
       <button type="button" class="nb-side-hide" data-side-toggle title="{{ _('Hide the sidebar') }} (Ctrl+\)" aria-label="{{ _('Hide the sidebar') }}">{{ icon('sidebar') }}</button>
     </div>
-    <button type="button" class="notebook-new-btn" id="nb-new-page">{{ icon('plus') }}<span>{{ _('New page') }}</span></button>
-
-    <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
-      <a href="{{ url_for('notebook') }}"{% if home %} class="is-active" aria-current="page"{% endif %}>{{ icon('home') }} {{ _('Home') }}</a>
-      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
-      <button type="button" data-panel="search">{{ icon('search') }} {{ _('Search & tags') }}</button>
-      {# Each opens its library in the page; /protocol in a page opens the drawer to insert one. #}
-      {% for key, lib in libraries.items() %}
-        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
-      {% endfor %}
-    </nav>
+    <form class="notebook-search-row" id="nb-search-form" role="search" title="{{ _('Type to narrow the pages here; Enter searches inside them') }}">
+      {{ icon('search', 'notebook-search-icon') }}
+      <input id="notebook-page-filter" type="search" placeholder="{{ _('Find a page…') }}" autocomplete="off" aria-label="{{ _('Search the notebook') }}">
+    </form>
 
     <div class="nb-side-scroll">
       {# Starred pages, in your order: drag one to reorder, or a page here to star it. #}
@@ -153,7 +161,31 @@
         </details>
       {% endif %}
     </div>
+
+    {# The day's log and the lab's libraries, always at the foot. Each opens in
+       the page; /protocol in a page opens the drawer to insert one. #}
+    <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
+      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
+      {% for key, lib in libraries.items() %}
+        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
+      {% endfor %}
+    </nav>
   </aside>
+  {# On a wider window it is docked beside the scrolling page, from below the
+     tabs to the bottom, so it never scrolls with the page (notebook.css). #}
+  <script nonce="{{ csp_nonce() }}">
+    (function () {
+      var side = document.getElementById('nb-sidebar'), home = side.parentNode, after = side.nextSibling;
+      var dock = document.querySelector('.shell-main');
+      var wide = window.matchMedia('(min-width: 768px)');
+      function place() {
+        if (wide.matches && dock) { side.classList.add('is-docked'); dock.appendChild(side); }
+        else if (side.parentNode !== home) { side.classList.remove('is-docked'); home.insertBefore(side, after); }
+      }
+      place();
+      if (wide.addEventListener) wide.addEventListener('change', place);
+    })();
+  </script>
 
   <div class="notebook-main">
     <div class="nb-side-show">
@@ -176,12 +208,12 @@
             <button type="button" class="nb-crumb-side" data-side-toggle title="{{ _('Show the sidebar') }} (Ctrl+\)" aria-label="{{ _('Show the sidebar') }}">{{ icon('sidebar') }}</button>
             <button type="button" class="nb-crumb-side" data-new-page-kind="" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
             {% if p.real_role == 'owner' %}
-              {% for up in p.tab_path %}<a class="nb-crumb-page nb-crumb-topic" href="{{ url_for('notebook', tab=up.id) }}">{{ icon(up.icon) }}{{ up.title|tr }}</a><span class="nb-crumb-sep">/</span>{% endfor %}
-              <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ icon(p.tab_icon) }}<span>{{ p.tab_title|tr }}</span></button>
+              {% for up in p.tab_path %}<a class="nb-crumb-page nb-crumb-topic" href="{{ url_for('notebook', tab=up.id) }}">{{ ticon(up.icon) }}{{ up.title|tr }}</a><span class="nb-crumb-sep">/</span>{% endfor %}
+              <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ ticon(p.tab_icon) }}<span>{{ p.tab_title|tr }}</span></button>
               <div class="nb-head-menu nb-move-menu" id="nb-move-menu" hidden>
                 <input type="search" class="nb-head-search" id="nb-move-search" placeholder="{{ _('Move to a topic…') }}" aria-label="{{ _('Move to a topic…') }}" autocomplete="off">
                 <div class="nb-head-list" id="nb-move-list">
-                  {% for tab in tabs %}<button type="button" class="nb-head-item{% if tab.id == p.tab_id %} is-on{% endif %}" data-move-to="{{ tab.id }}" data-name="{{ (tab.title|tr)|lower }}" style="padding-left: {{ 8 + 14 * tab.depth }}px">{{ icon(tab.icon) }}<span>{{ tab.title|tr }}</span><small>{% if tab.id == p.tab_id %}✓{% else %}{{ tab.flat|length }}{% endif %}</small></button>{% endfor %}
+                  {% for tab in tabs %}<button type="button" class="nb-head-item{% if tab.id == p.tab_id %} is-on{% endif %}" data-move-to="{{ tab.id }}" data-name="{{ (tab.title|tr)|lower }}" style="padding-left: {{ 8 + 14 * tab.depth }}px">{{ ticon(tab.icon) }}<span>{{ tab.title|tr }}</span><small>{% if tab.id == p.tab_id %}✓{% else %}{{ tab.flat|length }}{% endif %}</small></button>{% endfor %}
                 </div>
                 <button type="button" class="nb-head-item nb-head-add" id="nb-move-new">{{ icon('folder-plus') }}<span data-label="{{ _('New topic') }}" data-named="{{ _('New topic “%(name)s”', name='%(name)s') }}">{{ _('New topic') }}</span></button>
               </div>
@@ -192,7 +224,7 @@
             <span class="nb-crumb-sep">/</span><span class="nb-crumb-here" id="nb-crumb-here">{{ p.title if p.title and p.title != 'Untitled page' else _('Untitled page') }}</span>
           </nav>
           <div class="nb-page-tools">
-            <div class="nb-presence" id="nb-presence" aria-label="{{ _('Also here') }}"></div>
+            <div class="nb-presence" id="nb-presence" role="group" aria-label="{{ _('Also here') }}"></div>
             <span id="page-saved-state" class="page-saved-state" aria-live="polite"></span>
             <button type="button" class="nb-tool nb-star{% if p.favorite %} is-on{% endif %}" data-star="{{ p.id }}" aria-pressed="{{ 'true' if p.favorite else 'false' }}" title="{{ _('Favorite') }}" aria-label="{{ _('Favorite') }}">{{ icon('star') }}</button>
             {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="{{ _('Share with lab mates') }}">{{ icon('users') }}<span>{% if p.shared %}{{ _('Shared') }}{% else %}{{ _('Share') }}{% endif %}</span></button>{% endif %}
@@ -320,18 +352,16 @@
       <div class="nb-topic" id="nb-topic" data-topic-id="{{ tv.id }}">
         <nav class="nb-topic-trail" aria-label="{{ _('Where you are') }}">
           <a href="{{ url_for('notebook') }}">{{ icon('home') }}{{ _('Notebook') }}</a>
-          {% for up in tv.trail[:-1] %}<span class="nb-crumb-sep">/</span><a href="{{ url_for('notebook', tab=up.id) }}" data-drop-topic="{{ up.id }}">{{ icon(up.icon) }}{{ up.title|tr }}</a>{% endfor %}
+          {% for up in tv.trail[:-1] %}<span class="nb-crumb-sep">/</span><a href="{{ url_for('notebook', tab=up.id) }}" data-drop-topic="{{ up.id }}">{{ ticon(up.icon) }}{{ up.title|tr }}</a>{% endfor %}
         </nav>
         <header class="nb-topic-head">
           {% if tv.inbox %}
-            <span class="nb-topic-icon">{{ icon(tv.icon) }}</span>
+            <span class="nb-topic-icon">{{ ticon(tv.icon) }}</span>
           {% else %}
-            <button type="button" class="nb-topic-icon" data-topic-edit="{{ tv.id }}" title="{{ _('Name and icon') }}" aria-label="{{ _('Name and icon') }}">{{ icon(tv.icon) }}</button>
+            <button type="button" class="nb-topic-icon" data-topic-edit="{{ tv.id }}" title="{{ _('Name and icon') }}" aria-label="{{ _('Name and icon') }}">{{ ticon(tv.icon) }}</button>
           {% endif %}
           <h1 class="nb-topic-title">{{ tv.title|tr }}</h1>
           <div class="nb-topic-tools">
-            {% if not tv.inbox %}<button type="button" class="btn" data-topic-new-sub="{{ tv.id }}">{{ icon('folder-plus') }} {{ _('New topic inside') }}</button>{% endif %}
-            <button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>
             <button type="button" class="btn nb-icon-only" data-topic-menu="{{ tv.id }}"{% if tv.inbox %} data-inbox{% endif %} aria-haspopup="true" title="{{ _('More') }}" aria-label="{{ _('More') }}">{{ icon('ellipsis') }}</button>
           </div>
         </header>
@@ -341,7 +371,7 @@
           <h2 class="nb-lib-label">{{ _('Topics') }}</h2>
           <div class="nb-lib-folders nb-topic-folders">
             {% for sub in tv.topics %}
-              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ icon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
+              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ ticon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
             {% endfor %}
           </div>
         {% endif %}
@@ -377,10 +407,6 @@
         <header class="nb-topic-head">
           <span class="nb-topic-icon">{{ icon('notebook') }}</span>
           <h1 class="nb-topic-title">{{ _('%(name)s’s notebook', name=me.name) }}</h1>
-          <div class="nb-topic-tools">
-            <a class="btn" href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _("Today's log") }}</a>
-            <button type="button" class="btn btn-primary" data-new-page-kind="">{{ icon('plus') }} {{ _('New page') }}</button>
-          </div>
         </header>
         {% if home.favorites %}
           <h2 class="nb-lib-label">{{ icon('star') }} {{ _('Favorites') }}</h2>
@@ -394,7 +420,7 @@
           <h2 class="nb-lib-label">{{ icon('folder') }} {{ _('Topics') }}</h2>
           <div class="nb-lib-folders nb-topic-folders">
             {% for sub in home.topics %}
-              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ icon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
+              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ ticon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
             {% endfor %}
           </div>
         {% endif %}
@@ -506,6 +532,7 @@
   'starterTitles': starters | map(attribute='title') | list,
   'templateGroups': groups_api.choices(),
   'labZone': lab_zone,
+  'shorts': shorts,
   'library': library,
 } | tojson }}</script>
 

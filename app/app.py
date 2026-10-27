@@ -1100,7 +1100,8 @@ def _get_user_directory():
     try:
         with SessionLocal() as db_session:
             for u in db_session.scalars(select(UserAccount)).all():
-                cache[u.username] = {"short": u.short_name or u.username[:5], "display": u.display_name or u.username}
+                cache[u.username] = {"short": u.short_name or u.username[:5], "display": u.display_name or u.username,
+                                     "own_short": (u.short_name or "").strip()}
     except Exception:
         pass
     g.user_directory = cache
@@ -1396,23 +1397,27 @@ def _owner_badge(name: str) -> Markup:
     info = _get_user_directory().get(name)
     display = (info["display"] if info else "") or name
     tooltip = display
-    # Two initials, from the person's name as the lab knows it (Jordan Lee:
-    # JL), else from their username (jordan: JO).
-    parts = [p for p in re.split(r"[\s._-]+", display.strip()) if p]
-    if len(parts) >= 2:
-        text = (parts[0][0] + parts[-1][0]).upper()
-    else:
-        text = (parts[0][:2] if parts else name[:2]).upper()
+    # The short name they chose (Settings → Profile, up to 5 letters: THX),
+    # as on their records in tables. Else two initials, from the person's
+    # name as the lab knows it (Jordan Lee: JL), or their username (jordan: JO).
+    text = info["own_short"] if info and info.get("own_short") else ""
+    if not text:
+        parts = [p for p in re.split(r"[\s._-]+", display.strip()) if p]
+        if len(parts) >= 2:
+            text = (parts[0][0] + parts[-1][0]).upper()
+        else:
+            text = (parts[0][:2] if parts else name[:2]).upper()
     hue, _sat, _light = _name_color(name)
     # Soft in light and dark alike: the colour tells people apart, the
     # initials stay readable on it.
     bg = f"hsl({hue} 70% 55% / 0.2)"
-    fg = f"hsl({hue} 55% 30%);color:light-dark(hsl({hue} 55% 30%), hsl({hue} 75% 78%))"
+    fg = f"hsl({hue} 55% 25%);color:light-dark(hsl({hue} 55% 25%), hsl({hue} 75% 78%))"
     # data-tooltip drives the CSS popover; aria-label keeps it accessible.
     # We deliberately avoid the native `title` attribute so the browser doesn't
     # show its own delayed tooltip on top of ours.
     return Markup(
-        f'<span class="owner-badge" data-tooltip="{escape(tooltip)}" aria-label="{escape(tooltip)}" style="background:{bg};color:{fg};">{escape(text)}</span>'
+        f'<span class="owner-badge" data-tooltip="{escape(tooltip)}" aria-label="{escape(tooltip)}" '
+        f'data-len="{min(len(text), 5)}" style="background:{bg};color:{fg};">{escape(text)}</span>'
     )
 
 
@@ -6699,6 +6704,8 @@ def _notebook_page(library: str | None = None):
         library=library,
         libraries=NOTEBOOK_LIBRARIES,
         zotero=zotero_state,
+        # Each person's chosen short name (THX), shown on their round badge here too.
+        shorts={u: d["own_short"] for u, d in _get_user_directory().items() if d.get("own_short")},
     )
 
 

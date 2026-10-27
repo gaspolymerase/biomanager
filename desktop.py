@@ -117,6 +117,24 @@ def main() -> int:
         import desktop_windows
         desktop_windows.unblock(Path(sys._MEIPASS))
 
+    # Linux: the window drawn in software where OpenGL would stop the app
+    # (desktop_linux.py); the marker is taken away once the window shows.
+    window_marker = None
+    if sys.platform.startswith("linux"):
+        import desktop_linux
+        import desktop_updates
+        from app.paths import data_dir as _data_dir
+        window_marker = _data_dir() / "window-starting"
+        why = desktop_linux.software_rendering(window_marker, desktop_updates.load_prefs())
+        if why:
+            print(f"BioManager: drawing the window in software ({why}).", file=sys.stderr, flush=True)
+            if why == "the window didn't open last time":
+                desktop_updates.save_prefs(software_window=True)
+        try:
+            window_marker.write_text("1", encoding="utf-8")
+        except OSError:
+            window_marker = None
+
     # BIOMANAGER_PORT pins the port, so the release workflow can check that a
     # freshly built app answers; otherwise last time's, or any free one.
     port = _choose_port()
@@ -181,6 +199,8 @@ def main() -> int:
     if sys.platform == "darwin":
         import desktop_mac
         window.events.before_show += desktop_mac.prepare
+    if window_marker is not None:
+        window.events.shown += lambda: window_marker.unlink(missing_ok=True)
     # gui=None lets pywebview pick the native backend (cocoa on macOS,
     # edgechromium on Windows, gtk/qt on Linux). On a Mac the full menu bar
     # replaces pywebview's once the window is up; elsewhere pywebview's own
@@ -201,8 +221,9 @@ def main() -> int:
             desktop_windows.run_in_browser(target, "failed", error)
         elif sys.platform.startswith("linux"):
             # A computer without the graphics libraries Qt's window needs
-            # (desktop_linux.py).
-            import desktop_linux
+            # (desktop_linux.py): not a window that failed to draw.
+            if window_marker is not None:
+                window_marker.unlink(missing_ok=True)
             desktop_linux.run_in_browser(url + "lab-elsewhere" if target != url else url, error)
         else:
             raise

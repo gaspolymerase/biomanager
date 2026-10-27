@@ -32,11 +32,11 @@
     <button type="button" class="btn" id="biocal-today">{{ _('Today') }}</button>
     <button type="button" class="btn btn-icon" id="biocal-next" aria-label="{{ _('Next') }}">{{ icon('chevron-right') }}</button>
   </div>
-  <div class="seg cal-views" role="tablist" aria-label="{{ _('View') }}">
-    <button type="button" class="seg-item biocal-view-btn is-active" data-view="month">{{ _('Month') }}</button>
-    <button type="button" class="seg-item biocal-view-btn" data-view="week">{{ _('Week') }}</button>
-    <button type="button" class="seg-item biocal-view-btn" data-view="day">{{ _('Day') }}</button>
-    <button type="button" class="seg-item biocal-view-btn" data-view="list">{{ _('List') }}</button>
+  <div class="seg cal-views" role="group" aria-label="{{ _('View') }}">
+    <button type="button" class="seg-item biocal-view-btn is-active" data-view="month" aria-pressed="true">{{ _('Month') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="week" aria-pressed="false">{{ _('Week') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="day" aria-pressed="false">{{ _('Day') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="list" aria-pressed="false">{{ _('List') }}</button>
   </div>
   <div class="cal-new">
     <button type="button" class="btn btn-primary cal-new-main" data-new="event">{{ icon('plus') }} {{ _('New event') }}</button>

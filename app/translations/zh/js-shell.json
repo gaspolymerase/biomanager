@@ -57,5 +57,14 @@
   "Chemical": "化学品",
   "Saved the order of the databases.": "数据库顺序已保存。",
   "Could not save the order. Reload the page and try again.": "无法保存顺序。请刷新页面后再试。",
-  "Icon": "图标"
+  "Icon": "图标",
+  "Icons": "图标",
+  "Emoji": "表情",
+  "Your SVG": "你的 SVG",
+  "Any emoji": "其他表情",
+  "Control-Command-Space opens the Mac's own emoji.": "按 Control-Command-空格 打开 Mac 自带的表情。",
+  "Windows key + . opens the emoji panel (Control-Command-Space on a Mac).": "按 Windows 键 + . 打开表情面板（Mac 上按 Control-Command-空格）。",
+  "Upload an SVG…": "上传 SVG…",
+  "That SVG couldn't be used.": "这个 SVG 用不了。",
+  "A drawing in an .svg file, up to 100 KB. Scripts and links in it are taken out.": ".svg 文件里的图形，最大 100 KB。其中的脚本和链接会被去掉。"
 }
