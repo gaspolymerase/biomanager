@@ -30,6 +30,19 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.4.0": {
+        "new": [
+            "A notebook topic's icon can be any emoji, or an SVG of your own: **Name and icon** → **Emoji** or **SVG**.",
+        ],
+        "changed": [
+            "The notebook has one sidebar, the full height of the window: your notebook's name opens **Home**, **+** makes a page, and **Find a page…** searches.",
+            "Your round badge shows your **Short name** (up to 5 letters), set in **Settings**.",
+            "Grey and coloured text is easier to read, in light and dark mode.",
+        ],
+        "fixed": [
+            "On Linux, a computer without working graphics opens BioManager's window instead of stopping.",
+        ],
+    },
     "2.3.1": {
         "fixed": [
             "On macOS 14, an event in the **Mac Calendar** that runs across the night the clocks go back no longer shows ending an hour late.",
