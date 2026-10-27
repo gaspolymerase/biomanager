@@ -42,5 +42,9 @@
   "Calendar: “%(title)s”, %(when)s%(whose)s": "日历：“%(title)s”，%(when)s%(whose)s",
   " (only you)": "（仅自己可见）",
   "Book %(instrument)s, %(when)s%(repeat)s": "预约%(instrument)s，%(when)s%(repeat)s",
-  "until goes with repeat.": "until 需要和 repeat 一起给。"
+  "until goes with repeat.": "until 需要和 repeat 一起给。",
+  "To-do: “%(title)s”%(whose)s": "待办：“%(title)s”%(whose)s",
+  "To-do: “%(title)s”, due %(when)s%(whose)s": "待办：“%(title)s”，截止 %(when)s%(whose)s",
+  " (the lab's)": "（实验室共享）",
+  "A time goes with a date.": "时间需要和日期一起给。"
 }

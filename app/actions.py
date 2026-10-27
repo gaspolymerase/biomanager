@@ -1354,6 +1354,36 @@ def _task_done(_s, task, _v):
     return [] if task.done_at is not None else [Call("POST", f"/calendar/items/task-{task.id}/toggle", form=[])]
 
 
+def _task_said(v) -> str:
+    if "date" not in v:
+        return gettext("To-do: “%(title)s”%(whose)s", title=v["title"],
+                       whose=gettext(" (the lab's)") if v.get("shared") else "")
+    return gettext("To-do: “%(title)s”, due %(when)s%(whose)s", title=v["title"], when=_when_said(v),
+                   whose=gettext(" (the lab's)") if v.get("shared") else "")
+
+
+@action(name="task_new", area="calendar", title="New to-do",
+        help="A to-do on the calendar, yours unless shared (a lab to-do everyone sees and can tick off). Due on a "
+             "day, at a time if given, or with no day at all.", target=None,
+        fields=(Field("title", "text", "What to do", required=True),
+                Field("date", "date", "The day it is due"),
+                Field("time", "text", "When, like 14:30 (with date)"),
+                Field("end_time", "text", "When it ends, like 16:00"),
+                Field("notes", "text", "More about it"),
+                Field("shared", "bool", "true: a lab to-do, everyone's to see and tick off")),
+        describe=lambda _s, _t, v: _task_said(v))
+def _task_new(_s, _target, v):
+    if "date" in v:
+        start, end = _span(v)
+    elif {"time", "end_time"} & set(v):
+        raise ActionError(gettext("A time goes with a date."))
+    else:
+        start = end = None
+    body = {"kind": "task", "title": v["title"], "start": start, "end": end, "isAllday": "time" not in v,
+            "description": v.get("notes", ""), "audience": "1" if v.get("shared") else "0"}
+    return [Call("POST", "/calendar/items", json=body)]
+
+
 # ---------------------------------------------------------------- experiments
 
 def _experiments_named(s, name: str) -> list:
