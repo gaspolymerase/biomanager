@@ -188,7 +188,7 @@
   {% set own_fields = fields.get('organism', []) %}
   {% set dead_values = module.dead_statuses | join(',') %}
   {% set new_payload = {'count': 1, 'code': next_code, 'attrs': attr_defaults.get('organism', {})} %}
-  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-animals-v2" data-autosave-sheet
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-animals-v2" data-dt-views="org-{{ module.key }}" data-dt-inspector data-autosave-sheet
            data-noun="{{ n_org }}" data-noun-plural="{{ n_orgs }}"
            data-selection-scope data-selection-noun="{{ n_org }}" data-selection-noun-plural="{{ n_orgs }}">
     <div class="dt-toolbar">
@@ -467,7 +467,7 @@
     </div>
   {% endif %}
   <div data-layout-panel="table">
-  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-housing-v2" data-autosave-sheet
+  <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-housing-v2" data-dt-views="orgh-{{ module.key }}" data-dt-inspector data-autosave-sheet
            data-noun="{{ n_unit }}" data-noun-plural="{{ n_units }}"
            data-selection-scope data-selection-noun="{{ n_unit }}" data-selection-noun-plural="{{ n_units }}">
     <div class="dt-toolbar">

@@ -2584,6 +2584,19 @@ class NotebookPresence(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class PagePresence(Base):
+    """Who has a sheet open (static/sheet-views.js): a page's address and a
+    person, refreshed every half minute while it is open. Rows older than a
+    minute are ignored and cleared (app/sheet_views.py)."""
+    __tablename__ = "page_presence"
+    __table_args__ = (UniqueConstraint("path", "username", name="uq_page_presence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    path: Mapped[str] = mapped_column(String(200), index=True)
+    username: Mapped[str] = mapped_column(String(80), default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class NotebookComment(Base):
     """A comment on a page, optionally on a quoted passage; replies point at
     the first comment of their thread."""

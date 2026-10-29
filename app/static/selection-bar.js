@@ -87,11 +87,29 @@
       anchor = index;
     });
 
+    const clearAll = () => {
+      boxes().forEach((box) => { box.checked = false; });
+      refresh();
+    };
     bar.querySelectorAll('[data-selection-clear]').forEach((button) => {
-      button.addEventListener('click', () => {
-        boxes().forEach((box) => { box.checked = false; });
-        refresh();
-      });
+      button.addEventListener('click', clearAll);
+    });
+
+    // The keys, shown in the bar: Shift-click ticks a range, Esc lets go.
+    const clearButton = bar.querySelector('[data-selection-clear]');
+    if (clearButton && !bar.querySelector('.selbar-keys')) {
+      const keys = document.createElement('span');
+      keys.className = 'selbar-keys';
+      const kbd = (text) => { const k = document.createElement('kbd'); k.textContent = text; return k; };
+      keys.append(kbd(t('Shift')), ' ' + t('click a range') + ' · ', kbd('Esc'), ' ' + t('clear'));
+      clearButton.before(keys);
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || bar.hidden || event.defaultPrevented) return;
+      const target = event.target;
+      if (target && target.closest && target.closest('input:not([type=checkbox]), select, textarea, [contenteditable], dialog[open], .menu')) return;
+      if (document.querySelector('dialog[open]')) return;
+      clearAll();
     });
 
     // Inject the ids at submit time rather than keeping a hidden field in

@@ -463,6 +463,9 @@ app.register_blueprint(whats_new.bp)
 # Hovering a database in the sidebar shows a look inside it (app/rail_peek.py).
 from . import rail_peek  # noqa: E402
 app.register_blueprint(rail_peek.bp)
+# A sheet's saved views, each person's own (app/sheet_views.py).
+from . import sheet_views  # noqa: E402
+app.register_blueprint(sheet_views.bp)
 # Repeats, protocols, equipment, away days and the phone feed (app/lab_calendar.py).
 app.register_blueprint(lab_calendar.bp)
 # The calendar in the Mac's own Calendar app, from the desktop app (app/mac_calendar.py).

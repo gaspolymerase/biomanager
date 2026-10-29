@@ -1725,9 +1725,11 @@
 
   /* Clipped, not a scroller of its own: the page is what scrolls, so the
      toolbar and the bottom bar can stay in view as a long table goes by. */
+  /* A sheet keeps its solid page (what scrolls under its sticky toolbar and
+     header must be hidden), lifted off the wallpaper like the glass. */
   .data-table-card {
-    @apply flex min-w-0 flex-col overflow-clip rounded-2xl border border-hairline
-           bg-surface shadow-xs;
+    @apply flex min-w-0 flex-col overflow-clip rounded-2xl bg-surface;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
   }
 
   /* --- Toolbar ---------------------------------------------------------- */
@@ -1992,6 +1994,119 @@
   }
   .dt-chip-count { @apply text-[11px] font-semibold tabular-nums text-muted; }
   .dt-chip[aria-pressed="true"] .dt-chip-count { @apply text-brand-700; }
+
+  /* --- Saved views, filter chips, who is here (static/sheet-views.js) -- */
+
+  .dt-views {
+    @apply flex items-center gap-3 border-b border-sand-100 px-2.5 pb-1.5 pt-2;
+  }
+  .dt-views-tabs { @apply flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]; }
+  .dt-view {
+    @apply relative inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-full border-0
+           bg-transparent px-3 text-[12px] font-medium text-muted transition-colors;
+  }
+  .dt-view:hover { @apply bg-sand-300/30 text-ink; }
+  .dt-view[aria-selected="true"] { @apply bg-brand-600/12 font-semibold text-brand-800; }
+  .dt-view.is-changed::after {
+    content: ""; @apply absolute right-1 top-1 size-1.5 rounded-full bg-warn-600;
+  }
+  .dt-view .icon { @apply size-3; }
+  .dt-view-add { @apply text-muted; }
+
+  .dt-here { @apply flex shrink-0 items-center gap-1.5 text-[12px] text-muted; }
+  .dt-here:empty { @apply hidden; }
+  .dt-here-faces { @apply flex; }
+  .dt-here-face {
+    @apply -ml-1.5 grid size-6 place-items-center rounded-full text-[10px] font-bold first:ml-0;
+    box-shadow: 0 0 0 2px var(--color-surface);
+  }
+  .dt-here-face[data-tone="sky"]    { @apply bg-sky-100 text-sky-800; }
+  .dt-here-face[data-tone="violet"] { @apply bg-violet-100 text-violet-800; }
+  .dt-here-face[data-tone="pink"]   { @apply bg-pink-100 text-pink-800; }
+  .dt-here-face[data-tone="teal"]   { @apply bg-teal-100 text-teal-800; }
+  .dt-here-face[data-tone="amber"]  { @apply bg-amber-100 text-amber-900; }
+  .dt-here-face[data-tone="lime"]   { @apply bg-lime-100 text-lime-900; }
+
+  .dt-fields { @apply inline-flex flex-wrap items-center gap-1; }
+  .dt-field-chip {
+    @apply cursor-default gap-1 bg-brand-600/12 pr-1 font-normal text-brand-800;
+  }
+  .dt-field-chip b { @apply font-semibold; }
+  .dt-field-name { @apply text-brand-800/75; }
+  .dt-field-name::after { content: ":"; }
+  .dt-field-off {
+    @apply grid size-5 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-brand-800/70;
+  }
+  .dt-field-off:hover { @apply bg-brand-600/20 text-brand-900; }
+  .dt-field-off .icon { @apply size-3; }
+  .dt-chip-add {
+    @apply gap-1 border border-dashed border-sand-300 px-2.5 text-muted;
+  }
+  .dt-chip-add:hover { @apply border-sand-400 text-ink; }
+  .dt-chip-add .icon { @apply size-3; }
+
+  .menu.dt-pop {
+    @apply fixed right-auto top-auto z-100 max-h-[min(420px,70vh)] w-64 overflow-y-auto;
+    transform-origin: top left;
+  }
+  .dt-pop .menu-label { @apply px-2.5 pb-1 pt-1.5 text-[11px] font-semibold text-muted; }
+  .dt-pop-label { @apply min-w-0 flex-1 truncate text-left; }
+  .dt-pop-count { @apply shrink-0 text-[11px] tabular-nums text-muted; }
+  .dt-pop .menu-item:hover .dt-pop-count { @apply text-white/80; }
+  .dt-pop-back { @apply font-semibold; }
+
+  /* --- Inspector: the row you clicked, in full, beside the sheet ------- */
+
+  .dt-inspect-wrap { @apply min-w-0; }
+  .dt-inspect-wrap.is-open {
+    @apply grid items-start gap-3;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .dt-inspector {
+    @apply relative sticky flex flex-col gap-3 overflow-y-auto p-4;
+    top: 8px;
+    max-height: calc(100vh - var(--tabbar-h) - var(--toolbar-h) - 24px);
+  }
+  .dt-inspector[hidden] { display: none; }
+  .dt-inspector-close {
+    @apply absolute right-2.5 top-2.5 grid size-7 cursor-pointer place-items-center rounded-full border-0
+           bg-transparent text-muted;
+  }
+  .dt-inspector-close:hover { @apply bg-sand-300/40 text-ink; }
+  .dt-inspector-head { @apply flex flex-wrap items-end gap-x-3 gap-y-2 pr-8; }
+  .dt-inspector-kicker { @apply w-full text-[11px] font-semibold text-muted; }
+  .dt-inspector-title { @apply font-mono text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink; }
+  .dt-inspector-head .btn { @apply ml-auto; }
+  .dt-inspector-empty { @apply m-0 text-[13px] text-muted; }
+  .dt-inspector-fields {
+    @apply m-0 grid gap-x-3 gap-y-1.5 border-t border-hairline pt-3 text-[13px];
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .dt-inspector-fields dt { @apply text-[12px] text-muted; }
+  .dt-inspector-fields dd { @apply m-0 min-w-0 break-words text-ink; }
+  .dt-inspector-label { @apply pb-1.5 text-[12px] font-semibold text-muted; }
+  .dt-inspector-fields :is(.status-pill, .sex-pill, .scope-pill) {
+    @apply inline-block rounded-full px-2 text-[11px] font-semibold capitalize leading-5;
+  }
+  .dt-inspector-rack { @apply border-t border-hairline pt-3; }
+  .dt-rack-mini { @apply grid gap-1; }
+  .dt-rack-cell {
+    @apply grid aspect-[4/3] min-w-0 place-items-center truncate rounded-md bg-sand-300/25 font-mono text-[10px]
+           text-muted no-underline;
+  }
+  a.dt-rack-cell.is-live { @apply bg-surface text-ink; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  a.dt-rack-cell:hover { @apply text-brand-700 no-underline; }
+  a.dt-rack-cell.is-here {
+    @apply bg-brand-600 font-semibold;
+    color: var(--color-on-brand, #fff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .dt tbody tr.is-inspected > td { background-image: linear-gradient(color-mix(in srgb, var(--color-brand-600) 7%, transparent), color-mix(in srgb, var(--color-brand-600) 7%, transparent)); }
+  @media (max-width: 1100px) {
+    .dt-inspect-wrap.is-open { @apply block; }
+    .dt-inspector { @apply static mt-3 max-h-none; }
+  }
+  @media (max-width: 640px) { .dt-btn-inspect { @apply hidden; } }
 
   /* --- Popover menu (Columns, Sort) ------------------------------------ */
 
@@ -2298,7 +2413,7 @@
 
   /* The selection bar sits under the sheet rather than floating over it. */
   .sheet .selbar { @apply rounded-none border-x-0 border-b-0; }
-  .data-table-card > .selbar { bottom: var(--dt-bottom-h, 0px); @apply z-[33]; }
+  .data-table-card > .selbar { bottom: calc(var(--dt-bottom-h, 0px) + 10px); @apply z-[33]; }
 }
 
 /* ===========================================================================
@@ -3817,24 +3932,28 @@
 
 @layer components {
 
+  /* Floating clear glass, centred under the rows it acts on. */
   .selbar {
-    @apply sticky bottom-3 z-20 mb-3 flex flex-wrap items-center gap-2 rounded-2xl border
-           border-sand-300 bg-surface px-3 py-2.5 shadow-pop;
-    animation: selbar-in 0.16s var(--ease-out-soft);
+    @apply glass-clear sticky bottom-4 z-20 mx-auto mb-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap
+           items-center gap-2 rounded-[22px] px-2.5 py-2;
+    animation: selbar-in 0.22s var(--ease-spring);
   }
   .selbar[hidden] { display: none; }
 
   .selbar-count {
-    @apply shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-[13px] font-semibold text-brand-800;
+    @apply shrink-0 rounded-full bg-brand-600 px-3 py-1 text-[13px] font-semibold;
+    color: var(--color-on-brand, #fff);
   }
 
   .selbar-group {
-    @apply flex shrink-0 items-center gap-1.5 rounded-xl border border-hairline
-           bg-sand-50 px-2 py-1.5;
+    @apply flex shrink-0 items-center gap-1.5 rounded-full bg-sand-300/25 py-1 pl-1.5 pr-1;
   }
   .selbar-group select,
-  .selbar-group input { @apply field h-7 w-auto min-w-[104px] text-[12px]; }
+  .selbar-group input { @apply field h-7 w-auto min-w-[104px] rounded-full text-[12px]; }
   .selbar-group input { @apply min-w-[128px]; }
+  /* How to tick more, and to let go: shown, as Linear and Figma do. */
+  .selbar-keys { @apply hidden shrink-0 items-center gap-1 pl-1 text-[11px] text-muted lg:inline-flex; }
+  .selbar-keys kbd { @apply kbd-chip; }
 
   .selbar-spacer { @apply ml-auto; }
 

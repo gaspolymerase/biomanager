@@ -867,7 +867,14 @@ database has a name of its own (one another database has is refused), so
       Click a cell and type; it saves as you go. Every table sorts
       (numbers as numbers: cage 2 before cage 10), filters, exports to CSV
       and prints, and keeps your sort and filter
-      (the filter also in its address, for a bookmark). Drag a column's
+      (the filter also in its address, for a bookmark). <b>+ Filter</b>
+      adds a chip for any column's value (<i>Sex: F</i>), and <b>Save
+      view</b> keeps a search, its chips, a sort and the columns shown
+      under a name, a tab above the sheet that follows you to any
+      computer. <b>Inspector</b> shows the row you click in full beside
+      the sheet, a mouse's or cage's rack drawn with its place lit, and
+      the initials of anyone else with the sheet open show beside the
+      views. Drag a column's
       heading to put the columns you need first (or use the arrows under
       <b>Columns</b>); your order is kept, and an admin sets the lab's
       starting order in <b>Configure</b>. The page scrolls,
@@ -903,7 +910,8 @@ database has a name of its own (one another database has is refused), so
     </td>
     <td valign="top">
       <h4>↩️ Batch actions with undo</h4>
-      Tick rows (shift-click for a range), then <b>Set field</b> (any
+      Tick rows (shift-click for a range; <kbd>Esc</kbd> lets go) and a
+      bar of glass rises: <b>Set field</b> (any
       column, your own included), move them, change owner or status, add
       them to an experiment, sac, retire or delete them. Records you may
       not change are skipped and counted.

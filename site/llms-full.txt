@@ -305,6 +305,12 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
 
+- **Filters and saved views**: **+ Filter**, beside the search, picks a column and then one of the values in it (each with how many rows have it), for a chip such as *Sex: F* that keeps only those rows; add more and they all apply, × takes one off. Above the search, **Save view** keeps what you're looking at — the search, the chips, the sort and the columns shown — under a name, as a tab you come back to in one click; **All** shows everything again. A dot on a view means you've changed it since; click it again for **Update to what is shown**, **Rename…** or **Delete this view**. Views are yours, and follow you to any computer you sign in on.
+
+- **Inspector**: **Inspector** in the toolbar opens a panel beside the sheet with every column of the row you last clicked, hidden ones included, and **Open** for the full record. For a mouse or a cage it draws the rack too, the cage's place lit; click another cage there to go to it.
+
+- **Who else is here**: When someone else has the same sheet open, their initials show at the right of the views, with how many are here.
+
 - **Put the important columns first**: Drag a column's heading left or right; a line shows where it will land. Without a mouse, open **Columns** and use the arrows beside a column (**Move left**, **Move right**). The tick boxes, the number or ID, and the buttons at the end stay where they are. Pasting a block, **Export** and a phone's cards follow the order you set. **Reset column order**, under **Columns**, puts it back. The order you start from is the lab's: an admin sets it under the database's **Configure**, with the arrows beside each column of your own (**Move up**, **Move down**).
 
 - **On a phone**: A sheet becomes one card per row: the number and its buttons on top, then each column by name. **Columns** still hides what you don't need there.
@@ -337,7 +343,7 @@ Select many records and change, move or print them in one go.
 
 - **Import from Excel**: For the sheet you already keep. Every database takes an Excel workbook or CSV, with any columns: you check how they were matched, see a preview of what would be created and which rows would be skipped, then import them as one batch you can undo. See [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in).
 
-- **Select and act**: Tick rows (shift-click selects a range) and a bar rises from the bottom: set a field, move, change owner or status, sac, retire, delete. **Set field** sets any column on them, your own columns included (a date column takes a date, a number column a number). That includes **Source**, where you pick the colony and type the ID once — handy when one mouse gives a dozen samples and each would otherwise be opened in turn. Records you may not change are skipped and counted, never silently changed.
+- **Select and act**: Tick rows (shift-click selects a range) and a bar of glass rises from the bottom: set a field, move, change owner or status, sac, retire, delete. `Esc` lets them all go. **Set field** sets any column on them, your own columns included (a date column takes a date, a number column a number). That includes **Source**, where you pick the colony and type the ID once — handy when one mouse gives a dozen samples and each would otherwise be opened in turn. Records you may not change are skipped and counted, never silently changed.
 
 - **Duplicate**: Copies a record as a new one of yours — the next aliquot, or the same order again.
 

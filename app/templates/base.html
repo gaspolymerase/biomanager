@@ -381,6 +381,8 @@
     {% endif %}
 
     <script src="{{ url_for('static', filename='shell.js') }}?v={{ asset_version('shell.js') }}" defer></script>
+    {# A sheet's saved views, filter chips, inspector and who is here (app/sheet_views.py). #}
+    <script src="{{ url_for('static', filename='sheet-views.js') }}?v={{ asset_version('sheet-views.js') }}" defer></script>
     {# Hover a place in the sidebar: its name, or a look inside a database (app/rail_peek.py). #}
     <script src="{{ url_for('static', filename='rail-peek.js') }}?v={{ asset_version('rail-peek.js') }}" defer></script>
     <script src="{{ url_for('static', filename='tab-bar.js') }}?v={{ asset_version('tab-bar.js') }}" defer></script>
