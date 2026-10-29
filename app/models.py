@@ -447,6 +447,9 @@ class DropdownOption(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     field_name: Mapped[str] = mapped_column(String(80), index=True)
     option_value: Mapped[str] = mapped_column(String(200))
+    # Its place in its column's dropdown (the Dropdowns tab, dragged); 0
+    # until a lab orders them, when they go A–Z (revision 0052).
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

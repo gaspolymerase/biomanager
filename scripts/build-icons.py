@@ -56,6 +56,7 @@ FROM_LUCIDE = {
     "amount": "beaker",
     "target": "target",
     # --- navigation & chrome ---
+    "grip": "grip-vertical",
     "home": "house",
     "calendar": "calendar-days",
     "notebook": "notebook",

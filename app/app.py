@@ -31,6 +31,7 @@ from .formutil import form_changed
 from . import audit  # noqa: F401
 from . import sync_clock  # noqa: F401  (numbers each change to what devices keep)
 from . import lab_devices
+from . import choices
 from . import undo as undo_service
 from . import custom_fields, feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
@@ -2103,6 +2104,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
         dropdowns = dropdown_options_map(db_session)
         dropdown_records = dropdown_records_map(db_session)
+        # The Dropdowns tab: each column's choices and where they are used (app/choices.py).
+        choice_columns = choices.columns(db_session) if active_view == "settings" else []
         usernames = current_lab_usernames(db_session)
         notifications = recent_notifications(db_session, g.user.username if g.user else "", limit=10) if g.user else []
 
@@ -2252,6 +2255,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "strain_rows": strain_rows,
         "dropdowns": dropdowns,
         "dropdown_records": dropdown_records,
+        "choice_columns": choice_columns,
         "next_mouse_id_value": next_mouse_id_value,
         "next_cage_id_value": next_cage_id_value,
         "next_litter_id_value": next_litter_id_value,
@@ -5810,50 +5814,67 @@ def _presets_back():
     return redirect(url_for("colony", view="settings"))
 
 
+def _choices_reply(message: str, category: str = "success", status: int = 200):
+    """The Dropdowns tab asks by fetch and redraws itself; a plain form
+    (Configure's Cage purposes) goes back with a flash."""
+    if request.headers.get("X-Requested-With") == "fetch":
+        ok = category != "error"
+        return jsonify({"ok": ok, "message": message} if ok else {"ok": False, "error": message}), (status if ok else 409)
+    if request.headers.get("X-Autosave") == "1":
+        if category == "error":
+            flash(message, "error")
+        return autosave_response("settings")
+    flash(message, category)
+    return _presets_back()
+
+
 @app.route("/colony/options/create", methods=["POST"])
 @login_required
 def create_option():
+    """One choice, or several pasted one per line."""
     field_name = (request.form.get("field_name") or "").strip()
-    option_value = (request.form.get("option_value") or "").strip()
+    values = []
+    for line in (request.form.get("option_value") or "").splitlines():
+        if line.strip() and line.strip().lower() not in {v.lower() for v in values}:
+            values.append(line.strip())
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return _presets_back()
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
     with SessionLocal() as db_session:
-        if not field_name or not option_value:
-            flash(gettext("Pick a column and type a value."), "error")
-            return _presets_back()
-        existing = db_session.scalar(
-            select(DropdownOption).where(
-                DropdownOption.field_name == field_name,
-                func.lower(DropdownOption.option_value) == option_value.lower(),
-            )
-        )
-        if existing is not None:
-            flash(gettext("“%(value)s” is already a %(column)s preset.", value=existing.option_value,
-                          column=i18n.translate_value(field_name)), "error")
-            return _presets_back()
-        db_session.add(DropdownOption(field_name=field_name, option_value=option_value))
+        if not field_name or not values:
+            return _choices_reply(gettext("Pick a column and type a value."), "error")
+        have = {v.lower(): v for v in db_session.scalars(
+            select(DropdownOption.option_value).where(DropdownOption.field_name == field_name))}
+        fresh = [v for v in values if v.lower() not in have]
+        if not fresh:
+            return _choices_reply(gettext("“%(value)s” is already a %(column)s preset.", value=have[values[0].lower()],
+                                          column=i18n.translate_value(field_name)), "error")
+        place = choices.next_position(db_session, field_name)
+        for i, value in enumerate(fresh):
+            db_session.add(DropdownOption(field_name=field_name, option_value=value, position=place + i if place else 0))
         db_session.commit()
-        flash(gettext("Saved “%(value)s” as a %(column)s preset.", value=option_value,
-                      column=i18n.translate_value(field_name)), "success")
-    return _presets_back()
+    if len(fresh) == 1:
+        return _choices_reply(gettext("Saved “%(value)s” as a %(column)s preset.", value=fresh[0],
+                                      column=i18n.translate_value(field_name)))
+    return _choices_reply(gettext("Added %(n)s choices to %(column)s.", n=len(fresh), column=choices.label(field_name)))
 
 
 @app.route("/colony/options/<int:option_id>/update", methods=["POST"])
 @login_required
 def update_option(option_id: int):
+    """Rename a choice; with also_records=1, on the records that hold it too."""
     new_value = request.form.get("option_value", "").strip()
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return autosave_response("settings")
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
         if option is None:
-            flash(gettext("That preset no longer exists."), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("That preset no longer exists."), "error")
         if not new_value:
-            flash(gettext("A preset cannot be blank; delete it instead."), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("A preset cannot be blank; delete it instead."), "error")
+        if new_value == option.option_value:
+            return _choices_reply("")
+        if choices.locked(option.field_name, option.option_value):
+            return _choices_reply(gettext("Breeding and Breeder keep their names: the colony’s litters and its Breeders tab go by them."), "error")
         duplicate = db_session.scalar(
             select(DropdownOption).where(
                 DropdownOption.field_name == option.field_name,
@@ -5862,28 +5883,58 @@ def update_option(option_id: int):
             )
         )
         if duplicate is not None:
-            flash(gettext("“%(value)s” is already a %(column)s preset.", value=duplicate.option_value,
-                          column=i18n.translate_value(option.field_name)), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("“%(value)s” is already a %(column)s preset.", value=duplicate.option_value,
+                                          column=i18n.translate_value(option.field_name)), "error")
+        old = option.option_value
         option.option_value = new_value
+        done = None
+        if request.form.get("also_records") == "1":
+            done = choices.change_records(db_session, option.field_name, old, new_value,
+                                          f"renamed {option.field_name} {old} to {new_value}")
         db_session.commit()
-    return autosave_response("settings")
+        if done and done.changed:
+            return _choices_reply(gettext("Renamed “%(old)s” to “%(new)s”, and on %(things)s.", old=old, new=new_value,
+                                          things=choices.uses_text(option.field_name, done.changed)))
+    return _choices_reply(gettext("Renamed “%(old)s” to “%(new)s”.", old=old, new=new_value))
 
 
 @app.route("/colony/options/<int:option_id>/delete", methods=["POST"])
 @login_required
 def delete_option(option_id: int):
+    """Remove a choice. The records that hold it keep it, unless
+    replace_with names another value to put in its place."""
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return _presets_back()
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
+    replace_with = (request.form.get("replace_with") or "").strip()
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
-        if option is not None:
-            column, value = i18n.translate_value(option.field_name), option.option_value
-            db_session.delete(option)
-            db_session.commit()
-            flash(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value), "success")
-    return _presets_back()
+        if option is None:
+            return _choices_reply("")
+        column, value, field = i18n.translate_value(option.field_name), option.option_value, option.field_name
+        done = None
+        if replace_with and replace_with.lower() != value.lower():
+            done = choices.change_records(db_session, field, value, replace_with, f"replaced {field} {value} with {replace_with}")
+        db_session.delete(option)
+        db_session.commit()
+    if done and done.changed:
+        return _choices_reply(gettext("Removed “%(value)s”; %(things)s now have “%(other)s”.", value=value,
+                                      things=choices.uses_text(field, done.changed), other=replace_with))
+    return _choices_reply(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value))
+
+
+@app.route("/colony/options/order", methods=["POST"])
+@login_required
+def order_options():
+    """A column's choices in the order they were dragged to."""
+    if not access.can_edit_presets():
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
+    payload = request.get_json(silent=True) or {}
+    field = str(payload.get("field_name") or "")
+    ids = [int(i) for i in payload.get("ids") or [] if str(i).isdigit()]
+    with SessionLocal() as db_session:
+        choices.reorder(db_session, field, ids)
+        db_session.commit()
+    return jsonify({"ok": True})
 
 
 # ---------------------------------------------------------------------------

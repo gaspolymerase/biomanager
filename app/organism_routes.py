@@ -454,7 +454,7 @@ def configure_builtin(key: str):
         if key == "colony":
             from .models import DropdownOption
             cage_purposes = session.scalars(select(DropdownOption).where(DropdownOption.field_name == "purpose")
-                                            .order_by(DropdownOption.option_value)).all()
+                                            .order_by(DropdownOption.position, DropdownOption.option_value)).all()
     return render_template("organisms/builtin_configure.html", key=key, feature=feature, label=label,
                            cage_purposes=cage_purposes, purpose_hints=CAGE_PURPOSE_HINTS,
                            default=inventories.BUILTIN_DATABASES[key][0], on=on, fields=fields,
