@@ -32,12 +32,17 @@
   gap: 20px;
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
-  padding: 14px 12px 12px;
-  border-radius: 22px;
+  padding: 16px 14px 14px;
+  border-radius: 26px;
   background: var(--glass-regular);
-  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
   scrollbar-width: thin;
 }
+/* Equipment and protocols each sit in a well of their own. */
+.cal-side .cal-section.is-well { padding: 12px; border-radius: 18px; background: color-mix(in srgb, var(--color-sand-300) 45%, transparent); }
+.cal-side .cal-section.is-well .cal-section-h { font-size: 13px; color: var(--color-ink); }
 
 /* New event and its other kinds: one tinted capsule in the title row. */
 .cal-new { position: relative; display: flex; }
@@ -107,34 +112,41 @@
 }
 .cal-mini-day {
   position: relative;
-  justify-self: center;
-  width: 28px;
-  height: 28px;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0;
   border: 0;
-  border-radius: 50%;
   background: none;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--color-ink-soft);
   cursor: pointer;
 }
-.cal-mini-day:hover { background: var(--color-recess); }
+.cal-mini-day > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; }
+.cal-mini-day:hover > span { background: var(--color-recess); }
 .cal-mini-day.is-other { color: var(--color-muted); font-weight: 400; }
 .cal-mini-day.has-items::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: 3px;
-  width: 3px;
-  height: 3px;
-  margin-left: -1.5px;
+  bottom: 1px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
   border-radius: 50%;
-  background: var(--color-sand-500);
+  background: var(--color-brand-600);
 }
-.cal-mini-day.is-today { font-weight: 700; color: var(--color-brand-700); box-shadow: inset 0 0 0 1.5px var(--color-brand-600); }
-.cal-mini-day.is-selected { background: var(--color-brand-700); color: var(--color-on-brand, #fff); font-weight: 600; box-shadow: none; }
-.cal-mini-day.is-selected::after { background: #fff; }
-.cal-mini-day:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 1px; }
+.cal-mini-day.in-band { background: color-mix(in srgb, var(--color-brand-600) 14%, transparent); }
+.cal-mini-day.band-start { border-radius: 999px 0 0 999px; }
+.cal-mini-day.band-end { border-radius: 0 999px 999px 0; }
+.cal-mini-day.band-start.band-end { border-radius: 999px; }
+.cal-mini-day.is-today > span { background: var(--color-brand-600); color: var(--color-on-brand, #fff); font-weight: 600; }
+.cal-mini-day.is-today::after { background: transparent; }
+.cal-mini-day.is-selected > span { box-shadow: inset 0 0 0 1.5px var(--color-brand-600); font-weight: 600; color: var(--color-brand-700); }
+.cal-mini-day:focus-visible { outline: none; }
+.cal-mini-day:focus-visible > span { outline: 2px solid var(--color-brand-600); outline-offset: 1px; }
 
 /* Layers: a coloured box per kind of item. */
 .cal-layers { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
@@ -248,13 +260,13 @@
 .cal-main {
   min-width: 0;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 26px;
   background: var(--color-surface);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
 }
 body.cal-is-board .cal-main { overflow: visible; background: transparent; box-shadow: none; }
 /* The title row shows the month ("October 2026"), its year quieter. */
-.cal-title-sub { font-weight: 400; color: var(--color-muted); }
+.cal-title-sub { font-size: 0.7em; font-weight: 400; color: var(--color-muted); }
 .cal-nav { display: inline-flex; align-items: center; }
 .cal-side-toggle { display: none !important; }
 .cal-tui { height: clamp(560px, calc(100dvh - 128px), 1100px); }
@@ -358,6 +370,84 @@ body.cal-is-board .cal-main { overflow: visible; background: transparent; box-sh
 .cal-tui .toastui-calendar-weekday-event:has(.cal-chip-away) {
   background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(127 127 127 / 0.12) 6px 12px) !important;
 }
+
+/* ---- Week and day, as in the design --------------------------------------- */
+
+/* The days: the weekday, then the date in a circle, filled on today. */
+.cal-tui .toastui-calendar-day-name-item.toastui-calendar-week { text-align: center !important; padding: 0 !important; }
+.cal-tui .toastui-calendar-template-weekDayName { display: flex; align-items: center; justify-content: center; height: 100%; }
+.cal-wd { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.cal-tui .toastui-calendar-weekday-exceed-in-week { background: var(--color-surface) !important; color: var(--color-ink-soft) !important; border-color: var(--color-hairline) !important; }
+.cal-wd-dow { font-size: 12px; font-weight: 500; color: var(--color-muted); }
+.cal-wd-n {
+  display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 4px; border-radius: 999px;
+  font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-ink);
+}
+.cal-wd.is-today .cal-wd-dow { color: var(--color-brand-700); }
+.cal-wd.is-today .cal-wd-n {
+  background: var(--color-brand-600); color: var(--color-on-brand, #fff);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+}
+/* Due: a row of pills, each with a ring, in the item's colour. */
+.cal-tui .toastui-calendar-panel-title { justify-content: flex-end !important; padding-right: 8px; }
+.cal-tui .toastui-calendar-panel .toastui-calendar-weekday-event {
+  height: 24px !important; border-radius: 999px !important; border-left-width: 0 !important; padding-left: 8px !important;
+}
+.cal-ring { flex: none; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; opacity: 0.8; }
+.cal-tui .toastui-calendar-panel .cal-chip { gap: 6px; font-weight: 500; }
+/* Hours in mono, the time now in red beside its line. */
+.cal-hour, .cal-now { font-family: var(--font-mono); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.cal-hour { color: var(--color-muted); }
+.cal-now { font-weight: 600; color: var(--color-danger-600); }
+.cal-tui .toastui-calendar-timegrid-now-indicator-today { box-shadow: 0 0 8px color-mix(in srgb, var(--color-danger-600) 60%, transparent); }
+.cal-tui .toastui-calendar-timegrid-now-indicator-bullet { width: 10px !important; height: 10px !important; margin-top: -4px; }
+/* A timed item: rounded, a bar of its colour on the left, title then hours. */
+.cal-tui .toastui-calendar-event-time { border-radius: 12px !important; border-left-width: 3px !important; overflow: hidden; }
+.cal-tui .toastui-calendar-event-time-content { padding: 6px 8px 6px 12px !important; }
+.cal-tev { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cal-tev-t { overflow: hidden; font-size: 12.5px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; }
+.cal-tev-time { font-family: var(--font-mono); font-size: 11px; opacity: 0.85; }
+
+/* The quick look: a pane of glass beside the item. */
+.cal-peek {
+  position: fixed; z-index: 80; display: flex; flex-direction: column; gap: 10px;
+  width: min(320px, calc(100vw - 24px)); padding: 16px; border-radius: 24px;
+  background: var(--material-popover);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  backdrop-filter: blur(30px) saturate(200%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-rim), 0 18px 44px rgb(0 0 0 / 0.22);
+  font-size: 13px; color: var(--color-ink);
+  animation: menu-grow 0.2s var(--ease-spring);
+}
+.cal-peek[hidden] { display: none; }
+.cal-peek-head { display: flex; align-items: flex-start; gap: 8px; }
+.cal-peek-swatch { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 3px; }
+.cal-peek-titles { flex: 1; min-width: 0; }
+.cal-peek-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.cal-peek-when { color: var(--color-muted); }
+.cal-peek-mono { font-family: var(--font-mono); }
+.cal-peek-x {
+  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--color-sand-300) 40%, transparent); color: var(--color-ink-soft); cursor: pointer;
+}
+.cal-peek-x .icon { width: 12px; height: 12px; }
+.cal-peek-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-peek-chip {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--color-sand-300) 35%, transparent); font-size: 12px; color: var(--color-ink-soft);
+}
+.cal-peek-chip.is-kind { background: color-mix(in srgb, var(--edge) 18%, var(--color-surface)); color: var(--color-ink); font-weight: 500; }
+.cal-peek-label { margin-bottom: 4px; font-size: 12px; color: var(--color-muted); }
+.cal-peek-label a { font-weight: 500; color: var(--color-brand-700); text-decoration: none; }
+.cal-peek-mouse {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px 0 6px; border-radius: 999px;
+  background: var(--color-teal-100); color: var(--color-teal-800); font-size: 12px; font-weight: 500; text-decoration: none;
+}
+.cal-peek-mouse .icon { width: 13px; height: 13px; }
+.cal-peek-body { margin: 0; color: var(--color-ink-soft); white-space: pre-line; }
+.cal-peek-actions { display: flex; gap: 6px; }
+.cal-peek-actions:empty { display: none; }
+.cal-peek-actions .btn { flex: 1; height: 32px; border-radius: 999px; }
 
 /* ---- List view ------------------------------------------------------------ */
 

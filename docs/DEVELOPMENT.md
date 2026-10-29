@@ -1839,7 +1839,19 @@ crossing the origin keeps `start > end`.
 
 (The page: `templates/calendar.html` puts Back / Today / Forward, the view
 switch and **New event** in the title row (`page_actions`), and
-`static/calendar-page.js` writes the month or range into the title.)
+`static/calendar-page.js` writes the month or range into the title, a
+week's as "October 2026 · Oct 25 – 31". Week and day are TOAST UI drawn
+through its templates: `weekDayName` (the weekday and a date circle,
+today's filled), `alldayTitle` "Due" with each item a pill and a ring
+(`chip()`), `timegridDisplayPrimaryTime` and `timegridNowIndicatorLabel`
+in 24-hour mono, `time` a block of title and hours (`timedBlock`), and the
+theme's now line red. A click on any item, in every view, is the page's
+own listener (the calendar's `clickEvent` came only on a double-click in
+Month and never on a read-only item): `peek()` shows the quick look
+(`.cal-peek`, fixed beside the item: kind, owner, the `#n` mice its title
+names as links, its note, Mark done for a to-do, Open → `openOnce`). The
+hover card is the List view's only. The small month bands the week on
+show.)
 
 `app/lab_calendar.py`. A repeating event is one `calendar_events` row and a
 `calendar_repeats` row (`freq` daily, weekly, monthly or `nthweekday` —

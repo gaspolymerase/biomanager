@@ -109,6 +109,7 @@
   // the page switches (and a recording of it, on the website, does too).
   const SURFACE = 'var(--color-surface, #ffffff)';
   const INK = 'var(--color-ink, #1d1d1f)';
+  const NOW = 'var(--color-danger-600, #e5484d)';
   function tone(color, share, rest) { return `color-mix(in srgb, ${color} ${share}, ${rest})`; }
 
   /* A chip is a tint of its colour with a solid edge in the colour itself,
@@ -212,10 +213,11 @@
         today: { color: brand, backgroundColor: tone(brand, '5%', surface) },
         pastDay: { color: muted }, pastTime: { color: muted },
         weekend: { backgroundColor: tone(recess, '65%', surface) },
-        nowIndicatorLabel: { color: brand },
-        nowIndicatorPast: { border: `1px dashed ${brand}` },
-        nowIndicatorBullet: { backgroundColor: brand },
-        nowIndicatorToday: { border: `1px solid ${brand}` },
+        // Now: a red line across today with a dot, as a phone's calendar draws it.
+        nowIndicatorLabel: { color: NOW },
+        nowIndicatorPast: { border: '1px solid transparent' },
+        nowIndicatorBullet: { backgroundColor: NOW },
+        nowIndicatorToday: { border: `2px solid ${NOW}` },
         panelResizer: { border: line },
         gridSelection: { color: ink },
       },
@@ -224,8 +226,18 @@
 
   function chip(ev) {
     const item = findItem(ev.id) || ev;
-    return `<span class="cal-chip cal-chip-${item.kind || 'event'}" data-item-id="${ev.id}">${svgIcon(iconFor(item))}<span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
+    // Week and day: what is due that day is a pill with a ring, as in the design.
+    const lead = currentView === 'month' ? svgIcon(iconFor(item)) : '<i class="cal-ring" aria-hidden="true"></i>';
+    return `<span class="cal-chip cal-chip-${item.kind || 'event'}" data-item-id="${ev.id}">${lead}<span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
   }
+
+  // A timed item in week and day: its title, then its hours in mono.
+  function timedBlock(ev) {
+    const item = findItem(ev.id) || ev;
+    return `<span class="cal-tev" data-item-id="${ev.id}"><b class="cal-tev-t">${escapeHtml(ev.title || '')}</b>
+      <span class="cal-tev-time">${hm(new Date(item.start))} – ${hm(new Date(item.end))}</span></span>`;
+  }
+  function hm(d) { return Number.isNaN(d.getTime()) ? '' : `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
   waitForTui().then((status) => {
     if (status !== 'ready') {
@@ -244,7 +256,7 @@
       template: {
         allday: chip,
         time(ev) {
-          if (currentView !== 'month') return chip(ev);
+          if (currentView !== 'month') return timedBlock(ev);
           // In the month grid a timed item is a dot, its start and its title.
           const item = findItem(ev.id) || ev;
           return `<span class="cal-chip cal-chip-timed" data-item-id="${ev.id}">
@@ -260,7 +272,15 @@
         },
         monthMoreTitleDate(more) { return `<span class="cal-more-date">${more.ymd ? new Date(more.ymd + 'T00:00').toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }) : ''}</span>`; },
         monthGridHeaderExceed(hidden) { return `<span class="cal-more">${t('+%(n)s more', { n: hidden })}</span>`; },
-        alldayTitle() { return `<span class="cal-panel-title">${t('All day')}</span>`; },
+        alldayTitle() { return `<span class="cal-panel-title">${t('Due')}</span>`; },
+        // The week's days: the weekday, then the date in a circle (filled on today).
+        weekDayName(day) {
+          const isToday = day.dateInstance && ymd(tuiToDate(day.dateInstance)) === ymd(new Date());
+          return `<span class="cal-wd${isToday ? ' is-today' : ''}"><span class="cal-wd-dow">${escapeHtml(day.dayName)}</span><span class="cal-wd-n">${day.date}</span></span>`;
+        },
+        // Hours in 24-hour mono type, and the time now beside its red line.
+        timegridDisplayPrimaryTime({ time }) { return `<span class="cal-hour">${pad(time.getHours())}:00</span>`; },
+        timegridNowIndicatorLabel({ time }) { return `<span class="cal-now">${pad(time.getHours())}:${pad(time.getMinutes())}</span>`; },
         taskTitle() { return `<span class="cal-panel-title">${t('To-dos')}</span>`; },
       },
     });
@@ -307,16 +327,15 @@
         toggleDone(event.id);
         return;
       }
-      const item = findItem(event.id);
-      if (item) openOnce(item);
     });
-    // Month view: one click opens an item. The calendar's own click there
-    // only came on a double-click; this and it open it once between them.
+    // One click on an item shows its quick look, in every view: the
+    // calendar's own click came only on a double-click in Month, and not
+    // at all on a read-only item, so the page listens itself.
     tuiHost.addEventListener('click', (e) => {
-      if (currentView !== 'month' || e.target.closest('.biocal-task-cb')) return;
-      const chipEl = e.target.closest('.cal-chip[data-item-id]');
+      if (e.target.closest('.biocal-task-cb')) return;
+      const chipEl = e.target.closest('[data-item-id]');
       const item = chipEl && findItem(chipEl.dataset.itemId);
-      if (item) openOnce(item);
+      if (item) peek(item, e);
     });
 
     let savedView = null;
@@ -413,12 +432,15 @@
     const d = currentDate();
     let html;
     if (currentView === 'month') {
-      html = `${d.toLocaleDateString(LOCALE, { month: 'long' })} <span class="cal-title-sub">${d.getFullYear()}</span>`;
+      html = d.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
     } else if (currentView === 'week' && calendar) {
       const s = tuiToDate(calendar.getDateRangeStart());
       const e = tuiToDate(calendar.getDateRangeEnd());
       const sameMonth = s.getMonth() === e.getMonth();
-      html = `${s.toLocaleDateString(LOCALE, { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString(LOCALE, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })} <span class="cal-title-sub">${e.getFullYear()}</span>`;
+      // "October 2026 · Oct 25 – 31": the month the week is mostly in, then its days.
+      const mid = addDays(s, 3);
+      const range = `${s.toLocaleDateString(LOCALE, { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString(LOCALE, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })}`;
+      html = `${mid.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' })} <span class="cal-title-sub">· ${range}</span>`;
     } else if (currentView === 'day') {
       html = `${d.toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })} <span class="cal-title-sub">${d.getFullYear()}</span>`;
     } else {
@@ -561,6 +583,9 @@
     const start = addDays(miniMonth, -miniMonth.getDay());
     const today = ymd(new Date());
     const selected = ymd(currentDate());
+    // The week on show is a band across the small month.
+    let band = null;
+    if (currentView === 'week' && calendar) band = [ymd(tuiToDate(calendar.getDateRangeStart())), ymd(tuiToDate(calendar.getDateRangeEnd()))];
     let html = MINI_DAY_NAMES.map((d) => `<span class="cal-mini-dow">${d}</span>`).join('');
     for (let i = 0; i < 42; i++) {
       const d = addDays(start, i);
@@ -568,9 +593,14 @@
       const cls = ['cal-mini-day'];
       if (d.getMonth() !== miniMonth.getMonth()) cls.push('is-other');
       if (key === today) cls.push('is-today');
-      if (key === selected) cls.push('is-selected');
+      if (key === selected && !band) cls.push('is-selected');
       if (busy.has(key)) cls.push('has-items');
-      html += `<button type="button" class="${cls.join(' ')}" data-day="${key}" aria-label="${LOCALE ? d.toLocaleDateString(LOCALE, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : d.toDateString()}">${d.getDate()}</button>`;
+      if (band && key >= band[0] && key <= band[1]) {
+        cls.push('in-band');
+        if (key === band[0]) cls.push('band-start');
+        if (key === band[1]) cls.push('band-end');
+      }
+      html += `<button type="button" class="${cls.join(' ')}" data-day="${key}" aria-label="${LOCALE ? d.toLocaleDateString(LOCALE, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : d.toDateString()}"><span>${d.getDate()}</span></button>`;
     }
     grid.innerHTML = html;
   }
@@ -745,6 +775,87 @@
       default:
         return undefined;
     }
+  }
+
+  // ================================================================ quick look
+
+  /* Clicking an item shows it in a small pane of glass beside it, as in the
+     design: its colour and title, its day and hours, what kind it is and
+     whose, the mice it names, its note, then Mark done (a to-do) and Open. */
+  const peekEl = document.createElement('div');
+  peekEl.className = 'cal-peek';
+  peekEl.setAttribute('role', 'dialog');
+  peekEl.hidden = true;
+  document.body.appendChild(peekEl);
+  let peeked = null;
+  const KIND_WORDS = { event: t('Event'), task: t('To-do'), booking: t('Booking'), away: t('Away'),
+    protocol: t('Protocol'), auto: t('Mouse colony'), agenda: t('Due'), subscription: t('Connected calendar'),
+    google: t('Connected calendar'), meeting: t('Meeting') };
+
+  function closePeek() { peekEl.hidden = true; peeked = null; }
+  document.addEventListener('pointerdown', (e) => {
+    if (!peekEl.hidden && !peekEl.contains(e.target) && !(e.target.closest && e.target.closest('[data-item-id], .toastui-calendar-weekday-event, .toastui-calendar-event-time'))) closePeek();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !peekEl.hidden) closePeek(); });
+  window.addEventListener('resize', closePeek);
+
+  function peek(item, nativeEvent) {
+    if (peeked === item.id && !peekEl.hidden) { closePeek(); return; }
+    peeked = item.id;
+    const raw = item.raw || {};
+    const start = new Date(item.start);
+    const end = new Date(item.end);
+    const day = start.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
+    const hours = item.isAllday || item.category === 'allday' ? '' : ` · <span class="cal-peek-mono">${hm(start)} – ${hm(end)}</span>`;
+    const colour = paint(item).borderColor;
+    const chips = [];
+    const kindWord = raw.eventType === 'meeting' ? KIND_WORDS.meeting : (raw.group || KIND_WORDS[item.kind] || '');
+    if (kindWord) {
+      const extra = item.kind === 'protocol' && item.body ? ` · ${escapeHtml(String(item.body).split(', ').pop())}` : '';
+      chips.push(`<span class="cal-peek-chip is-kind" style="--edge:${colour}">${escapeHtml(kindWord)}${extra}</span>`);
+    }
+    if (raw.owner) chips.push(`<span class="cal-peek-chip">${escapeHtml(t('by %(who)s', { who: raw.owner }))}</span>`);
+    if (raw.audienceLabel) chips.push(`<span class="cal-peek-chip">${escapeHtml(t(raw.audienceLabel))}</span>`);
+    // Mice the item names (#37, #38…), as chips.
+    const mice = Array.from(new Set(String(item.title || '').match(/#\d+/g) || []));
+    const body = item.kind === 'protocol' ? '' : String(item.body || '').trim();
+    const canDone = item.kind === 'task' && !raw.readOnly;
+    const canOpen = ['event', 'task', 'booking', 'away', 'protocol'].includes(item.kind) || raw.href;
+    peekEl.innerHTML = `
+      <div class="cal-peek-head">
+        <span class="cal-peek-swatch" style="background:${colour}"></span>
+        <div class="cal-peek-titles"><div class="cal-peek-title">${escapeHtml(item.title || '')}</div>
+          <div class="cal-peek-when">${escapeHtml(day)}${hours}</div></div>
+        <button type="button" class="cal-peek-x" aria-label="${t('Close')}">${svgIcon('close')}</button>
+      </div>
+      ${chips.length ? `<div class="cal-peek-chips">${chips.join('')}</div>` : ''}
+      ${mice.length ? `<div><div class="cal-peek-label">${t('Mice')}</div><div class="cal-peek-chips">${mice.map((m) => `<a class="cal-peek-mouse" href="/colony?view=mice&q=${encodeURIComponent(m.slice(1))}">${svgIcon('mouse')}${m}</a>`).join('')}</div></div>` : ''}
+      ${body ? `<p class="cal-peek-body">${escapeHtml(body)}</p>` : ''}
+      ${raw.pageUrl ? `<div class="cal-peek-label">${t('Notebook')}: <a href="${escapeHtml(raw.pageUrl)}">${escapeHtml(raw.pageTitle || item.title || '')}</a></div>` : ''}
+      <div class="cal-peek-actions">
+        ${canDone ? `<button type="button" class="btn btn-primary btn-sm" data-peek="done">${raw.done ? t('Mark not done') : t('Mark done')}</button>` : ''}
+        ${canOpen ? `<button type="button" class="btn btn-sm" data-peek="open">${t('Open')}</button>` : ''}
+      </div>`;
+    peekEl.setAttribute('aria-label', item.title || '');
+    peekEl.querySelector('.cal-peek-x').addEventListener('click', closePeek);
+    const done = peekEl.querySelector('[data-peek="done"]');
+    if (done) done.addEventListener('click', () => { closePeek(); toggleDone(item.id); });
+    const open = peekEl.querySelector('[data-peek="open"]');
+    if (open) open.addEventListener('click', () => { closePeek(); openOnce(item); });
+    peekEl.hidden = false;
+    // Beside what was clicked, on whichever side has room.
+    const target = nativeEvent && nativeEvent.target && nativeEvent.target.closest
+      ? (nativeEvent.target.closest('.toastui-calendar-weekday-event, .toastui-calendar-event-time, .cal-chip') || nativeEvent.target) : null;
+    const r = target ? target.getBoundingClientRect() : { left: innerWidth / 2, right: innerWidth / 2, top: 120, bottom: 120 };
+    const w = peekEl.offsetWidth;
+    const h = peekEl.offsetHeight;
+    let left = r.right + 10;
+    if (left + w > innerWidth - 12) left = Math.max(12, r.left - w - 10);
+    const top = Math.max(12, Math.min(r.top - 8, innerHeight - h - 12));
+    peekEl.style.left = left + 'px';
+    peekEl.style.top = top + 'px';
+    const first = peekEl.querySelector('[data-peek]') || peekEl.querySelector('.cal-peek-x');
+    if (first) first.focus({ preventScroll: true });
   }
 
   // ================================================================ item dialog
@@ -1523,7 +1634,8 @@
     hoverCard.style.top = `${top}px`;
   }
   function hideHover() { clearTimeout(hoverShow); hoverHide = setTimeout(() => { hoverCard.hidden = true; }, 150); }
-  [tuiHost, listHost].forEach((host) => {
+  // The grid shows an item on a click (the quick look); the list on hover.
+  [listHost].forEach((host) => {
     host.addEventListener('mouseover', (e) => {
       const el = e.target.closest('[data-item-id]');
       if (!el || !host.contains(el)) return;

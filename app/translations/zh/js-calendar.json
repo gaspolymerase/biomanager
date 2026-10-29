@@ -167,5 +167,10 @@
   "List": "列表",
   "Notes": "备注",
   "With a due day it is on the calendar on that day too.": "有截止日期时，它也会出现在日历的那一天。",
-  "Delete “%(title)s”?": "删除“%(title)s”？"
+  "Delete “%(title)s”?": "删除“%(title)s”？",
+  "Booking": "预约",
+  "Away": "外出",
+  "by %(who)s": "由 %(who)s",
+  "Mark done": "标记完成",
+  "Mark not done": "标记未完成"
 }
