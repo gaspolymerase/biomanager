@@ -492,7 +492,15 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `app_settings` (`views:<name>:<username>`, `app/sheet_views.py`, checked
   for shape by `clean()`). Who is here is `page_presence`, beaten every 30
   seconds by `POST /presence` and read back the same way; rows older than
-  70 seconds are cleared.
+  70 seconds are cleared; its faces go into the page header's
+  `.toolbar-actions`. On such a card `layout()` lays the top out as in the
+  design (`.dt-laid`): the toolbar's `.btn-primary` (New, with the key N)
+  and a `[data-dt-show-as]` group (the mouse sheet's Table · Cages · Racks;
+  `data-layout-pick="mouse-cages:grid"` sets the Cages tab's remembered
+  layout) move to the end of the views row; the toolbar keeps the search,
+  the chips and the filter chips, then `.dt-summary` ("Sorted by Mouse ↑ ·
+  10 of 39", redrawn by wrapping the controller's `render()`), then its
+  buttons as icons with their names as tooltips.
 - A sheet's search (`data-table.js`, `_rowText`) reads a menu by its chosen
   option only; the row's `textContent` would hold every option, so a box
   or status name matched every row. Each row's text is kept while someone
@@ -3518,6 +3526,19 @@ selection at once, keep their own loops.
 The bar is generic — `static/selection-bar.js` reads a markup contract, so
 another table gets batch actions by adding `data-selection-scope`, row
 checkboxes, and a form marked `data-selection-form`. No JavaScript changes.
+`capsule()` turns the bar into one glass capsule: the count, a button per
+form, `•••` and ×. A form that asks for something (a select or an input)
+opens in `.selbar-pop`, a panel fixed above the bar (hung from `<body>`,
+since the bar's backdrop filter would make it a containing block); one that
+asks nothing submits through `requestSubmit`, its `data-confirm` asked
+first. A button's name is `data-selbar-label`, else its submit button's
+words, else for a bare Set or Move its control's `aria-label` ("Move to
+rack"). The first three forms are on the bar, the rest and any
+`btn-danger` one under `•••` (or `data-selbar-more`). Each gets a key:
+`data-key`, else the first free initial of a word of its name (never N);
+pressing it while rows are ticked runs it. `data-weigh-form` (the mouse
+sheet's Weigh, `POST /colony/mice/bulk-weigh`, `grams_<id>` per mouse and
+one `weigh_date`) fills a box per ticked mouse as it opens (`selbar:open`).
 
 **Creating records** — **Add many** on the colony page
 (`/colony/mice/batch`) is a two-step flow: describe one mouse and say how

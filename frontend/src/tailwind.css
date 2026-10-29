@@ -2043,7 +2043,6 @@
   }
   .dt-field-chip b { @apply font-semibold; }
   .dt-field-name { @apply text-brand-800/75; }
-  .dt-field-name::after { content: ":"; }
   .dt-field-off {
     @apply grid size-5 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-brand-800/70;
   }
@@ -2054,6 +2053,73 @@
   }
   .dt-chip-add:hover { @apply border-sand-400 text-ink; }
   .dt-chip-add .icon { @apply size-3; }
+
+  /* --- The sheet's top as in the design (sheet-views.js, layout) -------- */
+
+  .data-table-card.dt-laid { @apply rounded-[26px]; }
+  .dt-laid > .dt-views { @apply flex-wrap gap-2 border-0 px-3.5 pb-2 pt-3; }
+  .dt-laid .dt-view {
+    @apply h-8 gap-1.5 px-3.5 text-[13px] font-normal text-ink-soft;
+  }
+  .dt-laid .dt-view:hover { @apply bg-sand-300/30 text-ink; }
+  .dt-laid .dt-view[aria-selected="true"] {
+    @apply font-semibold text-ink;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), 0 1px 4px rgb(0 0 0 / 0.1);
+  }
+  .dt-view-count { @apply text-[12px] font-normal tabular-nums text-muted; }
+  .dt-view[aria-selected="true"] .dt-view-count { @apply font-medium text-brand-700; }
+  .dt-laid .dt-view-add { @apply gap-1 px-3 text-muted; }
+  .dt-views-end { @apply ml-auto flex shrink-0 items-center gap-2; }
+
+  /* Table · Cages · Racks */
+  .dt-show-as { @apply inline-flex shrink-0 rounded-full bg-sand-300/35 p-[3px]; }
+  .dt-show-as-item {
+    @apply inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] text-ink-soft no-underline;
+  }
+  .dt-show-as-item:hover { @apply text-ink no-underline; }
+  .dt-show-as-item.is-active {
+    @apply font-medium text-ink;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 1px 4px rgb(0 0 0 / 0.12);
+  }
+  .dt-show-as-item .icon { @apply size-3.5; }
+
+  /* New, the accent pill with its key. */
+  .dt-views-end > .btn-primary {
+    @apply h-[34px] gap-1.5 rounded-full px-4 text-[13px] font-semibold;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 14px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .dt-kbd {
+    @apply ml-0.5 inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] px-1 font-mono text-[10px] font-medium;
+    background: color-mix(in srgb, currentColor 20%, transparent);
+  }
+
+  /* The second row: search, quick chips, filter chips … sorted by, count, icons. */
+  .dt-laid > .dt-toolbar { @apply gap-1.5 border-0 px-3.5 pb-3 pt-0; }
+  .dt-laid .dt-toolbar-search { @apply min-w-[160px] max-w-[220px] flex-none; }
+  .dt-laid .dt-toolbar-search input { @apply h-7 border-0 bg-sand-300/30 text-[13px]; box-shadow: none; }
+  .dt-laid .dt-toolbar-search input:focus { @apply bg-surface; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand-600) 35%, transparent); }
+  .dt-laid > .dt-toolbar > .dt-toolbar-btn:has(svg) { @apply size-8 gap-0 rounded-full px-0 text-[0px]; justify-content: center; }
+  .dt-laid > .dt-toolbar > .dt-toolbar-btn svg { @apply size-[15px]; }
+  .dt-summary { @apply shrink-0 whitespace-nowrap px-1 text-[13px] tabular-nums text-muted; }
+  .dt-laid .dt-field-chip { @apply h-7 gap-1.5 rounded-full bg-brand-600/12 pl-3 pr-[5px] text-[13px] text-brand-800; }
+  .dt-laid .dt-field-off { @apply size-[18px] bg-brand-600/12; }
+  .dt-laid .dt-field-off .icon { @apply size-[9px]; }
+  .dt-laid .dt-chip-add {
+    @apply h-7 border-0 px-3 text-[13px] text-ink-soft;
+    box-shadow: inset 0 0 0 1px var(--color-hairline);
+  }
+
+  /* A clean header: the names only, muted, ruled above and below. */
+  .dt-laid .dt thead th {
+    @apply border-y border-hairline bg-surface px-3 py-2 text-[12px] font-medium text-muted backdrop-blur-none;
+  }
+  .dt-laid .dt thead th:not(:last-child) { box-shadow: inset -1px 0 0 color-mix(in srgb, var(--color-hairline) 60%, transparent); }
+  .dt-laid .dt thead th.sheet-pin-1 { box-shadow: inset -1px 0 0 var(--color-hairline); }
+  .dt-laid .dt-col-icon { @apply hidden; }
+  .dt-laid .sheet-table tbody td { @apply h-10; }
+  .dt-laid .sheet-table tbody td.sheet-pin-1 { @apply font-mono font-medium; }
 
   .menu.dt-pop {
     @apply fixed right-auto top-auto z-100 max-h-[min(420px,70vh)] w-64 overflow-y-auto;
@@ -2421,8 +2487,7 @@
   .sheet-save[data-state="saved"] { @apply text-ok-700; }
   .sheet-save[data-state="error"] { @apply font-medium text-danger-700; }
 
-  /* The selection bar sits under the sheet rather than floating over it. */
-  .sheet .selbar { @apply rounded-none border-x-0 border-b-0; }
+  /* The selection bar floats over the sheet, above its bottom bar. */
   .data-table-card > .selbar { bottom: calc(var(--dt-bottom-h, 0px) + 10px); @apply z-[33]; }
 }
 
@@ -3950,30 +4015,69 @@
 
 @layer components {
 
-  /* Floating clear glass, centred under the rows it acts on. */
+  /* Floating glass, centred under the rows it acts on: one capsule of
+     "2 selected", the actions with their keys, ··· and × (selection-bar.js). */
   .selbar {
-    @apply glass-clear sticky bottom-4 z-20 mx-auto mb-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap
-           items-center gap-2 rounded-[22px] px-2.5 py-2;
+    @apply sticky bottom-4 z-20 mx-auto mb-3 flex w-fit max-w-[calc(100%-24px)] items-center gap-0.5
+           rounded-full py-1.5 pl-4 pr-1.5 whitespace-nowrap;
+    background: var(--glass-regular);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring),
+                0 18px 44px rgb(0 0 0 / 0.24);
     animation: selbar-in 0.22s var(--ease-spring);
   }
   .selbar[hidden] { display: none; }
 
-  .selbar-count {
-    @apply shrink-0 rounded-full bg-brand-600 px-3 py-1 text-[13px] font-semibold;
-    color: var(--color-on-brand, #fff);
-  }
+  .selbar-count { @apply mr-2.5 shrink-0 text-[13px] font-semibold text-ink; }
+  .selbar-line { @apply flex min-w-0 items-center gap-0.5 overflow-x-auto [scrollbar-width:none]; }
 
-  .selbar-group {
-    @apply flex shrink-0 items-center gap-1.5 rounded-full bg-sand-300/25 py-1 pl-1.5 pr-1;
+  .selbar-act {
+    @apply inline-flex h-[34px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent
+           px-3 text-[13px] font-normal text-ink transition-colors;
   }
-  .selbar-group select,
-  .selbar-group input { @apply field h-7 w-auto min-w-[104px] rounded-full text-[12px]; }
-  .selbar-group input { @apply min-w-[128px]; }
-  /* How to tick more, and to let go: shown, as Linear and Figma do. */
-  .selbar-keys { @apply hidden shrink-0 items-center gap-1 pl-1 text-[11px] text-muted lg:inline-flex; }
-  .selbar-keys kbd { @apply kbd-chip; }
+  .selbar-act:hover, .selbar-act[aria-expanded="true"] { @apply bg-sand-300/40; }
+  .selbar-act.is-danger { @apply text-danger-700; }
+  .selbar-kbd {
+    @apply inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] bg-sand-300/50 px-1 font-mono
+           text-[10px] font-medium text-muted;
+  }
+  .selbar-icon {
+    @apply grid size-[34px] shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-ink-soft;
+  }
+  .selbar-icon:hover { @apply bg-sand-300/40 text-ink; }
+  .selbar-icon .icon { @apply size-[15px]; }
+  .selbar-clear { @apply ml-0.5 bg-sand-300/45; }
+  .selbar-clear .icon { @apply size-3; }
 
-  .selbar-spacer { @apply ml-auto; }
+  /* An action that asks for something opens above the bar. */
+  .selbar-pop {
+    background: var(--material-popover);
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-lg);
+    @apply fixed z-[70] flex w-max max-w-[min(560px,calc(100vw-32px))] flex-col gap-2 rounded-[22px] p-3 whitespace-normal;
+    animation: menu-grow 0.18s var(--ease-spring);
+    transform-origin: bottom center;
+  }
+  .selbar-pop[hidden] { display: none; }
+  .selbar-form { @apply flex flex-wrap items-center gap-2; }
+  .selbar-form[hidden] { display: none; }
+  .selbar-pop-title { @apply w-full text-[12px] font-semibold text-muted; }
+  .selbar-form select,
+  .selbar-form input:not([type=hidden]) { @apply field h-8 w-auto min-w-[150px] rounded-full text-[13px]; }
+  .selbar-form .btn { @apply h-8 rounded-full px-3.5; }
+  .selbar-weigh-day { @apply flex items-center gap-2 text-[12px] text-muted; }
+  .selbar-form .selbar-weigh-day input { @apply h-7 w-auto min-w-0; }
+  .selbar-weighs { @apply grid max-h-[40vh] w-full grid-cols-2 gap-1.5 overflow-y-auto sm:grid-cols-3; }
+  .selbar-weigh { @apply flex items-center gap-1.5 rounded-full bg-sand-300/25 py-0.5 pl-3 pr-1; }
+  .selbar-weigh-id { @apply min-w-0 flex-1 truncate font-mono text-[12px] font-medium; }
+  .selbar-form .selbar-weigh input { @apply h-7 w-[72px] min-w-0 text-right font-mono; }
+  .selbar-weigh-unit { @apply pr-1.5 text-[11px] text-muted; }
+  .menu.selbar-more-menu { @apply fixed top-auto z-[70] flex w-56 flex-col; transform-origin: bottom right; }
+  .menu.selbar-more-menu[hidden] { display: none; }
+  .selbar-more-menu .selbar-act { @apply h-8 w-full justify-start rounded-[9px] px-2.5; }
+  .selbar-more-menu .selbar-act .selbar-kbd { @apply ml-auto; }
+  .selbar-more-menu .menu-item-danger:not(:hover) { @apply text-danger-700; }
+  .selbar-more-menu .selbar-act:hover .selbar-kbd { @apply bg-white/25 text-white; }
 
   /* A ticked row should be obvious at a glance — the bar acts on these. */
   .dense-table tbody tr.is-selected,
@@ -3981,9 +4085,8 @@
   .dense-table tbody tr.is-selected:hover { @apply bg-brand-50; }
 
   @media (max-width: 640px) {
-    .selbar { @apply flex-col items-stretch; }
-    .selbar-group { @apply flex-wrap; }
-    .selbar-spacer { @apply hidden; }
+    .selbar { @apply max-w-[calc(100%-16px)] pl-3; }
+    .selbar-kbd { @apply hidden; }
   }
 }
 

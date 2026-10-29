@@ -97,5 +97,18 @@
   "Go to": "前往",
   "Ask the user guide: “%(q)s”": "问用户指南：“%(q)s”",
   "How to do it, step by step, on the BioManager website": "在 BioManager 网站上一步步说明怎么做",
-  "Ask": "提问"
+  "Ask": "提问",
+  "More actions": "更多操作",
+  "Clear the selection": "取消选择",
+  "Clear the selection (Esc)": "取消选择（Esc）",
+  "Move to %(place)s": "移到%(place)s",
+  "Field": "字段",
+  "Column to set": "要设置的列",
+  "Field to set": "要设置的字段",
+  "Set a field…": "设置字段…",
+  "Set": "设置",
+  "Weight of %(mouse)s in grams": "%(mouse)s 的体重（克）",
+  "%(column)s is": "%(column)s 为",
+  "Sorted by %(column)s": "按%(column)s排序",
+  "%(n)s of %(total)s": "%(n)s / %(total)s"
 }

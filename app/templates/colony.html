@@ -137,6 +137,13 @@
               {{ _('Alive') }} <span class="dt-chip-count">{{ sheet.active_count }}</span>
             </button>
           </div>
+          {# Table · Cages · Racks: the mice as a sheet, or their cages as cards
+             or on the racks (the Cages tab, its layout picked as it opens). #}
+          <div class="dt-show-as" data-dt-show-as role="group" aria-label="{{ _('Show as') }}">
+            <a class="dt-show-as-item is-active" aria-current="page" href="{{ url_for('colony', view='mice', scope=scope) }}">{{ icon('table') }}{{ _('Table') }}</a>
+            <a class="dt-show-as-item" href="{{ url_for('colony', view='cages', scope=scope) }}" data-layout-pick="mouse-cages:cards">{{ icon('cage') }}{{ _('Cages') }}</a>
+            <a class="dt-show-as-item" href="{{ url_for('colony', view='cages', scope=scope) }}" data-layout-pick="mouse-cages:grid">{{ icon('grid') }}{{ _('Racks') }}</a>
+          </div>
           <div class="dt-toolbar-spacer"></div>
           <span class="sheet-save" data-save-status aria-live="polite"></span>
           <button type="button" class="dt-toolbar-btn dt-btn-sort">{{ icon('sort') }} {{ _('Sort') }}</button>
@@ -259,11 +266,41 @@
 
         {# Batch actions. Appears only when rows are ticked; every form here
            receives the checked ids from static/selection-bar.js. #}
+        {# The floating capsule (static/selection-bar.js): Move to cage, Set
+           status and Weigh on the bar, each with its key; Set a field, Add to
+           experiment and Sac under ···. #}
         <div class="selbar" data-selection-bar hidden>
           <span class="selbar-count" data-selection-count></span>
 
+          <form method="post" action="{{ url_for('bulk_update_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Move to cage') }}" data-key="M">
+            <input type="hidden" name="field" value="cage_id">
+            <input name="value" placeholder="{{ _('Cage, or “new”') }}" list="mouse-bulk-cages"
+                   aria-label="{{ _('Cage') }}" required autocomplete="off">
+            <datalist id="mouse-bulk-cages">{% for c in mouse_rows|map(attribute='cage_id')|select|unique|sort %}<option value="{{ c }}"></option>{% endfor %}</datalist>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Move') }}</button>
+          </form>
+
+          <form method="post" action="{{ url_for('bulk_update_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Set status') }}" data-key="S">
+            <input type="hidden" name="field" value="status">
+            <select name="value" aria-label="{{ _('Status') }}">
+              {% for st in sheet.status_choices %}<option value="{{ st }}">{{ st|tr }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Set') }}</button>
+          </form>
+
+          {# One weight per ticked mouse, on one day: the rows are filled in
+             as the panel opens (data-weigh-form, below). #}
+          <form method="post" action="{{ url_for('bulk_weigh_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Weigh') }}" data-key="W" data-weigh-form>
+            <label class="selbar-weigh-day">{{ _('Day') }} <input type="date" name="weigh_date"></label>
+            <div class="selbar-weighs" data-weigh-rows></div>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Save weights') }}</button>
+          </form>
+
           <form method="post" action="{{ url_for('bulk_update_mice') }}"
-                class="selbar-group" data-selection-form>
+                data-selection-form data-selbar-more data-selbar-label="{{ _('Set a field…') }}" data-key="F">
             {# The value box follows the field chosen (static/selection-bar.js):
                a date picker for a date, the field's own choices offered. #}
             <select name="field" aria-label="{{ _('Field to set') }}" data-bulk-field>
@@ -283,12 +320,12 @@
             <input name="value" placeholder="{{ _('new value') }}" list="mouse-bulk-value-options"
                    aria-label="{{ _('New value') }}" data-bulk-value>
             <datalist id="mouse-bulk-value-options"></datalist>
-            <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Set') }}</button>
           </form>
 
           {% if open_experiments %}
             <form method="post" action="{{ url_for('bulk_add_to_experiment') }}"
-                  class="selbar-group" data-selection-form>
+                  data-selection-form data-selbar-more data-key="E">
               <select name="experiment_id" aria-label="{{ _('Experiment') }}">
                 {% for exp in open_experiments %}
                   <option value="{{ exp.id }}"{% if exp.fixed %} data-ask-reason="{{ _('%(name)s was started with a plan: adding mice changes its groups. Why?', name=exp.name) }}"{% endif %}>{{ exp.name }}</option>
@@ -301,7 +338,7 @@
           {% endif %}
 
           <form method="post" action="{{ url_for('bulk_sac_mice') }}"
-                class="selbar-group" data-selection-form
+                data-selection-form data-selbar-more
                 data-confirm="{{ _("Mark {n} mouse record(s) as sac'd today?") }}">
             <button type="submit" class="btn btn-sm btn-danger">{{ _('Sac') }}</button>
           </form>

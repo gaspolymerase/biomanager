@@ -919,9 +919,11 @@ database has a name of its own (one another database has is refused), so
     <td valign="top">
       <h4>↩️ Batch actions with undo</h4>
       Tick rows (shift-click for a range; <kbd>Esc</kbd> lets go) and a
-      bar of glass rises: <b>Set field</b> (any
-      column, your own included), move them, change owner or status, add
-      them to an experiment, sac, retire or delete them. Records you may
+      capsule of glass rises with the commonest actions and their keys —
+      on the mouse sheet <b>Move to cage</b> <kbd>M</kbd>, <b>Set status</b>
+      <kbd>S</kbd> and <b>Weigh</b> <kbd>W</kbd> (a weight for each) — and
+      the rest under <b>•••</b>: <b>Set a field</b> (any column, your own
+      included), add them to an experiment, sac, retire or delete them. Records you may
       not change are skipped and counted.
       Every bulk action, an import included, can be <b>undone</b> from
       <b>Settings → History</b>. If someone has edited those records since,

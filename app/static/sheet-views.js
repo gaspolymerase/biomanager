@@ -87,11 +87,11 @@
       box.replaceChildren();
       sheet.fields.forEach((field, index) => {
         const chip = el('span', 'dt-chip dt-field-chip');
-        chip.appendChild(el('span', 'dt-field-name', field.label || field.key));
+        chip.appendChild(el('span', 'dt-field-name', t('%(column)s is', { column: field.label || field.key })));
         chip.appendChild(el('b', null, field.value === '' ? t('blank') : field.value));
         const off = el('button', 'dt-field-off');
         off.type = 'button';
-        off.innerHTML = SVG('x');
+        off.innerHTML = SVG('close');
         off.setAttribute('aria-label', t('Remove this filter'));
         off.addEventListener('click', () => sheet.setFields(sheet.fields.filter((_, i) => i !== index)));
         chip.appendChild(off);
@@ -180,6 +180,9 @@
         const on = active === name;
         b.setAttribute('aria-selected', on ? 'true' : 'false');
         b.textContent = label;
+        // How many rows: the whole sheet for All, what is shown for the view you are on.
+        const n = name === '' ? sheet.original.length : (on ? sheet.filtered.length : null);
+        if (n != null) b.appendChild(el('span', 'dt-view-count', String(n)));
         if (on && !sameState(state, current)) {
           b.classList.add('is-changed');
           b.title = t('Changed since it was saved');
@@ -258,6 +261,9 @@
       })
       .catch(draw);
     draw();
+    // Who else is here sits in the page's header, beside its actions, as in the design.
+    const actions = document.querySelector('#app-toolbar .toolbar-actions');
+    if (actions) { here.classList.add('is-in-header'); actions.prepend(here); }
     presence(here);
   }
 
@@ -374,7 +380,7 @@
       panel.replaceChildren();
       const close = el('button', 'dt-inspector-close');
       close.type = 'button';
-      close.innerHTML = SVG('x');
+      close.innerHTML = SVG('close');
       close.setAttribute('aria-label', t('Close the inspector'));
       close.addEventListener('click', () => open(false));
       panel.appendChild(close);
@@ -467,6 +473,65 @@
     open(store.get(key) === '1');
   }
 
+  /* ------------------------------------------------------------ layout */
+
+  /* The sheet's top, as in the design: the views on one row with how it is
+     shown (Table · Cages · Racks, where a sheet has that) and New at its
+     end; under them the search, the quick chips and the filter chips, with
+     what the sheet is sorted by and how many rows it shows, then the
+     toolbar's buttons as icons. N makes a new record. */
+  function layout(card, sheet, toolbar) {
+    const strip = card.querySelector(':scope > .dt-views');
+    if (!strip || !toolbar) return;
+    card.classList.add('dt-laid');
+    const end = el('div', 'dt-views-end');
+    strip.appendChild(end);
+    const showAs = toolbar.querySelector('[data-dt-show-as]');
+    if (showAs) end.appendChild(showAs);
+    const primary = toolbar.querySelector(':scope > .btn-primary');
+    if (primary) {
+      if (!primary.querySelector('kbd')) primary.appendChild(el('kbd', 'dt-kbd', 'N'));
+      primary.setAttribute('aria-keyshortcuts', 'N');
+      end.appendChild(primary);
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'n' && event.key !== 'N') return;
+        if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return;
+        const target = event.target;
+        if (target && target.closest && target.closest('input, select, textarea, [contenteditable], dialog[open], .menu')) return;
+        if (document.querySelector('dialog[open]') || !primary.isConnected || primary.offsetParent === null) return;
+        event.preventDefault();
+        primary.click();
+      });
+    }
+    // The buttons as icons, their names in a tooltip.
+    toolbar.querySelectorAll(':scope > .dt-toolbar-btn').forEach((b) => {
+      if (!b.title) b.title = b.textContent.replace(/\s+/g, ' ').trim();
+    });
+    const status = el('span', 'dt-summary');
+    status.setAttribute('aria-live', 'polite');
+    const spacer = toolbar.querySelector(':scope > .dt-toolbar-spacer');
+    if (spacer) spacer.after(status); else toolbar.appendChild(status);
+    const show = () => {
+      const parts = [];
+      const st = sheet.state();
+      if (st.sort) {
+        const col = sheet.columns().find((c) => c.key === st.sort[0]);
+        if (col) parts.push(t('Sorted by %(column)s', { column: col.label }) + (st.sort[1] === -1 ? ' ↓' : ' ↑'));
+      }
+      const all = sheet.original.length;
+      const shown = sheet.filtered.length;
+      parts.push(shown === all ? String(all) : t('%(n)s of %(total)s', { n: shown, total: all }));
+      status.textContent = parts.join(' · ');
+    };
+    const render = sheet.render.bind(sheet);
+    sheet.render = function () {
+      const out = render.apply(null, arguments);
+      show();
+      return out;
+    };
+    show();
+  }
+
   /* ------------------------------------------------------------ setup */
 
   function setup(card) {
@@ -479,7 +544,16 @@
       filters(card, sheet, toolbar);
     }
     if (card.hasAttribute('data-dt-inspector')) inspector(card, sheet, toolbar);
+    if (card.hasAttribute('data-dt-views')) layout(card, sheet, toolbar);
   }
+
+  // Show as Cages or Racks: the Cages tab opens in that layout (rack-grid.js keeps it).
+  document.addEventListener('click', (event) => {
+    const pick = event.target.closest && event.target.closest('[data-layout-pick]');
+    if (!pick) return;
+    const [key, layout] = pick.dataset.layoutPick.split(':');
+    store.set('layout:' + key, layout);
+  });
 
   function init() { document.querySelectorAll('.data-table-card[data-dt-views], .data-table-card[data-dt-inspector]').forEach(setup); }
   // After data-table.js has made each sheet (it does on DOMContentLoaded).

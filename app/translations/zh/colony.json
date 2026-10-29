@@ -400,5 +400,13 @@
   "A workbook, ready to open.": "一个工作簿，直接打开即可。",
   "A page to print or save as PDF.": "一页可打印或存为 PDF 的内容。",
   "About racks and positions": "关于笼架和位置",
-  "Whose records these are": "这些记录是谁的"
+  "Whose records these are": "这些记录是谁的",
+  "Move to cage": "移到笼位",
+  "Cage, or “new”": "笼号，或填“new”新建",
+  "Weigh": "称取",
+  "Save weights": "保存体重",
+  "Set a field…": "设置字段…",
+  "Show as": "显示为",
+  "“%(value)s” is not a weight in grams, so nothing was weighed.": "“%(value)s”不是以克为单位的体重，所以没有记录任何体重。",
+  "Weighed": "已称重"
 }

@@ -4113,6 +4113,42 @@ def bulk_sac_mice():
     return _back_to_colony("mice")
 
 
+@app.route("/colony/mice/bulk-weigh", methods=["POST"])
+@login_required
+def bulk_weigh_mice():
+    """Weigh the ticked mice: one weight each (grams_<id>), on one day.
+    A mouse left blank is not weighed; a second weight on the same day
+    replaces the first, as weighing one mouse does."""
+    weigh_date = parse_date(request.form.get("weigh_date") or "") or date.today()
+    grams: dict[int, float] = {}
+    for key, raw in request.form.items():
+        if not key.startswith("grams_") or not raw.strip():
+            continue
+        try:
+            grams[int(key[6:])] = float(raw.strip().replace(",", "."))
+        except ValueError:
+            flash(gettext("“%(value)s” is not a weight in grams, so nothing was weighed.", value=raw.strip()), "error")
+            return _back_to_colony("mice")
+    with SessionLocal() as db_session:
+        mice = [m for m in bulk.selected(db_session, MouseRecord, request.form) if m.id in grams]
+
+        def weigh(mouse):
+            existing = db_session.scalar(select(MouseWeight).where(
+                MouseWeight.mouse_id_fk == mouse.id, MouseWeight.weigh_date == weigh_date))
+            if existing is not None:
+                existing.grams = grams[mouse.id]
+                existing.recorded_by = g.user.username
+            else:
+                db_session.add(MouseWeight(mouse_id_fk=mouse.id, weigh_date=weigh_date, grams=grams[mouse.id],
+                                           recorded_by=g.user.username))
+
+        done = bulk.run(db_session, mice, weigh, may_edit=can_edit_mouse, action="update",
+                        what=f"weigh on {weigh_date.isoformat()}", table="mice")
+        db_session.commit()
+    bulk.report(done, gettext("Weighed"), "mouse")
+    return _back_to_colony("mice")
+
+
 def _back_to_colony(view: str):
     """The colony page an action came from, scope and all, or the view."""
     referrer = request.referrer or ""
