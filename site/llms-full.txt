@@ -1648,6 +1648,8 @@ Under **General**, besides its name:
 
 - **Genotyping day** — the day after birth the genotyping reminder falls on (P28 unless you change it).
 
+- **Lab icon** — a picture of the lab's own (a square PNG, JPEG or WebP), shown with the lab's name at the top of everyone's sidebar. **Remove** brings back BioManager's icon.
+
 ### Troubleshooting
 
 #### A database disappeared from the sidebar

@@ -426,5 +426,13 @@
   "Home view": "首页视图",
   "Design gallery": "设计样例",
   "Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.": "应用里的每种控件、对话框、菜单和标签都在这一页上：用来检查外观上的改动。",
-  "On your round badge and your records in tables. Up to 5 letters.": "显示在你的圆形头像和表格中你的记录上，最多 5 个字符。"
+  "On your round badge and your records in tables. Up to 5 letters.": "显示在你的圆形头像和表格中你的记录上，最多 5 个字符。",
+  "Lab icon": "实验室图标",
+  "Shown at the top of the sidebar for everyone in the lab. A square PNG, JPEG or WebP picture. Without one, BioManager’s icon shows.": "显示在侧边栏顶部，实验室所有人都看得到。请用方形的 PNG、JPEG 或 WebP 图片。没有设置时显示 BioManager 的图标。",
+  "Choose a picture…": "选择图片…",
+  "Choose a PNG, JPEG or WebP picture.": "请选择 PNG、JPEG 或 WebP 图片。",
+  "That picture is too large. Choose one under 4 MB.": "图片太大，请选择 4 MB 以内的图片。",
+  "That picture is too large. Choose one under 256 KB.": "图片太大，请选择 256 KB 以内的图片。",
+  "The lab icon is removed. BioManager's shows instead.": "已移除实验室图标，改为显示 BioManager 的图标。",
+  "Lab icon saved.": "实验室图标已保存。"
 }

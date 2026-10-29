@@ -1141,8 +1141,10 @@ vials, by person, and shows how full each rack and box is.
 Each person can pick their own app icon in **Settings → Appearance &
 language**: a double helix,
 mouse, zebrafish, *C. elegans*, *Drosophila*, cryobox, microtube or petri
-dish, in one of six macaron colours. The browser tab and sidebar show it,
-and the app's accent colour follows it.
+dish, in one of six macaron colours. The browser tab shows it, and the
+app's accent colour follows it. The top of the sidebar shows the lab's own
+icon and name when an admin has chosen one in **Settings → General → Lab
+icon** (a square PNG, JPEG or WebP picture); otherwise it shows yours.
 
 ### 🌏 English or 中文
 

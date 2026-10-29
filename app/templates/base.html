@@ -92,9 +92,10 @@
         {# ---- Sidebar ---- #}
         <aside class="rail" aria-label="{{ _('Sidebar') }}">
           <div class="rail-top">
-            <a class="rail-brand" href="{{ url_for('home_dashboard') }}" aria-label="{{ _('BioManager home') }}">
-              <img src="{{ app_icon_url }}" alt="" data-app-icon>
-              <span class="rail-brand-word">BioManager</span>
+            {# The lab's own icon when an admin chose one (app/lab_icon.py), else BioManager's. #}
+            <a class="rail-brand{% if lab_icon_url %} is-lab{% endif %}" href="{{ url_for('home_dashboard') }}" aria-label="{{ _('BioManager home') }}">
+              {% if lab_icon_url %}<img src="{{ lab_icon_url }}" alt="" data-lab-icon>{% else %}<img src="{{ app_icon_url }}" alt="" data-app-icon>{% endif %}
+              <span class="rail-brand-word">{{ lab_icon_name or 'BioManager' }}</span>
             </a>
             <button type="button" class="rail-toggle" data-rail-toggle
                     aria-label="{{ _('Hide or show the sidebar') }}" title="{{ _('Hide or show the sidebar') }}">

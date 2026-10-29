@@ -519,6 +519,20 @@
         </label>
         <datalist id="lab-timezones">{% for zone in timezones %}<option value="{{ zone }}"></option>{% endfor %}</datalist>
       </form>
+      {# The lab's own icon, at the top of the sidebar (app/lab_icon.py). #}
+      <form method="post" action="{{ url_for('lab_icon.save') }}" enctype="multipart/form-data" class="set-group mt-3" id="lab-icon" data-lab-icon-form>
+        <div class="set-row">
+          <span class="set-label"><b>{{ _('Lab icon') }}</b><small>{{ _('Shown at the top of the sidebar for everyone in the lab. A square PNG, JPEG or WebP picture. Without one, BioManager’s icon shows.') }}</small></span>
+          <span class="set-icon-pick">
+            <img class="set-icon-preview" src="{{ lab_icon_url or app_icon_url }}" alt="" data-lab-icon-preview>
+            {% if admin %}
+              <label class="btn btn-sm">{{ _('Choose a picture…') }}<input type="file" name="icon" accept="image/png,image/jpeg,image/webp" class="sr-only" data-lab-icon-file></label>
+              <button type="submit" name="remove" value="1" class="btn btn-sm btn-ghost" data-lab-icon-remove {% if not lab_icon_url %}hidden{% endif %}>{{ _('Remove') }}</button>
+            {% endif %}
+          </span>
+        </div>
+        <noscript><button type="submit" class="btn btn-sm">{{ _('Save') }}</button></noscript>
+      </form>
       {% if heartbeat and heartbeat.state != 'no-key' %}
         {# The anonymous daily counts (app/telemetry.py): on unless an admin switches them off. #}
         <form method="post" action="{{ url_for('settings_lab_save') }}" class="set-group mt-3" id="heartbeat" {% if admin %}data-autosave-form{% endif %}>
@@ -1016,6 +1030,37 @@
           shell.desktopCall('set_text_size', b.dataset.size);
         });
       });
+    });
+  })();
+
+  // Lab icon: saved as soon as a picture is chosen; the sidebar shows it at once.
+  (function () {
+    var form = document.querySelector('[data-lab-icon-form]');
+    var file = form && form.querySelector('[data-lab-icon-file]');
+    if (!file) return;
+    var preview = form.querySelector('[data-lab-icon-preview]');
+    var remove = form.querySelector('[data-lab-icon-remove]');
+    function send(data) {
+      return fetch(form.action, { method: 'POST', body: data, headers: { 'X-Autosave': '1' } })
+        .then(function (res) { return res.json(); })
+        .then(function (body) {
+          if (body.ok) { location.reload(); return; }
+          if (window.BiomanagerShell) window.BiomanagerShell.toast(body.message, 'danger');
+          if (preview) preview.src = preview.dataset.was;
+        });
+    }
+    file.addEventListener('change', function () {
+      if (!file.files.length) return;
+      var data = new FormData();
+      data.append('icon', file.files[0]);
+      if (preview) { preview.dataset.was = preview.getAttribute('src'); preview.src = URL.createObjectURL(file.files[0]); }
+      send(data);
+    });
+    if (remove) remove.addEventListener('click', function (event) {
+      event.preventDefault();
+      var data = new FormData();
+      data.append('remove', '1');
+      send(data);
     });
   })();
 

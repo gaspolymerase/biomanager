@@ -205,8 +205,13 @@ frames.
 The sidebar is a pane of clear glass floating over the wallpaper, inset
 `--rail-gap` from the window's edges. Collapsed (`body[data-rail="closed"]`,
 the default), it shows icons only, each a circle and the current place a
-raised pill, groups parted by a short hairline, and Settings and Help pinned
-to its foot while the rest scrolls. Hovering a place names it beside the
+raised pill, groups parted by a short hairline, and Settings and Help at
+its foot, below `.rail-places`, which scrolls on its own and fades at its
+ends. At its top is the lab's icon and name when an admin chose one
+(`app/lab_icon.py`: the picture is kept in app_settings `lab_icon` as
+`type;base64`, made a 160px PNG when Pillow is here, never an SVG; the
+`lab_icon_version` key, read on every page, is its hash for the URL), else
+the person's app icon. Hovering a place names it beside the
 glass; hovering a database shows a look inside (`static/rail-peek.js`, from `/rail/peek` in `app/rail_peek.py`: the count from `home_layouts.count_tiles`, the due rows from `build_agenda` for its tracks, the person's own latest records).
 
 macOS 26 draws its current look, and the larger lights (14 points, 23

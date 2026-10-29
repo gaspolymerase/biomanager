@@ -1048,6 +1048,8 @@
   }
   .rail-brand:hover { @apply no-underline; }
   .rail-brand img { @apply size-[22px] shrink-0 rounded-md; }
+  /* A lab's own picture is drawn larger, as a tile, since it may be a photo or a crest. */
+  .rail-brand.is-lab img { @apply size-7 rounded-lg object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   .rail-brand-word {
     @apply truncate text-[13px] font-semibold tracking-[-0.01em] text-ink;
   }
@@ -4905,6 +4907,8 @@ tr.is-scanned > td:first-child {
   .set-row > :is(select, form > select):focus-visible { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
   .set-row > input:not([type="checkbox"]):not([type="radio"]):focus { @apply border-hairline bg-sand-50 text-left outline-none; }
   .set-row > .set-input-short { @apply w-24; }
+  .set-icon-pick { @apply flex shrink-0 items-center gap-2; }
+  .set-icon-preview { @apply size-10 rounded-xl object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   a.set-row-link { @apply cursor-pointer transition-colors; }
   a.set-row-link:hover { @apply bg-sand-50; }
   .set-chev { @apply size-4 shrink-0 text-sand-400; }
