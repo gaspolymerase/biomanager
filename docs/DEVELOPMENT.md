@@ -310,7 +310,12 @@ Sign-in & security, Appearance & language, Notifications, AI assistant &
 tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
 the lab's (Statistics, General, Databases, People & access, Devices &
 copies, History) in one slate (`.set-ico.is-lab`). `app/settings_lab.py`
-gathers what the Lab panes show (`panes()`); everyone sees them and only
+gathers what the Lab panes show (`panes()`: with `configure`, every
+sidebar database's own set-up page from `configure_links()`, listed in
+Databases as Set up each database, and `summary`, the line under General,
+Databases and People in the list of panes, as `pane_link(sub=)`); every
+pane's head says whose its settings are (`.set-scope`: the person's, or
+the lab's and who changes them); everyone sees them and only
 admins get their forms (`/settings/lab` saves General, Databases, What
 members may do and one other database at a time: `lab.apply_survey(...,
 sections=)`). The pages they replace redirect to them: `/setup` once the lab

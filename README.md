@@ -1136,12 +1136,16 @@ looks the same on every computer, with each system's own Chinese font.
 and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
+in a pane of glass, each with what it is set to now under its name
 on the left (**You**: Profile, Sign-in & security, Appearance & language,
 Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
 General, Databases, People & access, Devices & copies, History) and the
 chosen one beside it, its settings in grouped rows with a short line on what
-each does. A change is saved as it is made, and the search box at the top
-finds a setting by name. Your **Short name** under Profile (up to 5
+each does. Each pane says at its top whose settings it holds (yours alone,
+or the whole lab's) and who changes them, and **Databases → Set up each
+database** reaches every database's own **Configure** from one list. A
+change is saved as it is made, and the search box at the top finds a
+setting by name. Your **Short name** under Profile (up to 5
 letters, THX) is what your round badge says, at the top right and on your
 records; without one it shows your initials. The lab's panes hold its setup and its admin
 pages: everyone sees them, admins change them. **Statistics** counts the lab's mice, fish tanks and fly and worm

@@ -5044,14 +5044,29 @@ tr.is-scanned > td:first-child {
   .settings {
     --set-lab: #5B6B80;
     --set-lab-tint: rgb(91 107 128 / 0.14);
-    @apply grid grid-cols-1 items-start gap-6 md:grid-cols-[230px_minmax(0,1fr)];
+    @apply grid grid-cols-1 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)];
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
   }
   :root[data-theme="dark"] .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
 
+  /* The list of panes: a pane of glass of its own, as the calendar's and
+     the notebook's side panels are; the open pane beside it a thick sheet. */
   .settings-nav { @apply flex flex-col gap-0.5 md:sticky md:top-4; }
+  @media (min-width: 768px) {
+    .settings-nav {
+      @apply rounded-[26px] px-2.5 pb-3 pt-3;
+      background: var(--glass-regular);
+      -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+      box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+    }
+    .settings.is-ready .set-pane.is-on {
+      @apply rounded-[26px] px-7 pb-8 pt-6;
+      background: var(--glass-thick);
+      box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+    }
+  }
   .set-search { @apply mb-2; }
   .set-search input { @apply h-8 rounded-full text-[13px]; }
   .set-me {
@@ -5063,8 +5078,11 @@ tr.is-scanned > td:first-child {
   .set-me.is-on { @apply bg-brand-50; }
   .set-group-head { @apply mt-3 mb-1 px-2 text-[12px] font-semibold text-muted; }
   .set-link {
-    @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13px] no-underline text-ink transition-colors;
+    @apply flex items-center gap-2.5 rounded-xl px-2 py-[5px] text-[13px] no-underline text-ink transition-colors;
   }
+  .set-link-text { @apply flex min-w-0 flex-col; }
+  /* What a pane is set to now, under its name. */
+  .set-link-sub { @apply truncate text-[11px] font-normal text-muted; }
   .set-link:hover { @apply bg-sand-100; }
   /* The open pane: a soft tint of the accent, as in the sidebar. */
   .set-link.is-on { @apply bg-brand-600/14 font-semibold text-brand-800; }
@@ -5081,12 +5099,23 @@ tr.is-scanned > td:first-child {
 
   /* Until the script picks one, every pane shows (and without JavaScript). */
   .settings.is-ready .set-pane:not(.is-on) { @apply hidden; }
-  .set-pane { @apply min-w-0 max-w-[700px] pb-10; }
+  .set-pane { @apply min-w-0 max-w-[760px] pb-10; }
+  /* Whose these settings are, and who changes them. */
+  .set-scope { @apply mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium; }
+  .set-scope svg { @apply size-3; }
+  .set-scope.is-you { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); color: var(--color-brand-800); }
+  .set-scope.is-lab { background: var(--set-lab-tint); color: var(--set-lab); }
+  /* Each database's own set-up, one row each. */
+  .set-row input[list] { padding-right: 26px; }
+  .set-config { @apply no-underline transition-colors; }
+  .set-config:hover { @apply bg-sand-100 no-underline; }
+  .set-config-go { @apply ml-auto inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-brand-700; }
+  .set-config-go svg { @apply size-3.5; }
   .set-pane + .set-pane { @apply mt-8; }
   .settings.is-ready .set-pane + .set-pane { @apply mt-0; }
   .set-back { @apply mb-3 hidden items-center gap-1 text-[13px] font-medium text-brand-700 no-underline; }
   .set-back svg { @apply size-4; }
-  .set-head { @apply mb-4 flex items-center gap-3; }
+  .set-head { @apply mb-4 flex items-start gap-3; }
   .set-head h2 { @apply m-0 text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink; }
   .set-head p { @apply mt-0.5 mb-0 text-[13px] leading-snug text-muted; }
   .set-head p svg { @apply inline size-3 align-[-1px]; }

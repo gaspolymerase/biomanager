@@ -434,5 +434,15 @@
   "That picture is too large. Choose one under 4 MB.": "图片太大，请选择 4 MB 以内的图片。",
   "That picture is too large. Choose one under 256 KB.": "图片太大，请选择 256 KB 以内的图片。",
   "The lab icon is removed. BioManager's shows instead.": "已移除实验室图标，改为显示 BioManager 的图标。",
-  "Lab icon saved.": "实验室图标已保存。"
+  "Lab icon saved.": "实验室图标已保存。",
+  "Yours alone: only you see and change these.": "仅你自己：只有你能看到和修改这些。",
+  "The whole lab’s: you change them as an admin, for everyone.": "全实验室的：你作为管理员修改，对所有人生效。",
+  "The whole lab’s: admins change them; you can see them.": "全实验室的：由管理员修改，你可以查看。",
+  "%(num)s in the sidebar": "侧边栏中 %(num)s 个",
+  "%(num)s member": "%(num)s 名成员",
+  "%(num)s members": "%(num)s 名成员",
+  "Set up each database": "设置各个数据库",
+  "Its columns, the choices in its menus, and what it keeps track of": "它的列、菜单里的选项，以及它记录的内容",
+  "See": "查看",
+  "Which databases the lab keeps": "实验室使用哪些数据库"
 }

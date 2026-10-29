@@ -11,9 +11,10 @@
   You: this person's own settings. Lab: the lab's, one pane so far
   (Devices & copies); the lab's other pages join it there later.
 #}
-{% macro pane_link(key, icon_name, label, family='you', badge='') %}
+{% macro pane_link(key, icon_name, label, family='you', badge='', sub='') %}
   <a class="set-link" href="#{{ key }}" data-pane-link="{{ key }}">
-    <span class="set-ico is-{{ family }}">{{ icon(icon_name) }}</span><span class="set-link-label">{{ label }}</span>
+    <span class="set-ico is-{{ family }}">{{ icon(icon_name) }}</span>
+    <span class="set-link-text"><span class="set-link-label">{{ label }}</span>{% if sub %}<small class="set-link-sub">{{ sub }}</small>{% endif %}</span>
     {% if badge %}<span class="set-link-badge">{{ badge }}</span>{% endif %}
   </a>
 {% endmacro %}
@@ -25,6 +26,12 @@
     <div class="min-w-0">
       <h2>{{ title }}</h2>
       {% if blurb %}<p>{{ blurb }}</p>{% endif %}
+      {# Whose these are, and who changes them: said once, on every pane. #}
+      <span class="set-scope is-{{ family }}">
+        {%- if family == 'you' %}{{ icon('user') }} {{ _('Yours alone: only you see and change these.') }}
+        {%- elif current_user.role == 'admin' %}{{ icon('users') }} {{ _('The whole lab’s: you change them as an admin, for everyone.') }}
+        {%- else %}{{ icon('lock') }} {{ _('The whole lab’s: admins change them; you can see them.') }}{% endif -%}
+      </span>
     </div>
     {% if saved %}<span class="set-saved" data-saved role="status"></span>{% endif %}
   </header>
@@ -48,7 +55,7 @@
     </a>
     <div class="set-group-head">{{ _('You') }}</div>
     {{ pane_link('security', 'lock', _('Sign-in & security')) }}
-    {{ pane_link('appearance', 'type', _('Appearance & language')) }}
+    {{ pane_link('appearance', 'type', _('Appearance & language'), sub=('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
     {{ pane_link('notifications', 'bell', _('Notifications')) }}
     {% set show_assistant = api_tokens_card() or proposals_pending is not none or not current_user.expires_at %}
     {% if show_assistant %}{{ pane_link('assistant', 'sparkle', _('AI assistant & tokens')) }}{% endif %}
@@ -56,9 +63,9 @@
     <div class="set-group-head">{{ _('Lab') }}</div>
     {% if lab_data %}
       {{ pane_link('stats', 'chart', _('Statistics'), 'lab') }}
-      {{ pane_link('general', 'sliders', _('General'), 'lab') }}
-      {{ pane_link('databases', 'database', _('Databases'), 'lab') }}
-      {{ pane_link('people', 'users', _('People & access'), 'lab') }}
+      {{ pane_link('general', 'sliders', _('General'), 'lab', sub=lab_data.summary.general) }}
+      {{ pane_link('databases', 'database', _('Databases'), 'lab', sub=ngettext('%(num)s in the sidebar', '%(num)s in the sidebar', lab_data.summary.databases)) }}
+      {{ pane_link('people', 'users', _('People & access'), 'lab', sub=ngettext('%(num)s member', '%(num)s members', lab_data.summary.people)) }}
     {% endif %}
     {{ pane_link('devices', 'copy', _('Devices & copies'), 'lab') }}
     {{ pane_link('version', 'tag', _('Version'), 'lab', _('Update') if updates and updates.latest else '') }}
@@ -488,7 +495,6 @@
     {% set state = lab_data.state %}
     <section class="set-pane" id="general" data-pane="general">
       {{ pane_head('sliders', _('General'), _('The lab’s name, and how it counts days.'), 'lab', saved=True) }}
-      {% if not admin %}<p class="set-readonly">{{ _('Only admins change these. You can see how the lab is set up.') }}</p>{% endif %}
       <form method="post" action="{{ url_for('settings_lab_save') }}" class="set-group" {% if admin %}data-autosave-form{% endif %}>
         <input type="hidden" name="section" value="general">
         <label class="set-row">
@@ -569,7 +575,20 @@
     {% endmacro %}
     <section class="set-pane" id="databases" data-pane="databases">
       {{ pane_head('database', _('Databases'), _('What the lab keeps. Switching one off hides it; nothing is deleted.'), 'lab', saved=True) }}
-      {% if not admin %}<p class="set-readonly">{{ _('Only admins change these. You can see how the lab is set up.') }}</p>{% endif %}
+      {# Each database's own set-up (its columns, its choices, what it tracks), reached from one list. #}
+      {% if lab_data.configure %}
+        <div class="set-title">{{ _('Set up each database') }}</div>
+        <div class="set-group set-config-list">
+          {% for c in lab_data.configure %}
+            <a class="set-row set-config" href="{{ c.url }}">
+              <span class="set-ico is-lab">{{ icon(c.icon) }}</span>
+              <span class="set-label"><b>{{ c.label }}</b><small>{{ _('Its columns, the choices in its menus, and what it keeps track of') }}</small></span>
+              <span class="set-config-go">{{ _('Configure') if admin else _('See') }} {{ icon('chevron-right') }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="set-title">{{ _('Which databases the lab keeps') }}</div>
       <form method="post" action="{{ url_for('settings_lab_save') }}" {% if admin %}data-autosave-form{% endif %}>
         <input type="hidden" name="section" value="databases">
         <div class="set-title">{{ _('Animals and stocks') }}</div>

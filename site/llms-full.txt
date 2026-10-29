@@ -1630,11 +1630,11 @@ Turn databases on or off, and set your lab's name, time zone and dates.
 
 Who and where: Admins only
 
-After the first survey, the lab's setup is in **Settings**, under **Lab**. Admins change it; everyone else sees it, read only, so they know how the lab is set up. Each change is saved as you make it.
+After the first survey, the lab's setup is in **Settings**, under **Lab**. Admins change it; everyone else sees it, read only, so they know how the lab is set up. Each change is saved as you make it. Each pane says at its top whose settings it holds — yours alone, or the whole lab's — and who changes them, and the list of panes shows under each name what it is set to now (the lab's name, how many databases, how many members).
 
 - **General** — the lab's name, time zone, dates, and weaning and genotyping days.
 
-- **Databases** — switch each database and the calendar and notebook on or off; **Other databases** lists the ones made with **Add database** and members' own.
+- **Databases** — **Set up each database** lists every database in the sidebar, each with **Configure** for its own columns, menu choices and what it keeps track of, so the lab's whole set-up is reached from one place. Under it, switch each database and the calendar and notebook on or off; **Other databases** lists the ones made with **Add database** and members' own.
 
 - **People & access** — the lab's people ([People and guests](https://biomanager.org/guide/people-and-guests)), its [project groups](https://biomanager.org/guide/project-groups), and **What members may do**: create their own databases, add ones for the whole lab, keep a copy of the lab, make tokens.
 

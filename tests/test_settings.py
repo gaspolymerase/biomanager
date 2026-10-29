@@ -74,3 +74,27 @@ class SavedAsYouChangeTests(AppTestCase):
                 r = self.m.post("/settings", data={"action": action})
                 self.assertEqual(r.status_code, 302)
                 self.assertTrue(r.headers["Location"].endswith(f"/settings#{pane}"), r.headers["Location"])
+
+
+class SettingsSaysWhoseAndWhereTests(AppTestCase):
+    """Each pane says whose settings it holds and who changes them; the list
+    says what a pane is set to; Databases reaches every database's own set-up."""
+
+    def test_every_database_in_the_sidebar_has_its_configure_link(self):
+        html = self.get_ok(client_for(make_user(role="admin")), "/settings")
+        self.assertIn("Set up each database", html)
+        configure = re.findall(r'class="set-row set-config" href="([^"]+)"', html)
+        self.assertTrue(configure)
+        self.assertTrue(all(url.startswith("/") for url in configure))
+
+    def test_a_pane_says_whose_settings_these_are(self):
+        member = self.get_ok(client_for(make_user()), "/settings")
+        self.assertIn("Yours alone: only you see and change these.", member)
+        self.assertIn("admins change them; you can see them.", member)
+        admin = self.get_ok(client_for(make_user(role="admin")), "/settings")
+        self.assertIn("you change them as an admin, for everyone.", admin)
+
+    def test_the_list_says_what_a_pane_is_set_to(self):
+        html = self.get_ok(client_for(make_user(role="admin")), "/settings")
+        self.assertRegex(html, r'class="set-link-sub">\d+ in the sidebar<')
+        self.assertRegex(html, r'class="set-link-sub">\d+ members?<')
