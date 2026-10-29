@@ -37,6 +37,7 @@
     <button type="button" class="seg-item biocal-view-btn" data-view="week" aria-pressed="false">{{ _('Week') }}</button>
     <button type="button" class="seg-item biocal-view-btn" data-view="day" aria-pressed="false">{{ _('Day') }}</button>
     <button type="button" class="seg-item biocal-view-btn" data-view="list" aria-pressed="false">{{ _('List') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="board" aria-pressed="false" title="{{ _('Your to-dos as cards in lists') }}">{{ _('Board') }}</button>
   </div>
   <div class="cal-new">
     <button type="button" class="btn btn-primary cal-new-main" data-new="event">{{ icon('plus') }} {{ _('New event') }}</button>
@@ -122,6 +123,8 @@
     <div class="cal-body">
       <div id="biocal-tui" class="cal-tui"></div>
       <div id="biocal-list" class="cal-list" hidden></div>
+      {# The to-dos as cards in lists (static/calendar-board.js, app/task_board.py). #}
+      <div id="biocal-board" class="cal-board" hidden></div>
     </div>
   </section>
 </div>
@@ -506,5 +509,6 @@
 {# TOAST UI Calendar's UMD bundle (window.tui.Calendar), then the page. #}
 <script src="{{ url_for('static', filename='notebook-build/calendar-app.js') }}?v={{ asset_version('notebook-build/calendar-app.js') }}" defer
         data-loaded-flag="__tuiLoaded" data-missing-flag="__tuiMissing"></script>
+<script src="{{ url_for('static', filename='calendar-board.js') }}?v={{ asset_version('calendar-board.js') }}" defer></script>
 <script src="{{ url_for('static', filename='calendar-page.js') }}?v={{ asset_version('calendar-page.js') }}" defer></script>
 {% endblock %}

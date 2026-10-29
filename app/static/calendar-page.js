@@ -323,7 +323,7 @@
     try { savedView = localStorage.getItem(VIEW_KEY); } catch (_) {}
     // A link or bookmark may say which view and day: /calendar?view=week&date=2026-10-06.
     const params = new URLSearchParams(window.location.search);
-    const askedView = ['month', 'week', 'day', 'list'].includes(params.get('view')) ? params.get('view') : null;
+    const askedView = ['month', 'week', 'day', 'list', 'board'].includes(params.get('view')) ? params.get('view') : null;
     const askedDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') || '') ? new Date(`${params.get('date')}T12:00`) : null;
     if (askedDate && !Number.isNaN(askedDate.getTime())) {
       calendar.setDate(askedDate);
@@ -358,6 +358,8 @@
   }
 
   function goTo(day) {
+    // A day picked while on the Board opens that day.
+    if (currentView === 'board') { listAnchor = startOfDay(day); if (calendar) calendar.setDate(day); setView('day', true); return; }
     listAnchor = startOfDay(day);
     if (calendar) calendar.setDate(day);
     miniMonth = firstOfMonth(day);
@@ -385,8 +387,18 @@
     });
     try { localStorage.setItem(VIEW_KEY, view); } catch (_) {}
     const isList = view === 'list';
-    tuiHost.hidden = isList;
+    // The Board: the to-dos as cards in lists, with no days to step through
+    // (static/calendar-board.js).
+    const isBoard = view === 'board';
+    tuiHost.hidden = isList || isBoard;
     listHost.hidden = !isList;
+    $('#biocal-board').hidden = !isBoard;
+    document.body.classList.toggle('cal-is-board', isBoard);
+    if (isBoard) {
+      if (window.BioBoard) window.BioBoard.show();
+      titleEl.textContent = t('To-dos');
+      return;
+    }
     if (!isList && calendar) {
       calendar.changeView(view);
       if (listAnchor) calendar.setDate(listAnchor);
@@ -695,6 +707,9 @@
     return openFromItem(item);
   }
 
+  // The Board opens a dated to-do in the same editor as the calendar does.
+  window.BioCalendar = { open: (item) => openFromItem(item) };
+
   function openFromItem(item) {
     const raw = item.raw || {};
     switch (item.kind) {
@@ -999,6 +1014,7 @@
       if (!j.ok) return showError(formError, j.error || t("Couldn't save that."));
       modal.close();
       fetchAndRender();
+      if (currentView === 'board' && window.BioBoard) window.BioBoard.show();
       return undefined;
     });
   });

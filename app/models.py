@@ -156,6 +156,10 @@ class TaskItem(Base):
     share_group_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # On the calendar's Board (app/task_board.py): the list it is in (empty:
+    # Inbox) and its place there.
+    board_list: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    board_position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class CalendarSubscription(Base):

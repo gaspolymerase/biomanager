@@ -176,5 +176,11 @@
   "<b>Outlook:</b> add the account in System Settings → Internet Accounts, then choose it.": "<b>Outlook：</b>在“系统设置 → 互联网账户”中添加该账户，然后选择它。",
   "The calendar is BioManager’s alone: anything else put in it is taken out at the next update.": "这个日历只属于 BioManager：放进去的其他内容会在下次更新时被移除。",
   "Allow access": "允许访问",
-  "On My Mac": "我的 Mac"
+  "On My Mac": "我的 Mac",
+  "Your to-dos as cards in lists": "把你的待办当作卡片放在列表里",
+  "A list needs a name.": "列表需要一个名字。",
+  "That is as many lists as a board holds.": "看板放不下更多列表了。",
+  "There is a list of that name already.": "已经有同名的列表了。",
+  "A card needs a title.": "卡片需要一个标题。",
+  "That is not a date.": "这不是一个日期。"
 }

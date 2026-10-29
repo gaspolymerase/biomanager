@@ -1231,6 +1231,16 @@ shared to-dos, not their personal ones. A member's copy
 of the lab (`lab_copy.member_view`) leaves out the databases of groups they
 are not in, and keeps pages shared with their groups.
 
+The calendar's **Board** (`app/task_board.py`, `static/calendar-board.js`)
+draws the same to-dos as cards: `tasks.board_list` is the list one is in
+(empty: Inbox) and `board_position` its place there (revision 0051), the
+to-do's own, so a shared to-do sits in one list for everyone. The lists'
+names and order are each person's, in `app_settings` (`board:<username>`);
+a list someone else put a shared to-do in shows after one's own. Done is
+the to-dos ticked off in the last 14 days; moving a card into it sets
+`done_at`, out of it clears it. `calendar_items` leaves out a to-do with no
+day that is in a list (one with no day otherwise shows on today).
+
 **Settings → Statistics** (`settings_lab.statistics`) counts living mice,
 active fish tanks and fly and worm vials per person (one animal at a time:
 they are counted in different units), every rack, box and incubator with

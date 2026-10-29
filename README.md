@@ -576,6 +576,10 @@ database has a name of its own (one another database has is refused), so
   genotyping, sac reminders), fly and worm flips, organism schedules and
   reagent expiry filled in for you. Shows your **Google Calendar** and any
   iCal subscription alongside, read-only, under **Connected calendars**.
+  - **Board**: your to-dos as cards in lists, beside Month, Week, Day and
+    List: Inbox, the lists you add (*This week*, *Waiting on*…) and Done.
+    Drag a card between lists, into Done to tick it off; **Add a card**
+    makes one with no day, which stays on the Board, not on today.
   - **Who sees it**: an event or to-do is yours alone, the lab's or one
     of your project groups'. Your own is seen by nobody else, admins
     included. A shared event is everyone's to see, its owner's and the

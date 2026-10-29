@@ -32,7 +32,10 @@
   gap: 20px;
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
-  padding: 4px 4px 12px;
+  padding: 14px 12px 12px;
+  border-radius: 22px;
+  background: var(--glass-regular);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
   scrollbar-width: thin;
 }
 
@@ -240,13 +243,16 @@
 
 /* ---- Main --------------------------------------------------------------- */
 
+/* The month or week is a sheet: solid, lifted off the wallpaper as the
+   glass is; the side panel beside it is a pane of glass. */
 .cal-main {
   min-width: 0;
   overflow: hidden;
-  border-radius: var(--radius-xl);
+  border-radius: 22px;
   background: var(--color-surface);
-  box-shadow: 0 0 0 0.5px var(--color-hairline), var(--shadow-xs);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
 }
+body.cal-is-board .cal-main { overflow: visible; background: transparent; box-shadow: none; }
 /* The title row shows the month ("October 2026"), its year quieter. */
 .cal-title-sub { font-weight: 400; color: var(--color-muted); }
 .cal-nav { display: inline-flex; align-items: center; }
@@ -558,3 +564,91 @@
    and its dropdowns keep room for their chevron. */
 :is(.cal-cover-pick select, .cal-repeat :is(select, input), .cal-step-row input, .cal-feed-url input):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
 select:is(.cal-cover-pick select, .cal-repeat :is(select, input), .cal-step-row input, .cal-feed-url input) { padding-right: 28px; }
+
+/* ---------------------------------------------------------------- Board
+   The to-dos as cards in lists (static/calendar-board.js): columns of
+   glass side by side, scrolling sideways; each card a slip of paper. */
+/* The Board has the page's width: no days to step through or pick. */
+body.cal-is-board .cal-nav, body.cal-is-board .cal-side { display: none; }
+body.cal-is-board .cal { grid-template-columns: minmax(0, 1fr); }
+.cal-board { min-height: 100%; }
+.todo-board {
+  display: flex; align-items: flex-start; gap: 12px; padding: 2px 2px 16px; overflow-x: auto;
+  min-height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h) - 32px);
+}
+.todo-col {
+  flex: 0 0 280px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h) - 40px);
+  padding: 10px; border-radius: 22px; background: var(--glass-regular);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+.todo-col-new { background: transparent; box-shadow: none; padding: 0; }
+.todo-col-done { opacity: 0.92; }
+.todo-col-head { display: flex; align-items: center; gap: 6px; padding: 2px 4px; }
+.todo-col-head .icon { width: 15px; height: 15px; color: var(--color-muted); }
+.todo-col-head h3 { margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; color: var(--color-ink); }
+.todo-count { font-size: 11px; font-weight: 600; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.todo-col-more { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-muted); cursor: pointer; }
+.todo-col-more:hover { background: rgb(0 0 0 / 0.06); color: var(--color-ink); }
+.todo-cards { display: flex; flex-direction: column; gap: 6px; min-height: 8px; overflow-y: auto; padding: 2px; margin: -2px; border-radius: 14px; }
+.todo-cards.is-drop-zone { background: color-mix(in srgb, var(--color-brand-600) 7%, transparent); }
+.todo-cards.todo-drop-end::after { content: ""; height: 3px; border-radius: 2px; background: var(--color-brand-600); }
+.todo-empty { margin: 0; padding: 14px 8px; color: var(--color-muted); font-size: 12px; text-align: center; }
+
+.todo-card {
+  position: relative; display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px; border-radius: 14px;
+  background: var(--color-surface); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 6%, transparent), 0 1px 2px rgb(0 0 0 / 0.06);
+  border-left: 3px solid var(--card-tint, transparent);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.todo-card:hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 10%, transparent), 0 6px 16px rgb(0 0 0 / 0.1); }
+.todo-card[draggable="true"] { cursor: grab; }
+.todo-card.is-dragging { opacity: 0.4; }
+.todo-card.is-drop-before { box-shadow: 0 -3px 0 0 var(--color-brand-600), 0 1px 2px rgb(0 0 0 / 0.06); }
+.todo-card.is-done .todo-card-title { color: var(--color-muted); text-decoration: line-through; }
+.todo-tick { display: grid; place-items: center; flex: none; margin-top: 1px; }
+.todo-tick input { width: 15px; height: 15px; margin: 0; accent-color: var(--color-brand-600); cursor: pointer; }
+.todo-card-open {
+  display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch; gap: 5px; padding: 0; border: 0;
+  background: none; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer;
+}
+.todo-card-title { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.todo-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.todo-card-meta:empty { display: none; }
+.todo-due, .todo-who {
+  display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 999px;
+  background: var(--color-recess); color: var(--color-ink-soft); font-size: 11px; font-weight: 500;
+}
+.todo-due .icon { width: 11px; height: 11px; }
+.todo-due.is-overdue { background: var(--color-danger-50); color: var(--color-danger-700); }
+.todo-who { background: var(--color-info-50); color: var(--color-info-700); }
+.todo-has-notes .icon { width: 12px; height: 12px; color: var(--color-muted); }
+
+.todo-add-btn, .todo-add-list {
+  display: flex; align-items: center; gap: 6px; width: 100%; height: 32px; padding: 0 8px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--color-muted); font: inherit; font-size: 13px; cursor: pointer;
+}
+.todo-add-btn:hover { background: rgb(0 0 0 / 0.05); color: var(--color-ink); }
+.todo-add-btn .icon, .todo-add-list .icon { width: 14px; height: 14px; }
+.todo-add-list {
+  height: 44px; padding: 0 14px; border-radius: 22px; background: var(--glass-clear); color: var(--color-ink-soft);
+  -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring);
+}
+.todo-add-list:hover { background: var(--glass-regular); color: var(--color-ink); }
+.todo-add-form { display: flex; flex-direction: column; gap: 6px; }
+.todo-add-form textarea {
+  width: 100%; min-height: 56px; padding: 8px 10px; border: 0; border-radius: 14px; resize: vertical;
+  background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: 13px;
+  box-shadow: 0 0 0 1px var(--focus-border), var(--focus-ring);
+}
+.todo-add-row { display: flex; gap: 6px; }
+.menu.todo-menu { position: fixed; right: auto; top: auto; width: 200px; }
+.todo-dialog-hint { margin: 0; color: var(--color-muted); font-size: 12px; }
+.todo-delete { color: var(--color-danger-600); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .todo-col-more:hover, :root:not([data-theme="light"]) .todo-add-btn:hover { background: rgb(255 255 255 / 0.08); }
+}
+@media (max-width: 640px) {
+  .todo-board { scroll-snap-type: x mandatory; }
+  .todo-col { flex-basis: calc(100vw - 48px); scroll-snap-align: start; }
+}

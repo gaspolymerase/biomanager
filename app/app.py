@@ -467,6 +467,9 @@ app.register_blueprint(rail_peek.bp)
 # A sheet's saved views, each person's own (app/sheet_views.py).
 from . import sheet_views  # noqa: E402
 app.register_blueprint(sheet_views.bp)
+# The calendar's Board: to-dos as cards in lists (app/task_board.py).
+from . import task_board  # noqa: E402
+app.register_blueprint(task_board.bp)
 # Repeats, protocols, equipment, away days and the phone feed (app/lab_calendar.py).
 app.register_blueprint(lab_calendar.bp)
 # The calendar in the Mac's own Calendar app, from the desktop app (app/mac_calendar.py).
@@ -6003,8 +6006,11 @@ def calendar_items(db_session, start: date | None, end: date | None, owner: str 
     ev_q = select(CalendarEvent).where(
         ((CalendarEvent.event_date >= start) & (CalendarEvent.event_date <= end))
         | ((CalendarEvent.event_date <= end) & CalendarEvent.id.in_(select(CalendarRepeat.event_id_fk))))
+    # A to-do with no day shows on today; one kept in a list on the Board
+    # (app/task_board.py) stays there.
     tk_q = select(TaskItem).where(
-        TaskItem.due_date.is_(None) | ((TaskItem.due_date >= start) & (TaskItem.due_date <= end)))
+        (TaskItem.due_date.is_(None) & (TaskItem.board_list == ""))
+        | ((TaskItem.due_date >= start) & (TaskItem.due_date <= end)))
     if owner is not None:
         ev_q = ev_q.where(CalendarEvent.owner == owner)
         tk_q = tk_q.where(TaskItem.owner == owner)
