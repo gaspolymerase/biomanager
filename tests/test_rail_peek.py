@@ -28,6 +28,7 @@ class PeekTests(AppTestCase):
     def test_a_database_not_in_the_sidebar_is_not_found(self):
         client = client_for(make_user())
         self.assertEqual(client.get("/rail/peek?key=inventory:nothing-here").status_code, 404)
+        self.assertEqual(client.get("/rail/peek").status_code, 400)
 
     def test_signed_out_gets_nothing(self):
         from app.app import app

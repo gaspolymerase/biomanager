@@ -85,6 +85,8 @@ def peek():
     if g.get("user") is None:
         abort(401)
     key = request.args.get("key", "")
+    if not key:
+        abort(400)
     today = date.today()
     features = lab.request_features()
     with SessionLocal() as session:
