@@ -4788,7 +4788,9 @@
   .home-page-row small { @apply shrink-0 text-[12px] text-muted; }
 
   /* Home's title: the day as a small kicker above a large greeting. */
-  body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse; }
+  body:has(.home-bento) { --toolbar-h: 92px; }
+  body:has(.home-bento) .toolbar { @apply pt-1.5; }
+  body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse gap-1.5; }
   body:has(.home-bento) .toolbar-title { @apply text-[28px] font-semibold tracking-[-0.03em]; }
   body:has(.home-bento) .toolbar-sub { @apply mt-0 font-mono text-[12px] uppercase tracking-[0.05em]; }
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
