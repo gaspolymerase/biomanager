@@ -7,6 +7,13 @@ of Done opens it again), and + Add a card makes one in that list with no
 day. The same to-dos are on the calendar, by their day; one with no day
 shows there on today, unless it is kept in a list here.
 
+A day can be written in a new card, as one would say it: "Order primers
+Fri", "Call the vendor tomorrow", "Book the scope by Nov 8", "明天订抗体",
+"周五交报告" (when_in). Inbox also shows, under the cards, what the
+calendar has to do in the coming week and what is overdue: the colony's
+weanings and genotyping, flips, supplies running low (home_layouts.build_agenda).
+Those are done where they are kept, so a click opens them there.
+
 Which list a to-do is in, and its place, is the to-do's own (tasks.board_list
 and board_position), so a lab to-do sits in the same list for everyone who
 sees it. The lists themselves, their names and order, are each person's
@@ -16,6 +23,7 @@ in is shown after one's own.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, abort, g, jsonify, request
@@ -93,6 +101,135 @@ def _visible(session):
         .order_by(TaskItem.board_position, TaskItem.id)).all()
 
 
+# ------------------------------------------------------------ a day written in a card
+
+_WEEKDAYS = {"mon": 0, "monday": 0, "tue": 1, "tues": 1, "tuesday": 1, "wed": 2, "weds": 2, "wednesday": 2,
+             "thu": 3, "thur": 3, "thurs": 3, "thursday": 3, "fri": 4, "friday": 4, "sat": 5, "saturday": 5,
+             "sun": 6, "sunday": 6}
+_MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "sept": 9,
+           "oct": 10, "nov": 11, "dec": 12}
+_ZH_DAYS = {"一": 0, "二": 1, "三": 2, "四": 3, "五": 4, "六": 5, "日": 6, "天": 6}
+_EN_DAY = (r"(?P<rel>today|tod|tonight|tomorrow|tmrw?|next week|in (?P<n>\d{1,3}) (?P<unit>days?|weeks?))"
+           r"|(?P<next>next )?(?P<wd>mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)"
+           r"|(?P<iso>\d{4}-\d{2}-\d{2})"
+           r"|(?P<m>\d{1,2})/(?P<d>\d{1,2})"
+           r"|(?P<mon>jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\.? (?P<md>\d{1,2})(?:st|nd|rd|th)?"
+           r"|(?P<dm>\d{1,2})(?:st|nd|rd|th)? (?P<mon2>jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\.?")
+_EN_END = re.compile(rf"(?:^|\s+)(?:(?:on|by|due|for|before)\s+)?(?:{_EN_DAY})\s*$", re.I)
+_ZH_DAY = (r"(?P<zrel>今天|今日|明天|明日|后天|大后天|下周)"
+           r"|(?P<znext>下个?)?(?:周|星期|礼拜)(?P<zwd>[一二三四五六日天])"
+           r"|(?P<zm>\d{1,2})月(?P<zd>\d{1,2})[日号]?")
+_ZH_START = re.compile(rf"^\s*(?:{_ZH_DAY})\s*(?:前|之前)?\s*")
+_ZH_END = re.compile(rf"\s*(?:在|于)?(?:{_ZH_DAY})\s*(?:前|之前)?\s*$")
+
+
+def _coming(month: int, day: int, today: date) -> date | None:
+    """That day this year, or next year once this year's is well past."""
+    try:
+        d = date(today.year, month, day)
+    except ValueError:
+        return None
+    if d < today - timedelta(days=30):
+        d = date(today.year + 1, month, day)
+    return d
+
+
+def _weekday(wd: int, today: date, nxt: bool) -> date:
+    ahead = (wd - today.weekday()) % 7 or 7
+    d = today + timedelta(days=ahead)
+    # "next Friday" said on a Monday is the one after this week's.
+    if nxt and d.isocalendar()[1] == today.isocalendar()[1]:
+        d += timedelta(days=7)
+    return d
+
+
+def _day_of(m: re.Match, today: date) -> date | None:
+    g_ = {k: v for k, v in m.groupdict().items() if v}
+    rel = (g_.get("rel") or "").lower()
+    if rel in ("today", "tod", "tonight"):
+        return today
+    if rel.startswith("tom") or rel.startswith("tmr"):
+        return today + timedelta(days=1)
+    if rel == "next week":
+        return today + timedelta(days=7 - today.weekday())
+    if g_.get("n"):
+        n = int(g_["n"])
+        return today + timedelta(days=n * (7 if g_["unit"].startswith("week") else 1))
+    if g_.get("wd"):
+        return _weekday(_WEEKDAYS[g_["wd"].lower()[:3] if g_["wd"].lower()[:3] in _WEEKDAYS else g_["wd"].lower()],
+                        today, bool(g_.get("next")))
+    if g_.get("iso"):
+        try:
+            return date.fromisoformat(g_["iso"])
+        except ValueError:
+            return None
+    if g_.get("m"):
+        a, b = int(g_["m"]), int(g_["d"])
+        return _coming(a, b, today) if a <= 12 else _coming(b, a, today)
+    if g_.get("mon"):
+        return _coming(_MONTHS[g_["mon"].lower()[:3]], int(g_["md"]), today)
+    if g_.get("mon2"):
+        return _coming(_MONTHS[g_["mon2"].lower()[:3]], int(g_["dm"]), today)
+    zrel = g_.get("zrel")
+    if zrel:
+        return today + timedelta(days={"今天": 0, "今日": 0, "明天": 1, "明日": 1, "后天": 2, "大后天": 3}.get(zrel, 7 - today.weekday()))
+    if g_.get("zwd"):
+        return _weekday(_ZH_DAYS[g_["zwd"]], today, bool(g_.get("znext")))
+    if g_.get("zm"):
+        return _coming(int(g_["zm"]), int(g_["zd"]), today)
+    return None
+
+
+def when_in(text: str, today: date) -> tuple[str, date | None]:
+    """A day written at the end of a card's title, or (in Chinese) at its
+    start or end: the title without it, and the day. Nothing is taken when
+    it would leave no title."""
+    text = " ".join(str(text or "").split())
+    for pattern in (_EN_END, _ZH_END, _ZH_START):
+        m = pattern.search(text)
+        if not m:
+            continue
+        rest = (text[:m.start()] + " " + text[m.end():]).strip(" ,;:-–—，。")
+        day = _day_of(m, today)
+        if day and rest:
+            return rest, day
+    return text, None
+
+
+@bp.get("/when")
+def when():
+    """What a card being written would be: its title and its day (for the
+    hint under the box)."""
+    _me()
+    title, day = when_in(request.args.get("text", ""), date.today())
+    return jsonify({"ok": True, "title": title, "due": day.isoformat() if day else ""})
+
+
+# ------------------------------------------------------------ what the calendar has to do
+
+def _from_calendar(session, today: date) -> list[dict]:
+    """The calendar's work in the coming week and anything overdue, not the
+    to-dos (they are cards) or events: the colony's, the stocks', supplies'."""
+    from . import home_layouts, lab
+    from .app import builtin_labels, zebrafish_home_summary
+    features = lab.request_features()
+    try:
+        zebra = zebrafish_home_summary() if features.get("zebrafish", True) else None
+    except Exception:  # noqa: BLE001  (the board shows without them)
+        zebra = None
+    items, tracks = home_layouts.build_agenda(session, today, 7, features, zebra,
+                                              colony_label=builtin_labels().get("colony", "Mouse colony"))
+    out = []
+    for n, item in enumerate(items):
+        if item["track"] == "calendar":
+            continue
+        group = tracks.get(item["track"], ("", "", ""))[0]
+        out.append({"key": f"cal-{n}", "title": item["title"], "due": item["due"].isoformat(),
+                    "overdue": item["due"] < today, "from": group, "detail": item.get("detail") or "",
+                    "url": item.get("url") or "", "track": item["track"].split(":")[0]})
+    return out[:40]
+
+
 @bp.get("")
 def board():
     me = _me()
@@ -103,7 +240,8 @@ def board():
         open_tasks = [t for t in tasks if not _is_done(t)]
         others = [name for name in dict.fromkeys(t.board_list for t in open_tasks if t.board_list) if name not in mine]
         columns = [{"name": "", "kind": "inbox", "label": gettext("Inbox"),
-                    "cards": [_card(t, today) for t in open_tasks if not t.board_list]}]
+                    "cards": [_card(t, today) for t in open_tasks if not t.board_list],
+                    "calendar": _from_calendar(s, today)}]
         for name in [*mine, *others]:
             columns.append({"name": name, "kind": "list", "label": name, "theirs": name not in mine,
                             "cards": [_card(t, today) for t in open_tasks if t.board_list == name]})
@@ -180,11 +318,20 @@ def card_new():
     title = " ".join(str(data.get("title") or "").split())[:200]
     if not title:
         return jsonify({"ok": False, "error": gettext("A card needs a title.")}), 400
+    # A day picked beside the box, else one written in it ("… Fri", "明天…").
+    due = None
+    if data.get("due"):
+        try:
+            due = date.fromisoformat(str(data["due"]))
+        except ValueError:
+            return jsonify({"ok": False, "error": gettext("That is not a date.")}), 400
+    elif data.get("read_day", True):
+        title, due = when_in(title, date.today())
     list_name = (clean_names([data.get("list")]) or [""])[0]
     with SessionLocal() as s:
         top = s.scalar(select(func.max(TaskItem.board_position)).where(TaskItem.board_list == list_name)) or 0
         row = TaskItem(title=title, owner=me, status="todo", priority="medium", board_list=list_name,
-                       board_position=top + 1)
+                       board_position=top + 1, due_date=due)
         refused = project_groups.apply(row, data.get("audience", "0"))
         if refused:
             return jsonify({"ok": False, "error": refused}), 403

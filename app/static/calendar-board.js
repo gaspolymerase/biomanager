@@ -2,7 +2,10 @@
  *
  * Inbox, then your lists, then Done. Drag a card to another list, or within
  * one to reorder it; into Done ticks it off. + Add a card makes one in that
- * list (with no day: it stays on the Board, not on the calendar's today);
+ * list; a day written in it ("… Fri", "明天…") is its day on the calendar,
+ * shown under the box as it is typed (× keeps the words as written). Inbox
+ * also lists what the calendar has to do this week, each opening where it
+ * is done;
  * + Add a list makes a list, and a list's ••• renames or deletes it (its
  * cards go back to Inbox). Click a card to change its title, day, notes or
  * list, or to delete it; the tick box beside its title ticks it off.
@@ -72,10 +75,23 @@
     const icon = col.kind === 'inbox' ? SVG('inbox') : col.kind === 'done' ? SVG('check') : '';
     const add = col.kind === 'done' ? '' :
       `<div class="todo-add" data-add-wrap><button type="button" class="todo-add-btn" data-add="${esc(col.name)}">${SVG('plus')}${esc(t('Add a card'))}</button></div>`;
+    const fromCal = (col.calendar || []).length
+      ? `<div class="todo-from-cal"><h4>${SVG('calendar')}${esc(t('From the calendar'))}<span class="todo-count">${col.calendar.length}</span></h4>` +
+        col.calendar.map(calHtml).join('') + '</div>' : '';
     return `<section class="todo-col todo-col-${col.kind}" data-col="${esc(col.name)}" aria-label="${esc(col.label)}">` +
       `<header class="todo-col-head">${icon}<h3>${esc(col.label)}</h3><span class="todo-count">${count}</span>${menu}</header>` +
       `<div class="todo-cards" data-drop="${esc(col.name)}">${col.cards.map(cardHtml).join('') ||
-        (col.kind === 'done' ? `<p class="todo-empty">${esc(t('Tick a card, or drag it here.'))}</p>` : '')}</div>${add}</section>`;
+        (col.kind === 'done' ? `<p class="todo-empty">${esc(t('Tick a card, or drag it here.'))}</p>` : '')}</div>${add}${fromCal}</section>`;
+  }
+
+  // Work the calendar has for this week (the colony's, stocks', supplies'):
+  // done where it is kept, so the card opens it there.
+  function calHtml(item) {
+    const due = dueLabel(item);
+    return `<a class="todo-card todo-card-cal" data-track="${esc(item.track)}" href="${esc(item.url || '/calendar')}">` +
+      `<i class="todo-cal-ring" aria-hidden="true"></i><span class="todo-card-open"><span class="todo-card-title">${esc(item.title)}</span>` +
+      `<span class="todo-card-meta"><span class="todo-due${item.overdue ? ' is-overdue' : ''}">${SVG('calendar')}${esc(due)}</span>` +
+      `<span class="todo-who">${esc(item.from)}</span></span></span></a>`;
   }
 
   function render() {
@@ -92,16 +108,35 @@
   function openAdder(button) {
     const wrap = button.closest('[data-add-wrap]');
     const list = button.dataset.add;
-    wrap.innerHTML = `<form class="todo-add-form"><textarea rows="2" maxlength="200" placeholder="${esc(t('What needs doing?'))}" aria-label="${esc(t('Card title'))}"></textarea>` +
+    wrap.innerHTML = `<form class="todo-add-form"><textarea rows="2" maxlength="200" placeholder="${esc(t('What needs doing? A day too: Fri, tomorrow, Nov 8'))}" aria-label="${esc(t('Card title'))}"></textarea>` +
+      `<p class="todo-add-when" hidden>${SVG('calendar')}<span></span><button type="button" data-when-off aria-label="${esc(t('Keep the words as written'))}" title="${esc(t('Keep the words as written'))}">${SVG('close')}</button></p>` +
       `<div class="todo-add-row"><button type="submit" class="btn btn-primary btn-sm">${esc(t('Add card'))}</button>` +
       `<button type="button" class="btn btn-ghost btn-sm" data-add-cancel>${esc(t('Cancel'))}</button></div></form>`;
     const form = wrap.querySelector('form');
     const field = form.querySelector('textarea');
+    const hint = form.querySelector('.todo-add-when');
+    let readDay = true;
+    let asked = 0;
+    // The day the words name, under the box as they are typed.
+    const look = () => {
+      const seq = ++asked;
+      const text = field.value.trim();
+      if (!text || !readDay) { hint.hidden = true; return; }
+      fetch(`/calendar/board/when?text=${encodeURIComponent(text)}`, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((r) => r.json()).then((d) => {
+          if (seq !== asked) return;
+          hint.hidden = !d.due;
+          if (d.due) hint.querySelector('span').textContent = t('%(day)s · on the calendar', { day: dueLabel({ due: d.due }) });
+        }).catch(() => {});
+    };
+    let timer = null;
+    field.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(look, 180); });
+    hint.querySelector('[data-when-off]').addEventListener('click', () => { readDay = false; hint.hidden = true; field.focus(); });
     field.focus();
     const submit = () => {
       const title = field.value.trim();
       if (!title) return;
-      post('/calendar/board/cards', { title, list }).then(() => show().then(() => {
+      post('/calendar/board/cards', { title, list, read_day: readDay }).then(() => show().then(() => {
         // Ready for the next one, as Trello keeps it open.
         const again = host.querySelector(`[data-add="${CSS.escape(list)}"]`);
         if (again) openAdder(again);

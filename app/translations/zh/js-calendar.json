@@ -184,5 +184,9 @@
   "%(n)s things": "%(n)s 件事",
   "%(n)s more in Week view": "还有 %(n)s 件，在周视图里看",
   "1 thing": "1 件事",
-  "Nothing on this day.": "这一天没有安排。"
+  "Nothing on this day.": "这一天没有安排。",
+  "From the calendar": "来自日历",
+  "What needs doing? A day too: Fri, tomorrow, Nov 8": "要做什么？也可以写上日子：周五、明天、11月8日",
+  "Keep the words as written": "按原文保留，不当作日期",
+  "%(day)s · on the calendar": "%(day)s · 会出现在日历上"
 }

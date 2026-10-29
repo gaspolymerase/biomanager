@@ -1,7 +1,7 @@
 """The calendar's Board: to-dos as cards in lists (app/task_board.py)."""
 from __future__ import annotations
 
-from tests.base import AppTestCase, client_for, make_user, one  # isort: skip
+from tests.base import AppTestCase, client_for, days_ago, make_user, one  # isort: skip
 
 
 class BoardTests(AppTestCase):
@@ -81,3 +81,49 @@ class BoardTests(AppTestCase):
     def test_names_must_be_names(self):
         self.assertEqual(self.c.post("/calendar/board/lists", json={"add": "   "}).status_code, 400)
         self.assertEqual(self.c.post("/calendar/board/cards", json={"title": ""}).status_code, 400)
+
+
+class ADayWrittenInACard(AppTestCase):
+    """A day written in a new card is its day on the calendar (when_in)."""
+
+    def test_days_in_english_and_chinese(self):
+        from datetime import date
+
+        from app.task_board import when_in
+        thursday = date(2026, 10, 29)
+        for text, title, day in (
+                ("Order primers Fri", "Order primers", date(2026, 10, 30)),
+                ("Call the vendor tomorrow", "Call the vendor", date(2026, 10, 30)),
+                ("Book the scope by Nov 8", "Book the scope", date(2026, 11, 8)),
+                ("Renew IACUC on 2026-11-20", "Renew IACUC", date(2026, 11, 20)),
+                ("Flip vials 11/3", "Flip vials", date(2026, 11, 3)),
+                ("Perfuse cohort in 3 days", "Perfuse cohort", date(2026, 11, 1)),
+                ("Sync next fri", "Sync", date(2026, 11, 6)),
+                ("明天订抗体", "订抗体", date(2026, 10, 30)),
+                ("周五交报告", "交报告", date(2026, 10, 30)),
+                ("交报告 下周一", "交报告", date(2026, 11, 2)),
+                ("11月8日开组会", "开组会", date(2026, 11, 8))):
+            with self.subTest(text=text):
+                self.assertEqual(when_in(text, thursday), (title, day))
+        for text in ("Order 2 boxes", "Friday's prep", "Tomorrow", "周报"):
+            with self.subTest(text=text):
+                self.assertEqual(when_in(text, thursday), (text, None))
+
+    def test_a_new_card_takes_its_day_unless_told_not_to(self):
+        c = client_for(make_user())
+        card = c.post("/calendar/board/cards", json={"title": "Order primers tomorrow"}).get_json()["card"]
+        self.assertEqual(card["title"], "Order primers")
+        self.assertTrue(card["due"])
+        kept = c.post("/calendar/board/cards", json={"title": "Results from Sat", "read_day": False}).get_json()["card"]
+        self.assertEqual((kept["title"], kept["due"]), ("Results from Sat", ""))
+        picked = c.post("/calendar/board/cards", json={"title": "Order tips", "due": "2026-12-01"}).get_json()["card"]
+        self.assertEqual(picked["due"], "2026-12-01")
+        self.assertEqual(c.get("/calendar/board/when?text=Book+the+scope+Fri").get_json()["title"], "Book the scope")
+
+    def test_inbox_has_the_calendars_work_for_the_week(self):
+        self.make_mouse(self.a, self.admin, date_of_birth=days_ago(7 * 31))       # past 30 weeks
+        inbox = self.a.get("/calendar/board").get_json()["columns"][0]
+        self.assertEqual(inbox["kind"], "inbox")
+        work = inbox["calendar"]
+        self.assertTrue(any(item["track"] == "colony" for item in work), work)
+        self.assertTrue(all(item["url"] and item["due"] and item["from"] for item in work))
