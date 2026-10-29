@@ -1311,6 +1311,8 @@ When a page should be the record of your work, **Sign** it — your choice, page
 
 Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. A page's pictures and files go with it: only the people who can open the page can open them. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Share**, **Comments**, **Sign** and **History** are in the row at the top of the page; each opens on the right, and the list of pages folds away while it is open. **Tags and search** work across every page you can open.
 
+**Share a whole topic** the same way: **Share** on the topic's page, or **Share with lab mates…** in its **•••**. Everyone it is shared with can open its pages and the topics inside it, including pages you add later; with *can edit* they can write in them and add pages, which stay yours. They find it under **Shared with me** at the top of their sidebar, with your name beside it, and are told when you share it. Only you rename, move or delete it.
+
 ### Utilities
 
 **Utilities**, under Notebook in the sidebar, holds the bench calculators and reference tables. Type in the search at the top what you are doing, in the bench's words: *c1v1*, *nanodrop*, *× g*, *MOI*, *稀释*; a typo or a plural still finds it, and a chemical's name (*MgCl2*) opens **Make a solution** with it filled in. Or open one from its group. **Pin** a tool to keep it at the top; the ones you opened last are under **Recent**.

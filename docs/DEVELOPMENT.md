@@ -207,7 +207,7 @@ The sidebar is a pane of clear glass floating over the wallpaper, inset
 the default), it shows icons only, each a circle and the current place a
 raised pill, groups parted by a short hairline, and Settings and Help pinned
 to its foot while the rest scrolls. Hovering a place names it beside the
-glass; hovering a database shows a look inside (`static/rail-peek.js`).
+glass; hovering a database shows a look inside (`static/rail-peek.js`, from `/rail/peek` in `app/rail_peek.py`: the count from `home_layouts.count_tiles`, the due rows from `build_agenda` for its tracks, the person's own latest records).
 
 macOS 26 draws its current look, and the larger lights (14 points, 23
 apart, not 12 and 20), only for an app built with its SDK, judged by the
@@ -475,6 +475,19 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   and columns as shown, each cell put in and saved as if typed. A value
   that isn't one of a `<select>`'s options moves on to the next cell (at
   most two), and a toast names the first and last rows filled.
+- A sheet card with `data-dt-views="<name>"` (every database's main sheet)
+  gets saved views, filter chips and who is here; `data-dt-inspector` (with
+  `mice` or `cages`, its rack drawn too) the Inspector. All three are
+  `static/sheet-views.js`, on the sheet's controller (`BioSheets.sheet(el)`:
+  `columns()`, `columnValues()`, `setFields()`, `state()`, `applyState()`).
+  A filter chip is `{key, value, label}`, a column's `data-sort-key` that
+  must read exactly that value (`_sortValue`), kept as `dt:<id>:fields`. A
+  view is a name and a state (search, quick chip, filter chips, sort,
+  hidden columns by key), each person's own per sheet name in
+  `app_settings` (`views:<name>:<username>`, `app/sheet_views.py`, checked
+  for shape by `clean()`). Who is here is `page_presence`, beaten every 30
+  seconds by `POST /presence` and read back the same way; rows older than
+  70 seconds are cleared.
 - A sheet's search (`data-table.js`, `_rowText`) reads a menu by its chosen
   option only; the row's `textContent` would hold every option, so a box
   or status name matched every row. Each row's text is kept while someone
@@ -1194,8 +1207,8 @@ database for a group has an empty `private_to` and a `share_group_id`
 database forms (and `lab_routes.audience` `to=group:<id>`). A notebook page
 is shared with a group by a `notebook_shares` row whose username is
 `group:<id>` (`groups.page_share_names()` in `role_for` and
-`shared_page_ids`); a notebook template with `lab` on and a group is that
-group's.
+`shared_page_ids`), and a topic by a `notebook_topic_shares` row the same
+way; a notebook template with `lab` on and a group is that group's.
 
 Forms send sharing as one value, `"0"` personal, `"1"` the lab, `"g<id>"` a
 group: `groups.parse()`, `groups.differs()` and `groups.apply()` (which
@@ -2212,6 +2225,7 @@ structure only).
 | --- | --- |
 | `notebook_page_info` | kind (note, experiment, protocol, reading, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation, and `parent_page_id`: the page a sub-page was made in (revision 0028) |
 | `notebook_shares` | who else may open a page, and whether to view or edit (`*` is the whole lab, guests excepted) |
+| `notebook_topic_shares` | the same for a topic: its pages, and the topics inside it at any depth (`lab_notebook.topic_shares`, worked out once a request), open to them; `role_for` takes the better of a page's own share and its topic's, `shared_page_ids` adds the topics' pages, and a member's copy (`lab_copy.member_view`) keeps them. Revision 0050 |
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
 | `notebook_comments` | comments on a page or a quoted passage, and replies |

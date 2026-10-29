@@ -361,7 +361,7 @@ _SHARED_RECORDS = ("CageRecord", "PlasmidRecord", "InventoryItem", "TankRecord",
 def release(s, group_id: int) -> dict[str, int]:
     """Make everything shared with this group its owner's again."""
     from . import models
-    from .models import NotebookShare, NotebookTemplate
+    from .models import NotebookShare, NotebookTemplate, NotebookTopicShare
     counts: dict[str, int] = {}
     for name in _SHARED_RECORDS:
         model = getattr(models, name)
@@ -383,6 +383,8 @@ def release(s, group_id: int) -> dict[str, int]:
         counts[model.__tablename__] = n
     counts["notebook_shares"] = s.execute(delete(NotebookShare).where(
         NotebookShare.username == f"{PAGE_SHARE_PREFIX}{group_id}")).rowcount or 0
+    counts["notebook_topic_shares"] = s.execute(delete(NotebookTopicShare).where(
+        NotebookTopicShare.username == f"{PAGE_SHARE_PREFIX}{group_id}")).rowcount or 0
     return counts
 
 

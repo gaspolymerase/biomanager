@@ -24,32 +24,38 @@
   body:has(#nb-shell) { --nb-side-w: 264px; }
   .notebook-shell:not(:has(> .notebook-sidebar)) { grid-template-columns: minmax(0, 1fr); padding-left: var(--nb-side-w); }
   body.nb-side-is-closed .notebook-shell { padding-left: 0; }
+  /* A pane of glass beside the app's sidebar, inset as it is. */
   .notebook-sidebar.is-docked {
-    position: absolute; top: 0; bottom: 0; left: 0; z-index: 37;
-    width: var(--nb-side-w); height: auto; padding: 6px 8px 0; overflow: hidden;
-    background: var(--material-sidebar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px);
-    box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    position: absolute; top: var(--rail-gap); bottom: var(--rail-gap); left: 8px; z-index: 37;
+    width: calc(var(--nb-side-w) - 8px); height: auto; padding: 8px 8px 0; overflow: hidden;
+    border-radius: var(--radius-3xl);
+    background: var(--glass-regular);
+    -webkit-backdrop-filter: saturate(190%) blur(28px); backdrop-filter: saturate(190%) blur(28px);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
   }
   body.nb-side-is-closed .notebook-sidebar.is-docked { display: none; }
   body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) :is(.toolbar, .chrome-edge) { left: var(--nb-side-w); }
   /* It runs the window's height, as Notion's does: the tabs start after it,
      not over it, so no corner shows where they meet. */
-  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) .topstrip { left: var(--nb-side-w); padding-left: 10px; }
+  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) .topstrip { left: var(--nb-side-w); padding-left: 12px; }
   /* The Mac window: the lights and the window's tools sit on its top, the
      folded app sidebar beside it runs the window's height too (no corner). */
-  html.mac-window .notebook-sidebar.is-docked { padding-top: var(--tabbar-h); }
+  html.mac-window .notebook-sidebar.is-docked { padding-top: calc(var(--tabbar-h) - var(--rail-gap)); }
   html.mac-window body[data-rail="closed"]:has(#nb-shell) .rail {
-    height: 100vh; margin-top: 0; padding-top: var(--tabbar-h);
-    border-top-right-radius: 0; box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    height: calc(100vh - 2 * var(--rail-gap)); margin-top: var(--rail-gap); padding-top: calc(var(--tabbar-h) - var(--rail-gap));
   }
-  /* A page is the paper itself, from the title row to the bottom, with no
-     box around it; Home, a topic and the libraries keep their cards on the window. */
+  /* A page is paper on thick glass, under the title row and to the bottom
+     of the window; Home, a topic and the libraries keep their cards on the
+     wallpaper. */
   .nb-shell:has(.notebook-editor) { margin-top: calc(-1 * var(--toolbar-h)); }
   .nb-shell:has(.notebook-editor) .notebook-main {
-    min-height: calc(100dvh - var(--tabbar-h)); padding-top: var(--toolbar-h); background: var(--color-surface);
+    min-height: calc(100dvh - var(--tabbar-h)); padding: var(--toolbar-h) 14px 14px;
   }
-  .nb-shell .notebook-editor { border-radius: 0; background: transparent; box-shadow: none; }
+  .nb-shell .notebook-editor {
+    min-height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h) - 14px);
+    border-radius: 28px; background: var(--glass-thick);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  }
   /* The words "Notebook" there would repeat the sidebar's name: a page's
      path and tools take the row instead (notebook-page.js liftHeader). */
   body:has(#nb-shell):not(.nb-header-lifted) .toolbar-title { visibility: hidden; }
@@ -636,10 +642,12 @@ a.nb-starter { text-decoration: none; }
 
 .nb-lib-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .nb-lib-folder {
-  display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 10px;
-  background: var(--color-surface); color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-xs);
+  display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 18px;
+  background: var(--glass-regular); color: var(--color-ink); text-decoration: none;
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  transition: background-color 0.15s, transform 0.15s;
 }
-.nb-lib-folder:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); }
+.nb-lib-folder:hover { background: var(--glass-thick); transform: translateY(-1px); }
 .nb-lib-folder > .icon { flex: none; width: 26px; height: 26px; color: var(--color-brand-600); }
 .nb-lib-folder span { min-width: 0; }
 .nb-lib-folder b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -826,14 +834,17 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 
 /* Cards: a page's kind as a coloured mark, its title, its first words, when. */
 .nb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+/* A card is glass with the page's thumbnail on top: its picture, or its
+   first lines in small type on a sheet of paper. */
 .nb-card {
-  position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 112px; padding: 14px 14px 10px;
-  border: 1px solid var(--color-hairline); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-xs);
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 112px; padding: 10px 12px 8px;
+  border-radius: 20px; background: var(--glass-regular);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  transition: background-color 0.15s, transform 0.15s;
 }
-.nb-card:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.nb-card:hover { background: var(--glass-thick); transform: translateY(-2px); }
 .nb-card[draggable="true"] { cursor: grab; }
-.nb-card-cover { margin: -14px -14px 4px; height: 84px; overflow: hidden; border-radius: 11px 11px 0 0; background: var(--color-recess); }
+.nb-card-cover { order: -2; margin: 0 -2px; height: 96px; overflow: hidden; border-radius: 12px; background: var(--color-recess); }
 .nb-card-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .nb-card-link { display: flex; align-items: flex-start; gap: 9px; color: var(--color-ink); text-decoration: none; }
 .nb-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
@@ -849,8 +860,17 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 .nb-card-icon[data-kind="meeting"] { --kind: var(--color-warn-700); }
 .nb-card-icon[data-kind="daily"] { --kind: var(--color-danger-600); }
 .nb-card-icon[data-kind="note"] { --kind: var(--color-sand-400); }
-.nb-card-gist { flex: 1; margin: 0; color: var(--color-ink-soft); font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.nb-card-gist:empty { display: none; }
+.nb-card-gist {
+  order: -1; height: 96px; margin: 0 -2px; padding: 10px 12px; box-sizing: border-box; overflow: hidden;
+  border-radius: 12px; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-hairline);
+  color: var(--color-ink-soft); font-size: 10px; line-height: 1.5;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent);
+}
+/* A page with no words yet: a blank sheet, its lines ruled. */
+.nb-card-gist:empty {
+  background: repeating-linear-gradient(transparent 0 14px, var(--color-hairline) 14px 15px) 12px 10px / calc(100% - 24px) 60% no-repeat, var(--color-surface);
+}
+.nb-card:has(.nb-card-cover) .nb-card-gist { display: none; }
 .nb-card footer { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
 .nb-card footer small { flex: 1; min-width: 0; color: var(--color-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nb-card .nb-star { position: relative; z-index: 1; display: grid; place-items: center; width: 26px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
@@ -865,7 +885,8 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 
 /* The same pages as a list: one line each. */
 .nb-cards.is-list { grid-template-columns: minmax(0, 1fr); gap: 0; border: 1px solid var(--color-hairline); border-radius: 12px; background: var(--color-surface); overflow: hidden; }
-.nb-cards.is-list .nb-card { flex-direction: row; align-items: center; gap: 12px; min-height: 0; padding: 9px 12px; border: 0; border-radius: 0; box-shadow: none; transform: none; }
+.nb-cards.is-list .nb-card { flex-direction: row; align-items: center; gap: 12px; min-height: 0; padding: 9px 12px; border: 0; border-radius: 0; box-shadow: none; transform: none; background: transparent; }
+.nb-cards.is-list .nb-card-gist { display: none; }
 .nb-cards.is-list .nb-card + .nb-card { border-top: 1px solid var(--color-hairline); }
 .nb-cards.is-list .nb-card:hover { background: var(--color-recess); }
 .nb-cards.is-list .nb-card-cover { display: none; }
@@ -904,3 +925,19 @@ select:is(.nb-new-field :is(input, select), .nb-new-cite-row input, .nb-lib-meet
   background: color-mix(in srgb, var(--color-brand-600) 12%, var(--color-surface));
 }
 .nb-topic-folders .nb-lib-folder > .ti-emoji { font-size: 17px; }
+
+/* Someone else's topic shared with you: in the sidebar under Shared with
+   me, and its page says whose it is and what you may do. */
+.notebook-tab.is-shared > summary .nb-side-owner { margin-left: auto; }
+.nb-topic-shared { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 12px; }
+.nb-topic-shared .icon { width: 14px; height: 14px; }
+.nb-share-body { display: flex; flex-direction: column; gap: 10px; }
+.nb-share-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.nb-share-row > select, .nb-share-add select { height: 30px; }
+.nb-share-add select[data-share-who] { flex: 1; min-width: 0; }
+.nb-share-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.nb-share-list li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.nb-share-who { display: inline-flex; flex: 1; min-width: 0; align-items: center; gap: 6px; }
+.nb-share-who .icon { width: 14px; height: 14px; color: var(--color-muted); }
+.nb-share-remove { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-muted); cursor: pointer; }
+.nb-share-remove:hover { background: var(--color-recess); color: var(--color-ink); }

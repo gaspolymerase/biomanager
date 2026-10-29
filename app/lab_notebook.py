@@ -31,7 +31,7 @@ import json
 import re
 from datetime import date, datetime, timedelta, timezone
 
-from flask import Blueprint, Response, abort, g, jsonify, redirect, request, url_for
+from flask import Blueprint, Response, abort, g, has_request_context, jsonify, redirect, request, url_for
 from sqlalchemy import and_, delete, func, or_, select, update
 
 from .formutil import like_pattern
@@ -41,7 +41,7 @@ from .i18n import gettext
 from .models import (CalendarEvent, NotebookComment, NotebookFavorite, NotebookFolder, NotebookMeetingSeries, NotebookPage,
                      NotebookPageInfo,
                      NotebookPendingInsert, NotebookPresence, NotebookRecipe, NotebookShare, NotebookSyncUpdate,
-                     NotebookTab,
+                     NotebookTab, NotebookTopicShare,
                      NotebookTemplate, NotebookVersion, TaskItem, UserAccount, ZoteroLink)
 
 bp = Blueprint("nb", __name__, url_prefix="/notebook")
@@ -181,15 +181,15 @@ def role_for(session, page: NotebookPage, user=None) -> str | None:
         return None
     if owner_of(page) == me:
         return "owner"
-    names = ([me] if _is_guest(user) else [me, EVERYONE]) + groups.page_share_names(user)
+    names = _share_names(user)
     roles = set()
     for share_name, role in session.execute(select(NotebookShare.username, NotebookShare.role).where(
             NotebookShare.page_id_fk == page.id, NotebookShare.username.in_(names))).all():
-        # Shared with a group to edit: only if the group lets its members.
-        group_id = groups.page_share_group(share_name)
-        if role == "edit" and group_id is not None and not groups.member_may(group_id, "pages", user):
-            role = "view"
-        roles.add(role)
+        roles.add(_share_role(share_name, role, user))
+    # Its topic shared, or a topic it sits in.
+    topic_role = topic_shares(session, user).get(page.tab_id_fk)
+    if topic_role:
+        roles.add(topic_role)
     if "edit" in roles:
         return "edit"
     return "view" if roles else None
@@ -199,12 +199,82 @@ def can_edit_role(role: str | None) -> bool:
     return role in ("owner", "edit")
 
 
-def shared_page_ids(session, user=None):
-    """A select of the ids of pages shared with this person (not their own)."""
+def _share_names(user) -> list[str]:
+    """The names a share may name this person by: theirs, the lab's ("*",
+    not for a guest), and their project groups'."""
+    me = access.username(user)
+    return ([me] if _is_guest(user) else [me, EVERYONE]) + groups.page_share_names(user)
+
+
+def _share_role(share_name: str, role: str, user) -> str:
+    """Shared with a group to edit: only if the group lets its members."""
+    group_id = groups.page_share_group(share_name)
+    if role == "edit" and group_id is not None and not groups.member_may(group_id, "pages", user):
+        return "view"
+    return role
+
+
+def topic_shares(session, user=None) -> dict[int, str]:
+    """topic id -> how it is shared with this person, edit or view: the
+    topics shared with them and every topic inside one. Worked out once a
+    request."""
     user = user or access.current_user()
     me = access.username(user)
-    names = ([me] if _is_guest(user) else [me, EVERYONE]) + groups.page_share_names(user)
-    return select(NotebookShare.page_id_fk).where(NotebookShare.username.in_(names))
+    if not me:
+        return {}
+    cache = g.setdefault("_nb_topic_shares", {}) if has_request_context() else {}
+    if me in cache:
+        return cache[me]
+    own = session is None
+    s = SessionLocal() if own else session
+    try:
+        direct: dict[int, str] = {}
+        for tab_id, name, role in s.execute(select(NotebookTopicShare.tab_id_fk, NotebookTopicShare.username,
+                                                   NotebookTopicShare.role)
+                                            .where(NotebookTopicShare.username.in_(_share_names(user)))).all():
+            if direct.get(tab_id) != "edit":
+                direct[tab_id] = _share_role(name, role, user)
+        out = dict(direct)
+        if direct:
+            owners = select(NotebookTab.owner_username).where(NotebookTab.id.in_(list(direct)))
+            inside: dict[int | None, list[int]] = {}
+            for tab_id, parent in s.execute(select(NotebookTab.id, NotebookTab.parent_tab_id)
+                                            .where(NotebookTab.owner_username.in_(owners))).all():
+                inside.setdefault(parent, []).append(tab_id)
+            stack = list(direct.items())
+            while stack:
+                tab_id, role = stack.pop()
+                for child in inside.get(tab_id, []):
+                    if out.get(child) == "edit" or out.get(child) == role:
+                        continue
+                    out[child] = role
+                    stack.append((child, role))
+    finally:
+        if own:
+            s.close()
+    cache[me] = out
+    return out
+
+
+def topic_role(session, tab: NotebookTab | None, user=None) -> str | None:
+    """owner, edit, view or None, for a topic."""
+    if tab is None:
+        return None
+    user = user or access.current_user()
+    if tab.owner_username == access.username(user):
+        return "owner"
+    return topic_shares(session, user).get(tab.id)
+
+
+def shared_page_ids(session, user=None):
+    """A select of the ids of pages shared with this person (not their own):
+    one by one, or in a topic shared with them."""
+    user = user or access.current_user()
+    stmt = select(NotebookShare.page_id_fk).where(NotebookShare.username.in_(_share_names(user)))
+    topics = list(topic_shares(session, user))
+    if topics:
+        stmt = stmt.union(select(NotebookPage.id).where(NotebookPage.tab_id_fk.in_(topics)))
+    return stmt
 
 
 def accessible_filter(stmt, user=None):
@@ -823,7 +893,8 @@ def sidebar(session, user=None) -> dict:
     shared_rows = session.execute(
         select(NotebookPage.id, NotebookPage.title, NotebookPage.updated_at, NotebookTab.owner_username)
         .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
-        .where(NotebookPage.id.in_(shared_page_ids(session, user)), NotebookTab.owner_username != me)
+        .where(NotebookPage.id.in_(shared_page_ids(session, user)), NotebookTab.owner_username != me,
+               NotebookPage.tab_id_fk.not_in(list(topic_shares(session, user)) or [0]))
         .order_by(NotebookPage.updated_at.desc()).limit(40)).all()
     names = display_names(session, [r.owner_username for r in shared_rows])
     kinds = dict(session.execute(accessible_filter(
@@ -1422,7 +1493,8 @@ def page_new():
         tab = None
         if data.get("tab_id"):
             tab = s.get(NotebookTab, _int(data["tab_id"]) or 0)
-            if tab is None or tab.owner_username != me:
+            # Yours, or one shared with you to edit: the page is then its owner's, as the topic is.
+            if tab is None or not can_edit_role(topic_role(s, tab)) or is_inbox(tab) and tab.owner_username != me:
                 return _fail(gettext("That topic is not yours."), 404)
         title, body, kind = (data.get("title") or "").strip(), "", "note"
         starter = STARTERS.get(data.get("starter") or "")
@@ -1551,6 +1623,102 @@ def shares_remove(page_id: int):
                                               NotebookShare.username == username))
         s.commit()
         return jsonify({"ok": True})
+
+
+def _share_name_of(s, username: str, names: dict) -> str:
+    if username == EVERYONE:
+        return gettext("Everyone in the lab")
+    group_id = groups.page_share_group(username)
+    if group_id is not None:
+        return gettext("%(group)s (project group)", group=groups.name_of(group_id) or gettext("A deleted group"))
+    return names.get(username, username)
+
+
+def _forget_topic_shares() -> None:
+    if has_request_context():
+        g.pop("_nb_topic_shares", None)
+
+
+@bp.get("/api/topics/<int:tab_id>/shares")
+def topic_shares_list(tab_id: int):
+    """Who a topic of yours is shared with: its pages, and the topics inside it."""
+    with SessionLocal() as s:
+        tab = _my_topic(s, tab_id)
+        rows = s.scalars(select(NotebookTopicShare).where(NotebookTopicShare.tab_id_fk == tab.id)
+                         .order_by(NotebookTopicShare.created_at)).all()
+        names = display_names(s, [r.username for r in rows])
+        return jsonify({"ok": True, "title": tab.title,
+                        "shares": [{"username": r.username, "role": r.role, "name": _share_name_of(s, r.username, names),
+                                    "group": groups.page_share_group(r.username) is not None} for r in rows],
+                        "people": [p for p in people(s) if p["username"] != tab.owner_username],
+                        "groups": [{"username": f"{groups.PAGE_SHARE_PREFIX}{gid}", "name": name}
+                                   for gid, name in groups.choices()]})
+
+
+@bp.post("/api/topics/<int:tab_id>/shares")
+def topic_shares_set(tab_id: int):
+    data = _json_body()
+    username, share_role = str(data.get("username") or "").strip(), data.get("role") or "view"
+    if share_role not in ROLES:
+        return _fail(gettext("Role is view or edit."))
+    with SessionLocal() as s:
+        tab = _my_topic(s, tab_id)
+        if is_inbox(tab):
+            return _fail(gettext("Inbox is yours alone; share a topic, or the page itself."))
+        group_id = groups.page_share_group(username)
+        if group_id is not None:
+            if not groups.may_share_with(group_id):
+                return _fail(groups.refusal(group_id), 403)
+        elif username != EVERYONE:
+            user = s.scalar(select(UserAccount).where(UserAccount.username == username))
+            if user is None or user.disabled:
+                return _fail(gettext("No one in the lab by that name."), 404)
+            if username == tab.owner_username:
+                return _fail(gettext("It is already theirs."))
+        row = s.scalar(select(NotebookTopicShare).where(NotebookTopicShare.tab_id_fk == tab.id,
+                                                        NotebookTopicShare.username == username))
+        is_new = row is None
+        if is_new:
+            row = NotebookTopicShare(tab_id_fk=tab.id, username=username, shared_by=_me())
+            s.add(row)
+        row.role = share_role
+        if is_new and username != EVERYONE:
+            told = sorted(groups.members_of(group_id) - {_me(), tab.owner_username}) if group_id is not None \
+                else [username]
+            title = ("%(who)s shared the topic “%(title)s” with you (%(group)s)" if group_id is not None
+                     else "%(who)s shared the topic “%(title)s” with you")
+            message = ("You can edit its pages in your notebook, under Shared with me." if share_role == "edit"
+                       else "You can read its pages in your notebook, under Shared with me.")
+            values = {"who": g.user.display_name or _me(), "title": tab.title,
+                      "group": groups.name_of(group_id) if group_id is not None else ""}
+            for person in told:
+                notify.send(s, person, title, message, category="notebook", link=url_for("notebook", tab=tab.id),
+                            actor=_me(), values=values, message_values={})
+        s.commit()
+        _forget_topic_shares()
+        return jsonify({"ok": True})
+
+
+@bp.post("/api/topics/<int:tab_id>/shares/remove")
+def topic_shares_remove(tab_id: int):
+    username = str(_json_body().get("username") or "")
+    with SessionLocal() as s:
+        tab = _my_topic(s, tab_id)
+        s.execute(delete(NotebookTopicShare).where(NotebookTopicShare.tab_id_fk == tab.id,
+                                                   NotebookTopicShare.username == username))
+        s.commit()
+        _forget_topic_shares()
+        return jsonify({"ok": True})
+
+
+def shared_topic_rows(session, user=None) -> list[NotebookTab]:
+    """Other people's topics this person may open (shared, or inside a shared one)."""
+    ids = list(topic_shares(session, user))
+    if not ids:
+        return []
+    me = access.username(user or access.current_user())
+    return session.scalars(select(NotebookTab).where(NotebookTab.id.in_(ids), NotebookTab.owner_username != me)
+                           .order_by(NotebookTab.position, NotebookTab.id)).all()
 
 
 # ---------------------------------------------------------------- versions

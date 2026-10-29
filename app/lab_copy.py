@@ -308,8 +308,15 @@ def member_view(out, username: str) -> None:
     run("DELETE FROM calendar_repeats WHERE event_id_fk NOT IN (SELECT id FROM calendar_events)")
     # Notebook pages: their own and those shared with them or the lab
     # (app/lab_notebook.accessible_filter), and the rows that hang off them.
+    # The topics shared with them, and the topics inside those (lab_notebook.topic_shares).
+    run("CREATE TEMP TABLE seen_topics AS WITH RECURSIVE st(id) AS ("
+        "SELECT tab_id_fk FROM notebook_topic_shares WHERE username IN (:me, :everyone) "
+        "OR username IN (SELECT 'group:' || group_id_fk FROM lab_group_members WHERE username = :me) "
+        "UNION SELECT t.id FROM notebook_tabs t JOIN st ON t.parent_tab_id = st.id) SELECT id FROM st",
+        everyone="*")
     run("CREATE TEMP TABLE seen_pages AS SELECT p.id FROM notebook_pages p "
         "JOIN notebook_tabs t ON t.id = p.tab_id_fk WHERE t.owner_username = :me "
+        "OR p.tab_id_fk IN (SELECT id FROM seen_topics) "
         "OR p.id IN (SELECT page_id_fk FROM notebook_shares WHERE username IN (:me, :everyone) "
         "OR username IN (SELECT 'group:' || group_id_fk FROM lab_group_members WHERE username = :me))",
         everyone="*")
@@ -317,8 +324,10 @@ def member_view(out, username: str) -> None:
         run(f"DELETE FROM {table} WHERE page_id_fk NOT IN (SELECT id FROM seen_pages)")
     run("DELETE FROM notebook_pages WHERE id NOT IN (SELECT id FROM seen_pages)")
     run("DELETE FROM notebook_tabs WHERE owner_username != :me "
-        "AND id NOT IN (SELECT tab_id_fk FROM notebook_pages)")
+        "AND id NOT IN (SELECT tab_id_fk FROM notebook_pages) AND id NOT IN (SELECT id FROM seen_topics)")
+    run("DELETE FROM notebook_topic_shares WHERE tab_id_fk NOT IN (SELECT id FROM notebook_tabs)")
     run("DROP TABLE seen_pages")
+    run("DROP TABLE seen_topics")
     # Someone else's personal databases, and project groups' they are not
     # in (app/groups.py), and everything in them.
     for modules in PERSONAL_DATABASES:

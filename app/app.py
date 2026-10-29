@@ -16,7 +16,7 @@ from jinja2 import pass_context, pass_environment
 from jinja2.filters import make_attrgetter
 from jinja2.utils import htmlsafe_json_dumps
 from werkzeug.datastructures import ImmutableMultiDict
-from sqlalchemy import case, func, select, update
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import StaleDataError
@@ -69,6 +69,7 @@ from .models import (
     NotebookEntry,
     NotebookPage,
     NotebookTab,
+    NotebookTopicShare,
     NotebookTemplate,
     PlasmidFile, PlasmidRecord,
     PlasmidSequenceVersion,
@@ -6631,18 +6632,28 @@ def _notebook_page(library: str | None = None):
             role = lab_notebook.role_for(db_session, candidate) if candidate is not None else None
             if role is not None:
                 selected_page = candidate
+        # Other people's topics shared with this person (lab_notebook.topic_shares).
+        shared_rows = lab_notebook.shared_topic_rows(db_session)
         selected_tab = None
-        if selected_page is not None and role == "owner":
-            selected_tab = next((tab for tab in tab_rows if tab.id == selected_page.tab_id_fk), None)
+        if selected_page is not None:
+            selected_tab = next((tab for tab in [*tab_rows, *shared_rows] if tab.id == selected_page.tab_id_fk
+                                 and (role == "owner" or tab in shared_rows)), None)
         # No page asked for: a topic's page (?tab=), or the notebook's home.
         if selected_page is None and library is None and selected_tab_id is not None:
-            selected_tab = next((tab for tab in tab_rows if tab.id == selected_tab_id), None)
+            selected_tab = next((tab for tab in [*tab_rows, *shared_rows] if tab.id == selected_tab_id), None)
 
         side = lab_notebook.sidebar(db_session)
         kinds = side.pop("kinds_by_page")
-        parents = lab_notebook.parent_ids([page.id for tab in tab_rows for page in tab.pages])
+        parents = lab_notebook.parent_ids([page.id for tab in [*tab_rows, *shared_rows] for page in tab.pages])
         tabs_data = lab_notebook.topic_tree(db_session, tab_rows, kinds, parents)
-        by_id = {node["id"]: node for node in tabs_data}
+        shared_data = lab_notebook.topic_tree(db_session, shared_rows, kinds, parents) if shared_rows else []
+        shared_roles = lab_notebook.topic_shares(db_session)
+        owners = {tab.id: tab.owner_username for tab in shared_rows}
+        owner_names = lab_notebook.display_names(db_session, list(owners.values()))
+        for node in shared_data:
+            node.update(shared=True, role=shared_roles.get(node["id"], "view"),
+                        owner_name=owner_names.get(owners[node["id"]], owners[node["id"]]))
+        by_id = {node["id"]: node for node in [*tabs_data, *shared_data]}
         # The open topic and the topics it sits in start unfolded.
         open_topics = set()
         here = selected_tab.id if selected_tab is not None else None
@@ -6685,6 +6696,7 @@ def _notebook_page(library: str | None = None):
     return render_template(
         "notebook.html",
         tabs=tabs_data,
+        shared_topics=[node for node in shared_data if node["depth"] == 0],
         open_topics=open_topics,
         topic_view=topic_view,
         home=home,
@@ -6767,6 +6779,7 @@ def notebook_delete_tab(tab_id: int):
             db_session.execute(update(NotebookTab).where(NotebookTab.owner_username == g.user.username,
                                                          NotebookTab.parent_tab_id == tab.id)
                                .values(parent_tab_id=tab.parent_tab_id))
+            db_session.execute(delete(NotebookTopicShare).where(NotebookTopicShare.tab_id_fk == tab.id))
             db_session.delete(tab)
             db_session.commit()
     return redirect(url_for("notebook"))

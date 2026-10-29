@@ -2523,6 +2523,21 @@ class NotebookShare(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class NotebookTopicShare(Base):
+    """Someone else who may open every page of a topic, and of the topics
+    inside it, as NotebookShare does for one page: username "*" is the
+    whole lab, "group:<id>" a project group's members."""
+    __tablename__ = "notebook_topic_shares"
+    __table_args__ = (UniqueConstraint("tab_id_fk", "username", name="uq_notebook_topic_share"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tab_id_fk: Mapped[int] = mapped_column(ForeignKey("notebook_tabs.id"), index=True)
+    username: Mapped[str] = mapped_column(String(80), index=True)
+    role: Mapped[str] = mapped_column(String(10), default="view")  # view | edit
+    shared_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class NotebookFavorite(Base):
     """A page someone starred: it is listed under Favorites at the top of
     their notebook's sidebar, in their order. Any page they may open."""

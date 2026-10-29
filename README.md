@@ -780,8 +780,10 @@ database has a name of its own (one another database has is refused), so
     the page as Markdown, download it as `.md`, or import `.md` files.
   - **Pictures and files**: paste, drop, or take a photo on the phone.
     They open only for the people who can open the page.
-  - **Working together**: share a page to read or to edit, with lab mates,
-    the whole lab or a project group. Editors write in it at the same time
+  - **Working together**: share a page, or a whole topic with the topics
+    inside it, to read or to edit, with lab mates, the whole lab or a
+    project group; a shared topic lists under **Shared with me** with its
+    owner's name, and pages added to it later are shared too. Editors write in it at the same time
     and see each other's cursors. Comments sit on a passage of text, and
     an `@name` tells that person, as it does in any record's notes (a
     reagent, an order, a plasmid, a cage). Point at a linked record for its
