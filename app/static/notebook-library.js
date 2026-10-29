@@ -77,19 +77,34 @@
     return out.join('');
   }
 
-  // The top of every view: where you are, then the view's own buttons.
-  function head(crumbs, tools, blurb) {
+  // The top of every view, as the notebook's home: the way here as a
+  // small kicker (Notebook › Protocols › a folder), the place as a large
+  // title with what it holds, its own buttons beside; then a line on it.
+  function head(crumbs, tools, blurb, total) {
     var home = { protocols: ['Protocols', 'protocol'], recipes: ['Recipes', 'flask'], meetings: ['Meetings', 'users'], reading: ['Reading', 'book-open'] }[KIND];
-    var trail = [
-      '<a href="' + BASE + '" data-nav="" data-drop-folder="">' + icon(home[1]) + ' ' + esc(NP.tc('notebook', home[0])) + '</a>',
-    ].concat(crumbs.map(function (c) {
-      return '<span class="nb-lib-sep" aria-hidden="true">›</span>' +
-        (c.params ? '<a href="' + link(c.params) + '" data-nav="' + esc(JSON.stringify(c.params)) + '">' + (c.icon ? icon(c.icon) + ' ' : '') + esc(c.label) + '</a>'
-          : '<span>' + (c.icon ? icon(c.icon) + ' ' : '') + '<span class="nb-lib-crumb-text">' + esc(c.label) + '</span></span>');
-    }));
-    return '<header class="nb-lib-head"><nav class="nb-lib-crumbs" aria-label="' + t('Where you are') + '">' + trail.join('') + '</nav>' +
+    var here = crumbs.length ? crumbs[crumbs.length - 1] : null;
+    var trail = ['<a href="/notebook">' + esc(NP.tc('notebook', 'Notebook')) + '</a>',
+      '<span class="nb-lib-sep" aria-hidden="true">›</span>' +
+      '<a href="' + BASE + '" data-nav="" data-drop-folder="">' + esc(NP.tc('notebook', home[0])) + '</a>']
+      .concat(crumbs.slice(0, -1).map(function (c) {
+        return '<span class="nb-lib-sep" aria-hidden="true">›</span>' +
+          (c.params ? '<a href="' + link(c.params) + '" data-nav="' + esc(JSON.stringify(c.params)) + '">' + esc(c.label) + '</a>' : '<span>' + esc(c.label) + '</span>');
+      }));
+    var title = here ? (here.icon ? icon(here.icon) + ' ' : '') + '<span class="nb-lib-crumb-text">' + esc(here.label) + '</span>'
+      : '<span class="nb-lib-mark" data-lib="' + KIND + '">' + icon(home[1]) + '</span>' + esc(NP.tc('notebook', home[0]));
+    return '<header class="nb-lib-head"><div class="nb-lib-titles">' +
+      '<nav class="nb-lib-crumbs nb-home-kicker" aria-label="' + t('Where you are') + '">' + trail.join('') + '</nav>' +
+      '<h1 class="nb-lib-title">' + title + (total ? ' <span class="nb-lib-total">' + total + '</span>' : '') + '</h1></div>' +
       '<div class="nb-lib-tools">' + (tools || '') + '</div></header>' +
       (blurb ? '<p class="nb-lib-blurb">' + blurb + '</p>' : '');
+  }
+  // A card's sketch, as the notebook draws a page's: its title over lines,
+  // and steps or a table's bands as the page has them.
+  function thumb(title, shape) {
+    var body = shape === 'steps' ? '<span class="nb-thumb-steps"><span><i></i><b></b></span><span><i></i><b></b></span></span>'
+      : shape === 'sheet' ? '<span class="nb-thumb-sheet"><i></i><i></i><i></i><i></i><i></i><i></i></span>' : '<i class="nb-sk"></i>';
+    return '<span class="nb-thumb" data-shape="' + esc(shape) + '" aria-hidden="true"><span class="nb-thumb-title">' + esc(title) + '</span>' +
+      '<i class="nb-sk"></i><i class="nb-sk"></i>' + body + '</span>';
   }
   function searchBox(placeholder, value) {
     return '<label class="nb-lib-search">' + icon('search') +
@@ -223,26 +238,36 @@
             '<button type="button" class="btn" data-delete-folder>' + icon('trash') + ' ' + t('Delete folder') + '</button>' : '')
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-protocol>' + icon('plus') + ' ' + t('New protocol') + '</button>';
+      var kept = d.protocols.filter(function (p) { return !p.topic; });
+      var elsewhere = d.protocols.filter(function (p) { return p.topic; });
       root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
-        folder ? '' : t('Drag one onto a folder to file it. In a page, type /protocol to insert one.')) +
+        folder ? '' : t('The lab’s protocols, in one place: write a new one here, and copy a common one to start from. Drag one onto a folder to file it; in a page, type /protocol to insert one.'),
+        folder ? null : d.protocols.length) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
+      // A protocol: its sketch and title, its version (or Draft, or #protocol
+      // for a page only tagged one), who keeps it and when it last changed;
+      // one kept in a topic says which, with Move to Protocols for its keeper.
       function card(p) {
-        var meta = [p.owner_name, p.version ? 'v' + p.version : t('not numbered yet'), NP.timeText(p.updated_at)];
+        var meta = [p.owner_name, NP.timeText(p.updated_at)];
         if (lastQuery && p.folder_id) meta.unshift(folderName(d.folders, p.folder_id));
-        return '<article class="nb-lib-card" data-item="' + p.id + '" data-title="' + esc(p.title) + '" draggable="' + (p.can_edit && d.folders.length ? 'true' : 'false') + '">' +
-          '<a class="nb-lib-card-link" href="/notebook?page=' + p.id + '">' + icon('protocol') + '<b>' + esc(p.title) + '</b></a>' +
-          (p.gist ? '<p>' + esc(p.gist) + '</p>' : '') +
-          '<footer><small>' + esc(meta.filter(Boolean).join(' · ')) + (p.tags.length ? ' <span class="nb-lib-tags">' + p.tags.map(function (x) { return '#' + esc(x); }).join(' ') + '</span>' : '') + '</small>' +
-          fileMenu(p, d.folders) + '</footer></article>';
+        var pill = p.kind !== 'protocol' ? '#' + t('protocol') : p.version ? 'v' + p.version : t('Draft');
+        return '<article class="nb-card nb-lib-item" data-kind="protocol" data-item="' + p.id + '" data-title="' + esc(p.title) + '" draggable="' + (p.can_edit && d.folders.length ? 'true' : 'false') + '">' +
+          '<a class="nb-card-link" href="/notebook?page=' + p.id + '" draggable="false"' + (p.gist ? ' title="' + esc(p.gist) + '"' : '') + '>' + thumb(p.title, p.shape || 'steps') +
+          '<b class="nb-card-title">' + esc(p.title) + '</b></a>' +
+          (p.topic ? '<div class="nb-lib-where">' + icon('folder') + '<span>' + esc(t('In %(topic)s', { topic: p.topic })) + '</span>' +
+            (p.can_keep ? '<button type="button" class="nb-lib-keep" data-keep="' + p.id + '">' + t('Move to Protocols') + '</button>' : '') + '</div>' : '') +
+          '<footer><span class="nb-kind-pill" data-kind="protocol"' + (p.version ? '' : ' data-draft') + '>' + esc(pill) + '</span>' +
+          '<small>' + esc(meta.filter(Boolean).join(' · ')) + '</small>' + fileMenu(p, d.folders) + '</footer></article>';
       }
       function presetCard(p) {
-        return '<article class="nb-lib-card is-builtin">' +
-          '<a class="nb-lib-card-link" href="' + link({ preset: p.key }) + '" data-nav="' + esc(JSON.stringify({ preset: p.key })) + '">' + icon('protocol') + '<b>' + esc(p.title) + '</b></a>' +
-          '<p>' + esc(p.summary) + '</p>' +
-          '<footer><small>' + t('Built in') + '</small><button type="button" class="btn btn-ghost" data-copy-preset="' + esc(p.key) + '" title="' + t('Save a copy as your own protocol to change') + '">' + t('Copy') + '</button></footer></article>';
+        return '<article class="nb-card nb-lib-item is-builtin" data-kind="protocol">' +
+          '<a class="nb-card-link" href="' + link({ preset: p.key }) + '" data-nav="' + esc(JSON.stringify({ preset: p.key })) + '" title="' + esc(p.summary) + '">' +
+          thumb(p.title, 'steps') + '<b class="nb-card-title">' + esc(p.title) + '</b></a>' +
+          '<footer><span class="nb-kind-pill is-builtin">' + t('Built in') + '</span><small>' + esc(p.summary) + '</small>' +
+          '<button type="button" class="btn btn-sm" data-copy-preset="' + esc(p.key) + '" title="' + t('Save a copy as your own protocol to change') + '">' + t('Copy') + '</button></footer></article>';
       }
-      function cards(list) { return '<div class="nb-lib-cards">' + list.map(card).join('') + '</div>'; }
+      function cards(list) { return '<div class="nb-cards nb-lib-cards">' + list.map(card).join('') + '</div>'; }
 
       function body() {
         var q = lastQuery.trim().toLowerCase();
@@ -263,10 +288,19 @@
         } else {
           var known = {};
           d.folders.forEach(function (f) { known[f.id] = true; });
-          var loose = d.protocols.filter(function (p) { return !known[p.folder_id]; });
+          var loose = kept.filter(function (p) { return !known[p.folder_id]; });
           html = folderTiles(d.folders, d.protocols) +
             '<h2 class="nb-lib-label">' + (d.folders.length ? t('Not in a folder') : t('Lab protocols')) + '</h2>' +
-            (loose.length ? cards(loose) : '<p class="nb-lib-empty">' + (d.protocols.length ? t('Everything is in a folder.') : t('None yet. Write one with New protocol, or copy a common one below and make it yours.')) + '</p>');
+            (loose.length ? cards(loose) : '<p class="nb-lib-empty">' + (kept.length ? t('Everything is in a folder.') : t('None yet. Write one with New protocol, or copy a common one below and make it yours.')) + '</p>');
+          // Protocols kept in topics, and pages tagged protocol: listed here
+          // too, with Move to Protocols, so the lab's protocols are one list.
+          var outside = elsewhere.filter(function (p) { return !known[p.folder_id]; });
+          if (outside.length) {
+            html += '<h2 class="nb-lib-label is-section">' + t('In your topics') + '</h2>' +
+              '<p class="nb-lib-blurb">' + t('Protocol pages kept in a topic, and pages tagged #protocol. Move to Protocols keeps one here with the rest.') + '</p>' + cards(outside);
+          }
+          // The calendar's protocols: steps counted in days from a day 0.
+          html += '<div id="nb-lib-timelines"></div>';
           var cats = [];
           var byCat = {};
           d.presets.forEach(function (p) {
@@ -282,9 +316,10 @@
         box.innerHTML = html;
       }
       body();
+      timelines();
 
       var input = document.getElementById('nb-lib-q');
-      input.addEventListener('input', NP.debounce(function () { lastQuery = input.value; body(); }, 120));
+      input.addEventListener('input', NP.debounce(function () { lastQuery = input.value; body(); timelines(); }, 120));
       root.onchange = function (e) {
         var sel = e.target.closest('select[data-file]');
         if (!sel) return;
@@ -309,8 +344,42 @@
           });
         } else if (b.dataset.copyPreset) {
           copyPreset(b, b.dataset.copyPreset, folder ? folder.id : null);
+        } else if (b.dataset.keep) {
+          b.disabled = true;
+          api('/notebook/api/protocols/' + b.dataset.keep + '/keep', { body: {} })
+            .then(function () { toast(t('Moved to Protocols.')); draw(); })
+            .catch(function (err) { b.disabled = false; toast(esc(err.message), true); });
         }
       };
+
+      // The calendar's protocols (calendar-page.js): timelines of steps in
+      // days, started on a day 0. Edited and started on the calendar.
+      function timelines() {
+        var box = document.getElementById('nb-lib-timelines');
+        if (!box || folder) return;
+        fetch('/calendar/protocols', { headers: { Accept: 'application/json' } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+          if (!j || !j.ok) return;
+          var q = lastQuery.trim().toLowerCase();
+          var list = (j.templates || []).filter(function (tpl) { return matches([tpl.name, tpl.description].join(' '), q); });
+          if (q && !list.length) { box.innerHTML = ''; return; }
+          box.innerHTML = '<h2 class="nb-lib-label is-section">' + t('Timelines on the calendar') + '</h2>' +
+            '<p class="nb-lib-blurb">' + t('Steps counted in days from a day 0, such as tamoxifen then a perfusion three weeks on. Start one and its days are on the calendar.') + '</p>' +
+            '<div class="nb-cards nb-lib-cards">' + list.map(function (tpl) {
+              var steps = tpl.steps || [];
+              var span = Math.max(tpl.days || 1, 1);
+              var bars = steps.slice(0, 4).map(function (st) {
+                return '<i style="left:' + (100 * st.from / span) + '%;width:' + Math.max(6, 100 * (st.to - st.from + 1) / (span + 1)) + '%"></i>';
+              }).join('');
+              return '<article class="nb-card nb-lib-item nb-lib-timeline" style="--tone:' + esc(tpl.color || '') + '">' +
+                '<a class="nb-card-link" href="/calendar?protocol=' + tpl.id + '"><span class="nb-thumb nb-thumb-days" aria-hidden="true"><span class="nb-thumb-title">' + esc(tpl.name) + '</span><span class="nb-days">' + bars + '</span></span>' +
+                '<b class="nb-card-title">' + esc(tpl.name) + '</b></a>' +
+                '<footer><span class="nb-kind-pill" data-kind="timeline">' + esc(t('%(n)s days', { n: tpl.days })) + '</span>' +
+                '<small>' + esc(steps.length === 1 ? t('1 step') : t('%(n)s steps', { n: steps.length })) + '</small>' +
+                '<a class="btn btn-sm" href="/calendar?protocol=start&template=' + tpl.id + '">' + t('Start') + '</a></footer></article>';
+            }).join('') +
+            '<a class="nb-card nb-lib-new" href="/calendar?protocol=new">' + icon('plus') + '<span>' + t('New timeline') + '</span></a></div>';
+        }).catch(function () {});
+      }
     }).catch(failed);
   }
 
@@ -364,19 +433,26 @@
           : '<button type="button" class="btn" data-new-folder>' + icon('folder-plus') + ' ' + t('New folder') + '</button>') +
         '<button type="button" class="btn btn-primary" data-new-recipe>' + icon('plus') + ' ' + t('New recipe') + '</button>';
       root.innerHTML = head(folder ? [{ label: folder.name, icon: folder.icon }] : [], tools,
-        folder ? '' : t('In a page, type /recipe to load one; change its volume and every amount follows.')) +
+        folder ? '' : t('In a page, type /recipe to load one; change its volume and every amount follows.'),
+        folder ? null : d.recipes.length) +
         '<div class="nb-lib-body" id="nb-lib-body"></div>';
 
+      // A recipe: its volume and pH large, what goes in it, then who saved it.
       function card(r, builtIn) {
         var params = { recipe: String(r.id) };
-        var meta = builtIn ? [t('Built in')] : [r.owner_name, NP.timeText(r.updated_at)];
+        var meta = builtIn ? [] : [r.owner_name, NP.timeText(r.updated_at)];
         if (!builtIn && lastQuery && r.folder_id) meta.unshift(folderName(d.folders, r.folder_id));
-        return '<article class="nb-lib-card' + (builtIn ? ' is-builtin' : '') + '" data-item="' + esc(r.id) + '" data-title="' + esc(r.name) + '" draggable="' + (!builtIn && r.can_edit && d.folders.length ? 'true' : 'false') + '">' +
-          '<a class="nb-lib-card-link" href="' + link(params) + '" data-nav="' + esc(JSON.stringify(params)) + '">' + icon('flask') + '<b>' + esc(r.name) + '</b></a>' +
-          '<p>' + esc(recipeLine(r)) + '</p>' +
-          '<footer><small>' + esc(meta.filter(Boolean).join(' · ')) + '</small>' + (builtIn ? '' : fileMenu(r, d.folders)) + '</footer></article>';
+        var size = [r.data.volume, r.data.volumeUnit].filter(function (x) { return x !== undefined && x !== ''; }).join(' ');
+        var parts = (r.data.components || []).map(function (c) { return c.name; }).filter(Boolean);
+        return '<article class="nb-card nb-lib-item nb-lib-recipe-card' + (builtIn ? ' is-builtin' : '') + '" data-kind="recipe" data-item="' + esc(r.id) + '" data-title="' + esc(r.name) + '" draggable="' + (!builtIn && r.can_edit && d.folders.length ? 'true' : 'false') + '">' +
+          '<a class="nb-card-link" href="' + link(params) + '" data-nav="' + esc(JSON.stringify(params)) + '" draggable="false">' +
+          '<span class="nb-thumb nb-thumb-recipe" aria-hidden="true"><b>' + esc(size || '–') + '</b>' + (r.data.ph ? '<small>pH ' + esc(r.data.ph) + '</small>' : '') +
+          '<span class="nb-recipe-parts">' + parts.slice(0, 4).map(function (x) { return '<i>' + esc(x) + '</i>'; }).join('') + '</span></span>' +
+          '<b class="nb-card-title">' + esc(r.name) + '</b></a>' +
+          '<footer><span class="nb-kind-pill' + (builtIn ? ' is-builtin' : '') + '" data-kind="recipe">' + (builtIn ? t('Built in') : esc(parts.length === 1 ? t('1 component') : t('%(n)s components', { n: parts.length }))) + '</span>' +
+          '<small>' + esc(meta.filter(Boolean).join(' · ')) + '</small>' + (builtIn ? '' : fileMenu(r, d.folders)) + '</footer></article>';
       }
-      function cards(list, builtIn) { return '<div class="nb-lib-cards">' + list.map(function (r) { return card(r, builtIn); }).join('') + '</div>'; }
+      function cards(list, builtIn) { return '<div class="nb-cards nb-lib-cards">' + list.map(function (r) { return card(r, builtIn); }).join('') + '</div>'; }
 
       function body() {
         var q = lastQuery.trim().toLowerCase();

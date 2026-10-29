@@ -1533,6 +1533,10 @@ def page_new():
             parent = s.get(NotebookPage, _int(data["parent_page_id"]) or 0)
             if parent is None or role_for(s, parent) is None:
                 return _fail(gettext("Page not found."), 404)
+        if kind == "protocol" and parent is None:
+            # A protocol is kept in Protocols, whatever topic was open: the
+            # lab's protocols are one list (Inbox leaves it to the library).
+            tab = tab_named(s, me, INBOX)
         if tab is None:
             # Topics are folders, and a page's kind never picks one: it goes
             # where it was made (the page it was made in, if that's in your
@@ -2268,16 +2272,30 @@ def _gist(body: str, width: int = 140) -> str:
     return ""
 
 
+PROTOCOL_TAGS = ("protocol", "protocols", "规程", "实验方案")
+
+
+def tagged_protocol(tags: str) -> bool:
+    """A page of another kind tagged as a protocol (#protocol)."""
+    return any(t.strip().lstrip("#").lower() in PROTOCOL_TAGS for t in tag_list(tags or ""))
+
+
 @bp.get("/api/protocols")
 def protocols():
+    """Every protocol one may open: the protocol pages, wherever they are
+    kept, and pages tagged protocol. Each says whether it is kept in
+    Protocols or in a topic (which one), so the library can offer to bring
+    it in."""
     with SessionLocal() as s:
         me = _me()
         stmt = accessible_filter(select(NotebookPage, NotebookTab.owner_username, NotebookPageInfo.tags,
-                                        NotebookPageInfo.folder_id)
+                                        NotebookPageInfo.folder_id, NotebookPageInfo.kind, NotebookTab)
                                  .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
                                  .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
-                                 .where(NotebookPageInfo.kind == "protocol"))
-        rows = s.execute(stmt.order_by(NotebookPage.title)).all()
+                                 .where(or_(NotebookPageInfo.kind == "protocol",
+                                            *[func.lower(NotebookPageInfo.tags).like(f"%{tag}%") for tag in PROTOCOL_TAGS])))
+        rows = [r for r in s.execute(stmt.order_by(NotebookPage.title)).all()
+                if r.kind == "protocol" or tagged_protocol(r.tags)]
         releases = dict(s.execute(select(NotebookVersion.page_id_fk, func.max(NotebookVersion.number))
                                   .where(NotebookVersion.kind == "release")
                                   .group_by(NotebookVersion.page_id_fk)).all())
@@ -2289,9 +2307,33 @@ def protocols():
             "gist": _gist(r.NotebookPage.body),
             # May file it in a folder: whoever may edit the page.
             "can_edit": r.owner_username == me or can_edit_role(role_for(s, r.NotebookPage)),
-            "tags": tag_list(r.tags or ""), "updated_at": _iso(r.NotebookPage.updated_at)} for r in rows],
+            "tags": tag_list(r.tags or ""), "updated_at": _iso(r.NotebookPage.updated_at),
+            "kind": r.kind, "shape": page_shape(r.NotebookPage.body),
+            # Kept in Protocols, or in a topic: then which, and whether one may bring it in.
+            "topic": None if is_inbox(r.NotebookTab) else r.NotebookTab.title,
+            "can_keep": not is_inbox(r.NotebookTab) and r.owner_username == me} for r in rows],
             "folders": folder_list(s, "protocol"), "folder_icons": FOLDER_ICONS,
             "presets": notebook_protocols.preset_list()})
+
+
+@bp.post("/api/protocols/<int:page_id>/keep")
+def protocol_keep(page_id: int):
+    """Bring a protocol kept in a topic (or a page tagged protocol) into
+    Protocols: it leaves its topic and is a protocol page."""
+    with SessionLocal() as s:
+        me = _me()
+        page = s.get(NotebookPage, page_id)
+        if page is None or role_for(s, page) is None:
+            return _fail(gettext("Page not found."), 404)
+        if page.tab is None or page.tab.owner_username != me:
+            return _fail(gettext("Only whoever keeps it can move it."), 403)
+        inbox = tab_named(s, me, INBOX)
+        if page.tab_id_fk != inbox.id:
+            page.tab_id_fk = inbox.id
+            page.position = _next_position(s, inbox.id)
+        info_for(s, page.id, create=True).kind = "protocol"
+        s.commit()
+        return jsonify({"ok": True})
 
 
 def _latest_release(session, page_id: int):
@@ -2343,8 +2385,8 @@ BLANK_PROTOCOL = """## Purpose
 @bp.post("/api/protocols/new")
 def protocol_new():
     """A new protocol page of one's own: blank, or a copy of a built-in one
-    to change. It goes in the Protocols topic, and in the library's folder
-    it was made in, if any."""
+    to change. It is kept in Protocols (Inbox leaves it to the library), in
+    the library's folder it was made in, if any."""
     data = _json_body()
     preset = notebook_protocols.PRESET_PROTOCOLS.get(str(data.get("preset") or ""))
     if data.get("preset") and preset is None:
@@ -2352,7 +2394,7 @@ def protocol_new():
     title = str(data.get("title") or "").strip()[:200] or (preset["title"] if preset else "New protocol")
     with SessionLocal() as s:
         folder = _folder(s, data.get("folder_id"), "protocol")
-        tab = folder_for(s, _me())
+        tab = tab_named(s, _me(), INBOX)
         page = new_page(s, tab, title, preset["body"] if preset else BLANK_PROTOCOL, kind="protocol",
                         folder_id=folder.id if folder else None)
         record_edit(s, page)

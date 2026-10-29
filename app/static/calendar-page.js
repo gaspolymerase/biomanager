@@ -369,7 +369,17 @@
     const initial = askedView || savedView || (window.innerWidth < 720 ? 'list' : 'month');
     setView(initial, false);
     fetchAndRender();
-    loadProtocols();
+    // From the notebook's Protocols: ?protocol=<id> opens that timeline to
+    // edit, ?protocol=new a new one, ?protocol=start&template=<id> starts one.
+    const askedProtocol = params.get('protocol');
+    loadProtocols().then(() => {
+      if (!askedProtocol) return;
+      if (askedProtocol === 'start') {
+        openRun(null);
+        const tpl = Number(params.get('template'));
+        if (tpl && runForm.elements.template_id) { runForm.elements.template_id.value = String(tpl); runForm.elements.template_id.dispatchEvent(new Event('change')); }
+      } else openTemplates(askedProtocol === 'new' ? -1 : Number(askedProtocol) || null);
+    });
     spriteReady.then(() => { if (allItems.length) renderAll(); });
   });
 

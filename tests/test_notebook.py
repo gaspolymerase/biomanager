@@ -339,8 +339,9 @@ class PageKindTests(Notebook):
         topic = lambda page: one("select t.title from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id "
                                  "where p.id=?", page)
         self.assertEqual(topic(self.new_page(c, starter="blank", open_tab_id=sops)), "SOPs")
-        self.assertEqual(topic(self.new_page(c, starter="protocol", open_tab_id=sops)), "SOPs")
-        # A page's kind never picks its folder; someone else's topic is no place.
+        # A protocol is kept in Protocols (Inbox leaves it to the library);
+        # any other kind never picks its folder; someone else's topic is no place.
+        self.assertEqual(topic(self.new_page(c, starter="protocol", open_tab_id=sops)), "Inbox")
         self.assertEqual(topic(self.new_page(c, starter="experiment", open_tab_id=sops)), "SOPs")
         self.assertEqual(topic(self.new_page(c, starter="meeting", open_tab_id=sops)), "SOPs")
         self.assertNotEqual(topic(self.new_page(self.m, starter="blank", open_tab_id=sops)), "SOPs")
@@ -761,6 +762,26 @@ class ProtocolLibraryTests(Notebook):
         keys = [p["key"] for p in lib["presets"]]
         self.assertIn("hotshot", keys)
         self.assertTrue(all(p["title"] and p["category"] and p["summary"] for p in lib["presets"]))
+
+    def test_a_protocol_started_in_a_topic_is_kept_in_protocols(self):
+        topic = self.m.post("/notebook/tabs/create", data={"title": uniq("Slice ephys")}).get_json()["id"]
+        page = self.new_page(self.m, kind="protocol", tab_id=topic, title=uniq("Cutting solution"))
+        self.assertEqual(one("select t.title from notebook_pages p join notebook_tabs t on t.id=p.tab_id_fk where p.id=?", page), "Inbox")
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertIsNone(lib[page]["topic"])
+
+    def test_pages_tagged_protocol_are_listed_and_can_be_brought_in(self):
+        topic = self.m.post("/notebook/tabs/create", data={"title": uniq("Imaging")}).get_json()["id"]
+        page = self.new_page(self.m, tab_id=topic, title=uniq("Two-photon setup"))
+        self.post_json(self.m, f"/notebook/api/pages/{page}/meta", {"tags": ["#protocol", "imaging"]})
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertEqual((lib[page]["kind"], lib[page]["can_keep"]), ("note", True))
+        self.assertTrue(lib[page]["topic"])
+        # Only its keeper moves it.
+        self.assertNotEqual(self.post_json(self.a, f"/notebook/api/protocols/{page}/keep").status_code, 200)
+        self.assertEqual(self.post_json(self.m, f"/notebook/api/protocols/{page}/keep").status_code, 200)
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertEqual((lib[page]["kind"], lib[page]["topic"]), ("protocol", None))
 
     def test_every_built_in_protocol_has_steps_that_become_a_checklist(self):
         from app.notebook_protocols import PRESET_PROTOCOLS

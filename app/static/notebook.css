@@ -639,15 +639,20 @@ a.nb-starter { text-decoration: none; }
 
 .nb-library { max-width: 1120px; margin: 0 auto; padding: 22px 28px 120px; font-size: 13px; }
 @media (max-width: 640px) { .nb-library { padding: 14px 16px 100px; } }
-.nb-lib-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 6px; }
-.nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-.nb-lib-crumbs a { display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px; margin: -2px -6px; border-radius: 8px; color: var(--color-ink); text-decoration: none; }
-.nb-lib-crumbs a:hover { background: var(--color-recess); }
-.nb-lib-crumbs a .icon, .nb-lib-crumbs > span > .icon { width: 18px; height: 18px; color: var(--color-brand-600); }
-.nb-lib-crumbs > span:last-child { display: inline-flex; align-items: center; gap: 8px; }
-.nb-lib-crumbs > span:last-child { overflow-wrap: anywhere; min-width: 0; }
-.nb-lib-crumbs:has(> span:last-child) > a:first-child { color: var(--color-muted); }
+/* The top, as the notebook's home: a kicker with the way here, the place
+   as a large title with how much it holds, its buttons beside. */
+.nb-lib-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin: 6px 0 8px; }
+.nb-lib-titles { flex: 1 1 300px; min-width: 0; }
+.nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.nb-lib-crumbs a { padding: 1px 4px; margin: -1px -4px; border-radius: 6px; color: inherit; text-decoration: none; }
+.nb-lib-crumbs a:hover { background: var(--color-recess); color: var(--color-ink); }
 .nb-lib-sep { color: var(--color-sand-400); font-weight: 400; }
+.nb-lib-title { display: flex; align-items: center; gap: 10px; min-width: 0; margin: 4px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--color-ink); }
+.nb-lib-title > .icon { width: 22px; height: 22px; color: var(--color-brand-600); }
+.nb-lib-title .nb-lib-mark { width: 34px; height: 34px; border-radius: 11px; }
+.nb-lib-title .nb-lib-mark .icon { width: 18px; height: 18px; }
+.nb-lib-title .nb-lib-crumb-text { min-width: 0; overflow-wrap: anywhere; }
+.nb-lib-total { font-size: 17px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .nb-lib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .nb-lib-tools .btn .icon { width: 13px; height: 13px; }
 .nb-lib-saved { color: var(--color-muted); font-size: 12px; }
@@ -682,6 +687,41 @@ a.nb-starter { text-decoration: none; }
 .nb-lib-folder.is-drop, .nb-lib-crumbs a.is-drop { outline: 2px dashed var(--color-brand-600); outline-offset: 2px; background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); }
 
 .nb-lib-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+/* Protocols and recipes as the notebook's page cards (.nb-card): a sketch,
+   the title, then a pill and who and when. */
+.nb-lib-cards.nb-cards { gap: 14px; }
+.nb-lib-item footer small { text-align: right; }
+.nb-lib-item footer .btn { position: relative; z-index: 1; flex: none; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; }
+.nb-lib-item.is-builtin { background: var(--glass-clear); }
+.nb-lib-item.is-builtin footer small { text-align: left; }
+.nb-kind-pill[data-draft] { background: var(--color-recess); color: var(--color-muted); }
+.nb-kind-pill.is-builtin { background: var(--color-recess); color: var(--color-ink-soft); }
+.nb-lib-item[data-kind="recipe"] { --kind: var(--color-violet-600, #7c3aed); }
+.nb-lib-where { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; margin: 6px 6px 0; padding: 4px 4px 4px 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--color-warn-700) 9%, transparent); color: var(--color-ink-soft); font-size: 12px; }
+.nb-lib-where .icon { flex: none; width: 12px; height: 12px; color: var(--color-warn-700); }
+.nb-lib-where span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-lib-keep { flex: none; height: 22px; padding: 0 8px; border: 0; border-radius: 999px; background: var(--color-surface); color: var(--color-brand-700);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+.nb-lib-keep:hover { box-shadow: inset 0 0 0 1px var(--color-brand-600); }
+/* A recipe's sketch: its volume large, its pH, what goes in it. */
+.nb-thumb-recipe { justify-content: flex-start; gap: 2px; }
+.nb-thumb-recipe > b { font-family: var(--font-mono); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: color-mix(in srgb, var(--kind) 75%, var(--color-ink)); }
+.nb-thumb-recipe > small { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); }
+.nb-recipe-parts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+.nb-recipe-parts i { max-width: 100%; padding: 1px 6px; overflow: hidden; border-radius: 999px; font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap;
+  background: color-mix(in srgb, var(--kind) 10%, transparent); color: var(--color-ink-soft); }
+/* A calendar timeline's sketch: its steps as bars across its days. */
+.nb-lib-timeline { --kind: var(--tone, var(--color-brand-600)); }
+.nb-thumb-days .nb-days { position: relative; flex: 1; margin-top: 4px; background: repeating-linear-gradient(90deg, transparent 0 calc(14.28% - 1px), var(--color-hairline) calc(14.28% - 1px) 14.28%); border-radius: 6px; }
+.nb-thumb-days .nb-days i { position: absolute; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--kind) 55%, transparent); }
+.nb-thumb-days .nb-days i:nth-child(1) { top: 8%; } .nb-thumb-days .nb-days i:nth-child(2) { top: 32%; }
+.nb-thumb-days .nb-days i:nth-child(3) { top: 56%; } .nb-thumb-days .nb-days i:nth-child(4) { top: 80%; }
+.nb-kind-pill[data-kind="timeline"] { font-family: var(--font-mono); font-size: 11px; }
+.nb-card.nb-lib-new { display: grid; place-content: center; justify-items: center; gap: 6px; min-height: 120px; color: var(--color-muted); text-decoration: none;
+  background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-ink) 12%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.nb-card.nb-lib-new:hover { color: var(--color-brand-700); text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--color-brand-600); }
+.nb-lib-new .icon { width: 18px; height: 18px; }
 .nb-lib-card {
   position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 10px; border: 1px solid var(--color-hairline);
   border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-xs);
