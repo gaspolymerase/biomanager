@@ -839,7 +839,9 @@ database has a name of its own (one another database has is refused), so
   <tr>
     <td width="50%" valign="top">
       <h4>☀️ A home page that tells you what to do</h4>
-      Built from the databases your lab keeps, in the sidebar's order:
+      A <b>Daily brief</b> on top says the day in a few words (today's
+      work by name, what is overdue, animals that may need a look, unread
+      notices). Below it, built from the databases your lab keeps, in the sidebar's order:
       a count for each database, then each one's own cards — <i>Animals
       that may need a look</i> (below), mice older
       than 30 weeks, upcoming weanings and the genotyping queue for the
@@ -1500,7 +1502,7 @@ what it needs to track.
 
 | Keys | Does |
 | --- | --- |
-| <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> | Search everything |
+| <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> | Search everything, go to any place in the sidebar, or ask the user guide |
 | <kbd>⌘/Ctrl</kbd> + <kbd>B</kbd> | Show or hide the sidebar |
 | <kbd>Alt</kbd> + <kbd>1</kbd>…<kbd>9</kbd> | Switch to tab 1 to 9 |
 | <kbd>Alt</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | Previous / next tab |

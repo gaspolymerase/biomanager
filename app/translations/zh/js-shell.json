@@ -88,5 +88,14 @@
   "Show the row you click, in full, beside the sheet": "在表格旁完整显示你点的那一行",
   "Close the inspector": "关闭检查器",
   "Click a row to see it here.": "点一行就会在这里显示。",
-  "Filter": "筛选"
+  "Filter": "筛选",
+  "Go to %(place)s": "前往 %(place)s",
+  "Your to-dos on the Board": "看板上的待办",
+  "Today's log": "今天的日志",
+  "Hide or show the sidebar": "隐藏或显示侧边栏",
+  "Search, go somewhere, or ask the guide…": "搜索、跳转，或问用户指南……",
+  "Go to": "前往",
+  "Ask the user guide: “%(q)s”": "问用户指南：“%(q)s”",
+  "How to do it, step by step, on the BioManager website": "在 BioManager 网站上一步步说明怎么做",
+  "Ask": "提问"
 }

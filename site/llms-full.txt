@@ -253,6 +253,8 @@ The page that opens each morning: what needs doing today, in three views.
 
 Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone.
 
+Above them, the **Daily brief** says the day in a few words: what is due today (the first three by name, each a link), how many things are overdue, how many animals may need a look, and how many notices for you are unread. **Plan my day** opens the calendar on today.
+
 - **Overview**: Cards, built from the databases your lab keeps and laid out in the sidebar's order: *For you*, then *Counts*, a number for each database (mice, tanks, plasmids, vials or plates, open orders, items running low), and each database's own cards. The mouse colony brings *Animals that may need a look* (below), *Mice older than 30 weeks*, *Upcoming weanings* and the *Genotyping queue*; zebrafish the mating tanks to return; Molecular biology *Recent plasmids* (yours first, marked *No sequence* until one is added); and each fly, worm or other animal database a card of its own with what is due in the next two days, so Drosophila and C. elegans are never mixed. *Expiring & low stock*, the *Next 14 days* and *Recent orders* complete it. The button at the top opens the first database in the sidebar.
 
 - **Timeline**: Every dated job on one row of days, a row per kind of work, coloured overdue, today, within 3 days or scheduled. Choose 1, 2 or 4 weeks beside the tabs. *Needs you now* and *Busy days* sit beside it. On a phone it becomes a list of days.
@@ -361,6 +363,8 @@ Search everything from anywhere, and keep pages open as tabs.
 
 - **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open. The search at the top of the window opens it too; in the Mac app that is the magnifying glass beside the window's buttons.
 
+- **Go somewhere, or ask.** Before you type, the same box lists every place in the sidebar (*Go to Calendar*…), your to-dos on the Board, today's log and hiding the sidebar; as you type, the ones that match come first. At the end, **Ask the user guide** looks up what you typed in this guide, in a new tab.
+
 - **Back and forward.** In the Mac app, the arrows after the magnifying glass go back and forward, as `⌘` `[` and `⌘` `]` do; the button before it hides or shows the sidebar (`⌘` `B`). The sidebar starts as a narrow column of icons; widen it to see their names.
 
 - **Hover the sidebar.** Rest the pointer on an icon to see its name. On a database, a card comes up beside it: how many records it holds, what is due soon, your latest records and its tabs, so you can see how it stands, or go straight to **Cages** or **Litters**, without leaving the page you're on. Move onto the card to click in it.
@@ -405,7 +409,7 @@ Source: https://biomanager.org/guide/notifications
 
 Every keyboard shortcut on one page: search with ⌘/Ctrl K, switch tabs, fill down, and the Mac menu bar's keys.
 
-| `⌘`/`Ctrl` `K` | Search everything |
+| `⌘`/`Ctrl` `K` | Search everything, go to any place, or ask the user guide |
 |---|---|
 | `Alt` `1`…`9` | Go to tab 1–9. On a Mac, `Alt` is `⌥ Option`, here and below. |
 | `Alt` `←` `→` | Previous / next tab (also `Alt` `[` `]`) |

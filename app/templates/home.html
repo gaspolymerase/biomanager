@@ -28,6 +28,35 @@
 
 {% block content %}
 
+{# ---- The daily brief: today's work in a few words, from the same agenda
+     Timeline draws (home_layouts.daily_brief). ---------------------------- #}
+<section class="home-brief" aria-label="{{ _('Daily brief') }}">
+  <span class="home-brief-mark">{{ icon('sparkle') }}</span>
+  <div class="home-brief-text">
+    <div class="home-brief-label">{{ _('Daily brief') }}</div>
+    <p>
+      {%- if brief.quiet %}{{ _('Nothing is due today, and nothing is overdue.') }}
+      {%- else %}
+        {%- if brief.today %}
+          {{ ngettext('One thing today:', '%(num)s things today:', brief.today|length + brief.more) }}
+          {% for it in brief.today -%}
+            {%- if not loop.first %}{% if loop.last and not brief.more %} {{ _('and') }} {% else %}{{ _(', ') }}{% endif %}{% endif -%}
+            <a href="{{ it.url or url_for('calendar') }}"><b>{{ it.title }}</b></a>
+          {%- endfor %}{% if brief.more %} {{ ngettext('and one more', 'and %(num)s more', brief.more) }}{% endif %}{{ _('.') }}
+        {%- endif %}
+        {%- if brief.overdue %} {{ ngettext('One thing is overdue.', '%(num)s things are overdue.', brief.overdue) }}{% endif %}
+        {%- if brief.animals %} {{ ngettext('One animal may need a look.', '%(num)s animals may need a look.', brief.animals) }}{% endif %}
+      {%- endif %}
+      {%- if notification_unread %} <a href="{{ url_for('lab.notifications', show='unread') }}">{{ ngettext('One thing for you is unread.', '%(num)s things for you are unread.', notification_unread) }}</a>{% endif %}
+    </p>
+  </div>
+  {% if lab_features.calendar %}
+    <div class="home-brief-actions">
+      <a class="btn" href="{{ url_for('calendar', view='day') }}">{{ icon('calendar') }} {{ _('Plan my day') }}</a>
+    </div>
+  {% endif %}
+</section>
+
 {# ---- The view: Overview, Timeline or By place (app/home_layouts.py) -----
      Tabs, as a database's are; what belongs to the view sits beside them. #}
 <form class="page-tabs-row" method="post" action="{{ url_for('set_home_layout') }}">

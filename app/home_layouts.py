@@ -594,6 +594,17 @@ def build_agenda(session, today: date, horizon: int, features: dict, zebrafish: 
     return items, tracks
 
 
+def daily_brief(agenda: list[dict], today: date, animals: int = 0) -> dict:
+    """Home's daily brief, from the agenda (build_agenda): what is due today,
+    the first few by name, how many are overdue, and how many animals may
+    need a look (app/welfare.py). The page puts it into words."""
+    due_today = [item for item in agenda if item["due"] == today and item["status"] != "overdue"]
+    overdue = [item for item in agenda if item["status"] == "overdue"]
+    return {"today": [{"title": item["title"], "url": item["url"] or ""} for item in due_today[:3]],
+            "more": max(0, len(due_today) - 3), "overdue": len(overdue), "animals": animals,
+            "quiet": not due_today and not overdue and not animals}
+
+
 def _when(due: date, today: date) -> str:
     days = (due - today).days
     if days < 0:

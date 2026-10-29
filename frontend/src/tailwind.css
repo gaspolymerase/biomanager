@@ -3417,7 +3417,7 @@
   .cmdk-input-row input::placeholder { @apply text-sand-400; }
   .cmdk-kbd { @apply kbd-chip shrink-0; }
 
-  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto bg-surface/70 p-1.5; }
+  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto p-1.5; }
   .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[13px] text-muted; }
 
   .cmdk-group-label {
@@ -3434,6 +3434,14 @@
     @apply w-[62px] shrink-0 rounded-md bg-sand-100 px-1.5 py-0.5 text-center
            text-[11px] font-semibold text-muted;
   }
+  /* An action or Ask: its icon in a round well, where a record has its kind. */
+  .cmdk-row-icon {
+    @apply grid size-7 shrink-0 place-items-center rounded-full bg-sand-300/30 text-ink-soft;
+  }
+  .cmdk-row-icon .icon { @apply size-[15px]; }
+  .cmdk-row-ask .cmdk-row-icon { @apply bg-brand-600; color: var(--color-on-brand, #fff); }
+  .cmdk-row-ask .cmdk-row-label { @apply font-medium; }
+  .cmdk-row > .cmdk-kbd { @apply ml-auto; }
   .cmdk-row-type-mouse   { @apply bg-info-50 text-info-600; }
   .cmdk-row-type-plasmid { @apply bg-brand-50 text-brand-700; }
   .cmdk-row-type-order   { @apply bg-warn-50 text-warn-700; }
@@ -4522,10 +4530,32 @@
   /* The databases row on the home page. */
   .home-dbs { @apply flex flex-wrap gap-2; }
   /* Home's cards, in each person's order (templates/home.html). */
-  .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2; }
+  /* Bento: two across, three on a wide window; a wide card takes the row,
+     and the grid fills the gaps a tall card leaves. */
+  .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3; grid-auto-flow: row dense; }
   .home-card { @apply flex min-w-0 flex-col; }
   .home-card > .card { @apply h-full; }
-  .home-card.is-wide { @apply lg:col-span-2; }
+  .home-card.is-wide { @apply lg:col-span-2 2xl:col-span-3; }
+
+  /* The daily brief: glass, above the views. */
+  .home-brief {
+    @apply mb-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[26px] px-5 py-4;
+    background: var(--glass-regular);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring),
+                0 0 0 1px color-mix(in srgb, var(--color-brand-600) 18%, transparent), var(--glass-lift);
+  }
+  .home-brief-mark {
+    @apply grid size-9 shrink-0 place-items-center rounded-full bg-brand-600;
+    color: var(--color-on-brand, #fff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .home-brief-mark .icon { @apply size-[18px]; }
+  .home-brief-text { @apply min-w-0 flex-1 basis-[320px]; }
+  .home-brief-label { @apply text-[11px] font-semibold text-brand-700; }
+  .home-brief-text p { @apply m-0 mt-0.5 text-[15px] leading-relaxed text-ink; }
+  .home-brief-text a { @apply text-ink no-underline; }
+  .home-brief-text a:hover { @apply text-brand-700 underline; }
+  .home-brief-actions { @apply flex shrink-0 gap-2; }
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
   .home-cust-list { @apply flex flex-col gap-1; }
   .home-cust-row { @apply flex items-center gap-2 rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px]; }

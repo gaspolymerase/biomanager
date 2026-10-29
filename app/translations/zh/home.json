@@ -172,5 +172,20 @@
   "Nothing to do on your racks in the next %(n)s days.": "接下来 %(n)s 天你的架子上没有要做的事。",
   "Due soon": "即将到期",
   "Yours, lately": "你最近的",
-  "Nothing due soon": "近期没有到期的事"
+  "Nothing due soon": "近期没有到期的事",
+  "Daily brief": "今日简报",
+  "Nothing is due today, and nothing is overdue.": "今天没有到期的事，也没有逾期的。",
+  "One thing today:": "今天有 1 件事：",
+  "%(num)s things today:": "今天有 %(num)s 件事：",
+  "and": "和",
+  "and one more": "还有 1 件",
+  "and %(num)s more": "还有 %(num)s 件",
+  ".": "。",
+  "One thing is overdue.": "有 1 件已逾期。",
+  "%(num)s things are overdue.": "有 %(num)s 件已逾期。",
+  "One animal may need a look.": "有 1 只动物可能需要看一下。",
+  "%(num)s animals may need a look.": "有 %(num)s 只动物可能需要看一下。",
+  "One thing for you is unread.": "有 1 条给你的消息未读。",
+  "%(num)s things for you are unread.": "有 %(num)s 条给你的消息未读。",
+  "Plan my day": "安排今天"
 }

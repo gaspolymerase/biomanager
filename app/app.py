@@ -2474,17 +2474,18 @@ def home_dashboard():
                         if "welfare" in shown else None)
         home_layout = home_layouts.get_layout(db_session, g.user.username)
         layout_view = None
-        if home_layout != "classic":
-            span = home_layouts.span_arg(request.args.get("span"))
-            horizon = span if home_layout == "tracks" else home_layouts.PULL_DAYS
-            agenda, track_meta = home_layouts.build_agenda(
-                db_session, today, horizon, lab.request_features(), zebrafish_due,
-                colony_label=builtin_labels().get("colony", "Mouse colony"))
-            if home_layout == "tracks":
-                layout_view = home_layouts.tracks_view(agenda, track_meta, today, span)
-            else:
-                layout_view = home_layouts.freezer_view(db_session, agenda, today, g.user.username)
-            db_session.commit()
+        span = home_layouts.span_arg(request.args.get("span"))
+        horizon = span if home_layout == "tracks" else home_layouts.PULL_DAYS
+        agenda, track_meta = home_layouts.build_agenda(
+            db_session, today, horizon, lab.request_features(), zebrafish_due,
+            colony_label=builtin_labels().get("colony", "Mouse colony"))
+        if home_layout == "tracks":
+            layout_view = home_layouts.tracks_view(agenda, track_meta, today, span)
+        elif home_layout != "classic":
+            layout_view = home_layouts.freezer_view(db_session, agenda, today, g.user.username)
+        # The daily brief at the top: today's work in a few words.
+        brief = home_layouts.daily_brief(agenda, today, welfare_view["count"] if welfare_view else 0)
+        db_session.commit()
 
     return render_template(
         "home.html",
@@ -2514,6 +2515,7 @@ def home_dashboard():
         },
         sac_candidates=sac_candidates,
         welfare_view=welfare_view,
+        brief=brief,
         weanings=weanings,
         geno_queue=geno_queue,
         orders_list=orders_list,
