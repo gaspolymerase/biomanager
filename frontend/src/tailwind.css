@@ -4684,10 +4684,14 @@
   a.home-panel:hover { @apply no-underline; box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px color-mix(in srgb, var(--color-brand-600) 40%, transparent), var(--glass-lift); }
   .home-panel.is-2 { @apply flex-[2_1_520px]; }
   .home-panel-head { @apply mb-2.5 flex items-center gap-2; }
-  .home-panel-head h2 { @apply m-0 text-[15px] font-semibold text-ink; }
+  .home-panel-head h2 { @apply m-0 whitespace-nowrap text-[15px] font-semibold text-ink; }
   .home-panel-head > a { @apply ml-auto font-medium text-brand-700 no-underline; }
   .home-panel-head > a:hover { @apply underline; }
   .home-panel-n { @apply font-normal text-muted; }
+  .home-panel-seg { @apply ml-auto flex shrink-0 gap-0.5 rounded-full p-0.5; background: color-mix(in srgb, var(--color-ink) 6%, transparent); }
+  .home-panel-seg a { @apply rounded-full px-2 py-0.5 text-[12px] font-medium text-muted no-underline; }
+  .home-panel-seg a:hover { @apply text-ink no-underline; }
+  .home-panel-seg a[aria-current] { @apply text-ink; background: var(--glass-solid); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), inset 0 0 0 1px var(--glass-ring); }
   .home-panel-mark { @apply grid size-[26px] place-items-center rounded-[9px] bg-teal-100 text-teal-800; }
   .home-panel-mark .icon { @apply size-[15px]; }
   .home-panel-empty { @apply m-0 py-2 text-muted; }
@@ -4735,7 +4739,7 @@
   /* The colony: its count, how much of it is active, yours and what is due. */
   .home-colony { @apply gap-2.5; }
   .home-colony .home-panel-head { @apply mb-0; }
-  .home-colony-n { @apply text-[44px] font-medium leading-none tracking-[-0.03em] tabular-nums; }
+  .home-colony-n { @apply text-[40px] font-medium leading-none tracking-[-0.03em] tabular-nums; }
   .home-colony-bar { @apply flex h-2 overflow-hidden rounded-full bg-sand-300/40; }
   .home-colony-bar i { @apply bg-teal-500; }
   .home-colony-split { @apply flex justify-between text-muted; }
@@ -4785,7 +4789,7 @@
 
   /* Home's title: the day as a small kicker above a large greeting. */
   body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse; }
-  body:has(.home-bento) .toolbar-title { @apply text-[30px] font-semibold tracking-[-0.03em]; }
+  body:has(.home-bento) .toolbar-title { @apply text-[28px] font-semibold tracking-[-0.03em]; }
   body:has(.home-bento) .toolbar-sub { @apply mt-0 font-mono text-[12px] uppercase tracking-[0.05em]; }
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
   .home-cust-list { @apply flex flex-col gap-1; }

@@ -83,7 +83,7 @@
 .nb-sheet-toolbar, .nb-sheet-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 6px; margin-bottom: 10px; }
 .nb-sheet-controls label { display: inline-flex; align-items: center; gap: 5px; color: var(--color-muted); font-size: 12px; }
 .nb-sheet-controls select { height: 26px; padding: 0 8px !important; border: 0 !important; border-radius: 999px !important; background: color-mix(in srgb, var(--color-sand-300) 30%, transparent) !important; font-size: 12px !important; }
-.nb-sheet-title { flex: 1 1 180px; font-weight: 600 !important; font-size: 14px !important; border-color: transparent !important; padding-left: 2px !important; }
+.nb-sheet-title { flex: 1 1 180px; font-weight: 600 !important; font-size: 15px !important; border-color: transparent !important; padding-left: 2px !important; }
 .nb-sheet-title:hover { border-color: var(--color-hairline) !important; }
 /* The table, as in the design: names quiet over a rule, rows close, numbers in mono. */
 .nb-sheet-scroll { overflow-x: auto; max-width: 100%; margin: 0 -14px 10px; border-top: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent); }
@@ -97,7 +97,7 @@
 .tiptap-editor-host .nb-sheet-table thead th { background: transparent; padding: 5px 8px; font-weight: 500; }
 .nb-sheet-table td input { width: 100%; height: 30px; border: 0 !important; border-radius: 0 !important; background: transparent !important; padding: 0 10px !important; }
 .nb-sheet-table td input:focus { box-shadow: inset 0 0 0 2px var(--color-brand-500); }
-.nb-sheet-table td.is-num input, .nb-sheet-table td.is-num { text-align: right; font-family: var(--font-mono); font-size: 12.5px; }
+.nb-sheet-table td.is-num input, .nb-sheet-table td.is-num { text-align: right; font-family: var(--font-mono); font-size: 12px; }
 .nb-sheet-table td.is-formula { padding: 0 10px; color: var(--color-ink-soft); background: color-mix(in srgb, var(--color-brand-600) 4%, transparent); }
 .nb-sheet-table td input.is-bad { color: var(--color-danger-600); }
 .nb-sheet-table tbody tr:hover td { background: color-mix(in srgb, var(--color-sand-300) 15%, transparent); }
@@ -125,7 +125,7 @@
 }
 .nb-block-body .nb-sheet-unit:placeholder-shown { background: transparent !important; opacity: 0; }
 .nb-sheet-table th:hover .nb-sheet-unit, .nb-block-body .nb-sheet-unit:focus { opacity: 1; }
-.nb-sheet-colmenu { border: 0; background: none; color: var(--color-sand-400); cursor: pointer; font-size: 14px; padding: 0 2px; opacity: 0; }
+.nb-sheet-colmenu { border: 0; background: none; color: var(--color-sand-400); cursor: pointer; font-size: 13px; padding: 0 2px; opacity: 0; }
 .nb-sheet-table th:hover .nb-sheet-colmenu, .nb-sheet-colmenu:focus { opacity: 1; }
 .nb-sheet-colmenu:hover { color: var(--color-danger-600); }
 .nb-block-body .nb-sheet-formula { display: block; width: 100%; margin-top: 3px; height: 22px; font-family: var(--font-mono) !important; font-size: 11px !important; color: var(--color-muted) !important; }

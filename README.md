@@ -874,7 +874,7 @@ database has a name of its own (one another database has is refused), so
       itself); mice in an experiment measuring body weight not weighed for
       longer than its regimen allows (7 days if it plans no weighing
       days); and mice whose status and experiments disagree. A member sees
-      their own animals and experiments (<b>Show the lab’s</b> for the
+      their own animals and experiments (<b>The lab</b> for the
       rest); animal care, facility managers and admins see the lab's.
     </td>
     <td width="50%" valign="top">

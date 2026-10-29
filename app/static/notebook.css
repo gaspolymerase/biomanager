@@ -942,7 +942,7 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 .nb-home-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 6px 0 20px; }
 .nb-home-titles { flex: 1 1 300px; min-width: 0; }
 .nb-home-kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-muted); }
-.nb-home .nb-topic-title { margin: 2px 0 0; font-size: 30px; font-weight: 600; letter-spacing: -0.03em; }
+.nb-home .nb-topic-title { margin: 2px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
 .nb-home-new {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 999px; background: var(--glass-clear);
   -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
@@ -979,7 +979,7 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 }
 .nb-topic-chip:hover { transform: translateY(-1px); }
 .nb-topic-chip-icon {
-  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; font-size: 19px;
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; font-size: 17px;
   background: color-mix(in srgb, var(--color-sand-300) 40%, transparent);
 }
 .nb-topic-chip-icon .icon, .nb-topic-chip-icon .ti-svg { width: 18px; height: 18px; color: var(--color-brand-700); }

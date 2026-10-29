@@ -631,9 +631,13 @@
       {% endif %}
 
       {% if 'welfare' in shown_cards and welfare_view %}
-        <section class="home-panel" aria-label="{{ _('Needs a look') }}">
+        <section class="home-panel" id="welfare" data-home-card="welfare" aria-label="{{ _('Needs a look') }}">
           <header class="home-panel-head">
             <h2>{{ _('Needs a look') }}{% if welfare_view.count %} <span class="home-panel-n">{{ welfare_view.count }}</span>{% endif %}</h2>
+            <span class="home-panel-seg">
+              <a href="{{ url_for('home_dashboard', animals='mine') }}#welfare" title="{{ _('Show only yours') }}"{% if welfare_view.scope != 'lab' %} aria-current="true"{% endif %}>{{ _('Mine') }}</a>
+              <a href="{{ url_for('home_dashboard', animals='lab') }}#welfare" title="{{ _('Show the lab’s') }}"{% if welfare_view.scope == 'lab' %} aria-current="true"{% endif %}>{{ _('The lab') }}</a>
+            </span>
           </header>
           {% if needs %}
             {% for l in needs %}
@@ -652,7 +656,7 @@
 
     <div class="home-bento-row">
       {% if 'for_you' in shown_cards %}
-        <section class="home-panel" aria-label="{{ _('For you') }}">
+        <section class="home-panel" data-home-card="for_you" aria-label="{{ _('For you') }}">
           <header class="home-panel-head">
             <h2>{{ _('For you') }}{% if notification_unread %} <span class="home-panel-n">{{ notification_unread }}</span>{% endif %}</h2>
             <a href="{{ url_for('lab.notifications') }}">{{ _('All') }}</a>
@@ -672,7 +676,7 @@
       {% endif %}
 
       {% if db_links %}
-        <section class="home-panel is-2" aria-label="{{ _('Your databases') }}">
+        <section class="home-panel is-2" data-home-panel="databases" aria-label="{{ _('Your databases') }}">
           <header class="home-panel-head"><h2>{{ _('Your databases') }}</h2></header>
           <div class="home-dbgrid">
             {% for link in db_links %}
@@ -690,7 +694,7 @@
       {% endif %}
 
       {% if lab_features.notebook %}
-        <section class="home-panel" aria-label="{{ _('Notebook') }}">
+        <section class="home-panel" data-home-panel="notebook" aria-label="{{ _('Notebook') }}">
           <header class="home-panel-head">
             <h2>{{ _('Notebook') }}</h2>
             <a href="{{ url_for('notebook') }}">{{ _('Open') }}</a>

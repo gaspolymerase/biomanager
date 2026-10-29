@@ -285,7 +285,7 @@ The first card of the mouse colony (or of zebrafish, in a lab without mice) list
 
 - **Status and experiment disagree**: A mouse whose status is *experiment* while it is in no experiment (once the lab keeps its mouse experiments here), or something else, such as *geno*, while it is in an active one.
 
-A member sees their own animals and the mice of their experiments; **Show the lab’s** shows everyone's. Animal care, facility managers and admins see the lab's, and **Show only yours** narrows it. Each morning the bell also says how many animals may need a look (not the status ones); turn that off in **Settings → Notifications → Animals that may need a look**. Like any card, **Customize** can put it away.
+A member sees their own animals and the mice of their experiments; **The lab**, at the panel's top right, shows everyone's. Animal care, facility managers and admins see the lab's, and **Mine** narrows it. Each morning the bell also says how many animals may need a look (not the status ones); turn that off in **Settings → Notifications → Animals that may need a look**. Like any card, **Customize** can put it away.
 
 *The Home page*
 
