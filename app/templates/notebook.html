@@ -174,7 +174,8 @@
     <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
       <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
       {% for key, lib in libraries.items() %}
-        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
+        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}
+           {% if key == 'meetings' %}title="{{ _('Meetings and who presents are kept in the calendar') }}"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
       {% endfor %}
     </nav>
   </aside>

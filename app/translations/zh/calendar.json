@@ -182,5 +182,6 @@
   "That is as many lists as a board holds.": "看板放不下更多列表了。",
   "There is a list of that name already.": "已经有同名的列表了。",
   "A card needs a title.": "卡片需要一个标题。",
-  "That is not a date.": "这不是一个日期。"
+  "That is not a date.": "这不是一个日期。",
+  "A meeting that comes round every week, and who presents in turn": "每周一次的会议，以及轮流由谁报告"
 }

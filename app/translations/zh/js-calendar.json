@@ -172,5 +172,13 @@
   "Away": "外出",
   "by %(who)s": "由 %(who)s",
   "Mark done": "标记完成",
-  "Mark not done": "标记未完成"
+  "Mark not done": "标记未完成",
+  "Meetings could not be loaded.": "无法载入会议。",
+  "That could not be saved.": "无法保存。",
+  "%(name)s next": "下一位：%(name)s",
+  "Set one up and the calendar keeps track of who presents next.": "设置一个会议，日历会记住下一位由谁报告。",
+  "Past notes": "以往的记录",
+  "New meeting": "新建会议",
+  "A meeting that comes round every week, and who presents in turn.": "每周一次的会议，以及轮流由谁报告。",
+  "Notes for this meeting": "这次会议的记录"
 }

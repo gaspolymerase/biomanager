@@ -249,5 +249,6 @@
   "%(who)s shared the topic “%(title)s” with you": "%(who)s 与你共享了主题“%(title)s”",
   "%(who)s shared the topic “%(title)s” with you (%(group)s)": "%(who)s 与你共享了主题“%(title)s”（%(group)s）",
   "You can edit its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中编辑它的页面。",
-  "You can read its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中阅读它的页面。"
+  "You can read its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中阅读它的页面。",
+  "Meetings and who presents are kept in the calendar": "会议和报告轮值在日历里管理"
 }

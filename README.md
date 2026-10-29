@@ -634,7 +634,7 @@ database has a name of its own (one another database has is refused), so
   top of the sidebar (once there is one), in your order. The notebook opens on **Home**: your
   favourites, what was edited lately and your topics. **Inbox** holds the
   pages in no topic yet; protocols, papers and talks, and a meeting series'
-  notes are in **Protocols**, **Reading** and **Meetings** instead. The
+  notes are in **Protocols**, **Reading** and the calendar's meetings instead. The
   sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
   **New page** asks for a title, the topic, the kind of page and what to
   start from (a built-in starter or one of your templates). A page's kind
@@ -770,10 +770,10 @@ database has a name of its own (one another database has is refused), so
     when they end.
   - **Daily log**: *Today* opens the day's page; each quick entry is added
     with the time.
-  - **Meetings and seminars** (**Meetings** in the notebook's sidebar,
-    where each series is edited): a rotation of who presents next, notes for
-    each meeting shared with everyone in it, the coming meetings on the
-    calendar, and action items (`- [ ] @name order primers, due
+  - **Meetings and seminars** (kept in the calendar: **New event →
+    Meeting**, and **Meetings** in its side panel): a rotation of who
+    presents next, notes for each meeting (a notebook page shared with
+    everyone in it), the coming meetings on the calendar, and action items (`- [ ] @name order primers, due
     2026-10-02`) sent to each person's to-dos, from any page with ⋯ →
     **Send @name tasks as to-dos**. A **Seminar** page keeps the speaker
     and their affiliation under its title and is listed in **Reading**

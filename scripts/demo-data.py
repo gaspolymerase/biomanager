@@ -479,7 +479,6 @@ for c, title, start, kind, etype in (
     (sam, "Photometry session 7", ahead(3) + "T10:00", "event", "experiment"),
     (jordan, "Slice ephys: PV-Cre;Ai14", ahead(2) + "T13:00", "event", "experiment"),
     (priya, "Flip stock rack", ahead(4), "task", ""),
-    (alex, "Lab meeting", ahead(5) + "T15:00", "event", "meeting"),
     (sam, "Perfuse cohort 2", ahead(8) + "T09:00", "event", "experiment"),
     (alex, "IACUC protocol renewal", ahead(10), "task", ""),
     (jordan, "Order AAVs", ahead(0), "task", ""),
@@ -487,6 +486,14 @@ for c, title, start, kind, etype in (
     payload = {"title": title, "start": start, "kind": kind, "event_type": etype, "priority": "normal",
                "status": "open"}
     c.post("/calendar/items", data=json.dumps(payload), content_type="application/json")
+
+# The weekly lab meeting, kept in the calendar with who presents in turn;
+# the next four are on the calendar, each naming its presenter.
+meeting_day = date.today() + timedelta(days=5)
+series = alex.post("/notebook/api/meetings", json={
+    "name": "Lab meeting", "weekday": meeting_day.weekday(), "time": "15:00", "location": "Room 2.14",
+    "members": [p[0] for p in PEOPLE]}).get_json()["series"]
+alex.post(f"/notebook/api/meetings/{series['id']}/calendar", json={"count": 4})
 
 # alex's to-dos on the calendar's Board: two lists of cards, with no day.
 for name, cards in (("This week", ("Order Cre antibody", "Book the confocal for Friday")),

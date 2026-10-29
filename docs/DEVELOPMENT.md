@@ -2283,13 +2283,19 @@ structure only).
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
 
-**Libraries.** Protocols, Recipes, Meetings and Reading in the notebook's sidebar
-are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`, `/notebook/reading`,
+**Libraries.** Protocols, Recipes and Reading in the notebook's sidebar
+are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/reading`,
 `NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
 and `static/notebook-library.js` in the main column. It reads the same
 `/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
-recipe block do, and draws Meetings with notebook-page.js's panel
-(`window.NotebookPage`). A recipe opens in the recipe block's editor
+recipe block do (`window.NotebookPage`). Meetings is kept in the calendar:
+`/notebook/meetings` redirects to `/calendar?meetings=all`, and
+`static/calendar-meetings.js` draws the series (side panel, New event →
+Meeting, a dialog for each: rotation, notes for the next meeting, put on
+the calendar, past notes) from the same `/notebook/api/meetings` routes in
+`app/lab_notebook.py`; `?meetings=new` or `=<id>` opens one. A meeting's
+calendar event ends with `Notes: /notebook/meetings/<id>/open?date=`, which
+the quick look turns into a link. A recipe opens in the recipe block's editor
 (`BiomanagerNotebook.recipe`, with `library: true`: no ticks, no Save to /
 Load from library), which saves as it changes. `?folder=`, `?recipe=` and
 `?preset=` say where in a library you are. A folder's icon is one of

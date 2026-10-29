@@ -1,5 +1,6 @@
 /* The notebook's libraries, each a page beside the sidebar
- * (/notebook/protocols, /notebook/recipes, /notebook/meetings, /notebook/reading):
+ * (/notebook/protocols, /notebook/recipes, /notebook/reading; /notebook/meetings
+ * goes to the calendar, where meetings are kept):
  *
  * - Protocols and Recipes: the lab's folders, then what is in none, then
  *   the common ones built in. Search finds across all of them. A card
@@ -7,7 +8,6 @@
  *   edit; a card is filed in a folder by dragging it onto one or with its
  *   folder button. ?folder=, ?recipe= and ?preset= are the place, so Back
  *   and a link come back to it.
- * - Meetings: the meeting series, drawn by notebook-page.js's panel.
  * - Reading: the papers and talks (reading and seminar pages), as cards
  *   with their covers or as every picture in them.
  *
@@ -198,7 +198,6 @@
     if (KIND === 'protocols') protocols();
     else if (KIND === 'recipes') recipes();
     else if (KIND === 'reading') reading();
-    else meetings();
   }
 
   function failed(e) {
@@ -512,16 +511,7 @@
     };
   }
 
-  // ------------------------------------------------------------ meetings
 
-  function meetings() {
-    view = null;
-    root.innerHTML = head([], '', t('Who presents next, and the notes of each meeting.')) +
-      '<div class="nb-lib-meetings" id="nb-lib-meetings"><p class="nb-muted">' + t('Loading…') + '</p></div>';
-    root.onclick = null;
-    root.onchange = null;
-    NP.renderPanel('meetings', document.getElementById('nb-lib-meetings'));
-  }
 
   // ------------------------------------------------------------ reading
 

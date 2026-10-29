@@ -1,6 +1,6 @@
 /* The notebook page around the editor: saving, the page's kind, status and
  * tags, and the side panels — sharing, comments, version history, search,
- * meetings, protocols. The editor itself is the bundle in notebook-build/
+ * protocols. The editor itself is the bundle in notebook-build/
  * (frontend/src/main.js); without it the page falls back to a plain
  * Markdown textarea so nothing is ever locked away.
  */
@@ -779,101 +779,6 @@
     },
   };
 
-  // ---- meetings
-  PANELS.meetings = {
-    title: 'Meetings',
-    render: function (box) {
-      api('/notebook/api/meetings').then(function (d) {
-        var weekdays = d.weekdays;
-        var card = function (s) {
-          var next = s.next;
-          return '<article class="nb-series" data-series="' + s.id + '">' +
-            '<header><b>' + esc(s.name) + '</b><small>' + esc([s.weekday_name ? t(s.weekday_name + 's') : '', s.time, s.location].filter(Boolean).join(' · ')) + '</small></header>' +
-            (next ? '<div class="nb-next">' + avatar(next.presenter, next.name, 'is-lg') + '<div><small>' + t('Next to present') + (next.date ? ' · ' + esc(new Date(next.date + 'T12:00').toLocaleDateString(LOC, { weekday: 'short', day: 'numeric', month: 'short' })) : '') + '</small><b>' + esc(next.name) + '</b></div></div>' : '<p class="nb-muted">' + t('No one in the rotation yet.') + '</p>') +
-            (s.upcoming.length > 1 ? '<ol class="nb-rotation">' + s.upcoming.slice(1).map(function (u) { return '<li><span>' + esc(u.name) + '</span><small>' + esc(u.date ? new Date(u.date + 'T12:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }) : '') + '</small></li>'; }).join('') + '</ol>' : '') +
-            '<div class="nb-field-row">' +
-            '<button type="button" class="btn btn-primary" data-note="' + s.id + '">' + icon('note') + ' ' + t('Notes for the next meeting') + '</button>' +
-            (s.can_edit ? '<button type="button" class="btn" data-skip="' + s.id + '" title="' + t('Move the rotation on one person') + '">' + t('Skip ›') + '</button><button type="button" class="btn" data-back="' + s.id + '" title="' + t('Move the rotation back one') + '">‹</button>' : '') + '</div>' +
-            (s.can_edit ? '<div class="nb-field-row"><button type="button" class="btn-link" data-cal="' + s.id + '">' + t('Put the next meetings on the calendar') + '</button><button type="button" class="btn-link" data-edit="' + s.id + '">' + t('Edit') + '</button></div>' : '') +
-            (s.notes.length ? '<details><summary>' + t('Past notes (%(n)s)', { n: s.notes.length }) + '</summary><ul class="nb-list">' + s.notes.map(function (n) { return '<li><a href="' + esc(n.url) + '">' + esc(n.title) + '</a></li>'; }).join('') + '</ul></details>' : '') +
-            '</article>';
-        };
-        box.innerHTML = (d.series.length ? d.series.map(card).join('') : '<p class="nb-muted">' + t('No meetings yet. Set one up and the notebook keeps track of who presents next.') + '</p>') +
-          '<button type="button" class="btn" id="nb-series-new">' + icon('plus') + ' ' + t('New meeting series') + '</button><div id="nb-series-form"></div>';
-        var byId = {};
-        d.series.forEach(function (s) { byId[s.id] = s; });
-        $('#nb-series-new', box).addEventListener('click', function () { seriesForm(box, null, d.people, weekdays); });
-        box.onclick = function (e) {
-          var b = e.target.closest('button');
-          if (!b) return;
-          if (b.dataset.note) api('/notebook/api/meetings/' + b.dataset.note + '/note', { body: {} }).then(function (r) { go(r.url); });
-          if (b.dataset.skip) api('/notebook/api/meetings/' + b.dataset.skip + '/advance', { body: { step: 1 } }).then(function () { PANELS.meetings.render(box); });
-          if (b.dataset.back) api('/notebook/api/meetings/' + b.dataset.back + '/advance', { body: { step: -1 } }).then(function () { PANELS.meetings.render(box); });
-          if (b.dataset.edit) seriesForm(box, byId[b.dataset.edit], d.people, weekdays);
-          if (b.dataset.cal) {
-            BioDialog.prompt(t('How many of the coming meetings?'), String(Math.max(4, byId[b.dataset.cal].members.length)), { okLabel: t('Add to the calendar') }).then(function (n) {
-              if (!n) return;
-              api('/notebook/api/meetings/' + b.dataset.cal + '/calendar', { body: { count: Number(n) } })
-                .then(function (r) { toast(r.made ? t(r.made > 1 ? '%(n)s meetings added to the calendar, each naming its presenter.' : '%(n)s meeting added to the calendar, each naming its presenter.', { n: r.made }) : t('They are on the calendar already.')); })
-                .catch(function (err) { toast(esc(err.message), true); });
-            });
-          }
-        };
-      }).catch(function (e) { box.innerHTML = '<p class="nb-warn">' + esc(e.message) + '</p>'; });
-    },
-  };
-  function seriesForm(box, s, list, weekdays) {
-    var holder = $('#nb-series-form', box);
-    var members = s ? s.members.map(function (m) { return m.username; }) : [me.username];
-    var fields = { name: s ? s.name : t('Lab meeting'), weekday: s && s.weekday !== null ? String(s.weekday) : '', time: s ? s.time : '', location: s ? s.location : '' };
-    function draw() {
-      // Keep what has been typed when the rotation list is redrawn.
-      var old = $('form', holder);
-      if (old) ['name', 'weekday', 'time', 'location'].forEach(function (k) { fields[k] = old.elements[k].value; });
-      var names = {};
-      list.forEach(function (p) { names[p.username] = p.name; });
-      holder.innerHTML = '<form class="nb-series-form"><h4>' + (s ? t('Edit %(name)s', { name: esc(s.name) }) : t('New meeting series')) + '</h4>' +
-        '<label>' + t('Name') + ' <input name="name" required value="' + esc(fields.name) + '"></label>' +
-        '<div class="nb-field-row"><label>' + t('Every') + ' <select name="weekday"><option value="">' + t('— day —') + '</option>' + weekdays.map(function (w, i) { return '<option value="' + i + '"' + (fields.weekday === String(i) ? ' selected' : '') + '>' + esc(t(w)) + '</option>'; }).join('') + '</select></label>' +
-        '<label>' + t('at') + ' <input type="time" name="time" value="' + esc(fields.time) + '"></label></div>' +
-        '<label>' + t('Where') + ' <input name="location" value="' + esc(fields.location) + '" placeholder="' + t('Room, or a video link') + '"></label>' +
-        '<div class="nb-label">' + t('Presenting order') + '</div><ol class="nb-order">' + members.map(function (u, i) {
-          return '<li><span class="nb-grow">' + esc(names[u] || u) + '</span><button type="button" class="nb-icon-btn" data-up="' + i + '" aria-label="' + t('Earlier') + '">↑</button><button type="button" class="nb-icon-btn" data-down="' + i + '" aria-label="' + t('Later') + '">↓</button><button type="button" class="nb-icon-btn" data-out="' + i + '" aria-label="' + t('Remove') + '">×</button></li>';
-        }).join('') + '</ol>' +
-        '<div class="nb-field-row"><select id="nb-series-add"><option value="">' + t('Add someone…') + '</option>' + list.filter(function (p) { return members.indexOf(p.username) < 0; }).map(function (p) { return '<option value="' + esc(p.username) + '">' + esc(p.name) + '</option>'; }).join('') + '</select>' +
-        '<button type="button" class="btn-link" id="nb-series-all">' + t('Add everyone') + '</button></div>' +
-        '<div class="nb-field-row"><button class="btn btn-primary" type="submit">' + t('Save') + '</button><button type="button" class="btn" data-cancel>' + t('Cancel') + '</button>' +
-        (s && (s.owner === me.username) ? '<span class="nb-grow"></span><button type="button" class="btn-link is-danger" data-delete-series>' + t('Delete') + '</button>' : '') + '</div></form>';
-      var form = $('form', holder);
-      form.scrollIntoView({ block: 'nearest' });
-      $('#nb-series-add', holder).addEventListener('change', function (e) { if (e.target.value) { members.push(e.target.value); draw(); } });
-      $('#nb-series-all', holder).addEventListener('click', function () {
-        list.forEach(function (p) { if (!p.guest && members.indexOf(p.username) < 0) members.push(p.username); });
-        draw();
-      });
-      form.onclick = function (e) {
-        var b = e.target.closest('button');
-        if (!b) return;
-        var i;
-        if (b.dataset.up !== undefined) { i = Number(b.dataset.up); if (i > 0) { members.splice(i - 1, 0, members.splice(i, 1)[0]); draw(); } }
-        if (b.dataset.down !== undefined) { i = Number(b.dataset.down); if (i < members.length - 1) { members.splice(i + 1, 0, members.splice(i, 1)[0]); draw(); } }
-        if (b.dataset.out !== undefined) { members.splice(Number(b.dataset.out), 1); draw(); }
-        if (b.dataset.cancel !== undefined) holder.innerHTML = '';
-        if (b.dataset.deleteSeries !== undefined) BioDialog.confirm(t('Delete %(name)s? Its notes stay.', { name: s.name }), { danger: true }).then(function (ok) {
-          if (ok) api('/notebook/api/meetings/' + s.id + '/delete', { body: {} }).then(function () { PANELS.meetings.render(box); });
-        });
-      };
-      form.onsubmit = function (e) {
-        e.preventDefault();
-        var el = form.elements;
-        var body = { name: el.name.value, weekday: el.weekday.value, time: el.time.value, location: el.location.value, members: members };
-        api(s ? '/notebook/api/meetings/' + s.id : '/notebook/api/meetings', { body: body }).then(function () { PANELS.meetings.render(box); })
-          .catch(function (err) { toast(esc(err.message), true); });
-      };
-    }
-    draw();
-  }
-
   // The lab's protocols or recipes as the library files them: a part for
   // each folder with something in it, by name, then what is in none (under
   // `rest`, or "Not in a folder" when there are folders).
@@ -1093,11 +998,10 @@
   }
   document.addEventListener('click', function (e) { if (e.target.closest('[data-zotero]')) zoteroDialog(); });
 
-  // For the protocol, recipe and meeting libraries (static/notebook-library.js).
+  // For the protocol and recipe libraries (static/notebook-library.js).
   window.NotebookPage = {
     api: api, esc: esc, icon: icon, toast: toast, tc: tc, timeText: timeText, debounce: debounce,
     byFolder: byFolder,
-    renderPanel: function (name, box) { PANELS[name].render(box, {}); },
     zotero: function () { return zotero; },
   };
 

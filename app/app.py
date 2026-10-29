@@ -6673,8 +6673,11 @@ def notebook():
 @app.route("/notebook/<any(protocols, recipes, meetings, reading):library>")
 @login_required
 def notebook_library(library: str):
-    """The lab's protocols, recipes or meetings, or the papers and talks
-    read, to look through, open, add to and sort into folders."""
+    """The lab's protocols or recipes, or the papers and talks read, to look
+    through, open, add to and sort into folders. Meetings, their days and
+    who presents, are kept in the calendar (static/calendar-meetings.js)."""
+    if library == "meetings":
+        return redirect(url_for("calendar", meetings="all"))
     return _notebook_page(library)
 
 

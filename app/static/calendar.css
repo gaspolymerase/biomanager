@@ -253,6 +253,43 @@
 .cal-foot-btn:hover { background: var(--color-recess); color: var(--color-ink); }
 .cal-foot-btn .icon { width: 14px; height: 14px; color: var(--color-muted); }
 
+/* Meetings: each series and who presents next; its dialog (calendar-meetings.js). */
+.cal-meeting-list { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.cal-meeting-item {
+  display: grid; gap: 1px; width: 100%; padding: 5px 6px; border: 0; border-radius: 9px; background: none;
+  font-size: 13px; text-align: left; color: var(--color-ink); cursor: pointer;
+}
+.cal-meeting-item:hover { background: var(--color-recess); }
+.cal-meeting-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-meeting-item small { color: var(--color-muted); font-size: 11px; }
+.cal-side .cal-section.is-lit { box-shadow: 0 0 0 2px var(--color-brand-600); transition: box-shadow 0.3s; }
+.cal-meeting-dialog { width: min(520px, calc(100vw - 2rem)); }
+.cal-meeting-body { display: flex; flex-direction: column; gap: 12px; }
+.cal-meeting-body label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--color-muted); }
+.cal-meeting-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.cal-meeting-row > label { flex: 1 1 140px; }
+.cal-meeting-next {
+  display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px;
+  background: color-mix(in srgb, var(--color-brand-600) 10%, transparent);
+}
+.cal-meeting-next small { display: block; font-size: 12px; color: var(--color-muted); }
+.cal-meeting-next b { font-size: 17px; font-weight: 600; }
+.cal-meeting-face {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--color-brand-600); color: var(--color-on-brand, #fff); font-size: 13px; font-weight: 700;
+}
+.cal-meeting-steer { display: flex; gap: 4px; margin-left: auto; }
+.cal-meeting-rota, .cal-meeting-notes, .cal-meeting-order { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.cal-meeting-rota li, .cal-meeting-notes li, .cal-meeting-order li {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; font-size: 13px;
+}
+.cal-meeting-rota li:nth-child(odd), .cal-meeting-order li:nth-child(odd) { background: var(--color-recess); }
+.cal-meeting-rota span, .cal-meeting-order span, .cal-meeting-notes a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-meeting-rota small, .cal-meeting-notes small { color: var(--color-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cal-meeting-notes a { color: var(--color-ink); text-decoration: none; }
+.cal-meeting-notes a:hover { color: var(--color-brand-700); text-decoration: underline; }
+.cal-meeting-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* ---- Main --------------------------------------------------------------- */
 
 /* The month or week is a sheet: solid, lifted off the wallpaper as the

@@ -46,6 +46,7 @@
     <div class="menu cal-new-menu" id="cal-new-menu" role="menu" hidden>
       <button type="button" class="menu-item" role="menuitem" data-new="event">{{ icon('calendar') }} {{ _('Event') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="task">{{ icon('list-check') }} {{ _('To-do') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="meeting" title="{{ _('A meeting that comes round every week, and who presents in turn') }}">{{ icon('users') }} {{ _('Meeting') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="booking">{{ icon('calendar-clock') }} {{ _('Book equipment') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="away">{{ icon('user') }} {{ _('Time away') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="protocol">{{ icon('protocol') }} {{ _('Start a protocol') }}</button>
@@ -93,6 +94,14 @@
     <section class="cal-section" id="cal-cover" hidden>
       <h3 class="cal-section-h">{{ _('Away soon') }}</h3>
       <div class="cal-cover-list" id="cal-cover-list"></div>
+    </section>
+
+    {# Meeting series and who presents next (static/calendar-meetings.js). #}
+    <section class="cal-section is-well">
+      <h3 class="cal-section-h">{{ _('Meetings') }}
+        <button type="button" class="cal-link-btn" id="cal-meeting-new">{{ icon('plus') }} {{ _('New') }}</button>
+      </h3>
+      <ul class="cal-meeting-list" id="cal-meetings"><li class="cal-muted">{{ _('Loading…') }}</li></ul>
     </section>
 
     <section class="cal-section is-well">
@@ -511,4 +520,5 @@
         data-loaded-flag="__tuiLoaded" data-missing-flag="__tuiMissing"></script>
 <script src="{{ url_for('static', filename='calendar-board.js') }}?v={{ asset_version('calendar-board.js') }}" defer></script>
 <script src="{{ url_for('static', filename='calendar-page.js') }}?v={{ asset_version('calendar-page.js') }}" defer></script>
+<script src="{{ url_for('static', filename='calendar-meetings.js') }}?v={{ asset_version('calendar-meetings.js') }}" defer></script>
 {% endblock %}

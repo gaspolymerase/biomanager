@@ -801,13 +801,22 @@ class ProtocolLibraryTests(Notebook):
 
     def test_the_sidebar_opens_each_library_as_a_page(self):
         html = self.get_ok(self.m, "/notebook")
-        for key in ("protocols", "recipes", "meetings", "reading"):
+        for key in ("protocols", "recipes", "reading"):
             self.assertIn(f'href="/notebook/{key}"', html)
             page = self.get_ok(self.m, f"/notebook/{key}")
             self.assertIn(f'data-library="{key}"', page)
             self.assertIn("notebook-library.js", page)
             self.assertIn('aria-current="page"', page)
         self.assertEqual(self.m.get("/notebook/other").status_code, 404)
+
+    def test_meetings_are_kept_in_the_calendar(self):
+        self.assertIn('href="/notebook/meetings"', self.get_ok(self.m, "/notebook"))
+        r = self.m.get("/notebook/meetings")
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("/calendar?meetings=all", r.headers["Location"])
+        calendar = self.get_ok(self.m, "/calendar")
+        for part in ('data-new="meeting"', 'id="cal-meetings"', "calendar-meetings.js"):
+            self.assertIn(part, calendar)
 
     def test_a_built_in_protocol_reads_as_it_is_written(self):
         from app.notebook_protocols import PRESET_PROTOCOLS

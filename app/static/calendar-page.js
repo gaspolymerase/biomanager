@@ -357,6 +357,7 @@
 
   // ================================================================ navigation
 
+  document.addEventListener('calendar:changed', () => fetchAndRender());
   $('#biocal-prev').addEventListener('click', () => step(-1));
   $('#biocal-next').addEventListener('click', () => step(1));
   $('#biocal-today').addEventListener('click', () => {
@@ -710,6 +711,8 @@
     const now = new Date();
     const day = ymd(currentView === 'list' ? new Date() : currentDate() < startOfDay(now) ? now : currentDate());
     if (kind === 'protocol') return openRun(null);
+    // A meeting series: its day, its people and who presents in turn (calendar-meetings.js).
+    if (kind === 'meeting') return window.BioMeetings && window.BioMeetings.create();
     if (kind === 'booking') {
       const start = new Date(now);
       start.setMinutes(0, 0, 0);
@@ -818,7 +821,10 @@
     if (raw.audienceLabel) chips.push(`<span class="cal-peek-chip">${escapeHtml(t(raw.audienceLabel))}</span>`);
     // Mice the item names (#37, #38…), as chips.
     const mice = Array.from(new Set(String(item.title || '').match(/#\d+/g) || []));
-    const body = item.kind === 'protocol' ? '' : String(item.body || '').trim();
+    let body = item.kind === 'protocol' ? '' : String(item.body || '').trim();
+    // A meeting's event ends with the link to its notes (lab_notebook.meeting_calendar).
+    const notes = body.match(/(?:^|\n)Notes: (\/notebook\/meetings\/\d+\/open\?date=[\d-]+)\s*$/);
+    if (notes) body = body.slice(0, notes.index).trim();
     const canDone = item.kind === 'task' && !raw.readOnly;
     const canOpen = ['event', 'task', 'booking', 'away', 'protocol'].includes(item.kind) || raw.href;
     peekEl.innerHTML = `
@@ -831,7 +837,7 @@
       ${chips.length ? `<div class="cal-peek-chips">${chips.join('')}</div>` : ''}
       ${mice.length ? `<div><div class="cal-peek-label">${t('Mice')}</div><div class="cal-peek-chips">${mice.map((m) => `<a class="cal-peek-mouse" href="/colony?view=mice&q=${encodeURIComponent(m.slice(1))}">${svgIcon('mouse')}${m}</a>`).join('')}</div></div>` : ''}
       ${body ? `<p class="cal-peek-body">${escapeHtml(body)}</p>` : ''}
-      ${raw.pageUrl ? `<div class="cal-peek-label">${t('Notebook')}: <a href="${escapeHtml(raw.pageUrl)}">${escapeHtml(raw.pageTitle || item.title || '')}</a></div>` : ''}
+      ${notes ? `<div class="cal-peek-label">${t('Notebook')}: <a href="${escapeHtml(notes[1])}">${t('Notes for this meeting')}</a></div>` : ''}
       <div class="cal-peek-actions">
         ${canDone ? `<button type="button" class="btn btn-primary btn-sm" data-peek="done">${raw.done ? t('Mark not done') : t('Mark done')}</button>` : ''}
         ${canOpen ? `<button type="button" class="btn btn-sm" data-peek="open">${t('Open')}</button>` : ''}

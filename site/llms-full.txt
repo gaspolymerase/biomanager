@@ -1207,7 +1207,7 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 ### Pages
 
-- The notebook has one sidebar, its own: BioManager's sidebar folds to its icons while you are in it (the **»** at its top opens it for a moment). At the top of the notebook's sidebar, your notebook's name opens its **Home**, **+** beside it makes a **New page** (in the topic you are in), and **Find a page…** under it narrows the pages listed as you type; **Enter** searches inside every page, with its tags. **Today**, **Protocols**, **Recipes**, **Meetings** and **Reading** stay at its foot.
+- The notebook has one sidebar, its own: BioManager's sidebar folds to its icons while you are in it (the **»** at its top opens it for a moment). At the top of the notebook's sidebar, your notebook's name opens its **Home**, **+** beside it makes a **New page** (in the topic you are in), and **Find a page…** under it narrows the pages listed as you type; **Enter** searches inside every page, with its tags. **Today**, **Protocols**, **Recipes**, **Meetings** (which opens the calendar, where meetings are kept) and **Reading** stay at its foot.
 
 - Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar, and a topic can hold topics of its own, as deep as you like (*Projects*, in it *Lung neurons*, in that *Flow*). **+** beside *Topics* names a new one. A topic's own **+** starts a page in it, and its **•••** makes a **New topic inside** it, changes its **Name and icon**, moves it into another topic (**Move to…**), or deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the notebook remembers which you left open. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
 
@@ -1221,7 +1221,7 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 - **Home** (your notebook's name, at the top of the sidebar) is where the notebook opens: your favourites, the pages edited most recently (yours and those shared with you), and your topics.
 
-- **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols**, **Reading** and **Meetings**, below), so Inbox leaves them out.
+- **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols** and **Reading** below, and each meeting in the calendar), so Inbox leaves them out.
 
 - **New page** asks four things, each labelled: the **Title**, the **Topic** it goes in, its **Kind**, and what to **Start from**. Each kind says what it adds:
 
@@ -1275,7 +1275,7 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`). A colleague is shown in their colour, and hovering the name shows who they are: name, what they do, admin, member or guest, email, project groups, and how long they've been in the lab. They're told they were mentioned, and an action item names them. The page and a record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
 
-- **Daily log** (*Today*) and **Meetings**: **Meetings** in the sidebar lists each meeting series, where you edit its day, place and presenting order. A presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
+- **Daily log** (*Today*) and meeting notes: a meeting series is kept in the [calendar](https://biomanager.org/guide/calendar) (**New event → Meeting**), with its presenter rotation; **Notes for the next meeting** there makes the meeting's page here, shared with everyone in it. Action items in any page (`- [ ] @name …, due …`) go to that person's to-dos, with ⋯ → **Send @name tasks as to-dos**.
 
 - An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
 
@@ -1391,7 +1391,9 @@ Experiments, to-dos and bookings, with the colony's dates filled in for you.
 
 - Beside the grid are a small month to jump around, a **Show** list with a colour and a count for each kind (events, to-dos, the colony, stocks and organisms, supplies, protocols, equipment, time away, connected calendars), the instruments and the protocols under way.
 
-- **New event** offers an event, a to-do (due today, tomorrow, next week, or a date), **Book equipment**, **Time away** and **Start a protocol**. Drag an event, to-do or booking to move it.
+- **New event** offers an event, a to-do (due today, tomorrow, next week, or a date), a **Meeting**, **Book equipment**, **Time away** and **Start a protocol**. Drag an event, to-do or booking to move it.
+
+- **Meetings**: a lab meeting or journal club that comes round every week. Give it its day, time and place, and the people who present in turn. **Meetings** in the side panel lists each with who presents next; open one to move the rotation on (**Skip ›**) or back (**‹**), make the **Notes for the next meeting** (a notebook page shared with everyone in it), **Put the next meetings on the calendar**, each naming its presenter, or read the notes of past ones. A meeting's event links to its notes.
 
 - **Who sees it**, for an event or a to-do: *Only me*, *Everyone in the lab* or one of your [project groups](https://biomanager.org/guide/project-groups). Your own is seen by nobody else, admins included. A shared event is changed only by whoever added it and admins; a shared to-do anyone it is for can tick off. A new event starts as the lab's, a new to-do as yours.
 
