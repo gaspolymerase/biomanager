@@ -4669,6 +4669,124 @@
   .home-brief-text a { @apply text-ink no-underline; }
   .home-brief-text a:hover { @apply text-brand-700 underline; }
   .home-brief-actions { @apply flex shrink-0 gap-2; }
+  .home-brief-actions .btn { @apply h-9 rounded-full px-4; }
+
+  /* Overview's bento (templates/home.html): rows of thick glass panels that
+     wrap, a wide one (.is-2) taking twice the room. */
+  .home-bento { @apply mb-4 flex flex-col gap-3.5; }
+  .home-bento-row { @apply flex flex-wrap gap-3.5; }
+  .home-bento-row:empty { @apply hidden; }
+  .home-panel {
+    @apply flex min-w-0 flex-[1_1_250px] flex-col rounded-[26px] px-[18px] py-4 text-[13px] text-ink no-underline;
+    background: var(--glass-thick);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  }
+  a.home-panel:hover { @apply no-underline; box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px color-mix(in srgb, var(--color-brand-600) 40%, transparent), var(--glass-lift); }
+  .home-panel.is-2 { @apply flex-[2_1_520px]; }
+  .home-panel-head { @apply mb-2.5 flex items-center gap-2; }
+  .home-panel-head h2 { @apply m-0 text-[15px] font-semibold text-ink; }
+  .home-panel-head > a { @apply ml-auto font-medium text-brand-700 no-underline; }
+  .home-panel-head > a:hover { @apply underline; }
+  .home-panel-n { @apply font-normal text-muted; }
+  .home-panel-mark { @apply grid size-[26px] place-items-center rounded-[9px] bg-teal-100 text-teal-800; }
+  .home-panel-mark .icon { @apply size-[15px]; }
+  .home-panel-empty { @apply m-0 py-2 text-muted; }
+  .home-panel-more { @apply m-0 pt-2 text-[12px] text-muted; }
+
+  /* This week: seven days, a dot for each kind of work due. */
+  .home-week { @apply mb-3 grid grid-cols-7 gap-1.5; }
+  .home-day {
+    @apply flex flex-col items-center rounded-2xl py-2 text-ink no-underline transition-colors;
+  }
+  .home-day:hover { @apply bg-sand-300/30 no-underline; }
+  .home-day.is-past { @apply opacity-55; }
+  .home-day.is-today {
+    @apply bg-brand-600;
+    color: var(--color-on-brand, #fff);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 14px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .home-day-dow { @apply text-[11px] opacity-80; }
+  .home-day-n { @apply text-[17px] font-semibold tabular-nums; }
+  .home-day-dots { @apply mt-[3px] flex h-1.5 justify-center gap-[3px]; }
+  .home-day-dots i { @apply size-[5px] rounded-full bg-sand-400; }
+  .home-day.is-today .home-day-dots i { background: currentColor !important; opacity: 0.85; }
+  :is(.home-day-dots i, .home-pill)[data-tone="event"] { --tone: var(--color-sky-600); --tone-bg: var(--color-sky-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="colony"] { --tone: var(--color-teal-600); --tone-bg: var(--color-teal-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="fish"] { --tone: var(--color-blue-600); --tone-bg: var(--color-blue-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="stock"] { --tone: var(--color-violet-600); --tone-bg: var(--color-violet-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="supply"] { --tone: var(--color-amber-600); --tone-bg: var(--color-amber-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="todo"] { --tone: var(--color-pink-600); --tone-bg: var(--color-pink-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="overdue"] { --tone: var(--color-danger-700); --tone-bg: var(--color-danger-50); }
+  .home-day-dots i[data-tone] { background: var(--tone, var(--color-sand-400)); }
+  .home-today-row, .home-look-row, .home-page-row {
+    @apply flex min-w-0 items-center gap-3 border-t border-hairline px-1 py-[9px] text-ink no-underline;
+  }
+  :is(.home-today-row, .home-look-row, .home-page-row):hover { @apply no-underline; }
+  :is(.home-today-row, .home-look-row, .home-page-row):hover > span:not(.home-pill) { @apply text-brand-700; }
+  .home-today-ring { @apply size-[18px] shrink-0 rounded-full; box-shadow: inset 0 0 0 1.5px var(--color-sand-400); }
+  .home-today-ring.is-overdue { box-shadow: inset 0 0 0 1.5px var(--color-danger-600); }
+  .home-today-title { @apply min-w-0 flex-1 truncate font-medium; }
+  .home-pill {
+    @apply inline-flex h-[22px] shrink-0 items-center rounded-full px-2.5 text-[12px] font-medium;
+    background: var(--tone-bg, var(--color-sand-200)); color: var(--tone, var(--color-ink-soft));
+  }
+  .home-pill.is-mono { @apply font-mono font-normal; }
+
+  /* The colony: its count, how much of it is active, yours and what is due. */
+  .home-colony { @apply gap-2.5; }
+  .home-colony .home-panel-head { @apply mb-0; }
+  .home-colony-n { @apply text-[44px] font-medium leading-none tracking-[-0.03em] tabular-nums; }
+  .home-colony-bar { @apply flex h-2 overflow-hidden rounded-full bg-sand-300/40; }
+  .home-colony-bar i { @apply bg-teal-500; }
+  .home-colony-split { @apply flex justify-between text-muted; }
+  .home-colony-tiles { @apply mt-auto flex gap-1.5; }
+  .home-colony-tiles > span { @apply flex flex-1 flex-col rounded-[14px] bg-sand-300/30 px-2.5 py-2; }
+  .home-colony-tiles small { @apply text-[12px] text-muted; }
+  .home-colony-tiles b { @apply text-[17px] font-semibold tabular-nums; }
+
+  .home-look-id { @apply shrink-0 font-mono text-[12px] text-muted; }
+  .home-look-text { @apply min-w-0 flex-1 truncate; }
+
+  /* For you: who, what, and Open. */
+  .home-req-row { @apply flex min-w-0 items-center gap-2.5 border-t border-hairline py-[9px]; }
+  .home-req-mark { @apply grid size-7 shrink-0 place-items-center rounded-full bg-sand-300/40 text-muted; }
+  .home-req-mark .icon { @apply size-3.5; }
+  .home-req-text { @apply flex min-w-0 flex-1 flex-col; }
+  .home-req-text b { @apply truncate font-medium; }
+  .home-req-text small { @apply truncate text-[12px] text-muted; }
+  .home-req-open {
+    @apply inline-flex h-7 shrink-0 items-center rounded-full bg-brand-600/12 px-3 font-semibold text-brand-800 no-underline;
+  }
+  .home-req-open:hover { @apply bg-brand-600/20 no-underline; }
+
+  /* Your databases: a tile each, its mark, name and count. */
+  .home-dbgrid { @apply grid gap-2; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .home-dbtile {
+    @apply flex min-w-0 items-center gap-2.5 rounded-[18px] bg-sand-300/25 p-2.5 text-ink no-underline transition-colors;
+  }
+  .home-dbtile:hover { @apply bg-sand-300/45 no-underline; }
+  .home-dbtile.is-add { @apply bg-transparent text-muted; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  .home-dbtile-mark { @apply grid size-[34px] shrink-0 place-items-center rounded-[11px] bg-sand-200 text-ink-soft; }
+  .home-dbtile-mark .icon { @apply size-[17px]; }
+  .home-dbtile-mark[data-tone="0"] { @apply bg-teal-100 text-teal-800; }
+  .home-dbtile-mark[data-tone="1"] { @apply bg-sky-100 text-sky-800; }
+  .home-dbtile-mark[data-tone="2"] { @apply bg-violet-100 text-violet-800; }
+  .home-dbtile-mark[data-tone="3"] { @apply bg-amber-100 text-amber-900; }
+  .home-dbtile-mark[data-tone="4"] { @apply bg-pink-100 text-pink-800; }
+  .home-dbtile-mark[data-tone="5"] { @apply bg-lime-100 text-lime-900; }
+  .home-dbtile.is-add .home-dbtile-mark { @apply bg-transparent text-muted; }
+  .home-dbtile-text { @apply flex min-w-0 flex-col; }
+  .home-dbtile-text b { @apply truncate font-medium; }
+  .home-dbtile-text small { @apply truncate text-[12px] text-muted; }
+
+  .home-page-row .icon { @apply size-4 shrink-0 text-muted; }
+  .home-page-row > span { @apply min-w-0 flex-1 truncate; }
+  .home-page-row small { @apply shrink-0 text-[12px] text-muted; }
+
+  /* Home's title: the day as a small kicker above a large greeting. */
+  body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse; }
+  body:has(.home-bento) .toolbar-title { @apply text-[30px] font-semibold tracking-[-0.03em]; }
+  body:has(.home-bento) .toolbar-sub { @apply mt-0 font-mono text-[12px] uppercase tracking-[0.05em]; }
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
   .home-cust-list { @apply flex flex-col gap-1; }
   .home-cust-row { @apply flex items-center gap-2 rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px]; }

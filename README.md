@@ -853,10 +853,14 @@ database has a name of its own (one another database has is refused), so
       cards, <b>Timeline</b> (the coming weeks on one row of days, a row
       per kind of work) and <b>By place</b> (your racks from above, with
       the jobs numbered in the order you'd walk the room).
+      Overview opens with panels of glass: <b>This week</b> (Monday to
+      Sunday, a dot under each day for each kind of work due, and today's
+      list), the colony in a number, <b>Needs a look</b>, <b>For you</b>,
+      <b>Your databases</b> (a tile each, with its count) and the
+      notebook's latest pages; the cards follow.
       <b>Customize</b> chooses which cards Overview shows, in what order
-      and how wide, and which counts it shows, with your databases,
-      to-dos, bookings, recent pages and calculators (the ones you
-      opened last) to add.
+      and how wide, and which counts it shows, with to-dos, bookings and
+      calculators (the ones you opened last) to add.
       <br><br><b>Animals that may need a look</b> says what the records
       show, never a diagnosis: a living mouse whose latest weight is 15%
       or more below its peak of the last 30 days, or below its first

@@ -187,5 +187,15 @@
   "%(num)s animals may need a look.": "有 %(num)s 只动物可能需要看一下。",
   "One thing for you is unread.": "有 1 条给你的消息未读。",
   "%(num)s things for you are unread.": "有 %(num)s 条给你的消息未读。",
-  "Plan my day": "安排今天"
+  "Plan my day": "安排今天",
+  "This week": "本周",
+  "Needs a look": "需要看一下",
+  "Every animal looks fine.": "所有动物看起来都正常。",
+  "Nothing new for you.": "没有给你的新消息。",
+  "A database of your own": "一个你自己的数据库",
+  "%(n)s active": "%(n)s 只在养",
+  "%(n)s not active": "%(n)s 只不在养",
+  "Due this week": "本周到期",
+  "Not weighed in %(experiment)s": "在%(experiment)s中未称重",
+  "note": "备注"
 }

@@ -2464,7 +2464,7 @@ def home_dashboard():
         setup_needed = g.user.role == "admin" and not lab.setup_done(db_session)
         if g.user.role == "admin":
             notify.settle_signups(db_session)
-        for_you = [{"id": n.id, "title": n.title, "created_at": n.created_at}
+        for_you = [{"id": n.id, "title": n.title, "created_at": n.created_at, "actor": n.actor or ""}
                    for n in notify.recent(db_session, g.user.username, limit=5, unread_only=True)]
 
     # Classic (the cards above) or one of the other layouts (app/home_layouts.py),
@@ -2476,7 +2476,8 @@ def home_dashboard():
             "has_orders": has_orders, "has_restock": has_restock,
             "has_animals": features.get("colony", True) or features.get("zebrafish", True)}, lab_cards)
         shown = {c["key"] for c in offered} - set(home_cards["hidden"])
-        extra = _home_extra_cards(db_session, shown, today)
+        # Overview's bento always has the databases and the notebook's pages.
+        extra = _home_extra_cards(db_session, shown | {"notebook"}, today)
         # Animals that may need a look (app/welfare.py): a member's own by
         # default, the lab's for animal care; ?animals= switches.
         from . import welfare
@@ -2485,7 +2486,8 @@ def home_dashboard():
         home_layout = home_layouts.get_layout(db_session, g.user.username)
         layout_view = None
         span = home_layouts.span_arg(request.args.get("span"))
-        horizon = span if home_layout == "tracks" else home_layouts.PULL_DAYS
+        # Overview's This week reaches Sunday; By place pulls the next few days.
+        horizon = span if home_layout == "tracks" else (7 if home_layout == "classic" else home_layouts.PULL_DAYS)
         agenda, track_meta = home_layouts.build_agenda(
             db_session, today, horizon, lab.request_features(), zebrafish_due,
             colony_label=builtin_labels().get("colony", "Mouse colony"))
@@ -2495,6 +2497,10 @@ def home_dashboard():
             layout_view = home_layouts.freezer_view(db_session, agenda, today, g.user.username)
         # The daily brief at the top: today's work in a few words.
         brief = home_layouts.daily_brief(agenda, today, welfare_view["count"] if welfare_view else 0)
+        week = home_layouts.week_view(agenda, track_meta, today, extra.get("todos"))
+        needs = home_layouts.needs_look(welfare_view)
+        week_end = today + timedelta(days=6 - today.weekday())
+        colony_due = sum(1 for item in agenda if item["track"].startswith("colony:") and item["due"] <= week_end)
         db_session.commit()
 
     return render_template(
@@ -2526,6 +2532,10 @@ def home_dashboard():
         sac_candidates=sac_candidates,
         welfare_view=welfare_view,
         brief=brief,
+        week=week,
+        needs=needs,
+        colony_due=colony_due,
+        today_kicker=i18n.strftime(today, "%A %d %B"),
         weanings=weanings,
         geno_queue=geno_queue,
         orders_list=orders_list,

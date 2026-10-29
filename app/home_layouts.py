@@ -104,6 +104,8 @@ INVENTORY_CARDS = {"orders": "orders", **{kind: "restock" for kind in inventory_
 SPLIT_CARDS = {"stocks": "stock:", "organisms": "org:"}
 # Cards a new person doesn't see until they add them in Customize. Your
 # databases repeats the sidebar and the Counts tiles, which open each one too.
+# Overview's bento always shows these, so Customize does not offer them.
+BENTO_FIXED = {"databases", "notebook"}
 OFF_AT_FIRST = {"databases", "todos", "bookings", "notebook", "utilities"}
 # How many of the Counts tiles show until someone chooses.
 TILES_AT_FIRST = 5
@@ -231,6 +233,8 @@ def offered_cards(features: dict, flags: dict, cards: list[tuple] | None = None)
     """The cards this lab can show, for Customize."""
     out = []
     for key, label, icon, _wide, needs in cards or CARDS:
+        if key in BENTO_FIXED:
+            continue
         if needs and not (flags.get(needs) if needs.startswith("has_") else features.get(needs, True)):
             continue
         out.append({"key": key, "label": label, "icon": icon})
@@ -603,6 +607,78 @@ def daily_brief(agenda: list[dict], today: date, animals: int = 0) -> dict:
     return {"today": [{"title": item["title"], "url": item["url"] or ""} for item in due_today[:3]],
             "more": max(0, len(due_today) - 3), "overdue": len(overdue), "animals": animals,
             "quiet": not due_today and not overdue and not animals}
+
+
+# ---------------------------------------------------------------- Overview's bento
+
+# The colour a day's dot and a row's pill take: what kind of work it is.
+_TONES = (("calendar", "event"), ("colony", "colony"), ("zebrafish", "fish"), ("stock", "stock"),
+          ("org", "stock"), ("supplies", "supply"))
+
+
+def _tone(track: str) -> str:
+    return next((tone for prefix, tone in _TONES if track == prefix or track.startswith(prefix + ":")), "other")
+
+
+def week_view(agenda: list[dict], tracks: dict, today: date, todos: list[dict] | None = None) -> dict:
+    """Overview's This week: Monday to Sunday, each day a dot for each kind
+    of work due on it (overdue work on today), and today's list: what is due
+    today or overdue, then the to-dos due today, each with its kind."""
+    start = today - timedelta(days=today.weekday())
+    end = start + timedelta(days=6)
+    per_day: dict[date, list[str]] = defaultdict(list)
+    for item in agenda:
+        day = today if item["status"] == "overdue" else item["due"]
+        if start <= day <= end:
+            tone = _tone(item["track"])
+            if tone not in per_day[day]:
+                per_day[day].append(tone)
+    for t in todos or []:
+        due = t.get("due")
+        day = today if due and due < today else due
+        if day and start <= day <= end and "todo" not in per_day[day]:
+            per_day[day].append("todo")
+    days = []
+    for i in range(7):
+        d = start + timedelta(days=i)
+        weekday = i18n.strftime(d, "%a")
+        days.append({"date": d, "dow": weekday if i18n.current() == i18n.DEFAULT else weekday[-1], "n": d.day,
+                     "today": d == today, "past": d < today, "dots": per_day[d][:3]})
+    rows = [{"title": item["title"], "url": item["url"] or "", "overdue": item["status"] == "overdue",
+             "kind": tracks.get(item["track"], ("",))[0], "tone": _tone(item["track"])}
+            for item in agenda if item["due"] <= today or item["status"] == "overdue"]
+    rows += [{"title": t["title"], "url": t.get("url", ""), "overdue": bool(t.get("overdue")),
+              "kind": gettext("To-do"), "tone": "todo"}
+             for t in todos or [] if t.get("due") and t["due"] <= today]
+    rows.sort(key=lambda r: r["overdue"])       # today's first, then what is overdue
+    return {"days": days, "today": rows[:5], "more": max(0, len(rows) - 5),
+            "week_due": sum(1 for item in agenda if item["due"] <= end)}
+
+
+def needs_look(welfare_view: dict | None, limit: int = 4) -> list[dict]:
+    """Overview's Needs a look: the first few animals of the welfare checks
+    (app/welfare.py), each its number, what is wrong, and a short tag."""
+    if not welfare_view:
+        return []
+    out = []
+    for group in welfare_view["groups"]:
+        for it in group["rows"]:
+            ident = (f"#{it['mouse']}" if it.get("mouse") else it.get("label") or
+                     " · ".join(str(x) for x in (it.get("tank"), it.get("fish")) if x))
+            if group["id"] == "weight_loss":
+                text, tag = gettext("Losing weight"), f"−{it['loss_pct']:g}%"
+            elif group["id"] == "not_weighed":
+                text = gettext("Not weighed in %(experiment)s", experiment=it.get("experiment", ""))
+                tag = gettext("%(n)s d", n=it["days"]) if it.get("days") is not None else "–"
+            elif group["id"] == "welfare_notes":
+                text, tag = f"“{it.get('line', '')}”", gettext("note")
+            else:
+                text, tag = gettext("Status and experiment disagree"), gettext("status")
+            out.append({"id": ident, "text": text, "tag": tag, "url": it.get("url", ""),
+                        "high": group["id"] == "weight_loss"})
+            if len(out) >= limit:
+                return out
+    return out
 
 
 def _when(due: date, today: date) -> str:

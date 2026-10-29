@@ -342,6 +342,19 @@ the other two For you is one line (`.home-for-you`). Both read one agenda,
 `build_agenda`; their styles are `static/home-layouts.css`, in the app's
 type and tokens.
 
+Overview opens with a bento of glass panels (`.home-bento`, rows of
+`.home-panel` that wrap, `.is-2` twice as wide) above its cards: This week
+(`week_view`: Monday to Sunday from an agenda built 7 days ahead on
+Overview, a dot per kind of work a day (`_tone` of its track; overdue work
+on today) and today's list, today's first), the colony's count, Needs a
+look (`needs_look`, from `welfare.home_view`), For you, Your databases (a
+tile per sidebar database with its `count_tiles` number) and the
+notebook's latest pages. The databases and notebook panels always show,
+so Customize does not offer those cards (`BENTO_FIXED`); For you and
+Needs a look follow their cards' switches, and the grid below skips what
+the bento shows. The title is the day as a mono kicker over the greeting
+(`body:has(.home-bento)`).
+
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
 the ones in this person's sidebar, in the lab's order (as the rail does,
 leaving out the inventories that are tabs of Plasmids). `lab_cards` turns

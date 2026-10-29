@@ -106,8 +106,8 @@ def icon():
         abort(404)
     with SessionLocal() as session:
         found = stored(session)
-    if found is None:
-        abort(404)
+    if found is None:       # none (or removed since the page was drawn): BioManager's
+        return redirect(url_for("static", filename="icon.svg"))
     mimetype, data = found
     return Response(data, mimetype=mimetype, headers={
         "Cache-Control": "private, max-age=31536000, immutable",
