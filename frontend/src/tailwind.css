@@ -1036,7 +1036,7 @@
   /* A pane of clear glass floating over the wallpaper, inset from the
      window's edges, its corners concentric with the window's. */
   .rail {
-    @apply glass-clear relative z-40 flex flex-col gap-px overflow-y-auto px-2 pb-2 pt-2.5;
+    @apply glass-clear relative z-40 flex flex-col gap-px overflow-hidden px-2 pb-2 pt-2.5;
     margin: var(--rail-gap) 0 var(--rail-gap) var(--rail-gap);
     height: calc(100vh - 2 * var(--rail-gap));
     border-radius: var(--radius-3xl);
@@ -1052,6 +1052,14 @@
     @apply truncate text-[13px] font-semibold tracking-[-0.01em] text-ink;
   }
 
+  /* The places scroll on their own, between the logo and Settings and
+     Help, fading out at either end rather than sliding under them. */
+  .rail-places {
+    @apply -mx-2 flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 14px), transparent 100%);
+  }
+  .rail-places::-webkit-scrollbar { display: none; }
   .rail-group { @apply flex shrink-0 flex-col gap-px; }
 
   /* macOS sidebar headers: small, semibold, secondary — not uppercase. */
@@ -1075,7 +1083,7 @@
   html.window-inactive .rail-item.is-active .icon { @apply text-muted; }
 
   .rail-label { @apply truncate; }
-  .rail-foot { @apply mt-auto flex shrink-0 flex-col gap-px pt-3; }
+  .rail-foot { @apply flex shrink-0 flex-col gap-px pt-2; }
 
   /* Collapsed: icons only, each a circle; the chosen one a raised pill of
      solid glass. A place's name (and, for a database, a look inside) comes
@@ -1099,8 +1107,8 @@
   body[data-rail="closed"] .rail-group + .rail-group::before {
     content: ""; @apply mb-1.5 block h-px w-[22px] bg-hairline;
   }
-  /* Settings and Help stay at the bottom while the places above scroll. */
-  body[data-rail="closed"] .rail-foot { @apply sticky bottom-0 mt-auto items-center gap-0.5 pt-2; }
+  body[data-rail="closed"] .rail-places { @apply mx-0 w-full items-center px-0; }
+  body[data-rail="closed"] .rail-foot { @apply items-center gap-0.5; }
   body[data-rail="closed"] .rail-group-label { @apply hidden; }
 
   /* The logo and, beside it, Hide sidebar (above it when collapsed). */
@@ -1399,7 +1407,7 @@
     .rail-item, body[data-rail="closed"] .rail-item { @apply h-9 w-auto justify-start rounded-full px-2.5 text-[15px]; }
     .rail-label, .rail-brand-word, body[data-rail="closed"] :is(.rail-label, .rail-brand-word) { @apply not-sr-only block; }
     body[data-rail="closed"] .rail-group-label { @apply block; }
-    body[data-rail="closed"] :is(.rail-group, .rail-foot) { @apply items-stretch; }
+    body[data-rail="closed"] :is(.rail-places, .rail-group, .rail-foot) { @apply items-stretch; }
     body[data-rail="closed"] .rail-group + .rail-group::before { content: none; }
     .rail-group-label { @apply h-auto p-0 px-2.5 pb-1 pt-4 text-muted; }
     .rail-brand { @apply justify-start px-2.5; }

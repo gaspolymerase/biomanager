@@ -102,6 +102,7 @@
             </button>
           </div>
 
+          <div class="rail-places">
           {% for section in nav_sections %}
             <div class="rail-group"{% if section.sortable %} data-rail-order="{{ url_for('organisms.reorder') }}"{% endif %}>
               <div class="rail-group-label">{{ section.label|tr }}</div>
@@ -123,6 +124,7 @@
               {% endfor %}
             </div>
           {% endfor %}
+          </div>
 
           <div class="rail-foot">
             {% for item in nav_footer %}
