@@ -180,5 +180,9 @@
   "Past notes": "以往的记录",
   "New meeting": "新建会议",
   "A meeting that comes round every week, and who presents in turn.": "每周一次的会议，以及轮流由谁报告。",
-  "Notes for this meeting": "这次会议的记录"
+  "Notes for this meeting": "这次会议的记录",
+  "%(n)s things": "%(n)s 件事",
+  "%(n)s more in Week view": "还有 %(n)s 件，在周视图里看",
+  "1 thing": "1 件事",
+  "Nothing on this day.": "这一天没有安排。"
 }

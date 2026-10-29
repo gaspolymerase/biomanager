@@ -41,8 +41,8 @@
   scrollbar-width: thin;
 }
 /* Equipment and protocols each sit in a well of their own. */
-.cal-side .cal-section.is-well { padding: 12px; border-radius: 18px; background: color-mix(in srgb, var(--color-sand-300) 45%, transparent); }
-.cal-side .cal-section.is-well .cal-section-h { font-size: 13px; color: var(--color-ink); }
+:is(.cal-side, .cal-dayside) .cal-section.is-well { padding: 12px; border-radius: 18px; background: color-mix(in srgb, var(--color-sand-300) 45%, transparent); }
+:is(.cal-side, .cal-dayside) .cal-section.is-well .cal-section-h { font-size: 13px; color: var(--color-ink); }
 
 /* New event and its other kinds: one tinted capsule in the title row. */
 .cal-new { position: relative; display: flex; }
@@ -262,7 +262,7 @@
 .cal-meeting-item:hover { background: var(--color-recess); }
 .cal-meeting-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-meeting-item small { color: var(--color-muted); font-size: 11px; }
-.cal-side .cal-section.is-lit { box-shadow: 0 0 0 2px var(--color-brand-600); transition: box-shadow 0.3s; }
+:is(.cal-side, .cal-dayside) .cal-section.is-lit { box-shadow: 0 0 0 2px var(--color-brand-600); transition: box-shadow 0.3s; }
 .cal-meeting-dialog { width: min(520px, calc(100vw - 2rem)); }
 .cal-meeting-body { display: flex; flex-direction: column; gap: 12px; }
 .cal-meeting-body label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--color-muted); }
@@ -330,7 +330,7 @@ body.cal-is-board .cal-main { overflow: visible; background: transparent; box-sh
   text-align: left;
 }
 .cal-tui .toastui-calendar-weekday-grid-date {
-  margin: 6px 0 0 6px;
+  margin: 8px 0 0 6px;
   font-size: 13px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -413,11 +413,11 @@ body.cal-is-board .cal-main { overflow: visible; background: transparent; box-sh
 /* The days: the weekday, then the date in a circle, filled on today. */
 .cal-tui .toastui-calendar-day-name-item.toastui-calendar-week { text-align: center !important; padding: 0 !important; }
 .cal-tui .toastui-calendar-template-weekDayName { display: flex; align-items: center; justify-content: center; height: 100%; }
-.cal-wd { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.cal-wd { display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.2; }
 .cal-tui .toastui-calendar-weekday-exceed-in-week { background: var(--color-surface) !important; color: var(--color-ink-soft) !important; border-color: var(--color-hairline) !important; }
 .cal-wd-dow { font-size: 12px; font-weight: 500; color: var(--color-muted); }
 .cal-wd-n {
-  display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 4px; border-radius: 999px;
+  display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 4px; border-radius: 999px; line-height: 1;
   font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-ink);
 }
 .cal-wd.is-today .cal-wd-dow { color: var(--color-brand-700); }
@@ -658,7 +658,9 @@ body.cal-is-board .cal-main { overflow: visible; background: transparent; box-sh
 /* ---- Narrow screens ------------------------------------------------------ */
 
 @media (max-width: 1080px) {
-  .cal { grid-template-columns: minmax(0, 1fr); }
+  .cal, .cal[data-view="month"] { grid-template-columns: minmax(0, 1fr); }
+  /* Month on a narrow window: the day panel goes below the grid. */
+  .cal[data-view="month"] .cal-dayside { position: static; max-height: none; }
   .cal-side { display: none; position: static; max-height: none; }
   .cal-side.is-open { display: flex; }
   .cal-side-toggle { display: inline-flex !important; }
@@ -779,3 +781,97 @@ body.cal-is-board .cal { grid-template-columns: minmax(0, 1fr); }
   .todo-board { scroll-snap-type: x mandatory; }
   .todo-col { flex-basis: calc(100vw - 48px); scroll-snap-align: start; }
 }
+
+/* ---------------------------------------------------------------- Month, as in the design
+   No sidebar: the layers as chips above the grid, and on the right the day
+   picked (today at first) with what is on it, then meetings, protocols and
+   equipment (calendar-page.js renderChips, renderDay, placeWells). */
+.cal-center { display: flex; min-width: 0; flex-direction: column; gap: 12px; }
+.cal-chips, .cal-dayside { display: none; }
+.cal[data-view="month"] { grid-template-columns: minmax(0, 1fr) 268px; }
+.cal[data-view="month"] .cal-side { display: none; }
+.cal[data-view="month"] .cal-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal[data-view="month"] .cal-dayside { display: flex; }
+.cal[data-view="month"] .cal-tui { height: clamp(520px, calc(100dvh - 196px), 1060px); }
+.cal-title-year { font-weight: 400; color: var(--color-muted); }
+
+.cal-fchip {
+  display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--tone) 16%, var(--glass-regular));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 30%, transparent);
+  font: inherit; font-size: 13px; font-weight: 500; color: color-mix(in srgb, var(--tone) 70%, var(--color-ink)); cursor: pointer;
+}
+.cal-fchip i { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); }
+.cal-fchip span { font-family: var(--font-mono); font-size: 11px; opacity: 0.75; }
+.cal-fchip[aria-pressed="false"] { background: var(--glass-clear); box-shadow: inset 0 0 0 1px var(--glass-ring); color: var(--color-muted); }
+.cal-fchip[aria-pressed="false"] i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--tone); }
+.cal-fchip:hover { filter: brightness(0.98); }
+.cal-fchip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.cal-dayside {
+  position: sticky; top: 6px; flex-direction: column; gap: 14px; max-height: calc(100dvh - 120px); overflow-y: auto;
+  padding: 16px 14px 14px; border-radius: 26px;
+  background: var(--glass-regular); -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  scrollbar-width: thin;
+}
+.cal-day-head { display: flex; align-items: center; gap: 12px; }
+.cal-day-badge {
+  display: grid; flex: none; place-items: center; align-content: center; width: 52px; height: 52px; border-radius: 16px;
+  background: var(--color-brand-600); color: var(--color-on-brand, #fff); line-height: 1;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+}
+.cal-day-badge small { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.cal-day-badge b { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal-day-what { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.cal-day-what b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.cal-day-what small { font-size: 12px; color: var(--color-muted); }
+.cal-day-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cal-day-list li { position: relative; }
+.cal-day-item {
+  display: flex; width: 100%; flex-direction: column; gap: 2px; padding: 10px 40px 10px 16px; border: 0; border-radius: 14px;
+  background: var(--glass-solid); text-align: left; font: inherit; color: var(--color-ink); cursor: pointer;
+  box-shadow: inset 3px 0 0 var(--edge), inset 0 0 0 1px var(--glass-ring), 0 1px 2px rgb(0 0 0 / 0.04);
+}
+.cal-day-item b { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.cal-day-item small { overflow: hidden; font-size: 12px; color: var(--color-muted); text-overflow: ellipsis; white-space: nowrap; }
+.cal-day-item.is-done b { color: var(--color-muted); text-decoration: line-through; }
+.cal-day-item:hover { box-shadow: inset 3px 0 0 var(--edge), inset 0 0 0 1px color-mix(in srgb, var(--edge) 45%, transparent), 0 1px 2px rgb(0 0 0 / 0.04); }
+.cal-day-ring {
+  position: absolute; top: 50%; right: 12px; width: 18px; height: 18px; margin-top: -9px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-brand-600); cursor: pointer;
+}
+.cal-day-ring:hover { background: color-mix(in srgb, var(--color-brand-600) 14%, transparent); }
+.cal-day-ring.is-done { background: var(--color-brand-600); }
+.cal-day-none { padding: 6px 2px; }
+.cal-day-more { align-self: flex-start; margin-top: -4px; padding-left: 4px; }
+.cal-dayside-wells { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+.cal-dayside-wells:empty { display: none; }
+.cal-dayside .cal-side-foot { margin-top: 0; }
+
+/* The grid: dates top-left, today's in a filled circle; the picked day tinted;
+   every item a tinted pill with a dot. */
+.cal-tui .toastui-calendar-weekday-grid-date-decorator { display: none !important; }
+.cal-mday {
+  display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 4px; border-radius: 999px;
+  font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.cal-mday.is-today {
+  background: var(--color-brand-600); color: var(--color-on-brand, #fff); font-weight: 600;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+}
+.cal-tui .toastui-calendar-daygrid-cell { cursor: pointer; }
+.cal-tui .toastui-calendar-daygrid-cell.cal-is-picked { background: color-mix(in srgb, var(--color-brand-600) 7%, var(--color-surface)) !important; }
+.cal-tui .toastui-calendar-month .toastui-calendar-weekday-event {
+  height: 22px !important; border-left-width: 0 !important; border-radius: 7px !important; padding-left: 7px !important;
+}
+.cal-tui .toastui-calendar-month .cal-chip { gap: 6px; }
+.cal-tui .toastui-calendar-month .cal-chip-dot { width: 6px; height: 6px; }
+.cal-tui .toastui-calendar-month .cal-chip-timed { width: 100%; height: 22px; padding: 0 7px; border-radius: 7px; }
+.cal-tui .toastui-calendar-month .toastui-calendar-weekday-event:has(.cal-chip-timed) { padding-left: 0 !important; background: transparent !important; }
+.cal-more { font-family: var(--font-mono); }
+
+/* ---------------------------------------------------------------- Week, as in the design */
+/* Today's column is tinted from its name down, through the Due row. */
+.cal-tui .toastui-calendar-day-name-item:has(.cal-wd.is-today),
+.cal-tui .toastui-calendar-panel-grid.cal-is-today { background: color-mix(in srgb, var(--color-brand-600) 5%, var(--color-surface)) !important; }

@@ -128,14 +128,31 @@
   </aside>
 
   {# ================= Main ================= #}
-  <section class="cal-main">
-    <div class="cal-body">
-      <div id="biocal-tui" class="cal-tui"></div>
-      <div id="biocal-list" class="cal-list" hidden></div>
-      {# The to-dos as cards in lists (static/calendar-board.js, app/task_board.py). #}
-      <div id="biocal-board" class="cal-board" hidden></div>
-    </div>
-  </section>
+  <div class="cal-center">
+    {# Month: what is shown, as a row of chips above the grid, each its
+       layer's colour and count (the same switches as Show). #}
+    <div class="cal-chips" id="cal-chips" role="group" aria-label="{{ _('Show') }}"></div>
+    <section class="cal-main">
+      <div class="cal-body">
+        <div id="biocal-tui" class="cal-tui"></div>
+        <div id="biocal-list" class="cal-list" hidden></div>
+        {# The to-dos as cards in lists (static/calendar-board.js, app/task_board.py). #}
+        <div id="biocal-board" class="cal-board" hidden></div>
+      </div>
+    </section>
+  </div>
+
+  {# Month: the day picked in the grid (today at first) and what is on it;
+     then meetings, protocols and equipment, moved here from the sidebar. #}
+  <aside class="cal-dayside" id="cal-dayside" aria-label="{{ _('The day picked') }}">
+    <header class="cal-day-head">
+      <span class="cal-day-badge" aria-hidden="true"><small id="cal-day-mon"></small><b id="cal-day-n"></b></span>
+      <span class="cal-day-what"><b id="cal-day-title"></b><small id="cal-day-sub"></small></span>
+    </header>
+    <ul class="cal-day-list" id="cal-day-list"></ul>
+    <button type="button" class="cal-link-btn cal-day-more" id="cal-day-more" hidden></button>
+    <div class="cal-dayside-wells" id="cal-dayside-wells"></div>
+  </aside>
 </div>
 
 {# ================= New / edit: event, to-do, booking, time away ================= #}

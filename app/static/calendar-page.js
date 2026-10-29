@@ -227,7 +227,9 @@
   function chip(ev) {
     const item = findItem(ev.id) || ev;
     // Week and day: what is due that day is a pill with a ring, as in the design.
-    const lead = currentView === 'month' ? svgIcon(iconFor(item)) : '<i class="cal-ring" aria-hidden="true"></i>';
+    const lead = currentView === 'month'
+      ? `<i class="cal-chip-dot" style="background:${paint(item).borderColor}" aria-hidden="true"></i>`
+      : '<i class="cal-ring" aria-hidden="true"></i>';
     return `<span class="cal-chip cal-chip-${item.kind || 'event'}" data-item-id="${ev.id}">${lead}<span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
   }
 
@@ -257,11 +259,11 @@
         allday: chip,
         time(ev) {
           if (currentView !== 'month') return timedBlock(ev);
-          // In the month grid a timed item is a dot, its start and its title.
+          // In the month grid a timed item is a dot and its title, as a
+          // due one is; its hours are in the day beside and the quick look.
           const item = findItem(ev.id) || ev;
-          return `<span class="cal-chip cal-chip-timed" data-item-id="${ev.id}">
+          return `<span class="cal-chip cal-chip-timed" data-item-id="${ev.id}" title="${escapeHtml(fmtTime(item.start))}" style="background:${paint(item).backgroundColor}">
               <i class="cal-chip-dot" style="background:${paint(item).borderColor}"></i>
-              <span class="cal-chip-time">${fmtTime(item.start)}</span>
               <span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
         },
         task(ev) {
@@ -271,7 +273,13 @@
               <span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
         },
         monthMoreTitleDate(more) { return `<span class="cal-more-date">${more.ymd ? new Date(more.ymd + 'T00:00').toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }) : ''}</span>`; },
-        monthGridHeaderExceed(hidden) { return `<span class="cal-more">${t('+%(n)s more', { n: hidden })}</span>`; },
+        monthGridHeaderExceed(hidden) { return `<span class="cal-more">+${hidden}</span>`; },
+        // A day of the month: its number, in a filled circle on today; the
+        // date lets a click pick the day for the panel beside.
+        monthGridHeader(model) {
+          const n = parseInt(String(model.date).split('-')[2], 10);
+          return `<span class="cal-mday${model.isToday ? ' is-today' : ''}" data-date="${model.date}">${n}</span>`;
+        },
         alldayTitle() { return `<span class="cal-panel-title">${t('Due')}</span>`; },
         // The week's days: the weekday, then the date in a circle (filled on today).
         weekDayName(day) {
@@ -335,7 +343,17 @@
       if (e.target.closest('.biocal-task-cb')) return;
       const chipEl = e.target.closest('[data-item-id]');
       const item = chipEl && findItem(chipEl.dataset.itemId);
-      if (item) peek(item, e);
+      if (item) { peek(item, e); return; }
+      // Month: a click on a day (not on what is in it) shows that day beside.
+      // The grid's events lie over its cells, so the day is the cell of
+      // the click's week under the pointer.
+      const week = currentView === 'month' && e.target.closest('.toastui-calendar-month-week-item');
+      const cell = week && $$('.toastui-calendar-daygrid-cell', week).find((c) => {
+        const r = c.getBoundingClientRect();
+        return e.clientX >= r.left && e.clientX < r.right;
+      });
+      const date = cell && cell.querySelector('[data-date]');
+      if (date) { pickedDay = new Date(`${date.dataset.date}T00:00`); renderDay(); }
     });
 
     let savedView = null;
@@ -387,6 +405,8 @@
   }
 
   function afterMove() {
+    if (pickedDay && currentView === 'month' && pickedDay.getMonth() !== currentDate().getMonth()) pickedDay = null;
+    toWorkingHours();
     refreshTitle();
     renderMini();
     fetchAndRender();
@@ -401,6 +421,8 @@
 
   function setView(view, refetch) {
     currentView = view;
+    calRoot.dataset.view = view;
+    placeWells(view === 'month');
     $$('.biocal-view-btn').forEach((b) => {
       b.classList.toggle('is-active', b.dataset.view === view);
       b.setAttribute('aria-pressed', String(b.dataset.view === view));
@@ -422,6 +444,7 @@
     if (!isList && calendar) {
       calendar.changeView(view);
       if (listAnchor) calendar.setDate(listAnchor);
+      toWorkingHours();
     }
     if (isList && calendar) listAnchor = startOfDay(tuiToDate(calendar.getDate()));
     refreshTitle();
@@ -433,7 +456,9 @@
     const d = currentDate();
     let html;
     if (currentView === 'month') {
-      html = d.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
+      // "October 2026", the year quieter, as in the design.
+      html = LOCALE ? d.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' })
+        : `${d.toLocaleDateString(LOCALE, { month: 'long' })} <span class="cal-title-year">${d.getFullYear()}</span>`;
     } else if (currentView === 'week' && calendar) {
       const s = tuiToDate(calendar.getDateRangeStart());
       const e = tuiToDate(calendar.getDateRangeEnd());
@@ -478,11 +503,129 @@
     if (calendar && currentView !== 'list') {
       calendar.clear();
       calendar.createEvents(shown.map(paint));
+      if (wantWorkingHours) toWorkingHours();
     }
     if (currentView === 'list') renderList(shown);
     renderCounts();
     renderMini();
+    renderChips();
+    renderDay();
+    requestAnimationFrame(markToday);
   }
+
+  // ================================================================ as in the design
+
+  const calRoot = $('#cal');
+  let pickedDay = null;
+
+  // Meetings, equipment, protocols and the links for your phone sit in the
+  // sidebar; in Month the sidebar gives way to the day panel, and they go
+  // there, below the day.
+  const wells = [...$$('.cal-side > .cal-section.is-well'), $('.cal-side-foot')].filter(Boolean);
+  function placeWells(inPanel) {
+    const home = inPanel ? $('#cal-dayside-wells') : side;
+    wells.forEach((el) => { if (el.parentElement !== home) home.appendChild(el); });
+  }
+
+  // Week and day open on the working day, 08:00, and scroll for the rest:
+  // once the grid has drawn (it scrolls itself to the time now first).
+  let wantWorkingHours = true;
+  function toWorkingHours() {
+    wantWorkingHours = true;
+    if (currentView !== 'week' && currentView !== 'day') return;
+    setTimeout(() => {
+      const grid = $('.toastui-calendar-panel.toastui-calendar-time', tuiHost);
+      if (!grid || !grid.scrollHeight) return;
+      grid.scrollTop = Math.round((grid.scrollHeight / 24) * 8) - 14;
+      wantWorkingHours = false;
+    }, 30);
+  }
+
+  // Today's column is tinted through the days' names and the Due row too.
+  function markToday() {
+    if (currentView !== 'week' || !calendar) return;
+    const s = startOfDay(tuiToDate(calendar.getDateRangeStart()));
+    const i = Math.round((startOfDay(new Date()) - s) / 86400000);
+    $$('.toastui-calendar-panel-grid', tuiHost).forEach((el, j) => el.classList.toggle('cal-is-today', j === i));
+  }
+
+  // Month: the layers as chips above the grid, each its colour and count;
+  // a chip switches its layer as its box under Show does.
+  const chipsHost = $('#cal-chips');
+  function renderChips() {
+    if (currentView !== 'month') return;
+    chipsHost.innerHTML = layerInputs.filter((i) => i.dataset.layerToggle !== 'done').map((input) => {
+      const key = input.dataset.layerToggle;
+      // Connected calendars, only when one is connected and shows something.
+      if (key === 'subs' && !allItems.some((it) => layerOf(it) === 'subs')) return '';
+      const name = input.closest('.cal-layer').querySelector('.cal-layer-name').textContent;
+      const count = ($(`[data-layer-count="${key}"]`) || {}).textContent || '';
+      return `<button type="button" class="cal-fchip" data-chip="${key}" aria-pressed="${input.checked}" style="--tone:${LAYER_COLORS[key] || '#8e8e93'}">
+        <i aria-hidden="true"></i>${escapeHtml(name)}${count ? `<span>${count}</span>` : ''}</button>`;
+    }).join('');
+  }
+  chipsHost.addEventListener('click', (e) => {
+    const chipBtn = e.target.closest('[data-chip]');
+    const input = chipBtn && layerInputs.find((i) => i.dataset.layerToggle === chipBtn.dataset.chip);
+    if (input) input.click();
+  });
+
+  // Month: the day picked (today, else the month's first) and what is on it.
+  function renderDay() {
+    if (currentView !== 'month' || !calendar) return;
+    const shownMonth = currentDate();
+    const today = startOfDay(new Date());
+    const day = pickedDay || (today.getMonth() === shownMonth.getMonth() && today.getFullYear() === shownMonth.getFullYear() ? today : firstOfMonth(shownMonth));
+    const d0 = startOfDay(day);
+    const d1 = addDays(d0, 1);
+    const items = allItems.filter(visible).filter((it) => {
+      const s = new Date(it.start);
+      const e = new Date(it.end || it.start);
+      return s < d1 && (e > d0 || ymd(s) === ymd(d0));
+    }).sort((a, b) => (b.isAllday - a.isAllday) || String(a.start).localeCompare(String(b.start)));
+    $('#cal-day-mon').textContent = d0.toLocaleDateString(LOCALE, { month: 'short' });
+    $('#cal-day-n').textContent = d0.getDate();
+    $('#cal-day-title').textContent = d0.toLocaleDateString(LOCALE, { weekday: 'long' });
+    const things = items.length === 1 ? t('1 thing') : t('%(n)s things', { n: items.length });
+    const when = ymd(d0) === ymd(today) ? t('Today') : d0.toLocaleDateString(LOCALE, { month: 'long', day: 'numeric' });
+    $('#cal-day-sub').textContent = `${when} · ${things}`;
+    const SHOW = 6;
+    $('#cal-day-list').innerHTML = items.length ? items.slice(0, SHOW).map((it) => {
+      const raw = it.raw || {};
+      const kind = raw.eventType === 'meeting' ? KIND_WORDS.meeting : (raw.group || KIND_WORDS[it.kind] || '');
+      const hours = it.isAllday || it.category === 'allday' || it.category === 'task' ? '' : `${hm(new Date(it.start))} – ${hm(new Date(it.end))}`;
+      const mice = Array.from(new Set(String(it.title || '').match(/#\d+/g) || []));
+      const due = ['task', 'auto', 'agenda'].includes(it.kind);
+      const when = hours || (due ? (ymd(d0) === ymd(today) ? t('due today') : t('due')) : t('All day'));
+      const sub = [kind, it.kind === 'protocol' && mice.length ? mice.join(', ') : when].filter(Boolean).join(' · ');
+      const ring = it.kind === 'task' && !raw.readOnly
+        ? `<button type="button" class="cal-day-ring${raw.done ? ' is-done' : ''}" data-done="${escapeHtml(it.id)}" aria-label="${t('Mark done')}"></button>` : '';
+      return `<li><button type="button" class="cal-day-item${raw.done ? ' is-done' : ''}" data-item-id="${escapeHtml(it.id)}" style="--edge:${paint(it).borderColor}">
+          <b>${escapeHtml(it.title || '')}</b><small>${escapeHtml(sub)}</small></button>${ring}</li>`;
+    }).join('') : `<li class="cal-muted cal-day-none">${t('Nothing on this day.')}</li>`;
+    const more = $('#cal-day-more');
+    more.hidden = items.length <= SHOW;
+    more.textContent = t('%(n)s more in Week view', { n: items.length - SHOW });
+    more.dataset.day = ymd(d0);
+    // The picked day is marked in the grid.
+    $$('.toastui-calendar-daygrid-cell', tuiHost).forEach((cell) => {
+      const date = cell.querySelector('[data-date]');
+      cell.classList.toggle('cal-is-picked', !!date && date.dataset.date === ymd(d0));
+    });
+  }
+  $('#cal-day-list').addEventListener('click', (e) => {
+    const ring = e.target.closest('[data-done]');
+    if (ring) { toggleDone(ring.dataset.done); return; }
+    const row = e.target.closest('[data-item-id]');
+    const item = row && findItem(row.dataset.itemId);
+    if (item) peek(item, e);
+  });
+  $('#cal-day-more').addEventListener('click', (e) => {
+    const day = new Date(`${e.currentTarget.dataset.day}T12:00`);
+    if (calendar) calendar.setDate(day);
+    listAnchor = startOfDay(day);
+    setView('week', true);
+  });
 
   function renderCounts() {
     const [s, e] = currentView === 'month' && calendar
