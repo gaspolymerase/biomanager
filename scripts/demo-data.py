@@ -488,12 +488,21 @@ for c, title, start, kind, etype in (
                "status": "open"}
     c.post("/calendar/items", data=json.dumps(payload), content_type="application/json")
 
+# alex's to-dos on the calendar's Board: two lists of cards, with no day.
+for name, cards in (("This week", ("Order Cre antibody", "Book the confocal for Friday")),
+                    ("Waiting on", ("Sequencing results from the core",))):
+    alex.post("/calendar/board/lists", json={"add": name})
+    for title in cards:
+        alex.post("/calendar/board/cards", json={"title": title, "list": name})
+
 # ------------------------------------------------------------------ notebook
 
 sam.post("/notebook/tabs/create", data={"title": "Photometry"})
 tab = one("select id from notebook_tabs order by id desc limit 1")
 if tab:
     sam.post("/notebook/pages/create", data={"tab_id": tab, "title": "Session 5: sucrose vs water"})
+    # The topic shared with the lab: it lists under Shared with me.
+    sam.post(f"/notebook/api/topics/{tab}/shares", json={"username": "*", "role": "view"})
 
 # A made-up lab never sends the daily anonymous counts (app/telemetry.py),
 # however it is run later: the screenshots, the launch clips, a demo.
