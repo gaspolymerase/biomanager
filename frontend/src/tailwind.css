@@ -4567,7 +4567,7 @@
   .choices-lock .icon { @apply mt-0.5 size-3.5 shrink-0; }
 
   .choices-pane { @apply gap-3 p-5; }
-  .choices-head h3 { @apply m-0 flex items-baseline gap-2 text-[20px] font-semibold tracking-[-0.01em] text-ink; }
+  .choices-head h3 { @apply m-0 flex items-baseline gap-2 text-[22px] font-semibold tracking-[-0.01em] text-ink; }
   .choices-head h3 span { @apply text-[13px] font-normal text-muted; }
   .choices-head p { @apply mt-1 max-w-[60ch] text-[13px] text-muted; }
   .choices-list { @apply m-0 flex list-none flex-col gap-1.5 p-0; }
