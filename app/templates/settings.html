@@ -227,9 +227,10 @@
       <form method="post" class="set-group" data-autosave-form>
         <input type="hidden" name="action" value="profile">
         <label class="set-row">
-          <span class="set-label"><b>{{ _('Font') }}</b><small>{{ _('Inter tells I, l and 1 apart and looks the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.') }}</small></span>
+          <span class="set-label"><b>{{ _('Font') }}</b><small>{{ _('Geist and Inter tell I, l and 1 apart and look the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.') }}</small></span>
           <select name="ui_font" data-ui-font>
-            <option value="inter" {% if ui_font != 'system' %}selected{% endif %}>Inter</option>
+            <option value="geist" {% if ui_font not in ('inter', 'system') %}selected{% endif %}>Geist</option>
+            <option value="inter" {% if ui_font == 'inter' %}selected{% endif %}>Inter</option>
             <option value="system" {% if ui_font == 'system' %}selected{% endif %}>{{ _('System font') }}</option>
           </select>
         </label>
@@ -988,7 +989,7 @@
   (function () {
     var font = document.querySelector('[data-ui-font]');
     if (font) font.addEventListener('change', function () {
-      if (font.value === 'system') document.documentElement.setAttribute('data-font', 'system');
+      if (font.value === 'system' || font.value === 'inter') document.documentElement.setAttribute('data-font', font.value);
       else document.documentElement.removeAttribute('data-font');
     });
     var seg = document.querySelector('[data-text-size]');

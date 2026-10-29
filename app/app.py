@@ -460,6 +460,9 @@ from .litters import PUP_AGE_DAYS, pup_litter as cage_pup_litter  # noqa: E402,F
 # What's new: a short note once after an update (app/whats_new.py).
 from . import whats_new  # noqa: E402
 app.register_blueprint(whats_new.bp)
+# Hovering a database in the sidebar shows a look inside it (app/rail_peek.py).
+from . import rail_peek  # noqa: E402
+app.register_blueprint(rail_peek.bp)
 # Repeats, protocols, equipment, away days and the phone feed (app/lab_calendar.py).
 app.register_blueprint(lab_calendar.bp)
 # The calendar in the Mac's own Calendar app, from the desktop app (app/mac_calendar.py).

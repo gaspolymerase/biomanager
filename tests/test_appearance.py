@@ -89,28 +89,34 @@ class ChoiceTests(AppTestCase):
 
 
 class FontTests(AppTestCase):
-    """Inter by default; the computer's own font for whoever picks it."""
+    """Geist by default; Inter or the computer's own font for whoever picks it."""
 
     def font(self, client, value):
         return self.autosave(client, "/settings", {"action": "profile", "ui_font": value})
 
-    def test_inter_is_the_default(self):
+    def test_geist_is_the_default(self):
         html = self.get_ok(client_for(make_user(uniq("fresh"))), "/settings")
-        self.assertNotIn('data-font="system"', html)
-        self.assertIn('<option value="inter" selected>', html)
+        self.assertNotIn("data-font=", html[:html.index(">", html.index("<html"))])
+        self.assertIn('<option value="geist" selected>', html)
 
-    def test_the_system_font_is_kept_per_person(self):
+    def test_the_font_is_kept_per_person(self):
         me = client_for(make_user(uniq("sysfont")))
         self.font(me, "system")
         self.assertIn('data-font="system"', self.get_ok(me, "/home"))
         self.assertNotIn('data-font="system"', self.get_ok(client_for(make_user(uniq("other"))), "/home"))
         self.font(me, "inter")
-        self.assertNotIn('data-font="system"', self.get_ok(me, "/home"))
+        self.assertIn('data-font="inter"', self.get_ok(me, "/home"))
+        self.font(me, "geist")
+        home = self.get_ok(me, "/home")
+        self.assertNotIn('data-font="inter"', home)
+        self.assertNotIn('data-font="system"', home)
 
-    def test_unknown_fonts_fall_back_to_inter(self):
+    def test_unknown_fonts_fall_back_to_geist(self):
         me = client_for(make_user(uniq("oddfont")))
         self.font(me, "comic-sans")
-        self.assertNotIn('data-font="system"', self.get_ok(me, "/home"))
+        home = self.get_ok(me, "/home")
+        self.assertNotIn('data-font="system"', home)
+        self.assertNotIn('data-font="inter"', home)
 
 
 class IconRouteTests(AppTestCase):

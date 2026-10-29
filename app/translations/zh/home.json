@@ -169,5 +169,8 @@
   "in walking order": "按走过去的顺序",
   "Colour = owner · ring = on the list": "颜色 = 负责人 · 圈 = 在清单上",
   "Job %(n)s on the list is this whole rack": "清单上的第 %(n)s 项是整个架子",
-  "Nothing to do on your racks in the next %(n)s days.": "接下来 %(n)s 天你的架子上没有要做的事。"
+  "Nothing to do on your racks in the next %(n)s days.": "接下来 %(n)s 天你的架子上没有要做的事。",
+  "Due soon": "即将到期",
+  "Yours, lately": "你最近的",
+  "Nothing due soon": "近期没有到期的事"
 }

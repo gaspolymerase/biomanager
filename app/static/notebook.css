@@ -778,7 +778,7 @@ body.nb-dragging-page .nb-favorites.is-empty .nb-fav-hint { outline: 1px dashed 
 /* The star, on a page's tools and on a card. */
 .nb-star .icon { color: var(--color-sand-300); transition: color 0.15s, transform 0.15s; }
 .nb-star:hover .icon { color: var(--color-sand-400); }
-.nb-star.is-on .icon { color: #f2b01e; }
+.nb-star.is-on .icon { color: #f2b01e; fill: currentColor; }
 .nb-star:active .icon { transform: scale(0.85); }
 .nb-tool.nb-star { padding: 0 7px; }
 .nb-tool.nb-star .icon { width: 14px; height: 14px; }

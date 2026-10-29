@@ -1090,22 +1090,24 @@ becomes a card with its columns under their names, and rack grids get a
 
 ### 🌗 At home on a Mac, and in the dark
 
-The interface follows Apple's Liquid Glass design: the sidebar, the row of
-tabs and each page's buttons float as frosted glass over the page, which
-scrolls beneath them, while the records themselves sit on solid ground so
-they stay easy to read. On a Mac the desktop app has no title bar; its close,
+The interface follows Apple's Liquid Glass design, over a softly tinted
+wallpaper: the sidebar, the row of tabs and each page's buttons float as
+clear glass over the page, which scrolls beneath them; cards are a thicker
+glass, and sheets and notebook pages the thickest, so the records stay as
+easy to read as paper. On a Mac the desktop app has no title bar; its close,
 minimise and zoom buttons sit at the top of the sidebar, followed, as in
 Safari, by buttons to hide the sidebar, search everything, and go back and
-forward. Hidden, the sidebar narrows to a column of its places, each icon
-with its name under it. There is a full
+forward. The sidebar starts narrow, a column of icons: hover one to see its
+name, or hover a database to look inside it (how many records, what is due,
+the latest ones) without leaving the page. There is a full
 dark mode, following the system's setting (in the desktop app, **View →
 Appearance** chooses Light or Dark), and Reduce Transparency, Increase
 Contrast and Reduce Motion are honoured. It works in any modern browser on
 Windows and Linux too.
 
-Text is set in Inter, which tells I, l and 1 apart in IDs and genotypes and
+Text is set in Geist, which tells I, l and 1 apart in IDs and genotypes and
 looks the same on every computer, with each system's own Chinese font.
-**Settings → Appearance & language → Font** switches to the computer's font,
+**Settings → Appearance & language → Font** switches to Inter or the computer's font,
 and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
@@ -1768,8 +1770,8 @@ your research, **Cite this repository** on the GitHub page gives the
 citation in APA or BibTeX (from [CITATION.cff](CITATION.cff)).
 
 Built with Python, Flask, SQLAlchemy, PostgreSQL / SQLite and Tailwind CSS.
-Icons from [Font Awesome Free](https://fontawesome.com) (CC BY 4.0) and
-[game-icons.net](https://game-icons.net) by Delapouite (CC BY 3.0) — the
-mouse and fly are theirs; the plasmid, petri dish, cage, tank and
-culture-vial icons were drawn for this project. The people and records in
+Icons from [Lucide](https://lucide.dev) (ISC licence); the fly, plasmid,
+petri dish, cage, tank, culture-vial, organ and other lab icons were drawn
+for this project in its style. Text is set in
+[Geist](https://vercel.com/font) (SIL Open Font Licence). The people and records in
 the screenshots are made up.

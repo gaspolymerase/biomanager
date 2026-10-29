@@ -335,7 +335,7 @@
 /* TOAST UI colours timed items #333; they follow the page's ink instead. */
 .cal-tui .toastui-calendar-template-time,
 .cal-tui .toastui-calendar-weekday-event-title { color: inherit !important; }
-.cal-chip .icon { flex: none; width: 12px; height: 12px; opacity: 0.7; fill: currentColor; }
+.cal-chip .icon { flex: none; width: 12px; height: 12px; opacity: 0.7; }
 .cal-chip-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; }
 .cal-chip-time { flex: none; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--color-muted); }
 /* Timed items in the month grid carry their own dot; TOAST UI's dot and edge go. */

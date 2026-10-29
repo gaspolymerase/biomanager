@@ -202,10 +202,12 @@ sidebar collapsed the top row runs the window's width, the tabs after the
 tools, and the sidebar starts below it. Windows and Linux keep their own
 frames.
 
-Collapsed (`body[data-rail="closed"]`, everywhere), the sidebar is a
-76px column of tiles, as Benchling's: each place's glyph over its name in
-10px type (two lines at most), groups parted by a hairline, and Settings and
-Help pinned to its foot while the rest scrolls.
+The sidebar is a pane of clear glass floating over the wallpaper, inset
+`--rail-gap` from the window's edges. Collapsed (`body[data-rail="closed"]`,
+the default), it shows icons only, each a circle and the current place a
+raised pill, groups parted by a short hairline, and Settings and Help pinned
+to its foot while the rest scrolls. Hovering a place names it beside the
+glass; hovering a database shows a look inside (`static/rail-peek.js`).
 
 macOS 26 draws its current look, and the larger lights (14 points, 23
 apart, not 12 and 20), only for an app built with its SDK, judged by the
@@ -219,10 +221,11 @@ macos 11.0 26.0 -replace -output <copy> <python>`, then `codesign -s -`).
 
 ### Icons
 
-One sprite, `app/static/icons.svg`, built by `scripts/build-icons.py`:
+One sprite, `app/static/icons.svg`, built by `scripts/build-icons.py`
+from `lucide-static` (installed by `npm install` in `frontend/`):
 
 ```bash
-python scripts/build-icons.py path/to/fontawesome-free-6.7.2
+python scripts/build-icons.py
 ```
 
 Referenced as `{{ icon('mouse') }}` in templates, which emits
@@ -237,26 +240,18 @@ rows' icons. Anything drawn outside a page (a template rendered for a
 fragment or after the page) still points to the file; so do the icons
 scripts write.
 
-Three sources, all permissively licensed:
+Every icon is a line drawing on a 24 grid, stroked in `currentColor`
+(1.75, round ends); the fill is left to CSS (`svg.icon { fill: none }`), so
+a toggle can fill one in (`.is-on`, a starred favourite). Two sources:
 
 | Source | Licence | Covers |
 | --- | --- | --- |
-| [Font Awesome Free 6](https://fontawesome.com) | Icons CC BY 4.0 | the UI, plus `worm`, `mosquito`, `fish`, `frog`, `dna`, `vial`, `microscope`, `bacterium`, `virus`, `syringe` |
-| [game-icons.net](https://game-icons.net) by Delapouite | CC BY 3.0 | `mouse` (their *rat*) and `fly`, vendored in `scripts/icon-sources/` |
-| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood`, `kidney`, `liver`, `stomach`, `intestine`, `gel`, `centrifuge` |
+| [Lucide](https://lucide.dev) | ISC | the interface, plus `mouse` (Lucide's *rat*), `fish`, `worm`, `bird`, `rabbit`, `dna`, `virus`, `microscope`, `syringe`, `bone`, `brain` and the other objects |
+| This project | — | `fly`, `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood`, `kidney`, `liver`, `stomach`, `intestine`, `lungs`, `gel`, `centrifuge` and the other lab and organ drawings, in Lucide's style |
 
-Font Awesome has no laboratory mouse and no plasmid. The plasmid and the
-labware are drawn here; the mouse and the housefly are not, because both
-collapse into a blob below about 24px unless ears, snout, tail — or
-compound eyes and wings — are all resolved, which is more drawing than a
-16px mark can carry. Hand-drawn versions were tried three times and thrown
-away.
-
-Add an icon by adding a name to `FROM_FONTAWESOME`, `FROM_SOURCES` or
-`CUSTOM` in the build script and rebuilding (`npm pack
-@fortawesome/fontawesome-free@6.7.2` and unpack it for the path). A Font
-Awesome icon keeps its own viewBox (they are 320 to 640 wide), so each is
-centred in its square and none is cut off. Organs, procedures and more
+Add an icon by adding a name to `FROM_LUCIDE` (our name → Lucide's) or
+`CUSTOM` in the build script and rebuilding; the build stops on a name in
+both or one Lucide lacks. Organs, procedures and more
 organisms came in for the notebook's library folders, which offer the
 biology ones (`FOLDER_ICONS` in `app/lab_notebook.py`). **Check any new icon at 15px**,
 not just large — that is where they fail.
