@@ -476,8 +476,8 @@
   /* ------------------------------------------------------------ layout */
 
   /* The sheet's top, as in the design: the views on one row with how it is
-     shown (Table · Cages · Racks, where a sheet has that) and New at its
-     end; under them the search, the quick chips and the filter chips, with
+     shown (where a sheet has that) and New at its end (the foot's New then
+     steps aside); under them the search, the quick chips and the filter chips, with
      what the sheet is sorted by and how many rows it shows, then the
      toolbar's buttons as icons. N makes a new record. */
   function layout(card, sheet, toolbar) {
@@ -493,6 +493,8 @@
       if (!primary.querySelector('kbd')) primary.appendChild(el('kbd', 'dt-kbd', 'N'));
       primary.setAttribute('aria-keyshortcuts', 'N');
       end.appendChild(primary);
+      // New is at the top now: the foot's own New would say it twice.
+      card.querySelectorAll('.dt-bottom-bar [data-quick-add]').forEach((q) => { q.style.display = 'none'; });
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'n' && event.key !== 'N') return;
         if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return;

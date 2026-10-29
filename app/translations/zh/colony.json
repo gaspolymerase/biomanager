@@ -408,5 +408,6 @@
   "Set a field…": "设置字段…",
   "Show as": "显示为",
   "“%(value)s” is not a weight in grams, so nothing was weighed.": "“%(value)s”不是以克为单位的体重，所以没有记录任何体重。",
-  "Weighed": "已称重"
+  "Weighed": "已称重",
+  "Each rack names its positions its own way (A1, 1-1, 37…); change it with Edit beside the rack on the rack grid.": "每个笼架有自己的位置命名方式（A1、1-1、37……）；在笼架图上点笼架旁边的「编辑」来修改。"
 }

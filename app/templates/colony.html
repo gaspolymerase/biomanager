@@ -137,13 +137,6 @@
               {{ _('Alive') }} <span class="dt-chip-count">{{ sheet.active_count }}</span>
             </button>
           </div>
-          {# Table · Cages · Racks: the mice as a sheet, or their cages as cards
-             or on the racks (the Cages tab, its layout picked as it opens). #}
-          <div class="dt-show-as" data-dt-show-as role="group" aria-label="{{ _('Show as') }}">
-            <a class="dt-show-as-item is-active" aria-current="page" href="{{ url_for('colony', view='mice', scope=scope) }}">{{ icon('table') }}{{ _('Table') }}</a>
-            <a class="dt-show-as-item" href="{{ url_for('colony', view='cages', scope=scope) }}" data-layout-pick="mouse-cages:cards">{{ icon('cage') }}{{ _('Cages') }}</a>
-            <a class="dt-show-as-item" href="{{ url_for('colony', view='cages', scope=scope) }}" data-layout-pick="mouse-cages:grid">{{ icon('grid') }}{{ _('Racks') }}</a>
-          </div>
           <div class="dt-toolbar-spacer"></div>
           <span class="sheet-save" data-save-status aria-live="polite"></span>
           <button type="button" class="dt-toolbar-btn dt-btn-sort">{{ icon('sort') }} {{ _('Sort') }}</button>
@@ -353,24 +346,11 @@
       <div data-layout-scope>
         <div class="mb-3 flex flex-wrap items-center gap-2.5">
           {{ view_switch('mouse-cages', _('Table'), _('Rack grid'), _('Cards')) }}
-          <div class="rack-chips" role="group" aria-label="{{ _('Rack settings') }}">
-            <span class="rack-chips-label">{{ _('Racks') }}</span>
-            {% for rack in cage_racks.racks %}
-              <button type="button" class="btn btn-sm" title="{{ _('Size and position names for %(rack)s', rack=rack.name) }}"
-                      data-record-edit="mouse-rack-dialog" data-record-payload="{{ rack.edit['data-record-payload'] }}">
-                {{ icon('sliders') }} {{ rack.name }}
-              </button>
-            {% endfor %}
-            <button type="button" class="btn btn-sm" data-record-edit="mouse-rack-dialog"
-                    data-record-payload='{{ {"rows": 8, "cols": 10, "naming_mode": "grid", "naming_rows": "letters", "naming_cols": "numbers", "naming_order": "row_col", "naming_separator": "", "naming_start": "1"} | tojson }}'>
-              {{ icon('plus') }} {{ _('New rack') }}
-            </button>
-          </div>
           <details class="info-tip" data-popover>
             <summary aria-label="{{ _('About racks and positions') }}" title="{{ _('About racks and positions') }}">{{ icon('info') }}</summary>
             <div class="info-tip-pop">
               {{ _('Set a cage’s <strong>Rack</strong> and <strong>Position</strong> here, in the mouse sheet, or by dragging on the rack grid.') }}
-              {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it under the rack’s button above.') }}
+              {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it with Edit beside the rack on the rack grid.') }}
             </div>
           </details>
         </div>
