@@ -998,6 +998,26 @@
   }
   document.addEventListener('click', function (e) { if (e.target.closest('[data-zotero]')) zoteroDialog(); });
 
+  // Fit the window, or the paper's width: kept in this browser.
+  (function () {
+    var btn = document.getElementById('nb-wide-btn');
+    var shell = document.getElementById('nb-shell');
+    if (!btn || !shell) return;
+    function show() {
+      var wide = shell.classList.contains('is-wide');
+      btn.setAttribute('aria-pressed', String(wide));
+      var label = btn.querySelector('span');
+      if (label) label.textContent = wide ? btn.dataset.narrowLabel : btn.dataset.wideLabel;
+    }
+    btn.addEventListener('click', function () {
+      shell.classList.toggle('is-wide');
+      try { localStorage.setItem('nb-wide', shell.classList.contains('is-wide') ? '1' : '0'); } catch (e) { /* not kept */ }
+      show();
+      window.dispatchEvent(new Event('resize'));      // plots redraw for the width they now have
+    });
+    show();
+  })();
+
   // For the protocol and recipe libraries (static/notebook-library.js).
   window.NotebookPage = {
     api: api, esc: esc, icon: icon, toast: toast, tc: tc, timeText: timeText, debounce: debounce,

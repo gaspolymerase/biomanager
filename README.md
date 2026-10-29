@@ -635,7 +635,10 @@ database has a name of its own (one another database has is refused), so
   favourites, what was edited lately and your topics. **Inbox** holds the
   pages in no topic yet; protocols, papers and talks, and a meeting series'
   notes are in **Protocols**, **Reading** and the calendar's meetings instead. The
-  sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
+  sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window,
+  and **Fit the window** lets a page run the window's width. Home starts a
+  **New page**, **Protocol**, **Paper** or **Meeting** note from its top
+  right, and shows each page as a card with a sketch of it.
   **New page** asks for a title, the topic, the kind of page and what to
   start from (a built-in starter or one of your templates). A page's kind
   sits above its title, saying what it adds; click it to change the kind,

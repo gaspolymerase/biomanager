@@ -32,84 +32,107 @@
 .nb-warn { color: var(--color-danger-600); font-size: 12px; }
 .nb-spacer, .nb-grow { flex: 1 1 auto; }
 .nb-mini {
-  display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px;
-  border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-surface);
-  color: var(--color-ink); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px;
+  border: 0; border-radius: 999px; background: transparent;
+  color: var(--color-ink-soft); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
 }
-.nb-mini:hover { background: var(--color-sand-50); }
+.nb-mini:hover { background: color-mix(in srgb, var(--color-sand-300) 40%, transparent); color: var(--color-ink); }
 .nb-icon-btn {
   display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px;
   background: transparent; color: var(--color-muted); font-size: 15px; line-height: 1; cursor: pointer;
 }
 .nb-icon-btn:hover { background: var(--color-sand-200); color: var(--color-ink); }
 .nb-icon-btn .icon { width: 13px; height: 13px; }
-.nb-seg { display: inline-flex; border: 1px solid var(--color-hairline); border-radius: 6px; overflow: hidden; }
+.nb-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: color-mix(in srgb, var(--color-sand-300) 35%, transparent); }
 .nb-seg button {
-  border: 0; background: var(--color-surface); color: var(--color-ink-soft); font: inherit; font-size: 12px;
-  padding: 3px 9px; cursor: pointer;
+  border: 0; border-radius: 999px; background: transparent; color: var(--color-ink-soft); font: inherit; font-size: 12px;
+  padding: 3px 10px; cursor: pointer;
 }
-.nb-seg button + button { border-left: 1px solid var(--color-hairline); }
-.nb-seg button.is-on { background: color-mix(in srgb, var(--color-brand-600) 12%, var(--color-surface)); color: var(--color-brand-700); font-weight: 600; }
+.nb-seg button.is-on { background: var(--color-surface); color: var(--color-ink); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
 .nb-check { display: inline-flex; align-items: center; gap: 4px; }
 
 /* ---------------------------------------------------------------- block frame */
 
 .tiptap-editor-host .nb-block {
-  margin: 14px 0; border: 1px solid var(--color-hairline); border-radius: 10px; background: var(--color-surface);
-  box-shadow: var(--shadow-xs); overflow: hidden; white-space: normal; font-size: 13px; line-height: 1.45;
+  margin: 16px 0; border: 0; border-radius: 18px; background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-hairline); overflow: hidden; white-space: normal; font-size: 13px; line-height: 1.45;
 }
 .tiptap-editor-host .nb-block.is-selected,
-.tiptap-editor-host .ProseMirror-selectednode.nb-block { outline: 2px solid var(--color-brand-400); outline-offset: 1px; }
+.tiptap-editor-host .ProseMirror-selectednode.nb-block { box-shadow: inset 0 0 0 1px var(--color-hairline), 0 0 0 2px color-mix(in srgb, var(--color-brand-600) 55%, transparent); outline: none; }
+/* Its name, quiet, on a plain row: the block is the work, not its frame. */
 .nb-block-head {
-  display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 4px; border-bottom: 1px solid var(--color-sand-100);
-  background: var(--color-recess); color: var(--color-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 6px; padding: 7px 10px 7px 6px; border-bottom: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent);
+  background: transparent; color: var(--color-muted); font-size: 12px; font-weight: 500;
 }
-.nb-block-grip { cursor: grab; padding: 0 4px; color: var(--color-sand-400); letter-spacing: -2px; user-select: none; }
+.nb-block-grip { cursor: grab; padding: 0 4px; color: var(--color-sand-400); letter-spacing: -2px; user-select: none; opacity: 0; transition: opacity 0.15s; }
+.nb-block:hover .nb-block-grip, .nb-block.is-selected .nb-block-grip { opacity: 1; }
 .nb-block-label { flex: 1; font-size: 12px; }
 .nb-block-actions { display: inline-flex; gap: 2px; }
-.nb-block-body { padding: 10px 12px 12px; }
+.nb-block-body { padding: 12px 14px 14px; }
 .nb-block-body input, .nb-block-body select, .nb-block-body textarea {
   font: inherit; font-size: 13px; color: var(--color-ink); background: var(--color-surface);
-  border: 1px solid var(--color-hairline); border-radius: 5px; padding: 2px 6px; min-width: 0;
+  border: 1px solid var(--color-hairline); border-radius: 8px; padding: 3px 8px; min-width: 0;
 }
+.nb-block-body input[type="checkbox"], .nb-block-body input[type="radio"] { width: 14px; height: 14px; padding: 0; border-radius: 4px; accent-color: var(--color-brand-600); }
 .nb-block-body input:focus, .nb-block-body select:focus, .nb-block-body textarea:focus { outline: none; border-color: var(--color-brand-500); }
 .nb-block-body input:disabled, .nb-block-body select:disabled, .nb-block-body textarea:disabled { background: transparent; border-color: transparent; color: var(--color-ink); opacity: 1; }
 .nb-block-body table { border-collapse: collapse; margin: 0; }
 
 /* ---------------------------------------------------------------- sheet */
 
-.nb-sheet-toolbar, .nb-sheet-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
-.nb-sheet-controls label { display: inline-flex; align-items: center; gap: 4px; color: var(--color-muted); font-size: 12px; }
-.nb-sheet-title { flex: 1 1 180px; font-weight: 600 !important; font-size: 13px !important; border-color: transparent !important; padding-left: 2px !important; }
+.nb-sheet-toolbar, .nb-sheet-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 6px; margin-bottom: 10px; }
+.nb-sheet-controls label { display: inline-flex; align-items: center; gap: 5px; color: var(--color-muted); font-size: 12px; }
+.nb-sheet-controls select { height: 26px; padding: 0 8px !important; border: 0 !important; border-radius: 999px !important; background: color-mix(in srgb, var(--color-sand-300) 30%, transparent) !important; font-size: 12px !important; }
+.nb-sheet-title { flex: 1 1 180px; font-weight: 600 !important; font-size: 14px !important; border-color: transparent !important; padding-left: 2px !important; }
 .nb-sheet-title:hover { border-color: var(--color-hairline) !important; }
-.nb-sheet-scroll { overflow-x: auto; max-width: 100%; margin-bottom: 8px; }
-.tiptap-editor-host .nb-sheet-table { min-width: 100%; border: 1px solid var(--color-hairline); border-radius: 0; font-variant-numeric: tabular-nums; }
+/* The table, as in the design: names quiet over a rule, rows close, numbers in mono. */
+.nb-sheet-scroll { overflow-x: auto; max-width: 100%; margin: 0 -14px 10px; border-top: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent); }
+.tiptap-editor-host .nb-sheet-table { min-width: 100%; border: 0; border-radius: 0; font-variant-numeric: tabular-nums; }
 .tiptap-editor-host .nb-sheet-table th, .tiptap-editor-host .nb-sheet-table td {
-  border: 1px solid var(--color-sand-100); padding: 0; min-width: 72px; background: var(--color-surface); vertical-align: top;
+  border: 0; border-bottom: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent);
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--color-hairline) 70%, transparent);
+  padding: 0; min-width: 72px; background: transparent; vertical-align: middle;
 }
-.tiptap-editor-host .nb-sheet-table thead th { background: var(--color-recess); padding: 4px; font-weight: 500; }
-.nb-sheet-table td input { width: 100%; border: 0 !important; border-radius: 0 !important; background: transparent !important; padding: 5px 6px !important; }
+.tiptap-editor-host .nb-sheet-table tbody tr:last-child td { border-bottom: 0; }
+.tiptap-editor-host .nb-sheet-table thead th { background: transparent; padding: 5px 8px; font-weight: 500; }
+.nb-sheet-table td input { width: 100%; height: 30px; border: 0 !important; border-radius: 0 !important; background: transparent !important; padding: 0 10px !important; }
 .nb-sheet-table td input:focus { box-shadow: inset 0 0 0 2px var(--color-brand-500); }
-.nb-sheet-table td.is-num input, .nb-sheet-table td.is-num { text-align: right; }
-.nb-sheet-table td.is-formula { padding: 5px 6px; color: var(--color-ink-soft); background: color-mix(in srgb, var(--color-brand-600) 4%, var(--color-surface)); }
+.nb-sheet-table td.is-num input, .nb-sheet-table td.is-num { text-align: right; font-family: var(--font-mono); font-size: 12.5px; }
+.nb-sheet-table td.is-formula { padding: 0 10px; color: var(--color-ink-soft); background: color-mix(in srgb, var(--color-brand-600) 4%, transparent); }
 .nb-sheet-table td input.is-bad { color: var(--color-danger-600); }
+.nb-sheet-table tbody tr:hover td { background: color-mix(in srgb, var(--color-sand-300) 15%, transparent); }
 .tiptap-editor-host .nb-sheet-table .nb-sheet-rownum, .tiptap-editor-host .nb-sheet-table .nb-sheet-corner {
-  min-width: 28px; width: 28px; text-align: center; color: var(--color-sand-400); background: var(--color-recess); font-size: 11px; padding: 5px 2px; cursor: pointer;
+  min-width: 30px; width: 30px; text-align: center; color: var(--color-sand-400); background: transparent; box-shadow: none;
+  font-family: var(--font-mono); font-size: 10px; padding: 0 2px; cursor: pointer;
 }
 .nb-sheet-rownum:hover { color: var(--color-danger-600); text-decoration: line-through; }
-.nb-sheet-colhead { display: flex; align-items: center; gap: 3px; }
-.nb-sheet-letter { color: var(--color-sand-400); font-size: 10px; width: 12px; text-align: center; }
-.nb-sheet-colname { flex: 1; min-width: 60px; font-weight: 600 !important; border-color: transparent !important; background: transparent !important; }
-.nb-sheet-colname:hover, .nb-sheet-colname:focus { border-color: var(--color-hairline) !important; background: var(--color-surface) !important; }
-.nb-sheet-coltype { width: 44px; padding: 1px !important; font-size: 11px !important; color: var(--color-muted) !important; }
-.nb-sheet-colmenu { border: 0; background: none; color: var(--color-sand-400); cursor: pointer; font-size: 15px; padding: 0 2px; }
+.nb-sheet-colhead { display: flex; align-items: center; gap: 2px; }
+.nb-sheet-letter { color: var(--color-sand-400); font-family: var(--font-mono); font-size: 10px; width: 12px; text-align: center; }
+.nb-block-body .nb-sheet-colname {
+  flex: 1; min-width: 50px; padding: 2px 4px !important; font-size: 12px !important; font-weight: 500 !important; color: var(--color-muted) !important;
+  border-color: transparent !important; background: transparent !important;
+}
+.nb-block-body .nb-sheet-colname:hover, .nb-block-body .nb-sheet-colname:focus { border-color: var(--color-hairline) !important; background: var(--color-surface) !important; color: var(--color-ink) !important; }
+/* The kind of a column (Aa, 123, ƒx) and its unit: quiet until pointed at. */
+.nb-block-body .nb-sheet-coltype {
+  width: auto; height: 20px; padding: 0 4px !important; border-color: transparent !important; background: transparent !important;
+  font-family: var(--font-mono); font-size: 10px !important; color: var(--color-sand-400) !important; cursor: pointer; appearance: none; -webkit-appearance: none;
+}
+.nb-block-body .nb-sheet-coltype:hover, .nb-block-body .nb-sheet-coltype:focus { border-color: var(--color-hairline) !important; color: var(--color-ink) !important; }
+.nb-block-body .nb-sheet-unit {
+  flex: none; width: auto; height: 20px; padding: 0 5px !important; border-color: transparent !important; border-radius: 999px !important;
+  background: color-mix(in srgb, var(--color-sand-300) 30%, transparent) !important; font-family: var(--font-mono); font-size: 11px !important; color: var(--color-muted) !important;
+}
+.nb-block-body .nb-sheet-unit:placeholder-shown { background: transparent !important; opacity: 0; }
+.nb-sheet-table th:hover .nb-sheet-unit, .nb-block-body .nb-sheet-unit:focus { opacity: 1; }
+.nb-sheet-colmenu { border: 0; background: none; color: var(--color-sand-400); cursor: pointer; font-size: 14px; padding: 0 2px; opacity: 0; }
+.nb-sheet-table th:hover .nb-sheet-colmenu, .nb-sheet-colmenu:focus { opacity: 1; }
 .nb-sheet-colmenu:hover { color: var(--color-danger-600); }
-.nb-sheet-unit, .nb-sheet-formula { display: block; width: 100%; margin-top: 3px; font-size: 11px !important; color: var(--color-muted) !important; }
-.nb-sheet-formula { font-family: var(--font-mono) !important; }
+.nb-block-body .nb-sheet-formula { display: block; width: 100%; margin-top: 3px; height: 22px; font-family: var(--font-mono) !important; font-size: 11px !important; color: var(--color-muted) !important; }
 .nb-sheet-formula.has-error { border-color: var(--color-danger-600) !important; }
-.nb-sheet-addcol { min-width: 28px !important; width: 28px; }
+.tiptap-editor-host .nb-sheet-table .nb-sheet-addcol { min-width: 30px !important; width: 30px; }
 .nb-sheet-addcol button { width: 100%; height: 100%; border: 0; background: none; color: var(--color-brand-600); font-size: 16px; cursor: pointer; }
-.nb-sheet-plot, .nb-sheet-stats { border-top: 1px solid var(--color-sand-100); padding-top: 10px; margin-top: 6px; }
+.nb-sheet-plot, .nb-sheet-stats { border-top: 1px solid color-mix(in srgb, var(--color-hairline) 70%, transparent); padding-top: 12px; margin-top: 8px; }
 .tiptap-editor-host .nb-stats-table { font-variant-numeric: tabular-nums; margin: 6px 0; display: block; max-width: 100%; overflow-x: auto; }
 .tiptap-editor-host .nb-stats-table th, .tiptap-editor-host .nb-stats-table td { white-space: nowrap; }
 .tiptap-editor-host .nb-stats-table th, .tiptap-editor-host .nb-stats-table td { border: 0; border-bottom: 1px solid var(--color-sand-100); padding: 4px 10px 4px 0; text-align: left; background: transparent; min-width: 0; }
@@ -197,7 +220,8 @@ tr:has(input[data-c="done"]:checked) .nb-form-mol b { text-decoration: line-thro
 .nb-calc-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 12px; }
 .nb-calc-field { display: flex; flex-direction: column; gap: 3px; color: var(--color-muted); font-size: 12px; }
 .nb-calc-input { display: flex; gap: 3px; }
-.nb-calc-input input { flex: 1; text-align: right; }
+.nb-calc-input input { flex: 1 1 0; min-width: 0; text-align: right; font-family: var(--font-mono); }
+.nb-calc-input select { flex: none; width: 68px; }
 .nb-calc-field.is-solved input { background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); border-style: dashed; }
 .nb-calc-list { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; }
 .nb-calc-row { display: flex; gap: 6px; align-items: center; }

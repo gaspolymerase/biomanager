@@ -2231,7 +2231,18 @@ its top-level pages as `page_cards()`, `?sort=edited|name|order`), and
 `/notebook` with nothing asked for is the home (`home`: favourites, the
 eight pages most recently changed that the person may open, the top-level
 topics); neither opens a page any more. Deleting a topic moves the topics
-in it up one level.
+in it up one level. A card (`page_card`) is a sketch of its page:
+`page_shape()` reads its Markdown as `sheet` (a ```sheet fence or a
+table), `steps` (two numbered or checklist lines) or `text`, and the card
+draws a table's bands, a list's dots or lines (`.nb-thumb`); its kind as a
+pill, its topic's icon (`tab_icon`) and its gist as the link's tooltip.
+Home's header has the New page capsule (`data-new-page-kind`, and
+`data-new-kind` protocol, reading, meeting) and its topics are chips; New
+topic there names one in a dialog. While the sidebar is hidden, its button
+and + are one glass capsule (`.nb-side-capsule`): in a page's path, else
+placed in the title row above. **Fit the window** (`#nb-wide-btn`) puts
+`.is-wide` on `#nb-shell` (localStorage `nb-wide`, set before paint), which
+lifts the paper's 860px limit.
 
 `app/static/notebook-topics.js` runs the sidebar's topics, favourites and
 dragging, without the editor bundle (it borrows `window.NotebookPage`'s

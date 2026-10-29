@@ -504,6 +504,37 @@ for name, cards in (("This week", ("Order Cre antibody", "Book the confocal for 
 
 # ------------------------------------------------------------------ notebook
 
+# alex's own notebook: three topics, each with an icon, and pages of each
+# kind: a data sheet, a protocol's steps, notes and a paper.
+SHEET = """```sheet
+{"title": "Peak dF/F", "columns": [{"name": "Group", "type": "text"}, {"name": "dF/F", "type": "number", "unit": "%"}],
+ "rows": [["Sucrose", "4.1"], ["Sucrose", "3.8"], ["Sucrose", "4.6"], ["Water", "1.2"], ["Water", "0.9"], ["Water", "1.4"]],
+ "showPlot": true, "showStats": true, "chart": {"type": "bar", "x": 0, "y": [1], "group": -1, "error": "sem"},
+ "stats": {"group": 0, "value": 1, "test": "auto", "control": "Water"}}
+```"""
+NOTEBOOK = (
+    ("Fiber photometry", "emoji:🔬", (
+        ("Session 7: sucrose vs water", "note", "Recorded 12 trials per mouse.\n\n" + SHEET),
+        ("Fiber implant surgery", "protocol", "## Steps\n\n1. Anesthetize with isoflurane, 2% induction\n"
+                                              "2. Level the skull, mark AP −1.2, ML 0.8\n3. Lower the fiber to DV −4.6\n"
+                                              "4. Cement and suture"),
+    )),
+    ("Slice ephys", "emoji:⚡", (
+        ("PV-Cre;Ai14 recordings", "note", "Whole-cell from tdTomato+ cells in layer 5.\n\n"
+                                          "| Cell | Rin (MΩ) | Firing (Hz) |\n|---|---|---|\n| 1 | 142 | 88 |\n| 2 | 118 | 102 |"),
+        ("Cutting solution", "protocol", "- [ ] 93 mM NMDG\n- [ ] 2.5 mM KCl\n- [ ] 1.2 mM NaH2PO4\n- [ ] 30 mM NaHCO3"),
+    )),
+    ("Reading", "emoji:📚", (
+        ("Dopamine and reward prediction", "reading", "Notes on the paper: phasic dopamine encodes the error, not the reward."),
+    )),
+)
+for topic, icon, pages in NOTEBOOK:
+    tab_id = alex.post("/notebook/tabs/create", data={"title": topic}).get_json()["id"]
+    alex.post(f"/notebook/api/topics/{tab_id}", json={"icon": icon})
+    for title, kind, body in pages:
+        page_id = alex.post("/notebook/api/pages/new", json={"tab_id": tab_id, "title": title, "kind": kind}).get_json()["page_id"]
+        alex.post(f"/notebook/pages/{page_id}/update", data={"body": body})
+
 sam.post("/notebook/tabs/create", data={"title": "Photometry"})
 tab = one("select id from notebook_tabs order by id desc limit 1")
 if tab:

@@ -250,5 +250,10 @@
   "%(who)s shared the topic “%(title)s” with you (%(group)s)": "%(who)s 与你共享了主题“%(title)s”（%(group)s）",
   "You can edit its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中编辑它的页面。",
   "You can read its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中阅读它的页面。",
-  "Meetings and who presents are kept in the calendar": "会议和报告轮值在日历里管理"
+  "Meetings and who presents are kept in the calendar": "会议和报告轮值在日历里管理",
+  "Pages you can open, newest first": "你能打开的页面，最新的在前",
+  "Pages that are in no topic yet. Protocols, and papers and talks, are kept in Protocols and Reading instead, and a meeting’s notes with its meeting in the calendar.": "还没有放进任何主题的页面。实验流程、论文和报告分别在实验流程和文献里，会议记录则和会议一起在日历里。",
+  "Fit the window": "铺满窗口",
+  "Page width": "页面宽度",
+  "Fit the page to the window, or back to its paper width": "让页面铺满窗口，或恢复为纸张宽度"
 }

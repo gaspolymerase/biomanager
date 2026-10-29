@@ -1361,6 +1361,24 @@ class TopicTests(Notebook):
         self.share(self.m, theirs, self.user, "edit")
         self.assertEqual(self.post_json(self.c, f"/notebook/api/pages/{theirs}/place", {"tab_id": tab}).status_code, 404)
 
+    def test_a_card_sketches_a_sheet_steps_or_text(self):
+        from app.lab_notebook import page_shape
+        self.assertEqual(page_shape("Before\n```sheet\n{}\n```"), "sheet")
+        self.assertEqual(page_shape("| a | b |\n|---|---|\n| 1 | 2 |"), "sheet")
+        self.assertEqual(page_shape("1. Anesthetize\n2. Level the skull"), "steps")
+        self.assertEqual(page_shape("- [ ] NMDG\n- [x] KCl"), "steps")
+        self.assertEqual(page_shape("Just words."), "text")
+
+    def test_home_has_the_new_page_capsule_and_topics_as_chips(self):
+        tab = self.topic("Ephys")
+        page = self.new_page(self.c, starter="blank", tab_id=tab, title="Recordings")
+        self.save(self.c, page, body="| Cell | Rin |\n|---|---|\n| 1 | 142 |\n")
+        html = self.html("/notebook")
+        for part in ('class="nb-home-new"', 'data-new-kind="protocol"', 'data-new-kind="reading"', 'data-new-kind="meeting"',
+                     'data-shape="sheet"', 'class="nb-topic-chip"', "data-home-new-topic"):
+            self.assertIn(part, html)
+        self.assertIn('id="nb-wide-btn"', self.html(f"/notebook?page={page}"))
+
     def test_a_topic_page_shows_its_topics_and_its_pages_newest_by_name_or_in_order(self):
         tab = self.topic("Cards")
         inside = self.topic("Inside", parent_id=tab)

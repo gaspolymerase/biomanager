@@ -84,6 +84,15 @@
     return String(id) === String(outer) || !!(el && el.querySelector('.notebook-tab[data-tab-id="' + id + '"]'));
   }
 
+  // New topic, on the notebook's home: its name, then its page.
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-home-new-topic]')) return;
+    window.BioDialog.prompt(t('New topic'), '', { placeholder: t('Name the topic'), okLabel: t('Make it') }).then(function (title) {
+      title = (title || '').trim();
+      if (title) post('/notebook/tabs/create', { title: title }).then(function (d) { if (d.ok) go('/notebook?tab=' + d.id); });
+    });
+  });
+
   var addBtn = document.getElementById('nb-topic-add');
   var addForm = document.getElementById('nb-topic-new');
   if (addBtn && addForm) {

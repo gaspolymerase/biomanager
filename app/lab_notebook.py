@@ -1172,6 +1172,8 @@ def page_cards(session, pages, user=None) -> list[dict]:
     starred = set(favorite_ids(session, user))
     me = access.username(user)
     owners = {p.id: owner_of(p) for p in pages}
+    tab_icons = dict(session.execute(select(NotebookTab.id, NotebookTab.icon)
+                                     .where(NotebookTab.id.in_({p.tab_id_fk for p in pages}))).all())
     names = display_names(session, [o for o in owners.values() if o != me])
     out = []
     for page in pages:
@@ -1182,8 +1184,23 @@ def page_cards(session, pages, user=None) -> list[dict]:
                     "cover": property_map(page.properties).get(COVER, ""),
                     "updated_at": _iso(page.updated_at), "entry_date": _iso(page.entry_date),
                     "favorite": page.id in starred, "inside": inside.get(page.id, 0),
-                    "owner_name": "" if owner == me else names.get(owner, owner)})
+                    "owner_name": "" if owner == me else names.get(owner, owner),
+                    "shape": page_shape(page.body), "tab_icon": tab_icons.get(page.tab_id_fk) or ""})
     return out
+
+
+_STEP_LINE = re.compile(r"^\s*(?:\d+[.)]|[-*+]\s+\[[ xX]\])\s+\S")
+
+
+def page_shape(body: str) -> str:
+    """What a page's card sketches: "sheet" for a data sheet or a table,
+    "steps" for numbered steps or a checklist, else "text"."""
+    body = body or ""
+    if "```sheet" in body or re.search(r"^\s*\|.*\|\s*$\n^\s*\|[\s:|-]+\|\s*$", body, re.M):
+        return "sheet"
+    if sum(1 for line in body.split("\n") if _STEP_LINE.match(line)) >= 2:
+        return "steps"
+    return "text"
 
 
 def favorite_ids(session, user=None) -> list[int]:
