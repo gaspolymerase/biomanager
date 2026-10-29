@@ -245,6 +245,16 @@ never what you may edit.
     measure of the experiment the same way, or give each today's
     manipulation and tick it. **Scan a card** reads a cage, tank or vial
     card with the phone's camera and jumps to the animal in it.
+- **Dropdowns** — the choices each column offers (Status, Cage purpose,
+  Strain, Genotype, Sex, Owner), so the lab uses the same words. Each
+  column's choices are listed in the order its dropdown shows them, with
+  how many mice or cages have each. An admin renames one in place (and,
+  if they like, on every record that has it), drags it to a new place,
+  removes it (putting another choice in its place on its records, if they
+  like), or pastes many at once; words typed in the sheet that aren't a
+  choice yet are listed to **Make it a choice**. The built-in statuses and
+  sexes are always offered; Breeding and Breeder keep their names. Every
+  rename or replacement is one change in Batch history, to undo.
 
 <table>
   <tr>
@@ -576,10 +586,18 @@ database has a name of its own (one another database has is refused), so
   genotyping, sac reminders), fly and worm flips, organism schedules and
   reagent expiry filled in for you. Shows your **Google Calendar** and any
   iCal subscription alongside, read-only, under **Connected calendars**.
+  - **Month** shows the kinds of things as a row of chips above the grid
+    (each its colour and count, to hide or show), and beside it the day
+    you pick with what is on it, then meetings, equipment and protocols.
+    **Week** opens on the working day from 08:00, today's column tinted.
   - **Board**: your to-dos as cards in lists, beside Month, Week, Day and
     List: Inbox, the lists you add (*This week*, *Waiting on*…) and Done.
-    Drag a card between lists, into Done to tick it off; **Add a card**
-    makes one with no day, which stays on the Board, not on today.
+    Drag a card between lists, into Done to tick it off. Write a card's
+    day in it as you would say it (*Order primers Fri*, *明天订抗体*) and
+    it is on the calendar that day; a card with no day stays on the
+    Board, not on today. Inbox also lists what the calendar has to do
+    this week (weanings, genotyping, flips, supplies running low), each
+    opening where it is done.
   - **Who sees it**: an event or to-do is yours alone, the lab's or one
     of your project groups'. Your own is seen by nobody else, admins
     included. A shared event is everyone's to see, its owner's and the
@@ -717,10 +735,15 @@ database has a name of its own (one another database has is refused), so
   - **Protocols** with numbered versions. **Start experiment**
     copies the steps as a checklist and records which version was followed.
     **Protocols** in the notebook's sidebar opens the lab's protocols as a
-    page of their own: search them, open one to read or change it, make one
-    with **New protocol**, and sort them into **folders** (**New folder**,
+    page of their own, as cards with a sketch of their steps and their
+    version: search them, open one to read or change it, make one with
+    **New protocol**, and sort them into **folders**. A protocol started
+    anywhere in the notebook is kept there; protocol pages kept in a
+    topic, and pages tagged *#protocol*, are listed with **Move to
+    Protocols**, and the calendar's protocol timelines are there to start
+    or edit. Folders: **New folder**,
     then drag a protocol onto it, or pick its folder on the card or in the
-    protocol's own bar). Each folder has an icon you pick when you make it;
+    protocol's own bar. Each folder has an icon you pick when you make it;
     **Edit folder** changes its name or icon. Folders are the lab's, shared
     by everyone. Below
     them are a dozen common protocols built in (genotyping, perfusion,
@@ -745,7 +768,8 @@ database has a name of its own (one another database has is refused), so
     millilitres to add out (from molecular weight or a stock); change the
     volume and every amount follows. Common buffers are built in; the lab's
     own are saved to a shared library. **Recipes** in the notebook's
-    sidebar opens that library: open a recipe to change it, make one with
+    sidebar opens that library, each recipe a card with its volume, pH and
+    what goes in it: open a recipe to change it, make one with
     **New recipe**, sort them into folders as protocols are, and **Save a
     copy** of a built-in one to make it yours. **Load from library** in a
     recipe block lists them by folder.

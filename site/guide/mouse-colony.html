@@ -234,7 +234,7 @@
           its mice, untick <b>Custom tag</b> under <b>Columns</b> to hide it.</li>
         <li><b>Strain</b>, after the custom tag, is the mouse's background: <i>C57BL/6J</i>, <i>BALB/cJ</i>, <i>129S1/SvImJ</i>,
           <i>FVB/NJ</i> and the other strains most labs keep are offered as you type, and you can type one of your own. Change the
-          list on the colony's <b>Dropdowns</b> tab (Column: <i>strain</i>). <b>Add many</b> sets one strain for the whole batch,
+          list on the colony's <b>Dropdowns</b> tab, under <b>Strain</b>. <b>Add many</b> sets one strain for the whole batch,
           search finds a mouse by it, and a spreadsheet column called <i>strain</i> or <i>background</i> comes into it when you
           import.</li>
         <li>Select mice to set a field (owner, status, strain, sex, transgenes, cage, litter, date of birth, date of death, note, or one of your own columns), <b>Add to experiment</b>, or <b>Sac</b>.
@@ -272,8 +272,13 @@
           see <a href="experiments.html">Experiments, for every animal</a>. (The notebook's experiments are the write-ups; these are the
           animals.)</li>
         <li><b>Strains</b> is the lab's reference list of lines and alleles.</li>
-        <li><b>Dropdowns</b> keeps the choices each column offers, so the lab uses the same words. Everyone sees them; only admins
-          change them.</li>
+        <li><b>Dropdowns</b> keeps the choices each column offers, so the lab uses the same words. Pick a column on the left (Status,
+          Cage purpose, Strain, Genotype, Sex, Owner) and its choices are listed in the order its dropdown shows them, each with how many
+          mice or cages have it. An admin renames one where it stands (and is asked whether to change it on those records too), drags it
+          (or presses <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>) to move it in the dropdown, removes it with × (the records that have it
+          keep it, or get another choice in its place), and adds one, or many pasted a line each. <i>In the records, but not a
+          choice</i> lists words typed in the sheet that aren't one yet, with <b>Make it a choice</b>. The built-in statuses and sexes
+          are always there; <i>Breeding</i> and <i>Breeder</i> keep their names. Everyone sees the choices; only admins change them.</li>
       </ul>
     <!-- /page -->
       <nav class="pager" aria-label="Previous / Next"><a class="prev" href="keyboard-shortcuts.html"><small>Previous</small>Keyboard shortcuts</a><a class="next" href="record-a-litter.html"><small>Next</small>Record a litter</a></nav>

@@ -1098,7 +1098,20 @@ Who may change what lives in one place, `app/access.py`:
   `field_name = 'purpose'` (`cage_purposes()`; a new lab gets
   `CAGE_PURPOSE_CHOICES`), edited on the Dropdowns tab or the colony's
   Configure page (`organisms.configure_builtin`, posting to the same
-  `create_option` / `delete_option` with `back=configure`). The bar above
+  `create_option` / `delete_option` with `back=configure`).
+  The **Dropdowns** tab is `app/choices.py` and `static/choices.js`:
+  `choices.columns()` lists each column with choices (`FIELDS`), its
+  `dropdown_options` rows in `position` order (revision 0052; 0 until a
+  lab drags them, then A–Z still breaks ties), the built-in ones the
+  sheet always offers (`BUILT_IN`: the statuses, F/M/Unknown) as fixed
+  rows, each choice's count of records (`USES`: column → model and
+  field), and up to eight values the records hold that are no choice
+  (`loose`). The routes answer `X-Requested-With: fetch` with JSON and the
+  tab redraws itself from the page: `create_option` takes several lines,
+  `update_option` with `also_records=1` and `delete_option` with
+  `replace_with` rewrite the records through `bulk.run` (one audit batch,
+  undone from Batch history), and `order_options` sets the positions.
+  `choices.locked()` keeps Breeding and Breeder from being renamed. The bar above
   the cages is All, Active, then one chip per purpose
   (`cage_purpose_chips()`). Revision 0029 wrote "Exp" and "Experiments" as
   "Experiment", made Stock cages shared Breeder cages, cleared "Retired",
@@ -1271,6 +1284,24 @@ a list someone else put a shared to-do in shows after one's own. Done is
 the to-dos ticked off in the last 14 days; moving a card into it sets
 `done_at`, out of it clears it. `calendar_items` leaves out a to-do with no
 day that is in a list (one with no day otherwise shows on today).
+A new card's day may be written in its title: `task_board.when_in()`
+reads one at the end (English: today, tomorrow, a weekday, next Fri, in
+3 days, Nov 8, 8 Nov, 11/8, an ISO date, after on/by/due/for) or, in
+Chinese, at either end (今天, 明天, 后天, 周五, 下周一, 11月8日), takes it
+out of the title and sets `due_date`; `GET /calendar/board/when` gives
+the box its hint, and `read_day: false` keeps the words. Inbox's column
+also carries `calendar`: `home_layouts.build_agenda()` for the next 7 days
+and anything overdue, less the calendar's own events (`_from_calendar`),
+drawn under the cards as links to where each is done.
+The calendar page's Month (`calendar-page.js`, `#cal[data-view]`) hides
+the sidebar for the layer chips above the grid (`renderChips`, switching
+the same `[data-layer-toggle]` boxes) and the day panel `#cal-dayside`
+(`renderDay`; a click on a month cell picks its day, read from the
+`monthGridHeader` template's `data-date`); `placeWells()` moves the
+Meetings, Equipment and Protocols wells and the phone links between the
+sidebar and that panel. Week and Day scroll to 08:00 once drawn
+(`toWorkingHours`), and `markToday()` tints today's Due cell. `?protocol=`
+opens a protocol timeline (`<id>`, `new`, or `start&template=<id>`).
 
 **Settings → Statistics** (`settings_lab.statistics`) counts living mice,
 active fish tanks and fly and worm vials per person (one animal at a time:
@@ -2304,7 +2335,15 @@ are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/reading`,
 `NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
 and `static/notebook-library.js` in the main column. It reads the same
 `/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
-recipe block do (`window.NotebookPage`). Meetings is kept in the calendar:
+recipe block do (`window.NotebookPage`). Protocols lists the protocol
+pages and the pages tagged protocol (`tagged_protocol`, `PROTOCOL_TAGS`),
+each with `topic` (None when it is kept in Protocols, that is in the
+owner's Inbox, which leaves it to the library) and `can_keep`;
+`POST /notebook/api/protocols/<id>/keep` brings one in (its owner's
+Inbox, kind protocol). A page made with kind protocol, from anywhere but
+a page's sub-page, goes to that Inbox too (`page_new`), as
+`protocol_new` does. The library also draws the calendar's timelines
+from `/calendar/protocols`, each linking to `/calendar?protocol=`. Meetings is kept in the calendar:
 `/notebook/meetings` redirects to `/calendar?meetings=all`, and
 `static/calendar-meetings.js` draws the series (side panel, New event →
 Meeting, a dialog for each: rotation, notes for the next meeting, put on
