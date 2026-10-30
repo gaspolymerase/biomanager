@@ -37,6 +37,13 @@ X
 fi
 # Where this stack is, so the watchdog reads its .env (and BACKUP_DIR) wherever it was unpacked.
 grep -q '^DEPLOY_DIR=' /etc/biomanager/watchdog.env || echo "DEPLOY_DIR=$deploy" >> /etc/biomanager/watchdog.env
+# TLS=tailscale mounts /run/tailscale in Caddy; systemd would otherwise
+# remove and remake that folder each time tailscaled restarts, leaving Caddy
+# with a stale one and no certificate.
+if systemctl cat tailscaled.service >/dev/null 2>&1; then
+  mkdir -p /etc/systemd/system/tailscaled.service.d
+  printf '[Service]\nRuntimeDirectoryPreserve=yes\n' > /etc/systemd/system/tailscaled.service.d/biomanager.conf
+fi
 systemctl daemon-reload
 systemctl enable --now biomanager-watchdog.timer biomanager-maintenance.timer biomanager-update.path
 . /etc/biomanager/watchdog.env

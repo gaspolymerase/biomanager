@@ -30,7 +30,7 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
-    "2.5.0": {
+    "2.6.0": {
         "new": [
             "Change a plasmid on its **Sequence** tab: pick bases, then **Edit…** to type over them, insert, delete, or add a feature. **Undo** takes it back.",
             "**Mutagenesis…** on picked bases designs the two primers for a point change, says what it does to the protein, and **Make it** adds the new plasmid.",
@@ -42,6 +42,20 @@ NOTES: dict[str, dict[str, list[str]]] = {
             "BioManager draws and edits plasmids on its own now: the borrowed editor is gone, and each plasmid page loads about 9 MB less.",
             "The search palette (**⌘K**) is a sheet of glass, with a larger field and **Ask the guide** on its own card.",
             "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.",
+        ],
+    },
+    "2.5.0": {
+        "new": [
+            "Plasmids are drawn by the app: the map, a **Digest** gel, clones checked against their traces under **Verify**, and **Primers** that bind.",
+            "Every sheet can **Save view**, and **Set a field…** works on every column.",
+            "Share a notebook topic with lab mates; ⌘K (Ctrl+K) searches from anywhere.",
+        ],
+        "changed": [
+            "A new look across the app; **Home** opens on a **Daily brief**.",
+            "Meetings live in the calendar, and its **Board** keeps to-dos.",
+        ],
+        "fixed": [
+            "A lab server reached over Tailscale keeps HTTPS working after Tailscale restarts.",
         ],
     },
     "2.4.0": {
