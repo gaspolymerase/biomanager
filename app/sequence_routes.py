@@ -133,7 +133,8 @@ def _suggest_name(p: PlasmidRecord, features: list[dict], start: int, direction:
     f, fs, fe = inside
     third = (start - fs) / max(fe - fs, 1)
     part = "N" if third < 0.33 else "mid" if third < 0.67 else "C"
-    return f"{re.sub(r'[^\w.-]+', '', f['name'])[:20]}-{part}-{end}"
+    label = re.sub(r"[^\w.-]+", "", f["name"])[:20]
+    return f"{label}-{part}-{end}"
 
 
 @bp.route("/plasmids/<int:row_id>/primer-check")
