@@ -908,6 +908,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - **Drag across bases** to pick them: a small bar says where they are, how many, and their Tm and GC. **Forward primer** or **Reverse** checks them as a primer on the right: its length, Tm, GC, whether it ends in a G/C clamp, its hairpin and self-dimer, whether it binds this plasmid only once, and whether the lab already has the same primer or one close by. Give it a name (one is suggested, such as *EGFP-mid-F*), add a 5′ tail if it needs a site or an overlap, and **Save to Primers** files it in the lab's [Primers](https://biomanager.org/guide/samples-and-orders), marked *to order*, with this plasmid beside it. **Copy** copies the bases; **Translate** reads them as codons.
 
+- **Change…**, in the same bar, designs a site-directed mutagenesis (a click picks a single base). **Replace** the picked bases with others, **Insert bases** after them, or **Delete** them; in a coding feature you can write the amino acid change instead, such as *K80A*, and the closest codon is chosen. The panel gives the two primers, back to back as NEB's Q5 kit has them (the new bases on the forward primer's 5′ end, or half on each for a long insertion), with their Tm and any hairpin or self-dimer; what the change does to each protein (*K80A*, a stop, a frameshift and where it stops, a deletion in frame); the new plasmid's size; and the PCR: anneal, extend, then KLD. **Silent changes that add or remove a site** lists codon changes near your pick that keep the protein but add an enzyme's site (for a check digest) or take one away (to free it for cloning); **Use this** takes one. **Make it** adds the new plasmid, its features moved and the change marked, **Made from** this one by mutagenesis, and puts both primers in [Primers](https://biomanager.org/guide/samples-and-orders) to order.
+
 - **Click a coding feature** to see its protein on the right: its length, mass, pI, extinction coefficient at 280 nm, how it starts and ends, and whether a stop sits inside it, then the amino acids ten to a group; **Copy** copies them.
 
 - **Edit the sequence, its features and its map**, under the sequence, opens the editor (edits save themselves), full screen if you like. **Download** gives it as GenBank (with every feature) or FASTA, and **Versions** lists every earlier sequence (replaced, cleared or edited) with **Restore**.
@@ -917,6 +919,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 *A plasmid's Overview*
 
 *The sequence, with EGFP's protein*
+
+*Site-directed mutagenesis: EGFP K80A*
 
 ### Knowing what a sequence holds
 

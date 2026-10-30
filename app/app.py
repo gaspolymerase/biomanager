@@ -439,6 +439,9 @@ app.register_blueprint(clone_routes.bp)
 # The plasmid's own sequence viewer, primer design and PCR (app/sequence_routes.py).
 from . import sequence_routes  # noqa: E402
 app.register_blueprint(sequence_routes.bp)
+# Site-directed mutagenesis from the Sequence tab (app/mutagenesis_routes.py).
+from . import mutagenesis_routes  # noqa: E402
+app.register_blueprint(mutagenesis_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
@@ -8462,6 +8465,7 @@ def _version_row(v, current: bool) -> dict:
                "detect": gettext("Features found from the library"),
                "annotate": gettext("Features found by pLannotate"),
                "assembly": gettext("Assembled from fragments"),
+               "mutagenesis": gettext("Made by site-directed mutagenesis"),
                "primers": gettext("Primers the wizard designed, drawn on the map"),
                "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
     try:

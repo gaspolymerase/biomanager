@@ -11,6 +11,12 @@
    protein. Everything comes from /plasmids/<id>/view.json
    (app/sequence_routes.py).
 
+   Change… (one base is enough) designs a site-directed mutagenesis: the
+   picked bases replaced, bases inserted after them, or the bases deleted,
+   or a coding feature's amino acid written as K79A; its two primers, what
+   it does to the protein, silent changes that add or remove an enzyme's
+   site, and Make it (app/mutagenesis_routes.py).
+
    Rows are laid out first, then drawn as they scroll into view, so a long
    plasmid opens as fast as a short one. */
 (function () {
@@ -300,7 +306,6 @@
   window.addEventListener('pointerup', () => {
     if (dragFrom == null) return;
     dragFrom = null;
-    if (sel && sel.end === sel.start) { sel = null; redraw(); return; }
     picked();
   });
 
@@ -322,11 +327,13 @@
 
   function placePopover() {
     const pop = $('[data-pop]');
-    if (!sel || sel.start === sel.end) { pop.hidden = true; return; }
+    if (!sel) { pop.hidden = true; return; }
     const s = pickedText();
-    pop.querySelector('[data-pop-text]').innerHTML = `<b class="tabular-nums">${num(sel.start)}–${num(sel.end)}</b> · ${esc(t('%(n)s bp', { n: s.length }))} · Tm ${quickTm(s).toFixed(0)} °C · GC ${gc(s)}%`;
+    pop.querySelector('[data-pop-text]').innerHTML = s.length === 1 ? `<b class="tabular-nums">${esc(t('Base %(n)s', { n: num(sel.start) }))}</b> ${esc(s)}`
+      : `<b class="tabular-nums">${num(sel.start)}–${num(sel.end)}</b> · ${esc(t('%(n)s bp', { n: s.length }))} · Tm ${quickTm(s).toFixed(0)} °C · GC ${gc(s)}%`;
     const primerOk = s.length >= 15 && s.length <= 60;
     pop.querySelectorAll('[data-make]').forEach((b) => { b.disabled = !primerOk; });
+    pop.querySelector('[data-pop-translate]').disabled = s.length < 3;
     const i = rows.findIndex((r) => sel.end >= r.r0 && sel.end <= r.r1);
     const rowEl = root.querySelector(`.sv2-row[data-row="${i}"]`);
     if (!rowEl) { pop.hidden = true; return; }
@@ -427,6 +434,138 @@
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => window.BioDialog.prompt(t('Copy the text below.'), text, { okLabel: t('Done') }));
   }
 
+  // ---------------------------------------------------------------- mutagenesis
+
+  let mut = null;            // {mode, start, end, bases, protein, cds, result}
+  let mutTimer = null;
+
+  // The coding feature the picked bases sit in, and the codon they start in.
+  function cdsAt(a, b) {
+    const p = data.proteins.find((x) => x.start <= x.end && a >= x.start && b <= x.end);
+    if (!p) return null;
+    const n = p.direction >= 0 ? Math.floor((a - p.start) / 3) + 1 : Math.floor((p.end - b) / 3) + 1;
+    return { ...p, codon: n, aa: (p.protein || '')[n - 1] || '' };
+  }
+
+  function mutatePanel() {
+    mut = { mode: 'replace', start: sel.start, end: sel.end, bases: pickedText(), protein: '', cds: cdsAt(sel.start, sel.end), result: null };
+    panel = { kind: 'mutate' };
+    mutateForm();
+  }
+
+  // The request's start, end and bases for the mode.
+  function mutRequest() {
+    const url = new URL(root.dataset.mutate, window.location.href);
+    if (mut.protein && mut.cds) {
+      url.searchParams.set('feature', mut.cds.feature);
+      url.searchParams.set('protein', mut.protein);
+      return url;
+    }
+    const bases = mut.bases.toUpperCase().replace(/[^ACGT]/g, '');
+    if (mut.mode === 'insert') { url.searchParams.set('start', mut.end + 1); url.searchParams.set('end', mut.end); }
+    else { url.searchParams.set('start', mut.start); url.searchParams.set('end', mut.end); }
+    url.searchParams.set('bases', mut.mode === 'delete' ? '' : bases);
+    if (mut.site) url.searchParams.set('label', mut.site);
+    return url;
+  }
+
+  function mutateForm() {
+    const n = mut.end - mut.start + 1;
+    const where = mut.mode === 'insert' ? t('After base %(n)s', { n: num(mut.end) })
+      : n === 1 ? t('Base %(n)s', { n: num(mut.start) }) : `${num(mut.start)}–${num(mut.end)} · ${t('%(n)s bp', { n })}`;
+    const seg = (key, label) => `<button type="button" class="seg-item${mut.mode === key ? ' is-active' : ''}" data-mut-mode="${key}">${esc(label)}</button>`;
+    const bases = mut.mode === 'delete' ? `<p class="sv2-note">${esc(t('Deletes %(n)s bases.', { n }))}</p>`
+      : `<label class="sv2-field"><span>${esc(mut.mode === 'insert' ? t('Bases to insert') : t('Becomes'))}</span><input type="text" data-mut-bases value="${esc(mut.mode === 'insert' ? '' : mut.bases)}" spellcheck="false" autocomplete="off"></label>`;
+    const cds = mut.cds && mut.mode === 'replace'
+      ? `<label class="sv2-field"><span>${esc(t('Or the protein (%(name)s)', { name: mut.cds.name }))}</span><input type="text" data-mut-protein value="${esc(mut.protein)}" placeholder="${esc(`${mut.cds.aa}${mut.cds.codon}A`)}" spellcheck="false" autocomplete="off"></label>`
+      : '';
+    sidePanel(`<div class="sv2-panel-head"><h3>${esc(t('Mutagenesis'))}</h3><span class="sv2-mut-where tabular-nums">${esc(where)}</span></div>
+      <div class="seg sv2-mut-modes">${seg('replace', t('Replace'))}${seg('insert', t('Insert bases'))}${seg('delete', t('Delete'))}</div>
+      ${bases}${cds}
+      <div data-mut-result><p class="sv2-note">${esc(t('Type what the bases become.'))}</p></div>
+      ${mut.cds ? `<div class="sv2-mut-silent" data-mut-silent-box><button type="button" class="btn btn-sm" data-mut-silent>${esc(t('Silent changes that add or remove a site'))}</button></div>` : ''}`);
+    const focus = $('[data-mut-bases]');
+    if (focus) { focus.focus(); focus.select(); }
+    if (mut.mode === 'delete') mutate();
+  }
+
+  function mutateSoon() { clearTimeout(mutTimer); mutTimer = setTimeout(mutate, 250); }
+
+  function mutate() {
+    const box = $('[data-mut-result]');
+    if (!box) return;
+    const asked = mutRequest().toString();
+    fetch(asked, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+      if (!mut || mutRequest().toString() !== asked) return;               // typed on since
+      mut.result = j.ok ? j : null;
+      if (!j.ok) { box.innerHTML = `<p class="sv2-note">${esc(j.error || '')}</p>`; return; }
+      const badge = (yes, good, bad) => `<span class="badge ${yes ? 'badge-ok' : 'badge-warn'}">${esc(yes ? good : bad)}</span>`;
+      const primer = (label, p) => `<div class="sv2-mut-primer"><div class="sv2-mut-primer-head"><b>${esc(label)}</b>
+          <span class="tabular-nums text-muted">${p.length} nt · ${esc(t('anneals %(n)s nt', { n: p.anneal_length }))} · Tm ${p.tm != null ? `${p.tm} °C` : '—'}</span></div>
+        <code class="sv2-primer-seq"><span class="sv2-tail">${esc(p.tail)}</span>${esc(p.anneal)}</code>
+        <div class="sv2-mut-checks">${p.length > 45 ? badge(false, '', t('long: order it purified')) : ''}${p.hairpin_ok ? '' : badge(false, '', `${t('Hairpin')} ΔG ${p.hairpin}`)}${p.dimer_ok ? '' : badge(false, '', `${t('Self-dimer')} ΔG ${p.dimer}`)}${p.binds > 1 ? badge(false, '', t('binds %(n)s places', { n: p.binds })) : ''}</div></div>`;
+      const kinds = { silent: t('silent'), missense: t('missense'), nonsense: t('a stop'), frameshift: t('frameshift'),
+        deletion: t('deletion in frame'), insertion: t('insertion in frame'), delins: t('in frame'), removed: t('removed') };
+      const effects = j.effects.length ? j.effects.map((e) => `<li><b>${esc(e.name)}</b> ${e.label ? `<code>${esc(e.label)}</code> ` : ''}<span class="badge ${e.kind === 'silent' || e.kind === 'missense' ? 'badge-ok' : 'badge-warn'}">${esc(kinds[e.kind] || e.kind)}</span>${e.kind === 'frameshift' ? ` <span class="text-muted">${esc(t('%(n)s aa, then a stop', { n: e.length_after }))}</span>` : ''}</li>`).join('')
+        : `<li class="text-muted">${esc(t('No coding feature is changed.'))}</li>`;
+      const extend = j.extend_s >= 60 ? t('%(m)s min %(s)s s', { m: Math.floor(j.extend_s / 60), s: j.extend_s % 60 }) : `${j.extend_s} s`;
+      box.innerHTML = `${j.codon ? `<p class="sv2-note">${esc(t('Codon %(from)s becomes %(to)s.', { from: j.codon.codon, to: j.codon.to }))}</p>` : ''}
+        <ul class="sv2-mut-effects">${effects}</ul>
+        ${primer(t('Forward'), j.forward)}${primer(t('Reverse'), j.reverse)}
+        <dl class="pver-dl">
+          <dt>${esc(t('The new plasmid'))}</dt><dd class="tabular-nums">${esc(t('%(n)s bp', { n: num(j.length) }))}${j.delta ? ` (${j.delta > 0 ? '+' : ''}${j.delta})` : ''}</dd>
+          <dt>PCR</dt><dd>${esc(t('Anneal at %(c)s °C, extend %(time)s, then KLD.', { c: j.anneal, time: extend }))}</dd>
+        </dl>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-mut-name value="${esc(j.name)}"></label>
+        <div class="pver-actions">
+          <button type="button" class="btn btn-primary" data-mut-make>${esc(t('Make it'))}</button>
+          <button type="button" class="btn" data-mut-copy>${icon('copy')} ${esc(t('Copy the primers'))}</button>
+        </div>
+        <p class="sv2-note">${esc(t('Make it adds the new plasmid, made from this one, and puts both primers in Primers to order.'))}</p>`;
+    }).catch(() => { box.innerHTML = `<p class="sv2-note">${esc(t('The server did not answer. Check the connection and try again.'))}</p>`; });
+  }
+
+  function silentSites() {
+    const box = $('[data-mut-silent-box]');
+    const url = new URL(root.dataset.silent, window.location.href);
+    url.searchParams.set('feature', mut.cds.feature);
+    url.searchParams.set('start', mut.start);
+    url.searchParams.set('end', mut.end);
+    box.innerHTML = `<p class="sv2-note">${esc(t('Looking for silent changes…'))}</p>`;
+    fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+      const cuts = (n) => (n === 1 ? t('then cuts once') : t('then cuts %(n)s times', { n }));
+      const row = (r, adding) => `<li><b>${adding ? '+' : '−'} ${esc(r.enzyme)}</b>
+          <span class="sv2-mut-site-how tabular-nums">${esc(t('codon %(n)s', { n: r.codon }))} <code>${esc(r.from)}→${esc(r.to)}</code> · ${esc(t('%(n)s bp changed', { n: r.changes }))} · ${esc(cuts(r.cuts_after))}</span>
+          <button type="button" class="btn btn-sm" data-mut-use="${esc(JSON.stringify({ start: r.start, end: r.end, bases: r.bases, site: `${adding ? '+' : '-'}${r.enzyme}` }))}">${esc(t('Use this'))}</button></li>`;
+      const list = (rows, adding, title) => (rows.length ? `<h4>${esc(title)}</h4><ul class="sv2-mut-sites">${rows.map((r) => row(r, adding)).join('')}</ul>` : '');
+      box.innerHTML = (list(j.add || [], true, t('Add a site')) + list(j.remove || [], false, t('Remove a site')))
+        || `<p class="sv2-note">${esc(t('No silent change near here adds or removes a site.'))}</p>`;
+    });
+  }
+
+  function useSilent(r) {
+    sel = { start: r.start, end: r.end };
+    redraw();
+    goTo(r.start);
+    mut = { ...mut, mode: 'replace', start: r.start, end: r.end, bases: r.bases, protein: '', site: r.site };
+    mutateForm();
+    mutate();
+  }
+
+  function makeMutant(button) {
+    const body = new FormData();
+    const url = mutRequest();
+    url.searchParams.forEach((v, k) => body.append(k, v));
+    body.append('name', $('[data-mut-name]').value);
+    button.disabled = true;
+    fetch(root.dataset.mutateMake, { method: 'POST', body, headers: { 'X-Requested-With': 'fetch' } })
+      .then((r) => r.json()).then((j) => {
+        if (!j.ok) { button.disabled = false; say(j.error, 'error'); return; }
+        say(j.message);
+        window.location.href = j.url;
+      }).catch(() => { button.disabled = false; say(t('The server did not answer. Check the connection and try again.'), 'error'); });
+  }
+
   // ---------------------------------------------------------------- finding
 
   function find(q) {
@@ -483,6 +622,17 @@
     if (make && sel) { primerPanel(Number(make.dataset.make)); return; }
     if (e.target.closest('[data-pop-copy]') && sel) { copy(pickedText(), t('The sequence')); return; }
     if (e.target.closest('[data-pop-translate]') && sel) { translateStretch(); return; }
+    if (e.target.closest('[data-pop-mutate]') && sel) { mutatePanel(); return; }
+    const mode = e.target.closest('[data-mut-mode]');
+    if (mode && mut) { mut.mode = mode.dataset.mutMode; mut.protein = ''; mut.site = ''; mutateForm(); return; }
+    if (e.target.closest('[data-mut-silent]') && mut) { silentSites(); return; }
+    const use = e.target.closest('[data-mut-use]');
+    if (use && mut) { useSilent(JSON.parse(use.dataset.mutUse)); return; }
+    if (e.target.closest('[data-mut-make]') && mut && mut.result) { makeMutant(e.target.closest('[data-mut-make]')); return; }
+    if (e.target.closest('[data-mut-copy]') && mut && mut.result) {
+      copy(`${mut.result.name} F\t${mut.result.forward.sequence}\n${mut.result.name} R\t${mut.result.reverse.sequence}`, t('The primers'));
+      return;
+    }
     const feature = e.target.closest('[data-feature]');
     if (feature) {
       const f = featureSpans()[Number(feature.dataset.feature)];
@@ -517,6 +667,14 @@
       $('[data-primer-seq]').innerHTML = `<span class="sv2-tail">${esc(primerSequence().slice(0, primerSequence().length - panel.check.sequence.length))}</span>${esc(panel.check.sequence)}`;
     }
     if (e.target.matches('[data-find]')) $('[data-find-count]').dataset.i = -1;
+    if (e.target.matches('[data-mut-bases]') && mut) {
+      mut.bases = e.target.value;
+      mut.protein = '';
+      mut.site = '';
+      if ($('[data-mut-protein]')) $('[data-mut-protein]').value = '';
+      mutateSoon();
+    }
+    if (e.target.matches('[data-mut-protein]') && mut) { mut.protein = e.target.value; mut.site = ''; mutateSoon(); }
   });
   root.addEventListener('keydown', (e) => {
     if (e.target.matches('[data-find]') && e.key === 'Enter') { e.preventDefault(); find(e.target.value); }

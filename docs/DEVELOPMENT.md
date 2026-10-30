@@ -1827,6 +1827,24 @@ crossing the origin keeps `start > end`.
     sites) with the lab's same or nearby primers and a name
     (`_suggest_name`), and `primers/new` saves it through
     `primer_records.save_primer` and `derive_primer`.
+  - **Mutagenesis** (`app/mutagenesis.py` pure, `app/mutagenesis_routes.py`,
+    the Sequence tab's **Change…**): a `Change` is `at` (0-based), `cut`
+    bases and the `new` ones. `design_primers` makes Q5-style back-to-back
+    primers on a circular plasmid: each anneals for `cloning.anneal_length`
+    (TARGET_TM) from the change outwards; the new bases ride on the forward
+    primer's 5′ end, or split over both from `SPLIT` bases. `shift_features`
+    moves features after the change, stretches one it runs through, drops
+    one it removes and any primer mark it touches; `effects` translates
+    each coding feature before and after (`describe`: K80A, K80*, L3del,
+    K2_L3insGS, …delins…, F101Qfs*151, reading on past the feature for a
+    frameshift's stop). `codon_change` turns K80A into bases (`best_codon`:
+    fewest changes, then `PREFERRED`); `silent_sites` tries one codon or two
+    side by side (at most `MOST_CHANGED` bases) for sites of the non-Type IIS
+    enzymes appearing or going, near the pick. `mutagenesis.json` designs,
+    `silent-sites.json` lists, and `POST mutagenesis` makes the plasmid (the
+    change marked as a `misc_difference`, version `how="mutagenesis"`, a
+    `plasmid_parents` link with role `template` and method `mutagenesis`,
+    the primers saved with category `mutagenesis`).
   - **Digest** (`app/digest.py` pure, `app/digest_routes.py`,
     `static/plasmid-digest.js`): `digest.json?enzymes=&agarose=&ladder=
     &methylated=&lane=` answers the cuts (`cut_positions`, the cut written

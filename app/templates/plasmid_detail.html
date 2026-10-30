@@ -122,7 +122,10 @@
   {# The app's own viewer: every base, features, enzymes, primers, proteins (static/seq-viewer.js). #}
   <div class="sv2" data-seq-viewer data-url="{{ url_for('sequence_view.view', row_id=plasmid.row_id) }}"
        data-check="{{ url_for('sequence_view.primer_check', row_id=plasmid.row_id) }}"
-       data-save="{{ url_for('sequence_view.primer_new', row_id=plasmid.row_id) }}">
+       data-save="{{ url_for('sequence_view.primer_new', row_id=plasmid.row_id) }}"
+       data-mutate="{{ url_for('mutagenesis.design', row_id=plasmid.row_id) }}"
+       data-mutate-make="{{ url_for('mutagenesis.make', row_id=plasmid.row_id) }}"
+       data-silent="{{ url_for('mutagenesis.silent_sites', row_id=plasmid.row_id) }}">
     <div class="pglass sv2-main">
       <div class="sv2-bar">
         <label class="pdig-find sv2-find">{{ icon('search') }}<input type="search" data-find placeholder="{{ _('Find bases, a primer, a site or a feature…') }}" aria-label="{{ _('Find in the sequence') }}"><span class="sv2-count" data-find-count></span></label>
@@ -146,6 +149,7 @@
           <button type="button" class="btn btn-sm" data-make="-1">← {{ _('Reverse') }}</button>
           <button type="button" class="btn btn-sm" data-pop-copy>{{ _('Copy') }}</button>
           <button type="button" class="btn btn-sm" data-pop-translate>{{ _('Translate') }}</button>
+          <button type="button" class="btn btn-sm" data-pop-mutate title="{{ _('Site-directed mutagenesis: replace, insert or delete these bases') }}">{{ _('Change…') }}</button>
         </div>
       </div>
     </div>

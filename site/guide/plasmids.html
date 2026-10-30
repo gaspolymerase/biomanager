@@ -196,6 +196,16 @@
           primer or one close by. Give it a name (one is suggested, such as <i>EGFP-mid-F</i>), add a 5′ tail if it needs a site
           or an overlap, and <b>Save to Primers</b> files it in the lab's <a href="samples-and-orders.html">Primers</a>, marked
           <i>to order</i>, with this plasmid beside it. <b>Copy</b> copies the bases; <b>Translate</b> reads them as codons.</li>
+        <li><b>Change…</b>, in the same bar, designs a site-directed mutagenesis (a click picks a single base). <b>Replace</b> the
+          picked bases with others, <b>Insert bases</b> after them, or <b>Delete</b> them; in a coding feature you can write the
+          amino acid change instead, such as <i>K80A</i>, and the closest codon is chosen. The panel gives the two primers, back to
+          back as NEB's Q5 kit has them (the new bases on the forward primer's 5′ end, or half on each for a long insertion), with
+          their Tm and any hairpin or self-dimer; what the change does to each protein (<i>K80A</i>, a stop, a frameshift and where
+          it stops, a deletion in frame); the new plasmid's size; and the PCR: anneal, extend, then KLD. <b>Silent changes that add
+          or remove a site</b> lists codon changes near your pick that keep the protein but add an enzyme's site (for a check
+          digest) or take one away (to free it for cloning); <b>Use this</b> takes one. <b>Make it</b> adds the new plasmid, its
+          features moved and the change marked, <b>Made from</b> this one by mutagenesis, and puts both primers in
+          <a href="samples-and-orders.html">Primers</a> to order.</li>
         <li><b>Click a coding feature</b> to see its protein on the right: its length, mass, pI, extinction coefficient at 280 nm,
           how it starts and ends, and whether a stop sits inside it, then the amino acids ten to a group; <b>Copy</b> copies them.</li>
         <li><b>Edit the sequence, its features and its map</b>, under the sequence, opens the editor (edits save themselves),
@@ -208,6 +218,7 @@
       </ul>
       <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid's Overview: its map, what it is, and its features" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid's Overview</figcaption></figure>
       <figure class="gshot"><a href="../assets/screenshots/plasmid-sequence.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-sequence.webp" alt="EGFP picked on the Sequence tab, its protein beside it" loading="lazy" width="2000" height="1250"></a><figcaption>The sequence, with EGFP's protein</figcaption></figure>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-mutagenesis.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-mutagenesis.webp" alt="Change… on one base of EGFP: K80A, its two primers and Make it" loading="lazy" width="2000" height="1250"></a><figcaption>Site-directed mutagenesis: EGFP K80A</figcaption></figure>
       <h2 id="features">Knowing what a sequence holds</h2>
       <ul>
         <li>The <b>Feature library</b> (a button at the top of Plasmids, beside Table · Boxes · List) keeps the lab's elements by sequence: promoters, ITRs and LTRs,
@@ -354,7 +365,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 17 min read</p>
+      <p>On this page · 18 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your cloning</a></li>
         <li class="lvl2"><a href="#the-sheet">The plasmid sheet</a></li>

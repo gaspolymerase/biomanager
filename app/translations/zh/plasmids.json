@@ -308,5 +308,21 @@
   "Exact": "完全匹配",
   "≤ 2 mismatches": "≤ 2 个错配",
   "Every primer in the lab’s Primers databases is checked against this plasmid, on both strands. A mismatch counts only away from the 3′ end, which has to pair for the polymerase to start.": "实验室引物库里的每条引物都会在这个质粒的两条链上比对。错配只算在远离 3′ 端的地方：3′ 端必须配上，聚合酶才能延伸。",
-  "Add a sequence on the Sequence tab, and the lab’s primers that bind it show here.": "在“序列”标签页加上序列后，能结合它的实验室引物会显示在这里。"
+  "Add a sequence on the Sequence tab, and the lab’s primers that bind it show here.": "在“序列”标签页加上序列后，能结合它的实验室引物会显示在这里。",
+  "Made by site-directed mutagenesis": "由定点突变得到",
+  "Pick bases on the sequence.": "请在序列上选择碱基。",
+  "Say what the bases become, or leave it empty to delete them.": "请写出这些碱基要改成什么，留空则删除它们。",
+  "That is what the plasmid has already.": "质粒上本来就是这样。",
+  "Site-directed mutagenesis copies a whole circular plasmid, and this one is linear.": "定点突变要扩增整个环状质粒，而这个质粒是线性的。",
+  "That would leave too little of the plasmid to copy.": "这样剩下可扩增的质粒太少了。",
+  "The change is too long for two primers of up to %(most)s bases. Assemble the plasmid with a synthesized fragment instead.": "这个改动太长，两条最长 %(most)s 个碱基的引物放不下。请改用合成片段来组装质粒。",
+  "Write the change as K79A: the amino acid, its number and the new one.": "请按 K79A 的格式写：原氨基酸、位置和新氨基酸。",
+  "This protein has %(n)s codons.": "这个蛋白有 %(n)s 个密码子。",
+  "Codon %(number)s is %(aa)s.": "第 %(number)s 个密码子是 %(aa)s。",
+  "That codon runs across the origin. Pick its bases on the sequence instead.": "这个密码子跨过了序列起点，请直接在序列上选择它的碱基。",
+  "Designed for the mutagenesis of %(template)s into %(name)s.": "为把 %(template)s 突变成 %(name)s 而设计。",
+  "Plasmid #%(number)s %(name)s made.": "已创建质粒 #%(number)s %(name)s。",
+  "Its two primers are in Primers, to order.": "两条引物已放进引物库，待订购。",
+  "Site-directed mutagenesis: replace, insert or delete these bases": "定点突变：替换、插入或删除这些碱基",
+  "Change…": "突变…"
 }

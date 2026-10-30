@@ -435,7 +435,12 @@ codons or more instead). Drag across bases and a small bar gives their
 length, Tm and GC: **Forward primer** or **Reverse** checks them as a
 primer (Tm, GC, a G/C clamp, hairpins, self-dimers, whether it binds
 only once, and whether the lab already has one there) and **Save to
-Primers** files it, to order. Click a coding feature for its protein:
+Primers** files it, to order. **Change…** (one base is enough) designs a
+site-directed mutagenesis: replace, insert or delete bases, or write the
+amino acid change (*K80A*); it gives the two back-to-back primers, what
+the change does to each protein, the silent changes nearby that add or
+remove an enzyme's site, and **Make it** adds the new plasmid, made from
+this one, with its primers in Primers to order. Click a coding feature for its protein:
 length, mass, pI, extinction coefficient and the amino acids. **Edit the
 sequence, its features and its map** below it opens the editor.
 **Digest** cuts it: tick enzymes (the ones that cut once, twice, or that

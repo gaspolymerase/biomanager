@@ -380,6 +380,23 @@ text.pmap-piece-3 { fill: var(--pmap-piece-3); }
 .sv2-tail { color: var(--color-brand-700); }
 .sv2-lab { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--color-recess); font-size: 12px; }
 .sv2-lab p { margin: 0; }
+/* Mutagenesis, in the side panel. */
+.sv2-mut-where { font-size: 12px; color: var(--color-muted); }
+.sv2-mut-modes { display: flex; }
+.sv2-mut-modes .seg-item { flex: 1; white-space: nowrap; padding-inline: 8px; }
+.sv2-mut-effects { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; }
+.sv2-mut-effects li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 3px 0; }
+.sv2-mut-effects code, .sv2-mut-sites code { display: inline; font: 12px var(--font-mono, ui-monospace, monospace); }
+.sv2-mut-primer { margin-top: 8px; padding: 8px 12px; border-radius: 12px; background: var(--color-recess); }
+.sv2-mut-primer-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-bottom: 3px; }
+.sv2-mut-checks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.sv2-mut-checks:empty { display: none; }
+.sv2-mut-silent { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--color-hairline); }
+.sv2-mut-silent h4 { margin: 8px 0 4px; font-size: 12px; font-weight: 600; color: var(--color-muted); }
+.sv2-mut-sites { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.sv2-mut-sites li { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; padding: 6px 0; }
+.sv2-mut-sites li + li { border-top: 1px solid var(--color-hairline); }
+.sv2-mut-site-how { grid-row: 2; grid-column: 1 / -1; color: var(--color-muted); line-height: 1.5; }
 .sv2-protein { margin-top: 12px; font: 12px/1.8 var(--font-mono, ui-monospace, monospace); color: var(--color-ink-soft); word-break: break-all; }
 .sv2-aa-start { display: inline-block; width: 34px; color: var(--color-muted); }
 
