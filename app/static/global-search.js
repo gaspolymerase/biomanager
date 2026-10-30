@@ -70,12 +70,12 @@
       <div class="cmdk-card" role="dialog" aria-label="${escapeHtml(t('Global search'))}">
         <div class="cmdk-input-row">
           <svg class="icon cmdk-icon" aria-hidden="true"><use href="/static/icons.svg#search"></use></svg>
-          <input id="cmdk-input" type="text" placeholder="${escapeHtml(t('Search, go somewhere, or ask the guide…'))}" autocomplete="off">
+          <input id="cmdk-input" class="cmdk-field" type="text" placeholder="${escapeHtml(t('Search, go somewhere, or ask the guide…'))}" autocomplete="off">
           <kbd class="cmdk-kbd">esc</kbd>
         </div>
         <div id="cmdk-results" class="cmdk-results"></div>
         <div class="cmdk-foot">
-          <span><kbd>↑</kbd><kbd>↓</kbd> ${escapeHtml(t('to navigate'))}</span>
+          <span><kbd>↑↓</kbd> ${escapeHtml(t('to navigate'))}</span>
           <span><kbd>↵</kbd> ${escapeHtml(t('to open'))}</span>
           <span><kbd>esc</kbd> ${escapeHtml(t('to close'))}</span>
         </div>

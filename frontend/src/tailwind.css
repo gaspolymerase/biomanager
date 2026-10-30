@@ -257,6 +257,12 @@
   --glass-ring:    rgba(255, 255, 255, 0.6);
   --glass-lo:      rgba(15, 20, 40, 0.05);
   --glass-lift:    0 1px 1px rgba(15, 20, 40, 0.04), 0 12px 32px rgba(30, 40, 70, 0.12);
+  /* The ⌘K palette: a sheet of glass over a light, blurred scrim, its
+     rows picked out by a faint wash rather than a colour. */
+  --palette-glass: rgba(255, 255, 255, 0.74);
+  --palette-scrim: rgba(20, 24, 40, 0.16);
+  --palette-row:   rgba(15, 20, 40, 0.06);
+  --palette-line:  rgba(15, 20, 40, 0.07);
   --wall: radial-gradient(900px 600px at 10% 5%, rgba(94, 234, 212, 0.26), transparent 60%),
           radial-gradient(800px 600px at 92% 15%, rgba(167, 139, 250, 0.24), transparent 60%),
           radial-gradient(900px 700px at 55% 105%, rgba(253, 186, 116, 0.2), transparent 60%);
@@ -438,6 +444,10 @@
     --glass-ring:    rgba(255, 255, 255, 0.09);
     --glass-lo:      rgba(0, 0, 0, 0.35);
     --glass-lift:    0 1px 1px rgba(0, 0, 0, 0.3), 0 14px 36px rgba(0, 0, 0, 0.55);
+    --palette-glass: rgba(32, 34, 42, 0.72);
+    --palette-scrim: rgba(0, 0, 0, 0.4);
+    --palette-row:   rgba(255, 255, 255, 0.07);
+    --palette-line:  rgba(255, 255, 255, 0.07);
     --wall: radial-gradient(900px 600px at 10% 5%, rgba(45, 212, 191, 0.15), transparent 60%),
             radial-gradient(800px 600px at 92% 15%, rgba(129, 140, 248, 0.18), transparent 60%),
             radial-gradient(900px 700px at 55% 105%, rgba(244, 114, 182, 0.1), transparent 60%);
@@ -491,6 +501,7 @@
    Contrast: solid too, with a firmer outline. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
+    --palette-glass: var(--glass-strong);
     --glass: var(--glass-strong);
     --glass-fill: var(--glass-strong);
     --material-bar: var(--glass-strong);
@@ -500,6 +511,7 @@
   :root {
     --glass: var(--color-surface);
     --glass-strong: var(--color-surface);
+    --palette-glass: var(--color-surface);
     --glass-fill: var(--color-surface);
     --glass-light: linear-gradient(var(--color-sand-500), var(--color-sand-500));
     --glass-sheen: transparent;
@@ -3470,52 +3482,79 @@
 
   .cmdk-overlay { @apply fixed inset-0 z-100 flex items-start justify-center p-4 pt-[12vh]; }
   .cmdk-overlay[hidden] { display: none; }
+  /* Lighter than a dialog's scrim: the page stays there, softened. */
+  .cmdk-overlay > .cmdk-backdrop {
+    background: var(--palette-scrim);
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
+    backdrop-filter: blur(6px) saturate(120%);
+  }
 
+  /* A thick sheet of glass (R3-Palette): lit along its top edge, a darker
+     line along the bottom, a bright rim, and a deep shadow. */
   .cmdk-card {
-    @apply relative flex max-h-[62vh] w-full max-w-[600px] flex-col overflow-hidden
-           rounded-3xl shadow-pop;
-    background: var(--glass-strong);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
-    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 0.5px var(--glass-rim), var(--shadow-pop);
+    @apply relative flex max-h-[64vh] w-full max-w-[680px] flex-col overflow-hidden;
+    border-radius: 30px;
+    background: var(--palette-glass);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    backdrop-filter: blur(40px) saturate(200%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring),
+                0 30px 80px rgb(0 0 0 / 0.3);
     transform-origin: top center;
     animation: menu-grow 0.28s var(--ease-spring);
   }
 
   .cmdk-input-row {
-    @apply flex shrink-0 items-center gap-3 border-b border-hairline/70 px-4 py-3.5;
+    @apply flex shrink-0 items-center gap-3 px-5 py-[18px];
+    border-bottom: 1px solid var(--palette-line);
   }
-  .cmdk-icon { @apply size-[17px] shrink-0 text-sand-400; }
-  .cmdk-input-row input {
-    @apply min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none;
+  .cmdk-icon { @apply size-5 shrink-0 text-muted; }
+  /* The field is the sheet itself: no box, no ring, a large line of text. */
+  .cmdk-input-row .cmdk-field {
+    @apply min-w-0 flex-1 border-0 bg-transparent p-0 text-[18px] text-ink shadow-none outline-none;
+    caret-color: var(--color-brand-600);
   }
-  .cmdk-input-row input::placeholder { @apply text-sand-400; }
-  .cmdk-kbd { @apply kbd-chip shrink-0; }
+  .cmdk-input-row .cmdk-field::placeholder { color: var(--placeholder-ink, var(--color-sand-400)); }
+  .cmdk-kbd {
+    @apply inline-grid h-6 shrink-0 place-items-center rounded-lg px-2 font-mono text-[11px] text-muted;
+    background: var(--palette-row);
+  }
 
-  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto p-1.5; }
+  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto p-2.5; }
   .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[13px] text-muted; }
 
-  .cmdk-group-label {
-    @apply px-2.5 pb-1 pt-2.5 text-[11px] font-semibold
-           text-muted;
-  }
+  .cmdk-group-label { @apply px-2.5 pb-1 pt-3 text-[12px] font-medium text-muted; }
+  .cmdk-group-label:first-child { @apply pt-1.5; }
 
   .cmdk-row {
-    @apply flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-ink no-underline
-           transition-colors duration-100;
+    @apply flex items-center gap-2.5 px-2.5 py-2 text-ink no-underline transition-colors duration-100;
+    border-radius: 14px;
   }
-  .cmdk-row.is-active { @apply bg-brand-600/12 text-ink; }
+  .cmdk-row.is-active { background: var(--palette-row); }
   .cmdk-row-type {
-    @apply w-[62px] shrink-0 rounded-md bg-sand-100 px-1.5 py-0.5 text-center
+    @apply w-[62px] shrink-0 rounded-full bg-sand-100 px-1.5 py-0.5 text-center
            text-[11px] font-semibold text-muted;
   }
-  /* An action or Ask: its icon in a round well, where a record has its kind. */
+  /* An action: its icon in a soft round well, where a record has its kind. */
   .cmdk-row-icon {
-    @apply grid size-7 shrink-0 place-items-center rounded-full bg-sand-300/30 text-ink-soft;
+    @apply grid size-7 shrink-0 place-items-center rounded-full text-ink-soft;
+    background: var(--palette-row);
   }
   .cmdk-row-icon .icon { @apply size-[15px]; }
-  .cmdk-row-ask .cmdk-row-icon { @apply bg-brand-600; color: var(--color-on-brand, #fff); }
-  .cmdk-row-ask .cmdk-row-label { @apply font-medium; }
+  /* Asking the guide is a card of its own, in the brand's colour. */
+  .cmdk-row-ask {
+    @apply my-1 gap-3 p-3.5;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--color-brand-500) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand-500) 22%, transparent);
+  }
+  .cmdk-row-ask.is-active { background: color-mix(in srgb, var(--color-brand-500) 16%, transparent); }
+  .cmdk-row-ask .cmdk-row-icon {
+    @apply size-[34px] bg-brand-600;
+    border-radius: 12px;
+    color: var(--color-on-brand, #fff);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 4px 12px color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+  }
+  .cmdk-row-ask .cmdk-row-label { @apply text-brand-700 font-semibold; }
   .cmdk-row > .cmdk-kbd { @apply ml-auto; }
   .cmdk-row-type-mouse   { @apply bg-info-50 text-info-600; }
   .cmdk-row-type-plasmid { @apply bg-brand-50 text-brand-700; }
@@ -3528,14 +3567,16 @@
   .cmdk-row-type-vial    { @apply bg-brand-50 text-brand-700; }
 
   .cmdk-row-text { @apply flex min-w-0 flex-col; }
-  .cmdk-row-label { @apply truncate text-[13px] font-medium text-ink; }
+  .cmdk-row-label { @apply truncate text-[14px] text-ink; }
   .cmdk-row-sublabel { @apply truncate text-[12px] text-muted; }
+  .cmdk-row-sublabel:empty { display: none; }
 
   .cmdk-foot {
-    @apply flex shrink-0 items-center gap-4 border-t border-hairline/70 bg-transparent
-           px-3.5 py-2 text-[11px] text-muted;
+    @apply flex shrink-0 flex-wrap items-center gap-4 px-5 py-2.5 text-[12px] text-muted;
+    border-top: 1px solid var(--palette-line);
   }
   .cmdk-foot span { @apply inline-flex items-center gap-1; }
+  .cmdk-foot kbd { @apply font-mono text-[12px] text-ink-soft; }
 }
 
 /* ===========================================================================
