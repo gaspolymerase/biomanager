@@ -465,14 +465,17 @@ from and what was made from it, with a family tree. **Assemble a
 plasmid** builds the next one from the ones you have: fill a tray with
 fragments — a whole plasmid, one feature, a region, or a piece an enzyme
 leaves — and put them together by **digest and ligation**, by **Gibson /
-NEBuilder HiFi**, or by **Golden Gate**. Every junction shows its own
-bases, and one line says what is wrong and which end it is ("Fragment 2's
-3′ end has no overlap with fragment 3") before you make anything. The
-product arrives as an ordinary plasmid, with every fragment's features at
-their new places, each fragment marked on its map, **Made from** filled in
-for all of them, and — for a Gibson — the primers it needs designed,
-costed by melting temperature and waiting in the Primers database to
-order. Primers, glycerol stocks and viruses each name the plasmid they came
+NEBuilder HiFi**, by **In-Fusion**, or by **Golden Gate**. Every junction
+shows its own bases, and one line says what is wrong and which end it is
+("Fragment 2's 3′ end has no overlap with fragment 3") before you make
+anything. The product arrives as an ordinary plasmid, with every fragment's
+features at their new places, each fragment marked on its map, **Made from**
+filled in for all of them, and — for a Gibson or In-Fusion — the primers it
+needs designed, costed by melting temperature and waiting in the Primers
+database to order. **Gateway** is there too: pick an attB or attL plasmid
+and its attP or attR partner, and BP or LR makes the entry or expression
+clone, moving the gene onto the other's backbone, converting the att sites
+and removing the ccdB cassette — both parents kept under **Made from**. Primers, glycerol stocks and viruses each name the plasmid they came
 from, so they are tabs of one area rather than four entries in the
 sidebar: **Molecular biology**, called just **Plasmids** while the lab
 has none of them. The **Feature library**

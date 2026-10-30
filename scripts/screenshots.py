@@ -43,6 +43,10 @@ DESKTOP = [
                                                     ("run", "window.BioSeqViewer.select(930, 930)"),
                                                     "[data-pop-mutate]", ("fill", "[data-mut-protein]", "K80A")]),
     ("plasmid-primers", "/plasmid/2", "light", ['.plasmid-tab[data-tab="primers"]', '.ppr-table tr:has-text("CAG-F") [data-pick]', '.ppr-table tr:has-text("bGH-R") [data-pick]']),
+    # Gateway BP: the attB gene and the pDONR picked, by their names.
+    ("plasmid-gateway", "/plasmids/assembly?method=gateway", "light",
+     [("run", "(function(){function pick(s,t){for(var o of s.options){if(o.textContent.indexOf(t)>=0){s.value=o.value;s.dispatchEvent(new Event('change',{bubbles:true}));return;}}}"
+              "pick(document.querySelector('[data-gw-a]'),'attB-Rab5a');pick(document.querySelector('[data-gw-b]'),'pDONR221');})()")]),
     ("orders", "/orders", "light", "[data-layout=board]"),
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),

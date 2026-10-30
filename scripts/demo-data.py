@@ -433,6 +433,43 @@ sam.post(f"/plasmids/{pcag}/parents", data={
     "method": "digest_ligate"})
 
 
+# A Gateway pair, so Assemble a plasmid → Gateway has something to recombine:
+# an attB-flanked gene and a pDONR (attP–ccdB–attP). BP makes an entry clone.
+def att_plasmid(name: str, s1: str, mid: str, mid_name: str, mid_kind: str, s2: str) -> None:
+    import random
+    from app.gateway import ATT_SEQUENCES as ATT
+    rnd = random.Random(sum(ord(c) for c in name))
+    fill = lambda n: "".join(rnd.choice("ACGT") for _ in range(n))
+    pre, post = fill(700), fill(900)
+    seq = pre + ATT[s1] + mid + ATT[s2] + post
+    p = len(pre)
+    feats = [("protein_bind", p + 1, p + len(ATT[s1]), s1, 1)]
+    p += len(ATT[s1])
+    feats.append((mid_kind, p + 1, p + len(mid), mid_name, 1))
+    p += len(mid)
+    feats.append(("protein_bind", p + 1, p + len(ATT[s2]), s2, 1))
+    feats += [("CDS", len(seq) - 650, len(seq) - 40, "KanR", -1)]
+    lines = [f"LOCUS       {name:<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             f"DEFINITION  {name} (demo).", "FEATURES             Location/Qualifiers"]
+    for kind, a, b, label, strand in feats:
+        loc = f"{a}..{b}" if strand == 1 else f"complement({a}..{b})"
+        lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
+    lines.append("ORIGIN")
+    for i in range(0, len(seq), 60):
+        lines.append(f"{i + 1:>9} " + " ".join(seq[j:j + 10] for j in range(i, min(i + 60, len(seq)), 10)).lower())
+    lines.append("//")
+    PLASMIDS.append(name)
+    sam.post("/plasmids", data={"name": name, "count": "1", "box_id": str(box), "position": f"B{len(PLASMIDS)}"})
+    rid = one("select id from plasmids where name=?", name)
+    sam.post(f"/plasmids/{rid}/upload-sequence", data={"sequence_text": "\n".join(lines)})
+
+
+att_plasmid("attB-Rab5a", "attB1", "ATG" + "".join(__import__("random").Random(1).choice("ACGT") for _ in range(648)),
+            "Rab5a", "CDS", "attB2")
+att_plasmid("pDONR221", "attP1", "".join(__import__("random").Random(2).choice("ACGT") for _ in range(1100)),
+            "ccdB", "CDS", "attP2")
+
+
 
 def ab1(bases: str, quality: list[int], seed: int) -> bytes:
     """A made-up ABI chromatogram: a peak for each called base in its dye's

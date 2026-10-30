@@ -144,7 +144,7 @@
         冻存盒里哪一管才是对的，以及文件里的序列和管子里的序列是不是同一个。
         这些页面把整个闭环放在一处，而不是散在 SnapGene 文件、引物表格和一张冻存盒示意图之间。</p>
       <table class="gtable">
-        <tr><th>设计</th><td><b>组装质粒</b> 用你已有的质粒拼出下一个——酶切连接、Gibson 或 Golden Gate——
+        <tr><th>设计</th><td><b>组装质粒</b> 用你已有的质粒拼出下一个——酶切连接、Gibson、In-Fusion、Golden Gate 或 Gateway——
           产物会记下它由什么构建而来，于是一年后回答这个问题的是家族树，而不是你的记忆。</td></tr>
         <tr><th>需要的引物</th><td>向导设计的引物，以及你自己在图谱上画的引物，都会进入实验室的 <b>引物</b> 数据库，
           状态是<i>待订购</i>，旁边写着对应的质粒。勾选后用 <b>复制以订购</b>，就能把清单交给公司——在此之前，<b>查找已有引物</b> 会先列出实验室已有、能结合的引物。</td></tr>
@@ -217,10 +217,11 @@
       </ul>
       <h2 id="building">构建新质粒</h2>
       <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 组装质粒</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/assembly.webp" data-clip-src="../../assets/clips/assembly"></video></div></figure>
+      <figure class="gshot"><a href="../../assets/screenshots/plasmid-gateway.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-gateway.webp" alt="Gateway：attB 基因和 pDONR 做出入门克隆，并去掉 ccdB" loading="lazy" width="2000" height="1250"></a><figcaption>Gateway BP：入门克隆</figcaption></figure>
       <ul>
         <li><b>组装质粒</b> （Assemble a plasmid，在质粒页顶部或任意图谱的编辑器上方）用现有的质粒搭出下一个质粒。
           在片段列表里按拼接顺序添加片段——整条质粒、它的某个特征、两个碱基之间的一段区域，或某个酶切后的片段——
-          任何一个都可以反向，然后用三种方式组装：<b>酶切连接</b> （用同样的酶切开，让黏性末端彼此配对）、<b>Gibson / NEBuilder HiFi</b> （相邻片段在接口处共用二十来个碱基；向导会设计补上这段同源的引物，并算出各自的 Tm）
+          任何一个都可以反向，然后用四种方式组装：<b>酶切连接</b> （用同样的酶切开，让黏性末端彼此配对）、<b>Gibson / NEBuilder HiFi</b> （相邻片段在接口处共用二十来个碱基；向导会设计补上这段同源的引物，并算出各自的 Tm）、<b>In-Fusion</b> （同样的做法，用 Takara 试剂盒的 15 碱基较短末端，载体是切开而非扩增）
           或 <b>Golden Gate</b> （BsaI、BsmBI、BbsI 在识别位点之外切开，所以每个接口都是你选定的四碱基突出端）。
           酶切时只列出在这条质粒上真正有位点的酶，并标明各有几个位点、单切点的排在前面；
           选中的片段会画在它来源质粒的环形图上，让你在取用之前就看清切出来的是哪一段。
@@ -231,6 +232,11 @@
           每个片段都标在图谱上，便于看清接口；所有来源质粒连同用到的酶和坐标都写进 <b>来源质粒</b>，<b>版本</b> 里有它的第一条记录；如果勾选，还会标出元件库里的元件。
           Gibson 的引物会保存到<a href="samples-and-orders.html">引物</a>数据库并标为<i>待订购</i>，
           同时画在各自扩增的那条质粒的图谱上，这样 <b>复制以订购</b> 也会一并带上它们。</li>
+        <li><b>Gateway</b> 是组装质粒的最后一个标签，它重组的是两条完整质粒，而不是片段列表。
+          选带有基因的那条（BP 用 <b>attB</b> 位点，LR 用 <b>attL</b>）和它的搭档（带 <b>attP</b> 的 pDONR，或带 <b>attR</b> 的目的载体）：
+          BP 得到入门克隆、LR 得到表达克隆，把基因接到搭档的骨架上，att 位点随之变成产物的（attL 或 attB）和副产物的（attR 或 attP），
+          并去掉搭档带的 ccdB 盒。创建之前你可以看到产物的图谱和被去掉的东西，<b>重组</b> 会把两条质粒都记进 <b>来源质粒</b>。
+          att 位点是从每条质粒自己的图谱上读出来的，所以把它们保存在 <b>元件库</b> 里。</li>
         <li>在图谱上画的引物（选中碱基后用 <b>Edit → Create → Primer</b>）也会保存到实验室的
           <a href="samples-and-orders.html">引物</a>数据库，状态为<i>待订购</i>，<b>质粒</b> 一列填着这个质粒。
           序列标签页上的 <b>引物</b> 卡片列出这个质粒的所有引物、各自的结合位置和 5′ 端尾巴；勾选几条后，<b>复制以订购</b> （每行一条名称和序列，可直接粘贴到公司的下单页面）或 <b>导出订购表</b> （CSV）。</li>

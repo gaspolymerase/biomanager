@@ -375,11 +375,12 @@ def released(fragments: list[Fragment], enzyme_name: str) -> list[Fragment]:
 # Putting the pieces together
 # ---------------------------------------------------------------------------
 
-METHODS = ("digest_ligate", "gibson", "golden_gate")
+METHODS = ("digest_ligate", "gibson", "infusion", "golden_gate")
 
 MIN_OVERLAP = 15           # shorter than this and a match is chance, not homology
 MAX_OVERLAP = 60
 ARM = 25                   # the homology a designed Gibson primer carries
+INFUSION_ARM = 15          # In-Fusion's is shorter: 15 bases, as Takara has it
 ANNEAL_MIN, ANNEAL_MAX = 18, 32
 TARGET_TM = 60.0
 
@@ -562,8 +563,10 @@ def golden_gate(fragments: list[Fragment], circular: bool = True, enzyme: str = 
 
 
 def assemble(method: str, fragments: list[Fragment], circular: bool = True, **kwargs) -> dict:
-    """Whichever of the three the wizard is on."""
-    if method == "gibson":
+    """Whichever of the four the wizard is on. In-Fusion is Gibson's overlap
+    assembly: it is told apart only by the shorter homology its designed
+    primers carry (design_gibson_primers' arm)."""
+    if method in ("gibson", "infusion"):
         return gibson(fragments, circular, design=kwargs.get("design", False))
     if method == "golden_gate":
         return golden_gate(fragments, circular, enzyme=kwargs.get("enzyme", "BsaI"))

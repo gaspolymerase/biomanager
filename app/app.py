@@ -442,6 +442,9 @@ app.register_blueprint(sequence_routes.bp)
 # Site-directed mutagenesis from the Sequence tab (app/mutagenesis_routes.py).
 from . import mutagenesis_routes  # noqa: E402
 app.register_blueprint(mutagenesis_routes.bp)
+# Gateway BP/LR in Assemble a plasmid (app/gateway_routes.py).
+from . import gateway_routes  # noqa: E402
+app.register_blueprint(gateway_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
@@ -8434,6 +8437,7 @@ def _parent_role_label(role: str) -> str:
 
 def _parent_method_label(method: str) -> str:
     return {"digest_ligate": gettext("Digest and ligate"), "gibson": gettext("Gibson / HiFi assembly"),
+            "infusion": gettext("In-Fusion"),
             "golden_gate": gettext("Golden Gate"), "pcr": gettext("PCR"), "mutagenesis": gettext("Mutagenesis"),
             "gateway": gettext("Gateway"), "synthesis": gettext("Synthesised"), "other": gettext("Other")}.get(method, "")
 

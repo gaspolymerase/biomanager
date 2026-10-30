@@ -19,7 +19,7 @@ from sqlalchemy import delete, select
 from .models import PlasmidParent, PlasmidRecord
 
 ROLES = ("backbone", "insert", "template", "donor", "other")
-METHODS = ("", "digest_ligate", "gibson", "golden_gate", "pcr", "mutagenesis", "gateway", "synthesis", "other")
+METHODS = ("", "digest_ligate", "gibson", "infusion", "golden_gate", "pcr", "mutagenesis", "gateway", "synthesis", "other")
 TREE_DEPTH = 4
 
 

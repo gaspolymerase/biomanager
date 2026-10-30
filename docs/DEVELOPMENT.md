@@ -1725,10 +1725,12 @@ crossing the origin keeps `start > end`.
   that already share 15–60 bases where they meet, and designs the primers
   that add that homology where they do not (`design_gibson_primers`, a 25
   base 5′ arm copied from the neighbour plus what anneals, sized to 60 °C
-  by `inventory_service.primer_tm`); **Golden Gate** takes the pieces a
-  Type IIS enzyme releases (`released`: the ones its site has left) and
-  refuses an overhang used twice, one that is another's reverse complement,
-  or one that reads the same on both strands.
+  by `inventory_service.primer_tm`); **In-Fusion** is the same overlap
+  assembly told apart only by its shorter designed arm (`INFUSION_ARM`,
+  15 bases), with the vector a cut fragment that gets no primer; **Golden
+  Gate** takes the pieces a Type IIS enzyme releases (`released`: the ones
+  its site has left) and refuses an overhang used twice, one that is
+  another's reverse complement, or one that reads the same on both strands.
   A cut is `(at, overhang)` — the bond the top strand breaks at, and how
   far the other strand's nick is from it, signed — and a fragment keeps its
   top strand between two such nicks with each end's overhang written as the
@@ -1758,6 +1760,22 @@ crossing the origin keeps `start > end`.
   through `save_primer` against the plasmid each amplifies and are drawn on
   that plasmid's map where `binding_sites` says they bind (`how="primers"`);
   a map that is not yours to edit keeps the records but not the drawing.
+- **Gateway** (`app/gateway.py` pure, `app/gateway_routes.py`,
+  `static/gateway.js`), a method in the same wizard but its own panel
+  because it recombines two whole plasmids, not a tray. att sites are read
+  from each plasmid's own annotations (`att_sites`: features named
+  `attB1`…`attR2`); `reaction_of` sees BP (a B molecule with a P) or LR (an
+  L with an R). The insert donor's stretch between its two att sites (the
+  gene) goes onto the other's backbone, each junction spliced at the core
+  the two att sites of a number share (`_longest_common`, ≥ `MIN_CORE`), so
+  it reads through with no seam whatever the exact arms in hand; the sites
+  are relabelled by `REACTIONS` (B+P→L on the product and R on the
+  byproduct; L+R→B and P). `recombine` returns the product, the byproduct
+  and what the reaction removed (a ccdB cassette). `/plasmids/assembly/
+  gateway/preview` answers two plasmid numbers with both products, and
+  **Recombine** makes the entry or expression clone, `add_parent` for each
+  parent (method `gateway`), version `how="assembly"`. `ATT_SEQUENCES` holds
+  canonical att sites for the Feature library and the demo lab.
 - **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
   `services.save_uploaded_file` into the uploads folder, with `kind` from

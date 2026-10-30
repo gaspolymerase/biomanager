@@ -22,5 +22,11 @@
   "cuts at %(at)s": "切点在 %(at)s",
   "%(n)s of them cut this plasmid": "其中 %(n)s 种能切这条质粒",
   "no enzyme in the list cuts this plasmid": "列表里没有能切这条质粒的酶",
-  "of %(n)s bp": "共 %(n)s bp"
+  "of %(n)s bp": "共 %(n)s bp",
+  "Working it out…": "正在计算…",
+  "entry clone": "入门克隆",
+  "expression clone": "表达克隆",
+  "%(reaction)s makes the %(kind)s: %(insert)s on %(backbone)s’s backbone.": "%(reaction)s 得到%(kind)s：%(insert)s 接到 %(backbone)s 的骨架上。",
+  "Removed: %(what)s.": "去掉了：%(what)s。",
+  "Byproduct: %(n)s bp with att%(t)s sites.": "副产物：%(n)s bp，带 att%(t)s 位点。"
 }
