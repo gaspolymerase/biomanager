@@ -34,10 +34,11 @@
     const large = (a1 - a0) % TAU > Math.PI ? 1 : 0;
     return `M${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 ${large} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`;
   }
-  // A feature as a thick arc with an arrowhead at its 3′ end.
+  // A feature as a thick arc with an arrowhead at its 3′ end. Its start
+  // and end are 0-based with the end included, as the plasmid keeps them.
   function featureArc(cx, cy, r, w, f, length) {
     const start = Number(f.start) || 0;
-    let end = Number(f.end) || 0;
+    let end = (Number(f.end) || 0) + 1;
     if (end <= start) end += length;
     let a0 = angle(start, length);
     let a1 = angle(end, length);
@@ -79,9 +80,9 @@
     const r = size * 0.3;
     const out = [`<svg class="pmap" viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" role="img" aria-label="${esc(o.title || '')}">`];
     out.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" class="pmap-backbone"/>`);
-    // Ticks inside every 1 kb (or 500 bp on a small plasmid).
+    // Ticks inside every 1 kb (or 500 bp on a small plasmid); a small map has none.
     const step = length > 12000 ? 2000 : length > 3000 ? 1000 : 500;
-    for (let bp = step; bp < length; bp += step) {
+    for (let bp = step; !o.mini && bp < length; bp += step) {
       const a = angle(bp, length);
       const [x0, y0] = point(cx, cy, r - 9, a);
       const [x1, y1] = point(cx, cy, r - 4, a);
@@ -103,14 +104,14 @@
       out.push(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${Math.cos(mid) > 0.25 ? 'start' : Math.cos(mid) < -0.25 ? 'end' : 'middle'}" class="pmap-piece-text pmap-piece-${i % 4}">${num(piece.length)} bp</text>`);
     });
     // Features.
-    const feats = (o.features || []).filter((f) => Number(f.end) !== Number(f.start));
+    const feats = (o.features || []).filter((f) => f.name || Number(f.end) > Number(f.start));
     feats.forEach((f) => {
-      out.push(`<path d="${featureArc(cx, cy, r, 11, f, length)}" class="pmap-f pmap-f-${kind(f)}"><title>${esc(f.name)}</title></path>`);
+      out.push(`<path d="${featureArc(cx, cy, r, o.mini ? size * 0.09 : 11, f, length)}" class="pmap-f pmap-f-${kind(f)}"><title>${esc(f.name)}</title></path>`);
     });
     // Feature labels, when asked.
     if (o.labels) {
       const items = feats.map((f) => {
-        let end = Number(f.end);
+        let end = Number(f.end) + 1;
         if (end <= Number(f.start)) end += length;
         return { text: f.name, a: angle((Number(f.start) + end) / 2, length), cls: kind(f) };
       });
@@ -135,7 +136,7 @@
       out.push(`<text x="${x.toFixed(1)}" y="${(c.y + 4).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}" class="pmap-cut-text"><tspan class="pmap-cut-name">${esc(c.enzyme)}</tspan> ${num(c.at)}</text>`);
     });
     if (o.title) out.push(`<text x="${cx}" y="${cy - 2}" text-anchor="middle" class="pmap-title">${esc(o.title)}</text>`);
-    out.push(`<text x="${cx}" y="${cy + 18}" text-anchor="middle" class="pmap-sub">${esc(o.subtitle || `${num(length)} bp`)}</text>`);
+    if (!o.mini) out.push(`<text x="${cx}" y="${cy + 18}" text-anchor="middle" class="pmap-sub">${esc(o.subtitle || `${num(length)} bp`)}</text>`);
     out.push('</svg>');
     return out.join('');
   }

@@ -504,6 +504,21 @@ for clone, reads in (
     if clone == "3":
         sam.post(f"/plasmids/{pcag}/clones/{one('select id from plasmid_clones where name=?', '3')}/accept")
 
+# The lab's primers, a few of which bind pCAG-EGFP: its Primers tab finds
+# them (CMV-F with two mismatches away from its 3′ end).
+def revcomp(text: str) -> str:
+    return text.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+
+cmv = list(demo_seq[300:321])
+cmv[2], cmv[6] = ("A" if cmv[2] != "A" else "C"), ("G" if cmv[6] != "G" else "T")
+PRIMERS = [("CAG-F", demo_seq[540:560], "forward", "sequencing", "Primer box 2 · B4"),
+           ("EGFP-N", revcomp(demo_seq[790:810]), "reverse", "sequencing", "Primer box 2 · C1"),
+           ("EGFP-C", demo_seq[1330:1350], "forward", "sequencing", "Primer box 2 · C2"),
+           ("bGH-R", revcomp(demo_seq[1520:1540]), "reverse", "sequencing", "Primer box 1 · F7"),
+           ("CMV-F", "".join(cmv), "forward", "PCR", "Primer box 1 · A3"),
+           ("AmpR-F", demo_seq[3000:3020], "forward", "PCR", "Primer box 1 · B2")]
+
 # ------------------------------------------------------------------ inventories
 
 
@@ -554,6 +569,12 @@ for name, cat, box_pos in (("EcoRI-HF", "R3101S", "door, row 1"), ("NotI-HF", "R
                                                          "quantity": "1", "unit": "tube", "is_shared": "1",
                                                          "location_note": f"−20 °C freezer, {box_pos}",
                                                          "attr_storage_temp": "−20 °C", "attr_hazard": "none"})
+
+primers_db = keys_of("primers") or module("primers", "Primers & oligos")
+for name, seq, direction, use, where in PRIMERS:
+    sam.post(f"/inventory/{primers_db}/items/save", data={"id": "", "name": name, "status": "in stock", "category": use,
+                                                          "attr_sequence": seq, "attr_direction": direction,
+                                                          "vendor": "IDT", "is_shared": "1", "location_note": where})
 
 antibodies = keys_of("antibodies") or module("antibodies", "Antibodies")
 for name, host, dil, vendor, cat in (

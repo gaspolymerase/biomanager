@@ -87,6 +87,8 @@ def view(row_id: int):
         circular = bool(p.is_circular)
         features = _features(p)
         primers = lab_primers(session, p)
+        from .clone_routes import sequence_next
+        next_reads = sequence_next(session, p) if seq else None
     if not seq:
         return jsonify({"ok": False, "error": gettext("This plasmid has no sequence yet.")}), 400
     cutters = [{"name": r["name"], "cut": r["sites"][0]["cut"]} for r in digest.enzyme_table(seq, circular)
@@ -99,17 +101,17 @@ def view(row_id: int):
             start, end, direction = int(f.get("start", 0)), int(f.get("end", 0)), int(f.get("direction", f.get("strand", 1)) or 1)
         except (TypeError, ValueError):
             continue
-        bases = seq[start:end] if end > start else seq[start:] + seq[:end]
+        bases = seq[start:end + 1] if end >= start else seq[start:] + seq[:end + 1]
         if direction < 0:
             bases = primer_records.reverse_complement(bases)
-        proteins.append({"feature": i, "name": f.get("name", ""), "start": start + 1, "end": end,
+        proteins.append({"feature": i, "name": f.get("name", ""), "start": start + 1, "end": end + 1,
                          "direction": direction, **protein.about(bases)})
     return jsonify({
         "ok": True, "length": len(seq), "circular": circular, "sequence": seq,
         "features": [{"name": f.get("name", ""), "type": f.get("type", ""), "start": f.get("start", 0),
                       "end": f.get("end", 0), "direction": f.get("direction", f.get("strand", 1))} for f in features],
         "cutters": cutters, "primers": primers, "proteins": proteins,
-        "orfs": protein.orfs(seq, circular)[:20],
+        "orfs": protein.orfs(seq, circular)[:20], "next": next_reads,
     })
 
 
@@ -121,7 +123,7 @@ def _suggest_name(p: PlasmidRecord, features: list[dict], start: int, direction:
             fs, fe = int(f.get("start", 0)), int(f.get("end", 0))
         except (TypeError, ValueError):
             continue
-        if fs < start <= fe and f.get("name"):
+        if fs + 1 <= start <= fe + 1 and f.get("name"):
             inside = (f, fs, fe)
             break
     end = "F" if direction > 0 else "R"
@@ -229,7 +231,7 @@ def pcr(row_id: int):
             except (TypeError, ValueError):
                 continue
             a = product["start"] - 1
-            if (fs - a) % len(seq) + (fe - fs) <= product["template_length"] and f.get("name"):
+            if (fs - a) % len(seq) + (fe - fs) % len(seq) < product["template_length"] and f.get("name"):
                 holds.append(f["name"])
         backbone = _backbone(session, p)
         empty = None

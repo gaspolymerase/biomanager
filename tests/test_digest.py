@@ -56,7 +56,7 @@ class Cutting(unittest.TestCase):
         self.assertEqual(digest.cut_positions(seq, False, ["EcoRI"]), [])
 
     def test_a_piece_holds_the_features_wholly_inside_it(self):
-        features = [{"name": "Insert", "start": 1006, "end": 1706}, {"name": "Across", "start": 900, "end": 1100}]
+        features = [{"name": "Insert", "start": 1006, "end": 1705}, {"name": "Across", "start": 900, "end": 1100}]
         pieces = digest.pieces(len(PLASMID), True, digest.cut_positions(PLASMID, True, ["EcoRI", "NotI"]), features)
         self.assertEqual(pieces[0].holds, ["Insert"])
 

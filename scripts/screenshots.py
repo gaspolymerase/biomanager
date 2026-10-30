@@ -34,6 +34,11 @@ DESKTOP = [
     ("fly-stocks", "/stocks/drosophila", "light", None),
     ("fly-grid", "/stocks/drosophila", "light", "[data-layout=grid]"),
     ("plasmid-map", "/plasmids/2", "light", None),
+    # Its EGFP, clicked on Overview: the sequence there, with the protein beside it.
+    ("plasmid-sequence", "/plasmid/2#egfp", "light", 'tr[data-feature-go^="693-"]'),
+    ("plasmid-digest", "/plasmid/2", "light", '.plasmid-tab[data-tab="digest"]'),
+    ("plasmid-verify", "/plasmid/2", "light", '.plasmid-tab[data-tab="verify"]'),
+    ("plasmid-primers", "/plasmid/2", "light", ['.plasmid-tab[data-tab="primers"]', '.ppr-table tr:has-text("CAG-F") [data-pick]', '.ppr-table tr:has-text("bGH-R") [data-pick]']),
     ("orders", "/orders", "light", "[data-layout=board]"),
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),

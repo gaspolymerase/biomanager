@@ -8587,6 +8587,11 @@ def plasmids():
         records = db_session.scalars(select(PlasmidRecord).order_by(PlasmidRecord.plasmid_id.desc())).all()
         boxes = pbox.all_boxes(db_session)
         box_by_id = {b.id: b for b in boxes}
+        # Each plasmid's newest accepted clone, for the List's cards (app/clone_routes.py).
+        from .models import PlasmidClone
+        verified_at = dict(db_session.execute(select(PlasmidClone.plasmid_row_id, func.max(PlasmidClone.accepted_at))
+                                              .where(PlasmidClone.accepted_at.is_not(None))
+                                              .group_by(PlasmidClone.plasmid_row_id)).all())
         rows = []
         for p in records:
             editable = access.can_edit(p)
@@ -8597,6 +8602,8 @@ def plasmids():
                 "where": _plasmid_where(p, box),
                 "length": len(p.full_sequence or ""),
                 "payload": _plasmid_payload(p, box, editable),
+                "mini": _mini_map(p),
+                "verified": fmt_day(local_time(verified_at[p.id])) if p.id in verified_at else "",
             })
         next_id = _next_plasmid_id(db_session)
         usernames = current_lab_usernames(db_session)
@@ -10119,6 +10126,18 @@ def _editor_annotations(stored: list) -> dict[str, list]:
                 item[extra] = f[extra]
         groups[group].append(item)
     return groups
+
+
+def _mini_map(p) -> list:
+    """A plasmid's features, as little as its small map in the List needs."""
+    if not p.full_sequence or not p.features_json:
+        return []
+    try:
+        stored = json.loads(p.features_json)
+    except json.JSONDecodeError:
+        return []
+    return [{"start": f.get("start", 0), "end": f.get("end", 0), "type": f.get("type", ""), "name": f.get("name", ""),
+             "direction": f.get("direction", 1)} for f in _features_only(stored)][:40]
 
 
 def _features_only(stored: list) -> list:

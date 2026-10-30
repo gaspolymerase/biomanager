@@ -1763,7 +1763,8 @@ crossing the origin keeps `start > end`.
   carries them under `plasmids/<n>-<name>-files/`. Row ids without foreign
   keys, as for versions.
 - **Verify sequencing** (`app/seqverify.py`, pure; `static/seq-verify.js`
-  draws it): Sanger reads checked against the map. `read_file` takes an
+  draws its map strip and small traces, for the Verify tab too): Sanger
+  reads checked against the map. `read_file` takes an
   ABI chromatogram (ABIF: the 128-byte header's root entry points at a
   directory of 28-byte entries, data of 4 bytes or less sitting in the
   offset field; PBAS2/PCON2, else PBAS1/PCON1; a MacBinary header is
@@ -1783,8 +1784,8 @@ crossing the origin keeps `start > end`.
   (the standard code, `CODE`) or a frameshift / in-frame indel. An .ab1's
   trace (`_abif_trace`: DATA9–12 in FWO_'s order, PLOC2 peaks, kept only
   when they line up with the bases) gives each difference a `trace`
-  (`trace_window`: ±`TRACE_FLANK` bases, at most `TRACE_POINTS` samples a
-  dye) and the read a `mixed` when `second_peaks` (another dye at
+  (`trace_window`: ±`TRACE_FLANK` bases, or the `flank` asked for, at most
+  `TRACE_POINTS` samples a dye for the usual flank) and the read a `mixed` when `second_peaks` (another dye at
   `MIXED_RATIO` of the called one) marks `MIXED_SHARE` of its good bases,
   with `from_read`/`from_plasmid` when `mixed_from` finds them starting at
   one place; the API and the assistants get the report `without_traces`
@@ -1800,6 +1801,67 @@ crossing the origin keeps `start > end`.
   `verify_sequencing`, which sends capture ids (an `.ab1` capture is
   `application/x-abi`, kept as it is; `get_capture` only says what it is)
   or text reads.
+- **The plasmid page's tabs.** Overview · Sequence · Digest · Verify ·
+  Primers · Storage · Properties, each a `plasmid-tab-panel`; the app draws
+  the plasmid itself (`static/plasmid-map.js`: `BioPlasmidMap.circular`
+  for the maps, labelled on Overview, small in the List, with cuts and
+  pieces on Digest; `BioPlasmidMap.gel` for the gel; colours from
+  `static/plasmid.css`, the gel dark in both themes). Open Vector Editor
+  stays for editing, in the Sequence tab's **Edit the sequence…** fold.
+  Stored features are 0-based with the end included.
+  - **Overview** (`static/plasmid-overview.js`): the labelled map from the
+    page's own features, saved as SVG (computed styles written in) or a
+    3× PNG; the plasmid's facts; a feature row opens Sequence on it
+    (`BioSeqViewer.select`).
+  - **Sequence** (`static/seq-viewer.js`, `app/sequence_routes.py`):
+    `view.json` gives the bases, features, single cutters
+    (`digest.enzyme_table`), the lab's primers (`lab_primers`:
+    `primer_design.binding` with up to two mismatches, the 3′
+    `ANCHOR` bases pairing), each CDS's protein (`protein.about`) and the
+    ORFs of 100 codons or more (`protein.orfs`). Rows are laid out first
+    (bases per row from the measured width of the mono font) and drawn as
+    SVG when they scroll near (IntersectionObserver); a ResizeObserver lays
+    them out again. Dragging picks a stretch; `primer-check` checks it as
+    a primer (`primer_design.check`: Tm by the Primers database's nearest
+    neighbours, GC, clamp, hairpin and self-dimer ΔG from the same table,
+    sites) with the lab's same or nearby primers and a name
+    (`_suggest_name`), and `primers/new` saves it through
+    `primer_records.save_primer` and `derive_primer`.
+  - **Digest** (`app/digest.py` pure, `app/digest_routes.py`,
+    `static/plasmid-digest.js`): `digest.json?enzymes=&agarose=&ladder=
+    &methylated=&lane=` answers the cuts (`cut_positions`, the cut written
+    as the top-strand base it follows), the pieces and the features wholly
+    in each, the gel (`position`: log size over each agarose's range,
+    bunching beyond it; `bands` merges pieces closer than `ONE_BAND`;
+    brightness by mass; the uncut plasmid supercoiled at 0.68× and nicked
+    at 1.7×), notes, and `suggest`: one or two enzymes of 1–3 cuts leaving
+    2–4 pieces at least `WELL_APART`, scored for the freezer
+    (`in_freezer`, the lab's Reagents names: EcoRI-HF counts), fewer
+    enzymes and, when Made from names a backbone with a sequence
+    (`_backbone`), a pattern unlike its own. Methylation: Dam's adenine in
+    GATC and Dcm's inner cytosine in CCWGG, on either strand, block the
+    sites of `DAM_BLOCKED` / `DCM_BLOCKED` enzymes they fall in. Kept
+    lanes, agarose and ladder are per plasmid in localStorage; a lane may
+    be `pcr:<bp>:<label>` (`BioDigest.addLane`, from the Primers tab).
+  - **Verify** (`app/clone_routes.py`, `plasmid_clones`, revision 0053,
+    `static/plasmid-verify.js`): reads are grouped by the clone their file
+    names (`clone_of`: `C4_…`, `clone3-…`, `colony 2 …`), else the next
+    number or the one typed, checked by `seqverify.verify` with a
+    `TRACE_FLANK` of 20, kept as `plasmid_files` (notes: the clone) and
+    remembered as a `PlasmidClone` (status, verdict, the report without
+    traces, its file ids; a clone sequenced again is checked with all its
+    reads). Opening one checks its kept files again, so its traces come
+    back. **Accept** sets `accepted_at`; `verified()` is the newest
+    accepted, shown in the header, on Overview and in the List. Someone
+    who may only view the plasmid checks without keeping. The older
+    `POST /plasmids/<id>/verify` stays for the API and the assistants.
+  - **Primers** (`static/plasmid-primers.js`): `view.json`'s primers on a
+    strip and in a list (exact, or with mismatches); an F and an R make
+    `pcr.json` (`primer_design.pcr`: the nearest facing pair, tails
+    included; what the backbone gives; anneal at the lower Tm − 3, extend
+    at 1 kb/min), sent to the gel as a lane. `sequence_next` names the lab
+    primers either side of the insert (the longest CDS that isn't a
+    resistance gene).
 - **One area, four tabs:** `PLASMID_TAB_KINDS` (primers, glycerol_stocks,
   viruses) are left out of the sidebar rail by `_inventory_module_links`
   and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,

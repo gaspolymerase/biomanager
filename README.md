@@ -74,7 +74,7 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🪰 | [**Drosophila & C. elegans**](#-drosophila-and-c-elegans) | Vials and plates, crosses, and temperature-aware flip schedules |
 | 🌱 | [**Plants and field crops**](#-plants-and-field-crops) | Sowings, trays or plots, harvests kept as seed lots and sown again, generations and the 3:1 |
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
-| 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
+| 🧬 | [**Plasmids**](#-plasmids) | Maps, sequences and proteins, virtual digests and gels, primers and PCR, clones checked by sequencing, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
 | 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks, cell lines, or a list of your own |
 | 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols, paper notes and meeting notes |
 
@@ -412,15 +412,47 @@ two buttons beside its name: **Configure** (for whoever may change it) and
 ### 🧬 Plasmids
 
 Upload a GenBank, FASTA or SnapGene file and BioManager keeps the sequence
-and its features, with an interactive map you can edit. Plasmid boxes sit
+and its features, and draws the plasmid itself: a map, every base, the
+cuts, the gel, the primers and the protein. Plasmid boxes sit
 on the same rack grid as everything else, so every tube has an address.
 Each tube keeps its miniprep's concentration (ng/µL) and 260/280, and a
 plasmid can be **Lab common**: anyone can edit it (or, shared with a
 project group, its members), while its owner still decides whose it is. A plasmid's page lists the notebook pages that
 `@plasmid` it, and its address is its number (plasmid #12 is `/plasmid/12`).
-Show them as a **Table**, by storage **Boxes**, or as a **List**. In the
+Show them as a **Table**, by storage **Boxes**, or as a **List**, where
+each one has its small map and says when it was verified. In the
 sheet, **Sequence** beside a plasmid's number opens its sequence and map
-(**Add sequence** when it has none yet). **Download** gives it as
+(**Add sequence** when it has none yet).
+
+A plasmid's page has seven tabs. **Overview** is its map, ready to
+download as SVG or PNG for a lab meeting or a paper, what it is (backbone,
+resistance, where the tube is, whether a clone was verified, what it was
+made from), and its features; a feature opens the sequence on it.
+**Sequence** shows every base with its complement, the features, the
+enzymes that cut once, the lab's primers as arrows, and the protein under
+each coding sequence (**6 frames** shows every open reading frame of 100
+codons or more instead). Drag across bases and a small bar gives their
+length, Tm and GC: **Forward primer** or **Reverse** checks them as a
+primer (Tm, GC, a G/C clamp, hairpins, self-dimers, whether it binds
+only once, and whether the lab already has one there) and **Save to
+Primers** files it, to order. Click a coding feature for its protein:
+length, mass, pI, extinction coefficient and the amino acids. **Edit the
+sequence, its features and its map** below it opens the editor.
+**Digest** cuts it: tick enzymes (the ones that cut once, twice, or that
+the lab has in its Reagents) and see the cuts on the map, the pieces and
+what each holds, and the gel they would run as, beside a ladder and the
+uncut plasmid, with lanes kept side by side. A suggested check picks
+enzymes whose pieces sit well apart and, when the plasmid was made from
+a backbone, look different from the backbone's. Sites that Dam or Dcm
+methylation blocks in DNA from an ordinary *E. coli* (XbaI next to GATC)
+are drawn uncut and said, and **Put my gel beside it** sets a photo of
+your own gel next to the expected one. **Verify** keeps the clones checked
+by sequencing (below), and **Primers** lists every primer the lab has
+that binds the plasmid, exactly or with up to two mismatches away from
+the 3′ end, on a strip of the plasmid; pick a forward and a reverse one
+for a **PCR**: its product, what it holds, what the backbone would give
+instead (for a colony PCR), and **Put it on the gel** adds it as a lane on
+the Digest tab. **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
@@ -448,9 +480,10 @@ your own files (**Add to library** above a map, or **Read elements from
 files**), and an admin can **Add the common-features pack**, about 1,900
 elements from widely used plasmids, downloaded when asked for. **Files** on its Storage tab keeps
 the sequencing reads, gel photos and datasheets that belong with it, and
-they come along in Export my data. **Verify sequencing**, below the map,
-checks Sanger reads of a miniprep or clone against it: choose the `.ab1`
-chromatograms (or FASTA, or paste the bases) and each read is trimmed of
+they come along in Export my data. The **Verify** tab
+checks Sanger reads of each clone against the map: drop the `.ab1`
+chromatograms (or FASTA, or paste the bases), named by clone like
+`C4_CAG-F.ab1`, and each clone is listed with what its reads showed. Each read is trimmed of
 its poor ends, placed on the map on either strand (across the origin
 too), and compared base by base. You get a line for the clone ("Matches
 the map across 425–1,359, covering EGFP", or "1 difference from the map:
@@ -460,9 +493,13 @@ features it falls in and what it does to a coding sequence's amino acid;
 one at low quality is marked as a likely sequencing error. From an
 `.ab1`, each difference shows its stretch of trace, and a read with
 second peaks under many bases is said to look like a mix of two clones
-(and where they part, when an insertion or deletion splits them). **Keep the
-reads and the result with this plasmid's files** files them under
-**Files**, each noted with what it showed, to check again later. An
+(and where they part, when an insertion or deletion splits them). Opening
+a clone shows where its reads fall and each difference with a wide stretch
+of its trace, the map's base beside the read's, and what it does to the
+protein ("In EGFP, codon 61: CTC → CTT, L → L (silent)"). **Accept** marks
+the plasmid verified with that clone, shown at the top of its page and in
+the list. The reads are kept with the plasmid's **Files**; someone who may
+only view the plasmid can still check reads, and nothing is kept. An
 assistant can do the same with `verify_sequencing`, from reads uploaded
 as captures. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
@@ -475,7 +512,11 @@ tail — and **Show on map** draws them on the map to look at, without
 saving them into it.
 
 <p align="center">
-  <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
+  <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid's Overview: its map, what it is and its features" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/plasmid-digest.webp" alt="The Digest tab: EcoRI and NotI cut out EGFP, and the gel they would run as" width="49%">
+  <img src="docs/screenshots/plasmid-verify.webp" alt="The Verify tab: a clone's reads, a silent change and its trace" width="49%">
 </p>
 
 Every database takes **columns of your own** — *Configure → Your own

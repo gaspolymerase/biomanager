@@ -176,16 +176,17 @@ def _num(feature: dict, key: str) -> int:
 
 
 def _inside(feature: dict, start0: int, length: int, n: int) -> bool:
-    """Whether a feature (0-based start, end exclusive) lies wholly in the
-    piece that starts at `start0` (0-based) and runs `length` bases on."""
+    """Whether a feature (0-based, its end included, as the plasmid keeps
+    them) lies wholly in the piece that starts at `start0` (0-based) and
+    runs `length` bases on."""
     try:
         fs, fe = int(feature.get("start", 0)), int(feature.get("end", 0))
     except (TypeError, ValueError):
         return False
-    if fe <= fs:
+    if fe < fs:
         fe += n                          # a feature across the origin
     a = (fs - start0) % n
-    return a + (fe - fs) <= length
+    return a + (fe - fs) < length
 
 
 def pieces(length: int, circular: bool, cuts: list[tuple[int, str]], features=()) -> list[Piece]:
@@ -207,7 +208,7 @@ def pieces(length: int, circular: bool, cuts: list[tuple[int, str]], features=()
         for (a, left), (b, right) in zip(ends, ends[1:]):
             if b > a:
                 out.append(Piece(a + 1, b, b - a, left, right,
-                                 [f["name"] for f in named if a <= _num(f, "start") and _num(f, "end") <= b]))
+                                 [f["name"] for f in named if a <= _num(f, "start") and _num(f, "end") < b]))
     return out
 
 

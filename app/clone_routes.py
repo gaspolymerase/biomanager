@@ -162,7 +162,7 @@ def sequence_next(session, p: PlasmidRecord) -> dict | None:
     if not inserts or not p.full_sequence:
         return None
     insert = inserts[0]
-    start, end = int(insert.get("start", 0)) + 1, int(insert.get("end", 0))
+    start, end = int(insert.get("start", 0)) + 1, int(insert.get("end", 0)) + 1
     hits = primer_sites(session, p, with_listed=True).get("hits", [])
     before = [h for h in hits if h["strand"] > 0 and start - INSERT_REACH <= h["end"] < start]
     after = [h for h in hits if h["strand"] < 0 and end < h["start"] <= end + INSERT_REACH]
