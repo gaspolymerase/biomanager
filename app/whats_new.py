@@ -30,6 +30,20 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.5.0": {
+        "new": [
+            "Plasmids are drawn by the app: the map, a **Digest** gel, clones checked against their traces under **Verify**, and **Primers** that bind.",
+            "Every sheet can **Save view**, and **Set a field…** works on every column.",
+            "Share a notebook topic with lab mates; ⌘K (Ctrl+K) searches from anywhere.",
+        ],
+        "changed": [
+            "A new look across the app; **Home** opens on a **Daily brief**.",
+            "Meetings live in the calendar, and its **Board** keeps to-dos.",
+        ],
+        "fixed": [
+            "A lab server reached over Tailscale keeps HTTPS working after Tailscale restarts.",
+        ],
+    },
     "2.4.0": {
         "new": [
             "A notebook topic's icon can be any emoji, or an SVG of your own: **Name and icon** → **Emoji** or **SVG**.",
