@@ -324,5 +324,11 @@
   "Plasmid #%(number)s %(name)s made.": "已创建质粒 #%(number)s %(name)s。",
   "Its two primers are in Primers, to order.": "两条引物已放进引物库，待订购。",
   "Site-directed mutagenesis: replace, insert or delete these bases": "定点突变：替换、插入或删除这些碱基",
-  "Change…": "突变…"
+  "Change…": "突变…",
+  "Pick a plasmid to compare with.": "请选一个要比较的质粒。",
+  "Pick a different plasmid.": "请选一个不同的质粒。",
+  "One of the plasmids has no sequence yet.": "其中一个质粒还没有序列。",
+  "Compare with…": "与…比较",
+  "Another plasmid": "另一个质粒",
+  "Choose a plasmid…": "选一个质粒…"
 }

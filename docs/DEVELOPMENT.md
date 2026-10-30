@@ -1836,7 +1836,16 @@ crossing the origin keeps `start > end`.
   - **Overview** (`static/plasmid-overview.js`): the labelled map from the
     page's own features, saved as SVG (computed styles written in) or a
     3× PNG; the plasmid's facts; a feature row opens Sequence on it
-    (`BioSeqViewer.select`).
+    (`BioSeqViewer.select`). **Compare with…** (`app/plasmid_compare.py`,
+    `app/compare_routes.py`) reads this plasmid as a synthetic `Read`
+    against the other's `seqverify.Target`, so the banded local aligner
+    matches them whatever their origins or strand and reports each
+    difference with the feature it hits and its protein effect
+    (`check_read`, reshaped B→A); a net indel wider than the aligner's
+    band shows as the aligned stretch ending early (for near-identical
+    plasmids, every change is caught). `compare.json` and
+    `compare/others.json` serve the Overview card, which draws both rings
+    with the differences marked.
   - **Sequence** (`static/seq-viewer.js`, `app/sequence_routes.py`):
     `view.json` gives the bases, features, single cutters
     (`digest.enzyme_table`), the lab's primers (`lab_primers`:

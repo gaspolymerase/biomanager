@@ -428,6 +428,10 @@ A plasmid's page has seven tabs. **Overview** is its map, ready to
 download as SVG or PNG for a lab meeting or a paper, what it is (backbone,
 resistance, where the tube is, whether a clone was verified, what it was
 made from), and its features; a feature opens the sequence on it.
+**Compare with…** lines it up against another plasmid and lists
+every base that differs, with the feature and protein effect and the two
+maps side by side — which of two near-identical constructs is in the tube,
+and what a colleague's "same plasmid" changed.
 **Sequence** shows every base with its complement, the features, the
 enzymes that cut once, the lab's primers as arrows, and the protein under
 each coding sequence (**6 frames** shows every open reading frame of 100

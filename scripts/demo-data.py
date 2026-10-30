@@ -432,6 +432,32 @@ sam.post(f"/plasmids/{pcag}/parents", data={
     "parent": str(one("select plasmid_id from plasmids where name='pCAGGS'")), "role": "backbone",
     "method": "digest_ligate"})
 
+# A near-identical variant, so Overview → Compare with… has a clean example:
+# pCAG-EGFP with one base changed in EGFP (a point mutation).
+def _variant_genbank() -> str:
+    seq, features = demo_plasmid(insert=True)
+    at = 692 + 3 * 64 + 1                       # the second base of EGFP codon 65
+    seq = seq[:at] + ("c" if seq[at] != "c" else "a") + seq[at + 1:]
+    lines = [f"LOCUS       {'pCAG-EGFP-P65L':<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             "DEFINITION  pCAG-EGFP-P65L (demo).", "FEATURES             Location/Qualifiers"]
+    for kind, start, end, label, strand in features:
+        loc = f"{start}..{end}" if strand == 1 else f"complement({start}..{end})"
+        lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
+    lines.append("ORIGIN")
+    for i in range(0, len(seq), 60):
+        lines.append(f"{i + 1:>9} " + " ".join(seq[j:j + 10] for j in range(i, min(i + 60, len(seq)), 10)))
+    lines.append("//")
+    return "\n".join(lines)
+
+
+PLASMIDS.append("pCAG-EGFP-P65L")
+sam.post("/plasmids", data={"name": "pCAG-EGFP-P65L", "count": "1", "box_id": str(box), "position": f"B{len(PLASMIDS)}"})
+variant = one("select id from plasmids where name='pCAG-EGFP-P65L'")
+sam.post(f"/plasmids/{variant}/upload-sequence", data={"sequence_text": _variant_genbank()})
+sam.post(f"/plasmids/{variant}/parents", data={
+    "parent": str(one("select plasmid_id from plasmids where name='pCAG-EGFP'")), "role": "template",
+    "method": "mutagenesis"})
+
 
 # A Gateway pair, so Assemble a plasmid → Gateway has something to recombine:
 # an attB-flanked gene and a pDONR (attP–ccdB–attP). BP makes an entry clone.

@@ -445,6 +445,9 @@ app.register_blueprint(mutagenesis_routes.bp)
 # Gateway BP/LR in Assemble a plasmid (app/gateway_routes.py).
 from . import gateway_routes  # noqa: E402
 app.register_blueprint(gateway_routes.bp)
+# Compare two plasmids, from the Overview tab (app/compare_routes.py).
+from . import compare_routes  # noqa: E402
+app.register_blueprint(compare_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)

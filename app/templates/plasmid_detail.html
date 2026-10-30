@@ -93,6 +93,18 @@
           {% if plasmid.updated_at %}<dt>{{ _('Changed') }}</dt><dd>{{ plasmid.updated_at }}{% if plasmid.updated_by %} · {{ plasmid.updated_by }}{% endif %}</dd>{% endif %}
         </dl>
       </div>
+      {% if plasmid.length_bp %}
+      <div class="pglass pver-card pov-compare" data-compare
+           data-others="{{ url_for('compare.others', row_id=plasmid.row_id) }}"
+           data-compare-url="{{ url_for('compare.compare', row_id=plasmid.row_id) }}">
+        <div class="pver-head"><h3>{{ _('Compare with…') }}</h3></div>
+        <label class="sr-only" for="pov-compare-pick">{{ _('Another plasmid') }}</label>
+        <select id="pov-compare-pick" class="pov-compare-pick" data-compare-pick>
+          <option value="">{{ _('Choose a plasmid…') }}</option>
+        </select>
+        <div class="pov-compare-out" data-compare-out></div>
+      </div>
+      {% endif %}
       {% if plasmid.features %}
       <div class="pglass pver-card">
         <div class="pver-head"><h3>{{ _('Features') }} <span class="text-muted tabular-nums">{{ plasmid.features|length }}</span></h3></div>

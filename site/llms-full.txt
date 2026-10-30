@@ -902,7 +902,7 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - A plasmid's page has seven tabs: **Overview**, **Sequence**, **Digest**, **Verify**, **Primers**, **Storage** and **Properties**. Its address carries its number: plasmid #12 is `…/plasmid/12`.
 
-- **Overview** is its map, with the features named round it, and **SVG** and **PNG** above it to save the map for a lab meeting or a paper. Beside it: its size, backbone, resistance, owner, where the tube is, whether a clone was verified, what it was made from and what was made from it, and its features; click a feature to see it in the sequence.
+- **Overview** is its map, with the features named round it, and **SVG** and **PNG** above it to save the map for a lab meeting or a paper. Beside it: its size, backbone, resistance, owner, where the tube is, whether a clone was verified, what it was made from and what was made from it, and its features; click a feature to see it in the sequence. **Compare with…** lines this plasmid up against another in the lab and lists every base that differs, the feature it falls in and what it does to a protein — the two maps side by side — so you can tell two near-identical constructs apart or see what a colleague's “same plasmid” actually changed. It matches however the origins sit or whichever strand the other was saved on.
 
 - **Sequence** shows every base, with the complement under it, the features as bars, the enzymes that cut once above it, the lab's primers as arrows (amber when they bind with a mismatch), and the protein of each coding feature under it, a letter under each codon. The chips at the top turn each of these on and off; **6 frames** shows every open reading frame of 100 codons or more on both strands instead of the coding features. Type in **Find** to go to bases (on either strand), a primer, an enzyme or a feature; Enter goes to the next. The bar under it is the whole plasmid: click it to go there.
 
@@ -917,6 +917,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 - On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; **Overview** then shows **Made from** and **Used to make**, and Properties a **Family tree** both ways. **Storage** lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)).
 
 *A plasmid's Overview*
+
+*Compare with…*
 
 *The sequence, with EGFP's protein*
 

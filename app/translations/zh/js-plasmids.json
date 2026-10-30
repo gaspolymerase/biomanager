@@ -206,5 +206,15 @@
   "removed": "被删除",
   "The primers": "引物",
   "then cuts once": "改后只切一处",
-  "then cuts %(n)s times": "改后切 %(n)s 处"
+  "then cuts %(n)s times": "改后切 %(n)s 处",
+  "Comparing…": "正在比较…",
+  "These two don’t line up — they look like different plasmids.": "这两个对不上——看起来是不同的质粒。",
+  "Identical: the same sequence, %(n)s bp.": "完全相同：序列一致，%(n)s bp。",
+  "1 difference from %(name)s": "与 %(name)s 有 1 处不同",
+  "%(n)s differences from %(name)s": "与 %(name)s 有 %(n)s 处不同",
+  "No base differs across the part that lines up with %(name)s": "在与 %(name)s 对齐的部分没有碱基不同",
+  "No base differs from %(name)s": "与 %(name)s 没有碱基不同",
+  "%(pct)s% identical": "%(pct)s% 相同",
+  "saved on the other strand": "保存在另一条链上",
+  "%(n)s bp of this plasmid did not line up (an insert, or a large change).": "这个质粒有 %(n)s bp 没有对齐（插入片段，或较大的改动）。"
 }
