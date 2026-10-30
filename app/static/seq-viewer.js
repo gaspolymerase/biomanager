@@ -11,6 +11,17 @@
    protein. Everything comes from /plasmids/<id>/view.json
    (app/sequence_routes.py).
 
+   Edit… (on a plasmid the person may change) types over the picked
+   bases, inserts after them or deletes them, or adds a feature on them;
+   a feature's panel renames, retypes, turns round or removes it; ⌘Z
+   undoes (app/sequence_routes.py edit.json, app/sequence_edit.py).
+
+   Mutagenesis… (one base is enough) designs a site-directed mutagenesis: the
+   picked bases replaced, bases inserted after them, or the bases deleted,
+   or a coding feature's amino acid written as K79A; its two primers, what
+   it does to the protein, silent changes that add or remove an enzyme's
+   site, and Make it (app/mutagenesis_routes.py).
+
    Rows are laid out first, then drawn as they scroll into view, so a long
    plasmid opens as fast as a short one. */
 (function () {
@@ -300,7 +311,6 @@
   window.addEventListener('pointerup', () => {
     if (dragFrom == null) return;
     dragFrom = null;
-    if (sel && sel.end === sel.start) { sel = null; redraw(); return; }
     picked();
   });
 
@@ -322,11 +332,13 @@
 
   function placePopover() {
     const pop = $('[data-pop]');
-    if (!sel || sel.start === sel.end) { pop.hidden = true; return; }
+    if (!sel) { pop.hidden = true; return; }
     const s = pickedText();
-    pop.querySelector('[data-pop-text]').innerHTML = `<b class="tabular-nums">${num(sel.start)}–${num(sel.end)}</b> · ${esc(t('%(n)s bp', { n: s.length }))} · Tm ${quickTm(s).toFixed(0)} °C · GC ${gc(s)}%`;
+    pop.querySelector('[data-pop-text]').innerHTML = s.length === 1 ? `<b class="tabular-nums">${esc(t('Base %(n)s', { n: num(sel.start) }))}</b> ${esc(s)}`
+      : `<b class="tabular-nums">${num(sel.start)}–${num(sel.end)}</b> · ${esc(t('%(n)s bp', { n: s.length }))} · Tm ${quickTm(s).toFixed(0)} °C · GC ${gc(s)}%`;
     const primerOk = s.length >= 15 && s.length <= 60;
     pop.querySelectorAll('[data-make]').forEach((b) => { b.disabled = !primerOk; });
+    pop.querySelector('[data-pop-translate]').disabled = s.length < 3;
     const i = rows.findIndex((r) => sel.end >= r.r0 && sel.end <= r.r1);
     const rowEl = root.querySelector(`.sv2-row[data-row="${i}"]`);
     if (!rowEl) { pop.hidden = true; return; }
@@ -427,6 +439,138 @@
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => window.BioDialog.prompt(t('Copy the text below.'), text, { okLabel: t('Done') }));
   }
 
+  // ---------------------------------------------------------------- mutagenesis
+
+  let mut = null;            // {mode, start, end, bases, protein, cds, result}
+  let mutTimer = null;
+
+  // The coding feature the picked bases sit in, and the codon they start in.
+  function cdsAt(a, b) {
+    const p = data.proteins.find((x) => x.start <= x.end && a >= x.start && b <= x.end);
+    if (!p) return null;
+    const n = p.direction >= 0 ? Math.floor((a - p.start) / 3) + 1 : Math.floor((p.end - b) / 3) + 1;
+    return { ...p, codon: n, aa: (p.protein || '')[n - 1] || '' };
+  }
+
+  function mutatePanel() {
+    mut = { mode: 'replace', start: sel.start, end: sel.end, bases: pickedText(), protein: '', cds: cdsAt(sel.start, sel.end), result: null };
+    panel = { kind: 'mutate' };
+    mutateForm();
+  }
+
+  // The request's start, end and bases for the mode.
+  function mutRequest() {
+    const url = new URL(root.dataset.mutate, window.location.href);
+    if (mut.protein && mut.cds) {
+      url.searchParams.set('feature', mut.cds.feature);
+      url.searchParams.set('protein', mut.protein);
+      return url;
+    }
+    const bases = mut.bases.toUpperCase().replace(/[^ACGT]/g, '');
+    if (mut.mode === 'insert') { url.searchParams.set('start', mut.end + 1); url.searchParams.set('end', mut.end); }
+    else { url.searchParams.set('start', mut.start); url.searchParams.set('end', mut.end); }
+    url.searchParams.set('bases', mut.mode === 'delete' ? '' : bases);
+    if (mut.site) url.searchParams.set('label', mut.site);
+    return url;
+  }
+
+  function mutateForm() {
+    const n = mut.end - mut.start + 1;
+    const where = mut.mode === 'insert' ? t('After base %(n)s', { n: num(mut.end) })
+      : n === 1 ? t('Base %(n)s', { n: num(mut.start) }) : `${num(mut.start)}–${num(mut.end)} · ${t('%(n)s bp', { n })}`;
+    const seg = (key, label) => `<button type="button" class="seg-item${mut.mode === key ? ' is-active' : ''}" data-mut-mode="${key}">${esc(label)}</button>`;
+    const bases = mut.mode === 'delete' ? `<p class="sv2-note">${esc(t('Deletes %(n)s bases.', { n }))}</p>`
+      : `<label class="sv2-field"><span>${esc(mut.mode === 'insert' ? t('Bases to insert') : t('Becomes'))}</span><input type="text" data-mut-bases value="${esc(mut.mode === 'insert' ? '' : mut.bases)}" spellcheck="false" autocomplete="off"></label>`;
+    const cds = mut.cds && mut.mode === 'replace'
+      ? `<label class="sv2-field"><span>${esc(t('Or the protein (%(name)s)', { name: mut.cds.name }))}</span><input type="text" data-mut-protein value="${esc(mut.protein)}" placeholder="${esc(`${mut.cds.aa}${mut.cds.codon}A`)}" spellcheck="false" autocomplete="off"></label>`
+      : '';
+    sidePanel(`<div class="sv2-panel-head"><h3>${esc(t('Mutagenesis'))}</h3><span class="sv2-mut-where tabular-nums">${esc(where)}</span></div>
+      <div class="seg sv2-mut-modes">${seg('replace', t('Replace'))}${seg('insert', t('Insert bases'))}${seg('delete', t('Delete'))}</div>
+      ${bases}${cds}
+      <div data-mut-result><p class="sv2-note">${esc(t('Type what the bases become.'))}</p></div>
+      ${mut.cds ? `<div class="sv2-mut-silent" data-mut-silent-box><button type="button" class="btn btn-sm" data-mut-silent>${esc(t('Silent changes that add or remove a site'))}</button></div>` : ''}`);
+    const focus = $('[data-mut-bases]');
+    if (focus) { focus.focus(); focus.select(); }
+    if (mut.mode === 'delete') mutate();
+  }
+
+  function mutateSoon() { clearTimeout(mutTimer); mutTimer = setTimeout(mutate, 250); }
+
+  function mutate() {
+    const box = $('[data-mut-result]');
+    if (!box) return;
+    const asked = mutRequest().toString();
+    fetch(asked, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+      if (!mut || mutRequest().toString() !== asked) return;               // typed on since
+      mut.result = j.ok ? j : null;
+      if (!j.ok) { box.innerHTML = `<p class="sv2-note">${esc(j.error || '')}</p>`; return; }
+      const badge = (yes, good, bad) => `<span class="badge ${yes ? 'badge-ok' : 'badge-warn'}">${esc(yes ? good : bad)}</span>`;
+      const primer = (label, p) => `<div class="sv2-mut-primer"><div class="sv2-mut-primer-head"><b>${esc(label)}</b>
+          <span class="tabular-nums text-muted">${p.length} nt · ${esc(t('anneals %(n)s nt', { n: p.anneal_length }))} · Tm ${p.tm != null ? `${p.tm} °C` : '—'}</span></div>
+        <code class="sv2-primer-seq"><span class="sv2-tail">${esc(p.tail)}</span>${esc(p.anneal)}</code>
+        <div class="sv2-mut-checks">${p.length > 45 ? badge(false, '', t('long: order it purified')) : ''}${p.hairpin_ok ? '' : badge(false, '', `${t('Hairpin')} ΔG ${p.hairpin}`)}${p.dimer_ok ? '' : badge(false, '', `${t('Self-dimer')} ΔG ${p.dimer}`)}${p.binds > 1 ? badge(false, '', t('binds %(n)s places', { n: p.binds })) : ''}</div></div>`;
+      const kinds = { silent: t('silent'), missense: t('missense'), nonsense: t('a stop'), frameshift: t('frameshift'),
+        deletion: t('deletion in frame'), insertion: t('insertion in frame'), delins: t('in frame'), removed: t('removed') };
+      const effects = j.effects.length ? j.effects.map((e) => `<li><b>${esc(e.name)}</b> ${e.label ? `<code>${esc(e.label)}</code> ` : ''}<span class="badge ${e.kind === 'silent' || e.kind === 'missense' ? 'badge-ok' : 'badge-warn'}">${esc(kinds[e.kind] || e.kind)}</span>${e.kind === 'frameshift' ? ` <span class="text-muted">${esc(t('%(n)s aa, then a stop', { n: e.length_after }))}</span>` : ''}</li>`).join('')
+        : `<li class="text-muted">${esc(t('No coding feature is changed.'))}</li>`;
+      const extend = j.extend_s >= 60 ? t('%(m)s min %(s)s s', { m: Math.floor(j.extend_s / 60), s: j.extend_s % 60 }) : `${j.extend_s} s`;
+      box.innerHTML = `${j.codon ? `<p class="sv2-note">${esc(t('Codon %(from)s becomes %(to)s.', { from: j.codon.codon, to: j.codon.to }))}</p>` : ''}
+        <ul class="sv2-mut-effects">${effects}</ul>
+        ${primer(t('Forward'), j.forward)}${primer(t('Reverse'), j.reverse)}
+        <dl class="pver-dl">
+          <dt>${esc(t('The new plasmid'))}</dt><dd class="tabular-nums">${esc(t('%(n)s bp', { n: num(j.length) }))}${j.delta ? ` (${j.delta > 0 ? '+' : ''}${j.delta})` : ''}</dd>
+          <dt>PCR</dt><dd>${esc(t('Anneal at %(c)s °C, extend %(time)s, then KLD.', { c: j.anneal, time: extend }))}</dd>
+        </dl>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-mut-name value="${esc(j.name)}"></label>
+        <div class="pver-actions">
+          <button type="button" class="btn btn-primary" data-mut-make>${esc(t('Make it'))}</button>
+          <button type="button" class="btn" data-mut-copy>${icon('copy')} ${esc(t('Copy the primers'))}</button>
+        </div>
+        <p class="sv2-note">${esc(t('Make it adds the new plasmid, made from this one, and puts both primers in Primers to order.'))}</p>`;
+    }).catch(() => { box.innerHTML = `<p class="sv2-note">${esc(t('The server did not answer. Check the connection and try again.'))}</p>`; });
+  }
+
+  function silentSites() {
+    const box = $('[data-mut-silent-box]');
+    const url = new URL(root.dataset.silent, window.location.href);
+    url.searchParams.set('feature', mut.cds.feature);
+    url.searchParams.set('start', mut.start);
+    url.searchParams.set('end', mut.end);
+    box.innerHTML = `<p class="sv2-note">${esc(t('Looking for silent changes…'))}</p>`;
+    fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+      const cuts = (n) => (n === 1 ? t('then cuts once') : t('then cuts %(n)s times', { n }));
+      const row = (r, adding) => `<li><b>${adding ? '+' : '−'} ${esc(r.enzyme)}</b>
+          <span class="sv2-mut-site-how tabular-nums">${esc(t('codon %(n)s', { n: r.codon }))} <code>${esc(r.from)}→${esc(r.to)}</code> · ${esc(t('%(n)s bp changed', { n: r.changes }))} · ${esc(cuts(r.cuts_after))}</span>
+          <button type="button" class="btn btn-sm" data-mut-use="${esc(JSON.stringify({ start: r.start, end: r.end, bases: r.bases, site: `${adding ? '+' : '-'}${r.enzyme}` }))}">${esc(t('Use this'))}</button></li>`;
+      const list = (rows, adding, title) => (rows.length ? `<h4>${esc(title)}</h4><ul class="sv2-mut-sites">${rows.map((r) => row(r, adding)).join('')}</ul>` : '');
+      box.innerHTML = (list(j.add || [], true, t('Add a site')) + list(j.remove || [], false, t('Remove a site')))
+        || `<p class="sv2-note">${esc(t('No silent change near here adds or removes a site.'))}</p>`;
+    });
+  }
+
+  function useSilent(r) {
+    sel = { start: r.start, end: r.end };
+    redraw();
+    goTo(r.start);
+    mut = { ...mut, mode: 'replace', start: r.start, end: r.end, bases: r.bases, protein: '', site: r.site };
+    mutateForm();
+    mutate();
+  }
+
+  function makeMutant(button) {
+    const body = new FormData();
+    const url = mutRequest();
+    url.searchParams.forEach((v, k) => body.append(k, v));
+    body.append('name', $('[data-mut-name]').value);
+    button.disabled = true;
+    fetch(root.dataset.mutateMake, { method: 'POST', body, headers: { 'X-Requested-With': 'fetch' } })
+      .then((r) => r.json()).then((j) => {
+        if (!j.ok) { button.disabled = false; say(j.error, 'error'); return; }
+        say(j.message);
+        window.location.href = j.url;
+      }).catch(() => { button.disabled = false; say(t('The server did not answer. Check the connection and try again.'), 'error'); });
+  }
+
   // ---------------------------------------------------------------- finding
 
   function find(q) {
@@ -483,13 +627,23 @@
     if (make && sel) { primerPanel(Number(make.dataset.make)); return; }
     if (e.target.closest('[data-pop-copy]') && sel) { copy(pickedText(), t('The sequence')); return; }
     if (e.target.closest('[data-pop-translate]') && sel) { translateStretch(); return; }
+    if (e.target.closest('[data-pop-mutate]') && sel) { mutatePanel(); return; }
+    const mode = e.target.closest('[data-mut-mode]');
+    if (mode && mut) { mut.mode = mode.dataset.mutMode; mut.protein = ''; mut.site = ''; mutateForm(); return; }
+    if (e.target.closest('[data-mut-silent]') && mut) { silentSites(); return; }
+    const use = e.target.closest('[data-mut-use]');
+    if (use && mut) { useSilent(JSON.parse(use.dataset.mutUse)); return; }
+    if (e.target.closest('[data-mut-make]') && mut && mut.result) { makeMutant(e.target.closest('[data-mut-make]')); return; }
+    if (e.target.closest('[data-mut-copy]') && mut && mut.result) {
+      copy(`${mut.result.name} F\t${mut.result.forward.sequence}\n${mut.result.name} R\t${mut.result.reverse.sequence}`, t('The primers'));
+      return;
+    }
     const feature = e.target.closest('[data-feature]');
     if (feature) {
       const f = featureSpans()[Number(feature.dataset.feature)];
       sel = { start: f.a, end: f.b };
       picked();
-      const p = data.proteins.find((x) => x.feature === f.i);
-      if (p) proteinPanel(p);
+      featurePanel(f);
       return;
     }
     const primer = e.target.closest('[data-primer]');
@@ -517,6 +671,14 @@
       $('[data-primer-seq]').innerHTML = `<span class="sv2-tail">${esc(primerSequence().slice(0, primerSequence().length - panel.check.sequence.length))}</span>${esc(panel.check.sequence)}`;
     }
     if (e.target.matches('[data-find]')) $('[data-find-count]').dataset.i = -1;
+    if (e.target.matches('[data-mut-bases]') && mut) {
+      mut.bases = e.target.value;
+      mut.protein = '';
+      mut.site = '';
+      if ($('[data-mut-protein]')) $('[data-mut-protein]').value = '';
+      mutateSoon();
+    }
+    if (e.target.matches('[data-mut-protein]') && mut) { mut.protein = e.target.value; mut.site = ''; mutateSoon(); }
   });
   root.addEventListener('keydown', (e) => {
     if (e.target.matches('[data-find]') && e.key === 'Enter') { e.preventDefault(); find(e.target.value); }
@@ -538,6 +700,203 @@
       }).catch(() => { button.disabled = false; say(t('The server did not answer. Check the connection and try again.'), 'error'); });
   }
 
+  // ---------------------------------------------------------------- editing
+
+  // On a plasmid the person may edit (data-edit, app/sequence_routes.py
+  // edit.json): Edit… on picked bases types over them, inserts after them
+  // or deletes them, or adds a feature on them; a feature's panel renames,
+  // retypes, turns round or removes it. With bases picked, typing a base
+  // letter opens Edit with it, Delete removes them, and ⌘Z undoes. Each
+  // edit is saved at once; the server moves the features with it and
+  // refuses an edit made on a page someone has since changed.
+  const FEATURE_TYPES = ['misc_feature', 'CDS', 'promoter', 'terminator', 'rep_origin', 'polyA_signal', 'enhancer',
+    'primer_bind', 'protein_bind', 'LTR', 'sig_peptide', "5'UTR", "3'UTR", 'intron', 'exon', 'misc_RNA', 'ncRNA',
+    'regulatory', 'RBS', 'tag'];
+  const IUPAC = /^[ACGTURYSWKMBDHVN]$/i;
+  const undoStack = [];
+  let ed = null;               // the Edit panel: {mode, start, end}
+  const editable = () => !!(root.dataset.edit && data && data.editable);
+
+  function editState() {
+    const undo = $('[data-undo]');
+    if (undo) { undo.hidden = !editable(); undo.disabled = !undoStack.length; }
+    const pop = $('[data-pop-edit]');
+    if (pop) pop.hidden = !editable();
+    const topo = document.querySelector('[data-topology]');
+    if (topo && data) topo.textContent = data.circular ? t('Make it linear') : t('Make it circular');
+  }
+
+  function send(body, after) {
+    if (!editable()) return Promise.resolve();
+    return fetch(root.dataset.edit, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' },
+      body: JSON.stringify({ ...body, base: data.hash }),
+    }).then((r) => r.json()).then((j) => {
+      if (!j.ok) { say(j.error, 'error'); return; }
+      if (!j.changed) { say(j.message); return; }
+      if (body.op !== 'state' && j.before) undoStack.push(j.before);
+      if (undoStack.length > 100) undoStack.shift();
+      say(j.message);
+      return load().then(() => { if (after) after(); editState(); });
+    }).catch(() => say(t('The server did not answer. Check the connection and try again.'), 'error'));
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    send({ op: 'state', state: undoStack.pop() }, () => { if (sel) picked(); });
+  }
+
+  function reselect(start, end) {
+    const L = data.length;
+    sel = { start: Math.max(1, Math.min(start, L)), end: Math.max(1, Math.min(end, L)) };
+    goTo(sel.start);
+    picked();
+  }
+
+  function editPanel(mode, typed) {
+    if (!sel || !editable()) return;
+    ed = { mode: mode || 'replace', start: sel.start, end: sel.end };
+    panel = { kind: 'edit' };
+    const n = ed.end - ed.start + 1;
+    const where = ed.mode === 'insert' ? t('After base %(n)s', { n: num(ed.end) })
+      : n === 1 ? t('Base %(n)s', { n: num(ed.start) }) : `${num(ed.start)}–${num(ed.end)} · ${t('%(n)s bp', { n })}`;
+    const seg = (key, label) => `<button type="button" class="seg-item${ed.mode === key ? ' is-active' : ''}" data-ed-mode="${key}">${esc(label)}</button>`;
+    const field = ed.mode === 'delete'
+      ? `<p class="sv2-note">${esc(t('Deletes %(n)s bases.', { n }))}</p>`
+      : `<label class="sv2-field"><span>${esc(ed.mode === 'insert' ? t('Bases to insert') : t('Becomes'))}</span>
+           <input type="text" data-ed-bases value="${esc(typed != null ? typed : ed.mode === 'replace' ? pickedText() : '')}" spellcheck="false" autocomplete="off"></label>`;
+    const types = FEATURE_TYPES.map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    sidePanel(`<div class="sv2-panel-head"><h3>${esc(t('Edit'))}</h3><span class="sv2-mut-where tabular-nums">${esc(where)}</span></div>
+      <div class="seg sv2-mut-modes">${seg('replace', t('Replace'))}${seg('insert', t('Insert bases'))}${seg('delete', t('Delete'))}</div>
+      ${field}
+      <div class="pver-actions"><button type="button" class="btn btn-primary" data-ed-apply>${esc(t('Apply'))}</button></div>
+      <p class="sv2-note">${esc(t('Saved at once. Features after the change move with it, and one it runs through grows or shrinks. ⌘Z undoes.'))}</p>
+      <div class="sv2-mut-silent">
+        <h4>${esc(t('Add a feature on these bases'))}</h4>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-ed-fname autocomplete="off"></label>
+        <label class="sv2-field"><span>${esc(t('Type'))}</span><select data-ed-ftype>${types}</select></label>
+        <div class="seg sv2-mut-modes"><button type="button" class="seg-item is-active" data-ed-fdir="1">→ ${esc(t('Forward'))}</button>
+          <button type="button" class="seg-item" data-ed-fdir="-1">← ${esc(t('Reverse'))}</button></div>
+        <div class="pver-actions"><button type="button" class="btn" data-ed-add>${esc(t('Add the feature'))}</button></div>
+      </div>`);
+    const input = $('[data-ed-bases]');
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+
+  function applyEdit() {
+    if (!ed) return;
+    const typed = ($('[data-ed-bases]') ? $('[data-ed-bases]').value : '').replace(/\s+/g, '');
+    if (ed.mode === 'delete') {
+      const at = ed.start;
+      send({ op: 'bases', start: ed.start, end: ed.end, bases: '' }, () => { reselect(at, at); sidePanel(''); ed = null; });
+      return;
+    }
+    const start = ed.mode === 'insert' ? ed.end + 1 : ed.start;
+    const end = ed.mode === 'insert' ? ed.end : ed.end;
+    send({ op: 'bases', start, end, bases: typed }, () => {
+      const put = typed.replace(/[^A-Za-z]/g, '').length;
+      reselect(start, start + Math.max(put, 1) - 1);
+      sidePanel('');
+      ed = null;
+    });
+  }
+
+  function addFeature() {
+    if (!ed) return;
+    const dir = $('[data-ed-fdir].is-active');
+    send({ op: 'add_feature', start: ed.start, end: ed.end, name: $('[data-ed-fname]').value,
+      type: $('[data-ed-ftype]').value, direction: dir ? Number(dir.dataset.edFdir) : 1 },
+    () => { reselect(ed.start, ed.end); sidePanel(''); ed = null; });
+  }
+
+  // A feature's own block, under its protein or on its own.
+  function featureEditor(f) {
+    const stored = data.features[f.i];
+    if (!editable() || !stored || stored.at == null) return '';
+    const types = FEATURE_TYPES.concat(FEATURE_TYPES.includes(stored.type) || !stored.type ? [] : [stored.type])
+      .map((x) => `<option value="${esc(x)}"${x === stored.type ? ' selected' : ''}>${esc(x)}</option>`).join('');
+    const fwd = Number(stored.direction || 1) >= 0;
+    return `<div class="sv2-mut-silent" data-fe-at="${stored.at}">
+        <h4>${esc(t('Edit this feature'))}</h4>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-fe-name value="${esc(stored.name)}" autocomplete="off"></label>
+        <label class="sv2-field"><span>${esc(t('Type'))}</span><select data-fe-type>${types}</select></label>
+        <div class="seg sv2-mut-modes"><button type="button" class="seg-item${fwd ? ' is-active' : ''}" data-fe-dir="1">→ ${esc(t('Forward'))}</button>
+          <button type="button" class="seg-item${fwd ? '' : ' is-active'}" data-fe-dir="-1">← ${esc(t('Reverse'))}</button></div>
+        <div class="pver-actions"><button type="button" class="btn btn-primary" data-fe-save>${esc(t('Save'))}</button>
+          <button type="button" class="btn" data-fe-delete>${icon('trash')} ${esc(t('Remove'))}</button></div>
+      </div>`;
+  }
+
+  function featurePanel(f) {
+    const p = data.proteins.find((x) => x.feature === f.i);
+    if (p) proteinPanel(p);
+    const block = featureEditor(f);
+    if (!block) return;
+    if (p) { $('[data-side]').insertAdjacentHTML('beforeend', block); return; }
+    panel = { kind: 'feature' };
+    sidePanel(`<div class="sv2-panel-head"><h3><span class="pdig-dot pmap-f-${f.kind}"></span>${esc(f.name || f.type)}</h3>
+      <span class="sv2-mut-where tabular-nums">${num(f.a)}–${num(f.b)}</span></div>${block}`);
+  }
+
+  root.addEventListener('click', (e) => {
+    if (e.target.closest('[data-pop-edit]') && sel) { editPanel('replace'); return; }
+    if (e.target.closest('[data-undo]')) { undo(); return; }
+    const mode = e.target.closest('[data-ed-mode]');
+    if (mode && ed) { const was = sel; sel = { start: ed.start, end: ed.end }; editPanel(mode.dataset.edMode); sel = was; return; }
+    if (e.target.closest('[data-ed-apply]')) { applyEdit(); return; }
+    if (e.target.closest('[data-ed-add]')) { addFeature(); return; }
+    const fdir = e.target.closest('[data-ed-fdir], [data-fe-dir]');
+    if (fdir) { fdir.parentElement.querySelectorAll('.seg-item').forEach((b) => b.classList.toggle('is-active', b === fdir)); return; }
+    const box = e.target.closest('[data-fe-at]');
+    if (box && e.target.closest('[data-fe-save]')) {
+      const dir = box.querySelector('[data-fe-dir].is-active');
+      send({ op: 'edit_feature', at: Number(box.dataset.feAt), name: box.querySelector('[data-fe-name]').value,
+        type: box.querySelector('[data-fe-type]').value, direction: dir ? Number(dir.dataset.feDir) : 1 });
+      return;
+    }
+    if (box && e.target.closest('[data-fe-delete]')) {
+      send({ op: 'delete_feature', at: Number(box.dataset.feAt) }, () => sidePanel(''));
+    }
+  });
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-ed-bases]')) { e.preventDefault(); applyEdit(); }
+    if (e.key === 'Enter' && e.target.matches('[data-ed-fname]')) { e.preventDefault(); addFeature(); }
+  });
+
+  // Keys on the picked bases: the rows themselves can't take focus, so these
+  // listen on the page while the Sequence tab is the one showing.
+  document.addEventListener('keydown', (e) => {
+    if (!editable()) return;
+    const tab = root.closest('.plasmid-tab-panel');
+    if (tab && !tab.classList.contains('is-active')) return;
+    const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]');
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey || !sel) return;
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      const at = sel.start;
+      send({ op: 'bases', start: sel.start, end: sel.end, bases: '' }, () => reselect(at, at));
+      return;
+    }
+    if (IUPAC.test(e.key)) { e.preventDefault(); editPanel('replace', e.key.toUpperCase()); }
+  });
+
+  // The tools under the viewer: the topology, and full screen.
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-topology]') && data) { send({ op: 'topology', circular: !data.circular }); return; }
+    if (e.target.closest('[data-sv-fullscreen]')) {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else root.requestFullscreen().catch(() => {});
+    }
+  });
+  const fsButton = document.querySelector('[data-sv-fullscreen]');
+  if (fsButton && root.requestFullscreen) {
+    fsButton.hidden = false;
+    document.addEventListener('fullscreenchange', () => {
+      fsButton.querySelector('span').textContent = document.fullscreenElement === root ? t('Exit full screen') : t('Full screen');
+    });
+  }
+
   // ---------------------------------------------------------------- start
 
   function load() {
@@ -547,6 +906,7 @@
       drawBar();
       layout();
       drawAll();
+      editState();
       window.dispatchEvent(new CustomEvent('biomanager:plasmid-view', { detail: data }));
     });
   }
@@ -563,7 +923,8 @@
 
   const tabPanel = root.closest('.plasmid-tab-panel');
   const opened = () => { if (!data) { width = $('[data-rows]').clientWidth; load(); } };
-  if (tabPanel && tabPanel.classList.contains('is-active')) opened();
+  // A page without tabs (a virus's or a stock's plasmid) shows it at once.
+  if (!tabPanel || tabPanel.classList.contains('is-active')) opened();
   document.querySelectorAll('.plasmid-tab[data-tab="sequence"]').forEach((tab) => tab.addEventListener('click', () => setTimeout(opened, 0)));
 
   // From elsewhere on the page (Overview's features): go to a stretch and

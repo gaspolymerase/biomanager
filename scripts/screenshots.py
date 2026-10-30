@@ -38,7 +38,20 @@ DESKTOP = [
     ("plasmid-sequence", "/plasmid/2#egfp", "light", 'tr[data-feature-go^="693-"]'),
     ("plasmid-digest", "/plasmid/2", "light", '.plasmid-tab[data-tab="digest"]'),
     ("plasmid-verify", "/plasmid/2", "light", '.plasmid-tab[data-tab="verify"]'),
+    # Codon 80 of EGFP (from base 693) picked, and Change… asked for K80A.
+    ("plasmid-mutagenesis", "/plasmid/2#k80a", "light", ['.plasmid-tab[data-tab="sequence"]',
+                                                    ("run", "window.BioSeqViewer.select(930, 930)"),
+                                                    "[data-pop-mutate]", ("fill", "[data-mut-protein]", "K80A")]),
     ("plasmid-primers", "/plasmid/2", "light", ['.plasmid-tab[data-tab="primers"]', '.ppr-table tr:has-text("CAG-F") [data-pick]', '.ppr-table tr:has-text("bGH-R") [data-pick]']),
+    # Compare with…: pCAG-EGFP against its P65L variant (a single base change).
+    ("plasmid-compare", "/plasmid/2", "light",
+     [("run", "(async function(){var b=document.querySelector('[data-compare]'),p=document.querySelector('[data-compare-pick]');"
+              "var r=await fetch(b.dataset.others).then(x=>x.json());r.plasmids.forEach(function(q){var o=document.createElement('option');o.value=q.number;o.textContent=q.label+' · '+q.length+' bp';p.append(o);});"
+              "var o=[].slice.call(p.options).find(function(x){return /P65L/.test(x.textContent);});if(o){p.value=o.value;p.dispatchEvent(new Event('change',{bubbles:true}));}})()")]),
+    # Gateway BP: the attB gene and the pDONR picked, by their names.
+    ("plasmid-gateway", "/plasmids/assembly?method=gateway", "light",
+     [("run", "(function(){function pick(s,t){for(var o of s.options){if(o.textContent.indexOf(t)>=0){s.value=o.value;s.dispatchEvent(new Event('change',{bubbles:true}));return;}}}"
+              "pick(document.querySelector('[data-gw-a]'),'attB-Rab5a');pick(document.querySelector('[data-gw-b]'),'pDONR221');})()")]),
     ("orders", "/orders", "light", "[data-layout=board]"),
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),
@@ -119,8 +132,15 @@ def shoot(page, name, path, click=None, full=False, crop=None):
     for step in ([click] if isinstance(click, str) else click or []):
         # A dialog shot needs two steps: open the view, then open the dialog.
         # A (selector, value) step chooses in a dropdown instead of clicking,
-        # which is how the orders sheet raises "Add it to stock?".
-        if isinstance(step, tuple):
+        # which is how the orders sheet raises "Add it to stock?". ("fill",
+        # selector, text) types into a field; ("run", script) runs a line of
+        # the page's own script, such as picking a base on the Sequence tab.
+        if isinstance(step, tuple) and step[0] == "fill":
+            page.fill(step[1], step[2])
+            page.wait_for_timeout(600)          # the panel asks as you stop typing
+        elif isinstance(step, tuple) and step[0] == "run":
+            page.evaluate(step[1])
+        elif isinstance(step, tuple):
             page.select_option(step[0], step[1])
         else:
             page.locator(step).first.click()

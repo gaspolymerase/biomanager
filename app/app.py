@@ -439,6 +439,19 @@ app.register_blueprint(clone_routes.bp)
 # The plasmid's own sequence viewer, primer design and PCR (app/sequence_routes.py).
 from . import sequence_routes  # noqa: E402
 app.register_blueprint(sequence_routes.bp)
+# Site-directed mutagenesis from the Sequence tab (app/mutagenesis_routes.py).
+from . import mutagenesis_routes  # noqa: E402
+app.register_blueprint(mutagenesis_routes.bp)
+# Gateway BP/LR in Assemble a plasmid (app/gateway_routes.py).
+from . import gateway_routes  # noqa: E402
+app.register_blueprint(gateway_routes.bp)
+# Compare two plasmids, from the Overview tab (app/compare_routes.py).
+from . import compare_routes  # noqa: E402
+app.register_blueprint(compare_routes.bp)
+# A plasmid's sequence by its Addgene number or GenBank accession (app/sequence_fetch_routes.py).
+from . import sequence_fetch_routes  # noqa: E402
+app.register_blueprint(sequence_fetch_routes.bp)
+app.jinja_env.globals["sequence_fetch_on"] = lambda: not sequence_fetch_routes.sequence_fetch.switched_off()
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
@@ -2783,7 +2796,8 @@ def settings():
                 flash(gettext("Language saved."), "success")
             elif action == "notifications":
                 for category in notify.CATEGORIES:
-                    notify.set_wants(db_session, user, category, request.form.get(f"notify_{category}") == "1")
+                    switch = notify.FOLLOWS.get(category, category)
+                    notify.set_wants(db_session, user, category, request.form.get(f"notify_{switch}") == "1")
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     return jsonify({"ok": True})
@@ -2860,10 +2874,9 @@ def settings():
         icon_glyphs={key: label for key, (label, _draw) in appearance.GLYPHS.items()},
         icon_palettes=appearance.PALETTES,
         icon_urls={f"{g}/{c}": app_icon_url(g, c) for g in appearance.GLYPHS for c in appearance.PALETTES},
-        mail_status=mailer.status_line(),
         mail_configured=mailer.is_configured(),
         identities=identities,
-        notification_categories=notify.CATEGORIES,
+        notification_categories=notify.SHOWN,
     )
 
 
@@ -8431,6 +8444,7 @@ def _parent_role_label(role: str) -> str:
 
 def _parent_method_label(method: str) -> str:
     return {"digest_ligate": gettext("Digest and ligate"), "gibson": gettext("Gibson / HiFi assembly"),
+            "infusion": gettext("In-Fusion"),
             "golden_gate": gettext("Golden Gate"), "pcr": gettext("PCR"), "mutagenesis": gettext("Mutagenesis"),
             "gateway": gettext("Gateway"), "synthesis": gettext("Synthesised"), "other": gettext("Other")}.get(method, "")
 
@@ -8458,10 +8472,11 @@ def _version_row(v, current: bool) -> dict:
             restored = v.detail
         how = gettext("Restored the version of %(when)s", when=restored)
     else:
-        how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
+        how = {"editor": gettext("Edited on the Sequence tab"), "hand": gettext("Edited by hand"),
                "detect": gettext("Features found from the library"),
                "annotate": gettext("Features found by pLannotate"),
                "assembly": gettext("Assembled from fragments"),
+               "mutagenesis": gettext("Made by site-directed mutagenesis"),
                "primers": gettext("Primers the wizard designed, drawn on the map"),
                "clear": gettext("Cleared"), "baseline": gettext("As it was before version history")}.get(v.how, v.how)
     try:
@@ -10200,10 +10215,11 @@ def plasmid_edit_sequence(row_id: int):
 @app.route("/plasmids/<int:row_id>/sequence-save", methods=["POST"])
 @login_required
 def plasmid_sequence_save_json(row_id: int):
-    """JSON endpoint hit by the Open Vector Editor onSave callback. The body
-    contains OVE's `sequenceData` shape: {sequence, circular, features, name}.
-    OVE features look like {id, name, start, end, type, color, forward,
-    strand, notes, locations[]}. We translate to our schema and persist.
+    """A whole map saved as JSON, for scripts (the Sequence tab saves one
+    edit at a time through sequence_routes' edit.json). The body is
+    `sequenceData`: {sequence, circular, features, primers, translations,
+    parts, name}, each annotation {id, name, start, end, type, color,
+    forward or strand, notes, locations[]}, translated to our schema.
 
     An empty or malformed save is refused (400) rather than stored: the
     editor autosaves after every edit, and a blank body used to wipe the
@@ -10233,7 +10249,7 @@ def plasmid_sequence_save_json(row_id: int):
         primers_added = primer_records.sync_from_map(db_session, p, translated, g.user.username)
         p.features_json = json.dumps(translated)
         if not p.sequence_format:
-            p.sequence_format = "ove"
+            p.sequence_format = "json"
         # File > Rename Sequence in the editor renames the plasmid.
         if isinstance(sd.get("name"), str) and sd["name"].strip() and sd["name"].strip() != (p.name or ""):
             p.name = sd["name"].strip()[:200]
@@ -10250,7 +10266,8 @@ def plasmid_sequence_save_json(row_id: int):
 @app.route("/plasmids/<int:row_id>/sequence.json")
 @login_required
 def plasmid_sequence_json(row_id: int):
-    """Return the plasmid's sequence + features as JSON for the editor."""
+    """The plasmid's sequence and annotations as JSON, grouped as
+    sequence-save takes them (for scripts)."""
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
@@ -10265,7 +10282,7 @@ def plasmid_sequence_json(row_id: int):
             "name": p.name or f"Plasmid #{p.plasmid_id}",
             "sequence": p.full_sequence or "",
             "is_circular": bool(p.is_circular),
-            "circular": bool(p.is_circular),  # OVE uses this key
+            "circular": bool(p.is_circular),  # the key sequence-save takes
             "features": groups["features"],
             "primers": groups["primers"],
             "translations": groups["translations"],

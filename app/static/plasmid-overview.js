@@ -7,8 +7,8 @@
 
   const root = document.querySelector('[data-overview]');
   if (!root) return;
-  const features = JSON.parse(root.dataset.features || '[]');
-  const length = Number(root.dataset.length || 0);
+  let features = JSON.parse(root.dataset.features || '[]');
+  let length = Number(root.dataset.length || 0);
 
   function draw() {
     const box = root.querySelector('[data-map]');
@@ -100,4 +100,84 @@
 
   if (document.readyState === 'complete') draw();
   else window.addEventListener('load', draw);
+  // An edit on the Sequence tab: the map follows it (static/seq-viewer.js).
+  window.addEventListener('biomanager:plasmid-view', (e) => {
+    const view = e.detail || {};
+    if (!view.length) return;
+    length = view.length;
+    features = view.features || features;
+    draw();
+  });
+
+  // ---------------------------------------------------------------- Compare with…
+  (function () {
+    const box = root.querySelector('[data-compare]');
+    if (!box) return;
+    const t = window.t || ((s) => s);
+    const num = (n) => Number(n || 0).toLocaleString('en-US');
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const pick = box.querySelector('[data-compare-pick]');
+    const out = box.querySelector('[data-compare-out]');
+    let loaded = false;
+
+    function miniMap(len, feats, diffs) {
+      if (!window.BioPlasmidMap) return '';
+      return window.BioPlasmidMap.circular({ length: len, features: feats, mini: true, size: 150,
+        picked: (diffs || []).map((d) => ({ start: d, end: d })) });
+    }
+
+    pick.addEventListener('focus', () => {
+      if (loaded) return;
+      loaded = true;
+      fetch(box.dataset.others, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+        if (!j.ok) return;
+        j.plasmids.forEach((p) => {
+          const o = document.createElement('option');
+          o.value = p.number;
+          o.textContent = `${p.label} · ${num(p.length)} bp`;
+          pick.append(o);
+        });
+      });
+    }, { once: false });
+
+    pick.addEventListener('change', () => {
+      if (!pick.value) { out.innerHTML = ''; return; }
+      out.innerHTML = `<p class="pov-note">${esc(t('Comparing…'))}</p>`;
+      const url = new URL(box.dataset.compareUrl, window.location.href);
+      url.searchParams.set('other', pick.value);
+      fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then((r) => r.json()).then((j) => {
+        if (!j.ok) { out.innerHTML = `<p class="pov-note">${esc(j.error || '')}</p>`; return; }
+        if (!j.matched) {
+          out.innerHTML = `<p class="pov-note">${esc(t('These two don’t line up — they look like different plasmids.'))}</p>`;
+          return;
+        }
+        const big = j.a_outside > 200;
+        const lead = j.count === 1 ? t('1 difference from %(name)s', { name: j.b.name })
+          : j.count ? t('%(n)s differences from %(name)s', { n: j.count, name: j.b.name })
+            : big ? t('No base differs across the part that lines up with %(name)s', { name: j.b.name })
+              : t('No base differs from %(name)s', { name: j.b.name });
+        const pct = j.count && j.identity >= 100 ? '99.9' : j.identity;
+        const head = j.same
+          ? `<p class="pov-compare-same">${esc(t('Identical: the same sequence, %(n)s bp.', { n: num(j.a.length) }))}</p>`
+          : `<p class="pov-compare-head">${esc(lead)}
+             <span class="text-muted">${esc(t('%(pct)s% identical', { pct }))}${j.strand === 'reverse' ? ' · ' + esc(t('saved on the other strand')) : ''}</span></p>`;
+        const kinds = { silent: 'badge-ok', missense: 'badge-warn', in_frame: 'badge-warn', frameshift: 'badge-danger',
+          nonsense: 'badge-danger', start_lost: 'badge-danger', stop_lost: 'badge-danger' };
+        const rows = j.differences.map((d) => `<li>
+            <span class="tabular-nums pov-compare-at">${num(d.at_b)}</span>
+            <span class="pov-compare-what">${esc(d.text)}</span>
+            ${d.effect ? `<span class="badge ${kinds[d.effect_kind] || 'badge-quiet'}">${esc(d.effect)}</span>` : ''}
+          </li>`).join('');
+        const outside = j.a_outside > 200
+          ? `<p class="pov-note">${esc(t('%(n)s bp of this plasmid did not line up (an insert, or a large change).', { n: num(j.a_outside) }))}</p>`
+          : '';
+        out.innerHTML = `${head}
+          <div class="pov-compare-maps">
+            <figure>${miniMap(j.a.length, j.features_a, j.differences.map((d) => d.at_a).filter(Boolean))}<figcaption>${esc(j.a.name)}</figcaption></figure>
+            <figure>${miniMap(j.b.length, j.features_b, j.differences.map((d) => d.at_b))}<figcaption><a href="${esc(j.b.url || '#')}">${esc(j.b.name)}</a></figcaption></figure>
+          </div>
+          ${rows ? `<ul class="pov-compare-list">${rows}</ul>` : ''}${outside}`;
+      }).catch(() => { out.innerHTML = `<p class="pov-note">${esc(t('The server did not answer. Check the connection and try again.'))}</p>`; });
+    });
+  })();
 })();

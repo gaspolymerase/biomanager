@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_seq_viewer.html" import seq_viewer with context %}
 
 {# The plasmid a record names, to read: the same map as the plasmid's own
    page, read only. Editing stays on the plasmid's page. #}
@@ -19,14 +20,13 @@
 {% endblock %}
 
 {% block head_extra %}
-<style>@import url("{{ url_for('static', filename='notebook-build/plasmid-app.css') }}?v={{ asset_version('notebook-build/plasmid-app.css') }}") layer(vendor);</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='plasmid.css') }}?v={{ asset_version('plasmid.css') }}">
 {% endblock %}
 
 {% block content %}
-<div id="ove-root" class="ove-root" data-plasmid-id="{{ plasmid.row_id }}"
-     data-plasmid-name="{{ plasmid.name or ('Plasmid #' ~ plasmid.number) }}">
-  <div class="ove-loading">{{ _('Loading the sequence editor…') }}</div>
-</div>
+{# The plasmid, drawn by the app: its map, and every base (static/plasmid-map.js, static/seq-viewer.js). #}
+<div class="pglass pov-map item-seq-map" data-item-map></div>
+<div class="mt-4">{{ seq_viewer(plasmid.row_id) }}</div>
 
 {# Find saved primers, as on the plasmid's page (app/static/primer-scan.js). #}
 {% if plasmid.can_scan %}
@@ -41,56 +41,16 @@
   <script src="{{ url_for('static', filename='primer-scan.js') }}?v={{ asset_version('primer-scan.js') }}" defer></script>
 {% endif %}
 
-<script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
-        data-loaded-flag="__oveLoaded" data-missing-flag="__oveMissing"></script>
+<script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}" defer></script>
+<script src="{{ url_for('static', filename='seq-viewer.js') }}?v={{ asset_version('seq-viewer.js') }}" defer></script>
 <script nonce="{{ csp_nonce() }}">
-  (function () {
-    const root = document.getElementById('ove-root');
-    const plasmidId = root.dataset.plasmidId;
-
-    function waitForOve() {
-      return new Promise((resolve) => {
-        if (window.createVectorEditor) return resolve('ready');
-        const start = Date.now();
-        const tick = () => {
-          if (window.createVectorEditor) return resolve('ready');
-          if (window.__oveMissing) return resolve('missing');
-          if (Date.now() - start > 20000) return resolve('missing');
-          setTimeout(tick, 80);
-        };
-        tick();
-      });
-    }
-
-    Promise.all([
-      fetch(`/plasmids/${plasmidId}/sequence.json`).then((r) => (r.ok ? r.json() : null)),
-      waitForOve(),
-    ]).then(([data, state]) => {
-      if (state !== 'ready') {
-        root.innerHTML = '<div class="ove-error">' + t('The sequence editor didn’t load. Reload the page.') + '</div>';
-        return;
-      }
-      root.innerHTML = '';
-      const editor = window.createVectorEditor(root, {
-        editorName: `inventory-plasmid-${plasmidId}`,
-        showMenuBar: true,
-        readOnly: true,
-        doNotUseAbsolutePosition: true,
-      });
-      editor.updateEditor({
-        readOnly: true,
-        sequenceData: {
-          name: (data && data.name) || root.dataset.plasmidName,
-          sequence: (data && data.sequence) || '',
-          circular: !!(data && data.circular),
-          features: (data && data.features) || [],
-          primers: (data && data.primers) || [],
-          translations: (data && data.translations) || [],
-          parts: (data && data.parts) || [],
-        },
-      });
-      root.oveEditor = editor;   // for Find saved primers' Show on map
-    });
-  })();
+  // The map, from what the viewer loads.
+  window.addEventListener('biomanager:plasmid-view', (e) => {
+    const view = e.detail || {};
+    const box = document.querySelector('[data-item-map]');
+    if (!box || !window.BioPlasmidMap || !view.length) return;
+    box.innerHTML = window.BioPlasmidMap.circular({ length: view.length, features: view.features || [], labels: true,
+      title: {{ (plasmid.name or ('#' ~ plasmid.number))|tojson }}, size: 460, subtitle: `${view.length.toLocaleString('en-US')} bp` });
+  });
 </script>
 {% endblock %}

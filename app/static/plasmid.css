@@ -380,6 +380,23 @@ text.pmap-piece-3 { fill: var(--pmap-piece-3); }
 .sv2-tail { color: var(--color-brand-700); }
 .sv2-lab { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--color-recess); font-size: 12px; }
 .sv2-lab p { margin: 0; }
+/* Mutagenesis, in the side panel. */
+.sv2-mut-where { font-size: 12px; color: var(--color-muted); }
+.sv2-mut-modes { display: flex; }
+.sv2-mut-modes .seg-item { flex: 1; white-space: nowrap; padding-inline: 8px; }
+.sv2-mut-effects { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; }
+.sv2-mut-effects li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 3px 0; }
+.sv2-mut-effects code, .sv2-mut-sites code { display: inline; font: 12px var(--font-mono, ui-monospace, monospace); }
+.sv2-mut-primer { margin-top: 8px; padding: 8px 12px; border-radius: 12px; background: var(--color-recess); }
+.sv2-mut-primer-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-bottom: 3px; }
+.sv2-mut-checks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.sv2-mut-checks:empty { display: none; }
+.sv2-mut-silent { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--color-hairline); }
+.sv2-mut-silent h4 { margin: 8px 0 4px; font-size: 12px; font-weight: 600; color: var(--color-muted); }
+.sv2-mut-sites { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.sv2-mut-sites li { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; padding: 6px 0; }
+.sv2-mut-sites li + li { border-top: 1px solid var(--color-hairline); }
+.sv2-mut-site-how { grid-row: 2; grid-column: 1 / -1; color: var(--color-muted); line-height: 1.5; }
 .sv2-protein { margin-top: 12px; font: 12px/1.8 var(--font-mono, ui-monospace, monospace); color: var(--color-ink-soft); word-break: break-all; }
 .sv2-aa-start { display: inline-block; width: 34px; color: var(--color-muted); }
 
@@ -441,3 +458,41 @@ text.pmap-piece-3 { fill: var(--pmap-piece-3); }
 .plasmid-mini > svg { position: absolute; inset: 0; width: 64px; height: 64px; max-width: none; }
 .plasmid-mini > span { position: relative; font: 600 11px var(--font-mono, ui-monospace, monospace); color: var(--color-muted); }
 .plasmid-mini:not([data-mini]) { border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--color-hairline); transform: scale(0.62); }
+
+/* ---- Compare with… on the Overview (static/plasmid-overview.js) --------- */
+.pov-compare-pick { width: 100%; }
+.pov-note { margin: 10px 0 0; font-size: 12px; color: var(--color-muted); }
+.pov-compare-head { margin: 12px 0 0; font-size: 13px; font-weight: 500; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.pov-compare-head .text-muted { font-weight: 400; font-size: 12px; }
+.pov-compare-same { margin: 12px 0 0; font-size: 13px; font-weight: 500; color: var(--color-ok-700, var(--color-ink)); }
+.pov-compare-maps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pov-compare-maps figure { margin: 0; text-align: center; }
+.pov-compare-maps figcaption { margin-top: 2px; font-size: 11px; color: var(--color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pov-compare-maps figcaption a { color: var(--color-brand-700); }
+.pov-compare-list { list-style: none; margin: 12px 0 0; padding: 0; font-size: 12px; max-height: 260px; overflow-y: auto; }
+.pov-compare-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; }
+.pov-compare-list li + li { border-top: 1px solid var(--color-hairline); }
+.pov-compare-at { color: var(--color-muted); }
+.pov-compare-what { min-width: 0; }
+
+/* ---- From Addgene or NCBI (templates/_sequence_fetch.html) ------------- */
+.seq-fetch { display: flex; flex-direction: column; gap: 6px; }
+.seq-fetch-label { font-size: 12px; font-weight: 500; color: var(--color-muted); }
+.seq-fetch-row { display: flex; gap: 8px; align-items: center; }
+.seq-fetch-row input { flex: 1; min-width: 0; font-family: var(--font-mono, ui-monospace, monospace); }
+.seq-fetch-said { margin: 0; font-size: 12px; color: var(--color-muted); }
+.seq-fetch-said:empty { display: none; }
+.seq-fetch-said.is-ok { color: var(--color-ok-700, var(--color-ink)); }
+.seq-fetch-said.is-error { color: var(--color-danger-700, var(--color-ink)); }
+.seq-fetch-said a { color: var(--color-brand-700); }
+
+/* ---- Under the viewer, and the viewer full screen ------------------------ */
+.sv2-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; }
+.sv2-tools form { margin: 0; }
+.sv2-tools a:not(.btn) { color: var(--color-brand-700); }
+.sv2:fullscreen { padding: 16px; background: var(--wall, var(--color-canvas)), var(--color-canvas); overflow: auto; }
+.sv2:fullscreen .sv2-rows { max-height: calc(100vh - 140px); }
+
+/* ---- A record's plasmid, read only (templates/inventory/sequence.html) -- */
+.item-seq-map { padding: 14px 16px; }
+.item-seq-map svg { display: block; max-width: 460px; margin: 0 auto; }

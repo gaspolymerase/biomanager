@@ -100,3 +100,8 @@
    and its dropdowns keep room for their chevron. */
 :is(.assembly-fields :is(input, textarea, select)):focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
 select:is(.assembly-fields :is(input, textarea, select)) { padding-right: 28px; }
+
+/* ---- Gateway (templates/plasmid_assembly.html, static/gateway.js) ------- */
+.gateway-pick { display: flex; flex-direction: column; gap: 12px; }
+.gateway-out { margin: 4px 2px 0; }
+.gateway-byproduct { font-size: 12px; color: var(--color-muted); margin: 0; }

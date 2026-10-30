@@ -216,5 +216,13 @@
   "Share a notebook topic with lab mates; ⌘K (Ctrl+K) searches from anywhere.": "实验记录本的主题可以共享给实验室同事；在任何地方按 ⌘K（Ctrl+K）搜索。",
   "A new look across the app; **Home** opens on a **Daily brief**.": "全新的界面；**首页** 先显示 **今日简报**。",
   "Meetings live in the calendar, and its **Board** keeps to-dos.": "会议移到了日历里，日历的 **看板** 用来放待办。",
-  "A lab server reached over Tailscale keeps HTTPS working after Tailscale restarts.": "通过 Tailscale 访问的实验室服务器，在 Tailscale 重启后 HTTPS 依然正常。"
+  "A lab server reached over Tailscale keeps HTTPS working after Tailscale restarts.": "通过 Tailscale 访问的实验室服务器，在 Tailscale 重启后 HTTPS 依然正常。",
+  "Change a plasmid on its **Sequence** tab: pick bases, then **Edit…** to type over them, insert, delete, or add a feature. **Undo** takes it back.": "在质粒的 **序列** 标签页直接修改它：选中碱基后点 **编辑…**，可以改写、插入、删除，或加一个特征。**撤销** 可以撤回。",
+  "**Mutagenesis…** on picked bases designs the two primers for a point change, says what it does to the protein, and **Make it** adds the new plasmid.": "选中碱基后点 **定点突变…**，会为这个点突变设计两条引物，说明它对蛋白的影响，**创建** 则新建这个质粒。",
+  "**Assemble a plasmid** gains **In-Fusion** and **Gateway** (BP and LR).": "**组装质粒** 新增 **In-Fusion** 和 **Gateway**（BP 和 LR）。",
+  "**Compare with…** on a plasmid's **Overview** lists every base that differs from another plasmid, with the feature and the protein change.": "质粒 **概览** 上的 **与…比较** 会列出它和另一个质粒之间每一个不同的碱基，以及所在特征和对蛋白的影响。",
+  "**New plasmid** takes an Addgene number or a GenBank accession under **From Addgene or NCBI**.": "**新建质粒** 可以在 **从 Addgene 或 NCBI 获取** 下填 Addgene 编号或 GenBank 登录号。",
+  "BioManager draws and edits plasmids on its own now: the borrowed editor is gone, and each plasmid page loads about 9 MB less.": "质粒的绘制和编辑现在都由 BioManager 自己完成：借用的编辑器已经去掉，每个质粒页面少载入约 9 MB。",
+  "The search palette (**⌘K**) is a sheet of glass, with a larger field and **Ask the guide** on its own card.": "搜索面板（**⌘K**）变成了一块玻璃，输入框更大，**向用户指南提问** 单独成为一张卡片。",
+  "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.": "**设置** 里每件事只出现一次：登录方式并入 **个人资料**，欢迎导览移到 **帮助** 下。"
 }

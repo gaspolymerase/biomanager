@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% import "_sheet.html" as sheet_ui with context %}
 {% import "_sharing.html" as sharing with context %}
+{% from "_sequence_fetch.html" import fetch_row with context %}
+{% from "_seq_viewer.html" import seq_viewer with context %}
 
 {% set locked = plasmid.locked %}
 
@@ -56,11 +58,6 @@
   <option value="Spec"></option><option value="Hyg"></option><option value="Puro"></option>
 </datalist>
 
-{# Open Vector Editor's own stylesheet, in the "vendor" layer (base.html):
-   unlayered, its a { color } and form { display } rules beat the app's own
-   and turned the sidebar blue. ?v= is the file mtime, so the browser
-   refetches after a rebuild. #}
-<style>@import url("{{ url_for('static', filename='notebook-build/plasmid-app.css') }}?v={{ asset_version('notebook-build/plasmid-app.css') }}") layer(vendor);</style>
 
 {# ============ Overview — the map drawn by the app, its features, what it is (static/plasmid-overview.js) ============ #}
 <section class="plasmid-tab-panel is-active" data-panel="overview">
@@ -93,6 +90,18 @@
           {% if plasmid.updated_at %}<dt>{{ _('Changed') }}</dt><dd>{{ plasmid.updated_at }}{% if plasmid.updated_by %} · {{ plasmid.updated_by }}{% endif %}</dd>{% endif %}
         </dl>
       </div>
+      {% if plasmid.length_bp %}
+      <div class="pglass pver-card pov-compare" data-compare
+           data-others="{{ url_for('compare.others', row_id=plasmid.row_id) }}"
+           data-compare-url="{{ url_for('compare.compare', row_id=plasmid.row_id) }}">
+        <div class="pver-head"><h3>{{ _('Compare with…') }}</h3></div>
+        <label class="sr-only" for="pov-compare-pick">{{ _('Another plasmid') }}</label>
+        <select id="pov-compare-pick" class="pov-compare-pick" data-compare-pick>
+          <option value="">{{ _('Choose a plasmid…') }}</option>
+        </select>
+        <div class="pov-compare-out" data-compare-out></div>
+      </div>
+      {% endif %}
       {% if plasmid.features %}
       <div class="pglass pver-card">
         <div class="pver-head"><h3>{{ _('Features') }} <span class="text-muted tabular-nums">{{ plasmid.features|length }}</span></h3></div>
@@ -109,101 +118,47 @@
   </div>
 </section>
 
-{# ============ Sequence — the app's viewer, and Open Vector Editor to edit ============ #}
+{# ============ Sequence — the app's own viewer and editor (static/seq-viewer.js) ============ #}
 <section class="plasmid-tab-panel" data-panel="sequence">
-  {# Full screen shows the bar and the editor filling the screen. #}
   <style>
-    #ove-shell:fullscreen { background: var(--color-surface, #fff); padding: 12px 16px; display: flex; flex-direction: column; }
-    #ove-shell:fullscreen .ove-root { flex: 1; height: auto; }
     .lineage-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
     .lineage-tree .lineage-tree { margin: 4px 0 0 6px; padding-left: 12px; border-left: 1px solid var(--color-line); }
   </style>
   {% if plasmid.length_bp %}
-  {# The app's own viewer: every base, features, enzymes, primers, proteins (static/seq-viewer.js). #}
-  <div class="sv2" data-seq-viewer data-url="{{ url_for('sequence_view.view', row_id=plasmid.row_id) }}"
-       data-check="{{ url_for('sequence_view.primer_check', row_id=plasmid.row_id) }}"
-       data-save="{{ url_for('sequence_view.primer_new', row_id=plasmid.row_id) }}">
-    <div class="pglass sv2-main">
-      <div class="sv2-bar">
-        <label class="pdig-find sv2-find">{{ icon('search') }}<input type="search" data-find placeholder="{{ _('Find bases, a primer, a site or a feature…') }}" aria-label="{{ _('Find in the sequence') }}"><span class="sv2-count" data-find-count></span></label>
-        <button type="button" class="sv2-chip" data-show="complement">{{ _('Complement') }}</button>
-        <button type="button" class="sv2-chip" data-show="translation">{{ _('Translation') }}</button>
-        <button type="button" class="sv2-chip" data-show="features">{{ _('Features') }}</button>
-        <button type="button" class="sv2-chip" data-show="enzymes">{{ _('Enzymes') }}</button>
-        <button type="button" class="sv2-chip" data-show="primers">{{ _('Primers') }}</button>
-        <span class="sv2-grow"></span>
-        <div class="seg" role="group" aria-label="{{ _('Proteins shown') }}">
-          <button type="button" class="seg-item" data-frames="cds" title="{{ _('The protein of each coding feature') }}">CDS</button>
-          <button type="button" class="seg-item" data-frames="six" title="{{ _('Open reading frames of 100 codons or more, in all six frames') }}">{{ _('6 frames') }}</button>
-        </div>
-      </div>
-      <div class="sv2-over" data-over title="{{ _('Click to go there') }}"></div>
-      <div class="sv2-rows" data-rows>
-        <div data-rowlist><p class="sv2-note">{{ _('Loading the sequence…') }}</p></div>
-        <div class="sv2-pop" data-pop hidden>
-          <span class="sv2-pop-text" data-pop-text></span>
-          <button type="button" class="btn btn-sm btn-primary" data-make="1">→ {{ _('Forward primer') }}</button>
-          <button type="button" class="btn btn-sm" data-make="-1">← {{ _('Reverse') }}</button>
-          <button type="button" class="btn btn-sm" data-pop-copy>{{ _('Copy') }}</button>
-          <button type="button" class="btn btn-sm" data-pop-translate>{{ _('Translate') }}</button>
-        </div>
-      </div>
-    </div>
-    <aside class="pglass sv2-side" data-side hidden></aside>
-  </div>
+  {{ seq_viewer(plasmid.row_id, editable=not locked, mutagenesis=True) }}
   {% endif %}
 
-  <details class="fold-card mt-4" id="ove-fold"{% if not plasmid.length_bp %} open{% endif %}>
-  <summary>{{ icon('edit') }} {{ _('Edit the sequence, its features and its map') }}</summary>
-  <div id="ove-shell">
-    <div class="ove-bar">
-      <span class="text-[12px] text-muted">
-        {% if locked %}{{ _('Read only.') }}{% else %}{% trans %}Edits save as you make them. Select bases, then <strong>Edit → Create</strong> for a feature, primer or translation. An empty sequence is never saved; use <strong>Clear sequence</strong> below.{% endtrans %}{% endif %}
-      </span>
-      <span class="flex items-center gap-3">
-        <span class="sheet-save" id="ove-status" aria-live="polite"></span>
-        {% if plasmid.length_bp %}
-          <span class="text-[12px] text-muted">{{ _('Download') }}
-            <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='gb') }}">GenBank</a> ·
-            <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='fa') }}">FASTA</a></span>
-        {% endif %}
-        <button type="button" class="btn btn-sm" id="ove-fullscreen" hidden><span>{{ _('Full screen') }}</span></button>
-      </span>
-    </div>
-    {# The lab's feature library (app/feature_library.py): mark its elements here, or keep this map's in it. #}
-    {% if plasmid.length_bp %}
-      <div class="ove-bar text-[12px]" id="feature-library-bar">
-        <span class="text-muted">{% trans url=url_for('feature_library_page') %}The <a href="{{ url }}">feature library</a> keeps the lab's elements by sequence.{% endtrans %}</span>
-        <span class="flex items-center gap-2">
-          {% if not locked %}
-            <form method="post" action="{{ url_for('plasmid_detect_features', row_id=plasmid.row_id) }}">
-              <button type="submit" class="btn btn-sm" title="{{ _('Mark every library element found in this sequence') }}">{{ icon('wand') }} {{ _('Detect features') }}</button>
-            </form>
-          {% endif %}
-          {% if not locked and plannotate_here %}
-            {# A separate program the lab installed: it finds an element a few bases off. #}
-            <form method="post" action="{{ url_for('plasmid_annotate', row_id=plasmid.row_id) }}">
-              <button type="submit" class="btn btn-sm" title="{{ _('Find features by alignment, including ones a few bases off') }}">{{ icon('sparkle') }} {{ _('Annotate with pLannotate') }}</button>
-            </form>
-          {% endif %}
-          {% if plasmid.features %}
-            <form method="post" action="{{ url_for('plasmid_features_to_library', row_id=plasmid.row_id) }}">
-              <button type="submit" class="btn btn-sm" title="{{ _('Keep the named features of this map in the library') }}">{{ icon('folder-plus') }} {{ _('Add to library') }}</button>
-            </form>
-          {% endif %}
-          {# Build something out of this one (app/cloning.py). #}
-          <a class="btn btn-sm" href="{{ url_for('cloning.wizard', **{'from': plasmid.plasmid_id}) }}"
-             title="{{ _('Cut it, or use it whole, in a new plasmid') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
-        </span>
-      </div>
+  {% if plasmid.length_bp %}
+  {# Under the viewer: the file, the topology, full screen, and the lab's feature library (app/feature_library.py). #}
+  <div class="sv2-tools">
+    <span class="text-muted">{{ _('Download') }}
+      <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='gb') }}">GenBank</a> ·
+      <a href="{{ url_for('plasmid_download', row_id=plasmid.row_id, fmt='fa') }}">FASTA</a></span>
+    {% if not locked %}
+      <button type="button" class="btn btn-sm" data-topology>{{ _('Make it linear') if plasmid.is_circular else _('Make it circular') }}</button>
     {% endif %}
-    <div id="ove-root" class="ove-root" data-plasmid-id="{{ plasmid.row_id }}"
-         data-plasmid-name="{{ plasmid.name or ('Plasmid #' ~ plasmid.plasmid_id) }}"
-         data-locked="{{ '1' if locked else '0' }}">
-      <div class="ove-loading">{{ _('Loading the sequence editor…') }}</div>
-    </div>
+    <button type="button" class="btn btn-sm" data-sv-fullscreen hidden>{{ icon('panel-right') }} <span>{{ _('Full screen') }}</span></button>
+    <span class="sv2-grow"></span>
+    {% if not locked %}
+      <form method="post" action="{{ url_for('plasmid_detect_features', row_id=plasmid.row_id) }}">
+        <button type="submit" class="btn btn-sm" title="{{ _('Mark every library element found in this sequence') }}">{{ icon('wand') }} {{ _('Detect features') }}</button>
+      </form>
+    {% endif %}
+    {% if not locked and plannotate_here %}
+      {# A separate program the lab installed: it finds an element a few bases off. #}
+      <form method="post" action="{{ url_for('plasmid_annotate', row_id=plasmid.row_id) }}">
+        <button type="submit" class="btn btn-sm" title="{{ _('Find features by alignment, including ones a few bases off') }}">{{ icon('sparkle') }} {{ _('Annotate with pLannotate') }}</button>
+      </form>
+    {% endif %}
+    {% if plasmid.features %}
+      <form method="post" action="{{ url_for('plasmid_features_to_library', row_id=plasmid.row_id) }}">
+        <button type="submit" class="btn btn-sm" title="{{ _('Keep the named features of this map in the library') }}">{{ icon('folder-plus') }} {{ _('Add to library') }}</button>
+      </form>
+    {% endif %}
+    <a class="btn btn-sm" href="{{ url_for('cloning.wizard', **{'from': plasmid.plasmid_id}) }}"
+       title="{{ _('Cut it, or use it whole, in a new plasmid') }}">{{ icon('plasmid') }} {{ _('Assemble a plasmid') }}</a>
   </div>
-  </details>
+  {% endif %}
 
   {# Primers that name this plasmid in the Primers database; the map's own primers land there (app/primer_records.py). #}
   {# Find saved primers looks through every primer the lab has saved for ones that bind here (GitHub #62). #}
@@ -249,14 +204,15 @@
 
   {% if not locked %}
     {# Replace the whole sequence from a file in one step. #}
-    <details class="fold-card mt-4">
-      <summary>{{ icon('upload') }} {{ _('Replace the sequence from a file') }}</summary>
+    <details class="fold-card mt-4"{% if not plasmid.length_bp %} open{% endif %}>
+      <summary>{{ icon('upload') }} {% if plasmid.length_bp %}{{ _('Replace the sequence: a file, pasted text, or Addgene and NCBI') }}{% else %}{{ _('Add the sequence: a file, pasted text, or Addgene and NCBI') }}{% endif %}</summary>
       <form method="post" action="{{ url_for('plasmid_upload_sequence', row_id=plasmid.row_id) }}"
             enctype="multipart/form-data" class="flex flex-col gap-3 px-4 py-3.5"
             {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? You can restore it from its versions.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
         <label class="field-label">{{ _('SnapGene .dna, GenBank .gb / .gbk, or FASTA') }}
           <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
         </label>
+        {{ fetch_row() }}
         <details class="dropzone-paste">
           <summary>{{ _('Paste annotated text instead (FASTA or GenBank)') }}</summary>
           <textarea name="sequence_text" rows="4" placeholder="&gt;pTest&#10;ATGCGTAAACCC…&#10;&#10;{{ _('…or a GenBank LOCUS … // record') }}"></textarea>
@@ -655,18 +611,10 @@
 <script src="{{ url_for('static', filename='seq-viewer.js') }}?v={{ asset_version('seq-viewer.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-primers.js') }}?v={{ asset_version('plasmid-primers.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-overview.js') }}?v={{ asset_version('plasmid-overview.js') }}" defer></script>
-{# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
-   inline script so the global is in place when we read it. #}
-<script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
-        data-loaded-flag="__oveLoaded"
-        data-missing-flag="__oveMissing"></script>
+<script src="{{ url_for('static', filename='sequence-fetch.js') }}?v={{ asset_version('sequence-fetch.js') }}" defer></script>
 
 <script nonce="{{ csp_nonce() }}">
 (function () {
-  // The editor sizes itself on resize: nudge it when its fold opens.
-  const fold = document.getElementById('ove-fold');
-  if (fold) fold.addEventListener('toggle', () => { if (fold.open) window.dispatchEvent(new Event('resize')); });
-
   // Tab switching ----------------------------------------------------------
   const tabs = document.querySelectorAll('.plasmid-tab');
   const panels = document.querySelectorAll('.plasmid-tab-panel');
@@ -677,157 +625,6 @@
     });
   });
 
-  // Open Vector Editor mount -----------------------------------------------
-  const root = document.getElementById('ove-root');
-  if (!root) return;
-  const plasmidId = root.dataset.plasmidId;
-  const plasmidName = root.dataset.plasmidName;
-  const locked = root.dataset.locked === '1';
-  const status = document.getElementById('ove-status');
-
-  // The editor saves on every edit; say how each save went, and keep an
-  // error on screen until the next save succeeds.
-  function say(state, text) {
-    if (!status) return;
-    clearTimeout(status._clear);
-    status.dataset.state = state;
-    status.textContent = text;
-    if (state === 'saved') status._clear = setTimeout(() => { status.textContent = ''; status.dataset.state = ''; }, 2400);
-  }
-
-  // Full screen: the whole editor, map and sequence, filling the screen.
-  const shell = document.getElementById('ove-shell');
-  const fsButton = document.getElementById('ove-fullscreen');
-  if (fsButton && shell && shell.requestFullscreen) {
-    fsButton.hidden = false;
-    fsButton.addEventListener('click', () => {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else shell.requestFullscreen().catch((err) => say('error', t('Full screen is not available: %(error)s', { error: err.message })));
-    });
-    document.addEventListener('fullscreenchange', () => {
-      const on = document.fullscreenElement === shell;
-      fsButton.querySelector('span').textContent = on ? t('Exit full screen') : t('Full screen');
-      // The editor sizes itself on resize; nudge it when the frame changes.
-      window.dispatchEvent(new Event('resize'));
-    });
-  }
-
-  // Wait for the deferred UMD bundle to register window.createVectorEditor.
-  function waitForOve() {
-    return new Promise((resolve) => {
-      if (window.createVectorEditor) return resolve('ready');
-      const start = Date.now();
-      const tick = () => {
-        if (window.createVectorEditor) return resolve('ready');
-        if (window.__oveMissing) return resolve('missing');
-        if (window.__oveLoaded && !window.createVectorEditor) {
-          // Bundle finished but global not set → runtime crash.
-          return setTimeout(() => resolve(window.createVectorEditor ? 'ready' : 'broken'), 200);
-        }
-        if (Date.now() - start > 20000) return resolve('missing');
-        setTimeout(tick, 80);
-      };
-      tick();
-    });
-  }
-
-  Promise.all([
-    fetch(`/plasmids/${plasmidId}/sequence.json`).then((r) => r.ok ? r.json() : null),
-    waitForOve(),
-  ]).then(([data, state]) => {
-    if (state === 'missing') {
-      root.innerHTML = '<div class="ove-error">' + t('The sequence editor didn’t load. Run %(command)s, then hard-refresh.', { command: '<code>cd frontend &amp;&amp; npm run build:plasmid</code>' }) + '</div>';
-      return;
-    }
-    if (state === 'broken') {
-      root.innerHTML = '<div class="ove-error">' + t('OVE crashed at startup. Open DevTools → Console for the error.') + '</div>';
-      return;
-    }
-    // Clear our placeholder. OVE renders into an empty container.
-    root.innerHTML = '';
-
-    // Find saved primers (primer-scan.js) draws marks whose ids start so on
-    // the map, to look at: they are left out of every save. Drawing them
-    // re-sends the map, so a save that would store nothing new is skipped.
-    const FOUND = 'found-primer-';
-    const listOf = (group) => (Array.isArray(group) ? group : Object.values(group || {})).filter(Boolean);
-    function withoutFound(sd) {
-      return Object.assign({}, sd, { primers: listOf(sd.primers).filter((p) => !String(p.id || '').startsWith(FOUND)) });
-    }
-    function saveKey(sd) {   // what the server keeps of a save (_clean_features)
-      const group = (g) => listOf(g).map((a) => JSON.stringify([a.name, a.start, a.end, a.forward, a.strand, a.type, a.color,
-        a.notes, a.bases, a.inventory_id, a.translationType, (a.locations || []).map((l) => [l.start, l.end])])).sort();
-      return JSON.stringify([sd.sequence, !!sd.circular, sd.name, group(sd.features), group(sd.primers),
-        group(sd.translations), group(sd.parts)]);
-    }
-    let savedKey = null;
-
-    const editor = window.createVectorEditor(root, {
-      editorName: `plasmid-${plasmidId}`,
-      showMenuBar: true,
-      readOnly: locked,
-      shouldAutosave: !locked,  // calls onSave after every edit
-      doNotUseAbsolutePosition: true,
-      onSave: function (event, rawSequenceData, editorState, onSuccess) {
-        if (locked) return;
-        const sequenceData = withoutFound(rawSequenceData);
-        const key = saveKey(sequenceData);
-        if (key === savedKey) { if (onSuccess) onSuccess(); return; }
-        say('saving', t('Saving…'));
-        fetch(`/plasmids/${plasmidId}/sequence-save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sequenceData }),
-        })
-          .then((r) => r.json().catch(() => ({ ok: false, error: t('The server answered %(status)s.', { status: r.status }) })))
-          .then((j) => {
-            if (j && j.ok) {
-              savedKey = key;
-              const c = j.counts || { features: j.features };
-              const parts = [t(c.features === 1 ? '%(n)s feature' : '%(n)s features', { n: c.features })];
-              if (c.primers) parts.push(t(c.primers === 1 ? '%(n)s primer' : '%(n)s primers', { n: c.primers }));
-              if (c.translations) parts.push(t(c.translations === 1 ? '%(n)s translation' : '%(n)s translations', { n: c.translations }));
-              if (c.parts) parts.push(t(c.parts === 1 ? '%(n)s part' : '%(n)s parts', { n: c.parts }));
-              if (j.primers_added) parts.push(t(j.primers_added === 1 ? '%(n)s primer added to Primers' : '%(n)s primers added to Primers', { n: j.primers_added }));
-              say('saved', t('Saved · %(length)s bp · %(parts)s', { length: j.length, parts: parts.join(' · ') }));
-              if (onSuccess) onSuccess();
-            } else {
-              say('error', t('Not saved: %(error)s', { error: (j && j.error) || t('unknown error') }));
-            }
-          })
-          .catch((err) => say('error', t('Not saved: %(error)s', { error: err.message })));
-      },
-    });
-
-    if (data && data.ok) {
-      editor.updateEditor({
-        readOnly: locked,
-        sequenceData: {
-          name: data.name || plasmidName,
-          sequence: data.sequence || '',
-          circular: !!data.circular,
-          features: data.features || [],
-          primers: data.primers || [],
-          translations: data.translations || [],
-          parts: data.parts || [],
-        },
-      });
-      const loaded = editor.getState && editor.getState();
-      if (loaded && loaded.sequenceData) savedKey = saveKey(withoutFound(loaded.sequenceData));
-    } else {
-      // Empty plasmid — start with a blank sequence so user can begin typing.
-      editor.updateEditor({
-        readOnly: locked,
-        sequenceData: {
-          name: plasmidName,
-          sequence: '',
-          circular: true,
-          features: [],
-        },
-      });
-    }
-    root.oveEditor = editor;   // for Find saved primers' Show on map
-  });
 })();
 </script>
 {% endblock %}

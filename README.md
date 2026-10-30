@@ -411,8 +411,9 @@ two buttons beside its name: **Configure** (for whoever may change it) and
 
 ### 🧬 Plasmids
 
-Upload a GenBank, FASTA or SnapGene file and BioManager keeps the sequence
-and its features, and draws the plasmid itself: a map, every base, the
+Upload a GenBank, FASTA or SnapGene file, or fetch one by its Addgene
+number or GenBank accession, and BioManager keeps the sequence and its
+features, and draws the plasmid itself: a map, every base, the
 cuts, the gel, the primers and the protein. Plasmid boxes sit
 on the same rack grid as everything else, so every tube has an address.
 Each tube keeps its miniprep's concentration (ng/µL) and 260/280, and a
@@ -428,6 +429,10 @@ A plasmid's page has seven tabs. **Overview** is its map, ready to
 download as SVG or PNG for a lab meeting or a paper, what it is (backbone,
 resistance, where the tube is, whether a clone was verified, what it was
 made from), and its features; a feature opens the sequence on it.
+**Compare with…** lines it up against another plasmid and lists
+every base that differs, with the feature and protein effect and the two
+maps side by side — which of two near-identical constructs is in the tube,
+and what a colleague's "same plasmid" changed.
 **Sequence** shows every base with its complement, the features, the
 enzymes that cut once, the lab's primers as arrows, and the protein under
 each coding sequence (**6 frames** shows every open reading frame of 100
@@ -435,9 +440,18 @@ codons or more instead). Drag across bases and a small bar gives their
 length, Tm and GC: **Forward primer** or **Reverse** checks them as a
 primer (Tm, GC, a G/C clamp, hairpins, self-dimers, whether it binds
 only once, and whether the lab already has one there) and **Save to
-Primers** files it, to order. Click a coding feature for its protein:
-length, mass, pI, extinction coefficient and the amino acids. **Edit the
-sequence, its features and its map** below it opens the editor.
+Primers** files it, to order. **Mutagenesis…** (one base is enough) designs a
+site-directed mutagenesis: replace, insert or delete bases, or write the
+amino acid change (*K80A*); it gives the two back-to-back primers, what
+the change does to each protein, the silent changes nearby that add or
+remove an enzyme's site, and **Make it** adds the new plasmid, made from
+this one, with its primers in Primers to order. Click a coding feature for its protein:
+length, mass, pI, extinction coefficient and the amino acids. **Edit…**
+on picked bases changes the plasmid itself: type over them, insert after
+them or delete them (or just type a base letter, or press Delete), or add
+a feature on them; click a feature to rename, retype, turn round or remove
+it. Each edit is saved at once, the features move with it, and **Undo**
+(⌘Z) takes it back.
 **Digest** cuts it: tick enzymes (the ones that cut once, twice, or that
 the lab has in its Reagents) and see the cuts on the map, the pieces and
 what each holds, and the gel they would run as, beside a ladder and the
@@ -460,14 +474,17 @@ from and what was made from it, with a family tree. **Assemble a
 plasmid** builds the next one from the ones you have: fill a tray with
 fragments — a whole plasmid, one feature, a region, or a piece an enzyme
 leaves — and put them together by **digest and ligation**, by **Gibson /
-NEBuilder HiFi**, or by **Golden Gate**. Every junction shows its own
-bases, and one line says what is wrong and which end it is ("Fragment 2's
-3′ end has no overlap with fragment 3") before you make anything. The
-product arrives as an ordinary plasmid, with every fragment's features at
-their new places, each fragment marked on its map, **Made from** filled in
-for all of them, and — for a Gibson — the primers it needs designed,
-costed by melting temperature and waiting in the Primers database to
-order. Primers, glycerol stocks and viruses each name the plasmid they came
+NEBuilder HiFi**, by **In-Fusion**, or by **Golden Gate**. Every junction
+shows its own bases, and one line says what is wrong and which end it is
+("Fragment 2's 3′ end has no overlap with fragment 3") before you make
+anything. The product arrives as an ordinary plasmid, with every fragment's
+features at their new places, each fragment marked on its map, **Made from**
+filled in for all of them, and — for a Gibson or In-Fusion — the primers it
+needs designed, costed by melting temperature and waiting in the Primers
+database to order. **Gateway** is there too: pick an attB or attL plasmid
+and its attP or attR partner, and BP or LR makes the entry or expression
+clone, moving the gene onto the other's backbone, converting the att sites
+and removing the ccdB cassette — both parents kept under **Made from**. Primers, glycerol stocks and viruses each name the plasmid they came
 from, so they are tabs of one area rather than four entries in the
 sidebar: **Molecular biology**, called just **Plasmids** while the lab
 has none of them. The **Feature library**
@@ -1032,7 +1049,7 @@ database has a name of its own (one another database has is refused), so
       <h4>🔐 Sign-in options and reminders</h4>
       Sign in with Google, Microsoft or a password. If your server sends
       email, a daily digest lists what is overdue or coming up for each
-      person (<b>Settings → Notifications → Reminder email</b>).
+      person (<b>Settings → Notifications → Daily email</b>).
     </td>
   </tr>
   <tr>
@@ -1205,9 +1222,9 @@ and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 in a pane of glass, each with what it is set to now under its name
-on the left (**You**: Profile, Sign-in & security, Appearance & language,
+on the left (**You**: Profile, with how you sign in, Appearance & language,
 Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
-General, Databases, People & access, Devices & copies, History) and the
+General, Databases, People & access, Devices & copies, Version, History) and the
 chosen one beside it, its settings in grouped rows with a short line on what
 each does. Each pane says at its top whose settings it holds (yours alone,
 or the whole lab's) and who changes them, and **Databases → Set up each
@@ -1684,8 +1701,7 @@ what it needs to track.
   weight, not weighed in an experiment, notes with a welfare word): your
   own, or the lab's for animal care, facility managers and admins.
   Choose which kinds in **Settings → Notifications**. New members get a
-  short welcome tour (**Settings → Your data → See the welcome tour
-  again**).
+  short welcome tour (**Help → Welcome tour** brings it back).
 - **Guests.** An admin can let someone outside the lab in for a day to 30
   days with a **guest pass**: a one-time code instead of a password, an
   account that stops working when the pass ends, and nothing they can do
@@ -1763,7 +1779,7 @@ what it needs to track.
   curl -H "Authorization: Bearer $BM_TOKEN" "https://your-server/api/v1/mice?alive=true"
   ```
 - Passwords are at least 12 characters, repeated failed sign-ins are
-  locked out, and changing a password (**Settings → Sign-in & security**)
+  locked out, and changing a password (**Settings → Profile → Sign-in**)
   signs out every other session. A forgotten password is reset by an
   admin, from the **···** beside you in **Settings → People & access**.
 - **Your data stays with you** — on your computer or your lab's server.

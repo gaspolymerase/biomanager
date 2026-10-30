@@ -52,6 +52,8 @@ services:
       DO_NOT_TRACK: ${DO_NOT_TRACK:-}
       # 0: never ask GitHub whether a newer BioManager is out (app/server_updates.py).
       BIOMANAGER_UPDATE_CHECK: ${BIOMANAGER_UPDATE_CHECK:-}
+      # 0: never fetch a plasmid's sequence from NCBI or Addgene (app/sequence_fetch.py).
+      BIOMANAGER_SEQUENCE_FETCH: ${BIOMANAGER_SEQUENCE_FETCH:-}
       BIOMANAGER_GOOGLE_CLIENT_ID: ${BIOMANAGER_GOOGLE_CLIENT_ID:-}
       BIOMANAGER_GOOGLE_CLIENT_SECRET: ${BIOMANAGER_GOOGLE_CLIENT_SECRET:-}
       BIOMANAGER_MICROSOFT_CLIENT_ID: ${BIOMANAGER_MICROSOFT_CLIENT_ID:-}

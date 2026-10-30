@@ -40,7 +40,7 @@ ROLES = ("backbone", "insert", "template", "donor", "other")
 
 def method_label(method: str) -> str:
     return {"digest_ligate": gettext("Digest and ligate"), "gibson": gettext("Gibson / HiFi assembly"),
-            "golden_gate": gettext("Golden Gate")}.get(method, "")
+            "infusion": gettext("In-Fusion"), "golden_gate": gettext("Golden Gate")}.get(method, "")
 
 
 def role_labels() -> dict[str, str]:
@@ -53,6 +53,7 @@ def method_blurb(method: str) -> str:
     return {
         "digest_ligate": gettext("Cut each plasmid with the same enzymes and let the sticky ends find each other."),
         "gibson": gettext("Give neighbouring fragments the same bases where they meet, by PCR, and one enzyme mix joins them."),
+        "infusion": gettext("Takara's In-Fusion: the vector is cut, the inserts are PCR’d with 15-base ends matching it, and one mix joins them."),
         "golden_gate": gettext("A Type IIS enzyme cuts outside its own site, so every fragment gets the overhang you choose."),
     }.get(method, "")
 
@@ -242,14 +243,15 @@ def plan(fragments: list[cloning.Fragment], method: str, circular: bool, enzyme:
     """The assembly as the page shows it: the product, every junction, and
     the one sentence that says whether it goes together."""
     amplify = _amplified(fragments)
-    if method == "gibson":
+    if method in ("gibson", "infusion"):
         result = cloning.gibson(fragments, circular, design=design, amplify=amplify)
     elif method == "golden_gate":
         result = cloning.golden_gate(fragments, circular, enzyme=enzyme)
     else:
         result = cloning.ligate(fragments, circular)
-    result["primers"] = (cloning.design_gibson_primers(fragments, circular, amplify=amplify)
-                         if method == "gibson" and design else [])
+    arm = cloning.INFUSION_ARM if method == "infusion" else cloning.ARM
+    result["primers"] = (cloning.design_gibson_primers(fragments, circular, arm=arm, amplify=amplify)
+                         if method in ("gibson", "infusion") and design else [])
     result["status"] = status_text(result["problem"], result, method)
     result["junction_rows"] = [_junction_row(j, method) for j in result["junctions"]]
     return result
@@ -257,7 +259,7 @@ def plan(fragments: list[cloning.Fragment], method: str, circular: bool, enzyme:
 
 def _junction_row(junction: dict, method: str) -> dict:
     """A junction as the tray draws it: its bases, and what they are."""
-    if method == "gibson":
+    if method in ("gibson", "infusion"):
         if junction["bases"]:
             words = gettext("%(n)s bp overlap", n=junction["length"])
         elif junction["designed"]:
@@ -327,22 +329,37 @@ def cutters_of(p: PlasmidRecord) -> list[dict]:
     return sorted(found, key=lambda e: (e["sites"], e["name"]))
 
 
+# The fragment-tray methods, then Gateway, which recombines two whole
+# plasmids and so has its own panel (app/gateway_routes.py).
+NAV_METHODS = (*cloning.METHODS, "gateway")
+
+
+def _method_label(method: str) -> str:
+    return gettext("Gateway") if method == "gateway" else method_label(method)
+
+
+def _method_blurb(method: str) -> str:
+    if method == "gateway":
+        return gettext("BP or LR between two plasmids with att sites: the gene moves onto the other’s backbone, the att sites convert, and a ccdB cassette is removed.")
+    return method_blurb(method)
+
+
 @bp.route("/")
 def wizard():
     method = request.args.get("method", "digest_ligate")
-    if method not in cloning.METHODS:
+    if method not in NAV_METHODS:
         method = "digest_ligate"
     with SessionLocal() as db_session:
         sources = _sources(db_session)
         preload = _source_plasmid(db_session, request.args.get("from"))
         start = preload.plasmid_id if preload is not None and preload.full_sequence else None
         library = len(feature_library.entries(db_session))
-    return render_template("plasmid_assembly.html", method=method, methods=cloning.METHODS, sources=sources,
+    return render_template("plasmid_assembly.html", method=method, methods=NAV_METHODS, sources=sources,
                            golden_gate_enzymes=_enzyme_rows(cloning.GOLDEN_GATE_ENZYMES),
                            role_labels=role_labels(), start=start, library=library,
                            max_fragments=MAX_FRAGMENTS,
-                           method_labels={m: method_label(m) for m in cloning.METHODS},
-                           method_blurbs={m: method_blurb(m) for m in cloning.METHODS})
+                           method_labels={m: _method_label(m) for m in NAV_METHODS},
+                           method_blurbs={m: _method_blurb(m) for m in NAV_METHODS})
 
 
 @bp.route("/source/<int:number>")

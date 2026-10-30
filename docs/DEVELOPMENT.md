@@ -122,7 +122,7 @@ reads the source for the rules marked *(tested)*.
 - **Empty** sheets and lists: a soft icon over one sentence (`.dt-empty`,
   `empty-state`), with at most one action.
 
-**The design gallery**, `/design` (admins; Settings → Version), draws
+**The design gallery**, `/design` (admins, by its address), draws
 every piece above on one page as the app does (`templates/design_gallery.html`,
 in English only, as a maintainer's tool): check a change there in light,
 dark and at a phone's width before looking page by page.
@@ -306,10 +306,16 @@ scrolls to it, so links from other pages and redirects
 (`url_for("settings", _anchor=…)`) keep working. Without JavaScript every
 pane shows, stacked. On a phone the list and the pane take turns, with
 **‹ Settings** to go back. Panes: **You**, the person's own (Profile,
-Sign-in & security, Appearance & language, Notifications, AI assistant &
-tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
-the lab's (Statistics, General, Databases, People & access, Devices &
-copies, History) in one slate (`.set-ico.is-lab`). `app/settings_lab.py`
+with Sign-in under it, `#security`; Appearance & language, Notifications,
+AI assistant & tokens, Your data) with icon tiles in the person's accent
+colour; **Lab**, the lab's (Statistics, General, Databases, People &
+access, Devices & copies, Version, History) in one slate
+(`.set-ico.is-lab`). A setting is shown once, where it belongs: Batch
+history is reached from History, the welcome tour from Help, the daily
+email's cron line is under Reminder emails below, and the text size row
+shows only in the Mac app, which can set it. In Notifications a category
+in `notify.FOLLOWS` shares another's switch (a mouse picked from your
+breeder cage follows Transfers), so Settings lists `notify.SHOWN`. `app/settings_lab.py`
 gathers what the Lab panes show (`panes()`: with `configure`, every
 sidebar database's own set-up page from `configure_links()`, listed in
 Databases as Set up each database, and `summary`, the line under General,
@@ -888,8 +894,8 @@ Rebuild after editing templates — Tailwind only emits the classes it finds in
 `app/templates/**/*.html` and `app/static/*.js`.
 
 Every page is on Tailwind; the old `styles.css` / `legacy.css` bridge has
-been removed. Three pages embed third-party widgets that bring their own
-stylesheet (Open Vector Editor on plasmid detail, TOAST UI on the calendar)
+been removed. Two pages embed third-party widgets that bring their own
+stylesheet (TOAST UI on the calendar)
 and the notebook editor's own CSS lives in `frontend/src/styles.css` and
 `frontend/src/blocks.css`, built with `npm run build:notebook`. All three read the theme's colour tokens, so
 they follow the app's palette and dark mode.
@@ -1652,9 +1658,10 @@ crossing the origin keeps `start > end`.
   known. A byte-order mark and lines before LOCUS are ignored. A file of
   several records keeps the first, and `records` says how many there were
   (`_several_records` warns).
-- **Saves:** the map (Open Vector Editor, `/plasmids/<id>/sequence-save`,
-  after every edit), the hand edit, a file, and Clear. The editor's save
-  refuses anything but IUPAC letters (`is_iupac`) and an empty sequence.
+- **Saves:** an edit on the Sequence tab (`edit.json`, below), a whole map
+  as JSON (`/plasmids/<id>/sequence-save`, for scripts), the hand edit, a
+  file, and Clear. Each refuses anything but IUPAC letters (`is_iupac`)
+  and an empty sequence.
 - **Versions** (`app/plasmid_versions.py`, `plasmid_sequence_versions`,
   revision 0019): each of those records the state it leaves (`record`, with
   `how`: upload, editor, hand, clear, restore); a sequence from before
@@ -1703,12 +1710,12 @@ crossing the origin keeps `start > end`.
   are one per site, 1-based, with `exact`, `tail`, `annealed` and
   `linked` (its Plasmid column names this one); records the Primers card
   lists are counted in `listed`, not repeated, unless `?all=1` (a
-  record's read-only map, `inventory/sequence.html`). `static/primer-scan.js`
-  draws them on the editor (`#ove-root.oveEditor`) as primers whose ids
-  start `found-primer-`: the plasmid page's `onSave` drops those and skips
-  a save that would store nothing new (drawing re-sends the map), and
-  `_clean_features` drops any that still arrive, so they never reach
-  `features_json` or `sync_from_map`.
+  record's read-only page, `inventory/sequence.html`). `static/primer-scan.js`
+  lists them, each one's place a link that opens the Sequence tab on it
+  (`BioSeqViewer.select`); the viewer already draws every lab primer that
+  binds. `_clean_features` still drops any mark whose id starts
+  `found-primer-` that a script sends, so none reaches `features_json` or
+  `sync_from_map`.
 - **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
   the pages, at `/plasmids/assembly`): a tray of fragments taken from the
   lab's plasmids — a whole one, one feature, a region, or a piece a digest
@@ -1719,10 +1726,12 @@ crossing the origin keeps `start > end`.
   that already share 15–60 bases where they meet, and designs the primers
   that add that homology where they do not (`design_gibson_primers`, a 25
   base 5′ arm copied from the neighbour plus what anneals, sized to 60 °C
-  by `inventory_service.primer_tm`); **Golden Gate** takes the pieces a
-  Type IIS enzyme releases (`released`: the ones its site has left) and
-  refuses an overhang used twice, one that is another's reverse complement,
-  or one that reads the same on both strands.
+  by `inventory_service.primer_tm`); **In-Fusion** is the same overlap
+  assembly told apart only by its shorter designed arm (`INFUSION_ARM`,
+  15 bases), with the vector a cut fragment that gets no primer; **Golden
+  Gate** takes the pieces a Type IIS enzyme releases (`released`: the ones
+  its site has left) and refuses an overhang used twice, one that is
+  another's reverse complement, or one that reads the same on both strands.
   A cut is `(at, overhang)` — the bond the top strand breaks at, and how
   far the other strand's nick is from it, signed — and a fragment keeps its
   top strand between two such nicks with each end's overhang written as the
@@ -1752,6 +1761,22 @@ crossing the origin keeps `start > end`.
   through `save_primer` against the plasmid each amplifies and are drawn on
   that plasmid's map where `binding_sites` says they bind (`how="primers"`);
   a map that is not yours to edit keeps the records but not the drawing.
+- **Gateway** (`app/gateway.py` pure, `app/gateway_routes.py`,
+  `static/gateway.js`), a method in the same wizard but its own panel
+  because it recombines two whole plasmids, not a tray. att sites are read
+  from each plasmid's own annotations (`att_sites`: features named
+  `attB1`…`attR2`); `reaction_of` sees BP (a B molecule with a P) or LR (an
+  L with an R). The insert donor's stretch between its two att sites (the
+  gene) goes onto the other's backbone, each junction spliced at the core
+  the two att sites of a number share (`_longest_common`, ≥ `MIN_CORE`), so
+  it reads through with no seam whatever the exact arms in hand; the sites
+  are relabelled by `REACTIONS` (B+P→L on the product and R on the
+  byproduct; L+R→B and P). `recombine` returns the product, the byproduct
+  and what the reaction removed (a ccdB cassette). `/plasmids/assembly/
+  gateway/preview` answers two plasmid numbers with both products, and
+  **Recombine** makes the entry or expression clone, `add_parent` for each
+  parent (method `gateway`), version `how="assembly"`. `ATT_SEQUENCES` holds
+  canonical att sites for the Feature library and the demo lab.
 - **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
   `services.save_uploaded_file` into the uploads folder, with `kind` from
@@ -1806,13 +1831,36 @@ crossing the origin keeps `start > end`.
   the plasmid itself (`static/plasmid-map.js`: `BioPlasmidMap.circular`
   for the maps, labelled on Overview, small in the List, with cuts and
   pieces on Digest; `BioPlasmidMap.gel` for the gel; colours from
-  `static/plasmid.css`, the gel dark in both themes). Open Vector Editor
-  stays for editing, in the Sequence tab's **Edit the sequence…** fold.
-  Stored features are 0-based with the end included.
+  `static/plasmid.css`, the gel dark in both themes), and edits it on the
+  Sequence tab; nothing third-party draws or edits a plasmid. Stored
+  features are 0-based with the end included.
   - **Overview** (`static/plasmid-overview.js`): the labelled map from the
     page's own features, saved as SVG (computed styles written in) or a
     3× PNG; the plasmid's facts; a feature row opens Sequence on it
-    (`BioSeqViewer.select`).
+    (`BioSeqViewer.select`). **Compare with…** (`app/plasmid_compare.py`,
+    `app/compare_routes.py`) reads this plasmid as a synthetic `Read`
+    against the other's `seqverify.Target`, so the banded local aligner
+    matches them whatever their origins or strand and reports each
+    difference with the feature it hits and its protein effect
+    (`check_read`, reshaped B→A); a net indel wider than the aligner's
+    band shows as the aligned stretch ending early (for near-identical
+    plasmids, every change is caught). `compare.json` and
+    `compare/others.json` serve the Overview card, which draws both rings
+    with the differences marked.
+  - **From Addgene or NCBI** (`app/sequence_fetch.py`,
+    `app/sequence_fetch_routes.py`, `templates/_sequence_fetch.html`,
+    `static/sequence-fetch.js`), in New plasmid and Replace the sequence:
+    `parse_ref` reads an Addgene number (`Addgene #11150`, a bare number)
+    or an accession; `fetch` gets GenBank text from E-utilities' efetch
+    (`gbwithparts`) or the first `.gbk` Addgene's sequences page links
+    (Addgene's own full sequence ahead of the depositor's), at most `MOST`
+    bytes. `fetch-sequence?ref=` answers with the text and what
+    `parse_genbank` finds in it, and the page drops the text in the form's
+    paste box, so creating or replacing reads it as pasted GenBank. Any
+    failure is one `FetchError` code said politely (offline: download the
+    file and upload it); `BIOMANAGER_SEQUENCE_FETCH=0` hides it and reaches
+    nothing (`sequence_fetch_on()` in templates, passed through
+    `deploy/compose.yaml`). Tests pass their own opener.
   - **Sequence** (`static/seq-viewer.js`, `app/sequence_routes.py`):
     `view.json` gives the bases, features, single cutters
     (`digest.enzyme_table`), the lab's primers (`lab_primers`:
@@ -1827,6 +1875,41 @@ crossing the origin keeps `start > end`.
     sites) with the lab's same or nearby primers and a name
     (`_suggest_name`), and `primers/new` saves it through
     `primer_records.save_primer` and `derive_primer`.
+  - **Editing** (`app/sequence_edit.py` pure, `edit.json` in
+    `app/sequence_routes.py`, `static/seq-viewer.js`), on a plasmid the
+    person may change (`access.can_edit`; the viewer's `data-edit`): one
+    operation per request — `bases` (start, end, the new bases: typing over,
+    an insertion when end = start − 1, a deletion when empty), `add_feature`,
+    `edit_feature` / `delete_feature` (by `at`, the feature's place in the
+    stored list, which `view.json` gives beside each feature), `topology`,
+    and `state` (Undo: the whole state the previous edit's answer handed
+    back as `before`, cleaned by `_clean_features`). Annotations move with a
+    base edit by `mutagenesis.shift_features`, so a primer mark it touches
+    goes. Each request carries `base`, the `state_hash` the page loaded,
+    and is refused (409) when someone else has changed the plasmid since;
+    each saved edit is `how="editor"`, joined with the same person's edits
+    within `EDITS_JOIN` into one version, while Undo steps through every
+    edit of the page's session. Keys: a base letter with bases picked opens
+    Edit with it, Delete removes them, ⌘Z undoes. `templates/_seq_viewer.html`
+    is the viewer for both the plasmid page and a record's read-only page.
+  - **Mutagenesis** (`app/mutagenesis.py` pure, `app/mutagenesis_routes.py`,
+    the Sequence tab's **Mutagenesis…**): a `Change` is `at` (0-based), `cut`
+    bases and the `new` ones. `design_primers` makes Q5-style back-to-back
+    primers on a circular plasmid: each anneals for `cloning.anneal_length`
+    (TARGET_TM) from the change outwards; the new bases ride on the forward
+    primer's 5′ end, or split over both from `SPLIT` bases. `shift_features`
+    moves features after the change, stretches one it runs through, drops
+    one it removes and any primer mark it touches; `effects` translates
+    each coding feature before and after (`describe`: K80A, K80*, L3del,
+    K2_L3insGS, …delins…, F101Qfs*151, reading on past the feature for a
+    frameshift's stop). `codon_change` turns K80A into bases (`best_codon`:
+    fewest changes, then `PREFERRED`); `silent_sites` tries one codon or two
+    side by side (at most `MOST_CHANGED` bases) for sites of the non-Type IIS
+    enzymes appearing or going, near the pick. `mutagenesis.json` designs,
+    `silent-sites.json` lists, and `POST mutagenesis` makes the plasmid (the
+    change marked as a `misc_difference`, version `how="mutagenesis"`, a
+    `plasmid_parents` link with role `template` and method `mutagenesis`,
+    the primers saved with category `mutagenesis`).
   - **Digest** (`app/digest.py` pure, `app/digest_routes.py`,
     `static/plasmid-digest.js`): `digest.json?enzymes=&agarose=&ladder=
     &methylated=&lane=` answers the cuts (`cut_positions`, the cut written

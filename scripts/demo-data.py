@@ -432,6 +432,69 @@ sam.post(f"/plasmids/{pcag}/parents", data={
     "parent": str(one("select plasmid_id from plasmids where name='pCAGGS'")), "role": "backbone",
     "method": "digest_ligate"})
 
+# A near-identical variant, so Overview → Compare with… has a clean example:
+# pCAG-EGFP with one base changed in EGFP (a point mutation).
+def _variant_genbank() -> str:
+    seq, features = demo_plasmid(insert=True)
+    at = 692 + 3 * 64 + 1                       # the second base of EGFP codon 65
+    seq = seq[:at] + ("c" if seq[at] != "c" else "a") + seq[at + 1:]
+    lines = [f"LOCUS       {'pCAG-EGFP-P65L':<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             "DEFINITION  pCAG-EGFP-P65L (demo).", "FEATURES             Location/Qualifiers"]
+    for kind, start, end, label, strand in features:
+        loc = f"{start}..{end}" if strand == 1 else f"complement({start}..{end})"
+        lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
+    lines.append("ORIGIN")
+    for i in range(0, len(seq), 60):
+        lines.append(f"{i + 1:>9} " + " ".join(seq[j:j + 10] for j in range(i, min(i + 60, len(seq)), 10)))
+    lines.append("//")
+    return "\n".join(lines)
+
+
+PLASMIDS.append("pCAG-EGFP-P65L")
+sam.post("/plasmids", data={"name": "pCAG-EGFP-P65L", "count": "1", "box_id": str(box), "position": f"B{len(PLASMIDS)}"})
+variant = one("select id from plasmids where name='pCAG-EGFP-P65L'")
+sam.post(f"/plasmids/{variant}/upload-sequence", data={"sequence_text": _variant_genbank()})
+sam.post(f"/plasmids/{variant}/parents", data={
+    "parent": str(one("select plasmid_id from plasmids where name='pCAG-EGFP'")), "role": "template",
+    "method": "mutagenesis"})
+
+
+# A Gateway pair, so Assemble a plasmid → Gateway has something to recombine:
+# an attB-flanked gene and a pDONR (attP–ccdB–attP). BP makes an entry clone.
+def att_plasmid(name: str, s1: str, mid: str, mid_name: str, mid_kind: str, s2: str) -> None:
+    import random
+    from app.gateway import ATT_SEQUENCES as ATT
+    rnd = random.Random(sum(ord(c) for c in name))
+    fill = lambda n: "".join(rnd.choice("ACGT") for _ in range(n))
+    pre, post = fill(700), fill(900)
+    seq = pre + ATT[s1] + mid + ATT[s2] + post
+    p = len(pre)
+    feats = [("protein_bind", p + 1, p + len(ATT[s1]), s1, 1)]
+    p += len(ATT[s1])
+    feats.append((mid_kind, p + 1, p + len(mid), mid_name, 1))
+    p += len(mid)
+    feats.append(("protein_bind", p + 1, p + len(ATT[s2]), s2, 1))
+    feats += [("CDS", len(seq) - 650, len(seq) - 40, "KanR", -1)]
+    lines = [f"LOCUS       {name:<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             f"DEFINITION  {name} (demo).", "FEATURES             Location/Qualifiers"]
+    for kind, a, b, label, strand in feats:
+        loc = f"{a}..{b}" if strand == 1 else f"complement({a}..{b})"
+        lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
+    lines.append("ORIGIN")
+    for i in range(0, len(seq), 60):
+        lines.append(f"{i + 1:>9} " + " ".join(seq[j:j + 10] for j in range(i, min(i + 60, len(seq)), 10)).lower())
+    lines.append("//")
+    PLASMIDS.append(name)
+    sam.post("/plasmids", data={"name": name, "count": "1", "box_id": str(box), "position": f"B{len(PLASMIDS)}"})
+    rid = one("select id from plasmids where name=?", name)
+    sam.post(f"/plasmids/{rid}/upload-sequence", data={"sequence_text": "\n".join(lines)})
+
+
+att_plasmid("attB-Rab5a", "attB1", "ATG" + "".join(__import__("random").Random(1).choice("ACGT") for _ in range(648)),
+            "Rab5a", "CDS", "attB2")
+att_plasmid("pDONR221", "attP1", "".join(__import__("random").Random(2).choice("ACGT") for _ in range(1100)),
+            "ccdB", "CDS", "attP2")
+
 
 
 def ab1(bases: str, quality: list[int], seed: int) -> bytes:

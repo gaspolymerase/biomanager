@@ -151,6 +151,8 @@
                 <a class="menu-item" role="menuitem" href="{{ url_for('oauth.connect_page') }}"
                    data-label="{{ _('Connect an AI assistant') }}" title="{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}">{{ icon('sparkle') }} {{ _('Connect an AI assistant') }}</a>
                 {% endif %}
+                <a class="menu-item" role="menuitem" href="{{ url_for('lab.welcome') }}"
+                   data-label="{{ _('Welcome tour') }}" title="{{ _('The lab’s databases, one page, as a new member first sees them') }}">{{ icon('book-open') }} {{ _('Welcome tour') }}</a>
                 <a class="menu-item" role="menuitem" href="#whats-new" data-whats-new-open
                    data-label="{{ _("What's new") }}" title="{{ _('What changed in this version') }}">{{ icon('sparkle') }} {{ _("What's new") }}</a>
               </div>

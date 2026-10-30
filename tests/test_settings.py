@@ -12,7 +12,7 @@ class SettingsWindowTests(AppTestCase):
         html = self.get_ok(self.m, "/settings")
         links = re.findall(r'data-pane-link="([a-z]+)"', html)
         panes = re.findall(r'data-pane="([a-z]+)"', html)
-        self.assertEqual(links, ["profile", "security", "appearance", "notifications", "assistant", "data",
+        self.assertEqual(links, ["profile", "appearance", "notifications", "assistant", "data",
                                  "stats", "general", "databases", "people", "devices", "version", "history"])
         self.assertEqual(panes, links)
         self.assertIn('placeholder="Search settings"', html)
@@ -66,6 +66,35 @@ class SavedAsYouChangeTests(AppTestCase):
         self.assertTrue(r.get_json()["ok"])
         orders, transfer = row("select notify_orders, notify_transfer from users where username=?", who)
         self.assertEqual((bool(orders), bool(transfer)), (True, False))
+
+    def test_a_mouse_picked_from_your_breeder_cage_follows_transfers(self):
+        # One switch for both: a pick is one of your animals moving.
+        who = make_user(uniq("pick"))
+        c = client_for(who)
+        html = self.get_ok(c, "/settings")
+        self.assertIn('name="notify_transfer"', html)
+        self.assertNotIn('name="notify_picked"', html)
+        self.autosave(c, "/settings", {"action": "notifications", "notify_orders": "1"})
+        self.assertEqual(tuple(map(bool, row("select notify_transfer, notify_picked from users where username=?", who))),
+                         (False, False))
+        self.autosave(c, "/settings", {"action": "notifications", "notify_transfer": "1"})
+        self.assertEqual(tuple(map(bool, row("select notify_transfer, notify_picked from users where username=?", who))),
+                         (True, True))
+
+    def test_sign_in_is_on_profile_and_the_extras_are_gone(self):
+        html = self.get_ok(self.a, "/settings")
+        profile = html[html.index('data-pane="profile"'):html.index('data-pane="appearance"')]
+        self.assertIn('id="security"', profile)
+        self.assertIn('name="new_password"', profile)
+        # What was shown twice, or belongs elsewhere: the header already says
+        # who you are, History holds the batches, Help the welcome tour, and
+        # the design gallery is for whoever works on the app's look.
+        self.assertNotIn(">Username<", html)
+        self.assertNotIn("Batch history", html[html.index('data-pane="data"'):html.index('data-pane="stats"')])
+        self.assertNotIn("See the welcome tour again", html)
+        self.assertNotIn("/design", html[html.index('data-pane="version"'):])
+        self.assertNotIn("send-reminders", html)
+        self.assertIn('href="/welcome"', html)            # in the Help menu now
 
     def test_a_plain_post_comes_back_to_its_pane(self):
         for action, pane in (("profile", "profile"), ("notifications", "notifications"),

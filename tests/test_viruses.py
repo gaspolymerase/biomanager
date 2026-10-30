@@ -98,7 +98,10 @@ class SequenceViewTests(VirusCase):
         page = self.get_ok(self.a, f"/inventory/{self.viruses}/items/{vid}/sequence")
         self.assertIn("read only", page)
         self.assertIn(f"/plasmid/{number}", page)
-        self.assertIn("readOnly: true", page)
+        # The app's own viewer, with no way to edit: no Edit…, no Mutagenesis….
+        self.assertIn("data-seq-viewer", page)
+        self.assertNotIn("data-edit=", page)
+        self.assertNotIn("data-mutate=", page)
         self.assertNotIn("sequence-save", page)
 
     def test_without_a_sequence_it_says_so_instead(self):

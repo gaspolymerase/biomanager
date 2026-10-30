@@ -59,7 +59,6 @@
   "See them": "查看",
   "Shown under the %(bell)s at the top. You’re never told about changes you made yourself.": "显示在页面顶部的 %(bell)s 下。你自己做的更改不会通知你。",
   "Transfers": "转移",
-  "Your animals, cages, tanks or vials moved or given by someone else": "你的动物、笼、鱼缸或果蝇管被别人移动或转给他人",
   "Picked from breeders": "从种鼠笼取鼠",
   "Someone took one of your mice from a breeder cage": "有人从你的种鼠笼里取走了小鼠",
   "Genotyping": "基因型鉴定",
@@ -444,5 +443,8 @@
   "Set up each database": "设置各个数据库",
   "Its columns, the choices in its menus, and what it keeps track of": "它的列、菜单里的选项，以及它记录的内容",
   "See": "查看",
-  "Which databases the lab keeps": "实验室使用哪些数据库"
+  "Which databases the lab keeps": "实验室使用哪些数据库",
+  "Your animals, cages, tanks or vials moved or given by someone else, or your mice picked from a breeder cage": "你的动物、笼、鱼缸或果蝇管被别人移动或转给他人，或有人从你的种鼠笼里取走了小鼠",
+  "Sign-in": "登录",
+  "Take your records with you, and keep the whole lab safe.": "带走你的记录，并保护好整个实验室。"
 }

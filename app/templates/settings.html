@@ -54,7 +54,6 @@
       </span>
     </a>
     <div class="set-group-head">{{ _('You') }}</div>
-    {{ pane_link('security', 'lock', _('Sign-in & security')) }}
     {{ pane_link('appearance', 'type', _('Appearance & language'), sub=('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
     {{ pane_link('notifications', 'bell', _('Notifications')) }}
     {% set show_assistant = api_tokens_card() or proposals_pending is not none or not current_user.expires_at %}
@@ -75,7 +74,7 @@
 
   <div class="settings-panes">
 
-    {# ---------------------------------------------------------------- Profile #}
+    {# ---------------------------------------------------------------- Profile: who you are, and how you sign in #}
     <section class="set-pane" id="profile" data-pane="profile">
       <a class="set-back" href="#">{{ icon('chevron-left') }} {{ _('Settings') }}</a>
       <header class="set-head">
@@ -106,22 +105,7 @@
         </label>
         <noscript><div class="set-row"><span class="set-label"></span><button type="submit" class="btn btn-primary">{{ _('Save profile') }}</button></div></noscript>
       </form>
-      <div class="set-title">{{ _('Account') }}</div>
-      <div class="set-group">
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('Username') }}</b><small>{{ _('What you sign in with. It cannot be changed.') }}</small></span>
-          <span class="set-value">{{ user_settings.username }}</span>
-        </div>
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('Role') }}</b></span>
-          <span class="set-value">{{ (user_settings.role|tr)|capitalize }}</span>
-        </div>
-      </div>
-    </section>
-
-    {# ---------------------------------------------------------------- Sign-in & security #}
-    <section class="set-pane" id="security" data-pane="security">
-      {{ pane_head('lock', _('Sign-in & security'), _('How you sign in to BioManager.')) }}
+      <div class="set-title" id="security">{{ _('Sign-in') }}</div>
       <div class="set-group">
         <details class="set-details" {% if not user_settings.has_password %}open{% endif %}>
           <summary class="set-row">
@@ -229,7 +213,7 @@
 
       {# Font and text size. The font is saved for the person; the size is the
          window's zoom, which only the Mac app lets the page set (desktop_menu.py
-         DesktopApi.set_text_size): elsewhere the browser's zoom keys do it. #}
+         DesktopApi.set_text_size), so only there is it shown. #}
       <div class="set-title">{{ _('Text') }}</div>
       <form method="post" class="set-group" data-autosave-form>
         <input type="hidden" name="action" value="profile">
@@ -241,10 +225,9 @@
             <option value="system" {% if ui_font == 'system' %}selected{% endif %}>{{ _('System font') }}</option>
           </select>
         </label>
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('Text size') }}</b>
-            <small data-text-size-hint>{{ _('Your browser’s zoom sets it: ⌘ + and ⌘ − on a Mac, Ctrl + and Ctrl − elsewhere.') }}</small></span>
-          <div class="seg" data-text-size hidden>
+        <div class="set-row" data-text-size-row hidden>
+          <span class="set-label"><b>{{ _('Text size') }}</b></span>
+          <div class="seg" data-text-size>
             <button type="button" class="seg-item" data-size="smaller">{{ _('Smaller') }}</button>
             <button type="button" class="seg-item" data-size="default">{{ _('Default') }}</button>
             <button type="button" class="seg-item" data-size="larger">{{ _('Larger') }}</button>
@@ -299,35 +282,17 @@
         <noscript><div class="set-row"><span class="set-label"></span><button type="submit" class="btn btn-primary">{{ _('Save notifications') }}</button></div></noscript>
       </form>
 
-      <div class="set-title">{{ _('Reminder email') }}</div>
-      <div class="set-group">
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('Daily email') }}</b><small>{{ _('Each morning: what is overdue or coming up, such as flips, weanings, aging breeders and your own tasks.') }}</small></span>
+      <div class="set-group mt-3">
+        <div class="set-row" id="daily-email">
+          <span class="set-label"><b>{{ _('Daily email') }}</b>
+            <small>{{ _('Each morning: what is overdue or coming up, such as flips, weanings, aging breeders and your own tasks.') }}
+              {% if not mail_configured %}{{ _('Not set up yet, so no email is sent. Whoever runs the server can turn it on.') }}
+              {% elif user_settings.email %}{{ _('To stop it, clear your email in Profile.') }}
+              {% else %}{{ _('Add your email in Profile to get it.') }}{% endif %}</small></span>
+          {% if mail_configured and user_settings.email %}<span class="set-value">{{ user_settings.email }}</span>
+          {% elif mail_configured %}<a class="btn btn-sm" href="#profile">{{ _('Profile') }}</a>
+          {% else %}<span class="badge badge-warn">{{ _('off') }}</span>{% endif %}
         </div>
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('Sent to') }}</b>
-            <small>{% if user_settings.email %}{{ _('To stop it, clear your email in Profile.') }}{% else %}{{ _('Add your email in Profile to get it.') }}{% endif %}</small></span>
-          {% if user_settings.email %}<span class="set-value">{{ user_settings.email }}</span>
-          {% else %}<a class="btn btn-sm" href="#profile">{{ _('Profile') }}</a>{% endif %}
-        </div>
-        <div class="set-row">
-          <span class="set-label"><b>{{ _('On this server') }}</b>
-            <small>{% if mail_configured %}{{ mail_status|tr }}{% else %}{{ _('Not set up yet, so no email is sent. Whoever runs the server can turn it on.') }}{% endif %}</small></span>
-          {% if mail_configured %}<span class="badge badge-ok">{{ _('on') }}</span>{% else %}<span class="badge badge-warn">{{ _('off') }}</span>{% endif %}
-        </div>
-        {% if current_user.role == 'admin' %}
-          <details class="set-details">
-            <summary class="set-row">
-              <span class="set-label"><b>{{ _('Sending it each morning') }}</b><small>{{ _('For whoever runs the server.') }}</small></span>
-              {{ icon('chevron-down', 'set-chev') }}
-            </summary>
-            <div class="set-more">
-              <pre><code>0 8 * * *  cd {{ config.get('PROJECT_ROOT', '/path/to/Biomanager') }} \
-  && .venv/bin/python scripts/send-reminders.py</code></pre>
-              <p>{{ _('Preview without sending anything:') }} <code class="ident">scripts/send-reminders.py --dry-run</code></p>
-            </div>
-          </details>
-        {% endif %}
       </div>
     </section>
 
@@ -358,7 +323,7 @@
 
     {# ---------------------------------------------------------------- Your data #}
     <section class="set-pane" id="data" data-pane="data">
-      {{ pane_head('archive', _('Your data'), _('Take your records with you, and undo big changes.')) }}
+      {{ pane_head('archive', _('Your data'), _('Take your records with you, and keep the whole lab safe.')) }}
       <div class="set-group">
         <div class="set-row">
           <span class="set-label"><b>{{ _('Export my data') }}</b><small>{{ _('Your mice and plasmids, your notebook pages and your profile, in one .zip.') }}</small></span>
@@ -384,14 +349,6 @@
             {{ icon('chevron-right', 'set-chev') }}
           </a>
         {% endif %}
-        <a class="set-row set-row-link" href="{% if lab_data %}#history{% else %}{{ url_for('batches_view') }}{% endif %}">
-          <span class="set-label"><b>{{ _('Batch history') }}</b><small>{{ _('Changes made many records at a time (Add many, bulk edits, imports), each with Undo') }}</small></span>
-          {{ icon('chevron-right', 'set-chev') }}
-        </a>
-        <a class="set-row set-row-link" href="{{ url_for('lab.welcome') }}">
-          <span class="set-label"><b>{{ _('See the welcome tour again') }}</b></span>
-          {{ icon('chevron-right', 'set-chev') }}
-        </a>
       </div>
     </section>
 
@@ -884,12 +841,6 @@
             {{ icon('chevron-right', 'set-chev') }}
           </a>
         {% endif %}
-        {% if current_user.role == 'admin' %}
-          <a class="set-row set-row-link" href="{{ url_for('design_gallery') }}">
-            <span class="set-label"><b>{{ _('Design gallery') }}</b><small>{{ _('Every control, dialog, menu and pill the app draws, on one page: for checking a change to how it looks.') }}</small></span>
-            {{ icon('chevron-right', 'set-chev') }}
-          </a>
-        {% endif %}
       </div>
       {% if version_info.desktop %}
         <div class="set-title">{{ _('Updates') }}</div>
@@ -1018,7 +969,7 @@
 <script nonce="{{ csp_nonce() }}">
   // Font: the page changes at once (the choice saves itself). Text size: in
   // the Mac app, Smaller / Default / Larger set the window's zoom; elsewhere
-  // the row says which keys do it.
+  // the browser's zoom does it, so the row stays hidden.
   (function () {
     var font = document.querySelector('[data-ui-font]');
     if (font) font.addEventListener('change', function () {
@@ -1026,7 +977,7 @@
       else document.documentElement.removeAttribute('data-font');
     });
     var seg = document.querySelector('[data-text-size]');
-    var hint = document.querySelector('[data-text-size-hint]');
+    var row = document.querySelector('[data-text-size-row]');
     if (!seg) return;
     function mark(size) {
       seg.querySelectorAll('[data-size]').forEach(function (b) { b.classList.toggle('is-active', b.dataset.size === size); });
@@ -1037,8 +988,7 @@
       shell.whenDesktop(function () {
         // The Mac app answers with the current size; others don't answer.
         window.bmTextSize = function (size) {
-          seg.hidden = false;
-          if (hint) hint.hidden = true;
+          row.hidden = false;
           mark(size);
         };
         shell.desktopCall('text_size');
@@ -1091,7 +1041,7 @@
     if (!root) return;
     var panes = Array.prototype.slice.call(root.querySelectorAll('[data-pane]'));
     var links = Array.prototype.slice.call(root.querySelectorAll('[data-pane-link]'));
-    var aliases = { 'api-tokens': 'assistant', 'language': 'appearance', 'app-icon': 'appearance', 'racks': 'stats',
+    var aliases = { 'api-tokens': 'assistant', 'security': 'profile', 'language': 'appearance', 'app-icon': 'appearance', 'racks': 'stats',
                     'lab-copies': 'devices', 'lab-copy': 'devices', 'lab-server': 'devices', 'updates': 'version' };
     root.classList.add('is-ready');
     function show() {

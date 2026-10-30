@@ -23,6 +23,56 @@
 {% endblock %}
 
 {% block content %}
+{% if method == 'gateway' %}
+{# ---- Gateway: two whole plasmids recombine at their att sites ---- #}
+<div class="assembly gateway" data-gateway
+     data-preview-url="{{ url_for('gateway.preview') }}" data-make-url="{{ url_for('gateway.make') }}">
+  {% if sources %}
+  <div class="assembly-grid">
+    <section class="card assembly-card">
+      <header class="card-head"><h2 class="card-title">{{ _('The two plasmids') }}</h2></header>
+      <div class="gateway-pick">
+        <label class="field-label">{{ _('Entry or insert plasmid') }}
+          <select data-gw-a>
+            {% for s in sources %}<option value="{{ s.number }}">{{ s.label }} · {{ s.length }} bp</option>{% endfor %}
+          </select>
+          <span class="field-hint normal-case tracking-normal">{{ _('The one carrying the gene, between attB (for BP) or attL (for LR) sites.') }}</span>
+        </label>
+        <label class="field-label">{{ _('Donor or destination plasmid') }}
+          <select data-gw-b>
+            {% for s in sources %}<option value="{{ s.number }}"{% if loop.index == 2 %} selected{% endif %}>{{ s.label }} · {{ s.length }} bp</option>{% endfor %}
+          </select>
+          <span class="field-hint normal-case tracking-normal">{{ _('The pDONR (attP) or destination (attR) vector, with a ccdB cassette.') }}</span>
+        </label>
+      </div>
+      <p class="assembly-status" data-gw-status aria-live="polite">{{ _('Pick two plasmids with att sites.') }}</p>
+    </section>
+
+    <section class="card assembly-card">
+      <header class="card-head"><h2 class="card-title">{{ _('The product') }}</h2>
+        <span class="ml-auto text-[12px] text-muted" data-gw-size></span></header>
+      <div class="assembly-preview">
+        <svg viewBox="0 0 260 260" class="assembly-map" role="img" aria-label="{{ _('A map of the product') }}" data-gw-map></svg>
+      </div>
+      <div class="gateway-out" data-gw-out hidden>
+        <p class="gateway-byproduct" data-gw-byproduct></p>
+      </div>
+      <div class="assembly-fields">
+        <label class="field-label">{{ _('Name') }}
+          <input type="text" data-gw-name maxlength="200" autocomplete="off" placeholder="{{ _('e.g. %(example)s', example='pENTR-GFP') }}">
+        </label>
+      </div>
+    </section>
+  </div>
+  <div class="assembly-foot">
+    <span class="ml-auto"></span>
+    <button type="button" class="btn btn-primary" data-gw-make disabled>{{ icon('plasmid') }} {{ _('Recombine') }}</button>
+  </div>
+  {% else %}
+    <p class="record-wide text-[13px] text-muted">{% trans url=url_for('plasmids') %}No plasmid in the lab has a sequence yet. <a href="{{ url }}">Add one</a> and come back.{% endtrans %}</p>
+  {% endif %}
+</div>
+{% else %}
 <form method="post" action="{{ url_for('cloning.create') }}" id="assembly" class="assembly"
       data-method="{{ method }}" data-start="{{ start or '' }}" data-max="{{ max_fragments }}"
       data-source-url="{{ url_for('cloning.source', number=0) }}" data-preview-url="{{ url_for('cloning.preview') }}">
@@ -58,7 +108,7 @@
         </label>
         <div class="assembly-options">
           <label><input type="checkbox" name="circular" value="1" checked data-live> {{ _('Circular') }}</label>
-          {% if method == 'gibson' %}
+          {% if method in ('gibson', 'infusion') %}
             <label><input type="checkbox" name="design" value="1" checked data-live> {{ _('Design the primers') }}</label>
           {% endif %}
           {% if method == 'golden_gate' %}
@@ -147,8 +197,13 @@
     </footer>
   </form>
 </dialog>
+{% endif %}
 {% endblock %}
 
 {% block body_end %}
+{% if method == 'gateway' %}
+<script src="{{ url_for('static', filename='gateway.js') }}?v={{ asset_version('gateway.js') }}" defer></script>
+{% else %}
 <script src="{{ url_for('static', filename='assembly.js') }}?v={{ asset_version('assembly.js') }}" defer></script>
+{% endif %}
 {% endblock %}
