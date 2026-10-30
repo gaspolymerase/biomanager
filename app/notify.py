@@ -45,7 +45,8 @@ from .models import (CageRecord, FishRecord, InventoryItem, InventoryModule, Mou
                      TankRecord, UserAccount)
 
 CATEGORIES = {
-    "transfer": ("Transfers", "Your animals, cages, tanks or vials moved or given by someone else"),
+    "transfer": ("Transfers", "Your animals, cages, tanks or vials moved or given by someone else, "
+                              "or your mice picked from a breeder cage"),
     "picked": ("Picked from breeders", "Someone took one of your mice from a breeder cage"),
     "genotyping": ("Genotyping", "Genotypes recorded or requested for your animals, and what is waiting"),
     "orders": ("Orders", "Your orders placed, received or cancelled, and your stock running low; for admins, new requests"),
@@ -56,6 +57,11 @@ CATEGORIES = {
     "welfare": ("Animals that may need a look", "Once a day: animals losing weight, not weighed in an experiment, "
                                                 "or with notes that may need a look (yours; the lab's for animal care)"),
 }
+# Categories that share another's switch in Settings: a mouse picked from
+# your breeder cage is one of your animals moving, as a transfer is.
+FOLLOWS = {"picked": "transfer"}
+# The switches Settings → Notifications shows.
+SHOWN = {key: words for key, words in CATEGORIES.items() if key not in FOLLOWS}
 # Categories whose switch is kept as an app setting ("notify_<category>:<user>",
 # "off" when silenced) rather than a users column: no schema change for them.
 SETTING_SWITCHES = {"welfare"}

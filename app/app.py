@@ -2786,7 +2786,8 @@ def settings():
                 flash(gettext("Language saved."), "success")
             elif action == "notifications":
                 for category in notify.CATEGORIES:
-                    notify.set_wants(db_session, user, category, request.form.get(f"notify_{category}") == "1")
+                    switch = notify.FOLLOWS.get(category, category)
+                    notify.set_wants(db_session, user, category, request.form.get(f"notify_{switch}") == "1")
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     return jsonify({"ok": True})
@@ -2863,10 +2864,9 @@ def settings():
         icon_glyphs={key: label for key, (label, _draw) in appearance.GLYPHS.items()},
         icon_palettes=appearance.PALETTES,
         icon_urls={f"{g}/{c}": app_icon_url(g, c) for g in appearance.GLYPHS for c in appearance.PALETTES},
-        mail_status=mailer.status_line(),
         mail_configured=mailer.is_configured(),
         identities=identities,
-        notification_categories=notify.CATEGORIES,
+        notification_categories=notify.SHOWN,
     )
 
 

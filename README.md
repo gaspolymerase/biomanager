@@ -1037,7 +1037,7 @@ database has a name of its own (one another database has is refused), so
       <h4>🔐 Sign-in options and reminders</h4>
       Sign in with Google, Microsoft or a password. If your server sends
       email, a daily digest lists what is overdue or coming up for each
-      person (<b>Settings → Notifications → Reminder email</b>).
+      person (<b>Settings → Notifications → Daily email</b>).
     </td>
   </tr>
   <tr>
@@ -1210,9 +1210,9 @@ and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 in a pane of glass, each with what it is set to now under its name
-on the left (**You**: Profile, Sign-in & security, Appearance & language,
+on the left (**You**: Profile, with how you sign in, Appearance & language,
 Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
-General, Databases, People & access, Devices & copies, History) and the
+General, Databases, People & access, Devices & copies, Version, History) and the
 chosen one beside it, its settings in grouped rows with a short line on what
 each does. Each pane says at its top whose settings it holds (yours alone,
 or the whole lab's) and who changes them, and **Databases → Set up each
@@ -1689,8 +1689,7 @@ what it needs to track.
   weight, not weighed in an experiment, notes with a welfare word): your
   own, or the lab's for animal care, facility managers and admins.
   Choose which kinds in **Settings → Notifications**. New members get a
-  short welcome tour (**Settings → Your data → See the welcome tour
-  again**).
+  short welcome tour (**Help → Welcome tour** brings it back).
 - **Guests.** An admin can let someone outside the lab in for a day to 30
   days with a **guest pass**: a one-time code instead of a password, an
   account that stops working when the pass ends, and nothing they can do
@@ -1768,7 +1767,7 @@ what it needs to track.
   curl -H "Authorization: Bearer $BM_TOKEN" "https://your-server/api/v1/mice?alive=true"
   ```
 - Passwords are at least 12 characters, repeated failed sign-ins are
-  locked out, and changing a password (**Settings → Sign-in & security**)
+  locked out, and changing a password (**Settings → Profile → Sign-in**)
   signs out every other session. A forgotten password is reset by an
   admin, from the **···** beside you in **Settings → People & access**.
 - **Your data stays with you** — on your computer or your lab's server.

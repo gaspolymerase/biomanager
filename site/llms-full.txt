@@ -113,7 +113,7 @@ The first time the desktop app opens, it asks **Does your lab already use BioMan
 
 Below the questions, a note says BioManager sends its makers a few anonymous counts once a day, which helps keep it free and going ([what is sent](https://biomanager.org/guide/your-data#counts)). To stop them, switch off **Share anonymous counts with BioManager's makers** in **Settings → General**, then or any time later.
 
-BioManager then makes those databases, the racks and incubators too, and shows the lab ready, with the address people join at. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Settings → Your data → See the welcome tour again** brings it back).
+BioManager then makes those databases, the racks and incubators too, and shows the lab ready, with the address people join at. Everyone who joins later gets a one-page welcome tour of the lab's databases on first sign-in (**Help → Welcome tour** brings it back).
 
 **English or 中文.** BioManager shows in the language your computer or browser asks for first, English or Simplified Chinese; the desktop app follows your computer's. Choose for yourself under **Settings → Appearance & language**, which changes as soon as you pick, or with the **中文 / English** switch on the sign-in page, which then stays your choice when you sign in. Everyone in the lab chooses their own; names, notes and everything people type stay as written.
 
@@ -401,9 +401,9 @@ Source: https://biomanager.org/guide/undo-and-history
 
 The bell and what it tells you: your animals moved, orders arriving, @mentions and genotyping reminders, and how to choose them.
 
-The bell at the top shows what happened while you were away: someone moved your animals or vials, picked from your breeders, recorded a genotype on your mice, an order you placed was ordered, arrived or was cancelled, stock of yours [ran low](https://biomanager.org/guide/samples-and-orders#low-stock), someone wrote `@you` in a record's notes (a reagent, an order, a plasmid, a cage) or a notebook comment, and lab news such as being made admin. Admins are told of each new order request. A notice about one record opens that record — an order notice opens the order. A daily note reminds you of pups waiting to be genotyped, and another says how many [animals may need a look](https://biomanager.org/guide/home-page#animals) (losing weight, not weighed in an experiment, a welfare word in their notes): yours, or the lab's for animal care. Choose which kinds you get in **Settings → Notifications**; you're never notified of your own changes.
+The bell at the top shows what happened while you were away: someone moved your animals or vials, picked from your breeders, recorded a genotype on your mice, an order you placed was ordered, arrived or was cancelled, stock of yours [ran low](https://biomanager.org/guide/samples-and-orders#low-stock), someone wrote `@you` in a record's notes (a reagent, an order, a plasmid, a cage) or a notebook comment, and lab news such as being made admin. Admins are told of each new order request. A notice about one record opens that record — an order notice opens the order. A daily note reminds you of pups waiting to be genotyped, and another says how many [animals may need a look](https://biomanager.org/guide/home-page#animals) (losing weight, not weighed in an experiment, a welfare word in their notes): yours, or the lab's for animal care. Choose which kinds you get in **Settings → Notifications** (**Transfers** covers your mice picked from a breeder cage too); you're never notified of your own changes.
 
-If your server sends email, a daily digest of what's overdue or coming up — flips, weanings, returns, expiring stock — goes to the email on your profile (**Settings → Notifications → Reminder email**). Clear the email to stop it.
+If your server sends email, a daily digest of what's overdue or coming up — flips, weanings, returns, expiring stock — goes to the email on your profile (**Settings → Notifications → Daily email**). Clear the email to stop it.
 
 Source: https://biomanager.org/guide/notifications
 
@@ -1616,7 +1616,7 @@ Who and where: Admins
 
 - **Where**: **Settings → People & access**. Everyone sees the lab's people there; admins change them, from the **···** beside each person.
 
-- **Joining**: New sign-ups wait under **Waiting to join** until an admin presses **Approve**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it under **Settings → Sign-in & security** ([setting it up](https://biomanager.org/server#sign-in)).
+- **Joining**: New sign-ups wait under **Waiting to join** until an admin presses **Approve**. Members can also sign in with Google or Microsoft, or with the institution's own account, if the server offers it, and connect it in **Settings → Profile** ([setting it up](https://biomanager.org/server#sign-in)).
 
 - **Admins**: The **···** beside someone sets their role (admin, member, animal care, facility manager), resets their password, or disables the account. Keep at least two admins.
 
@@ -1650,7 +1650,7 @@ Who and where: Admins · Lab server
 
 1. Send them your lab server's address.
 
-2. They open it, press **Ask to join** and fill it in. Every admin is told at once, and their page changes as soon as one approves them; they can't sign in before that. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it under **Settings → Sign-in & security**, in **Sign in with another account**.
+2. They open it, press **Ask to join** and fill it in. Every admin is told at once, and their page changes as soon as one approves them; they can't sign in before that. If the server offers it, they can also sign in with Google or Microsoft, or with the institution's own account, and connect it in **Settings → Profile**, under **Sign in with another account**.
 
 3. Admins are notified of the sign-up. Open **Settings → People & access**: they wait under **Waiting to join**.
 

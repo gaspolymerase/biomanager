@@ -122,7 +122,7 @@ reads the source for the rules marked *(tested)*.
 - **Empty** sheets and lists: a soft icon over one sentence (`.dt-empty`,
   `empty-state`), with at most one action.
 
-**The design gallery**, `/design` (admins; Settings → Version), draws
+**The design gallery**, `/design` (admins, by its address), draws
 every piece above on one page as the app does (`templates/design_gallery.html`,
 in English only, as a maintainer's tool): check a change there in light,
 dark and at a phone's width before looking page by page.
@@ -306,10 +306,16 @@ scrolls to it, so links from other pages and redirects
 (`url_for("settings", _anchor=…)`) keep working. Without JavaScript every
 pane shows, stacked. On a phone the list and the pane take turns, with
 **‹ Settings** to go back. Panes: **You**, the person's own (Profile,
-Sign-in & security, Appearance & language, Notifications, AI assistant &
-tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
-the lab's (Statistics, General, Databases, People & access, Devices &
-copies, History) in one slate (`.set-ico.is-lab`). `app/settings_lab.py`
+with Sign-in under it, `#security`; Appearance & language, Notifications,
+AI assistant & tokens, Your data) with icon tiles in the person's accent
+colour; **Lab**, the lab's (Statistics, General, Databases, People &
+access, Devices & copies, Version, History) in one slate
+(`.set-ico.is-lab`). A setting is shown once, where it belongs: Batch
+history is reached from History, the welcome tour from Help, the daily
+email's cron line is under Reminder emails below, and the text size row
+shows only in the Mac app, which can set it. In Notifications a category
+in `notify.FOLLOWS` shares another's switch (a mouse picked from your
+breeder cage follows Transfers), so Settings lists `notify.SHOWN`. `app/settings_lab.py`
 gathers what the Lab panes show (`panes()`: with `configure`, every
 sidebar database's own set-up page from `configure_links()`, listed in
 Databases as Set up each database, and `summary`, the line under General,
