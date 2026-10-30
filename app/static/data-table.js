@@ -124,6 +124,11 @@
       if (!sheet) return Promise.resolve([]);
       return sheet._loadRows(sheet.rows).then(() => sheet.rows.slice());
     },
+    // The sheet `el` is in (its DataTableController), for sheet-views.js.
+    sheet(el) {
+      const card = el && el.closest ? el.closest('.data-table-card') : null;
+      return sheets.find((c) => c.card === card) || null;
+    },
     // A row's detail row (<tr data-detail-for>), on the page or not.
     detail(tr) {
       const sheet = tr && sheets.find((c) => c.rows.includes(tr));
@@ -174,10 +179,13 @@
       if (this.tbody) this.tbody.querySelectorAll(':scope > tr[data-detail-for]').forEach((d) => this.details.set(d.dataset.detailFor, d));
       this.sortKey = null;
       this.sortDir = 1;
-      this.page = 0;
+      // The page it was on before a batch action or a save reloaded it.
+      this.page = keptPlace && keptPlace.pages ? Math.max(0, Number(keptPlace.pages[this.id]) || 0) : 0;
       this.query = '';
+      controllers.push(this);
       this.quick = null;   // [{attr, value}, …] from a .dt-chip
       this._indexColumns();
+      this.fields = this._loadFields();   // [{key, value, label}, …]: sheet-views.js's filter chips
       this.hidden = this._loadHiddenCols();
       this.order = this._loadOrder();
       this.noun = card.dataset.noun || card.dataset.selectionNoun || 'entry';
@@ -208,6 +216,7 @@
       this._applyHidden();
       this._applyResizedWidths();
       this._restoreSort();
+      if (this.fields.length) this._refilter();
       this._wireQuickAdd();
       this._wireMore();
       this._wireTight();
@@ -575,13 +584,94 @@
     _refilter() {
       const q = this.query;
       const quick = this.quick;
+      const fields = this.fields || [];
       this.filtered = this.original.filter((tr) => {
         if (quick && quick.some((c) => (tr.dataset[c.attr] || '') !== c.value)) return false;
+        if (fields.some((f) => this._sortValue(tr, f.key).trim() !== f.value)) return false;
         return !q || this._rowText(tr).includes(q);
       });
       if (this.sortKey) this._applySort();
       this.page = 0;
       this.render();
+    }
+
+    /* Filter chips (static/sheet-views.js): each a column (its
+       data-sort-key) that must read exactly one value, all of them at once.
+       Kept per sheet in this browser, and in a saved view. */
+    _loadFields() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(`dt:${this.id}:fields`) || '[]');
+        return Array.isArray(saved) ? saved.filter((f) => f && f.key && typeof f.value === 'string') : [];
+      } catch (_) { return []; }
+    }
+
+    setFields(list) {
+      this.fields = (list || []).filter((f) => f && f.key && typeof f.value === 'string');
+      try {
+        if (this.fields.length) localStorage.setItem(`dt:${this.id}:fields`, JSON.stringify(this.fields));
+        else localStorage.removeItem(`dt:${this.id}:fields`);
+      } catch (_) {}
+      this._refilter();
+      this.card.dispatchEvent(new CustomEvent('dt:state', { bubbles: true }));
+    }
+
+    // The columns a filter or a view can name: those that sort.
+    columns() {
+      return this.headers.filter((th) => th.classList.contains('dt-sortable') && th.dataset.sortKey && th.dataset.dtOff !== '1')
+        .map((th) => ({ key: th.dataset.sortKey, label: this._columnLabel(th) }));
+    }
+
+    // The values a column holds across the sheet, most common first.
+    columnValues(key, limit) {
+      const counts = new Map();
+      this.original.forEach((tr) => {
+        const value = this._sortValue(tr, key).trim();
+        counts.set(value, (counts.get(value) || 0) + 1);
+      });
+      return Array.from(counts, ([value, n]) => ({ value, n }))
+        .sort((a, b) => b.n - a.n || a.value.localeCompare(b.value, undefined, { numeric: true }))
+        .slice(0, limit || 40);
+    }
+
+    // What the sheet is showing, for a saved view, and putting it back.
+    state() {
+      const chip = this.card.querySelector('.dt-chip[data-dt-filter][aria-pressed="true"]');
+      return {
+        query: this.search ? this.search.value : '',
+        chip: chip ? (chip.dataset.dtFilter || '') : '',
+        fields: this.fields.slice(),
+        sort: this.sortKey ? [this.sortKey, this.sortDir] : null,
+        hidden: [...this.hidden].map((col) => this.colKeys[col]).filter(Boolean),
+      };
+    }
+
+    applyState(view) {
+      view = view || {};
+      if (this.search) this.search.value = view.query || '';
+      this.query = (view.query || '').trim().toLowerCase();
+      const chips = Array.from(this.card.querySelectorAll('.dt-chip[data-dt-filter]'));
+      const chip = chips.find((c) => (c.dataset.dtFilter || '') === (view.chip || '')) || chips.find((c) => !c.dataset.dtFilter);
+      if (chip) chip.click();
+      if (Array.isArray(view.hidden)) {
+        const want = new Set(view.hidden);
+        this.hidden = new Set(this.colKeys.map((key, col) => (want.has(key) ? col : -1)).filter((col) => col >= 0));
+        this._saveHiddenCols();
+        this._applyHidden();
+      }
+      this.table && this.table.querySelectorAll('th.dt-sortable').forEach((o) => o.classList.remove('dt-sort-asc', 'dt-sort-desc'));
+      const sortBtn = this.card.querySelector('.dt-btn-sort');
+      const th = view.sort && this.table && Array.from(this.table.querySelectorAll('th.dt-sortable')).find((h) => h.dataset.sortKey === view.sort[0]);
+      if (th) {
+        this.sortKey = view.sort[0];
+        this.sortDir = view.sort[1] === -1 ? -1 : 1;
+        th.classList.add(this.sortDir === 1 ? 'dt-sort-asc' : 'dt-sort-desc');
+        try { localStorage.setItem(`dt:${this.id}:sort`, JSON.stringify([this.sortKey, this.sortDir])); } catch (_) {}
+      } else {
+        this.sortKey = null;
+        try { localStorage.removeItem(`dt:${this.id}:sort`); } catch (_) {}
+      }
+      if (sortBtn) sortBtn.classList.toggle('is-active', Boolean(th));
+      this.setFields(view.fields || []);
     }
 
     /* Quick filter chips: <button class="dt-chip" data-dt-filter="active:true">.
@@ -1476,6 +1566,8 @@
     // -------- render -----------------------------------------------------
     render() {
       const size = this.pageSize ? parseInt(this.pageSize.value, 10) : 50;
+      // A page kept from before a save (keepPlace) may be past the end now.
+      if (size && this.page > 0 && this.page * size >= this.filtered.length) this.page = Math.max(0, Math.ceil(this.filtered.length / size) - 1);
       const start = this.page * size;
       const end = start + size;
       // A page with stubs on it waits for their rows (a sheet the server
@@ -1641,7 +1733,43 @@
     });
   }
 
+  /* Keep your place. A batch action, a dialog's Save or a button that posts
+     comes back to the same page, reloaded: it opens where you were, each
+     sheet on its page and the window scrolled as it was. Noted as the form
+     goes (this tab only), used if it comes back to the same address within
+     two minutes. */
+  const PLACE_KEY = 'biomanager:place';
+  const controllers = [];
+  const scrollerOf = () => document.getElementById('app-scroll') || document.scrollingElement;
+  let keptPlace = null;
+  try {
+    const note = JSON.parse(sessionStorage.getItem(PLACE_KEY) || 'null');
+    sessionStorage.removeItem(PLACE_KEY);
+    if (note && note.url === location.pathname + location.search && Date.now() - (note.at || 0) < 120000) keptPlace = note;
+  } catch (_) { keptPlace = null; }
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!form || event.defaultPrevented || (form.method || '').toLowerCase() !== 'post' || form.target === '_blank') return;
+    const scroller = scrollerOf();
+    const pages = {};
+    controllers.forEach((c) => { pages[c.id] = c.page; });
+    try {
+      sessionStorage.setItem(PLACE_KEY, JSON.stringify({
+        url: location.pathname + location.search, at: Date.now(), y: scroller ? scroller.scrollTop : 0, pages,
+      }));
+    } catch (_) { /* storage off: it opens at the top, as before */ }
+  });
+  function restoreScroll() {
+    if (!keptPlace || !keptPlace.y) return;
+    const y = keptPlace.y;
+    const go = () => { const scroller = scrollerOf(); if (scroller) scroller.scrollTop = y; };
+    // Once the sheets are drawn, and again when images and fonts have come.
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    if (document.readyState !== 'complete') window.addEventListener('load', () => requestAnimationFrame(go), { once: true });
+  }
+
   function init() {
+    restoreScroll();
     document.querySelectorAll('.data-table-card[data-table-id]').forEach((card) => {
       // Avoid double-initializing if data-table.js is loaded twice.
       if (card.dataset.dtBound === '1') return;

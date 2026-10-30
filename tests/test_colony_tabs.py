@@ -949,10 +949,99 @@ class PresetTests(AppTestCase):
     def test_presets_tab_is_read_only_for_members(self):
         member_html = self.get_ok(self.m, "/colony?view=settings")
         self.assertIn("Only an admin can add, rename or remove choices", member_html)
-        self.assertNotIn("Add choice", member_html)
+        self.assertNotIn('class="choice-add"', member_html)
+        self.assertNotIn('class="choice-remove"', member_html)
         admin_html = self.get_ok(self.a, "/colony?view=settings")
-        self.assertIn("Add choice", admin_html)
+        self.assertIn('class="choice-add"', admin_html)
         self.assertNotIn("Only an admin can add, rename or remove choices", admin_html)
+
+
+FETCH = {"X-Requested-With": "fetch"}
+
+
+class DropdownsTabTests(AppTestCase):
+    """The Dropdowns tab (app/choices.py): each column's choices in order,
+    with how many records hold each; rename on the records too, remove with
+    another in its place, drag to order, paste many."""
+
+    def strain_choice(self, value):
+        self.a.post("/colony/options/create", data={"field_name": "strain", "option_value": value})
+        return one("select id from dropdown_options where field_name='strain' and option_value=?", value)
+
+    def test_each_choice_says_how_many_records_hold_it(self):
+        value = uniq("Strain ")
+        self.strain_choice(value)
+        self.make_mouse(self.a, self.admin, strain=value)
+        self.make_mouse(self.a, self.admin, strain=value.lower())
+        html = self.get_ok(self.a, "/colony?view=settings&field=strain")
+        row = html[html.index(f'data-value="{value}"'):]
+        self.assertIn('data-uses="2"', row[:400])
+        self.assertIn("2 mice", row[:1200])
+
+    def test_built_in_statuses_are_shown_and_cannot_be_removed(self):
+        html = self.get_ok(self.a, "/colony?view=settings&field=status")
+        pane = html[html.index('data-pane="status"'):html.index('data-pane="purpose"')]
+        for status in ("breeder", "experiment", "geno", "transfer", "sac"):
+            self.assertIn(f'data-value="{status}"', pane)
+        self.assertIn("built in", pane)
+        self.assertNotIn("data-remove", pane[:pane.index('data-value="sac"') + 600])
+
+    def test_values_in_the_records_that_arent_a_choice_are_offered(self):
+        loose = uniq("Loose ")
+        self.make_mouse(self.a, self.admin, strain=loose)
+        html = self.get_ok(self.a, "/colony?view=settings&field=strain")
+        self.assertIn(f'data-adopt="{loose}"', html)
+        self.assertEqual(self.a.post("/colony/options/create", data={"field_name": "strain", "option_value": loose},
+                                     headers=FETCH).get_json()["ok"], True)
+        self.assertNotIn(f'data-adopt="{loose}"', self.get_ok(self.a, "/colony?view=settings&field=strain"))
+
+    def test_pasting_several_lines_adds_each_once(self):
+        a, b = uniq("Paste "), uniq("Paste ")
+        r = self.a.post("/colony/options/create", headers=FETCH,
+                        data={"field_name": "strain", "option_value": f"{a}\n\n{b}\n{a.upper()}\n"})
+        self.assertTrue(r.get_json()["ok"])
+        self.assertEqual(count("dropdown_options", "field_name='strain' and lower(option_value) in (lower(?), lower(?))", a, b), 2)
+
+    def test_renaming_can_change_the_records_too(self):
+        old, new = uniq("Old "), uniq("New ")
+        oid = self.strain_choice(old)
+        kept = self.make_mouse(self.a, self.admin, strain=old)
+        r = self.a.post(f"/colony/options/{oid}/update", headers=FETCH, data={"option_value": new})
+        self.assertTrue(r.get_json()["ok"])
+        self.assertEqual(one("select strain from mice where id=?", kept), old)      # only the choice
+        oid2 = self.strain_choice(old)
+        r = self.a.post(f"/colony/options/{oid2}/update", headers=FETCH, data={"option_value": new + "x", "also_records": "1"})
+        self.assertIn("1 mouse", r.get_json()["message"])
+        self.assertEqual(one("select strain from mice where id=?", kept), new + "x")
+
+    def test_removing_can_put_another_choice_in_its_place(self):
+        gone, other = uniq("Gone "), uniq("Other ")
+        oid = self.strain_choice(gone)
+        self.strain_choice(other)
+        mouse = self.make_mouse(self.a, self.admin, strain=gone)
+        r = self.a.post(f"/colony/options/{oid}/delete", headers=FETCH, data={"replace_with": other})
+        self.assertTrue(r.get_json()["ok"])
+        self.assertEqual(count("dropdown_options", "id=?", oid), 0)
+        self.assertEqual(one("select strain from mice where id=?", mouse), other)
+
+    def test_breeding_and_breeder_keep_their_names(self):
+        oid = one("select id from dropdown_options where field_name='purpose' and lower(option_value)='breeding'")
+        if not oid:
+            self.a.post("/colony/options/create", data={"field_name": "purpose", "option_value": "Breeding"})
+            oid = one("select id from dropdown_options where field_name='purpose' and lower(option_value)='breeding'")
+        r = self.a.post(f"/colony/options/{oid}/update", headers=FETCH, data={"option_value": "Mating"})
+        self.assertFalse(r.get_json()["ok"])
+        self.assertEqual(one("select lower(option_value) from dropdown_options where id=?", oid), "breeding")
+
+    def test_the_order_dragged_is_the_dropdowns_order(self):
+        x, y = uniq("Zed "), uniq("Abe ")
+        ix, iy = self.strain_choice(x), self.strain_choice(y)
+        r = self.a.post("/colony/options/order", json={"field_name": "strain", "ids": [ix, iy]}, headers=FETCH)
+        self.assertTrue(r.get_json()["ok"])
+        strains = self.get_ok(self.a, "/colony?view=settings&field=strain")
+        self.assertLess(strains.index(f'data-value="{x}"'), strains.index(f'data-value="{y}"'))
+        self.assertNotEqual(self.m.post("/colony/options/order", json={"field_name": "strain", "ids": [iy, ix]},
+                                        headers=FETCH).status_code, 200)
 
 
 # ============================================================ Add many (batch)

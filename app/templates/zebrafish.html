@@ -204,7 +204,7 @@
 {% if active_view == "tanks" and tanks_sub == 'table' %}
   {% set any_mating = tank_rows | selectattr('row.mating_return_at') | list %}
   {% set any_returnable = tank_rows | selectattr('returnable') | list %}
-  <section class="data-table-card sheet dt-held" data-table-id="zf-tanks-v2" data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-tanks"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-tanks-v2" data-dt-views="zf-tanks" data-dt-inspector data-noun="{{ _('tank') }}" data-noun-plural="{{ _('tanks') }}" data-export-name="zebrafish-tanks"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('tank') }}" data-selection-noun-plural="{{ _('tanks') }}"{% if tank_rows_url %} data-dt-rows-url="{{ tank_rows_url }}"{% endif %}>
     <div class="dt-toolbar">
       {{ search_box(_('Search tank, line, owner…')) }}
@@ -607,7 +607,7 @@
 {# ================================= FISH ================================= #}
 {% if active_view == "fish" %}
   {% set sex_labels = {'M': _('M'), 'F': _('F'), 'mixed': zf('Mix'), 'unknown': '?'} %}
-  <section class="data-table-card sheet dt-held" data-table-id="zf-fish-v2" data-noun="{{ _('row') }}" data-noun-plural="{{ _('rows') }}" data-export-name="zebrafish-fish"
+  <section class="data-table-card sheet dt-held" data-table-id="zf-fish-v2" data-dt-views="zf-fish" data-dt-inspector data-noun="{{ _('row') }}" data-noun-plural="{{ _('rows') }}" data-export-name="zebrafish-fish"
            data-autosave-sheet data-selection-scope data-selection-noun="{{ _('fish row') }}" data-selection-noun-plural="{{ _('fish rows') }}">
     <div class="dt-toolbar">
       {{ search_box(_('Search tank, line, genotype…')) }}

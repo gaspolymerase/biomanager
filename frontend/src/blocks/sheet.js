@@ -110,15 +110,19 @@ export function mountSheet(host, ctx) {
         fixIndices(ci);
         commit(); renderAll();
       });
-      th.append(el('div', { class: 'nb-sheet-colhead' }, [letter, name, typeSel, menu]));
+      // A number's unit sits beside its name, as small as what it holds
+      // (dF/F %), rather than in a box of its own under it.
+      const parts = [letter, name];
+      if (col.type === 'number') {
+        const u = el('input', { class: 'nb-sheet-unit', value: col.unit || '', placeholder: 'unit', disabled: !editable, 'aria-label': 'Unit', size: Math.max(3, (col.unit || '').length + 1) });
+        u.addEventListener('input', () => { col.unit = u.value; u.size = Math.max(3, u.value.length + 1); commit(); refreshPanels(); });
+        if (editable || col.unit) parts.push(u);
+      }
+      th.append(el('div', { class: 'nb-sheet-colhead' }, [...parts, typeSel, menu]));
       if (col.type === 'formula') {
         const f = el('input', { class: 'nb-sheet-formula' + (errors[ci] ? ' has-error' : ''), value: col.formula || '', placeholder: '=B/mean(B)', disabled: !editable, title: errors[ci] || 'Formula: columns by letter or {name}; mean(), sd(), log2(), sqrt() …' });
         f.addEventListener('change', () => { col.formula = f.value.startsWith('=') ? f.value : `=${f.value}`; commit(); renderAll(); });
         th.appendChild(f);
-      } else if (col.type === 'number') {
-        const u = el('input', { class: 'nb-sheet-unit', value: col.unit || '', placeholder: 'unit', disabled: !editable, 'aria-label': 'Unit' });
-        u.addEventListener('input', () => { col.unit = u.value; commit(); refreshPanels(); });
-        th.appendChild(u);
       }
       head.appendChild(th);
     });

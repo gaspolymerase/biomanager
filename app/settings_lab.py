@@ -191,14 +191,56 @@ def history(session) -> dict:
     return {"batches": batches, "changes": changes}
 
 
+# ------------------------------------------------------------ Configure
+
+def configure_links(session) -> list[dict]:
+    """Every database in the sidebar, in its order, with the page that sets
+    it up (its columns, its choices, what it tracks), so Settings → Databases
+    reaches each one's configuration from one list."""
+    from flask import url_for
+
+    from . import home_layouts, inventory_service
+    from .i18n import translate_value
+    from .icons import resolve as resolve_icon
+    labels = inventory_service.builtin_labels(session)
+    builtin = {"colony": ("Mouse colony", "mouse"), "zebrafish": ("Zebrafish", "fish"), "plasmids": ("Plasmids", "plasmid")}
+    out = []
+    for db in home_layouts.lab_databases(session, lab.features_on(session)):
+        kind, module = db["kind"], db["module"]
+        if kind in builtin:
+            label, icon = labels.get(kind, builtin[kind][0]), builtin[kind][1]
+            url = url_for("organisms.configure_builtin", key=kind)
+        elif kind == "stock":
+            label, icon = module.label, resolve_icon(module.icon or "vials")
+            url = url_for("stocks.module", key=module.key, view="settings")
+        elif kind == "organism":
+            label, icon = module.label, resolve_icon(module.icon or "paw")
+            url = url_for("organisms.module", key=module.key, view="settings")
+        else:
+            label, icon = module.label, resolve_icon(module.icon or "box")
+            url = url_for("inventory.configure", key=module.key)
+        out.append({"key": db["key"], "label": translate_value(label), "icon": icon, "url": url})
+    return out
+
+
 def panes(session) -> dict:
     """Everything the Lab panes show."""
     state = lab.survey_state(session)
+    people_view = people(session)
+    custom = lab.custom_databases(session)
+    configure = configure_links(session)
     return {
         "stats": statistics(session),
         "state": state,
-        "custom": lab.custom_databases(session),
-        "people": people(session),
+        "custom": custom,
+        "people": people_view,
         "groups": project_groups(session),
         "history": history(session),
+        "configure": configure,
+        # A line under each pane's name in the list: what it is set to now.
+        "summary": {
+            "general": " · ".join(x for x in (state.get("lab_name") or "", state.get("lab_timezone") or "") if x),
+            "databases": len(configure),
+            "people": len(people_view.get("members", [])),
+        },
     }

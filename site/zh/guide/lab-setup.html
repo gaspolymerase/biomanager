@@ -141,10 +141,12 @@
     <div class="badges"><span class="badge who">仅管理员</span></div>
 
       <p>首次问卷之后，实验室的设置都在 <b>设置</b> （Settings）的 <b>实验室</b> （Lab）下。管理员可以修改；其他人只能查看，
-        好知道实验室是怎么设置的。每项修改都会即时保存。</p>
+        好知道实验室是怎么设置的。每项修改都会即时保存。每个面板顶部都写明这些设置是谁的——只属于你，还是全实验室的——以及由谁修改；
+        左边的面板列表在每个名称下面写着它现在的设置（实验室名称、几个数据库、几名成员）。</p>
       <ul>
         <li><b>一般</b> （General）——实验室的名称、时区、日期格式、断奶日和基因型鉴定日。</li>
-        <li><b>数据库</b> （Databases）——开启或关闭每个数据库，以及日历和实验记录本；<b>其他数据库</b> （Other databases）列出
+        <li><b>数据库</b> （Databases）——<b>设置各个数据库</b> （Set up each database）列出侧边栏里的每个数据库，各带一个 <b>配置</b> （Configure），
+          用来设置它的列、菜单选项和要记录的内容，实验室的全部设置都能从这一处找到。下面可以开启或关闭每个数据库，以及日历和实验记录本；<b>其他数据库</b> （Other databases）列出
           用 <b>添加数据库</b> （Add database）创建的数据库和成员自己的数据库。</li>
         <li><b>人员与权限</b> （People &amp; access）——实验室的人员（<a href="people-and-guests.html">成员与访客</a>）、
           <a href="project-groups.html">项目组</a>，以及 <b>成员可以做什么</b> （What members may do）：创建自己的数据库、为全实验室
@@ -163,6 +165,7 @@
           需要你输入的日期字段跟随电脑的语言设置。</li>
         <li><b>断奶日</b> （Weaning day）——出生后第几天该断奶（默认 P21，可修改）。首页、日历和笼子上的 <b>应断奶</b> 日期都按它来算。</li>
         <li><b>基因型鉴定日</b> （Genotyping day）——出生后第几天发出基因型鉴定提醒（默认 P28，可修改）。</li>
+        <li><b>实验室图标</b> （Lab icon）——实验室自己的图片（方形的 PNG、JPEG 或 WebP），和实验室名称一起显示在每个人侧边栏的顶部。<b>移除</b> 后恢复显示 BioManager 的图标。</li>
       </ul>
     <section class="trouble">
       <h2 id="troubleshooting">故障排除</h2>
@@ -192,6 +195,6 @@
     <p><a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本和更新内容</a> · <a href="../../privacy.html">隐私</a> · <a href="../../terms.html">使用条款</a></p>
   </div>
 </footer>
-<script src="../../site.js?v=ab8d9aa6a0"></script>
+<script src="../../site.js?v=0885aab389"></script>
 </body>
 </html>

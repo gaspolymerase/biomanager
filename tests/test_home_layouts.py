@@ -159,7 +159,7 @@ class CustomizeHomeTests(AppTestCase):
         self.save(who, order, show=order)
         html = self.get_ok(who, "/home")
         self.assertIn(title, html)
-        self.assertIn("Recent notebook pages", html)
+        self.assertIn('aria-label="Notebook"', html)      # in Overview's bento, always
         self.assertIn("No instrument booked in the next week.", html)
 
 

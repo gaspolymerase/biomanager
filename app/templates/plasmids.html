@@ -60,7 +60,7 @@
   </details>
 </div>
 
-<section class="data-table-card sheet plasmid-sheet dt-held" data-table-id="plasmids-v5" data-noun="plasmid" id="plasmids-section"
+<section class="data-table-card sheet plasmid-sheet dt-held" data-table-id="plasmids-v5" data-dt-views="plasmids" data-dt-inspector data-noun="plasmid" id="plasmids-section"
          data-autosave-sheet data-export-name="plasmids"
          data-selection-scope data-selection-noun="{{ _('plasmid') }}" data-selection-noun-plural="{{ _('plasmids') }}">
   <div class="dt-toolbar">
@@ -266,8 +266,8 @@
           {% set p = r.p %}
           <li class="plasmid-list-row" data-search="{{ ((p.name or '') + ' ' + (p.backbone or '') + ' ' + (p.resistance or '') + ' ' + (p.owner or '') + ' ' + r.where)|lower }}">
             <a href="{{ url_for('plasmid_page', number=p.plasmid_id) }}">
-              <span class="plasmid-list-id">#{{ p.plasmid_id }}</span>
-              <span class="plasmid-list-name">{{ p.name or _('Unnamed') }}</span>
+              <span class="plasmid-mini" {% if r.length %}data-mini='{{ r.mini|tojson }}' data-length="{{ r.length }}"{% endif %}><span>#{{ p.plasmid_id }}</span></span>
+              <span class="plasmid-list-name">{{ p.name or _('Unnamed') }}{% if r.verified %} <span class="badge badge-ok">{{ _('Verified %(when)s', when=r.verified) }}</span>{% endif %}</span>
               <span class="plasmid-list-meta">
                 {% if p.backbone %}<span>{{ p.backbone }}</span>{% endif %}
                 {% if p.resistance %}<span class="badge badge-brand">{{ p.resistance }}</span>{% endif %}
@@ -434,7 +434,24 @@
 {% endcall %}
 {% endblock %}
 
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='plasmid.css') }}?v={{ asset_version('plasmid.css') }}">
+{% endblock %}
+
 {% block body_end %}
+<script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
+// The List's small maps, drawn as the list is first shown (static/plasmid-map.js).
+(function () {
+  const draw = () => document.querySelectorAll('.plasmid-mini[data-mini]:not([data-drawn])').forEach((box) => {
+    box.dataset.drawn = '1';
+    box.insertAdjacentHTML('afterbegin', window.BioPlasmidMap.circular({
+      length: Number(box.dataset.length), features: JSON.parse(box.dataset.mini), mini: true, size: 64 }));
+  });
+  document.querySelectorAll('.plasmid-view-btn[data-view="list"]').forEach((b) => b.addEventListener('click', draw));
+  if (document.querySelector('.plasmid-view-list.is-active')) draw();
+})();
+</script>
 <script nonce="{{ csp_nonce() }}">
   /* The Belongs to pill takes its colour from what it says. */
   document.addEventListener('change', (e) => {

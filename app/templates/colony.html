@@ -119,6 +119,7 @@
          scrolls sideways instead, with the ID column and row actions
          pinned. #}
       <section class="data-table-card sheet dt-held" data-table-id="{{ mouse_table_id }}"
+               data-dt-views="colony-mice" data-dt-inspector="mice"
                {% if mouse_rows_url %}data-dt-rows-url="{{ mouse_rows_url }}"{% endif %}
                data-selection-scope="mice"
                data-selection-noun="mouse" data-selection-noun-plural="mice">
@@ -258,11 +259,41 @@
 
         {# Batch actions. Appears only when rows are ticked; every form here
            receives the checked ids from static/selection-bar.js. #}
+        {# The floating capsule (static/selection-bar.js): Move to cage, Set
+           status and Weigh on the bar, each with its key; Set a field, Add to
+           experiment and Sac under ···. #}
         <div class="selbar" data-selection-bar hidden>
           <span class="selbar-count" data-selection-count></span>
 
+          <form method="post" action="{{ url_for('bulk_update_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Move to cage') }}" data-key="M">
+            <input type="hidden" name="field" value="cage_id">
+            <input name="value" placeholder="{{ _('Cage, or “new”') }}" list="mouse-bulk-cages"
+                   aria-label="{{ _('Cage') }}" required autocomplete="off">
+            <datalist id="mouse-bulk-cages">{% for c in mouse_rows|map(attribute='cage_id')|select|unique|sort %}<option value="{{ c }}"></option>{% endfor %}</datalist>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Move') }}</button>
+          </form>
+
+          <form method="post" action="{{ url_for('bulk_update_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Set status') }}" data-key="S">
+            <input type="hidden" name="field" value="status">
+            <select name="value" aria-label="{{ _('Status') }}">
+              {% for st in sheet.status_choices %}<option value="{{ st }}">{{ st|tr }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Set') }}</button>
+          </form>
+
+          {# One weight per ticked mouse, on one day: the rows are filled in
+             as the panel opens (data-weigh-form, below). #}
+          <form method="post" action="{{ url_for('bulk_weigh_mice') }}" data-selection-form
+                data-selbar-label="{{ _('Weigh') }}" data-key="W" data-weigh-form>
+            <label class="selbar-weigh-day">{{ _('Day') }} <input type="date" name="weigh_date"></label>
+            <div class="selbar-weighs" data-weigh-rows></div>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Save weights') }}</button>
+          </form>
+
           <form method="post" action="{{ url_for('bulk_update_mice') }}"
-                class="selbar-group" data-selection-form>
+                data-selection-form data-selbar-more data-selbar-label="{{ _('Set a field…') }}" data-key="F">
             {# The value box follows the field chosen (static/selection-bar.js):
                a date picker for a date, the field's own choices offered. #}
             <select name="field" aria-label="{{ _('Field to set') }}" data-bulk-field>
@@ -282,12 +313,12 @@
             <input name="value" placeholder="{{ _('new value') }}" list="mouse-bulk-value-options"
                    aria-label="{{ _('New value') }}" data-bulk-value>
             <datalist id="mouse-bulk-value-options"></datalist>
-            <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
+            <button type="submit" class="btn btn-sm btn-primary">{{ _('Set') }}</button>
           </form>
 
           {% if open_experiments %}
             <form method="post" action="{{ url_for('bulk_add_to_experiment') }}"
-                  class="selbar-group" data-selection-form>
+                  data-selection-form data-selbar-more data-key="E">
               <select name="experiment_id" aria-label="{{ _('Experiment') }}">
                 {% for exp in open_experiments %}
                   <option value="{{ exp.id }}"{% if exp.fixed %} data-ask-reason="{{ _('%(name)s was started with a plan: adding mice changes its groups. Why?', name=exp.name) }}"{% endif %}>{{ exp.name }}</option>
@@ -300,7 +331,7 @@
           {% endif %}
 
           <form method="post" action="{{ url_for('bulk_sac_mice') }}"
-                class="selbar-group" data-selection-form
+                data-selection-form data-selbar-more
                 data-confirm="{{ _("Mark {n} mouse record(s) as sac'd today?") }}">
             <button type="submit" class="btn btn-sm btn-danger">{{ _('Sac') }}</button>
           </form>
@@ -315,24 +346,11 @@
       <div data-layout-scope>
         <div class="mb-3 flex flex-wrap items-center gap-2.5">
           {{ view_switch('mouse-cages', _('Table'), _('Rack grid'), _('Cards')) }}
-          <div class="rack-chips" role="group" aria-label="{{ _('Rack settings') }}">
-            <span class="rack-chips-label">{{ _('Racks') }}</span>
-            {% for rack in cage_racks.racks %}
-              <button type="button" class="btn btn-sm" title="{{ _('Size and position names for %(rack)s', rack=rack.name) }}"
-                      data-record-edit="mouse-rack-dialog" data-record-payload="{{ rack.edit['data-record-payload'] }}">
-                {{ icon('sliders') }} {{ rack.name }}
-              </button>
-            {% endfor %}
-            <button type="button" class="btn btn-sm" data-record-edit="mouse-rack-dialog"
-                    data-record-payload='{{ {"rows": 8, "cols": 10, "naming_mode": "grid", "naming_rows": "letters", "naming_cols": "numbers", "naming_order": "row_col", "naming_separator": "", "naming_start": "1"} | tojson }}'>
-              {{ icon('plus') }} {{ _('New rack') }}
-            </button>
-          </div>
           <details class="info-tip" data-popover>
             <summary aria-label="{{ _('About racks and positions') }}" title="{{ _('About racks and positions') }}">{{ icon('info') }}</summary>
             <div class="info-tip-pop">
               {{ _('Set a cage’s <strong>Rack</strong> and <strong>Position</strong> here, in the mouse sheet, or by dragging on the rack grid.') }}
-              {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it under the rack’s button above.') }}
+              {{ _('Each rack names its positions its own way (A1, 1-1, 37…); change it with Edit beside the rack on the rack grid.') }}
             </div>
           </details>
         </div>
@@ -396,6 +414,7 @@
              all stay on the page (data-dt-keep-rows): the cards view, Open
              all and a scanned cage look for them there. #}
           <section class="data-table-card sheet cage-sheet dt-held" data-table-id="cages-v3" data-dt-keep-rows
+                   data-dt-views="colony-cages" data-dt-inspector="cages"
                    {% if cage_rows_url %}data-dt-rows-url="{{ cage_rows_url }}"{% endif %}
                    data-noun="cage" data-noun-plural="cages" data-export-name="cages"
                    data-autosave-sheet data-selection-scope="cages"
@@ -622,7 +641,7 @@
       {# Litters as a sheet: one row per litter. Its date of birth is the
          age of every mouse in it, so changing it asks first (as on the
          mouse sheet), and only someone who may edit all its mice can. #}
-      <section class="data-table-card sheet dt-held" data-table-id="litters-v2"
+      <section class="data-table-card sheet dt-held" data-table-id="litters-v2" data-dt-views="colony-litters"
                data-noun="litter" data-noun-plural="litters" data-export-name="litters"
                {% if litter_rows_url %}data-dt-rows-url="{{ litter_rows_url }}"{% endif %}>
         <div class="dt-toolbar">
@@ -1044,80 +1063,105 @@
         </form>
       </dialog>
 {% else %}
-      <section class="grid two-col">
-        <article class="panel">
-          <h2>{{ _('Dropdown choices') }}</h2>
-          <p>{{ _("The choices a column's dropdown offers. Picking a column shows only its choices on the right.") }}</p>
-          {% if not can_edit_presets %}
-            <p class="preset-readonly-note">{{ icon('lock') }} {{ _('Only an admin can add, rename or remove choices. You can still pick them everywhere.') }}</p>
-          {% endif %}
-          <form method="post" action="{{ url_for('create_option') }}" class="option-form"{% if not can_edit_presets %} data-presets-locked{% endif %}>
-            <label>
-              <span>{{ _('Column') }}</span>
-              <select name="field_name" id="preset-column-select">
-                {% for field_name in dropdowns.keys() %}
-                  <option value="{{ field_name }}">{{ field_name|tr }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            {% if can_edit_presets %}
-              <label>
-                <span>{{ _('Choice') }}</span>
-                <input name="option_value" required>
-              </label>
-              <button type="submit">{{ _('Add choice') }}</button>
-            {% endif %}
-          </form>
-        </article>
-        <article class="panel">
-          <h2>{{ _('Current choices') }} <span id="preset-selected-label" class="muted-inline" style="font-weight:normal;"></span></h2>
-          <p>{% if can_edit_presets %}{{ _('Edit a value inline to rename a preset, or remove it with the delete button.') }}{% else %}{{ _('The values offered in each column’s dropdown.') }}{% endif %}</p>
-          {% for field_name, options in dropdown_records.items() %}
-            <div class="preset-block" data-field-name="{{ field_name }}">
-              <strong>{{ field_name|tr }}</strong>
-              {% if options %}
-                <div class="preset-options">
-                  {% for option in options %}
-                    <div class="preset-row">
-                      <form method="post" action="{{ url_for('update_option', option_id=option.id) }}" class="preset-edit-form">
-                        <input name="option_value" value="{{ option.option_value }}" data-autosave="1" aria-label="{{ _('Edit preset') }}"
-                               {% if not can_edit_presets %}disabled title="{{ _('Only an admin can rename presets') }}"{% endif %}>
-                      </form>
-                      {% if can_edit_presets %}
-                        <form method="post" action="{{ url_for('delete_option', option_id=option.id) }}"
-                              data-confirm="{{ _('Remove the %(column)s preset “%(value)s”?', column=field_name|tr, value=option.option_value) }}">
-                          <button type="submit" class="danger-button preset-delete">{{ _('Delete') }}</button>
-                        </form>
-                      {% endif %}
-                    </div>
-                  {% endfor %}
-                </div>
-              {% else %}
-                <p class="muted-inline">{{ _('No saved values yet.') }}</p>
-              {% endif %}
-            </div>
+      {# The Dropdowns tab: each column with choices, and its choices in the
+         order its dropdown shows them, each with how many records hold it
+         (app/choices.py, static/choices.js). #}
+      {% set picked = request.args.get('field') if request.args.get('field') in choice_columns|map(attribute='key')|list else (choice_columns[0].key if choice_columns else '') %}
+      <section class="choices" id="choices" data-choices{% if can_edit_presets %} data-can-edit{% endif %}
+               data-create-url="{{ url_for('create_option') }}" data-order-url="{{ url_for('order_options') }}"
+               data-update-url="{{ url_for('update_option', option_id=0) }}" data-delete-url="{{ url_for('delete_option', option_id=0) }}">
+        <nav class="choices-nav" aria-label="{{ _('Columns with choices') }}">
+          <header class="choices-nav-head">
+            <h2>{{ _('Dropdowns') }}</h2>
+            <p>{{ _('The choices a column offers when you pick its value.') }}</p>
+          </header>
+          {% for col in choice_columns %}
+            <a class="choices-col{% if col.key == picked %} is-active{% endif %}" data-col="{{ col.key }}"
+               href="{{ url_for('colony', view='settings', scope=scope, field=col.key) }}"{% if col.key == picked %} aria-current="true"{% endif %}>
+              <b>{{ col.label }}</b>
+              <small>{{ ngettext('%(num)s choice', '%(num)s choices', col.choices|length) }}{% if col.choices %} · {{ col.choices[:3]|map(attribute='value')|join(', ') }}{% endif %}</small>
+            </a>
           {% endfor %}
-        </article>
+          {% if not can_edit_presets %}
+            <p class="choices-lock">{{ icon('lock') }} {{ _('Only an admin can add, rename or remove choices. You can still pick them everywhere.') }}</p>
+          {% endif %}
+        </nav>
+
+        {% for col in choice_columns %}
+          <div class="choices-pane" data-pane="{{ col.key }}"{% if col.key != picked %} hidden{% endif %}>
+            <header class="choices-head">
+              <h3>{{ col.label }} <span>{{ ngettext('%(num)s choice', '%(num)s choices', col.choices|length) }}</span></h3>
+              <p>{{ col.where }}{% if can_edit_presets and col.choices|length > 1 %} {{ _('Drag a choice to move it in the dropdown.') }}{% endif %}</p>
+            </header>
+            {% if col.choices %}
+              <ol class="choices-list" data-field="{{ col.key }}">
+                {% for c in col.choices %}
+                  {% set movable = can_edit_presets and not c.built_in %}
+                  <li class="choice{% if c.built_in %} is-built-in{% endif %}" data-id="{{ c.id or '' }}" data-value="{{ c.value }}" data-uses="{{ c.uses }}" data-uses-text="{{ c.uses_text }}"
+                      {% if movable %}draggable="true"{% endif %}>
+                    {% if can_edit_presets %}<span class="choice-grip" aria-hidden="true"{% if movable %} title="{{ _('Drag to move') }}"{% endif %}>{% if movable %}{{ icon('grip') }}{% endif %}</span>{% endif %}
+                    {% if c.built_in %}
+                      <span class="choice-name is-fixed" title="{{ _('Built in: every lab has it, first in the dropdown.') }}">{{ c.value }} <small>{{ _('built in') }}</small></span>
+                    {% elif can_edit_presets and not c.locked %}
+                      <input class="choice-name" value="{{ c.value }}" autocomplete="off" spellcheck="false"
+                             aria-label="{{ _('Rename “%(value)s”', value=c.value) }}">
+                    {% else %}
+                      <span class="choice-name is-fixed"{% if c.locked %} title="{{ _('Breeding and Breeder keep their names: the colony’s litters and its Breeders tab go by them.') }}"{% endif %}>
+                        {{ c.value }}{% if c.locked %} {{ icon('lock') }}{% endif %}</span>
+                    {% endif %}
+                    <span class="choice-uses{% if not c.uses %} is-none{% endif %}">{{ c.uses_text }}</span>
+                    {% if can_edit_presets and not c.built_in %}
+                      <button type="button" class="choice-remove" data-remove aria-label="{{ _('Remove “%(value)s”', value=c.value) }}"
+                              title="{{ _('Remove') }}">{{ icon('close') }}</button>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <p class="choices-empty">{{ _('No choices yet.') }}</p>
+            {% endif %}
+            {% if can_edit_presets %}
+              <form class="choice-add" data-add="{{ col.key }}">
+                {{ icon('plus') }}
+                <textarea name="option_value" rows="1" placeholder="{{ _('Add a choice…') }}" aria-label="{{ _('Add a choice to %(column)s', column=col.label) }}"></textarea>
+                <button type="submit" class="btn btn-sm btn-primary">{{ _('Add') }}</button>
+              </form>
+              <p class="choices-hint">{{ _('Enter adds it. Paste several lines to add them all at once.') }}</p>
+            {% endif %}
+            {% if col.loose %}
+              <section class="choices-loose">
+                <h4>{{ _('In the records, but not a choice') }}</h4>
+                <ul>
+                  {% for l in col.loose %}
+                    <li><b>{{ l.value }}</b><small>{{ l.uses_text }}</small>
+                      {% if can_edit_presets %}<button type="button" class="btn btn-sm btn-ghost" data-adopt="{{ l.value }}" data-field="{{ col.key }}">{{ icon('plus') }} {{ _('Make it a choice') }}</button>{% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </section>
+            {% endif %}
+          </div>
+        {% endfor %}
       </section>
 
-      <script nonce="{{ csp_nonce() }}">
-        // Show only the preset block matching the currently selected column.
-        (function () {
-          const select = document.getElementById('preset-column-select');
-          const label = document.getElementById('preset-selected-label');
-          if (!select) return;
-          const blocks = document.querySelectorAll('.preset-block[data-field-name]');
-          function applyFilter() {
-            const active = select.value;
-            blocks.forEach((block) => {
-              block.style.display = (block.dataset.fieldName === active) ? '' : 'none';
-            });
-            if (label) label.textContent = active ? `· ${select.selectedOptions[0].textContent}` : '';
-          }
-          select.addEventListener('change', applyFilter);
-          applyFilter();
-        })();
-      </script>
+      {# Removing a choice the records hold: leave them as they are, or put
+         another choice in its place there. #}
+      <dialog class="record-dialog record-dialog-narrow" id="choice-remove-dialog" aria-labelledby="choice-remove-title">
+        <form method="dialog">
+          <header class="record-dialog-head"><div><h3 id="choice-remove-title"></h3></div></header>
+          <div class="record-dialog-body">
+            <p class="record-wide" data-remove-text></p>
+            <label class="record-wide">{{ _('On those records') }}
+              <select name="replace_with" data-remove-with></select>
+            </label>
+          </div>
+          <footer class="record-dialog-foot">
+            <button type="button" class="btn" data-remove-cancel>{{ _('Cancel') }}</button>
+            <button type="submit" class="btn btn-danger" value="remove">{{ _('Remove') }}</button>
+          </footer>
+        </form>
+      </dialog>
+      <script src="{{ url_for('static', filename='choices.js') }}?v={{ asset_version('choices.js') }}" defer></script>
     {% endif %}
     {% if active_view in ("mice", "cages") %}
       {# New / open mouse. The same dialog shows every field at full width,
@@ -1837,7 +1881,7 @@ document.addEventListener('rack-grid:moved', (event) => {
   setValue(form.querySelector('[name="position_was"]'), position || '');
 });
 
-async function saveFormInBackground(form) {
+async function saveFormInBackground(form, headers) {
   form.dataset.saveState = 'saving';
   savesInFlight += 1;
   showSaveStatus('saving', t('Saving…'));
@@ -1847,7 +1891,7 @@ async function saveFormInBackground(form) {
     const response = await fetch(form.action, {
       method: form.method || 'POST',
       body: sent,
-      headers: { 'X-Autosave': '1' },
+      headers: Object.assign({ 'X-Autosave': '1' }, headers || {}),
     });
     let body = {};
     try { body = await response.json(); } catch (_) { /* a redirect or HTML page */ }
@@ -1867,6 +1911,7 @@ async function saveFormInBackground(form) {
     rowsForForm(form).forEach((el) => el.closest('td')?.classList.remove('has-error'));
     savesInFlight -= 1;
     if (savesInFlight === 0) showSaveStatus('saved', t('All changes saved'));
+    return true;
   } catch (error) {
     savesInFlight -= 1;
     form.dataset.saveState = 'error';
@@ -1875,8 +1920,13 @@ async function saveFormInBackground(form) {
     });
     showSaveStatus('error', t('Couldn’t save %(what)s: %(error)s', { what: label, error: error.message }));
     console.error(error);
+    return false;
   }
 }
+// Set a field… on ticked rows saves each as its cell would (selection-bar.js).
+document.querySelectorAll('[data-selection-scope="mice"]').forEach((card) => {
+  card.bioSave = (form, headers) => saveFormInBackground(form, headers);
+});
 
 function wireAutosave(input) {
   if (input.closest('[data-autosave-sheet]')) return;  // static/sheet.js saves these

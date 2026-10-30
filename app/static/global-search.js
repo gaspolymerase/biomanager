@@ -1,8 +1,14 @@
 /* Global Cmd+K search palette.
  *
  * Triggered by Cmd+K (Ctrl+K on Windows/Linux) or by clicking the topbar
- * search input. Hits /search?q=… and displays grouped results. Arrow keys
- * navigate, Enter opens the selected result, Esc closes.
+ * search input. Three kinds of row, in this order:
+ *   - Actions: every place in the sidebar (Go to …), the calendar's Board,
+ *     today's log, hiding the sidebar; all of them before anything is
+ *     typed, the ones that match after.
+ *   - Records: /search?q=…, grouped by kind.
+ *   - Ask the user guide: the words typed, searched in the guide on the
+ *     BioManager website (its ?q=).
+ * Arrow keys move, Enter opens the row, Esc closes.
  */
 (function () {
   'use strict';
@@ -14,6 +20,38 @@
   let activeIndex = 0;
   let pendingFetch = null;
   let debounceTimer = null;
+  let flat = [];          // the rows in the order shown: what the arrows step through
+
+  // What can be done from here, read from the page: the sidebar's places
+  // and Help's menu, then a few commands of the palette's own.
+  function actions() {
+    const seen = new Set();
+    const out = [];
+    document.querySelectorAll('.rail a.rail-item[href], .rail .rail-pop a.menu-item[href]').forEach((a) => {
+      const label = (a.dataset.label || a.textContent).replace(/\s+/g, ' ').trim();
+      const href = a.getAttribute('href');
+      if (!label || !href || href.startsWith('#') || seen.has(href)) return;
+      seen.add(href);
+      const use = a.querySelector('svg use');
+      const icon = use ? (use.getAttribute('href') || '').split('#').pop().replace(/^i-/, '') : 'arrow-right';
+      out.push({ kind: 'action', label: t('Go to %(place)s', { place: label }), words: label, icon, url: href,
+                 newTab: a.target === '_blank' });
+    });
+    if (document.querySelector('.rail a.rail-item[href^="/calendar"]')) {
+      out.push({ kind: 'action', label: t('Your to-dos on the Board'), words: 'board kanban todo to-do list', icon: 'kanban', url: '/calendar?view=board' });
+    }
+    if (document.querySelector('.rail a.rail-item[href^="/notebook"]')) {
+      out.push({ kind: 'action', label: t("Today's log"), words: 'notebook daily today log', icon: 'calendar-clock', url: '/notebook/today' });
+    }
+    out.push({ kind: 'action', label: t('Hide or show the sidebar'), words: 'sidebar rail', icon: 'sidebar',
+               run: () => window.BiomanagerShell && window.BiomanagerShell.toggleRail() });
+    return out;
+  }
+
+  function guideUrl() {
+    const link = document.querySelector('a[data-milestone="guide"]');
+    return link ? link.getAttribute('href') : 'https://biomanager.org/guide.html';
+  }
 
   const TYPE_LABEL = {
     mouse: t('Mouse'), cage: t('Cage'), litter: t('Litter'), experiment: t('Experiment'), strain: t('Strain'),
@@ -32,7 +70,7 @@
       <div class="cmdk-card" role="dialog" aria-label="${escapeHtml(t('Global search'))}">
         <div class="cmdk-input-row">
           <svg class="icon cmdk-icon" aria-hidden="true"><use href="/static/icons.svg#search"></use></svg>
-          <input id="cmdk-input" type="text" placeholder="${escapeHtml(t('Search mice, cages, litters, experiments, plasmids, samples, notebook…'))}" autocomplete="off">
+          <input id="cmdk-input" type="text" placeholder="${escapeHtml(t('Search, go somewhere, or ask the guide…'))}" autocomplete="off">
           <kbd class="cmdk-kbd">esc</kbd>
         </div>
         <div id="cmdk-results" class="cmdk-results"></div>
@@ -58,7 +96,7 @@
     inputEl.value = seed || '';
     activeIndex = 0;
     currentResults = [];
-    resultsEl.innerHTML = `<div class="cmdk-hint">${escapeHtml(t('Start typing to search…'))}</div>`;
+    render();
     setTimeout(() => inputEl.focus(), 0);
     if (seed) runFetch(seed);
   }
@@ -73,11 +111,13 @@
   function onInput() {
     const q = inputEl.value.trim();
     if (debounceTimer) clearTimeout(debounceTimer);
+    activeIndex = 0;
     if (!q) {
       currentResults = [];
-      resultsEl.innerHTML = `<div class="cmdk-hint">${escapeHtml(t('Start typing to search…'))}</div>`;
+      render();
       return;
     }
+    render();           // the actions that match, at once; the records as they come
     debounceTimer = setTimeout(() => runFetch(q), 120);
   }
 
@@ -96,42 +136,69 @@
       .catch(() => {});
   }
 
+  function rowHtml(row, idx, type, typeLabel, iconName) {
+    const active = idx === activeIndex ? 'is-active' : '';
+    const lead = iconName
+      ? `<span class="cmdk-row-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${escapeAttr(iconName)}"></use></svg></span>`
+      : `<span class="cmdk-row-type cmdk-row-type-${type}">${escapeHtml(typeLabel)}</span>`;
+    return `
+      <a href="${escapeAttr(row.url || '#')}" class="cmdk-row cmdk-row-${row.kind || 'result'} ${active}" data-idx="${idx}"${row.newTab ? ' target="_blank" rel="noopener"' : ''}>
+        ${lead}
+        <span class="cmdk-row-text">
+          <span class="cmdk-row-label">${escapeHtml(row.label)}</span>
+          <span class="cmdk-row-sublabel">${escapeHtml(row.sublabel || '')}</span>
+        </span>
+        ${row.kind === 'ask' ? '<kbd class="cmdk-kbd">↗</kbd>' : ''}
+      </a>`;
+  }
+
   function render() {
-    if (!currentResults.length) {
-      resultsEl.innerHTML = `<div class="cmdk-empty">${escapeHtml(t('No matches.'))}</div>`;
-      return;
+    const q = inputEl ? inputEl.value.trim() : '';
+    const words = q.toLowerCase();
+    const acts = actions().filter((a) => !words || a.label.toLowerCase().includes(words) || (a.words || '').toLowerCase().includes(words));
+    const shownActions = words ? acts.slice(0, 5) : acts.slice(0, 9);
+    flat = [];
+    let html = '';
+    if (shownActions.length) {
+      html += `<div class="cmdk-group-label">${escapeHtml(words ? t('Actions') : t('Go to'))}</div>`;
+      shownActions.forEach((a) => { html += rowHtml(a, flat.length, 'action', '', a.icon); flat.push(a); });
     }
-    // Group by type, preserving overall ordering.
+    // Records, grouped by kind, in the search's order.
     const groups = {};
-    currentResults.forEach((item, idx) => {
+    currentResults.forEach((item) => {
       if (!groups[item.type]) groups[item.type] = [];
-      groups[item.type].push({ ...item, _idx: idx });
+      groups[item.type].push(item);
     });
     const known = ['mouse', 'cage', 'litter', 'experiment', 'strain', 'vial', 'tank', 'fish-line', 'clutch', 'organism', 'plasmid', 'order', 'sample', 'reagent', 'antibody', 'virus', 'item', 'page'];
     // Any other type the server sends still shows, after the known ones.
-    const order = known.concat(Object.keys(groups).filter((t) => !known.includes(t)));
-    let html = '';
+    const order = known.concat(Object.keys(groups).filter((k) => !known.includes(k)));
     order.forEach((type) => {
       if (!groups[type]) return;
       html += `<div class="cmdk-group-label">${escapeHtml(TYPE_LABEL[type] || type)}</div>`;
       groups[type].forEach((item) => {
-        const active = item._idx === activeIndex ? 'is-active' : '';
-        html += `
-          <a href="${escapeAttr(item.url)}" class="cmdk-row ${active}" data-idx="${item._idx}">
-            <span class="cmdk-row-type cmdk-row-type-${item.type}">${escapeHtml(TYPE_LABEL[item.type] || item.type)}</span>
-            <span class="cmdk-row-text">
-              <span class="cmdk-row-label">${escapeHtml(item.label)}</span>
-              <span class="cmdk-row-sublabel">${escapeHtml(item.sublabel || '')}</span>
-            </span>
-          </a>
-        `;
+        const row = Object.assign({ kind: 'result' }, item);
+        html += rowHtml(row, flat.length, item.type, TYPE_LABEL[item.type] || item.type);
+        flat.push(row);
       });
     });
+    if (words) {
+      const ask = { kind: 'ask', label: t('Ask the user guide: “%(q)s”', { q }), sublabel: t('How to do it, step by step, on the BioManager website'),
+                    url: `${guideUrl()}?q=${encodeURIComponent(q)}`, newTab: true };
+      html += `<div class="cmdk-group-label">${escapeHtml(t('Ask'))}</div>`;
+      html += rowHtml(ask, flat.length, 'ask', '', 'sparkle');
+      flat.push(ask);
+    }
+    if (!flat.length) html = `<div class="cmdk-empty">${escapeHtml(t('No matches.'))}</div>`;
+    if (activeIndex >= flat.length) activeIndex = Math.max(0, flat.length - 1);
     resultsEl.innerHTML = html;
     resultsEl.querySelectorAll('.cmdk-row').forEach((row) => {
       row.addEventListener('mouseenter', () => {
         activeIndex = parseInt(row.dataset.idx, 10);
         refreshActive();
+      });
+      row.addEventListener('click', (event) => {
+        const picked = flat[parseInt(row.dataset.idx, 10)];
+        if (picked && picked.run) { event.preventDefault(); close(); picked.run(); }
       });
     });
   }
@@ -147,7 +214,7 @@
   function onKey(event) {
     if (event.key === 'Escape') { close(); event.preventDefault(); return; }
     if (event.key === 'ArrowDown') {
-      activeIndex = Math.min(currentResults.length - 1, activeIndex + 1);
+      activeIndex = Math.min(flat.length - 1, activeIndex + 1);
       refreshActive();
       event.preventDefault();
       return;
@@ -159,9 +226,12 @@
       return;
     }
     if (event.key === 'Enter') {
-      const result = currentResults[activeIndex];
-      if (result && result.url) window.location.href = result.url;
+      const row = flat[activeIndex];
       event.preventDefault();
+      if (!row) return;
+      if (row.run) { close(); row.run(); return; }
+      if (row.newTab) { window.open(row.url, '_blank', 'noopener'); close(); return; }
+      if (row.url) window.location.href = row.url;
       return;
     }
   }

@@ -323,9 +323,9 @@ class Verifying(Base):
         self.ab1 = abif(region, [40] * len(region))
 
     def test_the_page_checks_reads_and_can_keep_them(self):
+        # The page checks reads on its Verify tab (tests/test_clones.py); this route is the API's and the assistants'.
         html = self.get_ok(self.m, f"/plasmid/{self.number}")
-        self.assertIn("Verify sequencing", html)
-        self.assertIn(f'data-verify-url="/plasmids/{self.rid}/verify"', html)
+        self.assertIn("data-verify-tab", html)
         self.assertIn("seq-verify.js", html)
         before = one("select count(*) from plasmid_files where plasmid_row_id=?", self.rid)
         r = self.m.post(f"/plasmids/{self.rid}/verify", data={"reads": (io.BytesIO(self.ab1), "clone3.ab1")},
@@ -345,7 +345,6 @@ class Verifying(Base):
         self.assertEqual(kind, "trace")
         self.assertIn("Verified against the map", notes)
         self.assertIn("L2P", notes)
-        self.assertIn(f'name="kept" value="{kept_id}"', self.get_ok(self.m, f"/plasmid/{self.number}"))
         again = self.m.post(f"/plasmids/{self.rid}/verify", data={"kept": str(kept_id)}).get_json()
         self.assertEqual(again["report"]["reads"][0]["name"], "clone3")
         # Nothing to read, or a file that isn't a read, is said.

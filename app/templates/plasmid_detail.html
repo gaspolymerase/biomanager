@@ -12,10 +12,18 @@
   <a class="btn" href="{{ url_for('plasmids') }}">{{ icon('chevron-left') }} {{ _('All plasmids') }}</a>
 {% endblock %}
 
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='plasmid.css') }}?v={{ asset_version('plasmid.css') }}">
+{% endblock %}
+
 {% block page_nav %}
   <div class="mb-3 flex flex-wrap items-center gap-3">
     <nav class="seg" role="tablist" aria-label="{{ _('Plasmid sections') }}">
-      <button type="button" class="seg-item plasmid-tab is-active" data-tab="sequence" role="tab">{{ icon('dna') }}{{ _('Sequence') }}</button>
+      <button type="button" class="seg-item plasmid-tab is-active" data-tab="overview" role="tab">{{ icon('plasmid') }}{{ _('Overview') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="sequence" role="tab">{{ icon('dna') }}{{ _('Sequence') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="digest" role="tab">{{ icon('scissors') }}{{ _('Digest') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="verify" role="tab">{{ icon('list-check') }}{{ _('Verify') }}{% if clones.count %} <span class="seg-count">{{ clones.count }}</span>{% endif %}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="primers" role="tab">{{ icon('signpost') }}{{ _('Primers') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="storage" role="tab">{{ icon('box') }}{{ _('Storage') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="properties" role="tab">{{ icon('sliders') }}{{ _('Properties') }}</button>
     </nav>
@@ -28,6 +36,9 @@
         {% elif plasmid.storage_box %}{{ plasmid.storage_box }} · {{ _('no cell yet') }}
         {% else %}{{ _('Not stored') }}{% endif %}
       </span>
+      {% if clones.verified %}
+        <span class="plasmid-meta-item plasmid-meta-verified" data-verified-pill>{{ icon('check') }} {{ _('Verified · %(clone)s · %(when)s', clone=clones.verified.label, when=clones.verified.when) }}</span>
+      {% endif %}
       {% if locked %}
         <span class="plasmid-meta-item plasmid-meta-lock">{{ icon('lock') }} {{ _('Read only') }}</span>
       {% endif %}
@@ -51,37 +62,99 @@
    refetches after a rebuild. #}
 <style>@import url("{{ url_for('static', filename='notebook-build/plasmid-app.css') }}?v={{ asset_version('notebook-build/plasmid-app.css') }}") layer(vendor);</style>
 
-{# ============ Sequence — Open Vector Editor ============ #}
-<section class="plasmid-tab-panel is-active" data-panel="sequence">
-  {% if plasmid.parents or plasmid.children or made_from %}
-    {# What it was made from and what was made from it, on the first screen (app/plasmid_lineage.py). #}
-    <p class="lineage-line mb-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
-      {% if plasmid.parents %}
-        <span><span class="text-muted">{{ _('Made from') }}</span>
-          {% for e in plasmid.parents %}{% if not loop.first %} + {% endif %}{% if e.url %}<a href="{{ e.url }}">#{{ e.number }} {{ e.label }}</a>{% else %}{{ e.label }}{% endif %} <span class="text-muted">({{ e.role }})</span>{% endfor %}{% if plasmid.parents[0].method %} <span class="text-muted">· {{ plasmid.parents[0].method }}</span>{% endif %}</span>
+{# ============ Overview — the map drawn by the app, its features, what it is (static/plasmid-overview.js) ============ #}
+<section class="plasmid-tab-panel is-active" data-panel="overview">
+  <div class="pov" data-overview data-length="{{ plasmid.length_bp }}" data-circular="{{ '1' if plasmid.is_circular else '' }}"
+       data-name="{{ plasmid.name or ('#' ~ plasmid.plasmid_id) }}" data-features='{{ plasmid.features|tojson }}'>
+    <div class="pglass pov-map">
+      {% if plasmid.length_bp %}
+        <div class="pver-head"><h3>{{ _('Map') }}</h3>
+          <button type="button" class="btn btn-sm" data-export="svg">{{ icon('download') }} SVG</button>
+          <button type="button" class="btn btn-sm" data-export="png">{{ icon('download') }} PNG</button></div>
+        <div data-map></div>
+      {% else %}
+        <div class="empty-state"><p>{{ _('No sequence yet. Open Sequence → Edit to paste one or upload a GenBank, SnapGene or FASTA file; the map is drawn from it.') }}</p></div>
       {% endif %}
-      {% if plasmid.children or made_from %}
-        <span><span class="text-muted">{{ _('Used to make') }}</span>
-          {% for c in plasmid.children %}{% if not loop.first %}, {% endif %}<a href="{{ c.url }}">#{{ c.number }} {{ c.label }}</a>{% endfor %}{% if plasmid.children and made_from %}, {% endif %}{% for m in made_from %}{% if not loop.first %}, {% endif %}<a href="{{ m.url }}">{{ m.label }}</a> <span class="text-muted">({{ m.database|tr }})</span>{% endfor %}</span>
+    </div>
+    <div class="pov-side">
+      <div class="pglass pver-card">
+        <div class="pver-head"><h3>{{ _('About it') }}</h3><button type="button" class="btn btn-sm" data-go-tab="properties">{{ icon('edit') }} {{ _('Edit') }}</button></div>
+        <dl class="pver-dl pov-dl">
+          {% if plasmid.length_bp %}<dt>{{ _('Size') }}</dt><dd class="tabular-nums">{{ '{:,}'.format(plasmid.length_bp) }} bp · {{ _('circular') if plasmid.is_circular else _('linear') }}</dd>{% endif %}
+          {% if plasmid.backbone %}<dt>{{ _('Backbone') }}</dt><dd>{{ plasmid.backbone }}</dd>{% endif %}
+          {% if plasmid.insert_seq %}<dt>{{ _('Insert') }}</dt><dd>{{ plasmid.insert_seq }}</dd>{% endif %}
+          {% if plasmid.resistance %}<dt>{{ _('Resistance') }}</dt><dd>{{ plasmid.resistance }}</dd>{% endif %}
+          <dt>{{ _('Owner') }}</dt><dd>{{ plasmid.owner or _('anyone') }}</dd>
+          <dt>{{ _('Where') }}</dt><dd>{% if plasmid.stored %}{{ plasmid.storage_box }} · {{ plasmid.position }}{% else %}{{ _('Not stored') }}{% endif %}</dd>
+          {% if plasmid.concentration %}<dt>{{ _('DNA') }}</dt><dd class="tabular-nums">{{ plasmid.concentration }}{% if plasmid.a260_280 %} · 260/280 {{ plasmid.a260_280 }}{% endif %}</dd>{% endif %}
+          <dt>{{ _('Sequencing') }}</dt><dd>{% if clones.verified %}<button type="button" class="pov-link" data-go-tab="verify">{{ _('Verified · %(clone)s · %(when)s', clone=clones.verified.label, when=clones.verified.when) }}</button>{% elif clones.count %}<button type="button" class="pov-link" data-go-tab="verify">{{ ngettext('%(num)s clone checked', '%(num)s clones checked', clones.count) }}</button>{% else %}{{ _('Not sequenced') }}{% endif %}</dd>
+          {% if plasmid.parents %}<dt>{{ _('Made from') }}</dt><dd>{% for e in plasmid.parents %}{% if not loop.first %}, {% endif %}{% if e.url %}<a href="{{ e.url }}">#{{ e.number }} {{ e.label }}</a>{% else %}{{ e.label }}{% endif %} <span class="text-muted">({{ e.role }})</span>{% endfor %}</dd>{% endif %}
+          {% if plasmid.children or made_from %}<dt>{{ _('Used to make') }}</dt><dd>{% for c in plasmid.children %}{% if not loop.first %}, {% endif %}<a href="{{ c.url }}">#{{ c.number }} {{ c.label }}</a>{% endfor %}{% if plasmid.children and made_from %}, {% endif %}{% for m in made_from %}{% if not loop.first %}, {% endif %}<a href="{{ m.url }}">{{ m.label }}</a>{% endfor %}</dd>{% endif %}
+          {% if plasmid.updated_at %}<dt>{{ _('Changed') }}</dt><dd>{{ plasmid.updated_at }}{% if plasmid.updated_by %} · {{ plasmid.updated_by }}{% endif %}</dd>{% endif %}
+        </dl>
+      </div>
+      {% if plasmid.features %}
+      <div class="pglass pver-card">
+        <div class="pver-head"><h3>{{ _('Features') }} <span class="text-muted tabular-nums">{{ plasmid.features|length }}</span></h3></div>
+        <table class="pdig-table pov-features"><tbody>
+          {% for f in plasmid.features %}
+            <tr data-feature-go="{{ f.start + 1 }}-{{ f.end + 1 }}"><td><span class="pdig-dot" data-kind-of="{{ f.type }}|{{ f.name }}"></span>{{ f.name }}</td>
+              <td class="tabular-nums text-muted">{{ '{:,}'.format(f.start + 1) }}–{{ '{:,}'.format(f.end + 1) }}</td>
+              <td class="text-muted">{{ '→' if (f.direction or 1) >= 0 else '←' }}</td></tr>
+          {% endfor %}
+        </tbody></table>
+      </div>
       {% endif %}
-    </p>
-  {% endif %}
+    </div>
+  </div>
+</section>
+
+{# ============ Sequence — the app's viewer, and Open Vector Editor to edit ============ #}
+<section class="plasmid-tab-panel" data-panel="sequence">
   {# Full screen shows the bar and the editor filling the screen. #}
   <style>
     #ove-shell:fullscreen { background: var(--color-surface, #fff); padding: 12px 16px; display: flex; flex-direction: column; }
     #ove-shell:fullscreen .ove-root { flex: 1; height: auto; }
     .lineage-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
     .lineage-tree .lineage-tree { margin: 4px 0 0 6px; padding-left: 12px; border-left: 1px solid var(--color-line); }
-    /* Verify sequencing's map (static/seq-verify.js). */
-    .sv-map { width: 100%; height: auto; display: block; }
-    .sv-map .sv-line { stroke: var(--color-hairline); stroke-width: 2; }
-    .sv-map .sv-label { font-size: 11px; fill: var(--color-muted); }
-    .sv-map .sv-feature { fill: var(--color-sand-300); }
-    .sv-map .sv-feature-name { font-size: 10px; fill: var(--color-ink); pointer-events: none; }
-    .sv-map .sv-read { fill: var(--color-brand-500); }
-    .sv-map .sv-diff { fill: var(--color-danger-600); }
-    .sv-map .sv-diff-low { fill: var(--color-warn-600); opacity: .7; }
   </style>
+  {% if plasmid.length_bp %}
+  {# The app's own viewer: every base, features, enzymes, primers, proteins (static/seq-viewer.js). #}
+  <div class="sv2" data-seq-viewer data-url="{{ url_for('sequence_view.view', row_id=plasmid.row_id) }}"
+       data-check="{{ url_for('sequence_view.primer_check', row_id=plasmid.row_id) }}"
+       data-save="{{ url_for('sequence_view.primer_new', row_id=plasmid.row_id) }}">
+    <div class="pglass sv2-main">
+      <div class="sv2-bar">
+        <label class="pdig-find sv2-find">{{ icon('search') }}<input type="search" data-find placeholder="{{ _('Find bases, a primer, a site or a feature…') }}" aria-label="{{ _('Find in the sequence') }}"><span class="sv2-count" data-find-count></span></label>
+        <button type="button" class="sv2-chip" data-show="complement">{{ _('Complement') }}</button>
+        <button type="button" class="sv2-chip" data-show="translation">{{ _('Translation') }}</button>
+        <button type="button" class="sv2-chip" data-show="features">{{ _('Features') }}</button>
+        <button type="button" class="sv2-chip" data-show="enzymes">{{ _('Enzymes') }}</button>
+        <button type="button" class="sv2-chip" data-show="primers">{{ _('Primers') }}</button>
+        <span class="sv2-grow"></span>
+        <div class="seg" role="group" aria-label="{{ _('Proteins shown') }}">
+          <button type="button" class="seg-item" data-frames="cds" title="{{ _('The protein of each coding feature') }}">CDS</button>
+          <button type="button" class="seg-item" data-frames="six" title="{{ _('Open reading frames of 100 codons or more, in all six frames') }}">{{ _('6 frames') }}</button>
+        </div>
+      </div>
+      <div class="sv2-over" data-over title="{{ _('Click to go there') }}"></div>
+      <div class="sv2-rows" data-rows>
+        <div data-rowlist><p class="sv2-note">{{ _('Loading the sequence…') }}</p></div>
+        <div class="sv2-pop" data-pop hidden>
+          <span class="sv2-pop-text" data-pop-text></span>
+          <button type="button" class="btn btn-sm btn-primary" data-make="1">→ {{ _('Forward primer') }}</button>
+          <button type="button" class="btn btn-sm" data-make="-1">← {{ _('Reverse') }}</button>
+          <button type="button" class="btn btn-sm" data-pop-copy>{{ _('Copy') }}</button>
+          <button type="button" class="btn btn-sm" data-pop-translate>{{ _('Translate') }}</button>
+        </div>
+      </div>
+    </div>
+    <aside class="pglass sv2-side" data-side hidden></aside>
+  </div>
+  {% endif %}
+
+  <details class="fold-card mt-4" id="ove-fold"{% if not plasmid.length_bp %} open{% endif %}>
+  <summary>{{ icon('edit') }} {{ _('Edit the sequence, its features and its map') }}</summary>
   <div id="ove-shell">
     <div class="ove-bar">
       <span class="text-[12px] text-muted">
@@ -130,6 +203,7 @@
       <div class="ove-loading">{{ _('Loading the sequence editor…') }}</div>
     </div>
   </div>
+  </details>
 
   {# Primers that name this plasmid in the Primers database; the map's own primers land there (app/primer_records.py). #}
   {# Find saved primers looks through every primer the lab has saved for ones that bind here (GitHub #62). #}
@@ -171,44 +245,6 @@
       {% endif %}
       {% if primers.can_scan %}{{ scan.scan_panel() }}{% endif %}
     </div>
-  {% endif %}
-
-  {# Verify sequencing: Sanger reads of a miniprep or clone against this map (app/seqverify.py, static/seq-verify.js). #}
-  {% if plasmid.length_bp %}
-    <details class="fold-card mt-4" id="verify-sequencing" data-verify-url="{{ url_for('plasmid_verify', row_id=plasmid.row_id) }}"
-             data-length="{{ plasmid.length_bp }}">
-      <summary>{{ icon('list-check') }} {{ _('Verify sequencing') }}</summary>
-      <form class="flex flex-col gap-3 px-4 py-3.5" data-verify-form>
-        <p class="text-[13px] text-muted">{{ _('Check Sanger reads of a miniprep or clone against this map: where each read lies, and every base that differs from it.') }}</p>
-        <label class="field-label">{{ _('Sequencing reads: .ab1 chromatograms, or FASTA or text') }}
-          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
-        </label>
-        {% if kept_reads %}
-          <div class="text-[13px]">
-            <p class="field-label mb-1">{{ _('Or reads kept with this plasmid') }}</p>
-            <div class="flex flex-wrap gap-x-4 gap-y-1">
-              {% for f in kept_reads %}
-                <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" name="kept" value="{{ f.id }}"> {{ f.name }}</label>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-        <details class="dropzone-paste">
-          <summary>{{ _('Paste reads instead (FASTA or plain bases)') }}</summary>
-          <textarea name="reads_text" rows="4" placeholder="&gt;clone3-T7&#10;TGCTAGTTATTGCTCAGCGG…"></textarea>
-        </details>
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="submit" class="btn btn-primary" data-verify-go>{{ icon('list-check') }} {{ _('Verify') }}</button>
-          {% if not locked %}
-            <label class="inline-flex items-center gap-2 text-[13px] cursor-pointer">
-              <input type="checkbox" class="set-switch" name="keep" value="1"> {{ _('Keep the reads and the result with this plasmid’s files') }}
-            </label>
-          {% endif %}
-          <span class="text-[13px] text-muted" data-verify-status aria-live="polite"></span>
-        </div>
-      </form>
-      <div data-verify-result hidden class="border-t border-[var(--color-line)]"></div>
-    </details>
   {% endif %}
 
   {% if not locked %}
@@ -264,6 +300,125 @@
 </section>
 
 {# ============ Storage ============ #}
+{# ============ Digest — enzymes, the pieces they leave, the gel (static/plasmid-digest.js) ============ #}
+<section class="plasmid-tab-panel" data-panel="digest">
+  {% if plasmid.length_bp %}
+  <div class="pdig" data-digest data-url="{{ url_for('digest.digest_json', row_id=plasmid.row_id) }}"
+       data-key="{{ plasmid.row_id }}" data-name="{{ plasmid.name or ('#' ~ plasmid.plasmid_id) }}">
+    <aside class="pglass pdig-enzymes" aria-label="{{ _('Enzymes') }}">
+      <label class="pdig-find">{{ icon('search') }}<input type="search" data-enzyme-find placeholder="{{ _('Find an enzyme…') }}" aria-label="{{ _('Find an enzyme') }}"></label>
+      <div class="seg pdig-filter">
+        <button type="button" class="seg-item is-active" data-filter="unique">{{ _('Unique') }}</button>
+        <button type="button" class="seg-item" data-filter="two">{{ _('Two') }}</button>
+        <button type="button" class="seg-item" data-filter="all">{{ _('All') }}</button>
+        <button type="button" class="seg-item" data-filter="freezer">{{ _('In freezer') }}</button>
+      </div>
+      <ul class="pdig-list" data-enzyme-list></ul>
+      <div class="pdig-chosen" data-chosen hidden></div>
+    </aside>
+    <div class="pdig-center">
+      <div class="pglass pdig-map" data-map></div>
+      <div class="pdig-suggest" data-suggest></div>
+      <div class="pglass pdig-pieces" data-pieces></div>
+    </div>
+    <section class="pglass pdig-gel" aria-label="{{ _('Expected gel') }}">
+      <header class="pdig-gel-head">
+        <h3>{{ _('Expected gel') }}</h3>
+        <select class="pdig-select" data-agarose aria-label="{{ _('Agarose') }}"></select>
+        <select class="pdig-select" data-ladder aria-label="{{ _('Ladder') }}"></select>
+        <label class="pdig-toggle" title="{{ _('Grown in an ordinary E. coli (DH5α, TOP10): Dam and Dcm methylation can stop a few enzymes.') }}"><input type="checkbox" data-methylated> {{ _('Dam⁺ Dcm⁺') }}</label>
+        <label class="btn btn-sm pdig-photo-pick">{{ icon('image') }} {{ _('Put my gel beside it') }}<input type="file" accept="image/*" data-photo-file hidden></label>
+      </header>
+      <div class="pdig-gels">
+        <div data-gel></div>
+        <figure class="pdig-photo" data-photo hidden><img alt="{{ _('Your gel') }}"><button type="button" class="btn btn-sm" data-photo-remove>{{ _('Remove') }}</button></figure>
+      </div>
+      <div class="pdig-lanes" data-lanes></div>
+      <ul class="pdig-notes" data-notes></ul>
+    </section>
+  </div>
+  {% else %}
+  <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, and its digests show here.') }}</p></div>
+  {% endif %}
+</section>
+
+{# ============ Verify — clones checked by sequencing (app/clone_routes.py, static/plasmid-verify.js) ============ #}
+<section class="plasmid-tab-panel" data-panel="verify">
+  {% if plasmid.length_bp %}
+  <div class="pver" data-verify-tab data-urls='{{ clones.urls|tojson }}' data-name="{{ plasmid.name or ('#' ~ plasmid.plasmid_id) }}">
+    <aside class="pglass pver-clones" aria-label="{{ _('Clones') }}">
+      <div class="pver-head"><h3>{{ _('Clones') }}</h3><span class="tabular-nums text-muted" data-clone-count></span></div>
+      <ul class="pver-list" data-clone-list></ul>
+      <form class="pver-drop" data-clone-form>
+        <label class="pver-zone" data-zone>
+          {{ icon('upload') }}
+          <b>{{ _('Drop .ab1 reads') }}</b>
+          <span>{{ _('Each named by its clone, like') }} <code>C4_CAG-F.ab1</code></span>
+          <span>{{ _('FASTA and text work too.') }}</span>
+          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" hidden>
+        </label>
+        <details class="pver-more">
+          <summary>{{ _('Name the clone, or paste a read') }}</summary>
+          <input type="text" name="clone" placeholder="{{ _('Clone, e.g. 4') }}" aria-label="{{ _('Clone') }}">
+          <textarea name="reads_text" rows="3" placeholder="&gt;clone4-T7&#10;TGCTAGTTATTGCTCAGCGG…" aria-label="{{ _('Paste a read') }}"></textarea>
+          <button type="submit" class="btn btn-sm">{{ _('Check') }}</button>
+        </details>
+        <p class="pver-status" data-clone-status aria-live="polite"></p>
+      </form>
+      <div class="pver-next" data-next hidden></div>
+    </aside>
+    <div class="pver-center">
+      <div class="pglass pver-card">
+        <div class="pver-head"><h3>{{ _('Where the reads fall') }}</h3><span class="pver-legend"><i class="is-read"></i>{{ _('read') }} <i class="is-diff"></i>{{ _('difference') }}</span></div>
+        <div data-strip></div>
+      </div>
+      <div class="pglass pver-card" data-diff-card hidden>
+        <div class="pver-head"><h3 data-diff-title></h3>
+          <button type="button" class="btn btn-sm" data-diff-step="-1">‹ {{ _('Previous difference') }}</button>
+          <button type="button" class="btn btn-sm" data-diff-step="1">{{ _('Next difference') }} ›</button></div>
+        <div data-diff></div>
+      </div>
+      <div class="pglass pver-card" data-reads-card hidden><div data-reads></div></div>
+      <div class="pglass pver-card pver-empty" data-empty>
+        <p>{{ _('Drop the reads of a clone on the left: each read is placed on the map, every base that differs is shown with its trace, and what it does to a protein.') }}</p>
+      </div>
+    </div>
+    <aside class="pver-side">
+      <div class="pglass pver-card" data-summary hidden></div>
+      <div class="pglass pver-card pver-about">
+        <h3>{{ _('What Accept does') }}</h3>
+        <p>{{ _('Marks the plasmid verified with this clone and keeps its reads with the plasmid, so the next clone is checked against the same map.') }}</p>
+      </div>
+    </aside>
+  </div>
+  {% else %}
+  <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, then check clones here.') }}</p></div>
+  {% endif %}
+</section>
+
+{# ============ Primers — the lab's primers that bind, and a PCR (static/plasmid-primers.js) ============ #}
+<section class="plasmid-tab-panel" data-panel="primers">
+  {% if plasmid.length_bp %}
+  <div class="ppr" data-primers-tab data-url="{{ url_for('sequence_view.view', row_id=plasmid.row_id) }}"
+       data-pcr="{{ url_for('sequence_view.pcr', row_id=plasmid.row_id) }}" data-name="{{ plasmid.name or ('plasmid-' ~ plasmid.plasmid_id) }}">
+    <div class="ppr-main">
+      <div class="pglass pver-card">
+        <div class="pver-head"><h3>{{ _('The lab’s primers that bind here') }}</h3>
+          <div class="seg"><button type="button" class="seg-item is-active" data-loose="0">{{ _('Exact') }}</button>
+            <button type="button" class="seg-item" data-loose="1">{{ _('≤ 2 mismatches') }}</button></div></div>
+        <p class="pver-note">{{ _('Every primer in the lab’s Primers databases is checked against this plasmid, on both strands. A mismatch counts only away from the 3′ end, which has to pair for the polymerase to start.') }}</p>
+        <div data-strip></div>
+        <div data-list><p class="pver-note">{{ _('Loading…') }}</p></div>
+      </div>
+      <div class="pglass pver-card ppr-next" data-to-sequence hidden></div>
+    </div>
+    <aside class="pglass pver-card ppr-pcr" data-pcr></aside>
+  </div>
+  {% else %}
+  <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, and the lab’s primers that bind it show here.') }}</p></div>
+  {% endif %}
+</section>
+
 <section class="plasmid-tab-panel" data-panel="storage">
   <div class="card max-w-[760px] overflow-hidden">
     <form method="post" action="{{ url_for('update_plasmid', row_id=plasmid.row_id) }}" class="modal-grid p-4">
@@ -494,6 +649,12 @@
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
 <script src="{{ url_for('static', filename='primer-scan.js') }}?v={{ asset_version('primer-scan.js') }}" defer></script>
 <script src="{{ url_for('static', filename='seq-verify.js') }}?v={{ asset_version('seq-verify.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-digest.js') }}?v={{ asset_version('plasmid-digest.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-verify.js') }}?v={{ asset_version('plasmid-verify.js') }}" defer></script>
+<script src="{{ url_for('static', filename='seq-viewer.js') }}?v={{ asset_version('seq-viewer.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-primers.js') }}?v={{ asset_version('plasmid-primers.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-overview.js') }}?v={{ asset_version('plasmid-overview.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
 <script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
@@ -502,6 +663,10 @@
 
 <script nonce="{{ csp_nonce() }}">
 (function () {
+  // The editor sizes itself on resize: nudge it when its fold opens.
+  const fold = document.getElementById('ove-fold');
+  if (fold) fold.addEventListener('toggle', () => { if (fold.open) window.dispatchEvent(new Event('resize')); });
+
   // Tab switching ----------------------------------------------------------
   const tabs = document.querySelectorAll('.plasmid-tab');
   const panels = document.querySelectorAll('.plasmid-tab-panel');

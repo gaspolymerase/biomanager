@@ -368,17 +368,51 @@ for i, name in enumerate(PLASMIDS):
     sam.post("/plasmids", data={"name": name, "count": "1", "box_id": str(box), "position": pos})
 
 
-def genbank() -> str:
-    """A made-up 5.5 kb plasmid with plausible features, for the map."""
+PLASMIDS.append("pCAGGS")
+sam.post("/plasmids", data={"name": "pCAGGS", "count": "1", "box_id": str(box), "position": f"A{len(PLASMIDS)}"})
+
+# The real EGFP coding sequence, so a digest, a primer and a translation
+# of the demo's pCAG-EGFP read true; the rest of the plasmid is made up.
+EGFP = ("ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACC"
+        "TACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCCTGACCTACGGCGTGCAGTGCTTCAGCCGCTACCCCGACCAC"
+        "ATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGC"
+        "GACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAACGTCTATATCATGGCCGAC"
+        "AAGCAGAAGAACGGCATCAAGGTGAACTTCAAGATCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTG"
+        "CTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATG"
+        "GACGAGCTGTACAAGTAA")
+CUT_HERE = ("GAATTC", "GCGGCCGC", "TCTAGA", "GGTACC", "GGATCC", "CCATGG")
+
+
+def demo_plasmid(insert: bool = True) -> tuple[str, list]:
+    """pCAG-EGFP (5.5 kb): EGFP between EcoRI and NotI, an XbaI site Dam
+    blocks just after; without the insert, its backbone pCAGGS."""
     import random
     rnd = random.Random(7)
-    seq = "".join(rnd.choice("ACGT") for _ in range(5500)).lower()
-    features = [("promoter", 1, 584, "CAG promoter", 1), ("CDS", 700, 1419, "EGFP", 1),
-                ("polyA_signal", 1450, 1674, "bGH poly(A)", 1), ("rep_origin", 2100, 2688, "ori", -1),
-                ("CDS", 2860, 3720, "AmpR", -1), ("promoter", 3721, 3825, "AmpR promoter", -1),
-                ("misc_feature", 4200, 4340, "f1 ori", 1), ("CDS", 4500, 5100, "WPRE", 1)]
-    lines = [f"LOCUS       pCAG-EGFP               5500 bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
-             "DEFINITION  pCAG-EGFP (demo).", "FEATURES             Location/Qualifiers"]
+
+    def filler(n: int) -> str:
+        text = "".join(rnd.choice("ACGT") for _ in range(n))
+        for site in CUT_HERE:              # these cut only where the map says
+            text = text.replace(site, site[:2] + ("A" if site[2] != "A" else "C") + site[3:])
+        return text
+    head, gap = filler(680), filler(10)
+    tail = filler(5500 - 680 - 12 - len(EGFP) - 10 - 16)
+    seq = head + "GAATTC" + "GCCACC" + (EGFP if insert else "") + gap + "GCGGCCGC" + "TCTAGATC" + tail
+    egfp_at = 692
+    shift = 0 if insert else -len(EGFP)
+    features = [("promoter", 1, 584, "CAG promoter", 1)]
+    if insert:
+        features.append(("CDS", egfp_at + 1, egfp_at + len(EGFP), "EGFP", 1))
+    features += [(kind, a + shift, b + shift, label, strand) for kind, a, b, label, strand in (
+        ("polyA_signal", 1460, 1684, "bGH poly(A)", 1), ("rep_origin", 2100, 2688, "ori", -1),
+        ("CDS", 2860, 3720, "AmpR", -1), ("promoter", 3721, 3825, "AmpR promoter", -1),
+        ("misc_feature", 4200, 4340, "f1 ori", 1), ("CDS", 4500, 5100, "WPRE", 1))]
+    return seq.lower(), features
+
+
+def genbank(name: str = "pCAG-EGFP", insert: bool = True) -> str:
+    seq, features = demo_plasmid(insert)
+    lines = [f"LOCUS       {name:<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             f"DEFINITION  {name} (demo).", "FEATURES             Location/Qualifiers"]
     for kind, start, end, label, strand in features:
         loc = f"{start}..{end}" if strand == 1 else f"complement({start}..{end})"
         lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
@@ -392,6 +426,98 @@ def genbank() -> str:
 
 pcag = one("select id from plasmids where name='pCAG-EGFP'")
 sam.post(f"/plasmids/{pcag}/upload-sequence", data={"sequence_text": genbank()})
+pcaggs = one("select id from plasmids where name='pCAGGS'")
+sam.post(f"/plasmids/{pcaggs}/upload-sequence", data={"sequence_text": genbank("pCAGGS", insert=False)})
+sam.post(f"/plasmids/{pcag}/parents", data={
+    "parent": str(one("select plasmid_id from plasmids where name='pCAGGS'")), "role": "backbone",
+    "method": "digest_ligate"})
+
+
+
+def ab1(bases: str, quality: list[int], seed: int) -> bytes:
+    """A made-up ABI chromatogram: a peak for each called base in its dye's
+    channel, a little noise under them, and the quality the caller gave."""
+    import math
+    import random
+    import struct
+    rnd = random.Random(seed)
+    spacing = 12
+    size = spacing * len(bases) + spacing
+    order = "GATC"
+    channels = {b: [rnd.randint(4, 30) for _ in range(size)] for b in "ACGT"}
+    peaks = []
+    for i, base in enumerate(bases):
+        centre = spacing * i + spacing // 2 + rnd.randint(-1, 1)
+        peaks.append(centre)
+        height = rnd.randint(700, 1300) * (0.3 if quality[i] < 15 else 1)
+        for dx in range(-6, 7):
+            channels[base][centre + dx] += int(height * math.exp(-(dx * dx) / 6.5))
+    entries = [("SMPL", 1, 18, 1, 6, b"\x05clone"), ("PBAS", 2, 2, 1, len(bases), bases.encode()),
+               ("PCON", 2, 2, 1, len(quality), bytes(quality)), ("FWO_", 1, 2, 1, 4, order.encode()),
+               *(("DATA", n, 4, 2, size, struct.pack(f">{size}h", *[min(v, 32000) for v in channels[b]]))
+                 for n, b in zip(range(9, 13), order)),
+               ("PLOC", 2, 4, 2, len(bases), struct.pack(f">{len(bases)}h", *peaks))]
+    blob, directory, offset = b"", b"", 128
+    for tag, num, etype, esize, count, data in entries:
+        if len(data) <= 4:
+            directory += struct.pack(">4sihhii", tag.encode(), num, etype, esize, count, len(data)) + \
+                data.ljust(4, b"\0") + struct.pack(">i", 0)
+        else:
+            directory += struct.pack(">4sihhiiii", tag.encode(), num, etype, esize, count, len(data), offset, 0)
+            blob += data
+            offset += len(data)
+    header = (b"ABIF" + struct.pack(">h", 101) + struct.pack(">4sihhiiii", b"tdir", 1, 1023, 28, len(entries),
+                                                            28 * len(entries), offset, 0)).ljust(128, b"\0")
+    return header + blob + directory
+
+
+def sanger(seq: str, start: int, end: int, reverse: bool, seed: int, changes=None) -> bytes:
+    """A read of seq[start:end] (0-based), forward or reverse, with poor ends."""
+    import random
+    rnd = random.Random(seed)
+    bases = list(seq[start:end].upper())
+    for at, base in (changes or {}).items():
+        bases[at - start] = base
+    text = "".join(bases)
+    if reverse:
+        text = text.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+    n = len(text)
+    quality = [rnd.randint(4, 14) if i < 25 or i > n - 60 else rnd.randint(36, 60) for i in range(n)]
+    return ab1(text, quality, seed)
+
+
+# Clones of pCAG-EGFP checked by sequencing: clone 3 matches and is the
+# plasmid; clone 2 failed; clone 1 has a silent change in EGFP (codon 61,
+# CTC → CTT). Each read is named by its clone, as the Verify tab reads them.
+from io import BytesIO  # noqa: E402
+
+demo_seq = demo_plasmid()[0].upper()
+silent = 692 + 60 * 3 + 2                      # EGFP's codon 61, third base (0-based)
+assert demo_seq[silent - 2:silent + 1] == "CTC"
+for clone, reads in (
+    ("3", [("C3_CAG-F.ab1", 560, 1480, False, 31, None), ("C3_bGH-R.ab1", 600, 1560, True, 32, None)]),
+    ("2", [("C2_CAG-F.ab1", 560, 650, False, 21, None)]),
+    ("1", [("C1_CAG-F.ab1", 560, 1480, False, 11, {silent: "T"}), ("C1_bGH-R.ab1", 600, 1560, True, 12, {silent: "T"})]),
+):
+    files = [(BytesIO(sanger(demo_seq, a, b, rev, seed, ch)), name) for name, a, b, rev, seed, ch in reads]
+    sam.post(f"/plasmids/{pcag}/clones", data={"reads": files}, content_type="multipart/form-data")
+    if clone == "3":
+        sam.post(f"/plasmids/{pcag}/clones/{one('select id from plasmid_clones where name=?', '3')}/accept")
+
+# The lab's primers, a few of which bind pCAG-EGFP: its Primers tab finds
+# them (CMV-F with two mismatches away from its 3′ end).
+def revcomp(text: str) -> str:
+    return text.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+
+cmv = list(demo_seq[300:321])
+cmv[2], cmv[6] = ("A" if cmv[2] != "A" else "C"), ("G" if cmv[6] != "G" else "T")
+PRIMERS = [("CAG-F", demo_seq[540:560], "forward", "sequencing", "Primer box 2 · B4"),
+           ("EGFP-N", revcomp(demo_seq[790:810]), "reverse", "sequencing", "Primer box 2 · C1"),
+           ("EGFP-C", demo_seq[1330:1350], "forward", "sequencing", "Primer box 2 · C2"),
+           ("bGH-R", revcomp(demo_seq[1520:1540]), "reverse", "sequencing", "Primer box 1 · F7"),
+           ("CMV-F", "".join(cmv), "forward", "PCR", "Primer box 1 · A3"),
+           ("AmpR-F", demo_seq[3000:3020], "forward", "PCR", "Primer box 1 · B2")]
 
 # ------------------------------------------------------------------ inventories
 
@@ -433,6 +559,22 @@ for name, status, vendor, cat, qty, unit, expires, cas, conc, temp, hazard in (
                                                          "expires_on": expires, "is_shared": "1", "attr_cas": cas,
                                                          "attr_concentration": conc, "attr_storage_temp": temp,
                                                          "attr_hazard": hazard})
+
+# The restriction enzymes in the freezer door: the Digest tab marks them.
+for name, cat, box_pos in (("EcoRI-HF", "R3101S", "door, row 1"), ("NotI-HF", "R3189S", "door, row 1"),
+                           ("HindIII-HF", "R3104S", "door, row 2"), ("PstI-HF", "R3140S", "door, row 2"),
+                           ("BamHI-HF", "R3136S", "door, row 2"), ("XbaI", "R0145S", "door, row 3")):
+    alex.post(f"/inventory/{reagents}/items/save", data={"id": "", "name": name, "category": "enzyme",
+                                                         "status": "in stock", "vendor": "NEB", "catalog_number": cat,
+                                                         "quantity": "1", "unit": "tube", "is_shared": "1",
+                                                         "location_note": f"−20 °C freezer, {box_pos}",
+                                                         "attr_storage_temp": "−20 °C", "attr_hazard": "none"})
+
+primers_db = keys_of("primers") or module("primers", "Primers & oligos")
+for name, seq, direction, use, where in PRIMERS:
+    sam.post(f"/inventory/{primers_db}/items/save", data={"id": "", "name": name, "status": "in stock", "category": use,
+                                                          "attr_sequence": seq, "attr_direction": direction,
+                                                          "vendor": "IDT", "is_shared": "1", "location_note": where})
 
 antibodies = keys_of("antibodies") or module("antibodies", "Antibodies")
 for name, host, dil, vendor, cat in (
@@ -479,7 +621,6 @@ for c, title, start, kind, etype in (
     (sam, "Photometry session 7", ahead(3) + "T10:00", "event", "experiment"),
     (jordan, "Slice ephys: PV-Cre;Ai14", ahead(2) + "T13:00", "event", "experiment"),
     (priya, "Flip stock rack", ahead(4), "task", ""),
-    (alex, "Lab meeting", ahead(5) + "T15:00", "event", "meeting"),
     (sam, "Perfuse cohort 2", ahead(8) + "T09:00", "event", "experiment"),
     (alex, "IACUC protocol renewal", ahead(10), "task", ""),
     (jordan, "Order AAVs", ahead(0), "task", ""),
@@ -488,12 +629,60 @@ for c, title, start, kind, etype in (
                "status": "open"}
     c.post("/calendar/items", data=json.dumps(payload), content_type="application/json")
 
+# The weekly lab meeting, kept in the calendar with who presents in turn;
+# the next four are on the calendar, each naming its presenter.
+meeting_day = date.today() + timedelta(days=5)
+series = alex.post("/notebook/api/meetings", json={
+    "name": "Lab meeting", "weekday": meeting_day.weekday(), "time": "15:00", "location": "Room 2.14",
+    "members": [p[0] for p in PEOPLE]}).get_json()["series"]
+alex.post(f"/notebook/api/meetings/{series['id']}/calendar", json={"count": 4})
+
+# alex's to-dos on the calendar's Board: two lists of cards, with no day.
+for name, cards in (("This week", ("Order Cre antibody", "Book the confocal for Friday")),
+                    ("Waiting on", ("Sequencing results from the core",))):
+    alex.post("/calendar/board/lists", json={"add": name})
+    for title in cards:
+        alex.post("/calendar/board/cards", json={"title": title, "list": name})
+
 # ------------------------------------------------------------------ notebook
+
+# alex's own notebook: three topics, each with an icon, and pages of each
+# kind: a data sheet, a protocol's steps, notes and a paper.
+SHEET = """```sheet
+{"title": "Peak dF/F", "columns": [{"name": "Group", "type": "text"}, {"name": "dF/F", "type": "number", "unit": "%"}],
+ "rows": [["Sucrose", "4.1"], ["Sucrose", "3.8"], ["Sucrose", "4.6"], ["Water", "1.2"], ["Water", "0.9"], ["Water", "1.4"]],
+ "showPlot": true, "showStats": true, "chart": {"type": "bar", "x": 0, "y": [1], "group": -1, "error": "sem"},
+ "stats": {"group": 0, "value": 1, "test": "auto", "control": "Water"}}
+```"""
+NOTEBOOK = (
+    ("Fiber photometry", "emoji:🔬", (
+        ("Session 7: sucrose vs water", "note", "Recorded 12 trials per mouse.\n\n" + SHEET),
+        ("Fiber implant surgery", "protocol", "## Steps\n\n1. Anesthetize with isoflurane, 2% induction\n"
+                                              "2. Level the skull, mark AP −1.2, ML 0.8\n3. Lower the fiber to DV −4.6\n"
+                                              "4. Cement and suture"),
+    )),
+    ("Slice ephys", "emoji:⚡", (
+        ("PV-Cre;Ai14 recordings", "note", "Whole-cell from tdTomato+ cells in layer 5.\n\n"
+                                          "| Cell | Rin (MΩ) | Firing (Hz) |\n|---|---|---|\n| 1 | 142 | 88 |\n| 2 | 118 | 102 |"),
+        ("Cutting solution", "protocol", "- [ ] 93 mM NMDG\n- [ ] 2.5 mM KCl\n- [ ] 1.2 mM NaH2PO4\n- [ ] 30 mM NaHCO3"),
+    )),
+    ("Reading", "emoji:📚", (
+        ("Dopamine and reward prediction", "reading", "Notes on the paper: phasic dopamine encodes the error, not the reward."),
+    )),
+)
+for topic, icon, pages in NOTEBOOK:
+    tab_id = alex.post("/notebook/tabs/create", data={"title": topic}).get_json()["id"]
+    alex.post(f"/notebook/api/topics/{tab_id}", json={"icon": icon})
+    for title, kind, body in pages:
+        page_id = alex.post("/notebook/api/pages/new", json={"tab_id": tab_id, "title": title, "kind": kind}).get_json()["page_id"]
+        alex.post(f"/notebook/pages/{page_id}/update", data={"body": body})
 
 sam.post("/notebook/tabs/create", data={"title": "Photometry"})
 tab = one("select id from notebook_tabs order by id desc limit 1")
 if tab:
     sam.post("/notebook/pages/create", data={"tab_id": tab, "title": "Session 5: sucrose vs water"})
+    # The topic shared with the lab: it lists under Shared with me.
+    sam.post(f"/notebook/api/topics/{tab}/shares", json={"username": "*", "role": "view"})
 
 # A made-up lab never sends the daily anonymous counts (app/telemetry.py),
 # however it is run later: the screenshots, the launch clips, a demo.

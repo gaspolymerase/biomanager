@@ -24,32 +24,38 @@
   body:has(#nb-shell) { --nb-side-w: 264px; }
   .notebook-shell:not(:has(> .notebook-sidebar)) { grid-template-columns: minmax(0, 1fr); padding-left: var(--nb-side-w); }
   body.nb-side-is-closed .notebook-shell { padding-left: 0; }
+  /* A pane of glass beside the app's sidebar, inset as it is. */
   .notebook-sidebar.is-docked {
-    position: absolute; top: 0; bottom: 0; left: 0; z-index: 37;
-    width: var(--nb-side-w); height: auto; padding: 6px 8px 0; overflow: hidden;
-    background: var(--material-sidebar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px); backdrop-filter: saturate(180%) blur(30px);
-    box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    position: absolute; top: var(--rail-gap); bottom: var(--rail-gap); left: 8px; z-index: 37;
+    width: calc(var(--nb-side-w) - 8px); height: auto; padding: 8px 8px 0; overflow: hidden;
+    border-radius: var(--radius-3xl);
+    background: var(--glass-regular);
+    -webkit-backdrop-filter: saturate(190%) blur(28px); backdrop-filter: saturate(190%) blur(28px);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
   }
   body.nb-side-is-closed .notebook-sidebar.is-docked { display: none; }
   body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) :is(.toolbar, .chrome-edge) { left: var(--nb-side-w); }
   /* It runs the window's height, as Notion's does: the tabs start after it,
      not over it, so no corner shows where they meet. */
-  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) .topstrip { left: var(--nb-side-w); padding-left: 10px; }
+  body:has(.notebook-sidebar.is-docked):not(.nb-side-is-closed) .topstrip { left: var(--nb-side-w); padding-left: 12px; }
   /* The Mac window: the lights and the window's tools sit on its top, the
      folded app sidebar beside it runs the window's height too (no corner). */
-  html.mac-window .notebook-sidebar.is-docked { padding-top: var(--tabbar-h); }
+  html.mac-window .notebook-sidebar.is-docked { padding-top: calc(var(--tabbar-h) - var(--rail-gap)); }
   html.mac-window body[data-rail="closed"]:has(#nb-shell) .rail {
-    height: 100vh; margin-top: 0; padding-top: var(--tabbar-h);
-    border-top-right-radius: 0; box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    height: calc(100vh - 2 * var(--rail-gap)); margin-top: var(--rail-gap); padding-top: calc(var(--tabbar-h) - var(--rail-gap));
   }
-  /* A page is the paper itself, from the title row to the bottom, with no
-     box around it; Home, a topic and the libraries keep their cards on the window. */
+  /* A page is paper on thick glass, under the title row and to the bottom
+     of the window; Home, a topic and the libraries keep their cards on the
+     wallpaper. */
   .nb-shell:has(.notebook-editor) { margin-top: calc(-1 * var(--toolbar-h)); }
   .nb-shell:has(.notebook-editor) .notebook-main {
-    min-height: calc(100dvh - var(--tabbar-h)); padding-top: var(--toolbar-h); background: var(--color-surface);
+    min-height: calc(100dvh - var(--tabbar-h)); padding: var(--toolbar-h) 14px 14px;
   }
-  .nb-shell .notebook-editor { border-radius: 0; background: transparent; box-shadow: none; }
+  .nb-shell .notebook-editor {
+    min-height: calc(100dvh - var(--tabbar-h) - var(--toolbar-h) - 14px);
+    border-radius: 28px; background: var(--glass-thick);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  }
   /* The words "Notebook" there would repeat the sidebar's name: a page's
      path and tools take the row instead (notebook-page.js liftHeader). */
   body:has(#nb-shell):not(.nb-header-lifted) .toolbar-title { visibility: hidden; }
@@ -75,11 +81,23 @@
   border-top: 1px solid var(--color-hairline);
 }
 .nb-side-links a, .nb-side-links button {
-  display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 0; border-radius: 6px; background: none;
+  display: flex; align-items: center; gap: 10px; padding: 5px 8px; border: 0; border-radius: 12px; background: none;
   color: var(--color-ink-soft); font: inherit; font-size: 13px; text-decoration: none; text-align: left; cursor: pointer;
 }
 .nb-side-links a:hover, .nb-side-links button:hover { background: color-mix(in srgb, var(--color-sand-200) 60%, transparent); color: var(--color-ink); }
 .nb-side-links .icon { width: 13px; height: 13px; color: var(--color-sand-400); }
+/* Each library a small coloured square, as in the design. */
+.nb-lib-mark {
+  --tone: var(--color-sand-400);
+  display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; border-radius: 7px;
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+}
+.nb-side-links .nb-lib-mark .icon { width: 12px; height: 12px; color: color-mix(in srgb, var(--tone) 85%, var(--color-ink)); }
+.nb-lib-mark[data-lib="today"] { --tone: var(--color-danger-600); }
+.nb-lib-mark[data-lib="protocols"] { --tone: var(--color-brand-600); }
+.nb-lib-mark[data-lib="recipes"] { --tone: var(--color-violet-600, #7c3aed); }
+.nb-lib-mark[data-lib="meetings"] { --tone: var(--color-warn-700); }
+.nb-lib-mark[data-lib="reading"] { --tone: var(--color-info-600); }
 .nb-side-links a.is-active { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); color: var(--color-ink); font-weight: 600; }
 .nb-side-links a.is-active .icon { color: var(--color-brand-600); }
 .nb-side-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px 12px; }
@@ -95,12 +113,27 @@
 }
 .nb-side-hide:hover, .nb-side-show > button:hover, .nb-crumb-side:hover { background: color-mix(in srgb, var(--color-sand-200) 70%, transparent); color: var(--color-ink); }
 .nb-side-hide .icon, .nb-side-show .icon, .nb-crumb-side .icon { width: 15px; height: 15px; }
-.nb-side-show { display: none; gap: 2px; margin: 6px 0 0 4px; }
-.nb-crumb-side { display: none; width: 26px; height: 26px; margin-right: 2px; }
+/* While the sidebar is hidden, showing it and New page are one small
+   capsule of glass, at the start of the page's path (or of the page). */
+.nb-side-capsule {
+  display: none; flex: none; align-items: center; gap: 0; padding: 2px; border-radius: 999px;
+  background: var(--glass-clear); -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+.nb-side-capsule > button { width: 30px; height: 30px; margin: 0; border-radius: 50%; }
+/* On Home, a topic or a library it sits in the title row above, where a
+   page's path would be. */
+.notebook-main { position: relative; }
+.nb-side-show.nb-side-capsule { position: absolute; z-index: 5; top: calc(-1 * var(--toolbar-h, 52px) + (var(--toolbar-h, 52px) - 34px) / 2); left: 18px; width: fit-content; margin: 0; }
+.nb-crumb-capsule { margin-right: 6px; }
 @media (min-width: 768px) {
+  body.nb-side-is-closed .nb-crumb-capsule { display: inline-flex; }
   body.nb-side-is-closed .nb-crumb-side { display: grid; }
   body.nb-side-is-closed:not(.nb-header-lifted) .nb-side-show { display: flex; }
 }
+/* Fit the window: the page runs the width it has, not the paper's. */
+.nb-shell.is-wide .notebook-editor { max-width: none; }
+#nb-wide-btn[aria-pressed="true"] { color: var(--color-brand-700); background: color-mix(in srgb, var(--color-brand-600) 10%, transparent); }
 @media (max-width: 767px) { .nb-side-hide { display: none; } }
 
 /* Topics: a heading with +, each topic's own + and ••• on hover. */
@@ -606,15 +639,20 @@ a.nb-starter { text-decoration: none; }
 
 .nb-library { max-width: 1120px; margin: 0 auto; padding: 22px 28px 120px; font-size: 13px; }
 @media (max-width: 640px) { .nb-library { padding: 14px 16px 100px; } }
-.nb-lib-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 6px; }
-.nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-.nb-lib-crumbs a { display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px; margin: -2px -6px; border-radius: 8px; color: var(--color-ink); text-decoration: none; }
-.nb-lib-crumbs a:hover { background: var(--color-recess); }
-.nb-lib-crumbs a .icon, .nb-lib-crumbs > span > .icon { width: 18px; height: 18px; color: var(--color-brand-600); }
-.nb-lib-crumbs > span:last-child { display: inline-flex; align-items: center; gap: 8px; }
-.nb-lib-crumbs > span:last-child { overflow-wrap: anywhere; min-width: 0; }
-.nb-lib-crumbs:has(> span:last-child) > a:first-child { color: var(--color-muted); }
+/* The top, as the notebook's home: a kicker with the way here, the place
+   as a large title with how much it holds, its buttons beside. */
+.nb-lib-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin: 6px 0 8px; }
+.nb-lib-titles { flex: 1 1 300px; min-width: 0; }
+.nb-lib-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.nb-lib-crumbs a { padding: 1px 4px; margin: -1px -4px; border-radius: 6px; color: inherit; text-decoration: none; }
+.nb-lib-crumbs a:hover { background: var(--color-recess); color: var(--color-ink); }
 .nb-lib-sep { color: var(--color-sand-400); font-weight: 400; }
+.nb-lib-title { display: flex; align-items: center; gap: 10px; min-width: 0; margin: 4px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--color-ink); }
+.nb-lib-title > .icon { width: 22px; height: 22px; color: var(--color-brand-600); }
+.nb-lib-title .nb-lib-mark { width: 34px; height: 34px; border-radius: 11px; }
+.nb-lib-title .nb-lib-mark .icon { width: 18px; height: 18px; }
+.nb-lib-title .nb-lib-crumb-text { min-width: 0; overflow-wrap: anywhere; }
+.nb-lib-total { font-size: 17px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 .nb-lib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .nb-lib-tools .btn .icon { width: 13px; height: 13px; }
 .nb-lib-saved { color: var(--color-muted); font-size: 12px; }
@@ -636,10 +674,12 @@ a.nb-starter { text-decoration: none; }
 
 .nb-lib-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .nb-lib-folder {
-  display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 10px;
-  background: var(--color-surface); color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-xs);
+  display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 18px;
+  background: var(--glass-regular); color: var(--color-ink); text-decoration: none;
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  transition: background-color 0.15s, transform 0.15s;
 }
-.nb-lib-folder:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); }
+.nb-lib-folder:hover { background: var(--glass-thick); transform: translateY(-1px); }
 .nb-lib-folder > .icon { flex: none; width: 26px; height: 26px; color: var(--color-brand-600); }
 .nb-lib-folder span { min-width: 0; }
 .nb-lib-folder b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -647,6 +687,41 @@ a.nb-starter { text-decoration: none; }
 .nb-lib-folder.is-drop, .nb-lib-crumbs a.is-drop { outline: 2px dashed var(--color-brand-600); outline-offset: 2px; background: color-mix(in srgb, var(--color-brand-600) 8%, var(--color-surface)); }
 
 .nb-lib-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+/* Protocols and recipes as the notebook's page cards (.nb-card): a sketch,
+   the title, then a pill and who and when. */
+.nb-lib-cards.nb-cards { gap: 14px; }
+.nb-lib-item footer small { text-align: right; }
+.nb-lib-item footer .btn { position: relative; z-index: 1; flex: none; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; }
+.nb-lib-item.is-builtin { background: var(--glass-clear); }
+.nb-lib-item.is-builtin footer small { text-align: left; }
+.nb-kind-pill[data-draft] { background: var(--color-recess); color: var(--color-muted); }
+.nb-kind-pill.is-builtin { background: var(--color-recess); color: var(--color-ink-soft); }
+.nb-lib-item[data-kind="recipe"] { --kind: var(--color-violet-600, #7c3aed); }
+.nb-lib-where { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; margin: 6px 6px 0; padding: 4px 4px 4px 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--color-warn-700) 9%, transparent); color: var(--color-ink-soft); font-size: 12px; }
+.nb-lib-where .icon { flex: none; width: 12px; height: 12px; color: var(--color-warn-700); }
+.nb-lib-where span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-lib-keep { flex: none; height: 22px; padding: 0 8px; border: 0; border-radius: 999px; background: var(--color-surface); color: var(--color-brand-700);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+.nb-lib-keep:hover { box-shadow: inset 0 0 0 1px var(--color-brand-600); }
+/* A recipe's sketch: its volume large, its pH, what goes in it. */
+.nb-thumb-recipe { justify-content: flex-start; gap: 2px; }
+.nb-thumb-recipe > b { font-family: var(--font-mono); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: color-mix(in srgb, var(--kind) 75%, var(--color-ink)); }
+.nb-thumb-recipe > small { font-family: var(--font-mono); font-size: 11px; color: var(--color-muted); }
+.nb-recipe-parts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+.nb-recipe-parts i { max-width: 100%; padding: 1px 6px; overflow: hidden; border-radius: 999px; font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap;
+  background: color-mix(in srgb, var(--kind) 10%, transparent); color: var(--color-ink-soft); }
+/* A calendar timeline's sketch: its steps as bars across its days. */
+.nb-lib-timeline { --kind: var(--tone, var(--color-brand-600)); }
+.nb-thumb-days .nb-days { position: relative; flex: 1; margin-top: 4px; background: repeating-linear-gradient(90deg, transparent 0 calc(14.28% - 1px), var(--color-hairline) calc(14.28% - 1px) 14.28%); border-radius: 6px; }
+.nb-thumb-days .nb-days i { position: absolute; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--kind) 55%, transparent); }
+.nb-thumb-days .nb-days i:nth-child(1) { top: 8%; } .nb-thumb-days .nb-days i:nth-child(2) { top: 32%; }
+.nb-thumb-days .nb-days i:nth-child(3) { top: 56%; } .nb-thumb-days .nb-days i:nth-child(4) { top: 80%; }
+.nb-kind-pill[data-kind="timeline"] { font-family: var(--font-mono); font-size: 11px; }
+.nb-card.nb-lib-new { display: grid; place-content: center; justify-items: center; gap: 6px; min-height: 120px; color: var(--color-muted); text-decoration: none;
+  background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-ink) 12%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.nb-card.nb-lib-new:hover { color: var(--color-brand-700); text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--color-brand-600); }
+.nb-lib-new .icon { width: 18px; height: 18px; }
 .nb-lib-card {
   position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 10px; border: 1px solid var(--color-hairline);
   border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-xs);
@@ -778,7 +853,7 @@ body.nb-dragging-page .nb-favorites.is-empty .nb-fav-hint { outline: 1px dashed 
 /* The star, on a page's tools and on a card. */
 .nb-star .icon { color: var(--color-sand-300); transition: color 0.15s, transform 0.15s; }
 .nb-star:hover .icon { color: var(--color-sand-400); }
-.nb-star.is-on .icon { color: #f2b01e; }
+.nb-star.is-on .icon { color: #f2b01e; fill: currentColor; }
 .nb-star:active .icon { transform: scale(0.85); }
 .nb-tool.nb-star { padding: 0 7px; }
 .nb-tool.nb-star .icon { width: 14px; height: 14px; }
@@ -824,57 +899,136 @@ button.nb-topic-icon:hover { background: color-mix(in srgb, var(--color-brand-60
 .nb-topic-empty > .icon { width: 28px; height: 28px; color: var(--color-sand-300); }
 .nb-topic-empty p { margin: 0; font-size: 13px; }
 
-/* Cards: a page's kind as a coloured mark, its title, its first words, when. */
-.nb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+/* Cards, as in the design: a pane of glass holding a sketch of the page on
+   paper (its cover, or its title over lines, and a table's bands or a
+   list's dots as the page has them), then its title, its kind as a pill,
+   its topic's icon and when. */
+.nb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .nb-card {
-  position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 112px; padding: 14px 14px 10px;
-  border: 1px solid var(--color-hairline); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-xs);
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  --kind: var(--color-sand-400);
+  position: relative; display: flex; flex-direction: column; min-width: 0; padding: 8px;
+  border-radius: 24px; background: var(--glass-regular);
+  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.nb-card:hover { border-color: var(--color-brand-400); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.nb-card:hover { transform: translateY(-2px); }
 .nb-card[draggable="true"] { cursor: grab; }
-.nb-card-cover { margin: -14px -14px 4px; height: 84px; overflow: hidden; border-radius: 11px 11px 0 0; background: var(--color-recess); }
-.nb-card-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.nb-card-link { display: flex; align-items: flex-start; gap: 9px; color: var(--color-ink); text-decoration: none; }
+.nb-card[data-kind="experiment"] { --kind: var(--color-ok-600); }
+.nb-card[data-kind="protocol"] { --kind: var(--color-brand-600); }
+.nb-card[data-kind="reading"], .nb-card[data-kind="seminar"] { --kind: var(--color-info-600); }
+.nb-card[data-kind="meeting"] { --kind: var(--color-warn-700); }
+.nb-card[data-kind="daily"] { --kind: var(--color-danger-600); }
+.nb-card-link { display: flex; flex-direction: column; color: var(--color-ink); text-decoration: none; }
 .nb-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
-.nb-card-link b { font-size: 13px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.nb-card-icon {
-  display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-top: -2px; border-radius: 7px;
-  background: color-mix(in srgb, var(--kind, var(--color-brand-600)) 12%, var(--color-surface)); color: var(--kind, var(--color-brand-600));
+.nb-thumb {
+  display: flex; flex-direction: column; height: 120px; box-sizing: border-box; padding: 14px 16px; overflow: hidden;
+  border-radius: 16px; background: var(--nb-paper, var(--color-surface)); box-shadow: inset 0 0 0 1px var(--color-hairline);
 }
-.nb-card-icon .icon { width: 13px; height: 13px; }
-.nb-card-icon[data-kind="experiment"] { --kind: var(--color-ok-600); }
-.nb-card-icon[data-kind="protocol"] { --kind: var(--color-brand-600); }
-.nb-card-icon[data-kind="reading"], .nb-card-icon[data-kind="seminar"] { --kind: var(--color-info-600); }
-.nb-card-icon[data-kind="meeting"] { --kind: var(--color-warn-700); }
-.nb-card-icon[data-kind="daily"] { --kind: var(--color-danger-600); }
-.nb-card-icon[data-kind="note"] { --kind: var(--color-sand-400); }
-.nb-card-gist { flex: 1; margin: 0; color: var(--color-ink-soft); font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.nb-card-gist:empty { display: none; }
-.nb-card footer { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
-.nb-card footer small { flex: 1; min-width: 0; color: var(--color-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nb-card .nb-star { position: relative; z-index: 1; display: grid; place-items: center; width: 26px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+.nb-thumb img { display: block; width: calc(100% + 32px); height: calc(100% + 28px); margin: -14px -16px; object-fit: cover; }
+.nb-thumb-title { margin-bottom: 8px; overflow: hidden; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.nb-sk { display: block; flex: none; height: 5px; margin-bottom: 6px; border-radius: 3px; background: color-mix(in srgb, var(--color-ink) 9%, transparent); }
+.nb-sk:nth-of-type(1) { width: 92%; }
+.nb-sk:nth-of-type(2) { width: 78%; margin-bottom: 10px; }
+.nb-sk:nth-of-type(3) { width: 85%; }
+.nb-thumb-sheet { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.nb-thumb-sheet i { height: 9px; border-radius: 2px; background: color-mix(in srgb, var(--color-ink) 9%, transparent); }
+.nb-thumb-sheet i:nth-child(-n+3) { background: color-mix(in srgb, var(--kind) 30%, transparent); }
+.nb-thumb-steps { display: flex; flex-direction: column; gap: 5px; }
+.nb-thumb-steps > span { display: flex; align-items: center; gap: 5px; }
+.nb-thumb-steps i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--kind) 45%, transparent); }
+.nb-thumb-steps b { height: 5px; width: 70%; border-radius: 3px; background: color-mix(in srgb, var(--color-ink) 9%, transparent); }
+.nb-thumb-steps > span + span b { width: 55%; }
+.nb-card-title {
+  display: block; padding: 10px 6px 0; overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap;
+}
+.nb-card footer { display: flex; align-items: center; gap: 6px; padding: 4px 6px 2px; }
+.nb-card footer small {
+  flex: 1; min-width: 0; overflow: hidden; color: var(--color-muted); font-size: 11px; text-align: right; text-overflow: ellipsis; white-space: nowrap;
+}
+.nb-card footer time { font-family: var(--font-mono); }
+.nb-kind-pill {
+  display: inline-flex; flex: none; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500;
+  background: color-mix(in srgb, var(--kind) 14%, transparent); color: color-mix(in srgb, var(--kind) 80%, var(--color-ink));
+}
+.nb-card-topic { display: inline-grid; flex: none; place-items: center; font-size: 13px; line-height: 1; }
+.nb-card-topic .icon, .nb-card-topic .ti-svg { width: 13px; height: 13px; color: var(--color-muted); }
+.nb-card .nb-star { position: relative; z-index: 1; display: grid; place-items: center; width: 24px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
 .nb-card .nb-star:hover { background: var(--color-recess); }
 .nb-card .nb-star .icon { width: 13px; height: 13px; }
-.nb-card:not(:hover):not(:focus-within) .nb-star:not(.is-on), .nb-card:not(:hover):not(:focus-within) .nb-lib-file { opacity: 0; }
-@media (hover: none) { .nb-card .nb-star, .nb-card .nb-lib-file { opacity: 1 !important; } }
+.nb-card:not(:hover):not(:focus-within) .nb-star:not(.is-on), .nb-card:not(:hover):not(:focus-within) .nb-lib-file { display: none; }
+@media (hover: none) { .nb-card .nb-star, .nb-card .nb-lib-file { display: grid !important; } }
 .nb-card-status { flex: none; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--color-recess); color: var(--color-ink-soft); }
 .nb-card-status[data-status="running"] { background: color-mix(in srgb, var(--color-ok-600) 14%, transparent); color: var(--color-ok-700); }
 .nb-card-status[data-status="planned"] { background: color-mix(in srgb, var(--color-info-600) 14%, transparent); color: var(--color-info-600); }
 .nb-card-status[data-status="failed"] { background: color-mix(in srgb, var(--color-danger-600) 12%, transparent); color: var(--color-danger-600); }
 
-/* The same pages as a list: one line each. */
-.nb-cards.is-list { grid-template-columns: minmax(0, 1fr); gap: 0; border: 1px solid var(--color-hairline); border-radius: 12px; background: var(--color-surface); overflow: hidden; }
-.nb-cards.is-list .nb-card { flex-direction: row; align-items: center; gap: 12px; min-height: 0; padding: 9px 12px; border: 0; border-radius: 0; box-shadow: none; transform: none; }
+/* The same pages as a list: one line each, no sketch. */
+.nb-cards.is-list {
+  grid-template-columns: minmax(0, 1fr); gap: 0; overflow: hidden; border-radius: 18px; background: var(--glass-thick);
+  box-shadow: inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+.nb-cards.is-list .nb-card { flex-direction: row; align-items: center; gap: 12px; padding: 6px 12px; border-radius: 0; box-shadow: none; transform: none; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .nb-cards.is-list .nb-card + .nb-card { border-top: 1px solid var(--color-hairline); }
 .nb-cards.is-list .nb-card:hover { background: var(--color-recess); }
-.nb-cards.is-list .nb-card-cover { display: none; }
-.nb-cards.is-list .nb-card-link { flex: 0 1 40%; min-width: 0; align-items: center; }
-.nb-cards.is-list .nb-card-link b { -webkit-line-clamp: 1; font-size: 13px; }
-.nb-cards.is-list .nb-card-gist { flex: 1 1 0; -webkit-line-clamp: 1; font-size: 12px; }
-.nb-cards.is-list .nb-card footer { flex: none; margin: 0; padding: 0; }
+.nb-cards.is-list .nb-thumb { display: none; }
+.nb-cards.is-list .nb-card-link { flex: 1 1 auto; min-width: 0; }
+.nb-cards.is-list .nb-card-title { padding: 4px 0; }
+.nb-cards.is-list .nb-card footer { flex: none; padding: 0; }
 .nb-cards.is-list .nb-card footer small { flex: none; }
-@media (max-width: 640px) { .nb-cards.is-list .nb-card-gist { display: none; } .nb-cards.is-list .nb-card-link { flex: 1 1 auto; } }
+
+/* The notebook's home, as in the design: a mono kicker over its name, the
+   capsule that starts a page of each kind, then pages and topics. */
+.nb-home-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 6px 0 20px; }
+.nb-home-titles { flex: 1 1 300px; min-width: 0; }
+.nb-home-kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-muted); }
+.nb-home .nb-topic-title { margin: 2px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
+.nb-home-new {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 999px; background: var(--glass-clear);
+  -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+.nb-home-new-btn {
+  display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px 0 6px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--color-ink); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.nb-home-new-btn:hover { background: color-mix(in srgb, var(--color-sand-300) 40%, transparent); }
+.nb-home-new-btn.is-main {
+  background: var(--color-brand-600); color: var(--color-on-brand, #fff); font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 14px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+}
+.nb-home-mark {
+  --kind: var(--color-sand-400);
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  background: color-mix(in srgb, var(--kind) 16%, transparent); color: color-mix(in srgb, var(--kind) 85%, var(--color-ink));
+}
+.nb-home-new-btn.is-main .nb-home-mark { background: rgb(255 255 255 / 0.22); color: inherit; }
+.nb-home-mark .icon { width: 13px; height: 13px; }
+.nb-home-mark[data-kind="protocol"] { --kind: var(--color-brand-600); }
+.nb-home-mark[data-kind="reading"] { --kind: var(--color-info-600); }
+.nb-home-mark[data-kind="meeting"] { --kind: var(--color-warn-700); }
+.nb-home-bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 26px 0 10px; }
+.nb-home-bar h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-ink); }
+.nb-home-bar > span { color: var(--color-muted); }
+.nb-home-seg { margin-left: auto; align-self: center; }
+.nb-home-topics { display: flex; flex-wrap: wrap; gap: 10px; }
+.nb-topic-chip {
+  display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border: 0; border-radius: 999px;
+  background: var(--glass-thick); color: var(--color-ink); font: inherit; text-decoration: none; cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+.nb-topic-chip:hover { transform: translateY(-1px); }
+.nb-topic-chip-icon {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; font-size: 17px;
+  background: color-mix(in srgb, var(--color-sand-300) 40%, transparent);
+}
+.nb-topic-chip-icon .icon, .nb-topic-chip-icon .ti-svg { width: 18px; height: 18px; color: var(--color-brand-700); }
+.nb-topic-chip b { display: block; font-weight: 600; }
+.nb-topic-chip small { display: block; font-size: 12px; color: var(--color-muted); }
+.nb-topic-chip.is-new { height: 58px; padding: 0 18px; gap: 8px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-hairline); color: var(--color-ink-soft); }
+.nb-topic-chip.is-new .icon { width: 14px; height: 14px; }
+.nb-topic-chip.is-drop { outline: 2px dashed var(--color-brand-600); outline-offset: 2px; }
+
 /* A page's path: the topics its topic sits in, each a link to that topic's page. */
 .nb-crumb-topic { display: inline-flex; align-items: center; gap: 5px; }
 .nb-crumb-topic .icon { flex: none; width: 13px; height: 13px; color: var(--color-sand-400); }
@@ -904,3 +1058,19 @@ select:is(.nb-new-field :is(input, select), .nb-new-cite-row input, .nb-lib-meet
   background: color-mix(in srgb, var(--color-brand-600) 12%, var(--color-surface));
 }
 .nb-topic-folders .nb-lib-folder > .ti-emoji { font-size: 17px; }
+
+/* Someone else's topic shared with you: in the sidebar under Shared with
+   me, and its page says whose it is and what you may do. */
+.notebook-tab.is-shared > summary .nb-side-owner { margin-left: auto; }
+.nb-topic-shared { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 12px; }
+.nb-topic-shared .icon { width: 14px; height: 14px; }
+.nb-share-body { display: flex; flex-direction: column; gap: 10px; }
+.nb-share-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.nb-share-row > select, .nb-share-add select { height: 30px; }
+.nb-share-add select[data-share-who] { flex: 1; min-width: 0; }
+.nb-share-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.nb-share-list li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.nb-share-who { display: inline-flex; flex: 1; min-width: 0; align-items: center; gap: 6px; }
+.nb-share-who .icon { width: 14px; height: 14px; color: var(--color-muted); }
+.nb-share-remove { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-muted); cursor: pointer; }
+.nb-share-remove:hover { background: var(--color-recess); color: var(--color-ink); }

@@ -6,17 +6,22 @@ Why a sprite rather than an icon font or a JS library:
   * it is one file, served once, cached, and works offline in the packaged
     desktop app — no CDN, no runtime DOM rewriting
   * `<use href="…#name">` inherits `currentColor`, so icons follow text
-  * Font Awesome's biology set and our own organism drawings sit side by
-    side with no visual seam
+  * Lucide's interface icons and our own lab drawings sit side by side
+    with no visual seam
 
-Font Awesome Free supplies the general UI and most of the biology (worm,
-mosquito, fish, frog, dna, vial, microscope…). It has no laboratory mouse
-and no plasmid, so those — and a few others where FA's shape reads wrong at
-18px — are drawn here in a matching solid style on the same 512 grid.
+Every icon is a line drawing on Lucide's 24 grid, stroked in currentColor
+with round ends. Lucide (lucide-static, installed by npm in frontend/)
+supplies the interface and most objects; it has no laboratory mouse, fruit
+fly, plasmid, cage or culture vial, so those and the other lab and organ
+drawings are drawn here in the same style.
 
-    python scripts/build-icons.py [path/to/fontawesome-free-6.7.2]
+The stroke is set on each symbol and the fill is left to CSS
+(`svg.icon { fill: none }`), so a toggle can fill an icon in: a starred
+favourite is `fill: currentColor`.
 
-Icons: CC BY 4.0 (Font Awesome Free). Attribution is embedded in the sprite.
+    python scripts/build-icons.py [path/to/lucide-static]
+
+Icons: Lucide, ISC licence. Attribution is embedded in the sprite.
 """
 from __future__ import annotations
 
@@ -26,338 +31,419 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = PROJECT_ROOT / "app" / "static" / "icons.svg"
+DEFAULT_SOURCE = PROJECT_ROOT / "frontend" / "node_modules" / "lucide-static"
 
-# name-in-app -> font-awesome solid file
-FROM_FONTAWESOME = {
+STROKE = 'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"'
+
+# name-in-app -> Lucide icon
+FROM_LUCIDE = {
     # --- column headers: one glyph per kind of value ---
-    "sex": "venus-mars",
+    "sex": "venus-and-mars",
     "female": "venus",
     "male": "mars",
-    "age": "hourglass-half",
-    "born": "cake-candles",
-    "died": "calendar-xmark",
-    "litter": "people-group",
-    "status": "circle-half-stroke",
-    "note": "note-sticky",
-    "count": "hashtag",
+    "age": "hourglass",
+    "born": "cake",
+    "died": "calendar-x",
+    "litter": "users-round",
+    "status": "contrast",
+    "note": "sticky-note",
+    "count": "hash",
     "barcode": "barcode",
-    "vendor": "building",
-    "resistance": "capsules",
+    "vendor": "building-2",
+    "resistance": "pill",
     "protocol": "clipboard-check",
-    "position": "location-crosshairs",
-    "amount": "flask",
-    "target": "bullseye",
+    "position": "crosshair",
+    "amount": "beaker",
+    "target": "target",
     # --- navigation & chrome ---
+    "grip": "grip-vertical",
     "home": "house",
     "calendar": "calendar-days",
-    "notebook": "book",
-    "search": "magnifying-glass",
-    "settings": "gear",
-    "sign-out": "right-from-bracket",
-    "menu": "bars",
+    "notebook": "notebook",
+    "search": "search",
+    "settings": "settings",
+    "sign-out": "log-out",
+    "menu": "menu",
     "plus": "plus",
-    "close": "xmark",
+    "close": "x",
     "check": "check",
     "chevron-right": "chevron-right",
     "chevron-down": "chevron-down",
     "chevron-left": "chevron-left",
     "chevron-up": "chevron-up",
     "ellipsis": "ellipsis",
-    "sidebar": "table-columns",
-    "grid": "table-cells-large",
+    "sidebar": "panel-left",
+    "grid": "layout-grid",
     "list": "list",
     "table": "table",
-    "filter": "filter",
-    "sort": "arrow-up-wide-short",
-    "eye-off": "eye-slash",
-    "external": "arrow-up-right-from-square",
+    "filter": "list-filter",
+    "sort": "arrow-down-wide-narrow",
+    "eye-off": "eye-off",
+    "external": "external-link",
     "back": "arrow-left",
+    "kanban": "square-kanban",
+    "inbox": "inbox",
+    "todo": "list-todo",
+    "share": "share-2",
+    "command": "command",
+    "pin": "pin",
+    "panel-right": "panel-right",
     # --- objects & actions ---
     "database": "database",
-    "layers": "layer-group",
-    "box": "box",
-    "archive": "box-archive",
-    "trash": "trash",
-    "edit": "pen",
+    "layers": "layers",
+    "box": "package",
+    "archive": "archive",
+    "trash": "trash-2",
+    "edit": "pencil",
     "copy": "copy",
-    "duplicate": "clone",
-    "print": "print",
+    "duplicate": "copy-plus",
+    "print": "printer",
     "download": "download",
     "upload": "upload",
-    "import": "file-import",
+    "import": "file-input",
     "tag": "tag",
     "folder": "folder",
-    "file": "file-lines",
+    "file": "file-text",
     "link": "link",
     "image": "image",
     "book-open": "book-open",
-    "person-chalkboard": "person-chalkboard",
+    "person-chalkboard": "presentation",
     "key": "key",
-    "mail": "envelope",
+    "mail": "mail",
     "bell": "bell",
     "clock": "clock",
-    "history": "clock-rotate-left",
-    "undo": "rotate-left",
-    "refresh": "arrows-rotate",
-    "warning": "triangle-exclamation",
-    "info": "circle-info",
+    "history": "history",
+    "undo": "undo-2",
+    "refresh": "refresh-cw",
+    "warning": "triangle-alert",
+    "info": "info",
     "success": "circle-check",
-    "error": "circle-xmark",
+    "error": "circle-x",
     "user": "user",
     "users": "users",
-    "shield": "shield-halved",
+    "shield": "shield",
     "chart": "chart-line",
-    "scale": "scale-balanced",
+    "scale": "scale",
     "receipt": "receipt",
-    "location": "location-dot",
-    "qrcode": "qrcode",
+    "location": "map-pin",
+    "qrcode": "qr-code",
     "snowflake": "snowflake",
     "droplet": "droplet",
-    "temperature": "temperature-half",
-    "sparkle": "wand-magic-sparkles",
+    "temperature": "thermometer",
+    "sparkle": "sparkles",
     "heart": "heart",
     "star": "star",
-    # --- biology (Font Awesome has these and they read well) ---
+    # --- biology Lucide draws well ---
     "dna": "dna",
     "microscope": "microscope",
-    "vial": "vial",
-    "vials": "vials",
-    "flask": "flask",
+    "vial": "test-tube",
+    "vials": "test-tubes",
+    "flask": "flask-conical",
     "syringe": "syringe",
     "worm": "worm",
     "fish": "fish",
-    "frog": "frog",
-    "bacterium": "bacterium",
     "virus": "virus",
-    "paw": "paw",
+    "paw": "paw-print",
     "egg": "egg",
-    "seedling": "seedling",
+    "seedling": "sprout",
     "stethoscope": "stethoscope",
-    "notes-medical": "notes-medical",
+    "notes-medical": "clipboard-plus",
     "heart-pulse": "heart-pulse",
-    "weight": "weight-scale",
-    # --- library folders (lab_notebook.FOLDER_ICONS): organs ---
+    "weight": "weight",
+    # --- library folders (lab_notebook.FOLDER_ICONS): body ---
     "brain": "brain",
-    "lungs": "lungs",
     "bone": "bone",
-    "joint": "joint",
-    "tooth": "tooth",
     "skull": "skull",
     "hand": "hand",
-    "ear": "ear-listen",
-    "person": "person",
-    "pregnancy": "person-pregnant",
-    # --- library folders: microbes, disease, chemistry, safety ---
-    "bacteria": "bacteria",
-    "vial-virus": "vial-virus",
-    "lungs-virus": "lungs-virus",
-    "disease": "disease",
+    "ear": "ear",
+    "person": "person-standing",
+    # --- library folders: microbes, chemistry, safety ---
     "atom": "atom",
-    "mortar-pestle": "mortar-pestle",
-    "pills": "pills",
+    "pills": "tablets",
     "biohazard": "biohazard",
     "radiation": "radiation",
-    "toxic": "skull-crossbones",
+    "toxic": "skull",
     # --- library folders: procedures ---
-    "dropper": "eye-dropper",
+    "dropper": "pipette",
     "scissors": "scissors",
     "bandage": "bandage",
-    "blood-draw": "hand-holding-droplet",
-    "mask": "mask-face",
-    "aseptic": "hands-bubbles",
-    "recovery": "bed-pulse",
-    "recording": "file-waveform",
-    "x-ray": "x-ray",
-    "clinician": "user-doctor",
+    "aseptic": "soap-dispenser-droplet",
+    "recovery": "bed",
+    "recording": "audio-waveform",
+    "x-ray": "scan",
+    "clinician": "briefcase-medical",
     "ruler": "ruler",
     # --- library folders: more organisms ---
-    "bird": "dove",
-    "cow": "cow",
+    "bird": "bird",
+    # Lucide's rat is the lab mouse: a rodent in profile, its tail curled.
+    "mouse": "rat",
+    "rat": "rat",
+    "rabbit": "rabbit",
+    "squirrel": "squirrel",
+    "cat": "cat",
+    "dog": "dog",
+    "turtle": "turtle",
+    "snail": "snail",
+    "shrimp": "shrimp",
+    "joint": "bone",
     "leaf": "leaf",
-    "wheat": "wheat-awn",
+    "wheat": "wheat",
     "clipboard": "clipboard-check",
-    "sitemap": "sitemap",
-    "alarm": "stopwatch",
+    "sitemap": "network",
+    "alarm": "alarm-clock",
     "arrow-down": "arrow-down",
     "arrow-up": "arrow-up",
     "baby": "baby",
-    "bolt": "bolt",
+    "bolt": "zap",
     "calculator": "calculator",
     "calendar-clock": "calendar-check",
-    "cart": "cart-shopping",
-    "chevrons-right": "angles-right",
+    "cart": "shopping-cart",
+    "chevrons-right": "chevrons-right",
     "circle": "circle",
-    "columns": "table-columns",
+    "columns": "columns-2",
     "eye": "eye",
-    "file-archive": "file-zipper",
-    "flask-vial": "flask-vial",
+    "file-archive": "file-archive",
+    "flask-vial": "test-tubes",
     "folder-plus": "folder-plus",
-    "gauge": "gauge-simple-high",
-    "list-check": "list-check",
+    "gauge": "gauge",
+    "list-check": "list-checks",
     "lock": "lock",
     "repeat": "repeat",
     "rss": "rss",
-    "sign-in": "right-to-bracket",
-    "signpost": "signs-post",
-    "sliders": "sliders",
+    "sign-in": "log-in",
+    "signpost": "signpost",
+    "sliders": "sliders-horizontal",
     "template": "clipboard-list",
-    "type": "font",
-    "user-gear": "user-gear",
+    "type": "type",
+    "user-gear": "user-cog",
     "user-plus": "user-plus",
-    "wand": "wand-magic-sparkles",
+    "wand": "wand-sparkles",
 }
 
-# Drawn here because Font Awesome has no equivalent, or its shape is
-# unrecognisable at sidebar size. Same 0 0 512 512 grid, solid fills.
+# Drawn here, on Lucide's 24 grid and in its style: Lucide has no fruit
+# fly, plasmid or culture vial, and no organs but the brain and bones.
+# A dot is a zero-length line ("h.01"), as Lucide draws one.
 CUSTOM: dict[str, str] = {}
 
-# Plasmid: a supercoiled circle with a highlighted insert arc.
+# A fruit fly from above: head, thorax, the banded abdomen, a wing each side
+# swept back.
+CUSTOM["fly"] = '''
+<circle cx="12" cy="4.6" r="1.9"/>
+<ellipse cx="12" cy="9.2" rx="2.7" ry="2.5"/>
+<path d="M12 11.7c-1.7 0-2.7 1.9-2.7 4.4s1.2 4.9 2.7 4.9 2.7-2.4 2.7-4.9-1-4.4-2.7-4.4z"/>
+<path d="M9.6 15.3h4.8M9.9 18h4.2"/>
+<path d="M9.6 9.8C6.6 9.4 3 11.3 3 14.2c0 1.6 1.6 2.4 3.1 1.6l3.6-3.6"/>
+<path d="M14.4 9.8c3-.4 6.6 1.5 6.6 4.4 0 1.6-1.6 2.4-3.1 1.6l-3.6-3.6"/>
+'''
+
+# A plasmid: the circle, its insert drawn bold, and the promoter's arrow.
 CUSTOM["plasmid"] = '''
-<circle cx="256" cy="256" r="132" fill="none" stroke="currentColor" stroke-width="40"/>
-<path d="M 64 201 A 200 200 0 0 1 201 64" fill="none" stroke="currentColor"
- stroke-width="46" stroke-linecap="round"/>
-<path d="M 450 304 A 200 200 0 0 1 304 450" fill="none" stroke="currentColor"
- stroke-width="46" stroke-linecap="round"/>
-<path d="M 356 83 A 200 200 0 0 1 448 201" fill="none" stroke="currentColor"
- stroke-width="24" stroke-linecap="round"/>
+<circle cx="12" cy="12" r="8"/>
+<path d="M12 4a8 8 0 0 1 7.6 5.5" stroke-width="3.6"/>
+<path d="M6.3 17.6a8 8 0 0 1-2.1-3.3"/>
+<path d="m8.5 18.9-2.2-1.3.4 2.5"/>
 '''
 
-# Petri dish seen from above: rim, base and a few colonies.
+# A Petri dish from above: rim, base and three colonies.
 CUSTOM["petri"] = '''
-<path d="M256 76C155 76 74 157 74 256s81 180 182 180 182-81 182-180S357 76
-256 76zm0 48c74 0 134 59 134 132s-60 132-134 132-134-59-134-132 60-132
-134-132z"/>
-<circle cx="214" cy="212" r="26"/>
-<circle cx="300" cy="256" r="18"/>
-<circle cx="226" cy="308" r="14"/>
+<circle cx="12" cy="12" r="9"/>
+<path d="M18.4 8.2a7.3 7.3 0 0 0-4.4-3.9"/>
+<circle cx="9.3" cy="10" r="1.3"/>
+<circle cx="14.6" cy="13.8" r="1"/>
+<path d="M9.8 15.4h.01"/>
 '''
 
-# A mouse cage: tub with a wire lid and a water bottle.
+# A mouse cage: the tub, the wire lid arching over it.
 CUSTOM["cage"] = '''
-<path d="M86 208h340c13 0 24 11 24 24v140c0 35-29 64-64 64H126c-35 0-64-29
--64-64V232c0-13 11-24 24-24zm24 48v120c0 9 7 16 16 16h260c9 0 16-7 16-16V256H110z"/>
-<path d="M104 160h304c11 0 20 9 20 20s-9 20-20 20H104c-11 0-20-9-20-20s9-20
-20-20z"/>
-<path d="M168 96c11 0 20 9 20 20v28h-40v-28c0-11 9-20 20-20zm88 0c11 0 20 9
-20 20v28h-40v-28c0-11 9-20 20-20zm88 0c11 0 20 9 20 20v28h-40v-28c0-11
-9-20 20-20z"/>
+<path d="M3 11h18"/>
+<path d="m4.8 11 1.3 7.3A2 2 0 0 0 8.1 20h7.8a2 2 0 0 0 2-1.7L19.2 11"/>
+<path d="M5.5 11V8.5c4-2.6 9-2.6 13 0V11"/>
+<path d="M9 11V7.2M12 11V6.6M15 11V7.2"/>
 '''
 
-# An antibody (IgG): the Y of two heavy chains, a light chain beside each
-# arm. Bold strokes so the Y survives at 15px.
-CUSTOM["antibody"] = '''
-<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-<path d="M256 468V288L118 128M256 288l138-160" stroke-width="58"/>
-<path d="M186 300 72 168M326 300l114-132" stroke-width="34"/>
-</g>
-'''
-
-# An aquatic tank: glass box with a water line.
+# An aquarium tank: the glass, the water line, a bubble or two.
 CUSTOM["tank"] = '''
-<path d="M88 120h336c22 0 40 18 40 40v192c0 22-18 40-40 40H88c-22 0-40-18
--40-40V160c0-22 18-40 40-40zm8 48v176h320V168H96z"/>
-<path d="M96 248c34 0 34 22 68 22s34-22 68-22 34 22 68 22 34-22 68-22v96H96z"/>
+<rect x="3" y="5" width="18" height="14" rx="2"/>
+<path d="M3 10c1.5 0 1.5.9 3 .9s1.5-.9 3-.9 1.5.9 3 .9 1.5-.9 3-.9 1.5.9 3 .9 1.5-.9 3-.9"/>
+<path d="M8 15.5c.9-1 2.4-1 3.3 0-.9 1-2.4 1-3.3 0zM11.3 15.5l1.2-.9v1.8z"/>
+<path d="M16.5 14.5h.01M17.5 12.8h.01"/>
 '''
 
-# A fly vial / culture tube with a plug.
+# A fly vial: the foam plug, the tube, the food in its bottom.
 CUSTOM["culture-vial"] = '''
-<path d="M196 56h120c13 0 24 11 24 24s-11 24-24 24h-8v40h8c40 0 72 32 72
-72v186c0 30-24 54-54 54H178c-30 0-54-24-54-54V216c0-40 32-72 72-72h8v-40h-8
-c-13 0-24-11-24-24s11-24 24-24zm-24 304v42c0 3 3 6 6 6h156c3 0 6-3 6-6v-42H172z"/>
+<rect x="7.5" y="2.5" width="9" height="4" rx="1.2"/>
+<path d="M8.5 6.5v12.7A2.3 2.3 0 0 0 10.8 21.5h2.4a2.3 2.3 0 0 0 2.3-2.3V6.5"/>
+<path d="M8.5 16h7"/>
 '''
 
-# A cell: its membrane, the nucleus and two organelles.
+# An antibody (IgG): the Y of the heavy chains, a light chain beside each arm.
+CUSTOM["antibody"] = '''
+<path d="M12 21v-8.5M12 12.5 6.5 5.5M12 12.5l5.5-7"/>
+<path d="M9.3 14.1 4 7.6M14.7 14.1 20 7.6"/>
+'''
+
+# A cell: its membrane, the nucleus, an organelle and a vesicle.
 CUSTOM["cell"] = '''
-<path fill-rule="evenodd" d="M256 40c128 0 216 82 216 210 0 130-92 222-220 222C120 472 40 384 40 254 40 124 128 40 256 40zm-2 52C156 92 92 160 92 254c0 98 64 166 160 166 96 0 168-68 168-170 0-96-68-158-166-158z"/>
-<circle cx="226" cy="232" r="78"/>
-<ellipse cx="342" cy="336" rx="44" ry="24" transform="rotate(-35 342 336)"/>
-<circle cx="330" cy="168" r="20"/>
-<circle cx="172" cy="352" r="16"/>
+<path d="M12 3c5 0 9 3.6 9 8.6 0 5.3-4 9.4-9.2 9.4C6.7 21 3 17.1 3 12.1 3 7 7 3 12 3z"/>
+<circle cx="10.4" cy="11" r="3.2"/>
+<ellipse cx="16" cy="15.6" rx="1.9" ry="1" transform="rotate(-35 16 15.6)"/>
+<path d="M15.6 7.4h.01M7.6 16.8h.01"/>
 '''
 
-# A 1.5 mL microcentrifuge (Eppendorf) tube: rim, conical body, the lid
-# open on its hinge, which is what tells it from a vial at 15px.
+# A microcentrifuge tube: its lid open on the hinge, the rim, the conical
+# body with a fill line.
 CUSTOM["microtube"] = '''
-<path d="M190 112h220a22 22 0 0 1 0 44h-24v144l-66 152q-6 14-20 14t-20-14l-66-152V156h-24a22 22 0 0 1 0-44z"/>
-<rect x="50" y="112" width="160" height="44" rx="22" transform="rotate(-58 196 134)"/>
+<path d="M8 8h8v3.5l-2.7 8.7a1.4 1.4 0 0 1-2.6 0L8 11.5z"/>
+<path d="M7 6h10v2H7z"/>
+<path d="M7.5 6 5.2 3.3a1 1 0 0 1 .3-1.5l.6-.3a1 1 0 0 1 1.3.4L9 5"/>
+<path d="M8.3 12h7.4"/>
 '''
 
-# A multi-well plate with its A1 corner cut: 12 wells stand for 96, as
-# many as stay apart at 15px.
+# A multi-well plate with its A1 corner cut.
 CUSTOM["well-plate"] = '''
-<path fill-rule="evenodd" d="M80 96h376c22 0 40 18 40 40v240c0 22-18 40-40 40H56c-22 0-40-18-40-40V160l64-64zM78 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 176a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM78 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 256a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM78 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM174 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM270 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0zM366 336a34 34 0 1 0 68 0a34 34 0 1 0 -68 0z"/>
+<path d="M5 5h14.5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2V7.5z"/>
+<circle cx="7.5" cy="10" r="1.5"/><circle cx="12" cy="10" r="1.5"/><circle cx="16.5" cy="10" r="1.5"/>
+<circle cx="7.5" cy="14.5" r="1.5"/><circle cx="12" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/>
 '''
 
-# Blood: two red blood cells, the front one with its pale centre, the one
-# behind it a crescent.
+# Blood: a red cell with its pale centre, another behind it.
 CUSTOM["blood"] = '''
-<path fill-rule="evenodd" d="M156 326a170 170 0 1 0 340 0a170 170 0 1 0 -340 0zM260 326a66 66 0 1 1 132 0a66 66 0 1 1 -132 0z"/>
-<path d="M312 122A150 150 0 1 0 122 312A204 204 0 0 1 312 122Z"/>
+<circle cx="14.5" cy="14.5" r="6"/>
+<circle cx="14.5" cy="14.5" r="2.1"/>
+<path d="M8.6 15.3a5.8 5.8 0 1 1 6.7-6.7"/>
 '''
 
-# A kidney: the bean, its hilum and the ureter leaving it.
+# A kidney: the bean, and the ureter leaving its hilum.
 CUSTOM["kidney"] = '''
-<path d="M300 56C170 40 70 140 74 272c4 124 96 200 202 188 76-8 108-60 84-110-16-32-56-48-56-88s40-56 58-86c30-56 6-112-62-120z"/>
-<path d="M318 262c52 0 94 36 98 86l10 112" fill="none" stroke="currentColor" stroke-width="40" stroke-linecap="round"/>
+<path d="M14.5 3C10 2.2 5.5 5.8 5.5 11.8S9.5 21 13.5 21c2.4 0 3.5-1.9 2.6-3.9-.6-1.4-2.4-2.3-2.4-4.6s1.8-3.1 2.6-4.6C17.4 5.9 17 3.4 14.5 3z"/>
+<path d="M14.2 12.6h1.6c1.5 0 2.7 1.2 2.7 2.7V21"/>
 '''
 
-# The liver: the wedge of its lobes, the ligament between them as a slit,
-# the gallbladder beneath.
+# The liver: its lobes as one wedge, the ligament between them.
 CUSTOM["liver"] = '''
-<path fill-rule="evenodd" d="M36 176C108 112 228 90 340 94c104 4 146 60 136 140-10 86-70 150-152 160C238 404 160 340 36 176zM246 104c-6 54 0 104 26 150l-20 12c-30-50-36-104-28-162z"/>
-<path d="M306 380c18-8 42-6 52 14 12 24-2 54-28 58-24 4-42-14-40-36 2-14 6-30 16-36z"/>
+<path d="M2.5 9.5C6 6.5 11 5.5 15.5 5.7c4.3.2 6.2 2.7 5.8 6.1-.4 3.7-3 6.5-6.5 7C11 19.3 7 16.5 2.5 9.5z"/>
+<path d="M11.5 6.2c-.3 2.4 0 4.5 1.2 6.4"/>
 '''
 
-# The stomach: the bag with the oesophagus coming in and the duodenum
-# leaving.
+# The stomach: the oesophagus in, the bag, the duodenum out.
 CUSTOM["stomach"] = '''
-<path d="M300 112c-40-24-110-26-160 20-58 54-74 160-30 236 46 80 160 114 248 68 50-26 66-66 50-96-14-26-48-32-82-18-44 18-84 8-92-30-8-40 22-66 58-82 30-14 40-58 8-78z"/>
-<path d="M304 120c20-30 30-58 30-88M412 386c34-14 54-44 58-84" fill="none" stroke="currentColor" stroke-width="50" stroke-linecap="round"/>
+<path d="M9 2v3.2c0 .9-.5 1.6-1.3 2.2C5.4 9 4.3 11.6 4.7 14.6c.6 4.2 4.6 6.9 9.2 6.3 3.3-.4 5.6-2.7 5.6-5.4 0-1.7-1.1-2.8-2.6-2.8-1.4 0-2.1.9-3.3 1.2-1.6.4-2.9-.6-3-2.1-.1-1.4.8-2.3 1.5-3.2.7-.9.9-2.1.4-3"/>
+<path d="M19.4 14.8 22 13"/>
 '''
 
-# The gut: one hollow tube winding back and forth, its rows sharing their
-# walls, so it stays open at 15px.
+# The gut: one tube winding back and forth.
 CUSTOM["intestine"] = '''
-<path d="M344 62L344 96L344 96L128 96A80 80 0 0 0 128 256L384 256L384 256L128 256A80 80 0 0 0 128 416L344 416L344 416L344 450A40 40 0 0 0 424 450L424 416A80 80 0 0 0 344 336L128 336L128 336L384 336A80 80 0 0 0 384 176L128 176L128 176L344 176A80 80 0 0 0 424 96L424 62A40 40 0 0 0 344 62Z" fill="none" stroke="currentColor" stroke-width="36" stroke-linejoin="round"/>
+<path d="M15 2.5v2H7.5a3 3 0 0 0 0 6h9a3 3 0 0 1 0 6h-9a3 3 0 0 0 0 6H15"/>
+'''
+
+# Lungs: the trachea, the bronchi and a lobe each side.
+CUSTOM["lungs"] = '''
+<path d="M12 3v7.5M12 8.5l-2.2 2.2M12 8.5l2.2 2.2"/>
+<path d="M9.5 7C6 7.6 4 12 4 16.5 4 18.6 5.2 20 7 20c2 0 3-1.3 3-3V9"/>
+<path d="M14.5 7C18 7.6 20 12 20 16.5c0 2.1-1.2 3.5-3 3.5-2 0-3-1.3-3-3V9"/>
+'''
+
+# Lungs with a virus beside them.
+CUSTOM["lungs-virus"] = '''
+<path d="M12 3v7.5M12 8.5l-2.2 2.2M12 8.5l2.2 2.2"/>
+<path d="M9.5 7C6 7.6 4 12 4 16.5 4 18.6 5.2 20 7 20c2 0 3-1.3 3-3V9"/>
+<path d="M14.5 7c2 .3 3.5 2 4.4 4.2"/>
+<circle cx="17.5" cy="17" r="2.4"/>
+<path d="M17.5 13.3v1.3M17.5 19.4v1.3M21.2 17h-1.3M15.1 17h-1.3"/>
+'''
+
+# A molar: its crown and two roots.
+CUSTOM["tooth"] = '''
+<path d="M7 3.5c-2.5 0-4 2-4 4.5 0 2.4 1.3 3.8 1.8 6.6.5 2.8.8 5.9 2.3 5.9 1.8 0 1.6-4.3 2.4-5.6.4-.7.8-1 1.5-1s1.1.3 1.5 1c.8 1.3.6 5.6 2.4 5.6 1.5 0 1.8-3.1 2.3-5.9.5-2.8 1.8-4.2 1.8-6.6 0-2.5-1.5-4.5-4-4.5-1.7 0-2.6.8-4 .8S8.7 3.5 7 3.5z"/>
+'''
+
+# A surgical mask with its ties.
+CUSTOM["mask"] = '''
+<path d="M4 9c2.7-1.3 5.3-2 8-2s5.3.7 8 2v4c0 3.3-3.6 6-8 6s-8-2.7-8-6z"/>
+<path d="M4 10H2.5M20 10h1.5M8 11.5h8M8.5 14.5h7"/>
+'''
+
+# A cow's head: ears, the face, the muzzle.
+CUSTOM["cow"] = '''
+<path d="M7 8C5 8 3.5 6.8 3 5c1.8 0 3.4.4 4.4 1.3M17 8c2 0 3.5-1.2 4-3-1.8 0-3.4.4-4.4 1.3"/>
+<path d="M7 7.5h10v6.5c0 2.2-1.8 4-4 4h-2c-2.2 0-4-1.8-4-4z"/>
+<path d="M9 18.3c0 1.5 1.3 2.7 3 2.7s3-1.2 3-2.7"/>
+<path d="M10 11h.01M14 11h.01"/>
+'''
+
+# A frog's face: the eyes on top, the wide mouth.
+CUSTOM["frog"] = '''
+<path d="M8.5 8a3 3 0 1 0-5 2.2C2.6 11.6 2 13.3 2 15c0 3.3 4.5 6 10 6s10-2.7 10-6c0-1.7-.6-3.4-1.5-4.8a3 3 0 1 0-5-2.2"/>
+<path d="M8.5 8c1-.6 2.2-1 3.5-1s2.5.4 3.5 1"/>
+<path d="M6 6.5h.01M18 6.5h.01M8.5 15c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5"/>
+'''
+
+# A rod-shaped bacterium with its flagella.
+CUSTOM["bacterium"] = '''
+<rect x="3.5" y="9" width="13" height="6" rx="3" transform="rotate(-30 10 12)"/>
+<path d="M16.6 7.4c1.5-1 2-2.6 1.4-4.1M17.8 11c1.8-.2 3 .6 3.7 2"/>
+'''
+
+# Bacteria: two rods.
+CUSTOM["bacteria"] = '''
+<rect x="2.5" y="5" width="11" height="5" rx="2.5" transform="rotate(-25 8 7.5)"/>
+<rect x="10.5" y="13.5" width="11" height="5" rx="2.5" transform="rotate(-25 16 16)"/>
+<path d="M14.6 4.4c.9-.8 1.2-1.9.8-2.9M4 17.5c-.9.8-1.2 1.9-.8 2.9"/>
+'''
+
+# Disease: a cell gone ragged, with spots.
+CUSTOM["disease"] = '''
+<path d="M12 3.5c3 0 4.2 2 6.2 2.6 2 .6 2.8 2.6 2.3 4.8-.4 2 1 3.4.2 5.4-.9 2.4-3.6 2.6-5.3 3.7-1.6 1.1-2.9 2.5-5.4 1.8-2.3-.6-2.6-2.6-4.4-3.8C3.9 16.8 2.5 15 3.2 12.6c.6-2-.7-3.6.6-5.6 1.4-2.2 3.4-1.8 5-2.6 1.2-.6 1.8-.9 3.2-.9z"/>
+<circle cx="9" cy="10" r="1.5"/>
+<circle cx="14.5" cy="13.5" r="2"/>
+<path d="M10 15.6h.01M15 8.5h.01"/>
+'''
+
+# A tube with a virus beside it.
+CUSTOM["vial-virus"] = '''
+<path d="M7.5 3h6M8.5 3v13.5a2 2 0 0 0 4 0V3"/>
+<path d="M8.5 11h4"/>
+<circle cx="18" cy="15.5" r="2.4"/>
+<path d="M18 11.8v1.3M18 17.9v1.3M21.7 15.5h-1.3M15.6 15.5h-1.3"/>
+'''
+
+# A mortar and its pestle.
+CUSTOM["mortar-pestle"] = '''
+<path d="M3.5 11h17"/>
+<path d="M5 11a7 7 0 0 0 14 0"/>
+<path d="m9.5 18.4-1 2.6h7l-1-2.6"/>
+<path d="m13 11 6.6-7.6a1.4 1.4 0 0 1 2 2L15.2 11"/>
+'''
+
+# Pregnancy: a person with the belly rounded.
+CUSTOM["pregnancy"] = '''
+<circle cx="11" cy="4" r="2"/>
+<path d="M11 7.5v4c0 .8.5 1.5 1.3 1.8 2 .7 3.2 2.2 3.2 3.7 0 1.7-1.6 3-3.7 3H11"/>
+<path d="m11 11-2.5 3M11 20v1.5"/>
+'''
+
+# Drawing blood: a drop over an open hand.
+CUSTOM["blood-draw"] = '''
+<path d="M14 2.5s3.5 3.9 3.5 6.3a3.5 3.5 0 0 1-7 0c0-2.4 3.5-6.3 3.5-6.3z"/>
+<path d="M2.5 21H6l4-2h4.5a1.5 1.5 0 0 0 0-3H11"/>
+<path d="M6 21v-5l3-2h2.5"/>
 '''
 
 # An electrophoresis gel: its wells and lanes of bands, a ladder first.
 CUSTOM["gel"] = '''
-<path fill-rule="evenodd" d="M76 40h360c20 0 36 16 36 36v360c0 20-16 36-36 36H76c-20 0-36-16-36-36V76c0-20 16-36 36-36zm8 36c-4 0-8 4-8 8v344c0 4 4 8 8 8h344c4 0 8-4 8-8V84c0-4-4-8-8-8z"/>
-<path d="M80 150h72v30h-72zM80 230h72v30h-72zM80 310h72v30h-72zM80 390h72v30h-72zM176 230h72v30h-72zM272 190h72v30h-72zM272 330h72v30h-72zM368 270h72v30h-72zM86 88h60v26h-60zM182 88h60v26h-60zM278 88h60v26h-60zM374 88h60v26h-60z"/>
+<rect x="3.5" y="3" width="17" height="18" rx="2"/>
+<path d="M7 6.5h2M11 6.5h2M15 6.5h2"/>
+<path d="M7 10h2M7 13h2M7 16h2M11 12.5h2M15 10.5h2M15 15.5h2"/>
 '''
 
-# A centrifuge rotor seen from above, its tube slots, and the spin.
+# A centrifuge rotor from above, its tube slots, and the spin.
 CUSTOM["centrifuge"] = '''
-<path fill-rule="evenodd" d="M82 256a174 174 0 1 0 348 0a174 174 0 1 0 -348 0zM256 198A50 25 -90 1 0 256 98A50 25 -90 1 0 256 198zM306 227A50 25 -30 1 0 393 177A50 25 -30 1 0 306 227zM306 285A50 25 30 1 0 393 335A50 25 30 1 0 306 285zM256 314A50 25 90 1 0 256 414A50 25 90 1 0 256 314zM206 285A50 25 150 1 0 119 335A50 25 150 1 0 206 285zM206 227A50 25 210 1 0 119 177A50 25 210 1 0 206 227z"/>
-<path d="M47 180A222 222 0 0 1 180 47" fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round"/>
-<path d="M214 38L156 20L183 83z"/>
-<path d="M465 332A222 222 0 0 1 332 465" fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round"/>
-<path d="M298 474L356 492L329 429z"/>
+<circle cx="12" cy="12" r="7.5"/>
+<circle cx="12" cy="7.8" r="1.3"/><circle cx="15.6" cy="9.9" r="1.3"/><circle cx="15.6" cy="14.1" r="1.3"/>
+<circle cx="12" cy="16.2" r="1.3"/><circle cx="8.4" cy="14.1" r="1.3"/><circle cx="8.4" cy="9.9" r="1.3"/>
+<path d="M21 9.2A9.5 9.5 0 0 0 14.8 3"/>
+<path d="m21.6 5.9-.6 3.3-3.1-1"/>
 '''
-
-
-# Drawn by other people and vendored under scripts/icon-sources/, because a
-# convincing mouse or housefly needs more detail than a hand-written path of
-# this size can carry. See that folder's README for authorship and licence.
-FROM_SOURCES = {
-    "mouse": "mouse.svg",   # game-icons.net "rat", Delapouite, CC BY 3.0
-    "fly": "fly.svg",       # game-icons.net "fly", Delapouite, CC BY 3.0
-}
-
-
-def read_source(name: str) -> str | None:
-    """Inner markup of a vendored SVG, stripped of its background plate and fills."""
-    path = Path(__file__).resolve().parent / "icon-sources" / name
-    if not path.exists():
-        return None
-    text = path.read_text(encoding="utf-8")
-    inner = re.sub(r"^.*?<svg[^>]*>", "", text, flags=re.S)
-    inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
-    # game-icons ship a white glyph on a full-bleed black plate.
-    inner = re.sub(r'<path d="M0 0h512v512H0z"\s*/?>', "", inner)
-    inner = re.sub(r'\sfill="#fff"', "", inner)
-    return inner.strip()
 
 
 HEADER = """<?xml version="1.0" encoding="UTF-8"?>
@@ -366,67 +452,60 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
   Rebuild with: python scripts/build-icons.py
 
   Sources:
-    - Font Awesome Free 6.7.2 (fontawesome.com) — Icons: CC BY 4.0
-    - game-icons.net by Delapouite — CC BY 3.0 — the mouse and fly
-    - plasmid, petri, cage, tank, culture-vial, antibody, cell, microtube,
-      well-plate, blood, kidney, liver, stomach, intestine, gel, centrifuge
-      — original to this project
+    - Lucide (lucide.dev) — ISC licence, Copyright (c) Lucide Contributors
+    - fly, plasmid, petri, cage, tank, culture-vial, antibody, cell,
+      microtube, well-plate, blood, organs and the other lab drawings
+      — original to this project, in Lucide's style
 -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 """
 
 
-def read_fa(root: Path, fa_name: str) -> tuple[str, str] | None:
-    """(viewBox, inner markup) of a Font Awesome icon. Its own viewBox, not a
-    512 square: Font Awesome icons are 320 to 640 wide, and in a square box
-    a narrow one sits to the left and a wide one is cut off on the right.
-    In its own box each is centred and fits."""
-    path = root / "svgs" / "solid" / f"{fa_name}.svg"
+def read_lucide(root: Path, lucide_name: str) -> str | None:
+    """The drawing inside a Lucide icon (all of them are on a 24 grid)."""
+    path = root / "icons" / f"{lucide_name}.svg"
     if not path.exists():
         return None
     text = path.read_text(encoding="utf-8")
-    box = re.search(r'<svg[^>]*viewBox="([^"]+)"', text)
     inner = re.sub(r"^.*?<svg[^>]*>", "", text, flags=re.S)
     inner = re.sub(r"</svg>\s*$", "", inner, flags=re.S)
     inner = re.sub(r"<!--.*?-->", "", inner, flags=re.S)
-    return (box.group(1) if box else "0 0 512 512"), inner.strip()
+    return " ".join(inner.split())
+
+
+def symbol(name: str, inner: str) -> str:
+    return f'  <symbol id="{name}" viewBox="0 0 24 24"><g {STROKE}>{inner}</g></symbol>'
 
 
 def main() -> int:
-    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("package")
-    if not (root / "svgs" / "solid").is_dir():
-        sys.exit(f"Font Awesome solid SVGs not found under {root}/svgs/solid")
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SOURCE
+    if not (root / "icons").is_dir():
+        sys.exit(f"Lucide icons not found under {root}/icons (npm install in frontend/)")
 
     parts = [HEADER]
     missing = []
-    for name, fa_name in sorted(FROM_FONTAWESOME.items()):
-        found = read_fa(root, fa_name)
-        if found is None:
-            missing.append(f"{name} ({fa_name})")
-            continue
-        box, inner = found
-        parts.append(f'  <symbol id="{name}" viewBox="{box}">{inner}</symbol>')
-
-    for name, filename in sorted(FROM_SOURCES.items()):
-        inner = read_source(filename)
+    clash = sorted(set(FROM_LUCIDE) & set(CUSTOM))
+    if clash:
+        sys.exit("drawn here and taken from Lucide both: " + ", ".join(clash))
+    for name, lucide_name in sorted(FROM_LUCIDE.items()):
+        inner = read_lucide(root, lucide_name)
         if inner is None:
-            missing.append(f"{name} (icon-sources/{filename})")
+            missing.append(f"{name} ({lucide_name})")
             continue
-        parts.append(f'  <symbol id="{name}" viewBox="0 0 512 512">{inner}</symbol>')
-
+        parts.append(symbol(name, inner))
     for name, inner in sorted(CUSTOM.items()):
-        compact = " ".join(inner.split())
-        parts.append(f'  <symbol id="{name}" viewBox="0 0 512 512">{compact}</symbol>')
+        parts.append(symbol(name, " ".join(inner.split())))
 
     parts.append("</svg>")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("\n".join(parts) + "\n", encoding="utf-8")
 
-    total = len(FROM_FONTAWESOME) + len(FROM_SOURCES) - len(missing) + len(CUSTOM)
+    total = len(FROM_LUCIDE) - len(missing) + len(CUSTOM)
     print(f"wrote {OUTPUT.relative_to(PROJECT_ROOT)} — {total} icons "
-          f"({len(CUSTOM)} drawn here, {len(FROM_SOURCES)} vendored), {OUTPUT.stat().st_size // 1024} KB")
+          f"({len(CUSTOM)} drawn here), {OUTPUT.stat().st_size // 1024} KB")
     if missing:
-        print("  not found in Font Awesome:", ", ".join(missing))
+        print("  not found in Lucide:", ", ".join(missing))
+        return 1
     return 0
 
 

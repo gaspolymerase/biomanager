@@ -186,7 +186,9 @@ class DraggingInTheSidebar(AppTestCase):
         self.assertNotIn('data-db-key="new-db"', html)
         member = self.get_ok(self.m, "/home")
         self.assertNotIn("data-rail-order", member)
-        self.assertNotIn("data-db-key", member)
+        self.assertNotIn('data-db-key="colony" draggable', member)
+        # Every database still says which it is, for its hover card.
+        self.assertIn('data-db-key="colony"', member)
 
     def test_a_drop_saves_the_rails_order_and_keeps_the_rest_in_place(self):
         from app import lab

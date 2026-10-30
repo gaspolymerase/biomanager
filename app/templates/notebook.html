@@ -31,21 +31,24 @@
 {# A topic in the sidebar, as a folder: its name opens its page of cards,
    the arrow folds it, and inside are its topics, then its pages. Drag a
    topic onto another to put it inside, or above or below one to reorder. #}
-{% macro topic_node(tab, active_id) -%}
-  <details class="notebook-tab{% if tab.inbox %} is-inbox{% endif %}" {% if tab.id in open_topics %}open{% endif %} data-tab-id="{{ tab.id }}" data-parent-id="{{ tab.parent_id or '' }}" data-icon="{{ tab.icon }}">
+{# Someone else's topic shared with you (`shared`): no dragging and no menu;
+   + only if it is shared with you to edit. #}
+{% macro topic_node(tab, active_id, shared=False) -%}
+  <details class="notebook-tab{% if tab.inbox %} is-inbox{% endif %}{% if shared %} is-shared{% endif %}" {% if tab.id in open_topics %}open{% endif %} data-tab-id="{{ tab.id }}" data-parent-id="{{ tab.parent_id or '' }}" data-icon="{{ tab.icon }}"{% if shared %} data-shared="{{ tab.role }}"{% endif %}>
     {# The row itself is a group, out of the Tab order: its arrow is the
        button that folds it, beside its link and its own buttons. #}
-    <summary role="group" tabindex="-1" aria-label="{{ tab.title|tr }}"{% if not tab.inbox %} draggable="true"{% endif %}>
+    <summary role="group" tabindex="-1" aria-label="{{ tab.title|tr }}"{% if not tab.inbox and not shared %} draggable="true"{% endif %}>
       <button type="button" class="nb-tab-fold" aria-expanded="{{ 'true' if tab.id in open_topics else 'false' }}" aria-label="{{ _('Show or hide its pages') }}">{{ icon('chevron-right', 'notebook-tab-caret') }}</button>
       {{ ticon(tab.icon, 'nb-tab-icon') }}
       <a class="tab-title" href="{{ url_for('notebook', tab=tab.id) }}" draggable="false"{% if topic_view and topic_view.id == tab.id %} aria-current="page"{% endif %}>{{ tab.title|tr }}</a>
+      {% if shared and tab.depth == 0 %}<span class="nb-side-owner">{{ tab.owner_name }}</span>{% endif %}
       <span class="tab-count">{{ tab.flat|length or '' }}</span>
       <span class="tab-actions">
-        <button type="button" title="{{ _('New page in this topic') }}" aria-label="{{ _('New page in this topic') }}" data-topic-new-page="{{ tab.id }}">{{ icon('plus') }}</button>
-        <button type="button" title="{{ _('More') }}" aria-label="{{ _('More') }}" aria-haspopup="true" data-topic-menu="{{ tab.id }}"{% if tab.inbox %} data-inbox{% endif %}>{{ icon('ellipsis') }}</button>
+        {% if not shared or tab.role == 'edit' %}<button type="button" title="{{ _('New page in this topic') }}" aria-label="{{ _('New page in this topic') }}" data-topic-new-page="{{ tab.id }}">{{ icon('plus') }}</button>{% endif %}
+        {% if not shared %}<button type="button" title="{{ _('More') }}" aria-label="{{ _('More') }}" aria-haspopup="true" data-topic-menu="{{ tab.id }}"{% if tab.inbox %} data-inbox{% endif %}>{{ icon('ellipsis') }}</button>{% endif %}
       </span>
     </summary>
-    {% if tab.topics %}<div class="notebook-subtopics">{% for child in tab.topics %}{{ topic_node(child, active_id) }}{% endfor %}</div>{% endif %}
+    {% if tab.topics %}<div class="notebook-subtopics">{% for child in tab.topics %}{{ topic_node(child, active_id, shared) }}{% endfor %}</div>{% endif %}
     <ul class="notebook-page-list notebook-tab-pages">
       {% for page in tab.pages %}{{ page_link(page, active_id) }}{% else %}{% if not tab.topics %}<li class="notebook-empty">{{ _('No pages yet.') }}</li>{% endif %}{% endfor %}
     </ul>
@@ -58,20 +61,32 @@
 {# A page as a card, on a topic's page and the notebook's home: open it,
    star it, and (a page of your own in a topic) move it to another topic. #}
 {% macro page_card(c, movable=False) -%}
+  {# A card: a sketch of the page (its cover, or its title over lines, and a
+     table's bands or a list's dots as the page has them), then its title,
+     kind, topic and day. #}
   <article class="nb-card" data-page-id="{{ c.id }}" data-kind="{{ c.kind }}"{% if movable %} draggable="true"{% endif %}>
-    {% if c.cover %}<div class="nb-card-cover"><img src="{{ c.cover }}" alt="" loading="lazy"></div>{% endif %}
-    <a class="nb-card-link" href="{{ url_for('notebook', page=c.id) }}" draggable="false">
-      <span class="nb-card-icon" data-kind="{{ c.kind }}">{{ icon(kind_icons.get(c.kind, 'file')) }}</span>
-      <b>{{ c.title if c.title != 'Untitled page' else _('Untitled page') }}</b>
+    <a class="nb-card-link" href="{{ url_for('notebook', page=c.id) }}" draggable="false"{% if c.gist %} title="{{ c.gist }}"{% endif %}>
+      <span class="nb-thumb" data-shape="{{ c.shape }}" aria-hidden="true">
+        {%- if c.cover %}<img src="{{ c.cover }}" alt="" loading="lazy">
+        {%- else %}
+          <span class="nb-thumb-title">{{ c.title if c.title != 'Untitled page' else _('Untitled page') }}</span>
+          <i class="nb-sk"></i><i class="nb-sk"></i>
+          {%- if c.shape == 'sheet' %}<span class="nb-thumb-sheet"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          {%- elif c.shape == 'steps' %}<span class="nb-thumb-steps"><span><i></i><b></b></span><span><i></i><b></b></span></span>
+          {%- else %}<i class="nb-sk"></i>{% endif %}
+        {%- endif %}
+      </span>
+      <b class="nb-card-title">{{ c.title if c.title != 'Untitled page' else _('Untitled page') }}</b>
     </a>
-    <p class="nb-card-gist">{{ c.gist }}</p>
     <footer>
-      <small>
-        <time datetime="{{ c.updated_at }}" data-when>{{ c.updated_at[:10] }}</time>
-        {%- if c.owner_name %} · {{ c.owner_name }}{% endif %}
-        {%- if c.inside %} · {{ ngettext('%(num)s page inside', '%(num)s pages inside', c.inside) }}{% endif %}
-      </small>
+      <span class="nb-kind-pill" data-kind="{{ c.kind }}">{{ kinds.get(c.kind, 'Note')|tr('notebook') }}</span>
+      {% if c.tab_icon %}<span class="nb-card-topic">{{ ticon(c.tab_icon) }}</span>{% endif %}
       {% if c.status %}<span class="nb-card-status" data-status="{{ c.status }}">{{ statuses.get(c.status, '')|tr }}</span>{% endif %}
+      <small>
+        {%- if c.owner_name %}{{ c.owner_name }} · {% endif -%}
+        {%- if c.inside %}{{ ngettext('%(num)s page inside', '%(num)s pages inside', c.inside) }} · {% endif -%}
+        <time datetime="{{ c.updated_at }}" data-when>{{ c.updated_at[:10] }}</time>
+      </small>
       <button type="button" class="nb-star{% if c.favorite %} is-on{% endif %}" data-star="{{ c.id }}" aria-pressed="{{ 'true' if c.favorite else 'false' }}" title="{{ _('Favorite') }}" aria-label="{{ _('Favorite') }}">{{ icon('star') }}</button>
       {% if movable %}
         <label class="nb-lib-file" title="{{ _('Move to another topic') }}">{{ icon('folder') }}
@@ -92,7 +107,7 @@
 {% set active_id = selected_page.id if selected_page else None %}
 <section class="notebook-shell nb-shell{% if selected_page or library or topic_view or home %} has-page{% endif %}" id="nb-shell">
   {# Hidden sidebar, as this browser left it: set before the page draws, so it doesn't flash. #}
-  <script nonce="{{ csp_nonce() }}">try { if (localStorage.getItem('nb-side') === 'closed') { document.getElementById('nb-shell').classList.add('is-side-closed'); document.body.classList.add('nb-side-is-closed'); } } catch (e) {}</script>
+  <script nonce="{{ csp_nonce() }}">try { if (localStorage.getItem('nb-side') === 'closed') { document.getElementById('nb-shell').classList.add('is-side-closed'); document.body.classList.add('nb-side-is-closed'); } if (localStorage.getItem('nb-wide') === '1') document.getElementById('nb-shell').classList.add('is-wide'); } catch (e) {}</script>
   <aside class="notebook-sidebar" id="nb-sidebar" aria-label="{{ _('Pages') }}">
     {% if selected_page or library or topic_view or home %}
       <button type="button" class="nb-side-toggle" id="nb-side-toggle" aria-expanded="false">{{ icon('list') }} {{ _('All pages') }} {{ icon('chevron-down') }}</button>
@@ -129,11 +144,15 @@
         </ul>
       {% endif %}
 
-      {% if side.shared %}
+      {% if side.shared or shared_topics %}
         <div class="notebook-section-label">{{ _('Shared with me') }}</div>
-        <ul class="notebook-page-list">
-          {% for p in side.shared %}{{ page_link(p, active_id) }}{% endfor %}
-        </ul>
+        {# Topics lab mates shared with you, with their pages; then single pages. #}
+        {% for tab in shared_topics %}{{ topic_node(tab, active_id, True) }}{% endfor %}
+        {% if side.shared %}
+          <ul class="notebook-page-list">
+            {% for p in side.shared %}{{ page_link(p, active_id) }}{% endfor %}
+          </ul>
+        {% endif %}
       {% endif %}
 
       {# Topics are your folders: + makes one, ••• renames, moves or deletes it, and a page dragged onto one moves there. #}
@@ -165,9 +184,10 @@
     {# The day's log and the lab's libraries, always at the foot. Each opens in
        the page; /protocol in a page opens the drawer to insert one. #}
     <nav class="nb-side-links" aria-label="{{ _('Notebook tools') }}">
-      <a href="{{ url_for('nb.today') }}">{{ icon('calendar-clock') }} {{ _('Today') }}</a>
+      <a href="{{ url_for('nb.today') }}"><span class="nb-lib-mark" data-lib="today">{{ icon('calendar-clock') }}</span>{{ _('Today') }}</a>
       {% for key, lib in libraries.items() %}
-        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}>{{ icon(lib[1]) }} {{ lib[0]|tr('notebook') }}</a>
+        <a href="{{ url_for('notebook_library', library=key) }}"{% if library == key %} class="is-active" aria-current="page"{% endif %}
+           {% if key == 'meetings' %}title="{{ _('Meetings and who presents are kept in the calendar') }}"{% endif %}><span class="nb-lib-mark" data-lib="{{ key }}">{{ icon(lib[1]) }}</span>{{ lib[0]|tr('notebook') }}</a>
       {% endfor %}
     </nav>
   </aside>
@@ -188,7 +208,7 @@
   </script>
 
   <div class="notebook-main">
-    <div class="nb-side-show">
+    <div class="nb-side-show nb-side-capsule">
       <button type="button" data-side-toggle title="{{ _('Show the sidebar') }} (Ctrl+\)" aria-label="{{ _('Show the sidebar') }}">{{ icon('sidebar') }}</button>
       <button type="button" data-new-page-kind="" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
     </div>
@@ -205,8 +225,10 @@
           {# Where the page is, like a file path: its topic (a folder; click to
              move it) and the pages it was made in. #}
           <nav class="nb-page-where nb-breadcrumb" aria-label="{{ _('Where this page is') }}">
-            <button type="button" class="nb-crumb-side" data-side-toggle title="{{ _('Show the sidebar') }} (Ctrl+\)" aria-label="{{ _('Show the sidebar') }}">{{ icon('sidebar') }}</button>
-            <button type="button" class="nb-crumb-side" data-new-page-kind="" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
+            <span class="nb-side-capsule nb-crumb-capsule">
+              <button type="button" class="nb-crumb-side" data-side-toggle title="{{ _('Show the sidebar') }} (Ctrl+\)" aria-label="{{ _('Show the sidebar') }}">{{ icon('sidebar') }}</button>
+              <button type="button" class="nb-crumb-side" data-new-page-kind="" title="{{ _('New page') }}" aria-label="{{ _('New page') }}">{{ icon('plus') }}</button>
+            </span>
             {% if p.real_role == 'owner' %}
               {% for up in p.tab_path %}<a class="nb-crumb-page nb-crumb-topic" href="{{ url_for('notebook', tab=up.id) }}">{{ ticon(up.icon) }}{{ up.title|tr }}</a><span class="nb-crumb-sep">/</span>{% endfor %}
               <button type="button" class="nb-crumb-folder" id="nb-move-btn" aria-haspopup="true" aria-expanded="false" title="{{ _('Move to another topic') }}">{{ ticon(p.tab_icon) }}<span>{{ p.tab_title|tr }}</span></button>
@@ -230,6 +252,8 @@
             {% if p.real_role == 'owner' %}<button type="button" class="nb-tool" data-panel="share" title="{{ _('Share with lab mates') }}">{{ icon('users') }}<span>{% if p.shared %}{{ _('Shared') }}{% else %}{{ _('Share') }}{% endif %}</span></button>{% endif %}
             <button type="button" class="nb-tool" data-panel="comments" title="{{ _('Comments') }}">{{ icon('note') }}<span>{{ _('Comments') }}</span>{% if p.open_comments %}<b class="nb-badge" id="nb-comment-count">{{ p.open_comments }}</b>{% endif %}</button>
             <button type="button" class="nb-tool{% if p.locked %} is-signed{% endif %}" data-panel="sign" title="{{ _('Signed and locked: see the signatures, witness it, or amend it') if p.locked else _('Sign this page as the record of your work, which locks it') }}">{{ icon('success' if p.locked else 'edit') }}<span class="nb-hide-sm">{{ _('Signed') if p.locked else _('Sign') }}</span></button>
+            {# The page as paper, or across the window (kept in this browser). #}
+            <button type="button" class="nb-tool" id="nb-wide-btn" aria-pressed="false" data-wide-label="{{ _('Fit the window') }}" data-narrow-label="{{ _('Page width') }}" title="{{ _('Fit the page to the window, or back to its paper width') }}">{{ icon('columns') }}<span class="nb-hide-sm">{{ _('Fit the window') }}</span></button>
             <button type="button" class="nb-tool" data-panel="history" title="{{ _('Version history') }}">{{ icon('history') }}<span class="nb-hide-sm">{{ _('History') }}</span></button>
             <button type="button" class="nb-tool" id="nb-run" title="{{ _('Go through the checklist step by step') }}" hidden>{{ icon('list-check') }}<span class="nb-hide-sm">{{ _('Run') }}</span></button>
             <div class="nb-more">
@@ -355,17 +379,22 @@
           {% for up in tv.trail[:-1] %}<span class="nb-crumb-sep">/</span><a href="{{ url_for('notebook', tab=up.id) }}" data-drop-topic="{{ up.id }}">{{ ticon(up.icon) }}{{ up.title|tr }}</a>{% endfor %}
         </nav>
         <header class="nb-topic-head">
-          {% if tv.inbox %}
+          {% if tv.inbox or tv.shared %}
             <span class="nb-topic-icon">{{ ticon(tv.icon) }}</span>
           {% else %}
             <button type="button" class="nb-topic-icon" data-topic-edit="{{ tv.id }}" title="{{ _('Name and icon') }}" aria-label="{{ _('Name and icon') }}">{{ ticon(tv.icon) }}</button>
           {% endif %}
           <h1 class="nb-topic-title">{{ tv.title|tr }}</h1>
           <div class="nb-topic-tools">
-            <button type="button" class="btn nb-icon-only" data-topic-menu="{{ tv.id }}"{% if tv.inbox %} data-inbox{% endif %} aria-haspopup="true" title="{{ _('More') }}" aria-label="{{ _('More') }}">{{ icon('ellipsis') }}</button>
+            {% if tv.shared %}
+              <span class="nb-topic-shared">{{ icon('users') }} {% if tv.role == 'edit' %}{{ _('Shared by %(name)s · you can edit', name=tv.owner_name) }}{% else %}{{ _('Shared by %(name)s · you can read', name=tv.owner_name) }}{% endif %}</span>
+            {% else %}
+              {% if not tv.inbox %}<button type="button" class="btn" data-topic-share="{{ tv.id }}" title="{{ _('Share this topic with lab mates') }}">{{ icon('users') }} {{ _('Share') }}</button>{% endif %}
+              <button type="button" class="btn nb-icon-only" data-topic-menu="{{ tv.id }}"{% if tv.inbox %} data-inbox{% endif %} aria-haspopup="true" title="{{ _('More') }}" aria-label="{{ _('More') }}">{{ icon('ellipsis') }}</button>
+            {% endif %}
           </div>
         </header>
-        {% if tv.inbox %}<p class="nb-lib-blurb">{{ _('Pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series are kept in Protocols, Reading and Meetings instead.') }}</p>{% endif %}
+        {% if tv.inbox %}<p class="nb-lib-blurb">{{ _('Pages that are in no topic yet. Protocols, and papers and talks, are kept in Protocols and Reading instead, and a meeting’s notes with its meeting in the calendar.') }}</p>{% endif %}
 
         {% if tv.topics %}
           <h2 class="nb-lib-label">{{ _('Topics') }}</h2>
@@ -390,40 +419,58 @@
         </div>
         {% if tv.cards %}
           <div class="nb-cards" id="nb-cards" data-sort="{{ tv.sort }}">
-            {% for c in tv.cards %}{{ page_card(c, True) }}{% endfor %}
+            {% for c in tv.cards %}{{ page_card(c, not tv.shared) }}{% endfor %}
           </div>
           {% if tv.sort == 'order' %}<p class="nb-muted nb-topic-note">{{ _('Drag a card, or a page in the sidebar, to change the order.') }}</p>{% endif %}
         {% else %}
           <div class="nb-topic-empty">
             {{ icon('file') }}
             <p>{{ _('No pages here yet.') }}</p>
-            <button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>
+            {% if not tv.shared or tv.role == 'edit' %}<button type="button" class="btn btn-primary" data-topic-new-page="{{ tv.id }}">{{ icon('plus') }} {{ _('New page') }}</button>{% endif %}
           </div>
         {% endif %}
       </div>
     {% elif home and (home.recent or home.topics) %}
-      {# The notebook's home: what you starred, what changed lately, and your topics. #}
+      {# The notebook's home, as in the design: its name, a capsule to start a
+         page of each kind, what you starred, what changed lately (as pages
+         or a list), and your topics as chips. #}
       <div class="nb-home" id="nb-home">
-        <header class="nb-topic-head">
-          <span class="nb-topic-icon">{{ icon('notebook') }}</span>
-          <h1 class="nb-topic-title">{{ _('%(name)s’s notebook', name=me.name) }}</h1>
+        <header class="nb-home-head">
+          <div class="nb-home-titles">
+            <div class="nb-home-kicker">{{ _('Notebook') }}</div>
+            <h1 class="nb-topic-title">{{ _('%(name)s’s notebook', name=me.name) }}</h1>
+          </div>
+          <div class="nb-home-new" role="group" aria-label="{{ _('New page') }}">
+            <button type="button" class="nb-home-new-btn is-main" data-new-page-kind=""><span class="nb-home-mark">{{ icon('plus') }}</span>{{ _('New page') }}</button>
+            {% for key, letter in (('protocol', 'P'), ('reading', 'R'), ('meeting', 'M')) %}
+              <button type="button" class="nb-home-new-btn" data-new-kind="{{ key }}" title="{{ kind_hints[key]|tr('notebook') }}"><span class="nb-home-mark" data-kind="{{ key }}">{{ letter }}</span>{{ (_('Paper') if key == 'reading' else kinds[key]|tr('notebook')) }}</button>
+            {% endfor %}
+          </div>
         </header>
         {% if home.favorites %}
-          <h2 class="nb-lib-label">{{ icon('star') }} {{ _('Favorites') }}</h2>
+          <div class="nb-home-bar"><h2>{{ _('Favorites') }}</h2></div>
           <div class="nb-cards">{% for c in home.favorites %}{{ page_card(c) }}{% endfor %}</div>
         {% endif %}
         {% if home.recent %}
-          <h2 class="nb-lib-label">{{ icon('clock') }} {{ _('Recently edited') }}</h2>
-          <div class="nb-cards">{% for c in home.recent %}{{ page_card(c) }}{% endfor %}</div>
-        {% endif %}
-        {% if home.topics %}
-          <h2 class="nb-lib-label">{{ icon('folder') }} {{ _('Topics') }}</h2>
-          <div class="nb-lib-folders nb-topic-folders">
-            {% for sub in home.topics %}
-              <a class="nb-lib-folder" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">{{ ticon(sub.icon) }}<span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span></a>
-            {% endfor %}
+          <div class="nb-home-bar">
+            <h2>{{ _('Recently edited') }}</h2><span>{{ _('Pages you can open, newest first') }}</span>
+            <div class="seg nb-home-seg" role="group" aria-label="{{ _('Show as') }}">
+              <button type="button" class="seg-item is-active" data-cards-view="cards">{{ _('Pages') }}</button>
+              <button type="button" class="seg-item" data-cards-view="list">{{ _('List') }}</button>
+            </div>
           </div>
+          <div class="nb-cards" id="nb-cards">{% for c in home.recent %}{{ page_card(c) }}{% endfor %}</div>
         {% endif %}
+        <div class="nb-home-bar"><h2>{{ _('Topics') }}</h2></div>
+        <div class="nb-home-topics">
+          {% for sub in home.topics %}
+            <a class="nb-topic-chip" href="{{ url_for('notebook', tab=sub.id) }}" data-drop-topic="{{ sub.id }}">
+              <span class="nb-topic-chip-icon">{{ ticon(sub.icon) }}</span>
+              <span><b>{{ sub.title|tr }}</b><small>{{ ngettext('%(num)s page', '%(num)s pages', sub.flat|length) }}{% if sub.topics %} · {{ ngettext('%(num)s topic', '%(num)s topics', sub.topics|length) }}{% endif %}</small></span>
+            </a>
+          {% endfor %}
+          <button type="button" class="nb-topic-chip is-new" data-home-new-topic>{{ icon('plus') }} {{ _('New topic') }}</button>
+        </div>
       </div>
     {% else %}
       <div class="nb-welcome">
@@ -444,6 +491,7 @@
     <button type="button" class="nb-head-item" data-topic-do="page">{{ icon('plus') }}<span>{{ _('New page in this topic') }}</span></button>
     <button type="button" class="nb-head-item" data-topic-do="sub" data-not-inbox>{{ icon('folder-plus') }}<span>{{ _('New topic inside') }}</span></button>
     <button type="button" class="nb-head-item" data-topic-do="edit" data-not-inbox>{{ icon('edit') }}<span>{{ _('Name and icon') }}</span></button>
+    <button type="button" class="nb-head-item" data-topic-do="share" data-not-inbox>{{ icon('users') }}<span>{{ _('Share with lab mates…') }}</span></button>
     <button type="button" class="nb-head-item" data-topic-do="move" data-not-inbox>{{ icon('sitemap') }}<span>{{ _('Move to…') }}</span></button>
     <button type="button" class="nb-head-item is-danger" data-topic-do="delete">{{ icon('trash') }}<span>{{ _('Delete topic and its pages…') }}</span></button>
   </div>

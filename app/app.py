@@ -16,7 +16,7 @@ from jinja2 import pass_context, pass_environment
 from jinja2.filters import make_attrgetter
 from jinja2.utils import htmlsafe_json_dumps
 from werkzeug.datastructures import ImmutableMultiDict
-from sqlalchemy import case, func, select, update
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import StaleDataError
@@ -31,6 +31,7 @@ from .formutil import form_changed
 from . import audit  # noqa: F401
 from . import sync_clock  # noqa: F401  (numbers each change to what devices keep)
 from . import lab_devices
+from . import choices
 from . import undo as undo_service
 from . import custom_fields, feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records  # noqa: E402
 from .models import (
@@ -69,6 +70,7 @@ from .models import (
     NotebookEntry,
     NotebookPage,
     NotebookTab,
+    NotebookTopicShare,
     NotebookTemplate,
     PlasmidFile, PlasmidRecord,
     PlasmidSequenceVersion,
@@ -424,6 +426,19 @@ security.init_app(app)
 # Registered after load_current_user too: its checks (a switched-off
 # function, the daily reminder) need to know who is signed in.
 app.register_blueprint(lab_routes.bp)
+# A batch made of a sheet's row saves (Set a field…): registered after
+# load_current_user, so its hook knows who is saving.
+from . import batch_edit  # noqa: E402
+app.register_blueprint(batch_edit.bp)
+# A plasmid's virtual digest and gel (app/digest_routes.py).
+from . import digest_routes  # noqa: E402
+app.register_blueprint(digest_routes.bp)
+# Clones checked by sequencing, on a plasmid's Verify tab (app/clone_routes.py).
+from . import clone_routes  # noqa: E402
+app.register_blueprint(clone_routes.bp)
+# The plasmid's own sequence viewer, primer design and PCR (app/sequence_routes.py).
+from . import sequence_routes  # noqa: E402
+app.register_blueprint(sequence_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
@@ -460,6 +475,19 @@ from .litters import PUP_AGE_DAYS, pup_litter as cage_pup_litter  # noqa: E402,F
 # What's new: a short note once after an update (app/whats_new.py).
 from . import whats_new  # noqa: E402
 app.register_blueprint(whats_new.bp)
+# Hovering a database in the sidebar shows a look inside it (app/rail_peek.py).
+from . import rail_peek  # noqa: E402
+app.register_blueprint(rail_peek.bp)
+
+# The lab's own icon at the top of the sidebar (app/lab_icon.py).
+from . import lab_icon  # noqa: E402
+app.register_blueprint(lab_icon.bp)
+# A sheet's saved views, each person's own (app/sheet_views.py).
+from . import sheet_views  # noqa: E402
+app.register_blueprint(sheet_views.bp)
+# The calendar's Board: to-dos as cards in lists (app/task_board.py).
+from . import task_board  # noqa: E402
+app.register_blueprint(task_board.bp)
 # Repeats, protocols, equipment, away days and the phone feed (app/lab_calendar.py).
 app.register_blueprint(lab_calendar.bp)
 # The calendar in the Mac's own Calendar app, from the desktop app (app/mac_calendar.py).
@@ -742,11 +770,17 @@ def inject_appearance():
     user = g.get("user")
     glyph, color = appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR
     font = appearance.FONTS[0]
+    icon_url, lab_icon_name = "", ""
     if user is not None:
+        from . import lab_icon as lab_icons
         with SessionLocal() as db_session:
             glyph, color = appearance.get_choice(db_session, user.username)
             font = appearance.get_font(db_session, user.username)
-    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font}
+            # The lab's own icon (app/lab_icon.py) heads the sidebar when it has one.
+            icon_url = lab_icons.url(db_session)
+            lab_icon_name = lab.lab_name(db_session) if icon_url else ""
+    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font,
+            "lab_icon_url": icon_url, "lab_icon_name": lab_icon_name}
 
 
 # ---------------------------------------------------------------------------
@@ -2083,6 +2117,8 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         strains = positions.natural_sorted(db_session.scalars(select(StrainRecord)).all(), key=lambda s: s.strain_name)
         dropdowns = dropdown_options_map(db_session)
         dropdown_records = dropdown_records_map(db_session)
+        # The Dropdowns tab: each column's choices and where they are used (app/choices.py).
+        choice_columns = choices.columns(db_session) if active_view == "settings" else []
         usernames = current_lab_usernames(db_session)
         notifications = recent_notifications(db_session, g.user.username if g.user else "", limit=10) if g.user else []
 
@@ -2232,6 +2268,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "strain_rows": strain_rows,
         "dropdowns": dropdowns,
         "dropdown_records": dropdown_records,
+        "choice_columns": choice_columns,
         "next_mouse_id_value": next_mouse_id_value,
         "next_cage_id_value": next_cage_id_value,
         "next_litter_id_value": next_litter_id_value,
@@ -2444,7 +2481,7 @@ def home_dashboard():
         setup_needed = g.user.role == "admin" and not lab.setup_done(db_session)
         if g.user.role == "admin":
             notify.settle_signups(db_session)
-        for_you = [{"id": n.id, "title": n.title, "created_at": n.created_at}
+        for_you = [{"id": n.id, "title": n.title, "created_at": n.created_at, "actor": n.actor or ""}
                    for n in notify.recent(db_session, g.user.username, limit=5, unread_only=True)]
 
     # Classic (the cards above) or one of the other layouts (app/home_layouts.py),
@@ -2456,7 +2493,8 @@ def home_dashboard():
             "has_orders": has_orders, "has_restock": has_restock,
             "has_animals": features.get("colony", True) or features.get("zebrafish", True)}, lab_cards)
         shown = {c["key"] for c in offered} - set(home_cards["hidden"])
-        extra = _home_extra_cards(db_session, shown, today)
+        # Overview's bento always has the databases and the notebook's pages.
+        extra = _home_extra_cards(db_session, shown | {"notebook"}, today)
         # Animals that may need a look (app/welfare.py): a member's own by
         # default, the lab's for animal care; ?animals= switches.
         from . import welfare
@@ -2464,17 +2502,23 @@ def home_dashboard():
                         if "welfare" in shown else None)
         home_layout = home_layouts.get_layout(db_session, g.user.username)
         layout_view = None
-        if home_layout != "classic":
-            span = home_layouts.span_arg(request.args.get("span"))
-            horizon = span if home_layout == "tracks" else home_layouts.PULL_DAYS
-            agenda, track_meta = home_layouts.build_agenda(
-                db_session, today, horizon, lab.request_features(), zebrafish_due,
-                colony_label=builtin_labels().get("colony", "Mouse colony"))
-            if home_layout == "tracks":
-                layout_view = home_layouts.tracks_view(agenda, track_meta, today, span)
-            else:
-                layout_view = home_layouts.freezer_view(db_session, agenda, today, g.user.username)
-            db_session.commit()
+        span = home_layouts.span_arg(request.args.get("span"))
+        # Overview's This week reaches Sunday; By place pulls the next few days.
+        horizon = span if home_layout == "tracks" else (7 if home_layout == "classic" else home_layouts.PULL_DAYS)
+        agenda, track_meta = home_layouts.build_agenda(
+            db_session, today, horizon, lab.request_features(), zebrafish_due,
+            colony_label=builtin_labels().get("colony", "Mouse colony"))
+        if home_layout == "tracks":
+            layout_view = home_layouts.tracks_view(agenda, track_meta, today, span)
+        elif home_layout != "classic":
+            layout_view = home_layouts.freezer_view(db_session, agenda, today, g.user.username)
+        # The daily brief at the top: today's work in a few words.
+        brief = home_layouts.daily_brief(agenda, today, welfare_view["count"] if welfare_view else 0)
+        week = home_layouts.week_view(agenda, track_meta, today, extra.get("todos"))
+        needs = home_layouts.needs_look(welfare_view)
+        week_end = today + timedelta(days=6 - today.weekday())
+        colony_due = sum(1 for item in agenda if item["track"].startswith("colony:") and item["due"] <= week_end)
+        db_session.commit()
 
     return render_template(
         "home.html",
@@ -2504,6 +2548,11 @@ def home_dashboard():
         },
         sac_candidates=sac_candidates,
         welfare_view=welfare_view,
+        brief=brief,
+        week=week,
+        needs=needs,
+        colony_due=colony_due,
+        today_kicker=i18n.strftime(today, "%A %d %B"),
         weanings=weanings,
         geno_queue=geno_queue,
         orders_list=orders_list,
@@ -4088,6 +4137,42 @@ def bulk_sac_mice():
     # Say what happened, like every other batch action, and go back to the
     # view (and scope) it was done from.
     bulk.report(done, gettext("Recorded sac"), "mouse")
+    return _back_to_colony("mice")
+
+
+@app.route("/colony/mice/bulk-weigh", methods=["POST"])
+@login_required
+def bulk_weigh_mice():
+    """Weigh the ticked mice: one weight each (grams_<id>), on one day.
+    A mouse left blank is not weighed; a second weight on the same day
+    replaces the first, as weighing one mouse does."""
+    weigh_date = parse_date(request.form.get("weigh_date") or "") or date.today()
+    grams: dict[int, float] = {}
+    for key, raw in request.form.items():
+        if not key.startswith("grams_") or not raw.strip():
+            continue
+        try:
+            grams[int(key[6:])] = float(raw.strip().replace(",", "."))
+        except ValueError:
+            flash(gettext("“%(value)s” is not a weight in grams, so nothing was weighed.", value=raw.strip()), "error")
+            return _back_to_colony("mice")
+    with SessionLocal() as db_session:
+        mice = [m for m in bulk.selected(db_session, MouseRecord, request.form) if m.id in grams]
+
+        def weigh(mouse):
+            existing = db_session.scalar(select(MouseWeight).where(
+                MouseWeight.mouse_id_fk == mouse.id, MouseWeight.weigh_date == weigh_date))
+            if existing is not None:
+                existing.grams = grams[mouse.id]
+                existing.recorded_by = g.user.username
+            else:
+                db_session.add(MouseWeight(mouse_id_fk=mouse.id, weigh_date=weigh_date, grams=grams[mouse.id],
+                                           recorded_by=g.user.username))
+
+        done = bulk.run(db_session, mice, weigh, may_edit=can_edit_mouse, action="update",
+                        what=f"weigh on {weigh_date.isoformat()}", table="mice")
+        db_session.commit()
+    bulk.report(done, gettext("Weighed"), "mouse")
     return _back_to_colony("mice")
 
 
@@ -5742,50 +5827,67 @@ def _presets_back():
     return redirect(url_for("colony", view="settings"))
 
 
+def _choices_reply(message: str, category: str = "success", status: int = 200):
+    """The Dropdowns tab asks by fetch and redraws itself; a plain form
+    (Configure's Cage purposes) goes back with a flash."""
+    if request.headers.get("X-Requested-With") == "fetch":
+        ok = category != "error"
+        return jsonify({"ok": ok, "message": message} if ok else {"ok": False, "error": message}), (status if ok else 409)
+    if request.headers.get("X-Autosave") == "1":
+        if category == "error":
+            flash(message, "error")
+        return autosave_response("settings")
+    flash(message, category)
+    return _presets_back()
+
+
 @app.route("/colony/options/create", methods=["POST"])
 @login_required
 def create_option():
+    """One choice, or several pasted one per line."""
     field_name = (request.form.get("field_name") or "").strip()
-    option_value = (request.form.get("option_value") or "").strip()
+    values = []
+    for line in (request.form.get("option_value") or "").splitlines():
+        if line.strip() and line.strip().lower() not in {v.lower() for v in values}:
+            values.append(line.strip())
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return _presets_back()
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
     with SessionLocal() as db_session:
-        if not field_name or not option_value:
-            flash(gettext("Pick a column and type a value."), "error")
-            return _presets_back()
-        existing = db_session.scalar(
-            select(DropdownOption).where(
-                DropdownOption.field_name == field_name,
-                func.lower(DropdownOption.option_value) == option_value.lower(),
-            )
-        )
-        if existing is not None:
-            flash(gettext("“%(value)s” is already a %(column)s preset.", value=existing.option_value,
-                          column=i18n.translate_value(field_name)), "error")
-            return _presets_back()
-        db_session.add(DropdownOption(field_name=field_name, option_value=option_value))
+        if not field_name or not values:
+            return _choices_reply(gettext("Pick a column and type a value."), "error")
+        have = {v.lower(): v for v in db_session.scalars(
+            select(DropdownOption.option_value).where(DropdownOption.field_name == field_name))}
+        fresh = [v for v in values if v.lower() not in have]
+        if not fresh:
+            return _choices_reply(gettext("“%(value)s” is already a %(column)s preset.", value=have[values[0].lower()],
+                                          column=i18n.translate_value(field_name)), "error")
+        place = choices.next_position(db_session, field_name)
+        for i, value in enumerate(fresh):
+            db_session.add(DropdownOption(field_name=field_name, option_value=value, position=place + i if place else 0))
         db_session.commit()
-        flash(gettext("Saved “%(value)s” as a %(column)s preset.", value=option_value,
-                      column=i18n.translate_value(field_name)), "success")
-    return _presets_back()
+    if len(fresh) == 1:
+        return _choices_reply(gettext("Saved “%(value)s” as a %(column)s preset.", value=fresh[0],
+                                      column=i18n.translate_value(field_name)))
+    return _choices_reply(gettext("Added %(n)s choices to %(column)s.", n=len(fresh), column=choices.label(field_name)))
 
 
 @app.route("/colony/options/<int:option_id>/update", methods=["POST"])
 @login_required
 def update_option(option_id: int):
+    """Rename a choice; with also_records=1, on the records that hold it too."""
     new_value = request.form.get("option_value", "").strip()
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return autosave_response("settings")
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
         if option is None:
-            flash(gettext("That preset no longer exists."), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("That preset no longer exists."), "error")
         if not new_value:
-            flash(gettext("A preset cannot be blank; delete it instead."), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("A preset cannot be blank; delete it instead."), "error")
+        if new_value == option.option_value:
+            return _choices_reply("")
+        if choices.locked(option.field_name, option.option_value):
+            return _choices_reply(gettext("Breeding and Breeder keep their names: the colony’s litters and its Breeders tab go by them."), "error")
         duplicate = db_session.scalar(
             select(DropdownOption).where(
                 DropdownOption.field_name == option.field_name,
@@ -5794,28 +5896,58 @@ def update_option(option_id: int):
             )
         )
         if duplicate is not None:
-            flash(gettext("“%(value)s” is already a %(column)s preset.", value=duplicate.option_value,
-                          column=i18n.translate_value(option.field_name)), "error")
-            return autosave_response("settings")
+            return _choices_reply(gettext("“%(value)s” is already a %(column)s preset.", value=duplicate.option_value,
+                                          column=i18n.translate_value(option.field_name)), "error")
+        old = option.option_value
         option.option_value = new_value
+        done = None
+        if request.form.get("also_records") == "1":
+            done = choices.change_records(db_session, option.field_name, old, new_value,
+                                          f"renamed {option.field_name} {old} to {new_value}")
         db_session.commit()
-    return autosave_response("settings")
+        if done and done.changed:
+            return _choices_reply(gettext("Renamed “%(old)s” to “%(new)s”, and on %(things)s.", old=old, new=new_value,
+                                          things=choices.uses_text(option.field_name, done.changed)))
+    return _choices_reply(gettext("Renamed “%(old)s” to “%(new)s”.", old=old, new=new_value))
 
 
 @app.route("/colony/options/<int:option_id>/delete", methods=["POST"])
 @login_required
 def delete_option(option_id: int):
+    """Remove a choice. The records that hold it keep it, unless
+    replace_with names another value to put in its place."""
     if not access.can_edit_presets():
-        flash(gettext(PRESETS_DENIED), "error")
-        return _presets_back()
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
+    replace_with = (request.form.get("replace_with") or "").strip()
     with SessionLocal() as db_session:
         option = db_session.get(DropdownOption, option_id)
-        if option is not None:
-            column, value = i18n.translate_value(option.field_name), option.option_value
-            db_session.delete(option)
-            db_session.commit()
-            flash(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value), "success")
-    return _presets_back()
+        if option is None:
+            return _choices_reply("")
+        column, value, field = i18n.translate_value(option.field_name), option.option_value, option.field_name
+        done = None
+        if replace_with and replace_with.lower() != value.lower():
+            done = choices.change_records(db_session, field, value, replace_with, f"replaced {field} {value} with {replace_with}")
+        db_session.delete(option)
+        db_session.commit()
+    if done and done.changed:
+        return _choices_reply(gettext("Removed “%(value)s”; %(things)s now have “%(other)s”.", value=value,
+                                      things=choices.uses_text(field, done.changed), other=replace_with))
+    return _choices_reply(gettext("Removed the %(column)s preset “%(value)s”.", column=column, value=value))
+
+
+@app.route("/colony/options/order", methods=["POST"])
+@login_required
+def order_options():
+    """A column's choices in the order they were dragged to."""
+    if not access.can_edit_presets():
+        return _choices_reply(gettext(PRESETS_DENIED), "error")
+    payload = request.get_json(silent=True) or {}
+    field = str(payload.get("field_name") or "")
+    ids = [int(i) for i in payload.get("ids") or [] if str(i).isdigit()]
+    with SessionLocal() as db_session:
+        choices.reorder(db_session, field, ids)
+        db_session.commit()
+    return jsonify({"ok": True})
 
 
 # ---------------------------------------------------------------------------
@@ -5996,8 +6128,11 @@ def calendar_items(db_session, start: date | None, end: date | None, owner: str 
     ev_q = select(CalendarEvent).where(
         ((CalendarEvent.event_date >= start) & (CalendarEvent.event_date <= end))
         | ((CalendarEvent.event_date <= end) & CalendarEvent.id.in_(select(CalendarRepeat.event_id_fk))))
+    # A to-do with no day shows on today; one kept in a list on the Board
+    # (app/task_board.py) stays there.
     tk_q = select(TaskItem).where(
-        TaskItem.due_date.is_(None) | ((TaskItem.due_date >= start) & (TaskItem.due_date <= end)))
+        (TaskItem.due_date.is_(None) & (TaskItem.board_list == ""))
+        | ((TaskItem.due_date >= start) & (TaskItem.due_date <= end)))
     if owner is not None:
         ev_q = ev_q.where(CalendarEvent.owner == owner)
         tk_q = tk_q.where(TaskItem.owner == owner)
@@ -6602,8 +6737,11 @@ def notebook():
 @app.route("/notebook/<any(protocols, recipes, meetings, reading):library>")
 @login_required
 def notebook_library(library: str):
-    """The lab's protocols, recipes or meetings, or the papers and talks
-    read, to look through, open, add to and sort into folders."""
+    """The lab's protocols or recipes, or the papers and talks read, to look
+    through, open, add to and sort into folders. Meetings, their days and
+    who presents, are kept in the calendar (static/calendar-meetings.js)."""
+    if library == "meetings":
+        return redirect(url_for("calendar", meetings="all"))
     return _notebook_page(library)
 
 
@@ -6625,18 +6763,28 @@ def _notebook_page(library: str | None = None):
             role = lab_notebook.role_for(db_session, candidate) if candidate is not None else None
             if role is not None:
                 selected_page = candidate
+        # Other people's topics shared with this person (lab_notebook.topic_shares).
+        shared_rows = lab_notebook.shared_topic_rows(db_session)
         selected_tab = None
-        if selected_page is not None and role == "owner":
-            selected_tab = next((tab for tab in tab_rows if tab.id == selected_page.tab_id_fk), None)
+        if selected_page is not None:
+            selected_tab = next((tab for tab in [*tab_rows, *shared_rows] if tab.id == selected_page.tab_id_fk
+                                 and (role == "owner" or tab in shared_rows)), None)
         # No page asked for: a topic's page (?tab=), or the notebook's home.
         if selected_page is None and library is None and selected_tab_id is not None:
-            selected_tab = next((tab for tab in tab_rows if tab.id == selected_tab_id), None)
+            selected_tab = next((tab for tab in [*tab_rows, *shared_rows] if tab.id == selected_tab_id), None)
 
         side = lab_notebook.sidebar(db_session)
         kinds = side.pop("kinds_by_page")
-        parents = lab_notebook.parent_ids([page.id for tab in tab_rows for page in tab.pages])
+        parents = lab_notebook.parent_ids([page.id for tab in [*tab_rows, *shared_rows] for page in tab.pages])
         tabs_data = lab_notebook.topic_tree(db_session, tab_rows, kinds, parents)
-        by_id = {node["id"]: node for node in tabs_data}
+        shared_data = lab_notebook.topic_tree(db_session, shared_rows, kinds, parents) if shared_rows else []
+        shared_roles = lab_notebook.topic_shares(db_session)
+        owners = {tab.id: tab.owner_username for tab in shared_rows}
+        owner_names = lab_notebook.display_names(db_session, list(owners.values()))
+        for node in shared_data:
+            node.update(shared=True, role=shared_roles.get(node["id"], "view"),
+                        owner_name=owner_names.get(owners[node["id"]], owners[node["id"]]))
+        by_id = {node["id"]: node for node in [*tabs_data, *shared_data]}
         # The open topic and the topics it sits in start unfolded.
         open_topics = set()
         here = selected_tab.id if selected_tab is not None else None
@@ -6679,6 +6827,7 @@ def _notebook_page(library: str | None = None):
     return render_template(
         "notebook.html",
         tabs=tabs_data,
+        shared_topics=[node for node in shared_data if node["depth"] == 0],
         open_topics=open_topics,
         topic_view=topic_view,
         home=home,
@@ -6761,6 +6910,7 @@ def notebook_delete_tab(tab_id: int):
             db_session.execute(update(NotebookTab).where(NotebookTab.owner_username == g.user.username,
                                                          NotebookTab.parent_tab_id == tab.id)
                                .values(parent_tab_id=tab.parent_tab_id))
+            db_session.execute(delete(NotebookTopicShare).where(NotebookTopicShare.tab_id_fk == tab.id))
             db_session.delete(tab)
             db_session.commit()
     return redirect(url_for("notebook"))
@@ -8437,6 +8587,11 @@ def plasmids():
         records = db_session.scalars(select(PlasmidRecord).order_by(PlasmidRecord.plasmid_id.desc())).all()
         boxes = pbox.all_boxes(db_session)
         box_by_id = {b.id: b for b in boxes}
+        # Each plasmid's newest accepted clone, for the List's cards (app/clone_routes.py).
+        from .models import PlasmidClone
+        verified_at = dict(db_session.execute(select(PlasmidClone.plasmid_row_id, func.max(PlasmidClone.accepted_at))
+                                              .where(PlasmidClone.accepted_at.is_not(None))
+                                              .group_by(PlasmidClone.plasmid_row_id)).all())
         rows = []
         for p in records:
             editable = access.can_edit(p)
@@ -8447,6 +8602,8 @@ def plasmids():
                 "where": _plasmid_where(p, box),
                 "length": len(p.full_sequence or ""),
                 "payload": _plasmid_payload(p, box, editable),
+                "mini": _mini_map(p),
+                "verified": fmt_day(local_time(verified_at[p.id])) if p.id in verified_at else "",
             })
         next_id = _next_plasmid_id(db_session)
         usernames = current_lab_usernames(db_session)
@@ -9166,12 +9323,15 @@ def plasmid_page(number: int):
         files = _plasmid_files(db_session, p)
         kept_reads = _kept_reads(db_session, p)
         primers = _plasmid_primers(db_session, p)
+        from . import clone_routes
+        clones = {"count": len(clone_routes.clones_of(db_session, p)), "verified": clone_routes.verified(db_session, p),
+                  "urls": clone_routes.clone_urls(p.id)}
         lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
             select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
                            made_from=made_from, lineage_options=lineage_options, primers=primers, files=files,
-                           kept_reads=kept_reads,
+                           kept_reads=kept_reads, clones=clones,
                            plannotate_here=plannotate.available(),
                            glycerol=glycerol)
 
@@ -9966,6 +10126,18 @@ def _editor_annotations(stored: list) -> dict[str, list]:
                 item[extra] = f[extra]
         groups[group].append(item)
     return groups
+
+
+def _mini_map(p) -> list:
+    """A plasmid's features, as little as its small map in the List needs."""
+    if not p.full_sequence or not p.features_json:
+        return []
+    try:
+        stored = json.loads(p.features_json)
+    except json.JSONDecodeError:
+        return []
+    return [{"start": f.get("start", 0), "end": f.get("end", 0), "type": f.get("type", ""), "name": f.get("name", ""),
+             "direction": f.get("direction", 1)} for f in _features_only(stored)][:40]
 
 
 def _features_only(stored: list) -> list:

@@ -14,11 +14,14 @@ Output shape (also what gets handed to SeqViz):
   "format": "genbank",
   "name": "pCAG-GFP",
   "features": [
-    {"name": "EGFP", "start": 0, "end": 720, "type": "CDS",
+    {"name": "EGFP", "start": 0, "end": 719, "type": "CDS",
      "direction": 1, "color": "#a4d4a4", "notes": ""},
     ...
   ]
 }
+
+A feature's start and end are 0-based, its end included (EGFP's 720 bases
+above are 0–719).
 """
 from __future__ import annotations
 

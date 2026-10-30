@@ -156,6 +156,10 @@ class TaskItem(Base):
     share_group_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # On the calendar's Board (app/task_board.py): the list it is in (empty:
+    # Inbox) and its place there.
+    board_list: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    board_position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class CalendarSubscription(Base):
@@ -443,6 +447,9 @@ class DropdownOption(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     field_name: Mapped[str] = mapped_column(String(80), index=True)
     option_value: Mapped[str] = mapped_column(String(200))
+    # Its place in its column's dropdown (the Dropdowns tab, dragged); 0
+    # until a lab orders them, when they go A–Z (revision 0052).
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -683,6 +690,29 @@ class PlasmidFile(Base):
     notes: Mapped[str] = mapped_column(String(300), default="")
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     uploaded_by: Mapped[str] = mapped_column(String(80), default="")
+
+
+class PlasmidClone(Base):
+    """A clone of a plasmid whose Sanger reads were checked against its map
+    (the Verify tab, app/clone_routes.py): its reads (kept as the plasmid's
+    files), what they showed, and whether someone accepted it as the
+    plasmid. The newest accepted clone is the one the page calls verified.
+    The plasmid's row id with no foreign key, as for its files."""
+    __tablename__ = "plasmid_clones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    # match, differences, no_match or poor: app/seqverify.py's verdict
+    status: Mapped[str] = mapped_column(String(20), default="")
+    verdict: Mapped[str] = mapped_column(Text, default="")
+    # The report without its traces, and the plasmid files holding the reads.
+    report_json: Mapped[str] = mapped_column(Text, default="{}")
+    file_ids: Mapped[str] = mapped_column(String(400), default="")
+    checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    checked_by: Mapped[str] = mapped_column(String(80), default="")
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    accepted_by: Mapped[str] = mapped_column(String(80), default="")
 
 
 class FeatureLibraryEntry(Base):
@@ -2523,6 +2553,21 @@ class NotebookShare(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class NotebookTopicShare(Base):
+    """Someone else who may open every page of a topic, and of the topics
+    inside it, as NotebookShare does for one page: username "*" is the
+    whole lab, "group:<id>" a project group's members."""
+    __tablename__ = "notebook_topic_shares"
+    __table_args__ = (UniqueConstraint("tab_id_fk", "username", name="uq_notebook_topic_share"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tab_id_fk: Mapped[int] = mapped_column(ForeignKey("notebook_tabs.id"), index=True)
+    username: Mapped[str] = mapped_column(String(80), index=True)
+    role: Mapped[str] = mapped_column(String(10), default="view")  # view | edit
+    shared_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class NotebookFavorite(Base):
     """A page someone starred: it is listed under Favorites at the top of
     their notebook's sidebar, in their order. Any page they may open."""
@@ -2581,6 +2626,19 @@ class NotebookPresence(Base):
     client_id: Mapped[str] = mapped_column(String(40))
     username: Mapped[str] = mapped_column(String(80), default="")
     state: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class PagePresence(Base):
+    """Who has a sheet open (static/sheet-views.js): a page's address and a
+    person, refreshed every half minute while it is open. Rows older than a
+    minute are ignored and cleared (app/sheet_views.py)."""
+    __tablename__ = "page_presence"
+    __table_args__ = (UniqueConstraint("path", "username", name="uq_page_presence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    path: Mapped[str] = mapped_column(String(200), index=True)
+    username: Mapped[str] = mapped_column(String(80), default="")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 

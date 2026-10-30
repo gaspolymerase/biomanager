@@ -37,6 +37,7 @@
     <button type="button" class="seg-item biocal-view-btn" data-view="week" aria-pressed="false">{{ _('Week') }}</button>
     <button type="button" class="seg-item biocal-view-btn" data-view="day" aria-pressed="false">{{ _('Day') }}</button>
     <button type="button" class="seg-item biocal-view-btn" data-view="list" aria-pressed="false">{{ _('List') }}</button>
+    <button type="button" class="seg-item biocal-view-btn" data-view="board" aria-pressed="false" title="{{ _('Your to-dos as cards in lists') }}">{{ _('Board') }}</button>
   </div>
   <div class="cal-new">
     <button type="button" class="btn btn-primary cal-new-main" data-new="event">{{ icon('plus') }} {{ _('New event') }}</button>
@@ -45,6 +46,7 @@
     <div class="menu cal-new-menu" id="cal-new-menu" role="menu" hidden>
       <button type="button" class="menu-item" role="menuitem" data-new="event">{{ icon('calendar') }} {{ _('Event') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="task">{{ icon('list-check') }} {{ _('To-do') }}</button>
+      <button type="button" class="menu-item" role="menuitem" data-new="meeting" title="{{ _('A meeting that comes round every week, and who presents in turn') }}">{{ icon('users') }} {{ _('Meeting') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="booking">{{ icon('calendar-clock') }} {{ _('Book equipment') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="away">{{ icon('user') }} {{ _('Time away') }}</button>
       <button type="button" class="menu-item" role="menuitem" data-new="protocol">{{ icon('protocol') }} {{ _('Start a protocol') }}</button>
@@ -94,14 +96,22 @@
       <div class="cal-cover-list" id="cal-cover-list"></div>
     </section>
 
-    <section class="cal-section">
+    {# Meeting series and who presents next (static/calendar-meetings.js). #}
+    <section class="cal-section is-well">
+      <h3 class="cal-section-h">{{ _('Meetings') }}
+        <button type="button" class="cal-link-btn" id="cal-meeting-new">{{ icon('plus') }} {{ _('New') }}</button>
+      </h3>
+      <ul class="cal-meeting-list" id="cal-meetings"><li class="cal-muted">{{ _('Loading…') }}</li></ul>
+    </section>
+
+    <section class="cal-section is-well">
       <h3 class="cal-section-h">{{ _('Equipment') }}
         <button type="button" class="cal-link-btn" id="cal-equip-manage">{{ _('Manage') }}</button>
       </h3>
       <ul class="cal-equip-list" id="cal-equip-list"></ul>
     </section>
 
-    <section class="cal-section">
+    <section class="cal-section is-well">
       <h3 class="cal-section-h">{{ _('Protocols') }}
         <button type="button" class="cal-link-btn" id="cal-templates-btn">{{ _('Edit') }}</button>
       </h3>
@@ -118,12 +128,31 @@
   </aside>
 
   {# ================= Main ================= #}
-  <section class="cal-main">
-    <div class="cal-body">
-      <div id="biocal-tui" class="cal-tui"></div>
-      <div id="biocal-list" class="cal-list" hidden></div>
-    </div>
-  </section>
+  <div class="cal-center">
+    {# Month: what is shown, as a row of chips above the grid, each its
+       layer's colour and count (the same switches as Show). #}
+    <div class="cal-chips" id="cal-chips" role="group" aria-label="{{ _('Show') }}"></div>
+    <section class="cal-main">
+      <div class="cal-body">
+        <div id="biocal-tui" class="cal-tui"></div>
+        <div id="biocal-list" class="cal-list" hidden></div>
+        {# The to-dos as cards in lists (static/calendar-board.js, app/task_board.py). #}
+        <div id="biocal-board" class="cal-board" hidden></div>
+      </div>
+    </section>
+  </div>
+
+  {# Month: the day picked in the grid (today at first) and what is on it;
+     then meetings, protocols and equipment, moved here from the sidebar. #}
+  <aside class="cal-dayside" id="cal-dayside" aria-label="{{ _('The day picked') }}">
+    <header class="cal-day-head">
+      <span class="cal-day-badge" aria-hidden="true"><small id="cal-day-mon"></small><b id="cal-day-n"></b></span>
+      <span class="cal-day-what"><b id="cal-day-title"></b><small id="cal-day-sub"></small></span>
+    </header>
+    <ul class="cal-day-list" id="cal-day-list"></ul>
+    <button type="button" class="cal-link-btn cal-day-more" id="cal-day-more" hidden></button>
+    <div class="cal-dayside-wells" id="cal-dayside-wells"></div>
+  </aside>
 </div>
 
 {# ================= New / edit: event, to-do, booking, time away ================= #}
@@ -506,5 +535,7 @@
 {# TOAST UI Calendar's UMD bundle (window.tui.Calendar), then the page. #}
 <script src="{{ url_for('static', filename='notebook-build/calendar-app.js') }}?v={{ asset_version('notebook-build/calendar-app.js') }}" defer
         data-loaded-flag="__tuiLoaded" data-missing-flag="__tuiMissing"></script>
+<script src="{{ url_for('static', filename='calendar-board.js') }}?v={{ asset_version('calendar-board.js') }}" defer></script>
 <script src="{{ url_for('static', filename='calendar-page.js') }}?v={{ asset_version('calendar-page.js') }}" defer></script>
+<script src="{{ url_for('static', filename='calendar-meetings.js') }}?v={{ asset_version('calendar-meetings.js') }}" defer></script>
 {% endblock %}

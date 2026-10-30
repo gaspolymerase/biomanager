@@ -1308,7 +1308,7 @@ def cage_derived_dates(cage: CageRecord) -> dict[str, str]:
 
 def dropdown_options_map(session) -> dict[str, list[str]]:
     options = defaultdict(list)
-    rows = session.scalars(select(DropdownOption).order_by(DropdownOption.field_name, DropdownOption.option_value)).all()
+    rows = session.scalars(select(DropdownOption).order_by(DropdownOption.field_name, DropdownOption.position, DropdownOption.option_value)).all()
     for row in rows:
         options[row.field_name].append(row.option_value)
     for field in MOUSE_PRESET_FIELDS:
@@ -1318,7 +1318,7 @@ def dropdown_options_map(session) -> dict[str, list[str]]:
 
 def dropdown_records_map(session) -> dict[str, list[DropdownOption]]:
     grouped: dict[str, list[DropdownOption]] = {field: [] for field in MOUSE_PRESET_FIELDS}
-    rows = session.scalars(select(DropdownOption).order_by(DropdownOption.field_name, DropdownOption.option_value)).all()
+    rows = session.scalars(select(DropdownOption).order_by(DropdownOption.field_name, DropdownOption.position, DropdownOption.option_value)).all()
     for row in rows:
         grouped.setdefault(row.field_name, []).append(row)
     return grouped

@@ -202,10 +202,17 @@ sidebar collapsed the top row runs the window's width, the tabs after the
 tools, and the sidebar starts below it. Windows and Linux keep their own
 frames.
 
-Collapsed (`body[data-rail="closed"]`, everywhere), the sidebar is a
-76px column of tiles, as Benchling's: each place's glyph over its name in
-10px type (two lines at most), groups parted by a hairline, and Settings and
-Help pinned to its foot while the rest scrolls.
+The sidebar is a pane of clear glass floating over the wallpaper, inset
+`--rail-gap` from the window's edges. Collapsed (`body[data-rail="closed"]`,
+the default), it shows icons only, each a circle and the current place a
+raised pill, groups parted by a short hairline, and Settings and Help at
+its foot, below `.rail-places`, which scrolls on its own and fades at its
+ends. At its top is the lab's icon and name when an admin chose one
+(`app/lab_icon.py`: the picture is kept in app_settings `lab_icon` as
+`type;base64`, made a 160px PNG when Pillow is here, never an SVG; the
+`lab_icon_version` key, read on every page, is its hash for the URL), else
+the person's app icon. Hovering a place names it beside the
+glass; hovering a database shows a look inside (`static/rail-peek.js`, from `/rail/peek` in `app/rail_peek.py`: the count from `home_layouts.count_tiles`, the due rows from `build_agenda` for its tracks, the person's own latest records).
 
 macOS 26 draws its current look, and the larger lights (14 points, 23
 apart, not 12 and 20), only for an app built with its SDK, judged by the
@@ -219,10 +226,11 @@ macos 11.0 26.0 -replace -output <copy> <python>`, then `codesign -s -`).
 
 ### Icons
 
-One sprite, `app/static/icons.svg`, built by `scripts/build-icons.py`:
+One sprite, `app/static/icons.svg`, built by `scripts/build-icons.py`
+from `lucide-static` (installed by `npm install` in `frontend/`):
 
 ```bash
-python scripts/build-icons.py path/to/fontawesome-free-6.7.2
+python scripts/build-icons.py
 ```
 
 Referenced as `{{ icon('mouse') }}` in templates, which emits
@@ -237,26 +245,18 @@ rows' icons. Anything drawn outside a page (a template rendered for a
 fragment or after the page) still points to the file; so do the icons
 scripts write.
 
-Three sources, all permissively licensed:
+Every icon is a line drawing on a 24 grid, stroked in `currentColor`
+(1.75, round ends); the fill is left to CSS (`svg.icon { fill: none }`), so
+a toggle can fill one in (`.is-on`, a starred favourite). Two sources:
 
 | Source | Licence | Covers |
 | --- | --- | --- |
-| [Font Awesome Free 6](https://fontawesome.com) | Icons CC BY 4.0 | the UI, plus `worm`, `mosquito`, `fish`, `frog`, `dna`, `vial`, `microscope`, `bacterium`, `virus`, `syringe` |
-| [game-icons.net](https://game-icons.net) by Delapouite | CC BY 3.0 | `mouse` (their *rat*) and `fly`, vendored in `scripts/icon-sources/` |
-| This project | — | `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood`, `kidney`, `liver`, `stomach`, `intestine`, `gel`, `centrifuge` |
+| [Lucide](https://lucide.dev) | ISC | the interface, plus `mouse` (Lucide's *rat*), `fish`, `worm`, `bird`, `rabbit`, `dna`, `virus`, `microscope`, `syringe`, `bone`, `brain` and the other objects |
+| This project | — | `fly`, `plasmid`, `petri`, `cage`, `tank`, `culture-vial`, `antibody`, `cell`, `microtube`, `well-plate`, `blood`, `kidney`, `liver`, `stomach`, `intestine`, `lungs`, `gel`, `centrifuge` and the other lab and organ drawings, in Lucide's style |
 
-Font Awesome has no laboratory mouse and no plasmid. The plasmid and the
-labware are drawn here; the mouse and the housefly are not, because both
-collapse into a blob below about 24px unless ears, snout, tail — or
-compound eyes and wings — are all resolved, which is more drawing than a
-16px mark can carry. Hand-drawn versions were tried three times and thrown
-away.
-
-Add an icon by adding a name to `FROM_FONTAWESOME`, `FROM_SOURCES` or
-`CUSTOM` in the build script and rebuilding (`npm pack
-@fortawesome/fontawesome-free@6.7.2` and unpack it for the path). A Font
-Awesome icon keeps its own viewBox (they are 320 to 640 wide), so each is
-centred in its square and none is cut off. Organs, procedures and more
+Add an icon by adding a name to `FROM_LUCIDE` (our name → Lucide's) or
+`CUSTOM` in the build script and rebuilding; the build stops on a name in
+both or one Lucide lacks. Organs, procedures and more
 organisms came in for the notebook's library folders, which offer the
 biology ones (`FOLDER_ICONS` in `app/lab_notebook.py`). **Check any new icon at 15px**,
 not just large — that is where they fail.
@@ -310,7 +310,12 @@ Sign-in & security, Appearance & language, Notifications, AI assistant &
 tokens, Your data) with icon tiles in the person's accent colour; **Lab**,
 the lab's (Statistics, General, Databases, People & access, Devices &
 copies, History) in one slate (`.set-ico.is-lab`). `app/settings_lab.py`
-gathers what the Lab panes show (`panes()`); everyone sees them and only
+gathers what the Lab panes show (`panes()`: with `configure`, every
+sidebar database's own set-up page from `configure_links()`, listed in
+Databases as Set up each database, and `summary`, the line under General,
+Databases and People in the list of panes, as `pane_link(sub=)`); every
+pane's head says whose its settings are (`.set-scope`: the person's, or
+the lab's and who changes them); everyone sees them and only
 admins get their forms (`/settings/lab` saves General, Databases, What
 members may do and one other database at a time: `lab.apply_survey(...,
 sections=)`). The pages they replace redirect to them: `/setup` once the lab
@@ -341,6 +346,19 @@ made before the rename still holds. Customize shows on Overview only; on
 the other two For you is one line (`.home-for-you`). Both read one agenda,
 `build_agenda`; their styles are `static/home-layouts.css`, in the app's
 type and tokens.
+
+Overview opens with a bento of glass panels (`.home-bento`, rows of
+`.home-panel` that wrap, `.is-2` twice as wide) above its cards: This week
+(`week_view`: Monday to Sunday from an agenda built 7 days ahead on
+Overview, a dot per kind of work a day (`_tone` of its track; overdue work
+on today) and today's list, today's first), the colony's count, Needs a
+look (`needs_look`, from `welfare.home_view`), For you, Your databases (a
+tile per sidebar database with its `count_tiles` number) and the
+notebook's latest pages. The databases and notebook panels always show,
+so Customize does not offer those cards (`BENTO_FIXED`); For you and
+Needs a look follow their cards' switches, and the grid below skips what
+the bento shows. The title is the day as a mono kicker over the greeting
+(`body:has(.home-bento)`).
 
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
 the ones in this person's sidebar, in the lab's order (as the rail does,
@@ -480,6 +498,27 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   and columns as shown, each cell put in and saved as if typed. A value
   that isn't one of a `<select>`'s options moves on to the next cell (at
   most two), and a toast names the first and last rows filled.
+- A sheet card with `data-dt-views="<name>"` (every database's main sheet)
+  gets saved views, filter chips and who is here; `data-dt-inspector` (with
+  `mice` or `cages`, its rack drawn too) the Inspector. All three are
+  `static/sheet-views.js`, on the sheet's controller (`BioSheets.sheet(el)`:
+  `columns()`, `columnValues()`, `setFields()`, `state()`, `applyState()`).
+  A filter chip is `{key, value, label}`, a column's `data-sort-key` that
+  must read exactly that value (`_sortValue`), kept as `dt:<id>:fields`. A
+  view is a name and a state (search, quick chip, filter chips, sort,
+  hidden columns by key), each person's own per sheet name in
+  `app_settings` (`views:<name>:<username>`, `app/sheet_views.py`, checked
+  for shape by `clean()`). Who is here is `page_presence`, beaten every 30
+  seconds by `POST /presence` and read back the same way; rows older than
+  70 seconds are cleared; its faces go into the page header's
+  `.toolbar-actions`. On such a card `layout()` lays the top out as in the
+  design (`.dt-laid`): the toolbar's `.btn-primary` (New, with the key N)
+  and a `[data-dt-show-as]` group (the mouse sheet's Table · Cages · Racks;
+  `data-layout-pick="mouse-cages:grid"` sets the Cages tab's remembered
+  layout) move to the end of the views row; the toolbar keeps the search,
+  the chips and the filter chips, then `.dt-summary` ("Sorted by Mouse ↑ ·
+  10 of 39", redrawn by wrapping the controller's `render()`), then its
+  buttons as icons with their names as tooltips.
 - A sheet's search (`data-table.js`, `_rowText`) reads a menu by its chosen
   option only; the row's `textContent` would hold every option, so a box
   or status name matched every row. Each row's text is kept while someone
@@ -1059,7 +1098,20 @@ Who may change what lives in one place, `app/access.py`:
   `field_name = 'purpose'` (`cage_purposes()`; a new lab gets
   `CAGE_PURPOSE_CHOICES`), edited on the Dropdowns tab or the colony's
   Configure page (`organisms.configure_builtin`, posting to the same
-  `create_option` / `delete_option` with `back=configure`). The bar above
+  `create_option` / `delete_option` with `back=configure`).
+  The **Dropdowns** tab is `app/choices.py` and `static/choices.js`:
+  `choices.columns()` lists each column with choices (`FIELDS`), its
+  `dropdown_options` rows in `position` order (revision 0052; 0 until a
+  lab drags them, then A–Z still breaks ties), the built-in ones the
+  sheet always offers (`BUILT_IN`: the statuses, F/M/Unknown) as fixed
+  rows, each choice's count of records (`USES`: column → model and
+  field), and up to eight values the records hold that are no choice
+  (`loose`). The routes answer `X-Requested-With: fetch` with JSON and the
+  tab redraws itself from the page: `create_option` takes several lines,
+  `update_option` with `also_records=1` and `delete_option` with
+  `replace_with` rewrite the records through `bulk.run` (one audit batch,
+  undone from Batch history), and `order_options` sets the positions.
+  `choices.locked()` keeps Breeding and Breeder from being renamed. The bar above
   the cages is All, Active, then one chip per purpose
   (`cage_purpose_chips()`). Revision 0029 wrote "Exp" and "Experiments" as
   "Experiment", made Stock cages shared Breeder cages, cleared "Retired",
@@ -1199,8 +1251,8 @@ database for a group has an empty `private_to` and a `share_group_id`
 database forms (and `lab_routes.audience` `to=group:<id>`). A notebook page
 is shared with a group by a `notebook_shares` row whose username is
 `group:<id>` (`groups.page_share_names()` in `role_for` and
-`shared_page_ids`); a notebook template with `lab` on and a group is that
-group's.
+`shared_page_ids`), and a topic by a `notebook_topic_shares` row the same
+way; a notebook template with `lab` on and a group is that group's.
 
 Forms send sharing as one value, `"0"` personal, `"1"` the lab, `"g<id>"` a
 group: `groups.parse()`, `groups.differs()` and `groups.apply()` (which
@@ -1222,6 +1274,50 @@ existing event shared); to-dos to their owner's. Away soon lists someone's
 shared to-dos, not their personal ones. A member's copy
 of the lab (`lab_copy.member_view`) leaves out the databases of groups they
 are not in, and keeps pages shared with their groups.
+
+**Set a field…** (`static/selection-bar.js`, `anyField`) lists, when its
+panel opens, every column of the ticked rows a person may edit (a cell's
+field, or a text cell's `data-field`) beside the columns the sheet's batch
+route sets (`[data-bulk-field]` options; a sheet without one gets a form
+of the rows alone). A column of the route posts as before; any other is
+set row by row: the cell takes the value and the row's form is saved as an
+edit would save it (`BioSheet.save`, or the sheet's own `card.bioSave`,
+as the mouse sheet's `saveFormInBackground`), each sending `X-Batch-Id`
+from `POST /batch/start` so their audit rows join one batch
+(`app/batch_edit.py`, a `before_app_request` that sets `g.audit_batch_id`
+for its own opener's batch, open half an hour), closed with
+`/batch/<id>/finish` and its count. A post that reloads the same page
+opens where it was: `data-table.js` notes the scroll and each sheet's page
+in sessionStorage (`biomanager:place`) as a POST form goes, and uses it if
+the page comes back to the same address within two minutes.
+
+The calendar's **Board** (`app/task_board.py`, `static/calendar-board.js`)
+draws the same to-dos as cards: `tasks.board_list` is the list one is in
+(empty: Inbox) and `board_position` its place there (revision 0051), the
+to-do's own, so a shared to-do sits in one list for everyone. The lists'
+names and order are each person's, in `app_settings` (`board:<username>`);
+a list someone else put a shared to-do in shows after one's own. Done is
+the to-dos ticked off in the last 14 days; moving a card into it sets
+`done_at`, out of it clears it. `calendar_items` leaves out a to-do with no
+day that is in a list (one with no day otherwise shows on today).
+A new card's day may be written in its title: `task_board.when_in()`
+reads one at the end (English: today, tomorrow, a weekday, next Fri, in
+3 days, Nov 8, 8 Nov, 11/8, an ISO date, after on/by/due/for) or, in
+Chinese, at either end (今天, 明天, 后天, 周五, 下周一, 11月8日), takes it
+out of the title and sets `due_date`; `GET /calendar/board/when` gives
+the box its hint, and `read_day: false` keeps the words. Inbox's column
+also carries `calendar`: `home_layouts.build_agenda()` for the next 7 days
+and anything overdue, less the calendar's own events (`_from_calendar`),
+drawn under the cards as links to where each is done.
+The calendar page's Month (`calendar-page.js`, `#cal[data-view]`) hides
+the sidebar for the layer chips above the grid (`renderChips`, switching
+the same `[data-layer-toggle]` boxes) and the day panel `#cal-dayside`
+(`renderDay`; a click on a month cell picks its day, read from the
+`monthGridHeader` template's `data-date`); `placeWells()` moves the
+Meetings, Equipment and Protocols wells and the phone links between the
+sidebar and that panel. Week and Day scroll to 08:00 once drawn
+(`toWorkingHours`), and `markToday()` tints today's Due cell. `?protocol=`
+opens a protocol timeline (`<id>`, `new`, or `start&template=<id>`).
 
 **Settings → Statistics** (`settings_lab.statistics`) counts living mice,
 active fish tanks and fly and worm vials per person (one animal at a time:
@@ -1667,7 +1763,8 @@ crossing the origin keeps `start > end`.
   carries them under `plasmids/<n>-<name>-files/`. Row ids without foreign
   keys, as for versions.
 - **Verify sequencing** (`app/seqverify.py`, pure; `static/seq-verify.js`
-  draws it): Sanger reads checked against the map. `read_file` takes an
+  draws its map strip and small traces, for the Verify tab too): Sanger
+  reads checked against the map. `read_file` takes an
   ABI chromatogram (ABIF: the 128-byte header's root entry points at a
   directory of 28-byte entries, data of 4 bytes or less sitting in the
   offset field; PBAS2/PCON2, else PBAS1/PCON1; a MacBinary header is
@@ -1687,8 +1784,8 @@ crossing the origin keeps `start > end`.
   (the standard code, `CODE`) or a frameshift / in-frame indel. An .ab1's
   trace (`_abif_trace`: DATA9–12 in FWO_'s order, PLOC2 peaks, kept only
   when they line up with the bases) gives each difference a `trace`
-  (`trace_window`: ±`TRACE_FLANK` bases, at most `TRACE_POINTS` samples a
-  dye) and the read a `mixed` when `second_peaks` (another dye at
+  (`trace_window`: ±`TRACE_FLANK` bases, or the `flank` asked for, at most
+  `TRACE_POINTS` samples a dye for the usual flank) and the read a `mixed` when `second_peaks` (another dye at
   `MIXED_RATIO` of the called one) marks `MIXED_SHARE` of its good bases,
   with `from_read`/`from_plasmid` when `mixed_from` finds them starting at
   one place; the API and the assistants get the report `without_traces`
@@ -1704,6 +1801,67 @@ crossing the origin keeps `start > end`.
   `verify_sequencing`, which sends capture ids (an `.ab1` capture is
   `application/x-abi`, kept as it is; `get_capture` only says what it is)
   or text reads.
+- **The plasmid page's tabs.** Overview · Sequence · Digest · Verify ·
+  Primers · Storage · Properties, each a `plasmid-tab-panel`; the app draws
+  the plasmid itself (`static/plasmid-map.js`: `BioPlasmidMap.circular`
+  for the maps, labelled on Overview, small in the List, with cuts and
+  pieces on Digest; `BioPlasmidMap.gel` for the gel; colours from
+  `static/plasmid.css`, the gel dark in both themes). Open Vector Editor
+  stays for editing, in the Sequence tab's **Edit the sequence…** fold.
+  Stored features are 0-based with the end included.
+  - **Overview** (`static/plasmid-overview.js`): the labelled map from the
+    page's own features, saved as SVG (computed styles written in) or a
+    3× PNG; the plasmid's facts; a feature row opens Sequence on it
+    (`BioSeqViewer.select`).
+  - **Sequence** (`static/seq-viewer.js`, `app/sequence_routes.py`):
+    `view.json` gives the bases, features, single cutters
+    (`digest.enzyme_table`), the lab's primers (`lab_primers`:
+    `primer_design.binding` with up to two mismatches, the 3′
+    `ANCHOR` bases pairing), each CDS's protein (`protein.about`) and the
+    ORFs of 100 codons or more (`protein.orfs`). Rows are laid out first
+    (bases per row from the measured width of the mono font) and drawn as
+    SVG when they scroll near (IntersectionObserver); a ResizeObserver lays
+    them out again. Dragging picks a stretch; `primer-check` checks it as
+    a primer (`primer_design.check`: Tm by the Primers database's nearest
+    neighbours, GC, clamp, hairpin and self-dimer ΔG from the same table,
+    sites) with the lab's same or nearby primers and a name
+    (`_suggest_name`), and `primers/new` saves it through
+    `primer_records.save_primer` and `derive_primer`.
+  - **Digest** (`app/digest.py` pure, `app/digest_routes.py`,
+    `static/plasmid-digest.js`): `digest.json?enzymes=&agarose=&ladder=
+    &methylated=&lane=` answers the cuts (`cut_positions`, the cut written
+    as the top-strand base it follows), the pieces and the features wholly
+    in each, the gel (`position`: log size over each agarose's range,
+    bunching beyond it; `bands` merges pieces closer than `ONE_BAND`;
+    brightness by mass; the uncut plasmid supercoiled at 0.68× and nicked
+    at 1.7×), notes, and `suggest`: one or two enzymes of 1–3 cuts leaving
+    2–4 pieces at least `WELL_APART`, scored for the freezer
+    (`in_freezer`, the lab's Reagents names: EcoRI-HF counts), fewer
+    enzymes and, when Made from names a backbone with a sequence
+    (`_backbone`), a pattern unlike its own. Methylation: Dam's adenine in
+    GATC and Dcm's inner cytosine in CCWGG, on either strand, block the
+    sites of `DAM_BLOCKED` / `DCM_BLOCKED` enzymes they fall in. Kept
+    lanes, agarose and ladder are per plasmid in localStorage; a lane may
+    be `pcr:<bp>:<label>` (`BioDigest.addLane`, from the Primers tab).
+  - **Verify** (`app/clone_routes.py`, `plasmid_clones`, revision 0053,
+    `static/plasmid-verify.js`): reads are grouped by the clone their file
+    names (`clone_of`: `C4_…`, `clone3-…`, `colony 2 …`), else the next
+    number or the one typed, checked by `seqverify.verify` with a
+    `TRACE_FLANK` of 20, kept as `plasmid_files` (notes: the clone) and
+    remembered as a `PlasmidClone` (status, verdict, the report without
+    traces, its file ids; a clone sequenced again is checked with all its
+    reads). Opening one checks its kept files again, so its traces come
+    back. **Accept** sets `accepted_at`; `verified()` is the newest
+    accepted, shown in the header, on Overview and in the List. Someone
+    who may only view the plasmid checks without keeping. The older
+    `POST /plasmids/<id>/verify` stays for the API and the assistants.
+  - **Primers** (`static/plasmid-primers.js`): `view.json`'s primers on a
+    strip and in a list (exact, or with mismatches); an F and an R make
+    `pcr.json` (`primer_design.pcr`: the nearest facing pair, tails
+    included; what the backbone gives; anneal at the lower Tm − 3, extend
+    at 1 kb/min), sent to the gel as a lane. `sequence_next` names the lab
+    primers either side of the insert (the longest CDS that isn't a
+    resistance gene).
 - **One area, four tabs:** `PLASMID_TAB_KINDS` (primers, glycerol_stocks,
   viruses) are left out of the sidebar rail by `_inventory_module_links`
   and put in `g.plasmid_tabs`; `_plasmid_tab_strip` adds Plasmids itself,
@@ -1795,7 +1953,19 @@ crossing the origin keeps `start > end`.
 
 (The page: `templates/calendar.html` puts Back / Today / Forward, the view
 switch and **New event** in the title row (`page_actions`), and
-`static/calendar-page.js` writes the month or range into the title.)
+`static/calendar-page.js` writes the month or range into the title, a
+week's as "October 2026 · Oct 25 – 31". Week and day are TOAST UI drawn
+through its templates: `weekDayName` (the weekday and a date circle,
+today's filled), `alldayTitle` "Due" with each item a pill and a ring
+(`chip()`), `timegridDisplayPrimaryTime` and `timegridNowIndicatorLabel`
+in 24-hour mono, `time` a block of title and hours (`timedBlock`), and the
+theme's now line red. A click on any item, in every view, is the page's
+own listener (the calendar's `clickEvent` came only on a double-click in
+Month and never on a read-only item): `peek()` shows the quick look
+(`.cal-peek`, fixed beside the item: kind, owner, the `#n` mice its title
+names as links, its note, Mark done for a to-do, Open → `openOnce`). The
+hover card is the List view's only. The small month bands the week on
+show.)
 
 `app/lab_calendar.py`. A repeating event is one `calendar_events` row and a
 `calendar_repeats` row (`freq` daily, weekly, monthly or `nthweekday` —
@@ -2175,7 +2345,18 @@ its top-level pages as `page_cards()`, `?sort=edited|name|order`), and
 `/notebook` with nothing asked for is the home (`home`: favourites, the
 eight pages most recently changed that the person may open, the top-level
 topics); neither opens a page any more. Deleting a topic moves the topics
-in it up one level.
+in it up one level. A card (`page_card`) is a sketch of its page:
+`page_shape()` reads its Markdown as `sheet` (a ```sheet fence or a
+table), `steps` (two numbered or checklist lines) or `text`, and the card
+draws a table's bands, a list's dots or lines (`.nb-thumb`); its kind as a
+pill, its topic's icon (`tab_icon`) and its gist as the link's tooltip.
+Home's header has the New page capsule (`data-new-page-kind`, and
+`data-new-kind` protocol, reading, meeting) and its topics are chips; New
+topic there names one in a dialog. While the sidebar is hidden, its button
+and + are one glass capsule (`.nb-side-capsule`): in a page's path, else
+placed in the title row above. **Fit the window** (`#nb-wide-btn`) puts
+`.is-wide` on `#nb-shell` (localStorage `nb-wide`, set before paint), which
+lifts the paper's 860px limit.
 
 `app/static/notebook-topics.js` runs the sidebar's topics, favourites and
 dragging, without the editor bundle (it borrows `window.NotebookPage`'s
@@ -2217,6 +2398,7 @@ structure only).
 | --- | --- |
 | `notebook_page_info` | kind (note, experiment, protocol, reading, meeting, seminar, daily), status, tags, start/finish, the protocol an experiment follows, a meeting's series and presenter, the live-editing generation, and `parent_page_id`: the page a sub-page was made in (revision 0028) |
 | `notebook_shares` | who else may open a page, and whether to view or edit (`*` is the whole lab, guests excepted) |
+| `notebook_topic_shares` | the same for a topic: its pages, and the topics inside it at any depth (`lab_notebook.topic_shares`, worked out once a request), open to them; `role_for` takes the better of a page's own share and its topic's, `shared_page_ids` adds the topics' pages, and a member's copy (`lab_copy.member_view`) keeps them. Revision 0050 |
 | `notebook_versions` | the page's history: `auto` (one person's edits within 10 minutes, up to an hour, fold into one), `manual`, `release` (a protocol's v1, v2 …), `restore` |
 | `notebook_sync_updates`, `notebook_presence` | live editing: Yjs updates and cursors (below) |
 | `notebook_comments` | comments on a page or a quoted passage, and replies |
@@ -2226,13 +2408,27 @@ structure only).
 | `notebook_meeting_series` | a meeting's rotation (`members` in order, `next_index`), day and time |
 | `notebook_templates` | a person's templates: title, Markdown, the page `kind` a page made from it gets, and `lab` (everyone may start from it; revision 0009) |
 
-**Libraries.** Protocols, Recipes, Meetings and Reading in the notebook's sidebar
-are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/meetings`, `/notebook/reading`,
+**Libraries.** Protocols, Recipes and Reading in the notebook's sidebar
+are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/reading`,
 `NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
 and `static/notebook-library.js` in the main column. It reads the same
 `/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
-recipe block do, and draws Meetings with notebook-page.js's panel
-(`window.NotebookPage`). A recipe opens in the recipe block's editor
+recipe block do (`window.NotebookPage`). Protocols lists the protocol
+pages and the pages tagged protocol (`tagged_protocol`, `PROTOCOL_TAGS`),
+each with `topic` (None when it is kept in Protocols, that is in the
+owner's Inbox, which leaves it to the library) and `can_keep`;
+`POST /notebook/api/protocols/<id>/keep` brings one in (its owner's
+Inbox, kind protocol). A page made with kind protocol, from anywhere but
+a page's sub-page, goes to that Inbox too (`page_new`), as
+`protocol_new` does. The library also draws the calendar's timelines
+from `/calendar/protocols`, each linking to `/calendar?protocol=`. Meetings is kept in the calendar:
+`/notebook/meetings` redirects to `/calendar?meetings=all`, and
+`static/calendar-meetings.js` draws the series (side panel, New event →
+Meeting, a dialog for each: rotation, notes for the next meeting, put on
+the calendar, past notes) from the same `/notebook/api/meetings` routes in
+`app/lab_notebook.py`; `?meetings=new` or `=<id>` opens one. A meeting's
+calendar event ends with `Notes: /notebook/meetings/<id>/open?date=`, which
+the quick look turns into a link. A recipe opens in the recipe block's editor
 (`BiomanagerNotebook.recipe`, with `library: true`: no ticks, no Save to /
 Load from library), which saves as it changes. `?folder=`, `?recipe=` and
 `?preset=` say where in a library you are. A folder's icon is one of
@@ -3494,6 +3690,19 @@ selection at once, keep their own loops.
 The bar is generic — `static/selection-bar.js` reads a markup contract, so
 another table gets batch actions by adding `data-selection-scope`, row
 checkboxes, and a form marked `data-selection-form`. No JavaScript changes.
+`capsule()` turns the bar into one glass capsule: the count, a button per
+form, `•••` and ×. A form that asks for something (a select or an input)
+opens in `.selbar-pop`, a panel fixed above the bar (hung from `<body>`,
+since the bar's backdrop filter would make it a containing block); one that
+asks nothing submits through `requestSubmit`, its `data-confirm` asked
+first. A button's name is `data-selbar-label`, else its submit button's
+words, else for a bare Set or Move its control's `aria-label` ("Move to
+rack"). The first three forms are on the bar, the rest and any
+`btn-danger` one under `•••` (or `data-selbar-more`). Each gets a key:
+`data-key`, else the first free initial of a word of its name (never N);
+pressing it while rows are ticked runs it. `data-weigh-form` (the mouse
+sheet's Weigh, `POST /colony/mice/bulk-weigh`, `grams_<id>` per mouse and
+one `weigh_date`) fills a box per ticked mouse as it opens (`selbar:open`).
 
 **Creating records** — **Add many** on the colony page
 (`/colony/mice/batch`) is a two-step flow: describe one mouse and say how

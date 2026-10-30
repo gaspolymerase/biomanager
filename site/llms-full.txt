@@ -63,7 +63,7 @@ If your lab runs on spreadsheets, you already know most of BioManager. The sheet
 | Typing, then Save, then "who has the file open?" | Type in the cell; it **saves as you type**. Everyone edits the same records at once, and nobody's work overwrites anyone else's. |
 | AutoFilter | The search box and the **chips** above every sheet: *All, Alive, Mine*, one per status. Your last choice is remembered, and it is in the page's address, so a bookmark or a link you send opens the sheet the same way. |
 | Freeze panes, hide columns, column widths | The ID stays pinned as you scroll; **Columns** hides and shows; drag a column's edge to resize. Remembered per sheet. |
-| Data validation drop-downs | **Choices** for a column (statuses, categories, purposes), set in **Configure** or **Dropdowns**. Renaming one renames it everywhere. |
+| Data validation drop-downs | **Choices** for a column (statuses, categories, purposes), set in **Configure** or **Dropdowns**. Renaming one can rename it on every record that has it too. |
 | Autocomplete from the column | **Suggestions** from everything the lab typed before. In inventories, picking an earlier item fills in its vendor, catalogue number and price. |
 | Fill down, copy a row | In the mice's **Add many** preview, click a cell and **Fill down** (or `Ctrl`/`⌘` + `D`) copies it to the rows below. **Duplicate** copies any record. |
 | Paste a column | Copy a column of readings (a Nanodrop export, say) or a block of cells, click the first cell in the sheet and paste: the values go down the rows as shown, and across if you copied several columns, each saved as if typed. A number steps over a choice column it isn't one of (the unit between concentration and A260/280), and a note says which rows it went into, first to last, so a list in another order shows at once. |
@@ -253,7 +253,9 @@ The page that opens each morning: what needs doing today, in three views.
 
 Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone.
 
-- **Overview**: Cards, built from the databases your lab keeps and laid out in the sidebar's order: *For you*, then *Counts*, a number for each database (mice, tanks, plasmids, vials or plates, open orders, items running low), and each database's own cards. The mouse colony brings *Animals that may need a look* (below), *Mice older than 30 weeks*, *Upcoming weanings* and the *Genotyping queue*; zebrafish the mating tanks to return; Molecular biology *Recent plasmids* (yours first, marked *No sequence* until one is added); and each fly, worm or other animal database a card of its own with what is due in the next two days, so Drosophila and C. elegans are never mixed. *Expiring & low stock*, the *Next 14 days* and *Recent orders* complete it. The button at the top opens the first database in the sidebar.
+Above them, the **Daily brief** says the day in a few words: what is due today (the first three by name, each a link), how many things are overdue, how many animals may need a look, and how many notices for you are unread. **Plan my day** opens the calendar on today.
+
+- **Overview**: It opens with panels of glass. *This week* shows Monday to Sunday, today lit, with a dot under each day for each kind of work due on it (an event, the colony, fish, flies and worms, supplies, a to-do), and under the days today's list: what is due today, then what is overdue, each named with its database; click a day to open the calendar on it. Beside it, the mouse colony in a number (how many mice, how many active, yours, and how many jobs are due this week) and *Needs a look*: the first animals of *Animals that may need a look* (below), each with a short tag such as *−12%* or *17 d*. Under them, *For you* (your unread notices, who sent each, and **Open**), *Your databases* (a tile each, with its count) and *Notebook* (your latest pages). Then the cards, built from the databases your lab keeps and laid out in the sidebar's order: *Counts*, a number for each database (mice, tanks, plasmids, vials or plates, open orders, items running low), and each database's own cards. The mouse colony brings *Animals that may need a look* (below), *Mice older than 30 weeks*, *Upcoming weanings* and the *Genotyping queue*; zebrafish the mating tanks to return; Molecular biology *Recent plasmids* (yours first, marked *No sequence* until one is added); and each fly, worm or other animal database a card of its own with what is due in the next two days, so Drosophila and C. elegans are never mixed. *Expiring & low stock*, the *Next 14 days* and *Recent orders* complete it. The button at the top opens the first database in the sidebar.
 
 - **Timeline**: Every dated job on one row of days, a row per kind of work, coloured overdue, today, within 3 days or scheduled. Choose 1, 2 or 4 weeks beside the tabs. *Needs you now* and *Busy days* sit beside it. On a phone it becomes a list of days.
 
@@ -261,7 +263,7 @@ Home is where each day starts: only what needs attention, from every database yo
 
 On Timeline and By place, *For you* is one line at the top: your latest notice and how many are unread.
 
-**Customize**, beside the tabs on Overview, arranges it your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. Five cards start switched off and are there to add: *Your databases* (a button for each, as in the sidebar), *Your to-dos* (due this week or undated), *Bookings* (instruments booked in the next week), *Recent pages* of your notebook, and *Calculators* (the ones you opened last, then the usual ones). Under the cards, *Counts* lists a number for every database: the first five show until you tick the ones you want. **Back to the usual** puts everything back, after asking. Like the view, it is yours alone.
+**Customize**, beside the tabs on Overview, arranges it your way: tick the cards you want, drag them (or use the arrows; the double arrow sends a card to the top) into your order, and make any of them *wide*. *For you* and *Animals that may need a look* switch the panels of those names on or off. Three cards start switched off and are there to add: *Your to-dos* (due this week or undated, which then show in *This week* too), *Bookings* (instruments booked in the next week) and *Calculators* (the ones you opened last, then the usual ones). Under the cards, *Counts* lists a number for every database: the first five show until you tick the ones you want. **Back to the usual** puts everything back, after asking. Like the view, it is yours alone.
 
 On every view:
 
@@ -283,7 +285,7 @@ The first card of the mouse colony (or of zebrafish, in a lab without mice) list
 
 - **Status and experiment disagree**: A mouse whose status is *experiment* while it is in no experiment (once the lab keeps its mouse experiments here), or something else, such as *geno*, while it is in an active one.
 
-A member sees their own animals and the mice of their experiments; **Show the lab’s** shows everyone's. Animal care, facility managers and admins see the lab's, and **Show only yours** narrows it. Each morning the bell also says how many animals may need a look (not the status ones); turn that off in **Settings → Notifications → Animals that may need a look**. Like any card, **Customize** can put it away.
+A member sees their own animals and the mice of their experiments; **The lab**, at the panel's top right, shows everyone's. Animal care, facility managers and admins see the lab's, and **Mine** narrows it. Each morning the bell also says how many animals may need a look (not the status ones); turn that off in **Settings → Notifications → Animals that may need a look**. Like any card, **Customize** can put it away.
 
 *The Home page*
 
@@ -299,11 +301,19 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **The dot**: The dot beside the number means alive or usable: a living mouse, a vial in use, an open order, a reagent in stock; grey means it isn't. For animals its colour is their age: **blue** young, **green** adult, **red** old (mice: under 8 weeks, 8 to 30, past 30; fish: under 3 months, to 18 months, past 18; a vial or plate: progeny still developing, adults, past its flip or chunk). An expired reagent, chemical, antibody or virus is red too. Point at a dot to see what it means.
 
-- **Scrolling and New**: The page scrolls, not the sheet: its search and buttons stay at the top of the window, its column names under them, and its count at the bottom. **All** under *per page* lists every row. **New**, at the bottom left, adds an empty row at the end of the sheet with its first cell ready to type in. A strain, fish, line, plasmid or order needs a name or a tank first, so there it opens the form.
+- **Scrolling and New**: The page scrolls, not the sheet: its search and buttons stay at the top of the window, its column names under them, and its count at the bottom. **All** under *per page* lists every row. A sheet without **New** at its top has it at the bottom left: it adds an empty row at the end of the sheet with its first cell ready to type in. A strain, fish, line, plasmid or order needs a name or a tank first, so there it opens the form.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
 - **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
+
+- **The top of a sheet**: Its first row holds the views — **All** with how many rows the sheet has, then your saved views and **+ Save view** — and, at its end, the sheet's **New** button (or press `N`). The second row holds the search, the quick chips (**All**, **Alive**…) and your filters, and at its end what the sheet is sorted by and how many rows it shows (*Sorted by Mouse ↑ · 10 of 39*), then **Inspector**, **Sort**, **Columns**, **Export** and **•••** as icons: point at one for its name.
+
+- **Filters and saved views**: **+ Filter**, beside the search, picks a column and then one of the values in it (each with how many rows have it), for a chip such as *Status is Stock* that keeps only those rows; add more and they all apply, × takes one off. In the row above, **Save view** keeps what you're looking at — the search, the chips, the sort and the columns shown — under a name, as a tab you come back to in one click; **All** shows everything again. A dot on a view means you've changed it since; click it again for **Update to what is shown**, **Rename…** or **Delete this view**. Views are yours, and follow you to any computer you sign in on.
+
+- **Inspector**: **Inspector** in the toolbar opens a panel beside the sheet with every column of the row you last clicked, hidden ones included, and **Open** for the full record. For a mouse or a cage it draws the rack too, the cage's place lit; click another cage there to go to it.
+
+- **Who else is here**: When someone else has the same sheet open, their initials show at the top right of the page, beside its buttons, with how many are here.
 
 - **Put the important columns first**: Drag a column's heading left or right; a line shows where it will land. Without a mouse, open **Columns** and use the arrows beside a column (**Move left**, **Move right**). The tick boxes, the number or ID, and the buttons at the end stay where they are. Pasting a block, **Export** and a phone's cards follow the order you set. **Reset column order**, under **Columns**, puts it back. The order you start from is the lab's: an admin sets it under the database's **Configure**, with the arrows beside each column of your own (**Move up**, **Move down**).
 
@@ -337,7 +347,9 @@ Select many records and change, move or print them in one go.
 
 - **Import from Excel**: For the sheet you already keep. Every database takes an Excel workbook or CSV, with any columns: you check how they were matched, see a preview of what would be created and which rows would be skipped, then import them as one batch you can undo. See [Bring your lab in](https://biomanager.org/guide/bring-your-lab-in).
 
-- **Select and act**: Tick rows (shift-click selects a range) and a bar rises from the bottom: set a field, move, change owner or status, sac, retire, delete. **Set field** sets any column on them, your own columns included (a date column takes a date, a number column a number). That includes **Source**, where you pick the colony and type the ID once — handy when one mouse gives a dozen samples and each would otherwise be opened in turn. Records you may not change are skipped and counted, never silently changed.
+- **Select and act**: Tick rows (shift-click selects a range) and a capsule of glass rises from the bottom: how many are selected, the commonest actions, each with its key, **•••** for the rest, and × (or `Esc`) to let them all go. On the mouse sheet these are **Move to cage** (`M`; type a cage, or *new* for one new cage for all of them), **Set status** (`S`) and **Weigh** (`W`: a box for each mouse's weight, and the day, today unless you change it; a mouse left blank isn't weighed), and under **•••** **Set a field…** (`F`), **Add to experiment** (`E`) and **Sac**. Other sheets do the same with theirs: set a field, move, change owner or status, retire, delete. An action that needs a value opens a small panel above the bar for it. **Set a field** offers every column you can edit in the sheet, your own columns included (a date column takes a date, a number column a number, a column of choices offers them). That includes **Source**, where you pick the colony and type the ID once — handy when one mouse gives a dozen samples and each would otherwise be opened in turn. A column the sheet sets in one go saves and brings the page back; any other is set row by row, as typing it into each cell would, and the sheet changes in place, still ticked. Either way the rows are one change in **Settings → History**, to undo. Records you may not change are skipped and counted, never silently changed.
+
+- **Where you were**: After a batch action, a record's **Save** or any button that saves and comes back to the same sheet, the page opens where you left it: each sheet on the page it was on, and scrolled as it was.
 
 - **Duplicate**: Copies a record as a new one of yours — the next aliquot, or the same order again.
 
@@ -355,7 +367,11 @@ Search everything from anywhere, and keep pages open as tabs.
 
 - **Search everything** with `⌘`/`Ctrl` + `K`, from anywhere: mice, cages, litters, experiments, strains, vials, tanks, lines, clutches, plasmids, orders, samples, reagents, chemicals, antibodies, viruses and notebook pages. Names that are, or start with, what you typed come first ("S20" finds the S20 tubes before a note about an S200 column), and a lot or catalogue number typed in full comes before anything that merely contains it. Arrows to move, Enter to open. The search at the top of the window opens it too; in the Mac app that is the magnifying glass beside the window's buttons.
 
-- **Back and forward.** In the Mac app, the arrows after the magnifying glass go back and forward, as `⌘` `[` and `⌘` `]` do; the button before it hides or shows the sidebar (`⌘` `B`). Hidden, the sidebar is a narrow column of its places, each with its name under it.
+- **Go somewhere, or ask.** Before you type, the same box lists every place in the sidebar (*Go to Calendar*…), your to-dos on the Board, today's log and hiding the sidebar; as you type, the ones that match come first. At the end, **Ask the user guide** looks up what you typed in this guide, in a new tab.
+
+- **Back and forward.** In the Mac app, the arrows after the magnifying glass go back and forward, as `⌘` `[` and `⌘` `]` do; the button before it hides or shows the sidebar (`⌘` `B`). The sidebar starts as a narrow column of icons; widen it to see their names.
+
+- **Hover the sidebar.** Rest the pointer on an icon to see its name. On a database, a card comes up beside it: how many records it holds, what is due soon, your latest records and its tabs, so you can see how it stands, or go straight to **Cages** or **Litters**, without leaving the page you're on. Move onto the card to click in it.
 
 - **Tabs.** Following a link moves the tab you're in; **+** opens a new tab on your start page (**Settings → Appearance & language → Open on**; Home if none). Drag to reorder, `Alt` (`⌥ Option` on a Mac) + `1`…`9` to jump. They're still there tomorrow, and they are yours: someone else signing in on the same computer gets their own.
 
@@ -397,7 +413,7 @@ Source: https://biomanager.org/guide/notifications
 
 Every keyboard shortcut on one page: search with ⌘/Ctrl K, switch tabs, fill down, and the Mac menu bar's keys.
 
-| `⌘`/`Ctrl` `K` | Search everything |
+| `⌘`/`Ctrl` `K` | Search everything, go to any place, or ask the user guide |
 |---|---|
 | `Alt` `1`…`9` | Go to tab 1–9. On a Mac, `Alt` is `⌥ Option`, here and below. |
 | `Alt` `←` `→` | Previous / next tab (also `Alt` `[` `]`) |
@@ -476,7 +492,7 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 
 - The number BioManager gives a mouse is its identity: handed out in order, never reused, and what its samples, cage card and experiments all link by. **Custom tag**, beside it, is however the animal itself is marked — an ear tag number, an ear punch such as *RF* or *LB*, a tail tattoo, or your lab's own way. Two mice may carry the same mark, search finds a mouse by it, and a spreadsheet column called *custom tag*, *ear tag*, *notch*, *tattoo* or *tail tattoo* comes into it when you import. Point at a mouse's number and its tag shows there too. If your lab doesn't mark its mice, untick **Custom tag** under **Columns** to hide it.
 
-- **Strain**, after the custom tag, is the mouse's background: *C57BL/6J*, *BALB/cJ*, *129S1/SvImJ*, *FVB/NJ* and the other strains most labs keep are offered as you type, and you can type one of your own. Change the list on the colony's **Dropdowns** tab (Column: *strain*). **Add many** sets one strain for the whole batch, search finds a mouse by it, and a spreadsheet column called *strain* or *background* comes into it when you import.
+- **Strain**, after the custom tag, is the mouse's background: *C57BL/6J*, *BALB/cJ*, *129S1/SvImJ*, *FVB/NJ* and the other strains most labs keep are offered as you type, and you can type one of your own. Change the list on the colony's **Dropdowns** tab, under **Strain**. **Add many** sets one strain for the whole batch, search finds a mouse by it, and a spreadsheet column called *strain* or *background* comes into it when you import.
 
 - Select mice to set a field (owner, status, strain, sex, transgenes, cage, litter, date of birth, date of death, note, or one of your own columns), **Add to experiment**, or **Sac**. A date of birth belongs to the litter: when you select every mouse of a litter, the litter itself takes the new date; mice picked from part of a litter move together into a new litter of that date. Setting sac or a date of death ends the record; it stays in the history.
 
@@ -498,7 +514,7 @@ Set up a mating by putting the breeders in a cage whose purpose is **Breeding**.
 
 - **Strains** is the lab's reference list of lines and alleles.
 
-- **Dropdowns** keeps the choices each column offers, so the lab uses the same words. Everyone sees them; only admins change them.
+- **Dropdowns** keeps the choices each column offers, so the lab uses the same words. Pick a column on the left (Status, Cage purpose, Strain, Genotype, Sex, Owner) and its choices are listed in the order its dropdown shows them, each with how many mice or cages have it. An admin renames one where it stands (and is asked whether to change it on those records too), drags it (or presses `Alt`+`↑`/`↓`) to move it in the dropdown, removes it with × (the records that have it keep it, or get another choice in its place), and adds one, or many pasted a line each. *In the records, but not a choice* lists words typed in the sheet that aren't one yet, with **Make it a choice**. The built-in statuses and sexes are always there; *Breeding* and *Breeder* keep their names. Everyone sees the choices; only admins change them.
 
 Source: https://biomanager.org/guide/mouse-colony
 
@@ -857,7 +873,7 @@ Source: https://biomanager.org/guide/any-organism
 
 ## Plasmids
 
-Plasmid records with their sequence and map, and the box each tube is in.
+Plasmid records with their map, sequence and protein, their digests and gels, the primers that bind them, the clones checked by sequencing, and the box each tube is in.
 
 ### What this does for your cloning
 
@@ -866,7 +882,7 @@ A construct is only as good as what you can still prove about it a year later: w
 | Designing it | **Assemble a plasmid** builds the next construct out of the ones you already have — digest and ligate, Gibson or Golden Gate — and the product records what it was made from, so a year later the family tree answers the question instead of your memory. |
 |---|---|
 | The primers it needs | Primers the wizard designs, and any you draw on a map yourself, land in the lab's **Primers** database marked *to order*, with the plasmid beside them. Tick them and **Copy for ordering** hands the list to your supplier — after **Find saved primers** has shown any the lab already has that bind. |
-| Checking what you got | **Verify sequencing** checks the Sanger reads of each clone against the map and names every base that differs, and what it does to the protein; **Detect features** marks the lab's known elements on a new map, and the reads that confirmed the clone live on the plasmid itself under **Files**, with the gel photo. |
+| Checking what you got | **Digest** shows the enzymes that tell a right clone from the backbone and the gel you should see; **Verify** checks the Sanger reads of each clone against the map, names every base that differs and what it does to the protein, and **Accept** marks the clone you keep. The reads live on the plasmid itself under **Files**, with the gel photo. |
 | Finding the tube | Every plasmid has a box position, and the bacteria carrying it sit in **Glycerol stocks** with their own box — so "which tube" has an answer that is not a colleague's memory. |
 | Handing it on | A virus made from it names the plasmid; the plasmid's page lists what was made from it. Download it as GenBank whenever someone outside the lab asks. |
 
@@ -876,35 +892,75 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 ### The plasmid sheet
 
-- Show them as a **Table**, by storage **Boxes**, or as a **List**; chips for *Mine*, *Has sequence*, *In a box*.
+- Show them as a **Table**, by storage **Boxes**, or as a **List**, where each has its small map and says when a clone of it was verified; chips for *Mine*, *Has sequence*, *In a box*.
 
 - **Sequence**, beside each plasmid's number in the table, opens its sequence and map (**Add sequence** when it has none yet); the number opens the same page.
 
 - **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
 
-### The sequence and its map
+### The map, the sequence and the protein
 
-- Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if you like. **Download** above the map gives it as GenBank (with every feature) or FASTA. **Versions**, below the map, lists every earlier sequence (replaced, cleared or edited) with **Restore**. **Storage** and **Properties** are the other tabs. On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; the page then shows **Made from** and **Used to make** above the map, and a **Family tree** both ways. **Storage** also lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)). Its address carries its number: plasmid #12 is `…/plasmid/12`.
+- A plasmid's page has seven tabs: **Overview**, **Sequence**, **Digest**, **Verify**, **Primers**, **Storage** and **Properties**. Its address carries its number: plasmid #12 is `…/plasmid/12`.
 
-*A plasmid map*
+- **Overview** is its map, with the features named round it, and **SVG** and **PNG** above it to save the map for a lab meeting or a paper. Beside it: its size, backbone, resistance, owner, where the tube is, whether a clone was verified, what it was made from and what was made from it, and its features; click a feature to see it in the sequence.
+
+- **Sequence** shows every base, with the complement under it, the features as bars, the enzymes that cut once above it, the lab's primers as arrows (amber when they bind with a mismatch), and the protein of each coding feature under it, a letter under each codon. The chips at the top turn each of these on and off; **6 frames** shows every open reading frame of 100 codons or more on both strands instead of the coding features. Type in **Find** to go to bases (on either strand), a primer, an enzyme or a feature; Enter goes to the next. The bar under it is the whole plasmid: click it to go there.
+
+- **Drag across bases** to pick them: a small bar says where they are, how many, and their Tm and GC. **Forward primer** or **Reverse** checks them as a primer on the right: its length, Tm, GC, whether it ends in a G/C clamp, its hairpin and self-dimer, whether it binds this plasmid only once, and whether the lab already has the same primer or one close by. Give it a name (one is suggested, such as *EGFP-mid-F*), add a 5′ tail if it needs a site or an overlap, and **Save to Primers** files it in the lab's [Primers](https://biomanager.org/guide/samples-and-orders), marked *to order*, with this plasmid beside it. **Copy** copies the bases; **Translate** reads them as codons.
+
+- **Click a coding feature** to see its protein on the right: its length, mass, pI, extinction coefficient at 280 nm, how it starts and ends, and whether a stop sits inside it, then the amino acids ten to a group; **Copy** copies them.
+
+- **Edit the sequence, its features and its map**, under the sequence, opens the editor (edits save themselves), full screen if you like. **Download** gives it as GenBank (with every feature) or FASTA, and **Versions** lists every earlier sequence (replaced, cleared or edited) with **Restore**.
+
+- On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; **Overview** then shows **Made from** and **Used to make**, and Properties a **Family tree** both ways. **Storage** lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)).
+
+*A plasmid's Overview*
+
+*The sequence, with EGFP's protein*
 
 ### Knowing what a sequence holds
 
-- The **Feature library** (a button at the top of Plasmids, beside Table · Boxes · List) keeps the lab's elements by sequence: promoters, ITRs and LTRs, WPRE, resistance genes, tags. **Add to library**, above a well-annotated map (a SnapGene or Addgene file, say), keeps its named features there; an admin can **Collect from every plasmid**. On the library page, **Read elements from files** takes them straight from annotated files — the GenBank a repository gives you, a SnapGene `.dna`, a vendor's map — several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because a sequence typed from memory and wrong by one base would mislabel every map in the lab. An admin can also fetch the **common-features pack** — about 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open research archive when you ask for it (about a minute; the page shows it when it is in). Its authors built it by exporting a commercial program's published library, so check anything you rely on; elements you added yourself always win over it. Search the library by name or by sequence. On any other plasmid, **Detect features** marks each library element wherever it is, on either strand and across the origin, and keeps the map as it was in **Versions**.
+- The **Feature library** (a button at the top of Plasmids, beside Table · Boxes · List) keeps the lab's elements by sequence: promoters, ITRs and LTRs, WPRE, resistance genes, tags. **Add to library**, above the editor of a well-annotated map (a SnapGene or Addgene file, say), keeps its named features there; an admin can **Collect from every plasmid**. On the library page, **Read elements from files** takes them straight from annotated files — the GenBank a repository gives you, a SnapGene `.dna`, a vendor's map — several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because a sequence typed from memory and wrong by one base would mislabel every map in the lab. An admin can also fetch the **common-features pack** — about 1,900 elements curated from some 2,000 widely used plasmids, downloaded from the open research archive when you ask for it (about a minute; the page shows it when it is in). Its authors built it by exporting a commercial program's published library, so check anything you rely on; elements you added yourself always win over it. Search the library by name or by sequence. On any other plasmid, **Detect features** marks each library element wherever it is, on either strand and across the origin, and keeps the map as it was in **Versions**.
 
-- If your lab runs a server, whoever looks after it can install **pLannotate** (a separate, free program) and **Annotate with pLannotate** then appears above the map. It finds elements by comparing sequences rather than matching them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will miss. Everything it marks is kept in **Versions**, so it can be undone.
+- If your lab runs a server, whoever looks after it can install **pLannotate** (a separate, free program) and **Annotate with pLannotate** then appears above the editor. It finds elements by comparing sequences rather than matching them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will miss. Everything it marks is kept in **Versions**, so it can be undone.
 
 ### Building a new plasmid
 
-- **Assemble a plasmid**, from the top of Plasmids or from above any map, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). When you cut a plasmid, only the enzymes that actually have a site in it are offered, with how many sites each has and the single cutters first, and the piece you pick is drawn on a ring of the plasmid it came off, so you can see which part comes out before you take it. Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
+- **Assemble a plasmid**, from the top of Plasmids or from above any map's editor, builds the next plasmid out of the ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases, or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together three ways: **digest and ligate** (cut with the same enzymes and let the sticky ends meet), **Gibson / NEBuilder HiFi** (neighbouring fragments share twenty-odd bases where they meet; the wizard designs the primers that add them, each with its melting temperature) or **Golden Gate** (BsaI, BsmBI or BbsI, which cut outside their own site, so every junction is a four-base overhang you chose). When you cut a plasmid, only the enzymes that actually have a site in it are offered, with how many sites each has and the single cutters first, and the piece you pick is drawn on a ring of the plasmid it came off, so you can see which part comes out before you take it. Each junction shows its own bases, and one line tells you what is wrong and which end it is — *Fragment 2's 3′ end has no overlap with fragment 3* — rather than that it did not work. A Golden Gate is refused when two junctions take the same overhang, when one is another backwards, or when one reads the same on both strands, because each of those puts the pieces together in more than one way. You see the product's map, its length and every fragment in it before anything is made. **Create the plasmid** then makes an ordinary plasmid: the features of each fragment at their new places (a feature a cut runs through keeps the part that is there, and says so), each fragment marked on the map so you can see the joins, **Made from** filled in for every plasmid it came out of with the enzymes and coordinates used, the first entry in its **Versions**, and the library's elements marked if you asked. A Gibson's primers are saved in the [Primers](https://biomanager.org/guide/samples-and-orders) database marked *to order* and drawn on the map of the plasmid each one amplifies, so **Copy for ordering** picks them up with the rest.
 
-- A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
+- A primer you draw on the map (select bases, then **Edit → Create → Primer**) is also kept in the lab's [Primers](https://biomanager.org/guide/samples-and-orders) database, marked *to order*, with the plasmid in its **Plasmid** column. The **Primers** card on the Sequence tab lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then **Copy for ordering** (name and sequence, one per line, to paste into a supplier's form) or **Export for ordering** (a CSV).
 
 - Before you order a new primer, turn on **Find saved primers** on that card. It looks through every primer saved in the Primers databases you can see — whichever plasmid they were made for — and lists each one that binds this sequence: where, on which strand, and whether it is an *exact match* or matches only at its 3′ end with a 5′ tail (a restriction site, a homology arm, or a few bases that differ). Its name opens the primer, so you can see whether there is still a tube. **Show on map** draws them on the map in amber, to look at; they are not saved with the plasmid, and editing the map while they are shown leaves them out. A primer only counts if at least its last 15 bases match exactly. The same switch is on the read-only map that a glycerol stock or virus opens.
 
-### Checking a clone's sequencing
+### Cutting it: the Digest tab
 
-- **Verify sequencing**, below the map, checks Sanger reads of a miniprep or clone against this plasmid. Choose the reads — the `.ab1` chromatograms the sequencing service sends, or FASTA or text files — or paste the bases under **Paste reads instead**; reads already kept under **Files** can be ticked to check again. Press **Verify**.
+- Tick up to four enzymes on the left — **Unique** lists the ones that cut once, **Two** those that cut twice, **All** every one, **In freezer** the ones in the lab's [Reagents](https://biomanager.org/guide/samples-and-orders) (a reagent named *EcoRI-HF* counts as EcoRI; a snowflake marks them, and the tube's place shows under the list).
+
+- The map shows where they cut and the pieces they leave, each piece with its size; the table under it says where each piece runs and the features it holds. Click a piece to pick it out on the map.
+
+- **Suggested check** picks the enzymes whose pieces sit well apart on a gel, preferring ones in the freezer and, when **Made from** names a backbone with a sequence, a pattern unlike the backbone's: one lane then tells a right clone from an empty one. **Use these** ticks them. The first time you open a plasmid's Digest tab it starts on this check.
+
+- **Expected gel** draws the lanes: the ladder (**1 kb Plus**, **1 kb** or **100 bp**), the plasmid uncut (supercoiled ahead of its size, a faint nicked band behind), and the enzymes ticked, with each band's size. Pick the **agarose** percentage: pieces too close to part on it run as one band, and the tab says so. **Keep … on the gel** keeps a lane while you try other enzymes, and a PCR from the Primers tab arrives as a lane too.
+
+- **Dam⁺ Dcm⁺** is on for DNA grown in an ordinary *E. coli* (DH5α, TOP10): a site that Dam or Dcm methylation blocks, such as XbaI's next to a GATC, is marked **Dam** or **Dcm**, drawn uncut and explained. Turn it off for DNA from a dam⁻ dcm⁻ strain.
+
+- **Put my gel beside it** sets a photo of your own gel next to the expected one, to compare; it stays only on your screen. Keep the photo with the plasmid under **Files**.
+
+*A virtual digest and its gel*
+
+### The lab's primers and a PCR: the Primers tab
+
+- Every primer in the Primers databases you can see is checked against the plasmid, on both strands, and each one that binds is drawn on a strip of the plasmid and listed: where it binds, whether exactly (or with a 5′ tail that pairs with nothing), its Tm and where its tube is. **≤ 2 mismatches** also lists primers that bind with up to two bases that don't pair, as long as the 3′ end does, which a polymerase needs.
+
+- Pick a forward primer (**F**) and a reverse one (**R**) for a **PCR**: its product's size and where it runs, the features in it, what the backbone named in **Made from** would give instead (for a colony PCR, the empty vector's band), an annealing temperature to start from and an extension time. **Put it on the gel** adds the product as a lane on the Digest tab; **Copy the product as FASTA** copies its bases, tails included.
+
+- When the lab has primers either side of the plasmid's insert, a line under the list names the two that read all of it, for sending the next clone off.
+
+*The lab's primers, and a PCR*
+
+### Checking a clone's sequencing: the Verify tab
+
+- **Verify** keeps the clones of this plasmid that were sequenced. Drop the reads on **Drop .ab1 reads** — the `.ab1` chromatograms the sequencing service sends, or FASTA or text files — named by clone, like `C4_CAG-F.ab1` or `clone4-T7.ab1`: reads of the same clone are checked together. Reads that name no clone become the next one, or type its name under **Name the clone, or paste a read**, where you can also paste bases. A clone sequenced again keeps its earlier reads and is checked with all of them.
 
 - Each read's poor ends are trimmed by its own quality values, then the read is placed on the map, whichever strand it was read from and across the origin of a circular plasmid, and compared base by base. You get one line for the clone — *Matches the map across 425–1,359, covering EGFP*, or *1 difference from the map: C→A at 740 in EGFP (A14D)* — a strip showing where each read lies over the map's features with every difference marked in red, a line for each read (strand, the bases it covers, how much of it agrees), and a table of the differences: the position, the change, the features it falls in, what it does to a coding sequence (*silent*, an amino-acid change such as *A14D*, a stop codon, or a frameshift), the read's quality there, how many of the reads covering that base show it, and, for an `.ab1`, the stretch of trace around it, the base in question shaded.
 
@@ -912,9 +968,13 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - A chromatogram with a second peak under many of its good bases is said to look like a **mix of two clones**, with its trace: pick a single colony and sequence it again. When the second peaks start at one place and carry on, it says where: two clones that differ by an insertion or deletion there.
 
-- Turn on **Keep the reads and the result with this plasmid's files** to file the reads under **Files**, each noted with the date and what it showed. Checking changes nothing else; anyone who can open the plasmid can check reads, and keeping them needs the right to edit it.
+- The clones are listed on the left with what their reads showed; open one to see where its reads fall, each difference in turn (**Previous difference**, **Next difference**) with a wide stretch of trace, the map's base under the read's, and what it does to the protein — *In EGFP, codon 61: CTC → CTT, L → L (silent)* — and on the right what the clone comes to: identity, how much the reads cover, which coding sequences they read through and how often, and the changes.
+
+- **Accept** marks the plasmid verified with that clone: *Verified · Clone 3 · Oct 12* shows at the top of the page, on Overview and in the list. **Remove** takes a clone off the list; its reads stay under **Files**. The reads are kept with the plasmid when you check them; someone who may only view the plasmid can still check reads, and nothing is kept.
 
 - An AI assistant can do the same: upload the `.ab1` as a capture (or give it the read as text) and ask it to check the clone against the plasmid (see [AI assistants](https://biomanager.org/guide/ai-assistants)).
+
+*A clone checked by sequencing*
 
 ### Tubes, boxes and files
 
@@ -1193,9 +1253,9 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 ### Pages
 
-- The notebook has one sidebar, its own: BioManager's sidebar folds to its icons while you are in it (the **»** at its top opens it for a moment). At the top of the notebook's sidebar, your notebook's name opens its **Home**, **+** beside it makes a **New page** (in the topic you are in), and **Find a page…** under it narrows the pages listed as you type; **Enter** searches inside every page, with its tags. **Today**, **Protocols**, **Recipes**, **Meetings** and **Reading** stay at its foot.
+- The notebook has one sidebar, its own: BioManager's sidebar folds to its icons while you are in it (the **»** at its top opens it for a moment). At the top of the notebook's sidebar, your notebook's name opens its **Home**, **+** beside it makes a **New page** (in the topic you are in), and **Find a page…** under it narrows the pages listed as you type; **Enter** searches inside every page, with its tags. **Today**, **Protocols**, **Recipes**, **Meetings** (which opens the calendar, where meetings are kept) and **Reading** stay at its foot.
 
-- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar, and a topic can hold topics of its own, as deep as you like (*Projects*, in it *Lung neurons*, in that *Flow*). **+** beside *Topics* names a new one. A topic's own **+** starts a page in it, and its **•••** makes a **New topic inside** it, changes its **Name and icon**, moves it into another topic (**Move to…**), or deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the notebook remembers which you left open. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; the same button beside the page's place brings it back.
+- Pages in **Topics**, written like a document and kept as Markdown. Topics are folders, listed in the notebook's sidebar, and a topic can hold topics of its own, as deep as you like (*Projects*, in it *Lung neurons*, in that *Flow*). **+** beside *Topics* names a new one. A topic's own **+** starts a page in it, and its **•••** makes a **New topic inside** it, changes its **Name and icon**, moves it into another topic (**Move to…**), or deletes it with its pages (the topics inside it stay, one level up). The arrow beside a topic opens or folds it, and the notebook remembers which you left open. The sidebar's button at the top (or `Ctrl`+`\`, `⌘`+`\` on a Mac) hides it, so the page has the window; a small capsule at the start of the row above the page then holds the button that brings it back and **+** for a new page. **Fit the window**, among a page's tools, lets the page run the window's width rather than a sheet of paper's; **Page width** puts it back. That browser remembers both.
 
 - A topic's icon is yours to choose, in **Name and icon** (or click the icon on the topic's page): **Icons** are BioManager's own; **Emoji** offers the lab's usual ones, and **Any emoji** takes whatever you type there, so your computer's emoji panel gives you all of them (`Control`+`⌘`+`Space` on a Mac, Windows key + `.` on Windows); **SVG** lets you **Upload an SVG…** of your own, up to 100 KB, such as your lab's logo or a drawing of your model organism. Scripts and links in an SVG are taken out, and it is kept with the lab's other files, in its backups.
 
@@ -1205,9 +1265,9 @@ Notebook pages, paper notes, protocols, data sheets, signing, and the bench calc
 
 - **Favorites**, at the top of the sidebar once you have one: the star at the top of a page, or on its card, keeps it there. Any page you can open may be a favourite, a lab mate's shared page too. Drag a page into Favorites to star it, and drag the favourites into your own order; the star again takes one out.
 
-- **Home** (your notebook's name, at the top of the sidebar) is where the notebook opens: your favourites, the pages edited most recently (yours and those shared with you), and your topics.
+- **Home** (your notebook's name, at the top of the sidebar) is where the notebook opens. Its top right starts a page: **New page**, or straight away a **Protocol**, a **Paper** or a **Meeting** note. Then your favourites, the pages edited most recently (yours and those shared with you) as **Pages** or a **List**, and your topics. Each page is a card with a sketch of it (its cover, or its title over a table's rows or a list's steps as the page has them), its kind, its topic's icon and when it changed; point at it for its first words.
 
-- **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols**, **Reading** and **Meetings**, below), so Inbox leaves them out.
+- **Inbox** holds the pages that are in no topic yet. Protocols, papers and talks, and the notes of a meeting series have places of their own (**Protocols** and **Reading** below, and each meeting in the calendar), so Inbox leaves them out.
 
 - **New page** asks four things, each labelled: the **Title**, the **Topic** it goes in, its **Kind**, and what to **Start from**. Each kind says what it adds:
 
@@ -1261,7 +1321,7 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - Type `@` to link a mouse, plasmid, order or any inventory record — an antibody, a sample, a primer (`@antibodies 5`), found by its name, catalogue number or lot (a lot or catalogue number typed in full, like `@0012`, comes first; names such as *anti-β-actin* or *Waf1/Cip1* are found as written), a database by its name (`@antib` offers *Antibodies*, and picking it lists its records), or a colleague (`@jordan`). A colleague is shown in their colour, and hovering the name shows who they are: name, what they do, admin, member or guest, email, project groups, and how long they've been in the lab. They're told they were mentioned, and an action item names them. The page and a record then point at each other, and the record lists the page under **Used in notebook pages**. The chip shows the record's name after its number (*@antibodies 5 · anti-p53*). Hover over one for its details; clicking it opens the record, and **↗** (or `⌘`/`Ctrl`-click) opens it in a new BioManager tab.
 
-- **Daily log** (*Today*) and **Meetings**: **Meetings** in the sidebar lists each meeting series, where you edit its day, place and presenting order. A presenter rotation, shared meeting notes, and action items (`- [ ] @name …, due …`) sent to that person's to-dos — from any page, with ⋯ → **Send @name tasks as to-dos**.
+- **Daily log** (*Today*) and meeting notes: a meeting series is kept in the [calendar](https://biomanager.org/guide/calendar) (**New event → Meeting**), with its presenter rotation; **Notes for the next meeting** there makes the meeting's page here, shared with everyone in it. Action items in any page (`- [ ] @name …, due …`) go to that person's to-dos, with ⋯ → **Send @name tasks as to-dos**.
 
 - An AI assistant you connected can add lines to the **Log** of today's daily log, once you approve them ([AI assistants](https://biomanager.org/guide/ai-assistants)). If the page is open, the line appears in it within a few seconds.
 
@@ -1285,15 +1345,15 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - **Protocols** with numbered versions. **Start experiment**, in the protocol's bar, copies the steps as a checklist and records the version; **Run mode** takes you through it at the bench, one step at a time.
 
-- **Protocols** in the sidebar opens the lab's protocols as a page: search them, open one to read or change it, or make one with **New protocol**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one. Your protocols live here rather than in *Inbox*; one you move into a topic of yours is listed in that topic as well.
+- **Protocols** in the sidebar opens the lab's protocols as a page, laid out as the notebook's home: each protocol a card with a sketch of its steps, its version (or *Draft*), who keeps it and when it last changed. Search them, open one to read or change it, or make one with **New protocol**. A protocol is kept here wherever you start it: **New page → Protocol** in a topic, or **P** on the notebook's home, puts it in Protocols too. Protocol pages kept in a topic from before, and any page tagged *#protocol*, are listed under **In your topics**, each saying which topic, with **Move to Protocols** to keep it here with the rest. **Timelines on the calendar** lists the calendar's protocols, steps counted in days from a day 0: **Start** one, open one to edit it, or make a **New timeline**. Sort them into folders: **New folder**, then drag a protocol onto it, or pick its folder with the folder button on its card or in the protocol's own bar. Pick a folder's icon when you make it, and change its name or icon with **Edit folder** inside it. Folders are shared with the whole lab; you file the protocols you can edit. Below are a dozen common protocols built in: open one to read it, and **Copy** it to make your own. In a page, `/protocol` lists the same protocols beside it, folder by folder, to insert one. Your protocols live here rather than in *Inbox*.
 
 ### Data and calculators
 
-- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. Paste a log with its headers (time down the first column, readings such as temperature and pressure beside it) and it is drawn as a line over time; **Y** picks the reading. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes.
+- **Data sheets**: paste from Excel or a CSV, add formula columns, and get a plot (bar, dot, box, scatter, line) with error bars, a fitted line and a t-test, Mann–Whitney or ANOVA. Paste a log with its headers (time down the first column, readings such as temperature and pressure beside it) and it is drawn as a line over time; **Y** picks the reading. **Plate reader** and **qPCR** blocks read concentrations off a standard curve and ΔΔCt fold changes. A column's kind (*Aa* text, *123* number, *ƒx* formula) is the small mark at the end of its name, and a number's unit sits beside the name (*dF/F %*); both show in full when you point at the column.
 
 - **Formulation** (`/formulation`): what goes into a reaction or a batch, by mass. In **Component**, type a chemical's name, abbreviation or CAS number and pick it from the lab's [Chemicals](https://biomanager.org/guide/samples-and-orders) database: its molecular weight, purity, density and lot come with it, and the chemical's **Used in notebook pages** lists the page. Type the **Mass** you weigh and **Amount** gives the moles. Mark one row as the basis (the round button beside **Equiv.**) and give the others in equivalents: the mass to weigh follows, and changes when the basis does. Each row shows its **wt %**, a liquid its volume, and the total is underneath.
 
-- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Recipes** in the sidebar opens them: open one to change it, make one with **New recipe**, sort them into folders as protocols are, or **Save a copy** of a built-in one. **Load from library** in a recipe block lists them by folder. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
+- **Buffer recipes** scale with the volume; common buffers are built in and the lab's own are shared. **Recipes** in the sidebar opens them, each a card with its volume, pH and what goes in it: open one to change it, make one with **New recipe**, sort them into folders as protocols are, or **Save a copy** of a built-in one. **Load from library** in a recipe block lists them by folder. **Calculators** for dilution, molarity, master mix, serial dilution, ligation, cells, gels, DNA/RNA and **Protein (A₂₈₀)**: paste the sequence (or give ε and MW) and the reading, and it gives µM and mg/mL. Durations in a step get a **⏱** timer, named from the step's own words; time points (*6, 24, 48 h*, *at 24 h*, *the 48 h samples*) don't. Times on a page (*started 16:00*) are on the lab's clock, whatever your computer's time zone.
 
 ### Signing a page
 
@@ -1302,6 +1362,8 @@ When a page should be the record of your work, **Sign** it — your choice, page
 ### Working together
 
 Share a page to read or edit, with people, everyone in the lab or a [project group](https://biomanager.org/guide/project-groups); editors type in it at the same time. A page's pictures and files go with it: only the people who can open the page can open them. Comments on a passage, with `@name` telling that person (switch these notices off under **Settings → Notifications**). **Version history** keeps every editing session to compare or restore. **Share**, **Comments**, **Sign** and **History** are in the row at the top of the page; each opens on the right, and the list of pages folds away while it is open. **Tags and search** work across every page you can open.
+
+**Share a whole topic** the same way: **Share** on the topic's page, or **Share with lab mates…** in its **•••**. Everyone it is shared with can open its pages and the topics inside it, including pages you add later; with *can edit* they can write in them and add pages, which stay yours. They find it under **Shared with me** at the top of their sidebar, with your name beside it, and are told when you share it. Only you rename, move or delete it.
 
 ### Utilities
 
@@ -1365,13 +1427,21 @@ Source: https://biomanager.org/guide/sign-a-notebook-page
 
 Experiments, to-dos and bookings, with the colony's dates filled in for you.
 
-- **Month, Week, Day** and **List** views. Filled in for you: weanings, genotyping and sac reminders, fly and worm flips and egg collections, organism schedules, zebrafish tanks and reagent expiry. Clicking one (once, in every view) opens the record it came from. A link can open a given view and day: `/calendar?view=week&date=2026-10-05`.
+- **Month, Week, Day** and **List** views. Filled in for you: weanings, genotyping and sac reminders, fly and worm flips and egg collections, organism schedules, zebrafish tanks and reagent expiry. Clicking one (once, in every view) shows it in a small pane beside it: its day and hours, what kind it is and whose, the mice it names (each a link), its note, and **Mark done** for a to-do and **Open** for the event, or the record it came from. A link can open a given view and day: `/calendar?view=week&date=2026-10-05`.
 
-- The month (or week, or day) is the page's title. Back, **Today** and Forward, the **Month** / **Week** / **Day** / **List** switch and **New event** are in the row at the top.
+- In **Month**, the kinds of things shown are a row of chips above the grid, each with its colour and how many there are this month; click one to hide or show that kind. Beside the grid is the day you picked (today at first; click any day to pick it) with what is on it, a ring to tick off a to-do, then **Meetings**, **Equipment** and **Protocols**.
 
-- Beside the grid are a small month to jump around, a **Show** list with a colour and a count for each kind (events, to-dos, the colony, stocks and organisms, supplies, protocols, equipment, time away, connected calendars), the instruments and the protocols under way.
+- In **Week**, each day is its weekday and its date, today's in a filled circle and its column tinted from its name down; under the days the *Due* row holds what falls on a day without a time, each a pill; the hours run in 24-hour time from 08:00 (scroll for earlier or later), and a red line with a dot marks now.
 
-- **New event** offers an event, a to-do (due today, tomorrow, next week, or a date), **Book equipment**, **Time away** and **Start a protocol**. Drag an event, to-do or booking to move it.
+- The month (or week, or day) is the page's title, a week's with its days beside it (*October 2026 · Oct 25 – 31*). Back, **Today** and Forward, the **Month** / **Week** / **Day** / **List** / **Board** switch and **New event** are in the row at the top.
+
+- **Board** shows your to-dos as cards in lists, as on a kanban board: **Inbox** (every open to-do not in a list), the lists you make with **Add a list** (*This week*, *Waiting on*…), and **Done**, what was ticked off in the last two weeks. Drag a card to another list or up and down one; into Done ticks it off. **Add a card** makes one in that list; write its day in it as you would say it (*Order primers Fri*, *Call the vendor tomorrow*, *Book the scope by Nov 8*, *明天订抗体*) and the day shows under the box: the card is on the calendar that day (× keeps the words as written). A card with no day stays on the Board rather than on the calendar's today. Under Inbox's cards, **From the calendar** lists the week's weanings, genotyping, flips and supplies running low, and anything overdue; each opens where it is done. Click a card to change its title, day, list or notes, or to delete it; with a day it is on the calendar that day too. A list's **•••** renames it, moves it left or right, or deletes it (its cards go back to Inbox). The lists are yours; a lab to-do is in the same list for everyone.
+
+- In Week, Day and List, beside the grid are a small month to jump around, a **Show** list with a colour and a count for each kind (events, to-dos, the colony, stocks and organisms, supplies, protocols, equipment, time away, connected calendars), the instruments and the protocols under way.
+
+- **New event** offers an event, a to-do (due today, tomorrow, next week, or a date), a **Meeting**, **Book equipment**, **Time away** and **Start a protocol**. Drag an event, to-do or booking to move it.
+
+- **Meetings**: a lab meeting or journal club that comes round every week. Give it its day, time and place, and the people who present in turn. **Meetings** in the side panel lists each with who presents next; open one to move the rotation on (**Skip ›**) or back (**‹**), make the **Notes for the next meeting** (a notebook page shared with everyone in it), **Put the next meetings on the calendar**, each naming its presenter, or read the notes of past ones. A meeting's event links to its notes.
 
 - **Who sees it**, for an event or a to-do: *Only me*, *Everyone in the lab* or one of your [project groups](https://biomanager.org/guide/project-groups). Your own is seen by nobody else, admins included. A shared event is changed only by whoever added it and admins; a shared to-do anyone it is for can tick off. A new event starts as the lab's, a new to-do as yours.
 
@@ -1608,11 +1678,11 @@ Turn databases on or off, and set your lab's name, time zone and dates.
 
 Who and where: Admins only
 
-After the first survey, the lab's setup is in **Settings**, under **Lab**. Admins change it; everyone else sees it, read only, so they know how the lab is set up. Each change is saved as you make it.
+After the first survey, the lab's setup is in **Settings**, under **Lab**. Admins change it; everyone else sees it, read only, so they know how the lab is set up. Each change is saved as you make it. Each pane says at its top whose settings it holds — yours alone, or the whole lab's — and who changes them, and the list of panes shows under each name what it is set to now (the lab's name, how many databases, how many members).
 
 - **General** — the lab's name, time zone, dates, and weaning and genotyping days.
 
-- **Databases** — switch each database and the calendar and notebook on or off; **Other databases** lists the ones made with **Add database** and members' own.
+- **Databases** — **Set up each database** lists every database in the sidebar, each with **Configure** for its own columns, menu choices and what it keeps track of, so the lab's whole set-up is reached from one place. Under it, switch each database and the calendar and notebook on or off; **Other databases** lists the ones made with **Add database** and members' own.
 
 - **People & access** — the lab's people ([People and guests](https://biomanager.org/guide/people-and-guests)), its [project groups](https://biomanager.org/guide/project-groups), and **What members may do**: create their own databases, add ones for the whole lab, keep a copy of the lab, make tokens.
 
@@ -1631,6 +1701,8 @@ Under **General**, besides its name:
 - **Weaning day** — the day after birth a litter is due to be weaned (P21 unless you change it). Home, the calendar and the cage's **Wean due** date all follow it.
 
 - **Genotyping day** — the day after birth the genotyping reminder falls on (P28 unless you change it).
+
+- **Lab icon** — a picture of the lab's own (a square PNG, JPEG or WebP), shown with the lab's name at the top of everyone's sidebar. **Remove** brings back BioManager's icon.
 
 ### Troubleshooting
 

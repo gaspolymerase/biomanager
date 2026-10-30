@@ -76,12 +76,13 @@
     row.classList.toggle('is-inactive', !alive);
   }
 
-  async function save(form, card) {
+  // headers: more to send (a batch's X-Batch-Id, selection-bar.js). True when it saved.
+  async function save(form, card, headers) {
     say(card, 'saving', t('Saving…'));
     const label = form.dataset.recordLabel || t('this change');
     try {
       const response = await fetch(form.action, {
-        method: 'POST', body: new FormData(form), headers: { 'X-Autosave': '1' },
+        method: 'POST', body: new FormData(form), headers: Object.assign({ 'X-Autosave': '1' }, headers || {}),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || body.ok === false) throw new Error(body.error || t('The server answered %(status)s.', { status: response.status }));
@@ -115,6 +116,7 @@
       cellsOf(form).forEach((el) => el.closest('td') && el.closest('td').classList.remove('has-error'));
       form.dispatchEvent(new CustomEvent('sheet:saved', { bubbles: true, detail: { form, body } }));
       say(card, 'saved', t('All changes saved'));
+      return true;
     } catch (error) {
       cellsOf(form).forEach((el) => {
         if (el.dataset.dirty === '1' && el.closest('td')) el.closest('td').classList.add('has-error');
@@ -124,6 +126,7 @@
         if (was) el.value = was.value;
       });
       say(card, 'error', t('Couldn’t save %(what)s: %(error)s', { what: label, error: error.message }));
+      return false;
     }
   }
 

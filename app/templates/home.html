@@ -2,7 +2,7 @@
 
 {% block page_title %}{{ _('Home') }}{% endblock %}
 {% block page_heading %}{{ greeting|tr }}, {{ current_user.display_name or current_user.username }}{% endblock %}
-{% block page_subtitle %}{{ today_str }} · {{ _('what needs attention today') }}{% endblock %}
+{% block page_subtitle %}{{ today_kicker }}{% endblock %}
 
 {% block page_actions %}
   {% if lab_features.notebook %}
@@ -27,6 +27,35 @@
 {% endblock %}
 
 {% block content %}
+
+{# ---- The daily brief: today's work in a few words, from the same agenda
+     Timeline draws (home_layouts.daily_brief). ---------------------------- #}
+<section class="home-brief" aria-label="{{ _('Daily brief') }}">
+  <span class="home-brief-mark">{{ icon('sparkle') }}</span>
+  <div class="home-brief-text">
+    <div class="home-brief-label">{{ _('Daily brief') }}</div>
+    <p>
+      {%- if brief.quiet %}{{ _('Nothing is due today, and nothing is overdue.') }}
+      {%- else %}
+        {%- if brief.today %}
+          {{ ngettext('One thing today:', '%(num)s things today:', brief.today|length + brief.more) }}
+          {% for it in brief.today -%}
+            {%- if not loop.first %}{% if loop.last and not brief.more %} {{ _('and') }} {% else %}{{ _(', ') }}{% endif %}{% endif -%}
+            <a href="{{ it.url or url_for('calendar') }}"><b>{{ it.title }}</b></a>
+          {%- endfor %}{% if brief.more %} {{ ngettext('and one more', 'and %(num)s more', brief.more) }}{% endif %}{{ _('.') }}
+        {%- endif %}
+        {%- if brief.overdue %} {{ ngettext('One thing is overdue.', '%(num)s things are overdue.', brief.overdue) }}{% endif %}
+        {%- if brief.animals %} {{ ngettext('One animal may need a look.', '%(num)s animals may need a look.', brief.animals) }}{% endif %}
+      {%- endif %}
+      {%- if notification_unread %} <a href="{{ url_for('lab.notifications', show='unread') }}">{{ ngettext('One thing for you is unread.', '%(num)s things for you are unread.', notification_unread) }}</a>{% endif %}
+    </p>
+  </div>
+  {% if lab_features.calendar %}
+    <div class="home-brief-actions">
+      <a class="btn btn-primary" href="{{ url_for('calendar', view='day') }}">{{ icon('calendar') }} {{ _('Plan my day') }}</a>
+    </div>
+  {% endif %}
+</section>
 
 {# ---- The view: Overview, Timeline or By place (app/home_layouts.py) -----
      Tabs, as a database's are; what belongs to the view sits beside them. #}
@@ -544,8 +573,148 @@
   {% endif %}
   {% if home_layout == 'tracks' %}{% include "home/_tracks.html" %}{% else %}{% include "home/_freezer.html" %}{% endif %}
 {% else %}
+  {# ---- Overview's bento, as in the design: This week, the colony and what
+       needs a look; then what is for you, your databases and the notebook.
+       What is for you and what needs a look show if their cards are on
+       (Customize); the rest of the cards follow. #}
+  {% set in_bento = ['for_you', 'databases', 'welfare', 'notebook'] %}
+  <div class="home-bento">
+    <div class="home-bento-row">
+      <section class="home-panel is-2" aria-label="{{ _('This week') }}">
+        <header class="home-panel-head">
+          <h2>{{ _('This week') }}</h2>
+          {% if lab_features.calendar %}<a href="{{ url_for('calendar', view='week') }}">{{ _('Calendar') }}</a>{% endif %}
+        </header>
+        <div class="home-week">
+          {% for d in week.days %}
+            <a class="home-day{% if d.today %} is-today{% elif d.past %} is-past{% endif %}"
+               href="{{ url_for('calendar', view='day', date=d.date.isoformat()) if lab_features.calendar else '#' }}"
+               {% if d.today %}aria-current="date"{% endif %}>
+              <span class="home-day-dow">{{ d.dow }}</span>
+              <span class="home-day-n">{{ d.n }}</span>
+              <span class="home-day-dots">{% for tone in d.dots %}<i data-tone="{{ tone }}"></i>{% endfor %}</span>
+            </a>
+          {% endfor %}
+        </div>
+        {% if week.today %}
+          <div class="home-today">
+            {% for e in week.today %}
+              <a class="home-today-row" href="{{ e.url or url_for('calendar') }}">
+                <span class="home-today-ring{% if e.overdue %} is-overdue{% endif %}" aria-hidden="true"></span>
+                <span class="home-today-title">{{ e.title }}</span>
+                {% if e.overdue %}<span class="home-pill" data-tone="overdue">{{ _('overdue') }}</span>{% endif %}
+                <span class="home-pill" data-tone="{{ e.tone }}">{{ e.kind }}</span>
+              </a>
+            {% endfor %}
+            {% if week.more %}<p class="home-panel-more">{{ _('and %(n)s more', n=week.more) }}</p>{% endif %}
+          </div>
+        {% else %}
+          <p class="home-panel-empty">{{ _('Nothing is due today, and nothing is overdue.') }}</p>
+        {% endif %}
+      </section>
+
+      {% if lab_features.colony %}
+        <a class="home-panel home-colony" href="{{ url_for('colony') }}" aria-label="{{ db_labels.get('colony', 'Mouse colony')|tr }}">
+          <header class="home-panel-head">
+            <span class="home-panel-mark">{{ icon('mouse') }}</span>
+            <h2>{{ db_labels.get('colony', 'Mouse colony')|tr }}</h2>
+          </header>
+          <span class="home-colony-n">{{ counts.total_mice }}</span>
+          {% set pct = (100 * counts.active_mice / counts.total_mice) if counts.total_mice else 0 %}
+          <span class="home-colony-bar"><i style="width: {{ '%.1f'|format(pct) }}%"></i></span>
+          <span class="home-colony-split"><span>{{ _('%(n)s active', n=counts.active_mice) }}</span><span>{{ _('%(n)s not active', n=counts.total_mice - counts.active_mice) }}</span></span>
+          <span class="home-colony-tiles">
+            <span><small>{{ _('Mine') }}</small><b>{{ counts.my_mice }}</b></span>
+            <span><small>{{ _('Due this week') }}</small><b>{{ colony_due }}</b></span>
+          </span>
+        </a>
+      {% endif %}
+
+      {% if 'welfare' in shown_cards and welfare_view %}
+        <section class="home-panel" id="welfare" data-home-card="welfare" aria-label="{{ _('Needs a look') }}">
+          <header class="home-panel-head">
+            <h2>{{ _('Needs a look') }}{% if welfare_view.count %} <span class="home-panel-n">{{ welfare_view.count }}</span>{% endif %}</h2>
+            <span class="home-panel-seg">
+              <a href="{{ url_for('home_dashboard', animals='mine') }}#welfare" title="{{ _('Show only yours') }}"{% if welfare_view.scope != 'lab' %} aria-current="true"{% endif %}>{{ _('Mine') }}</a>
+              <a href="{{ url_for('home_dashboard', animals='lab') }}#welfare" title="{{ _('Show the lab’s') }}"{% if welfare_view.scope == 'lab' %} aria-current="true"{% endif %}>{{ _('The lab') }}</a>
+            </span>
+          </header>
+          {% if needs %}
+            {% for l in needs %}
+              <a class="home-look-row" href="{{ l.url or '#' }}">
+                <span class="home-look-id">{{ l.id }}</span>
+                <span class="home-look-text">{{ l.text }}</span>
+                <span class="home-pill is-mono" data-tone="{{ 'overdue' if l.high else 'other' }}">{{ l.tag }}</span>
+              </a>
+            {% endfor %}
+          {% else %}
+            <p class="home-panel-empty">{{ _('Every animal looks fine.') }}</p>
+          {% endif %}
+        </section>
+      {% endif %}
+    </div>
+
+    <div class="home-bento-row">
+      {% if 'for_you' in shown_cards %}
+        <section class="home-panel" data-home-card="for_you" aria-label="{{ _('For you') }}">
+          <header class="home-panel-head">
+            <h2>{{ _('For you') }}{% if notification_unread %} <span class="home-panel-n">{{ notification_unread }}</span>{% endif %}</h2>
+            <a href="{{ url_for('lab.notifications') }}">{{ _('All') }}</a>
+          </header>
+          {% if for_you %}
+            {% for n in for_you[:4] %}
+              <div class="home-req-row">
+                {% if n.actor %}{{ n.actor | owner_badge }}{% else %}<span class="home-req-mark">{{ icon('bell') }}</span>{% endif %}
+                <span class="home-req-text"><b>{{ n.title }}</b><small>{% if n.actor %}{{ n.actor }} · {% endif %}{{ n.created_at|when }}</small></span>
+                <a class="home-req-open" href="{{ url_for('lab.open_notification', note_id=n.id) }}">{{ _('Open') }}</a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="home-panel-empty">{{ _('Nothing new for you.') }}</p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if db_links %}
+        <section class="home-panel is-2" data-home-panel="databases" aria-label="{{ _('Your databases') }}">
+          <header class="home-panel-head"><h2>{{ _('Your databases') }}</h2></header>
+          <div class="home-dbgrid">
+            {% for link in db_links %}
+              {% set tile = tiles|selectattr('key', 'equalto', link.key)|first %}
+              <a class="home-dbtile{% if link.key == 'new-db' %} is-add{% endif %}" href="{{ link.url }}">
+                <span class="home-dbtile-mark" data-tone="{{ loop.index0 % 6 }}">{{ icon(link.icon) }}</span>
+                <span class="home-dbtile-text">
+                  <b>{{ link.label|tr }}</b>
+                  <small>{% if tile %}{{ tile.value }}{% if tile.sub %} · {{ tile.sub }}{% endif %}{% elif link.personal %}{{ _('Just you') }}{% elif link.key == 'new-db' %}{{ _('A database of your own') }}{% endif %}</small>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if lab_features.notebook %}
+        <section class="home-panel" data-home-panel="notebook" aria-label="{{ _('Notebook') }}">
+          <header class="home-panel-head">
+            <h2>{{ _('Notebook') }}</h2>
+            <a href="{{ url_for('notebook') }}">{{ _('Open') }}</a>
+          </header>
+          {% if recent_pages %}
+            {% for pg in recent_pages[:4] %}
+              <a class="home-page-row" href="{{ url_for('notebook', tab=pg.tab_id, page=pg.id) }}">
+                {{ icon('file') }}<span>{{ pg.title }}</span><small>{{ pg.updated_at|when }}</small>
+              </a>
+            {% endfor %}
+          {% else %}
+            <p class="home-panel-empty">{{ _('No pages yet.') }}</p>
+          {% endif %}
+        </section>
+      {% endif %}
+    </div>
+  </div>
+
   <section class="home-grid">
-    {% for key in home_cards.order if key in cards and key in shown_cards %}
+    {% for key in home_cards.order if key in cards and key in shown_cards and key not in in_bento %}
       <div class="home-card{% if key in home_cards.wide %} is-wide{% endif %}" data-home-card="{{ key }}">{{ cards[key] }}</div>
     {% endfor %}
   </section>

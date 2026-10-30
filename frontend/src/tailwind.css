@@ -22,13 +22,15 @@
 @import "tailwindcss";
 
 /* --- Fonts ------------------------------------------------------------------
-   Inter for the interface and JetBrains Mono for sequences and IDs, shipped
+   Geist for the interface and Geist Mono for sequences, IDs and numbers
+   (Inter and JetBrains Mono stay: Inter for whoever picks it in Settings →
+   Appearance, and both fill in the Greek Geist lacks), shipped
    in static/fonts (npm run build:fonts) so the packaged app needs no network.
    One file per script; the browser fetches only the ones a page uses.
    Chinese comes from the system (PingFang SC, Microsoft YaHei UI, Noto Sans
    CJK SC): a Chinese font is 8-15 MB a weight, and every platform has one.
 
-   "Inter Text CJK" is Inter without the quotes, ellipsis, em dash and middle
+   "Geist BM CJK" and "Inter Text CJK" leave out the quotes, ellipsis, em dash and middle
    dot, used when the page is in Chinese: those then come from the Chinese
    font, full width, as Chinese text sets them. */
 @font-face { font-family: "Inter Text"; font-style: normal; font-weight: 100 900; font-display: swap;
@@ -101,6 +103,52 @@
   src: url("fonts/jetbrains-mono-cyrillic-ext-wght-normal.woff2") format("woff2");
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
 
+@font-face { font-family: "Geist BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Geist BM CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00B6, U+00B8-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-2013, U+2015-2017, U+201A-201B, U+201E-2025, U+2027-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Geist BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Geist BM CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Geist BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-cyrillic-wght-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Geist BM CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-cyrillic-wght-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Geist BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-cyrillic-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Geist BM CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-cyrillic-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Geist BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-vietnamese-wght-normal.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Geist BM CJK"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-vietnamese-wght-normal.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Geist Mono BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Geist Mono BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-mono-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Geist Mono BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-mono-cyrillic-wght-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Geist Mono BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-mono-cyrillic-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Geist Mono BM"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/geist-mono-vietnamese-wght-normal.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+
 @source "../../app/templates/**/*.html";
 @source "../../app/static/*.js";
 
@@ -159,7 +207,7 @@
   --color-info-700:   #0060C9;   /* blue as text, on its tint */
 
   /* --- Surfaces ---------------------------------------------------------- */
-  --color-canvas:   #EEEFF1;   /* window background behind content */
+  --color-canvas:   #E9EDF3;   /* window background behind content (the wallpaper's base) */
   --color-surface:  #FFFFFF;   /* content / control background */
   --color-recess:   #F5F5F7;
   --color-hairline: #D2D2D7;   /* separator */
@@ -197,26 +245,43 @@
      behind it (a blur inside a blurred bar isn't drawn), so it must hide it. */
   --material-popover: rgba(252, 252, 254, 0.97);
 
+  /* Liquid Glass in three thicknesses, over the wallpaper (--wall):
+     clear for what you steer with (the sidebar, the bars, a floating
+     selection bar), regular for cards and side panels, thick for sheets and
+     long text, which must read as paper. Thick panels need no blur: what is
+     behind them is only the wallpaper's soft colour. */
+  --glass-clear:   rgba(255, 255, 255, 0.45);
+  --glass-regular: rgba(255, 255, 255, 0.66);
+  --glass-thick:   rgba(255, 255, 255, 0.86);
+  --glass-solid:   rgba(255, 255, 255, 0.96);   /* the chosen item in a glass bar */
+  --glass-ring:    rgba(255, 255, 255, 0.6);
+  --glass-lo:      rgba(15, 20, 40, 0.05);
+  --glass-lift:    0 1px 1px rgba(15, 20, 40, 0.04), 0 12px 32px rgba(30, 40, 70, 0.12);
+  --wall: radial-gradient(900px 600px at 10% 5%, rgba(94, 234, 212, 0.26), transparent 60%),
+          radial-gradient(800px 600px at 92% 15%, rgba(167, 139, 250, 0.24), transparent 60%),
+          radial-gradient(900px 700px at 55% 105%, rgba(253, 186, 116, 0.2), transparent 60%);
+
   /* --- Type --------------------------------------------------------------
-     Inter everywhere (the same on a Mac, Windows, Linux and phones), then
-     each platform's Chinese font. The page in Chinese swaps "Inter Text"
-     for "Inter Text CJK" (see :lang(zh) below). */
+     Geist everywhere (the same on a Mac, Windows, Linux and phones), then
+     each platform's Chinese font. The page in Chinese swaps "Geist BM"
+     for "Geist BM CJK" (see :lang(zh) below). */
   --font-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
               "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC";
-  --font-sans: "Inter Text", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-sans: "Geist BM", "Inter Text", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
                system-ui, sans-serif;
-  --font-mono: "JetBrains Mono BM", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-mono: "Geist Mono BM", "JetBrains Mono BM", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 
   /* --- Radii: macOS control geometry ------------------------------------- */
-  /* Concentric: a control 4px inside a 12px card is 8px, a 9px menu item
-     inside a 14px menu leaves 5px. Anything floating in a bar is a capsule. */
+  /* Concentric: a control 8px inside a 16px card is 8px, a 9px menu item
+     inside an 18px menu leaves 9px. Buttons, and anything floating in a
+     bar, are capsules. */
   --radius-xs: 4px;
   --radius-sm: 5px;
   --radius-md: 8px;    /* push buttons, fields */
   --radius-lg: 9px;
-  --radius-xl: 12px;   /* grouped boxes, cards */
-  --radius-2xl: 14px;  /* menus, popovers */
-  --radius-3xl: 20px;  /* dialogs */
+  --radius-xl: 16px;   /* grouped boxes, cards */
+  --radius-2xl: 18px;  /* menus, popovers */
+  --radius-3xl: 26px;  /* dialogs, the sidebar's glass */
 
   /* --- Shadows: Apple keeps these very tight ----------------------------- */
   --shadow-xs:  0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 1px rgb(0 0 0 / 0.04);
@@ -227,8 +292,9 @@
 
   --ease-out-soft: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --rail-w: 76px;
-  --rail-w-open: 220px;
+  --rail-w: 72px;        /* the column: the glass and the gaps around it */
+  --rail-w-open: 232px;
+  --rail-gap: 10px;
   /* The top row (tabs, search, you) and the page's title row under it.
      The page scrolls beneath both. desktop_mac.py centres a Mac's traffic
      lights on the top row: change ROW_CENTER there with --tabbar-h. */
@@ -300,9 +366,9 @@
     --color-sand-900: #F5F5F7;
     --color-sand-950: #FFFFFF;
 
-    --color-canvas:   #1C1C1E;
-    --color-surface:  #2A2A2C;
-    --color-recess:   #232325;
+    --color-canvas:   #0B0C10;
+    --color-surface:  #1F2027;
+    --color-recess:   #181920;
     --color-hairline: #3A3A3C;
     --color-ink:      #F5F5F7;
     --color-ink-soft: #C7C7CC;
@@ -365,6 +431,16 @@
     --glass-shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.45);
     --control-hi:   rgba(255, 255, 255, 0.06);
     --material-popover: rgba(44, 44, 46, 0.98);
+    --glass-clear:   rgba(30, 32, 40, 0.42);
+    --glass-regular: rgba(30, 32, 40, 0.6);
+    --glass-thick:   rgba(22, 23, 29, 0.82);
+    --glass-solid:   rgba(58, 61, 74, 0.9);
+    --glass-ring:    rgba(255, 255, 255, 0.09);
+    --glass-lo:      rgba(0, 0, 0, 0.35);
+    --glass-lift:    0 1px 1px rgba(0, 0, 0, 0.3), 0 14px 36px rgba(0, 0, 0, 0.55);
+    --wall: radial-gradient(900px 600px at 10% 5%, rgba(45, 212, 191, 0.15), transparent 60%),
+            radial-gradient(800px 600px at 92% 15%, rgba(129, 140, 248, 0.18), transparent 60%),
+            radial-gradient(900px 700px at 55% 105%, rgba(244, 114, 182, 0.1), transparent 60%);
 
     /* Fields sit darker than the panel they are on, with a rim you can see:
        on a dark dialog a field the panel's own grey reads as no field. */
@@ -391,6 +467,16 @@
    are denser than Latin letters at the same size.
    --------------------------------------------------------------------------- */
 :root:lang(zh) {
+  --font-sans: "Geist BM CJK", "Inter Text CJK", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
+               system-ui, sans-serif;
+}
+
+/* Inter, for whoever picks it (Settings → Appearance). */
+:root[data-font="inter"] {
+  --font-sans: "Inter Text", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
+               system-ui, sans-serif;
+}
+:root[data-font="inter"]:lang(zh) {
   --font-sans: "Inter Text CJK", var(--font-cjk), -apple-system, BlinkMacSystemFont, "Segoe UI",
                system-ui, sans-serif;
 }
@@ -583,11 +669,14 @@
     input[type="checkbox"]::before, input[type="radio"]::before { transition: none; }
   }
 
-  /* Every icon is one <use> of the shared sprite, so it inherits colour. */
+  /* Every icon is one <use> of the shared sprite, so it inherits colour.
+     They are line drawings, stroked in it (scripts/build-icons.py); one
+     that should read as on (a starred favourite) is filled in as well. */
   svg.icon {
     @apply inline-block size-4 shrink-0 align-[-0.15em];
-    fill: currentColor;
+    fill: none;
   }
+  .is-on > svg.icon, .is-pinned > svg.icon { fill: currentColor; }
 }
 
 /* ===========================================================================
@@ -598,11 +687,10 @@
 /* --- Push button -------------------------------------------------------- */
 
 /* Buttons in the page are solid, not glass (glass is for what floats
-   over it): a rounded rectangle, as small Mac controls stay, lit from
-   above by a faint top highlight. */
+   over it): a capsule, lit from above by a faint top highlight. */
 @utility btn {
   @apply inline-flex h-7 shrink-0 cursor-pointer items-center justify-center gap-1.5
-         rounded-md border border-hairline bg-surface px-2.5 text-[13px]
+         rounded-full border border-hairline bg-surface px-3 text-[13px]
          font-medium text-ink select-none;
   box-shadow: inset 0 1px 0 var(--control-hi), 0 1px 1.5px rgb(0 0 0 / 0.06);
   transition: background-color 0.1s, box-shadow 0.1s, transform 0.25s var(--ease-spring);
@@ -700,7 +788,26 @@
    between rows rather than a border around every item. */
 
 @utility card {
-  @apply overflow-hidden rounded-xl border border-hairline bg-surface shadow-xs;
+  @apply overflow-hidden rounded-xl;
+  background: var(--glass-regular);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+
+/* Thick glass: a sheet, a page of text. Reads as paper over the wallpaper. */
+@utility panel-thick {
+  @apply rounded-xl;
+  background: var(--glass-thick);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+
+/* Clear glass: a bar or panel floating over the page (the sidebar, a
+   selection bar). Blurred, as content passes beneath it. */
+@utility glass-clear {
+  background: var(--glass-clear);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo),
+              inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
 }
 @utility card-pad { @apply p-4; }
 @utility inset { @apply rounded-lg bg-sand-100 px-3 py-2.5; }
@@ -715,9 +822,10 @@
 }
 
 @utility stat {
-  @apply flex min-w-0 flex-col gap-0.5 rounded-xl border border-hairline bg-surface
-         px-3.5 py-3 no-underline shadow-xs transition-colors duration-100;
-  &:hover { @apply bg-sand-50; }
+  @apply flex min-w-0 flex-col gap-0.5 rounded-xl px-3.5 py-3 no-underline transition-colors duration-100;
+  background: var(--glass-regular);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  &:hover { background: var(--glass-thick); }
 }
 
 @utility row-line {
@@ -916,7 +1024,8 @@
 @layer components {
 
   .shell {
-    @apply grid h-screen w-full overflow-hidden bg-canvas;
+    @apply grid h-screen w-full overflow-hidden;
+    background: var(--wall), var(--color-canvas);
     grid-template-columns: var(--rail-w) minmax(0, 1fr);
     transition: grid-template-columns 0.25s var(--ease-out-soft);
   }
@@ -924,12 +1033,14 @@
 
   /* --- Sidebar ---------------------------------------------------------- */
 
+  /* A pane of clear glass floating over the wallpaper, inset from the
+     window's edges, its corners concentric with the window's. */
   .rail {
-    @apply relative z-40 flex h-screen flex-col gap-px overflow-y-auto px-2 pb-2 pt-2.5;
-    background: var(--material-sidebar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
-    box-shadow: inset -0.5px 0 0 var(--color-hairline);
+    @apply glass-clear relative z-40 flex flex-col gap-px overflow-hidden px-2 pb-2 pt-2.5;
+    margin: var(--rail-gap) 0 var(--rail-gap) var(--rail-gap);
+    height: calc(100vh - 2 * var(--rail-gap));
+    border-radius: var(--radius-3xl);
+    scrollbar-width: none;
   }
 
   .rail-brand {
@@ -937,10 +1048,20 @@
   }
   .rail-brand:hover { @apply no-underline; }
   .rail-brand img { @apply size-[22px] shrink-0 rounded-md; }
+  /* A lab's own picture is drawn larger, as a tile, since it may be a photo or a crest. */
+  .rail-brand.is-lab img { @apply size-7 rounded-lg object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   .rail-brand-word {
     @apply truncate text-[13px] font-semibold tracking-[-0.01em] text-ink;
   }
 
+  /* The places scroll on their own, between the logo and Settings and
+     Help, fading out at either end rather than sliding under them. */
+  .rail-places {
+    @apply -mx-2 flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 14px), transparent 100%);
+  }
+  .rail-places::-webkit-scrollbar { display: none; }
   .rail-group { @apply flex shrink-0 flex-col gap-px; }
 
   /* macOS sidebar headers: small, semibold, secondary — not uppercase. */
@@ -950,11 +1071,11 @@
 
   /* The current place is a soft tint of the accent, not a solid block. */
   .rail-item {
-    @apply relative flex h-7 shrink-0 cursor-pointer items-center gap-2 rounded-md
+    @apply relative flex h-8 shrink-0 cursor-pointer items-center gap-2.5 rounded-full
            border-0 bg-transparent px-2 text-[13px] font-normal text-ink no-underline
            transition-colors duration-75 select-none;
   }
-  .rail-item .icon { @apply size-[15px] shrink-0 text-muted transition-colors; }
+  .rail-item .icon { @apply size-4 shrink-0 text-muted transition-colors; }
   .rail-item:hover { @apply bg-sand-300/40 no-underline; }
   .rail-item.is-active { @apply bg-brand-600/15 font-semibold text-brand-800; }
   .rail-item.is-active .icon { @apply text-brand-600; }
@@ -964,36 +1085,32 @@
   html.window-inactive .rail-item.is-active .icon { @apply text-muted; }
 
   .rail-label { @apply truncate; }
-  .rail-foot { @apply mt-auto flex shrink-0 flex-col gap-px pt-3; }
+  .rail-foot { @apply flex shrink-0 flex-col gap-px pt-2; }
 
-  /* Collapsed, as Benchling's: each place a tile, its glyph over its name
-     in small type (two lines at most), the groups parted by a hairline. */
-  body[data-rail="closed"] .rail { @apply px-1.5; }
+  /* Collapsed: icons only, each a circle; the chosen one a raised pill of
+     solid glass. A place's name (and, for a database, a look inside) comes
+     up beside it on hover (static/rail-peek.js). */
+  body[data-rail="closed"] .rail { @apply items-center px-0; }
   body[data-rail="closed"] .rail-item {
-    @apply h-auto min-h-[44px] flex-col justify-center gap-[2px] rounded-lg px-0.5 py-1 text-center;
+    @apply size-[42px] justify-center rounded-full p-0;
   }
-  body[data-rail="closed"] .rail-item .icon { @apply size-[17px]; }
-  body[data-rail="closed"] .rail-label {
-    @apply max-w-full overflow-hidden text-[10px] font-medium leading-[12px] text-muted;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    white-space: normal;
-    overflow-wrap: anywhere;
+  body[data-rail="closed"] .rail-item .icon { @apply size-[18px]; }
+  body[data-rail="closed"] .rail-label { @apply sr-only; }
+  body[data-rail="closed"] .rail-item.is-active {
+    @apply text-brand-800;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), 0 2px 8px rgb(0 0 0 / 0.1);
   }
-  body[data-rail="closed"] .rail-item:hover .rail-label { @apply text-ink; }
-  body[data-rail="closed"] .rail-item.is-active .rail-label { @apply font-semibold text-brand-800; }
-  html.window-inactive body[data-rail="closed"] .rail-item.is-active .rail-label { @apply text-ink; }
+  html.window-inactive body[data-rail="closed"] .rail-item.is-active { @apply text-ink; }
   body[data-rail="closed"] .rail-brand-word { @apply hidden; }
   body[data-rail="closed"] .rail-brand { @apply justify-center px-0; }
-  body[data-rail="closed"] .rail-group + .rail-group { @apply mt-1 border-t border-hairline pt-1; }
-  /* Settings and Help stay at the bottom while the places above scroll. */
-  body[data-rail="closed"] .rail-foot {
-    @apply sticky bottom-0 -mx-1.5 -mb-2 mt-auto border-t border-hairline px-1.5 pb-2 pt-1;
-    background: var(--material-sidebar);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
+  body[data-rail="closed"] .rail-group { @apply items-center gap-0.5; }
+  body[data-rail="closed"] .rail-group + .rail-group { @apply mt-1.5 pt-1.5; }
+  body[data-rail="closed"] .rail-group + .rail-group::before {
+    content: ""; @apply mb-1.5 block h-px w-[22px] bg-hairline;
   }
+  body[data-rail="closed"] .rail-places { @apply mx-0 w-full items-center px-0; }
+  body[data-rail="closed"] .rail-foot { @apply items-center gap-0.5; }
   body[data-rail="closed"] .rail-group-label { @apply hidden; }
 
   /* The logo and, beside it, Hide sidebar (above it when collapsed). */
@@ -1001,7 +1118,7 @@
   .rail-top .rail-brand { @apply mb-0 min-w-0; }
   body[data-rail="closed"] .rail-top { @apply flex-col gap-1; }
   .rail-toggle {
-    @apply flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md
+    @apply flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full
            text-muted transition-colors duration-75;
   }
   .rail-toggle:hover { @apply bg-sand-300/45 text-ink; }
@@ -1036,17 +1153,49 @@
   html.window-inactive .wtool { @apply opacity-60; }
   html.mac-window .rail-toggle,
   html.mac-window .omnibox { @apply hidden; }
-  html.mac-window .rail { padding-top: var(--tabbar-h); }
+  html.mac-window .rail { padding-top: calc(var(--tabbar-h) - var(--rail-gap)); }
   html.mac-window body[data-rail="closed"] .topstrip {
     padding-left: calc(var(--wtools-end) + 12px - var(--rail-w));
   }
   html.mac-window body[data-rail="closed"] .rail {
     @apply pt-2;
     margin-top: var(--tabbar-h);
-    height: calc(100vh - var(--tabbar-h));
-    border-top-right-radius: var(--radius-xl);
-    box-shadow: inset -0.5px 0 0 var(--color-hairline), inset 0 0.5px 0 var(--color-hairline);
+    height: calc(100vh - var(--tabbar-h) - var(--rail-gap));
   }
+
+  /* Hovering a place: its name beside the glass, or for a database a look
+     inside it (static/rail-peek.js, app/rail_peek.py). */
+  .rail-peek { @apply fixed z-[61] flex w-[300px] flex-col gap-2.5 p-3 text-[13px]; }
+  .rail-peek.is-label { @apply w-auto max-w-[260px] gap-0.5 rounded-full px-3 py-1.5; }
+  .rail-peek.is-label:has(.rail-peek-hint) { @apply rounded-xl py-2; }
+  .rail-peek.is-label .rail-peek-name { @apply font-semibold; }
+  .rail-peek-hint { @apply text-[12px] text-muted; }
+  .rail-peek-head {
+    @apply -m-1 flex items-center gap-2.5 rounded-xl p-1 text-ink no-underline transition-colors;
+  }
+  .rail-peek-head:hover { @apply bg-sand-300/30 text-ink no-underline; }
+  .rail-peek-icon { @apply size-[18px] text-brand-600; }
+  .rail-peek-title { @apply flex min-w-0 flex-1 flex-col; }
+  .rail-peek-title .rail-peek-name { @apply truncate text-[15px] font-semibold; }
+  .rail-peek-sub { @apply truncate text-[12px] text-muted; }
+  .rail-peek-value { @apply font-mono text-[22px] font-semibold tracking-[-0.02em]; }
+  .rail-peek-tabs { @apply flex flex-wrap gap-1; }
+  .rail-peek-tab {
+    @apply rounded-full bg-sand-300/30 px-2.5 py-[3px] text-[12px] font-medium text-ink-soft no-underline transition-colors;
+  }
+  .rail-peek-tab:hover { @apply bg-brand-600/15 text-brand-800 no-underline; }
+  .rail-peek-section { @apply flex flex-col border-t border-hairline pt-2; }
+  .rail-peek-label { @apply pb-1 text-[11px] font-semibold text-muted; }
+  .rail-peek-empty { @apply text-[12px] text-muted; }
+  .rail-peek-row {
+    @apply -mx-1.5 flex items-baseline gap-2 rounded-md px-1.5 py-[3px] text-ink no-underline;
+  }
+  a.rail-peek-row:hover { @apply bg-sand-300/30 text-ink no-underline; }
+  .rail-peek-row-title { @apply min-w-0 flex-1 truncate; }
+  .rail-peek-row-title.ident { @apply flex-none; }
+  .rail-peek-row-detail { @apply min-w-0 flex-1 truncate text-[12px] text-muted; }
+  .rail-peek-when { @apply shrink-0 text-[11px] text-muted; }
+  .rail-peek-when.is-overdue { @apply font-semibold text-danger-600; }
 
   /* More and Help: a button that opens its menu beside the sidebar
      (placed by static/shell.js, as the sidebar scrolls and clips). */
@@ -1068,7 +1217,7 @@
 
   .shell-main { @apply relative min-w-0 overflow-hidden; }
   .shell-scroll {
-    @apply h-full overflow-y-auto overscroll-contain bg-canvas;
+    @apply h-full overflow-y-auto overscroll-contain;
     padding-top: calc(var(--tabbar-h) + var(--toolbar-h));
     /* A link to a #section, or scrollIntoView, stops it below the rows. */
     scroll-padding-top: calc(var(--tabbar-h) + var(--toolbar-h) + 8px);
@@ -1248,14 +1397,20 @@
 
   @media (max-width: 767px) {
     .shell, body[data-rail="open"] .shell { grid-template-columns: minmax(0, 1fr); }
-    .rail {
-      @apply fixed inset-y-0 left-0 w-[260px] -translate-x-full shadow-lg transition-transform;
+    .rail, body[data-rail="closed"] .rail {
+      @apply fixed inset-y-0 left-0 w-[260px] items-stretch px-2 transition-transform;
+      height: auto;
+      transform: translateX(calc(-100% - 2 * var(--rail-gap)));
+      background: var(--glass-thick);
       transition-duration: 0.28s;
       transition-timing-function: var(--ease-out-soft);
     }
-    body[data-drawer="open"] .rail { @apply translate-x-0; }
-    .rail-item { @apply h-9 justify-start px-2.5 text-[15px]; }
-    .rail-label, .rail-brand-word { @apply block; }
+    body[data-drawer="open"] .rail { transform: none; }
+    .rail-item, body[data-rail="closed"] .rail-item { @apply h-9 w-auto justify-start rounded-full px-2.5 text-[15px]; }
+    .rail-label, .rail-brand-word, body[data-rail="closed"] :is(.rail-label, .rail-brand-word) { @apply not-sr-only block; }
+    body[data-rail="closed"] .rail-group-label { @apply block; }
+    body[data-rail="closed"] :is(.rail-places, .rail-group, .rail-foot) { @apply items-stretch; }
+    body[data-rail="closed"] .rail-group + .rail-group::before { content: none; }
     .rail-group-label { @apply h-auto p-0 px-2.5 pb-1 pt-4 text-muted; }
     .rail-brand { @apply justify-start px-2.5; }
     .rail-item[data-label]::after { content: none; }
@@ -1580,9 +1735,11 @@
 
   /* Clipped, not a scroller of its own: the page is what scrolls, so the
      toolbar and the bottom bar can stay in view as a long table goes by. */
+  /* A sheet keeps its solid page (what scrolls under its sticky toolbar and
+     header must be hidden), lifted off the wallpaper like the glass. */
   .data-table-card {
-    @apply flex min-w-0 flex-col overflow-clip rounded-2xl border border-hairline
-           bg-surface shadow-xs;
+    @apply flex min-w-0 flex-col overflow-clip rounded-2xl bg-surface;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
   }
 
   /* --- Toolbar ---------------------------------------------------------- */
@@ -1847,6 +2004,185 @@
   }
   .dt-chip-count { @apply text-[11px] font-semibold tabular-nums text-muted; }
   .dt-chip[aria-pressed="true"] .dt-chip-count { @apply text-brand-700; }
+
+  /* --- Saved views, filter chips, who is here (static/sheet-views.js) -- */
+
+  .dt-views {
+    @apply flex items-center gap-3 border-b border-sand-100 px-2.5 pb-1.5 pt-2;
+  }
+  .dt-views-tabs { @apply flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]; }
+  .dt-view {
+    @apply relative inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-full border-0
+           bg-transparent px-3 text-[12px] font-medium text-muted transition-colors;
+  }
+  .dt-view:hover { @apply bg-sand-300/30 text-ink; }
+  .dt-view[aria-selected="true"] { @apply bg-brand-600/12 font-semibold text-brand-800; }
+  .dt-view.is-changed::after {
+    content: ""; @apply absolute right-1 top-1 size-1.5 rounded-full bg-warn-600;
+  }
+  .dt-view .icon { @apply size-3; }
+  .dt-view-add { @apply text-muted; }
+
+  .dt-here { @apply flex shrink-0 items-center gap-1.5 text-[12px] text-muted; }
+  .dt-here:empty { @apply hidden; }
+  .dt-here-faces { @apply flex; }
+  .dt-here-face {
+    @apply -ml-1.5 grid size-6 place-items-center rounded-full text-[10px] font-bold first:ml-0;
+    box-shadow: 0 0 0 2px var(--color-surface);
+  }
+  .dt-here-face[data-tone="sky"]    { @apply bg-sky-100 text-sky-800; }
+  .dt-here-face[data-tone="violet"] { @apply bg-violet-100 text-violet-800; }
+  .dt-here-face[data-tone="pink"]   { @apply bg-pink-100 text-pink-800; }
+  .dt-here-face[data-tone="teal"]   { @apply bg-teal-100 text-teal-800; }
+  .dt-here-face[data-tone="amber"]  { @apply bg-amber-100 text-amber-900; }
+  .dt-here-face[data-tone="lime"]   { @apply bg-lime-100 text-lime-900; }
+
+  .dt-fields { @apply inline-flex flex-wrap items-center gap-1; }
+  .dt-field-chip {
+    @apply cursor-default gap-1 bg-brand-600/12 pr-1 font-normal text-brand-800;
+  }
+  .dt-field-chip b { @apply font-semibold; }
+  .dt-field-name { @apply text-brand-800/75; }
+  .dt-field-off {
+    @apply grid size-5 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-brand-800/70;
+  }
+  .dt-field-off:hover { @apply bg-brand-600/20 text-brand-900; }
+  .dt-field-off .icon { @apply size-3; }
+  .dt-chip-add {
+    @apply gap-1 border border-dashed border-sand-300 px-2.5 text-muted;
+  }
+  .dt-chip-add:hover { @apply border-sand-400 text-ink; }
+  .dt-chip-add .icon { @apply size-3; }
+
+  /* --- The sheet's top as in the design (sheet-views.js, layout) -------- */
+
+  .data-table-card.dt-laid { @apply rounded-[26px]; }
+  .dt-laid > .dt-views { @apply flex-wrap gap-2 border-0 px-3.5 pb-2 pt-3; }
+  .dt-laid .dt-view {
+    @apply h-8 gap-1.5 px-3.5 text-[13px] font-normal text-ink-soft;
+  }
+  .dt-laid .dt-view:hover { @apply bg-sand-300/30 text-ink; }
+  .dt-laid .dt-view[aria-selected="true"] {
+    @apply font-semibold text-ink;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), 0 1px 4px rgb(0 0 0 / 0.1);
+  }
+  .dt-view-count { @apply text-[12px] font-normal tabular-nums text-muted; }
+  .dt-view[aria-selected="true"] .dt-view-count { @apply font-medium text-brand-700; }
+  .dt-laid .dt-view-add { @apply gap-1 px-3 text-muted; }
+  .dt-views-end { @apply ml-auto flex shrink-0 items-center gap-2; }
+
+  /* Table · Cages · Racks */
+  .dt-show-as { @apply inline-flex shrink-0 rounded-full bg-sand-300/35 p-[3px]; }
+  .dt-show-as-item {
+    @apply inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] text-ink-soft no-underline;
+  }
+  .dt-show-as-item:hover { @apply text-ink no-underline; }
+  .dt-show-as-item.is-active {
+    @apply font-medium text-ink;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 1px 4px rgb(0 0 0 / 0.12);
+  }
+  .dt-show-as-item .icon { @apply size-3.5; }
+
+  /* New, the accent pill with its key. */
+  .dt-views-end > .btn-primary {
+    @apply h-[34px] gap-1.5 rounded-full px-4 text-[13px] font-semibold;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 14px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .dt-kbd {
+    @apply ml-0.5 inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] px-1 font-mono text-[10px] font-medium;
+    background: color-mix(in srgb, currentColor 20%, transparent);
+  }
+
+  /* The second row: search, quick chips, filter chips … sorted by, count, icons. */
+  .dt-laid > .dt-toolbar { @apply gap-1.5 border-0 px-3.5 pb-3 pt-0; }
+  .dt-laid .dt-toolbar-search { @apply min-w-[160px] max-w-[220px] flex-none; }
+  .dt-laid .dt-toolbar-search input { @apply h-7 border-0 bg-sand-300/30 text-[13px]; box-shadow: none; }
+  .dt-laid .dt-toolbar-search input:focus { @apply bg-surface; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand-600) 35%, transparent); }
+  .dt-laid > .dt-toolbar > .dt-toolbar-btn:has(svg) { @apply size-8 gap-0 rounded-full px-0 text-[0px]; justify-content: center; }
+  .dt-laid > .dt-toolbar > .dt-toolbar-btn svg { @apply size-[15px]; }
+  .dt-summary { @apply shrink-0 whitespace-nowrap px-1 text-[13px] tabular-nums text-muted; }
+  .dt-laid .dt-field-chip { @apply h-7 gap-1.5 rounded-full bg-brand-600/12 pl-3 pr-[5px] text-[13px] text-brand-800; }
+  .dt-laid .dt-field-off { @apply size-[18px] bg-brand-600/12; }
+  .dt-laid .dt-field-off .icon { @apply size-[9px]; }
+  .dt-laid .dt-chip-add {
+    @apply h-7 border-0 px-3 text-[13px] text-ink-soft;
+    box-shadow: inset 0 0 0 1px var(--color-hairline);
+  }
+
+  /* A clean header: the names only, muted, ruled above and below. */
+  .dt-laid .dt thead th {
+    @apply border-y border-hairline bg-surface px-3 py-2 text-[12px] font-medium text-muted backdrop-blur-none;
+  }
+  .dt-laid .dt thead th:not(:last-child) { box-shadow: inset -1px 0 0 color-mix(in srgb, var(--color-hairline) 60%, transparent); }
+  .dt-laid .dt thead th.sheet-pin-1 { box-shadow: inset -1px 0 0 var(--color-hairline); }
+  .dt-laid .dt-col-icon { @apply hidden; }
+  .dt-laid .sheet-table tbody td { @apply h-10; }
+  .dt-laid .sheet-table tbody td.sheet-pin-1 { @apply font-mono font-medium; }
+
+  .menu.dt-pop {
+    @apply fixed right-auto top-auto z-100 max-h-[min(420px,70vh)] w-64 overflow-y-auto;
+    transform-origin: top left;
+  }
+  .dt-pop .menu-label { @apply px-2.5 pb-1 pt-1.5 text-[11px] font-semibold text-muted; }
+  .dt-pop-label { @apply min-w-0 flex-1 truncate text-left; }
+  .dt-pop-count { @apply shrink-0 text-[11px] tabular-nums text-muted; }
+  .dt-pop .menu-item:hover .dt-pop-count { @apply text-white/80; }
+  .dt-pop-back { @apply font-semibold; }
+
+  /* --- Inspector: the row you clicked, in full, beside the sheet ------- */
+
+  .dt-inspect-wrap { @apply min-w-0; }
+  .dt-inspect-wrap.is-open {
+    @apply grid items-start gap-3;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .dt-inspector {
+    @apply relative sticky flex flex-col gap-3 overflow-y-auto p-4;
+    top: 8px;
+    max-height: calc(100vh - var(--tabbar-h) - var(--toolbar-h) - 24px);
+  }
+  .dt-inspector[hidden] { display: none; }
+  .dt-inspector-close {
+    @apply absolute right-2.5 top-2.5 grid size-7 cursor-pointer place-items-center rounded-full border-0
+           bg-transparent text-muted;
+  }
+  .dt-inspector-close:hover { @apply bg-sand-300/40 text-ink; }
+  .dt-inspector-head { @apply flex flex-wrap items-end gap-x-3 gap-y-2 pr-8; }
+  .dt-inspector-kicker { @apply w-full text-[11px] font-semibold text-muted; }
+  .dt-inspector-title { @apply font-mono text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink; }
+  .dt-inspector-head .btn { @apply ml-auto; }
+  .dt-inspector-empty { @apply m-0 text-[13px] text-muted; }
+  .dt-inspector-fields {
+    @apply m-0 grid gap-x-3 gap-y-1.5 border-t border-hairline pt-3 text-[13px];
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .dt-inspector-fields dt { @apply text-[12px] text-muted; }
+  .dt-inspector-fields dd { @apply m-0 min-w-0 break-words text-ink; }
+  .dt-inspector-label { @apply pb-1.5 text-[12px] font-semibold text-muted; }
+  .dt-inspector-fields :is(.status-pill, .sex-pill, .scope-pill) {
+    @apply inline-block rounded-full px-2 text-[11px] font-semibold capitalize leading-5;
+  }
+  .dt-inspector-rack { @apply border-t border-hairline pt-3; }
+  .dt-rack-mini { @apply grid gap-1; }
+  .dt-rack-cell {
+    @apply grid aspect-[4/3] min-w-0 place-items-center truncate rounded-md bg-sand-300/25 font-mono text-[10px]
+           text-muted no-underline;
+  }
+  a.dt-rack-cell.is-live { @apply bg-surface text-ink; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  a.dt-rack-cell:hover { @apply text-brand-700 no-underline; }
+  a.dt-rack-cell.is-here {
+    @apply bg-brand-600 font-semibold;
+    color: var(--color-on-brand, #fff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .dt tbody tr.is-inspected > td { background-image: linear-gradient(color-mix(in srgb, var(--color-brand-600) 7%, transparent), color-mix(in srgb, var(--color-brand-600) 7%, transparent)); }
+  @media (max-width: 1100px) {
+    .dt-inspect-wrap.is-open { @apply block; }
+    .dt-inspector { @apply static mt-3 max-h-none; }
+  }
+  @media (max-width: 640px) { .dt-btn-inspect { @apply hidden; } }
 
   /* --- Popover menu (Columns, Sort) ------------------------------------ */
 
@@ -2151,9 +2487,8 @@
   .sheet-save[data-state="saved"] { @apply text-ok-700; }
   .sheet-save[data-state="error"] { @apply font-medium text-danger-700; }
 
-  /* The selection bar sits under the sheet rather than floating over it. */
-  .sheet .selbar { @apply rounded-none border-x-0 border-b-0; }
-  .data-table-card > .selbar { bottom: var(--dt-bottom-h, 0px); @apply z-[33]; }
+  /* The selection bar floats over the sheet, above its bottom bar. */
+  .data-table-card > .selbar { bottom: calc(var(--dt-bottom-h, 0px) + 10px); @apply z-[33]; }
 }
 
 /* ===========================================================================
@@ -3157,7 +3492,7 @@
   .cmdk-input-row input::placeholder { @apply text-sand-400; }
   .cmdk-kbd { @apply kbd-chip shrink-0; }
 
-  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto bg-surface/70 p-1.5; }
+  .cmdk-results { @apply min-h-0 flex-1 overflow-y-auto p-1.5; }
   .cmdk-hint, .cmdk-empty { @apply px-2.5 py-8 text-center text-[13px] text-muted; }
 
   .cmdk-group-label {
@@ -3174,6 +3509,14 @@
     @apply w-[62px] shrink-0 rounded-md bg-sand-100 px-1.5 py-0.5 text-center
            text-[11px] font-semibold text-muted;
   }
+  /* An action or Ask: its icon in a round well, where a record has its kind. */
+  .cmdk-row-icon {
+    @apply grid size-7 shrink-0 place-items-center rounded-full bg-sand-300/30 text-ink-soft;
+  }
+  .cmdk-row-icon .icon { @apply size-[15px]; }
+  .cmdk-row-ask .cmdk-row-icon { @apply bg-brand-600; color: var(--color-on-brand, #fff); }
+  .cmdk-row-ask .cmdk-row-label { @apply font-medium; }
+  .cmdk-row > .cmdk-kbd { @apply ml-auto; }
   .cmdk-row-type-mouse   { @apply bg-info-50 text-info-600; }
   .cmdk-row-type-plasmid { @apply bg-brand-50 text-brand-700; }
   .cmdk-row-type-order   { @apply bg-warn-50 text-warn-700; }
@@ -3672,26 +4015,69 @@
 
 @layer components {
 
+  /* Floating glass, centred under the rows it acts on: one capsule of
+     "2 selected", the actions with their keys, ··· and × (selection-bar.js). */
   .selbar {
-    @apply sticky bottom-3 z-20 mb-3 flex flex-wrap items-center gap-2 rounded-2xl border
-           border-sand-300 bg-surface px-3 py-2.5 shadow-pop;
-    animation: selbar-in 0.16s var(--ease-out-soft);
+    @apply sticky bottom-4 z-20 mx-auto mb-3 flex w-fit max-w-[calc(100%-24px)] items-center gap-0.5
+           rounded-full py-1.5 pl-4 pr-1.5 whitespace-nowrap;
+    background: var(--glass-regular);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring),
+                0 18px 44px rgb(0 0 0 / 0.24);
+    animation: selbar-in 0.22s var(--ease-spring);
   }
   .selbar[hidden] { display: none; }
 
-  .selbar-count {
-    @apply shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-[13px] font-semibold text-brand-800;
-  }
+  .selbar-count { @apply mr-2.5 shrink-0 text-[13px] font-semibold text-ink; }
+  .selbar-line { @apply flex min-w-0 items-center gap-0.5 overflow-x-auto [scrollbar-width:none]; }
 
-  .selbar-group {
-    @apply flex shrink-0 items-center gap-1.5 rounded-xl border border-hairline
-           bg-sand-50 px-2 py-1.5;
+  .selbar-act {
+    @apply inline-flex h-[34px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent
+           px-3 text-[13px] font-normal text-ink transition-colors;
   }
-  .selbar-group select,
-  .selbar-group input { @apply field h-7 w-auto min-w-[104px] text-[12px]; }
-  .selbar-group input { @apply min-w-[128px]; }
+  .selbar-act:hover, .selbar-act[aria-expanded="true"] { @apply bg-sand-300/40; }
+  .selbar-act.is-danger { @apply text-danger-700; }
+  .selbar-kbd {
+    @apply inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] bg-sand-300/50 px-1 font-mono
+           text-[10px] font-medium text-muted;
+  }
+  .selbar-icon {
+    @apply grid size-[34px] shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-ink-soft;
+  }
+  .selbar-icon:hover { @apply bg-sand-300/40 text-ink; }
+  .selbar-icon .icon { @apply size-[15px]; }
+  .selbar-clear { @apply ml-0.5 bg-sand-300/45; }
+  .selbar-clear .icon { @apply size-3; }
 
-  .selbar-spacer { @apply ml-auto; }
+  /* An action that asks for something opens above the bar. */
+  .selbar-pop {
+    background: var(--material-popover);
+    box-shadow: 0 0 0 0.5px var(--glass-rim), var(--shadow-lg);
+    @apply fixed z-[70] flex w-max max-w-[min(560px,calc(100vw-32px))] flex-col gap-2 rounded-[22px] p-3 whitespace-normal;
+    animation: menu-grow 0.18s var(--ease-spring);
+    transform-origin: bottom center;
+  }
+  .selbar-pop[hidden] { display: none; }
+  .selbar-form { @apply flex flex-wrap items-center gap-2; }
+  .selbar-form[hidden] { display: none; }
+  .selbar-pop-title { @apply w-full text-[12px] font-semibold text-muted; }
+  .selbar-form select,
+  .selbar-form input:not([type=hidden]) { @apply field h-8 w-auto min-w-[150px] rounded-full text-[13px]; }
+  .selbar-form .btn { @apply h-8 rounded-full px-3.5; }
+  .selbar-weigh-day { @apply flex items-center gap-2 text-[12px] text-muted; }
+  .selbar-form .selbar-weigh-day input { @apply h-7 w-auto min-w-0; }
+  .selbar-weighs { @apply grid max-h-[40vh] w-full grid-cols-2 gap-1.5 overflow-y-auto sm:grid-cols-3; }
+  .selbar-weigh { @apply flex items-center gap-1.5 rounded-full bg-sand-300/25 py-0.5 pl-3 pr-1; }
+  .selbar-weigh-id { @apply min-w-0 flex-1 truncate font-mono text-[12px] font-medium; }
+  .selbar-form .selbar-weigh input { @apply h-7 w-[72px] min-w-0 text-right font-mono; }
+  .selbar-weigh-unit { @apply pr-1.5 text-[11px] text-muted; }
+  .menu.selbar-more-menu { @apply fixed top-auto z-[70] flex w-56 flex-col; transform-origin: bottom right; }
+  .menu.selbar-more-menu[hidden] { display: none; }
+  .selbar-more-menu .selbar-act { @apply h-8 w-full justify-start rounded-[9px] px-2.5; }
+  .selbar-more-menu .selbar-act .selbar-kbd { @apply ml-auto; }
+  .selbar-more-menu .menu-item-danger:not(:hover) { @apply text-danger-700; }
+  .selbar-more-menu .selbar-act:hover .selbar-kbd { @apply bg-white/25 text-white; }
 
   /* A ticked row should be obvious at a glance — the bar acts on these. */
   .dense-table tbody tr.is-selected,
@@ -3699,9 +4085,8 @@
   .dense-table tbody tr.is-selected:hover { @apply bg-brand-50; }
 
   @media (max-width: 640px) {
-    .selbar { @apply flex-col items-stretch; }
-    .selbar-group { @apply flex-wrap; }
-    .selbar-spacer { @apply hidden; }
+    .selbar { @apply max-w-[calc(100%-16px)] pl-3; }
+    .selbar-kbd { @apply hidden; }
   }
 }
 
@@ -4156,6 +4541,79 @@
     @apply my-2 flex items-center gap-2 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-[13px] text-muted;
   }
   .preset-readonly-note svg { @apply size-3.5 shrink-0 text-sand-400; }
+
+  /* The colony's Dropdowns tab (static/choices.js): the columns on a pane
+     of glass, and the one picked beside it, its choices as rows to rename,
+     drag and remove, with how many records hold each. */
+  .choices { @apply grid items-start gap-3.5; grid-template-columns: 260px minmax(0, 1fr); }
+  .choices-nav, .choices-pane {
+    @apply flex flex-col rounded-[26px] p-3.5;
+    background: var(--glass-regular);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    backdrop-filter: blur(28px) saturate(190%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  }
+  .choices-nav { @apply sticky top-1.5 gap-1; }
+  .choices-nav-head { @apply px-2 pb-2.5 pt-1; }
+  .choices-nav-head h2 { @apply m-0 text-[17px] font-semibold text-ink; }
+  .choices-nav-head p { @apply mt-1 text-[12px] leading-snug text-muted; }
+  .choices-col { @apply flex min-w-0 flex-col gap-0.5 rounded-2xl px-3 py-2 text-ink no-underline; }
+  .choices-col:hover { @apply no-underline; background: color-mix(in srgb, var(--color-ink) 5%, transparent); }
+  .choices-col b { @apply text-[13px] font-semibold; }
+  .choices-col small { @apply truncate text-[12px] text-muted; }
+  .choices-col.is-active { background: var(--glass-solid); box-shadow: inset 0 0 0 1px var(--glass-ring), 0 1px 3px rgb(0 0 0 / 0.06); }
+  .choices-col.is-active b { @apply text-brand-700; }
+  .choices-lock { @apply mt-2 flex items-start gap-1.5 px-2 text-[12px] text-muted; }
+  .choices-lock .icon { @apply mt-0.5 size-3.5 shrink-0; }
+
+  .choices-pane { @apply gap-3 p-5; }
+  .choices-head h3 { @apply m-0 flex items-baseline gap-2 text-[22px] font-semibold tracking-[-0.01em] text-ink; }
+  .choices-head h3 span { @apply text-[13px] font-normal text-muted; }
+  .choices-head p { @apply mt-1 max-w-[60ch] text-[13px] text-muted; }
+  .choices-list { @apply m-0 flex list-none flex-col gap-1.5 p-0; }
+  .choice {
+    @apply flex items-center gap-2 rounded-xl px-2 py-1.5;
+    background: var(--glass-solid);
+    box-shadow: inset 0 0 0 1px var(--glass-ring), 0 1px 2px rgb(0 0 0 / 0.04);
+  }
+  .choice.is-dragging { @apply opacity-50; }
+  .choice-grip { @apply grid size-6 shrink-0 cursor-grab place-items-center rounded-md text-sand-400; }
+  .choice-grip:active { @apply cursor-grabbing; }
+  .choice-grip .icon { @apply size-4; }
+  .choice-name { @apply min-w-0 flex-1 truncate rounded-lg border border-transparent bg-transparent px-2 py-1 text-[13px] font-medium text-ink; }
+  input.choice-name:hover { border-color: var(--color-hairline); }
+  input.choice-name:focus { @apply outline-none; border-color: var(--focus-border); box-shadow: var(--focus-ring); background: var(--color-surface); }
+  .choice-name.is-fixed { @apply flex items-center gap-1.5; }
+  .choice-name.is-fixed .icon { @apply size-3.5 text-sand-400; }
+  .choice-name.is-fixed small { @apply rounded-full px-1.5 text-[11px] font-normal text-muted; background: color-mix(in srgb, var(--color-ink) 6%, transparent); }
+  .choice.is-built-in { background: color-mix(in srgb, var(--glass-solid) 60%, transparent); }
+  .choice-uses { @apply shrink-0 rounded-full px-2 py-0.5 font-mono text-[11px] text-ink-soft; background: color-mix(in srgb, var(--color-ink) 6%, transparent); }
+  .choice-uses.is-none { @apply bg-transparent text-muted; }
+  .choice-remove { @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-sand-400 opacity-0 transition-opacity; }
+  .choice:hover .choice-remove, .choice:focus-within .choice-remove { @apply opacity-100; }
+  .choice-remove:hover { @apply text-danger-600; background: color-mix(in srgb, var(--color-danger-600) 10%, transparent); }
+  .choice-remove .icon { @apply size-3.5; }
+  @media (hover: none) { .choice-remove { @apply opacity-100; } }
+  .choices-empty { @apply m-0 rounded-xl px-3 py-4 text-center text-[13px] text-muted; background: color-mix(in srgb, var(--color-ink) 4%, transparent); }
+
+  .choice-add { @apply flex items-start gap-2 rounded-xl px-2.5 py-1.5; box-shadow: inset 0 0 0 1px var(--color-hairline); background: var(--color-surface); }
+  .choice-add:focus-within { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+  .choice-add > .icon { @apply mt-2 size-4 shrink-0 text-muted; }
+  .choice-add textarea { @apply min-h-8 flex-1 resize-none border-0 bg-transparent px-0 py-1.5 text-[13px] text-ink outline-none; box-shadow: none; }
+  .choices-hint { @apply -mt-1.5 px-1 text-[12px] text-muted; }
+
+  .choices-loose { @apply mt-1 border-t border-hairline pt-3; }
+  .choices-loose h4 { @apply m-0 mb-2 text-[12px] font-semibold text-muted; }
+  .choices-loose ul { @apply m-0 flex list-none flex-wrap gap-1.5 p-0; }
+  .choices-loose li { @apply flex items-center gap-2 rounded-full py-0.5 pl-3 pr-1 text-[13px]; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  .choices-loose li small { @apply font-mono text-[11px] text-muted; }
+  .choices-loose li .btn { @apply h-6 rounded-full px-2 text-[12px]; }
+
+  @media (max-width: 767px) {
+    .choices { grid-template-columns: minmax(0, 1fr); }
+    .choices-nav { @apply static; }
+    .choice-uses { @apply hidden; }
+  }
   .preset-edit-form input:disabled { @apply cursor-default bg-transparent; }
 }
 
@@ -4258,10 +4716,156 @@
   /* The databases row on the home page. */
   .home-dbs { @apply flex flex-wrap gap-2; }
   /* Home's cards, in each person's order (templates/home.html). */
-  .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2; }
+  /* Bento: two across, three on a wide window; a wide card takes the row,
+     and the grid fills the gaps a tall card leaves. */
+  .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3; grid-auto-flow: row dense; }
   .home-card { @apply flex min-w-0 flex-col; }
   .home-card > .card { @apply h-full; }
-  .home-card.is-wide { @apply lg:col-span-2; }
+  .home-card.is-wide { @apply lg:col-span-2 2xl:col-span-3; }
+
+  /* The daily brief: glass, above the views. */
+  .home-brief {
+    @apply mb-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[26px] px-5 py-4;
+    background: var(--glass-regular);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring),
+                0 0 0 1px color-mix(in srgb, var(--color-brand-600) 18%, transparent), var(--glass-lift);
+  }
+  .home-brief-mark {
+    @apply grid size-9 shrink-0 place-items-center rounded-full bg-brand-600;
+    color: var(--color-on-brand, #fff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .home-brief-mark .icon { @apply size-[18px]; }
+  .home-brief-text { @apply min-w-0 flex-1 basis-[320px]; }
+  .home-brief-label { @apply text-[11px] font-semibold text-brand-700; }
+  .home-brief-text p { @apply m-0 mt-0.5 text-[15px] leading-relaxed text-ink; }
+  .home-brief-text a { @apply text-ink no-underline; }
+  .home-brief-text a:hover { @apply text-brand-700 underline; }
+  .home-brief-actions { @apply flex shrink-0 gap-2; }
+  .home-brief-actions .btn { @apply h-9 rounded-full px-4; }
+
+  /* Overview's bento (templates/home.html): rows of thick glass panels that
+     wrap, a wide one (.is-2) taking twice the room. */
+  .home-bento { @apply mb-4 flex flex-col gap-3.5; }
+  .home-bento-row { @apply flex flex-wrap gap-3.5; }
+  .home-bento-row:empty { @apply hidden; }
+  .home-panel {
+    @apply flex min-w-0 flex-[1_1_250px] flex-col rounded-[26px] px-[18px] py-4 text-[13px] text-ink no-underline;
+    background: var(--glass-thick);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+  }
+  a.home-panel:hover { @apply no-underline; box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px color-mix(in srgb, var(--color-brand-600) 40%, transparent), var(--glass-lift); }
+  .home-panel.is-2 { @apply flex-[2_1_520px]; }
+  .home-panel-head { @apply mb-2.5 flex items-center gap-2; }
+  .home-panel-head h2 { @apply m-0 whitespace-nowrap text-[15px] font-semibold text-ink; }
+  .home-panel-head > a { @apply ml-auto font-medium text-brand-700 no-underline; }
+  .home-panel-head > a:hover { @apply underline; }
+  .home-panel-n { @apply font-normal text-muted; }
+  .home-panel-seg { @apply ml-auto flex shrink-0 gap-0.5 rounded-full p-0.5; background: color-mix(in srgb, var(--color-ink) 6%, transparent); }
+  .home-panel-seg a { @apply rounded-full px-2 py-0.5 text-[12px] font-medium text-muted no-underline; }
+  .home-panel-seg a:hover { @apply text-ink no-underline; }
+  .home-panel-seg a[aria-current] { @apply text-ink; background: var(--glass-solid); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), inset 0 0 0 1px var(--glass-ring); }
+  .home-panel-mark { @apply grid size-[26px] place-items-center rounded-[9px] bg-teal-100 text-teal-800; }
+  .home-panel-mark .icon { @apply size-[15px]; }
+  .home-panel-empty { @apply m-0 py-2 text-muted; }
+  .home-panel-more { @apply m-0 pt-2 text-[12px] text-muted; }
+
+  /* This week: seven days, a dot for each kind of work due. */
+  .home-week { @apply mb-3 grid grid-cols-7 gap-1.5; }
+  .home-day {
+    @apply flex flex-col items-center rounded-2xl py-2 text-ink no-underline transition-colors;
+  }
+  .home-day:hover { @apply bg-sand-300/30 no-underline; }
+  .home-day.is-past { @apply opacity-55; }
+  .home-day.is-today {
+    @apply bg-brand-600;
+    color: var(--color-on-brand, #fff);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 14px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
+  }
+  .home-day-dow { @apply text-[11px] opacity-80; }
+  .home-day-n { @apply text-[17px] font-semibold tabular-nums; }
+  .home-day-dots { @apply mt-[3px] flex h-1.5 justify-center gap-[3px]; }
+  .home-day-dots i { @apply size-[5px] rounded-full bg-sand-400; }
+  .home-day.is-today .home-day-dots i { background: currentColor !important; opacity: 0.85; }
+  :is(.home-day-dots i, .home-pill)[data-tone="event"] { --tone: var(--color-sky-600); --tone-bg: var(--color-sky-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="colony"] { --tone: var(--color-teal-600); --tone-bg: var(--color-teal-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="fish"] { --tone: var(--color-blue-600); --tone-bg: var(--color-blue-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="stock"] { --tone: var(--color-violet-600); --tone-bg: var(--color-violet-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="supply"] { --tone: var(--color-amber-600); --tone-bg: var(--color-amber-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="todo"] { --tone: var(--color-pink-600); --tone-bg: var(--color-pink-100); }
+  :is(.home-day-dots i, .home-pill)[data-tone="overdue"] { --tone: var(--color-danger-700); --tone-bg: var(--color-danger-50); }
+  .home-day-dots i[data-tone] { background: var(--tone, var(--color-sand-400)); }
+  .home-today-row, .home-look-row, .home-page-row {
+    @apply flex min-w-0 items-center gap-3 border-t border-hairline px-1 py-[9px] text-ink no-underline;
+  }
+  :is(.home-today-row, .home-look-row, .home-page-row):hover { @apply no-underline; }
+  :is(.home-today-row, .home-look-row, .home-page-row):hover > span:not(.home-pill) { @apply text-brand-700; }
+  .home-today-ring { @apply size-[18px] shrink-0 rounded-full; box-shadow: inset 0 0 0 1.5px var(--color-sand-400); }
+  .home-today-ring.is-overdue { box-shadow: inset 0 0 0 1.5px var(--color-danger-600); }
+  .home-today-title { @apply min-w-0 flex-1 truncate font-medium; }
+  .home-pill {
+    @apply inline-flex h-[22px] shrink-0 items-center rounded-full px-2.5 text-[12px] font-medium;
+    background: var(--tone-bg, var(--color-sand-200)); color: var(--tone, var(--color-ink-soft));
+  }
+  .home-pill.is-mono { @apply font-mono font-normal; }
+
+  /* The colony: its count, how much of it is active, yours and what is due. */
+  .home-colony { @apply gap-2.5; }
+  .home-colony .home-panel-head { @apply mb-0; }
+  .home-colony-n { @apply text-[40px] font-medium leading-none tracking-[-0.03em] tabular-nums; }
+  .home-colony-bar { @apply flex h-2 overflow-hidden rounded-full bg-sand-300/40; }
+  .home-colony-bar i { @apply bg-teal-500; }
+  .home-colony-split { @apply flex justify-between text-muted; }
+  .home-colony-tiles { @apply mt-auto flex gap-1.5; }
+  .home-colony-tiles > span { @apply flex flex-1 flex-col rounded-[14px] bg-sand-300/30 px-2.5 py-2; }
+  .home-colony-tiles small { @apply text-[12px] text-muted; }
+  .home-colony-tiles b { @apply text-[17px] font-semibold tabular-nums; }
+
+  .home-look-id { @apply shrink-0 font-mono text-[12px] text-muted; }
+  .home-look-text { @apply min-w-0 flex-1 truncate; }
+
+  /* For you: who, what, and Open. */
+  .home-req-row { @apply flex min-w-0 items-center gap-2.5 border-t border-hairline py-[9px]; }
+  .home-req-mark { @apply grid size-7 shrink-0 place-items-center rounded-full bg-sand-300/40 text-muted; }
+  .home-req-mark .icon { @apply size-3.5; }
+  .home-req-text { @apply flex min-w-0 flex-1 flex-col; }
+  .home-req-text b { @apply truncate font-medium; }
+  .home-req-text small { @apply truncate text-[12px] text-muted; }
+  .home-req-open {
+    @apply inline-flex h-7 shrink-0 items-center rounded-full bg-brand-600/12 px-3 font-semibold text-brand-800 no-underline;
+  }
+  .home-req-open:hover { @apply bg-brand-600/20 no-underline; }
+
+  /* Your databases: a tile each, its mark, name and count. */
+  .home-dbgrid { @apply grid gap-2; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .home-dbtile {
+    @apply flex min-w-0 items-center gap-2.5 rounded-[18px] bg-sand-300/25 p-2.5 text-ink no-underline transition-colors;
+  }
+  .home-dbtile:hover { @apply bg-sand-300/45 no-underline; }
+  .home-dbtile.is-add { @apply bg-transparent text-muted; box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  .home-dbtile-mark { @apply grid size-[34px] shrink-0 place-items-center rounded-[11px] bg-sand-200 text-ink-soft; }
+  .home-dbtile-mark .icon { @apply size-[17px]; }
+  .home-dbtile-mark[data-tone="0"] { @apply bg-teal-100 text-teal-800; }
+  .home-dbtile-mark[data-tone="1"] { @apply bg-sky-100 text-sky-800; }
+  .home-dbtile-mark[data-tone="2"] { @apply bg-violet-100 text-violet-800; }
+  .home-dbtile-mark[data-tone="3"] { @apply bg-amber-100 text-amber-900; }
+  .home-dbtile-mark[data-tone="4"] { @apply bg-pink-100 text-pink-800; }
+  .home-dbtile-mark[data-tone="5"] { @apply bg-lime-100 text-lime-900; }
+  .home-dbtile.is-add .home-dbtile-mark { @apply bg-transparent text-muted; }
+  .home-dbtile-text { @apply flex min-w-0 flex-col; }
+  .home-dbtile-text b { @apply truncate font-medium; }
+  .home-dbtile-text small { @apply truncate text-[12px] text-muted; }
+
+  .home-page-row .icon { @apply size-4 shrink-0 text-muted; }
+  .home-page-row > span { @apply min-w-0 flex-1 truncate; }
+  .home-page-row small { @apply shrink-0 text-[12px] text-muted; }
+
+  /* Home's title: the day as a small kicker above a large greeting. */
+  body:has(.home-bento) { --toolbar-h: 92px; }
+  body:has(.home-bento) .toolbar { @apply pt-1.5; }
+  body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse gap-1.5; }
+  body:has(.home-bento) .toolbar-title { @apply text-[28px] font-semibold tracking-[-0.03em]; }
+  body:has(.home-bento) .toolbar-sub { @apply mt-0 font-mono text-[12px] uppercase tracking-[0.05em]; }
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
   .home-cust-list { @apply flex flex-col gap-1; }
   .home-cust-row { @apply flex items-center gap-2 rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px]; }
@@ -4519,14 +5123,29 @@ tr.is-scanned > td:first-child {
   .settings {
     --set-lab: #5B6B80;
     --set-lab-tint: rgb(91 107 128 / 0.14);
-    @apply grid grid-cols-1 items-start gap-6 md:grid-cols-[230px_minmax(0,1fr)];
+    @apply grid grid-cols-1 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)];
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
   }
   :root[data-theme="dark"] .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
 
+  /* The list of panes: a pane of glass of its own, as the calendar's and
+     the notebook's side panels are; the open pane beside it a thick sheet. */
   .settings-nav { @apply flex flex-col gap-0.5 md:sticky md:top-4; }
+  @media (min-width: 768px) {
+    .settings-nav {
+      @apply rounded-[26px] px-2.5 pb-3 pt-3;
+      background: var(--glass-regular);
+      -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+      box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+    }
+    .settings.is-ready .set-pane.is-on {
+      @apply rounded-[26px] px-7 pb-8 pt-6;
+      background: var(--glass-thick);
+      box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+    }
+  }
   .set-search { @apply mb-2; }
   .set-search input { @apply h-8 rounded-full text-[13px]; }
   .set-me {
@@ -4538,8 +5157,11 @@ tr.is-scanned > td:first-child {
   .set-me.is-on { @apply bg-brand-50; }
   .set-group-head { @apply mt-3 mb-1 px-2 text-[12px] font-semibold text-muted; }
   .set-link {
-    @apply flex items-center gap-2.5 rounded-lg px-2 py-[5px] text-[13px] no-underline text-ink transition-colors;
+    @apply flex items-center gap-2.5 rounded-xl px-2 py-[5px] text-[13px] no-underline text-ink transition-colors;
   }
+  .set-link-text { @apply flex min-w-0 flex-col; }
+  /* What a pane is set to now, under its name. */
+  .set-link-sub { @apply truncate text-[11px] font-normal text-muted; }
   .set-link:hover { @apply bg-sand-100; }
   /* The open pane: a soft tint of the accent, as in the sidebar. */
   .set-link.is-on { @apply bg-brand-600/14 font-semibold text-brand-800; }
@@ -4556,12 +5178,23 @@ tr.is-scanned > td:first-child {
 
   /* Until the script picks one, every pane shows (and without JavaScript). */
   .settings.is-ready .set-pane:not(.is-on) { @apply hidden; }
-  .set-pane { @apply min-w-0 max-w-[700px] pb-10; }
+  .set-pane { @apply min-w-0 max-w-[760px] pb-10; }
+  /* Whose these settings are, and who changes them. */
+  .set-scope { @apply mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium; }
+  .set-scope svg { @apply size-3; }
+  .set-scope.is-you { background: color-mix(in srgb, var(--color-brand-600) 12%, transparent); color: var(--color-brand-800); }
+  .set-scope.is-lab { background: var(--set-lab-tint); color: var(--set-lab); }
+  /* Each database's own set-up, one row each. */
+  .set-row input[list] { padding-right: 26px; }
+  .set-config { @apply no-underline transition-colors; }
+  .set-config:hover { @apply bg-sand-100 no-underline; }
+  .set-config-go { @apply ml-auto inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-brand-700; }
+  .set-config-go svg { @apply size-3.5; }
   .set-pane + .set-pane { @apply mt-8; }
   .settings.is-ready .set-pane + .set-pane { @apply mt-0; }
   .set-back { @apply mb-3 hidden items-center gap-1 text-[13px] font-medium text-brand-700 no-underline; }
   .set-back svg { @apply size-4; }
-  .set-head { @apply mb-4 flex items-center gap-3; }
+  .set-head { @apply mb-4 flex items-start gap-3; }
   .set-head h2 { @apply m-0 text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink; }
   .set-head p { @apply mt-0.5 mb-0 text-[13px] leading-snug text-muted; }
   .set-head p svg { @apply inline size-3 align-[-1px]; }
@@ -4603,6 +5236,8 @@ tr.is-scanned > td:first-child {
   .set-row > :is(select, form > select):focus-visible { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
   .set-row > input:not([type="checkbox"]):not([type="radio"]):focus { @apply border-hairline bg-sand-50 text-left outline-none; }
   .set-row > .set-input-short { @apply w-24; }
+  .set-icon-pick { @apply flex shrink-0 items-center gap-2; }
+  .set-icon-preview { @apply size-10 rounded-xl object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   a.set-row-link { @apply cursor-pointer transition-colors; }
   a.set-row-link:hover { @apply bg-sand-50; }
   .set-chev { @apply size-4 shrink-0 text-sand-400; }

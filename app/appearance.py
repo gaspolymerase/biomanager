@@ -400,10 +400,11 @@ def set_choice(session, username: str, glyph: str, color: str) -> tuple[str, str
     return glyph, color
 
 
-# The person's font (Settings → Appearance): Inter, which the app ships, or the
-# computer's own (SF Pro on a Mac, Segoe UI on Windows). base.html puts
-# data-font="system" on the page for the latter (frontend/src/tailwind.css).
-FONTS = ("inter", "system")
+# The person's font (Settings → Appearance): Geist or Inter, which the app
+# ships, or the computer's own (SF Pro on a Mac, Segoe UI on Windows).
+# base.html puts data-font="inter" or "system" on the page for the latter two
+# (frontend/src/tailwind.css).
+FONTS = ("geist", "inter", "system")
 
 
 def get_font(session, username: str) -> str:

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Plasmids, primers and stocks — BioManager user guide</title>
-  <meta name="description" content="Plasmid records with their sequence and map, and the box each tube is in.">
+  <meta name="description" content="Plasmid records with their map, sequence and protein, their digests and gels, the primers that bind them, the clones checked by sequencing, and the box each tube is in.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#fbfdfc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1413" media="(prefers-color-scheme: dark)">
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="BioManager">
   <meta property="og:url" content="https://biomanager.org/guide/plasmids">
   <meta property="og:title" content="Plasmids, primers and stocks — BioManager user guide">
-  <meta property="og:description" content="Plasmid records with their sequence and map, and the box each tube is in.">
+  <meta property="og:description" content="Plasmid records with their map, sequence and protein, their digests and gels, the primers that bind them, the clones checked by sequencing, and the box each tube is in.">
   <meta property="og:image" content="https://biomanager.org/assets/social-card.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
@@ -137,7 +137,7 @@
     <!-- page -->
     <p class="eyebrow">Your databases</p>
     <h1>Plasmids</h1>
-    <p class="summary">Plasmid records with their sequence and map, and the box each tube is in.</p>
+    <p class="summary">Plasmid records with their map, sequence and protein, their digests and gels, the primers that bind them, the clones checked by sequencing, and the box each tube is in.</p>
     <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Plasmids</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/plasmid.webp" data-clip-src="../assets/clips/plasmid"></video></div></figure>
       <h2 id="a-week">What this does for your cloning</h2>
       <p>A construct is only as good as what you can still prove about it a year later: what it was built from, which primers
@@ -151,10 +151,10 @@
           <b>Primers</b> database marked <i>to order</i>, with the plasmid beside them. Tick them and
           <b>Copy for ordering</b> hands the list to your supplier — after <b>Find saved primers</b> has shown any the lab
           already has that bind.</td></tr>
-        <tr><th>Checking what you got</th><td><b>Verify sequencing</b> checks the Sanger reads of each clone against the map
-          and names every base that differs, and what it does to the protein; <b>Detect features</b> marks the lab's known
-          elements on a new map, and the reads that confirmed the clone live on the plasmid itself under <b>Files</b>, with the
-          gel photo.</td></tr>
+        <tr><th>Checking what you got</th><td><b>Digest</b> shows the enzymes that tell a right clone from the backbone and the
+          gel you should see; <b>Verify</b> checks the Sanger reads of each clone against the map, names every base that differs
+          and what it does to the protein, and <b>Accept</b> marks the clone you keep. The reads live on the plasmid itself under
+          <b>Files</b>, with the gel photo.</td></tr>
         <tr><th>Finding the tube</th><td>Every plasmid has a box position, and the bacteria carrying it sit in
           <b>Glycerol stocks</b> with their own box — so "which tube" has an answer that is not a colleague's memory.</td></tr>
         <tr><th>Handing it on</th><td>A virus made from it names the plasmid; the plasmid's page lists what was made from it.
@@ -169,28 +169,49 @@
       </ul>
       <h2 id="the-sheet">The plasmid sheet</h2>
       <ul>
-        <li>Show them as a <b>Table</b>, by storage <b>Boxes</b>, or as a <b>List</b>; chips for <i>Mine</i>, <i>Has sequence</i>, <i>In a box</i>.</li>
+        <li>Show them as a <b>Table</b>, by storage <b>Boxes</b>, or as a <b>List</b>, where each has its small map and says when
+          a clone of it was verified; chips for <i>Mine</i>, <i>Has sequence</i>, <i>In a box</i>.</li>
         <li><b>Sequence</b>, beside each plasmid's number in the table, opens its sequence and map (<b>Add sequence</b> when it has
           none yet); the number opens the same page.</li>
         <li><b>New plasmid</b> takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) —
           or paste a list of names to make several. Drop in a SnapGene <code>.dna</code>, GenBank, FASTA or plain-text sequence: its name, features and every
           annotation note come with it, and a file of several sequences keeps the first and says so.</li>
       </ul>
-      <h2 id="the-map">The sequence and its map</h2>
+      <h2 id="the-map">The map, the sequence and the protein</h2>
       <ul>
-        <li>Open a plasmid to see its sequence and features on an interactive map you can edit (edits save themselves), full screen if
-          you like. <b>Download</b> above the map gives it as GenBank (with every feature) or FASTA. <b>Versions</b>, below the map, lists every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.
-          <b>Storage</b> and <b>Properties</b> are the other tabs.
-          On <b>Properties</b>, <b>Made from</b> records its backbone, insert or template (a plasmid in the lab, by number or name,
-          or one from outside it such as <i>Addgene #11150</i>) and how it was made; the page then shows <b>Made from</b> and
-          <b>Used to make</b> above the map, and a <b>Family tree</b> both ways. <b>Storage</b> also lists its <a href="samples-and-orders.html">glycerol stocks</a>, with the box each is in, and the viruses made from it
-          (<a href="samples-and-orders.html">Viruses</a>). Its address carries its number: plasmid #12 is <code>…/plasmid/12</code>.</li>
+        <li>A plasmid's page has seven tabs: <b>Overview</b>, <b>Sequence</b>, <b>Digest</b>, <b>Verify</b>, <b>Primers</b>,
+          <b>Storage</b> and <b>Properties</b>. Its address carries its number: plasmid #12 is <code>…/plasmid/12</code>.</li>
+        <li><b>Overview</b> is its map, with the features named round it, and <b>SVG</b> and <b>PNG</b> above it to save the map
+          for a lab meeting or a paper. Beside it: its size, backbone, resistance, owner, where the tube is, whether a clone was
+          verified, what it was made from and what was made from it, and its features; click a feature to see it in the sequence.</li>
+        <li><b>Sequence</b> shows every base, with the complement under it, the features as bars, the enzymes that cut once above
+          it, the lab's primers as arrows (amber when they bind with a mismatch), and the protein of each coding feature under it,
+          a letter under each codon. The chips at the top turn each of these on and off; <b>6 frames</b> shows every open reading
+          frame of 100 codons or more on both strands instead of the coding features. Type in <b>Find</b> to go to bases (on either
+          strand), a primer, an enzyme or a feature; Enter goes to the next. The bar under it is the whole plasmid: click it to go
+          there.</li>
+        <li><b>Drag across bases</b> to pick them: a small bar says where they are, how many, and their Tm and GC.
+          <b>Forward primer</b> or <b>Reverse</b> checks them as a primer on the right: its length, Tm, GC, whether it ends in a
+          G/C clamp, its hairpin and self-dimer, whether it binds this plasmid only once, and whether the lab already has the same
+          primer or one close by. Give it a name (one is suggested, such as <i>EGFP-mid-F</i>), add a 5′ tail if it needs a site
+          or an overlap, and <b>Save to Primers</b> files it in the lab's <a href="samples-and-orders.html">Primers</a>, marked
+          <i>to order</i>, with this plasmid beside it. <b>Copy</b> copies the bases; <b>Translate</b> reads them as codons.</li>
+        <li><b>Click a coding feature</b> to see its protein on the right: its length, mass, pI, extinction coefficient at 280 nm,
+          how it starts and ends, and whether a stop sits inside it, then the amino acids ten to a group; <b>Copy</b> copies them.</li>
+        <li><b>Edit the sequence, its features and its map</b>, under the sequence, opens the editor (edits save themselves),
+          full screen if you like. <b>Download</b> gives it as GenBank (with every feature) or FASTA, and <b>Versions</b> lists
+          every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.</li>
+        <li>On <b>Properties</b>, <b>Made from</b> records its backbone, insert or template (a plasmid in the lab, by number or name,
+          or one from outside it such as <i>Addgene #11150</i>) and how it was made; <b>Overview</b> then shows <b>Made from</b> and
+          <b>Used to make</b>, and Properties a <b>Family tree</b> both ways. <b>Storage</b> lists its <a href="samples-and-orders.html">glycerol stocks</a>, with the box each is in, and the viruses made from it
+          (<a href="samples-and-orders.html">Viruses</a>).</li>
       </ul>
-      <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid map" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid map</figcaption></figure>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid's Overview: its map, what it is, and its features" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid's Overview</figcaption></figure>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-sequence.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-sequence.webp" alt="EGFP picked on the Sequence tab, its protein beside it" loading="lazy" width="2000" height="1250"></a><figcaption>The sequence, with EGFP's protein</figcaption></figure>
       <h2 id="features">Knowing what a sequence holds</h2>
       <ul>
         <li>The <b>Feature library</b> (a button at the top of Plasmids, beside Table · Boxes · List) keeps the lab's elements by sequence: promoters, ITRs and LTRs,
-          WPRE, resistance genes, tags. <b>Add to library</b>, above a well-annotated map (a SnapGene or Addgene file, say), keeps its
+          WPRE, resistance genes, tags. <b>Add to library</b>, above the editor of a well-annotated map (a SnapGene or Addgene file, say), keeps its
           named features there; an admin can <b>Collect from every plasmid</b>. On the library page, <b>Read elements from files</b>
           takes them straight from annotated files — the GenBank a repository gives you, a SnapGene <code>.dna</code>, a vendor's map —
           several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because
@@ -201,14 +222,14 @@
           Search the library by name or by sequence. On any other plasmid, <b>Detect features</b> marks
           each library element wherever it is, on either strand and across the origin, and keeps the map as it was in <b>Versions</b>.</li>
         <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
-          <b>Annotate with pLannotate</b> then appears above the map. It finds elements by comparing sequences rather than matching
+          <b>Annotate with pLannotate</b> then appears above the editor. It finds elements by comparing sequences rather than matching
           them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
           miss. Everything it marks is kept in <b>Versions</b>, so it can be undone.</li>
       </ul>
       <h2 id="building">Building a new plasmid</h2>
       <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Assemble a plasmid</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/assembly.webp" data-clip-src="../assets/clips/assembly"></video></div></figure>
       <ul>
-        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map, builds the next plasmid out of the
+        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map's editor, builds the next plasmid out of the
           ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases,
           or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together
           three ways: <b>digest and ligate</b> (cut with the same enzymes and let the sticky ends meet),
@@ -230,7 +251,7 @@
           ordering</b> picks them up with the rest.</li>
         <li>A primer you draw on the map (select bases, then <b>Edit → Create → Primer</b>) is also kept in the lab's
           <a href="samples-and-orders.html">Primers</a> database, marked <i>to order</i>, with the plasmid in its <b>Plasmid</b> column.
-          The <b>Primers</b> card under the map lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
+          The <b>Primers</b> card on the Sequence tab lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
           <b>Copy for ordering</b> (name and sequence, one per line, to paste into a supplier's form) or <b>Export for ordering</b> (a CSV).</li>
         <li>Before you order a new primer, turn on <b>Find saved primers</b> on that card. It looks through every primer saved in the
           Primers databases you can see — whichever plasmid they were made for — and lists each one that binds this sequence: where,
@@ -240,11 +261,48 @@
           while they are shown leaves them out. A primer only counts if at least its last 15 bases match exactly. The same switch is
           on the read-only map that a glycerol stock or virus opens.</li>
       </ul>
-      <h2 id="verify">Checking a clone's sequencing</h2>
+      <h2 id="digest">Cutting it: the Digest tab</h2>
       <ul>
-        <li><b>Verify sequencing</b>, below the map, checks Sanger reads of a miniprep or clone against this plasmid. Choose the
-          reads — the <code>.ab1</code> chromatograms the sequencing service sends, or FASTA or text files — or paste the bases
-          under <b>Paste reads instead</b>; reads already kept under <b>Files</b> can be ticked to check again. Press <b>Verify</b>.</li>
+        <li>Tick up to four enzymes on the left — <b>Unique</b> lists the ones that cut once, <b>Two</b> those that cut twice,
+          <b>All</b> every one, <b>In freezer</b> the ones in the lab's <a href="samples-and-orders.html">Reagents</a> (a reagent
+          named <i>EcoRI-HF</i> counts as EcoRI; a snowflake marks them, and the tube's place shows under the list).</li>
+        <li>The map shows where they cut and the pieces they leave, each piece with its size; the table under it says where each
+          piece runs and the features it holds. Click a piece to pick it out on the map.</li>
+        <li><b>Suggested check</b> picks the enzymes whose pieces sit well apart on a gel, preferring ones in the freezer and, when
+          <b>Made from</b> names a backbone with a sequence, a pattern unlike the backbone's: one lane then tells a right clone
+          from an empty one. <b>Use these</b> ticks them. The first time you open a plasmid's Digest tab it starts on this check.</li>
+        <li><b>Expected gel</b> draws the lanes: the ladder (<b>1 kb Plus</b>, <b>1 kb</b> or <b>100 bp</b>), the plasmid uncut
+          (supercoiled ahead of its size, a faint nicked band behind), and the enzymes ticked, with each band's size. Pick the
+          <b>agarose</b> percentage: pieces too close to part on it run as one band, and the tab says so. <b>Keep … on the gel</b>
+          keeps a lane while you try other enzymes, and a PCR from the Primers tab arrives as a lane too.</li>
+        <li><b>Dam⁺ Dcm⁺</b> is on for DNA grown in an ordinary <i>E. coli</i> (DH5α, TOP10): a site that Dam or Dcm methylation
+          blocks, such as XbaI's next to a GATC, is marked <b>Dam</b> or <b>Dcm</b>, drawn uncut and explained. Turn it off for
+          DNA from a dam⁻ dcm⁻ strain.</li>
+        <li><b>Put my gel beside it</b> sets a photo of your own gel next to the expected one, to compare; it stays only on your
+          screen. Keep the photo with the plasmid under <b>Files</b>.</li>
+      </ul>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-digest.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-digest.webp" alt="The Digest tab: EcoRI and NotI cut out EGFP, and the gel they would run as" loading="lazy" width="2000" height="1250"></a><figcaption>A virtual digest and its gel</figcaption></figure>
+      <h2 id="primers">The lab's primers and a PCR: the Primers tab</h2>
+      <ul>
+        <li>Every primer in the Primers databases you can see is checked against the plasmid, on both strands, and each one that
+          binds is drawn on a strip of the plasmid and listed: where it binds, whether exactly (or with a 5′ tail that pairs with
+          nothing), its Tm and where its tube is. <b>≤ 2 mismatches</b> also lists primers that bind with up to two bases that
+          don't pair, as long as the 3′ end does, which a polymerase needs.</li>
+        <li>Pick a forward primer (<b>F</b>) and a reverse one (<b>R</b>) for a <b>PCR</b>: its product's size and where it runs,
+          the features in it, what the backbone named in <b>Made from</b> would give instead (for a colony PCR, the empty vector's
+          band), an annealing temperature to start from and an extension time. <b>Put it on the gel</b> adds the product as a lane
+          on the Digest tab; <b>Copy the product as FASTA</b> copies its bases, tails included.</li>
+        <li>When the lab has primers either side of the plasmid's insert, a line under the list names the two that read all of it,
+          for sending the next clone off.</li>
+      </ul>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-primers.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-primers.webp" alt="The Primers tab: the lab's primers on the plasmid, and a PCR from two of them" loading="lazy" width="2000" height="1250"></a><figcaption>The lab's primers, and a PCR</figcaption></figure>
+      <h2 id="verify">Checking a clone's sequencing: the Verify tab</h2>
+      <ul>
+        <li><b>Verify</b> keeps the clones of this plasmid that were sequenced. Drop the reads on <b>Drop .ab1 reads</b> — the
+          <code>.ab1</code> chromatograms the sequencing service sends, or FASTA or text files — named by clone, like
+          <code>C4_CAG-F.ab1</code> or <code>clone4-T7.ab1</code>: reads of the same clone are checked together. Reads that name no
+          clone become the next one, or type its name under <b>Name the clone, or paste a read</b>, where you can also paste bases.
+          A clone sequenced again keeps its earlier reads and is checked with all of them.</li>
         <li>Each read's poor ends are trimmed by its own quality values, then the read is placed on the map, whichever strand it
           was read from and across the origin of a circular plasmid, and compared base by base. You get one line for the clone —
           <i>Matches the map across 425–1,359, covering EGFP</i>, or <i>1 difference from the map: C→A at 740 in EGFP (A14D)</i> —
@@ -259,12 +317,19 @@
         <li>A chromatogram with a second peak under many of its good bases is said to look like a <b>mix of two clones</b>, with
           its trace: pick a single colony and sequence it again. When the second peaks start at one place and carry on, it says
           where: two clones that differ by an insertion or deletion there.</li>
-        <li>Turn on <b>Keep the reads and the result with this plasmid's files</b> to file the reads under <b>Files</b>, each
-          noted with the date and what it showed. Checking changes nothing else; anyone who can open the plasmid can check reads,
-          and keeping them needs the right to edit it.</li>
+        <li>The clones are listed on the left with what their reads showed; open one to see where its reads fall, each difference
+          in turn (<b>Previous difference</b>, <b>Next difference</b>) with a wide stretch of trace, the map's base under the
+          read's, and what it does to the protein — <i>In EGFP, codon 61: CTC → CTT, L → L (silent)</i> — and on the right what
+          the clone comes to: identity, how much the reads cover, which coding sequences they read through and how often, and the
+          changes.</li>
+        <li><b>Accept</b> marks the plasmid verified with that clone: <i>Verified · Clone 3 · Oct 12</i> shows at the top of the
+          page, on Overview and in the list. <b>Remove</b> takes a clone off the list; its reads stay under <b>Files</b>. The reads
+          are kept with the plasmid when you check them; someone who may only view the plasmid can still check reads, and nothing
+          is kept.</li>
         <li>An AI assistant can do the same: upload the <code>.ab1</code> as a capture (or give it the read as text) and ask it to
           check the clone against the plasmid (see <a href="ai-assistants.html">AI assistants</a>).</li>
       </ul>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-verify.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-verify.webp" alt="The Verify tab: a clone's reads, a silent change and its trace" loading="lazy" width="2000" height="1250"></a><figcaption>A clone checked by sequencing</figcaption></figure>
       <h2 id="tubes">Tubes, boxes and files</h2>
       <ul>
         <li><b>Files</b>, on <b>Storage</b>, keeps what belongs with the plasmid: the sequencing reads (.ab1) that confirmed it,
@@ -289,14 +354,16 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 11 min read</p>
+      <p>On this page · 17 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your cloning</a></li>
         <li class="lvl2"><a href="#the-sheet">The plasmid sheet</a></li>
-        <li class="lvl2"><a href="#the-map">The sequence and its map</a></li>
+        <li class="lvl2"><a href="#the-map">The map, the sequence and the protein</a></li>
         <li class="lvl2"><a href="#features">Knowing what a sequence holds</a></li>
         <li class="lvl2"><a href="#building">Building a new plasmid</a></li>
-        <li class="lvl2"><a href="#verify">Checking a clone&#x27;s sequencing</a></li>
+        <li class="lvl2"><a href="#digest">Cutting it: the Digest tab</a></li>
+        <li class="lvl2"><a href="#primers">The lab&#x27;s primers and a PCR: the Primers tab</a></li>
+        <li class="lvl2"><a href="#verify">Checking a clone&#x27;s sequencing: the Verify tab</a></li>
         <li class="lvl2"><a href="#tubes">Tubes, boxes and files</a></li>
         <li class="lvl2"><a href="#sharing">Sharing and bulk changes</a></li>
       </ol>
@@ -314,6 +381,6 @@
     <p><a href="../download.html">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">All releases and what changed</a> · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a></p>
   </div>
 </footer>
-<script src="../site.js?v=ab8d9aa6a0"></script>
+<script src="../site.js?v=0885aab389"></script>
 </body>
 </html>

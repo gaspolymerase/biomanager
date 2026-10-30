@@ -87,7 +87,8 @@ def note_record(session, saved_path: str, source: str, record_id: int) -> None:
 # Tables whose text never makes a file anyone's: the change history keeps
 # what records said (the admins' to read), and the live editor's state is
 # base64.
-NOT_OWNERS = frozenset({"upload_owners", "audit_log", "notebook_sync_updates", "notebook_presence"})
+NOT_OWNERS = frozenset({"upload_owners", "audit_log", "notebook_sync_updates", "notebook_presence",
+                        "page_presence"})
 _TEXT_ATTRS: dict = {}
 
 

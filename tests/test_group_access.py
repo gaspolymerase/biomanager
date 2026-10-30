@@ -140,7 +140,7 @@ class LabPanesTests(AppTestCase):
     def test_a_member_sees_the_lab_panes_read_only(self):
         html = self.get_ok(self.m, "/settings")
         general = html.split('id="general"', 1)[1].split('id="databases"', 1)[0]
-        self.assertIn("Only admins change these", general)
+        self.assertIn("The whole lab’s: admins change them; you can see them.", general)
         self.assertNotIn("data-autosave-form", general)
         self.assertNotIn("Waiting to join", html)
 

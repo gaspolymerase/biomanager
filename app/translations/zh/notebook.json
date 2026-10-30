@@ -240,5 +240,21 @@
   "Type to narrow the pages here; Enter searches inside them": "输入可筛选这里的页面；按回车在页面内容里搜索",
   "Choose one of the icons shown, an emoji or an SVG.": "请选择列出的图标、一个表情或一个 SVG。",
   "That SVG is too big: up to 100 KB.": "这个 SVG 太大了：最大 100 KB。",
-  "That isn't an SVG drawing BioManager can show.": "这不是 BioManager 能显示的 SVG 图形。"
+  "That isn't an SVG drawing BioManager can show.": "这不是 BioManager 能显示的 SVG 图形。",
+  "Shared by %(name)s · you can edit": "%(name)s 共享 · 你可以编辑",
+  "Shared by %(name)s · you can read": "%(name)s 共享 · 你可以阅读",
+  "Share this topic with lab mates": "把这个主题共享给实验室同事",
+  "Share with lab mates…": "共享给实验室同事……",
+  "Inbox is yours alone; share a topic, or the page itself.": "收件箱只属于你；请共享一个主题，或共享页面本身。",
+  "%(who)s shared the topic “%(title)s” with you": "%(who)s 与你共享了主题“%(title)s”",
+  "%(who)s shared the topic “%(title)s” with you (%(group)s)": "%(who)s 与你共享了主题“%(title)s”（%(group)s）",
+  "You can edit its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中编辑它的页面。",
+  "You can read its pages in your notebook, under Shared with me.": "你可以在实验记录本的“与我共享”中阅读它的页面。",
+  "Meetings and who presents are kept in the calendar": "会议和报告轮值在日历里管理",
+  "Pages you can open, newest first": "你能打开的页面，最新的在前",
+  "Pages that are in no topic yet. Protocols, and papers and talks, are kept in Protocols and Reading instead, and a meeting’s notes with its meeting in the calendar.": "还没有放进任何主题的页面。实验流程、论文和报告分别在实验流程和文献里，会议记录则和会议一起在日历里。",
+  "Fit the window": "铺满窗口",
+  "Page width": "页面宽度",
+  "Fit the page to the window, or back to its paper width": "让页面铺满窗口，或恢复为纸张宽度",
+  "Only whoever keeps it can move it.": "只有保存它的人可以移动它。"
 }

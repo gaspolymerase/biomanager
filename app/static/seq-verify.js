@@ -1,4 +1,4 @@
-/* Verify sequencing, on a plasmid's Sequence tab: the chosen Sanger reads
+/* Verify sequencing: the chosen Sanger reads
    (.ab1, FASTA or text, pasted, or kept with the plasmid) go to
    /plasmids/<id>/verify, which checks them against the map
    (app/seqverify.py, where all of the biology is) and answers with a report.
@@ -215,6 +215,9 @@
         .finally(() => { go.disabled = false; });
     });
   }
+
+  // The plasmid's Verify tab (static/plasmid-verify.js) draws with these too.
+  window.BioSeqVerify = { drawMap, drawTrace, changeText, where, badge };
 
   function start() { document.querySelectorAll('[data-verify-url]').forEach(mount); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

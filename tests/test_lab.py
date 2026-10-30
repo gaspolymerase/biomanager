@@ -153,12 +153,10 @@ class SetupSurvey(LabSettingsCase):
         self.assertIn("Recent orders", html)
 
     def test_unticking_an_inventory_hides_it_and_ticking_brings_it_back(self):
-        # Your databases is off until someone adds it to Home (Customize).
-        self.post(self.m, "/home/cards", {"order": ["databases"], "show": ["databases"], "wide": []})
         self.survey(self.a, inventory__antibodies=False)
         self.assertEqual(one("select count(*) from inventory_modules where kind='antibodies' "
                              "and private_to='' and share_group_id is null and enabled=true"), 0)
-        self.assertNotIn("Antibodies", self.get_ok(self.m, "/home").split("home-dbs")[1].split("</section>")[0])
+        self.assertNotIn("Antibodies", self.get_ok(self.m, "/home").split('data-home-panel="databases"')[1].split("</section>")[0])
         self.survey(self.a)
         self.assertGreater(one("select count(*) from inventory_modules where kind='antibodies' "
                                "and private_to='' and share_group_id is null and enabled=true"), 0)

@@ -339,8 +339,9 @@ class PageKindTests(Notebook):
         topic = lambda page: one("select t.title from notebook_tabs t join notebook_pages p on p.tab_id_fk=t.id "
                                  "where p.id=?", page)
         self.assertEqual(topic(self.new_page(c, starter="blank", open_tab_id=sops)), "SOPs")
-        self.assertEqual(topic(self.new_page(c, starter="protocol", open_tab_id=sops)), "SOPs")
-        # A page's kind never picks its folder; someone else's topic is no place.
+        # A protocol is kept in Protocols (Inbox leaves it to the library);
+        # any other kind never picks its folder; someone else's topic is no place.
+        self.assertEqual(topic(self.new_page(c, starter="protocol", open_tab_id=sops)), "Inbox")
         self.assertEqual(topic(self.new_page(c, starter="experiment", open_tab_id=sops)), "SOPs")
         self.assertEqual(topic(self.new_page(c, starter="meeting", open_tab_id=sops)), "SOPs")
         self.assertNotEqual(topic(self.new_page(self.m, starter="blank", open_tab_id=sops)), "SOPs")
@@ -762,6 +763,26 @@ class ProtocolLibraryTests(Notebook):
         self.assertIn("hotshot", keys)
         self.assertTrue(all(p["title"] and p["category"] and p["summary"] for p in lib["presets"]))
 
+    def test_a_protocol_started_in_a_topic_is_kept_in_protocols(self):
+        topic = self.m.post("/notebook/tabs/create", data={"title": uniq("Slice ephys")}).get_json()["id"]
+        page = self.new_page(self.m, kind="protocol", tab_id=topic, title=uniq("Cutting solution"))
+        self.assertEqual(one("select t.title from notebook_pages p join notebook_tabs t on t.id=p.tab_id_fk where p.id=?", page), "Inbox")
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertIsNone(lib[page]["topic"])
+
+    def test_pages_tagged_protocol_are_listed_and_can_be_brought_in(self):
+        topic = self.m.post("/notebook/tabs/create", data={"title": uniq("Imaging")}).get_json()["id"]
+        page = self.new_page(self.m, tab_id=topic, title=uniq("Two-photon setup"))
+        self.post_json(self.m, f"/notebook/api/pages/{page}/meta", {"tags": ["#protocol", "imaging"]})
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertEqual((lib[page]["kind"], lib[page]["can_keep"]), ("note", True))
+        self.assertTrue(lib[page]["topic"])
+        # Only its keeper moves it.
+        self.assertNotEqual(self.post_json(self.a, f"/notebook/api/protocols/{page}/keep").status_code, 200)
+        self.assertEqual(self.post_json(self.m, f"/notebook/api/protocols/{page}/keep").status_code, 200)
+        lib = {p["id"]: p for p in self.m.get("/notebook/api/protocols").get_json()["protocols"]}
+        self.assertEqual((lib[page]["kind"], lib[page]["topic"]), ("protocol", None))
+
     def test_every_built_in_protocol_has_steps_that_become_a_checklist(self):
         from app.notebook_protocols import PRESET_PROTOCOLS
         for key in PRESET_PROTOCOLS:
@@ -801,13 +822,22 @@ class ProtocolLibraryTests(Notebook):
 
     def test_the_sidebar_opens_each_library_as_a_page(self):
         html = self.get_ok(self.m, "/notebook")
-        for key in ("protocols", "recipes", "meetings", "reading"):
+        for key in ("protocols", "recipes", "reading"):
             self.assertIn(f'href="/notebook/{key}"', html)
             page = self.get_ok(self.m, f"/notebook/{key}")
             self.assertIn(f'data-library="{key}"', page)
             self.assertIn("notebook-library.js", page)
             self.assertIn('aria-current="page"', page)
         self.assertEqual(self.m.get("/notebook/other").status_code, 404)
+
+    def test_meetings_are_kept_in_the_calendar(self):
+        self.assertIn('href="/notebook/meetings"', self.get_ok(self.m, "/notebook"))
+        r = self.m.get("/notebook/meetings")
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("/calendar?meetings=all", r.headers["Location"])
+        calendar = self.get_ok(self.m, "/calendar")
+        for part in ('data-new="meeting"', 'id="cal-meetings"', "calendar-meetings.js"):
+            self.assertIn(part, calendar)
 
     def test_a_built_in_protocol_reads_as_it_is_written(self):
         from app.notebook_protocols import PRESET_PROTOCOLS
@@ -1351,6 +1381,24 @@ class TopicTests(Notebook):
         theirs = self.new_page(self.m, starter="blank")
         self.share(self.m, theirs, self.user, "edit")
         self.assertEqual(self.post_json(self.c, f"/notebook/api/pages/{theirs}/place", {"tab_id": tab}).status_code, 404)
+
+    def test_a_card_sketches_a_sheet_steps_or_text(self):
+        from app.lab_notebook import page_shape
+        self.assertEqual(page_shape("Before\n```sheet\n{}\n```"), "sheet")
+        self.assertEqual(page_shape("| a | b |\n|---|---|\n| 1 | 2 |"), "sheet")
+        self.assertEqual(page_shape("1. Anesthetize\n2. Level the skull"), "steps")
+        self.assertEqual(page_shape("- [ ] NMDG\n- [x] KCl"), "steps")
+        self.assertEqual(page_shape("Just words."), "text")
+
+    def test_home_has_the_new_page_capsule_and_topics_as_chips(self):
+        tab = self.topic("Ephys")
+        page = self.new_page(self.c, starter="blank", tab_id=tab, title="Recordings")
+        self.save(self.c, page, body="| Cell | Rin |\n|---|---|\n| 1 | 142 |\n")
+        html = self.html("/notebook")
+        for part in ('class="nb-home-new"', 'data-new-kind="protocol"', 'data-new-kind="reading"', 'data-new-kind="meeting"',
+                     'data-shape="sheet"', 'class="nb-topic-chip"', "data-home-new-topic"):
+            self.assertIn(part, html)
+        self.assertIn('id="nb-wide-btn"', self.html(f"/notebook?page={page}"))
 
     def test_a_topic_page_shows_its_topics_and_its_pages_newest_by_name_or_in_order(self):
         tab = self.topic("Cards")

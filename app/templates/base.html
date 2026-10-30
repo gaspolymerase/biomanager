@@ -2,7 +2,7 @@
 {# A page with a sidebar of its own (the notebook) starts with this one
    folded to its icons: block rail_mode says "compact". #}
 {% set rail_mode = self.rail_mode()|trim %}
-<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font == 'system' %} data-font="system"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -15,8 +15,8 @@
     {# Add to Home Screen: Android reads the manifest, iPhone the touch icon. #}
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#e9edf3" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0c10" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-title" content="BioManager">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -67,18 +67,18 @@
 
     <script nonce="{{ csp_nonce() }}">
       (function () {
-        var state = 'open';
-        try { state = localStorage.getItem('biomanager:rail') || 'open'; } catch (e) {}
+        var state = 'closed';
+        try { state = localStorage.getItem('biomanager:rail') || 'closed'; } catch (e) {}
         if (document.documentElement.dataset.railMode === 'compact') state = 'closed';
         document.documentElement.dataset.railBoot = state;
       })();
     </script>
   </head>
 
-  <body data-rail="open">
+  <body data-rail="closed">
     {{- icon_sprite_start() }}
     <script nonce="{{ csp_nonce() }}">
-      document.body.dataset.rail = document.documentElement.dataset.railBoot || 'open';
+      document.body.dataset.rail = document.documentElement.dataset.railBoot || 'closed';
     </script>
 
     {% if current_user %}
@@ -92,9 +92,10 @@
         {# ---- Sidebar ---- #}
         <aside class="rail" aria-label="{{ _('Sidebar') }}">
           <div class="rail-top">
-            <a class="rail-brand" href="{{ url_for('home_dashboard') }}" aria-label="{{ _('BioManager home') }}">
-              <img src="{{ app_icon_url }}" alt="" data-app-icon>
-              <span class="rail-brand-word">BioManager</span>
+            {# The lab's own icon when an admin chose one (app/lab_icon.py), else BioManager's. #}
+            <a class="rail-brand{% if lab_icon_url %} is-lab{% endif %}" href="{{ url_for('home_dashboard') }}" aria-label="{{ _('BioManager home') }}">
+              {% if lab_icon_url %}<img src="{{ lab_icon_url }}" alt="" data-lab-icon>{% else %}<img src="{{ app_icon_url }}" alt="" data-app-icon>{% endif %}
+              <span class="rail-brand-word">{{ lab_icon_name or 'BioManager' }}</span>
             </a>
             <button type="button" class="rail-toggle" data-rail-toggle
                     aria-label="{{ _('Hide or show the sidebar') }}" title="{{ _('Hide or show the sidebar') }}">
@@ -102,6 +103,7 @@
             </button>
           </div>
 
+          <div class="rail-places">
           {% for section in nav_sections %}
             <div class="rail-group"{% if section.sortable %} data-rail-order="{{ url_for('organisms.reorder') }}"{% endif %}>
               <div class="rail-group-label">{{ section.label|tr }}</div>
@@ -109,7 +111,7 @@
                 {% if item.url %}
                   <a class="rail-item {% if item.active %}is-active{% endif %}"
                      href="{{ item.url }}" data-label="{{ item.label|tr }}"
-                     {% if section.sortable and item.key != 'new-db' %}data-db-key="{{ item.key }}" draggable="true"{% endif %}
+                     {% if section.label == 'Databases' and item.key != 'new-db' %}data-db-key="{{ item.key }}"{% if section.sortable %} draggable="true"{% endif %}{% endif %}
                      {% if item.hint %}title="{{ item.hint|tr }}"{% endif %}
                      {% if item.active %}aria-current="page"{% endif %}>
                     {{ icon(item.icon) }}<span class="rail-label">{{ item.short|tr }}</span>
@@ -123,6 +125,7 @@
               {% endfor %}
             </div>
           {% endfor %}
+          </div>
 
           <div class="rail-foot">
             {% for item in nav_footer %}
@@ -381,6 +384,10 @@
     {% endif %}
 
     <script src="{{ url_for('static', filename='shell.js') }}?v={{ asset_version('shell.js') }}" defer></script>
+    {# A sheet's saved views, filter chips, inspector and who is here (app/sheet_views.py). #}
+    <script src="{{ url_for('static', filename='sheet-views.js') }}?v={{ asset_version('sheet-views.js') }}" defer></script>
+    {# Hover a place in the sidebar: its name, or a look inside a database (app/rail_peek.py). #}
+    <script src="{{ url_for('static', filename='rail-peek.js') }}?v={{ asset_version('rail-peek.js') }}" defer></script>
     <script src="{{ url_for('static', filename='tab-bar.js') }}?v={{ asset_version('tab-bar.js') }}" defer></script>
     <script src="{{ url_for('static', filename='selection-bar.js') }}?v={{ asset_version('selection-bar.js') }}" defer></script>
     <script src="{{ url_for('static', filename='data-table.js') }}?v={{ asset_version('data-table.js') }}" defer></script>

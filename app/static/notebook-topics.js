@@ -12,6 +12,10 @@
  * - Drag any page into Favorites to star it, and a favourite to reorder
  *   them; the star on a page or a card does the same.
  * - The arrow beside a topic or a page folds it, remembered in this browser.
+ * - Share (on a topic's page, or in its •••) shares the topic with lab
+ *   mates, a project group or the whole lab, to read or to edit: its pages
+ *   and the topics inside it. They find it under Shared with me, where it
+ *   is theirs to open but not to move.
  *
  * Every change goes to the server, then the page is drawn again from it.
  */
@@ -79,6 +83,15 @@
     var el = topicEl(outer);
     return String(id) === String(outer) || !!(el && el.querySelector('.notebook-tab[data-tab-id="' + id + '"]'));
   }
+
+  // New topic, on the notebook's home: its name, then its page.
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-home-new-topic]')) return;
+    window.BioDialog.prompt(t('New topic'), '', { placeholder: t('Name the topic'), okLabel: t('Make it') }).then(function (title) {
+      title = (title || '').trim();
+      if (title) post('/notebook/tabs/create', { title: title }).then(function (d) { if (d.ok) go('/notebook?tab=' + d.id); });
+    });
+  });
 
   var addBtn = document.getElementById('nb-topic-add');
   var addForm = document.getElementById('nb-topic-new');
@@ -185,6 +198,77 @@
     });
   }
 
+  // Share: who may open this topic's pages (lab_notebook.topic_shares_*).
+  function shareTopic(tabId) {
+    var base = '/notebook/api/topics/' + tabId + '/shares';
+    var dialog = document.createElement('dialog');
+    dialog.className = 'record-dialog record-dialog-narrow bio-dialog nb-share-dialog';
+    dialog.setAttribute('aria-labelledby', 'nb-share-title');
+    dialog.innerHTML = '<form method="dialog"><header class="record-dialog-head"><div><h3 id="nb-share-title">' +
+      esc(t('Share %(name)s', { name: topicName(tabId) })) + '</h3></div></header>' +
+      '<div class="record-dialog-body bio-dialog-body nb-share-body"><p class="nb-muted">' + esc(t('Loading…')) + '</p></div>' +
+      '<footer class="record-dialog-foot"><button class="btn btn-primary" value="done">' + esc(t('Done')) + '</button></footer></form>';
+    document.body.appendChild(dialog);
+    var body = dialog.querySelector('.nb-share-body');
+    var changed = false;
+    dialog.addEventListener('close', function () { dialog.remove(); if (changed) reload(); });
+    function roleSelect(attr, value) {
+      return '<select ' + attr + '><option value="edit"' + (value === 'edit' ? ' selected' : '') + '>' + esc(t('can edit')) +
+        '</option><option value="view"' + (value === 'view' ? ' selected' : '') + '>' + esc(t('can view')) + '</option></select>';
+    }
+    function draw() {
+      fetch(base, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+        var lab = d.shares.filter(function (x) { return x.username === '*'; })[0];
+        var shared = d.shares.filter(function (x) { return x.username !== '*'; });
+        var taken = {};
+        shared.forEach(function (x) { taken[x.username] = true; });
+        var people = d.people.filter(function (p) { return !taken[p.username]; }).map(function (p) {
+          return '<option value="' + esc(p.username) + '">' + esc(p.name) + (p.guest ? ' ' + esc(t('(guest)')) : '') + '</option>';
+        }).join('');
+        var teams = (d.groups || []).filter(function (grp) { return !taken[grp.username]; }).map(function (grp) {
+          return '<option value="' + esc(grp.username) + '">' + esc(grp.name) + '</option>';
+        }).join('');
+        var options = teams ? (people ? '<optgroup label="' + esc(t('People')) + '">' + people + '</optgroup>' : '') +
+          '<optgroup label="' + esc(t('Project groups')) + '">' + teams + '</optgroup>' : people;
+        body.innerHTML = '<p class="bio-dialog-text">' + esc(t('Its pages, and the topics inside it, open for them under Shared with me. New pages you add are shared too.')) + '</p>' +
+          '<label class="nb-share-row">' + esc(t('Everyone in the lab')) + ' <select data-share-lab><option value="">' + esc(t('can’t see it')) + '</option>' +
+          '<option value="view"' + (lab && lab.role === 'view' ? ' selected' : '') + '>' + esc(t('can view')) + '</option>' +
+          '<option value="edit"' + (lab && lab.role === 'edit' ? ' selected' : '') + '>' + esc(t('can edit')) + '</option></select></label>' +
+          '<div class="nb-share-row nb-share-add"><select data-share-who aria-label="' + esc(t('Person or project group')) + '">' +
+          (options || '<option value="">' + esc(t('Everyone already has access')) + '</option>') + '</select>' +
+          roleSelect('data-share-new-role aria-label="' + esc(t('Role')) + '"', 'view') +
+          '<button type="button" class="btn" data-share-add>' + esc(t('Share')) + '</button></div>' +
+          '<ul class="nb-share-list">' + (shared.length ? shared.map(function (x) {
+            return '<li><span class="nb-share-who">' + (x.group ? icon('users') : icon('user')) + esc(x.name) + '</span>' +
+              roleSelect('data-share-role="' + esc(x.username) + '" aria-label="' + esc(t('Role')) + '"', x.role) +
+              '<button type="button" class="nb-share-remove" data-share-remove="' + esc(x.username) + '" aria-label="' + esc(t('Stop sharing')) + '">' + icon('x') + '</button></li>';
+          }).join('') : '<li class="nb-muted">' + esc(t('Not shared with anyone yet.')) + '</li>') + '</ul>';
+      }).catch(function (err) { body.innerHTML = '<p class="nb-warn">' + esc(err.message) + '</p>'; });
+    }
+    function send(url, payload, note) {
+      return api(url, payload).then(function () { changed = true; if (note) toast(note); draw(); }).catch(fail);
+    }
+    body.addEventListener('change', function (e) {
+      if (e.target.matches('[data-share-lab]')) {
+        var role = e.target.value;
+        send(role ? base : base + '/remove', role ? { username: '*', role: role } : { username: '*' });
+      } else if (e.target.dataset.shareRole) {
+        send(base, { username: e.target.dataset.shareRole, role: e.target.value });
+      }
+    });
+    body.addEventListener('click', function (e) {
+      var add = e.target.closest('[data-share-add]');
+      var remove = e.target.closest('[data-share-remove]');
+      if (add) {
+        var who = body.querySelector('[data-share-who]').value;
+        if (who) send(base, { username: who, role: body.querySelector('[data-share-new-role]').value }, t('Shared. They have been told.'));
+      }
+      if (remove) send(base + '/remove', { username: remove.dataset.shareRemove });
+    });
+    dialog.showModal();
+    draw();
+  }
+
   var menu = document.getElementById('nb-topic-menu');
   var menuTab = null, menuButton = null;
   function closeMenu() { if (menu) menu.hidden = true; menuTab = null; }
@@ -194,7 +278,9 @@
     var act = e.target.closest('[data-topic-do]');
     var sub = e.target.closest('[data-topic-new-sub]');
     var edit = e.target.closest('[data-topic-edit]');
+    var share = e.target.closest('[data-topic-share]');
     if (picker && !picker.contains(e.target)) closePicker();
+    if (share) { e.preventDefault(); shareTopic(share.dataset.topicShare); return; }
     if (plus) { e.preventDefault(); e.stopPropagation(); newPageIn(plus.dataset.topicNewPage); return; }
     if (sub) { e.preventDefault(); newTopicIn(sub.dataset.topicNewSub); return; }
     if (edit) { e.preventDefault(); editTopic(edit.dataset.topicEdit); return; }
@@ -215,6 +301,7 @@
       if (what === 'sub') newTopicIn(tabId);
       if (what === 'edit') editTopic(tabId);
       if (what === 'move') movePicker(tabId, menuButton);
+      if (what === 'share') shareTopic(tabId);
       if (what === 'delete') removeTopic(tabId);
       return;
     }
@@ -402,6 +489,7 @@
       return drag.kind === 'topic' ? null : { el: favBox, zone: 'in', what: 'fav-add' };
     }
     if (drag.kind === 'fav' || drag.kind === 'ref') return null;
+    if (x.closest('.notebook-tab.is-shared')) return null;     // someone else's: not to move things into
     var summary = x.closest('.notebook-tab > summary');
     if (summary) {
       var d = summary.parentNode;
@@ -468,8 +556,9 @@
     var x = e.target && e.target.closest ? e.target : null;
     if (!x) return;
     var fav = x.closest('#nb-favorite-list > .notebook-page-item');
-    var page = x.closest('.notebook-tab .notebook-page-item');
-    var summary = x.closest('.notebook-tab > summary');
+    var shared = x.closest('.notebook-tab.is-shared');
+    var page = !shared && x.closest('.notebook-tab .notebook-page-item');
+    var summary = !shared && x.closest('.notebook-tab > summary');
     var ref = x.closest('.notebook-sidebar .notebook-page-item');
     var card = x.closest('.nb-card');
     if (fav) drag = { kind: 'fav', id: fav.dataset.pageId, el: fav };

@@ -74,7 +74,7 @@ everyone signs in to from a browser, including on their phone at the rack.
 | 🪰 | [**Drosophila & C. elegans**](#-drosophila-and-c-elegans) | Vials and plates, crosses, and temperature-aware flip schedules |
 | 🌱 | [**Plants and field crops**](#-plants-and-field-crops) | Sowings, trays or plots, harvests kept as seed lots and sown again, generations and the 3:1 |
 | 🦎 | [**Any other organism**](#-any-other-organism) | Your own database, in your own words, with no programming |
-| 🧬 | [**Plasmids**](#-plasmids) | Sequences with an interactive map, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
+| 🧬 | [**Plasmids**](#-plasmids) | Maps, sequences and proteins, virtual digests and gels, primers and PCR, clones checked by sequencing, assembly of new ones, and where each tube lives; primers, glycerol stocks and viruses beside them |
 | 🧪 | [**Lab inventories**](#-lab-inventories) | Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks, cell lines, or a list of your own |
 | 📅 | [**Calendar & notebook**](#-calendar-and-notebook) | Experiments, to-dos and colony dates; a shared lab notebook with data sheets, protocols, paper notes and meeting notes |
 
@@ -245,6 +245,16 @@ never what you may edit.
     measure of the experiment the same way, or give each today's
     manipulation and tick it. **Scan a card** reads a cage, tank or vial
     card with the phone's camera and jumps to the animal in it.
+- **Dropdowns** — the choices each column offers (Status, Cage purpose,
+  Strain, Genotype, Sex, Owner), so the lab uses the same words. Each
+  column's choices are listed in the order its dropdown shows them, with
+  how many mice or cages have each. An admin renames one in place (and,
+  if they like, on every record that has it), drags it to a new place,
+  removes it (putting another choice in its place on its records, if they
+  like), or pastes many at once; words typed in the sheet that aren't a
+  choice yet are listed to **Make it a choice**. The built-in statuses and
+  sexes are always offered; Breeding and Breeder keep their names. Every
+  rename or replacement is one change in Batch history, to undo.
 
 <table>
   <tr>
@@ -402,15 +412,47 @@ two buttons beside its name: **Configure** (for whoever may change it) and
 ### 🧬 Plasmids
 
 Upload a GenBank, FASTA or SnapGene file and BioManager keeps the sequence
-and its features, with an interactive map you can edit. Plasmid boxes sit
+and its features, and draws the plasmid itself: a map, every base, the
+cuts, the gel, the primers and the protein. Plasmid boxes sit
 on the same rack grid as everything else, so every tube has an address.
 Each tube keeps its miniprep's concentration (ng/µL) and 260/280, and a
 plasmid can be **Lab common**: anyone can edit it (or, shared with a
 project group, its members), while its owner still decides whose it is. A plasmid's page lists the notebook pages that
 `@plasmid` it, and its address is its number (plasmid #12 is `/plasmid/12`).
-Show them as a **Table**, by storage **Boxes**, or as a **List**. In the
+Show them as a **Table**, by storage **Boxes**, or as a **List**, where
+each one has its small map and says when it was verified. In the
 sheet, **Sequence** beside a plasmid's number opens its sequence and map
-(**Add sequence** when it has none yet). **Download** gives it as
+(**Add sequence** when it has none yet).
+
+A plasmid's page has seven tabs. **Overview** is its map, ready to
+download as SVG or PNG for a lab meeting or a paper, what it is (backbone,
+resistance, where the tube is, whether a clone was verified, what it was
+made from), and its features; a feature opens the sequence on it.
+**Sequence** shows every base with its complement, the features, the
+enzymes that cut once, the lab's primers as arrows, and the protein under
+each coding sequence (**6 frames** shows every open reading frame of 100
+codons or more instead). Drag across bases and a small bar gives their
+length, Tm and GC: **Forward primer** or **Reverse** checks them as a
+primer (Tm, GC, a G/C clamp, hairpins, self-dimers, whether it binds
+only once, and whether the lab already has one there) and **Save to
+Primers** files it, to order. Click a coding feature for its protein:
+length, mass, pI, extinction coefficient and the amino acids. **Edit the
+sequence, its features and its map** below it opens the editor.
+**Digest** cuts it: tick enzymes (the ones that cut once, twice, or that
+the lab has in its Reagents) and see the cuts on the map, the pieces and
+what each holds, and the gel they would run as, beside a ladder and the
+uncut plasmid, with lanes kept side by side. A suggested check picks
+enzymes whose pieces sit well apart and, when the plasmid was made from
+a backbone, look different from the backbone's. Sites that Dam or Dcm
+methylation blocks in DNA from an ordinary *E. coli* (XbaI next to GATC)
+are drawn uncut and said, and **Put my gel beside it** sets a photo of
+your own gel next to the expected one. **Verify** keeps the clones checked
+by sequencing (below), and **Primers** lists every primer the lab has
+that binds the plasmid, exactly or with up to two mismatches away from
+the 3′ end, on a strip of the plasmid; pick a forward and a reverse one
+for a **PCR**: its product, what it holds, what the backbone would give
+instead (for a colony PCR), and **Put it on the gel** adds it as a lane on
+the Digest tab. **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
@@ -438,9 +480,10 @@ your own files (**Add to library** above a map, or **Read elements from
 files**), and an admin can **Add the common-features pack**, about 1,900
 elements from widely used plasmids, downloaded when asked for. **Files** on its Storage tab keeps
 the sequencing reads, gel photos and datasheets that belong with it, and
-they come along in Export my data. **Verify sequencing**, below the map,
-checks Sanger reads of a miniprep or clone against it: choose the `.ab1`
-chromatograms (or FASTA, or paste the bases) and each read is trimmed of
+they come along in Export my data. The **Verify** tab
+checks Sanger reads of each clone against the map: drop the `.ab1`
+chromatograms (or FASTA, or paste the bases), named by clone like
+`C4_CAG-F.ab1`, and each clone is listed with what its reads showed. Each read is trimmed of
 its poor ends, placed on the map on either strand (across the origin
 too), and compared base by base. You get a line for the clone ("Matches
 the map across 425–1,359, covering EGFP", or "1 difference from the map:
@@ -450,9 +493,13 @@ features it falls in and what it does to a coding sequence's amino acid;
 one at low quality is marked as a likely sequencing error. From an
 `.ab1`, each difference shows its stretch of trace, and a read with
 second peaks under many bases is said to look like a mix of two clones
-(and where they part, when an insertion or deletion splits them). **Keep the
-reads and the result with this plasmid's files** files them under
-**Files**, each noted with what it showed, to check again later. An
+(and where they part, when an insertion or deletion splits them). Opening
+a clone shows where its reads fall and each difference with a wide stretch
+of its trace, the map's base beside the read's, and what it does to the
+protein ("In EGFP, codon 61: CTC → CTT, L → L (silent)"). **Accept** marks
+the plasmid verified with that clone, shown at the top of its page and in
+the list. The reads are kept with the plasmid's **Files**; someone who may
+only view the plasmid can still check reads, and nothing is kept. An
 assistant can do the same with `verify_sequencing`, from reads uploaded
 as captures. A primer drawn on the
 map is kept in the Primers database, linked to the plasmid; the page lists
@@ -465,7 +512,11 @@ tail — and **Show on map** draws them on the map to look at, without
 saving them into it.
 
 <p align="center">
-  <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid map with features, restriction sites and the sequence view" width="100%">
+  <img src="docs/screenshots/plasmid-map.webp" alt="A plasmid's Overview: its map, what it is and its features" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/plasmid-digest.webp" alt="The Digest tab: EcoRI and NotI cut out EGFP, and the gel they would run as" width="49%">
+  <img src="docs/screenshots/plasmid-verify.webp" alt="The Verify tab: a clone's reads, a silent change and its trace" width="49%">
 </p>
 
 Every database takes **columns of your own** — *Configure → Your own
@@ -576,6 +627,18 @@ database has a name of its own (one another database has is refused), so
   genotyping, sac reminders), fly and worm flips, organism schedules and
   reagent expiry filled in for you. Shows your **Google Calendar** and any
   iCal subscription alongside, read-only, under **Connected calendars**.
+  - **Month** shows the kinds of things as a row of chips above the grid
+    (each its colour and count, to hide or show), and beside it the day
+    you pick with what is on it, then meetings, equipment and protocols.
+    **Week** opens on the working day from 08:00, today's column tinted.
+  - **Board**: your to-dos as cards in lists, beside Month, Week, Day and
+    List: Inbox, the lists you add (*This week*, *Waiting on*…) and Done.
+    Drag a card between lists, into Done to tick it off. Write a card's
+    day in it as you would say it (*Order primers Fri*, *明天订抗体*) and
+    it is on the calendar that day; a card with no day stays on the
+    Board, not on today. Inbox also lists what the calendar has to do
+    this week (weanings, genotyping, flips, supplies running low), each
+    opening where it is done.
   - **Who sees it**: an event or to-do is yours alone, the lab's or one
     of your project groups'. Your own is seen by nobody else, admins
     included. A shared event is everyone's to see, its owner's and the
@@ -630,8 +693,11 @@ database has a name of its own (one another database has is refused), so
   top of the sidebar (once there is one), in your order. The notebook opens on **Home**: your
   favourites, what was edited lately and your topics. **Inbox** holds the
   pages in no topic yet; protocols, papers and talks, and a meeting series'
-  notes are in **Protocols**, **Reading** and **Meetings** instead. The
-  sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window.
+  notes are in **Protocols**, **Reading** and the calendar's meetings instead. The
+  sidebar hides (its button, or Ctrl+\ / ⌘\) to give the page the window,
+  and **Fit the window** lets a page run the window's width. Home starts a
+  **New page**, **Protocol**, **Paper** or **Meeting** note from its top
+  right, and shows each page as a card with a sketch of it.
   **New page** asks for a title, the topic, the kind of page and what to
   start from (a built-in starter or one of your templates). A page's kind
   sits above its title, saying what it adds; click it to change the kind,
@@ -710,10 +776,15 @@ database has a name of its own (one another database has is refused), so
   - **Protocols** with numbered versions. **Start experiment**
     copies the steps as a checklist and records which version was followed.
     **Protocols** in the notebook's sidebar opens the lab's protocols as a
-    page of their own: search them, open one to read or change it, make one
-    with **New protocol**, and sort them into **folders** (**New folder**,
+    page of their own, as cards with a sketch of their steps and their
+    version: search them, open one to read or change it, make one with
+    **New protocol**, and sort them into **folders**. A protocol started
+    anywhere in the notebook is kept there; protocol pages kept in a
+    topic, and pages tagged *#protocol*, are listed with **Move to
+    Protocols**, and the calendar's protocol timelines are there to start
+    or edit. Folders: **New folder**,
     then drag a protocol onto it, or pick its folder on the card or in the
-    protocol's own bar). Each folder has an icon you pick when you make it;
+    protocol's own bar. Each folder has an icon you pick when you make it;
     **Edit folder** changes its name or icon. Folders are the lab's, shared
     by everyone. Below
     them are a dozen common protocols built in (genotyping, perfusion,
@@ -738,7 +809,8 @@ database has a name of its own (one another database has is refused), so
     millilitres to add out (from molecular weight or a stock); change the
     volume and every amount follows. Common buffers are built in; the lab's
     own are saved to a shared library. **Recipes** in the notebook's
-    sidebar opens that library: open a recipe to change it, make one with
+    sidebar opens that library, each recipe a card with its volume, pH and
+    what goes in it: open a recipe to change it, make one with
     **New recipe**, sort them into folders as protocols are, and **Save a
     copy** of a built-in one to make it yours. **Load from library** in a
     recipe block lists them by folder.
@@ -766,10 +838,10 @@ database has a name of its own (one another database has is refused), so
     when they end.
   - **Daily log**: *Today* opens the day's page; each quick entry is added
     with the time.
-  - **Meetings and seminars** (**Meetings** in the notebook's sidebar,
-    where each series is edited): a rotation of who presents next, notes for
-    each meeting shared with everyone in it, the coming meetings on the
-    calendar, and action items (`- [ ] @name order primers, due
+  - **Meetings and seminars** (kept in the calendar: **New event →
+    Meeting**, and **Meetings** in its side panel): a rotation of who
+    presents next, notes for each meeting (a notebook page shared with
+    everyone in it), the coming meetings on the calendar, and action items (`- [ ] @name order primers, due
     2026-10-02`) sent to each person's to-dos, from any page with ⋯ →
     **Send @name tasks as to-dos**. A **Seminar** page keeps the speaker
     and their affiliation under its title and is listed in **Reading**
@@ -780,8 +852,10 @@ database has a name of its own (one another database has is refused), so
     the page as Markdown, download it as `.md`, or import `.md` files.
   - **Pictures and files**: paste, drop, or take a photo on the phone.
     They open only for the people who can open the page.
-  - **Working together**: share a page to read or to edit, with lab mates,
-    the whole lab or a project group. Editors write in it at the same time
+  - **Working together**: share a page, or a whole topic with the topics
+    inside it, to read or to edit, with lab mates, the whole lab or a
+    project group; a shared topic lists under **Shared with me** with its
+    owner's name, and pages added to it later are shared too. Editors write in it at the same time
     and see each other's cursors. Comments sit on a passage of text, and
     an `@name` tells that person, as it does in any record's notes (a
     reagent, an order, a plasmid, a cage). Point at a linked record for its
@@ -833,7 +907,9 @@ database has a name of its own (one another database has is refused), so
   <tr>
     <td width="50%" valign="top">
       <h4>☀️ A home page that tells you what to do</h4>
-      Built from the databases your lab keeps, in the sidebar's order:
+      A <b>Daily brief</b> on top says the day in a few words (today's
+      work by name, what is overdue, animals that may need a look, unread
+      notices). Below it, built from the databases your lab keeps, in the sidebar's order:
       a count for each database, then each one's own cards — <i>Animals
       that may need a look</i> (below), mice older
       than 30 weeks, upcoming weanings and the genotyping queue for the
@@ -845,10 +921,14 @@ database has a name of its own (one another database has is refused), so
       cards, <b>Timeline</b> (the coming weeks on one row of days, a row
       per kind of work) and <b>By place</b> (your racks from above, with
       the jobs numbered in the order you'd walk the room).
+      Overview opens with panels of glass: <b>This week</b> (Monday to
+      Sunday, a dot under each day for each kind of work due, and today's
+      list), the colony in a number, <b>Needs a look</b>, <b>For you</b>,
+      <b>Your databases</b> (a tile each, with its count) and the
+      notebook's latest pages; the cards follow.
       <b>Customize</b> chooses which cards Overview shows, in what order
-      and how wide, and which counts it shows, with your databases,
-      to-dos, bookings, recent pages and calculators (the ones you
-      opened last) to add.
+      and how wide, and which counts it shows, with to-dos, bookings and
+      calculators (the ones you opened last) to add.
       <br><br><b>Animals that may need a look</b> says what the records
       show, never a diagnosis: a living mouse whose latest weight is 15%
       or more below its peak of the last 30 days, or below its first
@@ -859,7 +939,7 @@ database has a name of its own (one another database has is refused), so
       itself); mice in an experiment measuring body weight not weighed for
       longer than its regimen allows (7 days if it plans no weighing
       days); and mice whose status and experiments disagree. A member sees
-      their own animals and experiments (<b>Show the lab’s</b> for the
+      their own animals and experiments (<b>The lab</b> for the
       rest); animal care, facility managers and admins see the lab's.
     </td>
     <td width="50%" valign="top">
@@ -867,7 +947,14 @@ database has a name of its own (one another database has is refused), so
       Click a cell and type; it saves as you go. Every table sorts
       (numbers as numbers: cage 2 before cage 10), filters, exports to CSV
       and prints, and keeps your sort and filter
-      (the filter also in its address, for a bookmark). Drag a column's
+      (the filter also in its address, for a bookmark). <b>+ Filter</b>
+      adds a chip for any column's value (<i>Sex: F</i>), and <b>Save
+      view</b> keeps a search, its chips, a sort and the columns shown
+      under a name, a tab above the sheet that follows you to any
+      computer. <b>Inspector</b> shows the row you click in full beside
+      the sheet, a mouse's or cage's rack drawn with its place lit, and
+      the initials of anyone else with the sheet open show beside the
+      views. Drag a column's
       heading to put the columns you need first (or use the arrows under
       <b>Columns</b>); your order is kept, and an admin sets the lab's
       starting order in <b>Configure</b>. The page scrolls,
@@ -903,10 +990,16 @@ database has a name of its own (one another database has is refused), so
     </td>
     <td valign="top">
       <h4>↩️ Batch actions with undo</h4>
-      Tick rows (shift-click for a range), then <b>Set field</b> (any
-      column, your own included), move them, change owner or status, add
-      them to an experiment, sac, retire or delete them. Records you may
-      not change are skipped and counted.
+      Tick rows (shift-click for a range; <kbd>Esc</kbd> lets go) and a
+      capsule of glass rises with the commonest actions and their keys —
+      on the mouse sheet <b>Move to cage</b> <kbd>M</kbd>, <b>Set status</b>
+      <kbd>S</kbd> and <b>Weigh</b> <kbd>W</kbd> (a weight for each) — and
+      the rest under <b>•••</b>: <b>Set a field</b> (every column you can
+      edit in the sheet, your own included; one the sheet can't set in one
+      go is set row by row in place, with no reload), add them to an
+      experiment, sac, retire or delete them. Records you may not change
+      are skipped and counted. After any of these the page comes back
+      where you were: the same page of the sheet, scrolled as it was.
       Every bulk action, an import included, can be <b>undone</b> from
       <b>Settings → History</b>. If someone has edited those records since,
       BioManager says so first and offers <b>Undo anyway</b>, so their work
@@ -1090,31 +1183,37 @@ becomes a card with its columns under their names, and rack grids get a
 
 ### 🌗 At home on a Mac, and in the dark
 
-The interface follows Apple's Liquid Glass design: the sidebar, the row of
-tabs and each page's buttons float as frosted glass over the page, which
-scrolls beneath them, while the records themselves sit on solid ground so
-they stay easy to read. On a Mac the desktop app has no title bar; its close,
+The interface follows Apple's Liquid Glass design, over a softly tinted
+wallpaper: the sidebar, the row of tabs and each page's buttons float as
+clear glass over the page, which scrolls beneath them; cards are a thicker
+glass, and sheets and notebook pages the thickest, so the records stay as
+easy to read as paper. On a Mac the desktop app has no title bar; its close,
 minimise and zoom buttons sit at the top of the sidebar, followed, as in
 Safari, by buttons to hide the sidebar, search everything, and go back and
-forward. Hidden, the sidebar narrows to a column of its places, each icon
-with its name under it. There is a full
+forward. The sidebar starts narrow, a column of icons: hover one to see its
+name, or hover a database to look inside it (how many records, what is due,
+the latest ones) without leaving the page. There is a full
 dark mode, following the system's setting (in the desktop app, **View →
 Appearance** chooses Light or Dark), and Reduce Transparency, Increase
 Contrast and Reduce Motion are honoured. It works in any modern browser on
 Windows and Linux too.
 
-Text is set in Inter, which tells I, l and 1 apart in IDs and genotypes and
+Text is set in Geist, which tells I, l and 1 apart in IDs and genotypes and
 looks the same on every computer, with each system's own Chinese font.
-**Settings → Appearance & language → Font** switches to the computer's font,
+**Settings → Appearance & language → Font** switches to Inter or the computer's font,
 and **Text size** makes everything smaller or larger in the Mac app.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
+in a pane of glass, each with what it is set to now under its name
 on the left (**You**: Profile, Sign-in & security, Appearance & language,
 Notifications, AI assistant & tokens, Your data; **Lab**: Statistics,
 General, Databases, People & access, Devices & copies, History) and the
 chosen one beside it, its settings in grouped rows with a short line on what
-each does. A change is saved as it is made, and the search box at the top
-finds a setting by name. Your **Short name** under Profile (up to 5
+each does. Each pane says at its top whose settings it holds (yours alone,
+or the whole lab's) and who changes them, and **Databases → Set up each
+database** reaches every database's own **Configure** from one list. A
+change is saved as it is made, and the search box at the top finds a
+setting by name. Your **Short name** under Profile (up to 5
 letters, THX) is what your round badge says, at the top right and on your
 records; without one it shows your initials. The lab's panes hold its setup and its admin
 pages: everyone sees them, admins change them. **Statistics** counts the lab's mice, fish tanks and fly and worm
@@ -1123,8 +1222,10 @@ vials, by person, and shows how full each rack and box is.
 Each person can pick their own app icon in **Settings → Appearance &
 language**: a double helix,
 mouse, zebrafish, *C. elegans*, *Drosophila*, cryobox, microtube or petri
-dish, in one of six macaron colours. The browser tab and sidebar show it,
-and the app's accent colour follows it.
+dish, in one of six macaron colours. The browser tab shows it, and the
+app's accent colour follows it. The top of the sidebar shows the lab's own
+icon and name when an admin has chosen one in **Settings → General → Lab
+icon** (a square PNG, JPEG or WebP picture); otherwise it shows yours.
 
 ### 🌏 English or 中文
 
@@ -1484,7 +1585,7 @@ what it needs to track.
 
 | Keys | Does |
 | --- | --- |
-| <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> | Search everything |
+| <kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> | Search everything, go to any place in the sidebar, or ask the user guide |
 | <kbd>⌘/Ctrl</kbd> + <kbd>B</kbd> | Show or hide the sidebar |
 | <kbd>Alt</kbd> + <kbd>1</kbd>…<kbd>9</kbd> | Switch to tab 1 to 9 |
 | <kbd>Alt</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | Previous / next tab |
@@ -1768,8 +1869,8 @@ your research, **Cite this repository** on the GitHub page gives the
 citation in APA or BibTeX (from [CITATION.cff](CITATION.cff)).
 
 Built with Python, Flask, SQLAlchemy, PostgreSQL / SQLite and Tailwind CSS.
-Icons from [Font Awesome Free](https://fontawesome.com) (CC BY 4.0) and
-[game-icons.net](https://game-icons.net) by Delapouite (CC BY 3.0) — the
-mouse and fly are theirs; the plasmid, petri dish, cage, tank and
-culture-vial icons were drawn for this project. The people and records in
+Icons from [Lucide](https://lucide.dev) (ISC licence); the fly, plasmid,
+petri dish, cage, tank, culture-vial, organ and other lab icons were drawn
+for this project in its style. Text is set in
+[Geist](https://vercel.com/font) (SIL Open Font Licence). The people and records in
 the screenshots are made up.

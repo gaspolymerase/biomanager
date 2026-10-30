@@ -525,7 +525,10 @@ var bmClips = (function () {
   var zh = document.documentElement.lang.indexOf('zh') === 0;
   var opener = document.querySelector('[data-search]');
   if (opener) {
-    var base = opener.dataset.pagefind, dialog = null, ready = false;
+    var base = opener.dataset.pagefind, dialog = null, ready = false, ui = null;
+    // ?q=… (the app's search palette, "Ask the guide") opens the search with it.
+    var asked = '';
+    try { asked = new URLSearchParams(location.search).get('q') || ''; } catch (e) { /* old browser */ }
     var open = function () {
       if (!dialog) {
         dialog = document.createElement('dialog');
@@ -540,10 +543,11 @@ var bmClips = (function () {
         js.src = base + 'pagefind-ui.js';
         js.onload = function () {
           // Results are links from the site's root, which is a folder down on GitHub Pages.
-          new window.PagefindUI({ element: '#guide-search', showSubResults: true, showImages: false, resetStyles: false,
+          ui = new window.PagefindUI({ element: '#guide-search', showSubResults: true, showImages: false, resetStyles: false,
             baseUrl: new URL(base + '../', location.href).pathname,
             translations: zh ? { placeholder: '搜索用户指南', zero_results: '没有找到“[SEARCH_TERM]”' } : { placeholder: 'Search the guide' } });
           ready = true;
+          if (asked && ui.triggerSearch) { ui.triggerSearch(asked); asked = ''; }
           var input = dialog.querySelector('input');
           if (input) input.focus();
         };
@@ -553,6 +557,7 @@ var bmClips = (function () {
       if (ready) { var i = dialog.querySelector('input'); if (i) { i.focus(); i.select(); } }
     };
     opener.addEventListener('click', open);
+    if (asked) open();
     document.addEventListener('keydown', function (e) {
       var typing = /input|textarea|select/i.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
       if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) { e.preventDefault(); open(); }

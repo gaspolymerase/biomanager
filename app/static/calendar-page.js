@@ -109,6 +109,7 @@
   // the page switches (and a recording of it, on the website, does too).
   const SURFACE = 'var(--color-surface, #ffffff)';
   const INK = 'var(--color-ink, #1d1d1f)';
+  const NOW = 'var(--color-danger-600, #e5484d)';
   function tone(color, share, rest) { return `color-mix(in srgb, ${color} ${share}, ${rest})`; }
 
   /* A chip is a tint of its colour with a solid edge in the colour itself,
@@ -212,10 +213,11 @@
         today: { color: brand, backgroundColor: tone(brand, '5%', surface) },
         pastDay: { color: muted }, pastTime: { color: muted },
         weekend: { backgroundColor: tone(recess, '65%', surface) },
-        nowIndicatorLabel: { color: brand },
-        nowIndicatorPast: { border: `1px dashed ${brand}` },
-        nowIndicatorBullet: { backgroundColor: brand },
-        nowIndicatorToday: { border: `1px solid ${brand}` },
+        // Now: a red line across today with a dot, as a phone's calendar draws it.
+        nowIndicatorLabel: { color: NOW },
+        nowIndicatorPast: { border: '1px solid transparent' },
+        nowIndicatorBullet: { backgroundColor: NOW },
+        nowIndicatorToday: { border: `2px solid ${NOW}` },
         panelResizer: { border: line },
         gridSelection: { color: ink },
       },
@@ -224,8 +226,20 @@
 
   function chip(ev) {
     const item = findItem(ev.id) || ev;
-    return `<span class="cal-chip cal-chip-${item.kind || 'event'}" data-item-id="${ev.id}">${svgIcon(iconFor(item))}<span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
+    // Week and day: what is due that day is a pill with a ring, as in the design.
+    const lead = currentView === 'month'
+      ? `<i class="cal-chip-dot" style="background:${paint(item).borderColor}" aria-hidden="true"></i>`
+      : '<i class="cal-ring" aria-hidden="true"></i>';
+    return `<span class="cal-chip cal-chip-${item.kind || 'event'}" data-item-id="${ev.id}">${lead}<span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
   }
+
+  // A timed item in week and day: its title, then its hours in mono.
+  function timedBlock(ev) {
+    const item = findItem(ev.id) || ev;
+    return `<span class="cal-tev" data-item-id="${ev.id}"><b class="cal-tev-t">${escapeHtml(ev.title || '')}</b>
+      <span class="cal-tev-time">${hm(new Date(item.start))} – ${hm(new Date(item.end))}</span></span>`;
+  }
+  function hm(d) { return Number.isNaN(d.getTime()) ? '' : `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
   waitForTui().then((status) => {
     if (status !== 'ready') {
@@ -244,12 +258,12 @@
       template: {
         allday: chip,
         time(ev) {
-          if (currentView !== 'month') return chip(ev);
-          // In the month grid a timed item is a dot, its start and its title.
+          if (currentView !== 'month') return timedBlock(ev);
+          // In the month grid a timed item is a dot and its title, as a
+          // due one is; its hours are in the day beside and the quick look.
           const item = findItem(ev.id) || ev;
-          return `<span class="cal-chip cal-chip-timed" data-item-id="${ev.id}">
+          return `<span class="cal-chip cal-chip-timed" data-item-id="${ev.id}" title="${escapeHtml(fmtTime(item.start))}" style="background:${paint(item).backgroundColor}">
               <i class="cal-chip-dot" style="background:${paint(item).borderColor}"></i>
-              <span class="cal-chip-time">${fmtTime(item.start)}</span>
               <span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
         },
         task(ev) {
@@ -259,8 +273,22 @@
               <span class="cal-chip-t">${escapeHtml(ev.title || '')}</span></span>`;
         },
         monthMoreTitleDate(more) { return `<span class="cal-more-date">${more.ymd ? new Date(more.ymd + 'T00:00').toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }) : ''}</span>`; },
-        monthGridHeaderExceed(hidden) { return `<span class="cal-more">${t('+%(n)s more', { n: hidden })}</span>`; },
-        alldayTitle() { return `<span class="cal-panel-title">${t('All day')}</span>`; },
+        monthGridHeaderExceed(hidden) { return `<span class="cal-more">+${hidden}</span>`; },
+        // A day of the month: its number, in a filled circle on today; the
+        // date lets a click pick the day for the panel beside.
+        monthGridHeader(model) {
+          const n = parseInt(String(model.date).split('-')[2], 10);
+          return `<span class="cal-mday${model.isToday ? ' is-today' : ''}" data-date="${model.date}">${n}</span>`;
+        },
+        alldayTitle() { return `<span class="cal-panel-title">${t('Due')}</span>`; },
+        // The week's days: the weekday, then the date in a circle (filled on today).
+        weekDayName(day) {
+          const isToday = day.dateInstance && ymd(tuiToDate(day.dateInstance)) === ymd(new Date());
+          return `<span class="cal-wd${isToday ? ' is-today' : ''}"><span class="cal-wd-dow">${escapeHtml(day.dayName)}</span><span class="cal-wd-n">${day.date}</span></span>`;
+        },
+        // Hours in 24-hour mono type, and the time now beside its red line.
+        timegridDisplayPrimaryTime({ time }) { return `<span class="cal-hour">${pad(time.getHours())}:00</span>`; },
+        timegridNowIndicatorLabel({ time }) { return `<span class="cal-now">${pad(time.getHours())}:${pad(time.getMinutes())}</span>`; },
         taskTitle() { return `<span class="cal-panel-title">${t('To-dos')}</span>`; },
       },
     });
@@ -307,23 +335,32 @@
         toggleDone(event.id);
         return;
       }
-      const item = findItem(event.id);
-      if (item) openOnce(item);
     });
-    // Month view: one click opens an item. The calendar's own click there
-    // only came on a double-click; this and it open it once between them.
+    // One click on an item shows its quick look, in every view: the
+    // calendar's own click came only on a double-click in Month, and not
+    // at all on a read-only item, so the page listens itself.
     tuiHost.addEventListener('click', (e) => {
-      if (currentView !== 'month' || e.target.closest('.biocal-task-cb')) return;
-      const chipEl = e.target.closest('.cal-chip[data-item-id]');
+      if (e.target.closest('.biocal-task-cb')) return;
+      const chipEl = e.target.closest('[data-item-id]');
       const item = chipEl && findItem(chipEl.dataset.itemId);
-      if (item) openOnce(item);
+      if (item) { peek(item, e); return; }
+      // Month: a click on a day (not on what is in it) shows that day beside.
+      // The grid's events lie over its cells, so the day is the cell of
+      // the click's week under the pointer.
+      const week = currentView === 'month' && e.target.closest('.toastui-calendar-month-week-item');
+      const cell = week && $$('.toastui-calendar-daygrid-cell', week).find((c) => {
+        const r = c.getBoundingClientRect();
+        return e.clientX >= r.left && e.clientX < r.right;
+      });
+      const date = cell && cell.querySelector('[data-date]');
+      if (date) { pickedDay = new Date(`${date.dataset.date}T00:00`); renderDay(); }
     });
 
     let savedView = null;
     try { savedView = localStorage.getItem(VIEW_KEY); } catch (_) {}
     // A link or bookmark may say which view and day: /calendar?view=week&date=2026-10-06.
     const params = new URLSearchParams(window.location.search);
-    const askedView = ['month', 'week', 'day', 'list'].includes(params.get('view')) ? params.get('view') : null;
+    const askedView = ['month', 'week', 'day', 'list', 'board'].includes(params.get('view')) ? params.get('view') : null;
     const askedDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') || '') ? new Date(`${params.get('date')}T12:00`) : null;
     if (askedDate && !Number.isNaN(askedDate.getTime())) {
       calendar.setDate(askedDate);
@@ -332,12 +369,23 @@
     const initial = askedView || savedView || (window.innerWidth < 720 ? 'list' : 'month');
     setView(initial, false);
     fetchAndRender();
-    loadProtocols();
+    // From the notebook's Protocols: ?protocol=<id> opens that timeline to
+    // edit, ?protocol=new a new one, ?protocol=start&template=<id> starts one.
+    const askedProtocol = params.get('protocol');
+    loadProtocols().then(() => {
+      if (!askedProtocol) return;
+      if (askedProtocol === 'start') {
+        openRun(null);
+        const tpl = Number(params.get('template'));
+        if (tpl && runForm.elements.template_id) { runForm.elements.template_id.value = String(tpl); runForm.elements.template_id.dispatchEvent(new Event('change')); }
+      } else openTemplates(askedProtocol === 'new' ? -1 : Number(askedProtocol) || null);
+    });
     spriteReady.then(() => { if (allItems.length) renderAll(); });
   });
 
   // ================================================================ navigation
 
+  document.addEventListener('calendar:changed', () => fetchAndRender());
   $('#biocal-prev').addEventListener('click', () => step(-1));
   $('#biocal-next').addEventListener('click', () => step(1));
   $('#biocal-today').addEventListener('click', () => {
@@ -358,6 +406,8 @@
   }
 
   function goTo(day) {
+    // A day picked while on the Board opens that day.
+    if (currentView === 'board') { listAnchor = startOfDay(day); if (calendar) calendar.setDate(day); setView('day', true); return; }
     listAnchor = startOfDay(day);
     if (calendar) calendar.setDate(day);
     miniMonth = firstOfMonth(day);
@@ -365,6 +415,8 @@
   }
 
   function afterMove() {
+    if (pickedDay && currentView === 'month' && pickedDay.getMonth() !== currentDate().getMonth()) pickedDay = null;
+    toWorkingHours();
     refreshTitle();
     renderMini();
     fetchAndRender();
@@ -379,17 +431,30 @@
 
   function setView(view, refetch) {
     currentView = view;
+    calRoot.dataset.view = view;
+    placeWells(view === 'month');
     $$('.biocal-view-btn').forEach((b) => {
       b.classList.toggle('is-active', b.dataset.view === view);
       b.setAttribute('aria-pressed', String(b.dataset.view === view));
     });
     try { localStorage.setItem(VIEW_KEY, view); } catch (_) {}
     const isList = view === 'list';
-    tuiHost.hidden = isList;
+    // The Board: the to-dos as cards in lists, with no days to step through
+    // (static/calendar-board.js).
+    const isBoard = view === 'board';
+    tuiHost.hidden = isList || isBoard;
     listHost.hidden = !isList;
+    $('#biocal-board').hidden = !isBoard;
+    document.body.classList.toggle('cal-is-board', isBoard);
+    if (isBoard) {
+      if (window.BioBoard) window.BioBoard.show();
+      titleEl.textContent = t('To-dos');
+      return;
+    }
     if (!isList && calendar) {
       calendar.changeView(view);
       if (listAnchor) calendar.setDate(listAnchor);
+      toWorkingHours();
     }
     if (isList && calendar) listAnchor = startOfDay(tuiToDate(calendar.getDate()));
     refreshTitle();
@@ -401,12 +466,17 @@
     const d = currentDate();
     let html;
     if (currentView === 'month') {
-      html = `${d.toLocaleDateString(LOCALE, { month: 'long' })} <span class="cal-title-sub">${d.getFullYear()}</span>`;
+      // "October 2026", the year quieter, as in the design.
+      html = LOCALE ? d.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' })
+        : `${d.toLocaleDateString(LOCALE, { month: 'long' })} <span class="cal-title-year">${d.getFullYear()}</span>`;
     } else if (currentView === 'week' && calendar) {
       const s = tuiToDate(calendar.getDateRangeStart());
       const e = tuiToDate(calendar.getDateRangeEnd());
       const sameMonth = s.getMonth() === e.getMonth();
-      html = `${s.toLocaleDateString(LOCALE, { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString(LOCALE, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })} <span class="cal-title-sub">${e.getFullYear()}</span>`;
+      // "October 2026 · Oct 25 – 31": the month the week is mostly in, then its days.
+      const mid = addDays(s, 3);
+      const range = `${s.toLocaleDateString(LOCALE, { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString(LOCALE, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })}`;
+      html = `${mid.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' })} <span class="cal-title-sub">· ${range}</span>`;
     } else if (currentView === 'day') {
       html = `${d.toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })} <span class="cal-title-sub">${d.getFullYear()}</span>`;
     } else {
@@ -443,11 +513,129 @@
     if (calendar && currentView !== 'list') {
       calendar.clear();
       calendar.createEvents(shown.map(paint));
+      if (wantWorkingHours) toWorkingHours();
     }
     if (currentView === 'list') renderList(shown);
     renderCounts();
     renderMini();
+    renderChips();
+    renderDay();
+    requestAnimationFrame(markToday);
   }
+
+  // ================================================================ as in the design
+
+  const calRoot = $('#cal');
+  let pickedDay = null;
+
+  // Meetings, equipment, protocols and the links for your phone sit in the
+  // sidebar; in Month the sidebar gives way to the day panel, and they go
+  // there, below the day.
+  const wells = [...$$('.cal-side > .cal-section.is-well'), $('.cal-side-foot')].filter(Boolean);
+  function placeWells(inPanel) {
+    const home = inPanel ? $('#cal-dayside-wells') : side;
+    wells.forEach((el) => { if (el.parentElement !== home) home.appendChild(el); });
+  }
+
+  // Week and day open on the working day, 08:00, and scroll for the rest:
+  // once the grid has drawn (it scrolls itself to the time now first).
+  let wantWorkingHours = true;
+  function toWorkingHours() {
+    wantWorkingHours = true;
+    if (currentView !== 'week' && currentView !== 'day') return;
+    setTimeout(() => {
+      const grid = $('.toastui-calendar-panel.toastui-calendar-time', tuiHost);
+      if (!grid || !grid.scrollHeight) return;
+      grid.scrollTop = Math.round((grid.scrollHeight / 24) * 8) - 14;
+      wantWorkingHours = false;
+    }, 30);
+  }
+
+  // Today's column is tinted through the days' names and the Due row too.
+  function markToday() {
+    if (currentView !== 'week' || !calendar) return;
+    const s = startOfDay(tuiToDate(calendar.getDateRangeStart()));
+    const i = Math.round((startOfDay(new Date()) - s) / 86400000);
+    $$('.toastui-calendar-panel-grid', tuiHost).forEach((el, j) => el.classList.toggle('cal-is-today', j === i));
+  }
+
+  // Month: the layers as chips above the grid, each its colour and count;
+  // a chip switches its layer as its box under Show does.
+  const chipsHost = $('#cal-chips');
+  function renderChips() {
+    if (currentView !== 'month') return;
+    chipsHost.innerHTML = layerInputs.filter((i) => i.dataset.layerToggle !== 'done').map((input) => {
+      const key = input.dataset.layerToggle;
+      // Connected calendars, only when one is connected and shows something.
+      if (key === 'subs' && !allItems.some((it) => layerOf(it) === 'subs')) return '';
+      const name = input.closest('.cal-layer').querySelector('.cal-layer-name').textContent;
+      const count = ($(`[data-layer-count="${key}"]`) || {}).textContent || '';
+      return `<button type="button" class="cal-fchip" data-chip="${key}" aria-pressed="${input.checked}" style="--tone:${LAYER_COLORS[key] || '#8e8e93'}">
+        <i aria-hidden="true"></i>${escapeHtml(name)}${count ? `<span>${count}</span>` : ''}</button>`;
+    }).join('');
+  }
+  chipsHost.addEventListener('click', (e) => {
+    const chipBtn = e.target.closest('[data-chip]');
+    const input = chipBtn && layerInputs.find((i) => i.dataset.layerToggle === chipBtn.dataset.chip);
+    if (input) input.click();
+  });
+
+  // Month: the day picked (today, else the month's first) and what is on it.
+  function renderDay() {
+    if (currentView !== 'month' || !calendar) return;
+    const shownMonth = currentDate();
+    const today = startOfDay(new Date());
+    const day = pickedDay || (today.getMonth() === shownMonth.getMonth() && today.getFullYear() === shownMonth.getFullYear() ? today : firstOfMonth(shownMonth));
+    const d0 = startOfDay(day);
+    const d1 = addDays(d0, 1);
+    const items = allItems.filter(visible).filter((it) => {
+      const s = new Date(it.start);
+      const e = new Date(it.end || it.start);
+      return s < d1 && (e > d0 || ymd(s) === ymd(d0));
+    }).sort((a, b) => (b.isAllday - a.isAllday) || String(a.start).localeCompare(String(b.start)));
+    $('#cal-day-mon').textContent = d0.toLocaleDateString(LOCALE, { month: 'short' });
+    $('#cal-day-n').textContent = d0.getDate();
+    $('#cal-day-title').textContent = d0.toLocaleDateString(LOCALE, { weekday: 'long' });
+    const things = items.length === 1 ? t('1 thing') : t('%(n)s things', { n: items.length });
+    const when = ymd(d0) === ymd(today) ? t('Today') : d0.toLocaleDateString(LOCALE, { month: 'long', day: 'numeric' });
+    $('#cal-day-sub').textContent = `${when} · ${things}`;
+    const SHOW = 6;
+    $('#cal-day-list').innerHTML = items.length ? items.slice(0, SHOW).map((it) => {
+      const raw = it.raw || {};
+      const kind = raw.eventType === 'meeting' ? KIND_WORDS.meeting : (raw.group || KIND_WORDS[it.kind] || '');
+      const hours = it.isAllday || it.category === 'allday' || it.category === 'task' ? '' : `${hm(new Date(it.start))} – ${hm(new Date(it.end))}`;
+      const mice = Array.from(new Set(String(it.title || '').match(/#\d+/g) || []));
+      const due = ['task', 'auto', 'agenda'].includes(it.kind);
+      const when = hours || (due ? (ymd(d0) === ymd(today) ? t('due today') : t('due')) : t('All day'));
+      const sub = [kind, it.kind === 'protocol' && mice.length ? mice.join(', ') : when].filter(Boolean).join(' · ');
+      const ring = it.kind === 'task' && !raw.readOnly
+        ? `<button type="button" class="cal-day-ring${raw.done ? ' is-done' : ''}" data-done="${escapeHtml(it.id)}" aria-label="${t('Mark done')}"></button>` : '';
+      return `<li><button type="button" class="cal-day-item${raw.done ? ' is-done' : ''}" data-item-id="${escapeHtml(it.id)}" style="--edge:${paint(it).borderColor}">
+          <b>${escapeHtml(it.title || '')}</b><small>${escapeHtml(sub)}</small></button>${ring}</li>`;
+    }).join('') : `<li class="cal-muted cal-day-none">${t('Nothing on this day.')}</li>`;
+    const more = $('#cal-day-more');
+    more.hidden = items.length <= SHOW;
+    more.textContent = t('%(n)s more in Week view', { n: items.length - SHOW });
+    more.dataset.day = ymd(d0);
+    // The picked day is marked in the grid.
+    $$('.toastui-calendar-daygrid-cell', tuiHost).forEach((cell) => {
+      const date = cell.querySelector('[data-date]');
+      cell.classList.toggle('cal-is-picked', !!date && date.dataset.date === ymd(d0));
+    });
+  }
+  $('#cal-day-list').addEventListener('click', (e) => {
+    const ring = e.target.closest('[data-done]');
+    if (ring) { toggleDone(ring.dataset.done); return; }
+    const row = e.target.closest('[data-item-id]');
+    const item = row && findItem(row.dataset.itemId);
+    if (item) peek(item, e);
+  });
+  $('#cal-day-more').addEventListener('click', (e) => {
+    const day = new Date(`${e.currentTarget.dataset.day}T12:00`);
+    if (calendar) calendar.setDate(day);
+    listAnchor = startOfDay(day);
+    setView('week', true);
+  });
 
   function renderCounts() {
     const [s, e] = currentView === 'month' && calendar
@@ -549,6 +737,9 @@
     const start = addDays(miniMonth, -miniMonth.getDay());
     const today = ymd(new Date());
     const selected = ymd(currentDate());
+    // The week on show is a band across the small month.
+    let band = null;
+    if (currentView === 'week' && calendar) band = [ymd(tuiToDate(calendar.getDateRangeStart())), ymd(tuiToDate(calendar.getDateRangeEnd()))];
     let html = MINI_DAY_NAMES.map((d) => `<span class="cal-mini-dow">${d}</span>`).join('');
     for (let i = 0; i < 42; i++) {
       const d = addDays(start, i);
@@ -556,9 +747,14 @@
       const cls = ['cal-mini-day'];
       if (d.getMonth() !== miniMonth.getMonth()) cls.push('is-other');
       if (key === today) cls.push('is-today');
-      if (key === selected) cls.push('is-selected');
+      if (key === selected && !band) cls.push('is-selected');
       if (busy.has(key)) cls.push('has-items');
-      html += `<button type="button" class="${cls.join(' ')}" data-day="${key}" aria-label="${LOCALE ? d.toLocaleDateString(LOCALE, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : d.toDateString()}">${d.getDate()}</button>`;
+      if (band && key >= band[0] && key <= band[1]) {
+        cls.push('in-band');
+        if (key === band[0]) cls.push('band-start');
+        if (key === band[1]) cls.push('band-end');
+      }
+      html += `<button type="button" class="${cls.join(' ')}" data-day="${key}" aria-label="${LOCALE ? d.toLocaleDateString(LOCALE, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : d.toDateString()}"><span>${d.getDate()}</span></button>`;
     }
     grid.innerHTML = html;
   }
@@ -668,6 +864,8 @@
     const now = new Date();
     const day = ymd(currentView === 'list' ? new Date() : currentDate() < startOfDay(now) ? now : currentDate());
     if (kind === 'protocol') return openRun(null);
+    // A meeting series: its day, its people and who presents in turn (calendar-meetings.js).
+    if (kind === 'meeting') return window.BioMeetings && window.BioMeetings.create();
     if (kind === 'booking') {
       const start = new Date(now);
       start.setMinutes(0, 0, 0);
@@ -694,6 +892,9 @@
     lastOpened = { id: item.id, at: now };
     return openFromItem(item);
   }
+
+  // The Board opens a dated to-do in the same editor as the calendar does.
+  window.BioCalendar = { open: (item) => openFromItem(item) };
 
   function openFromItem(item) {
     const raw = item.raw || {};
@@ -730,6 +931,90 @@
       default:
         return undefined;
     }
+  }
+
+  // ================================================================ quick look
+
+  /* Clicking an item shows it in a small pane of glass beside it, as in the
+     design: its colour and title, its day and hours, what kind it is and
+     whose, the mice it names, its note, then Mark done (a to-do) and Open. */
+  const peekEl = document.createElement('div');
+  peekEl.className = 'cal-peek';
+  peekEl.setAttribute('role', 'dialog');
+  peekEl.hidden = true;
+  document.body.appendChild(peekEl);
+  let peeked = null;
+  const KIND_WORDS = { event: t('Event'), task: t('To-do'), booking: t('Booking'), away: t('Away'),
+    protocol: t('Protocol'), auto: t('Mouse colony'), agenda: t('Due'), subscription: t('Connected calendar'),
+    google: t('Connected calendar'), meeting: t('Meeting') };
+
+  function closePeek() { peekEl.hidden = true; peeked = null; }
+  document.addEventListener('pointerdown', (e) => {
+    if (!peekEl.hidden && !peekEl.contains(e.target) && !(e.target.closest && e.target.closest('[data-item-id], .toastui-calendar-weekday-event, .toastui-calendar-event-time'))) closePeek();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !peekEl.hidden) closePeek(); });
+  window.addEventListener('resize', closePeek);
+
+  function peek(item, nativeEvent) {
+    if (peeked === item.id && !peekEl.hidden) { closePeek(); return; }
+    peeked = item.id;
+    const raw = item.raw || {};
+    const start = new Date(item.start);
+    const end = new Date(item.end);
+    const day = start.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
+    const hours = item.isAllday || item.category === 'allday' ? '' : ` · <span class="cal-peek-mono">${hm(start)} – ${hm(end)}</span>`;
+    const colour = paint(item).borderColor;
+    const chips = [];
+    const kindWord = raw.eventType === 'meeting' ? KIND_WORDS.meeting : (raw.group || KIND_WORDS[item.kind] || '');
+    if (kindWord) {
+      const extra = item.kind === 'protocol' && item.body ? ` · ${escapeHtml(String(item.body).split(', ').pop())}` : '';
+      chips.push(`<span class="cal-peek-chip is-kind" style="--edge:${colour}">${escapeHtml(kindWord)}${extra}</span>`);
+    }
+    if (raw.owner) chips.push(`<span class="cal-peek-chip">${escapeHtml(t('by %(who)s', { who: raw.owner }))}</span>`);
+    if (raw.audienceLabel) chips.push(`<span class="cal-peek-chip">${escapeHtml(t(raw.audienceLabel))}</span>`);
+    // Mice the item names (#37, #38…), as chips.
+    const mice = Array.from(new Set(String(item.title || '').match(/#\d+/g) || []));
+    let body = item.kind === 'protocol' ? '' : String(item.body || '').trim();
+    // A meeting's event ends with the link to its notes (lab_notebook.meeting_calendar).
+    const notes = body.match(/(?:^|\n)Notes: (\/notebook\/meetings\/\d+\/open\?date=[\d-]+)\s*$/);
+    if (notes) body = body.slice(0, notes.index).trim();
+    const canDone = item.kind === 'task' && !raw.readOnly;
+    const canOpen = ['event', 'task', 'booking', 'away', 'protocol'].includes(item.kind) || raw.href;
+    peekEl.innerHTML = `
+      <div class="cal-peek-head">
+        <span class="cal-peek-swatch" style="background:${colour}"></span>
+        <div class="cal-peek-titles"><div class="cal-peek-title">${escapeHtml(item.title || '')}</div>
+          <div class="cal-peek-when">${escapeHtml(day)}${hours}</div></div>
+        <button type="button" class="cal-peek-x" aria-label="${t('Close')}">${svgIcon('close')}</button>
+      </div>
+      ${chips.length ? `<div class="cal-peek-chips">${chips.join('')}</div>` : ''}
+      ${mice.length ? `<div><div class="cal-peek-label">${t('Mice')}</div><div class="cal-peek-chips">${mice.map((m) => `<a class="cal-peek-mouse" href="/colony?view=mice&q=${encodeURIComponent(m.slice(1))}">${svgIcon('mouse')}${m}</a>`).join('')}</div></div>` : ''}
+      ${body ? `<p class="cal-peek-body">${escapeHtml(body)}</p>` : ''}
+      ${notes ? `<div class="cal-peek-label">${t('Notebook')}: <a href="${escapeHtml(notes[1])}">${t('Notes for this meeting')}</a></div>` : ''}
+      <div class="cal-peek-actions">
+        ${canDone ? `<button type="button" class="btn btn-primary btn-sm" data-peek="done">${raw.done ? t('Mark not done') : t('Mark done')}</button>` : ''}
+        ${canOpen ? `<button type="button" class="btn btn-sm" data-peek="open">${t('Open')}</button>` : ''}
+      </div>`;
+    peekEl.setAttribute('aria-label', item.title || '');
+    peekEl.querySelector('.cal-peek-x').addEventListener('click', closePeek);
+    const done = peekEl.querySelector('[data-peek="done"]');
+    if (done) done.addEventListener('click', () => { closePeek(); toggleDone(item.id); });
+    const open = peekEl.querySelector('[data-peek="open"]');
+    if (open) open.addEventListener('click', () => { closePeek(); openOnce(item); });
+    peekEl.hidden = false;
+    // Beside what was clicked, on whichever side has room.
+    const target = nativeEvent && nativeEvent.target && nativeEvent.target.closest
+      ? (nativeEvent.target.closest('.toastui-calendar-weekday-event, .toastui-calendar-event-time, .cal-chip') || nativeEvent.target) : null;
+    const r = target ? target.getBoundingClientRect() : { left: innerWidth / 2, right: innerWidth / 2, top: 120, bottom: 120 };
+    const w = peekEl.offsetWidth;
+    const h = peekEl.offsetHeight;
+    let left = r.right + 10;
+    if (left + w > innerWidth - 12) left = Math.max(12, r.left - w - 10);
+    const top = Math.max(12, Math.min(r.top - 8, innerHeight - h - 12));
+    peekEl.style.left = left + 'px';
+    peekEl.style.top = top + 'px';
+    const first = peekEl.querySelector('[data-peek]') || peekEl.querySelector('.cal-peek-x');
+    if (first) first.focus({ preventScroll: true });
   }
 
   // ================================================================ item dialog
@@ -999,6 +1284,7 @@
       if (!j.ok) return showError(formError, j.error || t("Couldn't save that."));
       modal.close();
       fetchAndRender();
+      if (currentView === 'board' && window.BioBoard) window.BioBoard.show();
       return undefined;
     });
   });
@@ -1507,7 +1793,8 @@
     hoverCard.style.top = `${top}px`;
   }
   function hideHover() { clearTimeout(hoverShow); hoverHide = setTimeout(() => { hoverCard.hidden = true; }, 150); }
-  [tuiHost, listHost].forEach((host) => {
+  // The grid shows an item on a click (the quick look); the list on hover.
+  [listHost].forEach((host) => {
     host.addEventListener('mouseover', (e) => {
       const el = e.target.closest('[data-item-id]');
       if (!el || !host.contains(el)) return;
