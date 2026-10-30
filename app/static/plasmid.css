@@ -1,0 +1,210 @@
+/* A plasmid's own pages (templates/plasmid_detail.html): the map and gel
+   drawn by static/plasmid-map.js, and the Digest tab around them
+   (static/plasmid-digest.js). Colours come from the app's tokens, so light
+   and dark both follow; the gel stays dark in both, as a real one is. */
+
+:root {
+  --pmap-promoter: #E8A11A;
+  --pmap-cds: #14A291;
+  --pmap-polya: #E2558E;
+  --pmap-ori: #7E8BA3;
+  --pmap-marker: #8B5CF6;
+  --pmap-other: #3B82F6;
+  --pmap-piece-0: #8B5CF6;
+  --pmap-piece-1: #14A291;
+  --pmap-piece-2: #E8A11A;
+  --pmap-piece-3: #3B82F6;
+  --gel-bg: #15171D;
+  --gel-lane: #1D2028;
+  --gel-well: rgba(255, 255, 255, 0.1);
+  --gel-text: #A9B0BF;
+  --gel-band: #F1ECFF;
+  --gel-glow: #B9A5FF;
+  --gel-size: #5EEAD4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pmap-cds: #2DD4BF;
+    --pmap-ori: #94A3B8;
+    --pmap-marker: #A78BFA;
+    --pmap-other: #60A5FA;
+    --pmap-piece-0: #A78BFA;
+    --pmap-piece-1: #2DD4BF;
+    --pmap-piece-3: #60A5FA;
+    --gel-bg: #0E0F13;
+    --gel-lane: #171920;
+  }
+}
+:root[data-theme="dark"] {
+  --pmap-cds: #2DD4BF;
+  --pmap-ori: #94A3B8;
+  --pmap-marker: #A78BFA;
+  --pmap-other: #60A5FA;
+  --pmap-piece-0: #A78BFA;
+  --pmap-piece-1: #2DD4BF;
+  --pmap-piece-3: #60A5FA;
+  --gel-bg: #0E0F13;
+  --gel-lane: #171920;
+}
+
+/* A pane of glass in the page, as the calendar's sidebar is. */
+.pglass {
+  border-radius: 22px;
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), inset 0 0 0 1px var(--glass-ring), var(--glass-lift);
+}
+
+/* ---- The map ------------------------------------------------------------ */
+
+.pmap { display: block; margin: 0 auto; height: auto; overflow: visible; }
+.pmap-backbone { stroke: var(--color-hairline); stroke-width: 2; }
+.pmap-tick { stroke: var(--color-muted); stroke-width: 1; opacity: 0.6; }
+.pmap-tick-text { font: 10px var(--font-mono, ui-monospace, monospace); fill: var(--color-muted); }
+.pmap-f { stroke: none; }
+.pmap-f-promoter { fill: var(--pmap-promoter); }
+.pmap-f-cds { fill: var(--pmap-cds); }
+.pmap-f-polya { fill: var(--pmap-polya); }
+.pmap-f-ori { fill: var(--pmap-ori); }
+.pmap-f-marker { fill: var(--pmap-marker); }
+.pmap-f-other { fill: var(--pmap-other); }
+.pmap-leader { stroke: var(--color-hairline); fill: none; }
+.pmap-label { font-size: 11px; fill: var(--color-ink-soft); }
+.pmap-cut { stroke: var(--color-ink); stroke-width: 1.5; }
+.pmap-cut-text { font: 11px var(--font-mono, ui-monospace, monospace); fill: var(--color-muted); }
+.pmap-cut-name { font-weight: 600; fill: var(--color-ink); }
+.pmap-title { font-size: 17px; font-weight: 600; fill: var(--color-ink); }
+.pmap-sub { font: 12px var(--font-mono, ui-monospace, monospace); fill: var(--color-muted); }
+.pmap-piece { fill: none; stroke-width: 5; stroke-linecap: round; opacity: 0.55; cursor: pointer; }
+.pmap-piece.is-picked { stroke-width: 8; opacity: 1; }
+.pmap-piece.pmap-piece-0 { stroke: var(--pmap-piece-0); }
+.pmap-piece.pmap-piece-1 { stroke: var(--pmap-piece-1); }
+.pmap-piece.pmap-piece-2 { stroke: var(--pmap-piece-2); }
+.pmap-piece.pmap-piece-3 { stroke: var(--pmap-piece-3); }
+.pmap-piece-text { font: 600 12px var(--font-mono, ui-monospace, monospace); }
+text.pmap-piece-0 { fill: var(--pmap-piece-0); }
+text.pmap-piece-1 { fill: var(--pmap-piece-1); }
+text.pmap-piece-2 { fill: var(--pmap-piece-2); }
+text.pmap-piece-3 { fill: var(--pmap-piece-3); }
+
+/* ---- The gel ------------------------------------------------------------ */
+
+.gel { display: block; height: auto; }
+.gel-bg { fill: var(--gel-bg); }
+.gel-lane { fill: var(--gel-lane); }
+.gel-lane.is-current { stroke: var(--color-brand-500); stroke-width: 1.5; }
+.gel-well { fill: var(--gel-well); }
+.gel-text { font-size: 11px; fill: var(--gel-text); }
+.gel-band { fill: var(--gel-band); }
+.gel-glow { fill: var(--gel-glow); }
+.gel-size { font: 600 10px var(--font-mono, ui-monospace, monospace); fill: var(--gel-size); }
+
+/* ---- The Digest tab ----------------------------------------------------- */
+
+.pdig {
+  color: var(--color-ink);
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) minmax(320px, 470px);
+  gap: 14px;
+  align-items: start;
+}
+.pdig.is-loading .pdig-center, .pdig.is-loading .pdig-gel { opacity: 0.7; transition: opacity 0.2s 0.15s; }
+@media (max-width: 1180px) {
+  .pdig { grid-template-columns: 260px minmax(0, 1fr); }
+  .pdig-gel { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .pdig { grid-template-columns: minmax(0, 1fr); }
+}
+
+.pdig-enzymes { padding: 14px; position: sticky; top: 6px; max-height: calc(100dvh - 120px); overflow-y: auto; }
+.pdig-find {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px;
+  border-radius: 12px; background: var(--color-recess); color: var(--color-muted);
+}
+.pdig-find input { flex: 1; min-width: 0; border: 0; background: none; font-size: 13px; color: var(--color-ink); outline: none; }
+.pdig-filter { display: flex; width: 100%; margin: 10px 0 6px; }
+.pdig-filter .seg-item { flex: 1; justify-content: center; padding-inline: 6px; white-space: nowrap; font-size: 12px; }
+.pdig-list { list-style: none; margin: 0; padding: 0; }
+.pdig-enzyme {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 12px;
+  font-size: 13px; cursor: pointer;
+}
+.pdig-enzyme:hover { background: var(--color-recess); }
+.pdig-enzyme.is-on { background: var(--color-brand-50); }
+.pdig-enzyme.is-none { opacity: 0.55; }
+.pdig-enzyme input { accent-color: var(--color-brand-600); }
+.pdig-name { width: 64px; flex: none; font-family: var(--font-mono, ui-monospace, monospace); font-weight: 500; }
+.pdig-where { flex: 1; min-width: 0; font: 12px var(--font-mono, ui-monospace, monospace); color: var(--color-muted); }
+.pdig-tag {
+  flex: none; padding: 1px 6px; border-radius: 6px; font-size: 11px;
+  background: var(--color-warn-50); color: var(--color-warn-700);
+}
+.pdig-freezer { flex: none; width: 14px; color: var(--color-brand-700); }
+.pdig-freezer .icon { width: 14px; height: 14px; }
+.pdig-chosen { margin-top: 10px; padding: 12px; border-radius: 14px; background: var(--color-recess); font-size: 12px; }
+.pdig-chosen-head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.pdig-chosen-head b { flex: 1; }
+.pdig-chosen ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pdig-chosen li span { display: block; color: var(--color-muted); }
+.pdig-chosen a { color: var(--color-ink); font-weight: 500; }
+.pdig-chosen p { margin: 6px 0 0; }
+
+.pdig-center { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pdig-map { padding: 12px 10px 6px; }
+.pdig-pieces { padding: 6px 12px; }
+.pdig-empty { padding: 12px; font-size: 13px; color: var(--color-muted); }
+.pdig-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pdig-table th { padding: 7px 8px; text-align: left; font-weight: 500; font-size: 12px; color: var(--color-muted); }
+.pdig-table td { padding: 7px 8px; border-top: 1px solid var(--color-hairline); }
+.pdig-table .num { text-align: right; }
+.pdig-table tr[data-piece] { cursor: pointer; }
+.pdig-table tr.is-picked td { background: var(--color-brand-50); }
+.pdig-dot { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 3px; background: currentColor; }
+.pdig-dot.pmap-piece-0 { color: var(--pmap-piece-0); }
+.pdig-dot.pmap-piece-1 { color: var(--pmap-piece-1); }
+.pdig-dot.pmap-piece-2 { color: var(--pmap-piece-2); }
+.pdig-dot.pmap-piece-3 { color: var(--pmap-piece-3); }
+
+.pdig-suggest { display: flex; flex-direction: column; gap: 6px; }
+.pdig-suggest:empty { display: none; }
+.pdig-check {
+  padding: 14px 16px; border-radius: 22px; background: var(--glass-thick);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand-500), var(--glass-lift);
+}
+.pdig-check.is-on { background: var(--color-brand-50); }
+.pdig-check-head { display: flex; align-items: center; gap: 8px; }
+.pdig-check-head .grow { flex: 1; }
+.pdig-check p { margin: 8px 0 0; font-size: 13px; line-height: 1.5; }
+.pdig-alt {
+  display: flex; gap: 8px; align-items: baseline; padding: 8px 14px; border-radius: 14px; text-align: left;
+  font-size: 12px; color: var(--color-ink-soft); background: var(--glass-regular);
+  box-shadow: inset 0 0 0 1px var(--glass-ring);
+}
+.pdig-alt:hover { background: var(--glass-thick); }
+
+.pdig-gel { padding: 12px; min-width: 0; }
+.pdig-gel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.pdig-gel-head h3 { flex: 1; margin: 0; font-size: 15px; font-weight: 600; color: var(--color-ink); }
+.pdig-select {
+  height: 28px; padding: 0 8px; border: 0; border-radius: 9px; font-size: 12px;
+  color: var(--color-ink); background: var(--color-recess);
+}
+.pdig-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-ink-soft); }
+.pdig-photo-pick { cursor: pointer; }
+.pdig-gels { display: flex; gap: 10px; align-items: flex-start; overflow-x: auto; }
+.pdig-gels > div { flex: 1 1 auto; min-width: 0; }
+.pdig-photo { flex: 1 1 45%; margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.pdig-photo img { width: 100%; border-radius: 14px; filter: grayscale(1) contrast(1.15); }
+.pdig-lanes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pdig-lanes:empty { display: none; }
+.pdig-lane-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; border-radius: 999px;
+  font-size: 12px; background: var(--color-recess);
+}
+.pdig-lane-chip button { width: 20px; height: 20px; border-radius: 999px; color: var(--color-muted); }
+.pdig-lane-chip button:hover { background: var(--color-sand-200); color: var(--color-ink); }
+.pdig-notes { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pdig-notes li { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: var(--color-ink-soft); }
+.pdig-notes .badge { flex: none; }

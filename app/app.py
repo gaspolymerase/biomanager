@@ -430,6 +430,9 @@ app.register_blueprint(lab_routes.bp)
 # load_current_user, so its hook knows who is saving.
 from . import batch_edit  # noqa: E402
 app.register_blueprint(batch_edit.bp)
+# A plasmid's virtual digest and gel (app/digest_routes.py).
+from . import digest_routes  # noqa: E402
+app.register_blueprint(digest_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)

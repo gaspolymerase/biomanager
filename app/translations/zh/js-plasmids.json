@@ -45,5 +45,22 @@
   "Those listed above aren’t repeated.": "上方已列出的不再重复。",
   "names this plasmid": "已关联此质粒",
   "Looking through the saved primers…": "正在查找已保存的引物…",
-  "Couldn’t look: %(error)s": "无法查找：%(error)s"
+  "Couldn’t look: %(error)s": "无法查找：%(error)s",
+  "That could not be worked out.": "这个没算出来。",
+  "doesn't cut": "不切",
+  "Methylation stops it here": "这里被甲基化挡住",
+  "In the freezer: %(item)s": "冰箱里有：%(item)s",
+  "No enzyme here. Try All.": "这里没有酶。试试“全部”。",
+  "Not in the lab’s reagents: %(names)s": "实验室试剂里没有：%(names)s",
+  "These enzymes don’t cut it.": "这些酶切不开它。",
+  "Tick enzymes on the left, or use a suggested check.": "在左边勾选酶，或用推荐的检测组合。",
+  "Piece": "片段",
+  "Holds": "容纳",
+  "Suggested check": "推荐检测",
+  "In the freezer": "冰箱里有",
+  "Use these": "用这组",
+  "Expected gel": "预期胶图",
+  "%(pct)s agarose": "%(pct)s 琼脂糖",
+  "Take %(lane)s off the gel": "把 %(lane)s 从胶上拿掉",
+  "Keep %(lane)s on the gel": "把 %(lane)s 留在胶上"
 }

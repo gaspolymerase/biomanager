@@ -368,17 +368,51 @@ for i, name in enumerate(PLASMIDS):
     sam.post("/plasmids", data={"name": name, "count": "1", "box_id": str(box), "position": pos})
 
 
-def genbank() -> str:
-    """A made-up 5.5 kb plasmid with plausible features, for the map."""
+PLASMIDS.append("pCAGGS")
+sam.post("/plasmids", data={"name": "pCAGGS", "count": "1", "box_id": str(box), "position": f"A{len(PLASMIDS)}"})
+
+# The real EGFP coding sequence, so a digest, a primer and a translation
+# of the demo's pCAG-EGFP read true; the rest of the plasmid is made up.
+EGFP = ("ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACC"
+        "TACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCCTGACCTACGGCGTGCAGTGCTTCAGCCGCTACCCCGACCAC"
+        "ATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGC"
+        "GACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAACGTCTATATCATGGCCGAC"
+        "AAGCAGAAGAACGGCATCAAGGTGAACTTCAAGATCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTG"
+        "CTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATG"
+        "GACGAGCTGTACAAGTAA")
+CUT_HERE = ("GAATTC", "GCGGCCGC", "TCTAGA", "GGTACC", "GGATCC", "CCATGG")
+
+
+def demo_plasmid(insert: bool = True) -> tuple[str, list]:
+    """pCAG-EGFP (5.5 kb): EGFP between EcoRI and NotI, an XbaI site Dam
+    blocks just after; without the insert, its backbone pCAGGS."""
     import random
     rnd = random.Random(7)
-    seq = "".join(rnd.choice("ACGT") for _ in range(5500)).lower()
-    features = [("promoter", 1, 584, "CAG promoter", 1), ("CDS", 700, 1419, "EGFP", 1),
-                ("polyA_signal", 1450, 1674, "bGH poly(A)", 1), ("rep_origin", 2100, 2688, "ori", -1),
-                ("CDS", 2860, 3720, "AmpR", -1), ("promoter", 3721, 3825, "AmpR promoter", -1),
-                ("misc_feature", 4200, 4340, "f1 ori", 1), ("CDS", 4500, 5100, "WPRE", 1)]
-    lines = [f"LOCUS       pCAG-EGFP               5500 bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
-             "DEFINITION  pCAG-EGFP (demo).", "FEATURES             Location/Qualifiers"]
+
+    def filler(n: int) -> str:
+        text = "".join(rnd.choice("ACGT") for _ in range(n))
+        for site in CUT_HERE:              # these cut only where the map says
+            text = text.replace(site, site[:2] + ("A" if site[2] != "A" else "C") + site[3:])
+        return text
+    head, gap = filler(680), filler(10)
+    tail = filler(5500 - 680 - 12 - len(EGFP) - 10 - 16)
+    seq = head + "GAATTC" + "GCCACC" + (EGFP if insert else "") + gap + "GCGGCCGC" + "TCTAGATC" + tail
+    egfp_at = 692
+    shift = 0 if insert else -len(EGFP)
+    features = [("promoter", 1, 584, "CAG promoter", 1)]
+    if insert:
+        features.append(("CDS", egfp_at + 1, egfp_at + len(EGFP), "EGFP", 1))
+    features += [(kind, a + shift, b + shift, label, strand) for kind, a, b, label, strand in (
+        ("polyA_signal", 1460, 1684, "bGH poly(A)", 1), ("rep_origin", 2100, 2688, "ori", -1),
+        ("CDS", 2860, 3720, "AmpR", -1), ("promoter", 3721, 3825, "AmpR promoter", -1),
+        ("misc_feature", 4200, 4340, "f1 ori", 1), ("CDS", 4500, 5100, "WPRE", 1))]
+    return seq.lower(), features
+
+
+def genbank(name: str = "pCAG-EGFP", insert: bool = True) -> str:
+    seq, features = demo_plasmid(insert)
+    lines = [f"LOCUS       {name:<24}{len(seq)} bp    DNA     circular SYN {TODAY:%d-%b-%Y}".upper(),
+             f"DEFINITION  {name} (demo).", "FEATURES             Location/Qualifiers"]
     for kind, start, end, label, strand in features:
         loc = f"{start}..{end}" if strand == 1 else f"complement({start}..{end})"
         lines += [f"     {kind:<16}{loc}", f'                     /label="{label}"']
@@ -392,6 +426,11 @@ def genbank() -> str:
 
 pcag = one("select id from plasmids where name='pCAG-EGFP'")
 sam.post(f"/plasmids/{pcag}/upload-sequence", data={"sequence_text": genbank()})
+pcaggs = one("select id from plasmids where name='pCAGGS'")
+sam.post(f"/plasmids/{pcaggs}/upload-sequence", data={"sequence_text": genbank("pCAGGS", insert=False)})
+sam.post(f"/plasmids/{pcag}/parents", data={
+    "parent": str(one("select plasmid_id from plasmids where name='pCAGGS'")), "role": "backbone",
+    "method": "digest_ligate"})
 
 # ------------------------------------------------------------------ inventories
 
@@ -433,6 +472,16 @@ for name, status, vendor, cat, qty, unit, expires, cas, conc, temp, hazard in (
                                                          "expires_on": expires, "is_shared": "1", "attr_cas": cas,
                                                          "attr_concentration": conc, "attr_storage_temp": temp,
                                                          "attr_hazard": hazard})
+
+# The restriction enzymes in the freezer door: the Digest tab marks them.
+for name, cat, box_pos in (("EcoRI-HF", "R3101S", "door, row 1"), ("NotI-HF", "R3189S", "door, row 1"),
+                           ("HindIII-HF", "R3104S", "door, row 2"), ("PstI-HF", "R3140S", "door, row 2"),
+                           ("BamHI-HF", "R3136S", "door, row 2"), ("XbaI", "R0145S", "door, row 3")):
+    alex.post(f"/inventory/{reagents}/items/save", data={"id": "", "name": name, "category": "enzyme",
+                                                         "status": "in stock", "vendor": "NEB", "catalog_number": cat,
+                                                         "quantity": "1", "unit": "tube", "is_shared": "1",
+                                                         "location_note": f"−20 °C freezer, {box_pos}",
+                                                         "attr_storage_temp": "−20 °C", "attr_hazard": "none"})
 
 antibodies = keys_of("antibodies") or module("antibodies", "Antibodies")
 for name, host, dil, vendor, cat in (

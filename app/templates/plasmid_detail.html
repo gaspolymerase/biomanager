@@ -12,10 +12,15 @@
   <a class="btn" href="{{ url_for('plasmids') }}">{{ icon('chevron-left') }} {{ _('All plasmids') }}</a>
 {% endblock %}
 
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='plasmid.css') }}?v={{ asset_version('plasmid.css') }}">
+{% endblock %}
+
 {% block page_nav %}
   <div class="mb-3 flex flex-wrap items-center gap-3">
     <nav class="seg" role="tablist" aria-label="{{ _('Plasmid sections') }}">
       <button type="button" class="seg-item plasmid-tab is-active" data-tab="sequence" role="tab">{{ icon('dna') }}{{ _('Sequence') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="digest" role="tab">{{ icon('scissors') }}{{ _('Digest') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="storage" role="tab">{{ icon('box') }}{{ _('Storage') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="properties" role="tab">{{ icon('sliders') }}{{ _('Properties') }}</button>
     </nav>
@@ -264,6 +269,48 @@
 </section>
 
 {# ============ Storage ============ #}
+{# ============ Digest — enzymes, the pieces they leave, the gel (static/plasmid-digest.js) ============ #}
+<section class="plasmid-tab-panel" data-panel="digest">
+  {% if plasmid.length_bp %}
+  <div class="pdig" data-digest data-url="{{ url_for('digest.digest_json', row_id=plasmid.row_id) }}"
+       data-key="{{ plasmid.row_id }}" data-name="{{ plasmid.name or ('#' ~ plasmid.plasmid_id) }}">
+    <aside class="pglass pdig-enzymes" aria-label="{{ _('Enzymes') }}">
+      <label class="pdig-find">{{ icon('search') }}<input type="search" data-enzyme-find placeholder="{{ _('Find an enzyme…') }}" aria-label="{{ _('Find an enzyme') }}"></label>
+      <div class="seg pdig-filter">
+        <button type="button" class="seg-item is-active" data-filter="unique">{{ _('Unique') }}</button>
+        <button type="button" class="seg-item" data-filter="two">{{ _('Two') }}</button>
+        <button type="button" class="seg-item" data-filter="all">{{ _('All') }}</button>
+        <button type="button" class="seg-item" data-filter="freezer">{{ _('In freezer') }}</button>
+      </div>
+      <ul class="pdig-list" data-enzyme-list></ul>
+      <div class="pdig-chosen" data-chosen hidden></div>
+    </aside>
+    <div class="pdig-center">
+      <div class="pglass pdig-map" data-map></div>
+      <div class="pdig-suggest" data-suggest></div>
+      <div class="pglass pdig-pieces" data-pieces></div>
+    </div>
+    <section class="pglass pdig-gel" aria-label="{{ _('Expected gel') }}">
+      <header class="pdig-gel-head">
+        <h3>{{ _('Expected gel') }}</h3>
+        <select class="pdig-select" data-agarose aria-label="{{ _('Agarose') }}"></select>
+        <select class="pdig-select" data-ladder aria-label="{{ _('Ladder') }}"></select>
+        <label class="pdig-toggle" title="{{ _('Grown in an ordinary E. coli (DH5α, TOP10): Dam and Dcm methylation can stop a few enzymes.') }}"><input type="checkbox" data-methylated> {{ _('Dam⁺ Dcm⁺') }}</label>
+        <label class="btn btn-sm pdig-photo-pick">{{ icon('image') }} {{ _('Put my gel beside it') }}<input type="file" accept="image/*" data-photo-file hidden></label>
+      </header>
+      <div class="pdig-gels">
+        <div data-gel></div>
+        <figure class="pdig-photo" data-photo hidden><img alt="{{ _('Your gel') }}"><button type="button" class="btn btn-sm" data-photo-remove>{{ _('Remove') }}</button></figure>
+      </div>
+      <div class="pdig-lanes" data-lanes></div>
+      <ul class="pdig-notes" data-notes></ul>
+    </section>
+  </div>
+  {% else %}
+  <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, and its digests show here.') }}</p></div>
+  {% endif %}
+</section>
+
 <section class="plasmid-tab-panel" data-panel="storage">
   <div class="card max-w-[760px] overflow-hidden">
     <form method="post" action="{{ url_for('update_plasmid', row_id=plasmid.row_id) }}" class="modal-grid p-4">
@@ -494,6 +541,8 @@
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
 <script src="{{ url_for('static', filename='primer-scan.js') }}?v={{ asset_version('primer-scan.js') }}" defer></script>
 <script src="{{ url_for('static', filename='seq-verify.js') }}?v={{ asset_version('seq-verify.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-digest.js') }}?v={{ asset_version('plasmid-digest.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
 <script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer
