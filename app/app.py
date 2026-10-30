@@ -426,6 +426,10 @@ security.init_app(app)
 # Registered after load_current_user too: its checks (a switched-off
 # function, the daily reminder) need to know who is signed in.
 app.register_blueprint(lab_routes.bp)
+# A batch made of a sheet's row saves (Set a field…): registered after
+# load_current_user, so its hook knows who is saving.
+from . import batch_edit  # noqa: E402
+app.register_blueprint(batch_edit.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)

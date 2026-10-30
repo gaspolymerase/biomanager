@@ -1881,7 +1881,7 @@ document.addEventListener('rack-grid:moved', (event) => {
   setValue(form.querySelector('[name="position_was"]'), position || '');
 });
 
-async function saveFormInBackground(form) {
+async function saveFormInBackground(form, headers) {
   form.dataset.saveState = 'saving';
   savesInFlight += 1;
   showSaveStatus('saving', t('Saving…'));
@@ -1891,7 +1891,7 @@ async function saveFormInBackground(form) {
     const response = await fetch(form.action, {
       method: form.method || 'POST',
       body: sent,
-      headers: { 'X-Autosave': '1' },
+      headers: Object.assign({ 'X-Autosave': '1' }, headers || {}),
     });
     let body = {};
     try { body = await response.json(); } catch (_) { /* a redirect or HTML page */ }
@@ -1911,6 +1911,7 @@ async function saveFormInBackground(form) {
     rowsForForm(form).forEach((el) => el.closest('td')?.classList.remove('has-error'));
     savesInFlight -= 1;
     if (savesInFlight === 0) showSaveStatus('saved', t('All changes saved'));
+    return true;
   } catch (error) {
     savesInFlight -= 1;
     form.dataset.saveState = 'error';
@@ -1919,8 +1920,13 @@ async function saveFormInBackground(form) {
     });
     showSaveStatus('error', t('Couldn’t save %(what)s: %(error)s', { what: label, error: error.message }));
     console.error(error);
+    return false;
   }
 }
+// Set a field… on ticked rows saves each as its cell would (selection-bar.js).
+document.querySelectorAll('[data-selection-scope="mice"]').forEach((card) => {
+  card.bioSave = (form, headers) => saveFormInBackground(form, headers);
+});
 
 function wireAutosave(input) {
   if (input.closest('[data-autosave-sheet]')) return;  // static/sheet.js saves these

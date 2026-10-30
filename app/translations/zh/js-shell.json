@@ -110,5 +110,12 @@
   "Weight of %(mouse)s in grams": "%(mouse)s 的体重（克）",
   "%(column)s is": "%(column)s 为",
   "Sorted by %(column)s": "按%(column)s排序",
-  "%(n)s of %(total)s": "%(n)s / %(total)s"
+  "%(n)s of %(total)s": "%(n)s / %(total)s",
+  "Set %(column)s": "设置%(column)s",
+  "%(what)s on %(n)s rows.": "%(what)s：%(n)s 行。",
+  "%(n)s not yours to edit.": "%(n)s 行不归你编辑。",
+  "%(n)s have no such choice.": "%(n)s 行没有这个选项。",
+  "%(n)s could not be saved; their cells are marked.": "%(n)s 行没能保存，已在单元格上标出。",
+  "new value": "新值",
+  "New value": "新值"
 }

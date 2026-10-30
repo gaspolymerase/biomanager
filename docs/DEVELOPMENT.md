@@ -1275,6 +1275,22 @@ shared to-dos, not their personal ones. A member's copy
 of the lab (`lab_copy.member_view`) leaves out the databases of groups they
 are not in, and keeps pages shared with their groups.
 
+**Set a field…** (`static/selection-bar.js`, `anyField`) lists, when its
+panel opens, every column of the ticked rows a person may edit (a cell's
+field, or a text cell's `data-field`) beside the columns the sheet's batch
+route sets (`[data-bulk-field]` options; a sheet without one gets a form
+of the rows alone). A column of the route posts as before; any other is
+set row by row: the cell takes the value and the row's form is saved as an
+edit would save it (`BioSheet.save`, or the sheet's own `card.bioSave`,
+as the mouse sheet's `saveFormInBackground`), each sending `X-Batch-Id`
+from `POST /batch/start` so their audit rows join one batch
+(`app/batch_edit.py`, a `before_app_request` that sets `g.audit_batch_id`
+for its own opener's batch, open half an hour), closed with
+`/batch/<id>/finish` and its count. A post that reloads the same page
+opens where it was: `data-table.js` notes the scroll and each sheet's page
+in sessionStorage (`biomanager:place`) as a POST form goes, and uses it if
+the page comes back to the same address within two minutes.
+
 The calendar's **Board** (`app/task_board.py`, `static/calendar-board.js`)
 draws the same to-dos as cards: `tasks.board_list` is the list one is in
 (empty: Inbox) and `board_position` its place there (revision 0051), the

@@ -96,6 +96,7 @@
       button.addEventListener('click', clearAll);
     });
 
+    anyField(scope, bar, checked);
     bar.selbarForms = Array.from(bar.querySelectorAll('form[data-selection-form]'));
     capsule(bar, checked);
     document.addEventListener('keydown', (event) => {
@@ -152,7 +153,12 @@
           return;
         }
         delete form.dataset.confirmed;
-        if (typeof form.selbarBefore === 'function') form.selbarBefore(ids);
+        // A form may do the work itself (Set a field… on a column set row by
+        // row): it answers false, and nothing is posted.
+        if (typeof form.selbarBefore === 'function' && form.selbarBefore(ids, event) === false) {
+          event.preventDefault();
+          return;
+        }
         form.querySelectorAll('input[name="selected_ids"]').forEach((el) => el.remove());
         ids.forEach((id) => {
           const field = document.createElement('input');
@@ -416,6 +422,155 @@
     select.addEventListener('change', () => guard(true));
     form.addEventListener('submit', () => guard(false), true);   // before the bar's own handler reads it
     guard(true);
+  }
+
+  /* Set a field…, for every column of the sheet. A sheet's own batch route
+     covers some columns (the server sets them on all the rows at once, and
+     the page comes back where it was); every other column a person can
+     edit in a cell is offered too, and set on each ticked row through that
+     row's own save, as typing it into the cell would: the same checks and
+     rules, the sheet not reloaded, and the rows one change in Batch history
+     (app/batch_edit.py). Built when the panel opens, from the ticked rows. */
+  function anyField(scope, bar, checked) {
+    // The sheet: one saving through sheet.js, or one with a saver of its own (card.bioSave).
+    const card = scope.closest('[data-autosave-sheet]') || scope.querySelector('[data-autosave-sheet]')
+      || (scope.matches('.data-table-card') ? scope : scope.closest('.data-table-card'));
+    if (!card) return;
+    let select = bar.querySelector('[data-bulk-field]');
+    let form = select && select.form;
+    if (!form) {
+      // No batch route for any column: a Set a field… of the rows alone.
+      form = document.createElement('form');
+      form.setAttribute('data-selection-form', '');
+      form.setAttribute('data-selbar-more', '');
+      form.dataset.selbarLabel = t('Set a field…');
+      form.dataset.key = 'F';
+      const listId = `selbar-any-${Math.random().toString(36).slice(2, 8)}`;
+      form.innerHTML = `<select name="field" aria-label="${t('Field to set')}" data-bulk-field></select>` +
+        `<input name="value" placeholder="${t('new value')}" list="${listId}" aria-label="${t('New value')}" data-bulk-value autocomplete="off">` +
+        `<datalist id="${listId}"></datalist><button type="submit" class="btn btn-sm btn-primary">${t('Set')}</button>`;
+      const anchor = bar.querySelector('form[data-selbar-more], .selbar-spacer, [data-selection-clear]');
+      bar.insertBefore(form, anchor);
+      select = form.querySelector('[data-bulk-field]');
+    }
+    const table = card.querySelector('table');
+    const served = new Set(Array.from(select.options).map((o) => o.value));
+
+    // The columns of the ticked rows a person may edit, in the sheet's order.
+    function columns(boxes) {
+      const found = new Map();
+      boxes.forEach((box) => {
+        const tr = box.closest('tr');
+        if (!tr) return;
+        Array.from(tr.cells).forEach((td) => {
+          const fields = Array.from(td.querySelectorAll('[form][name], .cell-text[data-sort-for][data-form]'));
+          fields.forEach((el) => {
+            const name = el.getAttribute('name') || el.dataset.sortFor;
+            if (!name || /_was$/.test(name) || found.has(name) || served.has(name)) return;
+            const control = el.classList.contains('cell-text') ? fieldOf(el) : el;
+            if (!control || control.type === 'hidden' || control.type === 'checkbox' || control.type === 'file') return;
+            if (control.disabled || control.readOnly || el.classList.contains('is-disabled')) return;
+            const head = table && table.tHead && table.tHead.rows[0] && table.tHead.rows[0].cells[td.cellIndex];
+            const heading = head ? head.textContent.replace(/\s+/g, ' ').trim() : '';
+            const label = fields.length > 1 ? (control.getAttribute('aria-label') || heading || name) : (heading || control.getAttribute('aria-label') || name);
+            found.set(name, { name, label, control });
+          });
+        });
+      });
+      return Array.from(found.values());
+    }
+    // A cell drawn as text: its field, from its markup, without opening it.
+    function fieldOf(span) {
+      const holder = document.createElement('template');
+      holder.innerHTML = span.dataset.field || '';
+      return holder.content.firstElementChild;
+    }
+    function choicesOf(control) {
+      if (control.tagName === 'SELECT') {
+        if (window.BiomanagerShell && window.BiomanagerShell.fillChoices && control.isConnected) window.BiomanagerShell.fillChoices(control);
+        return Array.from(control.options).filter((o) => o.value).map((o) => [o.value, o.textContent.trim()]);
+      }
+      const list = control.list || (control.getAttribute('list') && document.getElementById(control.getAttribute('list')));
+      return list ? Array.from(list.options).map((o) => [o.value, o.label || '']) : [];
+    }
+
+    form.addEventListener('selbar:open', (event) => {
+      select.querySelectorAll('option[data-mode="rows"]').forEach((o) => o.remove());
+      columns(event.detail.boxes).forEach((col) => {
+        const opt = document.createElement('option');
+        opt.value = col.name;
+        opt.textContent = col.label;
+        opt.dataset.mode = 'rows';
+        const type = col.control.type;
+        if (type === 'date' || type === 'number') opt.dataset.type = type;
+        const choices = choicesOf(col.control);
+        if (choices.length) opt.dataset.options = choices.map((c) => c[0]).join('\n');
+        select.appendChild(opt);
+      });
+      select.dispatchEvent(new Event('change'));
+    });
+
+    form.selbarBefore = () => {
+      const opt = select.selectedOptions[0];
+      if (!opt || opt.dataset.mode !== 'rows' || !(card.bioSave || window.BioSheet)) return true;      // the server's
+      const value = (form.querySelector('[data-bulk-value]') || {}).value || '';
+      setOnRows(card, checked(), opt.value, opt.textContent.trim(), value.trim());
+      return false;
+    };
+  }
+
+  async function setOnRows(card, boxes, name, label, value) {
+    const say = (text, kind) => window.BiomanagerShell && window.BiomanagerShell.toast(text, kind);
+    const what = t('Set %(column)s', { column: label });
+    let batchId = null;
+    try {
+      const r = await fetch('/batch/start', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ what: `${what}: ${value || t('(blank)')}`, table: card.dataset.auditTable || '' }) });
+      if (r.ok) batchId = (await r.json()).id;
+    } catch (_) { /* each row is still its own change */ }
+    let changed = 0;
+    let skipped = 0;
+    let failed = 0;
+    let notChoice = 0;
+    for (const box of boxes) {
+      const tr = box.closest('tr');
+      const holder = tr && tr.querySelector('[form]');
+      const formId = holder && holder.getAttribute('form');
+      const rowForm = formId && window.BioRowForms.get(formId);
+      let el = tr && tr.querySelector(`[form="${formId}"][name="${name}"]`);
+      if (!el && tr && window.BioTextCells) el = window.BioTextCells.field(tr, name, formId);
+      if (!rowForm || !el || el.disabled || el.readOnly) { skipped += 1; continue; }
+      if (el.tagName === 'SELECT') {
+        if (window.BiomanagerShell && window.BiomanagerShell.fillChoices) window.BiomanagerShell.fillChoices(el);
+        const low = value.toLowerCase();
+        const option = Array.from(el.options).find((o) => o.value === value)
+          || Array.from(el.options).find((o) => o.value.toLowerCase() === low || o.textContent.trim().toLowerCase() === low);
+        if (!option) { notChoice += 1; continue; }
+        if (el.value === option.value) continue;
+        el.value = option.value;
+      } else {
+        if (el.value === value) continue;
+        el.value = value;
+        if (el.type === 'date') el.dataset.empty = value ? '0' : '1';
+      }
+      el.dataset.dirty = '1';
+      // A pill takes its colour from the value (status, sex).
+      if ('status' in el.dataset) el.dataset.status = el.value.toLowerCase();
+      if ('sex' in el.dataset) el.dataset.sex = el.value;
+      const headers = batchId ? { 'X-Batch-Id': String(batchId) } : null;
+      const ok = card.bioSave ? await card.bioSave(rowForm, headers) : await window.BioSheet.save(rowForm, card, headers);
+      if (ok) changed += 1; else failed += 1;
+    }
+    if (batchId) {
+      fetch(`/batch/${batchId}/finish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count: changed }) }).catch(() => {});
+    }
+    const parts = [t('%(what)s on %(n)s rows.', { what, n: changed })];
+    if (skipped) parts.push(t('%(n)s not yours to edit.', { n: skipped }));
+    if (notChoice) parts.push(t('%(n)s have no such choice.', { n: notChoice }));
+    if (failed) parts.push(t('%(n)s could not be saved; their cells are marked.', { n: failed }));
+    say(parts.join(' '), failed || (!changed && (skipped || notChoice)) ? 'error' : '');
+    const bar = card.querySelector('[data-selection-bar]') || document.querySelector('[data-selection-bar]:not([hidden])');
+    if (bar) closePanel(bar);
   }
 
   /* Weigh: a weight box for each ticked mouse, named by its number. */

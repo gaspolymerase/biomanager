@@ -179,8 +179,10 @@
       if (this.tbody) this.tbody.querySelectorAll(':scope > tr[data-detail-for]').forEach((d) => this.details.set(d.dataset.detailFor, d));
       this.sortKey = null;
       this.sortDir = 1;
-      this.page = 0;
+      // The page it was on before a batch action or a save reloaded it.
+      this.page = keptPlace && keptPlace.pages ? Math.max(0, Number(keptPlace.pages[this.id]) || 0) : 0;
       this.query = '';
+      controllers.push(this);
       this.quick = null;   // [{attr, value}, …] from a .dt-chip
       this._indexColumns();
       this.fields = this._loadFields();   // [{key, value, label}, …]: sheet-views.js's filter chips
@@ -1564,6 +1566,8 @@
     // -------- render -----------------------------------------------------
     render() {
       const size = this.pageSize ? parseInt(this.pageSize.value, 10) : 50;
+      // A page kept from before a save (keepPlace) may be past the end now.
+      if (size && this.page > 0 && this.page * size >= this.filtered.length) this.page = Math.max(0, Math.ceil(this.filtered.length / size) - 1);
       const start = this.page * size;
       const end = start + size;
       // A page with stubs on it waits for their rows (a sheet the server
@@ -1729,7 +1733,43 @@
     });
   }
 
+  /* Keep your place. A batch action, a dialog's Save or a button that posts
+     comes back to the same page, reloaded: it opens where you were, each
+     sheet on its page and the window scrolled as it was. Noted as the form
+     goes (this tab only), used if it comes back to the same address within
+     two minutes. */
+  const PLACE_KEY = 'biomanager:place';
+  const controllers = [];
+  const scrollerOf = () => document.getElementById('app-scroll') || document.scrollingElement;
+  let keptPlace = null;
+  try {
+    const note = JSON.parse(sessionStorage.getItem(PLACE_KEY) || 'null');
+    sessionStorage.removeItem(PLACE_KEY);
+    if (note && note.url === location.pathname + location.search && Date.now() - (note.at || 0) < 120000) keptPlace = note;
+  } catch (_) { keptPlace = null; }
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!form || event.defaultPrevented || (form.method || '').toLowerCase() !== 'post' || form.target === '_blank') return;
+    const scroller = scrollerOf();
+    const pages = {};
+    controllers.forEach((c) => { pages[c.id] = c.page; });
+    try {
+      sessionStorage.setItem(PLACE_KEY, JSON.stringify({
+        url: location.pathname + location.search, at: Date.now(), y: scroller ? scroller.scrollTop : 0, pages,
+      }));
+    } catch (_) { /* storage off: it opens at the top, as before */ }
+  });
+  function restoreScroll() {
+    if (!keptPlace || !keptPlace.y) return;
+    const y = keptPlace.y;
+    const go = () => { const scroller = scrollerOf(); if (scroller) scroller.scrollTop = y; };
+    // Once the sheets are drawn, and again when images and fonts have come.
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    if (document.readyState !== 'complete') window.addEventListener('load', () => requestAnimationFrame(go), { once: true });
+  }
+
   function init() {
+    restoreScroll();
     document.querySelectorAll('.data-table-card[data-table-id]').forEach((card) => {
       // Avoid double-initializing if data-table.js is loaded twice.
       if (card.dataset.dtBound === '1') return;
