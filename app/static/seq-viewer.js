@@ -11,7 +11,12 @@
    protein. Everything comes from /plasmids/<id>/view.json
    (app/sequence_routes.py).
 
-   Change… (one base is enough) designs a site-directed mutagenesis: the
+   Edit… (on a plasmid the person may change) types over the picked
+   bases, inserts after them or deletes them, or adds a feature on them;
+   a feature's panel renames, retypes, turns round or removes it; ⌘Z
+   undoes (app/sequence_routes.py edit.json, app/sequence_edit.py).
+
+   Mutagenesis… (one base is enough) designs a site-directed mutagenesis: the
    picked bases replaced, bases inserted after them, or the bases deleted,
    or a coding feature's amino acid written as K79A; its two primers, what
    it does to the protein, silent changes that add or remove an enzyme's
@@ -638,8 +643,7 @@
       const f = featureSpans()[Number(feature.dataset.feature)];
       sel = { start: f.a, end: f.b };
       picked();
-      const p = data.proteins.find((x) => x.feature === f.i);
-      if (p) proteinPanel(p);
+      featurePanel(f);
       return;
     }
     const primer = e.target.closest('[data-primer]');
@@ -696,6 +700,203 @@
       }).catch(() => { button.disabled = false; say(t('The server did not answer. Check the connection and try again.'), 'error'); });
   }
 
+  // ---------------------------------------------------------------- editing
+
+  // On a plasmid the person may edit (data-edit, app/sequence_routes.py
+  // edit.json): Edit… on picked bases types over them, inserts after them
+  // or deletes them, or adds a feature on them; a feature's panel renames,
+  // retypes, turns round or removes it. With bases picked, typing a base
+  // letter opens Edit with it, Delete removes them, and ⌘Z undoes. Each
+  // edit is saved at once; the server moves the features with it and
+  // refuses an edit made on a page someone has since changed.
+  const FEATURE_TYPES = ['misc_feature', 'CDS', 'promoter', 'terminator', 'rep_origin', 'polyA_signal', 'enhancer',
+    'primer_bind', 'protein_bind', 'LTR', 'sig_peptide', "5'UTR", "3'UTR", 'intron', 'exon', 'misc_RNA', 'ncRNA',
+    'regulatory', 'RBS', 'tag'];
+  const IUPAC = /^[ACGTURYSWKMBDHVN]$/i;
+  const undoStack = [];
+  let ed = null;               // the Edit panel: {mode, start, end}
+  const editable = () => !!(root.dataset.edit && data && data.editable);
+
+  function editState() {
+    const undo = $('[data-undo]');
+    if (undo) { undo.hidden = !editable(); undo.disabled = !undoStack.length; }
+    const pop = $('[data-pop-edit]');
+    if (pop) pop.hidden = !editable();
+    const topo = document.querySelector('[data-topology]');
+    if (topo && data) topo.textContent = data.circular ? t('Make it linear') : t('Make it circular');
+  }
+
+  function send(body, after) {
+    if (!editable()) return Promise.resolve();
+    return fetch(root.dataset.edit, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' },
+      body: JSON.stringify({ ...body, base: data.hash }),
+    }).then((r) => r.json()).then((j) => {
+      if (!j.ok) { say(j.error, 'error'); return; }
+      if (!j.changed) { say(j.message); return; }
+      if (body.op !== 'state' && j.before) undoStack.push(j.before);
+      if (undoStack.length > 100) undoStack.shift();
+      say(j.message);
+      return load().then(() => { if (after) after(); editState(); });
+    }).catch(() => say(t('The server did not answer. Check the connection and try again.'), 'error'));
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    send({ op: 'state', state: undoStack.pop() }, () => { if (sel) picked(); });
+  }
+
+  function reselect(start, end) {
+    const L = data.length;
+    sel = { start: Math.max(1, Math.min(start, L)), end: Math.max(1, Math.min(end, L)) };
+    goTo(sel.start);
+    picked();
+  }
+
+  function editPanel(mode, typed) {
+    if (!sel || !editable()) return;
+    ed = { mode: mode || 'replace', start: sel.start, end: sel.end };
+    panel = { kind: 'edit' };
+    const n = ed.end - ed.start + 1;
+    const where = ed.mode === 'insert' ? t('After base %(n)s', { n: num(ed.end) })
+      : n === 1 ? t('Base %(n)s', { n: num(ed.start) }) : `${num(ed.start)}–${num(ed.end)} · ${t('%(n)s bp', { n })}`;
+    const seg = (key, label) => `<button type="button" class="seg-item${ed.mode === key ? ' is-active' : ''}" data-ed-mode="${key}">${esc(label)}</button>`;
+    const field = ed.mode === 'delete'
+      ? `<p class="sv2-note">${esc(t('Deletes %(n)s bases.', { n }))}</p>`
+      : `<label class="sv2-field"><span>${esc(ed.mode === 'insert' ? t('Bases to insert') : t('Becomes'))}</span>
+           <input type="text" data-ed-bases value="${esc(typed != null ? typed : ed.mode === 'replace' ? pickedText() : '')}" spellcheck="false" autocomplete="off"></label>`;
+    const types = FEATURE_TYPES.map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    sidePanel(`<div class="sv2-panel-head"><h3>${esc(t('Edit'))}</h3><span class="sv2-mut-where tabular-nums">${esc(where)}</span></div>
+      <div class="seg sv2-mut-modes">${seg('replace', t('Replace'))}${seg('insert', t('Insert bases'))}${seg('delete', t('Delete'))}</div>
+      ${field}
+      <div class="pver-actions"><button type="button" class="btn btn-primary" data-ed-apply>${esc(t('Apply'))}</button></div>
+      <p class="sv2-note">${esc(t('Saved at once. Features after the change move with it, and one it runs through grows or shrinks. ⌘Z undoes.'))}</p>
+      <div class="sv2-mut-silent">
+        <h4>${esc(t('Add a feature on these bases'))}</h4>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-ed-fname autocomplete="off"></label>
+        <label class="sv2-field"><span>${esc(t('Type'))}</span><select data-ed-ftype>${types}</select></label>
+        <div class="seg sv2-mut-modes"><button type="button" class="seg-item is-active" data-ed-fdir="1">→ ${esc(t('Forward'))}</button>
+          <button type="button" class="seg-item" data-ed-fdir="-1">← ${esc(t('Reverse'))}</button></div>
+        <div class="pver-actions"><button type="button" class="btn" data-ed-add>${esc(t('Add the feature'))}</button></div>
+      </div>`);
+    const input = $('[data-ed-bases]');
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+
+  function applyEdit() {
+    if (!ed) return;
+    const typed = ($('[data-ed-bases]') ? $('[data-ed-bases]').value : '').replace(/\s+/g, '');
+    if (ed.mode === 'delete') {
+      const at = ed.start;
+      send({ op: 'bases', start: ed.start, end: ed.end, bases: '' }, () => { reselect(at, at); sidePanel(''); ed = null; });
+      return;
+    }
+    const start = ed.mode === 'insert' ? ed.end + 1 : ed.start;
+    const end = ed.mode === 'insert' ? ed.end : ed.end;
+    send({ op: 'bases', start, end, bases: typed }, () => {
+      const put = typed.replace(/[^A-Za-z]/g, '').length;
+      reselect(start, start + Math.max(put, 1) - 1);
+      sidePanel('');
+      ed = null;
+    });
+  }
+
+  function addFeature() {
+    if (!ed) return;
+    const dir = $('[data-ed-fdir].is-active');
+    send({ op: 'add_feature', start: ed.start, end: ed.end, name: $('[data-ed-fname]').value,
+      type: $('[data-ed-ftype]').value, direction: dir ? Number(dir.dataset.edFdir) : 1 },
+    () => { reselect(ed.start, ed.end); sidePanel(''); ed = null; });
+  }
+
+  // A feature's own block, under its protein or on its own.
+  function featureEditor(f) {
+    const stored = data.features[f.i];
+    if (!editable() || !stored || stored.at == null) return '';
+    const types = FEATURE_TYPES.concat(FEATURE_TYPES.includes(stored.type) || !stored.type ? [] : [stored.type])
+      .map((x) => `<option value="${esc(x)}"${x === stored.type ? ' selected' : ''}>${esc(x)}</option>`).join('');
+    const fwd = Number(stored.direction || 1) >= 0;
+    return `<div class="sv2-mut-silent" data-fe-at="${stored.at}">
+        <h4>${esc(t('Edit this feature'))}</h4>
+        <label class="sv2-field"><span>${esc(t('Name'))}</span><input type="text" data-fe-name value="${esc(stored.name)}" autocomplete="off"></label>
+        <label class="sv2-field"><span>${esc(t('Type'))}</span><select data-fe-type>${types}</select></label>
+        <div class="seg sv2-mut-modes"><button type="button" class="seg-item${fwd ? ' is-active' : ''}" data-fe-dir="1">→ ${esc(t('Forward'))}</button>
+          <button type="button" class="seg-item${fwd ? '' : ' is-active'}" data-fe-dir="-1">← ${esc(t('Reverse'))}</button></div>
+        <div class="pver-actions"><button type="button" class="btn btn-primary" data-fe-save>${esc(t('Save'))}</button>
+          <button type="button" class="btn" data-fe-delete>${icon('trash')} ${esc(t('Remove'))}</button></div>
+      </div>`;
+  }
+
+  function featurePanel(f) {
+    const p = data.proteins.find((x) => x.feature === f.i);
+    if (p) proteinPanel(p);
+    const block = featureEditor(f);
+    if (!block) return;
+    if (p) { $('[data-side]').insertAdjacentHTML('beforeend', block); return; }
+    panel = { kind: 'feature' };
+    sidePanel(`<div class="sv2-panel-head"><h3><span class="pdig-dot pmap-f-${f.kind}"></span>${esc(f.name || f.type)}</h3>
+      <span class="sv2-mut-where tabular-nums">${num(f.a)}–${num(f.b)}</span></div>${block}`);
+  }
+
+  root.addEventListener('click', (e) => {
+    if (e.target.closest('[data-pop-edit]') && sel) { editPanel('replace'); return; }
+    if (e.target.closest('[data-undo]')) { undo(); return; }
+    const mode = e.target.closest('[data-ed-mode]');
+    if (mode && ed) { const was = sel; sel = { start: ed.start, end: ed.end }; editPanel(mode.dataset.edMode); sel = was; return; }
+    if (e.target.closest('[data-ed-apply]')) { applyEdit(); return; }
+    if (e.target.closest('[data-ed-add]')) { addFeature(); return; }
+    const fdir = e.target.closest('[data-ed-fdir], [data-fe-dir]');
+    if (fdir) { fdir.parentElement.querySelectorAll('.seg-item').forEach((b) => b.classList.toggle('is-active', b === fdir)); return; }
+    const box = e.target.closest('[data-fe-at]');
+    if (box && e.target.closest('[data-fe-save]')) {
+      const dir = box.querySelector('[data-fe-dir].is-active');
+      send({ op: 'edit_feature', at: Number(box.dataset.feAt), name: box.querySelector('[data-fe-name]').value,
+        type: box.querySelector('[data-fe-type]').value, direction: dir ? Number(dir.dataset.feDir) : 1 });
+      return;
+    }
+    if (box && e.target.closest('[data-fe-delete]')) {
+      send({ op: 'delete_feature', at: Number(box.dataset.feAt) }, () => sidePanel(''));
+    }
+  });
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-ed-bases]')) { e.preventDefault(); applyEdit(); }
+    if (e.key === 'Enter' && e.target.matches('[data-ed-fname]')) { e.preventDefault(); addFeature(); }
+  });
+
+  // Keys on the picked bases: the rows themselves can't take focus, so these
+  // listen on the page while the Sequence tab is the one showing.
+  document.addEventListener('keydown', (e) => {
+    if (!editable()) return;
+    const tab = root.closest('.plasmid-tab-panel');
+    if (tab && !tab.classList.contains('is-active')) return;
+    const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]');
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey || !sel) return;
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      const at = sel.start;
+      send({ op: 'bases', start: sel.start, end: sel.end, bases: '' }, () => reselect(at, at));
+      return;
+    }
+    if (IUPAC.test(e.key)) { e.preventDefault(); editPanel('replace', e.key.toUpperCase()); }
+  });
+
+  // The tools under the viewer: the topology, and full screen.
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-topology]') && data) { send({ op: 'topology', circular: !data.circular }); return; }
+    if (e.target.closest('[data-sv-fullscreen]')) {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else root.requestFullscreen().catch(() => {});
+    }
+  });
+  const fsButton = document.querySelector('[data-sv-fullscreen]');
+  if (fsButton && root.requestFullscreen) {
+    fsButton.hidden = false;
+    document.addEventListener('fullscreenchange', () => {
+      fsButton.querySelector('span').textContent = document.fullscreenElement === root ? t('Exit full screen') : t('Full screen');
+    });
+  }
+
   // ---------------------------------------------------------------- start
 
   function load() {
@@ -705,6 +906,7 @@
       drawBar();
       layout();
       drawAll();
+      editState();
       window.dispatchEvent(new CustomEvent('biomanager:plasmid-view', { detail: data }));
     });
   }
@@ -721,7 +923,8 @@
 
   const tabPanel = root.closest('.plasmid-tab-panel');
   const opened = () => { if (!data) { width = $('[data-rows]').clientWidth; load(); } };
-  if (tabPanel && tabPanel.classList.contains('is-active')) opened();
+  // A page without tabs (a virus's or a stock's plasmid) shows it at once.
+  if (!tabPanel || tabPanel.classList.contains('is-active')) opened();
   document.querySelectorAll('.plasmid-tab[data-tab="sequence"]').forEach((tab) => tab.addEventListener('click', () => setTimeout(opened, 0)));
 
   // From elsewhere on the page (Overview's features): go to a stretch and

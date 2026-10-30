@@ -204,7 +204,7 @@
           primer or one close by. Give it a name (one is suggested, such as <i>EGFP-mid-F</i>), add a 5′ tail if it needs a site
           or an overlap, and <b>Save to Primers</b> files it in the lab's <a href="samples-and-orders.html">Primers</a>, marked
           <i>to order</i>, with this plasmid beside it. <b>Copy</b> copies the bases; <b>Translate</b> reads them as codons.</li>
-        <li><b>Change…</b>, in the same bar, designs a site-directed mutagenesis (a click picks a single base). <b>Replace</b> the
+        <li><b>Mutagenesis…</b>, in the same bar, designs a site-directed mutagenesis (a click picks a single base). <b>Replace</b> the
           picked bases with others, <b>Insert bases</b> after them, or <b>Delete</b> them; in a coding feature you can write the
           amino acid change instead, such as <i>K80A</i>, and the closest codon is chosen. The panel gives the two primers, back to
           back as NEB's Q5 kit has them (the new bases on the forward primer's 5′ end, or half on each for a long insertion), with
@@ -216,9 +216,13 @@
           <a href="samples-and-orders.html">Primers</a> to order.</li>
         <li><b>Click a coding feature</b> to see its protein on the right: its length, mass, pI, extinction coefficient at 280 nm,
           how it starts and ends, and whether a stop sits inside it, then the amino acids ten to a group; <b>Copy</b> copies them.</li>
-        <li><b>Edit the sequence, its features and its map</b>, under the sequence, opens the editor (edits save themselves),
-          full screen if you like. <b>Download</b> gives it as GenBank (with every feature) or FASTA, and <b>Versions</b> lists
-          every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.</li>
+        <li><b>Edit…</b>, in the bar beside picked bases, changes the plasmid itself (if it is yours to change): type over the bases,
+          insert bases after them, or delete them, or add a feature on them with its name, type and direction. With bases picked you
+          can also just type a base letter to start, or press <b>Delete</b> to remove them. Each edit is saved at once; features after
+          it move with it, one it runs through grows or shrinks, and <b>Undo</b> (or <kbd>⌘</kbd> <kbd>Z</kbd>) takes it back. Click a
+          feature to rename it, change its type, turn it round or remove it. Under the sequence, <b>Make it linear</b> (or circular)
+          changes its topology, <b>Full screen</b> fills the screen with it, <b>Download</b> gives it as GenBank (with every feature)
+          or FASTA, and <b>Versions</b> lists every earlier sequence (replaced, cleared or edited) with <b>Restore</b>.</li>
         <li>On <b>Properties</b>, <b>Made from</b> records its backbone, insert or template (a plasmid in the lab, by number or name,
           or one from outside it such as <i>Addgene #11150</i>) and how it was made; <b>Overview</b> then shows <b>Made from</b> and
           <b>Used to make</b>, and Properties a <b>Family tree</b> both ways. <b>Storage</b> lists its <a href="samples-and-orders.html">glycerol stocks</a>, with the box each is in, and the viruses made from it
@@ -227,11 +231,11 @@
       <figure class="gshot"><a href="../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-map.webp" alt="A plasmid's Overview: its map, what it is, and its features" loading="lazy" width="2000" height="1250"></a><figcaption>A plasmid's Overview</figcaption></figure>
       <figure class="gshot"><a href="../assets/screenshots/plasmid-compare.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-compare.webp" alt="Compare with…: pCAG-EGFP against a one-base variant, the difference marked on both maps" loading="lazy" width="2000" height="1250"></a><figcaption>Compare with…</figcaption></figure>
       <figure class="gshot"><a href="../assets/screenshots/plasmid-sequence.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-sequence.webp" alt="EGFP picked on the Sequence tab, its protein beside it" loading="lazy" width="2000" height="1250"></a><figcaption>The sequence, with EGFP's protein</figcaption></figure>
-      <figure class="gshot"><a href="../assets/screenshots/plasmid-mutagenesis.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-mutagenesis.webp" alt="Change… on one base of EGFP: K80A, its two primers and Make it" loading="lazy" width="2000" height="1250"></a><figcaption>Site-directed mutagenesis: EGFP K80A</figcaption></figure>
+      <figure class="gshot"><a href="../assets/screenshots/plasmid-mutagenesis.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-mutagenesis.webp" alt="Mutagenesis… on one base of EGFP: K80A, its two primers and Make it" loading="lazy" width="2000" height="1250"></a><figcaption>Site-directed mutagenesis: EGFP K80A</figcaption></figure>
       <h2 id="features">Knowing what a sequence holds</h2>
       <ul>
         <li>The <b>Feature library</b> (a button at the top of Plasmids, beside Table · Boxes · List) keeps the lab's elements by sequence: promoters, ITRs and LTRs,
-          WPRE, resistance genes, tags. <b>Add to library</b>, above the editor of a well-annotated map (a SnapGene or Addgene file, say), keeps its
+          WPRE, resistance genes, tags. <b>Add to library</b>, under the sequence of a well-annotated map (a SnapGene or Addgene file, say), keeps its
           named features there; an admin can <b>Collect from every plasmid</b>. On the library page, <b>Read elements from files</b>
           takes them straight from annotated files — the GenBank a repository gives you, a SnapGene <code>.dna</code>, a vendor's map —
           several at once, without making a plasmid for each. Nothing is built in: every element is one your own files carry, because
@@ -242,7 +246,7 @@
           Search the library by name or by sequence. On any other plasmid, <b>Detect features</b> marks
           each library element wherever it is, on either strand and across the origin, and keeps the map as it was in <b>Versions</b>.</li>
         <li>If your lab runs a server, whoever looks after it can install <b>pLannotate</b> (a separate, free program) and
-          <b>Annotate with pLannotate</b> then appears above the editor. It finds elements by comparing sequences rather than matching
+          <b>Annotate with pLannotate</b> then appears under the sequence. It finds elements by comparing sequences rather than matching
           them exactly, so it catches a codon-optimised gene or a promoter a base or two off, which the library on its own will
           miss. Everything it marks is kept in <b>Versions</b>, so it can be undone.</li>
       </ul>
@@ -250,7 +254,7 @@
       <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — Assemble a plasmid</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../assets/clips/assembly.webp" data-clip-src="../assets/clips/assembly"></video></div></figure>
       <figure class="gshot"><a href="../assets/screenshots/plasmid-gateway.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/plasmid-gateway.webp" alt="Gateway: an attB gene and a pDONR make an entry clone, with ccdB removed" loading="lazy" width="2000" height="1250"></a><figcaption>Gateway BP: an entry clone</figcaption></figure>
       <ul>
-        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from above any map's editor, builds the next plasmid out of the
+        <li><b>Assemble a plasmid</b>, from the top of Plasmids or from under any plasmid's sequence, builds the next plasmid out of the
           ones you have. Fill the tray with fragments — a whole plasmid, one of its features, a region between two bases,
           or a piece an enzyme leaves — in the order they go together, turning any of them round, and put them together
           four ways: <b>digest and ligate</b> (cut with the same enzymes and let the sticky ends meet),
@@ -279,7 +283,7 @@
           You see the product's map and what was removed before you make it, and <b>Recombine</b> keeps both plasmids
           under <b>Made from</b>. The att sites are read from each plasmid's own map, so keep them in the
           <b>Feature library</b>.</li>
-        <li>A primer you draw on the map (select bases, then <b>Edit → Create → Primer</b>) is also kept in the lab's
+        <li>A primer you make from picked bases (<b>Forward primer</b> or <b>Reverse</b>, then <b>Save to Primers</b>) is kept in the lab's
           <a href="samples-and-orders.html">Primers</a> database, marked <i>to order</i>, with the plasmid in its <b>Plasmid</b> column.
           The <b>Primers</b> card on the Sequence tab lists every primer for this plasmid, where it binds and any 5′ tail; tick some, then
           <b>Copy for ordering</b> (name and sequence, one per line, to paste into a supplier's form) or <b>Export for ordering</b> (a CSV).</li>
@@ -384,7 +388,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 19 min read</p>
+      <p>On this page · 20 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your cloning</a></li>
         <li class="lvl2"><a href="#the-sheet">The plasmid sheet</a></li>

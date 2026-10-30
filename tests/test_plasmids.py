@@ -723,11 +723,13 @@ class PermissionTests(AppTestCase):
         item = [x for x in grid_of(sheet)["items"] if x["id"] == self.rid][0]
         self.assertTrue(item["locked"])
         detail = self.get_ok(self.o, page(self.rid))
-        self.assertIn('data-locked="1"', detail)
+        # Read only: the viewer has no way to change the plasmid.
+        self.assertNotIn("data-edit=", detail)
         self.assertNotIn("Replace sequence", detail)
         self.assertNotIn("Save storage", detail)
+        self.assertFalse(self.o.get(f"/plasmids/{self.rid}/view.json").get_json()["editable"])
         self.assertTrue(self.o.get(f"/plasmids/{self.rid}/sequence.json").get_json()["locked"])
-        self.assertIn('data-locked="0"', self.get_ok(self.m, page(self.rid)))
+        self.assertIn("data-edit=", self.get_ok(self.m, page(self.rid)))
 
 
 # ================================================================ autosave

@@ -894,8 +894,8 @@ Rebuild after editing templates — Tailwind only emits the classes it finds in
 `app/templates/**/*.html` and `app/static/*.js`.
 
 Every page is on Tailwind; the old `styles.css` / `legacy.css` bridge has
-been removed. Three pages embed third-party widgets that bring their own
-stylesheet (Open Vector Editor on plasmid detail, TOAST UI on the calendar)
+been removed. Two pages embed third-party widgets that bring their own
+stylesheet (TOAST UI on the calendar)
 and the notebook editor's own CSS lives in `frontend/src/styles.css` and
 `frontend/src/blocks.css`, built with `npm run build:notebook`. All three read the theme's colour tokens, so
 they follow the app's palette and dark mode.
@@ -1658,9 +1658,10 @@ crossing the origin keeps `start > end`.
   known. A byte-order mark and lines before LOCUS are ignored. A file of
   several records keeps the first, and `records` says how many there were
   (`_several_records` warns).
-- **Saves:** the map (Open Vector Editor, `/plasmids/<id>/sequence-save`,
-  after every edit), the hand edit, a file, and Clear. The editor's save
-  refuses anything but IUPAC letters (`is_iupac`) and an empty sequence.
+- **Saves:** an edit on the Sequence tab (`edit.json`, below), a whole map
+  as JSON (`/plasmids/<id>/sequence-save`, for scripts), the hand edit, a
+  file, and Clear. Each refuses anything but IUPAC letters (`is_iupac`)
+  and an empty sequence.
 - **Versions** (`app/plasmid_versions.py`, `plasmid_sequence_versions`,
   revision 0019): each of those records the state it leaves (`record`, with
   `how`: upload, editor, hand, clear, restore); a sequence from before
@@ -1709,12 +1710,12 @@ crossing the origin keeps `start > end`.
   are one per site, 1-based, with `exact`, `tail`, `annealed` and
   `linked` (its Plasmid column names this one); records the Primers card
   lists are counted in `listed`, not repeated, unless `?all=1` (a
-  record's read-only map, `inventory/sequence.html`). `static/primer-scan.js`
-  draws them on the editor (`#ove-root.oveEditor`) as primers whose ids
-  start `found-primer-`: the plasmid page's `onSave` drops those and skips
-  a save that would store nothing new (drawing re-sends the map), and
-  `_clean_features` drops any that still arrive, so they never reach
-  `features_json` or `sync_from_map`.
+  record's read-only page, `inventory/sequence.html`). `static/primer-scan.js`
+  lists them, each one's place a link that opens the Sequence tab on it
+  (`BioSeqViewer.select`); the viewer already draws every lab primer that
+  binds. `_clean_features` still drops any mark whose id starts
+  `found-primer-` that a script sends, so none reaches `features_json` or
+  `sync_from_map`.
 - **Assembling one** (`app/cloning.py`, the pure functions; `app/cloning_routes.py`,
   the pages, at `/plasmids/assembly`): a tray of fragments taken from the
   lab's plasmids — a whole one, one feature, a region, or a piece a digest
@@ -1830,9 +1831,9 @@ crossing the origin keeps `start > end`.
   the plasmid itself (`static/plasmid-map.js`: `BioPlasmidMap.circular`
   for the maps, labelled on Overview, small in the List, with cuts and
   pieces on Digest; `BioPlasmidMap.gel` for the gel; colours from
-  `static/plasmid.css`, the gel dark in both themes). Open Vector Editor
-  stays for editing, in the Sequence tab's **Edit the sequence…** fold.
-  Stored features are 0-based with the end included.
+  `static/plasmid.css`, the gel dark in both themes), and edits it on the
+  Sequence tab; nothing third-party draws or edits a plasmid. Stored
+  features are 0-based with the end included.
   - **Overview** (`static/plasmid-overview.js`): the labelled map from the
     page's own features, saved as SVG (computed styles written in) or a
     3× PNG; the plasmid's facts; a feature row opens Sequence on it
@@ -1874,8 +1875,25 @@ crossing the origin keeps `start > end`.
     sites) with the lab's same or nearby primers and a name
     (`_suggest_name`), and `primers/new` saves it through
     `primer_records.save_primer` and `derive_primer`.
+  - **Editing** (`app/sequence_edit.py` pure, `edit.json` in
+    `app/sequence_routes.py`, `static/seq-viewer.js`), on a plasmid the
+    person may change (`access.can_edit`; the viewer's `data-edit`): one
+    operation per request — `bases` (start, end, the new bases: typing over,
+    an insertion when end = start − 1, a deletion when empty), `add_feature`,
+    `edit_feature` / `delete_feature` (by `at`, the feature's place in the
+    stored list, which `view.json` gives beside each feature), `topology`,
+    and `state` (Undo: the whole state the previous edit's answer handed
+    back as `before`, cleaned by `_clean_features`). Annotations move with a
+    base edit by `mutagenesis.shift_features`, so a primer mark it touches
+    goes. Each request carries `base`, the `state_hash` the page loaded,
+    and is refused (409) when someone else has changed the plasmid since;
+    each saved edit is `how="editor"`, joined with the same person's edits
+    within `EDITS_JOIN` into one version, while Undo steps through every
+    edit of the page's session. Keys: a base letter with bases picked opens
+    Edit with it, Delete removes them, ⌘Z undoes. `templates/_seq_viewer.html`
+    is the viewer for both the plasmid page and a record's read-only page.
   - **Mutagenesis** (`app/mutagenesis.py` pure, `app/mutagenesis_routes.py`,
-    the Sequence tab's **Change…**): a `Change` is `at` (0-based), `cut`
+    the Sequence tab's **Mutagenesis…**): a `Change` is `at` (0-based), `cut`
     bases and the `new` ones. `design_primers` makes Q5-style back-to-back
     primers on a circular plasmid: each anneals for `cloning.anneal_length`
     (TARGET_TM) from the change outwards; the new bases ride on the forward

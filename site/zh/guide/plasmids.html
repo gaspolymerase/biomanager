@@ -187,7 +187,7 @@
           长度、Tm、GC、3′ 端有没有 G/C 钳、发夹和自身二聚体、在这个质粒上是否只结合一处，以及实验室是否已有同样或附近的引物。
           起个名字（会建议一个，如 <i>EGFP-mid-F</i>），需要酶切位点或同源臂就加上 5′ 尾巴，<b>存进引物库</b> 就会把它存进实验室的<a href="samples-and-orders.html">引物</a>，
           标为<i>待订购</i>，并写明这个质粒。<b>复制</b> 复制碱基；<b>翻译</b> 按密码子读出氨基酸。</li>
-        <li>同一个工具栏里的 <b>突变…</b> 用来设计定点突变（单击就能选中一个碱基）。可以把选中的碱基 <b>替换</b> 成别的、在它后面 <b>插入碱基</b>，
+        <li>同一个工具栏里的 <b>定点突变…</b> 用来设计定点突变（单击就能选中一个碱基）。可以把选中的碱基 <b>替换</b> 成别的、在它后面 <b>插入碱基</b>，
           或把它们 <b>删除</b>；在编码特征里也可以直接写氨基酸的改变，如 <i>K80A</i>，会选改动最少的密码子。右边给出两条背靠背的引物
           （和 NEB Q5 试剂盒的设计一样：新碱基放在正向引物的 5′ 端，较长的插入则两条引物各带一半），以及它们的 Tm、发夹和自身二聚体；
           这个改动对每个蛋白的影响（<i>K80A</i>、提前终止、移码以及在哪里终止、框内缺失）；新质粒的大小；以及 PCR 条件：退火、延伸，然后做 KLD。<b>加入或去掉酶切位点的同义突变</b>
@@ -195,7 +195,11 @@
           点 <b>用这个</b> 即可采用。<b>创建</b> 会新建这个质粒：特征随之移动、改动处有标记、<b>来源质粒</b> 记为本质粒（方法为突变），
           两条引物也放进<a href="samples-and-orders.html">引物</a>库待订购。</li>
         <li><b>点击编码特征</b> 会在右边显示它的蛋白：长度、分子量、等电点、280 nm 消光系数、起止，以及中间有没有终止密码子，然后是每十个一组的氨基酸；<b>复制</b> 可以复制下来。</li>
-        <li>序列下方的 <b>编辑序列、特征和图谱</b> 会打开编辑器（编辑会自动保存），也可以全屏。<b>下载</b> 可以导出 GenBank（含所有特征）或 FASTA，<b>版本</b> 列出以前的每一版序列（被替换、清空或编辑过的），可以 <b>恢复</b>。</li>
+        <li>选中碱基后工具栏里的 <b>编辑…</b> （Edit…）直接修改这个质粒（前提是你有权修改）：改写这些碱基、在它们后面插入碱基、删除它们，
+          或在它们上面加一个特征（名称、类型和方向）。选中碱基后直接敲一个碱基字母也能开始，按 <b>Delete</b> 则删除它们。
+          每次编辑都立即保存；后面的特征跟着移动，被改动穿过的特征会变长或变短，<b>撤销</b> （Undo，或 <kbd>⌘</kbd> <kbd>Z</kbd>）可以撤回。
+          点一个特征可以改名、改类型、调转方向或删除。序列下方的 <b>改为线性</b> （或环状）改变拓扑，<b>全屏</b> 让它占满屏幕，<b>下载</b>
+          可以导出 GenBank（含所有特征）或 FASTA，<b>版本</b> 列出以前的每一版序列（被替换、清空或编辑过的），可以 <b>恢复</b>。</li>
         <li>在 <b>属性</b> 里，<b>来源质粒</b> 记录它的骨架、插入片段或模板（实验室里的质粒，填编号或名称；或外来的，如 <i>Addgene #11150</i>）
           以及构建方法；之后 <b>概览</b> 显示 <b>来源质粒</b> 和 <b>用于制备</b>，<b>属性</b> 里有双向的 <b>家族树</b>。<b>存放</b> 里列出它的<a href="samples-and-orders.html">甘油菌</a>（注明所在冻存盒）和用这个质粒制备的病毒
           （见<a href="samples-and-orders.html">病毒</a>）。</li>
@@ -203,11 +207,11 @@
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-map.webp" alt="质粒的概览：图谱、基本情况和特征" loading="lazy" width="2000" height="1250"></a><figcaption>质粒概览</figcaption></figure>
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-compare.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-compare.webp" alt="与…比较：pCAG-EGFP 和只差一个碱基的变体，不同之处在两张图谱上都标了出来" loading="lazy" width="2000" height="1250"></a><figcaption>与…比较</figcaption></figure>
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-sequence.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-sequence.webp" alt="在序列标签页选中 EGFP，旁边是它的蛋白" loading="lazy" width="2000" height="1250"></a><figcaption>序列，以及 EGFP 的蛋白</figcaption></figure>
-      <figure class="gshot"><a href="../../assets/screenshots/plasmid-mutagenesis.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-mutagenesis.webp" alt="在 EGFP 的一个碱基上点突变…：K80A、两条引物和创建" loading="lazy" width="2000" height="1250"></a><figcaption>定点突变：EGFP K80A</figcaption></figure>
+      <figure class="gshot"><a href="../../assets/screenshots/plasmid-mutagenesis.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-mutagenesis.webp" alt="在 EGFP 的一个碱基上点定点突变…：K80A、两条引物和创建" loading="lazy" width="2000" height="1250"></a><figcaption>定点突变：EGFP K80A</figcaption></figure>
       <h2 id="features">看清序列里有什么</h2>
       <ul>
         <li><b>元件库</b> （Feature library，在质粒页顶部、表格 · 冻存盒 · 列表旁边的按钮）按序列保存实验室的常用元件：启动子、ITR 和 LTR、
-          WPRE、抗性基因、标签等。在注释完整的图谱（比如来自 SnapGene 或 Addgene 的文件）的编辑器上方点 <b>加入元件库</b>，就能把它有名称的特征保存进去；
+          WPRE、抗性基因、标签等。在注释完整的图谱（比如来自 SnapGene 或 Addgene 的文件）的序列下方点 <b>加入元件库</b>，就能把它有名称的特征保存进去；
           管理员还可以 <b>从所有质粒收集</b>。在元件库页面用 <b>从文件读取元件</b>，可以直接从带注释的文件里提取——
           数据库给你的 GenBank、SnapGene <code>.dna</code>、厂家的图谱——一次可以传多个，也不必为每个文件建质粒。
           元件库不预装任何元件：所有元件都来自你自己的文件，因为凭记忆写下的序列只要错一个碱基，就会让实验室里每一张图谱标注错误。
@@ -215,7 +219,7 @@
           （约一分钟，下载完成后页面会显示）。它由作者导出某商业软件公开的元件库整理而成，重要的元件请自行核对；
           你自己添加的元件始终优先。元件库支持按名称或序列搜索。在其他质粒上点 <b>识别特征</b>，就会标出元件库里每个元件所在的位置（正反链、跨越起点都能识别），
           原来的图谱保存在 <b>版本</b> 里。</li>
-        <li>如果实验室自建服务器，管理服务器的人可以安装 <b>pLannotate</b> （一个独立的免费程序），编辑器上方就会出现
+        <li>如果实验室自建服务器，管理服务器的人可以安装 <b>pLannotate</b> （一个独立的免费程序），序列下方就会出现
  <b>用 pLannotate 注释</b>。它通过序列比对来识别特征，而不是精确匹配，所以密码子优化过的基因、
           相差一两个碱基的启动子也能找到，这些是元件库本身识别不到的。它标注的内容都保存在 <b>版本</b> 里，随时可以撤销。</li>
       </ul>
@@ -223,7 +227,7 @@
       <figure class="doc-clip"><div class="window"><div class="window-bar"><i></i><i></i><i></i><span>BioManager — 组装质粒</span></div><video muted loop playsinline preload="none" width="1280" height="786" poster="../../assets/clips/assembly.webp" data-clip-src="../../assets/clips/assembly"></video></div></figure>
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-gateway.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-gateway.webp" alt="Gateway：attB 基因和 pDONR 做出入门克隆，并去掉 ccdB" loading="lazy" width="2000" height="1250"></a><figcaption>Gateway BP：入门克隆</figcaption></figure>
       <ul>
-        <li><b>组装质粒</b> （Assemble a plasmid，在质粒页顶部或任意图谱的编辑器上方）用现有的质粒搭出下一个质粒。
+        <li><b>组装质粒</b> （Assemble a plasmid，在质粒页顶部或任意质粒的序列下方）用现有的质粒搭出下一个质粒。
           在片段列表里按拼接顺序添加片段——整条质粒、它的某个特征、两个碱基之间的一段区域，或某个酶切后的片段——
           任何一个都可以反向，然后用四种方式组装：<b>酶切连接</b> （用同样的酶切开，让黏性末端彼此配对）、<b>Gibson / NEBuilder HiFi</b> （相邻片段在接口处共用二十来个碱基；向导会设计补上这段同源的引物，并算出各自的 Tm）、<b>In-Fusion</b> （同样的做法，用 Takara 试剂盒的 15 碱基较短末端，载体是切开而非扩增）
           或 <b>Golden Gate</b> （BsaI、BsmBI、BbsI 在识别位点之外切开，所以每个接口都是你选定的四碱基突出端）。
@@ -241,7 +245,7 @@
           BP 得到入门克隆、LR 得到表达克隆，把基因接到搭档的骨架上，att 位点随之变成产物的（attL 或 attB）和副产物的（attR 或 attP），
           并去掉搭档带的 ccdB 盒。创建之前你可以看到产物的图谱和被去掉的东西，<b>重组</b> 会把两条质粒都记进 <b>来源质粒</b>。
           att 位点是从每条质粒自己的图谱上读出来的，所以把它们保存在 <b>元件库</b> 里。</li>
-        <li>在图谱上画的引物（选中碱基后用 <b>Edit → Create → Primer</b>）也会保存到实验室的
+        <li>从选中的碱基做的引物（<b>正向引物</b> 或 <b>反向</b>，再点 <b>存进引物库</b>）会保存到实验室的
           <a href="samples-and-orders.html">引物</a>数据库，状态为<i>待订购</i>，<b>质粒</b> 一列填着这个质粒。
           序列标签页上的 <b>引物</b> 卡片列出这个质粒的所有引物、各自的结合位置和 5′ 端尾巴；勾选几条后，<b>复制以订购</b> （每行一条名称和序列，可直接粘贴到公司的下单页面）或 <b>导出订购表</b> （CSV）。</li>
         <li>订购新引物之前，先打开这张卡片上的 <b>查找已有引物</b> 开关。它会查遍你能看到的所有引物数据库里保存的引物——不管当初是为哪个质粒设计的——

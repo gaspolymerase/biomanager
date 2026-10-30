@@ -1,24 +1,24 @@
-# Molecular biology: the next round
+# Molecular biology: the round, as built
 
-The plasmid page now draws the plasmid itself (Overview, Sequence, Digest,
-Verify, Primers): maps, every base and its protein, virtual digests and
-gels with Dam/Dcm, the lab's primers that bind and a PCR, clones checked
-by sequencing and accepted, site-directed mutagenesis from the Sequence tab
-(`app/mutagenesis.py`), Assemble a plasmid's In-Fusion and Gateway
-(`app/cloning.py`, `app/gateway.py`), Compare with… on the Overview
-(`app/plasmid_compare.py`), and a sequence fetched by its Addgene number or
-GenBank accession (`app/sequence_fetch.py`). Compared with what SnapGene offers, these are
-what a lab would still reach for, in the order they are worth doing.
-Each builds on code that is already there.
+The plasmid page draws and edits the plasmid itself. Everything the round
+set out to do is in:
 
-## 1. Editing in the app's own viewer
+| What | Where |
+| --- | --- |
+| Maps, every base and its protein, open reading frames | `static/plasmid-map.js`, `static/seq-viewer.js`, `app/protein.py` |
+| Virtual digests and gels, with Dam/Dcm | `app/digest.py` |
+| The lab's primers that bind, and a PCR | `app/primer_design.py`, `app/sequence_routes.py` |
+| Clones checked by sequencing, and accepted | `app/seqverify.py`, `app/clone_routes.py` |
+| Site-directed mutagenesis, and silent site changes | `app/mutagenesis.py` |
+| Digest and ligate, Gibson, In-Fusion, Golden Gate | `app/cloning.py` |
+| Gateway BP and LR | `app/gateway.py` |
+| Compare two plasmids | `app/plasmid_compare.py` |
+| A sequence by its Addgene number or GenBank accession | `app/sequence_fetch.py` |
+| Editing the bases, the features and the topology | `app/sequence_edit.py` |
 
-The Sequence tab already picks bases. Typing over a selection, inserting
-and deleting bases, adding a feature or a primer from a selection, and
-undo would let the Open Vector Editor bundle go: features that a change
-runs through are shifted or cut as `cloning.carry_features` already does
-for fragments, every save is a version (`app/plasmid_versions.py`), and
-the editor's JavaScript (some 3 MB) stops loading on every plasmid page.
+With the last of those the app draws and edits a plasmid on its own:
+Open Vector Editor is gone, and with it some 9 MB of JavaScript and CSS
+that every plasmid page used to load.
 
 ## Left out on purpose
 
@@ -28,3 +28,8 @@ the editor's JavaScript (some 3 MB) stops loading on every plasmid page.
   vector at a known place; a lab records it with Made from.
 - **A secondary-structure viewer for primers**: the hairpin and self-dimer
   ΔG the primer panel gives answer the question a lab asks.
+- **Multi-site Gateway** (att3, att4, att5): one pair of sites a reaction
+  is what a lab does; the rest is a second plasmid's worth of machinery.
+- **A rearrangement-scale compare**: two plasmids that differ by more than
+  the read aligner's band show as the aligned stretch ending early, which
+  says enough for the near-identical constructs the feature is for.

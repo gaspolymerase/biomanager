@@ -292,7 +292,7 @@ def span_of_parts(parts: list[tuple[int, int]]) -> tuple[int, int]:
 
     Parts listed in order that step backwards cross the origin of a
     circular sequence: join(55..60,1..5) runs 55→60 then 1→5. That span is
-    kept as start > end, which is how the map (Open Vector Editor) draws a
+    kept as start > end, which is how the app's own map draws a
     feature wrapping the origin; folding it to min..max would paint the
     whole plasmid instead. Parts that run forwards give the outer bounds."""
     if len(parts) == 1:

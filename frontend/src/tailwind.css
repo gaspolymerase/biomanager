@@ -2987,15 +2987,6 @@
   button.seg-item { @apply cursor-pointer border-0 bg-transparent; }
   button.seg-item.is-active { @apply bg-surface; }
 
-  .ove-root {
-    @apply relative overflow-hidden rounded-2xl border border-hairline bg-white shadow-xs;
-    height: max(560px, calc(100dvh - 230px));
-  }
-  .ove-loading, .ove-error {
-    @apply absolute inset-0 flex items-center justify-center px-6 text-center text-[13px] text-muted;
-  }
-  .ove-error { @apply bg-danger-50 text-danger-700; }
-  .ove-error code { @apply rounded bg-surface px-1.5 py-0.5 font-mono text-[12px] text-ink; }
 }
 
 /* ===========================================================================
@@ -4359,7 +4350,6 @@
   .plasmid-meta-lock svg { @apply size-3; }
   .plasmid-lock-note { @apply -mt-1 mb-3 max-w-[760px] text-[12px] text-muted; }
 
-  .ove-bar { @apply mb-2 flex min-h-5 items-center justify-between gap-3; }
 }
 
 /* ===========================================================================

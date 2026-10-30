@@ -1,0 +1,47 @@
+{#
+  The app's own sequence viewer (static/seq-viewer.js): every base, its
+  complement, the features, the enzymes that cut once, the lab's primers
+  that bind and the proteins. `editable` adds Edit… and Undo (app/
+  sequence_routes.py edit.json); `mutagenesis` adds Mutagenesis…. Without
+  either, it is the read-only viewer a virus's or a stock's plasmid shows.
+#}
+{% macro seq_viewer(row_id, editable=False, mutagenesis=False) %}
+  <div class="sv2" data-seq-viewer data-url="{{ url_for('sequence_view.view', row_id=row_id) }}"
+       data-check="{{ url_for('sequence_view.primer_check', row_id=row_id) }}"
+       data-save="{{ url_for('sequence_view.primer_new', row_id=row_id) }}"
+       {% if mutagenesis %}data-mutate="{{ url_for('mutagenesis.design', row_id=row_id) }}"
+       data-mutate-make="{{ url_for('mutagenesis.make', row_id=row_id) }}"
+       data-silent="{{ url_for('mutagenesis.silent_sites', row_id=row_id) }}"{% endif %}
+       {% if editable %}data-edit="{{ url_for('sequence_view.edit', row_id=row_id) }}"{% endif %}>
+    <div class="pglass sv2-main">
+      <div class="sv2-bar">
+        <label class="pdig-find sv2-find">{{ icon('search') }}<input type="search" data-find placeholder="{{ _('Find bases, a primer, a site or a feature…') }}" aria-label="{{ _('Find in the sequence') }}"><span class="sv2-count" data-find-count></span></label>
+        <button type="button" class="sv2-chip" data-show="complement">{{ _('Complement') }}</button>
+        <button type="button" class="sv2-chip" data-show="translation">{{ _('Translation') }}</button>
+        <button type="button" class="sv2-chip" data-show="features">{{ _('Features') }}</button>
+        <button type="button" class="sv2-chip" data-show="enzymes">{{ _('Enzymes') }}</button>
+        <button type="button" class="sv2-chip" data-show="primers">{{ _('Primers') }}</button>
+        <span class="sv2-grow"></span>
+        <button type="button" class="sv2-chip" data-undo hidden disabled title="{{ _('Undo the last edit (⌘Z)') }}">{{ icon('undo') }} {{ _('Undo') }}</button>
+        <div class="seg" role="group" aria-label="{{ _('Proteins shown') }}">
+          <button type="button" class="seg-item" data-frames="cds" title="{{ _('The protein of each coding feature') }}">CDS</button>
+          <button type="button" class="seg-item" data-frames="six" title="{{ _('Open reading frames of 100 codons or more, in all six frames') }}">{{ _('6 frames') }}</button>
+        </div>
+      </div>
+      <div class="sv2-over" data-over title="{{ _('Click to go there') }}"></div>
+      <div class="sv2-rows" data-rows>
+        <div data-rowlist><p class="sv2-note">{{ _('Loading the sequence…') }}</p></div>
+        <div class="sv2-pop" data-pop hidden>
+          <span class="sv2-pop-text" data-pop-text></span>
+          <button type="button" class="btn btn-sm btn-primary" data-make="1">→ {{ _('Forward primer') }}</button>
+          <button type="button" class="btn btn-sm" data-make="-1">← {{ _('Reverse') }}</button>
+          <button type="button" class="btn btn-sm" data-pop-copy>{{ _('Copy') }}</button>
+          <button type="button" class="btn btn-sm" data-pop-translate>{{ _('Translate') }}</button>
+          {% if mutagenesis %}<button type="button" class="btn btn-sm" data-pop-mutate title="{{ _('Site-directed mutagenesis: design the primers for a new plasmid with these bases changed') }}">{{ _('Mutagenesis…') }}</button>{% endif %}
+          <button type="button" class="btn btn-sm" data-pop-edit hidden title="{{ _('Change this plasmid: type over, insert after or delete these bases, or add a feature on them') }}">{{ icon('edit') }} {{ _('Edit…') }}</button>
+        </div>
+      </div>
+    </div>
+    <aside class="pglass sv2-side" data-side hidden></aside>
+  </div>
+{% endmacro %}

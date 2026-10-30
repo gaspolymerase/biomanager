@@ -180,7 +180,8 @@ class FindSavedPrimers(InventoryCase):
         html = self.get_ok(self.a, f"/plasmid/{self.number}")
         self.assertIn("data-scan-switch", html)
         self.assertIn("Find saved primers", html)
-        self.assertIn("Show on map", html)
+        # Where each found primer binds opens the Sequence tab on it (primer-scan.js).
+        self.assertIn("data-seq-viewer", html)
         self.assertIn(f'data-scan-url="/plasmids/{self.rid}/primer-sites"', html)
         self.assertIn("primer-scan.js", html)
         zh = self.a.get(f"/plasmid/{self.number}", headers={"Accept-Language": "zh-CN"}).get_data(as_text=True)

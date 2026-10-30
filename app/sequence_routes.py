@@ -11,17 +11,23 @@
   plasmid, as the map's own primers are (app/primer_records.py).
 - `pcr.json`: what two primers would amplify, what it holds, and what the
   backbone would give instead (for a colony PCR).
+- `edit.json`: one edit made on the Sequence tab (app/sequence_edit.py):
+  bases typed over, inserted or deleted, a feature added, changed or
+  removed, the topology, or a whole earlier state (Undo). Each is saved as
+  the plasmid's sequence, joined into one version per editing session, and
+  refused when someone else changed the plasmid since the page loaded it.
 """
 from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 
 from flask import Blueprint, abort, g, jsonify, request, url_for
 
-from . import digest, primer_design, primer_records, protein
+from . import access, digest, plasmid_versions, primer_design, primer_records, protein, sequence_edit
 from .db import SessionLocal
-from .i18n import gettext
+from .i18n import gettext, ngettext
 from .models import InventoryItem, PlasmidRecord
 
 bp = Blueprint("sequence_view", __name__)
@@ -43,12 +49,21 @@ def _plasmid(session, row_id: int) -> PlasmidRecord:
     return p
 
 
-def _features(p: PlasmidRecord) -> list[dict]:
+def _stored(p: PlasmidRecord) -> list:
     try:
         stored = json.loads(p.features_json) if p.features_json else []
     except json.JSONDecodeError:
         stored = []
-    return [f for f in stored if isinstance(f, dict) and (f.get("kind") or "feature") == "feature"]
+    return stored if isinstance(stored, list) else []
+
+
+def _features(p: PlasmidRecord) -> list[dict]:
+    return [f for f in _stored(p) if isinstance(f, dict) and (f.get("kind") or "feature") == "feature"]
+
+
+def _feature_places(p: PlasmidRecord) -> list[int]:
+    """Where each of `_features(p)` sits in the stored list, in step with it."""
+    return [i for i, f in enumerate(_stored(p)) if isinstance(f, dict) and (f.get("kind") or "feature") == "feature"]
 
 
 def lab_primers(session, p: PlasmidRecord, mismatches: int = 2) -> list[dict]:
@@ -86,6 +101,9 @@ def view(row_id: int):
         seq = (p.full_sequence or "").upper()
         circular = bool(p.is_circular)
         features = _features(p)
+        places = _feature_places(p)
+        state = sequence_edit.state_hash(seq, circular, _stored(p))
+        editable = access.can_edit(p)
         primers = lab_primers(session, p)
         from .clone_routes import sequence_next
         next_reads = sequence_next(session, p) if seq else None
@@ -109,7 +127,9 @@ def view(row_id: int):
     return jsonify({
         "ok": True, "length": len(seq), "circular": circular, "sequence": seq,
         "features": [{"name": f.get("name", ""), "type": f.get("type", ""), "start": f.get("start", 0),
-                      "end": f.get("end", 0), "direction": f.get("direction", f.get("strand", 1))} for f in features],
+                      "end": f.get("end", 0), "direction": f.get("direction", f.get("strand", 1)), "at": at}
+                     for f, at in zip(features, places)],
+        "hash": state, "editable": editable,
         "cutters": cutters, "primers": primers, "proteins": proteins,
         "orfs": protein.orfs(seq, circular)[:20], "next": next_reads,
     })
@@ -243,3 +263,95 @@ def pcr(row_id: int):
         return jsonify({"ok": True, **product, "holds": holds, "empty": empty,
                         "anneal": round(min(tms) - 3) if tms else None,
                         "extend_s": max(15, round(product["length"] / 1000 * 60 / 5) * 5)})
+
+
+# ---------------------------------------------------------------- editing
+
+def _edit_problem(code: str) -> str:
+    return {
+        "outside": gettext("Pick bases on the sequence."),
+        "nothing": gettext("Type the bases to put in."),
+        "same": gettext("Those are the bases already there."),
+        "empty": gettext("That would leave no sequence. Use Clear sequence to empty it."),
+        "not_bases": gettext("Only nucleotide letters (A, C, G, T and the IUPAC codes) can go in."),
+        "no_name": gettext("Give the feature a name."),
+        "no_feature": gettext("That feature is no longer there. Reload the page."),
+    }.get(code, gettext("That edit couldn’t be made."))
+
+
+def _int(body: dict, key: str) -> int:
+    try:
+        return int(body.get(key))
+    except (TypeError, ValueError):
+        raise sequence_edit.EditError("outside") from None
+
+
+@bp.route("/plasmids/<int:row_id>/edit.json", methods=["POST"])
+def edit(row_id: int):
+    body = request.get_json(silent=True) or {}
+    op = body.get("op")
+    with SessionLocal() as session:
+        p = _plasmid(session, row_id)
+        if not access.can_edit(p):
+            return jsonify({"ok": False, "error": gettext("This plasmid isn’t yours to edit.")}), 403
+        seq, circular, stored = (p.full_sequence or "").upper(), bool(p.is_circular), _stored(p)
+        if body.get("base") != sequence_edit.state_hash(seq, circular, stored):
+            return jsonify({"ok": False, "stale": True,
+                            "error": gettext("Someone changed this plasmid since the page loaded it. Reload to see their change.")}), 409
+        before = {"sequence": seq, "circular": circular, "features": stored}
+        new_seq, new_circular, new_features, message, dropped = seq, circular, stored, "", 0
+        try:
+            if op == "bases":
+                new_seq, new_features, done = sequence_edit.bases(seq, stored, _int(body, "start"), _int(body, "end"),
+                                                                  body.get("bases") or "")
+                dropped = done["dropped"]
+                message = (ngettext("%(num)s base deleted.", "%(num)s bases deleted.", done["removed"])
+                           if done["kind"] == "deletion" else
+                           ngettext("%(num)s base inserted.", "%(num)s bases inserted.", done["added"])
+                           if done["kind"] == "insertion" else
+                           gettext("%(was)s bp became %(now)s bp.", was=done["removed"], now=done["added"]))
+            elif op == "add_feature":
+                new_features = sequence_edit.add_feature(stored, len(seq), _int(body, "start"), _int(body, "end"),
+                                                         body.get("name") or "", body.get("type") or "",
+                                                         body.get("direction", 1))
+                message = gettext("Feature added.")
+            elif op == "edit_feature":
+                new_features = sequence_edit.edit_feature(stored, body.get("at"), body.get("name"), body.get("type"),
+                                                          body.get("direction"))
+                message = gettext("Feature changed.")
+            elif op == "delete_feature":
+                new_features = sequence_edit.delete_feature(stored, body.get("at"))
+                message = gettext("Feature removed.")
+            elif op == "topology":
+                new_circular = bool(body.get("circular"))
+                message = gettext("Now circular.") if new_circular else gettext("Now linear.")
+            elif op == "state":
+                from .app import _clean_features
+                from .sequence_parser import clean_bases
+                state = body.get("state") or {}
+                new_seq = clean_bases(state.get("sequence") or "")
+                if not new_seq:
+                    raise sequence_edit.EditError("empty")
+                new_circular = bool(state.get("circular"))
+                new_features = _clean_features(state.get("features") or [], len(new_seq))
+                message = gettext("Undone.")
+            else:
+                abort(400)
+        except sequence_edit.EditError as problem:
+            return jsonify({"ok": False, "error": _edit_problem(problem.code)}), 400
+        if (new_seq, new_circular, new_features) == (seq, circular, stored):
+            return jsonify({"ok": True, "hash": sequence_edit.state_hash(seq, circular, stored), "length": len(seq),
+                            "message": gettext("Nothing changed."), "changed": False})
+        plasmid_versions.before_change(session, p)
+        p.full_sequence, p.is_circular, p.features_json = new_seq, new_circular, json.dumps(new_features)
+        if not p.sequence_format:
+            p.sequence_format = "manual"
+        now = datetime.utcnow()
+        p.sequence_uploaded_at, p.updated_at, p.updated_by = now, now, g.user.username
+        plasmid_versions.record(session, p, "editor", g.user.username)
+        session.commit()
+        if dropped:
+            message += " " + ngettext("%(num)s annotation inside the changed bases was removed.",
+                                      "%(num)s annotations inside the changed bases were removed.", dropped)
+        return jsonify({"ok": True, "changed": True, "message": message, "length": len(new_seq),
+                        "hash": sequence_edit.state_hash(new_seq, new_circular, new_features), "before": before})

@@ -8472,7 +8472,7 @@ def _version_row(v, current: bool) -> dict:
             restored = v.detail
         how = gettext("Restored the version of %(when)s", when=restored)
     else:
-        how = {"editor": gettext("Edited in the map"), "hand": gettext("Edited by hand"),
+        how = {"editor": gettext("Edited on the Sequence tab"), "hand": gettext("Edited by hand"),
                "detect": gettext("Features found from the library"),
                "annotate": gettext("Features found by pLannotate"),
                "assembly": gettext("Assembled from fragments"),
@@ -10215,10 +10215,11 @@ def plasmid_edit_sequence(row_id: int):
 @app.route("/plasmids/<int:row_id>/sequence-save", methods=["POST"])
 @login_required
 def plasmid_sequence_save_json(row_id: int):
-    """JSON endpoint hit by the Open Vector Editor onSave callback. The body
-    contains OVE's `sequenceData` shape: {sequence, circular, features, name}.
-    OVE features look like {id, name, start, end, type, color, forward,
-    strand, notes, locations[]}. We translate to our schema and persist.
+    """A whole map saved as JSON, for scripts (the Sequence tab saves one
+    edit at a time through sequence_routes' edit.json). The body is
+    `sequenceData`: {sequence, circular, features, primers, translations,
+    parts, name}, each annotation {id, name, start, end, type, color,
+    forward or strand, notes, locations[]}, translated to our schema.
 
     An empty or malformed save is refused (400) rather than stored: the
     editor autosaves after every edit, and a blank body used to wipe the
@@ -10248,7 +10249,7 @@ def plasmid_sequence_save_json(row_id: int):
         primers_added = primer_records.sync_from_map(db_session, p, translated, g.user.username)
         p.features_json = json.dumps(translated)
         if not p.sequence_format:
-            p.sequence_format = "ove"
+            p.sequence_format = "json"
         # File > Rename Sequence in the editor renames the plasmid.
         if isinstance(sd.get("name"), str) and sd["name"].strip() and sd["name"].strip() != (p.name or ""):
             p.name = sd["name"].strip()[:200]
@@ -10265,7 +10266,8 @@ def plasmid_sequence_save_json(row_id: int):
 @app.route("/plasmids/<int:row_id>/sequence.json")
 @login_required
 def plasmid_sequence_json(row_id: int):
-    """Return the plasmid's sequence + features as JSON for the editor."""
+    """The plasmid's sequence and annotations as JSON, grouped as
+    sequence-save takes them (for scripts)."""
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
         if p is None:
@@ -10280,7 +10282,7 @@ def plasmid_sequence_json(row_id: int):
             "name": p.name or f"Plasmid #{p.plasmid_id}",
             "sequence": p.full_sequence or "",
             "is_circular": bool(p.is_circular),
-            "circular": bool(p.is_circular),  # OVE uses this key
+            "circular": bool(p.is_circular),  # the key sequence-save takes
             "features": groups["features"],
             "primers": groups["primers"],
             "translations": groups["translations"],

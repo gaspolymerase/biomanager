@@ -219,5 +219,11 @@
   "%(n)s bp of this plasmid did not line up (an insert, or a large change).": "这个质粒有 %(n)s bp 没有对齐（插入片段，或较大的改动）。",
   "Fetching…": "正在获取…",
   "From %(source)s.": "来自 %(source)s。",
-  "%(name)s · %(bp)s bp · %(n)s features. It goes in when you save.": "%(name)s · %(bp)s bp · %(n)s 个特征。保存时就会填进去。"
+  "%(name)s · %(bp)s bp · %(n)s features. It goes in when you save.": "%(name)s · %(bp)s bp · %(n)s 个特征。保存时就会填进去。",
+  "Add a feature on these bases": "在这些碱基上加一个特征",
+  "Add the feature": "添加特征",
+  "Edit this feature": "编辑这个特征",
+  "Make it circular": "改为环状",
+  "Make it linear": "改为线性",
+  "Saved at once. Features after the change move with it, and one it runs through grows or shrinks. ⌘Z undoes.": "立即保存。改动之后的特征会跟着移动，被改动穿过的特征会变长或变短。⌘Z 可以撤销。"
 }

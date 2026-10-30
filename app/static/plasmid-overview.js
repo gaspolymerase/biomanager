@@ -7,8 +7,8 @@
 
   const root = document.querySelector('[data-overview]');
   if (!root) return;
-  const features = JSON.parse(root.dataset.features || '[]');
-  const length = Number(root.dataset.length || 0);
+  let features = JSON.parse(root.dataset.features || '[]');
+  let length = Number(root.dataset.length || 0);
 
   function draw() {
     const box = root.querySelector('[data-map]');
@@ -100,6 +100,14 @@
 
   if (document.readyState === 'complete') draw();
   else window.addEventListener('load', draw);
+  // An edit on the Sequence tab: the map follows it (static/seq-viewer.js).
+  window.addEventListener('biomanager:plasmid-view', (e) => {
+    const view = e.detail || {};
+    if (!view.length) return;
+    length = view.length;
+    features = view.features || features;
+    draw();
+  });
 
   // ---------------------------------------------------------------- Compare with…
   (function () {
