@@ -2,6 +2,7 @@
 (app/sequence_routes.py, app/protein.py, app/primer_design.py)."""
 from __future__ import annotations
 
+import json
 import random
 import unittest
 
@@ -131,8 +132,8 @@ class TheTabs(InventoryCase):
                             data={"name": uniq("EGFP-mid-F-"), "sequence": j["sequence"], "direction": "1"}).get_json()
         self.assertTrue(saved["ok"], saved)
         self.assertTrue(saved["made"])
-        self.assertEqual(one("select json_extract(attrs, '$.template') from inventory_items where id=?", saved["id"]),
-                         str(self.number))
+        attrs = json.loads(one("select attrs from inventory_items where id=?", saved["id"]))
+        self.assertEqual(attrs["template"], str(self.number))
 
     def test_too_short_is_not_a_primer(self):
         r = self.m.get(f"/plasmids/{self.row}/primer-check?start=1100&end=1105&direction=1")
