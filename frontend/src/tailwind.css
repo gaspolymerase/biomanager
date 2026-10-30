@@ -3510,7 +3510,7 @@
   .cmdk-icon { @apply size-5 shrink-0 text-muted; }
   /* The field is the sheet itself: no box, no ring, a large line of text. */
   .cmdk-input-row .cmdk-field {
-    @apply min-w-0 flex-1 border-0 bg-transparent p-0 text-[18px] text-ink shadow-none outline-none;
+    @apply min-w-0 flex-1 border-0 bg-transparent p-0 text-[17px] text-ink shadow-none outline-none;
     caret-color: var(--color-brand-600);
   }
   .cmdk-input-row .cmdk-field::placeholder { color: var(--placeholder-ink, var(--color-sand-400)); }
@@ -3567,7 +3567,7 @@
   .cmdk-row-type-vial    { @apply bg-brand-50 text-brand-700; }
 
   .cmdk-row-text { @apply flex min-w-0 flex-col; }
-  .cmdk-row-label { @apply truncate text-[14px] text-ink; }
+  .cmdk-row-label { @apply truncate text-[15px] text-ink; }
   .cmdk-row-sublabel { @apply truncate text-[12px] text-muted; }
   .cmdk-row-sublabel:empty { display: none; }
 
