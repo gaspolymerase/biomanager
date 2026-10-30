@@ -30,6 +30,20 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.5.0": {
+        "new": [
+            "Change a plasmid on its **Sequence** tab: pick bases, then **Edit…** to type over them, insert, delete, or add a feature. **Undo** takes it back.",
+            "**Mutagenesis…** on picked bases designs the two primers for a point change, says what it does to the protein, and **Make it** adds the new plasmid.",
+            "**Assemble a plasmid** gains **In-Fusion** and **Gateway** (BP and LR).",
+            "**Compare with…** on a plasmid's **Overview** lists every base that differs from another plasmid, with the feature and the protein change.",
+            "**New plasmid** takes an Addgene number or a GenBank accession under **From Addgene or NCBI**.",
+        ],
+        "changed": [
+            "BioManager draws and edits plasmids on its own now: the borrowed editor is gone, and each plasmid page loads about 9 MB less.",
+            "The search palette (**⌘K**) is a sheet of glass, with a larger field and **Ask the guide** on its own card.",
+            "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.",
+        ],
+    },
     "2.4.0": {
         "new": [
             "A notebook topic's icon can be any emoji, or an SVG of your own: **Name and icon** → **Emoji** or **SVG**.",
