@@ -5,20 +5,13 @@ Verify, Primers): maps, every base and its protein, virtual digests and
 gels with Dam/Dcm, the lab's primers that bind and a PCR, clones checked
 by sequencing and accepted, site-directed mutagenesis from the Sequence tab
 (`app/mutagenesis.py`), Assemble a plasmid's In-Fusion and Gateway
-(`app/cloning.py`, `app/gateway.py`), and Compare with… on the Overview
-(`app/plasmid_compare.py`). Compared with what SnapGene offers, these are
+(`app/cloning.py`, `app/gateway.py`), Compare with… on the Overview
+(`app/plasmid_compare.py`), and a sequence fetched by its Addgene number or
+GenBank accession (`app/sequence_fetch.py`). Compared with what SnapGene offers, these are
 what a lab would still reach for, in the order they are worth doing.
 Each builds on code that is already there.
 
-## 1. Fetch a sequence by its number
-
-**New plasmid → From Addgene or NCBI**: an Addgene plasmid number or a
-GenBank accession fills the sequence and features. Optional, and off when
-the lab's server has no internet (the Feature library's pack download
-shows how to ask and fail politely). NCBI's E-utilities need no key for a
-lab's volume; Addgene's full sequences come from its public GenBank files.
-
-## 2. Editing in the app's own viewer
+## 1. Editing in the app's own viewer
 
 The Sequence tab already picks bases. Typing over a selection, inserting
 and deleting bases, adding a feature or a primer from a selection, and

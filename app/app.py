@@ -448,6 +448,10 @@ app.register_blueprint(gateway_routes.bp)
 # Compare two plasmids, from the Overview tab (app/compare_routes.py).
 from . import compare_routes  # noqa: E402
 app.register_blueprint(compare_routes.bp)
+# A plasmid's sequence by its Addgene number or GenBank accession (app/sequence_fetch_routes.py).
+from . import sequence_fetch_routes  # noqa: E402
+app.register_blueprint(sequence_fetch_routes.bp)
+app.jinja_env.globals["sequence_fetch_on"] = lambda: not sequence_fetch_routes.sequence_fetch.switched_off()
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)

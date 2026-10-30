@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_sheet.html" as sheet_ui with context %}
 {% import "_sharing.html" as sharing with context %}
+{% from "_sequence_fetch.html" import fetch_row with context %}
 
 {% set locked = plasmid.locked %}
 
@@ -266,13 +267,14 @@
   {% if not locked %}
     {# Replace the whole sequence from a file in one step. #}
     <details class="fold-card mt-4">
-      <summary>{{ icon('upload') }} {{ _('Replace the sequence from a file') }}</summary>
+      <summary>{{ icon('upload') }} {{ _('Replace the sequence: a file, pasted text, or Addgene and NCBI') }}</summary>
       <form method="post" action="{{ url_for('plasmid_upload_sequence', row_id=plasmid.row_id) }}"
             enctype="multipart/form-data" class="flex flex-col gap-3 px-4 py-3.5"
             {% if plasmid.length_bp %}data-confirm="{{ _('Replace the %(bp)s bp sequence and its %(features)s feature(s) of plasmid #%(id)s? You can restore it from its versions.', bp=plasmid.length_bp, features=plasmid.features|length, id=plasmid.plasmid_id) }}"{% endif %}>
         <label class="field-label">{{ _('SnapGene .dna, GenBank .gb / .gbk, or FASTA') }}
           <input type="file" name="file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
         </label>
+        {{ fetch_row() }}
         <details class="dropzone-paste">
           <summary>{{ _('Paste annotated text instead (FASTA or GenBank)') }}</summary>
           <textarea name="sequence_text" rows="4" placeholder="&gt;pTest&#10;ATGCGTAAACCC…&#10;&#10;{{ _('…or a GenBank LOCUS … // record') }}"></textarea>
@@ -671,6 +673,7 @@
 <script src="{{ url_for('static', filename='seq-viewer.js') }}?v={{ asset_version('seq-viewer.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-primers.js') }}?v={{ asset_version('plasmid-primers.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-overview.js') }}?v={{ asset_version('plasmid-overview.js') }}" defer></script>
+<script src="{{ url_for('static', filename='sequence-fetch.js') }}?v={{ asset_version('sequence-fetch.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
 <script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer

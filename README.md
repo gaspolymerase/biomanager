@@ -411,8 +411,9 @@ two buttons beside its name: **Configure** (for whoever may change it) and
 
 ### 🧬 Plasmids
 
-Upload a GenBank, FASTA or SnapGene file and BioManager keeps the sequence
-and its features, and draws the plasmid itself: a map, every base, the
+Upload a GenBank, FASTA or SnapGene file, or fetch one by its Addgene
+number or GenBank accession, and BioManager keeps the sequence and its
+features, and draws the plasmid itself: a map, every base, the
 cuts, the gel, the primers and the protein. Plasmid boxes sit
 on the same rack grid as everything else, so every tube has an address.
 Each tube keeps its miniprep's concentration (ng/µL) and 260/280, and a

@@ -3,6 +3,7 @@
 {% import "_sheet.html" as sheet_ui with context %}
 {% import "_sharing.html" as sharing with context %}
 {% from "_rack_grid.html" import rack_grid, rack_dialog with context %}
+{% from "_sequence_fetch.html" import fetch_row with context %}
 
 {% block page_actions %}{{ db_actions(url_for('organisms.configure_builtin', key='plasmids'), current_user.role == 'admin') }}{% endblock %}
 {% block page_title %}{{ db_labels.get('plasmids', 'Plasmids')|tr }}{% endblock %}
@@ -400,6 +401,7 @@
       </fieldset>
       <fieldset class="record-group" data-new-only>
         <legend>{{ _('Sequence (optional)') }}</legend>
+        {{ fetch_row() }}
         <div id="plasmid-new-dropzone" class="dropzone record-wide">
           <input type="file" id="plasmid-new-file" name="sequence_file" accept=".dna,.fasta,.fa,.gb,.gbk,.txt" hidden>
           {{ icon('upload') }}
@@ -440,6 +442,7 @@
 
 {% block body_end %}
 <script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}"></script>
+<script src="{{ url_for('static', filename='sequence-fetch.js') }}?v={{ asset_version('sequence-fetch.js') }}" defer></script>
 <script nonce="{{ csp_nonce() }}">
 // The List's small maps, drawn as the list is first shown (static/plasmid-map.js).
 (function () {

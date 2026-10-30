@@ -474,3 +474,14 @@ text.pmap-piece-3 { fill: var(--pmap-piece-3); }
 .pov-compare-list li + li { border-top: 1px solid var(--color-hairline); }
 .pov-compare-at { color: var(--color-muted); }
 .pov-compare-what { min-width: 0; }
+
+/* ---- From Addgene or NCBI (templates/_sequence_fetch.html) ------------- */
+.seq-fetch { display: flex; flex-direction: column; gap: 6px; }
+.seq-fetch-label { font-size: 12px; font-weight: 500; color: var(--color-muted); }
+.seq-fetch-row { display: flex; gap: 8px; align-items: center; }
+.seq-fetch-row input { flex: 1; min-width: 0; font-family: var(--font-mono, ui-monospace, monospace); }
+.seq-fetch-said { margin: 0; font-size: 12px; color: var(--color-muted); }
+.seq-fetch-said:empty { display: none; }
+.seq-fetch-said.is-ok { color: var(--color-ok-700, var(--color-ink)); }
+.seq-fetch-said.is-error { color: var(--color-danger-700, var(--color-ink)); }
+.seq-fetch-said a { color: var(--color-brand-700); }

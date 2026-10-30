@@ -896,7 +896,7 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - **Sequence**, beside each plasmid's number in the table, opens its sequence and map (**Add sequence** when it has none yet); the number opens the same page.
 
-- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so.
+- **New plasmid** takes a name, backbone, insert, resistance, owner and a box position (blank takes the next free one) — or paste a list of names to make several. Drop in a SnapGene `.dna`, GenBank, FASTA or plain-text sequence: its name, features and every annotation note come with it, and a file of several sequences keeps the first and says so. Or type an Addgene number (*Addgene #11150*, or just *11150*) or a GenBank accession (*L09137*) under **From Addgene or NCBI** and **Fetch**: the record comes in with its features, and its name and where it came from fill in if they are empty. The same box is under **Replace the sequence** on a plasmid's page. A server with no internet says so, and you download the GenBank file yourself.
 
 ### The map, the sequence and the protein
 

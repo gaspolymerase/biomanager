@@ -1,0 +1,19 @@
+{#
+  From Addgene or NCBI: an Addgene number or a GenBank accession, fetched
+  into the enclosing form's paste box (static/sequence-fetch.js,
+  app/sequence_fetch_routes.py). Hidden when the server has fetching
+  switched off (BIOMANAGER_SEQUENCE_FETCH=0).
+#}
+{% macro fetch_row() %}
+  {% if sequence_fetch_on() %}
+  <div class="seq-fetch record-wide" data-seq-fetch data-url="{{ url_for('sequence_fetch.fetch') }}">
+    <span class="seq-fetch-label">{{ _('From Addgene or NCBI') }}</span>
+    <div class="seq-fetch-row">
+      <input type="text" data-seq-fetch-ref autocomplete="off" spellcheck="false"
+             placeholder="{{ _('Addgene #11150, or an accession such as L09137') }}" aria-label="{{ _('Addgene number or GenBank accession') }}">
+      <button type="button" class="btn btn-sm" data-seq-fetch-go>{{ icon('download') }} {{ _('Fetch') }}</button>
+    </div>
+    <p class="seq-fetch-said" data-seq-fetch-said role="status"></p>
+  </div>
+  {% endif %}
+{% endmacro %}

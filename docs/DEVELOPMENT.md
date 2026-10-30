@@ -1846,6 +1846,20 @@ crossing the origin keeps `start > end`.
     plasmids, every change is caught). `compare.json` and
     `compare/others.json` serve the Overview card, which draws both rings
     with the differences marked.
+  - **From Addgene or NCBI** (`app/sequence_fetch.py`,
+    `app/sequence_fetch_routes.py`, `templates/_sequence_fetch.html`,
+    `static/sequence-fetch.js`), in New plasmid and Replace the sequence:
+    `parse_ref` reads an Addgene number (`Addgene #11150`, a bare number)
+    or an accession; `fetch` gets GenBank text from E-utilities' efetch
+    (`gbwithparts`) or the first `.gbk` Addgene's sequences page links
+    (Addgene's own full sequence ahead of the depositor's), at most `MOST`
+    bytes. `fetch-sequence?ref=` answers with the text and what
+    `parse_genbank` finds in it, and the page drops the text in the form's
+    paste box, so creating or replacing reads it as pasted GenBank. Any
+    failure is one `FetchError` code said politely (offline: download the
+    file and upload it); `BIOMANAGER_SEQUENCE_FETCH=0` hides it and reaches
+    nothing (`sequence_fetch_on()` in templates, passed through
+    `deploy/compose.yaml`). Tests pass their own opener.
   - **Sequence** (`static/seq-viewer.js`, `app/sequence_routes.py`):
     `view.json` gives the bases, features, single cutters
     (`digest.enzyme_table`), the lab's primers (`lab_primers`:
