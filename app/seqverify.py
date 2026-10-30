@@ -238,18 +238,19 @@ def mixed_from(marked: list[int], start: int, end: int) -> int | None:
     return None
 
 
-def trace_window(read: Read, index: int, strand: str) -> dict | None:
-    """The trace around one of the read's bases, for a picture: each dye's
-    samples (at most TRACE_POINTS), the called bases at their x, and which
-    one is `index`. As the read runs: a reverse read's is the other strand."""
+def trace_window(read: Read, index: int, strand: str, flank: int = TRACE_FLANK) -> dict | None:
+    """The trace around one of the read's bases, for a picture: `flank`
+    called bases either side, each dye's samples (TRACE_POINTS for the usual
+    flank, more for a wider one), the called bases at their x, and which one
+    is `index`. As the read runs: a reverse read's is the other strand."""
     trace = (read.extra or {}).get("trace")
     if not trace or not 0 <= index < len(trace["peaks"]):
         return None
     peaks = trace["peaks"]
-    lo, hi = max(0, index - TRACE_FLANK), min(len(peaks) - 1, index + TRACE_FLANK)
+    lo, hi = max(0, index - flank), min(len(peaks) - 1, index + flank)
     x0 = max(0, peaks[lo] - 6)
     x1 = min(len(trace["channels"]["A"]) - 1, peaks[hi] + 6)
-    step = max(1, -(-(x1 - x0 + 1) // TRACE_POINTS))
+    step = max(1, -(-(x1 - x0 + 1) // (TRACE_POINTS * max(flank, TRACE_FLANK) // TRACE_FLANK)))
     channels = {b: trace["channels"][b][x0:x1 + 1:step] for b in "ACGT"}
     return {"channels": channels, "step": step, "x0": x0, "strand": strand,
             "bases": [{"base": read.bases[i], "x": (peaks[i] - x0) / step, "at": i == index} for i in range(lo, hi + 1)
@@ -657,7 +658,7 @@ def _listed(differences: list[dict], most: int) -> str:
     return text
 
 
-def check_read(read: Read, target: Target, features: list[dict]) -> dict:
+def check_read(read: Read, target: Target, features: list[dict], flank: int = TRACE_FLANK) -> dict:
     """One read against the plasmid: where it lies, and how it differs."""
     L = target.length
     out = {"name": read.name, "source": read.source, "length": len(read.bases), "placed": False,
@@ -763,7 +764,7 @@ def check_read(read: Read, target: Target, features: list[dict]) -> dict:
                     "quality": q}
         item["read_position"] = read_index(d["q"][0]) + 1
         item["confident"] = q is None or q >= GOOD_QUALITY
-        picture = trace_window(read, read_index(d["q"][0]), strand)
+        picture = trace_window(read, read_index(d["q"][0]), strand, flank)
         if picture is not None:
             item["trace"] = picture
         item["_pos"] = pos
@@ -862,13 +863,15 @@ def _join(names: list[str]) -> str:
     return gettext("%(some)s and %(last)s", some=", ".join(names[:-1]), last=names[-1])
 
 
-def verify(sequence: str, circular: bool, annotations: list, reads: list[Read], name: str = "") -> dict:
-    """Every read checked against the plasmid, and the clone's verdict."""
+def verify(sequence: str, circular: bool, annotations: list, reads: list[Read], name: str = "",
+           flank: int = TRACE_FLANK) -> dict:
+    """Every read checked against the plasmid, and the clone's verdict.
+    `flank`: how many called bases either side of a difference its trace shows."""
     sequence = (sequence or "").upper()
     L = len(sequence)
     target = Target(sequence, circular, max((len(r.bases) for r in reads), default=0))
     features = map_features(annotations, L)
-    checked = [check_read(r, target, features) for r in reads]
+    checked = [check_read(r, target, features, flank) for r in reads]
     placed = [r for r in checked if r["placed"]]
     mask = bytearray(L)
     for r in placed:

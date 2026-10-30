@@ -21,6 +21,7 @@
     <nav class="seg" role="tablist" aria-label="{{ _('Plasmid sections') }}">
       <button type="button" class="seg-item plasmid-tab is-active" data-tab="sequence" role="tab">{{ icon('dna') }}{{ _('Sequence') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="digest" role="tab">{{ icon('scissors') }}{{ _('Digest') }}</button>
+      <button type="button" class="seg-item plasmid-tab" data-tab="verify" role="tab">{{ icon('list-check') }}{{ _('Verify') }}{% if clones.count %} <span class="seg-count">{{ clones.count }}</span>{% endif %}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="storage" role="tab">{{ icon('box') }}{{ _('Storage') }}</button>
       <button type="button" class="seg-item plasmid-tab" data-tab="properties" role="tab">{{ icon('sliders') }}{{ _('Properties') }}</button>
     </nav>
@@ -33,6 +34,9 @@
         {% elif plasmid.storage_box %}{{ plasmid.storage_box }} · {{ _('no cell yet') }}
         {% else %}{{ _('Not stored') }}{% endif %}
       </span>
+      {% if clones.verified %}
+        <span class="plasmid-meta-item plasmid-meta-verified" data-verified-pill>{{ icon('check') }} {{ _('Verified · %(clone)s · %(when)s', clone=clones.verified.label, when=clones.verified.when) }}</span>
+      {% endif %}
       {% if locked %}
         <span class="plasmid-meta-item plasmid-meta-lock">{{ icon('lock') }} {{ _('Read only') }}</span>
       {% endif %}
@@ -77,15 +81,6 @@
     #ove-shell:fullscreen .ove-root { flex: 1; height: auto; }
     .lineage-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
     .lineage-tree .lineage-tree { margin: 4px 0 0 6px; padding-left: 12px; border-left: 1px solid var(--color-line); }
-    /* Verify sequencing's map (static/seq-verify.js). */
-    .sv-map { width: 100%; height: auto; display: block; }
-    .sv-map .sv-line { stroke: var(--color-hairline); stroke-width: 2; }
-    .sv-map .sv-label { font-size: 11px; fill: var(--color-muted); }
-    .sv-map .sv-feature { fill: var(--color-sand-300); }
-    .sv-map .sv-feature-name { font-size: 10px; fill: var(--color-ink); pointer-events: none; }
-    .sv-map .sv-read { fill: var(--color-brand-500); }
-    .sv-map .sv-diff { fill: var(--color-danger-600); }
-    .sv-map .sv-diff-low { fill: var(--color-warn-600); opacity: .7; }
   </style>
   <div id="ove-shell">
     <div class="ove-bar">
@@ -176,44 +171,6 @@
       {% endif %}
       {% if primers.can_scan %}{{ scan.scan_panel() }}{% endif %}
     </div>
-  {% endif %}
-
-  {# Verify sequencing: Sanger reads of a miniprep or clone against this map (app/seqverify.py, static/seq-verify.js). #}
-  {% if plasmid.length_bp %}
-    <details class="fold-card mt-4" id="verify-sequencing" data-verify-url="{{ url_for('plasmid_verify', row_id=plasmid.row_id) }}"
-             data-length="{{ plasmid.length_bp }}">
-      <summary>{{ icon('list-check') }} {{ _('Verify sequencing') }}</summary>
-      <form class="flex flex-col gap-3 px-4 py-3.5" data-verify-form>
-        <p class="text-[13px] text-muted">{{ _('Check Sanger reads of a miniprep or clone against this map: where each read lies, and every base that differs from it.') }}</p>
-        <label class="field-label">{{ _('Sequencing reads: .ab1 chromatograms, or FASTA or text') }}
-          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" class="mt-1.5 text-[13px] normal-case tracking-normal">
-        </label>
-        {% if kept_reads %}
-          <div class="text-[13px]">
-            <p class="field-label mb-1">{{ _('Or reads kept with this plasmid') }}</p>
-            <div class="flex flex-wrap gap-x-4 gap-y-1">
-              {% for f in kept_reads %}
-                <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" name="kept" value="{{ f.id }}"> {{ f.name }}</label>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-        <details class="dropzone-paste">
-          <summary>{{ _('Paste reads instead (FASTA or plain bases)') }}</summary>
-          <textarea name="reads_text" rows="4" placeholder="&gt;clone3-T7&#10;TGCTAGTTATTGCTCAGCGG…"></textarea>
-        </details>
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="submit" class="btn btn-primary" data-verify-go>{{ icon('list-check') }} {{ _('Verify') }}</button>
-          {% if not locked %}
-            <label class="inline-flex items-center gap-2 text-[13px] cursor-pointer">
-              <input type="checkbox" class="set-switch" name="keep" value="1"> {{ _('Keep the reads and the result with this plasmid’s files') }}
-            </label>
-          {% endif %}
-          <span class="text-[13px] text-muted" data-verify-status aria-live="polite"></span>
-        </div>
-      </form>
-      <div data-verify-result hidden class="border-t border-[var(--color-line)]"></div>
-    </details>
   {% endif %}
 
   {% if not locked %}
@@ -308,6 +265,60 @@
   </div>
   {% else %}
   <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, and its digests show here.') }}</p></div>
+  {% endif %}
+</section>
+
+{# ============ Verify — clones checked by sequencing (app/clone_routes.py, static/plasmid-verify.js) ============ #}
+<section class="plasmid-tab-panel" data-panel="verify">
+  {% if plasmid.length_bp %}
+  <div class="pver" data-verify-tab data-urls='{{ clones.urls|tojson }}' data-name="{{ plasmid.name or ('#' ~ plasmid.plasmid_id) }}">
+    <aside class="pglass pver-clones" aria-label="{{ _('Clones') }}">
+      <div class="pver-head"><h3>{{ _('Clones') }}</h3><span class="tabular-nums text-muted" data-clone-count></span></div>
+      <ul class="pver-list" data-clone-list></ul>
+      <form class="pver-drop" data-clone-form>
+        <label class="pver-zone" data-zone>
+          {{ icon('upload') }}
+          <b>{{ _('Drop .ab1 reads') }}</b>
+          <span>{{ _('Each named by its clone, like') }} <code>C4_CAG-F.ab1</code></span>
+          <span>{{ _('FASTA and text work too.') }}</span>
+          <input type="file" name="reads" multiple accept=".ab1,.abi,.seq,.fa,.fasta,.fas,.txt" hidden>
+        </label>
+        <details class="pver-more">
+          <summary>{{ _('Name the clone, or paste a read') }}</summary>
+          <input type="text" name="clone" placeholder="{{ _('Clone, e.g. 4') }}" aria-label="{{ _('Clone') }}">
+          <textarea name="reads_text" rows="3" placeholder="&gt;clone4-T7&#10;TGCTAGTTATTGCTCAGCGG…" aria-label="{{ _('Paste a read') }}"></textarea>
+          <button type="submit" class="btn btn-sm">{{ _('Check') }}</button>
+        </details>
+        <p class="pver-status" data-clone-status aria-live="polite"></p>
+      </form>
+      <div class="pver-next" data-next hidden></div>
+    </aside>
+    <div class="pver-center">
+      <div class="pglass pver-card">
+        <div class="pver-head"><h3>{{ _('Where the reads fall') }}</h3><span class="pver-legend"><i class="is-read"></i>{{ _('read') }} <i class="is-diff"></i>{{ _('difference') }}</span></div>
+        <div data-strip></div>
+      </div>
+      <div class="pglass pver-card" data-diff-card hidden>
+        <div class="pver-head"><h3 data-diff-title></h3>
+          <button type="button" class="btn btn-sm" data-diff-step="-1">‹ {{ _('Previous difference') }}</button>
+          <button type="button" class="btn btn-sm" data-diff-step="1">{{ _('Next difference') }} ›</button></div>
+        <div data-diff></div>
+      </div>
+      <div class="pglass pver-card" data-reads-card hidden><div data-reads></div></div>
+      <div class="pglass pver-card pver-empty" data-empty>
+        <p>{{ _('Drop the reads of a clone on the left: each read is placed on the map, every base that differs is shown with its trace, and what it does to a protein.') }}</p>
+      </div>
+    </div>
+    <aside class="pver-side">
+      <div class="pglass pver-card" data-summary hidden></div>
+      <div class="pglass pver-card pver-about">
+        <h3>{{ _('What Accept does') }}</h3>
+        <p>{{ _('Marks the plasmid verified with this clone and keeps its reads with the plasmid, so the next clone is checked against the same map.') }}</p>
+      </div>
+    </aside>
+  </div>
+  {% else %}
+  <div class="empty-state mt-4"><p>{{ _('Add a sequence on the Sequence tab, then check clones here.') }}</p></div>
   {% endif %}
 </section>
 
@@ -543,6 +554,7 @@
 <script src="{{ url_for('static', filename='seq-verify.js') }}?v={{ asset_version('seq-verify.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}" defer></script>
 <script src="{{ url_for('static', filename='plasmid-digest.js') }}?v={{ asset_version('plasmid-digest.js') }}" defer></script>
+<script src="{{ url_for('static', filename='plasmid-verify.js') }}?v={{ asset_version('plasmid-verify.js') }}" defer></script>
 {# OVE UMD bundle. Exposes window.createVectorEditor. Loaded BEFORE the
    inline script so the global is in place when we read it. #}
 <script src="{{ url_for('static', filename='notebook-build/plasmid-app.js') }}?v={{ asset_version('notebook-build/plasmid-app.js') }}" defer

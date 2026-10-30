@@ -208,3 +208,112 @@ text.pmap-piece-3 { fill: var(--pmap-piece-3); }
 .pdig-notes { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .pdig-notes li { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: var(--color-ink-soft); }
 .pdig-notes .badge { flex: none; }
+
+/* ---- The header's Verified, and a tab's count --------------------------- */
+
+.plasmid-meta-verified { color: var(--color-ok-700); background: var(--color-ok-50); border-color: var(--color-ok-200); }
+.plasmid-meta-verified .icon { width: 12px; height: 12px; }
+.seg-count { margin-left: 4px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--color-muted); }
+
+/* ---- The Verify tab ----------------------------------------------------- */
+
+.pver {
+  color: var(--color-ink);
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr) 300px;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1180px) {
+  .pver { grid-template-columns: 250px minmax(0, 1fr); }
+  .pver-side { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .pver { grid-template-columns: minmax(0, 1fr); }
+}
+.pver-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pver-head h3 { flex: 1; margin: 0; font-size: 15px; font-weight: 600; color: var(--color-ink); }
+.pver-clones { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.pver-clones > .pver-head { padding: 2px 4px; }
+.pver-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pver-clone {
+  width: 100%; display: grid; grid-template-columns: 22px 1fr auto; gap: 2px 8px; align-items: center;
+  padding: 10px 12px; border-radius: 16px; text-align: left; color: var(--color-ink);
+}
+.pver-clone:hover { background: var(--color-recess); }
+.pver-clone.is-open { background: var(--glass-solid); box-shadow: inset 0 0 0 1px var(--glass-ring), 0 1px 3px rgb(0 0 0 / 0.06); }
+.pver-mark {
+  grid-row: 1; width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+}
+.pver-mark .icon { width: 12px; height: 12px; }
+.pver-mark.is-ok, .pver-mark.is-accepted { background: var(--color-ok-50); color: var(--color-ok-700); }
+.pver-mark.is-accepted { box-shadow: inset 0 0 0 1.5px var(--color-ok-600); }
+.pver-mark.is-warn { background: var(--color-warn-50); color: var(--color-warn-700); }
+.pver-mark.is-bad { background: var(--color-danger-50); color: var(--color-danger-700); }
+.pver-clone-name { font-weight: 600; font-size: 13px; }
+.pver-when { font-size: 12px; color: var(--color-muted); }
+.pver-detail { grid-column: 2 / -1; font-size: 12px; color: var(--color-muted); }
+
+.pver-drop { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.pver-zone {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 12px; border-radius: 16px;
+  text-align: center; font-size: 12px; color: var(--color-muted); cursor: pointer;
+  box-shadow: inset 0 0 0 1.5px var(--color-hairline);
+}
+.pver-zone .icon { width: 20px; height: 20px; color: var(--color-brand-700); }
+.pver-zone b { font-size: 13px; color: var(--color-ink); }
+.pver-zone code { font-size: 12px; white-space: nowrap; }
+.pver-card .pdig-table td:first-child, .pver-card .pdig-table td:nth-child(3) { white-space: nowrap; }
+.pver-zone:hover, .pver-zone.is-over { background: var(--color-brand-50); box-shadow: inset 0 0 0 1.5px var(--color-brand-500); }
+.pver-more { font-size: 12px; color: var(--color-muted); }
+.pver-more summary { cursor: pointer; padding: 2px 4px; }
+.pver-more input, .pver-more textarea {
+  display: block; width: 100%; margin-top: 6px; padding: 6px 10px; border: 0; border-radius: 10px;
+  font-size: 13px; color: var(--color-ink); background: var(--color-recess);
+}
+.pver-more textarea { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; }
+.pver-more .btn { margin-top: 6px; }
+.pver-status { margin: 0; font-size: 12px; color: var(--color-muted); }
+.pver-status:empty { display: none; }
+.pver-next { margin-top: 6px; padding: 10px 12px; border-radius: 14px; background: var(--color-recess); font-size: 12px; }
+.pver-next p { margin: 2px 0 6px; color: var(--color-ink-soft); }
+
+.pver-center { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pver-card { padding: 14px 16px; min-width: 0; }
+.pver-empty p { margin: 0; font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+.pver-legend { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-muted); }
+.pver-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-left: 8px; }
+.pver-legend i.is-read { background: var(--color-brand-500); }
+.pver-legend i.is-diff { background: var(--color-danger-600); }
+.pver-note { margin: 6px 0 0; font-size: 12px; color: var(--color-muted); }
+.pver-trace { display: block; height: auto; }
+.pver-at { fill: var(--color-warn-50); }
+.pver-base { font: 13px var(--font-mono, ui-monospace, monospace); }
+.pver-base.is-at { font-weight: 700; }
+.pver-base.is-map { fill: var(--color-ink) !important; font-weight: 600; }
+.pver-row-label { font-size: 11px; fill: var(--color-muted); }
+.pver-diff-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-top: 10px; font-size: 13px; }
+.pver-effect { flex: 1; min-width: 200px; color: var(--color-ink-soft); }
+
+.pver-side { display: flex; flex-direction: column; gap: 12px; }
+.pver-sum-head { display: flex; gap: 6px; }
+.pver-side h2 { margin: 10px 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--color-ink); }
+.pver-verdict { margin: 0; font-size: 13px; line-height: 1.5; color: var(--color-ink-soft); }
+.pver-dl { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; margin: 12px 0 0; font-size: 13px; }
+.pver-dl dt { color: var(--color-muted); }
+.pver-dl dd { margin: 0; text-align: right; font-weight: 500; }
+.pver-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.pver-actions .btn { justify-content: center; }
+.pver-about h3 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--color-ink); }
+.pver-about p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--color-muted); }
+
+/* Verify's map strip (static/seq-verify.js). */
+.sv-map { width: 100%; height: auto; display: block; }
+.sv-map .sv-line { stroke: var(--color-hairline); stroke-width: 2; }
+.sv-map .sv-label { font-size: 11px; fill: var(--color-muted); }
+.sv-map .sv-feature { fill: var(--color-sand-300); }
+.sv-map .sv-feature-name { font-size: 10px; fill: var(--color-ink); pointer-events: none; }
+.sv-map .sv-read { fill: var(--color-brand-500); }
+.sv-map .sv-diff { fill: var(--color-danger-600); }
+.sv-map .sv-diff-low { fill: var(--color-warn-600); opacity: .7; }

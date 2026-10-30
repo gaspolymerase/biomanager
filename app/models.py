@@ -692,6 +692,29 @@ class PlasmidFile(Base):
     uploaded_by: Mapped[str] = mapped_column(String(80), default="")
 
 
+class PlasmidClone(Base):
+    """A clone of a plasmid whose Sanger reads were checked against its map
+    (the Verify tab, app/clone_routes.py): its reads (kept as the plasmid's
+    files), what they showed, and whether someone accepted it as the
+    plasmid. The newest accepted clone is the one the page calls verified.
+    The plasmid's row id with no foreign key, as for its files."""
+    __tablename__ = "plasmid_clones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plasmid_row_id: Mapped[int] = mapped_column(Integer, index=True)
+    name: Mapped[str] = mapped_column(String(80), default="")
+    # match, differences, no_match or poor: app/seqverify.py's verdict
+    status: Mapped[str] = mapped_column(String(20), default="")
+    verdict: Mapped[str] = mapped_column(Text, default="")
+    # The report without its traces, and the plasmid files holding the reads.
+    report_json: Mapped[str] = mapped_column(Text, default="{}")
+    file_ids: Mapped[str] = mapped_column(String(400), default="")
+    checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    checked_by: Mapped[str] = mapped_column(String(80), default="")
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    accepted_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class FeatureLibraryEntry(Base):
     """A named element the lab reuses, by its sequence (app/feature_library.py):
     Detect features on any plasmid's map finds it there. Collected from the

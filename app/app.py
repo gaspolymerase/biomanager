@@ -433,6 +433,12 @@ app.register_blueprint(batch_edit.bp)
 # A plasmid's virtual digest and gel (app/digest_routes.py).
 from . import digest_routes  # noqa: E402
 app.register_blueprint(digest_routes.bp)
+# Clones checked by sequencing, on a plasmid's Verify tab (app/clone_routes.py).
+from . import clone_routes  # noqa: E402
+app.register_blueprint(clone_routes.bp)
+# The plasmid's own sequence viewer, primer design and PCR (app/sequence_routes.py).
+from . import sequence_routes  # noqa: E402
+app.register_blueprint(sequence_routes.bp)
 
 # Guest passes and the gate in front of internet access (app/guests.py).
 app.register_blueprint(guests.bp)
@@ -9310,12 +9316,15 @@ def plasmid_page(number: int):
         files = _plasmid_files(db_session, p)
         kept_reads = _kept_reads(db_session, p)
         primers = _plasmid_primers(db_session, p)
+        from . import clone_routes
+        clones = {"count": len(clone_routes.clones_of(db_session, p)), "verified": clone_routes.verified(db_session, p),
+                  "urls": clone_routes.clone_urls(p.id)}
         lineage_options = [f"{n} · {name}" if name else str(n) for n, name in db_session.execute(
             select(PlasmidRecord.plasmid_id, PlasmidRecord.name).where(PlasmidRecord.id != p.id)
             .order_by(PlasmidRecord.plasmid_id)).all()]
     return render_template("plasmid_detail.html", plasmid=data, boxes=boxes, usernames=usernames,
                            made_from=made_from, lineage_options=lineage_options, primers=primers, files=files,
-                           kept_reads=kept_reads,
+                           kept_reads=kept_reads, clones=clones,
                            plannotate_here=plannotate.available(),
                            glycerol=glycerol)
 

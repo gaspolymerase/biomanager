@@ -432,6 +432,78 @@ sam.post(f"/plasmids/{pcag}/parents", data={
     "parent": str(one("select plasmid_id from plasmids where name='pCAGGS'")), "role": "backbone",
     "method": "digest_ligate"})
 
+
+
+def ab1(bases: str, quality: list[int], seed: int) -> bytes:
+    """A made-up ABI chromatogram: a peak for each called base in its dye's
+    channel, a little noise under them, and the quality the caller gave."""
+    import math
+    import random
+    import struct
+    rnd = random.Random(seed)
+    spacing = 12
+    size = spacing * len(bases) + spacing
+    order = "GATC"
+    channels = {b: [rnd.randint(4, 30) for _ in range(size)] for b in "ACGT"}
+    peaks = []
+    for i, base in enumerate(bases):
+        centre = spacing * i + spacing // 2 + rnd.randint(-1, 1)
+        peaks.append(centre)
+        height = rnd.randint(700, 1300) * (0.3 if quality[i] < 15 else 1)
+        for dx in range(-6, 7):
+            channels[base][centre + dx] += int(height * math.exp(-(dx * dx) / 6.5))
+    entries = [("SMPL", 1, 18, 1, 6, b"\x05clone"), ("PBAS", 2, 2, 1, len(bases), bases.encode()),
+               ("PCON", 2, 2, 1, len(quality), bytes(quality)), ("FWO_", 1, 2, 1, 4, order.encode()),
+               *(("DATA", n, 4, 2, size, struct.pack(f">{size}h", *[min(v, 32000) for v in channels[b]]))
+                 for n, b in zip(range(9, 13), order)),
+               ("PLOC", 2, 4, 2, len(bases), struct.pack(f">{len(bases)}h", *peaks))]
+    blob, directory, offset = b"", b"", 128
+    for tag, num, etype, esize, count, data in entries:
+        if len(data) <= 4:
+            directory += struct.pack(">4sihhii", tag.encode(), num, etype, esize, count, len(data)) + \
+                data.ljust(4, b"\0") + struct.pack(">i", 0)
+        else:
+            directory += struct.pack(">4sihhiiii", tag.encode(), num, etype, esize, count, len(data), offset, 0)
+            blob += data
+            offset += len(data)
+    header = (b"ABIF" + struct.pack(">h", 101) + struct.pack(">4sihhiiii", b"tdir", 1, 1023, 28, len(entries),
+                                                            28 * len(entries), offset, 0)).ljust(128, b"\0")
+    return header + blob + directory
+
+
+def sanger(seq: str, start: int, end: int, reverse: bool, seed: int, changes=None) -> bytes:
+    """A read of seq[start:end] (0-based), forward or reverse, with poor ends."""
+    import random
+    rnd = random.Random(seed)
+    bases = list(seq[start:end].upper())
+    for at, base in (changes or {}).items():
+        bases[at - start] = base
+    text = "".join(bases)
+    if reverse:
+        text = text.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+    n = len(text)
+    quality = [rnd.randint(4, 14) if i < 25 or i > n - 60 else rnd.randint(36, 60) for i in range(n)]
+    return ab1(text, quality, seed)
+
+
+# Clones of pCAG-EGFP checked by sequencing: clone 3 matches and is the
+# plasmid; clone 2 failed; clone 1 has a silent change in EGFP (codon 61,
+# CTC → CTT). Each read is named by its clone, as the Verify tab reads them.
+from io import BytesIO  # noqa: E402
+
+demo_seq = demo_plasmid()[0].upper()
+silent = 692 + 60 * 3 + 2                      # EGFP's codon 61, third base (0-based)
+assert demo_seq[silent - 2:silent + 1] == "CTC"
+for clone, reads in (
+    ("3", [("C3_CAG-F.ab1", 560, 1480, False, 31, None), ("C3_bGH-R.ab1", 600, 1560, True, 32, None)]),
+    ("2", [("C2_CAG-F.ab1", 560, 650, False, 21, None)]),
+    ("1", [("C1_CAG-F.ab1", 560, 1480, False, 11, {silent: "T"}), ("C1_bGH-R.ab1", 600, 1560, True, 12, {silent: "T"})]),
+):
+    files = [(BytesIO(sanger(demo_seq, a, b, rev, seed, ch)), name) for name, a, b, rev, seed, ch in reads]
+    sam.post(f"/plasmids/{pcag}/clones", data={"reads": files}, content_type="multipart/form-data")
+    if clone == "3":
+        sam.post(f"/plasmids/{pcag}/clones/{one('select id from plasmid_clones where name=?', '3')}/accept")
+
 # ------------------------------------------------------------------ inventories
 
 
