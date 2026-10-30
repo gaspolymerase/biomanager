@@ -21,10 +21,11 @@ node_modules/
 .DS_Store
 
 # Claude Code: memory, local settings, MCP config, preview config and agent
-# worktrees — local state, kept private. CLAUDE.md itself is tracked: it is
-# how this repository works, and an ignored file does not reach a fresh
-# clone or an agent's worktree, where it is needed most.
-.claude/
+# worktrees — local state, kept private. CLAUDE.md and .claude/skills/ are
+# tracked: they are how this repository works, and an ignored file does not
+# reach a fresh clone or an agent's worktree, where it is needed most.
+.claude/*
+!.claude/skills/
 CLAUDE.local.md
 .claude.json
 .mcp.json
