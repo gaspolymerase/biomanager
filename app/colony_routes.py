@@ -16,7 +16,7 @@ import re
 from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
-from flask import Response, flash, g, jsonify, redirect, render_template, request, url_for
+from flask import Response, flash, g, has_request_context, jsonify, redirect, render_template, request, url_for
 from markupsafe import Markup
 from werkzeug.datastructures import ImmutableMultiDict
 from sqlalchemy import func, select
@@ -617,6 +617,14 @@ def cage_sheet_row(cage) -> dict:
 
 
 RECENT_DAYS = 90   # ended mice, empty cages and old litters shown without "Show all"
+# The Breeders tab draws every Breeder cage as a card with its mice. Past
+# BREEDERS_DRAWN_OVER cards it draws the first BREEDERS_FIRST in full and the
+# rest empty, each carrying what the search, Alive only and the count read;
+# the page fills them from /colony/breeders/cards as they are shown. At
+# 100,000 mice (1,855 cards) it opened in 1.6 s with every card drawn
+# (274,000 nodes), 0.67 s so.
+BREEDERS_DRAWN_OVER = 200
+BREEDERS_FIRST = 100
 
 
 def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_ended: bool = False,
@@ -931,6 +939,9 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         "notifications": notifications,
         "status_options": MOUSE_STATUS_OPTIONS,
         "breeder_rows": breeder_rows,
+        "breeder_drawn": BREEDERS_FIRST if len(breeder_rows) > BREEDERS_DRAWN_OVER else None,
+        "breeder_cards_args": {k: request.args[k] for k in ("scope", "ended") if request.args.get(k)}
+        if has_request_context() else {},
         "breeder_summary": breeder_summary_rows,
         "experiments_list": experiments_list,
         "open_experiments": open_experiments,
@@ -950,6 +961,19 @@ def colony():
         # on whichever tab happens to be the template's fallback.
         active_view = "mice"
     return render_template("colony.html", **_colony_page_context(active_view))
+
+
+@app.route("/colony/breeders/cards")
+@login_required
+def colony_breeder_cards():
+    """Breeders cards by cage id (?ids=…, with the page's own ?scope= and
+    ?ended=), in full, for a page that drew them empty (BREEDERS_DRAWN_OVER)."""
+    ids = sheet_paging.ids_asked(request)
+    context = _colony_page_context("breeders")
+    found = {group["id"]: group for group in context["breeder_rows"]}
+    groups = [found[i] for i in dict.fromkeys(ids) if i in found]
+    return jsonify({"cards": render_template("_breeder_cards.html", groups=groups, drawn=None),
+                    "ids": [group["id"] for group in groups]})
 
 
 @app.route("/colony/litters/rows")

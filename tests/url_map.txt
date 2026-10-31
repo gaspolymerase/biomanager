@@ -146,6 +146,7 @@
 /captures/<int:capture_id>/restore	captures.restore	POST
 /captures/new	captures.new	GET POST
 /colony	colony	GET
+/colony/breeders/cards	colony_breeder_cards	GET
 /colony/cages/<int:cage_row_id>/add-mouse	add_mouse_from_cage	POST
 /colony/cages/<int:cage_row_id>/genotyping	cage_genotyping	POST
 /colony/cages/<int:cage_row_id>/give-birth	cage_give_birth	POST

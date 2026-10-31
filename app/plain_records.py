@@ -50,7 +50,7 @@ COLUMNS = {
              "cage_id_fk", "litter_id_fk"),
     "mouse_cages": ("id", "cage_id", "cage_location", "purpose", "owner", "is_shared", "share_group_id",
                     "rack_id_fk", "rack_row", "rack_col"),
-    "mouse_racks": ("id", "name", "rows", "cols", "naming"),
+    "mouse_racks": ("id", "name", "rows", "cols", "naming", "position"),
     "litters": ("id", "litter_id", "date_of_birth", "weaned_on"),
 }
 

@@ -26,7 +26,7 @@ from flask import url_for
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from . import i18n, inventory_service, organism_service, positions, stock_service
+from . import i18n, inventory_service, organism_service, plain_records, positions, stock_service
 from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
@@ -404,16 +404,15 @@ def _by_cage(mice):
 def _colony_items(session, today, until) -> list[dict]:
     out = []
     mice_url = url_for("colony", view="mice")
-    alive = (select(MouseRecord)
-             .options(selectinload(MouseRecord.litter),
-                      selectinload(MouseRecord.cage).selectinload(CageRecord.rack))
-             .join(LitterRecord, MouseRecord.litter_id_fk == LitterRecord.id)
-             .where(MouseRecord.date_of_death.is_(None), LitterRecord.date_of_birth.is_not(None)))
-
+    # The mice are read as plain rows (app/plain_records.py), each with its
+    # cage, rack and litter: in a big colony thousands are past 30 weeks or
+    # waiting on genotyping, and building them as ORM objects was most of
+    # Home's time.
     # 30 weeks and older (one entry per cage), and anyone turning 30 weeks
     # inside the window (per cage and day).
-    crossing = session.scalars(alive.where(
-        LitterRecord.date_of_birth <= until - timedelta(days=SAC_AGE_DAYS))).all()
+    crossing = plain_records.mice(
+        session, MouseRecord.date_of_death.is_(None), LitterRecord.date_of_birth.is_not(None),
+        LitterRecord.date_of_birth <= until - timedelta(days=SAC_AGE_DAYS))
     by_day_cage = defaultdict(list)
     for m in crossing:
         crosses = m.litter.date_of_birth + timedelta(days=SAC_AGE_DAYS)
@@ -451,9 +450,7 @@ def _colony_items(session, today, until) -> list[dict]:
             out[-1]["litter"] = cage_litter_json(wean["cage_litter"])
 
     # Waiting on genotyping: due now.
-    geno = session.scalars(
-        select(MouseRecord).options(selectinload(MouseRecord.cage).selectinload(CageRecord.rack))
-        .where(MouseRecord.date_of_death.is_(None), MouseRecord.status == "geno")).all()
+    geno = plain_records.mice(session, MouseRecord.date_of_death.is_(None), MouseRecord.status == "geno")
     # One item a litter: a cage with two litters genotypes each on its own.
     by_litter = defaultdict(list)
     for m in geno:

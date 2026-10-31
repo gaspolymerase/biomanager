@@ -59,5 +59,6 @@
   "Remove “%(value)s”?": "移除「%(value)s」？",
   "%(things)s have “%(value)s”. It goes from the dropdown; on those records it can stay as it is, or another choice can take its place.": "%(things)s是「%(value)s」。它会从下拉菜单里去掉；这些记录上可以保持不变，也可以换成另一个选项。",
   "Keep “%(value)s” on them": "保留「%(value)s」",
-  "Change it to “%(value)s”": "改成「%(value)s」"
+  "Change it to “%(value)s”": "改成「%(value)s」",
+  "Show %(n)s more": "再显示 %(n)s 个"
 }

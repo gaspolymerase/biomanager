@@ -195,6 +195,56 @@ class BreedersTabSpeedTests(AppTestCase):
         self.assertEqual(html.count('<form id="breeder-pick"'), 1)
         self.assertNotIn('form="breeder-pick"', html)
 
+    def breeders(self, n=3):
+        cages = [uniq("C") for _ in range(n)]
+        for cage in cages:
+            self.make_cage(self.a, cage, purpose="Breeder")
+            self.make_mouse(self.a, self.admin, cage=cage, date_of_birth=days_ago(60))
+        return cages
+
+    def test_under_the_limit_every_card_is_drawn(self):
+        self.breeders()
+        html = self.get_ok(self.a, "/colony?view=breeders&scope=all")
+        self.assertNotIn('<article class="cage-card breeder-card" data-breeder-stub=', html)
+        self.assertNotIn('data-breeder-cards-url="', html)
+
+    def test_past_the_limit_the_rest_are_drawn_empty_and_filled_when_asked(self):
+        """Past BREEDERS_DRAWN_OVER cards, the first BREEDERS_FIRST are drawn
+        and the rest empty, with what the search, Alive only and the count
+        read; /colony/breeders/cards then draws each as the page would have."""
+        from unittest import mock
+        from app import colony_routes
+        cages = self.breeders()
+        whole = self.get_ok(self.a, "/colony?view=breeders&scope=all")
+        with mock.patch.object(colony_routes, "BREEDERS_DRAWN_OVER", 2), \
+                mock.patch.object(colony_routes, "BREEDERS_FIRST", 1):
+            html = self.get_ok(self.a, "/colony?view=breeders&scope=all")
+        drawn_here = re.findall(r'<article class="cage-card breeder-card" data-breeder-id="(\d+)"', html)
+        empty = re.findall(r'<article class="cage-card breeder-card" data-breeder-stub="(\d+)" '
+                           r'data-breeder-search="([^"]*)" data-active-count="(\d+)" hidden></article>', html)
+        self.assertEqual(len(drawn_here), 1)
+        self.assertEqual(len(drawn_here) + len(empty), whole.count('<article class="cage-card breeder-card"'))
+        self.assertIn('data-breeder-cards-url="/colony/breeders/cards?scope=all"', html)
+        names = {one("select id from mouse_cages where cage_id=?", c): c for c in cages}
+        mine = [(int(cage_row), search, count) for cage_row, search, count in empty if int(cage_row) in names]
+        self.assertGreaterEqual(len(mine), 2)          # at most one of the three is the card drawn
+        for cage_row, search, count in mine:
+            self.assertIn(names[cage_row].lower(), search)
+            self.assertEqual(count, "1")
+        ids = [cage_row for cage_row, _s, _c in mine]
+        r = self.a.get("/colony/breeders/cards", query_string={"scope": "all", "ids": ",".join(map(str, ids[::-1]))})
+        self.assertEqual(r.status_code, 200)
+        answer = r.get_json()
+        self.assertEqual(answer["ids"], ids[::-1])
+        squash = lambda text: re.sub(r"\s+", " ", text).strip()
+        for cage_row in ids:
+            drawn = re.search(rf'<article class="cage-card breeder-card" data-breeder-id="{cage_row}".*?</article>',
+                              answer["cards"], re.S).group(0)
+            on_page = re.search(rf'<article class="cage-card breeder-card" data-breeder-id="{cage_row}".*?</article>',
+                                whole, re.S).group(0)
+            self.assertEqual(squash(drawn), squash(on_page))
+            self.assertIn('data-mouse-active="true"', drawn)       # its mouse, not an empty card
+
 
 class InventorySheetSpeedTests(AppTestCase):
     """An inventory row holds its own choice in each menu, the lists come

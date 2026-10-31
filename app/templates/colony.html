@@ -797,78 +797,14 @@
           <span id="breeder-count" class="muted-inline"></span>
         </div>
         <form id="breeder-pick" method="post" hidden></form>
-        <div class="cage-stack" id="breeder-stack">
-          {% set cages_url = url_for('colony', view='cages', scope='all') %}
-          {% set pick_url = url_for('pick_mouse', mouse_row_id=0) %}
-          {# What every card says alike, put in the page's words once: a lab has a thousand Breeder cages. #}
-          {% set breeder_table_head -%}
-                  <thead>
-                    <tr>
-                      <th>{{ _('Mouse') }}</th>
-                      <th>{{ _('Alive') }}</th>
-                      <th>{{ _('Sex') }}</th>
-                      <th>{{ _('Age (w)') }}</th>
-                      <th>{{ _('Born') }}</th>
-                      <th>{{ _('Status') }}</th>
-                      <th>{{ _('Genotype') }}</th>
-                      <th>{{ _('Owner') }}</th>
-                      <th>{{ _('Litter') }}</th>
-                      <th>{{ _('Note') }}</th>
-                      <th>{{ _('Pick') }}</th>
-                    </tr>
-                  </thead>
-          {%- endset %}
-          {% set w_cage, w_rack, w_location, w_detail, w_room, w_card, w_genotype, w_owner, w_mice, w_yes, w_no, w_pick, w_yours =
-                 _('Cage'), _('Rack'), _('Location'), _('Location detail'), _('Room'), _('Card'), _('Genotype'), _('Owner'),
-                 _('Mice'), _('Yes'), _('No'), _('Pick'), _('Yours') %}
-          {% for breeder_group in breeder_rows %}
-            <article class="cage-card breeder-card" data-breeder-search="{{ breeder_group.search_blob }}" data-active-count="{{ breeder_group.active_count }}">
-              <div class="breeder-head-grid">
-                <div><span>{{ w_cage }}</span><strong><a href="{{ cages_url }}#cage-{{ breeder_group.id }}" title="{{ _('Open cage %(id)s', id=breeder_group.cage_id) }}">{{ breeder_group.cage_id }}</a></strong></div>
-                <div><span>{{ w_rack }}</span><strong>{% if breeder_group.rack %}{{ breeder_group.rack }}{% if breeder_group.position %} · {{ breeder_group.position }}{% endif %}{% else %}—{% endif %}</strong></div>
-                <div><span>{{ w_location }}</span><strong>{{ breeder_group.cage_location or '—' }}</strong></div>
-                <div><span>{{ w_detail }}</span><strong>{{ breeder_group.location_detail or '—' }}</strong></div>
-                <div><span>{{ w_room }}</span><strong>{{ breeder_group.room or '—' }}</strong></div>
-                <div><span>{{ w_card }}</span><strong>{{ breeder_group.card_id or '—' }}</strong></div>
-                <div><span>{{ w_genotype }}</span><strong class="genotype-full">{{ breeder_group.genotype_summary or '—' }}</strong></div>
-                <div><span>{{ w_owner }}</span><strong>{% if breeder_group.owner and breeder_group.owner != 'Unassigned' %}{{ breeder_group.owner | owner_badge }}{% else %}{{ breeder_group.owner|tr }}{% endif %}</strong></div>
-                <div><span>{{ w_mice }}</span><strong>{{ _('%(n)s alive', n=breeder_group.active_count) }}{% if breeder_group.females or breeder_group.males %} ({{ breeder_group.females }}♀ {{ breeder_group.males }}♂){% endif %} / {{ _('%(n)s total', n=breeder_group.total_count) }}</strong></div>
-              </div>
-              <div class="table-wrap">
-                <table class="dense-table fit-table breeder-table">
-                  {{ breeder_table_head }}
-                  <tbody>
-                    {% for mouse in breeder_group.mice %}
-                      <tr data-mouse-active="{{ 'true' if mouse.active else 'false' }}">
-                        <td>{{ mouse.mouse_id }}</td>
-                        <td>{{ w_yes if mouse.active else w_no }}</td>
-                        <td>{{ mouse.gender|tr }}</td>
-                        <td>{{ mouse.age_weeks if mouse.age_weeks is not none else '' }}</td>
-                        <td class="whitespace-nowrap tabular-nums">{{ mouse.date_of_birth }}</td>
-                        <td>{{ mouse.status|tr }}</td>
-                        <td class="genotype-full">{{ mouse.genotype_full }}</td>
-                        <td>{% if mouse.owner %}{{ mouse.owner | owner_badge }}{% endif %}</td>
-                        <td>{{ mouse.litter_id }}</td>
-                        <td>{{ mouse.note }}</td>
-                        <td>
-                          {% if mouse.owner != current_user.username %}
-                            {# Posted through the tab's one form (breeder-pick): a form a row, or a button joined to one, made the browser's work as the page loaded grow with the rows. #}
-                            <button type="button" data-pick-action="{{ pick_url|replace('/0/', '/' ~ mouse.id ~ '/') }}"
-                                    data-pick-confirm="{{ _('Take mouse %(id)s as yours? %(owner)s is notified.', id=mouse.mouse_id, owner=mouse.owner or _('Its owner')) }}">{{ w_pick }}</button>
-                          {% else %}<span class="text-[12px] text-muted">{{ w_yours }}</span>{% endif %}
-                        </td>
-                      </tr>
-                    {% else %}
-                      <tr><td colspan="11">{{ _('No mice in this breeder cage.') }}</td></tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </article>
+        <div class="cage-stack" id="breeder-stack"{% if breeder_drawn is not none %} data-breeder-cards-url="{{ url_for('colony_breeder_cards', **breeder_cards_args) }}"{% endif %}>
+          {% if breeder_rows %}
+            {% with groups=breeder_rows, drawn=breeder_drawn %}{% include "_breeder_cards.html" %}{% endwith %}
           {% else %}
             <p>{{ _("No Breeder cages yet. Set a cage's purpose to Breeder to see it here.") }}</p>
-          {% endfor %}
+          {% endif %}
         </div>
+        <button type="button" class="mt-3" id="breeder-more" hidden data-on-click="moreBreeders"></button>
       </section>
     {% elif active_view == "experiments" %}
       <section class="panel">
@@ -2313,22 +2249,36 @@ function wireNote(input) {
 }
 document.querySelectorAll('input.note-cell').forEach(wireNote);
 
+// A big lab's Breeders tab draws its first cards in full and the rest empty
+// (data-breeder-stub; colony_routes.BREEDERS_DRAWN_OVER), each carrying what
+// the search, Alive only and the count read. Then at most breederShowing of
+// the cards that match are shown, with Show more for the rest, and an empty
+// card is filled from /colony/breeders/cards when it is to be shown.
+const BREEDERS_AT_ONCE = 100;
+let breederShowing = BREEDERS_AT_ONCE;
+const breederAsked = new Set();
+
 function filterBreeders() {
   const searchInput = document.getElementById('breeder-search');
   const activeOnly = document.getElementById('breeder-active-only');
   if (!searchInput) return;
+  const stack = document.getElementById('breeder-stack');
+  const paged = !!(stack && stack.dataset.breederCardsUrl);
   const query = searchInput.value.trim().toLowerCase();
   const onlyActive = activeOnly ? activeOnly.checked : false;
   let visibleCards = 0;
   let totalMatches = 0;
+  const toFill = [];
   document.querySelectorAll('.breeder-card').forEach((card) => {
     const haystack = (card.dataset.breederSearch || '').toLowerCase();
     const matchesQuery = !query || haystack.includes(query);
     const activeCount = parseInt(card.dataset.activeCount || '0', 10);
     const matchesActive = !onlyActive || activeCount > 0;
     const visible = matchesQuery && matchesActive;
-    card.style.display = visible ? '' : 'none';
     if (visible) visibleCards += 1;
+    const shown = visible && (!paged || visibleCards <= breederShowing);
+    card.style.display = shown ? '' : 'none';
+    if (shown && card.dataset.breederStub && !breederAsked.has(card.dataset.breederStub)) toFill.push(card.dataset.breederStub);
 
     let cardMatches = 0;
     card.querySelectorAll('tbody tr[data-mouse-active]').forEach((row) => {
@@ -2339,7 +2289,7 @@ function filterBreeders() {
         return;
       }
       row.style.display = '';
-      if (query) {
+      if (query && shown) {          // matches counted in the cards shown
         const rowText = (row.textContent || '').toLowerCase();
         if (rowText.includes(query)) {
           row.classList.add('breeder-match');
@@ -2352,7 +2302,7 @@ function filterBreeders() {
         row.classList.remove('breeder-match');
       }
     });
-    if (visible && query && cardMatches > 0) {
+    if (shown && query && cardMatches > 0) {
       card.classList.add('breeder-card-has-match');
     } else {
       card.classList.remove('breeder-card-has-match');
@@ -2368,6 +2318,39 @@ function filterBreeders() {
     }
     counter.textContent = text;
   }
+  const more = document.getElementById('breeder-more');
+  if (more) {
+    const left = paged ? visibleCards - breederShowing : 0;
+    more.hidden = left <= 0;
+    if (left > 0) more.textContent = t('Show %(n)s more', { n: Math.min(left, BREEDERS_AT_ONCE) });
+  }
+  if (toFill.length) fillBreeders(stack, toFill);
+}
+
+function fillBreeders(stack, ids) {
+  ids.forEach((id) => breederAsked.add(id));
+  const url = new URL(stack.dataset.breederCardsUrl, window.location.href);
+  url.searchParams.set('ids', ids.join(','));
+  fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+    .then((answer) => {
+      const box = document.createElement('div');
+      box.innerHTML = answer.cards;
+      box.querySelectorAll('.breeder-card[data-breeder-id]').forEach((card) => {
+        const empty = stack.querySelector('[data-breeder-stub="' + card.dataset.breederId + '"]');
+        if (empty) empty.replaceWith(card);
+      });
+      filterBreeders();
+    }, () => {
+      ids.forEach((id) => breederAsked.delete(id));   // the next search or Show more asks again
+      const say = window.BiomanagerShell && window.BiomanagerShell.toast;
+      if (say) say(t('Some rows could not be loaded. Check the connection and try again.'), 'error');
+    });
+}
+
+function moreBreeders() {
+  breederShowing += BREEDERS_AT_ONCE;
+  filterBreeders();
 }
 
 // Pick: asks, then posts the tab's one form to that mouse's address.
@@ -2388,6 +2371,7 @@ function resetBreederSearch() {
   const activeOnly = document.getElementById('breeder-active-only');
   if (searchInput) searchInput.value = '';
   if (activeOnly) activeOnly.checked = false;
+  breederShowing = BREEDERS_AT_ONCE;
   filterBreeders();
 }
 
@@ -2412,6 +2396,6 @@ document.addEventListener('text-cells:open', (event) => {
   if (input.matches('input.note-cell')) wireNote(input);
 });
 
-  BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });
+  BioActions.register({ addWeanRow: addWeanRow, filterBreeders: filterBreeders, moreBreeders: moreBreeders, openExportModal: openExportModal, printMouseTable: printMouseTable, resetBreederSearch: resetBreederSearch });
 </script>
 {% endblock %}

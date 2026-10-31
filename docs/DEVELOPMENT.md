@@ -388,7 +388,9 @@ saved under their first names, `classic`, `tracks` and `freezer`
 (`home_layouts.LAYOUTS`, the `home_layout:<user>` setting), so a choice
 made before the rename still holds. Customize shows on Overview only; on
 the other two For you is one line (`.home-for-you`). Both read one agenda,
-`build_agenda`; their styles are `static/home-layouts.css`, in the app's
+`build_agenda` (its colony items from the living mice old enough to be
+due, and those waiting on genotyping, read as plain rows:
+`plain_records.mice`); their styles are `static/home-layouts.css`, in the app's
 type and tokens.
 
 Overview opens with a bento of glass panels (`.home-bento`, rows of
@@ -752,6 +754,19 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   - At 100,000 mice the litters (6,634) open in 3.2 s instead of 9.1, the
     cages (1,368 listed) in 3.1 s instead of 7.6 (26 MB of page to 3.8);
     their **Cards**, page and cards together, in 9.7 s instead of 10.4.
+- The **Breeders** tab is cards, not a sheet, and is paged on its own:
+  past `colony_routes.BREEDERS_DRAWN_OVER` (200) cards, the page draws
+  the first `BREEDERS_FIRST` (100) in full and each other card empty
+  (`_breeder_cards.html`: `data-breeder-stub` with the `data-breeder-search`
+  and `data-active-count` that the search, **Alive only** and the count
+  read). `filterBreeders` shows at most `breederShowing` of the cards
+  that match, with **Show 100 more** under them, and fetches the empty
+  ones it is to show from `/colony/breeders/cards?ids=` (with the page's
+  `scope` and `ended`), drawn by the same template. A lab with fewer
+  cards gets every card drawn, as before. At 100,000 mice (1,855 Breeder
+  cages) the tab loads in 0.67 s instead of 1.6 (Chromium's busy time
+  0.44 s instead of 1.19; 23,000 nodes instead of 274,000; 0.7 MB of page
+  instead of 4.5).
 - What a long sheet costs the server, and what keeps it down:
   - Its records are read as plain rows, not ORM objects
     (`app/plain_records.py`): the mouse sheet's mice with their cages,
@@ -3037,7 +3052,9 @@ tokens are redacted; high-churn tables are excluded. Admins read it at
 copies an SQLite database first (`backups/before-upgrade-<from>-to-<to>-<time>.db`,
 ten kept), then runs `create_all()`, the frozen pre-0.8 ALTERs
 (`ensure_schema_updates`, which stop at revision `0002_v0_8_schema`), the
-one-off data migrations, and `alembic upgrade head`. A new database is
+one-off data migrations (each reads only the rows still to change:
+`migrate_cage_locations` the cages with a place written as text and no
+rack, not every cage of a big lab at every start), and `alembic upgrade head`. A new database is
 stamped at head instead. Because create_all() runs first, a revision must
 tolerate what it adds already being there: use `migrations/helpers.py`
 (`create_table`, `add_column`). `scripts/upgrade-check.py` makes a demo
