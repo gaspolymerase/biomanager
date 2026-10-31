@@ -224,5 +224,8 @@
   "**New plasmid** takes an Addgene number or a GenBank accession under **From Addgene or NCBI**.": "**新建质粒** 可以在 **从 Addgene 或 NCBI 获取** 下填 Addgene 编号或 GenBank 登录号。",
   "BioManager draws and edits plasmids on its own now: the borrowed editor is gone, and each plasmid page loads about 9 MB less.": "质粒的绘制和编辑现在都由 BioManager 自己完成：借用的编辑器已经去掉，每个质粒页面少载入约 9 MB。",
   "The search palette (**⌘K**) is a sheet of glass, with a larger field and **Ask the guide** on its own card.": "搜索面板（**⌘K**）变成了一块玻璃，输入框更大，**向用户指南提问** 单独成为一张卡片。",
-  "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.": "**设置** 里每件事只出现一次：登录方式并入 **个人资料**，欢迎导览移到 **帮助** 下。"
+  "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.": "**设置** 里每件事只出现一次：登录方式并入 **个人资料**，欢迎导览移到 **帮助** 下。",
+  "An AI assistant can **Design an experiment** with you, then set it up in one proposal: the experiment, the **Breeding** cages, the to-dos and the calendar.": "AI 助手可以和你一起 **设计实验**，再用一个提议安排好：实验、**配种笼**、待办和日历。",
+  "A big colony opens faster: the **Breeders** tab shows 100 cages at a time, with **Show 100 more**, and **Home** and long vial sheets come up sooner.": "大型小鼠库打开更快：**种鼠** 标签页一次显示 100 个笼，下面有 **再显示 100 个**；**首页** 和很长的果蝇管列表也更快出现。",
+  "On a long sheet of vials, **Show them** lists the vials that ended long ago on every page.": "很长的果蝇管列表里，**显示它们** 会在每一页列出早已结束的管。"
 }

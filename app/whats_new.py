@@ -30,6 +30,17 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.7.0": {
+        "new": [
+            "An AI assistant can **Design an experiment** with you, then set it up in one proposal: the experiment, the **Breeding** cages, the to-dos and the calendar.",
+        ],
+        "changed": [
+            "A big colony opens faster: the **Breeders** tab shows 100 cages at a time, with **Show 100 more**, and **Home** and long vial sheets come up sooner.",
+        ],
+        "fixed": [
+            "On a long sheet of vials, **Show them** lists the vials that ended long ago on every page.",
+        ],
+    },
     "2.6.0": {
         "new": [
             "Change a plasmid on its **Sequence** tab: pick bases, then **Edit…** to type over them, insert, delete, or add a feature. **Undo** takes it back.",
