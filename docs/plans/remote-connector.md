@@ -1,6 +1,6 @@
 # Plan: BioManager as a connector in claude.ai, Claude's apps and ChatGPT
 
-Status: built (not yet released). Follows `docs/plans/ai-assistants.md`, whose
+Status: built and released. Follows `docs/plans/ai-assistants.md`, whose
 local MCP server (`mcp/biomanager_mcp.py`) needs Python and a copy of the
 source on the person's computer, and can't be used from claude.ai on the
 web, Claude's phone app or ChatGPT.
