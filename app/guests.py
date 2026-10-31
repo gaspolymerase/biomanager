@@ -112,7 +112,7 @@ def internet_gate():
 
 @bp.route("/guest", methods=["GET", "POST"])
 def enter():
-    from .app import landing_url
+    from .web import landing_url
 
     if g.get("user") is not None and request.method == "GET":
         return redirect(url_for("home_dashboard"))
@@ -140,7 +140,7 @@ def enter():
                 gp.last_used_at = now
                 s.commit()
                 security.start_session(user)
-                from .app import local_time
+                from .web import local_time
                 until = local_time(gp.expires_at)
                 when = (f"{until.day} {until:%b %Y, %H:%M}" if i18n.current() == i18n.DEFAULT
                         else i18n.strftime(until, "%b %d, %Y %H:%M"))

@@ -35,7 +35,7 @@ def birth_date(cage_row: int) -> str | None:
 
 def short(day: str) -> str:
     """A date as the pages write it, in the lab's style ("Sep 29")."""
-    from app.app import fmt_day
+    from app.days import fmt_day
     with app.test_request_context("/"):
         return fmt_day(date.fromisoformat(day))
 

@@ -181,7 +181,7 @@ FISH_BREEDING = ("breeding", "mating")
 
 def _day_of(stamp) -> date | None:
     """The lab's own day of a stamp the database keeps in UTC (created_at,
-    recorded_at), as app.local_time reads them."""
+    recorded_at), as web.local_time reads them."""
     return stamp.replace(tzinfo=timezone.utc).astimezone().date() if stamp else None
 
 

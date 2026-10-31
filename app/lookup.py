@@ -331,7 +331,7 @@ def _database_labels(session) -> dict[str, str]:
 def vocabulary(session) -> dict:
     from . import organism_service as org_svc
     from . import stock_service as stock_svc
-    from .app import _merged_choices, cage_purposes
+    from .colony_routes import _merged_choices, cage_purposes
     from .models import FISH_SEX_OPTIONS, FISH_STATUS_OPTIONS, MOUSE_STATUS_OPTIONS, TANK_PURPOSE_OPTIONS
     from .services import dropdown_options_map
     features = lab.request_features()
@@ -351,7 +351,7 @@ def vocabulary(session) -> dict:
         in_use = session.scalars(select(MouseRecord.status).distinct())
         out["mouse_colony"] = {
             # As the mouse sheet offers them: the built-in ones, the lab's
-            # own, then any others its mice have (app.mouse_sheet_meta).
+            # own, then any others its mice have (colony_routes.mouse_sheet_meta).
             "statuses": _merged_choices(MOUSE_STATUS_OPTIONS, options.get("status", []), in_use),
             "cage_purposes": cage_purposes(options),
             "strains": natural_sorted(n for (n,) in session.execute(select(StrainRecord.strain_name))),
@@ -435,7 +435,8 @@ def _inventory_vocabulary(session) -> list[dict]:
 
 def due(session, days: int) -> list[dict]:
     from . import home_layouts
-    from .app import builtin_labels, zebrafish_home_summary
+    from .web import builtin_labels
+    from .zebrafish_routes import zebrafish_home_summary
     today = date.today()
     items, tracks = home_layouts.build_agenda(session, today, days, lab.request_features(),
                                               zebrafish_home_summary(),
@@ -506,10 +507,10 @@ def _snippet(text: str, q: str) -> str:
 
 
 def search(session, q: str, limit: int = 5) -> list[dict]:
-    """The app's own search (the ⌘K palette's, app.search_results), as the
+    """The app's own search (the ⌘K palette's, records_routes.search_results), as the
     person: records in the databases they can open and notebook pages they
     may read, each with its reference, a snippet and its address."""
-    from .app import search_results
+    from .records_routes import search_results
     from .models import InventoryItem, NotebookPage, PlasmidRecord
     text_of = {**SNIPPET_TEXT, "notebook_page": (NotebookPage, ("body",)),
                "plasmid": (PlasmidRecord, ("notes",)), "inventory_item": (InventoryItem, ("notes",))}

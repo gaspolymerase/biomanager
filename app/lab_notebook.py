@@ -1,5 +1,5 @@
 """The lab notebook's own features, beside the tabs, pages and templates in
-app.py:
+app/notebook_routes.py:
 
 - Kinds of page: notes, experiments (planned, running, done, with a start
   and finish stamp), protocols (numbered versions), meeting and seminar
@@ -679,7 +679,7 @@ def add_note():
         else:
             page = _daily_page(s, me, date.today())
         if not when:
-            from .app import local_time
+            from .web import local_time
             when = local_time(datetime.utcnow()).strftime("%H:%M")
         gen = collab_generation(s, page.id)
         live = s.scalar(select(NotebookSyncUpdate.id).where(NotebookSyncUpdate.page_id_fk == page.id,

@@ -782,7 +782,7 @@ def _day_list(agenda: list[dict], today: date, span: int) -> list[dict]:
 def _hue(name: str) -> int | None:
     if not name:
         return None
-    from .app import _name_color
+    from .web import _name_color
     return _name_color(name)[0]
 
 

@@ -99,7 +99,7 @@ class SetAside(AppTestCase):
         with self.desktop(LAB_SET_ASIDE="/somewhere/old-labs/2026-10-08 120000"):
             # This test database has accounts, so it is not a new lab.
             self.assertNotIn("/somewhere/old-labs", anyone.get("/login").get_data(as_text=True))
-            with mock.patch("app.app.no_accounts_yet", return_value=True), \
+            with mock.patch("app.account_routes.no_accounts_yet", return_value=True), \
                     mock.patch("app.door.no_accounts_yet", return_value=True), \
                     mock.patch("app.devices.on_this_computer", return_value=True):
                 html = anyone.get("/login", follow_redirects=True).get_data(as_text=True)

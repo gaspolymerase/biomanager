@@ -134,7 +134,7 @@ def weight_row(w: MouseWeight) -> dict:
 
 
 def task_row(t: TaskItem, user=None) -> dict:
-    from .app import task_can_edit
+    from .calendar_routes import task_can_edit
     return {"id": t.id, "title": t.title, "due": _d(t.due_date), "status": t.status or "", "done": t.done_at is not None,
             "priority": t.priority or "", "owner": t.owner or "", "shared": bool(t.is_shared),
             "notes": t.notes or "", "edit": task_can_edit(t, user) if user is not None else False,
@@ -182,7 +182,7 @@ def snapshot():
     """Everything a device keeps, as this person may see it, and the cursor
     to ask for changes from."""
     from . import services
-    from .app import task_visible_clause
+    from .calendar_routes import task_visible_clause
     user = _user()
     today = date.today()
     with SessionLocal() as s:
@@ -241,7 +241,7 @@ def _due_row(d: dict) -> dict:
 def changes():
     """Records changed since a cursor (each as the snapshot has it), and
     those that went or that this person may no longer see."""
-    from .app import task_visible_clause
+    from .calendar_routes import task_visible_clause
     user = _user()
     try:
         since = int(request.args.get("since", ""))

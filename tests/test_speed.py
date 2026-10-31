@@ -583,7 +583,7 @@ class SheetPagingTests(AppTestCase):
                          r'<tr id="tank-%d".*?</tr>', lambda i: f"utank-{i}")
 
     def test_a_tank_not_drawn_reads_as_its_row_would(self):
-        """app.zf_tank_stubs builds an undrawn tank from its data; it must
+        """zebrafish_routes.zf_tank_stubs builds an undrawn tank from its data; it must
         be what data-table.js would read from its row (cell_text.row_stub),
         in either way of drawing cells, for its owner and someone else."""
         from unittest import mock

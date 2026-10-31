@@ -281,7 +281,7 @@ PAGE_ROWS = ("notebook_comments", "notebook_page_info", "notebook_presence", "no
              "notebook_favorites")
 PERSONAL_DATABASES = ("inventory_modules", "stock_modules", "organism_modules")
 # To-dos and calendar events: a member sees their own, the lab's and their
-# project groups' (app.task_visible_clause, lab_calendar's event filter);
+# project groups' (calendar_routes.task_visible_clause, lab_calendar's event filter);
 # someone else's personal one (not shared) is theirs alone.
 OWN_OR_SHARED = ("tasks", "calendar_events")
 ALIAS_KIND = {"inventory_modules": "inventory", "stock_modules": "stocks", "organism_modules": "organisms"}

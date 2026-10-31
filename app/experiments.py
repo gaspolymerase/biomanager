@@ -508,7 +508,8 @@ class Subject:
 def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Subject]:
     """The experiment's animals, in order; only one treatment group's when
     `group` is given."""
-    from .app import can_edit_mouse, mouse_is_active
+    from .colony_routes import can_edit_mouse
+    from .services import mouse_is_active
     out: list[Subject] = []
     if place.subject_kind == "mouse":
         for em in exp.memberships:
@@ -586,7 +587,8 @@ def find_subject(session, exp, place, key: str) -> Subject | None:
 def candidates(session, exp: Experiment, place: Place) -> dict:
     """What can be added: {"groups": [(value, label, count)], "single": [(value, label)]}
     — a cage, tank, rack or housing of animals, or one."""
-    from .app import can_edit_mouse, mouse_is_active
+    from .colony_routes import can_edit_mouse
+    from .services import mouse_is_active
     have = {s.key for s in subjects(session, exp, place)}
     groups, single = [], []
     if place.subject_kind == "mouse":
@@ -1295,7 +1297,8 @@ def update(experiment_id: int):
 def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str) -> tuple[int, int]:
     """Put a cage, tank, rack or housing of animals ("group"), or one
     ("one"), in the experiment: (added, skipped as not this person's)."""
-    from .app import can_edit_mouse, mouse_is_active
+    from .colony_routes import can_edit_mouse
+    from .services import mouse_is_active
     session.flush()
     session.expire(exp, ["memberships"])        # mice added a moment ago count as in it
     have = {x.key for x in subjects(session, exp, place)}
@@ -1622,7 +1625,7 @@ def delete_measure(experiment_id: int, measure_id: int):
 
 @bp.post("/<int:experiment_id>/delete")
 def delete(experiment_id: int):
-    from .app import log_delete
+    from .web import log_delete
     with SessionLocal() as s:
         exp, place = _load(s, experiment_id)
         if not access.can_edit_experiment(exp):

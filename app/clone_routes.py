@@ -56,7 +56,7 @@ def label(name: str) -> str:
 
 
 def _when(value) -> str:
-    from .app import local_time
+    from .web import local_time
     from .days import fmt_day
     return fmt_day(local_time(value)) if value else ""
 
@@ -152,7 +152,7 @@ def sequence_next(session, p: PlasmidRecord) -> dict | None:
     """Primers the lab has that would read the plasmid's insert: the longest
     coding feature that isn't a resistance gene, a forward primer before it
     and a reverse one after it, each within INSERT_REACH."""
-    from .app import primer_sites
+    from .plasmid_routes import primer_sites
 
     features = [f for f in _annotations(p) if isinstance(f, dict) and (f.get("kind") or "feature") == "feature"
                 and str(f.get("type", "")).lower() in ("cds", "gene")]
@@ -237,7 +237,8 @@ def clone_check(row_id: int):
     """Check reads: each clone they name (or the one typed) is checked and,
     for someone who may edit the plasmid, kept."""
     from . import services
-    from .app import _file_kind, stamp_updated
+    from .plasmid_routes import _file_kind
+    from .web import stamp_updated
 
     with SessionLocal() as session:
         p = _plasmid(session, row_id)
@@ -315,7 +316,7 @@ def clone_check(row_id: int):
 
 
 def _change(row_id: int, clone_id: int, how):
-    from .app import stamp_updated
+    from .web import stamp_updated
     with SessionLocal() as session:
         p = _plasmid(session, row_id)
         c = session.get(PlasmidClone, clone_id)

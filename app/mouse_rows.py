@@ -6,7 +6,7 @@ sends. A Jinja loop drew the first page in a fifth of the page's time; this
 writes the same text in a twentieth of that. It is written as the template
 was, line for line, so the page is the same to the byte: data-table.js,
 cell_text.row_stub (a stub must read as its row) and the text cells
-(app.as_text_cells) all read it. Change a row here; the lab's own columns
+(text_cells.as_text_cells) all read it. Change a row here; the lab's own columns
 are still drawn by _sheet.html's custom_cell, and the icons by icon().
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ def _each(message: str):
 def _menu(chosen, options, blank: str) -> tuple[str, tuple[str, str] | None]:
     """A menu's <option>s with `chosen` selected, as the template's loop
     wrote them: (value, label) pairs after a blank option; and the option a
-    text cell shows (app.text_cell), as written: the selected one, else the
+    text cell shows (text_cells.text_cell), as written: the selected one, else the
     first. None when an option's own words say "selected", which the text
     cell's reading of the menu would take for the chosen one: it reads it."""
     shown = None if chosen else ("", blank)
@@ -54,9 +54,9 @@ def html(rows: list[dict], sheet: dict, custom_columns: list[dict], custom_colum
          as_text: bool, *, custom_cell, icon, owner_badge, payload, duplicate_url, delete_url, text_cell,
          text_cells) -> Markup:
     """The rows' <tr>s (`rows`: services.mouse_display_row's, with
-    `editable`), or the sheet's empty line. `sheet`: app.mouse_sheet_meta's
+    `editable`), or the sheet's empty line. `sheet`: colony_routes.mouse_sheet_meta's
     choices. `as_text`: each field's cell drawn as text until used
-    (cell_text.text_cells_on), as app.as_text_cells would draw it, each
+    (cell_text.text_cells_on), as text_cells.as_text_cells would draw it, each
     field told its attributes rather than read back from the page. The
     others are the template's helpers, passed in."""
     if not rows:
@@ -95,7 +95,7 @@ def html(rows: list[dict], sheet: dict, custom_columns: list[dict], custom_colum
 
     def td(inside: str, field: str, after: str, attrs: dict, chosen=None) -> str:
         """A field's cell: <td>, the field between the template's spaces,
-        or, as text, what app.text_cell makes of it. `attrs`: the field's
+        or, as text, what text_cells.text_cell makes of it. `attrs`: the field's
         own, as its tag writes them (escaped); `chosen`: a menu's shown
         option (_menu)."""
         if as_text:

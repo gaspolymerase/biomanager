@@ -224,7 +224,7 @@ def cages(session, *where, order_by=()) -> list[SheetCageFull]:
     rack and its mice (each with its litter): what the cage
     sheet reads of the cages it does not draw, its stubs, its chips and its
     rack grid. A cage's own row in full (its litters born in it, who may
-    edit what) is the ORM's (app.cage_sheet_row)."""
+    edit what) is the ORM's (colony_routes.cage_sheet_row)."""
     t, r = models.CageRecord.__table__, models.MouseRack.__table__
     racks = {row[0]: SheetRack(*row) for row in session.execute(select(*(r.c[name] for name in COLUMNS["mouse_racks"])))}
     at_rack = CAGE_COLUMNS.index("rack_id_fk")

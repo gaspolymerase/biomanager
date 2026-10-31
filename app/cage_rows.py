@@ -7,7 +7,7 @@ Wean), whose mice have their own cells. A Jinja loop drew a page of them in
 half the page's time; this writes the same text in a fraction of that. It
 is written as the template was, line for line, so the page is the same to
 the byte: data-table.js, cell_text.row_stub (a stub must read as its row:
-app.cage_stubs) and the text cells (app.as_text_cells) read it. Change a
+colony_routes.cage_stubs) and the text cells (text_cells.as_text_cells) read it. Change a
 row here; the icons are still icon()'s, and the badges owner_badge's.
 """
 from __future__ import annotations
@@ -49,14 +49,14 @@ def purpose_tones(purposes: list[str]) -> dict[str, str]:
 def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[str], mouse_sheet: dict,
          end_statuses: list[str], custom_columns_all: list[dict], wean_offset_days, icon, owner_badge,
          payload, json_attr, url_for, id_url, group_choices, as_text: bool, text_cell) -> Markup:
-    """The cages' rows (`rows`: app.cage_sheet_row's), or the sheet's empty
+    """The cages' rows (`rows`: colony_routes.cage_sheet_row's), or the sheet's empty
     line. `racks`, `purposes`: the Rack and Purpose menus' choices;
     `mouse_sheet`: the mice's Sex and Status choices and which transgene
     columns show. The others are the template's helpers, passed in:
     `payload` the mouse dialog's (app.mouse_payload_json), `json_attr` what
     `|tojson` writes, `group_choices` groups.choices. `as_text`: each
     field's cell drawn as text until used (cell_text.text_cells_on), as
-    app.as_text_cells would draw it, each field told its attributes
+    text_cells.as_text_cells would draw it, each field told its attributes
     (`text_cell`) rather than read back from the page."""
     if not rows:
         if fragment:
@@ -113,7 +113,7 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
 
     def cell(td_attrs: str, before: str, field: str, after: str, attrs: dict, locked: bool) -> str:
         """A cell holding one field: <td>, the field between the template's
-        spaces, or, as text, what app.text_cell makes of it. `attrs`: the
+        spaces, or, as text, what text_cells.text_cell makes of it. `attrs`: the
         field's own, as its tag writes them (escaped)."""
         if as_text:
             drawn = text_cell(td_attrs, field, attrs, locked)

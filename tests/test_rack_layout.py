@@ -33,7 +33,7 @@ class Colony(AppTestCase):
 
     def where(self, cage) -> tuple:
         """(rack, row, col, the name of its place now)."""
-        from app.app import cage_position_label
+        from app.colony_routes import cage_position_label
         from app.db import SessionLocal
         from app.models import CageRecord
         with SessionLocal() as s:

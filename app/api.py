@@ -18,7 +18,7 @@ cross-site check (security.py) does not apply here. No cookie is set.
 Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
-Writes go through the same checks as the pages (app.change_mouse,
+Writes go through the same checks as the pages (colony_routes.change_mouse,
 inventory_routes._item_from_form, stock_routes._unit_from_form,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
@@ -406,7 +406,7 @@ def mouse_update(mouse_id: int):
     """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
     "version" (as the mouse was read), a mouse changed since is refused (409)
     instead of overwritten."""
-    from .app import can_edit_mouse, change_mouse
+    from .colony_routes import can_edit_mouse, change_mouse
     from .services import mouse_display_row, split_genotype
     data = dict(_json())
     seen = data.pop("version", None)
@@ -474,7 +474,7 @@ def weights(mouse_id: int):
 def weigh(mouse_id: int):
     """{"grams": 24.1, "date": "2026-09-28" (today if left out), "notes": ""}:
     one weight a day, so the same day again replaces it."""
-    from .app import can_edit_mouse
+    from .colony_routes import can_edit_mouse
     data = _json()
     try:
         grams = float(data.get("grams"))
@@ -582,7 +582,7 @@ def rack_update(name: str):
     now) or "keep_cells" (each keeps its row and column, and its name
     changes); without one it is refused (409) with what each would do."""
     from . import rack_layout
-    from .app import _mouse_rack_from_form
+    from .colony_routes import _mouse_rack_from_form
     from .models import MouseRack
     _feature("colony")
     data = _json()

@@ -51,3 +51,11 @@ def arg_int(name: str, default=0):
     except ValueError:
         return default
     return value if -MAX_ID <= value <= MAX_ID else default
+
+
+def _record_number(query: str) -> int | None:
+    """What typed after @ is a record's number: digits, and not "0012", which
+    is a lot or catalogue number (record numbers have no leading zero)."""
+    if query.isdigit() and len(query) <= 12 and not (len(query) > 1 and query.startswith("0")):
+        return int(query)
+    return None

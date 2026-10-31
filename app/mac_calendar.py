@@ -88,7 +88,7 @@ def _clean(text: str) -> str:
 
 
 def entry(item: dict) -> Entry | None:
-    """A calendar item (app.calendar_items) as an event, or None without times."""
+    """A calendar item (calendar_routes.calendar_items) as an event, or None without times."""
     from .lab_calendar import _dt, shown_title
     start, end = _dt(item.get("start")), _dt(item.get("end"))
     if start is None or end is None:

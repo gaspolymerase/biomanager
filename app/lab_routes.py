@@ -198,7 +198,7 @@ def welcome():
             user.welcomed_at = datetime.utcnow()
             whats_new.stamp(user)          # what's new is for those who knew the version before
             db_session.commit()
-            from .app import landing_url
+            from .web import landing_url
             return redirect(landing_url(user, after_welcome=True))
         name = lab.lab_name(db_session)
         may_create = lab.may_create_database(db_session)

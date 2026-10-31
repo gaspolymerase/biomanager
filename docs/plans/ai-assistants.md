@@ -1,6 +1,6 @@
 # Plan: AI assistants suggest records, people approve them
 
-Status: built (steps 1 to 4 below), on a branch, not yet released: actions
+Status: built and released. Actions
 for every animal database, experiments and the daily log; `/resolve`,
 `/vocabulary`, `/due`, `/actions`; proposals with the Propose-only token and
 Proposed changes; the MCP server in `mcp/` and Connect an AI assistant.
