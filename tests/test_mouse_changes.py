@@ -1,4 +1,4 @@
-"""Changing a mouse is one operation (app.change_mouse) with one set of
+"""Changing a mouse is one operation (colony_routes.change_mouse) with one set of
 rules, whether the change comes from a row of the mouse sheet, a dialog or
 the API (and so an assistant): a date of birth or of death can't be in the
 future, a mouse goes only to a lab member, and a cohort's date of birth

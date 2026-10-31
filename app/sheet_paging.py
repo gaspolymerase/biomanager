@@ -2,7 +2,7 @@
 
 The inventories, the mouse, cage and litter sheets and the fish tanks draw
 their first page through their own row templates and make the other rows'
-stubs from data (inventory_routes, app.colony_mouse_rows, zebrafish_routes.zf_tank_stubs);
+stubs from data (inventory_routes, colony_routes.colony_mouse_rows, zebrafish_routes.zf_tank_stubs);
 their rows addresses use answer() here. Other sheets (fly vials) are drawn
 by their page as before and trimmed here: past LAZY_OVER rows, the rows after the first page leave the page
 and stand as stubs (cell_text.row_stub, read from the rows as drawn, as

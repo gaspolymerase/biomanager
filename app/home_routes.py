@@ -33,6 +33,7 @@ from . import groups as project_groups
 from .calendar_routes import task_can_edit, task_visible_clause
 from .days import fmt_day
 from .flask_app import app
+from .zebrafish_routes import zebrafish_home_summary
 from .web import ALLOWED_LANDING_ENDPOINTS, LANDING_FEATURES, builtin_labels, local_time, login_required
 
 
@@ -61,8 +62,6 @@ def home_dashboard():
     """Home dashboard: counts, sac reminders, upcoming weanings, genotyping
     queue, recent orders. Read-only — every card links into the relevant
     page for actual edits."""
-    # Imported here: app.py brings the zebrafish's pages in last, after this.
-    from .zebrafish_routes import zebrafish_home_summary
     today = date.today()
     week_ahead = today + timedelta(days=7)
 

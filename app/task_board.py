@@ -80,7 +80,7 @@ def _is_done(t: TaskItem) -> bool:
 
 
 def _card(t: TaskItem, today: date) -> dict:
-    from .app import task_can_edit
+    from .calendar_routes import task_can_edit
     done = _is_done(t)
     return {
         "id": t.id, "key": f"task-{t.id}", "title": t.title or "", "notes": t.notes or "",
@@ -93,7 +93,7 @@ def _card(t: TaskItem, today: date) -> dict:
 
 
 def _visible(session):
-    from .app import task_visible_clause
+    from .calendar_routes import task_visible_clause
     recent = datetime.utcnow() - timedelta(days=DONE_DAYS)
     return session.scalars(
         select(TaskItem).where(task_visible_clause())
@@ -211,7 +211,8 @@ def _from_calendar(session, today: date) -> list[dict]:
     """The calendar's work in the coming week and anything overdue, not the
     to-dos (they are cards) or events: the colony's, the stocks', supplies'."""
     from . import home_layouts, lab
-    from .app import builtin_labels, zebrafish_home_summary
+    from .web import builtin_labels
+    from .zebrafish_routes import zebrafish_home_summary
     features = lab.request_features()
     try:
         zebra = zebrafish_home_summary() if features.get("zebrafish", True) else None
@@ -254,7 +255,7 @@ def board():
 @bp.post("/lists")
 def lists():
     """{"add": name}, {"rename": [old, new]}, {"remove": name} or {"order": [names]}."""
-    from .app import task_can_edit
+    from .calendar_routes import task_can_edit
     me = _me()
     data = request.get_json(silent=True) or {}
     with SessionLocal() as s:
@@ -295,7 +296,7 @@ def lists():
 def _place(session, card: TaskItem, list_name: str, before: int | None, after: int | None) -> None:
     """Put the card in a list, before or after another card, else at its end,
     and number the list's cards afresh."""
-    from .app import task_visible_clause
+    from .calendar_routes import task_visible_clause
     rows = [t for t in session.scalars(
         select(TaskItem).where(task_visible_clause(), TaskItem.board_list == list_name, TaskItem.done_at.is_(None))
         .order_by(TaskItem.board_position, TaskItem.id)) if t.id != card.id]
@@ -344,7 +345,7 @@ def card_new():
 def card_update(task_id: int):
     """Move a card ({"list", "before"|"after"}; the list "__done__" ticks it
     off), or change its title, notes or day ({"due": "" clears it})."""
-    from .app import task_can_edit, task_denied
+    from .calendar_routes import task_can_edit, task_denied
     _me()
     data = request.get_json(silent=True) or {}
     with SessionLocal() as s:

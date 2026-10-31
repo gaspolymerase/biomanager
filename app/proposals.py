@@ -257,7 +257,7 @@ def changed_since(session, p: Proposal) -> list[str]:
                             .order_by(AuditEntry.id)).all()
     for e in later:
         if (e.table_name, e.record_id) in touched:
-            from .app import local_time
+            from .web import local_time
             out.append(gettext("%(record)s (by %(who)s, %(when)s)", record=e.record_label or f"#{e.record_id}",
                                who=e.changed_by, when=local_time(e.changed_at).strftime("%H:%M")))
             touched.discard((e.table_name, e.record_id))
@@ -275,7 +275,7 @@ def _pages_changed_since(session, p: Proposal, page_ids: set) -> list[str]:
     out = []
     for page in session.scalars(select(NotebookPage).where(NotebookPage.id.in_(page_ids),
                                                            NotebookPage.updated_at > p.created_at)):
-        from .app import local_time
+        from .web import local_time
         out.append(gettext("%(record)s (by %(who)s, %(when)s)", record=page.title,
                            who=(info_for(session, page.id) or SimpleNamespace(edited_by="")).edited_by or "-",
                            when=local_time(page.updated_at).strftime("%H:%M")))

@@ -1,6 +1,6 @@
 {#- The litter sheet's rows: drawn in its page (colony.html) and, for a
     sheet the server pages, fetched by data-table.js from /colony/litters/rows
-    (app.py, colony_litter_rows, fragment=True). `sheet_rows` are the rows to
+    (colony_routes.py, colony_litter_rows, fragment=True). `sheet_rows` are the rows to
     draw; app.litter_stub reads an undrawn row as data-table.js reads these. -#}
 {% import "_sheet.html" as sheet_ui with context %}
               {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}

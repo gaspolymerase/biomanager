@@ -1,5 +1,5 @@
 """A colony keeps everything it ever had: the sheets list what is current,
-and what ended long ago behind "Show them" (app.colony_context,
+and what ended long ago behind "Show them" (colony_routes.colony_context,
 inventory_routes._recent_items, stock_routes)."""
 from __future__ import annotations
 

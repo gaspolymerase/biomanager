@@ -685,7 +685,7 @@ class MiceTarget(Target):
         return str(number)
 
     def create(self, session, ctx, v, extras):
-        from .app import populate_mouse_from_form
+        from .colony_routes import populate_mouse_from_form
         from .models import MouseRecord
         from .services import parse_date
         warnings: list[str] = []

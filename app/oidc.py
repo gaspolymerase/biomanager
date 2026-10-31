@@ -375,7 +375,7 @@ def _connect(provider: Provider, claims: dict):
 
 
 def _sign_in(provider: Provider, claims: dict, next_url: str):
-    from .app import landing_url  # the app module is fully loaded by the time anyone signs in
+    from .web import landing_url  # the app module is fully loaded by the time anyone signs in
 
     with SessionLocal() as db_session:
         identity = _identity(db_session, claims)

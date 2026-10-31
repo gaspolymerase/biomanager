@@ -326,7 +326,7 @@ def edit(row_id: int):
                 new_circular = bool(body.get("circular"))
                 message = gettext("Now circular.") if new_circular else gettext("Now linear.")
             elif op == "state":
-                from .app import _clean_features
+                from .plasmid_routes import _clean_features
                 from .sequence_parser import clean_bases
                 state = body.get("state") or {}
                 new_seq = clean_bases(state.get("sequence") or "")

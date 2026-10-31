@@ -146,7 +146,7 @@ def front():
     """`/` before signing in: the sign-in, or, before there is any account,
     the first step of starting a lab (or of opening one, in the desktop app)."""
     from . import devices
-    from .app import lab_set_aside
+    from .account_routes import lab_set_aside
     if no_accounts_yet():
         if devices.on_this_computer():
             from . import paths
@@ -157,7 +157,7 @@ def front():
 
 def signin(status: int = 200, **values):
     from . import devices
-    from .app import lab_set_aside
+    from .account_routes import lab_set_aside
     from . import paths
     here = devices.on_this_computer()
     return render("door/signin.html", status, lab_set_aside=lab_set_aside(),

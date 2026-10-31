@@ -44,6 +44,7 @@ from .services import (
 from . import experiment_steps, lab_calendar
 from . import groups as project_groups
 from .flask_app import app
+from .zebrafish_routes import zebrafish_home_summary
 from .web import login_required
 
 
@@ -188,8 +189,6 @@ def calendar_items(db_session, start: date | None, end: date | None, owner: str 
     organisms and supplies, protocol steps, bookings and away days
     (app/lab_calendar.py), then connected calendars. With `owner`, only that
     person's own things (their phone feed can ask for that)."""
-    # Imported here: app.py brings the zebrafish's pages in last, after this.
-    from .zebrafish_routes import zebrafish_home_summary
     today = date.today()
     start = start or today - timedelta(days=400)
     end = end or today + timedelta(days=400)
@@ -271,8 +270,6 @@ def calendar_items(db_session, start: date | None, end: date | None, owner: str 
 def calendar_events_json():
     """The calendar page's feed for ?start=&end= (ISO dates or date-times),
     plus who is away soon and what of theirs falls due meanwhile."""
-    # Imported here: app.py brings the zebrafish's pages in last, after this.
-    from .zebrafish_routes import zebrafish_home_summary
     def _day(v):
         try:
             return date.fromisoformat((v or "")[:10]) if v else None

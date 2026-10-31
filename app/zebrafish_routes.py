@@ -18,7 +18,7 @@ from . import access, audit, bulk, cell_text, custom_fields, i18n, inventory_rou
 from . import sheet_paging, stewardship
 from . import experiments as experiment_pages
 from . import groups as project_groups
-from .app import as_text_cells
+from .text_cells import as_text_cells
 from .flask_app import app
 from .web import login_required, owner_badge_filter
 from .days import fmt_day

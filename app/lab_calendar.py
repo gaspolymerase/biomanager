@@ -863,7 +863,7 @@ def feed_items(s, user: UserAccount, scope: str) -> tuple[list[dict], str]:
     """What a feed of `scope` ("mine" or "lab") holds, read as its owner,
     so what they may see is what it shows, in the page's language; and its
     name. Called with g ready to take g.user."""
-    from .app import calendar_items
+    from .calendar_routes import calendar_items
     g.user = user
     today = date.today()
     items = calendar_items(s, today - timedelta(days=FEED_BACK_DAYS), today + timedelta(days=FEED_AHEAD_DAYS),

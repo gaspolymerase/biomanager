@@ -49,7 +49,6 @@ from .services import (
     find_open_litter,
     born_day,
     CAGE_GENO_OFFSET_DAYS,
-    mouse_is_active,
     sample_source_label,
     sample_sources,
     init_database,
@@ -146,15 +145,11 @@ def healthz():
 # reaches for them here, go on working unchanged.
 from .web import (  # noqa: E402
     _get_user_directory,
-    _name_color,
     admin_required,
     app_icon_url,
     builtin_labels,
-    landing_url,
     local_time,
-    log_delete,
     owner_badge_filter,
-    stamp_updated,
 )
 
 
@@ -656,14 +651,9 @@ NAV_FOOTER: list[dict] = [
 ]
 
 
-# The mouse colony's pages, and the helpers behind them, are in
-# app/colony_routes.py. These are the names this file and other modules
-# still reach for here.
-from .colony_routes import (  # noqa: E402
-    COLONY_VIEW_META, _merged_choices, _mouse_rack_from_form,
-    cage_position_label, cage_purposes, can_edit_mouse, change_mouse,
-    populate_mouse_from_form,
-)
+# The mouse colony's pages are in app/colony_routes.py; importing it is what registers them.
+# COLONY_VIEW_META names the colony's tabs in the navigation below.
+from .colony_routes import COLONY_VIEW_META  # noqa: E402
 
 
 # URL prefix -> lucide icon, longest prefix wins. Used for workspace tabs.
@@ -968,74 +958,10 @@ def tight(html) -> Markup:
     return Markup(_BETWEEN_TAGS.sub("><", str(html)))
 
 
-# A sheet's cells drawn as text until used, in Chromium (cell_text.text_cells_on;
-# static/text-cells.js turns one back into its field). Each <td> holding just
-# one field: the field's own markup goes in data-field, and the text it shows
-# is drawn instead, as the field would show it (a menu's chosen label, else
-# its first; an input's placeholder when empty). Gzipped, a page grows by
-# about a tenth.
-_ONE_FIELD = re.compile(r'<td((?:\s[^>]*)?)>\s*(<input\b[^>]*>|<select\b[^>]*>.*?</select>)\s*</td>', re.S)
-# A field's attributes, each with its value: a word in a value ("see the
-# form") is part of it, not an attribute of its own.
-_ATTR = re.compile(r'\s([\w:-]+)(?:="([^"]*)")?')
-_CHOSEN = re.compile(r'<option\b(?=[^>]*\bselected\b)[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
-_FIRST = re.compile(r'<option\b[^>]*?\bvalue="([^"]*)"[^>]*>([^<]*)</option>')
-# Copied onto the text: what the page's styles and scripts read from the field.
-_KEPT = ("title", "data-status", "data-tone", "data-scope", "data-sex", "data-alive-values", "data-dead-values", "data-dead-if-set")
-_DISABLED = re.compile(r"\sdisabled\b")
-_READONLY = re.compile(r"\sreadonly\b")
+# A sheet's cells drawn as text until used (app/text_cells.py).
+from .text_cells import as_text_cells, text_cell  # noqa: E402
 
-
-def text_cell(td_attrs: str, field: str, attrs: dict | None = None, locked: bool | None = None,
-              chosen: tuple[str, str] | None = None) -> str | None:
-    """A field's cell (<td{td_attrs}>{field}</td>) drawn as text, as
-    as_text_cells draws it; None for a field that stays one (a tick box, a
-    hidden field, one without a name). What the caller knows of the field
-    it says, rather than have it read back from the tag (app/mouse_rows.py):
-    `attrs`, its tag's attributes as written there; `locked`, whether it is
-    disabled (then it is not read-only either); `chosen`, a menu's chosen
-    option's value and words, as written."""
-    tag = "select" if field.startswith("<select") else "input"
-    head = field[:field.index(">") + 1] if attrs is None or locked is None else ""
-    if attrs is None:
-        attrs = dict(_ATTR.findall(head))
-    if attrs.get("type") in ("checkbox", "hidden", "radio") or "name" not in attrs:
-        return None
-    if tag == "select":
-        if chosen is None:
-            # As the browser shows it: the chosen option, else the first.
-            found = _CHOSEN.search(field) or _FIRST.search(field)
-            chosen = (found.group(1), found.group(2)) if found else ("", "")
-        value, shown = chosen
-    else:
-        value = shown = attrs.get("value", "")
-    empty = not value
-    if not shown and "note-cell" not in attrs.get("class", ""):
-        shown = attrs.get("placeholder", "")
-    readonly = False
-    if locked is None:
-        locked = _DISABLED.search(head) is not None
-        readonly = _READONLY.search(head) is not None
-    classes = " ".join(c for c in ["cell-text", attrs.get("class", ""), "is-empty" if empty else "",
-                                   "is-date" if attrs.get("type") == "date" else "",
-                                   "is-disabled" if locked else "",
-                                   # an input's placeholder, shown for an empty one: not its value
-                                   "is-placeholder" if tag != "select" and not value and shown else ""] if c)
-    extra = "".join(f' {k}="{attrs[k]}"' for k in _KEPT if k in attrs)
-    form = f' data-form="{attrs["form"]}"' if attrs.get("form") else ""
-    # A field that can't be changed (or only shows what is worked out) stays text.
-    reach = "" if locked or readonly else ' tabindex="0"'
-    return (f'<td{td_attrs}><span class="{classes}"{reach} data-field="{escape(field)}" '
-            f'data-sort-for="{attrs["name"]}" data-sort-value="{value}"{form}'
-            f'{extra}>{shown}</span></td>')
-
-
-@app.template_filter("as_text_cells")
-def as_text_cells(html, on: bool = True) -> Markup:
-    html = str(html)
-    if not on:
-        return Markup(html)
-    return Markup(_ONE_FIELD.sub(lambda m: text_cell(m.group(1), m.group(2)) or m.group(0), html))
+app.template_filter("as_text_cells")(as_text_cells)
 
 
 app.jinja_env.globals["text_cells_on"] = cell_text.text_cells_on
@@ -1210,26 +1136,19 @@ def design_gallery():
 
 
 # Signing in and out, Settings, the admin's pages and starting or restoring a
-# lab are in app/account_routes.py. lab_set_aside is what other modules still
-# reach for here.
-from .account_routes import lab_set_aside  # noqa: E402
+# lab are in app/account_routes.py; importing it is what registers them.
+from . import account_routes  # noqa: E402,F401
 
 
 # Search across the databases, CSV import, Batch history, the change log and
-# the old /orders and /samples addresses are in app/records_routes.py.
-# search_results is what other modules still reach for here.
-from .records_routes import search_results  # noqa: E402
+# the old /orders and /samples are in app/records_routes.py; importing it is
+# what registers them.
+from . import records_routes  # noqa: E402,F401
 
 
-# The calendar's events and to-dos, and who may see and change a to-do, are
-# in app/calendar_routes.py. These are the names this file and other
-# modules still reach for here.
-from .calendar_routes import (  # noqa: E402
-    calendar_items,
-    task_can_edit,
-    task_denied,
-    task_visible_clause,
-)
+# The calendar's events and to-dos are in app/calendar_routes.py; importing it
+# is what registers them.
+from . import calendar_routes  # noqa: E402,F401
 
 
 # The notebook's tabs, pages and templates are in app/notebook_routes.py;
@@ -1237,10 +1156,9 @@ from .calendar_routes import (  # noqa: E402
 from . import notebook_routes  # noqa: E402,F401
 
 
-# The plasmids' pages, and the helpers behind them, are in
-# app/plasmid_routes.py. These are the names this file and other modules
-# still reach for here.
-from .plasmid_routes import _clean_features, _file_kind, primer_sites  # noqa: E402
+# The plasmids' pages are in app/plasmid_routes.py; importing it is what
+# registers them.
+from . import plasmid_routes  # noqa: E402,F401
 
 
 # Utilities (the bench calculators, rotors and lab tools) are in
@@ -1248,10 +1166,9 @@ from .plasmid_routes import _clean_features, _file_kind, primer_sites  # noqa: E
 from . import utilities_routes  # noqa: E402,F401
 
 
-# The zebrafish database's pages (app/zebrafish_routes.py), registered on
-# this app; Home and the calendar read its summary of what is due.
+# The zebrafish database's pages are in app/zebrafish_routes.py; importing it
+# is what registers them.
 from . import zebrafish_routes  # noqa: E402,F401
-from .zebrafish_routes import zebrafish_home_summary  # noqa: E402
 
 
 if __name__ == "__main__":
