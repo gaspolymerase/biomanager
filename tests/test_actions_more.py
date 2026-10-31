@@ -304,6 +304,24 @@ class CalendarActions(Applies, Notebook):
             out = run(self.member, {"action": "calendar_event_new", "fields": {"title": "x", "date": day, **fields}})
             self.assertIn(words, errors_of(out))
 
+    def test_a_to_do_mine_or_the_labs_with_or_without_a_day(self):
+        day = (date.today() + timedelta(days=4)).isoformat()
+        title = uniq("Order tamoxifen ")
+        out = self.apply({"action": "task_new", "fields": {"title": title, "date": day, "notes": "20 mg/mL",
+                                                           "shared": True}})
+        self.assertEqual(out.changes[0].summary, f"To-do: “{title}”, due {day} (the lab's)")
+        self.assertEqual(row("select cast(due_date as text), start_at, is_shared, owner, notes, done_at "
+                             "from tasks where title=?", title), (day, None, 1, self.member, "20 mg/mL", None))
+        timed = uniq("Weigh cohort ")
+        self.apply({"action": "task_new", "fields": {"title": timed, "date": day, "time": "9:00"}})
+        self.assertEqual(row("select cast(start_at as text), is_shared from tasks where title=?", timed)[1], 0)
+        undated = uniq("Book the surgery room ")
+        out = self.apply({"action": "task_new", "fields": {"title": undated}})
+        self.assertEqual(out.changes[0].summary, f"To-do: “{undated}”")
+        self.assertEqual(row("select due_date from tasks where title=?", undated), (None,))
+        out = run(self.member, {"action": "task_new", "fields": {"title": "x", "time": "10:00"}})
+        self.assertIn("goes with a date", errors_of(out))
+
     def test_an_instrument_booked_and_a_clash_refused(self):
         name = uniq("Confocal ")
         self.post_json(self.m, "/calendar/equipment", {"name": name})

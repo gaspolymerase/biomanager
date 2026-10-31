@@ -3259,7 +3259,8 @@ page itself.
   text, so an assistant edits from the page as it is now; resolve gives
   pages that path, and `_pages_titled` only finds pages the person may read.
   `inventory_renumber` posts to the inventory's **Renumber** page (below).
-  `calendar_event_new` posts to `/calendar/items` and `equipment_booking_new`
+  `calendar_event_new` and `task_new` (a to-do: yours, or with `shared` the
+  lab's; a day is optional) post to `/calendar/items` and `equipment_booking_new`
   to `/calendar/bookings`. The kinds `inventory_item`, `plasmid`, `equipment`,
   `notebook_page`, `protocol_folder` and `notebook_template` are found by `/resolve`, and `/vocabulary` lists
   each inventory's statuses, categories, columns and boxes, plasmid boxes,
@@ -3423,7 +3424,8 @@ names what it can't forecast (`without_enough_history`). The endpoints are
 tested in `tests/test_api_compute.py`, and what an end-to-end run of the tools
 found wanting in the reads in `tests/test_assistant_fixes_read.py`.
 The prompts `weekly_review`, `design_experiment` and `write_methods` drive
-them.
+them; `design_experiment` asks first, then proposes the plan it agreed with the
+person: `experiment_new`, Breeding cages for the matings, `task_new` and the calendar.
 
 **Write-ups (`app/assistant_reports.py`).** BioManager counts and lists;
 the model writes. `GET /animal-use?start=&end=&protocol=` (the twelve months
