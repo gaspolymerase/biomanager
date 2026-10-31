@@ -18,9 +18,10 @@ from . import access, audit, bulk, cell_text, custom_fields, i18n, inventory_rou
 from . import sheet_paging, stewardship
 from . import experiments as experiment_pages
 from . import groups as project_groups
-from .app import _bulk_custom_column, as_text_cells, owner_badge_filter
+from .app import as_text_cells
+from .colony_routes import _bulk_custom_column
 from .flask_app import app
-from .web import login_required
+from .web import login_required, owner_badge_filter
 from .days import fmt_day
 from .db import SessionLocal
 from .formutil import form_changed

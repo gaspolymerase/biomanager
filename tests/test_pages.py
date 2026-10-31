@@ -181,9 +181,9 @@ class PagesRender(AppTestCase):
     def test_a_database_that_does_not_answer_gets_a_page_not_a_bare_500(self):
         from unittest import mock
         from sqlalchemy.exc import OperationalError
-        import app.app as app_module
+        from app import colony_routes
         boom = OperationalError("SELECT 1", {}, Exception("database is locked"))
-        with mock.patch.object(app_module, "colony_context", side_effect=boom):
+        with mock.patch.object(colony_routes, "colony_context", side_effect=boom):
             r = self.a.get("/colony?view=mice")
             self.assertEqual(r.status_code, 503)
             self.assertIn("The database is not answering", r.get_data(as_text=True))

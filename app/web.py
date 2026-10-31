@@ -8,14 +8,18 @@ itself.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from functools import wraps
 
 from flask import flash, g, get_flashed_messages, jsonify, redirect, request, session, url_for
+from markupsafe import Markup, escape
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from .db import SessionLocal
 from .i18n import gettext
-from .models import AuditEntry
+from .models import AuditEntry, UserAccount
 def login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
@@ -118,3 +122,72 @@ def stamp_updated(record, fields_changed: int = 1) -> None:
     record.updated_by = g.user.username
 
 
+def _get_user_directory():
+    """Cache username -> {short_name, display_name} for the current request."""
+    cache = g.get("user_directory")
+    if cache is not None:
+        return cache
+    cache = {}
+    try:
+        with SessionLocal() as db_session:
+            for u in db_session.scalars(select(UserAccount)).all():
+                cache[u.username] = {"short": u.short_name or u.username[:5], "display": u.display_name or u.username,
+                                     "own_short": (u.short_name or "").strip()}
+    except Exception:
+        pass
+    g.user_directory = cache
+    return cache
+
+
+
+def _name_color(seed: str) -> tuple[int, int, int]:
+    """Stable HSL hue from a name string."""
+    h = 0
+    for ch in seed:
+        h = (h * 31 + ord(ch)) & 0xFFFFFF
+    return h % 360, 55, 32
+
+
+
+def owner_badge_filter(name: str) -> Markup:
+    """A person's initials in their colour. Made once a name for the
+    request: a long sheet or the Breeders tab shows the same few thousands
+    of times."""
+    if not name:
+        return Markup("")
+    made = g.get("owner_badges")
+    if made is None:
+        made = g.owner_badges = {}
+    found = made.get(name)
+    if found is None:
+        found = made[name] = _owner_badge(name)
+    return found
+
+
+
+def _owner_badge(name: str) -> Markup:
+    info = _get_user_directory().get(name)
+    display = (info["display"] if info else "") or name
+    tooltip = display
+    # The short name they chose (Settings → Profile, up to 5 letters: THX),
+    # as on their records in tables. Else two initials, from the person's
+    # name as the lab knows it (Jordan Lee: JL), or their username (jordan: JO).
+    text = info["own_short"] if info and info.get("own_short") else ""
+    if not text:
+        parts = [p for p in re.split(r"[\s._-]+", display.strip()) if p]
+        if len(parts) >= 2:
+            text = (parts[0][0] + parts[-1][0]).upper()
+        else:
+            text = (parts[0][:2] if parts else name[:2]).upper()
+    hue, _sat, _light = _name_color(name)
+    # Soft in light and dark alike: the colour tells people apart, the
+    # initials stay readable on it.
+    bg = f"hsl({hue} 70% 55% / 0.2)"
+    fg = f"hsl({hue} 55% 25%);color:light-dark(hsl({hue} 55% 25%), hsl({hue} 75% 78%))"
+    # data-tooltip drives the CSS popover; aria-label keeps it accessible.
+    # We deliberately avoid the native `title` attribute so the browser doesn't
+    # show its own delayed tooltip on top of ours.
+    return Markup(
+        f'<span class="owner-badge" data-tooltip="{escape(tooltip)}" aria-label="{escape(tooltip)}" '
+        f'data-len="{min(len(text), 5)}" style="background:{bg};color:{fg};">{escape(text)}</span>'
+    )
