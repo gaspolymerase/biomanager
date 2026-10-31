@@ -178,6 +178,25 @@ class ColumnsTheLabAdds(AppTestCase):
         for m in mice:
             self.assertEqual(json.loads(one("select attrs from mice where id=?", m))["perfused"], "yes")
 
+    def test_a_column_is_set_on_many_plasmids_or_tanks_at_once(self):
+        """The same batch action from the Plasmids and Zebrafish selection
+        bars, which post the column as the action rather than as a field."""
+        import json
+        for key, url, make, table in (
+                ("plasmids", "/plasmids/bulk", lambda: self.make_plasmid(self.a), "plasmids"),
+                ("zebrafish", "/zebrafish/tanks/bulk", lambda: self.make_tank(self.a), "tanks")):
+            with self.subTest(database=key):
+                self.post(self.a, f"/organisms/builtin/{key}/fields",
+                          {"field_count": "1", "field_0_label": "Checked by", "field_0_type": "text",
+                           "field_0_width": "130", "field_0_in_table": "1"})
+                self.addCleanup(self.post, self.a, f"/organisms/builtin/{key}/fields", {"field_count": "0"})
+                rows = [make() for _ in range(2)]
+                r = self.post(self.a, url, {"action": "attr_checked_by", "value": "JL",
+                                            "selected_ids": [str(i) for i in rows]})
+                self.assertNoErrors(r)
+                for i in rows:
+                    self.assertEqual(json.loads(one(f"select attrs from {table} where id=?", i))["checked_by"], "JL")
+
     def test_a_spreadsheet_column_of_that_name_comes_into_it(self):
         """A column the lab added is one the importer can match a sheet to,
         and what it reads lands in it."""

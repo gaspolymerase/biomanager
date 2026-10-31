@@ -1823,23 +1823,6 @@ def new_owned_cage(db_session, **fields) -> CageRecord:
     return cage
 
 
-def _bulk_custom_column(db_session, database: str, field: dict, value: str, back: str,
-                        records, may_edit, table: str):
-    """Set one of the lab's own columns on the ticked records, in one batch
-    so Batch history can undo it. Records the person may not change are
-    skipped and counted, as every other bulk action does."""
-    def apply(record):
-        custom_fields.apply_form(record, {f"attr_{field['key']}": value}, [field])
-        stamp_updated(record)
-
-    done = bulk.run(db_session, list(records), apply, may_edit=may_edit, action="update",
-                    what=f"set {field['label'].lower()} = {value or '(blank)'}", table=table)
-    db_session.commit()
-    bulk.report(done, gettext("Set %(column)s", column=i18n.translate_value(field["label"], "field")),
-                {"mice": "mouse", "tanks": "tank", "plasmids": "plasmid"}.get(table, table))
-    return redirect(back)
-
-
 @app.route("/colony/mice/bulk-update", methods=["POST"])
 @login_required
 def bulk_update_mice():
@@ -1856,7 +1839,7 @@ def bulk_update_mice():
             flash(gettext("Pick a field to set."), "error")
             return redirect(back)
         if own is not None:
-            return _bulk_custom_column(db_session, "colony", own, value, back,
+            return bulk.set_custom_column(db_session, "colony", own, value, back,
                                        bulk.selected(db_session, MouseRecord, request.form), can_edit_mouse, "mice")
         refused = (stewardship.batch_owner_refused(stewardship.lab_members(db_session), value)
                    if field == "owner" else None)

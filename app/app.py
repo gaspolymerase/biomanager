@@ -352,7 +352,7 @@ app.register_blueprint(devices.bp)
 from . import groups as project_groups  # noqa: E402
 app.register_blueprint(project_groups.bp)
 # Who may give a record to someone else, or share it (app/stewardship.py).
-from . import stewardship  # noqa: E402
+from . import bulk, stewardship  # noqa: E402
 # A Breeding cage's litters: Litter born, Genotyping and Wean (app/litters.py).
 from .litters import PUP_AGE_DAYS  # noqa: E402,F401
 # What's new: a short note once after an update (app/whats_new.py).
@@ -720,7 +720,7 @@ NAV_FOOTER: list[dict] = [
 # app/colony_routes.py. These are the names this file and other modules
 # still reach for here.
 from .colony_routes import (  # noqa: E402
-    COLONY_VIEW_META, _bulk_custom_column, _merged_choices, _mouse_rack_from_form,
+    COLONY_VIEW_META, _merged_choices, _mouse_rack_from_form,
     cage_position_label, cage_purposes, can_edit_mouse, change_mouse,
     populate_mouse_from_form,
 )
@@ -5400,7 +5400,7 @@ def bulk_plasmids():
         own = next((f for f in custom_fields.fields(db_session, "plasmids")
                     if f"attr_{f['key']}" == action), None)
         if own is not None:
-            return _bulk_custom_column(db_session, "plasmids", own, value, url_for("plasmids"),
+            return bulk.set_custom_column(db_session, "plasmids", own, value, url_for("plasmids"),
                                        records, access.can_edit, "plasmids")
         if action not in ("owner", "resistance", "move", "delete", "shared"):
             flash(gettext("Unknown batch action."), "error")

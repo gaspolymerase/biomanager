@@ -22,11 +22,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from flask import flash
+from flask import flash, redirect
 from sqlalchemy import select
 
-from . import audit
+from . import audit, custom_fields
 from .i18n import gettext, ngettext, translate_value
+from .web import stamp_updated
 
 UNCHANGED = object()   # nothing to do for this record
 NOT_YOURS = object()   # this change is for someone else (its owner, an admin)
@@ -111,3 +112,20 @@ def report(done: Done, what: str, noun: str, plural: str = "", reasons: int = 5)
         flash(gettext("Nothing was changed."), "error")
     for reason in done.blocked[:reasons]:
         flash(reason, "error")
+
+
+def set_custom_column(db_session, database: str, field: dict, value: str, back: str,
+                      records, may_edit, table: str):
+    """Set one of the lab's own columns on the ticked records, in one batch
+    so Batch history can undo it. Records the person may not change are
+    skipped and counted, as every other bulk action does."""
+    def apply(record):
+        custom_fields.apply_form(record, {f"attr_{field['key']}": value}, [field])
+        stamp_updated(record)
+
+    done = run(db_session, list(records), apply, may_edit=may_edit, action="update",
+               what=f"set {field['label'].lower()} = {value or '(blank)'}", table=table)
+    db_session.commit()
+    report(done, gettext("Set %(column)s", column=translate_value(field["label"], "field")),
+           {"mice": "mouse", "tanks": "tank", "plasmids": "plasmid"}.get(table, table))
+    return redirect(back)
