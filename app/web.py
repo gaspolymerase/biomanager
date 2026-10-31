@@ -9,7 +9,7 @@ itself.
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 
 from flask import flash, g, get_flashed_messages, jsonify, redirect, request, session, url_for
@@ -120,6 +120,16 @@ def stamp_updated(record, fields_changed: int = 1) -> None:
         return
     record.updated_at = datetime.utcnow()
     record.updated_by = g.user.username
+
+
+def local_time(value):
+    """A timestamp the app stamped (datetime.utcnow(): naive UTC) as the
+    lab's own time (the server's TZ), for showing to people. Without it an
+    evening's entry reads as tomorrow."""
+    if value is None:
+        return None
+    return value.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
+
 
 
 def _get_user_directory():
