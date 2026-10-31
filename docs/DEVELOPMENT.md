@@ -17,15 +17,30 @@ lab server, see [`deploy/README.md`](../deploy/README.md) and the
 ### Where the pages are
 
 `app/flask_app.py` holds the Flask application object and nothing else.
-`app/app.py` builds the application around it (configuration, error
-handlers, what every page is given to render with, the navigation) and
-imports the modules that hold the pages: the colony's in
-`app/colony_routes.py`, the zebrafish's in `app/zebrafish_routes.py`, most
-others as blueprints. Some are still in `app.py` itself;
-`docs/plans/app-py-split.md` moves them out. What a page needs whatever it
-is a page of (who is signed in, how a save answers, how an edit or a
-delete is written down, a person's badge) is in `app/web.py`, so a module
-of pages imports that and `flask_app.py`, never `app.py`.
+`app/app.py` builds the application around it: its configuration, the
+blueprints it registers, signing a request in (`load_current_user`), the
+error pages, what every template is given (the navigation, the icon, the
+template filters), and the app's few pages about itself (its icon, the
+health check, uploaded files, the design gallery). It holds no database's
+pages. Those are in their own modules, which `app.py` imports:
+
+| Module | Pages |
+| --- | --- |
+| `app/colony_routes.py` | The mouse colony: mice, cages, litters, strains, racks, its experiments, batch actions, dropdown choices |
+| `app/zebrafish_routes.py` | The zebrafish database |
+| `app/plasmid_routes.py` | Plasmids: the sheet, boxes, the detail page and the writes behind it |
+| `app/calendar_routes.py` | The calendar's events and to-dos, subscriptions, the Google link; who may see a to-do |
+| `app/notebook_routes.py` | The notebook's tabs, pages, templates, uploads and links between records |
+| `app/account_routes.py` | Signing in and out, Settings, the admin's pages, starting or restoring a lab |
+| `app/home_routes.py` | `/` and Home |
+| `app/records_routes.py` | Search across the databases, CSV import, Batch history, the change log, the old `/orders` and `/samples` |
+| `app/utilities_routes.py` | Utilities: the bench calculators, rotors, lab tools |
+
+The rest are blueprints, each in its own module. What a page needs
+whatever it is a page of (who is signed in and where they land, how a save
+answers, how an edit or a delete is written down, the lab's own time, a
+person's badge, the databases' names, the app's icon) is in `app/web.py`;
+a module of pages imports that and `flask_app.py`, never `app.py`.
 
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
@@ -650,7 +665,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `{% filter as_text_cells(text_cells_on()) %}`: the inventories, the mice,
   the cages and the mice in each, litters, strains, fish, tanks, clutches,
   lines and the genotyping queue, vials, a stock's genotypes and frozen
-  lots, plasmids. The filter (`app.py`) turns each `<td>` holding a single
+  lots, plasmids. The filter (`app/text_cells.py`) turns each `<td>` holding a single
   input or menu (spaces around it allowed) into a `<span class="cell-text">`:
   the text the field shows (a menu's chosen label, else its first; an
   input's placeholder when empty), the field's own markup in `data-field`,
@@ -751,7 +766,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   - The mouse sheet's rows and their forms are written by
     `app/mouse_rows.py` (`mouse_rows_html`, `mouse_row_forms_html`), the
     same markup `_mouse_rows.html` wrote, character for character, and the
-    text cells told what it already knows of each field (`app.text_cell`)
+    text cells told what it already knows of each field (`text_cells.text_cell`)
     rather than reading it back from the tag. A change to a mouse row's
     cells is made there. The cage sheet's rows the same: each cage's cells,
     its detail row and its mice's cells are written by `app/cage_rows.py`
@@ -930,8 +945,6 @@ the colony's pages are in `app/colony_routes.py`, the zebrafish database's
 in `app/zebrafish_routes.py`. Both hang their routes on the application
 object itself (`app/flask_app.py`) rather than a blueprint, so their
 endpoints keep the names every page links to ("colony", "zebrafish_*").
-`app.py` imports the zebrafish's module last: it still takes one template
-filter from there.
 Everything else is configurable: an **organism module** is a row in
 `organism_modules` that describes a species, and one generic engine serves it.
 
@@ -1293,7 +1306,7 @@ refuses a group the person isn't in; admins: any), and the
 Memberships are read once per request (`groups._cache`, `forget()` after a
 change).
 
-To-dos and events: `task_visible_clause()` (app.py) and
+To-dos and events: `task_visible_clause()` (calendar_routes.py) and
 `lab_calendar.event_visible_clause()` are the person's own, the lab's
 (`is_shared`, no group) and their groups'; that is what the calendar, Home
 and the phone feed show. A personal one is its owner's alone, admins
@@ -1367,7 +1380,7 @@ left (the BioManager mark, the lab's name and initials, the lab's shared
 databases, on the helix `door.pattern()` draws once), the one thing to do
 on the right. `app/door.py` gathers that (`door.context()`; from the
 internet, the name only) and holds what is new around `/login` and
-`/register` in `app.py`:
+`/register` in `app/account_routes.py`:
 
 - **`/`** signed out is the sign-in (`door.signin`). Before any account it
   starts a lab instead: on a server `door/fresh.html` (no lab yet; the wrong
@@ -1670,7 +1683,7 @@ pages are in `app/lab_routes.py`.
 A plasmid's sequence is `plasmids.full_sequence` (uppercase IUPAC, no
 spaces), `is_circular` and `features_json`: every annotation the map holds,
 features without a `kind` and primers, translations and parts with one
-(`ANNOTATION_KINDS` in `app.py`). Coordinates are 0-based inclusive; one
+(`ANNOTATION_KINDS` in `plasmid_routes.py`). Coordinates are 0-based inclusive; one
 crossing the origin keeps `start > end`.
 
 - **Import** (`app/sequence_parser.py`, no BioPython): SnapGene `.dna`
@@ -1722,7 +1735,7 @@ crossing the origin keeps `start > end`.
   `/inventory/<key>/order-sheet.csv|txt` (ticked `selected_ids`), give
   `order_sheet` (Name, Sequence, Scale, Purification) and `order_lines`.
   Used to make leaves Primers databases out. **Find saved primers**
-  (GitHub #62): `/plasmids/<id>/primer-sites` (`app.primer_sites`) checks
+  (GitHub #62): `/plasmids/<id>/primer-sites` (`plasmid_routes.primer_sites`) checks
   every record of every Primers database the person may see
   (`saved_primers`: `list_modules` plus `lab.can_see`, so not someone
   else's own) against the plasmid. `TemplateIndex` maps each 15-base
@@ -2519,7 +2532,7 @@ structure only).
 
 **Libraries.** Protocols, Recipes and Reading in the notebook's sidebar
 are pages (`/notebook/protocols`, `/notebook/recipes`, `/notebook/reading`,
-`NOTEBOOK_LIBRARIES` in `app/app.py`): the notebook's page with no page open
+`NOTEBOOK_LIBRARIES` in `app/notebook_routes.py`): the notebook's page with no page open
 and `static/notebook-library.js` in the main column. It reads the same
 `/notebook/api/protocols` and `/notebook/api/recipes` the drawer and the
 recipe block do (`window.NotebookPage`). Protocols lists the protocol
@@ -2656,7 +2669,7 @@ emptied).
 (`frontend/src/extensions/MentionDecoration.js`), the `@` menu is
 `MentionSuggestion.js`, and the words they know are `mentionTypes.js`:
 `mouse`, `plasmid`, `order`, and every inventory key the page lists in
-`#nb-mention-types` (`app._mention_modules()`: inventories the person can
+`#nb-mention-types` (`notebook_routes._mention_modules()`: inventories the person can
 see, except orders, which is `@order`). `/notebook/search|lookup|open|
 backlinks/<type>/…` serve each kind; an inventory record's popover is
 `{name, fields: [[label, value]…]}`; the chip shows `name` after the
@@ -3415,7 +3428,7 @@ the `derive` tool) and `/experiments/<id>/plate` (a plate on its layout,
 open to any token). Each runs as the token's person: `lookup.record` 404s a
 record in a database they can't open, history shows only their own changes
 unless they are an admin, and search is the ⌘K search
-(`app.search_results`, which gives each match a `ref`). The genotype model
+(`records_routes.search_results`, which gives each match a `ref`). The genotype model
 counts copies of the allele that matters at each autosomal, unlinked locus
 (one to five loci, `MAX_LOCI`); a strain or background wanted (`is_strain`: the
 `BACKGROUND` pattern, C57BL/6J, BALB/c…, or a background in the lab's

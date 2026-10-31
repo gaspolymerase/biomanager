@@ -177,6 +177,11 @@ cancels the job.
 
 - Write for the people in the lab: what it does for them and where to
   find it, in plain words, naming buttons as the app does.
+- A database's pages are in their own module (`app/colony_routes.py`,
+  `app/plasmid_routes.py`, ... or a blueprint), which imports
+  `app/flask_app.py` and `app/web.py` and **never `app.py`**. What every
+  page needs goes in `app/web.py`; `docs/DEVELOPMENT.md` (Where the pages
+  are) lists the modules.
 - Keep the biology pure and the routes thin: `app/digest.py`,
   `app/cloning.py`, `app/mutagenesis.py`, `app/gateway.py` and
   `app/plasmid_compare.py` take sequences and return results, with no
