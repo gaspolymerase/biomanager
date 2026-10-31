@@ -1,5 +1,5 @@
 """The lab notebook's own features, beside the tabs, pages and templates in
-app.py:
+app/notebook_routes.py:
 
 - Kinds of page: notes, experiments (planned, running, done, with a start
   and finish stamp), protocols (numbered versions), meeting and seminar
