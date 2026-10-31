@@ -832,19 +832,21 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     Breeders tab (1,602 cages) 0.43 s (1.07); an inventory of 20,000
     samples 0.7 s (1.85), of 20,000 reagents 0.7 s (1.4); the fish tab
     0.7 s (1.9); the tanks (3,337) 0.5 s (4.6).
-- Vials are drawn whole by their page and paged after
-  (`app/sheet_paging.py`): past `LAZY_OVER` rows, `page()` keeps the
-  sheet's first page, makes each other row a stub with
-  `cell_text.row_stub` (read from the row as drawn, as `_sortValue` and
-  `_rowText` read it, so it needs no code per sheet), takes those rows'
-  forms out of its `<template data-row-forms>`, and gives the sheet its
-  rows address: `/stocks/<key>/units/rows`. That address builds the
-  page's context with only the rows asked for, draws the page, and
-  `rows_of` lifts them and their forms out. A stub carries its row form
-  (`f`) for links. The server still draws every row once for the page;
-  the browser builds only a page of them. At 100,000 mice: vials 3.8 s
-  (4.5), a page turn 0.1–0.9 s.
-- The tank sheet was paged that way, and drawing 3,337 tanks then reading
+- Past `LAZY_OVER` vials, `_module_page` (`app/stock_routes.py`) draws
+  the first `FIRST_PAGE` and makes each other vial's stub from its data
+  (`unit_stubs`: its `data-*`, each field's value, the Purpose and Rack
+  menus' shown choices, the room's temperature, the Next cell's words, the
+  owner's badge, and in text cells an empty Position's "–");
+  `tests/test_speed.py` holds every stub to `cell_text.row_stub` of its
+  drawn row, in both ways of drawing cells and in Chinese. The sheet's
+  count and **All** chip say every vial listed (`unit_total`). Its rows
+  address, `/stocks/<key>/units/rows` (with the page's `?ended=all`),
+  builds the page's context with only the rows asked for, draws the page,
+  and `rows_of` (`app/sheet_paging.py`) lifts them and their forms out.
+  The vials were once drawn whole and read back as stubs; on a demo lab
+  of 20,000 mice, the 503 vials' page went from 325 ms on the
+  server to 87, and from 0.72 s to 0.42 s in Chromium.
+- The tank sheet was paged that way too, and drawing 3,337 tanks then reading
   them back took 4.6 s. Now `_zebrafish_context` draws its first page
   (`tank_sheet_rows`) and makes each other tank's stub from its data
   (`zf_tank_stubs`: its `data-*`, each field's value, a menu's shown

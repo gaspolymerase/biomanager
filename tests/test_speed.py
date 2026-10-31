@@ -825,6 +825,59 @@ class SheetPagingTests(AppTestCase):
         self.check_sheet(f"/stocks/{key}", ids, f"/stocks/{key}/units/rows",
                          r'<tr\b[^>]*\bdata-id="%d".*?</tr>', lambda i: f"unit-{i}")
 
+    def test_a_vial_not_drawn_reads_as_its_row_would(self):
+        """stock_routes.unit_stubs builds an undrawn vial from its data; it
+        must be what data-table.js would read from its row
+        (cell_text.row_stub), in either way of drawing cells, in Chinese,
+        for its owner and someone else."""
+        from unittest import mock
+        from app import inventory_routes
+        from app.cell_text import row_stub
+        key, inc, rack = self.make_fly_setup(self.a)
+        loose = self.make_stock_rack(self.a, key)   # in no incubator
+        ids = [self.make_vial(self.a, key, genotype='w; said "hi" & left', rack_id=rack, position="A2",
+                              notes="a <b>note</b>", set_up_on=days_ago(3)),
+               self.make_vial(self.a, key, purpose="cross", female_genotype="w1118", male_genotype="CyO/Sp",
+                              rack_id=loose, position="B1", set_up_on=days_ago(9)),
+               self.make_vial(self.a, key, purpose="progeny", rack_id=rack),   # in a rack, at no place
+               self.make_vial(self.m, key, genotype="someone else's"),
+               self.make_vial(self.a, key, genotype="ended"),
+               self.make_vial(self.a, key, genotype="old purpose")]
+        execute("update stock_units set active=?, discarded_on=? where id=?", False, days_ago(5), ids[4])
+        execute("update stock_units set purpose='quarantine' where id=?", ids[5])   # since removed from Settings
+        execute("update stock_units set owner='' where id=?", ids[2])
+        url = f"/stocks/{key}"
+        for client in (self.a, self.m):
+            for ua in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
+                       {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
+                with mock.patch.object(inventory_routes, "LAZY_OVER", 100000):
+                    whole = client.get(url, headers=ua).get_data(as_text=True)
+                stubs = {s["id"]: s for s in self.stubs(client.get(url, headers=ua).get_data(as_text=True))}
+                body = whole[whole.index("<tbody"):whole.index("</tbody>")]
+                read = {}
+                for attrs, row in re.findall(r'<tr (data-id="\d+"[^>]*)>(.*?)</tr>', body, re.S):
+                    drawn = row_stub(attrs, row)
+                    read[drawn["id"]] = drawn
+                self.assertEqual(len(stubs), len(ids) - 1, ua)
+                for vid in ids:
+                    if vid not in stubs:
+                        continue
+                    want, got = read[vid], stubs[vid]
+                    for name in ("d", "k", "f"):
+                        self.assertEqual(got[name], want[name], (vid, name, ua))
+                    self.assertNotIn("e", got)
+                    self.assertEqual(set(got["s"].split()), set(want["s"].split()), (vid, ua))
+
+    def test_a_long_sheet_of_vials_counts_every_vial(self):
+        key = self.make_stock_module(self.a, "fly")
+        for _ in range(4):
+            self.make_vial(self.a, key)
+        html = self.get_ok(self.a, f"/stocks/{key}")
+        self.assertIn('<span class="dt-bottom-count dt-count">4 ', html)
+        # With the vials that ended long ago, their rows come with them.
+        html = self.get_ok(self.a, f"/stocks/{key}?ended=all")
+        self.assertIn(f'data-dt-rows-url="/stocks/{key}/units/rows?ended=all"', html)
+
 
 class VersionedAssetsTests(AppTestCase):
 
