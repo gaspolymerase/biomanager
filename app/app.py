@@ -177,14 +177,19 @@ def healthz():
 # imported here so that this file's own pages, and anything that still
 # reaches for them here, go on working unchanged.
 from .web import (  # noqa: E402
+    ALLOWED_LANDING_ENDPOINTS,
+    LANDING_FEATURES,
     _get_user_directory,
     _name_color,
     admin_required,
+    app_icon_url,
+    builtin_labels,
+    landing_url,
+    local_time,
     log_delete,
     login_required,
     next_number_retried,
     owner_badge_filter,
-    local_time,
     stamp_updated,
 )
 
@@ -412,14 +417,6 @@ def app_icon(glyph: str, color: str):
         abort(404)
     return Response(appearance.render(glyph, color), mimetype="image/svg+xml",
                     headers={"Cache-Control": "public, max-age=31536000, immutable"})
-
-
-def app_icon_url(glyph: str, color: str) -> str:
-    # The default is the static icon the build script writes, so the sign-in
-    # page and everyone who never chose share one cached file.
-    if appearance.is_default(glyph, color):
-        return url_for("static", filename="icon.svg", v=appearance.version(glyph, color))
-    return url_for("app_icon", glyph=glyph, color=color, v=appearance.version(glyph, color))
 
 
 def _said(message: str) -> str:
@@ -760,16 +757,6 @@ def _may_create_db() -> bool:
         with SessionLocal() as db_session:
             g.may_create_db = lab.may_create_database(db_session)
     return g.may_create_db
-
-
-def builtin_labels() -> dict[str, str]:
-    """Names of the built-in databases (the lab may have renamed them)."""
-    from . import inventory_service as inventories
-    try:
-        with SessionLocal() as db_session:
-            return inventories.builtin_labels(db_session)
-    except Exception:
-        return {key: default for key, (default, _short) in inventories.BUILTIN_DATABASES.items()}
 
 
 # Plasmids and the databases that belong with them: one area in the sidebar
@@ -1587,9 +1574,6 @@ def set_home_cards():
     return redirect(url_for("home_dashboard"))
 
 
-ALLOWED_LANDING_ENDPOINTS = {"colony", "notebook", "calendar", "orders", "samples", "plasmids"}
-
-
 @app.route("/home/layout", methods=["POST"])
 @login_required
 def set_home_layout():
@@ -1646,34 +1630,6 @@ def login():
     if request.method == "GET" and no_accounts_yet():
         return redirect(url_for("index"))
     return door.signin()
-
-
-LANDING_FEATURES = {"colony": "colony", "calendar": "calendar", "notebook": "notebook", "plasmids": "plasmids"}
-
-
-def landing_url(user, after_welcome: bool = False) -> str:
-    """Where someone lands after signing in. The first admin goes to the
-    setup survey until the lab is set up, anyone new to the welcome tour
-    once, then their chosen start page (or home, if that page's function
-    is switched off)."""
-    with SessionLocal() as db_session:
-        if user.role == "admin" and not lab.setup_done(db_session):
-            return url_for("lab.setup")
-        features = lab.features_on(db_session)
-        # Someone who has not chosen a start page starts at home while
-        # their Getting started list has steps left.
-        new_to_it = not (user.default_landing or "").strip() and lab.getting_started_pending(
-            db_session, user, on_server=not app.config.get("LOCAL_SETUP"))
-    if getattr(user, "welcomed_at", None) is None and not after_welcome:
-        return url_for("lab.welcome")
-    if new_to_it:
-        return url_for("home_dashboard")
-    landing = (user.default_landing or "").strip()
-    if landing not in ALLOWED_LANDING_ENDPOINTS:
-        landing = "colony"
-    if not features.get(LANDING_FEATURES.get(landing, ""), True):
-        landing = "home_dashboard"
-    return url_for(landing)
 
 
 @app.post("/language")
