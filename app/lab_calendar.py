@@ -1,4 +1,5 @@
-"""The lab calendar's own features, beside the events and to-dos in app.py:
+"""The lab calendar's own features, beside the events and to-dos in
+app/calendar_routes.py:
 
 - Repeats: an event every N days, weeks or months, until a date, with single
   dates skipped. Expanded into occurrences for whatever range is on screen.
