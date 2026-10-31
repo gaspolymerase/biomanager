@@ -506,7 +506,7 @@ Set up a mating by putting the breeders in a cage whose purpose is **Breeding**.
 
 3. **Wean** opens *Wean and distribute pups*, already filled with the cage's pups, females and males on separate rows: **Wean and move** sends each row to a new or existing cage, or **Mark weaned, move pups later**. Either way the litter is marked weaned and leaves Home and the calendar. Pups younger than P18 are weaned only after you confirm. With two litters, it asks which, the oldest first; the other stays, with its own weaning date.
 
-**Breeders** lists the Breeder cages, the lab's breeding stock: rack and position, and how many of each sex. Above them, the breeders in Breeder and Breeding cages are counted by genotype, and breeders past 30 weeks are flagged. **Pick** takes a breeder as yours to set up a mating; its owner is notified. A Breeder cage left empty for over 90 days, and a mouse in one that ended that long ago, aren't listed; **Show them** at the top lists them too.
+**Breeders** lists the Breeder cages, the lab's breeding stock: rack and position, and how many of each sex. Above them, the breeders in Breeder and Breeding cages are counted by genotype, and breeders past 30 weeks are flagged. **Pick** takes a breeder as yours to set up a mating; its owner is notified. A Breeder cage left empty for over 90 days, and a mouse in one that ended that long ago, aren't listed; **Show them** at the top lists them too. In a lab with hundreds of Breeder cages the first 100 are shown, with **Show 100 more** under them; the search and **Alive only** still look through every cage.
 
 ### Experiments, strains, dropdowns
 

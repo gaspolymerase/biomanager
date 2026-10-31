@@ -1,0 +1,77 @@
+{# The Breeders tab's cards: colony.html draws them, and
+   /colony/breeders/cards draws those the page asks for later. `groups` are
+   services.breeder_mice's; the first `drawn` are drawn in full and the rest
+   as empty cards carrying only what the search, Alive only and the count
+   read, filled when shown (None: every card in full). #}
+{% set cages_url = url_for('colony', view='cages', scope='all') %}
+{% set pick_url = url_for('pick_mouse', mouse_row_id=0) %}
+{# What every card says alike, put in the page's words once: a lab has a thousand Breeder cages. #}
+{% set breeder_table_head -%}
+        <thead>
+          <tr>
+            <th>{{ _('Mouse') }}</th>
+            <th>{{ _('Alive') }}</th>
+            <th>{{ _('Sex') }}</th>
+            <th>{{ _('Age (w)') }}</th>
+            <th>{{ _('Born') }}</th>
+            <th>{{ _('Status') }}</th>
+            <th>{{ _('Genotype') }}</th>
+            <th>{{ _('Owner') }}</th>
+            <th>{{ _('Litter') }}</th>
+            <th>{{ _('Note') }}</th>
+            <th>{{ _('Pick') }}</th>
+          </tr>
+        </thead>
+{%- endset %}
+{% set w_cage, w_rack, w_location, w_detail, w_room, w_card, w_genotype, w_owner, w_mice, w_yes, w_no, w_pick, w_yours =
+       _('Cage'), _('Rack'), _('Location'), _('Location detail'), _('Room'), _('Card'), _('Genotype'), _('Owner'),
+       _('Mice'), _('Yes'), _('No'), _('Pick'), _('Yours') %}
+{% for breeder_group in groups %}
+  {% if drawn is none or loop.index0 < drawn %}
+  <article class="cage-card breeder-card" data-breeder-id="{{ breeder_group.id }}" data-breeder-search="{{ breeder_group.search_blob }}" data-active-count="{{ breeder_group.active_count }}">
+    <div class="breeder-head-grid">
+      <div><span>{{ w_cage }}</span><strong><a href="{{ cages_url }}#cage-{{ breeder_group.id }}" title="{{ _('Open cage %(id)s', id=breeder_group.cage_id) }}">{{ breeder_group.cage_id }}</a></strong></div>
+      <div><span>{{ w_rack }}</span><strong>{% if breeder_group.rack %}{{ breeder_group.rack }}{% if breeder_group.position %} · {{ breeder_group.position }}{% endif %}{% else %}—{% endif %}</strong></div>
+      <div><span>{{ w_location }}</span><strong>{{ breeder_group.cage_location or '—' }}</strong></div>
+      <div><span>{{ w_detail }}</span><strong>{{ breeder_group.location_detail or '—' }}</strong></div>
+      <div><span>{{ w_room }}</span><strong>{{ breeder_group.room or '—' }}</strong></div>
+      <div><span>{{ w_card }}</span><strong>{{ breeder_group.card_id or '—' }}</strong></div>
+      <div><span>{{ w_genotype }}</span><strong class="genotype-full">{{ breeder_group.genotype_summary or '—' }}</strong></div>
+      <div><span>{{ w_owner }}</span><strong>{% if breeder_group.owner and breeder_group.owner != 'Unassigned' %}{{ breeder_group.owner | owner_badge }}{% else %}{{ breeder_group.owner|tr }}{% endif %}</strong></div>
+      <div><span>{{ w_mice }}</span><strong>{{ _('%(n)s alive', n=breeder_group.active_count) }}{% if breeder_group.females or breeder_group.males %} ({{ breeder_group.females }}♀ {{ breeder_group.males }}♂){% endif %} / {{ _('%(n)s total', n=breeder_group.total_count) }}</strong></div>
+    </div>
+    <div class="table-wrap">
+      <table class="dense-table fit-table breeder-table">
+        {{ breeder_table_head }}
+        <tbody>
+          {% for mouse in breeder_group.mice %}
+            <tr data-mouse-active="{{ 'true' if mouse.active else 'false' }}">
+              <td>{{ mouse.mouse_id }}</td>
+              <td>{{ w_yes if mouse.active else w_no }}</td>
+              <td>{{ mouse.gender|tr }}</td>
+              <td>{{ mouse.age_weeks if mouse.age_weeks is not none else '' }}</td>
+              <td class="whitespace-nowrap tabular-nums">{{ mouse.date_of_birth }}</td>
+              <td>{{ mouse.status|tr }}</td>
+              <td class="genotype-full">{{ mouse.genotype_full }}</td>
+              <td>{% if mouse.owner %}{{ mouse.owner | owner_badge }}{% endif %}</td>
+              <td>{{ mouse.litter_id }}</td>
+              <td>{{ mouse.note }}</td>
+              <td>
+                {% if mouse.owner != current_user.username %}
+                  {# Posted through the tab's one form (breeder-pick): a form a row, or a button joined to one, made the browser's work as the page loaded grow with the rows. #}
+                  <button type="button" data-pick-action="{{ pick_url|replace('/0/', '/' ~ mouse.id ~ '/') }}"
+                          data-pick-confirm="{{ _('Take mouse %(id)s as yours? %(owner)s is notified.', id=mouse.mouse_id, owner=mouse.owner or _('Its owner')) }}">{{ w_pick }}</button>
+                {% else %}<span class="text-[12px] text-muted">{{ w_yours }}</span>{% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="11">{{ _('No mice in this breeder cage.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  {% else %}
+    <article class="cage-card breeder-card" data-breeder-stub="{{ breeder_group.id }}" data-breeder-search="{{ breeder_group.search_blob }}" data-active-count="{{ breeder_group.active_count }}" hidden></article>
+  {% endif %}
+{% endfor %}
