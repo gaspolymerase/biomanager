@@ -117,14 +117,14 @@
   <div data-layout-panel="table">
     <section class="data-table-card sheet dt-held" data-table-id="stock-{{ key }}-v2-{{ col_sig }}" data-dt-views="stock-{{ key }}" data-dt-inspector data-noun="{{ unit_w }}" data-noun-plural="{{ units_w }}"
              data-export-name="{{ m.key }}-{{ m.units }}" data-autosave-sheet
-             data-selection-scope data-selection-noun="{{ unit_w }}" data-selection-noun-plural="{{ units_w }}">
+             data-selection-scope data-selection-noun="{{ unit_w }}" data-selection-noun-plural="{{ units_w }}"{% if unit_rows_url %} data-dt-rows-url="{{ unit_rows_url }}"{% endif %}>
       <div class="dt-toolbar">
         <div class="dt-toolbar-search">
           {{ icon('search', 'search-icon') }}
           <input type="text" class="dt-search" placeholder="{{ _('Search genotype, #, owner…') }}" autocomplete="off" aria-label="{{ _('Search') }}">
         </div>
         <div class="dt-chips" role="group" aria-label="{{ _('Show') }}">
-          <button type="button" class="dt-chip" data-dt-filter="" aria-pressed="false">{{ _('All') }} <span class="dt-chip-count">{{ rows|length }}</span></button>
+          <button type="button" class="dt-chip" data-dt-filter="" aria-pressed="false">{{ _('All') }} <span class="dt-chip-count">{{ unit_total }}</span></button>
           <button type="button" class="dt-chip" data-dt-filter="active:true" aria-pressed="true">{{ _('Active') }} <span class="dt-chip-count">{{ counts.active }}</span></button>
           <button type="button" class="dt-chip" data-dt-filter="mine:true" aria-pressed="false">{{ _('Mine') }} <span class="dt-chip-count">{{ counts.mine }}</span></button>
           {% for p in m.purposes if counts[p.key] %}
@@ -166,6 +166,7 @@
             </tr>
           </thead>
           <tbody>
+            {# A long sheet draws its first page; the other vials are stubs (stock_routes.unit_stubs), their rows fetched as shown. #}
             {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
             {% filter as_text_cells(text_cells_on()) %}
             {% for r in rows %}
@@ -242,7 +243,7 @@
             {% endfor %}
             {% endfilter %}
           </tbody>
-        </table>
+        </table>{% if unit_stubs %}<script type="application/json" data-dt-stubs>{{ unit_stubs | stubs_json }}</script>{% endif %}
       </div>
       <template data-row-forms>
       {% for r in rows %}
@@ -255,7 +256,7 @@
       </template>
       <div class="dt-bottom-bar">
         {{ sheet_ui.quick_add(url_for('stocks.save_unit', key=key), _('New %(noun)s', noun=unit_w), new_payload) }}
-        <span class="dt-bottom-count dt-count">{{ rows|length }} {{ units_w }}</span>
+        <span class="dt-bottom-count dt-count">{{ unit_total }} {{ units_w }}</span>
         <div class="dt-bottom-spacer"></div>
         <div class="dt-pagination">
           <span class="dt-page-label">{{ _('Page %(n)s', n=1) }}</span>

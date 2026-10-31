@@ -8,6 +8,7 @@ frozen stocks (worms) and settings."""
 from __future__ import annotations
 
 import json
+import re
 import zlib
 from datetime import date, datetime, timedelta
 
@@ -19,14 +20,17 @@ from sqlalchemy import func, select
 from . import access, audit, database_keys, i18n, positions, rack_layout
 from . import groups as project_groups
 from . import stewardship
-from . import sheet_paging
+from . import cell_text, inventory_routes, sheet_paging
 from . import stock_service as svc
 from . import stocks as presets
+from .days import fmt_day
 from .db import SessionLocal
+from .flask_app import app
 from . import lab, notify
 from .lab import lab_audience
 from .formutil import form_changed
 from .i18n import gettext, ngettext, pgettext, translate_value
+from .web import owner_badge_filter
 from .models import (
     StockFrozen, StockGenotype, StockIncubator, StockModule, StockRack, StockUnit,
 )
@@ -350,11 +354,72 @@ def rack_payload(mv, rack: StockRack) -> dict:
             **{f"naming_{k}": v for k, v in positions.scheme(rack.naming).items()}}
 
 
+def unit_stubs(mv, units, racks, incubators, today: date) -> list[dict]:
+    """Vials the sheet does not draw, as data-table.js reads a drawn row
+    (module.html's vial rows, as cell_text.row_stub reads them): its
+    data-*, each field's value ("k"), its row form, and the words a search
+    looks in ("s": what the row shows, its data-* and each field's value
+    and the choice it shows). Built from each vial's data rather than
+    drawn: drawing every vial and reading the rows back was most of the
+    page's time. tests/test_speed.py holds each to the row it stands for."""
+    relative_day = app.jinja_env.filters["relative_day"]
+    as_text = cell_text.text_cells_on()
+    me = g.user.username
+    # The Rack menu (rack_options): a rack in a room the page lists, or in none.
+    rooms = {inc.id for inc in incubators}
+    rack_name = {r.id: r.name for r in racks if r.incubator_id_fk is None or r.incubator_id_fk in rooms}
+    purpose_word = {p["key"]: _w(p["label"]) for p in mv.purposes}
+    badges: dict[str, str] = {}
+
+    def purpose_of(purpose) -> tuple[str, str]:
+        """The Purpose menu's choice (purpose_options): its own word, one
+        since removed as itself, else the first."""
+        if purpose in purpose_word:
+            return purpose, purpose_word[purpose]
+        if purpose:
+            return purpose, _w(mv.purpose_label(purpose))
+        return next(iter(purpose_word.items()), ("", ""))
+
+    out = []
+    for u in units:
+        nxt = _next_due(mv, u, today) if u.active else None
+        incubator = u.rack.incubator.name if u.rack and u.rack.incubator else ""
+        rack = (str(u.rack_id_fk), rack_name[u.rack_id_fk]) if u.rack_id_fk in rack_name else ("", "–")
+        purpose = purpose_of(u.purpose)
+        position = svc.position_label(u)
+        owner = u.owner or ""
+        data = {"id": str(u.id), "number": str(u.number), "purpose": str(u.purpose),
+                "purposeActive": str(u.purpose) if u.active else "", "rackname": u.rack.name if u.rack else "",
+                "active": "true" if u.active else "false", "mine": "true" if u.owner == me else "false",
+                "incubator": incubator, "nextdue": nxt["on"].isoformat() if nxt else ""}
+        sort = {"genotype": str(u.genotype), "purpose": purpose[0], "female_genotype": str(u.female_genotype),
+                "male_genotype": str(u.male_genotype), "rack_id": rack[0], "position": position,
+                "set_up_on": u.set_up_on.isoformat() if u.set_up_on else "", "owner": owner, "notes": str(u.notes)}
+        words = [mv.code(u), incubator or "–", purpose[1], rack[1], *data.values(), *sort.values()]
+        if incubator:
+            temp = svc.unit_temperature(mv, u)
+            if f"{temp} °C" not in incubator:
+                words += [str(temp), "°C"]
+        if nxt:
+            words += [nxt["label"], "·", relative_day(nxt["on"])]
+        elif not u.active:
+            words.append(gettext("discarded %(day)s", day=fmt_day(u.discarded_on)))
+        else:
+            words.append("–")
+        if owner:
+            if owner not in badges:
+                badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
+            words.append(badges[owner])
+        if as_text and not position:
+            words.append("–")   # an empty Position shows its placeholder
+        out.append({"id": u.id, "f": f"unit-{u.id}", "d": data, "k": sort,
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
+
+
 @bp.route("/<key>")
 def module(key: str):
-    html = _module_page(key)
-    # A long sheet of vials: its first page drawn, the rest fetched as shown (app/sheet_paging.py).
-    return sheet_paging.page(html, f"stock-{key}-v2-", url_for("stocks.unit_rows", key=key))
+    return _module_page(key)
 
 
 @bp.route("/<key>/units/rows")
@@ -394,8 +459,11 @@ def _module_page(key: str, keep: set[int] | None = None) -> str:
                                                     horizon=max(1, min(_int(request.args.get("horizon"), 14), 366))),
                                    units)
         me = g.user.username
+        # A long sheet of vials draws its first page; each other vial is a
+        # stub (unit_stubs), its row fetched from unit_rows as it is shown.
+        lazy = keep is None and view_name == "units" and len(units) > inventory_routes.LAZY_OVER
         rows = []
-        for u in units:
+        for u in units[:inventory_routes.FIRST_PAGE] if lazy else units:
             if keep is not None and u.id not in keep:
                 continue
             nxt = _next_due(mv, u, today) if u.active else None
@@ -420,6 +488,10 @@ def _module_page(key: str, keep: set[int] | None = None) -> str:
             if mv.s.get("frozen") else []
         context = {
             "module": mv, "view": view_name, "rows": rows, "racks": racks, "incubators": incubators,
+            "unit_total": len(units),
+            "unit_stubs": unit_stubs(mv, units[inventory_routes.FIRST_PAGE:], racks, incubators, today) if lazy else [],
+            "unit_rows_url": url_for("stocks.unit_rows", key=key, **({"ended": "all"} if show_ended else {}))
+                             if lazy else "",
             "can_configure": can_configure(row),
             "rack_rows": rack_rows, "genotypes": genotypes, "active_counts": active_counts,
             "grid": grid_payload(mv, racks, units), "schedule": schedule, "frozen": frozen,
