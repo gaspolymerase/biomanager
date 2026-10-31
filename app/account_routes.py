@@ -109,7 +109,6 @@ def choose_language():
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    profile_error = None
     with SessionLocal() as db_session:
         user = db_session.get(UserAccount, g.user.id)
         if user is None:
@@ -331,7 +330,6 @@ def settings_updates_status():
 @app.route("/settings/export")
 @login_required
 def export_my_data():
-    import csv as _csv
     import io as _io
     import json as _json
     import re as _re

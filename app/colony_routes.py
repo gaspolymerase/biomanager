@@ -2375,7 +2375,6 @@ def batch_mice_create():
             db_session.add(mouse)
             created += 1
         batch_row.record_count = created
-        batch_id = batch_row.id
         db_session.commit()
         first, last = (ids[0], ids[-1]) if ids else (0, 0)
 

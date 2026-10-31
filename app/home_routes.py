@@ -63,7 +63,6 @@ def home_dashboard():
     queue, recent orders. Read-only — every card links into the relevant
     page for actual edits."""
     today = date.today()
-    week_ahead = today + timedelta(days=7)
 
     with SessionLocal() as db_session:
         # ---- Counts ------------------------------------------------------

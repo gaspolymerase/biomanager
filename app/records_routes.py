@@ -263,7 +263,7 @@ PlasmidRecord.name.ilike(like, escape="\\") | PlasmidRecord.backbone.ilike(like,
 
         # Fly vials and worm plates, by genotype (or either cross parent).
         from . import stock_service
-        from .models import StockModule, StockUnit
+        from .models import StockUnit
         stock_modules = {m.id: stock_service.view(m) for m in stock_service.list_modules(db_session)}
         unit_stmt = select(StockUnit).where(StockUnit.active.is_(True))
         if is_digit:
