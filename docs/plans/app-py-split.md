@@ -1,6 +1,6 @@
 # Plan: app.py comes apart, round 2
 
-Status: not started.
+Status: phases 1 and 2 done. `app/app.py` is 6,845 lines, from 10,473.
 
 `app/app.py` is 10,473 lines and holds 159 routes. Most of them belong to
 areas that already have their own module: the colony (51 routes), plasmids
@@ -45,11 +45,18 @@ moves, so each phase has to prove it changed nothing.
    `app/flask_app.py`; the shared decorators and helpers (`login_required`,
    `admin_required`, `autosave_response`, `next_number_retried`,
    `log_delete`, `stamp_updated`) move to `app/web.py`. An area module then
-   imports from those two and never from `app.py`, so the circular import
-   and the "app.py imports it last" rule both go away.
-   `zebrafish_routes.py` moves onto the new imports in the same step.
+   imports from those two and never from `app.py`.
    Add `tests/test_url_map.py` first of all.
+   *Done.* Every module this round makes keeps that rule; `colony_routes.py`
+   does. `zebrafish_routes.py`, which predates it, still takes one template
+   filter (`as_text_cells`) from `app.py` and so is still imported last;
+   phase 6 settles where the filters' functions live.
 2. **Colony** — the biggest, and the one that pays back most.
+   *Done:* `app/colony_routes.py`, 3,543 lines: the 51 routes and the
+   colony's helpers from higher up the file (who may edit a mouse, how a
+   mouse's change is made, a cage's row). A person's badge went to
+   `app/web.py` with it, since the colony needs it and may not import
+   `app.py`.
 3. **Plasmids** — the area just worked on, so it is fresh.
 4. **Notebook and calendar.**
 5. **Accounts and the rest**, and whatever is left that belongs in a module
@@ -72,6 +79,16 @@ filters, `NAV_SECTIONS` and the navigation helpers, and the asset-version
 `after_request`.
 
 ## Risks
+
+- **A test that patches the old place.** `mock.patch.object(app_module,
+  "next_mouse_id", …)` replaces the name in `app.py`; once the route lives
+  in another module it calls that module's own, the stand-in is never
+  called, and a test can pass with nothing tested. Phase 2 found one
+  (`test_mice`, simulating two saves taking the same mouse number). Before
+  each move, look in `tests/` for patches of the names that move
+  (`patch("app.app.…")`, `patch.object(app_module, …)`), point them at
+  the new module, and where a stand-in's being called is the point, check
+  that it was.
 
 - **A helper used by two areas.** Moving it with one of them breaks the
   other. Each phase checks what the moved block calls, and anything shared

@@ -84,6 +84,12 @@ tree, and the results come out meaningless.
   start an indented line (`tests/test_site.py`).
 - **`deploy/` ships to every lab**: nothing there names a maintainer's own
   server, account, address or institution (`tests/test_deploy.py`).
+- **A route keeps its path and its endpoint name** (`tests/test_url_map.py`,
+  against `tests/url_map.txt`). Pages link by endpoint name some 2,100
+  times and the other tests ask for URLs, so a rename breaks pages no test
+  opens. Adding or removing a route on purpose: `python scripts/url-map.py
+  --write`, and say so in the commit. Moving a route's code: patch it in
+  tests where the route now calls it from, or the stand-in is never called.
 
 ## Front-end
 

@@ -14,6 +14,29 @@ lab server, see [`deploy/README.md`](../deploy/README.md) and the
 - PostgreSQL for a shared lab server (the test suite runs on both in CI)
 - Tailwind CSS v4 for the interface (compiled, no CDN at runtime)
 
+### Where the pages are
+
+`app/flask_app.py` holds the Flask application object and nothing else.
+`app/app.py` builds the application around it (configuration, error
+handlers, what every page is given to render with, the navigation) and
+imports the modules that hold the pages: the colony's in
+`app/colony_routes.py`, the zebrafish's in `app/zebrafish_routes.py`, most
+others as blueprints. Some are still in `app.py` itself;
+`docs/plans/app-py-split.md` moves them out. What a page needs whatever it
+is a page of (who is signed in, how a save answers, how an edit or a
+delete is written down, a person's badge) is in `app/web.py`, so a module
+of pages imports that and `flask_app.py`, never `app.py`.
+
+A route keeps its path and its endpoint name when its code moves:
+`url_for` is called on them some 2,100 times, and the tests ask for URLs,
+not endpoints, so a renamed one would break pages no test opens.
+`tests/url_map.txt` holds every route the app answers and
+`tests/test_url_map.py` fails on any difference; when a change really adds
+or removes a route, `python scripts/url-map.py --write` updates it. A test
+that patches a function patches it in the module the route calls it from:
+patched anywhere else, the stand-in is never called and the test can pass
+without testing anything.
+
 ## Interface design
 
 The interface follows Apple's Liquid Glass design, on the frosted side as
@@ -769,7 +792,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     query (`breeder_summary`). The words every cage row or Breeders card
     says alike are put in the page's words once a draw (`app/cage_rows.py`,
     `w_…` in `colony.html`), and an owner's badge is
-    made once a name for the request (`owner_badge_filter`): the short name
+    made once a name for the request (`web.owner_badge_filter`): the short name
     the person chose (Settings → Profile, up to 5 letters; 3 or more make the
     round badge a pill, `data-len`), else two initials. The notebook's own
     badges (`notebook-page.js` `avatar`) read the same short names (`shorts`).
@@ -903,9 +926,12 @@ they follow the app's palette and dark mode.
 ## Organism modules (configurable species databases)
 
 Mouse colony and zebrafish are hand-written modules with their own tables:
-the colony's pages are in `app/app.py`, the zebrafish database's in
-`app/zebrafish_routes.py` (registered on the same Flask app, so its
-endpoints keep the names every page links to; `app.py` imports it last).
+the colony's pages are in `app/colony_routes.py`, the zebrafish database's
+in `app/zebrafish_routes.py`. Both hang their routes on the application
+object itself (`app/flask_app.py`) rather than a blueprint, so their
+endpoints keep the names every page links to ("colony", "zebrafish_*").
+`app.py` imports the zebrafish's module last: it still takes one template
+filter from there.
 Everything else is configurable: an **organism module** is a row in
 `organism_modules` that describes a species, and one generic engine serves it.
 
@@ -1089,7 +1115,7 @@ Who may change what lives in one place, `app/access.py`:
   and every organism record (`organism_routes._set_owner`) call it from
   their dialogs, sheet rows and batch actions; each answers with the
   refusal in words or None. Mice stay the colony's: anyone who may edit a
-  mouse in a shared cage may take it (Pick), so `app.change_mouse` checks
+  mouse in a shared cage may take it (Pick), so `colony_routes.change_mouse` checks
   only that the new owner is in the lab. `tests/test_stewardship.py`.
 - **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
   *Breeding* is a mating cage: only it gets Litter born, Genotyping and
@@ -3135,7 +3161,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
   fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `app.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  `colony_routes.change_mouse`, as the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;
