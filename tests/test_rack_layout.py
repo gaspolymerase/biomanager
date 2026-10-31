@@ -249,3 +249,44 @@ class OtherGrids(AppTestCase):
         from app.models import InventoryItem
         with SessionLocal() as s:
             self.assertEqual(rack_label(s.get(InventoryItem, item)), "D10")
+
+
+class PlacesWrittenAsText(Colony):
+    """Before racks had positions, a cage's place was written in its location
+    ("<rack>-D7"). At start, services.migrate_cage_locations moves such a place
+    into the rack's fields and clears the text; text that names no rack is a
+    note and stays. It reads only cages with location text: a big lab's
+    thousands of cages with none can have nothing to move."""
+
+    def test_a_place_moves_into_its_rack_and_a_note_stays(self):
+        from app.services import migrate_cage_locations
+        rack = self.make_rack()
+        name = one("select name from mouse_racks where id=?", rack)
+        placed, note, bare = (self.make_cage(self.m) for _ in range(3))
+        for cage, text in ((placed, f"{name}-D7"), (note, "shelf 2"), (bare, "")):
+            execute("update mouse_cages set cage_location=?, rack_id_fk=NULL, rack_row=NULL, rack_col=NULL"
+                    " where id=?", text, cage)
+        self.assertEqual(migrate_cage_locations(), 1)
+        self.assertEqual(tuple(row("select rack_id_fk, rack_row, rack_col, cage_location from mouse_cages"
+                                   " where id=?", placed)), (rack, 4, 7, ""))
+        self.assertEqual(tuple(row("select rack_id_fk, cage_location from mouse_cages where id=?", note)),
+                         (None, "shelf 2"))
+        self.assertEqual(migrate_cage_locations(), 0)          # once moved, nothing is left to move
+
+    def test_cages_with_no_location_text_are_not_read(self):
+        from sqlalchemy import event
+        from app.db import engine as db_engine
+        from app.services import migrate_cage_locations
+        self.make_rack()
+        self.make_cage(self.m)
+        seen = []
+        def note(conn, cursor, statement, parameters, context, executemany):
+            if "mouse_cages" in statement and statement.lstrip().upper().startswith("SELECT"):
+                seen.append(statement)
+        event.listen(db_engine, "before_cursor_execute", note)
+        try:
+            migrate_cage_locations()
+        finally:
+            event.remove(db_engine, "before_cursor_execute", note)
+        self.assertTrue(seen)
+        self.assertTrue(all("cage_location" in s.split("WHERE", 1)[-1] for s in seen), seen)

@@ -826,9 +826,13 @@ def migrate_cage_locations() -> int:
         if not racks:
             return 0
         # Only the columns it uses: this runs before Alembic adds newer ones.
+        # Only cages with location text: it runs at every start, and a big
+        # lab's thousands of cages with none can have nothing to move.
         for cage in session.scalars(select(CageRecord).options(load_only(
                 CageRecord.id, CageRecord.cage_location, CageRecord.rack_id_fk, CageRecord.rack_row,
-                CageRecord.rack_col)).where(CageRecord.rack_id_fk.is_(None))):
+                CageRecord.rack_col)).where(CageRecord.rack_id_fk.is_(None),
+                                            CageRecord.cage_location.is_not(None),
+                                            CageRecord.cage_location != "")):
             match = pattern.match(cage.cage_location or "")
             rack = racks.get(match.group("rack").strip().lower()) if match else None
             cell = positions.parse(match.group("pos"), rack.naming, rack.rows, rack.cols) if rack else None
