@@ -748,15 +748,24 @@ PROMPTS.update({
                    "found nothing. Then offer one proposal that clears the items that come with a fix (their "
                    "propose changes); send it only if I say yes, and give me the link to approve it.")),
     "design_experiment": (
-        "Design an experiment",
+        "Design an experiment and set it up",
         [{"name": "goal", "description": "What the experiment should find out", "required": True}],
-        lambda a: ("Help me design this experiment from the lab's records in BioManager. Find the animals we have "
-                   "(availability) and, if there aren't enough, how to breed them in time (breeding_plan); the "
-                   "animals per group (power_analysis, with the SD from a past experiment's readouts if we have "
-                   "one); a balanced, seeded allocation (randomize); and the procedures from the lab's saved "
-                   "regimens (list regimens). Take doses only from the lab's regimens or a source you cite, and "
-                   "leave the check against our animal protocol (IACUC) to me. Give me the design with every number "
-                   "as BioManager worked it out and every assumption it made. Don't propose any change unless I ask."
+        lambda a: ("Plan this experiment with me from the lab's records in BioManager, then set it up. First ask me what "
+                   "you can't find in the records and isn't clear from the goal: the model, the groups and controls, the "
+                   "readout and its days, the start date, who does what. Ask it all at once, in a few short questions. "
+                   "Then find the animals we have (availability) and, if there aren't enough, how to breed them in time "
+                   "(breeding_plan); the animals per group (power_analysis, with the SD from a past experiment's readouts"
+                   " if we have one); a balanced, seeded allocation (randomize); and the procedures from the lab's saved "
+                   "regimens (list regimens). Search the published literature for the model, its timeline and doses, and "
+                   "cite each source: take a dose only from the lab's regimens or a source you cite, and leave the check "
+                   "against our animal protocol (IACUC) to me. Give me the plan: the animals and groups, the regimen day "
+                   "by day with its dates, every number as BioManager worked it out with the assumptions it made, and the"
+                   " to-dos for what must be ready before day 1 (breeding, ordering, booking, training). Once I say the "
+                   "plan is right, propose it all as one proposal: the experiment (experiment_new); for animals still to "
+                   "be bred, the matings (a Breeding cage with cage_new, then mice_move); the to-dos (task_new, each due "
+                   "when it must be done); and the calendar (calendar_event_new, equipment_booking_new for an "
+                   "instrument). Its steps are due on Home once I press Start on its page, so don't repeat them as "
+                   "to-dos. Give me the link to approve it."
                    "\n\nThe goal: " + a.get("goal", ""))),
     "write_methods": (
         "Write the methods for an experiment",

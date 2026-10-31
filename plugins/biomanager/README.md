@@ -31,7 +31,7 @@ today and asks what you did.
 - **Nine commands**: *Log today's work from my notes*, *Log from a photo of
   my notebook, whiteboard or cage card*, *Turn my captures from the bench
   into records*, *Plan tomorrow from what's due*, *Review the lab this week*,
-  *Design an experiment*, *Write the methods for an experiment*, *Draft the
+  *Design an experiment and set it up*, *Write the methods for an experiment*, *Draft the
   animal-use report for an annual review* and *Write a handover for someone
   leaving the lab*. The numbers in them (animals available, breeding odds,
   animals per group, group allocation, animals used per protocol) are worked
