@@ -25,8 +25,8 @@ from .days import fmt_day
 from .db import SessionLocal
 from .formutil import form_changed
 from .i18n import gettext, ngettext, pgettext
-from .models import (FISH_SEX_OPTIONS, FISH_STATUS_OPTIONS, TANK_PURPOSE_OPTIONS, ClutchRecord, FishLine, FishRack,
-                     FishRecord, FishSacLog, TankRecord, WaterLog, WaterSystem)
+from .models import (FISH_SEX_OPTIONS, FISH_STATUS_OPTIONS, TANK_PURPOSE_ALIASES, TANK_PURPOSE_OPTIONS, ClutchRecord,
+                     FishLine, FishRack, FishRecord, FishSacLog, TankRecord, WaterLog, WaterSystem)
 from .services import current_lab_usernames, parse_date
 
 
@@ -41,8 +41,9 @@ FISH_DEAD_STATUSES = {"sac", "dead"}
 # How a sac-log entry written by a status change begins; reviving the row
 # removes that entry, not ones logged by hand.
 FISH_STATUS_SAC_REASON = "Status set to "
-# Tank purposes the whole lab works out of, like the mouse breeder cages.
-FISH_SHARED_PURPOSES = {"breeding", "shared"}
+# Tank purposes the whole lab works out of: the breeder tanks, the lab's
+# breeding stock, like the mouse Breeder cages ("shared" is an older value).
+FISH_SHARED_PURPOSES = {"breeder", "shared"}
 
 
 def _fish_age_label(dof):
@@ -73,14 +74,14 @@ def zf_tank_shared(tank) -> bool:
 
 def zf_can_edit(record) -> bool:
     """access.can_edit for fish records. A tank is editable when it is
-    yours, unowned or a shared breeding tank; a fish row follows its tank.
+    yours, unowned or a shared breeder tank; a fish row follows its tank.
     A line is its owner's (lines from before owners stay open). Racks carry
     no owner and stay open to the lab; deleting a water system is
     access.can_edit_rack (its creator or an admin)."""
     if isinstance(record, FishRecord):
         record = record.tank or record
     if isinstance(record, TankRecord):
-        # A breeding tank shared with a project group is its members'.
+        # A breeder tank shared with a project group is its members'.
         return access.can_edit(record, shared=zf_tank_shared(record)
                                and project_groups.record_editable(record, shared=True))
     return access.can_edit(record)
@@ -192,6 +193,13 @@ def zf_choice(raw, allowed, label: str, current=None) -> str:
         return raw
     raise ZfInputError(gettext("%(field)s must be one of: %(options)s.", field=pgettext("zebrafish", label),
                                options=", ".join(allowed)))
+
+
+def zf_tank_purpose(raw, current=None) -> str:
+    """A tank's purpose as zf_choice reads it, where the old word for a
+    breeder tank ("breeding") still means breeder."""
+    raw = (raw or "").strip()
+    return zf_choice(TANK_PURPOSE_ALIASES.get(raw.lower(), raw), TANK_PURPOSE_OPTIONS, "Purpose", current)
 
 
 def zf_next_code(s, column, prefix: str, width: int = 0) -> str:
@@ -833,7 +841,7 @@ def zebrafish_create_tank():
             tank = TankRecord(
                 tank_id=zf_unique(s, TankRecord.tank_id, code, "tank") if code and how_many == 1
                 else code or zf_next_code(s, TankRecord.tank_id, "T", 3),
-                purpose=zf_choice(form.get("purpose") or "stock", TANK_PURPOSE_OPTIONS, "Purpose"),
+                purpose=zf_tank_purpose(form.get("purpose") or "stock"),
                 line_id_fk=zf_ref(s, FishLine, form.get("line_id_fk"), "line"),
                 owner=(form.get("owner", access.username()) or "").strip(),
                 card_id=(form.get("card_id") or "").strip(),
@@ -886,7 +894,7 @@ def zebrafish_update_tank(tank_row_id: int):
             if "tank_id" in form:
                 t.tank_id = zf_unique(s, TankRecord.tank_id, form.get("tank_id"), "tank", t.id)
             if "purpose" in form:
-                t.purpose = zf_choice(form.get("purpose"), TANK_PURPOSE_OPTIONS, "Purpose", t.purpose)
+                t.purpose = zf_tank_purpose(form.get("purpose"), t.purpose)
             if "line_id_fk" in form:
                 t.line_id_fk = zf_ref(s, FishLine, form.get("line_id_fk"), "line")
             # Owner, rack and position also show on the rack grid and the
@@ -902,7 +910,7 @@ def zebrafish_update_tank(tank_row_id: int):
             custom_fields.apply_form(t, form, custom_fields.fields(s, "zebrafish"))
             if "active" in form:
                 t.active = zf_active_flag(form.get("active"))
-            # Which group a breeding or shared tank is for ("1": the lab's).
+            # Which group a breeder or shared tank is for ("1": the lab's).
             if "share_group" in form:
                 refused = stewardship.change_sharing(t, form.get("share_group") or "1", "tank", t.tank_id,
                                                      shared=True, set_shared=False)
@@ -1080,7 +1088,7 @@ def zebrafish_bulk_tanks():
         members = stewardship.lab_members(s) if action == "owner" else set()
         try:
             if action == "purpose":
-                value = zf_choice(value, TANK_PURPOSE_OPTIONS, "Purpose")
+                value = zf_tank_purpose(value)
             elif action == "owner":
                 refused = stewardship.batch_owner_refused(members, value)
                 if refused:
@@ -1097,7 +1105,7 @@ def zebrafish_bulk_tanks():
             if action == "purpose":
                 t.purpose = value
             elif action == "owner":
-                # Editing a shared breeding tank doesn't make it yours to give away.
+                # Editing a shared breeder tank doesn't make it yours to give away.
                 if not stewardship.may_give_away(t):
                     return bulk.NOT_YOURS
                 return stewardship.change_owner(s, t, value, "tank", t.tank_id, members)
@@ -1913,7 +1921,7 @@ def zebrafish_bulk_clutches():
 def zebrafish_set_up_mating():
     """Create a mating tank from a ♂×♀ pair of tanks, with a return date
     (default tomorrow). The fish come out of both tanks, so both have to
-    be yours to edit (or shared breeding tanks). Optional male and female
+    be yours to edit (or shared breeder tanks). Optional male and female
     counts move that many fish (rows marked M / F) into the mating tank;
     Returned on the tank puts them back."""
     form = request.form

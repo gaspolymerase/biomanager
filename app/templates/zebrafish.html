@@ -234,7 +234,7 @@
             </th>
             {{ col('rack', 'grid', zf('Rack'), 112) }}
             {{ col('position', 'position', _('Pos'), 56, _("Position in the rack, named by the rack's scheme"), full=_('Position')) }}
-            {{ col('purpose', 'tag', _('Purpose'), 104, _('Breeding tanks are shared: anyone in the lab (or the project group it is shared with) can edit them')) }}
+            {{ col('purpose', 'tag', _('Purpose'), 104, _('Breeder tanks, the lab’s breeding stock, are shared: anyone in the lab (or the project group it is shared with) can edit them. Mating: a tank being crossed now')) }}
             {{ col('line', 'sitemap', _('Line'), 160) }}
             {{ col('fish', 'fish', zf('Fish'), 56, _('Live fish in the tank')) }}
             {{ col('owner', 'user', _('Owner'), 80) }}
@@ -527,7 +527,7 @@
         <select name="active"><option value="1">{{ _('In use') }}</option><option value="0">{{ _('Retired') }}</option></select>
       </label>
       {% if groups_api.names() %}
-        <label title="{{ _("A breeding or shared tank is the lab's to edit, or one project group's") }}">{{ _('Shared with') }}
+        <label title="{{ _("A breeder or shared tank is the lab's to edit, or one project group's") }}">{{ _('Shared with') }}
           <select name="share_group">
             <option value="1">{{ _('The lab') }}</option>
             {% for gid, name in groups_api.names().items() %}<option value="g{{ gid }}">{{ name }}</option>{% endfor %}

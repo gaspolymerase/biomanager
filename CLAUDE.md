@@ -60,8 +60,11 @@ from before the move update to, and which looks here for every update after.
 
 ## The mouse colony's words
 
-What a cage's **Purpose** means, as the lab's maintainer set it. Don't
-read them as synonyms or add meanings of your own:
+`GLOSSARY.md` holds the lab's words for every database (the zebrafish's
+breeder and mating tanks among them); use them as it defines them, and add
+a word there when one is settled. What a cage's **Purpose** means, as the
+lab's maintainer set it. Don't read them as synonyms or add meanings of
+your own:
 
 - **Breeding** is a mating cage, mating now. It is the only cage with
   **Litter born**, **Genotyping** and **Wean**, and its litters are its

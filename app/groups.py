@@ -3,7 +3,7 @@
 A group is a layer between a person and the whole lab. Wherever something
 can be shared with the lab, it can instead be shared with one group:
 
-  * shared breeder cages, breeding tanks and lab stock vials, lab common
+  * shared breeder cages, breeder tanks and lab stock vials, lab common
     plasmids and stock: the group's members may edit them (everyone still
     sees them, as for the lab's: a census with holes is not a census);
   * a database: only the group's members (and admins) see it;
@@ -19,7 +19,7 @@ pages are shared with a group by a share whose username is "group:<id>".
 Admins make, rename and delete groups and choose their members on the
 Project groups page; a group's leads may add and remove its members. A
 person may be in several groups. Deleting a group makes what was shared
-with it its owner's again (a breeding tank or lab stock vial, shared by its
+with it its owner's again (a breeder tank or lab stock vial, shared by its
 purpose, the lab's; a group database its creator's own).
 """
 from __future__ import annotations
@@ -236,7 +236,7 @@ def shared_with(is_shared, group_id, user=None) -> bool:
 
 def record_shared_with(record, user=None, shared: bool | None = None) -> bool:
     """For a record with is_shared and share_group_id. `shared` overrides
-    is_shared when a purpose decides it (a breeding tank, a stock vial)."""
+    is_shared when a purpose decides it (a breeder tank, a stock vial)."""
     is_shared = getattr(record, "is_shared", False) if shared is None else shared
     return shared_with(is_shared, getattr(record, "share_group_id", None), user)
 

@@ -1151,7 +1151,12 @@ class MouseWeight(Base):
 #   * Age units shift (dpf → wpf → mpf) — derived in the route layer
 # ---------------------------------------------------------------------------
 
-TANK_PURPOSE_OPTIONS = ["stock", "breeding", "mating", "experiment", "quarantine"]
+# A breeder tank is the lab's breeding stock, shared like a mouse Breeder cage;
+# a mating tank is one being crossed now (GLOSSARY.md). The breeder tank was
+# once called "breeding" (revision 0054 renamed it); the old word typed, or sent
+# through the API, still means breeder (TANK_PURPOSE_ALIASES).
+TANK_PURPOSE_OPTIONS = ["stock", "breeder", "mating", "experiment", "quarantine"]
+TANK_PURPOSE_ALIASES = {"breeding": "breeder"}
 FISH_SEX_OPTIONS = ["M", "F", "mixed", "unknown"]
 FISH_STATUS_OPTIONS = ["alive", "transfer", "geno", "sac"]
 

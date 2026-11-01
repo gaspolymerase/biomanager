@@ -195,7 +195,7 @@ class AnimalUse(Reports):
         p = uniq("ZF-")
         line_name = uniq("casper")
         line = self.make_line(self.m, line_name, iacuc_protocol=p)
-        tank = self.make_tank(self.m, line_id_fk=str(line), purpose="breeding")
+        tank = self.make_tank(self.m, line_id_fk=str(line), purpose="breeder")
         self.m.post("/zebrafish/fish/create", data={"tank_id_fk": str(tank), "count": "12",
                                                      "date_of_fertilization": days_ago(60)})
         fish = one("select max(id) from fish where tank_id_fk=?", tank)

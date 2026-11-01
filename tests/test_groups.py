@@ -131,8 +131,8 @@ class SharedRecordTests(GroupCase):
         self.autosave(self.o, "/inventory/reagents/items/save", {"id": item, "notes": "nope"})
         self.assertEqual(one("select notes from inventory_items where id=?", item), "opened")
 
-    def test_a_breeding_tank_for_a_group(self):
-        tank = self.make_tank(self.m, purpose="breeding")
+    def test_a_breeder_tank_for_a_group(self):
+        tank = self.make_tank(self.m, purpose="breeder")
         r = self.autosave(self.m, f"/zebrafish/tanks/{tank}/update", {"share_group": f"g{self.gid}"})
         self.assertEqual(r.status_code, 200, r.get_data(as_text=True)[:200])
         self.assertEqual(one("select share_group_id from tanks where id=?", tank), self.gid)

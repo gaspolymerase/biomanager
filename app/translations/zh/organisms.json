@@ -576,6 +576,7 @@
   "organism::backup": "备份",
   "organism::maintenance": "维持",
   "organism::breeding": "繁殖",
+  "organism::breeder": "亲本",
   "organism::mating": "配对",
   "organism::nursery": "育幼",
   "organism::quarantine": "检疫",

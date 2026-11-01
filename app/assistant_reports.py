@@ -176,7 +176,7 @@ def year_before(end: date) -> date:
 MOUSE = "Mus musculus (mouse)"
 FISH = "Danio rerio (zebrafish)"
 STARTED = ("active", "paused", "done", "cancelled")   # every status but planned: animals were used
-FISH_BREEDING = ("breeding", "mating")
+FISH_BREEDING = ("breeder", "mating")
 
 
 def _day_of(stamp) -> date | None:
@@ -450,7 +450,7 @@ def animal_use(session, start=None, end=None, protocol: str = "", today: date | 
                               "reason is read from the words in the mouse's notes or the sac log's reason, else its "
                               "status: check the categories against the records.",
         "breeding": "Mice named by number as a parent of a litter born in the period, or now in a Breeder or Breeding "
-                    "cage and alive during it; zebrafish alive now in a breeding or mating tank. Where a mouse was "
+                    "cage and alive during it; zebrafish alive now in a breeder or mating tank. Where a mouse was "
                     "before today isn't kept, so one moved out of a breeding cage counts only as a parent.",
         "columns": "An animal may be in several columns (born, used and euthanized); don't add them up.",
     }

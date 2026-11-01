@@ -1306,7 +1306,7 @@ who *sees* something. Every switch starts as groups worked before 0026.
 (leads and admins; only an admin makes or unmakes a lead). A record shared with a group keeps `is_shared` and names the group in
 `share_group_id` (no foreign key; `groups.release()` clears it, and the
 record's `is_shared`, when a group is deleted): `mouse_cages`, `plasmids`,
-`inventory_items` and `tasks`. Breeding tanks and lab stock vials are shared
+`inventory_items` and `tasks`. Breeder tanks and lab stock vials are shared
 by their purpose, so `tanks.share_group_id` and `stock_units.share_group_id`
 only narrow it (`share_group` in their dialogs; `"1"` is the lab). A
 database for a group has an empty `private_to` and a `share_group_id`

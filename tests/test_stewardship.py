@@ -11,15 +11,15 @@ from tests.base import AppTestCase, client_for, make_user, one, uniq
 
 class TankOwnerTests(AppTestCase):
 
-    def test_member_may_edit_a_shared_breeding_tank_but_not_give_it_away(self):
-        tank = self.make_tank(self.a, purpose="breeding")
+    def test_member_may_edit_a_shared_breeder_tank_but_not_give_it_away(self):
+        tank = self.make_tank(self.a, purpose="breeder")
         r = self.autosave(self.m, f"/zebrafish/tanks/{tank}/update", {"owner": self.member, "owner_was": self.admin})
         self.assertRefused(r)
         self.assertIn("to someone else", r.get_json()["error"])
         self.assertEqual(one("select owner from tanks where id=?", tank), self.admin)
 
-    def test_member_batch_cannot_give_away_a_shared_breeding_tank(self):
-        tank = self.make_tank(self.a, purpose="breeding")
+    def test_member_batch_cannot_give_away_a_shared_breeder_tank(self):
+        tank = self.make_tank(self.a, purpose="breeder")
         r = self.post(self.m, "/zebrafish/tanks/bulk", {"action": "owner", "value": self.member,
                                                        "selected_ids": [tank]})
         self.assertFlash(r, "not yours", "error")

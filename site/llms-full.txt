@@ -705,7 +705,7 @@ A fish facility runs on things that go wrong quietly: a mating tank left in over
 
 What you stop doing: keeping mating returns on a whiteboard, counting a line's clutches from memory, and discovering a water problem only when the fish tell you.
 
-- **Tanks**: **New tank** or **Add many** (consecutive IDs), on a table or a rack grid. Purposes: stock, breeding, mating, experiment, quarantine. Select tanks to set purpose or owner, move, or mark genotyping. The tank view also has the **Sacrifice log**.
+- **Tanks**: **New tank** or **Add many** (consecutive IDs), on a table or a rack grid. Purposes: stock, breeder (the lab's breeding stock, shared with the lab like a mouse Breeder cage), mating (being crossed now), experiment, quarantine. Select tanks to set purpose or owner, move, or mark genotyping. The tank view also has the **Sacrifice log**.
 
 - **Fish**: A group with a headcount, or individuals when you need them; statuses alive, transfer, geno, sac. Move or sac a selection.
 
@@ -1538,7 +1538,7 @@ You may change a record if *any one* of these is true: you own it; it is shared 
 
 - **Shared cages and anything marked lab common** belong to the whole lab. A cage whose purpose is *Breeder* starts out *Shared*; any other cage (an experiment cage, a *Breeding* one) starts *Personal*. Only its owner or an admin shares a cage, makes it personal or gives it to someone else; admins and animal care can still see and change every cage.
 
-- **Giving something away is its owner's call**, in every database. You may edit a shared breeding tank, a lab stock vial or a lab-common plasmid, but only its owner or an admin changes its **Owner** or whom it is shared with (animal care may too, for the animals, cages, tanks and vials they look after). A new owner is always someone in the lab: pick them from the list.
+- **Giving something away is its owner's call**, in every database. You may edit a shared breeder tank, a lab stock vial or a lab-common plasmid, but only its owner or an admin changes its **Owner** or whom it is shared with (animal care may too, for the animals, cages, tanks and vials they look after). A new owner is always someone in the lab: pick them from the list.
 
 - **Everyone sees the lab's databases**, because a census with holes is not a census.
 
@@ -1598,7 +1598,7 @@ Each person in a group is a **Lead** (runs the group: adds and removes people an
 
 Each starts as groups have always worked, so nothing changes until someone changes it. Leads and admins may always do all of them; the owner of a record may always edit it.
 
-- **Shared with a group.** Wherever you choose *Shared* or *Lab common*, your groups are offered as well: a breeder cage, a plasmid or a reagent shared with a group is its members' to edit, as the group allows. For a breeding tank or a lab stock vial, pick the group under **Shared with** in its dialog. Everyone in the lab still sees them.
+- **Shared with a group.** Wherever you choose *Shared* or *Lab common*, your groups are offered as well: a breeder cage, a plasmid or a reagent shared with a group is its members' to edit, as the group allows. For a breeder tank or a lab stock vial, pick the group under **Shared with** in its dialog. Everyone in the lab still sees them.
 
 - **A group's database.** When you make a database, **Who is it for?** offers your groups: only their members (and admins) see it, and they are told it was added. **Share with the group** on the Databases page gives one of your own to a group.
 
@@ -1608,7 +1608,7 @@ Each starts as groups have always worked, so nothing changes until someone chang
 
 - **The colony.** **My groups**, beside My colony, shows the mice and cages of everyone in your groups.
 
-Deleting a group (admins) makes what was shared with it its owner's own again (a breeding tank or a stock vial the lab's, as its purpose says), and a group's databases their maker's.
+Deleting a group (admins) makes what was shared with it its owner's own again (a breeder tank or a stock vial the lab's, as its purpose says), and a group's databases their maker's.
 
 Source: https://biomanager.org/guide/project-groups
 
