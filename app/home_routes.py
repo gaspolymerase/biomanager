@@ -27,7 +27,7 @@ from .models import (
     PlasmidRecord,
     TaskItem,
 )
-from .services import weaning_offset, weaning_due, weaning_title, mouse_is_active
+from .services import weaning_offset, weaning_due, weaning_title
 from . import door, home_layouts, lab_calendar, lab_notebook, notify
 from . import groups as project_groups
 from .calendar_routes import task_can_edit, task_visible_clause
@@ -66,16 +66,8 @@ def home_dashboard():
 
     with SessionLocal() as db_session:
         # ---- Counts ------------------------------------------------------
-        total_mice = db_session.scalar(select(func.count(MouseRecord.id))) or 0
-        # "Active" by the same rule as the mouse sheet's green dot: no date
-        # of death and not in an end status (sac, dead…) or transferred.
-        active_mice = sum(
-            1 for mouse in db_session.scalars(
-                select(MouseRecord).where(MouseRecord.date_of_death.is_(None))).all()
-            if mouse_is_active(mouse))
-        my_mice = db_session.scalar(
-            select(func.count(MouseRecord.id)).where(MouseRecord.owner == g.user.username)
-        ) or 0
+        # The active mice only, and how many are yours (home_layouts.colony_counts).
+        mouse_counts = home_layouts.colony_counts(db_session, g.user.username)
         from . import inventory_service as _inv
         order_modules = [m.id for m in _inv.list_modules(db_session) if m.kind == "orders"]
         # Each orders inventory's own open statuses, not a hard-coded pair.
@@ -214,8 +206,7 @@ def home_dashboard():
                 due_count[db["key"]] = len(rows)
         tiles = home_layouts.count_tiles(
             db_session, databases, g.user.username, builtin_labels(),
-            {"total_mice": total_mice, "active_mice": active_mice, "my_mice": my_mice,
-             "notebook_pages": notebook_pages}, due_count, bool(features.get("notebook", True)))
+            {**mouse_counts, "notebook_pages": notebook_pages}, due_count, bool(features.get("notebook", True)))
         db_session.commit()
 
     hour = datetime.now().hour
@@ -266,8 +257,7 @@ def home_dashboard():
         brief = home_layouts.daily_brief(agenda, today, welfare_view["count"] if welfare_view else 0)
         week = home_layouts.week_view(agenda, track_meta, today, extra.get("todos"))
         needs = home_layouts.needs_look(welfare_view)
-        week_end = today + timedelta(days=6 - today.weekday())
-        colony_due = sum(1 for item in agenda if item["track"].startswith("colony:") and item["due"] <= week_end)
+        colony_due = home_layouts.colony_due(agenda, today)
         db_session.commit()
 
     return render_template(
@@ -290,9 +280,7 @@ def home_dashboard():
         greeting=greeting,
         today_str=i18n.strftime(today, "%A, %b %d, %Y"),
         counts={
-            "total_mice": total_mice,
-            "active_mice": active_mice,
-            "my_mice": my_mice,
+            **mouse_counts,
             "pending_orders": pending_orders,
             "notebook_pages": notebook_pages,
         },

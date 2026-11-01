@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date
 
 from flask import Blueprint, abort, g, jsonify, request, url_for
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from . import home_layouts, inventory_service, lab
 from .db import SessionLocal
@@ -94,14 +94,9 @@ def peek():
         if db is None:
             abort(404)
         username = g.user.username
-        counts = {"total_mice": 0, "active_mice": 0, "my_mice": 0, "notebook_pages": 0}
+        counts = {"active_mice": 0, "my_mice": 0, "notebook_pages": 0}
         if db["kind"] == "colony":
-            from .services import mouse_is_active
-            counts["total_mice"] = session.scalar(select(func.count(MouseRecord.id))) or 0
-            counts["active_mice"] = sum(1 for m in session.scalars(
-                select(MouseRecord).where(MouseRecord.date_of_death.is_(None))) if mouse_is_active(m))
-            counts["my_mice"] = session.scalar(
-                select(func.count(MouseRecord.id)).where(MouseRecord.owner == username)) or 0
+            counts.update(home_layouts.colony_counts(session, username))
 
         tracks = _tracks(db)
         due = []

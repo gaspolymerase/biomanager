@@ -4844,8 +4844,6 @@
   .home-colony { @apply gap-2.5; }
   .home-colony .home-panel-head { @apply mb-0; }
   .home-colony-n { @apply text-[40px] font-medium leading-none tracking-[-0.03em] tabular-nums; }
-  .home-colony-bar { @apply flex h-2 overflow-hidden rounded-full bg-sand-300/40; }
-  .home-colony-bar i { @apply bg-teal-500; }
   .home-colony-split { @apply flex justify-between text-muted; }
   .home-colony-tiles { @apply mt-auto flex gap-1.5; }
   .home-colony-tiles > span { @apply flex flex-1 flex-col rounded-[14px] bg-sand-300/30 px-2.5 py-2; }

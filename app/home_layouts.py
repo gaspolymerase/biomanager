@@ -19,7 +19,7 @@ browsers and needs no schema change.
 """
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import date, timedelta
 
 from flask import url_for
@@ -31,7 +31,8 @@ from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
 from . import litters
-from .services import cage_litter_json, crowded, slot_cages, weaning_offset, weaning_due, weaning_title
+from .services import (cage_litter_json, crowded, mouse_is_active, slot_cages, weaning_offset, weaning_due,
+                       weaning_title)
 
 LAYOUTS = {
     "classic": ("Overview", "columns"),
@@ -249,6 +250,33 @@ def shown_tiles(tiles: list[dict], chosen: list[str] | None) -> list[dict]:
     return [t for t in tiles if t["key"] in chosen]
 
 
+_Living = namedtuple("MouseRecord", ("date_of_death", "status"))
+
+
+def colony_counts(session, username: str) -> dict:
+    """The mouse colony's numbers on Home: its active mice (alive and not in
+    an end status, as the mouse sheet's green dot: services.mouse_is_active)
+    and how many of them are `username`'s. Only living mice count; the
+    colony's history is not a number anyone works from."""
+    active = mine = 0
+    for status, owner in session.execute(select(MouseRecord.status, MouseRecord.owner)
+                                         .where(MouseRecord.date_of_death.is_(None))):
+        if mouse_is_active(_Living(None, status)):
+            active += 1
+            mine += owner == username
+    return {"active_mice": active, "my_mice": mine}
+
+
+def colony_due(agenda: list[dict], today: date) -> dict:
+    """The colony panel's work (build_agenda's colony items): how much falls
+    due from today to Sunday, and how much is already overdue, apart, so a
+    cage long past 30 weeks doesn't count as this week's."""
+    week_end = today + timedelta(days=6 - today.weekday())
+    colony = [item for item in agenda if item["track"].startswith("colony:")]
+    return {"week": sum(1 for item in colony if today <= item["due"] <= week_end),
+            "overdue": sum(1 for item in colony if item["due"] < today)}
+
+
 def count_tiles(session, databases: list[dict], username: str, labels: dict, counts: dict,
                 due: dict, notebook: bool) -> list[dict]:
     """One Counts tile per database, in the sidebar's order, then the
@@ -268,9 +296,8 @@ def count_tiles(session, databases: list[dict], username: str, labels: dict, cou
         kind, module, key = db["kind"], db["module"], db["key"]
         tile = {"key": key, "label": translate_value(labels.get(kind, "")), "icon": "", "value": 0, "sub": "", "url": ""}
         if kind == "colony":
-            tile.update(icon="mouse", value=counts["total_mice"], url=url_for("colony", view="mice"),
-                        sub=gettext("mice · %(active)s active · %(mine)s yours",
-                                    active=counts["active_mice"], mine=counts["my_mice"]))
+            tile.update(icon="mouse", value=counts["active_mice"], url=url_for("colony", view="mice"),
+                        sub=gettext("active mice · %(mine)s yours", mine=counts["my_mice"]))
         elif kind == "zebrafish":
             active = select(func.count(TankRecord.id)).where(TankRecord.active.is_(True))
             tile.update(icon="fish", value=session.scalar(active) or 0, url=url_for("zebrafish", view="tanks"),

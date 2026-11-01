@@ -397,7 +397,10 @@ Overview opens with a bento of glass panels (`.home-bento`, rows of
 `.home-panel` that wrap, `.is-2` twice as wide) above its cards: This week
 (`week_view`: Monday to Sunday from an agenda built 7 days ahead on
 Overview, a dot per kind of work a day (`_tone` of its track; overdue work
-on today) and today's list, today's first), the colony's count, Needs a
+on today) and today's list, today's first), the colony's numbers (its
+active mice and yours, `colony_counts`, which the colony's database
+tile and the sidebar's peek also show; its work due from today to
+Sunday and its work overdue, apart: `colony_due`), Needs a
 look (`needs_look`, from `welfare.home_view`), For you, Your databases (a
 tile per sidebar database with its `count_tiles` number) and the
 notebook's latest pages. The databases and notebook panels always show,

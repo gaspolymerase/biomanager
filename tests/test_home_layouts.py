@@ -251,3 +251,48 @@ class PerDatabaseHomeTests(AppTestCase):
         html = self.get_ok(self.m, "/home")
         first = re.search(r'<div class="rail-group-label">Databases</div>.*?href="([^"]+)"', html, re.S).group(1)
         self.assertRegex(html, r'<a class="btn btn-primary" href="%s">' % re.escape(first))
+
+
+class ColonyPanelTests(AppTestCase):
+    """Overview's mouse colony panel: the active mice only (no total), yours,
+    and its work due this week apart from what is already overdue."""
+
+    def setUp(self):
+        super().setUp()
+        self.post(self.m, "/home/layout", {"layout": "classic"})
+
+    def panel(self) -> dict:
+        html = self.get_ok(self.m, "/home")
+        panel = re.search(r'<a class="home-panel home-colony".*?</a>', html, re.S).group(0)
+        self.assertNotIn("not active", panel)
+        tiles = dict(re.findall(r"<small>([^<]+)</small><b>(\d+)</b>", panel))
+        return {"active": int(re.search(r'class="home-colony-n">(\d+)<', panel).group(1)),
+                "mine": int(re.search(r"active mice · (\d+) yours", panel).group(1)),
+                "week": int(tiles["Due this week"]), "overdue": int(tiles["Overdue"])}
+
+    def test_only_active_mice_are_counted(self):
+        before = self.panel()
+        cage = uniq("C")
+        self.make_mouse(self.m, self.member, cage=cage, date_of_birth=days_ago(60))
+        self.make_mouse(self.m, self.member, cage=cage, date_of_birth=days_ago(60),
+                        status="sac", date_of_death=days_ago(1))
+        self.make_mouse(self.m, self.admin, cage=cage, date_of_birth=days_ago(60))
+        after = self.panel()
+        self.assertEqual(after["active"] - before["active"], 2)
+        self.assertEqual(after["mine"] - before["mine"], 1)          # the one ended isn't yours to count
+
+    def test_work_long_overdue_is_not_this_weeks(self):
+        before = self.panel()
+        self.make_colony(self.m, self.member, n_mice=1, dob=days_ago(30 * 7 + 60))      # past 30 w for two months
+        self.make_mouse(self.m, self.member, cage=uniq("C"), date_of_birth=days_ago(20), status="geno")
+        after = self.panel()
+        self.assertEqual(after["overdue"] - before["overdue"], 1)
+        self.assertEqual(after["week"] - before["week"], 1)           # genotyping, due today
+
+    def test_this_week_runs_from_today_to_sunday(self):
+        from datetime import date
+        from app import home_layouts
+        today = date(2026, 11, 4)                                      # a Wednesday
+        agenda = [{"track": "colony:wean", "due": date(2026, 11, d)} for d in (2, 3, 4, 8, 9)]
+        agenda.append({"track": "calendar", "due": today})
+        self.assertEqual(home_layouts.colony_due(agenda, today), {"week": 2, "overdue": 2})
