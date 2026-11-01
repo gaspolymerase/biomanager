@@ -144,7 +144,6 @@
   "%(n)s things": "%(n)s 件事",
   "<b>%(overdue)s</b> overdue · <b>%(today)s</b> today · <b>%(soon)s</b> in the next 3 days · <b>%(later)s</b> later": "<b>%(overdue)s</b> 已逾期 · <b>%(today)s</b> 今天 · <b>%(soon)s</b> 3 天内 · <b>%(later)s</b> 之后",
   "Nothing due in the next %(n)s days.": "未来 %(n)s 天没有到期的。",
-  "mice · %(active)s active · %(mine)s yours": "只小鼠 · 在养 %(active)s · 你的 %(mine)s",
   "tanks · %(n)s mating": "个鱼缸 · %(n)s 个在配对",
   "plasmids · %(mine)s yours": "个质粒 · 你的 %(mine)s 个",
   "%(things)s · %(n)s due": "%(things)s · %(n)s 项待做",
@@ -193,9 +192,8 @@
   "Every animal looks fine.": "所有动物看起来都正常。",
   "Nothing new for you.": "没有给你的新消息。",
   "A database of your own": "一个你自己的数据库",
-  "%(n)s active": "%(n)s 只在养",
-  "%(n)s not active": "%(n)s 只不在养",
   "Due this week": "本周到期",
   "Not weighed in %(experiment)s": "在%(experiment)s中未称重",
-  "note": "备注"
+  "note": "备注",
+  "active mice · %(mine)s yours": "只在养小鼠 · 你的 %(mine)s"
 }

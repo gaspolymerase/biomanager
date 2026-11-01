@@ -619,13 +619,11 @@
             <span class="home-panel-mark">{{ icon('mouse') }}</span>
             <h2>{{ db_labels.get('colony', 'Mouse colony')|tr }}</h2>
           </header>
-          <span class="home-colony-n">{{ counts.total_mice }}</span>
-          {% set pct = (100 * counts.active_mice / counts.total_mice) if counts.total_mice else 0 %}
-          <span class="home-colony-bar"><i style="width: {{ '%.1f'|format(pct) }}%"></i></span>
-          <span class="home-colony-split"><span>{{ _('%(n)s active', n=counts.active_mice) }}</span><span>{{ _('%(n)s not active', n=counts.total_mice - counts.active_mice) }}</span></span>
+          <span class="home-colony-n">{{ counts.active_mice }}</span>
+          <span class="home-colony-split">{{ _('active mice · %(mine)s yours', mine=counts.my_mice) }}</span>
           <span class="home-colony-tiles">
-            <span><small>{{ _('Mine') }}</small><b>{{ counts.my_mice }}</b></span>
-            <span><small>{{ _('Due this week') }}</small><b>{{ colony_due }}</b></span>
+            <span><small>{{ _('Due this week') }}</small><b>{{ colony_due.week }}</b></span>
+            <span><small>{{ _('Overdue') }}</small><b>{{ colony_due.overdue }}</b></span>
           </span>
         </a>
       {% endif %}

@@ -4,7 +4,7 @@ A look inside it: its count as Home has it, what is due soon, the person's
 own latest records, and its tabs. Nothing in it the person may not see."""
 from __future__ import annotations
 
-from tests.base import AppTestCase, client_for, make_user, one  # isort: skip
+from tests.base import AppTestCase, client_for, days_ago, make_user, one  # isort: skip
 
 
 class PeekTests(AppTestCase):
@@ -14,10 +14,14 @@ class PeekTests(AppTestCase):
         mine = self.make_mouse(client, me)
         other = make_user()
         theirs = self.make_mouse(client_for(other), other)
+        before = client.get("/rail/peek?key=colony").get_json()["value"]
+        self.make_mouse(client, me, status="sac", date_of_death=days_ago(1))    # ended: not counted
+        self.make_mouse(client, me)
         r = client.get("/rail/peek?key=colony")
         self.assertEqual(r.status_code, 200)
         data = r.get_json()
-        self.assertEqual(data["value"], one("select count(*) from mice"))
+        self.assertEqual(data["value"] - before, 1)                    # the active mice, as Home counts them
+        self.assertIn("active mice · 2 yours", data["sub"])
         self.assertIn("/colony", data["url"])
         self.assertEqual([t["label"] for t in data["tabs"]][:3], ["Mice", "Cages", "Litters"])
         titles = [row["title"] for row in data["recent"]]
