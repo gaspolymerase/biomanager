@@ -557,7 +557,8 @@ def handover(session, username: str = "", days: int = AGENDA_DAYS, today: date |
 def _handover_colony(session, who: str, due_by_ref: dict) -> dict:
     from sqlalchemy.orm import selectinload
     from .models import CageRecord, MouseRecord
-    from .services import cage_litter_json, is_breeding_cage, mouse_is_active, open_litters
+    from .services import is_breeding_cage, mouse_is_active
+    from .litter_dates import cage_litter_json, open_litters
     theirs_living = select(MouseRecord.cage_id_fk).where(MouseRecord.owner == who, MouseRecord.date_of_death.is_(None))
     cages, breeding = [], []
     for c in session.scalars(select(CageRecord).options(selectinload(CageRecord.mice), selectinload(CageRecord.rack))

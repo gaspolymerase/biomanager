@@ -49,6 +49,15 @@ a cage or a litter, a cage into a rack position, a mouse rack's own
 dialog): the colony's pages, the API and the spreadsheet import all call
 it, so none of them imports another's pages for it.
 
+`app/services.py` is what is left of the shared helpers from before the
+pages had modules, and its parts are moving out by topic.
+`app/litter_dates.py` is when a litter is due (the lab's weaning and
+genotyping days, a cage's open litters, `weaning_due`, the list Home, the
+calendar, the cage sheet and the reminder emails all read);
+`app/calendar_feeds.py` reads the calendars a person subscribes to (a
+remote .ics, a linked Google Calendar). A new helper goes in the module of
+its topic, not in `services.py`.
+
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
 not endpoints, so a renamed one would break pages no test opens.
@@ -1203,10 +1212,10 @@ Who may change what lives in one place, `app/access.py`:
   the first is weaned. Each birth is a row: `born`, `pups` and `dam` if
   given, `litter_id_fk` (the litter of mice Genotyping made of its pups),
   `weaned_on`. `mouse_cages.date_give_birth` stays, as the cage's oldest
-  litter not yet weaned (`services.refresh_birth_date`, called wherever
+  litter not yet weaned (`litter_dates.refresh_birth_date`, called wherever
   litters change), so the sheet's *Litter born* cell, the sync view, the
   exports and every other reader of one date read as before; typing in that
-  cell corrects the oldest (`litters.set_born`, then `services.set_birth_date`;
+  cell corrects the oldest (`litters.set_born`, then `litter_dates.set_birth_date`;
   the row's `date_give_birth_was` keeps a stale row from writing it back),
   and only on a Breeding cage, like New cage's date; clearing it works on any. `open_litters()` are the ones
   not weaned, `waiting_litters()` those whose pups aren't all recorded
@@ -3205,7 +3214,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   of its living pups are and `cages` every one (a litter is in a cage only
   through its mice, as in `weaning_due`), and `/litters?cage=` lists those
   with a living pup in it; a cage's `litters` are the litters born in it not
-  yet weaned (`services.cage_litter_json`: `born`, `pups`, `dam`, `litter`,
+  yet weaned (`litter_dates.cage_litter_json`: `born`, `pups`, `dam`, `litter`,
   `age_days`, `wean_due`, `genotyping_due`), `litter_born` the oldest's date;
   an item of `/due` about one carries it as `litter`, and its `propose` names
   it when the cage has two; `/experiments/<id>` is

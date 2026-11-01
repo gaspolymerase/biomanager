@@ -511,7 +511,7 @@ _CAGE_LITTERS = selectinload(CageRecord.cage_litters).selectinload(CageLitter.li
 
 
 def cage_json(c: CageRecord) -> dict:
-    from .services import cage_litter_json, open_litters
+    from .litter_dates import cage_litter_json, open_litters
     living = sorted(m.mouse_id for m in c.mice if m.date_of_death is None)
     return {
         # Each litter born in it not yet weaned, oldest first (a trio's two
@@ -619,7 +619,7 @@ def rack_update(name: str):
 
 def litter_json(lt: LitterRecord) -> dict:
     # A litter is in a cage through its pups (made in the cage at genotyping,
-    # moved out at weaning; services.weaning_due reads it the same way):
+    # moved out at weaning; litter_dates.weaning_due reads it the same way):
     # `cage` is where most of its living pups are, `cages` every one.
     held = Counter(m.cage.cage_id for m in lt.mice if m.date_of_death is None and m.cage is not None)
     from .positions import natural, natural_sorted

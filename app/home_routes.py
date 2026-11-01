@@ -27,7 +27,7 @@ from .models import (
     PlasmidRecord,
     TaskItem,
 )
-from .services import weaning_offset, weaning_due, weaning_title
+from .litter_dates import weaning_offset, weaning_due, weaning_title
 from . import door, home_layouts, lab_calendar, lab_notebook, notify
 from . import groups as project_groups
 from .calendar_routes import task_visible_clause

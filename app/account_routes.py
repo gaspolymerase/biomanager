@@ -39,7 +39,8 @@ from .models import (
     UserAccount,
     UserIdentity,
 )
-from .services import csv_text, add_notification, weaning_offset, open_litters
+from .services import csv_text, add_notification
+from .litter_dates import weaning_offset, open_litters
 from . import appearance, devices, door, home_layouts, notify, oidc, server_updates, telemetry
 from . import groups as project_groups
 from .inventory_service import set_setting

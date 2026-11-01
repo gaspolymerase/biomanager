@@ -541,7 +541,7 @@ def _cage_said(s, key, value) -> str:
 
 
 def _open_litters(cage) -> list:
-    from .services import open_litters
+    from .litter_dates import open_litters
     return open_litters(cage)
 
 

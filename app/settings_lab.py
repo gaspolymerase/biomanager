@@ -63,7 +63,7 @@ def statistics(session) -> dict:
     coming: list[tuple[str, int]] = []
     today = date.today()
     if on.get("colony"):
-        from .services import weaning_due
+        from .litter_dates import weaning_due
         coming.append(("Litters to wean in the next 7 days", len(weaning_due(session, today, today + timedelta(days=7)))))
         coming.append(("Pups waiting to be genotyped", session.scalar(select(func.count(MouseRecord.id)).where(
             MouseRecord.status == "geno", MouseRecord.date_of_death.is_(None))) or 0))

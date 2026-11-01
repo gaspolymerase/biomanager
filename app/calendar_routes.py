@@ -32,15 +32,14 @@ from .models import (
     Experiment,
     TaskItem,
 )
-from .services import (
-    derive_auto_calendar_items,
-    fetch_ics_subscription,
+from .calendar_feeds import (
+    GOOGLE_OAUTH_SCOPES,
     fetch_google_calendar_items,
+    fetch_ics_subscription,
     google_client_config,
     google_oauth_configured,
-    GOOGLE_OAUTH_SCOPES,
-    parse_date,
 )
+from .services import derive_auto_calendar_items, parse_date
 from . import experiment_steps, lab_calendar
 from . import groups as project_groups
 from .flask_app import app
@@ -235,7 +234,6 @@ def calendar_items(db_session, start: date | None, end: date | None, owner: str 
         for sub in subs:
             items.extend(fetch_ics_subscription(sub, db_session))
         try:
-            from .services import fetch_google_calendar_items  # optional, may not exist yet
             for link in db_session.scalars(
                 select(GoogleCalendarLink)
                 .where(GoogleCalendarLink.owner == g.user.username)

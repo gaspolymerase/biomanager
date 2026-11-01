@@ -26,7 +26,7 @@ from . import groups, lab, notify, telemetry, whats_new
 from .db import SessionLocal
 from .i18n import gettext, translate_value
 from .models import NotificationRecord, UserAccount
-from .services import weaning_offset
+from .litter_dates import weaning_offset
 
 bp = Blueprint("lab", __name__)
 

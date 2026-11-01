@@ -4,7 +4,7 @@ Only a Breeding (mating) cage has litters (services.is_breeding_cage): it
 is the only cage with Litter born, Genotyping and Wean, and its litters are
 its pups. A mating cage often holds two females, so a second litter can
 come before the first is weaned; each is its own CageLitter, with its own
-weaning and genotyping days (services.open_litters).
+weaning and genotyping days (litter_dates.open_litters).
 
 Every way into a cage's litters asks here: the cage's buttons and dialogs,
 its sheet's Litter born cell and New cage, an assistant's proposals
@@ -19,8 +19,16 @@ from datetime import date, timedelta
 from .days import fmt_day
 from .i18n import gettext, ngettext
 from .models import CageLitter
-from .services import (MIN_WEAN_AGE_DAYS, find_open_litter, is_breeding_cage, mouse_is_active, open_litters,
-                       refresh_birth_date, set_birth_date, waiting_litters, weaning_offset)
+from .services import is_breeding_cage, mouse_is_active
+from .litter_dates import (
+    MIN_WEAN_AGE_DAYS,
+    find_open_litter,
+    open_litters,
+    refresh_birth_date,
+    set_birth_date,
+    waiting_litters,
+    weaning_offset,
+)
 
 MAX_PUPS = 40           # the most pups one litter can have
 PUP_AGE_DAYS = 28       # younger than this, mice in a cage are its pups

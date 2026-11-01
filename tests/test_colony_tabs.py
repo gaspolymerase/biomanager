@@ -287,7 +287,7 @@ class GiveBirthGenotypingTests(AppTestCase):
 
 
 class WeanDueTests(AppTestCase):
-    """Weaning is P21 (services.WEAN_OFFSET_DAYS), from the cage's birth
+    """Weaning is P21 (litter_dates.WEAN_OFFSET_DAYS), from the cage's birth
     date or, failing that, from its pups' litter."""
 
     def wean_due(self, cage, **fields):
@@ -309,7 +309,7 @@ class WeanDueTests(AppTestCase):
 
 class OneWeaningListTests(AppTestCase):
     """Home, the calendar and the cage sheet read one list of what is due
-    to be weaned (services.weaning_due), and weaning takes a litter off it."""
+    to be weaned (litter_dates.weaning_due), and weaning takes a litter off it."""
 
     def calendar_weans(self, client):
         r = client.get("/calendar/events.json", query_string={"start": days_ago(30), "end": days_ahead(30)})

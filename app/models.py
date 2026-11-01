@@ -256,7 +256,7 @@ class LitterRecord(Base):
     total_pups: Mapped[int] = mapped_column(Integer, default=0)
     notes: Mapped[str] = mapped_column(Text, default="")
     # Set when its cage is weaned: from then on it is not "due to wean"
-    # anywhere (Home, the calendar, the cage sheet; services.weaning_due).
+    # anywhere (Home, the calendar, the cage sheet; litter_dates.weaning_due).
     weaned_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -341,7 +341,7 @@ class CageLitter(Base):
     date, how many pups if counted, its dam and sire if known, and its own weaning
     and genotyping days, until it is weaned. Genotyping makes its pups a
     litter of mice (`litter`). The cage's date_give_birth is its oldest
-    litter not yet weaned (services.refresh_birth_date), so everything that
+    litter not yet weaned (litter_dates.refresh_birth_date), so everything that
     read one date per cage reads the same as before (revision 0037)."""
 
     __tablename__ = "cage_litters"

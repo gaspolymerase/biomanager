@@ -45,7 +45,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from . import access, actions, lab, sync_clock
+from . import access, actions, lab, litter_dates, sync_clock
 from .db import SessionLocal
 from .i18n import gettext
 from .positions import natural_sorted
@@ -111,10 +111,9 @@ def cage_row(c: CageRecord, user=None) -> dict:
 def cage_litters(c: CageRecord) -> list[dict]:
     """The cage's litters not yet weaned, oldest first: what the phone lists
     and what its Genotyping and Wean ask between (litter: the birth date)."""
-    from . import services
     return [{"born": _d(cl.born), "pups": cl.pups, "dam": cl.dam or "", "sire": cl.sire or "", "litter": cl.litter_id_fk,
-             "wean_due": _d(services.litter_wean_due(cl)), "genotyping_due": _d(services.litter_genotyping_due(cl))}
-            for cl in services.open_litters(c)]
+             "wean_due": _d(litter_dates.litter_wean_due(cl)), "genotyping_due": _d(litter_dates.litter_genotyping_due(cl))}
+            for cl in litter_dates.open_litters(c)]
 
 
 def litter_row(lt: LitterRecord) -> dict:
@@ -217,7 +216,7 @@ def snapshot():
             .order_by(StockUnit.module_id_fk, StockUnit.number))] if modules else []
         stock_racks = [{"id": r.id, "module": modules[r.module_id_fk], "name": r.name}
                        for r in s.scalars(select(StockRack)) if r.module_id_fk in modules]
-        due = services.weaning_due(s, today - timedelta(days=7), today + timedelta(days=TASK_DAYS))
+        due = litter_dates.weaning_due(s, today - timedelta(days=7), today + timedelta(days=TASK_DAYS))
         options = services.dropdown_options_map(s)
         lab_name = lab.lab_name(s)
     return jsonify({"ok": True, "cursor": cursor, "taken": datetime.utcnow().isoformat(timespec="seconds") + "Z",
@@ -615,9 +614,9 @@ def _check(s, user, op: dict, change: dict) -> tuple[str, list[dict], dict, str]
         seen = saw("cage", target)
         mine = fields.get("date") or date.today().isoformat()
         now = _d(target.date_give_birth)
-        # A cage can have two litters (services.open_litters): any of them
+        # A cage can have two litters (litter_dates.open_litters): any of them
         # born that day is this one, recorded already.
-        if now == mine or any(_d(cl.born) == mine for cl in services.open_litters(target)):
+        if now == mine or any(_d(cl.born) == mine for cl in litter_dates.open_litters(target)):
             return "done", [], change, gettext("That birth date was recorded already.")
         # Another litter keeps the earlier one, whatever it became meanwhile;
         # a correction is of the date the phone saw.
