@@ -2,7 +2,7 @@
 feed (/calendar/events.json), adding, changing, ticking and deleting an
 event or a to-do, calendar subscriptions (an .ics link) and the Google
 Calendar link. Who may see and change a to-do is decided here
-(task_visible_clause, task_can_edit, task_denied), and the Board, the
+(task_visible_clause, access.can_edit_task, task_denied), and the Board, the
 devices' sync and Home ask the same functions.
 
 Repeats, protocol timelines, equipment booking and the dates the other
@@ -114,22 +114,6 @@ def task_visible_clause(user=None):
     return clause
 
 
-def task_can_edit(t, user=None) -> bool:
-    """A lab to-do is anyone's to tick off and change, a group's its
-    members' (and admins'); a personal one its owner's alone, not even an
-    admin's."""
-    if lab_calendar.task_is_personal(t):
-        return (t.owner or "") == access.username(user)
-    return access.can_edit(t, user, shared=project_groups.record_editable(t, user, what="todos"))
-
-
-def task_can_manage(t, user=None) -> bool:
-    """Delete it or change whose it is: its owner (a shared one also an admin)."""
-    if lab_calendar.task_is_personal(t):
-        return (t.owner or "") == access.username(user)
-    return access.can_manage(t, user)
-
-
 def task_denied(t) -> str:
     if t.is_shared and t.share_group_id:
         return gettext("That to-do is %(group)s's.",
@@ -177,7 +161,7 @@ def _serialize_task(t: TaskItem) -> dict:
             # Whose to-do it is: "0" its owner's, "1" the lab's, "g<id>" a group's.
             "audience": project_groups.record_value(t),
             "audienceLabel": project_groups.label(t.is_shared, t.share_group_id, personal="", lab="Lab"),
-            "readOnly": has_request_context() and g.get("user") is not None and not task_can_edit(t),
+            "readOnly": has_request_context() and g.get("user") is not None and not access.can_edit_task(t),
         },
     }
 
@@ -643,10 +627,10 @@ def calendar_item_update(item_key: str):
             row = db_session.get(TaskItem, row_id)
             if row is None:
                 return jsonify({"ok": False}), 404
-            if not task_can_edit(row):
+            if not access.can_edit_task(row):
                 return jsonify({"ok": False, "error": task_denied(row)}), 403
             if "audience" in payload and project_groups.differs(row, payload["audience"]):
-                if not task_can_manage(row):
+                if not access.can_manage_task(row):
                     return jsonify({"ok": False, "error": gettext(
                         "Only %(owner)s or an admin can change whose to-do it is.",
                         owner=row.owner or gettext("its owner"))}), 403
@@ -708,7 +692,7 @@ def calendar_item_toggle(item_key: str):
         row = db_session.get(TaskItem, int(raw_id))
         if row is None:
             return jsonify({"ok": False}), 404
-        if not task_can_edit(row):
+        if not access.can_edit_task(row):
             return jsonify({"ok": False, "error": task_denied(row)}), 403
         if row.done_at is None:
             row.done_at = datetime.utcnow()
@@ -731,7 +715,7 @@ def calendar_item_delete(item_key: str):
         row = db_session.get(TaskItem if kind == "task" else CalendarEvent, row_id)
         if row is None:
             return jsonify({"ok": False}), 404
-        if kind == "task" and not task_can_manage(row):
+        if kind == "task" and not access.can_manage_task(row):
             return jsonify({"ok": False, "error": gettext("Only %(owner)s can delete this to-do.",
                                                           owner=row.owner or gettext("its owner"))}), 403
         if kind != "task" and not lab_calendar.event_can_edit(row):

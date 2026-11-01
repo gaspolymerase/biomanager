@@ -84,6 +84,7 @@ from .services import (
 from . import bulk, experiment_plan, inventory_routes, litters, rack_layout, sheet_paging, stewardship
 from . import experiments as experiment_pages
 from . import groups as project_groups
+from .access import can_edit_cage, can_edit_mouse
 from .colony import (apply_cage_position, change_mouse, create_transfer_copy, future_birth, mouse_rack_from_form,
                      populate_mouse_from_form, set_mouse_cage, set_mouse_litter)
 from .days import fmt_day
@@ -117,15 +118,6 @@ COLONY_VIEW_META: dict[str, dict[str, str]] = {
     "settings":    {"label": "Dropdowns", "icon": "sliders",
                     "blurb": "The choices offered in the colony's dropdowns (statuses, purposes, strains…)"},
 }
-
-
-def can_edit_mouse(mouse: MouseRecord) -> bool:
-    """Delegates to the single access policy in app/access.py."""
-    return access.can_edit_mouse(mouse)
-
-
-def can_edit_cage(cage: CageRecord) -> bool:
-    return access.can_edit_cage(cage)
 
 
 def deny(record, view: str = "mice"):

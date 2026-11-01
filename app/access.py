@@ -170,6 +170,69 @@ def can_edit_mouse(mouse, user=None) -> bool:
     return can_edit(mouse, user, shared=cage_editable_shared(getattr(mouse, "cage", None), user))
 
 
+
+# Tank purposes the whole lab works out of: the breeder tanks, its breeding
+# stock, like the mouse Breeder cages ("shared" is an older value).
+SHARED_TANK_PURPOSES = {"breeder", "shared"}
+# Fly and worm vials and plates that are the lab's because of their purpose;
+# crosses, experiments and progeny belong to whoever set them up.
+LAB_STOCK_PURPOSES = ("stock", "backup", "maintenance", "starved")
+
+
+def tank_shared(tank) -> bool:
+    """A zebrafish tank the lab works out of because of its purpose."""
+    return (getattr(tank, "purpose", "") or "").strip().lower() in SHARED_TANK_PURPOSES
+
+
+def can_edit_fish(record, user=None) -> bool:
+    """can_edit for the zebrafish database. A tank is editable when it is
+    yours, unowned or a shared breeder tank (a breeder tank shared with a
+    project group, its members'); a fish row follows its tank. A line is
+    its owner's (lines from before owners stay open). Racks carry no owner
+    and stay open to the lab; deleting a water system is can_edit_rack."""
+    from . import groups
+    if type(record).__name__ == "FishRecord":
+        record = record.tank or record
+    if type(record).__name__ == "TankRecord":
+        return can_edit(record, user, shared=tank_shared(record)
+                        and groups.record_editable(record, user, shared=True))
+    return can_edit(record, user)
+
+
+def can_edit_unit(unit, user=None) -> bool:
+    """A fly or worm vial or plate: stocks, backups and maintenance plates
+    are the lab's (shared with a project group, its members'); the rest
+    belong to whoever set them up."""
+    from . import groups
+    shared = unit.purpose in LAB_STOCK_PURPOSES and groups.record_editable(unit, user, shared=True)
+    return can_edit(unit, user, shared=shared)
+
+
+def can_edit_item(item, user=None) -> bool:
+    """An inventory item (a reagent, an antibody, a sample): lab common is
+    everyone's to edit; shared with a project group, its members'."""
+    from . import groups
+    return can_edit(item, user, shared=groups.record_editable(item, user))
+
+
+def can_edit_task(task, user=None) -> bool:
+    """A lab to-do is anyone's to tick off and change, a group's its
+    members' (and admins'); a personal one its owner's alone, not even an
+    admin's."""
+    from . import groups, lab_calendar
+    if lab_calendar.task_is_personal(task):
+        return (task.owner or "") == username(user)
+    return can_edit(task, user, shared=groups.record_editable(task, user, what="todos"))
+
+
+def can_manage_task(task, user=None) -> bool:
+    """Delete a to-do or change whose it is: its owner (a shared one also an
+    admin)."""
+    from . import lab_calendar
+    if lab_calendar.task_is_personal(task):
+        return (task.owner or "") == username(user)
+    return can_manage(task, user)
+
 def yours_to_use(mouse, user=None) -> bool:
     """A mouse this person may take for an experiment: theirs, nobody's, or
     in a cage shared with them. An admin may edit everyone's mice, which

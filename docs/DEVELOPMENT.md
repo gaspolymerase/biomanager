@@ -1157,6 +1157,16 @@ Who may change what lives in one place, `app/access.py`:
   refusal in words or None. Mice stay the colony's: anyone who may edit a
   mouse in a shared cage may take it (Pick), so `colony.change_mouse` checks
   only that the new owner is in the lab. `tests/test_stewardship.py`.
+- **Each database's edit rule is in `access.py` too**, never in its pages,
+  so the API, the import and the experiments ask the same function the
+  page does: `can_edit_mouse()` and `can_edit_cage()` for the colony,
+  `can_edit_fish()` for zebrafish (a tank shared by its purpose,
+  `SHARED_TANK_PURPOSES`, a fish row following its tank),
+  `can_edit_unit()` for fly and worm vials (`LAB_STOCK_PURPOSES`),
+  `can_edit_item()` for inventory, `can_edit_task()` and
+  `can_manage_task()` for to-dos. A database's settings are
+  `can_configure()` in every kind (its creator, a facility manager or an
+  admin), and a rack, box or incubator is `can_edit_rack()`.
 - **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
   *Breeding* is a mating cage: only it gets Litter born, Genotyping and
   Wean (`services.is_breeding_cage()`, the row's `can_breed` and
@@ -1337,9 +1347,9 @@ To-dos and events: `task_visible_clause()` (calendar_routes.py) and
 `lab_calendar.event_visible_clause()` are the person's own, the lab's
 (`is_shared`, no group) and their groups'; that is what the calendar, Home
 and the phone feed show. A personal one is its owner's alone, admins
-included. `task_can_edit()` lets the lab or the group tick off and change a
+included. `access.can_edit_task()` lets the lab or the group tick off and change a
 shared to-do; deleting it, or changing whose it is, is its owner's or an
-admin's (`task_can_manage()`). A shared event is changed by its owner or an
+admin's (`access.can_manage_task()`). A shared event is changed by its owner or an
 admin (`lab_calendar.event_can_edit()`). Events default to the lab's
 (`calendar_events.is_shared` defaults true, and revision 0015 left every
 existing event shared); to-dos to their owner's. Away soon lists someone's
@@ -3212,8 +3222,8 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   inventory items go through `inventory_routes._item_from_form`, vials
   through `stock_routes._unit_from_form` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
-  same functions (`can_edit_mouse`, `_can_edit`, `can_edit`,
-  `access.can_edit_experiment`). A switched-off built-in database is a 404.
+  same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
+  `can_edit_experiment`). A switched-off built-in database is a 404.
 - **Racks**: `GET /racks` lists the colony's cage racks (`rack_json`:
   size, `naming`, example `positions`, how many cages); `PATCH
   /racks/<name>` takes `RACK_FIELDS` (`naming` merged over the rack's own,

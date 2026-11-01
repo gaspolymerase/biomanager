@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from .db import SessionLocal
-from . import i18n, lab
+from . import access, i18n, lab
 from .models import (
     CalendarEvent,
     LitterRecord,
@@ -30,7 +30,7 @@ from .models import (
 from .services import weaning_offset, weaning_due, weaning_title
 from . import door, home_layouts, lab_calendar, lab_notebook, notify
 from . import groups as project_groups
-from .calendar_routes import task_can_edit, task_visible_clause
+from .calendar_routes import task_visible_clause
 from .days import fmt_day
 from .flask_app import app
 from .zebrafish_routes import zebrafish_home_summary
@@ -329,7 +329,7 @@ def _home_extra_cards(db_session, shown: set, today: date) -> dict:
         out["todos"] = [{"id": t.id, "title": t.title, "due": t.due_date,
                          "overdue": bool(t.due_date and t.due_date < today),
                          "whose": project_groups.label(t.is_shared, t.share_group_id, personal="", lab="Lab"),
-                         "can_tick": task_can_edit(t)} for t in rows]
+                         "can_tick": access.can_edit_task(t)} for t in rows]
     if "bookings" in shown:
         from .models import EquipmentBooking
         start = datetime.combine(today, datetime.min.time())

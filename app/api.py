@@ -407,7 +407,6 @@ def mouse_update(mouse_id: int):
     "version" (as the mouse was read), a mouse changed since is refused (409)
     instead of overwritten."""
     from .colony import change_mouse
-    from .colony_routes import can_edit_mouse
     from .services import mouse_display_row, split_genotype
     data = dict(_json())
     seen = data.pop("version", None)
@@ -416,7 +415,7 @@ def mouse_update(mouse_id: int):
         abort(400, f"A mouse has no {', '.join(unknown)} to change; it has {', '.join(MOUSE_FIELDS)}.")
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
-        if not can_edit_mouse(m):
+        if not access.can_edit_mouse(m):
             abort(403, access.reason_denied(m))
         if seen is not None and seen != m.sync_version:
             abort(409, f"Mouse {m.mouse_id} was changed since you read it (by {m.updated_by or 'someone'}). "
@@ -475,7 +474,6 @@ def weights(mouse_id: int):
 def weigh(mouse_id: int):
     """{"grams": 24.1, "date": "2026-09-28" (today if left out), "notes": ""}:
     one weight a day, so the same day again replaces it."""
-    from .colony_routes import can_edit_mouse
     data = _json()
     try:
         grams = float(data.get("grams"))
@@ -492,7 +490,7 @@ def weigh(mouse_id: int):
     notes = str(data.get("notes") or "").strip()[:500]
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
-        if not can_edit_mouse(m):
+        if not access.can_edit_mouse(m):
             abort(403, access.reason_denied(m))
         w = s.scalar(select(MouseWeight).where(MouseWeight.mouse_id_fk == m.id, MouseWeight.weigh_date == on))
         created = w is None
@@ -882,7 +880,7 @@ UNIT_FIELDS = ("genotype", "female_genotype", "male_genotype", "owner", "purpose
 
 @bp.patch("/stocks/<key>/units/<int:number>")
 def stock_unit_update(key: str, number: int):
-    from .stock_routes import Invalid, can_edit, _unit_from_form
+    from .stock_routes import Invalid, _unit_from_form
     data = _json()
     unknown = sorted(set(data) - set(UNIT_FIELDS))
     if unknown:
@@ -892,7 +890,7 @@ def stock_unit_update(key: str, number: int):
         u = s.scalar(select(StockUnit).where(StockUnit.module_id_fk == module.id, StockUnit.number == number))
         if u is None:
             abort(404, f"There is no {mv.unit} {number}.")
-        if not can_edit(u):
+        if not access.can_edit_unit(u):
             abort(403, access.reason_denied(u))
         form = MultiDict({k: str(v if v is not None else "") for k, v in data.items() if k not in ("rack", "position")})
         if "rack" in data or "position" in data:
@@ -1049,12 +1047,12 @@ def inventory_create(key: str):
 
 @bp.patch("/inventories/<key>/items/<int:number>")
 def inventory_update(key: str, number: int):
-    from .inventory_routes import Refused, _can_edit, _item_from_form
+    from .inventory_routes import Refused, _item_from_form
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
         item = _item(s, module, mv, number)
-        if not _can_edit(item):
+        if not access.can_edit_item(item):
             abort(403, access.reason_denied(item, noun=mv.item_noun))
         form = _item_form(s, module, mv, data, item)
         try:

@@ -134,10 +134,9 @@ def weight_row(w: MouseWeight) -> dict:
 
 
 def task_row(t: TaskItem, user=None) -> dict:
-    from .calendar_routes import task_can_edit
     return {"id": t.id, "title": t.title, "due": _d(t.due_date), "status": t.status or "", "done": t.done_at is not None,
             "priority": t.priority or "", "owner": t.owner or "", "shared": bool(t.is_shared),
-            "notes": t.notes or "", "edit": task_can_edit(t, user) if user is not None else False,
+            "notes": t.notes or "", "edit": access.can_edit_task(t, user) if user is not None else False,
             "v": t.sync_version}
 
 

@@ -848,7 +848,7 @@ class FishTarget(Target):
                 "racks": {r.name.lower(): r for r in session.scalars(select(FishRack))}}
 
     def create(self, session, ctx, v, extras):
-        from .zebrafish_routes import (ZfInputError, apply_fish_position, zf_apply_fish_status, zf_can_edit,
+        from .zebrafish_routes import (ZfInputError, apply_fish_position, zf_apply_fish_status,
                                        zf_denied, zf_fish_from_form)
         from .models import FishLine, FishRecord, TankRecord
         warnings: list[str] = []
@@ -883,7 +883,7 @@ class FishTarget(Target):
                 problem = apply_fish_position(session, tank, str(rack.id), v.get("position", ""))
                 if problem:
                     warnings.append(problem)
-        elif not zf_can_edit(tank):
+        elif not access.can_edit_fish(tank):
             raise RowError(zf_denied(tank))
         fish = FishRecord(tank=tank, count=1, sex="mixed", status="alive")
         form = {k: v[k] for k in ("individual_id", "genotype", "count", "sex", "status", "date_of_fertilization")
@@ -1339,7 +1339,6 @@ ATTR_ALIASES = {
 
 def inventory_target(session, module) -> Target:
     from . import inventory_service as svc
-    from .inventory_routes import _can_configure
     mv = svc.view(module)
     required = set(mv.required)
     fields = [
@@ -1392,7 +1391,7 @@ def inventory_target(session, module) -> Target:
     for f in fields:
         if f.key in required:
             f.required = True
-    can_add = _can_configure(module)
+    can_add = access.can_configure(module)
     return InventoryTarget(
         key=f"inventory:{module.key}", title=translate_value(mv.label), noun=mv.item_noun, nouns=mv.item_noun_plural,
         back_url=url_for("inventory.module", key=module.key), module=module, mv=mv, fields=fields,

@@ -14,7 +14,7 @@ A database writes only what one record needs:
         return bulk.NOT_YOURS              # may edit it, not this change
         return "tank T1 still holds fish"  # refused, said under the report
 
-    done = bulk.run(s, records, apply, may_edit=zf_can_edit,
+    done = bulk.run(s, records, apply, may_edit=access.can_edit_fish,
                     action="update", what="set purpose", table="tanks")
     bulk.report(done, gettext("Set purpose"), "tank")
 """

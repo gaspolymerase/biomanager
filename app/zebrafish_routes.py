@@ -41,9 +41,6 @@ FISH_DEAD_STATUSES = {"sac", "dead"}
 # How a sac-log entry written by a status change begins; reviving the row
 # removes that entry, not ones logged by hand.
 FISH_STATUS_SAC_REASON = "Status set to "
-# Tank purposes the whole lab works out of: the breeder tanks, the lab's
-# breeding stock, like the mouse Breeder cages ("shared" is an older value).
-FISH_SHARED_PURPOSES = {"breeder", "shared"}
 
 
 def _fish_age_label(dof):
@@ -68,31 +65,12 @@ def _fish_age_label(dof):
 # ---- Rules shared by every zebrafish write ---------------------------------
 
 
-def zf_tank_shared(tank) -> bool:
-    return (getattr(tank, "purpose", "") or "").strip().lower() in FISH_SHARED_PURPOSES
-
-
-def zf_can_edit(record) -> bool:
-    """access.can_edit for fish records. A tank is editable when it is
-    yours, unowned or a shared breeder tank; a fish row follows its tank.
-    A line is its owner's (lines from before owners stay open). Racks carry
-    no owner and stay open to the lab; deleting a water system is
-    access.can_edit_rack (its creator or an admin)."""
-    if isinstance(record, FishRecord):
-        record = record.tank or record
-    if isinstance(record, TankRecord):
-        # A breeder tank shared with a project group is its members'.
-        return access.can_edit(record, shared=zf_tank_shared(record)
-                               and project_groups.record_editable(record, shared=True))
-    return access.can_edit(record)
-
-
 def zf_denied(record) -> str:
     """Why a record is read only, in words worth showing."""
     if isinstance(record, FishRecord) and record.tank is not None:
         record = record.tank
     owner = (getattr(record, "owner", "") or "").strip() or gettext("someone else")
-    if isinstance(record, TankRecord) and zf_tank_shared(record) and record.share_group_id:
+    if isinstance(record, TankRecord) and access.tank_shared(record) and record.share_group_id:
         return gettext("Tank %(tank)s is shared with %(group)s, which you are not in. Ask %(owner)s, or an admin, to make the change.", tank=record.tank_id,
                        group=project_groups.name_of(record.share_group_id), owner=owner)
     if isinstance(record, TankRecord):
@@ -376,7 +354,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
         for n, t in enumerate(tanks if tank_tab else []):
             groups = fish_in.get(t.id, [])
             total = sum(f.count or 0 for f in groups if fish_alive(f))
-            editable = zf_can_edit(t)
+            editable = access.can_edit_fish(t)
             position = fish_position_label(t)
             returnable = zf_is_mating(t) and t.active
             drawn = (tank_ids is None and (not paged or n < inventory_routes.FIRST_PAGE)) or (
@@ -384,7 +362,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
             if not (drawn or returnable or tank_mode != "table"):
                 tank_rows.append({
                     "row": t, "total_fish": total, "position": position, "editable": editable,
-                    "attrs": custom_fields.values(t), "mine": t.owner == me, "shared": zf_tank_shared(t),
+                    "attrs": custom_fields.values(t), "mine": t.owner == me, "shared": access.tank_shared(t),
                     "fish_rows": len(groups), "returnable": False, "return_plan": []})
                 continue
             if drawn:
@@ -408,8 +386,8 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
             tank_rows.append({
                 "row": t, "total_fish": total, "position": position, "editable": editable,
                 "attrs": custom_fields.values(t),
-                "mine": t.owner == me, "shared": zf_tank_shared(t), "fish_rows": len(groups),
-                "share_group": project_groups.name_of(t.share_group_id) if zf_tank_shared(t) else "",
+                "mine": t.owner == me, "shared": access.tank_shared(t), "fish_rows": len(groups),
+                "share_group": project_groups.name_of(t.share_group_id) if access.tank_shared(t) else "",
                 "returnable": returnable, "return_plan": plan,
                 "return_ready": all(p["home"] for p in plan),
                 "return_confirm": zf_return_confirm(t, [(p["fish"].count or 0, p["home_code"]) for p in plan]),
@@ -433,7 +411,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
         fish_rows = []
         for f in fish:
             tank = f.tank
-            editable = zf_can_edit(f)
+            editable = access.can_edit_fish(f)
             days = (today - f.date_of_fertilization).days if f.date_of_fertilization else None
             fish_rows.append({
                 "row": f, "tank": tank, "alive": fish_alive(f), "editable": editable,
@@ -452,7 +430,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
         clutch_rows = []
         for c in clutches:
             dof = c.date_of_fertilization
-            editable = zf_can_edit(c)
+            editable = access.can_edit_fish(c)
             n_fish = clutch_fish_refs.get(c.id, 0)
             clutch_rows.append({
                 "row": c,
@@ -490,7 +468,7 @@ def _zebrafish_context(active_view: str, tank_ids: set[int] | None = None):
                     (children.get(ln.id, 0), "child line", "child lines")]
             used = ", ".join(bulk.count(n, one, many) for n, one, many in uses if n)
             live = live_by_line.get(ln.id, 0)
-            line_editable = zf_can_edit(ln)
+            line_editable = access.can_edit_fish(ln)
             line_rows.append({
                 "row": ln, "tanks": n_tanks, "live": live, "active": live > 0, "used": used,
                 "editable": line_editable, "mine": ln.owner == me,
@@ -655,7 +633,7 @@ def zebrafish_home_summary() -> dict:
         return {
             "any": bool(s.scalar(select(func.count(TankRecord.id)))),
             "mating": [{"id": t.id, "tank_id": t.tank_id, "due": t.mating_return_at, "owner": t.owner,
-                        "overdue": t.mating_return_at < date.today(), "editable": zf_can_edit(t),
+                        "overdue": t.mating_return_at < date.today(), "editable": access.can_edit_fish(t),
                         # Returned straight from here when every group has a home tank;
                         # otherwise the tanks page asks where they go.
                         "ready": all(zf_mating_home(f, t) in codes for f in live),
@@ -888,7 +866,7 @@ def zebrafish_update_tank(tank_row_id: int):
         t = s.get(TankRecord, tank_row_id)
         if t is None:
             return zf_reply("tanks", gettext("That tank no longer exists. Reload the page."), status=404)
-        if not zf_can_edit(t):
+        if not access.can_edit_fish(t):
             return zf_reply("tanks", zf_denied(t), status=403)
         try:
             if "tank_id" in form:
@@ -944,7 +922,7 @@ def zebrafish_move_tank(tank_row_id: int):
         t = s.get(TankRecord, tank_row_id)
         if t is None:
             return jsonify({"ok": False, "error": gettext("That tank no longer exists.")}), 404
-        if not zf_can_edit(t):
+        if not access.can_edit_fish(t):
             return jsonify({"ok": False, "error": zf_denied(t)}), 403
         try:
             rack_id = zf_ref(s, FishRack, form.get("rack_id_fk"), "rack")
@@ -964,7 +942,7 @@ def zebrafish_move_tank(tank_row_id: int):
             TankRecord.rack_id_fk == rack.id, TankRecord.row == row, TankRecord.col == col,
             TankRecord.id != t.id))
         if occupant is not None:
-            if not zf_can_edit(occupant):
+            if not access.can_edit_fish(occupant):
                 return jsonify({"ok": False, "error": zf_denied(occupant)}), 403
             occupant.rack_id_fk, occupant.row, occupant.col = t.rack_id_fk, t.row, t.col
         t.rack_id_fk, t.row, t.col = rack.id, row, col
@@ -1006,7 +984,7 @@ def zebrafish_delete_tank(tank_row_id: int):
         t = s.get(TankRecord, tank_row_id)
         if t is None:
             return redirect(url_for("zebrafish", view="tanks"))
-        if not zf_can_edit(t):
+        if not access.can_edit_fish(t):
             flash(zf_denied(t), "error")
             return redirect(url_for("zebrafish", view="tanks"))
         code = t.tank_id
@@ -1054,7 +1032,7 @@ def zebrafish_toggle_geno(tank_row_id: int):
         t = s.get(TankRecord, tank_row_id)
         if t is None:
             return jsonify({"ok": False, "error": gettext("That tank no longer exists.")}), 404
-        if not zf_can_edit(t):
+        if not access.can_edit_fish(t):
             return jsonify({"ok": False, "error": zf_denied(t)}), 403
         t.needs_genotyping = not bool(t.needs_genotyping)
         s.commit()
@@ -1080,7 +1058,7 @@ def zebrafish_bulk_tanks():
             tanks = s.scalars(select(TankRecord).where(TankRecord.id.in_(
                 [int(i) for i in form.getlist("selected_ids") if i.isdigit()]))).all()
             return bulk.set_custom_column(s, "zebrafish", own, value, url_for("zebrafish", view="tanks"),
-                                       tanks, zf_can_edit, "tanks")
+                                       tanks, access.can_edit_fish, "tanks")
     if action not in labels:
         flash(gettext("Pick an action."), "error")
         return redirect(url_for("zebrafish", view="tanks"))
@@ -1131,7 +1109,7 @@ def zebrafish_bulk_tanks():
                 return zf_delete_tank(s, t)
             return None
 
-        done = bulk.run(s, bulk.selected(s, TankRecord, form), apply, may_edit=zf_can_edit,
+        done = bulk.run(s, bulk.selected(s, TankRecord, form), apply, may_edit=access.can_edit_fish,
                         action="delete" if action == "delete" else "update", what=what, table="tanks")
         s.commit()
     bulk.report(done, gettext(labels[action]), "tank")
@@ -1200,7 +1178,7 @@ def zebrafish_create_fish():
             if tank_id is None:
                 raise ZfInputError(gettext("Choose the tank these fish are in."))
             tank = s.get(TankRecord, tank_id)
-            if not zf_can_edit(tank):
+            if not access.can_edit_fish(tank):
                 raise ZfInputError(zf_denied(tank))
             f = FishRecord(tank=tank, count=1, sex="mixed", status="alive")
             zf_fish_from_form(s, f, form)
@@ -1220,7 +1198,7 @@ def zebrafish_update_fish(fish_row_id: int):
         f = s.get(FishRecord, fish_row_id)
         if f is None:
             return zf_reply("fish", gettext("That fish row no longer exists. Reload the page."), status=404)
-        if not zf_can_edit(f):
+        if not access.can_edit_fish(f):
             return zf_reply("fish", zf_denied(f), status=403)
         previous_status = f.status
         try:
@@ -1230,7 +1208,7 @@ def zebrafish_update_fish(fish_row_id: int):
                     raise ZfInputError(gettext("Fish have to be in a tank."))
                 if tank_id != f.tank_id_fk:
                     tank = s.get(TankRecord, tank_id)
-                    if not zf_can_edit(tank):
+                    if not access.can_edit_fish(tank):
                         raise ZfInputError(gettext("Can’t move fish into %(tank)s: %(reason)s", tank=tank.tank_id,
                                                    reason=zf_denied(tank)))
                     f.tank_id_fk, f.tank = tank.id, tank  # the column too, for the change history
@@ -1251,7 +1229,7 @@ def zebrafish_duplicate_fish(fish_row_id: int):
         f = s.get(FishRecord, fish_row_id)
         if f is None:
             return redirect(url_for("zebrafish", view="fish"))
-        if not zf_can_edit(f):
+        if not access.can_edit_fish(f):
             flash(zf_denied(f), "error")
             return redirect(url_for("zebrafish", view="fish"))
         s.add(FishRecord(tank_id_fk=f.tank_id_fk, line_id_fk=f.line_id_fk, individual_id="", count=f.count,
@@ -1268,7 +1246,7 @@ def zebrafish_delete_fish(fish_row_id: int):
     with SessionLocal() as s:
         f = s.get(FishRecord, fish_row_id)
         if f is not None:
-            if not zf_can_edit(f):
+            if not access.can_edit_fish(f):
                 flash(zf_denied(f), "error")
                 return redirect(url_for("zebrafish", view="fish"))
             # The sac log is history: it keeps the entry, not the link.
@@ -1297,7 +1275,7 @@ def zebrafish_bulk_fish():
             tank = s.get(TankRecord, zf_ref(s, TankRecord, value, "tank") or 0) if action == "tank" else None
             if action == "tank" and tank is None:
                 raise ZfInputError(gettext("Choose the tank to move them to."))
-            if tank is not None and not zf_can_edit(tank):
+            if tank is not None and not access.can_edit_fish(tank):
                 raise ZfInputError(gettext("Can’t move fish into %(tank)s: %(reason)s", tank=tank.tank_id,
                                            reason=zf_denied(tank)))
         except ZfInputError as error:
@@ -1317,7 +1295,7 @@ def zebrafish_bulk_fish():
             zf_apply_fish_status(s, f, previous)
             return None
 
-        done = bulk.run(s, bulk.selected(s, FishRecord, form), apply, may_edit=zf_can_edit,
+        done = bulk.run(s, bulk.selected(s, FishRecord, form), apply, may_edit=access.can_edit_fish,
                         action="update", what=what, table="fish")
         s.commit()
     bulk.report(done, gettext(labels[action]), "fish row")
@@ -1372,7 +1350,7 @@ def zebrafish_update_line(line_id: int):
         ln = s.get(FishLine, line_id)
         if ln is None:
             return zf_reply("lines", gettext("That line no longer exists. Reload the page."), status=404)
-        if not zf_can_edit(ln):
+        if not access.can_edit_fish(ln):
             return zf_reply("lines", zf_denied(ln), status=403)
         try:
             if "name" in form:
@@ -1425,7 +1403,7 @@ def zebrafish_delete_line(line_id: int):
         ln = s.get(FishLine, line_id)
         if ln is None:
             return redirect(url_for("zebrafish", view="lines"))
-        if not zf_can_edit(ln):
+        if not access.can_edit_fish(ln):
             flash(zf_denied(ln), "error")
             return redirect(url_for("zebrafish", view="lines"))
         name = ln.name
@@ -1494,7 +1472,7 @@ def zebrafish_bulk_lines():
                 setattr(ln, action, value)
             return None
 
-        done = bulk.run(s, bulk.selected(s, FishLine, form), apply, may_edit=zf_can_edit,
+        done = bulk.run(s, bulk.selected(s, FishLine, form), apply, may_edit=access.can_edit_fish,
                         action="delete" if action == "delete" else "update", what=what, table="fish_lines")
         s.commit()
     bulk.report(done, gettext(labels[action]), "line")
@@ -1533,7 +1511,7 @@ def zebrafish_line_detail(line_id: int):
         tank_positions = {t.id: fish_position_label(t) for t in line_tanks}
 
         all_lines = positions.natural_sorted(s.scalars(select(FishLine)).all(), key=lambda line: line.name)
-        editable = zf_can_edit(ln)
+        editable = access.can_edit_fish(ln)
         denied = "" if editable else zf_denied(ln)
         usernames = current_lab_usernames(s)
 
@@ -1627,7 +1605,7 @@ def zebrafish_delete_rack(rack_id: int):
             flash(gettext("Only whoever added rack %(rack)s, or an admin, can delete it.", rack=r.name), "error")
             return redirect(url_for("zebrafish", view="tanks", mode="grid"))
         if r is not None:
-            theirs = [t.tank_id for t in r.tanks if not zf_can_edit(t)]
+            theirs = [t.tank_id for t in r.tanks if not access.can_edit_fish(t)]
             if theirs:
                 flash(gettext("%(rack)s holds tanks you can’t edit (%(tanks)s). Ask their owners, or an admin.",
                               rack=r.name, tanks=", ".join(theirs[:5]) + ("…" if len(theirs) > 5 else "")), "error")
@@ -1828,7 +1806,7 @@ def zebrafish_update_clutch(clutch_row_id: int):
         c = s.get(ClutchRecord, clutch_row_id)
         if c is None:
             return zf_reply("clutches", gettext("That clutch no longer exists. Reload the page."), status=404)
-        if not zf_can_edit(c):
+        if not access.can_edit_fish(c):
             return zf_reply("clutches", zf_denied(c), status=403)
         try:
             zf_clutch_from_form(s, c, request.form)
@@ -1854,7 +1832,7 @@ def zebrafish_delete_clutch(clutch_row_id: int):
     with SessionLocal() as s:
         c = s.get(ClutchRecord, clutch_row_id)
         if c is not None:
-            if not zf_can_edit(c):
+            if not access.can_edit_fish(c):
                 flash(zf_denied(c), "error")
                 return redirect(url_for("zebrafish", view="clutches"))
             with audit.batch(s, "delete", f"delete clutch {c.clutch_id}", "clutches"):
@@ -1909,7 +1887,7 @@ def zebrafish_bulk_clutches():
                 return bulk.NOT_YOURS
             return stewardship.change_owner(s, c, value, "clutch", c.clutch_id, members)
 
-        done = bulk.run(s, bulk.selected(s, ClutchRecord, form), apply, may_edit=zf_can_edit,
+        done = bulk.run(s, bulk.selected(s, ClutchRecord, form), apply, may_edit=access.can_edit_fish,
                         action="delete" if action == "delete" else "update", what=what, table="clutches")
         s.commit()
     bulk.report(done, gettext(labels[action]), "clutch")
@@ -1938,7 +1916,7 @@ def zebrafish_set_up_mating():
             females = zf_int(form, "females", "Females", default=0, lo=0, hi=1000)
             for tid in (father_id, mother_id):
                 parent = s.get(TankRecord, tid)
-                if not zf_can_edit(parent):
+                if not access.can_edit_fish(parent):
                     raise ZfInputError(zf_denied(parent))
             father, mother = s.get(TankRecord, father_id), s.get(TankRecord, mother_id)
             for source, sex, wanted, noun in ((father, "M", males, "male"), (mother, "F", females, "female")):
@@ -2068,7 +2046,7 @@ def zf_return_mating(s, mt, choices: dict):
         return gettext("Tank %(tank)s is not a mating tank.", tank=mt.tank_id), ""
     if not mt.active:
         return gettext("Mating tank %(tank)s was already returned.", tank=mt.tank_id), ""
-    if not zf_can_edit(mt):
+    if not access.can_edit_fish(mt):
         return zf_denied(mt), ""
     moves = []
     for f in [f for f in mt.fish if fish_alive(f)]:
@@ -2083,7 +2061,7 @@ def zf_return_mating(s, mt, choices: dict):
         if home.id == mt.id:
             return gettext("Pick a home tank for %(what)s other than %(tank)s itself.", what=what,
                            tank=mt.tank_id), ""
-        if not zf_can_edit(home):
+        if not access.can_edit_fish(home):
             return gettext("Can’t move fish into %(tank)s: %(reason)s", tank=home.tank_id, reason=zf_denied(home)), ""
         moves.append((f, home))
     homes = {}
@@ -2150,7 +2128,7 @@ def zebrafish_create_sac_log():
             fish_id = zf_ref(s, FishRecord, form.get("fish_id_fk"), "fish row")
             if fish_id is not None:
                 fish = s.get(FishRecord, fish_id)
-                if not zf_can_edit(fish):
+                if not access.can_edit_fish(fish):
                     raise ZfInputError(zf_denied(fish))
                 in_tank = fish.tank.tank_id if fish.tank else gettext("no tank")
                 if not fish_alive(fish):
@@ -2163,7 +2141,7 @@ def zebrafish_create_sac_log():
                 line_id = fish.line_id_fk or (fish.tank.line_id_fk if fish.tank else None)
             else:
                 tank_id = zf_ref(s, TankRecord, form.get("tank_id_fk"), "tank")
-                if tank_id is not None and not zf_can_edit(s.get(TankRecord, tank_id)):
+                if tank_id is not None and not access.can_edit_fish(s.get(TankRecord, tank_id)):
                     raise ZfInputError(zf_denied(s.get(TankRecord, tank_id)))
                 line_id = zf_ref(s, FishLine, form.get("line_id_fk"), "line")
             entry = FishSacLog(
