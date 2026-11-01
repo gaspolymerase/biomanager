@@ -4488,6 +4488,15 @@
     @apply sticky left-0 overflow-x-auto px-3 py-2.5;
     max-width: 100cqw;
   }
+  /* Most of the cage sheet is its open cages' mice, and a window shows two
+     or three: the rest are not styled, laid out or painted until they come
+     near the view. Their height until then is a guess from the mice they
+     hold (--mice), inside its padding: 57px empty, else 69px and 32px a
+     mouse. Seen once, a card keeps its own. */
+  .sheet-table tr.cage-detail .cage-detail-body {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto calc(57px + 12px * min(var(--mice, 0), 1) + 32px * var(--mice, 0));
+  }
   .cage-detail-tools { @apply mb-2 flex flex-wrap items-center gap-1.5; }
   .cage-detail-tools form { @apply m-0; }
   .cage-detail-title { @apply mr-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink; }
