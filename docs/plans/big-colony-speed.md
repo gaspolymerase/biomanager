@@ -101,11 +101,23 @@ each a table with its own header row, 274,000 nodes.
   0.44 s, first paint 0.73 s → 0.53 s, 274,000 → 23,000 nodes, 4.5 MB →
   0.7 MB of page.
 
-### Later
+### Afterwards: the Cages tab's style recalculation — done
 
-- Style recalculation is 0.9 s on Cages. `tailwind.css` is 495 KB (about
-  3,800 rule blocks); Chromium's selector statistics would show which
-  selectors the sheet's cells pay for.
+Style recalculation was about 1 s of the Cages tab's 3 s in the browser.
+Chromium's selector statistics showed the selectors are not the cost
+(about 8% of it); the number of elements is. More than half the page
+(8,400 of 14,700 elements) is the open cages' mice, of which a window
+shows two or three. The cards in the table are now `content-visibility:
+auto`, with a height worked out from their mice until first seen
+(`docs/DEVELOPMENT.md`). Interleaved medians of 9: your colony's cages
+load in 2.4 s instead of 3.3, the browser busy 2.0 s instead of 2.9; the
+whole lab's cages, busy 2.2 s instead of 2.9, load unchanged (that page's
+time is its download).
+
+Two things found on the way: the load test's numbers included the What's
+new dialog, which opens once after each update and restyles the whole
+page (its admin had never pressed Got it); and Home's `status_experiment`
+read its 1,532 mice as ORM objects: as plain rows, 110 ms to 50 ms.
 
 ## How to check each
 

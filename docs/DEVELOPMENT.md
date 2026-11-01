@@ -460,7 +460,7 @@ out, by its `ExperimentReading` body weights, its item a `label` in place
 of `mouse`); and
 `status_experiment` (`no_experiment`: status "experiment" in no
 planned/active/paused experiment, checked once the lab has any colony
-experiment; `other_status`: a non-blank other status in an active one,
+experiment, read as plain rows since a lab can have thousands; `other_status`: a non-blank other status in an active one,
 with `propose` setting it to "experiment"). Items carry `ref`, the numbers
 and a path `url`. `owner` narrows to a person's mice and the mice of their
 experiments; `home_view()` uses it for a member and the lab's for
@@ -754,6 +754,19 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
     detail row's card into its grid, and back. The cage tab works out
     which transgene columns the mouse sheet shows from the mice that can
     fill Transgene 3 or 4 only.
+  - Most of the cage sheet is its open cages' mice, of which a window
+    shows two or three, so each card in the table (`.cage-detail-body`
+    in a `tr.cage-detail`) is `content-visibility: auto`: the browser
+    does not style, lay out or paint it until it comes near the view.
+    Its height until then is worked out in the CSS from `--mice`, which
+    `cage_rows` sets on the card (57px empty, else 69px and 32px a mouse,
+    inside its padding: exact for a card with one litter or none); seen
+    once, a card keeps its own. At 100,000 mice this takes the cage
+    sheet (your colony) from 3.3 s to 2.4 s to load, the browser's work
+    from 2.9 s to 2.0 s and its style recalculation from 1.0 s to 0.6 s
+    (interleaved medians of 9). Reading a card's size from a script
+    makes the browser draw it, so a script that measures every card
+    undoes this.
   - At 100,000 mice the litters (6,634) open in 3.2 s instead of 9.1, the
     cages (1,368 listed) in 3.1 s instead of 7.6 (26 MB of page to 3.8);
     their **Cards**, page and cards together, in 9.7 s instead of 10.4.
