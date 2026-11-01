@@ -18,7 +18,7 @@ cross-site check (security.py) does not apply here. No cookie is set.
 Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
-Writes go through the same checks as the pages (colony_routes.change_mouse,
+Writes go through the same checks as the pages (colony.change_mouse,
 inventory_routes._item_from_form, stock_routes._unit_from_form,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
@@ -406,7 +406,8 @@ def mouse_update(mouse_id: int):
     """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
     "version" (as the mouse was read), a mouse changed since is refused (409)
     instead of overwritten."""
-    from .colony_routes import can_edit_mouse, change_mouse
+    from .colony import change_mouse
+    from .colony_routes import can_edit_mouse
     from .services import mouse_display_row, split_genotype
     data = dict(_json())
     seen = data.pop("version", None)
@@ -582,7 +583,7 @@ def rack_update(name: str):
     now) or "keep_cells" (each keeps its row and column, and its name
     changes); without one it is refused (409) with what each would do."""
     from . import rack_layout
-    from .colony_routes import _mouse_rack_from_form
+    from .colony import mouse_rack_from_form
     from .models import MouseRack
     _feature("colony")
     data = _json()
@@ -610,7 +611,7 @@ def rack_update(name: str):
             preview = rack_layout.plan(s, rack_layout.kind("mouse_rack"), r, new)
             if preview["affected"]:
                 return _error(409, rack_layout.refusal(preview), preview=rack_layout.public(preview))
-        error, change = _mouse_rack_from_form(s, r, form)
+        error, change = mouse_rack_from_form(s, r, form)
         if error:
             s.rollback()
             abort(400, error)

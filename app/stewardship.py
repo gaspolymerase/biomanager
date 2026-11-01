@@ -15,7 +15,7 @@ ask here instead of checking for themselves:
 
 Each change answers with the refusal in words, or None when it was made
 (or there was nothing to change). Mice are the exception that stays in the
-colony (colony_routes.populate_mouse_from_form): anyone who may edit a mouse in a
+colony (colony.populate_mouse_from_form): anyone who may edit a mouse in a
 shared cage may take it, which is what Pick on the Breeders tab does.
 """
 from __future__ import annotations

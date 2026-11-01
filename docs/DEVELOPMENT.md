@@ -42,6 +42,13 @@ answers, how an edit or a delete is written down, the lab's own time, a
 person's badge, the databases' names, the app's icon) is in `app/web.py`;
 a module of pages imports that and `flask_app.py`, never `app.py`.
 
+What a change to a record must obey belongs beside the pages, not in them,
+when more than the pages make that change. `app/colony.py` is how a mouse
+is changed (`change_mouse`, `populate_mouse_from_form`, moving a mouse into
+a cage or a litter, a cage into a rack position, a mouse rack's own
+dialog): the colony's pages, the API and the spreadsheet import all call
+it, so none of them imports another's pages for it.
+
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
 not endpoints, so a renamed one would break pages no test opens.
@@ -1148,7 +1155,7 @@ Who may change what lives in one place, `app/access.py`:
   and every organism record (`organism_routes._set_owner`) call it from
   their dialogs, sheet rows and batch actions; each answers with the
   refusal in words or None. Mice stay the colony's: anyone who may edit a
-  mouse in a shared cage may take it (Pick), so `colony_routes.change_mouse` checks
+  mouse in a shared cage may take it (Pick), so `colony.change_mouse` checks
   only that the new owner is in the lab. `tests/test_stewardship.py`.
 - **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
   *Breeding* is a mating cage: only it gets Litter born, Genotyping and
@@ -3196,7 +3203,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
   fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `colony_routes.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  `colony.change_mouse`, as the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;
@@ -3210,7 +3217,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
 - **Racks**: `GET /racks` lists the colony's cage racks (`rack_json`:
   size, `naming`, example `positions`, how many cages); `PATCH
   /racks/<name>` takes `RACK_FIELDS` (`naming` merged over the rack's own,
-  `rack_layout.json_naming`) through `_mouse_rack_from_form`. A change that
+  `rack_layout.json_naming`) through `colony.mouse_rack_from_form`. A change that
   renames or leaves out cages' places needs `cages`: `keep_names` or
   `keep_cells`; without it the answer is 409 with the `preview`
   (`rack_layout.public(plan)`), so a script can show it and send again.
@@ -3943,7 +3950,7 @@ both its cell and its name is not listed, and one already outside the old
 grid is left where it is. It also counts, per choice, what ends with no
 position and the places left holding more than one live thing. `default`
 is `keep_names` when the naming changed, else `keep_cells`. Every save
-route (`save_mouse_rack` through `_mouse_rack_from_form`,
+route (`save_mouse_rack` through `colony.mouse_rack_from_form`,
 `zebrafish_update_rack`, `inventory_routes.save_rack`,
 `stock_routes.save_rack`, `save_plasmid_box`) calls `check` before
 changing anything: with something listed and no `cages=keep_names|keep_cells`
