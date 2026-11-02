@@ -13,7 +13,7 @@ from urllib.parse import quote
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from sqlalchemy import String, func, inspect, select, text
+from sqlalchemy import String, and_, func, inspect, select, text
 from sqlalchemy.orm import load_only
 
 from .db import BASE_DIR, Base, SessionLocal, engine
@@ -714,6 +714,13 @@ _INACTIVE_STATUSES = frozenset(END_STATUSES | {"transfer"})
 
 def mouse_is_active(mouse: MouseRecord) -> bool:
     return mouse.date_of_death is None and normalize_status(mouse.status or "") not in _INACTIVE_STATUSES
+
+
+def mouse_active_clause():
+    """mouse_is_active as a query's where, for lists read in SQL: a
+    transferred mouse has no date of death but is no longer the lab's."""
+    return and_(MouseRecord.date_of_death.is_(None),
+                func.lower(func.trim(func.coalesce(MouseRecord.status, ""))).not_in(_INACTIVE_STATUSES))
 
 
 def _cage_position(cage) -> str:

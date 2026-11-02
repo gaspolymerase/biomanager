@@ -31,7 +31,7 @@ from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
 from . import litters
-from .services import crowded, mouse_is_active, slot_cages
+from .services import crowded, mouse_active_clause, mouse_is_active, slot_cages
 from .litter_dates import cage_litter_json, weaning_offset, weaning_due, weaning_title
 
 LAYOUTS = {
@@ -438,7 +438,7 @@ def _colony_items(session, today, until) -> list[dict]:
     # 30 weeks and older (one entry per cage), and anyone turning 30 weeks
     # inside the window (per cage and day).
     crossing = plain_records.mice(
-        session, MouseRecord.date_of_death.is_(None), LitterRecord.date_of_birth.is_not(None),
+        session, mouse_active_clause(), LitterRecord.date_of_birth.is_not(None),
         LitterRecord.date_of_birth <= until - timedelta(days=SAC_AGE_DAYS))
     by_day_cage = defaultdict(list)
     for m in crossing:
