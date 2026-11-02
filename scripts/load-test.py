@@ -8,8 +8,9 @@ records, then time the pages people open.
 
 The folder must be empty (or --reuse one this made). It is a demo lab
 (scripts/demo-data.py) with, added in bulk: mice in cages and litters,
-their weights, zebrafish tanks and fish rows, fly vials, inventory items
-and notebook pages. Like a real colony it has years of history: most
+their weights, zebrafish tanks and fish rows, fly vials, worm strains,
+plants, plasmids (a fifth with a sequence), inventory items, orders,
+calendar events and to-dos, and notebook pages. Like a real colony it has years of history: most
 mice died, most cages emptied and most tubes were used up, on days
 spread over five years. Each page is fetched twice as the demo admin; the
 second time is reported, with the size of the answer. SQLite: a lab
@@ -41,6 +42,7 @@ PAGES = [
     "/inventory/reagents", "/inventory/samples", "/plasmids", "/calendar",
     f"/calendar/events.json?start={date.today() - timedelta(days=35)}&end={date.today() + timedelta(days=7)}",
     "/search?q=Ai14", "/notebook", "/audit", "/batches", "/admin/colony",
+    "/stocks/c_elegans", "/organisms/arabidopsis", "/inventory/orders", "/calendar/board",
 ]
 
 
@@ -113,6 +115,58 @@ def fill(n_mice: int, alive: float = 0.05) -> None:
         print(f"filled in {time.time() - t:.0f} s: {n_mice} mice, {n_cages} cages, {n_litters} litters, "
               f"{n_mice // 2} weights, {len(tanks)} tanks, {n_mice // 6} fish rows, {n_mice // 10} vials, "
               f"{2 * n_mice // 5} inventory items, {n_mice // 40} notebook pages")
+    fill_more(n_mice)
+
+
+def fill_more(n_mice: int) -> None:
+    """The lab's other databases, in proportion to its mice: worm strains,
+    the plant database's plants, plasmids (a fifth with a sequence), orders,
+    and five years of calendar events and to-dos. Like the rest, most of it
+    is history: discarded, dead, received, done."""
+    import json
+    from sqlalchemy import func, insert, select
+    from app.db import SessionLocal
+    from app.models import (CalendarEvent, InventoryItem, InventoryModule, Organism, OrganismModule, PlasmidRecord,
+                            StockModule, StockUnit, TaskItem, UserAccount)
+    rnd = random.Random(11)
+    today = date.today()
+    ago = lambda: today - timedelta(days=rnd.randint(1, 1800))
+    t = time.time()
+    with SessionLocal() as s:
+        users = [u for u in s.scalars(select(UserAccount.username))]
+        worm = s.scalar(select(StockModule.id).where(StockModule.key == "c_elegans"))
+        if worm:
+            s.execute(insert(StockUnit), [{"module_id_fk": worm, "number": 200000 + i, "genotype": f"unc-{i % 120}(e{i % 900}) X",
+                                           "purpose": "stock", "active": i % 10 < 2, "owner": rnd.choice(users), "attrs": "{}",
+                                           "discarded_on": None if i % 10 < 2 else ago()} for i in range(n_mice // 20)])
+        plant = s.scalar(select(OrganismModule.id).where(OrganismModule.key == "arabidopsis"))
+        if plant:
+            s.execute(insert(Organism), [{"module_id_fk": plant, "code": f"AT-{i:06d}", "count": 1, "status": "",
+                                          "birth_on": ago(), "death_on": None if i % 10 < 3 else ago(),
+                                          "genotype": f"Col-0 x{i % 50}", "owner": rnd.choice(users), "attrs": "{}",
+                                          "notes": "", "created_at": datetime.utcnow()} for i in range(n_mice // 10)])
+        start = (s.scalar(select(func.max(PlasmidRecord.plasmid_id))) or 0) + 1
+        seq = lambda: "".join(rnd.choice("ACGT") for _ in range(rnd.randint(4000, 9000)))
+        s.execute(insert(PlasmidRecord), [{"plasmid_id": start + i, "name": f"pLoad-{i}", "backbone": "pAAV",
+                                           "insert_seq": f"insert {i % 300}", "resistance": "Amp", "owner": rnd.choice(users),
+                                           "full_sequence": seq() if i % 5 == 0 else "", "is_circular": True,
+                                           "features_json": "", "created_at": datetime.utcnow()} for i in range(n_mice // 20)])
+        orders = s.scalar(select(InventoryModule.id).where(InventoryModule.key == "orders"))
+        if orders:
+            s.execute(insert(InventoryItem), [{"module_id_fk": orders, "number": 300000 + i, "name": f"order {i}",
+                                               "status": "requested" if i % 25 == 0 else "received", "owner": rnd.choice(users),
+                                               "attrs": json.dumps({"ordered_on": ago().isoformat()})} for i in range(n_mice // 25)])
+        s.execute(insert(CalendarEvent), [{"title": f"Event {i}", "event_date": today + timedelta(days=rnd.randint(-1800, 60)),
+                                           "is_all_day": True, "owner": rnd.choice(users), "event_type": "experiment",
+                                           "description": "", "is_shared": i % 3 == 0, "created_at": datetime.utcnow()}
+                                          for i in range(n_mice // 20)])
+        s.execute(insert(TaskItem), [{"title": f"To-do {i}", "due_date": today + timedelta(days=rnd.randint(-1800, 30)),
+                                      "status": "todo" if i % 5 == 0 else "done", "priority": "medium", "owner": rnd.choice(users),
+                                      "is_shared": i % 4 == 0, "notes": "", "created_at": datetime.utcnow()}
+                                     for i in range(n_mice // 50)])
+        s.commit()
+    print(f"and in {time.time() - t:.0f} s: {n_mice // 20} worm strains, {n_mice // 10} plants, {n_mice // 20} plasmids, "
+          f"{n_mice // 25} orders, {n_mice // 20} calendar events, {n_mice // 50} to-dos")
 
 
 def time_pages(data: Path) -> None:

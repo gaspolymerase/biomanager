@@ -23,7 +23,7 @@ Write rules every handler here follows:
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from flask import (
     Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for,
@@ -55,7 +55,7 @@ from . import audit, database_keys
 from . import organism_service as svc
 from . import inventory as inventory_presets
 from . import stocks as stock_presets
-from . import life_stage, positions
+from . import life_stage, positions, sheet_paging
 from .icons import housing_icon
 from .organisms import (
     AGE_UNITS,
@@ -609,7 +609,35 @@ def _spec_from_form(form) -> dict:
 
 @bp.route("/<key>")
 def module(key: str):
+    page = _module_page(key)
+    if not isinstance(page, str):
+        return page
+    # A long sheet of animals: its first page drawn, the rest fetched as
+    # shown (app/sheet_paging.py). Only the animals view draws that sheet.
+    return sheet_paging.page(page, f"org-{key}-animals-v2",
+                             url_for("organisms.animal_rows", key=key, **_ended_args()))
+
+
+@bp.route("/<key>/animals/rows")
+def animal_rows(key: str):
+    """Rows of a long sheet of animals by id (?ids=…, with the page's own
+    ?ended=), as the page draws them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    page = _module_page(key, keep=set(ids), view="animals")
+    if not isinstance(page, str):
+        abort(404)
+    return sheet_paging.answer(page, f"org-{key}-animals-v2", ids, request)
+
+
+def _ended_args() -> dict:
+    return {"ended": "all"} if request.args.get("ended") == "all" else {}
+
+
+def _module_page(key: str, keep: set[int] | None = None, view: str | None = None):
+    """The module's page (or a redirect); with `keep`, its sheet of animals
+    draws only those, whenever they ended."""
     from . import stock_service
+    from .inventory_routes import RECENT_DAYS
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         # Flies and worms moved to their own vial/plate pages.
@@ -617,7 +645,7 @@ def module(key: str):
             return redirect(url_for("stocks.module", key=key))
         mv = svc.view(row)
         views = _views_for(mv)
-        active = request.args.get("view") or (views[0]["key"] if views else "settings")
+        active = view or request.args.get("view") or (views[0]["key"] if views else "settings")
         if active not in {v["key"] for v in views}:
             active = views[0]["key"] if views else "settings"
 
@@ -677,10 +705,21 @@ def module(key: str):
         ctx["housing_units"] = housing
 
         if active == "animals":
+            listed = select(Organism).where(Organism.module_id_fk == row.id)
+            if keep is not None:
+                listed = listed.where(Organism.id.in_(keep))
             organisms = session.scalars(
-                select(Organism).where(Organism.module_id_fk == row.id)
-                .order_by(Organism.death_on.is_(None).desc(), Organism.id.desc())
+                listed.order_by(Organism.death_on.is_(None).desc(), Organism.id.desc())
             ).all()
+            # Those that died long ago wait behind "Show them", as the
+            # other sheets' do: a database keeps years of them.
+            show_ended = keep is not None or request.args.get("ended") == "all"
+            cutoff = date.today() - timedelta(days=RECENT_DAYS)
+            hidden_old = 0
+            if not show_ended:
+                recent = [o for o in organisms if not (o.death_on and o.death_on < cutoff and not mv.is_alive(o))]
+                hidden_old, organisms = len(organisms) - len(recent), recent
+            ctx.update(hidden_old=hidden_old, show_ended=request.args.get("ended") == "all", recent_days=RECENT_DAYS)
             ctx["animal_rows"] = [{
                 "o": o, "editable": access.can_edit(o), "alive": mv.is_alive(o),
                 "mine": bool(me) and o.owner == me,

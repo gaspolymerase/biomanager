@@ -119,6 +119,29 @@ new dialog, which opens once after each update and restyles the whole
 page (its admin had never pressed Got it); and Home's `status_experiment`
 read its 1,532 mice as ORM objects: as plain rows, 110 ms to 50 ms.
 
+### Afterwards: the other databases at scale
+
+The load test filled only the colony, fish, fly vials, two inventories
+and the notebook. It now also fills, in proportion to 100,000 mice,
+5,000 worm strains, 10,000 plants, 5,000 plasmids (a fifth with a
+sequence), 4,000 orders, 5,000 calendar events and 2,000 to-dos
+(`fill_more`). Two pages had never been paged:
+
+| Page | Before | After |
+| --- | --- | --- |
+| Plasmids (5,000) | 10.6 s to load, 2.7 s on the server, 36 MB | 1.4 s, 0.3 s, 3 MB |
+| Plants (10,000; 3,328 listed) | 33 s, 4.3 s, 54 MB | 4.9 s, 3.2 s, 5.5 MB |
+
+The plasmids' sheet draws its first page and makes the rest's stubs from
+data; its Boxes grid and List come when first shown. The plants' sheet
+lists the living and recently ended (the rest behind "Show them") and is
+paged by drawing every row and reading the rest back, which is half its
+server time; stubs made from data are the next step there. Worm strains
+(0.9 s), orders (1.4 s) and the calendar's Board (0.4 s) were already
+fine. On the fish, tanks, reagents and vials (1.4–1.8 s), the tank menus
+of the fish dialog and the batch bar (3,338 tanks each) were tried and
+cost nothing measurable: options in a closed menu are not laid out.
+
 ## How to check each
 
 `scripts/load-test.py <folder> --reuse --browser` before and after (with

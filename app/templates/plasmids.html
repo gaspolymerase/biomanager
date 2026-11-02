@@ -63,7 +63,7 @@
 
 <section class="data-table-card sheet plasmid-sheet dt-held" data-table-id="plasmids-v5" data-dt-views="plasmids" data-dt-inspector data-noun="plasmid" id="plasmids-section"
          data-autosave-sheet data-export-name="plasmids"
-         data-selection-scope data-selection-noun="{{ _('plasmid') }}" data-selection-noun-plural="{{ _('plasmids') }}">
+         data-selection-scope data-selection-noun="{{ _('plasmid') }}" data-selection-noun-plural="{{ _('plasmids') }}"{% if rows_url %} data-dt-rows-url="{{ rows_url }}"{% endif %}>
   <div class="dt-toolbar">
     <div class="dt-toolbar-search">
       {{ icon('search', 'search-icon') }}
@@ -150,8 +150,9 @@
         </thead>
         <tbody>
           {# In Chromium, its cells drawn as text until used (app.py, as_text_cells; static/text-cells.js). #}
+          {# A long sheet draws its first page; the other plasmids are stubs (plasmid_routes.plasmid_stubs), their rows fetched as shown. #}
           {% filter as_text_cells(text_cells_on()) %}
-          {% for r in rows %}
+          {% for r in sheet_rows %}
             {% set p = r.p %}
             {% set f = 'plasmid-' ~ p.id %}
             {% set locked = not r.editable %}
@@ -231,14 +232,14 @@
           {% endfor %}
           {% endfilter %}
         </tbody>
-      </table>
+      </table>{% if stubs %}<script type="application/json" data-dt-stubs>{{ stubs | stubs_json }}</script>{% endif %}
     </div>
     {# One form per row; each cell joins it through form="…". The _was
        fields are what the row showed for the box and position: the box
        grid can move a plasmid while its row is on screen, and the server
        only moves it when these differ (app/formutil.py). #}
     <template data-row-forms>
-    {% for r in rows %}
+    {% for r in sheet_rows %}
       <form id="plasmid-{{ r.p.id }}" method="post" action="{{ url_for('update_plasmid', row_id=r.p.id) }}"
             data-record-label="{{ _('plasmid #%(id)s', id=r.p.plasmid_id) }}">
         <input type="hidden" name="box_id_was" value="{{ r.p.box_id_fk or '' }}">
@@ -251,39 +252,17 @@
   {# The shared rack grid (static/rack-grid.js): pick the freezer, then the
      box. Moves post box_id + 0-based box_row / box_col to /plasmids/<id>/move. #}
   <div class="plasmid-view plasmid-view-cards" data-view="cards">
-    {{ rack_grid('plasmid-boxes', grid, url_for('plasmid_move_in_box', row_id=0)|replace('/0/', '/{id}/'),
+    {{ rack_grid('plasmid-boxes', {}, url_for('plasmid_move_in_box', row_id=0)|replace('/0/', '/{id}/'),
                  rack_noun='box', rack_dialog_id='plasmid-box-dialog',
                  new_rack_payload={'rows': 9, 'cols': 9},
                  index_base=0, rack_field='box_id', row_field='box_row', col_field='box_col',
                  empty_text=_('No boxes yet. Use New box to add one, with its size and how its positions are named.'),
                  hint=_('Drag a plasmid onto a cell to place it (onto another to swap them), or here to take it out of its cell. Click a plasmid to open it; click an empty cell to add one there.'),
-                 group_label='freezer') }}
+                 group_label='freezer', src=url_for('plasmid_grid')) }}
   </div>
 
-  <div class="plasmid-view plasmid-view-list" data-view="list">
-    {% if rows %}
-      <ul class="plasmid-list">
-        {% for r in rows %}
-          {% set p = r.p %}
-          <li class="plasmid-list-row" data-search="{{ ((p.name or '') + ' ' + (p.backbone or '') + ' ' + (p.resistance or '') + ' ' + (p.owner or '') + ' ' + r.where)|lower }}">
-            <a href="{{ url_for('plasmid_page', number=p.plasmid_id) }}">
-              <span class="plasmid-mini" {% if r.length %}data-mini='{{ r.mini|tojson }}' data-length="{{ r.length }}"{% endif %}><span>#{{ p.plasmid_id }}</span></span>
-              <span class="plasmid-list-name">{{ p.name or _('Unnamed') }}{% if r.verified %} <span class="badge badge-ok">{{ _('Verified %(when)s', when=r.verified) }}</span>{% endif %}</span>
-              <span class="plasmid-list-meta">
-                {% if p.backbone %}<span>{{ p.backbone }}</span>{% endif %}
-                {% if p.resistance %}<span class="badge badge-brand">{{ p.resistance }}</span>{% endif %}
-                {% if r.where %}<span>{{ r.where }}</span>{% elif p.location %}<span>{{ p.location }}</span>{% endif %}
-                {% if r.length %}<span class="tabular-nums">{{ r.length }} bp</span>{% endif %}
-                {% if p.owner %}{{ p.owner | owner_badge }}{% endif %}
-                {% if not r.editable %}<span class="sheet-lock" title="{{ _('%(owner)s’s plasmid: read only', owner=p.owner or _('Someone else')) }}">{{ icon('lock') }}</span>{% endif %}
-              </span>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <div class="empty-state m-4">{{ _('No plasmids yet.') }}</div>
-    {% endif %}
+  <div class="plasmid-view plasmid-view-list" data-view="list" data-list-src="{{ url_for('plasmid_list') }}">
+    {# Its rows come when the List is first shown (_plasmid_list.html). #}
   </div>
 
   <div class="dt-bottom-bar">
@@ -444,15 +423,37 @@
 <script src="{{ url_for('static', filename='plasmid-map.js') }}?v={{ asset_version('plasmid-map.js') }}"></script>
 <script src="{{ url_for('static', filename='sequence-fetch.js') }}?v={{ asset_version('sequence-fetch.js') }}" defer></script>
 <script nonce="{{ csp_nonce() }}">
-// The List's small maps, drawn as the list is first shown (static/plasmid-map.js).
+// The List, fetched as it is first shown (plasmid_routes.plasmid_list), and
+// its small maps (static/plasmid-map.js).
 (function () {
-  const draw = () => document.querySelectorAll('.plasmid-mini[data-mini]:not([data-drawn])').forEach((box) => {
+  const list = document.querySelector('.plasmid-view-list[data-list-src]');
+  let asked = null;
+  const drawMaps = () => document.querySelectorAll('.plasmid-mini[data-mini]:not([data-drawn])').forEach((box) => {
     box.dataset.drawn = '1';
     box.insertAdjacentHTML('afterbegin', window.BioPlasmidMap.circular({
       length: Number(box.dataset.length), features: JSON.parse(box.dataset.mini), mini: true, size: 64 }));
   });
+  const draw = () => {
+    if (!list) return;
+    if (!asked) {
+      asked = fetch(list.dataset.listSrc, { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+        .then((html) => {
+          list.innerHTML = html;
+          // As the toolbar search would have left it.
+          const search = document.querySelector('#plasmids-section .dt-search');
+          if (search && search.value) search.dispatchEvent(new Event('input'));
+        }, () => {
+          asked = null;   // the next time it is shown asks again
+          const say = window.BiomanagerShell && window.BiomanagerShell.toast;
+          if (say) say(t('Some rows could not be loaded. Check the connection and try again.'), 'error');
+        });
+    }
+    asked.then(drawMaps);
+  };
   document.querySelectorAll('.plasmid-view-btn[data-view="list"]').forEach((b) => b.addEventListener('click', draw));
   if (document.querySelector('.plasmid-view-list.is-active')) draw();
+  document.addEventListener('plasmids:view', (e) => { if (e.detail === 'list') draw(); });
 })();
 </script>
 <script nonce="{{ csp_nonce() }}">
@@ -634,6 +635,7 @@
       });
       panels.forEach((p) => p.classList.toggle('is-active', p.dataset.view === name));
       section.dataset.view = name;
+      document.dispatchEvent(new CustomEvent('plasmids:view', { detail: name }));
       try { localStorage.setItem(VIEW_KEY, name); } catch (_) {}
     }
 

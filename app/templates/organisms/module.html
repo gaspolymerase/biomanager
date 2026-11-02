@@ -185,6 +185,13 @@
    ANIMALS
    ===================================================================== #}
 {% if active_view == 'animals' %}
+  {% if hidden_old %}
+    <p class="mb-3 text-[12px] text-muted" data-hidden-ended>{% trans trimmed n='{:,}'.format(hidden_old), units=n_orgs, days=recent_days, url=request.path ~ '?' ~ (dict(request.args, ended='all') | urlencode) %}{{ n }} {{ units }} that ended over {{ days }} days ago aren't listed.
+      <a href="{{ url }}">Show them</a>.{% endtrans %}</p>
+  {% elif show_ended %}
+    <p class="mb-3 text-[12px] text-muted">{% trans trimmed url=request.path ~ '?' ~ (dict(request.args) | urlencode | replace('ended=all', '')) %}Showing everything, however long ago it ended.
+      <a href="{{ url }}">Only recent</a>.{% endtrans %}</p>
+  {% endif %}
   {% set own_fields = fields.get('organism', []) %}
   {% set dead_values = module.dead_statuses | join(',') %}
   {% set new_payload = {'count': 1, 'code': next_code, 'attrs': attr_defaults.get('organism', {})} %}

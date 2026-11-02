@@ -46,9 +46,15 @@ def newest_batch(actor: str):
                "where actor=? order by id desc limit 1", actor)
 
 
-def grid_of(html: str) -> dict:
-    m = re.search(r'<script type="application/json" data-rack-data>(.*?)</script>', html, re.S)
-    return json.loads(m.group(1))
+def grid_of(client) -> dict:
+    """The Boxes grid's payload, as the page asks for it when the grid is
+    first shown (the page itself carries only where to ask)."""
+    page = client.get("/plasmids").get_data(as_text=True)
+    assert 'data-rack-data' not in page
+    src = re.search(r'data-rack-view="plasmid-boxes"[^>]*data-rack-src="([^"]+)"', page).group(1)
+    r = client.get(src)
+    assert r.status_code == 200, r.status_code
+    return r.get_json()
 
 
 def gb_upload(text: str = GB, filename: str = "p.gb"):
@@ -720,7 +726,7 @@ class PermissionTests(AppTestCase):
         sheet = self.get_ok(self.o, "/plasmids")
         tr = re.search(rf'<tr data-id="{self.rid}".*?</tr>', sheet, re.S).group(0)
         self.assertIn("sheet-lock", tr)
-        item = [x for x in grid_of(sheet)["items"] if x["id"] == self.rid][0]
+        item = [x for x in grid_of(self.o)["items"] if x["id"] == self.rid][0]
         self.assertTrue(item["locked"])
         detail = self.get_ok(self.o, page(self.rid))
         # Read only: the viewer has no way to change the plasmid.
@@ -1064,7 +1070,7 @@ class BoxTests(AppTestCase):
         name = uniq("Grid")
         box = self.make_box(self.a, name, rows=5, cols=6, location="-20 shelf")
         rid = self.make_plasmid(self.a, box_id=box, position="D5")
-        g = grid_of(self.get_ok(self.a, "/plasmids"))
+        g = grid_of(self.a)
         rack = [x for x in g["racks"] if x["id"] == box][0]
         self.assertEqual((rack["name"], rack["rows"], rack["cols"], rack["group"]), (name, 5, 6, "-20 shelf"))
         self.assertEqual(json.loads(rack["edit"]["data-record-payload"])["_count"], 1)
@@ -1130,7 +1136,7 @@ class LegacyBoxMigrationTests(AppTestCase):
         r = self.post(self.m, "/plasmids/boxes/save", {"id": str(box_id), "name": uniq("Mine now"), "rows": "9", "cols": "9"})
         self.assertFlash(r, "Only an admin can change", "error")
         self.assertEqual(self.box(self.perm)[0], box_id)
-        payload = [json.loads(x["edit"]["data-record-payload"]) for x in grid_of(self.get_ok(self.m, "/plasmids"))["racks"]
+        payload = [json.loads(x["edit"]["data-record-payload"]) for x in grid_of(self.m)["racks"]
                    if x["id"] == box_id][0]
         self.assertTrue(payload["_locked"])
         self.post(self.a, "/plasmids/boxes/save", {"id": str(box_id), "name": self.perm, "rows": "10", "cols": "9", **GRID_NAMING})
