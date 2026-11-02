@@ -469,7 +469,7 @@ def html(rows: list[dict], *, fragment: bool, racks: list[dict], purposes: list[
                     <tr class="cage-detail" id="cage-detail-{cid}" data-detail-for="{cid}">
                       <td colspan="15">
                         <article class="cage-detail-body{' is-locked' if locked else ''}" aria-label="{cage_named(id=code)}"
-                                 data-cage-card="{cid}" data-active="{'true' if active else 'false'}"
+                                 style="--mice: {len(mice)}" data-cage-card="{cid}" data-active="{'true' if active else 'false'}"
                                  data-breeding="{escape(cage['breeding'])}" data-mine="{'true' if mine else 'false'}"
                                  data-purpose="{purpose_key}"
                                  data-search="{escape(search)} {escape(mouse_ids.lower())}">

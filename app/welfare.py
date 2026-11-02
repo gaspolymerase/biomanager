@@ -236,7 +236,7 @@ def weight_loss(session, today: date, pct: float, owner: str | None = None) -> l
 # ---------------------------------------------------------------- 2. status and experiment disagree
 
 def status_experiment(session, owner: str | None = None) -> list[dict]:
-    from .models import Experiment, MouseRecord
+    from .models import CageRecord, Experiment, MouseRecord
     from .services import normalize_status
     out = []
     in_exp = _busy_by_mouse(session)
@@ -244,15 +244,19 @@ def status_experiment(session, owner: str | None = None) -> list[dict]:
     keeps = session.scalar(select(Experiment.id).where(
         or_(Experiment.db == "colony", Experiment.db == "", Experiment.db.is_(None))).limit(1)) is not None
     if keeps:
-        stmt = select(MouseRecord).options(selectinload(MouseRecord.cage)).where(
-            MouseRecord.date_of_death.is_(None), func.lower(func.trim(MouseRecord.status)) == "experiment")
+        # Read as plain rows: a lab can have thousands of mice so labelled.
+        stmt = (select(MouseRecord.id, MouseRecord.mouse_id, MouseRecord.status, MouseRecord.owner,
+                       CageRecord.cage_id)
+                .outerjoin(CageRecord, CageRecord.id == MouseRecord.cage_id_fk)
+                .where(MouseRecord.date_of_death.is_(None),
+                       func.lower(func.trim(MouseRecord.status)) == "experiment"))
         if owner:
             stmt = stmt.where(MouseRecord.owner == owner)
-        for m in session.scalars(stmt.order_by(MouseRecord.mouse_id)):
+        for m in session.execute(stmt.order_by(MouseRecord.mouse_id)):
             if normalize_status(m.status or "") != "experiment" or m.id in in_exp:
                 continue
             out.append({"mouse": m.mouse_id, "ref": _mouse_ref(m), "kind": "no_experiment",
-                        "status": m.status, "owner": m.owner or "", "cage": m.cage.cage_id if m.cage else "",
+                        "status": m.status, "owner": m.owner or "", "cage": m.cage_id or "",
                         "url": _mouse_path(m)})
     for exp in _experiments(session, ("active",)):
         from . import experiments as ex
