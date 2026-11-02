@@ -37,7 +37,7 @@ from app.models import (  # noqa: E402
     CageRecord, MouseRecord, OrgDue, OrganismModule, TaskItem, UserAccount,
 )
 from app import i18n, mailer  # noqa: E402
-from app.services import weaning_due, weaning_title  # noqa: E402
+from app.litter_dates import weaning_due, weaning_title  # noqa: E402
 from app import organism_service as svc  # noqa: E402
 from app.i18n import gettext, ngettext, translate_value  # noqa: E402
 
@@ -116,7 +116,7 @@ def collect(session, horizon: int) -> dict[str, list[dict]]:
                 })
 
     # --- Mouse litters reaching weaning ----------------------------------
-    # The list Home and the calendar show (services.weaning_due): each
+    # The list Home and the calendar show (litter_dates.weaning_due): each
     # litter born in a cage until it is weaned (a cage can have two, each
     # with its own day), and litters of mice not yet weaned. The cage's
     # owner hears of it, else the owners of the pups.

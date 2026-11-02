@@ -749,13 +749,13 @@ class FishTests(AppTestCase):
 class TankBulkTests(AppTestCase):
 
     def test_bulk_purpose_and_its_undo(self):
-        a = self.make_tank(self.a, purpose="breeding")
+        a = self.make_tank(self.a, purpose="breeder")
         b = self.make_tank(self.a, purpose="stock")
         r = self.post(self.a, "/zebrafish/tanks/bulk", {"action": "purpose", "value": "quarantine", "selected_ids": [a, b]})
         self.assertFlash(r, "Set purpose: 2 tanks", "success")
         undo(self.a, last_batch()[0])
         self.assertEqual(rows("select purpose from tanks where id in (?, ?) order by id", a, b),
-                         [("breeding",), ("stock",)])
+                         [("breeder",), ("stock",)])
 
     def test_bulk_purpose_outside_the_list_is_refused(self):
         tank = self.make_tank(self.a, purpose="stock")
@@ -1138,10 +1138,38 @@ class PermissionTests(AppTestCase):
         self.post(self.m, "/zebrafish/clutches/bulk", {"action": "owner", "value": self.member, "selected_ids": [clutch]})
         self.assertEqual(row("select owner, notes from clutches where id=?", clutch), (self.admin, ""))
 
-    def test_member_may_edit_a_shared_breeding_tank(self):
-        tank = self.make_tank(self.a, purpose="breeding")
+    def test_member_may_edit_a_shared_breeder_tank(self):
+        tank = self.make_tank(self.a, purpose="breeder")
         self.assertSaved(self.autosave(self.m, f"/zebrafish/tanks/{tank}/update", {"notes": "shared tank"}))
         self.assertEqual(one("select notes from tanks where id=?", tank), "shared tank")
+
+    def test_the_old_word_breeding_makes_a_shared_breeder_tank(self):
+        # Before the rename a breeder tank was "breeding"; typed or sent
+        # through the API it still means breeder, never a mating tank.
+        tank = self.make_tank(self.a, purpose="Breeding")
+        self.assertEqual(one("select purpose from tanks where id=?", tank), "breeder")
+        self.assertSaved(self.autosave(self.m, f"/zebrafish/tanks/{tank}/update", {"notes": "still shared"}))
+        mine = self.make_tank(self.a)
+        self.assertSaved(self.autosave(self.a, f"/zebrafish/tanks/{mine}/update", {"purpose": "breeding"}))
+        self.assertEqual(one("select purpose from tanks where id=?", mine), "breeder")
+
+    def test_breeding_tanks_from_before_become_breeder_tanks(self):
+        """Revision 0054: a tank stored as "breeding" (any case) is a breeder
+        tank, still the lab's to edit; a mating tank stays a mating tank."""
+        import importlib
+        from unittest import mock
+        from app.db import engine
+        old = self.make_tank(self.a, purpose="breeder")
+        execute("update tanks set purpose=? where id=?", " Breeding", old)
+        mating = self.make_tank(self.a, purpose="mating")
+        migration = importlib.import_module("migrations.versions.0054_breeder_tanks")
+        with engine.begin() as conn:
+            with mock.patch.object(migration, "op", mock.Mock(get_bind=lambda: conn)), \
+                    mock.patch.object(migration, "has_table", lambda name: True):
+                migration.upgrade()
+        self.assertEqual(one("select purpose from tanks where id=?", old), "breeder")
+        self.assertEqual(one("select purpose from tanks where id=?", mating), "mating")
+        self.assertSaved(self.autosave(self.m, f"/zebrafish/tanks/{old}/update", {"notes": "fed"}))
 
     def test_member_owns_and_edits_the_tanks_they_make(self):
         tank = self.make_tank(self.m)

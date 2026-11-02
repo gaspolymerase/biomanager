@@ -42,6 +42,22 @@ answers, how an edit or a delete is written down, the lab's own time, a
 person's badge, the databases' names, the app's icon) is in `app/web.py`;
 a module of pages imports that and `flask_app.py`, never `app.py`.
 
+What a change to a record must obey belongs beside the pages, not in them,
+when more than the pages make that change. `app/colony.py` is how a mouse
+is changed (`change_mouse`, `populate_mouse_from_form`, moving a mouse into
+a cage or a litter, a cage into a rack position, a mouse rack's own
+dialog): the colony's pages, the API and the spreadsheet import all call
+it, so none of them imports another's pages for it.
+
+`app/services.py` is what is left of the shared helpers from before the
+pages had modules, and its parts are moving out by topic.
+`app/litter_dates.py` is when a litter is due (the lab's weaning and
+genotyping days, a cage's open litters, `weaning_due`, the list Home, the
+calendar, the cage sheet and the reminder emails all read);
+`app/calendar_feeds.py` reads the calendars a person subscribes to (a
+remote .ics, a linked Google Calendar). A new helper goes in the module of
+its topic, not in `services.py`.
+
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
 not endpoints, so a renamed one would break pages no test opens.
@@ -1185,8 +1201,18 @@ Who may change what lives in one place, `app/access.py`:
   and every organism record (`organism_routes._set_owner`) call it from
   their dialogs, sheet rows and batch actions; each answers with the
   refusal in words or None. Mice stay the colony's: anyone who may edit a
-  mouse in a shared cage may take it (Pick), so `colony_routes.change_mouse` checks
+  mouse in a shared cage may take it (Pick), so `colony.change_mouse` checks
   only that the new owner is in the lab. `tests/test_stewardship.py`.
+- **Each database's edit rule is in `access.py` too**, never in its pages,
+  so the API, the import and the experiments ask the same function the
+  page does: `can_edit_mouse()` and `can_edit_cage()` for the colony,
+  `can_edit_fish()` for zebrafish (a tank shared by its purpose,
+  `SHARED_TANK_PURPOSES`, a fish row following its tank),
+  `can_edit_unit()` for fly and worm vials (`LAB_STOCK_PURPOSES`),
+  `can_edit_item()` for inventory, `can_edit_task()` and
+  `can_manage_task()` for to-dos. A database's settings are
+  `can_configure()` in every kind (its creator, a facility manager or an
+  admin), and a rack, box or incubator is `can_edit_rack()`.
 - **What a cage's purpose does** (CLAUDE.md, "The mouse colony's words").
   *Breeding* is a mating cage: only it gets Litter born, Genotyping and
   Wean (`services.is_breeding_cage()`, the row's `can_breed` and
@@ -1223,10 +1249,10 @@ Who may change what lives in one place, `app/access.py`:
   the first is weaned. Each birth is a row: `born`, `pups` and `dam` if
   given, `litter_id_fk` (the litter of mice Genotyping made of its pups),
   `weaned_on`. `mouse_cages.date_give_birth` stays, as the cage's oldest
-  litter not yet weaned (`services.refresh_birth_date`, called wherever
+  litter not yet weaned (`litter_dates.refresh_birth_date`, called wherever
   litters change), so the sheet's *Litter born* cell, the sync view, the
   exports and every other reader of one date read as before; typing in that
-  cell corrects the oldest (`litters.set_born`, then `services.set_birth_date`;
+  cell corrects the oldest (`litters.set_born`, then `litter_dates.set_birth_date`;
   the row's `date_give_birth_was` keeps a stale row from writing it back),
   and only on a Breeding cage, like New cage's date; clearing it works on any. `open_litters()` are the ones
   not weaned, `waiting_litters()` those whose pups aren't all recorded
@@ -1343,7 +1369,7 @@ who *sees* something. Every switch starts as groups worked before 0026.
 (leads and admins; only an admin makes or unmakes a lead). A record shared with a group keeps `is_shared` and names the group in
 `share_group_id` (no foreign key; `groups.release()` clears it, and the
 record's `is_shared`, when a group is deleted): `mouse_cages`, `plasmids`,
-`inventory_items` and `tasks`. Breeding tanks and lab stock vials are shared
+`inventory_items` and `tasks`. Breeder tanks and lab stock vials are shared
 by their purpose, so `tanks.share_group_id` and `stock_units.share_group_id`
 only narrow it (`share_group` in their dialogs; `"1"` is the lab). A
 database for a group has an empty `private_to` and a `share_group_id`
@@ -1367,9 +1393,9 @@ To-dos and events: `task_visible_clause()` (calendar_routes.py) and
 `lab_calendar.event_visible_clause()` are the person's own, the lab's
 (`is_shared`, no group) and their groups'; that is what the calendar, Home
 and the phone feed show. A personal one is its owner's alone, admins
-included. `task_can_edit()` lets the lab or the group tick off and change a
+included. `access.can_edit_task()` lets the lab or the group tick off and change a
 shared to-do; deleting it, or changing whose it is, is its owner's or an
-admin's (`task_can_manage()`). A shared event is changed by its owner or an
+admin's (`access.can_manage_task()`). A shared event is changed by its owner or an
 admin (`lab_calendar.event_can_edit()`). Events default to the lab's
 (`calendar_events.is_shared` defaults true, and revision 0015 left every
 existing event shared); to-dos to their owner's. Away soon lists someone's
@@ -3225,7 +3251,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   of its living pups are and `cages` every one (a litter is in a cage only
   through its mice, as in `weaning_due`), and `/litters?cage=` lists those
   with a living pup in it; a cage's `litters` are the litters born in it not
-  yet weaned (`services.cage_litter_json`: `born`, `pups`, `dam`, `litter`,
+  yet weaned (`litter_dates.cage_litter_json`: `born`, `pups`, `dam`, `litter`,
   `age_days`, `wean_due`, `genotyping_due`), `litter_born` the oldest's date;
   an item of `/due` about one carries it as `litter`, and its `propose` names
   it when the cage has two; `/experiments/<id>` is
@@ -3233,7 +3259,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
   fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `colony_routes.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  `colony.change_mouse`, as the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;
@@ -3242,12 +3268,12 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   inventory items go through `inventory_routes._item_from_form`, vials
   through `stock_routes._unit_from_form` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
-  same functions (`can_edit_mouse`, `_can_edit`, `can_edit`,
-  `access.can_edit_experiment`). A switched-off built-in database is a 404.
+  same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
+  `can_edit_experiment`). A switched-off built-in database is a 404.
 - **Racks**: `GET /racks` lists the colony's cage racks (`rack_json`:
   size, `naming`, example `positions`, how many cages); `PATCH
   /racks/<name>` takes `RACK_FIELDS` (`naming` merged over the rack's own,
-  `rack_layout.json_naming`) through `_mouse_rack_from_form`. A change that
+  `rack_layout.json_naming`) through `colony.mouse_rack_from_form`. A change that
   renames or leaves out cages' places needs `cages`: `keep_names` or
   `keep_cells`; without it the answer is 409 with the `preview`
   (`rack_layout.public(plan)`), so a script can show it and send again.
@@ -3980,7 +4006,7 @@ both its cell and its name is not listed, and one already outside the old
 grid is left where it is. It also counts, per choice, what ends with no
 position and the places left holding more than one live thing. `default`
 is `keep_names` when the naming changed, else `keep_cells`. Every save
-route (`save_mouse_rack` through `_mouse_rack_from_form`,
+route (`save_mouse_rack` through `colony.mouse_rack_from_form`,
 `zebrafish_update_rack`, `inventory_routes.save_rack`,
 `stock_routes.save_rack`, `save_plasmid_box`) calls `check` before
 changing anything: with something listed and no `cages=keep_names|keep_cells`

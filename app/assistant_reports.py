@@ -176,7 +176,7 @@ def year_before(end: date) -> date:
 MOUSE = "Mus musculus (mouse)"
 FISH = "Danio rerio (zebrafish)"
 STARTED = ("active", "paused", "done", "cancelled")   # every status but planned: animals were used
-FISH_BREEDING = ("breeding", "mating")
+FISH_BREEDING = ("breeder", "mating")
 
 
 def _day_of(stamp) -> date | None:
@@ -450,7 +450,7 @@ def animal_use(session, start=None, end=None, protocol: str = "", today: date | 
                               "reason is read from the words in the mouse's notes or the sac log's reason, else its "
                               "status: check the categories against the records.",
         "breeding": "Mice named by number as a parent of a litter born in the period, or now in a Breeder or Breeding "
-                    "cage and alive during it; zebrafish alive now in a breeding or mating tank. Where a mouse was "
+                    "cage and alive during it; zebrafish alive now in a breeder or mating tank. Where a mouse was "
                     "before today isn't kept, so one moved out of a breeding cage counts only as a parent.",
         "columns": "An animal may be in several columns (born, used and euthanized); don't add them up.",
     }
@@ -557,7 +557,8 @@ def handover(session, username: str = "", days: int = AGENDA_DAYS, today: date |
 def _handover_colony(session, who: str, due_by_ref: dict) -> dict:
     from sqlalchemy.orm import selectinload
     from .models import CageRecord, MouseRecord
-    from .services import cage_litter_json, is_breeding_cage, mouse_is_active, open_litters
+    from .services import is_breeding_cage, mouse_is_active
+    from .litter_dates import cage_litter_json, open_litters
     theirs_living = select(MouseRecord.cage_id_fk).where(MouseRecord.owner == who, MouseRecord.date_of_death.is_(None))
     cages, breeding = [], []
     for c in session.scalars(select(CageRecord).options(selectinload(CageRecord.mice), selectinload(CageRecord.rack))

@@ -29,7 +29,7 @@ from datetime import date, datetime, timedelta
 from flask import Blueprint, abort, g, jsonify, request
 from sqlalchemy import func, or_, select
 
-from . import groups as project_groups, inventory_service
+from . import access, groups as project_groups, inventory_service
 from .db import SessionLocal
 from .i18n import gettext
 from .models import TaskItem
@@ -80,7 +80,6 @@ def _is_done(t: TaskItem) -> bool:
 
 
 def _card(t: TaskItem, today: date) -> dict:
-    from .calendar_routes import task_can_edit
     done = _is_done(t)
     return {
         "id": t.id, "key": f"task-{t.id}", "title": t.title or "", "notes": t.notes or "",
@@ -88,7 +87,7 @@ def _card(t: TaskItem, today: date) -> dict:
         "overdue": bool(t.due_date and t.due_date < today and not done),
         "done": done, "color": t.color or "", "priority": t.priority or "medium",
         "audience": project_groups.label(t.is_shared, t.share_group_id, personal="", lab="Lab"),
-        "owner": t.owner or "", "readOnly": not task_can_edit(t), "list": t.board_list or "",
+        "owner": t.owner or "", "readOnly": not access.can_edit_task(t), "list": t.board_list or "",
     }
 
 
@@ -255,7 +254,6 @@ def board():
 @bp.post("/lists")
 def lists():
     """{"add": name}, {"rename": [old, new]}, {"remove": name} or {"order": [names]}."""
-    from .calendar_routes import task_can_edit
     me = _me()
     data = request.get_json(silent=True) or {}
     with SessionLocal() as s:
@@ -276,14 +274,14 @@ def lists():
                 return jsonify({"ok": False, "error": gettext("There is a list of that name already.")}), 400
             names = [new if n == old else n for n in names]
             for t in s.scalars(select(TaskItem).where(TaskItem.board_list == old)):
-                if task_can_edit(t):
+                if access.can_edit_task(t):
                     t.board_list = new
         elif "remove" in data:
             name = str(data.get("remove") or "")
             names = [n for n in names if n != name]
             # Its cards go back to Inbox, as far as this person may move them.
             for t in s.scalars(select(TaskItem).where(TaskItem.board_list == name)):
-                if task_can_edit(t):
+                if access.can_edit_task(t):
                     t.board_list = ""
         elif "order" in data:
             wanted = clean_names(data.get("order"))
@@ -345,14 +343,14 @@ def card_new():
 def card_update(task_id: int):
     """Move a card ({"list", "before"|"after"}; the list "__done__" ticks it
     off), or change its title, notes or day ({"due": "" clears it})."""
-    from .calendar_routes import task_can_edit, task_denied
+    from .calendar_routes import task_denied
     _me()
     data = request.get_json(silent=True) or {}
     with SessionLocal() as s:
         row = s.get(TaskItem, task_id)
         if row is None:
             abort(404)
-        if not task_can_edit(row):
+        if not access.can_edit_task(row):
             return jsonify({"ok": False, "error": task_denied(row)}), 403
         if "title" in data:
             title = " ".join(str(data.get("title") or "").split())[:200]

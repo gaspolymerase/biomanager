@@ -10,6 +10,10 @@ change to `deploy/RUNBOOK.md` usually belongs in that copy too. The words to
 keep out are the `PRIVATE_WORDS` secret (and a git-ignored `.private-words`
 locally), which `tests/test_deploy.py` checks against.
 
+Decisions that are hard to reverse, and why they were made, are in
+`docs/adr/` (one short file each, numbered). Read the ones in the area you
+change; add one when you make such a decision.
+
 ## Changing the database's shape
 
 Never add a column or table by hand-written ALTER at start-up any more
@@ -60,8 +64,11 @@ from before the move update to, and which looks here for every update after.
 
 ## The mouse colony's words
 
-What a cage's **Purpose** means, as the lab's maintainer set it. Don't
-read them as synonyms or add meanings of your own:
+`GLOSSARY.md` holds the lab's words for every database (the zebrafish's
+breeder and mating tanks among them); use them as it defines them, and add
+a word there when one is settled. What a cage's **Purpose** means, as the
+lab's maintainer set it. Don't read them as synonyms or add meanings of
+your own:
 
 - **Breeding** is a mating cage, mating now. It is the only cage with
   **Litter born**, **Genotyping** and **Wean**, and its litters are its

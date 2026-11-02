@@ -508,7 +508,6 @@ class Subject:
 def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Subject]:
     """The experiment's animals, in order; only one treatment group's when
     `group` is given."""
-    from .colony_routes import can_edit_mouse
     from .services import mouse_is_active
     out: list[Subject] = []
     if place.subject_kind == "mouse":
@@ -518,7 +517,7 @@ def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Su
                 continue
             out.append(Subject(f"mouse:{m.id}", "mouse", m.id, f"#{m.mouse_id}", m.gender or "", m.genotype or "",
                                m.cage.cage_id if m.cage else "", em.treatment_group or "", 1, em.note or "",
-                               mouse_is_active(m), can_edit_mouse(m), em, m))
+                               mouse_is_active(m), access.can_edit_mouse(m), em, m))
         out.sort(key=lambda s: s.record.mouse_id or 0)
     else:
         rows = session.scalars(select(ExperimentSubject).where(ExperimentSubject.experiment_id_fk == exp.id)
@@ -587,7 +586,6 @@ def find_subject(session, exp, place, key: str) -> Subject | None:
 def candidates(session, exp: Experiment, place: Place) -> dict:
     """What can be added: {"groups": [(value, label, count)], "single": [(value, label)]}
     — a cage, tank, rack or housing of animals, or one."""
-    from .colony_routes import can_edit_mouse
     from .services import mouse_is_active
     have = {s.key for s in subjects(session, exp, place)}
     groups, single = [], []
@@ -597,7 +595,7 @@ def candidates(session, exp: Experiment, place: Place) -> dict:
             if n:
                 groups.append((c.cage_id, gettext("Cage %(cage)s", cage=c.cage_id), n))
         for m in session.scalars(select(MouseRecord).where(MouseRecord.date_of_death.is_(None)).order_by(MouseRecord.mouse_id)):
-            if f"mouse:{m.id}" not in have and mouse_is_active(m) and can_edit_mouse(m):
+            if f"mouse:{m.id}" not in have and mouse_is_active(m) and access.can_edit_mouse(m):
                 single.append((str(m.id), f"#{m.mouse_id} · {m.gender or '?'} · {m.genotype or gettext('no genotype')}"))
     elif place.subject_kind == "fish":
         for t in positions.natural_sorted(session.scalars(select(TankRecord).where(TankRecord.active.is_(True))),
@@ -1297,7 +1295,6 @@ def update(experiment_id: int):
 def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str) -> tuple[int, int]:
     """Put a cage, tank, rack or housing of animals ("group"), or one
     ("one"), in the experiment: (added, skipped as not this person's)."""
-    from .colony_routes import can_edit_mouse
     from .services import mouse_is_active
     session.flush()
     session.expire(exp, ["memberships"])        # mice added a moment ago count as in it
@@ -1312,7 +1309,7 @@ def add_animals(session, exp: Experiment, place: Place, how: str, value: str, gr
         for m in mice:
             if f"mouse:{m.id}" in have or not mouse_is_active(m):
                 continue
-            if not can_edit_mouse(m):
+            if not access.can_edit_mouse(m):
                 skipped += 1
                 continue
             session.add(ExperimentMouse(experiment_id_fk=exp.id, mouse_id_fk=m.id, treatment_group=group))

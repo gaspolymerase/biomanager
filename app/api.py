@@ -18,7 +18,7 @@ cross-site check (security.py) does not apply here. No cookie is set.
 Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
-Writes go through the same checks as the pages (colony_routes.change_mouse,
+Writes go through the same checks as the pages (colony.change_mouse,
 inventory_routes._item_from_form, stock_routes._unit_from_form,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
@@ -406,7 +406,7 @@ def mouse_update(mouse_id: int):
     """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
     "version" (as the mouse was read), a mouse changed since is refused (409)
     instead of overwritten."""
-    from .colony_routes import can_edit_mouse, change_mouse
+    from .colony import change_mouse
     from .services import mouse_display_row, split_genotype
     data = dict(_json())
     seen = data.pop("version", None)
@@ -415,7 +415,7 @@ def mouse_update(mouse_id: int):
         abort(400, f"A mouse has no {', '.join(unknown)} to change; it has {', '.join(MOUSE_FIELDS)}.")
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
-        if not can_edit_mouse(m):
+        if not access.can_edit_mouse(m):
             abort(403, access.reason_denied(m))
         if seen is not None and seen != m.sync_version:
             abort(409, f"Mouse {m.mouse_id} was changed since you read it (by {m.updated_by or 'someone'}). "
@@ -474,7 +474,6 @@ def weights(mouse_id: int):
 def weigh(mouse_id: int):
     """{"grams": 24.1, "date": "2026-09-28" (today if left out), "notes": ""}:
     one weight a day, so the same day again replaces it."""
-    from .colony_routes import can_edit_mouse
     data = _json()
     try:
         grams = float(data.get("grams"))
@@ -491,7 +490,7 @@ def weigh(mouse_id: int):
     notes = str(data.get("notes") or "").strip()[:500]
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
-        if not can_edit_mouse(m):
+        if not access.can_edit_mouse(m):
             abort(403, access.reason_denied(m))
         w = s.scalar(select(MouseWeight).where(MouseWeight.mouse_id_fk == m.id, MouseWeight.weigh_date == on))
         created = w is None
@@ -512,7 +511,7 @@ _CAGE_LITTERS = selectinload(CageRecord.cage_litters).selectinload(CageLitter.li
 
 
 def cage_json(c: CageRecord) -> dict:
-    from .services import cage_litter_json, open_litters
+    from .litter_dates import cage_litter_json, open_litters
     living = sorted(m.mouse_id for m in c.mice if m.date_of_death is None)
     return {
         # Each litter born in it not yet weaned, oldest first (a trio's two
@@ -582,7 +581,7 @@ def rack_update(name: str):
     now) or "keep_cells" (each keeps its row and column, and its name
     changes); without one it is refused (409) with what each would do."""
     from . import rack_layout
-    from .colony_routes import _mouse_rack_from_form
+    from .colony import mouse_rack_from_form
     from .models import MouseRack
     _feature("colony")
     data = _json()
@@ -610,7 +609,7 @@ def rack_update(name: str):
             preview = rack_layout.plan(s, rack_layout.kind("mouse_rack"), r, new)
             if preview["affected"]:
                 return _error(409, rack_layout.refusal(preview), preview=rack_layout.public(preview))
-        error, change = _mouse_rack_from_form(s, r, form)
+        error, change = mouse_rack_from_form(s, r, form)
         if error:
             s.rollback()
             abort(400, error)
@@ -620,7 +619,7 @@ def rack_update(name: str):
 
 def litter_json(lt: LitterRecord) -> dict:
     # A litter is in a cage through its pups (made in the cage at genotyping,
-    # moved out at weaning; services.weaning_due reads it the same way):
+    # moved out at weaning; litter_dates.weaning_due reads it the same way):
     # `cage` is where most of its living pups are, `cages` every one.
     held = Counter(m.cage.cage_id for m in lt.mice if m.date_of_death is None and m.cage is not None)
     from .positions import natural, natural_sorted
@@ -881,7 +880,7 @@ UNIT_FIELDS = ("genotype", "female_genotype", "male_genotype", "owner", "purpose
 
 @bp.patch("/stocks/<key>/units/<int:number>")
 def stock_unit_update(key: str, number: int):
-    from .stock_routes import Invalid, can_edit, _unit_from_form
+    from .stock_routes import Invalid, _unit_from_form
     data = _json()
     unknown = sorted(set(data) - set(UNIT_FIELDS))
     if unknown:
@@ -891,7 +890,7 @@ def stock_unit_update(key: str, number: int):
         u = s.scalar(select(StockUnit).where(StockUnit.module_id_fk == module.id, StockUnit.number == number))
         if u is None:
             abort(404, f"There is no {mv.unit} {number}.")
-        if not can_edit(u):
+        if not access.can_edit_unit(u):
             abort(403, access.reason_denied(u))
         form = MultiDict({k: str(v if v is not None else "") for k, v in data.items() if k not in ("rack", "position")})
         if "rack" in data or "position" in data:
@@ -1048,12 +1047,12 @@ def inventory_create(key: str):
 
 @bp.patch("/inventories/<key>/items/<int:number>")
 def inventory_update(key: str, number: int):
-    from .inventory_routes import Refused, _can_edit, _item_from_form
+    from .inventory_routes import Refused, _item_from_form
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
         item = _item(s, module, mv, number)
-        if not _can_edit(item):
+        if not access.can_edit_item(item):
             abort(403, access.reason_denied(item, noun=mv.item_noun))
         form = _item_form(s, module, mv, data, item)
         try:

@@ -276,6 +276,9 @@ marks them **Returned**; **New clutch** records each fertilisation against
 its cross. **Log reading** keeps each system's temperature, pH,
 conductivity and salinity, with a chart, and can raise an alarm. A tank
 can hold a group with a headcount, or resolve into named individuals.
+A tank's purpose is stock, breeder, mating, experiment or quarantine: a
+**breeder** tank holds the lab's breeding stock and is shared with the lab,
+as a mouse **Breeder** cage is; a **mating** tank is one being crossed now.
 A fish row's dot is blue under 3 months post fertilisation, green to 18
 months and red after. The **Experiments** tab, beside Tanks and Fish, works as the mouse
 colony's does, with fish in mind: start with a tank's fish rows, or a clutch's
@@ -1642,7 +1645,7 @@ what it needs to track.
   A Breeder cage starts out shared; any other cage starts personal. Only a
   cage's owner or an admin shares it, makes it personal or gives it away.
   The same goes for everything with an owner, in every database: editing
-  a shared breeding tank, a lab stock vial or a lab-common plasmid doesn't
+  a shared breeder tank, a lab stock vial or a lab-common plasmid doesn't
   make it yours to give away (animal care may, for the animals, cages,
   tanks and vials they look after), and a new owner must be someone in
   the lab, picked from the list.
@@ -1658,14 +1661,14 @@ what it needs to track.
   databases, edit each other's records there, edit its notebook pages,
   tick off its to-dos, and share their own things with it. They start as
   groups always worked. Wherever something can be shared with the lab, it can
-  be shared with one of your groups instead: a cage, a breeding tank or a
+  be shared with one of your groups instead: a cage, a breeder tank or a
   lab stock vial is then its members' to edit (as the group allows), as is a plasmid
   or reagent shared with it (everyone still sees them). A database made
   for a group is seen only by its members (and admins), a group's to-dos
   are on their calendars for any of them to tick off, and a notebook page
   or template can be shared with a group. The colony's **My groups** view
   shows the mice and cages of everyone in your groups. Deleting a group
-  makes what was shared with it its owner's own again (a breeding tank or
+  makes what was shared with it its owner's own again (a breeder tank or
   stock vial the lab's).
 - **Roles for a facility** (Settings → People & access, the **···** beside someone): **Animal care**
   (technicians, vets) may change any lab's animals, cages, tanks and
