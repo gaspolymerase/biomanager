@@ -142,6 +142,32 @@ fine. On the fish, tanks, reagents and vials (1.4–1.8 s), the tank menus
 of the fish dialog and the batch bar (3,338 tanks each) were tried and
 cost nothing measurable: options in a closed menu are not laid out.
 
+### Afterwards: a load test with a colony's ages
+
+The load test gave its living mice litters born over five years, so 88%
+of them were past 30 weeks and Home's agenda listed about 5,700 colony
+items, 3,960 of them cages long past 30 weeks: no working colony keeps
+its mice like that, and tuning Home for it would have tuned the test
+data. The living mice now come from litters born in the last ten months,
+most of them young: 519 of 4,921 (10.5%) are past 30 weeks, and the
+agenda has 2,423 colony items (1,688 of them genotyping, as a third of
+the living mice are labelled geno). Measured again on that lab:
+
+| Page | Server | In Chromium |
+| --- | --- | --- |
+| Home | 0.45 s | 0.74 s to load |
+| Mice / Cages / Litters | 0.13 / 0.22 / 0.30 s | 1.2 / 1.5 / 0.8 s |
+| Fish / Tanks | 0.65 / 0.39 s | 1.8 / 1.4 s |
+| Reagents / Samples / Orders | 0.84 / 0.38 / 0.30 s | 1.9 / 1.6 / 1.5 s |
+| Fly vials / Worm strains | 0.30 / 0.23 s | 1.3 / 1.1 s |
+| Plasmids | 0.27 s | 1.3 s |
+| Plants (10,000) | 2.7 s | 4.8 s |
+
+Home's server time is now 0.45 s, of which the fly and worm schedules are
+0.11 s: each is worked out twice, for the database's card (two days) and
+for the agenda (seven). Working each out once would save about half of
+that. The plants' sheet is the slowest page left.
+
 ## How to check each
 
 `scripts/load-test.py <folder> --reuse --browser` before and after (with
