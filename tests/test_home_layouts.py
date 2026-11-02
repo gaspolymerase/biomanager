@@ -282,12 +282,16 @@ class ColonyPanelTests(AppTestCase):
         self.assertEqual(after["mine"] - before["mine"], 1)          # the one ended isn't yours to count
 
     def test_work_long_overdue_is_not_this_weeks(self):
+        from datetime import date
         before = self.panel()
         self.make_colony(self.m, self.member, n_mice=1, dob=days_ago(30 * 7 + 60))      # past 30 w for two months
         self.make_mouse(self.m, self.member, cage=uniq("C"), date_of_birth=days_ago(20), status="geno")
         after = self.panel()
         self.assertEqual(after["overdue"] - before["overdue"], 1)
-        self.assertEqual(after["week"] - before["week"], 1)           # genotyping, due today
+        # Genotyping is due today; its litter's weaning (P21) tomorrow, which is
+        # this week's unless today is Sunday.
+        tomorrow_this_week = date.today().weekday() != 6
+        self.assertEqual(after["week"] - before["week"], 1 + tomorrow_this_week)
 
     def test_this_week_runs_from_today_to_sunday(self):
         from datetime import date
