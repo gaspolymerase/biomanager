@@ -26,7 +26,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from .db import SessionLocal
-from . import access, i18n, positions
+from . import access, i18n, positions, sheet_paging
 from .i18n import gettext, ngettext
 from .formutil import form_changed
 from . import audit
@@ -320,33 +320,126 @@ def _plasmid_int(raw) -> int | None:
 def plasmids():
     if request.method == "POST":
         return _create_plasmid()
-    me = g.user.username
+    # A long sheet of plasmids: its first page drawn, the rest fetched as
+    # shown (app/sheet_paging.py); the Boxes grid and the List come when
+    # they are first shown (plasmid_grid, plasmid_list).
+    return sheet_paging.page(_plasmid_sheet_page(), "plasmids-v5", url_for("plasmid_rows"))
+
+
+@app.route("/plasmids/rows")
+@login_required
+def plasmid_rows():
+    """Rows of a long sheet of plasmids by id (?ids=…), as the page draws
+    them; ?as=text for their words."""
+    ids = sheet_paging.ids_asked(request)
+    return sheet_paging.answer(_plasmid_sheet_page(keep=set(ids)), "plasmids-v5", ids, request)
+
+
+@app.route("/plasmids/grid")
+@login_required
+def plasmid_grid():
+    """The Boxes grid's boxes and tiles (rack-grid.js), asked for when the
+    grid is first shown: a tile carries its plasmid's whole dialog."""
     with SessionLocal() as db_session:
-        records = db_session.scalars(select(PlasmidRecord).order_by(PlasmidRecord.plasmid_id.desc())).all()
-        boxes = pbox.all_boxes(db_session)
-        box_by_id = {b.id: b for b in boxes}
-        # Each plasmid's newest accepted clone, for the List's cards (app/clone_routes.py).
-        from .models import PlasmidClone
-        verified_at = dict(db_session.execute(select(PlasmidClone.plasmid_row_id, func.max(PlasmidClone.accepted_at))
-                                              .where(PlasmidClone.accepted_at.is_not(None))
-                                              .group_by(PlasmidClone.plasmid_row_id)).all())
-        rows = []
-        for p in records:
-            editable = access.can_edit(p)
-            box = box_by_id.get(p.box_id_fk)
-            rows.append({
-                "p": p, "box": box, "editable": editable, "manageable": access.can_manage(p), "mine": p.owner == me,
-                "stored": pbox.is_stored(p), "position": pbox.label(p, box),
-                "where": _plasmid_where(p, box),
-                "length": len(p.full_sequence or ""),
-                "payload": _plasmid_payload(p, box, editable),
-                "mini": _mini_map(p),
-                "verified": fmt_day(local_time(verified_at[p.id])) if p.id in verified_at else "",
-            })
-        next_id = _next_plasmid_id(db_session)
+        rows, boxes, new_payload = _plasmid_rows(db_session)
+        return jsonify(_plasmid_grid(rows, boxes, new_payload))
+
+
+@app.route("/plasmids/list")
+@login_required
+def plasmid_list():
+    """The List view's rows, asked for when the List is first shown."""
+    with SessionLocal() as db_session:
+        rows, _boxes, _new = _plasmid_rows(db_session, minis=True)
+        return render_template("_plasmid_list.html", rows=rows)
+
+
+def _plasmid_rows(db_session, keep: set[int] | None = None, minis: bool = False):
+    """(rows, boxes, the New plasmid payload): each plasmid as the sheet,
+    the grid and the list read it, newest first; with `keep`, only those;
+    with `minis`, each with its small map."""
+    me = g.user.username
+    listed = select(PlasmidRecord).order_by(PlasmidRecord.plasmid_id.desc())
+    if keep is not None:
+        listed = listed.where(PlasmidRecord.id.in_(keep))
+    records = db_session.scalars(listed).all()
+    boxes = pbox.all_boxes(db_session)
+    box_by_id = {b.id: b for b in boxes}
+    # Each plasmid's newest accepted clone, for the List's cards (app/clone_routes.py).
+    from .models import PlasmidClone
+    verified_at = dict(db_session.execute(select(PlasmidClone.plasmid_row_id, func.max(PlasmidClone.accepted_at))
+                                          .where(PlasmidClone.accepted_at.is_not(None))
+                                          .group_by(PlasmidClone.plasmid_row_id)).all())
+    rows = []
+    for p in records:
+        editable = access.can_edit(p)
+        box = box_by_id.get(p.box_id_fk)
+        rows.append({
+            "p": p, "box": box, "editable": editable, "manageable": access.can_manage(p), "mine": p.owner == me,
+            "stored": pbox.is_stored(p), "position": pbox.label(p, box),
+            "where": _plasmid_where(p, box),
+            "length": len(p.full_sequence or ""),
+            "payload": _plasmid_payload(p, box, editable),
+            "mini": _mini_map(p) if minis else [],
+            "verified": fmt_day(local_time(verified_at[p.id])) if p.id in verified_at else "",
+        })
+    new_payload = {"owner": me, "plasmid_id": _next_plasmid_id(db_session), "count": 1}
+    return rows, boxes, new_payload
+
+
+def plasmid_stubs(rows: list[dict], boxes) -> list[dict]:
+    """Plasmids the sheet does not draw, as data-table.js reads a drawn row
+    (plasmids.html's rows, as cell_text.row_stub reads them): its data-*,
+    each field's value ("k"), its row form, and the words a search looks in
+    ("s": what the row shows, its data-* and each field's value and the
+    choice it shows). Built from each plasmid's data rather than drawn:
+    drawing every plasmid and reading the rows back was most of the page's
+    time. tests/test_speed.py holds each to the row it stands for."""
+    from .web import owner_badge_filter
+    tr = i18n.translate_value    # as the template's |tr
+    box_name = {b.id: b.name for b in boxes}
+    group_name = project_groups.names()
+    personal, lab = tr("Personal"), tr("Lab common")
+    sequence, add_sequence, circ, lin = gettext("Sequence"), gettext("Add sequence"), gettext("circ"), gettext("lin")
+    badges: dict[str, str] = {}
+    out = []
+    for r in rows:
+        p, length = r["p"], r["length"]
+        share = project_groups.record_value(p)
+        shown_share = personal if share == "0" else lab if share == "1" else group_name.get(p.share_group_id, "")
+        box = str(p.box_id_fk) if p.box_id_fk in box_name else ""
+        owner = p.owner or ""
+        data = {"id": str(p.id), "pid": str(p.plasmid_id), "length": str(length), "mine": "true" if r["mine"] else "false",
+                "seq": "true" if length else "false", "shared": "true" if p.is_shared else "false",
+                "active": "true" if r["stored"] else "false"}
+        sort = {"name": p.name or "", "backbone": p.backbone or "", "insert_seq": p.insert_seq or "",
+                "resistance": p.resistance or "", "is_shared": share, "owner": owner, "box_id": box,
+                "position": r["position"] or "", "location": p.location or "", "concentration": p.concentration or "",
+                "a260_280": p.a260_280 or "", "notes": p.notes or ""}
+        words = [f"#{p.plasmid_id}", sequence if length else add_sequence,
+                 f"{length:,}bp{circ if p.is_circular else lin}" if length else "–",
+                 shown_share, box_name.get(p.box_id_fk, "–") if box else "–", *data.values(), *sort.values()]
+        if owner:
+            if owner not in badges:
+                badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
+            words.append(badges[owner])
+        out.append({"id": p.id, "f": f"plasmid-{p.id}", "d": data, "k": sort,
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
+
+
+def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
+    """The plasmids page; with `keep`, its sheet draws only those. A long
+    sheet draws its first page; each other plasmid is a stub
+    (plasmid_stubs), its row fetched from plasmid_rows as it is shown."""
+    from .inventory_routes import FIRST_PAGE, LAZY_OVER
+    with SessionLocal() as db_session:
+        rows, boxes, new_payload = _plasmid_rows(db_session, keep)
+        defined_columns = custom_fields.fields(db_session, "plasmids")
+        in_table = custom_fields.in_table(defined_columns)
+        # A lab's own columns are drawn and read back (sheet_paging.page).
+        lazy = keep is None and not in_table and len(rows) > LAZY_OVER
         usernames = current_lab_usernames(db_session)
-        new_payload = {"owner": me, "plasmid_id": next_id, "count": 1}
-        grid = _plasmid_grid(rows, boxes, new_payload)
         counts = {
             "all": len(rows),
             "mine": sum(1 for r in rows if r["mine"]),
@@ -355,18 +448,19 @@ def plasmids():
             "lab": sum(1 for r in rows if r["p"].is_shared),
         }
         box_list = [{"id": b.id, "name": b.name, "location": b.location or ""} for b in boxes]
-        defined_columns = custom_fields.fields(db_session, "plasmids")
         return render_template(
             "plasmids.html",
             rows=rows,
+            sheet_rows=rows[:FIRST_PAGE] if lazy else rows,
+            stubs=plasmid_stubs(rows[FIRST_PAGE:], boxes) if lazy else [],
+            rows_url=url_for("plasmid_rows") if lazy else "",
             counts=counts,
             usernames=usernames,
-            next_plasmid_id=next_id,
+            next_plasmid_id=new_payload["plasmid_id"],
             new_payload=new_payload,
             boxes=box_list,
-            grid=grid,
             max_batch=pbox.MAX_BATCH,
-            custom_columns=custom_fields.in_table(defined_columns),
+            custom_columns=in_table,
             custom_columns_all=defined_columns,
         )
 

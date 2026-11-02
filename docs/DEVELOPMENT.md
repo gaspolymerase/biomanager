@@ -879,6 +879,30 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   The rack grid's tiles are made only for the grid (`?mode=grid`). The
   other tabs read no tank's fish at all. At 100,000 mice the tank sheet
   answers in 0.45–0.5 s.
+- The plasmids page (`plasmid_routes._plasmid_sheet_page`) draws its first
+  `FIRST_PAGE` past `LAZY_OVER` plasmids and makes each other plasmid's
+  stub from its data (`plasmid_stubs`: its `data-*`, each field's value,
+  the Belongs to and Box menus' shown choices, the Sequence button's word,
+  the length cell's words, the owner's badge); `tests/test_speed.py`
+  holds every stub to `cell_text.row_stub` of its drawn row, in both ways
+  of drawing cells and in Chinese. `/plasmids/rows` draws only the
+  plasmids asked for. The Boxes grid's tiles (`/plasmids/grid`, the
+  shared grid's `src`) and the List (`/plasmids/list`,
+  `_plasmid_list.html`, then each small map) come when first shown. A lab
+  with its own plasmid columns gets its sheet drawn whole and trimmed by
+  `sheet_paging.page` instead. At 100,000 mice (5,000 plasmids, a fifth
+  with a sequence) the page answers in 0.3 s instead of 2.7 and loads in
+  1.4 s instead of 10.6 (36 MB of page to 3).
+- An animal database's **Animals** sheet (`organism_routes._module_page`)
+  lists the living ones and those that ended in the last `RECENT_DAYS`;
+  the rest wait behind "Show them" (`?ended=all`). It is drawn whole and
+  trimmed by `sheet_paging.page`: past `LAZY_OVER` rows its first page
+  stays and the others become stubs read from the drawn rows
+  (`cell_text.page_of_rows`), fetched from `/organisms/<key>/animals/rows`.
+  At 100,000 mice (10,000 plants, 3,328 listed) the page loads in 4.9 s
+  instead of 33 (54 MB to 5.5), of which the server is 3.2 s, half of it
+  drawing every row and half reading them back; stubs made from data, as
+  the vials' are, would take that to a few tenths of a second.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

@@ -879,6 +879,131 @@ class SheetPagingTests(AppTestCase):
         self.assertIn(f'data-dt-rows-url="/stocks/{key}/units/rows?ended=all"', html)
 
 
+class WholeSheetPagingTests(AppTestCase):
+    """Sheets drawn whole by their page and trimmed by sheet_paging.page: an
+    animal database's animals and the plasmids. Past LAZY_OVER rows the
+    page keeps its first page and stubs for the rest, whose rows come from
+    a rows address as the page draws them; the plasmids' Boxes grid and
+    List come when first shown."""
+
+    def paged(self, **limits):
+        from unittest import mock
+        from app import inventory_routes
+        return mock.patch.multiple(inventory_routes, LAZY_OVER=limits.get("over", 2), FIRST_PAGE=limits.get("first", 1))
+
+    def stubs_of(self, html):
+        import json
+        m = re.search(r'<script type="application/json" data-dt-stubs>(.*?)</script>', html, re.S)
+        return json.loads(m.group(1)) if m else []
+
+    def row_of(self, html, row_id):
+        squash = lambda text: re.sub(r"\s+", " ", text).strip()
+        return squash(re.search(rf'<tr data-id="{row_id}".*?</tr>', html, re.S).group(0))
+
+    def test_animals_past_the_limit_are_stubs_fetched_as_drawn(self):
+        from tests.test_plants import plant_module
+        key = plant_module(self.a)
+        mid = one("select id from organism_modules where key=?", key)
+        for _ in range(4):
+            self.post(self.a, f"/organisms/{key}/animal/save", {"code": uniq("P"), "count": "1", "status": "growing"})
+        whole = self.get_ok(self.a, f"/organisms/{key}")
+        self.assertNotIn("data-dt-rows-url", whole)
+        with self.paged():
+            html = self.get_ok(self.a, f"/organisms/{key}")
+        self.assertIn(f'data-dt-rows-url="/organisms/{key}/animals/rows"', html)
+        stubs = self.stubs_of(html)
+        self.assertEqual(len(stubs), 3)
+        ids = [s["id"] for s in stubs]
+        answer = self.a.get(f"/organisms/{key}/animals/rows", query_string={"ids": ",".join(map(str, ids[::-1]))}).get_json()
+        self.assertEqual(answer["ids"], ids[::-1])
+        for row_id in ids:
+            self.assertEqual(self.row_of(answer["rows"], row_id), self.row_of(whole, row_id))
+            self.assertIn(f'id="row-a-{row_id}"', answer["forms"])
+        self.assertEqual(one("select count(*) from organisms where module_id_fk=?", mid), 4)
+
+    def test_animals_that_ended_long_ago_wait_behind_show_them(self):
+        from tests.test_plants import plant_module
+        key = plant_module(self.a)
+        old, new = uniq("P"), uniq("P")
+        for code in (old, new):
+            self.post(self.a, f"/organisms/{key}/animal/save", {"code": code, "count": "1", "status": "growing"})
+        execute("update organisms set death_on=? where code=?", days_ago(400), old)
+        html = self.get_ok(self.a, f"/organisms/{key}")
+        self.assertIn(f'data-code="{new}"', html)
+        self.assertNotIn(f'data-code="{old}"', html)
+        self.assertIn("that ended over 90 days ago aren't listed", html)
+        everything = self.get_ok(self.a, f"/organisms/{key}?ended=all")
+        self.assertIn(f'data-code="{old}"', everything)
+        with self.paged(over=0, first=0):
+            self.assertIn(f'data-dt-rows-url="/organisms/{key}/animals/rows?ended=all"',
+                          self.get_ok(self.a, f"/organisms/{key}?ended=all"))
+        # A row asked for by id comes whenever it ended.
+        row_id = one("select id from organisms where code=?", old)
+        answer = self.a.get(f"/organisms/{key}/animals/rows", query_string={"ids": row_id}).get_json()
+        self.assertEqual(answer["ids"], [row_id])
+
+    def test_a_plasmid_not_drawn_reads_as_its_row_would(self):
+        """plasmid_routes.plasmid_stubs builds an undrawn plasmid from its
+        data; it must be what data-table.js would read from its row
+        (cell_text.row_stub), in either way of drawing cells, in Chinese,
+        for its owner and someone else."""
+        from app.cell_text import row_stub
+        box = self.make_box(self.a, uniq("Box"), rows=5, cols=6, location="-20 shelf")
+        ids = [self.make_plasmid(self.a, box_id=box, position="D5", notes='a <b>note</b> & "more"', backbone="pX"),
+               self.make_plasmid(self.a, resistance="Kan", location="bench"),
+               self.make_plasmid(self.m),
+               self.make_plasmid(self.a, box_id=box, position="")]
+        execute("update plasmids set full_sequence=?, is_circular=? where id=?", "ACGT" * 300, True, ids[0])
+        execute("update plasmids set full_sequence=?, is_circular=?, is_shared=? where id=?", "ACGT" * 3000, False, True, ids[1])
+        execute("update plasmids set owner='' where id=?", ids[3])
+        drawn_count = one("select count(*) from plasmids")
+        for client in (self.a, self.m):
+            for ua in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
+                       {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
+                with self.paged(over=100000):
+                    whole = client.get("/plasmids", headers=ua).get_data(as_text=True)
+                with self.paged(over=1, first=1):
+                    stubs = {s["id"]: s for s in self.stubs_of(client.get("/plasmids", headers=ua).get_data(as_text=True))}
+                self.assertEqual(len(stubs), drawn_count - 1, ua)
+                body = whole[whole.index("<tbody"):whole.index("</tbody>")]
+                read = {}
+                for attrs, row in re.findall(r'<tr (data-id="\d+"[^>]*)>(.*?)</tr>', body, re.S):
+                    drawn = row_stub(attrs, row)
+                    drawn["k"].pop("", None)   # row_stub reads a key inside the single-quoted payload; a browser does not
+                    read[drawn["id"]] = drawn
+                for pid in ids:
+                    if pid not in stubs:
+                        continue
+                    want, got = read[pid], stubs[pid]
+                    for name in ("d", "k", "f"):
+                        self.assertEqual(got[name], want[name], (pid, name, ua))
+                    self.assertEqual(set(got["s"].split()), set(want["s"].split()), (pid, ua))
+
+    def test_plasmids_past_the_limit_are_stubs_and_the_grid_and_list_come_later(self):
+        made = [self.make_plasmid(self.a) for _ in range(3)]
+        whole = self.get_ok(self.a, "/plasmids")
+        with self.paged():
+            html = self.get_ok(self.a, "/plasmids")
+        self.assertIn('data-dt-rows-url="/plasmids/rows"', html)
+        stubs = self.stubs_of(html)
+        self.assertEqual(len(stubs), whole.count("<tr data-id=") - 1)
+        ids = [s["id"] for s in stubs if s["id"] in made]
+        self.assertTrue(ids)
+        answer = self.a.get("/plasmids/rows", query_string={"ids": ",".join(map(str, ids))}).get_json()
+        for row_id in ids:
+            self.assertEqual(self.row_of(answer["rows"], row_id), self.row_of(whole, row_id))
+        # Neither the Boxes grid's tiles nor the List are in the page.
+        self.assertNotIn("data-rack-data", whole)
+        self.assertNotIn('class="plasmid-list-row"', whole)
+        self.assertIn('data-rack-src="/plasmids/grid"', whole)
+        self.assertIn('data-list-src="/plasmids/list"', whole)
+        listed = self.get_ok(self.a, "/plasmids/list")
+        for row_id in made:
+            number = one("select plasmid_id from plasmids where id=?", row_id)
+            self.assertIn(f'href="/plasmid/{number}"', listed)
+        self.assertTrue({i["id"] for i in self.a.get("/plasmids/grid").get_json()["items"]} >= set(made))
+
+
 class VersionedAssetsTests(AppTestCase):
 
     def test_a_file_named_with_its_version_is_kept_by_the_browser(self):

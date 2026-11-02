@@ -149,8 +149,10 @@ class TheTabs(InventoryCase):
 
     def test_the_list_draws_small_maps(self):
         page = self.get_ok(self.m, "/plasmids")
-        self.assertIn("data-mini=", page)
         self.assertIn("plasmid-map.js", page)
+        # The List comes when it is first shown (plasmid_routes.plasmid_list).
+        self.assertIn('data-list-src="/plasmids/list"', page)
+        self.assertIn("data-mini=", self.get_ok(self.m, "/plasmids/list"))
 
 
 if __name__ == "__main__":
