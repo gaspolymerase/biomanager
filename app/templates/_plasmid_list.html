@@ -1,0 +1,24 @@
+{# The plasmids page's List view (plasmid_routes.plasmid_list), asked for when the List is first shown. #}
+{% if rows %}
+  <ul class="plasmid-list">
+    {% for r in rows %}
+      {% set p = r.p %}
+      <li class="plasmid-list-row" data-search="{{ ((p.name or '') + ' ' + (p.backbone or '') + ' ' + (p.resistance or '') + ' ' + (p.owner or '') + ' ' + r.where)|lower }}">
+        <a href="{{ url_for('plasmid_page', number=p.plasmid_id) }}">
+          <span class="plasmid-mini" {% if r.length %}data-mini='{{ r.mini|tojson }}' data-length="{{ r.length }}"{% endif %}><span>#{{ p.plasmid_id }}</span></span>
+          <span class="plasmid-list-name">{{ p.name or _('Unnamed') }}{% if r.verified %} <span class="badge badge-ok">{{ _('Verified %(when)s', when=r.verified) }}</span>{% endif %}</span>
+          <span class="plasmid-list-meta">
+            {% if p.backbone %}<span>{{ p.backbone }}</span>{% endif %}
+            {% if p.resistance %}<span class="badge badge-brand">{{ p.resistance }}</span>{% endif %}
+            {% if r.where %}<span>{{ r.where }}</span>{% elif p.location %}<span>{{ p.location }}</span>{% endif %}
+            {% if r.length %}<span class="tabular-nums">{{ r.length }} bp</span>{% endif %}
+            {% if p.owner %}{{ p.owner | owner_badge }}{% endif %}
+            {% if not r.editable %}<span class="sheet-lock" title="{{ _('%(owner)s’s plasmid: read only', owner=p.owner or _('Someone else')) }}">{{ icon('lock') }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty-state m-4">{{ _('No plasmids yet.') }}</div>
+{% endif %}

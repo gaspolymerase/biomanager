@@ -424,6 +424,7 @@
 /organisms/<key>/animal/save	organisms.save_animal	POST
 /organisms/<key>/animals/bulk	organisms.bulk_animals	POST
 /organisms/<key>/animals/genotype	organisms.genotype_batch	POST
+/organisms/<key>/animals/rows	organisms.animal_rows	GET
 /organisms/<key>/cohort/save	organisms.save_cohort	POST
 /organisms/<key>/configure	organisms.configure	POST
 /organisms/<key>/cross/save	organisms.save_cross	POST
@@ -505,6 +506,9 @@
 /plasmids/features/import	feature_library_import	POST
 /plasmids/features/pack	feature_library_pack	POST
 /plasmids/fetch-sequence	sequence_fetch.fetch	GET
+/plasmids/grid	plasmid_grid	GET
+/plasmids/list	plasmid_list	GET
+/plasmids/rows	plasmid_rows	GET
 /presence	sheet_views.presence	POST
 /proposals	proposals.page	GET
 /proposals/<int:proposal_id>/approve	proposals.approve_page	POST
