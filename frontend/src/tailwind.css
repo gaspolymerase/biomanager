@@ -1932,6 +1932,10 @@
   /* The column it is sorted by reads in ink; the others show their caret
      only when pointed at. */
   .dt thead th:is(.dt-sort-asc, .dt-sort-desc) { @apply text-ink; }
+  /* A column of amounts (data-table.js _alignNumbers): its heading at the
+     right, over its numbers. */
+  .dt thead th.is-num { @apply text-right; }
+  .dt thead th.is-num .dt-col-head { @apply justify-end; }
   .dt thead th.dt-sortable:not(.dt-sort-asc, .dt-sort-desc) .dt-sort-indicator { @apply opacity-0; }
   .dt thead th.dt-sortable:hover .dt-sort-indicator { @apply opacity-100; }
 
@@ -2797,6 +2801,9 @@
   }
   .record-dialog-foot .btn { @apply h-8 px-3.5; }
   .record-dialog-hint { @apply mr-auto text-[12px] text-muted; }
+  .record-dialog-another { @apply mr-2 flex shrink-0 cursor-pointer items-center gap-2 text-[13px] text-ink-soft; }
+  .record-dialog-another[hidden] { display: none; }
+  .record-dialog-another input { @apply size-4 accent-brand-600; }
   .record-dialog-narrow { @apply w-[min(460px,calc(100vw-2rem))]; }
   .record-dialog-wide { @apply w-[min(880px,calc(100vw-2rem))]; }
 
@@ -3908,6 +3915,7 @@
     .record-dialog-foot { @apply flex-wrap px-5 pt-3; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
     .record-dialog-foot .btn { @apply h-10 flex-1 text-[15px]; }
     .record-dialog-foot .record-dialog-hint { @apply w-full flex-none; }
+    .record-dialog-foot .record-dialog-another { @apply w-full; }
   }
   @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
     dialog:not(.phone-sheet):not(.cmdk-dialog) { animation: none; }

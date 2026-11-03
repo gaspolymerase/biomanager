@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.9.2": {
+        "new": [
+            "A new mouse's form has **Add another after this**: save, and the form stays open for the next mouse with its strain and cage kept.",
+            "Numbers line up on the right in every sheet: an age, a count, a quantity.",
+        ],
+        "fixed": [
+            "Picking one of **Set field**'s choices no longer closes its panel.",
+        ],
+    },
     "2.9.1": {
         "fixed": [
             "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.",

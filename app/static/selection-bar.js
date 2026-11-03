@@ -358,8 +358,12 @@
     document.body.appendChild(panel);
     bar.selbarPop = panel;
 
-    // A click away from the bar closes its panel or menu.
+    // A click away from the bar closes its panel or menu. A field's
+    // suggestions (static/combobox.js) hang from the page, not the panel,
+    // but picking one is a click in the panel's field: it stays open for
+    // Set field.
     document.addEventListener('pointerdown', (event) => {
+      if (event.target.closest && event.target.closest('.combo-pop')) return;
       if (![bar, panel, moreMenu].some((node) => node.contains(event.target))) closePanel(bar);
     });
     moreMenu.addEventListener('keydown', (event) => {
