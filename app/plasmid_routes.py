@@ -732,6 +732,48 @@ def _plasmid_answer(db_session, p, message: str = "", error: str = "", status: i
     return _plasmid_back(p.id if p is not None else None)
 
 
+MAP_HITS = 60
+
+
+def plasmids_with_element(db_session, text: str, limit: int = MAP_HITS) -> tuple[list[dict], int]:
+    """The plasmids whose map has a feature named like `text` (EGFP, WPRE,
+    "hSyn"), each with the features that matched: ([{number, name, url,
+    features}], how many in all). The database narrows by the text first,
+    so only the maps that mention it are read."""
+    wanted = " ".join((text or "").split()).casefold()
+    if len(wanted) < 2:
+        return [], 0
+    rows = db_session.execute(
+        select(PlasmidRecord.plasmid_id, PlasmidRecord.name, PlasmidRecord.features_json)
+        .where(func.lower(PlasmidRecord.features_json).contains(wanted))
+        .order_by(PlasmidRecord.plasmid_id))
+    found = []
+    for number, name, features_json in rows:
+        try:
+            features = json.loads(features_json or "[]")
+        except ValueError:
+            continue
+        names = []
+        for f in features if isinstance(features, list) else []:
+            label = str(f.get("name") or "") if isinstance(f, dict) else ""
+            if wanted in label.casefold() and label not in names:
+                names.append(label)
+        if names:
+            found.append({"number": number, "name": name or "", "features": names[:4],
+                          "url": url_for("plasmid_page", number=number)})
+    return found[:limit], len(found)
+
+
+@app.route("/plasmids/on-map")
+@login_required
+def plasmids_on_map():
+    """For the plasmids page's search: the plasmids that carry what is
+    typed on their map, whatever their Insert says."""
+    with SessionLocal() as db_session:
+        found, total = plasmids_with_element(db_session, request.args.get("q", ""))
+    return jsonify({"plasmids": found, "total": total})
+
+
 @app.route("/plasmids/link-columns", methods=["POST"])
 @admin_required
 def plasmid_link_columns():

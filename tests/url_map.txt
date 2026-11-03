@@ -513,6 +513,7 @@
 /plasmids/grid	plasmid_grid	GET
 /plasmids/link-columns	plasmid_link_columns	POST
 /plasmids/list	plasmid_list	GET
+/plasmids/on-map	plasmids_on_map	GET
 /plasmids/rows	plasmid_rows	GET
 /presence	sheet_views.presence	POST
 /proposals	proposals.page	GET

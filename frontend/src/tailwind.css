@@ -4344,6 +4344,10 @@
     .spend-bar-cell { @apply min-w-20; }
   }
 
+  /* Plasmids: what the search names on the maps (plasmids_on_map). */
+  .plasmid-on-map { @apply border-b border-hairline px-4 py-2 text-[12px] text-ink-soft; }
+  .plasmid-on-map a { @apply font-medium; }
+
   /* The lab's vendors (templates/vendors.html). */
   .vendors-bar { @apply flex items-center gap-3 border-b border-hairline px-4 py-2.5; }
   .vendors-search { @apply flex min-w-0 max-w-80 flex-1 items-center gap-2 text-muted; }

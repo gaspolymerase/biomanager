@@ -225,5 +225,7 @@
   "Edit this feature": "编辑这个特征",
   "Make it circular": "改为环状",
   "Make it linear": "改为线性",
-  "Saved at once. Features after the change move with it, and one it runs through grows or shrinks. ⌘Z undoes.": "立即保存。改动之后的特征会跟着移动，被改动穿过的特征会变长或变短。⌘Z 可以撤销。"
+  "Saved at once. Features after the change move with it, and one it runs through grows or shrinks. ⌘Z undoes.": "立即保存。改动之后的特征会跟着移动，被改动穿过的特征会变长或变短。⌘Z 可以撤销。",
+  "“%(q)s” on the map of %(n)s plasmids:": "图谱上有“%(q)s”的质粒共 %(n)s 个：",
+  "and %(n)s more": "还有 %(n)s 个"
 }
