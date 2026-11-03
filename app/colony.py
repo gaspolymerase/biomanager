@@ -21,14 +21,25 @@ from flask import flash, g, url_for
 from sqlalchemy import func, select
 from werkzeug.datastructures import MultiDict
 
-from . import access, custom_fields, positions, rack_layout, stewardship
+from . import access, custom_fields, notify, positions, rack_layout, stewardship
 from .days import fmt_day
 from .formutil import form_changed
 from .i18n import gettext, ngettext
 from .models import CageRecord, LitterRecord, MouseRack, MouseRecord
-from .services import (add_notification, apply_status_rules, cage_is_active, current_lab_usernames, get_or_create_cage,
-                       get_or_create_litter, mouse_display_row, next_litter_id, next_mouse_id, parse_date, slot_order,
-                       split_genotype, sync_mouse_transgenes, transgene_values_from_form)
+from .services import (
+    apply_status_rules,
+    cage_is_active,
+    current_lab_usernames,
+    get_or_create_cage,
+    get_or_create_litter,
+    mouse_display_row,
+    parse_date,
+    slot_order,
+    split_genotype,
+    sync_mouse_transgenes,
+    transgene_values_from_form,
+)
+from .record_numbers import next_litter_id, next_mouse_id
 from .web import stamp_updated
 
 
@@ -293,7 +304,7 @@ def create_transfer_copy(db_session, source_mouse: MouseRecord, recipient_userna
         [source_mouse.transgene_1, source_mouse.transgene_2, source_mouse.transgene_3, source_mouse.transgene_4],
     )
     db_session.add(copied_mouse)
-    add_notification(
+    notify.send(
         db_session,
         recipient_username,
         title="Mouse transfer received",

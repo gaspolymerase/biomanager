@@ -22,7 +22,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from .db import SessionLocal
-from . import access, cell_text, i18n, lab, plain_records, positions
+from . import access, cell_text, i18n, lab, notify, plain_records, positions
 from .i18n import gettext, ngettext
 from .formutil import form_changed
 from . import audit
@@ -59,19 +59,20 @@ from .services import (
     normalize_status,
     dropdown_options_map,
     dropdown_records_map,
-    generate_litter_id,
     get_or_create_cage,
     get_or_create_litter,
     mouse_display_row,
     transgene_columns_used,
+    parse_date,
+    sync_mouse_transgenes,
+)
+from .record_numbers import (
+    generate_litter_id,
     next_cage_id,
     next_litter_id,
     next_mouse_id,
     reserve_cage_ids,
     reserve_mouse_ids,
-    parse_date,
-    recent_notifications,
-    sync_mouse_transgenes,
 )
 from .sheet_export import export_mouse_rows
 from .litter_dates import (
@@ -553,7 +554,7 @@ def colony_context(active_view: str, scope: str = access.DEFAULT_SCOPE, show_end
         # The Dropdowns tab: each column's choices and where they are used (app/choices.py).
         choice_columns = choices.columns(db_session) if active_view == "settings" else []
         usernames = current_lab_usernames(db_session)
-        notifications = recent_notifications(db_session, g.user.username if g.user else "", limit=10) if g.user else []
+        notifications = notify.recent(db_session, g.user.username, limit=10) if g.user else []
 
         me_name, my_role = (g.user.username, g.user.role) if g.user else (None, None)
         cage_cells, today = {}, date.today()

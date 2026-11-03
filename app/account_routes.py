@@ -39,7 +39,6 @@ from .models import (
     UserAccount,
     UserIdentity,
 )
-from .services import add_notification
 from .sheet_export import csv_text
 from .litter_dates import weaning_offset, open_litters
 from . import appearance, devices, door, home_layouts, notify, oidc, server_updates, telemetry
@@ -617,11 +616,11 @@ def register():
                         admins = db_session.scalars(select(UserAccount.username).where(
                             UserAccount.role == "admin", UserAccount.disabled.is_(False))).all()
                         for admin_name in admins:
-                            add_notification(db_session, admin_name, notify.SIGNUP_TITLE, category="account",
-                                             link=url_for("admin_users"),
-                                             message=notify.SIGNUP_MESSAGE,
-                                             message_values={"who": display_name or username,
-                                                             "username": username})
+                            notify.send(db_session, admin_name, notify.SIGNUP_TITLE, category="account",
+                                        link=url_for("admin_users"),
+                                        message=notify.SIGNUP_MESSAGE,
+                                        message_values={"who": display_name or username,
+                                                        "username": username})
                     db_session.commit()
                     if not first:
                         security.signup_throttle.failed(signup_key)     # counts sign-ups, not failures

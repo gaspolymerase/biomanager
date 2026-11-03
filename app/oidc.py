@@ -411,8 +411,6 @@ def _unique_username(db_session, claims: dict) -> str:
 
 def _request_account(db_session, provider: Provider, claims: dict):
     """A provider account nobody has seen: a sign-up waiting for approval."""
-    from .services import add_notification
-
     if db_session.scalar(select(func.count(UserAccount.id))) == 0:
         flash(gettext("Create the admin account first (it needs the setup code). Then connect %(provider)s in Settings.",
                       provider=_shown(provider)), "error")
@@ -428,9 +426,9 @@ def _request_account(db_session, provider: Provider, claims: dict):
     admins = db_session.scalars(select(UserAccount.username).where(
         UserAccount.role == "admin", UserAccount.disabled.is_(False))).all()
     for admin_name in admins:
-        add_notification(db_session, admin_name, notify.SIGNUP_TITLE, notify.SIGNUP_WITH_PROVIDER,
-                         category="account", link=url_for("admin_users"), message_values={
-                             "who": display_name or username, "provider": provider.label, "username": username})
+        notify.send(db_session, admin_name, notify.SIGNUP_TITLE, notify.SIGNUP_WITH_PROVIDER,
+                    category="account", link=url_for("admin_users"), message_values={
+                        "who": display_name or username, "provider": provider.label, "username": username})
     db_session.commit()
     flash(gettext("Account requested as %(username)s. A lab admin needs to approve it before you can sign in.",
                   username=username), "success")

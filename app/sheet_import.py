@@ -643,7 +643,7 @@ class MiceTarget(Target):
         from .models import MouseRecord
         from .models import CageRecord
         from .inventory_service import get_setting
-        from .services import MOUSE_ID_HIGH
+        from .record_numbers import MOUSE_ID_HIGH
         taken = set(session.scalars(select(MouseRecord.mouse_id)))
         high = get_setting(session, MOUSE_ID_HIGH, "")
         first = max(max(taken, default=0), int(high) if high.isdigit() else 0) + 1
@@ -656,7 +656,7 @@ class MiceTarget(Target):
         so the rest of its mice could still be put in it."""
         from .inventory_service import get_setting, set_setting
         from .models import CageRecord
-        from .services import MOUSE_ID_HIGH
+        from .record_numbers import MOUSE_ID_HIGH
         high = get_setting(session, MOUSE_ID_HIGH, "")
         top = max(ctx["taken"], default=0)
         if top > (int(high) if high.isdigit() else 0):
@@ -672,7 +672,7 @@ class MiceTarget(Target):
         both the colony's cages and every number the sheet itself uses, so a
         later row's cage 106 is never this one."""
         from .models import CageRecord
-        from .services import _cage_number, reserve_cage_ids
+        from .record_numbers import _cage_number, reserve_cage_ids
         in_sheet = ctx.get("sheet", {}).get("cage_id", set())
         highest = max((_cage_number(c) for c in in_sheet), default=0)
         code = reserve_cage_ids(session, 1)[0]

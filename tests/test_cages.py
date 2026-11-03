@@ -9,6 +9,7 @@ from datetime import timedelta
 
 from tests.base import *  # noqa: F401,F403
 from tests.base import AppTestCase, SessionLocal, TODAY, T, count, execute, one, row, rows, services, uniq
+from app import record_numbers  # noqa: E402
 
 
 # ---------------------------------------------------------------- helpers
@@ -26,7 +27,7 @@ def cage_id_of(code: str):
 
 
 def highest_cage_number() -> int:
-    return max((services._cage_number(code) for (code,) in rows("select cage_id from mouse_cages")), default=0)
+    return max((record_numbers._cage_number(code) for (code,) in rows("select cage_id from mouse_cages")), default=0)
 
 
 def newest_batch(actor: str):
@@ -100,7 +101,7 @@ class CageCreateTests(RackMixin, Case):
         # Typed on a mouse, the latest cage is "2A…": its number is 2.
         self.make_mouse(self.m, self.member, cage="2A" + uniq("z"))
         with SessionLocal() as s:
-            self.assertEqual(services.next_cage_id(s), str(high + 1))
+            self.assertEqual(record_numbers.next_cage_id(s), str(high + 1))
         before = count("mice", "cage_id_fk=(select id from mouse_cages where cage_id='3')")
         mid = self.make_mouse(self.m, self.member, cage="new")
         self.assertEqual(one("select c.cage_id from mice m join mouse_cages c on c.id=m.cage_id_fk where m.id=?", mid),
@@ -110,11 +111,11 @@ class CageCreateTests(RackMixin, Case):
     def test_reserve_cage_ids_gives_consecutive_unused_ids(self):
         high = highest_cage_number()
         with SessionLocal() as s:
-            self.assertEqual(services.reserve_cage_ids(s, 3), [str(high + i) for i in (1, 2, 3)])
-            self.assertEqual(services.reserve_cage_ids(s, 0), [])
+            self.assertEqual(record_numbers.reserve_cage_ids(s, 3), [str(high + i) for i in (1, 2, 3)])
+            self.assertEqual(record_numbers.reserve_cage_ids(s, 0), [])
 
     def test_cage_number_reads_the_first_run_of_digits(self):
-        self.assertEqual([services._cage_number(c) for c in ("12", "2A", "B-12", "B12-3", "x", "", None)],
+        self.assertEqual([record_numbers._cage_number(c) for c in ("12", "2A", "B-12", "B12-3", "x", "", None)],
                          [12, 2, 12, 12, 0, 0, 0])
 
     def test_an_existing_id_is_refused_and_the_cage_left_alone(self):
