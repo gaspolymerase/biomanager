@@ -5297,12 +5297,25 @@ tr.is-scanned > td:first-child {
   .settings {
     --set-lab: #5B6B80;
     --set-lab-tint: rgb(91 107 128 / 0.14);
+    --set-fill: rgb(0 0 0 / 0.045);
+    --set-fill-hover: rgb(0 0 0 / 0.035);
+    --set-fill-press: rgb(0 0 0 / 0.07);
+    --set-sep: rgb(0 0 0 / 0.09);
+    --set-chev: rgb(0 0 0 / 0.32);
     @apply grid grid-cols-1 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)];
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+    :root:not([data-theme="light"]) .settings {
+      --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16);
+      --set-fill: rgb(255 255 255 / 0.055); --set-fill-hover: rgb(255 255 255 / 0.04);
+      --set-fill-press: rgb(255 255 255 / 0.08); --set-sep: rgb(255 255 255 / 0.09); --set-chev: rgb(255 255 255 / 0.36);
+    }
   }
-  :root[data-theme="dark"] .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+  :root[data-theme="dark"] .settings {
+    --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16);
+    --set-fill: rgb(255 255 255 / 0.055); --set-fill-hover: rgb(255 255 255 / 0.04);
+    --set-fill-press: rgb(255 255 255 / 0.08); --set-sep: rgb(255 255 255 / 0.09); --set-chev: rgb(255 255 255 / 0.36);
+  }
 
   /* The list of panes: a pane of glass of its own, as the calendar's and
      the notebook's side panels are; the open pane beside it a thick sheet. */
@@ -5380,8 +5393,11 @@ tr.is-scanned > td:first-child {
   .set-title { @apply mt-5 mb-1.5 px-1 text-[12px] font-semibold text-muted; }
   .set-title-row { @apply flex items-center justify-between gap-3; }
   .set-title-row a { @apply text-[12px] font-medium text-brand-700 no-underline; }
+  /* A group is a grey block, as on the Mac: no outline, its separators
+     inset from both sides (and past a row's icon, to its text). */
   .set-group {
-    @apply overflow-hidden rounded-xl border border-hairline bg-surface;
+    @apply overflow-hidden rounded-xl;
+    background: var(--set-fill);
   }
   .set-group-pad { @apply flex flex-col gap-3 p-4; }
   .set-note { @apply m-0 text-[13px] leading-snug text-muted; }
@@ -5391,7 +5407,30 @@ tr.is-scanned > td:first-child {
   .set-group > .set-row + .set-row,
   .set-group > * + .set-row,
   .set-group > .set-row + *:not(input):not(noscript),
-  .set-details + .set-row, .set-row + .set-details { @apply border-t border-hairline; }
+  .set-details + .set-row, .set-row + .set-details {
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(to right, transparent var(--set-sep-in, 14px), var(--set-sep) var(--set-sep-in, 14px),
+                                  var(--set-sep) calc(100% - 14px), transparent calc(100% - 14px)) 1;
+  }
+  .set-row:has(> .set-row-ico) { --set-sep-in: 52px; }
+  @media (prefers-contrast: more) {
+    .set-group, .set-stat { box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  }
+
+  /* A row's icon: a solid tile with a white glyph, the Mac's way, so a
+     list of links reads at a glance. The colour only tells rows apart. */
+  .set-row-ico {
+    @apply grid size-[26px] shrink-0 place-items-center rounded-[7px] text-white;
+    background: linear-gradient(rgb(255 255 255 / 0.16), rgb(255 255 255 / 0)), var(--tile, var(--color-sand-500));
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.1);
+  }
+  .set-row-ico svg { @apply size-[14px]; }
+  .set-row-ico.is-blue { --tile: #007AFF; }
+  .set-row-ico.is-green { --tile: #28A745; }
+  .set-row-ico.is-orange { --tile: #F08C00; }
+  .set-row-ico.is-purple { --tile: #AF52DE; }
+  .set-row-ico.is-indigo { --tile: #5856D6; }
+  .set-row-ico.is-slate { --tile: #6E7A8A; }
   .set-label { @apply min-w-0 flex-1; }
   .set-label b { @apply block font-medium; }
   .set-label small { @apply mt-px block text-[12px] leading-snug text-muted; }
@@ -5413,8 +5452,9 @@ tr.is-scanned > td:first-child {
   .set-icon-pick { @apply flex shrink-0 items-center gap-2; }
   .set-icon-preview { @apply size-10 rounded-xl object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   a.set-row-link { @apply cursor-pointer transition-colors; }
-  a.set-row-link:hover { @apply bg-sand-50; }
-  .set-chev { @apply size-4 shrink-0 text-sand-400; }
+  a.set-row-link:hover { background: var(--set-fill-hover); }
+  a.set-row-link:active { background: var(--set-fill-press); }
+  .set-chev { @apply size-3 shrink-0; color: var(--set-chev); }
 
   /* An on/off switch: a checkbox drawn the Mac's way. */
   .set-switch {
@@ -5437,9 +5477,9 @@ tr.is-scanned > td:first-child {
   .set-details > summary { @apply cursor-pointer list-none; }
   .set-details > summary::-webkit-details-marker { @apply hidden; }
   .set-details[open] > summary .set-chev { @apply rotate-180; }
-  .set-password { @apply grid grid-cols-1 gap-3 border-t border-hairline px-3.5 py-3 sm:grid-cols-3; }
+  .set-password { @apply grid grid-cols-1 gap-3 border-t px-3.5 py-3 sm:grid-cols-3; border-color: var(--set-sep); }
   .set-password > div { @apply sm:col-span-3; }
-  .set-more { @apply border-t border-hairline px-3.5 py-3 text-[12px] text-muted; }
+  .set-more { @apply border-t px-3.5 py-3 text-[12px] text-muted; border-color: var(--set-sep); }
   .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[12px] leading-relaxed text-ink-soft; }
   .set-more p { @apply m-0; }
   .set-more .set-notes { @apply max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-[12px]; }
@@ -5452,7 +5492,7 @@ tr.is-scanned > td:first-child {
 
   /* Statistics: the totals, one bar per person, how full each rack is. */
   .set-stats { @apply grid grid-cols-2 gap-2.5 sm:grid-cols-4; }
-  .set-stat { @apply rounded-xl border border-hairline bg-surface px-3.5 py-3; }
+  .set-stat { @apply rounded-xl px-3.5 py-3; background: var(--set-fill); }
   .set-stat b { @apply block text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink; }
   .set-stat small { @apply text-[12px] text-muted; }
   .set-bar { @apply block h-2 w-[min(220px,35%)] shrink-0 overflow-hidden rounded bg-transparent; }

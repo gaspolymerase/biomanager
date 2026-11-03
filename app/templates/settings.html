@@ -304,12 +304,14 @@
         <div class="set-group">
           {% if not current_user.expires_at %}
             <a class="set-row set-row-link" href="{{ url_for('oauth.connect_page') }}">
+              <span class="set-row-ico is-purple">{{ icon('sparkle') }}</span>
               <span class="set-label"><b>{{ _('Connect an AI assistant') }}</b><small>{{ _('Claude, ChatGPT, Cursor or another assistant app: it reads your lab and proposes changes for you to approve.') }}</small></span>
               {{ icon('chevron-right', 'set-chev') }}
             </a>
           {% endif %}
           {% if proposals_pending is not none %}
             <a class="set-row set-row-link" href="{{ url_for('proposals.page') }}">
+              <span class="set-row-ico is-orange">{{ icon('list-check') }}</span>
               <span class="set-label"><b>{{ _('Proposed changes') }}</b><small>{{ _('What an assistant proposed, waiting for you to approve.') }}</small></span>
               {% if proposals_pending %}<span class="badge">{{ proposals_pending }}</span>{% endif %}
               {{ icon('chevron-right', 'set-chev') }}
@@ -326,12 +328,14 @@
       {{ pane_head('archive', _('Your data'), _('Take your records with you, and keep the whole lab safe.')) }}
       <div class="set-group">
         <div class="set-row">
+          <span class="set-row-ico is-blue">{{ icon('download') }}</span>
           <span class="set-label"><b>{{ _('Export my data') }}</b><small>{{ _('Your mice and plasmids, your notebook pages and your profile, in one .zip.') }}</small></span>
           <a class="btn btn-sm" href="{{ url_for('export_my_data') }}">{{ icon('download') }} {{ _('Download .zip') }}</a>
         </div>
         {% if current_user.role == 'admin' %}
           {# The whole lab in one file (app/lab_move.py save): a backup, or to bring it to a server or another computer. #}
           <div class="set-row">
+            <span class="set-row-ico is-green">{{ icon('archive') }}</span>
             <span class="set-label"><b>{{ _('Save the whole lab') }}</b><small>{{ _('Every record, account and uploaded file, in one .biomanager file: a backup, or to bring the lab to a server or another computer.') }}</small></span>
             <span class="flex gap-1.5">
               {% if request.args.get('saved_file') and this_computer() %}
@@ -344,6 +348,7 @@
           {# The lab's key (app/lab_key.py): it locks backups, lab files and computers' copies. #}
           {% set lk = lab_key_status() %}
           <a class="set-row set-row-link" id="lab-key" href="{{ url_for('lab_move.lab_key_page') }}">
+            <span class="set-row-ico is-slate">{{ icon('key') }}</span>
             <span class="set-label"><b>{{ _('Lab key') }}</b><small>{{ _('Backups, lab files and the copies on your computers are locked with it, so a file that leaks can’t be read.') }}
               {% if lk.shown_at %}{{ _('Its recovery key was last shown to %(who)s on %(when)s.', who=lk.shown_to, when=(lk.shown_at | local).strftime('%Y-%m-%d')) }}{% else %}<b class="text-warn-700">{{ _('Keep its recovery key somewhere safe.') }}</b>{% endif %}</small></span>
             {{ icon('chevron-right', 'set-chev') }}
@@ -810,12 +815,14 @@
       {{ pane_head('copy', _('Devices & copies'), _('Where the lab is kept, and the computers that keep a copy of it.'), 'lab') }}
       <div class="set-group">
         <a class="set-row set-row-link" href="{{ url_for('devices.page') }}">
+          <span class="set-row-ico is-blue">{{ icon('copy') }}</span>
           <span class="set-label"><b>{{ _('Devices') }}</b><small>{{ _('Which device holds the lab: the lab server, or a computer that shares its lab. Hand it to another computer, or open the lab in this window.') }}</small></span>
           {{ icon('chevron-right', 'set-chev') }}
         </a>
         {% if config.LOCAL_SETUP %}
           {# Only the desktop app sets servers up (app/server_setup.py). #}
           <a class="set-row set-row-link" id="lab-server" href="{{ url_for('server_setup.page') }}">
+            <span class="set-row-ico is-indigo">{{ icon('database') }}</span>
             <span class="set-label"><b>{{ _('Set up a lab server') }}</b><small>{{ _('One BioManager everyone in the lab signs in to, from their computers and phones. This app does the setting up and can bring your records along.') }}</small></span>
             {{ icon('chevron-right', 'set-chev') }}
           </a>
@@ -829,6 +836,7 @@
       {{ pane_head('tag', _('Version'), _('Which BioManager this is, what is new in it, and updating it.'), 'lab') }}
       <div class="set-group">
         <div class="set-row">
+          <span class="set-row-ico is-slate">{{ icon('tag') }}</span>
           <span class="set-label">
             <b>{% if version_info.number %}{{ _('BioManager %(version)s', version=version_info.number) }}{% else %}BioManager{% endif %}</b>
             <small>{% if version_info.desktop %}{{ _('The desktop app on this computer.') }}{% elif version_info.source %}{{ _('This lab server was built from BioManager’s source code, so it doesn’t update itself.') }}{% else %}{{ _('The lab’s server.') }}{% endif %}</small>
@@ -837,6 +845,7 @@
         </div>
         {% if version_info.notes %}
           <a class="set-row set-row-link" href="{{ version_info.notes }}" target="_blank" rel="noopener">
+            <span class="set-row-ico is-orange">{{ icon('file') }}</span>
             <span class="set-label"><b>{{ _('Release notes') }}</b><small>{{ _('Everything in this version, on GitHub.') }}</small></span>
             {{ icon('chevron-right', 'set-chev') }}
           </a>
