@@ -29,6 +29,7 @@ pages. Those are in their own modules, which `app.py` imports:
 | `app/colony_routes.py` | The mouse colony: mice, cages, litters, strains, racks, its experiments, batch actions, dropdown choices |
 | `app/zebrafish_routes.py` | The zebrafish database |
 | `app/plasmid_routes.py` | Plasmids: the sheet, boxes, the detail page and the writes behind it |
+| `app/vendors.py` | The lab's vendors: the list, details, renaming and merging |
 | `app/calendar_routes.py` | The calendar's events and to-dos, subscriptions, the Google link; who may see a to-do |
 | `app/notebook_routes.py` | The notebook's tabs, pages, templates, uploads and links between records |
 | `app/account_routes.py` | Signing in and out, Settings, the admin's pages, starting or restoring a lab |
@@ -49,14 +50,29 @@ a cage or a litter, a cage into a rack position, a mouse rack's own
 dialog): the colony's pages, the API and the spreadsheet import all call
 it, so none of them imports another's pages for it.
 
+What the pages take as a form, the API gives as plain values:
+`colony.change_mouse_values` (`MOUSE_FIELDS`) and `colony.change_mouse_rack`
+build the form the pages' rules read, so the API never does. A value of
+the wrong shape raises `ValueError` (the API's 400); a change the rules
+refuse comes back as the sheet would say it.
+The same holds for inventory items (`app/inventory_items.py`:
+`item_from_form`, and `change_item_values` with `ITEM_VALUES`) and fly and
+worm vials (`stock_service.unit_from_form`, `change_unit_values` with
+`UNIT_VALUES`).
+
 `app/services.py` is what is left of the shared helpers from before the
 pages had modules, and its parts are moving out by topic.
 `app/litter_dates.py` is when a litter is due (the lab's weaning and
 genotyping days, a cage's open litters, `weaning_due`, the list Home, the
 calendar, the cage sheet and the reminder emails all read);
 `app/calendar_feeds.py` reads the calendars a person subscribes to (a
-remote .ics, a linked Google Calendar). A new helper goes in the module of
-its topic, not in `services.py`.
+remote .ics, a linked Google Calendar). `app/startup.py` is what runs when
+the app opens a database (`init_database`, the frozen
+`ensure_schema_updates`, the seeds and one-time moves of data);
+`app/record_numbers.py` hands out mouse, cage and litter numbers;
+`app/sheet_export.py` writes CSV and .xlsx; `app/uploads.py` saves an
+uploaded file as well as deciding who may fetch it. A new helper goes in
+the module of its topic, not in `services.py`.
 
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
@@ -899,26 +915,55 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `FIRST_PAGE` past `LAZY_OVER` plasmids and makes each other plasmid's
   stub from its data (`plasmid_stubs`: its `data-*`, each field's value,
   the Belongs to and Box menus' shown choices, the Sequence button's word,
-  the length cell's words, the owner's badge); `tests/test_speed.py`
-  holds every stub to `cell_text.row_stub` of its drawn row, in both ways
-  of drawing cells and in Chinese. `/plasmids/rows` draws only the
+  the length cell's words, the owner's badge; the lab's own columns are
+  drawn with `custom_cell` and read with `row_stub`, as the fish tanks'
+  are); `tests/test_speed.py` holds every stub to `cell_text.row_stub` of
+  its drawn row, with and without the lab's own columns, in both ways of
+  drawing cells and in Chinese. `/plasmids/rows` draws only the
   plasmids asked for. The Boxes grid's tiles (`/plasmids/grid`, the
   shared grid's `src`) and the List (`/plasmids/list`,
-  `_plasmid_list.html`, then each small map) come when first shown. A lab
-  with its own plasmid columns gets its sheet drawn whole and trimmed by
-  `sheet_paging.page` instead. At 100,000 mice (5,000 plasmids, a fifth
-  with a sequence) the page answers in 0.3 s instead of 2.7 and loads in
-  1.4 s instead of 10.6 (36 MB of page to 3).
+  `_plasmid_list.html`, then each small map) come when first shown. At
+  100,000 mice (5,000 plasmids, a fifth with a sequence) the page answers
+  in 0.3 s instead of 2.7 and loads in 1.4 s instead of 10.6 (36 MB of
+  page to 3); with three of the lab's own columns, in 0.54 s (it was
+  drawn whole and trimmed, 4–6 s).
+- A stub builder that draws a template's macros (`custom_cell`,
+  `table_cells`) gets them from `web.page_macros(template)`, which gives
+  the template the page's context (`icon` and the rest) outside a
+  request's rendering.
 - An animal database's **Animals** sheet (`organism_routes._module_page`)
   lists the living ones and those that ended in the last `RECENT_DAYS`;
-  the rest wait behind "Show them" (`?ended=all`). It is drawn whole and
-  trimmed by `sheet_paging.page`: past `LAZY_OVER` rows its first page
-  stays and the others become stubs read from the drawn rows
-  (`cell_text.page_of_rows`), fetched from `/organisms/<key>/animals/rows`.
-  At 100,000 mice (10,000 plants, 3,328 listed) the page loads in 4.9 s
-  instead of 33 (54 MB to 5.5), of which the server is 3.2 s, half of it
-  drawing every row and half reading them back; stubs made from data, as
-  the vials' are, would take that to a few tenths of a second.
+  the rest wait behind "Show them" (`?ended=all`). Past `LAZY_OVER` rows
+  it draws its first `FIRST_PAGE` and makes each other animal's stub from
+  its data (`animal_stubs`: its `data-*`, each field's value, the Housing,
+  Line, Sex and Status menus' shown choices, the age, generation and
+  genotype call, the owner's badge; the database's own columns are drawn
+  by `table_cells` and read with `row_stub`, as the fish tanks' are).
+  `tests/test_speed.py` holds every stub to `cell_text.row_stub` of its
+  drawn row, in both ways of drawing cells, in Chinese, and for the owner
+  and someone else. `/organisms/<key>/animals/rows` draws the rows asked
+  for, whenever they ended. At 100,000 mice (10,000 plants, 3,323 listed)
+  the page answers in 0.39 s and loads in 1.3 s (it drew every plant,
+  54 MB, and took 33 s); with "Show them", 0.89 s.
+- `stock_service.schedule` reads only the vials that can fall due by its
+  horizon (a cross, or one ready, to shift or to score by then) and counts
+  the racks' vials in one query: Home's four schedules (each database's
+  card and its agenda) went from 0.11 s to 8 ms, and Home from 0.45 s to
+  0.34 s on that lab.
+- A stock inventory's "Already on order" (`inventory_routes._open_orders_of`)
+  indexes the open orders by what they are matched on (`_same_thing`: the
+  "Reorder of … #n" note, else the catalog number, else the name) rather
+  than trying every order against every item: 4,772 reagents against 164
+  open orders made 782,608 comparisons, and the sheet answered in 0.93 s
+  instead of 0.37. A note is matched on the whole number: "Reorder of
+  Reagents #1" is #1's, not #12's.
+- An inventory's **Board** (orders) is drawn by `inventory.board`
+  (`/inventory/<key>/board`, `inventory/_board.html`, with the page's
+  `?type=` and `?ended=`) when it is first shown: each card carries its
+  record's dialog payload, and on 4,000 orders the Board was 4.2 MB of a
+  6.7 MB page. `module.html` asks for it on the rack switch's
+  `layout:change` to `board`, or at once when the page opens on it, then
+  wires its drag and drop (`wireBoard`).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).
@@ -984,6 +1029,21 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   limit, and offers a database whose key or label word starts with the
   query (`type: "database"`; picking it inserts `@<key> ` and keeps the
   menu open for its records).
+
+### Page scripts
+
+A page's own script is a file, `app/static/<page>-page.js` (`colony-page.js`,
+`inventory-page.js`, `settings-page.js`, …), loaded where the page needs it
+without `defer`, so it runs as an inline script there would. What it needs
+from the server goes in a JSON block beside it, `<script type="application/json"
+id="<page>-page-data">{{ {...}|tojson }}</script>`, which the script parses
+first; the CSP never runs a JSON block, and the file is cached and can be
+checked in Node (`tests/js`). An inline script is for a few lines that
+must run before the page draws (the theme, the sidebar's width).
+
+Text a script puts into HTML goes through `BioHtml.escape` (`static/html.js`,
+loaded first on every page): `const esc = BioHtml.escape;`. A test fails
+on another copy of it in `app/static` (`test_page_scripts.py`).
 
 ### Styling
 
@@ -1303,7 +1363,7 @@ whole colony, from its mice's dates and statuses only.
 ### Uploaded files
 
 Every upload (a notebook page's pictures and attachments, a plasmid's
-files, a capture's photo or CSV) is saved by `services.save_uploaded_file`
+files, a capture's photo or CSV) is saved by `uploads.save_uploaded_file`
 (or `save_uploaded_image`) under a random name in the uploads folder and
 served by one route, `/static/uploads/<path>` (`app/uploads.serve`, always
 registered, wherever the folder is: `app/static/uploads`, a frozen app's
@@ -1557,7 +1617,7 @@ pages are in `app/lab_routes.py`.
   `attr_price`…) a new item must have; `None` (never chosen) falls back to
   the preset's list, so older orders inventories get name, vendor,
   catalogue number and quantity. `ModuleView.required` / `requirable` in
-  `inventory_service.py`; `_item_from_form` refuses a new item missing one
+  `inventory_service.py`; `inventory_items.item_from_form` refuses a new item missing one
   and an edit that empties one, but an old item that never had it still
   saves. An order always needs a name. CSV import is not held to it.
 - **Remembered values:** `inventory_service.remembered()` gives each text
@@ -1581,7 +1641,7 @@ pages are in `app/lab_routes.py`.
   (the *quantity* feature, and statuses with "in stock" and "low"). The
   quantity stays free text; `amount()` reads "12", "2.5", "2,5" (a decimal
   comma) or "1,000" as a number and anything else as none.
-  `_item_from_form` calls `follow_stock_level()` when the quantity or the
+  `inventory_items.item_from_form` calls `follow_stock_level()` when the quantity or the
   level changed and the same save didn't set the status by hand: at or
   below the level "in stock" turns "low", at 0 "empty" (or "used up",
   whichever the list has; through `apply_status`, so the box cell is
@@ -1598,7 +1658,7 @@ pages are in `app/lab_routes.py`.
   one of the item's unit holds, "10 mL" for an item kept in ampoules. Its
   sheet column (hidden until shown) and dialog field are where
   `has_pack_size()` holds (the *quantity* feature, not Orders);
-  `_item_from_form` refuses one that `pack_size()` can't read as a number
+  `inventory_items.item_from_form` refuses one that `pack_size()` can't read as a number
   above 0 and a unit, and keeps it as `pack_size_text()` gives it ("10mL"
   → "10 mL"). It changes nothing on the page: `actions._used` reads it,
   so an amount used in its unit, or one of the same family (`UNITS`), comes
@@ -1630,7 +1690,7 @@ pages are in `app/lab_routes.py`.
   `inventory_renumber` posts to the same page.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
-  number as text. `_item_from_form` reads a number, `#42`, a name or a
+  number as text. `inventory_items.item_from_form` reads a number, `#42`, a name or a
   picked `42 · name` through `inventory_service.resolve_plasmid()` and
   keeps the number; one it can't find is kept as typed, with a note.
   `plasmid_links()` links the sheet's cells; `made_from_plasmid()` fills
@@ -1646,7 +1706,7 @@ pages are in `app/lab_routes.py`.
   (`_open_orders_of()`) and puts an amber `_warn` hint in the dialog.
 - **Positions and Stored at:** `apply_status()` frees the box cell of an
   item moving to `GONE_FROM_BOX` (used up, empty, discarded) and writes
-  "was in Box · D7" into an empty location note; `_item_from_form` then
+  "was in Box · D7" into an empty location note; `inventory_items.item_from_form` then
   doesn't put it back from the dialog's unchanged box fields.
   `inventory_racks.stored_at` (revision 0007) is where a box is kept; a
   `before_flush` listener in `inventory_service` (`insert=True`, so it runs
@@ -1674,7 +1734,7 @@ pages are in `app/lab_routes.py`.
   (`primer_numbers()`: SantaLucia 1998 nearest-neighbour stacks, 50 mM Na⁺
   entropy correction, 250 nM primer in excess). The sheet shows them read
   only and `_row_json` sends them back after a save. `add_primer_pair`
-  makes *name*-F and *name*-R through `_item_from_form`, flushing between
+  makes *name*-F and *name*-R through `inventory_items.item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
   setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
@@ -1698,7 +1758,7 @@ pages are in `app/lab_routes.py`.
   widths and hidden columns. Under All, a cell not used for the row's type
   and empty is a dash (`rows[].unused`). The item dialog wraps each field in
   `data-for-types` and hides and disables those not for the Type chosen, so
-  they post nothing and keep their values; `_item_from_form` doesn't hold a
+  they post nothing and keep their values; `inventory_items.item_from_form` doesn't hold a
   required column to a type it isn't used for. `add_type` (the **+**,
   anyone who can open the database) appends a category; renaming and
   removing stay in Configure, as they relabel items. Samples' *Genotype*
@@ -1716,7 +1776,7 @@ pages are in `app/lab_routes.py`.
   one type takes it. Headers naming no column are flashed. One batch.
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
   built-in columns the inventory uses, every custom one and notes) runs
-  each ticked row through `_item_from_form` with that one column, inside
+  each ticked row through `inventory_items.item_from_form` with that one column, inside
   the batch; a refused value leaves that row as it was and is named. A
   *source* column is two answers — which colony and the ID in it — so the
   bar shows a second box for the colony and `_bulk_value` pairs them back
@@ -1760,6 +1820,40 @@ pages are in `app/lab_routes.py`.
   `order_to_reagents` redirects to the new record with `?open=<id>`. These
   one-shot parameters are removed from the address on load and from the
   referrer in `_back()`.
+- **Spending** (`app/order_spending.py`, `inventory/_spending.html`,
+  `static/spending.js`): an orders inventory with a Price column
+  (`inventory_routes._spends`) gets a Spending view in its layout switch.
+  `GET /inventory/<key>/spending?from=YYYY-MM|all&to=YYYY-MM&by=person|group|vendor|category`
+  answers `summary()`: months, each month's total, every series ranked
+  (spent, asked, orders, per month), the chart's stack (`STACKED` = 5 and
+  Other) and `limits()`. An order costs `money(price) × amount(quantity)`
+  (or the price alone with `price_is: total`), counts in its `created_at`
+  month, is "asked" at the first status and nowhere when cancelled; by
+  project group it counts in every group its owner is in now. The JS
+  draws the stacked columns in SVG (2px gaps, a 4px rounded top, a
+  tooltip on hover and focus), the legend, the ranked table and the
+  limit meters; series colours are `--spend-1…5` (the dataviz palette's
+  first five, validated against the app's light and dark surfaces).
+  `/spending.csv` is the same table with a column per month.
+- **Spending settings and limits** are JSON in `app_settings`
+  (`spending:<key>`): currency, `price_is`, `period` (year or month),
+  `year_starts` and limits for the lab, people (`people[username]`) and
+  groups (`groups[id]`). `POST /inventory/<key>/spending/settings` is an
+  admin's (`can_set_limits`). A limit counts everything not cancelled in
+  the period holding today (`limit_period`); near is 80%. After a dialog
+  save or an inline edit that raised an order's cost,
+  `_limit_notes` → `over_limits` adds a warning for each limit now passed
+  (the asker's, their groups', the lab's).
+- **Vendors** (`app/vendors.py`, `vendors.html`, table `vendors`, revision
+  0055): records keep their vendor as text; the page groups
+  `inventory_items.vendor` by `key_of` (case and spacing aside), counts
+  orders and other records, sums the last twelve months of orders through
+  `order_spending`, and joins a `Vendor` row of details (website, contact,
+  email, phone, customer number, notes). Anyone saves details;
+  renaming (`POST /vendors/save` with a new name) and `POST /vendors/merge`
+  are an admin's or a facility manager's, rewrite every matching record
+  and fold the Vendor rows into one, in one `audit.batch`. A Vendor's name
+  is offered in every vendor field (`inventory_service.remembered`).
 
 ## Plasmids and their sequences
 
@@ -1805,6 +1899,19 @@ crossing the origin keeps `start > end`.
   `tree()` up to `TREE_DEPTH` generations each way on Properties. Row ids
   without foreign keys, as for versions. The assembly wizard records its
   product's parents through `add_parent`.
+- **The Backbone and Insert columns link** (`plasmid_lineage.follow_column`):
+  a value naming a lab plasmid (`#42`, `#42 name`, `@name`, `@42` or its
+  exact name, `column_parent`; a bare number is not one, as "5' UTR"
+  starts with one) is stored as its name and adds a Made from link
+  in that role, marked `details.from_column`; changing the column drops
+  only such a link (one from the page or an assembly stays). The sheet's
+  and dialog's inputs take `list="plasmid-backbone-choices"` /
+  `plasmid-insert_seq-choices` (`_column_choices`: the lab's plasmids,
+  then the column's values, `COMMON_BACKBONES` or the Feature library's
+  coding entries). `unlinked()` finds columns written before that name a
+  lab plasmid; an admin sees the count and `POST /plasmids/link-columns`
+  links them in one batch. The plasmid page links its Backbone and Insert
+  (`column_urls`).
 - **Primers** (`app/primer_records.py`): each save of the map gives every
   primer annotation a record in the lab's Primers database
   (`sync_from_map`, made with it only by someone who may add lab
@@ -1901,7 +2008,7 @@ crossing the origin keeps `start > end`.
   canonical att sites for the Feature library and the demo lab.
 - **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
-  `services.save_uploaded_file` into the uploads folder, with `kind` from
+  `uploads.save_uploaded_file` into the uploads folder, with `kind` from
   the name (`_file_kind`: trace, image, document). Anyone who may edit the
   plasmid adds them; whoever added one, or an admin, takes it off, and the
   file itself stays in uploads, as the notebook's do (the lab sees it at
@@ -2413,7 +2520,7 @@ pages' own routes. Nothing is merged; the lab keeps one master copy.
   count (`sync_clock`, advanced by an UPDATE that PostgreSQL holds locked to
   commit, so numbers follow commit order). Deletions go to
   `sync_deletions`. The hook is off before Alembic has run
-  (`services.init_database`).
+  (`startup.init_database`).
 - **The feed.** `app/sync.py`: `GET /api/sync/snapshot` (as the person may
   see it: the colony, living mice and those dead in the last 90 days, the
   last five weights, their to-dos for 14 days, vials of the stock databases
@@ -2824,7 +2931,7 @@ A step may name the inventory item it uses (`reagent_item_id_fk`); a record
 keeps that item as it was then (`reagent`: id, name, lot, expiry, and
 `taken` once its amounts were taken off) and any sample records the person
 chose to make with it (`samples`), made through
-`inventory_routes._item_from_form` with the animal as their Source.
+`inventory_items.item_from_form` with the animal as their Source.
 Every path that records a day goes through `experiment_steps._record`
 (the page's record dialog and *Record manipulation*, bench mode, and the
 `experiment_step_done` action, which posts to the same route), and
@@ -2932,7 +3039,7 @@ whole (the layout's `used_at` is set outside it, by a Core update, so a
 later plate on the same layout doesn't block that Undo; a new measure is
 kept before the batch, so an Undo never hides another plate's readings
 of it); the
-file is saved (`services.save_uploaded_file`) only once some animal has a
+file is saved (`uploads.save_uploaded_file`) only once some animal has a
 value, and `upload_owners` makes it the experiment's to see. For an
 assistant, `POST /api/v1/experiments/<id>/plate` (`api.COMPUTING`) runs the
 same with `layout` (id or name) or `wells` + `format`, and `text` or a
@@ -3113,7 +3220,7 @@ tokens are redacted; high-churn tables are excluded. Admins read it at
 ## Keeping the data safe
 
 **Schema changes are Alembic revisions** (`migrations/versions/`,
-`app/upgrade.py`). On start-up `services.init_database()` asks
+`app/upgrade.py`). On start-up `startup.init_database()` asks
 `upgrade.plan()` what opening the database will change; if anything, it
 copies an SQLite database first (`backups/before-upgrade-<from>-to-<to>-<time>.db`,
 ten kept), then runs `create_all()`, the frozen pre-0.8 ALTERs
@@ -3151,7 +3258,7 @@ BioManager database and asks that the app be closed first (`--yes` skips
 the question).
 
 **The app won't start on a database it can't trust**: an SQLite file of 0
-bytes (`services.refuse_emptied_database`: it would otherwise start a new
+bytes (`startup.refuse_emptied_database`: it would otherwise start a new
 empty lab over it), or a database whose Alembic revision this version
 doesn't know, i.e. one a newer version made (`upgrade.plan`).
 
@@ -3177,7 +3284,7 @@ alembic revision --autogenerate -m "describe the change"
 alembic upgrade head
 ```
 
-The old hand-written ALTERs in `services.ensure_schema_updates()` still run
+The old hand-written ALTERs in `startup.ensure_schema_updates()` still run
 for backwards compatibility, but new changes belong in a revision.
 
 ## Cage cards and QR labels
@@ -3258,15 +3365,16 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   `experiments.payload` without `PAGE_ONLY` (the step kinds, regimens,
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
-  fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `colony.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  calls `colony.change_mouse_values`, which overlays the fields sent on the
+  mouse as `mouse_display_row` shows it and calls `colony.change_mouse`, as
+  the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;
   a `version` that isn't the mouse's `sync_version` now is a 409, so a
   client that sends back what it read never overwrites a change since);
-  inventory items go through `inventory_routes._item_from_form`, vials
-  through `stock_routes._unit_from_form` (both copy only the fields sent),
+  inventory items go through `inventory_items.change_item_values`, vials
+  through `stock_service.change_unit_values` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
   `can_edit_experiment`). A switched-off built-in database is a 404.
@@ -3332,7 +3440,7 @@ page itself.
   failing keeps nothing.
 - Beyond the animals, the catalogue covers inventories, plasmids, the
   notebook and the calendar. Inventory items are written through the API's
-  item writes (`_item_from_form`), so required columns, statuses and Low at
+  item writes (`inventory_items.item_from_form`), so required columns, statuses and Low at
   behave as on the sheet. `inventory_quantity_used` takes an amount off a
   numeric quantity, and the status follows Low at; an amount in another unit
   ("40 mg", or `unit`) is converted within mass or volume (`UNITS`, powers
@@ -3486,7 +3594,7 @@ the quote in its title and under **Show each change**. **Send back** (`proposals
 `as_dict` then gives `reason` and a `next` telling the assistant to propose
 again with `replaces`. Captures (`app/captures.py`, table `captures`,
 revision `0032_assistant_inbox`) are what a person wrote or photographed at
-the bench: text and one file (kept by `services.save_uploaded_file`, served
+the bench: text and one file (kept by `uploads.save_uploaded_file`, served
 to its owner only by `/captures/<id>/file`, as `/static/uploads/` is:
 `app/uploads.py`), with the record it was taken at
 (`at_kind`, `at_id`, `at_label`; from Bench mode or a scanned card's link,
@@ -3961,7 +4069,7 @@ the importer, where a "Strain" or "Background" column now maps to it (one
 called "Strain" went to the genotype before). The column moved the
 transgenes along, so the sheet's id is `mice-v5` (`_mouse_sheet.html`).
 
-**Numbers are handed out once.** `services.reserve_mouse_ids()` counts
+**Numbers are handed out once.** `record_numbers.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest
 ever handed out, so deleting the newest mouse or undoing an Add many never
 gives its number again. Saves that take the next free number (New mouse,
@@ -4131,6 +4239,13 @@ permissions and validation are checked along with behaviour. One module per
 area (`test_mice.py`, `test_plasmids.py`, `test_stocks.py`, …); shared
 set-up and factories are in `tests/base.py`. Run one module, class or test
 with `scripts/test.sh tests.test_mice` (or `tests.test_mice.SomeClass`).
+
+JavaScript is checked in Node by `tests/js/*.check.mjs`, run from the
+suite when Node is there (`test_notebook_blocks.py`). The page scripts that
+need a DOM (`sheet.check.mjs`: a row's autosave keeps the `_was` copies of
+`formutil.form_changed`) use jsdom, a package of `tests/js` alone: run
+`npm ci --prefix tests/js` once (CI does, and fails rather than skips
+without it; `test_page_scripts.py`).
 
 `scripts/test-parallel.py` shares the test classes out to up to four
 processes as they ask for more (the ones with most tests first), each on

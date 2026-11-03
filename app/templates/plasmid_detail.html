@@ -78,8 +78,8 @@
         <div class="pver-head"><h3>{{ _('About it') }}</h3><button type="button" class="btn btn-sm" data-go-tab="properties">{{ icon('edit') }} {{ _('Edit') }}</button></div>
         <dl class="pver-dl pov-dl">
           {% if plasmid.length_bp %}<dt>{{ _('Size') }}</dt><dd class="tabular-nums">{{ '{:,}'.format(plasmid.length_bp) }} bp · {{ _('circular') if plasmid.is_circular else _('linear') }}</dd>{% endif %}
-          {% if plasmid.backbone %}<dt>{{ _('Backbone') }}</dt><dd>{{ plasmid.backbone }}</dd>{% endif %}
-          {% if plasmid.insert_seq %}<dt>{{ _('Insert') }}</dt><dd>{{ plasmid.insert_seq }}</dd>{% endif %}
+          {% if plasmid.backbone %}<dt>{{ _('Backbone') }}</dt><dd>{% if plasmid.column_urls.backbone %}<a href="{{ plasmid.column_urls.backbone }}">{{ plasmid.backbone }}</a>{% else %}{{ plasmid.backbone }}{% endif %}</dd>{% endif %}
+          {% if plasmid.insert_seq %}<dt>{{ _('Insert') }}</dt><dd>{% if plasmid.column_urls.insert %}<a href="{{ plasmid.column_urls.insert }}">{{ plasmid.insert_seq }}</a>{% else %}{{ plasmid.insert_seq }}{% endif %}</dd>{% endif %}
           {% if plasmid.resistance %}<dt>{{ _('Resistance') }}</dt><dd>{{ plasmid.resistance }}</dd>{% endif %}
           <dt>{{ _('Owner') }}</dt><dd>{{ plasmid.owner or _('anyone') }}</dd>
           <dt>{{ _('Where') }}</dt><dd>{% if plasmid.stored %}{{ plasmid.storage_box }} · {{ plasmid.position }}{% else %}{{ _('Not stored') }}{% endif %}</dd>

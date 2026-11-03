@@ -4,9 +4,7 @@
    data-used-in-number (a record's own page), or each time its dialog opens
    (record-dialog:open), from the record's _number. */
 (function () {
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const esc = BioHtml.escape;
 
   function fill(box, number) {
     const type = box.dataset.usedIn;

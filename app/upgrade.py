@@ -11,7 +11,7 @@ that safe:
   and the runbook), and the log says so.
 - Schema changes are Alembic revisions (migrations/versions/), applied in
   order and recorded in `alembic_version`. The hand-written ALTERs of the
-  versions before 0.8 (services.ensure_schema_updates) are frozen: they
+  versions before 0.8 (startup.ensure_schema_updates) are frozen: they
   still bring an old database up to 0.8's shape, and revision 0002 marks
   that point. Every change since is a revision, written with the helpers
   in migrations/helpers.py so it can run on a database that already has it.
@@ -87,7 +87,7 @@ def known_revisions() -> set[str]:
 
 
 def plan(engine) -> Plan:
-    from .services import ensure_schema_updates
+    from .startup import ensure_schema_updates
     fresh = not inspect(engine).has_table("users")
     current = None if fresh else current_revision(engine)
     if current is not None and current not in known_revisions():

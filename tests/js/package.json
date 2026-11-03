@@ -1,0 +1,8 @@
+{
+  "name": "biomanager-js-checks",
+  "private": true,
+  "description": "What tests/js/*.check.mjs need besides Node: a DOM for the page scripts (sheet.check.mjs).",
+  "devDependencies": {
+    "jsdom": "24.1.3"
+  }
+}

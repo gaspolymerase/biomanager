@@ -222,6 +222,7 @@
   </div>
 
   <script type="application/json" id="ss-data">{{ {"computer_address": computer_address, "accounts": accounts} | tojson }}</script>
+  <script src="{{ url_for('static', filename='html.js') }}?v={{ asset_version('html.js') }}"></script>
   <script src="{{ url_for('static', filename='server-setup.js') }}?v={{ asset_version('server-setup.js') }}" defer></script>
 </body>
 </html>

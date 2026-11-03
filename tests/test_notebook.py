@@ -1081,11 +1081,11 @@ class NotificationSwitchTests(Notebook):
 
     @only_sqlite
     def test_an_existing_database_gets_the_column_on_start(self):
-        from app import services
+        from app import startup
         from app.db import engine
         with engine.begin() as con:
             con.exec_driver_sql("ALTER TABLE users DROP COLUMN notify_notebook")
-        services.ensure_schema_updates()
+        startup.ensure_schema_updates()
         with engine.connect() as con:
             cols = [r[1] for r in con.exec_driver_sql("PRAGMA table_info(users)")]
         self.assertIn("notify_notebook", cols)

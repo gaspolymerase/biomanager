@@ -28,7 +28,6 @@ from .models import (
     OrgHousing,
     OrgLine,
     OrgLocation,
-    OrgMeasurement,
     OrgPreservationLot,
     OrgSeedLot,
     Organism,

@@ -53,6 +53,9 @@ DESKTOP = [
      [("run", "(function(){function pick(s,t){for(var o of s.options){if(o.textContent.indexOf(t)>=0){s.value=o.value;s.dispatchEvent(new Event('change',{bubbles:true}));return;}}}"
               "pick(document.querySelector('[data-gw-a]'),'attB-Rab5a');pick(document.querySelector('[data-gw-b]'),'pDONR221');})()")]),
     ("orders", "/orders", "light", "[data-layout=board]"),
+    # What the year's orders cost, by person, with the demo lab's limits.
+    ("orders-spending", "/orders", "light", "[data-layout=spending]"),
+    ("vendors", "/vendors", "light", None),
     ("reagents", "/inventory/reagents", "light", None),
     ("calendar", "/calendar", "light", None),
     ("new-database", "/organisms/new", "light", None),

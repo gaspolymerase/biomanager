@@ -12,7 +12,7 @@
   if (!root) return;
   const t = window.t || ((s) => s);
   const num = (n) => Number(n || 0).toLocaleString('en-US');
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = BioHtml.escape;
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${name}"></use></svg>`;
   const $ = (sel) => root.querySelector(sel);
   const say = (message, kind) => { if (message && window.BiomanagerShell) window.BiomanagerShell.toast(message, kind); };

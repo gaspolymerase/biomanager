@@ -9,10 +9,10 @@ import re
 import struct
 import unittest
 
-from tests.base import AppTestCase, GRID_NAMING, count, errors, execute, one, row, rows, uniq
+from tests.base import AppTestCase, GRID_NAMING, count, errors, execute, flash_text, one, row, rows, uniq
 
 from app import sequence_parser as sp
-from app import services
+from app import startup
 
 
 GB = """LOCUS       pQA1        60 bp    DNA     circular SYN 01-JAN-2026
@@ -326,6 +326,59 @@ class LineageTests(AppTestCase):
         # An empty Backbone or Insert column takes the parent's name.
         self.assertEqual(plasmid(self.child, "backbone, insert_seq"),
                          (plasmid(self.backbone, "name")[0], plasmid(self.insert, "name")[0]))
+
+    def test_a_backbone_or_insert_naming_a_lab_plasmid_is_made_from_it(self):
+        back_name, ins_name = plasmid(self.backbone, "name")[0], plasmid(self.insert, "name")[0]
+        # In the sheet: picked from the list ("#42 name"), or typed with @.
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": f"#{self.number(self.backbone)} {back_name}"})
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"insert_seq": f"@{ins_name}"})
+        self.assertEqual(plasmid(self.child, "backbone, insert_seq"), (back_name, ins_name))
+        self.assertEqual(self.links(self.child), [(self.backbone, back_name, "backbone", ""),
+                                                  (self.insert, ins_name, "insert", "")])
+        # Another backbone: the link the column made goes, the new one comes.
+        other = self.make_plasmid(self.m, name=uniq("pOther"))
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": plasmid(other, "name")[0]})
+        self.assertEqual([link[0] for link in self.links(self.child)], [self.insert, other])
+        # A number at the start of an insert is not a plasmid's number.
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"insert_seq": f"{self.number(other)} UTR"})
+        self.assertEqual([link[0] for link in self.links(self.child)], [other])
+        # Words that name no plasmid stay as they are, with no link.
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": "pUC19"})
+        self.assertEqual(plasmid(self.child, "backbone")[0], "pUC19")
+        self.assertEqual(self.links(self.child), [])
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"insert_seq": f"@{ins_name}"})
+        # The plasmid page links the Insert to its plasmid.
+        html = self.get_ok(self.m, f"/plasmid/{self.number(self.child)}")
+        self.assertRegex(html, rf'<dd><a href="[^"]*{self.number(self.insert)}[^"]*">{re.escape(ins_name)}</a></dd>')
+
+    def test_a_link_added_on_the_page_stays_when_the_column_changes(self):
+        self.post(self.m, f"/plasmids/{self.child}/parents",
+                  data={"parent": f"#{self.number(self.backbone)}", "role": "backbone", "method": "gibson"})
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": "pUC19"})
+        self.assertEqual(self.links(self.child), [(self.backbone, plasmid(self.backbone, "name")[0], "backbone", "gibson")])
+
+    def test_a_new_plasmid_is_made_from_what_it_names(self):
+        name = plasmid(self.backbone, "name")[0]
+        new = self.make_plasmid(self.m, name=uniq("pNew"), backbone=f"@{name}")
+        self.assertEqual(self.links(new), [(self.backbone, name, "backbone", "")])
+        self.assertEqual(plasmid(new, "backbone")[0], name)
+
+    def test_the_sheet_offers_the_labs_plasmids_and_usual_backbones(self):
+        html = self.get_ok(self.m, "/plasmids")
+        self.assertIn(f'<option value="#{self.number(self.backbone)} {plasmid(self.backbone, "name")[0]}">', html)
+        self.assertIn('<option value="pcDNA3.1(+)">', html)
+        self.assertIn('list="plasmid-backbone-choices"', html)
+
+    def test_an_admin_links_what_was_written_before(self):
+        name = plasmid(self.backbone, "name")[0]
+        execute("update plasmids set backbone=? where id=?", name, self.child)
+        self.assertNotIn("data-unlinked", self.get_ok(self.m, "/plasmids"))
+        self.assertIn("data-unlinked", self.get_ok(self.a, "/plasmids"))
+        self.m.post("/plasmids/link-columns")
+        self.assertEqual(self.links(self.child), [])
+        r = self.post(self.a, "/plasmids/link-columns")
+        self.assertIn("Linked", flash_text(r))
+        self.assertEqual(self.links(self.child), [(self.backbone, name, "backbone", "")])
 
     def test_a_plasmid_cannot_be_its_own_parent_or_make_a_loop(self):
         r = self.post(self.m, f"/plasmids/{self.child}/parents", data={"parent": str(self.number(self.child))})
@@ -1100,8 +1153,8 @@ class LegacyBoxMigrationTests(AppTestCase):
                     " full_sequence, is_circular, features_json, sequence_format, storage_box, box_row, box_col,"
                     " created_at, updated_by) values (?,?,'','','',?,'','','',true,'','',?,?,?,'2026-01-01','')",
                     pid, uniq(tag), cls.member, box, r, c)
-        execute("delete from app_settings where key=?", services.PLASMID_BOXES_FLAG)
-        cls.result = services.migrate_plasmid_boxes()
+        execute("delete from app_settings where key=?", startup.PLASMID_BOXES_FLAG)
+        cls.result = startup.migrate_plasmid_boxes()
 
     @staticmethod
     def at(pid, cols="box_id_fk, storage_box, box_row, box_col"):
@@ -1144,7 +1197,7 @@ class LegacyBoxMigrationTests(AppTestCase):
 
     def test_migration_runs_only_once(self):
         before = count("plasmid_boxes")
-        self.assertIsNone(services.migrate_plasmid_boxes())
+        self.assertIsNone(startup.migrate_plasmid_boxes())
         self.assertEqual(count("plasmid_boxes"), before)
 
 

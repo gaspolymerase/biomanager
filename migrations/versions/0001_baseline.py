@@ -2,7 +2,7 @@
 
 Intentionally a no-op. Existing databases were built by
 `Base.metadata.create_all()` plus the hand-written ALTERs in
-services.ensure_schema_updates(), so there is nothing to replay — this
+startup.ensure_schema_updates(), so there is nothing to replay — this
 revision exists only to give those databases a version to be stamped with:
 
     alembic stamp 0001_baseline

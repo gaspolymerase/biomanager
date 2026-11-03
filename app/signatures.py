@@ -26,10 +26,9 @@ import json
 import re
 from datetime import datetime
 
-from flask import Blueprint, abort, g, jsonify, request
+from flask import Blueprint, g, jsonify, request
 from sqlalchemy import select
 
-from . import access
 from .db import SessionLocal
 from .models import NotebookPage, NotebookVersion, RecordSignature
 

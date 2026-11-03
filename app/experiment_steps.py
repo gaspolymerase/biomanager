@@ -745,7 +745,7 @@ def make_samples(session, exp, place, step, day, chosen, on: date, inventory_key
     the animal: through the inventory's own save code, so its required
     columns and permissions hold."""
     from . import inventory_service as inv
-    from .inventory_routes import Refused, _item_from_form
+    from .inventory_items import Refused, item_from_form
     module = inv.get_module(session, inventory_key)
     if module is None or not lab.can_see(module):
         return [], [gettext("There is no such inventory for the samples.")]
@@ -768,7 +768,7 @@ def make_samples(session, exp, place, step, day, chosen, on: date, inventory_key
             form[f"attr_{dated['key']}"] = on.isoformat()
         savepoint = session.begin_nested()
         try:
-            _item_from_form(session, mv, item, form, creating=True)
+            item_from_form(session, mv, item, form, creating=True)
             savepoint.commit()
             made.append({"id": item.id, "number": item.number, "name": item.name, "inventory": mv.label,
                          "key": module.key})

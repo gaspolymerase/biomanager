@@ -421,7 +421,7 @@ def _export_data(tmp: Path) -> list[Path]:
     """A consistent copy of this app's database (SQLite's backup API) and a
     tarball of its uploaded files."""
     from .db import engine
-    from .services import UPLOAD_DIR
+    from .uploads import UPLOAD_DIR
 
     files = []
     source = engine.url.database

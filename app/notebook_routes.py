@@ -35,7 +35,8 @@ from .models import (
     PlasmidRecord,
 )
 from .formutil import _record_number, arg_int, attr_value_pattern, like_pattern
-from .services import calculate_age_fields, parse_date, save_uploaded_file, save_uploaded_image
+from .services import calculate_age_fields, parse_date
+from .uploads import save_uploaded_file, save_uploaded_image
 from . import lab_notebook
 from . import groups as project_groups
 from . import uploads as _uploads

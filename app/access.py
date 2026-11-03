@@ -20,7 +20,6 @@ route is how they drift apart.
 """
 from __future__ import annotations
 
-from flask import g
 from flask.globals import _cv_app   # g without its proxy: asked for once a row
 
 # The cage purpose that starts out shared with the lab: a breeder cage

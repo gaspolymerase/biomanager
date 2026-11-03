@@ -1,0 +1,22 @@
+{# An inventory's Board (inventory_routes.board), asked for when the Board is first shown:
+   a card a record, each carrying its dialog's payload, megabytes on a long inventory. #}
+  {% for s in m.statuses %}
+    {% set col_rows = rows | selectattr('item.status', 'equalto', s) | list %}
+    <section class="board-col" data-status="{{ s }}">
+      <header class="board-col-head">
+        <span class="status-pill-static" data-status="{{ s }}">{{ s|tr('inventory') }}</span>
+        <span class="board-count" data-board-count>{{ col_rows|length }}</span>
+      </header>
+      <div class="board-cards" data-board-drop>
+        {% for r in col_rows %}
+          {% set i = r.item %}
+          <article class="board-card" draggable="{{ 'true' if r.editable else 'false' }}" data-id="{{ i.id }}" data-record-edit="item-dialog"
+                   data-record-payload='{{ r.payload | tojson }}'>
+            <div class="board-card-top"><span class="ident text-muted">#{{ i.number }}</span>{% if i.owner %}{{ i.owner | owner_badge }}{% endif %}</div>
+            <div class="board-card-name">{{ i.name or _('(unnamed)') }}</div>
+            <div class="board-card-meta">{{ [i.vendor, i.catalog_number, (i.quantity ~ ' ' ~ i.unit)|trim] | select | join(' · ') }}</div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}

@@ -24,7 +24,7 @@ import sys
 from contextlib import contextmanager
 from pathlib import Path
 
-from flask import current_app, g, has_request_context, request, session
+from flask import current_app, g, request, session
 # Flask's own context variables (Flask is pinned): read directly, a page's
 # language costs a lookup rather than two proxies, and a long sheet asks
 # for it tens of thousands of times.

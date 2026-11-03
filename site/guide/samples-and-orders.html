@@ -237,6 +237,37 @@
           quantity, price and grant of the last time it was ordered. While it is already on order the button says <b>On order</b>, and
           the new order opens with a note naming the open one and who asked for it.</li>
       </ol>
+      <h2 id="spending">What the orders cost</h2>
+      <p>On the orders page, <b>Spending</b> (beside <b>Table</b> and <b>Board</b>) adds up what the lab asked for. Choose the months
+        (<b>Last 12 months</b>, <b>This year</b>, <b>Last 3 months</b>, <b>All</b>, or <b>Choose…</b> any two months) and how to
+        group them: <b>Person</b>, <b>Project group</b>, <b>Vendor</b> or <b>Category</b>.</p>
+      <ul>
+        <li>The figures at the top give the total, what was ordered or received, what is still waiting to be ordered, and how many
+          orders, saying how many have no price.</li>
+        <li><b>By month</b> stacks each month's orders by the five that cost most, the rest as <i>Other</i>. Point at a month (or
+          move to it with Tab) to see each one's share; point at a name in the legend or a row of the table to pick it out.</li>
+        <li>The table below lists every person, group, vendor or category with its total, what was ordered or received, what is
+          waiting, and its orders. <b>Download CSV</b> gives the same table, a column for each month, for a spreadsheet.</li>
+        <li>An order costs its <i>Price</i> times its <i>Quantity</i>, and counts in the month it was asked for. A cancelled order counts
+          nowhere. By project group, an order counts in every group its asker is in now, so the groups can add up to more than the lab.</li>
+      </ul>
+      <p>An admin opens <b>Limits and settings</b> to choose the currency, whether Price is for one or for the whole order, and the
+        limits: per year (from the month your year starts) or per month, for the lab, for each person and for each project group.
+        The <b>Limits</b> card shows how much of each is used, marked <i>Near the limit</i> from 80% and <i>Over the limit</i> past it.
+        When saving an order takes its asker, one of their groups or the lab past a limit, the message after saving says so.</p>
+      <figure class="gshot"><a href="../assets/screenshots/orders-spending.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/orders-spending.webp" alt="The orders page's Spending view: a year of orders by month and by person, with the lab's limits" loading="lazy" width="2000" height="1250"></a><figcaption>Spending, by person, with the lab's limits</figcaption></figure>
+      <h2 id="vendors">Vendors</h2>
+      <p><b>Vendors</b>, at the top of the orders page and of every list with a vendor, lists every vendor your records name: its
+        orders and other records, what its orders cost in the last 12 months, and when it was last ordered from. <b>Edit</b> keeps its
+        website, contact, email, phone and your customer number, and <b>New vendor</b> adds one you haven't ordered from yet. A vendor
+        kept there is offered when you type a vendor.</p>
+      <ul>
+        <li>Spellings that differ only in capitals or spaces are one vendor, and the page says how else it is written.</li>
+        <li>An admin or a facility manager can give a vendor a new name in its <b>Edit</b>, which renames it on every order and
+          record, or tick several spellings (<i>Sigma</i>, <i>Sigma-Aldrich</i>), choose the name to keep and <b>Merge</b>.
+          <b>Batch history</b> undoes either.</li>
+      </ul>
+      <figure class="gshot"><a href="../assets/screenshots/vendors.webp" target="_blank" rel="noopener" title="Open full size"><img src="../assets/screenshots/vendors.webp" alt="The Vendors page: every vendor with its orders, records, last 12 months and last order" loading="lazy" width="2000" height="1250"></a><figcaption>Vendors</figcaption></figure>
       <h2 id="low-stock">Low stock, from the quantity</h2>
       <p>Reagents, chemicals, antibodies, viruses and primers have a <b>Low at</b> column beside <b>Qty</b> and <b>Unit</b>, and
         the same field in the record's dialog under <i>Supply</i>. Write the quantity as a number (<code>12</code>, <code>2.5</code>
@@ -295,11 +326,13 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 11 min read</p>
+      <p>On this page · 13 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#samples-by-type">Samples by type</a></li>
         <li class="lvl2"><a href="#ordering-start-to-shelf">Ordering, start to shelf</a></li>
+        <li class="lvl2"><a href="#spending">What the orders cost</a></li>
+        <li class="lvl2"><a href="#vendors">Vendors</a></li>
         <li class="lvl2"><a href="#low-stock">Low stock, from the quantity</a></li>
         <li class="lvl2"><a href="#every-inventory">Every inventory</a></li>
       </ol>

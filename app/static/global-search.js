@@ -236,9 +236,7 @@
     }
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const escapeHtml = BioHtml.escape;
   const escapeAttr = escapeHtml;
 
   // Activate Cmd+K (or Ctrl+K) globally. Also enables the topbar search input

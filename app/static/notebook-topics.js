@@ -25,11 +25,7 @@
   var dataEl = document.getElementById('nb-data');
   var DATA = dataEl ? JSON.parse(dataEl.textContent || '{}') : {};
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  const esc = BioHtml.escape;
   function icon(name) { return '<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#' + name + '"></use></svg>'; }
   // A topic's icon: one of ours, an emoji or an SVG of its own (app/topic_icons.py).
   function topicIcon(value) {

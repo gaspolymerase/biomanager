@@ -69,10 +69,10 @@ def bring_up_to_date(copy: Path, scratch: Path):
     os.environ["DATABASE_URL"] = f"sqlite:///{copy}"
     os.environ["BIOMANAGER_DATA_DIR"] = str(scratch)  # its setup files stay out of the way
     sys.path.insert(0, str(ROOT))
-    from app import services
+    from app import startup
     from app.db import Base, engine
 
-    services.init_database()
+    startup.init_database()
     return Base.metadata, engine
 
 
