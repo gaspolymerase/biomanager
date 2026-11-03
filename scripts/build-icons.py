@@ -33,7 +33,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = PROJECT_ROOT / "app" / "static" / "icons.svg"
 DEFAULT_SOURCE = PROJECT_ROOT / "frontend" / "node_modules" / "lucide-static"
 
-STROKE = 'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"'
+# The width is a custom property so a place can draw them bolder (the
+# sidebar sets --icon-stroke); it reaches inside <use> because custom
+# properties inherit into the drawn copy.
+STROKE = ('stroke="currentColor" style="stroke-width:var(--icon-stroke,1.75)" '
+          'stroke-linecap="round" stroke-linejoin="round"')
 
 # name-in-app -> Lucide icon
 FROM_LUCIDE = {
@@ -58,6 +62,7 @@ FROM_LUCIDE = {
     # --- navigation & chrome ---
     "grip": "grip-vertical",
     "home": "house",
+    "shuffle": "shuffle",
     "calendar": "calendar-days",
     "notebook": "notebook",
     "search": "search",

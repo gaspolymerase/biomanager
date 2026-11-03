@@ -382,7 +382,7 @@
   "Health observations": "健康观察",
   "Sick and dead reports, clinical observations and humane endpoints.": "患病和死亡报告、临床观察和人道终点。",
   "Body weights": "体重",
-  "A weight series per animal, with a trend sparkline.": "每只动物的体重序列，附趋势小图。",
+  "A weight series per animal, with a trend sparkline. In an experiment, a fall from its first weight there shows under Losing weight.": "每只动物的体重序列，附趋势小图。在实验中比它在实验里的第一次体重下降时，会列在“体重下降”里。",
   "Cull log": "淘汰记录",
   "Quantity-based culling records, for animals removed in batches.": "按数量记录的淘汰，用于成批移除的动物。",
   "Cryo inventory": "冻存库存",

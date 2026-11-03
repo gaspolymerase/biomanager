@@ -167,8 +167,15 @@
         <tr><th>Flies and worms</th><td>Vials or plates, or a whole rack; say how many each started with. They have no body weight:
           survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi
           feeding, temperature shifts, starvation, infection, flipping to fresh food.</td></tr>
+        <tr><th>Plants and field crops</th><td>Plants or sowings, or a whole tray or plot. Germination, height, rosette area, days
+          to flowering, leaf number, survival or a phenotype. Treatments and sprays, a watering regime, a light or temperature
+          shift, inoculation, transplanting, sampling, imaging.</td></tr>
         <tr><th>Any other organism</th><td>Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score.</td></tr>
       </table>
+      <p>An organism's weight, length or height typed in an experiment is kept on the animal too: its panel on the sheet
+        (<b>Inspector</b>) lists it under <b>Measurements</b>, as a mouse keeps its weights.</p>
+      <p>The sheet shows each animal's <b>Age on day 1</b>, as its database counts age: a mouse in weeks, a fish or a clutch in days
+        post fertilisation, a plant in days after sowing, any other organism in its own unit. The export has it too.</p>
       <p>Any experiment can follow a readout of its own (<b>Readout → Something else…</b>): a number for each, or how many of
         those at the start.</p>
       <h2 id="derived">Readouts worked out from what you measure</h2>
@@ -267,7 +274,10 @@
         <li><b>The experiment</b> on top: name, status, start (day 1), end, readout and description, saved as you type.</li>
         <li><b>The sheet of its animals</b> switches between <b>Treatment</b> — each manipulation day a column: ✓ and the amount for
           each animal that got it (click to change) — and the readout, a column a day, typed in place (<b>Another day</b> adds one).
-          Each animal's group is edited here too.</li>
+          Each animal's group is edited here too. <b>Randomize</b> shares them out into the groups you name, balanced by sex,
+          by cage (tank, rack or housing) and by weight, and shows the groups before setting them; it says the seed, which
+          gives the same groups again. For vials or plates, <b>Fill in</b> beside <b>At start</b> gives every one without a
+          count the same number, and <b>Add</b> asks how many each started with.</li>
         <li><b>Record manipulation</b> records what was just done — <i>the HDM group got Tamoxifen 20 mg/kg i.p. today</i> — or a day
           of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume
           given the solution (<i>10 mg/mL</i>). Tick the animals it was done to and, if you want, <b>make a sample record for each
@@ -282,7 +292,8 @@
         <li><b>The chart</b> shows the readout by group over the days (the value, or its % of the first; for a count, % of those at
           the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the
           days the groups differ, and <b>Tests by day</b> below lists each test (Welch's t-test for two groups, one-way ANOVA for
-          more, χ² for counts), each day on its own.</li>
+          more, χ² for counts), each day on its own. A survival readout is also tested over the whole experiment, group against
+          group, by the log-rank test, above the days: how many of each group died, against how many would have by chance.</li>
       </ul>
       <h2 id="the-regimen">The regimen</h2>
       <p><b>Regimen</b> lists what is to be done and on which days: the kind, what, dose, route, solution, group and days
@@ -298,7 +309,9 @@
       <ul>
         <li><b>Losing weight</b>: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in
           <b>Settings → General → Weight loss to flag</b>) or more below its first weight in an experiment that has started,
-          or below its heaviest of the last 30 days.</li>
+          or below its heaviest of the last 30 days. An animal of your own database is flagged the same way, against its
+          first weight in an experiment, once the database keeps body weights (<b>Body weights</b> on in its
+          <b>Configure</b>); fish, flies, worms and plants are not.</li>
         <li><b>Not weighed in their experiment</b>: in an active experiment whose readout is body weight, an animal (a mouse,
           or any other organism weighed in the experiment) not weighed for longer than the longest gap between the regimen's weighing days (a <i>Readout day</i> on days 1, 4, 7: 3 days),
           or 7 days when it plans none or its last has passed. Animals left out of the analysis aren't counted.</li>
@@ -350,7 +363,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 15 min read</p>
+      <p>On this page · 16 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#derived">Readouts worked out from what you measure</a></li>

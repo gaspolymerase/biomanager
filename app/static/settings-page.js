@@ -3,6 +3,12 @@
 // the Mac app, Smaller / Default / Larger set the window's zoom; elsewhere
 // the browser's zoom does it, so the row stays hidden.
 (function () {
+  // Look: Liquid Glass or Solid, changed at once too.
+  var look = document.querySelector('[data-ui-look]');
+  if (look) look.addEventListener('change', function () {
+    if (look.value === 'solid') document.documentElement.setAttribute('data-look', 'solid');
+    else document.documentElement.removeAttribute('data-look');
+  });
   var font = document.querySelector('[data-ui-font]');
   if (font) font.addEventListener('change', function () {
     if (font.value === 'system' || font.value === 'inter') document.documentElement.setAttribute('data-font', font.value);

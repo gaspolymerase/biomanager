@@ -229,6 +229,7 @@
 /experiments/<int:experiment_id>/plates/layouts/<int:layout_id>/delete	plates.delete_layout	POST
 /experiments/<int:experiment_id>/plates/preview	plates.preview	POST
 /experiments/<int:experiment_id>/plates/save	plates.save_plate	POST
+/experiments/<int:experiment_id>/randomize	experiments.randomize_groups	POST
 /experiments/<int:experiment_id>/readings	experiments.save_readings	POST
 /experiments/<int:experiment_id>/start	experiments.start	POST
 /experiments/<int:experiment_id>/subjects/<path:key>/leave-out	experiments.leave_out	POST
@@ -522,6 +523,8 @@
 /racks/<key>/<int:rack_id>/layout	rack_layout.preview	POST
 /rail/peek	rail_peek.peek	GET
 /ready	lab.ready	GET
+/records/history	record_history	GET
+/records/measurements	record_measurements	GET
 /register	register	GET POST
 /restore-lab	restore_lab	GET POST
 /samples	samples	GET

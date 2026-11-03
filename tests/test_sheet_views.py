@@ -54,3 +54,28 @@ class PresenceTests(AppTestCase):
     def test_an_address_must_look_like_one(self):
         me = client_for(make_user())
         self.assertEqual(me.post("/presence", json={"path": "javascript:alert(1)"}).status_code, 400)
+
+
+class PanelHistoryTests(AppTestCase):
+    """The History tab of a sheet's side panel (/records/history)."""
+
+    def test_a_mouse_shows_its_own_making_to_its_maker_and_an_admin(self):
+        from tests.base import uniq
+        row = self.make_mouse(self.m, self.member, cage=uniq("C"))
+        mine = self.m.get(f"/records/history?kind=mouse&id={row}")
+        self.assertEqual(mine.status_code, 200)
+        self.assertIn("create", [e["action"] for e in mine.get_json()["entries"]])
+        self.assertFalse(mine.get_json()["everyone"])
+        self.assertTrue(self.a.get(f"/records/history?kind=mouse&id={row}").get_json()["everyone"])
+        # Someone else sees only their own changes to it: none.
+        other = client_for(make_user())
+        self.assertEqual(other.get(f"/records/history?kind=mouse&id={row}").get_json()["entries"], [])
+
+    def test_what_it_cannot_name_is_refused(self):
+        self.assertEqual(self.m.get("/records/history?kind=mouse").status_code, 400)
+        self.assertEqual(self.m.get("/records/history?kind=nothing&id=1").status_code, 404)
+        self.assertEqual(self.m.get("/records/history?kind=mouse&id=999999999").status_code, 404)
+
+    def test_signed_out_gets_nothing(self):
+        from app.app import app
+        self.assertIn(app.test_client().get("/records/history?kind=mouse&id=1").status_code, (302, 401))

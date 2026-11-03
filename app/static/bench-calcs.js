@@ -1902,7 +1902,39 @@
     }
   }
 
-  const api = { CALCS, REFERENCES, GROUPS, TOOLS, UNITS: U, CHEMICALS, run, search, locate, plain, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq,
+  /* A sum typed in Utilities' search, read as a tool and its inputs: a
+     dilution (10 mM to 50 µM in 1 mL; 1:1000 in 5 mL) or a speed (4000 rpm,
+     12000 x g). Null for anything else, which stays a search. */
+  const CONC_WORDS = { m: 'M', mm: 'mM', um: 'µM', 'µm': 'µM', nm: 'nM', pm: 'pM', 'mg/ml': 'mg/mL', 'ug/ml': 'µg/mL',
+    'µg/ml': 'µg/mL', 'ng/ul': 'ng/µL', 'ng/µl': 'ng/µL', 'ng/ml': 'ng/mL', 'g/l': 'g/L', x: '×', '×': '×', '%': '% (v/v)' };
+  const VOL_WORDS = { l: 'L', ml: 'mL', ul: 'µL', 'µl': 'µL', nl: 'nL' };
+  function parseSum(text) {
+    const q = String(text || '').trim().replace(/μ/g, 'µ').replace(/\s+/g, ' ');
+    const NUM = '(\\d+(?:[.,]\\d+)?)';
+    const unit = (word, words) => words[String(word || '').toLowerCase().replace(/\s/g, '')];
+    const number = (s) => s.replace(',', '.');
+    const conc = '(m|mm|um|µm|nm|pm|mg/ml|ug/ml|µg/ml|ng/ul|ng/µl|ng/ml|g/l|x|×|%)';
+    const vol = '(l|ml|ul|µl|nl)';
+    const to = '\\s*(?:to|→|->|=>|至|到|稀释到|稀释至)\\s*';
+    const inV = `(?:\\s*(?:in|,|for|配|共|定容到|定容至)?\\s*${NUM}\\s*${vol})?`;
+    let m = new RegExp(`^${NUM}\\s*${conc}${to}${NUM}\\s*${conc}${inV}$`, 'i').exec(q);
+    if (m) {
+      return { tool: 'dilute', calc: 'dilution', solve: 'v1', raw: { c1: number(m[1]), c1_unit: unit(m[2], CONC_WORDS), c2: number(m[3]), c2_unit: unit(m[4], CONC_WORDS),
+        v1: '', v2: m[5] ? number(m[5]) : '1', v2_unit: m[6] ? unit(m[6], VOL_WORDS) : 'mL' } };
+    }
+    m = new RegExp(`^1\\s*:\\s*${NUM}${inV}$`, 'i').exec(q);
+    if (m) {
+      return { tool: 'dilute', calc: 'dilution', solve: 'v1', raw: { c1: number(m[1]), c1_unit: '×', c2: '1', c2_unit: '×',
+        v1: '', v2: m[2] ? number(m[2]) : '1', v2_unit: m[3] ? unit(m[3], VOL_WORDS) : 'mL' } };
+    }
+    m = new RegExp(`^${NUM}\\s*rpm$`, 'i').exec(q);
+    if (m) return { tool: 'rcf', calc: 'rcf', raw: { rpm: number(m[1]), g: '' } };
+    m = new RegExp(`^${NUM}\\s*(?:x|×)?\\s*g$`, 'i').exec(q);
+    if (m) return { tool: 'rcf', calc: 'rcf', raw: { g: number(m[1]), rpm: '' } };
+    return null;
+  }
+
+  const api = { CALCS, REFERENCES, GROUPS, TOOLS, UNITS: U, CHEMICALS, run, search, locate, plain, num, fmt, show, dnaTm, protein, cleanDna, cleanProtein, zq, parseSum,
     parseFormula, evalFormula, labTool, useLabTools, FORMULA_FUNCS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BenchCalc = api;

@@ -128,7 +128,8 @@ CAPABILITIES: tuple[Capability, ...] = (
     ),
     Capability(
         "weights", "Body weights", "Husbandry",
-        "A weight series per animal, with a trend sparkline.",
+        "A weight series per animal, with a trend sparkline. In an experiment, a fall from its first "
+        "weight there shows under Losing weight.",
         "scale", requires=("individuals",),
     ),
     Capability(

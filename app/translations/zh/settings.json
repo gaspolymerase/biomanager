@@ -446,5 +446,9 @@
   "Which databases the lab keeps": "实验室使用哪些数据库",
   "Your animals, cages, tanks or vials moved or given by someone else, or your mice picked from a breeder cage": "你的动物、笼、鱼缸或果蝇管被别人移动或转给他人，或有人从你的种鼠笼里取走了小鼠",
   "Sign-in": "登录",
-  "Take your records with you, and keep the whole lab safe.": "带走你的记录，并保护好整个实验室。"
+  "Take your records with you, and keep the whole lab safe.": "带走你的记录，并保护好整个实验室。",
+  "Look": "外观样式",
+  "Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Only for you.": "液态玻璃：柔和的背景上叠着磨砂玻璃面板。实色：素色底上的白色表格，没有玻璃效果。只对你自己生效。",
+  "Liquid Glass": "液态玻璃",
+  "Solid": "实色"
 }

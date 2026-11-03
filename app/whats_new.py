@@ -30,6 +30,15 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.9.0": {
+        "new": [
+            "A new look: the wallpaper fills the window and sheets are glass. **Settings → Appearance & language → Look → Solid** for no glass.",
+            "The **Inspector** beside a sheet: the record's labels, **Open**, ↑ ↓ to the next row, and its **History**.",
+            "A mouse's form slides in at the right: Sex as buttons, the rack drawn to click a place, **⌘/Ctrl ↵** to save.",
+            "**Utilities** answers a sum typed in its search (10 mM to 50 µM in 1 mL), and keeps each tool's **Recent sums**.",
+            "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.",
+        ],
+    },
     "2.8.0": {
         "new": [
             "**Spending** on the orders page: what the orders cost, month by month, by person, project group, vendor or category, with **Download CSV**.",

@@ -251,7 +251,7 @@ Source: https://biomanager.org/guide/import-from-excel
 
 The page that opens each morning: what needs doing today, in three views.
 
-Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone.
+Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone. So is the whole app's look, in **Settings → Appearance & language → Look**: **Liquid Glass**, frosted panes over a soft wallpaper, or **Solid**, white sheets on plain paper with no glass.
 
 Above them, the **Daily brief** says the day in a few words: what is due today (the first three by name, each a link), how many things are overdue, how many animals may need a look, and how many notices for you are unread. **Plan my day** opens the calendar on today.
 
@@ -311,7 +311,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Filters and saved views**: **+ Filter**, beside the search, picks a column and then one of the values in it (each with how many rows have it), for a chip such as *Status is Stock* that keeps only those rows; add more and they all apply, × takes one off. In the row above, **Save view** keeps what you're looking at — the search, the chips, the sort and the columns shown — under a name, as a tab you come back to in one click; **All** shows everything again. A dot on a view means you've changed it since; click it again for **Update to what is shown**, **Rename…** or **Delete this view**. Views are yours, and follow you to any computer you sign in on.
 
-- **Inspector**: **Inspector** in the toolbar opens a panel beside the sheet with every column of the row you last clicked, hidden ones included, and **Open** for the full record. For a mouse or a cage it draws the rack too, the cage's place lit; click another cage there to go to it.
+- **Inspector**: **Inspector** in the toolbar opens a panel beside the sheet with the row you last clicked: its name, its labels (status, sex, shared) and **Open** for the full record, then every other column, hidden ones included. The arrows at its top go to the row above or below without leaving the panel. For a mouse or a cage it draws the rack too, the cage's place lit; click another cage there to go to it. **History** beside **Overview** lists the changes made to the record, who made each and when: your own changes, or everyone's for an admin.
 
 - **Who else is here**: When someone else has the same sheet open, their initials show at the top right of the page, beside its buttons, with how many are here.
 
@@ -422,6 +422,7 @@ Every keyboard shortcut on one page: search with ⌘/Ctrl K, switch tabs, fill d
 | `Esc` | Close a menu or dialog |
 | Shift-click | Select a range of rows |
 | `⌘`/`Ctrl` `D` | Fill down, in the mice's **Add many** preview |
+| `⌘`/`Ctrl` `↵` | Save the form that is open (a new mouse, a cage, any record) |
 
 In the desktop app on a Mac, the menu bar has the usual ones as well:
 
@@ -487,6 +488,8 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 ### Mice
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
+
+- A mouse's form, and a cage's, slide in at the right of the window with the sheet still beside them. Sex is a row of buttons; **Transgene 1** shows, and **Add a transgene** the next. Pick a rack and it is drawn under **Position**: click a free place to fill in the position, or, for a mouse, a cage to put the mouse in it. `⌘`/`Ctrl` `↵` saves.
 
 - Each mouse has a **Custom tag**, strain, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth or of death can't be in the future, and a mouse's owner is someone in the lab. The same holds when an [AI assistant](https://biomanager.org/guide/ai-assistants) or a script changes it.
 
@@ -1176,7 +1179,12 @@ Mice, zebrafish, flies, worms and your own organisms all have an **Experiments**
 |---|---|
 | Zebrafish | Fish rows, a whole tank, or a clutch's larvae. Survival (how many of those at the start are alive), standard length or a phenotype. Drug in the water, microinjection, heat shock, injury or fin clip. |
 | Flies and worms | Vials or plates, or a whole rack; say how many each started with. They have no body weight: survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi feeding, temperature shifts, starvation, infection, flipping to fresh food. |
+| Plants and field crops | Plants or sowings, or a whole tray or plot. Germination, height, rosette area, days to flowering, leaf number, survival or a phenotype. Treatments and sprays, a watering regime, a light or temperature shift, inoculation, transplanting, sampling, imaging. |
 | Any other organism | Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score. |
+
+An organism's weight, length or height typed in an experiment is kept on the animal too: its panel on the sheet (**Inspector**) lists it under **Measurements**, as a mouse keeps its weights.
+
+The sheet shows each animal's **Age on day 1**, as its database counts age: a mouse in weeks, a fish or a clutch in days post fertilisation, a plant in days after sowing, any other organism in its own unit. The export has it too.
 
 Any experiment can follow a readout of its own (**Readout → Something else…**): a number for each, or how many of those at the start.
 
@@ -1233,13 +1241,13 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 - **The experiment** on top: name, status, start (day 1), end, readout and description, saved as you type.
 
-- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too.
+- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too. **Randomize** shares them out into the groups you name, balanced by sex, by cage (tank, rack or housing) and by weight, and shows the groups before setting them; it says the seed, which gives the same groups again. For vials or plates, **Fill in** beside **At start** gives every one without a count the same number, and **Add** asks how many each started with.
 
 - **Record manipulation** records what was just done — *the HDM group got Tamoxifen 20 mg/kg i.p. today* — or a day of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume given the solution (*10 mg/mL*). Tick the animals it was done to and, if you want, **make a sample record for each one** in Samples, with the animal as its source.
 
 - Each day recorded keeps the **Reagent used** and its **Lot**, and the expiry the lot had. It starts as the item picked in the regimen; when the regimen names only what is given (*Tamoxifen*), the one item of that name in your inventories is picked, and kept on the regimen for next time (with several, they come first in the list: pick the bottle you used). A new bottle is another item, or type its lot. A lot already past its expiry on the day is recorded, with a warning. Tick **Take what they got off the inventory** to take the amounts (or volumes) the animals got off the item's quantity, turned into its unit (a **Pack size** turns mL into ampoules); it is taken once, however often the day is saved, and **Undo: not done** puts it back. The lot shows on the day in the list and the sheet, in **Export**, and in the experiment's notebook block.
 
-- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own.
+- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own. A survival readout is also tested over the whole experiment, group against group, by the log-rank test, above the days: how many of each group died, against how many would have by chance.
 
 ### The regimen
 
@@ -1249,7 +1257,7 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 Home's card [Animals that may need a look](https://biomanager.org/guide/home-page#animals) reads a mouse experiment's records too. It says what they show, never a diagnosis:
 
-- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days.
+- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days. An animal of your own database is flagged the same way, against its first weight in an experiment, once the database keeps body weights (**Body weights** on in its **Configure**); fish, flies, worms and plants are not.
 
 - **Not weighed in their experiment**: in an active experiment whose readout is body weight, an animal (a mouse, or any other organism weighed in the experiment) not weighed for longer than the longest gap between the regimen's weighing days (a *Readout day* on days 1, 4, 7: 3 days), or 7 days when it plans none or its last has passed. Animals left out of the analysis aren't counted.
 
@@ -1405,9 +1413,9 @@ Share a page to read or edit, with people, everyone in the lab or a [project gro
 
 ### Utilities
 
-**Utilities**, under Notebook in the sidebar, holds the bench calculators and reference tables. Type in the search at the top what you are doing, in the bench's words: *c1v1*, *nanodrop*, *× g*, *MOI*, *稀释*; a typo or a plural still finds it, and a chemical's name (*MgCl2*) opens **Make a solution** with it filled in. Or open one from its group. **Pin** a tool to keep it at the top; the ones you opened last are under **Recent**.
+**Utilities**, under Notebook in the sidebar, holds the bench calculators and reference tables. Type in the search at the top what you are doing, in the bench's words: *c1v1*, *nanodrop*, *× g*, *MOI*, *稀释*; a typo or a plural still finds it, and a chemical's name (*MgCl2*) opens **Make a solution** with it filled in. Or type the sum itself: *10 mM to 50 µM in 1 mL* or *1:1000 in 5 mL* shows the answer under the search before you open anything, and *4000 rpm* or *12000 x g* opens **rpm ↔ × g** with it filled in. Under the search every tool is a tile saying what it works out; the buttons above them (**Solutions**, **DNA & cloning**, **PCR & qPCR**…) show one kind at a time. **Pin** a tool to keep it at the top with its last answer; the ones you opened last are under **Recent**.
 
-A tool opens on a worked example, with the answer beside what you type, and changes as you type. Where a tool can work out more than one thing, **Work out** says which (the stock volume, or the final concentration); tools that do related jobs have modes along the top. Each remembers what you last typed on this computer, **Reset** goes back to the example, and **Copy** takes the answer, tables too, to paste into a notebook page or a sheet.
+A tool opens on a worked example, with the answer beside what you type, and changes as you type. Where a tool can work out more than one thing, **Work out** says which (the stock volume, or the final concentration); tools that do related jobs have modes along the top. Each remembers what you last typed on this computer, and the last few sums under **Recent sums**, to have one back with a click; **Reset** goes back to the example, and **Copy** takes the answer, tables too, to paste into a notebook page or a sheet.
 
 - **Solutions**: **Make a solution**: what to weigh for a molarity, a percent, from a concentrated liquid (37 % HCl, glacial acetic acid, 50 % NaOH) or in another hydrate or salt; **Dilute (C₁V₁)**, which also goes between mg/mL and µM when you give the MW, and takes × stocks; **Serial dilution**, by a round transfer (10 µL into 90 µL) or a fold per step; **Buffer at a pH**: what to weigh and how much concentrated acid or base to titrate with, or the two phosphate salts, at the temperature you use it. Type a chemical's name or formula to fill its molecular weight (*MgCl2·6H2O* and *magnesium chloride hexahydrate* are the same one). The lab's own come first: its [Chemicals](https://biomanager.org/guide/samples-and-orders) database, by name or abbreviation. One it doesn't know leaves the weight for you to type.
 

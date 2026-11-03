@@ -560,17 +560,18 @@ def inject_appearance():
     """The person's app icon, and the accent colour that goes with it."""
     user = g.get("user")
     glyph, color = appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR
-    font = appearance.FONTS[0]
+    font, look = appearance.FONTS[0], appearance.LOOKS[0]
     icon_url, lab_icon_name = "", ""
     if user is not None:
         from . import lab_icon as lab_icons
         with SessionLocal() as db_session:
             glyph, color = appearance.get_choice(db_session, user.username)
             font = appearance.get_font(db_session, user.username)
+            look = appearance.get_look(db_session, user.username)
             # The lab's own icon (app/lab_icon.py) heads the sidebar when it has one.
             icon_url = lab_icons.url(db_session)
             lab_icon_name = lab.lab_name(db_session) if icon_url else ""
-    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font,
+    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font, "ui_look": look,
             "lab_icon_url": icon_url, "lab_icon_name": lab_icon_name}
 
 

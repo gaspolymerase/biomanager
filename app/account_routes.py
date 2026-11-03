@@ -136,6 +136,8 @@ def settings():
                     home_layouts.set_layout(db_session, user.username, form.get("home_layout", ""))
                 if "ui_font" in form:
                     appearance.set_font(db_session, user.username, form.get("ui_font", ""))
+                if "ui_look" in form:
+                    appearance.set_look(db_session, user.username, form.get("ui_look", ""))
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     return jsonify({"ok": True})

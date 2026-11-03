@@ -922,8 +922,9 @@ database has a name of its own (one another database has is refused), so
     you, by words, kind, status, tag and date.
 - **Utilities** — bench calculators and reference tables, found by a
   search that knows the bench's words (c1v1, nanodrop, × g, 稀释, a
-  chemical's name), with the tools you pin and opened last on top and the
-  rest in seven groups. Each opens on a worked example and answers as you
+  chemical's name), or a sum typed in it (10 mM to 50 µM in 1 mL,
+  4000 rpm) answered on the spot, with the tools you pin (and their last
+  answer) and opened last on top and the rest as tiles by kind. Each opens on a worked example and answers as you
   type: solutions (make a solution by molarity, percent, from a
   concentrate such as 37 % HCl or in another hydrate; C₁V₁ dilutions, also
   between mg/mL and µM; serial dilutions; buffers at a pH, with what to
@@ -946,7 +947,7 @@ database has a name of its own (one another database has is refused), so
   shared with everyone; the maker or an admin changes them.
 
 <p align="center">
-  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" width="100%">
+  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools with their last answers, and every calculator as a tile by kind" width="100%">
 </p>
 
 <p align="center">
@@ -1006,7 +1007,9 @@ database has a name of its own (one another database has is refused), so
       view</b> keeps a search, its chips, a sort and the columns shown
       under a name, a tab above the sheet that follows you to any
       computer. <b>Inspector</b> shows the row you click in full beside
-      the sheet, a mouse's or cage's rack drawn with its place lit, and
+      the sheet, with arrows to the row above or below, a mouse's or
+      cage's rack drawn with its place lit, and a History tab of the
+      record's changes, and
       the initials of anyone else with the sheet open show beside the
       views. Drag a column's
       heading to put the columns you need first (or use the arrows under
@@ -1241,7 +1244,8 @@ The interface follows Apple's Liquid Glass design, over a softly tinted
 wallpaper: the sidebar, the row of tabs and each page's buttons float as
 clear glass over the page, which scrolls beneath them; cards are a thicker
 glass, and sheets and notebook pages the thickest, so the records stay as
-easy to read as paper. On a Mac the desktop app has no title bar; its close,
+easy to read as paper. Prefer no glass? **Settings → Appearance & language →
+Look → Solid** gives white sheets on plain paper instead, for you alone. On a Mac the desktop app has no title bar; its close,
 minimise and zoom buttons sit at the top of the sidebar, followed, as in
 Safari, by buttons to hide the sidebar, search everything, and go back and
 forward. The sidebar starts narrow, a column of icons: hover one to see its

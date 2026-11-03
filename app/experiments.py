@@ -58,6 +58,12 @@ READOUTS = {
     "climbing": {"label": "Climbing", "unit": "climbed", "kind": "fraction", "verb": "Test"},
     "brood": {"label": "Brood size", "unit": "progeny", "kind": "value", "verb": "Count"},
     "paralysis": {"label": "Paralysis", "unit": "paralysed", "kind": "fraction", "verb": "Score"},
+    # Plants (a Plants or Field crops database): what a plant lab measures.
+    "germination": {"label": "Germination", "unit": "germinated", "kind": "fraction", "verb": "Count"},
+    "height": {"label": "Height", "unit": "cm", "kind": "value", "verb": "Measure"},
+    "rosette_area": {"label": "Rosette area", "unit": "cm²", "kind": "value", "verb": "Measure"},
+    "flowering": {"label": "Days to flowering", "unit": "days", "kind": "value", "verb": "Score"},
+    "leaf_number": {"label": "Leaf number", "unit": "leaves", "kind": "value", "verb": "Count"},
 }
 READOUT_CHOICES = {
     "mouse": ["body_weight", "tumour_volume", "score", "survival"],
@@ -65,6 +71,7 @@ READOUT_CHOICES = {
     "fly": ["survival", "eclosion", "climbing"],
     "worm": ["survival", "brood", "paralysis"],
     "organism": ["body_weight", "length", "survival", "score"],
+    "plant": ["germination", "height", "rosette_area", "flowering", "leaf_number", "survival", "phenotype"],
 }
 
 # What can be done to each kind of animal: key → (label, icon). "reading"
@@ -86,6 +93,10 @@ KINDS = {
              ("temperature", "Temperature shift", "temperature"), ("heat_shock", "Heat shock", "temperature"),
              ("starvation", "Starvation", "clock"), ("infection", "Infection", "virus"),
              ("transfer", "Transfer to a fresh plate", "repeat")],
+    "plant": [("treatment", "Treatment", "droplet"), ("spray", "Spray", "droplet"),
+              ("watering", "Watering regime", "flask"), ("environment", "Light or temperature shift", "temperature"),
+              ("infection", "Inoculation", "virus"), ("transplant", "Transplant", "repeat"),
+              ("sample", "Sample", "vial"), ("imaging", "Imaging", "microscope")],
     "organism": [("injection", "Injection", "syringe"), ("treatment", "Treatment", "droplet"),
                  ("challenge", "Challenge", "virus"), ("surgery", "Surgery", "stethoscope"),
                  ("behavior", "Behaviour", "gauge"), ("stimulation", "Stimulation", "bolt"), ("sample", "Sample", "vial"),
@@ -130,7 +141,7 @@ class Place:
     """The database an experiment is on, as far as experiments care."""
     key: str                 # colony, zebrafish, stocks:<key>, organisms:<key>
     label: str               # Mouse colony, Zebrafish, Drosophila…
-    family: str              # mouse | fish | fly | worm | organism
+    family: str              # mouse | fish | fly | worm | plant | organism
     subject_kind: str        # mouse | fish | unit | organism
     noun: str
     nouns: str
@@ -140,6 +151,18 @@ class Place:
     home_url: str = ""
     module: object = None
     mv: object = None
+
+
+PLANT_PRESETS = ("plant", "field_crop")
+
+
+def _organism_family(module, mv) -> str:
+    """An organism database's family: plant for one of plants (made from the
+    Plants or Field crops preset, or keeping seed stocks), which measure and
+    treat their plants as a plant lab does; organism for the rest."""
+    if (module.preset_key or "") in PLANT_PRESETS or mv.has("seed_bank"):
+        return "plant"
+    return "organism"
 
 
 def place_for(session, key: str) -> Place | None:
@@ -172,7 +195,7 @@ def place_for(session, key: str) -> Place | None:
         if module is None or not lab.can_see(module):
             return None
         mv = organism_service.view(module)
-        return Place(key, mv.label, "organism", "organism", mv.organism_noun, mv.organism_noun_plural,
+        return Place(key, mv.label, _organism_family(module, mv), "organism", mv.organism_noun, mv.organism_noun_plural,
                      mv.housing_noun, module.icon or "paw", url_for("organisms.module", key=module.key, view="experiments"),
                      url_for("organisms.module", key=module.key), module, mv)
     return None
@@ -480,6 +503,7 @@ class Subject:
     can_edit: bool = True     # its own record may be changed (a mouse's weight)
     row: object = None        # the membership row
     record: object = None     # the animal's own record
+    age: str = ""             # its age on day 1 (13w, 5 dpf, 21d), in its database's unit
 
     @property
     def left_out(self) -> str:
@@ -502,7 +526,7 @@ class Subject:
     def as_dict(self) -> dict:
         return {"key": self.key, "label": self.label, "sex": self.sex, "genotype": self.genotype,
                 "housing": self.housing, "group": self.group, "start": self.start, "note": self.note,
-                "alive": self.alive, "card": self.card, "left_out": self.left_out}
+                "alive": self.alive, "card": self.card, "left_out": self.left_out, "age": self.age}
 
 
 def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Subject]:
@@ -541,10 +565,46 @@ def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Su
             if rec is None:
                 continue
             out.append(_describe(place, r, rec))
+    # A mouse's birth is its litter's: read for them all at once.
+    born = {}
+    litter_ids = {getattr(sub.record, "litter_id_fk", None) for sub in out if sub.kind == "mouse"} - {None}
+    if litter_ids:
+        from .models import LitterRecord
+        born = dict(session.execute(select(LitterRecord.id, LitterRecord.date_of_birth)
+                                    .where(LitterRecord.id.in_(litter_ids))).all())
+    for sub in out:
+        sub.age = age_at_start(sub, exp.start_date, place,
+                               born.get(getattr(sub.record, "litter_id_fk", None)) if sub.kind == "mouse" else None)
     wanted = (group or "").strip().lower()
     if wanted:
         out = [s for s in out if s.group.strip().lower() == wanted]
     return out
+
+
+def age_at_start(sub: Subject, start: date | None, place: Place, born_on: date | None = None) -> str:
+    """How old the animal was on day 1, as its database counts age: a mouse
+    in weeks, a fish or a clutch in days post fertilisation, an organism or
+    a cohort in its database's own unit (days after sowing for plants). A
+    vial or a plate has no age of its own: blank, as is one with no date."""
+    rec = sub.record
+    if start is None or rec is None:
+        return ""
+    if sub.kind != "mouse":     # a mouse's birth is its litter's, passed in
+        born = {"fish": "date_of_fertilization", "clutch": "date_of_fertilization",
+                "organism": "birth_on", "cohort": "birth_on"}.get(sub.kind)
+        born_on = getattr(rec, born, None) if born else None
+    if not isinstance(born_on, date) or born_on > start:
+        return ""
+    days = (start - born_on).days
+    if sub.kind == "mouse":
+        return f"{days // 7}w"
+    if sub.kind in ("fish", "clutch"):
+        return f"{days} dpf"
+    module = getattr(place, "module", None)
+    if module is not None:
+        from .organism_service import age_label
+        return age_label(module, born_on, start, None)
+    return f"{days}d"
 
 
 def _describe(place: Place, row: ExperimentSubject, rec) -> Subject:
@@ -779,7 +839,38 @@ def set_reading(session, exp: Experiment, place: Place, subject: Subject, on: da
                                       read_on=on, value=value, recorded_by=g.user.username))
     else:
         row.value, row.recorded_by = value, g.user.username
+    _keep_on_the_animal(session, exp, place, subject, readout, on, value)
     return None
+
+
+# What an organism's own record keeps of a reading, as a mouse keeps its weights.
+ON_THE_ANIMAL = ("body_weight", "length", "height", "rosette_area", "leaf_number")
+
+
+def _keep_on_the_animal(session, exp, place, subject, readout, on: date, value) -> None:
+    """A weight, length or height read for one organism in an experiment is
+    its own measurement too (organism_measurements, that day's), so it stays
+    with the animal, shows in its panel, and outlives the experiment."""
+    from datetime import time, timedelta
+    from .models import OrgMeasurement
+    if subject.kind != "organism" or place.module is None or readout["key"] not in ON_THE_ANIMAL \
+            or not subject.can_edit:
+        return
+    noon = datetime.combine(on, time(12))
+    day = datetime.combine(on, time.min)
+    row = session.scalar(select(OrgMeasurement).where(
+        OrgMeasurement.module_id_fk == place.module.id, OrgMeasurement.subject_kind == "organism",
+        OrgMeasurement.subject_id == subject.id, OrgMeasurement.metric == readout["key"],
+        OrgMeasurement.recorded_at >= day, OrgMeasurement.recorded_at < day + timedelta(days=1)))
+    if value is None:
+        if row is not None:
+            session.delete(row)
+    elif row is None:
+        session.add(OrgMeasurement(module_id_fk=place.module.id, subject_kind="organism", subject_id=subject.id,
+                                   metric=readout["key"], value_num=value, unit=readout.get("unit") or "",
+                                   recorded_at=noon, recorded_by=g.user.username, notes=(exp.name or "")[:200]))
+    else:
+        row.value_num, row.recorded_by = value, g.user.username
 
 
 def _blank(raw) -> bool:
@@ -933,6 +1024,8 @@ def readout_table(session, exp: Experiment, place: Place, subs: list[Subject] | 
              "days": [((d - start).days + 1) if start else None for d in dates], "rows": rows, "readout": readout}
     from . import exp_stats
     table["stats"] = {"raw": exp_stats.by_day(table), "pct": exp_stats.by_day(table, percent=True)}
+    if table["readout"].get("key") == "survival":
+        table["stats"]["survival"] = exp_stats.logrank(table)
     return table
 
 
@@ -1292,9 +1385,12 @@ def update(experiment_id: int):
         return jsonify({"ok": True, **payload(s, exp, place)})
 
 
-def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str) -> tuple[int, int]:
+def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str,
+                start_each: int | None = None) -> tuple[int, int]:
     """Put a cage, tank, rack or housing of animals ("group"), or one
-    ("one"), in the experiment: (added, skipped as not this person's)."""
+    ("one"), in the experiment: (added, skipped as not this person's).
+    `start_each`: how many each started with, for those whose record does
+    not say (a vial's flies, a plate's worms), so a count has its start."""
     from .services import mouse_is_active
     session.flush()
     session.expire(exp, ["memberships"])        # mice added a moment ago count as in it
@@ -1321,7 +1417,7 @@ def add_animals(session, exp: Experiment, place: Place, how: str, value: str, gr
             if key in have:
                 continue
             session.add(ExperimentSubject(experiment_id_fk=exp.id, subject_kind=kind, subject_id=rec.id,
-                                          treatment_group=group, start_count=start))
+                                          treatment_group=group, start_count=start if start is not None else start_each))
             have.add(key)
             added += 1
     return added, skipped
@@ -1334,13 +1430,16 @@ def add_subjects(experiment_id: int):
     from . import experiment_plan as plan
     data = request.get_json(silent=True) or request.form.to_dict()
     how, value, group = data.get("how"), str(data.get("value") or ""), str(data.get("group") or "").strip()[:80]
+    raw_start = str(data.get("start_each") or "").strip()
+    if raw_start and (not raw_start.isdigit() or int(raw_start) < 1):
+        return jsonify({"ok": False, "error": gettext("“%(value)s” isn't a number of animals.", value=raw_start)}), 400
     with SessionLocal() as s:
         exp, place = _load(s, experiment_id)
         refused = _refuse(exp)
         if refused:
             return refused
         before = plan.members(s, exp, place) if plan.fixed(exp) else {}
-        added, skipped = add_animals(s, exp, place, how, value, group)
+        added, skipped = add_animals(s, exp, place, how, value, group, int(raw_start) if raw_start else None)
         problem = plan.groups_changed(s, exp, place, before, str(data.get("reason") or "")) if added else None
         if problem:
             s.rollback()
@@ -1389,6 +1488,69 @@ def _plain_records(session, place: Place, how: str, ident: int) -> list[tuple[ob
     query = select(Organism).where(Organism.module_id_fk == place.module.id)
     query = query.where(Organism.housing_id_fk == ident) if how == "group" else query.where(Organism.id == ident)
     return [(o, o.count or 1) for o in session.scalars(query) if place.mv.is_alive(o)]
+
+
+@bp.post("/<int:experiment_id>/randomize")
+def randomize_groups(experiment_id: int):
+    """The experiment's animals into named groups, balanced and seeded
+    (assistant_compute.allocate: stratified minimisation by sex, then
+    cage, tank, rack or housing, then latest weight): {groups: "Drug,
+    Vehicle" or a list, seed}. Without `apply` it only says how; with it,
+    each animal's group is set (after Start, with a plan, with a reason).
+    The living ones in the analysis only; the same animals, groups and seed
+    give the same allocation."""
+    import random as _random
+    import secrets
+    from . import assistant_compute as ac
+    from . import experiment_plan as plan
+    data = request.get_json(silent=True) or {}
+    names = data.get("groups")
+    if isinstance(names, str):
+        names = names.split(",")
+    names = [str(n).strip()[:80] for n in (names or []) if str(n).strip()]
+    if len(names) < 2 or len({n.lower() for n in names}) != len(names):
+        return jsonify({"ok": False, "error": gettext("Name two groups or more, each its own.")}), 400
+    try:
+        seed = int(data["seed"]) if str(data.get("seed") or "").strip() else secrets.randbelow(1_000_000)
+    except ValueError:
+        return jsonify({"ok": False, "error": gettext("The seed is a whole number.")}), 400
+    with SessionLocal() as s:
+        exp, place = _load(s, experiment_id)
+        refused = _refuse(exp)
+        if refused:
+            return refused
+        subs = [x for x in subjects(s, exp, place) if x.alive and not x.left_out.strip()]
+        if len(subs) < len(names):
+            return jsonify({"ok": False, "error": gettext("Fewer %(nouns)s than groups.", nouns=i18n.translate_value(place.nouns))}), 400
+        weights: dict[str, float] = {}
+        if place.subject_kind == "mouse":
+            got = ac.latest_weights(s, [x.id for x in subs], date.today())
+            weights = {f"mouse:{mid}": w for mid, (w, _on) in got.items()}
+        else:
+            for key, value in s.execute(select(ExperimentReading.subject, ExperimentReading.value).where(
+                    ExperimentReading.experiment_id_fk == exp.id, ExperimentReading.readout_key == "body_weight")
+                    .order_by(ExperimentReading.read_on, ExperimentReading.id)):
+                if value is not None:
+                    weights[key] = value
+        rows = [{"key": x.key, "sex": (x.sex or "").strip().upper()[:1], "stratum": x.housing or "",
+                 "weight": weights.get(x.key), "sub": x} for x in subs]
+        sizes = ac.split_sizes(len(rows), names, _random.Random(seed + 1))
+        result = ac.allocate(rows, [{"name": n, "size": z} for n, z in zip(names, sizes)], seed)
+        allocation = [{"group": g["name"], "animals": sorted((a["sub"].label for a in g["animals"]), key=positions.natural)}
+                      for g in result["groups"]]
+        if not data.get("apply"):
+            return jsonify({"ok": True, "seed": seed, "allocation": allocation})
+        before = plan.members(s, exp, place) if plan.fixed(exp) else {}
+        for g in result["groups"]:
+            for a in g["animals"]:
+                a["sub"].row.treatment_group = g["name"]
+        problem = plan.groups_changed(s, exp, place, before, str(data.get("reason") or ""))
+        if problem:
+            s.rollback()
+            return plan.ask_response(problem)
+        s.commit()
+        s.refresh(exp)
+        return jsonify({"ok": True, "seed": seed, "allocation": allocation, **payload(s, exp, place)})
 
 
 @bp.post("/<int:experiment_id>/subjects/<path:key>/update")
@@ -1649,7 +1811,8 @@ def _long_rows(exp, place, table, by_key) -> list[list]:
     measured = readout.get("inputs") or []      # a readout BioManager works out: what was measured, beside it
     long_rows = [["Experiment", "Database", place.noun.capitalize(), "Group", "Sex", "Genotype", place.housing.capitalize(),
                   "Date", "Day", f"{readout['label']}{unit}", "At start", "% of first" if readout["kind"] == "value" else "% of start",
-                  "Left out of the analysis"] + [f"{i['label']} ({i['unit']})" if i["unit"] else i["label"] for i in measured]]
+                  "Left out of the analysis"] + [f"{i['label']} ({i['unit']})" if i["unit"] else i["label"] for i in measured]
+                 + ["Age on day 1"]]
     for r in table["rows"]:
         x = by_key.get(r["key"])
         for i, d in enumerate(table["dates"]):
@@ -1658,7 +1821,7 @@ def _long_rows(exp, place, table, by_key) -> list[list]:
             inputs = (r.get("inputs") or [None] * len(table["dates"]))[i] or {}
             long_rows.append([exp.name, place.label, r["label"], r["group"], r["sex"], x.genotype if x else "",
                               x.housing if x else "", d, table["days"][i], r["values"][i], r["start"], r["pct"][i],
-                              r.get("left_out", "")] + [inputs.get(m["key"], "") for m in measured])
+                              r.get("left_out", "")] + [inputs.get(m["key"], "") for m in measured] + [x.age if x else ""])
     return long_rows
 
 

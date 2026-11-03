@@ -14,7 +14,7 @@
     </div>
 
     <form method="post" action="{{ url_for('experiments.create', db_key=place.key) }}" class="inline-create-grid experiment-create-form">
-      <input name="name" placeholder="{{ _('Experiment name (e.g. %(example)s)', example={'fish': 'Tricaine dose response', 'fly': 'Paraquat survival', 'worm': 'daf-2 RNAi lifespan'}.get(place.family, 'Cohort 1')|tr) }}" aria-label="{{ _('Experiment name') }}" required>
+      <input name="name" placeholder="{{ _('Experiment name (e.g. %(example)s)', example={'fish': 'Tricaine dose response', 'fly': 'Paraquat survival', 'worm': 'daf-2 RNAi lifespan', 'plant': 'Drought response'}.get(place.family, 'Cohort 1')|tr) }}" aria-label="{{ _('Experiment name') }}" required>
       {% if t.groups %}
         <select name="from_group" aria-label="{{ _('Start with the %(nouns)s of a %(housing)s', nouns=place.nouns|tr, housing=place.housing|tr) }}">
           <option value="">{{ _('Start with a %(housing)s’s %(nouns)s (optional)', housing=place.housing|tr, nouns=place.nouns|tr) }}</option>

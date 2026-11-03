@@ -103,6 +103,19 @@ macOS 27 is. Two layers:
   the Mac app and Safari use, drops the whole backdrop filter then, so it
   isn't used.
 
+A sheet (`.data-table-card`) is a pane of glass too (`--sheet-glass`): its
+rows let the wallpaper through, its sticky toolbar, header row and foot are
+frosted (`--sheet-head`), and a pinned column is solid (`--sheet-pin`) while
+the sheet scrolls sideways under it. The wallpaper (`--wall`) is sized to the
+window so the grey canvas never shows between its washes.
+
+**Solid** (Settings → Appearance & language → Look; `appearance.get_look`,
+kept as `look:<username>`, the page's `html[data-look="solid"]`) is the same
+app with no glass: one block of tokens in `tailwind.css` gives the canvas a
+cool paper, every glass and sheet token a solid white (or the dark mode's
+solid), the sidebar a second paper, and turns `backdrop-filter` off. A new
+surface that reads its colours from the tokens follows both looks.
+
 The page scrolls *beneath* the two rows at the top (`.topstrip`, then
 `.toolbar`), which float over it: `.shell-scroll` is padded at the top by
 `--tabbar-h + --toolbar-h`, so a `sticky top-0` header stops just under
@@ -172,8 +185,19 @@ reads the source for the rules marked *(tested)*.
   `.record-dialog-head` (title, optional `.record-dialog-sub`, × as
   `.modal-close`), a `.record-dialog-body` that scrolls, and a
   `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
-  the left. Below 640px it is a bottom sheet. A choice of formats or kinds
-  inside one is a `.choice-list` or `.choice-cards`.
+  the left. Below 640px it is a bottom sheet; on a wider window one with
+  two `.record-group`s or more in view (a long form; groups a dialog's tabs
+  hide don't count) slides in from the right, the
+  window's height. A choice of formats or kinds inside one is a
+  `.choice-list` or `.choice-cards`. `static/record-forms.js` gives every
+  record dialog ⌘/Ctrl ↵ to save (the keys on its main button), draws
+  `select[data-segmented]` and a dialog's Sex as a row of buttons (the
+  select stays the field), and shows a `fieldset[data-reveal]`'s fields one
+  more at a time (its first and the filled ones, then + its
+  `data-reveal-label`). `div[data-place-picker]` (`static/rack-grid.js`,
+  with the form's rack, position and, optionally, cage field names and a
+  `data-grid-url` of the cage grid's JSON) draws the chosen rack to click a
+  place, or a cage, in.
 - **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
   (the Mac app's web view answers them with no); `BioDialog.alert /
   confirm / prompt` (`static/dialogs.js`).
@@ -514,12 +538,17 @@ each running one calculator, with the `example` it opens on and the values
 it can `solve` for. `search(q)` ranks tools by those words (whole word,
 then start of word, then inside a word or one typo), and `locate(id)` turns
 an address into a tool and mode, so an old calculator's `#dilution` still
-opens Dilute. It loads in Node too, and `tests/js/bench-calcs.check.mjs`
-checks known answers and the searches testers typed.
-`static/utilities-page.js` draws the search, Pinned and Recent (kept in
+opens Dilute. `parseSum(text)` reads a sum typed in the search (a
+dilution, `10 mM to 50 µM in 1 mL` or `1:1000 in 5 mL`; a speed, `4000 rpm`
+or `12000 x g`) as `{tool, calc, raw, solve}`, null for anything else. It
+loads in Node too, and `tests/js/bench-calcs.check.mjs` checks known
+answers, the searches testers typed and the sums.
+`static/utilities-page.js` draws the search (a sum's answer under it),
+Pinned with each tool's last answer (`answer:<tool>`) and Recent (kept in
 this browser under `biomanager:util:`; Home's Calculators card reads
-`recent`), the group cards, the open tool (from the address hash) and the
-reference tables. The lab's chemicals come from the page (`/utilities`
+`recent`), every tool as a tile with buttons by group (`group`), the open
+tool (from the address hash) with its last five sums (`sums:<calc>`, kept
+once typing stops) and the reference tables. The lab's chemicals come from the page (`/utilities`
 passes them: its Chemicals databases through `lab_notebook.chemicals_search`,
 each by name and abbreviation, then `chemical_references`) ahead of the
 built-in list. The lab's centrifuge rotors (name, radius, top speed) are
@@ -581,7 +610,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   most two), and a toast names the first and last rows filled.
 - A sheet card with `data-dt-views="<name>"` (every database's main sheet)
   gets saved views, filter chips and who is here; `data-dt-inspector` (with
-  `mice` or `cages`, its rack drawn too) the Inspector. All three are
+  `mice` or `cages`, its rack drawn too) the Inspector, and `data-dt-kind`
+  (a `lookup.RECORD_KINDS` kind: mouse, cage, plasmid, stock_unit…) its
+  History tab, from `/records/history` (`lookup.history`, as the API's
+  `/history`: your own changes, an admin everyone's). All three are
   `static/sheet-views.js`, on the sheet's controller (`BioSheets.sheet(el)`:
   `columns()`, `columnValues()`, `setFields()`, `state()`, `applyState()`).
   A filter chip is `{key, value, label}`, a column's `data-sort-key` that
@@ -2951,8 +2983,32 @@ checks a named `reagent` or `lot` before sending and refuses an unknown
 lot in words. `assistant_compute.experiment_summary` lists each step's
 lots and `expired_lots`; the handover's `next_steps` carry the planned
 item and lot (`reagent`). Subjects
-are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`.
-`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²);
+are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`. A database's
+family (`Place.family`: mouse, fish, fly, worm, plant or organism) picks
+its readouts (`READOUT_CHOICES`) and manipulations (`KINDS`); an organism
+database is `plant` when made from the Plants or Field crops preset or
+keeping seed stocks (`_organism_family`). Each subject carries its
+`age` on day 1 (`age_at_start`: a mouse's litter's birth in weeks, a fish
+or clutch in dpf, an organism or cohort in its database's `age_unit`
+through `organism_service.age_label`; a vial or plate none), on the sheet
+and as the export's last column.
+`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²), and a
+survival readout over the whole experiment (`logrank`: deaths each day
+are the drop in each group's count since the last, a day not counted
+carrying the last count; the two-group variance when there are two).
+`POST /experiments/<id>/randomize` shares the living animals in the
+analysis into named groups by `assistant_compute.allocate` (sex, then
+housing, then latest weight; seeded), only showing how unless `apply`.
+`add_animals(start_each=)` gives a vial or plate its count at the start.
+A body weight, length, height, rosette area or leaf number read for one
+organism is also its `organism_measurements` row (`_keep_on_the_animal`,
+that day's; blanked with the reading), listed by `/records/measurements`
+in its sheet panel, and `welfare.others_weight_loss` flags an animal of
+an organism database with the `weights` capability (only those: not fish,
+flies, worms or plants) weighed in a started experiment and down the lab's
+percentage from its first weight there. The assistant's `experiment_add_animals` takes a
+`rack`, single `animals` (refs of the database's kinds, as a design's)
+and `start_each`;
 `/experiments/<id>/export.xlsx` and bench mode (`/experiments/<id>/bench`,
 `static/experiment-bench.js`) are in `experiments.py`. The owner's
 morning notification of what is due is `notify.daily_experiment_reminder`
