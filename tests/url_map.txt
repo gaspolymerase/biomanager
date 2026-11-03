@@ -289,6 +289,9 @@
 /inventory/<key>/renumber	inventory.renumber	GET POST
 /inventory/<key>/rows	inventory.sheet_rows	GET
 /inventory/<key>/sources	inventory.source_ids	GET
+/inventory/<key>/spending	inventory.spending_data	GET
+/inventory/<key>/spending.csv	inventory.spending_csv	GET
+/inventory/<key>/spending/settings	inventory.spending_settings	POST
 /inventory/<key>/types/add	inventory.add_type	POST
 /inventory/new	inventory.new_module	GET POST
 /joined	door.joined	GET

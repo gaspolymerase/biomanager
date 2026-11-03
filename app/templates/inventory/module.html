@@ -42,11 +42,12 @@
 {% block page_nav %}
   {% include "_plasmid_tabs.html" %}
   <div class="mb-3 flex flex-wrap items-center gap-2.5">
-    {% if m.has('storage') or m.has('board') %}
+    {% if m.has('storage') or m.has('board') or spends %}
       <div class="dt-chips view-switch" data-view-switch="inv-{{ key }}" role="group" aria-label="{{ _('Layout') }}">
         <button type="button" class="dt-chip" data-layout="table">{{ icon('table') }}{{ _('Table') }}</button>
         {% if m.has('storage') %}<button type="button" class="dt-chip" data-layout="grid">{{ icon('grid') }}{{ _('Box grid') }}</button>{% endif %}
         {% if m.has('board') %}<button type="button" class="dt-chip" data-layout="board">{{ icon('columns') }}{{ _('Board') }}</button>{% endif %}
+        {% if spends %}<button type="button" class="dt-chip" data-layout="spending">{{ icon('chart') }}{{ _('Spending') }}</button>{% endif %}
       </div>
     {% endif %}
     {% if m.has('storage') %}
@@ -408,6 +409,9 @@
       </div>
     </div>
   {% endif %}
+
+  {# ============================== SPENDING ============================== #}
+  {% if spends %}{% include "inventory/_spending.html" %}{% endif %}
 </div>
 
 {# ============================ ITEM DIALOG ============================ #}
@@ -678,6 +682,7 @@
 
 {% block body_end %}
 <script src="{{ url_for('static', filename='used-in.js') }}?v={{ asset_version('used-in.js') }}" defer></script>
+{% if spends %}<script src="{{ url_for('static', filename='spending.js') }}?v={{ asset_version('spending.js') }}" defer></script>{% endif %}
 <script src="{{ url_for('static', filename='mouse-peek.js') }}?v={{ asset_version('mouse-peek.js') }}" defer></script>
 <script nonce="{{ csp_nonce() }}">
   /* The item dialog asks only for the columns used for the type chosen

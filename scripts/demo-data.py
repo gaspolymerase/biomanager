@@ -607,6 +607,48 @@ for name, status, vendor, cat, qty, price in (
                                                       "catalog_number": cat, "quantity": qty,
                                                       "attr_price": price, "attr_account": "R01-NS-DEMO"})
 
+# A year of orders before these, for the Spending view: who asked, from whom,
+# and what it cost, each in the month it was asked for.
+import random  # noqa: E402
+rng = random.Random(7)
+PAST_ORDERS = [
+    # name, vendor, catalog, price, category
+    ("Isoflurane 250 mL", "Covetrus", "11695-6776-2", 96, "consumable"),
+    ("Tamoxifen 1 g", "Sigma-Aldrich", "T5648-1G", 112, "reagent"),
+    ("PFA 16% ampoules", "EMS", "15710", 52, "reagent"),
+    ("Superfrost Plus slides", "Fisher", "12-550-15", 138, "consumable"),
+    ("AAV9-hSyn-GCaMP8m", "Addgene", "162375-AAV9", 450, "virus"),
+    ("AAV5-EF1a-DIO-hChR2", "UNC Vector Core", "AV4378", 380, "virus"),
+    ("Anti-TH (rabbit)", "Millipore", "AB152", 489, "antibody"),
+    ("Donkey anti-rabbit 488", "Jackson", "711-545-152", 165, "antibody"),
+    ("Optic fibers 400 um", "Doric", "MFC_400/430", 640, "equipment"),
+    ("Pipette tips 200 uL", "Fisher", "02-707-410", 74, "consumable"),
+    ("Q5 polymerase", "NEB", "M0491S", 118, "reagent"),
+    ("Mouse chow 25 kg", "LabDiet", "5053", 82, "consumable"),
+]
+ASKERS = ["sam", "sam", "jordan", "priya", "priya", "alex"]
+for month_back in range(1, 12):
+    for _ in range(rng.randint(3, 6)):
+        name, vendor, cat, price, category = rng.choice(PAST_ORDERS)
+        who = rng.choice(ASKERS)
+        qty = rng.choice([1, 1, 1, 2, 3])
+        {"sam": sam, "jordan": jordan, "priya": priya, "alex": alex}[who].post(
+            f"/inventory/{orders}/items/save",
+            data={"id": "", "name": name, "status": rng.choice(["received", "received", "received", "cancelled"]),
+                  "vendor": vendor, "catalog_number": cat, "quantity": str(qty), "category": category,
+                  "attr_price": str(price), "attr_account": "R01-NS-DEMO"})
+        newest = one("select max(id) from inventory_items")
+        with engine.begin() as con:
+            con.exec_driver_sql("update inventory_items set created_at=? where id=?",
+                                (f"{ago(month_back * 30 + rng.randint(0, 25))} 10:00:00", newest))
+# Two project groups, and the lab's spending settings: dollars, a limit a year.
+alex.post("/groups/create", data={"name": "Photometry", "members": ["sam", "priya"]})
+alex.post("/groups/create", data={"name": "Anatomy", "members": ["jordan", "alex"]})
+photometry = one("select id from lab_groups where name='Photometry'")
+alex.post(f"/inventory/{orders}/spending/settings",
+          data={"currency": "$", "price_is": "unit", "period": "year", "year_starts": "1", "limit_lab": "30000",
+                "limit_person_sam": "6000", f"limit_group_{photometry}": "12000"})
+
 reagents = keys_of("reagents") or module("reagents", "Reagents")
 for name, status, vendor, cat, qty, unit, expires, cas, conc, temp, hazard in (
     ("Tamoxifen", "in stock", "Sigma-Aldrich", "T5648", "1", "g", ahead(200), "10540-29-1", "powder", "4 °C", "toxic"),
