@@ -9,9 +9,7 @@
   const tr = (text, values) => (typeof window.t === 'function' ? window.t(text, values) : text);
   const SVG = 'http://www.w3.org/2000/svg';
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const esc = BioHtml.escape;
   const num = (n) => Number(n).toLocaleString('en-US');
 
   function badge(status) {

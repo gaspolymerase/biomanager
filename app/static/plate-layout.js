@@ -21,7 +21,7 @@
     'var(--viz-5, #e87ba4)', 'var(--viz-7, #4a3aa7)'];
   const $ = (sel) => dialog.querySelector(sel);
   const $$ = (sel) => Array.from(dialog.querySelectorAll(sel));
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const esc = BioHtml.escape;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const num = (v) => (v === null || v === undefined || Number.isNaN(v) ? '' : String(Number(Number(v).toPrecision(4))));
   const FLAG = {

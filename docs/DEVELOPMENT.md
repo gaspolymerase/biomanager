@@ -1040,6 +1040,10 @@ first; the CSP never runs a JSON block, and the file is cached and can be
 checked in Node (`tests/js`). An inline script is for a few lines that
 must run before the page draws (the theme, the sidebar's width).
 
+Text a script puts into HTML goes through `BioHtml.escape` (`static/html.js`,
+loaded first on every page): `const esc = BioHtml.escape;`. A test fails
+on another copy of it in `app/static` (`test_page_scripts.py`).
+
 ### Styling
 
 `frontend/src/tailwind.css` is the single source of truth: design tokens in

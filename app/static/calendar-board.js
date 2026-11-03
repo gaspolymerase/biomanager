@@ -22,7 +22,7 @@
   let drag = null;
 
   const SVG = (name) => `<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${name}"></use></svg>`;
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = BioHtml.escape;
   const toast = (text, bad) => window.BiomanagerShell && window.BiomanagerShell.toast(text, bad ? 'danger' : '');
 
   function post(url, body) {

@@ -17,7 +17,7 @@
   const canEditRotors = root.dataset.rotorsEditable === '1';   // anyone but a guest
   const me = root.dataset.me || '';
   const isAdmin = root.dataset.admin === '1';
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const esc = BioHtml.escape;
   const ico = (name) => `<svg class="icon" aria-hidden="true"><use href="${ICONS}#${name}"></use></svg>`;
   const get = (k, d) => { try { const v = JSON.parse(localStorage.getItem(KEY + k)); return v == null ? d : v; } catch (_) { return d; } };
   const put = (k, v) => { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (_) { /* storage off */ } };

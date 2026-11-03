@@ -18,7 +18,7 @@
   let scale = null;           // raw values, or %: a count starts as % of those at the start
   try { view = sessionStorage.getItem(`xp:view:${D.id}`) || 'treatment'; } catch (_e) { /* no storage */ }
 
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const esc = BioHtml.escape;
   const icon = (name) => `<svg class="icon xp-icon" aria-hidden="true"><use href="/static/icons.svg#${esc(name)}"></use></svg>`;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const LOCALE = window.BM_LANG === 'zh' ? 'zh-CN' : undefined;

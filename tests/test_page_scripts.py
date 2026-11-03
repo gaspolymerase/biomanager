@@ -27,5 +27,15 @@ class PageScripts(unittest.TestCase):
         self.check("sheet.check.mjs")
 
 
+class OneEscape(unittest.TestCase):
+    def test_page_scripts_escape_html_with_the_one_helper(self):
+        """BioHtml.escape (static/html.js) is the one way a page script puts
+        text into HTML; a copy of it in another file is how a variant that
+        forgets a quote or prints "null" comes back."""
+        copies = [f.name for f in (ROOT / "app" / "static").glob("*.js")
+                  if f.name != "html.js" and "'&lt;'" in f.read_text(encoding="utf-8")]
+        self.assertEqual(copies, [], "use BioHtml.escape (static/html.js)")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -30,8 +30,7 @@
   let pending = 0;
 
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${name}"></use></svg>`;
-  const escape = (text) => String(text == null ? '' : text).replace(/[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const escape = BioHtml.escape;
 
   // ---------------------------------------------------------------- drawing
 

@@ -12,9 +12,7 @@
   let hideTimer = null;
   let showTimer = null;
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const esc = BioHtml.escape;
 
   function getJSON(url) {
     return fetch(url, { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);

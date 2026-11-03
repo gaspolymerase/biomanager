@@ -10,7 +10,7 @@
   if (!el) return;
   const D = JSON.parse(el.textContent || '{}');
   const $ = (s, r = document) => r.querySelector(s);
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const esc = BioHtml.escape;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const nice = (iso) => (iso ? new Date(`${iso}T12:00:00`).toLocaleDateString(window.BM_LANG === 'zh' ? 'zh-CN' : undefined, { day: 'numeric', month: 'short' }) : '');
   // What is being recorded: the main readout, or another measure picked
