@@ -183,6 +183,18 @@ class Stocks(Base):
         self.assertEqual(r.get_json()["status"], "empty")
         self.assertEqual(self.call("patch", f"/inventories/reagents/items/{number}", tok,
                                    json={"status": "on the moon"}).status_code, 400)
+        for body, said in (({"colour": "red"}, "has no colour"),
+                           ({"fields": {"no_such_column": "x"}}, "has no field no_such_column"),
+                           ({"box": "No such box", "notes": "x"}, "has no box No such box")):
+            r = self.call("patch", f"/inventories/reagents/items/{number}", tok, json=body)
+            self.assertEqual(r.status_code, 400, body)
+            self.assertIn(said, r.get_json()["error"])
+        self.assertEqual(one("select coalesce(notes, '') from inventory_items where module_id_fk="
+                             "(select id from inventory_modules where key='reagents') and number=?", number), "")
+        count_before = one("select count(*) from inventory_items")
+        self.assertEqual(self.call("post", "/inventories/reagents/items", tok,
+                                   json={"name": uniq("Bad "), "colour": "red"}).status_code, 400)
+        self.assertEqual(one("select count(*) from inventory_items"), count_before)
         listed = self.call("get", "/inventories", tok).get_json()["data"]
         self.assertIn("reagents", [m["key"] for m in listed])
 

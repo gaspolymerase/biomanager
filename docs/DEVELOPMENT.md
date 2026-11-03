@@ -54,6 +54,10 @@ What the pages take as a form, the API gives as plain values:
 build the form the pages' rules read, so the API never does. A value of
 the wrong shape raises `ValueError` (the API's 400); a change the rules
 refuse comes back as the sheet would say it.
+The same holds for inventory items (`app/inventory_items.py`:
+`item_from_form`, and `change_item_values` with `ITEM_VALUES`) and fly and
+worm vials (`stock_service.unit_from_form`, `change_unit_values` with
+`UNIT_VALUES`).
 
 `app/services.py` is what is left of the shared helpers from before the
 pages had modules, and its parts are moving out by topic.
@@ -1563,7 +1567,7 @@ pages are in `app/lab_routes.py`.
   `attr_price`…) a new item must have; `None` (never chosen) falls back to
   the preset's list, so older orders inventories get name, vendor,
   catalogue number and quantity. `ModuleView.required` / `requirable` in
-  `inventory_service.py`; `_item_from_form` refuses a new item missing one
+  `inventory_service.py`; `inventory_items.item_from_form` refuses a new item missing one
   and an edit that empties one, but an old item that never had it still
   saves. An order always needs a name. CSV import is not held to it.
 - **Remembered values:** `inventory_service.remembered()` gives each text
@@ -1587,7 +1591,7 @@ pages are in `app/lab_routes.py`.
   (the *quantity* feature, and statuses with "in stock" and "low"). The
   quantity stays free text; `amount()` reads "12", "2.5", "2,5" (a decimal
   comma) or "1,000" as a number and anything else as none.
-  `_item_from_form` calls `follow_stock_level()` when the quantity or the
+  `inventory_items.item_from_form` calls `follow_stock_level()` when the quantity or the
   level changed and the same save didn't set the status by hand: at or
   below the level "in stock" turns "low", at 0 "empty" (or "used up",
   whichever the list has; through `apply_status`, so the box cell is
@@ -1604,7 +1608,7 @@ pages are in `app/lab_routes.py`.
   one of the item's unit holds, "10 mL" for an item kept in ampoules. Its
   sheet column (hidden until shown) and dialog field are where
   `has_pack_size()` holds (the *quantity* feature, not Orders);
-  `_item_from_form` refuses one that `pack_size()` can't read as a number
+  `inventory_items.item_from_form` refuses one that `pack_size()` can't read as a number
   above 0 and a unit, and keeps it as `pack_size_text()` gives it ("10mL"
   → "10 mL"). It changes nothing on the page: `actions._used` reads it,
   so an amount used in its unit, or one of the same family (`UNITS`), comes
@@ -1636,7 +1640,7 @@ pages are in `app/lab_routes.py`.
   `inventory_renumber` posts to the same page.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
-  number as text. `_item_from_form` reads a number, `#42`, a name or a
+  number as text. `inventory_items.item_from_form` reads a number, `#42`, a name or a
   picked `42 · name` through `inventory_service.resolve_plasmid()` and
   keeps the number; one it can't find is kept as typed, with a note.
   `plasmid_links()` links the sheet's cells; `made_from_plasmid()` fills
@@ -1652,7 +1656,7 @@ pages are in `app/lab_routes.py`.
   (`_open_orders_of()`) and puts an amber `_warn` hint in the dialog.
 - **Positions and Stored at:** `apply_status()` frees the box cell of an
   item moving to `GONE_FROM_BOX` (used up, empty, discarded) and writes
-  "was in Box · D7" into an empty location note; `_item_from_form` then
+  "was in Box · D7" into an empty location note; `inventory_items.item_from_form` then
   doesn't put it back from the dialog's unchanged box fields.
   `inventory_racks.stored_at` (revision 0007) is where a box is kept; a
   `before_flush` listener in `inventory_service` (`insert=True`, so it runs
@@ -1680,7 +1684,7 @@ pages are in `app/lab_routes.py`.
   (`primer_numbers()`: SantaLucia 1998 nearest-neighbour stacks, 50 mM Na⁺
   entropy correction, 250 nM primer in excess). The sheet shows them read
   only and `_row_json` sends them back after a save. `add_primer_pair`
-  makes *name*-F and *name*-R through `_item_from_form`, flushing between
+  makes *name*-F and *name*-R through `inventory_items.item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
   setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
@@ -1704,7 +1708,7 @@ pages are in `app/lab_routes.py`.
   widths and hidden columns. Under All, a cell not used for the row's type
   and empty is a dash (`rows[].unused`). The item dialog wraps each field in
   `data-for-types` and hides and disables those not for the Type chosen, so
-  they post nothing and keep their values; `_item_from_form` doesn't hold a
+  they post nothing and keep their values; `inventory_items.item_from_form` doesn't hold a
   required column to a type it isn't used for. `add_type` (the **+**,
   anyone who can open the database) appends a category; renaming and
   removing stay in Configure, as they relabel items. Samples' *Genotype*
@@ -1722,7 +1726,7 @@ pages are in `app/lab_routes.py`.
   one type takes it. Headers naming no column are flashed. One batch.
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
   built-in columns the inventory uses, every custom one and notes) runs
-  each ticked row through `_item_from_form` with that one column, inside
+  each ticked row through `inventory_items.item_from_form` with that one column, inside
   the batch; a refused value leaves that row as it was and is named. A
   *source* column is two answers — which colony and the ID in it — so the
   bar shows a second box for the colony and `_bulk_value` pairs them back
@@ -2830,7 +2834,7 @@ A step may name the inventory item it uses (`reagent_item_id_fk`); a record
 keeps that item as it was then (`reagent`: id, name, lot, expiry, and
 `taken` once its amounts were taken off) and any sample records the person
 chose to make with it (`samples`), made through
-`inventory_routes._item_from_form` with the animal as their Source.
+`inventory_items.item_from_form` with the animal as their Source.
 Every path that records a day goes through `experiment_steps._record`
 (the page's record dialog and *Record manipulation*, bench mode, and the
 `experiment_step_done` action, which posts to the same route), and
@@ -3272,7 +3276,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   do while saving the rest (a private cage) comes back as `warnings`;
   a `version` that isn't the mouse's `sync_version` now is a 409, so a
   client that sends back what it read never overwrites a change since);
-  inventory items go through `inventory_routes._item_from_form`, vials
+  inventory items go through `inventory_items.change_item_values`, vials
   through `stock_service.change_unit_values` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
@@ -3339,7 +3343,7 @@ page itself.
   failing keeps nothing.
 - Beyond the animals, the catalogue covers inventories, plasmids, the
   notebook and the calendar. Inventory items are written through the API's
-  item writes (`_item_from_form`), so required columns, statuses and Low at
+  item writes (`inventory_items.item_from_form`), so required columns, statuses and Low at
   behave as on the sheet. `inventory_quantity_used` takes an amount off a
   numeric quantity, and the status follows Low at; an amount in another unit
   ("40 mg", or `unit`) is converted within mass or volume (`UNITS`, powers

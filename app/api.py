@@ -19,7 +19,7 @@ Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
 Writes go through the same checks as the pages (colony.change_mouse,
-inventory_routes._item_from_form, stock_service.change_unit_values,
+inventory_items.change_item_values, stock_service.change_unit_values,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
 the reference page at /api.
@@ -41,15 +41,15 @@ from flask import (Blueprint, abort, flash, g, get_flashed_messages, jsonify, re
                    url_for)
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import selectinload
-from werkzeug.datastructures import MultiDict
 
 from .formutil import like_pattern
 from . import access, groups, lab
 from .colony import MOUSE_FIELDS
+from .inventory_items import ITEM_VALUES
 from .stock_service import UNIT_VALUES
 from .db import SessionLocal
 from .i18n import gettext
-from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, InventoryRack, LitterRecord,
+from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, LitterRecord,
                      MouseRecord, MouseWeight, PlasmidBox, PlasmidRecord, StockUnit, StrainRecord,
                      TankRecord, UserAccount)
 
@@ -935,57 +935,18 @@ def inventory_item(key: str, number: int):
         return jsonify(item_json(mv, _item(s, module, mv, number)))
 
 
-ITEM_FIELDS = ("name", "category", "status", "owner", "shared", "quantity", "unit", "low_at", "pack_size", "vendor",
-               "catalog_number", "lot", "box", "position", "location_note", "received_on", "expires_on", "notes", "fields")
-
-
-def _item_form(session, module, mv, data: dict, item: InventoryItem | None) -> MultiDict:
-    unknown = sorted(set(data) - set(ITEM_FIELDS))
-    if unknown:
-        abort(400, f"A {mv.item_noun} has no {', '.join(unknown)}; it has {', '.join(ITEM_FIELDS)}.")
-    form = MultiDict()
-    for k, v in data.items():
-        if k in ("box", "position", "fields", "shared"):
-            continue
-        form[k] = "" if v is None else str(v)
-    if "shared" in data:
-        # true keeps a project group's stock its group's (app/groups.py).
-        keep = item is not None and data["shared"] and item.is_shared
-        form["is_shared"] = groups.record_value(item) if keep else ("1" if data["shared"] else "0")
-    known = {f["key"]: f for f in mv.fields}
-    for k, v in (data.get("fields") or {}).items():
-        field = known.get(k)
-        if field is None:
-            abort(400, f"{module.label} has no field {k}; it has {', '.join(known) or 'none'}.")
-        if field["type"] == "source":
-            v = v if isinstance(v, dict) else {"kind": "", "ref": str(v or "")}
-            form[f"attr_{k}_kind"], form[f"attr_{k}_ref"] = str(v.get("kind") or ""), str(v.get("ref") or "")
-        else:
-            form[f"attr_{k}"] = "" if v is None else str(v)
-    if "box" in data or "position" in data:
-        box = data.get("box", item.rack.name if item is not None and item.rack else "")
-        rack = session.scalar(select(InventoryRack).where(InventoryRack.module_id_fk == module.id,
-                                                          InventoryRack.name == box)) if box else None
-        if box and rack is None:
-            abort(400, f"{module.label} has no box {box}.")
-        form["rack_id"] = str(rack.id) if rack else ""
-        form["position"] = str(data.get("position") or "")
-    return form
-
-
 @bp.post("/inventories/<key>/items")
 def inventory_create(key: str):
     from . import inventory_service as isvc
-    from .inventory_routes import Refused, _item_from_form
+    from .inventory_items import Refused, change_item_values
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
-        form = _item_form(s, module, mv, data, None)
         item = InventoryItem(module_id_fk=module.id, number=isvc.next_number(s, module.id), owner=g.user.username,
                              status=mv.statuses[0] if mv.statuses else "")
         s.add(item)
         try:
-            problem, notes = _item_from_form(s, mv, item, form, creating=True)
+            problem, notes = change_item_values(s, module, mv, item, data, creating=True)
         except Refused as refused:
             s.rollback()
             abort(400, str(refused))
@@ -998,16 +959,15 @@ def inventory_create(key: str):
 
 @bp.patch("/inventories/<key>/items/<int:number>")
 def inventory_update(key: str, number: int):
-    from .inventory_routes import Refused, _item_from_form
+    from .inventory_items import Refused, change_item_values
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
         item = _item(s, module, mv, number)
         if not access.can_edit_item(item):
             abort(403, access.reason_denied(item, noun=mv.item_noun))
-        form = _item_form(s, module, mv, data, item)
         try:
-            problem, notes = _item_from_form(s, mv, item, form)
+            problem, notes = change_item_values(s, module, mv, item, data)
         except Refused as refused:
             s.rollback()
             abort(getattr(refused, "status", 400) if getattr(refused, "status", 400) in (400, 403) else 400,
@@ -1632,7 +1592,7 @@ ENDPOINTS = [
     ("GET", "/api/v1/inventories", "read", "Inventories, with their statuses and fields", ()),
     ("GET", "/api/v1/inventories/{key}/items", "read", "Items", ("status", "category", "owner", "q", "updated_since")),
     ("GET", "/api/v1/inventories/{key}/items/{number}", "read", "One item", ()),
-    ("POST", "/api/v1/inventories/{key}/items", "write", "Add an item: " + ", ".join(ITEM_FIELDS), ()),
+    ("POST", "/api/v1/inventories/{key}/items", "write", "Add an item: " + ", ".join(ITEM_VALUES), ()),
     ("PATCH", "/api/v1/inventories/{key}/items/{number}", "write", "Change an item", ()),
     ("GET", "/api/v1/experiments", "read", "Experiments, in every database", ("status", "owner", "database")),
     ("GET", "/api/v1/experiments/{experiment_id}", "read", "One experiment: animals, readout table, manipulations, the plan kept at Start and the changes from it", ()),

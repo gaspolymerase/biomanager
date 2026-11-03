@@ -1259,7 +1259,7 @@ class InventoryTarget(Target):
 
     def create(self, session, ctx, v, extras):
         from . import inventory_service as svc
-        from .inventory_routes import Refused, _item_from_form
+        from .inventory_items import Refused, item_from_form
         from .models import InventoryItem
         mv = self.mv
         warnings: list[str] = []
@@ -1296,7 +1296,7 @@ class InventoryTarget(Target):
             else:
                 form["rack_id"], form["position"] = str(rack.id), v.get("position", "")
         try:
-            problem, notes = _item_from_form(session, mv, item, form, creating=True)
+            problem, notes = item_from_form(session, mv, item, form, creating=True)
         except Refused as error:
             raise RowError(str(error)) from error
         warnings += notes
