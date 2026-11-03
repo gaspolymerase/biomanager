@@ -30,7 +30,7 @@ class RetiringAnimals(AppTestCase):
         """What the rebuilt tables are pointed at from elsewhere: a repeat rule
         (ON DELETE CASCADE) and a notebook page on a calendar event."""
         execute("INSERT INTO calendar_events (title, event_date, is_all_day, color, owner, event_type, description, "
-                "is_shared, created_at) VALUES (?, CURRENT_DATE, 1, '', '', 'experiment', '', 1, CURRENT_TIMESTAMP)",
+                "is_shared, created_at) VALUES (?, CURRENT_DATE, TRUE, '', '', 'experiment', '', TRUE, CURRENT_TIMESTAMP)",
                 uniq("Ev "))
         event = one("select max(id) from calendar_events")
         execute("INSERT INTO calendar_repeats (event_id_fk, freq, interval, skip) VALUES (?, 'weekly', 1, '')", event)
