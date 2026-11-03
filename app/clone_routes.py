@@ -191,11 +191,11 @@ def _report(p: PlasmidRecord, files: list[tuple[str, bytes]], text: str = "") ->
 
 
 def _kept_files(session, p: PlasmidRecord, ids: list[int]) -> list[tuple[str, bytes]]:
-    from . import services
+    from . import uploads
     out = []
     for kept in session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id,
                                                           PlasmidFile.id.in_(ids or [0])).order_by(PlasmidFile.id)):
-        source = services.UPLOAD_DIR / Path(kept.path).name
+        source = uploads.UPLOAD_DIR / Path(kept.path).name
         if source.is_file():
             out.append((kept.name, source.read_bytes()[:seqverify.MAX_FILE + 1]))
     return out
@@ -236,7 +236,7 @@ def clone_detail(row_id: int, clone_id: int):
 def clone_check(row_id: int):
     """Check reads: each clone they name (or the one typed) is checked and,
     for someone who may edit the plasmid, kept."""
-    from . import services
+    from .uploads import save_uploaded_file
     from .plasmid_routes import _file_kind
     from .web import stamp_updated
 
@@ -281,7 +281,7 @@ def clone_check(row_id: int):
             ids = []
             sources = list(chosen) + ([("pasted-reads.fa", pasted.encode("utf-8"))] if pasted.strip() else [])
             for name, data in sources:
-                saved = services.save_uploaded_file(FileStorage(BytesIO(data), filename=name))
+                saved = save_uploaded_file(FileStorage(BytesIO(data), filename=name))
                 if saved is None:
                     continue
                 f = PlasmidFile(plasmid_row_id=p.id, kind=_file_kind(name), name=name[:200], path=saved["path"],

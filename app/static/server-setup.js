@@ -231,9 +231,7 @@
     $('#ss-copy').textContent = t('Copied');
   });
 
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const escapeHtml = BioHtml.escape;
 
   show('where');
 })();

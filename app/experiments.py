@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
@@ -1719,7 +1719,6 @@ def export(experiment_id: int, fmt: str):
     manipulations, the day-by-day tests, each other measure on a sheet of
     its own and, for one started with a plan, the plan and the changes from
     it: an Excel workbook, or the long readout as CSV."""
-    import csv
     import io
     import re as _re
     from flask import Response
@@ -1730,7 +1729,7 @@ def export(experiment_id: int, fmt: str):
         measures = _measure_exports(s, exp, place, subjects(s, exp, place))
         plan_rows = experiment_plan.export_rows(s, exp, place)
         base = _re.sub(r"[^A-Za-z0-9._-]+", "-", exp.name).strip("-")[:60] or "experiment"
-    from .services import csv_text
+    from .sheet_export import csv_text
     if fmt == "csv":
         return Response(csv_text(long_rows), mimetype="text/csv",
                         headers={"Content-Disposition": f"attachment; filename={base}-readout.csv"})

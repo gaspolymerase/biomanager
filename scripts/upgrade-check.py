@@ -39,6 +39,8 @@ PY = sys.executable
 # Rows start-up deliberately tidies away: the built-in mouse statuses, which
 # the first boot of an older version stored as dropdown choices.
 TIDIED = {"dropdown_options"}
+# Tables a revision retires on purpose (docs/adr/): they may disappear.
+RETIRED = {"animals": "0056_retire_animals"}
 PAGES = ["/home", "/colony?view=mice", "/colony?view=experiments", "/calendar", "/notebook", "/settings",
          "/zebrafish?view=fish", "/plasmids"]
 
@@ -105,7 +107,7 @@ def verify(result: dict, before: dict[str, int], after: dict[str, int], have: di
     for table, n in before.items():
         if table in after and after[table] < n and table not in TIDIED:
             problems.append(f"{table} lost rows: {n} → {after[table]}")
-        if table not in after:
+        if table not in after and table not in RETIRED:
             problems.append(f"table {table} disappeared ({n} rows)")
     if result["revision"] != result["head"]:
         problems.append(f"at revision {result['revision']}, not {result['head']}")

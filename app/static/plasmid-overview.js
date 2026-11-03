@@ -115,7 +115,7 @@
     if (!box) return;
     const t = window.t || ((s) => s);
     const num = (n) => Number(n || 0).toLocaleString('en-US');
-    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const esc = BioHtml.escape;
     const pick = box.querySelector('[data-compare-pick]');
     const out = box.querySelector('[data-compare-out]');
     let loaded = false;

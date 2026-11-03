@@ -1,7 +1,7 @@
 # Schema changes are Alembic revisions that tolerate the change already being there
 
 Until 0.8 the app brought an older database up to date with hand-written
-`ALTER`s at start-up (`services.ensure_schema_updates`). That code is frozen
+`ALTER`s at start-up (`startup.ensure_schema_updates`). That code is frozen
 at 0.8's shape (revision 0002 marks the point), and every change since is an
 Alembic revision in `migrations/versions/`. Every start-up still runs
 `create_all()`, and a new database is created at the newest shape and stamped,

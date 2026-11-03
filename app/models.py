@@ -55,43 +55,20 @@ class Order(Base):
     updated_by: Mapped[str] = mapped_column(String(80), default="")
 
 
-class AnimalRecord(Base):
-    __tablename__ = "animals"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    animal_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
-    species: Mapped[str] = mapped_column(String(40))
-    strain_or_line: Mapped[str] = mapped_column(String(120), default="")
-    sex: Mapped[str] = mapped_column(String(20), default="")
-    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    status: Mapped[str] = mapped_column(String(40), default="active")
-    location: Mapped[str] = mapped_column(String(120), default="")
-    protocol: Mapped[str] = mapped_column(String(120), default="")
-    genotype: Mapped[str] = mapped_column(String(200), default="")
-    custom_attributes: Mapped[str] = mapped_column(Text, default="")
-    species_details: Mapped[str] = mapped_column(Text, default="")
-    notes: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-    samples: Mapped[list["SampleRecord"]] = relationship(back_populates="animal", cascade="all, delete-orphan")
-    events: Mapped[list["CalendarEvent"]] = relationship(back_populates="animal")
-    notebook_entries: Mapped[list["NotebookEntry"]] = relationship(back_populates="animal")
-
-
 class SampleRecord(Base):
     """A harvested sample and where it came from.
 
     The source used to be a required link to `animals`, a generic table the
-    app never fills, which made samples impossible to create. It is now a
+    app never filled, which made samples impossible to create. It is now a
     kind (mouse, fish, organism:<module key>, other) plus the identifier
-    used in that colony, so a sample can come from any database.
+    used in that colony, so a sample can come from any database. The table
+    itself is gone (revision 0056, docs/adr/0007).
     """
 
     __tablename__ = "samples"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sample_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
-    animal_id_fk: Mapped[int | None] = mapped_column(ForeignKey("animals.id"), nullable=True)
     source_kind: Mapped[str] = mapped_column(String(60), default="", index=True)
     source_ref: Mapped[str] = mapped_column(String(120), default="")
     sample_type: Mapped[str] = mapped_column(String(80))
@@ -104,7 +81,6 @@ class SampleRecord(Base):
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_by: Mapped[str] = mapped_column(String(80), default="")
 
-    animal: Mapped["AnimalRecord | None"] = relationship(back_populates="samples")
 
 
 class CalendarEvent(Base):
@@ -119,7 +95,6 @@ class CalendarEvent(Base):
     is_all_day: Mapped[bool] = mapped_column(Boolean, default=True)
     color: Mapped[str] = mapped_column(String(20), default="")  # hex, e.g. #7c3aed
     owner: Mapped[str] = mapped_column(String(80), default="", index=True)
-    animal_id_fk: Mapped[int | None] = mapped_column(ForeignKey("animals.id"), nullable=True)
     event_type: Mapped[str] = mapped_column(String(80), default="experiment")
     description: Mapped[str] = mapped_column(Text, default="")
     # Shared: everyone sees it (with a group, its members); only its owner and
@@ -128,7 +103,6 @@ class CalendarEvent(Base):
     share_group_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    animal: Mapped[AnimalRecord | None] = relationship(back_populates="events")
     notebook_entries: Mapped[list["NotebookEntry"]] = relationship(back_populates="event")
 
 
@@ -221,13 +195,11 @@ class NotebookEntry(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     entry_date: Mapped[date] = mapped_column(Date, default=date.today)
-    animal_id_fk: Mapped[int | None] = mapped_column(ForeignKey("animals.id"), nullable=True)
     event_id_fk: Mapped[int | None] = mapped_column(ForeignKey("calendar_events.id"), nullable=True)
     body: Mapped[str] = mapped_column(Text, default="")
     attachment_path: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    animal: Mapped[AnimalRecord | None] = relationship(back_populates="notebook_entries")
     event: Mapped[CalendarEvent | None] = relationship(back_populates="notebook_entries")
 
 
@@ -379,7 +351,7 @@ def _breeder_cages_start_shared(cage, value, oldvalue, _initiator):
         cage.is_shared, cage.share_group_id = False, None
 
 
-# Off while the start-up steps before Alembic save cages (services.init_database):
+# Off while the start-up steps before Alembic save cages (startup.init_database):
 # placed_at may not be a column yet.
 stamp_placements = True
 
@@ -675,7 +647,7 @@ class PlasmidParent(Base):
 class PlasmidFile(Base):
     """A file kept with a plasmid: a sequencing trace (.ab1), a gel photo, a
     map from the vendor. The file itself is in the uploads folder
-    (app/services.save_uploaded_file); this row is what the page lists. The
+    (app/uploads.save_uploaded_file); this row is what the page lists. The
     plasmid's row id with no foreign key, as for versions, so undoing a
     plasmid's delete brings its files back with it."""
     __tablename__ = "plasmid_files"

@@ -26,7 +26,7 @@ What is left is start-up, Home's server time, and the browser.
 
 ### 1. Start-up: stop scanning every cage at each start — done
 
-`services.migrate_cage_locations` (run by `init_database`) moves rack
+`startup.migrate_cage_locations` (run by `init_database`) moves rack
 positions once written as location text ("B-D7") into the rack fields.
 It read every cage not in a rack, at every start, to try its pattern on
 the text: 25,000 cages here, none with any location text.

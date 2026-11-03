@@ -16,7 +16,7 @@ from unittest import mock
 
 from sqlalchemy import create_engine, text
 
-from app import security, services
+from app import security, startup
 from app.app import app
 from app.db import SessionLocal, engine
 from app.models import GoogleCalendarLink
@@ -70,9 +70,9 @@ class TokensAtRest(AppTestCase):
                       {"i": link_id})
         with SessionLocal() as s:
             self.assertEqual(s.get(GoogleCalendarLink, link_id).refresh_token, "old-plain")
-        self.assertGreaterEqual(services.encrypt_stored_tokens(), 1)
+        self.assertGreaterEqual(startup.encrypt_stored_tokens(), 1)
         self.assertTrue(self.raw(link_id)[0].startswith("enc:v1:"))
-        self.assertEqual(services.encrypt_stored_tokens(), 0)  # nothing left to do
+        self.assertEqual(startup.encrypt_stored_tokens(), 0)  # nothing left to do
 
     def test_a_token_from_another_key_reads_as_missing(self):
         with mock.patch.object(security, "_fernet_cache", []), \

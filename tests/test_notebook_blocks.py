@@ -26,6 +26,9 @@ class Blocks(unittest.TestCase):
     def test_the_utilities_calculators_give_known_answers(self):
         self.check("bench-calcs.check.mjs")
 
+    def test_text_put_into_html_is_escaped(self):
+        self.check("html.check.mjs")
+
     def test_plate_standard_series_follows_the_selection_shape(self):
         self.check("plate.check.mjs")
 

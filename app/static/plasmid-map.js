@@ -10,7 +10,7 @@
   'use strict';
 
   const TAU = Math.PI * 2;
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = BioHtml.escape;
   const num = (n) => Number(n || 0).toLocaleString('en-US');
 
   // A feature's colour by what it is, so every map reads the same.

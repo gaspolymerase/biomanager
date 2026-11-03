@@ -23,10 +23,11 @@ database: they belong to this computer.
 from __future__ import annotations
 
 import json
+import os
 import platform
-import re
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -76,6 +77,9 @@ def _git_version() -> str:
 
 # ---------------------------------------------------------------- preferences
 
+_prefs_lock = threading.RLock()     # reads too: Windows can't replace a file open for reading
+
+
 def _prefs_path() -> Path:
     from app.paths import data_dir
     return data_dir() / "desktop-prefs.json"
@@ -83,19 +87,36 @@ def _prefs_path() -> Path:
 
 def load_prefs() -> dict:
     try:
-        stored = json.loads(_prefs_path().read_text(encoding="utf-8"))
+        with _prefs_lock:
+            stored = json.loads(_prefs_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         stored = {}
     return {**DEFAULT_PREFS, **(stored if isinstance(stored, dict) else {})}
 
 
 def save_prefs(**changes) -> dict:
-    prefs = {**load_prefs(), **changes}
-    try:
-        _prefs_path().write_text(json.dumps(prefs, indent=2), encoding="utf-8")
-    except OSError:
-        pass
-    return prefs
+    """Merge `changes` into the preferences. They hold the joined lab's token,
+    which the relay and the offline copy read while others save, so the file
+    is replaced whole (a reader never sees half of it, and a save the disk
+    can't finish leaves it as it was), one save at a time."""
+    with _prefs_lock:
+        prefs = {**load_prefs(), **changes}
+        path = _prefs_path()
+        part = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.part")
+        try:
+            part.write_text(json.dumps(prefs, indent=2), encoding="utf-8")
+            for attempt in range(20):
+                try:
+                    os.replace(part, path)
+                    break
+                except PermissionError:
+                    # Windows, while another program (an antivirus) has it open.
+                    if attempt == 19:
+                        raise
+                    time.sleep(0.05)
+        except OSError:
+            part.unlink(missing_ok=True)
+        return prefs
 
 
 # ---------------------------------------------------------------- the check

@@ -15,7 +15,7 @@
   const API = '/notebook/api/meetings';
   const LOCALE = window.BM_LANG === 'zh' ? 'zh-CN' : undefined;
   const $ = (sel, root) => (root || document).querySelector(sel);
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const esc = BioHtml.escape;
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="/static/icons.svg#${name}"></use></svg>`;
   const toast = (text, bad) => window.BiomanagerShell && window.BiomanagerShell.toast(text, bad ? 'danger' : '');
   const day = (iso, opts) => (iso ? new Date(iso + 'T12:00').toLocaleDateString(LOCALE, opts || { weekday: 'short', day: 'numeric', month: 'short' }) : '');

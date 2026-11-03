@@ -59,8 +59,7 @@
     const c = axisLabel(col, s.cols, s.start);
     return s.order === 'row_col' ? `${r}${s.separator}${c}` : `${c}${s.separator}${r}`;
   }
-  const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const escapeHtml = BioHtml.escape;
 
   /* Click an invisible button carrying data-* hooks, so the page's existing
      delegated listeners (record-dialog.js, orgEdit, the mouse dialog) open

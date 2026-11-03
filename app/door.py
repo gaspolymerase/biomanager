@@ -355,7 +355,7 @@ def joined_status():
 def ask():
     """Ask the lab's admins for something (a guest code, a new password, an
     account): it reaches each of them as a notification."""
-    from .services import add_notification
+    from . import notify
     reason = request.values.get("why", "")
     reason = reason if reason in ASK_REASONS else "guest"
     if g.get("user") is not None:
@@ -379,10 +379,10 @@ def ask():
                 admins = db_session.scalars(select(UserAccount.username).where(
                     UserAccount.role == "admin", UserAccount.disabled.is_(False))).all()
                 for admin in admins:
-                    add_notification(db_session, admin, title, category="account",
-                                     link=url_for("admin_users"),
-                                     message=message, values={"who": name},
-                                     message_values={"note": note, "contact": contact or gettext("no address given")})
+                    notify.send(db_session, admin, title, category="account",
+                                link=url_for("admin_users"),
+                                message=message, values={"who": name},
+                                message_values={"note": note, "contact": contact or gettext("no address given")})
                 db_session.commit()
             ask_throttle.failed(key)                 # counts requests, not failures
             sent = True
