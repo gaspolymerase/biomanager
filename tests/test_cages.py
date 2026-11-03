@@ -937,7 +937,14 @@ class CagePurposeTests(Case):
     def test_the_bar_is_all_active_and_the_labs_purposes(self):
         html = self.cages_page()
         chips = re.findall(r'data-dt-filter="([^"]*)"', html)
-        self.assertEqual(chips, ["", "active:true", "purpose:breeder", "purpose:breeding", "purpose:experiment"])
+        self.assertEqual(chips[:2], ["", "active:true"])
+        # One chip per purpose on the lab's own list, in its order: a new lab's
+        # three, and any purpose another test has added to the shared lab.
+        lab = [v.lower() for (v,) in rows("select option_value from dropdown_options where field_name='purpose' "
+                                          "order by position, option_value")]
+        self.assertEqual(chips[2:], [f"purpose:{v}" for v in lab])
+        self.assertEqual([c for c in chips if c in ("purpose:breeder", "purpose:breeding", "purpose:experiment")],
+                         ["purpose:breeder", "purpose:breeding", "purpose:experiment"])
         for gone in ("stock", "retired", "mine:true", "breeding:1"):
             self.assertNotIn(f'data-dt-filter="{gone}"', html)
             self.assertNotIn(f'data-dt-filter="purpose:{gone}"', html)
