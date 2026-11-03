@@ -3,9 +3,11 @@ sheet and its per-cage mouse rows, cage edits and who may make them, batch
 actions and their undo, racks and placing cages in them."""
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from datetime import timedelta
+from pathlib import Path
 
 from tests.base import *  # noqa: F401,F403
 from tests.base import AppTestCase, SessionLocal, TODAY, T, count, execute, one, row, rows, services, uniq
@@ -483,8 +485,12 @@ class CageSheetTests(Case):
         tg1 = keys.index("transgene_1")
         self.assertEqual(keys[tg1:tg1 + 4], [f"transgene_{n}" for n in range(1, 5)])
         mouse_sheet_hides = {n: "data-default-hidden" in heads[tg1 - 1 + n] for n in range(1, 5)}
-        self.assertIn(f'"dt:{table_id}:hidden"', self.html)
-        self.assertIn(f"hiddenCols.has({tg1 - 1} + Number(cell.dataset.tg))", self.html)
+        data = json.loads(re.search(
+            r'<script type="application/json" id="colony-page-data">(.*?)</script>', self.html, re.S).group(1))
+        self.assertEqual(data["hiddenColumnsKey"], f"dt:{table_id}:hidden")
+        self.assertEqual(data["firstTransgeneColumn"], tg1)
+        script = (Path(__file__).resolve().parent.parent / "app" / "static" / "colony-page.js").read_text(encoding="utf-8")
+        self.assertIn("hiddenCols.has(COLONY.firstTransgeneColumn - 1 + Number(cell.dataset.tg))", script)
         panel = between(self.html, f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
         for n in range(1, 5):
             th = re.search(rf'<th data-tg="{n}"[^>]*>', panel).group(0)
