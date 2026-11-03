@@ -422,6 +422,7 @@ Every keyboard shortcut on one page: search with ⌘/Ctrl K, switch tabs, fill d
 | `Esc` | Close a menu or dialog |
 | Shift-click | Select a range of rows |
 | `⌘`/`Ctrl` `D` | Fill down, in the mice's **Add many** preview |
+| `⌘`/`Ctrl` `↵` | Save the form that is open (a new mouse, a cage, any record) |
 
 In the desktop app on a Mac, the menu bar has the usual ones as well:
 
@@ -487,6 +488,8 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 ### Mice
 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
+
+- A mouse's form, and a cage's, slide in at the right of the window with the sheet still beside them. Sex is a row of buttons; **Transgene 1** shows, and **Add a transgene** the next. Pick a rack and it is drawn under **Position**: click a free place to fill in the position, or, for a mouse, a cage to put the mouse in it. `⌘`/`Ctrl` `↵` saves.
 
 - Each mouse has a **Custom tag**, strain, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth or of death can't be in the future, and a mouse's owner is someone in the lab. The same holds when an [AI assistant](https://biomanager.org/guide/ai-assistants) or a script changes it.
 

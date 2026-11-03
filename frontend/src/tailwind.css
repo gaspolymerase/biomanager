@@ -2611,15 +2611,22 @@
   .record-dialog-head h3 small { @apply ml-1 text-[13px] font-normal text-muted; }
   .record-dialog-sub { @apply mt-1 max-w-[62ch] text-[13px] leading-snug text-muted; }
 
-  .record-dialog-body { @apply flex flex-col gap-5 overflow-y-auto px-6 pb-5 pt-2; }
+  /* Roomier fields than a sheet's: a form is where one record is typed in. */
+  .record-dialog-body { @apply flex flex-col gap-5 overflow-y-auto px-6 pb-5 pt-2; --field-h: 36px; }
 
   .record-group {
-    @apply m-0 grid grid-cols-1 gap-x-3 gap-y-2.5 border-0 p-0 sm:grid-cols-2;
+    @apply m-0 grid grid-cols-1 gap-x-3 gap-y-3 border-0 p-0 sm:grid-cols-2;
   }
+  /* A group's name in words, as a heading, not small capitals; the groups
+     after the first ruled off from the one above. */
   .record-group legend {
-    @apply mb-2.5 p-0 text-[11px] font-semibold tracking-[0.04em] text-muted uppercase;
+    @apply mb-3 p-0 text-[13px] font-semibold text-ink;
   }
-  :lang(zh) .record-group legend { @apply text-[12px] tracking-normal normal-case; }
+  .record-dialog-body > .record-group ~ .record-group { @apply pt-1; }
+  /* A choice drawn as buttons takes the row, so each button reads in full. */
+  .record-group > label:has(> .seg-field) { @apply col-span-full; }
+  .record-dialog-body label:has(> :required) > span:first-child::after,
+  .record-dialog-body label.is-required > span:first-child::after { content: " *"; @apply text-danger-600; }
   .record-dialog-body label { @apply field-label; }
   .record-dialog-body label > :is(input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), select, textarea) {
     @apply field normal-case tracking-normal;
@@ -2633,6 +2640,82 @@
 
   .record-dialog-foot {
     @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-6 py-4;
+  }
+  /* ⌘↵ / Ctrl+↵ saves (dialogs.js puts the key on the main button). */
+  .record-dialog-foot .dt-kbd { @apply ml-1; }
+  @media (max-width: 640px), (pointer: coarse) { .record-dialog-foot .dt-kbd { display: none; } }
+
+  /* A long form (two groups of fields or more) slides in from the right as
+     a sheet the height of the window, the page still in view beside it; a
+     short one stays a card in the middle. A phone shows both from below. */
+  @media (min-width: 641px) {
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) {
+      @apply mr-2 ml-auto rounded-[22px];
+      width: min(600px, calc(100vw - 1rem));
+      height: calc(100dvh - 1rem);
+      max-height: calc(100dvh - 1rem);
+      animation: sheet-in-right 0.32s var(--ease-out-soft);
+    }
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) > form {
+      @apply h-full max-h-none;
+    }
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) .record-dialog-body {
+      @apply flex-1;
+    }
+  }
+  @keyframes sheet-in-right { from { transform: translateX(104%); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    dialog.record-dialog:has(.record-group ~ .record-group) { animation: none !important; }
+  }
+
+  /* A short choice as buttons in a row (a select[data-segmented], drawn by
+     dialogs.js; the select stays the field and is what is saved). */
+  .seg-field { @apply flex flex-wrap gap-1.5; }
+  .seg-field-item {
+    @apply inline-flex h-9 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border
+           px-3 text-[13px] font-medium text-ink-soft transition-colors;
+    border-color: var(--field-border);
+    background: var(--field-bg);
+  }
+  .seg-field-item:hover { border-color: var(--field-border-hover); @apply text-ink; }
+  .seg-field-item[aria-checked="true"] {
+    @apply font-semibold text-ink;
+    border-color: var(--color-brand-600);
+    background: color-mix(in srgb, var(--color-brand-600) 9%, var(--field-bg));
+    box-shadow: inset 0 0 0 1px var(--color-brand-600);
+  }
+  .seg-field-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  select.is-segmented { @apply sr-only; }
+
+  /* Fields shown one more at a time (fieldset[data-reveal], dialogs.js):
+     Transgene 1, and + Add a transgene for the next. */
+  .reveal-more {
+    @apply col-span-full inline-flex h-8 cursor-pointer items-center gap-1.5 justify-self-start rounded-full border border-dashed
+           bg-transparent px-3 text-[13px] font-medium text-brand-700;
+    border-color: color-mix(in srgb, var(--color-brand-600) 45%, transparent);
+  }
+  .reveal-more:hover { background: color-mix(in srgb, var(--color-brand-600) 8%, transparent); }
+  .reveal-more .icon { @apply size-3.5; }
+
+  /* Pick a place in a rack by clicking it (rack-grid.js, [data-place-picker]). */
+  .place-picker { @apply col-span-full flex flex-col gap-1.5; }
+  .place-picker[hidden] { display: none; }
+  .place-picker-head { @apply flex flex-wrap items-baseline gap-x-2 text-[12px] font-medium text-ink-soft; }
+  .place-picker-head small { @apply text-[12px] font-normal text-muted; }
+  .place-picker-grid { @apply grid gap-1; }
+  .place-picker-cell {
+    @apply grid h-8 min-w-0 cursor-pointer place-items-center truncate rounded-md border px-0.5 font-mono text-[11px]
+           text-ink-soft transition-colors;
+    border-color: var(--field-border);
+    background: var(--field-bg);
+  }
+  .place-picker-cell:hover { border-color: var(--color-brand-600); @apply text-ink; }
+  .place-picker-cell.is-taken { @apply border-transparent font-semibold text-ink; background: color-mix(in srgb, var(--color-ink) 8%, transparent); }
+  .place-picker-cell.is-taken:disabled { @apply cursor-not-allowed opacity-60; }
+  .place-picker-cell[aria-pressed="true"] {
+    @apply border-transparent font-semibold;
+    background: var(--color-brand-600);
+    color: var(--color-on-brand, #fff);
   }
   .record-dialog-foot .btn { @apply h-8 px-3.5; }
   .record-dialog-hint { @apply mr-auto text-[12px] text-muted; }

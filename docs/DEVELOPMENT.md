@@ -156,8 +156,18 @@ reads the source for the rules marked *(tested)*.
   `.record-dialog-head` (title, optional `.record-dialog-sub`, × as
   `.modal-close`), a `.record-dialog-body` that scrolls, and a
   `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
-  the left. Below 640px it is a bottom sheet. A choice of formats or kinds
-  inside one is a `.choice-list` or `.choice-cards`.
+  the left. Below 640px it is a bottom sheet; on a wider window one with
+  two `.record-group`s or more (a long form) slides in from the right, the
+  window's height. A choice of formats or kinds inside one is a
+  `.choice-list` or `.choice-cards`. `static/record-forms.js` gives every
+  record dialog ⌘/Ctrl ↵ to save (the keys on its main button), draws
+  `select[data-segmented]` and a dialog's Sex as a row of buttons (the
+  select stays the field), and shows a `fieldset[data-reveal]`'s fields one
+  more at a time (its first and the filled ones, then + its
+  `data-reveal-label`). `div[data-place-picker]` (`static/rack-grid.js`,
+  with the form's rack, position and, optionally, cage field names and a
+  `data-grid-url` of the cage grid's JSON) draws the chosen rack to click a
+  place, or a cage, in.
 - **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
   (the Mac app's web view answers them with no); `BioDialog.alert /
   confirm / prompt` (`static/dialogs.js`).

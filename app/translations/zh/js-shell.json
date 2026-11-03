@@ -126,5 +126,9 @@
   "%(n)s have no such choice.": "%(n)s 行没有这个选项。",
   "%(n)s could not be saved; their cells are marked.": "%(n)s 行没能保存，已在单元格上标出。",
   "new value": "新值",
-  "New value": "新值"
+  "New value": "新值",
+  "Add another": "再加一个",
+  "Place in %(rack)s": "放在 %(rack)s",
+  "Click a free place, or a cage to put it in.": "点一个空位，或点一个笼子把它放进去。",
+  "Click a free place.": "点一个空位。"
 }

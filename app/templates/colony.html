@@ -614,6 +614,8 @@
                 <select name="rack_id"><option value="">{{ _('Not in a rack') }}</option>{% for rack in cage_racks.racks %}<option value="{{ rack.id }}">{{ rack.name }}</option>{% endfor %}</select>
               </label>
               <label>{{ _('Position') }} <input name="position" class="font-mono" placeholder="{{ _('e.g. D7') }}"></label>
+              <div class="place-picker" data-place-picker data-rack-field="rack_id" data-position-field="position"
+                   data-grid-url="{{ url_for('colony_cage_grid', scope='all') }}" hidden></div>
               <label>{{ _('Location note') }} <input name="cage_location" list="options-cage_location" placeholder="{{ _('room, shelf…') }}"></label>
               <label>{{ _('Room') }} <input name="room"></label>
               <label class="col-span-full">{{ _('Location detail') }} <input name="location_detail"></label>
@@ -1127,7 +1129,7 @@
               <label>{{ _('Strain') }} <input name="strain" maxlength="120" autocomplete="off" list="options-strain"
                      placeholder="{{ _('e.g. C57BL/6J') }}"></label>
               <label>{{ _('Sex') }}
-                <select name="gender">
+                <select name="gender" data-segmented>
                   <option value="">{{ _('Not set') }}</option>
                   {% for g_value in mouse_sheet.gender_choices %}<option value="{{ g_value }}">{{ g_value|tr }}</option>{% endfor %}
                 </select>
@@ -1160,7 +1162,7 @@
                 {% endfor %}
               </fieldset>
             {% endif %}
-            <fieldset class="record-group">
+            <fieldset class="record-group" data-reveal data-reveal-label="{{ _('Add a transgene') }}">
               <legend>{{ _('Genotype') }}</legend>
               {% for n in range(1, 5) %}
                 <label>{{ _('Transgene %(n)s', n=n) }} <input name="transgene_{{ n }}" list="strain-name-options"></label>
@@ -1173,6 +1175,8 @@
                 <select name="cage_rack"><option value="">{{ _('Not in a rack') }}</option>{% for rack in mouse_sheet.racks %}<option value="{{ rack.id }}">{{ rack.name }}</option>{% endfor %}</select>
               </label>
               <label>{{ _('Position') }} <input name="cage_position" class="font-mono" placeholder="{{ _('e.g. D7') }}"></label>
+              <div class="place-picker" data-place-picker data-rack-field="cage_rack" data-position-field="cage_position"
+                   data-cage-field="cage_id" data-grid-url="{{ url_for('colony_cage_grid', scope='all') }}" hidden></div>
               <label>{{ _('Location note') }} <input name="cage_location" list="options-cage_location" placeholder="{{ _('room, shelf…') }}"></label>
               <label>{{ _('Litter') }} <input name="litter_id"></label>
               <label>{{ _('Born') }} <input type="date" name="date_of_birth"></label>
