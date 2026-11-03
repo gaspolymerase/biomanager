@@ -31,8 +31,8 @@ from .i18n import gettext, translate_value
 from .icons import resolve as resolve_icon
 from .models import CageRecord, CalendarEvent, InventoryItem, LitterRecord, MouseRack, MouseRecord, StockRack, StockUnit
 from . import litters
-from .services import (cage_litter_json, crowded, mouse_is_active, slot_cages, weaning_offset, weaning_due,
-                       weaning_title)
+from .services import crowded, mouse_is_active, slot_cages
+from .litter_dates import cage_litter_json, weaning_offset, weaning_due, weaning_title
 
 LAYOUTS = {
     "classic": ("Overview", "columns"),
@@ -456,7 +456,7 @@ def _colony_items(session, today, until) -> list[dict]:
         out[-1]["mice"] = _mouse_refs(group)
 
     # Weanings at P21, from a week overdue to the end of the window: the
-    # same list as Home's and the calendar's (services.weaning_due).
+    # same list as Home's and the calendar's (litter_dates.weaning_due).
     for wean in weaning_due(session, today - timedelta(days=7), until):
         cage, litter = wean["cage"], wean["litter"]
         bits = [b for b in (litter.cohort_name if litter else "",

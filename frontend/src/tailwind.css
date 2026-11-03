@@ -2792,6 +2792,7 @@
   /* Tank purposes and fish statuses share the status pill palette. */
   :is(.status-pill, .status-pill-static)[data-status="alive"],
   :is(.status-pill, .status-pill-static)[data-status="stock"] { @apply bg-ok-50 text-ok-700; }
+  :is(.status-pill, .status-pill-static)[data-status="breeder"],
   :is(.status-pill, .status-pill-static)[data-status="breeding"],
   :is(.status-pill, .status-pill-static)[data-status="mating"] { @apply bg-brand-50 text-brand-700; }
   :is(.status-pill, .status-pill-static)[data-status="experiment"] { @apply bg-info-50 text-info-600; }

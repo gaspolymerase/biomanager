@@ -7,7 +7,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 # tests.base first: it points the app at a throwaway database before app is imported.
-from tests.base import AppTestCase, client_for, make_user, one, uniq
+from tests.base import AppTestCase, client_for, location, make_user, one, uniq
 from app import access, oidc  # noqa: E402
 from app.app import app  # noqa: E402
 
@@ -42,6 +42,22 @@ class Roles(AppTestCase):
             g.user = s.query(UserAccount).filter_by(username=self.facility).one()
             self.assertTrue(access.can_configure(module))
             self.assertTrue(access.can_edit_rack(type("R", (), {"created_by": self.member})()))
+
+    def test_a_facility_manager_runs_every_database_s_settings(self):
+        """Settings are a facility manager's in every kind of database, not
+        only the configurable organisms: a reagent inventory and a fly
+        database a member made, too. Another member still may not."""
+        fm = client_for(self.facility)
+        r = self.m.post("/inventory/new", data={"preset": "custom", "label": uniq("Reagents "), "audience": "lab"})
+        inventory = location(r).split("?")[0].rsplit("/", 1)[1]
+        self.assertEqual(self.o.get(f"/inventory/{inventory}/configure").status_code, 302)
+        self.assertEqual(fm.get(f"/inventory/{inventory}/configure").status_code, 200)
+        flies = self.make_stock_module(self.m, "fly")
+        label = one("select label from stock_modules where key=?", flies)
+        self.o.post(f"/stocks/{flies}/delete", data={"confirm": label})
+        self.assertEqual(one("select count(*) from stock_modules where key=?", flies), 1)
+        fm.post(f"/stocks/{flies}/delete", data={"confirm": label})
+        self.assertEqual(one("select count(*) from stock_modules where key=?", flies), 0)
 
     def test_a_member_still_can_t(self):
         mouse = self.mouse_of(self.m, self.member)

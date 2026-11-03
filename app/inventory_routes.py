@@ -140,21 +140,9 @@ def _back(key: str, **params) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _can_edit(item: InventoryItem) -> bool:
-    """Lab common stock is everyone's to edit; shared with a project group,
-    its members'."""
-    return access.can_edit(item, shared=project_groups.record_editable(item))
-
-
-def _can_manage(item: InventoryItem) -> bool:
-    """Delete it, change its owner, move it between personal and lab
-    common: the owner or an admin (anyone, for an unowned item)."""
-    return access.is_admin() or access.owns(item) or access.is_unowned(item)
-
-
 def _manage_denied(mv, item: InventoryItem, what: str) -> str:
     """`what`: "owner", "personal" or "delete"."""
-    if not _can_edit(item):
+    if not access.can_edit_item(item):
         return access.reason_denied(item, noun=mv.item_noun)
     values = {"noun": _tr(mv.item_noun), "who": item.owner or gettext("its owner")}
     if what == "owner":
@@ -163,14 +151,6 @@ def _manage_denied(mv, item: InventoryItem, what: str) -> str:
         return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can make it personal.",
                        **values)
     return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can delete it.", **values)
-
-
-def _can_configure(module: InventoryModule) -> bool:
-    return access.is_admin() or (module.created_by or "") == access.username()
-
-
-def _can_manage_rack(rack: InventoryRack) -> bool:
-    return access.can_edit_rack(rack)
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +201,7 @@ def _item_payload(mv, item: InventoryItem) -> dict:
     attrs = item.attrs_dict
     payload = {
         "id": item.id, "_number": item.number, "_label": item.name or f"#{item.number}",
-        "_locked": not _can_edit(item), "_manage": _can_manage(item),
+        "_locked": not access.can_edit_item(item), "_manage": access.can_manage(item),
         "name": item.name, "category": item.category, "status": item.status, "owner": item.owner,
         "is_shared": project_groups.record_value(item), "quantity": item.quantity, "unit": item.unit,
         "low_at": svc.number_text(item.low_at), "pack_size": item.pack_size or "",
@@ -280,7 +260,7 @@ def _grid_payload(mv, racks, items, tab: str = "") -> dict:
         # "group": the fridge or cabinet it is kept in, the grid's first picker.
         "racks": [{"id": r.id, "name": r.name, "rows": r.rows, "cols": r.cols, "group": (r.place or "").strip(),
                    "naming": positions.scheme(r.naming),
-                   **({"edit": {"data-record-payload": _rack_edit(r)}} if _can_manage_rack(r) else {})}
+                   **({"edit": {"data-record-payload": _rack_edit(r)}} if access.can_edit_rack(r) else {})}
                   for r in racks],
         "items": [{
             "id": i.id, "label": i.name or f"#{i.number}",
@@ -566,8 +546,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         attrs = item.attrs_dict
         rows.append({
             "item": item, "attrs": attrs,
-            "editable": _can_edit(item),
-            "manageable": _can_manage(item),
+            "editable": access.can_edit_item(item),
+            "manageable": access.can_manage(item),
             "mine": item.owner == me,
             "position": svc.rack_label(item),
             "expiry": svc.expiry_state(item),
@@ -625,20 +605,20 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "tab_counts": tab_counts, "listed_all": listed_all,
         "can_add_type": mv.has("tabs"),
         "col_sig": format(zlib.crc32(layout.encode()), "x"),
-        "manageable_racks": {r.id for r in racks if _can_manage_rack(r)},
+        "manageable_racks": {r.id for r in racks if access.can_edit_rack(r)},
         "places": svc.places_in_use(session) if mv.has("storage") else [],
         "box_width": _box_width(racks),
         # The box grid's tiles come when the grid is first shown (grid_data):
         # a tile carries its item's whole dialog, megabytes on a long inventory.
         "grid_url": url_for("inventory.grid_data", key=key, type=request.args.get("type"),
                             ended=request.args.get("ended")) if mv.has("storage") else "",
-        "rack_edits": {r.id: _rack_edit(r) for r in racks if _can_manage_rack(r)},
+        "rack_edits": {r.id: _rack_edit(r) for r in racks if access.can_edit_rack(r)},
         "hidden_old": hidden_old, "show_ended": show_ended, "recent_days": RECENT_DAYS,
         "usernames": current_lab_usernames(session),
         "plasmid_options": plasmid_options,
         "next_number": svc.next_number(session, row.id),
         "reorder": reorder,
-        "can_configure": _can_configure(row), "is_admin": access.is_admin(),
+        "can_configure": access.can_configure(row), "is_admin": access.is_admin(),
         "bulk_fields": bulk_fields(mv),
         "stored_at_field": svc.stored_at_field(mv),
         "terminal_statuses": sorted(svc.TERMINAL_STATUSES),
@@ -884,7 +864,7 @@ def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fal
     make); the caller rolls back. Returns (a position problem, notes):
     a position that cannot be taken leaves the rest saved."""
     notes: list[str] = []
-    manage = creating or _can_manage(item)
+    manage = creating or access.can_manage(item)
     me = access.username()
     stock_was = (item.status, item.quantity, item.low_at)
     was = {key: _column_value(item, key) for key in mv.required}
@@ -1057,7 +1037,7 @@ def save_item(key: str):
             item = session.get(InventoryItem, int(item_id))
             if item is None or item.module_id_fk != row.id:
                 abort(404)
-            if not _can_edit(item):
+            if not access.can_edit_item(item):
                 return _done(key, error=access.reason_denied(item, noun=mv.item_noun))
         else:
             if (request.form.get("names") or "").strip() or (request.form.get("count") or "1").strip() != "1":
@@ -1271,7 +1251,7 @@ def update_item(key: str, item_id: int):
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
             return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
-        if not _can_edit(item):
+        if not access.can_edit_item(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
         try:
@@ -1299,7 +1279,7 @@ def delete_item(key: str, item_id: int):
         mv = svc.view(row)
         item = session.get(InventoryItem, item_id)
         if item is not None and item.module_id_fk == row.id:
-            if not _can_manage(item):
+            if not access.can_manage(item):
                 return _done(key, error=_manage_denied(mv, item, "delete"))
             label = item.name or f"#{item.number}"
             session.delete(item)
@@ -1346,7 +1326,7 @@ def place_item(key: str, item_id: int):
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
             return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
-        if not _can_edit(item):
+        if not access.can_edit_item(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         rack_id = request.form.get("rack_id", "").strip()
         if not rack_id:
@@ -1367,7 +1347,7 @@ def place_item(key: str, item_id: int):
             holder_label = holder.name or f"#{holder.number}"
             if item.rack_id_fk is None or item.rack_row is None or item.rack_col is None:
                 return jsonify({"ok": False, "error": gettext("That cell holds %(item)s. Drop it on an empty cell, or move %(item)s out first.", item=holder_label)}), 409
-            if not _can_edit(holder):
+            if not access.can_edit_item(holder):
                 return jsonify({"ok": False, "error": gettext("That cell holds %(item)s, which you may not move.",
                                                               item=holder_label)}), 403
             holder.rack_id_fk, holder.rack_row, holder.rack_col = item.rack_id_fk, item.rack_row, item.rack_col
@@ -1385,7 +1365,7 @@ def set_status(key: str, item_id: int):
         item = session.get(InventoryItem, item_id)
         if item is None or item.module_id_fk != row.id:
             return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
-        if not _can_edit(item):
+        if not access.can_edit_item(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
         problem = svc.apply_status(mv, item, request.form.get("status"))
@@ -1460,7 +1440,7 @@ def _offers_stock(session, mv, item: InventoryItem, status_was: str) -> bool:
     and there is somewhere to put it: ask whether to add it."""
     return (mv.row.kind == "orders" and (item.status or "").lower() == "received"
             and (status_was or "").lower() != "received" and not item.attrs_dict.get("stocked_as")
-            and _can_edit(item) and bool(_stock_targets(session)))
+            and access.can_edit_item(item) and bool(_stock_targets(session)))
 
 
 @bp.route("/<key>/items/<int:item_id>/to-reagents", methods=["POST"])
@@ -1474,7 +1454,7 @@ def order_to_reagents(key: str, item_id: int):
         order = session.get(InventoryItem, item_id)
         if order is None or order.module_id_fk != row.id or row.kind != "orders":
             return _done(key, error=gettext("That order no longer exists."))
-        if not _can_edit(order):
+        if not access.can_edit_item(order):
             return _done(key, error=access.reason_denied(order, noun="order"))
         if (order.status or "").lower() != "received":
             if order.name:
@@ -1539,7 +1519,7 @@ def _order_for_stock(session, ref: str):
     source = svc.get_module(session, key)
     order = session.get(InventoryItem, int(raw)) if raw.isdigit() else None
     if (source is None or source.kind != "orders" or not lab.can_see(source) or order is None
-            or order.module_id_fk != source.id or not _can_edit(order)
+            or order.module_id_fk != source.id or not access.can_edit_item(order)
             or (order.status or "").lower() != "received" or order.attrs_dict.get("stocked_as")):
         return None, None
     return order, svc.view(source)
@@ -1732,7 +1712,7 @@ def bulk(key: str):
             item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
             return None
 
-        result = bulk_actions.run(session, items, apply, may_edit=_can_edit if need == "edit" else _can_manage,
+        result = bulk_actions.run(session, items, apply, may_edit=access.can_edit_item if need == "edit" else access.can_manage,
                           action="delete" if action == "delete" else "update",
                           what=f"{action} ×{len(items)} {mv.item_noun_plural}", table="inventory_items")
         done, skipped, refused = result.changed, result.skipped, result.blocked
@@ -1775,7 +1755,7 @@ def save_rack(key: str):
         rack = session.get(InventoryRack, int(rack_id)) if rack_id.isdigit() else None
         if rack is not None and rack.module_id_fk != row.id:
             abort(404)
-        if rack is not None and not _can_manage_rack(rack):
+        if rack is not None and not access.can_edit_rack(rack):
             flash(gettext("Only %(who)s or an admin can change %(box)s.", who=rack.created_by, box=rack.name)
                   if rack.created_by else gettext("Only an admin can change %(box)s.", box=rack.name), "error")
             return redirect(url_for("inventory.module", key=key))
@@ -1847,7 +1827,7 @@ def delete_rack(key: str, rack_id: int):
         row = _module_or_404(session, key)
         rack = session.get(InventoryRack, rack_id)
         if rack is not None and rack.module_id_fk == row.id:
-            if not _can_manage_rack(rack):
+            if not access.can_edit_rack(rack):
                 flash(gettext("Only %(who)s or an admin can delete %(box)s.", who=rack.created_by, box=rack.name)
                       if rack.created_by else gettext("Only an admin can delete %(box)s.", box=rack.name), "error")
                 return redirect(url_for("inventory.module", key=key))
@@ -1926,7 +1906,7 @@ def renumber(key: str):
     order = (request.values.get("order") or "ascending").strip()
     with SessionLocal() as session:
         row = _module_or_404(session, key)
-        if not _can_configure(row):
+        if not access.can_configure(row):
             flash(gettext("Only an admin, or whoever created %(name)s, can renumber it.",
                           name=i18n.translate_value(row.label)), "error")
             return redirect(url_for("inventory.module", key=key))
@@ -1964,7 +1944,7 @@ def renumber_warnings(locked: list[str]) -> list[str]:
 def configure(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
-        if not _can_configure(row):
+        if not access.can_configure(row):
             flash(gettext("Only an admin, or whoever created %(name)s, can configure it.",
                           name=i18n.translate_value(row.label)), "error")
             return redirect(url_for("inventory.module", key=key))
@@ -2104,7 +2084,7 @@ def _choice_rows(form, name: str, limit: int) -> list[dict] | None:
 def delete_module(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
-        if not _can_configure(row):
+        if not access.can_configure(row):
             flash(gettext("Only an admin, or whoever created it, can delete an inventory."), "error")
             return redirect(url_for("inventory.module", key=key))
         if (request.form.get("confirm") or "").strip() != row.label:

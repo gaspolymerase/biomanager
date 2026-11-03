@@ -102,29 +102,6 @@ def _back(key: str, view: str = "units", message: str = "", error: str = ""):
     return redirect(url_for("stocks.module", key=key, view=view))
 
 
-LAB_PURPOSES = ("stock", "backup", "maintenance", "starved")
-
-
-def can_edit(unit: StockUnit) -> bool:
-    """Stocks, backups and maintenance plates are the lab's (or, shared with
-    a project group, its members'); crosses, experiments and progeny belong
-    to whoever set them up."""
-    shared = unit.purpose in LAB_PURPOSES and project_groups.record_editable(unit, shared=True)
-    return access.can_edit(unit, shared=shared)
-
-
-def can_configure(module: StockModule) -> bool:
-    """Settings, renaming and deleting a database: an admin or its creator."""
-    return access.is_admin() or bool(module.created_by) and module.created_by == g.user.username
-
-
-def can_manage(thing) -> bool:
-    """Editing or deleting a rack or incubator: an admin or whoever made it
-    (anyone may add one, and anyone may record a flip). The same rule as
-    mouse racks and inventory boxes: access.can_edit_rack."""
-    return access.can_edit_rack(thing)
-
-
 class Invalid(ValueError):
     """A submitted value that cannot be stored; nothing is saved."""
 
@@ -306,7 +283,7 @@ def unit_values(unit: StockUnit) -> dict:
 
 def unit_payload(mv, unit: StockUnit) -> dict:
     values = unit_values(unit)
-    return {"id": unit.id, "_label": mv.code(unit), "_locked": not can_edit(unit) or not unit.active,
+    return {"id": unit.id, "_label": mv.code(unit), "_locked": not access.can_edit_unit(unit) or not unit.active,
             "count": 1, **values, **{f"{k}_was": v for k, v in values.items()}}
 
 
@@ -333,7 +310,7 @@ def grid_payload(mv, racks, units) -> dict:
             "sub": (svc.cross_label(u) if u.purpose == presets.CROSS else u.genotype) or mv.purpose_label(u.purpose),
             "badge": mv.purpose_label(u.purpose)[:1] if u.purpose not in ("stock", "maintenance") else "",
             "tone": tone.get(u.purpose, ""), "flag": bool(u.ready_on and u.ready_on <= date.today()),
-            "rack": u.rack_id_fk, "row": u.rack_row, "col": u.rack_col, "locked": not can_edit(u),
+            "rack": u.rack_id_fk, "row": u.rack_row, "col": u.rack_col, "locked": not access.can_edit_unit(u),
             "title": " · ".join(filter(None, [mv.code(u), mv.purpose_label(u.purpose), svc.cross_label(u), u.owner])),
             "search": " ".join(filter(None, [mv.code(u), u.genotype, u.female_genotype, u.male_genotype,
                                              u.purpose, u.owner, u.notes])).lower(),
@@ -467,7 +444,7 @@ def _module_page(key: str, keep: set[int] | None = None) -> str:
             if keep is not None and u.id not in keep:
                 continue
             nxt = _next_due(mv, u, today) if u.active else None
-            rows.append({"unit": u, "code": mv.code(u), "editable": can_edit(u), "mine": u.owner == me,
+            rows.append({"unit": u, "code": mv.code(u), "editable": access.can_edit_unit(u), "mine": u.owner == me,
                          "position": svc.position_label(u), "temp": svc.unit_temperature(mv, u),
                          "incubator": u.rack.incubator.name if u.rack and u.rack.incubator else "",
                          "next": nxt, "overdue": bool(nxt and nxt["on"] < today),
@@ -492,7 +469,7 @@ def _module_page(key: str, keep: set[int] | None = None) -> str:
             "unit_stubs": unit_stubs(mv, units[inventory_routes.FIRST_PAGE:], racks, incubators, today) if lazy else [],
             "unit_rows_url": url_for("stocks.unit_rows", key=key, **({"ended": "all"} if show_ended else {}))
                              if lazy else "",
-            "can_configure": can_configure(row),
+            "can_configure": access.can_configure(row),
             "rack_rows": rack_rows, "genotypes": genotypes, "active_counts": active_counts,
             "grid": grid_payload(mv, racks, units), "schedule": schedule, "frozen": frozen,
             "usernames": current_lab_usernames(session), "today": today,
@@ -599,7 +576,7 @@ def save_unit(key: str):
             unit = session.get(StockUnit, int(unit_id))
             if unit is None or unit.module_id_fk != row.id:
                 abort(404)
-            if not can_edit(unit):
+            if not access.can_edit_unit(unit):
                 return _back(key, error=access.reason_denied(unit))
             try:
                 problem = _unit_from_form(session, mv, unit, request.form, users=users)
@@ -689,7 +666,7 @@ def update_unit(key: str, unit_id: int):
         unit = session.get(StockUnit, unit_id)
         if unit is None or unit.module_id_fk != row.id:
             return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
-        if not can_edit(unit) or not unit.active:
+        if not access.can_edit_unit(unit) or not unit.active:
             return jsonify({"ok": False, "error": access.reason_denied(unit) if unit.active
                             else gettext("%(code)s is discarded; restore it to edit.", code=mv.code(unit))}), 403
         try:
@@ -714,7 +691,7 @@ def place_unit(key: str, unit_id: int):
         unit = session.get(StockUnit, unit_id)
         if unit is None or unit.module_id_fk != row.id:
             return jsonify({"ok": False, "error": gettext("That record no longer exists.")}), 404
-        if not can_edit(unit):
+        if not access.can_edit_unit(unit):
             return jsonify({"ok": False, "error": access.reason_denied(unit)}), 403
         rack_id = request.form.get("rack_id", "").strip()
         if not rack_id:
@@ -729,7 +706,7 @@ def place_unit(key: str, unit_id: int):
             StockUnit.rack_id_fk == rack.id, StockUnit.rack_row == r, StockUnit.rack_col == c,
             StockUnit.active.is_(True), StockUnit.id != unit.id))
         if holder is not None:
-            if not can_edit(holder):
+            if not access.can_edit_unit(holder):
                 return jsonify({"ok": False, "error": gettext("That cell holds someone else’s %(unit)s.",
                                                              unit=_w(svc.view(row).unit))}), 403
             if unit.rack_row is None:
@@ -753,7 +730,7 @@ def collect(key: str, unit_id: int):
         if unit.purpose != presets.CROSS or not unit.active:
             return _back(key, error=gettext("%(code)s is not an active cross; set its purpose to %(cross)s first.",
                                             code=mv.code(unit), cross=_w(mv.purpose_label(presets.CROSS))))
-        if not can_edit(unit):
+        if not access.can_edit_unit(unit):
             return _back(key, error=access.reason_denied(unit))
         progeny, note = svc.collect_eggs(session, mv, unit, g.user.username)
         session.commit()
@@ -821,7 +798,7 @@ def unit_action(key: str, unit_id: int, action: str):
         if unit is None or unit.module_id_fk != row.id:
             abort(404)
         code = mv.code(unit)
-        if not can_edit(unit):
+        if not access.can_edit_unit(unit):
             return _back(key, error=access.reason_denied(unit))
         if action == "discard":
             _set_active(unit, False)
@@ -893,7 +870,7 @@ def bulk(key: str):
             StockUnit.module_id_fk == row.id, StockUnit.id.in_(ids)).order_by(StockUnit.number))]
         if not units:
             return _back(key, error=gettext("No %(units)s selected.", units=_w(mv.units)))
-        editable = [u for u in units if can_edit(u)]
+        editable = [u for u in units if access.can_edit_unit(u)]
         skipped = len(units) - len(editable)
         done, notes = 0, []
         try:
@@ -938,7 +915,7 @@ def bulk(key: str):
                         if note:
                             notes.append(note)
                     done = len(made)
-                    skipped = sum(1 for u in units if u.purpose == presets.CROSS and u.active and not can_edit(u))
+                    skipped = sum(1 for u in units if u.purpose == presets.CROSS and u.active and not access.can_edit_unit(u))
                     message = (ngettext("%(verb)s from %(num)s cross: new %(units)s %(codes)s.",
                                         "%(verb)s from %(num)s crosses: new %(units)s %(codes)s.", done,
                                         verb=_w(mv.s["collect_verb"]), units=_w(mv.units), codes=", ".join(made))
@@ -988,7 +965,7 @@ def save_rack(key: str):
         rack = session.get(StockRack, int(rack_id)) if rack_id.isdigit() else None
         if rack is not None and rack.module_id_fk != row.id:
             abort(404)
-        if rack is not None and not can_manage(rack):
+        if rack is not None and not access.can_edit_rack(rack):
             return _back(key, view="setup", error=gettext("Only an admin or whoever made %(name)s can change it.",
                                                           name=rack.name))
         rows = max(1, min(26, _int(form.get("rows"), mv.s["rack_rows"])))
@@ -1033,7 +1010,7 @@ def delete_rack(key: str, rack_id: int):
         rack = session.get(StockRack, rack_id)
         if rack is None or rack.module_id_fk != row.id:
             abort(404)
-        if not can_manage(rack):
+        if not access.can_edit_rack(rack):
             return _back(key, view="setup", error=gettext("Only an admin or whoever made %(name)s can delete it.",
                                                           name=rack.name))
         for u in session.scalars(select(StockUnit).where(StockUnit.rack_id_fk == rack.id)):
@@ -1082,7 +1059,7 @@ def save_incubator(key: str):
         inc = session.get(StockIncubator, int(inc_id)) if inc_id.isdigit() else None
         if inc is not None and inc.module_id_fk != row.id:
             abort(404)
-        if inc is not None and not can_manage(inc):
+        if inc is not None and not access.can_edit_rack(inc):
             return _back(key, view="setup", error=gettext("Only an admin or whoever added %(name)s can change it.",
                                                           name=inc.name))
         if inc is None:
@@ -1108,7 +1085,7 @@ def delete_incubator(key: str, inc_id: int):
         inc = session.get(StockIncubator, inc_id)
         if inc is None or inc.module_id_fk != row.id:
             abort(404)
-        if not can_manage(inc):
+        if not access.can_edit_rack(inc):
             return _back(key, view="setup", error=gettext("Only an admin or whoever added %(name)s can delete it.",
                                                           name=inc.name))
         moved = []
@@ -1160,7 +1137,7 @@ def save_genotype(key: str):
                 label = (u.genotype or "").removeprefix("F1 of ")
                 return old in (u.genotype, u.female_genotype, u.male_genotype) or old in label.split(" × ")
             locked = [u for u in session.scalars(select(StockUnit).where(StockUnit.module_id_fk == row.id))
-                      if uses(u) and not can_edit(u)]
+                      if uses(u) and not access.can_edit_unit(u)]
             if locked and not access.is_admin():
                 return _back(key, view="genotypes",
                              error=gettext("%(count)s of the %(units)s labelled %(genotype)s belong to someone else, so it can’t be renamed for them. Ask them or an admin.",  # noqa: E501
@@ -1310,7 +1287,7 @@ def save_settings(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
         mv = svc.view(row)
-        if not can_configure(row):
+        if not access.can_configure(row):
             return _back(key, view="settings",
                          error=gettext("Only an admin, or whoever created this database, can change its settings."))
         label = (form.get("label") or "").strip()
@@ -1372,7 +1349,7 @@ def save_settings(key: str):
 def delete_module(key: str):
     with SessionLocal() as session:
         row = _module_or_404(session, key)
-        if not can_configure(row):
+        if not access.can_configure(row):
             flash(gettext("Only an admin, or whoever created it, can delete this database."), "error")
             return redirect(url_for("stocks.module", key=key, view="settings"))
         if (request.form.get("confirm") or "").strip() != row.label:

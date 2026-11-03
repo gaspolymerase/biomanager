@@ -903,7 +903,7 @@ def breeding_plan(session, want: dict, sex: str = "", count: int = 1, age_min_da
     window on a day: the odds per mating, how many matings (each giving
     `litters_per_mating` litters, else as many as fit before `by`, else
     one), the matings already under way, and by when."""
-    from .services import weaning_offset
+    from .litter_dates import weaning_offset
     wean_days = weaning_offset(session)
     today = today or date.today()
     if not isinstance(want, dict) or not want:

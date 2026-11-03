@@ -341,13 +341,12 @@ def take_off(session, snapshot: dict, entries: list[dict]) -> tuple[str, str]:
     ("taken_qty"), so undoing the day gives it back (give_back)."""
     from . import actions
     from . import inventory_service as inv
-    from .inventory_routes import _can_edit
     from .models import InventoryModule
     item = session.get(InventoryItem, int(snapshot.get("id") or 0))
     if item is None:
         return "", gettext("Nothing was taken off the inventory: no item was used.")
     label = actions._item_label(session, item)
-    if not _can_edit(item):
+    if not access.can_edit_item(item):
         return "", gettext("Nothing was taken off %(item)s: you can't change it.", item=label)
     if any(e.get("needs") for e in entries):
         return "", gettext("Nothing was taken off %(item)s: some have no weight to work out what they got.", item=label)

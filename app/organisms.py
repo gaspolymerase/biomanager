@@ -552,7 +552,7 @@ PRESETS: tuple[Preset, ...] = (
             ScheduleRule("turnover", "Line turnover", "line", "last_refreshed_on", 540,
                          icon="refresh", recurring=True),
         ],
-        housing_purposes=["stock", "breeding", "mating", "nursery", "experiment", "quarantine"],
+        housing_purposes=["stock", "breeder", "mating", "nursery", "experiment", "quarantine"],
         statuses=["alive", "euthanized", "found dead", "transferred"],
         sexes=["mixed", "female", "male", "unknown"],
         fields=[
