@@ -387,3 +387,53 @@ class ClutchesAndCohorts(Base):
         exp2 = self.new(f"organisms:{key}")
         subs = self.add(exp2, "one", f"cohort:{cohort_id}").get_json()["subjects"]
         self.assertEqual((subs[0]["key"], subs[0]["start"]), (f"cohort:{cohort_id}", 30))
+
+
+class EachDatabaseItsOwn(Base):
+    """What an experiment offers follows its database's animals."""
+
+    def test_a_plant_database_measures_and_treats_plants(self):
+        from tests.test_plants import plant_module
+        key = plant_module(self.a)
+        tab = self.get_ok(self.a, f"/organisms/{key}?view=experiments")
+        self.assertIn('value="germination"', tab)
+        self.assertNotIn('value="body_weight"', tab)
+        self.assertNotIn("Tumour", tab)
+        exp = self.new(f"organisms:{key}")
+        data = self.data(exp)
+        self.assertEqual(data["family"], "plant")
+        self.assertEqual(data["readout"]["key"], "germination")
+        kinds = {k["key"] for k in data["kinds"]}
+        self.assertIn("spray", kinds)
+        self.assertNotIn("surgery", kinds)
+        # An animal database made from scratch keeps the animal's.
+        other = self.data(self.new(f"organisms:{self.make_organism_module(self.a)}"))
+        self.assertEqual(other["family"], "organism")
+        self.assertIn("surgery", {k["key"] for k in other["kinds"]})
+
+    def test_each_animal_shows_its_age_on_day_1(self):
+        start = TODAY - timedelta(days=2)
+        mouse = self.make_mouse(self.a, self.admin, date_of_birth=(start - timedelta(days=70)).isoformat())
+        r = self.a.post("/colony/experiments/create", data={"name": uniq("Age "), "start_date": start.isoformat()})
+        exp = int(location(r).rsplit("/", 1)[1])
+        self.add(exp, "one", str(mouse))
+        self.assertEqual(self.data(exp)["subjects"][0]["age"], "10w")
+        csv = self.a.get(f"/experiments/{exp}/export.csv").get_data(as_text=True)
+        self.assertIn("Age on day 1", csv.splitlines()[0])
+
+    def test_survival_over_the_whole_experiment_by_the_log_rank_test(self):
+        from app import exp_stats
+        rows = [{"group": "Drug", "start": 20, "values": [20, 15, 9, 4], "left_out": ""},
+                {"group": "Vehicle", "start": 20, "values": [20, 20, 19, 19], "left_out": ""},
+                {"group": "Vehicle", "start": 5, "values": [None, 5, None, 5], "left_out": "too old"}]
+        table = {"rows": rows, "dates": ["d1", "d2", "d3", "d4"], "days": [1, 2, 3, 4],
+                 "readout": {"key": "survival", "kind": "fraction"}}
+        out = exp_stats.logrank(table)
+        self.assertEqual(out["test"], "Log-rank test")
+        self.assertLess(out["p"], 0.001)
+        drug = next(g for g in out["groups"] if g["group"] == "Drug")
+        self.assertEqual((drug["start"], drug["deaths"]), (20, 16))
+        # The same counts in both: no difference; one group alone: no test.
+        same = {**table, "rows": [{**rows[0], "group": "A"}, {**rows[0], "group": "B"}]}
+        self.assertGreater(exp_stats.logrank(same)["p"], 0.99)
+        self.assertIsNone(exp_stats.logrank({**table, "rows": rows[:1]}))

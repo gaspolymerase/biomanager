@@ -2862,8 +2862,19 @@ checks a named `reagent` or `lot` before sending and refuses an unknown
 lot in words. `assistant_compute.experiment_summary` lists each step's
 lots and `expired_lots`; the handover's `next_steps` carry the planned
 item and lot (`reagent`). Subjects
-are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`.
-`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²);
+are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`. A database's
+family (`Place.family`: mouse, fish, fly, worm, plant or organism) picks
+its readouts (`READOUT_CHOICES`) and manipulations (`KINDS`); an organism
+database is `plant` when made from the Plants or Field crops preset or
+keeping seed stocks (`_organism_family`). Each subject carries its
+`age` on day 1 (`age_at_start`: a mouse's litter's birth in weeks, a fish
+or clutch in dpf, an organism or cohort in its database's `age_unit`
+through `organism_service.age_label`; a vial or plate none), on the sheet
+and as the export's last column.
+`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²), and a
+survival readout over the whole experiment (`logrank`: deaths each day
+are the drop in each group's count since the last, a day not counted
+carrying the last count; the two-group variance when there are two);
 `/experiments/<id>/export.xlsx` and bench mode (`/experiments/<id>/bench`,
 `static/experiment-bench.js`) are in `experiments.py`. The owner's
 morning notification of what is due is `notify.daily_experiment_reminder`

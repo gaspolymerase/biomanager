@@ -1151,7 +1151,10 @@ Mice, zebrafish, flies, worms and your own organisms all have an **Experiments**
 |---|---|
 | Zebrafish | Fish rows, a whole tank, or a clutch's larvae. Survival (how many of those at the start are alive), standard length or a phenotype. Drug in the water, microinjection, heat shock, injury or fin clip. |
 | Flies and worms | Vials or plates, or a whole rack; say how many each started with. They have no body weight: survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi feeding, temperature shifts, starvation, infection, flipping to fresh food. |
+| Plants and field crops | Plants or sowings, or a whole tray or plot. Germination, height, rosette area, days to flowering, leaf number, survival or a phenotype. Treatments and sprays, a watering regime, a light or temperature shift, inoculation, transplanting, sampling, imaging. |
 | Any other organism | Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score. |
+
+The sheet shows each animal's **Age on day 1**, as its database counts age: a mouse in weeks, a fish or a clutch in days post fertilisation, a plant in days after sowing, any other organism in its own unit. The export has it too.
 
 Any experiment can follow a readout of its own (**Readout → Something else…**): a number for each, or how many of those at the start.
 
@@ -1214,7 +1217,7 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 - Each day recorded keeps the **Reagent used** and its **Lot**, and the expiry the lot had. It starts as the item picked in the regimen; when the regimen names only what is given (*Tamoxifen*), the one item of that name in your inventories is picked, and kept on the regimen for next time (with several, they come first in the list: pick the bottle you used). A new bottle is another item, or type its lot. A lot already past its expiry on the day is recorded, with a warning. Tick **Take what they got off the inventory** to take the amounts (or volumes) the animals got off the item's quantity, turned into its unit (a **Pack size** turns mL into ampoules); it is taken once, however often the day is saved, and **Undo: not done** puts it back. The lot shows on the day in the list and the sheet, in **Export**, and in the experiment's notebook block.
 
-- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own.
+- **The chart** shows the readout by group over the days (the value, or its % of the first; for a count, % of those at the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the days the groups differ, and **Tests by day** below lists each test (Welch's t-test for two groups, one-way ANOVA for more, χ² for counts), each day on its own. A survival readout is also tested over the whole experiment, group against group, by the log-rank test, above the days: how many of each group died, against how many would have by chance.
 
 ### The regimen
 

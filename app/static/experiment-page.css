@@ -85,6 +85,9 @@
   box-shadow: var(--shadow-sm); pointer-events: none; white-space: normal;
 }
 .xp-tip b { display: block; margin-bottom: 2px; }
+/* Survival over the whole run (the log-rank test), above the tests by day. */
+.xp-survival { margin: 0 0 8px; font-size: 13px; color: var(--color-ink); }
+.xp-survival .xp-muted { display: block; margin-top: 2px; }
 .xp-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 4px; font-size: 12px; color: var(--color-ink-soft); }
 .xp-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
 

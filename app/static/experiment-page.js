@@ -191,9 +191,11 @@
       return;
     }
     const showSex = subs.some((s) => s.sex);
+    const showAge = subs.some((s) => s.age);
     const showStart = D.family !== 'mouse';
     const head = [`<th class="sheet-pin sheet-pin-start xp-id">${esc(cap(noun()))}</th>`];
     if (showSex) head.push(`<th>${t('Sex')}</th>`);
+    if (showAge) head.push(`<th title="${esc(t('How old it was on day 1, as this database counts age'))}">${t('Age on day 1')}</th>`);
     head.push(`<th>${t('Genotype')}</th>`, `<th>${esc(cap(t(D.housing)))}</th>`, `<th>${t('Group')}</th>`);
     if (showStart) head.push(`<th title="${esc(t('How many at the start, for a count or survival'))}">${t('At start')}</th>`);
 
@@ -215,6 +217,7 @@
       const out = s.left_out ? ` <span class="xp-left-tag" title="${esc(t('Left out of the analysis: %(reason)s', { reason: s.left_out }))}">${esc(t('left out'))}</span>` : '';
       const cells = [`<td class="sheet-pin sheet-pin-start xp-id"><span class="sheet-id"><span class="life-dot${s.alive ? ' is-alive' : ''}"></span><span class="ident">${esc(s.label)}</span>${out}</span></td>`];
       if (showSex) cells.push(`<td>${esc(s.sex)}</td>`);
+      if (showAge) cells.push(`<td class="xp-num">${esc(s.age || '')}</td>`);
       cells.push(`<td class="xp-geno" title="${esc(s.genotype)}">${esc(s.genotype)}</td>`, `<td>${esc(s.housing)}</td>`);
       cells.push(`<td><input class="xp-cell" data-xp-group="${esc(s.key)}" value="${esc(s.group)}" placeholder="${esc(t('(no group)'))}" list="xp-groups" aria-label="${esc(t('Group of %(label)s', { label: s.label }))}" ${D.editable ? '' : 'disabled'}></td>`);
       if (showStart) cells.push(`<td><input class="xp-cell xp-num" data-xp-start="${esc(s.key)}" value="${s.start == null ? '' : s.start}" inputmode="numeric" aria-label="${esc(t('How many %(label)s started with', { label: s.label }))}" ${D.editable ? '' : 'disabled'}></td>`);
@@ -466,10 +469,16 @@
   function drawStats(stats) {
     const box = $('[data-xp-stats]');
     const tested = stats.filter((st) => st.test);
-    box.hidden = !tested.length;
-    if (!tested.length) return;
+    // Survival over the whole run: the log-rank test, group against group.
+    const surv = (VT().stats || {}).survival;
+    box.hidden = !tested.length && !surv;
+    if (box.hidden) return;
+    const pText = (p) => (p < 0.001 ? p.toExponential(1) : p.toFixed(3));
+    const whole = surv ? `<p class="xp-survival"><b>${t('Over the whole experiment')}</b>: ${esc(surv.test)}, p = ${pText(surv.p)} <b>${esc(surv.stars)}</b>
+      <span class="xp-muted">${surv.groups.map((g) => esc(t('%(group)s: %(deaths)s died of %(start)s (%(expected)s expected)', { group: g.group, deaths: num(g.deaths, 0), start: num(g.start, 0), expected: num(g.expected, 1) }))).join(' · ')}</span></p>` : '';
     const unit = scale === 'pct' || vFraction() ? '%' : (VR().unit ? ` ${VR().unit}` : '');
-    $('[data-xp-stats-table]').innerHTML = `<table class="dense-table fit-table"><thead><tr><th>${tc('experiment', 'Day')}</th><th>${t('Groups')}</th><th>${tc('experiment', 'Test')}</th><th>p</th><th></th></tr></thead><tbody>${
+    if (!tested.length) { $('[data-xp-stats-table]').innerHTML = whole; return; }
+    $('[data-xp-stats-table]').innerHTML = whole + `<table class="dense-table fit-table"><thead><tr><th>${tc('experiment', 'Day')}</th><th>${t('Groups')}</th><th>${tc('experiment', 'Test')}</th><th>p</th><th></th></tr></thead><tbody>${
       stats.map((st) => `<tr><td>${st.day !== null ? t('Day %(n)s', { n: st.day }) : ''} <span class="xp-muted">${esc(niceDate(st.date))}</span></td>
         <td>${st.groups.map((g) => `${esc(g.group)}: ${num(g.value, 2)}${unit}${g.sem != null ? ` ± ${num(g.sem, 2)}` : ''} <span class="xp-muted">n=${g.n}</span>`).join('<br>')}</td>
         <td>${esc(st.test || '—')}</td><td>${st.p == null ? '' : (st.p < 0.001 ? st.p.toExponential(1) : st.p.toFixed(3))}</td><td><b>${esc(st.stars)}</b></td></tr>`).join('')}</tbody></table>`;

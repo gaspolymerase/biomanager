@@ -167,8 +167,13 @@
         <tr><th>Flies and worms</th><td>Vials or plates, or a whole rack; say how many each started with. They have no body weight:
           survival, or eclosion and climbing for flies, brood size and paralysis for worms. Drug in the food or on the plate, RNAi
           feeding, temperature shifts, starvation, infection, flipping to fresh food.</td></tr>
+        <tr><th>Plants and field crops</th><td>Plants or sowings, or a whole tray or plot. Germination, height, rosette area, days
+          to flowering, leaf number, survival or a phenotype. Treatments and sprays, a watering regime, a light or temperature
+          shift, inoculation, transplanting, sampling, imaging.</td></tr>
         <tr><th>Any other organism</th><td>Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score.</td></tr>
       </table>
+      <p>The sheet shows each animal's <b>Age on day 1</b>, as its database counts age: a mouse in weeks, a fish or a clutch in days
+        post fertilisation, a plant in days after sowing, any other organism in its own unit. The export has it too.</p>
       <p>Any experiment can follow a readout of its own (<b>Readout → Something else…</b>): a number for each, or how many of
         those at the start.</p>
       <h2 id="derived">Readouts worked out from what you measure</h2>
@@ -282,7 +287,8 @@
         <li><b>The chart</b> shows the readout by group over the days (the value, or its % of the first; for a count, % of those at
           the start). Each manipulation day is a dashed line: point at it to see what was done that day, by whom. Stars mark the
           days the groups differ, and <b>Tests by day</b> below lists each test (Welch's t-test for two groups, one-way ANOVA for
-          more, χ² for counts), each day on its own.</li>
+          more, χ² for counts), each day on its own. A survival readout is also tested over the whole experiment, group against
+          group, by the log-rank test, above the days: how many of each group died, against how many would have by chance.</li>
       </ul>
       <h2 id="the-regimen">The regimen</h2>
       <p><b>Regimen</b> lists what is to be done and on which days: the kind, what, dose, route, solution, group and days
@@ -350,7 +356,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 15 min read</p>
+      <p>On this page · 16 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#derived">Readouts worked out from what you measure</a></li>

@@ -58,6 +58,12 @@ READOUTS = {
     "climbing": {"label": "Climbing", "unit": "climbed", "kind": "fraction", "verb": "Test"},
     "brood": {"label": "Brood size", "unit": "progeny", "kind": "value", "verb": "Count"},
     "paralysis": {"label": "Paralysis", "unit": "paralysed", "kind": "fraction", "verb": "Score"},
+    # Plants (a Plants or Field crops database): what a plant lab measures.
+    "germination": {"label": "Germination", "unit": "germinated", "kind": "fraction", "verb": "Count"},
+    "height": {"label": "Height", "unit": "cm", "kind": "value", "verb": "Measure"},
+    "rosette_area": {"label": "Rosette area", "unit": "cm²", "kind": "value", "verb": "Measure"},
+    "flowering": {"label": "Days to flowering", "unit": "days", "kind": "value", "verb": "Score"},
+    "leaf_number": {"label": "Leaf number", "unit": "leaves", "kind": "value", "verb": "Count"},
 }
 READOUT_CHOICES = {
     "mouse": ["body_weight", "tumour_volume", "score", "survival"],
@@ -65,6 +71,7 @@ READOUT_CHOICES = {
     "fly": ["survival", "eclosion", "climbing"],
     "worm": ["survival", "brood", "paralysis"],
     "organism": ["body_weight", "length", "survival", "score"],
+    "plant": ["germination", "height", "rosette_area", "flowering", "leaf_number", "survival", "phenotype"],
 }
 
 # What can be done to each kind of animal: key → (label, icon). "reading"
@@ -86,6 +93,10 @@ KINDS = {
              ("temperature", "Temperature shift", "temperature"), ("heat_shock", "Heat shock", "temperature"),
              ("starvation", "Starvation", "clock"), ("infection", "Infection", "virus"),
              ("transfer", "Transfer to a fresh plate", "repeat")],
+    "plant": [("treatment", "Treatment", "droplet"), ("spray", "Spray", "droplet"),
+              ("watering", "Watering regime", "flask"), ("environment", "Light or temperature shift", "temperature"),
+              ("infection", "Inoculation", "virus"), ("transplant", "Transplant", "repeat"),
+              ("sample", "Sample", "vial"), ("imaging", "Imaging", "microscope")],
     "organism": [("injection", "Injection", "syringe"), ("treatment", "Treatment", "droplet"),
                  ("challenge", "Challenge", "virus"), ("surgery", "Surgery", "stethoscope"),
                  ("behavior", "Behaviour", "gauge"), ("stimulation", "Stimulation", "bolt"), ("sample", "Sample", "vial"),
@@ -130,7 +141,7 @@ class Place:
     """The database an experiment is on, as far as experiments care."""
     key: str                 # colony, zebrafish, stocks:<key>, organisms:<key>
     label: str               # Mouse colony, Zebrafish, Drosophila…
-    family: str              # mouse | fish | fly | worm | organism
+    family: str              # mouse | fish | fly | worm | plant | organism
     subject_kind: str        # mouse | fish | unit | organism
     noun: str
     nouns: str
@@ -140,6 +151,18 @@ class Place:
     home_url: str = ""
     module: object = None
     mv: object = None
+
+
+PLANT_PRESETS = ("plant", "field_crop")
+
+
+def _organism_family(module, mv) -> str:
+    """An organism database's family: plant for one of plants (made from the
+    Plants or Field crops preset, or keeping seed stocks), which measure and
+    treat their plants as a plant lab does; organism for the rest."""
+    if (module.preset_key or "") in PLANT_PRESETS or mv.has("seed_bank"):
+        return "plant"
+    return "organism"
 
 
 def place_for(session, key: str) -> Place | None:
@@ -172,7 +195,7 @@ def place_for(session, key: str) -> Place | None:
         if module is None or not lab.can_see(module):
             return None
         mv = organism_service.view(module)
-        return Place(key, mv.label, "organism", "organism", mv.organism_noun, mv.organism_noun_plural,
+        return Place(key, mv.label, _organism_family(module, mv), "organism", mv.organism_noun, mv.organism_noun_plural,
                      mv.housing_noun, module.icon or "paw", url_for("organisms.module", key=module.key, view="experiments"),
                      url_for("organisms.module", key=module.key), module, mv)
     return None
@@ -480,6 +503,7 @@ class Subject:
     can_edit: bool = True     # its own record may be changed (a mouse's weight)
     row: object = None        # the membership row
     record: object = None     # the animal's own record
+    age: str = ""             # its age on day 1 (13w, 5 dpf, 21d), in its database's unit
 
     @property
     def left_out(self) -> str:
@@ -502,7 +526,7 @@ class Subject:
     def as_dict(self) -> dict:
         return {"key": self.key, "label": self.label, "sex": self.sex, "genotype": self.genotype,
                 "housing": self.housing, "group": self.group, "start": self.start, "note": self.note,
-                "alive": self.alive, "card": self.card, "left_out": self.left_out}
+                "alive": self.alive, "card": self.card, "left_out": self.left_out, "age": self.age}
 
 
 def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Subject]:
@@ -541,10 +565,46 @@ def subjects(session, exp: Experiment, place: Place, group: str = "") -> list[Su
             if rec is None:
                 continue
             out.append(_describe(place, r, rec))
+    # A mouse's birth is its litter's: read for them all at once.
+    born = {}
+    litter_ids = {getattr(sub.record, "litter_id_fk", None) for sub in out if sub.kind == "mouse"} - {None}
+    if litter_ids:
+        from .models import LitterRecord
+        born = dict(session.execute(select(LitterRecord.id, LitterRecord.date_of_birth)
+                                    .where(LitterRecord.id.in_(litter_ids))).all())
+    for sub in out:
+        sub.age = age_at_start(sub, exp.start_date, place,
+                               born.get(getattr(sub.record, "litter_id_fk", None)) if sub.kind == "mouse" else None)
     wanted = (group or "").strip().lower()
     if wanted:
         out = [s for s in out if s.group.strip().lower() == wanted]
     return out
+
+
+def age_at_start(sub: Subject, start: date | None, place: Place, born_on: date | None = None) -> str:
+    """How old the animal was on day 1, as its database counts age: a mouse
+    in weeks, a fish or a clutch in days post fertilisation, an organism or
+    a cohort in its database's own unit (days after sowing for plants). A
+    vial or a plate has no age of its own: blank, as is one with no date."""
+    rec = sub.record
+    if start is None or rec is None:
+        return ""
+    if sub.kind != "mouse":     # a mouse's birth is its litter's, passed in
+        born = {"fish": "date_of_fertilization", "clutch": "date_of_fertilization",
+                "organism": "birth_on", "cohort": "birth_on"}.get(sub.kind)
+        born_on = getattr(rec, born, None) if born else None
+    if not isinstance(born_on, date) or born_on > start:
+        return ""
+    days = (start - born_on).days
+    if sub.kind == "mouse":
+        return f"{days // 7}w"
+    if sub.kind in ("fish", "clutch"):
+        return f"{days} dpf"
+    module = getattr(place, "module", None)
+    if module is not None:
+        from .organism_service import age_label
+        return age_label(module, born_on, start, None)
+    return f"{days}d"
 
 
 def _describe(place: Place, row: ExperimentSubject, rec) -> Subject:
@@ -933,6 +993,8 @@ def readout_table(session, exp: Experiment, place: Place, subs: list[Subject] | 
              "days": [((d - start).days + 1) if start else None for d in dates], "rows": rows, "readout": readout}
     from . import exp_stats
     table["stats"] = {"raw": exp_stats.by_day(table), "pct": exp_stats.by_day(table, percent=True)}
+    if table["readout"].get("key") == "survival":
+        table["stats"]["survival"] = exp_stats.logrank(table)
     return table
 
 
@@ -1649,7 +1711,8 @@ def _long_rows(exp, place, table, by_key) -> list[list]:
     measured = readout.get("inputs") or []      # a readout BioManager works out: what was measured, beside it
     long_rows = [["Experiment", "Database", place.noun.capitalize(), "Group", "Sex", "Genotype", place.housing.capitalize(),
                   "Date", "Day", f"{readout['label']}{unit}", "At start", "% of first" if readout["kind"] == "value" else "% of start",
-                  "Left out of the analysis"] + [f"{i['label']} ({i['unit']})" if i["unit"] else i["label"] for i in measured]]
+                  "Left out of the analysis"] + [f"{i['label']} ({i['unit']})" if i["unit"] else i["label"] for i in measured]
+                 + ["Age on day 1"]]
     for r in table["rows"]:
         x = by_key.get(r["key"])
         for i, d in enumerate(table["dates"]):
@@ -1658,7 +1721,7 @@ def _long_rows(exp, place, table, by_key) -> list[list]:
             inputs = (r.get("inputs") or [None] * len(table["dates"]))[i] or {}
             long_rows.append([exp.name, place.label, r["label"], r["group"], r["sex"], x.genotype if x else "",
                               x.housing if x else "", d, table["days"][i], r["values"][i], r["start"], r["pct"][i],
-                              r.get("left_out", "")] + [inputs.get(m["key"], "") for m in measured])
+                              r.get("left_out", "")] + [inputs.get(m["key"], "") for m in measured] + [x.age if x else ""])
     return long_rows
 
 

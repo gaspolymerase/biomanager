@@ -187,3 +187,61 @@ def by_day(table: dict, percent: bool = False) -> list[dict]:
                     "test": result["test"] if result else "", "p": result["p"] if result else None,
                     "stars": stars(result["p"]) if result else ""})
     return out
+
+
+def logrank(table: dict) -> dict | None:
+    """Survival over the whole experiment, group against group: the
+    log-rank test on the counts each day (a survival readout: how many of
+    each group's start are alive). An animal's or a vial's deaths on a day
+    are the drop since its last count; a day it was not counted keeps its
+    last count. None when fewer than two groups have a start and a count."""
+    groups: dict[str, list] = {}
+    for r in table["rows"]:
+        if r.get("left_out") or not r.get("start"):
+            continue
+        groups.setdefault(r["group"] or "All", []).append(r)
+    if len(groups) < 2:
+        return None
+    days = len(table["dates"])
+    # Each group's alive count on each day, carried forward over a day not counted.
+    alive: dict[str, list[float]] = {}
+    for g, rows in groups.items():
+        series = []
+        for i in range(days):
+            total = 0.0
+            for r in rows:
+                last = r["start"]
+                for j in range(i + 1):
+                    if r["values"][j] is not None:
+                        last = min(last, r["values"][j])
+                total += last
+            series.append(total)
+        alive[g] = series
+    start = {g: float(sum(r["start"] for r in rows)) for g, rows in groups.items()}
+    observed = {g: 0.0 for g in groups}
+    expected = {g: 0.0 for g in groups}
+    var2 = 0.0
+    names = sorted(groups)
+    for i in range(days):
+        at_risk = {g: (alive[g][i - 1] if i else start[g]) for g in names}
+        deaths = {g: max(0.0, at_risk[g] - alive[g][i]) for g in names}
+        n = sum(at_risk.values())
+        d = sum(deaths.values())
+        if n <= 0 or d <= 0:
+            continue
+        for g in names:
+            observed[g] += deaths[g]
+            expected[g] += d * at_risk[g] / n
+        if len(names) == 2 and n > 1:
+            n1, n2 = at_risk[names[0]], at_risk[names[1]]
+            var2 += d * (n1 / n) * (n2 / n) * (n - d) / (n - 1)
+    if not any(observed.values()):
+        return {"test": "Log-rank test", "p": 1.0, "stars": "ns", "groups": [
+            {"group": g, "start": start[g], "deaths": 0, "expected": 0} for g in names]}
+    if len(names) == 2 and var2 > 0:
+        x2 = (observed[names[0]] - expected[names[0]]) ** 2 / var2
+    else:
+        x2 = sum((observed[g] - expected[g]) ** 2 / expected[g] for g in names if expected[g] > 0)
+    p = chi2_upper(x2, len(names) - 1)
+    return {"test": "Log-rank test", "p": p, "stars": stars(p), "groups": [
+        {"group": g, "start": start[g], "deaths": round(observed[g], 1), "expected": round(expected[g], 1)} for g in names]}
