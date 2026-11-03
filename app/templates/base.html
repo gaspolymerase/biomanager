@@ -2,7 +2,7 @@
 {# A page with a sidebar of its own (the notebook) starts with this one
    folded to its icons: block rail_mode says "compact". #}
 {% set rail_mode = self.rail_mode()|trim %}
-<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if ui_look == 'solid' %} data-look="solid"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

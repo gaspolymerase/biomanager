@@ -87,6 +87,19 @@ macOS 27 is. Two layers:
   the Mac app and Safari use, drops the whole backdrop filter then, so it
   isn't used.
 
+A sheet (`.data-table-card`) is a pane of glass too (`--sheet-glass`): its
+rows let the wallpaper through, its sticky toolbar, header row and foot are
+frosted (`--sheet-head`), and a pinned column is solid (`--sheet-pin`) while
+the sheet scrolls sideways under it. The wallpaper (`--wall`) is sized to the
+window so the grey canvas never shows between its washes.
+
+**Solid** (Settings → Appearance & language → Look; `appearance.get_look`,
+kept as `look:<username>`, the page's `html[data-look="solid"]`) is the same
+app with no glass: one block of tokens in `tailwind.css` gives the canvas a
+cool paper, every glass and sheet token a solid white (or the dark mode's
+solid), the sidebar a second paper, and turns `backdrop-filter` off. A new
+surface that reads its colours from the tokens follows both looks.
+
 The page scrolls *beneath* the two rows at the top (`.topstrip`, then
 `.toolbar`), which float over it: `.shell-scroll` is padded at the top by
 `--tabbar-h + --toolbar-h`, so a `sticky top-0` header stops just under
@@ -2882,9 +2895,10 @@ housing, then latest weight; seeded), only showing how unless `apply`.
 A body weight, length, height, rosette area or leaf number read for one
 organism is also its `organism_measurements` row (`_keep_on_the_animal`,
 that day's; blanked with the reading), listed by `/records/measurements`
-in its sheet panel, and `welfare.others_weight_loss` flags any animal
-weighed in a started experiment that is down the lab's percentage from its
-first weight there. The assistant's `experiment_add_animals` takes a
+in its sheet panel, and `welfare.others_weight_loss` flags an animal of
+an organism database with the `weights` capability (only those: not fish,
+flies, worms or plants) weighed in a started experiment and down the lab's
+percentage from its first weight there. The assistant's `experiment_add_animals` takes a
 `rack`, single `animals` (refs of the database's kinds, as a design's)
 and `start_each`;
 `/experiments/<id>/export.xlsx` and bench mode (`/experiments/<id>/bench`,

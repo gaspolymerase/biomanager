@@ -54,7 +54,7 @@
       </span>
     </a>
     <div class="set-group-head">{{ _('You') }}</div>
-    {{ pane_link('appearance', 'type', _('Appearance & language'), sub=('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
+    {{ pane_link('appearance', 'type', _('Appearance & language'), sub=(_('Solid') if ui_look == 'solid' else _('Liquid Glass')) ~ ' · ' ~ ('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
     {{ pane_link('notifications', 'bell', _('Notifications')) }}
     {% set show_assistant = api_tokens_card() or proposals_pending is not none or not current_user.expires_at %}
     {% if show_assistant %}{{ pane_link('assistant', 'sparkle', _('AI assistant & tokens')) }}{% endif %}
@@ -214,6 +214,18 @@
       {# Font and text size. The font is saved for the person; the size is the
          window's zoom, which only the Mac app lets the page set (desktop_menu.py
          DesktopApi.set_text_size), so only there is it shown. #}
+      <div class="set-title">{{ _('Look') }}</div>
+      <form method="post" class="set-group" data-autosave-form>
+        <input type="hidden" name="action" value="profile">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Look') }}</b><small>{{ _('Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Only for you.') }}</small></span>
+          <select name="ui_look" data-ui-look>
+            <option value="glass" {% if ui_look != 'solid' %}selected{% endif %}>{{ _('Liquid Glass') }}</option>
+            <option value="solid" {% if ui_look == 'solid' %}selected{% endif %}>{{ _('Solid') }}</option>
+          </select>
+        </label>
+      </form>
+
       <div class="set-title">{{ _('Text') }}</div>
       <form method="post" class="set-group" data-autosave-form>
         <input type="hidden" name="action" value="profile">
@@ -971,6 +983,11 @@
   // the Mac app, Smaller / Default / Larger set the window's zoom; elsewhere
   // the browser's zoom does it, so the row stays hidden.
   (function () {
+    var look = document.querySelector('[data-ui-look]');
+    if (look) look.addEventListener('change', function () {
+      if (look.value === 'solid') document.documentElement.setAttribute('data-look', 'solid');
+      else document.documentElement.removeAttribute('data-look');
+    });
     var font = document.querySelector('[data-ui-font]');
     if (font) font.addEventListener('change', function () {
       if (font.value === 'system' || font.value === 'inter') document.documentElement.setAttribute('data-font', font.value);

@@ -517,6 +517,82 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cjk), system-ui, sans-serif;
 }
 
+/* The Solid look (Settings → Appearance & language → Look; html
+   data-look="solid"): no wallpaper and no glass. A cool, faintly green
+   paper, white sheets edged by a line, the sidebar a second paper, text in
+   ink a step darker; shadows only on what floats. Every surface reads its
+   colour from these, so the whole app follows. */
+:root[data-look="solid"] {
+  --wall: none;
+  --color-canvas:   #F3F6F5;
+  --color-recess:   #EEF3F1;
+  --color-hairline: #DCE3E1;
+  --color-ink:      #0E1A18;
+  --color-ink-soft: #2B3735;
+  --color-muted:    #56625F;
+  --material-sidebar: #E8EFEC;
+  --material-bar:     #FFFFFF;
+  --material-popover: #FFFFFF;
+  --palette-glass:    #FFFFFF;
+  --glass:          #FFFFFF;
+  --glass-strong:   #FFFFFF;
+  --glass-fill:     #FFFFFF;
+  --glass-light:    linear-gradient(transparent, transparent);
+  --glass-glow:     transparent;
+  --glass-sheen:    transparent;
+  --glass-hi:       transparent;
+  --glass-edge:     transparent;
+  --glass-rim:      #DCE3E1;
+  --glass-ring:     #DCE3E1;
+  --glass-lo:       rgba(14, 26, 24, 0.04);
+  --glass-shadow:   0 1px 2px rgba(14, 26, 24, 0.06), 0 8px 24px rgba(14, 26, 24, 0.10);
+  --glass-lift:     0 1px 2px rgba(14, 26, 24, 0.05);
+  --glass-clear:    #E8EFEC;
+  --glass-regular:  #FFFFFF;
+  --glass-thick:    #FFFFFF;
+  --glass-solid:    #FFFFFF;
+  --sheet-glass:    #FFFFFF;
+  --sheet-head:     #FFFFFF;
+  --sheet-pin:      #FFFFFF;
+  --sheet-hover:    #F6F9F8;
+  --sheet-lift:     #E9F5F2;
+  --sheet-rule:     #EDF1F0;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-look="solid"]:not([data-theme="light"]) {
+    --color-canvas:   #111416;
+    --color-recess:   #171B1D;
+    --color-hairline: #2C3335;
+    --color-ink:      #EEF3F2;
+    --color-ink-soft: #C9D3D1;
+    --color-muted:    #9AA7A4;
+    --material-sidebar: #171B1D;
+    --material-bar:     #1C2123;
+    --material-popover: #1F2426;
+    --palette-glass:    #1F2426;
+    --glass:          #1C2123;
+    --glass-strong:   #1C2123;
+    --glass-fill:     #1C2123;
+    --glass-rim:      #2C3335;
+    --glass-ring:     #2C3335;
+    --glass-lo:       rgba(0, 0, 0, 0.3);
+    --glass-shadow:   0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --glass-lift:     0 1px 2px rgba(0, 0, 0, 0.35);
+    --glass-clear:    #171B1D;
+    --glass-regular:  #1C2123;
+    --glass-thick:    #1C2123;
+    --glass-solid:    #2A3133;
+    --sheet-glass:    #1C2123;
+    --sheet-head:     #1C2123;
+    --sheet-pin:      #1C2123;
+    --sheet-hover:    #21272A;
+    --sheet-lift:     #1E3330;
+    --sheet-rule:     #262D2F;
+  }
+}
+/* Nothing to see through, so nothing to blur (and no cost to it). */
+:root[data-look="solid"] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
 /* Reduce Transparency: every glass surface becomes solid. Increase
    Contrast: solid too, with a firmer outline. */
 @media (prefers-reduced-transparency: reduce) {

@@ -119,6 +119,26 @@ class FontTests(AppTestCase):
         self.assertNotIn('data-font="inter"', home)
 
 
+class LookTests(AppTestCase):
+    """Liquid Glass by default; Solid (no glass, no wallpaper) for whoever picks it."""
+
+    def look(self, client, value):
+        return self.autosave(client, "/settings", {"action": "profile", "ui_look": value})
+
+    def test_the_look_is_kept_per_person(self):
+        me = client_for(make_user(uniq("solid")))
+        html = self.get_ok(me, "/settings")
+        self.assertNotIn('data-look="solid"', html)
+        self.assertIn('<option value="glass" selected>', html)
+        self.look(me, "solid")
+        self.assertIn('data-look="solid"', self.get_ok(me, "/home"))
+        self.assertNotIn('data-look="solid"', self.get_ok(client_for(make_user(uniq("other"))), "/home"))
+        self.look(me, "glass")
+        self.assertNotIn('data-look="solid"', self.get_ok(me, "/home"))
+        self.look(me, "neon")
+        self.assertNotIn('data-look=', self.get_ok(me, "/home"))
+
+
 class IconRouteTests(AppTestCase):
     def test_serves_an_svg_without_signing_in(self):
         client = self.m.application.test_client()

@@ -251,7 +251,7 @@ Source: https://biomanager.org/guide/import-from-excel
 
 The page that opens each morning: what needs doing today, in three views.
 
-Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone.
+Home is where each day starts: only what needs attention, from every database you can see. Three tabs under the greeting show it three ways (or choose in **Settings → Appearance & language → Home view**); the choice is yours alone. So is the whole app's look, in **Settings → Appearance & language → Look**: **Liquid Glass**, frosted panes over a soft wallpaper, or **Solid**, white sheets on plain paper with no glass.
 
 Above them, the **Daily brief** says the day in a few words: what is due today (the first three by name, each a link), how many things are overdue, how many animals may need a look, and how many notices for you are unread. **Plan my day** opens the calendar on today.
 
@@ -1229,7 +1229,7 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 Home's card [Animals that may need a look](https://biomanager.org/guide/home-page#animals) reads a mouse experiment's records too. It says what they show, never a diagnosis:
 
-- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days; any other animal weighed in an experiment (a frog, a fish row) the same below its first weight there.
+- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days. An animal of your own database is flagged the same way, against its first weight in an experiment, once the database keeps body weights (**Body weights** on in its **Configure**); fish, flies, worms and plants are not.
 
 - **Not weighed in their experiment**: in an active experiment whose readout is body weight, an animal (a mouse, or any other organism weighed in the experiment) not weighed for longer than the longest gap between the regimen's weighing days (a *Readout day* on days 1, 4, 7: 3 days), or 7 days when it plans none or its last has passed. Animals left out of the analysis aren't counted.
 

@@ -418,5 +418,21 @@ def set_font(session, username: str, font: str) -> str:
     return font
 
 
+# The app's look: Liquid Glass over a wallpaper (the default), or Solid
+# (paper and white sheets, no glass), each person's own choice.
+LOOKS = ("glass", "solid")
+
+
+def get_look(session, username: str) -> str:
+    value = inventory_service.get_setting(session, f"look:{username}", "")
+    return value if value in LOOKS else LOOKS[0]
+
+
+def set_look(session, username: str, look: str) -> str:
+    look = look if look in LOOKS else LOOKS[0]
+    inventory_service.set_setting(session, f"look:{username}", look)
+    return look
+
+
 def is_default(glyph: str, color: str) -> bool:
     return (glyph, color) == (DEFAULT_GLYPH, DEFAULT_COLOR)

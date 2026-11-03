@@ -457,10 +457,12 @@ def _others_not_weighed(session, today: date, owner: str | None) -> list[dict]:
 
 
 def others_weight_loss(session, today: date, pct: float, owner: str | None = None) -> list[dict]:
-    """weight_loss for the animals of a started experiment in any other
-    database weighing them (an organism, a fish row): its latest body
-    weight against its first since day 1, as for a mouse in an experiment.
-    A group of animals (a vial, a cohort) has no weight of its own."""
+    """weight_loss for the animals of a started experiment in an organism
+    database that keeps body weights (its Body weights capability, turned
+    on in Configure where a lab's animals are weighed as mice are): its
+    latest body weight against its first since day 1, as for a mouse in an
+    experiment. Fish, flies, worms and plants are not: a loss of weight is
+    a humane endpoint for a rodent, not a reading of theirs."""
     from . import experiments as ex
     from .models import Experiment, ExperimentReading
     out = []
@@ -468,7 +470,8 @@ def others_weight_loss(session, today: date, pct: float, owner: str | None = Non
         if _is_colony(exp) or exp.start_date is None or exp.start_date > today:
             continue
         place = ex.place_for(session, exp.db)
-        if place is None or not ex.weighs(exp, place):
+        if place is None or place.family != "organism" or place.mv is None or not place.mv.has("weights") \
+                or not ex.weighs(exp, place):
             continue
         weights: dict[str, list] = {}
         for key, day, grams in session.execute(select(
@@ -481,7 +484,7 @@ def others_weight_loss(session, today: date, pct: float, owner: str | None = Non
         if not weights:
             continue
         for sub in ex.subjects(session, exp, place):
-            if sub.kind not in ("organism", "fish") or not sub.alive or sub.left_out.strip():
+            if sub.kind != "organism" or not sub.alive or sub.left_out.strip():
                 continue
             ws = weights.get(sub.key) or []
             if len(ws) < 2 or not ws[0][1]:
@@ -490,8 +493,7 @@ def others_weight_loss(session, today: date, pct: float, owner: str | None = Non
             loss = (first - last) / first * 100
             if loss < pct - 1e-9:
                 continue
-            rec = sub.record
-            whose = (rec.tank.owner if sub.kind == "fish" and rec.tank else getattr(rec, "owner", "")) or ""
+            whose = getattr(sub.record, "owner", "") or ""
             if owner and whose != owner and (exp.owner_username or "") != owner:
                 continue
             out.append({"animal": sub.kind, "label": sub.label, "ref": {"kind": _REF_KIND[sub.kind], "id": sub.id},
@@ -525,7 +527,8 @@ def checks(session, today: date | None = None, owner: str | None = None, pct: fl
         + others_weight_loss(session, today, pct, owner)
     if features.get("colony", True) or losing:
         check("weight_loss", f"Animals down {pct:g}% or more: a mouse from its peak weight in the last {WINDOW_DAYS} "
-                             "days, or any animal from its first weight in an experiment that started", "high",
+                             "days or its first weight in an experiment that started; an animal of a database "
+                             "keeping body weights from its first weight in an experiment", "high",
               losing,
               "Say what the records show and check them against the protocol's humane endpoints; nothing is "
               "proposed for this.")

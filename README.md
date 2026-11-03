@@ -1210,7 +1210,8 @@ The interface follows Apple's Liquid Glass design, over a softly tinted
 wallpaper: the sidebar, the row of tabs and each page's buttons float as
 clear glass over the page, which scrolls beneath them; cards are a thicker
 glass, and sheets and notebook pages the thickest, so the records stay as
-easy to read as paper. On a Mac the desktop app has no title bar; its close,
+easy to read as paper. Prefer no glass? **Settings → Appearance & language →
+Look → Solid** gives white sheets on plain paper instead, for you alone. On a Mac the desktop app has no title bar; its close,
 minimise and zoom buttons sit at the top of the sidebar, followed, as in
 Safari, by buttons to hide the sidebar, search everything, and go back and
 forward. The sidebar starts narrow, a column of icons: hover one to see its

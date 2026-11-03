@@ -475,7 +475,9 @@ class EveryAnimalLooked(Base):
     def test_an_organism_weighed_keeps_its_weight_and_its_loss_is_flagged(self):
         from app import welfare
         from app.db import SessionLocal
-        key = self.make_organism_module(self.a)
+        # Flagged only where the database keeps body weights (its Body weights capability).
+        key = self.make_organism_module(self.a, capabilities=[
+            "housing", "housing_grid", "individuals", "group_counts", "lines", "cohorts", "weights"])
         animal = self.make_animal(self.a, key)
         exp = self.new(f"organisms:{key}", start=TODAY - timedelta(days=3))
         self.add(exp, "one", str(animal))
@@ -490,6 +492,16 @@ class EveryAnimalLooked(Base):
         mine = [x for x in found if x["ref"] == {"kind": "org_animal", "id": animal}]
         self.assertEqual(len(mine), 1)
         self.assertEqual((mine[0]["peak_g"], mine[0]["latest_g"], mine[0]["loss_pct"]), (30.0, 24.0, 20.0))
+        # The same weights in a database that doesn't keep body weights: not flagged.
+        plain = self.make_organism_module(self.a)
+        other = self.make_animal(self.a, plain)
+        exp2 = self.new(f"organisms:{plain}", start=TODAY - timedelta(days=3))
+        self.add(exp2, "one", str(other))
+        self.read(exp2, TODAY - timedelta(days=3), {f"organism:{other}": "30"})
+        self.read(exp2, TODAY, {f"organism:{other}": "24"})
+        with app.test_request_context(), SessionLocal() as s:
+            self.assertFalse([x for x in welfare.others_weight_loss(s, TODAY, 15)
+                              if x["ref"] == {"kind": "org_animal", "id": other}])
         # Blanking a day's weight takes it off the animal too.
         self.read(exp, TODAY, {subject: ""})
         kept = self.a.get(f"/records/measurements?kind=org_animal&id={animal}").get_json()["measurements"]
