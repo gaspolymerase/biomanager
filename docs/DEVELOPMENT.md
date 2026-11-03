@@ -565,7 +565,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   most two), and a toast names the first and last rows filled.
 - A sheet card with `data-dt-views="<name>"` (every database's main sheet)
   gets saved views, filter chips and who is here; `data-dt-inspector` (with
-  `mice` or `cages`, its rack drawn too) the Inspector. All three are
+  `mice` or `cages`, its rack drawn too) the Inspector, and `data-dt-kind`
+  (a `lookup.RECORD_KINDS` kind: mouse, cage, plasmid, stock_unit…) its
+  History tab, from `/records/history` (`lookup.history`, as the API's
+  `/history`: your own changes, an admin everyone's). All three are
   `static/sheet-views.js`, on the sheet's controller (`BioSheets.sheet(el)`:
   `columns()`, `columnValues()`, `setFields()`, `state()`, `applyState()`).
   A filter chip is `{key, value, label}`, a column's `data-sort-key` that

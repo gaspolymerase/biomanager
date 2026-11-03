@@ -517,6 +517,7 @@
 /racks/<key>/<int:rack_id>/layout	rack_layout.preview	POST
 /rail/peek	rail_peek.peek	GET
 /ready	lab.ready	GET
+/records/history	record_history	GET
 /register	register	GET POST
 /restore-lab	restore_lab	GET POST
 /samples	samples	GET

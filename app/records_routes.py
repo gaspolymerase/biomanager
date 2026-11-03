@@ -622,6 +622,28 @@ def _undo_back() -> str:
     """Undo from Settings → History goes back there; from Batch history, there."""
     return url_for("settings", _anchor="history") if request.form.get("from") == "settings" else url_for("batches_view")
 
+@app.route("/records/history")
+@login_required
+def record_history():
+    """One record's changes, newest first, for the History tab of a sheet's
+    side panel (static/sheet-views.js): ?kind=mouse&id=12, the kinds and
+    the rule of whose changes show as the API's /history (lookup.history)."""
+    from . import lookup
+    kind = (request.args.get("kind") or "").strip()
+    try:
+        rid = int(request.args.get("id") or 0)
+    except ValueError:
+        rid = 0
+    if not kind or rid < 1:
+        return jsonify({"error": "Send kind and id."}), 400
+    with SessionLocal() as db_session:
+        try:
+            row = lookup.record(db_session, kind, {"kind": kind, "id": rid})
+        except (LookupError, KeyError):
+            return jsonify({"error": "No such record."}), 404
+        return jsonify(lookup.history(db_session, kind, row, 30))
+
+
 @app.route("/audit")
 @admin_required
 def audit_log_view():

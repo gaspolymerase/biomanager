@@ -12,8 +12,12 @@
  *                        the values it holds, for a chip that keeps only
  *                        those rows; × takes it off. Chips add up.
  *   data-dt-inspector    an Inspector button: a panel beside the sheet with
- *                        every column of the row you last clicked, and, for
- *                        a mouse or a cage, its rack with its place lit.
+ *                        the row you last clicked: its name and pills, Open,
+ *                        ↑ ↓ to the row above or below, every other column,
+ *                        and, for a mouse or a cage, its rack with its place
+ *                        lit. With data-dt-kind (mouse, cage, plasmid… as
+ *                        lookup.RECORD_KINDS) it has a History tab too, from
+ *                        /records/history.
  */
 (function () {
   'use strict';
@@ -372,37 +376,58 @@
       if (on) draw();
     };
 
+    // Which record a row is, for its History tab: the card names the kind
+    // (data-dt-kind, as lookup.RECORD_KINDS has it) and each row its id.
+    const historyKind = card.dataset.dtKind || '';
+    let tab = 'overview';
+
+    const visibleRows = () => sheet.filtered.filter((tr) => !tr._stub && tr.isConnected && tr.style.display !== 'none');
+    const step = (by) => {
+      const rows = visibleRows();
+      const at = rows.indexOf(row);
+      const next = rows[Math.max(0, Math.min(rows.length - 1, (at < 0 ? 0 : at + by)))];
+      if (!next || next === row) return;
+      row = next;
+      row.scrollIntoView({ block: 'nearest' });
+      draw();
+    };
+    const iconButton = (icon, label, onClick) => {
+      const b = el('button', 'dt-inspector-icon');
+      b.type = 'button';
+      b.innerHTML = SVG(icon);
+      b.setAttribute('aria-label', label);
+      b.title = label;
+      b.addEventListener('click', onClick);
+      return b;
+    };
+
     const draw = () => {
       if (!wrap.classList.contains('is-open')) return;
       if (!row || !row.isConnected || row.style.display === 'none') {
         row = sheet.filtered.find((tr) => !tr._stub && tr.isConnected) || null;
       }
       panel.replaceChildren();
-      const close = el('button', 'dt-inspector-close');
-      close.type = 'button';
-      close.innerHTML = SVG('close');
-      close.setAttribute('aria-label', t('Close the inspector'));
-      close.addEventListener('click', () => open(false));
-      panel.appendChild(close);
+      const top = el('div', 'dt-inspector-top');
+      top.appendChild(el('div', 'dt-inspector-kicker', (sheet.headers[1] && sheet._columnLabel(sheet.headers[1])) || ''));
+      const nav = el('div', 'dt-inspector-nav');
+      if (row) {
+        nav.appendChild(iconButton('chevron-up', t('Previous row'), () => step(-1)));
+        nav.appendChild(iconButton('chevron-down', t('Next row'), () => step(1)));
+      }
+      nav.appendChild(iconButton('close', t('Close the inspector'), () => open(false)));
+      top.appendChild(nav);
+      panel.appendChild(top);
       if (!row) { panel.appendChild(el('p', 'dt-inspector-empty', t('Click a row to see it here.'))); return; }
       sheet.rows.forEach((tr) => tr.classList.toggle('is-inspected', tr === row));
+
       const idCell = row.querySelector('td.sheet-pin-1') || row.cells[1] || row.cells[0];
       const head = el('div', 'dt-inspector-head');
-      head.appendChild(el('div', 'dt-inspector-kicker', (sheet.headers[1] && sheet._columnLabel(sheet.headers[1])) || ''));
       head.appendChild(el('div', 'dt-inspector-title', idCell ? idCell.textContent.replace(/\s+/g, ' ').trim() : ''));
       panel.appendChild(head);
 
-      const opener = row.querySelector('.sheet-actions [data-mouse-edit], .sheet-actions [data-record-edit], .sheet-actions button[title]');
-      if (opener) {
-        const edit = el('button', 'btn btn-sm');
-        edit.type = 'button';
-        edit.innerHTML = SVG('edit');
-        edit.appendChild(document.createTextNode(' ' + t('Open')));
-        edit.addEventListener('click', () => opener.click());
-        head.appendChild(edit);
-      }
-
-      const list = el('dl', 'dt-inspector-fields');
+      // The row's pills (status, sex, shared) as the record's labels, under its name.
+      const fields = [];
+      const chips = el('div', 'dt-inspector-chips');
       Array.from(row.cells).forEach((td) => {
         const col = sheet._col(td);
         const th = sheet.headers[col >= 0 ? col : td.cellIndex];
@@ -411,15 +436,98 @@
         const label = sheet._columnLabel(th);
         if (!label) return;
         const shown = cellShown(td);
-        if (!shown.textContent.trim() || shown.textContent.trim() === '–') return;
+        const text = shown.textContent.trim();
+        if (!text || text === '–') return;
+        if (shown.nodeType === 1 && /(^| )(sex-pill|status-pill|scope-pill)( |$)/.test(shown.className)) {
+          shown.title = label;
+          chips.appendChild(shown);
+          return;
+        }
+        fields.push([label, shown]);
+      });
+      if (chips.childNodes.length) panel.appendChild(chips);
+
+      const opener = row.querySelector('.sheet-actions [data-mouse-edit], .sheet-actions [data-record-edit], .sheet-actions button[title]');
+      if (opener) {
+        const actions = el('div', 'dt-inspector-actions');
+        const edit = el('button', 'btn btn-primary btn-sm');
+        edit.type = 'button';
+        edit.innerHTML = SVG('edit');
+        edit.appendChild(document.createTextNode(' ' + t('Open')));
+        edit.addEventListener('click', () => opener.click());
+        actions.appendChild(edit);
+        panel.appendChild(actions);
+      }
+
+      const id = row.dataset.id;
+      const hasHistory = !!historyKind && /^\d+$/.test(id || '');
+      if (!hasHistory) tab = 'overview';
+      if (hasHistory) {
+        const tabs = el('div', 'dt-inspector-tabs');
+        tabs.setAttribute('role', 'tablist');
+        [['overview', t('Overview')], ['history', t('History')]].forEach(([key, label]) => {
+          const b = el('button', 'dt-inspector-tab', label);
+          b.type = 'button';
+          b.setAttribute('role', 'tab');
+          b.setAttribute('aria-selected', tab === key ? 'true' : 'false');
+          b.addEventListener('click', () => { if (tab !== key) { tab = key; draw(); } });
+          tabs.appendChild(b);
+        });
+        panel.appendChild(tabs);
+      }
+
+      if (tab === 'history') { history(panel, row, id); return; }
+
+      const block = el('section', 'dt-inspector-block');
+      block.appendChild(el('h3', 'dt-inspector-label', t('Details')));
+      const list = el('dl', 'dt-inspector-fields');
+      fields.forEach(([label, shown]) => {
         list.append(el('dt', null, label));
         const dd = el('dd');
         dd.appendChild(shown);
         list.append(dd);
       });
-      panel.appendChild(list);
+      block.appendChild(list);
+      if (fields.length) panel.appendChild(block);
 
       if (kind === 'mice' || kind === 'cages') rackMap(panel, row);
+    };
+
+    const word = { create: t('Added'), insert: t('Added'), update: t('Changed'), delete: t('Deleted') };
+    const plainField = (name) => {
+      const words = String(name).replace(/_fk$/, '').replace(/_/g, ' ');
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    };
+    const shownValue = (v) => (v == null || v === '' ? '–' : (typeof v === 'object' ? JSON.stringify(v) : String(v)));
+    const history = (panel, tr, id) => {
+      const block = el('section', 'dt-inspector-block dt-inspector-history');
+      const note = el('p', 'dt-inspector-empty', t('Loading…'));
+      block.appendChild(note);
+      panel.appendChild(block);
+      fetch(`/records/history?kind=${encodeURIComponent(historyKind)}&id=${encodeURIComponent(id)}`,
+        { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        .then((data) => {
+          if (tr !== row || tab !== 'history') return;
+          block.replaceChildren();
+          const entries = (data && data.entries) || [];
+          if (!entries.length) block.appendChild(el('p', 'dt-inspector-empty', t('No changes to it yet.')));
+          const list = el('ol', 'dt-history');
+          entries.forEach((e) => {
+            const li = el('li');
+            li.appendChild(el('div', 'dt-history-what', word[e.action] || e.action));
+            Object.entries(e.changes || {}).slice(0, 6).forEach(([field, pair]) => {
+              const [from, to] = Array.isArray(pair) ? pair : [null, pair];
+              li.appendChild(el('div', 'dt-history-change',
+                e.action === 'update' ? `${plainField(field)}: ${shownValue(from)} → ${shownValue(to)}` : `${plainField(field)}: ${shownValue(to == null ? from : to)}`));
+            });
+            const when = e.at ? new Date(e.at) : null;
+            li.appendChild(el('div', 'dt-history-when', [e.by, when && !isNaN(when) ? when.toLocaleString() : ''].filter(Boolean).join(' · ')));
+            list.appendChild(li);
+          });
+          if (entries.length) block.appendChild(list);
+          if (data && data.everyone === false) block.appendChild(el('p', 'dt-inspector-empty', t('Only your own changes show here; an admin sees everyone’s.')));
+        });
     };
 
     const rackMap = (panel, tr) => {
@@ -427,13 +535,13 @@
       const rackId = data.cage_rack || data.rack_id;
       const cage = String(data.cage_id || data._label || '');
       if (!rackId) return;
-      const box = el('section', 'dt-inspector-rack');
+      const box = el('section', 'dt-inspector-block dt-inspector-rack');
       panel.appendChild(box);
       racks().then((grid) => {
         if (!grid || tr !== row) return;
         const rack = (grid.racks || []).find((r) => String(r.id) === String(rackId));
         if (!rack) return;
-        box.appendChild(el('div', 'dt-inspector-label', rack.name + (data.cage_position ? ' · ' + data.cage_position : (data.position ? ' · ' + data.position : ''))));
+        box.appendChild(el('h3', 'dt-inspector-label', t('Where it lives') + ' · ' + rack.name + (data.cage_position ? ' · ' + data.cage_position : (data.position ? ' · ' + data.position : ''))));
         const cells = el('div', 'dt-rack-mini');
         cells.style.gridTemplateColumns = `repeat(${rack.cols}, minmax(0, 1fr))`;
         const at = new Map();

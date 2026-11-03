@@ -119,7 +119,7 @@
          scrolls sideways instead, with the ID column and row actions
          pinned. #}
       <section class="data-table-card sheet dt-held" data-table-id="{{ mouse_table_id }}"
-               data-dt-views="colony-mice" data-dt-inspector="mice"
+               data-dt-views="colony-mice" data-dt-inspector="mice" data-dt-kind="mouse"
                {% if mouse_rows_url %}data-dt-rows-url="{{ mouse_rows_url }}"{% endif %}
                data-selection-scope="mice"
                data-selection-noun="mouse" data-selection-noun-plural="mice">
@@ -414,7 +414,7 @@
              all stay on the page (data-dt-keep-rows): the cards view, Open
              all and a scanned cage look for them there. #}
           <section class="data-table-card sheet cage-sheet dt-held" data-table-id="cages-v3" data-dt-keep-rows
-                   data-dt-views="colony-cages" data-dt-inspector="cages"
+                   data-dt-views="colony-cages" data-dt-inspector="cages" data-dt-kind="cage"
                    {% if cage_rows_url %}data-dt-rows-url="{{ cage_rows_url }}"{% endif %}
                    data-noun="cage" data-noun-plural="cages" data-export-name="cages"
                    data-autosave-sheet data-selection-scope="cages"

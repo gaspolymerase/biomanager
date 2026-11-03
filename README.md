@@ -972,7 +972,9 @@ database has a name of its own (one another database has is refused), so
       view</b> keeps a search, its chips, a sort and the columns shown
       under a name, a tab above the sheet that follows you to any
       computer. <b>Inspector</b> shows the row you click in full beside
-      the sheet, a mouse's or cage's rack drawn with its place lit, and
+      the sheet, with arrows to the row above or below, a mouse's or
+      cage's rack drawn with its place lit, and a History tab of the
+      record's changes, and
       the initials of anyone else with the sheet open show beside the
       views. Drag a column's
       heading to put the columns you need first (or use the arrows under
