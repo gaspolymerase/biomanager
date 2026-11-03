@@ -49,6 +49,12 @@ a cage or a litter, a cage into a rack position, a mouse rack's own
 dialog): the colony's pages, the API and the spreadsheet import all call
 it, so none of them imports another's pages for it.
 
+What the pages take as a form, the API gives as plain values:
+`colony.change_mouse_values` (`MOUSE_FIELDS`) and `colony.change_mouse_rack`
+build the form the pages' rules read, so the API never does. A value of
+the wrong shape raises `ValueError` (the API's 400); a change the rules
+refuse comes back as the sheet would say it.
+
 `app/services.py` is what is left of the shared helpers from before the
 pages had modules, and its parts are moving out by topic.
 `app/litter_dates.py` is when a litter is due (the lab's weaning and
@@ -3258,8 +3264,9 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   `experiments.payload` without `PAGE_ONLY` (the step kinds, regimens,
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
-  fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `colony.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  calls `colony.change_mouse_values`, which overlays the fields sent on the
+  mouse as `mouse_display_row` shows it and calls `colony.change_mouse`, as
+  the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;

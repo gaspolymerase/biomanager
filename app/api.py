@@ -45,6 +45,7 @@ from werkzeug.datastructures import MultiDict
 
 from .formutil import like_pattern
 from . import access, groups, lab
+from .colony import MOUSE_FIELDS
 from .db import SessionLocal
 from .i18n import gettext
 from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, InventoryRack, LitterRecord,
@@ -398,21 +399,14 @@ def _mouse_experiments(session, m: MouseRecord) -> list[dict]:
     return out
 
 
-MOUSE_FIELDS = ("sex", "genotype", "transgenes", "status", "owner", "note", "cage", "litter", "date_of_death")
-
-
 @bp.patch("/mice/<int:mouse_id>")
 def mouse_update(mouse_id: int):
-    """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
-    "version" (as the mouse was read), a mouse changed since is refused (409)
-    instead of overwritten."""
-    from .colony import change_mouse
-    from .services import mouse_display_row, split_genotype
+    """Change a mouse: any of colony.MOUSE_FIELDS, the rest left as they are.
+    With "version" (as the mouse was read), a mouse changed since is refused
+    (409) instead of overwritten."""
+    from .colony import change_mouse_values
     data = dict(_json())
     seen = data.pop("version", None)
-    unknown = sorted(set(data) - set(MOUSE_FIELDS))
-    if unknown:
-        abort(400, f"A mouse has no {', '.join(unknown)} to change; it has {', '.join(MOUSE_FIELDS)}.")
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
         if not access.can_edit_mouse(m):
@@ -420,40 +414,12 @@ def mouse_update(mouse_id: int):
         if seen is not None and seen != m.sync_version:
             abort(409, f"Mouse {m.mouse_id} was changed since you read it (by {m.updated_by or 'someone'}). "
                        "Read it again, then make the change.")
-        row = mouse_display_row(m)
-        form = MultiDict({"gender": row["gender"] or "", "status": row["status"] or "", "owner": row["owner"] or "",
-                          "note": row["note"] or "",
-                          **{f"transgene_{i}": row[f"transgene_{i}"] or "" for i in range(1, 5)}})
-        if "sex" in data:
-            sex = str(data["sex"] or "").strip().upper()
-            if sex not in ("F", "M", ""):
-                abort(400, "sex is F, M or empty.")
-            form["gender"] = sex
-        if "genotype" in data or "transgenes" in data:
-            parts = data["transgenes"] if "transgenes" in data else split_genotype(str(data["genotype"] or ""))
-            if not isinstance(parts, list) or len(parts) > 4:
-                abort(400, "transgenes is a list of at most four.")
-            for i in range(1, 5):
-                form[f"transgene_{i}"] = str(parts[i - 1]).strip() if i <= len(parts) else ""
-        for key in ("status", "note"):
-            if key in data:
-                form[key] = str(data[key] or "")
-        if "owner" in data:
-            form["owner"] = str(data["owner"] or "").strip()
-        if "cage" in data:
-            form["cage_id"] = str(data["cage"] or "")
-        if "litter" in data:
-            form["litter_id"] = str(data["litter"] or "")
-        if "date_of_death" in data:
-            raw = str(data["date_of_death"] or "")
-            try:
-                if raw:
-                    date.fromisoformat(raw[:10])
-            except ValueError:
-                abort(400, "date_of_death is a date, 2026-09-28.")
-            form["date_of_death"] = raw[:10]
         # The same change, with the same rules, as a row of the mouse sheet.
-        done = change_mouse(s, m, form)
+        try:
+            done = change_mouse_values(s, m, data)
+        except ValueError as error:
+            s.rollback()
+            abort(400, str(error))
         if done.refused:
             s.rollback()
             abort(400, done.refused)
@@ -581,7 +547,7 @@ def rack_update(name: str):
     now) or "keep_cells" (each keeps its row and column, and its name
     changes); without one it is refused (409) with what each would do."""
     from . import rack_layout
-    from .colony import mouse_rack_from_form
+    from .colony import change_mouse_rack
     from .models import MouseRack
     _feature("colony")
     data = _json()
@@ -598,18 +564,17 @@ def rack_update(name: str):
             naming = rack_layout.json_naming(data, r)
         except ValueError:
             abort(400, "naming is {mode, rows, cols, order, separator, start}.")
-        form = MultiDict({"name": str(data.get("name", r.name) or ""), "rows": str(data.get("rows", r.rows)),
-                          "cols": str(data.get("cols", r.cols)), "room": str(data.get("room", r.room) or ""),
-                          **{f"naming_{k}": str(v) for k, v in naming.items()},
-                          rack_layout.FIELD: str(data.get("cages") or "")})
-        if form[rack_layout.FIELD] and form[rack_layout.FIELD] not in rack_layout.CHOICES:
+        rows, cols, cages = str(data.get("rows", r.rows)), str(data.get("cols", r.cols)), str(data.get("cages") or "")
+        if cages and cages not in rack_layout.CHOICES:
             abort(400, "cages is keep_names or keep_cells.")
-        if not form[rack_layout.FIELD] and form["rows"].isdigit() and form["cols"].isdigit():
-            new = rack_layout.Layout(max(1, min(26, int(form["rows"]))), max(1, min(40, int(form["cols"]))), naming)
+        if not cages and rows.isdigit() and cols.isdigit():
+            # What each choice would do, for the client to pick from.
+            new = rack_layout.Layout(max(1, min(26, int(rows))), max(1, min(40, int(cols))), naming)
             preview = rack_layout.plan(s, rack_layout.kind("mouse_rack"), r, new)
             if preview["affected"]:
                 return _error(409, rack_layout.refusal(preview), preview=rack_layout.public(preview))
-        error, change = mouse_rack_from_form(s, r, form)
+        error, change = change_mouse_rack(s, r, name=data.get("name", r.name), rows=rows, cols=cols,
+                                          room=data.get("room", r.room), naming=naming, cages=cages)
         if error:
             s.rollback()
             abort(400, error)

@@ -19,6 +19,7 @@ from datetime import date
 
 from flask import flash, g, url_for
 from sqlalchemy import func, select
+from werkzeug.datastructures import MultiDict
 
 from . import access, custom_fields, positions, rack_layout, stewardship
 from .days import fmt_day
@@ -26,8 +27,8 @@ from .formutil import form_changed
 from .i18n import gettext, ngettext
 from .models import CageRecord, LitterRecord, MouseRack, MouseRecord
 from .services import (add_notification, apply_status_rules, cage_is_active, current_lab_usernames, get_or_create_cage,
-                       get_or_create_litter, next_litter_id, next_mouse_id, parse_date, slot_order,
-                       sync_mouse_transgenes, transgene_values_from_form)
+                       get_or_create_litter, mouse_display_row, next_litter_id, next_mouse_id, parse_date, slot_order,
+                       split_genotype, sync_mouse_transgenes, transgene_values_from_form)
 from .web import stamp_updated
 
 
@@ -225,6 +226,57 @@ def change_mouse(db_session, mouse: MouseRecord, form, confirm_cohort: bool = Fa
     return done
 
 
+# What a mouse is changed by from outside the pages (the API, so an
+# assistant), as plain values.
+MOUSE_FIELDS = ("sex", "genotype", "transgenes", "status", "owner", "note", "cage", "litter", "date_of_death")
+
+
+def change_mouse_values(db_session, mouse: MouseRecord, values: dict) -> MouseChange:
+    """change_mouse with plain `values` by MOUSE_FIELDS name; a field left out
+    stays as it is. "transgenes" is a list of at most four, or "genotype" the
+    one text ("Cre/+; Ai14/+"); "cage" and "litter" are their codes. Raises
+    ValueError, in words, for a field or value of the wrong shape; a change
+    the rules refuse comes back as MouseChange.refused, as change_mouse's."""
+    unknown = sorted(set(values) - set(MOUSE_FIELDS))
+    if unknown:
+        raise ValueError(f"A mouse has no {', '.join(unknown)} to change; it has {', '.join(MOUSE_FIELDS)}.")
+    # The change as a row of the mouse sheet sends it, with no "_was" copies:
+    # every field below counts, the ones not asked for as the mouse has them.
+    row = mouse_display_row(mouse)
+    form = MultiDict({"gender": row["gender"] or "", "status": row["status"] or "", "owner": row["owner"] or "",
+                      "note": row["note"] or "",
+                      **{f"transgene_{i}": row[f"transgene_{i}"] or "" for i in range(1, 5)}})
+    if "sex" in values:
+        sex = str(values["sex"] or "").strip().upper()
+        if sex not in ("F", "M", ""):
+            raise ValueError("sex is F, M or empty.")
+        form["gender"] = sex
+    if "genotype" in values or "transgenes" in values:
+        parts = values["transgenes"] if "transgenes" in values else split_genotype(str(values["genotype"] or ""))
+        if not isinstance(parts, list) or len(parts) > 4:
+            raise ValueError("transgenes is a list of at most four.")
+        for i in range(1, 5):
+            form[f"transgene_{i}"] = str(parts[i - 1]).strip() if i <= len(parts) else ""
+    for key in ("status", "note"):
+        if key in values:
+            form[key] = str(values[key] or "")
+    if "owner" in values:
+        form["owner"] = str(values["owner"] or "").strip()
+    if "cage" in values:
+        form["cage_id"] = str(values["cage"] or "")
+    if "litter" in values:
+        form["litter_id"] = str(values["litter"] or "")
+    if "date_of_death" in values:
+        raw = str(values["date_of_death"] or "")
+        try:
+            if raw:
+                date.fromisoformat(raw[:10])
+        except ValueError:
+            raise ValueError("date_of_death is a date, 2026-09-28.") from None
+        form["date_of_death"] = raw[:10]
+    return change_mouse(db_session, mouse, form)
+
+
 def create_transfer_copy(db_session, source_mouse: MouseRecord, recipient_username: str, sender_username: str | None) -> MouseRecord:
     copied_mouse = MouseRecord(
         mouse_id=next_mouse_id(db_session),
@@ -284,6 +336,16 @@ def mouse_rack_from_form(db_session, rack, form) -> tuple[str | None, dict | Non
         rack.naming = json.dumps(new.naming)
         rack_layout.apply(db_session, change)
     return None, change
+
+
+def change_mouse_rack(db_session, rack, *, name, rows, cols, room, naming: dict,
+                      cages: str = "") -> tuple[str | None, dict | None]:
+    """mouse_rack_from_form with plain values (the API's): `naming` a scheme
+    ({mode, rows, cols, order, separator, start}), `cages` keep_names or
+    keep_cells when the new layout moves cages in it."""
+    return mouse_rack_from_form(db_session, rack, MultiDict({
+        "name": str(name or ""), "rows": str(rows), "cols": str(cols), "room": str(room or ""),
+        **{f"naming_{k}": str(v) for k, v in naming.items()}, rack_layout.FIELD: str(cages or "")}))
 
 
 def apply_cage_position(db_session, cage, rack_raw, position_raw) -> str | None:
