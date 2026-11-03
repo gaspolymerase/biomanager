@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{# The lab's vendors (app/vendors.py): every vendor its records name, what
+   the lab keeps about each, and for an admin or a facility manager,
+   renaming one or merging spellings everywhere they are written. #}
+
+{% block page_title %}{{ _('Vendors') }}{% endblock %}
+{% block page_heading %}{{ _('Vendors') }}{% endblock %}
+{% block page_subtitle %}{{ _('Every vendor the lab orders from or keeps stock of, with its website, contact and your customer number.') }}{% endblock %}
+{% block page_shell_class %}shell-page-wide workbench{% endblock %}
+
+{% block page_actions %}
+  {% if orders_key %}<a class="btn" href="{{ url_for('inventory.module', key=orders_key) }}">{{ icon('cart') }} {{ _('Orders') }}</a>{% endif %}
+  <button type="button" class="btn btn-primary" data-vendor-new>{{ icon('plus') }} {{ _('New vendor') }}</button>
+{% endblock %}
+
+{% block content %}
+<section class="data-table-card vendors" data-vendors>
+  <div class="vendors-bar">
+    <label class="vendors-search">{{ icon('search') }}
+      <input type="search" placeholder="{{ _('Find a vendor') }}" aria-label="{{ _('Find a vendor') }}" data-vendor-find></label>
+    <span class="vendors-count">{{ ngettext('%(num)s vendor', '%(num)s vendors', vendors|length) }}</span>
+  </div>
+  {% if vendors %}
+    <div class="dt-scroll">
+      <table class="dt vendors-table">
+        <thead>
+          <tr>
+            {% if can_rename %}<th class="vendors-tick"><span class="sr-only">{{ _('Tick to merge') }}</span></th>{% endif %}
+            <th>{{ _('Vendor') }}</th>
+            <th>{{ _('Website') }}</th>
+            <th>{{ _('Contact') }}</th>
+            <th>{{ _('Customer number') }}</th>
+            <th class="vendors-num">{{ _('Orders') }}</th>
+            <th class="vendors-num">{{ _('Other records') }}</th>
+            <th class="vendors-num">{{ _('Last 12 months') }}</th>
+            <th>{{ _('Last ordered') }}</th>
+            <th><span class="sr-only">{{ _('Edit') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vendors %}
+            {% set d = v.details %}
+            <tr data-vendor-row data-find="{{ ([v.name] + v.others)|join(' ')|lower }}">
+              {% if can_rename %}<td class="vendors-tick"><input type="checkbox" value="{{ v.name }}" aria-label="{{ _('Tick %(name)s to merge', name=v.name) }}" data-vendor-tick></td>{% endif %}
+              <td class="vendors-name">
+                {{ v.name }}
+                {% if v.others %}<span class="vendors-also">{{ _('Also written: %(names)s', names=v.others|join(', ')) }}</span>{% endif %}
+              </td>
+              <td>{% if v.website %}<a href="{{ v.website }}" target="_blank" rel="noopener noreferrer">{{ d.website }}</a>{% endif %}</td>
+              <td class="vendors-contact">
+                {% if d and d.contact %}<span>{{ d.contact }}</span>{% endif %}
+                {% if d and d.email %}<a href="mailto:{{ d.email }}">{{ d.email }}</a>{% endif %}
+                {% if d and d.phone %}<span class="text-muted">{{ d.phone }}</span>{% endif %}
+              </td>
+              <td>{{ d.customer_number if d else '' }}</td>
+              <td class="vendors-num">{{ v.orders or '' }}</td>
+              <td class="vendors-num">{{ v.records or '' }}</td>
+              <td class="vendors-num">{{ amount_text(v.spent, currency) if v.spent else '' }}</td>
+              <td class="text-muted">{{ v.last_ordered|day if v.last_ordered else '' }}</td>
+              <td class="vendors-edit">
+                <button type="button" class="btn btn-sm" data-vendor-edit
+                        data-payload="{{ {'was': v.name, 'name': v.name, 'website': d.website if d else '', 'contact': d.contact if d else '',
+                                         'email': d.email if d else '', 'phone': d.phone if d else '',
+                                         'customer_number': d.customer_number if d else '', 'notes': d.notes if d else ''} | tojson | forceescape }}">{{ icon('edit') }} {{ _('Edit') }}</button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vendors-empty">{{ _('No vendors yet. A vendor is listed here once an order or a record names it, or once you add it with New vendor.') }}</p>
+  {% endif %}
+  <p class="vendors-foot">{{ _('Spellings that differ only in capitals or spaces are one vendor. Last 12 months is what its orders cost, from each order\'s Price.') }}</p>
+</section>
+
+{% if can_rename %}
+  {# Ticked rows: merged into one name, on every record. #}
+  <form method="post" action="{{ url_for('vendors.merge') }}" class="vendors-merge" data-vendor-merge hidden>
+    <span data-vendor-merge-count></span>
+    <label>{{ _('Keep the name') }}
+      <select name="into" data-vendor-merge-into></select></label>
+    <label>{{ _('or type a new one') }} <input type="text" name="into_other" maxlength="120"></label>
+    <span data-vendor-merge-names></span>
+    <button type="submit" class="btn btn-primary btn-sm">{{ icon('layers') }} {{ _('Merge') }}</button>
+  </form>
+{% endif %}
+
+<dialog id="vendor-dialog" class="record-dialog" aria-labelledby="vendor-dialog-title">
+  <form method="post" action="{{ url_for('vendors.save') }}">
+    <header class="record-dialog-head">
+      <div>
+        <h3 id="vendor-dialog-title" data-vendor-title>{{ _('New vendor') }}</h3>
+        {% if can_rename %}
+          <p class="record-dialog-sub">{{ _('A new name here renames the vendor on every order and record.') }}</p>
+        {% endif %}
+      </div>
+      <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+    </header>
+    <div class="record-dialog-body">
+      <input type="hidden" name="was">
+      <label class="record-wide"><span>{{ _('Name') }}</span> <input name="name" maxlength="120" required autocomplete="off"></label>
+      <label class="record-wide"><span>{{ _('Website') }}</span> <input name="website" maxlength="300" placeholder="www.example.com" autocomplete="off"></label>
+      <label><span>{{ _('Contact') }}</span> <input name="contact" maxlength="200" autocomplete="off"></label>
+      <label><span>{{ _('Email') }}</span> <input type="email" name="email" maxlength="200" autocomplete="off"></label>
+      <label><span>{{ _('Phone') }}</span> <input name="phone" maxlength="80" autocomplete="off"></label>
+      <label><span>{{ _('Customer number') }}</span> <input name="customer_number" maxlength="120" autocomplete="off"></label>
+      <label class="record-wide"><span>{{ _('Notes') }}</span> <textarea name="notes" rows="3"></textarea></label>
+    </div>
+    <footer class="record-dialog-foot">
+      <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+    </footer>
+  </form>
+</dialog>
+
+<script nonce="{{ csp_nonce() }}">
+(function () {
+  'use strict';
+  const t = window.t || ((s) => s);
+  const dialog = document.getElementById('vendor-dialog');
+  const form = dialog.querySelector('form');
+  const canRename = {{ can_rename | tojson }};
+  function open(payload) {
+    const isNew = !payload;
+    payload = payload || {};
+    ['was', 'name', 'website', 'contact', 'email', 'phone', 'customer_number', 'notes'].forEach((k) => {
+      form.elements[k].value = payload[k] || '';
+    });
+    // Only an admin or a facility manager renames: everyone else keeps the name.
+    form.elements.name.readOnly = !isNew && !canRename;
+    dialog.querySelector('[data-vendor-title]').textContent = isNew ? {{ _('New vendor') | tojson }} : (payload.name || '');
+    dialog.showModal();
+    (isNew ? form.elements.name : form.elements.website).focus();
+  }
+  document.querySelector('[data-vendor-new]').addEventListener('click', () => open(null));
+  document.querySelectorAll('[data-vendor-edit]').forEach((b) => b.addEventListener('click', () => open(JSON.parse(b.dataset.payload))));
+
+  const find = document.querySelector('[data-vendor-find]');
+  const rows = Array.from(document.querySelectorAll('[data-vendor-row]'));
+  if (find) find.addEventListener('input', () => {
+    const q = find.value.trim().toLowerCase();
+    rows.forEach((r) => { r.hidden = q && !r.dataset.find.includes(q); });
+  });
+
+  const merge = document.querySelector('[data-vendor-merge]');
+  if (merge) {
+    const into = merge.querySelector('[data-vendor-merge-into]');
+    const names = merge.querySelector('[data-vendor-merge-names]');
+    const count = merge.querySelector('[data-vendor-merge-count]');
+    const ticks = Array.from(document.querySelectorAll('[data-vendor-tick]'));
+    const sync = () => {
+      const picked = ticks.filter((c) => c.checked).map((c) => c.value);
+      merge.hidden = picked.length < 2;
+      count.textContent = t('%(n)s vendors ticked', { n: picked.length });
+      const keep = into.value;
+      into.textContent = '';
+      names.textContent = '';
+      picked.forEach((name) => {
+        into.appendChild(new Option(name, name, false, name === keep));
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'names';
+        hidden.value = name;
+        names.appendChild(hidden);
+      });
+    };
+    ticks.forEach((c) => c.addEventListener('change', sync));
+  }
+})();
+</script>
+{% endblock %}

@@ -4332,6 +4332,30 @@
   .spend-limit-input span { @apply truncate; }
   .spend-limit-input input { @apply w-28 text-right; }
 
+  /* The lab's vendors (templates/vendors.html). */
+  .vendors-bar { @apply flex items-center gap-3 border-b border-hairline px-4 py-2.5; }
+  .vendors-search { @apply flex min-w-0 max-w-80 flex-1 items-center gap-2 text-muted; }
+  .vendors-search svg { @apply size-4 shrink-0; }
+  .vendors-search input { @apply field h-[28px] min-w-0 flex-1; }
+  .vendors-count { @apply ml-auto text-[12px] text-muted; }
+  .vendors-table { min-width: 980px; }
+  .vendors-table td { @apply align-middle; }
+  .vendors-tick { @apply w-8; }
+  .vendors-name { @apply min-w-44 font-semibold text-ink; }
+  .vendors-also { @apply block text-[12px] font-normal text-muted; }
+  .vendors-contact { @apply min-w-40; }
+  .vendors-contact > * { @apply block; }
+  .vendors-table .vendors-num { @apply whitespace-nowrap text-right tabular-nums; }
+  .vendors-edit { @apply w-20 text-right; }
+  .vendors-empty { @apply px-4 py-8 text-center text-[13px] text-muted; }
+  .vendors-foot { @apply px-4 py-2.5 text-[12px] text-muted; }
+  .vendors-merge {
+    @apply sticky bottom-4 z-10 mx-auto mt-4 flex w-fit max-w-full flex-wrap items-center gap-3 rounded-2xl border
+           border-hairline bg-surface px-4 py-2.5 text-[13px] shadow-lg;
+  }
+  .vendors-merge label { @apply flex items-center gap-2 text-muted; }
+  .vendors-merge select, .vendors-merge input[type="text"] { @apply field h-[28px] w-44; }
+
   /* New inventory: preset cards. */
   .preset-grid { @apply grid gap-3; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
   .preset-card {

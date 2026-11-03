@@ -23,6 +23,7 @@
 {% block page_subtitle %}{{ m.blurb|tr }}{% endblock %}
 {% block page_shell_class %}shell-page-wide workbench{% endblock %}
 {% block page_actions %}
+  {% if m.has('supplier') %}<a class="btn" href="{{ url_for('vendors.page') }}">{{ icon('vendor') }} {{ _('Vendors') }}</a>{% endif %}
   {{ db_actions(url_for('inventory.configure', key=key), can_configure) }}
 {% endblock %}
 

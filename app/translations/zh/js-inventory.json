@@ -38,5 +38,6 @@
   "Saved the spending settings.": "已保存花费设置。",
   "Spending by month": "每月花费",
   "The spending could not be loaded. Check the connection and try again.": "花费数据没能载入。请检查网络连接后再试。",
-  "Within the limit": "未超出限额"
+  "Within the limit": "未超出限额",
+  "%(n)s vendors ticked": "已勾选 %(n)s 个供应商"
 }

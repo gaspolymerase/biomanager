@@ -1956,6 +1956,29 @@ class InventoryItem(Base, _JsonAttrs):
     rack: Mapped["InventoryRack | None"] = relationship()
 
 
+class Vendor(Base):
+    """What the lab keeps about a vendor (app/vendors.py): its website,
+    contact and the lab's customer number. Records name their vendor as
+    text (inventory_items.vendor); a row here belongs to every record whose
+    vendor reads the same, whatever the case, and renaming or merging
+    vendors rewrites those records."""
+
+    __tablename__ = "vendors"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    website: Mapped[str] = mapped_column(String(300), default="")
+    contact: Mapped[str] = mapped_column(String(200), default="")
+    email: Mapped[str] = mapped_column(String(200), default="")
+    phone: Mapped[str] = mapped_column(String(80), default="")
+    customer_number: Mapped[str] = mapped_column(String(120), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[str] = mapped_column(String(80), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_by: Mapped[str] = mapped_column(String(80), default="")
+
+
 class AppSetting(Base):
     """Small lab-wide settings, e.g. the display name of a built-in database."""
 

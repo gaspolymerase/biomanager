@@ -591,6 +591,9 @@
 /utilities/lab-tools	utilities_lab_tool_save	POST
 /utilities/lab-tools/<tool_id>/delete	utilities_lab_tool_delete	POST
 /utilities/rotors	utilities_rotors	POST
+/vendors	vendors.page	GET
+/vendors/merge	vendors.merge	POST
+/vendors/save	vendors.save	POST
 /welcome	lab.welcome	GET POST
 /whats-new/seen	whats_new.seen	POST
 /zebrafish	zebrafish	GET
