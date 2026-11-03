@@ -29,6 +29,7 @@ pages. Those are in their own modules, which `app.py` imports:
 | `app/colony_routes.py` | The mouse colony: mice, cages, litters, strains, racks, its experiments, batch actions, dropdown choices |
 | `app/zebrafish_routes.py` | The zebrafish database |
 | `app/plasmid_routes.py` | Plasmids: the sheet, boxes, the detail page and the writes behind it |
+| `app/vendors.py` | The lab's vendors: the list, details, renaming and merging |
 | `app/calendar_routes.py` | The calendar's events and to-dos, subscriptions, the Google link; who may see a to-do |
 | `app/notebook_routes.py` | The notebook's tabs, pages, templates, uploads and links between records |
 | `app/account_routes.py` | Signing in and out, Settings, the admin's pages, starting or restoring a lab |
@@ -1789,6 +1790,40 @@ pages are in `app/lab_routes.py`.
   `order_to_reagents` redirects to the new record with `?open=<id>`. These
   one-shot parameters are removed from the address on load and from the
   referrer in `_back()`.
+- **Spending** (`app/order_spending.py`, `inventory/_spending.html`,
+  `static/spending.js`): an orders inventory with a Price column
+  (`inventory_routes._spends`) gets a Spending view in its layout switch.
+  `GET /inventory/<key>/spending?from=YYYY-MM|all&to=YYYY-MM&by=person|group|vendor|category`
+  answers `summary()`: months, each month's total, every series ranked
+  (spent, asked, orders, per month), the chart's stack (`STACKED` = 5 and
+  Other) and `limits()`. An order costs `money(price) × amount(quantity)`
+  (or the price alone with `price_is: total`), counts in its `created_at`
+  month, is "asked" at the first status and nowhere when cancelled; by
+  project group it counts in every group its owner is in now. The JS
+  draws the stacked columns in SVG (2px gaps, a 4px rounded top, a
+  tooltip on hover and focus), the legend, the ranked table and the
+  limit meters; series colours are `--spend-1…5` (the dataviz palette's
+  first five, validated against the app's light and dark surfaces).
+  `/spending.csv` is the same table with a column per month.
+- **Spending settings and limits** are JSON in `app_settings`
+  (`spending:<key>`): currency, `price_is`, `period` (year or month),
+  `year_starts` and limits for the lab, people (`people[username]`) and
+  groups (`groups[id]`). `POST /inventory/<key>/spending/settings` is an
+  admin's (`can_set_limits`). A limit counts everything not cancelled in
+  the period holding today (`limit_period`); near is 80%. After a dialog
+  save or an inline edit that raised an order's cost,
+  `_limit_notes` → `over_limits` adds a warning for each limit now passed
+  (the asker's, their groups', the lab's).
+- **Vendors** (`app/vendors.py`, `vendors.html`, table `vendors`, revision
+  0055): records keep their vendor as text; the page groups
+  `inventory_items.vendor` by `key_of` (case and spacing aside), counts
+  orders and other records, sums the last twelve months of orders through
+  `order_spending`, and joins a `Vendor` row of details (website, contact,
+  email, phone, customer number, notes). Anyone saves details;
+  renaming (`POST /vendors/save` with a new name) and `POST /vendors/merge`
+  are an admin's or a facility manager's, rewrite every matching record
+  and fold the Vendor rows into one, in one `audit.batch`. A Vendor's name
+  is offered in every vendor field (`inventory_service.remembered`).
 
 ## Plasmids and their sequences
 
@@ -1834,6 +1869,18 @@ crossing the origin keeps `start > end`.
   `tree()` up to `TREE_DEPTH` generations each way on Properties. Row ids
   without foreign keys, as for versions. The assembly wizard records its
   product's parents through `add_parent`.
+- **The Backbone and Insert columns link** (`plasmid_lineage.follow_column`):
+  a value naming a lab plasmid (`#42`, `42 · name`, `@name` or its exact
+  name, `column_parent`) is stored as its name and adds a Made from link
+  in that role, marked `details.from_column`; changing the column drops
+  only such a link (one from the page or an assembly stays). The sheet's
+  and dialog's inputs take `list="plasmid-backbone-choices"` /
+  `plasmid-insert_seq-choices` (`_column_choices`: the lab's plasmids,
+  then the column's values, `COMMON_BACKBONES` or the Feature library's
+  coding entries). `unlinked()` finds columns written before that name a
+  lab plasmid; an admin sees the count and `POST /plasmids/link-columns`
+  links them in one batch. The plasmid page links its Backbone and Insert
+  (`column_urls`).
 - **Primers** (`app/primer_records.py`): each save of the map gives every
   primer annotation a record in the lab's Primers database
   (`sync_from_map`, made with it only by someone who may add lab
