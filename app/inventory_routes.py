@@ -658,6 +658,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     if row.kind in STOCK_KINDS and request.args.get("from_order"):
         reorder = _from_order_payload(session, mv, request.args["from_order"],
                                       shared=request.args.get("shared") == "1")
+    redraw_url = url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
+                         cells=request.args.get("cells"))
     context = {
         **common,
         # rows: every row the sheet lists (the board's cards, the counts);
@@ -665,9 +667,9 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
         "stubs": _row_stubs(mv, rows[FIRST_PAGE:], table_fields, box_labels, mouse_links, plasmid_links)
         if lazy else [],
-        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
-                            cells=request.args.get("cells"))
-                    if lazy else "",
+        "rows_url": redraw_url if lazy else "",
+        # Rows redrawn where they are after a batch change (data-table.js, BioSheets.redraw).
+        "redraw_url": redraw_url,
         "racks": racks,
         "tab_counts": tab_counts, "listed_all": listed_all,
         "can_add_type": mv.has("tabs"),
@@ -1616,10 +1618,21 @@ def bulk(key: str):
                           what=f"{action} ×{len(items)} {mv.item_noun_plural}", table="inventory_items")
         done, skipped, refused = result.changed, result.skipped, result.blocked
         noun = _tr(mv.item_noun if done == 1 else mv.item_noun_plural)
+        item_ids = [item.id for item in items]
         session.commit()
+        # The type tabs' counts, when the batch changed them (a delete, a
+        # new Type): the page shows them without coming back.
+        tabs = None
+        if _wants_json() and (action == "delete" or (field and field["name"] == "category")):
+            chosen = _chosen(session, row, mv, None)
+            tabs = {"all": chosen["listed_all"], **chosen["tab_counts"]}
     message = _bulk_message(action, done, noun, _tr(field["label"]) if field else "")
+    # Asked from the page (selection-bar.js, a form marked
+    # data-selection-inplace): the answer in words, and the page redraws
+    # the ticked rows where they are rather than coming back from the top.
+    said: list[tuple[str, str]] = []
     if refused:
-        flash(gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error")
+        said.append((gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error"))
     if skipped:
         message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
                              if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))
@@ -1632,8 +1645,12 @@ def bulk(key: str):
     if no_column:
         notes.append(gettext("No column is called %(names)s, so those stay in the notes: add them in Configure and split again.",
                              names=gettext(", ").join(f"“{h}”" for h in no_column[:6])))
-    for note in notes[:5]:
-        flash(note, "info")
+    said.extend((note, "info") for note in notes[:5])
+    if _wants_json():
+        return jsonify({"ok": bool(done), "message": message, "said": [{"text": text, "kind": kind} for text, kind in said],
+                        "ids": item_ids, "tabs": tabs})
+    for text, kind in said:
+        flash(text, kind)
     if not done:
         return _done(key, error=message)
     return _done(key, message=message)

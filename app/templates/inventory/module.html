@@ -125,7 +125,7 @@
     <section class="data-table-card sheet dt-held" data-table-id="inv-{{ key }}-{{ col_sig }}" data-dt-views="inv-{{ key }}" data-dt-inspector data-autosave-sheet
              data-noun="{{ noun }}" data-noun-plural="{{ nouns }}" data-export-name="{{ key }}"
              data-selection-scope data-selection-noun="{{ noun }}" data-selection-noun-plural="{{ nouns }}"
-             {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %}>
+             {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %} data-dt-redraw-url="{{ redraw_url }}">
       <div class="dt-toolbar">
         <div class="dt-toolbar-search">
           {{ icon('search', 'search-icon') }}
@@ -310,18 +310,20 @@
       </div>
 
       {# Batch actions on the ticked rows: one batch each, undoable from
-         Batch history. Rows you may not change are skipped and counted. #}
+         Batch history. Rows you may not change are skipped and counted.
+         Done in place (data-selection-inplace, selection-bar.js): the ticked
+         rows are redrawn where they are, still ticked, the sheet not reloaded. #}
       <div class="selbar" data-selection-bar hidden>
         <span class="selbar-count" data-selection-count></span>
         {% if m.statuses %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
             <input type="hidden" name="action" value="status">
             <select name="value" aria-label="{{ _('Status') }}">{% for s in m.statuses %}<option value="{{ s }}">{{ s|tr('inventory') }}</option>{% endfor %}</select>
             <button type="submit" class="btn btn-sm">{{ _('Set status') }}</button>
           </form>
         {% endif %}
         {% if m.has('storage') %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
             <input type="hidden" name="action" value="rack">
             <select name="value" aria-label="{{ _('Box') }}" required>
               <option value="" disabled selected>{{ _('Choose a box…') }}</option>
@@ -332,7 +334,7 @@
           </form>
         {% endif %}
         {# Any column, custom ones too: a titer on 10 aliquots, "on hold" on a lot, a myco date on every line. #}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
           <input type="hidden" name="action" value="field">
           <select name="field" aria-label="{{ _('Column to set') }}" data-bulk-field>
             {% for f in bulk_fields %}<option value="{{ f.name }}" data-type="{{ f.type }}"{% if f.options %} data-options="{{ f.options|join('\n') }}"{% endif %}>{{ f.label|tr('inventory') }}</option>{% endfor %}
@@ -348,26 +350,26 @@
         </form>
         {# "Tissue: Lung; Fixation: 4% PFA" in the notes (an old sheet's
            columns) into the columns of those names. #}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               title="{{ _('Moves each “Column: value” in the notes into the column of that name; the rest stays in the notes') }}">
           <input type="hidden" name="action" value="split_notes">
           <button type="submit" class="btn btn-sm">{{ icon('columns') }} {{ _('Split notes') }}</button>
         </form>
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               title="{{ _('Only for %(nouns)s you own (admins: any)', nouns=nouns) }}">
           <input type="hidden" name="action" value="owner">
           <input name="value" list="inv-owner-options" placeholder="{{ _('requested by') if m.kind == 'orders' else _('owner') }}" value="{{ current_user.username }}" aria-label="{{ _('New owner') }}">
           <button type="submit" class="btn btn-sm">{{ _('Set owner') }}</button>
         </form>
         {% if m.has('sharing') %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
                 title="{{ _('Only for %(nouns)s you own (admins: any)', nouns=nouns) }}">
             <input type="hidden" name="action" value="shared">
             <select name="value" aria-label="{{ _('Belongs to') }}"><option value="1">{{ _('Lab common') }}</option>{% for gid, gname in groups_api.choices() %}<option value="g{{ gid }}">{{ _('Shared with %(name)s', name=gname) }}</option>{% endfor %}<option value="0">{{ _('Personal') }}</option></select>
             <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
           </form>
         {% endif %}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               data-confirm="{{ _('Delete {n} %(nouns)s? Batch history can undo it.', nouns=nouns) }}">
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn btn-sm btn-danger">{{ _('Delete') }}</button>

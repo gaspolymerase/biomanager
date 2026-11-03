@@ -131,6 +131,23 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
   }
   window.InventoryPage = { applyRow, offerStock };
 
+  /* A batch change done in place (selection-bar.js; the rows themselves
+     are redrawn, their chips recounted, by data-table.js): the type tabs
+     take the counts the answer brings, and the board and the box grid,
+     drawn from the rows as they were, come again when next shown. */
+  document.addEventListener('selbar:done', (event) => {
+    const answer = (event.detail && event.detail.answer) || {};
+    if (answer.tabs) {
+      document.querySelectorAll('[data-type-tabs] .dt-chip').forEach((chip) => {
+        const count = chip.querySelector('.dt-chip-count');
+        const n = chip.dataset.typeTab !== undefined ? answer.tabs[chip.dataset.typeTab] : (chip.getAttribute('href') ? answer.tabs.all : undefined);
+        if (count && n !== undefined) count.textContent = n;
+      });
+    }
+    if (board && boardAsked) boardAsked = null;
+    document.querySelectorAll('[data-rack-src]').forEach((root) => root.dispatchEvent(new CustomEvent('rack-grid:stale')));
+  });
+
   document.addEventListener('sheet:saved', (event) => {
     const { form, body } = event.detail || {};
     if (!form || !body) return;

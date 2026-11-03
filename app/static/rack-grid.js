@@ -600,6 +600,29 @@
     } else {
       render();
     }
+    // Moved, deleted or changed from the sheet in a batch (inventory-page.js
+    // sends rack-grid:stale): what the boxes hold comes again from the
+    // server, now if the grid is shown or else when it next is.
+    if (root.dataset.rackSrc) {
+      let stale = false;
+      const refresh = async () => {
+        if (!stale || (panel && panel.hidden)) return;
+        stale = false;
+        try {
+          const response = await fetch(root.dataset.rackSrc, { headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error(String(response.status));
+          const fresh = await response.json();
+          racks.splice(0, racks.length, ...(fresh.racks || []));
+          items.splice(0, items.length, ...(fresh.items || []));
+          if (!racks.some((r) => r.id === active)) active = racks[0] ? racks[0].id : null;
+          render();
+        } catch (_) {
+          stale = true;   // asked again the next time it is shown
+        }
+      };
+      root.addEventListener('rack-grid:stale', () => { stale = true; refresh(); });
+      document.addEventListener('layout:change', refresh);
+    }
   }
 
   /* Table / grid switch, remembered per page:

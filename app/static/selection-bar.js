@@ -167,6 +167,15 @@
           field.value = id;
           form.appendChild(field);
         });
+        // Set in place (data-selection-inplace): sent from the page, and
+        // the ticked rows redrawn where they are, so the ticks, the page and
+        // the scroll stay as they were rather than the sheet coming back.
+        const card = scope.closest('.data-table-card') || scope.querySelector('.data-table-card');
+        if (form.hasAttribute('data-selection-inplace') && (form.getAttribute('method') || '').toLowerCase() === 'post'
+            && card && card.dataset.dtRedrawUrl && window.BioSheets && window.BioSheets.redraw) {
+          event.preventDefault();
+          postInPlace(form, event.submitter, card, ids, bar);
+        }
       });
     });
 
@@ -571,6 +580,52 @@
     say(parts.join(' '), failed || (!changed && (skipped || notChoice)) ? 'error' : '');
     const bar = card.querySelector('[data-selection-bar]') || document.querySelector('[data-selection-bar]:not([hidden])');
     if (bar) closePanel(bar);
+  }
+
+  /* A batch form sent from the page: the route answers in words
+     ({ok, message, said, ids}; inventory_routes.bulk), and the rows it
+     changed are drawn again in their places, still ticked. If they can't
+     be drawn, the page reloads, as the form would have. */
+  async function postInPlace(form, submitter, card, ids, bar) {
+    const say = (text, kind) => window.BiomanagerShell && window.BiomanagerShell.toast(text, kind);
+    const button = submitter || form.querySelector('button[type=submit], button:not([type])');
+    if (form.dataset.sending === '1') return;
+    form.dataset.sending = '1';
+    if (button) button.disabled = true;
+    card.classList.add('dt-loading');
+    try {
+      const body = new FormData(form);
+      if (submitter && submitter.name) body.append(submitter.name, submitter.value);
+      // Its address as written (a field named "action", the bar's own, hides
+      // form.action), with the page's own choices (?type=, ?ended=) for
+      // whatever counts the answer carries.
+      const url = new URL(form.getAttribute('action'), window.location.href);
+      new URLSearchParams(window.location.search).forEach((value, key) => { if (!url.searchParams.has(key)) url.searchParams.set(key, value); });
+      const response = await fetch(url, { method: 'POST', body, credentials: 'same-origin',
+        headers: { 'X-Autosave': '1', Accept: 'application/json' } });
+      const answer = await response.json().catch(() => ({}));
+      if (!response.ok && !answer.message && !answer.error) throw new Error(t('The server answered %(status)s.', { status: response.status }));
+      if (answer.error) { say(answer.error, 'danger'); return; }
+      say(answer.message || '', answer.ok ? 'ok' : 'danger');
+      (answer.said || []).forEach((note) => say(note.text, note.kind === 'error' ? 'danger' : ''));
+      if (!answer.ok) return;
+      const drawn = await window.BioSheets.redraw(answer.ids || ids, card).catch(() => false);
+      if (!drawn) { window.location.reload(); return; }
+      // The bar counts what is ticked now (a row deleted, or no longer in
+      // this view, went with its tick).
+      const box = card.querySelector('.mouse-select:checked, [data-select-row]:checked') || card.querySelector(ROW_SELECTOR);
+      if (box) box.dispatchEvent(new Event('change', { bubbles: true }));
+      else { bar.hidden = true; bar.dispatchEvent(new CustomEvent('selbar:hidden')); }
+      closePanel(bar);
+      // The page keeps the rest in step (inventory-page.js: the type tabs, the board, the box grid).
+      form.dispatchEvent(new CustomEvent('selbar:done', { bubbles: true, detail: { answer, ids } }));
+    } catch (error) {
+      say(t('Couldn’t save %(what)s: %(error)s', { what: t('this change'), error: error.message }), 'danger');
+    } finally {
+      delete form.dataset.sending;
+      if (button) button.disabled = false;
+      card.classList.remove('dt-loading');
+    }
   }
 
   /* Weigh: a weight box for each ticked mouse, named by its number. */
