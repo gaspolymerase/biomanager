@@ -179,6 +179,17 @@ against every reagent. Left as they are: the fish (0.31 s) and tanks
 (0.24 s), and Home's weaning list (0.04 s), shared with the calendar and
 the cage sheet.
 
+Two more, measured on the same lab:
+
+| Page | Before | After |
+| --- | --- | --- |
+| Plasmids, with three of the lab's own columns | 4–6 s (drawn whole, trimmed) | 0.54 s |
+| Orders (4,000) | 6.7 MB, 287 ms on the server | 2.06 MB, 194 ms |
+
+A lab's own plasmid columns are now drawn into the stubs, as the fish
+tanks' are. The orders' Board (4.2 MB, each card carrying its dialog)
+comes from `/inventory/<key>/board` when it is first shown.
+
 ## How to check each
 
 `scripts/load-test.py <folder> --reuse --browser` before and after (with

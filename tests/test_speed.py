@@ -643,12 +643,14 @@ class SheetPagingTests(AppTestCase):
         with SessionLocal() as session:
             custom_fields.set_fields(session, "zebrafish", [
                 {"key": "diet", "label": "Diet", "type": "select", "options": ["rotifers", "flakes"]},
-                {"key": "room", "label": "Room"}])
+                {"key": "room", "label": "Room"},
+                {"key": "zfin", "label": "ZFIN page", "type": "url"}])   # its cell draws an icon
             session.commit()
         rack = self.make_rack_for_tanks()
         line = self.make_line(self.a)
         ids = [self.make_tank(self.a, notes='said "hi" & left', card_id="C-7", rack_id_fk=str(rack), position="A2",
-                              line_id_fk=str(line), purpose="breeding", attr_diet="flakes", attr_room="B 12"),
+                              line_id_fk=str(line), purpose="breeding", attr_diet="flakes", attr_room="B 12",
+                              attr_zfin="https://zfin.org/ZDB-ALT-1"),
                self.make_tank(self.a, purpose="mating"),
                self.make_tank(self.m),   # someone else's: read only to alex
                self.make_tank(self.a, purpose="quarantine"),
@@ -880,11 +882,10 @@ class SheetPagingTests(AppTestCase):
 
 
 class WholeSheetPagingTests(AppTestCase):
-    """Sheets drawn whole by their page and trimmed by sheet_paging.page: an
-    animal database's animals and the plasmids. Past LAZY_OVER rows the
-    page keeps its first page and stubs for the rest, whose rows come from
-    a rows address as the page draws them; the plasmids' Boxes grid and
-    List come when first shown."""
+    """An animal database's animals and the plasmids. Past LAZY_OVER rows
+    the page draws its first page and stubs built from data for the rest,
+    whose rows come from a rows address as the page draws them; the
+    plasmids' Boxes grid and List come when first shown."""
 
     def paged(self, **limits):
         from unittest import mock
@@ -1009,27 +1010,50 @@ class WholeSheetPagingTests(AppTestCase):
         execute("update plasmids set full_sequence=?, is_circular=?, is_shared=? where id=?", "ACGT" * 3000, False, True, ids[1])
         execute("update plasmids set owner='' where id=?", ids[3])
         drawn_count = one("select count(*) from plasmids")
-        for client in (self.a, self.m):
-            for ua in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
-                       {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
-                with self.paged(over=100000):
-                    whole = client.get("/plasmids", headers=ua).get_data(as_text=True)
-                with self.paged(over=1, first=1):
-                    stubs = {s["id"]: s for s in self.stubs_of(client.get("/plasmids", headers=ua).get_data(as_text=True))}
-                self.assertEqual(len(stubs), drawn_count - 1, ua)
-                body = whole[whole.index("<tbody"):whole.index("</tbody>")]
-                read = {}
-                for attrs, row in re.findall(r'<tr (data-id="\d+"[^>]*)>(.*?)</tr>', body, re.S):
-                    drawn = row_stub(attrs, row)
-                    drawn["k"].pop("", None)   # row_stub reads a key inside the single-quoted payload; a browser does not
-                    read[drawn["id"]] = drawn
-                for pid in ids:
-                    if pid not in stubs:
-                        continue
-                    want, got = read[pid], stubs[pid]
-                    for name in ("d", "k", "f"):
-                        self.assertEqual(got[name], want[name], (pid, name, ua))
-                    self.assertEqual(set(got["s"].split()), set(want["s"].split()), (pid, ua))
+
+        def check():
+            for client in (self.a, self.m):
+                for ua in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
+                           {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
+                    with self.paged(over=100000):
+                        whole = client.get("/plasmids", headers=ua).get_data(as_text=True)
+                    with self.paged(over=1, first=1):
+                        page = client.get("/plasmids", headers=ua).get_data(as_text=True)
+                    stubs = {s["id"]: s for s in self.stubs_of(page)}
+                    self.assertEqual(len(stubs), drawn_count - 1, ua)
+                    body = whole[whole.index("<tbody"):whole.index("</tbody>")]
+                    read = {}
+                    for attrs, row in re.findall(r'<tr (data-id="\d+"[^>]*)>(.*?)</tr>', body, re.S):
+                        drawn = row_stub(attrs, row)
+                        drawn["k"].pop("", None)   # row_stub reads a key inside the single-quoted payload; a browser does not
+                        read[drawn["id"]] = drawn
+                    for pid in ids:
+                        if pid not in stubs:
+                            continue
+                        want, got = read[pid], stubs[pid]
+                        for name in ("d", "k", "f"):
+                            self.assertEqual(got[name], want[name], (pid, name, ua))
+                        self.assertEqual(set(got["s"].split()), set(want["s"].split()), (pid, ua))
+
+        check()
+        # And with the lab's own columns, drawn by their macro and read back.
+        from app import custom_fields
+        from app.db import SessionLocal
+        with SessionLocal() as session:
+            custom_fields.set_fields(session, "plasmids", [
+                {"key": "promoter", "label": "Promoter", "type": "select", "options": ["CAG", "hSyn"]},
+                {"key": "made_on", "label": "Made on", "type": "date"},
+                {"key": "addgene", "label": "Addgene page", "type": "url"},
+                {"key": "prep", "label": "Prep"}])
+            session.commit()
+        try:
+            self.post(self.a, f"/plasmids/{ids[0]}/update", {"attr_promoter": "hSyn", "attr_made_on": days_ago(4),
+                                                             "attr_addgene": "https://example.org/1", "attr_prep": 'mini "A"'})
+            check()
+        finally:
+            with SessionLocal() as session:
+                custom_fields.set_fields(session, "plasmids", [])
+                session.commit()
 
     def test_plasmids_past_the_limit_are_stubs_and_the_grid_and_list_come_later(self):
         made = [self.make_plasmid(self.a) for _ in range(3)]

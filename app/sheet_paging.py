@@ -1,33 +1,20 @@
-"""Long sheets the server pages, and their rows addresses.
+"""The rows addresses of long sheets the server pages.
 
-The inventories, the mouse, cage and litter sheets, the fish tanks and the
-fly vials draw their first page through their own row templates and make
-the other rows' stubs from data (inventory_routes, colony_routes.colony_mouse_rows,
+The inventories, the mouse, cage and litter sheets, the fish tanks, the
+fly vials, an animal database's animals and the plasmids draw their first
+page through their own row templates and make the other rows' stubs from
+data (inventory_routes, colony_routes.colony_mouse_rows,
 zebrafish_routes.zf_tank_stubs, stock_routes.unit_stubs,
-organism_routes.animal_stubs, plasmid_routes.plasmid_stubs). A sheet that
-cannot (the plasmids of a lab with its own plasmid columns) is drawn by its
-page whole and trimmed here (page): past LAZY_OVER rows, the rows after the first page
-leave the page and stand as stubs (cell_text.row_stub, read from the rows
-as drawn, as data-table.js reads a row), their row forms leave its
-<template data-row-forms>, and the sheet gets data-dt-rows-url. A sheet's
-rows address draws the page again with only the rows asked for, and
-rows_of lifts them and their forms out of it; answer() is what it sends.
-
-Drawing every row and reading them back as stubs was most of such a
-page's time on the server (3,337 tanks took 2.2 s of 2.8), and nearly all
-of it in the browser, which no longer builds rows it does not show.
+organism_routes.animal_stubs, plasmid_routes.plasmid_stubs). A sheet's rows
+address draws the page again with only the rows asked for, and rows_of
+lifts them and their forms out of it; answer() is what it sends.
 """
 from __future__ import annotations
 
 import re
 
-from jinja2.utils import htmlsafe_json_dumps
-from markupsafe import Markup
-
 from . import cell_text
 from . import inventory_routes
-
-_FORM = re.compile(r'<form\b[^>]*\bid="([^"]+)"[^>]*>.*?</form>\s*', re.S)
 
 
 def _sheet(html: str, table_id: str) -> tuple[int, int, int, int, int] | None:
@@ -50,32 +37,6 @@ def _sheet(html: str, table_id: str) -> tuple[int, int, int, int, int] | None:
         return head_end, body_end, body_close, -1, -1
     forms_end = forms + len("<template data-row-forms>")
     return head_end, body_end, body_close, forms_end, html.find("</template>", forms_end)
-
-
-def page(html: str, table_id: str, rows_url: str) -> str:
-    """The page with its sheet paged, when the sheet has more than
-    LAZY_OVER rows; else the page as it was."""
-    where = _sheet(html, table_id)
-    if where is None:
-        return html
-    head_end, body_end, body_close, forms_end, forms_close = where
-    rows = html[body_end:body_close]
-    if len(cell_text._ROW_FULL.findall(rows)) <= inventory_routes.LAZY_OVER:
-        return html
-    drawn, stubs = cell_text.page_of_rows(rows, inventory_routes.FIRST_PAGE)
-    gone = {s["f"] for s in stubs if s.get("f")}
-    forms = html[forms_end:forms_close] if forms_end >= 0 else ""
-    if gone:
-        forms = _FORM.sub(lambda m: "" if m.group(1) in gone else m.group(0), forms)
-    after_table = html.find("</table>", body_close) + len("</table>")
-    script = f"<script type=\"application/json\" data-dt-stubs>{htmlsafe_json_dumps(stubs)}</script>"
-    head = html[:head_end - 1] + f' data-dt-rows-url="{Markup.escape(rows_url)}">'
-    out = head + html[head_end:body_end] + drawn + html[body_close:after_table] + script
-    if forms_end >= 0:
-        out += html[after_table:forms_end] + forms + html[forms_close:]
-    else:
-        out += html[after_table:]
-    return out
 
 
 def rows_of(html: str, table_id: str, ids: list[int]) -> dict:

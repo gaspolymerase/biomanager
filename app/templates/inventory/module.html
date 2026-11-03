@@ -402,27 +402,9 @@
   {# ================================ BOARD =============================== #}
   {% if m.has('board') and m.statuses %}
     <div data-layout-panel="board" hidden>
-      <div class="board" data-board data-status-url="{{ url_for('inventory.set_status', key=key, item_id=0) }}">
-        {% for s in m.statuses %}
-          {% set col_rows = rows | selectattr('item.status', 'equalto', s) | list %}
-          <section class="board-col" data-status="{{ s }}">
-            <header class="board-col-head">
-              <span class="status-pill-static" data-status="{{ s }}">{{ s|tr('inventory') }}</span>
-              <span class="board-count" data-board-count>{{ col_rows|length }}</span>
-            </header>
-            <div class="board-cards" data-board-drop>
-              {% for r in col_rows %}
-                {% set i = r.item %}
-                <article class="board-card" draggable="{{ 'true' if r.editable else 'false' }}" data-id="{{ i.id }}" data-record-edit="item-dialog"
-                         data-record-payload='{{ r.payload | tojson }}'>
-                  <div class="board-card-top"><span class="ident text-muted">#{{ i.number }}</span>{% if i.owner %}{{ i.owner | owner_badge }}{% endif %}</div>
-                  <div class="board-card-name">{{ i.name or _('(unnamed)') }}</div>
-                  <div class="board-card-meta">{{ [i.vendor, i.catalog_number, (i.quantity ~ ' ' ~ i.unit)|trim] | select | join(' · ') }}</div>
-                </article>
-              {% endfor %}
-            </div>
-          </section>
-        {% endfor %}
+      <div class="board" data-board data-status-url="{{ url_for('inventory.set_status', key=key, item_id=0) }}"
+           data-board-src="{{ url_for('inventory.board', key=key, type=request.args.get('type'), ended=request.args.get('ended')) }}">
+        {# Its columns and cards come when the Board is first shown (_board.html). #}
       </div>
     </div>
   {% endif %}
@@ -913,8 +895,23 @@
       editPayload(id, { rack_id: rackId || '', position: position || '' });
     });
 
-    /* Board: drag a card to another status; click to open it. */
-    if (board) {
+    /* Board: drag a card to another status; click to open it. Its cards
+       come when it is first shown (inventory_routes.board). */
+    let boardAsked = null;
+    function showBoard() {
+      if (!board || boardAsked) return;
+      boardAsked = fetch(board.dataset.boardSrc, { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+        .then((html) => { board.innerHTML = html; wireBoard(); }, () => {
+          boardAsked = null;   // asked again the next time it is shown
+          const say = window.BiomanagerShell && window.BiomanagerShell.toast;
+          if (say) say(t('Some rows could not be loaded. Check the connection and try again.'), 'error');
+        });
+    }
+    document.addEventListener('layout:change', (event) => { if (event.detail && event.detail.layout === 'board') showBoard(); });
+    if (board && !board.closest('[data-layout-panel]').hidden) showBoard();
+
+    function wireBoard() {
       let dragged = null;
       board.querySelectorAll('.board-card').forEach((card) => {
         card.addEventListener('dragstart', (e) => { dragged = card; card.classList.add('is-dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.dataset.id); });

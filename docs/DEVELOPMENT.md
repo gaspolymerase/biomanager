@@ -883,16 +883,22 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   `FIRST_PAGE` past `LAZY_OVER` plasmids and makes each other plasmid's
   stub from its data (`plasmid_stubs`: its `data-*`, each field's value,
   the Belongs to and Box menus' shown choices, the Sequence button's word,
-  the length cell's words, the owner's badge); `tests/test_speed.py`
-  holds every stub to `cell_text.row_stub` of its drawn row, in both ways
-  of drawing cells and in Chinese. `/plasmids/rows` draws only the
+  the length cell's words, the owner's badge; the lab's own columns are
+  drawn with `custom_cell` and read with `row_stub`, as the fish tanks'
+  are); `tests/test_speed.py` holds every stub to `cell_text.row_stub` of
+  its drawn row, with and without the lab's own columns, in both ways of
+  drawing cells and in Chinese. `/plasmids/rows` draws only the
   plasmids asked for. The Boxes grid's tiles (`/plasmids/grid`, the
   shared grid's `src`) and the List (`/plasmids/list`,
-  `_plasmid_list.html`, then each small map) come when first shown. A lab
-  with its own plasmid columns gets its sheet drawn whole and trimmed by
-  `sheet_paging.page` instead. At 100,000 mice (5,000 plasmids, a fifth
-  with a sequence) the page answers in 0.3 s instead of 2.7 and loads in
-  1.4 s instead of 10.6 (36 MB of page to 3).
+  `_plasmid_list.html`, then each small map) come when first shown. At
+  100,000 mice (5,000 plasmids, a fifth with a sequence) the page answers
+  in 0.3 s instead of 2.7 and loads in 1.4 s instead of 10.6 (36 MB of
+  page to 3); with three of the lab's own columns, in 0.54 s (it was
+  drawn whole and trimmed, 4–6 s).
+- A stub builder that draws a template's macros (`custom_cell`,
+  `table_cells`) gets them from `web.page_macros(template)`, which gives
+  the template the page's context (`icon` and the rest) outside a
+  request's rendering.
 - An animal database's **Animals** sheet (`organism_routes._module_page`)
   lists the living ones and those that ended in the last `RECENT_DAYS`;
   the rest wait behind "Show them" (`?ended=all`). Past `LAZY_OVER` rows
@@ -917,7 +923,15 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   "Reorder of … #n" note, else the catalog number, else the name) rather
   than trying every order against every item: 4,772 reagents against 164
   open orders made 782,608 comparisons, and the sheet answered in 0.93 s
-  instead of 0.37.
+  instead of 0.37. A note is matched on the whole number: "Reorder of
+  Reagents #1" is #1's, not #12's.
+- An inventory's **Board** (orders) is drawn by `inventory.board`
+  (`/inventory/<key>/board`, `inventory/_board.html`, with the page's
+  `?type=` and `?ended=`) when it is first shown: each card carries its
+  record's dialog payload, and on 4,000 orders the Board was 4.2 MB of a
+  6.7 MB page. `module.html` asks for it on the rack switch's
+  `layout:change` to `board`, or at once when the page opens on it, then
+  wires its drag and drop (`wireBoard`).
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

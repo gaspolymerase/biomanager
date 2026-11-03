@@ -458,6 +458,18 @@ def source_ids(key: str):
         return jsonify({"refs": [source["refs"] for source in sample_sources(session)]})
 
 
+@bp.route("/<key>/board")
+def board(key: str):
+    """The Board's columns and cards (_board.html), for the page's ?type=
+    and ?ended=, asked for when the Board is first shown: each card carries
+    its record's dialog, megabytes on a long inventory."""
+    with SessionLocal() as session:
+        context = _sheet_context(session, key)
+        if not (context["module"].has("board") and context["module"].statuses):
+            abort(404)
+        return render_template("inventory/_board.html", m=context["module"], **context)
+
+
 @bp.route("/<key>/grid")
 def grid_data(key: str):
     """The box grid's boxes and tiles (rack-grid.js), for the page's ?type=
@@ -738,8 +750,9 @@ def _row_stubs(mv, rows: list[dict], table_fields: list[dict], box_labels: dict,
 def _same_thing(order: InventoryItem, stock: InventoryItem, source: InventoryModule) -> bool:
     """An order for this stock item: made from it with Order again, or the
     same catalog number (the same name when it has none)."""
-    if (order.notes or "").startswith(f"Reorder of {source.label} #{stock.number}"):
-        return True
+    notes, made_from = order.notes or "", f"Reorder of {source.label} #{stock.number}"
+    if notes.startswith(made_from) and not notes[len(made_from):len(made_from) + 1].isdigit():
+        return True     # #1's, not #12's
     cat = (stock.catalog_number or "").strip().lower()
     if cat:
         return (order.catalog_number or "").strip().lower() == cat
@@ -766,8 +779,7 @@ def _open_orders_of(session, source: InventoryModule, stock: list[InventoryItem]
         if notes.startswith(reorder_of):
             rest = notes[len(reorder_of):]
             digits = len(rest) - len(rest.lstrip("0123456789"))
-            for k in range(1, digits + 1):     # "#12…" starts as "#1" and "#12" do
-                by_number[rest[:k]].add(n)
+            by_number[rest[:digits]].add(n)
         by_catalog[(order.catalog_number or "").strip().lower()].add(n)
         by_name[(order.name or "").strip().lower()].add(n)
     found = {}

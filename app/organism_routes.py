@@ -636,10 +636,10 @@ def animal_stubs(module_row, mv, rows: list[dict], housing, lines, latest_calls:
     tests/test_speed.py holds each to the row it stands for."""
     from .cell_text import row_stub, text_cells_on
     from .text_cells import as_text_cells
-    from .web import owner_badge_filter
+    from .web import owner_badge_filter, page_macros
     as_text = text_cells_on()
     in_table = [f for f in own_fields if f.show_in_table]
-    table_cells = app_jinja().get_template("organisms/_fields.html").module.table_cells if in_table else None
+    table_cells = page_macros("organisms/_fields.html").table_cells if in_table else None
     housing_code = {u.id: u.code for u in housing}
     line_label = {ln.id: f"{ln.code} · {ln.name}" if ln.name else ln.code for ln in lines}
     tr = lambda value: i18n.translate_value(value, "organism")
@@ -716,11 +716,6 @@ def animal_stubs(module_row, mv, rows: list[dict], housing, lines, latest_calls:
         out.append({"id": o.id, "f": f"row-a-{o.id}", "d": data, "k": sort,
                     "s": " ".join(w for w in words if w).lower()})
     return out
-
-
-def app_jinja():
-    from flask import current_app
-    return current_app.jinja_env
 
 
 def _ended_args() -> dict:

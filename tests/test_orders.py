@@ -158,6 +158,19 @@ class StatusChipTests(OrdersCase):
         html = self.get_ok(self.a, f"/inventory/{self.reagents}")
         self.assertNotIn('data-dt-filter="status:', html)
 
+    def test_the_board_is_asked_for_when_it_is_first_shown(self):
+        name = uniq("Board order ")
+        oid = self.order(name=name, status="ordered")
+        page = self.get_ok(self.a, f"/inventory/{self.orders}")
+        self.assertNotIn('class="board-card"', page)
+        self.assertIn(f'data-board-src="/inventory/{self.orders}/board', page)
+        board = self.get_ok(self.a, f"/inventory/{self.orders}/board")
+        card = re.search(rf'<article class="board-card"[^>]*data-id="{oid}"[^>]*>', board)
+        self.assertIsNotNone(card)
+        self.assertIn("data-record-payload=", card.group(0))
+        self.assertRegex(board, rf'(?s)<section class="board-col" data-status="ordered">(?:(?!</section>).)*{re.escape(name)}')
+        self.assertEqual(self.a.get(f"/inventory/{self.reagents}/board").status_code, 404)
+
 
 # ======================================================================= remembered
 
@@ -289,6 +302,20 @@ class OrderAgainTests(OrdersCase):
         row = html.split(f'value="{self.reagents}:{rid}"', 1)[1][:600]
         self.assertIn("On order", row)
         self.assertIn("Already on order: #", row)
+
+    def test_a_reorder_of_twelve_is_not_one_on_order_for_one(self):
+        """"Reorder of Reagents #12" is an order for #12, not for #1."""
+        label = one("select label from inventory_modules where key=?", self.reagents)
+        one_ = self.make_item(self.a, self.reagents, uniq("Tris "), catalog_number=uniq("T"))
+        number = item(one_)["number"]
+        other = self.make_item(self.a, self.reagents, uniq("HEPES "), catalog_number=uniq("H"))
+        execute("update inventory_items set number=? where id=?", number * 10 + 2, other)
+        self.a.post(f"/inventory/{self.first_orders()}/items/save", data={
+            "id": "", "name": "for the other", "vendor": "Sigma", "catalog_number": "X-2", "quantity": "1",
+            "notes": f"Reorder of {label} #{number * 10 + 2}"})
+        html = self.get_ok(self.m, f"/inventory/{self.reagents}")
+        self.assertNotIn("Already on order: #", html.split(f'value="{self.reagents}:{one_}"', 1)[1][:600])
+        self.assertIn("Already on order: #", html.split(f'value="{self.reagents}:{other}"', 1)[1][:600])
 
     def test_order_again_is_placed_like_any_order(self):
         name = uniq("EDTA ")
