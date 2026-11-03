@@ -146,6 +146,20 @@ class Due(Base):
         [typing] = [i for i in due if i["title"] == f"Genotype #{self.mouse_id(geno)}"]
         self.assertEqual(typing["mice"], [{"mouse": self.mouse_id(geno), "ref": {"kind": "mouse", "id": geno}}])
 
+    def test_a_transferred_mouse_is_not_due_at_30_weeks(self):
+        tok = self.token(self.m, scope="read")
+        # The oldest in the lab, so Home's card (its 15 oldest) would list both.
+        kept = self.make_mouse(self.m, self.member, cage=uniq("C"), litter=uniq("L"), date_of_birth=days_ago(9000))
+        gone = self.make_mouse(self.m, self.member, cage=uniq("C"), litter=uniq("L"), date_of_birth=days_ago(9000))
+        execute("update mice set status='Transfer' where id=?", gone)   # left the lab: no date of death
+        due = self.call("get", "/due?days=0", tok).get_json()["data"]
+        aged = " ".join(i["title"] for i in due if i["title"].startswith("Past 30 w"))
+        self.assertIn(f"#{self.mouse_id(kept)}", aged)
+        self.assertNotIn(f"#{self.mouse_id(gone)}", aged)
+        home = self.m.get("/home").get_data(as_text=True)
+        self.assertIn(f">#{self.mouse_id(kept)}</span>", home)
+        self.assertNotIn(f">#{self.mouse_id(gone)}</span>", home)
+
     def test_the_overview_puts_the_persons_own_jobs_first(self):
         theirs = self.make_mouse(self.m, self.member, cage=uniq("C"), status="geno")
         mine = self.make_mouse(self.a, self.admin, cage=uniq("C"), status="geno")
