@@ -3,6 +3,7 @@ costs, how the months and groupings add up, the limits and the warning a
 save gives when it takes someone past one."""
 from __future__ import annotations
 
+import json
 import unittest
 from datetime import date, datetime
 
@@ -174,16 +175,44 @@ class TheView(InventoryCase):
         r = self.autosave(self.m, f"/inventory/{key}/items/{oid}/update", {"notes": "urgent"})
         self.assertNotIn("notes", r.get_json())
 
-    def test_an_order_counts_in_the_month_it_was_asked_for(self):
+    def test_an_order_counts_in_the_month_it_was_ordered(self):
         key = self.new_module(self.a, "orders")
-        oid = self.make_item(self.m, key, uniq("O"), status="received", attr_price="10")
-        execute("update inventory_items set created_at=? where id=?", datetime(2025, 6, 15, 10, 0), oid)
+        asked = self.make_item(self.m, key, uniq("O"), attr_price="10")
+        execute("update inventory_items set created_at=? where id=?", datetime(2025, 6, 15, 10, 0), asked)
         data = self.m.get(f"/inventory/{key}/spending?from=2025-05&to=2025-07").get_json()
         self.assertEqual(data["months"], ["2025-05", "2025-06", "2025-07"])
-        self.assertEqual(data["month_totals"], [0, 10, 0])
+        self.assertEqual(data["month_totals"], [0, 10, 0])          # waiting: the month it was asked for
+        # Ordered: the day it left Requested, kept in attrs.
+        self.autosave(self.m, f"/inventory/{key}/items/{asked}/status", {"status": "ordered"})
+        self.assertEqual(json.loads(one("select attrs from inventory_items where id=?", asked))["ordered_on"],
+                         date.today().isoformat())
+        execute("update inventory_items set attrs=? where id=?", json.dumps({"price": "10", "ordered_on": "2025-07-02"}),
+                asked)
+        data = self.m.get(f"/inventory/{key}/spending?from=2025-05&to=2025-07").get_json()
+        self.assertEqual(data["month_totals"], [0, 0, 10])
         data = self.m.get(f"/inventory/{key}/spending?from=all&to=2025-07").get_json()
-        self.assertEqual(data["first"], "2025-06")
+        self.assertEqual(data["first"], "2025-07")
+        # Back to Requested: not ordered after all.
+        self.autosave(self.m, f"/inventory/{key}/items/{asked}/status", {"status": "requested"})
+        self.assertNotIn("ordered_on", json.loads(one("select attrs from inventory_items where id=?", asked)))
 
+    def test_the_admins_are_told_when_a_save_takes_someone_past_a_limit(self):
+        key = self.new_module(self.a, "orders")
+        self.a.post(f"/inventory/{key}/spending/settings", data={"currency": "$", f"limit_person_{self.member}": "50"})
+        before = one("select count(*) from notifications where recipient_username=? and title like '%spending limit%'", self.admin)
+        self.post(self.m, f"/inventory/{key}/items/save",
+                  data={"id": "", "name": uniq("O"), "vendor": "Acme", "catalog_number": "A-1", "quantity": "1",
+                        "attr_price": "80"})
+        told = one("select count(*) from notifications where recipient_username=? and title like '%spending limit%'", self.admin) - before
+        self.assertEqual(told, 1)
+        self.assertIn("is over the spending limit",
+                      one("select title from notifications where recipient_username=? order by id desc limit 1",
+                          self.admin))
+        # Already over: another order says so to its asker, but tells the admins nothing new.
+        self.post(self.m, f"/inventory/{key}/items/save",
+                  data={"id": "", "name": uniq("O"), "vendor": "Acme", "catalog_number": "A-1", "quantity": "1",
+                        "attr_price": "5"})
+        self.assertEqual(one("select count(*) from notifications where recipient_username=? and title like '%spending limit%'", self.admin) - before, 1)
 
 if __name__ == "__main__":
     unittest.main()

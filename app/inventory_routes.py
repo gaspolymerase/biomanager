@@ -471,7 +471,15 @@ def _limit_notes(session, row: InventoryModule, item: InventoryItem, cost_was, c
     if now is None or (not creating and now <= (cost_was or 0)):
         return []
     over = spending.over_limits(session, row, item.owner)
-    return [spending.over_message(over, spending.settings_of(session, row))] if over else []
+    if not over:
+        return []
+    # Taken past it by this save (not over already): the admins are told too.
+    rise = now - (0 if creating else (cost_was or 0))
+    crossed = [r for r in over if r["used"] - rise <= r["limit"]]
+    if crossed:
+        spending.tell_admins(session, row, crossed, g.user.username, url_for("inventory.module", key=row.key))
+        session.commit()
+    return [spending.over_message(over, spending.settings_of(session, row))]
 
 
 def _spend_people(session, row: InventoryModule) -> dict:

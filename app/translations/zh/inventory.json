@@ -490,7 +490,6 @@
   "A limit counts everything asked for in its month or year, except what was cancelled.": "限额统计当月或当年申请的全部订单，已取消的除外。",
   "All orders": "全部订单",
   "An order counts in every project group its asker is in now, so the groups can add up to more than the lab.": "订单计入申请人目前所在的每个项目组，所以各项目组加起来可能多于全实验室。",
-  "An order counts in the month it was asked for; a cancelled one counts nowhere.": "订单计入提出申请的那个月；已取消的订单不计入。",
   "Asked for": "已申请",
   "By month": "按月",
   "Choose…": "自选…",
@@ -556,5 +555,9 @@
   "Renamed %(old)s to %(new)s on %(num)s records.": "已在 %(num)s 条记录里把 %(old)s 改为 %(new)s。",
   "Tick two or more vendors and choose the name to keep.": "请勾选两个或更多供应商，并选择要保留的名称。",
   "Vendor %(name)s": "供应商 %(name)s",
-  "Give the vendor a name.": "请填写供应商名称。"
+  "Give the vendor a name.": "请填写供应商名称。",
+  "An order counts in the month it was ordered (while it waits, the month it was asked for); a cancelled one counts nowhere.": "订单计入订购的那个月（还在等待订购时，计入申请的那个月）；已取消的订单不计入。",
+  "%(who)s is over the spending limit": "%(who)s 已超出花费限额",
+  "%(used)s asked for this month, of %(limit)s.": "本月已申请 %(used)s，限额为 %(limit)s。",
+  "%(used)s asked for this year, of %(limit)s.": "本年度已申请 %(used)s，限额为 %(limit)s。"
 }
