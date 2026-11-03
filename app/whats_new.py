@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.9.1": {
+        "fixed": [
+            "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.",
+        ],
+    },
     "2.9.0": {
         "new": [
             "A new look: the wallpaper fills the window and sheets are glass. **Settings → Appearance & language → Look → Solid** for no glass.",

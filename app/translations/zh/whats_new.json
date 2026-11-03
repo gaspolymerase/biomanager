@@ -241,5 +241,6 @@
   "The **Inspector** beside a sheet: the record's labels, **Open**, ↑ ↓ to the next row, and its **History**.": "表格旁的 **检查器**：记录的标签、**打开**、↑ ↓ 看下一行，以及它的 **历史**。",
   "A mouse's form slides in at the right: Sex as buttons, the rack drawn to click a place, **⌘/Ctrl ↵** to save.": "小鼠表单从右侧滑出：性别是按钮，画出架子点选位置，**⌘/Ctrl ↵** 保存。",
   "**Utilities** answers a sum typed in its search (10 mM to 50 µM in 1 mL), and keeps each tool's **Recent sums**.": "**工具** 页的搜索框能直接算（10 mM to 50 µM in 1 mL），每个工具保留 **最近算过**。",
-  "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.": "实验：植物自己的观测指标、每个个体 **第 1 天时的年龄**、**随机分组**，以及存活的 log-rank 检验。"
+  "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.": "实验：植物自己的观测指标、每个个体 **第 1 天时的年龄**、**随机分组**，以及存活的 log-rank 检验。",
+  "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.": "**设置字段** 又能列出这一列的选项了（样本的固定方式……），建议列表也不会超出窗口。"
 }
