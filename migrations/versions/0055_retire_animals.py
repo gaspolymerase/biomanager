@@ -56,6 +56,11 @@ def _rebuild_without_link(names: list[str]) -> None:
     for table in Base.metadata.sorted_tables:
         table.to_metadata(scratch)
     conn = op.get_bind().connection.driver_connection
+    if conn.execute("PRAGMA foreign_keys").fetchone()[0]:
+        # Alembic's own engine leaves them off. With them on, dropping a table
+        # to rebuild it would delete what points at it (calendar_repeats is
+        # ON DELETE CASCADE), and they can't be turned off inside this transaction.
+        raise RuntimeError("0055 rebuilds tables on SQLite and needs foreign keys off")
     audit_ok = "record_id" in {row[1] for row in conn.execute("PRAGMA table_info(audit_log)")}
     for name in names:
         integrity._rebuild_one(conn, scratch.tables[name], drop=frozenset({"animal_id_fk"}))
