@@ -895,14 +895,29 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   1.4 s instead of 10.6 (36 MB of page to 3).
 - An animal database's **Animals** sheet (`organism_routes._module_page`)
   lists the living ones and those that ended in the last `RECENT_DAYS`;
-  the rest wait behind "Show them" (`?ended=all`). It is drawn whole and
-  trimmed by `sheet_paging.page`: past `LAZY_OVER` rows its first page
-  stays and the others become stubs read from the drawn rows
-  (`cell_text.page_of_rows`), fetched from `/organisms/<key>/animals/rows`.
-  At 100,000 mice (10,000 plants, 3,328 listed) the page loads in 4.9 s
-  instead of 33 (54 MB to 5.5), of which the server is 3.2 s, half of it
-  drawing every row and half reading them back; stubs made from data, as
-  the vials' are, would take that to a few tenths of a second.
+  the rest wait behind "Show them" (`?ended=all`). Past `LAZY_OVER` rows
+  it draws its first `FIRST_PAGE` and makes each other animal's stub from
+  its data (`animal_stubs`: its `data-*`, each field's value, the Housing,
+  Line, Sex and Status menus' shown choices, the age, generation and
+  genotype call, the owner's badge; the database's own columns are drawn
+  by `table_cells` and read with `row_stub`, as the fish tanks' are).
+  `tests/test_speed.py` holds every stub to `cell_text.row_stub` of its
+  drawn row, in both ways of drawing cells, in Chinese, and for the owner
+  and someone else. `/organisms/<key>/animals/rows` draws the rows asked
+  for, whenever they ended. At 100,000 mice (10,000 plants, 3,323 listed)
+  the page answers in 0.39 s and loads in 1.3 s (it drew every plant,
+  54 MB, and took 33 s); with "Show them", 0.89 s.
+- `stock_service.schedule` reads only the vials that can fall due by its
+  horizon (a cross, or one ready, to shift or to score by then) and counts
+  the racks' vials in one query: Home's four schedules (each database's
+  card and its agenda) went from 0.11 s to 8 ms, and Home from 0.45 s to
+  0.34 s on that lab.
+- A stock inventory's "Already on order" (`inventory_routes._open_orders_of`)
+  indexes the open orders by what they are matched on (`_same_thing`: the
+  "Reorder of … #n" note, else the catalog number, else the name) rather
+  than trying every order against every item: 4,772 reagents against 164
+  open orders made 782,608 comparisons, and the sheet answered in 0.93 s
+  instead of 0.37.
 - `static/data-table.js` keeps a sheet's sort in `localStorage`
   (`dt:<id>:sort`, restored before the first render) and its chip in the
   address (`?chip=<spec>`; `?scope=mine` picks the chip reading *Mine*).

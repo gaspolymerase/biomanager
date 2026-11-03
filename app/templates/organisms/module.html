@@ -197,7 +197,7 @@
   {% set new_payload = {'count': 1, 'code': next_code, 'attrs': attr_defaults.get('organism', {})} %}
   <section class="data-table-card sheet dt-held" data-table-id="org-{{ module.key }}-animals-v2" data-dt-views="org-{{ module.key }}" data-dt-inspector data-autosave-sheet
            data-noun="{{ n_org }}" data-noun-plural="{{ n_orgs }}"
-           data-selection-scope data-selection-noun="{{ n_org }}" data-selection-noun-plural="{{ n_orgs }}">
+           data-selection-scope data-selection-noun="{{ n_org }}" data-selection-noun-plural="{{ n_orgs }}"{% if animal_rows_url %} data-dt-rows-url="{{ animal_rows_url }}"{% endif %}>
     <div class="dt-toolbar">
       <div class="dt-toolbar-search">
         {{ icon('search', 'search-icon') }}
@@ -247,7 +247,8 @@
           </tr>
         </thead>
         <tbody>
-          {% for r in animal_rows %}
+          {# A long sheet draws its first page; the other animals are stubs (organism_routes.animal_stubs), their rows fetched as shown. #}
+          {% for r in sheet_animal_rows %}
             {% set row = r.o %}
             {% set f = 'row-a-' ~ row.id %}
             {% set locked = not r.editable %}
@@ -322,10 +323,10 @@
             </span></td></tr>
           {% endfor %}
         </tbody>
-      </table>
+      </table>{% if animal_stubs %}<script type="application/json" data-dt-stubs>{{ animal_stubs | stubs_json }}</script>{% endif %}
     </div>
     <template data-row-forms>
-    {% for r in animal_rows %}
+    {% for r in sheet_animal_rows %}
       <form id="row-a-{{ r.o.id }}" method="post" action="{{ url_for('organisms.save_animal', key=module.key) }}" data-record-label="{{ r.o.code or n_org }}">
         <input type="hidden" name="id" value="{{ r.o.id }}">
       </form>

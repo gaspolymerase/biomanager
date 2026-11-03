@@ -23,6 +23,7 @@ Write rules every handler here follows:
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime, timedelta
 
 from flask import (
@@ -609,13 +610,7 @@ def _spec_from_form(form) -> dict:
 
 @bp.route("/<key>")
 def module(key: str):
-    page = _module_page(key)
-    if not isinstance(page, str):
-        return page
-    # A long sheet of animals: its first page drawn, the rest fetched as
-    # shown (app/sheet_paging.py). Only the animals view draws that sheet.
-    return sheet_paging.page(page, f"org-{key}-animals-v2",
-                             url_for("organisms.animal_rows", key=key, **_ended_args()))
+    return _module_page(key)
 
 
 @bp.route("/<key>/animals/rows")
@@ -627,6 +622,105 @@ def animal_rows(key: str):
     if not isinstance(page, str):
         abort(404)
     return sheet_paging.answer(page, f"org-{key}-animals-v2", ids, request)
+
+
+def animal_stubs(module_row, mv, rows: list[dict], housing, lines, latest_calls: dict, generations: dict,
+                 own_fields: list) -> list[dict]:
+    """Animals the sheet does not draw, as data-table.js reads a drawn row
+    (organisms/module.html's animal rows, as cell_text.row_stub reads
+    them): its data-*, each field's value ("k"), its row form, and the
+    words a search looks in ("s": what the row shows, its data-* and each
+    field's value and the choice it shows). Built from each animal's data
+    rather than drawn; the database's own columns are drawn by their macro
+    (table_cells) and read back, as the fish tanks' are.
+    tests/test_speed.py holds each to the row it stands for."""
+    from .cell_text import row_stub, text_cells_on
+    from .text_cells import as_text_cells
+    from .web import owner_badge_filter
+    as_text = text_cells_on()
+    in_table = [f for f in own_fields if f.show_in_table]
+    table_cells = app_jinja().get_template("organisms/_fields.html").module.table_cells if in_table else None
+    housing_code = {u.id: u.code for u in housing}
+    line_label = {ln.id: f"{ln.code} · {ln.name}" if ln.name else ln.code for ln in lines}
+    tr = lambda value: i18n.translate_value(value, "organism")
+    statuses, sexes = list(mv.statuses), list(mv.sexes)
+    has = {k: mv.has(k) for k in ("housing", "lines", "seed_bank", "genotyping")}
+    badges: dict[str, str] = {}
+
+    def choice(values, chosen) -> tuple[str, str]:
+        """A choice_options menu's (value, words): its own word, one not in
+        the list as itself, else the blank "–"."""
+        if chosen in values:
+            return chosen, tr(chosen)
+        return (chosen, chosen) if chosen else ("", "–")
+
+    out = []
+    for r in rows:
+        o = r["o"]
+        attrs = o.attrs_dict
+        call = latest_calls.get(o.id) if has["genotyping"] else None
+        today = date.today()
+        data = {"id": str(o.id), "code": o.code or "", "active": "true" if r["alive"] else "false",
+                "mine": "true" if r["mine"] else "false", "housing": o.housing.code if o.housing else "",
+                "line": o.line.code if o.line else "",
+                "age": str(((o.death_on or today) - o.birth_on).days) if o.birth_on else ""}
+        if call:
+            data["call"] = f"{call.result} {call.zygosity}".strip()
+        sort, fields, words = {}, [], [o.code or "—"]
+        if mv.tracks_groups:
+            sort["count"] = str(o.count)
+            fields.append((str(o.count), ""))
+        if has["housing"]:
+            chosen = (str(o.housing_id_fk), housing_code[o.housing_id_fk]) if o.housing_id_fk in housing_code else ("", "–")
+            sort["housing_id_fk"] = chosen[0]
+            fields.append(chosen)
+        if has["lines"]:
+            chosen = (str(o.line_id_fk), line_label[o.line_id_fk]) if o.line_id_fk in line_label else ("", "–")
+            sort["line_id_fk"] = chosen[0]
+            fields.append(chosen)
+        if sexes:
+            chosen = choice(sexes, o.sex)
+            sort["sex"] = chosen[0]
+            fields.append(chosen)
+        chosen = choice(statuses, o.status)
+        sort["status"] = chosen[0]
+        fields.append(chosen)
+        sort["birth_on"] = str(o.birth_on or "")
+        fields.append((sort["birth_on"], ""))
+        words.append(svc.age_label(module_row, o.birth_on, o.death_on, attrs) or "–")
+        if has["seed_bank"]:
+            words.append(generations.get(o.cohort_id_fk, ""))
+        sort["death_on"] = str(o.death_on or "")
+        fields.append((sort["death_on"], ""))
+        if has["genotyping"]:
+            sort["genotype"] = o.genotype or ""
+            fields.append((sort["genotype"], ""))
+            words += [call.result, call.zygosity] if call else ["—"]
+        if in_table:
+            cells = str(table_cells(in_table, attrs, form=f"row-a-{o.id}", locked=not r["editable"]))
+            read = row_stub("", str(as_text_cells(cells, as_text)))
+            sort.update({k: v for k, v in read["k"].items() if k not in sort})
+            words.append(read["s"])
+        owner = o.owner or ""
+        if owner:
+            if owner not in badges:
+                badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
+            words.append(badges[owner])
+        sort["owner"] = owner
+        fields.append((owner, ""))
+        sort["notes"] = o.notes or ""
+        fields.append((sort["notes"], ""))
+        words += list(data.values())
+        for value, label in fields:
+            words += [value, label]
+        out.append({"id": o.id, "f": f"row-a-{o.id}", "d": data, "k": sort,
+                    "s": " ".join(w for w in words if w).lower()})
+    return out
+
+
+def app_jinja():
+    from flask import current_app
+    return current_app.jinja_env
 
 
 def _ended_args() -> dict:
@@ -737,6 +831,16 @@ def _module_page(key: str, keep: set[int] | None = None, view: str | None = None
                 ctx["latest_calls"] = svc.latest_calls(session, row.id)
                 ctx["assays"] = svc.genotype_assays(session, row.id)
                 ctx["zygosities"] = svc.ZYGOSITIES
+            # A long sheet draws its first page; each other animal is a stub
+            # (animal_stubs), its row fetched from animal_rows as it is shown.
+            from .inventory_routes import FIRST_PAGE, LAZY_OVER
+            animal_rows = ctx["animal_rows"]
+            lazy = keep is None and len(animal_rows) > LAZY_OVER
+            ctx["sheet_animal_rows"] = animal_rows[:FIRST_PAGE] if lazy else animal_rows
+            ctx["animal_stubs"] = animal_stubs(
+                row, mv, animal_rows[FIRST_PAGE:], housing, lines, ctx.get("latest_calls", {}),
+                ctx["generations"], fields.get("organism", [])) if lazy else []
+            ctx["animal_rows_url"] = url_for("organisms.animal_rows", key=key, **_ended_args()) if lazy else ""
 
         elif active == "housing":
             ctx["locations"] = svc.location_tree(session, row.id)

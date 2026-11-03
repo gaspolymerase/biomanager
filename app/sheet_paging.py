@@ -3,9 +3,10 @@
 The inventories, the mouse, cage and litter sheets, the fish tanks and the
 fly vials draw their first page through their own row templates and make
 the other rows' stubs from data (inventory_routes, colony_routes.colony_mouse_rows,
-zebrafish_routes.zf_tank_stubs, stock_routes.unit_stubs). Other sheets (an
-animal database's animals, the plasmids) are drawn by their page whole and
-trimmed here (page): past LAZY_OVER rows, the rows after the first page
+zebrafish_routes.zf_tank_stubs, stock_routes.unit_stubs,
+organism_routes.animal_stubs, plasmid_routes.plasmid_stubs). A sheet that
+cannot (the plasmids of a lab with its own plasmid columns) is drawn by its
+page whole and trimmed here (page): past LAZY_OVER rows, the rows after the first page
 leave the page and stand as stubs (cell_text.row_stub, read from the rows
 as drawn, as data-table.js reads a row), their row forms leave its
 <template data-row-forms>, and the sheet gets data-dt-rows-url. A sheet's

@@ -163,10 +163,21 @@ the living mice are labelled geno). Measured again on that lab:
 | Plasmids | 0.27 s | 1.3 s |
 | Plants (10,000) | 2.7 s | 4.8 s |
 
-Home's server time is now 0.45 s, of which the fly and worm schedules are
-0.11 s: each is worked out twice, for the database's card (two days) and
-for the agenda (seven). Working each out once would save about half of
-that. The plants' sheet is the slowest page left.
+Home's server time was 0.45 s, of which the fly and worm schedules were
+0.11 s, and the plants' sheet the slowest page left. Then:
+
+| Page | Server before | After |
+| --- | --- | --- |
+| Plants (10,000; 3,323 listed) | 2.7 s (4.8 s to load) | 0.39 s (1.3 s); "Show them" 8.7 s to 0.89 s |
+| Home | 0.45 s | 0.34 s |
+| Reagents (with 4,000 orders) | 0.93 s | 0.37 s |
+
+The plants' stubs are made from data; the fly and worm schedules read
+only the vials that can fall due (the four of them on Home: 0.11 s to
+8 ms); "Already on order" indexes the open orders instead of trying each
+against every reagent. Left as they are: the fish (0.31 s) and tanks
+(0.24 s), and Home's weaning list (0.04 s), shared with the calendar and
+the cage sheet.
 
 ## How to check each
 

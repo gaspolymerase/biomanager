@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 import zlib
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -755,11 +756,30 @@ def _open_orders_of(session, source: InventoryModule, stock: list[InventoryItem]
     open_orders = list(session.scalars(select(InventoryItem).where(
         InventoryItem.module_id_fk == orders.id, InventoryItem.status.in_(omv.open_statuses))
         .order_by(InventoryItem.number.desc())))
+    # As _same_thing, each order indexed by what it is matched on, rather
+    # than every order tried against every stock item (a lab's thousands of
+    # reagents against its open orders took most of the sheet's time).
+    reorder_of = f"Reorder of {source.label} #"
+    by_number, by_catalog, by_name = defaultdict(set), defaultdict(set), defaultdict(set)
+    for n, order in enumerate(open_orders):
+        notes = order.notes or ""
+        if notes.startswith(reorder_of):
+            rest = notes[len(reorder_of):]
+            digits = len(rest) - len(rest.lstrip("0123456789"))
+            for k in range(1, digits + 1):     # "#12…" starts as "#1" and "#12" do
+                by_number[rest[:k]].add(n)
+        by_catalog[(order.catalog_number or "").strip().lower()].add(n)
+        by_name[(order.name or "").strip().lower()].add(n)
     found = {}
     for item in stock:
-        same = [o for o in open_orders if _same_thing(o, item, source)]
-        if same:
-            found[item.id] = same
+        hits = set(by_number.get(str(item.number), ()))
+        cat, name = (item.catalog_number or "").strip().lower(), (item.name or "").strip().lower()
+        if cat:
+            hits |= by_catalog.get(cat, set())
+        elif name:
+            hits |= by_name.get(name, set())
+        if hits:
+            found[item.id] = [open_orders[n] for n in sorted(hits)]
     return found
 
 

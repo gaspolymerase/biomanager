@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 
 from . import i18n, positions
 from . import stocks as presets
@@ -431,10 +431,15 @@ def schedule(session, mv: ModuleView, today: date | None = None, horizon: int = 
     today = today or date.today()
     until = today + timedelta(days=horizon)
     out: list[dict] = []
-    for rack in racks_of(session, mv.id):
+    racks = racks_of(session, mv.id)
+    # Each rack's active vials, counted in one query rather than one a rack.
+    counts = dict(session.execute(
+        select(StockUnit.rack_id_fk, func.count(StockUnit.id))
+        .where(StockUnit.rack_id_fk.in_([r.id for r in racks]), StockUnit.active.is_(True))
+        .group_by(StockUnit.rack_id_fk)).all()) if racks else {}
+    for rack in racks:
         due = next_flip(mv, rack)
-        count = session.scalar(select(func.count(StockUnit.id)).where(
-            StockUnit.rack_id_fk == rack.id, StockUnit.active.is_(True))) or 0
+        count = counts.get(rack.id, 0)
         verb = _w(mv.s["flip_verb"])
         noun = _w(mv.unit if count == 1 else mv.units)
         if due is None and count:
@@ -449,8 +454,13 @@ def schedule(session, mv: ModuleView, today: date | None = None, horizon: int = 
                                           count=count, units=noun, n=flip_interval(mv, rack),
                                           temp=rack_temperature(mv, rack),
                                           on=i18n.strftime(rack.last_flipped_on, "%d %b"))})
+    # Only a vial with something that can fall due by `until`: a cross (its
+    # collections), or one ready, to shift or to score by then. A lab's
+    # thousands of stock vials have none.
     units = list(session.scalars(select(StockUnit).where(
-        StockUnit.module_id_fk == mv.id, StockUnit.active.is_(True))))
+        StockUnit.module_id_fk == mv.id, StockUnit.active.is_(True),
+        or_(StockUnit.purpose == presets.CROSS, StockUnit.ready_on <= until,
+            and_(StockUnit.shift_on <= until, StockUnit.shifted_on.is_(None)), StockUnit.score_on <= until))))
     for u in units:
         code = mv.code(u)
         if u.purpose == presets.CROSS:

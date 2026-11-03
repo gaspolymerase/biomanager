@@ -921,6 +921,58 @@ class WholeSheetPagingTests(AppTestCase):
             self.assertIn(f'id="row-a-{row_id}"', answer["forms"])
         self.assertEqual(one("select count(*) from organisms where module_id_fk=?", mid), 4)
 
+    def test_an_animal_not_drawn_reads_as_its_row_would(self):
+        """organism_routes.animal_stubs builds an undrawn animal from its
+        data (its database's own columns drawn by their macro); it must be
+        what data-table.js would read from its row (cell_text.row_stub), in
+        either way of drawing cells, in Chinese, for its owner and someone
+        else."""
+        from app.cell_text import row_stub
+        from tests.test_plants import plant_module
+        key = plant_module(self.a)
+        mid = one("select id from organism_modules where key=?", key)
+        url = f"/organisms/{key}"
+        self.post(self.a, f"{url}/housing/save", {"code": uniq("Pot"), "owner": self.admin, "_full": "1"})
+        pot = one("select max(id) from organism_housing where module_id_fk=?", mid)
+        line_code = uniq("L")
+        self.post(self.a, f"{url}/line/save", {"code": line_code, "name": "Col-0 x", "_full": "1"})
+        line = one("select id from organism_lines where module_id_fk=? and code=?", mid, line_code)
+
+        def plant(client, **fields):
+            code = uniq("P")
+            self.post(client, f"{url}/animal/save", {"code": code, "count": "1", "status": "growing", **fields})
+            return one("select id from organisms where module_id_fk=? and code=?", mid, code)
+        ids = [plant(self.a, owner=self.admin, housing_id_fk=str(pot), line_id_fk=str(line), birth_on=days_ago(20),
+                     genotype='tt4 "x" & y', notes="a <b>note</b>", attr_flowered_on=days_ago(3)),
+               plant(self.a, status="harvested", birth_on=days_ago(60), death_on=days_ago(5)),
+               plant(self.m, status="", owner=self.member),
+               plant(self.a, status="odd one")]
+        execute("update organisms set status='odd one' where id=?", ids[3])     # not in the database's list
+        execute("insert into organism_genotypes (module_id_fk, subject_kind, subject_id, assay, result, zygosity, "
+                "called_on, called_by, image_path, notes, created_at) values (?, 'organism', ?, 'PCR', 'tt4', 'hom', ?, '', '', '', ?)",
+                mid, ids[0], days_ago(2), days_ago(2) + " 00:00:00")
+        total = one("select count(*) from organisms where module_id_fk=?", mid)
+        for client in (self.a, self.m):
+            for ua in ({"User-Agent": "Mozilla/5.0 Chrome/141.0 Safari/537.36"}, {"User-Agent": "Firefox"},
+                       {"User-Agent": "Firefox", "Accept-Language": "zh-CN"}):
+                with self.paged(over=100000):
+                    whole = client.get(url, headers=ua).get_data(as_text=True)
+                with self.paged(over=1, first=1):
+                    stubs = {s["id"]: s for s in self.stubs_of(client.get(url, headers=ua).get_data(as_text=True))}
+                self.assertEqual(len(stubs), total - 1, ua)
+                body = whole[whole.index("<tbody"):whole.index("</tbody>")]
+                read = {}
+                for attrs, row in re.findall(r'<tr (data-id="\d+"[^>]*)>(.*?)</tr>', body, re.S):
+                    drawn = row_stub(attrs, row)
+                    read[drawn["id"]] = drawn
+                for aid in ids:
+                    if aid not in stubs:
+                        continue
+                    want, got = read[aid], stubs[aid]
+                    for name in ("d", "k", "f"):
+                        self.assertEqual(got[name], want[name], (aid, name, ua))
+                    self.assertEqual(set(got["s"].split()), set(want["s"].split()), (aid, ua))
+
     def test_animals_that_ended_long_ago_wait_behind_show_them(self):
         from tests.test_plants import plant_module
         key = plant_module(self.a)
