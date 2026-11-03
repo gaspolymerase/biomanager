@@ -665,6 +665,14 @@ database has a name of its own (one another database has is refused), so
     <td align="center"><sub><b>Orders</b> — drag a card when it arrives</sub></td>
     <td align="center"><sub><b>Reagents</b> — what's low, what's expiring</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/orders-spending.webp" alt="The orders page's Spending view: a year of orders by month and by person, with the lab's limits"></td>
+    <td width="50%"><img src="docs/screenshots/vendors.webp" alt="The Vendors page: every vendor with its orders, records, last 12 months and last order"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Spending</b> — by person, group or vendor, against your limits</sub></td>
+    <td align="center"><sub><b>Vendors</b> — one list, details kept, spellings merged</sub></td>
+  </tr>
 </table>
 
 ### 📅 Calendar and notebook
