@@ -388,7 +388,11 @@
   function wireFieldPicker(select) {
     const form = select.form;
     const input = form.querySelector('[data-bulk-value]');
-    const list = input && input.list;
+    // Its datalist, by id: static/combobox.js takes the list attribute off
+    // a field it serves (input.list is then null) and reads the same
+    // datalist when its menu opens, so filling it here fills the menu.
+    const listId = input && (input.getAttribute('list') || input.dataset.comboList);
+    const list = listId ? document.getElementById(listId) : null;
     const kind = form.querySelector('[data-bulk-source]');
     const sync = () => {
       const opt = select.selectedOptions[0];
