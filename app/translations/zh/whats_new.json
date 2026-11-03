@@ -236,5 +236,10 @@
   "**Spending** on the orders page: what the orders cost, month by month, by person, project group, vendor or category, with **Download CSV**.": "订单页的 **花费**：按月统计订单花了多少，可按成员、项目组、供应商或类别分组，并可 **下载 CSV**。",
   "Spending limits for the lab, a person or a project group, per year or per month: an admin sets them in **Limits and settings**.": "可以为全实验室、个人或项目组设置每年或每月的花费限额：由管理员在 **限额和设置** 里设置。",
   "**Vendors**: one list of the lab's vendors, with their details; an admin can rename or **Merge** spellings everywhere.": "**供应商**：实验室所有供应商集中在一个列表里，并可记下详细信息；管理员可以改名或把不同写法 **合并**。",
-  "A plasmid's **Backbone** and **Insert** can name one of the lab's plasmids (pick it, or type @): it is listed under **Made from**.": "质粒的 **骨架** 和 **插入片段** 可以写实验室的质粒（从列表选，或输入 @）：它会列进 **来源质粒**。"
+  "A plasmid's **Backbone** and **Insert** can name one of the lab's plasmids (pick it, or type @): it is listed under **Made from**.": "质粒的 **骨架** 和 **插入片段** 可以写实验室的质粒（从列表选，或输入 @）：它会列进 **来源质粒**。",
+  "A new look: the wallpaper fills the window and sheets are glass. **Settings → Appearance & language → Look → Solid** for no glass.": "新外观：背景铺满窗口，表格是玻璃。不要玻璃效果就选 **设置 → 外观与语言 → 外观样式 → 实色**。",
+  "The **Inspector** beside a sheet: the record's labels, **Open**, ↑ ↓ to the next row, and its **History**.": "表格旁的 **检查器**：记录的标签、**打开**、↑ ↓ 看下一行，以及它的 **历史**。",
+  "A mouse's form slides in at the right: Sex as buttons, the rack drawn to click a place, **⌘/Ctrl ↵** to save.": "小鼠表单从右侧滑出：性别是按钮，画出架子点选位置，**⌘/Ctrl ↵** 保存。",
+  "**Utilities** answers a sum typed in its search (10 mM to 50 µM in 1 mL), and keeps each tool's **Recent sums**.": "**工具** 页的搜索框能直接算（10 mM to 50 µM in 1 mL），每个工具保留 **最近算过**。",
+  "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.": "实验：植物自己的观测指标、每个个体 **第 1 天时的年龄**、**随机分组**，以及存活的 log-rank 检验。"
 }
