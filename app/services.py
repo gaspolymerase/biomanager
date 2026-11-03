@@ -7,17 +7,14 @@ from urllib.parse import quote
 
 from sqlalchemy import func, select
 
-from .db import SessionLocal
 from .i18n import gettext
 from .litter_dates import born_day, genotyping_offset, open_litters, pups_all_dead, weaning_due, weaning_title
 from .positions import natural_sorted, place_order
 from . import custom_fields
 from .record_numbers import next_cage_id
 from .models import (
-    AnimalRecord,
     CageLitter,
     CageRecord,
-    CalendarEvent,
     ClutchRecord,
     Experiment,
     FishRecord,
@@ -26,11 +23,6 @@ from .models import (
     LitterRecord,
     MOUSE_PRESET_FIELDS,
     MouseRecord,
-    NotebookEntry,
-    Order,
-    SampleRecord,
-    StrainRecord,
-    TaskItem,
     UserAccount,
 )
 
@@ -47,21 +39,6 @@ def parse_date(raw_value: str | None) -> date | None:
         except ValueError:
             continue
     return None
-
-
-def dashboard_counts() -> dict[str, int]:
-    with SessionLocal() as session:
-        return {
-            "orders": len(session.scalars(select(Order)).all()),
-            "animals": len(session.scalars(select(AnimalRecord)).all()),
-            "samples": len(session.scalars(select(SampleRecord)).all()),
-            "events": len(session.scalars(select(CalendarEvent)).all()),
-            "tasks": len(session.scalars(select(TaskItem)).all()),
-            "notebook_entries": len(session.scalars(select(NotebookEntry)).all()),
-            "mice": len(session.scalars(select(MouseRecord)).all()),
-            "cages": len(session.scalars(select(CageRecord)).all()),
-            "strains": len(session.scalars(select(StrainRecord)).all()),
-        }
 
 
 def get_or_create_litter(session, litter_code: str, dob: date | None = None) -> LitterRecord:
