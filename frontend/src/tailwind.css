@@ -263,9 +263,13 @@
   --palette-scrim: rgba(20, 24, 40, 0.16);
   --palette-row:   rgba(15, 20, 40, 0.06);
   --palette-line:  rgba(15, 20, 40, 0.07);
-  --wall: radial-gradient(900px 600px at 10% 5%, rgba(94, 234, 212, 0.26), transparent 60%),
-          radial-gradient(800px 600px at 92% 15%, rgba(167, 139, 250, 0.24), transparent 60%),
-          radial-gradient(900px 700px at 55% 105%, rgba(253, 186, 116, 0.2), transparent 60%);
+  /* Sized to the window, not in pixels, and a fourth wash low on the left,
+     so no stretch of the bare grey canvas shows between them on a wide or
+     tall window: the grey read as the app being grey. */
+  --wall: radial-gradient(65% 60% at 6% 0%, rgba(94, 234, 212, 0.32), transparent 72%),
+          radial-gradient(60% 65% at 98% 6%, rgba(167, 139, 250, 0.28), transparent 72%),
+          radial-gradient(65% 60% at 60% 108%, rgba(253, 186, 116, 0.26), transparent 72%),
+          radial-gradient(50% 55% at 22% 78%, rgba(125, 211, 252, 0.2), transparent 72%);
 
   /* --- Type --------------------------------------------------------------
      Geist everywhere (the same on a Mac, Windows, Linux and phones), then
@@ -448,9 +452,10 @@
     --palette-scrim: rgba(0, 0, 0, 0.4);
     --palette-row:   rgba(255, 255, 255, 0.07);
     --palette-line:  rgba(255, 255, 255, 0.07);
-    --wall: radial-gradient(900px 600px at 10% 5%, rgba(45, 212, 191, 0.15), transparent 60%),
-            radial-gradient(800px 600px at 92% 15%, rgba(129, 140, 248, 0.18), transparent 60%),
-            radial-gradient(900px 700px at 55% 105%, rgba(244, 114, 182, 0.1), transparent 60%);
+    --wall: radial-gradient(65% 60% at 6% 0%, rgba(45, 212, 191, 0.16), transparent 72%),
+            radial-gradient(60% 65% at 98% 6%, rgba(129, 140, 248, 0.18), transparent 72%),
+            radial-gradient(65% 60% at 60% 108%, rgba(244, 114, 182, 0.11), transparent 72%),
+            radial-gradient(50% 55% at 22% 78%, rgba(56, 189, 248, 0.08), transparent 72%);
 
     /* Fields sit darker than the panel they are on, with a rim you can see:
        on a dark dialog a field the panel's own grey reads as no field. */
@@ -1087,7 +1092,7 @@
            border-0 bg-transparent px-2 text-[13px] font-normal text-ink no-underline
            transition-colors duration-75 select-none;
   }
-  .rail-item .icon { @apply size-4 shrink-0 text-muted transition-colors; }
+  .rail-item .icon { @apply size-4 shrink-0 text-ink-soft transition-colors; --icon-stroke: 2; }
   .rail-item:hover { @apply bg-sand-300/40 no-underline; }
   .rail-item.is-active { @apply bg-brand-600/15 font-semibold text-brand-800; }
   .rail-item.is-active .icon { @apply text-brand-600; }
@@ -1106,7 +1111,9 @@
   body[data-rail="closed"] .rail-item {
     @apply size-[42px] justify-center rounded-full p-0;
   }
-  body[data-rail="closed"] .rail-item .icon { @apply size-[18px]; }
+  /* Folded to icons, they are all there is to read: larger, bolder, in ink. */
+  body[data-rail="closed"] .rail-item .icon { @apply size-[21px] text-ink; --icon-stroke: 2.25; }
+  body[data-rail="closed"] .rail-item.is-active .icon { @apply text-brand-700; }
   body[data-rail="closed"] .rail-label { @apply sr-only; }
   body[data-rail="closed"] .rail-item.is-active {
     @apply text-brand-800;
@@ -1114,6 +1121,7 @@
     box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), 0 2px 8px rgb(0 0 0 / 0.1);
   }
   html.window-inactive body[data-rail="closed"] .rail-item.is-active { @apply text-ink; }
+  html.window-inactive body[data-rail="closed"] .rail-item.is-active .icon { @apply text-ink; }
   body[data-rail="closed"] .rail-brand-word { @apply hidden; }
   body[data-rail="closed"] .rail-brand { @apply justify-center px-0; }
   body[data-rail="closed"] .rail-group { @apply items-center gap-0.5; }
