@@ -227,5 +227,10 @@
   "**Settings** says each thing once: how you sign in is part of **Profile**, and the welcome tour is under **Help**.": "**设置** 里每件事只出现一次：登录方式并入 **个人资料**，欢迎导览移到 **帮助** 下。",
   "An AI assistant can **Design an experiment** with you, then set it up in one proposal: the experiment, the **Breeding** cages, the to-dos and the calendar.": "AI 助手可以和你一起 **设计实验**，再用一个提议安排好：实验、**配种笼**、待办和日历。",
   "A big colony opens faster: the **Breeders** tab shows 100 cages at a time, with **Show 100 more**, and **Home** and long vial sheets come up sooner.": "大型小鼠库打开更快：**种鼠** 标签页一次显示 100 个笼，下面有 **再显示 100 个**；**首页** 和很长的果蝇管列表也更快出现。",
-  "On a long sheet of vials, **Show them** lists the vials that ended long ago on every page.": "很长的果蝇管列表里，**显示它们** 会在每一页列出早已结束的管。"
+  "On a long sheet of vials, **Show them** lists the vials that ended long ago on every page.": "很长的果蝇管列表里，**显示它们** 会在每一页列出早已结束的管。",
+  "**Home** counts the active mice only, and how many are yours; **Due this week** and **Overdue** are apart.": "**首页** 只统计活跃的小鼠以及其中你的有多少；**本周到期** 和 **已逾期** 分开显示。",
+  "A big lab opens faster: long sheets of plants, plasmids and reagents, **Orders** (its **Board** comes when you open it) and **Home**.": "大型实验室打开更快：很长的植物、质粒和试剂列表，**订单**（它的 **看板** 在打开时才加载），以及 **首页**。",
+  "A zebrafish tank of the lab's breeding stock is now a *breeder* tank, shared with the lab, as a **Breeder** cage is.": "存放实验室种鱼的斑马鱼缸现在叫 *breeder*（种鱼缸），和 **种鼠笼** 一样与实验室共享。",
+  "**Already on order** no longer counts an order again of #1 as one for #12.": "**已在订购** 不会再把 #1 的再次订购当作 #12 的订单。",
+  "A facility manager can change an inventory's, a fly database's or a worm database's settings.": "设施管理员可以修改库存、果蝇数据库和线虫数据库的设置。"
 }
