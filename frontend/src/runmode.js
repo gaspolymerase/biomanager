@@ -2,12 +2,22 @@
 // page's checklist is shown a step at a time in large type; Done ticks the
 // step in the page with the time ("— ✓ 14:32"), durations in the step get
 // their own timer buttons, and a deviation is written under the page's
-// Deviations heading with the time and step number. The screen is kept on
-// while it is open (where the browser allows).
+// Deviations heading with the time and step number. A table written under
+// the step is shown with it, as it reads in the page now. The screen is kept
+// on while it is open (where the browser allows).
 
-import { appendLogLine, checkStep, taskItems } from './docops.js';
+import { appendLogLine, checkStep, tableRows, taskItems } from './docops.js';
 import { findDurations, timers } from './timers.js';
 import { ask, el, escapeHtml } from './util.js';
+
+function tableHtml(table) {
+  const rows = tableRows(table).map((cells) => `<tr>${cells.map((c) => {
+    const tag = c.header ? 'th' : 'td';
+    const span = `${c.colspan > 1 ? ` colspan="${c.colspan}"` : ''}${c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : ''}`;
+    return `<${tag}${span}>${escapeHtml(c.text)}</${tag}>`;
+  }).join('')}</tr>`).join('');
+  return `<div class="nb-run-table"><table>${rows}</table></div>`;
+}
 
 export function openRunMode(editor, { title = '' } = {}) {
   if (!taskItems(editor.state.doc).length) {
@@ -39,7 +49,10 @@ export function openRunMode(editor, { title = '' } = {}) {
       </div>
       <div class="nb-run-step${step.checked ? ' is-done' : ''}">
         <div class="nb-run-num">${index + 1}</div>
-        <div class="nb-run-text">${escapeHtml(clean || '(empty step)')}${step.checked ? '<div class="nb-run-stamp">Done</div>' : ''}</div>
+        <div class="nb-run-body">
+          <div class="nb-run-text">${escapeHtml(clean || '(empty step)')}${step.checked ? '<div class="nb-run-stamp">Done</div>' : ''}</div>
+          ${step.tables.map(tableHtml).join('')}
+        </div>
       </div>
       ${durations.length ? `<div class="nb-run-timers">${durations.map((d, i) => `<button type="button" class="nb-run-timer" data-timer="${i}">⏱ Start ${escapeHtml(d.text)}</button>`).join('')}</div>` : ''}
       <div class="nb-run-next">${steps[index + 1] ? `Next: ${escapeHtml(steps[index + 1].text.replace(/\s—\s✓\s\d{1,2}:\d{2}$/, '').slice(0, 120))}` : 'Last step'}</div>
