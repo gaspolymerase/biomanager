@@ -289,6 +289,9 @@
 /inventory/<key>/renumber	inventory.renumber	GET POST
 /inventory/<key>/rows	inventory.sheet_rows	GET
 /inventory/<key>/sources	inventory.source_ids	GET
+/inventory/<key>/spending	inventory.spending_data	GET
+/inventory/<key>/spending.csv	inventory.spending_csv	GET
+/inventory/<key>/spending/settings	inventory.spending_settings	POST
 /inventory/<key>/types/add	inventory.add_type	POST
 /inventory/new	inventory.new_module	GET POST
 /joined	door.joined	GET
@@ -508,6 +511,7 @@
 /plasmids/features/pack	feature_library_pack	POST
 /plasmids/fetch-sequence	sequence_fetch.fetch	GET
 /plasmids/grid	plasmid_grid	GET
+/plasmids/link-columns	plasmid_link_columns	POST
 /plasmids/list	plasmid_list	GET
 /plasmids/rows	plasmid_rows	GET
 /presence	sheet_views.presence	POST
@@ -588,6 +592,9 @@
 /utilities/lab-tools	utilities_lab_tool_save	POST
 /utilities/lab-tools/<tool_id>/delete	utilities_lab_tool_delete	POST
 /utilities/rotors	utilities_rotors	POST
+/vendors	vendors.page	GET
+/vendors/merge	vendors.merge	POST
+/vendors/save	vendors.save	POST
 /welcome	lab.welcome	GET POST
 /whats-new/seen	whats_new.seen	POST
 /zebrafish	zebrafish	GET

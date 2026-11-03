@@ -21,8 +21,8 @@ from alembic import op
 
 from migrations.helpers import has_column, has_table
 
-revision = "0055_retire_animals"
-down_revision = "0054_breeder_tanks"
+revision = "0056_retire_animals"
+down_revision = "0055_vendors"
 branch_labels = None
 depends_on = None
 
@@ -60,7 +60,7 @@ def _rebuild_without_link(names: list[str]) -> None:
         # Alembic's own engine leaves them off. With them on, dropping a table
         # to rebuild it would delete what points at it (calendar_repeats is
         # ON DELETE CASCADE), and they can't be turned off inside this transaction.
-        raise RuntimeError("0055 rebuilds tables on SQLite and needs foreign keys off")
+        raise RuntimeError("0056 rebuilds tables on SQLite and needs foreign keys off")
     audit_ok = "record_id" in {row[1] for row in conn.execute("PRAGMA table_info(audit_log)")}
     for name in names:
         integrity._rebuild_one(conn, scratch.tables[name], drop=frozenset({"animal_id_fk"}))

@@ -373,5 +373,12 @@
   "This plasmid isn’t yours to edit.": "这个质粒不是你可以编辑的。",
   "Those are the bases already there.": "那里本来就是这些碱基。",
   "Type the bases to put in.": "请输入要填入的碱基。",
-  "Undone.": "已撤销。"
+  "Undone.": "已撤销。",
+  "%(num)s Backbone or Insert names one of the lab's plasmids, but is not listed under its Made from.": "有 %(num)s 个骨架或插入片段写的是实验室里的质粒，但没有列在其“来源质粒”里。",
+  "%(num)s Backbones and Inserts name one of the lab's plasmids, but are not listed under their Made from.": "有 %(num)s 个骨架或插入片段写的是实验室里的质粒，但没有列在其“来源质粒”里。",
+  "Pick one of the lab's plasmids, or type @ and its name, and it is listed under Made from.": "从列表里选实验室的质粒，或输入 @ 加质粒名称，它就会列在“来源质粒”里。",
+  "Link them": "建立关联",
+  "Linked %(num)s Backbone or Insert to the plasmid it names: see Made from on each plasmid.": "已把 %(num)s 个骨架或插入片段关联到对应的质粒：见各质粒的“来源质粒”。",
+  "Linked %(num)s Backbones and Inserts to the plasmids they name: see Made from on each plasmid.": "已把 %(num)s 个骨架或插入片段关联到对应的质粒：见各质粒的“来源质粒”。",
+  "Linked Backbones and Inserts to the lab's plasmids": "把骨架和插入片段关联到实验室的质粒"
 }

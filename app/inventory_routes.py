@@ -41,6 +41,7 @@ from . import groups as project_groups
 from . import bulk as bulk_actions, stewardship
 from .inventory_items import MOUSE_SOURCE_KINDS, Refused, _and, _column_value, _manage_denied, _mouse_number, _tr
 from .inventory_items import item_from_form as _item_from_form
+from . import order_spending as spending
 from .models import InventoryItem, InventoryModule, InventoryRack
 
 bp = Blueprint("inventory", __name__, url_prefix="/inventory")
@@ -400,6 +401,122 @@ def board(key: str):
         return render_template("inventory/_board.html", m=context["module"], **context)
 
 
+def _spends(row: InventoryModule) -> bool:
+    """Whether a database has the Spending view: orders with a Price."""
+    return row.kind == "orders" and any(f["key"] == "price" for f in svc.view(row).fields)
+
+
+def _cost_of(session, row: InventoryModule, item: InventoryItem) -> float | None:
+    if not _spends(row):
+        return None
+    return spending.cost(item.attrs_dict, item.quantity, spending.settings_of(session, row)["price_is"])
+
+
+def _limit_notes(session, row: InventoryModule, item: InventoryItem, cost_was, creating: bool) -> list[str]:
+    """What an order that now costs more takes past: the lab's limit, its
+    asker's or their project group's (order_spending.over_limits)."""
+    if not _spends(row) or item.status and spending.state_of(item.status, svc.view(row).statuses) is None:
+        return []
+    now = _cost_of(session, row, item)
+    if now is None or (not creating and now <= (cost_was or 0)):
+        return []
+    over = spending.over_limits(session, row, item.owner)
+    return [spending.over_message(over, spending.settings_of(session, row))] if over else []
+
+
+def _spend_people(session, row: InventoryModule) -> dict:
+    """Who and which project groups a limit can be set for, in the
+    Spending view's settings: an admin's only."""
+    if not _spends(row) or not spending.can_set_limits():
+        return {"people": [], "groups": [], "months": []}
+    from .lab_calendar import people as lab_people
+    return {"people": lab_people(session),
+            "groups": [{"id": gid, "name": name} for gid, name in spending.people_of(session).groups.items()],
+            "months": [i18n.strftime(date(2000, n, 1), "%B") for n in range(1, 13)]}
+
+
+def _spending_range(settings: dict) -> tuple[date, date]:
+    """The months asked for (?from=YYYY-MM&to=YYYY-MM); the last twelve
+    without them."""
+    today = date.today()
+    last = spending.month_of(request.args.get("to"), date(today.year, today.month, 1))
+    first = spending.month_of(request.args.get("from"), spending.add_months(last, -11))
+    if first > last:
+        first, last = last, first
+    return first, last
+
+
+@bp.route("/<key>/spending")
+def spending_data(key: str):
+    """The Spending view's numbers (order_spending.summary) for ?from, ?to
+    and ?by (person, group, vendor or category), asked for when the view is
+    shown and each time its choices change."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        settings = spending.settings_of(session, row)
+        first, last = _spending_range(settings)
+        orders = spending.orders_of(session, row, settings)
+        if request.args.get("from") == "all" and orders:
+            first = date(min(o.day for o in orders).year, min(o.day for o in orders).month, 1)
+        answer = spending.summary(orders, request.args.get("by", "person"), first, last,
+                                  spending.people_of(session), settings)
+        answer["settings"] = settings
+        answer["can_set_limits"] = spending.can_set_limits()
+        return jsonify(answer)
+
+
+@bp.route("/<key>/spending.csv")
+def spending_csv(key: str):
+    """The Spending view's table, for a spreadsheet: one row per person
+    (group, vendor or category) and one column per month."""
+    import csv
+    import io
+    from flask import Response
+
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        settings = spending.settings_of(session, row)
+        first, last = _spending_range(settings)
+        orders = spending.orders_of(session, row, settings)
+        if request.args.get("from") == "all" and orders:
+            first = date(min(o.day for o in orders).year, min(o.day for o in orders).month, 1)
+        data = spending.summary(orders, request.args.get("by", "person"), first, last,
+                                spending.people_of(session), settings)
+        heading = {"person": gettext("Person"), "group": gettext("Project group"), "vendor": gettext("Vendor"),
+                   "category": gettext("Category")}[data["by"]]
+        out = io.StringIO()
+        writer = csv.writer(out)
+        writer.writerow([heading, gettext("Number of orders"), gettext("Spent"), gettext("Asked for, not yet ordered"),
+                         gettext("Total"), *data["months"]])
+        def figure(v: float) -> str:
+            return f"{v:.2f}".rstrip("0").rstrip(".")
+        for s in data["series"]:
+            writer.writerow([s["label"], s["orders"], figure(s["spent"]), figure(s["asked"]), figure(s["total"]),
+                             *[figure(v) for v in s["months"]]])
+        name = re.sub(r"[^\w\-.]+", "_", row.label).strip("_") or "orders"
+        body = "\ufeff" + out.getvalue()   # a byte-order mark, so Excel reads the names as UTF-8
+    return Response(body, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}-spending-{data["first"]}-{data["last"]}.csv"'})
+
+
+@bp.route("/<key>/spending/settings", methods=["POST"])
+def spending_settings(key: str):
+    """The Spending view's settings and limits; an admin's to change."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        if not spending.can_set_limits():
+            return jsonify({"ok": False, "error": gettext("Only an admin can set spending limits.")}), 403
+        settings = spending.save_settings(session, row, request.form)
+        session.commit()
+        return jsonify({"ok": True, "settings": settings})
+
+
 @bp.route("/<key>/grid")
 def grid_data(key: str):
     """The box grid's boxes and tiles (rack-grid.js), for the page's ?type=
@@ -569,6 +686,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "next_number": svc.next_number(session, row.id),
         "reorder": reorder,
         "can_configure": access.can_configure(row), "is_admin": access.is_admin(),
+        "spends": _spends(row), "spend_people": _spend_people(session, row),
         "bulk_fields": bulk_fields(mv),
         "stored_at_field": svc.stored_at_field(mv),
         "terminal_statuses": sorted(svc.TERMINAL_STATUSES),
@@ -823,6 +941,7 @@ def save_item(key: str):
                                  owner=g.user.username, status=mv.statuses[0] if mv.statuses else "")
             session.add(item)
         status_was = "" if creating else item.status
+        cost_was = None if creating else _cost_of(session, row, item)
         try:
             error, notes = _item_from_form(session, mv, item, request.form, creating=creating)
         except Refused as refused:
@@ -846,6 +965,7 @@ def save_item(key: str):
                 order_attrs["stocked_as"] = f"{row.key}:{item.number}"
                 order.attrs = json.dumps(order_attrs)
         session.commit()
+        notes += _limit_notes(session, row, item, cost_was, creating)
         label = item.name or f"#{item.number}"
         for note in notes:
             flash(note, "warning")
@@ -1031,6 +1151,7 @@ def update_item(key: str, item_id: int):
         if not access.can_edit_item(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
+        cost_was = _cost_of(session, row, item)
         try:
             error, notes = _item_from_form(session, mv, item, request.form)
         except Refused as refused:
@@ -1041,6 +1162,7 @@ def update_item(key: str, item_id: int):
             return jsonify({"ok": False, "error": error}), 409
         item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
         session.commit()
+        notes += _limit_notes(session, row, item, cost_was, False)
         answer = _row_json(mv, item)
         if notes:
             answer["notes"] = notes

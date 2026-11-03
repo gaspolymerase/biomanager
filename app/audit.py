@@ -67,7 +67,7 @@ TABLE_LABELS = {
     "experiment_deviations": "Changes from the plan",
     "mouse_weights": "Weights", "cage_litters": "Litters born",
     "plate_layouts": "Plate layouts", "plate_reads": "Plates read",
-    "organism_seed_lots": "Seed lots",
+    "organism_seed_lots": "Seed lots", "vendors": "Vendors",
 }
 
 

@@ -451,7 +451,7 @@ def rebuild_samples_table() -> None:
     aside, recreated from the model, rows copied across, old copy dropped,
     all in one transaction. Idempotent; a no-op once the table is current.
     A sample linked to the old `animals` table keeps that animal's number
-    as its source; revision 0055 then drops the link and the table.
+    as its source; revision 0056 then drops the link and the table.
     """
     inspector = inspect(engine)
     if "samples" not in inspector.get_table_names():

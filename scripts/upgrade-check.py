@@ -40,7 +40,7 @@ PY = sys.executable
 # the first boot of an older version stored as dropdown choices.
 TIDIED = {"dropdown_options"}
 # Tables a revision retires on purpose (docs/adr/): they may disappear.
-RETIRED = {"animals": "0055_retire_animals"}
+RETIRED = {"animals": "0056_retire_animals"}
 PAGES = ["/home", "/colony?view=mice", "/colony?view=experiments", "/calendar", "/notebook", "/settings",
          "/zebrafish?view=fish", "/plasmids"]
 

@@ -3,7 +3,7 @@
 The app's first versions had a generic `animals` table that samples,
 calendar events and notebook pages could link to. Nothing has filled or
 shown it since each database got its own records (mice, fish, organisms),
-and samples name their source by kind and number. Revision 0055 drops it
+and samples name their source by kind and number. Revision 0056 drops it
 and the three `animal_id_fk` columns, after copying any sample's linked
 animal number into its source. The lab's maintainer chose dropping over
 keeping an empty table, so the models say only what the app uses.

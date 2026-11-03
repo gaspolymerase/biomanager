@@ -1,0 +1,152 @@
+{# The orders page's Spending view (inventory/module.html, when the orders
+   have a Price): what they cost by month, by person, project group, vendor
+   or category, and where each limit stands. The numbers come from
+   inventory.spending_data when the view is first shown (static/spending.js);
+   the limits are an admin's to set (inventory.spending_settings). #}
+<div data-layout-panel="spending" hidden>
+  <section class="spend" data-spending data-key="{{ key }}"
+           data-src="{{ url_for('inventory.spending_data', key=key) }}"
+           data-csv="{{ url_for('inventory.spending_csv', key=key) }}"
+           data-settings-url="{{ url_for('inventory.spending_settings', key=key) }}"
+           data-people="{{ spend_people.people | tojson | forceescape }}"
+           data-groups="{{ spend_people.groups | tojson | forceescape }}">
+    {# One row of choices, above everything they scope. #}
+    <div class="spend-filters">
+      <div class="dt-chips" role="group" aria-label="{{ _('Months') }}">
+        <button type="button" class="dt-chip" data-spend-range-pick="last12">{{ _('Last 12 months') }}</button>
+        <button type="button" class="dt-chip" data-spend-range-pick="year">{{ _('This year') }}</button>
+        <button type="button" class="dt-chip" data-spend-range-pick="last3">{{ _('Last 3 months') }}</button>
+        <button type="button" class="dt-chip" data-spend-range-pick="all">{{ _('All') }}</button>
+        <button type="button" class="dt-chip" data-spend-range-pick="custom">{{ _('Choose…') }}</button>
+      </div>
+      <div class="spend-custom" data-spend-custom hidden>
+        <label>{{ _('From') }} <input type="month" name="spend_from" class="field"></label>
+        <label>{{ _('to') }} <input type="month" name="spend_to" class="field"></label>
+      </div>
+      <div class="dt-chips" role="group" aria-label="{{ _('Group by') }}">
+        <button type="button" class="dt-chip" data-spend-by="person">{{ icon('user') }}{{ _('Person') }}</button>
+        <button type="button" class="dt-chip" data-spend-by="group">{{ icon('users') }}{{ _('Project group') }}</button>
+        <button type="button" class="dt-chip" data-spend-by="vendor">{{ icon('vendor') }}{{ _('Vendor') }}</button>
+        <button type="button" class="dt-chip" data-spend-by="category">{{ icon('tag') }}{{ _('Category') }}</button>
+      </div>
+      <span class="spend-filters-end">
+        <a class="btn btn-sm" data-spend-csv href="#" download>{{ icon('download') }} {{ _('Download CSV') }}</a>
+        <button type="button" class="btn btn-sm" data-spend-settings hidden>{{ icon('sliders') }} {{ _('Limits and settings') }}</button>
+      </span>
+    </div>
+
+    <div class="spend-figures">
+      <div class="spend-figure is-hero">
+        <span class="spend-figure-label">{{ _('Asked for') }} · <span data-spend-range></span></span>
+        <strong data-spend-total>–</strong>
+        <span class="spend-figure-note" data-spend-price-is></span>
+      </div>
+      <div class="spend-figure">
+        <span class="spend-figure-label">{{ _('Ordered or received') }}</span>
+        <strong data-spend-spent>–</strong>
+      </div>
+      <div class="spend-figure">
+        <span class="spend-figure-label">{{ _('Waiting to be ordered') }}</span>
+        <strong data-spend-asked>–</strong>
+      </div>
+      <div class="spend-figure">
+        <span class="spend-figure-label">{{ _("Number of orders") }}</span>
+        <strong data-spend-orders>–</strong>
+        <span class="spend-figure-note" data-spend-unpriced hidden></span>
+      </div>
+    </div>
+
+    <div class="spend-cards">
+      <article class="card spend-card spend-card-chart">
+        <header class="spend-card-head"><h2>{{ icon('chart') }} {{ _('By month') }}</h2></header>
+        <div class="spend-legend" data-spend-legend></div>
+        <div class="spend-chart" data-spend-chart></div>
+      </article>
+
+      <article class="card spend-card spend-card-limits" data-spend-limits hidden>
+        <header class="spend-card-head">
+          <h2>{{ icon('receipt') }} {{ _('Limits') }}</h2>
+          <span class="spend-card-sub" data-spend-limit-period></span>
+        </header>
+        <p class="spend-empty" data-spend-limits-none>{{ _('No limits yet. Limits and settings sets one for the lab, a person or a project group.') }}</p>
+        <div class="spend-limit-list" data-spend-limit-rows></div>
+      </article>
+    </div>
+
+    <article class="card spend-card">
+      <div class="spend-table-wrap">
+        <table class="spend-table">
+          <thead>
+            <tr>
+              <th scope="col" data-spend-by-heading>{{ _('Person') }}</th>
+              <th scope="col" class="spend-bar-cell"><span class="spend-key is-spent"></span>{{ _('Ordered or received') }} <span class="spend-key is-asked"></span>{{ _('Waiting') }}</th>
+              <th scope="col" class="spend-num">{{ _('Total') }}</th>
+              <th scope="col" class="spend-num">{{ _('Ordered or received') }}</th>
+              <th scope="col" class="spend-num">{{ _('Waiting') }}</th>
+              <th scope="col" class="spend-num">{{ _("Number of orders") }}</th>
+            </tr>
+          </thead>
+          <tbody data-spend-rows></tbody>
+        </table>
+      </div>
+      <p class="spend-foot" data-spend-group-note hidden>{{ _('An order counts in every project group its asker is in now, so the groups can add up to more than the lab.') }}</p>
+      <p class="spend-foot">{{ _('An order counts in the month it was asked for; a cancelled one counts nowhere.') }}</p>
+    </article>
+  </section>
+
+  {% if is_admin %}
+    <dialog id="spend-settings-dialog" class="record-dialog" aria-labelledby="spend-settings-title">
+      <form method="post">
+        <header class="record-dialog-head">
+          <div>
+            <h3 id="spend-settings-title">{{ _('Limits and settings') }}</h3>
+            <p class="record-dialog-sub">{{ _('A limit counts everything asked for in its month or year, except what was cancelled.') }}</p>
+          </div>
+          <button type="button" class="modal-close" data-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
+        </header>
+        <div class="record-dialog-body">
+          <label><span>{{ _('Currency') }}</span>
+            <select name="currency">
+              <option value="">{{ _('None') }}</option>
+              {% for c in ['$', '€', '£', '¥', 'CHF', '₩', '₹'] %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </label>
+          <label><span>{{ _('Price is') }}</span>
+            <select name="price_is">
+              <option value="unit">{{ _('For one: an order costs its Price times its Quantity') }}</option>
+              <option value="total">{{ _('For the whole order') }}</option>
+            </select>
+          </label>
+          <label><span>{{ _('Limits are') }}</span>
+            <select name="period">
+              <option value="year">{{ _('Per year') }}</option>
+              <option value="month">{{ _('Per month') }}</option>
+            </select>
+          </label>
+          <label data-spend-year-starts><span>{{ _('The year starts in') }}</span>
+            <select name="year_starts">
+              {% for n in range(1, 13) %}<option value="{{ n }}">{{ spend_people.months[n - 1] }}</option>{% endfor %}
+            </select>
+          </label>
+          <fieldset class="record-group record-wide">
+            <legend>{{ _('The lab') }}</legend>
+            <label class="spend-limit-input"><span>{{ _('All orders') }}</span>
+              <input type="text" inputmode="decimal" name="limit_lab" class="field" placeholder="{{ _('No limit') }}"></label>
+          </fieldset>
+          <fieldset class="record-group record-wide">
+            <legend>{{ _('People') }}</legend>
+            <div class="spend-limit-inputs" data-spend-people></div>
+          </fieldset>
+          <fieldset class="record-group record-wide" data-spend-groups-block>
+            <legend>{{ _('Project groups') }}</legend>
+            <div class="spend-limit-inputs" data-spend-groups></div>
+          </fieldset>
+        </div>
+        <footer class="record-dialog-foot">
+          <button type="button" class="btn" data-close>{{ _('Cancel') }}</button>
+          <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+        </footer>
+      </form>
+    </dialog>
+  {% endif %}
+</div>

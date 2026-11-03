@@ -236,7 +236,7 @@ def _restart_sequence(conn, name: str, audit_ok: bool) -> int:
 def _rebuild_one(conn, table, drop: frozenset = frozenset()) -> dict:
     """Rebuild one table as the model has it, copying every row. A column
     the database has and the model doesn't is kept, unless named in `drop`
-    (a revision retiring it, as 0055 does)."""
+    (a revision retiring it, as 0056 does)."""
     name = table.name
     temp = f"{name}__integrity_new"
     old = {row[1]: row for row in conn.execute(f"PRAGMA table_info({_q(name)})")}

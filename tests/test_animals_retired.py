@@ -1,4 +1,4 @@
-"""Revision 0055 retires the old `animals` table (docs/adr/0007): a sample
+"""Revision 0056 retires the old `animals` table (docs/adr/0007): a sample
 still linked to an animal keeps its number as its source, the link columns
 and the table go, and on SQLite the rebuilt tables keep what app/integrity.py
 gives every table (AUTOINCREMENT, foreign keys checked at commit)."""
@@ -39,7 +39,7 @@ class RetiringAnimals(AppTestCase):
         return event
 
     def as_before(self) -> tuple[str, str]:
-        """The shape a database had before 0055: the table, one animal, and
+        """The shape a database had before 0056: the table, one animal, and
         each link column, with a sample linked to the animal."""
         execute("CREATE TABLE animals (id INTEGER PRIMARY KEY, animal_id VARCHAR(80), species VARCHAR(40))")
         execute("INSERT INTO animals (id, animal_id, species) VALUES (7, 'M-0042', 'mouse')")
@@ -53,7 +53,7 @@ class RetiringAnimals(AppTestCase):
         return linked, plain
 
     def run_revision(self):
-        migration = importlib.import_module("migrations.versions.0055_retire_animals")
+        migration = importlib.import_module("migrations.versions.0056_retire_animals")
         with engine.connect() as conn:
             if not ON_POSTGRES:
                 # As Alembic runs it: its own engine, with SQLite's foreign keys off.
@@ -83,7 +83,7 @@ class RetiringAnimals(AppTestCase):
         repeat rule is ON DELETE CASCADE): with foreign keys on it stops first."""
         event = self.a_repeating_event_with_a_page()
         self.as_before()
-        migration = importlib.import_module("migrations.versions.0055_retire_animals")
+        migration = importlib.import_module("migrations.versions.0056_retire_animals")
         try:
             with engine.connect() as conn:
                 self.assertEqual(conn.exec_driver_sql("PRAGMA foreign_keys").scalar(), 1)
