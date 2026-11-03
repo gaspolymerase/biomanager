@@ -53,7 +53,7 @@ from werkzeug.utils import secure_filename
 from .models import UploadOwner
 from .paths import uploads_dir
 
-# Off while the start-up steps before Alembic save records (services.init_database).
+# Off while the start-up steps before Alembic save records (startup.init_database).
 enabled = True
 
 UPLOADER = "upload"

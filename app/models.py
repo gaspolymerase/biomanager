@@ -379,7 +379,7 @@ def _breeder_cages_start_shared(cage, value, oldvalue, _initiator):
         cage.is_shared, cage.share_group_id = False, None
 
 
-# Off while the start-up steps before Alembic save cages (services.init_database):
+# Off while the start-up steps before Alembic save cages (startup.init_database):
 # placed_at may not be a column yet.
 stamp_placements = True
 

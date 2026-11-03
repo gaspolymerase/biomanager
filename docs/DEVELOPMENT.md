@@ -65,8 +65,13 @@ pages had modules, and its parts are moving out by topic.
 genotyping days, a cage's open litters, `weaning_due`, the list Home, the
 calendar, the cage sheet and the reminder emails all read);
 `app/calendar_feeds.py` reads the calendars a person subscribes to (a
-remote .ics, a linked Google Calendar). A new helper goes in the module of
-its topic, not in `services.py`.
+remote .ics, a linked Google Calendar). `app/startup.py` is what runs when
+the app opens a database (`init_database`, the frozen
+`ensure_schema_updates`, the seeds and one-time moves of data);
+`app/record_numbers.py` hands out mouse, cage and litter numbers;
+`app/sheet_export.py` writes CSV and .xlsx; `app/uploads.py` saves an
+uploaded file as well as deciding who may fetch it. A new helper goes in
+the module of its topic, not in `services.py`.
 
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
@@ -1313,7 +1318,7 @@ whole colony, from its mice's dates and statuses only.
 ### Uploaded files
 
 Every upload (a notebook page's pictures and attachments, a plasmid's
-files, a capture's photo or CSV) is saved by `services.save_uploaded_file`
+files, a capture's photo or CSV) is saved by `uploads.save_uploaded_file`
 (or `save_uploaded_image`) under a random name in the uploads folder and
 served by one route, `/static/uploads/<path>` (`app/uploads.serve`, always
 registered, wherever the folder is: `app/static/uploads`, a frozen app's
@@ -1911,7 +1916,7 @@ crossing the origin keeps `start > end`.
   canonical att sites for the Feature library and the demo lab.
 - **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
-  `services.save_uploaded_file` into the uploads folder, with `kind` from
+  `uploads.save_uploaded_file` into the uploads folder, with `kind` from
   the name (`_file_kind`: trace, image, document). Anyone who may edit the
   plasmid adds them; whoever added one, or an admin, takes it off, and the
   file itself stays in uploads, as the notebook's do (the lab sees it at
@@ -2423,7 +2428,7 @@ pages' own routes. Nothing is merged; the lab keeps one master copy.
   count (`sync_clock`, advanced by an UPDATE that PostgreSQL holds locked to
   commit, so numbers follow commit order). Deletions go to
   `sync_deletions`. The hook is off before Alembic has run
-  (`services.init_database`).
+  (`startup.init_database`).
 - **The feed.** `app/sync.py`: `GET /api/sync/snapshot` (as the person may
   see it: the colony, living mice and those dead in the last 90 days, the
   last five weights, their to-dos for 14 days, vials of the stock databases
@@ -2942,7 +2947,7 @@ whole (the layout's `used_at` is set outside it, by a Core update, so a
 later plate on the same layout doesn't block that Undo; a new measure is
 kept before the batch, so an Undo never hides another plate's readings
 of it); the
-file is saved (`services.save_uploaded_file`) only once some animal has a
+file is saved (`uploads.save_uploaded_file`) only once some animal has a
 value, and `upload_owners` makes it the experiment's to see. For an
 assistant, `POST /api/v1/experiments/<id>/plate` (`api.COMPUTING`) runs the
 same with `layout` (id or name) or `wells` + `format`, and `text` or a
@@ -3123,7 +3128,7 @@ tokens are redacted; high-churn tables are excluded. Admins read it at
 ## Keeping the data safe
 
 **Schema changes are Alembic revisions** (`migrations/versions/`,
-`app/upgrade.py`). On start-up `services.init_database()` asks
+`app/upgrade.py`). On start-up `startup.init_database()` asks
 `upgrade.plan()` what opening the database will change; if anything, it
 copies an SQLite database first (`backups/before-upgrade-<from>-to-<to>-<time>.db`,
 ten kept), then runs `create_all()`, the frozen pre-0.8 ALTERs
@@ -3161,7 +3166,7 @@ BioManager database and asks that the app be closed first (`--yes` skips
 the question).
 
 **The app won't start on a database it can't trust**: an SQLite file of 0
-bytes (`services.refuse_emptied_database`: it would otherwise start a new
+bytes (`startup.refuse_emptied_database`: it would otherwise start a new
 empty lab over it), or a database whose Alembic revision this version
 doesn't know, i.e. one a newer version made (`upgrade.plan`).
 
@@ -3187,7 +3192,7 @@ alembic revision --autogenerate -m "describe the change"
 alembic upgrade head
 ```
 
-The old hand-written ALTERs in `services.ensure_schema_updates()` still run
+The old hand-written ALTERs in `startup.ensure_schema_updates()` still run
 for backwards compatibility, but new changes belong in a revision.
 
 ## Cage cards and QR labels
@@ -3497,7 +3502,7 @@ the quote in its title and under **Show each change**. **Send back** (`proposals
 `as_dict` then gives `reason` and a `next` telling the assistant to propose
 again with `replaces`. Captures (`app/captures.py`, table `captures`,
 revision `0032_assistant_inbox`) are what a person wrote or photographed at
-the bench: text and one file (kept by `services.save_uploaded_file`, served
+the bench: text and one file (kept by `uploads.save_uploaded_file`, served
 to its owner only by `/captures/<id>/file`, as `/static/uploads/` is:
 `app/uploads.py`), with the record it was taken at
 (`at_kind`, `at_id`, `at_label`; from Bench mode or a scanned card's link,
@@ -3972,7 +3977,7 @@ the importer, where a "Strain" or "Background" column now maps to it (one
 called "Strain" went to the genotype before). The column moved the
 transgenes along, so the sheet's id is `mice-v5` (`_mouse_sheet.html`).
 
-**Numbers are handed out once.** `services.reserve_mouse_ids()` counts
+**Numbers are handed out once.** `record_numbers.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest
 ever handed out, so deleting the newest mouse or undoing an Add many never
 gives its number again. Saves that take the next free number (New mouse,

@@ -43,7 +43,8 @@ from .models import (
     SampleRecord,
     UserAccount,
 )
-from .services import sample_source_label, sample_sources, init_database
+from .services import sample_source_label, sample_sources
+from .startup import init_database
 from .litter_dates import set_birth_date, refresh_birth_date, find_open_litter, born_day, CAGE_GENO_OFFSET_DAYS
 
 
