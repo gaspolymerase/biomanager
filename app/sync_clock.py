@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from .models import CageRecord, SyncDeletion
 
-# Off while the start-up steps before Alembic save records (services.init_database).
+# Off while the start-up steps before Alembic save records (startup.init_database).
 enabled = True
 
 SYNCED_TABLES = frozenset({"mice", "mouse_cages", "litters", "mouse_weights", "tasks", "mouse_racks",

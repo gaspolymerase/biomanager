@@ -210,17 +210,7 @@ def _rebuild(conn, names: list[str]) -> list[dict]:
         for name in names:
             done.append(_rebuild_one(conn, scratch.tables[name]))
         for item in done:
-            name = item["table"]
-            high = conn.execute(f"select max(id) from {_q(name)}").fetchone()[0] or 0
-            if audit_ok:
-                logged = conn.execute("select max(record_id) from audit_log where table_name=?",
-                                      (name,)).fetchone()[0] or 0
-                high = max(high, logged)
-            seq = conn.execute("select seq from sqlite_sequence where name=?", (name,)).fetchone()
-            high = max(high, seq[0] if seq else 0)
-            conn.execute("delete from sqlite_sequence where name=?", (name,))
-            conn.execute("insert into sqlite_sequence (name, seq) values (?, ?)", (name, high))
-            item["next_id"] = high + 1
+            item["next_id"] = _restart_sequence(conn, item["table"], audit_ok)
         conn.execute("COMMIT")
     except Exception:
         conn.execute("ROLLBACK")
@@ -228,7 +218,25 @@ def _rebuild(conn, names: list[str]) -> list[dict]:
     return done
 
 
-def _rebuild_one(conn, table) -> dict:
+def _restart_sequence(conn, name: str, audit_ok: bool) -> int:
+    """After a rebuild: the table's next id is past every id it has had,
+    including deleted rows the change history remembers. Returns it."""
+    high = conn.execute(f"select max(id) from {_q(name)}").fetchone()[0] or 0
+    if audit_ok:
+        logged = conn.execute("select max(record_id) from audit_log where table_name=?",
+                              (name,)).fetchone()[0] or 0
+        high = max(high, logged)
+    seq = conn.execute("select seq from sqlite_sequence where name=?", (name,)).fetchone()
+    high = max(high, seq[0] if seq else 0)
+    conn.execute("delete from sqlite_sequence where name=?", (name,))
+    conn.execute("insert into sqlite_sequence (name, seq) values (?, ?)", (name, high))
+    return high + 1
+
+
+def _rebuild_one(conn, table, drop: frozenset = frozenset()) -> dict:
+    """Rebuild one table as the model has it, copying every row. A column
+    the database has and the model doesn't is kept, unless named in `drop`
+    (a revision retiring it, as 0056 does)."""
     name = table.name
     temp = f"{name}__integrity_new"
     old = {row[1]: row for row in conn.execute(f"PRAGMA table_info({_q(name)})")}
@@ -237,7 +245,7 @@ def _rebuild_one(conn, table) -> dict:
     for column in table.columns:
         if column.name in old and not old[column.name][3] and not column.primary_key:
             column.nullable = True  # never tighten: rows copy unchanged
-    extra = [col for col in old if col not in table.columns]
+    extra = [col for col in old if col not in table.columns and col not in drop]
     for col in extra:
         _, _, declared, notnull, dflt, _ = old[col]
         table.append_column(Column(col, _AsDeclared(declared or ""), nullable=not notnull,
@@ -272,6 +280,8 @@ def _rebuild_one(conn, table) -> dict:
     conn.execute(f"ALTER TABLE {_q(temp)} RENAME TO {_q(name)}")
     made = set()
     for index_name, sql in indexes:
+        if any(re.search(rf"\b{re.escape(col)}\b", sql) for col in drop):
+            continue                 # an index on a dropped column goes with it
         conn.execute(sql)
         made.add(index_name)
     for index in table.indexes:

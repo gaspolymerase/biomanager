@@ -60,6 +60,28 @@ class Versions(unittest.TestCase):
             self.assertEqual(du.asset_for_this_computer(names[:3]), None)
 
 
+class Preferences(unittest.TestCase):
+    """desktop-prefs.json holds the lab this computer joined (its token) as
+    well as the window's settings, and the relay and the offline copy read it
+    while other parts save it."""
+
+    def setUp(self):
+        du.save_prefs(**du.DEFAULT_PREFS)
+
+    def test_a_save_that_cannot_finish_leaves_them_as_they_were(self):
+        du.save_prefs(window_url="relay")
+        real = du.Path.write_text
+
+        def half_then_disk_full(path, text, *args, **kwargs):
+            real(path, text[:len(text) // 2], *args, **kwargs)
+            raise OSError("No space left on device")
+
+        with mock.patch.object(du.Path, "write_text", half_then_disk_full):
+            du.save_prefs(window_url="", zoom=2.0)
+        self.assertEqual(du.load_prefs()["window_url"], "relay")
+        self.assertEqual([p.name for p in du._prefs_path().parent.glob("desktop-prefs*")], ["desktop-prefs.json"])
+
+
 class Checking(unittest.TestCase):
     def setUp(self):
         du.save_prefs(**du.DEFAULT_PREFS)

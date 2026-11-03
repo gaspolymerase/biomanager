@@ -162,13 +162,3 @@ def row_stub(row_attrs: str, body: str) -> dict:
     if form:
         stub["f"] = form
     return stub
-
-
-def page_of_rows(rows_html: str, first: int) -> tuple[str, list[dict]]:
-    """A sheet's rows as drawn: the HTML of its first `first` rows (with
-    whatever comes between them), and a stub for each other row."""
-    rows = list(_ROW_FULL.finditer(rows_html))
-    if len(rows) <= first:
-        return rows_html, []
-    cut = rows[first].start()
-    return rows_html[:cut], [row_stub(m.group(1), m.group(2)) for m in rows[first:]]

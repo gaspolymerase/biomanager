@@ -919,6 +919,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - On **Properties**, **Made from** records its backbone, insert or template (a plasmid in the lab, by number or name, or one from outside it such as *Addgene #11150*) and how it was made; **Overview** then shows **Made from** and **Used to make**, and Properties a **Family tree** both ways. **Storage** lists its [glycerol stocks](https://biomanager.org/guide/samples-and-orders), with the box each is in, and the viruses made from it ([Viruses](https://biomanager.org/guide/samples-and-orders)).
 
+- The **Backbone** and **Insert** columns (and the same fields in **New plasmid**) offer the lab's plasmids as you type, *#42 pcDNA3.1*, then the usual vectors for a backbone and the Feature library's coding sequences for an insert. Pick one of the lab's plasmids, or type `@` and its name (`@pCAG-EGFP`), and the plasmid is listed under its **Made from** in that role; the plasmid named lists it under **Used to make**. So a gene's plasmid shows every construct made with it, and searching the sheet for the gene finds each one whose Insert names it. Change the column and the link it made changes with it; a link added on the plasmid's page stays. Backbones and Inserts written before name a lab plasmid but aren't linked: an admin sees how many above the sheet, and **Link them** links them all.
+
 *A plasmid's Overview*
 
 *Compare with…*
@@ -1062,6 +1064,32 @@ Brought your samples in from another database, with everything in the notes (*Ti
 3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, chemical, antibody or virus with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
 
 4. **Running low?** On any reagent, chemical, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
+
+### What the orders cost
+
+On the orders page, **Spending** (beside **Table** and **Board**) adds up what the lab asked for. Choose the months (**Last 12 months**, **This year**, **Last 3 months**, **All**, or **Choose…** any two months) and how to group them: **Person**, **Project group**, **Vendor** or **Category**.
+
+- The figures at the top give the total, what was ordered or received, what is still waiting to be ordered, and how many orders, saying how many have no price.
+
+- **By month** stacks each month's orders by the five that cost most, the rest as *Other*. Point at a month (or move to it with Tab) to see each one's share; point at a name in the legend or a row of the table to pick it out.
+
+- The table below lists every person, group, vendor or category with its total, what was ordered or received, what is waiting, and its orders. **Download CSV** gives the same table, a column for each month, for a spreadsheet.
+
+- An order costs its *Price* times its *Quantity*, and counts in the month it was asked for. A cancelled order counts nowhere. By project group, an order counts in every group its asker is in now, so the groups can add up to more than the lab.
+
+An admin opens **Limits and settings** to choose the currency, whether Price is for one or for the whole order, and the limits: per year (from the month your year starts) or per month, for the lab, for each person and for each project group. The **Limits** card shows how much of each is used, marked *Near the limit* from 80% and *Over the limit* past it. When saving an order takes its asker, one of their groups or the lab past a limit, the message after saving says so.
+
+*Spending, by person, with the lab's limits*
+
+### Vendors
+
+**Vendors**, at the top of the orders page and of every list with a vendor, lists every vendor your records name: its orders and other records, what its orders cost in the last 12 months, and when it was last ordered from. **Edit** keeps its website, contact, email, phone and your customer number, and **New vendor** adds one you haven't ordered from yet. A vendor kept there is offered when you type a vendor.
+
+- Spellings that differ only in capitals or spaces are one vendor, and the page says how else it is written.
+
+- An admin or a facility manager can give a vendor a new name in its **Edit**, which renames it on every order and record, or tick several spellings (*Sigma*, *Sigma-Aldrich*), choose the name to keep and **Merge**. **Batch history** undoes either.
+
+*Vendors*
 
 ### Low stock, from the quantity
 

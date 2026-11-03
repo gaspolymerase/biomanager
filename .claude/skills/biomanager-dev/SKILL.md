@@ -45,6 +45,7 @@ Both have to pass, so no 3.12-only syntax and no SQLite-only SQL
 (`json_extract` is the usual trap — do that work in Python).
 
 ```bash
+npm ci --prefix tests/js                          # once: jsdom, for the page-script checks
 python scripts/test-parallel.py -j 4              # the whole suite, as CI runs it
 python -m unittest tests.test_plasmids            # one file while working
 BIOMANAGER_TEST_DATABASE_URL=postgresql://… python scripts/test-parallel.py   # the PostgreSQL run

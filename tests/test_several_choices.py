@@ -12,7 +12,7 @@ from tests.base import execute, one, uniq
 from tests.test_inventory import InventoryCase, attrs_of, module_id, settings_of
 from app import inventory  # noqa: E402
 from app.db import engine  # noqa: E402
-from app.inventory_routes import several  # noqa: E402
+from app.inventory_items import several  # noqa: E402
 
 
 class SeveralTests(InventoryCase):

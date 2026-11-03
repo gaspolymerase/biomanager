@@ -999,6 +999,11 @@ def remembered(session, mv: ModuleView, items: list[InventoryItem]) -> dict:
             folded = (getattr(item, column) or "").strip().lower()
             if folded and folded not in fill[column] and len(fill[column]) < MAX_FILLS:
                 fill[column][folded] = values
+    if "vendor" in columns:
+        # The vendors the lab keeps details for (app/vendors.py), after those used here.
+        from .models import Vendor
+        for name in session.scalars(select(Vendor.name).order_by(Vendor.name)):
+            offer("vendor", name)
     return {"suggest": suggest, "fill": fill}
 
 

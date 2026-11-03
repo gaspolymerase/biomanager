@@ -59,13 +59,13 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from app.app import app  # noqa: E402  (runs init_database on the temp file)
-from app import services  # noqa: E402
+from app import services, uploads  # noqa: E402,F401  (services: other tests import it from here)
 from app.db import SessionLocal, engine  # noqa: E402
 from app.models import UserAccount  # noqa: E402
 
 # Uploaded files go to the temp folder, not app/static/uploads.
-services.UPLOAD_DIR = __import__("pathlib").Path(_TMP) / "uploads"
-services.UPLOAD_DIR.mkdir(exist_ok=True)
+uploads.UPLOAD_DIR = __import__("pathlib").Path(_TMP) / "uploads"
+uploads.UPLOAD_DIR.mkdir(exist_ok=True)
 
 # A view that raises should fail the test with its traceback, not a bare 500.
 app.config["TESTING"] = True

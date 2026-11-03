@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 import zlib
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -35,10 +36,12 @@ from . import inventory_service as svc
 from .db import SessionLocal
 from . import lab
 from .lab import lab_audience
-from .formutil import MAX_ID, form_changed
 from .i18n import gettext, ngettext
 from . import groups as project_groups
 from . import bulk as bulk_actions, stewardship
+from .inventory_items import MOUSE_SOURCE_KINDS, Refused, _and, _column_value, _manage_denied, _mouse_number, _tr
+from .inventory_items import item_from_form as _item_from_form
+from . import order_spending as spending
 from .models import InventoryItem, InventoryModule, InventoryRack
 
 bp = Blueprint("inventory", __name__, url_prefix="/inventory")
@@ -50,36 +53,10 @@ def require_login():
         return redirect(url_for("login", next=request.path))
 
 
-class Refused(Exception):
-    """A save that must not happen at all: nothing is written."""
-
-    def __init__(self, message: str, status: int = 409):
-        super().__init__(message)
-        self.status = status
-
-
-def _date(raw) -> date | None:
-    """A date from YYYY-MM-DD; blank is None; anything else is refused
-    rather than silently clearing what was stored."""
-    raw = str(raw or "").strip()
-    if not raw:
-        return None
-    try:
-        return date.fromisoformat(raw)
-    except ValueError:
-        raise Refused(gettext("“%(value)s” is not a date. Use YYYY-MM-DD.", value=raw)) from None
-
-
 def _sentences(*parts: str) -> str:
     """Sentences one after another: a space between them in English, none
     in Chinese."""
     return ("" if i18n.current() == "zh" else " ").join(p for p in parts if p)
-
-
-def _tr(value) -> str:
-    """A database's own word (its noun, a column's or status's name) in the
-    page's language; what a lab typed comes back as typed."""
-    return i18n.translate_value(value, "inventory")
 
 
 def _int(raw, default: int, low: int, high: int) -> int:
@@ -137,19 +114,6 @@ def _back(key: str, **params) -> str:
 # ---------------------------------------------------------------------------
 # Permissions
 # ---------------------------------------------------------------------------
-
-
-def _manage_denied(mv, item: InventoryItem, what: str) -> str:
-    """`what`: "owner", "personal" or "delete"."""
-    if not access.can_edit_item(item):
-        return access.reason_denied(item, noun=mv.item_noun)
-    values = {"noun": _tr(mv.item_noun), "who": item.owner or gettext("its owner")}
-    if what == "owner":
-        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can change who it belongs to.", **values)
-    if what == "personal":
-        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can make it personal.",
-                       **values)
-    return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can delete it.", **values)
 
 
 # ---------------------------------------------------------------------------
@@ -292,18 +256,6 @@ def _box_width(racks) -> int:
     return max(104, min(widest + 36, 320))
 
 
-MOUSE_SOURCE_KINDS = ("mouse", "colony")
-
-
-def _mouse_number(ref: str) -> int | None:
-    """The mouse ID a typed source names, or None: not a number, or one
-    beyond what the database holds (no colony mouse, not an error)."""
-    ref = str(ref or "").strip()
-    if ref.isascii() and ref.isdigit() and int(ref) <= MAX_ID:
-        return int(ref)
-    return None
-
-
 def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[str, dict]:
     """{mouse ID typed as a source: {"row", "ear_tag", "genotype"}} — the row
     to link to in the colony, what is written on that mouse, so a sample
@@ -435,6 +387,134 @@ def source_ids(key: str):
         if not any(f["type"] == "source" for f in svc.view(row).fields):
             abort(404)
         return jsonify({"refs": [source["refs"] for source in sample_sources(session)]})
+
+
+@bp.route("/<key>/board")
+def board(key: str):
+    """The Board's columns and cards (_board.html), for the page's ?type=
+    and ?ended=, asked for when the Board is first shown: each card carries
+    its record's dialog, megabytes on a long inventory."""
+    with SessionLocal() as session:
+        context = _sheet_context(session, key)
+        if not (context["module"].has("board") and context["module"].statuses):
+            abort(404)
+        return render_template("inventory/_board.html", m=context["module"], **context)
+
+
+def _spends(row: InventoryModule) -> bool:
+    """Whether a database has the Spending view: orders with a Price."""
+    return row.kind == "orders" and any(f["key"] == "price" for f in svc.view(row).fields)
+
+
+def _cost_of(session, row: InventoryModule, item: InventoryItem) -> float | None:
+    if not _spends(row):
+        return None
+    return spending.cost(item.attrs_dict, item.quantity, spending.settings_of(session, row)["price_is"])
+
+
+def _limit_notes(session, row: InventoryModule, item: InventoryItem, cost_was, creating: bool) -> list[str]:
+    """What an order that now costs more takes past: the lab's limit, its
+    asker's or their project group's (order_spending.over_limits)."""
+    if not _spends(row) or item.status and spending.state_of(item.status, svc.view(row).statuses) is None:
+        return []
+    now = _cost_of(session, row, item)
+    if now is None or (not creating and now <= (cost_was or 0)):
+        return []
+    over = spending.over_limits(session, row, item.owner)
+    return [spending.over_message(over, spending.settings_of(session, row))] if over else []
+
+
+def _spend_people(session, row: InventoryModule) -> dict:
+    """Who and which project groups a limit can be set for, in the
+    Spending view's settings: an admin's only."""
+    if not _spends(row) or not spending.can_set_limits():
+        return {"people": [], "groups": [], "months": []}
+    from .lab_calendar import people as lab_people
+    return {"people": lab_people(session),
+            "groups": [{"id": gid, "name": name} for gid, name in spending.people_of(session).groups.items()],
+            "months": [i18n.strftime(date(2000, n, 1), "%B") for n in range(1, 13)]}
+
+
+def _spending_range(settings: dict) -> tuple[date, date]:
+    """The months asked for (?from=YYYY-MM&to=YYYY-MM); the last twelve
+    without them."""
+    today = date.today()
+    last = spending.month_of(request.args.get("to"), date(today.year, today.month, 1))
+    first = spending.month_of(request.args.get("from"), spending.add_months(last, -11))
+    if first > last:
+        first, last = last, first
+    return first, last
+
+
+@bp.route("/<key>/spending")
+def spending_data(key: str):
+    """The Spending view's numbers (order_spending.summary) for ?from, ?to
+    and ?by (person, group, vendor or category), asked for when the view is
+    shown and each time its choices change."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        settings = spending.settings_of(session, row)
+        first, last = _spending_range(settings)
+        orders = spending.orders_of(session, row, settings)
+        if request.args.get("from") == "all" and orders:
+            first = date(min(o.day for o in orders).year, min(o.day for o in orders).month, 1)
+        answer = spending.summary(orders, request.args.get("by", "person"), first, last,
+                                  spending.people_of(session), settings)
+        answer["settings"] = settings
+        answer["can_set_limits"] = spending.can_set_limits()
+        return jsonify(answer)
+
+
+@bp.route("/<key>/spending.csv")
+def spending_csv(key: str):
+    """The Spending view's table, for a spreadsheet: one row per person
+    (group, vendor or category) and one column per month."""
+    import csv
+    import io
+    from flask import Response
+
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        settings = spending.settings_of(session, row)
+        first, last = _spending_range(settings)
+        orders = spending.orders_of(session, row, settings)
+        if request.args.get("from") == "all" and orders:
+            first = date(min(o.day for o in orders).year, min(o.day for o in orders).month, 1)
+        data = spending.summary(orders, request.args.get("by", "person"), first, last,
+                                spending.people_of(session), settings)
+        heading = {"person": gettext("Person"), "group": gettext("Project group"), "vendor": gettext("Vendor"),
+                   "category": gettext("Category")}[data["by"]]
+        out = io.StringIO()
+        writer = csv.writer(out)
+        writer.writerow([heading, gettext("Number of orders"), gettext("Spent"), gettext("Asked for, not yet ordered"),
+                         gettext("Total"), *data["months"]])
+        def figure(v: float) -> str:
+            return f"{v:.2f}".rstrip("0").rstrip(".")
+        for s in data["series"]:
+            writer.writerow([s["label"], s["orders"], figure(s["spent"]), figure(s["asked"]), figure(s["total"]),
+                             *[figure(v) for v in s["months"]]])
+        name = re.sub(r"[^\w\-.]+", "_", row.label).strip("_") or "orders"
+        body = "\ufeff" + out.getvalue()   # a byte-order mark, so Excel reads the names as UTF-8
+    return Response(body, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}-spending-{data["first"]}-{data["last"]}.csv"'})
+
+
+@bp.route("/<key>/spending/settings", methods=["POST"])
+def spending_settings(key: str):
+    """The Spending view's settings and limits; an admin's to change."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not _spends(row):
+            abort(404)
+        if not spending.can_set_limits():
+            return jsonify({"ok": False, "error": gettext("Only an admin can set spending limits.")}), 403
+        settings = spending.save_settings(session, row, request.form)
+        session.commit()
+        return jsonify({"ok": True, "settings": settings})
 
 
 @bp.route("/<key>/grid")
@@ -578,6 +658,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     if row.kind in STOCK_KINDS and request.args.get("from_order"):
         reorder = _from_order_payload(session, mv, request.args["from_order"],
                                       shared=request.args.get("shared") == "1")
+    redraw_url = url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
+                         cells=request.args.get("cells"))
     context = {
         **common,
         # rows: every row the sheet lists (the board's cards, the counts);
@@ -585,9 +667,9 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
         "stubs": _row_stubs(mv, rows[FIRST_PAGE:], table_fields, box_labels, mouse_links, plasmid_links)
         if lazy else [],
-        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
-                            cells=request.args.get("cells"))
-                    if lazy else "",
+        "rows_url": redraw_url if lazy else "",
+        # Rows redrawn where they are after a batch change (data-table.js, BioSheets.redraw).
+        "redraw_url": redraw_url,
         "racks": racks,
         "tab_counts": tab_counts, "listed_all": listed_all,
         "can_add_type": mv.has("tabs"),
@@ -606,6 +688,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "next_number": svc.next_number(session, row.id),
         "reorder": reorder,
         "can_configure": access.can_configure(row), "is_admin": access.is_admin(),
+        "spends": _spends(row), "spend_people": _spend_people(session, row),
         "bulk_fields": bulk_fields(mv),
         "stored_at_field": svc.stored_at_field(mv),
         "terminal_statuses": sorted(svc.TERMINAL_STATUSES),
@@ -717,8 +800,9 @@ def _row_stubs(mv, rows: list[dict], table_fields: list[dict], box_labels: dict,
 def _same_thing(order: InventoryItem, stock: InventoryItem, source: InventoryModule) -> bool:
     """An order for this stock item: made from it with Order again, or the
     same catalog number (the same name when it has none)."""
-    if (order.notes or "").startswith(f"Reorder of {source.label} #{stock.number}"):
-        return True
+    notes, made_from = order.notes or "", f"Reorder of {source.label} #{stock.number}"
+    if notes.startswith(made_from) and not notes[len(made_from):len(made_from) + 1].isdigit():
+        return True     # #1's, not #12's
     cat = (stock.catalog_number or "").strip().lower()
     if cat:
         return (order.catalog_number or "").strip().lower() == cat
@@ -735,11 +819,29 @@ def _open_orders_of(session, source: InventoryModule, stock: list[InventoryItem]
     open_orders = list(session.scalars(select(InventoryItem).where(
         InventoryItem.module_id_fk == orders.id, InventoryItem.status.in_(omv.open_statuses))
         .order_by(InventoryItem.number.desc())))
+    # As _same_thing, each order indexed by what it is matched on, rather
+    # than every order tried against every stock item (a lab's thousands of
+    # reagents against its open orders took most of the sheet's time).
+    reorder_of = f"Reorder of {source.label} #"
+    by_number, by_catalog, by_name = defaultdict(set), defaultdict(set), defaultdict(set)
+    for n, order in enumerate(open_orders):
+        notes = order.notes or ""
+        if notes.startswith(reorder_of):
+            rest = notes[len(reorder_of):]
+            digits = len(rest) - len(rest.lstrip("0123456789"))
+            by_number[rest[:digits]].add(n)
+        by_catalog[(order.catalog_number or "").strip().lower()].add(n)
+        by_name[(order.name or "").strip().lower()].add(n)
     found = {}
     for item in stock:
-        same = [o for o in open_orders if _same_thing(o, item, source)]
-        if same:
-            found[item.id] = same
+        hits = set(by_number.get(str(item.number), ()))
+        cat, name = (item.catalog_number or "").strip().lower(), (item.name or "").strip().lower()
+        if cat:
+            hits |= by_catalog.get(cat, set())
+        elif name:
+            hits |= by_name.get(name, set())
+        if hits:
+            found[item.id] = [open_orders[n] for n in sorted(hits)]
     return found
 
 
@@ -816,181 +918,8 @@ def _plasmid_options(session) -> list[tuple[int, str]]:
         select(PlasmidRecord.plasmid_id, PlasmidRecord.name).order_by(PlasmidRecord.plasmid_id.desc()).limit(2000))]
 
 
-def _mouse_exists(session, ref: str) -> bool:
-    from .models import MouseRecord
-
-    number = _mouse_number(ref)
-    return number is not None and session.scalar(
-        select(MouseRecord.id).where(MouseRecord.mouse_id == number)) is not None
-
-
-def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = False) -> tuple[str | None, list[str]]:
-    """Copy the submitted fields onto `item` (only fields the form sent).
-
-    Raises Refused when the save must not happen (a blank order name, a
-    date that is not a date, an unknown status, a change the user may not
-    make); the caller rolls back. Returns (a position problem, notes):
-    a position that cannot be taken leaves the rest saved."""
-    notes: list[str] = []
-    manage = creating or access.can_manage(item)
-    me = access.username()
-    stock_was = (item.status, item.quantity, item.low_at)
-    was = {key: _column_value(item, key) for key in mv.required}
-
-    def text(name, limit=200):
-        if name in form:
-            setattr(item, name, (form.get(name) or "").strip()[:limit])
-
-    if "name" in form:
-        name = (form.get("name") or "").strip()[:200]
-        if not name and mv.row.kind == "orders":
-            raise Refused(gettext("An order needs an item name."))
-        item.name = name
-    text("category", limit=80)
-
-    if "owner" in form:
-        owner = (form.get("owner") or "").strip()[:80]
-        if creating and not access.is_admin() and owner != me:
-            if owner:
-                notes.append(gettext("Only an admin can add a %(noun)s for someone else, so this one is yours.",
-                                     noun=_tr(mv.item_noun)))
-            owner = me
-        if owner != (item.owner or ""):
-            if not manage:
-                raise Refused(_manage_denied(mv, item, "owner"), 403)
-            refused = stewardship.change_owner(session, item, owner, mv.item_noun, item.name)
-            if refused:
-                raise Refused(refused)
-    if "is_shared" in form and project_groups.differs(item, form.get("is_shared")):
-        if not manage:
-            raise Refused(_manage_denied(mv, item, "personal"), 403)
-        refused = project_groups.apply(item, form.get("is_shared"))
-        if refused:
-            raise Refused(refused, 403)
-
-    for name, limit in (("quantity", 60), ("unit", 30), ("vendor", 120), ("catalog_number", 120),
-                        ("lot", 120), ("location_note", 200)):
-        text(name, limit=limit)
-    if "low_at" in form and svc.tracks_low(mv):
-        raw = (form.get("low_at") or "").strip()
-        level = svc.amount(raw) if raw else None
-        if raw and level is None:
-            raise Refused(gettext("Low at is a number, in the quantity's unit: “%(value)s” isn't one.", value=raw))
-        item.low_at = level
-    if "pack_size" in form and svc.has_pack_size(mv):
-        raw = (form.get("pack_size") or "").strip()
-        if raw and svc.pack_size(raw) is None:
-            raise Refused(gettext("Pack size is what one of its unit holds, a number and a unit (10 mL): “%(value)s” isn't one.", value=raw))
-        item.pack_size = svc.pack_size_text(raw)[:40]
-    for name in ("received_on", "expires_on"):
-        if name in form and form_changed(form, name):
-            setattr(item, name, _date(form.get(name)))
-    if "notes" in form:
-        item.notes = (form.get("notes") or "").strip()
-
-    attrs = item.attrs_dict
-    before = json.dumps(attrs, sort_keys=True)
-    for field in mv.fields:
-        k = field["key"]
-        if field["type"] == "source":
-            if f"attr_{k}_kind" in form or f"attr_{k}_ref" in form:
-                value = {"kind": (form.get(f"attr_{k}_kind") or "").strip(),
-                         "ref": (form.get(f"attr_{k}_ref") or "").strip()}
-                old = attrs.get(k) if isinstance(attrs.get(k), dict) else {}
-                if (value["kind"] in MOUSE_SOURCE_KINDS and value["ref"] and value != old
-                        and not _mouse_exists(session, value["ref"])):
-                    notes.append(gettext("There is no mouse %(id)s in the colony; the source was saved as typed.",
-                                         id=value["ref"]))
-                attrs[k] = value
-        elif field["type"] == "multiselect" and (f"attr_{k}" in form or f"attr_{k}__several" in form):
-            attrs[k] = several(form.getlist(f"attr_{k}"), field["options"])
-        elif f"attr_{k}" in form:
-            value = (form.get(f"attr_{k}") or "").strip()
-            if field["type"] == "date" and value:
-                value = _date(value).isoformat()
-            if field["type"] == "number" and value:
-                # "2,01" is a decimal comma (kept as 2.01); "1,000" and
-                # "12,500" are thousands, as before.
-                if re.fullmatch(r"-?\d+,\d+", value) and not re.fullmatch(r"-?\d{1,3}(,\d{3})+", value):
-                    value = value.replace(",", ".")
-                try:
-                    float(value.replace(",", ""))
-                except ValueError:
-                    raise Refused(gettext("%(field)s is a number column: “%(value)s” isn't a number.",
-                                          field=_tr(field["label"]), value=value))
-            if field["type"] == "plasmid" and value:
-                # Kept as the plasmid's number, which the sheet links to;
-                # a name or "#42 · pAAV…" from the list is read the same way.
-                plasmid = svc.resolve_plasmid(session, value)
-                if plasmid is not None:
-                    value = str(plasmid.plasmid_id)
-                elif value != str(attrs.get(k, "")):
-                    notes.append(gettext("There is no plasmid “%(value)s” in Plasmids; %(field)s was saved as typed.",
-                                         value=value, field=_tr(field["label"])))
-            attrs[k] = value
-    if json.dumps(attrs, sort_keys=True) != before:
-        item.attrs = json.dumps(attrs)
-
-    # A new entry needs every required column; an old one may not lose one
-    # (but one that never had it can still be saved).
-    # A column not used for its type (a 260/280 on tissue) isn't asked for.
-    unused = {f"attr_{f['key']}" for f in mv.fields if not presets.used_for(f, item.category)}
-    missing = [_tr(label) for key, label in mv.required_labels.items()
-               if not _column_value(item, key) and (creating or was[key]) and key not in unused]
-    if missing:
-        if creating:
-            if mv.item_noun[:1] in "aeiou":
-                raise Refused(gettext("Fill in %(fields)s to add an %(noun)s.", fields=_and(missing),
-                                      noun=_tr(mv.item_noun)))
-            raise Refused(gettext("Fill in %(fields)s to add a %(noun)s.", fields=_and(missing),
-                                  noun=_tr(mv.item_noun)))
-        raise Refused(gettext("%(fields)s can’t be left empty.", fields=_and(missing)))
-
-    # Status last: it may fill the received date or stamp a used-up date.
-    place_was = (str(item.rack_id_fk or ""), svc.rack_label(item))
-    if "status" in form and (creating or form_changed(form, "status")):
-        problem = svc.apply_status(mv, item, form.get("status"))
-        if problem:
-            raise Refused(problem)
-    # A quantity or Low at changed, and the status was not set by hand in
-    # the same save: it follows the quantity (in stock, low, empty).
-    if item.status == stock_was[0] and (item.quantity, item.low_at) != stock_was[1:]:
-        svc.follow_stock_level(mv, item)
-    # Used up just freed its cell: the dialog still showing that box and
-    # position is not a request to put it back.
-    freed = place_was[0] and not item.rack_id_fk
-    if freed and (form.get("rack_id", "").strip(), form.get("position", "").strip()) in (place_was, (place_was[0], "")):
-        return None, notes
-
-    if mv.has("storage") and "rack_id" in form and form_changed(form, "rack_id", "position"):
-        return svc.apply_position(session, item, form.get("rack_id"), form.get("position")), notes
-    return None, notes
-
-
-def several(values, options) -> str:
-    """The ticked choices of a multiselect field as one text, in the order of
-    its choices ("flammable, explosive precursor"); a value that isn't one of
-    them any more (from before, or an import) is kept after them. A box
-    unticked leaves it out: the form also sends attr_<key>__several, so no box
-    ticked still saves as empty."""
-    picked = [part.strip() for v in values for part in str(v).split(",") if part.strip()]
-    return ", ".join([o for o in options if o in picked] + [v for v in dict.fromkeys(picked) if v not in options])
-
-
 def several_values(value) -> list[str]:
     return [part.strip() for part in str(value or "").split(",") if part.strip()]
-
-
-def _column_value(item: InventoryItem, key: str) -> str:
-    """A column as text, by its form name (attr_<key> for custom fields)."""
-    value = item.attrs_dict.get(key[5:]) if key.startswith("attr_") else getattr(item, key, "")
-    return "" if value is None else str(value).strip()
-
-
-def _and(words: list[str]) -> str:
-    if len(words) == 1:
-        return words[0]
-    return gettext("%(first)s and %(last)s", first=gettext(", ").join(words[:-1]), last=words[-1])
 
 
 @bp.route("/<key>/items/save", methods=["POST"])
@@ -1014,6 +943,7 @@ def save_item(key: str):
                                  owner=g.user.username, status=mv.statuses[0] if mv.statuses else "")
             session.add(item)
         status_was = "" if creating else item.status
+        cost_was = None if creating else _cost_of(session, row, item)
         try:
             error, notes = _item_from_form(session, mv, item, request.form, creating=creating)
         except Refused as refused:
@@ -1037,6 +967,7 @@ def save_item(key: str):
                 order_attrs["stocked_as"] = f"{row.key}:{item.number}"
                 order.attrs = json.dumps(order_attrs)
         session.commit()
+        notes += _limit_notes(session, row, item, cost_was, creating)
         label = item.name or f"#{item.number}"
         for note in notes:
             flash(note, "warning")
@@ -1222,6 +1153,7 @@ def update_item(key: str, item_id: int):
         if not access.can_edit_item(item):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
+        cost_was = _cost_of(session, row, item)
         try:
             error, notes = _item_from_form(session, mv, item, request.form)
         except Refused as refused:
@@ -1232,6 +1164,7 @@ def update_item(key: str, item_id: int):
             return jsonify({"ok": False, "error": error}), 409
         item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
         session.commit()
+        notes += _limit_notes(session, row, item, cost_was, False)
         answer = _row_json(mv, item)
         if notes:
             answer["notes"] = notes
@@ -1685,10 +1618,21 @@ def bulk(key: str):
                           what=f"{action} ×{len(items)} {mv.item_noun_plural}", table="inventory_items")
         done, skipped, refused = result.changed, result.skipped, result.blocked
         noun = _tr(mv.item_noun if done == 1 else mv.item_noun_plural)
+        item_ids = [item.id for item in items]
         session.commit()
+        # The type tabs' counts, when the batch changed them (a delete, a
+        # new Type): the page shows them without coming back.
+        tabs = None
+        if _wants_json() and (action == "delete" or (field and field["name"] == "category")):
+            chosen = _chosen(session, row, mv, None)
+            tabs = {"all": chosen["listed_all"], **chosen["tab_counts"]}
     message = _bulk_message(action, done, noun, _tr(field["label"]) if field else "")
+    # Asked from the page (selection-bar.js, a form marked
+    # data-selection-inplace): the answer in words, and the page redraws
+    # the ticked rows where they are rather than coming back from the top.
+    said: list[tuple[str, str]] = []
     if refused:
-        flash(gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error")
+        said.append((gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error"))
     if skipped:
         message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
                              if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))
@@ -1701,8 +1645,12 @@ def bulk(key: str):
     if no_column:
         notes.append(gettext("No column is called %(names)s, so those stay in the notes: add them in Configure and split again.",
                              names=gettext(", ").join(f"“{h}”" for h in no_column[:6])))
-    for note in notes[:5]:
-        flash(note, "info")
+    said.extend((note, "info") for note in notes[:5])
+    if _wants_json():
+        return jsonify({"ok": bool(done), "message": message, "said": [{"text": text, "kind": kind} for text, kind in said],
+                        "ids": item_ids, "tabs": tabs})
+    for text, kind in said:
+        flash(text, kind)
     if not done:
         return _done(key, error=message)
     return _done(key, message=message)

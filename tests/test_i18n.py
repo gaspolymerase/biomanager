@@ -161,7 +161,9 @@ class APersonsChoice(AppTestCase):
         form = page[page.index("data-language-form"):]
         form = form[:form.index("</form>")]
         self.assertNotIn('type="submit"', form)
-        self.assertIn("form.addEventListener('change', function () { form.submit(); })", page)
+        self.assertIn("settings-page.js", page)
+        script = (Path(__file__).resolve().parent.parent / "app" / "static" / "settings-page.js").read_text(encoding="utf-8")
+        self.assertIn("form.addEventListener('change', function () { form.submit(); })", script)
 
     def test_the_guide_link_follows_the_language(self):
         who = make_user(uniq("guide"))

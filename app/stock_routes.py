@@ -26,9 +26,8 @@ from . import stocks as presets
 from .days import fmt_day
 from .db import SessionLocal
 from .flask_app import app
-from . import lab, notify
+from . import lab
 from .lab import lab_audience
-from .formutil import form_changed
 from .i18n import gettext, ngettext, pgettext, translate_value
 from .web import owner_badge_filter
 from .models import (
@@ -100,20 +99,6 @@ def _back(key: str, view: str = "units", message: str = "", error: str = ""):
     if referrer.startswith(request.host_url) and "/stocks/" in referrer:
         return redirect(referrer)
     return redirect(url_for("stocks.module", key=key, view=view))
-
-
-class Invalid(ValueError):
-    """A submitted value that cannot be stored; nothing is saved."""
-
-
-def _checked_date(form, name: str) -> date | None:
-    raw = (form.get(name) or "").strip()
-    if not raw:
-        return None
-    try:
-        return date.fromisoformat(raw)
-    except ValueError:
-        raise Invalid(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=raw)) from None
 
 
 # The fields a vial row and the vial dialog edit; each form also carries
@@ -498,62 +483,6 @@ def _module_page(key: str, keep: set[int] | None = None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _unit_from_form(session, mv, unit: StockUnit, form, placing: bool = True, users=None) -> str | None:
-    """Copy the fields this form changed onto the vial.
-
-    Raises Invalid (nothing should be saved) for a value that cannot be
-    stored; returns a position problem (the rest is saved) or None."""
-    user = g.user.username
-    changed = lambda name: form_changed(form, name)
-    for name, limit in (("genotype", 400), ("female_genotype", 400), ("male_genotype", 400)):
-        if changed(name):
-            setattr(unit, name, (form.get(name) or "").strip()[:limit])
-    if changed("owner"):
-        refused = stewardship.change_owner(session, unit, (form.get("owner") or "").strip()[:80],
-                                           mv.unit, mv.code(unit) if unit.number else "", users)
-        if refused:
-            raise Invalid(refused)
-    # Which project group a lab stock is for ("1": the lab's).
-    if "share_group" in form:
-        refused = stewardship.change_sharing(unit, form.get("share_group") or "1", mv.unit,
-                                             mv.code(unit) if unit.number else "", shared=True, set_shared=False)
-        if refused:
-            raise Invalid(refused)
-    if changed("purpose"):
-        purpose = (form.get("purpose") or "").strip()
-        if purpose not in {p["key"] for p in mv.purposes} and purpose != unit.purpose:
-            raise Invalid(gettext("“%(purpose)s” is not one of this database’s purposes.", purpose=purpose))
-        previous, unit.purpose = unit.purpose, purpose or mv.default_purpose
-        # Becoming progeny starts the clock for when they emerge.
-        if unit.purpose == presets.PROGENY and previous != presets.PROGENY and not unit.ready_on \
-                and not (form.get("ready_on") or "").strip():
-            start = unit.set_up_on or date.today()
-            unit.ready_on = start + timedelta(days=mv.interval("develop", svc.unit_temperature(mv, unit)))
-    for name in ("set_up_on", "ready_on", "shift_on", "score_on"):
-        if changed(name):
-            setattr(unit, name, _checked_date(form, name))
-    if changed("shift_to"):
-        unit.shift_to = svc.norm_temp(form.get("shift_to"))[:10]
-    if changed("notes"):
-        unit.notes = (form.get("notes") or "").strip()
-    if changed("generation"):
-        attrs = unit.attrs_dict
-        attrs["generation"] = (form.get("generation") or "").strip()[:40]
-        unit.attrs = json.dumps(attrs)
-    # A cross written only as its parents is labelled by them.
-    if unit.purpose == presets.CROSS and not unit.genotype and (unit.female_genotype or unit.male_genotype):
-        unit.genotype = svc.cross_label(unit)
-    for text in (unit.genotype, unit.female_genotype, unit.male_genotype):
-        svc.remember_genotype(session, mv.id, text or "", user)
-    if placing and "rack_id" in form and form_changed(form, "rack_id", "position"):
-        before = unit.rack
-        problem = svc.apply_position(session, unit, form.get("rack_id"), form.get("position"))
-        after = session.get(StockRack, unit.rack_id_fk) if unit.rack_id_fk else None
-        svc.follow_temperature(mv, unit, before, after)
-        return problem
-    return None
-
-
 def _row_reply(mv, unit: StockUnit, **extra):
     """The JSON an inline edit gets back: the server's view of the row."""
     return jsonify({"ok": True, "row": {"active": bool(unit.active), "values": unit_values(unit)},
@@ -579,8 +508,8 @@ def save_unit(key: str):
             if not access.can_edit_unit(unit):
                 return _back(key, error=access.reason_denied(unit))
             try:
-                problem = _unit_from_form(session, mv, unit, request.form, users=users)
-            except Invalid as error:
+                problem = svc.unit_from_form(session, mv, unit, request.form, users=users)
+            except svc.Invalid as error:
                 session.rollback()
                 return _back(key, error=gettext("Not saved: %(error)s", error=error))
             unit.updated_at, unit.updated_by = datetime.utcnow(), user
@@ -632,13 +561,13 @@ def save_unit(key: str):
                     # A new vial takes every field; "_was" copies only guard edits
                     # (and a reused dialog can still hold the last vial's).
                     fresh = {k: v for k, v in request.form.items() if not k.endswith("_was")}
-                    _unit_from_form(session, mv, unit, fresh, placing=False, users=users)
+                    svc.unit_from_form(session, mv, unit, fresh, placing=False, users=users)
                     if unit.purpose == presets.PROGENY and not unit.ready_on and unit.set_up_on:
                         unit.ready_on = unit.set_up_on + timedelta(days=mv.interval("develop", svc.rack_temperature(mv, rack)))
                     session.add(unit)
                     created.append(unit)
                 session.flush()
-        except Invalid as error:
+        except svc.Invalid as error:
             session.rollback()
             return _back(key, error=gettext("Not created: %(error)s", error=error))
         session.commit()
@@ -670,8 +599,8 @@ def update_unit(key: str, unit_id: int):
             return jsonify({"ok": False, "error": access.reason_denied(unit) if unit.active
                             else gettext("%(code)s is discarded; restore it to edit.", code=mv.code(unit))}), 403
         try:
-            problem = _unit_from_form(session, mv, unit, request.form)
-        except Invalid as error:
+            problem = svc.unit_from_form(session, mv, unit, request.form)
+        except svc.Invalid as error:
             session.rollback()
             return jsonify({"ok": False, "error": str(error)}), 409
         if problem:
@@ -901,7 +830,7 @@ def bulk(key: str):
                                 notes.append(f"{mv.code(u)}: {problem}")
                                 continue
                         else:
-                            _unit_from_form(session, mv, u, {field: value}, placing=False, users=users)
+                            svc.unit_from_form(session, mv, u, {field: value}, placing=False, users=users)
                         u.updated_at, u.updated_by = datetime.utcnow(), g.user.username
                         done += 1
                     message = gettext("Set %(field)s on %(count)s %(units)s.", field=gettext(BULK_FIELDS[field]),
@@ -938,7 +867,7 @@ def bulk(key: str):
                                gettext("Restored %(count)s %(units)s.", count=done, units=_n(mv, done)))
                 else:
                     return _back(key, error=gettext("Unknown action."))
-        except Invalid as error:
+        except svc.Invalid as error:
             session.rollback()
             return _back(key, error=gettext("Nothing changed: %(error)s", error=error))
         session.commit()
@@ -983,8 +912,8 @@ def save_rack(key: str):
             return _back(key, view="setup", error=gettext("That %(room)s belongs to another database.",
                                                           room=_w(mv.room)))
         try:
-            last = _checked_date(form, "last_flipped_on") if "last_flipped_on" in form else None
-        except Invalid as error:
+            last = svc.checked_date(form, "last_flipped_on") if "last_flipped_on" in form else None
+        except svc.Invalid as error:
             return _back(key, view="setup", error=gettext("Not saved: %(error)s", error=error))
         if rack is None:
             rack = StockRack(module_id_fk=row.id, created_by=g.user.username)
@@ -1032,8 +961,8 @@ def rack_flipped(key: str, rack_id: int):
         if rack is None or rack.module_id_fk != row.id:
             abort(404)
         try:
-            on = _checked_date(request.form, "on")
-        except Invalid as error:
+            on = svc.checked_date(request.form, "on")
+        except svc.Invalid as error:
             return _back(key, view="schedule", error=str(error))
         if on and on > date.today():
             # A flip "on" a future day would drop the rack off the schedule.
@@ -1207,15 +1136,15 @@ def save_frozen(key: str):
         vials_left = max(0, _int(form.get("vials_left"), vials))
         owner = (form.get("owner") or (lot.owner if lot else g.user.username)).strip()
         try:
-            frozen_on, tested_on = _checked_date(form, "frozen_on"), _checked_date(form, "thaw_tested_on")
+            frozen_on, tested_on = svc.checked_date(form, "frozen_on"), svc.checked_date(form, "thaw_tested_on")
             if not genotype:
-                raise Invalid(gettext("A frozen lot needs its genotype."))
+                raise svc.Invalid(gettext("A frozen lot needs its genotype."))
             if vials_left > vials:
-                raise Invalid(gettext("%(left)s vials left is more than the %(frozen)s frozen.",
+                raise svc.Invalid(gettext("%(left)s vials left is more than the %(frozen)s frozen.",
                                       left=vials_left, frozen=vials))
             if owner and owner not in stewardship.lab_members(session):
-                raise Invalid(stewardship.not_a_member(owner))
-        except Invalid as error:
+                raise svc.Invalid(stewardship.not_a_member(owner))
+        except svc.Invalid as error:
             return _back(key, view="frozen", error=gettext("Not saved: %(error)s", error=error))
         if lot is None:
             lot = StockFrozen(module_id_fk=row.id, owner=g.user.username)

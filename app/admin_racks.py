@@ -14,10 +14,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, redirect, request, url_for
 from sqlalchemy import func, select
 
-from . import access, audit, positions
+from . import access, audit
 from .db import SessionLocal
 from .i18n import gettext
 from .models import (

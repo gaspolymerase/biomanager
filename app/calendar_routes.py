@@ -91,7 +91,6 @@ def _serialize_calendar_event(e: CalendarEvent) -> dict:
         "raw": {
             "rowId": e.id,
             "owner": e.owner or "",
-            "animalId": e.animal_id_fk,
             "eventType": e.event_type or "",
             # Whose event: "0" its owner's alone, "1" the lab's, "g<id>" a group's.
             "audience": project_groups.record_value(e),
@@ -583,7 +582,7 @@ def calendar_item_create():
                 return jsonify({"ok": False, "error": gettext("That event does not repeat.")}), 404
             if not lab_calendar.event_can_edit(series):
                 return jsonify({"ok": False, "error": gettext("Only the person who added this event, or an admin, can change it.")}), 403
-            row.event_type, row.animal_id_fk = series.event_type, series.animal_id_fk
+            row.event_type = series.event_type
             skip = {d for d in (repeat.skip or "").split(",") if d} | {day.isoformat()}
             repeat.skip = ",".join(sorted(skip))
         db_session.add(row)

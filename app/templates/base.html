@@ -54,6 +54,7 @@
     </script>
     {% endif %}
     {# Declarative handlers (data-on-click=…); before any page script registers its actions. #}
+    <script src="{{ url_for('static', filename='html.js') }}?v={{ asset_version('html.js') }}"></script>
     <script src="{{ url_for('static', filename='actions.js') }}?v={{ asset_version('actions.js') }}"></script>
     {# In-app confirm / prompt / alert (BioDialog), for every page script. #}
     <script src="{{ url_for('static', filename='dialogs.js') }}?v={{ asset_version('dialogs.js') }}"></script>

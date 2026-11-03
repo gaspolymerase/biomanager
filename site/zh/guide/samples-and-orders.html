@@ -228,6 +228,23 @@
           数量、价格和经费。如果它已经在订购中，按钮会显示 <b>订购中</b> （On order），
           新订购打开时会附一条备注，注明那个未完成的订购和申请人。</li>
       </ol>
+      <h2 id="spending">订单花了多少</h2>
+      <p>在订单页，<b>花费</b> （在 <b>表格</b> 和 <b>看板</b> 旁边）把实验室申请的订单加起来。先选月份（<b>最近 12 个月</b>、<b>本年度</b>、<b>最近 3 个月</b>、<b>全部</b>，或用 <b>自选…</b> 选起止月份），再选分组方式：<b>成员</b>、<b>项目组</b>、<b>供应商</b> 或 <b>类别</b>。</p>
+      <ul>
+        <li>上方的数字是总额、已订购或已到货的金额、等待订购的金额，以及订单数，并注明有多少个没有价格。</li>
+        <li><b>按月</b> 把每个月的订单按花费最多的五个堆叠起来，其余合为“其他”。指向某个月（或用 Tab 键移过去）就能看到各自的金额；指向图例里的名称或表格的一行，就会突出显示它。</li>
+        <li>下面的表格列出每个人、项目组、供应商或类别的总额、已订购或已到货的金额、待订购的金额和订单数。<b>下载 CSV</b> 给出同一张表，每个月一列，可以用电子表格打开。</li>
+        <li>订单金额为价格乘以数量，计入提出申请的那个月；已取消的订单不计入。按项目组分时，订单计入申请人目前所在的每个项目组，所以各项目组加起来可能多于全实验室。</li>
+      </ul>
+      <p>管理员打开 <b>限额和设置</b>，可以选货币、价格是单价还是整个订单的价格，以及限额：每年（从你们年度开始的月份算起）或每月，可以为全实验室、每个人和每个项目组分别设置。<b>限额</b> 卡片显示每项用了多少，用到 80% 标为“接近限额”，超过后标为“超出限额”。保存订单时，如果让申请人、其所在项目组或全实验室超出限额，保存后的提示会说明。</p>
+      <figure class="gshot"><a href="../../assets/screenshots/orders-spending.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/orders-spending.webp" alt="订单页的花费视图：一年的订单按月、按成员统计，并对照实验室的限额" loading="lazy" width="2000" height="1250"></a><figcaption>按成员统计的花费和实验室的限额</figcaption></figure>
+      <h2 id="vendors">供应商</h2>
+      <p>订单页和所有带供应商的列表顶部都有 <b>供应商</b>，列出记录里写到的每个供应商：它的订单和其他记录、最近 12 个月订单的金额，以及最近一次订购的时间。<b>编辑</b> 可以记下网站、联系人、邮箱、电话和你们的客户编号；还没订过的供应商可以用 <b>新建供应商</b> 添加。记在这里的供应商，填写供应商时会出现在候选里。</p>
+      <ul>
+        <li>只在大小写或空格上不同的写法算同一个供应商，页面会注明它还有哪些写法。</li>
+        <li>管理员或设施管理员可以在 <b>编辑</b> 里给供应商改名，所有订单和记录里的名称会一起改；也可以勾选几种写法（如 Sigma、Sigma-Aldrich），选好要保留的名称后点 <b>合并</b>。两种操作都可以在 <b>批量操作记录</b> 里撤销。</li>
+      </ul>
+      <figure class="gshot"><a href="../../assets/screenshots/vendors.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/vendors.webp" alt="供应商页面：每个供应商的订单、记录、最近 12 个月金额和最近订购时间" loading="lazy" width="2000" height="1250"></a><figcaption>供应商</figcaption></figure>
       <h2 id="low-stock">按数量提醒库存不足</h2>
       <p>试剂、化学品、抗体、病毒和引物在 <b>数量</b> （Qty）和 <b>单位</b> （Unit）旁有一列 <b>低库存线</b> （Low at），
         记录对话框的<i>采购信息</i>（Supply）里也有。把数量写成数字（<code>12</code>、<code>2.5</code> 或 <code>2,5</code>），
@@ -279,11 +296,13 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 9 分钟</p>
+      <p>本页内容 · 阅读约 11 分钟</p>
       <ol>
         <li class="lvl2"><a href="#a-week">它对你每周的工作意味着什么</a></li>
         <li class="lvl2"><a href="#samples-by-type">按类型管理样本</a></li>
         <li class="lvl2"><a href="#ordering-start-to-shelf">订购：从下单到上架</a></li>
+        <li class="lvl2"><a href="#spending">订单花了多少</a></li>
+        <li class="lvl2"><a href="#vendors">供应商</a></li>
         <li class="lvl2"><a href="#low-stock">按数量提醒库存不足</a></li>
         <li class="lvl2"><a href="#every-inventory">所有库存通用</a></li>
       </ol>

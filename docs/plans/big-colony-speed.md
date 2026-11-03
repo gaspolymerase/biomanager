@@ -26,7 +26,7 @@ What is left is start-up, Home's server time, and the browser.
 
 ### 1. Start-up: stop scanning every cage at each start — done
 
-`services.migrate_cage_locations` (run by `init_database`) moves rack
+`startup.migrate_cage_locations` (run by `init_database`) moves rack
 positions once written as location text ("B-D7") into the rack fields.
 It read every cage not in a rack, at every start, to try its pattern on
 the text: 25,000 cages here, none with any location text.
@@ -141,6 +141,54 @@ server time; stubs made from data are the next step there. Worm strains
 fine. On the fish, tanks, reagents and vials (1.4–1.8 s), the tank menus
 of the fish dialog and the batch bar (3,338 tanks each) were tried and
 cost nothing measurable: options in a closed menu are not laid out.
+
+### Afterwards: a load test with a colony's ages
+
+The load test gave its living mice litters born over five years, so 88%
+of them were past 30 weeks and Home's agenda listed about 5,700 colony
+items, 3,960 of them cages long past 30 weeks: no working colony keeps
+its mice like that, and tuning Home for it would have tuned the test
+data. The living mice now come from litters born in the last ten months,
+most of them young: 519 of 4,921 (10.5%) are past 30 weeks, and the
+agenda has 2,423 colony items (1,688 of them genotyping, as a third of
+the living mice are labelled geno). Measured again on that lab:
+
+| Page | Server | In Chromium |
+| --- | --- | --- |
+| Home | 0.45 s | 0.74 s to load |
+| Mice / Cages / Litters | 0.13 / 0.22 / 0.30 s | 1.2 / 1.5 / 0.8 s |
+| Fish / Tanks | 0.65 / 0.39 s | 1.8 / 1.4 s |
+| Reagents / Samples / Orders | 0.84 / 0.38 / 0.30 s | 1.9 / 1.6 / 1.5 s |
+| Fly vials / Worm strains | 0.30 / 0.23 s | 1.3 / 1.1 s |
+| Plasmids | 0.27 s | 1.3 s |
+| Plants (10,000) | 2.7 s | 4.8 s |
+
+Home's server time was 0.45 s, of which the fly and worm schedules were
+0.11 s, and the plants' sheet the slowest page left. Then:
+
+| Page | Server before | After |
+| --- | --- | --- |
+| Plants (10,000; 3,323 listed) | 2.7 s (4.8 s to load) | 0.39 s (1.3 s); "Show them" 8.7 s to 0.89 s |
+| Home | 0.45 s | 0.34 s |
+| Reagents (with 4,000 orders) | 0.93 s | 0.37 s |
+
+The plants' stubs are made from data; the fly and worm schedules read
+only the vials that can fall due (the four of them on Home: 0.11 s to
+8 ms); "Already on order" indexes the open orders instead of trying each
+against every reagent. Left as they are: the fish (0.31 s) and tanks
+(0.24 s), and Home's weaning list (0.04 s), shared with the calendar and
+the cage sheet.
+
+Two more, measured on the same lab:
+
+| Page | Before | After |
+| --- | --- | --- |
+| Plasmids, with three of the lab's own columns | 4–6 s (drawn whole, trimmed) | 0.54 s |
+| Orders (4,000) | 6.7 MB, 287 ms on the server | 2.06 MB, 194 ms |
+
+A lab's own plasmid columns are now drawn into the stubs, as the fish
+tanks' are. The orders' Board (4.2 MB, each card carrying its dialog)
+comes from `/inventory/<key>/board` when it is first shown.
 
 ## How to check each
 

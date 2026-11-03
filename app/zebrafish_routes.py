@@ -20,7 +20,7 @@ from . import experiments as experiment_pages
 from . import groups as project_groups
 from .text_cells import as_text_cells
 from .flask_app import app
-from .web import login_required, owner_badge_filter
+from .web import login_required, owner_badge_filter, page_macros
 from .days import fmt_day
 from .db import SessionLocal
 from .formutil import form_changed
@@ -229,7 +229,7 @@ def zf_tank_stubs(rows: list[dict], custom_columns: list[dict], racks: list, lin
     queued, no = gettext("Queued"), gettext("No")
     purposes: dict[str, str] = {}
     badges: dict[str, str] = {}
-    custom_cell = app.jinja_env.get_template("_sheet.html").module.custom_cell if custom_columns else None
+    custom_cell = page_macros("_sheet.html").custom_cell if custom_columns else None
 
     def menu(chosen, names: dict) -> tuple[str, str]:
         """A rack or line menu's (value, words): the blank "–" when none is

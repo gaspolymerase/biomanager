@@ -203,6 +203,10 @@
         <li>在 <b>属性</b> 里，<b>来源质粒</b> 记录它的骨架、插入片段或模板（实验室里的质粒，填编号或名称；或外来的，如 <i>Addgene #11150</i>）
           以及构建方法；之后 <b>概览</b> 显示 <b>来源质粒</b> 和 <b>用于制备</b>，<b>属性</b> 里有双向的 <b>家族树</b>。<b>存放</b> 里列出它的<a href="samples-and-orders.html">甘油菌</a>（注明所在冻存盒）和用这个质粒制备的病毒
           （见<a href="samples-and-orders.html">病毒</a>）。</li>
+        <li><b>骨架</b> 和 <b>插入片段</b> 两列（以及 <b>新建质粒</b> 里的同名字段）在输入时会列出实验室的质粒，如 <i>#42 pcDNA3.1</i>，骨架还会列出常用载体，插入片段还会列出元件库里的编码序列。
+          选一个实验室的质粒，或输入 <code>@</code> 加质粒名称（<code>@pCAG-EGFP</code>），这个质粒就以相应角色列进 <b>来源质粒</b>，被写到的质粒则在 <b>用于制备</b> 里列出它。
+          这样，一个基因的质粒会列出用它构建的所有载体；在表格里搜索基因名，也能找到插入片段写了它的每个质粒。改了这一列，它建立的关联也随之改变；在质粒页面上添加的关联则保留。
+          以前写下的骨架和插入片段如果正好是实验室质粒的名称、但还没有关联，管理员会在表格上方看到有几个，点 <b>建立关联</b> 即可全部关联。</li>
       </ul>
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-map.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-map.webp" alt="质粒的概览：图谱、基本情况和特征" loading="lazy" width="2000" height="1250"></a><figcaption>质粒概览</figcaption></figure>
       <figure class="gshot"><a href="../../assets/screenshots/plasmid-compare.webp" target="_blank" rel="noopener" title="查看原图"><img src="../../assets/screenshots/plasmid-compare.webp" alt="与…比较：pCAG-EGFP 和只差一个碱基的变体，不同之处在两张图谱上都标了出来" loading="lazy" width="2000" height="1250"></a><figcaption>与…比较</figcaption></figure>
@@ -323,7 +327,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="本页内容">
-      <p>本页内容 · 阅读约 14 分钟</p>
+      <p>本页内容 · 阅读约 15 分钟</p>
       <ol>
         <li class="lvl2"><a href="#a-week">它对你的克隆工作意味着什么</a></li>
         <li class="lvl2"><a href="#the-sheet">质粒表格</a></li>

@@ -399,7 +399,7 @@ def csv_import(entity: str):
             # a number a blank row was about to get, is caught row by row
             # instead of failing whole at the end.
             from .inventory_service import get_setting, set_setting
-            from .services import MOUSE_ID_HIGH
+            from .record_numbers import MOUSE_ID_HIGH
             taken = set(db_session.scalars(select(MouseRecord.mouse_id)))
             high = get_setting(db_session, MOUSE_ID_HIGH, "")
             next_free = max(max(taken, default=0), int(high) if high.isdigit() else 0) + 1

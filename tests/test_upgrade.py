@@ -11,7 +11,7 @@ from pathlib import Path
 from tests.base import ON_POSTGRES  # noqa: F401
 from app import upgrade  # noqa: E402
 from app.db import engine  # noqa: E402
-from app.services import ensure_schema_updates  # noqa: E402
+from app.startup import ensure_schema_updates  # noqa: E402
 
 
 class Upgrade(unittest.TestCase):

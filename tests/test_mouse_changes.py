@@ -48,6 +48,30 @@ class FromTheApi(ApiBase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("Pick a username from the list", r.get_data(as_text=True))
 
+    def test_a_value_of_the_wrong_shape_is_refused_and_nothing_changes(self):
+        mouse = self.make_mouse(self.m, self.member)
+        tok = self.token(self.m)
+        mouse_id = one("select mouse_id from mice where id=?", mouse)
+        before = one("select gender || '|' || coalesce(note, '') from mice where id=?", mouse)
+        for body, said in (({"colour": "brown"}, "A mouse has no colour to change"),
+                           ({"sex": "X", "note": "x"}, "sex is F, M or empty."),
+                           ({"transgenes": ["a", "b", "c", "d", "e"]}, "transgenes is a list of at most four."),
+                           ({"date_of_death": "yesterday"}, "date_of_death is a date"),
+                           ({"note": "x", "sex": "Q"}, "sex is F, M or empty.")):
+            r = self.call("patch", f"/mice/{mouse_id}", tok, json=body)
+            self.assertEqual(r.status_code, 400, body)
+            self.assertIn(said, r.get_data(as_text=True))
+        self.assertEqual(one("select gender || '|' || coalesce(note, '') from mice where id=?", mouse), before)
+
+    def test_the_values_change_the_mouse(self):
+        mouse = self.make_mouse(self.m, self.member)
+        tok = self.token(self.m)
+        mouse_id = one("select mouse_id from mice where id=?", mouse)
+        r = self.call("patch", f"/mice/{mouse_id}", tok, json={"sex": "f", "genotype": "Cre/+; Ai14/+", "note": "API"})
+        self.assertEqual(r.status_code, 200, r.get_json())
+        self.assertEqual(one("select gender || '|' || transgene_1 || '|' || transgene_2 || '|' || note from mice where id=?",
+                             mouse), "F|Cre/+|Ai14/+|API")
+
 
 if __name__ == "__main__":
     unittest.main()

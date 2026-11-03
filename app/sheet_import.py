@@ -117,7 +117,7 @@ def _cell(value) -> str:
 
 def _unguard(text: str) -> str:
     """BioManager's own CSV exports put ' before a value starting with = + -
-    or @ (so a spreadsheet doesn't run it: services.sheet_safe); reading
+    or @ (so a spreadsheet doesn't run it: sheet_export.sheet_safe); reading
     one back, "'+/+" is the genotype +/+ again."""
     return text[1:] if text[:1] == "'" and text[1:2] in ("=", "+", "-", "@") else text
 
@@ -643,7 +643,7 @@ class MiceTarget(Target):
         from .models import MouseRecord
         from .models import CageRecord
         from .inventory_service import get_setting
-        from .services import MOUSE_ID_HIGH
+        from .record_numbers import MOUSE_ID_HIGH
         taken = set(session.scalars(select(MouseRecord.mouse_id)))
         high = get_setting(session, MOUSE_ID_HIGH, "")
         first = max(max(taken, default=0), int(high) if high.isdigit() else 0) + 1
@@ -656,7 +656,7 @@ class MiceTarget(Target):
         so the rest of its mice could still be put in it."""
         from .inventory_service import get_setting, set_setting
         from .models import CageRecord
-        from .services import MOUSE_ID_HIGH
+        from .record_numbers import MOUSE_ID_HIGH
         high = get_setting(session, MOUSE_ID_HIGH, "")
         top = max(ctx["taken"], default=0)
         if top > (int(high) if high.isdigit() else 0):
@@ -672,7 +672,7 @@ class MiceTarget(Target):
         both the colony's cages and every number the sheet itself uses, so a
         later row's cage 106 is never this one."""
         from .models import CageRecord
-        from .services import _cage_number, reserve_cage_ids
+        from .record_numbers import _cage_number, reserve_cage_ids
         in_sheet = ctx.get("sheet", {}).get("cage_id", set())
         highest = max((_cage_number(c) for c in in_sheet), default=0)
         code = reserve_cage_ids(session, 1)[0]
@@ -1033,7 +1033,7 @@ class StockTarget(Target):
     def create(self, session, ctx, v, extras):
         from . import stock_service as svc
         from .models import StockGenotype, StockUnit
-        from .stock_routes import Invalid, _unit_from_form
+        from .stock_service import Invalid, unit_from_form
         mv = self.mv
         warnings: list[str] = []
         if not v.get("genotype", "").strip() and not (v.get("female_genotype") or v.get("male_genotype")):
@@ -1065,7 +1065,7 @@ class StockTarget(Target):
             else:
                 form["rack_id"], form["position"] = str(rack.id), v.get("position", "")
         try:
-            problem = _unit_from_form(session, mv, unit, form, placing=True, users=ctx["users"])
+            problem = unit_from_form(session, mv, unit, form, placing=True, users=ctx["users"])
         except Invalid as error:
             raise RowError(str(error)) from error
         if problem:
@@ -1259,7 +1259,7 @@ class InventoryTarget(Target):
 
     def create(self, session, ctx, v, extras):
         from . import inventory_service as svc
-        from .inventory_routes import Refused, _item_from_form
+        from .inventory_items import Refused, item_from_form
         from .models import InventoryItem
         mv = self.mv
         warnings: list[str] = []
@@ -1296,7 +1296,7 @@ class InventoryTarget(Target):
             else:
                 form["rack_id"], form["position"] = str(rack.id), v.get("position", "")
         try:
-            problem, notes = _item_from_form(session, mv, item, form, creating=True)
+            problem, notes = item_from_form(session, mv, item, form, creating=True)
         except Refused as error:
             raise RowError(str(error)) from error
         warnings += notes

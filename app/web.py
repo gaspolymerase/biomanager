@@ -163,6 +163,16 @@ def _name_color(seed: str) -> tuple[int, int, int]:
 
 
 
+def page_macros(template: str):
+    """A template's macros as a page calls them: with what every page's
+    context gives them (icon, the user…), which a module of the template
+    taken alone lacks. For a row's cells drawn outside its page (a long
+    sheet's stubs, e.g. zebrafish_routes.zf_tank_stubs)."""
+    context: dict = {}
+    app.update_template_context(context)
+    return app.jinja_env.get_template(template).make_module(context)
+
+
 def owner_badge_filter(name: str) -> Markup:
     """A person's initials in their colour. Made once a name for the
     request: a long sheet or the Breeders tab shows the same few thousands

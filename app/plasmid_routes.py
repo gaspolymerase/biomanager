@@ -32,7 +32,8 @@ from .formutil import form_changed
 from . import audit
 from . import custom_fields, feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records
 from .models import PlasmidBox, PlasmidFile, PlasmidRecord, PlasmidSequenceVersion
-from .services import current_lab_usernames, save_uploaded_file
+from .services import current_lab_usernames
+from .uploads import save_uploaded_file
 from . import bulk, rack_layout, stewardship
 from . import groups as project_groups
 from .days import fmt_day
@@ -320,10 +321,9 @@ def _plasmid_int(raw) -> int | None:
 def plasmids():
     if request.method == "POST":
         return _create_plasmid()
-    # A long sheet of plasmids: its first page drawn, the rest fetched as
-    # shown (app/sheet_paging.py); the Boxes grid and the List come when
-    # they are first shown (plasmid_grid, plasmid_list).
-    return sheet_paging.page(_plasmid_sheet_page(), "plasmids-v5", url_for("plasmid_rows"))
+    # A long sheet draws its first page (plasmid_stubs for the rest); the
+    # Boxes grid and the List come when first shown (plasmid_grid, plasmid_list).
+    return _plasmid_sheet_page()
 
 
 @app.route("/plasmids/rows")
@@ -387,15 +387,21 @@ def _plasmid_rows(db_session, keep: set[int] | None = None, minis: bool = False)
     return rows, boxes, new_payload
 
 
-def plasmid_stubs(rows: list[dict], boxes) -> list[dict]:
+def plasmid_stubs(rows: list[dict], boxes, custom_columns: list[dict]) -> list[dict]:
     """Plasmids the sheet does not draw, as data-table.js reads a drawn row
     (plasmids.html's rows, as cell_text.row_stub reads them): its data-*,
     each field's value ("k"), its row form, and the words a search looks in
     ("s": what the row shows, its data-* and each field's value and the
     choice it shows). Built from each plasmid's data rather than drawn:
     drawing every plasmid and reading the rows back was most of the page's
-    time. tests/test_speed.py holds each to the row it stands for."""
-    from .web import owner_badge_filter
+    time. The lab's own columns are drawn by their macro (custom_cell) and
+    read back, as the fish tanks' are. tests/test_speed.py holds each to
+    the row it stands for."""
+    from .cell_text import row_stub, text_cells_on
+    from .text_cells import as_text_cells
+    from .web import owner_badge_filter, page_macros
+    as_text = text_cells_on()
+    custom_cell = page_macros("_sheet.html").custom_cell if custom_columns else None
     tr = i18n.translate_value    # as the template's |tr
     box_name = {b.id: b.name for b in boxes}
     group_name = project_groups.names()
@@ -423,8 +429,41 @@ def plasmid_stubs(rows: list[dict], boxes) -> list[dict]:
             if owner not in badges:
                 badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
             words.append(badges[owner])
+        for fd in custom_columns:
+            drawn = custom_cell(fd, r["payload"].get("attr_" + fd["key"], ""), "plasmid-%d" % p.id,
+                                not r["editable"], "owner-name-options")
+            cell = f"<td>{drawn}</td>"
+            read = row_stub("", str(as_text_cells(cell, as_text)))
+            sort.update({k: v for k, v in read["k"].items() if k not in sort})
+            words.append(read["s"])
         out.append({"id": p.id, "f": f"plasmid-{p.id}", "d": data, "k": sort,
                     "s": " ".join(w for w in words if w).lower()})
+    return out
+
+
+MAX_COLUMN_CHOICES = 3000
+
+
+def _column_choices(db_session, rows: list[dict]) -> dict[str, list[str]]:
+    """What the Backbone and Insert cells offer as you type: the lab's
+    plasmids ("#42 pcDNA3.1": picking one makes the plasmid Made from it),
+    then what the column already holds, the usual vectors for a backbone and
+    the coding sequences of the Feature library for an insert."""
+    from .models import FeatureLibraryEntry
+
+    plasmids = [f"#{r['p'].plasmid_id} {r['p'].name}".strip() for r in rows if r["p"].name][:MAX_COLUMN_CHOICES]
+    out = {}
+    for column, extra in (("backbone", list(plasmid_lineage.COMMON_BACKBONES)),
+                          ("insert_seq", [e.name for e in db_session.scalars(
+                              select(FeatureLibraryEntry).where(FeatureLibraryEntry.category == "coding")
+                              .order_by(FeatureLibraryEntry.name).limit(MAX_COLUMN_CHOICES))])):
+        seen, values = set(), []
+        for value in [*plasmids, *(getattr(r["p"], column) for r in rows), *extra]:
+            value = (value or "").strip()
+            if value and value.casefold() not in seen and len(values) < 2 * MAX_COLUMN_CHOICES:
+                seen.add(value.casefold())
+                values.append(value)
+        out[column] = values
     return out
 
 
@@ -437,8 +476,7 @@ def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
         rows, boxes, new_payload = _plasmid_rows(db_session, keep)
         defined_columns = custom_fields.fields(db_session, "plasmids")
         in_table = custom_fields.in_table(defined_columns)
-        # A lab's own columns are drawn and read back (sheet_paging.page).
-        lazy = keep is None and not in_table and len(rows) > LAZY_OVER
+        lazy = keep is None and len(rows) > LAZY_OVER
         usernames = current_lab_usernames(db_session)
         counts = {
             "all": len(rows),
@@ -452,7 +490,7 @@ def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
             "plasmids.html",
             rows=rows,
             sheet_rows=rows[:FIRST_PAGE] if lazy else rows,
-            stubs=plasmid_stubs(rows[FIRST_PAGE:], boxes) if lazy else [],
+            stubs=plasmid_stubs(rows[FIRST_PAGE:], boxes, in_table) if lazy else [],
             rows_url=url_for("plasmid_rows") if lazy else "",
             counts=counts,
             usernames=usernames,
@@ -462,6 +500,9 @@ def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
             max_batch=pbox.MAX_BATCH,
             custom_columns=in_table,
             custom_columns_all=defined_columns,
+            column_choices=_column_choices(db_session, rows),
+            # For an admin: Backbones and Inserts naming a lab plasmid not yet linked.
+            unlinked=len(plasmid_lineage.unlinked(db_session, [r["p"] for r in rows])) if access.is_admin() else 0,
         )
 
 
@@ -654,6 +695,12 @@ def _make_plasmids(db_session, form, user, count, name, names, requested, parsed
             elif i < len(cells):
                 record.box_row, record.box_col = cells[i]
             db_session.add(record)
+            # A Backbone or Insert naming one of the lab's plasmids: Made from it.
+            for field, role in (("backbone", "backbone"), ("insert_seq", "insert")):
+                if getattr(record, field):
+                    db_session.flush()
+                    setattr(record, field, plasmid_lineage.follow_column(
+                        db_session, record, role, "", getattr(record, field), user)[:200])
             if parsed:
                 _apply_parsed_sequence(record, parsed)
                 # A SnapGene file's description fills an empty Notes.
@@ -684,6 +731,28 @@ def _plasmid_answer(db_session, p, message: str = "", error: str = "", status: i
     elif message:
         flash(message, "success")
     return _plasmid_back(p.id if p is not None else None)
+
+
+@app.route("/plasmids/link-columns", methods=["POST"])
+@admin_required
+def plasmid_link_columns():
+    """Every Backbone and Insert that names another of the lab's plasmids
+    becomes Made from it, in one batch of the change history."""
+    with SessionLocal() as db_session:
+        plasmids = list(db_session.scalars(select(PlasmidRecord)))
+        with audit.batch(db_session, "update", gettext("Linked Backbones and Inserts to the lab's plasmids"),
+                         "plasmid_parents"):
+            made = plasmid_lineage.link_columns(db_session, plasmid_lineage.unlinked(db_session, plasmids),
+                                                g.user.username)
+        db_session.commit()
+    flash(ngettext("Linked %(num)s Backbone or Insert to the plasmid it names: see Made from on each plasmid.",
+                   "Linked %(num)s Backbones and Inserts to the plasmids they name: see Made from on each plasmid.",
+                   made), "success")
+    return redirect(url_for("plasmids"))
+
+
+# The columns that name what a plasmid was made from, and the role each names.
+COLUMN_ROLES = {"backbone": "backbone", "insert_seq": "insert"}
 
 
 @app.route("/plasmids/<int:row_id>/update", methods=["POST"])
@@ -727,7 +796,12 @@ def update_plasmid(row_id: int):
         for field, limit in (("name", 200), ("backbone", 200), ("insert_seq", 200),
                              ("resistance", 80), ("location", 120)):
             if field in form:
-                setattr(p, field, (form.get(field) or "").strip()[:limit])
+                value = (form.get(field) or "").strip()[:limit]
+                if field in COLUMN_ROLES and value != (getattr(p, field) or ""):
+                    # Naming one of the lab's plasmids makes it Made from it (plasmid_lineage).
+                    value = plasmid_lineage.follow_column(db_session, p, COLUMN_ROLES[field], getattr(p, field) or "",
+                                                          value, g.user.username)[:limit]
+                setattr(p, field, value)
         for field, _label, _limit in PLASMID_MEASURES:
             if field in form:
                 try:
@@ -1132,6 +1206,12 @@ def plasmid_page(number: int):
                         for e in plasmid_lineage.parents(db_session, p)],
             "children": [{"label": c.name, "number": c.plasmid_id, "url": url_for("plasmid_page", number=c.plasmid_id)}
                          for c in plasmid_lineage.children(db_session, p)],
+            # Its Backbone and Insert, linked when each is one of the lab's plasmids it was made from.
+            "column_urls": {e["role"]: url_for("plasmid_page", number=e["plasmid"].plasmid_id)
+                            for e in plasmid_lineage.parents(db_session, p)
+                            if e["plasmid"] is not None and e["role"] in ("backbone", "insert")
+                            and (e["plasmid"].name or "").casefold() == (
+                                (p.backbone if e["role"] == "backbone" else p.insert_seq) or "").casefold()},
             "tree": _tree_rows(plasmid_lineage.tree(db_session, p)),
         }
         # Viruses (or anything with a plasmid column) made from it.
@@ -1470,7 +1550,7 @@ def plasmid_verify(row_id: int):
     from werkzeug.datastructures import FileStorage
 
     from . import seqverify
-    from . import services as _services
+    from . import uploads as _uploads
 
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
@@ -1483,7 +1563,7 @@ def plasmid_verify(row_id: int):
         wanted = {int(x) for x in request.form.getlist("kept") if x.isdigit()}
         for kept in db_session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id,
                                                                  PlasmidFile.id.in_(wanted or {0}))):
-            source = _services.UPLOAD_DIR / _Path(kept.path).name
+            source = _uploads.UPLOAD_DIR / _Path(kept.path).name
             if source.is_file():
                 files.append((kept.name, source.read_bytes()[:seqverify.MAX_FILE + 1]))
         text = request.form.get("reads_text") or ""

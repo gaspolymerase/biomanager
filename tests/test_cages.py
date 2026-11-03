@@ -3,12 +3,15 @@ sheet and its per-cage mouse rows, cage edits and who may make them, batch
 actions and their undo, racks and placing cages in them."""
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from datetime import timedelta
+from pathlib import Path
 
 from tests.base import *  # noqa: F401,F403
 from tests.base import AppTestCase, SessionLocal, TODAY, T, count, execute, one, row, rows, services, uniq
+from app import record_numbers  # noqa: E402
 
 
 # ---------------------------------------------------------------- helpers
@@ -26,7 +29,7 @@ def cage_id_of(code: str):
 
 
 def highest_cage_number() -> int:
-    return max((services._cage_number(code) for (code,) in rows("select cage_id from mouse_cages")), default=0)
+    return max((record_numbers._cage_number(code) for (code,) in rows("select cage_id from mouse_cages")), default=0)
 
 
 def newest_batch(actor: str):
@@ -100,7 +103,7 @@ class CageCreateTests(RackMixin, Case):
         # Typed on a mouse, the latest cage is "2A…": its number is 2.
         self.make_mouse(self.m, self.member, cage="2A" + uniq("z"))
         with SessionLocal() as s:
-            self.assertEqual(services.next_cage_id(s), str(high + 1))
+            self.assertEqual(record_numbers.next_cage_id(s), str(high + 1))
         before = count("mice", "cage_id_fk=(select id from mouse_cages where cage_id='3')")
         mid = self.make_mouse(self.m, self.member, cage="new")
         self.assertEqual(one("select c.cage_id from mice m join mouse_cages c on c.id=m.cage_id_fk where m.id=?", mid),
@@ -110,11 +113,11 @@ class CageCreateTests(RackMixin, Case):
     def test_reserve_cage_ids_gives_consecutive_unused_ids(self):
         high = highest_cage_number()
         with SessionLocal() as s:
-            self.assertEqual(services.reserve_cage_ids(s, 3), [str(high + i) for i in (1, 2, 3)])
-            self.assertEqual(services.reserve_cage_ids(s, 0), [])
+            self.assertEqual(record_numbers.reserve_cage_ids(s, 3), [str(high + i) for i in (1, 2, 3)])
+            self.assertEqual(record_numbers.reserve_cage_ids(s, 0), [])
 
     def test_cage_number_reads_the_first_run_of_digits(self):
-        self.assertEqual([services._cage_number(c) for c in ("12", "2A", "B-12", "B12-3", "x", "", None)],
+        self.assertEqual([record_numbers._cage_number(c) for c in ("12", "2A", "B-12", "B12-3", "x", "", None)],
                          [12, 2, 12, 12, 0, 0, 0])
 
     def test_an_existing_id_is_refused_and_the_cage_left_alone(self):
@@ -482,8 +485,12 @@ class CageSheetTests(Case):
         tg1 = keys.index("transgene_1")
         self.assertEqual(keys[tg1:tg1 + 4], [f"transgene_{n}" for n in range(1, 5)])
         mouse_sheet_hides = {n: "data-default-hidden" in heads[tg1 - 1 + n] for n in range(1, 5)}
-        self.assertIn(f'"dt:{table_id}:hidden"', self.html)
-        self.assertIn(f"hiddenCols.has({tg1 - 1} + Number(cell.dataset.tg))", self.html)
+        data = json.loads(re.search(
+            r'<script type="application/json" id="colony-page-data">(.*?)</script>', self.html, re.S).group(1))
+        self.assertEqual(data["hiddenColumnsKey"], f"dt:{table_id}:hidden")
+        self.assertEqual(data["firstTransgeneColumn"], tg1)
+        script = (Path(__file__).resolve().parent.parent / "app" / "static" / "colony-page.js").read_text(encoding="utf-8")
+        self.assertIn("hiddenCols.has(COLONY.firstTransgeneColumn - 1 + Number(cell.dataset.tg))", script)
         panel = between(self.html, f'id="cage-detail-{self.colony["cage_id"]}"', "</table>")
         for n in range(1, 5):
             th = re.search(rf'<th data-tg="{n}"[^>]*>', panel).group(0)
@@ -937,7 +944,14 @@ class CagePurposeTests(Case):
     def test_the_bar_is_all_active_and_the_labs_purposes(self):
         html = self.cages_page()
         chips = re.findall(r'data-dt-filter="([^"]*)"', html)
-        self.assertEqual(chips, ["", "active:true", "purpose:breeder", "purpose:breeding", "purpose:experiment"])
+        self.assertEqual(chips[:2], ["", "active:true"])
+        # One chip per purpose on the lab's own list, in its order: a new lab's
+        # three, and any purpose another test has added to the shared lab.
+        lab = [v.lower() for (v,) in rows("select option_value from dropdown_options where field_name='purpose' "
+                                          "order by position, option_value")]
+        self.assertEqual(chips[2:], [f"purpose:{v}" for v in lab])
+        self.assertEqual([c for c in chips if c in ("purpose:breeder", "purpose:breeding", "purpose:experiment")],
+                         ["purpose:breeder", "purpose:breeding", "purpose:experiment"])
         for gone in ("stock", "retired", "mine:true", "breeding:1"):
             self.assertNotIn(f'data-dt-filter="{gone}"', html)
             self.assertNotIn(f'data-dt-filter="purpose:{gone}"', html)
