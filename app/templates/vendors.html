@@ -27,13 +27,13 @@
           <tr>
             {% if can_rename %}<th class="vendors-tick"><span class="sr-only">{{ _('Tick to merge') }}</span></th>{% endif %}
             <th>{{ _('Vendor') }}</th>
-            <th>{{ _('Website') }}</th>
-            <th>{{ _('Contact') }}</th>
-            <th>{{ _('Customer number') }}</th>
+            <th class="vendors-col-website">{{ _('Website') }}</th>
+            <th class="vendors-col-contact">{{ _('Contact') }}</th>
+            <th class="vendors-col-customer">{{ _('Customer number') }}</th>
             <th class="vendors-num">{{ _('Orders') }}</th>
-            <th class="vendors-num">{{ _('Other records') }}</th>
+            <th class="vendors-num vendors-col-records">{{ _('Other records') }}</th>
             <th class="vendors-num">{{ _('Last 12 months') }}</th>
-            <th>{{ _('Last ordered') }}</th>
+            <th class="vendors-col-last">{{ _('Last ordered') }}</th>
             <th><span class="sr-only">{{ _('Edit') }}</span></th>
           </tr>
         </thead>
@@ -46,17 +46,17 @@
                 {{ v.name }}
                 {% if v.others %}<span class="vendors-also">{{ _('Also written: %(names)s', names=v.others|join(', ')) }}</span>{% endif %}
               </td>
-              <td>{% if v.website %}<a href="{{ v.website }}" target="_blank" rel="noopener noreferrer">{{ d.website }}</a>{% endif %}</td>
-              <td class="vendors-contact">
+              <td class="vendors-col-website">{% if v.website %}<a href="{{ v.website }}" target="_blank" rel="noopener noreferrer">{{ d.website }}</a>{% endif %}</td>
+              <td class="vendors-contact vendors-col-contact">
                 {% if d and d.contact %}<span>{{ d.contact }}</span>{% endif %}
                 {% if d and d.email %}<a href="mailto:{{ d.email }}">{{ d.email }}</a>{% endif %}
                 {% if d and d.phone %}<span class="text-muted">{{ d.phone }}</span>{% endif %}
               </td>
-              <td>{{ d.customer_number if d else '' }}</td>
+              <td class="vendors-col-customer">{{ d.customer_number if d else '' }}</td>
               <td class="vendors-num">{{ v.orders or '' }}</td>
-              <td class="vendors-num">{{ v.records or '' }}</td>
+              <td class="vendors-num vendors-col-records">{{ v.records or '' }}</td>
               <td class="vendors-num">{{ amount_text(v.spent, currency) if v.spent else '' }}</td>
-              <td class="text-muted">{{ v.last_ordered|day if v.last_ordered else '' }}</td>
+              <td class="text-muted vendors-col-last">{{ v.last_ordered|day if v.last_ordered else '' }}</td>
               <td class="vendors-edit">
                 <button type="button" class="btn btn-sm" data-vendor-edit
                         data-payload="{{ {'was': v.name, 'name': v.name, 'website': d.website if d else '', 'contact': d.contact if d else '',
