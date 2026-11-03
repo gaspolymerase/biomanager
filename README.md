@@ -473,7 +473,12 @@ the Digest tab. **Download** gives it as
 GenBank or FASTA, and **Versions** keeps every earlier sequence to
 restore. **Made from** records its backbone, insert or template (in the
 lab or from Addgene) and how it was made; its page shows what it was made
-from and what was made from it, with a family tree. **Assemble a
+from and what was made from it, with a family tree. The **Backbone** and
+**Insert** columns offer the lab's plasmids as you type (and the usual
+vectors, pcDNA3.1, pLKO.1, pAAV…): pick one, or type `@` and its name, and
+the plasmid is listed as made from it, so a gene's plasmid shows every
+construct made with it. **Link them**, for an admin, does the same for
+Backbones and Inserts written before. **Assemble a
 plasmid** builds the next one from the ones you have: fill a tray with
 fragments — a whole plasmid, one feature, a region, or a piece an enzyme
 leaves — and put them together by **digest and ligation**, by **Gibson /
@@ -553,7 +558,7 @@ change:
 | Preset | Tracks |
 | --- | --- |
 | 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it and its **Genotype** from the colony, and its sex, age, genotype, status, owner and cage on hovering the arrow that opens it; a tab for each type (tissue, blood, DNA, RNA… and any you add with **+**), each with its own columns: a tissue's **Tissue**, **Fixation** and **Orientation**, a DNA's or RNA's concentration, unit, 260/280, 260/230 and volume as numbers; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position |
-| 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account |
+| 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account, and what it all costs |
 | ⚗️ **Reagents** | quantity (with a **Low at** level that marks a bottle low as it runs down), concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
 | 🔬 **Antibodies** | host, clonality, clone, conjugate, reactivity, applications, dilution, RRID and where each vial is stored |
@@ -611,6 +616,27 @@ database has a name of its own (one another database has is refused), so
   which order is open and who asked for it.
 - **Requests reach the lab manager** — a new order tells the lab's admins,
   and whoever asked for it is told as it moves.
+- **What the orders cost** — the orders page's **Spending** view adds up
+  what was asked for, month by month, in a chart you can point at, by
+  **Person**, **Project group**, **Vendor** or **Category**, over the last
+  12 months, this year, the last 3 months, all of it or months you choose.
+  Each order costs its Price times its Quantity (or its Price alone, if
+  your lab writes the whole order's price there); a cancelled one counts
+  nowhere, and one still requested shows as waiting. **Download CSV** gives
+  the same table for a spreadsheet.
+- **Spending limits** — an admin sets a limit per year (from the month your
+  year starts) or per month, for the lab, a person or a project group, in
+  **Limits and settings**. The Spending view shows how much of each is
+  used, near the limit or over it, and saving an order that takes its
+  asker, their group or the lab past a limit says so.
+- **One list of vendors** — **Vendors** (on the orders page and every list
+  with a vendor) lists every vendor your records name, with its orders,
+  other records, what its orders cost in the last 12 months and when it was
+  last ordered from. Keep its website, contact, email, phone and your
+  customer number there; a vendor kept there is offered when you type one.
+  An admin or a facility manager can rename a vendor, or tick several
+  spellings (*Sigma*, *Sigma-Aldrich*) and **Merge** them, on every order
+  and record at once; Batch history can undo it.
 - **Boxes that look after themselves** — a tube marked used up, empty or
   discarded leaves its box position free (its location note keeps where it
   was); a box can say where it is kept (−80 °C, LN₂), and what goes in
@@ -638,6 +664,14 @@ database has a name of its own (one another database has is refused), so
   <tr>
     <td align="center"><sub><b>Orders</b> — drag a card when it arrives</sub></td>
     <td align="center"><sub><b>Reagents</b> — what's low, what's expiring</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/orders-spending.webp" alt="The orders page's Spending view: a year of orders by month and by person, with the lab's limits"></td>
+    <td width="50%"><img src="docs/screenshots/vendors.webp" alt="The Vendors page: every vendor with its orders, records, last 12 months and last order"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Spending</b> — by person, group or vendor, against your limits</sub></td>
+    <td align="center"><sub><b>Vendors</b> — one list, details kept, spellings merged</sub></td>
   </tr>
 </table>
 

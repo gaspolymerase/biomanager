@@ -300,6 +300,9 @@ app.register_blueprint(rail_peek.bp)
 # The lab's own icon at the top of the sidebar (app/lab_icon.py).
 from . import lab_icon  # noqa: E402
 app.register_blueprint(lab_icon.bp)
+# The lab's vendors: details, renaming and merging spellings (app/vendors.py).
+from . import vendors  # noqa: E402
+app.register_blueprint(vendors.bp)
 # A sheet's saved views, each person's own (app/sheet_views.py).
 from . import sheet_views  # noqa: E402
 app.register_blueprint(sheet_views.bp)

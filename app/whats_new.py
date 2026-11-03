@@ -30,6 +30,14 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.8.0": {
+        "new": [
+            "**Spending** on the orders page: what the orders cost, month by month, by person, project group, vendor or category, with **Download CSV**.",
+            "Spending limits for the lab, a person or a project group, per year or per month: an admin sets them in **Limits and settings**.",
+            "**Vendors**: one list of the lab's vendors, with their details; an admin can rename or **Merge** spellings everywhere.",
+            "A plasmid's **Backbone** and **Insert** can name one of the lab's plasmids (pick it, or type @): it is listed under **Made from**.",
+        ],
+    },
     "2.7.1": {
         "changed": [
             "**Home** counts the active mice only, and how many are yours; **Due this week** and **Overdue** are apart.",
