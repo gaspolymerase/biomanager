@@ -559,5 +559,6 @@
   "An order counts in the month it was ordered (while it waits, the month it was asked for); a cancelled one counts nowhere.": "订单计入订购的那个月（还在等待订购时，计入申请的那个月）；已取消的订单不计入。",
   "%(who)s is over the spending limit": "%(who)s 已超出花费限额",
   "%(used)s asked for this month, of %(limit)s.": "本月已申请 %(used)s，限额为 %(limit)s。",
-  "%(used)s asked for this year, of %(limit)s.": "本年度已申请 %(used)s，限额为 %(limit)s。"
+  "%(used)s asked for this year, of %(limit)s.": "本年度已申请 %(used)s，限额为 %(limit)s。",
+  "Open in Vendors": "在供应商页面打开"
 }

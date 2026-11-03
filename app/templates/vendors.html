@@ -17,7 +17,7 @@
 <section class="data-table-card vendors" data-vendors>
   <div class="vendors-bar">
     <label class="vendors-search">{{ icon('search') }}
-      <input type="search" placeholder="{{ _('Find a vendor') }}" aria-label="{{ _('Find a vendor') }}" data-vendor-find></label>
+      <input type="search" placeholder="{{ _('Find a vendor') }}" aria-label="{{ _('Find a vendor') }}" value="{{ look_for }}" data-vendor-find></label>
     <span class="vendors-count">{{ ngettext('%(num)s vendor', '%(num)s vendors', vendors|length) }}</span>
   </div>
   {% if vendors %}
@@ -138,10 +138,14 @@
 
   const find = document.querySelector('[data-vendor-find]');
   const rows = Array.from(document.querySelectorAll('[data-vendor-row]'));
-  if (find) find.addEventListener('input', () => {
+  const narrow = () => {
     const q = find.value.trim().toLowerCase();
     rows.forEach((r) => { r.hidden = q && !r.dataset.find.includes(q); });
-  });
+  };
+  if (find) {
+    find.addEventListener('input', narrow);
+    if (find.value) narrow();   // ?q= from a record's dialog
+  }
 
   const merge = document.querySelector('[data-vendor-merge]');
   if (merge) {

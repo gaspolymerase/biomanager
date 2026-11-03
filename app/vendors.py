@@ -114,6 +114,18 @@ def listing(session, today: date | None = None) -> list[dict]:
     return out
 
 
+def details_map(session) -> dict[str, dict]:
+    """What the lab keeps about each vendor, by key_of its name, for a
+    record's dialog to show beside its Vendor: only vendors with something
+    kept."""
+    out = {}
+    for v in session.scalars(select(Vendor)):
+        kept = {k: (getattr(v, k) or "").strip() for k in ("website", "contact", "email", "phone", "customer_number")}
+        if any(kept.values()):
+            out[key_of(v.name)] = {"name": v.name, "url": website_url(kept["website"]), **kept}
+    return out
+
+
 def names(session) -> list[str]:
     """The names the lab keeps details for, to offer as a record's vendor."""
     return [v.name for v in session.scalars(select(Vendor).order_by(Vendor.name))]
@@ -163,7 +175,8 @@ def page():
         orders_key = modules[0].key if modules else None
         currency = spending.settings_of(session, modules[0])["currency"] if modules else ""
     return render_template("vendors.html", vendors=vendors, can_rename=can_rename(), orders_key=orders_key,
-                           currency=currency, amount_text=spending.amount_text)
+                           currency=currency, amount_text=spending.amount_text,
+                           look_for=(request.args.get("q") or "").strip()[:120])
 
 
 @bp.route("/save", methods=["POST"])

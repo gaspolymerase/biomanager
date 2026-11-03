@@ -482,6 +482,15 @@ def _limit_notes(session, row: InventoryModule, item: InventoryItem, cost_was, c
     return [spending.over_message(over, spending.settings_of(session, row))]
 
 
+def _vendor_details(session, mv) -> dict:
+    """What the lab keeps about each vendor (app/vendors.py), for the
+    dialog to show beside a record's Vendor."""
+    if not mv.has("supplier"):
+        return {}
+    from . import vendors
+    return vendors.details_map(session)
+
+
 def _spend_people(session, row: InventoryModule) -> dict:
     """Who and which project groups a limit can be set for, in the
     Spending view's settings: an admin's only."""
@@ -745,6 +754,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "reorder": reorder,
         "can_configure": access.can_configure(row), "is_admin": access.is_admin(),
         "spends": _spends(row), "spend_people": _spend_people(session, row),
+        "vendor_details": _vendor_details(session, mv),
         "bulk_fields": bulk_fields(mv),
         "stored_at_field": svc.stored_at_field(mv),
         "terminal_statuses": sorted(svc.TERMINAL_STATUSES),

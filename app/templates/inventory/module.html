@@ -474,6 +474,9 @@
             <label><span>{{ _('Vendor') }}{{ star('vendor') }}</span> <input name="vendor"{{ req('vendor') }}{{ rem('vendor') }}></label>
             <label><span>{{ _('Catalog #') }}{{ star('catalog_number') }}</span> <input name="catalog_number"{{ req('catalog_number') }}{{ rem('catalog_number') }} autocomplete="off" data-fill-key="catalog_number"></label>
             <label><span>{{ _('Lot') }}{{ star('lot') }}</span> <input name="lot"{{ req('lot') }}></label>
+            {# What the lab keeps about the vendor typed (Vendors), with a way there. #}
+            <p class="record-wide record-fill-hint vendor-hint" data-vendor-hint data-vendors-url="{{ url_for('vendors.page') }}"
+               data-open-words="{{ _('Open in Vendors') }}" data-customer-words="{{ _('Customer number') }}" hidden></p>
           {% endif %}
           {% if m.has('quantity') %}
             <label><span>{{ _('Quantity') }}{{ star('quantity') }}</span> <input name="quantity"{{ req('quantity') }}{{ rem('quantity') }}></label>
@@ -710,6 +713,51 @@
       follow();
     });
   })();
+  /* Beside Vendor: what the lab keeps about it (app/vendors.py), and a
+     link to it on the Vendors page. */
+  (function () {
+    const dialog = document.getElementById('item-dialog');
+    const hint = dialog && dialog.querySelector('[data-vendor-hint]');
+    const input = dialog && dialog.querySelector('input[name="vendor"]');
+    if (!hint || !input) return;
+    // Read when first needed: its JSON comes later in the page than this script.
+    let kept = null;
+    const details = () => {
+      if (kept === null) {
+        try { kept = JSON.parse(document.getElementById('inv-vendor-details').textContent || '{}'); } catch (_) { kept = {}; }
+      }
+      return kept;
+    };
+    const keyOf = (v) => (v || '').split(/\s+/).filter(Boolean).join(' ').toLowerCase();
+    const show = () => {
+      hint.textContent = '';
+      const name = input.value.trim();
+      const v = details()[keyOf(name)];
+      // A vendor the lab knows: kept on the Vendors page, or used before.
+      const used = Array.from(document.querySelectorAll('#inv-rem-vendor option')).some((o) => keyOf(o.value) === keyOf(name));
+      if (!name || (!v && !used)) { hint.hidden = true; return; }
+      const parts = [];
+      if (v && v.website) {
+        const a = document.createElement('a');
+        a.href = v.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = v.website;
+        parts.push(a);
+      }
+      if (v && v.customer_number) parts.push(`${hint.dataset.customerWords} ${v.customer_number}`);
+      if (v) [v.contact, v.email, v.phone].filter(Boolean).forEach((x) => parts.push(x));
+      const open = document.createElement('a');
+      open.href = `${hint.dataset.vendorsUrl}?q=${encodeURIComponent(name)}`;
+      open.textContent = hint.dataset.openWords;
+      parts.push(open);
+      parts.forEach((p, i) => {
+        if (i) hint.appendChild(document.createTextNode(' · '));
+        hint.appendChild(typeof p === 'string' ? document.createTextNode(p) : p);
+      });
+      hint.hidden = false;
+    };
+    input.addEventListener('input', show);
+    input.addEventListener('change', show);
+    dialog.addEventListener('record-dialog:open', () => setTimeout(show, 0));
+  })();
   /* "How many" is for a new box only. */
   (function () {
     const dialog = document.getElementById('inv-rack-dialog');
@@ -754,6 +802,7 @@
                                                         "openStatuses": m.open_statuses | map('lower') | list,
                                                         "sourcesUrl": url_for('inventory.source_ids', key=key) if sources else ""} | tojson }}</script>
 <script type="application/json" id="inv-fill-data">{{ remembered.fill | tojson }}</script>
+<script type="application/json" id="inv-vendor-details">{{ vendor_details | tojson }}</script>
 <script nonce="{{ csp_nonce() }}">
   /* Keep everything that shows an item in step after a save, a board drag
      or a grid move: the row's cells and its "_was" copies, the dot, the
