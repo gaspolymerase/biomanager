@@ -140,7 +140,7 @@ class TheView(InventoryCase):
         r = self.m.get(f"/inventory/{key}/spending.csv?by=vendor")
         self.assertEqual(r.status_code, 200)
         body = r.get_data(as_text=True)
-        self.assertTrue(body.startswith("﻿Vendor,Orders,Spent"))
+        self.assertTrue(body.startswith("﻿Vendor,Number of orders,Spent"))
         self.assertIn("Zymo,1,50,0,50,", body)
         self.assertIn("attachment", r.headers["Content-Disposition"])
 

@@ -1870,8 +1870,9 @@ crossing the origin keeps `start > end`.
   without foreign keys, as for versions. The assembly wizard records its
   product's parents through `add_parent`.
 - **The Backbone and Insert columns link** (`plasmid_lineage.follow_column`):
-  a value naming a lab plasmid (`#42`, `42 · name`, `@name` or its exact
-  name, `column_parent`) is stored as its name and adds a Made from link
+  a value naming a lab plasmid (`#42`, `#42 name`, `@name`, `@42` or its
+  exact name, `column_parent`; a bare number is not one, as "5' UTR"
+  starts with one) is stored as its name and adds a Made from link
   in that role, marked `details.from_column`; changing the column drops
   only such a link (one from the page or an assembly stays). The sheet's
   and dialog's inputs take `list="plasmid-backbone-choices"` /

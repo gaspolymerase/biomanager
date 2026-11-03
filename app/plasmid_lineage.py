@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from .models import PlasmidParent, PlasmidRecord
 
@@ -94,10 +94,18 @@ COMMON_BACKBONES = (
 
 
 def column_parent(session, typed: str) -> PlasmidRecord | None:
-    """The lab's plasmid a Backbone or Insert names: "@pcDNA3.1", "#42",
-    "42 · pcDNA3.1" picked from the list, or its exact name."""
+    """The lab's plasmid a Backbone or Insert names: "#42", "#42 pcDNA3.1"
+    picked from the list, "@pcDNA3.1" or "@42", or its exact name. A bare
+    number is not taken as one: an insert can start with one ("5' UTR",
+    "12S rRNA")."""
     from .inventory_service import resolve_plasmid
-    return resolve_plasmid(session, (typed or "").strip().lstrip("@").strip())
+    import re
+    text = (typed or "").strip()
+    if text.startswith("@"):
+        return resolve_plasmid(session, text[1:].strip())
+    if re.match(r"#\s*\d", text):
+        return resolve_plasmid(session, text)
+    return session.scalar(select(PlasmidRecord).where(func.lower(PlasmidRecord.name) == text.lower()).limit(1)) if text else None
 
 
 def follow_column(session, p: PlasmidRecord, role: str, before: str, typed: str, user: str = "") -> str:

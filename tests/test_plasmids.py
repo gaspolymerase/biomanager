@@ -339,10 +339,14 @@ class LineageTests(AppTestCase):
         other = self.make_plasmid(self.m, name=uniq("pOther"))
         self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": plasmid(other, "name")[0]})
         self.assertEqual([link[0] for link in self.links(self.child)], [self.insert, other])
+        # A number at the start of an insert is not a plasmid's number.
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"insert_seq": f"{self.number(other)} UTR"})
+        self.assertEqual([link[0] for link in self.links(self.child)], [other])
         # Words that name no plasmid stay as they are, with no link.
         self.autosave(self.m, f"/plasmids/{self.child}/update", {"backbone": "pUC19"})
         self.assertEqual(plasmid(self.child, "backbone")[0], "pUC19")
-        self.assertEqual([link[0] for link in self.links(self.child)], [self.insert])
+        self.assertEqual(self.links(self.child), [])
+        self.autosave(self.m, f"/plasmids/{self.child}/update", {"insert_seq": f"@{ins_name}"})
         # The plasmid page links the Insert to its plasmid.
         html = self.get_ok(self.m, f"/plasmid/{self.number(self.child)}")
         self.assertRegex(html, rf'<dd><a href="[^"]*{self.number(self.insert)}[^"]*">{re.escape(ins_name)}</a></dd>')
