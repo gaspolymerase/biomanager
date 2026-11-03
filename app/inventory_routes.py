@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 import zlib
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -387,6 +388,18 @@ def source_ids(key: str):
         return jsonify({"refs": [source["refs"] for source in sample_sources(session)]})
 
 
+@bp.route("/<key>/board")
+def board(key: str):
+    """The Board's columns and cards (_board.html), for the page's ?type=
+    and ?ended=, asked for when the Board is first shown: each card carries
+    its record's dialog, megabytes on a long inventory."""
+    with SessionLocal() as session:
+        context = _sheet_context(session, key)
+        if not (context["module"].has("board") and context["module"].statuses):
+            abort(404)
+        return render_template("inventory/_board.html", m=context["module"], **context)
+
+
 @bp.route("/<key>/grid")
 def grid_data(key: str):
     """The box grid's boxes and tiles (rack-grid.js), for the page's ?type=
@@ -667,8 +680,9 @@ def _row_stubs(mv, rows: list[dict], table_fields: list[dict], box_labels: dict,
 def _same_thing(order: InventoryItem, stock: InventoryItem, source: InventoryModule) -> bool:
     """An order for this stock item: made from it with Order again, or the
     same catalog number (the same name when it has none)."""
-    if (order.notes or "").startswith(f"Reorder of {source.label} #{stock.number}"):
-        return True
+    notes, made_from = order.notes or "", f"Reorder of {source.label} #{stock.number}"
+    if notes.startswith(made_from) and not notes[len(made_from):len(made_from) + 1].isdigit():
+        return True     # #1's, not #12's
     cat = (stock.catalog_number or "").strip().lower()
     if cat:
         return (order.catalog_number or "").strip().lower() == cat
@@ -685,11 +699,29 @@ def _open_orders_of(session, source: InventoryModule, stock: list[InventoryItem]
     open_orders = list(session.scalars(select(InventoryItem).where(
         InventoryItem.module_id_fk == orders.id, InventoryItem.status.in_(omv.open_statuses))
         .order_by(InventoryItem.number.desc())))
+    # As _same_thing, each order indexed by what it is matched on, rather
+    # than every order tried against every stock item (a lab's thousands of
+    # reagents against its open orders took most of the sheet's time).
+    reorder_of = f"Reorder of {source.label} #"
+    by_number, by_catalog, by_name = defaultdict(set), defaultdict(set), defaultdict(set)
+    for n, order in enumerate(open_orders):
+        notes = order.notes or ""
+        if notes.startswith(reorder_of):
+            rest = notes[len(reorder_of):]
+            digits = len(rest) - len(rest.lstrip("0123456789"))
+            by_number[rest[:digits]].add(n)
+        by_catalog[(order.catalog_number or "").strip().lower()].add(n)
+        by_name[(order.name or "").strip().lower()].add(n)
     found = {}
     for item in stock:
-        same = [o for o in open_orders if _same_thing(o, item, source)]
-        if same:
-            found[item.id] = same
+        hits = set(by_number.get(str(item.number), ()))
+        cat, name = (item.catalog_number or "").strip().lower(), (item.name or "").strip().lower()
+        if cat:
+            hits |= by_catalog.get(cat, set())
+        elif name:
+            hits |= by_name.get(name, set())
+        if hits:
+            found[item.id] = [open_orders[n] for n in sorted(hits)]
     return found
 
 
