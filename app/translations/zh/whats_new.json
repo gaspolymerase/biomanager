@@ -242,5 +242,8 @@
   "A mouse's form slides in at the right: Sex as buttons, the rack drawn to click a place, **⌘/Ctrl ↵** to save.": "小鼠表单从右侧滑出：性别是按钮，画出架子点选位置，**⌘/Ctrl ↵** 保存。",
   "**Utilities** answers a sum typed in its search (10 mM to 50 µM in 1 mL), and keeps each tool's **Recent sums**.": "**工具** 页的搜索框能直接算（10 mM to 50 µM in 1 mL），每个工具保留 **最近算过**。",
   "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.": "实验：植物自己的观测指标、每个个体 **第 1 天时的年龄**、**随机分组**，以及存活的 log-rank 检验。",
-  "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.": "**设置字段** 又能列出这一列的选项了（样本的固定方式……），建议列表也不会超出窗口。"
+  "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.": "**设置字段** 又能列出这一列的选项了（样本的固定方式……），建议列表也不会超出窗口。",
+  "A new mouse's form has **Add another after this**: save, and the form stays open for the next mouse with its strain and cage kept.": "新建小鼠的表单多了 **保存后再加一只**：保存后表单不关，品系和笼子都留着，直接填下一只。",
+  "Numbers line up on the right in every sheet: an age, a count, a quantity.": "每张表里的数字都靠右对齐：年龄、只数、数量。",
+  "Picking one of **Set field**'s choices no longer closes its panel.": "在 **设置字段** 里点选项，面板不会再被关掉。"
 }

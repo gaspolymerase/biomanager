@@ -560,8 +560,15 @@ document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
   const sub = dialog.querySelector('[data-mouse-sub]');
   const submit = dialog.querySelector('[data-mouse-submit]');
   const hint = dialog.querySelector('[data-mouse-hint]');
+  const anotherRow = dialog.querySelector('[data-mouse-another-row]');
+  const another = dialog.querySelector('[data-mouse-another]');
   const createSub = sub.textContent;
   let original = {};
+  let made = 0;      // mice made with Add another: the sheet shows them when the form closes
+  try { another.checked = localStorage.getItem('biomanager:mouse-add-another') === '1'; } catch (_e) { /* storage off */ }
+  another.addEventListener('change', () => {
+    try { localStorage.setItem('biomanager:mouse-add-another', another.checked ? '1' : '0'); } catch (_e) { /* storage off */ }
+  });
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mouse-edit]');
@@ -582,7 +589,9 @@ document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
       sub.textContent = data.locked ? t('Read only: this is %(owner)s’s mouse.', { owner: data.owner || t('another member') }) : t('Changes save when you press Save.');
       submit.textContent = t('Save');
       submit.hidden = Boolean(data.locked);
+      anotherRow.hidden = true;
     } else {
+      anotherRow.hidden = false;
       form.action = form.dataset.createAction;
       title.textContent = t('New mouse');
       sub.textContent = createSub;
@@ -606,6 +615,31 @@ document.querySelectorAll('[data-autosave="1"]').forEach(wireAutosave);
     else if (END_STATUSES.has(dialogStatus) && !END_STATUSES.has(now)) dod.value = '';
     dialogStatus = now;
   });
+
+  // Add another after this: the mouse is saved without leaving the page, and
+  // the form stays open with what a batch of mice shares (strain, sex,
+  // genotype, cage, litter, birth, owner); its tag, note and death clear.
+  form.addEventListener('submit', async (event) => {
+    if (original.id || !another.checked || event.defaultPrevented) return;
+    event.preventDefault();
+    submit.disabled = true;
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin',
+        headers: { 'X-Add-Another': '1', Accept: 'application/json' } });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.ok) throw new Error(body.error || t('Not saved. Check the connection and try again.'));
+      made += 1;
+      ['ear_tag', 'note', 'date_of_death'].forEach((name) => { if (form.elements[name]) form.elements[name].value = ''; });
+      sub.textContent = t('The next free ID (%(id)s) is assigned when you save.', { id: body.next_id });
+      hint.textContent = [t('Mouse %(id)s created.', { id: body.mouse_id }), ...(body.warnings || [])].join(' ');
+      (form.elements.ear_tag || form.querySelector('input:not([type=hidden])')).focus();
+    } catch (error) {
+      hint.textContent = error.message;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  dialog.addEventListener('close', () => { if (made) { made = 0; window.location.reload(); } });
 
   form.addEventListener('submit', (event) => {
     // Any change to an existing mouse's birth date asks first. In a

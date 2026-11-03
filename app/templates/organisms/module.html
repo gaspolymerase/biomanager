@@ -33,7 +33,7 @@
 {# Sortable header cell. A record's code (its ID) stays first when the
    other columns are dragged into another order (data-dt-fixed). #}
 {% macro th(key, label, glyph, width, title='') %}
-  <th class="dt-sortable" data-sort-key="{{ key }}" style="width: {{ width }};"{% if title %} title="{{ title }}"{% endif %}{% if key == 'code' %} data-dt-fixed{% endif %}>
+  <th class="dt-sortable" data-sort-key="{{ key }}" style="width: {{ width }};"{% if title %} title="{{ title }}"{% endif %}{% if key == 'code' %} data-dt-fixed{% endif %}{% if key in ('age', 'count') %} data-num{% endif %}>
     <span class="dt-col-head">{{ icon(glyph, 'dt-col-icon') }}{{ label|head }}<span class="dt-sort-indicator"></span></span>
   </th>
 {% endmacro %}

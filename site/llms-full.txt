@@ -305,7 +305,7 @@ Edit records the way you edit a spreadsheet: click, type, and it saves.
 
 - **Open a record**: The pencil opens the full record in a dialog, with every field, grouped. New records open the same dialog.
 
-- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
+- **Sort, Columns, Export, Print**: **Sort** by any column, or click a heading. Numbers sort as numbers, here and in every list: cage 2 comes before cage 10, and A2 before A10. Columns of amounts (an age, a count, a quantity) line up on the right, so the digits sit under each other. **Columns** hides what you don't need; drag an edge to resize. **Export** downloads the rows you see as CSV (mice: also Excel and PDF). **Print**, under **•••** at the toolbar's end, gives a clean sheet. Your sort, filters, hidden columns, widths and column order are remembered on that computer.
 
 - **The top of a sheet**: Its first row holds the views — **All** with how many rows the sheet has, then your saved views and **+ Save view** — and, at its end, the sheet's **New** button (or press `N`). The second row holds the search, the quick chips (**All**, **Alive**…) and your filters, and at its end what the sheet is sorted by and how many rows it shows (*Sorted by Mouse ↑ · 10 of 39*), then **Inspector**, **Sort**, **Columns**, **Export** and **•••** as icons: point at one for its name.
 
@@ -490,6 +490,8 @@ A cage whose name or cell the new layout doesn't have (a smaller rack) stays in 
 - **New mouse** for one, **Add many** for a new group (or a CSV made from its **Download a template**), and **Import from Excel** for the sheet you already keep ([how](https://biomanager.org/guide/bring-your-lab-in)). In Add many, type `new` as the cage to put a group in one new cage; with females and males, each sex gets its own new cage unless you tick *Keep both sexes in one new cage*. In the preview, `new-2`, `new-3`… are further new cages, and a new cage that would hold both sexes is pointed out.
 
 - A mouse's form, and a cage's, slide in at the right of the window with the sheet still beside them. Sex is a row of buttons; **Transgene 1** shows, and **Add a transgene** the next. Pick a rack and it is drawn under **Position**: click a free place to fill in the position, or, for a mouse, a cage to put the mouse in it. `⌘`/`Ctrl` `↵` saves.
+
+- Adding several mice by hand? Tick **Add another after this** beside **Create mouse**. Each save keeps the form open for the next mouse, with its strain, cage, sex and the rest still filled in; the tag and note are cleared, and the form shows the next free ID. The sheet shows the new mice when you close the form, and the box stays ticked until you untick it.
 
 - Each mouse has a **Custom tag**, strain, sex, date of birth (age shown in weeks), status — *breeder, experiment, geno, transfer, sac* — up to four transgenes, a genotype, cage, litter, owner and notes. A date of birth or of death can't be in the future, and a mouse's owner is someone in the lab. The same holds when an [AI assistant](https://biomanager.org/guide/ai-assistants) or a script changes it.
 
