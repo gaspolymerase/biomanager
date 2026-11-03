@@ -985,7 +985,6 @@ def for_assistant(session, exp, place, data: dict, export: dict | None = None) -
     changing nothing: the analysis, and the experiment_reading change to
     propose for it. `measure` names another measure of the experiment to
     fill instead of its main readout."""
-    from . import experiments as xp
     if data.get("layout") not in (None, ""):
         row = find_layout(session, exp, data.get("layout"))
         if row is None:

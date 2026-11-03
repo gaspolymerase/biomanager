@@ -36,7 +36,7 @@ import secrets
 from datetime import datetime, timedelta
 from urllib.parse import quote, urlencode, urlparse
 
-from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, g, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import delete, select
 
 from . import security

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from contextvars import ContextVar
-from pathlib import Path
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker

@@ -34,7 +34,6 @@ import re
 from dataclasses import dataclass
 
 from .cloning import carry_features
-from .primer_records import reverse_complement
 
 # att site → what it becomes, by reaction. BP joins B and P; LR joins L and R.
 REACTIONS = {

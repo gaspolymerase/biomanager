@@ -26,7 +26,7 @@ from . import stocks as presets
 from .days import fmt_day
 from .db import SessionLocal
 from .flask_app import app
-from . import lab, notify
+from . import lab
 from .lab import lab_audience
 from .i18n import gettext, ngettext, pgettext, translate_value
 from .web import owner_badge_filter

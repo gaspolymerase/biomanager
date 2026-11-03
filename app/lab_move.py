@@ -26,8 +26,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from flask import (Blueprint, abort, current_app, flash, g, redirect, render_template, request, send_file,
-                   url_for)
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, send_file, url_for
 
 from . import devices, lab_copy, lab_transfer, paths, security
 from .db import SessionLocal
