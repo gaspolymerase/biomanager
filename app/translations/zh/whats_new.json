@@ -236,5 +236,9 @@
   "**Spending** on the orders page: what the orders cost, month by month, by person, project group, vendor or category, with **Download CSV**.": "订单页的 **花费**：按月统计订单花了多少，可按成员、项目组、供应商或类别分组，并可 **下载 CSV**。",
   "Spending limits for the lab, a person or a project group, per year or per month: an admin sets them in **Limits and settings**.": "可以为全实验室、个人或项目组设置每年或每月的花费限额：由管理员在 **限额和设置** 里设置。",
   "**Vendors**: one list of the lab's vendors, with their details; an admin can rename or **Merge** spellings everywhere.": "**供应商**：实验室所有供应商集中在一个列表里，并可记下详细信息；管理员可以改名或把不同写法 **合并**。",
-  "A plasmid's **Backbone** and **Insert** can name one of the lab's plasmids (pick it, or type @): it is listed under **Made from**.": "质粒的 **骨架** 和 **插入片段** 可以写实验室的质粒（从列表选，或输入 @）：它会列进 **来源质粒**。"
+  "A plasmid's **Backbone** and **Insert** can name one of the lab's plasmids (pick it, or type @): it is listed under **Made from**.": "质粒的 **骨架** 和 **插入片段** 可以写实验室的质粒（从列表选，或输入 @）：它会列进 **来源质粒**。",
+  "Searching **Plasmids** also lists the plasmids carrying what you typed on their map.": "在 **质粒** 里搜索时，也会列出图谱上带有所搜元件的质粒。",
+  "An AI assistant can read what orders cost and the lab's vendors (plugin 1.8.0).": "AI 助手可以读取订单花费和供应商（插件 1.8.0）。",
+  "A record's dialog shows its vendor's website, customer number and contact, with **Open in Vendors**.": "记录的对话框会显示供应商的网站、客户编号和联系方式，并有 **在供应商页面打开**。",
+  "**Spending** counts an order in the month it was ordered; admins are told when someone passes a limit.": "**花费** 按订购的月份计入订单；有人超出限额时会通知管理员。"
 }
