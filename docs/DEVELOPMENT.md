@@ -4177,6 +4177,13 @@ area (`test_mice.py`, `test_plasmids.py`, `test_stocks.py`, …); shared
 set-up and factories are in `tests/base.py`. Run one module, class or test
 with `scripts/test.sh tests.test_mice` (or `tests.test_mice.SomeClass`).
 
+JavaScript is checked in Node by `tests/js/*.check.mjs`, run from the
+suite when Node is there (`test_notebook_blocks.py`). The page scripts that
+need a DOM (`sheet.check.mjs`: a row's autosave keeps the `_was` copies of
+`formutil.form_changed`) use jsdom, a package of `tests/js` alone: run
+`npm ci --prefix tests/js` once (CI does, and fails rather than skips
+without it; `test_page_scripts.py`).
+
 `scripts/test-parallel.py` shares the test classes out to up to four
 processes as they ask for more (the ones with most tests first), each on
 a database of its own, and reports as `unittest` does: the whole suite in

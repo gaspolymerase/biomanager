@@ -45,6 +45,9 @@ jobs:
         run: |
           grep -v pywebview requirements.txt > /tmp/requirements-ci.txt
           python -m pip install -r /tmp/requirements-ci.txt
+      - name: Install what the page-script checks need
+        # jsdom, for tests/js/*.check.mjs that need a DOM (tests/test_page_scripts.py).
+        run: npm ci --prefix tests/js
       - name: Run the tests
         env:
           # Words the maintainers keep out of what ships (tests/test_deploy.py); a secret, so
