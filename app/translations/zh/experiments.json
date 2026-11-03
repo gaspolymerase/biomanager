@@ -142,5 +142,12 @@
   "Pulse width": "脉宽",
   "Duration": "时长",
   "30 min, or 10 s on / 20 s off": "30 min，或 开 10 s / 关 20 s",
-  "Stimulation": "刺激"
+  "Stimulation": "刺激",
+  "Name two groups or more, each its own.": "请给出两个或更多组名，各不相同。",
+  "The seed is a whole number.": "随机种子是一个整数。",
+  "Fewer %(nouns)s than groups.": "%(nouns)s 比组还少。",
+  "Share them out into groups at random, balanced by sex, %(housing)s and weight": "随机分到各组，按性别、%(housing)s 和体重均衡",
+  "Randomize": "随机分组",
+  "How many each started with": "每个开始时有多少只",
+  "e.g. 20, for survival or a count (optional)": "例如 20，用于存活率或计数（可不填）"
 }

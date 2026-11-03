@@ -298,7 +298,7 @@ class MorningNotice(Welfare):
         self.weigh(c, thin, 24, days_ago(1))
         self.assertTrue(self.remind(name))
         title = one("select title from notifications where recipient_username=? and category='welfare'", name)
-        self.assertEqual(title, "Animals that may need a look: 1 mouse losing weight; 1 note that may need a look")
+        self.assertEqual(title, "Animals that may need a look: 1 animal losing weight; 1 note that may need a look")
         self.assertEqual(one("select link from notifications where recipient_username=? and category='welfare'", name),
                          "/home#welfare")
         self.assertFalse(self.remind(name))                  # once a day

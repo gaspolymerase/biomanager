@@ -491,6 +491,30 @@
       if (fields.length) panel.appendChild(block);
 
       if (kind === 'mice' || kind === 'cages') rackMap(panel, row);
+      if (historyKind === 'org_animal' && hasHistory) measurements(panel, row, id);
+    };
+
+    // An organism's own weights and lengths (from its experiments), newest first.
+    const measurements = (panel, tr, id) => {
+      const block = el('section', 'dt-inspector-block');
+      fetch(`/records/measurements?kind=org_animal&id=${encodeURIComponent(id)}`,
+        { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        .then((data) => {
+          const rows = (data && data.measurements) || [];
+          if (tr !== row || tab !== 'overview' || !rows.length) return;
+          block.appendChild(el('h3', 'dt-inspector-label', t('Measurements')));
+          const list = el('dl', 'dt-inspector-fields');
+          rows.slice(0, 8).forEach((m) => {
+            list.append(el('dt', null, t(m.label)));
+            const value = m.value == null ? m.text : `${Number(m.value).toLocaleString()}${m.unit ? ` ${t(m.unit)}` : ''}`;
+            const dd = el('dd', null, value);
+            dd.appendChild(el('span', 'dt-inspector-muted', ` · ${m.on}${m.note ? ` · ${m.note}` : ''}`));
+            list.append(dd);
+          });
+          block.appendChild(list);
+          panel.appendChild(block);
+        });
     };
 
     const word = { create: t('Added'), insert: t('Added'), update: t('Changed'), delete: t('Deleted') };

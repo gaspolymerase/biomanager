@@ -222,5 +222,17 @@
   "Age on day 1": "第 1 天时的年龄",
   "How old it was on day 1, as this database counts age": "第 1 天时多大，按这个数据库计算年龄的方式",
   "Over the whole experiment": "整个实验",
-  "%(group)s: %(deaths)s died of %(start)s (%(expected)s expected)": "%(group)s：%(start)s 只中死亡 %(deaths)s 只（预期 %(expected)s）"
+  "%(group)s: %(deaths)s died of %(start)s (%(expected)s expected)": "%(group)s：%(start)s 只中死亡 %(deaths)s 只（预期 %(expected)s）",
+  "Groups to share them into, separated by commas:": "要分到哪些组，用逗号分隔：",
+  "Treated": "处理组",
+  "Control": "对照组",
+  "Balanced by sex, %(housing)s and weight; seed %(seed)s, which gives the same groups again.": "按性别、%(housing)s 和体重均衡；随机种子 %(seed)s，用它能得到同样的分组。",
+  "Put them in these groups?": "按这样分组吗？",
+  "Set the groups": "设定分组",
+  "Groups set": "已分组",
+  "The same count for every one that has none yet": "给还没有数量的每一个填同一个数",
+  "How many did each start with?": "每个开始时有多少只？",
+  "“%(value)s” isn’t a number.": "“%(value)s”不是数字。",
+  "Fill in": "填写",
+  "Saved": "已保存"
 }

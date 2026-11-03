@@ -2243,6 +2243,7 @@
   }
   .dt-inspector-fields dt { @apply text-[12px] leading-5 text-muted; }
   .dt-inspector-fields dd { @apply m-0 min-w-0 break-words text-ink; }
+  .dt-inspector-muted { @apply text-[12px] text-muted; }
   .dt-inspector-label { @apply m-0 pb-2 text-[12px] font-semibold text-muted; }
   .dt-inspector :is(.dt-inspector-fields, .dt-inspector-chips) :is(.status-pill, .sex-pill, .scope-pill) {
     @apply inline-block rounded-full px-2 text-[11px] font-semibold capitalize leading-5;

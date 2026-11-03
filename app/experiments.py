@@ -839,7 +839,38 @@ def set_reading(session, exp: Experiment, place: Place, subject: Subject, on: da
                                       read_on=on, value=value, recorded_by=g.user.username))
     else:
         row.value, row.recorded_by = value, g.user.username
+    _keep_on_the_animal(session, exp, place, subject, readout, on, value)
     return None
+
+
+# What an organism's own record keeps of a reading, as a mouse keeps its weights.
+ON_THE_ANIMAL = ("body_weight", "length", "height", "rosette_area", "leaf_number")
+
+
+def _keep_on_the_animal(session, exp, place, subject, readout, on: date, value) -> None:
+    """A weight, length or height read for one organism in an experiment is
+    its own measurement too (organism_measurements, that day's), so it stays
+    with the animal, shows in its panel, and outlives the experiment."""
+    from datetime import time, timedelta
+    from .models import OrgMeasurement
+    if subject.kind != "organism" or place.module is None or readout["key"] not in ON_THE_ANIMAL \
+            or not subject.can_edit:
+        return
+    noon = datetime.combine(on, time(12))
+    day = datetime.combine(on, time.min)
+    row = session.scalar(select(OrgMeasurement).where(
+        OrgMeasurement.module_id_fk == place.module.id, OrgMeasurement.subject_kind == "organism",
+        OrgMeasurement.subject_id == subject.id, OrgMeasurement.metric == readout["key"],
+        OrgMeasurement.recorded_at >= day, OrgMeasurement.recorded_at < day + timedelta(days=1)))
+    if value is None:
+        if row is not None:
+            session.delete(row)
+    elif row is None:
+        session.add(OrgMeasurement(module_id_fk=place.module.id, subject_kind="organism", subject_id=subject.id,
+                                   metric=readout["key"], value_num=value, unit=readout.get("unit") or "",
+                                   recorded_at=noon, recorded_by=g.user.username, notes=(exp.name or "")[:200]))
+    else:
+        row.value_num, row.recorded_by = value, g.user.username
 
 
 def _blank(raw) -> bool:
@@ -1354,9 +1385,12 @@ def update(experiment_id: int):
         return jsonify({"ok": True, **payload(s, exp, place)})
 
 
-def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str) -> tuple[int, int]:
+def add_animals(session, exp: Experiment, place: Place, how: str, value: str, group: str,
+                start_each: int | None = None) -> tuple[int, int]:
     """Put a cage, tank, rack or housing of animals ("group"), or one
-    ("one"), in the experiment: (added, skipped as not this person's)."""
+    ("one"), in the experiment: (added, skipped as not this person's).
+    `start_each`: how many each started with, for those whose record does
+    not say (a vial's flies, a plate's worms), so a count has its start."""
     from .services import mouse_is_active
     session.flush()
     session.expire(exp, ["memberships"])        # mice added a moment ago count as in it
@@ -1383,7 +1417,7 @@ def add_animals(session, exp: Experiment, place: Place, how: str, value: str, gr
             if key in have:
                 continue
             session.add(ExperimentSubject(experiment_id_fk=exp.id, subject_kind=kind, subject_id=rec.id,
-                                          treatment_group=group, start_count=start))
+                                          treatment_group=group, start_count=start if start is not None else start_each))
             have.add(key)
             added += 1
     return added, skipped
@@ -1396,13 +1430,16 @@ def add_subjects(experiment_id: int):
     from . import experiment_plan as plan
     data = request.get_json(silent=True) or request.form.to_dict()
     how, value, group = data.get("how"), str(data.get("value") or ""), str(data.get("group") or "").strip()[:80]
+    raw_start = str(data.get("start_each") or "").strip()
+    if raw_start and (not raw_start.isdigit() or int(raw_start) < 1):
+        return jsonify({"ok": False, "error": gettext("“%(value)s” isn't a number of animals.", value=raw_start)}), 400
     with SessionLocal() as s:
         exp, place = _load(s, experiment_id)
         refused = _refuse(exp)
         if refused:
             return refused
         before = plan.members(s, exp, place) if plan.fixed(exp) else {}
-        added, skipped = add_animals(s, exp, place, how, value, group)
+        added, skipped = add_animals(s, exp, place, how, value, group, int(raw_start) if raw_start else None)
         problem = plan.groups_changed(s, exp, place, before, str(data.get("reason") or "")) if added else None
         if problem:
             s.rollback()
@@ -1451,6 +1488,69 @@ def _plain_records(session, place: Place, how: str, ident: int) -> list[tuple[ob
     query = select(Organism).where(Organism.module_id_fk == place.module.id)
     query = query.where(Organism.housing_id_fk == ident) if how == "group" else query.where(Organism.id == ident)
     return [(o, o.count or 1) for o in session.scalars(query) if place.mv.is_alive(o)]
+
+
+@bp.post("/<int:experiment_id>/randomize")
+def randomize_groups(experiment_id: int):
+    """The experiment's animals into named groups, balanced and seeded
+    (assistant_compute.allocate: stratified minimisation by sex, then
+    cage, tank, rack or housing, then latest weight): {groups: "Drug,
+    Vehicle" or a list, seed}. Without `apply` it only says how; with it,
+    each animal's group is set (after Start, with a plan, with a reason).
+    The living ones in the analysis only; the same animals, groups and seed
+    give the same allocation."""
+    import random as _random
+    import secrets
+    from . import assistant_compute as ac
+    from . import experiment_plan as plan
+    data = request.get_json(silent=True) or {}
+    names = data.get("groups")
+    if isinstance(names, str):
+        names = names.split(",")
+    names = [str(n).strip()[:80] for n in (names or []) if str(n).strip()]
+    if len(names) < 2 or len({n.lower() for n in names}) != len(names):
+        return jsonify({"ok": False, "error": gettext("Name two groups or more, each its own.")}), 400
+    try:
+        seed = int(data["seed"]) if str(data.get("seed") or "").strip() else secrets.randbelow(1_000_000)
+    except ValueError:
+        return jsonify({"ok": False, "error": gettext("The seed is a whole number.")}), 400
+    with SessionLocal() as s:
+        exp, place = _load(s, experiment_id)
+        refused = _refuse(exp)
+        if refused:
+            return refused
+        subs = [x for x in subjects(s, exp, place) if x.alive and not x.left_out.strip()]
+        if len(subs) < len(names):
+            return jsonify({"ok": False, "error": gettext("Fewer %(nouns)s than groups.", nouns=i18n.translate_value(place.nouns))}), 400
+        weights: dict[str, float] = {}
+        if place.subject_kind == "mouse":
+            got = ac.latest_weights(s, [x.id for x in subs], date.today())
+            weights = {f"mouse:{mid}": w for mid, (w, _on) in got.items()}
+        else:
+            for key, value in s.execute(select(ExperimentReading.subject, ExperimentReading.value).where(
+                    ExperimentReading.experiment_id_fk == exp.id, ExperimentReading.readout_key == "body_weight")
+                    .order_by(ExperimentReading.read_on, ExperimentReading.id)):
+                if value is not None:
+                    weights[key] = value
+        rows = [{"key": x.key, "sex": (x.sex or "").strip().upper()[:1], "stratum": x.housing or "",
+                 "weight": weights.get(x.key), "sub": x} for x in subs]
+        sizes = ac.split_sizes(len(rows), names, _random.Random(seed + 1))
+        result = ac.allocate(rows, [{"name": n, "size": z} for n, z in zip(names, sizes)], seed)
+        allocation = [{"group": g["name"], "animals": sorted((a["sub"].label for a in g["animals"]), key=positions.natural)}
+                      for g in result["groups"]]
+        if not data.get("apply"):
+            return jsonify({"ok": True, "seed": seed, "allocation": allocation})
+        before = plan.members(s, exp, place) if plan.fixed(exp) else {}
+        for g in result["groups"]:
+            for a in g["animals"]:
+                a["sub"].row.treatment_group = g["name"]
+        problem = plan.groups_changed(s, exp, place, before, str(data.get("reason") or ""))
+        if problem:
+            s.rollback()
+            return plan.ask_response(problem)
+        s.commit()
+        s.refresh(exp)
+        return jsonify({"ok": True, "seed": seed, "allocation": allocation, **payload(s, exp, place)})
 
 
 @bp.post("/<int:experiment_id>/subjects/<path:key>/update")

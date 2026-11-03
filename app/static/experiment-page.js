@@ -197,7 +197,7 @@
     if (showSex) head.push(`<th>${t('Sex')}</th>`);
     if (showAge) head.push(`<th title="${esc(t('How old it was on day 1, as this database counts age'))}">${t('Age on day 1')}</th>`);
     head.push(`<th>${t('Genotype')}</th>`, `<th>${esc(cap(t(D.housing)))}</th>`, `<th>${t('Group')}</th>`);
-    if (showStart) head.push(`<th title="${esc(t('How many at the start, for a count or survival'))}">${t('At start')}</th>`);
+    if (showStart) head.push(`<th title="${esc(t('How many at the start, for a count or survival'))}">${t('At start')}${D.editable && subs.some((s) => s.start == null) ? ` <button type="button" class="xp-link" data-xp-start-all title="${esc(t('The same count for every one that has none yet'))}">${t('Fill in')}</button>` : ''}</th>`);
 
     let cols = [];
     if (view === 'treatment') {
@@ -596,6 +596,43 @@
     groups.innerHTML = '<option value="">—</option>' + add.groups.map(([v, l, n]) => `<option value="${esc(v)}">${esc(l)} (${n})</option>`).join('');
     single.innerHTML = '<option value="">—</option>' + add.single.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
   }
+  // At start's Fill in: one count for every one that has none yet (a vial's flies).
+  document.addEventListener('click', async (event) => {
+    if (!event.target.closest('[data-xp-start-all]')) return;
+    const asked = await window.BioDialog.prompt(t('How many did each start with?'), '');
+    const value = String(typeof asked === 'string' ? asked : (asked && asked.value) || '').trim();
+    if (!value) return;
+    if (!/^\d+$/.test(value)) { say('error', t('“%(value)s” isn’t a number.', { value })); return; }
+    let data = null;
+    try {
+      for (const s of D.subjects.filter((x) => x.start == null)) {
+        data = await sendReason(`${XP}/subjects/${encodeURIComponent(s.key)}/update`, { start: value });
+        if (!data) break;
+      }
+      if (data) { apply(data); say('saved', t('Saved')); }
+    } catch (error) { say('error', error.message); }
+  });
+
+  // Randomize: the animals into the groups named, balanced and seeded; shown
+  // first, then set when confirmed.
+  const randomizeButton = $('[data-xp-randomize]');
+  if (randomizeButton) randomizeButton.addEventListener('click', async () => {
+    const known = [...new Set(D.subjects.map((s) => s.group).filter(Boolean))];
+    const asked = await window.BioDialog.prompt(t('Groups to share them into, separated by commas:'), (known.length >= 2 ? known : [t('Treated'), t('Control')]).join(', '));
+    const answer = typeof asked === 'string' ? asked : (asked && asked.value);
+    if (!answer) return;
+    const groups = answer.split(',').map((g) => g.trim()).filter(Boolean);
+    try {
+      const shown = await send(`${XP}/randomize`, { groups });
+      const lines = shown.allocation.map((g) => `${g.group} (${g.animals.length}): ${g.animals.join(', ')}`).join('\n\n');
+      const ok = await window.BioDialog.confirm(`${t('Balanced by sex, %(housing)s and weight; seed %(seed)s, which gives the same groups again.', { housing: t(D.housing), seed: shown.seed })}\n\n${lines}`,
+        { title: t('Put them in these groups?'), okLabel: t('Set the groups') });
+      if (!ok) return;
+      const data = await sendReason(`${XP}/randomize`, { groups, seed: shown.seed, apply: 1 });
+      if (data) { apply(data); say('saved', t('Groups set')); }
+    } catch (error) { say('error', error.message); }
+  });
+
   const addForm = $('[data-xp-form="add"]');
   if (addForm) addForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -604,6 +641,7 @@
     const body = f.group_value.value ? { how: 'group', value: f.group_value.value } : { how: 'one', value: f.one_value.value };
     if (!body.value) return showError(dialog, t('Pick a %(housing)s, or one.', { housing: t(D.housing) }));
     body.group = f.group.value;
+    if (f.start_each && f.start_each.value.trim()) body.start_each = f.start_each.value.trim();
     try {
       const data = await sendReason(`${XP}/subjects/add`, body);
       if (!data) return undefined;

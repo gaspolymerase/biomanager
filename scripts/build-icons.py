@@ -62,6 +62,7 @@ FROM_LUCIDE = {
     # --- navigation & chrome ---
     "grip": "grip-vertical",
     "home": "house",
+    "shuffle": "shuffle",
     "calendar": "calendar-days",
     "notebook": "notebook",
     "search": "search",

@@ -128,7 +128,6 @@
   " for %(n)s animals": "，%(n)s 只动物",
   "Experiment “%(name)s”: readout%(on)s for %(n)s animals": "实验“%(name)s”：%(n)s 只动物的观测指标%(on)s",
   "Experiment “%(name)s”: add %(what)s%(group)s": "实验“%(name)s”：加入 %(what)s%(group)s",
-  "Say which animals to add: mice, a cage, a tank or a housing unit.": "请说明要加入哪些动物：小鼠、一个笼、一个鱼缸或一个饲养单元。",
   "Experiment “%(name)s”: %(fields)s": "实验“%(name)s”：%(fields)s",
   "Say what to change on the experiment “%(name)s”.": "请说明要修改实验“%(name)s”的哪些内容。",
   "Write the note to add.": "请写下要添加的内容。",
@@ -198,5 +197,7 @@
   "Experiment “%(name)s”: delete the measure %(measure)s, with its %(n)s readings": "实验“%(name)s”：删除指标 %(measure)s 及其 %(n)s 个读数",
   "Experiment “%(name)s”, measure %(measure)s: %(fields)s": "实验“%(name)s”，指标 %(measure)s：%(fields)s",
   "Say what to change on the measure %(measure)s: label, unit, control, or delete.": "请说明要修改指标 %(measure)s 的什么：label、unit、control 或 delete。",
-  "There is no action called “%(action)s”. The nearest: %(names)s.": "没有名为“%(action)s”的操作。最接近的：%(names)s。"
+  "There is no action called “%(action)s”. The nearest: %(names)s.": "没有名为“%(action)s”的操作。最接近的：%(names)s。",
+  "Say which animals to add: mice, a cage, a tank, a rack, a housing unit or single animals.": "请说明要加入哪些动物：小鼠、一个笼、一个鱼缸、一个架子、一个饲养单元或单个动物。",
+  "%(num)s more": "另 %(num)s 个"
 }

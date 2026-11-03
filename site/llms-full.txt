@@ -1154,6 +1154,8 @@ Mice, zebrafish, flies, worms and your own organisms all have an **Experiments**
 | Plants and field crops | Plants or sowings, or a whole tray or plot. Germination, height, rosette area, days to flowering, leaf number, survival or a phenotype. Treatments and sprays, a watering regime, a light or temperature shift, inoculation, transplanting, sampling, imaging. |
 | Any other organism | Animals, groups or cohorts, or a whole housing. Body weight, length, survival or a score. |
 
+An organism's weight, length or height typed in an experiment is kept on the animal too: its panel on the sheet (**Inspector**) lists it under **Measurements**, as a mouse keeps its weights.
+
 The sheet shows each animal's **Age on day 1**, as its database counts age: a mouse in weeks, a fish or a clutch in days post fertilisation, a plant in days after sowing, any other organism in its own unit. The export has it too.
 
 Any experiment can follow a readout of its own (**Readout → Something else…**): a number for each, or how many of those at the start.
@@ -1211,7 +1213,7 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 - **The experiment** on top: name, status, start (day 1), end, readout and description, saved as you type.
 
-- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too.
+- **The sheet of its animals** switches between **Treatment** — each manipulation day a column: ✓ and the amount for each animal that got it (click to change) — and the readout, a column a day, typed in place (**Another day** adds one). Each animal's group is edited here too. **Randomize** shares them out into the groups you name, balanced by sex, by cage (tank, rack or housing) and by weight, and shows the groups before setting them; it says the seed, which gives the same groups again. For vials or plates, **Fill in** beside **At start** gives every one without a count the same number, and **Add** asks how many each started with.
 
 - **Record manipulation** records what was just done — *the HDM group got Tamoxifen 20 mg/kg i.p. today* — or a day of the regimen. For a dose per body weight it works out each animal's amount from its latest weight, and the volume given the solution (*10 mg/mL*). Tick the animals it was done to and, if you want, **make a sample record for each one** in Samples, with the animal as its source.
 
@@ -1227,7 +1229,7 @@ The **•••** beside the measure shown opens it: change its name or unit (it
 
 Home's card [Animals that may need a look](https://biomanager.org/guide/home-page#animals) reads a mouse experiment's records too. It says what they show, never a diagnosis:
 
-- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days.
+- **Losing weight**: a mouse whose latest weight is the lab's percentage (15% unless an admin sets another in **Settings → General → Weight loss to flag**) or more below its first weight in an experiment that has started, or below its heaviest of the last 30 days; any other animal weighed in an experiment (a frog, a fish row) the same below its first weight there.
 
 - **Not weighed in their experiment**: in an active experiment whose readout is body weight, an animal (a mouse, or any other organism weighed in the experiment) not weighed for longer than the longest gap between the regimen's weighing days (a *Readout day* on days 1, 4, 7: 3 days), or 7 days when it plans none or its last has passed. Animals left out of the analysis aren't counted.
 

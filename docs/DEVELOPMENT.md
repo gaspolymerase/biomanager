@@ -2874,7 +2874,19 @@ and as the export's last column.
 `exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²), and a
 survival readout over the whole experiment (`logrank`: deaths each day
 are the drop in each group's count since the last, a day not counted
-carrying the last count; the two-group variance when there are two);
+carrying the last count; the two-group variance when there are two).
+`POST /experiments/<id>/randomize` shares the living animals in the
+analysis into named groups by `assistant_compute.allocate` (sex, then
+housing, then latest weight; seeded), only showing how unless `apply`.
+`add_animals(start_each=)` gives a vial or plate its count at the start.
+A body weight, length, height, rosette area or leaf number read for one
+organism is also its `organism_measurements` row (`_keep_on_the_animal`,
+that day's; blanked with the reading), listed by `/records/measurements`
+in its sheet panel, and `welfare.others_weight_loss` flags any animal
+weighed in a started experiment that is down the lab's percentage from its
+first weight there. The assistant's `experiment_add_animals` takes a
+`rack`, single `animals` (refs of the database's kinds, as a design's)
+and `start_each`;
 `/experiments/<id>/export.xlsx` and bench mode (`/experiments/<id>/bench`,
 `static/experiment-bench.js`) are in `experiments.py`. The owner's
 morning notification of what is due is `notify.daily_experiment_reminder`

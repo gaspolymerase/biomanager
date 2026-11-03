@@ -644,6 +644,36 @@ def record_history():
         return jsonify(lookup.history(db_session, kind, row, 30))
 
 
+@app.route("/records/measurements")
+@login_required
+def record_measurements():
+    """An organism's own measurements, newest first (its weights and lengths
+    from experiments, app/experiments.py _keep_on_the_animal), for the
+    Measurements block of its sheet's side panel: ?kind=org_animal&id=40."""
+    from . import lookup
+    from .models import OrgMeasurement
+    try:
+        rid = int(request.args.get("id") or 0)
+    except ValueError:
+        rid = 0
+    if request.args.get("kind") != "org_animal" or rid < 1:
+        return jsonify({"error": "Send kind=org_animal and id."}), 400
+    with SessionLocal() as db_session:
+        try:
+            row = lookup.record(db_session, "org_animal", {"kind": "org_animal", "id": rid})
+        except (LookupError, KeyError):
+            return jsonify({"error": "No such record."}), 404
+        from .experiments import READOUTS
+        rows = db_session.scalars(select(OrgMeasurement).where(
+            OrgMeasurement.subject_kind == "organism", OrgMeasurement.subject_id == row.id)
+            .order_by(OrgMeasurement.recorded_at.desc(), OrgMeasurement.id.desc()).limit(30)).all()
+        return jsonify({"measurements": [{
+            "metric": m.metric, "label": (READOUTS.get(m.metric) or {}).get("label") or m.metric.replace("_", " "),
+            "value": m.value_num, "text": m.value_text or "", "unit": m.unit or "",
+            "on": m.recorded_at.date().isoformat() if m.recorded_at else "", "by": m.recorded_by or "",
+            "note": m.notes or ""} for m in rows]})
+
+
 @app.route("/audit")
 @admin_required
 def audit_log_view():
