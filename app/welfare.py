@@ -456,6 +456,55 @@ def _others_not_weighed(session, today: date, owner: str | None) -> list[dict]:
     return out
 
 
+def others_weight_loss(session, today: date, pct: float, owner: str | None = None) -> list[dict]:
+    """weight_loss for the animals of a started experiment in an organism
+    database that keeps body weights (its Body weights capability, turned
+    on in Configure where a lab's animals are weighed as mice are): its
+    latest body weight against its first since day 1, as for a mouse in an
+    experiment. Fish, flies, worms and plants are not: a loss of weight is
+    a humane endpoint for a rodent, not a reading of theirs."""
+    from . import experiments as ex
+    from .models import Experiment, ExperimentReading
+    out = []
+    for exp in session.scalars(select(Experiment).where(Experiment.status.in_(STARTED)).order_by(Experiment.id)):
+        if _is_colony(exp) or exp.start_date is None or exp.start_date > today:
+            continue
+        place = ex.place_for(session, exp.db)
+        if place is None or place.family != "organism" or place.mv is None or not place.mv.has("weights") \
+                or not ex.weighs(exp, place):
+            continue
+        weights: dict[str, list] = {}
+        for key, day, grams in session.execute(select(
+                ExperimentReading.subject, ExperimentReading.read_on, ExperimentReading.value).where(
+                ExperimentReading.experiment_id_fk == exp.id, ExperimentReading.readout_key == "body_weight",
+                ExperimentReading.read_on >= exp.start_date, ExperimentReading.read_on <= today)
+                .order_by(ExperimentReading.read_on, ExperimentReading.id)):
+            if grams is not None:
+                weights.setdefault(key, []).append((day, grams))
+        if not weights:
+            continue
+        for sub in ex.subjects(session, exp, place):
+            if sub.kind != "organism" or not sub.alive or sub.left_out.strip():
+                continue
+            ws = weights.get(sub.key) or []
+            if len(ws) < 2 or not ws[0][1]:
+                continue
+            (first_on, first), (last_on, last) = ws[0], ws[-1]
+            loss = (first - last) / first * 100
+            if loss < pct - 1e-9:
+                continue
+            whose = getattr(sub.record, "owner", "") or ""
+            if owner and whose != owner and (exp.owner_username or "") != owner:
+                continue
+            out.append({"animal": sub.kind, "label": sub.label, "ref": {"kind": _REF_KIND[sub.kind], "id": sub.id},
+                        "owner": whose, "basis": "experiment_start", "peak_g": first, "peak_on": first_on.isoformat(),
+                        "latest_g": last, "latest_on": last_on.isoformat(), "loss_pct": round(loss, 1),
+                        "experiment": exp.name, "experiment_ref": {"kind": "experiment", "id": exp.id},
+                        "group": sub.group, "url": ex.page_url(exp)})
+    out.sort(key=lambda x: (-x["loss_pct"], x["label"]))
+    return out
+
+
 # ---------------------------------------------------------------- all four
 
 def checks(session, today: date | None = None, owner: str | None = None, pct: float | None = None,
@@ -472,10 +521,15 @@ def checks(session, today: date | None = None, owner: str | None = None, pct: fl
         out.append({"id": cid, "title": title, "severity": severity, "count": len(items), "items": items,
                     "fix": fix})
 
-    if features.get("colony", True):
-        check("weight_loss", f"Mice down {pct:g}% or more from their peak weight in the last {WINDOW_DAYS} days, "
-                             "or from their first weight in an experiment that started", "high",
-              weight_loss(session, today, pct, owner),
+    # Mice from their peak or their first weight in an experiment; any other
+    # animal weighed in an experiment from its first weight there.
+    losing = (weight_loss(session, today, pct, owner) if features.get("colony", True) else []) \
+        + others_weight_loss(session, today, pct, owner)
+    if features.get("colony", True) or losing:
+        check("weight_loss", f"Animals down {pct:g}% or more: a mouse from its peak weight in the last {WINDOW_DAYS} "
+                             "days or its first weight in an experiment that started; an animal of a database "
+                             "keeping body weights from its first weight in an experiment", "high",
+              losing,
               "Say what the records show and check them against the protocol's humane endpoints; nothing is "
               "proposed for this.")
     if features.get("colony", True) or features.get("zebrafish", True):

@@ -30,7 +30,7 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
-    "2.9.0": {
+    "2.10.0": {
         "new": [
             "Searching **Plasmids** also lists the plasmids carrying what you typed on their map.",
             "An AI assistant can read what orders cost and the lab's vendors (plugin 1.8.0).",
@@ -38,6 +38,20 @@ NOTES: dict[str, dict[str, list[str]]] = {
         ],
         "changed": [
             "**Spending** counts an order in the month it was ordered; admins are told when someone passes a limit.",
+        ],
+    },
+    "2.9.1": {
+        "fixed": [
+            "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.",
+        ],
+    },
+    "2.9.0": {
+        "new": [
+            "A new look: the wallpaper fills the window and sheets are glass. **Settings → Appearance & language → Look → Solid** for no glass.",
+            "The **Inspector** beside a sheet: the record's labels, **Open**, ↑ ↓ to the next row, and its **History**.",
+            "A mouse's form slides in at the right: Sex as buttons, the rack drawn to click a place, **⌘/Ctrl ↵** to save.",
+            "**Utilities** answers a sum typed in its search (10 mM to 50 µM in 1 mL), and keeps each tool's **Recent sums**.",
+            "Experiments: plants' own readouts, each animal's **Age on day 1**, **Randomize** into groups, and a log-rank test for survival.",
         ],
     },
     "2.8.0": {

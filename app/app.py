@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import gc
 import json
-import os
 import re
 from datetime import date, datetime
-from functools import wraps
 
-from flask import Response, abort, flash, g, get_flashed_messages, jsonify, redirect, render_template, request, session, url_for
+from flask import Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from markupsafe import Markup, escape
 from jinja2 import pass_context, pass_environment
 from jinja2.filters import make_attrgetter
@@ -15,7 +13,6 @@ from jinja2.utils import htmlsafe_json_dumps
 from sqlalchemy import func, select
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm.exc import StaleDataError
-from werkzeug.security import check_password_hash
 
 from .db import SessionLocal
 from . import access, cage_rows, cell_text, i18n, lab, mouse_rows, positions, security
@@ -25,26 +22,8 @@ from .i18n import gettext
 from . import audit  # noqa: F401
 from . import sync_clock  # noqa: F401  (numbers each change to what devices keep)
 from . import lab_devices
-from .models import (
-    FishRack,
-    FishRecord,
-    FishSacLog,
-    TANK_PURPOSE_OPTIONS,
-    FISH_SEX_OPTIONS,
-    FISH_STATUS_OPTIONS,
-    WaterLog,
-    WaterSystem,
-    NotebookEntry,
-    ORDER_STATUS_OPTIONS,
-    Order,
-    SAMPLE_TYPE_OPTIONS,
-    TASK_STATUS_OPTIONS,
-    AnimalRecord,
-    SampleRecord,
-    UserAccount,
-)
-from .services import sample_source_label, sample_sources, init_database
-from .litter_dates import set_birth_date, refresh_birth_date, find_open_litter, born_day, CAGE_GENO_OFFSET_DAYS
+from .models import UserAccount
+from .startup import init_database
 
 
 # The application object itself is in app/flask_app.py, so that a module
@@ -581,17 +560,18 @@ def inject_appearance():
     """The person's app icon, and the accent colour that goes with it."""
     user = g.get("user")
     glyph, color = appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR
-    font = appearance.FONTS[0]
+    font, look = appearance.FONTS[0], appearance.LOOKS[0]
     icon_url, lab_icon_name = "", ""
     if user is not None:
         from . import lab_icon as lab_icons
         with SessionLocal() as db_session:
             glyph, color = appearance.get_choice(db_session, user.username)
             font = appearance.get_font(db_session, user.username)
+            look = appearance.get_look(db_session, user.username)
             # The lab's own icon (app/lab_icon.py) heads the sidebar when it has one.
             icon_url = lab_icons.url(db_session)
             lab_icon_name = lab.lab_name(db_session) if icon_url else ""
-    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font,
+    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font, "ui_look": look,
             "lab_icon_url": icon_url, "lab_icon_name": lab_icon_name}
 
 

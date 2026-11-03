@@ -19,7 +19,7 @@ Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
 Writes go through the same checks as the pages (colony.change_mouse,
-inventory_routes._item_from_form, stock_routes._unit_from_form,
+inventory_items.change_item_values, stock_service.change_unit_values,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
 the reference page at /api.
@@ -41,14 +41,16 @@ from flask import (Blueprint, abort, flash, g, get_flashed_messages, jsonify, re
                    url_for)
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import selectinload
-from werkzeug.datastructures import MultiDict
 
 from .formutil import like_pattern
 from . import access, groups, lab
+from .colony import MOUSE_FIELDS
+from .inventory_items import ITEM_VALUES
+from .stock_service import UNIT_VALUES
 from .db import SessionLocal
 from .i18n import gettext
-from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, InventoryRack, LitterRecord,
-                     MouseRecord, MouseWeight, PlasmidBox, PlasmidRecord, StockRack, StockUnit, StrainRecord,
+from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, LitterRecord,
+                     MouseRecord, MouseWeight, PlasmidBox, PlasmidRecord, StockUnit, StrainRecord,
                      TankRecord, UserAccount)
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -398,21 +400,14 @@ def _mouse_experiments(session, m: MouseRecord) -> list[dict]:
     return out
 
 
-MOUSE_FIELDS = ("sex", "genotype", "transgenes", "status", "owner", "note", "cage", "litter", "date_of_death")
-
-
 @bp.patch("/mice/<int:mouse_id>")
 def mouse_update(mouse_id: int):
-    """Change a mouse: any of MOUSE_FIELDS, the rest left as they are. With
-    "version" (as the mouse was read), a mouse changed since is refused (409)
-    instead of overwritten."""
-    from .colony import change_mouse
-    from .services import mouse_display_row, split_genotype
+    """Change a mouse: any of colony.MOUSE_FIELDS, the rest left as they are.
+    With "version" (as the mouse was read), a mouse changed since is refused
+    (409) instead of overwritten."""
+    from .colony import change_mouse_values
     data = dict(_json())
     seen = data.pop("version", None)
-    unknown = sorted(set(data) - set(MOUSE_FIELDS))
-    if unknown:
-        abort(400, f"A mouse has no {', '.join(unknown)} to change; it has {', '.join(MOUSE_FIELDS)}.")
     with SessionLocal() as s:
         m = _mouse(s, mouse_id)
         if not access.can_edit_mouse(m):
@@ -420,40 +415,12 @@ def mouse_update(mouse_id: int):
         if seen is not None and seen != m.sync_version:
             abort(409, f"Mouse {m.mouse_id} was changed since you read it (by {m.updated_by or 'someone'}). "
                        "Read it again, then make the change.")
-        row = mouse_display_row(m)
-        form = MultiDict({"gender": row["gender"] or "", "status": row["status"] or "", "owner": row["owner"] or "",
-                          "note": row["note"] or "",
-                          **{f"transgene_{i}": row[f"transgene_{i}"] or "" for i in range(1, 5)}})
-        if "sex" in data:
-            sex = str(data["sex"] or "").strip().upper()
-            if sex not in ("F", "M", ""):
-                abort(400, "sex is F, M or empty.")
-            form["gender"] = sex
-        if "genotype" in data or "transgenes" in data:
-            parts = data["transgenes"] if "transgenes" in data else split_genotype(str(data["genotype"] or ""))
-            if not isinstance(parts, list) or len(parts) > 4:
-                abort(400, "transgenes is a list of at most four.")
-            for i in range(1, 5):
-                form[f"transgene_{i}"] = str(parts[i - 1]).strip() if i <= len(parts) else ""
-        for key in ("status", "note"):
-            if key in data:
-                form[key] = str(data[key] or "")
-        if "owner" in data:
-            form["owner"] = str(data["owner"] or "").strip()
-        if "cage" in data:
-            form["cage_id"] = str(data["cage"] or "")
-        if "litter" in data:
-            form["litter_id"] = str(data["litter"] or "")
-        if "date_of_death" in data:
-            raw = str(data["date_of_death"] or "")
-            try:
-                if raw:
-                    date.fromisoformat(raw[:10])
-            except ValueError:
-                abort(400, "date_of_death is a date, 2026-09-28.")
-            form["date_of_death"] = raw[:10]
         # The same change, with the same rules, as a row of the mouse sheet.
-        done = change_mouse(s, m, form)
+        try:
+            done = change_mouse_values(s, m, data)
+        except ValueError as error:
+            s.rollback()
+            abort(400, str(error))
         if done.refused:
             s.rollback()
             abort(400, done.refused)
@@ -581,7 +548,7 @@ def rack_update(name: str):
     now) or "keep_cells" (each keeps its row and column, and its name
     changes); without one it is refused (409) with what each would do."""
     from . import rack_layout
-    from .colony import mouse_rack_from_form
+    from .colony import change_mouse_rack
     from .models import MouseRack
     _feature("colony")
     data = _json()
@@ -598,18 +565,17 @@ def rack_update(name: str):
             naming = rack_layout.json_naming(data, r)
         except ValueError:
             abort(400, "naming is {mode, rows, cols, order, separator, start}.")
-        form = MultiDict({"name": str(data.get("name", r.name) or ""), "rows": str(data.get("rows", r.rows)),
-                          "cols": str(data.get("cols", r.cols)), "room": str(data.get("room", r.room) or ""),
-                          **{f"naming_{k}": str(v) for k, v in naming.items()},
-                          rack_layout.FIELD: str(data.get("cages") or "")})
-        if form[rack_layout.FIELD] and form[rack_layout.FIELD] not in rack_layout.CHOICES:
+        rows, cols, cages = str(data.get("rows", r.rows)), str(data.get("cols", r.cols)), str(data.get("cages") or "")
+        if cages and cages not in rack_layout.CHOICES:
             abort(400, "cages is keep_names or keep_cells.")
-        if not form[rack_layout.FIELD] and form["rows"].isdigit() and form["cols"].isdigit():
-            new = rack_layout.Layout(max(1, min(26, int(form["rows"]))), max(1, min(40, int(form["cols"]))), naming)
+        if not cages and rows.isdigit() and cols.isdigit():
+            # What each choice would do, for the client to pick from.
+            new = rack_layout.Layout(max(1, min(26, int(rows))), max(1, min(40, int(cols))), naming)
             preview = rack_layout.plan(s, rack_layout.kind("mouse_rack"), r, new)
             if preview["affected"]:
                 return _error(409, rack_layout.refusal(preview), preview=rack_layout.public(preview))
-        error, change = mouse_rack_from_form(s, r, form)
+        error, change = change_mouse_rack(s, r, name=data.get("name", r.name), rows=rows, cols=cols,
+                                          room=data.get("room", r.room), naming=naming, cages=cages)
         if error:
             s.rollback()
             abort(400, error)
@@ -874,17 +840,11 @@ def stock_units(key: str):
         return _page(s, stmt, StockUnit, lambda u: unit_json(mv, u))
 
 
-UNIT_FIELDS = ("genotype", "female_genotype", "male_genotype", "owner", "purpose", "set_up_on", "ready_on",
-               "shift_on", "score_on", "shift_to", "notes", "rack", "position")
-
-
 @bp.patch("/stocks/<key>/units/<int:number>")
 def stock_unit_update(key: str, number: int):
-    from .stock_routes import Invalid, _unit_from_form
+    """Change a vial: any of stock_service.UNIT_VALUES, the rest left as they are."""
+    from .stock_service import Invalid, change_unit_values
     data = _json()
-    unknown = sorted(set(data) - set(UNIT_FIELDS))
-    if unknown:
-        abort(400, f"A vial has no {', '.join(unknown)} to change; it has {', '.join(UNIT_FIELDS)}.")
     with SessionLocal() as s:
         module, mv = _stock_module(s, key)
         u = s.scalar(select(StockUnit).where(StockUnit.module_id_fk == module.id, StockUnit.number == number))
@@ -892,17 +852,8 @@ def stock_unit_update(key: str, number: int):
             abort(404, f"There is no {mv.unit} {number}.")
         if not access.can_edit_unit(u):
             abort(403, access.reason_denied(u))
-        form = MultiDict({k: str(v if v is not None else "") for k, v in data.items() if k not in ("rack", "position")})
-        if "rack" in data or "position" in data:
-            rack_name = data.get("rack", u.rack.name if u.rack else "")
-            rack = s.scalar(select(StockRack).where(StockRack.module_id_fk == module.id, StockRack.name == rack_name)) \
-                if rack_name else None
-            if rack_name and rack is None:
-                abort(400, f"There is no {mv.rack_noun} {rack_name}.")
-            form["rack_id"] = str(rack.id) if rack else ""
-            form["position"] = str(data.get("position") or "")
         try:
-            problem = _unit_from_form(s, mv, u, form)
+            problem = change_unit_values(s, module, mv, u, data)
         except Invalid as refused:
             s.rollback()
             abort(400, str(refused))
@@ -984,57 +935,18 @@ def inventory_item(key: str, number: int):
         return jsonify(item_json(mv, _item(s, module, mv, number)))
 
 
-ITEM_FIELDS = ("name", "category", "status", "owner", "shared", "quantity", "unit", "low_at", "pack_size", "vendor",
-               "catalog_number", "lot", "box", "position", "location_note", "received_on", "expires_on", "notes", "fields")
-
-
-def _item_form(session, module, mv, data: dict, item: InventoryItem | None) -> MultiDict:
-    unknown = sorted(set(data) - set(ITEM_FIELDS))
-    if unknown:
-        abort(400, f"A {mv.item_noun} has no {', '.join(unknown)}; it has {', '.join(ITEM_FIELDS)}.")
-    form = MultiDict()
-    for k, v in data.items():
-        if k in ("box", "position", "fields", "shared"):
-            continue
-        form[k] = "" if v is None else str(v)
-    if "shared" in data:
-        # true keeps a project group's stock its group's (app/groups.py).
-        keep = item is not None and data["shared"] and item.is_shared
-        form["is_shared"] = groups.record_value(item) if keep else ("1" if data["shared"] else "0")
-    known = {f["key"]: f for f in mv.fields}
-    for k, v in (data.get("fields") or {}).items():
-        field = known.get(k)
-        if field is None:
-            abort(400, f"{module.label} has no field {k}; it has {', '.join(known) or 'none'}.")
-        if field["type"] == "source":
-            v = v if isinstance(v, dict) else {"kind": "", "ref": str(v or "")}
-            form[f"attr_{k}_kind"], form[f"attr_{k}_ref"] = str(v.get("kind") or ""), str(v.get("ref") or "")
-        else:
-            form[f"attr_{k}"] = "" if v is None else str(v)
-    if "box" in data or "position" in data:
-        box = data.get("box", item.rack.name if item is not None and item.rack else "")
-        rack = session.scalar(select(InventoryRack).where(InventoryRack.module_id_fk == module.id,
-                                                          InventoryRack.name == box)) if box else None
-        if box and rack is None:
-            abort(400, f"{module.label} has no box {box}.")
-        form["rack_id"] = str(rack.id) if rack else ""
-        form["position"] = str(data.get("position") or "")
-    return form
-
-
 @bp.post("/inventories/<key>/items")
 def inventory_create(key: str):
     from . import inventory_service as isvc
-    from .inventory_routes import Refused, _item_from_form
+    from .inventory_items import Refused, change_item_values
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
-        form = _item_form(s, module, mv, data, None)
         item = InventoryItem(module_id_fk=module.id, number=isvc.next_number(s, module.id), owner=g.user.username,
                              status=mv.statuses[0] if mv.statuses else "")
         s.add(item)
         try:
-            problem, notes = _item_from_form(s, mv, item, form, creating=True)
+            problem, notes = change_item_values(s, module, mv, item, data, creating=True)
         except Refused as refused:
             s.rollback()
             abort(400, str(refused))
@@ -1047,16 +959,15 @@ def inventory_create(key: str):
 
 @bp.patch("/inventories/<key>/items/<int:number>")
 def inventory_update(key: str, number: int):
-    from .inventory_routes import Refused, _item_from_form
+    from .inventory_items import Refused, change_item_values
     data = _json()
     with SessionLocal() as s:
         module, mv = _inventory(s, key)
         item = _item(s, module, mv, number)
         if not access.can_edit_item(item):
             abort(403, access.reason_denied(item, noun=mv.item_noun))
-        form = _item_form(s, module, mv, data, item)
         try:
-            problem, notes = _item_from_form(s, mv, item, form)
+            problem, notes = change_item_values(s, module, mv, item, data)
         except Refused as refused:
             s.rollback()
             abort(getattr(refused, "status", 400) if getattr(refused, "status", 400) in (400, 403) else 400,
@@ -1733,11 +1644,11 @@ ENDPOINTS = [
      "Check Sanger reads against its map: .ab1 or FASTA files (multipart), or {reads, captures}", ()),
     ("GET", "/api/v1/stocks", "read", "Fly and worm stock databases", ()),
     ("GET", "/api/v1/stocks/{key}/units", "read", "Vials or plates", ("active", "purpose", "owner", "genotype")),
-    ("PATCH", "/api/v1/stocks/{key}/units/{number}", "write", "Change a vial: " + ", ".join(UNIT_FIELDS), ()),
+    ("PATCH", "/api/v1/stocks/{key}/units/{number}", "write", "Change a vial: " + ", ".join(UNIT_VALUES), ()),
     ("GET", "/api/v1/inventories", "read", "Inventories, with their statuses and fields", ()),
     ("GET", "/api/v1/inventories/{key}/items", "read", "Items", ("status", "category", "owner", "q", "updated_since")),
     ("GET", "/api/v1/inventories/{key}/items/{number}", "read", "One item", ()),
-    ("POST", "/api/v1/inventories/{key}/items", "write", "Add an item: " + ", ".join(ITEM_FIELDS), ()),
+    ("POST", "/api/v1/inventories/{key}/items", "write", "Add an item: " + ", ".join(ITEM_VALUES), ()),
     ("PATCH", "/api/v1/inventories/{key}/items/{number}", "write", "Change an item", ()),
     ("GET", "/api/v1/experiments", "read", "Experiments, in every database", ("status", "owner", "database")),
     ("GET", "/api/v1/experiments/{experiment_id}", "read", "One experiment: animals, readout table, manipulations, the plan kept at Start and the changes from it", ()),

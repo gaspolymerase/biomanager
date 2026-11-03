@@ -36,10 +36,11 @@ from . import inventory_service as svc
 from .db import SessionLocal
 from . import lab
 from .lab import lab_audience
-from .formutil import MAX_ID, form_changed
 from .i18n import gettext, ngettext
 from . import groups as project_groups
 from . import bulk as bulk_actions, stewardship
+from .inventory_items import MOUSE_SOURCE_KINDS, Refused, _and, _column_value, _manage_denied, _mouse_number, _tr
+from .inventory_items import item_from_form as _item_from_form
 from . import order_spending as spending
 from .models import InventoryItem, InventoryModule, InventoryRack
 
@@ -52,36 +53,10 @@ def require_login():
         return redirect(url_for("login", next=request.path))
 
 
-class Refused(Exception):
-    """A save that must not happen at all: nothing is written."""
-
-    def __init__(self, message: str, status: int = 409):
-        super().__init__(message)
-        self.status = status
-
-
-def _date(raw) -> date | None:
-    """A date from YYYY-MM-DD; blank is None; anything else is refused
-    rather than silently clearing what was stored."""
-    raw = str(raw or "").strip()
-    if not raw:
-        return None
-    try:
-        return date.fromisoformat(raw)
-    except ValueError:
-        raise Refused(gettext("“%(value)s” is not a date. Use YYYY-MM-DD.", value=raw)) from None
-
-
 def _sentences(*parts: str) -> str:
     """Sentences one after another: a space between them in English, none
     in Chinese."""
     return ("" if i18n.current() == "zh" else " ").join(p for p in parts if p)
-
-
-def _tr(value) -> str:
-    """A database's own word (its noun, a column's or status's name) in the
-    page's language; what a lab typed comes back as typed."""
-    return i18n.translate_value(value, "inventory")
 
 
 def _int(raw, default: int, low: int, high: int) -> int:
@@ -139,19 +114,6 @@ def _back(key: str, **params) -> str:
 # ---------------------------------------------------------------------------
 # Permissions
 # ---------------------------------------------------------------------------
-
-
-def _manage_denied(mv, item: InventoryItem, what: str) -> str:
-    """`what`: "owner", "personal" or "delete"."""
-    if not access.can_edit_item(item):
-        return access.reason_denied(item, noun=mv.item_noun)
-    values = {"noun": _tr(mv.item_noun), "who": item.owner or gettext("its owner")}
-    if what == "owner":
-        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can change who it belongs to.", **values)
-    if what == "personal":
-        return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can make it personal.",
-                       **values)
-    return gettext("Anyone can edit a lab-common %(noun)s, but only %(who)s or an admin can delete it.", **values)
 
 
 # ---------------------------------------------------------------------------
@@ -292,18 +254,6 @@ def _box_width(racks) -> int:
         return 104
     widest = max(sum(6 if ord(ch) < 0x2E80 else 12 for ch in svc.box_label(r)) for r in racks)
     return max(104, min(widest + 36, 320))
-
-
-MOUSE_SOURCE_KINDS = ("mouse", "colony")
-
-
-def _mouse_number(ref: str) -> int | None:
-    """The mouse ID a typed source names, or None: not a number, or one
-    beyond what the database holds (no colony mouse, not an error)."""
-    ref = str(ref or "").strip()
-    if ref.isascii() and ref.isdigit() and int(ref) <= MAX_ID:
-        return int(ref)
-    return None
 
 
 def _mouse_links(session, rows_attrs: list[dict], fields: list[dict]) -> dict[str, dict]:
@@ -725,6 +675,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     if row.kind in STOCK_KINDS and request.args.get("from_order"):
         reorder = _from_order_payload(session, mv, request.args["from_order"],
                                       shared=request.args.get("shared") == "1")
+    redraw_url = url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
+                         cells=request.args.get("cells"))
     context = {
         **common,
         # rows: every row the sheet lists (the board's cards, the counts);
@@ -732,9 +684,9 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "rows": rows, "sheet_rows": rows[:FIRST_PAGE] if lazy else rows,
         "stubs": _row_stubs(mv, rows[FIRST_PAGE:], table_fields, box_labels, mouse_links, plasmid_links)
         if lazy else [],
-        "rows_url": url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
-                            cells=request.args.get("cells"))
-                    if lazy else "",
+        "rows_url": redraw_url if lazy else "",
+        # Rows redrawn where they are after a batch change (data-table.js, BioSheets.redraw).
+        "redraw_url": redraw_url,
         "racks": racks,
         "tab_counts": tab_counts, "listed_all": listed_all,
         "can_add_type": mv.has("tabs"),
@@ -984,181 +936,8 @@ def _plasmid_options(session) -> list[tuple[int, str]]:
         select(PlasmidRecord.plasmid_id, PlasmidRecord.name).order_by(PlasmidRecord.plasmid_id.desc()).limit(2000))]
 
 
-def _mouse_exists(session, ref: str) -> bool:
-    from .models import MouseRecord
-
-    number = _mouse_number(ref)
-    return number is not None and session.scalar(
-        select(MouseRecord.id).where(MouseRecord.mouse_id == number)) is not None
-
-
-def _item_from_form(session, mv, item: InventoryItem, form, creating: bool = False) -> tuple[str | None, list[str]]:
-    """Copy the submitted fields onto `item` (only fields the form sent).
-
-    Raises Refused when the save must not happen (a blank order name, a
-    date that is not a date, an unknown status, a change the user may not
-    make); the caller rolls back. Returns (a position problem, notes):
-    a position that cannot be taken leaves the rest saved."""
-    notes: list[str] = []
-    manage = creating or access.can_manage(item)
-    me = access.username()
-    stock_was = (item.status, item.quantity, item.low_at)
-    was = {key: _column_value(item, key) for key in mv.required}
-
-    def text(name, limit=200):
-        if name in form:
-            setattr(item, name, (form.get(name) or "").strip()[:limit])
-
-    if "name" in form:
-        name = (form.get("name") or "").strip()[:200]
-        if not name and mv.row.kind == "orders":
-            raise Refused(gettext("An order needs an item name."))
-        item.name = name
-    text("category", limit=80)
-
-    if "owner" in form:
-        owner = (form.get("owner") or "").strip()[:80]
-        if creating and not access.is_admin() and owner != me:
-            if owner:
-                notes.append(gettext("Only an admin can add a %(noun)s for someone else, so this one is yours.",
-                                     noun=_tr(mv.item_noun)))
-            owner = me
-        if owner != (item.owner or ""):
-            if not manage:
-                raise Refused(_manage_denied(mv, item, "owner"), 403)
-            refused = stewardship.change_owner(session, item, owner, mv.item_noun, item.name)
-            if refused:
-                raise Refused(refused)
-    if "is_shared" in form and project_groups.differs(item, form.get("is_shared")):
-        if not manage:
-            raise Refused(_manage_denied(mv, item, "personal"), 403)
-        refused = project_groups.apply(item, form.get("is_shared"))
-        if refused:
-            raise Refused(refused, 403)
-
-    for name, limit in (("quantity", 60), ("unit", 30), ("vendor", 120), ("catalog_number", 120),
-                        ("lot", 120), ("location_note", 200)):
-        text(name, limit=limit)
-    if "low_at" in form and svc.tracks_low(mv):
-        raw = (form.get("low_at") or "").strip()
-        level = svc.amount(raw) if raw else None
-        if raw and level is None:
-            raise Refused(gettext("Low at is a number, in the quantity's unit: “%(value)s” isn't one.", value=raw))
-        item.low_at = level
-    if "pack_size" in form and svc.has_pack_size(mv):
-        raw = (form.get("pack_size") or "").strip()
-        if raw and svc.pack_size(raw) is None:
-            raise Refused(gettext("Pack size is what one of its unit holds, a number and a unit (10 mL): “%(value)s” isn't one.", value=raw))
-        item.pack_size = svc.pack_size_text(raw)[:40]
-    for name in ("received_on", "expires_on"):
-        if name in form and form_changed(form, name):
-            setattr(item, name, _date(form.get(name)))
-    if "notes" in form:
-        item.notes = (form.get("notes") or "").strip()
-
-    attrs = item.attrs_dict
-    before = json.dumps(attrs, sort_keys=True)
-    for field in mv.fields:
-        k = field["key"]
-        if field["type"] == "source":
-            if f"attr_{k}_kind" in form or f"attr_{k}_ref" in form:
-                value = {"kind": (form.get(f"attr_{k}_kind") or "").strip(),
-                         "ref": (form.get(f"attr_{k}_ref") or "").strip()}
-                old = attrs.get(k) if isinstance(attrs.get(k), dict) else {}
-                if (value["kind"] in MOUSE_SOURCE_KINDS and value["ref"] and value != old
-                        and not _mouse_exists(session, value["ref"])):
-                    notes.append(gettext("There is no mouse %(id)s in the colony; the source was saved as typed.",
-                                         id=value["ref"]))
-                attrs[k] = value
-        elif field["type"] == "multiselect" and (f"attr_{k}" in form or f"attr_{k}__several" in form):
-            attrs[k] = several(form.getlist(f"attr_{k}"), field["options"])
-        elif f"attr_{k}" in form:
-            value = (form.get(f"attr_{k}") or "").strip()
-            if field["type"] == "date" and value:
-                value = _date(value).isoformat()
-            if field["type"] == "number" and value:
-                # "2,01" is a decimal comma (kept as 2.01); "1,000" and
-                # "12,500" are thousands, as before.
-                if re.fullmatch(r"-?\d+,\d+", value) and not re.fullmatch(r"-?\d{1,3}(,\d{3})+", value):
-                    value = value.replace(",", ".")
-                try:
-                    float(value.replace(",", ""))
-                except ValueError:
-                    raise Refused(gettext("%(field)s is a number column: “%(value)s” isn't a number.",
-                                          field=_tr(field["label"]), value=value))
-            if field["type"] == "plasmid" and value:
-                # Kept as the plasmid's number, which the sheet links to;
-                # a name or "#42 · pAAV…" from the list is read the same way.
-                plasmid = svc.resolve_plasmid(session, value)
-                if plasmid is not None:
-                    value = str(plasmid.plasmid_id)
-                elif value != str(attrs.get(k, "")):
-                    notes.append(gettext("There is no plasmid “%(value)s” in Plasmids; %(field)s was saved as typed.",
-                                         value=value, field=_tr(field["label"])))
-            attrs[k] = value
-    if json.dumps(attrs, sort_keys=True) != before:
-        item.attrs = json.dumps(attrs)
-
-    # A new entry needs every required column; an old one may not lose one
-    # (but one that never had it can still be saved).
-    # A column not used for its type (a 260/280 on tissue) isn't asked for.
-    unused = {f"attr_{f['key']}" for f in mv.fields if not presets.used_for(f, item.category)}
-    missing = [_tr(label) for key, label in mv.required_labels.items()
-               if not _column_value(item, key) and (creating or was[key]) and key not in unused]
-    if missing:
-        if creating:
-            if mv.item_noun[:1] in "aeiou":
-                raise Refused(gettext("Fill in %(fields)s to add an %(noun)s.", fields=_and(missing),
-                                      noun=_tr(mv.item_noun)))
-            raise Refused(gettext("Fill in %(fields)s to add a %(noun)s.", fields=_and(missing),
-                                  noun=_tr(mv.item_noun)))
-        raise Refused(gettext("%(fields)s can’t be left empty.", fields=_and(missing)))
-
-    # Status last: it may fill the received date or stamp a used-up date.
-    place_was = (str(item.rack_id_fk or ""), svc.rack_label(item))
-    if "status" in form and (creating or form_changed(form, "status")):
-        problem = svc.apply_status(mv, item, form.get("status"))
-        if problem:
-            raise Refused(problem)
-    # A quantity or Low at changed, and the status was not set by hand in
-    # the same save: it follows the quantity (in stock, low, empty).
-    if item.status == stock_was[0] and (item.quantity, item.low_at) != stock_was[1:]:
-        svc.follow_stock_level(mv, item)
-    # Used up just freed its cell: the dialog still showing that box and
-    # position is not a request to put it back.
-    freed = place_was[0] and not item.rack_id_fk
-    if freed and (form.get("rack_id", "").strip(), form.get("position", "").strip()) in (place_was, (place_was[0], "")):
-        return None, notes
-
-    if mv.has("storage") and "rack_id" in form and form_changed(form, "rack_id", "position"):
-        return svc.apply_position(session, item, form.get("rack_id"), form.get("position")), notes
-    return None, notes
-
-
-def several(values, options) -> str:
-    """The ticked choices of a multiselect field as one text, in the order of
-    its choices ("flammable, explosive precursor"); a value that isn't one of
-    them any more (from before, or an import) is kept after them. A box
-    unticked leaves it out: the form also sends attr_<key>__several, so no box
-    ticked still saves as empty."""
-    picked = [part.strip() for v in values for part in str(v).split(",") if part.strip()]
-    return ", ".join([o for o in options if o in picked] + [v for v in dict.fromkeys(picked) if v not in options])
-
-
 def several_values(value) -> list[str]:
     return [part.strip() for part in str(value or "").split(",") if part.strip()]
-
-
-def _column_value(item: InventoryItem, key: str) -> str:
-    """A column as text, by its form name (attr_<key> for custom fields)."""
-    value = item.attrs_dict.get(key[5:]) if key.startswith("attr_") else getattr(item, key, "")
-    return "" if value is None else str(value).strip()
-
-
-def _and(words: list[str]) -> str:
-    if len(words) == 1:
-        return words[0]
-    return gettext("%(first)s and %(last)s", first=gettext(", ").join(words[:-1]), last=words[-1])
 
 
 @bp.route("/<key>/items/save", methods=["POST"])
@@ -1857,10 +1636,21 @@ def bulk(key: str):
                           what=f"{action} ×{len(items)} {mv.item_noun_plural}", table="inventory_items")
         done, skipped, refused = result.changed, result.skipped, result.blocked
         noun = _tr(mv.item_noun if done == 1 else mv.item_noun_plural)
+        item_ids = [item.id for item in items]
         session.commit()
+        # The type tabs' counts, when the batch changed them (a delete, a
+        # new Type): the page shows them without coming back.
+        tabs = None
+        if _wants_json() and (action == "delete" or (field and field["name"] == "category")):
+            chosen = _chosen(session, row, mv, None)
+            tabs = {"all": chosen["listed_all"], **chosen["tab_counts"]}
     message = _bulk_message(action, done, noun, _tr(field["label"]) if field else "")
+    # Asked from the page (selection-bar.js, a form marked
+    # data-selection-inplace): the answer in words, and the page redraws
+    # the ticked rows where they are rather than coming back from the top.
+    said: list[tuple[str, str]] = []
     if refused:
-        flash(gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error")
+        said.append((gettext("Not set on %(n)s: %(reason)s", n=len(refused), reason=refused[0]), "error"))
     if skipped:
         message = _sentences(message, gettext("%(n)s left alone: only their owner or an admin can do that.", n=skipped)
                              if need == "manage" else gettext("%(n)s belong to someone else and were left alone.", n=skipped))
@@ -1873,8 +1663,12 @@ def bulk(key: str):
     if no_column:
         notes.append(gettext("No column is called %(names)s, so those stay in the notes: add them in Configure and split again.",
                              names=gettext(", ").join(f"“{h}”" for h in no_column[:6])))
-    for note in notes[:5]:
-        flash(note, "info")
+    said.extend((note, "info") for note in notes[:5])
+    if _wants_json():
+        return jsonify({"ok": bool(done), "message": message, "said": [{"text": text, "kind": kind} for text, kind in said],
+                        "ids": item_ids, "tabs": tabs})
+    for text, kind in said:
+        flash(text, kind)
     if not done:
         return _done(key, error=message)
     return _done(key, message=message)

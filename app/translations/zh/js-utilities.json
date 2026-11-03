@@ -940,5 +940,14 @@
   "A formula uses the names above, numbers, + − * / ^, brackets, pi, and sqrt, ln, log10, log2, exp, abs, round, min, max, pow. Units are labels: keep the numbers in the units you name.": "公式可用上面的名称、数字、+ − * / ^、括号、pi，以及 sqrt、ln、log10、log2、exp、abs、round、min、max、pow。单位只是标签：数值请按你写的单位填写。",
   "A note under the answer (optional)": "结果下方的备注（可选）",
   "Fix the marked rows first.": "请先修改标出的行。",
-  "Delete for everyone?": "为所有人删除？"
+  "Delete for everyone?": "为所有人删除？",
+  "Search, or type a sum: 10 mM to 50 µM in 1 mL, 4000 rpm…": "搜索，或直接输入算式：10 mM to 50 µM in 1 mL、4000 rpm……",
+  "Pinned, with your last answer": "已固定，附上次的结果",
+  "Kinds of tool": "工具类别",
+  "A table to look things up": "查数用的表",
+  "%(tool)s, from what you typed": "%(tool)s，按你输入的算出",
+  "Open it to finish the sum.": "打开工具把算式补全。",
+  "Open the tool": "打开工具",
+  "Recent sums": "最近算过",
+  "Recent": "最近"
 }

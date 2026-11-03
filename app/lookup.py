@@ -27,10 +27,30 @@ from sqlalchemy import func, or_, select
 from . import lab
 from .formutil import like_pattern
 from .positions import natural_sorted, place_order
-from .models import (CageRecord, ClutchRecord, DropdownOption, Experiment, ExperimentStep, FishLine, FishRack,
-                     LitterRecord, MouseRack,
-                     MouseRecord, OrgCohort, OrgCross, OrgHousing, OrgLine, OrgLocation, OrgSeedLot, Organism, StockRack,
-                     StockUnit, StrainRecord, TankRecord, UserAccount, WaterSystem)
+from .models import (
+    CageRecord,
+    ClutchRecord,
+    Experiment,
+    ExperimentStep,
+    FishLine,
+    FishRack,
+    LitterRecord,
+    MouseRack,
+    MouseRecord,
+    OrgCohort,
+    OrgCross,
+    OrgHousing,
+    OrgLine,
+    OrgLocation,
+    OrgSeedLot,
+    Organism,
+    StockRack,
+    StockUnit,
+    StrainRecord,
+    TankRecord,
+    UserAccount,
+    WaterSystem,
+)
 
 PER_KIND = 8
 # Words a person puts before a number ("cage 88"): they say what kind it is.

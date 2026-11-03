@@ -171,6 +171,7 @@ def _field_schema(f: Field) -> dict:
              "object": {"type": "object"},
              "amount": {"type": ["number", "string"]},
              "groups": {"type": "array", "items": _DESIGN_GROUP},
+             "refs": {"type": "array", "items": _ANIMAL_REF, "minItems": 1},
              "steps": {"type": "array", "items": _DESIGN_STEP},
              "edits": {"type": "array", "items": _TEXT_EDIT, "minItems": 1}}
     if f.kind in kinds:
@@ -329,7 +330,7 @@ def clean(act: Action, raw: dict) -> dict:
             if not isinstance(v, list):
                 raise ActionError(gettext("%(field)s is a list.", field=name))
             v = [str(x).strip() for x in v]
-        elif f.kind in ("mice", "rows"):
+        elif f.kind in ("mice", "rows", "refs"):
             if not isinstance(v, list) or not v:
                 raise ActionError(gettext("%(field)s is a list.", field=name))
         elif f.kind == "edits":
@@ -1664,12 +1665,17 @@ def _experiment_measure_change(s, exp, v):
 
 
 @action(name="experiment_add_animals", area="experiments", title="Add animals to an experiment",
-        help="Add mice (one by one, or a whole cage), or a tank's fish, or a housing unit's animals, to a treatment group.",
+        help="Add mice (one by one, or a whole cage), a tank's fish, a rack's vials or plates, a housing unit's "
+             "animals, or single fish rows, clutches, vials, plates, animals or cohorts, to a treatment group.",
         target="experiment",
         fields=(Field("mice", "mice", "Mice to add"),
                 Field("cage", "cage", "Every living mouse in this cage"),
                 Field("tank", "tank", "Every fish row in this tank (a zebrafish experiment)"),
+                Field("rack", "stock_rack", "Every vial or plate in this rack (a fly or worm experiment)"),
                 Field("housing", "org_housing", "Every animal in this housing (an organism experiment)"),
+                Field("animals", "refs", "Single ones, as references from resolve: fish or clutch (zebrafish), "
+                      "stock_unit (a vial or plate), org_animal or org_cohort (an organism experiment)"),
+                Field("start_each", "int", "How many each vial or plate started with, for survival or a count"),
                 Field("group", "text", "Their treatment group"),
                 Field("reason", "text", "Why: needed when the experiment was started with a plan (GET "
                       "/api/v1/experiments/{id} has plan), since adding animals changes its groups")),
@@ -1688,13 +1694,24 @@ def _experiment_add(s, exp, v):
     if v.get("cage") not in (None, ""):
         calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
                           json={"how": "group", "value": find(s, "cage", v["cage"]).cage_id, "group": group, **reason}))
-    for key in ("tank", "housing"):
+    if v.get("start_each") not in (None, ""):
+        reason = {**reason, "start_each": str(v["start_each"])}
+    for key, kind in (("tank", "tank"), ("rack", "stock_rack"), ("housing", "org_housing")):
         if v.get(key) not in (None, ""):
-            rec = find(s, "tank" if key == "tank" else "org_housing", v[key])
+            rec = find(s, kind, v[key])
             calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
                               json={"how": "group", "value": str(rec.id), "group": group, **reason}))
+    # Single ones of the experiment's database, as a design names them.
+    takes = _DESIGN_ANIMALS.get((exp.db or "colony").partition(":")[0], {})
+    for ref in v.get("animals") or []:
+        ref_kind = ref.get("kind") if isinstance(ref, dict) else next(iter(takes), "")
+        if ref_kind not in takes:
+            raise ActionError(gettext("%(ref)s isn't an animal this database's experiments take (%(kinds)s).",
+                                      ref=_show(ref), kinds=", ".join(takes)))
+        calls.append(Call("POST", f"/experiments/{exp.id}/subjects/add",
+                          json={"how": "one", "value": takes[ref_kind](find(s, ref_kind, ref)), "group": group, **reason}))
     if not calls:
-        raise ActionError(gettext("Say which animals to add: mice, a cage, a tank or a housing unit."))
+        raise ActionError(gettext("Say which animals to add: mice, a cage, a tank, a rack, a housing unit or single animals."))
     return calls
 
 
@@ -1706,9 +1723,13 @@ def _added_what(s, v) -> str:
         bits.append(gettext("cage %(cage)s", cage=find(s, "cage", v["cage"]).cage_id))
     if v.get("tank") not in (None, ""):
         bits.append(find(s, "tank", v["tank"]).tank_id)
+    if v.get("rack") not in (None, ""):
+        bits.append(find(s, "stock_rack", v["rack"]).name)
     if v.get("housing") not in (None, ""):
         rec = find(s, "org_housing", v["housing"])
         bits.append(rec.code or f"#{rec.id}")
+    if v.get("animals"):
+        bits.append(ngettext("%(num)s more", "%(num)s more", len(v["animals"])))
     return ", ".join(bits) or "-"
 
 

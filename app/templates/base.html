@@ -2,7 +2,7 @@
 {# A page with a sidebar of its own (the notebook) starts with this one
    folded to its icons: block rail_mode says "compact". #}
 {% set rail_mode = self.rail_mode()|trim %}
-<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if ui_look == 'solid' %} data-look="solid"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -54,6 +54,7 @@
     </script>
     {% endif %}
     {# Declarative handlers (data-on-click=…); before any page script registers its actions. #}
+    <script src="{{ url_for('static', filename='html.js') }}?v={{ asset_version('html.js') }}"></script>
     <script src="{{ url_for('static', filename='actions.js') }}?v={{ asset_version('actions.js') }}"></script>
     {# In-app confirm / prompt / alert (BioDialog), for every page script. #}
     <script src="{{ url_for('static', filename='dialogs.js') }}?v={{ asset_version('dialogs.js') }}"></script>
@@ -397,6 +398,7 @@
     <script src="{{ url_for('static', filename='form-memory.js') }}?v={{ asset_version('form-memory.js') }}" defer></script>
     <script src="{{ url_for('static', filename='sheet.js') }}?v={{ asset_version('sheet.js') }}" defer></script>
     <script src="{{ url_for('static', filename='rack-grid.js') }}?v={{ asset_version('rack-grid.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='record-forms.js') }}?v={{ asset_version('record-forms.js') }}" defer></script>
     <script src="{{ url_for('static', filename='csv-import.js') }}?v={{ asset_version('csv-import.js') }}" defer></script>
     <script src="{{ url_for('static', filename='global-search.js') }}?v={{ asset_version('global-search.js') }}" defer></script>
     {% block body_end %}{% endblock %}

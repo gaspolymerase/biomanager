@@ -115,9 +115,19 @@
     if (box.bottom < 0 || box.top > window.innerHeight) { close(); return; }
     pop.style.minWidth = Math.max(box.width, 180) + 'px';
     pop.style.left = Math.max(8, Math.min(box.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
-    const below = window.innerHeight - box.bottom;
+    // Under the field, or over it when there is more room there (a field in
+    // the selection bar at the window's foot), and never past the window's
+    // edge: a long list gets as tall as the room and scrolls (a Set field's
+    // choices ran off the window).
+    const edge = 8;
+    const below = window.innerHeight - box.bottom - 4 - edge;
+    const above = box.top - 4 - edge;
+    pop.style.maxHeight = '';
+    const natural = pop.offsetHeight;
+    const down = below >= natural || below >= above;
+    pop.style.maxHeight = Math.max(Math.min(natural, down ? below : above), 60) + 'px';
     const tall = pop.offsetHeight;
-    pop.style.top = (below < tall + 12 && box.top > below ? box.top - tall - 4 : box.bottom + 4) + 'px';
+    pop.style.top = (down ? box.bottom + 4 : Math.max(edge, box.top - tall - 4)) + 'px';
   }
 
   function open(input) {

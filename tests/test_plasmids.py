@@ -12,7 +12,7 @@ import unittest
 from tests.base import AppTestCase, GRID_NAMING, count, errors, execute, flash_text, one, row, rows, uniq
 
 from app import sequence_parser as sp
-from app import services
+from app import startup
 
 
 GB = """LOCUS       pQA1        60 bp    DNA     circular SYN 01-JAN-2026
@@ -1175,8 +1175,8 @@ class LegacyBoxMigrationTests(AppTestCase):
                     " full_sequence, is_circular, features_json, sequence_format, storage_box, box_row, box_col,"
                     " created_at, updated_by) values (?,?,'','','',?,'','','',true,'','',?,?,?,'2026-01-01','')",
                     pid, uniq(tag), cls.member, box, r, c)
-        execute("delete from app_settings where key=?", services.PLASMID_BOXES_FLAG)
-        cls.result = services.migrate_plasmid_boxes()
+        execute("delete from app_settings where key=?", startup.PLASMID_BOXES_FLAG)
+        cls.result = startup.migrate_plasmid_boxes()
 
     @staticmethod
     def at(pid, cols="box_id_fk, storage_box, box_row, box_col"):
@@ -1219,7 +1219,7 @@ class LegacyBoxMigrationTests(AppTestCase):
 
     def test_migration_runs_only_once(self):
         before = count("plasmid_boxes")
-        self.assertIsNone(services.migrate_plasmid_boxes())
+        self.assertIsNone(startup.migrate_plasmid_boxes())
         self.assertEqual(count("plasmid_boxes"), before)
 
 

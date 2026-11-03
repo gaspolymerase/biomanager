@@ -297,7 +297,7 @@ class Importing(AppTestCase):
 
     def test_a_new_cage_for_a_rack_place_never_takes_a_number_the_sheet_uses(self):
         from app.db import SessionLocal
-        from app.services import reserve_cage_ids
+        from app.record_numbers import reserve_cage_ids
         with SessionLocal() as s:
             upcoming = reserve_cage_ids(s, 1)[0]
         tag = uniq("TG")

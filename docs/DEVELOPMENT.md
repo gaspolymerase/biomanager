@@ -50,14 +50,29 @@ a cage or a litter, a cage into a rack position, a mouse rack's own
 dialog): the colony's pages, the API and the spreadsheet import all call
 it, so none of them imports another's pages for it.
 
+What the pages take as a form, the API gives as plain values:
+`colony.change_mouse_values` (`MOUSE_FIELDS`) and `colony.change_mouse_rack`
+build the form the pages' rules read, so the API never does. A value of
+the wrong shape raises `ValueError` (the API's 400); a change the rules
+refuse comes back as the sheet would say it.
+The same holds for inventory items (`app/inventory_items.py`:
+`item_from_form`, and `change_item_values` with `ITEM_VALUES`) and fly and
+worm vials (`stock_service.unit_from_form`, `change_unit_values` with
+`UNIT_VALUES`).
+
 `app/services.py` is what is left of the shared helpers from before the
 pages had modules, and its parts are moving out by topic.
 `app/litter_dates.py` is when a litter is due (the lab's weaning and
 genotyping days, a cage's open litters, `weaning_due`, the list Home, the
 calendar, the cage sheet and the reminder emails all read);
 `app/calendar_feeds.py` reads the calendars a person subscribes to (a
-remote .ics, a linked Google Calendar). A new helper goes in the module of
-its topic, not in `services.py`.
+remote .ics, a linked Google Calendar). `app/startup.py` is what runs when
+the app opens a database (`init_database`, the frozen
+`ensure_schema_updates`, the seeds and one-time moves of data);
+`app/record_numbers.py` hands out mouse, cage and litter numbers;
+`app/sheet_export.py` writes CSV and .xlsx; `app/uploads.py` saves an
+uploaded file as well as deciding who may fetch it. A new helper goes in
+the module of its topic, not in `services.py`.
 
 A route keeps its path and its endpoint name when its code moves:
 `url_for` is called on them some 2,100 times, and the tests ask for URLs,
@@ -87,6 +102,19 @@ macOS 27 is. Two layers:
   behind it: Chromium can (`backdrop-filter: url(#svg)`), but WebKit, which
   the Mac app and Safari use, drops the whole backdrop filter then, so it
   isn't used.
+
+A sheet (`.data-table-card`) is a pane of glass too (`--sheet-glass`): its
+rows let the wallpaper through, its sticky toolbar, header row and foot are
+frosted (`--sheet-head`), and a pinned column is solid (`--sheet-pin`) while
+the sheet scrolls sideways under it. The wallpaper (`--wall`) is sized to the
+window so the grey canvas never shows between its washes.
+
+**Solid** (Settings → Appearance & language → Look; `appearance.get_look`,
+kept as `look:<username>`, the page's `html[data-look="solid"]`) is the same
+app with no glass: one block of tokens in `tailwind.css` gives the canvas a
+cool paper, every glass and sheet token a solid white (or the dark mode's
+solid), the sidebar a second paper, and turns `backdrop-filter` off. A new
+surface that reads its colours from the tokens follows both looks.
 
 The page scrolls *beneath* the two rows at the top (`.topstrip`, then
 `.toolbar`), which float over it: `.shell-scroll` is padded at the top by
@@ -157,8 +185,19 @@ reads the source for the rules marked *(tested)*.
   `.record-dialog-head` (title, optional `.record-dialog-sub`, × as
   `.modal-close`), a `.record-dialog-body` that scrolls, and a
   `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
-  the left. Below 640px it is a bottom sheet. A choice of formats or kinds
-  inside one is a `.choice-list` or `.choice-cards`.
+  the left. Below 640px it is a bottom sheet; on a wider window one with
+  two `.record-group`s or more in view (a long form; groups a dialog's tabs
+  hide don't count) slides in from the right, the
+  window's height. A choice of formats or kinds inside one is a
+  `.choice-list` or `.choice-cards`. `static/record-forms.js` gives every
+  record dialog ⌘/Ctrl ↵ to save (the keys on its main button), draws
+  `select[data-segmented]` and a dialog's Sex as a row of buttons (the
+  select stays the field), and shows a `fieldset[data-reveal]`'s fields one
+  more at a time (its first and the filled ones, then + its
+  `data-reveal-label`). `div[data-place-picker]` (`static/rack-grid.js`,
+  with the form's rack, position and, optionally, cage field names and a
+  `data-grid-url` of the cage grid's JSON) draws the chosen rack to click a
+  place, or a cage, in.
 - **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
   (the Mac app's web view answers them with no); `BioDialog.alert /
   confirm / prompt` (`static/dialogs.js`).
@@ -499,12 +538,17 @@ each running one calculator, with the `example` it opens on and the values
 it can `solve` for. `search(q)` ranks tools by those words (whole word,
 then start of word, then inside a word or one typo), and `locate(id)` turns
 an address into a tool and mode, so an old calculator's `#dilution` still
-opens Dilute. It loads in Node too, and `tests/js/bench-calcs.check.mjs`
-checks known answers and the searches testers typed.
-`static/utilities-page.js` draws the search, Pinned and Recent (kept in
+opens Dilute. `parseSum(text)` reads a sum typed in the search (a
+dilution, `10 mM to 50 µM in 1 mL` or `1:1000 in 5 mL`; a speed, `4000 rpm`
+or `12000 x g`) as `{tool, calc, raw, solve}`, null for anything else. It
+loads in Node too, and `tests/js/bench-calcs.check.mjs` checks known
+answers, the searches testers typed and the sums.
+`static/utilities-page.js` draws the search (a sum's answer under it),
+Pinned with each tool's last answer (`answer:<tool>`) and Recent (kept in
 this browser under `biomanager:util:`; Home's Calculators card reads
-`recent`), the group cards, the open tool (from the address hash) and the
-reference tables. The lab's chemicals come from the page (`/utilities`
+`recent`), every tool as a tile with buttons by group (`group`), the open
+tool (from the address hash) with its last five sums (`sums:<calc>`, kept
+once typing stops) and the reference tables. The lab's chemicals come from the page (`/utilities`
 passes them: its Chemicals databases through `lab_notebook.chemicals_search`,
 each by name and abbreviation, then `chemical_references`) ahead of the
 built-in list. The lab's centrifuge rotors (name, radius, top speed) are
@@ -566,7 +610,10 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   most two), and a toast names the first and last rows filled.
 - A sheet card with `data-dt-views="<name>"` (every database's main sheet)
   gets saved views, filter chips and who is here; `data-dt-inspector` (with
-  `mice` or `cages`, its rack drawn too) the Inspector. All three are
+  `mice` or `cages`, its rack drawn too) the Inspector, and `data-dt-kind`
+  (a `lookup.RECORD_KINDS` kind: mouse, cage, plasmid, stock_unit…) its
+  History tab, from `/records/history` (`lookup.history`, as the API's
+  `/history`: your own changes, an admin everyone's). All three are
   `static/sheet-views.js`, on the sheet's controller (`BioSheets.sheet(el)`:
   `columns()`, `columnValues()`, `setFields()`, `state()`, `applyState()`).
   A filter chip is `{key, value, label}`, a column's `data-sort-key` that
@@ -1015,6 +1062,21 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   query (`type: "database"`; picking it inserts `@<key> ` and keeps the
   menu open for its records).
 
+### Page scripts
+
+A page's own script is a file, `app/static/<page>-page.js` (`colony-page.js`,
+`inventory-page.js`, `settings-page.js`, …), loaded where the page needs it
+without `defer`, so it runs as an inline script there would. What it needs
+from the server goes in a JSON block beside it, `<script type="application/json"
+id="<page>-page-data">{{ {...}|tojson }}</script>`, which the script parses
+first; the CSP never runs a JSON block, and the file is cached and can be
+checked in Node (`tests/js`). An inline script is for a few lines that
+must run before the page draws (the theme, the sidebar's width).
+
+Text a script puts into HTML goes through `BioHtml.escape` (`static/html.js`,
+loaded first on every page): `const esc = BioHtml.escape;`. A test fails
+on another copy of it in `app/static` (`test_page_scripts.py`).
+
 ### Styling
 
 `frontend/src/tailwind.css` is the single source of truth: design tokens in
@@ -1333,7 +1395,7 @@ whole colony, from its mice's dates and statuses only.
 ### Uploaded files
 
 Every upload (a notebook page's pictures and attachments, a plasmid's
-files, a capture's photo or CSV) is saved by `services.save_uploaded_file`
+files, a capture's photo or CSV) is saved by `uploads.save_uploaded_file`
 (or `save_uploaded_image`) under a random name in the uploads folder and
 served by one route, `/static/uploads/<path>` (`app/uploads.serve`, always
 registered, wherever the folder is: `app/static/uploads`, a frozen app's
@@ -1587,7 +1649,7 @@ pages are in `app/lab_routes.py`.
   `attr_price`…) a new item must have; `None` (never chosen) falls back to
   the preset's list, so older orders inventories get name, vendor,
   catalogue number and quantity. `ModuleView.required` / `requirable` in
-  `inventory_service.py`; `_item_from_form` refuses a new item missing one
+  `inventory_service.py`; `inventory_items.item_from_form` refuses a new item missing one
   and an edit that empties one, but an old item that never had it still
   saves. An order always needs a name. CSV import is not held to it.
 - **Remembered values:** `inventory_service.remembered()` gives each text
@@ -1611,7 +1673,7 @@ pages are in `app/lab_routes.py`.
   (the *quantity* feature, and statuses with "in stock" and "low"). The
   quantity stays free text; `amount()` reads "12", "2.5", "2,5" (a decimal
   comma) or "1,000" as a number and anything else as none.
-  `_item_from_form` calls `follow_stock_level()` when the quantity or the
+  `inventory_items.item_from_form` calls `follow_stock_level()` when the quantity or the
   level changed and the same save didn't set the status by hand: at or
   below the level "in stock" turns "low", at 0 "empty" (or "used up",
   whichever the list has; through `apply_status`, so the box cell is
@@ -1628,7 +1690,7 @@ pages are in `app/lab_routes.py`.
   one of the item's unit holds, "10 mL" for an item kept in ampoules. Its
   sheet column (hidden until shown) and dialog field are where
   `has_pack_size()` holds (the *quantity* feature, not Orders);
-  `_item_from_form` refuses one that `pack_size()` can't read as a number
+  `inventory_items.item_from_form` refuses one that `pack_size()` can't read as a number
   above 0 and a unit, and keeps it as `pack_size_text()` gives it ("10mL"
   → "10 mL"). It changes nothing on the page: `actions._used` reads it,
   so an amount used in its unit, or one of the same family (`UNITS`), comes
@@ -1660,7 +1722,7 @@ pages are in `app/lab_routes.py`.
   `inventory_renumber` posts to the same page.
 - **Plasmid columns:** field type `plasmid` (the Viruses preset's *Made
   from*; any inventory can add one in Configure) stores the plasmid's
-  number as text. `_item_from_form` reads a number, `#42`, a name or a
+  number as text. `inventory_items.item_from_form` reads a number, `#42`, a name or a
   picked `42 · name` through `inventory_service.resolve_plasmid()` and
   keeps the number; one it can't find is kept as typed, with a note.
   `plasmid_links()` links the sheet's cells; `made_from_plasmid()` fills
@@ -1676,7 +1738,7 @@ pages are in `app/lab_routes.py`.
   (`_open_orders_of()`) and puts an amber `_warn` hint in the dialog.
 - **Positions and Stored at:** `apply_status()` frees the box cell of an
   item moving to `GONE_FROM_BOX` (used up, empty, discarded) and writes
-  "was in Box · D7" into an empty location note; `_item_from_form` then
+  "was in Box · D7" into an empty location note; `inventory_items.item_from_form` then
   doesn't put it back from the dialog's unchanged box fields.
   `inventory_racks.stored_at` (revision 0007) is where a box is kept; a
   `before_flush` listener in `inventory_service` (`insert=True`, so it runs
@@ -1704,7 +1766,7 @@ pages are in `app/lab_routes.py`.
   (`primer_numbers()`: SantaLucia 1998 nearest-neighbour stacks, 50 mM Na⁺
   entropy correction, 250 nM primer in excess). The sheet shows them read
   only and `_row_json` sends them back after a save. `add_primer_pair`
-  makes *name*-F and *name*-R through `_item_from_form`, flushing between
+  makes *name*-F and *name*-R through `inventory_items.item_from_form`, flushing between
   them so the second takes the next free cell.
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
   setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
@@ -1728,7 +1790,7 @@ pages are in `app/lab_routes.py`.
   widths and hidden columns. Under All, a cell not used for the row's type
   and empty is a dash (`rows[].unused`). The item dialog wraps each field in
   `data-for-types` and hides and disables those not for the Type chosen, so
-  they post nothing and keep their values; `_item_from_form` doesn't hold a
+  they post nothing and keep their values; `inventory_items.item_from_form` doesn't hold a
   required column to a type it isn't used for. `add_type` (the **+**,
   anyone who can open the database) appends a category; renaming and
   removing stay in Configure, as they relabel items. Samples' *Genotype*
@@ -1746,7 +1808,7 @@ pages are in `app/lab_routes.py`.
   one type takes it. Headers naming no column are flashed. One batch.
 - **Set field:** the selection bar's `action=field` (`bulk_fields()`: the
   built-in columns the inventory uses, every custom one and notes) runs
-  each ticked row through `_item_from_form` with that one column, inside
+  each ticked row through `inventory_items.item_from_form` with that one column, inside
   the batch; a refused value leaves that row as it was and is named. A
   *source* column is two answers — which colony and the ID in it — so the
   bar shows a second box for the colony and `_bulk_value` pairs them back
@@ -1994,7 +2056,7 @@ crossing the origin keeps `start > end`.
   canonical att sites for the Feature library and the demo lab.
 - **Files** (`plasmid_files`, revision 0022): what belongs with a plasmid
   — a sequencing read, a gel photo, a datasheet — saved by
-  `services.save_uploaded_file` into the uploads folder, with `kind` from
+  `uploads.save_uploaded_file` into the uploads folder, with `kind` from
   the name (`_file_kind`: trace, image, document). Anyone who may edit the
   plasmid adds them; whoever added one, or an admin, takes it off, and the
   file itself stays in uploads, as the notebook's do (the lab sees it at
@@ -2506,7 +2568,7 @@ pages' own routes. Nothing is merged; the lab keeps one master copy.
   count (`sync_clock`, advanced by an UPDATE that PostgreSQL holds locked to
   commit, so numbers follow commit order). Deletions go to
   `sync_deletions`. The hook is off before Alembic has run
-  (`services.init_database`).
+  (`startup.init_database`).
 - **The feed.** `app/sync.py`: `GET /api/sync/snapshot` (as the person may
   see it: the colony, living mice and those dead in the last 90 days, the
   last five weights, their to-dos for 14 days, vials of the stock databases
@@ -2917,7 +2979,7 @@ A step may name the inventory item it uses (`reagent_item_id_fk`); a record
 keeps that item as it was then (`reagent`: id, name, lot, expiry, and
 `taken` once its amounts were taken off) and any sample records the person
 chose to make with it (`samples`), made through
-`inventory_routes._item_from_form` with the animal as their Source.
+`inventory_items.item_from_form` with the animal as their Source.
 Every path that records a day goes through `experiment_steps._record`
 (the page's record dialog and *Record manipulation*, bench mode, and the
 `experiment_step_done` action, which posts to the same route), and
@@ -2937,8 +2999,32 @@ checks a named `reagent` or `lot` before sending and refuses an unknown
 lot in words. `assistant_compute.experiment_summary` lists each step's
 lots and `expired_lots`; the handover's `next_steps` carry the planned
 item and lot (`reagent`). Subjects
-are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`.
-`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²);
+are `mouse`, `fish`, `clutch`, `unit`, `organism` or `cohort`. A database's
+family (`Place.family`: mouse, fish, fly, worm, plant or organism) picks
+its readouts (`READOUT_CHOICES`) and manipulations (`KINDS`); an organism
+database is `plant` when made from the Plants or Field crops preset or
+keeping seed stocks (`_organism_family`). Each subject carries its
+`age` on day 1 (`age_at_start`: a mouse's litter's birth in weeks, a fish
+or clutch in dpf, an organism or cohort in its database's `age_unit`
+through `organism_service.age_label`; a vial or plate none), on the sheet
+and as the export's last column.
+`exp_stats.py` compares the groups on each day (Welch, ANOVA, χ²), and a
+survival readout over the whole experiment (`logrank`: deaths each day
+are the drop in each group's count since the last, a day not counted
+carrying the last count; the two-group variance when there are two).
+`POST /experiments/<id>/randomize` shares the living animals in the
+analysis into named groups by `assistant_compute.allocate` (sex, then
+housing, then latest weight; seeded), only showing how unless `apply`.
+`add_animals(start_each=)` gives a vial or plate its count at the start.
+A body weight, length, height, rosette area or leaf number read for one
+organism is also its `organism_measurements` row (`_keep_on_the_animal`,
+that day's; blanked with the reading), listed by `/records/measurements`
+in its sheet panel, and `welfare.others_weight_loss` flags an animal of
+an organism database with the `weights` capability (only those: not fish,
+flies, worms or plants) weighed in a started experiment and down the lab's
+percentage from its first weight there. The assistant's `experiment_add_animals` takes a
+`rack`, single `animals` (refs of the database's kinds, as a design's)
+and `start_each`;
 `/experiments/<id>/export.xlsx` and bench mode (`/experiments/<id>/bench`,
 `static/experiment-bench.js`) are in `experiments.py`. The owner's
 morning notification of what is due is `notify.daily_experiment_reminder`
@@ -3025,7 +3111,7 @@ whole (the layout's `used_at` is set outside it, by a Core update, so a
 later plate on the same layout doesn't block that Undo; a new measure is
 kept before the batch, so an Undo never hides another plate's readings
 of it); the
-file is saved (`services.save_uploaded_file`) only once some animal has a
+file is saved (`uploads.save_uploaded_file`) only once some animal has a
 value, and `upload_owners` makes it the experiment's to see. For an
 assistant, `POST /api/v1/experiments/<id>/plate` (`api.COMPUTING`) runs the
 same with `layout` (id or name) or `wells` + `format`, and `text` or a
@@ -3206,7 +3292,7 @@ tokens are redacted; high-churn tables are excluded. Admins read it at
 ## Keeping the data safe
 
 **Schema changes are Alembic revisions** (`migrations/versions/`,
-`app/upgrade.py`). On start-up `services.init_database()` asks
+`app/upgrade.py`). On start-up `startup.init_database()` asks
 `upgrade.plan()` what opening the database will change; if anything, it
 copies an SQLite database first (`backups/before-upgrade-<from>-to-<to>-<time>.db`,
 ten kept), then runs `create_all()`, the frozen pre-0.8 ALTERs
@@ -3244,7 +3330,7 @@ BioManager database and asks that the app be closed first (`--yes` skips
 the question).
 
 **The app won't start on a database it can't trust**: an SQLite file of 0
-bytes (`services.refuse_emptied_database`: it would otherwise start a new
+bytes (`startup.refuse_emptied_database`: it would otherwise start a new
 empty lab over it), or a database whose Alembic revision this version
 doesn't know, i.e. one a newer version made (`upgrade.plan`).
 
@@ -3270,7 +3356,7 @@ alembic revision --autogenerate -m "describe the change"
 alembic upgrade head
 ```
 
-The old hand-written ALTERs in `services.ensure_schema_updates()` still run
+The old hand-written ALTERs in `startup.ensure_schema_updates()` still run
 for backwards compatibility, but new changes belong in a revision.
 
 ## Cage cards and QR labels
@@ -3351,15 +3437,16 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   `experiments.payload` without `PAGE_ONLY` (the step kinds, regimens,
   reagents, sample inventories and tests the page offers as choices).
 - **Writes reuse the pages' code**, so their rules hold: `PATCH /mice/<id>`
-  fills a form from `mouse_display_row`, overlays the fields sent, and calls
-  `colony.change_mouse`, as the mouse sheet does: one set of rules (no date of
+  calls `colony.change_mouse_values`, which overlays the fields sent on the
+  mouse as `mouse_display_row` shows it and calls `colony.change_mouse`, as
+  the mouse sheet does: one set of rules (no date of
   birth or death in the future, an owner from the lab, a cohort's date of
   birth only once confirmed) whose refusal is a 400, and what it couldn't
   do while saving the rest (a private cage) comes back as `warnings`;
   a `version` that isn't the mouse's `sync_version` now is a 409, so a
   client that sends back what it read never overwrites a change since);
-  inventory items go through `inventory_routes._item_from_form`, vials
-  through `stock_routes._unit_from_form` (both copy only the fields sent),
+  inventory items go through `inventory_items.change_item_values`, vials
+  through `stock_service.change_unit_values` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
   `can_edit_experiment`). A switched-off built-in database is a 404.
@@ -3425,7 +3512,7 @@ page itself.
   failing keeps nothing.
 - Beyond the animals, the catalogue covers inventories, plasmids, the
   notebook and the calendar. Inventory items are written through the API's
-  item writes (`_item_from_form`), so required columns, statuses and Low at
+  item writes (`inventory_items.item_from_form`), so required columns, statuses and Low at
   behave as on the sheet. `inventory_quantity_used` takes an amount off a
   numeric quantity, and the status follows Low at; an amount in another unit
   ("40 mg", or `unit`) is converted within mass or volume (`UNITS`, powers
@@ -3579,7 +3666,7 @@ the quote in its title and under **Show each change**. **Send back** (`proposals
 `as_dict` then gives `reason` and a `next` telling the assistant to propose
 again with `replaces`. Captures (`app/captures.py`, table `captures`,
 revision `0032_assistant_inbox`) are what a person wrote or photographed at
-the bench: text and one file (kept by `services.save_uploaded_file`, served
+the bench: text and one file (kept by `uploads.save_uploaded_file`, served
 to its owner only by `/captures/<id>/file`, as `/static/uploads/` is:
 `app/uploads.py`), with the record it was taken at
 (`at_kind`, `at_id`, `at_label`; from Bench mode or a scanned card's link,
@@ -4054,7 +4141,7 @@ the importer, where a "Strain" or "Background" column now maps to it (one
 called "Strain" went to the genotype before). The column moved the
 transgenes along, so the sheet's id is `mice-v5` (`_mouse_sheet.html`).
 
-**Numbers are handed out once.** `services.reserve_mouse_ids()` counts
+**Numbers are handed out once.** `record_numbers.reserve_mouse_ids()` counts
 above the highest mouse and above `app_settings.mouse_id_high`, the highest
 ever handed out, so deleting the newest mouse or undoing an Add many never
 gives its number again. Saves that take the next free number (New mouse,
@@ -4224,6 +4311,13 @@ permissions and validation are checked along with behaviour. One module per
 area (`test_mice.py`, `test_plasmids.py`, `test_stocks.py`, …); shared
 set-up and factories are in `tests/base.py`. Run one module, class or test
 with `scripts/test.sh tests.test_mice` (or `tests.test_mice.SomeClass`).
+
+JavaScript is checked in Node by `tests/js/*.check.mjs`, run from the
+suite when Node is there (`test_notebook_blocks.py`). The page scripts that
+need a DOM (`sheet.check.mjs`: a row's autosave keeps the `_was` copies of
+`formutil.form_changed`) use jsdom, a package of `tests/js` alone: run
+`npm ci --prefix tests/js` once (CI does, and fails rather than skips
+without it; `test_page_scripts.py`).
 
 `scripts/test-parallel.py` shares the test classes out to up to four
 processes as they ask for more (the ones with most tests first), each on

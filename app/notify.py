@@ -791,7 +791,7 @@ def daily_welfare_reminder(session, user, today: date | None = None) -> bool:
     with i18n.using(i18n.language_for(session, user.username)):
         parts = []
         if found.get("weight_loss"):
-            parts.append(ngettext("%(num)s mouse losing weight", "%(num)s mice losing weight", found["weight_loss"]))
+            parts.append(ngettext("%(num)s animal losing weight", "%(num)s animals losing weight", found["weight_loss"]))
         if found.get("not_weighed"):
             parts.append(ngettext("%(num)s animal not weighed in its experiment",
                                   "%(num)s animals not weighed in their experiments", found["not_weighed"]))

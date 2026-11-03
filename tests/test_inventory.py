@@ -1086,6 +1086,44 @@ class BulkTests(InventoryCase):
         self.post(self.a, f"/batches/{batch_id}/undo")                  # one batch, undoable
         self.assertEqual({item(i)["lot"] for i in ids}, {""})
 
+    def test_set_field_from_the_page_answers_in_words_and_the_rows_redraw(self):
+        # The bar sends Set field in the background (selection-bar.js):
+        # words, not a redirect, and no flash left for the next page; the
+        # page then redraws the ticked rows from /rows where they are.
+        ids = self.reagents(2)
+        r = self.autosave(self.a, f"/inventory/{self.key}/items/bulk", data={
+            "action": "field", "field": "lot", "value": "L77", "selected_ids": [str(i) for i in ids]})
+        self.assertEqual(r.status_code, 200)
+        answer = r.get_json()
+        self.assertTrue(answer["ok"])
+        self.assertIn("Set Lot on 2 reagents", answer["message"])
+        self.assertEqual(sorted(answer["ids"]), sorted(ids))
+        self.assertEqual({item(i)["lot"] for i in ids}, {"L77"})
+        page = self.a.get(f"/inventory/{self.key}").get_data(as_text=True)
+        self.assertNotIn("Set Lot on 2 reagents", page)
+        self.assertIn("data-dt-redraw-url=", page)
+        rows = self.a.get(f"/inventory/{self.key}/rows?ids={','.join(map(str, ids))}").get_json()
+        self.assertIn("L77", rows["rows"])
+        r = self.autosave(self.a, f"/inventory/{self.key}/items/bulk", data={
+            "action": "field", "field": "no_such_column", "value": "x", "selected_ids": [str(i) for i in ids]})
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("Pick the column to set", r.get_json()["error"])
+
+    def test_status_and_move_from_the_page_answer_in_words(self):
+        ids = self.reagents(2)
+        bulk = f"/inventory/{self.key}/items/bulk"
+        answer = self.autosave(self.a, bulk, data={"action": "status", "value": "low",
+                                                   "selected_ids": [str(i) for i in ids]}).get_json()
+        self.assertTrue(answer["ok"])
+        self.assertEqual({item(i)["status"] for i in ids}, {"low"})
+        box = self.make_rack(self.a, self.key)
+        answer = self.autosave(self.a, bulk, data={"action": "rack", "value": str(box),
+                                                   "selected_ids": [str(i) for i in ids]}).get_json()
+        self.assertIn("Moved 2 reagents", answer["message"])
+        self.assertEqual({item(i)["rack_id_fk"] for i in ids}, {box})
+        html = self.a.get(f"/inventory/{self.key}").get_data(as_text=True)
+        self.assertEqual(html.count("data-selection-inplace"), html.count("items/bulk\" class=\"selbar-group\""))
+
     def test_set_field_sets_the_pack_size(self):
         ids = self.reagents(2)
         r = self.post(self.a, f"/inventory/{self.key}/items/bulk", data={

@@ -131,6 +131,7 @@
     <button type="button" class="dt-toolbar-btn" data-xp-open="bench" title="{{ _('One animal at a time, on a phone at the bench') }}">{{ icon('qrcode') }} {{ _('Bench mode') }}</button>
     {% if experiment.editable %}
       <button type="button" class="dt-toolbar-btn" data-xp-open="add">{{ icon('plus') }} {{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</button>
+      <button type="button" class="dt-toolbar-btn" data-xp-randomize title="{{ _('Share them out into groups at random, balanced by sex, %(housing)s and weight', housing=place.housing|tr) }}">{{ icon('shuffle') }} {{ _('Randomize') }}</button>
       <button type="button" class="dt-toolbar-btn" data-xp-open="plan" title="{{ _('What is to be done, and on which days') }}">{{ icon('calendar') }} {{ _('Regimen') }}</button>
       <button type="button" class="dt-toolbar-btn" data-xp-open="reading">{{ icon('chart') }} <span data-xp-reading-verb>{{ readout.verb|tr("readout") }}</span></button>
       <button type="button" class="dt-toolbar-btn" data-plate-open title="{{ _("Which animal is in which well, and a plate reader's or qPCR machine's export read onto it") }}">{{ icon('well-plate') }} {{ _('Plate layout') }}</button>
@@ -182,6 +183,9 @@
         </select>
       </label>
       <label class="xp-wide">{{ _('Into the group') }} <input name="group" placeholder="{{ _('HDM, vehicle, control… (optional)') }}" list="xp-groups" autocomplete="off"></label>
+      {% if place.subject_kind == 'unit' %}
+        <label class="xp-wide">{{ _('How many each started with') }} <input name="start_each" inputmode="numeric" placeholder="{{ _('e.g. 20, for survival or a count (optional)') }}" autocomplete="off"></label>
+      {% endif %}
       <p class="xp-sub xp-wide">{% if place.subject_kind == 'mouse' %}{{ _('Living mice you may edit.') }}{% else %}{{ _('Only %(nouns)s still in use.', nouns=place.nouns|tr) }}{% endif %}</p>
       <p class="xp-error xp-wide" data-xp-error hidden></p>
     </div>

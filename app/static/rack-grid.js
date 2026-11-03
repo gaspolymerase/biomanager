@@ -59,8 +59,7 @@
     const c = axisLabel(col, s.cols, s.start);
     return s.order === 'row_col' ? `${r}${s.separator}${c}` : `${c}${s.separator}${r}`;
   }
-  const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const escapeHtml = BioHtml.escape;
 
   /* Click an invisible button carrying data-* hooks, so the page's existing
      delegated listeners (record-dialog.js, orgEdit, the mouse dialog) open
@@ -601,6 +600,29 @@
     } else {
       render();
     }
+    // Moved, deleted or changed from the sheet in a batch (inventory-page.js
+    // sends rack-grid:stale): what the boxes hold comes again from the
+    // server, now if the grid is shown or else when it next is.
+    if (root.dataset.rackSrc) {
+      let stale = false;
+      const refresh = async () => {
+        if (!stale || (panel && panel.hidden)) return;
+        stale = false;
+        try {
+          const response = await fetch(root.dataset.rackSrc, { headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error(String(response.status));
+          const fresh = await response.json();
+          racks.splice(0, racks.length, ...(fresh.racks || []));
+          items.splice(0, items.length, ...(fresh.items || []));
+          if (!racks.some((r) => r.id === active)) active = racks[0] ? racks[0].id : null;
+          render();
+        } catch (_) {
+          stale = true;   // asked again the next time it is shown
+        }
+      };
+      root.addEventListener('rack-grid:stale', () => { stale = true; refresh(); });
+      document.addEventListener('layout:change', refresh);
+    }
   }
 
   /* Table / grid switch, remembered per page:
@@ -717,7 +739,100 @@
     });
   }
 
+  /* A dialog's place, picked by clicking it (div[data-place-picker]): the
+     rack its rack field names, drawn small, each cell named as its rack
+     names them. A free cell fills in the position; with data-cage-field
+     (the mouse dialog) a cage's cell fills in that cage, to put it there.
+     The cells come from data-grid-url (the cage grid's JSON), asked once. */
+  const placeGrids = new Map();
+  function setupPlacePicker(box) {
+    const form = box.closest('form');
+    if (!form) return;
+    const t = window.t || ((s) => s);
+    const rackField = form.elements[box.dataset.rackField];
+    const posField = form.elements[box.dataset.positionField];
+    const cageField = box.dataset.cageField ? form.elements[box.dataset.cageField] : null;
+    if (!rackField || !posField) return;
+    const url = box.dataset.gridUrl;
+    const grid = () => {
+      if (!placeGrids.has(url)) {
+        placeGrids.set(url, fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+          .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+      }
+      return placeGrids.get(url);
+    };
+    let drawn = 0;
+    const draw = () => {
+      const rackId = rackField.value;
+      const ask = ++drawn;
+      if (!rackId) { box.hidden = true; return; }
+      grid().then((data) => {
+        if (ask !== drawn || !data) return;
+        const rack = (data.racks || []).find((r) => String(r.id) === String(rackId));
+        if (!rack) { box.hidden = true; return; }
+        const at = new Map();
+        (data.items || []).forEach((item) => {
+          if (String(item.rack) !== String(rack.id) || !item.row || !item.col) return;
+          const k = `${item.row}:${item.col}`;
+          if (!at.has(k) || item.live) at.set(k, item);
+        });
+        const here = (posField.value || '').trim().toUpperCase();
+        const mine = cageField ? (cageField.value || '').trim() : '';
+        box.replaceChildren();
+        const head = document.createElement('div');
+        head.className = 'place-picker-head';
+        head.textContent = t('Place in %(rack)s', { rack: rack.name });
+        const small = document.createElement('small');
+        small.textContent = cageField ? t('Click a free place, or a cage to put it in.') : t('Click a free place.');
+        head.appendChild(small);
+        box.appendChild(head);
+        const cells = document.createElement('div');
+        cells.className = 'place-picker-grid';
+        cells.style.gridTemplateColumns = `repeat(${rack.cols}, minmax(0, 1fr))`;
+        for (let r = 1; r <= rack.rows; r += 1) {
+          for (let c = 1; c <= rack.cols; c += 1) {
+            const name = cellLabel(r, c, rack.naming, rack.cols);
+            const item = at.get(`${r}:${c}`);
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = 'place-picker-cell';
+            cell.textContent = item ? item.label : name;
+            cell.title = item ? `${name} · ${item.title || item.label}` : name;
+            const picked = name.toUpperCase() === here && (!item || !cageField || String(item.label) === mine || !mine);
+            cell.setAttribute('aria-pressed', picked ? 'true' : 'false');
+            if (item) {
+              cell.classList.add('is-taken');
+              // Without a cage to pick, another cage's place cannot be taken.
+              if (!cageField && !picked) cell.disabled = true;
+            }
+            cell.addEventListener('click', () => {
+              posField.value = name;
+              if (item && cageField) cageField.value = item.label;
+              [posField, cageField].forEach((f) => f && f.dispatchEvent(new Event('input', { bubbles: true })));
+              draw();
+            });
+            cells.appendChild(cell);
+          }
+        }
+        box.appendChild(cells);
+        box.hidden = false;
+      });
+    };
+    rackField.addEventListener('change', draw);
+    posField.addEventListener('input', draw);
+    if (cageField) cageField.addEventListener('input', draw);
+    const dialog = box.closest('dialog');
+    if (dialog) {
+      new MutationObserver(() => { if (dialog.open) setTimeout(draw, 0); })
+        .observe(dialog, { attributes: true, attributeFilter: ['open'] });
+      // A cage made or moved since: ask again the next time.
+      dialog.addEventListener('close', () => placeGrids.delete(url));
+    }
+    draw();
+  }
+
   function init() {
+    document.querySelectorAll('[data-place-picker]').forEach(setupPlacePicker);
     document.querySelectorAll('[data-rack-naming]').forEach(setupNamingPreview);
     document.querySelectorAll('form[data-layout-preview]').forEach(setupLayoutCheck);
     document.querySelectorAll('[data-view-switch]').forEach(setupSwitch);

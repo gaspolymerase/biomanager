@@ -1922,9 +1922,7 @@
     return `${toLocalInput(dt)}:${pad(dt.getSeconds())}`;
   }
   function fmtTime(iso) { return iso ? new Date(iso).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' }) : ''; }
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const escapeHtml = BioHtml.escape;
 
   renderEquipment();
   renderMini();

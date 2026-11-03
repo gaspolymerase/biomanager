@@ -6,9 +6,7 @@
 (function () {
   const tr = (text, values) => (typeof window.t === 'function' ? window.t(text, values) : text);
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  }
+  const esc = BioHtml.escape;
 
   // The site on the sequence: open its tab (if the page has tabs), wait for
   // the viewer to load, and pick the bases.

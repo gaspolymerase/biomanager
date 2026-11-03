@@ -122,10 +122,10 @@
     {# Same card, toolbar and bottom bar as the mouse sheet: cells save as
        you type (static/sheet.js), ticked rows get the selection bar, the
        dot is green while an item is usable (or, for orders, open). #}
-    <section class="data-table-card sheet dt-held" data-table-id="inv-{{ key }}-{{ col_sig }}" data-dt-views="inv-{{ key }}" data-dt-inspector data-autosave-sheet
+    <section class="data-table-card sheet dt-held" data-table-id="inv-{{ key }}-{{ col_sig }}" data-dt-views="inv-{{ key }}" data-dt-inspector data-dt-kind="inventory_item" data-autosave-sheet
              data-noun="{{ noun }}" data-noun-plural="{{ nouns }}" data-export-name="{{ key }}"
              data-selection-scope data-selection-noun="{{ noun }}" data-selection-noun-plural="{{ nouns }}"
-             {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %}>
+             {% if rows_url %}data-dt-rows-url="{{ rows_url }}"{% endif %} data-dt-redraw-url="{{ redraw_url }}">
       <div class="dt-toolbar">
         <div class="dt-toolbar-search">
           {{ icon('search', 'search-icon') }}
@@ -310,18 +310,20 @@
       </div>
 
       {# Batch actions on the ticked rows: one batch each, undoable from
-         Batch history. Rows you may not change are skipped and counted. #}
+         Batch history. Rows you may not change are skipped and counted.
+         Done in place (data-selection-inplace, selection-bar.js): the ticked
+         rows are redrawn where they are, still ticked, the sheet not reloaded. #}
       <div class="selbar" data-selection-bar hidden>
         <span class="selbar-count" data-selection-count></span>
         {% if m.statuses %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
             <input type="hidden" name="action" value="status">
             <select name="value" aria-label="{{ _('Status') }}">{% for s in m.statuses %}<option value="{{ s }}">{{ s|tr('inventory') }}</option>{% endfor %}</select>
             <button type="submit" class="btn btn-sm">{{ _('Set status') }}</button>
           </form>
         {% endif %}
         {% if m.has('storage') %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
             <input type="hidden" name="action" value="rack">
             <select name="value" aria-label="{{ _('Box') }}" required>
               <option value="" disabled selected>{{ _('Choose a box…') }}</option>
@@ -332,7 +334,7 @@
           </form>
         {% endif %}
         {# Any column, custom ones too: a titer on 10 aliquots, "on hold" on a lot, a myco date on every line. #}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form>
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace>
           <input type="hidden" name="action" value="field">
           <select name="field" aria-label="{{ _('Column to set') }}" data-bulk-field>
             {% for f in bulk_fields %}<option value="{{ f.name }}" data-type="{{ f.type }}"{% if f.options %} data-options="{{ f.options|join('\n') }}"{% endif %}>{{ f.label|tr('inventory') }}</option>{% endfor %}
@@ -348,26 +350,26 @@
         </form>
         {# "Tissue: Lung; Fixation: 4% PFA" in the notes (an old sheet's
            columns) into the columns of those names. #}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               title="{{ _('Moves each “Column: value” in the notes into the column of that name; the rest stays in the notes') }}">
           <input type="hidden" name="action" value="split_notes">
           <button type="submit" class="btn btn-sm">{{ icon('columns') }} {{ _('Split notes') }}</button>
         </form>
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               title="{{ _('Only for %(nouns)s you own (admins: any)', nouns=nouns) }}">
           <input type="hidden" name="action" value="owner">
           <input name="value" list="inv-owner-options" placeholder="{{ _('requested by') if m.kind == 'orders' else _('owner') }}" value="{{ current_user.username }}" aria-label="{{ _('New owner') }}">
           <button type="submit" class="btn btn-sm">{{ _('Set owner') }}</button>
         </form>
         {% if m.has('sharing') %}
-          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+          <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
                 title="{{ _('Only for %(nouns)s you own (admins: any)', nouns=nouns) }}">
             <input type="hidden" name="action" value="shared">
             <select name="value" aria-label="{{ _('Belongs to') }}"><option value="1">{{ _('Lab common') }}</option>{% for gid, gname in groups_api.choices() %}<option value="g{{ gid }}">{{ _('Shared with %(name)s', name=gname) }}</option>{% endfor %}<option value="0">{{ _('Personal') }}</option></select>
             <button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
           </form>
         {% endif %}
-        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form
+        <form method="post" action="{{ url_for('inventory.bulk', key=key) }}" class="selbar-group" data-selection-form data-selection-inplace
               data-confirm="{{ _('Delete {n} %(nouns)s? Batch history can undo it.', nouns=nouns) }}">
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn btn-sm btn-danger">{{ _('Delete') }}</button>
@@ -803,473 +805,7 @@
                                                         "sourcesUrl": url_for('inventory.source_ids', key=key) if sources else ""} | tojson }}</script>
 <script type="application/json" id="inv-fill-data">{{ remembered.fill | tojson }}</script>
 <script type="application/json" id="inv-vendor-details">{{ vendor_details | tojson }}</script>
-<script nonce="{{ csp_nonce() }}">
-  /* Keep everything that shows an item in step after a save, a board drag
-     or a grid move: the row's cells and its "_was" copies, the dot, the
-     Open button's and the board card's payloads, the board column. The
-     autosave itself is static/sheet.js. */
-  (function () {
-    const page = JSON.parse(document.getElementById('inv-page-data').textContent);
-    const board = document.querySelector('[data-board]');
-    // A row may wait off the page until it is shown (data-table.js, BioSheets).
-    const rowOf = (id) => window.BioSheets.row(id, document.querySelector('.data-table-card'));
-    const cellsOf = (id, name) => {
-      const tr = rowOf(id);
-      return tr ? tr.querySelectorAll(`[form="inv-${id}"]${name ? `[name="${name}"]` : ''}`) : [];
-    };
-    const openOf = (id) => rowOf(id)?.querySelector('[data-open-item]') || null;
-
-    function recount() {
-      if (!board) return;
-      board.querySelectorAll('.board-col').forEach((col) => {
-        col.querySelector('[data-board-count]').textContent = col.querySelectorAll('.board-card').length;
-      });
-    }
-
-    /* The Open and per-status chips count rows as they are now. */
-    function recountChips() {
-      const rows = window.BioSheets.rows(document.querySelector('.data-table-card'));
-      const show = (chip, n) => { const count = chip.querySelector('.dt-chip-count'); if (count) count.textContent = n; };
-      document.querySelectorAll('[data-count-status]').forEach((chip) => {
-        show(chip, rows.filter((tr) => tr.dataset.status === chip.dataset.countStatus).length);
-      });
-      const open = document.querySelector('[data-count-open]');
-      if (open) show(open, rows.filter((tr) => tr.dataset.open === 'true').length);
-    }
-
-    function payloadOf(id) {
-      const open = openOf(id) || document.querySelector(`.board-card[data-id="${id}"]`);
-      try { return JSON.parse((open && open.dataset.recordPayload) || '{}'); } catch (_) { return {}; }
-    }
-
-    /* A received order: offer to make a reagent or antibody of it, in the
-       inventory its category points to. */
-    function offerStock(id) {
-      const dialog = document.getElementById('stock-offer-dialog');
-      if (!dialog) return;
-      const form = dialog.querySelector('form');
-      const item = payloadOf(id);
-      form.action = form.dataset.action.replace('/0/', `/${id}/`);
-      dialog.querySelector('[data-offer-name]').textContent = item.name || item._label || t('The order');
-      const want = String(item.category || '').toLowerCase() === 'antibody' ? 'antibodies' : 'reagents';
-      const target = dialog.querySelector('[data-offer-target]');
-      const option = Array.from(target.options).find((o) => o.dataset.kind === want);
-      if (option) target.value = option.value;
-      dialog.showModal();
-    }
-    BioActions.register({ 'offer-stock': offerStock });
-
-    function setPayload(id, payload) {
-      const json = JSON.stringify(payload);
-      [openOf(id), ...document.querySelectorAll(`.board-card[data-id="${id}"]`)]
-        .forEach((el) => { if (el) el.dataset.recordPayload = json; });
-    }
-
-    function editPayload(id, change) {
-      const open = openOf(id) || document.querySelector(`.board-card[data-id="${id}"]`);
-      if (!open) return;
-      let payload;
-      try { payload = JSON.parse(open.dataset.recordPayload || '{}'); } catch (_) { return; }
-      setPayload(id, Object.assign(payload, change));
-    }
-
-    /* The server's view of a row: cells, "_was" copies, pills, dot, lock. */
-    function applyRow(id, answer) {
-      const form = BioRowForms.get(`inv-${id}`);
-      const row = answer.row || {};
-      // A cell drawn as text (static/text-cells.js) whose value the server
-      // changed becomes its field, to take the new one.
-      const drawn = window.BioTextCells && rowOf(id);
-      if (drawn) Object.entries(row.values || {}).forEach(([name, value]) => {
-        drawn.querySelectorAll(`.cell-text[data-sort-for="${name}"]`).forEach((span) => {
-          if ((span.dataset.sortValue || '') !== (value == null ? '' : String(value))) window.BioTextCells.open(span);
-        });
-      });
-      Object.entries(row.values || {}).forEach(([name, value]) => {
-        const v = value == null ? '' : String(value);
-        if (form) {
-          const was = form.querySelector(`[name="${name}_was"]`);
-          if (was) was.value = v;
-        }
-        cellsOf(id, name).forEach((el) => {
-          if (el.tagName === 'SELECT' && window.BiomanagerShell) window.BiomanagerShell.fillChoices(el);   // its list first (shell.js)
-          if (el !== document.activeElement) el.value = v;
-          el.dataset.previous = el.value;
-          if (el.type === 'date') el.dataset.empty = el.value ? '0' : '1';
-          if (el.classList.contains('status-pill')) el.dataset.status = el.value.toLowerCase();
-          if (el.classList.contains('scope-pill')) el.dataset.scope = el.value === '1' ? 'lab' : 'mine';
-        });
-      });
-      const tr = rowOf(id);
-      if (tr && 'active' in row && window.BioSheet) window.BioSheet.refreshDot(tr, row.active);
-      if (tr && row.values) {
-        const toStock = tr.querySelector('[data-to-stock]');
-        if (toStock && answer.payload) {
-          toStock.hidden = String(row.values.status || '').toLowerCase() !== 'received' || answer.payload._locked;
-        }
-        if ('is_shared' in row.values) tr.dataset.shared = row.values.is_shared && row.values.is_shared !== '0' ? 'true' : 'false';
-        if ('owner' in row.values) tr.dataset.mine = row.values.owner === page.me ? 'true' : 'false';
-        if ('status' in row.values) {
-          const status = String(row.values.status || '').toLowerCase();
-          tr.dataset.status = status;
-          tr.dataset.open = page.openStatuses.includes(status) ? 'true' : 'false';
-          recountChips();
-        }
-      }
-      if (answer.payload) {
-        setPayload(id, answer.payload);
-        if (answer.payload._locked && tr) {
-          tr.classList.add('is-locked');
-          cellsOf(id).forEach((el) => { el.disabled = true; });
-          tr.querySelectorAll('.cell-text').forEach((span) => { span.classList.add('is-disabled'); span.removeAttribute('tabindex'); });
-        }
-      }
-      // A status changed in the sheet moves the card on the board too.
-      const card = board && board.querySelector(`.board-card[data-id="${id}"]`);
-      const status = row.values && row.values.status;
-      if (card && status !== undefined && card.closest('.board-col').dataset.status !== status) {
-        const col = Array.from(board.querySelectorAll('.board-col')).find((c) => c.dataset.status === status);
-        if (col) { col.querySelector('[data-board-drop]').prepend(card); recount(); }
-      }
-    }
-    window.InventoryPage = { applyRow, offerStock };
-
-    document.addEventListener('sheet:saved', (event) => {
-      const { form, body } = event.detail || {};
-      if (!form || !body) return;
-      const id = form.id.replace('inv-', '');
-      applyRow(id, body);
-      if (body.offer_stock) offerStock(id);
-    });
-
-    // A grid move changes the box and position of the item (and of the one
-    // it swapped with); the row must not post the old ones back.
-    document.addEventListener('rack-grid:moved', (event) => {
-      const { id, rackId, position } = event.detail || {};
-      applyRow(id, { row: { values: { rack_id: rackId || '', position: position || '' } } });
-      editPayload(id, { rack_id: rackId || '', position: position || '' });
-    });
-
-    /* Board: drag a card to another status; click to open it. Its cards
-       come when it is first shown (inventory_routes.board). */
-    let boardAsked = null;
-    function showBoard() {
-      if (!board || boardAsked) return;
-      boardAsked = fetch(board.dataset.boardSrc, { credentials: 'same-origin' })
-        .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
-        .then((html) => { board.innerHTML = html; wireBoard(); }, () => {
-          boardAsked = null;   // asked again the next time it is shown
-          const say = window.BiomanagerShell && window.BiomanagerShell.toast;
-          if (say) say(t('Some rows could not be loaded. Check the connection and try again.'), 'error');
-        });
-    }
-    document.addEventListener('layout:change', (event) => { if (event.detail && event.detail.layout === 'board') showBoard(); });
-    if (board && !board.closest('[data-layout-panel]').hidden) showBoard();
-
-    function wireBoard() {
-      let dragged = null;
-      board.querySelectorAll('.board-card').forEach((card) => {
-        card.addEventListener('dragstart', (e) => { dragged = card; card.classList.add('is-dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.dataset.id); });
-        card.addEventListener('dragend', () => { card.classList.remove('is-dragging'); dragged = null; });
-      });
-      board.querySelectorAll('.board-col').forEach((col) => {
-        const drop = col.querySelector('[data-board-drop]');
-        col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('is-drop-target'); });
-        col.addEventListener('dragleave', () => col.classList.remove('is-drop-target'));
-        col.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          col.classList.remove('is-drop-target');
-          if (!dragged || dragged.closest('.board-col') === col) return;
-          const card = dragged;
-          const from = card.parentElement;
-          drop.prepend(card);
-          recount();
-          const body = new FormData();
-          body.append('status', col.dataset.status);
-          const response = await fetch(board.dataset.statusUrl.replace('/0/', `/${card.dataset.id}/`), { method: 'POST', body, headers: { 'X-Autosave': '1' } });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok || result.ok === false) {
-            from.prepend(card);
-            recount();
-            BioDialog.alert(result.error || t('Could not move it.'));
-            return;
-          }
-          applyRow(card.dataset.id, result);
-          if (result.offer_stock) offerStock(card.dataset.id);
-        });
-      });
-    }
-  })();
-
-  /* Item dialog: suggest source IDs from the chosen colony; keep an old
-     status the list no longer has; owner and sharing only for those who
-     may change them. */
-  (function () {
-    const page = JSON.parse(document.getElementById('inv-page-data').textContent);
-    const dialog = document.getElementById('item-dialog');
-    const kind = dialog.querySelector('[data-source-kind]');
-    const ref = dialog.querySelector('[data-source-ref]');
-    /* The ID box offers the identifiers of whichever colony is chosen —
-       in the dialog, and in every source cell in the sheet. */
-    let sourceRefs = null;   // fetched once, the first time an ID box is used
-    const sourceList = (id) => {
-      if (!document.getElementById(id)) {
-        const datalist = document.createElement('datalist');
-        datalist.id = id;
-        document.body.append(datalist);
-        if (!sourceRefs) {
-          sourceRefs = page.sourcesUrl
-            ? fetch(page.sourcesUrl, { credentials: 'same-origin' })
-              .then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then((data) => data.refs)
-            : Promise.resolve([]);
-          sourceRefs.catch(() => { sourceRefs = null; });   // asked again next time
-        }
-        sourceRefs.then((refs) => {
-          (refs[Number(id.replace('inv-src-', ''))] || []).forEach((value) => {
-            const option = document.createElement('option');
-            option.value = value;
-            datalist.append(option);
-          });
-        }, () => datalist.remove());
-      }
-      return id;
-    };
-    const pair = (from) => {
-      const box = from.closest('.source-cell, label, fieldset, .record-dialog-body');
-      const to = box && box.querySelector('[data-source-ref]');
-      if (!to) return;
-      const list = from.selectedOptions[0] && from.selectedOptions[0].dataset.list;
-      if (list) to.setAttribute('list', sourceList(list)); else to.removeAttribute('list');
-    };
-    const sync = () => { if (kind && ref) pair(kind); };
-    document.addEventListener('change', (event) => {
-      const from = event.target.closest && event.target.closest('[data-source-kind]');
-      if (from) pair(from);
-    });
-    // A row's ID box gets its colony's list when it is used, not every row's as the page loads.
-    document.addEventListener('focusin', (event) => {
-      const to = event.target.closest && event.target.closest('.source-cell [data-source-ref]');
-      const from = to && to.closest('.source-cell').querySelector('[data-source-kind]');
-      if (from) pair(from);
-    });
-    dialog.addEventListener('record-dialog:open', (event) => {
-      const { data, isNew } = event.detail || {};
-      if (kind && ref) sync();
-      const status = dialog.querySelector('[data-dialog-status]');
-      if (status) {
-        status.querySelectorAll('[data-extra]').forEach((o) => o.remove());
-        if (data.status && !Array.from(status.options).some((o) => o.value === data.status)) {
-          const extra = new Option(data.status, data.status, true, true);
-          extra.dataset.extra = '1';
-          status.add(extra);
-        }
-      }
-      const fixed = !data._locked && data._manage === false;
-      const owner = dialog.querySelector('[data-dialog-owner]');
-      const shared = dialog.querySelector('[data-dialog-shared]');
-      if (owner) {
-        owner.readOnly = isNew && !page.isAdmin;
-        if (fixed) owner.disabled = true;
-      }
-      if (shared && fixed) shared.disabled = true;
-    });
-  })();
-
-  /* Item dialog, new only: How many / pasted names. Pasted names set the
-     count and stand in for the name field. */
-  (function () {
-    const dialog = document.getElementById('item-dialog');
-    const form = dialog.querySelector('form');
-    const count = form.querySelector('[data-add-count]');
-    const names = form.querySelector('[data-add-names]');
-    const name = form.elements.name;
-    const nameLabel = form.querySelector('[data-name-label]');
-    const sub = dialog.querySelector('[data-next-number]');
-    const span = dialog.querySelector('[data-number-span]');
-    const submit = dialog.querySelector('[data-record-submit]');
-    const noun = {{ noun | tojson }}, plural = {{ nouns | tojson }};
-    let nameRequired = false;
-    let isNew = true;
-    const sync = () => {
-      const pasted = names.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).length;
-      if (pasted) count.value = pasted;
-      count.readOnly = pasted > 0;
-      nameLabel.hidden = isNew && pasted > 0;
-      name.required = nameRequired && !(isNew && pasted > 0);
-      const k = Math.max(1, Number(count.value) || 1);
-      const first = Number(sub.dataset.nextNumber);
-      span.textContent = k > 1 ? `#${first}–#${first + k - 1}` : `#${first}`;
-      if (isNew) submit.textContent = k > 1 ? t('Create %(n)s %(nouns)s', { n: k, nouns: plural }) : t('Create %(noun)s', { noun });
-    };
-    count.addEventListener('input', sync);
-    names.addEventListener('input', sync);
-    dialog.addEventListener('record-dialog:open', (event) => {
-      isNew = Boolean((event.detail || {}).isNew);
-      // Required to add one; an old one that never had it can still be saved.
-      form.querySelectorAll('[data-required]').forEach((el) => { el.required = isNew || el.value.trim() !== ''; });
-      nameRequired = name.required;
-      form.querySelectorAll('[data-new-only]').forEach((el) => { el.hidden = !isNew; });
-      dialog.querySelectorAll('.record-dialog-head [data-new-only]').forEach((el) => { el.hidden = !isNew; });
-      sync();
-    });
-  })();
-
-  /* Item dialog, new only: pick a name or catalog # used before and the
-     empty fields fill in from that entry (the newest one), tinted until
-     edited. "Order again" opens with a hint of where it came from. */
-  (function () {
-    const dialog = document.getElementById('item-dialog');
-    const form = dialog.querySelector('form');
-    const hint = form.querySelector('[data-fill-hint]');
-    const fills = JSON.parse(document.getElementById('inv-fill-data').textContent || '{}');
-    let isNew = false;
-    const labelOf = (el) => {
-      // "Vendor", whether or not it is wrapped with a required star.
-      const label = el.closest('label');
-      const head = label && label.firstElementChild && label.firstElementChild.tagName === 'SPAN'
-        ? label.firstElementChild : label;
-      return ((head && head.firstChild && head.firstChild.textContent) || el.name).trim();
-    };
-    const say = (text, warn) => { hint.textContent = text; hint.hidden = !text; hint.classList.toggle('is-warning', Boolean(warn)); };
-    function fillFrom(input) {
-      if (!isNew) return;
-      const found = (fills[input.dataset.fillKey] || {})[input.value.trim().toLowerCase()];
-      if (!found) return;
-      const filled = [];
-      Array.from(form.elements).forEach((el) => {   // in the order the form shows them
-        const value = el.name && !el.name.startsWith('_') ? found[el.name] : '';
-        if (!value || el === input || el.disabled || el.readOnly || el.value !== '') return;
-        if (el.tagName === 'SELECT' && !Array.from(el.options).some((o) => o.value === value)) return;
-        el.value = value;
-        el.classList.add('is-filled');
-        filled.push(labelOf(el));
-      });
-      if (!filled.length) return;
-      const list = filled.length > 1
-        ? t('%(first)s and %(last)s', { first: filled.slice(0, -1).join(t(', ')), last: filled[filled.length - 1] })
-        : filled[0];
-      say(t('Filled %(fields)s from %(from)s.', { fields: list, from: found._from }));
-    }
-    form.querySelectorAll('[data-fill-key]').forEach((input) => {
-      // A pick from the suggestions arrives as an input without a typed character.
-      input.addEventListener('input', (e) => { if (!e.inputType || e.inputType === 'insertReplacementText') fillFrom(input); });
-      input.addEventListener('change', () => fillFrom(input));
-    });
-    form.addEventListener('input', (e) => e.target.classList && e.target.classList.remove('is-filled'));
-    dialog.addEventListener('record-dialog:open', (event) => {
-      const { data, isNew: fresh } = event.detail || {};
-      isNew = Boolean(fresh);
-      form.querySelectorAll('.is-filled').forEach((el) => el.classList.remove('is-filled'));
-      say((data && data._hint) || '', data && data._warn);
-    });
-  })();
-
-  /* Links that open something once: ?reorder= (a new order prefilled from
-     stock), ?offer= (add a received order to stock), ?open= (a record's
-     dialog, e.g. the reagent just made from an order). They leave the
-     address, so a reload or the next save does not open them again. */
-  window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    const once = {};
-    ['reorder', 'offer', 'open', 'from_order', 'shared'].forEach((k) => { if (params.has(k)) { once[k] = params.get(k); params.delete(k); } });
-    if (!Object.keys(once).length) return;
-    const rest = params.toString();
-    history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
-    const reorder = document.querySelector('[data-reorder-open]');
-    if (reorder) reorder.click();
-    else if (once.offer && /^\d+$/.test(once.offer)) window.InventoryPage.offerStock(once.offer);
-    else if (once.open && /^\d+$/.test(once.open)) {
-      // Its row is brought onto the page first: the dialog opens from a click there.
-      const row = window.BioSheets.row(once.open, document.querySelector('.data-table-card'));
-      if (row) window.BioSheets.show(row);
-      window.BioSheets.ready(row).then((tr) => {
-        const open = tr && tr.querySelector('[data-open-item]');
-        if (open) open.click();
-      });
-    }
-  });
-
-  /* ?q=… (from global search or the home page) searches the sheet on load. */
-  window.addEventListener('load', () => {
-    const q = new URLSearchParams(window.location.search).get('q');
-    if (!q) return;
-    const tableTab = document.querySelector('[data-view-switch] [data-layout="table"]');
-    if (tableTab) tableTab.click();
-    const all = document.querySelector('.data-table-card .dt-chip[data-dt-filter=""]');
-    if (all && all.getAttribute('aria-pressed') !== 'true') all.click();
-    const search = document.querySelector('.data-table-card .dt-search');
-    if (search) {
-      search.value = q;
-      search.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  });
-</script>
-<script nonce="{{ csp_nonce() }}">
-  // A several-choice cell (a chemical's hazards): its summary follows the
-  // ticked boxes, and an open menu closes when you click elsewhere.
-  // Until first opened it holds only the ticked values, as hidden fields its
-  // row sends; opening it makes the boxes from its list (choices-inv-m-…).
-  function buildMulti(cell) {
-    if (!cell || cell.dataset.multiBuilt || !cell.dataset.multiChoices) return;
-    cell.dataset.multiBuilt = '1';
-    const menu = cell.querySelector('.multi-cell-menu');
-    const several = menu.querySelector('input[name$="__several"]');
-    const name = several.name.replace(/__several$/, '');
-    const picked = Array.from(menu.querySelectorAll('[data-multi-picked]')).map((el) => el.value);
-    const list = document.getElementById(`choices-${cell.dataset.multiChoices}`);
-    const boxes = list ? list.content.cloneNode(true) : document.createDocumentFragment();
-    const listed = new Set(Array.from(boxes.querySelectorAll('input')).map((b) => b.value));
-    picked.filter((v) => !listed.has(v)).forEach((v) => {   // one the list no longer has
-      const label = document.createElement('label');
-      const box = label.appendChild(document.createElement('input'));
-      box.type = 'checkbox';
-      box.value = v;
-      label.append(' ');
-      label.appendChild(document.createElement('span')).textContent = v;
-      boxes.appendChild(label);
-    });
-    boxes.querySelectorAll('input[type="checkbox"]').forEach((box) => {
-      box.name = name;
-      box.setAttribute('form', several.getAttribute('form'));
-      box.dataset.autosave = '1';
-      box.dataset.multi = '';
-      box.checked = picked.includes(box.value);
-      box.disabled = cell.hasAttribute('data-locked');
-    });
-    menu.querySelectorAll('[data-multi-picked]').forEach((el) => el.remove());
-    menu.appendChild(boxes);
-  }
-  document.addEventListener('click', (event) => {
-    const summary = event.target.closest && event.target.closest('[data-multi-cell] > summary');
-    if (summary) buildMulti(summary.parentElement);
-  }, true);
-  document.addEventListener('change', (event) => {
-    const box = event.target.closest('[data-multi-cell] input[type="checkbox"]');
-    if (!box) return;
-    const cell = box.closest('[data-multi-cell]');
-    const names = [...cell.querySelectorAll('input[type="checkbox"]:checked')].map((b) => b.closest('label').textContent.trim());
-    const summary = cell.querySelector('[data-multi-summary]');
-    summary.textContent = names.length ? names.join(', ') : summary.dataset.emptyText;
-  });
-  document.addEventListener('click', (event) => {
-    document.querySelectorAll('[data-multi-cell][open]').forEach((cell) => {
-      if (!cell.contains(event.target)) cell.open = false;
-    });
-  });
-  // The menu is fixed (the sheet's scrolling box would clip it): put it under
-  // its cell, or above when there's no room, and close it if the page scrolls.
-  document.addEventListener('toggle', (event) => {
-    const cell = event.target;
-    if (!cell.matches || !cell.matches('[data-multi-cell]') || !cell.open) return;
-    buildMulti(cell);
-    const menu = cell.querySelector('.multi-cell-menu');
-    const box = cell.querySelector('summary').getBoundingClientRect();
-    menu.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - menu.offsetWidth - 8))}px`;
-    const below = box.bottom + 4;
-    menu.style.top = `${below + menu.offsetHeight > window.innerHeight - 8 ? Math.max(8, box.top - menu.offsetHeight - 4) : below}px`;
-  }, true);
-  window.addEventListener('scroll', () => {
-    document.querySelectorAll('[data-multi-cell][open]').forEach((cell) => { cell.open = false; });
-  }, true);
-</script>
+<script type="application/json" id="inventory-page-data">{{ {"noun": noun, "nouns": nouns}|tojson }}</script>
+<script src="{{ url_for('static', filename='inventory-page.js') }}?v={{ asset_version('inventory-page.js') }}"></script>
+<script src="{{ url_for('static', filename='inventory-several.js') }}?v={{ asset_version('inventory-several.js') }}"></script>
 {% endblock %}

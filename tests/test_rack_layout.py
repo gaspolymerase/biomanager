@@ -253,13 +253,13 @@ class OtherGrids(AppTestCase):
 
 class PlacesWrittenAsText(Colony):
     """Before racks had positions, a cage's place was written in its location
-    ("<rack>-D7"). At start, services.migrate_cage_locations moves such a place
+    ("<rack>-D7"). At start, startup.migrate_cage_locations moves such a place
     into the rack's fields and clears the text; text that names no rack is a
     note and stays. It reads only cages with location text: a big lab's
     thousands of cages with none can have nothing to move."""
 
     def test_a_place_moves_into_its_rack_and_a_note_stays(self):
-        from app.services import migrate_cage_locations
+        from app.startup import migrate_cage_locations
         rack = self.make_rack()
         name = one("select name from mouse_racks where id=?", rack)
         placed, note, bare = (self.make_cage(self.m) for _ in range(3))
@@ -276,7 +276,7 @@ class PlacesWrittenAsText(Colony):
     def test_cages_with_no_location_text_are_not_read(self):
         from sqlalchemy import event
         from app.db import engine as db_engine
-        from app.services import migrate_cage_locations
+        from app.startup import migrate_cage_locations
         self.make_rack()
         self.make_cage(self.m)
         seen = []

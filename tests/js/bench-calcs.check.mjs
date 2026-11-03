@@ -203,3 +203,17 @@ assert.equal(B.run('dosesheet', {}).table.rows[0][3], '92.3 µL');
 }
 
 console.log('ok');
+
+// A sum typed in Utilities' search reads as its tool and inputs.
+{
+  const sum = B.parseSum('10 mM to 50 µM in 1 mL');
+  assert.equal(sum.tool, 'dilute');
+  assert.equal(main(B.run(sum.calc, sum.raw))[0], '5 µL');
+  assert.deepEqual(B.parseSum('10mm to 50um in 2ml').raw, { c1: '10', c1_unit: 'mM', c2: '50', c2_unit: 'µM', v1: '', v2: '2', v2_unit: 'mL' });
+  assert.equal(main(B.run('dilution', B.parseSum('1:1000 in 5 mL').raw))[0], '5 µL');
+  assert.equal(B.parseSum('100 mM → 1 mM').raw.v2, '1');   // no volume: 1 mL
+  assert.deepEqual(B.parseSum('4000 rpm').raw, { rpm: '4000', g: '' });
+  assert.deepEqual(B.parseSum('12000 x g').raw, { g: '12000', rpm: '' });
+  assert.equal(B.parseSum('EDTA'), null);
+  assert.equal(B.parseSum('Tm of ACGT'), null);
+}

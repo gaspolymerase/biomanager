@@ -179,12 +179,16 @@ class BreedersTabSpeedTests(AppTestCase):
         gone = self.make_mouse(self.a, self.admin, cage=cage, date_of_birth=days_ago(400),
                                status="sac", date_of_death=days_ago(200))
         numbers = {m: one("select mouse_id from mice where id=?", m) for m in (living, gone)}
-        card = lambda html: re.search(rf">{cage}</a></strong>.*?</article>", html, re.S).group(0)
+        def listed(html):
+            """The mouse numbers on the cage's card: each row's first cell (a
+            number elsewhere in a row, such as its age, is not a mouse)."""
+            card = re.search(rf">{cage}</a></strong>.*?</article>", html, re.S).group(0)
+            return {int(n) for n in re.findall(r'<tr data-mouse-active="[^"]*">\s*<td>(\d+)</td>', card)}
         html = self.get_ok(self.a, "/colony?view=breeders&scope=all")
-        self.assertIn(f"<td>{numbers[living]}</td>", card(html))
-        self.assertNotIn(f"<td>{numbers[gone]}</td>", card(html))
+        self.assertEqual(listed(html), {numbers[living]})
         self.assertIn("mice that ended over 90 days ago", html)
-        self.assertIn(f"<td>{numbers[gone]}</td>", card(self.get_ok(self.a, "/colony?view=breeders&scope=all&ended=all")))
+        self.assertEqual(listed(self.get_ok(self.a, "/colony?view=breeders&scope=all&ended=all")),
+                         {numbers[living], numbers[gone]})
 
     def test_pick_buttons_post_through_one_form(self):
         cage = uniq("C")

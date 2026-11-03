@@ -387,3 +387,141 @@ class ClutchesAndCohorts(Base):
         exp2 = self.new(f"organisms:{key}")
         subs = self.add(exp2, "one", f"cohort:{cohort_id}").get_json()["subjects"]
         self.assertEqual((subs[0]["key"], subs[0]["start"]), (f"cohort:{cohort_id}", 30))
+
+
+class EachDatabaseItsOwn(Base):
+    """What an experiment offers follows its database's animals."""
+
+    def test_a_plant_database_measures_and_treats_plants(self):
+        from tests.test_plants import plant_module
+        key = plant_module(self.a)
+        tab = self.get_ok(self.a, f"/organisms/{key}?view=experiments")
+        self.assertIn('value="germination"', tab)
+        self.assertNotIn('value="body_weight"', tab)
+        self.assertNotIn("Tumour", tab)
+        exp = self.new(f"organisms:{key}")
+        data = self.data(exp)
+        self.assertEqual(data["family"], "plant")
+        self.assertEqual(data["readout"]["key"], "germination")
+        kinds = {k["key"] for k in data["kinds"]}
+        self.assertIn("spray", kinds)
+        self.assertNotIn("surgery", kinds)
+        # An animal database made from scratch keeps the animal's.
+        other = self.data(self.new(f"organisms:{self.make_organism_module(self.a)}"))
+        self.assertEqual(other["family"], "organism")
+        self.assertIn("surgery", {k["key"] for k in other["kinds"]})
+
+    def test_each_animal_shows_its_age_on_day_1(self):
+        start = TODAY - timedelta(days=2)
+        mouse = self.make_mouse(self.a, self.admin, date_of_birth=(start - timedelta(days=70)).isoformat())
+        r = self.a.post("/colony/experiments/create", data={"name": uniq("Age "), "start_date": start.isoformat()})
+        exp = int(location(r).rsplit("/", 1)[1])
+        self.add(exp, "one", str(mouse))
+        self.assertEqual(self.data(exp)["subjects"][0]["age"], "10w")
+        csv = self.a.get(f"/experiments/{exp}/export.csv").get_data(as_text=True)
+        self.assertIn("Age on day 1", csv.splitlines()[0])
+
+    def test_survival_over_the_whole_experiment_by_the_log_rank_test(self):
+        from app import exp_stats
+        rows = [{"group": "Drug", "start": 20, "values": [20, 15, 9, 4], "left_out": ""},
+                {"group": "Vehicle", "start": 20, "values": [20, 20, 19, 19], "left_out": ""},
+                {"group": "Vehicle", "start": 5, "values": [None, 5, None, 5], "left_out": "too old"}]
+        table = {"rows": rows, "dates": ["d1", "d2", "d3", "d4"], "days": [1, 2, 3, 4],
+                 "readout": {"key": "survival", "kind": "fraction"}}
+        out = exp_stats.logrank(table)
+        self.assertEqual(out["test"], "Log-rank test")
+        self.assertLess(out["p"], 0.001)
+        drug = next(g for g in out["groups"] if g["group"] == "Drug")
+        self.assertEqual((drug["start"], drug["deaths"]), (20, 16))
+        # The same counts in both: no difference; one group alone: no test.
+        same = {**table, "rows": [{**rows[0], "group": "A"}, {**rows[0], "group": "B"}]}
+        self.assertGreater(exp_stats.logrank(same)["p"], 0.99)
+        self.assertIsNone(exp_stats.logrank({**table, "rows": rows[:1]}))
+
+
+class EveryAnimalLooked(Base):
+    """Randomizing, counts at the start, weights on the animal and their loss,
+    for every database, not the colony's alone."""
+
+    def test_randomize_shows_then_sets_balanced_seeded_groups(self):
+        key = self.make_organism_module(self.a)
+        animals = [self.make_animal(self.a, key, sex="F" if i % 2 else "M") for i in range(6)]
+        exp = self.new(f"organisms:{key}")
+        for a in animals:
+            self.add(exp, "one", str(a))
+        url = f"/experiments/{exp}/randomize"
+        shown = self.a.post(url, json={"groups": "Drug, Vehicle", "seed": 7}).get_json()
+        self.assertEqual([len(g["animals"]) for g in shown["allocation"]], [3, 3])
+        self.assertEqual(self.a.post(url, json={"groups": ["Drug", "Vehicle"], "seed": 7}).get_json()["allocation"],
+                         shown["allocation"])                                     # the same seed, the same groups
+        self.assertTrue(all(s["group"] == "" for s in self.data(exp)["subjects"]))   # shown, not set
+        done = self.a.post(url, json={"groups": "Drug, Vehicle", "seed": 7, "apply": 1}).get_json()
+        groups = {s["label"]: s["group"] for s in done["subjects"]}
+        for g in shown["allocation"]:
+            self.assertEqual({groups[label] for label in g["animals"]}, {g["group"]})
+        self.assertEqual(self.a.post(url, json={"groups": "Drug"}).status_code, 400)
+
+    def test_a_rack_of_vials_added_with_how_many_each_started_with(self):
+        key = self.make_stock_module(self.a)
+        vials = [self.make_vial(self.a, key) for _ in range(2)]
+        exp = self.new(f"stocks:{key}")
+        self.a.post(f"/experiments/{exp}/subjects/add", json={"how": "one", "value": str(vials[0]), "start_each": "25"})
+        self.a.post(f"/experiments/{exp}/subjects/add", json={"how": "one", "value": str(vials[1])})
+        starts = sorted((s["start"] for s in self.data(exp)["subjects"]), key=lambda x: (x is None, x))
+        self.assertEqual(starts, [25, None])
+        r = self.a.post(f"/experiments/{exp}/subjects/add", json={"how": "one", "value": str(vials[1]), "start_each": "lots"})
+        self.assertEqual(r.status_code, 400)
+
+    def test_an_organism_weighed_keeps_its_weight_and_its_loss_is_flagged(self):
+        from app import welfare
+        from app.db import SessionLocal
+        # Flagged only where the database keeps body weights (its Body weights capability).
+        key = self.make_organism_module(self.a, capabilities=[
+            "housing", "housing_grid", "individuals", "group_counts", "lines", "cohorts", "weights"])
+        animal = self.make_animal(self.a, key)
+        exp = self.new(f"organisms:{key}", start=TODAY - timedelta(days=3))
+        self.add(exp, "one", str(animal))
+        subject = f"organism:{animal}"
+        self.read(exp, TODAY - timedelta(days=3), {subject: "30"})
+        self.read(exp, TODAY, {subject: "24"})
+        kept = self.a.get(f"/records/measurements?kind=org_animal&id={animal}").get_json()["measurements"]
+        self.assertEqual([(m["metric"], m["value"]) for m in kept], [("body_weight", 24.0), ("body_weight", 30.0)])
+        from app.app import app
+        with app.test_request_context(), SessionLocal() as s:
+            found = welfare.others_weight_loss(s, TODAY, 15)
+        mine = [x for x in found if x["ref"] == {"kind": "org_animal", "id": animal}]
+        self.assertEqual(len(mine), 1)
+        self.assertEqual((mine[0]["peak_g"], mine[0]["latest_g"], mine[0]["loss_pct"]), (30.0, 24.0, 20.0))
+        # The same weights in a database that doesn't keep body weights: not flagged.
+        plain = self.make_organism_module(self.a)
+        other = self.make_animal(self.a, plain)
+        exp2 = self.new(f"organisms:{plain}", start=TODAY - timedelta(days=3))
+        self.add(exp2, "one", str(other))
+        self.read(exp2, TODAY - timedelta(days=3), {f"organism:{other}": "30"})
+        self.read(exp2, TODAY, {f"organism:{other}": "24"})
+        with app.test_request_context(), SessionLocal() as s:
+            self.assertFalse([x for x in welfare.others_weight_loss(s, TODAY, 15)
+                              if x["ref"] == {"kind": "org_animal", "id": other}])
+        # Blanking a day's weight takes it off the animal too.
+        self.read(exp, TODAY, {subject: ""})
+        kept = self.a.get(f"/records/measurements?kind=org_animal&id={animal}").get_json()["measurements"]
+        self.assertEqual([m["value"] for m in kept], [30.0])
+        self.assertEqual(self.a.get("/records/measurements?kind=mouse&id=1").status_code, 400)
+
+    def test_an_assistant_adds_a_rack_or_single_vials(self):
+        from app import actions
+        from app.app import app
+        key = self.make_stock_module(self.a)
+        vials = [self.make_vial(self.a, key) for _ in range(2)]
+        exp = self.new(f"stocks:{key}")
+        out = actions.run(app, self.admin, [{"action": "experiment_add_animals", "target": {"kind": "experiment", "id": exp},
+                                             "fields": {"animals": [{"kind": "stock_unit", "id": v} for v in vials],
+                                                        "group": "Paraquat", "start_each": 20}}],
+                          apply=True, description=uniq("A"), source="Claude")
+        self.assertTrue(out.ok, [c.as_dict() for c in out.changes])
+        subs = self.data(exp)["subjects"]
+        self.assertEqual(sorted((s["group"], s["start"]) for s in subs), [("Paraquat", 20), ("Paraquat", 20)])
+        wrong = actions.run(app, self.admin, [{"action": "experiment_add_animals", "target": {"kind": "experiment", "id": exp},
+                                               "fields": {"animals": [{"kind": "fish", "id": 1}]}}],
+                            apply=False, description=uniq("A"), source="Claude")
+        self.assertFalse(wrong.ok)

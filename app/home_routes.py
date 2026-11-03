@@ -28,6 +28,7 @@ from .models import (
     TaskItem,
 )
 from .litter_dates import weaning_offset, weaning_due, weaning_title
+from .services import mouse_active_clause
 from . import door, home_layouts, lab_calendar, lab_notebook, notify
 from . import groups as project_groups
 from .calendar_routes import task_visible_clause
@@ -85,7 +86,7 @@ def home_dashboard():
         old_mice = db_session.scalars(
             select(MouseRecord)
             .join(LitterRecord, MouseRecord.litter_id_fk == LitterRecord.id)
-            .where(MouseRecord.date_of_death.is_(None))
+            .where(mouse_active_clause())
             .where(LitterRecord.date_of_birth.is_not(None))
             .where(LitterRecord.date_of_birth <= today - timedelta(days=210))
             .order_by(LitterRecord.date_of_birth.asc())

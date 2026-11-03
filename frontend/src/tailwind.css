@@ -257,15 +257,28 @@
   --glass-ring:    rgba(255, 255, 255, 0.6);
   --glass-lo:      rgba(15, 20, 40, 0.05);
   --glass-lift:    0 1px 1px rgba(15, 20, 40, 0.04), 0 12px 32px rgba(30, 40, 70, 0.12);
+  /* A sheet as glass: its rows let the wallpaper through; its toolbar, header
+     row and foot are frosted nearly white. A pinned column, while the sheet
+     scrolls sideways under it, is solid: even 10% let the text beneath show. */
+  --sheet-glass:   rgba(255, 255, 255, 0.6);
+  --sheet-head:    rgba(255, 255, 255, 0.78);
+  --sheet-pin:     #FFFFFF;
+  --sheet-hover:   rgba(255, 255, 255, 0.55);
+  --sheet-lift:    rgba(255, 255, 255, 0.96);
+  --sheet-rule:    rgba(20, 30, 40, 0.07);
   /* The ⌘K palette: a sheet of glass over a light, blurred scrim, its
      rows picked out by a faint wash rather than a colour. */
   --palette-glass: rgba(255, 255, 255, 0.74);
   --palette-scrim: rgba(20, 24, 40, 0.16);
   --palette-row:   rgba(15, 20, 40, 0.06);
   --palette-line:  rgba(15, 20, 40, 0.07);
-  --wall: radial-gradient(900px 600px at 10% 5%, rgba(94, 234, 212, 0.26), transparent 60%),
-          radial-gradient(800px 600px at 92% 15%, rgba(167, 139, 250, 0.24), transparent 60%),
-          radial-gradient(900px 700px at 55% 105%, rgba(253, 186, 116, 0.2), transparent 60%);
+  /* Sized to the window, not in pixels, and a fourth wash low on the left,
+     so no stretch of the bare grey canvas shows between them on a wide or
+     tall window: the grey read as the app being grey. */
+  --wall: radial-gradient(65% 60% at 6% 0%, rgba(94, 234, 212, 0.32), transparent 72%),
+          radial-gradient(60% 65% at 98% 6%, rgba(167, 139, 250, 0.28), transparent 72%),
+          radial-gradient(65% 60% at 60% 108%, rgba(253, 186, 116, 0.26), transparent 72%),
+          radial-gradient(50% 55% at 22% 78%, rgba(125, 211, 252, 0.2), transparent 72%);
 
   /* --- Type --------------------------------------------------------------
      Geist everywhere (the same on a Mac, Windows, Linux and phones), then
@@ -444,13 +457,20 @@
     --glass-ring:    rgba(255, 255, 255, 0.09);
     --glass-lo:      rgba(0, 0, 0, 0.35);
     --glass-lift:    0 1px 1px rgba(0, 0, 0, 0.3), 0 14px 36px rgba(0, 0, 0, 0.55);
+    --sheet-glass:   rgba(28, 30, 38, 0.62);
+    --sheet-head:    rgba(36, 38, 48, 0.82);
+    --sheet-pin:     #1D1F27;
+    --sheet-hover:   rgba(255, 255, 255, 0.05);
+    --sheet-lift:    rgba(58, 61, 74, 0.9);
+    --sheet-rule:    rgba(255, 255, 255, 0.07);
     --palette-glass: rgba(32, 34, 42, 0.72);
     --palette-scrim: rgba(0, 0, 0, 0.4);
     --palette-row:   rgba(255, 255, 255, 0.07);
     --palette-line:  rgba(255, 255, 255, 0.07);
-    --wall: radial-gradient(900px 600px at 10% 5%, rgba(45, 212, 191, 0.15), transparent 60%),
-            radial-gradient(800px 600px at 92% 15%, rgba(129, 140, 248, 0.18), transparent 60%),
-            radial-gradient(900px 700px at 55% 105%, rgba(244, 114, 182, 0.1), transparent 60%);
+    --wall: radial-gradient(65% 60% at 6% 0%, rgba(45, 212, 191, 0.16), transparent 72%),
+            radial-gradient(60% 65% at 98% 6%, rgba(129, 140, 248, 0.18), transparent 72%),
+            radial-gradient(65% 60% at 60% 108%, rgba(244, 114, 182, 0.11), transparent 72%),
+            radial-gradient(50% 55% at 22% 78%, rgba(56, 189, 248, 0.08), transparent 72%);
 
     /* Fields sit darker than the panel they are on, with a rim you can see:
        on a dark dialog a field the panel's own grey reads as no field. */
@@ -497,6 +517,82 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-cjk), system-ui, sans-serif;
 }
 
+/* The Solid look (Settings → Appearance & language → Look; html
+   data-look="solid"): no wallpaper and no glass. A cool, faintly green
+   paper, white sheets edged by a line, the sidebar a second paper, text in
+   ink a step darker; shadows only on what floats. Every surface reads its
+   colour from these, so the whole app follows. */
+:root[data-look="solid"] {
+  --wall: none;
+  --color-canvas:   #F3F6F5;
+  --color-recess:   #EEF3F1;
+  --color-hairline: #DCE3E1;
+  --color-ink:      #0E1A18;
+  --color-ink-soft: #2B3735;
+  --color-muted:    #56625F;
+  --material-sidebar: #E8EFEC;
+  --material-bar:     #FFFFFF;
+  --material-popover: #FFFFFF;
+  --palette-glass:    #FFFFFF;
+  --glass:          #FFFFFF;
+  --glass-strong:   #FFFFFF;
+  --glass-fill:     #FFFFFF;
+  --glass-light:    linear-gradient(transparent, transparent);
+  --glass-glow:     transparent;
+  --glass-sheen:    transparent;
+  --glass-hi:       transparent;
+  --glass-edge:     transparent;
+  --glass-rim:      #DCE3E1;
+  --glass-ring:     #DCE3E1;
+  --glass-lo:       rgba(14, 26, 24, 0.04);
+  --glass-shadow:   0 1px 2px rgba(14, 26, 24, 0.06), 0 8px 24px rgba(14, 26, 24, 0.10);
+  --glass-lift:     0 1px 2px rgba(14, 26, 24, 0.05);
+  --glass-clear:    #E8EFEC;
+  --glass-regular:  #FFFFFF;
+  --glass-thick:    #FFFFFF;
+  --glass-solid:    #FFFFFF;
+  --sheet-glass:    #FFFFFF;
+  --sheet-head:     #FFFFFF;
+  --sheet-pin:      #FFFFFF;
+  --sheet-hover:    #F6F9F8;
+  --sheet-lift:     #E9F5F2;
+  --sheet-rule:     #EDF1F0;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-look="solid"]:not([data-theme="light"]) {
+    --color-canvas:   #111416;
+    --color-recess:   #171B1D;
+    --color-hairline: #2C3335;
+    --color-ink:      #EEF3F2;
+    --color-ink-soft: #C9D3D1;
+    --color-muted:    #9AA7A4;
+    --material-sidebar: #171B1D;
+    --material-bar:     #1C2123;
+    --material-popover: #1F2426;
+    --palette-glass:    #1F2426;
+    --glass:          #1C2123;
+    --glass-strong:   #1C2123;
+    --glass-fill:     #1C2123;
+    --glass-rim:      #2C3335;
+    --glass-ring:     #2C3335;
+    --glass-lo:       rgba(0, 0, 0, 0.3);
+    --glass-shadow:   0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --glass-lift:     0 1px 2px rgba(0, 0, 0, 0.35);
+    --glass-clear:    #171B1D;
+    --glass-regular:  #1C2123;
+    --glass-thick:    #1C2123;
+    --glass-solid:    #2A3133;
+    --sheet-glass:    #1C2123;
+    --sheet-head:     #1C2123;
+    --sheet-pin:      #1C2123;
+    --sheet-hover:    #21272A;
+    --sheet-lift:     #1E3330;
+    --sheet-rule:     #262D2F;
+  }
+}
+/* Nothing to see through, so nothing to blur (and no cost to it). */
+:root[data-look="solid"] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
 /* Reduce Transparency: every glass surface becomes solid. Increase
    Contrast: solid too, with a firmer outline. */
 @media (prefers-reduced-transparency: reduce) {
@@ -505,6 +601,9 @@
     --glass: var(--glass-strong);
     --glass-fill: var(--glass-strong);
     --material-bar: var(--glass-strong);
+    --sheet-glass: var(--color-surface);
+    --sheet-head: var(--color-surface);
+    --sheet-pin: var(--color-surface);
   }
 }
 @media (prefers-contrast: more) {
@@ -517,6 +616,9 @@
     --glass-sheen: transparent;
     --material-sidebar: var(--color-recess);
     --material-bar: var(--color-surface);
+    --sheet-glass: var(--color-surface);
+    --sheet-head: var(--color-surface);
+    --sheet-pin: var(--color-surface);
     --glass-rim: var(--color-sand-500);
     --color-hairline: var(--color-sand-500);
   }
@@ -1087,7 +1189,7 @@
            border-0 bg-transparent px-2 text-[13px] font-normal text-ink no-underline
            transition-colors duration-75 select-none;
   }
-  .rail-item .icon { @apply size-4 shrink-0 text-muted transition-colors; }
+  .rail-item .icon { @apply size-4 shrink-0 text-ink-soft transition-colors; --icon-stroke: 2; }
   .rail-item:hover { @apply bg-sand-300/40 no-underline; }
   .rail-item.is-active { @apply bg-brand-600/15 font-semibold text-brand-800; }
   .rail-item.is-active .icon { @apply text-brand-600; }
@@ -1106,7 +1208,9 @@
   body[data-rail="closed"] .rail-item {
     @apply size-[42px] justify-center rounded-full p-0;
   }
-  body[data-rail="closed"] .rail-item .icon { @apply size-[18px]; }
+  /* Folded to icons, they are all there is to read: larger, bolder, in ink. */
+  body[data-rail="closed"] .rail-item .icon { @apply size-[21px] text-ink; --icon-stroke: 2.25; }
+  body[data-rail="closed"] .rail-item.is-active .icon { @apply text-brand-700; }
   body[data-rail="closed"] .rail-label { @apply sr-only; }
   body[data-rail="closed"] .rail-item.is-active {
     @apply text-brand-800;
@@ -1114,6 +1218,7 @@
     box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-ring), 0 2px 8px rgb(0 0 0 / 0.1);
   }
   html.window-inactive body[data-rail="closed"] .rail-item.is-active { @apply text-ink; }
+  html.window-inactive body[data-rail="closed"] .rail-item.is-active .icon { @apply text-ink; }
   body[data-rail="closed"] .rail-brand-word { @apply hidden; }
   body[data-rail="closed"] .rail-brand { @apply justify-center px-0; }
   body[data-rail="closed"] .rail-group { @apply items-center gap-0.5; }
@@ -1747,12 +1852,17 @@
 
   /* Clipped, not a scroller of its own: the page is what scrolls, so the
      toolbar and the bottom bar can stay in view as a long table goes by. */
-  /* A sheet keeps its solid page (what scrolls under its sticky toolbar and
-     header must be hidden), lifted off the wallpaper like the glass. */
+  /* A sheet is a pane of glass over the wallpaper. Its rows let the colour
+     through; what has to hide the rows going by under it (the sticky
+     toolbar, the header row, the foot) is frosted (--sheet-head). No blur on
+     the pane itself: behind it is only the wallpaper's soft colour, and a
+     blur the size of a long sheet costs every scroll. */
   .data-table-card {
-    @apply flex min-w-0 flex-col overflow-clip rounded-2xl bg-surface;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 7%, transparent), var(--glass-lift);
+    @apply flex min-w-0 flex-col overflow-clip rounded-2xl;
+    background: var(--sheet-glass);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px color-mix(in srgb, var(--color-ink) 6%, transparent), var(--glass-lift);
   }
+  .data-table-card > .dt-views { background: var(--sheet-head); }
 
   /* --- Toolbar ---------------------------------------------------------- */
 
@@ -1763,7 +1873,10 @@
      its table scrolls by, and the bottom bar (count, New, pages) at the
      bottom; data-table.js sets their heights as --dt-toolbar-h and
      --dt-bottom-h, which the header row and the selection bar keep clear of. */
-  .data-table-card > .dt-toolbar { @apply sticky top-0 z-[32] bg-surface; }
+  .data-table-card > .dt-toolbar {
+    @apply sticky top-0 z-[32] backdrop-blur-xl;
+    background: var(--sheet-head);
+  }
   /* On a phone the toolbar wraps to several lines: it stays where it is. */
   @media (max-width: 640px) {
     .data-table-card > .dt-toolbar { @apply static; }
@@ -1812,9 +1925,15 @@
 
   .dt thead th {
     @apply sticky top-0 z-10 overflow-hidden text-ellipsis whitespace-nowrap border-b border-hairline
-           bg-sand-50/95 px-2 py-1.5 text-left align-middle text-[12px] font-semibold
-           text-muted backdrop-blur;
+           px-2 py-1.5 text-left align-middle text-[12px] font-semibold
+           text-muted backdrop-blur-xl;
+    background-color: var(--sheet-head);
   }
+  /* The column it is sorted by reads in ink; the others show their caret
+     only when pointed at. */
+  .dt thead th:is(.dt-sort-asc, .dt-sort-desc) { @apply text-ink; }
+  .dt thead th.dt-sortable:not(.dt-sort-asc, .dt-sort-desc) .dt-sort-indicator { @apply opacity-0; }
+  .dt thead th.dt-sortable:hover .dt-sort-indicator { @apply opacity-100; }
 
   /* A table's last row has no rule under it. Its cells take the rule's
      width from their row (--row-rule), so a row that stops being the last
@@ -1825,11 +1944,12 @@
 
   .dt tbody tr { @apply transition-colors duration-100; }
   .dt tbody td {
-    @apply border-b border-sand-100 px-2 py-1 align-middle text-ink-soft;
+    @apply border-b px-2 py-1 align-middle text-ink-soft;
+    border-color: var(--sheet-rule);
     border-bottom-width: var(--row-rule);
   }
-  .dt tbody tr:hover { @apply bg-sand-50/80; }
-  .dt tbody tr.is-selected { @apply bg-brand-50/60; }
+  .dt tbody tr:hover { background-color: var(--sheet-hover); }
+  .dt tbody tr.is-selected { background-color: color-mix(in srgb, var(--color-brand-600) 10%, transparent); }
 
   /* Column header internals: label + type glyph + sort caret. The glyph is
      either an inline SVG injected by data-table.js (date/status/check/list)
@@ -1953,10 +2073,11 @@
   .dt-empty-msg { @apply sticky left-4 inline-block max-w-[calc(100vw-4rem)] whitespace-normal; }
 
   .dt-bottom-bar {
-    @apply flex flex-wrap items-center gap-2 border-t border-sand-100 bg-sand-50
-           px-2.5 py-1.5 text-[12px] text-muted;
+    @apply flex flex-wrap items-center gap-2 border-t px-2.5 py-1.5 text-[12px] text-muted;
+    border-color: var(--sheet-rule);
+    background: var(--sheet-head);
   }
-  .data-table-card > .dt-bottom-bar { @apply sticky bottom-0 z-[32]; }
+  .data-table-card > .dt-bottom-bar { @apply sticky bottom-0 z-[32] backdrop-blur-xl; }
   .dt-bottom-spacer { @apply ml-auto; }
   /* A phone: one line over the tab bar. The page size and its words go;
      ‹ › and the page stay. */
@@ -2125,9 +2246,9 @@
 
   /* A clean header: the names only, muted, ruled above and below. */
   .dt-laid .dt thead th {
-    @apply border-y border-hairline bg-surface px-3 py-2 text-[12px] font-medium text-muted backdrop-blur-none;
+    @apply border-b border-hairline px-3 py-2 text-[12px] font-medium text-muted;
   }
-  .dt-laid .dt thead th:not(:last-child) { box-shadow: inset -1px 0 0 color-mix(in srgb, var(--color-hairline) 60%, transparent); }
+  .dt-laid .dt thead th:is(.dt-sort-asc, .dt-sort-desc) { @apply font-semibold text-ink; }
   .dt-laid .dt thead th.sheet-pin-1 { box-shadow: inset -1px 0 0 var(--color-hairline); }
   .dt-laid .dt-col-icon { @apply hidden; }
   .dt-laid .sheet-table tbody td { @apply h-10; }
@@ -2148,35 +2269,66 @@
   .dt-inspect-wrap { @apply min-w-0; }
   .dt-inspect-wrap.is-open {
     @apply grid items-start gap-3;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) 340px;
   }
+  /* The row in full: its name and labels, Open, then Overview (blocks of
+     its fields, its rack) or History, each block a lighter pane on the glass. */
   .dt-inspector {
-    @apply relative sticky flex flex-col gap-3 overflow-y-auto p-4;
+    @apply relative sticky flex flex-col gap-3 overflow-y-auto overscroll-contain p-4;
     top: 8px;
     max-height: calc(100vh - var(--tabbar-h) - var(--toolbar-h) - 24px);
   }
   .dt-inspector[hidden] { display: none; }
-  .dt-inspector-close {
-    @apply absolute right-2.5 top-2.5 grid size-7 cursor-pointer place-items-center rounded-full border-0
-           bg-transparent text-muted;
+  .dt-inspector-top { @apply flex items-center gap-2; }
+  .dt-inspector-kicker { @apply min-w-0 flex-1 truncate text-[12px] font-semibold text-muted; }
+  .dt-inspector-nav { @apply flex shrink-0 items-center gap-1; }
+  .dt-inspector-icon {
+    @apply grid size-7 cursor-pointer place-items-center rounded-full border-0 text-ink-soft;
+    background: color-mix(in srgb, var(--color-surface) 60%, transparent);
   }
-  .dt-inspector-close:hover { @apply bg-sand-300/40 text-ink; }
-  .dt-inspector-head { @apply flex flex-wrap items-end gap-x-3 gap-y-2 pr-8; }
-  .dt-inspector-kicker { @apply w-full text-[11px] font-semibold text-muted; }
+  .dt-inspector-icon:hover { @apply text-ink; background: var(--sheet-lift); }
+  .dt-inspector-icon .icon { @apply size-3.5; --icon-stroke: 2.25; }
+  .dt-inspector-head { @apply flex flex-wrap items-baseline gap-x-3 gap-y-1; }
   .dt-inspector-title { @apply font-mono text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink; }
-  .dt-inspector-head .btn { @apply ml-auto; }
+  .dt-inspector-chips { @apply -mt-1 flex flex-wrap gap-1.5; }
+  .dt-inspector-actions { @apply flex gap-2; }
+  .dt-inspector-actions .btn { @apply flex-1 justify-center rounded-full; }
+  .dt-inspector-tabs {
+    @apply flex gap-0.5 rounded-full p-[3px];
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
+  .dt-inspector-tab {
+    @apply h-7 flex-1 cursor-pointer rounded-full border-0 bg-transparent text-[13px] font-medium text-ink-soft;
+  }
+  .dt-inspector-tab[aria-selected="true"] {
+    @apply font-semibold text-ink;
+    background: var(--glass-solid);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 1px 3px rgb(0 0 0 / 0.1);
+  }
+  .dt-inspector-block {
+    @apply rounded-2xl px-3.5 py-3;
+    background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
   .dt-inspector-empty { @apply m-0 text-[13px] text-muted; }
+  .dt-inspector-block .dt-inspector-empty + .dt-inspector-empty,
+  .dt-history + .dt-inspector-empty { @apply mt-2 text-[12px]; }
   .dt-inspector-fields {
-    @apply m-0 grid gap-x-3 gap-y-1.5 border-t border-hairline pt-3 text-[13px];
+    @apply m-0 grid gap-x-3 gap-y-1.5 text-[13px];
     grid-template-columns: max-content minmax(0, 1fr);
   }
-  .dt-inspector-fields dt { @apply text-[12px] text-muted; }
+  .dt-inspector-fields dt { @apply text-[12px] leading-5 text-muted; }
   .dt-inspector-fields dd { @apply m-0 min-w-0 break-words text-ink; }
-  .dt-inspector-label { @apply pb-1.5 text-[12px] font-semibold text-muted; }
-  .dt-inspector-fields :is(.status-pill, .sex-pill, .scope-pill) {
+  .dt-inspector-muted { @apply text-[12px] text-muted; }
+  .dt-inspector-label { @apply m-0 pb-2 text-[12px] font-semibold text-muted; }
+  .dt-inspector :is(.dt-inspector-fields, .dt-inspector-chips) :is(.status-pill, .sex-pill, .scope-pill) {
     @apply inline-block rounded-full px-2 text-[11px] font-semibold capitalize leading-5;
   }
-  .dt-inspector-rack { @apply border-t border-hairline pt-3; }
+  .dt-history { @apply m-0 flex list-none flex-col p-0; }
+  .dt-history > li { @apply border-b py-2 first:pt-0 last:border-b-0 last:pb-0; border-color: var(--sheet-rule); }
+  .dt-history-what { @apply text-[13px] font-semibold text-ink; }
+  .dt-history-change { @apply break-words text-[12px] text-ink-soft; }
+  .dt-history-when { @apply mt-0.5 text-[11px] text-muted; }
   .dt-rack-mini { @apply grid gap-1; }
   .dt-rack-cell {
     @apply grid aspect-[4/3] min-w-0 place-items-center truncate rounded-md bg-sand-300/25 font-mono text-[10px]
@@ -2189,7 +2341,9 @@
     color: var(--color-on-brand, #fff);
     box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 35%, transparent);
   }
-  .dt tbody tr.is-inspected > td { background-image: linear-gradient(color-mix(in srgb, var(--color-brand-600) 7%, transparent), color-mix(in srgb, var(--color-brand-600) 7%, transparent)); }
+  /* The row the panel shows lifts out of the glass, marked at its start. */
+  .dt tbody tr.is-inspected > td { background-color: var(--sheet-lift); }
+  .dt tbody tr.is-inspected > td:first-child { box-shadow: inset 3px 0 0 var(--color-brand-600); }
   @media (max-width: 1100px) {
     .dt-inspect-wrap.is-open { @apply block; }
     .dt-inspector { @apply static mt-3 max-h-none; }
@@ -2250,13 +2404,23 @@
      makes it as long as it is. Only a sheet wider than its card scrolls
      sideways, with the ID column pinned. */
   .sheet-table { @apply w-max min-w-full table-fixed; }
-  .sheet-table thead th { @apply z-20 bg-sand-50; }
+  .sheet-table thead th { @apply z-20; }
 
-  /* Cells are solid, not translucent, so pinned columns hide what slides
-     beneath them. */
-  .sheet-table tbody td { @apply h-8 bg-surface px-1 py-0; }
-  .sheet-table tbody tr:hover td { @apply bg-sand-50; }
-  .sheet-table tbody tr.is-selected td { @apply bg-brand-50; }
+  /* Cells are clear, so the glass shows; a sheet wider than its card
+     scrolls sideways under its pinned columns, which are then frosted to
+     hide what slides beneath them. */
+  .sheet-table tbody td { @apply h-8 px-1 py-0; }
+  .sheet-table tbody tr:hover td { background-color: var(--sheet-hover); }
+  .sheet-table tbody tr.is-selected td { background-color: color-mix(in srgb, var(--color-brand-600) 12%, transparent); }
+  .dt-scroll:not(.is-fit) .sheet-table tbody td.sheet-pin,
+  .dt-scroll:not(.is-fit) .sheet-table thead th.sheet-pin { background-color: var(--sheet-pin); }
+  .dt-scroll:not(.is-fit) .sheet-table tbody tr:hover td.sheet-pin {
+    background-color: color-mix(in srgb, var(--color-ink) 3%, var(--sheet-pin));
+  }
+  .dt-scroll:not(.is-fit) .sheet-table tbody tr.is-selected td.sheet-pin {
+    background-color: color-mix(in srgb, var(--color-brand-600) 12%, var(--sheet-pin));
+  }
+  .dt-scroll:not(.is-fit) .dt tbody tr.is-inspected > td.sheet-pin { background-color: var(--sheet-pin); }
   .sheet-table tbody tr.is-inactive td { @apply text-muted; }
   .sheet-table tbody tr.is-inactive :is(input, select) { @apply text-muted; }
   .sheet-table tbody tr.is-inactive .cell-text { @apply text-muted; }
@@ -2524,15 +2688,22 @@
   .record-dialog-head h3 small { @apply ml-1 text-[13px] font-normal text-muted; }
   .record-dialog-sub { @apply mt-1 max-w-[62ch] text-[13px] leading-snug text-muted; }
 
-  .record-dialog-body { @apply flex flex-col gap-5 overflow-y-auto px-6 pb-5 pt-2; }
+  /* Roomier fields than a sheet's: a form is where one record is typed in. */
+  .record-dialog-body { @apply flex flex-col gap-5 overflow-y-auto px-6 pb-5 pt-2; --field-h: 36px; }
 
   .record-group {
-    @apply m-0 grid grid-cols-1 gap-x-3 gap-y-2.5 border-0 p-0 sm:grid-cols-2;
+    @apply m-0 grid grid-cols-1 gap-x-3 gap-y-3 border-0 p-0 sm:grid-cols-2;
   }
+  /* A group's name in words, as a heading, not small capitals; the groups
+     after the first ruled off from the one above. */
   .record-group legend {
-    @apply mb-2.5 p-0 text-[11px] font-semibold tracking-[0.04em] text-muted uppercase;
+    @apply mb-3 p-0 text-[13px] font-semibold text-ink;
   }
-  :lang(zh) .record-group legend { @apply text-[12px] tracking-normal normal-case; }
+  .record-dialog-body > .record-group ~ .record-group { @apply pt-1; }
+  /* A choice drawn as buttons takes the row, so each button reads in full. */
+  .record-group > label:has(> .seg-field) { @apply col-span-full; }
+  .record-dialog-body label:has(> :required) > span:first-child::after,
+  .record-dialog-body label.is-required > span:first-child::after { content: " *"; @apply text-danger-600; }
   .record-dialog-body label { @apply field-label; }
   .record-dialog-body label > :is(input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), select, textarea) {
     @apply field normal-case tracking-normal;
@@ -2546,6 +2717,83 @@
 
   .record-dialog-foot {
     @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-6 py-4;
+  }
+  /* ⌘↵ / Ctrl+↵ saves (dialogs.js puts the key on the main button). */
+  .record-dialog-foot .dt-kbd { @apply ml-1; color: inherit; }
+  @media (max-width: 640px), (pointer: coarse) { .record-dialog-foot .dt-kbd { display: none; } }
+
+  /* A long form (two groups of fields or more in view: a dialog's tabs hide
+     the groups of the others) slides in from the right as
+     a sheet the height of the window, the page still in view beside it; a
+     short one stays a card in the middle. A phone shows both from below. */
+  @media (min-width: 641px) {
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) {
+      @apply mr-2 ml-auto rounded-[22px];
+      width: min(600px, calc(100vw - 1rem));
+      height: calc(100dvh - 1rem);
+      max-height: calc(100dvh - 1rem);
+      animation: sheet-in-right 0.32s var(--ease-out-soft);
+    }
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) > form {
+      @apply h-full max-h-none;
+    }
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) .record-dialog-body {
+      @apply flex-1;
+    }
+  }
+  @keyframes sheet-in-right { from { transform: translateX(104%); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    dialog.record-dialog:has(.record-group:not([hidden]) ~ .record-group:not([hidden])) { animation: none !important; }
+  }
+
+  /* A short choice as buttons in a row (a select[data-segmented], drawn by
+     dialogs.js; the select stays the field and is what is saved). */
+  .seg-field { @apply flex flex-wrap gap-1.5; }
+  .seg-field-item {
+    @apply inline-flex h-9 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border
+           px-3 text-[13px] font-medium text-ink-soft transition-colors;
+    border-color: var(--field-border);
+    background: var(--field-bg);
+  }
+  .seg-field-item:hover { border-color: var(--field-border-hover); @apply text-ink; }
+  .seg-field-item[aria-checked="true"] {
+    @apply font-semibold text-ink;
+    border-color: var(--color-brand-600);
+    background: color-mix(in srgb, var(--color-brand-600) 9%, var(--field-bg));
+    box-shadow: inset 0 0 0 1px var(--color-brand-600);
+  }
+  .seg-field-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  select.is-segmented { @apply sr-only; }
+
+  /* Fields shown one more at a time (fieldset[data-reveal], dialogs.js):
+     Transgene 1, and + Add a transgene for the next. */
+  .reveal-more {
+    @apply col-span-full inline-flex h-8 cursor-pointer items-center gap-1.5 justify-self-start rounded-full border border-dashed
+           bg-transparent px-3 text-[13px] font-medium text-brand-700;
+    border-color: color-mix(in srgb, var(--color-brand-600) 45%, transparent);
+  }
+  .reveal-more:hover { background: color-mix(in srgb, var(--color-brand-600) 8%, transparent); }
+  .reveal-more .icon { @apply size-3.5; }
+
+  /* Pick a place in a rack by clicking it (rack-grid.js, [data-place-picker]). */
+  .place-picker { @apply col-span-full flex flex-col gap-1.5; }
+  .place-picker[hidden] { display: none; }
+  .place-picker-head { @apply flex flex-wrap items-baseline gap-x-2 text-[12px] font-medium text-ink-soft; }
+  .place-picker-head small { @apply text-[12px] font-normal text-muted; }
+  .place-picker-grid { @apply grid gap-1; }
+  .place-picker-cell {
+    @apply grid h-8 min-w-0 cursor-pointer place-items-center truncate rounded-md border px-0.5 font-mono text-[11px]
+           text-ink-soft transition-colors;
+    border-color: var(--field-border);
+    background: var(--field-bg);
+  }
+  .place-picker-cell:hover { border-color: var(--color-brand-600); @apply text-ink; }
+  .place-picker-cell.is-taken { @apply border-transparent font-semibold text-ink; background: color-mix(in srgb, var(--color-ink) 8%, transparent); }
+  .place-picker-cell.is-taken:disabled { @apply cursor-not-allowed opacity-60; }
+  .place-picker-cell[aria-pressed="true"] {
+    @apply border-transparent font-semibold;
+    background: var(--color-brand-600);
+    color: var(--color-on-brand, #fff);
   }
   .record-dialog-foot .btn { @apply h-8 px-3.5; }
   .record-dialog-hint { @apply mr-auto text-[12px] text-muted; }
@@ -2667,15 +2915,63 @@
   .util-shortrow em { @apply text-[12px] not-italic text-muted; }
   .util-chip { @apply inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 text-[13px] text-ink no-underline hover:border-brand-500 hover:no-underline; }
   .util-chip .icon { @apply size-3 text-amber-500; }
-  .util-groups { @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3; }
-  .util-group { @apply p-3.5 pb-2.5; }
-  .util-group header { @apply mb-2 flex items-center gap-2.5; }
-  .util-gicon { @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700; }
-  .util-gicon .icon { @apply size-[18px]; }
-  .util-group h2 { @apply text-[15px] font-semibold text-ink; }
-  .util-group header p { @apply text-[12px] text-muted; }
-  .util-group li a { @apply -mx-2 flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-[13px] text-ink no-underline hover:bg-sand-100 hover:text-brand-700 hover:no-underline; }
-  .util-group li small { @apply text-[11px] text-muted; }
+  /* Home: a sum typed in the search answered on the spot, the pinned tools
+     with their last answer, then every tool as a tile, by the question it
+     answers, filtered by kind. */
+  .util-sum {
+    @apply mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl px-4 py-3 text-ink no-underline hover:no-underline;
+    background: color-mix(in srgb, var(--color-brand-600) 9%, var(--sheet-lift));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand-600) 30%, transparent);
+  }
+  .util-sum-tool { @apply w-full text-[12px] font-semibold text-brand-700; }
+  .util-sum-lines { @apply flex flex-wrap items-baseline gap-x-6 gap-y-1; }
+  .util-sum-lines > span { @apply flex flex-col text-[15px] tabular-nums text-ink-soft; }
+  .util-sum-lines > span.is-main { @apply text-[22px] font-semibold tracking-[-0.01em] text-ink; }
+  .util-sum-lines small { @apply text-[12px] font-normal tracking-normal text-muted; }
+  .util-sum-hint { @apply text-[13px] text-ink-soft; }
+  .util-sum-open {
+    @apply ml-auto inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-semibold;
+    background: var(--color-brand-600); color: var(--color-on-brand, #fff);
+  }
+  .util-label { @apply mb-2 text-[12px] font-semibold text-muted; }
+  .util-pins { @apply grid gap-2.5; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .util-pin {
+    @apply flex min-w-0 flex-col gap-0.5 rounded-2xl px-4 py-3 text-ink no-underline transition-shadow hover:no-underline;
+    background: var(--sheet-glass);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px color-mix(in srgb, var(--color-ink) 6%, transparent);
+  }
+  .util-pin:hover { box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--color-brand-600), var(--glass-lift); }
+  .util-pin b { @apply flex items-center gap-1.5 truncate text-[13px] font-semibold; }
+  .util-pin b .icon { @apply size-3.5 shrink-0 text-amber-500; }
+  .util-pin-answer { @apply truncate text-[22px] font-semibold tracking-[-0.01em] tabular-nums text-brand-700; }
+  .util-pin small { @apply truncate text-[12px] text-muted; }
+  .util-pills { @apply mb-3 mt-1 flex flex-wrap gap-1.5; }
+  .util-pills button {
+    @apply inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium text-ink-soft;
+    border-color: color-mix(in srgb, var(--color-ink) 12%, transparent);
+    background: var(--sheet-glass);
+  }
+  .util-pills button:hover { @apply text-ink; background: var(--sheet-lift); }
+  .util-pills button .icon { @apply size-3.5; --icon-stroke: 2; }
+  .util-pills button[aria-selected="true"] { @apply border-transparent font-semibold; background: var(--color-ink); color: var(--color-surface); }
+  .util-tiles { @apply grid gap-2.5; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .util-tile {
+    @apply flex min-h-[84px] min-w-0 flex-col gap-0.5 rounded-2xl px-4 py-3 text-ink no-underline transition-shadow hover:no-underline;
+    background: var(--sheet-glass);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px color-mix(in srgb, var(--color-ink) 6%, transparent);
+  }
+  .util-tile:hover { box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--color-brand-600), var(--glass-lift); }
+  .util-tile b { @apply flex items-center gap-1.5 text-[13px] font-semibold; }
+  .util-tile span { @apply text-[13px] leading-snug text-ink-soft; }
+  .util-tile small { @apply mt-auto pt-1 text-[11px] text-muted; }
+  .util-tile.is-new { @apply text-brand-700; background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand-600) 45%, transparent); }
+  .util-tile.is-new b .icon { @apply size-3.5; }
+  /* A tool's own recent sums, under it: click one to have it back. */
+  .util-sums { @apply mt-3 flex flex-wrap items-center gap-1.5; }
+  .util-sums:empty { display: none; }
+  .util-sums > span { @apply mr-1 text-[12px] font-semibold text-muted; }
+  .util-sums .util-chip { @apply cursor-pointer gap-2; }
+  .util-sums .util-chip b { @apply font-semibold text-brand-700; }
 
   .util-tool { @apply grid grid-cols-1 items-start gap-5 lg:grid-cols-[210px_minmax(0,1fr)]; }
   .util-rail { @apply hidden max-h-[calc(100vh-150px)] flex-col overflow-y-auto lg:sticky lg:top-2 lg:flex; }
@@ -2717,7 +3013,7 @@
   .util-answer-body { @apply flex flex-col gap-2.5 p-4; }
   .util-mains { @apply flex flex-col gap-2; }
   .util-mains dt { @apply text-[12px] text-muted; }
-  .util-mains dd { @apply text-[22px] font-semibold leading-tight tracking-[-0.01em] tabular-nums text-ink; }
+  .util-mains dd { @apply text-[28px] font-semibold leading-tight tracking-[-0.02em] tabular-nums text-ink; }
   .util-minors > div { @apply flex items-baseline justify-between gap-3 border-t border-sand-100 py-1; }
   .util-minors dt { @apply text-[13px] text-muted; }
   .util-minors dd { @apply text-right text-[13px] tabular-nums text-ink; }
@@ -5323,12 +5619,25 @@ tr.is-scanned > td:first-child {
   .settings {
     --set-lab: #5B6B80;
     --set-lab-tint: rgb(91 107 128 / 0.14);
+    --set-fill: rgb(0 0 0 / 0.045);
+    --set-fill-hover: rgb(0 0 0 / 0.035);
+    --set-fill-press: rgb(0 0 0 / 0.07);
+    --set-sep: rgb(0 0 0 / 0.09);
+    --set-chev: rgb(0 0 0 / 0.32);
     @apply grid grid-cols-1 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)];
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+    :root:not([data-theme="light"]) .settings {
+      --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16);
+      --set-fill: rgb(255 255 255 / 0.055); --set-fill-hover: rgb(255 255 255 / 0.04);
+      --set-fill-press: rgb(255 255 255 / 0.08); --set-sep: rgb(255 255 255 / 0.09); --set-chev: rgb(255 255 255 / 0.36);
+    }
   }
-  :root[data-theme="dark"] .settings { --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16); }
+  :root[data-theme="dark"] .settings {
+    --set-lab: #A3B1C4; --set-lab-tint: rgb(163 177 196 / 0.16);
+    --set-fill: rgb(255 255 255 / 0.055); --set-fill-hover: rgb(255 255 255 / 0.04);
+    --set-fill-press: rgb(255 255 255 / 0.08); --set-sep: rgb(255 255 255 / 0.09); --set-chev: rgb(255 255 255 / 0.36);
+  }
 
   /* The list of panes: a pane of glass of its own, as the calendar's and
      the notebook's side panels are; the open pane beside it a thick sheet. */
@@ -5406,8 +5715,11 @@ tr.is-scanned > td:first-child {
   .set-title { @apply mt-5 mb-1.5 px-1 text-[12px] font-semibold text-muted; }
   .set-title-row { @apply flex items-center justify-between gap-3; }
   .set-title-row a { @apply text-[12px] font-medium text-brand-700 no-underline; }
+  /* A group is a grey block, as on the Mac: no outline, its separators
+     inset from both sides (and past a row's icon, to its text). */
   .set-group {
-    @apply overflow-hidden rounded-xl border border-hairline bg-surface;
+    @apply overflow-hidden rounded-xl;
+    background: var(--set-fill);
   }
   .set-group-pad { @apply flex flex-col gap-3 p-4; }
   .set-note { @apply m-0 text-[13px] leading-snug text-muted; }
@@ -5417,7 +5729,30 @@ tr.is-scanned > td:first-child {
   .set-group > .set-row + .set-row,
   .set-group > * + .set-row,
   .set-group > .set-row + *:not(input):not(noscript),
-  .set-details + .set-row, .set-row + .set-details { @apply border-t border-hairline; }
+  .set-details + .set-row, .set-row + .set-details {
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(to right, transparent var(--set-sep-in, 14px), var(--set-sep) var(--set-sep-in, 14px),
+                                  var(--set-sep) calc(100% - 14px), transparent calc(100% - 14px)) 1;
+  }
+  .set-row:has(> .set-row-ico) { --set-sep-in: 52px; }
+  @media (prefers-contrast: more) {
+    .set-group, .set-stat { box-shadow: inset 0 0 0 1px var(--color-hairline); }
+  }
+
+  /* A row's icon: a solid tile with a white glyph, the Mac's way, so a
+     list of links reads at a glance. The colour only tells rows apart. */
+  .set-row-ico {
+    @apply grid size-[26px] shrink-0 place-items-center rounded-[7px] text-white;
+    background: linear-gradient(rgb(255 255 255 / 0.16), rgb(255 255 255 / 0)), var(--tile, var(--color-sand-500));
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.1);
+  }
+  .set-row-ico svg { @apply size-[14px]; }
+  .set-row-ico.is-blue { --tile: #007AFF; }
+  .set-row-ico.is-green { --tile: #28A745; }
+  .set-row-ico.is-orange { --tile: #F08C00; }
+  .set-row-ico.is-purple { --tile: #AF52DE; }
+  .set-row-ico.is-indigo { --tile: #5856D6; }
+  .set-row-ico.is-slate { --tile: #6E7A8A; }
   .set-label { @apply min-w-0 flex-1; }
   .set-label b { @apply block font-medium; }
   .set-label small { @apply mt-px block text-[12px] leading-snug text-muted; }
@@ -5439,8 +5774,9 @@ tr.is-scanned > td:first-child {
   .set-icon-pick { @apply flex shrink-0 items-center gap-2; }
   .set-icon-preview { @apply size-10 rounded-xl object-cover; box-shadow: inset 0 0 0 1px var(--glass-ring); }
   a.set-row-link { @apply cursor-pointer transition-colors; }
-  a.set-row-link:hover { @apply bg-sand-50; }
-  .set-chev { @apply size-4 shrink-0 text-sand-400; }
+  a.set-row-link:hover { background: var(--set-fill-hover); }
+  a.set-row-link:active { background: var(--set-fill-press); }
+  .set-chev { @apply size-3 shrink-0; color: var(--set-chev); }
 
   /* An on/off switch: a checkbox drawn the Mac's way. */
   .set-switch {
@@ -5463,9 +5799,9 @@ tr.is-scanned > td:first-child {
   .set-details > summary { @apply cursor-pointer list-none; }
   .set-details > summary::-webkit-details-marker { @apply hidden; }
   .set-details[open] > summary .set-chev { @apply rotate-180; }
-  .set-password { @apply grid grid-cols-1 gap-3 border-t border-hairline px-3.5 py-3 sm:grid-cols-3; }
+  .set-password { @apply grid grid-cols-1 gap-3 border-t px-3.5 py-3 sm:grid-cols-3; border-color: var(--set-sep); }
   .set-password > div { @apply sm:col-span-3; }
-  .set-more { @apply border-t border-hairline px-3.5 py-3 text-[12px] text-muted; }
+  .set-more { @apply border-t px-3.5 py-3 text-[12px] text-muted; border-color: var(--set-sep); }
   .set-more pre { @apply m-0 mb-2 overflow-x-auto text-[12px] leading-relaxed text-ink-soft; }
   .set-more p { @apply m-0; }
   .set-more .set-notes { @apply max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-[12px]; }
@@ -5478,7 +5814,7 @@ tr.is-scanned > td:first-child {
 
   /* Statistics: the totals, one bar per person, how full each rack is. */
   .set-stats { @apply grid grid-cols-2 gap-2.5 sm:grid-cols-4; }
-  .set-stat { @apply rounded-xl border border-hairline bg-surface px-3.5 py-3; }
+  .set-stat { @apply rounded-xl px-3.5 py-3; background: var(--set-fill); }
   .set-stat b { @apply block text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink; }
   .set-stat small { @apply text-[12px] text-muted; }
   .set-bar { @apply block h-2 w-[min(220px,35%)] shrink-0 overflow-hidden rounded bg-transparent; }

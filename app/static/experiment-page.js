@@ -18,7 +18,7 @@
   let scale = null;           // raw values, or %: a count starts as % of those at the start
   try { view = sessionStorage.getItem(`xp:view:${D.id}`) || 'treatment'; } catch (_e) { /* no storage */ }
 
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const esc = BioHtml.escape;
   const icon = (name) => `<svg class="icon xp-icon" aria-hidden="true"><use href="/static/icons.svg#${esc(name)}"></use></svg>`;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const LOCALE = window.BM_LANG === 'zh' ? 'zh-CN' : undefined;
@@ -191,11 +191,13 @@
       return;
     }
     const showSex = subs.some((s) => s.sex);
+    const showAge = subs.some((s) => s.age);
     const showStart = D.family !== 'mouse';
     const head = [`<th class="sheet-pin sheet-pin-start xp-id">${esc(cap(noun()))}</th>`];
     if (showSex) head.push(`<th>${t('Sex')}</th>`);
+    if (showAge) head.push(`<th title="${esc(t('How old it was on day 1, as this database counts age'))}">${t('Age on day 1')}</th>`);
     head.push(`<th>${t('Genotype')}</th>`, `<th>${esc(cap(t(D.housing)))}</th>`, `<th>${t('Group')}</th>`);
-    if (showStart) head.push(`<th title="${esc(t('How many at the start, for a count or survival'))}">${t('At start')}</th>`);
+    if (showStart) head.push(`<th title="${esc(t('How many at the start, for a count or survival'))}">${t('At start')}${D.editable && subs.some((s) => s.start == null) ? ` <button type="button" class="xp-link" data-xp-start-all title="${esc(t('The same count for every one that has none yet'))}">${t('Fill in')}</button>` : ''}</th>`);
 
     let cols = [];
     if (view === 'treatment') {
@@ -215,6 +217,7 @@
       const out = s.left_out ? ` <span class="xp-left-tag" title="${esc(t('Left out of the analysis: %(reason)s', { reason: s.left_out }))}">${esc(t('left out'))}</span>` : '';
       const cells = [`<td class="sheet-pin sheet-pin-start xp-id"><span class="sheet-id"><span class="life-dot${s.alive ? ' is-alive' : ''}"></span><span class="ident">${esc(s.label)}</span>${out}</span></td>`];
       if (showSex) cells.push(`<td>${esc(s.sex)}</td>`);
+      if (showAge) cells.push(`<td class="xp-num">${esc(s.age || '')}</td>`);
       cells.push(`<td class="xp-geno" title="${esc(s.genotype)}">${esc(s.genotype)}</td>`, `<td>${esc(s.housing)}</td>`);
       cells.push(`<td><input class="xp-cell" data-xp-group="${esc(s.key)}" value="${esc(s.group)}" placeholder="${esc(t('(no group)'))}" list="xp-groups" aria-label="${esc(t('Group of %(label)s', { label: s.label }))}" ${D.editable ? '' : 'disabled'}></td>`);
       if (showStart) cells.push(`<td><input class="xp-cell xp-num" data-xp-start="${esc(s.key)}" value="${s.start == null ? '' : s.start}" inputmode="numeric" aria-label="${esc(t('How many %(label)s started with', { label: s.label }))}" ${D.editable ? '' : 'disabled'}></td>`);
@@ -466,10 +469,16 @@
   function drawStats(stats) {
     const box = $('[data-xp-stats]');
     const tested = stats.filter((st) => st.test);
-    box.hidden = !tested.length;
-    if (!tested.length) return;
+    // Survival over the whole run: the log-rank test, group against group.
+    const surv = (VT().stats || {}).survival;
+    box.hidden = !tested.length && !surv;
+    if (box.hidden) return;
+    const pText = (p) => (p < 0.001 ? p.toExponential(1) : p.toFixed(3));
+    const whole = surv ? `<p class="xp-survival"><b>${t('Over the whole experiment')}</b>: ${esc(surv.test)}, p = ${pText(surv.p)} <b>${esc(surv.stars)}</b>
+      <span class="xp-muted">${surv.groups.map((g) => esc(t('%(group)s: %(deaths)s died of %(start)s (%(expected)s expected)', { group: g.group, deaths: num(g.deaths, 0), start: num(g.start, 0), expected: num(g.expected, 1) }))).join(' · ')}</span></p>` : '';
     const unit = scale === 'pct' || vFraction() ? '%' : (VR().unit ? ` ${VR().unit}` : '');
-    $('[data-xp-stats-table]').innerHTML = `<table class="dense-table fit-table"><thead><tr><th>${tc('experiment', 'Day')}</th><th>${t('Groups')}</th><th>${tc('experiment', 'Test')}</th><th>p</th><th></th></tr></thead><tbody>${
+    if (!tested.length) { $('[data-xp-stats-table]').innerHTML = whole; return; }
+    $('[data-xp-stats-table]').innerHTML = whole + `<table class="dense-table fit-table"><thead><tr><th>${tc('experiment', 'Day')}</th><th>${t('Groups')}</th><th>${tc('experiment', 'Test')}</th><th>p</th><th></th></tr></thead><tbody>${
       stats.map((st) => `<tr><td>${st.day !== null ? t('Day %(n)s', { n: st.day }) : ''} <span class="xp-muted">${esc(niceDate(st.date))}</span></td>
         <td>${st.groups.map((g) => `${esc(g.group)}: ${num(g.value, 2)}${unit}${g.sem != null ? ` ± ${num(g.sem, 2)}` : ''} <span class="xp-muted">n=${g.n}</span>`).join('<br>')}</td>
         <td>${esc(st.test || '—')}</td><td>${st.p == null ? '' : (st.p < 0.001 ? st.p.toExponential(1) : st.p.toFixed(3))}</td><td><b>${esc(st.stars)}</b></td></tr>`).join('')}</tbody></table>`;
@@ -587,6 +596,43 @@
     groups.innerHTML = '<option value="">—</option>' + add.groups.map(([v, l, n]) => `<option value="${esc(v)}">${esc(l)} (${n})</option>`).join('');
     single.innerHTML = '<option value="">—</option>' + add.single.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
   }
+  // At start's Fill in: one count for every one that has none yet (a vial's flies).
+  document.addEventListener('click', async (event) => {
+    if (!event.target.closest('[data-xp-start-all]')) return;
+    const asked = await window.BioDialog.prompt(t('How many did each start with?'), '');
+    const value = String(typeof asked === 'string' ? asked : (asked && asked.value) || '').trim();
+    if (!value) return;
+    if (!/^\d+$/.test(value)) { say('error', t('“%(value)s” isn’t a number.', { value })); return; }
+    let data = null;
+    try {
+      for (const s of D.subjects.filter((x) => x.start == null)) {
+        data = await sendReason(`${XP}/subjects/${encodeURIComponent(s.key)}/update`, { start: value });
+        if (!data) break;
+      }
+      if (data) { apply(data); say('saved', t('Saved')); }
+    } catch (error) { say('error', error.message); }
+  });
+
+  // Randomize: the animals into the groups named, balanced and seeded; shown
+  // first, then set when confirmed.
+  const randomizeButton = $('[data-xp-randomize]');
+  if (randomizeButton) randomizeButton.addEventListener('click', async () => {
+    const known = [...new Set(D.subjects.map((s) => s.group).filter(Boolean))];
+    const asked = await window.BioDialog.prompt(t('Groups to share them into, separated by commas:'), (known.length >= 2 ? known : [t('Treated'), t('Control')]).join(', '));
+    const answer = typeof asked === 'string' ? asked : (asked && asked.value);
+    if (!answer) return;
+    const groups = answer.split(',').map((g) => g.trim()).filter(Boolean);
+    try {
+      const shown = await send(`${XP}/randomize`, { groups });
+      const lines = shown.allocation.map((g) => `${g.group} (${g.animals.length}): ${g.animals.join(', ')}`).join('\n\n');
+      const ok = await window.BioDialog.confirm(`${t('Balanced by sex, %(housing)s and weight; seed %(seed)s, which gives the same groups again.', { housing: t(D.housing), seed: shown.seed })}\n\n${lines}`,
+        { title: t('Put them in these groups?'), okLabel: t('Set the groups') });
+      if (!ok) return;
+      const data = await sendReason(`${XP}/randomize`, { groups, seed: shown.seed, apply: 1 });
+      if (data) { apply(data); say('saved', t('Groups set')); }
+    } catch (error) { say('error', error.message); }
+  });
+
   const addForm = $('[data-xp-form="add"]');
   if (addForm) addForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -595,6 +641,7 @@
     const body = f.group_value.value ? { how: 'group', value: f.group_value.value } : { how: 'one', value: f.one_value.value };
     if (!body.value) return showError(dialog, t('Pick a %(housing)s, or one.', { housing: t(D.housing) }));
     body.group = f.group.value;
+    if (f.start_each && f.start_each.value.trim()) body.start_each = f.start_each.value.trim();
     try {
       const data = await sendReason(`${XP}/subjects/add`, body);
       if (!data) return undefined;

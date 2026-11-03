@@ -17,7 +17,7 @@ change; add one when you make such a decision.
 ## Changing the database's shape
 
 Never add a column or table by hand-written ALTER at start-up any more
-(`services.ensure_schema_updates` is frozen at 0.8). Make an Alembic
+(`startup.ensure_schema_updates` is frozen at 0.8). Make an Alembic
 revision after the newest in `migrations/versions/`, using
 `migrations/helpers.py` so it also runs where the change already exists,
 and run `python scripts/upgrade-check.py` before a release (and with
