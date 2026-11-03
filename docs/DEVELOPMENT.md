@@ -1029,6 +1029,17 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   query (`type: "database"`; picking it inserts `@<key> ` and keeps the
   menu open for its records).
 
+### Page scripts
+
+A page's own script is a file, `app/static/<page>-page.js` (`colony-page.js`,
+`inventory-page.js`, `settings-page.js`, …), loaded where the page needs it
+without `defer`, so it runs as an inline script there would. What it needs
+from the server goes in a JSON block beside it, `<script type="application/json"
+id="<page>-page-data">{{ {...}|tojson }}</script>`, which the script parses
+first; the CSP never runs a JSON block, and the file is cached and can be
+checked in Node (`tests/js`). An inline script is for a few lines that
+must run before the page draws (the theme, the sidebar's width).
+
 ### Styling
 
 `frontend/src/tailwind.css` is the single source of truth: design tokens in
