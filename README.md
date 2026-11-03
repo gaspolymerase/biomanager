@@ -888,8 +888,9 @@ database has a name of its own (one another database has is refused), so
     you, by words, kind, status, tag and date.
 - **Utilities** — bench calculators and reference tables, found by a
   search that knows the bench's words (c1v1, nanodrop, × g, 稀释, a
-  chemical's name), with the tools you pin and opened last on top and the
-  rest in seven groups. Each opens on a worked example and answers as you
+  chemical's name), or a sum typed in it (10 mM to 50 µM in 1 mL,
+  4000 rpm) answered on the spot, with the tools you pin (and their last
+  answer) and opened last on top and the rest as tiles by kind. Each opens on a worked example and answers as you
   type: solutions (make a solution by molarity, percent, from a
   concentrate such as 37 % HCl or in another hydrate; C₁V₁ dilutions, also
   between mg/mL and µM; serial dilutions; buffers at a pH, with what to

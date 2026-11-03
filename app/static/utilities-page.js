@@ -93,6 +93,9 @@
   let pins = get('pins', ['dilute', 'make', 'rcf', 'mastermix']);
   const recentList = () => (get('recent', []) || []).filter((r) => r && B.locate(r.id));
 
+  // A tool's last answer, kept when it is worked out, for its pinned tile.
+  const lastAnswer = (id) => get(`answer:${id}`, null);
+
   function home() {
     document.title = t('Utilities');
     const chip = (r) => {
@@ -101,49 +104,98 @@
       const x = found.tool;
       return `<a class="util-chip" href="#${x.id}">${pins.includes(x.id) ? ico('star') : ''}${esc(x.name)}</a>`;
     };
-    const pinned = pins.map(chip).join('');
-    const recent = recentList().slice(0, 6).map(chip).join('');
+    const pinTile = (id) => {
+      const found = B.locate(id);
+      if (!found) return '';
+      const x = found.tool;
+      const a = lastAnswer(x.id);
+      return `<a class="util-pin" href="#${x.id}"><b>${ico('star')}${esc(x.name)}</b>
+        ${a ? `<span class="util-pin-answer">${esc(a.value)}</span><small>${esc(a.from || a.label || '')}</small>`
+          : `<small>${esc(x.does)}</small>`}</a>`;
+    };
+    const recent = recentList().filter((r) => !pins.includes(r.id)).slice(0, 6).map(chip).join('');
+    const groups = [...B.GROUPS.map((g) => ({ id: g.id, name: g.name, icon: g.icon })), { id: 'reference', name: t('Reference'), icon: 'table' }];
+    let shown = get('group', 'all');
+    if (shown !== 'all' && !groups.some((g) => g.id === shown)) shown = 'all';
     view.innerHTML = `
       <label class="util-search">${ico('search')}
-        <input type="search" data-util-search autocomplete="off" placeholder="${esc(t('Search: dilute, Tm, × g, MOI, a chemical…'))}" aria-label="${esc(t('Find a calculator'))}">
+        <input type="search" data-util-search autocomplete="off" placeholder="${esc(t('Search, or type a sum: 10 mM to 50 µM in 1 mL, 4000 rpm…'))}" aria-label="${esc(t('Find a calculator'))}">
         <span class="kbd-chip">/</span></label>
+      <div data-util-sum aria-live="polite"></div>
       <div data-util-found></div>
       <div class="util-shortcuts" data-util-shortcuts>
-        <div class="util-shortrow"><span>${esc(t('Pinned'))}</span>${pinned || `<em>${esc(t('Pin a tool to keep it here.'))}</em>`}</div>
-        <div class="util-shortrow"><span>${esc(t('Recent'))}</span>${recent || `<em>${esc(t('Tools you open show here.'))}</em>`}</div>
+        ${pins.length ? `<section aria-label="${esc(t('Pinned'))}"><h2 class="util-label">${esc(t('Pinned, with your last answer'))}</h2>
+          <div class="util-pins">${pins.map(pinTile).join('')}</div></section>` : ''}
+        ${recent ? `<div class="util-shortrow"><span>${esc(t('Recent'))}</span>${recent}</div>` : ''}
       </div>
-      <div class="util-groups">
-        ${B.GROUPS.map((g) => `<section class="card util-group" aria-labelledby="util-g-${g.id}">
-          <header><span class="util-gicon">${ico(g.icon)}</span><div><h2 id="util-g-${g.id}">${esc(g.name)}</h2><p>${esc(g.does)}</p></div></header>
-          <ul>${inGroup(g.id).map((x) => `<li><a href="#${x.id}" title="${esc(x.does)}"><span>${esc(x.name)}</span>${x.group !== g.id ? `<small>${esc(group(x.group).name)}</small>` : ''}</a></li>`).join('')}</ul>
-          ${g.id === 'lab' ? `${inGroup('lab').length ? '' : `<p class="util-hint">${esc(t('Your own formulas, kept for everyone in the lab.'))}</p>`}
-            ${canEditRotors ? `<a class="util-new" href="#lab-new">${ico('plus')}${esc(t('Make a tool'))}</a>` : ''}` : ''}
-        </section>`).join('')}
-        <section class="card util-group" aria-labelledby="util-g-ref">
-          <header><span class="util-gicon">${ico('table')}</span><div><h2 id="util-g-ref">${esc(t('Reference'))}</h2><p>${esc(t('Tables to look things up'))}</p></div></header>
-          <ul>${[...B.REFERENCES, { id: 'ref-chemicals', title: t('Molecular weights') }].map((r) => `<li><a href="#${r.id}"><span>${esc(r.title)}</span></a></li>`).join('')}</ul>
-        </section>
-      </div>`;
+      <div class="util-pills" role="tablist" aria-label="${esc(t('Kinds of tool'))}">
+        <button type="button" role="tab" data-group="all" aria-selected="${shown === 'all'}">${ico('grid')}${esc(t('All'))}</button>
+        ${groups.map((g) => `<button type="button" role="tab" data-group="${g.id}" aria-selected="${shown === g.id}">${ico(g.icon)}${esc(g.name)}</button>`).join('')}
+      </div>
+      <div class="util-tiles" data-util-tiles></div>`;
+
+    const tiles = view.querySelector('[data-util-tiles]');
+    const drawTiles = () => {
+      const refs = [...B.REFERENCES, { id: 'ref-chemicals', title: t('Molecular weights') }];
+      const toolTile = (x) => `<a class="util-tile" href="#${x.id}"><b>${esc(x.name)}</b><span>${esc(x.does)}</span>
+        ${shown === 'all' ? `<small>${esc(group(x.group).name)}</small>` : ''}</a>`;
+      const refTile = (r) => `<a class="util-tile" href="#${r.id}"><b>${esc(r.title)}</b><span>${esc(t('A table to look things up'))}</span>
+        ${shown === 'all' ? `<small>${esc(t('Reference'))}</small>` : ''}</a>`;
+      const make = canEditRotors ? `<a class="util-tile is-new" href="#lab-new"><b>${ico('plus')}${esc(t('Make a tool'))}</b>
+        <span>${esc(t('Your own formulas, kept for everyone in the lab.'))}</span></a>` : '';
+      if (shown === 'reference') tiles.innerHTML = refs.map(refTile).join('');
+      else if (shown === 'all') tiles.innerHTML = B.GROUPS.map((g) => inGroup(g.id).filter((x) => x.group === g.id).map(toolTile).join('')).join('') + refs.map(refTile).join('') + make;
+      else tiles.innerHTML = inGroup(shown).map(toolTile).join('') + (shown === 'lab' ? make : '');
+      view.querySelectorAll('[data-group]').forEach((b) => b.setAttribute('aria-selected', b.dataset.group === shown ? 'true' : 'false'));
+    };
+    view.querySelectorAll('[data-group]').forEach((b) => b.addEventListener('click', () => { shown = b.dataset.group; put('group', shown); drawTiles(); }));
+    drawTiles();
+
     const q = view.querySelector('[data-util-search]');
     const found = view.querySelector('[data-util-found]');
+    const sumBox = view.querySelector('[data-util-sum]');
     const shortcuts = view.querySelector('[data-util-shortcuts]');
     let hits = [];
+    let sum = null;
     const go = (hit) => { if (hit.chem) pendingChem = hit.chem; location.hash = hit.href; };
+    // A sum opens its tool with what was typed, worked out the same way.
+    const openSum = () => {
+      put(sum.calc, sum.raw);
+      if (sum.solve) put(`solve:${sum.tool}`, sum.solve);
+      location.hash = sum.tool;
+    };
     q.addEventListener('input', () => {
       const text = q.value.trim();
       shortcuts.hidden = !!text;
+      sum = text ? B.parseSum(text) : null;
+      const found_ = sum && B.locate(sum.tool);
+      if (sum && found_) {
+        const out = B.run(sum.calc, { ...sum.raw, ...(sum.solve ? { [sum.solve]: '' } : {}) });
+        const lines = (out.lines || []).slice(0, 4);
+        sumBox.innerHTML = `<a class="util-sum" href="#${esc(sum.tool)}">
+          <span class="util-sum-tool">${esc(t('%(tool)s, from what you typed', { tool: found_.tool.name }))}</span>
+          ${lines.length ? `<span class="util-sum-lines">${lines.map((l) => `<span class="${l.main ? 'is-main' : ''}"><small>${esc(l.label)}</small>${esc(l.value)}</span>`).join('')}</span>`
+            : `<span class="util-sum-hint">${esc(out.hint || out.error || t('Open it to finish the sum.'))}</span>`}
+          <span class="util-sum-open">${esc(t('Open the tool'))} ↵</span></a>`;
+        sumBox.querySelector('a').addEventListener('click', (e) => { e.preventDefault(); openSum(); });
+      } else {
+        sumBox.innerHTML = '';
+      }
       if (!text) { found.innerHTML = ''; hits = []; return; }
-      hits = B.search(text).slice(0, 7).map((x) => ({ name: x.name, where: x.group === 'reference' ? t('Reference') : group(x.group).name, does: x.does, href: x.id }));
+      hits = B.search(text).slice(0, sum ? 3 : 7).map((x) => ({ name: x.name, where: x.group === 'reference' ? t('Reference') : group(x.group).name, does: x.does, href: x.id }));
       // A chemical's name opens Make a solution with it filled in.
       chemicalsFor(text).slice(0, 2).reverse().forEach((name) => hits.unshift({
         name: t('Make a solution: %(chemical)s', { chemical: name }), where: group('solutions').name, does: `${chemicals.get(name)} g/mol`, href: 'make', chem: name }));
       found.innerHTML = hits.length
-        ? `<div class="card util-results">${hits.map((h, i) => `<a href="#${esc(h.href)}" data-i="${i}"${i ? '' : ' class="is-first"'}>
+        ? `<div class="card util-results">${hits.map((h, i) => `<a href="#${esc(h.href)}" data-i="${i}"${i || sum ? '' : ' class="is-first"'}>
             <b>${esc(h.name)}</b><small>${esc(h.where)}</small>${h.does ? `<span>${esc(h.does)}</span>` : ''}</a>`).join('')}</div>`
-        : `<p class="util-none">${esc(t('Nothing matches “%(text)s”. Browse the groups below.', { text }))}</p>`;
+        : (sum ? '' : `<p class="util-none">${esc(t('Nothing matches “%(text)s”. Browse the groups below.', { text }))}</p>`);
       found.querySelectorAll('[data-i]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); go(hits[Number(a.dataset.i)]); }));
     });
-    q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && hits[0]) { e.preventDefault(); go(hits[0]); } });
+    q.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (sum) { e.preventDefault(); openSum(); } else if (hits[0]) { e.preventDefault(); go(hits[0]); }
+    });
   }
 
   function rail(current) {
@@ -300,7 +352,8 @@
             <header><span>${esc(t('Answer'))}</span><button type="button" class="btn btn-sm btn-ghost" data-copy>${ico('copy')}<span>${esc(t('Copy'))}</span></button></header>
             <div class="util-answer-body" data-util-results></div>
           </section>
-        </div></div></div>`;
+        </div>
+        <div class="util-sums" data-util-sums></div></div></div>`;
 
       const form = view.querySelector('form');
       const out = view.querySelector('[data-util-results]');
@@ -311,11 +364,44 @@
         form.querySelectorAll('[data-unit]').forEach((el) => { r[`${el.dataset.unit}_unit`] = el.value; });
         return r;
       };
-      const update = () => {
+      // What was typed, in a few words (10 mM · 50 µM · 1 mL), for the tool's
+      // recent sums and its pinned tile on Home.
+      const summary = (r) => calc.inputs.filter((inp) => inp.key !== solve && inp.type !== 'textarea').map((inp) => {
+        const value = String(r[inp.key] == null ? '' : r[inp.key]).trim();
+        if (!value) return '';
+        if (inp.type === 'select') return ((inp.options || []).find(([v]) => String(v) === value) || [, value])[1];
+        return inp.units ? `${value} ${r[`${inp.key}_unit`] || inp.unit}` : value;
+      }).filter(Boolean).slice(0, 4).join(' · ');
+      const sumsBox = view.querySelector('[data-util-sums]');
+      const drawSums = () => {
+        const sums = get(`sums:${m.calc}`, []) || [];
+        sumsBox.innerHTML = sums.length ? `<span>${esc(t('Recent sums'))}</span>${sums.map((x, i) => `<button type="button" class="util-chip" data-sum="${i}">
+          ${esc(x.from)}<b>${esc(x.value)}</b></button>`).join('')}` : '';
+        sumsBox.querySelectorAll('[data-sum]').forEach((b) => b.addEventListener('click', () => {
+          put(m.calc, sums[Number(b.dataset.sum)].raw);
+          draw();
+        }));
+      };
+      let keep = null;
+      const remember = (r, main) => {
+        const from = summary(r);
+        put(`answer:${x.id}`, { value: main.value, label: main.label, from });
+        clearTimeout(keep);
+        // Kept once typing stops, so a sum is one entry, not one a key.
+        keep = setTimeout(() => {
+          const sums = (get(`sums:${m.calc}`, []) || []).filter((s) => s.from !== from);
+          put(`sums:${m.calc}`, [{ raw: { ...r }, value: main.value, from }, ...sums].slice(0, 5));
+          drawSums();
+        }, 1500);
+      };
+      // typed: a person's change, which is kept as a recent sum (the example is not).
+      const update = (typed) => {
         const r = read();
         put(m.calc, { ...raw, ...r });
         if (solve) r[solve] = '';
         last = B.run(m.calc, r);
+        const main = (last.lines || []).find((l) => l.main);
+        if (typed && main && !last.error) remember({ ...raw, ...read() }, main);
         // A rotor's top speed, which the arithmetic doesn't know.
         const rotor = rotorAt((form.querySelector('[data-rotor]') || {}).value);
         if (m.calc === 'rcf' && rotor && rotor.max) {
@@ -345,7 +431,7 @@
         } else if (e.target === mw) {
           delete mw.dataset.filled;
         }
-        update();
+        update(true);
       });
       form.addEventListener('change', (e) => {
         if (e.target.matches('[data-rotor]')) {
@@ -354,7 +440,7 @@
           if (rotor && radius) radius.value = rotor.radius;
           put('rotor', e.target.value);
         }
-        update();
+        update(true);
       });
       const picker = form.querySelector('[data-rotor]');
       if (picker && rotorAt(get('rotor', ''))) {
@@ -379,6 +465,7 @@
           navigator.clipboard.writeText(asText(last, x.name)).then(() => done(t('Copied')), () => done(t('Not copied')));
         } catch (_) { done(t('Not copied')); }
       });
+      drawSums();
       update();
     }
     draw();

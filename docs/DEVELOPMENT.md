@@ -508,12 +508,17 @@ each running one calculator, with the `example` it opens on and the values
 it can `solve` for. `search(q)` ranks tools by those words (whole word,
 then start of word, then inside a word or one typo), and `locate(id)` turns
 an address into a tool and mode, so an old calculator's `#dilution` still
-opens Dilute. It loads in Node too, and `tests/js/bench-calcs.check.mjs`
-checks known answers and the searches testers typed.
-`static/utilities-page.js` draws the search, Pinned and Recent (kept in
+opens Dilute. `parseSum(text)` reads a sum typed in the search (a
+dilution, `10 mM to 50 µM in 1 mL` or `1:1000 in 5 mL`; a speed, `4000 rpm`
+or `12000 x g`) as `{tool, calc, raw, solve}`, null for anything else. It
+loads in Node too, and `tests/js/bench-calcs.check.mjs` checks known
+answers, the searches testers typed and the sums.
+`static/utilities-page.js` draws the search (a sum's answer under it),
+Pinned with each tool's last answer (`answer:<tool>`) and Recent (kept in
 this browser under `biomanager:util:`; Home's Calculators card reads
-`recent`), the group cards, the open tool (from the address hash) and the
-reference tables. The lab's chemicals come from the page (`/utilities`
+`recent`), every tool as a tile with buttons by group (`group`), the open
+tool (from the address hash) with its last five sums (`sums:<calc>`, kept
+once typing stops) and the reference tables. The lab's chemicals come from the page (`/utilities`
 passes them: its Chemicals databases through `lab_notebook.chemicals_search`,
 each by name and abbreviation, then `chemical_references`) ahead of the
 built-in list. The lab's centrifuge rotors (name, radius, top speed) are
