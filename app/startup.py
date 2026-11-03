@@ -450,16 +450,20 @@ def rebuild_samples_table() -> None:
     SQLite cannot relax NOT NULL in place, so the table is rebuilt: renamed
     aside, recreated from the model, rows copied across, old copy dropped,
     all in one transaction. Idempotent; a no-op once the table is current.
+    A sample linked to the old `animals` table keeps that animal's number
+    as its source; revision 0055 then drops the link and the table.
     """
     inspector = inspect(engine)
     if "samples" not in inspector.get_table_names():
         return
     columns = {col["name"]: col for col in inspector.get_columns("samples")}
     wanted = set(SampleRecord.__table__.columns.keys())
-    if not columns["animal_id_fk"]["nullable"] or not wanted <= set(columns):
+    linked = "animal_id_fk" in columns
+    if (linked and not columns["animal_id_fk"]["nullable"]) or not wanted <= set(columns):
         if engine.dialect.name != "sqlite":
             with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE samples ALTER COLUMN animal_id_fk DROP NOT NULL"))
+                if linked:
+                    conn.execute(text("ALTER TABLE samples ALTER COLUMN animal_id_fk DROP NOT NULL"))
                 for name in sorted(wanted - set(columns)):
                     column = SampleRecord.__table__.columns[name]
                     conn.execute(text(f"ALTER TABLE samples ADD COLUMN {name} {column.type.compile(engine.dialect)}"))
@@ -482,13 +486,14 @@ def rebuild_samples_table() -> None:
             table.create(conn)
             conn.execute(text(
                 f"INSERT INTO samples ({column_list}) SELECT {select_list} FROM samples_old"))
-            conn.execute(text("DROP TABLE samples_old"))
             # Rows from the old animal link keep a readable source.
-            if "animals" in inspector.get_table_names():
+            if linked and "animals" in inspector.get_table_names():
                 conn.execute(text(
                     "UPDATE samples SET source_kind = 'other', source_ref = "
-                    "(SELECT animal_id FROM animals WHERE animals.id = samples.animal_id_fk) "
-                    "WHERE animal_id_fk IS NOT NULL AND source_kind = ''"))
+                    "(SELECT a.animal_id FROM samples_old o JOIN animals a ON a.id = o.animal_id_fk "
+                    "WHERE o.id = samples.id) "
+                    "WHERE source_kind = '' AND id IN (SELECT id FROM samples_old WHERE animal_id_fk IS NOT NULL)"))
+            conn.execute(text("DROP TABLE samples_old"))
 
 
 PLASMID_BOXES_FLAG = "migrated:plasmid_boxes"
