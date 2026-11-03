@@ -54,7 +54,7 @@ protocol_file, an inventory's numbering with inventory_renumber.
 
 BioManager computes; you talk. Never work out a number yourself that a BioManager tool can: how many \
 animals fit (availability), breeding odds and matings (breeding_plan), group allocation (randomize), \
-animals per group (power_analysis), when stock runs out (reorder_forecast), the week's checks \
+animals per group (power_analysis), when stock runs out (reorder_forecast), what orders cost (spending), the week's checks \
 (lab_checks), an experiment's facts (experiment_summary), derived readouts (derive), a plate \
 reader's or qPCR export on a plate layout (plate_readout), animals used per \
 protocol for a review (animal_use), what someone leaving looks after (handover). Call the tool, give its \
@@ -406,6 +406,14 @@ def reorder_forecast(api: Api, days: int = 30, lead_days: int = 14) -> dict:
     return api.request("GET", "reorder-forecast", {"days": days, "lead_days": lead_days})
 
 
+def spending(api: Api, a: dict) -> dict:
+    return api.request("GET", "spending", {k: a[k] for k in ("inventory", "by", "from", "to") if a.get(k)})
+
+
+def vendors(api: Api, q: str = "") -> dict:
+    return api.request("GET", "vendors", {"q": q} if q else {})
+
+
 def lab_checks(api: Api, a: dict) -> dict:
     return api.request("GET", "lab-checks", {k: a.get(k) for k in (
         "scope", "weight_loss_pct", "breeder_weeks", "unsigned_days", "expiring_days")})
@@ -561,6 +569,23 @@ TOOLS.update({
         _obj({"days": {"type": "integer", "description": "Running out within this many days (default 30)"},
               "lead_days": {"type": "integer", "description": "Days an order takes to arrive (default 14)"}}),
         lambda api, a: reorder_forecast(api, a.get("days", 30), a.get("lead_days", 14))),
+    "spending": (
+        "What the lab's orders cost, as the orders page's Spending view adds it up: totals, each month, and each "
+        "person, project group, vendor or category ranked (spent = ordered or received, asked = waiting to be "
+        "ordered), with where each spending limit stands this year or month. `counts` says how orders were "
+        "counted. Use its numbers; don't add orders up yourself.",
+        _obj({"by": {"type": "string", "enum": ["person", "group", "vendor", "category"],
+                     "description": "How to group (default person)"},
+              "from": {"type": "string", "description": "First month, YYYY-MM, or all (default: twelve months back)"},
+              "to": {"type": "string", "description": "Last month, YYYY-MM (default this month)"},
+              "inventory": {"type": "string", "description": "An orders database's key (default the first)"}}),
+        lambda api, a: spending(api, a)),
+    "vendors": (
+        "The lab's vendors: each with how its name is also written, its orders and other records, what its orders "
+        "cost in the last twelve months, when it was last ordered from, and the website, contact, email, phone and "
+        "customer number the lab keeps.",
+        _obj({"q": {"type": "string", "description": "Only vendors whose name has this"}}),
+        lambda api, a: vendors(api, a.get("q", ""))),
     "lab_checks": (
         "The weekly review's checks, done by BioManager: overdue jobs; the animals that may need a look (living mice "
         "down the lab's threshold, 15% unless set, from their peak weight of the last 30 days or their first weight "
