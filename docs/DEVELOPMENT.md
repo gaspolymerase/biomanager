@@ -3273,7 +3273,7 @@ from `ENDPOINTS`, so a new endpoint goes there too.
   a `version` that isn't the mouse's `sync_version` now is a 409, so a
   client that sends back what it read never overwrites a change since);
   inventory items go through `inventory_routes._item_from_form`, vials
-  through `stock_routes._unit_from_form` (both copy only the fields sent),
+  through `stock_service.change_unit_values` (both copy only the fields sent),
   readouts through `experiments.set_reading`. Permission checks are the
   same functions (`access.can_edit_mouse`, `can_edit_item`, `can_edit_unit`,
   `can_edit_experiment`). A switched-off built-in database is a 404.

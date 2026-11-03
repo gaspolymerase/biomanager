@@ -1033,7 +1033,7 @@ class StockTarget(Target):
     def create(self, session, ctx, v, extras):
         from . import stock_service as svc
         from .models import StockGenotype, StockUnit
-        from .stock_routes import Invalid, _unit_from_form
+        from .stock_service import Invalid, unit_from_form
         mv = self.mv
         warnings: list[str] = []
         if not v.get("genotype", "").strip() and not (v.get("female_genotype") or v.get("male_genotype")):
@@ -1065,7 +1065,7 @@ class StockTarget(Target):
             else:
                 form["rack_id"], form["position"] = str(rack.id), v.get("position", "")
         try:
-            problem = _unit_from_form(session, mv, unit, form, placing=True, users=ctx["users"])
+            problem = unit_from_form(session, mv, unit, form, placing=True, users=ctx["users"])
         except Invalid as error:
             raise RowError(str(error)) from error
         if problem:

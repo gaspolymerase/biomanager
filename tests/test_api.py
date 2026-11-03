@@ -165,6 +165,13 @@ class Stocks(Base):
         r = self.call("patch", f"/stocks/{key}/units/{number}", tok, json={"genotype": "w; UAS-mCherry"})
         self.assertEqual(r.status_code, 200, r.get_json())
         self.assertEqual(one("select genotype from stock_units where id=?", vial), "w; UAS-mCherry")
+        for body, said in (({"colour": "red", "notes": "x"}, "A vial has no colour to change"),
+                           ({"rack": "No such rack", "notes": "x"}, "There is no"),
+                           ({"ready_on": "soon", "notes": "x"}, "is not a date")):
+            r = self.call("patch", f"/stocks/{key}/units/{number}", tok, json=body)
+            self.assertEqual(r.status_code, 400, body)
+            self.assertIn(said, r.get_json()["error"])
+        self.assertEqual(one("select coalesce(notes, '') from stock_units where id=?", vial), "")
 
         name = uniq("Liver ")
         r = self.call("post", "/inventories/reagents/items", tok, json={"name": name, "lot": "L-9", "quantity": "5"})

@@ -19,7 +19,7 @@ Errors are `{"error": "..."}` with the HTTP status. Dates are ISO 8601.
 600 requests a minute per token.
 
 Writes go through the same checks as the pages (colony.change_mouse,
-inventory_routes._item_from_form, stock_routes._unit_from_form,
+inventory_routes._item_from_form, stock_service.change_unit_values,
 experiments.set_reading), so the API can't do what the person couldn't.
 Every endpoint is in ENDPOINTS, which also makes /api/v1/openapi.json and
 the reference page at /api.
@@ -46,10 +46,11 @@ from werkzeug.datastructures import MultiDict
 from .formutil import like_pattern
 from . import access, groups, lab
 from .colony import MOUSE_FIELDS
+from .stock_service import UNIT_VALUES
 from .db import SessionLocal
 from .i18n import gettext
 from .models import (ApiToken, CageLitter, CageRecord, Experiment, FishRecord, InventoryItem, InventoryRack, LitterRecord,
-                     MouseRecord, MouseWeight, PlasmidBox, PlasmidRecord, StockRack, StockUnit, StrainRecord,
+                     MouseRecord, MouseWeight, PlasmidBox, PlasmidRecord, StockUnit, StrainRecord,
                      TankRecord, UserAccount)
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -839,17 +840,11 @@ def stock_units(key: str):
         return _page(s, stmt, StockUnit, lambda u: unit_json(mv, u))
 
 
-UNIT_FIELDS = ("genotype", "female_genotype", "male_genotype", "owner", "purpose", "set_up_on", "ready_on",
-               "shift_on", "score_on", "shift_to", "notes", "rack", "position")
-
-
 @bp.patch("/stocks/<key>/units/<int:number>")
 def stock_unit_update(key: str, number: int):
-    from .stock_routes import Invalid, _unit_from_form
+    """Change a vial: any of stock_service.UNIT_VALUES, the rest left as they are."""
+    from .stock_service import Invalid, change_unit_values
     data = _json()
-    unknown = sorted(set(data) - set(UNIT_FIELDS))
-    if unknown:
-        abort(400, f"A vial has no {', '.join(unknown)} to change; it has {', '.join(UNIT_FIELDS)}.")
     with SessionLocal() as s:
         module, mv = _stock_module(s, key)
         u = s.scalar(select(StockUnit).where(StockUnit.module_id_fk == module.id, StockUnit.number == number))
@@ -857,17 +852,8 @@ def stock_unit_update(key: str, number: int):
             abort(404, f"There is no {mv.unit} {number}.")
         if not access.can_edit_unit(u):
             abort(403, access.reason_denied(u))
-        form = MultiDict({k: str(v if v is not None else "") for k, v in data.items() if k not in ("rack", "position")})
-        if "rack" in data or "position" in data:
-            rack_name = data.get("rack", u.rack.name if u.rack else "")
-            rack = s.scalar(select(StockRack).where(StockRack.module_id_fk == module.id, StockRack.name == rack_name)) \
-                if rack_name else None
-            if rack_name and rack is None:
-                abort(400, f"There is no {mv.rack_noun} {rack_name}.")
-            form["rack_id"] = str(rack.id) if rack else ""
-            form["position"] = str(data.get("position") or "")
         try:
-            problem = _unit_from_form(s, mv, u, form)
+            problem = change_unit_values(s, module, mv, u, data)
         except Invalid as refused:
             s.rollback()
             abort(400, str(refused))
@@ -1642,7 +1628,7 @@ ENDPOINTS = [
      "Check Sanger reads against its map: .ab1 or FASTA files (multipart), or {reads, captures}", ()),
     ("GET", "/api/v1/stocks", "read", "Fly and worm stock databases", ()),
     ("GET", "/api/v1/stocks/{key}/units", "read", "Vials or plates", ("active", "purpose", "owner", "genotype")),
-    ("PATCH", "/api/v1/stocks/{key}/units/{number}", "write", "Change a vial: " + ", ".join(UNIT_FIELDS), ()),
+    ("PATCH", "/api/v1/stocks/{key}/units/{number}", "write", "Change a vial: " + ", ".join(UNIT_VALUES), ()),
     ("GET", "/api/v1/inventories", "read", "Inventories, with their statuses and fields", ()),
     ("GET", "/api/v1/inventories/{key}/items", "read", "Items", ("status", "category", "owner", "q", "updated_since")),
     ("GET", "/api/v1/inventories/{key}/items/{number}", "read", "One item", ()),

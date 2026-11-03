@@ -11,11 +11,14 @@ import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from flask import g
 from sqlalchemy import func, select
+from werkzeug.datastructures import MultiDict
 
-from . import i18n, positions
+from . import i18n, positions, stewardship
 from . import stocks as presets
 from .db import SessionLocal
+from .formutil import form_changed
 from .i18n import gettext, pgettext, translate_value
 from .models import (
     StockGenotype, StockIncubator, StockModule, StockRack, StockUnit,
@@ -619,3 +622,103 @@ def _copy_from_organism_module(session, mv: ModuleView, old) -> None:
                               notes=cross.notes or "", attrs=json.dumps({"old_code": cross.code})))
         number += 1
     session.flush()
+
+
+# ---------------------------------------------------------------------------
+# Changing a vial or plate: the rules every change has, from the pages (a
+# row, the dialog), the spreadsheet import and the API.
+# ---------------------------------------------------------------------------
+
+class Invalid(ValueError):
+    """A submitted value that cannot be stored; nothing is saved."""
+
+
+def checked_date(form, name: str) -> date | None:
+    raw = (form.get(name) or "").strip()
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        raise Invalid(gettext("“%(value)s” is not a date (use YYYY-MM-DD).", value=raw)) from None
+
+
+def unit_from_form(session, mv, unit: StockUnit, form, placing: bool = True, users=None) -> str | None:
+    """Copy the fields this form changed onto the vial.
+
+    Raises Invalid (nothing should be saved) for a value that cannot be
+    stored; returns a position problem (the rest is saved) or None."""
+    user = g.user.username
+    changed = lambda name: form_changed(form, name)
+    for name, limit in (("genotype", 400), ("female_genotype", 400), ("male_genotype", 400)):
+        if changed(name):
+            setattr(unit, name, (form.get(name) or "").strip()[:limit])
+    if changed("owner"):
+        refused = stewardship.change_owner(session, unit, (form.get("owner") or "").strip()[:80],
+                                           mv.unit, mv.code(unit) if unit.number else "", users)
+        if refused:
+            raise Invalid(refused)
+    # Which project group a lab stock is for ("1": the lab's).
+    if "share_group" in form:
+        refused = stewardship.change_sharing(unit, form.get("share_group") or "1", mv.unit,
+                                             mv.code(unit) if unit.number else "", shared=True, set_shared=False)
+        if refused:
+            raise Invalid(refused)
+    if changed("purpose"):
+        purpose = (form.get("purpose") or "").strip()
+        if purpose not in {p["key"] for p in mv.purposes} and purpose != unit.purpose:
+            raise Invalid(gettext("“%(purpose)s” is not one of this database’s purposes.", purpose=purpose))
+        previous, unit.purpose = unit.purpose, purpose or mv.default_purpose
+        # Becoming progeny starts the clock for when they emerge.
+        if unit.purpose == presets.PROGENY and previous != presets.PROGENY and not unit.ready_on \
+                and not (form.get("ready_on") or "").strip():
+            start = unit.set_up_on or date.today()
+            unit.ready_on = start + timedelta(days=mv.interval("develop", unit_temperature(mv, unit)))
+    for name in ("set_up_on", "ready_on", "shift_on", "score_on"):
+        if changed(name):
+            setattr(unit, name, checked_date(form, name))
+    if changed("shift_to"):
+        unit.shift_to = norm_temp(form.get("shift_to"))[:10]
+    if changed("notes"):
+        unit.notes = (form.get("notes") or "").strip()
+    if changed("generation"):
+        attrs = unit.attrs_dict
+        attrs["generation"] = (form.get("generation") or "").strip()[:40]
+        unit.attrs = json.dumps(attrs)
+    # A cross written only as its parents is labelled by them.
+    if unit.purpose == presets.CROSS and not unit.genotype and (unit.female_genotype or unit.male_genotype):
+        unit.genotype = cross_label(unit)
+    for text in (unit.genotype, unit.female_genotype, unit.male_genotype):
+        remember_genotype(session, mv.id, text or "", user)
+    if placing and "rack_id" in form and form_changed(form, "rack_id", "position"):
+        before = unit.rack
+        problem = apply_position(session, unit, form.get("rack_id"), form.get("position"))
+        after = session.get(StockRack, unit.rack_id_fk) if unit.rack_id_fk else None
+        follow_temperature(mv, unit, before, after)
+        return problem
+    return None
+
+
+# What a vial is changed by from outside the pages (the API), as plain values.
+UNIT_VALUES = ("genotype", "female_genotype", "male_genotype", "owner", "purpose", "set_up_on", "ready_on",
+               "shift_on", "score_on", "shift_to", "notes", "rack", "position")
+
+
+def change_unit_values(session, module, mv, unit: StockUnit, values: dict) -> str | None:
+    """unit_from_form with plain `values` by UNIT_VALUES name; a field left
+    out stays as it is. "rack" is the rack's name. Raises Invalid, in words,
+    for a field or value that cannot be stored; returns a position problem
+    (the rest is saved) or None, as unit_from_form does."""
+    unknown = sorted(set(values) - set(UNIT_VALUES))
+    if unknown:
+        raise Invalid(f"A vial has no {', '.join(unknown)} to change; it has {', '.join(UNIT_VALUES)}.")
+    form = MultiDict({k: str(v if v is not None else "") for k, v in values.items() if k not in ("rack", "position")})
+    if "rack" in values or "position" in values:
+        rack_name = values.get("rack", unit.rack.name if unit.rack else "")
+        rack = session.scalar(select(StockRack).where(StockRack.module_id_fk == module.id, StockRack.name == rack_name)) \
+            if rack_name else None
+        if rack_name and rack is None:
+            raise Invalid(f"There is no {mv.rack_noun} {rack_name}.")
+        form["rack_id"] = str(rack.id) if rack else ""
+        form["position"] = str(values.get("position") or "")
+    return unit_from_form(session, mv, unit, form)
