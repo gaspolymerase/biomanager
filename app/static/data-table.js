@@ -129,6 +129,15 @@
       const card = el && el.closest ? el.closest('.data-table-card') : null;
       return sheets.find((c) => c.card === card) || null;
     },
+    // These rows (by data-id) drawn again by the server, each where it is:
+    // still ticked, the page and the scroll as they were (a batch change
+    // made in place, selection-bar.js). A Promise of true once they are in;
+    // false when the sheet has no rows address (data-dt-redraw-url).
+    redraw(ids, el) {
+      const card = el && el.closest ? el.closest('.data-table-card') : null;
+      const sheet = sheets.find((c) => c.card === card);
+      return sheet ? sheet._redraw(ids) : Promise.resolve(false);
+    },
     // A row's detail row (<tr data-detail-for>), on the page or not.
     detail(tr) {
       const sheet = tr && sheets.find((c) => c.rows.includes(tr));
@@ -1507,6 +1516,120 @@
       this._applyHidden(fresh);
       // The page wires them as its own rows (their detail rows too: details).
       this.card.dispatchEvent(new CustomEvent('dt:rows-loaded', { bubbles: true, detail: { rows: fresh, details } }));
+    }
+
+    /* BioSheets.redraw: the rows the server draws now for these ids, each
+       in the place of the one it was. A row the answer leaves out (gone,
+       or no longer in this view) leaves the sheet, as a reload would. */
+    _redraw(ids) {
+      const base = this.card.dataset.dtRedrawUrl || this.rowsUrl;
+      const want = ids.map(String).filter((id) => this.rows.some((tr) => tr.dataset.id === id));
+      if (!base) return Promise.resolve(false);
+      if (!want.length) return Promise.resolve(true);
+      const chunks = [];
+      for (let i = 0; i < want.length; i += ROWS_AT_ONCE) chunks.push(want.slice(i, i + ROWS_AT_ONCE));
+      return Promise.all(chunks.map((chunk) => {
+        const url = new URL(base, window.location.href);
+        new URLSearchParams(window.location.search).forEach((value, key) => url.searchParams.set(key, value));
+        url.searchParams.set('ids', chunk.join(','));
+        return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+          .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+          .then((answer) => this._retakeRows(chunk, answer));
+      })).then(() => {
+        this._texts = new WeakMap();   // what search reads of them has changed
+        this._recountChips();
+        this.render();
+        return true;
+      });
+    }
+
+    /* Each quick chip's count (.dt-chip-count) as the rows are now: the
+       same test the chip filters by (_wireChips), over every row. */
+    _recountChips() {
+      const parse = (s) => {
+        const at = (s || '').indexOf(':');
+        return at > 0 ? { attr: s.slice(0, at), value: s.slice(at + 1) } : null;
+      };
+      this.card.querySelectorAll('.dt-chip[data-dt-filter]').forEach((chip) => {
+        const count = chip.querySelector('.dt-chip-count');
+        if (!count) return;
+        const conditions = [parse(chip.dataset.dtFilter), parse(chip.dataset.dtAlso)].filter(Boolean);
+        count.textContent = String(this.rows.filter((tr) => conditions.every((c) => (tr.dataset[c.attr] || '') === c.value)).length);
+      });
+    }
+
+    _retakeRows(ids, answer) {
+      // Each row form in place of the one of its id, on the page or still
+      // waiting in a template (row-forms.js): its "_was" copies are the
+      // values now stored, so the next edit of a cell is no conflict.
+      if (answer.forms) {
+        const forms = document.createElement('template');
+        forms.setAttribute('data-row-forms', '');
+        forms.innerHTML = answer.forms;
+        forms.content.querySelectorAll('form[id]').forEach((form) => {
+          const onPage = document.getElementById(form.id);
+          if (onPage) onPage.remove();
+          document.querySelectorAll('template[data-row-forms]').forEach((waiting) => {
+            const old = waiting.content.getElementById(form.id);
+            if (old) old.remove();
+          });
+        });
+        this.card.appendChild(forms);
+      }
+      const holder = document.createElement('template');
+      holder.innerHTML = answer.rows || '';
+      const kids = Array.from(holder.content.children).filter((tr) => tr.tagName === 'TR');
+      const drawn = new Map(kids.filter((tr) => tr.dataset.id).map((tr) => [tr.dataset.id, tr]));
+      const newDetails = new Map(kids.filter((tr) => tr.dataset.detailFor !== undefined).map((tr) => [tr.dataset.detailFor, tr]));
+      const TICK = 'input[type=checkbox].mouse-select, input[type=checkbox][data-select-row], input[type=checkbox].dt-row-check';
+      const swap = new Map();
+      const fresh = [];
+      const details = [];
+      ids.forEach((id) => {
+        const old = this.rows.find((tr) => tr.dataset.id === id);
+        if (!old) return;
+        const tr = drawn.get(id) || null;
+        if (tr) {
+          document.adoptNode(tr);
+          tr.style.display = old._stub ? 'none' : old.style.display;
+          const was = old.querySelector(TICK);
+          const box = tr.querySelector(TICK);
+          if (was && box) box.checked = was.checked;
+          tr.classList.toggle('is-selected', old.classList.contains('is-selected'));
+          if (old.isConnected) old.replaceWith(tr);
+          fresh.push(tr);
+        } else if (old.isConnected) {
+          old.remove();
+        }
+        swap.set(old, tr);
+        const oldDetail = this.details.get(id);
+        const detail = tr && newDetails.get(id);
+        if (detail) {
+          document.adoptNode(detail);
+          if (oldDetail) {
+            detail.hidden = oldDetail.hidden;
+            detail.style.display = oldDetail.style.display;
+            if (oldDetail.isConnected) oldDetail.replaceWith(detail);
+          }
+          this.details.set(id, detail);
+          details.push(detail);
+        } else if (oldDetail && !tr) {
+          oldDetail.remove();
+          this.details.delete(id);
+        }
+      });
+      [this.rows, this.original, this.filtered, this._laidOut].forEach((list) => {
+        for (let i = list.length - 1; i >= 0; i--) {
+          if (!swap.has(list[i])) continue;
+          const tr = swap.get(list[i]);
+          if (tr) list[i] = tr; else list.splice(i, 1);
+        }
+      });
+      fresh.forEach((tr) => this._markRow(tr));
+      this._applyOrder(fresh);
+      this._labelCells(fresh);
+      this._applyHidden(fresh);
+      this.card.dispatchEvent(new CustomEvent('dt:rows-loaded', { bubbles: true, detail: { rows: fresh, details, redrawn: true } }));
     }
 
     /* Runs `then` once these rows are all drawn (an export or a print of

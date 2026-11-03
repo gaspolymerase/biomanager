@@ -30,6 +30,23 @@ class TypeTabsTest(InventoryCase):
         super().setUp()
         self.key = self.new_module(self.a, "samples")
 
+    def test_a_batch_from_the_page_brings_the_type_tabs_counts(self):
+        # Done in place (selection-bar.js), a new Type or a delete changes
+        # the counts on the tabs, which the answer carries; other columns don't.
+        a, b = (self.make_item(self.m, self.key, category="tissue") for _ in range(2))
+        bulk = f"/inventory/{self.key}/items/bulk"
+        answer = self.autosave(self.m, bulk, data={"action": "field", "field": "category", "value": "DNA",
+                                                   "selected_ids": [str(a)]}).get_json()
+        self.assertEqual((answer["tabs"]["all"], answer["tabs"]["tissue"], answer["tabs"]["DNA"]), (2, 1, 1))
+        answer = self.autosave(self.m, bulk, data={"action": "field", "field": "attr_tissue", "value": "Lung",
+                                                   "selected_ids": [str(b)]}).get_json()
+        self.assertIsNone(answer["tabs"])
+        answer = self.autosave(self.m, bulk, data={"action": "delete", "selected_ids": [str(a)]}).get_json()
+        self.assertTrue(answer["ok"])
+        self.assertEqual((answer["tabs"]["all"], answer["tabs"]["tissue"], answer["tabs"]["DNA"]), (1, 1, 0))
+        # The rows endpoint the page redraws from leaves the deleted one out.
+        self.assertEqual(self.m.get(f"/inventory/{self.key}/rows?ids={a},{b}").get_json()["ids"], [b])
+
     def test_a_tab_per_type_with_its_own_columns(self):
         tissue = self.make_item(self.m, self.key, category="tissue", attr_tissue="Lung", attr_fixation="4% PFA")
         dna = self.make_item(self.m, self.key, category="DNA", attr_concentration="52.1")
