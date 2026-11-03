@@ -12,7 +12,7 @@ their weights, zebrafish tanks and fish rows, fly vials, worm strains,
 plants, plasmids (a fifth with a sequence), inventory items, orders,
 calendar events and to-dos, and notebook pages. Like a real colony it has years of history: most
 mice died, most cages emptied and most tubes were used up, on days
-spread over five years. Each page is fetched twice as the demo admin; the
+spread over five years; the living mice are mostly weeks or months old. Each page is fetched twice as the demo admin; the
 second time is reported, with the size of the answer. SQLite: a lab
 server on PostgreSQL is usually faster.
 
@@ -62,18 +62,27 @@ def fill(n_mice: int, alive: float = 0.05) -> None:
         s.execute(insert(CageRecord), [{"cage_id": f"L{i:06d}", "owner": rnd.choice(users), "purpose": rnd.choice(["Breeder", "Breeding", "Experiment"]),
                                         "room": rnd.choice(["B12", "B14", "C3"]),
                                         "created_at": datetime.utcnow() - timedelta(days=rnd.randint(0, 1800))} for i in range(n_cages)])
-        s.execute(insert(LitterRecord), [{"litter_id": f"LT{i:06d}", "date_of_birth": today - timedelta(days=rnd.randint(1, 1800)),
+        # Litters born over five years, and a fifth of them in the last ten
+        # months, most of those young: a working colony's living mice are
+        # mostly weeks or months old, and few are kept past 30 weeks.
+        def born(i):
+            days = rnd.triangular(1, 300, 45) if i % 5 == 0 else rnd.randint(1, 1800)
+            return today - timedelta(days=int(days))
+        s.execute(insert(LitterRecord), [{"litter_id": f"LT{i:06d}", "date_of_birth": born(i),
                                           "created_at": datetime.utcnow()} for i in range(n_litters)])
         s.commit()
         cage_ids = [c for c in s.scalars(select(CageRecord.id).where(CageRecord.cage_id.like("L%")))]
-        litter_ids = [c for c in s.scalars(select(LitterRecord.id).where(LitterRecord.litter_id.like("LT%")))]
+        litter_ids = [c for c in s.scalars(select(LitterRecord.id).where(LitterRecord.litter_id.like("LT%"))
+                                           .order_by(LitterRecord.id))]
+        # The living come from the recent litters (every fifth), the dead from any.
+        recent_litters = litter_ids[::5]
         batch = []
         for i in range(n_mice):
             dead = rnd.random() >= alive
             batch.append({"mouse_id": start_mouse + i, "gender": rnd.choice("MF"), "transgene_1": rnd.choice(genes),
                           "genotype": rnd.choice(genes), "status": "sac" if dead else rnd.choice(["breeder", "experiment", "geno"]),
                           "owner": rnd.choice(users), "cage_id_fk": None if dead else rnd.choice(cage_ids),
-                          "litter_id_fk": rnd.choice(litter_ids), "date_of_death": today - timedelta(days=rnd.randint(1, 1800)) if dead else None,
+                          "litter_id_fk": rnd.choice(litter_ids if dead else recent_litters), "date_of_death": today - timedelta(days=rnd.randint(1, 1800)) if dead else None,
                           "note": "", "created_at": datetime.utcnow()})
             if len(batch) == 20000:
                 s.execute(insert(MouseRecord), batch)

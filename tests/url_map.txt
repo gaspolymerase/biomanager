@@ -269,6 +269,7 @@
 /import/<entity>	csv_import	POST
 /inventory/	inventory.index	GET
 /inventory/<key>	inventory.module	GET
+/inventory/<key>/board	inventory.board	GET
 /inventory/<key>/configure	inventory.configure	GET POST
 /inventory/<key>/delete	inventory.delete_module	POST
 /inventory/<key>/grid	inventory.grid_data	GET

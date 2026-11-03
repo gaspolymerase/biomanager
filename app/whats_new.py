@@ -30,6 +30,17 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.7.1": {
+        "changed": [
+            "**Home** counts the active mice only, and how many are yours; **Due this week** and **Overdue** are apart.",
+            "A big lab opens faster: long sheets of plants, plasmids and reagents, **Orders** (its **Board** comes when you open it) and **Home**.",
+            "A zebrafish tank of the lab's breeding stock is now a *breeder* tank, shared with the lab, as a **Breeder** cage is.",
+        ],
+        "fixed": [
+            "**Already on order** no longer counts an order again of #1 as one for #12.",
+            "A facility manager can change an inventory's, a fly database's or a worm database's settings.",
+        ],
+    },
     "2.7.0": {
         "new": [
             "An AI assistant can **Design an experiment** with you, then set it up in one proposal: the experiment, the **Breeding** cages, the to-dos and the calendar.",

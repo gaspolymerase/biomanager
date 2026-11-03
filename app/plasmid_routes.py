@@ -320,10 +320,9 @@ def _plasmid_int(raw) -> int | None:
 def plasmids():
     if request.method == "POST":
         return _create_plasmid()
-    # A long sheet of plasmids: its first page drawn, the rest fetched as
-    # shown (app/sheet_paging.py); the Boxes grid and the List come when
-    # they are first shown (plasmid_grid, plasmid_list).
-    return sheet_paging.page(_plasmid_sheet_page(), "plasmids-v5", url_for("plasmid_rows"))
+    # A long sheet draws its first page (plasmid_stubs for the rest); the
+    # Boxes grid and the List come when first shown (plasmid_grid, plasmid_list).
+    return _plasmid_sheet_page()
 
 
 @app.route("/plasmids/rows")
@@ -387,15 +386,21 @@ def _plasmid_rows(db_session, keep: set[int] | None = None, minis: bool = False)
     return rows, boxes, new_payload
 
 
-def plasmid_stubs(rows: list[dict], boxes) -> list[dict]:
+def plasmid_stubs(rows: list[dict], boxes, custom_columns: list[dict]) -> list[dict]:
     """Plasmids the sheet does not draw, as data-table.js reads a drawn row
     (plasmids.html's rows, as cell_text.row_stub reads them): its data-*,
     each field's value ("k"), its row form, and the words a search looks in
     ("s": what the row shows, its data-* and each field's value and the
     choice it shows). Built from each plasmid's data rather than drawn:
     drawing every plasmid and reading the rows back was most of the page's
-    time. tests/test_speed.py holds each to the row it stands for."""
-    from .web import owner_badge_filter
+    time. The lab's own columns are drawn by their macro (custom_cell) and
+    read back, as the fish tanks' are. tests/test_speed.py holds each to
+    the row it stands for."""
+    from .cell_text import row_stub, text_cells_on
+    from .text_cells import as_text_cells
+    from .web import owner_badge_filter, page_macros
+    as_text = text_cells_on()
+    custom_cell = page_macros("_sheet.html").custom_cell if custom_columns else None
     tr = i18n.translate_value    # as the template's |tr
     box_name = {b.id: b.name for b in boxes}
     group_name = project_groups.names()
@@ -423,6 +428,13 @@ def plasmid_stubs(rows: list[dict], boxes) -> list[dict]:
             if owner not in badges:
                 badges[owner] = re.sub(r"<[^>]+>", "", str(owner_badge_filter(owner)))
             words.append(badges[owner])
+        for fd in custom_columns:
+            drawn = custom_cell(fd, r["payload"].get("attr_" + fd["key"], ""), "plasmid-%d" % p.id,
+                                not r["editable"], "owner-name-options")
+            cell = f"<td>{drawn}</td>"
+            read = row_stub("", str(as_text_cells(cell, as_text)))
+            sort.update({k: v for k, v in read["k"].items() if k not in sort})
+            words.append(read["s"])
         out.append({"id": p.id, "f": f"plasmid-{p.id}", "d": data, "k": sort,
                     "s": " ".join(w for w in words if w).lower()})
     return out
@@ -437,8 +449,7 @@ def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
         rows, boxes, new_payload = _plasmid_rows(db_session, keep)
         defined_columns = custom_fields.fields(db_session, "plasmids")
         in_table = custom_fields.in_table(defined_columns)
-        # A lab's own columns are drawn and read back (sheet_paging.page).
-        lazy = keep is None and not in_table and len(rows) > LAZY_OVER
+        lazy = keep is None and len(rows) > LAZY_OVER
         usernames = current_lab_usernames(db_session)
         counts = {
             "all": len(rows),
@@ -452,7 +463,7 @@ def _plasmid_sheet_page(keep: set[int] | None = None) -> str:
             "plasmids.html",
             rows=rows,
             sheet_rows=rows[:FIRST_PAGE] if lazy else rows,
-            stubs=plasmid_stubs(rows[FIRST_PAGE:], boxes) if lazy else [],
+            stubs=plasmid_stubs(rows[FIRST_PAGE:], boxes, in_table) if lazy else [],
             rows_url=url_for("plasmid_rows") if lazy else "",
             counts=counts,
             usernames=usernames,
