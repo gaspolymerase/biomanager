@@ -913,7 +913,7 @@ database has a name of its own (one another database has is refused), so
   shared with everyone; the maker or an admin changes them.
 
 <p align="center">
-  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools and the groups of bench calculators" width="100%">
+  <img src="docs/screenshots/utilities.webp" alt="Utilities: the search, pinned tools with their last answers, and every calculator as a tile by kind" width="100%">
 </p>
 
 <p align="center">

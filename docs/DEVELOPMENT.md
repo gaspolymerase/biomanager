@@ -170,7 +170,8 @@ reads the source for the rules marked *(tested)*.
   `.modal-close`), a `.record-dialog-body` that scrolls, and a
   `.record-dialog-foot`: Cancel, then the one `btn-primary`; Delete alone on
   the left. Below 640px it is a bottom sheet; on a wider window one with
-  two `.record-group`s or more (a long form) slides in from the right, the
+  two `.record-group`s or more in view (a long form; groups a dialog's tabs
+  hide don't count) slides in from the right, the
   window's height. A choice of formats or kinds inside one is a
   `.choice-list` or `.choice-cards`. `static/record-forms.js` gives every
   record dialog ⌘/Ctrl ↵ to save (the keys on its main button), draws

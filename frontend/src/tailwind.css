@@ -2719,30 +2719,31 @@
     @apply flex items-center justify-end gap-2 border-t border-hairline/60 px-6 py-4;
   }
   /* ⌘↵ / Ctrl+↵ saves (dialogs.js puts the key on the main button). */
-  .record-dialog-foot .dt-kbd { @apply ml-1; }
+  .record-dialog-foot .dt-kbd { @apply ml-1; color: inherit; }
   @media (max-width: 640px), (pointer: coarse) { .record-dialog-foot .dt-kbd { display: none; } }
 
-  /* A long form (two groups of fields or more) slides in from the right as
+  /* A long form (two groups of fields or more in view: a dialog's tabs hide
+     the groups of the others) slides in from the right as
      a sheet the height of the window, the page still in view beside it; a
      short one stays a card in the middle. A phone shows both from below. */
   @media (min-width: 641px) {
-    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) {
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) {
       @apply mr-2 ml-auto rounded-[22px];
       width: min(600px, calc(100vw - 1rem));
       height: calc(100dvh - 1rem);
       max-height: calc(100dvh - 1rem);
       animation: sheet-in-right 0.32s var(--ease-out-soft);
     }
-    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) > form {
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) > form {
       @apply h-full max-h-none;
     }
-    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group ~ .record-group) .record-dialog-body {
+    dialog.record-dialog:not(.record-dialog-wide):not(.record-dialog-narrow):has(.record-group:not([hidden]) ~ .record-group:not([hidden])) .record-dialog-body {
       @apply flex-1;
     }
   }
   @keyframes sheet-in-right { from { transform: translateX(104%); } to { transform: none; } }
   @media (prefers-reduced-motion: reduce) {
-    dialog.record-dialog:has(.record-group ~ .record-group) { animation: none !important; }
+    dialog.record-dialog:has(.record-group:not([hidden]) ~ .record-group:not([hidden])) { animation: none !important; }
   }
 
   /* A short choice as buttons in a row (a select[data-segmented], drawn by
