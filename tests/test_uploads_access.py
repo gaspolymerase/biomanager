@@ -18,7 +18,7 @@ import sqlalchemy as sa
 
 from tests.base import (AppTestCase, client_for, count, execute, make_user, one, rows,  # first: a test database
                         uniq, user_id)
-from app import services, uploads  # noqa: E402
+from app import uploads  # noqa: E402
 from app.db import SessionLocal  # noqa: E402
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
@@ -33,8 +33,8 @@ def make_guest() -> str:
 
 def a_file(text: str = "a picture") -> str:
     """A file in the uploads folder that no record names; its name."""
-    name = services.upload_name(uniq("orphan") + ".png")
-    (services.UPLOAD_DIR / name).write_text(text, encoding="utf-8")
+    name = uploads.upload_name(uniq("orphan") + ".png")
+    (uploads.UPLOAD_DIR / name).write_text(text, encoding="utf-8")
     return name
 
 

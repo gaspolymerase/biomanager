@@ -39,7 +39,8 @@ from .models import (
     UserAccount,
     UserIdentity,
 )
-from .services import csv_text, add_notification
+from .services import add_notification
+from .sheet_export import csv_text
 from .litter_dates import weaning_offset, open_litters
 from . import appearance, devices, door, home_layouts, notify, oidc, server_updates, telemetry
 from . import groups as project_groups
@@ -402,13 +403,13 @@ def export_my_data():
 
             # The folder save_uploaded_file writes to (the tests point it
             # at a temp folder), not paths.uploads_dir().
-            from . import services as _services
+            from . import uploads as _uploads
             for p in plasmids:
                 safe = _re.sub(r"[^\w\-.]+", "_", p.name or "").strip("_")
                 folder = f"plasmids/{p.plasmid_id}{'-' + safe if safe else ''}-files"
                 for kept in db_session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id)
                                                .order_by(PlasmidFile.id)):
-                    source = _services.UPLOAD_DIR / _Path(kept.path).name
+                    source = _uploads.UPLOAD_DIR / _Path(kept.path).name
                     if not source.is_file():
                         continue
                     name = _re.sub(r"[^\w\-. ]+", "_", kept.name or source.name).strip() or source.name

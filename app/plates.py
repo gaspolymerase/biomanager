@@ -925,7 +925,7 @@ def save_plate(experiment_id: int):
     """As preview, then each animal's value saved as the readout (or the
     measure chosen) for the day, the plate kept with its file as their
     source: one batch, which Batch history's Undo takes back whole."""
-    from . import audit, services
+    from . import audit, uploads
     from . import experiments as xp
     from .models import PlateLayout
     with SessionLocal() as s:
@@ -949,7 +949,7 @@ def save_plate(experiment_id: int):
                             "problems": problems}), 400
         file_path = file_name = ""
         if upload is not None:
-            stored = services.save_uploaded_file(upload)
+            stored = uploads.save_uploaded_file(upload)
             if stored:
                 file_path, file_name = stored["path"], upload.filename or ""
         s.flush()

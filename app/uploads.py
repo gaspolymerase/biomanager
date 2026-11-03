@@ -2,7 +2,7 @@
 
 Every uploaded file (a notebook page's picture or attachment, a file kept
 with a plasmid, a capture's photo or CSV) is saved under a random name in
-the uploads folder (services.save_uploaded_file) and served at
+the uploads folder (save_uploaded_file) and served at
 /static/uploads/<name>. A random name is not a lock: a name copied out of a
 page, a log or a lab copy would open the file for anyone signed in. So each
 file is served only to someone who may see a record it belongs to, by the
@@ -39,14 +39,19 @@ admins, who look after the lab; it is refused to everyone else.
 from __future__ import annotations
 
 import re
+import secrets
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import unquote
 
 from sqlalchemy import Table, event, inspect as sa_inspect, select
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Session
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 
 from .models import UploadOwner
+from .paths import uploads_dir
 
 # Off while the start-up steps before Alembic save records (services.init_database).
 enabled = True
@@ -108,7 +113,7 @@ def _text_attrs(mapper) -> list[str]:
 
 
 def note_fresh(saved_path: str) -> None:
-    """A file this request uploaded (services.save_uploaded_file): the
+    """A file this request uploaded (save_uploaded_file): the
     record it saves the file with (a plasmid's file, a capture) owns it."""
     from flask import g, has_request_context
     if saved_path and has_request_context():
@@ -271,13 +276,12 @@ def serve(filename: str):
     anyone not signed in to the sign-in page."""
     from flask import abort, g, send_from_directory
 
-    from . import services
     from .db import SessionLocal
     with SessionLocal() as session:
         allowed = may_fetch(session, g.get("user"), filename)
     if not allowed:
         abort(404)
-    return send_from_directory(services.UPLOAD_DIR, filename)
+    return send_from_directory(UPLOAD_DIR, filename)
 
 
 # ---------------------------------------------------------------- a member's copy of the lab
@@ -295,3 +299,46 @@ def narrow_copy(run, tables) -> None:
         else:   # a name from the app's own tables
             run(f'DELETE FROM upload_owners WHERE source = :source AND record_id NOT IN (SELECT id FROM "{source}")',
                 source=source)
+
+
+UPLOAD_DIR = uploads_dir()
+
+
+def upload_name(original: str) -> str:
+    """A stored name nobody can guess and no two uploads share: before this,
+    two files with the same name uploaded in the same second overwrote each
+    other. The original name stays on the end so a download is recognisable."""
+    return f"{datetime.utcnow():%Y%m%d%H%M%S}_{secrets.token_hex(8)}_{secure_filename(original) or 'file'}"
+
+
+def save_uploaded_image(upload: FileStorage | None) -> str:
+    if upload is None or not upload.filename:
+        return ""
+
+    output_name = upload_name(upload.filename)
+    destination = Path(UPLOAD_DIR / output_name)
+    upload.save(destination)
+    note_fresh(f"uploads/{output_name}")
+    return f"uploads/{output_name}"
+
+
+def save_uploaded_file(upload: FileStorage | None) -> dict | None:
+    """Save an arbitrary uploaded file (PDF, .docx, .xlsx, etc.) to the
+    uploads dir. Returns {path, original_name, size_bytes} or None on failure."""
+    if upload is None or not upload.filename:
+        return None
+
+    output_name = upload_name(upload.filename)
+    destination = Path(UPLOAD_DIR / output_name)
+    upload.save(destination)
+    try:
+        size_bytes = destination.stat().st_size
+    except OSError:
+        size_bytes = 0
+    # The record this request keeps it with owns it (app/uploads.py).
+    note_fresh(f"uploads/{output_name}")
+    return {
+        "path": f"uploads/{output_name}",
+        "original_name": upload.filename,
+        "size_bytes": size_bytes,
+    }

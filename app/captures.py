@@ -15,7 +15,7 @@ that proposal marks them used, linked to it and its batch. Dismiss sets
 one aside unused. A capture is its person's only: nobody else sees it,
 admins included.
 
-The file is kept with the other uploads (services.save_uploaded_file) and
+The file is kept with the other uploads (uploads.save_uploaded_file) and
 served only to its person, by `/captures/<id>/file`.
 """
 from __future__ import annotations
@@ -153,7 +153,7 @@ def _kind_of(filename: str, mimetype: str) -> str:
 
 def create(session, owner: str, text: str = "", upload=None, at_kind: str = "", at_id: int | None = None) -> Capture:
     """Keep a capture (commits), or raise CaptureError saying why not."""
-    from . import services
+    from . import uploads
     text = (text or "").strip()
     if len(text) > MAX_TEXT:
         raise CaptureError(gettext("That is more than %(n)s characters: save it in two.", n=MAX_TEXT))
@@ -170,7 +170,7 @@ def create(session, owner: str, text: str = "", upload=None, at_kind: str = "", 
         upload.stream.seek(0)
         if size > MAX_FILE:
             raise CaptureError(gettext("That file is over %(mb)s MB.", mb=MAX_FILE // (1024 * 1024)))
-        saved = services.save_uploaded_file(upload)
+        saved = uploads.save_uploaded_file(upload)
         if not saved:
             raise CaptureError(gettext("Add a photo, or a CSV or text file."))
         c.file_path, c.file_name = saved["path"], (upload.filename or "")[:255]
@@ -220,10 +220,10 @@ def is_text(c: Capture) -> bool:
 
 
 def file_on_disk(c: Capture) -> Path | None:
-    from . import services
+    from . import uploads
     if not c.file_path:
         return None
-    path = Path(services.UPLOAD_DIR) / Path(c.file_path).name
+    path = Path(uploads.UPLOAD_DIR) / Path(c.file_path).name
     return path if path.is_file() else None
 
 

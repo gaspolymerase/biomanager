@@ -19,7 +19,7 @@ from unittest import mock
 from flask import Response
 from werkzeug.security import generate_password_hash
 
-from app import security, services
+from app import security, uploads
 from app.app import app
 from app.db import SessionLocal
 from app.models import UserAccount
@@ -392,8 +392,8 @@ class Uploads(AppTestCase):
         self.assertNotIn("Content-Security-Policy", h)
 
     def test_stored_names_are_unguessable_unique_and_safe(self):
-        a = services.upload_name("../../etc/gel image.png")
-        b = services.upload_name("../../etc/gel image.png")
+        a = uploads.upload_name("../../etc/gel image.png")
+        b = uploads.upload_name("../../etc/gel image.png")
         self.assertNotEqual(a, b)
         self.assertTrue(a.endswith("_etc_gel_image.png"))
         self.assertNotIn("/", a)

@@ -32,7 +32,8 @@ from .formutil import form_changed
 from . import audit
 from . import custom_fields, feature_library, feature_pack, plannotate, plasmid_lineage, plasmid_versions, primer_records
 from .models import PlasmidBox, PlasmidFile, PlasmidRecord, PlasmidSequenceVersion
-from .services import current_lab_usernames, save_uploaded_file
+from .services import current_lab_usernames
+from .uploads import save_uploaded_file
 from . import bulk, rack_layout, stewardship
 from . import groups as project_groups
 from .days import fmt_day
@@ -1470,7 +1471,7 @@ def plasmid_verify(row_id: int):
     from werkzeug.datastructures import FileStorage
 
     from . import seqverify
-    from . import services as _services
+    from . import uploads as _uploads
 
     with SessionLocal() as db_session:
         p = db_session.get(PlasmidRecord, row_id)
@@ -1483,7 +1484,7 @@ def plasmid_verify(row_id: int):
         wanted = {int(x) for x in request.form.getlist("kept") if x.isdigit()}
         for kept in db_session.scalars(select(PlasmidFile).where(PlasmidFile.plasmid_row_id == p.id,
                                                                  PlasmidFile.id.in_(wanted or {0}))):
-            source = _services.UPLOAD_DIR / _Path(kept.path).name
+            source = _uploads.UPLOAD_DIR / _Path(kept.path).name
             if source.is_file():
                 files.append((kept.name, source.read_bytes()[:seqverify.MAX_FILE + 1]))
         text = request.form.get("reads_text") or ""

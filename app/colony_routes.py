@@ -59,7 +59,6 @@ from .services import (
     normalize_status,
     dropdown_options_map,
     dropdown_records_map,
-    export_mouse_rows,
     generate_litter_id,
     get_or_create_cage,
     get_or_create_litter,
@@ -74,6 +73,7 @@ from .services import (
     recent_notifications,
     sync_mouse_transgenes,
 )
+from .sheet_export import export_mouse_rows
 from .litter_dates import (
     weaning_offset,
     MIN_WEAN_AGE_DAYS,

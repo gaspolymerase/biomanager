@@ -675,7 +675,7 @@ class PlasmidParent(Base):
 class PlasmidFile(Base):
     """A file kept with a plasmid: a sequencing trace (.ab1), a gel photo, a
     map from the vendor. The file itself is in the uploads folder
-    (app/services.save_uploaded_file); this row is what the page lists. The
+    (app/uploads.save_uploaded_file); this row is what the page lists. The
     plasmid's row id with no foreign key, as for versions, so undoing a
     plasmid's delete brings its files back with it."""
     __tablename__ = "plasmid_files"

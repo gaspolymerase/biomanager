@@ -1083,12 +1083,12 @@ def topic_icon_upload():
     """An SVG of one's own for a topic's icon: cleaned, kept as an upload,
     and its value for the topic ("svg:uploads/…", app/topic_icons.py)."""
     from pathlib import Path
-    from . import services, topic_icons, uploads
+    from . import topic_icons, uploads
     upload = request.files.get("svg")
     data = upload.read(topic_icons.SVG_MAX + 1) if upload else b""
     if len(data) > topic_icons.SVG_MAX:
         return _fail(gettext("That SVG is too big: up to 100 KB."))
-    value = topic_icons.save_svg(data, Path(services.UPLOAD_DIR))
+    value = topic_icons.save_svg(data, Path(uploads.UPLOAD_DIR))
     if value is None:
         return _fail(gettext("That isn't an SVG drawing BioManager can show."))
     with SessionLocal() as s:

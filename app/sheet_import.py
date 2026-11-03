@@ -117,7 +117,7 @@ def _cell(value) -> str:
 
 def _unguard(text: str) -> str:
     """BioManager's own CSV exports put ' before a value starting with = + -
-    or @ (so a spreadsheet doesn't run it: services.sheet_safe); reading
+    or @ (so a spreadsheet doesn't run it: sheet_export.sheet_safe); reading
     one back, "'+/+" is the genotype +/+ again."""
     return text[1:] if text[:1] == "'" and text[1:2] in ("=", "+", "-", "@") else text
 

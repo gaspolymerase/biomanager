@@ -1730,7 +1730,7 @@ def export(experiment_id: int, fmt: str):
         measures = _measure_exports(s, exp, place, subjects(s, exp, place))
         plan_rows = experiment_plan.export_rows(s, exp, place)
         base = _re.sub(r"[^A-Za-z0-9._-]+", "-", exp.name).strip("-")[:60] or "experiment"
-    from .services import csv_text
+    from .sheet_export import csv_text
     if fmt == "csv":
         return Response(csv_text(long_rows), mimetype="text/csv",
                         headers={"Content-Disposition": f"attachment; filename={base}-readout.csv"})
