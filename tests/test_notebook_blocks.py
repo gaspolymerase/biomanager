@@ -48,6 +48,12 @@ class Blocks(unittest.TestCase):
     def test_callouts_toggles_columns_and_colours_read_from_markdown(self):
         self.check("markdown-extras.check.mjs")
 
+    @unittest.skipUnless((ROOT / "frontend" / "node_modules" / "@tiptap").is_dir()
+                         and (ROOT / "tests" / "js" / "node_modules" / "jsdom").is_dir(),
+                         "needs frontend/node_modules and jsdom")
+    def test_run_mode_shows_the_table_written_under_a_step(self):
+        self.check("runmode-steps.check.mjs")
+
 
 if __name__ == "__main__":
     unittest.main()
