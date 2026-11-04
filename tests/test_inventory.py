@@ -919,8 +919,9 @@ class CsvImportTests(InventoryCase):
         got_a, got_b = self.by_name(a), self.by_name(b)
         self.assertEqual((got_a["vendor"], got_a["catalog_number"], got_a["unit"], got_a["status"], got_a["owner"]),
                          ("NEB", "M0303", "kit", "received", self.member))
-        self.assertEqual(json.loads(got_a["attrs"]), {"price": "120"})
-        self.assertEqual(got_a["received_on"], T)  # received stamps the date
+        # Received stamps the date, and so the day it was ordered (order_spending).
+        self.assertEqual(json.loads(got_a["attrs"]), {"price": "120", "ordered_on": T})
+        self.assertEqual(got_a["received_on"], T)
         self.assertEqual((got_b["status"], got_b["quantity"], got_b["owner"]), ("requested", "1", self.admin))
 
     def test_csv_bad_rows_are_reported_and_the_good_ones_imported(self):

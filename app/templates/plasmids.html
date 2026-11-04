@@ -99,6 +99,9 @@
       {{ icon('plus') }} {{ _('New plasmid') }}
     </button>
   </div>
+  {# What the search names, on the maps of the lab's plasmids (plasmids_on_map):
+     a gene there whatever each plasmid's Insert says. #}
+  <p class="plasmid-on-map" data-on-map data-src="{{ url_for('plasmids_on_map') }}" aria-live="polite" hidden></p>
 
   <div class="plasmid-view plasmid-view-table is-active" data-view="table">
     <div class="dt-scroll">

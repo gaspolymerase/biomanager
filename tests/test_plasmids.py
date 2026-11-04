@@ -423,6 +423,28 @@ class LineageTests(AppTestCase):
                              self.child)
 
 
+class OnTheMapTests(AppTestCase):
+    """The plasmids page's search also lists the plasmids that carry what is
+    typed on their map (plasmid_routes.plasmids_on_map)."""
+
+    def test_a_gene_on_the_map_whatever_the_insert_says(self):
+        gene = uniq("Gcamp")
+        carrier = self.make_plasmid(self.m, name=uniq("pAAV"))
+        execute("update plasmids set features_json=? where id=?",
+                json.dumps([{"name": f"{gene}8m", "start": 0, "end": 99, "type": "CDS"},
+                            {"name": "WPRE", "start": 100, "end": 400, "type": "misc_feature"}]), carrier)
+        # Named only in its notes: not a feature, so not listed.
+        other = self.make_plasmid(self.m, name=uniq("pOther"))
+        execute("update plasmids set features_json=? where id=?",
+                json.dumps([{"name": "AmpR", "start": 0, "end": 99, "type": "CDS", "notes": {"note": [gene]}}]), other)
+        answer = self.m.get(f"/plasmids/on-map?q={gene.upper()}").get_json()
+        self.assertEqual(answer["total"], 1)
+        self.assertEqual(answer["plasmids"][0]["features"], [f"{gene}8m"])
+        self.assertEqual(answer["plasmids"][0]["number"], plasmid(carrier, "plasmid_id")[0])
+        self.assertEqual(self.m.get("/plasmids/on-map?q=x").get_json()["total"], 0)
+        self.assertIn('data-on-map data-src="/plasmids/on-map"', self.get_ok(self.m, "/plasmids"))
+
+
 class PrimerRecordTests(AppTestCase):
     """A primer drawn on the map gets its record in the Primers database,
     with the plasmid in its Plasmid column; the plasmid's Primers card shows

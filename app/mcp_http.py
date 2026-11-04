@@ -33,6 +33,7 @@ COMPUTE_TITLES = {"search": "Search", "history": "A record's history", "lineage"
                   "availability": "Animals available", "breeding_plan": "Breeding plan",
                   "randomize": "Randomise into groups", "power_analysis": "Animals per group",
                   "reorder_forecast": "Reorder forecast", "lab_checks": "The week's checks",
+                  "spending": "What orders cost", "vendors": "The lab's vendors",
                   "experiment_summary": "An experiment for its methods",
                   "animal_use": "Animal use for a review", "handover": "A handover",
                   "derive": "Derived readout",

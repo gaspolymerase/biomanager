@@ -638,9 +638,14 @@ for month_back in range(1, 12):
                   "vendor": vendor, "catalog_number": cat, "quantity": str(qty), "category": category,
                   "attr_price": str(price), "attr_account": "R01-NS-DEMO"})
         newest = one("select max(id) from inventory_items")
+        asked = ago(month_back * 30 + rng.randint(0, 25))
+        # Asked for then, and ordered the same day (the Spending view counts that day).
+        attrs = __import__("json").loads(one("select attrs from inventory_items where id=?", newest) or "{}")
+        if "ordered_on" in attrs:
+            attrs["ordered_on"] = asked
         with engine.begin() as con:
-            con.exec_driver_sql("update inventory_items set created_at=? where id=?",
-                                (f"{ago(month_back * 30 + rng.randint(0, 25))} 10:00:00", newest))
+            con.exec_driver_sql("update inventory_items set created_at=?, attrs=? where id=?",
+                                (f"{asked} 10:00:00", __import__("json").dumps(attrs), newest))
 # Two project groups, and the lab's spending settings: dollars, a limit a year.
 alex.post("/groups/create", data={"name": "Photometry", "members": ["sam", "priya"]})
 alex.post("/groups/create", data={"name": "Anatomy", "members": ["jordan", "alex"]})

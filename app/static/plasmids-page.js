@@ -187,6 +187,50 @@ document.addEventListener('change', (e) => {
   try { saved = localStorage.getItem(VIEW_KEY) || ''; } catch (_) {}
   applyView(['table', 'cards', 'list'].includes(saved) ? saved : 'table');
 
+  // The search also asks which plasmids carry it on their map.
+  const onMap = section.querySelector('[data-on-map]');
+  let mapTimer = null;
+  let mapAsked = '';
+  function showOnMap(q, answer) {
+    onMap.textContent = '';
+    if (!answer || !answer.total) {
+      onMap.hidden = true;
+      return;
+    }
+    const t = window.t || ((x) => x);
+    const lead = document.createElement('span');
+    lead.textContent = t('“%(q)s” on the map of %(n)s plasmids:', { q, n: answer.total });
+    onMap.appendChild(lead);
+    answer.plasmids.slice(0, 12).forEach((p, i) => {
+      onMap.appendChild(document.createTextNode(i ? ' · ' : ' '));
+      const a = document.createElement('a');
+      a.href = p.url;
+      a.textContent = `#${p.number} ${p.name}`;
+      a.title = p.features.join(', ');
+      onMap.appendChild(a);
+    });
+    if (answer.total > 12) {
+      const more = document.createElement('span');
+      more.className = 'text-muted';
+      more.textContent = ' ' + t('and %(n)s more', { n: answer.total - 12 });
+      onMap.appendChild(more);
+    }
+    onMap.hidden = false;
+  }
+  if (onMap && searchInput) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(mapTimer);
+      const q = searchInput.value.trim();
+      if (q.length < 2) { mapAsked = ''; showOnMap(q, null); return; }
+      mapTimer = setTimeout(() => {
+        mapAsked = q;
+        fetch(`${onMap.dataset.src}?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((answer) => { if (mapAsked === q) showOnMap(q, answer); }, () => {});
+      }, 350);
+    });
+  }
+
   // The toolbar search also filters the list view.
   if (searchInput) {
     searchInput.addEventListener('input', () => {

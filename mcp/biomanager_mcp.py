@@ -38,6 +38,7 @@ from app.assistant_tools import (availability, breeding_plan, derive, experiment
                                  lab_checks, lineage, power_analysis, randomize, reorder_forecast, search)
 from app.assistant_tools import animal_use, handover  # noqa: E402,F401
 from app.assistant_tools import plate_readout, verify_sequencing  # noqa: E402,F401
+from app.assistant_tools import spending, vendors  # noqa: E402,F401
 
 
 def with_content(out: dict):
@@ -152,6 +153,15 @@ def build_server(api: Api):
     @server.tool(name="reorder_forecast", description=description(api, "reorder_forecast"))
     def reorder_forecast_tool(days: int = 30, lead_days: int = 14) -> dict:
         return call_tool(api, "reorder_forecast", {"days": days, "lead_days": lead_days})
+
+    @server.tool(name="spending", description=description(api, "spending"))
+    def spending_tool(by: str = "person", from_month: str | None = None, to_month: str | None = None,
+                      inventory: str | None = None) -> dict:
+        return call_tool(api, "spending", given(by=by, inventory=inventory, **{"from": from_month, "to": to_month}))
+
+    @server.tool(name="vendors", description=description(api, "vendors"))
+    def vendors_tool(q: str = "") -> dict:
+        return call_tool(api, "vendors", {"q": q} if q else {})
 
     @server.tool(name="lab_checks", description=description(api, "lab_checks"))
     def lab_checks_tool(scope: str = "lab", weight_loss_pct: float | None = None, breeder_weeks: int | None = None,
