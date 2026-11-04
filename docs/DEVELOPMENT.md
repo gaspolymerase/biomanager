@@ -197,7 +197,13 @@ reads the source for the rules marked *(tested)*.
   `data-reveal-label`). `div[data-place-picker]` (`static/rack-grid.js`,
   with the form's rack, position and, optionally, cage field names and a
   `data-grid-url` of the cage grid's JSON) draws the chosen rack to click a
-  place, or a cage, in.
+  place, or a cage, in. The mouse dialog's **Add another after this**
+  (`.record-dialog-another`, remembered in `localStorage` as
+  `biomanager:mouse-add-another`) posts the new mouse with
+  `X-Add-Another: 1`; `create_mouse` then answers JSON (`{ok, mouse_id,
+  next_id, warnings}`, or `{ok: false, error}` with 400) instead of
+  redirecting, the form keeps its fields but the tag, note and death, and
+  the page reloads when the dialog closes if any mouse was made.
 - **Asking** *(tested)*: never the browser's `alert`, `confirm` or `prompt`
   (the Mac app's web view answers them with no); `BioDialog.alert /
   confirm / prompt` (`static/dialogs.js`).
@@ -1010,7 +1016,12 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   in the order shown, while hidden columns and widths still find theirs by
   `data-dt-col`. A key the saved order lacks (a column added since) goes in
   after the column it follows in the template; one that has gone is
-  dropped. Pinned columns (`.sheet-pin`), a `th[data-dt-fixed]` (an
+  dropped. `_alignNumbers` right-aligns a column of amounts, its heading
+  and its cells (inputs too): a `th[data-num]`, a `data-sort-type="number"`
+  heading, or one whose first row holds an `input[type=number]`; the
+  heading gets `.is-num` and the table one `<style>` rule by
+  `data-dt-num` and `data-dt-col`, so moving a column keeps it right.
+  Pinned columns (`.sheet-pin`), a `th[data-dt-fixed]` (an
   organism database's code), a header with a checkbox and one with no
   visible name don't move and can't be dropped among. The order a lab sees
   first is the template's: an inventory's `fields` list and the built-in

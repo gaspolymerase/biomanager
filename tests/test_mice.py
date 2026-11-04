@@ -958,3 +958,28 @@ class MouseLifecycleTests(Case):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AddAnotherTests(AppTestCase):
+    """New mouse's Add another after this: saved, answered in JSON, the form kept."""
+
+    def test_a_mouse_made_with_add_another_answers_its_number(self):
+        before = one("select coalesce(max(mouse_id), 0) from mice")
+        r = self.m.post("/colony/mice/create", data={"strain": "C57BL/6J", "gender": "F", "owner": self.member},
+                        headers={"X-Add-Another": "1"})
+        self.assertEqual(r.status_code, 200)
+        body = r.get_json()
+        self.assertTrue(body["ok"])
+        self.assertGreater(body["mouse_id"], before)
+        self.assertEqual(body["next_id"], body["mouse_id"] + 1)
+        self.assertEqual(one("select strain from mice where mouse_id=?", body["mouse_id"]), "C57BL/6J")
+        # Without it, the page as before.
+        self.assertEqual(self.m.post("/colony/mice/create", data={"gender": "M"}).status_code, 302)
+
+    def test_a_refusal_is_said_not_flashed(self):
+        from datetime import date, timedelta
+        future = (date.today() + timedelta(days=30)).isoformat()
+        r = self.m.post("/colony/mice/create", data={"date_of_birth": future}, headers={"X-Add-Another": "1"})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(r.get_json()["ok"])
+        self.assertTrue(r.get_json()["error"])

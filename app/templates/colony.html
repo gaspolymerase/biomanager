@@ -175,7 +175,7 @@
                 <th class="dt-sortable" data-sort-key="gender" style="width: 56px;">
                   <span class="dt-col-head">{{ icon('sex', 'dt-col-icon') }}{{ _('Sex') }}<span class="dt-sort-indicator"></span></span>
                 </th>
-                <th class="dt-sortable" data-sort-key="age" style="width: 56px;" title="{{ _("Age from the litter's date of birth") }}">
+                <th class="dt-sortable" data-sort-key="age" style="width: 56px;" data-num title="{{ _("Age from the litter's date of birth") }}">
                   <span class="dt-col-head">{{ icon('age', 'dt-col-icon') }}{{ _('Age') }}<span class="dt-sort-indicator"></span></span>
                 </th>
                 <th class="dt-sortable" data-sort-key="status" style="width: 108px;" title="{{ _('What the mouse is for: experiment, breeder, geno…') }}">
@@ -473,7 +473,7 @@
                     <th class="dt-sortable" data-sort-key="purpose" style="width: 104px;" title="{{ _('What the cage is for. Breeder: the lab’s breeding stock, shared with the lab unless its owner makes it personal. Breeding: mating now; only it has Litter born, Genotyping and Wean. Experiment: in an experiment.') }}">
                       <span class="dt-col-head">{{ icon('tag', 'dt-col-icon') }}{{ _('Purpose') }}<span class="dt-sort-indicator"></span></span>
                     </th>
-                    <th class="dt-sortable" data-sort-key="mice" style="width: 60px;" title="{{ _('Living mice, by sex') }}">
+                    <th class="dt-sortable" data-sort-key="mice" style="width: 60px;" data-num title="{{ _('Living mice, by sex') }}">
                       <span class="dt-col-head">{{ icon('mouse', 'dt-col-icon') }}{{ _('Mice') }}<span class="dt-sort-indicator"></span></span>
                     </th>
                     <th class="dt-sortable" data-sort-key="date_give_birth" style="width: 116px;" title="{{ _("When the cage's litter was born; its pups' litter, if any") }}">
@@ -678,7 +678,7 @@
                 <th class="dt-sortable" data-sort-key="mother_info" style="width: 92px;">
                   <span class="dt-col-head">{{ icon('female', 'dt-col-icon') }}{{ _('Mother') }}<span class="dt-sort-indicator"></span></span>
                 </th>
-                <th class="dt-sortable" data-sort-key="total_pups" style="width: 60px;">
+                <th class="dt-sortable" data-sort-key="total_pups" style="width: 60px;" data-num>
                   <span class="dt-col-head">{{ icon('count', 'dt-col-icon') }}{{ _('Pups') }}<span class="dt-sort-indicator"></span></span>
                 </th>
                 <th class="dt-sortable" data-sort-key="mice" style="min-width: 152px;" title="{{ _('Mice linked to the litter; the dot is blue under 8 weeks, green from 8 to 30 weeks, red past 30 weeks, grey once not alive') }}">
@@ -1185,6 +1185,11 @@
             <label class="record-wide">{{ _('Note') }} <textarea name="note" rows="3"></textarea></label>
           </div>
           <footer class="record-dialog-foot">
+            {# Ticked, Create mouse saves this one and leaves the form open for
+               the next, with what mice of a batch share kept (static/colony-page.js). #}
+            <label class="record-dialog-another" data-mouse-another-row>
+              <input type="checkbox" data-mouse-another> {{ _('Add another after this') }}
+            </label>
             <span class="record-dialog-hint" data-mouse-hint></span>
             <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>
             <button type="submit" class="btn btn-primary" data-mouse-submit>{{ _('Create mouse') }}</button>

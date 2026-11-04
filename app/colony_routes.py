@@ -1379,19 +1379,30 @@ def mouse_weight_delete(mouse_row_id: int, weight_id: int):
 @login_required
 @next_number_retried
 def create_mouse():
+    """New mouse. With X-Add-Another (the form's Add another after this),
+    the answer is JSON, so the form stays open for the next one: the new
+    mouse's number, the next free one and what could not be done."""
+    another = request.headers.get("X-Add-Another") == "1"
     refused = future_birth(request.form)
     if refused:
+        if another:
+            return jsonify({"ok": False, "error": refused}), 400
         flash(refused, "error")
         return redirect(url_for("colony", view="mice"))
+    warnings: list[str] = []
     with SessionLocal() as db_session:
         mouse = MouseRecord(mouse_id=next_mouse_id(db_session), owner=request.form.get("owner", "").strip())
-        transfer_recipient, sender_username = populate_mouse_from_form(db_session, mouse, request.form, preserve_owner_on_transfer=False)
+        transfer_recipient, sender_username = populate_mouse_from_form(
+            db_session, mouse, request.form, preserve_owner_on_transfer=False, warnings=warnings if another else None)
         if not mouse.owner and g.user is not None:
             mouse.owner = g.user.username
         db_session.add(mouse)
         if transfer_recipient:
             create_transfer_copy(db_session, mouse, transfer_recipient, sender_username)
         db_session.commit()
+        if another:
+            return jsonify({"ok": True, "mouse_id": mouse.mouse_id, "next_id": mouse.mouse_id + 1,
+                            "warnings": warnings})
     return redirect(url_for("colony", view="mice"))
 
 

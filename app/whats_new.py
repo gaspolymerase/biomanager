@@ -40,6 +40,15 @@ NOTES: dict[str, dict[str, list[str]]] = {
             "**Spending** counts an order in the month it was ordered; admins are told when someone passes a limit.",
         ],
     },
+    "2.9.2": {
+        "new": [
+            "A new mouse's form has **Add another after this**: save, and the form stays open for the next mouse with its strain and cage kept.",
+            "Numbers line up on the right in every sheet: an age, a count, a quantity.",
+        ],
+        "fixed": [
+            "Picking one of **Set field**'s choices no longer closes its panel.",
+        ],
+    },
     "2.9.1": {
         "fixed": [
             "**Set field** lists a column's choices again (a sample's Fixation…), and a list of suggestions stays inside the window.",

@@ -191,7 +191,7 @@
                 </th>
               {% endif %}
               {% for f in table_fields %}
-                <th class="dt-sortable" data-sort-key="attr_{{ f.key }}" style="width: {{ f.width }}px;">
+                <th class="dt-sortable" data-sort-key="attr_{{ f.key }}" style="width: {{ f.width }}px;"{% if f.type == 'number' %} data-sort-type="number"{% endif %}>
                   <span class="dt-col-head">{{ icon(f.icon or 'type', 'dt-col-icon') }}{{ f.label|tr('inventory')|head }}<span class="dt-sort-indicator"></span></span>
                 </th>
                 {% if f.type == 'source' %}
@@ -217,13 +217,13 @@
                 <th class="dt-sortable" data-sort-key="lot" style="width: 80px;" data-default-hidden="1"><span class="dt-col-head">{{ icon('barcode', 'dt-col-icon') }}{{ _('Lot') }}<span class="dt-sort-indicator"></span></span></th>
               {% endif %}
               {% if m.has('quantity') %}
-                <th class="dt-sortable" data-sort-key="quantity" style="width: 60px;"><span class="dt-col-head">{{ icon('count', 'dt-col-icon') }}{{ _('Qty') }}<span class="dt-sort-indicator"></span></span></th>
+                <th class="dt-sortable" data-sort-key="quantity" style="width: 60px;" data-num><span class="dt-col-head">{{ icon('count', 'dt-col-icon') }}{{ _('Qty') }}<span class="dt-sort-indicator"></span></span></th>
                 <th style="width: 56px;"><span class="dt-col-head">{{ icon('amount', 'dt-col-icon') }}{{ _('Unit') }}</span></th>
                 {% if low_stock %}
-                  <th class="dt-sortable" data-sort-key="low_at" style="width: 64px;" title="{{ _('When the quantity falls to this (in its unit), the status turns low; at 0, empty') }}"><span class="dt-col-head">{{ icon('bell', 'dt-col-icon') }}{{ _('Low at') }}<span class="dt-sort-indicator"></span></span></th>
+                  <th class="dt-sortable" data-sort-key="low_at" style="width: 64px;" data-num title="{{ _('When the quantity falls to this (in its unit), the status turns low; at 0, empty') }}"><span class="dt-col-head">{{ icon('bell', 'dt-col-icon') }}{{ _('Low at') }}<span class="dt-sort-indicator"></span></span></th>
                 {% endif %}
                 {% if pack_sizes %}
-                  <th style="width: 72px;" data-default-hidden="1" title="{{ _('What one of its unit holds (10 mL in an ampoule), so an amount used in mL or mg comes off as part of one') }}"><span class="dt-col-head">{{ icon('amount', 'dt-col-icon') }}{{ _('Pack size') }}</span></th>
+                  <th style="width: 72px;" data-default-hidden="1" data-num title="{{ _('What one of its unit holds (10 mL in an ampoule), so an amount used in mL or mg comes off as part of one') }}"><span class="dt-col-head">{{ icon('amount', 'dt-col-icon') }}{{ _('Pack size') }}</span></th>
                 {% endif %}
               {% endif %}
               {% if m.has('storage') %}
