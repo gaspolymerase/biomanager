@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.10.2": {
+        "new": [
+            "**Run mode** shows everything written for a step with it: its sub-bullets and notes, and the table, picture, callout or calculator under it.",
+        ],
+    },
     "2.10.1": {
         "new": [
             "**Run mode** shows the table written under a step, such as its master mix, with that step.",
