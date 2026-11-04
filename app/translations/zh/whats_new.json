@@ -1,4 +1,5 @@
 {
+  "**Run mode** shows the table written under a step, such as its master mix, with that step.": "**执行模式** 会把写在某一步下面的表格（比如这一步的反应体系）和这一步一起显示。",
   "BioManager's website is now **biomanager.org**: **Help → User guide** and the app's other links go there. The old address still works.": "BioManager 的网站现在是 **biomanager.org**：**帮助 → 用户指南** 和 app 里的其他链接都会打开它。旧地址仍然可用。",
   "**What's new**: this note, once after each update. **Help → What's new** opens it again.": "**新功能**：每次更新后显示一次这个说明。**帮助 → 新功能** 可以再次打开。",
   "**Litter born** asks for the date of birth (today unless you change it) before recording the litter.": "**产仔** 会先询问出生日期（默认今天，可以修改），再记录这一窝。",
