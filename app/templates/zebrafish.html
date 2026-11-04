@@ -118,7 +118,7 @@
 {% endmacro %}
 
 {% macro col(key, icon_name, label, width=None, title=None, hidden=False, min=None, full=None) %}
-  <th {% if key %}class="dt-sortable" data-sort-key="{{ key }}"{% endif %}
+  <th {% if key %}class="dt-sortable" data-sort-key="{{ key }}"{% endif %}{% if key in ('age', 'count') %} data-num{% endif %}
       style="{% if width %}width: {{ width }}px;{% endif %}{% if min %} min-width: {{ min }}px;{% endif %}"
       {% if full %}data-dt-label="{{ full }}"{% endif %}
       {% if title %}title="{{ title }}"{% endif %} {% if hidden %}data-default-hidden="1"{% endif %}>

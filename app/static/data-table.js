@@ -68,6 +68,7 @@
 
   // Only one toolbar menu is open at a time.
   let openMenu = null;
+  let alignedTables = 0;   // tables whose number columns have their rule (_alignNumbers)
   function closeMenus() {
     if (!openMenu) return;
     if (openMenu._anchor) openMenu._anchor.setAttribute('aria-expanded', 'false');
@@ -194,6 +195,7 @@
       controllers.push(this);
       this.quick = null;   // [{attr, value}, …] from a .dt-chip
       this._indexColumns();
+      this._alignNumbers();
       this.fields = this._loadFields();   // [{key, value, label}, …]: sheet-views.js's filter chips
       this.hidden = this._loadHiddenCols();
       this.order = this._loadOrder();
@@ -964,6 +966,34 @@
         return times > 1 ? `${base}~${times}` : base;
       });
       this.headers.forEach((th, col) => { if (!this._isFixedColumn(th)) this.movable.add(col); });
+    }
+
+    /* A column of amounts (th[data-num], th[data-sort-type="number"], or one
+       whose cells are number fields: an age, a count, a quantity, a price)
+       reads right-aligned, its heading too, so the units line up. One rule
+       for the whole column, by its data-dt-col, which follows the column
+       wherever it is moved and covers rows drawn later. A cage's or a
+       plasmid's number names it, so it isn't one. */
+    _alignNumbers() {
+      if (!this.table || !this.headers.length) return;
+      const first = this.rows.find((tr) => !tr._stub && tr.cells.length === this.headers.length);
+      const cols = [];
+      this.headers.forEach((th, col) => {
+        const cell = first && first.cells[col];
+        const num = th.hasAttribute('data-num') || th.dataset.sortType === 'number'
+          || !!(cell && cell.querySelector(':scope > input[type="number"]'));
+        th.classList.toggle('is-num', num);
+        if (num) cols.push(col);
+      });
+      if (!cols.length) return;
+      alignedTables += 1;
+      const id = `n${alignedTables}`;
+      this.table.dataset.dtNum = id;
+      const cells = cols.map((c) => `table[data-dt-num="${id}"] > tbody > tr > td[data-dt-col="${c}"]`);
+      const style = document.createElement('style');
+      style.textContent = `${cells.join(',\n')} { text-align: right; }\n`
+        + `${cells.map((c) => `${c} input`).join(',\n')} { text-align: right; }`;
+      document.head.appendChild(style);
     }
 
     _markRow(row) {
