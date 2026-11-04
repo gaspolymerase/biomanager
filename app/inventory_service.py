@@ -288,6 +288,9 @@ RESTOCK_KINDS = ("reagents", "chemicals", "antibodies", "viruses")
 # (app.py _inventory_module_links), in the order the work flows.
 PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")
 ENDED_ATTR = "used_up_on"
+# The day an order left its first status (requested) for one past it,
+# ordered or straight to received: when the money went (order_spending).
+ORDERED_ATTR = "ordered_on"
 
 # The statuses that mean "usable" (or, for orders, "still open"): the green
 # dot on the sheet. Custom lists: anything not terminal.
@@ -358,6 +361,11 @@ def apply_status(mv, item: InventoryItem, new_status, today: date | None = None)
         attrs.setdefault(ENDED_ATTR, today.isoformat())
     else:
         attrs.pop(ENDED_ATTR, None)
+    if mv.kind == "orders" and mv.statuses:
+        if new.lower() == mv.statuses[0].lower():
+            attrs.pop(ORDERED_ATTR, None)       # back to asked for: not yet ordered
+        elif new.lower() not in TERMINAL_STATUSES:
+            attrs.setdefault(ORDERED_ATTR, today.isoformat())
     if new.lower() in GONE_FROM_BOX and item.rack is not None:
         where = where_label(item)
         if not (item.location_note or "").strip():

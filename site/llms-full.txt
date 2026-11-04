@@ -923,6 +923,8 @@ What you stop doing: keeping maps in one folder and primers in another spreadshe
 
 - The **Backbone** and **Insert** columns (and the same fields in **New plasmid**) offer the lab's plasmids as you type, *#42 pcDNA3.1*, then the usual vectors for a backbone and the Feature library's coding sequences for an insert. Pick one of the lab's plasmids, or type `@` and its name (`@pCAG-EGFP`), and the plasmid is listed under its **Made from** in that role; the plasmid named lists it under **Used to make**. So a gene's plasmid shows every construct made with it, and searching the sheet for the gene finds each one whose Insert names it. Change the column and the link it made changes with it; a link added on the plasmid's page stays. Backbones and Inserts written before name a lab plasmid but aren't linked: an admin sees how many above the sheet, and **Link them** links them all.
 
+- Searching the sheet also looks at every plasmid's map: under the search, *“WPRE” on the map of 3 plasmids* lists those that carry it as a feature, whatever their Insert says, each a link to its page.
+
 *A plasmid's Overview*
 
 *Compare with…*
@@ -1077,15 +1079,15 @@ On the orders page, **Spending** (beside **Table** and **Board**) adds up what t
 
 - The table below lists every person, group, vendor or category with its total, what was ordered or received, what is waiting, and its orders. **Download CSV** gives the same table, a column for each month, for a spreadsheet.
 
-- An order costs its *Price* times its *Quantity*, and counts in the month it was asked for. A cancelled order counts nowhere. By project group, an order counts in every group its asker is in now, so the groups can add up to more than the lab.
+- An order costs its *Price* times its *Quantity*. It counts in the month it was ordered (the day it left *Requested*), and while it waits, in the month it was asked for. A cancelled order counts nowhere. By project group, an order counts in every group its asker is in now, so the groups can add up to more than the lab.
 
-An admin opens **Limits and settings** to choose the currency, whether Price is for one or for the whole order, and the limits: per year (from the month your year starts) or per month, for the lab, for each person and for each project group. The **Limits** card shows how much of each is used, marked *Near the limit* from 80% and *Over the limit* past it. When saving an order takes its asker, one of their groups or the lab past a limit, the message after saving says so.
+An admin opens **Limits and settings** to choose the currency, whether Price is for one or for the whole order, and the limits: per year (from the month your year starts) or per month, for the lab, for each person and for each project group. The **Limits** card shows how much of each is used, marked *Near the limit* from 80% and *Over the limit* past it. When saving an order takes its asker, one of their groups or the lab past a limit, the message after saving says so, and every admin is told once (under *Orders* in Settings → Notifications).
 
 *Spending, by person, with the lab's limits*
 
 ### Vendors
 
-**Vendors**, at the top of the orders page and of every list with a vendor, lists every vendor your records name: its orders and other records, what its orders cost in the last 12 months, and when it was last ordered from. **Edit** keeps its website, contact, email, phone and your customer number, and **New vendor** adds one you haven't ordered from yet. A vendor kept there is offered when you type a vendor.
+**Vendors**, at the top of the orders page and of every list with a vendor, lists every vendor your records name: its orders and other records, what its orders cost in the last 12 months, and when it was last ordered from. **Edit** keeps its website, contact, email, phone and your customer number, and **New vendor** adds one you haven't ordered from yet. A vendor kept there is offered when you type a vendor, and a record's dialog shows its website, customer number and contact beside **Vendor**, with **Open in Vendors**.
 
 - Spellings that differ only in capitals or spaces are one vendor, and the page says how else it is written.
 

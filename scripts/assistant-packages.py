@@ -45,8 +45,8 @@ from app.assistant_tools import INSTRUCTIONS, PROMPTS  # noqa: E402
 
 PLUGIN = ROOT / "plugins" / "biomanager"
 # The plugin's version, and a digest of the skill and commands it was set for.
-VERSION = "1.7.0"
-CONTENT = "fc8d1777a8241db3"
+VERSION = "1.8.0"
+CONTENT = "b8efb5701f103390"
 SITE = "https://biomanager.org"
 REPO = "https://github.com/gaspolymerase/biomanager"
 

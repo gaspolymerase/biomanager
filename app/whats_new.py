@@ -30,6 +30,16 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.10.0": {
+        "new": [
+            "Searching **Plasmids** also lists the plasmids carrying what you typed on their map.",
+            "An AI assistant can read what orders cost and the lab's vendors (plugin 1.8.0).",
+            "A record's dialog shows its vendor's website, customer number and contact, with **Open in Vendors**.",
+        ],
+        "changed": [
+            "**Spending** counts an order in the month it was ordered; admins are told when someone passes a limit.",
+        ],
+    },
     "2.9.2": {
         "new": [
             "A new mouse's form has **Add another after this**: save, and the form stays open for the next mouse with its strain and cage kept.",

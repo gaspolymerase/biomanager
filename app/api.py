@@ -1388,6 +1388,62 @@ def reorder_forecast():
                        lead_days=_int_arg("lead_days", 14, 0, 180), window_days=_int_arg("window_days", 180, 14, 730))
 
 
+@bp.get("/spending")
+def spending():
+    """What the orders cost (app/order_spending.py, the orders page's
+    Spending view): ?inventory= an orders database's key (the first one
+    when left out), ?by= person, group, vendor or category, ?from= and
+    ?to= YYYY-MM (the last twelve months when left out; from=all for every
+    month)."""
+    from datetime import date as _date
+    from . import inventory_service as isvc
+    from . import order_spending as spend
+    with SessionLocal() as s:
+        key = (request.args.get("inventory") or "").strip()
+        modules = [m for m in isvc.list_modules(s) if m.kind == "orders" and lab.can_see(m)
+                   and any(f["key"] == "price" for f in isvc.view(m).fields)]
+        module = next((m for m in modules if not key or m.key == key), None)
+        if module is None:
+            abort(404, "No orders database with a Price column" + (f" called {key}" if key else "") + ".")
+        settings = spend.settings_of(s, module)
+        today = _date.today()
+        last = spend.month_of(request.args.get("to"), _date(today.year, today.month, 1))
+        first = spend.month_of(request.args.get("from"), spend.add_months(last, -11))
+        orders = spend.orders_of(s, module, settings)
+        if request.args.get("from") == "all" and orders:
+            first = min(_date(o.day.year, o.day.month, 1) for o in orders)
+        if first > last:
+            first, last = last, first
+        out = spend.summary(orders, request.args.get("by", "person"), first, last, spend.people_of(s), settings)
+        out.pop("stack", None)
+        out["inventory"] = module.key
+        out["counts"] = ("Ordered or received counts in the month it was ordered; waiting (asked for, not yet "
+                         "ordered) in the month it was asked for; cancelled counts nowhere. An order costs its "
+                         "price times its quantity" + (" (price is per whole order here)." if settings["price_is"] == "total"
+                                                       else "."))
+        return jsonify(out)
+
+
+@bp.get("/vendors")
+def vendors_list():
+    """The lab's vendors (app/vendors.py): each with its spellings, orders,
+    other records, the last twelve months of orders' cost and its details;
+    ?q= narrows by name."""
+    from . import vendors as vendor_list
+    look = (request.args.get("q") or "").strip().casefold()
+    with SessionLocal() as s:
+        rows = []
+        for v in vendor_list.listing(s):
+            if look and not any(look in n.casefold() for n in [v["name"], *v["others"]]):
+                continue
+            d = v["details"]
+            rows.append({"name": v["name"], "also_written": v["others"], "orders": v["orders"],
+                         "other_records": v["records"], "spent_last_12_months": round(v["spent"], 2),
+                         "last_ordered": _stamp(v["last_ordered"]),
+                         **{k: (getattr(d, k) or "") if d else "" for k in vendor_list.DETAILS}})
+        return jsonify({"data": rows, "next": None})
+
+
 @bp.get("/lab-checks")
 def lab_checks():
     """The weekly review's checks, each with its items and their fixes."""
@@ -1629,6 +1685,10 @@ ENDPOINTS = [
      ()),
     ("GET", "/api/v1/reorder-forecast", "read", "Stock that runs out soon, from its use", ("days", "lead_days",
                                                                                            "window_days")),
+    ("GET", "/api/v1/spending", "read",
+     "What the orders cost by month, by person, project group, vendor or category, with the limits",
+     ("inventory", "by", "from", "to")),
+    ("GET", "/api/v1/vendors", "read", "The lab's vendors: orders, cost, contact and customer number", ("q",)),
     ("GET", "/api/v1/lab-checks", "read", "The weekly review's checks",
      ("scope", "weight_loss_pct", "breeder_weeks", "unsigned_days", "expiring_days")),
     ("GET", "/api/v1/experiments/{experiment_id}/summary", "read",
@@ -1651,6 +1711,7 @@ ENDPOINTS = [
 ]
 NOT_PAGED = {"/", "/me", "/racks", "/resolve", "/vocabulary", "/due", "/actions", "/proposals", "/mcp", "/captures", "/search",
              "/history", "/lineage", "/path", "/availability", "/reorder-forecast", "/lab-checks", "/regimens",
+             "/spending", "/vendors",
              "/animal-use", "/handover"}
 PARAM_HELP = {
     "limit": "How many a page (default 100, at most 1000)",

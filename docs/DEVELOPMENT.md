@@ -1870,8 +1870,12 @@ pages are in `app/lab_routes.py`.
   answers `summary()`: months, each month's total, every series ranked
   (spent, asked, orders, per month), the chart's stack (`STACKED` = 5 and
   Other) and `limits()`. An order costs `money(price) × amount(quantity)`
-  (or the price alone with `price_is: total`), counts in its `created_at`
-  month, is "asked" at the first status and nowhere when cancelled; by
+  (or the price alone with `price_is: total`), is "asked" at the first
+  status (in its `created_at` month) and nowhere when cancelled; a spent
+  one counts in its `attrs.ordered_on` month, which
+  `inventory_service.apply_status` stamps when an order leaves its first
+  status and clears when it goes back (an order from before has none, and
+  counts in its `created_at` month); by
   project group it counts in every group its owner is in now. The JS
   draws the stacked columns in SVG (2px gaps, a 4px rounded top, a
   tooltip on hover and focus), the legend, the ranked table and the
@@ -1886,7 +1890,11 @@ pages are in `app/lab_routes.py`.
   the period holding today (`limit_period`); near is 80%. After a dialog
   save or an inline edit that raised an order's cost,
   `_limit_notes` → `over_limits` adds a warning for each limit now passed
-  (the asker's, their groups', the lab's).
+  (the asker's, their groups', the lab's); a limit this save crossed (it
+  was not over before) also goes to every admin (`tell_admins`, Orders
+  notifications). `GET /api/v1/spending` (summary without the chart's
+  stack, plus `counts`, how orders are counted) and `GET /api/v1/vendors`
+  serve the assistant tools `spending` and `vendors`.
 - **Vendors** (`app/vendors.py`, `vendors.html`, table `vendors`, revision
   0055): records keep their vendor as text; the page groups
   `inventory_items.vendor` by `key_of` (case and spacing aside), counts
@@ -1896,7 +1904,10 @@ pages are in `app/lab_routes.py`.
   renaming (`POST /vendors/save` with a new name) and `POST /vendors/merge`
   are an admin's or a facility manager's, rewrite every matching record
   and fold the Vendor rows into one, in one `audit.batch`. A Vendor's name
-  is offered in every vendor field (`inventory_service.remembered`).
+  is offered in every vendor field (`inventory_service.remembered`), and a
+  record's dialog shows the details kept beside Vendor
+  (`vendors.details_map` as `#inv-vendor-details`, with a link to
+  `/vendors?q=<name>`).
 
 ## Plasmids and their sequences
 
@@ -1955,6 +1966,11 @@ crossing the origin keeps `start > end`.
   lab plasmid; an admin sees the count and `POST /plasmids/link-columns`
   links them in one batch. The plasmid page links its Backbone and Insert
   (`column_urls`).
+- **On the map** (`plasmids_with_element`, `GET /plasmids/on-map?q=`): the
+  sheet's search also asks which plasmids carry the text as a feature
+  name. The database narrows by `lower(features_json) LIKE`, then only those
+  maps are read (47 ms at most on 5,000 plasmids); the page lists them
+  under the toolbar, so the sheet itself reads no map.
 - **Primers** (`app/primer_records.py`): each save of the map gives every
   primer annotation a record in the lab's Primers database
   (`sync_from_map`, made with it only by someone who may add lab

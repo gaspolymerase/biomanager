@@ -478,7 +478,9 @@ from and what was made from it, with a family tree. The **Backbone** and
 vectors, pcDNA3.1, pLKO.1, pAAV…): pick one, or type `@` and its name, and
 the plasmid is listed as made from it, so a gene's plasmid shows every
 construct made with it. **Link them**, for an admin, does the same for
-Backbones and Inserts written before. **Assemble a
+Backbones and Inserts written before. Searching the sheet also lists the
+plasmids that carry what you typed on their map (*WPRE*, *GCaMP*), whatever
+their Insert says. **Assemble a
 plasmid** builds the next one from the ones you have: fill a tray with
 fragments — a whole plasmid, one feature, a region, or a piece an enzyme
 leaves — and put them together by **digest and ligation**, by **Gibson /
@@ -621,19 +623,21 @@ database has a name of its own (one another database has is refused), so
   **Person**, **Project group**, **Vendor** or **Category**, over the last
   12 months, this year, the last 3 months, all of it or months you choose.
   Each order costs its Price times its Quantity (or its Price alone, if
-  your lab writes the whole order's price there); a cancelled one counts
-  nowhere, and one still requested shows as waiting. **Download CSV** gives
+  your lab writes the whole order's price there) and counts in the month
+  it was ordered; a cancelled one counts nowhere, and one still requested
+  shows as waiting, in the month it was asked for. **Download CSV** gives
   the same table for a spreadsheet.
 - **Spending limits** — an admin sets a limit per year (from the month your
   year starts) or per month, for the lab, a person or a project group, in
   **Limits and settings**. The Spending view shows how much of each is
   used, near the limit or over it, and saving an order that takes its
-  asker, their group or the lab past a limit says so.
+  asker, their group or the lab past a limit says so and tells the admins.
 - **One list of vendors** — **Vendors** (on the orders page and every list
   with a vendor) lists every vendor your records name, with its orders,
   other records, what its orders cost in the last 12 months and when it was
   last ordered from. Keep its website, contact, email, phone and your
-  customer number there; a vendor kept there is offered when you type one.
+  customer number there; a vendor kept there is offered when you type one,
+  and a record's dialog shows them beside its Vendor.
   An admin or a facility manager can rename a vendor, or tick several
   spellings (*Sigma*, *Sigma-Aldrich*) and **Merge** them, on every order
   and record at once; Batch history can undo it.

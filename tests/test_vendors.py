@@ -2,6 +2,9 @@
 renaming or merging spellings on every record."""
 from __future__ import annotations
 
+import json
+import re
+
 from tests.base import flash_text, one, uniq
 from tests.test_inventory import InventoryCase
 
@@ -70,3 +73,17 @@ class Vendors(InventoryCase):
 
     def test_supplier_pages_link_to_it(self):
         self.assertIn('href="/vendors"', self.get_ok(self.m, f"/inventory/{self.orders}"))
+
+    def test_a_records_dialog_has_what_is_kept_about_its_vendor(self):
+        name = uniq("Bio-Rad ")
+        self.make_item(self.m, self.reagents, uniq("R"), vendor=name)
+        self.post(self.m, "/vendors/save", data={"was": name, "name": name, "website": "bio-rad.com",
+                                                 "customer_number": "BR-7"})
+        html = self.get_ok(self.m, f"/inventory/{self.reagents}")
+        found = re.search(r'<script type="application/json" id="inv-vendor-details">(.*?)</script>', html, re.S)
+        kept = json.loads(found.group(1))[name.strip().lower()]
+        self.assertEqual((kept["customer_number"], kept["url"]), ("BR-7", "https://bio-rad.com"))
+        self.assertIn("data-vendor-hint", html)
+        # The dialog's link opens the Vendors page found by its name.
+        self.assertIn(f'value="{name.lower()}"', self.get_ok(self.m, f"/vendors?q={name.lower()}"))
+

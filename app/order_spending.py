@@ -3,9 +3,11 @@ limits a lab can set on it.
 
 An order costs its Price times its Quantity, or its Price alone where the
 lab writes the whole order's price there (the view's *Price is* choice).
-An order counts in the month it was asked for (created_at); a cancelled
-one counts nowhere, one still requested counts as asked for and one
-ordered or received as spent. Grouped by project group, an order counts in
+An order ordered or received counts as spent, in the month it was
+ordered (attrs "ordered_on", stamped by inventory_service.apply_status;
+an order from before that date was kept counts in the month it was asked
+for); one still requested counts as asked for, in the month it was asked
+for (created_at); a cancelled one counts nowhere. Grouped by project group, an order counts in
 every group its asker is in now, so the groups can add up to more than the
 lab.
 
@@ -141,10 +143,15 @@ def orders_of(session, module: InventoryModule, settings: dict) -> list[Order]:
             attrs = json.loads(r.attrs or "{}")
         except ValueError:
             attrs = {}
+        attrs = attrs if isinstance(attrs, dict) else {}
+        day = r.created_at.date() if r.created_at else date.today()
+        if state == "spent":
+            try:
+                day = date.fromisoformat(str(attrs.get(svc.ORDERED_ATTR) or ""))
+            except ValueError:
+                pass
         out.append(Order(r.id, r.number or 0, r.name or "", (r.owner or "").strip(), (r.vendor or "").strip(),
-                         (r.category or "").strip(), state,
-                         cost(attrs if isinstance(attrs, dict) else {}, r.quantity, settings["price_is"]),
-                         r.created_at.date() if r.created_at else date.today()))
+                         (r.category or "").strip(), state, cost(attrs, r.quantity, settings["price_is"]), day))
     return out
 
 
@@ -302,6 +309,25 @@ def over_limits(session, module: InventoryModule, owner: str, today: date | None
     found = limits(orders_of(session, module, settings), people, settings, today or date.today())["rows"]
     return [r for r in found if r["state"] == "over" and (
         r["kind"] == "lab" or (r["kind"] == "person" and r["key"] == owner) or (r["kind"] == "group" and r["key"] in mine))]
+
+
+def tell_admins(session, module: InventoryModule, crossed: list[dict], actor: str, link: str) -> int:
+    """Every admin (but whoever saved) is told of each limit an order has
+    just taken past, in their own language, under Orders notifications."""
+    from . import notify
+    settings = settings_of(session, module)
+    admins = session.scalars(select(UserAccount.username).where(UserAccount.role == "admin",
+                                                                UserAccount.disabled.is_(False))).all()
+    message = ("%(used)s asked for this month, of %(limit)s." if settings["period"] == "month"
+               else "%(used)s asked for this year, of %(limit)s.")
+    sent = 0
+    for r in crossed:
+        values = {"used": amount_text(r["used"], settings["currency"]),
+                  "limit": amount_text(r["limit"], settings["currency"])}
+        for admin in admins:
+            sent += notify.send(session, admin, "%(who)s is over the spending limit", message, category="orders",
+                                link=link, actor=actor, values={"who": r["label"]}, message_values=values)
+    return sent
 
 
 def amount_text(value: float, currency: str = "") -> str:

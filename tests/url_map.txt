@@ -85,11 +85,13 @@
 /api/v1/reorder-forecast	api.reorder_forecast	GET
 /api/v1/resolve	api.resolve	GET
 /api/v1/search	api.search	GET
+/api/v1/spending	api.spending	GET
 /api/v1/stocks	api.stock_modules	GET
 /api/v1/stocks/<key>/units	api.stock_units	GET
 /api/v1/stocks/<key>/units/<int:number>	api.stock_unit_update	PATCH
 /api/v1/strains	api.strains	GET
 /api/v1/tanks	api.tanks	GET
+/api/v1/vendors	api.vendors_list	GET
 /api/v1/vocabulary	api.vocabulary	GET
 /app-icon/<glyph>/<color>.svg	app_icon	GET
 /ask	door.ask	GET POST
@@ -514,6 +516,7 @@
 /plasmids/grid	plasmid_grid	GET
 /plasmids/link-columns	plasmid_link_columns	POST
 /plasmids/list	plasmid_list	GET
+/plasmids/on-map	plasmids_on_map	GET
 /plasmids/rows	plasmid_rows	GET
 /presence	sheet_views.presence	POST
 /proposals	proposals.page	GET
