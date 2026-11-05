@@ -852,8 +852,10 @@ database has a name of its own (one another database has is refused), so
     folder, to insert one as a checklist.
     **Run the checklist step by step** (▶) goes through it at the bench one step at a time
     in large type: each tick gets the time, a deviation is written under the
-    page's Deviations heading, and a table written under a step (the master
-    mix for that step, say) is shown with it, up to the next step or heading.
+    page's Deviations heading, and what is written for a step is shown with
+    it as it reads in the page: its sub-bullets and notes, and the table,
+    picture, callout or calculator under it (the master mix for that step,
+    say), up to the next step or heading.
   - **Data sheets**: paste from Excel or import a CSV, add formula columns
     (`=B/mean(B)*100`), and get a bar, dot, box, scatter or line plot with
     SEM or SD error bars, a fitted line, and a t-test, Mann–Whitney or ANOVA

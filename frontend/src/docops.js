@@ -61,12 +61,34 @@ export function stampTime(editor) {
   editor.chain().focus().insertContent([{ type: 'text', text: clock(now), marks: [{ type: 'bold' }] }, { type: 'text', text: ' ' }]).run();
 }
 
-// Protocol steps: every task item in the page, in order. A step's tables
-// are those inside it and those written after it, up to the next step or
-// the next heading: a table typed under a step usually ends the checklist
-// in the page's Markdown, so "the table below" sits between two steps
-// rather than in one. A heading ends a step's reach, so a Results table is
-// no step's.
+// An empty line: a paragraph with nothing in it but spaces or line breaks.
+function blank(node) {
+  if (!node.isTextblock || node.textContent.trim()) return false;
+  let other = false;
+  node.forEach((child) => { if (!child.isText && child.type.name !== 'hardBreak') other = true; });
+  return !other;
+}
+
+function holdsStep(node) {
+  let found = false;
+  node.descendants((inner) => {
+    if (found) return false;
+    if (inner.type.name === 'taskItem') { found = true; return false; }
+    return true;
+  });
+  return found;
+}
+
+// Protocol steps: every task item in the page, in order, each with what is
+// written for it (its context): what is inside the step after its first
+// line (sub-bullets, a note, sub-steps), then the blocks written after it
+// up to the next step or the next heading or line (---): a note, a table,
+// a picture, a callout, a calculator. Whatever is typed under a step
+// usually ends the checklist in the page's Markdown, so "the table below"
+// sits between two steps rather than in one. A heading ends a step's
+// reach, so a Results table or the Notes are no step's. Empty lines are
+// left out. Sub-steps (a checklist inside a step) are part of their step,
+// not steps of their own.
 export function taskItems(doc) {
   const items = [];
   let open = null;
@@ -74,42 +96,23 @@ export function taskItems(doc) {
     const type = node.type.name;
     if (type === 'taskItem') {
       const para = node.firstChild;
-      const tables = [];
-      node.descendants((inner) => {
-        if (inner.type.name === 'table') { tables.push(inner); return false; }
-        return true;
+      const own = para && para.isTextblock;
+      const context = [];
+      node.forEach((child, _offset, i) => {
+        if (i === 0 && own) return;
+        if (!blank(child)) context.push(child);
       });
-      open = { pos, checked: !!node.attrs.checked, text: para ? para.textContent : node.textContent, node, tables };
+      open = { pos, checked: !!node.attrs.checked, text: own ? para.textContent : node.textContent, node, context };
       items.push(open);
       return false;
     }
-    if (type === 'heading') open = null;
-    if (type === 'table') {
-      if (open) open.tables.push(node);
-      return false;
-    }
-    return true;
+    if (type === 'heading' || type === 'horizontalRule') { open = null; return false; }
+    // A list of steps, or a callout or column holding one: look inside.
+    if (holdsStep(node)) return true;
+    if (open && !blank(node)) open.context.push(node);
+    return false;
   });
   return items;
-}
-
-// A table's rows as plain cells, header cells marked, for showing it
-// somewhere other than the editor (Run mode).
-export function tableRows(table) {
-  const rows = [];
-  table.forEach((row) => {
-    const cells = [];
-    row.forEach((cell) => {
-      cells.push({
-        header: cell.type.name === 'tableHeader',
-        text: cell.textBetween(0, cell.content.size, '\n', '\n'),
-        colspan: cell.attrs.colspan || 1,
-        rowspan: cell.attrs.rowspan || 1,
-      });
-    });
-    rows.push(cells);
-  });
-  return rows;
 }
 
 export function checkStep(editor, pos, checked, { stamp = true } = {}) {

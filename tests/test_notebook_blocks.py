@@ -51,7 +51,7 @@ class Blocks(unittest.TestCase):
     @unittest.skipUnless((ROOT / "frontend" / "node_modules" / "@tiptap").is_dir()
                          and (ROOT / "tests" / "js" / "node_modules" / "jsdom").is_dir(),
                          "needs frontend/node_modules and jsdom")
-    def test_run_mode_shows_the_table_written_under_a_step(self):
+    def test_run_mode_shows_what_is_written_for_a_step(self):
         self.check("runmode-steps.check.mjs")
 
 

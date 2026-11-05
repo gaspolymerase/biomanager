@@ -44,7 +44,7 @@ export const BLOCKS = {
 
 export { CALC_TYPES };
 
-function decode(kind, raw) {
+export function decode(kind, raw) {
   if (!BLOCKS[kind].json) return raw || '';
   try {
     const parsed = JSON.parse(raw || '{}');
