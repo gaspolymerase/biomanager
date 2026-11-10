@@ -870,9 +870,19 @@ def page_tree(pages: list[dict]) -> list[dict]:
     return top
 
 
-def page_link_pattern(page_id: int) -> str:
-    """How a page is linked in another page's Markdown: [title](/notebook?page=12)."""
-    return f"%/notebook?page={int(page_id)})%"
+def page_link_patterns(page_id: int) -> tuple[str, str]:
+    """How a page is linked in another page's Markdown: [title](/notebook?page=12),
+    or cited, [(Wang et al., 2024)](/notebook?page=12&cite=1)."""
+    return f"%/notebook?page={int(page_id)})%", f"%/notebook?page={int(page_id)}&cite=1)%"
+
+
+def cite_fields(kind: str | None, properties) -> dict | None:
+    """What a citation of a page shows (frontend/src/cite.js): a paper's
+    authors and year. Only a reading note is cited."""
+    if kind != "reading":
+        return None
+    props = property_map(properties)
+    return {"authors": props.get("authors", ""), "year": props.get("year", "")}
 
 
 def linked_from(session, page_id: int) -> list[dict]:
@@ -880,7 +890,7 @@ def linked_from(session, page_id: int) -> list[dict]:
     stmt = accessible_filter(select(NotebookPage.id, NotebookPage.title, NotebookTab.owner_username)
                              .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
                              .where(NotebookPage.id != page_id,
-                                    NotebookPage.body.like(page_link_pattern(page_id))))
+                                    or_(*(NotebookPage.body.like(p) for p in page_link_patterns(page_id)))))
     rows = session.execute(stmt.order_by(NotebookPage.updated_at.desc()).limit(50)).all()
     names = display_names(session, [r.owner_username for r in rows])
     return [{"id": r.id, "title": r.title or "Untitled page", "owner_name": names.get(r.owner_username, r.owner_username),
@@ -2195,6 +2205,7 @@ def search():
             "tags": tag_list(r.tags or ""), "entry_date": _iso(r.NotebookPage.entry_date),
             "updated_at": _iso(r.NotebookPage.updated_at), "snippet": _snippet(r.NotebookPage.body, terms),
             "url": page_url(r.NotebookPage.id), "cover": property_map(r.NotebookPage.properties).get(COVER, ""),
+            **({"fields": fields} if (fields := cite_fields(r.kind, r.NotebookPage.properties)) is not None else {}),
         } for r in rows]})
 
 
@@ -2223,7 +2234,11 @@ def page_titles():
             if role_for(s, page) is None:
                 continue
             info = info_for(s, page.id)
-            out[str(page.id)] = {"title": page.title or "Untitled page", "kind": info.kind if info else "note"}
+            kind = info.kind if info else "note"
+            out[str(page.id)] = {"title": page.title or "Untitled page", "kind": kind}
+            fields = cite_fields(kind, page.properties)
+            if fields is not None:
+                out[str(page.id)]["fields"] = fields
         return jsonify({"ok": True, "pages": out})
 
 

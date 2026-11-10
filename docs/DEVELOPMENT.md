@@ -2897,8 +2897,15 @@ the node so the Markdown carries the current title. Alone in its paragraph
 it is drawn as a block (a decoration, `is-block`). `[[` (an input rule) and
 **Link to page** open `openPagePicker`, which can also make a sub-page;
 **Turn into page** makes the line's text a sub-page's title.
+A citation (**Cite paper**, `/cite`, `openCitePicker`) is a `pageLink` with
+`cite: true`, kept as `[(Wang et al., 2024)](/notebook?page=12&cite=1)`:
+it shows `citeText()` (`frontend/src/cite.js`, checked by
+`tests/js/cite.check.mjs`) of the reading note's Authors and Year, which
+`/notebook/api/pages/titles` and `/notebook/api/search` give a reading
+page as `fields` (`cite_fields`), writes those words back as the link's,
+and is never drawn as a block.
 `/notebook/api/pages/<id>/linked-from` lists the pages the reader can open
-whose body contains `/notebook?page=<id>)`. Every link in a page opens with
+whose body contains `/notebook?page=<id>)` or `/notebook?page=<id>&cite=1)`. Every link in a page opens with
 `openInApp()` (the app's pages, in a BioManager tab, after
 `editor.storage.pageLink.beforeLeave` has pushed the live document and saved
 the text) or in the browser (other sites). On `pagehide` the sync provider

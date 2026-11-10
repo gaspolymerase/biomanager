@@ -7,23 +7,35 @@
 // In the Markdown it stays an ordinary link, [Title](/notebook?page=12), so
 // search, export and "Linked from" read it.
 //
+// A citation (/cite) is the same link to a paper's reading note, showing
+// the paper as papers cite it, "(Wang et al., 2024)", from the note's
+// Authors and Year as they are now (../cite.js). Its Markdown is a link too,
+// [(Wang et al., 2024)](/notebook?page=12&cite=1).
+//
 // Also here: "[[" opens the page search where you type, and every other
 // link opens in a BioManager tab (pages of the app) or the browser (the web).
 
 import { InputRule, Node, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { citeText } from '../cite.js';
 import { ICONS } from '../icons.js';
 import { openPagePicker } from '../rich-menus.js';
 import { openInApp } from '../util.js';
 
 const HREF = /^(?:https?:\/\/[^/]+)?\/notebook\?page=(\d+)(?:[&#].*)?$/;
+const CITE = /[?&]cite=1(?:[&#]|$)/;
 export const pageUrl = (id) => `/notebook?page=${id}`;
+const linkUrl = (attrs) => (attrs.cite ? `${pageUrl(attrs.id)}&cite=1` : pageUrl(attrs.id));
+
+// What a link shows: the page's title, or for a citation the paper's
+// author and year.
+const shown = (attrs, page) => (attrs.cite ? citeText(page.fields || {}, page.title) : page.title);
 
 
 // ---------------------------------------------------------------- live titles
 
-const known = new Map();      // id -> { title, kind } or null (no access / gone)
+const known = new Map();      // id -> { title, kind, fields } or null (no access / gone)
 const waiting = new Map();    // id -> [resolve]
 let batch = null;
 
@@ -82,6 +94,7 @@ export const PageLink = Node.create({
     return {
       id: { default: null, parseHTML: (el) => (el.getAttribute('href') || '').match(HREF)?.[1] || el.getAttribute('data-page') },
       title: { default: '', parseHTML: (el) => el.textContent || '' },
+      cite: { default: false, parseHTML: (el) => CITE.test(el.getAttribute('href') || '') },
     };
   },
 
@@ -91,7 +104,8 @@ export const PageLink = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    return ['a', mergeAttributes(HTMLAttributes, { href: pageUrl(node.attrs.id), class: 'nb-pagelink', 'data-page': node.attrs.id }), node.attrs.title || 'Untitled page'];
+    const { cite: _cite, ...attrs } = HTMLAttributes;
+    return ['a', mergeAttributes(attrs, { href: linkUrl(node.attrs), class: node.attrs.cite ? 'nb-pagelink nb-cite' : 'nb-pagelink', 'data-page': node.attrs.id }), node.attrs.title || 'Untitled page'];
   },
 
   renderText({ node }) { return node.attrs.title || 'Untitled page'; },
@@ -100,7 +114,7 @@ export const PageLink = Node.create({
     return {
       markdown: {
         serialize(state, node) {
-          state.write(`[${escapeLabel(node.attrs.title)}](${pageUrl(node.attrs.id)})`);
+          state.write(`[${escapeLabel(node.attrs.title)}](${linkUrl(node.attrs)})`);
         },
         parse: {},
       },
@@ -111,28 +125,33 @@ export const PageLink = Node.create({
     return ({ node, editor, getPos }) => {
       let current = node;
       const dom = document.createElement('a');
-      dom.className = 'nb-pagelink';
+      dom.className = node.attrs.cite ? 'nb-pagelink nb-cite' : 'nb-pagelink';
       dom.href = pageUrl(node.attrs.id);
       dom.contentEditable = 'false';
       dom.draggable = false;
-      dom.innerHTML = `<span class="nb-pagelink-icon">${ICONS.page}</span><span class="nb-pagelink-title"></span>`;
+      dom.innerHTML = node.attrs.cite ? '<span class="nb-pagelink-title"></span>'
+        : `<span class="nb-pagelink-icon">${ICONS.page}</span><span class="nb-pagelink-title"></span>`;
       const label = dom.querySelector('.nb-pagelink-title');
       const paint = (title, missing) => {
         label.textContent = title || 'Untitled page';
         dom.classList.toggle('is-missing', !!missing);
-        dom.title = missing ? 'A page you cannot open, or one that was deleted' : '';
+        dom.title = missing ? 'A page you cannot open, or one that was deleted' : (current.attrs.cite ? hint : '');
       };
+      let hint = '';
       paint(node.attrs.title, false);
 
       const refresh = (fresh) => pageInfo(current.attrs.id, fresh).then((page) => {
         if (!page) { paint(current.attrs.title, true); return; }
-        paint(page.title, false);
-        // Keep the Markdown's words the page's title, for search and export.
-        if (editor.isEditable && page.title !== current.attrs.title && typeof getPos === 'function') {
+        const words = shown(current.attrs, page);
+        hint = page.title;
+        paint(words, false);
+        // Keep the Markdown's words the page's title (a citation's, the
+        // paper's author and year), for search and export.
+        if (editor.isEditable && words !== current.attrs.title && typeof getPos === 'function') {
           const pos = getPos();
           const here = pos != null && editor.state.doc.nodeAt(pos);
           if (here && here.type.name === 'pageLink' && here.attrs.id === current.attrs.id) {
-            editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...here.attrs, title: page.title }).setMeta('addToHistory', false));
+            editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...here.attrs, title: words }).setMeta('addToHistory', false));
           }
         }
       });
@@ -150,11 +169,12 @@ export const PageLink = Node.create({
       return {
         dom,
         update(next) {
-          if (next.type.name !== 'pageLink') return false;
+          if (next.type.name !== 'pageLink' || next.attrs.cite !== current.attrs.cite) return false;
           const moved = next.attrs.id !== current.attrs.id;
           current = next;
           dom.href = pageUrl(next.attrs.id);
-          if (moved) refresh(false); else if (!dom.classList.contains('is-missing')) paint(known.get(String(next.attrs.id))?.title || next.attrs.title, false);
+          const page = known.get(String(next.attrs.id));
+          if (moved) refresh(false); else if (!dom.classList.contains('is-missing')) paint(page ? shown(next.attrs, page) : next.attrs.title, false);
           return true;
         },
         stopEvent: (e) => e.type === 'click',
@@ -187,7 +207,7 @@ export const PageLink = Node.create({
     const decorate = (doc) => {
       const found = [];
       doc.descendants((n, pos) => {
-        if (n.isTextblock && n.childCount === 1 && n.firstChild.type.name === 'pageLink') {
+        if (n.isTextblock && n.childCount === 1 && n.firstChild.type.name === 'pageLink' && !n.firstChild.attrs.cite) {
           found.push(Decoration.node(pos + 1, pos + 1 + n.firstChild.nodeSize, { class: 'is-block' }));
           return false;
         }

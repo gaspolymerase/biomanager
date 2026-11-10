@@ -1117,6 +1117,10 @@ body.biocal-autofill-active * { user-select: none !important; }
 .tiptap-editor-host .nb-pagelink.is-missing { color: var(--color-muted); }
 .tiptap-editor-host .nb-pagelink.is-missing .nb-pagelink-title { text-decoration-style: dashed; }
 .tiptap-editor-host .nb-pagelink.ProseMirror-selectednode { outline: 2px solid var(--color-brand-400); outline-offset: 1px; }
+/* A citation (/cite): the paper's author and year in the sentence, as
+   papers cite, linked to its reading note. */
+.tiptap-editor-host .nb-pagelink.nb-cite { padding: 0 0.1em; color: var(--color-brand-700, var(--color-ink)); }
+.tiptap-editor-host .nb-pagelink.nb-cite .nb-pagelink-title { font-weight: inherit; text-decoration-color: var(--color-brand-300, var(--color-sand-300)); }
 
 /* Small popovers: colours, a page to link, a date, a reminder. */
 .nb-pop {
