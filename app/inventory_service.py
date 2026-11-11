@@ -281,9 +281,12 @@ TERMINAL_STATUSES = {"used up", "empty", "discarded", "cancelled"}
 # Of those, the ones that leave the box: the tube's cell is freed for the
 # next one, and its location note says where it was.
 GONE_FROM_BOX = {"used up", "empty", "discarded"}
-# Stock that runs out or expires: Home's "Expiring & low stock", and what a
-# received order can be added to (inventory_routes.STOCK_KINDS).
+# Stock that runs out or expires: Home's "Expiring & low stock", and what
+# "Order again" orders more of (inventory_routes.STOCK_KINDS).
 RESTOCK_KINDS = ("reagents", "chemicals", "antibodies", "viruses")
+# What a received order can be added to: that stock, and the lab's own lists
+# (a Consumables or Equipment list made from Custom list).
+ORDER_TARGET_KINDS = (*RESTOCK_KINDS, "custom")
 # The ones that live as tabs of the Plasmids area, not in the sidebar
 # (app.py _inventory_module_links), in the order the work flows.
 PLASMID_TAB_KINDS = ("primers", "glycerol_stocks", "viruses")

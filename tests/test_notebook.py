@@ -444,6 +444,14 @@ class ReadingTests(Notebook):
         self.assertNotIn(theirs, ids)
         self.assertNotIn(note, ids)
 
+    def test_reading_lists_every_paper_not_the_first_five_hundred(self):
+        # A Zotero library brings a thousand papers at once; the page
+        # searches what it is sent, so all of them are sent (#142).
+        reader = client_for(make_user())
+        made = [self.new_page(reader, kind="reading", title=uniq("paper")) for _ in range(505)]
+        ids = {x["id"] for x in reader.get("/notebook/api/reading").get_json()["items"]}
+        self.assertEqual(ids, set(made))
+
     def test_a_page_from_before_keeps_its_named_properties(self):
         page = self.new_page(self.m)
         old = [{"name": "Cell line", "type": "text", "value": "HEK293"}]

@@ -659,6 +659,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "pack_sizes": svc.has_pack_size(mv), "box_labels": box_labels, "sources": sources,
         "mouse_links": mouse_links, "plasmid_links": plasmid_links,
         "stock_targets": stock_targets, "order_module": order_module,
+        "target_categories": _target_categories(mv.categories, stock_targets),
         "stock_links": _order_stock_links(session, row, items),
         "on_order": ({i: gettext("Already on order: %(orders)s", orders=gettext("; ").join(_on_order_text(o) for o in found[:3]))
                       for i, found in _open_orders_of(session, row, items).items()}
@@ -672,7 +673,7 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
     lazy = len(rows) > LAZY_OVER
     reorder = (_reorder_payload(session, mv, items, request.args.get("reorder", ""))
                if row.kind == "orders" and request.args.get("reorder") else None)
-    if row.kind in STOCK_KINDS and request.args.get("from_order"):
+    if row.kind in STOCK_TARGET_KINDS and request.args.get("from_order"):
         reorder = _from_order_payload(session, mv, request.args["from_order"],
                                       shared=request.args.get("shared") == "1")
     redraw_url = url_for("inventory.sheet_rows", key=key, rem=",".join(c for c, v in remembered["suggest"].items() if v),
@@ -975,7 +976,7 @@ def save_item(key: str):
             session.rollback()
             return _done(key, error=gettext("Not saved: %(reason)s", reason=error))
         item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
-        if creating and row.kind in STOCK_KINDS and request.form.get("from_order"):
+        if creating and row.kind in STOCK_TARGET_KINDS and request.form.get("from_order"):
             # Made from a received order's "Add to stock": the order now
             # points at this record, and is not offered for stock again.
             order, _ov = _order_for_stock(session, request.form["from_order"])
@@ -1300,13 +1301,31 @@ def set_status(key: str, item_id: int):
 
 
 STOCK_KINDS = svc.RESTOCK_KINDS
+# What "Add to stock" offers: those, and the lab's own lists (consumables).
+STOCK_TARGET_KINDS = svc.ORDER_TARGET_KINDS
 # The order category that belongs in each kind of stock, and back.
 STOCK_CATEGORY = {"reagents": "reagent", "chemicals": "reagent", "antibodies": "antibody", "viruses": "virus"}
 
 
 def _stock_targets(session) -> list[InventoryModule]:
-    """The reagent, chemical, antibody and virus inventories this person can add to."""
-    return [m for m in svc.list_modules(session) if m.kind in STOCK_KINDS]
+    """The reagent, chemical, antibody and virus inventories, and the lab's
+    own lists (consumables, equipment), this person can add an order to."""
+    return [m for m in svc.list_modules(session) if m.kind in STOCK_TARGET_KINDS]
+
+
+def _target_categories(categories: list[str], targets: list[InventoryModule]) -> dict[str, str]:
+    """A lab's own list → the order categories its name says it holds
+    ("Consumables" or "耗材" takes consumable orders), "|"-joined: where the
+    offer to add a received order to stock points first."""
+    found: dict[str, str] = {}
+    for target in targets:
+        if target.kind != "custom":
+            continue
+        name = (target.label or "").lower()
+        said = [c for c in categories if c and any(w and w.lower() in name for w in (c, i18n.catalog("zh").get(c, "")))]
+        if said:
+            found[target.key] = "|".join(c.lower() for c in said)
+    return found
 
 
 def _order_stock_links(session, row: InventoryModule, items: list[InventoryItem]) -> dict[int, dict]:
@@ -1331,7 +1350,7 @@ def _order_stock_links(session, row: InventoryModule, items: list[InventoryItem]
                 links[order_id] = {"label": record, "icon": "flask",
                                    "title": gettext("In stock as %(record)s: open it", record=record),
                                    "url": url_for("inventory.module", key=key, open=stock.id)}
-    elif row.kind in STOCK_KINDS:
+    elif row.kind in STOCK_TARGET_KINDS:
         numbers = {item.number: item.id for item in items}
         for orders in (m for m in svc.list_modules(session) if m.kind == "orders"):
             for order in session.scalars(select(InventoryItem).where(
@@ -1386,8 +1405,8 @@ def order_to_reagents(key: str, item_id: int):
                 return _done(key, error=gettext("%(name)s is already in stock (%(where)s).", name=order.name, where=where))
             return _done(key, error=gettext("That order is already in stock (%(where)s).", where=where))
         target = svc.get_module(session, target_key) if target_key else svc.first_of_kind(session, "reagents")
-        if target is None or target.kind not in STOCK_KINDS or not lab.can_see(target):
-            return _done(key, error=gettext("Pick a reagents, chemicals, antibodies or viruses inventory to add it to."))
+        if target is None or target.kind not in STOCK_TARGET_KINDS or not lab.can_see(target):
+            return _done(key, error=gettext("Pick an inventory to add it to: reagents, chemicals, antibodies, viruses or a list of the lab's own."))
         tv = svc.view(target)
         attrs = order.attrs_dict
         draft = _stock_from_order(session, mv, tv, order, shared=request.form.get("shared") == "1")

@@ -2673,7 +2673,7 @@ def _received_warn(s, order, v) -> list[str]:
 
 @action(name="order_received", area="inventory", title="Order received",
         help="Mark an order received. With to_stock, also add it to a reagents, chemicals, antibodies or viruses "
-             "inventory, as the order's Add to stock does: its name, vendor, catalogue number, quantity and unit "
+             "inventory, or a list of the lab's own (consumables), as the order's Add to stock does: its name, vendor, catalogue number, quantity and unit "
              "come from the order unless given here (the order says \"Tamoxifen 1 g\", the stock keeps "
              "\"Tamoxifen\", quantity 1, unit g); give the lot, when it expires and where it is kept. The summary "
              "shows the stock record as it will be made, and a warning when that inventory already has an item "
@@ -2710,8 +2710,8 @@ def _order_received(s, order, v):
         raise ActionError(gettext("%(name)s is already in stock (%(where)s).", name=order.name or f"#{order.number}",
                                   where=stocked.replace(":", " #")))
     target = _inventory(s, v["to_stock"])
-    if target.kind not in isvc.RESTOCK_KINDS:
-        raise ActionError(gettext("Pick a reagents, chemicals, antibodies or viruses inventory to add it to."))
+    if target.kind not in isvc.ORDER_TARGET_KINDS:
+        raise ActionError(gettext("Pick an inventory to add it to: reagents, chemicals, antibodies, viruses or a list of the lab's own."))
     return calls + [Call("POST", f"/inventory/{target.key}/items/save", form=_stock_form(s, module, target, order, v))]
 
 
