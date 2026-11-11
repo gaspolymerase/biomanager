@@ -410,6 +410,37 @@ class OfferStockTests(OrdersCase):
         self.assertIn(f'href="/inventory/{self.orders}?open={oid}"', stock_page)
 
 
+class OwnListStockTests(OrdersCase):
+    """A received order goes to a list of the lab's own too (#144): petri
+    dishes to Consumables, made from Custom list."""
+
+    def test_a_list_of_the_labs_own_is_offered_named_for_what_it_holds(self):
+        consumables = self.new_module(self.a, "custom", uniq("耗材 "))
+        other = self.new_module(self.a, "custom", uniq("Odds "))
+        self.order(status="received")
+        html = self.get_ok(self.a, f"/inventory/{self.orders}")
+        self.assertIn(f'<option value="{consumables}" data-kind="custom" data-category="consumable">', html)
+        self.assertIn(f'<option value="{other}" data-kind="custom">', html)
+        self.assertIn(f'<option value="{self.reagents}" data-kind="reagents">', html)
+
+    def test_an_order_added_to_a_list_of_the_labs_own_links_both_ways(self):
+        consumables = self.new_module(self.a, "custom", uniq("Consumables "))
+        name = uniq("Petri dish ")
+        oid = self.order(name=name, category="consumable", status="received")
+        r = self.a.post(f"/inventory/{self.orders}/items/{oid}/to-reagents", data={"target": consumables, "shared": "1"})
+        [cid] = items_named(consumables, name)
+        self.assertEqual(location(r), f"/inventory/{consumables}?open={cid}")
+        self.assertEqual(attrs_of(oid)["stocked_as"], f"{consumables}:{item(cid)['number']}")
+        self.assertIn(f'href="/inventory/{self.orders}?open={oid}"', self.get_ok(self.a, f"/inventory/{consumables}"))
+
+    def test_samples_are_still_not_somewhere_an_order_goes(self):
+        samples = self.new_module(self.a, "samples")
+        oid = self.order(status="received")
+        r = self.a.post(f"/inventory/{self.orders}/items/{oid}/to-reagents", data={"target": samples})
+        self.assertIn("a list of the lab's own", flash_text(self.a.get(location(r))))
+        self.assertNotIn("stocked_as", attrs_of(oid))
+
+
 class StockRequiredTests(OrdersCase):
     """Add to stock respects what the stock inventory requires."""
 

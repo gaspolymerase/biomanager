@@ -39,8 +39,11 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
     try { return JSON.parse((open && open.dataset.recordPayload) || '{}'); } catch (_) { return {}; }
   }
 
-  /* A received order: offer to make a reagent or antibody of it, in the
-     inventory its category points to. */
+  /* A received order: offer to add it to stock, in the inventory its
+     category points to: an antibody to Antibodies, a virus to Viruses, a
+     consumable or equipment to the lab's own list (Custom list), the rest to
+     Reagents. */
+  const OFFER_KIND = { antibody: 'antibodies', virus: 'viruses', reagent: 'reagents', chemical: 'chemicals' };
   function offerStock(id) {
     const dialog = document.getElementById('stock-offer-dialog');
     if (!dialog) return;
@@ -48,9 +51,16 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
     const item = payloadOf(id);
     form.action = form.dataset.action.replace('/0/', `/${id}/`);
     dialog.querySelector('[data-offer-name]').textContent = item.name || item._label || t('The order');
-    const want = String(item.category || '').toLowerCase() === 'antibody' ? 'antibodies' : 'reagents';
+    const category = String(item.category || '').toLowerCase();
     const target = dialog.querySelector('[data-offer-target]');
-    const option = Array.from(target.options).find((o) => o.dataset.kind === want);
+    const options = Array.from(target.options);
+    // A list of the lab's own named for the category ("Consumables" or
+    // "耗材" for a consumable: data-category, from the server) first.
+    const named = !OFFER_KIND[category] && category && options.find((o) => o.dataset.kind === 'custom'
+      && (o.dataset.category || '').split('|').includes(category));
+    const want = OFFER_KIND[category] || (['consumable', 'equipment'].includes(category) ? 'custom' : 'reagents');
+    const option = named || options.find((o) => o.dataset.kind === want)
+      || options.find((o) => o.dataset.kind === 'reagents');
     if (option) target.value = option.value;
     dialog.showModal();
   }

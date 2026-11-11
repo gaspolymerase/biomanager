@@ -771,6 +771,7 @@ a.nb-starter { text-decoration: none; }
    in them, to find a paper by a figure (static/notebook-library.js). */
 .nb-lib-tools .seg .seg-item .icon { width: 13px; height: 13px; }
 .nb-read-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+.nb-read-more { display: flex; justify-content: center; margin: 16px 0 8px; }
 .nb-read-card {
   display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--color-hairline); border-radius: 12px;
   background: var(--color-surface); color: var(--color-ink); text-decoration: none; box-shadow: var(--shadow-xs);

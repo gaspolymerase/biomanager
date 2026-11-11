@@ -595,10 +595,11 @@
   // cover, or every picture in them, to find one by a figure remembered.
   // Search reads titles, authors, journals, DOIs, tags and picture captions.
   var READ_VIEW_KEY = 'nb-reading-view';
+  var READ_PAGE = 120;   // cards drawn at a time; Show more draws the next
   function readingView() { try { return localStorage.getItem(READ_VIEW_KEY) === 'pictures' ? 'pictures' : 'cards'; } catch (_) { return 'cards'; } }
   function reading() {
     view = null;
-    var state = { q: '', only: '', layout: readingView(), items: null };
+    var state = { q: '', only: '', layout: readingView(), items: null, shown: READ_PAGE };
     root.innerHTML = head([], searchBox(t('Title, author, journal, DOI or tag'), '') +
       '<div class="seg" role="group" aria-label="' + t('Show') + '">' +
       '<button type="button" class="seg-item is-active" data-only="">' + t('All') + '</button>' +
@@ -608,7 +609,9 @@
       '<button type="button" class="seg-item" data-layout="cards" title="' + t('Cards') + '">' + icon('grid') + '</button>' +
       '<button type="button" class="seg-item" data-layout="pictures" title="' + t('Pictures') + '">' + icon('image') + '</button></div>' +
       '<button type="button" class="btn" data-zotero>' + icon('book-open') + ' Zotero</button>' +
-      '<button type="button" class="btn btn-primary" data-new-page-kind="reading">' + icon('plus') + ' ' + t('Paper notes') + '</button>') +
+      '<button type="button" class="btn btn-primary" data-new-page-kind="reading">' + icon('plus') + ' ' + t('Paper notes') + '</button>',
+      // How many are shown, filled in once they load (paint).
+      '', '<span id="nb-read-total"></span>') +
       '<p class="nb-lib-blurb nb-zotero-line" id="nb-zotero-line"></p>' +
       '<div id="nb-read-out"><p class="nb-muted">' + t('Loading…') + '</p></div>';
     var out = document.getElementById('nb-read-out');
@@ -647,8 +650,17 @@
             '<span>' + esc(img.alt || x.title) + '</span></a>');
         });
       });
+      // None to show: say so, and show the papers as cards, so a library
+      // brought in from Zotero is never hidden behind an empty wall (#142).
       return pics.length ? '<div class="nb-read-pics">' + pics.join('') + '</div>'
-        : '<p class="nb-lib-empty">' + t('No pictures yet. A cover or a picture pasted into a paper’s notes shows here.') + '</p>';
+        : '<p class="nb-lib-empty">' + t('No pictures yet. A cover or a picture pasted into a paper’s notes shows here.') + '</p>' + cards(list);
+    }
+    // The first READ_PAGE cards, and Show more for the next.
+    function cards(list) {
+      var more = list.length - state.shown;
+      return '<div class="nb-read-grid">' + list.slice(0, state.shown).map(card).join('') + '</div>' +
+        (more > 0 ? '<p class="nb-read-more"><button type="button" class="btn" data-read-more>' +
+          esc(t('Show more (%(n)s more)', { n: more })) + '</button></p>' : '');
     }
     function paint() {
       root.querySelectorAll('[data-only]').forEach(function (b) { b.classList.toggle('is-active', b.dataset.only === state.only); });
@@ -656,12 +668,14 @@
       if (!state.items) return;
       var q = state.q.toLowerCase();
       var list = state.items.filter(function (x) { return (!state.only || x.kind === state.only) && matches(text(x), q); });
+      var total = document.getElementById('nb-read-total');
+      if (total) total.textContent = state.items.length ? String(list.length) : '';
       if (!state.items.length) {
         out.innerHTML = '<p class="nb-lib-empty">' + t('No papers or talks yet. Paper notes and Seminar pages show here, yours and those shared with you.') + '</p>';
       } else if (!list.length) {
         out.innerHTML = '<p class="nb-lib-empty">' + t('Nothing matches.') + '</p>';
       } else {
-        out.innerHTML = state.layout === 'pictures' ? pictures(list) : '<div class="nb-read-grid">' + list.map(card).join('') + '</div>';
+        out.innerHTML = state.layout === 'pictures' ? pictures(list) : cards(list);
       }
     }
     function load() {
@@ -683,12 +697,13 @@
     window.addEventListener('nb:zotero-state', function (e) { zoteroLine(e.detail); });
     window.addEventListener('nb:zotero-made', load);
     var search = document.getElementById('nb-lib-q');
-    search.addEventListener('input', function () { state.q = search.value.trim(); paint(); });
+    search.addEventListener('input', function () { state.q = search.value.trim(); state.shown = READ_PAGE; paint(); });
     root.onchange = null;
     root.onclick = function (e) {
       var only = e.target.closest('[data-only]');
       var layout = e.target.closest('[data-layout]');
-      if (only) { state.only = only.dataset.only; paint(); }
+      if (e.target.closest('[data-read-more]')) { state.shown += READ_PAGE; paint(); }
+      if (only) { state.only = only.dataset.only; state.shown = READ_PAGE; paint(); }
       if (layout) {
         state.layout = layout.dataset.layout;
         try { localStorage.setItem(READ_VIEW_KEY, state.layout); } catch (_) { /* not remembered */ }

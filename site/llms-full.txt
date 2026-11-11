@@ -1065,7 +1065,7 @@ Brought your samples in from another database, with everything in the notes (*Ti
 
 2. **Follow it.** The status chips — *Requested, Ordered, Received, Cancelled* — show each stage in one tap; the person who requested it is notified as it moves.
 
-3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, chemical, antibody or virus with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
+3. **It arrives.** Mark it received and BioManager asks **Add it to stock?**: a new reagent, chemical, antibody or virus, or an item in a list of the lab's own (petri dishes go to a Consumables list made from **Custom list**), with its name, vendor, catalogue number, lot, quantity and expiry already filled in, opened for you to add where it's kept. (Later, the **To stock** button on the order does the same.) From then on the order shows *Reagents #8* and the reagent shows the order it came from; each opens the other.
 
 4. **Running low?** On any reagent, chemical, antibody or virus, the cart button, **Order again**, opens a new order with its details and the quantity, price and grant of the last time it was ordered. While it is already on order the button says **On order**, and the new order opens with a note naming the open one and who asked for it.
 
@@ -1145,7 +1145,7 @@ Who and where: Anyone who may edit the order · Desktop and lab server
 
 2. Mark it received: set its **Status** to *received*, or on the **Board**, drag its card to the *Received* column.
 
-3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, chemicals, antibodies or viruses it goes into, and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
+3. BioManager asks **Add it to stock?** Under **Add to**, choose the reagents, chemicals, antibodies or viruses it goes into, or a list of the lab's own (a Consumables list made from **Custom list**, for petri dishes and tips), and under **Belongs to**, whether it is lab common or yours. **Not now** leaves it; later, the **To stock** button on the order does the same.
 
 4. Press **Add to stock**.
 
@@ -1383,7 +1383,7 @@ On a narrow screen it scrolls sideways. All of it stays readable Markdown: a cal
 
 - Give a paper notes a **cover**: its key figure, uploaded or picked from the pictures in the page.
 
-- **Reading** in the notebook's sidebar lists every paper and talk you can open, yours and those shared with you, as cards with their covers. **Papers** and **Talks** narrow it, and the picture button shows every picture in them instead, so you can find a paper by a figure you remember; click one to open its page. The search reads titles, authors, journals, DOIs, tags and the captions of pictures. The notebook's own search finds a paper by its authors and DOI too.
+- **Reading** in the notebook's sidebar lists every paper and talk you can open, yours and those shared with you, as cards with their covers, how many beside the title and the first hundred or so at a time (**Show more** below them for the rest). **Papers** and **Talks** narrow it, and the picture button shows every picture in them instead, so you can find a paper by a figure you remember; click one to open its page. Papers with no pictures yet (as those just brought in from Zotero) stay listed as cards under it. The search reads titles, authors, journals, DOIs, tags and the captions of pictures. The notebook's own search finds a paper by its authors and DOI too.
 
 - **Paper notes from Zotero**: each paper you add to Zotero can become a paper note by itself. On zotero.org, open **Settings → Security → Create new private key**, tick **Allow library access** (and read access to groups, for a lab group library), and save. In BioManager, **Zotero** on the Reading page: paste the key, **Connect**, then pick the **Library**, a **Collection** (a collection called *BioManager*, say, so only the papers you put there get notes) and the **Topic** the notes go in. From then on, a paper added there becomes a note the next time you open the notebook, with its details, abstract and tags filled in; **Check now** looks at once. **Also the papers already there** makes notes for those too. A paper gets one note, ever, even if you change it in Zotero or delete its note. Zotero has to sync to zotero.org, and the computer or server running BioManager has to reach it. **Disconnect** forgets the key and keeps the notes.
 

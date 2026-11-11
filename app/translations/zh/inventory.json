@@ -217,7 +217,7 @@
   "Mark the order received before adding it to stock.": "请先把订单标为已到货，再加入库存。",
   "%(name)s is already in stock (%(where)s).": "%(name)s 已在库存中（%(where)s）。",
   "That order is already in stock (%(where)s).": "这个订单已在库存中（%(where)s）。",
-  "Pick a reagents, chemicals, antibodies or viruses inventory to add it to.": "请选择要加入的试剂、化学品、抗体或病毒库存。",
+  "Pick an inventory to add it to: reagents, chemicals, antibodies, viruses or a list of the lab's own.": "请选择要加入的库存：试剂、化学品、抗体、病毒，或实验室自建的列表。",
   "Fill in %(fields)s to add it to %(database)s.": "请填写%(fields)s才能加入%(database)s。",
   "Added %(name)s to %(database)s as #%(number)s. Add where it is kept and when it expires.": "已将 %(name)s 加入%(database)s，编号 #%(number)s。请补充存放位置和有效期。",
   "Added %(name)s to %(database)s as #%(number)s. Add where it is kept.": "已将 %(name)s 加入%(database)s，编号 #%(number)s。请补充存放位置。",

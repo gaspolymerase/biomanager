@@ -2829,11 +2829,13 @@ or RIS (what Zotero's Quick Copy or Export gives), a `zotero://select/…`
 link, or a DOI, which alone is looked up at `api.crossref.org` (the only
 host, 8 s; a failure is `CitationError`, said in words). A CSL JSON item's
 zotero.org address becomes its `zotero://select/library/items/<KEY>` (or
-`groups/<n>`) link. `/notebook/api/reading` lists the reading and seminar
-pages the person may open with their fields, cover and the pictures in
-their Markdown (`page_images`), which `notebook-library.js` draws as cards
-or as one wall of pictures (`nb-reading-view` in localStorage), filtered in
-the browser.
+`groups/<n>`) link. `/notebook/api/reading` lists every reading and seminar
+page the person may open (no cap: a Zotero library brings a thousand) with
+their fields, cover and the pictures in their Markdown (`page_images`), which
+`notebook-library.js` draws as cards, `READ_PAGE` at a time with **Show
+more**, or as one wall of pictures (`nb-reading-view` in localStorage),
+filtered in the browser. Pictures with none among what is shown says so and
+shows the cards, so papers are never hidden behind an empty wall.
 
 **Paper notes from Zotero** (`app/zotero.py`, `zotero_links`, revision
 0047). A person's link holds a read-only Zotero API key (`EncryptedText`,
