@@ -124,7 +124,7 @@ class InventoryActions(Applies, inv_tests.InventoryCase):
         self.assertIn("only go with to_stock", errors_of(out))
         out = run(self.member, {"action": "order_received", "target": item_ref(order),
                                 "fields": {"to_stock": "orders"}})
-        self.assertIn("Pick a reagents", errors_of(out))
+        self.assertIn("Pick an inventory to add it to", errors_of(out))
         self.apply({"action": "order_received", "target": item_ref(order), "fields": {"received_on": "2026-01-05"}})
         self.assertEqual(row("select status, cast(received_on as text) from inventory_items where id=?", order),
                          ("received", "2026-01-05"))

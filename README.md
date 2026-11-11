@@ -656,9 +656,11 @@ database has a name of its own (one another database has is refused), so
   inventory.
 - **From the box to the shelf** — when an order is marked received,
   BioManager asks **Add it to stock?**: a new reagent, chemical, antibody
-  or virus with the name, vendor, catalogue number, lot, quantity and
-  expiry already filled in (later, **To stock** on the order does the
-  same). The order and the record then link to each other.
+  or virus, or an item in a list of the lab's own (a Consumables list made
+  from **Custom list** takes the petri dishes), with the name, vendor,
+  catalogue number, lot, quantity and expiry already filled in (later,
+  **To stock** on the order does the same). The order and the record then
+  link to each other.
 
 <table>
   <tr>

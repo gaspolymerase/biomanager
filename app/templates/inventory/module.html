@@ -642,7 +642,7 @@
         </p>
         <label>{{ _('Add to') }}
           <select name="target" data-offer-target>
-            {% for st in stock_targets %}<option value="{{ st.key }}" data-kind="{{ st.kind }}">{{ st.label|tr }}</option>{% endfor %}
+            {% for st in stock_targets %}<option value="{{ st.key }}" data-kind="{{ st.kind }}"{% if target_categories[st.key] %} data-category="{{ target_categories[st.key] }}"{% endif %}>{{ st.label|tr }}</option>{% endfor %}
           </select>
         </label>
         <label>{{ _('Belongs to') }}

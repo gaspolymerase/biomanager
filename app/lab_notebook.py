@@ -2008,8 +2008,9 @@ def cite():
 
 @bp.get("/api/reading")
 def reading():
-    """Reading: the papers and talks (reading and seminar pages) this person
-    may open, with their details, cover and pictures."""
+    """Reading: every paper and talk (reading and seminar pages) this person
+    may open, with their details, cover and pictures. All of them: a Zotero
+    library brings a thousand at once, and the page searches what it is sent."""
     with SessionLocal() as s:
         me = _me()
         stmt = accessible_filter(
@@ -2017,7 +2018,7 @@ def reading():
             .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
             .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
             .where(NotebookPageInfo.kind.in_(READING_KINDS)))
-        rows = s.execute(stmt.order_by(NotebookPage.updated_at.desc()).limit(500)).all()
+        rows = s.execute(stmt.order_by(NotebookPage.updated_at.desc())).all()
         names = display_names(s, [r.owner_username for r in rows])
         items = []
         for r in rows:
@@ -2026,7 +2027,7 @@ def reading():
                 "id": page.id, "title": page.title or "Untitled page", "kind": r.kind, "url": page_url(page.id),
                 "fields": {key: props.get(key, "") for key in KIND_FIELDS[r.kind]},
                 "cover": props.get(COVER, ""), "images": page_images(page.body),
-                "tags": tag_list(r.tags or ""), "snippet": _snippet(page.body, [], 180),
+                "tags": tag_list(r.tags or ""),
                 "mine": r.owner_username == me, "owner_name": names.get(r.owner_username, r.owner_username),
                 "entry_date": _iso(page.entry_date), "updated_at": _iso(page.updated_at),
             })

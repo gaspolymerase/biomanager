@@ -515,6 +515,7 @@
   "No papers or talks yet. Paper notes and Seminar pages show here, yours and those shared with you.": "还没有论文或讲座。论文笔记和讲座页面会显示在这里，包括你的和与你共享的。",
   "Drag one onto a folder to file it. In a page, type /protocol to insert one.": "把一个拖到文件夹里即可归档。在页面中输入 /protocol 插入一个。",
   "No pictures yet. A cover or a picture pasted into a paper’s notes shows here.": "还没有图片。封面或粘贴到论文笔记里的图片会显示在这里。",
+  "Show more (%(n)s more)": "显示更多（还有 %(n)s 个）",
   "Delete topic": "删除主题",
   "Delete the topic “%(name)s” and every page in it?": "删除主题“%(name)s”及其中的所有页面？",
   "Create page": "创建页面",
