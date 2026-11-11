@@ -343,8 +343,11 @@ def order_sheet(key: str, fmt: str):
 # other item, only what search, sort, the chips and the counts read
 # (_row_stubs); static/data-table.js fetches a page's rows from
 # /<key>/rows when it is turned to. Thousands of rows of fields took the
-# server seconds to write and the browser seconds more to read.
-LAZY_OVER = 500
+# server seconds to write and the browser seconds more to read. Paged as
+# soon as there is a second page: in WebKit (the Mac app's window) each
+# editable row cost about 12 ms to draw, and the 300 rows a sheet of 400
+# mice kept hidden past its first page another 0.5 s.
+LAZY_OVER = 100
 FIRST_PAGE = 100
 ROWS_AT_ONCE = 500   # the most rows one /rows request returns
 
