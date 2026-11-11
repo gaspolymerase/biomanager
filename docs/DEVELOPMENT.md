@@ -771,7 +771,7 @@ id>` redirects there, and the writes stay under `/plasmids/<row id>/…`.
   5.8 → 4.5 s, vials 1.05 → 0.8 s; the page is 30–45% bigger, a tenth once
   compressed. Safari and the Mac app keep the fields: they never had
   autofill's wait, and the text cells are not tried there.
-- An inventory of more than 500 listed items (`inventory_routes.LAZY_OVER`)
+- An inventory of more than 100 listed items (`inventory_routes.LAZY_OVER`)
   is paged by the server. The page draws its first 100 rows (`FIRST_PAGE`,
   the sheet's first page, in its own order) and, for each other item, an
   entry in `<script type="application/json" data-dt-stubs>`
@@ -4410,7 +4410,7 @@ What keeps the browser's side short is under *Small shared rules*: row
 forms in a `<template>` (`row-forms.js`), long choice lists sent once
 (`data-choices`), the rows past the first page hidden until the sheet is
 drawn, a sheet of over 300 rows keeping the rows it has not shown
-off the page (`_parkLater`), and an inventory of over 500 items paged by
+off the page (`_parkLater`), and a sheet of over 100 rows paged by
 the server (`LAZY_OVER`).
 
 At 100k mice on SQLite (2.0.0), the server makes the mouse, cage and
@@ -4437,6 +4437,14 @@ mice 6.2 → 2.7 s, cages 8.0 → 3.1 s, litters 4.0 → 1.5 s, fish
 Breeders 0.5 s. With rows taken off the page from 300 (2.0.5,
 was 1,000): one person's 950 living mice 20 → 5 s, 500 fish 5–6 → 3 s;
 sheets under 300 rows are unchanged.
+
+WebKit (Safari, the Mac app), which keeps a sheet's fields rather than
+text cells, takes about twice Chromium's time: each editable row drawn
+cost about 12 ms, and the rows kept hidden past the first page cost too.
+On a mouse sheet of 392 rows (WebKit 26, the page served whole), it
+settled in 2.2 s, with only its first 100 rows in 1.3 s and with none in
+0.4 s, so a sheet is now paged by the server past one page
+(`LAZY_OVER` 100, was 500).
 
 ## Languages
 
