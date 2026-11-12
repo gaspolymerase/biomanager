@@ -1,4 +1,5 @@
 {
+  "Opening a page or approving a proposal that takes more than a second shows a small animation, so you can tell it is still loading.": "打开页面或应用提议时，如果要超过一秒，会显示一个小动画，让你知道它还在加载。",
   "**Reading** lists every paper, however many came from Zotero, and the picture view shows papers without pictures as cards.": "**文献** 会列出所有论文，不论从 Zotero 导入了多少；图片视图里没有图片的论文也会以卡片显示。",
   "A received order can go into a list of the lab's own, such as **Consumables**: **Add it to stock?** offers it.": "到货的订购可以加入实验室自建的列表，比如 **耗材**：**加入库存吗？** 里可以选它。",
   "**Run mode** shows everything written for a step with it: its sub-bullets and notes, and the table, picture, callout or calculator under it.": "**执行模式** 会把为某一步写的内容和这一步一起显示：它下面的小点和备注，以及写在它下面的表格、图片、提示框或计算器。",
