@@ -27,6 +27,8 @@
     <style>@layer properties, theme, base, vendor, components, utilities;</style>
     <link rel="stylesheet"
           href="{{ url_for('static', filename='tailwind.css') }}?v={{ asset_version('tailwind.css') }}">
+    {# A small animation while a page takes more than a second to come (static/loader.js). #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='loader.css') }}?v={{ asset_version('loader.css') }}">
     {# The accent that matches the person's app icon (app/appearance.py). #}
     <style id="brand-css">{{ brand_css|safe }}</style>
 
@@ -387,6 +389,7 @@
     {% endif %}
 
     <script src="{{ url_for('static', filename='shell.js') }}?v={{ asset_version('shell.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='loader.js') }}?v={{ asset_version('loader.js') }}" defer></script>
     {# A sheet's saved views, filter chips, inspector and who is here (app/sheet_views.py). #}
     <script src="{{ url_for('static', filename='sheet-views.js') }}?v={{ asset_version('sheet-views.js') }}" defer></script>
     {# Hover a place in the sidebar: its name, or a look inside a database (app/rail_peek.py). #}
