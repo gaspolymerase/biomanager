@@ -1,38 +1,91 @@
-{# Customize Home: which cards show, in what order, and which are full width
-   (app/home_layouts.py get_cards; saved per person by /home/cards). #}
-<dialog id="home-customize" class="record-dialog record-dialog-narrow" aria-labelledby="home-customize-title">
-  <form method="post" action="{{ url_for('set_home_cards') }}" data-home-customize>
+{# Customize Home: a small map of Overview. The panels at its top stay where
+   they are (two can be switched off); the cards below are dragged into
+   order, made wide or taken off, and the ones that are off wait underneath
+   (app/home_layouts.py get_cards; saved per person by /home/cards;
+   static/home-customize.js moves the cards). #}
+<dialog id="home-customize" class="record-dialog home-map-dialog" aria-labelledby="home-customize-title">
+  <form method="post" action="{{ url_for('set_home_cards') }}" data-home-customize
+        data-said-place="{{ _('%(name)s: %(position)s of %(total)s', name='{name}', position='{position}', total='{total}') }}"
+        data-said-off="{{ _('%(name)s is off Home', name='{name}') }}"
+        data-said-on="{{ _('%(name)s is on Home', name='{name}') }}">
     <header class="record-dialog-head">
       <div>
         <h3 id="home-customize-title">{{ _('Customize Home') }}</h3>
-        <p class="record-dialog-sub">{% trans trimmed %}Tick the cards you want and put them in your order; <b>Wide</b> spans both columns.
-          Only you see Home this way. The Tracks and Freezer layouts show the For you card above them.{% endtrans %}</p>
+        <p class="record-dialog-sub">{% trans trimmed %}Drag the cards into your order, make one <b>Wide</b> to fill its row, or take it off.
+          Only you see Home this way.{% endtrans %}</p>
       </div>
       <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
     </header>
     <div class="record-dialog-body">
       {% set offered_keys = offered_cards | map(attribute='key') | list %}
       {% set by_key = {} %}{% for c in offered_cards %}{% set _discard = by_key.update({c.key: c}) %}{% endfor %}
-      <ol class="home-cust-list" data-home-cust-list>
-        {% for key in home_cards.order if key in offered_keys %}
+      {# The two panels of Overview's top that can be switched off. #}
+      {% set top_keys = ['welfare', 'for_you'] %}
+      {% macro top_switch(key, label, hint='') %}
+        <label class="home-map-opt"{% if hint %} title="{{ hint }}"{% endif %}>
+          <input type="hidden" name="order" value="{{ key }}">
+          <span class="home-map-name">{{ icon(by_key[key].icon) }}<span>{{ label }}</span></span>
+          <input type="checkbox" class="set-switch" name="show" value="{{ key }}" {% if key not in home_cards.hidden %}checked{% endif %}>
+        </label>
+      {% endmacro %}
+      {% macro top_fixed(label, icon_name, two=false) %}
+        <span class="home-map-fixed{% if two %} is-2{% endif %}" title="{{ _('Always on Home') }}">
+          <span class="home-map-name">{{ icon(icon_name) }}<span>{{ label }}</span></span>{{ icon('lock') }}
+        </span>
+      {% endmacro %}
+
+      <section class="home-map" aria-labelledby="home-map-on">
+        <h4 class="home-map-h" id="home-map-on">{{ _('On your Home') }}</h4>
+        <div class="home-map-page">
+        <div class="home-map-top">
+          <div class="home-map-row">
+            {{ top_fixed(_('This week'), 'calendar', two=true) }}
+            {% if lab_features.colony %}{{ top_fixed(db_labels.get('colony', 'Mouse colony')|tr, 'mouse') }}{% endif %}
+            {% if 'welfare' in offered_keys %}{{ top_switch('welfare', _('Needs a look')) }}{% endif %}
+          </div>
+          <div class="home-map-row">
+            {% if 'for_you' in offered_keys %}{{ top_switch('for_you', _('For you'), _('Timeline and By place show it too, as one line')) }}{% endif %}
+            {{ top_fixed(_('Your databases'), 'database', two=true) }}
+            {% if lab_features.notebook %}{{ top_fixed(_('Notebook'), 'notebook') }}{% endif %}
+          </div>
+        </div>
+
+        {% macro card_row(key) %}
           {% set c = by_key[key] %}
-          <li class="home-cust-row" draggable="true">
+          {% set name = c.label|tr %}
+          <li class="home-map-card{% if key in home_cards.wide %} is-wide{% endif %}" data-key="{{ key }}" data-name="{{ name }}">
             <input type="hidden" name="order" value="{{ key }}">
-            <span class="home-cust-grip" aria-hidden="true">⋮⋮</span>
-            <label class="home-cust-show"><input type="checkbox" name="show" value="{{ key }}" {% if key not in home_cards.hidden %}checked{% endif %}>
-              {{ icon(c.icon) }} {{ c.label|tr }}</label>
-            <label class="home-cust-wide" title="{{ _('Span both columns') }}"><input type="checkbox" name="wide" value="{{ key }}" {% if key in home_cards.wide %}checked{% endif %}> {{ _('Wide') }}</label>
-            <span class="home-cust-move">
-              <button type="button" class="row-icon-btn" data-move="top" title="{{ _('To the top') }}" aria-label="{{ _('Move %(name)s to the top', name=c.label|tr) }}">{{ icon('arrow-up') }}{{ icon('arrow-up') }}</button>
-              <button type="button" class="row-icon-btn" data-move="-1" aria-label="{{ _('Move %(name)s up', name=c.label|tr) }}">{{ icon('arrow-up') }}</button>
-              <button type="button" class="row-icon-btn" data-move="1" aria-label="{{ _('Move %(name)s down', name=c.label|tr) }}">{{ icon('arrow-down') }}</button>
-            </span>
+            <input type="checkbox" hidden name="show" value="{{ key }}" {% if key not in home_cards.hidden %}checked{% endif %}>
+            <input type="checkbox" hidden name="wide" value="{{ key }}" {% if key in home_cards.wide %}checked{% endif %}>
+            <button type="button" class="home-map-grip" data-map-grip
+                    title="{{ _('Drag, or press the arrow keys') }}" aria-label="{{ _('Move %(name)s', name=name) }}">{{ icon('grip') }}</button>
+            <span class="home-map-name" title="{{ name }}">{{ icon(c.icon) }}<span>{{ name }}</span></span>
+            <button type="button" class="home-map-wide" data-map-wide title="{{ _('Wide: fill the whole row') }}"
+                    aria-label="{{ _('%(name)s: wide', name=name) }}" aria-pressed="{{ 'true' if key in home_cards.wide else 'false' }}"><i aria-hidden="true"></i></button>
+            <button type="button" class="row-icon-btn home-map-hide" data-map-hide
+                    title="{{ _('Take off Home') }}" aria-label="{{ _('Take %(name)s off Home', name=name) }}">{{ icon('eye-off') }}</button>
+            <button type="button" class="home-map-add" data-map-add
+                    aria-label="{{ _('Put %(name)s on Home', name=name) }}">{{ icon('plus') }}{{ _('Add') }}</button>
           </li>
-        {% endfor %}
-      </ol>
+        {% endmacro %}
+        <ol class="home-map-grid" data-home-map-grid>
+          {% for key in home_cards.order if key in offered_keys and key not in top_keys and key not in home_cards.hidden %}{{ card_row(key) }}{% endfor %}
+        </ol>
+        <p class="home-map-none" data-home-map-none>{{ _('No cards under the top of Home. Add one from below.') }}</p>
+        </div>
+      </section>
+
+      <section class="home-map-off" aria-labelledby="home-map-off" data-home-map-off>
+        <h4 class="home-map-h" id="home-map-off">{{ _('Not on Home') }}</h4>
+        <ul class="home-map-tray" data-home-map-tray>
+          {% for key in home_cards.order if key in offered_keys and key not in top_keys and key in home_cards.hidden %}{{ card_row(key) }}{% endfor %}
+        </ul>
+        <p class="home-map-none" data-home-map-all>{{ _('Every card is on Home.') }}</p>
+      </section>
+
       {# The Counts tiles: one per database; the first few until you choose. #}
       {% if tiles %}
-        <section class="home-cust-tiles">
+        <section class="home-cust-tiles" data-home-map-counts>
           <h4>{{ _('Counts') }}</h4>
           <p>{{ _('Which numbers the Counts card shows, in the order of the sidebar.') }}</p>
           <input type="hidden" name="tiles" value="1">
@@ -51,6 +104,7 @@
         {% if key not in home_cards.hidden %}<input type="hidden" name="show" value="{{ key }}">{% endif %}
         {% if key in home_cards.wide %}<input type="hidden" name="wide" value="{{ key }}">{% endif %}
       {% endfor %}
+      <p class="home-map-said" role="status" aria-live="polite" data-home-map-said></p>
     </div>
     <footer class="record-dialog-foot">
       <button type="submit" name="reset" value="1" class="btn" formnovalidate
@@ -61,40 +115,4 @@
     </footer>
   </form>
 </dialog>
-<script nonce="{{ csp_nonce() }}">
-  /* Reorder the cards: the arrows, or drag a row. */
-  (function () {
-    const list = document.querySelector('[data-home-cust-list]');
-    if (!list) return;
-    list.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-move]');
-      if (!b) return;
-      const row = b.closest('li');
-      if (b.dataset.move === 'top') list.insertBefore(row, list.firstElementChild);
-      if (b.dataset.move === '-1' && row.previousElementSibling) list.insertBefore(row, row.previousElementSibling);
-      if (b.dataset.move === '1' && row.nextElementSibling) list.insertBefore(row.nextElementSibling, row);
-      b.focus();
-    });
-    let dragged = null;
-    // A card switched off goes below the ones shown, so the list reads as Home will.
-    list.addEventListener('change', (e) => {
-      const box = e.target.closest('input[name="show"]');
-      if (!box) return;
-      const row = box.closest('li');
-      if (!box.checked) list.appendChild(row);
-      else {
-        const firstOff = [...list.children].find((li) => li !== row && !li.querySelector('input[name="show"]').checked);
-        list.insertBefore(row, firstOff || null);
-      }
-    });
-    list.addEventListener('dragstart', (e) => { dragged = e.target.closest('li'); if (dragged) dragged.classList.add('is-dragging'); });
-    list.addEventListener('dragend', () => { if (dragged) dragged.classList.remove('is-dragging'); dragged = null; });
-    list.addEventListener('dragover', (e) => {
-      const over = e.target.closest('li');
-      if (!dragged || !over || over === dragged) return;
-      e.preventDefault();
-      const r = over.getBoundingClientRect();
-      list.insertBefore(dragged, e.clientY > r.top + r.height / 2 ? over.nextSibling : over);
-    });
-  })();
-</script>
+<script src="{{ url_for('static', filename='home-customize.js') }}?v={{ asset_version('home-customize.js') }}" defer></script>

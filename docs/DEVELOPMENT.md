@@ -477,8 +477,18 @@ tile per sidebar database with its `count_tiles` number) and the
 notebook's latest pages. The databases and notebook panels always show,
 so Customize does not offer those cards (`BENTO_FIXED`); For you and
 Needs a look follow their cards' switches, and the grid below skips what
-the bento shows. The title is the day as a mono kicker over the greeting
-(`body:has(.home-bento)`).
+the bento shows. The title is the day as a mono kicker over the greeting,
+in all three views (`body:has(.home-page)`; on a phone the greeting takes
+two lines rather than being cut short).
+
+Home's page is `shell-page home-page`: wider than a form page (1360px), so
+on a laptop its left edge meets the title's. What is Home's alone is in
+`static/home-layouts.css`, not `tailwind.css`: the title, the page's width,
+and how many cards go across. `.home-cards` wraps `.home-grid` as a
+container, and the grid is one, two (from 640px) or three (from 1160px)
+columns by that container's width, so opening the sidebar re-lays it; a
+wide card (`.is-wide`) is `grid-column: 1 / -1`. Your databases' tiles are
+three across where the panel has room and two on a phone.
 
 Home is built from the lab's databases. `home_layouts.lab_databases` lists
 the ones in this person's sidebar, in the lab's order (as the rail does,
@@ -500,7 +510,20 @@ card that replaced them, at their place. `get_cards`, `set_cards` and
 `reset_cards` read and write it; `offered_cards` is what this lab can
 show; `POST /home/cards` saves the Customize dialog
 (`templates/home/_customize.html`; the tiles only when it sends
-`tiles=1`). `home.html` captures each card with `{% set %}` into a dict
+`tiles=1`). The dialog is a map of Overview (`.home-map`): the bento's
+panels as fixed tiles, with a switch on the two that can be off
+(`for_you`, `welfare`), then the cards that are on in a two-column grid
+(`[data-home-map-grid]`) and the ones that are off in a tray below
+(`[data-home-map-tray]`). Each card (`.home-map-card`) carries its own
+`order`, `show` and `wide` fields, so the form posts the map as it stands
+and the route is unchanged. `static/home-customize.js` moves the cards:
+pointer events rather than HTML drag and drop, so a finger works (by the
+grip, which is `touch-action: none`; elsewhere a touch scrolls the sheet),
+the arrow keys, Home and End on a grip, and each move said in a live
+region. The card in hand stays in the grid as the gap it will fill, a
+copy follows the pointer, and the others slide to their places
+(`reflow`, skipped under `prefers-reduced-motion`). Closing the dialog
+without saving puts the map back as Home is. `home.html` captures each card with `{% set %}` into a dict
 and draws them in the person's order; `_home_extra_cards` loads the cards
 off at first (to-dos, bookings, recent pages, calculators; Your databases
 too, which repeats the sidebar and the Counts tiles) and Recent
