@@ -133,12 +133,15 @@
       <button type="button" class="dt-toolbar-btn" data-xp-open="add">{{ icon('plus') }} {{ _('Add %(nouns)s', nouns=place.nouns|tr) }}</button>
       <button type="button" class="dt-toolbar-btn" data-xp-randomize title="{{ _('Share them out into groups at random, balanced by sex, %(housing)s and weight', housing=place.housing|tr) }}">{{ icon('shuffle') }} {{ _('Randomize') }}</button>
       <button type="button" class="dt-toolbar-btn" data-xp-open="plan" title="{{ _('What is to be done, and on which days') }}">{{ icon('calendar') }} {{ _('Regimen') }}</button>
-      <button type="button" class="dt-toolbar-btn" data-xp-open="reading">{{ icon('chart') }} <span data-xp-reading-verb>{{ readout.verb|tr("readout") }}</span></button>
       <button type="button" class="dt-toolbar-btn" data-plate-open title="{{ _("Which animal is in which well, and a plate reader's or qPCR machine's export read onto it") }}">{{ icon('well-plate') }} {{ _('Plate layout') }}</button>
-      <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]" data-xp-open="record">{{ icon('syringe') }} {{ _('Record manipulation') }}</button>
+      {# The two things done most: the one the sheet shows is the primary button (experiment-page.js) #}
+      <button type="button" class="btn h-8 gap-1.5 px-2.5 text-[12px]" data-xp-open="reading" data-xp-main="readout"
+        title="{{ _('Every %(noun)s on one day: type each, Enter goes to the next', noun=place.noun|tr) }}">{{ icon('scale' if readout.key == 'body_weight' else 'chart') }} <span data-xp-reading-verb>{{ readout.verb|tr("readout") }}</span></button>
+      <button type="button" class="btn btn-primary h-8 gap-1.5 px-2.5 text-[12px]" data-xp-open="record" data-xp-main="treatment">{{ icon('syringe') }} {{ _('Record manipulation') }}</button>
     {% endif %}
   </div>
   <div class="dt-scroll"><table class="dt xp-table" data-xp-table></table></div>
+  <p class="xp-sheet-hint" data-xp-sheet-hint hidden></p>
   <p class="xp-empty" data-xp-empty hidden></p>
 </section>
 
@@ -354,10 +357,11 @@
       <button type="button" class="modal-close" data-xp-close aria-label="{{ _('Close') }}">{{ icon('close') }}</button></header>
     <div class="xp-dialog-body">
       <label class="xp-date">{{ pgettext('experiment', 'Day') }} <input type="date" name="on" required></label>
-      <div class="table-wrap"><table class="dense-table fit-table xp-animals"><tbody data-xp-reading-rows></tbody></table></div>
+      <div class="table-wrap"><table class="dense-table fit-table xp-animals xp-entry-table"><tbody data-xp-reading-rows></tbody></table></div>
       <p class="xp-error" data-xp-error hidden></p>
     </div>
-    <footer class="record-dialog-foot"><span class="xp-spacer"></span>
+    <footer class="record-dialog-foot"><span class="xp-entry-progress" data-xp-reading-progress aria-live="polite"></span>
+      <span class="xp-entry-keys"><kbd>Enter</kbd> {{ _('next') }} · <kbd>⇧ Enter</kbd> {{ _('back') }}</span><span class="xp-spacer"></span>
       <button type="button" class="btn" data-xp-close>{{ _('Cancel') }}</button>
       <button type="submit" class="btn btn-primary">{{ _('Save') }}</button></footer>
   </form>

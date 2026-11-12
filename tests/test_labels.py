@@ -82,6 +82,14 @@ class Labels(InventoryCase):
         self.assertIn('viewBox="0 0', svg)
         self.assertNotIn("width=", svg)            # the label's CSS sizes it, the whole code
 
+    def test_a_qr_code_on_its_own_is_an_svg_file_an_img_can_draw(self):
+        from app import labels
+        if not labels.qr_svg_file("x"):
+            self.skipTest("segno is not installed")
+        r = self.a.get("/labels/qr.svg?d=hello")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.get_data(as_text=True).startswith('<svg xmlns="http://www.w3.org/2000/svg"'))
+
     def test_a_cryo_label_says_what_you_choose_and_can_wrap(self):
         box = self.make_rack(self.a, "samples", uniq("−80 A R1 B"))
         item = self.make_item(self.a, "samples", name=uniq("S01-R V-6h rep1 "), rack_id=str(box), position="B1")

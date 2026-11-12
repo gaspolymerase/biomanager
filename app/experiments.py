@@ -1959,9 +1959,10 @@ def bench(experiment_id: int):
 def bench_qr(experiment_id: int):
     """A QR code of bench mode's address, to open it on a phone."""
     from flask import Response
-    from .labels import _qr_svg
+    from .labels import qr_svg_file
     url = request.host_url.rstrip("/") + url_for("experiments.bench", experiment_id=experiment_id)
-    svg = _qr_svg(url, scale=5)
+    # A quiet zone of 2 modules (with the dialog's white padding) for a phone's camera.
+    svg = qr_svg_file(url, scale=5, border=2)
     if not svg:
         abort(404)
     return Response(svg, mimetype="image/svg+xml", headers={"Cache-Control": "private, max-age=3600"})

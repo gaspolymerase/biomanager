@@ -234,5 +234,7 @@
   "How many did each start with?": "每个开始时有多少只？",
   "“%(value)s” isn’t a number.": "“%(value)s”不是数字。",
   "Fill in": "填写",
-  "Saved": "已保存"
+  "Saved": "已保存",
+  "Type in a cell: Enter goes to the next %(noun)s, Shift+Enter back, and each saves as you go. Every %(noun)s on one day: %(verb)s.": "直接在格子里输入：回车到下一只%(noun)s，Shift+回车回到上一只，每格离开时自动保存。同一天给每只%(noun)s录入：点%(verb)s。",
+  "%(done)s of %(n)s entered": "已录入 %(done)s / %(n)s"
 }
