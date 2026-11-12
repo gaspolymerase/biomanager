@@ -1,8 +1,9 @@
 // The small dialogs behind some "/" items and the toolbar's colour button:
 // colours and highlights, a link to another page, a date, a reminder.
 
+import { citeText } from './cite.js';
 import { COLORS } from './markdown-extras.js';
-import { api, ask, escapeHtml, isoDate, openInApp } from './util.js';
+import { api, ask, escapeHtml, isoDate, openInApp, tr } from './util.js';
 
 const COLOR_NAMES = {
   gray: 'Gray', brown: 'Brown', orange: 'Orange', yellow: 'Yellow', green: 'Green',
@@ -172,6 +173,64 @@ export function openPagePicker(editor, { inline = false } = {}) {
     if (row) pick(results[Number(row.dataset.i)]);
   });
   addNew.addEventListener('click', makeNew);
+  load();
+  input.focus();
+}
+
+// "/cite": a paper from Reading (a reading note: one added there, or from
+// Zotero), cited where the caret is as "(Wang et al., 2024)" and linked to
+// its note (extensions/PageLinks.js).
+export function openCitePicker(editor) {
+  const coords = (() => { try { return editor.view.coordsAtPos(editor.state.selection.from); } catch (_e) { return null; } })();
+  const anchor = coords ? { getBoundingClientRect: () => coords, contains: () => false } : null;
+  const { pop, close } = popover('nb-page-picker nb-cite-picker', `
+    <div class="nb-pop-label">${escapeHtml(tr('Cite a paper'))}</div>
+    <input type="search" class="field nb-pop-search" placeholder="${escapeHtml(tr('Search papers by title, author or journal'))}" aria-label="${escapeHtml(tr('Search papers'))}">
+    <div class="nb-pop-list"><div class="insert-empty">${escapeHtml(tr('Loading…'))}</div></div>`, anchor);
+  const input = pop.querySelector('input');
+  const list = pop.querySelector('.nb-pop-list');
+  let results = [];
+  let seq = 0;
+  let active = 0;
+  const pick = (paper) => {
+    close();
+    const cite = { type: 'pageLink', attrs: { id: String(paper.id), title: citeText(paper.fields || {}, paper.title), cite: true } };
+    editor.chain().focus().insertContent([cite, { type: 'text', text: ' ' }]).run();
+  };
+  const mark = () => pop.querySelectorAll('.nb-pop-row').forEach((row, i) => row.classList.toggle('is-active', i === active));
+  const load = async () => {
+    const mine = ++seq;
+    try {
+      const data = await api(`/notebook/api/search?kind=reading&q=${encodeURIComponent(input.value.trim())}`);
+      if (mine !== seq) return;
+      results = (data.results || []).slice(0, 12);
+      list.innerHTML = results.length ? results.map((p, i) => `<button type="button" class="nb-pop-row" data-i="${i}"><b>${escapeHtml(citeText(p.fields || {}, p.title))}</b><small>${escapeHtml(p.title)}</small></button>`).join('')
+        : `<div class="insert-empty">${escapeHtml(tr(input.value.trim() ? 'No paper matches.' : 'No papers yet. Add them in Reading, or bring them in from Zotero there.'))}</div>`;
+    } catch (_e) {
+      list.innerHTML = `<div class="insert-empty">${escapeHtml(tr('Papers could not be loaded.'))}</div>`;
+    }
+    active = 0;
+    mark();
+  };
+  let timer = null;
+  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 200); });
+  input.addEventListener('keydown', (e) => {
+    const rows = pop.querySelectorAll('.nb-pop-row');
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && rows.length) {
+      e.preventDefault();
+      active = (active + (e.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length;
+      mark();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (rows[active]) rows[active].click();
+    } else if (e.key === 'Escape') {
+      editor.commands.focus();
+    }
+  });
+  list.addEventListener('click', (e) => {
+    const row = e.target.closest('.nb-pop-row');
+    if (row) pick(results[Number(row.dataset.i)]);
+  });
   load();
   input.focus();
 }

@@ -833,6 +833,10 @@ database has a name of its own (one another database has is refused), so
     minutes; **Check now** looks at once). A paper gets one note, ever,
     and the papers already there are left out unless you ask for them.
     Zotero has to sync to zotero.org, and BioManager has to reach it.
+  - **Cite paper** (`/cite`) cites a paper from Reading in any page as
+    papers do, *(Wang et al., 2024)*, from its authors and year (*(Wang,
+    2024)* for one author, *(Wang & Li, 2024)* for two, a Chinese name
+    whole), linked to its notes and following them when they change.
   - **Protocols** with numbered versions. **Start experiment**
     copies the steps as a checklist and records which version was followed.
     **Protocols** in the notebook's sidebar opens the lab's protocols as a
