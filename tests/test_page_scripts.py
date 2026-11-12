@@ -26,6 +26,9 @@ class PageScripts(unittest.TestCase):
     def test_a_row_save_keeps_the_copies_that_guard_a_colleagues_edit(self):
         self.check("sheet.check.mjs")
 
+    def test_a_slow_page_shows_an_animation_and_a_quick_one_does_not(self):
+        self.check("loader.check.mjs")
+
 
 class OneEscape(unittest.TestCase):
     def test_page_scripts_escape_html_with_the_one_helper(self):

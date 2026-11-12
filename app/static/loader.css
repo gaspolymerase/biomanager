@@ -1,0 +1,192 @@
+/* The loading animations (static/loader.js). Everything is prefixed ld-, so
+   nothing here can restyle the app. One beat, 2.4 s, runs through all ten;
+   swings are sine curves, drops fall under gravity, pops overshoot a little. */
+
+:root {
+  --ld-sky: #7DB4F5; --ld-sky-l: #D6E8FD; --ld-coral: #FF9F8F; --ld-mint: #6FD3B2;
+  --ld-lemon: #FFD66B; --ld-lilac: #B8A4F7; --ld-pink: #FF9FC6;
+  --ld-grey: #D9D9DE; --ld-grey-l: #F0F0F4; --ld-fur: #DEDEE4; --ld-eye: #2C2C2E;
+  --ld-veil: rgba(255, 255, 255, .82); --ld-text: #6E6E73;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ld-sky: #6FA8EE; --ld-sky-l: #203247; --ld-coral: #F28F80; --ld-mint: #5CC7A5;
+    --ld-lemon: #F4C95A; --ld-lilac: #A994F0; --ld-pink: #F18DB7;
+    --ld-grey: #48484A; --ld-grey-l: #2C2C2E; --ld-fur: #B4B4BC; --ld-eye: #1C1C1E;
+    --ld-veil: rgba(20, 20, 24, .8); --ld-text: #A1A1A6;
+  }
+}
+:root[data-theme="dark"] {
+  --ld-sky: #6FA8EE; --ld-sky-l: #203247; --ld-coral: #F28F80; --ld-mint: #5CC7A5;
+  --ld-lemon: #F4C95A; --ld-lilac: #A994F0; --ld-pink: #F18DB7;
+  --ld-grey: #48484A; --ld-grey-l: #2C2C2E; --ld-fur: #B4B4BC; --ld-eye: #1C1C1E;
+  --ld-veil: rgba(20, 20, 24, .8); --ld-text: #A1A1A6;
+}
+
+/* Over the content, never in the way: clicks pass through. */
+.ld-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ld-veil);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  pointer-events: none;
+  animation: ld-fade .2s ease-out both;
+}
+.ld-overlay.ld-in-page { inset: auto; z-index: 30; }
+@keyframes ld-fade { from { opacity: 0; } to { opacity: 1; } }
+.ld { display: flex; flex-direction: column; align-items: center; gap: 12px;
+  animation: ld-enter .4s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ld-enter { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
+.ld-art { width: 88px; height: 88px; }
+.ld-art svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.ld-label { font-size: 13px; color: var(--ld-text); }
+
+.ld-blink { transform-box: fill-box; transform-origin: center; animation: ld-blink 3.6s infinite; }
+@keyframes ld-blink { 0%, 91%, 97%, 100% { scale: 1 1; } 94% { scale: 1 .1; } }
+
+/* DNA */
+.ld-dna { transform-box: fill-box; transform-origin: center;
+  animation: ld-dnaY 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate, ld-dnaZ 2.4s linear infinite;
+  animation-delay: var(--d), var(--d); }
+.ld-dna-b { animation-delay: calc(var(--d) - 1.2s), calc(var(--d) - 1.2s); }
+.ld-rung { transform-box: fill-box; transform-origin: center;
+  animation: ld-rung 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; animation-delay: var(--d); }
+@keyframes ld-dnaY { from { translate: 0 -13px; } to { translate: 0 13px; } }
+@keyframes ld-dnaZ {
+  0% { scale: .8; opacity: .85; animation-timing-function: cubic-bezier(.61, 1, .88, 1); }
+  25% { scale: 1.15; opacity: 1; animation-timing-function: cubic-bezier(.12, 0, .39, 0); }
+  50% { scale: .8; opacity: .85; animation-timing-function: cubic-bezier(.61, 1, .88, 1); }
+  75% { scale: .5; opacity: .4; animation-timing-function: cubic-bezier(.12, 0, .39, 0); }
+  100% { scale: .8; opacity: .85; } }
+@keyframes ld-rung { from { scale: 1 1; } to { scale: 1 -1; } }
+
+/* Peptide chain: x and y a quarter beat apart make each bead go round. */
+.ld-ox { animation: ld-ox 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; animation-delay: var(--d); }
+.ld-oy { animation: ld-oy 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; animation-delay: calc(var(--d) - .6s); }
+@keyframes ld-ox { from { translate: -2.5px 0; } to { translate: 2.5px 0; } }
+@keyframes ld-oy { from { translate: 0 -6px; } to { translate: 0 6px; } }
+
+/* Membrane */
+.ld-ball { transform-box: fill-box; transform-origin: 50% 100%; animation: ld-ball 1.2s infinite; }
+@keyframes ld-ball {
+  0% { translate: 0 -24px; scale: 1 1; animation-timing-function: cubic-bezier(.55, 0, 1, .45); }
+  40% { translate: 0 0; scale: .94 1.08; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
+  50% { translate: 0 4px; scale: 1.22 .8; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
+  60% { translate: 0 0; scale: .94 1.08; animation-timing-function: cubic-bezier(0, .55, .45, 1); }
+  100% { translate: 0 -24px; scale: 1 1; } }
+.ld-lip { animation: ld-lip 1.2s infinite; animation-delay: var(--dl); }
+@keyframes ld-lip {
+  0%, 38% { translate: 0 0; }
+  50% { translate: 0 calc(var(--dip) * 1px); animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
+  66% { translate: 0 calc(var(--dip) * -.3px); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  82%, 100% { translate: 0 0; } }
+
+/* Cell division */
+.ld-mi-a, .ld-mi-b { transform-box: fill-box; transform-origin: center; animation: 3.6s infinite; }
+.ld-mi-a { animation-name: ld-miA; }
+.ld-mi-b { animation-name: ld-miB; }
+.ld-eyes-a { animation: ld-eyesA 3.6s infinite; }
+@keyframes ld-eyesA { 0%, 42% { opacity: 0; } 52%, 100% { opacity: 1; } }
+@keyframes ld-miA {
+  0% { translate: 0 0; scale: 1; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  30% { translate: -4px 0; scale: 1.04 .95; animation-timing-function: cubic-bezier(.5, 0, .2, 1); }
+  52% { translate: -16px 0; scale: .84 .88; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
+  60% { translate: -15px 0; scale: .86; opacity: 1; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  74% { translate: -15px 0; scale: .86; opacity: 1; animation-timing-function: cubic-bezier(.5, 0, .75, 0); }
+  94% { translate: -20px 0; scale: .45; opacity: 0; }
+  100% { translate: 0 0; scale: 1; opacity: 0; } }
+@keyframes ld-miB {
+  0% { translate: 0 0; scale: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  30% { translate: 4px 0; scale: 1.04 .95; animation-timing-function: cubic-bezier(.5, 0, .2, 1); }
+  52% { translate: 16px 0; scale: .84 .88; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
+  60% { translate: 15px 0; scale: .86; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  74% { translate: 15px 0; scale: .86; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  100% { translate: 0 0; scale: 1; } }
+
+/* Mouse */
+.ld-m-head { transform-box: view-box; transform-origin: 56px 56px; animation: ld-sniff 2.4s infinite; }
+@keyframes ld-sniff {
+  0% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  7% { rotate: -6deg; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  13% { rotate: -1.5deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  19% { rotate: -6deg; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  32%, 100% { rotate: 0deg; } }
+.ld-m-nose { transform-box: fill-box; transform-origin: center; animation: ld-nose 2.4s cubic-bezier(.3, 0, .2, 1) infinite; }
+@keyframes ld-nose { 0%, 13%, 28%, 100% { scale: 1; } 7%, 19% { scale: 1.4; } }
+.ld-m-whisk { transform-box: view-box; transform-origin: 75px 55px; animation: ld-whisk 2.4s infinite; }
+@keyframes ld-whisk {
+  0%, 2% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  10% { rotate: -10deg; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  16% { rotate: -2deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  22% { rotate: -10deg; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  38%, 100% { rotate: 0deg; } }
+.ld-m-ear { transform-box: view-box; transform-origin: 58px 46px; animation: ld-ear 2.4s infinite; }
+@keyframes ld-ear {
+  0%, 56% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  61% { rotate: -14deg; animation-timing-function: cubic-bezier(.34, 1.5, .64, 1); }
+  70%, 100% { rotate: 0deg; } }
+.ld-m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: ld-breath 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+@keyframes ld-breath { from { scale: 1 1; } to { scale: 1.015 1.045; } }
+.ld-m-tail { transform-box: view-box; transform-origin: 27px 66px; animation: ld-tail 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+@keyframes ld-tail { from { rotate: -6deg; } to { rotate: 7deg; } }
+
+/* Bacterium */
+.ld-flag { animation: ld-flag .5s linear infinite; }
+@keyframes ld-flag { from { translate: 0 0; } to { translate: -16px 0; } }
+.ld-bac { transform-box: view-box; transform-origin: 56px 48px; animation: ld-bac 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+@keyframes ld-bac { from { rotate: -3deg; translate: 0 -1.5px; } to { rotate: 3deg; translate: 0 1.5px; } }
+.ld-mote { opacity: 0; animation: ld-mote 2.4s linear infinite; animation-delay: var(--d); }
+@keyframes ld-mote { 0% { translate: 0 0; opacity: 0; } 20%, 80% { opacity: .8; } 100% { translate: -60px 0; opacity: 0; } }
+
+/* Petri dish */
+.ld-col { transform-box: fill-box; transform-origin: center; scale: 0; animation: ld-col 4.8s infinite; animation-delay: var(--d); }
+@keyframes ld-col {
+  0% { scale: 0; opacity: 1; animation-timing-function: cubic-bezier(.34, 1.7, .64, 1); }
+  8% { scale: 1; opacity: 1; }
+  60% { scale: 1; opacity: 1; animation-timing-function: cubic-bezier(.4, 0, .2, 1); }
+  68%, 100% { scale: .6; opacity: 0; } }
+
+/* Zebrafish: three joints, each later than the one before. */
+.ld-z-all { animation: ld-zDrift 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+@keyframes ld-zDrift { from { translate: 0 -2px; } to { translate: 0 2px; } }
+.ld-z-h, .ld-z-m, .ld-z-t { transform-box: view-box; animation: .6s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.ld-z-h { transform-origin: 60px 48px; animation-name: ld-zH; }
+.ld-z-m { transform-origin: 50px 48px; animation-name: ld-zM; animation-delay: -.12s; }
+.ld-z-t { transform-origin: 35px 48px; animation-name: ld-zT; animation-delay: -.26s; }
+@keyframes ld-zH { from { rotate: -2.5deg; } to { rotate: 2.5deg; } }
+@keyframes ld-zM { from { rotate: -5deg; } to { rotate: 5deg; } }
+@keyframes ld-zT { from { rotate: -12deg; } to { rotate: 12deg; } }
+.ld-z-bub { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ld-zBub 2.4s cubic-bezier(.22, 1, .36, 1) infinite; animation-delay: var(--d); }
+@keyframes ld-zBub { 0% { translate: 0 0; scale: .4; opacity: 0; } 15% { opacity: 1; } 100% { translate: 5px -22px; scale: 1; opacity: 0; } }
+
+/* Pipette */
+.ld-drop { transform-box: fill-box; transform-origin: 50% 0; animation: ld-drop 2.4s infinite; }
+@keyframes ld-drop {
+  0% { scale: .15; translate: 0 0; opacity: 1; animation-timing-function: cubic-bezier(.33, 1, .68, 1); }
+  46% { scale: 1; translate: 0 0; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  54% { scale: .92 1.14; translate: 0 1.5px; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  58% { scale: 1 1; translate: 0 4px; animation-timing-function: cubic-bezier(.11, 0, .5, 0); }
+  79% { scale: .88 1.18; translate: 0 38px; opacity: 1; }
+  80%, 100% { scale: .88 1.18; translate: 0 38px; opacity: 0; } }
+.ld-ring { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ld-ring 2.4s infinite; animation-delay: var(--d); }
+@keyframes ld-ring {
+  0% { scale: .3; opacity: 1; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+  60%, 100% { scale: 4.4 3.2; opacity: 0; } }
+.ld-pool { transform-box: fill-box; transform-origin: center; animation: ld-pool 2.4s infinite; }
+@keyframes ld-pool { 0%, 79% { scale: 1 1; } 84% { scale: 1.03 .78; animation-timing-function: cubic-bezier(.34, 1.5, .64, 1); } 96%, 100% { scale: 1 1; } }
+
+/* Well plate */
+.ld-well { transform-box: fill-box; transform-origin: center; scale: 0; animation: ld-well 2.4s infinite; animation-delay: var(--d); }
+@keyframes ld-well {
+  0% { scale: 0; opacity: 1; animation-timing-function: cubic-bezier(.34, 1.6, .64, 1); }
+  14% { scale: 1; opacity: 1; }
+  48% { scale: 1; opacity: 1; animation-timing-function: cubic-bezier(.4, 0, .2, 1); }
+  66%, 100% { scale: .5; opacity: 0; } }
+
+/* Less motion asked for: the picture only breathes. */
+@media (prefers-reduced-motion: reduce) {
+  .ld-art svg * { animation: none !important; }
+  .ld-col, .ld-well { scale: 1; }
+  .ld-art { animation: ld-calm 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+  @keyframes ld-calm { from { opacity: .5; } to { opacity: 1; } }
+}

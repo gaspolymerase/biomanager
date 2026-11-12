@@ -106,7 +106,8 @@
       {{ capture_list(card) }}
       {{ change_list(card) }}
       <div class="mt-4 flex flex-wrap items-center gap-2">
-        <form method="post" action="{{ url_for('proposals.approve_page', proposal_id=card.p.id) }}">
+        <form method="post" action="{{ url_for('proposals.approve_page', proposal_id=card.p.id) }}"
+              data-loading-label="{{ _('Applying the proposal…') }}">
           <button type="submit" class="btn btn-primary">{{ icon('check') }} {{ _('Approve') }}</button>
         </form>
         <form method="post" action="{{ url_for('proposals.discard_page', proposal_id=card.p.id) }}">
