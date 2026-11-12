@@ -7,7 +7,7 @@ code on the card that opens the record.
 
 The pieces:
 
-  * `/labels/qr.svg?d=…` renders a QR as inline SVG. Pure Python via segno,
+  * `/labels/qr.svg?d=…` renders a QR as an SVG file. Pure Python via segno,
     no image libraries, no network, so it works in the packaged desktop app.
   * `/labels/cards/<kind>` lays cards out for printing: cages, a species'
     housing units, fly vials (`stocks/<key>`) and inventory tubes

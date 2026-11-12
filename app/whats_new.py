@@ -30,6 +30,14 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.10.5": {
+        "changed": [
+            "In an experiment, **Weigh** goes down the list from the keyboard: **Enter** moves to the next animal, in its dialog and in the sheet, and it is a full button beside **Record manipulation**.",
+        ],
+        "fixed": [
+            "**Bench mode**'s QR code shows again, instead of a broken image.",
+        ],
+    },
     "2.10.4": {
         "new": [
             "Opening a page or approving a proposal that takes more than a second shows a small animation, so you can tell it is still loading.",
