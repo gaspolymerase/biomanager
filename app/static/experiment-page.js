@@ -180,7 +180,20 @@
   const inGroup = (subject, group) => !group || subject.group.trim().toLowerCase() === group.trim().toLowerCase();
   const treatmentCols = () => D.schedule.filter((r) => !r.reading);
 
+  // The button for what the sheet shows is the primary one: Record manipulation
+  // beside the treatments, Weigh (or Measure, Count…) beside the readout.
+  function syncMain() {
+    const reading = view !== 'treatment';
+    $$('[data-xp-main]').forEach((b) => b.classList.toggle('btn-primary', (b.dataset.xpMain === 'readout') === reading));
+    const hint = $('[data-xp-sheet-hint]');
+    if (!hint) return;
+    const typed = reading && D.editable && !workedOut() && D.subjects.length > 0;
+    hint.hidden = !typed;
+    if (typed) hint.textContent = t('Type in a cell: Enter goes to the next %(noun)s, Shift+Enter back, and each saves as you go. Every %(noun)s on one day: %(verb)s.', { noun: noun(), verb: verb() });
+  }
+
   function drawSheet() {
+    syncMain();
     const table = $('[data-xp-table]');
     const empty = $('[data-xp-empty]');
     const subs = D.subjects;
@@ -305,6 +318,7 @@
         if (data) apply(data, { sheet: false }); else t.value = s && s.start != null ? s.start : '';
       } catch (_e) { t.classList.add('is-error'); }
     } else if (t.matches('[data-xp-reading]')) {
+      delete t.dataset.typed;
       const on = t.dataset.fresh ? ($('.xp-newday-date') || {}).value : t.dataset.date;
       if (!on) return;
       try {
@@ -312,15 +326,49 @@
         t.classList.remove('is-error');
         // A new day becomes its own column; two Cts become their ΔCt (and a ΔΔCt moves the day's others).
         const redraw = Boolean(t.dataset.fresh) || Boolean(VR().formula);
-        const next = redraw && document.activeElement && document.activeElement.matches('[data-xp-reading]')
-          ? [document.activeElement.dataset.xpReading, document.activeElement.dataset.date] : null;
+        // The cell typed in by now (Enter went on to the next animal) keeps what is in it across
+        // the redraw, and a new day's cell moves to the column its first value made.
+        const a = document.activeElement;
+        const next = redraw && a && a.matches('[data-xp-reading]')
+          ? { key: a.dataset.xpReading, date: a.dataset.fresh ? '' : a.dataset.date, value: a.value, typed: a !== t && a.value !== a.defaultValue } : null;
         apply(data, { sheet: redraw });
         if (next) {
-          const again = $$('[data-xp-reading]').find((el) => el.dataset.xpReading === next[0] && el.dataset.date === next[1]);
-          if (again) again.focus();
+          const date = next.date === '' && VT().dates.includes(on) ? on : next.date;
+          const again = $$('[data-xp-reading]').find((el) => el.dataset.xpReading === next.key && el.dataset.date === date);
+          if (again) {
+            if (next.typed) { again.value = next.value; again.dataset.typed = '1'; }
+            again.focus();
+            if (next.typed) again.setSelectionRange(again.value.length, again.value.length);
+          }
         }
       } catch (_e) { t.classList.add('is-error'); }
     }
+  });
+
+  // A value put back after a redraw was never typed into this cell, so leaving it fires no change: send it here.
+  document.addEventListener('focusout', (event) => {
+    const c = event.target;
+    if (!c.dataset || !c.dataset.typed) return;
+    delete c.dataset.typed;
+    if (c.value !== c.defaultValue) c.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  // A number box's value is selected on the way in, so typing replaces it.
+  document.addEventListener('focusin', (event) => {
+    const c = event.target;
+    if (c.matches && c.matches('[data-xp-reading], [data-xp-entry]') && !c.dataset.typed) c.select();
+  });
+  // The readout cells go as a spreadsheet's do: Enter or ↓ to the same day's next animal,
+  // Shift+Enter or ↑ back. Leaving a cell saves it; Enter on the last saves it and stays.
+  document.addEventListener('keydown', (event) => {
+    const c = event.target;
+    if (event.isComposing || !c.matches || !c.matches('[data-xp-table] [data-xp-reading]')) return;
+    const step = event.key === 'Enter' ? (event.shiftKey ? -1 : 1) : ({ ArrowDown: 1, ArrowUp: -1 })[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const column = $$('[data-xp-table] [data-xp-reading]').filter((el) => el.dataset.date === c.dataset.date);
+    const next = column[column.indexOf(c) + step];
+    if (next) next.focus();
+    else if (event.key === 'Enter') { c.blur(); c.focus(); }
   });
 
   document.addEventListener('click', async (event) => {
@@ -586,6 +634,11 @@
     if (which === 'record') openRecord(dialog, arg);
     if (which === 'reading') openReading(dialog, arg || '');
     if (!dialog.open) dialog.showModal();
+    if (which === 'reading') {
+      const entries = $$('[data-xp-entry]', dialog);
+      const first = entries.find((i) => !i.value.trim()) || entries[0];
+      if (first) first.focus();
+    }
   }
 
   // Add animals
@@ -902,18 +955,52 @@
       const before = [...D.table.dates.keys()].filter((i) => D.table.dates[i] < day && r.values[i] != null).pop();
       if (derivedRO()) {
         const measured = idx >= 0 ? (r.inputs || [])[idx] : null;
-        const fields = inputsOf().map((i) => `<label>${esc(t(i.label))}<input class="xp-cell xp-num" data-key="${esc(s.key)}" data-input="${esc(i.key)}" inputmode="decimal" value="${measured && measured[i.key] != null ? num(measured[i.key], 4) : ''}" aria-label="${esc(`${t(i.label)}, ${s.label}`)}"></label>`).join('');
+        const fields = inputsOf().map((i) => `<label>${esc(t(i.label))}<input class="xp-cell xp-num" data-xp-entry data-key="${esc(s.key)}" data-input="${esc(i.key)}" inputmode="decimal" enterkeyhint="next" autocomplete="off" value="${measured && measured[i.key] != null ? num(measured[i.key], 4) : ''}" aria-label="${esc(`${t(i.label)}, ${s.label}`)}"></label>`).join('');
         const unit = D.readout.unit ? ` ${unitOf()}` : '';
         return `<tr><td>${esc(s.label)} <span class="xp-muted">${esc(s.group)}</span></td><td><span class="xp-inputs">${fields}</span></td>
           <td class="xp-muted">${current != null ? `→ ${num(current, 2)}${unit}` : (before !== undefined ? t('before: %(value)s (%(date)s)', { value: num(r.values[before], 2), date: esc(niceDate(D.table.dates[before])) }) : '')}</td></tr>`;
       }
       return `<tr><td>${esc(s.label)} <span class="xp-muted">${esc(s.group)}</span></td>
-        <td><input class="xp-cell xp-num" name="v-${esc(s.key)}" data-key="${esc(s.key)}" inputmode="decimal" value="${current == null ? '' : num(current, 2)}" aria-label="${esc(s.label)}">${fraction() && s.start != null ? ` <span class="xp-of">/ ${s.start}</span>` : ''}</td>
+        <td class="xp-entry-cell"><input class="xp-cell xp-num" name="v-${esc(s.key)}" data-xp-entry data-key="${esc(s.key)}" inputmode="decimal" enterkeyhint="next" autocomplete="off" value="${current == null ? '' : num(current, 2)}" aria-label="${esc(s.label)}">${fraction() && s.start != null ? ` <span class="xp-of">/ ${s.start}</span>` : (D.readout.unit ? ` <span class="xp-of">${esc(unitOf())}</span>` : '')}</td>
         <td class="xp-muted">${before !== undefined ? t('before: %(value)s (%(date)s)', { value: num(r.values[before], 2), date: esc(niceDate(D.table.dates[before])) }) : ''}</td></tr>`;
     }).join('') || `<tr><td class="xp-muted">${t('No %(nouns)s yet.', { nouns: esc(nouns()) })}</td></tr>`;
+    readingProgress(dialog);
+  }
+  // "12 of 30 entered", and each row filled in ticked off.
+  function readingProgress(dialog) {
+    const rows = $$('[data-xp-reading-rows] tr', dialog).filter((r) => r.querySelector('[data-xp-entry]'));
+    let done = 0;
+    rows.forEach((r) => {
+      const filled = $$('[data-xp-entry]', r).every((i) => i.value.trim() !== '');
+      r.classList.toggle('is-filled', filled);
+      done += filled ? 1 : 0;
+    });
+    const el = $('[data-xp-reading-progress]', dialog);
+    if (el) el.textContent = rows.length ? t('%(done)s of %(n)s entered', { done, n: rows.length }) : '';
   }
   const readingForm = $('[data-xp-form="reading"]');
   if (readingForm) {
+    const entryDialog = readingForm.closest('dialog');
+    // Enter goes to the next animal (or its next number: a length, then its width), Shift+Enter back,
+    // ↑↓ the same box a row up or down; after the last, Enter is on Save.
+    entryDialog.addEventListener('keydown', (event) => {
+      if (event.isComposing || !['Enter', 'ArrowDown', 'ArrowUp'].includes(event.key)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;   // ⌘↵ saves (record-forms.js)
+      const c = event.target;
+      const all = $$('[data-xp-entry]', entryDialog);
+      if (c === readingForm.elements.on && event.key === 'Enter') { event.preventDefault(); if (all[0]) all[0].focus(); return; }
+      if (!c.matches('[data-xp-entry]')) return;
+      event.preventDefault();
+      let next;
+      if (event.key === 'Enter') next = all[all.indexOf(c) + (event.shiftKey ? -1 : 1)];
+      else {
+        const same = all.filter((i) => (i.dataset.input || '') === (c.dataset.input || ''));
+        next = same[same.indexOf(c) + (event.key === 'ArrowDown' ? 1 : -1)];
+      }
+      if (next) next.focus();
+      else if (event.key === 'Enter' && !event.shiftKey) $('button[type="submit"]', entryDialog).focus();
+    });
+    entryDialog.addEventListener('input', (event) => { if (event.target.matches('[data-xp-entry]')) readingProgress(entryDialog); });
     readingForm.elements.on.addEventListener('change', (e) => drawReadingRows(readingForm.closest('dialog'), e.target.value));
     readingForm.addEventListener('submit', async (event) => {
       event.preventDefault();

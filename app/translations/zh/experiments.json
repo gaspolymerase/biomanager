@@ -149,5 +149,8 @@
   "Share them out into groups at random, balanced by sex, %(housing)s and weight": "随机分到各组，按性别、%(housing)s 和体重均衡",
   "Randomize": "随机分组",
   "How many each started with": "每个开始时有多少只",
-  "e.g. 20, for survival or a count (optional)": "例如 20，用于存活率或计数（可不填）"
+  "e.g. 20, for survival or a count (optional)": "例如 20，用于存活率或计数（可不填）",
+  "Every %(noun)s on one day: type each, Enter goes to the next": "同一天的每只%(noun)s：逐个输入，按回车到下一个",
+  "next": "下一个",
+  "back": "上一个"
 }

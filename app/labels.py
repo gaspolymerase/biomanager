@@ -7,7 +7,7 @@ code on the card that opens the record.
 
 The pieces:
 
-  * `/labels/qr.svg?d=…` renders a QR as inline SVG. Pure Python via segno,
+  * `/labels/qr.svg?d=…` renders a QR as an SVG file. Pure Python via segno,
     no image libraries, no network, so it works in the packaged desktop app.
   * `/labels/cards/<kind>` lays cards out for printing: cages, a species'
     housing units, fly vials (`stocks/<key>`) and inventory tubes
@@ -24,6 +24,7 @@ localhost.
 """
 from __future__ import annotations
 
+import io
 import ipaddress
 import math
 import socket
@@ -95,6 +96,21 @@ def _qr_svg(payload: str, scale: int = 4, fit: bool = False) -> str:
     return qr.svg_inline(scale=scale, border=0, dark="#15191d", omitsize=fit)
 
 
+def qr_svg_file(payload: str, scale: int = 4, border: int = 0) -> str:
+    """A QR as an SVG file of its own, for an <img> or a download, or "" if
+    segno is missing. Unlike _qr_svg's inline markup it names the SVG
+    namespace: an image/svg+xml response without xmlns="http://www.w3.org/2000/svg"
+    is not drawn at all (a broken-image icon in place of the code)."""
+    try:
+        import segno
+    except ImportError:
+        return ""
+    out = io.BytesIO()
+    segno.make(payload, error="m").save(out, kind="svg", scale=scale, border=border,
+                                         dark="#15191d", xmldecl=False)
+    return out.getvalue().decode("utf-8")
+
+
 @bp.route("/qr.svg")
 def qr_svg():
     """A single QR as a standalone SVG, for embedding anywhere."""
@@ -105,7 +121,7 @@ def qr_svg():
         scale = max(1, min(12, arg_int("scale", 4)))
     except ValueError:
         scale = 4
-    svg = _qr_svg(payload, scale)
+    svg = qr_svg_file(payload, scale)
     if not svg:
         abort(503)
     return Response(svg, mimetype="image/svg+xml",

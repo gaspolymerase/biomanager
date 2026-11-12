@@ -360,7 +360,8 @@ class StatsAndExport(Base):
         qr = self.a.get(f"/experiments/{exp}/bench.svg")
         self.assertIn(qr.status_code, (200, 404))          # 404 only without segno
         if qr.status_code == 200:
-            self.assertIn("<svg", qr.get_data(as_text=True))
+            # An <img> draws an SVG file only with its namespace: without it, a broken-image icon.
+            self.assertIn('<svg xmlns="http://www.w3.org/2000/svg"', qr.get_data(as_text=True))
 
 
 class ClutchesAndCohorts(Base):
