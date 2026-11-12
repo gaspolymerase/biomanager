@@ -24,7 +24,7 @@
   <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="preload" href="../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../style.css?v=e8999d1d34">
+  <link rel="stylesheet" href="../style.css?v=4b70e815f7">
 </head>
 <body class="docs-page">
 
@@ -34,8 +34,9 @@
     <nav class="nav-links" aria-label="Site">
       <a href="../features.html">Features</a>
       <a href="../server.html">Run it for your lab</a>
-      <a class="nav-guide" href="../guide.html" aria-current="page">User guide</a>
+      <a href="../guide.html" aria-current="page">User guide</a>
     </nav>
+    <a class="nav-gh" href="https://github.com/gaspolymerase/biomanager" aria-label="BioManager on GitHub"><svg aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#github"/></svg><span>GitHub</span></a>
     <a class="lang-link" href="../zh/guide/keyboard-shortcuts.html" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
     <a class="btn btn-small btn-primary" href="../download.html">Download</a>
   </div>
@@ -173,16 +174,49 @@
 </div>
 
 <footer class="footer">
-  <div class="wrap footer-inner">
-    <div class="footer-gh">
-      <p>BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs find it; an issue there tells us what to fix or build next.</p>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#star"/></svg>Star on GitHub</a>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#github"/></svg>Send feedback</a>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-about">
+        <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+        <p>BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs find it; an issue there tells us what to fix or build next.</p>
+        <div class="footer-btns">
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#star"/></svg>Star on GitHub</a>
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg?v=7f88b8dc9a#github"/></svg>Send feedback</a>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="Site map">
+        <div>
+          <p class="footer-h">Product</p>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../download.html">Download</a></li>
+            <li><a href="../server.html">Run it for your lab</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/releases">All releases</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">Learn</p>
+          <ul>
+            <li><a href="../guide.html">User guide</a></li>
+            <li><a href="../guide/try-it-first.html">Try it first</a></li>
+            <li><a href="../guide/coming-from-excel.html">Coming from Excel</a></li>
+            <li><a href="../guide/troubleshooting.html">Troubleshooting</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">Project</p>
+          <ul>
+            <li><a href="https://github.com/gaspolymerase/biomanager">Source on GitHub</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </div>
+      </nav>
     </div>
-    <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
-    <p><a href="../download.html">Download</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">All releases and what changed</a> · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a></p>
+    <p class="footer-legal">Released under the <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a>. Icons from <a href="https://lucide.dev">Lucide</a> (ISC licence), with the lab's own drawn for BioManager. Text in <a href="https://vercel.com/font">Geist</a> (SIL Open Font Licence). The people and records in the screenshots and clips are made up.</p>
   </div>
 </footer>
-<script src="../site.js?v=0885aab389"></script>
+<script src="../site.js?v=f7c715fbab"></script>
 </body>
 </html>

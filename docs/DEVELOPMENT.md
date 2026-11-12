@@ -4599,14 +4599,26 @@ in the same piece of work; the words come from `docs/i18n-glossary.md`.
 dark from the same tokens on `:root` (the app's teal, neutrals with a little
 teal in them).
 
-- **Type**: headings in Geist and small labels (eyebrows, the dock's names) in
-  Geist Mono, self-hosted as Latin subsets in `site/assets/fonts/` (SIL OFL,
-  `OFL.txt` beside them; about 25 KB and 20 KB), because mainland China can't
-  reach a font CDN. Running text is the system font with each system's
-  Chinese face; no Chinese webfont is sent. Big Chinese headings keep normal
-  letter spacing (`:lang(zh)`).
-- **The header** floats above the page and turns to glass once the page
-  scrolls (`site.js` adds `.scrolled`).
+- **The look** is the app itself. Every page but the front page's opening
+  is plain and left-aligned, parted by hairlines like the rows of a sheet,
+  with the app's teal as the only colour and nothing moving but the app's
+  own clips. Where a picture is wanted it is a still, a screenshot or a
+  clip of the app, never a drawing standing in for it.
+- **Type**: headings in Geist, and data (a version, a sample's values, keys)
+  in Geist Mono, self-hosted as Latin subsets in `site/assets/fonts/` (SIL
+  OFL, `OFL.txt` beside them; about 25 KB and 20 KB), because mainland China
+  can't reach a font CDN. Running text is the system font with each system's
+  Chinese face; no Chinese webfont is sent. Labels are sentence case in the
+  text face, never capitals. Big Chinese headings keep normal letter spacing
+  (`:lang(zh)`).
+- **The header** is a bar that stays at the top of every page: the pages,
+  GitHub, the other language and Download. Under 800px the pages are a
+  second row that scrolls sideways, so there is no menu to open
+  (`--nav-h` is its height, which `scroll-padding-top` follows).
+- **The footer** is the same on every page: the invitation to star or
+  write, the site's pages in three lists, and the licences.
+  `footer_html()` in `scripts/guide-pages.py` writes it for the guide, and
+  the hand-written pages carry a copy of what it returns.
 - **The clips are the app, replayed, not video** (as Raycast shows its
   app): `scripts/live-clips.py` runs each walk (the launch posts' walks in
   `promo/clips/`, plus the site's own census, litter and cage-card walks)
@@ -4629,11 +4641,42 @@ teal in them).
   are drawn by the visitor's browser, so they are as sharp as the page on
   any screen. Rerun `live-clips.py` after a change people would see in a
   clip; a walk that no longer finds its button fails alone, by name.
-- **The feature stage** (`#see` on the front page; dark on a dark page,
-  white with pale glass on a light one) plays a short clip per tab of its
-  dock. Only the chosen clip loads; clips follow one another until someone
-  picks a tab, and pause off screen. A tab's caption is in its `data-claim`
-  and `data-more`.
+- **The front page's opening** (`.hero-night`) is the one loud part of the
+  site: a band the colour of a dark room, in light and dark alike, under
+  the header (which is dark glass while over it: `site.js` adds
+  `.on-dark`). Behind the words, over drifting teal and blue light, a
+  double helix made of points of light turns slowly: `canvas.hero-helix`,
+  drawn by `site.js` with no library. It has the proportions of real
+  B-DNA: a turn 1.7 times as long as the helix is wide, 10.5 base pairs
+  to a turn, right-handed, and the strands 127° apart round the axis, which
+  leaves a wide groove and a narrow one. Each strand is a cloud of points
+  with a sparser halo, the base pairs rows of fainter points; one soft dot
+  per colour is drawn once and stamped for every point, added together
+  (`lighter`), small and sharp near the plane of focus and large and soft
+  away from it. The points drift along their strand, a wave of light runs
+  down it, and the whole leans a little towards the pointer. There are
+  more points, and larger, on a wide screen (about 8,500) than on a phone
+  (about 2,700), and the canvas is drawn at no more than 1.5 device pixels
+  to one. It is drawn only while the band is on screen and the tab in
+  front; asked for less motion it is one still frame, and without scripts
+  there is only the light. The release is a pill above the headline, whose
+  second sentence is a teal-to-blue gradient (`.grad`).
+- **The tour** (`#see`) is inside that band: a row of tabs (`.tour-tabs`)
+  and a window that plays the chosen tab's clip. Only the chosen clip
+  loads; clips follow one another until someone picks a tab, and pause off
+  screen. A tab's name is its `<b>`, its claim its `<small>` and the rest
+  of its caption its `data-more`; the caption is written under the window.
+  The window (`.stage-frame`) is lit from behind, has a light running
+  round its edge (a conic gradient turned by `@property --spin`), leans
+  back and stands up as the page scrolls (where the browser can drive
+  animation from scrolling), and hangs below the band's lower edge by
+  `--hang` (the band is `display: flow-root` so that margin is not
+  collapsed away). Under it, `dl.facts`: where it runs, the price, where
+  the data stays.
+- **What it keeps**: a few pictures of the app (`.bento`: screenshots from
+  `site/assets/screenshots/`, each cut to the part worth looking at with
+  `--w`, `--x` and `--y`), then `ul.ledger`, a row for each database
+  linking to its guide page, with that page's own summary.
 - **Clips play by themselves** on the front page, Features and the guide,
   with no play button or controls. With reduced motion the stage stays
   still (it plays the tab someone picks), a guide clip waits for a click,
@@ -4643,73 +4686,49 @@ teal in them).
   WebM), the others the smaller `.webm`; if the browser won't start it on
   its own (Safari in Low Power Mode) it starts at the visitor's first tap,
   click or key, and the browser's own play button is hidden over it.
-- **Features** has no screenshots: each database and each thing that works
-  everywhere is a glass and neon card (`.nc`) drawn in the page, with its own
-  colours (`--c1`/`--c2` for the neon, `--a`/`--b` for the card on a dark
-  page), a line drawing in inline SVG and a pane of glass with a little of
-  the app's own words. On a dark page the card is dark and its drawing
-  glows; on a light page it is white with a soft wash of its colour, a
-  deeper drawing and white frosted glass. A card with `data-clip` opens that
+- **Features** shows the app. Each database is an `article.feat`: a
+  picture of it (`.feat-shot`, its clip's still in this language, light or
+  dark with the page; a screenshot where there is no clip), then its name,
+  what it does and a link to its guide page. The first two run the page's
+  width, the rest sit two across. A picture with `data-clip-open` opens that
   clip (from `site/assets/clips/`, made by `scripts/live-clips.py`) in a
-  window with a link on to its part of the user guide; without scripts, or
-  with ⌘-click, it is just that link. By day every band is white, parted by
-  hairlines; on a dark page the header's glass turns dark over the stage and
-  the cards (`.on-dark`, from `site.js`).
-- **The AI assistants card** (`.nc-full.ai-card`, first under Features, the
-  whole row): three small panes of glass (`.mg`), joined by thin arrows
-  with Approve as a gate on the last: what you said (a prompt with its
-  send button), one proposal, and your records (three glass rows). The
-  glass is after Apple's Liquid Glass: clear and barely blurred, no grain,
-  its light in the rim (a gradient border by mask, bright top left and
-  bottom right) and a sheen across the top, over a soft glow of the
-  card's colours. All HTML and CSS: beside the words on a wide screen,
-  under them on a tablet, down the card on a phone. The send button
-  presses, a dot walks the path, Approve lights as it passes and the first
-  record row takes the change (CSS keyframes; still and lit with reduced
-  motion). Under it its clip plays by itself while on screen, with no window to open: a
-  `video[data-clip-src]`, which `site.js` loads and plays as the guide's
-  clips. `data-clip-still` makes it a moving picture rather than a player:
-  it loops with no controls, and a click on it stays on the page (the
-  rest of the card is the link) and starts it if the browser held it back;
-  asked for less motion, or not allowed to play, it stays on its poster.
-  The clip, `assistant.*`, is made by `scripts/assistant-clip.py`: the
-  assistant's window is drawn in a page, BioManager is a fresh demo lab
-  where a token proposes and a real click approves, and each frame is a
-  screenshot at twice the size with the zoom done by the browser, so words
-  stay sharp.
-- **The opening** (`.hero-glass`) is a band the height of the screen, light
-  or dark with the page. Behind the headline is a double helix of frosted
-  glass, worked out as a real helix in 3D: each backbone is wider and brighter
-  where it comes towards you and thinner where it turns away, and where the
-  two cross the near one passes over the far one. Back to front: a shadow,
-  the soft coloured cores, the far glass (both whole backbones) tinted teal
-  or blue, the paler base pairs, then where a backbone comes in front a veil
-  the colour of the page that hides the strand behind, its core, its glass
-  and tint, each glass with bright edges (each strand's tint is kept inside
-  its own outline, so it never spills onto the other where they cross); soft teal and blue light drifts underneath. Every layer is a
-  plain picture with its blur drawn in, which the CSS only slides: no
-  `backdrop-filter`, mask or CSS `filter`, which Safari draws on a long moving
-  layer with gaps and straight-edged holes. One turn of every layer, with
-  100px of room above and below for the blurs, is drawn by
-  `scripts/hero-helix.py` into `site/assets/helix/`, and the helix slides by
-  one turn on a loop, which looks just like it turning. The product shot rises out of its lower edge.
-  The header's **User guide** link is a bordered pill: more than the other
-  links, less than Download.
-- **Motion** is the hero's entrance and turning helix, the product shot flattening
-  as the page scrolls, sections (`.rise`) rising in (driven by scrolling
-  where the browser can, else by `site.js`), and each glass card's neon
-  drawing itself in. Without that support, or with
-  reduced motion, everything simply shows; reduced motion also stops the
-  clips playing by themselves.
+  window with a link on to the guide; without scripts, or with ⌘-click, it
+  is just that link. What works the same in every database is a row each
+  (`article.detail`): its name, what it does, and a sample of it in the
+  app's own words (`.sample`, with the `.gl-*` parts), with a **Watch**
+  button where there is a clip (hidden until `site.js` runs).
+- **The AI assistants card** (`.ai-card`, first under "in every database"):
+  the words on the left; on the right three small panes of glass (`.mg`),
+  joined by thin arrows with Approve as a gate on the last: what you said (a
+  prompt with its send button), one proposal, and your records. All HTML
+  and CSS, and down the card on a phone. The send button presses, a dot
+  walks the path, Approve lights as it passes and the first record row
+  takes the change (CSS keyframes; still and lit with reduced motion).
+  Under it its clip plays by itself while on screen, with no window to
+  open: a `video[data-clip-src]`, which `site.js` loads and plays as the
+  guide's clips. `data-clip-still` makes it a moving picture rather than a
+  player: it loops with no controls; asked for less motion, or not allowed
+  to play, it stays on its poster. The clip, `assistant.*`, is made by
+  `scripts/assistant-clip.py`: the assistant's window is drawn in a page,
+  BioManager is a fresh demo lab where a token proposes and a real click
+  approves, and each frame is a screenshot at twice the size with the zoom
+  done by the browser, so words stay sharp.
+- **Motion** is the front page's opening (the words arriving once, the
+  helix, the window standing up and the light round it), the clips and the
+  AI card's walk. Sections don't rise or fade in as the page scrolls.
+  Reduced motion stops all of it, and the clips playing by themselves.
+  (The glass helix of pictures that used to turn behind the headline is no
+  longer on the page; its pictures are still in `site/assets/helix/`, drawn
+  by `scripts/hero-helix.py`.)
 - **Icons** are `site/assets/icons.svg`, symbols copied from the app's
   `app/static/icons.svg` (plus phone, laptop, server and play, and Octicons'
-  GitHub mark and star), coloured by `.ic-<colour>`.
+  GitHub mark and star), each on a tint of its own colour (`.ic`, teal
+  unless `.ic-<colour>` says otherwise).
 - **Fresh copies.** Pages link `style.css`, `site.js` and `assets/icons.svg`
-  as `…?v=<hash of the file>`, and `style.css` links the helix pictures the
-  same way, so a browser never pairs a new page with yesterday's stylesheet.
-  `scripts/site-stamp.py` writes the stamps (`scripts/guide-pages.py` and
-  `scripts/hero-helix.py` run it); after editing any of those files by hand,
-  run it, or `tests/test_site.py` fails.
+  as `…?v=<hash of the file>`, so a browser never pairs a new page with
+  yesterday's stylesheet. `scripts/site-stamp.py` writes the stamps
+  (`scripts/guide-pages.py` runs it); after editing any of those files by
+  hand, run it, or `tests/test_site.py` fails.
 
 ## Desktop App
 

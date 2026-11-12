@@ -24,20 +24,21 @@
   <link rel="icon" href="../../assets/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
   <link rel="preload" href="../../assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../../style.css?v=e8999d1d34">
+  <link rel="stylesheet" href="../../style.css?v=4b70e815f7">
 </head>
 <body class="docs-page">
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="../../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <a class="brand" href="../"><img src="../../assets/icon.svg" alt="" width="28" height="28">BioManager</a>
     <nav class="nav-links" aria-label="页面导航">
-      <a href="../../features.html">功能</a>
-      <a href="../../server.html">为实验室部署</a>
-      <a class="nav-guide" href="../../guide.html" aria-current="page">用户指南</a>
+      <a href="../features.html">功能</a>
+      <a href="../server.html">为实验室部署</a>
+      <a href="../guide.html" aria-current="page">用户指南</a>
     </nav>
+    <a class="nav-gh" href="https://github.com/gaspolymerase/biomanager" aria-label="BioManager 的 GitHub 仓库"><svg aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#github"/></svg><span>GitHub</span></a>
     <a class="lang-link" href="../../guide/calendar.html" hreflang="en" lang="en" data-lang="en">English</a>
-    <a class="btn btn-small btn-primary" href="../../download.html">下载</a>
+    <a class="btn btn-small btn-primary" href="../download.html">下载</a>
   </div>
 </header>
 
@@ -211,16 +212,49 @@
 </div>
 
 <footer class="footer">
-  <div class="wrap footer-inner">
-    <div class="footer-gh">
-      <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#star"/></svg>在 GitHub 上标星</a>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#github"/></svg>提交反馈</a>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-about">
+        <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+        <p>BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；遇到问题或有想法，也欢迎在 GitHub 上提给我们。</p>
+        <div class="footer-btns">
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#star"/></svg>在 GitHub 上标星</a>
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="../../assets/icons.svg?v=7f88b8dc9a#github"/></svg>提交反馈</a>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="网站地图">
+        <div>
+          <p class="footer-h">产品</p>
+          <ul>
+            <li><a href="../features.html">功能</a></li>
+            <li><a href="../download.html">下载</a></li>
+            <li><a href="../server.html">为实验室部署</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/releases">所有版本</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">上手</p>
+          <ul>
+            <li><a href="../guide.html">用户指南</a></li>
+            <li><a href="../guide/try-it-first.html">先试一遍</a></li>
+            <li><a href="../guide/coming-from-excel.html">从 Excel 过来</a></li>
+            <li><a href="../guide/troubleshooting.html">常见问题排查</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">项目</p>
+          <ul>
+            <li><a href="https://github.com/gaspolymerase/biomanager">GitHub 源代码</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT 许可证</a></li>
+            <li><a href="../privacy.html">隐私</a></li>
+            <li><a href="../terms.html">使用条款</a></li>
+          </ul>
+        </div>
+      </nav>
     </div>
-    <div class="brand"><img src="../../assets/icon.svg" alt="" width="22" height="22">BioManager</div>
-    <p><a href="../../download.html">下载</a> · <a href="https://github.com/gaspolymerase/biomanager/releases">所有版本和更新内容</a> · <a href="../../privacy.html">隐私</a> · <a href="../../terms.html">使用条款</a></p>
+    <p class="footer-legal">以 <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT 许可证</a>发布。图标来自 <a href="https://lucide.dev">Lucide</a>（ISC 许可证），实验室用的图标为 BioManager 自绘。文字字体为 <a href="https://vercel.com/font">Geist</a>（SIL 开源字体许可证）。截图和视频中的人员和记录均为虚构。</p>
   </div>
 </footer>
-<script src="../../site.js?v=0885aab389"></script>
+<script src="../../site.js?v=f7c715fbab"></script>
 </body>
 </html>

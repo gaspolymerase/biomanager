@@ -34,7 +34,7 @@
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=e8999d1d34">
+  <link rel="stylesheet" href="style.css?v=4b70e815f7">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -74,8 +74,9 @@
     <nav class="nav-links" aria-label="Site">
       <a href="features.html">Features</a>
       <a href="server.html">Run it for your lab</a>
-      <a class="nav-guide" href="guide.html">User guide</a>
+      <a href="guide.html">User guide</a>
     </nav>
+    <a class="nav-gh" href="https://github.com/gaspolymerase/biomanager" aria-label="BioManager on GitHub"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#github"/></svg><span>GitHub</span></a>
     <a class="lang-link" href="zh/" hreflang="zh-CN" lang="zh-CN" data-lang="zh">中文</a>
     <a class="btn btn-small btn-primary" href="download.html">Download</a>
   </div>
@@ -83,14 +84,14 @@
 
 <main id="top">
 
-  <!-- ============================================================ hero -->
-  <section class="hero hero-glass">
-    <div class="hg" aria-hidden="true">
+  <!-- ============================================================ opening, and the tour inside it -->
+  <section class="hero-night">
+    <div class="hero-bg" aria-hidden="true">
       <div class="hg-light"><i></i><i></i><i></i><i></i></div>
-      <div class="hg-band"><div class="hg-move"><div class="hg-shadow"></div><div class="hg-line"></div><div class="hg-core"></div><div class="hg-back"></div><div class="hg-tint"></div><div class="hg-back-edge"></div><div class="hg-rungs"></div><div class="hg-rungs-edge"></div><div class="hg-hide"></div><div class="hg-core-near"></div><div class="hg-front"></div><div class="hg-tint-near"></div><div class="hg-front-edge"></div></div></div>
+      <canvas class="hero-helix"></canvas>
     </div>
-    <div class="wrap hero-inner">
-      <p class="eyebrow">Lab management · free and open source</p>
+    <div class="wrap">
+      <p class="release" data-latest><span class="release-v">Version <b data-version>2.10.5</b></span><a data-notes href="https://github.com/gaspolymerase/biomanager/releases/tag/v2.10.5">What's new in this version</a></p>
       <h1>Your lab's animals, stocks and supplies. <span class="grad">In one place.</span></h1>
       <p class="lede">BioManager replaces the spreadsheets, whiteboards and paper cage cards
         most labs run on. Edit records like a spreadsheet — underneath is a database that knows
@@ -99,44 +100,75 @@
         <a class="btn btn-primary btn-large" href="download.html" id="hero-download">Download for free</a>
         <a class="btn btn-large" href="features.html">See the features</a>
       </div>
-      <p class="fine" id="hero-platform"><span data-latest>Version <b data-version>2.10.5</b></span> &nbsp;·&nbsp; macOS · Windows · Linux · Android · any browser &nbsp;·&nbsp; MIT licence &nbsp;·&nbsp; your data stays on your computer or your lab's own server</p>
-      <ul class="chips" aria-label="What it tracks">
-        <li>Mice</li><li>Zebrafish</li><li>Flies</li><li>Worms</li><li>Plasmids</li><li>Samples</li><li>Orders</li>
-        <li>Reagents</li><li>Chemicals</li><li>Antibodies</li><li>Viruses</li><li>Primers</li><li>Glycerol stocks</li><li>Cell lines</li><li>Calendar</li><li>Notebook</li>
-      </ul>
+    </div>
+    <div id="see" class="wrap tour" aria-labelledby="see-title">
+      <h2 id="see-title">Nine things a lab does every week. <span class="mute">Watch BioManager do each one.</span></h2>
+      <div class="tour-tabs" role="tablist" aria-label="Features">
+        <button type="button" role="tab" id="tab-home" aria-selected="true" aria-controls="stage-panel" data-clip="home"
+                data-more="Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out from the databases your lab keeps.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#home"/></svg><b>Home</b><small>Every morning, what needs doing today.</small></button>
+        <button type="button" role="tab" id="tab-census" aria-selected="false" aria-controls="stage-panel" data-clip="census" tabindex="-1"
+                data-more="Each mouse in a sheet you edit in place, cages on a grid of the real rack, and everyone's cages on one page for the lab manager.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#mouse"/></svg><b>Animal census</b><small>Every animal, in its cage and on its rack.</small></button>
+        <button type="button" role="tab" id="tab-experiment" aria-selected="false" aria-controls="stage-panel" data-clip="experiment" tabindex="-1"
+                data-more="Each mouse's dose from its latest weight, the weight chart with treatment days marked, and groups compared day by day.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#chart"/></svg><b>Experiment</b><small>Doses worked out from body weight, and the stats done for you.</small></button>
+        <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
+                data-more="Weanings, genotyping, flips and expiry dates, and equipment bookings that never double up.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#calendar"/></svg><b>Calendar</b><small>A lab calendar that fills itself in.</small></button>
+        <button type="button" role="tab" id="tab-protocol" aria-selected="false" aria-controls="stage-panel" data-clip="protocol" tabindex="-1"
+                data-more="Tick off each step as you go, with its timer, and every version kept. Beside them, paper notes filled in from a DOI or Zotero, found again by their figures, and your pages in topics inside topics, with your favourites at the top.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#notebook"/></svg><b>Notebook</b><small>Protocols you run at the bench, step by step.</small></button>
+        <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
+                data-more="Bar, dot, box or scatter plots in the notebook, with SEM and significance stars.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#table"/></svg><b>Data sheet</b><small>Paste your numbers, get the plot and the test.</small></button>
+        <button type="button" role="tab" id="tab-links" aria-selected="false" aria-controls="stage-panel" data-clip="links" tabindex="-1"
+                data-more="Samples link to their mouse in the colony, and to the notebook pages that mention it. Tissue, blood, DNA and RNA each have a tab with columns of their own.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#vials"/></svg><b>Samples</b><small>Every sample knows the animal it came from.</small></button>
+        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
+                data-more="See every base and its protein, drag across bases to make a primer or a point mutation, run a virtual digest with its gel, find the lab&#39;s primers that bind and the PCR they make, check each clone&#39;s sequencing reads and accept the one you keep, and let Assemble a plasmid build the next construct out of the ones you have.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#dna"/></svg><b>Molecular biology</b><small>Plasmid maps, digests, primers, and the next construct.</small></button>
+        <button type="button" role="tab" id="tab-orders" aria-selected="false" aria-controls="stage-panel" data-clip="orders" tabindex="-1"
+                data-more="Orders move from requested to received, then into Reagents with everything filled in. Spending shows what they cost by person, project group or vendor, against the limits your lab sets.">
+          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#cart"/></svg><b>Order</b><small>When the box arrives, it goes straight onto the shelf.</small></button>
+      </div>
+      <div class="stage-frame">
+        <div class="window stage-window">
+          <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — Home</span></div>
+          <div class="stage-screen" id="stage-panel" role="tabpanel" aria-labelledby="tab-home">
+            <video id="stage-video" muted playsinline preload="none" width="1280" height="786"
+                   poster="assets/clips/home.webp" aria-describedby="stage-caption"></video>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
-
-  <section class="hero-show">
+  <section class="hero-after">
     <div class="wrap">
-      <div class="hero-stage">
-        <figure class="window hero-shot">
-          <div class="window-bar"><i></i><i></i><i></i><span>BioManager — Home</span></div>
-          <picture>
-            <source srcset="assets/screenshots/home-dark.webp" media="(prefers-color-scheme: dark)">
-            <img src="assets/screenshots/home.webp" width="2000" height="1250" fetchpriority="high"
-                 alt="BioManager's home page: mice older than 30 weeks, upcoming weanings, the genotyping queue, fly vials due, expiring reagents and the next 14 days">
-          </picture>
-        </figure>
-      </div>
-      <p class="caption">Home: every morning, what needs doing today.</p>
+      <p class="stage-caption" id="stage-caption" aria-live="polite"><b>Every morning, what needs doing today.</b>
+        Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out from the databases your lab keeps.</p>
+      <dl class="facts">
+        <div><dt>Runs on</dt><dd>macOS, Windows, Linux, Android, and any browser</dd></div>
+        <div><dt>Price</dt><dd>Free and open source, under the MIT licence</dd></div>
+        <div><dt>Your data</dt><dd>Stays on your computer or your lab's own server</dd></div>
+      </dl>
     </div>
   </section>
 
   <!-- ============================================================ audience -->
-  <section class="band" style="margin-top: clamp(56px, 8vw, 96px)">
+  <section class="band">
     <div class="wrap trio">
-      <div class="rise">
+      <div>
         <span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#user"/></svg></span>
         <h3>For lab members</h3>
         <p>Manage your own lines, fish, stocks and samples without hunting through someone else's spreadsheet.</p>
       </div>
-      <div class="rise">
+      <div>
         <span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#list-check"/></svg></span>
         <h3>For lab managers &amp; PIs</h3>
         <p>A census that is actually complete: who owns what, which cages are idle, what is overdue.</p>
       </div>
-      <div class="rise">
+      <div>
         <span class="ic ic-purple"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#dna"/></svg></span>
         <h3>For multi-organism labs</h3>
         <p>Mice, fish, flies, worms and plants side by side, and a database for anything else you keep, set up in minutes.</p>
@@ -144,69 +176,44 @@
     </div>
   </section>
 
-  <!-- ============================================================ the feature stage -->
-  <section id="see" class="stage" aria-labelledby="see-title">
+  <!-- ============================================================ what it keeps -->
+  <section id="keeps" class="section">
     <div class="wrap">
-      <h2 id="see-title">Nine things a lab does every week. <span class="mute">Watch BioManager do each one.</span></h2>
-
-      <div class="window stage-window">
-        <div class="window-bar"><i></i><i></i><i></i><span id="stage-title">BioManager — Home</span></div>
-        <div class="stage-screen" id="stage-panel" role="tabpanel" aria-labelledby="tab-home">
-          <video id="stage-video" muted playsinline preload="none" width="1280" height="786"
-                 poster="assets/clips/home.webp" aria-describedby="stage-caption"></video>
-        </div>
+      <div class="section-head">
+        <h2>One database for each thing you keep. <span class="mute">Only what your lab keeps appears.</span></h2>
       </div>
-
-      <div class="dock" role="tablist" aria-label="Features">
-        <button type="button" role="tab" id="tab-home" aria-selected="true" aria-controls="stage-panel" data-clip="home"
-                data-claim="Every morning, what needs doing today."
-                data-more="Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out from the databases your lab keeps.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#home"/></svg><span class="dock-tip">Home</span></button>
-        <button type="button" role="tab" id="tab-census" aria-selected="false" aria-controls="stage-panel" data-clip="census" tabindex="-1"
-                data-claim="Every animal, in its cage and on its rack."
-                data-more="Each mouse in a sheet you edit in place, cages on a grid of the real rack, and everyone's cages on one page for the lab manager.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#mouse"/></svg><span class="dock-tip">Animal census</span></button>
-        <button type="button" role="tab" id="tab-experiment" aria-selected="false" aria-controls="stage-panel" data-clip="experiment" tabindex="-1"
-                data-claim="Doses worked out from body weight, and the stats done for you."
-                data-more="Each mouse's dose from its latest weight, the weight chart with treatment days marked, and groups compared day by day.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#chart"/></svg><span class="dock-tip">Experiment</span></button>
-        <button type="button" role="tab" id="tab-calendar" aria-selected="false" aria-controls="stage-panel" data-clip="calendar" tabindex="-1"
-                data-claim="A lab calendar that fills itself in."
-                data-more="Weanings, genotyping, flips and expiry dates, and equipment bookings that never double up.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#calendar"/></svg><span class="dock-tip">Calendar</span></button>
-        <button type="button" role="tab" id="tab-protocol" aria-selected="false" aria-controls="stage-panel" data-clip="protocol" tabindex="-1"
-                data-claim="Protocols you run at the bench, step by step."
-                data-more="Tick off each step as you go, with its timer, and every version kept. Beside them, paper notes filled in from a DOI or Zotero, found again by their figures, and your pages in topics inside topics, with your favourites at the top.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#notebook"/></svg><span class="dock-tip">Notebook</span></button>
-        <button type="button" role="tab" id="tab-datasheet" aria-selected="false" aria-controls="stage-panel" data-clip="datasheet" tabindex="-1"
-                data-claim="Paste your numbers, get the plot and the test."
-                data-more="Bar, dot, box or scatter plots in the notebook, with SEM and significance stars.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#table"/></svg><span class="dock-tip">Data sheet</span></button>
-        <button type="button" role="tab" id="tab-links" aria-selected="false" aria-controls="stage-panel" data-clip="links" tabindex="-1"
-                data-claim="Every sample knows the animal it came from."
-                data-more="Samples link to their mouse in the colony, and to the notebook pages that mention it. Tissue, blood, DNA and RNA each have a tab with columns of their own.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#vials"/></svg><span class="dock-tip">Samples</span></button>
-        <button type="button" role="tab" id="tab-plasmid" aria-selected="false" aria-controls="stage-panel" data-clip="plasmid" tabindex="-1"
-                data-claim="Plasmid maps, digests, primers, and the next construct."
-                data-more="See every base and its protein, drag across bases to make a primer or a point mutation, run a virtual digest with its gel, find the lab&#39;s primers that bind and the PCR they make, check each clone&#39;s sequencing reads and accept the one you keep, and let Assemble a plasmid build the next construct out of the ones you have.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#dna"/></svg><span class="dock-tip">Molecular biology</span></button>
-        <button type="button" role="tab" id="tab-orders" aria-selected="false" aria-controls="stage-panel" data-clip="orders" tabindex="-1"
-                data-claim="When the box arrives, it goes straight onto the shelf."
-                data-more="Orders move from requested to received, then into Reagents with everything filled in. Spending shows what they cost by person, project group or vendor, against the limits your lab sets.">
-          <svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#cart"/></svg><span class="dock-tip">Order</span></button>
+      <div class="bento">
+        <a class="b-wide" href="guide/plasmids.html"><img src="assets/screenshots/plasmid-map.webp" width="2000" height="1250" alt="" loading="lazy" style="--w:106%;--x:-2.6%;--y:-13%"><span class="b-label">Plasmids</span></a>
+        <a class="b-tall" href="guide/phones-and-cage-cards.html"><img src="assets/screenshots/phone-home.webp" width="780" height="1328" alt="" loading="lazy"><span class="b-label">Phones and cage cards</span></a>
+        <a href="guide/samples-and-orders.html"><img src="assets/screenshots/orders-spending.webp" width="2000" height="1250" alt="" loading="lazy" style="--w:200%;--x:-2.5%;--y:-21%"><span class="b-label">Samples, orders and reagents</span></a>
+        <a href="guide/calendar.html"><img src="assets/screenshots/calendar.webp" width="2000" height="1250" alt="" loading="lazy" style="--w:200%;--x:-2.5%;--y:-7%"><span class="b-label">Calendar</span></a>
       </div>
-      <p class="stage-caption" id="stage-caption" aria-live="polite"><b>Every morning, what needs doing today.</b>
-        Weanings, genotyping, vials to flip, expiring reagents and the next 14 days, worked out from the databases your lab keeps.</p>
+      <ul class="ledger">
+        <li><a href="guide/mouse-colony.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#mouse"/></svg></span><b>Mouse colony</b><span class="what">Mice, cages, litters and breeders, from birth to weaning: racks laid out like yours, and genotyping and weaning dates worked out for you.</span></a></li>
+        <li><a href="guide/zebrafish.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#fish"/></svg></span><b>Zebrafish</b><span class="what">Tanks on racks, fish as groups or individuals, matings and clutches, lines with ZFIN names, and water quality.</span></a></li>
+        <li><a href="guide/flies-and-worms.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#fly"/></svg></span><b>Flies and worms</b><span class="what">Vials and plates on racks, with flips that follow the temperature.</span></a></li>
+        <li><a href="guide/plants.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#seedling"/></svg></span><b>Plants and field crops</b><span class="what">Sowings, trays or plots, and the seed you harvest and sow again, a generation at a time.</span></a></li>
+        <li><a href="guide/any-organism.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#database"/></svg></span><b>Any other organism</b><span class="what">A database for any other organism, described in your own words.</span></a></li>
+        <li><a href="guide/plasmids.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#plasmid"/></svg></span><b>Plasmids</b><span class="what">Plasmid records with their map, sequence and protein, their digests and gels, the primers that bind them, the clones checked by sequencing, and the box each tube is in.</span></a></li>
+        <li><a href="guide/samples-and-orders.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#flask"/></svg></span><b>Samples, orders and reagents</b><span class="what">Samples, orders, reagents, chemicals, antibodies, viruses, primers, glycerol stocks and cell lines.</span></a></li>
+        <li><a href="guide/experiments.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#chart"/></svg></span><b>Experiments</b><span class="what">Treatment groups, doses from body weight, readouts and the stats, for every animal.</span></a></li>
+        <li><a href="guide/calendar.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#calendar"/></svg></span><b>Calendar</b><span class="what">Experiments, to-dos and bookings, with the colony&#x27;s dates filled in for you.</span></a></li>
+        <li><a href="guide/notebook.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#notebook"/></svg></span><b>Notebook and utilities</b><span class="what">Notebook pages, paper notes, protocols, data sheets, signing, and the bench calculators.</span></a></li>
+        <li><a href="guide/phones-and-cage-cards.html"><span class="ic"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#qrcode"/></svg></span><b>Phones and cage cards</b><span class="what">Use BioManager on a phone, and print cage cards and labels that open records when scanned.</span></a></li>
+      </ul>
+      <div class="cta" style="margin-top: 28px">
+        <a class="btn" href="features.html">See the features</a>
+      </div>
     </div>
   </section>
 
   <!-- ============================================================ promises -->
-  <section class="section">
+  <section class="section band">
     <div class="wrap">
-      <div class="section-head rise">
+      <div class="section-head">
         <h2>Yours to keep. <span class="mute">Free, and nothing locked in.</span></h2>
       </div>
-      <ul class="promises promises-row rise">
+      <ul class="promises promises-row">
           <li><b>Your data stays yours.</b>Your records never leave your computer or your lab's server unless you
             connect a calendar or email. Once a day BioManager sends its makers <a href="guide/your-data.html#counts">anonymous counts</a>,
             never names, which an admin can switch off.</li>
@@ -214,42 +221,72 @@
             keep, whenever you like.</li>
           <li><b>Free, for good.</b>Released under the MIT licence: use it, share it, change it.</li>
         </ul>
-      <div class="cta rise" style="margin-top: 32px">
+      <div class="cta" style="margin-top: 32px">
         <a class="btn btn-primary btn-large" href="download.html">Download for free</a>
       </div>
     </div>
   </section>
 
   <!-- ============================================================ next -->
-  <section class="section band">
+  <section class="section">
     <div class="wrap">
-      <div class="section-head rise">
+      <div class="section-head">
         <h2>Find out more. <span class="mute">Pick where to go next.</span></h2>
       </div>
       <div class="grid next-grid">
-        <a class="card next rise" href="features.html"><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#grid"/></svg></span><h3>Features</h3><p>Every database, from the mouse colony to plasmids and orders, and what works the same in all of them.</p></a>
-        <a class="card next rise" href="server.html"><span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#server"/></svg></span><h3>Run it for your lab</h3><p>One computer, a lab machine, a university server or a free cloud VM: costs and every step.</p></a>
-        <a class="card next rise" href="guide.html"><span class="ic ic-purple"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#notebook"/></svg></span><h3>User guide</h3><p>Every function, and a path for labs coming from Excel.</p></a>
+        <a class="card next" href="features.html"><span class="ic ic-teal"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#grid"/></svg></span><h3>Features</h3><p>Every database, from the mouse colony to plasmids and orders, and what works the same in all of them.</p></a>
+        <a class="card next" href="server.html"><span class="ic ic-blue"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#server"/></svg></span><h3>Run it for your lab</h3><p>One computer, a lab machine, a university server or a free cloud VM: costs and every step.</p></a>
+        <a class="card next" href="guide.html"><span class="ic ic-purple"><svg aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#notebook"/></svg></span><h3>User guide</h3><p>Every function, and a path for labs coming from Excel.</p></a>
       </div>
     </div>
   </section>
 </main>
 
 <footer class="footer">
-  <div class="wrap footer-inner">
-    <div class="footer-gh">
-      <p>BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs find it; an issue there tells us what to fix or build next.</p>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#star"/></svg>Star on GitHub</a>
-      <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#github"/></svg>Send feedback</a>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-about">
+        <div class="brand"><img src="assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+        <p>BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs find it; an issue there tells us what to fix or build next.</p>
+        <div class="footer-btns">
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager"><svg class="star" width="16" height="16" aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#star"/></svg>Star on GitHub</a>
+          <a class="btn btn-quiet" href="https://github.com/gaspolymerase/biomanager/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="assets/icons.svg?v=7f88b8dc9a#github"/></svg>Send feedback</a>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="Site map">
+        <div>
+          <p class="footer-h">Product</p>
+          <ul>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="server.html">Run it for your lab</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/releases">All releases</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">Learn</p>
+          <ul>
+            <li><a href="guide.html">User guide</a></li>
+            <li><a href="guide/try-it-first.html">Try it first</a></li>
+            <li><a href="guide/coming-from-excel.html">Coming from Excel</a></li>
+            <li><a href="guide/troubleshooting.html">Troubleshooting</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">Project</p>
+          <ul>
+            <li><a href="https://github.com/gaspolymerase/biomanager">Source on GitHub</a></li>
+            <li><a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="terms.html">Terms</a></li>
+          </ul>
+        </div>
+      </nav>
     </div>
-    <div class="brand"><img src="assets/icon.svg" alt="" width="22" height="22">BioManager</div>
-    <p>Released under the <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a>. Icons from
-      <a href="https://lucide.dev">Lucide</a> (ISC licence), with the lab's own drawn for BioManager. Text in
-      <a href="https://vercel.com/font">Geist</a> (SIL Open Font Licence).
-      The people and records in the screenshots and clips are made up.<br><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
+    <p class="footer-legal">Released under the <a href="https://github.com/gaspolymerase/biomanager/blob/master/LICENSE">MIT licence</a>. Icons from <a href="https://lucide.dev">Lucide</a> (ISC licence), with the lab's own drawn for BioManager. Text in <a href="https://vercel.com/font">Geist</a> (SIL Open Font Licence). The people and records in the screenshots and clips are made up.</p>
   </div>
 </footer>
 
-<script src="site.js?v=0885aab389"></script>
+<script src="site.js?v=f7c715fbab"></script>
 </body>
 </html>

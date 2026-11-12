@@ -49,26 +49,149 @@ document.documentElement.classList.add('js');
   });
 })();
 
-// The header: on the page at the very top, a pane of glass once it scrolls.
+// The header: dark while it is over the front page's dark opening.
 (function () {
-  var nav = document.querySelector('.nav');
-  if (!nav) return;
+  var nav = document.querySelector('.nav'), band = document.querySelector('.hero-night');
+  if (!nav || !band) return;
   var ticking = false;
-  // Over a dark band (the feature stage, the glass cards, dark only on a dark
-  // page) the glass turns dark too.
-  var bands = document.querySelectorAll('.stage, .neon-band'), dim = window.matchMedia('(prefers-color-scheme: dark)');
   var update = function () {
     ticking = false;
-    nav.classList.toggle('scrolled', window.scrollY > 8);
-    var y = nav.getBoundingClientRect().top + nav.offsetHeight / 2, dark = false;
-    if (dim.matches) bands.forEach(function (d) { var r = d.getBoundingClientRect(); if (r.top <= y && r.bottom >= y) dark = true; });
-    nav.classList.toggle('on-dark', dark);
+    nav.classList.toggle('on-dark', band.getBoundingClientRect().bottom > nav.offsetHeight / 2);
   };
   update();
   window.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }, { passive: true });
+})();
 
+// The front page's opening: a double helix made of points of light, turning
+// slowly behind the words. It has the proportions of real B-DNA: one turn
+// is 1.7 times as long as the helix is wide (3.4 nm to 2.0 nm), with 10.5
+// base pairs to a turn, right-handed, and the two strands 127° apart round
+// the axis rather than opposite, which leaves a wide groove and a narrow
+// one. Each strand is a cloud of points with a sparser halo round it, the
+// base pairs rows of fainter points; points near the plane of focus are
+// small and sharp, those in front of and behind it large and soft. The
+// points drift along their strand, a wave of light runs down it, and the
+// whole leans a little towards the pointer. Drawn on a canvas, only while
+// the opening is on screen; asked for less motion, it is one still frame.
+(function () {
+  var canvas = document.querySelector('.hero-helix');
+  if (!canvas || !canvas.getContext) return;
+  var band = canvas.closest('.hero-night') || canvas.parentNode, g = canvas.getContext('2d');
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W = 0, H = 0, dpr = 1, s0 = 1, grain = 1;
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);   // soft points: no need for every pixel
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    s0 = Math.min(Math.max(W / 800, 0.8), 1.45);         // the helix is larger on a wide screen
+    grain = 1.12 * s0;                                   // and its points with it
+  }
+  fit();
+  // One soft dot of each colour, drawn once and stamped for every point.
+  function dot(r, gr, b) {
+    var s = document.createElement('canvas'); s.width = s.height = 64;
+    var x = s.getContext('2d'), fill = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    fill.addColorStop(0, 'rgba(' + r + ',' + gr + ',' + b + ',1)');
+    fill.addColorStop(0.28, 'rgba(' + r + ',' + gr + ',' + b + ',0.5)');
+    fill.addColorStop(1, 'rgba(' + r + ',' + gr + ',' + b + ',0)');
+    x.fillStyle = fill; x.fillRect(0, 0, 64, 64);
+    return s;
+  }
+  var DOTS = [dot(62, 208, 178), dot(134, 206, 255), dot(170, 152, 255), dot(226, 246, 241)];   // teal, sky, violet, white
+  function rnd() { return (Math.random() + Math.random() + Math.random() - 1.5) / 1.5; }
+  var R = 88, PITCH = 3.4 * R, K = 2 * Math.PI / PITCH, RISE = PITCH / 10.5, GROOVE = 2 * Math.PI * 12 / 34;
+  var L = 620, F = 820, FOCUS = -R * 0.35;
+  var many = Math.min(Math.max(s0 * s0 * 1.25, 0.7), 2.8);   // more points where the helix is larger, to keep it as dense
+  var P = [], D = [], i, j, t, u;
+  for (j = 0; j < 2; j++) for (i = 0; i < 1150 * many; i++) {   // the strands
+    u = Math.random();
+    P.push({ t: (Math.random() * 2 - 1) * L, a: j * GROOVE + rnd() * 0.2, r: R + rnd() * 12, k: j, w: 0.45 + u * u * u * 2.4,
+      al: 0.3 + Math.random() * 0.65, c: Math.random(), tw: Math.random() * 6.28, ts: 0.6 + Math.random() * 1.8, f: 6 + Math.random() * 8 });
+  }
+  for (j = 0; j < 2; j++) for (i = 0; i < 260 * many; i++) {    // their halo
+    P.push({ t: (Math.random() * 2 - 1) * L, a: j * GROOVE + rnd() * 0.5, r: R + rnd() * 32, k: j, w: 0.4 + Math.random() * 0.8,
+      al: 0.18 + Math.random() * 0.3, c: Math.random(), tw: Math.random() * 6.28, ts: 0.5 + Math.random(), f: 10 + Math.random() * 14 });
+  }
+  var across = many > 1.3 ? 22 : 16;
+  for (t = -L; t < L; t += RISE) for (j = 0; j < across; j++) {   // the base pairs
+    u = 0.035 + j / (across - 1) * 0.93;
+    P.push({ t: t + rnd() * 1.6, u: u, k: u < 0.5 ? 0 : 1, w: 0.42 + Math.random() * 0.45, al: 0.42, c: Math.random(),
+      tw: Math.random() * 6.28, ts: 1, f: 0, rung: true, o: rnd() * 2 });
+  }
+  for (i = 0; i < 110 * many; i++) {                           // dust adrift round it
+    D.push({ x: (Math.random() * 2 - 1) * 660, y: (Math.random() * 2 - 1) * 330, z: (Math.random() * 2 - 1) * 380, v: 4 + Math.random() * 10, k: i % 3 });
+  }
+  var px = 0, py = 0, tx = 0, ty = 0, time = 2, last = 0, raf = 0, seen = true;
+  band.addEventListener('pointermove', function (e) {
+    var r = band.getBoundingClientRect();
+    tx = (e.clientX - r.left) / r.width * 2 - 1; ty = (e.clientY - r.top) / r.height * 2 - 1;
+  });
+  band.addEventListener('pointerleave', function () { tx = 0; ty = 0; });
+  var cx, cy;
+  function put(k, X, Y, z, w, al) {
+    var sc = F / (F + z), blur = Math.abs(z - FOCUS) / R, size = (1.25 * w + blur * 3.1) * sc * dpr * grain, a = 1.3 * al / (1 + blur * blur * 1.9);
+    if (a < 0.012) return;
+    g.globalAlpha = a > 1 ? 1 : a;
+    g.drawImage(DOTS[k], (cx + X * sc) * dpr - size, (cy + Y * sc) * dpr - size, size * 2, size * 2);
+  }
+  function draw() {
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.globalCompositeOperation = 'lighter';
+    // leaning across a wide screen; steeper down a phone's tall one, where more of it then shows
+    var tilt = (W < 700 ? -1.0 : -0.33) + px * 0.05, ct = Math.cos(tilt), st = Math.sin(tilt), phase = time * 0.3 + px * 0.5;
+    var n, p, th, y, z, fade, pulse, k, tt, sc, gs, y0, z0, along, ci;
+    cx = W / 2; cy = H * 0.45 + py * 10 * s0;
+    for (n = 0; n < D.length; n++) { p = D[n]; put(p.k, p.x * s0, p.y * s0, p.z, 0.7, 0.5); }
+    for (k = 0; k < 2; k++) for (tt = -L; tt < L; tt += 16) {   // a faint glow down the middle of each strand
+      th = K * tt + phase + k * GROOVE; y = R * Math.cos(th); z = R * Math.sin(th);
+      fade = 1 - Math.pow(Math.abs(tt) / L, 3); sc = F / (F + z);
+      gs = (26 + 16 * (R - z) / (2 * R)) * sc * s0 * dpr;
+      g.globalAlpha = 0.05 * fade * (0.5 + (R - z) / (2 * R));
+      g.drawImage(DOTS[k], (cx + (tt * ct - y * st) * s0 * sc) * dpr - gs, (cy + (tt * st + y * ct) * s0 * sc) * dpr - gs, gs * 2, gs * 2);
+    }
+    for (n = 0; n < P.length; n++) {
+      p = P[n];
+      if (p.rung) {
+        th = K * p.t + phase; y0 = R * Math.cos(th); z0 = R * Math.sin(th);
+        y = y0 + (R * Math.cos(th + GROOVE) - y0) * p.u + p.o; z = z0 + (R * Math.sin(th + GROOVE) - z0) * p.u;
+      } else {
+        th = K * p.t + phase + p.a; y = p.r * Math.cos(th); z = p.r * Math.sin(th);
+      }
+      fade = 1 - Math.pow(Math.abs(p.t) / L, 3);
+      pulse = Math.max(0, Math.sin(p.t * 0.01 - time * 0.9));
+      along = (p.t / L + 1) / 2;                               // teal at one end, through sky, to violet at the other
+      ci = p.k === 0 ? (p.c < along * 0.8 ? 1 : 0) : (p.c < along * 0.9 ? 2 : 1);
+      if (!p.rung && p.c > 0.965) ci = 3;
+      put(ci, (p.t * ct - y * st) * s0, (p.t * st + y * ct) * s0, z, p.w,
+        p.al * fade * (0.72 + 0.28 * Math.sin(time * p.ts + p.tw)) * (0.6 + 0.75 * pulse));
+    }
+  }
+  function frame(now) {
+    raf = 0;
+    var dt = Math.min(0.05, (now - last) / 1000 || 0), n, p;
+    last = now; time += dt;
+    px += (tx - px) * 0.05; py += (ty - py) * 0.05;
+    for (n = 0; n < D.length; n++) { p = D[n]; p.x -= p.v * dt; if (p.x < -680) p.x = 680; }
+    for (n = 0; n < P.length; n++) { p = P[n]; if (p.f) { p.t += p.f * dt; if (p.t > L) p.t -= 2 * L; } }
+    draw();
+    go();
+  }
+  function go() {
+    if (raf || calm || !seen || document.hidden) return;
+    last = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+  draw();
+  if ('ResizeObserver' in window) new ResizeObserver(function () { fit(); draw(); }).observe(canvas);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) { seen = entries[0].isIntersecting; go(); }).observe(band);
+  }
+  document.addEventListener('visibilitychange', go);
+  go();
 })();
 
 // Clips. Most are the app itself, replayed (scripts/live-clips.py): a
@@ -303,16 +426,16 @@ var bmClips = (function () {
   };
 })();
 
-// The feature stage: a dock of tabs under a window, each playing a short
-// clip. Only the chosen clip loads. Clips follow one another until the
-// visitor picks one, which then loops; they pause off screen or in a
-// background tab. There is no play button: with reduced motion nothing
-// plays by itself, and the still shows until a tab is picked.
+// The tour: a row of tabs above a window, each playing a short clip. Only
+// the chosen clip loads. Clips follow one another until the visitor picks
+// one, which then loops; they pause off screen or in a background tab.
+// There is no play button: with reduced motion nothing plays by itself, and
+// the still shows until a tab is picked.
 (function () {
-  var dock = document.querySelector('.dock[role="tablist"]');
+  var list = document.querySelector('.tour-tabs[role="tablist"]');
   var video = document.getElementById('stage-video');
-  if (!dock || !video) return;
-  var tabs = Array.prototype.slice.call(dock.querySelectorAll('[role="tab"]'));
+  if (!list || !video) return;
+  var tabs = Array.prototype.slice.call(list.querySelectorAll('[role="tab"]'));
   var screen = video.parentNode;
   var base = video.getAttribute('poster').replace(/[^/]*$/, '');
   var player = bmClips.mount(video);
@@ -324,7 +447,6 @@ var bmClips = (function () {
   var current = 0;
   var loaded = -1;
   var prefix = title ? title.textContent.replace(/—.*$/, '— ') : 'BioManager — ';
-
   function clip(i) { return tabs[i].dataset.clip; }
   function wanted() { return inView && !document.hidden && (!calm || chosen); }
   function load(i) {
@@ -344,11 +466,10 @@ var bmClips = (function () {
       t.tabIndex = j === i ? 0 : -1;
     });
     screen.setAttribute('aria-labelledby', tabs[i].id);
-    var name = tabs[i].querySelector('.dock-tip').textContent;
-    if (title) title.textContent = prefix + name;
+    if (title) title.textContent = prefix + tabs[i].querySelector('b').textContent;
     caption.innerHTML = '';
     var b = document.createElement('b');
-    b.textContent = tabs[i].dataset.claim;
+    b.textContent = tabs[i].querySelector('small').textContent;
     caption.appendChild(b);
     caption.appendChild(document.createTextNode(' ' + tabs[i].dataset.more));
     player.loop = chosen;
@@ -363,7 +484,7 @@ var bmClips = (function () {
   tabs.forEach(function (t, i) {
     t.addEventListener('click', function () { chosen = true; show(i); });
     t.addEventListener('keydown', function (e) {
-      var j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      var j = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
       if (j === undefined) return;
       e.preventDefault();
       j = (j + tabs.length) % tabs.length;
@@ -429,38 +550,12 @@ var bmClips = (function () {
     .catch(function () {});
 })();
 
-// Scrolling: sections rise in as they appear, where the browser can't drive
-// that from scrolling itself; each glass card's neon draws itself in.
+// The Features page: a picture of a database, or a Watch button, opens its
+// clip in a window over the page, with a link on to its part of the user
+// guide. Without scripts the picture is just that link, and Watch stays hidden.
 (function () {
-  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!('IntersectionObserver' in window)) {
-    document.querySelectorAll('.rise').forEach(function (el) { el.classList.add('in'); });
-    return;
-  }
-  var scrolls = window.CSS && CSS.supports && CSS.supports('animation-timeline: view()');
-  if (!scrolls) {
-    var rise = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rise.unobserve(e.target); } });
-    }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('.rise').forEach(function (el) { rise.observe(el); });
-  }
-  if (calm) return;
-  var cards = document.querySelectorAll('.nc');
-  cards.forEach(function (card) {
-    card.querySelectorAll('.neon g > *').forEach(function (shape) { shape.setAttribute('pathLength', '1'); });
-    card.classList.add('neon-draw');
-  });
-  var draw = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('drawn'); draw.unobserve(e.target); } });
-  }, { threshold: 0.35 });
-  cards.forEach(function (card) { draw.observe(card); });
-})();
-
-// A card with a clip (data-clip) opens it in a window over the page, with a
-// link on to its part of the user guide; without scripts it is just that link.
-(function () {
-  var cards = document.querySelectorAll('.nc[data-clip]');
-  if (!cards.length || typeof HTMLDialogElement !== 'function') return;
+  var openers = document.querySelectorAll('[data-clip-open]');
+  if (!openers.length || typeof HTMLDialogElement !== 'function') return;
   var zh = document.documentElement.lang.indexOf('zh') === 0;
   var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css(\?.*)?$/, '') + 'assets/clips/';
   var dialog = document.createElement('dialog');
@@ -470,15 +565,18 @@ var bmClips = (function () {
     '<video muted loop playsinline disablepictureinpicture></video>' +
     '<div class="clip-text"><p></p><a></a></div>';
   document.body.appendChild(dialog);
-  dialog.querySelector('video').setAttribute('poster', base + cards[0].dataset.clip + '.webp');
+  dialog.querySelector('video').setAttribute('poster', base + openers[0].dataset.clipOpen + '.webp');
   var player = bmClips.mount(dialog.querySelector('video'));
   player.loop = true;
   function close() { dialog.close(); }
   dialog.querySelector('.clip-close').addEventListener('click', close);
   dialog.addEventListener('click', function (e) { if (e.target === dialog) close(); });
   dialog.addEventListener('close', function () { player.unload(); });
-  cards.forEach(function (card) {
-    card.addEventListener('click', function (e) {
+  openers.forEach(function (opener) {
+    opener.hidden = false;
+    var card = opener.closest('.feat, .detail');
+    if (!card) return;
+    opener.addEventListener('click', function (e) {
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;   // a new tab: the guide, as the link says
       e.preventDefault();
       var title = card.querySelector('h3').textContent;
@@ -489,9 +587,9 @@ var bmClips = (function () {
       p.appendChild(b);
       p.appendChild(document.createTextNode(card.querySelector('p').textContent));
       var a = dialog.querySelector('.clip-text a');
-      a.href = card.getAttribute('href');
-      a.textContent = zh ? '在用户指南中阅读 →' : 'Read about it in the user guide →';
-      player.show(card.dataset.clip, base + card.dataset.clip + '.webp');
+      a.href = card.querySelector('.feat-links a').getAttribute('href');
+      a.textContent = zh ? '在用户指南中阅读' : 'Read about it in the user guide';
+      player.show(opener.dataset.clipOpen, base + opener.dataset.clipOpen + '.webp');
       dialog.showModal();
       player.play();
     });
