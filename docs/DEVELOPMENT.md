@@ -216,8 +216,8 @@ reads the source for the rules marked *(tested)*.
 - **Loading.** A page or form that takes a while shows one of ten small
   animations over the content, picked at random (`static/loader.js`,
   `static/loader.css`). Each kind of load (`GET /colony/cage/:n`) remembers
-  how long it took in this browser: over a second, the animation shows at
-  once; otherwise only if the page is still not there after a second.
+  how long it took in this browser: over half a second, the animation shows at
+  once; otherwise only if the page is still not there after half a second.
   Approving a proposal starts out as slow. It watches the Navigation API
   where the browser has one, else links and forms, and skips downloads,
   new tabs and anything under `data-no-loading`; `data-loading-label` names
