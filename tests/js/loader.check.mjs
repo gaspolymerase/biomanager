@@ -20,9 +20,10 @@ assert.equal(L.estimate({}, 'POST /proposals/:n/approve'), 3000);
 assert.equal(L.estimate({}, 'GET /colony'), 0);
 assert.equal(L.estimate({ 'GET /colony': 420 }, 'GET /colony'), 420);
 
-// More than a second expected: at once. Otherwise only once a second has gone by.
-assert.equal(L.delayFor(1500), 0);
-assert.equal(L.delayFor(1000), L.THRESHOLD);
+// More than half a second expected: at once. Otherwise only once half a second has gone by.
+assert.equal(L.THRESHOLD, 500);
+assert.equal(L.delayFor(800), 0);
+assert.equal(L.delayFor(500), L.THRESHOLD);
 assert.equal(L.delayFor(0), L.THRESHOLD);
 
 // The newest time counts as much as all before it, and the oldest kinds drop off.
@@ -82,14 +83,14 @@ const shown = (w) => w.document.querySelector('.ld-overlay');
   assert.equal(shown(w), null);
 }
 
-// A page that is usually quick: nothing for the first second, then the animation.
+// A page that is usually quick: nothing for the first half second, then the animation.
 {
   const w = page({ 'GET /colony/cage/:n': 300 });
   click(w, 'cage');
   await wait(w, 300);
   assert.equal(shown(w), null, 'no flash for a quick page');
-  await wait(w, 900);
-  assert.ok(shown(w), 'still loading after a second: the animation');
+  await wait(w, 400);
+  assert.ok(shown(w), 'still loading after half a second: the animation');
   w.BiomanagerLoader.stop();
 }
 

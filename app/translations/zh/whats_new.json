@@ -1,4 +1,5 @@
 {
+  "The loading animation comes sooner: a page or proposal that takes more than half a second shows it, not only one that takes more than a second.": "加载动画出现得更早了：页面或提议超过半秒就会显示，不再等到一秒。",
   "In an experiment, **Weigh** goes down the list from the keyboard: **Enter** moves to the next animal, in its dialog and in the sheet, and it is a full button beside **Record manipulation**.": "在实验里，**称重** 可以用键盘一路往下录：在对话框和表格里按 **回车** 都会到下一只动物；它现在是 **记录处理** 旁边的一个完整按钮。",
   "**Bench mode**'s QR code shows again, instead of a broken image.": "**实验台模式** 的二维码又能显示了，不再是一个坏掉的图片。",
   "Opening a page or approving a proposal that takes more than a second shows a small animation, so you can tell it is still loading.": "打开页面或应用提议时，如果要超过一秒，会显示一个小动画，让你知道它还在加载。",

@@ -5,9 +5,9 @@
  * until the next page replaces it. Each kind of load ("GET /colony/cage/:n",
  * "POST /proposals/:n/approve") remembers how long it took on this computer:
  *
- *   - expected to take more than a second: the animation shows at once;
+ *   - expected to take more than half a second: the animation shows at once;
  *   - expected to be quicker (or never seen): it shows only if the page is
- *     still not here after a second, so a quick page never flashes it.
+ *     still not here after half a second, so a quick page never flashes it.
  *
  * Ten animations (loader.css), one picked at random each time, never the
  * same twice in a row. Downloads, new tabs, links within the page and
@@ -17,7 +17,7 @@
 (function () {
   'use strict';
 
-  const THRESHOLD = 1000;                  // ms: longer than this shows the animation at once
+  const THRESHOLD = 500;                   // ms: longer than this shows the animation at once
   const STORE = 'biomanager:load-times';   // localStorage: kind of load -> ms
   const PENDING = 'biomanager:loading';    // sessionStorage: the load under way, for the next page to time
   const KEEP = 200;                        // kinds of load remembered
