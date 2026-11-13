@@ -361,6 +361,37 @@ class Importing(AppTestCase):
         self.assertEqual(second[:2], (self.admin, None))         # unknown owner → you; the cell was taken
         self.assertIn("nobody-here", second[2])
 
+    def test_plasmids_take_the_columns_the_lab_added(self):
+        # Issue #148: a lab's own plasmid columns were offered only as notes.
+        from app import custom_fields
+        from app.db import SessionLocal
+        kept = one("select value from app_settings where key='custom_fields:plasmids'")
+        with SessionLocal() as s:
+            custom_fields.set_fields(s, "plasmids", [
+                {"key": "build_method", "label": "构建方式"},
+                {"key": "volume", "label": "体积", "type": "number"},
+                {"key": "full_name", "label": "全称"},
+            ])
+            s.commit()
+
+        def restore():
+            with SessionLocal() as s:
+                custom_fields.set_fields(s, "plasmids", json.loads(kept) if kept else [])
+                s.commit()
+        self.addCleanup(restore)
+
+        name = uniq("pOwn")
+        data = f"质粒名称,构建方式,体积,全称,Other\n{name},Gibson,50,pCMV-GFP full,kept\n".encode()
+        token, html = self.upload(self.a, "plasmids", "p.csv", data)
+        chosen = self.chosen(html)
+        self.assertEqual([chosen[f"map-{i}"] for i in range(1, 3)], ["attr_build_method", "attr_volume"])
+        self.assertEqual(chosen["map-3"], "attr_full_name")
+        self.post(self.a, f"/import-sheet/file/{token}/run", data={**chosen, "sheet": "Sheet 1"})
+        attrs, notes = row("select attrs, notes from plasmids where name=?", name)
+        self.assertEqual(json.loads(attrs), {"build_method": "Gibson", "volume": "50", "full_name": "pCMV-GFP full"})
+        self.assertNotIn("Gibson", notes)
+        self.assertIn("Other: kept", notes)                  # a column the lab hasn't added still goes to the notes
+
     def fresh_inventory(self, preset="reagents") -> str:
         r = self.a.post("/inventory/new", data={"preset": preset, "label": uniq("Chemicals "), "audience": "lab"})
         return r.headers["Location"].split("?")[0].rstrip("/").rsplit("/", 1)[1]
