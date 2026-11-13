@@ -496,8 +496,9 @@ def inject_icon():
     Icons live in a single static/icons.svg sprite referenced with <use>,
     so they inherit currentColor, need no JavaScript, cost one cached
     request, and work offline in the packaged app. Within a page (base.html,
-    between icon_sprite_start() and icon_sprite_end()) an icon points to a
-    copy of its symbol at the end of the page instead (icons.page_sprite).
+    from icon_sprite_start() to the end of its icon_sprite_first filter) an
+    icon points to a copy of its symbol at the top of the page instead
+    (icons.page_sprite).
     """
     from markupsafe import Markup
 
@@ -518,15 +519,25 @@ def inject_icon():
         g.icons_drawn = set()
         return ""
 
-    def icon_sprite_end() -> Markup:
-        # Anything drawn after the page (another template in the same
-        # request) points to the shared file again.
-        drawn = g.pop("icons_drawn", None)
-        return Markup(page_sprite(drawn)) if drawn else Markup("")
-
     from .icons import PICKER_ICONS
-    return {"icon": icon, "icon_sprite_start": icon_sprite_start, "icon_sprite_end": icon_sprite_end,
-            "picker_icons": PICKER_ICONS}
+    return {"icon": icon, "icon_sprite_start": icon_sprite_start, "picker_icons": PICKER_ICONS}
+
+
+@app.template_filter("icon_sprite_first")
+def icon_sprite_first(body):
+    """base.html's whole <body>, with the symbols it drew put before it.
+
+    At the end of the page, a browser that paints a long page before it has
+    all of it (WebKit: Safari and the Mac app) drew the sidebar's icons as
+    blanks until the sheet's last row had come. Anything drawn after the
+    page (another template in the same request) points to the shared file
+    again."""
+    from markupsafe import Markup
+
+    from .icons import page_sprite
+
+    drawn = g.pop("icons_drawn", None)
+    return (Markup(page_sprite(drawn)) if drawn else Markup("")) + Markup(body)
 
 
 @app.context_processor
