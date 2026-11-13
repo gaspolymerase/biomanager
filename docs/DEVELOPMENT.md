@@ -346,13 +346,15 @@ Referenced as `{{ icon('mouse') }}` in templates, which emits
 `<svg class="icon"><use href="/static/icons.svg#mouse"></svg>` — one cached
 request, inherits `currentColor`, no JavaScript, works offline in the
 packaged app. Within a page made from `base.html` it emits
-`<use href="#i-mouse">` instead, and `icon_sprite_end()` puts a copy of
-each symbol the page drew at its end (`icons.page_sprite`; the `i-` keeps
-them apart from the page's own ids): Chromium loads and announces each
-`<use>` of the file separately, a second of a long sheet's opening for its
-rows' icons. Anything drawn outside a page (a template rendered for a
-fragment or after the page) still points to the file; so do the icons
-scripts write.
+`<use href="#i-mouse">` instead, and the `icon_sprite_first` filter around
+its body puts a copy of each symbol the page drew at the top of `<body>`
+(`icons.page_sprite`; the `i-` keeps them apart from the page's own ids):
+Chromium loads and announces each `<use>` of the file separately, a second
+of a long sheet's opening for its rows' icons. At the top, not the end:
+WebKit paints a long page before it has all of it, and a sprite at the end
+left the sidebar's icons blank until the last row came. Anything drawn
+outside a page (a template rendered for a fragment or after the page)
+still points to the file; so do the icons scripts write.
 
 Every icon is a line drawing on a 24 grid, stroked in `currentColor`
 (1.75, round ends); the fill is left to CSS (`svg.icon { fill: none }`), so

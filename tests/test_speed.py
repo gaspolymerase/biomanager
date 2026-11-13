@@ -284,7 +284,8 @@ class InventorySheetSpeedTests(AppTestCase):
         used = set(re.findall(r'<use href="#i-([\w-]+)">', html))
         self.assertIn("trash", used)
         self.assertNotIn('<use href="/static/icons.svg#', html)
-        sprite = re.search(r'<svg aria-hidden="true" style="display:none">(.*?)</svg>\s*</body>', html, re.S).group(1)
+        # First in the body, before the sidebar: WebKit paints before the page's end.
+        sprite = re.search(r'<body[^>]*>\s*<svg aria-hidden="true" style="display:none">(.*?)</svg>', html, re.S).group(1)
         self.assertEqual(set(re.findall(r'<symbol id="i-([\w-]+)"', sprite)), used)
 
     def test_an_icon_drawn_outside_a_page_points_to_the_shared_file(self):

@@ -65,7 +65,7 @@ def symbols() -> dict[str, str]:
 
 
 def page_sprite(names) -> str:
-    """The symbols a page drew, for the end of the page: its icons then
+    """The symbols a page drew, for the top of the page: its icons then
     point within the page (#i-edit). Each <use> of the shared file was a
     resource of its own, loaded and announced one by one: a second of a
     long sheet's opening went to its rows' icons."""
